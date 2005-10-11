@@ -4,7 +4,9 @@ nif_import_237.py version 1.0.6
 --------------------------------------------------------------------------
 ***** BEGIN LICENSE BLOCK *****
 
-Copyright (c) 2005, Alessandro Garosi <tdo_brandano@hotmail.com>
+BSD License
+
+Copyright (c) 2005, NIF File Format Library and Tools
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -15,8 +17,9 @@ are met:
 2. Redistributions in binary form must reproduce the above copyright
    notice, this list of conditions and the following disclaimer in the
    documentation and/or other materials provided with the distribution.
-3. The name of the author may not be used to endorse or promote products
-   derived from this software without specific prior written permission.
+3. The name of the NIF File Format Library and Tools projectmay not be
+   used to endorse or promote products derived from this software
+   without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
