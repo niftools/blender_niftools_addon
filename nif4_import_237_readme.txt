@@ -1,27 +1,64 @@
 Turn Word Wrap on to read this file.
 
 nif_import_237.py version 1.0.6
-Copyright (C) 2005 Alessandro Garosi, (AKA Brandano) -- tdo_brandano@hotmail.com
 --------------------------------------------------------------------------
-***** BEGIN GPL LICENSE BLOCK *****
+***** BEGIN LICENSE BLOCK *****
 
-This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+Copyright (c) 2005, Alessandro Garosi <tdo_brandano@hotmail.com>
+All rights reserved.
 
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of the author may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
 
-You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-***** END GPL LICENCE BLOCK *****
+***** END LICENCE BLOCK *****
+Note: Versions of this script previous to 1.0.6 were released under the GPL license
+The script includes small portions of code obtained in the public domain, in particular
+the binary conversion functions. Every attempt to contact (or actually identify!) the
+original author has so far been fruitless.
+I have no claim of ownership these functions and will remove and replace them with
+a (probably less efficient) version if the original author ever will ask me to.
 --------------------------------------------------------------------------
+
 Credits:
-Portions of this programs are derived (through the old tested method of cut'n paste) from the obj import script obj_import.py: OBJ Import v0.9 by Campbell Barton (AKA Ideasman).
-Not really, I started the script like that, but I pretty much replaced every bit taken from it with my own code. Not that mine is any better, though!
+Portions of this programs are (were) derived (through the old tested method of cut'n paste)
+from the obj import script obj_import.py: OBJ Import v0.9 by Campbell Barton (AKA Ideasman)
+(No more. I rewrote the lot. Nevertheless I wouldn't have been able to start this without Ideasman's
+script to read from!)
+Binary conversion functions are courtesy of SJH. Couldn't find the full name, and couldn't find any
+license info, I got the code for these from http://projects.blender.org/pipermail/bf-python/2004-July/001676.html
+The file reading strategy was 'inspired' by the NifToPoly script included with the 
+DAOC mapper, which used to be available at http://www.randomly.org/projects/mapper/ and was written and 
+is copyright 2002 of Oliver Jowett. His domain and e-mail address are however no longer reacheable.
+No part of the original code is included here, as I pretty much rewrote everything, hence this is the 
+only mention of the original copyright. An updated version of the script is included with the DAOC Mappergui
+application, available at http://nathrach.republicofnewhome.org/mappergui.html
 
 Thanks go to:
-Campbell Barton (AKA Ideasman) for making code clear enough to be used as a learning resource. Hey, this is my first ever python script!
+Campbell Barton (AKA Ideasman, Cambo) for making code clear enough to be used as a learning resource.
+Hey, this is my first ever python script!
+SJH for the binary conversion functions. Got the code off a forum somewhere, posted by Ideasman, I suppose it's allright to use it
 Lars Rinde (AKA Taharez), for helping me a lot with the file format, and with some debugging even though he doesn't 'do Python'
 Timothy Wakeham (AKA timmeh), for taking some of his time to help me get to terms with the way the UV maps work in Blender
---------------------------------------------------------------------------
+Amorilia (don't know your name buddy), for bugfixes and testing.
 
 Installation:
 Copy this script in your Blender scripts folder when installing Blender under Windows this is by default Windows C:\Program Files\Blender Foundation\Blender\.blender\scripts.
@@ -30,9 +67,6 @@ IMPORTANT:
 The script needs a full python installation, as it uses regular expressions and the 'struct' class, can't do without them, I am sorry.
 The version of Python installed must also be compatible with Blender, or the script just won't run. It's not my mistake, and you will see that several other scripts bundled with Blender won't run properly or at all unless you have a full compatible Python installation, the Nendo import script for example.
 At the time of writing this the latest 'stable' version of Blender is Blender 2.36, and it was compiled with bindings for Python 2.3x. You won't need to uninstall Python 2.4 in order to get the script running, but you need to install python 2.35 as well (you can get it from http://www.python.org/2.3.5/).
-Then, to get everything running properly you need to open the Blender configuration panel (just drag down the lower border of the toolbar at the top of the screen), select the "File Paths" button, click on the folder icon near to the Python path box, and browse to the 'lib' subfolder of your Python 2.35 installation (for example c:\Python23\lib).
-This is by far the easiest way, a more complex (but more flexible) one would be to set a PYTHONPATH environment variable that points to the location of the blender 'lib' folder and also all other libraries that you want to use with it.
-You can even write a batch script (or shell script, if you are using Linux) to set the PYTHONPATH right before running blender, so that it will be set for Blender only and leave the rest of the system alone, but I'd leave that to the techies.
 Restart Blender and everything should work fine.
 If you still have problems, check out this LOOOONG thread on the elysiun board: http://www.elysiun.com/forum/viewtopic.php?t=7723
 The latest pages will be the ones you will find more useful, as the thread started several Blender versions back.
@@ -90,7 +124,7 @@ In the smaller updates, if the script can't find a full Python installation it w
 1.0.1
 I took the occasion of a new Blender version out and changed my versioning convention. Sorry about the confusion
 Fixed a bug that would hang the script on Blender 2.37
-Now bones are 'a' proper length (NIF bone syystems don't report a bone length), and are aligned properly, well, within 1 degree of their roll position
+Now bones are 'a' proper length (NIF bone systems don't report a bone length), and are aligned properly, well, within 1 degree of their roll position
 
 1.0.2
 A few (quite a few actually) bugfixes by Amorilia (whoopee, another python coder onboard!).
@@ -112,3 +146,6 @@ Fixed a few typos and a couple of mistakes that Amorilia pointed out. Still inco
 
 1.0.6
 Added Amorilia's corrections to the import of UV seams. Changed the name of the file to reflect the fact that the importer is version specific.
+As of this version the licensing is under a BSD license, to avoid confusion when distributing together with Amorilia's export script. However, copyright on the two script is still with the respective authors.
+Also, all previous versions of this script are still to be considered as governed by the GPL license.
+I also removed a small portion of the readme regarding python setup, as it was confusing, redundant and most likely just wrong. For the moment I'll rely on the Blender's user forums, until I can come up with a decent tutorial on setting up python properly.
