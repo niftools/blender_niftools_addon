@@ -691,21 +691,6 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
             nif.blocks[trishape_id].property_id.append(trialphaprop_id)
             nif.blocks[trishape_id].num_properties += 1
 
-        if (mesh_mat_shininess > epsilon ):
-            # add NiTriShape's specular property
-            trispecprop_id = last_id + 1
-            last_id = trispecprop_id
-            assert(trispecprop_id == len(nif.blocks))
-            nif.blocks.append(niflib.NiSpecularProperty())
-            nif.blocks[trispecprop_id].block_type.value = 'NiSpecularProperty'
-            nif.header.nblocks += 1
-            
-            nif.blocks[trispecprop_id].flags = 0x0001
-            
-            # refer to the specular property in the trishape block
-            nif.blocks[trishape_id].property_id.append(trispecprop_id)
-            nif.blocks[trishape_id].num_properties += 1
-            
         if (mesh_mat != None):
             # add NiTriShape's material property
             trimatprop_id = last_id + 1
@@ -735,7 +720,22 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
             # refer to the material property in the trishape block
             nif.blocks[trishape_id].property_id.append(trimatprop_id)
             nif.blocks[trishape_id].num_properties += 1
-        
+            
+            if (mesh_mat_shininess > epsilon ):
+                # add NiTriShape's specular property
+                trispecprop_id = last_id + 1
+                last_id = trispecprop_id
+                assert(trispecprop_id == len(nif.blocks))
+                nif.blocks.append(niflib.NiSpecularProperty())
+                nif.blocks[trispecprop_id].block_type.value = 'NiSpecularProperty'
+                nif.header.nblocks += 1
+                
+                nif.blocks[trispecprop_id].flags = 0x0001
+                
+                # refer to the specular property in the trishape block
+                nif.blocks[trishape_id].property_id.append(trispecprop_id)
+                nif.blocks[trishape_id].num_properties += 1
+            
         # add NiTriShape's data
         tridata_id = last_id + 1
         last_id = tridata_id
