@@ -21,32 +21,57 @@ Usage:
 Run this script from "File->Import" menu and then load the desired NIF file.
 """
 # nif4_import_237.py version 1.0.6
-# Copyright (C) 2005 Alessandro Garosi, (AKA Brandano) -- tdo_brandano@hotmail.com
 # --------------------------------------------------------------------------
-# ***** BEGIN GPL LICENSE BLOCK *****
+# ***** BEGIN LICENSE BLOCK *****
 #
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
+# Copyright (c) 2005, Alessandro Garosi <tdo_brandano@hotmail.com>
+# All rights reserved.
+
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. The name of the author may not be used to endorse or promote products
+#    derived from this software without specific prior written permission.
+
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software Foundation,
-# Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-#
-# ***** END GPL LICENCE BLOCK *****
+# ***** END LICENCE BLOCK *****
+# Note: Versions of this script vrevious to 1.0.6 were released under the GPL license
+# The script includes small portions of code obtained in the public domain, in particular
+# the binary conversion functions. Every attempt to contact (or actually identify!) the
+# original author has so far been fruitless.
+# I have no claim of ownership these functions and will remove and replace them with
+# a (probably less efficient) version if the original author ever will ask me to.
 # --------------------------------------------------------------------------
+#
 # Credits:
-# Portions of this programs are derived (through the old tested method of cut'n paste)
+# Portions of this programs are (were) derived (through the old tested method of cut'n paste)
 # from the obj import script obj_import.py: OBJ Import v0.9 by Campbell Barton (AKA Ideasman)
+# (No more. I rewrote the lot. Nevertheless I wouldn't have been able to start this without Ideasman's
+# script to read from!)
 # Binary conversion functions are courtesy of SJH. Couldn't find the full name, and couldn't find any
-#	license info, I got the code for these
-#	from "http://projects.blender.org/pipermail/bf-python/2004-July/001676.html"
+# license info, I got the code for these from http://projects.blender.org/pipermail/bf-python/2004-July/001676.html
+# The file reading strategy was 'inspired' by the NifToPoly script included with the 
+# DAOC mapper, which used to be available at http://www.randomly.org/projects/mapper/ and was written and 
+# is copyright 2002 of Oliver Jowett. His domain and e-mail address are however no longer reacheable.
+# No part of the original code is included here, as I pretty much rewrote everything, hence this is the 
+# only mention of the original copyright. An updated version of the script is included with the DAOC Mappergui
+# application, available at http://nathrach.republicofnewhome.org/mappergui.html
+#
 # Thanks go to:
 # Campbell Barton (AKA Ideasman, Cambo) for making code clear enough to be used as a learning resource.
 #	Hey, this is my first ever python script!
@@ -1609,7 +1634,7 @@ def readFile(filename):
 		versionString = '%s.%s.%s.%s' % version
 		nifObject = None
 		if versionString in versList:
-			# Selects the default texture folder.
+			# Selects the base texture folder.
 			# Argh, the fileselector doesn't return folders!
 			# I'll set up a gui for this
 			#Blender.Window.FileSelector(setTextureFolder, 'SELECT TEXTURE FOLDER')
@@ -1620,12 +1645,13 @@ def readFile(filename):
 			msg = 'This file format is not (yet?) supported'
 			Blender.Draw.PupMenu("ERROR%t|"+msg)
 			return
-		# Free memory
+		# Free memory (I hope)
 		data = None
 		# ok, let's try and write the meshes to Blender
 		nifObject.writeToBlender()
 	return
 
+# Not implemented yet, but I'll make a GUI version sometime
 def drawGui():
 	pass
 
