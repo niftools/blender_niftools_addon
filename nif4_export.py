@@ -1,5 +1,7 @@
 #!BPY
 
+#!BPY
+
 """ 
 Name: 'NetImmerse 4.0.0.2 (.nif & .kf))'
 Blender: 237
@@ -7,63 +9,18 @@ Group: 'Export'
 Tip: 'Export the selected objects, along with their parents and children, to a NIF file.'
 """
 
-__author__ = ["amorilia(at)gamebox.net"]
+__author__ = ["amorilia@gamebox.net"]
 __url__ = ("http://niftools.sourceforge.net/", "blender", "elysiun")
-__version__ = "0.7"
+__version__ = "0.7.1"
 __bpydoc__ = """\
 The Blender NIF exporter<br>
 
 This script exports a blender model to a NIF file.<br>
-
-Usage:<br>
-    - (optional) if you wish to use Morrowind's textures:<br>
-      * extract the contents of 'Morrowind.bsa' (and, if you have the expansions, also 'Tribunal.bsa' and 'Bloodmoon.bsa') into 'C:\\MORROWIND'<br>
-      * convert all .dds files in 'C:\\MORROWIND\\textures' to .tga files (for instance, using 'DDS Converter 2.1')<br>
-    - create meshes (and empties, if you like) in blender:<br>
-      * when grouping, always make parent without inverse (in Object Mode, use CTRL-SHIFT-P)<br>
-    - create UV coordinates (be sure to check the blender manual for more details)<br>
-      * create seams (3D View, Edit Mode, select seam vertices, CTRL-E)<br>
-      * in the 3D View, UV Face Select Mode, select all faces, press U->LSCM<br>
-      * (optional) if you want to creat your own texture: in the UV/Image Editor, UVs->Save UV Face Layout, and process the saved texture with your favorite 2D paint program<br>
-    - add materials to your meshes, and add one texture to each material, with the following settings:<br>
-        * texture map input:<br>
-            + UV<br>
-        * texture map output:<br>
-            + COL for diffuse map (base texture)<br>
-    - for each texture:<br>
-        * set texture type to 'Image'<br>
-        * either load a texture from 'C:\\MORROWIND\\textures', or put your custom texture in the 'C:\\Program Files\\Morrowind\\Data Files\\Textures' folder, and load it from there. Note that Blender does not read .dds files.<br>
-    - (optional) animate meshes and/or empty objects (press I to insert key, and select Rot, Loc, or LocRot; for now, only location and rotation channels are exported)<br>
-    - (optional) Hull your model in a simple so-called collision mesh, which defines where the player cannot walk through (most of Morrowind's static models have a collision mesh, you can see them in the TES CS pressing F4 in the render window). You may want to create it to speed up collision detection, to help the player walk over objects such as stairs, or to allow the player to walk through certain parts of your model such as spider webs.<br>
-        * create a mesh called 'RootCollisionNode' (object name, not datablock name)<br>
-        * don't apply any material to it
-    - (optional) if you suspect that some of the faces of your meshes are not convex, then you should let blender triangulate these meshes (press CTRL-T in edit mode with all vertices selected), because in that case, Blender's triangulation algorithm is less error prone than the triangulation algorithm used in this script.<br>
-    - select the models that you wish to export, and run this script from the 'File->Export' menu. Note that the script looks for unparented parents of the selected objects, and exports these root objects along with all of their children, so you don't have to select the whole model.
-
-Notes:<br>
-    - Animation may not be exported correctly due to a blender bug (at least in v237): parenting does not correctly update the local transform matrix. Workaround: parent without parent inverse (CTRL-SHIFT-P), and only then apply rotation/translation/scale for animation (for non-animated objects, a workaround is implemented in the exporter).<br>
-
-History:<br>
-    - 0.0 (Jun 15): first try<br>
-    - 0.1 (Jun 20): fixed texture mapping, fixed transformations, improved error handling<br>
-    - 0.2 (Jun 30): export animation, transparency, multiple materials per mesh<br>
-    - 0.3 (Aug 25): export normals (fixes lighting, thx y67_a), niflib.py updated<br>
-    - 0.4 (Aug 28): support smoothing<br>
-    - 0.5 (Sep 26): support for non-textured objects, optimization in trishapedata<br>
-    - 0.6 (Sep 27): support for uniformly scaled objects (fixes compatibility problem with Brandano's import script), fixed emissive and ambient colour<br>
-    - 0.7 (Sep 30): animation group support (contributed by Moritz Deutsch)<br>
-
-Credits:<br>
-    - Brandano, for the import script, which helped a lot writing this export script<br>
-    - Taharez, for helping with the Python NIF library, and NIF specs<br>
-    - Brick, for NIF specs<br>
-    - Shon, for NIF spec updates, and explaining rigging and programming<br>
-    - y67_a, for pointing out the fact that the script forgot to export normals; and thereby opening the path to smoothing support<br>
-    - Moritz, for non-textured object support, optimizing the main loop in the trishapedata export, and animation group support<br>
+See nif4_export_readme.html for instructions.
 """
 
 # --------------------------------------------------------------------------
-# NIF Export v0.7 by Amorilia ( amorilia(at)gamebox.net )
+# NIF Export v0.7.1 by Amorilia ( amorilia@gamebox.net )
 # --------------------------------------------------------------------------
 # ***** BEGIN BSD LICENSE BLOCK *****
 #
@@ -99,7 +56,6 @@ Credits:<br>
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
 #
 # ***** END BSD LICENCE BLOCK *****
 # --------------------------------------------------------------------------
@@ -480,12 +436,16 @@ def export_keyframe(ob, space, parent_block_id, parent_scale, nif):
                 nif.blocks[textextra_id].text_key[i].time = fspeed * flist[i];
                 nif.blocks[textextra_id].text_key[i].name.value = dlist[i];
     
-            # remove 'play loop' from parent node
-            if nif.blocks[parent_block_id].flags == 0x6a:
-                nif.blocks[parent_block_id].flags = 0x0a
-            
             # raise the flag
             nif.animextra = 1
+
+    if nif.animextra == 1:
+        # convert parent node type
+        if nif.blocks[parent_block_id].block_type.value == 'NiBSAnimationNode':
+            nif.blocks[parent_block_id].block_type.value = 'NiNode';
+        # remove 'play loop' from parent node
+        if nif.blocks[parent_block_id].flags == 0x6a:
+            nif.blocks[parent_block_id].flags = 0x0a
 
 
     # add a keyframecontroller block, and refer to this block in the parent's time controller
@@ -674,6 +634,59 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
             nif.blocks[tritexsrc_id].mipmap = 2 # default?
             nif.blocks[tritexsrc_id].alpha = 3 # default?
             nif.blocks[tritexsrc_id].dunno1 = 1 # ?
+
+            # check for texture flip definition
+            txtlist = Blender.Text.Get()
+            for fliptxt in txtlist:
+                if fliptxt.getName() == mesh_base_tex.getName():
+                    break
+                else:
+                    fliptxt = None
+
+            if fliptxt != None:
+                tlist = fliptxt.asLines()
+
+                # create a NiFlipController
+                flip_id = last_id + 1
+                last_id = flip_id
+                assert(flip_id == len(nif.blocks)) # debug
+                nif.blocks.append(niflib.NiFlipController())
+                nif.blocks[flip_id].block_type.value = 'NiFlipController'
+                nif.blocks[tritexprop_id].controller_id = flip_id
+                nif.header.nblocks += 1
+
+                # get frame start and frame end, and the number of frames per second
+                fspeed = 1.0 / Blender.Scene.GetCurrent().getRenderingContext().framesPerSec()
+                fstart = Blender.Scene.GetCurrent().getRenderingContext().startFrame()
+                fend = Blender.Scene.GetCurrent().getRenderingContext().endFrame()
+
+                # fill in NiFlipController's values
+                nif.blocks[flip_id].parent_id = tritexprop_id
+                nif.blocks[flip_id].flags = 0x08
+                nif.blocks[flip_id].frequency = 1.0
+                nif.blocks[flip_id].start_time = 0.0
+                nif.blocks[flip_id].stop_time = ( fend - fstart ) * fspeed
+                nif.blocks[flip_id].flip_id = []
+                #nif.blocks[flip_id].flip_id.append( tritexsrc_id )
+                for t in tlist:
+                    if len( t ) == 0:   # skip empty lines
+                        continue
+                    # create a NiSourceTexture for each flip
+                    tsrc_id = last_id + 1
+                    last_id = tsrc_id
+                    nif.blocks.append( niflib.NiSourceTexture() )
+                    nif.header.nblocks += 1
+                    nif.blocks[tsrc_id].block_type.value = 'NiSourceTexture'
+                    nif.blocks[tsrc_id].external = 1
+                    nif.blocks[tsrc_id].texture_file_name.value = t
+                    nif.blocks[tsrc_id].pixel_layout = 5 # default?
+                    nif.blocks[tsrc_id].mipmap = 2 # default?
+                    nif.blocks[tsrc_id].alpha = 3 # default?
+                    nif.blocks[tsrc_id].dunno1 = 1 # ?
+                    nif.blocks[flip_id].flip_id.append( tsrc_id )
+                nif.blocks[flip_id].num_flip_ids = len( nif.blocks[flip_id].flip_id )
+                nif.blocks[flip_id].delta_t = nif.blocks[flip_id].stop_time / nif.blocks[flip_id].num_flip_ids
+                
             
         if (mesh_hasalpha):
             # add NiTriShape's alpha propery (this is de facto an automated version of Detritus's method, see http://detritus.silgrad.com/alphahex.html)
@@ -691,6 +704,21 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
             nif.blocks[trishape_id].property_id.append(trialphaprop_id)
             nif.blocks[trishape_id].num_properties += 1
 
+        if ( mesh_mat != None and mesh_mat_shininess > epsilon ):
+            # add NiTriShape's specular property
+            trispecprop_id = last_id + 1
+            last_id = trispecprop_id
+            assert(trispecprop_id == len(nif.blocks))
+            nif.blocks.append(niflib.NiSpecularProperty())
+            nif.blocks[trispecprop_id].block_type.value = 'NiSpecularProperty'
+            nif.header.nblocks += 1
+            
+            nif.blocks[trispecprop_id].flags = 0x0001
+            
+            # refer to the specular property in the trishape block
+            nif.blocks[trishape_id].property_id.append(trispecprop_id)
+            nif.blocks[trishape_id].num_properties += 1
+            
         if (mesh_mat != None):
             # add NiTriShape's material property
             trimatprop_id = last_id + 1
@@ -720,22 +748,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
             # refer to the material property in the trishape block
             nif.blocks[trishape_id].property_id.append(trimatprop_id)
             nif.blocks[trishape_id].num_properties += 1
-            
-            if (mesh_mat_shininess > epsilon ):
-                # add NiTriShape's specular property
-                trispecprop_id = last_id + 1
-                last_id = trispecprop_id
-                assert(trispecprop_id == len(nif.blocks))
-                nif.blocks.append(niflib.NiSpecularProperty())
-                nif.blocks[trispecprop_id].block_type.value = 'NiSpecularProperty'
-                nif.header.nblocks += 1
-                
-                nif.blocks[trispecprop_id].flags = 0x0001
-                
-                # refer to the specular property in the trishape block
-                nif.blocks[trishape_id].property_id.append(trispecprop_id)
-                nif.blocks[trishape_id].num_properties += 1
-            
+        
         # add NiTriShape's data
         tridata_id = last_id + 1
         last_id = tridata_id
@@ -755,8 +768,11 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
             nif.blocks[tridata_id].num_texture_sets = 0
         if (mesh_mat != None):
             nif.blocks[tridata_id].has_normals = 1 # if we have a material, we should add normals for proper lighting
+            if ((mesh_mat.mode & Blender.Material.Modes.VCOL_PAINT) or mesh.hasVertexColours()): ##
+                nif.blocks[tridata_id].has_vertex_colours = 1
         else:
             nif.blocks[tridata_id].has_normals = 0
+            nif.blocks[tridata_id].has_vertex_colours = mesh.hasVertexColours()
         nif.blocks[tridata_id].uv_vertex = [ [] ] * nif.blocks[tridata_id].num_texture_sets # uv_vertex now has num_texture_sets elements, namely, an empty list of uv vertices for each 'texture set'
 
         # Blender only supports one set of uv coordinates per mesh;
@@ -816,8 +832,16 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                     fuv.v = 1.0 - f.uv[i][1] # NIF flips the texture V-coordinate (OpenGL standard)
                 else:
                     fuv = None
+                if (nif.blocks[tridata_id].has_vertex_colours):
+                    fcol = niflib.NiRGBA()
+                    fcol.r = f.col[i].r / 255.0 # NIF stores the colour values as floats
+                    fcol.g = f.col[i].g / 255.0
+                    fcol.b = f.col[i].b / 255.0
+                    fcol.a = f.col[i].a / 255.0
+                else:
+                    fcol = None
                 # do we already have this triple? (optimized by m4444x)
-                verttriple = ( fv, fuv, fn )
+                verttriple = ( fv, fuv, fn, fcol )
                 f_index[i] = len(verttriple_list)
                 for j in range(len(verttriple_list)):
                     if abs(verttriple[0].x - verttriple_list[j][0].x) > epsilon: continue
@@ -830,6 +854,11 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                         if abs(verttriple[2].x - verttriple_list[j][2].x) > epsilon: continue
                         if abs(verttriple[2].y - verttriple_list[j][2].y) > epsilon: continue
                         if abs(verttriple[2].z - verttriple_list[j][2].z) > epsilon: continue
+                    if nif.blocks[tridata_id].has_vertex_colours:
+                        if abs(verttriple[3].r - verttriple_list[j][3].r) > epsilon: continue
+                        if abs(verttriple[3].g - verttriple_list[j][3].g) > epsilon: continue
+                        if abs(verttriple[3].b - verttriple_list[j][3].b) > epsilon: continue
+                        if abs(verttriple[3].a - verttriple_list[j][3].a) > epsilon: continue
                     # all tests passed: so yes, we already have it!
                     f_index[i] = j
                     break
@@ -845,6 +874,9 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                     if (nif.blocks[tridata_id].has_uv_vertices):
                         for texset in range(nif.blocks[tridata_id].num_texture_sets):
                             nif.blocks[tridata_id].uv_vertex[texset].append(fuv)
+                    # add the vertex colour
+                    if (nif.blocks[tridata_id].has_vertex_colours):
+                        nif.blocks[tridata_id].vertex_colour.append( fcol )
             # now add the (hopefully, convex) face, in triangles
             for i in range(f_numverts - 2):
                 f_indexed = niflib.NiFace()
