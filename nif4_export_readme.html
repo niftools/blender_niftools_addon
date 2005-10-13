@@ -10,7 +10,7 @@
     </h1>
 
     <p>
-      nif4_export.py v0.7 by Amorilia ( amorilia@gamebox.net )
+      nif4_export.py v0.8 by Amorilia ( amorilia@gamebox.net )
     </p>
     <h2>
       BSD License
@@ -78,8 +78,8 @@
       support
       </li>
       <li>Moritz, for non-textured object support, optimizing the
-      main loop in the trishapedata export, and animation group
-      support
+      main loop in the trishapedata export, animation group
+      support, vertex color support, and texture flipping support
       </li>
 
     </ul>
@@ -96,7 +96,7 @@
           'Bloodmoon.bsa') into 'C:\MORROWIND'
           </li>
 
-          <li>convert all .dds files in 'C:\\MORROWIND\\textures'
+          <li>convert all .dds files in 'C:\MORROWIND\textures'
           to .tga files (for instance, using 'DDS Converter
           2.1')<br />
           </li>
@@ -152,7 +152,7 @@
           </li>
           <li>either load a texture from 'C:\MORROWIND\textures',
           or put your custom texture in the 'C:\Program
-          Files\Morrowind\\Data Files\Textures' folder, and load it
+          Files\Morrowind\Data Files\Textures' folder, and load it
           from there. Note that Blender does not read .dds files.
           </li>
         </ul>
@@ -160,7 +160,12 @@
       </li>
       <li>(optional) animate meshes and/or empty objects (press I
       to insert key, and select Rot, Loc, or LocRot; for now, only
-      location and rotation channels are exported)
+      location and rotation channels are exported); define the
+      animation groups in a text buffer called 'Anim'
+      (check source code for an example)
+      </li>
+      <li>(optional) to export vertex colors, turn on the VCOL_PAINT flag in 
+      the material tab
       </li>
       <li>(optional) Hull your model in a simple so-called
       collision mesh, which defines where the player cannot walk
@@ -233,8 +238,10 @@
       <li>0.7 (Sep 30): animation group support (contributed by
       Moritz Deutsch)
       </li>
-      <li>0.7.1 (Oct 7): vertex color support (contributed by
+      <li>0.7.1 (Oct 4): vertex color support (contributed by
       Moritz Deutsch)
+      </li>
+      <li>0.8 (Oct 12): code cleanup, moved to BSD license
       </li>
     </ul>
 

@@ -1,9 +1,7 @@
 #!BPY
 
-#!BPY
-
-""" 
-Name: 'NetImmerse 4.0.0.2 (.nif & .kf))'
+"""
+Name: 'NetImmerse 4.0.0.2 (.nif)'
 Blender: 237
 Group: 'Export'
 Tip: 'Export the selected objects, along with their parents and children, to a NIF file.'
@@ -11,16 +9,17 @@ Tip: 'Export the selected objects, along with their parents and children, to a N
 
 __author__ = ["amorilia@gamebox.net"]
 __url__ = ("http://niftools.sourceforge.net/", "blender", "elysiun")
-__version__ = "0.7.1"
+__version__ = "0.8"
 __bpydoc__ = """\
-The Blender NIF exporter<br>
+This script exports Netimmerse (the version used by Morrowind) .NIF files (version 4.0.0.2).
 
-This script exports a blender model to a NIF file.<br>
-See nif4_export_readme.html for instructions.
+Usage:
+
+Select the meshes you wish to export and run this script from "File->Export" menu. All parents and children of the selected meshes will be exported as well.
 """
 
 # --------------------------------------------------------------------------
-# NIF Export v0.7.1 by Amorilia ( amorilia@gamebox.net )
+# NIF Export v0.8 by Amorilia ( amorilia@gamebox.net )
 # --------------------------------------------------------------------------
 # ***** BEGIN BSD LICENSE BLOCK *****
 #
@@ -98,6 +97,7 @@ def export_nif(filename):
 
         # strip extension from filename
         root_name, fileext = Blender.sys.splitext(Blender.sys.basename(filename))
+        
         # get the root object from selected object
         if (Blender.Object.GetSelected() == None):
             raise NIFExportError("Please select the object(s) that you wish to export, and run this script again.")
@@ -109,26 +109,37 @@ def export_nif(filename):
                 raise NIFExportError("Root object (%s) must be an 'Empty' or a 'Mesh' object."%root_object.getName())
             if (root_objects.count(root_object) == 0): root_objects.append(root_object)
 
-        # exporting:
+        # check for animation groups definition in a text buffer called 'Anim'
+        animtxt = None
+        for txt in Blender.Text.Get():
+            if txt.getName() == "Anim":
+                animtxt = txt
+                break
+        
+        # export nif:
         #------------
         if show_progress >= 1: Blender.Window.DrawProgressBar(0.33, "Converting to NIF")
-
-        # create an empty nif object
-        nif = niflib.NIF()
         
-        # setup my anim export flag
-        nif.animextra = 0
+        # create a nif object
+        nif = niflib.NIF()
         
         # export the root node (note that transformation is ignored on the root node)
         nif = export_node(None, 'none', -1, 1.0, root_name, nif)
+        # export objects
         for root_object in root_objects:
             # export the root objects as a NiNodes; their children are exported as well
-            nif = export_node(root_object, 'worldspace', 0, scale_correction, root_object.getName(), nif)
+            # note that localspace = worldspace, because root objects have no children
+            nif = export_node(root_object, 'localspace', 0, scale_correction, root_object.getName(), nif)
 
+        # export animation groups
+        if (animtxt):
+            nif = export_animgroups(animtxt, 1, nif) # we link the animation extra data to the first root_object node
+            
         # write the file:
-        #-----------------
+        #----------------
         if show_progress >= 1: Blender.Window.DrawProgressBar(0.66, "Writing NIF file")
-        
+
+        # make sure we have the right file extension
         if ((fileext != '.nif') and (fileext != '.NIF')):
             filename += '.nif'
         file = open(filename, "wb")
@@ -137,31 +148,54 @@ def export_nif(filename):
         finally:
             # clean up: close file
             file.close()
-        
-        if ( nif.animextra == 1 ):
-            # if animation groups were detected during export:
-            # create a copy of the nif named Xbasename.nif
-            # perhaps one should remove those animation data from that file
-            # but it work with a simple copy too
-            nam, ext = Blender.sys.splitext(Blender.sys.basename(filename))
-            xnf_filename = Blender.sys.join( Blender.sys.dirname( filename ), 'X' + nam + '.nif' )
-            xnf_file = open( xnf_filename, "wb" )
-            try:
-                nif.write( xnf_file )
-            finally:
-                xnf_file.close()
-            # and create Xbasename.kf animation stream helper file
-            export_kf( nif, filename );
 
+
+
+        if (animtxt):
+            # for some reason we must also have "x*.kf" and "x*.nif" files
+            # x*.kf  contains a copy of the nif animation groups, the keyframes; it also has references to the animated nodes
+            # x*.nif contains a copy of everything except for the animation groups and the keyframes
+
+            # export xnif:
+            #-------------
+            xnif = export_xnif(nif)
+            
+            # write the file:
+            #----------------
+            xnif_filename = Blender.sys.join( Blender.sys.dirname( filename ), 'x' + root_name + '.nif' )
+            file = open( xnif_filename, "wb" )
+            try:
+                xnif.write(file)
+            finally:
+                # clean up: close file
+                file.close()
+                
+            # export xkf:
+            #------------
+            xkf = export_xkf(nif)
+            
+            # write the file:
+            #----------------
+            xkf_filename = Blender.sys.join( Blender.sys.dirname( filename ), 'x' + root_name + '.kf' )
+            file = open( xkf_filename, "wb" )
+            try:
+                xkf.write(file)
+            finally:
+                # clean up: close file
+                file.close()
+
+        
+        
     except NIFExportError, e: # in that case, we raise a menu instead of an exception
         if show_progress >= 1: Blender.Window.DrawProgressBar(1.0, "Export Failed")
         print 'NIFExportError: ' + e.value
         Blender.Draw.PupMenu('ERROR%t|' + e.value)
         return
 
-    # no export error, but let's double check: try reading the file we just wrote
-    # we can probably remove these lines once the exporter is stable
     if show_progress >= 1: Blender.Window.DrawProgressBar(1.0, "Finished")
+    
+    # no export error, but let's double check: try reading the file(s) we just wrote
+    # we can probably remove these lines once the exporter is stable
     nif.dump()
     try:
         nif = niflib.NIF()
@@ -172,76 +206,6 @@ def export_nif(filename):
         Blender.Draw.PupMenu("WARNING%t|Exported NIF file may not be valid: double check failed! This is probably due to an unknown bug in the exporter code.")
         raise # re-raise the exception
 
-
-#
-# export .kf file
-#
-def export_kf(NF, filename):
-    # strip extension from filename
-    nam, ext = Blender.sys.splitext(Blender.sys.basename(filename))
-
-    kf_filename = Blender.sys.join( Blender.sys.dirname( filename ), 'X' + nam + '.kf' )
-
-    KF = niflib.NIF()
-    KF.blocks.append( niflib.NiSequenceStreamHelper() )
-    KF.blocks[0].block_type.value = 'NiSequenceStreamHelper'
-    KF.header.nblocks += 1
-
-    lastextra  = -1
-    controller = []
-
-    # save extra text data
-    for block in NF.blocks:
-        if block.block_type.value == 'NiTextKeyExtraData':
-            assert ( lastextra < 0 )
-            KF.blocks.append( block )
-            KF.blocks[0].extra_data_id = KF.header.nblocks
-            lastextra = KF.header.nblocks
-            KF.header.nblocks += 1
-
-    # find nodes with keyframe controller
-    for block in NF.blocks:
-        if block.block_type.value == "NiNode" or block.block_type.value == "NiBSAnimationNode":
-            if block.controller_id >= 0:
-                controller.append( block.controller_id )
-                # link to the original node with a NiStringExtraData
-                KF.blocks[lastextra].extra_data_id = KF.header.nblocks
-                lastextra = KF.header.nblocks + 1
-                S = niflib.NiStringExtraData()
-                S.block_type.value = 'NiStringExtraData'
-                S.string_data.value = block.name.value
-                S.dunno = 4 + len( S.string_data.value ) # length of the string_data
-                KF.blocks.append( S )
-                KF.header.nblocks += 1
-
-    # copy keyframe controllers and keyframe datas
-    assert ( len( controller ) > 0 )
-    lastctrl = 0
-    for cid in controller:
-        C = NF.blocks[ cid ]
-
-        if ( lastctrl == 0 ):
-            KF.blocks[ lastctrl ].controller_id = KF.header.nblocks
-        else:
-            KF.blocks[ lastctrl ].next_controller_id = KF.header.nblocks
-        
-        KF.blocks.append( C )
-        lastctrl = KF.header.nblocks
-        KF.header.nblocks += 1
-
-        assert ( C.data_id > 0 )
-
-        KF.blocks.append( NF.blocks[ C.data_id ] )
-        KF.blocks[ lastctrl ].parent_id = -1
-        KF.blocks[ lastctrl ].data_id = KF.header.nblocks
-        KF.header.nblocks += 1
-
-    # write .KF file
-    print "writing %s file"%kf_filename
-    KF.dump()
-    kf_file = open( kf_filename, "wb" )
-    KF.write( kf_file )
-    kf_file.close()
 
 
 # 
@@ -264,6 +228,7 @@ def export_node(ob, space, parent_block_id, parent_scale, node_name, nif):
     # determine the block type, and append a new node to the nif block list
     if (ob == None):
         # -> root node
+        assert(space == 'none')
         assert(parent_block_id == -1) # debug
         assert(nif.header.nblocks == 0) # debug
         nif.blocks.append(niflib.NiNode())
@@ -283,14 +248,10 @@ def export_node(ob, space, parent_block_id, parent_scale, node_name, nif):
                 raise NIFExportError('ERROR%t|RootCollisionNode should not be animated.')
             nif.blocks.append(niflib.RootCollisionNode())
             nif.blocks[ob_block_id].block_type.value = 'RootCollisionNode'
-        elif (ipo == None):
-            # -> static object
+        else:
+            # -> static or animated object
             nif.blocks.append(niflib.NiNode())
             nif.blocks[ob_block_id].block_type.value = 'NiNode'
-        else:
-            # -> animated object
-            nif.blocks.append(niflib.NiBSAnimationNode())
-            nif.blocks[ob_block_id].block_type.value = 'NiBSAnimationNode'
     
     nif.header.nblocks += 1
 
@@ -305,10 +266,8 @@ def export_node(ob, space, parent_block_id, parent_scale, node_name, nif):
         nif.blocks[ob_block_id].flags = 0x000C # ? this seems pretty standard for the root node
     elif (ob.getName() == 'RootCollisionNode'):
         nif.blocks[ob_block_id].flags = 0x0003 # ? this seems pretty standard for the root collision node
-    elif (ipo == None):
-        nif.blocks[ob_block_id].flags = 0x000C # ? this seems pretty standard for static ninodes
     else:
-        nif.blocks[ob_block_id].flags = 0x006A # ? this seems pretty standard for animated ninodes        
+        nif.blocks[ob_block_id].flags = 0x000C # ? this seems pretty standard for static and animated ninodes
 
     # if scale of NiNodes is not 1.0, then the engine does a bit
     # weird... let's play safe and require it to be 1.0
@@ -341,13 +300,14 @@ def export_node(ob, space, parent_block_id, parent_scale, node_name, nif):
 
 
 #
-# Export the animation of blender object ob as keyframe controller and keyframe data.
+# Export the animation of blender object ob as keyframe controller and keyframe data
 #
 def export_keyframe(ob, space, parent_block_id, parent_scale, nif):
     # -> get keyframe information
-
-    #assert(space == 'localspace')
-
+    
+    assert(space == 'localspace') # we don't support anything else (yet)
+    assert(nif.blocks[parent_block_id].block_type.value == "NiNode") # make sure the parent is of the right type
+    
     # get frame start and frame end, and the number of frames per second
     scn = Blender.Scene.GetCurrent()
     context = scn.getRenderingContext()
@@ -375,78 +335,9 @@ def export_keyframe(ob, space, parent_block_id, parent_scale, nif):
                 trans_curve[ftime].z = ipo.getCurve('LocZ').evaluate(frame) * parent_scale
 
     # -> now comes the real export
+
+    # export keyframe stuff
     last_id = nif.header.nblocks - 1
-
-
-    # check for animation group definitions
-
-    # timeline markers are not supported yet
-    # so get the anim group definitions from a text buffer
-
-    txtlist = Blender.Text.Get()
-    for animtxt in txtlist:
-        if animtxt.getName() == "Anim":
-            break
-    else:
-        animtxt = None
-
-    if animtxt != None and nif.animextra == 0:
-        # parse the anim text descriptor
-
-	# format is:
-	# frame/string1[/string2[.../stringN]]
-
-	# example:
-	# 000/Idle: Start/Idle: Stop/Idle2: Start/Idle2: Loop Start
-	# 050/Idle2: Stop/Idle3: Start
-	# 100/Idle3: Loop Start/Idle3: Stop
-
-        slist = animtxt.asLines()
-        flist = []
-        dlist = []
-        for s in slist:
-            t = s.split( '/' )
-            if ( len( t ) > 1 ):
-                f = int( t[0] )
-                d = ''
-                for i in range( 1, len( t ) ):
-                    if ( i > 1 ):
-                        d = d + '\r\n' + t[i].strip( ' ' )
-                    else:
-                        d = d + t[i].strip( ' ' )
-                print 'frame %d'%f + ' -> \'%s\''%d
-                flist.append( f )
-                dlist.append( d )
-
-        if ( len( flist ) > 0 ):    
-            # add a NiTextKeyExtraData block, and refer to this block in the parent node
-            textextra_id = last_id + 1
-            last_id = textextra_id
-            assert(textextra_id == len(nif.blocks)) # debug
-            nif.blocks.append(niflib.NiTextKeyExtraData())
-            nif.blocks[textextra_id].block_type.value = 'NiTextKeyExtraData'
-            assert(nif.blocks[parent_block_id].extra_data_id == -1) # make sure we don't overwrite anything
-            nif.blocks[parent_block_id].extra_data_id = textextra_id
-            nif.header.nblocks += 1
-    
-            # create a NiTextKey for each frame descriptor
-            nif.blocks[textextra_id].num_keys = len( flist )
-            for i in range( len( flist ) ):
-                nif.blocks[textextra_id].text_key.append( niflib.NiTextKey() )
-                nif.blocks[textextra_id].text_key[i].time = fspeed * flist[i];
-                nif.blocks[textextra_id].text_key[i].name.value = dlist[i];
-    
-            # raise the flag
-            nif.animextra = 1
-
-    if nif.animextra == 1:
-        # convert parent node type
-        if nif.blocks[parent_block_id].block_type.value == 'NiBSAnimationNode':
-            nif.blocks[parent_block_id].block_type.value = 'NiNode';
-        # remove 'play loop' from parent node
-        if nif.blocks[parent_block_id].flags == 0x6a:
-            nif.blocks[parent_block_id].flags = 0x0a
-
 
     # add a keyframecontroller block, and refer to this block in the parent's time controller
     keyframectrl_id = last_id + 1
@@ -454,8 +345,8 @@ def export_keyframe(ob, space, parent_block_id, parent_scale, nif):
     assert(keyframectrl_id == len(nif.blocks)) # debug
     nif.blocks.append(niflib.NiKeyframeController()) # this should be block[keyframectrl_id]
     nif.blocks[keyframectrl_id].block_type.value = 'NiKeyframeController'
-    assert(nif.blocks[parent_block_id].controller_id == -1) # make sure we don't overwrite anything
-    nif.blocks[parent_block_id].controller_id = keyframectrl_id
+    assert(nif.blocks[parent_block_id].next_controller_id == -1) # make sure we don't overwrite anything
+    nif.blocks[parent_block_id].next_controller_id = keyframectrl_id
     nif.header.nblocks += 1
 
     # fill in the non-trivial values
@@ -506,6 +397,72 @@ def export_keyframe(ob, space, parent_block_id, parent_scale, nif):
 
 
 #
+# parse the animation groups buffer and write an extra string data block,
+# parented to the root block
+#
+def export_animgroups(animtxt, block_parent_id, nif):
+    # -> get animation groups information
+
+    # get frame start and frame end, and the number of frames per second
+    scn = Blender.Scene.GetCurrent()
+    context = scn.getRenderingContext()
+ 
+    fspeed = 1.0 / context.framesPerSec()
+    fstart = context.startFrame()
+    fend = context.endFrame()
+
+    # parse the anim text descriptor
+    
+    # the format is:
+    # frame/string1[/string2[.../stringN]]
+    
+    # example:
+    # 000/Idle: Start/Idle: Stop/Idle2: Start/Idle2: Loop Start
+    # 050/Idle2: Stop/Idle3: Start
+    # 100/Idle3: Loop Start/Idle3: Stop
+
+    slist = animtxt.asLines()
+    flist = []
+    dlist = []
+    for s in slist:
+        if ( s == '' ): continue # ignore empty lines
+        t = s.split('/')
+        if (len(t) < 2): raise NIFExportError("Syntax error in Anim buffer ('%s')"%s)
+        f = int(t[0])
+        if ((f < fstart) or (f > fend)): raise NIFExportError("Error in Anim buffer: frame out of range (%i not in [%i, %i])"%(f, fstart, fend))
+        d = t[1].strip(' ')
+        for i in range(2, len(t)):
+            d = d + '\r\n' + t[i].strip(' ')
+        print 'frame %d'%f + ' -> \'%s\''%d # debug
+        flist.append(f)
+        dlist.append(d)
+    
+    # -> now comes the real export
+    last_id = nif.header.nblocks - 1
+    
+    # add a NiTextKeyExtraData block, and refer to this block in the
+    # parent node (we choose the root block)
+    textextra_id = last_id + 1
+    last_id = textextra_id
+    assert(textextra_id == len(nif.blocks)) # debug
+    nif.blocks.append(niflib.NiTextKeyExtraData())
+    nif.blocks[textextra_id].block_type.value = 'NiTextKeyExtraData'
+    assert(nif.blocks[block_parent_id].extra_data_id == -1) # make sure we don't overwrite anything
+    nif.blocks[block_parent_id].extra_data_id = textextra_id
+    nif.header.nblocks += 1
+    
+    # create a NiTextKey for each frame descriptor
+    nif.blocks[textextra_id].num_keys = len( flist )
+    for i in range(len(flist)):
+        nif.blocks[textextra_id].text_key.append( niflib.NiTextKey() )
+        nif.blocks[textextra_id].text_key[i].time = fspeed * (flist[i]-1);
+        nif.blocks[textextra_id].text_key[i].name.value = dlist[i];
+    
+    return nif
+
+
+
+#
 # Export a blender object ob of the type mesh, child of nif block
 # parent_block_id, as NiTriShape and NiTriShapeData blocks, possibly
 # along with some NiTexturingProperty, NiSourceTexture,
@@ -534,7 +491,9 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
         mesh_base_tex = None
         mesh_hasalpha = 0
         mesh_hastex = 0
+        mesh_hasvcol = mesh.hasVertexColours()
         if (mesh_mat != None):
+            mesh_hasvcol = mesh_hasvcol or (mesh_mat.mode & Blender.Material.Modes.VCOL_PAINT) # read the Blender Python API documentation to understand this hack
             mesh_mat_ambient = mesh_mat.getAmb()             # 'Amb' scrollbar in blender (MW -> 1.0 1.0 1.0)
             mesh_mat_diffuse_colour = mesh_mat.getRGBCol()   # 'Col' colour in Blender (MW -> 1.0 1.0 1.0)
             mesh_mat_specular_colour = mesh_mat.getSpecCol() # 'Spe' colour in Blender (MW -> 0.0 0.0 0.0)
@@ -652,7 +611,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 assert(flip_id == len(nif.blocks)) # debug
                 nif.blocks.append(niflib.NiFlipController())
                 nif.blocks[flip_id].block_type.value = 'NiFlipController'
-                nif.blocks[tritexprop_id].controller_id = flip_id
+                nif.blocks[tritexprop_id].next_controller_id = flip_id
                 nif.header.nblocks += 1
 
                 # get frame start and frame end, and the number of frames per second
@@ -704,22 +663,22 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
             nif.blocks[trishape_id].property_id.append(trialphaprop_id)
             nif.blocks[trishape_id].num_properties += 1
 
-        if ( mesh_mat != None and mesh_mat_shininess > epsilon ):
-            # add NiTriShape's specular property
-            trispecprop_id = last_id + 1
-            last_id = trispecprop_id
-            assert(trispecprop_id == len(nif.blocks))
-            nif.blocks.append(niflib.NiSpecularProperty())
-            nif.blocks[trispecprop_id].block_type.value = 'NiSpecularProperty'
-            nif.header.nblocks += 1
-            
-            nif.blocks[trispecprop_id].flags = 0x0001
-            
-            # refer to the specular property in the trishape block
-            nif.blocks[trishape_id].property_id.append(trispecprop_id)
-            nif.blocks[trishape_id].num_properties += 1
-            
         if (mesh_mat != None):
+            # add NiTriShape's specular property
+            if ( mesh_mat_shininess > epsilon ):
+                trispecprop_id = last_id + 1
+                last_id = trispecprop_id
+                assert(trispecprop_id == len(nif.blocks))
+                nif.blocks.append(niflib.NiSpecularProperty())
+                nif.blocks[trispecprop_id].block_type.value = 'NiSpecularProperty'
+                nif.header.nblocks += 1
+                
+                nif.blocks[trispecprop_id].flags = 0x0001
+            
+                # refer to the specular property in the trishape block
+                nif.blocks[trishape_id].property_id.append(trispecprop_id)
+                nif.blocks[trishape_id].num_properties += 1
+            
             # add NiTriShape's material property
             trimatprop_id = last_id + 1
             last_id = trimatprop_id
@@ -760,6 +719,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
         
         # set faces, vertices, uv-vertices, and normals
         nif.blocks[tridata_id].has_vertices = 1 # ? not sure what non-zero value to choose
+        nif.blocks[tridata_id].has_vertex_colours = mesh_hasvcol
         if (mesh_hastex):
             nif.blocks[tridata_id].has_uv_vertices = 1 # ? not sure what non-zero value to choose
             nif.blocks[tridata_id].num_texture_sets = 1 # for now, we only have one texture for this trishape
@@ -768,11 +728,8 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
             nif.blocks[tridata_id].num_texture_sets = 0
         if (mesh_mat != None):
             nif.blocks[tridata_id].has_normals = 1 # if we have a material, we should add normals for proper lighting
-            if ((mesh_mat.mode & Blender.Material.Modes.VCOL_PAINT) or mesh.hasVertexColours()): ##
-                nif.blocks[tridata_id].has_vertex_colours = 1
         else:
             nif.blocks[tridata_id].has_normals = 0
-            nif.blocks[tridata_id].has_vertex_colours = mesh.hasVertexColours()
         nif.blocks[tridata_id].uv_vertex = [ [] ] * nif.blocks[tridata_id].num_texture_sets # uv_vertex now has num_texture_sets elements, namely, an empty list of uv vertices for each 'texture set'
 
         # Blender only supports one set of uv coordinates per mesh;
@@ -792,7 +749,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
         # should use Blender's vertex normals, and solid faces should
         # use Blender's face normals.
         
-        verttriple_list = [] # (vertex, uv coordinate, normal) list
+        vertquad_list = [] # (vertex, uv coordinate, normal, vertex color) list
         count = 0
         for f in mesh.faces:
             if show_progress >= 2: Blender.Window.DrawProgressBar(0.33 * float(count)/len(mesh.faces), "Converting to NIF (%s)"%ob.getName())
@@ -806,7 +763,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
             if (nif.blocks[tridata_id].has_uv_vertices):
                 if (len(f.uv) != len(f.v)): # make sure we have UV data
                     raise NIFExportError('ERROR%t|Create a UV map for every texture, and run the script again.')
-            # find (vert, uv-vert, normal) triple, and if not found, create it
+            # find (vert, uv-vert, normal, vcol) quad, and if not found, create it
             f_index = [ -1 ] * f_numverts
             for i in range(f_numverts):
                 fv = niflib.NiVector()
@@ -840,31 +797,31 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                     fcol.a = f.col[i].a / 255.0
                 else:
                     fcol = None
-                # do we already have this triple? (optimized by m4444x)
-                verttriple = ( fv, fuv, fn, fcol )
-                f_index[i] = len(verttriple_list)
-                for j in range(len(verttriple_list)):
-                    if abs(verttriple[0].x - verttriple_list[j][0].x) > epsilon: continue
-                    if abs(verttriple[0].y - verttriple_list[j][0].y) > epsilon: continue
-                    if abs(verttriple[0].z - verttriple_list[j][0].z) > epsilon: continue
+                # do we already have this quad? (optimized by m4444x)
+                vertquad = ( fv, fuv, fn, fcol )
+                f_index[i] = len(vertquad_list)
+                for j in range(len(vertquad_list)):
+                    if abs(vertquad[0].x - vertquad_list[j][0].x) > epsilon: continue
+                    if abs(vertquad[0].y - vertquad_list[j][0].y) > epsilon: continue
+                    if abs(vertquad[0].z - vertquad_list[j][0].z) > epsilon: continue
                     if nif.blocks[tridata_id].has_uv_vertices:
-                        if abs(verttriple[1].u - verttriple_list[j][1].u) > epsilon: continue
-                        if abs(verttriple[1].v - verttriple_list[j][1].v) > epsilon: continue
+                        if abs(vertquad[1].u - vertquad_list[j][1].u) > epsilon: continue
+                        if abs(vertquad[1].v - vertquad_list[j][1].v) > epsilon: continue
                     if nif.blocks[tridata_id].has_normals:
-                        if abs(verttriple[2].x - verttriple_list[j][2].x) > epsilon: continue
-                        if abs(verttriple[2].y - verttriple_list[j][2].y) > epsilon: continue
-                        if abs(verttriple[2].z - verttriple_list[j][2].z) > epsilon: continue
+                        if abs(vertquad[2].x - vertquad_list[j][2].x) > epsilon: continue
+                        if abs(vertquad[2].y - vertquad_list[j][2].y) > epsilon: continue
+                        if abs(vertquad[2].z - vertquad_list[j][2].z) > epsilon: continue
                     if nif.blocks[tridata_id].has_vertex_colours:
-                        if abs(verttriple[3].r - verttriple_list[j][3].r) > epsilon: continue
-                        if abs(verttriple[3].g - verttriple_list[j][3].g) > epsilon: continue
-                        if abs(verttriple[3].b - verttriple_list[j][3].b) > epsilon: continue
-                        if abs(verttriple[3].a - verttriple_list[j][3].a) > epsilon: continue
+                        if abs(vertquad[3].r - vertquad_list[j][3].r) > epsilon: continue
+                        if abs(vertquad[3].g - vertquad_list[j][3].g) > epsilon: continue
+                        if abs(vertquad[3].b - vertquad_list[j][3].b) > epsilon: continue
+                        if abs(vertquad[3].a - vertquad_list[j][3].a) > epsilon: continue
                     # all tests passed: so yes, we already have it!
                     f_index[i] = j
                     break
-                if (f_index[i] == len(verttriple_list)):
-                    # new (vert, uv-vert, normal) triple: add it
-                    verttriple_list.append(verttriple)
+                if (f_index[i] == len(vertquad_list)):
+                    # new (vert, uv-vert, normal, vcol) quad: add it
+                    vertquad_list.append(vertquad)
                     # add the vertex
                     nif.blocks[tridata_id].vertex.append(fv)
                     # and add the vertex normal
@@ -876,7 +833,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                             nif.blocks[tridata_id].uv_vertex[texset].append(fuv)
                     # add the vertex colour
                     if (nif.blocks[tridata_id].has_vertex_colours):
-                        nif.blocks[tridata_id].vertex_colour.append( fcol )
+                        nif.blocks[tridata_id].vertex_colour.append(fcol)
             # now add the (hopefully, convex) face, in triangles
             for i in range(f_numverts - 2):
                 f_indexed = niflib.NiFace()
@@ -890,7 +847,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 nif.blocks[tridata_id].face.append(f_indexed)
 
         # update the counters
-        nif.blocks[tridata_id].num_vertices = len(verttriple_list)
+        nif.blocks[tridata_id].num_vertices = len(vertquad_list)
         nif.blocks[tridata_id].num_faces = len(nif.blocks[tridata_id].face)
         nif.blocks[tridata_id].num_faces_x_3 = nif.blocks[tridata_id].num_faces * 3
 
@@ -1087,9 +1044,10 @@ def getObjectSRT(ob, space):
     mat = ob.getMatrix('worldspace')
     # localspace bug fix:
     if (space == 'localspace'):
-        matparentinv = ob.getParent().getMatrix('worldspace')
-        matparentinv.invert()
-        mat = mat * matparentinv
+        if (ob.getParent() != None):
+            matparentinv = ob.getParent().getMatrix('worldspace')
+            matparentinv.invert()
+            mat = mat * matparentinv
     
     # get translation
     bt = mat.translationPart()
@@ -1144,6 +1102,70 @@ def get_distance(v, w):
     return sqrt((v[0]-w.x)*(v[0]-w.x) + (v[1]-w.y)*(v[1]-w.y) + (v[2]-w.z)*(v[2]-w.z))
 
 
+
+# (WARNING this function changes it's argument, you should only call this after writing <root_name>.nif and x<root_name>.nif)
+def export_xkf(nif):
+    xkf = niflib.NIF()
+    xkf.blocks.append( niflib.NiSequenceStreamHelper() )
+    xkf.blocks[0].block_type.value = 'NiSequenceStreamHelper'
+    xkf.header.nblocks += 1
+
+    controller_id = []
+
+    # save extra text data
+    for block in nif.blocks:
+        if (block.block_type.value == 'NiTextKeyExtraData'):
+            xkf.blocks.append(block) # we can do this: it does not contain any references
+            xkf.blocks[0].extra_data_id = xkf.header.nblocks
+            last_extra_id = xkf.header.nblocks
+            xkf.header.nblocks += 1
+            break
+    else:
+        assert(0) # debug, we must break from the above loop
+
+    # find nodes with keyframe controller
+    for block in nif.blocks:
+        if (block.block_type.value == "NiNode"):
+            if (block.next_controller_id >= 0):
+                controller_id.append( block.next_controller_id )
+                # link to the original node with a NiStringExtraData
+                xkf.blocks[last_extra_id].extra_data_id = xkf.header.nblocks
+                last_extra_id = xkf.header.nblocks + 1
+                stringextra = niflib.NiStringExtraData()
+                stringextra.block_type.value = 'NiStringExtraData'
+                stringextra.string_data.value = block.name.value
+                stringextra.dunno = 4 + len(stringextra.string_data.value) # length of the string_data
+                xkf.blocks.append(stringextra)
+                xkf.header.nblocks += 1
+
+    # copy keyframe controllers and keyframe datas
+    if (len(controller_id) == 0): raise NIFExportError("Animation groups defined, but no meshes are animated.")
+    last_controller_id = 0
+    for cid in controller_id:
+        # get the keyframe controller block from nif
+        kfcontroller = nif.blocks[ cid ]
+        xkf.blocks.append( nif.blocks[ cid ] ) # copy it
+        xkf.blocks[ last_controller_id ].next_controller_id = xkf.header.nblocks # refer to it
+        last_controller_id = xkf.header.nblocks
+        xkf.header.nblocks += 1
+
+        assert(kfcontroller.data_id >= 0) # debug
+        xkf.blocks.append( nif.blocks[ kfcontroller.data_id ] )
+
+        # now "fix" the references
+        xkf.blocks[ last_controller_id ].parent_id = -1
+        xkf.blocks[ last_controller_id ].data_id = xkf.header.nblocks
+        xkf.header.nblocks += 1
+    
+    return xkf
+
+
+
+def export_xnif(nif):
+    # TODO delete keyframe controllers and keyframe data
+    # but apparently it still works if we leave everything in place
+    # so we make it ourselves very easy
+    return nif
 
 # start blender file selector for export
 Blender.Window.FileSelector(export_nif, "Export NIF")
