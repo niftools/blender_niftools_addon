@@ -668,6 +668,13 @@ class NiTriShape(NiObject):
 			return NiObjects[self.NiSkinInstanceId]
 		else:
 			return None
+	# Returns a NiAlphaProperty (there should be only one per mesh)
+	def getNiAlphaProperty(self):
+		for propId in self.properties:
+			propBlock = NiObjects[propId]
+			if propBlock != None and propBlock.getType() == 'NiAlphaProperty':
+				return propBlock
+		return None
 	# Returns a NiTexturingProperty (there should be only one per mesh)
 	def getNiTexturingProperty(self):
 		for propId in self.properties:
@@ -1322,6 +1329,7 @@ def createTexture(NiSourceTexture):
 			texture.type = Texture.Types.IMAGE
 			image = Image.Load(textureFile)
 			texture.setImage(image)
+			texture.imageFlags = Blender.Texture.ImageFlags.INTERPOL + Blender.Texture.ImageFlags.MIPMAP
 			textures[textureId] = texture
 		else:
 			debugMsg('%s does not exist, skipping texture (valid formats are .TGA, .PNG, .BMP and .JPG)' % (textureName[:-4]+".*"), 2)
@@ -1458,6 +1466,20 @@ def createMesh(block):
 	# Sets the material for this mesh. NIF files only support one material for each mesh
 	if matProperty:
 		material = createMaterial(matProperty, texProperty)
+		# Alpha property
+		alphaProperty = triShape.getNiAlphaProperty()
+		if alphaProperty:
+			# if the image has an alpha channel => then this overrides the material alpha value
+			if material.getTextures()[0] != None:
+				if material.getTextures()[0].tex.image.depth == 32: # ... crappy way to check for alpha channel in texture
+					material.getTextures()[0].tex.imageFlags |= Blender.Texture.ImageFlags.USEALPHA # use the alpha channel
+					material.getTextures()[0].mapto |=  Texture.MapTo.ALPHA # and map the alpha channel to transparency
+					material.setAlpha(0.0) # for proper display in Blender, we must set the alpha value to 0
+					material.mode |= Material.Modes.ZTRANSP # enable z-buffered transparency
+			# otherwise... leave everything as it is
+		else:
+			# no alpha property: force alpha 1.0 in Blender
+			material.setAlpha(1.0)
 		meshData.addMaterial(material)
 	# Mesh geometry data. From this I can retrieve all geometry info
 	triShapeData = triShape.getNiTriShapeData()
