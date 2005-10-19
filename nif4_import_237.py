@@ -1606,8 +1606,8 @@ def createMesh(block):
 			if mtex.tex.image.depth == 32: # ... crappy way to check for alpha channel in texture
 				mtex.tex.imageFlags |= Blender.Texture.ImageFlags.USEALPHA # use the alpha channel
 				mtex.mapto |=  Texture.MapTo.ALPHA # and map the alpha channel to transparency
-				mtex.setAlpha(0.0) # for proper display in Blender, we must set the alpha value to 0
-				mtex.mode |= Material.Modes.ZTRANSP # enable z-buffered transparency
+				material.setAlpha(0.0) # for proper display in Blender, we must set the alpha value to 0
+				material.mode |= Material.Modes.ZTRANSP # enable z-buffered transparency
 			# otherwise... leave everything as it is
 		else:
 			# no alpha property: force alpha 1.0 in Blender
