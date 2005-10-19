@@ -1602,7 +1602,7 @@ def createMesh(block):
 		# Texture. Only supports one atm
 		mtex = material.getTextures()[0]
 		# if the image has an alpha channel => then this overrides the material alpha value
-		if alphaProperty and mtexobj:
+		if alphaProperty and mtex:
 			if mtex.tex.image.depth == 32: # ... crappy way to check for alpha channel in texture
 				mtex.tex.imageFlags |= Blender.Texture.ImageFlags.USEALPHA # use the alpha channel
 				mtex.mapto |=  Texture.MapTo.ALPHA # and map the alpha channel to transparency
