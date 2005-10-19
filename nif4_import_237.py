@@ -1327,6 +1327,7 @@ def createTexture(NiSourceTexture):
 					break
 		if textureFile != None and Blender.sys.exists(textureFile) == 1:
 			# If the file exist the texture can be created and added to the textures list
+			
 			texture = Texture.New()
 			texture.type = Texture.Types.IMAGE
 			image = Image.Load(textureFile)
@@ -1461,28 +1462,6 @@ def createMesh(block):
 		xform = xform * triShape.getMatrix()
 	else:
 		triShape = block
-	# Texturing property. From this I can retrieve texture info
-	texProperty = triShape.getNiTexturingProperty()
-	# Material Property, from this I can retrieve material info
-	matProperty = triShape.getNiMaterialProperty()
-	# Sets the material for this mesh. NIF files only support one material for each mesh
-	if matProperty:
-		material = createMaterial(matProperty, texProperty)
-		# Alpha property
-		alphaProperty = triShape.getNiAlphaProperty()
-		if alphaProperty:
-			# if the image has an alpha channel => then this overrides the material alpha value
-			if material.getTextures()[0] != None:
-				if material.getTextures()[0].tex.image.depth == 32: # ... crappy way to check for alpha channel in texture
-					material.getTextures()[0].tex.imageFlags |= Blender.Texture.ImageFlags.USEALPHA # use the alpha channel
-					material.getTextures()[0].mapto |=  Texture.MapTo.ALPHA # and map the alpha channel to transparency
-					material.setAlpha(0.0) # for proper display in Blender, we must set the alpha value to 0
-					material.mode |= Material.Modes.ZTRANSP # enable z-buffered transparency
-			# otherwise... leave everything as it is
-		else:
-			# no alpha property: force alpha 1.0 in Blender
-			material.setAlpha(1.0)
-		meshData.addMaterial(material)
 	# Mesh geometry data. From this I can retrieve all geometry info
 	triShapeData = triShape.getNiTriShapeData()
 	# Vertices
@@ -1610,6 +1589,36 @@ def createMesh(block):
 	recalcNormals = 1
 	if len(vertNorms) > 0:
 		recalcNormals = 0
+	
+	# Texturing property. From this I can retrieve texture info
+	texProperty = triShape.getNiTexturingProperty()
+	# Material Property, from this I can retrieve material info
+	matProperty = triShape.getNiMaterialProperty()
+	# Sets the material for this mesh. NIF files only support one material for each mesh
+	if matProperty:
+		material = createMaterial(matProperty, texProperty)
+		# Alpha property
+		alphaProperty = triShape.getNiAlphaProperty()
+		# Texture. Only supports one atm
+		mtex = material.getTextures()[0]
+		# if the image has an alpha channel => then this overrides the material alpha value
+		if alphaProperty and mtexobj:
+			if mtex.tex.image.depth == 32: # ... crappy way to check for alpha channel in texture
+				mtex.tex.imageFlags |= Blender.Texture.ImageFlags.USEALPHA # use the alpha channel
+				mtex.mapto |=  Texture.MapTo.ALPHA # and map the alpha channel to transparency
+				mtex.setAlpha(0.0) # for proper display in Blender, we must set the alpha value to 0
+				mtex.mode |= Material.Modes.ZTRANSP # enable z-buffered transparency
+			# otherwise... leave everything as it is
+		else:
+			# no alpha property: force alpha 1.0 in Blender
+			material.setAlpha(1.0)
+		meshData.addMaterial(material)
+		#If there's a texture assigned to this material sets it to be displayed in Blender's 3D view
+		if mtex:
+			imgobj = mtex.tex.getImage()
+			for f in meshData.faces: 
+				f.image = imgobj
+				
 	# Put the object in blender
 	meshObj = Blender.NMesh.PutRaw(meshData, name, recalcNormals) # amorilia
 	# Name the object linked to the mesh
