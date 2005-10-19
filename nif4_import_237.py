@@ -10,7 +10,7 @@ Tip: 'Load a Netimmerse File'
 __author__ = "Alessandro Garosi (AKA Brandano) -- tdo_brandano@hotmail.com"
 __url__ = ("blender", "elysiun",
 "development group at http://games.groups.yahoo.com/group/NIFLA/")
-__version__ = "1.0.6"
+__version__ = "1.0.7"
 
 __bpydoc__ = """\
 This script imports Netimmerse (the version used by Morrowind) .NIF files to Blender
@@ -18,9 +18,9 @@ So far the script has been tested with 4.0.0.2 format files (Morrowind, Freedom 
 
 Usage:
 
-Run this script from "File->Import" menu and then load the desired NIF file.
+Run this script from "File->Import" menu and then select the desired NIF file.
 """
-# nif4_import_237.py version 1.0.6
+# nif4_import_237.py version 1.0.7
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
 #
@@ -37,7 +37,7 @@ Run this script from "File->Import" menu and then load the desired NIF file.
 #2. Redistributions in binary form must reproduce the above copyright
 #   notice, this list of conditions and the following disclaimer in the
 #   documentation and/or other materials provided with the distribution.
-#3. The name of the NIF File Format Library and Tools projectmay not be
+#3. The name of the NIF File Format Library and Tools project may not be
 #   used to endorse or promote products derived from this software
 #   without specific prior written permission.
 #
@@ -170,7 +170,7 @@ nullXform.identity()
 #----------------------------------------------------------------------------------------------------#
 
 # This section of the code is taken nearly verbatim off Ideasman's OBJ importer,
-# and relpaces the function written by Amorilia. It offers a slight increase in performance
+# and replaces the function written by Amorilia. It offers a slight increase in performance
 #===========================================================================#
 # Returns unique name of object/mesh (preserve overwriting existing meshes) #
 #===========================================================================#
@@ -1272,20 +1272,22 @@ def createArmature(block):
 
 # returns an angle between two vectors in radians.
 # I define the two vectors as 3 points: an origin and two 'heads'
-def getRads(p0, p1, p2):
-	x1 = p1[0] - p0[0]
-	y1 = p1[1] - p0[1]
-	z1 = p1[2] - p0[2]
-	x2 = p2[0] - p0[0]
-	y2 = p2[1] - p0[1]
-	z2 = p2[2] - p0[2]
-	v1 = Vector(x1, y1, z1)
-	v2 = Vector(x2, y2, z2)
-	return vecAngle(v1, v2)
+def getRads(pt_0, pt_1, pt_2):
+	vec_1 = Vector( *[ pt_1[i] - pt_0[i] for i in range(3)] ) 
+	vec_2 = Vector( *[ pt_2[i] - pt_0[i] for i in range(3)] ) 
+	#x1 = p1[0] - p0[0]
+	#y1 = p1[1] - p0[1]
+	#z1 = p1[2] - p0[2]
+	#x2 = p2[0] - p0[0]
+	#y2 = p2[1] - p0[1]
+	#z2 = p2[2] - p0[2]
+	#v1 = Vector(x1, y1, z1)
+	#v2 = Vector(x2, y2, z2)
+	return vecAngle(vec_1, vec_2)
 		
 #to be used in place of the mathutils buggy implementation, returns a value in radians
-def vecAngle(v1,v2):
-	dp = DotVecs(v2, v1)
+def vecAngle(vec_1, vec_2):
+	dp = DotVecs(vec_1, vec_2)
 	if dp > 1:
 		return 0.0
 	elif dp < -1:
