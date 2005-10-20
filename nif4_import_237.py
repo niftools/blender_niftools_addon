@@ -689,6 +689,13 @@ class NiTriShape(NiObject):
 			if propBlock != None and propBlock.getType() == 'NiMaterialProperty':
 				return propBlock
 		return None
+	# Returns the bound NiGeomMorpherController block
+	def getNiGeomMorpherController(self):
+		if self.NiTimeControllerId != -1:
+			ctrlBlock = NiObjects[self.NiTimeControllerId]
+			if ctrlBlock != None and ctrlBlock.getType() == 'NiGeomMorpherController':
+				return ctrlBlock
+		return None
 		
 
 
@@ -974,6 +981,78 @@ class NiSkinData(NiObject):
 	def getWeights(self):
 		return self.weights
 
+class NiController(NiObject):
+    """
+                Representation of a generic Controller block
+    """
+    def __init__(self, data, id):
+		# Base class constructor
+		offset = NiObject.__init__(self, data, id)
+		# ID of the next Controller ID
+		self.NextControllerId, offset = readInt(self.data, offset)
+                # usually 0x000C
+                self.Flags, offset = readShort(self.data, offset)
+                # usually 1.0
+                self.Frequency, offset = readFloat(self.data, offset)
+                # usually 0.0
+                self.Phase, offset = readFloat(self.data, offset)
+                # when does the controller start?
+                self.StartTime, offset = readFloat(self.data, offset)
+                # when does the controller end?
+                self.StopTime, offset = readFloat(self.data, offset)
+                # index of the parent that owns this time controller block
+		self.ParentId, offset = readInt(self.data, offset)
+		return offset
+    def getNextControllerId(self):
+                return self.NextControllerId
+    def getParentId(self):
+                return self.ParentId
+    
+class NiGeomMorpherController(NiController):
+	"""
+		Representation of a NiGeomMorpherController block
+	"""
+	def __init__(self, data, id):
+		# Base class constructor
+		offset = NiController.__init__(self, data, id)
+		# ID of the bound NiMorphData block
+		self.NiMorphDataId, offset = readInt(self.data, offset)
+	# Returns the ID of the bound NiSkinData block
+	def getNiMorphDataId(self):
+		return self.NiMorphDataId
+	# Returns the bound NiSkinData block
+	def getNiMorphData(self):
+		return NiObjects[self.NiMorphDataId]
+
+class NiMorphData(NiObject):
+    """
+        	Representation of a NiMorphData block
+    """
+    def __init__(self, data, id):
+                # Base class constructor
+                offset = NiObject.__init__(self, data, id)
+                # Number of morph targets
+                self.NumMorphBlocks, offset = readInt(self.data, offset)
+                # Number of vertices
+                self.NumVertices, offset = readInt(self.data, offset)
+                print self.NumMorphBlocks
+                print self.NumVertices
+                offset += 1
+                self.MorphBlocks = [ None ] * self.NumMorphBlocks
+                for count in range( self.NumMorphBlocks ):
+                    frameCnt, offset = readInt(self.data, offset)
+                    frameType, offset = readInt(self.data, offset)
+                    frames = [ None ] * frameCnt
+                    for fcount in range( frameCnt ):
+                        time, offset = readFloat(self.data, offset)
+                        x, offset = readFloat(self.data, offset)
+                        y, offset = readFloat(self.data, offset)
+                        z, offset = readFloat(self.data, offset)
+                        frames[fcount] = ( time, x, y, z )
+                    verts = readVerts(self.data[ offset : offset + (self.NumVertices * 12) ])
+                    offset += (self.NumVertices * 12)
+                    self.MorphBlocks[count] = ( frameCnt, frameType, frames, verts )
+                
 #----------------------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------#
 #-------- Main document class. This will hold the whole structure of the file and provide access
@@ -1048,7 +1127,7 @@ class NifDocument(object):
 			(blockType, blockOffset, blockLength) = self.blockMap[blockId]
 			blockData = self.data[blockOffset : blockOffset + blockLength]
 			block = None
-			if blockType == 'NiNode':
+			if blockType == 'NiNode' or blockType == 'RootCollisionNode':
 				block = NiNode(blockData, blockId)
 			elif blockType == 'NiTriShape':
 				block = NiTriShape(blockData, blockId)
@@ -1064,6 +1143,10 @@ class NifDocument(object):
 				block = NiSkinInstance(blockData, blockId)
 			elif blockType == 'NiSkinData':
 				block = NiSkinData(blockData, blockId)
+			elif blockType == 'NiGeomMorpherController':
+                                block = NiGeomMorpherController(blockData, blockId)
+                        elif blockType == 'NiMorphData':
+                                block = NiMorphData(blockData, blockId)
 			else:
 				# In case the node isn't one of the parsed ones I'll just assign it the base class
 				# so that at least I can mantain the tree structure
@@ -1099,7 +1182,6 @@ class NifDocument(object):
 	# Recursive function, writes the content of the NIF document to Blender. Must be fed with the root block to start
 	# reading the hierarchy tree
 	def writeObjs(self, block, scene):
-		# Again, not needed anymore. The whole list is filled by objects now, unhandled blocks are skipped as last condition of the check
 		if block.getId() not in self.blocksToSkip:
 			blockType= block.getType()
 			if blockType == 'NiNode':
@@ -1275,14 +1357,6 @@ def createArmature(block):
 def getRads(pt_0, pt_1, pt_2):
 	vec_1 = Vector( *[ pt_1[i] - pt_0[i] for i in range(3)] ) 
 	vec_2 = Vector( *[ pt_2[i] - pt_0[i] for i in range(3)] ) 
-	#x1 = p1[0] - p0[0]
-	#y1 = p1[1] - p0[1]
-	#z1 = p1[2] - p0[2]
-	#x2 = p2[0] - p0[0]
-	#y2 = p2[1] - p0[1]
-	#z2 = p2[2] - p0[2]
-	#v1 = Vector(x1, y1, z1)
-	#v2 = Vector(x2, y2, z2)
 	return vecAngle(vec_1, vec_2)
 		
 #to be used in place of the mathutils buggy implementation, returns a value in radians
@@ -1312,7 +1386,7 @@ def createTexture(NiSourceTexture):
 		# Checks to see if the texture is a DDS file (Blender doesn't support these yet)
 		# and in that case tries looking for an alternative extension with the same name
 		debugMsg("Looking for \"%s\"" % textureName, 3)
-		textureFile = textureName
+		textureFile = None
 		if re_ddsExt.match(textureName[-4:]):
 			base=textureName[:-4]
 			debugMsg("texture is a DDS file, looking for alternatives", 2)
@@ -1325,9 +1399,10 @@ def createTexture(NiSourceTexture):
 					debugMsg("found %s" % newFile, 2)
 					textureFile = newFile
 					break
-		if textureFile != None and Blender.sys.exists(textureFile) == 1:
+		else:
+			textureFile = textureName
+		if textureFile and Blender.sys.exists(textureFile) == 1:
 			# If the file exist the texture can be created and added to the textures list
-			
 			texture = Texture.New()
 			texture.type = Texture.Types.IMAGE
 			image = Image.Load(textureFile)
@@ -1478,37 +1553,6 @@ def createMesh(block):
 	hasVertexUV = len(vertUV)>0
 	hasVertexCol = len(vertCol)>0
 	hasVertexNormals = len(vertNorms)>0
-	
-	
-	
-	
-	# (brandano's strategy):
-## 	meshData.verts = [None]*len(verts)
-## 	for i, v in enumerate(verts):
-## 		x, y, z = v
-## 		vert = Blender.NMesh.Vert(x, y, z)
-## 		meshData.verts[i] = vert
-## 		# Vertex normals are stored as x, y, z triplets.
-##		if hasVertexNormals:
-##			(nx, ny, nz) = vertNorms[i]
-##			meshData.verts[i].no[0] = nx
-##			meshData.verts[i].no[1] = ny
-##			meshData.verts[i].no[2] = nz
-##		#--------------------------------------------serious debugging going on here
-##		# uncommenting these lines creates a set of vertices that represents each individual vertex normal.
-##		#(x, y, z) = verts[i]
-##		#nv = Blender.NMesh.Vert(nx+x, ny+y, nz+z)
-##		#mesh.verts.append(nv)
-##		#--------------------------------------------serious debugging going on here
-##	# Builds the faces list
-##	for f in faces:
-##		v1, v2, v3 = f 
-##		face = Blender.NMesh.Face()
-##		face.v = [meshData.verts[v1], meshData.verts[v2], meshData.verts[v3]]
-##		face.smooth = 1
-##		face.mat = 0
-##		meshData.faces.append(face)
-	
 	# amorilia: let's only duplicate vertices that have different
 	# normals (to simulate sharp edges), so we build list of unique
 	# (vertex, normal) pairs
@@ -1639,6 +1683,55 @@ def createMesh(block):
 					vert2 = vertmap[vert]
 					meshData.assignVertsToGroup(groupName, [vert2], weight, 'replace')
 	meshData.update(1) # amorilia: let Blender calculate vertex normals
+
+	# morphing
+	morphCtrl = triShape.getNiGeomMorpherController()
+	if morphCtrl:
+            morphData = morphCtrl.getNiMorphData()
+            if morphData and ( len( meshData.verts ) == morphData.NumVertices ) and ( morphData.NumMorphBlocks > 0 ):
+                # insert base key
+                meshData.insertKey( 0, 'relative' )
+                frameCnt, frameType, frames, baseverts = morphData.MorphBlocks[0]
+                ipo = Blender.Ipo.New( 'Key', 'KeyIpo' )
+                # iterate through the list of other morph keys
+                for key in range( 1, morphData.NumMorphBlocks ):
+                    frameCnt, frameType, frames, verts = morphData.MorphBlocks[key]
+                    # for each vertex calculate the key position from base pos + delta offset
+                    for count in range( morphData.NumVertices ):
+                        x, y, z = baseverts[count]
+                        dx, dy, dz = verts[count]
+                        meshData.verts[count].co[0] = x + dx
+                        meshData.verts[count].co[1] = y + dy
+                        meshData.verts[count].co[2] = z + dz
+                    # update the mesh and insert key
+                    meshData.update(0)
+                    meshData.insertKey(count, 'relative')
+                    # set up the ipo key curve
+                    curve = ipo.addCurve( 'Key %i'%key )
+                    # dunno how to set up the bezier triples -> switching to linear instead
+                    curve.setInterpolation( 'Linear' )
+                    # select extrapolation
+                    if ( morphCtrl.Flags == 0x000c ):
+                        curve.setExtrapolation( 'Constant' )
+                    elif ( morphCtrl.Flags == 0x0008 ):
+                        curve.setExtrapolation( 'Cyclic' )
+                    else:
+                        debugMsg( 'dunno which extrapolation to use: using constant instead' );
+                        curve.setExtrapolation( 'Constant' )
+                    # set up the curve's control points
+                    for count in range( frameCnt ):
+                        time, x, y, z = frames[count]
+                        frame = time * Blender.Scene.getCurrent().getRenderingContext().framesPerSec() + 1
+                        curve.addBezier( ( frame, x ) )
+                # hmm... assign ipo to mesh ???
+                #meshData.setIpo( ipo )
+                # finally: return to base position
+                for count in range( morphData.NumVertices ):
+                    x, y, z = baseverts[count]
+                    meshData.verts[count].co[0] = x
+                    meshData.verts[count].co[1] = y
+                    meshData.verts[count].co[2] = z
+                meshData.update(0)
 	return meshObj
 
 #----------------------------------------------------------------------------------------------------#
