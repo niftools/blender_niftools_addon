@@ -500,7 +500,8 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
             mesh_mat_emissive = mesh_mat.getEmit()           # 'Emit' scrollbar in Blender (MW -> 0.0 0.0 0.0)
             mesh_mat_shininess = mesh_mat.getSpec() / 2.0    # 'Spec' scrollbar in Blender, takes values between 0.0 and 2.0 (MW -> 0.0)
             mesh_mat_transparency = mesh_mat.getAlpha()      # 'A(lpha)' scrollbar in Blender (MW -> 1.0)
-            mesh_hasalpha = (abs(mesh_mat_transparency - 1.0) > epsilon)
+            mesh_hasalpha = (abs(mesh_mat_transparency - 1.0) > epsilon) \
+                            or (mesh_mat.getIpo() != None and mesh_mat.getIpo().getCurve('Alpha'))
             # the base texture = first material texture
             # note that most morrowind files only have a base texture, so let's for now only support single textured materials
             for mtex in mesh_mat.getTextures():
@@ -514,7 +515,9 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                             raise NIFExportError("Non-COL-mapped texture in mesh '%s', material '%s', these cannot be exported to NIF. Either delete all non-COL-mapped textures, or in the Shading Panel, under Material Buttons, set texture 'Map To' to 'COL'."%(mesh.getName(),mesh_mat.getName()))
                         # got the base texture
                         mesh_base_tex = mtex.tex
-                        mesh_hastex = 1
+                        # check if alpha channel is enabled for this texture
+                        if ( mesh_base_tex.imageFlags & Blender.Texture.ImageFlags.USEALPHA ):
+                            mesh_hasalpha = 1
                     else:
                         raise NIFExportError("Multiple textures in mesh '%s', material '%s', this is not supported. Delete all textures, except for the base texture."%(mesh.getName(),mesh_mat.getName()))
 
@@ -586,12 +589,30 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
             nif.header.nblocks += 1
             
             nif.blocks[tritexsrc_id].external = 1
-            nif.blocks[tritexsrc_id].texture_file_name.value = Blender.sys.basename(mesh_base_tex.image.getFilename())
+            # strip the data base dir from the texture file name
+            tfn = mesh_base_tex.image.getFilename().lower()
+            idx = tfn.find( "data files" )
+            if ( idx >= 0 ):
+                tfn = tfn[idx+10:len(tfn)]
+                tfn = tfn.replace( '/', '\\' )
+                if ( tfn[ 0 ] == '\\' ):
+                    tfn = tfn[1:len(tfn)]
+                #print "Texture: %s"%tfn
+                nif.blocks[tritexsrc_id].texture_file_name.value = tfn
+            else:
+                nif.blocks[tritexsrc_id].texture_file_name.value = Blender.sys.basename(mesh_base_tex.image.getFilename())
+            # force dds extension, if requested
             if force_dds:
                 nif.blocks[tritexsrc_id].texture_file_name.value = nif.blocks[tritexsrc_id].texture_file_name.value[:-4] + '.dds'
             nif.blocks[tritexsrc_id].pixel_layout = 5 # default?
             nif.blocks[tritexsrc_id].mipmap = 2 # default?
-            nif.blocks[tritexsrc_id].alpha = 3 # default?
+            # choose alpha mapping
+            # if ALPHA_DEFAULT is selected the texture alpha channel overides the material settings
+            # if ALPHA_NONE is selected the material alpha setting is used
+            if ( mesh_base_tex.imageFlags & Blender.Texture.ImageFlags.USEALPHA ):
+                nif.blocks[tritexsrc_id].alpha = 3 # ALPHA_DEFAULT
+            else:
+                nif.blocks[tritexsrc_id].alpha = 0 # ALPHA_NONE
             nif.blocks[tritexsrc_id].dunno1 = 1 # ?
 
             # check for texture flip definition
@@ -640,7 +661,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                     nif.blocks[tsrc_id].texture_file_name.value = t
                     nif.blocks[tsrc_id].pixel_layout = 5 # default?
                     nif.blocks[tsrc_id].mipmap = 2 # default?
-                    nif.blocks[tsrc_id].alpha = 3 # default?
+                    nif.blocks[tsrc_id].alpha = nif.blocks[tritexsrc_id].alpha # match the alpha setting of the base texture
                     nif.blocks[tsrc_id].dunno1 = 1 # ?
                     nif.blocks[flip_id].flip_id.append( tsrc_id )
                 nif.blocks[flip_id].num_flip_ids = len( nif.blocks[flip_id].flip_id )
@@ -708,6 +729,153 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
             nif.blocks[trishape_id].property_id.append(trimatprop_id)
             nif.blocks[trishape_id].num_properties += 1
         
+
+            # material animation
+            ipo = mesh_mat.getIpo()
+            a_curve = None
+            alphactrl_id = -1
+            if ( ipo != None ):
+                a_curve = ipo.getCurve( 'Alpha' )
+                # get frame start and the number of frames per second
+                scn = Blender.Scene.GetCurrent()
+                context = scn.getRenderingContext()
+                fspeed = 1.0 / context.framesPerSec()
+                fstart = context.startFrame()
+            
+            if ( a_curve != None ):
+                # get the alpha keyframes from blender's ipo curve
+                alpha = {}
+                for btriple in a_curve.getPoints():
+                    knot = btriple.getPoints()
+                    frame = knot[0]
+                    ftime = (frame - fstart) * fspeed
+                    alpha[ftime] = ipo.getCurve( 'Alpha' ).evaluate(frame)
+
+                ftimes = alpha.keys()
+                ftimes.sort()
+                assert( ( ftimes ) > 0 )
+
+                # add a alphacontroller block, and refer to this in the parent material
+                alphactrl_id = last_id + 1
+                last_id = alphactrl_id
+                assert(alphactrl_id == len(nif.blocks)) # debug
+                nif.blocks.append(niflib.NiAlphaController()) # this should be block[matcolctrl_id]
+                nif.blocks[alphactrl_id].block_type.value = 'NiAlphaController'
+                assert(nif.blocks[trimatprop_id].controller_id == -1) # make sure we don't overwrite anything
+                nif.blocks[trimatprop_id].controller_id = alphactrl_id
+                nif.blocks[alphactrl_id].parent_id = trimatprop_id
+                nif.header.nblocks += 1
+
+                # select extrapolation mode
+                if ( a_curve.getExtrapolation() == "Cyclic" ):
+                    nif.blocks[alphactrl_id].flags = 0x0008
+                elif ( a_curve.getExtrapolation() == "Constant" ):
+                    nif.blocks[alphactrl_id].flags = 0x000c
+                else:
+                    print "extrapolation \"%s\" for alpha curve not supported using \"cycle reverse\" instead"%a_curve.getExtrapolation()
+                    nif.blocks[alphactrl_id].flags = 0x000a
+
+                # fill in timing values
+                nif.blocks[alphactrl_id].frequency = 1.0
+                nif.blocks[alphactrl_id].phase = 0.0
+                nif.blocks[alphactrl_id].start_time = ftimes[0]
+                nif.blocks[alphactrl_id].stop_time = ftimes[len(ftimes)-1]
+
+                # add the alpha data
+                alphadata_id = last_id + 1
+                last_id = alphadata_id
+                assert(alphadata_id == len(nif.blocks)) # debug
+                nif.blocks.append(niflib.NiFloatData())
+                nif.blocks[alphadata_id].block_type.value = 'NiFloatData'
+                nif.blocks[alphactrl_id].data_id = alphadata_id
+                nif.header.nblocks += 1
+
+                # select interpolation mode and export the alpha curve data
+                if ( a_curve.getInterpolation() == "Linear" ):
+                    nif.blocks[alphadata_id].float_type = 1
+                elif ( a_curve.getInterpolation() == "Bezier" ):
+                    nif.blocks[alphadata_id].float_type = 2
+                else:
+                    raise NIFExportError( 'interpolation %s for alpha curve not supported use linear or bezier instead'%a_curve.getInterpolation() )
+
+                for ftime in ftimes:
+                    a_frame = niflib.NiFloatDataElem( nif.blocks[alphadata_id].float_type )
+                    a_frame.time = ftime
+                    a_frame.float = alpha[ftime]
+                    a_frame.tango_left = 0.0 # ?
+                    a_frame.tango_right = 0.0 # ?
+                    nif.blocks[alphadata_id].floats.append(a_frame)
+                nif.blocks[alphadata_id].num_floats = len(nif.blocks[alphadata_id].floats)
+
+            # export animated material colors
+            if ( ipo != None and ( ipo.getCurve( 'R' ) != None or ipo.getCurve( 'G' ) != None or ipo.getCurve( 'B' ) != None ) ):
+                # merge r, g, b curves into one rgba curve
+                rgba_curve = {}
+                for curve in ipo.getCurves():
+                    for btriple in curve.getPoints():
+                        knot = btriple.getPoints()
+                        frame = knot[0]
+                        ftime = (frame - fstart) * fspeed
+                        if (curve.getName() == 'R') or (curve.getName() == 'G') or (curve.getName() == 'B'):
+                            rgba_curve[ftime] = niflib.NiRGBA()
+                            if ( ipo.getCurve( 'R' ) != None):
+                                rgba_curve[ftime].r = ipo.getCurve('R').evaluate(frame)
+                            else:
+                                rgba_curve[ftime].r = mesh_mat_diffuse_colour[0]
+                            if ( ipo.getCurve( 'G' ) != None):
+                                rgba_curve[ftime].g = ipo.getCurve('G').evaluate(frame)
+                            else:
+                                rgba_curve[ftime].g = mesh_mat_diffuse_colour[1]
+                            if ( ipo.getCurve( 'B' ) != None):
+                                rgba_curve[ftime].b = ipo.getCurve('B').evaluate(frame)
+                            else:
+                                rgba_curve[ftime].b = mesh_mat_diffuse_colour[2]
+                            rgba_curve[ftime].a = mesh_mat_transparency # alpha ignored?
+
+                ftimes = rgba_curve.keys()
+                ftimes.sort()
+                assert( len( ftimes ) > 0 )
+
+                # add a materialcolorcontroller block
+                matcolctrl_id = last_id + 1
+                last_id = matcolctrl_id
+                assert(matcolctrl_id == len(nif.blocks)) # debug
+                nif.blocks.append(niflib.NiMaterialColorController()) # this should be block[matcolctrl_id]
+                nif.blocks[matcolctrl_id].block_type.value = 'NiMaterialColorController'
+                if ( alphactrl_id == -1 ):
+                    assert(nif.blocks[trimatprop_id].controller_id == -1) # make sure we don't overwrite anything
+                    nif.blocks[trimatprop_id].controller_id = matcolctrl_id
+                else:
+                    assert(nif.blocks[alphactrl_id].next_controller_id == -1)
+                    nif.blocks[alphactrl_id].next_controller_id = matcolctrl_id
+                nif.header.nblocks += 1
+
+                # fill in the non-trivial values
+                nif.blocks[matcolctrl_id].flags = 0x0008 # using cycle loop for now
+                nif.blocks[matcolctrl_id].frequency = 1.0
+                nif.blocks[matcolctrl_id].phase = 0.0
+                nif.blocks[matcolctrl_id].start_time = ftimes[0]
+                nif.blocks[matcolctrl_id].stop_time = ftimes[len(ftimes)-1]
+                nif.blocks[matcolctrl_id].parent_id = trimatprop_id
+
+                # add the material color data
+                matcoldata_id = last_id + 1
+                last_id = matcoldata_id
+                assert(matcoldata_id == len(nif.blocks)) # debug
+                nif.blocks.append(niflib.NiColorData())
+                nif.blocks[matcoldata_id].block_type.value = 'NiColorData'
+                nif.blocks[matcolctrl_id].data_id = matcoldata_id
+                nif.header.nblocks += 1
+
+                # export the resulting rgba curve
+                for ftime in ftimes:
+                    rgba_frame = niflib.NiColorDataElem()
+                    rgba_frame.time = ftime
+                    rgba_frame.rgba = rgba_curve[ftime]
+                    nif.blocks[matcoldata_id].colors.append(rgba_frame)
+                nif.blocks[matcoldata_id].num_colors = len(nif.blocks[matcoldata_id].colors)
+                nif.blocks[matcoldata_id].dunno = 1
+
         # add NiTriShape's data
         tridata_id = last_id + 1
         last_id = tridata_id
@@ -759,6 +927,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 if (f.materialIndex != materialIndex): # but this face has another material
                     continue # so skip this face
             f_numverts = len(f.v)
+            if (f_numverts < 3): continue # ignore degenerate faces
             assert((f_numverts == 3) or (f_numverts == 4)) # debug
             if (nif.blocks[tridata_id].has_uv_vertices):
                 if (len(f.uv) != len(f.v)): # make sure we have UV data
