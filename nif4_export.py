@@ -9,7 +9,7 @@ Tip: 'Export the selected objects, along with their parents and children, to a N
 
 __author__ = ["amorilia@gamebox.net"]
 __url__ = ("http://niftools.sourceforge.net/", "blender", "elysiun")
-__version__ = "0.8"
+__version__ = "1.1"
 __bpydoc__ = """\
 This script exports Netimmerse (the version used by Morrowind) .NIF files (version 4.0.0.2).
 
@@ -19,7 +19,7 @@ Select the meshes you wish to export and run this script from "File->Export" men
 """
 
 # --------------------------------------------------------------------------
-# NIF Export v0.8 by Amorilia ( amorilia@gamebox.net )
+# NIF Export v1.1 by Amorilia ( amorilia@gamebox.net )
 # --------------------------------------------------------------------------
 # ***** BEGIN BSD LICENSE BLOCK *****
 #
@@ -59,7 +59,7 @@ Select the meshes you wish to export and run this script from "File->Export" men
 # ***** END BSD LICENCE BLOCK *****
 # --------------------------------------------------------------------------
 
-import Blender, struct, re, niflib
+import Blender, struct, re, nif4
 from math import sqrt
 
 
@@ -121,7 +121,7 @@ def export_nif(filename):
         if show_progress >= 1: Blender.Window.DrawProgressBar(0.33, "Converting to NIF")
         
         # create a nif object
-        nif = niflib.NIF()
+        nif = nif4.NIF()
         
         # export the root node (note that transformation is ignored on the root node)
         nif = export_node(None, 'none', -1, 1.0, root_name, nif)
@@ -138,6 +138,7 @@ def export_nif(filename):
         # write the file:
         #----------------
         if show_progress >= 1: Blender.Window.DrawProgressBar(0.66, "Writing NIF file")
+        print nif # debug
 
         # make sure we have the right file extension
         if ((fileext != '.nif') and (fileext != '.NIF')):
@@ -196,9 +197,8 @@ def export_nif(filename):
     
     # no export error, but let's double check: try reading the file(s) we just wrote
     # we can probably remove these lines once the exporter is stable
-    nif.dump()
     try:
-        nif = niflib.NIF()
+        nif = nif4.NIF()
         file = open(filename, "rb")
         nif.read(file)
         file.close()
@@ -231,8 +231,7 @@ def export_node(ob, space, parent_block_id, parent_scale, node_name, nif):
         assert(space == 'none')
         assert(parent_block_id == -1) # debug
         assert(nif.header.nblocks == 0) # debug
-        nif.blocks.append(niflib.NiNode())
-        nif.blocks[ob_block_id].block_type.value = 'NiNode'
+        nif.blocks.append(nif4.NiNode())
     else:
         assert((ob.getType() == 'Empty') or (ob.getType() == 'Mesh')) # debug
         assert(parent_block_id >= 0) # debug
@@ -246,22 +245,20 @@ def export_node(ob, space, parent_block_id, parent_scale, node_name, nif):
             node_name = ''
             if (ipo != None):
                 raise NIFExportError('ERROR%t|RootCollisionNode should not be animated.')
-            nif.blocks.append(niflib.RootCollisionNode())
-            nif.blocks[ob_block_id].block_type.value = 'RootCollisionNode'
+            nif.blocks.append(nif4.RootCollisionNode())
         else:
             # -> static or animated object
-            nif.blocks.append(niflib.NiNode())
-            nif.blocks[ob_block_id].block_type.value = 'NiNode'
+            nif.blocks.append(nif4.NiNode())
     
     nif.header.nblocks += 1
 
     # make it child of its parent in the nif, if it has one
     if (parent_block_id >= 0):
-        nif.blocks[parent_block_id].child_id.append(ob_block_id)
-        nif.blocks[parent_block_id].num_children += 1
+        nif.blocks[parent_block_id].children.indices.append(ob_block_id)
+        nif.blocks[parent_block_id].children.num_indices += 1
     
     # and fill in this node's non-trivial values
-    nif.blocks[ob_block_id].name.value = node_name
+    nif.blocks[ob_block_id].name = nif4.mystring(node_name)
     if (ob == None):
         nif.blocks[ob_block_id].flags = 0x000C # ? this seems pretty standard for the root node
     elif (ob.getName() == 'RootCollisionNode'):
@@ -329,7 +326,7 @@ def export_keyframe(ob, space, parent_block_id, parent_scale, nif):
             if (curve.getName() == 'RotX') or (curve.getName() == 'RotY') or (curve.getName() == 'RotZ'):
                 rot_curve[ftime] = Blender.Mathutils.Euler([10*ipo.getCurve('RotX').evaluate(frame), 10*ipo.getCurve('RotY').evaluate(frame), 10*ipo.getCurve('RotZ').evaluate(frame)]).toQuat()
             if (curve.getName() == 'LocX') or (curve.getName() == 'LocY') or (curve.getName() == 'LocZ'):
-                trans_curve[ftime] = niflib.NiVector()
+                trans_curve[ftime] = nif4.vec3()
                 trans_curve[ftime].x = ipo.getCurve('LocX').evaluate(frame) * parent_scale
                 trans_curve[ftime].y = ipo.getCurve('LocY').evaluate(frame) * parent_scale
                 trans_curve[ftime].z = ipo.getCurve('LocZ').evaluate(frame) * parent_scale
@@ -343,10 +340,9 @@ def export_keyframe(ob, space, parent_block_id, parent_scale, nif):
     keyframectrl_id = last_id + 1
     last_id = keyframectrl_id
     assert(keyframectrl_id == len(nif.blocks)) # debug
-    nif.blocks.append(niflib.NiKeyframeController()) # this should be block[keyframectrl_id]
-    nif.blocks[keyframectrl_id].block_type.value = 'NiKeyframeController'
-    assert(nif.blocks[parent_block_id].next_controller_id == -1) # make sure we don't overwrite anything
-    nif.blocks[parent_block_id].next_controller_id = keyframectrl_id
+    nif.blocks.append(nif4.NiKeyframeController()) # this should be block[keyframectrl_id]
+    assert(nif.blocks[parent_block_id].controller == -1) # make sure we don't overwrite anything
+    nif.blocks[parent_block_id].controller = keyframectrl_id
     nif.header.nblocks += 1
 
     # fill in the non-trivial values
@@ -355,42 +351,42 @@ def export_keyframe(ob, space, parent_block_id, parent_scale, nif):
     nif.blocks[keyframectrl_id].phase = 0.0
     nif.blocks[keyframectrl_id].start_time = (fstart - 1) * fspeed
     nif.blocks[keyframectrl_id].stop_time = (fend - fstart) * fspeed
-    nif.blocks[keyframectrl_id].parent_id = parent_block_id
+    nif.blocks[keyframectrl_id].target_node = parent_block_id
 
     # add the keyframe data
     keyframedata_id = last_id + 1
     last_id = keyframedata_id
     assert(keyframedata_id == len(nif.blocks)) # debug
-    nif.blocks.append(niflib.NiKeyframeData()) # this should be block[keyframedata_id]
-    nif.blocks[keyframedata_id].block_type.value = 'NiKeyframeData'
-    nif.blocks[keyframectrl_id].data_id = keyframedata_id
+    nif.blocks.append(nif4.NiKeyframeData()) # this should be block[keyframedata_id]
+    nif.blocks[keyframectrl_id].data = keyframedata_id
     nif.header.nblocks += 1
 
-    nif.blocks[keyframedata_id].rotation_frame_type = 1
+    nif.blocks[keyframedata_id].rotation_type = 1
+    print dir(nif.blocks[keyframedata_id])
     ftimes = rot_curve.keys()
     ftimes.sort()
     for ftime in ftimes:
-        rot_frame = niflib.NiRotFrame(1)
+        rot_frame = nif4.keyrotation(nif.blocks[keyframedata_id].rotation_type)
         rot_frame.time = ftime
-        rot_frame.quat[0] = rot_curve[ftime].w
-        rot_frame.quat[1] = rot_curve[ftime].x
-        rot_frame.quat[2] = rot_curve[ftime].y
-        rot_frame.quat[3] = rot_curve[ftime].z
-        nif.blocks[keyframedata_id].rotation_frame.append(rot_frame)
-    nif.blocks[keyframedata_id].num_rotation_frames = len(nif.blocks[keyframedata_id].rotation_frame)
+        rot_frame.quat.w = rot_curve[ftime].w
+        rot_frame.quat.x = rot_curve[ftime].x
+        rot_frame.quat.y = rot_curve[ftime].y
+        rot_frame.quat.z = rot_curve[ftime].z
+        nif.blocks[keyframedata_id].rotations.append(rot_frame)
+    nif.blocks[keyframedata_id].num_rotations = len(nif.blocks[keyframedata_id].rotations)
 
     trans_count = 0
-    nif.blocks[keyframedata_id].translation_frame_type = 1
+    nif.blocks[keyframedata_id].translation_type = 1
     ftimes = trans_curve.keys()
     ftimes.sort()
     for ftime in ftimes:
-        trans_frame = niflib.NiTransFrame(1)
+        trans_frame = nif4.keyvec3(nif.blocks[keyframedata_id].translation_type)
         trans_frame.time = ftime
-        trans_frame.translation.x = trans_curve[ftime].x
-        trans_frame.translation.y = trans_curve[ftime].y
-        trans_frame.translation.z = trans_curve[ftime].z
-        nif.blocks[keyframedata_id].translation_frame.append(trans_frame)
-    nif.blocks[keyframedata_id].num_translation_frames = len(nif.blocks[keyframedata_id].translation_frame)
+        trans_frame.pos.x = trans_curve[ftime].x
+        trans_frame.pos.y = trans_curve[ftime].y
+        trans_frame.pos.z = trans_curve[ftime].z
+        nif.blocks[keyframedata_id].translations.append(trans_frame)
+    nif.blocks[keyframedata_id].num_translations = len(nif.blocks[keyframedata_id].translations)
 
     return nif
 
@@ -445,18 +441,17 @@ def export_animgroups(animtxt, block_parent_id, nif):
     textextra_id = last_id + 1
     last_id = textextra_id
     assert(textextra_id == len(nif.blocks)) # debug
-    nif.blocks.append(niflib.NiTextKeyExtraData())
-    nif.blocks[textextra_id].block_type.value = 'NiTextKeyExtraData'
-    assert(nif.blocks[block_parent_id].extra_data_id == -1) # make sure we don't overwrite anything
-    nif.blocks[block_parent_id].extra_data_id = textextra_id
+    nif.blocks.append(nif4.NiTextKeyExtraData())
+    assert(nif.blocks[block_parent_id].extra_data == -1) # make sure we don't overwrite anything
+    nif.blocks[block_parent_id].extra_data = textextra_id
     nif.header.nblocks += 1
     
     # create a NiTextKey for each frame descriptor
-    nif.blocks[textextra_id].num_keys = len( flist )
+    nif.blocks[textextra_id].num_text_keys = len( flist )
     for i in range(len(flist)):
-        nif.blocks[textextra_id].text_key.append( niflib.NiTextKey() )
-        nif.blocks[textextra_id].text_key[i].time = fspeed * (flist[i]-1);
-        nif.blocks[textextra_id].text_key[i].name.value = dlist[i];
+        nif.blocks[textextra_id].text_keys.append( nif4.keystring() )
+        nif.blocks[textextra_id].text_keys[i].time = fspeed * (flist[i]-1);
+        nif.blocks[textextra_id].text_keys[i].name = nif4.mystring(dlist[i]);
     
     return nif
 
@@ -489,6 +484,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
         # -> first, extract valuable info from our ob
         
         mesh_base_tex = None
+        mesh_base_tex_alpha = 0 # set to 1 if the texture alpha channel overrides the material alpha value
         mesh_hasalpha = 0
         mesh_hastex = 0
         mesh_hasvcol = mesh.hasVertexColours()
@@ -510,14 +506,18 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                         if (mtex.texco != Blender.Texture.TexCo.UV):
                             # nif only support UV-mapped textures
                             raise NIFExportError("Non-UV texture in mesh '%s', material '%s'. Either delete all non-UV textures, or in the Shading Panel, under Material Buttons, set texture 'Map Input' to 'UV'."%(ob.getName(),mesh_mat.getName()))
-                        if (mtex.mapto != Blender.Texture.MapTo.COL):
+                        if ((mtex.mapto & Blender.Texture.MapTo.COL) == 0):
                             # it should map to colour
                             raise NIFExportError("Non-COL-mapped texture in mesh '%s', material '%s', these cannot be exported to NIF. Either delete all non-COL-mapped textures, or in the Shading Panel, under Material Buttons, set texture 'Map To' to 'COL'."%(mesh.getName(),mesh_mat.getName()))
                         # got the base texture
                         mesh_base_tex = mtex.tex
-                        # check if alpha channel is enabled for this texture
-                        if ( mesh_base_tex.imageFlags & Blender.Texture.ImageFlags.USEALPHA ):
+                        # check if alpha channel is enabled for this texture; if so, set everything ready to override material alpha by texture alpha channel
+                        if ((mesh_base_tex.imageFlags & Blender.Texture.ImageFlags.USEALPHA) and (mtex.mapto & Blender.Texture.MapTo.ALPHA)):
+                            if (mesh_mat_transparency > epsilon):
+                                raise NIFExportError("Alpha enabled textures can only be correctly exported with material alpha value 0.0")
+                            mesh_mat_transparency = 0.0
                             mesh_hasalpha = 1
+                            mesh_base_tex_alpha = 1
                     else:
                         raise NIFExportError("Multiple textures in mesh '%s', material '%s', this is not supported. Delete all textures, except for the base texture."%(mesh.getName(),mesh_mat.getName()))
 
@@ -533,15 +533,14 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
         trishape_id = last_id + 1
         last_id = trishape_id
         assert(trishape_id == len(nif.blocks)) # debug
-        nif.blocks.append(niflib.NiTriShape()) # this should be block[trishape_id]
-        nif.blocks[trishape_id].block_type.value = 'NiTriShape'
-        nif.blocks[parent_block_id].child_id.append(trishape_id)
-        nif.blocks[parent_block_id].num_children += 1
+        nif.blocks.append(nif4.NiTriShape()) # this should be block[trishape_id]
+        nif.blocks[parent_block_id].children.indices.append(trishape_id)
+        nif.blocks[parent_block_id].children.num_indices += 1
         nif.header.nblocks += 1
         
         # fill in the NiTriShape's non-trivial values
         if (nif.blocks[parent_block_id].name.value != ""):
-            nif.blocks[trishape_id].name.value = "Tri " + nif.blocks[parent_block_id].name.value + " %i"%(nif.blocks[parent_block_id].num_children-1) # Morrowind's child naming convention
+            nif.blocks[trishape_id].name = nif4.mystring("Tri " + nif.blocks[parent_block_id].name.value + " %i"%(nif.blocks[parent_block_id].children.num_indices-1)) # Morrowind's child naming convention
         nif.blocks[trishape_id].flags = 0x0004 # ? this seems standard
         nif.blocks[trishape_id].translation, \
         nif.blocks[trishape_id].rotation, \
@@ -561,59 +560,58 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
             tritexprop_id = last_id + 1
             last_id = tritexprop_id
             assert(tritexprop_id == len(nif.blocks)) # debug
-            nif.blocks.append(niflib.NiTexturingProperty())
-            nif.blocks[tritexprop_id].block_type.value = 'NiTexturingProperty'
-            nif.blocks[trishape_id].property_id.append(tritexprop_id)
-            nif.blocks[trishape_id].num_properties += 1
+            nif.blocks.append(nif4.NiTexturingProperty())
+            nif.blocks[trishape_id].properties.indices.append(tritexprop_id)
+            nif.blocks[trishape_id].properties.num_indices += 1
             nif.header.nblocks += 1
             
-            nif.blocks[tritexprop_id].flags = 0x0001 # ? standard
+            nif.blocks[tritexprop_id].flags = 0x0001 # standard?
             nif.blocks[tritexprop_id].apply_mode = 2 # modulate?
-            nif.blocks[tritexprop_id].dunno1 = 7 # ? standard
+            nif.blocks[tritexprop_id].texture_count = 7 # standard?
             
-            nif.blocks[tritexprop_id].has_base_tex = 1
-            nif.blocks[tritexprop_id].base_tex.clamp_mode = 3 # wrap in both directions
-            nif.blocks[tritexprop_id].base_tex.set = 2 # ? standard (usually 2, but 0 and 1 are also possible)
-            nif.blocks[tritexprop_id].base_tex.dunno1 = 0 # ? standard
-            nif.blocks[tritexprop_id].base_tex.ps2_l = 0 # ? standard 
-            nif.blocks[tritexprop_id].base_tex.ps2_k = -75 # ? standard
-            nif.blocks[tritexprop_id].base_tex.dunno2 = 0x0101 # ? standard
+            nif.blocks[tritexprop_id].has_base_texture = 1
+            nif.blocks[tritexprop_id].base_texture.clamp_mode = 3 # wrap in both directions
+            nif.blocks[tritexprop_id].base_texture.filtermode = 2 # standard?
+            nif.blocks[tritexprop_id].base_texture.texture_set = 0 # ? standard
+            nif.blocks[tritexprop_id].base_texture.ps2_l = 0 # ? standard 
+            nif.blocks[tritexprop_id].base_texture.ps2_k = 0xFFB5 # ? standard
+            nif.blocks[tritexprop_id].base_texture.unknown = 0x0101 # ? standard
             
             # add NiTexturingProperty's texture source
             tritexsrc_id = last_id + 1
             last_id = tritexsrc_id
             assert(tritexsrc_id == len(nif.blocks)) # debug
-            nif.blocks.append(niflib.NiSourceTexture())
-            nif.blocks[tritexsrc_id].block_type.value = 'NiSourceTexture'
-            nif.blocks[tritexprop_id].base_tex.source_id = tritexsrc_id
+            nif.blocks.append(nif4.NiSourceTexture())
+            nif.blocks[tritexprop_id].base_texture.source = tritexsrc_id
             nif.header.nblocks += 1
             
-            nif.blocks[tritexsrc_id].external = 1
+            nif.blocks[tritexsrc_id].use_external = 1
             # strip the data base dir from the texture file name
-            tfn = mesh_base_tex.image.getFilename().lower()
-            idx = tfn.find( "data files" )
-            if ( idx >= 0 ):
-                tfn = tfn[idx+10:len(tfn)]
-                tfn = tfn.replace( '/', '\\' )
-                if ( tfn[ 0 ] == '\\' ):
-                    tfn = tfn[1:len(tfn)]
-                #print "Texture: %s"%tfn
-                nif.blocks[tritexsrc_id].texture_file_name.value = tfn
-            else:
-                nif.blocks[tritexsrc_id].texture_file_name.value = Blender.sys.basename(mesh_base_tex.image.getFilename())
+            #tfn = mesh_base_tex.image.getFilename().lower()
+            #idx = tfn.find( "data files" )
+            #if ( idx >= 0 ):
+            #    tfn = tfn[idx+10:len(tfn)]
+            #    tfn = tfn.replace( '/', '\\' )
+            #    if ( tfn[ 0 ] == '\\' ):
+            #        tfn = tfn[1:len(tfn)]
+            #    #print "Texture: %s"%tfn
+            #    nif.blocks[tritexsrc_id].file_name = nif4.mystring(tfn)
+            #else:
+            #    nif.blocks[tritexsrc_id].file_name = nif4.mystring(Blender.sys.basename(mesh_base_tex.image.getFilename()))
+            nif.blocks[tritexsrc_id].file_name = nif4.mystring(Blender.sys.basename(mesh_base_tex.image.getFilename()))
             # force dds extension, if requested
             if force_dds:
-                nif.blocks[tritexsrc_id].texture_file_name.value = nif.blocks[tritexsrc_id].texture_file_name.value[:-4] + '.dds'
-            nif.blocks[tritexsrc_id].pixel_layout = 5 # default?
-            nif.blocks[tritexsrc_id].mipmap = 2 # default?
+                nif.blocks[tritexsrc_id].file_name.value = nif.blocks[tritexsrc_id].file_name.value[:-4] + '.dds'
+            nif.blocks[tritexsrc_id].pixel_layout = 5 # default
+            nif.blocks[tritexsrc_id].use_mipmaps = 2  # default
             # choose alpha mapping
             # if ALPHA_DEFAULT is selected the texture alpha channel overides the material settings
             # if ALPHA_NONE is selected the material alpha setting is used
-            if ( mesh_base_tex.imageFlags & Blender.Texture.ImageFlags.USEALPHA ):
-                nif.blocks[tritexsrc_id].alpha = 3 # ALPHA_DEFAULT
+            if ( mesh_base_tex_alpha ):
+                nif.blocks[tritexsrc_id].alpha_format = 3 # ALPHA_DEFAULT
             else:
-                nif.blocks[tritexsrc_id].alpha = 0 # ALPHA_NONE
-            nif.blocks[tritexsrc_id].dunno1 = 1 # ?
+                nif.blocks[tritexsrc_id].alpha_format = 0 # ALPHA_NONE
+            nif.blocks[tritexsrc_id].unknown2 = 1 # ?
 
             # check for texture flip definition
             txtlist = Blender.Text.Get()
@@ -630,9 +628,8 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 flip_id = last_id + 1
                 last_id = flip_id
                 assert(flip_id == len(nif.blocks)) # debug
-                nif.blocks.append(niflib.NiFlipController())
-                nif.blocks[flip_id].block_type.value = 'NiFlipController'
-                nif.blocks[tritexprop_id].next_controller_id = flip_id
+                nif.blocks.append(nif4.NiFlipController())
+                nif.blocks[tritexprop_id].next_controller = flip_id
                 nif.header.nblocks += 1
 
                 # get frame start and frame end, and the number of frames per second
@@ -641,8 +638,8 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 fend = Blender.Scene.GetCurrent().getRenderingContext().endFrame()
 
                 # fill in NiFlipController's values
-                nif.blocks[flip_id].parent_id = tritexprop_id
-                nif.blocks[flip_id].flags = 0x08
+                nif.blocks[flip_id].target_node = tritexprop_id
+                nif.blocks[flip_id].flags = 0x0008
                 nif.blocks[flip_id].frequency = 1.0
                 nif.blocks[flip_id].start_time = 0.0
                 nif.blocks[flip_id].stop_time = ( fend - fstart ) * fspeed
@@ -654,18 +651,17 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                     # create a NiSourceTexture for each flip
                     tsrc_id = last_id + 1
                     last_id = tsrc_id
-                    nif.blocks.append( niflib.NiSourceTexture() )
+                    nif.blocks.append( nif4.NiSourceTexture() )
                     nif.header.nblocks += 1
-                    nif.blocks[tsrc_id].block_type.value = 'NiSourceTexture'
-                    nif.blocks[tsrc_id].external = 1
-                    nif.blocks[tsrc_id].texture_file_name.value = t
-                    nif.blocks[tsrc_id].pixel_layout = 5 # default?
-                    nif.blocks[tsrc_id].mipmap = 2 # default?
-                    nif.blocks[tsrc_id].alpha = nif.blocks[tritexsrc_id].alpha # match the alpha setting of the base texture
-                    nif.blocks[tsrc_id].dunno1 = 1 # ?
-                    nif.blocks[flip_id].flip_id.append( tsrc_id )
-                nif.blocks[flip_id].num_flip_ids = len( nif.blocks[flip_id].flip_id )
-                nif.blocks[flip_id].delta_t = nif.blocks[flip_id].stop_time / nif.blocks[flip_id].num_flip_ids
+                    nif.blocks[tsrc_id].use_external = 1
+                    nif.blocks[tsrc_id].file_name = nif4.mystring(t)
+                    nif.blocks[tsrc_id].pixel_layout = nif.blocks[tritexsrc_id].pixel_layout
+                    nif.blocks[tsrc_id].use_mipmaps  = nif.blocks[tritexsrc_id].use_mipmaps
+                    nif.blocks[tsrc_id].alpha        = nif.blocks[tritexsrc_id].alpha
+                    nif.blocks[tsrc_id].unknown2     = nif.blocks[tritexsrc_id].unknown2
+                    nif.blocks[flip_id].sources.indices.append( tsrc_id )
+                nif.blocks[flip_id].sources.num_indices = len( nif.blocks[flip_id].sources.indices )
+                nif.blocks[flip_id].delta = nif.blocks[flip_id].stop_time / nif.blocks[flip_id].sources.num_indices
                 
             
         if (mesh_hasalpha):
@@ -673,16 +669,15 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
             trialphaprop_id = last_id + 1
             last_id = trialphaprop_id
             assert(trialphaprop_id == len(nif.blocks))
-            nif.blocks.append(niflib.NiAlphaProperty())
-            nif.blocks[trialphaprop_id].block_type.value = 'NiAlphaProperty'
+            nif.blocks.append(nif4.NiAlphaProperty())
             nif.header.nblocks += 1
             
-            nif.blocks[trialphaprop_id].flags = 0x00ED
-            nif.blocks[trialphaprop_id].dunno = 0
+            nif.blocks[trialphaprop_id].flags   = 0x00ED
+            nif.blocks[trialphaprop_id].unknown = 0
             
             # refer to the alpha property in the trishape block
-            nif.blocks[trishape_id].property_id.append(trialphaprop_id)
-            nif.blocks[trishape_id].num_properties += 1
+            nif.blocks[trishape_id].properties.indices.append(trialphaprop_id)
+            nif.blocks[trishape_id].properties.num_indices += 1
 
         if (mesh_mat != None):
             # add NiTriShape's specular property
@@ -690,44 +685,42 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 trispecprop_id = last_id + 1
                 last_id = trispecprop_id
                 assert(trispecprop_id == len(nif.blocks))
-                nif.blocks.append(niflib.NiSpecularProperty())
-                nif.blocks[trispecprop_id].block_type.value = 'NiSpecularProperty'
+                nif.blocks.append(nif4.NiSpecularProperty())
                 nif.header.nblocks += 1
                 
                 nif.blocks[trispecprop_id].flags = 0x0001
             
                 # refer to the specular property in the trishape block
-                nif.blocks[trishape_id].property_id.append(trispecprop_id)
-                nif.blocks[trishape_id].num_properties += 1
+                nif.blocks[trishape_id].properties.indices.append(trispecprop_id)
+                nif.blocks[trishape_id].properties.num_indices += 1
             
             # add NiTriShape's material property
             trimatprop_id = last_id + 1
             last_id = trimatprop_id
             assert(trimatprop_id == len(nif.blocks))
-            nif.blocks.append(niflib.NiMaterialProperty())
-            nif.blocks[trimatprop_id].block_type.value = 'NiMaterialProperty'
+            nif.blocks.append(nif4.NiMaterialProperty())
             nif.header.nblocks += 1
             
-            nif.blocks[trimatprop_id].name.value = mesh_mat.getName()
+            nif.blocks[trimatprop_id].name = nif4.mystring(mesh_mat.getName())
             nif.blocks[trimatprop_id].flags = 0x0001 # ? standard
-            nif.blocks[trimatprop_id].ambient_colour.r = mesh_mat_ambient * mesh_mat_diffuse_colour[0]
-            nif.blocks[trimatprop_id].ambient_colour.g = mesh_mat_ambient * mesh_mat_diffuse_colour[1]
-            nif.blocks[trimatprop_id].ambient_colour.b = mesh_mat_ambient * mesh_mat_diffuse_colour[2]
-            nif.blocks[trimatprop_id].diffuse_colour.r = mesh_mat_diffuse_colour[0]
-            nif.blocks[trimatprop_id].diffuse_colour.g = mesh_mat_diffuse_colour[1]
-            nif.blocks[trimatprop_id].diffuse_colour.b = mesh_mat_diffuse_colour[2]
-            nif.blocks[trimatprop_id].specular_colour.r = mesh_mat_specular_colour[0]
-            nif.blocks[trimatprop_id].specular_colour.g = mesh_mat_specular_colour[1]
-            nif.blocks[trimatprop_id].specular_colour.b = mesh_mat_specular_colour[2]
-            nif.blocks[trimatprop_id].emissive_colour.r = mesh_mat_emissive * mesh_mat_diffuse_colour[0]
-            nif.blocks[trimatprop_id].emissive_colour.g = mesh_mat_emissive * mesh_mat_diffuse_colour[1]
-            nif.blocks[trimatprop_id].emissive_colour.b = mesh_mat_emissive * mesh_mat_diffuse_colour[2]
-            nif.blocks[trimatprop_id].shininess = mesh_mat_shininess
-            nif.blocks[trimatprop_id].transparency = mesh_mat_transparency
+            nif.blocks[trimatprop_id].ambient_color.r = mesh_mat_ambient * mesh_mat_diffuse_colour[0]
+            nif.blocks[trimatprop_id].ambient_color.g = mesh_mat_ambient * mesh_mat_diffuse_colour[1]
+            nif.blocks[trimatprop_id].ambient_color.b = mesh_mat_ambient * mesh_mat_diffuse_colour[2]
+            nif.blocks[trimatprop_id].diffuse_color.r = mesh_mat_diffuse_colour[0]
+            nif.blocks[trimatprop_id].diffuse_color.g = mesh_mat_diffuse_colour[1]
+            nif.blocks[trimatprop_id].diffuse_color.b = mesh_mat_diffuse_colour[2]
+            nif.blocks[trimatprop_id].specular_color.r = mesh_mat_specular_colour[0]
+            nif.blocks[trimatprop_id].specular_color.g = mesh_mat_specular_colour[1]
+            nif.blocks[trimatprop_id].specular_color.b = mesh_mat_specular_colour[2]
+            nif.blocks[trimatprop_id].emissive_color.r = mesh_mat_emissive * mesh_mat_diffuse_colour[0]
+            nif.blocks[trimatprop_id].emissive_color.g = mesh_mat_emissive * mesh_mat_diffuse_colour[1]
+            nif.blocks[trimatprop_id].emissive_color.b = mesh_mat_emissive * mesh_mat_diffuse_colour[2]
+            nif.blocks[trimatprop_id].glossiness = mesh_mat_shininess
+            nif.blocks[trimatprop_id].alpha = mesh_mat_transparency
             
             # refer to the material property in the trishape block
-            nif.blocks[trishape_id].property_id.append(trimatprop_id)
-            nif.blocks[trishape_id].num_properties += 1
+            nif.blocks[trishape_id].properties.indices.append(trimatprop_id)
+            nif.blocks[trishape_id].properties.num_indices += 1
         
 
             # material animation
@@ -759,11 +752,10 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 alphactrl_id = last_id + 1
                 last_id = alphactrl_id
                 assert(alphactrl_id == len(nif.blocks)) # debug
-                nif.blocks.append(niflib.NiAlphaController()) # this should be block[matcolctrl_id]
-                nif.blocks[alphactrl_id].block_type.value = 'NiAlphaController'
-                assert(nif.blocks[trimatprop_id].controller_id == -1) # make sure we don't overwrite anything
-                nif.blocks[trimatprop_id].controller_id = alphactrl_id
-                nif.blocks[alphactrl_id].parent_id = trimatprop_id
+                nif.blocks.append(nif4.NiAlphaController()) # this should be block[matcolctrl_id]
+                assert(nif.blocks[trimatprop_id].controller == -1) # make sure we don't overwrite anything
+                nif.blocks[trimatprop_id].controller = alphactrl_id
+                nif.blocks[alphactrl_id].target_node = trimatprop_id
                 nif.header.nblocks += 1
 
                 # select extrapolation mode
@@ -785,27 +777,26 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 alphadata_id = last_id + 1
                 last_id = alphadata_id
                 assert(alphadata_id == len(nif.blocks)) # debug
-                nif.blocks.append(niflib.NiFloatData())
-                nif.blocks[alphadata_id].block_type.value = 'NiFloatData'
-                nif.blocks[alphactrl_id].data_id = alphadata_id
+                nif.blocks.append(nif4.NiFloatData())
+                nif.blocks[alphactrl_id].data = alphadata_id
                 nif.header.nblocks += 1
 
                 # select interpolation mode and export the alpha curve data
                 if ( a_curve.getInterpolation() == "Linear" ):
-                    nif.blocks[alphadata_id].float_type = 1
+                    nif.blocks[alphadata_id].key_type = 1
                 elif ( a_curve.getInterpolation() == "Bezier" ):
-                    nif.blocks[alphadata_id].float_type = 2
+                    nif.blocks[alphadata_id].key_type = 2
                 else:
                     raise NIFExportError( 'interpolation %s for alpha curve not supported use linear or bezier instead'%a_curve.getInterpolation() )
 
                 for ftime in ftimes:
-                    a_frame = niflib.NiFloatDataElem( nif.blocks[alphadata_id].float_type )
+                    a_frame = nif4.keyfloat( nif.blocks[alphadata_id].key_type )
                     a_frame.time = ftime
-                    a_frame.float = alpha[ftime]
-                    a_frame.tango_left = 0.0 # ?
-                    a_frame.tango_right = 0.0 # ?
-                    nif.blocks[alphadata_id].floats.append(a_frame)
-                nif.blocks[alphadata_id].num_floats = len(nif.blocks[alphadata_id].floats)
+                    a_frame.value = alpha[ftime]
+                    a_frame.forward = 0.0 # ?
+                    a_frame.backward = 0.0 # ?
+                    nif.blocks[alphadata_id].keys.append(a_frame)
+                nif.blocks[alphadata_id].num_keys = len(nif.blocks[alphadata_id].keys)
 
             # export animated material colors
             if ( ipo != None and ( ipo.getCurve( 'R' ) != None or ipo.getCurve( 'G' ) != None or ipo.getCurve( 'B' ) != None ) ):
@@ -817,7 +808,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                         frame = knot[0]
                         ftime = (frame - fstart) * fspeed
                         if (curve.getName() == 'R') or (curve.getName() == 'G') or (curve.getName() == 'B'):
-                            rgba_curve[ftime] = niflib.NiRGBA()
+                            rgba_curve[ftime] = nif4.NiRGBA()
                             if ( ipo.getCurve( 'R' ) != None):
                                 rgba_curve[ftime].r = ipo.getCurve('R').evaluate(frame)
                             else:
@@ -840,14 +831,13 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 matcolctrl_id = last_id + 1
                 last_id = matcolctrl_id
                 assert(matcolctrl_id == len(nif.blocks)) # debug
-                nif.blocks.append(niflib.NiMaterialColorController()) # this should be block[matcolctrl_id]
-                nif.blocks[matcolctrl_id].block_type.value = 'NiMaterialColorController'
+                nif.blocks.append(nif4.NiMaterialColorController()) # this should be block[matcolctrl_id]
                 if ( alphactrl_id == -1 ):
-                    assert(nif.blocks[trimatprop_id].controller_id == -1) # make sure we don't overwrite anything
-                    nif.blocks[trimatprop_id].controller_id = matcolctrl_id
+                    assert(nif.blocks[trimatprop_id].controller == -1) # make sure we don't overwrite anything
+                    nif.blocks[trimatprop_id].controller = matcolctrl_id
                 else:
-                    assert(nif.blocks[alphactrl_id].next_controller_id == -1)
-                    nif.blocks[alphactrl_id].next_controller_id = matcolctrl_id
+                    assert(nif.blocks[alphactrl_id].next_controller == -1)
+                    nif.blocks[alphactrl_id].next_controller = matcolctrl_id
                 nif.header.nblocks += 1
 
                 # fill in the non-trivial values
@@ -856,62 +846,61 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 nif.blocks[matcolctrl_id].phase = 0.0
                 nif.blocks[matcolctrl_id].start_time = ftimes[0]
                 nif.blocks[matcolctrl_id].stop_time = ftimes[len(ftimes)-1]
-                nif.blocks[matcolctrl_id].parent_id = trimatprop_id
+                nif.blocks[matcolctrl_id].target_node = trimatprop_id
 
                 # add the material color data
                 matcoldata_id = last_id + 1
                 last_id = matcoldata_id
                 assert(matcoldata_id == len(nif.blocks)) # debug
-                nif.blocks.append(niflib.NiColorData())
-                nif.blocks[matcoldata_id].block_type.value = 'NiColorData'
-                nif.blocks[matcolctrl_id].data_id = matcoldata_id
+                nif.blocks.append(nif4.NiColorData())
+                nif.blocks[matcolctrl_id].data = matcoldata_id
                 nif.header.nblocks += 1
 
                 # export the resulting rgba curve
                 for ftime in ftimes:
-                    rgba_frame = niflib.NiColorDataElem()
+                    rgba_frame = nif4.keyrgba()
                     rgba_frame.time = ftime
                     rgba_frame.rgba = rgba_curve[ftime]
-                    nif.blocks[matcoldata_id].colors.append(rgba_frame)
-                nif.blocks[matcoldata_id].num_colors = len(nif.blocks[matcoldata_id].colors)
+                    nif.blocks[matcoldata_id].keys.indices.append(rgba_frame)
+                nif.blocks[matcoldata_id].keys.num_indices = len(nif.blocks[matcoldata_id].keys)
                 nif.blocks[matcoldata_id].dunno = 1
 
         # add NiTriShape's data
         tridata_id = last_id + 1
         last_id = tridata_id
         assert(tridata_id == len(nif.blocks))
-        nif.blocks.append(niflib.NiTriShapeData())
-        nif.blocks[tridata_id].block_type.value = 'NiTriShapeData'
-        nif.blocks[trishape_id].data_id = tridata_id
+        nif.blocks.append(nif4.NiTriShapeData())
+        nif.blocks[trishape_id].data = tridata_id
         nif.header.nblocks += 1
         
         # set faces, vertices, uv-vertices, and normals
-        nif.blocks[tridata_id].has_vertices = 1 # ? not sure what non-zero value to choose
-        nif.blocks[tridata_id].has_vertex_colours = mesh_hasvcol
+        nif.blocks[tridata_id].has_vertices = 1
+        nif.blocks[tridata_id].has_vertex_colors = mesh_hasvcol
         if (mesh_hastex):
-            nif.blocks[tridata_id].has_uv_vertices = 1 # ? not sure what non-zero value to choose
-            nif.blocks[tridata_id].num_texture_sets = 1 # for now, we only have one texture for this trishape
+            nif.blocks[tridata_id].has_uv = 1
+            nif.blocks[tridata_id].num_uv_sets = 1 # for now, we only have one texture for this trishape
         else:
-            nif.blocks[tridata_id].has_uv_vertices = 0
-            nif.blocks[tridata_id].num_texture_sets = 0
+            nif.blocks[tridata_id].has_uv = 0
+            nif.blocks[tridata_id].num_uv_sets = 0
         if (mesh_mat != None):
             nif.blocks[tridata_id].has_normals = 1 # if we have a material, we should add normals for proper lighting
         else:
             nif.blocks[tridata_id].has_normals = 0
-        nif.blocks[tridata_id].uv_vertex = [ [] ] * nif.blocks[tridata_id].num_texture_sets # uv_vertex now has num_texture_sets elements, namely, an empty list of uv vertices for each 'texture set'
+        nif.blocks[tridata_id].uv_sets = [ [] ] * nif.blocks[tridata_id].num_uv_sets # uv_sets now has num_uv_sets elements, namely, an empty list of uv vertices for each set of uv coordinates
 
         # Blender only supports one set of uv coordinates per mesh;
         # therefore, we shall have trouble when importing
         # multi-textured trishapes in blender. For this export script,
         # no problem: we must simply duplicate the uv vertex list.
 
-        # We now extract vertices, uv-vertices, and normals from the
-        # mesh's face list. NIF has one uv vertex and one normal per
-        # vertex, unlike blender's uv vertices and normals per
-        # face... therefore some vertices must be duplicated. The
-        # following algorithm extracts all unique (vert, uv-vert,
-        # normal) pairs, and uses this list to produce the list of
-        # vertices, uv-vertices, normals, and face indices.
+        # We now extract vertices, uv-vertices, normals, and vertex
+        # colors from the mesh's face list. NIF has one uv vertex and
+        # one normal per vertex, unlike blender's uv vertices and
+        # normals per face... therefore some vertices must be
+        # duplicated. The following algorithm extracts all unique
+        # (vert, uv-vert, normal, vcol) quads, and uses this list to
+        # produce the list of vertices, uv-vertices, normals, vertex
+        # colors, and face indices.
 
         # NIF uses the normal table for lighting. So, smooth faces
         # should use Blender's vertex normals, and solid faces should
@@ -929,18 +918,18 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
             f_numverts = len(f.v)
             if (f_numverts < 3): continue # ignore degenerate faces
             assert((f_numverts == 3) or (f_numverts == 4)) # debug
-            if (nif.blocks[tridata_id].has_uv_vertices):
+            if (nif.blocks[tridata_id].has_uv):
                 if (len(f.uv) != len(f.v)): # make sure we have UV data
                     raise NIFExportError('ERROR%t|Create a UV map for every texture, and run the script again.')
             # find (vert, uv-vert, normal, vcol) quad, and if not found, create it
             f_index = [ -1 ] * f_numverts
             for i in range(f_numverts):
-                fv = niflib.NiVector()
+                fv = nif4.vec3()
                 fv.x = f.v[i][0] * final_scale
                 fv.y = f.v[i][1] * final_scale
                 fv.z = f.v[i][2] * final_scale
                 # get vertex normal for lighting (smooth = Blender vertex normal, non-smooth = Blender face normal)
-                fn = niflib.NiVector()
+                fn = nif4.vec3()
                 if nif.blocks[tridata_id].has_normals:
                     if f.smooth:
                         fn.x = f.v[i].no[0]
@@ -952,14 +941,14 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                         fn.z = f.no[2]
                 else:
                     fn = None
-                if (nif.blocks[tridata_id].has_uv_vertices):
-                    fuv = niflib.NiUV()
+                if (nif.blocks[tridata_id].has_uv):
+                    fuv = nif4.vec2()
                     fuv.u = f.uv[i][0]
                     fuv.v = 1.0 - f.uv[i][1] # NIF flips the texture V-coordinate (OpenGL standard)
                 else:
                     fuv = None
-                if (nif.blocks[tridata_id].has_vertex_colours):
-                    fcol = niflib.NiRGBA()
+                if (nif.blocks[tridata_id].has_vertex_colors):
+                    fcol = nif4.rgba()
                     fcol.r = f.col[i].r / 255.0 # NIF stores the colour values as floats
                     fcol.g = f.col[i].g / 255.0
                     fcol.b = f.col[i].b / 255.0
@@ -973,14 +962,14 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                     if abs(vertquad[0].x - vertquad_list[j][0].x) > epsilon: continue
                     if abs(vertquad[0].y - vertquad_list[j][0].y) > epsilon: continue
                     if abs(vertquad[0].z - vertquad_list[j][0].z) > epsilon: continue
-                    if nif.blocks[tridata_id].has_uv_vertices:
+                    if nif.blocks[tridata_id].has_uv:
                         if abs(vertquad[1].u - vertquad_list[j][1].u) > epsilon: continue
                         if abs(vertquad[1].v - vertquad_list[j][1].v) > epsilon: continue
                     if nif.blocks[tridata_id].has_normals:
                         if abs(vertquad[2].x - vertquad_list[j][2].x) > epsilon: continue
                         if abs(vertquad[2].y - vertquad_list[j][2].y) > epsilon: continue
                         if abs(vertquad[2].z - vertquad_list[j][2].z) > epsilon: continue
-                    if nif.blocks[tridata_id].has_vertex_colours:
+                    if nif.blocks[tridata_id].has_vertex_colors:
                         if abs(vertquad[3].r - vertquad_list[j][3].r) > epsilon: continue
                         if abs(vertquad[3].g - vertquad_list[j][3].g) > epsilon: continue
                         if abs(vertquad[3].b - vertquad_list[j][3].b) > epsilon: continue
@@ -992,20 +981,20 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                     # new (vert, uv-vert, normal, vcol) quad: add it
                     vertquad_list.append(vertquad)
                     # add the vertex
-                    nif.blocks[tridata_id].vertex.append(fv)
+                    nif.blocks[tridata_id].vertices.append(fv)
                     # and add the vertex normal
                     if (nif.blocks[tridata_id].has_normals):
-                        nif.blocks[tridata_id].normal.append(fn)
+                        nif.blocks[tridata_id].normals.append(fn)
                     # for each texture set, add the uv-vertex
-                    if (nif.blocks[tridata_id].has_uv_vertices):
-                        for texset in range(nif.blocks[tridata_id].num_texture_sets):
-                            nif.blocks[tridata_id].uv_vertex[texset].append(fuv)
+                    if (nif.blocks[tridata_id].has_uv):
+                        for texset in range(nif.blocks[tridata_id].num_uv_sets):
+                            nif.blocks[tridata_id].uv_sets[texset].append(fuv)
                     # add the vertex colour
-                    if (nif.blocks[tridata_id].has_vertex_colours):
-                        nif.blocks[tridata_id].vertex_colour.append(fcol)
+                    if (nif.blocks[tridata_id].has_vertex_colors):
+                        nif.blocks[tridata_id].vertex_colors.append(fcol)
             # now add the (hopefully, convex) face, in triangles
             for i in range(f_numverts - 2):
-                f_indexed = niflib.NiFace()
+                f_indexed = nif4.face()
                 f_indexed.vert1 = f_index[0]
                 if (final_scale > 0):
                     f_indexed.vert2 = f_index[1+i]
@@ -1013,12 +1002,12 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 else:
                     f_indexed.vert2 = f_index[2+i]
                     f_indexed.vert3 = f_index[1+i]
-                nif.blocks[tridata_id].face.append(f_indexed)
+                nif.blocks[tridata_id].faces.append(f_indexed)
 
         # update the counters
         nif.blocks[tridata_id].num_vertices = len(vertquad_list)
-        nif.blocks[tridata_id].num_faces = len(nif.blocks[tridata_id].face)
-        nif.blocks[tridata_id].num_faces_x_3 = nif.blocks[tridata_id].num_faces * 3
+        nif.blocks[tridata_id].num_faces = len(nif.blocks[tridata_id].faces)
+        nif.blocks[tridata_id].num_faces_x3 = nif.blocks[tridata_id].num_faces * 3
 
         # center
         count = 0
@@ -1066,12 +1055,11 @@ def export_textureeffect(ob, parent_block_id, parent_scale, nif):
     texeff_id = last_id + 1
     last_id = texeff_id
     assert(texeff_id == len(nif.blocks)) # debug
-    nif.blocks.append(niflib.NiTextureEffect()) # this should be block[texeff_id]
-    nif.blocks[texeff_id].block_type.value = 'NiTextureEffect'
-    nif.blocks[parent_block_id].child_id.append(texeff_id)
-    nif.blocks[parent_block_id].num_children += 1
-    nif.blocks[parent_block_id].effect_id.append(texeff_id)
-    nif.blocks[parent_block_id].num_effects += 1
+    nif.blocks.append(nif4.NiTextureEffect()) # this should be block[texeff_id]
+    nif.blocks[parent_block_id].children.indices.append(texeff_id)
+    nif.blocks[parent_block_id].children.num_indices += 1
+    nif.blocks[parent_block_id].effects.indices.append(texeff_id)
+    nif.blocks[parent_block_id].effects.num_indices += 1
     nif.header.nblocks += 1
         
     # fill in the NiTextureEffect's non-trivial values
@@ -1089,30 +1077,30 @@ def export_textureeffect(ob, parent_block_id, parent_scale, nif):
     nif.blocks[texeff_id].scale = 1.0;
     
     # guessing
-    nif.blocks[texeff_id].dunno2[0] = 1.0
-    nif.blocks[texeff_id].dunno2[1] = 0.0
-    nif.blocks[texeff_id].dunno2[2] = 0.0
-    nif.blocks[texeff_id].dunno2[3] = 0.0
-    nif.blocks[texeff_id].dunno2[4] = 1.0
-    nif.blocks[texeff_id].dunno2[5] = 0.0
-    nif.blocks[texeff_id].dunno2[6] = 0.0
-    nif.blocks[texeff_id].dunno2[7] = 0.0
-    nif.blocks[texeff_id].dunno2[8] = 1.0
-    nif.blocks[texeff_id].dunno2[9] = 0.0
-    nif.blocks[texeff_id].dunno2[10] = 0.0
-    nif.blocks[texeff_id].dunno2[11] = 0.0
-    nif.blocks[texeff_id].dunno3 = 2
-    nif.blocks[texeff_id].dunno4 = 3
-    nif.blocks[texeff_id].dunno5 = 2
-    nif.blocks[texeff_id].dunno6 = 2
-    nif.blocks[texeff_id].dunno7 = 0
-    nif.blocks[texeff_id].dunno8[0] = 1.0
-    nif.blocks[texeff_id].dunno8[1] = 0.0
-    nif.blocks[texeff_id].dunno8[2] = 0.0
-    nif.blocks[texeff_id].dunno8[3] = 0.0
+    nif.blocks[texeff_id].unknown2[0] = 1.0
+    nif.blocks[texeff_id].unknown2[1] = 0.0
+    nif.blocks[texeff_id].unknown2[2] = 0.0
+    nif.blocks[texeff_id].unknown2[3] = 0.0
+    nif.blocks[texeff_id].unknown2[4] = 1.0
+    nif.blocks[texeff_id].unknown2[5] = 0.0
+    nif.blocks[texeff_id].unknown2[6] = 0.0
+    nif.blocks[texeff_id].unknown2[7] = 0.0
+    nif.blocks[texeff_id].unknown2[8] = 1.0
+    nif.blocks[texeff_id].unknown2[9] = 0.0
+    nif.blocks[texeff_id].unknown2[10] = 0.0
+    nif.blocks[texeff_id].unknown2[11] = 0.0
+    nif.blocks[texeff_id].unknown3[0] = 2
+    nif.blocks[texeff_id].unknown3[1] = 3
+    nif.blocks[texeff_id].unknown3[2] = 2
+    nif.blocks[texeff_id].unknown3[3] = 2
+    nif.blocks[texeff_id].unknown4 = 0
+    nif.blocks[texeff_id].unknown5[0] = 1.0
+    nif.blocks[texeff_id].unknown5[1] = 0.0
+    nif.blocks[texeff_id].unknown5[2] = 0.0
+    nif.blocks[texeff_id].unknown5[3] = 0.0
     nif.blocks[texeff_id].ps2_l = 0
-    nif.blocks[texeff_id].ps2_k = -75
-    nif.blocks[texeff_id].dunno9 = 0
+    nif.blocks[texeff_id].ps2_k = 0xFFB5
+    nif.blocks[texeff_id].unknown6 = 0
 
     # add NiTextureEffect's texture source
     nif.blocks[texeff_id].source_id = 91
@@ -1120,17 +1108,16 @@ def export_textureeffect(ob, parent_block_id, parent_scale, nif):
     texsrc_id = last_id + 1
     last_id = texsrc_id
     assert(texsrc_id == len(nif.blocks)) # debug
-    nif.blocks.append(niflib.NiSourceTexture())
-    nif.blocks[texsrc_id].block_type.value = 'NiSourceTexture'
-    nif.blocks[texeff_id].source_id = texsrc_id
+    nif.blocks.append(nif4.NiSourceTexture())
+    nif.blocks[texeff_id].source = texsrc_id
     nif.header.nblocks += 1
             
-    nif.blocks[texsrc_id].external = 1
-    nif.blocks[texsrc_id].texture_file_name.value = 'enviro 01.TGA' # ?
+    nif.blocks[texsrc_id].use_external = 1
+    nif.blocks[texsrc_id].file_name = nif4.mystring('enviro 01.TGA') # ?
     nif.blocks[texsrc_id].pixel_layout = 5 # default?
     nif.blocks[texsrc_id].mipmap = 1 # default?
     nif.blocks[texsrc_id].alpha = 3 # default?
-    nif.blocks[texsrc_id].dunno1 = 1 # ?
+    nif.blocks[texsrc_id].unknown2 = 1 # ?
 
     return nif
 
@@ -1160,10 +1147,10 @@ def export_children(ob, ob_block_id, parent_scale, nif):
 #
 def export_matrix(ob, space):
     global epsilon
-    nt = niflib.NiVector()
-    nr = niflib.NiMatrix()
-    ns = niflib.NiVector()
-    nv = niflib.NiVector()
+    nt = nif4.vec3()
+    nr = nif4.mat3x3()
+    ns = nif4.vec3()
+    nv = nif4.vec3()
     
     # decompose
     bs, br, bt = getObjectSRT(ob, space)
@@ -1274,9 +1261,8 @@ def get_distance(v, w):
 
 # (WARNING this function changes it's argument, you should only call this after writing <root_name>.nif and x<root_name>.nif)
 def export_xkf(nif):
-    xkf = niflib.NIF()
-    xkf.blocks.append( niflib.NiSequenceStreamHelper() )
-    xkf.blocks[0].block_type.value = 'NiSequenceStreamHelper'
+    xkf = nif4.NIF()
+    xkf.blocks.append( nif4.NiSequenceStreamHelper() )
     xkf.header.nblocks += 1
 
     controller_id = []
@@ -1285,7 +1271,7 @@ def export_xkf(nif):
     for block in nif.blocks:
         if (block.block_type.value == 'NiTextKeyExtraData'):
             xkf.blocks.append(block) # we can do this: it does not contain any references
-            xkf.blocks[0].extra_data_id = xkf.header.nblocks
+            xkf.blocks[0].extra_data = xkf.header.nblocks
             last_extra_id = xkf.header.nblocks
             xkf.header.nblocks += 1
             break
@@ -1295,15 +1281,14 @@ def export_xkf(nif):
     # find nodes with keyframe controller
     for block in nif.blocks:
         if (block.block_type.value == "NiNode"):
-            if (block.next_controller_id >= 0):
-                controller_id.append( block.next_controller_id )
+            if (block.controller >= 0):
+                controller_id.append( block.controller )
                 # link to the original node with a NiStringExtraData
-                xkf.blocks[last_extra_id].extra_data_id = xkf.header.nblocks
+                xkf.blocks[last_extra_id].extra_data = xkf.header.nblocks
                 last_extra_id = xkf.header.nblocks + 1
-                stringextra = niflib.NiStringExtraData()
-                stringextra.block_type.value = 'NiStringExtraData'
-                stringextra.string_data.value = block.name.value
-                stringextra.dunno = 4 + len(stringextra.string_data.value) # length of the string_data
+                stringextra = nif4.NiStringExtraData()
+                stringextra.string_data = block.name
+                stringextra.bytes_remaining = 4 + len(stringextra.string_data.value)
                 xkf.blocks.append(stringextra)
                 xkf.header.nblocks += 1
 
@@ -1314,16 +1299,16 @@ def export_xkf(nif):
         # get the keyframe controller block from nif
         kfcontroller = nif.blocks[ cid ]
         xkf.blocks.append( nif.blocks[ cid ] ) # copy it
-        xkf.blocks[ last_controller_id ].next_controller_id = xkf.header.nblocks # refer to it
+        xkf.blocks[ last_controller_id ].next_controller = xkf.header.nblocks # refer to it
         last_controller_id = xkf.header.nblocks
         xkf.header.nblocks += 1
 
-        assert(kfcontroller.data_id >= 0) # debug
-        xkf.blocks.append( nif.blocks[ kfcontroller.data_id ] )
+        assert(kfcontroller.data >= 0) # debug
+        xkf.blocks.append( nif.blocks[ kfcontroller.data ] )
 
         # now "fix" the references
-        xkf.blocks[ last_controller_id ].parent_id = -1
-        xkf.blocks[ last_controller_id ].data_id = xkf.header.nblocks
+        xkf.blocks[ last_controller_id ].target_node = -1
+        xkf.blocks[ last_controller_id ].data = xkf.header.nblocks
         xkf.header.nblocks += 1
     
     return xkf
