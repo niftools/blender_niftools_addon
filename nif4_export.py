@@ -75,7 +75,7 @@ strip_texpath = 2     # 0 = use full texture file path (obsolete?)
                       # 1 = basedir/filename.ext (strip 'data files' prefix for morrowind)
                       # 2 = filename.ext (original morrowind style)
 vertex_opt = 0        # 0 = minimum vertex array optimization (fast)
-                      # 1 = remove double vertices on the fly (slow, generates smallest nif possible)
+                      # 1 = remove double vertices on the fly (can be extremely slow, but generates smallest nif possible)
 
 
 
@@ -473,11 +473,19 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
     assert(ob.getType() == 'Mesh')
 
     # get mesh from ob
-    mesh = Blender.NMesh.GetRaw(ob.data.name)
+    mesh_orig = Blender.NMesh.GetRaw(ob.data.name) # original non-subsurfed mesh
+    try:
+        mesh = Blender.NMesh.GetRawFromObject(ob.name) # subsurf
+    except:
+        mesh = mesh_orig
 
-    # get the mesh's materials
-    mesh_mats = mesh.getMaterials(1) # the argument guarantees that the material list agrees with the face material indices
+    # get the mesh's materials, this updates the mesh material list,
+    # which is forbidden on GetRawFromObject meshes, so use mesh_orig
+    # to get material list
+    mesh_mats = mesh_orig.getMaterials(1) # the argument guarantees that the material list agrees with the face material indices
     
+    print "2"
+
     # if the mesh has no materials, all face material indices should be 0, so it's ok to fake one material in the material list
     if (mesh_mats == []):
         mesh_mats = [ None ]
@@ -576,7 +584,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
             
             nif.blocks[tritexprop_id].has_base_texture = 1
             nif.blocks[tritexprop_id].base_texture.clamp_mode = 3 # wrap in both directions
-            nif.blocks[tritexprop_id].base_texture.filtermode = 2 # standard?
+            nif.blocks[tritexprop_id].base_texture.filter_mode = 2 # standard?
             nif.blocks[tritexprop_id].base_texture.texture_set = 0 # ? standard
             nif.blocks[tritexprop_id].base_texture.ps2_l = 0 # ? standard 
             nif.blocks[tritexprop_id].base_texture.ps2_k = 0xFFB5 # ? standard
@@ -977,9 +985,6 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                         # iterate only over vertices with the same vertex index
                         # and check if they have the same uvs, normals and colors (wow is that fast!)
                         for j in vertmap[v_index]:
-                            if abs(vertquad[0].x - vertquad_list[j][0].x) > epsilon: continue # obsolete?
-                            if abs(vertquad[0].y - vertquad_list[j][0].y) > epsilon: continue # obsolete?
-                            if abs(vertquad[0].z - vertquad_list[j][0].z) > epsilon: continue # obsolete?
                             if nif.blocks[tridata_id].has_uv:
                                 if abs(vertquad[1].u - vertquad_list[j][1].u) > epsilon: continue
                                 if abs(vertquad[1].v - vertquad_list[j][1].v) > epsilon: continue
