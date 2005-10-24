@@ -1039,13 +1039,13 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
             # now add the (hopefully, convex) face, in triangles
             for i in range(f_numverts - 2):
                 f_indexed = nif4.face()
-                f_indexed.vert1 = f_index[0]
+                f_indexed.v1 = f_index[0]
                 if (final_scale > 0):
-                    f_indexed.vert2 = f_index[1+i]
-                    f_indexed.vert3 = f_index[2+i]
+                    f_indexed.v2 = f_index[1+i]
+                    f_indexed.v3 = f_index[2+i]
                 else:
-                    f_indexed.vert2 = f_index[2+i]
-                    f_indexed.vert3 = f_index[1+i]
+                    f_indexed.v2 = f_index[2+i]
+                    f_indexed.v3 = f_index[1+i]
                 nif.blocks[tridata_id].faces.append(f_indexed)
 
         # update the counters
