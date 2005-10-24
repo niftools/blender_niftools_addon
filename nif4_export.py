@@ -505,7 +505,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
             mesh_mat_diffuse_colour = mesh_mat.getRGBCol()   # 'Col' colour in Blender (MW -> 1.0 1.0 1.0)
             mesh_mat_specular_colour = mesh_mat.getSpecCol() # 'Spe' colour in Blender (MW -> 0.0 0.0 0.0)
             mesh_mat_emissive = mesh_mat.getEmit()           # 'Emit' scrollbar in Blender (MW -> 0.0 0.0 0.0)
-            mesh_mat_shininess = mesh_mat.getSpec() / 2.0    # 'Spec' scrollbar in Blender, takes values between 0.0 and 2.0 (MW -> 0.0)
+            mesh_mat_glossiness = mesh_mat.getSpec() / 2.0    # 'Spec' scrollbar in Blender, takes values between 0.0 and 2.0 (MW -> 0.0)
             mesh_mat_transparency = mesh_mat.getAlpha()      # 'A(lpha)' scrollbar in Blender (MW -> 1.0)
             mesh_hasalpha = (abs(mesh_mat_transparency - 1.0) > epsilon) \
                             or (mesh_mat.getIpo() != None and mesh_mat.getIpo().getCurve('Alpha'))
@@ -523,11 +523,9 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                         # got the base texture
                         mesh_base_tex = mtex.tex
                         mesh_hastex = 1 # flag that we have textures, and that we should export UV coordinates
-                        # check if alpha channel is enabled for this texture; if so, set everything ready to override material alpha by texture alpha channel
+                        # check if alpha channel is enabled for this texture
                         if ((mesh_base_tex.imageFlags & Blender.Texture.ImageFlags.USEALPHA) and (mtex.mapto & Blender.Texture.MapTo.ALPHA)):
-                            if (mesh_mat_transparency > epsilon):
-                                raise NIFExportError("Alpha enabled textures can only be correctly exported with material alpha value 0.0")
-                            mesh_mat_transparency = 0.0
+                            # yes: material alpha is multiplied with texture alpha channel
                             mesh_hasalpha = 1
                             mesh_base_tex_alpha = 1
                     else:
@@ -621,7 +619,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
             nif.blocks[tritexsrc_id].pixel_layout = 5 # default
             nif.blocks[tritexsrc_id].use_mipmaps = 2  # default
             # choose alpha mapping
-            # if ALPHA_DEFAULT is selected the texture alpha channel overides the material settings
+            # if ALPHA_DEFAULT is selected the texture alpha channel is multiplied with the material alpha setting
             # if ALPHA_NONE is selected the material alpha setting is used
             if ( mesh_base_tex_alpha ):
                 nif.blocks[tritexsrc_id].alpha_format = 3 # ALPHA_DEFAULT
@@ -697,7 +695,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
 
         if (mesh_mat != None):
             # add NiTriShape's specular property
-            if ( mesh_mat_shininess > epsilon ):
+            if ( mesh_mat_glossiness > epsilon ):
                 trispecprop_id = last_id + 1
                 last_id = trispecprop_id
                 assert(trispecprop_id == len(nif.blocks))
@@ -731,7 +729,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
             nif.blocks[trimatprop_id].emissive_color.r = mesh_mat_emissive * mesh_mat_diffuse_colour[0]
             nif.blocks[trimatprop_id].emissive_color.g = mesh_mat_emissive * mesh_mat_diffuse_colour[1]
             nif.blocks[trimatprop_id].emissive_color.b = mesh_mat_emissive * mesh_mat_diffuse_colour[2]
-            nif.blocks[trimatprop_id].glossiness = mesh_mat_shininess
+            nif.blocks[trimatprop_id].glossiness = mesh_mat_glossiness
             nif.blocks[trimatprop_id].alpha = mesh_mat_transparency
             
             # refer to the material property in the trishape block
