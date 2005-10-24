@@ -74,6 +74,8 @@ force_dds = 0         # 0 = use original texture file extension, 1 = force dds e
 strip_texpath = 2     # 0 = use full texture file path (obsolete?)
                       # 1 = basedir/filename.ext (strip 'data files' prefix for morrowind)
                       # 2 = filename.ext (original morrowind style)
+vertex_opt = 0        # 0 = minimum vertex array optimization (fast)
+                      # 1 = remove double vertices on the fly (slow, generates smallest nif possible)
 
 
 
@@ -914,6 +916,8 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
         # use Blender's face normals.
         
         vertquad_list = [] # (vertex, uv coordinate, normal, vertex color) list
+        vertmap = [ None ] * len( mesh.verts ) # blender vertex -> nif vertices
+            # this map will speed up the exporter to a great degree (may be useful too when exporting NiMorphData)
         count = 0
         for f in mesh.faces:
             if show_progress >= 2: Blender.Window.DrawProgressBar(0.33 * float(count)/len(mesh.faces), "Converting to NIF (%s)"%ob.getName())
@@ -962,29 +966,62 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                     fcol.a = f.col[i].a / 255.0
                 else:
                     fcol = None
-                # do we already have this quad? (optimized by m4444x)
+                    
                 vertquad = ( fv, fuv, fn, fcol )
+
+                # do we already have this quad? (optimized by m4444x)
                 f_index[i] = len(vertquad_list)
-                for j in range(len(vertquad_list)):
-                    if abs(vertquad[0].x - vertquad_list[j][0].x) > epsilon: continue
-                    if abs(vertquad[0].y - vertquad_list[j][0].y) > epsilon: continue
-                    if abs(vertquad[0].z - vertquad_list[j][0].z) > epsilon: continue
-                    if nif.blocks[tridata_id].has_uv:
-                        if abs(vertquad[1].u - vertquad_list[j][1].u) > epsilon: continue
-                        if abs(vertquad[1].v - vertquad_list[j][1].v) > epsilon: continue
-                    if nif.blocks[tridata_id].has_normals:
-                        if abs(vertquad[2].x - vertquad_list[j][2].x) > epsilon: continue
-                        if abs(vertquad[2].y - vertquad_list[j][2].y) > epsilon: continue
-                        if abs(vertquad[2].z - vertquad_list[j][2].z) > epsilon: continue
-                    if nif.blocks[tridata_id].has_vertex_colors:
-                        if abs(vertquad[3].r - vertquad_list[j][3].r) > epsilon: continue
-                        if abs(vertquad[3].g - vertquad_list[j][3].g) > epsilon: continue
-                        if abs(vertquad[3].b - vertquad_list[j][3].b) > epsilon: continue
-                        if abs(vertquad[3].a - vertquad_list[j][3].a) > epsilon: continue
-                    # all tests passed: so yes, we already have it!
-                    f_index[i] = j
-                    break
+                v_index = f.v[i].index
+                if ( vertex_opt == 0 ):
+                    if vertmap[v_index]:
+                        # iterate only over vertices with the same vertex index
+                        # and check if they have the same uvs, normals and colors (wow is that fast!)
+                        for j in vertmap[v_index]:
+                            if abs(vertquad[0].x - vertquad_list[j][0].x) > epsilon: continue # obsolete?
+                            if abs(vertquad[0].y - vertquad_list[j][0].y) > epsilon: continue # obsolete?
+                            if abs(vertquad[0].z - vertquad_list[j][0].z) > epsilon: continue # obsolete?
+                            if nif.blocks[tridata_id].has_uv:
+                                if abs(vertquad[1].u - vertquad_list[j][1].u) > epsilon: continue
+                                if abs(vertquad[1].v - vertquad_list[j][1].v) > epsilon: continue
+                            if nif.blocks[tridata_id].has_normals:
+                                if abs(vertquad[2].x - vertquad_list[j][2].x) > epsilon: continue
+                                if abs(vertquad[2].y - vertquad_list[j][2].y) > epsilon: continue
+                                if abs(vertquad[2].z - vertquad_list[j][2].z) > epsilon: continue
+                            if nif.blocks[tridata_id].has_vertex_colors:
+                                if abs(vertquad[3].r - vertquad_list[j][3].r) > epsilon: continue
+                                if abs(vertquad[3].g - vertquad_list[j][3].g) > epsilon: continue
+                                if abs(vertquad[3].b - vertquad_list[j][3].b) > epsilon: continue
+                                if abs(vertquad[3].a - vertquad_list[j][3].a) > epsilon: continue
+                            # all tests passed: so yes, we already have it!
+                            f_index[i] = j
+                            break
+                else:
+                    # iterate over all vertices exported so far and check if one is matching
+                    for j in range(len(vertquad_list)):
+                        if abs(vertquad[0].x - vertquad_list[j][0].x) > epsilon: continue
+                        if abs(vertquad[0].y - vertquad_list[j][0].y) > epsilon: continue
+                        if abs(vertquad[0].z - vertquad_list[j][0].z) > epsilon: continue
+                        if nif.blocks[tridata_id].has_uv:
+                            if abs(vertquad[1].u - vertquad_list[j][1].u) > epsilon: continue
+                            if abs(vertquad[1].v - vertquad_list[j][1].v) > epsilon: continue
+                        if nif.blocks[tridata_id].has_normals:
+                            if abs(vertquad[2].x - vertquad_list[j][2].x) > epsilon: continue
+                            if abs(vertquad[2].y - vertquad_list[j][2].y) > epsilon: continue
+                            if abs(vertquad[2].z - vertquad_list[j][2].z) > epsilon: continue
+                        if nif.blocks[tridata_id].has_vertex_colors:
+                            if abs(vertquad[3].r - vertquad_list[j][3].r) > epsilon: continue
+                            if abs(vertquad[3].g - vertquad_list[j][3].g) > epsilon: continue
+                            if abs(vertquad[3].b - vertquad_list[j][3].b) > epsilon: continue
+                            if abs(vertquad[3].a - vertquad_list[j][3].a) > epsilon: continue
+                        # all tests passed: so yes, we already have it!
+                        f_index[i] = j
+                        break
+                    
                 if (f_index[i] == len(vertquad_list)):
+                    # first: add it to the vertex map
+                    if not vertmap[v_index]:
+                        vertmap[v_index] = []
+                    vertmap[v_index].append( len(vertquad_list) )
                     # new (vert, uv-vert, normal, vcol) quad: add it
                     vertquad_list.append(vertquad)
                     # add the vertex
