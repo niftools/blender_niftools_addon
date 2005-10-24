@@ -497,7 +497,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
         mesh_base_tex = None
         mesh_base_tex_alpha = 0 # set to 1 if the texture alpha channel overrides the material alpha value
         mesh_hasalpha = 0
-        mesh_hastex = 0
+        mesh_hastex = 0 # non-zero if we have at least one texture
         mesh_hasvcol = mesh.hasVertexColours()
         if (mesh_mat != None):
             mesh_hasvcol = mesh_hasvcol or (mesh_mat.mode & Blender.Material.Modes.VCOL_PAINT) # read the Blender Python API documentation to understand this hack
@@ -522,6 +522,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                             raise NIFExportError("Non-COL-mapped texture in mesh '%s', material '%s', these cannot be exported to NIF. Either delete all non-COL-mapped textures, or in the Shading Panel, under Material Buttons, set texture 'Map To' to 'COL'."%(mesh.getName(),mesh_mat.getName()))
                         # got the base texture
                         mesh_base_tex = mtex.tex
+                        mesh_hastex = 1 # flag that we have textures, and that we should export UV coordinates
                         # check if alpha channel is enabled for this texture; if so, set everything ready to override material alpha by texture alpha channel
                         if ((mesh_base_tex.imageFlags & Blender.Texture.ImageFlags.USEALPHA) and (mtex.mapto & Blender.Texture.MapTo.ALPHA)):
                             if (mesh_mat_transparency > epsilon):
