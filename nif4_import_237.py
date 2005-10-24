@@ -148,6 +148,7 @@ nifToBlendXform = Matrix( # Scale x 0.1
 	[ 0.0,  0.1,  0.0,  0.0],
 	[ 0.0,  0.0,  0.1,  0.0],
 	[ 0.0,  0.0,  0.0,  1.0])
+epsilon = 0.005 # used for checking equality of floats
 
 #Blender 'invert()' method modifies the original matrix rather than returning a new one. 
 def invert(mat):
@@ -1559,19 +1560,21 @@ def createMesh(block):
 	vertpairs = []
 	vertmap = []
 	for i in range(len(verts)):
-		x, y , z = verts[i]
+		x, y, z = verts[i]
 		if hasVertexNormals:
 			nx, ny, nz = vertNorms[i]
 		found = 0
 		for j, vertpair in enumerate(vertpairs):
-			dist = \
-			abs(x - vertpair[0][0]) + abs(y - vertpair[0][1]) + abs(z - vertpair[0][2])
+			if abs(x - vertpair[0][0]) > epsilon: continue
+			if abs(y - vertpair[0][1]) > epsilon: continue
+			if abs(z - vertpair[0][2]) > epsilon: continue
 			if hasVertexNormals:
-				dist += abs(nx - vertpair[1][0]) + abs(ny - vertpair[1][1]) + abs(nz - vertpair[1][2])
-			if (dist < 0.005):
-				vertmap.append(j) # vertmap[i] = j
-				found = 1
-				break
+				if abs(nx - vertpair[1][0]) > epsilon: continue
+				if abs(ny - vertpair[1][1]) > epsilon: continue
+				if abs(nz - vertpair[1][2]) > epsilon: continue
+			vertmap.append(j) # vertmap[i] = j
+		       	found = 1
+		       	break
 		if found == 0:
 			if hasVertexNormals:
 				vertpairs.append( ( verts[i], vertNorms[i] ) )
@@ -1687,51 +1690,52 @@ def createMesh(block):
 	# morphing
 	morphCtrl = triShape.getNiGeomMorpherController()
 	if morphCtrl:
-            morphData = morphCtrl.getNiMorphData()
-            if morphData and ( len( meshData.verts ) == morphData.NumVertices ) and ( morphData.NumMorphBlocks > 0 ):
-                # insert base key
-                meshData.insertKey( 0, 'relative' )
-                frameCnt, frameType, frames, baseverts = morphData.MorphBlocks[0]
-                ipo = Blender.Ipo.New( 'Key', 'KeyIpo' )
-                # iterate through the list of other morph keys
-                for key in range( 1, morphData.NumMorphBlocks ):
-                    frameCnt, frameType, frames, verts = morphData.MorphBlocks[key]
-                    # for each vertex calculate the key position from base pos + delta offset
-                    for count in range( morphData.NumVertices ):
-                        x, y, z = baseverts[count]
-                        dx, dy, dz = verts[count]
-                        meshData.verts[count].co[0] = x + dx
-                        meshData.verts[count].co[1] = y + dy
-                        meshData.verts[count].co[2] = z + dz
-                    # update the mesh and insert key
-                    meshData.update(0)
-                    meshData.insertKey(count, 'relative')
-                    # set up the ipo key curve
-                    curve = ipo.addCurve( 'Key %i'%key )
-                    # dunno how to set up the bezier triples -> switching to linear instead
-                    curve.setInterpolation( 'Linear' )
-                    # select extrapolation
-                    if ( morphCtrl.Flags == 0x000c ):
-                        curve.setExtrapolation( 'Constant' )
-                    elif ( morphCtrl.Flags == 0x0008 ):
-                        curve.setExtrapolation( 'Cyclic' )
-                    else:
-                        debugMsg( 'dunno which extrapolation to use: using constant instead' );
-                        curve.setExtrapolation( 'Constant' )
-                    # set up the curve's control points
-                    for count in range( frameCnt ):
-                        time, x, y, z = frames[count]
-                        frame = time * Blender.Scene.getCurrent().getRenderingContext().framesPerSec() + 1
-                        curve.addBezier( ( frame, x ) )
-                # hmm... assign ipo to mesh ???
-                #meshData.setIpo( ipo )
-                # finally: return to base position
-                for count in range( morphData.NumVertices ):
-                    x, y, z = baseverts[count]
-                    meshData.verts[count].co[0] = x
-                    meshData.verts[count].co[1] = y
-                    meshData.verts[count].co[2] = z
-                meshData.update(0)
+		morphData = morphCtrl.getNiMorphData()
+		if morphData and ( morphData.NumMorphBlocks > 0 ):
+			# insert base key
+			meshData.insertKey( 0, 'relative' )
+			frameCnt, frameType, frames, baseverts = morphData.MorphBlocks[0]
+			ipo = Blender.Ipo.New( 'Key', 'KeyIpo' )
+			# iterate through the list of other morph keys
+			for key in range( 1, morphData.NumMorphBlocks ):
+				frameCnt, frameType, frames, verts = morphData.MorphBlocks[key]
+				# for each vertex calculate the key position from base pos + delta offset
+				for count in range( morphData.NumVertices ):
+					x, y, z = baseverts[count]
+					dx, dy, dz = verts[count]
+					meshData.verts[vertmap[count]].co[0] = x + dx
+					meshData.verts[vertmap[count]].co[1] = y + dy
+					meshData.verts[vertmap[count]].co[2] = z + dz
+				# update the mesh and insert key
+				meshData.update(1) # recalculate normals
+				meshData.insertKey(key, 'relative')
+				# set up the ipo key curve
+				curve = ipo.addCurve( 'Key %i'%key )
+				# dunno how to set up the bezier triples -> switching to linear instead
+				curve.setInterpolation( 'Linear' )
+				# select extrapolation
+				if ( morphCtrl.Flags == 0x000c ):
+					curve.setExtrapolation( 'Constant' )
+				elif ( morphCtrl.Flags == 0x0008 ):
+					curve.setExtrapolation( 'Cyclic' )
+				else:
+					debugMsg( 'dunno which extrapolation to use: using constant instead' );
+					curve.setExtrapolation( 'Constant' )
+				# set up the curve's control points
+				for count in range( frameCnt ):
+					time, x, y, z = frames[count]
+					frame = time * Blender.Scene.getCurrent().getRenderingContext().framesPerSec() + 1
+					curve.addBezier( ( frame, x ) )
+				# finally: return to base position
+				for count in range( morphData.NumVertices ):
+					x, y, z = baseverts[count]
+					meshData.verts[vertmap[count]].co[0] = x
+					meshData.verts[vertmap[count]].co[1] = y
+					meshData.verts[vertmap[count]].co[2] = z
+				meshData.update(1) # recalculate normals
+			# assign ipo to mesh (not supported by Blender API?)
+			#meshData.setIpo( ipo )
+				
 	return meshObj
 
 #----------------------------------------------------------------------------------------------------#
