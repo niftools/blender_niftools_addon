@@ -71,6 +71,9 @@ epsilon = 0.005       # used for checking equality of floats
 show_progress = 1     # 0 = off, 1 = basic, 2 = advanced (but slows down the exporter)
 scale_correction = 10 # 1 blender unit = 10 nif units
 force_dds = 0         # 0 = use original texture file extension, 1 = force dds extension
+strip_texpath = 2     # 0 = use full texture file path (obsolete?)
+                      # 1 = basedir/filename.ext (strip 'data files' prefix for morrowind)
+                      # 2 = filename.ext (original morrowind style)
 
 
 
@@ -586,19 +589,23 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
             nif.header.nblocks += 1
             
             nif.blocks[tritexsrc_id].use_external = 1
-            # strip the data base dir from the texture file name
-            #tfn = mesh_base_tex.image.getFilename().lower()
-            #idx = tfn.find( "data files" )
-            #if ( idx >= 0 ):
-            #    tfn = tfn[idx+10:len(tfn)]
-            #    tfn = tfn.replace( '/', '\\' )
-            #    if ( tfn[ 0 ] == '\\' ):
-            #        tfn = tfn[1:len(tfn)]
-            #    #print "Texture: %s"%tfn
-            #    nif.blocks[tritexsrc_id].file_name = nif4.mystring(tfn)
-            #else:
-            #    nif.blocks[tritexsrc_id].file_name = nif4.mystring(Blender.sys.basename(mesh_base_tex.image.getFilename()))
-            nif.blocks[tritexsrc_id].file_name = nif4.mystring(Blender.sys.basename(mesh_base_tex.image.getFilename()))
+            if ( strip_texpath == 2 ):
+                # strip texture file path (original morrowind style)
+                nif.blocks[tritexsrc_id].file_name = nif4.mystring(Blender.sys.basename(mesh_base_tex.image.getFilename()))
+            elif ( strip_texpath == 1 ):
+                # strip the data files prefix from the texture's file name
+                tfn = mesh_base_tex.image.getFilename().lower()
+                idx = tfn.find( "data files" )
+                if ( idx >= 0 ):
+                    tfn = tfn[idx+10:len(tfn)]
+                    tfn = tfn.strip( '/\\' )
+                    #print "Texture: %s"%tfn
+                    nif.blocks[tritexsrc_id].file_name = nif4.mystring(tfn)
+                else:
+                    nif.blocks[tritexsrc_id].file_name = nif4.mystring(Blender.sys.basename(mesh_base_tex.image.getFilename()))
+            else:
+                # export full texture path
+                nif.blocks[tritexsrc_id].file_name = nif4.mystring(mesh_base_tex.image.getFilename())
             # force dds extension, if requested
             if force_dds:
                 nif.blocks[tritexsrc_id].file_name.value = nif.blocks[tritexsrc_id].file_name.value[:-4] + '.dds'
