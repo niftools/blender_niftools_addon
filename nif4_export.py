@@ -499,7 +499,10 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
         mesh_hastex = 0 # non-zero if we have at least one texture
         mesh_hasvcol = mesh.hasVertexColours()
         if (mesh_mat != None):
-            mesh_hasvcol = mesh_hasvcol or (mesh_mat.mode & Blender.Material.Modes.VCOL_LIGHT) or (mesh_mat.mode & Blender.Material.Modes.VCOL_PAINT) # read the Blender Python API documentation to understand this hack
+            # for non-textured materials, vertex colors are used to color the mesh
+            # for textured materials, they represent lighting details
+            mesh_hasvcol = mesh_hasvcol or (mesh_mat.mode & Blender.Material.Modes.VCOL_LIGHT) or (mesh_mat.mode & Blender.Material.Modes.VCOL_PAINT)
+            # read the Blender Python API documentation to understand this hack
             mesh_mat_ambient = mesh_mat.getAmb()             # 'Amb' scrollbar in blender (MW -> 1.0 1.0 1.0)
             mesh_mat_diffuse_colour = mesh_mat.getRGBCol()   # 'Col' colour in Blender (MW -> 1.0 1.0 1.0)
             mesh_mat_specular_colour = mesh_mat.getSpecCol() # 'Spe' colour in Blender (MW -> 0.0 0.0 0.0)

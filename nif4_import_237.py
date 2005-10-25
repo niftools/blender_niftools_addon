@@ -149,6 +149,8 @@ nifToBlendXform = Matrix( # Scale x 0.1
 	[ 0.0,  0.0,  0.1,  0.0],
 	[ 0.0,  0.0,  0.0,  1.0])
 epsilon = 0.005 # used for checking equality of floats
+option_texpath = 1 # 0 = look in the same folder as the NIF file
+                   # 1 = assume original Morrowind style NIF path & texture path
 
 #Blender 'invert()' method modifies the original matrix rather than returning a new one. 
 def invert(mat):
@@ -1616,6 +1618,10 @@ def createMesh(block):
 				B = int(B * 255)
 				A = int(A * 255)
 				meshData.faces[i].col.append(Blender.NMesh.Col(R, G, B, A))
+		# vertex colors influence lighting...
+		# so now we have to set the VCOL_LIGHT flag on the material
+		# see below
+
 	# Nif files only support 'sticky' UV coordinates, and duplicates vertices to emulate hard edges and UV seams.
 	# Essentially whenever an hard edge or an UV seam is present the mesh this is converted to an open mesh.
 	# Blender also supports 'per face' UV coordinates, this could be a problem when exporting.
@@ -1653,12 +1659,17 @@ def createMesh(block):
 			if mtex.tex.image.depth == 32: # ... crappy way to check for alpha channel in texture
 				mtex.tex.imageFlags |= Blender.Texture.ImageFlags.USEALPHA # use the alpha channel
 				mtex.mapto |=  Texture.MapTo.ALPHA # and map the alpha channel to transparency
-				material.setAlpha(0.0) # for proper display in Blender, we must set the alpha value to 0
+				material.setAlpha(0.0) # for proper display in Blender, we must set the alpha value to 0 and the "Val" slider in the texture Map To tab to the NIF material alpha value (but we do not have access to that button yet... we have to wait until it gets supported by the Blender Python API...)
 				material.mode |= Material.Modes.ZTRANSP # enable z-buffered transparency
 			# otherwise... leave everything as it is
 		else:
 			# no alpha property: force alpha 1.0 in Blender
 			material.setAlpha(1.0)
+		if hasVertexCol:
+			if mtex:
+				material.mode |= Material.Modes.VCOL_LIGHT # textured material: vertex colors influence lighting
+			else:
+				material.mode |= Material.Modes.VCOL_PAINT # non-textured material: vertex colors incluence color
 		meshData.addMaterial(material)
 		#If there's a texture assigned to this material sets it to be displayed in Blender's 3D view
 		if mtex:
@@ -1751,6 +1762,13 @@ def readFile(filename):
 	global texturesFolder
 	versList = ('4.0.0.2') # for further extension
 	texturesFolder = Blender.sys.dirname(filename)
+	# detect Morrowind texture path...
+	if (option_texpath == 1):
+		idx = texturesFolder.lower().find("meshes")
+		if (idx >= 0):
+			texturesFolder = texturesFolder[:idx] + "textures"
+		else:
+			debugMsg("NIF file does not reside in a subfolder called 'Meshes'; texture path will be NIF path")
 	debugMsg('Using texture directory: %s' % texturesFolder, 2)
 	# opens the file in "rb" modality, read only, binary mode
 	file = open(filename, "rb")
