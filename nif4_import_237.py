@@ -114,8 +114,30 @@ Python minimum required version:
 #-------- Constants and global variables
 #----------------------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------#
-# Texture folder
-global texturesFolder
+
+# Texture folders
+global textureFolders
+textureFolders = []
+# first try the nif location
+textureFolders.append( "NIFDIR" )
+# if you have installed morrowind uncomment the following two lines
+#textureFolders.append( "C:\\Program Files\\Bethesda\\Morrowind\\Data Files\\Textures" )
+#textureFolders.append( "C:\\Program Files\\Bethesda\\Morrowind\\Data Files" )
+# if you have additional texture foldes put them here
+#textureFolders.append( "E:\\Data Files\\Textures" )
+#textureFolders.append( "E:\\Data Files" )
+# if you like to use the textures on the TESCS CD uncomment the following two line
+#textureFolders.append( "D:\\Data Files\\Textures" )
+#textureFolders.append( "D:\\Data Files" )
+# NOTE:
+# all original morrowind nifs use 'name.ext' only for addressing the textures
+# but most mods use something like 'textures\[subdir\]name.ext'
+# this is due to a 'feature' in morrowind's resource manager:
+# it loads 'name.ext', 'textures/name.ext' and 'textures/subdir/name.ext' but NOT 'subdir/name.ext'
+# by putting both 'data files' and 'data files/textures' in here
+# we make sure all textures are found
+
+
 # list of NiObject blocks
 global NiObjects
 NiObjects = []
@@ -149,8 +171,6 @@ nifToBlendXform = Matrix( # Scale x 0.1
 	[ 0.0,  0.0,  0.1,  0.0],
 	[ 0.0,  0.0,  0.0,  1.0])
 epsilon = 0.005 # used for checking equality of floats
-option_texpath = 1 # 0 = look in the same folder as the NIF file
-                   # 1 = assume original Morrowind style NIF path & texture path
 
 #Blender 'invert()' method modifies the original matrix rather than returning a new one. 
 def invert(mat):
@@ -824,7 +844,7 @@ class NiSourceTexture(NiObject):
 		Representation of a NiSourceTexture block
 	"""
 	texturePath = None
-	global texturesFolder, textures
+	global textures
 	def __init__(self, data, id):
 		# Base class constructor
 		offset = NiObject.__init__(self, data, id)
@@ -850,7 +870,7 @@ class NiSourceTexture(NiObject):
 		textureFile = textureFile.replace('\\', Blender.sys.sep)
 		textureFile = textureFile.replace('/', Blender.sys.sep)
 		# textureFile = textureFile.lstrip(Blender.sys.sep)
-		return texturesFolder+Blender.sys.sep+textureFile
+		return textureFile
 
 class NiMaterialProperty(NiObject):
 	"""
@@ -1386,26 +1406,32 @@ def createTexture(NiSourceTexture):
 		#if textures[textureId] != "err": # amorilia
 		texture = textures[textureId] # amorilia
 	else:
-		# Checks to see if the texture is a DDS file (Blender doesn't support these yet)
-		# and in that case tries looking for an alternative extension with the same name
-		debugMsg("Looking for \"%s\"" % textureName, 3)
+		# Find the right texture:
+		debugMsg("Searching for \"%s\"" % textureName, 2)
+		# Let's start by assuming the file isn't there
 		textureFile = None
-		if re_ddsExt.match(textureName[-4:]):
-			base=textureName[:-4]
-			debugMsg("texture is a DDS file, looking for alternatives", 2)
-			# Let's start by assuming the file isn't there
-			for ext in ('.PNG','.png','.TGA','.tga','.BMP','.bmp','.JPG','.jpg'):
-				newFile = base+ext
-				# If I find the file, then I have the new filename. This is what I will store
-				# in my dictionary of textures
-				if Blender.sys.exists(newFile) == 1:
-					debugMsg("found %s" % newFile, 2)
-					textureFile = newFile
-					break
-		else:
-			textureFile = textureName
+		# crawl through the texture folders
+		# (this may look a bit akward but it ensures that tga, png, etc are prefered
+		#  and if there is no alternative the dds is loaded)
+		for dir in textureFolders:
+			debugMsg( "Looking in \"%s\""%dir, 2 )
+			tex = Blender.sys.join( dir, textureName )
+			if Blender.sys.exists(tex) == 1:
+				textureFile = tex
+				debugMsg("Found %s" % textureFile, 2)
+			# if texture is dds try other formats
+			if re_ddsExt.match(tex[-4:]):
+				base=tex[:-4]
+				for ext in ('.PNG','.png','.TGA','.tga','.BMP','.bmp','.JPG','.jpg'):
+					if Blender.sys.exists(base+ext) == 1:
+						textureFile = base+ext
+						debugMsg( "Found %s" % textureFile, 2 )
+						break
+			if textureFile and not re_ddsExt.match(textureFile[-4:]):
+				break
 		if textureFile and Blender.sys.exists(textureFile) == 1:
 			# If the file exist the texture can be created and added to the textures list
+			debugMsg( "Using %s" % textureFile, 2 )
 			texture = Texture.New()
 			texture.type = Texture.Types.IMAGE
 			image = Image.Load(textureFile)
@@ -1759,17 +1785,15 @@ def createMesh(block):
 # loads the information from the object in Blender
 def readFile(filename):
 	debugMsg("-----\nLoading %s" % filename, 2)
-	global texturesFolder
 	versList = ('4.0.0.2') # for further extension
-	texturesFolder = Blender.sys.dirname(filename)
-	# detect Morrowind texture path...
-	if (option_texpath == 1):
-		idx = texturesFolder.lower().find("meshes")
-		if (idx >= 0):
-			texturesFolder = texturesFolder[:idx] + "textures"
-		else:
-			debugMsg("NIF file does not reside in a subfolder called 'Meshes'; texture path will be NIF path")
-	debugMsg('Using texture directory: %s' % texturesFolder, 2)
+	global textureFolders
+	debugMsg('Using texture directories:', 2)
+	for i in range( len( textureFolders ) ):
+		textureFolders[i].replace( '\\', Blender.sys.sep )
+		textureFolders[i].replace( '/', Blender.sys.sep )
+		if ( textureFolders[i] == 'NIFDIR' ):
+			textureFolders[i] = Blender.sys.dirname(filename)
+		debugMsg(textureFolders[i], 2)
 	# opens the file in "rb" modality, read only, binary mode
 	file = open(filename, "rb")
 	# Reads the content of the file in the data variable, to python purposes, a string
