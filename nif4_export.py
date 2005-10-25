@@ -495,12 +495,11 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
         # -> first, extract valuable info from our ob
         
         mesh_base_tex = None
-        mesh_base_tex_alpha = 0 # set to 1 if the texture alpha channel overrides the material alpha value
-        mesh_hasalpha = 0
+        mesh_hasalpha = 0 # non-zero if we have alpha properties
         mesh_hastex = 0 # non-zero if we have at least one texture
         mesh_hasvcol = mesh.hasVertexColours()
         if (mesh_mat != None):
-            mesh_hasvcol = mesh_hasvcol or (mesh_mat.mode & Blender.Material.Modes.VCOL_PAINT) # read the Blender Python API documentation to understand this hack
+            mesh_hasvcol = mesh_hasvcol or (mesh_mat.mode & Blender.Material.Modes.VCOL_LIGHT) or (mesh_mat.mode & Blender.Material.Modes.VCOL_PAINT) # read the Blender Python API documentation to understand this hack
             mesh_mat_ambient = mesh_mat.getAmb()             # 'Amb' scrollbar in blender (MW -> 1.0 1.0 1.0)
             mesh_mat_diffuse_colour = mesh_mat.getRGBCol()   # 'Col' colour in Blender (MW -> 1.0 1.0 1.0)
             mesh_mat_specular_colour = mesh_mat.getSpecCol() # 'Spe' colour in Blender (MW -> 0.0 0.0 0.0)
@@ -525,9 +524,17 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                         mesh_hastex = 1 # flag that we have textures, and that we should export UV coordinates
                         # check if alpha channel is enabled for this texture
                         if ((mesh_base_tex.imageFlags & Blender.Texture.ImageFlags.USEALPHA) and (mtex.mapto & Blender.Texture.MapTo.ALPHA)):
-                            # yes: material alpha is multiplied with texture alpha channel
+                            # in this case, Blender replaces the texture transparant parts with the underlying material color...
+                            # in NIF, material alpha is multiplied with texture alpha channel...
+                            # how can we emulate the NIF alpha system (simply multiplying material alpha with texture alpha) when MapTo.ALPHA is turned on?
+                            # require the Blender material alpha to be 0.0 (no material color can show up), and use the "Var" slider in the texture blending mode tab!
+                            # but...
+                            if (mesh_mat_transparency > epsilon):
+                                raise NIFExportError("Cannot export this type of transparency in material '%s': set alpha to 0.0, or turn off MapTo.ALPHA, and try again."%mesh_mat.getName())
+                            if (mesh_mat.getIpo() and mesh_mat.getIpo().getCurve('Alpha')):
+                                raise NIFExportError("Cannot export animation for this type of transparency in material '%s': remove alpha animation, or turn off MapTo.ALPHA, and try again."%mesh_mat.getName())
+                            mesh_mat_transparency = 1.0 # aargh! we should use the "Var" value, but we cannot yet access the texture blending properties in this version of Blender... we set it to 1.0
                             mesh_hasalpha = 1
-                            mesh_base_tex_alpha = 1
                     else:
                         raise NIFExportError("Multiple textures in mesh '%s', material '%s', this is not supported. Delete all textures, except for the base texture."%(mesh.getName(),mesh_mat.getName()))
 
@@ -618,13 +625,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 nif.blocks[tritexsrc_id].file_name.value = nif.blocks[tritexsrc_id].file_name.value[:-4] + '.dds'
             nif.blocks[tritexsrc_id].pixel_layout = 5 # default
             nif.blocks[tritexsrc_id].use_mipmaps = 2  # default
-            # choose alpha mapping
-            # if ALPHA_DEFAULT is selected the texture alpha channel is multiplied with the material alpha setting
-            # if ALPHA_NONE is selected the material alpha setting is used
-            if ( mesh_base_tex_alpha ):
-                nif.blocks[tritexsrc_id].alpha_format = 3 # ALPHA_DEFAULT
-            else:
-                nif.blocks[tritexsrc_id].alpha_format = 0 # ALPHA_NONE
+            nif.blocks[tritexsrc_id].alpha_format = 3 # default
             nif.blocks[tritexsrc_id].unknown2 = 1 # ?
 
             # check for texture flip definition
@@ -671,7 +672,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                     nif.blocks[tsrc_id].file_name = nif4.mystring(t)
                     nif.blocks[tsrc_id].pixel_layout = nif.blocks[tritexsrc_id].pixel_layout
                     nif.blocks[tsrc_id].use_mipmaps  = nif.blocks[tritexsrc_id].use_mipmaps
-                    nif.blocks[tsrc_id].alpha        = nif.blocks[tritexsrc_id].alpha
+                    nif.blocks[tsrc_id].alpha_format = nif.blocks[tritexsrc_id].alpha_format
                     nif.blocks[tsrc_id].unknown2     = nif.blocks[tritexsrc_id].unknown2
                     nif.blocks[flip_id].sources.indices.append( tsrc_id )
                 nif.blocks[flip_id].sources.num_indices = len( nif.blocks[flip_id].sources.indices )
