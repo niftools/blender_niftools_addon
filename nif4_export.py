@@ -1327,7 +1327,10 @@ def export_xkf(nif):
         # get the keyframe controller block from nif
         kfcontroller = nif.blocks[ cid ]
         xkf.blocks.append( nif.blocks[ cid ] ) # copy it
-        xkf.blocks[ last_controller_id ].next_controller = xkf.header.nblocks # refer to it
+        if ( last_controller_id == 0 ):
+            xkf.blocks[ last_controller_id ].controller = xkf.header.nblocks
+        else:
+            xkf.blocks[ last_controller_id ].next_controller = xkf.header.nblocks # refer to it
         last_controller_id = xkf.header.nblocks
         xkf.header.nblocks += 1
 
