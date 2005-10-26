@@ -458,7 +458,62 @@ def export_animgroups(animtxt, block_parent_id, nif):
     
     return nif
 
+#
+# export a NiFlipController
+#
+# fliptxt is a blender text object containing the flip definitions
+# target_id is the block id of the NiTexturingProperty
+# target_tex is the texture to flip ( 0 = base texture, 4 = glow texture )
 
+def export_flipcontroller( fliptxt, target_id, target_tex, nif ):
+    tlist = fliptxt.asLines()
+
+    # create a NiFlipController
+    flip_id = nif.header.nblocks
+    assert(flip_id == len(nif.blocks)) # debug
+    nif.blocks.append(nif4.NiFlipController())
+    nif.header.nblocks += 1
+
+    if ( nif.blocks[target_id].controller < 0 ):
+        nif.blocks[target_id].controller = flip_id
+    else:
+        last_controller = nif.blocks[target_id].controller
+        while ( nif.blocks[last_controller].next_controller >= 0 ):
+            last_controller = nif.blocks[last_controller].next_controller
+        nif.blocks[last_controller].next_controller = flip_id
+
+    # get frame start and frame end, and the number of frames per second
+    fspeed = 1.0 / Blender.Scene.GetCurrent().getRenderingContext().framesPerSec()
+    fstart = Blender.Scene.GetCurrent().getRenderingContext().startFrame()
+    fend = Blender.Scene.GetCurrent().getRenderingContext().endFrame()
+
+    # fill in NiFlipController's values
+    nif.blocks[flip_id].target_node = target_id
+    nif.blocks[flip_id].unknown_int_1 = target_tex
+    nif.blocks[flip_id].flags = 0x0008
+    nif.blocks[flip_id].frequency = 1.0
+    nif.blocks[flip_id].start_time = 0.0
+    nif.blocks[flip_id].stop_time = ( fend - fstart ) * fspeed
+    #nif.blocks[flip_id].flip_id.append( tritexsrc_id )
+    for t in tlist:
+        if len( t ) == 0:   # skip empty lines
+            continue
+        # create a NiSourceTexture for each flip
+        tsrc_id = nif.header.nblocks
+        assert(tsrc_id == len(nif.blocks)) # debug
+        nif.blocks.append(nif4.NiSourceTexture())
+        nif.header.nblocks += 1
+        nif.blocks[tsrc_id].use_external = 1
+        nif.blocks[tsrc_id].file_name    = nif4.mystring(t)
+        nif.blocks[tsrc_id].pixel_layout = 5
+        nif.blocks[tsrc_id].use_mipmaps  = 1
+        nif.blocks[tsrc_id].alpha_format = 3
+        nif.blocks[tsrc_id].unknown2     = 1
+        nif.blocks[flip_id].sources.indices.append( tsrc_id )
+    nif.blocks[flip_id].sources.num_indices = len( nif.blocks[flip_id].sources.indices )
+    nif.blocks[flip_id].delta = nif.blocks[flip_id].stop_time / nif.blocks[flip_id].sources.num_indices
+
+    return nif
 
 #
 # Export a blender object ob of the type mesh, child of nif block
@@ -495,6 +550,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
         # -> first, extract valuable info from our ob
         
         mesh_base_tex = None
+        mesh_glow_tex = None
         mesh_hasalpha = 0 # non-zero if we have alpha properties
         mesh_hastex = 0 # non-zero if we have at least one texture
         mesh_hasvcol = mesh.hasVertexColours()
@@ -515,43 +571,52 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
             # note that most morrowind files only have a base texture, so let's for now only support single textured materials
             for mtex in mesh_mat.getTextures():
                 if (mtex != None):
-                    if (mesh_base_tex == None):
-                        if (mtex.texco != Blender.Texture.TexCo.UV):
-                            # nif only support UV-mapped textures
-                            raise NIFExportError("Non-UV texture in mesh '%s', material '%s'. Either delete all non-UV textures, or in the Shading Panel, under Material Buttons, set texture 'Map Input' to 'UV'."%(ob.getName(),mesh_mat.getName()))
-                        if ((mtex.mapto & Blender.Texture.MapTo.COL) == 0):
-                            # it should map to colour
-                            raise NIFExportError("Non-COL-mapped texture in mesh '%s', material '%s', these cannot be exported to NIF. Either delete all non-COL-mapped textures, or in the Shading Panel, under Material Buttons, set texture 'Map To' to 'COL'."%(mesh.getName(),mesh_mat.getName()))
-                        # got the base texture
-                        mesh_base_tex = mtex.tex
-                        mesh_hastex = 1 # flag that we have textures, and that we should export UV coordinates
-                        # check if alpha channel is enabled for this texture
-                        if ((mesh_base_tex.imageFlags & Blender.Texture.ImageFlags.USEALPHA) and (mtex.mapto & Blender.Texture.MapTo.ALPHA)):
-                            # in this case, Blender replaces the texture transparant parts with the underlying material color...
-                            # in NIF, material alpha is multiplied with texture alpha channel...
-                            # how can we emulate the NIF alpha system (simply multiplying material alpha with texture alpha) when MapTo.ALPHA is turned on?
-                            # require the Blender material alpha to be 0.0 (no material color can show up), and use the "Var" slider in the texture blending mode tab!
-                            # but...
-                            if (mesh_mat_transparency > epsilon):
-                                raise NIFExportError("Cannot export this type of transparency in material '%s': set alpha to 0.0, or turn off MapTo.ALPHA, and try again."%mesh_mat.getName())
-                            if (mesh_mat.getIpo() and mesh_mat.getIpo().getCurve('Alpha')):
-                                raise NIFExportError("Cannot export animation for this type of transparency in material '%s': remove alpha animation, or turn off MapTo.ALPHA, and try again."%mesh_mat.getName())
-                            mesh_mat_transparency = 1.0 # aargh! we should use the "Var" value, but we cannot yet access the texture blending properties in this version of Blender... we set it to 1.0
-                            mesh_hasalpha = 1
+                    if (mtex.texco != Blender.Texture.TexCo.UV):
+                        # nif only support UV-mapped textures
+                        raise NIFExportError("Non-UV texture in mesh '%s', material '%s'. Either delete all non-UV textures, or in the Shading Panel, under Material Buttons, set texture 'Map Input' to 'UV'."%(ob.getName(),mesh_mat.getName()))
+                    if ((mtex.mapto & Blender.Texture.MapTo.COL) == 0):
+                        # it should map to colour
+                        raise NIFExportError("Non-COL-mapped texture in mesh '%s', material '%s', these cannot be exported to NIF. Either delete all non-COL-mapped textures, or in the Shading Panel, under Material Buttons, set texture 'Map To' to 'COL'."%(mesh.getName(),mesh_mat.getName()))
+                    if ((mtex.mapto & Blender.Texture.MapTo.EMIT) == 0):
+                        if (mesh_base_tex == None):
+                            # got the base texture
+                            mesh_base_tex = mtex.tex
+                            mesh_hastex = 1 # flag that we have textures, and that we should export UV coordinates
+                            # check if alpha channel is enabled for this texture
+                            if ((mesh_base_tex.imageFlags & Blender.Texture.ImageFlags.USEALPHA) and (mtex.mapto & Blender.Texture.MapTo.ALPHA)):
+                                # in this case, Blender replaces the texture transparant parts with the underlying material color...
+                                # in NIF, material alpha is multiplied with texture alpha channel...
+                                # how can we emulate the NIF alpha system (simply multiplying material alpha with texture alpha) when MapTo.ALPHA is turned on?
+                                # require the Blender material alpha to be 0.0 (no material color can show up), and use the "Var" slider in the texture blending mode tab!
+                                # but...
+                                if (mesh_mat_transparency > epsilon):
+                                    raise NIFExportError("Cannot export this type of transparency in material '%s': set alpha to 0.0, or turn off MapTo.ALPHA, and try again."%mesh_mat.getName())
+                                if (mesh_mat.getIpo() and mesh_mat.getIpo().getCurve('Alpha')):
+                                    raise NIFExportError("Cannot export animation for this type of transparency in material '%s': remove alpha animation, or turn off MapTo.ALPHA, and try again."%mesh_mat.getName())
+                                mesh_mat_transparency = 1.0 # aargh! we should use the "Var" value, but we cannot yet access the texture blending properties in this version of Blender... we set it to 1.0
+                                mesh_hasalpha = 1
+                        else:
+                            raise NIFExportError("Multiple base textures in mesh '%s', material '%s', this is not supported. Delete all textures, except for the base texture."%(mesh.name,mesh_mat.getName()))
                     else:
-                        raise NIFExportError("Multiple textures in mesh '%s', material '%s', this is not supported. Delete all textures, except for the base texture."%(mesh.getName(),mesh_mat.getName()))
-
-        # note: we can be in any of the following three situations
-        # material + base texture       -> normal object
-        # material, but no base texture -> uniformly coloured object
-        # no material                   -> typically, collision mesh
+                        # MapTo EMIT is checked -> glow map
+                        if ( mesh_glow_tex == None ):
+                            # got the glow tex
+                            mesh_glow_tex = mtex.tex
+                            mesh_hastex = 1
+                        else:
+                            raise NIFExportError("Multiple glow textures in mesh '%s', material '%s'. Make sure there is only one texture with MapTo.EMIT"%(mesh.name,mesh_mat.getName()))
 
         # -> now comes the real export
-        last_id = nif.header.nblocks - 1
         
+        # note: we can be in any of the following five situations
+        # material + base texture        -> normal object
+        # material + base tex + glow tex -> normal glow mapped object
+        # material + glow texture        -> (needs to be tested)
+        # material, but no texture       -> uniformly coloured object
+        # no material                    -> typically, collision mesh
+
         # add a trishape block, and refer to this block in the parent's children list
-        trishape_id = last_id + 1
-        last_id = trishape_id
+        trishape_id = nif.header.nblocks
         assert(trishape_id == len(nif.blocks)) # debug
         nif.blocks.append(nif4.NiTriShape()) # this should be block[trishape_id]
         nif.blocks[parent_block_id].children.indices.append(trishape_id)
@@ -575,10 +640,9 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
         nif.blocks[trishape_id].scale = 1.0;
         final_scale = parent_scale * scale.x;
         
-        if (mesh_base_tex != None):
+        if (mesh_base_tex != None or mesh_glow_tex != None):
             # add NiTriShape's texturing property
-            tritexprop_id = last_id + 1
-            last_id = tritexprop_id
+            tritexprop_id = nif.header.nblocks
             assert(tritexprop_id == len(nif.blocks)) # debug
             nif.blocks.append(nif4.NiTexturingProperty())
             nif.blocks[trishape_id].properties.indices.append(tritexprop_id)
@@ -588,104 +652,111 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
             nif.blocks[tritexprop_id].flags = 0x0001 # standard?
             nif.blocks[tritexprop_id].apply_mode = 2 # modulate?
             nif.blocks[tritexprop_id].texture_count = 7 # standard?
-            
-            nif.blocks[tritexprop_id].has_base_texture = 1
-            nif.blocks[tritexprop_id].base_texture.clamp_mode = 3 # wrap in both directions
-            nif.blocks[tritexprop_id].base_texture.filter_mode = 2 # standard?
-            nif.blocks[tritexprop_id].base_texture.texture_set = 0 # ? standard
-            nif.blocks[tritexprop_id].base_texture.ps2_l = 0 # ? standard 
-            nif.blocks[tritexprop_id].base_texture.ps2_k = 0xFFB5 # ? standard
-            nif.blocks[tritexprop_id].base_texture.unknown = 0x0101 # ? standard
-            
-            # add NiTexturingProperty's texture source
-            tritexsrc_id = last_id + 1
-            last_id = tritexsrc_id
-            assert(tritexsrc_id == len(nif.blocks)) # debug
-            nif.blocks.append(nif4.NiSourceTexture())
-            nif.blocks[tritexprop_id].base_texture.source = tritexsrc_id
-            nif.header.nblocks += 1
-            
-            nif.blocks[tritexsrc_id].use_external = 1
-            if ( strip_texpath == 2 ):
-                # strip texture file path (original morrowind style)
-                nif.blocks[tritexsrc_id].file_name = nif4.mystring(Blender.sys.basename(mesh_base_tex.image.getFilename()))
-            elif ( strip_texpath == 1 ):
-                # strip the data files prefix from the texture's file name
-                tfn = mesh_base_tex.image.getFilename().lower()
-                idx = tfn.find( "data files" )
-                if ( idx >= 0 ):
-                    tfn = tfn[idx+10:len(tfn)]
-                    tfn = tfn.strip( '/\\' )
-                    #print "Texture: %s"%tfn
-                    nif.blocks[tritexsrc_id].file_name = nif4.mystring(tfn)
-                else:
-                    nif.blocks[tritexsrc_id].file_name = nif4.mystring(Blender.sys.basename(mesh_base_tex.image.getFilename()))
-            else:
-                # export full texture path
-                nif.blocks[tritexsrc_id].file_name = nif4.mystring(mesh_base_tex.image.getFilename())
-            # force dds extension, if requested
-            if force_dds:
-                nif.blocks[tritexsrc_id].file_name.value = nif.blocks[tritexsrc_id].file_name.value[:-4] + '.dds'
-            nif.blocks[tritexsrc_id].pixel_layout = 5 # default
-            nif.blocks[tritexsrc_id].use_mipmaps = 2  # default
-            nif.blocks[tritexsrc_id].alpha_format = 3 # default
-            nif.blocks[tritexsrc_id].unknown2 = 1 # ?
 
-            # check for texture flip definition
-            txtlist = Blender.Text.Get()
-            for fliptxt in txtlist:
-                if fliptxt.getName() == mesh_base_tex.getName():
-                    break
-                else:
-                    fliptxt = None
-
-            if fliptxt != None:
-                tlist = fliptxt.asLines()
-
-                # create a NiFlipController
-                flip_id = last_id + 1
-                last_id = flip_id
-                assert(flip_id == len(nif.blocks)) # debug
-                nif.blocks.append(nif4.NiFlipController())
-                nif.blocks[tritexprop_id].next_controller = flip_id
-                nif.header.nblocks += 1
-
-                # get frame start and frame end, and the number of frames per second
-                fspeed = 1.0 / Blender.Scene.GetCurrent().getRenderingContext().framesPerSec()
-                fstart = Blender.Scene.GetCurrent().getRenderingContext().startFrame()
-                fend = Blender.Scene.GetCurrent().getRenderingContext().endFrame()
-
-                # fill in NiFlipController's values
-                nif.blocks[flip_id].target_node = tritexprop_id
-                nif.blocks[flip_id].flags = 0x0008
-                nif.blocks[flip_id].frequency = 1.0
-                nif.blocks[flip_id].start_time = 0.0
-                nif.blocks[flip_id].stop_time = ( fend - fstart ) * fspeed
-                nif.blocks[flip_id].flip_id = []
-                #nif.blocks[flip_id].flip_id.append( tritexsrc_id )
-                for t in tlist:
-                    if len( t ) == 0:   # skip empty lines
-                        continue
-                    # create a NiSourceTexture for each flip
-                    tsrc_id = last_id + 1
-                    last_id = tsrc_id
-                    nif.blocks.append( nif4.NiSourceTexture() )
-                    nif.header.nblocks += 1
-                    nif.blocks[tsrc_id].use_external = 1
-                    nif.blocks[tsrc_id].file_name = nif4.mystring(t)
-                    nif.blocks[tsrc_id].pixel_layout = nif.blocks[tritexsrc_id].pixel_layout
-                    nif.blocks[tsrc_id].use_mipmaps  = nif.blocks[tritexsrc_id].use_mipmaps
-                    nif.blocks[tsrc_id].alpha_format = nif.blocks[tritexsrc_id].alpha_format
-                    nif.blocks[tsrc_id].unknown2     = nif.blocks[tritexsrc_id].unknown2
-                    nif.blocks[flip_id].sources.indices.append( tsrc_id )
-                nif.blocks[flip_id].sources.num_indices = len( nif.blocks[flip_id].sources.indices )
-                nif.blocks[flip_id].delta = nif.blocks[flip_id].stop_time / nif.blocks[flip_id].sources.num_indices
+            if ( mesh_base_tex != None ):
+                nif.blocks[tritexprop_id].has_base_texture = 1
+                nif.blocks[tritexprop_id].base_texture.clamp_mode = 3 # wrap in both directions
+                nif.blocks[tritexprop_id].base_texture.filter_mode = 2 # standard?
+                nif.blocks[tritexprop_id].base_texture.texture_set = 0 # ? standard
+                nif.blocks[tritexprop_id].base_texture.ps2_l = 0 # ? standard 
+                nif.blocks[tritexprop_id].base_texture.ps2_k = 0xFFB5 # ? standard
+                nif.blocks[tritexprop_id].base_texture.unknown = 0x0101 # ? standard
                 
-            
+                # add NiTexturingProperty's texture source
+                tritexsrc_id = nif.header.nblocks
+                assert(tritexsrc_id == len(nif.blocks)) # debug
+                nif.blocks.append(nif4.NiSourceTexture())
+                nif.blocks[tritexprop_id].base_texture.source = tritexsrc_id
+                nif.header.nblocks += 1
+                
+                nif.blocks[tritexsrc_id].use_external = 1
+                if ( strip_texpath == 2 ):
+                    # strip texture file path (original morrowind style)
+                    nif.blocks[tritexsrc_id].file_name = nif4.mystring(Blender.sys.basename(mesh_base_tex.image.getFilename()))
+                elif ( strip_texpath == 1 ):
+                    # strip the data files prefix from the texture's file name
+                    tfn = mesh_base_tex.image.getFilename().lower()
+                    idx = tfn.find( "data files" )
+                    if ( idx >= 0 ):
+                        tfn = tfn[idx+10:len(tfn)]
+                        tfn = tfn.strip( '/\\' )
+                        #print "Texture: %s"%tfn
+                        nif.blocks[tritexsrc_id].file_name = nif4.mystring(tfn)
+                    else:
+                        nif.blocks[tritexsrc_id].file_name = nif4.mystring(Blender.sys.basename(mesh_base_tex.image.getFilename()))
+                else:
+                    # export full texture path
+                    nif.blocks[tritexsrc_id].file_name = nif4.mystring(mesh_base_tex.image.getFilename())
+                # force dds extension, if requested
+                if force_dds:
+                    nif.blocks[tritexsrc_id].file_name.value = nif.blocks[tritexsrc_id].file_name.value[:-4] + '.dds'
+                nif.blocks[tritexsrc_id].pixel_layout = 5 # default
+                nif.blocks[tritexsrc_id].use_mipmaps = 1  # default
+                nif.blocks[tritexsrc_id].alpha_format = 3 # default
+                nif.blocks[tritexsrc_id].unknown2 = 1 # ?
+
+                # check for texture flip definition
+                txtlist = Blender.Text.Get()
+                for fliptxt in txtlist:
+                    if fliptxt.getName() == mesh_base_tex.getName():
+                        nif = export_flipcontroller( fliptxt, tritexprop_id, 0, nif )
+                        break
+                    else:
+                        fliptxt = None
+                    
+            if ( mesh_glow_tex != None ):
+                nif.blocks[tritexprop_id].has_glow_texture = 1
+                nif.blocks[tritexprop_id].glow_texture.clamp_mode = 3 # wrap in both directions
+                nif.blocks[tritexprop_id].glow_texture.filter_mode = 2 # standard?
+                nif.blocks[tritexprop_id].glow_texture.texture_set = 0 # ? standard
+                nif.blocks[tritexprop_id].glow_texture.ps2_l = 0 # ? standard 
+                nif.blocks[tritexprop_id].glow_texture.ps2_k = 0xFFB5 # ? standard
+                nif.blocks[tritexprop_id].glow_texture.unknown = 0x0101 # ? standard
+                
+                # add NiTexturingProperty's texture source
+                tritexsrc_id = len(nif.blocks)
+                nif.blocks.append(nif4.NiSourceTexture())
+                nif.blocks[tritexprop_id].glow_texture.source = tritexsrc_id
+                nif.header.nblocks += 1
+                
+                nif.blocks[tritexsrc_id].use_external = 1
+                if ( strip_texpath == 2 ):
+                    # strip texture file path (original morrowind style)
+                    nif.blocks[tritexsrc_id].file_name = nif4.mystring(Blender.sys.basename(mesh_glow_tex.image.getFilename()))
+                elif ( strip_texpath == 1 ):
+                    # strip the data files prefix from the texture's file name
+                    tfn = mesh_glow_tex.image.getFilename().lower()
+                    idx = tfn.find( "data files" )
+                    if ( idx >= 0 ):
+                        tfn = tfn[idx+10:len(tfn)]
+                        tfn = tfn.strip( '/\\' )
+                        #print "Texture: %s"%tfn
+                        nif.blocks[tritexsrc_id].file_name = nif4.mystring(tfn)
+                    else:
+                        nif.blocks[tritexsrc_id].file_name = nif4.mystring(Blender.sys.basename(mesh_glow_tex.image.getFilename()))
+                else:
+                    # export full texture path
+                    nif.blocks[tritexsrc_id].file_name = nif4.mystring(mesh_glow_tex.image.getFilename())
+                # force dds extension, if requested
+                if force_dds:
+                    nif.blocks[tritexsrc_id].file_name.value = nif.blocks[tritexsrc_id].file_name.value[:-4] + '.dds'
+                nif.blocks[tritexsrc_id].pixel_layout = 5 # default
+                nif.blocks[tritexsrc_id].use_mipmaps = 1  # default
+                nif.blocks[tritexsrc_id].alpha_format = 3 # default
+                nif.blocks[tritexsrc_id].unknown2 = 1 # ?
+
+                # check for texture flip definition
+                txtlist = Blender.Text.Get()
+                for fliptxt in txtlist:
+                    if fliptxt.getName() == mesh_glow_tex.getName():
+                        nif = export_flipcontroller( fliptxt, tritexprop_id, 4, nif )
+                        break
+                    else:
+                        fliptxt = None
+        
         if (mesh_hasalpha):
             # add NiTriShape's alpha propery (this is de facto an automated version of Detritus's method, see http://detritus.silgrad.com/alphahex.html)
-            trialphaprop_id = last_id + 1
-            last_id = trialphaprop_id
+            trialphaprop_id = nif.header.nblocks
             assert(trialphaprop_id == len(nif.blocks))
             nif.blocks.append(nif4.NiAlphaProperty())
             nif.header.nblocks += 1
@@ -700,8 +771,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
         if (mesh_mat != None):
             # add NiTriShape's specular property
             if ( mesh_mat_glossiness > epsilon ):
-                trispecprop_id = last_id + 1
-                last_id = trispecprop_id
+                trispecprop_id = nif.header.nblocks
                 assert(trispecprop_id == len(nif.blocks))
                 nif.blocks.append(nif4.NiSpecularProperty())
                 nif.header.nblocks += 1
@@ -713,8 +783,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 nif.blocks[trishape_id].properties.num_indices += 1
             
             # add NiTriShape's material property
-            trimatprop_id = last_id + 1
-            last_id = trimatprop_id
+            trimatprop_id = nif.header.nblocks
             assert(trimatprop_id == len(nif.blocks))
             nif.blocks.append(nif4.NiMaterialProperty())
             nif.header.nblocks += 1
@@ -767,8 +836,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 assert( ( ftimes ) > 0 )
 
                 # add a alphacontroller block, and refer to this in the parent material
-                alphactrl_id = last_id + 1
-                last_id = alphactrl_id
+                alphactrl_id = nif.header.nblocks
                 assert(alphactrl_id == len(nif.blocks)) # debug
                 nif.blocks.append(nif4.NiAlphaController()) # this should be block[matcolctrl_id]
                 assert(nif.blocks[trimatprop_id].controller == -1) # make sure we don't overwrite anything
@@ -792,8 +860,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 nif.blocks[alphactrl_id].stop_time = ftimes[len(ftimes)-1]
 
                 # add the alpha data
-                alphadata_id = last_id + 1
-                last_id = alphadata_id
+                alphadata_id = nif.header.nblocks
                 assert(alphadata_id == len(nif.blocks)) # debug
                 nif.blocks.append(nif4.NiFloatData())
                 nif.blocks[alphactrl_id].data = alphadata_id
@@ -846,8 +913,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 assert( len( ftimes ) > 0 )
 
                 # add a materialcolorcontroller block
-                matcolctrl_id = last_id + 1
-                last_id = matcolctrl_id
+                matcolctrl_id = nif.header.nblocks
                 assert(matcolctrl_id == len(nif.blocks)) # debug
                 nif.blocks.append(nif4.NiMaterialColorController()) # this should be block[matcolctrl_id]
                 if ( alphactrl_id == -1 ):
@@ -867,8 +933,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 nif.blocks[matcolctrl_id].target_node = trimatprop_id
 
                 # add the material color data
-                matcoldata_id = last_id + 1
-                last_id = matcoldata_id
+                matcoldata_id = nif.header.nblocks
                 assert(matcoldata_id == len(nif.blocks)) # debug
                 nif.blocks.append(nif4.NiColorData())
                 nif.blocks[matcolctrl_id].data = matcoldata_id
@@ -884,8 +949,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 nif.blocks[matcoldata_id].dunno = 1
 
         # add NiTriShape's data
-        tridata_id = last_id + 1
-        last_id = tridata_id
+        tridata_id = nif.header.nblocks
         assert(tridata_id == len(nif.blocks))
         nif.blocks.append(nif4.NiTriShapeData())
         nif.blocks[trishape_id].data = tridata_id
