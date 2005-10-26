@@ -128,6 +128,7 @@ def export_nif(filename):
         
         # export the root node (note that transformation is ignored on the root node)
         nif = export_node(None, 'none', -1, 1.0, root_name, nif)
+        
         # export objects
         for root_object in root_objects:
             # export the root objects as a NiNodes; their children are exported as well
@@ -138,6 +139,18 @@ def export_nif(filename):
         if (animtxt):
             nif = export_animgroups(animtxt, 1, nif) # we link the animation extra data to the first root_object node
             
+        # export vertex color property
+        for block in nif.blocks:
+            has_vcolprop = 0
+            try:
+                if (block.has_vertex_colors != 0):
+                    has_vcolprop = 1
+                    break
+            except:
+                pass
+        if has_vcolprop:
+            nif = export_vcolprop(0, 1, nif) # vertex_mode = 0, lighting_mode = 1, this seems standard
+
         # write the file:
         #----------------
         if show_progress >= 1: Blender.Window.DrawProgressBar(0.66, "Writing NIF file")
@@ -395,6 +408,21 @@ def export_keyframe(ob, space, parent_block_id, parent_scale, nif):
 
 
 
+def export_vcolprop(vertex_mode, lighting_mode, nif):
+    # create new vertex color property block
+    vcolprop_id = nif.header.nblocks
+    nif.blocks.append(nif4.NiVertexColorProperty())
+    nif.header.nblocks += 1
+    
+    # make it a property of the root node
+    nif.blocks[0].properties.indices.append(vcolprop_id)
+    nif.blocks[0].properties.num_indices += 1
+
+    # and now export the parameters
+    nif.blocks[vcolprop_id].vertex_mode = vertex_mode
+    nif.blocks[vcolprop_id].lighting_mode = lighting_mode
+    
+    return nif
 #
 # parse the animation groups buffer and write an extra string data block,
 # parented to the root block
