@@ -1308,6 +1308,7 @@ def export_xkf(nif):
             xkf.blocks[0].extra_data = xkf.header.nblocks
             last_extra_id = xkf.header.nblocks
             xkf.header.nblocks += 1
+            assert(xkf.header.nblocks == len(xkf.blocks)) # debug
             break
     else:
         assert(0) # debug, we must break from the above loop
@@ -1319,12 +1320,13 @@ def export_xkf(nif):
                 controller_id.append( block.controller )
                 # link to the original node with a NiStringExtraData
                 xkf.blocks[last_extra_id].extra_data = xkf.header.nblocks
-                last_extra_id = xkf.header.nblocks + 1
+                last_extra_id = xkf.header.nblocks
                 stringextra = nif4.NiStringExtraData()
                 stringextra.string_data = block.name
                 stringextra.bytes_remaining = 4 + len(stringextra.string_data.value)
                 xkf.blocks.append(stringextra)
                 xkf.header.nblocks += 1
+                assert(xkf.header.nblocks == len(xkf.blocks)) # debug
 
     # copy keyframe controllers and keyframe datas
     if (len(controller_id) == 0): raise NIFExportError("Animation groups defined, but no meshes are animated.")
@@ -1348,6 +1350,8 @@ def export_xkf(nif):
         xkf.blocks[ last_controller_id ].data = xkf.header.nblocks
         xkf.header.nblocks += 1
     
+    print xkf # debug
+
     return xkf
 
 
