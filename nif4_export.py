@@ -135,6 +135,38 @@ def export_nif(filename):
             # note that localspace = worldspace, because root objects have no children
             nif = export_node(root_object, 'localspace', 0, scale_correction, root_object.getName(), nif)
 
+        # if we exported animations, but no animation groups are defined, define a default animation group
+        if (animtxt == None):
+            has_controllers = 0
+            for block in nif.blocks:
+                try:
+                    if (block.controller != -1):
+                        has_controllers = 1
+                        break
+                except:
+                    pass
+            if has_controllers:
+                # get frame start and frame end
+                scn = Blender.Scene.GetCurrent()
+                context = scn.getRenderingContext()
+                fstart = context.startFrame()
+                fend = context.endFrame()
+                # write the animation group text buffer
+                animtxt = Blender.Text.New("Anim")
+                animtxt.write("%i/Idle: Start/Idle: Start Loop\n%i/Idle: Stop/Idle: Stop Loop"%(fstart,fend))
+
+        # animations without keyframe animations crash the TES CS
+        # if we are in that situation, add a trivial keyframe animation
+        if (animtxt):
+            has_keyframecontrollers = 0
+            for block in nif.blocks:
+                if block.block_type.value == "NiKeyframeController":
+                    has_keyframecontrollers = 1
+                    break
+            if has_keyframecontrollers == 0:
+                # add a trivial keyframe controller on the first root_object node
+                nif = export_keyframe(None, 'localspace', 1, 1.0, nif)
+        
         # export animation groups
         if (animtxt):
             nif = export_animgroups(animtxt, 1, nif) # we link the animation extra data to the first root_object node
@@ -329,23 +361,29 @@ def export_keyframe(ob, space, parent_block_id, parent_scale, nif):
     fstart = context.startFrame()
     fend = context.endFrame()
 
-    # merge the animation curves into a rotation vector and translation vector curve
-    ipo = ob.getIpo()
-    assert(ipo != None) # debug
-    rot_curve = {}
-    trans_curve = {}
-    for curve in ipo.getCurves():
-        for btriple in curve.getPoints():
-            knot = btriple.getPoints()
-            frame = knot[0]
-            ftime = (frame - 1) * fspeed
-            if (curve.getName() == 'RotX') or (curve.getName() == 'RotY') or (curve.getName() == 'RotZ'):
-                rot_curve[ftime] = Blender.Mathutils.Euler([10*ipo.getCurve('RotX').evaluate(frame), 10*ipo.getCurve('RotY').evaluate(frame), 10*ipo.getCurve('RotZ').evaluate(frame)]).toQuat()
-            if (curve.getName() == 'LocX') or (curve.getName() == 'LocY') or (curve.getName() == 'LocZ'):
-                trans_curve[ftime] = nif4.vec3()
-                trans_curve[ftime].x = ipo.getCurve('LocX').evaluate(frame) * parent_scale
-                trans_curve[ftime].y = ipo.getCurve('LocY').evaluate(frame) * parent_scale
-                trans_curve[ftime].z = ipo.getCurve('LocZ').evaluate(frame) * parent_scale
+    # sometimes we need to export an empty keyframe... this will take care of that
+    if (ob == None):
+        rot_curve = {}
+        trans_curve = {}
+    # the usual case comes now...
+    else:
+        # merge the animation curves into a rotation vector and translation vector curve
+        ipo = ob.getIpo()
+        assert(ipo != None) # debug
+        rot_curve = {}
+        trans_curve = {}
+        for curve in ipo.getCurves():
+            for btriple in curve.getPoints():
+                knot = btriple.getPoints()
+                frame = knot[0]
+                ftime = (frame - 1) * fspeed
+                if (curve.getName() == 'RotX') or (curve.getName() == 'RotY') or (curve.getName() == 'RotZ'):
+                    rot_curve[ftime] = Blender.Mathutils.Euler([10*ipo.getCurve('RotX').evaluate(frame), 10*ipo.getCurve('RotY').evaluate(frame), 10*ipo.getCurve('RotZ').evaluate(frame)]).toQuat()
+                if (curve.getName() == 'LocX') or (curve.getName() == 'LocY') or (curve.getName() == 'LocZ'):
+                    trans_curve[ftime] = nif4.vec3()
+                    trans_curve[ftime].x = ipo.getCurve('LocX').evaluate(frame) * parent_scale
+                    trans_curve[ftime].y = ipo.getCurve('LocY').evaluate(frame) * parent_scale
+                    trans_curve[ftime].z = ipo.getCurve('LocZ').evaluate(frame) * parent_scale
 
     # -> now comes the real export
 
@@ -378,7 +416,6 @@ def export_keyframe(ob, space, parent_block_id, parent_scale, nif):
     nif.header.nblocks += 1
 
     nif.blocks[keyframedata_id].rotation_type = 1
-    print dir(nif.blocks[keyframedata_id])
     ftimes = rot_curve.keys()
     ftimes.sort()
     for ftime in ftimes:
@@ -520,7 +557,7 @@ def export_flipcontroller( fliptxt, target_id, target_tex, nif ):
     nif.blocks[flip_id].unknown_int_1 = target_tex
     nif.blocks[flip_id].flags = 0x0008
     nif.blocks[flip_id].frequency = 1.0
-    nif.blocks[flip_id].start_time = 0.0
+    nif.blocks[flip_id].start_time = (fstart - 1) * fspeed
     nif.blocks[flip_id].stop_time = ( fend - fstart ) * fspeed
     #nif.blocks[flip_id].flip_id.append( tritexsrc_id )
     for t in tlist:
@@ -565,8 +602,6 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
     # to get material list
     mesh_mats = mesh_orig.getMaterials(1) # the argument guarantees that the material list agrees with the face material indices
     
-    print "2"
-
     # if the mesh has no materials, all face material indices should be 0, so it's ok to fake one material in the material list
     if (mesh_mats == []):
         mesh_mats = [ None ]
@@ -849,6 +884,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 context = scn.getRenderingContext()
                 fspeed = 1.0 / context.framesPerSec()
                 fstart = context.startFrame()
+                fend = context.endFrame()
             
             if ( a_curve != None ):
                 # get the alpha keyframes from blender's ipo curve
@@ -884,8 +920,8 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 # fill in timing values
                 nif.blocks[alphactrl_id].frequency = 1.0
                 nif.blocks[alphactrl_id].phase = 0.0
-                nif.blocks[alphactrl_id].start_time = ftimes[0]
-                nif.blocks[alphactrl_id].stop_time = ftimes[len(ftimes)-1]
+                nif.blocks[alphactrl_id].start_time =  (fstart - 1) * fspeed
+                nif.blocks[alphactrl_id].stop_time = (fend - fstart) * fspeed
 
                 # add the alpha data
                 alphadata_id = nif.header.nblocks
@@ -956,8 +992,8 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 nif.blocks[matcolctrl_id].flags = 0x0008 # using cycle loop for now
                 nif.blocks[matcolctrl_id].frequency = 1.0
                 nif.blocks[matcolctrl_id].phase = 0.0
-                nif.blocks[matcolctrl_id].start_time = ftimes[0]
-                nif.blocks[matcolctrl_id].stop_time = ftimes[len(ftimes)-1]
+                nif.blocks[matcolctrl_id].start_time =  (fstart - 1) * fspeed
+                nif.blocks[matcolctrl_id].stop_time = (fend - fstart) * fspeed
                 nif.blocks[matcolctrl_id].target_node = trimatprop_id
 
                 # add the material color data
@@ -1421,7 +1457,8 @@ def export_xkf(nif):
                 assert(xkf.header.nblocks == len(xkf.blocks)) # debug
 
     # copy keyframe controllers and keyframe datas
-    if (len(controller_id) == 0): raise NIFExportError("Animation groups defined, but no meshes are animated.")
+    if (len(controller_id) == 0):
+        raise NIFExportError("Animation groups defined, but no meshes are animated.") # this crashes the TESCS...
     last_controller_id = 0
     for cid in controller_id:
         # get the keyframe controller block from nif
