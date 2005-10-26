@@ -1033,9 +1033,15 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 nif.blocks[tridata_id].faces.append(f_indexed)
 
         # update the counters
+        if (len(vertquad_list) > 65535):
+            raise NIFExportError("The NIF format does not allow that many vertices per mesh! Use the decimator, or cut up your most detailed meshes.")
         nif.blocks[tridata_id].num_vertices = len(vertquad_list)
+
+        if (len(nif.blocks[tridata_id].faces) > 65535):
+            raise NIFExportError("The NIF format does not allow that many faces per mesh! Use the decimator, or cut up your most detailed meshes.")
         nif.blocks[tridata_id].num_faces = len(nif.blocks[tridata_id].faces)
-        nif.blocks[tridata_id].num_faces_x3 = nif.blocks[tridata_id].num_faces * 3
+        
+        nif.blocks[tridata_id].num_faces_x3 = nif.blocks[tridata_id].num_faces * 3 # this is an int, not a short, no range problems here...
 
         # center
         count = 0

@@ -420,6 +420,12 @@ def readShort(data, offset):
 	(outShort,) = struct.unpack('<h', data[ offset : newOffset ])
 	return outShort, newOffset
 
+# Reads a 2 bytes unsigned short integer
+def readUShort(data, offset):
+	newOffset = offset + 2
+	(outShort,) = struct.unpack('<H', data[ offset : newOffset ])
+	return outShort, newOffset
+
 # Reads a 1 byte boolean value
 def readBool(data, offset):
 	newOffset = offset + 1
@@ -738,7 +744,7 @@ class NiTriShapeData(NiObject):
 		# Base class constructor
 		offset = NiObject.__init__(self, data, id)
 		# ID of the bound NiExtraData block
-		self.vertCount, offset = readShort(self.data, offset)
+		self.vertCount, offset = readUShort(self.data, offset)
 		debugMsg('found %04i vertices' % self.vertCount, 3)
 		# unknown, 0 for 0 vertex mesh. Some sort of crc or counter?
 		self.hasVerts, offset = readInt(self.data, offset)
@@ -774,9 +780,9 @@ class NiTriShapeData(NiObject):
 			self.vertsUV[i] = readUVMap(self.data[ offset : offset + dataLength ])
 			offset += dataLength
 		# number of faces
-		self.numFaces, offset = readShort(self.data, offset)
+		self.numFaces, offset = readUShort(self.data, offset)
 		debugMsg('found %04i faces' % self.numFaces, 3)
-		# number of vertices. I already got this
+		# number of faces times 3, we can throw this away
 		dummy, offset = readInt(self.data, offset)
 		self.faces = readFaces(self.data[offset : offset + (self.numFaces * 6) ])
 		offset += (self.numFaces * 6)
