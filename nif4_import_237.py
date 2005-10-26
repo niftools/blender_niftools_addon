@@ -139,6 +139,11 @@ textureFolders.append( "SMARTGUESS" )
 # by putting both 'data files' and 'data files/textures' in here
 # we make sure all textures are found
 
+global nifdir
+nifdir = ''
+global texdir
+texdir = ''
+
 
 # list of NiObject blocks
 global NiObjects
@@ -1422,7 +1427,13 @@ def createTexture(NiSourceTexture):
 		# (this may look a bit akward but it ensures that tga, png, etc are prefered
 		#  and if there is no alternative the dds is loaded)
 		for dir in textureFolders:
-			debugMsg( "Looking in \"%s\""%dir, 3 )
+			dir.replace( '\\', Blender.sys.sep )
+			dir.replace( '/', Blender.sys.sep )
+			if ( dir == 'NIFDIR' ):
+				dir = nifdir
+			elif ( dir == 'SMARTGUESS' ):
+				dir = texdir
+			debugMsg( "Looking in \"%s\""%dir, 2 )
 			tex = Blender.sys.join( dir, textureName )
 			if Blender.sys.exists(tex) == 1:
 				textureFile = tex
@@ -1688,14 +1699,14 @@ def createMesh(block):
 		alphaProperty = triShape.getNiAlphaProperty()
 		# Texture. Only supports one atm
 		mtex = material.getTextures()[0]
-		# if the image has an alpha channel => then this overrides the material alpha value
-		if alphaProperty and mtex:
-			if mtex.tex.image.depth == 32: # ... crappy way to check for alpha channel in texture
+		# if the mesh has an alpha channel
+		if alphaProperty:
+			material.mode |= Material.Modes.ZTRANSP # enable z-buffered transparency
+			# if the image has an alpha channel => then this overrides the material alpha value
+			if mtex and mtex.tex.image.depth == 32: # ... crappy way to check for alpha channel in texture
 				mtex.tex.imageFlags |= Blender.Texture.ImageFlags.USEALPHA # use the alpha channel
 				mtex.mapto |=  Texture.MapTo.ALPHA # and map the alpha channel to transparency
 				material.setAlpha(0.0) # for proper display in Blender, we must set the alpha value to 0 and the "Val" slider in the texture Map To tab to the NIF material alpha value (but we do not have access to that button yet... we have to wait until it gets supported by the Blender Python API...)
-				material.mode |= Material.Modes.ZTRANSP # enable z-buffered transparency
-			# otherwise... leave everything as it is
 		else:
 			# no alpha property: force alpha 1.0 in Blender
 			material.setAlpha(1.0)
@@ -1794,22 +1805,13 @@ def createMesh(block):
 def readFile(filename):
 	debugMsg("-----\nLoading %s" % filename, 2)
 	versList = ('4.0.0.2') # for further extension
-	global textureFolders
-	debugMsg('Using texture directories:', 2)
-	for i in range( len( textureFolders ) ):
-		textureFolders[i].replace( '\\', Blender.sys.sep )
-		textureFolders[i].replace( '/', Blender.sys.sep )
-		if ( textureFolders[i] == 'NIFDIR' ):
-			textureFolders[i] = Blender.sys.dirname(filename)
-		elif ( textureFolders[i] == 'SMARTGUESS' ):
-			# detect morrowind texture path
-			texfld = Blender.sys.dirname(filename)
-			idx = texfld.lower().find('meshes')
-			if ( idx >= 0 ):
-				textureFolders[i] = texfld[:idx] + 'textures'
-			else:
-				textureFolders[i] = Blender.sys.dirname(filename)
-		debugMsg(textureFolders[i], 2)
+	# detect morrowind texture path
+	global nifdir
+	global texdir
+	nifdir = Blender.sys.dirname(filename)
+	texdir = nifdir
+	idx = texdir.lower().find('meshes')
+	if ( idx >= 0 ): texdir = texdir[:idx] + 'textures'
 	# opens the file in "rb" modality, read only, binary mode
 	file = open(filename, "rb")
 	# Reads the content of the file in the data variable, to python purposes, a string
