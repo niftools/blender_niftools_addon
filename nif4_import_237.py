@@ -120,6 +120,8 @@ global textureFolders
 textureFolders = []
 # first try the nif location
 textureFolders.append( "NIFDIR" )
+# then be smart and have a guess
+textureFolders.append( "SMARTGUESS" )
 # if you have installed morrowind uncomment the following two lines
 #textureFolders.append( "C:\\Program Files\\Bethesda\\Morrowind\\Data Files\\Textures" )
 #textureFolders.append( "C:\\Program Files\\Bethesda\\Morrowind\\Data Files" )
@@ -1420,18 +1422,18 @@ def createTexture(NiSourceTexture):
 		# (this may look a bit akward but it ensures that tga, png, etc are prefered
 		#  and if there is no alternative the dds is loaded)
 		for dir in textureFolders:
-			debugMsg( "Looking in \"%s\""%dir, 2 )
+			debugMsg( "Looking in \"%s\""%dir, 3 )
 			tex = Blender.sys.join( dir, textureName )
 			if Blender.sys.exists(tex) == 1:
 				textureFile = tex
-				debugMsg("Found %s" % textureFile, 2)
+				debugMsg("Found %s" % textureFile, 3)
 			# if texture is dds try other formats
 			if re_ddsExt.match(tex[-4:]):
 				base=tex[:-4]
 				for ext in ('.PNG','.png','.TGA','.tga','.BMP','.bmp','.JPG','.jpg'):
 					if Blender.sys.exists(base+ext) == 1:
 						textureFile = base+ext
-						debugMsg( "Found %s" % textureFile, 2 )
+						debugMsg( "Found %s" % textureFile, 3 )
 						break
 			if textureFile and not re_ddsExt.match(textureFile[-4:]):
 				break
@@ -1799,6 +1801,14 @@ def readFile(filename):
 		textureFolders[i].replace( '/', Blender.sys.sep )
 		if ( textureFolders[i] == 'NIFDIR' ):
 			textureFolders[i] = Blender.sys.dirname(filename)
+		elif ( textureFolders[i] == 'SMARTGUESS' ):
+			# detect morrowind texture path
+			texfld = Blender.sys.dirname(filename)
+			idx = texfld.lower().find('meshes')
+			if ( idx >= 0 ):
+				textureFolders[i] = texfld[:idx] + 'textures'
+			else:
+				textureFolders[i] = Blender.sys.dirname(filename)
 		debugMsg(textureFolders[i], 2)
 	# opens the file in "rb" modality, read only, binary mode
 	file = open(filename, "rb")
