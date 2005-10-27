@@ -908,17 +908,34 @@ class NiTexturingProperty(NiObject):
 		self.applyMode, offset = readInt(self.data, offset)
 		# Ok, I'll skip a lot of data here. ATM I am more interested in getting the name of the base texture
 		# file than all of the other stuff. Probably it's info about material properties, blending modes and such
-		offset += 8
-		#bound NiSourceTexture ID
-		self.NiSourceTextureId, offset = readInt(self.data, offset)
-		self.resources.append(self.NiSourceTextureId)
+		offset += 4
+		self.NiSourceTextureId = [ -1 ] * 5
+		for tex in range( len( self.NiSourceTextureId ) ):
+			hasTex, offset = readInt(self.data, offset)
+			if hasTex:
+				self.NiSourceTextureId[tex], offset = readInt( self.data, offset )
+				#print "%i -> %i"%(tex, self.NiSourceTextureId[tex])
+				self.resources.append(self.NiSourceTextureId[tex])
+				offset += 18
 		#there's more following, I'll bother later
-	# Returns the bound NiSourceTexture ID
-	def getNiSourceTextureId(self):
-		return self.NiSourceTextureId
 	# Returns the bound NiSourceTexture
-	def getNiSourceTexture(self):
-		return NiObjects[self.NiSourceTextureId]
+	def getBaseTextureSource(self):
+		try:
+			if NiObjects[self.NiSourceTextureId[0]].getType() == "NiSourceTexture":
+				return NiObjects[self.NiSourceTextureId[0]]
+			else:
+				return None
+		except:
+			return None
+	# Returns the bound NiSourceTexture
+	def getGlowTextureSource(self):
+		try:
+			if NiObjects[self.NiSourceTextureId[4]].getType() == "NiSourceTexture":
+				return NiObjects[self.NiSourceTextureId[4]]
+			else:
+				return None
+		except:
+			return None
 
 class NiSourceTexture(NiObject):
 	"""
@@ -1139,8 +1156,8 @@ class NiMorphData(NiObject):
                 self.NumMorphBlocks, offset = readInt(self.data, offset)
                 # Number of vertices
                 self.NumVertices, offset = readInt(self.data, offset)
-                print self.NumMorphBlocks
-                print self.NumVertices
+                #print self.NumMorphBlocks
+                #print self.NumVertices
                 offset += 1
                 self.MorphBlocks = [ None ] * self.NumMorphBlocks
                 for count in range( self.NumMorphBlocks ):
@@ -1572,15 +1589,26 @@ def createMaterial(NiMaterialProperty, NiTexturingProperty):
 	material.setAlpha(surface[1])
 	textures = []
 	if NiTexturingProperty:
-		NiSourceTexture = NiTexturingProperty.getNiSourceTexture()
-		texture = createTexture(NiSourceTexture)
-		if texture != 'err':
-			# Sets the texture to use face UV coordinates.
-			texco = Texture.TexCo.UV
-			# Maps the texture to the base color channel. Not necessarily true.
-			mapto = Texture.MapTo.COL
-			# Sets the texture for the material
-			material.setTexture(0, texture, texco, mapto)
+		BaseTextureSource = NiTexturingProperty.getBaseTextureSource()
+		if BaseTextureSource:
+			baseTexture = createTexture(BaseTextureSource)
+			if baseTexture != 'err':
+				# Sets the texture to use face UV coordinates.
+				texco = Texture.TexCo.UV
+				# Maps the texture to the base color channel. Not necessarily true.
+				mapto = Texture.MapTo.COL
+				# Sets the texture for the material
+				material.setTexture(0, baseTexture, texco, mapto)
+		GlowTextureSource = NiTexturingProperty.getGlowTextureSource()
+		if GlowTextureSource:
+			glowTexture = createTexture(GlowTextureSource)
+			if glowTexture != 'err':
+				# Sets the texture to use face UV coordinates.
+				texco = Texture.TexCo.UV
+				# Maps the texture to the base color channel. Not necessarily true.
+				mapto = Texture.MapTo.COL | Texture.MapTo.EMIT
+				# Sets the texture for the material
+				material.setTexture(1, glowTexture, texco, mapto)
 	return material
 
 # creates a group of meshes aligned along the 3 axis
@@ -1844,7 +1872,7 @@ def createMesh(block):
 				elif ( morphCtrl.Flags == 0x0008 ):
 					curve.setExtrapolation( 'Cyclic' )
 				else:
-					debugMsg( 'dunno which extrapolation to use: using constant instead' );
+					debugMsg( 'dunno which extrapolation to use: using constant instead', 2 )
 					curve.setExtrapolation( 'Constant' )
 				# set up the curve's control points
 				for count in range( frameCnt ):
