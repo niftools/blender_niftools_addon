@@ -59,9 +59,93 @@ Select the meshes you wish to export and run this script from "File->Export" men
 # ***** END BSD LICENCE BLOCK *****
 # --------------------------------------------------------------------------
 
-import Blender, struct, re, nif4
-from math import sqrt
+import Blender, sys
 
+try:
+    import struct, re
+    from math import sqrt
+except:
+    err = """--------------------------
+ERROR\nThis script requires a full Python installation to run.
+Python minimum required version:
+%s
+--------------------------""" % sys.version
+    print err
+    Blender.Draw.PupMenu("ERROR%t|Python installation not found, check console for details")
+    raise
+
+try:
+    import nif4
+except:
+    err = """--------------------------
+ERROR\nThis script requires the Python NIF library, nif4.py.
+Download it from http://niftools.sourceforge.net/
+--------------------------"""
+    print err
+    Blender.Draw.PupMenu("ERROR%t|Python NIF library not found, check console for details")
+    raise
+    
+
+
+
+# 
+# Process the config file.
+# 
+
+def config_read(configfile, var, val):
+    if configfile:
+        configfile.seek(0)
+        for line in configfile.readlines():
+            try:
+                x, y = line.split('=', 2)
+            except ValueError: # if we cannot unpack the list into two elements
+                continue
+            x = x.strip() # strip surrounding spaces and trailing newline
+            y = y.strip() # dito
+            if x == 'scale_correction' and var == 'scale_correction': return float(y)
+            if x == 'force_dds'        and var == 'force_dds':        return int(y)
+            if x == 'strip_texpath'    and var == 'strip_texpath':    return int(y)
+            if x == 'seams_import'     and var == 'seams_import':     return int(y)
+            if x == 'last_imported'    and var == 'last_imported':    return y
+            if x == 'last_exported'    and var == 'last_exported':    return y
+            if x == 'user_texpath'     and var == 'user_texpath':     return y
+    return val
+
+configname = Blender.sys.join(Blender.Get('datadir'), 'nif4.ini')
+try:
+    configfile = open(configname, "r")
+except:
+    configfile = None
+scale_correction = config_read(configfile, 'scale_correction', 10.0) # 1 blender unit = 10 nif units
+force_dds        = config_read(configfile, 'force_dds', 0)           # 0 = export original texture file extension, 1 = force dds extension
+strip_texpath    = config_read(configfile, 'strip_texpath', 1)       # 0 = export full texture file path (obsolete?)
+                                                                     # 1 = basedir/filename.ext (strip 'data files' prefix for morrowind)
+                                                                     # 2 = filename.ext (original morrowind style)
+seams_import     = config_read(configfile, 'seams_import', 1)        # 0 = vertex duplication, fast method (may introduce unwanted seams in UV seams)
+                                                                     # 1 = vertex duplication, slow method (works perfectly, this is the preferred method if the model you are importing is not too large)
+                                                                     # 2 = use Blender smoothing flag (slow and imperfect, unless model was created with blender and had no duplicate vertices)
+last_imported    = config_read(configfile, 'last_imported', 'noname.nif')
+last_exported    = config_read(configfile, 'last_exported', 'noname.nif')
+user_texpath     = config_read(configfile, 'user_texpath',  'C:\\Program Files\\Bethesda\\Morrowind\\Data Files\\Textures') # colon-separated list of texture paths, used when importing
+if configfile: configfile.close()
+
+
+
+#
+# Run exporter GUI.
+# 
+
+# TODO
+
+
+
+#
+# Save options for next time.
+#
+configfile = open(configname, "w")
+configfile.write('scale_correction=%f\nforce_dds=%i\nstrip_texpath=%i\nseams_import=%i\nlast_imported=%s\nlast_exported=%s\nuser_texpath=%s\n'%(scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath))
+configfile.close()
+print 'config:',scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath
 
 
 # 
@@ -69,11 +153,6 @@ from math import sqrt
 # 
 epsilon = 0.005       # used for checking equality of floats
 show_progress = 1     # 0 = off, 1 = basic, 2 = advanced (but slows down the exporter)
-scale_correction = 10 # 1 blender unit = 10 nif units
-force_dds = 0         # 0 = use original texture file extension, 1 = force dds extension
-strip_texpath = 2     # 0 = use full texture file path (obsolete?)
-                      # 1 = basedir/filename.ext (strip 'data files' prefix for morrowind)
-                      # 2 = filename.ext (original morrowind style)
 
 
 
@@ -739,10 +818,10 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 elif ( strip_texpath == 1 ):
                     # strip the data files prefix from the texture's file name
                     tfn = mesh_base_tex.image.getFilename().lower()
-                    idx = tfn.find( "data files" )
+                    idx = tfn.find( "textures" )
                     if ( idx >= 0 ):
-                        tfn = tfn[idx+10:len(tfn)]
-                        tfn = tfn.strip( '/\\' )
+                        tfn = tfn[idx:]
+                        tfn = tfn.replace(Blender.sys.sep, '\\') # for my linux fellows
                         #print "Texture: %s"%tfn
                         nif.blocks[tritexsrc_id].file_name = nif4.mystring(tfn)
                     else:
@@ -1490,6 +1569,8 @@ def export_xnif(nif):
     # but apparently it still works if we leave everything in place
     # so we make it ourselves very easy
     return nif
+
+
 
 # start blender file selector for export
 Blender.Window.FileSelector(export_nif, "Export NIF")

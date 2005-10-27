@@ -111,6 +111,70 @@ Python minimum required version:
 
 #----------------------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------#
+#-------- Process the config file.
+#----------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------#
+
+def config_read(configfile, var, val):
+    if configfile:
+        configfile.seek(0)
+        for line in configfile.readlines():
+		try:
+			x, y = line.split('=', 2)
+		except ValueError: # if we cannot unpack the list into two elements
+			continue
+		x = x.strip() # strip surrounding spaces and trailing newline
+		y = y.strip() # dito
+		if x == 'scale_correction' and var == 'scale_correction': return float(y)
+		if x == 'force_dds'        and var == 'force_dds':        return int(y)
+		if x == 'strip_texpath'    and var == 'strip_texpath':    return int(y)
+		if x == 'seams_import'     and var == 'seams_import':     return int(y)
+		if x == 'last_imported'    and var == 'last_imported':    return y
+		if x == 'last_exported'    and var == 'last_exported':    return y
+		if x == 'user_texpath'     and var == 'user_texpath':     return y
+    return val
+
+configname = Blender.sys.join(Blender.Get('datadir'), 'nif4.ini')
+try:
+	configfile = open(configname, "r")
+except:
+	configfile = None
+scale_correction = config_read(configfile, 'scale_correction', 10.0) # 1 blender unit = 10 nif units
+force_dds        = config_read(configfile, 'force_dds', 0)           # 0 = export original texture file extension, 1 = force dds extension
+strip_texpath    = config_read(configfile, 'strip_texpath', 1)       # 0 = export full texture file path (obsolete?)
+                                                                     # 1 = textures/.../filename.ext (strip 'data files' prefix for morrowind)
+                                                                     # 2 = filename.ext (original morrowind style)
+seams_import     = config_read(configfile, 'seams_import', 1)        # 0 = vertex duplication, fast method (may introduce unwanted seams in UV seams)
+                                                                     # 1 = vertex duplication, slow method (works perfectly, this is the preferred method if the model you are importing is not too large)
+                                                                     # 2 = use Blender smoothing flag (slow and imperfect, unless model was created with blender and had no duplicate vertices)
+last_imported    = config_read(configfile, 'last_imported', 'noname.nif')
+last_exported    = config_read(configfile, 'last_exported', 'noname.nif')
+user_texpath     = config_read(configfile, 'user_texpath',  'C:\\Program Files\\Bethesda\\Morrowind\\Data Files\\Textures') # colon-separated list of texture paths, used when importing
+if configfile: configfile.close()
+
+#----------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------#
+#-------- Run importer GUI.
+#----------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------#
+
+# TODO
+
+#----------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------#
+#-------- Save options for next time.
+#----------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------#
+
+configfile = open(configname, "w")
+configfile.write('scale_correction=%f\nforce_dds=%i\nstrip_texpath=%i\nseams_import=%i\nlast_imported=%s\nlast_exported=%s\nuser_texpath=%s\n'%(scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath))
+configfile.close()
+print 'config:',scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath
+
+
+
+#----------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------#
 #-------- Constants and global variables
 #----------------------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------#
@@ -122,6 +186,9 @@ textureFolders = []
 textureFolders.append( "NIFDIR" )
 # then be smart and have a guess
 textureFolders.append( "SMARTGUESS" )
+# and now append the user-defined texture folders
+textureFolders.extend( user_texpath.split(';') )
+
 # if you have installed morrowind uncomment the following two lines
 #textureFolders.append( "C:\\Program Files\\Bethesda\\Morrowind\\Data Files\\Textures" )
 #textureFolders.append( "C:\\Program Files\\Bethesda\\Morrowind\\Data Files" )
@@ -131,6 +198,7 @@ textureFolders.append( "SMARTGUESS" )
 # if you like to use the textures on the TESCS CD uncomment the following two line
 #textureFolders.append( "D:\\Data Files\\Textures" )
 #textureFolders.append( "D:\\Data Files" )
+
 # NOTE:
 # all original morrowind nifs use 'name.ext' only for addressing the textures
 # but most mods use something like 'textures\[subdir\]name.ext'
@@ -160,11 +228,11 @@ verbose = 2
 # recompile them all the time.
 # The DOTALL flag has the '.' operator match newline characters too. So I have 4 generic 
 # bytes, followed by the letters Ni and an uppercase letter within A-Z
-# RootCollisionNode is probably a Bethseda extension # amorilia
-re_nameStart = re.compile('.{4}(Ni[A-Z]|RootCollisionNode)', re.DOTALL) # amorilia
+# RootCollisionNode is probably a Bethseda extension
+re_nameStart = re.compile('.{4}(Ni[A-Z]|RootCollisionNode)', re.DOTALL)
 # The 'r' before the regexp forces the use of a raw string, so that I don't need to
 # escape the character \. Way to save on a keystroke. Helps readability, though
-re_name = re.compile(r'^(Ni[A-Z][\w\s]*|RootCollisionNode)$') # amorilia
+re_name = re.compile(r'^(Ni[A-Z][\w\s]*|RootCollisionNode)$')
 # This matches a three digits versioned name (ie Material.001)
 re_versioned = re.compile(r'^.*\.[0-9]{3}$')
 # This matches a '.dds' file extension
@@ -172,10 +240,10 @@ re_ddsExt = re.compile(r'^\.dds$', re.IGNORECASE)
 # Geometries within the NIF files are stored with a size and/or orentation that are unpractical
 # for editing within blender. These matrices allow me to scale the mesh on import
 # to be more suitable for editing, and to do the inverse operation when exporting.
-nifToBlendXform = Matrix( # Scale x 0.1
-	[ 0.1,  0.0,  0.0,  0.0],
-	[ 0.0,  0.1,  0.0,  0.0],
-	[ 0.0,  0.0,  0.1,  0.0],
+nifToBlendXform = Matrix( # Scale x 1.0/scale_correction
+	[ 1.0/scale_correction,  0.0,  0.0,  0.0],
+	[ 0.0,  1.0/scale_correction,  0.0,  0.0],
+	[ 0.0,  0.0,  1.0/scale_correction,  0.0],
 	[ 0.0,  0.0,  0.0,  1.0])
 epsilon = 0.005 # used for checking equality of floats
 
@@ -185,7 +253,7 @@ def invert(mat):
 	out.invert()
 	return out
 
-# inverse of the import matrix, scales things back x 10
+# inverse of the import matrix, scales things back
 blendToNifXform = invert(nifToBlendXform)
 
 #Identity matrix, does nothing
@@ -879,7 +947,7 @@ class NiSourceTexture(NiObject):
 	def getTextureFile(self):
 		textureFile = self.texturePath
 		textureFile = textureFile.strip('\x00')
-		textureFile = textureFile.lower() # fixes problems with case sensitivity of file names under linux # amorilia
+		textureFile = textureFile.lower() # fixes problems with case sensitivity of file names under linux
 		textureFile = textureFile.replace('\\', Blender.sys.sep)
 		textureFile = textureFile.replace('/', Blender.sys.sep)
 		# textureFile = textureFile.lstrip(Blender.sys.sep)
@@ -1108,7 +1176,7 @@ class NifDocument(object):
 		NiObjects = []
 		self.data = data
 		# The version string is a fixed value
-		#self.headerString = 'NetImmerse File Format, Version 4.0.0.2\x0A\x02\x00\x00\x04' # amorilia
+		#self.headerString = 'NetImmerse File Format, Version 4.0.0.2\x0A\x02\x00\x00\x04'
 		self.headerString = data[0:data[0:50].find('\x0A')]
 		# Offset is an index from the start of data for reading the various bits and bobs
 		offset = len(self.headerString) + 1
@@ -1116,7 +1184,7 @@ class NifDocument(object):
 		# I'll store it as a tuple
 		self.version, offset = readVersion(self.data, offset)
 		debugMsg( 'file version is %s.%s.%s.%s' % self.version, 2)
-		# This value matches the number of nodes within the file # amorilia: now it really does :)
+		# This value matches the number of nodes within the file
 		self.blockCount, offset = readInt(self.data, offset)
 		# the % operand operates a substitution in the string
 		# with the 2nd parameter, where the formatting is defined
@@ -1193,8 +1261,7 @@ class NifDocument(object):
 		# could make it easier to navigate the tree later on.
 		for block in [obj for obj in NiObjects if obj.getType() == 'NiNode']:
 			for child in block.getChildren():
-				#if (child != None): # amorilia #Not needed anymore, children lists now only return valid blocks
-				child.setParentId(block.getId()) # amorilia
+				child.setParentId(block.getId())
 		# temporarily sets the root block to the first block found
 		self.rootBlock = NiObjects[0]
 		# finds the root block
@@ -1415,9 +1482,9 @@ def createTexture(NiSourceTexture):
 	texture = None
 	# If I looked earlier for this texture it will be stored in my dictionary of textures
 	if textures.has_key(textureId):
-		debugMsg("Reusing \"%s\"" % textureName, 3) # amorilia
-		#if textures[textureId] != "err": # amorilia
-		texture = textures[textureId] # amorilia
+		debugMsg("Reusing \"%s\"" % textureName, 3)
+		#if textures[textureId] != "err":
+		texture = textures[textureId]
 	else:
 		# Find the right texture:
 		debugMsg("Searching for \"%s\"" % textureName, 2)
@@ -1434,7 +1501,11 @@ def createTexture(NiSourceTexture):
 			elif ( dir == 'SMARTGUESS' ):
 				dir = texdir
 			debugMsg( "Looking in \"%s\""%dir, 2 )
-			tex = Blender.sys.join( dir, textureName )
+			# now a little trick, to satisfy many mods
+			if (textureName[:9].lower() == 'textures\\') and (dir[len(dir)-9:].lower() == '\\textures'):
+				tex = Blender.sys.join( dir, textureName[9:] ) # strip one of the two 'textures' from the path
+			else:
+				tex = Blender.sys.join( dir, textureName )
 			if Blender.sys.exists(tex) == 1:
 				textureFile = tex
 				debugMsg("Found %s" % textureFile, 3)
@@ -1576,7 +1647,6 @@ def createMesh(block):
 	meshData = Blender.NMesh.GetRaw()
 	# Mesh name -> must be unique, so tag it if needed
 	name = getUniqueName(block.getName())
-	#name = versioned_name(triShape.getName()) # amorilia
 	triShape = None
 	# Mesh transform matrix
 	xform = block.getMatrix()
@@ -1601,7 +1671,7 @@ def createMesh(block):
 	hasVertexUV = len(vertUV)>0
 	hasVertexCol = len(vertCol)>0
 	hasVertexNormals = len(vertNorms)>0
-	# amorilia: let's only duplicate vertices that have different
+	# let's only duplicate vertices that have different
 	# normals (to simulate sharp edges), so we build list of unique
 	# (vertex, normal) pairs
 	vertpairs = []
@@ -1628,11 +1698,11 @@ def createMesh(block):
 			else:
 				vertpairs.append( ( verts[i], None ) )
 			vertmap.append(len(vertpairs) - 1) # vertmap[i] = len(vertpairs) - 1
-	# amorilia: now import them
+	# now import them
 	for i, vertpair in enumerate(vertpairs):
 		x, y, z = vertpair[0]
 		meshData.verts.append(Blender.NMesh.Vert(x, y, z))
-		# amorilia: let Blender calculate the vertex normals when doing meshData.update
+		# let Blender calculate the vertex normals when doing meshData.update
 		#if hasVertexNormals:
 		#	nx, ny, nz = vertpair[1]
 		#	meshData.verts[i].no[0] = nx
@@ -1648,7 +1718,6 @@ def createMesh(block):
 		face.smooth = 1
 		face.mat = 0
 		meshData.faces.append(face)
-	# amorilia: done!
 	
 	# Vertex colors. For both this and UV mapping info I rely on the order of the faces matching that of the lists
 	# passed as parameter to the function. Nasty but effective
@@ -1723,9 +1792,9 @@ def createMesh(block):
 				f.image = imgobj
 				
 	# Put the object in blender
-	meshObj = Blender.NMesh.PutRaw(meshData, name, recalcNormals) # amorilia
+	meshObj = Blender.NMesh.PutRaw(meshData, name, recalcNormals)
 	# Name the object linked to the mesh
-	meshObj.name = name # amorilia
+	meshObj.name = name
 	# sets the transform matrix for the object.
 	meshObj.setMatrix(xform)
 	# Skinning info, for meshes affected by bones. Adding groups to a mesh can be done only after this is already
@@ -1741,7 +1810,7 @@ def createMesh(block):
 				for vert, weight in weights[idx]:
 					vert2 = vertmap[vert]
 					meshData.assignVertsToGroup(groupName, [vert2], weight, 'replace')
-	meshData.update(1) # amorilia: let Blender calculate vertex normals
+	meshData.update(1) # let Blender calculate vertex normals
 
 	# morphing
 	morphCtrl = triShape.getNiGeomMorpherController()
@@ -1844,8 +1913,4 @@ def readFile(filename):
 		nifObject.writeToBlender()
 	return
 
-# Not implemented yet, but I'll make a GUI version sometime
-def drawGui():
-	pass
-
-Blender.Window.FileSelector(readFile, 'LOAD FILE')
+Blender.Window.FileSelector(readFile, 'Import NIF')
