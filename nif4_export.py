@@ -60,6 +60,9 @@ Select the meshes you wish to export and run this script from "File->Export" men
 # --------------------------------------------------------------------------
 
 import Blender, sys
+from Blender.BGL import *
+from Blender.Draw import *
+from Blender.Noise import *
 
 try:
     import struct, re
@@ -121,9 +124,8 @@ except:
     configfile = None
 scale_correction = config_read(configfile, 'scale_correction', 10.0) # 1 blender unit = 10 nif units
 force_dds        = config_read(configfile, 'force_dds', 0)           # 0 = export original texture file extension, 1 = force dds extension
-strip_texpath    = config_read(configfile, 'strip_texpath', 1)       # 0 = export full texture file path (obsolete?)
-                                                                     # 1 = basedir/filename.ext (strip 'data files' prefix for morrowind)
-                                                                     # 2 = filename.ext (original morrowind style)
+strip_texpath    = config_read(configfile, 'strip_texpath', 0)       # 0 = basedir/filename.ext (strip 'data files' prefix for morrowind)
+                                                                     # 1 = filename.ext (original morrowind style)
 seams_import     = config_read(configfile, 'seams_import', 1)        # 0 = vertex duplication, fast method (may introduce unwanted seams in UV seams)
                                                                      # 1 = vertex duplication, slow method (works perfectly, this is the preferred method if the model you are importing is not too large)
                                                                      # 2 = use Blender smoothing flag (slow and imperfect, unless model was created with blender and had no duplicate vertices)
@@ -138,17 +140,62 @@ if configfile: configfile.close()
 # Run exporter GUI.
 # 
 
-# TODO
+Textbox1 = Create(last_exported)
+Slider1 = Create(scale_correction)
+Toggle1 = Create(force_dds)
+Toggle2 = Create(strip_texpath)
 
+def draw():
+    global Textbox1, Slider1, Toggle1, Toggle2
+    
+    glClearColor(0.753, 0.753, 0.753, 0.0)
+    glClear(GL_COLOR_BUFFER_BIT)
 
+    Button('Cancel', 7, 208, 328, 71, 23, 'Cancel the export script.')
+    Button('Export NIF', 1, 8, 328, 87, 23, 'Export the NIF file with these settings.')
+    Button('Browse', 2, 8, 368, 55, 23, 'Browse folders and select an other filename.')
+    Textbox1 = String('Filename: ', 3, 72, 368, 207, 23, Textbox1.val, 512, 'Filename of the NIF file to be written. If there is animation, also x***.nif and x***.kf files will be written.')
+    Toggle1 = Toggle('Force DDS', 4, 8, 400, 127, 23, Toggle1.val, 'Force textures to be exported with a .DDS extension? Usually, you can leave this disabled.')
+    Toggle2 = Toggle('Strip Texture Path', 5, 152, 400, 127, 23, Toggle2.val, "Strip texture path in NIF file. You should leave this disabled, especially when this model's textures are stored in a subdirectory of the Data Files\Textures folder.")
+    Slider1 = Slider('Scale Correction: ', 6, 8, 432, 271, 23, Slider1.val, 0.01, 100, 0, 'How many NIF units is one Blender unit?')
 
-#
-# Save options for next time.
-#
-configfile = open(configname, "w")
-configfile.write('scale_correction=%f\nforce_dds=%i\nstrip_texpath=%i\nseams_import=%i\nlast_imported=%s\nlast_exported=%s\nuser_texpath=%s\n'%(scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath))
-configfile.close()
-print 'config:',scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath
+def event(evt, val):
+    if (evt == QKEY and not val): Exit()
+    
+def select(filename):
+    global Textbox1, Slider1, Toggle1, Toggle2
+
+    Textbox1.val = filename
+
+def bevent(evt):
+    global Textbox1, Slider1, Toggle1, Toggle2
+    global scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath
+    
+    if evt == 2: # Browse
+        Blender.Window.FileSelector(select, 'Select')
+        
+    elif evt == 1: # Export NIF
+        #
+        # Save options for next time.
+        #
+        force_dds = Toggle1.val
+        strip_texpath = Toggle2.val
+        scale_correction = Slider1.val
+        last_exported = Textbox1.val
+        configfile = open(configname, "w")
+        configfile.write('scale_correction=%f\nforce_dds=%i\nstrip_texpath=%i\nseams_import=%i\nlast_imported=%s\nlast_exported=%s\nuser_texpath=%s\n'%(scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath))
+        configfile.close()
+        
+        export_nif(last_exported)
+        
+        Exit()
+    elif evt == 7: # Cancel
+        Exit()
+    
+    Blender.Redraw()
+
+Register(draw, event, bevent)
+
 
 
 # 
@@ -174,6 +221,9 @@ class NIFExportError(Exception):
 # Main export function.
 #
 def export_nif(filename):
+    global scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath
+    print 'config:',scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath
+    
     try: # catch NIFExportErrors
         
         # preparation:
@@ -670,6 +720,8 @@ def export_flipcontroller( fliptxt, target_id, target_tex, nif ):
 # trishape block per mesh material.
 # 
 def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
+    global scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath
+    
     assert(ob.getType() == 'Mesh')
 
     # get mesh from ob
@@ -815,10 +867,10 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 nif.header.nblocks += 1
                 
                 nif.blocks[tritexsrc_id].use_external = 1
-                if ( strip_texpath == 2 ):
+                if ( strip_texpath == 1 ):
                     # strip texture file path (original morrowind style)
                     nif.blocks[tritexsrc_id].file_name = nif4.mystring(Blender.sys.basename(mesh_base_tex.image.getFilename()))
-                elif ( strip_texpath == 1 ):
+                elif ( strip_texpath == 0 ):
                     # strip the data files prefix from the texture's file name
                     tfn = mesh_base_tex.image.getFilename().lower()
                     idx = tfn.find( "textures" )
@@ -829,9 +881,9 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                         nif.blocks[tritexsrc_id].file_name = nif4.mystring(tfn)
                     else:
                         nif.blocks[tritexsrc_id].file_name = nif4.mystring(Blender.sys.basename(mesh_base_tex.image.getFilename()))
-                else:
-                    # export full texture path
-                    nif.blocks[tritexsrc_id].file_name = nif4.mystring(mesh_base_tex.image.getFilename())
+                #else:
+                #    # export full texture path
+                #    nif.blocks[tritexsrc_id].file_name = nif4.mystring(mesh_base_tex.image.getFilename())
                 # force dds extension, if requested
                 if force_dds:
                     nif.blocks[tritexsrc_id].file_name.value = nif.blocks[tritexsrc_id].file_name.value[:-4] + '.dds'
@@ -1572,8 +1624,3 @@ def export_xnif(nif):
     # but apparently it still works if we leave everything in place
     # so we make it ourselves very easy
     return nif
-
-
-
-# start blender file selector for export
-Blender.Window.FileSelector(export_nif, "Export NIF")
