@@ -134,7 +134,10 @@ def config_read(configfile, var, val):
 		if x == 'user_texpath'     and var == 'user_texpath':     return y
     return val
 
-configname = Blender.sys.join(Blender.Get('datadir'), 'nif4.ini')
+datadir = Blender.Get('datadir')
+if datadir == None:
+    raise NIFExportError("Script data dir not found; creating a directory called 'bpydata' in your scripts folder should solve this problem.")
+configname = Blender.sys.join(datadir, 'nif4.ini')
 try:
 	configfile = open(configname, "r")
 except:
@@ -1526,8 +1529,8 @@ def createTexture(NiSourceTexture):
 			if Blender.sys.exists(tex) == 1:
 				textureFile = tex
 				debugMsg("Found %s" % textureFile, 3)
-			# if texture is dds try other formats
-			if re_ddsExt.match(tex[-4:]):
+			else:
+				# try other formats
 				base=tex[:-4]
 				for ext in ('.PNG','.png','.TGA','.tga','.BMP','.bmp','.JPG','.jpg'):
 					if Blender.sys.exists(base+ext) == 1:
