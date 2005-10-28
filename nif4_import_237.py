@@ -939,6 +939,24 @@ class NiTexturingProperty(NiObject):
 				return None
 		except:
 			return None
+	# Calculates CRC32
+	def getCRC(self):
+		str = ''
+		try:
+			str = str + self.getBaseTextureSource().getTextureFile()
+			str = str + self.getGlowTextureSource().getTextureFile()
+		except:
+			pass
+		id = int( 0 )
+		for x in range( 0, len( str ), 2 ):
+			try:
+				id += ord( str[x+1] ) * 256
+			except:
+				pass
+			id += ord( str[x] )
+			if id > 0xffff:
+				id = id - 0x10000 + 1
+		return "%04X"%id
 
 class NiSourceTexture(NiObject):
 	"""
@@ -1532,7 +1550,7 @@ def createTexture(NiSourceTexture):
 			else:
 				# try other formats
 				base=tex[:-4]
-				for ext in ('.PNG','.png','.TGA','.tga','.BMP','.bmp','.JPG','.jpg'):
+				for ext in ('.PNG','.png','.TGA','.tga','.BMP','.bmp','.JPG','.jpg','.dds','.DDS'):
 					if Blender.sys.exists(base+ext) == 1:
 						textureFile = base+ext
 						debugMsg( "Found %s" % textureFile, 3 )
@@ -1561,7 +1579,7 @@ def createMaterial(NiMaterialProperty, NiTexturingProperty):
 	material = None
 	#The same material could be used with different textures
 	if NiTexturingProperty:
-		name = "%s.%s" % (name, NiTexturingProperty.getId())
+		name = "%s.%s" % (name, NiTexturingProperty.getCRC())
 	try:
 		material = Material.Get(name)
 		debugMsg("reusing material: %s " % name, 3)
@@ -1606,6 +1624,8 @@ def createMaterial(NiMaterialProperty, NiTexturingProperty):
 		if GlowTextureSource:
 			glowTexture = createTexture(GlowTextureSource)
 			if glowTexture != 'err':
+				# glow maps use alpha from rgb intensity
+				glowTexture.imageFlags = glowTexture.imageFlags + Blender.Texture.ImageFlags.CALCALPHA
 				# Sets the texture to use face UV coordinates.
 				texco = Texture.TexCo.UV
 				# Maps the texture to the base color channel. Not necessarily true.
