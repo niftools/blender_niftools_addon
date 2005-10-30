@@ -10,7 +10,7 @@ Tip: 'Load a Netimmerse File'
 __author__ = "Alessandro Garosi (AKA Brandano) -- tdo_brandano@hotmail.com"
 __url__ = ("blender", "elysiun",
 "development group at http://games.groups.yahoo.com/group/NIFLA/")
-__version__ = "1.0.7"
+__version__ = "1.1"
 
 __bpydoc__ = """\
 This script imports Netimmerse (the version used by Morrowind) .NIF files to Blender
@@ -20,7 +20,7 @@ Usage:
 
 Run this script from "File->Import" menu and then select the desired NIF file.
 """
-# nif4_import_237.py version 1.0.7
+# nif4_import_237.py version 1.1
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
 #
@@ -87,10 +87,13 @@ Run this script from "File->Import" menu and then select the desired NIF file.
 # Amorilia (don't know your name buddy), for bugfixes and testing.
 
 import Blender, sys
+from Blender import BGL, Draw
 
 from Blender import Scene, Object, NMesh, Armature, Image, Texture, Material
 
 from Blender.Mathutils import *
+
+USE_GUI = 0 # set to one to use the GUI (warning: crashes Blender for some mysterious reason...)
 
 #----------------------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------#
@@ -106,7 +109,7 @@ Python minimum required version:
 %s
 --------------------------""" % sys.version
 	print err
-	Blender.Draw.PupMenu("ERROR%t|Python installation not found, check console for details")
+	Draw.PupMenu("ERROR%t|Python installation not found, check console for details")
 	raise
 
 #----------------------------------------------------------------------------------------------------#
@@ -157,40 +160,19 @@ if configfile: configfile.close()
 
 #----------------------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------#
-#-------- Run importer GUI.
-#----------------------------------------------------------------------------------------------------#
-#----------------------------------------------------------------------------------------------------#
-
-# TODO
-
-#----------------------------------------------------------------------------------------------------#
-#----------------------------------------------------------------------------------------------------#
-#-------- Save options for next time.
-#----------------------------------------------------------------------------------------------------#
-#----------------------------------------------------------------------------------------------------#
-
-configfile = open(configname, "w")
-configfile.write('scale_correction=%f\nforce_dds=%i\nstrip_texpath=%i\nseams_import=%i\nlast_imported=%s\nlast_exported=%s\nuser_texpath=%s\n'%(scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath))
-configfile.close()
-print 'config:',scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath
-
-
-
-#----------------------------------------------------------------------------------------------------#
-#----------------------------------------------------------------------------------------------------#
 #-------- Constants and global variables
 #----------------------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------#
 
 # Texture folders
-global textureFolders
-textureFolders = []
+#global textureFolders
+#textureFolders = []
 # first try the nif location
-textureFolders.append( "NIFDIR" )
+#textureFolders.append( "NIFDIR" )
 # then be smart and have a guess
-textureFolders.append( "SMARTGUESS" )
+#textureFolders.append( "SMARTGUESS" )
 # and now append the user-defined texture folders
-textureFolders.extend( user_texpath.split(';') )
+#textureFolders.extend( user_texpath.split(';') )
 
 # if you have installed morrowind uncomment the following two lines
 #textureFolders.append( "C:\\Program Files\\Bethesda\\Morrowind\\Data Files\\Textures" )
@@ -243,11 +225,11 @@ re_ddsExt = re.compile(r'^\.dds$', re.IGNORECASE)
 # Geometries within the NIF files are stored with a size and/or orentation that are unpractical
 # for editing within blender. These matrices allow me to scale the mesh on import
 # to be more suitable for editing, and to do the inverse operation when exporting.
-nifToBlendXform = Matrix( # Scale x 1.0/scale_correction
-	[ 1.0/scale_correction,  0.0,  0.0,  0.0],
-	[ 0.0,  1.0/scale_correction,  0.0,  0.0],
-	[ 0.0,  0.0,  1.0/scale_correction,  0.0],
-	[ 0.0,  0.0,  0.0,  1.0])
+#nifToBlendXform = Matrix( # Scale x 1.0/scale_correction
+#	[ 1.0/scale_correction,  0.0,  0.0,  0.0],
+#	[ 0.0,  1.0/scale_correction,  0.0,  0.0],
+#	[ 0.0,  0.0,  1.0/scale_correction,  0.0],
+#	[ 0.0,  0.0,  0.0,  1.0])
 epsilon = 0.005 # used for checking equality of floats
 
 #Blender 'invert()' method modifies the original matrix rather than returning a new one. 
@@ -257,12 +239,11 @@ def invert(mat):
 	return out
 
 # inverse of the import matrix, scales things back
-blendToNifXform = invert(nifToBlendXform)
+#blendToNifXform = invert(nifToBlendXform)
 
 #Identity matrix, does nothing
 nullXform = Matrix()
 nullXform.identity()
-
 
 #----------------------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------#
@@ -1263,7 +1244,7 @@ class NifDocument(object):
 			err = 'The node list is empty!'
 		if err != '':
 			print err
-			Blender.Draw.PupMenu("ERROR%t|"+err)
+			Draw.PupMenu("ERROR%t|"+err)
 			raise
 		for blockId in range(len(self.blockMap)):
 			(blockType, blockOffset, blockLength) = self.blockMap[blockId]
@@ -1366,11 +1347,13 @@ class NifDocument(object):
 	# Applies a corrective factor to the root node so that the scene can be handled better within Blender.
 	# Morrowind seems to be ignoring the scaling values set on the root node anyway.
 	def writeToBlender(self):
+		global scale_correction
+		
 		# get the root block
 		debugMsg("root block= %s, type= %s, parent= %s " % (self.rootBlock.getId(), self.rootBlock.getType(), self.rootBlock.getParentId()),3)
 		rootObj = self.writeObjs(self.rootBlock, Scene.GetCurrent())
 		# sets size and position of the root node
-		xform = self.rootBlock.getMatrix() * nifToBlendXform
+		xform = self.rootBlock.getMatrix() * Blender.Mathutils.ScaleMatrix(1.0/scale_correction, 4) # * nifToBlendXform
 		rootObj.setMatrix(xform)
 		# cleanup
 		materials = None
@@ -1531,6 +1514,10 @@ def createTexture(NiSourceTexture):
 		# crawl through the texture folders
 		# (this may look a bit akward but it ensures that tga, png, etc are prefered
 		#  and if there is no alternative the dds is loaded)
+		textureFolders = []
+		textureFolders.append('NIFDIR')
+		textureFolders.append('SMARTGUESS')
+		textureFolders.extend( user_texpath.split(';') )
 		for dir in textureFolders:
 			dir.replace( '\\', Blender.sys.sep )
 			dir.replace( '/', Blender.sys.sep )
@@ -1544,13 +1531,13 @@ def createTexture(NiSourceTexture):
 				tex = Blender.sys.join( dir, textureName[9:] ) # strip one of the two 'textures' from the path
 			else:
 				tex = Blender.sys.join( dir, textureName )
-			if Blender.sys.exists(tex) == 1:
+			if (not re_ddsExt.match(tex[-4:])) and Blender.sys.exists(tex) == 1: # Blender does not support .DDS
 				textureFile = tex
 				debugMsg("Found %s" % textureFile, 3)
 			else:
 				# try other formats
 				base=tex[:-4]
-				for ext in ('.PNG','.png','.TGA','.tga','.BMP','.bmp','.JPG','.jpg','.dds','.DDS'):
+				for ext in ('.PNG','.png','.TGA','.tga','.BMP','.bmp','.JPG','.jpg'): # Blender does not support .DDS
 					if Blender.sys.exists(base+ext) == 1:
 						textureFile = base+ext
 						debugMsg( "Found %s" % textureFile, 3 )
@@ -1695,6 +1682,8 @@ def createArrow(name = '', axis = 'x', color = (200, 200, 200, 255), size = 1.0,
 	
 # Creates and returns a mesh
 def createMesh(block):
+	global seams_import
+	
 	meshData = Blender.NMesh.GetRaw()
 	# Mesh name -> must be unique, so tag it if needed
 	name = getUniqueName(block.getName())
@@ -1732,17 +1721,18 @@ def createMesh(block):
 		if hasVertexNormals:
 			nx, ny, nz = vertNorms[i]
 		found = 0
-		for j, vertpair in enumerate(vertpairs):
-			if abs(x - vertpair[0][0]) > epsilon: continue
-			if abs(y - vertpair[0][1]) > epsilon: continue
-			if abs(z - vertpair[0][2]) > epsilon: continue
-			if hasVertexNormals:
-				if abs(nx - vertpair[1][0]) > epsilon: continue
-				if abs(ny - vertpair[1][1]) > epsilon: continue
-				if abs(nz - vertpair[1][2]) > epsilon: continue
-			vertmap.append(j) # vertmap[i] = j
-		       	found = 1
-		       	break
+		if (seams_import == 1): 
+			for j, vertpair in enumerate(vertpairs):
+				if abs(x - vertpair[0][0]) > epsilon: continue
+				if abs(y - vertpair[0][1]) > epsilon: continue
+				if abs(z - vertpair[0][2]) > epsilon: continue
+				if hasVertexNormals:
+					if abs(nx - vertpair[1][0]) > epsilon: continue
+					if abs(ny - vertpair[1][1]) > epsilon: continue
+					if abs(nz - vertpair[1][2]) > epsilon: continue
+				vertmap.append(j) # vertmap[i] = j
+				found = 1
+				break
 		if found == 0:
 			if hasVertexNormals:
 				vertpairs.append( ( verts[i], vertNorms[i] ) )
@@ -1940,7 +1930,7 @@ def readFile(filename):
 	fileTypeString = 'NetImmerse File Format' 
 	if data[0 : len(fileTypeString)] != fileTypeString:
 		msg = 'This does not appear to be a Netimmerse file'
-		Blender.Draw.PupMenu("ERROR%t|"+msg)
+		Draw.PupMenu("ERROR%t|"+msg)
 	else:
 		headerString = data[0:data[0:50].find('\x0A')]
 		version, dummy = readVersion(data, len(headerString)+1)
@@ -1956,7 +1946,7 @@ def readFile(filename):
 		else:
 			debugMsg('NIF version not supported:\n\t%s' % headerString,2)
 			msg = 'This file format is not (yet?) supported'
-			Blender.Draw.PupMenu("ERROR%t|"+msg)
+			Draw.PupMenu("ERROR%t|"+msg)
 			return
 		# Free memory (I hope)
 		data = None
@@ -1964,4 +1954,89 @@ def readFile(filename):
 		nifObject.writeToBlender()
 	return
 
-Blender.Window.FileSelector(readFile, 'Import NIF')
+#----------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------#
+#-------- Run importer GUI.
+#----------------------------------------------------------------------------------------------------#
+#----------------------------------------------------------------------------------------------------#
+
+Textbox2 = Draw.Create(user_texpath)
+Toggle3 = Draw.Create(seams_import == 2)
+Toggle2 = Draw.Create(seams_import == 1)
+Toggle1 = Draw.Create(seams_import == 0)
+Slider1 = Draw.Create(scale_correction)
+Textbox1 = Draw.Create(last_imported)
+
+def draw():
+	global Textbox2, Toggle3, Toggle2, Toggle1, Slider1, Textbox1
+	
+	BGL.glClearColor(0.753, 0.753, 0.753, 0.0)
+	BGL.glClear(BGL.GL_COLOR_BUFFER_BIT)
+
+	BGL.glColor3f(0.000, 0.000, 0.000)
+	BGL.glRasterPos2i(8, 92)
+	Draw.Text('Tex Path:')
+	BGL.glRasterPos2i(8, 188)
+	Draw.Text('Seams:')
+
+	Draw.Button('Browse', 1, 8, 48, 55, 23, '')
+	Draw.Button('Import NIF', 2, 8, 8, 87, 23, '')
+	Draw.Button('Cancel', 3, 208, 8, 71, 23, '')
+	Textbox2 = Draw.String('', 4, 72, 80, 207, 23, Textbox2.val, 512, 'Semi-colon separated list of texture directories.')
+	Textbox1 = Draw.String('', 5, 72, 48, 207, 23, Textbox1.val, 512, '')
+	Toggle3 = Draw.Toggle('Smoothing Flag (Slow)', 6, 88, 112, 191, 23, Toggle3.val, 'Import seams and convert them to "the Blender way", is slow and imperfect, unless model was created by Blender and had no duplicate vertices.')
+	Toggle2 = Draw.Toggle('Vertex Duplication (Slow)', 7, 88, 144, 191, 23, Toggle2.val, 'Perfect but slow, this is the preferred method if the model you are importing is not too large.')
+	Toggle1 = Draw.Toggle('Vertex Duplication (Fast)', 8, 88, 176, 191, 23, Toggle1.val, 'Fast but imperfect: may introduce unwanted cracks in UV seams')
+	Slider1 = Draw.Slider('Scale Correction', 9, 8, 208, 271, 23, Slider1.val, 0.01, 100, 0, 'How many NIF units is one Blender unit?')
+
+def event(evt, val):
+	if (evt == Draw.QKEY and not val):
+		Draw.Exit()
+
+def select(filename):
+	global Textbox1
+	Textbox1.val = filename
+
+def bevent(evt):
+	global Textbox2, Toggle3, Toggle2, Toggle1, Slider1, Textbox1
+	global scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath
+	
+	if evt == 6: #Toggle3
+		Toggle2.val = 0
+		Toggle1.val = 0
+		Draw.Redraw(1)
+	elif evt == 7: #Toggle2
+		Toggle3.val = 0
+		Toggle1.val = 0
+		Draw.Redraw(1)
+	elif evt == 8: #Toggle1
+		Toggle3.val = 0
+		Toggle2.val = 0
+		Draw.Redraw(1)
+	elif evt == 1: # Browse
+		Blender.Window.FileSelector(select, 'Select')
+		Draw.Redraw(1)
+	elif evt == 2: # Import NIF
+		# Read out values.
+		seams_import = 0 * Toggle1.val + 1 * Toggle2.val + 2 * Toggle3.val
+		user_texpath = Textbox2.val
+		scale_correction = Slider1.val
+		last_imported = Textbox1.val
+		# Stop GUI.
+		Draw.Exit()
+		# Save options for next time.
+		configfile = open(configname, "w")
+		configfile.write('scale_correction=%f\nforce_dds=%i\nstrip_texpath=%i\nseams_import=%i\nlast_imported=%s\nlast_exported=%s\nuser_texpath=%s\n'%(scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath))
+		configfile.close()
+		# Import file.
+		if seams_import == 2:
+			debugMsg("Smoothing import not implemented yet, selecting slow vertex duplication method instead.", 1)
+			seams_import = 1
+		readFile(last_imported)
+	elif evt == 3: # Cancel
+		Draw.Exit()
+
+if USE_GUI:
+	Draw.Register(draw, event, bevent) # unstable, sometimes crashes Blender?
+else:
+	Blender.Window.FileSelector(readFile, 'Import NIF')
