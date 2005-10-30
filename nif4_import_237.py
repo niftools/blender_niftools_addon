@@ -964,13 +964,16 @@ class NiSourceTexture(NiObject):
 			self.texturePath, offset = readString(data, offset)
 	# Returns the texture filepath
 	def getTextureFile(self):
-		textureFile = self.texturePath
-		textureFile = textureFile.strip('\x00')
-		textureFile = textureFile.lower() # fixes problems with case sensitivity of file names under linux
-		textureFile = textureFile.replace('\\', Blender.sys.sep)
-		textureFile = textureFile.replace('/', Blender.sys.sep)
-		# textureFile = textureFile.lstrip(Blender.sys.sep)
-		return textureFile
+		if self.hasExternalTextures:
+			textureFile = self.texturePath
+			textureFile = textureFile.strip('\x00')
+			textureFile = textureFile.lower() # fixes problems with case sensitivity of file names under linux
+			textureFile = textureFile.replace('\\', Blender.sys.sep)
+			textureFile = textureFile.replace('/', Blender.sys.sep)
+			# textureFile = textureFile.lstrip(Blender.sys.sep)
+			return textureFile
+		else:
+			return ''
 
 class NiMaterialProperty(NiObject):
 	"""
