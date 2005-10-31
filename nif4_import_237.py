@@ -93,7 +93,7 @@ from Blender import Scene, Object, NMesh, Armature, Image, Texture, Material
 
 from Blender.Mathutils import *
 
-USE_GUI = 0 # set to one to use the GUI (warning: crashes Blender for some mysterious reason...)
+USE_GUI = 1 # set to one to use the GUI (warning: crashes Blender for some mysterious reason...)
 
 #----------------------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------#
@@ -1963,15 +1963,16 @@ def readFile(filename):
 #----------------------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------#
 
-Textbox2 = Draw.Create(user_texpath)
-Toggle3 = Draw.Create(seams_import == 2)
-Toggle2 = Draw.Create(seams_import == 1)
-Toggle1 = Draw.Create(seams_import == 0)
-Slider1 = Draw.Create(scale_correction)
-Textbox1 = Draw.Create(last_imported)
+#Textbox2 = Draw.Create(user_texpath)
+#Toggle3 = Draw.Create(seams_import == 2)
+#Toggle2 = Draw.Create(seams_import == 1)
+#Toggle1 = Draw.Create(seams_import == 0)
+#Slider1 = Draw.Create(scale_correction)
+#Textbox1 = Draw.Create(last_imported)
 
 def draw():
 	global Textbox2, Toggle3, Toggle2, Toggle1, Slider1, Textbox1
+	global scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath
 	
 	BGL.glClearColor(0.753, 0.753, 0.753, 0.0)
 	BGL.glClear(BGL.GL_COLOR_BUFFER_BIT)
@@ -1985,46 +1986,45 @@ def draw():
 	Draw.Button('Browse', 1, 8, 48, 55, 23, '')
 	Draw.Button('Import NIF', 2, 8, 8, 87, 23, '')
 	Draw.Button('Cancel', 3, 208, 8, 71, 23, '')
-	Textbox2 = Draw.String('', 4, 72, 80, 207, 23, Textbox2.val, 512, 'Semi-colon separated list of texture directories.')
-	Textbox1 = Draw.String('', 5, 72, 48, 207, 23, Textbox1.val, 512, '')
-	Toggle3 = Draw.Toggle('Smoothing Flag (Slow)', 6, 88, 112, 191, 23, Toggle3.val, 'Import seams and convert them to "the Blender way", is slow and imperfect, unless model was created by Blender and had no duplicate vertices.')
-	Toggle2 = Draw.Toggle('Vertex Duplication (Slow)', 7, 88, 144, 191, 23, Toggle2.val, 'Perfect but slow, this is the preferred method if the model you are importing is not too large.')
-	Toggle1 = Draw.Toggle('Vertex Duplication (Fast)', 8, 88, 176, 191, 23, Toggle1.val, 'Fast but imperfect: may introduce unwanted cracks in UV seams')
-	Slider1 = Draw.Slider('Scale Correction', 9, 8, 208, 271, 23, Slider1.val, 0.01, 100, 0, 'How many NIF units is one Blender unit?')
+	Textbox2 = Draw.String('', 4, 72, 80, 207, 23, user_texpath, 512, 'Semi-colon separated list of texture directories.')
+	Textbox1 = Draw.String('', 5, 72, 48, 207, 23, last_imported, 512, '')
+	Toggle3 = Draw.Toggle('Smoothing Flag (Slow)', 6, 88, 112, 191, 23, seams_import == 2, 'Import seams and convert them to "the Blender way", is slow and imperfect, unless model was created by Blender and had no duplicate vertices.')
+	Toggle2 = Draw.Toggle('Vertex Duplication (Slow)', 7, 88, 144, 191, 23, seams_import == 1, 'Perfect but slow, this is the preferred method if the model you are importing is not too large.')
+	Toggle1 = Draw.Toggle('Vertex Duplication (Fast)', 8, 88, 176, 191, 23, seams_import == 0, 'Fast but imperfect: may introduce unwanted cracks in UV seams')
+	Slider1 = Draw.Slider('Scale Correction', 9, 8, 208, 271, 23, scale_correction, 0.01, 100, 0, 'How many NIF units is one Blender unit?')
 
 def event(evt, val):
 	if (evt == Draw.QKEY and not val):
 		Draw.Exit()
 
 def select(filename):
-	global Textbox1
-	Textbox1.val = filename
+	global last_imported
+	last_imported = filename
+	Draw.Redraw(1)
 
 def bevent(evt):
 	global Textbox2, Toggle3, Toggle2, Toggle1, Slider1, Textbox1
 	global scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath
 	
 	if evt == 6: #Toggle3
-		Toggle2.val = 0
-		Toggle1.val = 0
+		seams_import = 2
 		Draw.Redraw(1)
 	elif evt == 7: #Toggle2
-		Toggle3.val = 0
-		Toggle1.val = 0
+		seams_import = 1
 		Draw.Redraw(1)
 	elif evt == 8: #Toggle1
-		Toggle3.val = 0
-		Toggle2.val = 0
+		seams_import = 0
 		Draw.Redraw(1)
 	elif evt == 1: # Browse
 		Blender.Window.FileSelector(select, 'Select')
 		Draw.Redraw(1)
-	elif evt == 2: # Import NIF
-		# Read out values.
-		seams_import = 0 * Toggle1.val + 1 * Toggle2.val + 2 * Toggle3.val
+	elif evt == 4: # TexPath
 		user_texpath = Textbox2.val
-		scale_correction = Slider1.val
+	elif evt == 5: # filename
 		last_imported = Textbox1.val
+	elif evt == 9: # scale
+		scale_correction = Slider1.val
+	elif evt == 2: # Import NIF
 		# Stop GUI.
 		Draw.Exit()
 		# Save options for next time.
@@ -2040,6 +2040,6 @@ def bevent(evt):
 		Draw.Exit()
 
 if USE_GUI:
-	Draw.Register(draw, event, bevent) # unstable, sometimes crashes Blender?
+	Draw.Register(draw, event, bevent)
 else:
 	Blender.Window.FileSelector(readFile, 'Import NIF')

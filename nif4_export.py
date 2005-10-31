@@ -93,7 +93,7 @@ Download it from http://niftools.sourceforge.net/
 # 
 # Some constants.
 # 
-USE_GUI = 0           # set to one to use the GUI (warning: crashes Blender for some mysterious reason...)
+USE_GUI = 1           # set to one to use the GUI (warning: crashes Blender for some mysterious reason...)
 epsilon = 0.005       # used for checking equality of floats
 show_progress = 1     # 0 = off, 1 = basic, 2 = advanced (but slows down the exporter)
 
@@ -1578,14 +1578,15 @@ evtFilename = 6
 evtCancel   = 7
 
 # This crashes Blender...
-bFilename = Draw.Create(last_exported)
-bForceDDS = Draw.Create(force_dds)
-bSTexPath = Draw.Create(strip_texpath)
-bScale    = Draw.Create(scale_correction)
+#bFilename = Draw.Create(last_exported)
+#bForceDDS = Draw.Create(force_dds)
+#bSTexPath = Draw.Create(strip_texpath)
+#bScale    = Draw.Create(scale_correction)
 
 def gui():
     global evtCancel, evtExport, evtBrowse, evtForceDDS, evtSTexPath, evtScale, evtFilename
     global bFilename, bForceDDS, bSTexPath, bScale
+    global scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath
 
     BGL.glClearColor(0.753, 0.753, 0.753, 0.0)
     BGL.glClear(BGL.GL_COLOR_BUFFER_BIT)
@@ -1593,18 +1594,19 @@ def gui():
     Draw.Button('Cancel', evtCancel, 208, 8, 71, 23, 'Cancel the export script.')
     Draw.Button('Export NIF', evtExport, 8, 8, 87, 23, 'Export the NIF file with these settings.')
     Draw.Button('Browse', evtBrowse, 8, 48, 55, 23, 'Browse folders and select an other filename.')
-    bFilename = Draw.String('', evtFilename, 72, 48, 207, 23, bFilename.val, 512, 'Filename of the NIF file to be written. If there is animation, also x***.nif and x***.kf files will be written.')
-    bForceDDS = Draw.Toggle('Force DDS', evtForceDDS, 8, 80, 127, 23, bForceDDS.val, 'Force textures to be exported with a .DDS extension? Usually, you can leave this disabled.')
-    bSTexPath = Draw.Toggle('Strip Texture Path', evtSTexPath, 152, 80, 127, 23, bSTexPath.val, "Strip texture path in NIF file. You should leave this disabled, especially when this model's textures are stored in a subdirectory of the Data Files\Textures folder.")
-    bScale = Draw.Slider('Scale Correction: ', evtScale, 8, 112, 271, 23, bScale.val, 0.01, 100, 0, 'How many NIF units is one Blender unit?')
+    bFilename = Draw.String('', evtFilename, 72, 48, 207, 23, last_exported, 512, 'Filename of the NIF file to be written. If there is animation, also x***.nif and x***.kf files will be written.')
+    bForceDDS = Draw.Toggle('Force DDS', evtForceDDS, 8, 80, 127, 23, force_dds, 'Force textures to be exported with a .DDS extension? Usually, you can leave this disabled.')
+    bSTexPath = Draw.Toggle('Strip Texture Path', evtSTexPath, 152, 80, 127, 23, strip_texpath, "Strip texture path in NIF file. You should leave this disabled, especially when this model's textures are stored in a subdirectory of the Data Files\Textures folder.")
+    bScale = Draw.Slider('Scale Correction: ', evtScale, 8, 112, 271, 23, scale_correction, 0.01, 100, 0, 'How many NIF units is one Blender unit?')
 
 def event(evt, val):
     if (evt == Draw.QKEY and not val):
         Draw.Exit()
     
 def select(filename):
-    global bFilename
-    bFilename.val = filename
+    global last_exported
+    last_exported = filename
+    Draw.Redraw(1)
 
 def bevent(evt):
     global evtCancel, evtExport, evtBrowse, evtForceDDS, evtSTexPath, evtScale, evtFilename
@@ -1613,13 +1615,15 @@ def bevent(evt):
 
     if evt == evtBrowse:
         Blender.Window.FileSelector(select, 'Select')
-        Draw.Redraw(1)
-    elif evt == evtExport:
-        # Read out values.
+    elif evt == evtForceDDS:
         force_dds = bForceDDS.val
+    elif evt == evtSTexPath:
         strip_texpath = bSTexPath.val
+    elif evt == evtScale:
         scale_correction = bScale.val
+    elif evt == evtFilename:
         last_exported = bFilename.val
+    elif evt == evtExport:
         # Stop GUI.
         Draw.Exit()
         # Save options for next time.
