@@ -1,0 +1,23 @@
+Version 1.0 (Oct 12, 2005):
+* Initial bundled release of the importer v1.0.6 and exporter v0.8 on SourceForge.
+
+Version 1.1 (Oct 31, 2005):
+* Export: Fixed bug pointed out by Sarah, on mesh_mat_shininess.
+* Export: Applied Moritz patches to exporter (texture flipping), changed names, included exporter readme file.
+* Import/Export: Changed the licensing to BSD.
+* Import: Added support for texturing in the editor 3D view. Now the textures will show up in textured mode if loaded.
+* Import: NiMorph Controllers that Moritz coded. Haven't tested it, but it doesn't break the previous functionality, so it should be fine
+* Export: Added an option for stripping the texture's file path
+* Export: Support for subsurfed meshes (display level).
+* Export: Vertex export method improved, extreme speedup!
+* Import/Export: Transparency support improved.
+* Import: Small fix in the import of vertex colors.
+* Import: Autodetect Morrowind style texture path; if you load a NIF from ...\meshes\... then the importer will look in ...\textures\* for the NIF textures.
+* Export: Fixed animation group export.
+* Import: Multiple texture folders.
+* Import/Export: number of vertices and number of faces is unsigned short: fix in importer, and added range check in exporter.
+* Import/Export: Added glow mapping.
+* Export: Fixed texture flipping
+* Import/Export: Config file support.
+* Import/Export: Now we have a GUI for setting various options.
+* Import: Solved problem with textures embedded in NIF file; textures will not load but the script will still load the meshes.

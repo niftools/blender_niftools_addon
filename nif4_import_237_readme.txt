@@ -152,3 +152,5 @@ Added Amorilia's corrections to the import of UV seams. Changed the name of the 
 As of this version the licensing is under a BSD license, to avoid confusion when distributing together with Amorilia's export script. However, copyright on the two script is still with the respective authors.
 Also, all previous versions of this script are still to be considered as governed by the GPL license.
 I also removed a small portion of the readme regarding python setup, as it was confusing, redundant and most likely just wrong. For the moment I'll rely on the Blender's user forums, until I can come up with a decent tutorial on setting up python properly.
+
+For the more recent history, see ChangeLog file.

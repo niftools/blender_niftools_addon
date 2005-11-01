@@ -4,18 +4,26 @@
 Name: 'NetImmerse 4.0.0.2 (.nif)'
 Blender: 237
 Group: 'Export'
-Tip: 'Export the selected objects, along with their parents and children, to a NIF file.'
+Tip: 'Export the selected objects, along with their parents and children, to a NIF file. Animation, if present, is exported as a X***.NIF and a X***.KF file.'
 """
 
 __author__ = ["amorilia@gamebox.net"]
-__url__ = ("http://niftools.sourceforge.net/", "blender", "elysiun")
+__url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
 __version__ = "1.1"
 __bpydoc__ = """\
 This script exports Netimmerse (the version used by Morrowind) .NIF files (version 4.0.0.2).
 
 Usage:
 
-Select the meshes you wish to export and run this script from "File->Export" menu. All parents and children of the selected meshes will be exported as well.
+Select the meshes you wish to export and run this script from "File->Export" menu. All parents and children of the selected meshes will be exported as well. Supports animation of mesh location and rotation, and material color and alpha. To define animation groups, check the script source code. The script does not (yet) support the export of armature.
+
+Options:
+
+Scale Correction: How many NIF units is one Blender unit?
+
+Force DDS: Force textures to be exported with a .DDS extension? Usually, you can leave this disabled.
+
+Strip Texture Path: Strip texture path in NIF file? You should leave this disabled, especially when this model's textures are stored in a subdirectory of the Data Files\Textures folder.
 """
 
 # --------------------------------------------------------------------------
