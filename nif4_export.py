@@ -1103,7 +1103,7 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
         nif.blocks[tridata_id].has_vertices = 1
         nif.blocks[tridata_id].has_vertex_colors = mesh_hasvcol
         if (mesh_hastex):
-            nif.blocks[tridata_id].has_uv = 1
+            nif.blocks[tridata_id].has_uv = 0xffffffff # ... 0x00000001 crashes NifTexture
             nif.blocks[tridata_id].num_uv_sets = 1 # for now, we only have one texture for this trishape
         else:
             nif.blocks[tridata_id].has_uv = 0
