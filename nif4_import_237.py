@@ -1975,7 +1975,7 @@ def readFile(filename):
 #----------------------------------------------------------------------------------------------------#
 
 def draw():
-	global Textbox2, Toggle3, Toggle2, Toggle1, Slider1, Textbox1
+	global Textbox2, Slider1, Textbox1
 	global scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath
 	
 	BGL.glClearColor(0.753, 0.753, 0.753, 0.0)
@@ -1990,11 +1990,11 @@ def draw():
 	Draw.Button('Browse', 1, 8, 48, 55, 23, '')
 	Draw.Button('Import NIF', 2, 8, 8, 87, 23, '')
 	Draw.Button('Cancel', 3, 208, 8, 71, 23, '')
+	Draw.Toggle('Smoothing Flag (Slow)', 6, 88, 112, 191, 23, seams_import == 2, 'Import seams and convert them to "the Blender way", is slow and imperfect, unless model was created by Blender and had no duplicate vertices.')
+	Draw.Toggle('Vertex Duplication (Slow)', 7, 88, 144, 191, 23, seams_import == 1, 'Perfect but slow, this is the preferred method if the model you are importing is not too large.')
+	Draw.Toggle('Vertex Duplication (Fast)', 8, 88, 176, 191, 23, seams_import == 0, 'Fast but imperfect: may introduce unwanted cracks in UV seams')
 	Textbox2 = Draw.String('', 4, 72, 80, 207, 23, user_texpath, 512, 'Semi-colon separated list of texture directories.')
 	Textbox1 = Draw.String('', 5, 72, 48, 207, 23, last_imported, 512, '')
-	Toggle3 = Draw.Toggle('Smoothing Flag (Slow)', 6, 88, 112, 191, 23, seams_import == 2, 'Import seams and convert them to "the Blender way", is slow and imperfect, unless model was created by Blender and had no duplicate vertices.')
-	Toggle2 = Draw.Toggle('Vertex Duplication (Slow)', 7, 88, 144, 191, 23, seams_import == 1, 'Perfect but slow, this is the preferred method if the model you are importing is not too large.')
-	Toggle1 = Draw.Toggle('Vertex Duplication (Fast)', 8, 88, 176, 191, 23, seams_import == 0, 'Fast but imperfect: may introduce unwanted cracks in UV seams')
 	Slider1 = Draw.Slider('Scale Correction: ', 9, 8, 208, 271, 23, scale_correction, 0.01, 100, 0, 'How many NIF units is one Blender unit?')
 
 def event(evt, val):
@@ -2004,10 +2004,9 @@ def event(evt, val):
 def select(filename):
 	global last_imported
 	last_imported = filename
-	Draw.Redraw(1)
 
 def bevent(evt):
-	global Textbox2, Toggle3, Toggle2, Toggle1, Slider1, Textbox1
+	global Textbox2, Slider1, Textbox1
 	global scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath
 	
 	if evt == 6: #Toggle3
@@ -2030,6 +2029,9 @@ def bevent(evt):
 		scale_correction = Slider1.val
 	elif evt == 2: # Import NIF
 		# Stop GUI.
+		Textbox1 = None
+		Textbox2 = None
+		Slider1 = None
 		Draw.Exit()
 		# Save options for next time.
 		configfile = open(configname, "w")
@@ -2041,6 +2043,9 @@ def bevent(evt):
 			seams_import = 1
 		readFile(last_imported)
 	elif evt == 3: # Cancel
+		Textbox1 = None
+		Textbox2 = None
+		Slider1 = None
 		Draw.Exit()
 
 if USE_GUI:
