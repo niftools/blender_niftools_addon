@@ -601,14 +601,178 @@ def export_animgroups(animtxt, block_parent_id, nif):
     
     return nif
 
+
+#
+# export a NiSourceTexture
+#
+# texture is the texture object in blender to be exported
+# filename is the full or relative path to the texture file ( used by NiFlipController )
+#
+# returns the modified nif and the block index of the exported NiSourceTexture
+#
+# TODO: filter mipmaps
+
+def export_sourcetexture( texture, nif, filename = None ):
+    # texture must be of type IMAGE
+    if ( texture.type != Blender.Texture.Types.IMAGE ):
+        raise NIFExportError( "Error: Texture '%s' must be of type IMAGE"%texture.getName())
+    
+    # check if the texture is already exported
+    if filename != None:
+        texid = filename
+    else:
+        texid = texture.image.getFilename()
+    for idx, block in enumerate( nif.blocks ):
+        if ( block.block_type.value == 'NiSourceTexture' ):
+            if ( block.texid == texid ):
+                return nif, idx
+
+    # add NiSourceTexture
+    tsrc_id = nif.header.nblocks
+    assert(tsrc_id == len(nif.blocks)) # debug
+    nif.blocks.append(nif4.NiSourceTexture())
+    nif.header.nblocks += 1
+    nif.blocks[tsrc_id].texid = texid
+    nif.blocks[tsrc_id].use_external = ( texture.getName()[:4] != "pack" )
+    
+    if nif.blocks[tsrc_id].use_external == 0:
+        if filename != None:
+            try:
+                image = Blender.Image.Load( filename )
+            except:
+                raise NIFExportError( "Error: Cannot pack texture '%s'; Failed to load image '%s'"%(texture.getName(),filename) )
+        else:
+            image = texture.image
+        w, h = image.getSize()
+        if ( w <= 0 ) or ( h <= 0 ):
+            image.reload()
+        if ( w <= 0 ) or ( h <= 0 ):
+            raise NIFExportError( "Error: Cannot pack texture '%s'; Failed to load image '%s'"%(texture.getName(),image.getFilename()) )
+        depth = image.getDepth()
+        if depth == 32:
+            rmask = 0x000000ff
+            gmask = 0x0000ff00
+            bmask = 0x00ff0000
+            amask = 0xff000000
+        elif depth == 24:
+            rmask = 0x000000ff
+            gmask = 0x0000ff00
+            bmask = 0x00ff0000
+            amask = 0x00000000
+        else:
+            raise NIFExportError( "Error: Cannot pack texture '%s' image '%s'; Unsupported image depth %i"%(texture.getName(),image.getFilename(),image.getDepth()) )
+
+        # now pack the image
+        data = []
+        mipmaps = []
+        print "packing %s -> width %i, height %i"%(Blender.sys.basename(image.getFilename()),w,h)
+        mipmaps.append( [ w, h, 0 ] )
+        for y in range( h ):
+            if show_progress >= 1: Blender.Window.DrawProgressBar(float(y)/float(h), "Packing image %s"%Blender.sys.basename(image.getFilename()))
+            for x in range( w ):
+                r,g,b,a = image.getPixelF( x, (h-1)-y ) # nif flips y coordinate
+                if ( depth == 32 ):
+                    data.append( int( r * 255 ) )
+                    data.append( int( g * 255 ) )
+                    data.append( int( b * 255 ) )
+                    data.append( int( a * 255 ) )
+                elif ( depth == 24 ):
+                    data.append( int( r * 255 ) )
+                    data.append( int( g * 255 ) )
+                    data.append( int( b * 255 ) )
+
+        # generate (unfiltered) mipmaps
+        sx = 2
+        sy = 2
+        while ( texture.imageFlags & Blender.Texture.ImageFlags.MIPMAP != 0 ):
+            print "packing %s mipmap %i -> width %i, height %i, offset %i"%(Blender.sys.basename(image.getFilename()),len(mipmaps),w/sx,h/sy,len(data))
+            mipmaps.append( [ w/sx, h/sy, len(data) ] )
+            for y in range( 0, h, sy ):
+                if show_progress >= 1: Blender.Window.DrawProgressBar(float(y)/float(h), "Mipmapping image %s"%Blender.sys.basename(image.getFilename()))
+                for x in range( 0, w, sx ):
+                    r,g,b,a = image.getPixelF( x, (h-1)-y ) # nif flips y coordinate
+                    if ( depth == 32 ):
+                        data.append( int( r * 255 ) )
+                        data.append( int( g * 255 ) )
+                        data.append( int( b * 255 ) )
+                        data.append( int( a * 255 ) )
+                    elif ( depth == 24 ):
+                        data.append( int( r * 255 ) )
+                        data.append( int( g * 255 ) )
+                        data.append( int( b * 255 ) )
+            if ( sx == w ) and ( sy == h ):
+                break # now more mipmap levels left
+            if ( sx < w ):
+                sx = sx * 2
+            if ( sy < h ):
+                sy = sy * 2
+            if ( sx > w ) or ( sy > h ):
+                raise NIFExportError( "Error: Cannot pack texture '%s' image '%s'; Image dimensions must be power of two"%(texture.getName(),image.getFilename()) )
+        
+        # add NiPixelData
+        pixel_id = nif.header.nblocks
+        assert(pixel_id == len(nif.blocks)) # debug
+        nif.blocks.append(nif4.NiPixelData())
+        nif.header.nblocks += 1
+        nif.blocks[pixel_id].rmask = rmask
+        nif.blocks[pixel_id].gmask = gmask
+        nif.blocks[pixel_id].bmask = bmask
+        nif.blocks[pixel_id].amask = amask
+        nif.blocks[pixel_id].bpp = depth
+        nif.blocks[pixel_id].bytespp = nif.blocks[pixel_id].bpp / 8
+        nif.blocks[pixel_id].mipmaps = mipmaps
+        nif.blocks[pixel_id].num_mipmaps = len( nif.blocks[pixel_id].mipmaps )
+        nif.blocks[pixel_id].data = data
+        nif.blocks[pixel_id].data_size = len(nif.blocks[pixel_id].data)
+        if ( depth == 24 ):
+            nif.blocks[pixel_id].unknown2 = [ 96, 8, 130, 0, 0, 65, 0, 0 ] # ?? copy values from original files
+        elif ( depth == 32 ):
+            nif.blocks[pixel_id].unknown2 = [ 129, 8, 130, 32, 0, 65, 12, 0 ]
+        nif.blocks[tsrc_id].pixel_data = pixel_id
+        nif.blocks[tsrc_id].unknown1 = 1
+
+    if nif.blocks[tsrc_id].use_external:
+        if filename != None:
+            tfn = filename
+        else:
+            tfn = texture.image.getFilename()
+        if ( strip_texpath == 1 ):
+            # strip texture file path (original morrowind style)
+            nif.blocks[tsrc_id].file_name = nif4.mystring(Blender.sys.basename(tfn))
+        elif ( strip_texpath == 0 ):
+            # strip the data files prefix from the texture's file name
+            tfn = tfn.lower()
+            idx = tfn.find( "textures" )
+            if ( idx >= 0 ):
+                tfn = tfn[idx:]
+                tfn = tfn.replace(Blender.sys.sep, '\\') # for my linux fellows
+                nif.blocks[tsrc_id].file_name = nif4.mystring(tfn)
+            else:
+                nif.blocks[tsrc_id].file_name = nif4.mystring(Blender.sys.basename(tfn))
+        # force dds extension, if requested
+        if force_dds:
+            nif.blocks[tsrc_id].file_name.value = nif.blocks[tsrc_id].file_name.value[:-4] + '.dds'
+
+    # fill in default values
+    nif.blocks[tsrc_id].pixel_layout = 5
+    nif.blocks[tsrc_id].use_mipmaps  = 2
+    nif.blocks[tsrc_id].alpha_format = 3
+    nif.blocks[tsrc_id].unknown2     = 1
+    
+    return nif, tsrc_id
+
+
 #
 # export a NiFlipController
 #
 # fliptxt is a blender text object containing the flip definitions
+# texture is the texture object in blender ( texture is used to checked for pack and mipmap flags )
 # target_id is the block id of the NiTexturingProperty
 # target_tex is the texture to flip ( 0 = base texture, 4 = glow texture )
+#
+# returns the modified nif and the block index of the exported NiFlipController
 
-def export_flipcontroller( fliptxt, target_id, target_tex, nif ):
+def export_flipcontroller( fliptxt, texture, target_id, target_tex, nif ):
     tlist = fliptxt.asLines()
 
     # create a NiFlipController
@@ -637,26 +801,17 @@ def export_flipcontroller( fliptxt, target_id, target_tex, nif ):
     nif.blocks[flip_id].frequency = 1.0
     nif.blocks[flip_id].start_time = (fstart - 1) * fspeed
     nif.blocks[flip_id].stop_time = ( fend - fstart ) * fspeed
-    #nif.blocks[flip_id].flip_id.append( tritexsrc_id )
     for t in tlist:
-        if len( t ) == 0:   # skip empty lines
-            continue
+        if len( t ) == 0: continue  # skip empty lines
         # create a NiSourceTexture for each flip
-        tsrc_id = nif.header.nblocks
-        assert(tsrc_id == len(nif.blocks)) # debug
-        nif.blocks.append(nif4.NiSourceTexture())
-        nif.header.nblocks += 1
-        nif.blocks[tsrc_id].use_external = 1
-        nif.blocks[tsrc_id].file_name    = nif4.mystring(t)
-        nif.blocks[tsrc_id].pixel_layout = 5
-        nif.blocks[tsrc_id].use_mipmaps  = 1
-        nif.blocks[tsrc_id].alpha_format = 3
-        nif.blocks[tsrc_id].unknown2     = 1
+        nif, tsrc_id = export_sourcetexture( texture, nif, t )
         nif.blocks[flip_id].sources.indices.append( tsrc_id )
     nif.blocks[flip_id].sources.num_indices = len( nif.blocks[flip_id].sources.indices )
+    if ( nif.blocks[flip_id].sources.num_indices < 2 ):
+        raise NIFExportError("Error in Texture Flip buffer '%s': Must define at least two textures"%fliptxt.getName())
     nif.blocks[flip_id].delta = nif.blocks[flip_id].stop_time / nif.blocks[flip_id].sources.num_indices
 
-    return nif
+    return nif, flip_id
 
 #
 # Export a blender object ob of the type mesh, child of nif block
@@ -805,48 +960,19 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 nif.blocks[tritexprop_id].base_texture.ps2_k = 0xFFB5 # ? standard
                 nif.blocks[tritexprop_id].base_texture.unknown = 0x0101 # ? standard
                 
-                # add NiTexturingProperty's texture source
-                tritexsrc_id = nif.header.nblocks
-                assert(tritexsrc_id == len(nif.blocks)) # debug
-                nif.blocks.append(nif4.NiSourceTexture())
-                nif.blocks[tritexprop_id].base_texture.source = tritexsrc_id
-                nif.header.nblocks += 1
-                
-                nif.blocks[tritexsrc_id].use_external = 1
-                if ( strip_texpath == 1 ):
-                    # strip texture file path (original morrowind style)
-                    nif.blocks[tritexsrc_id].file_name = nif4.mystring(Blender.sys.basename(mesh_base_tex.image.getFilename()))
-                elif ( strip_texpath == 0 ):
-                    # strip the data files prefix from the texture's file name
-                    tfn = mesh_base_tex.image.getFilename().lower()
-                    idx = tfn.find( "textures" )
-                    if ( idx >= 0 ):
-                        tfn = tfn[idx:]
-                        tfn = tfn.replace(Blender.sys.sep, '\\') # for my linux fellows
-                        #print "Texture: %s"%tfn
-                        nif.blocks[tritexsrc_id].file_name = nif4.mystring(tfn)
-                    else:
-                        nif.blocks[tritexsrc_id].file_name = nif4.mystring(Blender.sys.basename(mesh_base_tex.image.getFilename()))
-                #else:
-                #    # export full texture path
-                #    nif.blocks[tritexsrc_id].file_name = nif4.mystring(mesh_base_tex.image.getFilename())
-                # force dds extension, if requested
-                if force_dds:
-                    nif.blocks[tritexsrc_id].file_name.value = nif.blocks[tritexsrc_id].file_name.value[:-4] + '.dds'
-                nif.blocks[tritexsrc_id].pixel_layout = 5 # default
-                nif.blocks[tritexsrc_id].use_mipmaps = 1  # default
-                nif.blocks[tritexsrc_id].alpha_format = 3 # default
-                nif.blocks[tritexsrc_id].unknown2 = 1 # ?
-
                 # check for texture flip definition
                 txtlist = Blender.Text.Get()
                 for fliptxt in txtlist:
                     if fliptxt.getName() == mesh_base_tex.getName():
-                        nif = export_flipcontroller( fliptxt, tritexprop_id, 0, nif )
+                        nif, flip_id = export_flipcontroller( fliptxt, mesh_base_tex, tritexprop_id, 0, nif )
+                        nif.blocks[tritexprop_id].base_texture.source = nif.blocks[flip_id].sources.indices[0]
                         break
                     else:
                         fliptxt = None
-                    
+                else:
+                    nif, basetexsrc_id = export_sourcetexture( mesh_base_tex, nif )
+                    nif.blocks[tritexprop_id].base_texture.source = basetexsrc_id
+
             if ( mesh_glow_tex != None ):
                 nif.blocks[tritexprop_id].has_glow_texture = 1
                 nif.blocks[tritexprop_id].glow_texture.clamp_mode = 3 # wrap in both directions
@@ -856,46 +982,18 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 nif.blocks[tritexprop_id].glow_texture.ps2_k = 0xFFB5 # ? standard
                 nif.blocks[tritexprop_id].glow_texture.unknown = 0x0101 # ? standard
                 
-                # add NiTexturingProperty's texture source
-                tritexsrc_id = len(nif.blocks)
-                nif.blocks.append(nif4.NiSourceTexture())
-                nif.blocks[tritexprop_id].glow_texture.source = tritexsrc_id
-                nif.header.nblocks += 1
-                
-                nif.blocks[tritexsrc_id].use_external = 1
-                if ( strip_texpath == 2 ):
-                    # strip texture file path (original morrowind style)
-                    nif.blocks[tritexsrc_id].file_name = nif4.mystring(Blender.sys.basename(mesh_glow_tex.image.getFilename()))
-                elif ( strip_texpath == 1 ):
-                    # strip the data files prefix from the texture's file name
-                    tfn = mesh_glow_tex.image.getFilename().lower()
-                    idx = tfn.find( "data files" )
-                    if ( idx >= 0 ):
-                        tfn = tfn[idx+10:len(tfn)]
-                        tfn = tfn.strip( '/\\' )
-                        #print "Texture: %s"%tfn
-                        nif.blocks[tritexsrc_id].file_name = nif4.mystring(tfn)
-                    else:
-                        nif.blocks[tritexsrc_id].file_name = nif4.mystring(Blender.sys.basename(mesh_glow_tex.image.getFilename()))
-                else:
-                    # export full texture path
-                    nif.blocks[tritexsrc_id].file_name = nif4.mystring(mesh_glow_tex.image.getFilename())
-                # force dds extension, if requested
-                if force_dds:
-                    nif.blocks[tritexsrc_id].file_name.value = nif.blocks[tritexsrc_id].file_name.value[:-4] + '.dds'
-                nif.blocks[tritexsrc_id].pixel_layout = 5 # default
-                nif.blocks[tritexsrc_id].use_mipmaps = 1  # default
-                nif.blocks[tritexsrc_id].alpha_format = 3 # default
-                nif.blocks[tritexsrc_id].unknown2 = 1 # ?
-
                 # check for texture flip definition
                 txtlist = Blender.Text.Get()
                 for fliptxt in txtlist:
                     if fliptxt.getName() == mesh_glow_tex.getName():
-                        nif = export_flipcontroller( fliptxt, tritexprop_id, 4, nif )
+                        nif, flip_id = export_flipcontroller( fliptxt, mesh_glow_tex, tritexprop_id, 4, nif )
+                        nif.blocks[tritexprop_id].glow_texture.source = nif.blocks[flip_id].sources.indices[0]
                         break
                     else:
                         fliptxt = None
+                else:
+                    nif, glowtexsrc_id = export_sourcetexture( mesh_glow_tex, nif )
+                    nif.blocks[tritexprop_id].glow_texture.source = glowtexsrc_id
         
         if (mesh_hasalpha):
             # add NiTriShape's alpha propery (this is de facto an automated version of Detritus's method, see http://detritus.silgrad.com/alphahex.html)
@@ -1562,7 +1660,7 @@ def export_xkf(nif):
         xkf.blocks[ last_controller_id ].data = xkf.header.nblocks
         xkf.header.nblocks += 1
     
-    print xkf # debug
+    #print xkf # debug
 
     return xkf
 
