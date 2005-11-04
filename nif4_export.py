@@ -101,7 +101,7 @@ Download it from http://niftools.sourceforge.net/
 # 
 # Some constants.
 # 
-USE_GUI = 1           # set to one to use the GUI (warning: crashes Blender for some mysterious reason...)
+USE_GUI = 0           # set to one to use the GUI (warning: crashes Blender for some mysterious reason...)
 epsilon = 0.005       # used for checking equality of floats
 show_progress = 1     # 0 = off, 1 = basic, 2 = advanced (but slows down the exporter)
 
@@ -613,6 +613,8 @@ def export_animgroups(animtxt, block_parent_id, nif):
 # TODO: filter mipmaps
 
 def export_sourcetexture( texture, nif, filename = None ):
+    global scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath
+
     # texture must be of type IMAGE
     if ( texture.type != Blender.Texture.Types.IMAGE ):
         raise NIFExportError( "Error: Texture '%s' must be of type IMAGE"%texture.getName())
@@ -654,11 +656,13 @@ def export_sourcetexture( texture, nif, filename = None ):
             gmask = 0x0000ff00
             bmask = 0x00ff0000
             amask = 0xff000000
+            bytes = 4
         elif depth == 24:
             rmask = 0x000000ff
             gmask = 0x0000ff00
             bmask = 0x00ff0000
             amask = 0x00000000
+            bytes = 3
         else:
             raise NIFExportError( "Error: Cannot pack texture '%s' image '%s'; Unsupported image depth %i"%(texture.getName(),image.getFilename(),image.getDepth()) )
 
@@ -681,25 +685,26 @@ def export_sourcetexture( texture, nif, filename = None ):
                     data.append( int( g * 255 ) )
                     data.append( int( b * 255 ) )
 
-        # generate (unfiltered) mipmaps
+        # filter mipmaps
         sx = 2
         sy = 2
+        lastOffset = 0
         while ( texture.imageFlags & Blender.Texture.ImageFlags.MIPMAP != 0 ):
-            print "packing %s mipmap %i -> width %i, height %i, offset %i"%(Blender.sys.basename(image.getFilename()),len(mipmaps),w/sx,h/sy,len(data))
-            mipmaps.append( [ w/sx, h/sy, len(data) ] )
+            offset = len(data)
+            print "packing %s mipmap %i -> width %i, height %i, offset %i"%(Blender.sys.basename(image.getFilename()),len(mipmaps),w/sx,h/sy,offset)
+            mipmaps.append( [ w/sx, h/sy, offset ] )
             for y in range( 0, h, sy ):
                 if show_progress >= 1: Blender.Window.DrawProgressBar(float(y)/float(h), "Mipmapping image %s"%Blender.sys.basename(image.getFilename()))
                 for x in range( 0, w, sx ):
-                    r,g,b,a = image.getPixelF( x, (h-1)-y ) # nif flips y coordinate
-                    if ( depth == 32 ):
-                        data.append( int( r * 255 ) )
-                        data.append( int( g * 255 ) )
-                        data.append( int( b * 255 ) )
-                        data.append( int( a * 255 ) )
-                    elif ( depth == 24 ):
-                        data.append( int( r * 255 ) )
-                        data.append( int( g * 255 ) )
-                        data.append( int( b * 255 ) )
+                    rgba = [ 0, 0, 0, 0 ]
+                    for fy in range( 2 ):
+                        for fx in range( 2 ):
+                            for fd in range( bytes ):
+                                rgba[fd] += data[lastOffset+((y/sy*2+fy)*w/sx*2+(x/sx*2+fx))*bytes+fd]
+                    for fd in range( bytes ):
+                        rgba[fd] = rgba[fd] / 4
+                        data.append( rgba[fd] )
+            lastOffset = offset
             if ( sx == w ) and ( sy == h ):
                 break # now more mipmap levels left
             if ( sx < w ):
