@@ -1443,7 +1443,7 @@ class NifDocument(object):
                         if childObj: childObjList.append(childObj)
                     armObj.makeParent(childObjList)
                     #xform = block.getMatrix('world') * nifToBlendXform
-                    xform = block.getMatrix('world')
+                    xform = block.getMatrix('localspace')
                     armObj.setMatrix(xform)
                     return armObj
                 elif role == 'mesh':
@@ -1596,7 +1596,7 @@ def createArmature(block):
             #bone.setRoll(getRads(tgtRef, boneRef)/4)
     Blender.NMesh.PutRaw(dbgMesh, name, 1)
     meshObj = Blender.Object.GetSelected()[0]
-    meshObj.setMatrix(armatureMat*nifToBlendXform)
+    meshObj.setMatrix(armatureMat * Blender.Mathutils.ScaleMatrix(1.0/scale_correction, 4)) # * nifToBlendXform)
     """
     armObj.link(armData)
     return armObj
