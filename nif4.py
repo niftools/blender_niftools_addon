@@ -54,7 +54,7 @@ import struct
 
 MAX_ARRAYDUMPSIZE = 8 # we shall not dump arrays that have more elements than this number
 
-MAX_STRLEN = 256 # reading/writing strings longer than this number will raise an exception
+MAX_STRLEN = 2560 # reading/writing strings longer than this number will raise an exception
 
 MAX_ARRAYSIZE = 1048576 # reading/writing arrays that have more elements than this number will raise an exception
 
@@ -1915,6 +1915,149 @@ class NiAutoNormalParticles(ANode):
 
 
 
+class NiAutoNormalParticlesData:
+    # constructor
+    def __init__(self):
+        self.block_type = mystring("NiAutoNormalParticlesData")
+        # Number of vertices.
+        self.num_vertices = 0
+        # xxx
+        self.has_vertices = 0
+        # The mesh vertices.
+        self.vertices = [ None ] * self.num_vertices
+        for count in range(self.num_vertices): self.vertices[count] = vec3()
+        # Do we have lighting normals? These are essential for proper lighting: if
+        # not present, the model will only be influenced by ambient light.
+        self.has_normals = 0
+        # The lighting normals.
+        self.normals = [ None ] * self.num_vertices
+        for count in range(self.num_vertices): self.normals[count] = vec3()
+        # Center of the mesh.
+        self.center = vec3()
+        # Radius of the mesh.
+        self.radius = 0.0
+        # Do we have vertex colours? These are used to fine-tune the lighting of the
+        # model.
+        self.has_vertex_colors = 0
+        # The vertex colors.
+        self.vertex_colors = [ None ] * self.num_vertices
+        for count in range(self.num_vertices): self.vertex_colors[count] = rgba()
+        # Number of UV texture sets.
+        self.num_uv_sets = 0
+        # Do we have UV coordinates?
+        self.has_uv = 0
+        # The UV texture coordinates.
+        self.uv_sets = [ [ None ] * self.num_vertices ] * self.num_uv_sets
+        for count in range(self.num_uv_sets):
+            for count2 in range(self.num_vertices):
+                self.uv_sets[count][count2] = vec2()
+
+        # Number of active vertices.
+        self.num_active_vertices = 0
+        self.active_radius = 0.0
+        self.num_valid_vertices = 0
+        self.has_sizes = 0
+        self.sizes = []
+
+    # read from file, excluding type string
+    def read(self, file):
+        self.num_vertices, = struct.unpack('<H', file.read(2))
+        self.has_vertices, = struct.unpack('<I', file.read(4))
+        if (self.num_vertices > MAX_ARRAYSIZE): raise NIFError('array size unreasonably large (size %i)'%self.num_vertices)
+        self.vertices = [ None ] * self.num_vertices
+        for count in range(self.num_vertices): self.vertices[count] = vec3()
+        if (self.has_vertices != 0):
+            for count in range(self.num_vertices):
+                self.vertices[count].read(file)
+        self.has_normals, = struct.unpack('<I', file.read(4))
+        if (self.num_vertices > MAX_ARRAYSIZE): raise NIFError('array size unreasonably large (size %i)'%self.num_vertices)
+        self.normals = [ None ] * self.num_vertices
+        for count in range(self.num_vertices): self.normals[count] = vec3()
+        if (self.has_normals != 0):
+            for count in range(self.num_vertices):
+                self.normals[count].read(file)
+        self.center = vec3()
+        self.center.read(file)
+        self.radius, = struct.unpack('<f', file.read(4))
+        self.has_vertex_colors, = struct.unpack('<I', file.read(4))
+        if (self.num_vertices > MAX_ARRAYSIZE): raise NIFError('array size unreasonably large (size %i)'%self.num_vertices)
+        self.vertex_colors = [ None ] * self.num_vertices
+        for count in range(self.num_vertices): self.vertex_colors[count] = rgba()
+        if (self.has_vertex_colors != 0):
+            for count in range(self.num_vertices):
+                self.vertex_colors[count].read(file)
+        self.num_uv_sets, = struct.unpack('<H', file.read(2))
+        self.has_uv, = struct.unpack('<I', file.read(4))
+        if (self.num_uv_sets > MAX_ARRAYSIZE): raise NIFError('array size unreasonably large (size %i)'%self.num_uv_sets)
+        if (self.num_vertices > MAX_ARRAYSIZE): raise NIFError('array size unreasonably large (size %i)'%self.num_vertices)
+        self.uv_sets = [ [ None ] * self.num_vertices ] * self.num_uv_sets
+        for count in range(self.num_uv_sets):
+            for count2 in range(self.num_vertices):
+                self.uv_sets[count][count2] = vec2()
+        if (self.has_uv != 0):
+            for count in range(self.num_uv_sets):
+                for count2 in range(self.num_vertices):
+                    self.uv_sets[count][count2].read(file)
+
+        self.num_active_vertices, = struct.unpack('<H', file.read(2))
+        self.active_radius, = struct.unpack('<f', file.read(4))
+        self.num_valid_vertices, = struct.unpack('<H', file.read(2))
+        self.has_sizes, = struct.unpack('<I', file.read(4))
+        if (self.num_active_vertices > MAX_ARRAYSIZE): raise NIFError('array size unreasonably large (size %i)'%self.num_active_vertices)
+        self.sizes = [None] * self.num_active_vertices
+        for count in range(self.num_active_vertices): self.sizes[count] = 0.0
+        for count in range(self.num_active_vertices):
+            self.sizes[count], = struct.unpack( "<f", file.read(4))
+
+
+
+    # dump to screen
+    def __str__(self):
+        s = ''
+        s += str(self.block_type)
+        s += 'num_vertices' + ': %i\n'%self.num_vertices
+        s += 'has_vertices' + ': %i\n'%self.has_vertices
+        if (self.has_vertices != 0):
+            if (self.num_vertices <= MAX_ARRAYDUMPSIZE):
+                for count in range(self.num_vertices):
+                    s += 'vertices' + '[%i]'%count + ':\n'
+                    s += str(self.vertices[count]) + '\n'
+            else:
+                s += 'vertices: array[%i]\n'%self.num_vertices
+        s += 'has_normals' + ': %i\n'%self.has_normals
+        if (self.has_normals != 0):
+            if (self.num_vertices <= MAX_ARRAYDUMPSIZE):
+                for count in range(self.num_vertices):
+                    s += 'normals' + '[%i]'%count + ':\n'
+                    s += str(self.normals[count]) + '\n'
+            else:
+                s += 'normals: array[%i]\n'%self.num_vertices
+        s += 'center' + ':\n'
+        s += str(self.center) + '\n'
+        s += 'radius' + ': %f\n'%self.radius
+        s += 'has_vertex_colors' + ': %i\n'%self.has_vertex_colors
+        if (self.has_vertex_colors != 0):
+            if (self.num_vertices <= MAX_ARRAYDUMPSIZE):
+                for count in range(self.num_vertices):
+                    s += 'vertex_colors' + '[%i]'%count + ':\n'
+                    s += str(self.vertex_colors[count]) + '\n'
+            else:
+                s += 'vertex_colors: array[%i]\n'%self.num_vertices
+        s += 'num_uv_sets' + ': %i\n'%self.num_uv_sets
+        s += 'has_uv' + ': %i\n'%self.has_uv
+        if (self.has_uv != 0):
+            s += 'uv_sets: array[%i][%i]\n'%(self.num_uv_sets,self.num_vertices)
+            
+        s += 'num_active_vertices' + ': %i\n'%self.num_active_vertices
+        s += 'active_radius' + ': %f\n'%self.active_radius
+        s += 'num_valid_vertices' + ': %i\n'%self.num_valid_vertices
+        s += 'has_sizes' + ': %08X\n'%self.has_sizes
+        for i in range(self.num_valid_vertices):
+            s += 'sizes' + '[%i]'%i + ': %f\n'%self.sizes[i]
+        return s
+
+
+
 #
 # Unknown.
 #
@@ -1977,6 +2120,87 @@ class NiBSAnimationNode(AParentNode):
         s = ''
         s += str(self.block_type)
         s += AParentNode.__str__(self)
+        return s
+
+
+
+#
+# 
+#
+class NiBSPArrayController(AController):
+    # constructor
+    def __init__(self):
+        self.block_type = mystring("NiBSPArrayController")
+        AController.__init__(self)
+        # Unknown, 16 floats
+        self.unknown1 = [ 0.0 ] * 16
+        # Unknown, always 0?
+        self.unknown2 = 0
+        # Unknown, 46 bytes, shorts and floats mixed
+        self.unknown3 = [ 0 ] * 23
+        # ?
+        self.num_vertices = 0
+        self.num_active = 0
+        self.active = []
+        # ?
+        self.unknown_id1 = -1
+        # NiGravity, NiParticleColorModifier, NiParticleGrowFade, NiParticelRotation
+        self.particle_extra_id = -1
+        # ?
+        self.unknown_id2 = -1
+        # trailing null byte
+        self.trailer = 0
+
+
+
+    # read from file, excluding type string
+    def read(self, file):
+        AController.read(self, file)
+        self.unknown1 = [ 0.0 ] * 16
+        for i in range( 16 ):
+            self.unknown1[i], = struct.unpack('<f', file.read(4))
+        self.unknown2, = struct.unpack('<B', file.read(1))
+        self.unknown3 = [ 0 ] * 23
+        for i in range( 23 ):
+            self.unknown3[i], = struct.unpack('<H', file.read(2))
+        
+        self.num_vertices, = struct.unpack('<H', file.read(2))
+        self.num_active, = struct.unpack('<H', file.read(2))
+        self.active = [None] * self.num_vertices
+        for i in range( self.num_vertices ):
+            m = mat3x3()
+            m.read( file )
+            s1, = struct.unpack('<H', file.read(2))
+            s2, = struct.unpack('<H', file.read(2))
+            self.active[i] = (m, s1, s2)
+        self.unknown_id1, = struct.unpack('<i', file.read(4))
+        self.particle_extra_id, = struct.unpack('<i', file.read(4))
+        self.unknown_id2, = struct.unpack('<i', file.read(4))
+        self.trailer, = struct.unpack('<B', file.read(1))
+
+
+
+    # dump to screen
+    def __str__(self):
+        s = ''
+        s += str(self.block_type)
+        s += AController.__str__(self)
+        s += 'unknown1' + ': ' + str( self.unknown1 ) + "\n"
+        s += 'unknown2' + ': %i\n'%self.unknown2
+        s += 'unknown3:\n'
+        for i in range( 23 ):
+            s += '%04X '%self.unknown3[i]
+            if ( i & 7 == 7 ): s += '\n'
+        s += '\n'
+        s += 'num vertices: %i\n'%self.num_vertices
+        s += 'num active: %i\n'%self.num_active
+        for i in range( self.num_active ):
+            m, s1, s2 = self.active[i]
+            s += 'active[%02i]:((% .2f,% .2f,% .2f),(% .2f,% .2f,% .2f),(% .2f,% .2f,% .2f),%i,%02i)\n'%(i, s1, m.x.x, m.x.y, m.x.z, m.y.x, m.y.y, m.y.z, m.z.x, m.z.y, m.z.z, s2)
+        s += 'unknown_id1' + ': %i\n'%self.unknown_id1
+        s += 'particle_extra_id' + ': %i\n'%self.particle_extra_id
+        s += 'unknown_id2' + ': %i\n'%self.unknown_id2
+        s += 'trailer' + ': %i\n'%self.trailer
         return s
 
 
@@ -2964,6 +3188,86 @@ class NiParticleRotation(AControlled):
             s += 'unknown2: array[%i]\n'%4
         return s
 
+#
+# Time controller for particle systems
+#
+class NiParticleSystemController(AController):
+    # constructor
+    def __init__(self):
+        self.block_type = mystring("NiParticleSystemController")
+        AController.__init__(self)
+        # Unknown, 16 floats
+        self.unknown1 = [ 0.0 ] * 16
+        # Unknown, always 0?
+        self.unknown2 = 0
+        # Unknown, 46 bytes, shorts and floats mixed
+        self.unknown3 = [ 0 ] * 23
+        # ?
+        self.num_vertices = 0
+        self.num_active = 0
+        self.active = []
+        # ?
+        self.unknown_id1 = -1
+        # NiGravity, NiParticleColorModifier, NiParticleGrowFade, NiParticelRotation
+        self.particle_extra_id = -1
+        # ?
+        self.unknown_id2 = -1
+        # trailing null byte
+        self.trailer = 0
+
+
+
+    # read from file, excluding type string
+    def read(self, file):
+        AController.read(self, file)
+        self.unknown1 = [ 0.0 ] * 16
+        for i in range( 16 ):
+            self.unknown1[i], = struct.unpack('<f', file.read(4))
+        self.unknown2, = struct.unpack('<B', file.read(1))
+        self.unknown3 = [ 0 ] * 23
+        for i in range( 23 ):
+            self.unknown3[i], = struct.unpack('<H', file.read(2))
+        
+        self.num_vertices, = struct.unpack('<H', file.read(2))
+        self.num_active, = struct.unpack('<H', file.read(2))
+        self.active = [None] * self.num_vertices
+        for i in range( self.num_vertices ):
+            m = mat3x3()
+            m.read( file )
+            s1, = struct.unpack('<H', file.read(2))
+            s2, = struct.unpack('<H', file.read(2))
+            self.active[i] = (m, s1, s2)
+        self.unknown_id1, = struct.unpack('<i', file.read(4))
+        self.particle_extra_id, = struct.unpack('<i', file.read(4))
+        self.unknown_id2, = struct.unpack('<i', file.read(4))
+        self.trailer, = struct.unpack('<B', file.read(1))
+
+
+
+    # dump to screen
+    def __str__(self):
+        s = ''
+        s += str(self.block_type)
+        s += AController.__str__(self)
+        s += 'unknown1' + ': ' + str( self.unknown1 ) + "\n"
+        s += 'unknown2' + ': %i\n'%self.unknown2
+        s += 'unknown3:\n'
+        for i in range( 23 ):
+            s += '%04X '%self.unknown3[i]
+            if ( i & 7 == 7 ): s += '\n'
+        s += '\n'
+        s += 'num vertices: %i\n'%self.num_vertices
+        s += 'num active: %i\n'%self.num_active
+        for i in range( self.num_active ):
+            m, s1, s2 = self.active[i]
+            s += 'active[%02i]:((% .2f,% .2f,% .2f),(% .2f,% .2f,% .2f),(% .2f,% .2f,% .2f),%i,%02i)\n'%(i, s1, m.x.x, m.x.y, m.x.z, m.y.x, m.y.y, m.y.z, m.z.x, m.z.y, m.z.z, s2)
+        s += 'unknown_id1' + ': %i\n'%self.unknown_id1
+        s += 'particle_extra_id' + ': %i\n'%self.particle_extra_id
+        s += 'unknown_id2' + ': %i\n'%self.unknown_id2
+        s += 'trailer' + ': %i\n'%self.trailer
+        return s
+
+
 
 
 #
@@ -3058,8 +3362,9 @@ class NiPixelData:
         # Bytes per pixel (BPP/8).
         self.bytespp = 0
         # Mipmap descriptions (width, height, offset).
-        self.mipmaps = [ [ None ] * 3 ] * self.num_mipmaps
+        self.mipmaps = [ None ] * self.num_mipmaps
         for count in range(self.num_mipmaps):
+            self.mipmaps[count] = [ None ] * 3
             for count2 in range(3):
                 self.mipmaps[count][count2] = 0
         # Number of bytes that make up all mipmaps.
@@ -3088,11 +3393,9 @@ class NiPixelData:
         self.bytespp, = struct.unpack('<I', file.read(4))
         if (self.num_mipmaps > MAX_ARRAYSIZE): raise NIFError('array size unreasonably large (size %i)'%self.num_mipmaps)
         if (3 > MAX_ARRAYSIZE): raise NIFError('array size unreasonably large (size %i)'%3)
-        self.mipmaps = [ [ None ] * 3 ] * self.num_mipmaps
+        self.mipmaps = [ None ] * self.num_mipmaps
         for count in range(self.num_mipmaps):
-            for count2 in range(3):
-                self.mipmaps[count][count2] = 0
-        for count in range(self.num_mipmaps):
+            self.mipmaps[count] = [ None ] * 3
             for count2 in range(3):
                 self.mipmaps[count][count2], = struct.unpack('<I', file.read(4))
         self.data_size, = struct.unpack('<I', file.read(4))
@@ -3149,7 +3452,8 @@ class NiPixelData:
         s += 'unknown3' + ': %i\n'%self.unknown3
         s += 'num_mipmaps' + ': %i\n'%self.num_mipmaps
         s += 'bytespp' + ': %i\n'%self.bytespp
-        s += 'mipmaps: array[%i][%i]\n'%(self.num_mipmaps,3)
+        for count in range( self.num_mipmaps ):
+            s += 'mipmaps[%i]: [%i,%i,%i]\n'%(count,self.mipmaps[count][0],self.mipmaps[count][1],self.mipmaps[count][2])
         s += 'data_size' + ': %i\n'%self.data_size
         if (self.data_size <= MAX_ARRAYDUMPSIZE):
             for count in range(self.data_size):
@@ -3275,7 +3579,7 @@ class NiRotatingParticles(ANode):
         ANode.__init__(self)
         # Rotating particles data index.
         self.data = -1
-        # Unknown (always -1?).
+        # Unknown (always -1?). skin instance ?
         self.unknown = -1
 
 
@@ -3304,6 +3608,161 @@ class NiRotatingParticles(ANode):
         s += ANode.__str__(self)
         s += 'data' + ': %i\n'%self.data
         s += 'unknown' + ': %i\n'%self.unknown
+        return s
+
+
+#
+# Unknown.
+#
+class NiRotatingParticlesData:
+    # constructor
+    def __init__(self):
+        self.block_type = mystring("NiRotatingParticlesData")
+        # Number of vertices.
+        self.num_vertices = 0
+        # xxx
+        self.has_vertices = 0
+        # The mesh vertices.
+        self.vertices = [ None ] * self.num_vertices
+        for count in range(self.num_vertices): self.vertices[count] = vec3()
+        # Do we have lighting normals? These are essential for proper lighting: if
+        # not present, the model will only be influenced by ambient light.
+        self.has_normals = 0
+        # The lighting normals.
+        self.normals = [ None ] * self.num_vertices
+        for count in range(self.num_vertices): self.normals[count] = vec3()
+        # Center of the mesh.
+        self.center = vec3()
+        # Radius of the mesh.
+        self.radius = 0.0
+        # Do we have vertex colours? These are used to fine-tune the lighting of the
+        # model.
+        self.has_vertex_colors = 0
+        # The vertex colors.
+        self.vertex_colors = [ None ] * self.num_vertices
+        for count in range(self.num_vertices): self.vertex_colors[count] = rgba()
+        # Number of UV texture sets.
+        self.num_uv_sets = 0
+        # Do we have UV coordinates?
+        self.has_uv = 0
+        # The UV texture coordinates.
+        self.uv_sets = [ [ None ] * self.num_vertices ] * self.num_uv_sets
+        for count in range(self.num_uv_sets):
+            for count2 in range(self.num_vertices):
+                self.uv_sets[count][count2] = vec2()
+
+        # Number of active vertices.
+        self.num_active_vertices = 0
+        self.active_radius = 0.0
+        self.num_valid_vertices = 0
+        self.has_sizes = 0
+        self.sizes = []
+        self.has_quats = 0
+        self.quats = []
+
+    # read from file, excluding type string
+    def read(self, file):
+        self.num_vertices, = struct.unpack('<H', file.read(2))
+        self.has_vertices, = struct.unpack('<I', file.read(4))
+        if (self.num_vertices > MAX_ARRAYSIZE): raise NIFError('array size unreasonably large (size %i)'%self.num_vertices)
+        self.vertices = [ None ] * self.num_vertices
+        for count in range(self.num_vertices): self.vertices[count] = vec3()
+        if (self.has_vertices != 0):
+            for count in range(self.num_vertices):
+                self.vertices[count].read(file)
+        self.has_normals, = struct.unpack('<I', file.read(4))
+        if (self.num_vertices > MAX_ARRAYSIZE): raise NIFError('array size unreasonably large (size %i)'%self.num_vertices)
+        self.normals = [ None ] * self.num_vertices
+        for count in range(self.num_vertices): self.normals[count] = vec3()
+        if (self.has_normals != 0):
+            for count in range(self.num_vertices):
+                self.normals[count].read(file)
+        self.center = vec3()
+        self.center.read(file)
+        self.radius, = struct.unpack('<f', file.read(4))
+        self.has_vertex_colors, = struct.unpack('<I', file.read(4))
+        if (self.num_vertices > MAX_ARRAYSIZE): raise NIFError('array size unreasonably large (size %i)'%self.num_vertices)
+        self.vertex_colors = [ None ] * self.num_vertices
+        for count in range(self.num_vertices): self.vertex_colors[count] = rgba()
+        if (self.has_vertex_colors != 0):
+            for count in range(self.num_vertices):
+                self.vertex_colors[count].read(file)
+        self.num_uv_sets, = struct.unpack('<H', file.read(2))
+        self.has_uv, = struct.unpack('<I', file.read(4))
+        if (self.num_uv_sets > MAX_ARRAYSIZE): raise NIFError('array size unreasonably large (size %i)'%self.num_uv_sets)
+        if (self.num_vertices > MAX_ARRAYSIZE): raise NIFError('array size unreasonably large (size %i)'%self.num_vertices)
+        self.uv_sets = [ [ None ] * self.num_vertices ] * self.num_uv_sets
+        for count in range(self.num_uv_sets):
+            for count2 in range(self.num_vertices):
+                self.uv_sets[count][count2] = vec2()
+        if (self.has_uv != 0):
+            for count in range(self.num_uv_sets):
+                for count2 in range(self.num_vertices):
+                    self.uv_sets[count][count2].read(file)
+
+        self.num_active_vertices, = struct.unpack('<H', file.read(2))
+        self.active_radius, = struct.unpack('<f', file.read(4))
+        self.num_valid_vertices, = struct.unpack('<H', file.read(2))
+        self.has_sizes, = struct.unpack('<I', file.read(4))
+        if (self.num_active_vertices > MAX_ARRAYSIZE): raise NIFError('array size unreasonably large (size %i)'%self.num_active_vertices)
+        self.sizes = [None] * self.num_active_vertices
+        for count in range(self.num_active_vertices): self.sizes[count] = 0.0
+        for count in range(self.num_active_vertices):
+            self.sizes[count], = struct.unpack( "<f", file.read(4))
+        self.has_quats, = struct.unpack('<I', file.read(4))
+        self.quats = [None] * self.num_active_vertices
+        for count in range(self.num_active_vertices): self.quats[count] = quaternion()
+        for count in range(self.num_active_vertices):
+            self.quats[count].read(file)
+
+
+    # dump to screen
+    def __str__(self):
+        s = ''
+        s += str(self.block_type)
+        s += 'num_vertices' + ': %i\n'%self.num_vertices
+        s += 'has_vertices' + ': %i\n'%self.has_vertices
+        if (self.has_vertices != 0):
+            if (self.num_vertices <= MAX_ARRAYDUMPSIZE):
+                for count in range(self.num_vertices):
+                    s += 'vertices' + '[%i]'%count + ':\n'
+                    s += str(self.vertices[count]) + '\n'
+            else:
+                s += 'vertices: array[%i]\n'%self.num_vertices
+        s += 'has_normals' + ': %i\n'%self.has_normals
+        if (self.has_normals != 0):
+            if (self.num_vertices <= MAX_ARRAYDUMPSIZE):
+                for count in range(self.num_vertices):
+                    s += 'normals' + '[%i]'%count + ':\n'
+                    s += str(self.normals[count]) + '\n'
+            else:
+                s += 'normals: array[%i]\n'%self.num_vertices
+        s += 'center' + ':\n'
+        s += str(self.center) + '\n'
+        s += 'radius' + ': %f\n'%self.radius
+        s += 'has_vertex_colors' + ': %i\n'%self.has_vertex_colors
+        if (self.has_vertex_colors != 0):
+            if (self.num_vertices <= MAX_ARRAYDUMPSIZE):
+                for count in range(self.num_vertices):
+                    s += 'vertex_colors' + '[%i]'%count + ':\n'
+                    s += str(self.vertex_colors[count]) + '\n'
+            else:
+                s += 'vertex_colors: array[%i]\n'%self.num_vertices
+        s += 'num_uv_sets' + ': %i\n'%self.num_uv_sets
+        s += 'has_uv' + ': %i\n'%self.has_uv
+        if (self.has_uv != 0):
+            s += 'uv_sets: array[%i][%i]\n'%(self.num_uv_sets,self.num_vertices)
+            
+        s += 'num_active_vertices' + ': %i\n'%self.num_active_vertices
+        s += 'active_radius' + ': %f\n'%self.active_radius
+        s += 'num_valid_vertices' + ': %i\n'%self.num_valid_vertices
+        s += 'has_sizes' + ': %08X\n'%self.has_sizes
+        for i in range(self.num_valid_vertices):
+            s += 'sizes' + '[%i]'%i + ': %f\n'%self.sizes[i]
+        s += 'has_quats' + ': %08X\n'%self.has_quats
+        for i in range(self.num_valid_vertices):
+            s += 'quats[%i]:\n'%i
+            s += str( self.quats[i] )
         return s
 
 
@@ -3731,28 +4190,35 @@ class NiTextKeyExtraData(AExtraData):
 
 
 #
-# Unknown.
+# Unknown .
 #
 class NiTextureEffect(ANode):
     # constructor
     def __init__(self):
         self.block_type = mystring("NiTextureEffect")
         ANode.__init__(self)
-        # Unknown.
+        # Unknown. Most likely a list of pointers to the affected Nodes. Seems to be overwritten by NetImmerse on load
         self.has_unknown1 = 0
-        # Unknown.
         self.unknown1 = 0
-        # Unknown: (1,0,0,0), (1,0,0,0), (1,0,0,0)
-        self.unknown2 = [ None ] * 12
-        for count in range(12): self.unknown2[count] = 0.0
-        # Unknown: (2,3,2,2) or (2,0,2,2)
-        self.unknown3 = [ None ] * 4
-        for count in range(4): self.unknown3[count] = 0
+
+        # The rotation part of the projection matrix.
+        self.proj_rotation = mat3x3()
+        # The translation part of the projection matrix
+        self.proj_translation = vec3()
+        # 0=nearest, 1=bilinear, 2=trilinear, 3=..., 4=..., 5=...
+        self.filter_mode = 0
+        # 0=clamp S clamp T, 1=clamp S wrap T, 2=wrap S clamp T, 3=wrap S wrap T
+        self.clamp_mode = 0
+        # 0=projected light, 1=projected shadow, 2=evironment map, 3=fog map
+        self.texture_mode = 0
+        # 0=world parallel, 1=world perspective, 2=sphere map, 3=specular cube map, 4=diffuse cube map
+        self.coord_mode = 0
+
         # Source texture index.
         self.source_texture = -1
         # Unknown: 0?
         self.unknown4 = 0
-        # Unknown: (1,0,0,0)?
+        # Unknown: (1,0,0,0)? 
         self.unknown5 = [ None ] * 4
         for count in range(4): self.unknown5[count] = 0.0
         # 0?
@@ -3771,16 +4237,16 @@ class NiTextureEffect(ANode):
         self.unknown1 = 0
         if (self.has_unknown1 != 0):
             self.unknown1, = struct.unpack('<I', file.read(4))
-        if (12 > MAX_ARRAYSIZE): raise NIFError('array size unreasonably large (size %i)'%12)
-        self.unknown2 = [ None ] * 12
-        for count in range(12): self.unknown2[count] = 0.0
-        for count in range(12):
-            self.unknown2[count], = struct.unpack('<f', file.read(4))
-        if (4 > MAX_ARRAYSIZE): raise NIFError('array size unreasonably large (size %i)'%4)
-        self.unknown3 = [ None ] * 4
-        for count in range(4): self.unknown3[count] = 0
-        for count in range(4):
-            self.unknown3[count], = struct.unpack('<I', file.read(4))
+
+        self.proj_rotation = mat3x3()
+        self.proj_rotation.read(file)
+        self.proj_translation = vec3()
+        self.proj_translation.read(file)
+        self.clamp_mode, = struct.unpack('<I', file.read(4))
+        self.filter_mode, = struct.unpack('<I', file.read(4))
+        self.texture_mode, = struct.unpack('<I', file.read(4))
+        self.coord_mode, = struct.unpack('<I', file.read(4))
+
         self.source_texture, = struct.unpack('<i', file.read(4))
         self.unknown4, = struct.unpack('<B', file.read(1))
         if (4 > MAX_ARRAYSIZE): raise NIFError('array size unreasonably large (size %i)'%4)
@@ -3801,12 +4267,12 @@ class NiTextureEffect(ANode):
         file.write(struct.pack('<I', self.has_unknown1))
         if (self.has_unknown1 != 0):
             file.write(struct.pack('<I', self.unknown1))
-        if (12 > MAX_ARRAYSIZE): raise NIFError('array size unreasonably large (size %i)'%12)
-        for count in range(12):
-            file.write(struct.pack('<f', self.unknown2[count]))
-        if (4 > MAX_ARRAYSIZE): raise NIFError('array size unreasonably large (size %i)'%4)
-        for count in range(4):
-            file.write(struct.pack('<I', self.unknown3[count]))
+        self.proj_rotation.write( file )
+        self.proj_translation.write( file )
+        file.write(struct.pack('<I', self.filter_mode))
+        file.write(struct.pack('<I', self.clamp_mode))
+        file.write(struct.pack('<I', self.texture_mode))
+        file.write(struct.pack('<I', self.coord_mode))
         file.write(struct.pack('<i', self.source_texture))
         file.write(struct.pack('<b', self.unknown4))
         if (4 > MAX_ARRAYSIZE): raise NIFError('array size unreasonably large (size %i)'%4)
@@ -3825,17 +4291,13 @@ class NiTextureEffect(ANode):
         s += ANode.__str__(self)
         s += 'has_unknown1' + ': %i\n'%self.has_unknown1
         if (self.has_unknown1 != 0):
-            s += 'unknown1' + ': %i\n'%self.unknown1
-        if (12 <= MAX_ARRAYDUMPSIZE):
-            for count in range(12):
-                s += 'unknown2' + '[%i]'%count + ': %f\n'%self.unknown2[count]
-        else:
-            s += 'unknown2: array[%i]\n'%12
-        if (4 <= MAX_ARRAYDUMPSIZE):
-            for count in range(4):
-                s += 'unknown3' + '[%i]'%count + ': %i\n'%self.unknown3[count]
-        else:
-            s += 'unknown3: array[%i]\n'%4
+            s += 'unknown1' + ': %08X\n'%self.unknown1
+        s += 'proj_rotation' + ':\n' + str( self.proj_rotation )
+        s += 'proj_translation' + ':\n' + str( self.proj_translation )
+        s += 'filter_mode' + ': %i\n'%self.filter_mode
+        s += 'clamp_mode' + ': %i\n'%self.clamp_mode
+        s += 'texture_mode' + ': %i\n'%self.texture_mode
+        s += 'coord_mode' + ': %i\n'%self.coord_mode
         s += 'source_texture' + ': %i\n'%self.source_texture
         s += 'unknown4' + ': %i\n'%self.unknown4
         if (4 <= MAX_ARRAYDUMPSIZE):
@@ -3847,7 +4309,6 @@ class NiTextureEffect(ANode):
         s += 'ps2_k' + ': %i\n'%self.ps2_k
         s += 'unknown6' + ': %i\n'%self.unknown6
         return s
-
 
 
 #
@@ -4667,7 +5128,50 @@ class RootCollisionNode(AParentNode):
         s += AParentNode.__str__(self)
         return s
 
+import re
 
+re_blockStart = re.compile('.{4}(Ni[A-Z]|RootCollisionNode)', re.DOTALL)
+re_blockType  = re.compile(r'^(Ni[A-Z][\w\s]*|RootCollisionNode)$')
+
+#
+#
+#
+class UnknownBlock:
+    def __init__(self,type):
+        self.block_type = mystring(type)
+        self.data = []
+
+    def read(self,file):
+        entry = file.tell()
+        self.data = file.read()
+        offset = 0
+        while offset < len( self.data ) - 8:
+            match = re_blockStart.search(self.data[offset:])
+            if not match:
+                offset = len(self.data)
+            else:
+                strlen, = struct.unpack('<i', self.data[match.start():(match.start()+4)])
+                if ( strlen > 0 ) and ( strlen < 65 ) and ( match.start() + 4 + strlen < len( self.data ) - 8 ):
+                    type = self.data[(match.start()+4):(match.start()+4+strlen)]
+                    if re_blockType.match(type):
+                        offset = match.start()
+                        break
+            offset += 7
+        if offset >= len( self.data ) - 8:
+            self.data = self.data[:-8]
+        else:
+            self.data = self.data[:offset]
+        file.seek( entry + len( self.data ) )
+
+    def write(self,file):
+        self.block_type.write(file)
+        file.write(self.data)
+
+    def __str__(self):
+        s = ''
+        s += str(self.block_type)
+        s += 'unknown data: array[%i]\n'%len(self.data)
+        return s
 
 #
 # Customized string class
@@ -4855,7 +5359,12 @@ class NIF:
             elif (block_id_str.value == "NiWireframeProperty"): this_block = NiWireframeProperty()
             elif (block_id_str.value == "NiZBufferProperty"): this_block = NiZBufferProperty()
             elif (block_id_str.value == "RootCollisionNode"): this_block = RootCollisionNode()
+            elif (block_id_str.value == "NiAutoNormalParticlesData"): this_block = NiAutoNormalParticlesData()
+            elif (block_id_str.value == "NiRotatingParticlesData"): this_block = NiRotatingParticlesData()
+            elif (block_id_str.value == "NiParticleSystemController"): this_block = NiParticleSystemController()
+            elif (block_id_str.value == "NiBSPArrayController"): this_block = NiBSPArrayController()
             else:
+                #this_block = UnknownBlock( block_id_str.value )
                 # something to investigate! hex dump
                 try:
                     hexdump(file, block_pos)
@@ -4966,3 +5475,12 @@ def hexdump(file, pos):
         for i in range(num_floats):
             print '%02i: '%i, '(%02X %02X %02X %02X)'%(bytes[i*4], bytes[i*4+1], bytes[i*4+2], bytes[i*4+3]), floats[i]
 
+#f = open( 'f:\\meshes\\r\\AscendedSleeper.nif', 'rb' )
+#n = NIF()
+#n.read( f )
+#f.close()
+#print n
+#xxx = [ 'NiParticleSystemController', 'NiRotatingParticlesData' ]
+#for x in n.blocks:
+#    if x.block_type.value in xxx:
+#        print x
