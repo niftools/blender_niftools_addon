@@ -1,15 +1,15 @@
 #!BPY
 
 """
-Name: 'NetImmerse 4.0.0.2 (.nif)'
-Blender: 237
+Name: 'NetImmerse/Gamebryo (.nif & .kf)'
+Blender: 239
 Group: 'Export'
 Tip: 'Export the selected objects, along with their parents and children, to a NIF file. Animation, if present, is exported as a X***.NIF and a X***.KF file.'
 """
 
 __author__ = ["amorilia@gamebox.net"]
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
-__version__ = "1.1"
+__version__ = "1.2"
 __bpydoc__ = """\
 This script exports Netimmerse (the version used by Morrowind) .NIF files (version 4.0.0.2).
 
@@ -73,7 +73,6 @@ from Blender import Draw
 
 try:
     import struct, re
-    from math import sqrt
 except:
     err = """--------------------------
 ERROR\nThis script requires a full Python installation to run.
@@ -85,16 +84,15 @@ Python minimum required version:
     raise
 
 try:
-    import nif4
+    from niflib import *
 except:
     err = """--------------------------
-ERROR\nThis script requires the Python NIF library, nif4.py.
+ERROR\nThis script requires the NIFLIB Python SWIG wrapper, niflib.py & _niflib.dll.
 Download it from http://niftools.sourceforge.net/
 --------------------------"""
     print err
-    Blender.Draw.PupMenu("ERROR%t|Python NIF library not found, check console for details")
+    Blender.Draw.PupMenu("ERROR%t|NIFLIB not found, check console for details")
     raise
-    
 
 
 
@@ -169,7 +167,7 @@ class NIFExportError(Exception):
 def export_nif(filename):
     global scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath
     print 'config:',scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath
-    
+
     try: # catch NIFExportErrors
         
         # preparation:
@@ -202,16 +200,15 @@ def export_nif(filename):
         if show_progress >= 1: Blender.Window.DrawProgressBar(0.33, "Converting to NIF")
         
         # create a nif object
-        nif = nif4.NIF()
         
         # export the root node (note that transformation is ignored on the root node)
-        nif = export_node(None, 'none', -1, 1.0, root_name, nif)
+        root_block = export_node(None, 'none', None, 1.0, root_name)
         
         # export objects
         for root_object in root_objects:
             # export the root objects as a NiNodes; their children are exported as well
-            # note that localspace = worldspace, because root objects have no children
-            nif = export_node(root_object, 'localspace', 0, scale_correction, root_object.getName(), nif)
+            # note that localspace = worldspace, because root objects have no parents
+            export_node(root_object, 'localspace', root_block, scale_correction, root_object.getName())
 
         # if we exported animations, but no animation groups are defined, define a default animation group
         if (animtxt == None):
@@ -243,11 +240,11 @@ def export_nif(filename):
                     break
             if has_keyframecontrollers == 0:
                 # add a trivial keyframe controller on the first root_object node
-                nif = export_keyframe(None, 'localspace', 1, 1.0, nif)
+                export_keyframe(None, 'localspace', root_block["Children"][0], 1.0, root_block)
         
         # export animation groups
         if (animtxt):
-            nif = export_animgroups(animtxt, 1, nif) # we link the animation extra data to the first root_object node
+            export_animgroups(animtxt, 1, root_block) # we link the animation extra data to the first root_object node
             
         # export vertex color property
         for block in nif.blocks:
@@ -346,90 +343,77 @@ def export_nif(filename):
 # - for the root node, ob is None, and node_name is usually the base
 #   filename (either with or without extension)
 #
-def export_node(ob, space, parent_block_id, parent_scale, node_name, nif):
+def export_node(ob, space, parent_block, parent_scale, node_name):
     ipo = None
-    ob_block_id = nif.header.nblocks # the block index number of the to be created block
-    assert(ob_block_id == len(nif.blocks)) # debug
 
     # determine the block type, and append a new node to the nif block list
     if (ob == None):
         # -> root node
         assert(space == 'none')
-        assert(parent_block_id == -1) # debug
-        assert(nif.header.nblocks == 0) # debug
-        nif.blocks.append(nif4.NiNode())
+        assert(parent_block == None) # debug
+        node = CreateBlock("NiNode")
     else:
         assert((ob.getType() == 'Empty') or (ob.getType() == 'Mesh')) # debug
-        assert(parent_block_id >= 0) # debug
-        assert(nif.header.nblocks >= 1) # debug
+        assert(parent_block) # debug
         ipo = ob.getIpo() # get animation data
         if (ob.getName() == 'RootCollisionNode'):
             # -> root collision node
-            # we export the root collision node as a child of the root node
-            parent_block_id = 0
-            space = 'worldspace'
-            node_name = ''
-            if (ipo != None):
-                raise NIFExportError('ERROR%t|RootCollisionNode should not be animated.')
-            nif.blocks.append(nif4.RootCollisionNode())
+            node = CreateBlock("RootCollisionNode")
         else:
-            # -> static or animated object
-            nif.blocks.append(nif4.NiNode())
+            # -> regular node (static or animated object)
+            node = CreateBlock("NiNode")
     
-    nif.header.nblocks += 1
-
     # make it child of its parent in the nif, if it has one
-    if (parent_block_id >= 0):
-        nif.blocks[parent_block_id].children.indices.append(ob_block_id)
-        nif.blocks[parent_block_id].children.num_indices += 1
+    if (parent_block):
+        parent_block["Children"].AddLink(node)
     
     # and fill in this node's non-trivial values
-    nif.blocks[ob_block_id].name = nif4.mystring(node_name)
+    #node["Name"] = node_name
+    node.SetName(node_name)
     if (ob == None):
-        nif.blocks[ob_block_id].flags = 0x000C # ? this seems pretty standard for the root node
+        node["Flags"] = 0x000C # ? this seems pretty standard for the root node
     elif (ob.getName() == 'RootCollisionNode'):
-        nif.blocks[ob_block_id].flags = 0x0003 # ? this seems pretty standard for the root collision node
+        node["Flags"] = 0x0003 # ? this seems pretty standard for the root collision node
     else:
-        nif.blocks[ob_block_id].flags = 0x000C # ? this seems pretty standard for static and animated ninodes
+        node["Flags"] = 0x000C # ? this seems pretty standard for static and animated ninodes
 
     # if scale of NiNodes is not 1.0, then the engine does a bit
     # weird... let's play safe and require it to be 1.0
-    nif.blocks[ob_block_id].translation, \
-    nif.blocks[ob_block_id].rotation, \
-    scale, \
-    nif.blocks[ob_block_id].velocity  \
+    ob_translation, \
+    ob_rotation, \
+    ob_scale, \
+    ob_velocity \
     = export_matrix(ob, space)
-    nif.blocks[ob_block_id].scale = 1.0; # scale is taken into account under export_trishapes and export_children below
-    # take care of the parent scale
-    nif.blocks[ob_block_id].translation.x *= parent_scale
-    nif.blocks[ob_block_id].translation.y *= parent_scale
-    nif.blocks[ob_block_id].translation.z *= parent_scale
+    node["Rotation"]    = ob_rotation
+    node["Velocity"]    = ob_velocity
+    node["Scale"]       = 1.0; # scale is transferred to export_trishapes and export_children below
+    node["Translation"] = ob_translation * parent_scale # take parent scale into account
 
     if (ob != None):
         # export animation
         if (ipo != None):
-            nif = export_keyframe(ob, space, ob_block_id, parent_scale, nif)
+            export_keyframe(ob, space, node, parent_scale)
     
         # if it is a mesh, export the mesh as trishape children of this ninode
-        # (we assume scale.x == scale.y == scale.z)
+        # (we assume ob_scale[0] == ob_scale[1] == ob_scale[2])
         if (ob.getType() == 'Mesh'):
-            nif = export_trishapes(ob, 'none', ob_block_id, parent_scale * scale.x, nif) # the transformation of the mesh is already in the ninode block (except for scaling)
+            export_trishapes(ob, 'none', node, parent_scale * ob_scale[0]) # the transformation of the mesh is already in the ninode block (except for scaling)
 
         # export all children of this empty/mesh object as children of this NiNode
-        return export_children(ob, ob_block_id, parent_scale * scale.x, nif)
-    else:
-        return nif
+        export_children(ob, node, parent_scale * ob_scale[0])
+
+    return node
 
 
 
 #
 # Export the animation of blender object ob as keyframe controller and keyframe data
 #
-def export_keyframe(ob, space, parent_block_id, parent_scale, nif):
+def export_keyframe(ob, space, parent_block, parent_scale):
     # -> get keyframe information
     
     assert(space == 'localspace') # we don't support anything else (yet)
-    assert(nif.blocks[parent_block_id].block_type.value == "NiNode") # make sure the parent is of the right type
+    assert(parent_block.GetType() == "NiNode") # make sure the parent is of the right type
     
     # get frame start and frame end, and the number of frames per second
     scn = Blender.Scene.GetCurrent()
@@ -825,7 +809,7 @@ def export_flipcontroller( fliptxt, texture, target_id, target_tex, nif ):
 # NiMaterialProperty, and NiAlphaProperty blocks. We export one
 # trishape block per mesh material.
 # 
-def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
+def export_trishapes(ob, space, parent_block, parent_scale):
     global scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath
     
     assert(ob.getType() == 'Mesh')
@@ -858,13 +842,14 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
         mesh_hastex = 0 # non-zero if we have at least one texture
         mesh_hasvcol = mesh.hasVertexColours()
         if (mesh_mat != None):
+            mesh_hasnormals = 1 # for proper lighting
             # for non-textured materials, vertex colors are used to color the mesh
             # for textured materials, they represent lighting details
             mesh_hasvcol = mesh_hasvcol or (mesh_mat.mode & Blender.Material.Modes.VCOL_LIGHT) or (mesh_mat.mode & Blender.Material.Modes.VCOL_PAINT)
             # read the Blender Python API documentation to understand this hack
             mesh_mat_ambient = mesh_mat.getAmb()             # 'Amb' scrollbar in blender (MW -> 1.0 1.0 1.0)
-            mesh_mat_diffuse_colour = mesh_mat.getRGBCol()   # 'Col' colour in Blender (MW -> 1.0 1.0 1.0)
-            mesh_mat_specular_colour = mesh_mat.getSpecCol() # 'Spe' colour in Blender (MW -> 0.0 0.0 0.0)
+            mesh_mat_diffuse_color = mesh_mat.getRGBCol()   # 'Col' colour in Blender (MW -> 1.0 1.0 1.0)
+            mesh_mat_specular_color = mesh_mat.getSpecCol() # 'Spe' colour in Blender (MW -> 0.0 0.0 0.0)
             mesh_mat_emissive = mesh_mat.getEmit()           # 'Emit' scrollbar in Blender (MW -> 0.0 0.0 0.0)
             mesh_mat_glossiness = mesh_mat.getSpec() / 2.0    # 'Spec' scrollbar in Blender, takes values between 0.0 and 2.0 (MW -> 0.0)
             mesh_mat_transparency = mesh_mat.getAlpha()      # 'A(lpha)' scrollbar in Blender (MW -> 1.0)
@@ -919,64 +904,51 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
         # no material                    -> typically, collision mesh
 
         # add a trishape block, and refer to this block in the parent's children list
-        trishape_id = nif.header.nblocks
-        assert(trishape_id == len(nif.blocks)) # debug
-        nif.blocks.append(nif4.NiTriShape()) # this should be block[trishape_id]
-        nif.blocks[parent_block_id].children.indices.append(trishape_id)
-        nif.blocks[parent_block_id].children.num_indices += 1
-        nif.header.nblocks += 1
+        trishape = CreateBlock("NiTriShape")
+        parent_block["Children"].AddLink(trishape)
         
         # fill in the NiTriShape's non-trivial values
-        if (nif.blocks[parent_block_id].name.value != ""):
-            nif.blocks[trishape_id].name = nif4.mystring("Tri " + nif.blocks[parent_block_id].name.value + " %i"%(nif.blocks[parent_block_id].children.num_indices-1)) # Morrowind's child naming convention
-        nif.blocks[trishape_id].flags = 0x0004 # ? this seems standard
-        nif.blocks[trishape_id].translation, \
-        nif.blocks[trishape_id].rotation, \
-        scale, \
-        nif.blocks[trishape_id].velocity \
+        if (parent_block.GetName() != ""):
+            trishape.SetName("Tri " + parent_block.GetName() + " %i"%(parent_block["Children"].asInt()-1)) # Morrowind's child naming convention
+        trishape["Flags"] = 0x0004 # ? this seems standard
+        ob_translation, \
+        ob_rotation, \
+        ob_scale, \
+        ob_velocity \
         = export_matrix(ob, space)
         # scale correction
-        nif.blocks[trishape_id].translation.x *= parent_scale
-        nif.blocks[trishape_id].translation.y *= parent_scale
-        nif.blocks[trishape_id].translation.z *= parent_scale
-        # scaling is applied on vertices... here we put it on 1.0
-        nif.blocks[trishape_id].scale = 1.0;
-        final_scale = parent_scale * scale.x;
+        trishape["Translation"] = ob_translation * parent_scale
+        trishape["Rotation"]    = ob_rotation
+        trishape["Scale"]       = 1.0 # scaling is applied on vertices... here we put it on 1.0
+        trishape["Velocity"]    = ob_velocity
+        final_scale = parent_scale * ob_scale[0];
         
         if (mesh_base_tex != None or mesh_glow_tex != None):
             # add NiTriShape's texturing property
-            tritexprop_id = nif.header.nblocks
-            assert(tritexprop_id == len(nif.blocks)) # debug
-            nif.blocks.append(nif4.NiTexturingProperty())
-            nif.blocks[trishape_id].properties.indices.append(tritexprop_id)
-            nif.blocks[trishape_id].properties.num_indices += 1
-            nif.header.nblocks += 1
+            tritexprop = CreateBlock("NiTexturingProperty")
+            trishape["Properties"].AddLink(tritexprop)
             
-            nif.blocks[tritexprop_id].flags = 0x0001 # standard?
-            nif.blocks[tritexprop_id].apply_mode = 2 # modulate?
-            nif.blocks[tritexprop_id].texture_count = 7 # standard?
+            tritexprop["Flags"] = 0x0001 # standard?
+            tritexprop["Apply Mode"] = 2 # modulate?
+            tritexprop["Texture Count?"] = 7 # standard?
 
             if ( mesh_base_tex != None ):
-                nif.blocks[tritexprop_id].has_base_texture = 1
-                nif.blocks[tritexprop_id].base_texture.clamp_mode = 3 # wrap in both directions
-                nif.blocks[tritexprop_id].base_texture.filter_mode = 2 # standard?
-                nif.blocks[tritexprop_id].base_texture.texture_set = 0 # ? standard
-                nif.blocks[tritexprop_id].base_texture.ps2_l = 0 # ? standard 
-                nif.blocks[tritexprop_id].base_texture.ps2_k = 0xFFB5 # ? standard
-                nif.blocks[tritexprop_id].base_texture.unknown = 0x0101 # ? standard
+                basetex = Texture()
+                basetex.isUsed = 1
+                tritexprop["Base Texture"] = basetex
                 
                 # check for texture flip definition
                 txtlist = Blender.Text.Get()
                 for fliptxt in txtlist:
                     if fliptxt.getName() == mesh_base_tex.getName():
-                        nif, flip_id = export_flipcontroller( fliptxt, mesh_base_tex, tritexprop_id, 0, nif )
-                        nif.blocks[tritexprop_id].base_texture.source = nif.blocks[flip_id].sources.indices[0]
+                        flip = export_flipcontroller( fliptxt, mesh_base_tex, tritexprop, 0 )
+                        tritexprop["Base Texture"].AddLink(flip)
                         break
                     else:
                         fliptxt = None
                 else:
-                    nif, basetexsrc_id = export_sourcetexture( mesh_base_tex, nif )
-                    nif.blocks[tritexprop_id].base_texture.source = basetexsrc_id
+                    basetexsrc = export_sourcetexture( mesh_base_tex )
+                    tritexprop["Base Texture"].AddLink(basetexsrc)
 
             if ( mesh_glow_tex != None ):
                 nif.blocks[tritexprop_id].has_glow_texture = 1
@@ -1002,58 +974,36 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
         
         if (mesh_hasalpha):
             # add NiTriShape's alpha propery (this is de facto an automated version of Detritus's method, see http://detritus.silgrad.com/alphahex.html)
-            trialphaprop_id = nif.header.nblocks
-            assert(trialphaprop_id == len(nif.blocks))
-            nif.blocks.append(nif4.NiAlphaProperty())
-            nif.header.nblocks += 1
-            
-            nif.blocks[trialphaprop_id].flags   = 0x00ED
-            nif.blocks[trialphaprop_id].unknown = 0
+            trialphaprop = CreateBlock("NiAlphaProperty")
+            trialphaprop["Flags"] = 0x00ED
             
             # refer to the alpha property in the trishape block
-            nif.blocks[trishape_id].properties.indices.append(trialphaprop_id)
-            nif.blocks[trishape_id].properties.num_indices += 1
+            trishape["Properties"].AddLink(trialphaprop)
 
         if (mesh_mat != None):
             # add NiTriShape's specular property
             if ( mesh_mat_glossiness > epsilon ):
-                trispecprop_id = nif.header.nblocks
-                assert(trispecprop_id == len(nif.blocks))
-                nif.blocks.append(nif4.NiSpecularProperty())
-                nif.header.nblocks += 1
-                
-                nif.blocks[trispecprop_id].flags = 0x0001
+                trispecprop = CreateBlock("NiSpecularProperty")
+                trispecprop["Flags"] = 0x0001
             
                 # refer to the specular property in the trishape block
-                nif.blocks[trishape_id].properties.indices.append(trispecprop_id)
-                nif.blocks[trishape_id].properties.num_indices += 1
+                trishape["Properties"].AddLink(trispecprop)
             
             # add NiTriShape's material property
-            trimatprop_id = nif.header.nblocks
-            assert(trimatprop_id == len(nif.blocks))
-            nif.blocks.append(nif4.NiMaterialProperty())
-            nif.header.nblocks += 1
+            trimatprop = CreateBlock("NiMaterialProperty")
             
-            nif.blocks[trimatprop_id].name = nif4.mystring(mesh_mat.getName())
-            nif.blocks[trimatprop_id].flags = 0x0001 # ? standard
-            nif.blocks[trimatprop_id].ambient_color.r = mesh_mat_ambient * mesh_mat_diffuse_colour[0]
-            nif.blocks[trimatprop_id].ambient_color.g = mesh_mat_ambient * mesh_mat_diffuse_colour[1]
-            nif.blocks[trimatprop_id].ambient_color.b = mesh_mat_ambient * mesh_mat_diffuse_colour[2]
-            nif.blocks[trimatprop_id].diffuse_color.r = mesh_mat_diffuse_colour[0]
-            nif.blocks[trimatprop_id].diffuse_color.g = mesh_mat_diffuse_colour[1]
-            nif.blocks[trimatprop_id].diffuse_color.b = mesh_mat_diffuse_colour[2]
-            nif.blocks[trimatprop_id].specular_color.r = mesh_mat_specular_colour[0]
-            nif.blocks[trimatprop_id].specular_color.g = mesh_mat_specular_colour[1]
-            nif.blocks[trimatprop_id].specular_color.b = mesh_mat_specular_colour[2]
-            nif.blocks[trimatprop_id].emissive_color.r = mesh_mat_emissive * mesh_mat_diffuse_colour[0]
-            nif.blocks[trimatprop_id].emissive_color.g = mesh_mat_emissive * mesh_mat_diffuse_colour[1]
-            nif.blocks[trimatprop_id].emissive_color.b = mesh_mat_emissive * mesh_mat_diffuse_colour[2]
-            nif.blocks[trimatprop_id].glossiness = mesh_mat_glossiness
-            nif.blocks[trimatprop_id].alpha = mesh_mat_transparency
+            trimatprop.SetName(mesh_mat.getName())
+            trimatprop["Flags"] = 0x0001 # ? standard
+            trimatprop["Ambient Color"] = Float3(*mesh_mat_diffuse_color) * mesh_mat_ambient
+            trimatprop["Diffuse Color"] = Float3(*mesh_mat_diffuse_color)
+            trimatprop["Specular Color"] = Float3(*mesh_mat_specular_color)
+            trimatprop["Emissive Color"] = Float3(*mesh_mat_diffuse_color) * mesh_mat_emissive
+            trimatprop["Glossiness"] = mesh_mat_glossiness
+            trimatprop["Alpha"] = mesh_mat_transparency
             
             # refer to the material property in the trishape block
-            nif.blocks[trishape_id].properties.indices.append(trimatprop_id)
-            nif.blocks[trishape_id].properties.num_indices += 1
+            trishape["Properties"].AddLink(trimatprop)
+
         
 
             # material animation
@@ -1196,30 +1146,12 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 nif.blocks[matcoldata_id].dunno = 1
 
         # add NiTriShape's data
-        tridata_id = nif.header.nblocks
-        assert(tridata_id == len(nif.blocks))
-        nif.blocks.append(nif4.NiTriShapeData())
-        nif.blocks[trishape_id].data = tridata_id
-        nif.header.nblocks += 1
+        tridata = CreateBlock("NiTriShapeData")
+        ishapedata = QueryShapeData(tridata)
+        itridata = QueryTriShapeData(tridata)
+        if mesh_hastex:
+            ishapedata.SetUVSetCount(1)
         
-        # set faces, vertices, uv-vertices, and normals
-        nif.blocks[tridata_id].has_vertices = 1
-        if ( mesh_hasvcol ):
-            nif.blocks[tridata_id].has_vertex_colors = 0xffffffff # NifTexture
-        else:
-            nif.blocks[tridata_id].has_vertex_colors = 0
-        if (mesh_hastex):
-            nif.blocks[tridata_id].has_uv = 0xffffffff # ... 0x00000001 crashes NifTexture
-            nif.blocks[tridata_id].num_uv_sets = 1 # for now, we only have one texture for this trishape
-        else:
-            nif.blocks[tridata_id].has_uv = 0
-            nif.blocks[tridata_id].num_uv_sets = 0
-        if (mesh_mat != None):
-            nif.blocks[tridata_id].has_normals = 1 # if we have a material, we should add normals for proper lighting
-        else:
-            nif.blocks[tridata_id].has_normals = 0
-        nif.blocks[tridata_id].uv_sets = [ [] ] * nif.blocks[tridata_id].num_uv_sets # uv_sets now has num_uv_sets elements, namely, an empty list of uv vertices for each set of uv coordinates
-
         # Blender only supports one set of uv coordinates per mesh;
         # therefore, we shall have trouble when importing
         # multi-textured trishapes in blender. For this export script,
@@ -1252,45 +1184,37 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
             f_numverts = len(f.v)
             if (f_numverts < 3): continue # ignore degenerate faces
             assert((f_numverts == 3) or (f_numverts == 4)) # debug
-            if (nif.blocks[tridata_id].has_uv):
+            if (mesh_hastex): # if we have uv coordinates
                 if (len(f.uv) != len(f.v)): # make sure we have UV data
                     raise NIFExportError('ERROR%t|Create a UV map for every texture, and run the script again.')
             # find (vert, uv-vert, normal, vcol) quad, and if not found, create it
             f_index = [ -1 ] * f_numverts
             for i in range(f_numverts):
-                fv = nif4.vec3()
-                fv.x = f.v[i][0] * final_scale
-                fv.y = f.v[i][1] * final_scale
-                fv.z = f.v[i][2] * final_scale
+                fv = Vector3(*(f.v[i].co)) * final_scale
                 # get vertex normal for lighting (smooth = Blender vertex normal, non-smooth = Blender face normal)
-                fn = nif4.vec3()
-                if nif.blocks[tridata_id].has_normals:
+                if mesh_hasnormals:
                     if f.smooth:
-                        fn.x = f.v[i].no[0]
-                        fn.y = f.v[i].no[1]
-                        fn.z = f.v[i].no[2]
+                        fn = Vector3(*(f.v[i].no))
                     else:
-                        fn.x = f.no[0]
-                        fn.y = f.no[1]
-                        fn.z = f.no[2]
+                        fn = Vector3(*(f.no))
                 else:
                     fn = None
-                if (nif.blocks[tridata_id].has_uv):
-                    fuv = nif4.vec2()
-                    fuv.u = f.uv[i][0]
-                    fuv.v = 1.0 - f.uv[i][1] # NIF flips the texture V-coordinate (OpenGL standard)
+                if (mesh_hastex):
+                    fuv = UVCoord(*(f.uv[i]))
+                    fuv[1] = 1.0 - f.uv[1] # NIF flips the texture V-coordinate (OpenGL standard)
                 else:
                     fuv = None
-                if (nif.blocks[tridata_id].has_vertex_colors):
-                    fcol = nif4.rgba()
-                    fcol.r = f.col[i].r / 255.0 # NIF stores the colour values as floats
-                    fcol.g = f.col[i].g / 255.0
-                    fcol.b = f.col[i].b / 255.0
-                    fcol.a = f.col[i].a / 255.0
+                if (mesh_hasvcol):
+                    fcol = Color(*(f.col[i])) / 255.0 # NIF stores the colour values as floats
                 else:
                     fcol = None
                     
                 vertquad = ( fv, fuv, fn, fcol )
+                print "!"
+                print Vector3(*(f.v[i].co))
+                print final_scale
+                print Vector3(*(f.v[i].co)) * final_scale
+                print vertquad
 
                 # do we already have this quad? (optimized by m4444x)
                 f_index[i] = len(vertquad_list)
@@ -1299,14 +1223,14 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                     # iterate only over vertices with the same vertex index
                     # and check if they have the same uvs, normals and colors (wow is that fast!)
                     for j in vertmap[v_index]:
-                        if nif.blocks[tridata_id].has_uv:
+                        if mesh_hastex:
                             if abs(vertquad[1].u - vertquad_list[j][1].u) > epsilon: continue
                             if abs(vertquad[1].v - vertquad_list[j][1].v) > epsilon: continue
-                        if nif.blocks[tridata_id].has_normals:
+                        if mesh_hasnormals:
                             if abs(vertquad[2].x - vertquad_list[j][2].x) > epsilon: continue
                             if abs(vertquad[2].y - vertquad_list[j][2].y) > epsilon: continue
                             if abs(vertquad[2].z - vertquad_list[j][2].z) > epsilon: continue
-                        if nif.blocks[tridata_id].has_vertex_colors:
+                        if mesh_hasvcol:
                             if abs(vertquad[3].r - vertquad_list[j][3].r) > epsilon: continue
                             if abs(vertquad[3].g - vertquad_list[j][3].g) > epsilon: continue
                             if abs(vertquad[3].b - vertquad_list[j][3].b) > epsilon: continue
@@ -1323,20 +1247,17 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                     # new (vert, uv-vert, normal, vcol) quad: add it
                     vertquad_list.append(vertquad)
                     # add the vertex
-                    nif.blocks[tridata_id].vertices.append(fv)
-                    # and add the vertex normal
-                    if (nif.blocks[tridata_id].has_normals):
-                        nif.blocks[tridata_id].normals.append(fn)
-                    # for each texture set, add the uv-vertex
-                    if (nif.blocks[tridata_id].has_uv):
-                        for texset in range(nif.blocks[tridata_id].num_uv_sets):
-                            nif.blocks[tridata_id].uv_sets[texset].append(fuv)
-                    # add the vertex colour
-                    if (nif.blocks[tridata_id].has_vertex_colors):
-                        nif.blocks[tridata_id].vertex_colors.append(fcol)
+                    args = [ vertquad[0] ]
+                    if ( mesh_hasnormals ): args.extend([1, vertquad[2]])
+                    else: args.extend([0, Vector3() ])
+                    if ( mesh_hasvcol ): args.extend([1, vertquad[3]])
+                    else: args.extend([0, Color() ])
+                    if ( mesh_hastex ): args.extend([1, vertquad[1]])
+                    else: args.extend([0, UVCoord() ])
+                    ishapedata.AppendVertex(*args)
             # now add the (hopefully, convex) face, in triangles
             for i in range(f_numverts - 2):
-                f_indexed = nif4.face()
+                f_indexed = Triangle()
                 f_indexed.v1 = f_index[0]
                 if (final_scale > 0):
                     f_indexed.v2 = f_index[1+i]
@@ -1344,58 +1265,54 @@ def export_trishapes(ob, space, parent_block_id, parent_scale, nif):
                 else:
                     f_indexed.v2 = f_index[2+i]
                     f_indexed.v3 = f_index[1+i]
-                nif.blocks[tridata_id].faces.append(f_indexed)
+                itridata.AppendTriangle(f_indexed)
 
         # update the counters
-        if (len(vertquad_list) > 65535):
+        if (ishapedata.GetVertexCount() > 65535):
             raise NIFExportError("The NIF format does not allow that many vertices per mesh! Use the decimator, or cut up your most detailed meshes.")
-        nif.blocks[tridata_id].num_vertices = len(vertquad_list)
 
-        if (len(nif.blocks[tridata_id].faces) > 65535):
+        if (itridata.GetTriangleCount() > 65535):
             raise NIFExportError("The NIF format does not allow that many faces per mesh! Use the decimator, or cut up your most detailed meshes.")
-        nif.blocks[tridata_id].num_faces = len(nif.blocks[tridata_id].faces)
-        
-        nif.blocks[tridata_id].num_faces_x3 = nif.blocks[tridata_id].num_faces * 3 # this is an int, not a short, no range problems here...
 
         # center
         count = 0
+        center = Vector3()
         for v in mesh.verts:
             if show_progress >= 2: Blender.Window.DrawProgressBar(0.33 + 0.33 * float(count)/len(mesh.verts), "Converting to NIF (%s)"%ob.getName())
             count += 1
-            nif.blocks[tridata_id].center.x += v[0]
-            nif.blocks[tridata_id].center.y += v[1]
-            nif.blocks[tridata_id].center.z += v[2]
+            center.x += v[0]
+            center.y += v[1]
+            center.z += v[2]
         assert(len(mesh.verts) > 0) # debug
-        nif.blocks[tridata_id].center.x /= len(mesh.verts)
-        nif.blocks[tridata_id].center.y /= len(mesh.verts)
-        nif.blocks[tridata_id].center.z /= len(mesh.verts)
+        center.x /= len(mesh.verts)
+        center.y /= len(mesh.verts)
+        center.z /= len(mesh.verts)
         
         # radius
         count = 0
+        radius = 0.0
         for v in mesh.verts:
             if show_progress >= 2: Blender.Window.DrawProgressBar(0.66 + 0.33 * float(count)/len(mesh.verts), "Converting to NIF (%s)"%ob.getName())
             count += 1
-            r = get_distance(v, nif.blocks[tridata_id].center)
-            if (r > nif.blocks[tridata_id].radius):
-                nif.blocks[tridata_id].radius = r
+            r = get_distance(v, center)
+            if (r > radius): radius = r
 
         # correct scale
-        nif.blocks[tridata_id].center.x *= final_scale
-        nif.blocks[tridata_id].center.y *= final_scale
-        nif.blocks[tridata_id].center.z *= final_scale
-        nif.blocks[tridata_id].radius *= final_scale
+        center *= final_scale
+        radius *= final_scale
+
+        print dir(tridata)
+        tridata["Center"] = center
+        tridata["Radius"] = radius
 
         materialIndex += 1 # ...and process the next material
-
-    # return updated nif
-    return nif
 
 
 
 #
 # EXPERIMENTAL: Export texture effect.
 # 
-def export_textureeffect(ob, parent_block_id, parent_scale, nif):
+def export_textureeffect(ob, parent_block, parent_scale):
     assert(ob.getType() == 'Empty')
     last_id = nif.header.nblocks - 1
     
@@ -1473,20 +1390,19 @@ def export_textureeffect(ob, parent_block_id, parent_scale, nif):
 # Export all children of blender object ob, already stored in
 # nif.blocks[ob_block_id], and return the updated nif.
 # 
-def export_children(ob, ob_block_id, parent_scale, nif):
+def export_children(ob, parent_block, parent_scale):
     # loop over all ob's children
     for ob_child in Blender.Object.Get():
         if (ob_child.getParent() == ob):
             # we found a child! try to add it to ob's children
             # is it a texture effect node?
             if ((ob_child.getType() == 'Empty') and (ob_child.getName()[:13] == 'TextureEffect')):
-                nif = export_textureeffect(ob_child, ob_block_id, parent_scale, nif)
+                export_textureeffect(ob_child, parent_block, parent_scale)
             # is it a regular node?
             elif (ob_child.getType() == 'Mesh') or (ob_child.getType() == 'Empty'):
-                nif = export_node(ob_child, 'localspace', ob_block_id, parent_scale, ob_child.getName(), nif)
+                export_node(ob_child, 'localspace', parent_block, parent_scale, ob_child.getName())
 
-    # return updated nif
-    return nif
+
 
 #
 # Convert an object's transformation matrix to a niflib quadrupple ( translate, rotate, scale, velocity ).
@@ -1495,36 +1411,36 @@ def export_children(ob, ob_block_id, parent_scale, nif):
 #
 def export_matrix(ob, space):
     global epsilon
-    nt = nif4.vec3()
-    nr = nif4.mat3x3()
-    ns = nif4.vec3()
-    nv = nif4.vec3()
+    nt = Float3()
+    nr = Matrix33()
+    ns = Float3()
+    nv = Float3()
     
     # decompose
     bs, br, bt = getObjectSRT(ob, space)
     
     # and fill in the values
-    nt.x = bt[0]
-    nt.y = bt[1]
-    nt.z = bt[2]
-    nr.x.x = br[0][0]
-    nr.x.y = br[1][0]
-    nr.x.z = br[2][0]
-    nr.y.x = br[0][1]
-    nr.y.y = br[1][1]
-    nr.y.z = br[2][1]
-    nr.z.x = br[0][2]
-    nr.z.y = br[1][2]
-    nr.z.z = br[2][2]
-    ns.x = bs[0]
-    ns.y = bs[1]
-    ns.z = bs[2]
-    nv.x = 0.0
-    nv.y = 0.0
-    nv.z = 0.0
+    nt[0] = bt[0]
+    nt[1] = bt[1]
+    nt[2] = bt[2]
+    nr[0][0] = br[0][0]
+    nr[1][0] = br[1][0]
+    nr[2][0] = br[2][0]
+    nr[0][1] = br[0][1]
+    nr[1][1] = br[1][1]
+    nr[2][1] = br[2][1]
+    nr[0][2] = br[0][2]
+    nr[1][2] = br[1][2]
+    nr[2][2] = br[2][2]
+    ns[0] = bs[0]
+    ns[1] = bs[1]
+    ns[2] = bs[2]
+    nv[0] = 0.0
+    nv[1] = 0.0
+    nv[2] = 0.0
 
     # for now, we don't support non-uniform scaling
-    if abs(ns.x - ns.y) + abs(ns.y - ns.z) > epsilon:
+    if abs(ns[0] - ns[1]) + abs(ns[1] - ns[2]) > epsilon:
         raise NIFExportError('ERROR%t|non-uniformly scaled objects not yet supported; apply size and rotation (CTRL-A in Object Mode) and try again.')
 
     # return result
@@ -1560,7 +1476,7 @@ def getObjectSRT(ob, space):
     bsr = mat.rotationPart()
     
     # get the squared scale matrix
-    bsrT = Blender.Mathutils.CopyMat(bsr)
+    bsrT = Blender.Mathutils.Matrix(bsr)
     bsrT.transpose()
     bs2 = bsr * bsrT # bsr * bsrT = bs * br * brT * bsT = bs^2
     # debug: br2's off-diagonal elements must be zero!
@@ -1570,7 +1486,7 @@ def getObjectSRT(ob, space):
     
     # get scale components
     bs = Blender.Mathutils.Vector(\
-         [ sqrt(bs2[0][0]), sqrt(bs2[1][1]), sqrt(bs2[2][2]) ])
+         [ (bs2[0][0]) ** 0.5, (bs2[1][1]) ** 0.5, (bs2[2][2]) ** 0.5 ])
     # and fix their sign
     if (bsr.determinant() < 0): bs.negate()
     
@@ -1603,7 +1519,7 @@ def getObjectSRT(ob, space):
 
 # calculate distance between two vectors
 def get_distance(v, w):
-    return sqrt((v[0]-w.x)*(v[0]-w.x) + (v[1]-w.y)*(v[1]-w.y) + (v[2]-w.z)*(v[2]-w.z))
+    return ((v[0]-w.x)*(v[0]-w.x) + (v[1]-w.x)*(v[1]-w.x) + (v[2]-w.x)*(v[2]-w.x)) ** 0.5
 
 
 
