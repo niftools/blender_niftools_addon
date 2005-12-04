@@ -99,7 +99,7 @@ Download it from http://niftools.sourceforge.net/
 # 
 # Some constants.
 # 
-USE_GUI = 0           # set to one to use the GUI (warning: crashes Blender for some mysterious reason...)
+USE_GUI = 1           # set to one to use the GUI (warning: crashes Blender for some mysterious reason...)
 epsilon = 0.005       # used for checking equality of floats
 show_progress = 1     # 0 = off, 1 = basic, 2 = advanced (but slows down the exporter)
 
@@ -210,43 +210,44 @@ def export_nif(filename):
             # note that localspace = worldspace, because root objects have no parents
             export_node(root_object, 'localspace', root_block, scale_correction, root_object.getName())
 
-## TODO: port this
-##        # if we exported animations, but no animation groups are defined, define a default animation group
-##        if (animtxt == None):
-##            has_controllers = 0
-##            for block in nif.blocks:
-##                try:
-##                    if (block.controller != -1):
-##                        has_controllers = 1
-##                        break
-##                except:
-##                    pass
-##            if has_controllers:
-##                # get frame start and frame end
-##                scn = Blender.Scene.GetCurrent()
-##                context = scn.getRenderingContext()
-##                fstart = context.startFrame()
-##                fend = context.endFrame()
-##                # write the animation group text buffer
-##                animtxt = Blender.Text.New("Anim")
-##                animtxt.write("%i/Idle: Start/Idle: Start Loop\n%i/Idle: Stop/Idle: Stop Loop"%(fstart,fend))
-##
-##        # animations without keyframe animations crash the TES CS
-##        # if we are in that situation, add a trivial keyframe animation
-##        if (animtxt):
-##            has_keyframecontrollers = 0
-##            for block in nif.blocks:
-##                if block.block_type.value == "NiKeyframeController":
-##                    has_keyframecontrollers = 1
-##                    break
-##            if has_keyframecontrollers == 0:
-##                # add a trivial keyframe controller on the first root_object node
-##                export_keyframe(None, 'localspace', root_block["Children"][0], 1.0, root_block)
-##        
-##        # export animation groups
-##        if (animtxt):
-##            export_animgroups(animtxt, 1, root_block) # we link the animation extra data to the first root_object node
-##            
+        # if we exported animations, but no animation groups are defined, define a default animation group
+        if (animtxt == None):
+            has_controllers = 0
+            for block in GetNifTree(root_block):
+                try:
+                    if ( not block["Controller"].asLink().is_null() ):
+                        has_controllers = 1
+                        break
+                except:
+                    pass
+            if has_controllers:
+                # get frame start and frame end
+                scn = Blender.Scene.GetCurrent()
+                context = scn.getRenderingContext()
+                fstart = context.startFrame()
+                fend = context.endFrame()
+                # write the animation group text buffer
+                animtxt = Blender.Text.New("Anim")
+                animtxt.write("%i/Idle: Start/Idle: Start Loop\n%i/Idle: Stop/Idle: Stop Loop"%(fstart,fend))
+
+        # animations without keyframe animations crash the TES CS
+        # if we are in that situation, add a trivial keyframe animation
+        if (animtxt):
+            has_keyframecontrollers = 0
+            for block in GetNifTree(root_block):
+                if block.GetBlockType() == "NiKeyframeController":
+                    has_keyframecontrollers = 1
+                    break
+            if has_keyframecontrollers == 0:
+                # add a trivial keyframe controller on the first root_object node
+                #export_keyframe(None, 'localspace', root_block["Children"].asLinkList()[0], 1.0)
+                export_keyframe(None, 'localspace', root_block, 1.0)
+        
+        # export animation groups
+        if (animtxt):
+            export_animgroups(animtxt, 1, root_block) # we link the animation extra data to the first root_object node
+
+### TODO
 ##        # export vertex color property
 ##        for block in nif.blocks:
 ##            has_vcolprop = 0
@@ -266,42 +267,7 @@ def export_nif(filename):
         # make sure we have the right file extension
         if ((fileext != '.nif') and (fileext != '.NIF')):
             filename += '.nif'
-        WriteNifTree(filename, root_block)
-
-
-
-        if (animtxt):
-            # for some reason we must also have "x*.kf" and "x*.nif" files
-            # x*.kf  contains a copy of the nif animation groups, the keyframes; it also has references to the animated nodes
-            # x*.nif contains a copy of everything except for the animation groups and the keyframes
-
-            # export xnif:
-            #-------------
-            xnif = export_xnif(nif)
-            
-            # write the file:
-            #----------------
-            xnif_filename = Blender.sys.join( Blender.sys.dirname( filename ), 'x' + root_name + '.nif' )
-            file = open( xnif_filename, "wb" )
-            try:
-                xnif.write(file)
-            finally:
-                # clean up: close file
-                file.close()
-                
-            # export xkf:
-            #------------
-            xkf = export_xkf(nif)
-            
-            # write the file:
-            #----------------
-            xkf_filename = Blender.sys.join( Blender.sys.dirname( filename ), 'x' + root_name + '.kf' )
-            file = open( xkf_filename, "wb" )
-            try:
-                xkf.write(file)
-            finally:
-                # clean up: close file
-                file.close()
+        WriteNifTree(filename, root_block, 0x04000002)
 
         
         
@@ -407,7 +373,7 @@ def export_keyframe(ob, space, parent_block, parent_scale):
     # -> get keyframe information
     
     assert(space == 'localspace') # we don't support anything else (yet)
-    assert(parent_block.GetType() == "NiNode") # make sure the parent is of the right type
+    assert(parent_block.GetBlockType() == "NiNode") # make sure the parent is of the right type
     
     # get frame start and frame end, and the number of frames per second
     scn = Blender.Scene.GetCurrent()
@@ -436,68 +402,58 @@ def export_keyframe(ob, space, parent_block, parent_scale):
                 if (curve.getName() == 'RotX') or (curve.getName() == 'RotY') or (curve.getName() == 'RotZ'):
                     rot_curve[ftime] = Blender.Mathutils.Euler([10*ipo.getCurve('RotX').evaluate(frame), 10*ipo.getCurve('RotY').evaluate(frame), 10*ipo.getCurve('RotZ').evaluate(frame)]).toQuat()
                 if (curve.getName() == 'LocX') or (curve.getName() == 'LocY') or (curve.getName() == 'LocZ'):
-                    trans_curve[ftime] = nif4.vec3()
+                    trans_curve[ftime] = Vector3()
                     trans_curve[ftime].x = ipo.getCurve('LocX').evaluate(frame) * parent_scale
                     trans_curve[ftime].y = ipo.getCurve('LocY').evaluate(frame) * parent_scale
                     trans_curve[ftime].z = ipo.getCurve('LocZ').evaluate(frame) * parent_scale
 
     # -> now comes the real export
 
-    # export keyframe stuff
-    last_id = nif.header.nblocks - 1
-
     # add a keyframecontroller block, and refer to this block in the parent's time controller
-    keyframectrl_id = last_id + 1
-    last_id = keyframectrl_id
-    assert(keyframectrl_id == len(nif.blocks)) # debug
-    nif.blocks.append(nif4.NiKeyframeController()) # this should be block[keyframectrl_id]
-    assert(nif.blocks[parent_block_id].controller == -1) # make sure we don't overwrite anything
-    nif.blocks[parent_block_id].controller = keyframectrl_id
-    nif.header.nblocks += 1
+    kfc = CreateBlock("NiKeyframeController")
+    assert( parent_block["Controller"].asLink().is_null() ) # make sure we don't overwrite
+    parent_block["Controller"] = kfc
 
     # fill in the non-trivial values
-    nif.blocks[keyframectrl_id].flags = 0x0008
-    nif.blocks[keyframectrl_id].frequency = 1.0
-    nif.blocks[keyframectrl_id].phase = 0.0
-    nif.blocks[keyframectrl_id].start_time = (fstart - 1) * fspeed
-    nif.blocks[keyframectrl_id].stop_time = (fend - fstart) * fspeed
-    nif.blocks[keyframectrl_id].target_node = parent_block_id
+    kfc["Flags"] = 0x0008
+    kfc["Frequency"] = 1.0
+    kfc["Phase"] = 0.0
+    kfc["Start Time"] = (fstart - 1) * fspeed
+    kfc["Stop Time"] = (fend - fstart) * fspeed
+    # The target node is automatically calculated :) Thanks Shon!
+    #kfc["Target Node"] = parent_block
 
     # add the keyframe data
-    keyframedata_id = last_id + 1
-    last_id = keyframedata_id
-    assert(keyframedata_id == len(nif.blocks)) # debug
-    nif.blocks.append(nif4.NiKeyframeData()) # this should be block[keyframedata_id]
-    nif.blocks[keyframectrl_id].data = keyframedata_id
-    nif.header.nblocks += 1
+    kfd = CreateBlock("NiKeyframeData")
+    kfc["Data"] = kfd
 
-    nif.blocks[keyframedata_id].rotation_type = 1
+    ikfd = QueryKeyframeData(kfd)
+    ikfd.SetRotateType(LINEAR_KEY)
     ftimes = rot_curve.keys()
     ftimes.sort()
+    rot_keys = []
     for ftime in ftimes:
-        rot_frame = nif4.keyrotation(nif.blocks[keyframedata_id].rotation_type)
+        rot_frame = Key_Quaternion()
         rot_frame.time = ftime
-        rot_frame.quat.w = rot_curve[ftime].w
-        rot_frame.quat.x = rot_curve[ftime].x
-        rot_frame.quat.y = rot_curve[ftime].y
-        rot_frame.quat.z = rot_curve[ftime].z
-        nif.blocks[keyframedata_id].rotations.append(rot_frame)
-    nif.blocks[keyframedata_id].num_rotations = len(nif.blocks[keyframedata_id].rotations)
+        rot_frame.data.w = rot_curve[ftime].w
+        rot_frame.data.x = rot_curve[ftime].x
+        rot_frame.data.y = rot_curve[ftime].y
+        rot_frame.data.z = rot_curve[ftime].z
+        rot_keys.append(rot_frame)
+    ikfd.SetRotateKeys(rot_keys)
 
-    trans_count = 0
-    nif.blocks[keyframedata_id].translation_type = 1
+    ikfd.SetTranslateType(LINEAR_KEY)
     ftimes = trans_curve.keys()
     ftimes.sort()
+    trans_keys = []
     for ftime in ftimes:
-        trans_frame = nif4.keyvec3(nif.blocks[keyframedata_id].translation_type)
+        trans_frame = Key_Vector3()
         trans_frame.time = ftime
-        trans_frame.pos.x = trans_curve[ftime].x
-        trans_frame.pos.y = trans_curve[ftime].y
-        trans_frame.pos.z = trans_curve[ftime].z
-        nif.blocks[keyframedata_id].translations.append(trans_frame)
-    nif.blocks[keyframedata_id].num_translations = len(nif.blocks[keyframedata_id].translations)
-
-    return nif
+        trans_frame.data.x = trans_curve[ftime].x
+        trans_frame.data.y = trans_curve[ftime].y
+        trans_frame.data.z = trans_curve[ftime].z
+        trans_keys.append(trans_frame)
+    ikfd.SetTranslateKeys(trans_keys)
 
 
 
@@ -520,7 +476,7 @@ def export_vcolprop(vertex_mode, lighting_mode, nif):
 # parse the animation groups buffer and write an extra string data block,
 # parented to the root block
 #
-def export_animgroups(animtxt, block_parent_id, nif):
+def export_animgroups(animtxt, block_parent):
     # -> get animation groups information
 
     # get frame start and frame end, and the number of frames per second
@@ -558,26 +514,22 @@ def export_animgroups(animtxt, block_parent_id, nif):
         dlist.append(d)
     
     # -> now comes the real export
-    last_id = nif.header.nblocks - 1
     
     # add a NiTextKeyExtraData block, and refer to this block in the
     # parent node (we choose the root block)
-    textextra_id = last_id + 1
-    last_id = textextra_id
-    assert(textextra_id == len(nif.blocks)) # debug
-    nif.blocks.append(nif4.NiTextKeyExtraData())
-    assert(nif.blocks[block_parent_id].extra_data == -1) # make sure we don't overwrite anything
-    nif.blocks[block_parent_id].extra_data = textextra_id
-    nif.header.nblocks += 1
+    textextra = CreateBlock("NiTextKeyExtraData")
+    assert( block_parent["Extra Data"].is_null() ) # make sure we don't overwrite anything
+    block_parent["Extra Data"] = textextra
     
     # create a NiTextKey for each frame descriptor
-    nif.blocks[textextra_id].num_text_keys = len( flist )
+    keys = []
     for i in range(len(flist)):
-        nif.blocks[textextra_id].text_keys.append( nif4.keystring() )
-        nif.blocks[textextra_id].text_keys[i].time = fspeed * (flist[i]-1);
-        nif.blocks[textextra_id].text_keys[i].name = nif4.mystring(dlist[i]);
-    
-    return nif
+        key = Key_string()
+        key.time = fspeed * (flist[i]-1);
+        key.data = dlist[i];
+        keys.append(key)
+    textextra.SetStringKeys(keys)
+
 
 
 #
@@ -848,14 +800,14 @@ def export_trishapes(ob, space, parent_block, parent_scale):
             mesh_mat_transparency = mesh_mat.getAlpha()     # 'A(lpha)' scrollbar in Blender (MW -> 1.0)
             mesh_hasalpha = (abs(mesh_mat_transparency - 1.0) > epsilon) \
                             or (mesh_mat.getIpo() != None and mesh_mat.getIpo().getCurve('Alpha'))
-            mesh_mat_ambient_color = mesh_mat_diffuse_color
-            mesh_mat_ambient_color[0] *= mesh_mat_ambient
-            mesh_mat_ambient_color[1] *= mesh_mat_ambient
-            mesh_mat_ambient_color[2] *= mesh_mat_ambient
-            mesh_mat_emissive_color = mesh_mat_diffuse_color
-            mesh_mat_emissive_color[0] *= mesh_mat_emissive
-            mesh_mat_emissive_color[1] *= mesh_mat_emissive
-            mesh_mat_emissive_color[2] *= mesh_mat_emissive
+            mesh_mat_ambient_color = [0.0,0.0,0.0]
+            mesh_mat_ambient_color[0] = mesh_mat_diffuse_color[0] * mesh_mat_ambient
+            mesh_mat_ambient_color[1] = mesh_mat_diffuse_color[1] * mesh_mat_ambient
+            mesh_mat_ambient_color[2] = mesh_mat_diffuse_color[2] * mesh_mat_ambient
+            mesh_mat_emissive_color = [0.0,0.0,0.0]
+            mesh_mat_emissive_color[0] = mesh_mat_diffuse_color[0] * mesh_mat_emissive
+            mesh_mat_emissive_color[1] = mesh_mat_diffuse_color[1] * mesh_mat_emissive
+            mesh_mat_emissive_color[2] = mesh_mat_diffuse_color[2] * mesh_mat_emissive
             # the base texture = first material texture
             # note that most morrowind files only have a base texture, so let's for now only support single textured materials
             for mtex in mesh_mat.getTextures():
@@ -1037,52 +989,47 @@ def export_trishapes(ob, space, parent_block, parent_scale):
                 assert( ( ftimes ) > 0 )
 
                 # add a alphacontroller block, and refer to this in the parent material
-                alphactrl_id = nif.header.nblocks
-                assert(alphactrl_id == len(nif.blocks)) # debug
-                nif.blocks.append(nif4.NiAlphaController()) # this should be block[matcolctrl_id]
-                assert(nif.blocks[trimatprop_id].controller == -1) # make sure we don't overwrite anything
-                nif.blocks[trimatprop_id].controller = alphactrl_id
-                nif.blocks[alphactrl_id].target_node = trimatprop_id
-                nif.header.nblocks += 1
+                alphac = CreateBlock("NiAlphaController")
+                assert(trimatprop["Controller"].asLink().is_null()) # make sure we don't overwrite anything
+                trimatprop["Controller"] = alphac
 
                 # select extrapolation mode
                 if ( a_curve.getExtrapolation() == "Cyclic" ):
-                    nif.blocks[alphactrl_id].flags = 0x0008
+                    alphac["Flags"] = 0x0008
                 elif ( a_curve.getExtrapolation() == "Constant" ):
-                    nif.blocks[alphactrl_id].flags = 0x000c
+                    alphac["Flags"] = 0x000c
                 else:
                     print "extrapolation \"%s\" for alpha curve not supported using \"cycle reverse\" instead"%a_curve.getExtrapolation()
-                    nif.blocks[alphactrl_id].flags = 0x000a
+                    alphac["Flags"] = 0x000a
 
                 # fill in timing values
-                nif.blocks[alphactrl_id].frequency = 1.0
-                nif.blocks[alphactrl_id].phase = 0.0
-                nif.blocks[alphactrl_id].start_time =  (fstart - 1) * fspeed
-                nif.blocks[alphactrl_id].stop_time = (fend - fstart) * fspeed
+                alphac["Frequency"] = 1.0
+                alphac["Phase"] = 0.0
+                alphac["Start Time"] = (fstart - 1) * fspeed
+                alphac["Stop Time"]  = (fend - fstart) * fspeed
 
                 # add the alpha data
-                alphadata_id = nif.header.nblocks
-                assert(alphadata_id == len(nif.blocks)) # debug
-                nif.blocks.append(nif4.NiFloatData())
-                nif.blocks[alphactrl_id].data = alphadata_id
-                nif.header.nblocks += 1
+                alphad = CreateBlock("NiFloatData")
+                alphac["Data"] = alphad
 
                 # select interpolation mode and export the alpha curve data
+                ialphad = QueryFloatData(alphad)
                 if ( a_curve.getInterpolation() == "Linear" ):
-                    nif.blocks[alphadata_id].key_type = 1
+                    ialphad.SetKeyType(LINEAR_KEY)
                 elif ( a_curve.getInterpolation() == "Bezier" ):
-                    nif.blocks[alphadata_id].key_type = 2
+                    ialphad.SetKeyType(QUADRATIC_KEY)
                 else:
                     raise NIFExportError( 'interpolation %s for alpha curve not supported use linear or bezier instead'%a_curve.getInterpolation() )
 
+                a_keys = []
                 for ftime in ftimes:
-                    a_frame = nif4.keyfloat( nif.blocks[alphadata_id].key_type )
+                    a_frame = Key_float()
                     a_frame.time = ftime
-                    a_frame.value = alpha[ftime]
-                    a_frame.forward = 0.0 # ?
-                    a_frame.backward = 0.0 # ?
-                    nif.blocks[alphadata_id].keys.append(a_frame)
-                nif.blocks[alphadata_id].num_keys = len(nif.blocks[alphadata_id].keys)
+                    a_frame.data = alpha[ftime]
+                    a_frame.forward_tangent = 0.0 # ?
+                    a_frame.backward_tangent = 0.0 # ?
+                    a_keys.append(a_frame)
+                ialphad.SetKeys(a_keys)
 
             # export animated material colors
             if ( ipo != None and ( ipo.getCurve( 'R' ) != None or ipo.getCurve( 'G' ) != None or ipo.getCurve( 'B' ) != None ) ):
@@ -1529,75 +1476,75 @@ def get_distance(v, w):
 
 
 
-# (WARNING this function changes it's argument, you should only call this after writing <root_name>.nif and x<root_name>.nif)
-def export_xkf(nif):
-    xkf = nif4.NIF()
-    xkf.blocks.append( nif4.NiSequenceStreamHelper() )
-    xkf.header.nblocks += 1
-
-    controller_id = []
-
-    # save extra text data
-    for block in nif.blocks:
-        if (block.block_type.value == 'NiTextKeyExtraData'):
-            xkf.blocks.append(block) # we can do this: it does not contain any references
-            xkf.blocks[0].extra_data = xkf.header.nblocks
-            last_extra_id = xkf.header.nblocks
-            xkf.header.nblocks += 1
-            assert(xkf.header.nblocks == len(xkf.blocks)) # debug
-            break
-    else:
-        assert(0) # debug, we must break from the above loop
-
-    # find nodes with keyframe controller
-    for block in nif.blocks:
-        if (block.block_type.value == "NiNode"):
-            if (block.controller >= 0):
-                controller_id.append( block.controller )
-                # link to the original node with a NiStringExtraData
-                xkf.blocks[last_extra_id].extra_data = xkf.header.nblocks
-                last_extra_id = xkf.header.nblocks
-                stringextra = nif4.NiStringExtraData()
-                stringextra.string_data = block.name
-                stringextra.bytes_remaining = 4 + len(stringextra.string_data.value)
-                xkf.blocks.append(stringextra)
-                xkf.header.nblocks += 1
-                assert(xkf.header.nblocks == len(xkf.blocks)) # debug
-
-    # copy keyframe controllers and keyframe datas
-    if (len(controller_id) == 0):
-        raise NIFExportError("Animation groups defined, but no meshes are animated.") # this crashes the TESCS...
-    last_controller_id = 0
-    for cid in controller_id:
-        # get the keyframe controller block from nif
-        kfcontroller = nif.blocks[ cid ]
-        xkf.blocks.append( nif.blocks[ cid ] ) # copy it
-        if ( last_controller_id == 0 ):
-            xkf.blocks[ last_controller_id ].controller = xkf.header.nblocks
-        else:
-            xkf.blocks[ last_controller_id ].next_controller = xkf.header.nblocks # refer to it
-        last_controller_id = xkf.header.nblocks
-        xkf.header.nblocks += 1
-
-        assert(kfcontroller.data >= 0) # debug
-        xkf.blocks.append( nif.blocks[ kfcontroller.data ] )
-
-        # now "fix" the references
-        xkf.blocks[ last_controller_id ].target_node = -1
-        xkf.blocks[ last_controller_id ].data = xkf.header.nblocks
-        xkf.header.nblocks += 1
-    
-    #print xkf # debug
-
-    return xkf
-
-
-
-def export_xnif(nif):
-    # TODO delete keyframe controllers and keyframe data
-    # but apparently it still works if we leave everything in place
-    # so we make it ourselves very easy
-    return nif
+### (WARNING this function changes it's argument, you should only call this after writing <root_name>.nif and x<root_name>.nif)
+##def export_xkf(nif):
+##    xkf = nif4.NIF()
+##    xkf.blocks.append( nif4.NiSequenceStreamHelper() )
+##    xkf.header.nblocks += 1
+##
+##    controller_id = []
+##
+##    # save extra text data
+##    for block in nif.blocks:
+##        if (block.block_type.value == 'NiTextKeyExtraData'):
+##            xkf.blocks.append(block) # we can do this: it does not contain any references
+##            xkf.blocks[0].extra_data = xkf.header.nblocks
+##            last_extra_id = xkf.header.nblocks
+##            xkf.header.nblocks += 1
+##            assert(xkf.header.nblocks == len(xkf.blocks)) # debug
+##            break
+##    else:
+##        assert(0) # debug, we must break from the above loop
+##
+##    # find nodes with keyframe controller
+##    for block in nif.blocks:
+##        if (block.block_type.value == "NiNode"):
+##            if (block.controller >= 0):
+##                controller_id.append( block.controller )
+##                # link to the original node with a NiStringExtraData
+##                xkf.blocks[last_extra_id].extra_data = xkf.header.nblocks
+##                last_extra_id = xkf.header.nblocks
+##                stringextra = nif4.NiStringExtraData()
+##                stringextra.string_data = block.name
+##                stringextra.bytes_remaining = 4 + len(stringextra.string_data.value)
+##                xkf.blocks.append(stringextra)
+##                xkf.header.nblocks += 1
+##                assert(xkf.header.nblocks == len(xkf.blocks)) # debug
+##
+##    # copy keyframe controllers and keyframe datas
+##    if (len(controller_id) == 0):
+##        raise NIFExportError("Animation groups defined, but no meshes are animated.") # this crashes the TESCS...
+##    last_controller_id = 0
+##    for cid in controller_id:
+##        # get the keyframe controller block from nif
+##        kfcontroller = nif.blocks[ cid ]
+##        xkf.blocks.append( nif.blocks[ cid ] ) # copy it
+##        if ( last_controller_id == 0 ):
+##            xkf.blocks[ last_controller_id ].controller = xkf.header.nblocks
+##        else:
+##            xkf.blocks[ last_controller_id ].next_controller = xkf.header.nblocks # refer to it
+##        last_controller_id = xkf.header.nblocks
+##        xkf.header.nblocks += 1
+##
+##        assert(kfcontroller.data >= 0) # debug
+##        xkf.blocks.append( nif.blocks[ kfcontroller.data ] )
+##
+##        # now "fix" the references
+##        xkf.blocks[ last_controller_id ].target_node = -1
+##        xkf.blocks[ last_controller_id ].data = xkf.header.nblocks
+##        xkf.header.nblocks += 1
+##    
+##    #print xkf # debug
+##
+##    return xkf
+##
+##
+##
+##def export_xnif(nif):
+##    # TODO delete keyframe controllers and keyframe data
+##    # but apparently it still works if we leave everything in place
+##    # so we make it ourselves very easy
+##    return nif
 
 
 
@@ -1613,11 +1560,10 @@ evtScale    = 5
 evtFilename = 6
 evtCancel   = 7
 
-# This crashes Blender...
-#bFilename = Draw.Create(last_exported)
-#bForceDDS = Draw.Create(force_dds)
-#bSTexPath = Draw.Create(strip_texpath)
-#bScale    = Draw.Create(scale_correction)
+bFilename = Draw.Create(last_exported)
+bForceDDS = Draw.Create(force_dds)
+bSTexPath = Draw.Create(strip_texpath)
+bScale    = Draw.Create(scale_correction)
 
 def gui():
     global evtCancel, evtExport, evtBrowse, evtForceDDS, evtSTexPath, evtScale, evtFilename
