@@ -245,7 +245,8 @@ def export_nif(filename):
         
         # export animation groups
         if (animtxt):
-            export_animgroups(animtxt, 1, root_block) # we link the animation extra data to the first root_object node
+            export_animgroups(animtxt, root_block)
+            #export_animgroups(animtxt, root_block["Children"].asLinkList()[0]) # we link the animation extra data to the first root_object node
 
 ### TODO
 ##        # export vertex color property
@@ -509,7 +510,7 @@ def export_animgroups(animtxt, block_parent):
         d = t[1].strip(' ')
         for i in range(2, len(t)):
             d = d + '\r\n' + t[i].strip(' ')
-        print 'frame %d'%f + ' -> \'%s\''%d # debug
+        #print 'frame %d'%f + ' -> \'%s\''%d # debug
         flist.append(f)
         dlist.append(d)
     
@@ -518,8 +519,7 @@ def export_animgroups(animtxt, block_parent):
     # add a NiTextKeyExtraData block, and refer to this block in the
     # parent node (we choose the root block)
     textextra = CreateBlock("NiTextKeyExtraData")
-    assert( block_parent["Extra Data"].is_null() ) # make sure we don't overwrite anything
-    block_parent["Extra Data"] = textextra
+    add_extra_data(block_parent, textextra)
     
     # create a NiTextKey for each frame descriptor
     keys = []
@@ -528,7 +528,8 @@ def export_animgroups(animtxt, block_parent):
         key.time = fspeed * (flist[i]-1);
         key.data = dlist[i];
         keys.append(key)
-    textextra.SetStringKeys(keys)
+    itextextra = QueryTextKeyExtraData(textextra)
+    itextextra.SetKeys(keys)
 
 
 
@@ -965,7 +966,6 @@ def export_trishapes(ob, space, parent_block, parent_scale):
             # material animation
             ipo = mesh_mat.getIpo()
             a_curve = None
-            alphactrl_id = -1
             if ( ipo != None ):
                 a_curve = ipo.getCurve( 'Alpha' )
                 # get frame start and the number of frames per second
@@ -1061,40 +1061,32 @@ def export_trishapes(ob, space, parent_block, parent_scale):
                 assert( len( ftimes ) > 0 )
 
                 # add a materialcolorcontroller block
-                matcolctrl_id = nif.header.nblocks
-                assert(matcolctrl_id == len(nif.blocks)) # debug
-                nif.blocks.append(nif4.NiMaterialColorController()) # this should be block[matcolctrl_id]
-                if ( alphactrl_id == -1 ):
-                    assert(nif.blocks[trimatprop_id].controller == -1) # make sure we don't overwrite anything
-                    nif.blocks[trimatprop_id].controller = matcolctrl_id
-                else:
-                    assert(nif.blocks[alphactrl_id].next_controller == -1)
-                    nif.blocks[alphactrl_id].next_controller = matcolctrl_id
-                nif.header.nblocks += 1
+                matcolc = CreateBlock("NiMaterialColorController")
+                set_controller(trimatprop, matcolc)
 
                 # fill in the non-trivial values
-                nif.blocks[matcolctrl_id].flags = 0x0008 # using cycle loop for now
-                nif.blocks[matcolctrl_id].frequency = 1.0
-                nif.blocks[matcolctrl_id].phase = 0.0
-                nif.blocks[matcolctrl_id].start_time =  (fstart - 1) * fspeed
-                nif.blocks[matcolctrl_id].stop_time = (fend - fstart) * fspeed
-                nif.blocks[matcolctrl_id].target_node = trimatprop_id
+                matcolc["Flags"] = 0x0008 # using cycle loop for now
+                matcolc["Frequency"] = 1.0
+                matcolc["Phase"] = 0.0
+                matcolc["Start Time"] =  (fstart - 1) * fspeed
+                matcolc["Stop Time"] = (fend - fstart) * fspeed
 
                 # add the material color data
-                matcoldata_id = nif.header.nblocks
-                assert(matcoldata_id == len(nif.blocks)) # debug
-                nif.blocks.append(nif4.NiColorData())
-                nif.blocks[matcolctrl_id].data = matcoldata_id
-                nif.header.nblocks += 1
+                matcold = CreateBlock("NiColorData")
+                matcolc["Data"] = matcold
 
                 # export the resulting rgba curve
+                imatcold = QueryColorData(matcold)
+                rgba_keys = []
                 for ftime in ftimes:
-                    rgba_frame = nif4.keyrgba()
+                    rgba_frame = Key_Color()
                     rgba_frame.time = ftime
-                    rgba_frame.rgba = rgba_curve[ftime]
-                    nif.blocks[matcoldata_id].keys.indices.append(rgba_frame)
-                nif.blocks[matcoldata_id].keys.num_indices = len(nif.blocks[matcoldata_id].keys)
-                nif.blocks[matcoldata_id].dunno = 1
+                    rgba_frame.data.r = rgba_curve[ftime][0]
+                    rgba_frame.data.g = rgba_curve[ftime][1]
+                    rgba_frame.data.b = rgba_curve[ftime][2]
+                    rgba_frame.data.a = rgba_curve[ftime][3]
+                    rgba_keys.append(rgba_frame)
+                imatcold.SetKeys(rgba_keys)
 
         # add NiTriShape's data
         tridata = CreateBlock("NiTriShapeData")
@@ -1545,6 +1537,34 @@ def get_distance(v, w):
 ##    # but apparently it still works if we leave everything in place
 ##    # so we make it ourselves very easy
 ##    return nif
+
+
+
+#
+# Helper function to add a controller to a controllable block.
+#
+def add_controller(block, ctrl):
+    if block["Controller"].asLink().is_null():
+        block["Controller"] = ctrl
+    else:
+        lastctrl = block["Controller"].asLink()
+        while not lastctrl["Next Controller"].asLink().is_null():
+            lastctrl = lastctrl["Next Controller"].asLink()
+        lastctrl["Next Controller"] = ctrl
+
+
+
+#
+# Helper function to add extra data
+#
+def add_extra_data(block, xtra):
+    if block["Extra Data"].asLink().is_null():
+        block["Extra Data"] = xtra
+    else:
+        lastxtra = block["Extra Data"].asLink()
+        while not lastxtra["Extra Data"].asLink().is_null():
+            lastxtra = lastxtra["Extra Data"].asLink()
+        lastxtra["Extra Data"] = xtra
 
 
 
