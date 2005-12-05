@@ -1,23 +1,29 @@
 #!BPY
 
-"""
-Name: 'NetImmerse/Gamebryo (.nif & .kf)'
+""" Registration info for Blender menus:
+Name: 'NetImmerse/Gamebryo (.nif & .kf)...'
 Blender: 239
 Group: 'Export'
-Tip: 'Export the selected objects, along with their parents and children, to a NIF file. Animation, if present, is exported as a X***.NIF and a X***.KF file.'
+Tip: 'Export selected meshes to NIF (.nif) format.'
 """
 
-__author__ = ["amorilia@gamebox.net"]
+__author__ = "amorilia@gamebox.net"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
 __version__ = "1.2"
 __bpydoc__ = """\
-This script exports Netimmerse (the version used by Morrowind) .NIF files (version 4.0.0.2).
+This script exports selected meshes, along with parents and children, to the NetImmerse version 4.0.0.2 (used by Morrowind) .NIF files, along with their parents and children. If animation is present, also X***.NIF and a X***.KF files are written.
 
-Usage:
+Usage:<br>
+    Select the meshes you wish to export and run this script from "File->Export" menu. All parents and children of the selected meshes will be exported as well. Supports animation of mesh location and rotation, and material color and alpha. To define animation groups, check the script source code.
 
-Select the meshes you wish to export and run this script from "File->Export" menu. All parents and children of the selected meshes will be exported as well. Supports animation of mesh location and rotation, and material color and alpha. To define animation groups, check the script source code. The script does not (yet) support the export of armature.
+Missing:<br>
+    The script does not (yet) support the export of armature.
 
-Options:
+Known issues:<br>
+    Ambient and emit colors are obtained by multiplication with the diffuse color.<br>
+    Blender double sided faces will be one sided in the NIF file (workaround: duplicate faces).
+
+Options (Scripts->System->Scripts Config Editor->Other->nif_import_export):
 
 Scale Correction: How many NIF units is one Blender unit?
 
@@ -72,18 +78,6 @@ from Blender import BGL
 from Blender import Draw
 
 try:
-    import struct, re
-except:
-    err = """--------------------------
-ERROR\nThis script requires a full Python installation to run.
-Python minimum required version:
-%s
---------------------------""" % sys.version
-    print err
-    Blender.Draw.PupMenu("ERROR%t|Python installation not found, check console for details")
-    raise
-
-try:
     from niflib import *
 except:
     err = """--------------------------
@@ -99,54 +93,86 @@ Download it from http://niftools.sourceforge.net/
 # 
 # Some constants.
 # 
-USE_GUI = 1           # set to one to use the GUI (warning: crashes Blender for some mysterious reason...)
 epsilon = 0.005       # used for checking equality of floats
 show_progress = 1     # 0 = off, 1 = basic, 2 = advanced (but slows down the exporter)
 
 
 
 # 
-# Process the config file.
+# Process config files.
 # 
 
-def config_read(configfile, var, val):
-    if configfile:
-        configfile.seek(0)
-        for line in configfile.readlines():
-            try:
-                x, y = line.split('=', 2)
-            except ValueError: # if we cannot unpack the list into two elements
-                continue
-            x = x.strip() # strip surrounding spaces and trailing newline
-            y = y.strip() # dito
-            if x == 'scale_correction' and var == 'scale_correction': return float(y)
-            if x == 'force_dds'        and var == 'force_dds':        return int(y)
-            if x == 'strip_texpath'    and var == 'strip_texpath':    return int(y)
-            if x == 'seams_import'     and var == 'seams_import':     return int(y)
-            if x == 'last_imported'    and var == 'last_imported':    return y
-            if x == 'last_exported'    and var == 'last_exported':    return y
-            if x == 'user_texpath'     and var == 'user_texpath':     return y
-    return val
+# configuration default values
+scale_correction = 10.0
+force_dds = False
+strip_texpath = False
+seams_import = 1
+import_dir = ''
+export_dir = ''
+user_texpath = 'C:\\Program Files\\Bethesda\\Morrowind\\Data Files\\Textures'
 
-datadir = Blender.Get('datadir')
-if datadir == None:
-    raise NIFExportError("Script data dir not found; creating a directory called 'bpydata' in your scripts folder should solve this problem.")
-configname = Blender.sys.join(datadir, 'nif4.ini')
-try:
-    configfile = open(configname, "r")
-except:
-    configfile = None
-scale_correction = config_read(configfile, 'scale_correction', 10.0) # 1 blender unit = 10 nif units
-force_dds        = config_read(configfile, 'force_dds', 0)           # 0 = export original texture file extension, 1 = force dds extension
-strip_texpath    = config_read(configfile, 'strip_texpath', 0)       # 0 = basedir/filename.ext (strip 'data files' prefix for morrowind)
-                                                                     # 1 = filename.ext (original morrowind style)
-seams_import     = config_read(configfile, 'seams_import', 1)        # 0 = vertex duplication, fast method (may introduce unwanted seams in UV seams)
-                                                                     # 1 = vertex duplication, slow method (works perfectly, this is the preferred method if the model you are importing is not too large)
-                                                                     # 2 = use Blender smoothing flag (slow and imperfect, unless model was created with blender and had no duplicate vertices)
-last_imported    = config_read(configfile, 'last_imported', 'noname.nif')
-last_exported    = config_read(configfile, 'last_exported', 'noname.nif')
-user_texpath     = config_read(configfile, 'user_texpath',  'C:\\Program Files\\Bethesda\\Morrowind\\Data Files\\Textures') # colon-separated list of texture paths, used when importing
-if configfile: configfile.close()
+tooltips = {
+    'SCALE_CORRECTION': "How many NIF units is one Blender unit?",
+    'FORCE_DDS': "Force textures to be exported with a .DDS extension? Usually, you can leave this disabled.",
+    'STRIP_TEXPATH': "Strip texture path in NIF file. You should leave this disabled, especially when this model's textures are stored in a subdirectory of the Data Files\Textures folder.",
+    'SEAMS_IMPORT': "How to import seams: 0=don't care (fast), 1=use vertex duplication (slow), 2=use face smooth flag (slow).",
+    'IMPORT_DIR': "Default import directory.",
+    'EXPORT_DIR': "Default export directory.",
+    'TEX_DIR': "Texture directory."
+}
+
+limits = {
+    'SCALE_CORRECTION': [0.01, 100.0],
+    'SEAMS_IMPORT': [0, 2]
+}
+
+# update registry
+def update_registry():
+    # populate a dict with current config values:
+    d = {}
+    d['SCALE_CORRECTION'] = scale_correction
+    d['FORCE_DDS'] = force_dds
+    d['STRIP_TEXPATH'] = strip_texpath
+    d['SEAMS_IMPORT'] = seams_import
+    d['IMPORT_DIR'] = import_dir
+    d['EXPORT_DIR'] = export_dir
+    d['TEX_DIR'] = user_texpath
+    d['tooltips'] = tooltips
+    d['limits'] = limits
+    # store the key
+    Blender.Registry.SetKey('nif_export', d, True)
+
+# Now we check if our key is available in the Registry or file system:
+regdict = Blender.Registry.GetKey('nif_export', True)
+
+# If this key already exists, update config variables with its values:
+if regdict:
+    try:
+        scale_correction = regdict['SCALE_CORRECTION']
+        force_dds = regdict['FORCE_DDS']
+        strip_texpath = regdict['STRIP_TEXPATH']
+        seams_import = regdict['SEAMS_IMPORT']
+        import_dir = regdict['IMPORT_DIR']
+        export_dir = regdict['EXPORT_DIR']
+        user_texpath = regdict['TEX_DIR'] 
+
+    # if data was corrupted (or a new version of the script changed
+    # (expanded, removed, renamed) the config vars and users may have
+    # the old config file around):
+    except: update_registry() # rewrite it
+else: # if the key doesn't exist yet, use our function to create it:
+    update_registry()
+
+VERBOSE = True
+CONFIRM_OVERWRITE = True
+
+# check General scripts config key for default behaviors
+rd = Blender.Registry.GetKey('General', True)
+if rd:
+    try:
+        VERBOSE = rd['verbose']
+        CONFIRM_OVERWRITE = rd['confirm_overwrite']
+    except: pass
 
 
 
@@ -165,8 +191,8 @@ class NIFExportError(Exception):
 # Main export function.
 #
 def export_nif(filename):
-    global scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath
-    print 'config:',scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath
+    global scale_correction,force_dds,strip_texpath,seams_import,import_dir,export_dir,user_texpath
+    #print 'config:',scale_correction,force_dds,strip_texpath,seams_import,import_dir,export_dir,user_texpath
 
     try: # catch NIFExportErrors
         
@@ -185,7 +211,7 @@ def export_nif(filename):
             while (root_object.getParent() != None):
                 root_object = root_object.getParent()
             if ((root_object.getType() != 'Empty') and (root_object.getType() != 'Mesh')):
-                raise NIFExportError("Root object (%s) must be an 'Empty' or a 'Mesh' object."%root_object.getName())
+                raise NIFExportError("Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."%root_object.getName())
             if (root_objects.count(root_object) == 0): root_objects.append(root_object)
 
         # check for animation groups definition in a text buffer called 'Anim'
@@ -214,12 +240,10 @@ def export_nif(filename):
         if (animtxt == None):
             has_controllers = 0
             for block in GetNifTree(root_block):
-                try:
+                if block.isControllable():
                     if ( not block["Controller"].asLink().is_null() ):
                         has_controllers = 1
                         break
-                except:
-                    pass
             if has_controllers:
                 # get frame start and frame end
                 scn = Blender.Scene.GetCurrent()
@@ -312,7 +336,7 @@ def export_node(ob, space, parent_block, parent_scale, node_name):
         assert(parent_block == None) # debug
         node = CreateBlock("NiNode")
     else:
-        assert((ob.getType() == 'Empty') or (ob.getType() == 'Mesh')) # debug
+        assert((ob.getType() == 'Empty') or (ob.getType() == 'Mesh') or (ob.getType() == 'Armature')) # debug
         assert(parent_block) # debug
         ipo = ob.getIpo() # get animation data
         if (ob.getName() == 'RootCollisionNode'):
@@ -359,6 +383,10 @@ def export_node(ob, space, parent_block, parent_scale, node_name):
         # (we assume ob_scale[0] == ob_scale[1] == ob_scale[2])
         if (ob.getType() == 'Mesh'):
             export_trishapes(ob, 'none', node, parent_scale * ob_scale[0]) # the transformation of the mesh is already in the ninode block (except for scaling)
+
+        # if it is an armature, export the bones as ninode children of this ninode
+        if (ob.getType() == 'Armature'):
+            export_bones(ob, 'none', node, parent_scale * ob_scale[0]) # the transformation of the mesh is already in the ninode block (except for scaling)
 
         # export all children of this empty/mesh object as children of this NiNode
         export_children(ob, node, parent_scale * ob_scale[0])
@@ -1254,6 +1282,11 @@ def export_trishapes(ob, space, parent_block, parent_scale):
 
 
 
+def export_bones(ob, space, parent_block, parent_scale):
+    assert( ob.getType() == 'Armature' )
+
+
+
 #
 # EXPERIMENTAL: Export texture effect.
 # 
@@ -1344,7 +1377,7 @@ def export_children(ob, parent_block, parent_scale):
             if ((ob_child.getType() == 'Empty') and (ob_child.getName()[:13] == 'TextureEffect')):
                 export_textureeffect(ob_child, parent_block, parent_scale)
             # is it a regular node?
-            elif (ob_child.getType() == 'Mesh') or (ob_child.getType() == 'Empty'):
+            elif (ob_child.getType() == 'Mesh') or (ob_child.getType() == 'Empty') or (ob_child.getType() == 'Armature'):
                 export_node(ob_child, 'localspace', parent_block, parent_scale, ob_child.getName())
 
 
@@ -1468,78 +1501,6 @@ def get_distance(v, w):
 
 
 
-### (WARNING this function changes it's argument, you should only call this after writing <root_name>.nif and x<root_name>.nif)
-##def export_xkf(nif):
-##    xkf = nif4.NIF()
-##    xkf.blocks.append( nif4.NiSequenceStreamHelper() )
-##    xkf.header.nblocks += 1
-##
-##    controller_id = []
-##
-##    # save extra text data
-##    for block in nif.blocks:
-##        if (block.block_type.value == 'NiTextKeyExtraData'):
-##            xkf.blocks.append(block) # we can do this: it does not contain any references
-##            xkf.blocks[0].extra_data = xkf.header.nblocks
-##            last_extra_id = xkf.header.nblocks
-##            xkf.header.nblocks += 1
-##            assert(xkf.header.nblocks == len(xkf.blocks)) # debug
-##            break
-##    else:
-##        assert(0) # debug, we must break from the above loop
-##
-##    # find nodes with keyframe controller
-##    for block in nif.blocks:
-##        if (block.block_type.value == "NiNode"):
-##            if (block.controller >= 0):
-##                controller_id.append( block.controller )
-##                # link to the original node with a NiStringExtraData
-##                xkf.blocks[last_extra_id].extra_data = xkf.header.nblocks
-##                last_extra_id = xkf.header.nblocks
-##                stringextra = nif4.NiStringExtraData()
-##                stringextra.string_data = block.name
-##                stringextra.bytes_remaining = 4 + len(stringextra.string_data.value)
-##                xkf.blocks.append(stringextra)
-##                xkf.header.nblocks += 1
-##                assert(xkf.header.nblocks == len(xkf.blocks)) # debug
-##
-##    # copy keyframe controllers and keyframe datas
-##    if (len(controller_id) == 0):
-##        raise NIFExportError("Animation groups defined, but no meshes are animated.") # this crashes the TESCS...
-##    last_controller_id = 0
-##    for cid in controller_id:
-##        # get the keyframe controller block from nif
-##        kfcontroller = nif.blocks[ cid ]
-##        xkf.blocks.append( nif.blocks[ cid ] ) # copy it
-##        if ( last_controller_id == 0 ):
-##            xkf.blocks[ last_controller_id ].controller = xkf.header.nblocks
-##        else:
-##            xkf.blocks[ last_controller_id ].next_controller = xkf.header.nblocks # refer to it
-##        last_controller_id = xkf.header.nblocks
-##        xkf.header.nblocks += 1
-##
-##        assert(kfcontroller.data >= 0) # debug
-##        xkf.blocks.append( nif.blocks[ kfcontroller.data ] )
-##
-##        # now "fix" the references
-##        xkf.blocks[ last_controller_id ].target_node = -1
-##        xkf.blocks[ last_controller_id ].data = xkf.header.nblocks
-##        xkf.header.nblocks += 1
-##    
-##    #print xkf # debug
-##
-##    return xkf
-##
-##
-##
-##def export_xnif(nif):
-##    # TODO delete keyframe controllers and keyframe data
-##    # but apparently it still works if we leave everything in place
-##    # so we make it ourselves very easy
-##    return nif
-
-
-
 #
 # Helper function to add a controller to a controllable block.
 #
@@ -1568,83 +1529,4 @@ def add_extra_data(block, xtra):
 
 
 
-#
-# Run exporter GUI.
-# 
-
-evtExport   = 1
-evtBrowse   = 2
-evtForceDDS = 3
-evtSTexPath = 4
-evtScale    = 5
-evtFilename = 6
-evtCancel   = 7
-
-bFilename = Draw.Create(last_exported)
-bForceDDS = Draw.Create(force_dds)
-bSTexPath = Draw.Create(strip_texpath)
-bScale    = Draw.Create(scale_correction)
-
-def gui():
-    global evtCancel, evtExport, evtBrowse, evtForceDDS, evtSTexPath, evtScale, evtFilename
-    global bFilename, bForceDDS, bSTexPath, bScale
-    global scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath
-
-    BGL.glClearColor(0.753, 0.753, 0.753, 0.0)
-    BGL.glClear(BGL.GL_COLOR_BUFFER_BIT)
-
-    Draw.Button('Cancel', evtCancel, 208, 8, 71, 23, 'Cancel the export script.')
-    Draw.Button('Export NIF', evtExport, 8, 8, 87, 23, 'Export the NIF file with these settings.')
-    Draw.Button('Browse', evtBrowse, 8, 48, 55, 23, 'Browse folders and select an other filename.')
-    bFilename = Draw.String('', evtFilename, 72, 48, 207, 23, last_exported, 512, 'Filename of the NIF file to be written. If there is animation, also x***.nif and x***.kf files will be written.')
-    bForceDDS = Draw.Toggle('Force DDS', evtForceDDS, 8, 80, 127, 23, force_dds, 'Force textures to be exported with a .DDS extension? Usually, you can leave this disabled.')
-    bSTexPath = Draw.Toggle('Strip Texture Path', evtSTexPath, 152, 80, 127, 23, strip_texpath, "Strip texture path in NIF file. You should leave this disabled, especially when this model's textures are stored in a subdirectory of the Data Files\Textures folder.")
-    bScale = Draw.Slider('Scale Correction: ', evtScale, 8, 112, 271, 23, scale_correction, 0.01, 100, 0, 'How many NIF units is one Blender unit?')
-
-def event(evt, val):
-    if (evt == Draw.QKEY and not val):
-        Draw.Exit()
-    
-def select(filename):
-    global last_exported
-    last_exported = filename
-
-def bevent(evt):
-    global evtCancel, evtExport, evtBrowse, evtForceDDS, evtSTexPath, evtScale, evtFilename
-    global bFilename, bForceDDS, bSTexPath, bScale
-    global scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath
-
-    if evt == evtBrowse:
-        Blender.Window.FileSelector(select, 'Select')
-    elif evt == evtForceDDS:
-        force_dds = bForceDDS.val
-    elif evt == evtSTexPath:
-        strip_texpath = bSTexPath.val
-    elif evt == evtScale:
-        scale_correction = bScale.val
-    elif evt == evtFilename:
-        last_exported = bFilename.val
-    elif evt == evtExport:
-        # Stop GUI.
-        bFilename = None
-        bForceDDS = None
-        bSTexPath = None
-        bScale = None
-        Draw.Exit()
-        # Save options for next time.
-        configfile = open(configname, "w")
-        configfile.write('scale_correction=%f\nforce_dds=%i\nstrip_texpath=%i\nseams_import=%i\nlast_imported=%s\nlast_exported=%s\nuser_texpath=%s\n'%(scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath))
-        configfile.close()
-        # Export NIF file.
-        export_nif(last_exported)
-    elif evt == evtCancel:
-        bFilename = None
-        bForceDDS = None
-        bSTexPath = None
-        bScale = None
-        Draw.Exit()
-
-if USE_GUI:
-    Draw.Register(gui, event, bevent)
-else:
-    Blender.Window.FileSelector(export_nif, 'Export NIF')
+Blender.Window.FileSelector(export_nif, 'Export NIF', export_dir)
