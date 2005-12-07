@@ -150,7 +150,8 @@ def config_read(configfile, var, val):
 
 datadir = Blender.Get('datadir')
 if datadir == None:
-    raise NIFExportError("Script data dir not found; creating a directory called 'bpydata' in your scripts folder should solve this problem.")
+    Draw.PupMenu("ERROR%t|Script data dir not found; creating a directory called 'bpydata' in your scripts folder should solve this problem (linux: ~/.blender/scripts/bpydata).")
+    raise
 configname = Blender.sys.join(datadir, 'nif4.ini')
 try:
     configfile = open(configname, "r")
