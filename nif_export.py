@@ -91,52 +91,51 @@ Download it from http://niftools.sourceforge.net/
 
 
 # 
-# Some constants.
-# 
-epsilon = 0.005       # used for checking equality of floats
-show_progress = 1     # 0 = off, 1 = basic, 2 = advanced (but slows down the exporter)
-
-
-
-# 
 # Process config files.
 # 
 
-# configuration default values
-scale_correction = 10.0
-force_dds = False
-strip_texpath = False
-seams_import = 1
-import_dir = ''
-export_dir = ''
-user_texpath = 'C:\\Program Files\\Bethesda\\Morrowind\\Data Files\\Textures'
+NIF_VERSION_DICT = {}
+NIF_VERSION_DICT['4.0.0.2']  = 0x04000002
+NIF_VERSION_DICT['4.1.0.12'] = 0x0401000C
+NIF_VERSION_DICT['4.2.0.2']  = 0x04020002
+NIF_VERSION_DICT['4.2.1.0']  = 0x04020100
+NIF_VERSION_DICT['4.2.2.0']  = 0x04020200
+NIF_VERSION_DICT['10.0.1.0'] = 0x0A000100
+NIF_VERSION_DICT['10.1.0.0'] = 0x0A010000
+NIF_VERSION_DICT['10.2.0.0'] = 0x0A020000
+NIF_VERSION_DICT['20.0.0.4'] = 0x14000004
 
+# configuration default values
+EPSILON = 0.005 # used for checking equality with floats, NOT STORED IN CONFIG
+SCALE_CORRECTION = 10.0
+FORCE_DDS = False
+STRIP_TEXPATH = False
+EXPORT_DIR = ''
+NIF_VERSION_STR = '4.0.0.2'
+
+# tooltips
 tooltips = {
     'SCALE_CORRECTION': "How many NIF units is one Blender unit?",
     'FORCE_DDS': "Force textures to be exported with a .DDS extension? Usually, you can leave this disabled.",
     'STRIP_TEXPATH': "Strip texture path in NIF file. You should leave this disabled, especially when this model's textures are stored in a subdirectory of the Data Files\Textures folder.",
-    'SEAMS_IMPORT': "How to import seams: 0=don't care (fast), 1=use vertex duplication (slow), 2=use face smooth flag (slow).",
-    'IMPORT_DIR': "Default import directory.",
     'EXPORT_DIR': "Default export directory.",
-    'TEX_DIR': "Texture directory."
+    'NIF_VERSION': "The NIF version to write."
 }
 
+# bounds
 limits = {
-    'SCALE_CORRECTION': [0.01, 100.0],
-    'SEAMS_IMPORT': [0, 2]
+    'SCALE_CORRECTION': [0.01, 100.0]
 }
 
 # update registry
 def update_registry():
     # populate a dict with current config values:
     d = {}
-    d['SCALE_CORRECTION'] = scale_correction
-    d['FORCE_DDS'] = force_dds
-    d['STRIP_TEXPATH'] = strip_texpath
-    d['SEAMS_IMPORT'] = seams_import
-    d['IMPORT_DIR'] = import_dir
-    d['EXPORT_DIR'] = export_dir
-    d['TEX_DIR'] = user_texpath
+    d['SCALE_CORRECTION'] = SCALE_CORRECTION
+    d['FORCE_DDS'] = FORCE_DDS
+    d['STRIP_TEXPATH'] = STRIP_TEXPATH
+    d['EXPORT_DIR'] = EXPORT_DIR
+    d['NIF_VERSION'] = NIF_VERSION_STR
     d['tooltips'] = tooltips
     d['limits'] = limits
     # store the key
@@ -144,18 +143,21 @@ def update_registry():
 
 # Now we check if our key is available in the Registry or file system:
 regdict = Blender.Registry.GetKey('nif_export', True)
-
 # If this key already exists, update config variables with its values:
 if regdict:
     try:
-        scale_correction = regdict['SCALE_CORRECTION']
-        force_dds = regdict['FORCE_DDS']
-        strip_texpath = regdict['STRIP_TEXPATH']
-        seams_import = regdict['SEAMS_IMPORT']
-        import_dir = regdict['IMPORT_DIR']
-        export_dir = regdict['EXPORT_DIR']
-        user_texpath = regdict['TEX_DIR'] 
-
+        SCALE_CORRECTION = regdict['SCALE_CORRECTION']
+        FORCE_DDS = regdict['FORCE_DDS']
+        STRIP_TEXPATH = regdict['STRIP_TEXPATH']
+        EXPORT_DIR = regdict['EXPORT_DIR']
+        NIF_VERSION_STR = regdict['NIF_VERSION']
+        try:
+            NIF_VERSION = NIF_VERSION_DICT[NIF_VERSION_STR]
+        except:
+            print "Warning: NIF version %s not supported; exporting version 4.0.0.2 instead."%NIF_VERSION_STR
+            NIF_VERSION_STR = '4.0.0.2'
+            NIF_VERSION = NIF_VERSION_DICT[NIF_VERSION_STR]
+            raise # data was corrupted, reraise exception
     # if data was corrupted (or a new version of the script changed
     # (expanded, removed, renamed) the config vars and users may have
     # the old config file around):
@@ -191,14 +193,11 @@ class NIFExportError(Exception):
 # Main export function.
 #
 def export_nif(filename):
-    global scale_correction,force_dds,strip_texpath,seams_import,import_dir,export_dir,user_texpath
-    #print 'config:',scale_correction,force_dds,strip_texpath,seams_import,import_dir,export_dir,user_texpath
-
     try: # catch NIFExportErrors
         
         # preparation:
         #--------------
-        if show_progress >= 1: Blender.Window.DrawProgressBar(0.0, "Preparing Export")
+        Blender.Window.DrawProgressBar(0.0, "Preparing Export")
 
         # strip extension from filename
         root_name, fileext = Blender.sys.splitext(Blender.sys.basename(filename))
@@ -210,7 +209,7 @@ def export_nif(filename):
         for root_object in Blender.Object.GetSelected():
             while (root_object.getParent() != None):
                 root_object = root_object.getParent()
-            if ((root_object.getType() != 'Empty') and (root_object.getType() != 'Mesh')):
+            if ((root_object.getType() != 'Empty') and (root_object.getType() != 'Mesh') and (root_object.getType() != 'Armature')):
                 raise NIFExportError("Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."%root_object.getName())
             if (root_objects.count(root_object) == 0): root_objects.append(root_object)
 
@@ -223,7 +222,7 @@ def export_nif(filename):
         
         # export nif:
         #------------
-        if show_progress >= 1: Blender.Window.DrawProgressBar(0.33, "Converting to NIF")
+        Blender.Window.DrawProgressBar(0.33, "Converting to NIF")
         
         # create a nif object
         
@@ -234,13 +233,14 @@ def export_nif(filename):
         for root_object in root_objects:
             # export the root objects as a NiNodes; their children are exported as well
             # note that localspace = worldspace, because root objects have no parents
-            export_node(root_object, 'localspace', root_block, scale_correction, root_object.getName())
+            export_node(root_object, 'localspace', root_block, SCALE_CORRECTION, root_object.getName())
 
         # if we exported animations, but no animation groups are defined, define a default animation group
         if (animtxt == None):
             has_controllers = 0
             for block in GetNifTree(root_block):
-                if block.isControllable():
+                print block
+                if block.IsControllable():
                     if ( not block["Controller"].asLink().is_null() ):
                         has_controllers = 1
                         break
@@ -287,22 +287,22 @@ def export_nif(filename):
 
         # write the file:
         #----------------
-        if show_progress >= 1: Blender.Window.DrawProgressBar(0.66, "Writing NIF file")
+        Blender.Window.DrawProgressBar(0.66, "Writing NIF file(s)")
 
         # make sure we have the right file extension
         if ((fileext != '.nif') and (fileext != '.NIF')):
             filename += '.nif'
-        WriteNifTree(filename, root_block, 0x04000002)
+        WriteNifTree(filename, root_block, NIF_VERSION)
 
         
         
     except NIFExportError, e: # in that case, we raise a menu instead of an exception
-        if show_progress >= 1: Blender.Window.DrawProgressBar(1.0, "Export Failed")
+        Blender.Window.DrawProgressBar(1.0, "Export Failed")
         print 'NIFExportError: ' + e.value
         Blender.Draw.PupMenu('ERROR%t|' + e.value)
         return
 
-    if show_progress >= 1: Blender.Window.DrawProgressBar(1.0, "Finished")
+    Blender.Window.DrawProgressBar(1.0, "Finished")
     
     # no export error, but let's double check: try reading the file(s) we just wrote
     # we can probably remove these lines once the exporter is stable
@@ -339,7 +339,7 @@ def export_node(ob, space, parent_block, parent_scale, node_name):
         assert((ob.getType() == 'Empty') or (ob.getType() == 'Mesh') or (ob.getType() == 'Armature')) # debug
         assert(parent_block) # debug
         ipo = ob.getIpo() # get animation data
-        if (ob.getName() == 'RootCollisionNode'):
+        if (node_name == 'RootCollisionNode'):
             # -> root collision node
             node = CreateBlock("RootCollisionNode")
         else:
@@ -354,7 +354,7 @@ def export_node(ob, space, parent_block, parent_scale, node_name):
     node["Name"] = node_name
     if (ob == None):
         node["Flags"] = 0x000C # ? this seems pretty standard for the root node
-    elif (ob.getName() == 'RootCollisionNode'):
+    elif (node_name == 'RootCollisionNode'):
         node["Flags"] = 0x0003 # ? this seems pretty standard for the root collision node
     else:
         node["Flags"] = 0x000C # ? this seems pretty standard for static and animated ninodes
@@ -377,7 +377,7 @@ def export_node(ob, space, parent_block, parent_scale, node_name):
     if (ob != None):
         # export animation
         if (ipo != None):
-            export_keyframe(ob, space, node, parent_scale)
+            export_keyframe(ipo, space, node, parent_scale)
     
         # if it is a mesh, export the mesh as trishape children of this ninode
         # (we assume ob_scale[0] == ob_scale[1] == ob_scale[2])
@@ -385,10 +385,10 @@ def export_node(ob, space, parent_block, parent_scale, node_name):
             export_trishapes(ob, 'none', node, parent_scale * ob_scale[0]) # the transformation of the mesh is already in the ninode block (except for scaling)
 
         # if it is an armature, export the bones as ninode children of this ninode
-        if (ob.getType() == 'Armature'):
-            export_bones(ob, 'none', node, parent_scale * ob_scale[0]) # the transformation of the mesh is already in the ninode block (except for scaling)
+        elif (ob.getType() == 'Armature'):
+            export_bones(ob, node, parent_scale * ob_scale[0])
 
-        # export all children of this empty/mesh object as children of this NiNode
+        # export all children of this empty/mesh/armature/bone object as children of this NiNode
         export_children(ob, node, parent_scale * ob_scale[0])
 
     return node
@@ -396,9 +396,9 @@ def export_node(ob, space, parent_block, parent_scale, node_name):
 
 
 #
-# Export the animation of blender object ob as keyframe controller and keyframe data
+# Export the animation of blender Ipo as keyframe controller and keyframe data
 #
-def export_keyframe(ob, space, parent_block, parent_scale):
+def export_keyframe(ipo, space, parent_block, parent_scale):
     # -> get keyframe information
     
     assert(space == 'localspace') # we don't support anything else (yet)
@@ -413,14 +413,12 @@ def export_keyframe(ob, space, parent_block, parent_scale):
     fend = context.endFrame()
 
     # sometimes we need to export an empty keyframe... this will take care of that
-    if (ob == None):
+    if (ipo == None):
         rot_curve = {}
         trans_curve = {}
     # the usual case comes now...
     else:
         # merge the animation curves into a rotation vector and translation vector curve
-        ipo = ob.getIpo()
-        assert(ipo != None) # debug
         rot_curve = {}
         trans_curve = {}
         for curve in ipo.getCurves():
@@ -430,6 +428,12 @@ def export_keyframe(ob, space, parent_block, parent_scale):
                 ftime = (frame - 1) * fspeed
                 if (curve.getName() == 'RotX') or (curve.getName() == 'RotY') or (curve.getName() == 'RotZ'):
                     rot_curve[ftime] = Blender.Mathutils.Euler([10*ipo.getCurve('RotX').evaluate(frame), 10*ipo.getCurve('RotY').evaluate(frame), 10*ipo.getCurve('RotZ').evaluate(frame)]).toQuat()
+                elif (curve.getName() == 'QuatX') or (curve.getName() == 'QuatY') or (curve.getName() == 'QuatZ') or  (curve.getName() == 'QuatW'):
+                    rot_curve[ftime] = Quaternion()
+                    rot_curve[ftime].x = ipo.getCurve('QuatX').evaluate(frame)
+                    rot_curve[ftime].y = ipo.getCurve('QuatY').evaluate(frame)
+                    rot_curve[ftime].z = ipo.getCurve('QuatZ').evaluate(frame)
+                    rot_curve[ftime].w = ipo.getCurve('QuatW').evaluate(frame)
                 if (curve.getName() == 'LocX') or (curve.getName() == 'LocY') or (curve.getName() == 'LocZ'):
                     trans_curve[ftime] = Vector3()
                     trans_curve[ftime].x = ipo.getCurve('LocX').evaluate(frame) * parent_scale
@@ -572,7 +576,7 @@ def export_animgroups(animtxt, block_parent):
 # TODO: filter mipmaps
 
 def export_sourcetexture(texture, filename = None):
-    global scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath
+    global SCALE_CORRECTION,FORCE_DDS,STRIP_TEXPATH,seams_import,last_imported,last_exported,TEXTURE_DIR
 
     # texture must be of type IMAGE
     if ( texture.type != Blender.Texture.Types.IMAGE ):
@@ -630,7 +634,7 @@ def export_sourcetexture(texture, filename = None):
         print "packing %s -> width %i, height %i"%(Blender.sys.basename(image.getFilename()),w,h)
         mipmaps.append( [ w, h, 0 ] )
         for y in range( h ):
-            if show_progress >= 1: Blender.Window.DrawProgressBar(float(y)/float(h), "Packing image %s"%Blender.sys.basename(image.getFilename()))
+            if VERBOSE: Blender.Window.DrawProgressBar(float(y)/float(h), "Packing image %s"%Blender.sys.basename(image.getFilename()))
             for x in range( w ):
                 r,g,b,a = image.getPixelF( x, (h-1)-y ) # nif flips y coordinate
                 if ( depth == 32 ):
@@ -652,7 +656,7 @@ def export_sourcetexture(texture, filename = None):
             print "packing %s mipmap %i -> width %i, height %i, offset %i"%(Blender.sys.basename(image.getFilename()),len(mipmaps),w/sx,h/sy,offset)
             mipmaps.append( [ w/sx, h/sy, offset ] )
             for y in range( 0, h, sy ):
-                if show_progress >= 1: Blender.Window.DrawProgressBar(float(y)/float(h), "Mipmapping image %s"%Blender.sys.basename(image.getFilename()))
+                if VERBOSE: Blender.Window.DrawProgressBar(float(y)/float(h), "Mipmapping image %s"%Blender.sys.basename(image.getFilename()))
                 for x in range( 0, w, sx ):
                     rgba = [ 0, 0, 0, 0 ]
                     for fy in range( 2 ):
@@ -699,10 +703,10 @@ def export_sourcetexture(texture, filename = None):
             tfn = filename
         else:
             tfn = texture.image.getFilename()
-        if ( strip_texpath == 1 ):
+        if ( STRIP_TEXPATH == 1 ):
             # strip texture file path (original morrowind style)
             srctexdata.fileName = Blender.sys.basename(tfn)
-        elif ( strip_texpath == 0 ):
+        elif ( STRIP_TEXPATH == 0 ):
             # strip the data files prefix from the texture's file name
             tfn = tfn.lower()
             idx = tfn.find( "textures" )
@@ -713,7 +717,7 @@ def export_sourcetexture(texture, filename = None):
             else:
                 srctexdata.fileName = Blender.sys.basename(tfn)
         # force dds extension, if requested
-        #if force_dds:
+        #if FORCE_DDS:
         #    nif.blocks[tsrc_id].file_name.value = nif.blocks[tsrc_id].file_name.value[:-4] + '.dds'
 
     # fill in default values
@@ -785,7 +789,7 @@ def export_flipcontroller( fliptxt, texture, target_id, target_tex, nif ):
 # trishape block per mesh material.
 # 
 def export_trishapes(ob, space, parent_block, parent_scale):
-    global scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath
+    global SCALE_CORRECTION,FORCE_DDS,STRIP_TEXPATH,seams_import,last_imported,last_exported,TEXTURE_DIR
     
     assert(ob.getType() == 'Mesh')
 
@@ -827,7 +831,7 @@ def export_trishapes(ob, space, parent_block, parent_scale):
             mesh_mat_emissive = mesh_mat.getEmit()          # 'Emit' scrollbar in Blender (MW -> 0.0 0.0 0.0)
             mesh_mat_glossiness = mesh_mat.getSpec() / 2.0  # 'Spec' scrollbar in Blender, takes values between 0.0 and 2.0 (MW -> 0.0)
             mesh_mat_transparency = mesh_mat.getAlpha()     # 'A(lpha)' scrollbar in Blender (MW -> 1.0)
-            mesh_hasalpha = (abs(mesh_mat_transparency - 1.0) > epsilon) \
+            mesh_hasalpha = (abs(mesh_mat_transparency - 1.0) > EPSILON) \
                             or (mesh_mat.getIpo() != None and mesh_mat.getIpo().getCurve('Alpha'))
             mesh_mat_ambient_color = [0.0,0.0,0.0]
             mesh_mat_ambient_color[0] = mesh_mat_diffuse_color[0] * mesh_mat_ambient
@@ -859,7 +863,7 @@ def export_trishapes(ob, space, parent_block, parent_scale):
                                 # how can we emulate the NIF alpha system (simply multiplying material alpha with texture alpha) when MapTo.ALPHA is turned on?
                                 # require the Blender material alpha to be 0.0 (no material color can show up), and use the "Var" slider in the texture blending mode tab!
                                 # but...
-                                if (mesh_mat_transparency > epsilon):
+                                if (mesh_mat_transparency > EPSILON):
                                     raise NIFExportError("Cannot export this type of transparency in material '%s': set alpha to 0.0, or turn off MapTo.ALPHA, and try again."%mesh_mat.getName())
                                 if (mesh_mat.getIpo() and mesh_mat.getIpo().getCurve('Alpha')):
                                     raise NIFExportError("Cannot export animation for this type of transparency in material '%s': remove alpha animation, or turn off MapTo.ALPHA, and try again."%mesh_mat.getName())
@@ -967,7 +971,7 @@ def export_trishapes(ob, space, parent_block, parent_scale):
 
         if (mesh_mat != None):
             # add NiTriShape's specular property
-            if ( mesh_mat_glossiness > epsilon ):
+            if ( mesh_mat_glossiness > EPSILON ):
                 trispecprop = CreateBlock("NiSpecularProperty")
                 trispecprop["Flags"] = 0x0001
             
@@ -1150,7 +1154,7 @@ def export_trishapes(ob, space, parent_block, parent_scale):
         trilist = []
         count = 0
         for f in mesh.faces:
-            if show_progress >= 2: Blender.Window.DrawProgressBar(0.33 * float(count)/len(mesh.faces), "Converting to NIF (%s)"%ob.getName())
+            if VERBOSE: Blender.Window.DrawProgressBar(0.33 * float(count)/len(mesh.faces), "Converting to NIF (%s)"%ob.getName())
             count += 1
             # does the face belong to this trishape?
             if (mesh_mat != None): # we have a material
@@ -1197,17 +1201,17 @@ def export_trishapes(ob, space, parent_block, parent_scale):
                     # and check if they have the same uvs, normals and colors (wow is that fast!)
                     for j in vertmap[v_index]:
                         if mesh_hastex:
-                            if abs(vertquad[1].u - vertquad_list[j][1].u) > epsilon: continue
-                            if abs(vertquad[1].v - vertquad_list[j][1].v) > epsilon: continue
+                            if abs(vertquad[1].u - vertquad_list[j][1].u) > EPSILON: continue
+                            if abs(vertquad[1].v - vertquad_list[j][1].v) > EPSILON: continue
                         if mesh_hasnormals:
-                            if abs(vertquad[2].x - vertquad_list[j][2].x) > epsilon: continue
-                            if abs(vertquad[2].y - vertquad_list[j][2].y) > epsilon: continue
-                            if abs(vertquad[2].z - vertquad_list[j][2].z) > epsilon: continue
+                            if abs(vertquad[2].x - vertquad_list[j][2].x) > EPSILON: continue
+                            if abs(vertquad[2].y - vertquad_list[j][2].y) > EPSILON: continue
+                            if abs(vertquad[2].z - vertquad_list[j][2].z) > EPSILON: continue
                         if mesh_hasvcol:
-                            if abs(vertquad[3].r - vertquad_list[j][3].r) > epsilon: continue
-                            if abs(vertquad[3].g - vertquad_list[j][3].g) > epsilon: continue
-                            if abs(vertquad[3].b - vertquad_list[j][3].b) > epsilon: continue
-                            if abs(vertquad[3].a - vertquad_list[j][3].a) > epsilon: continue
+                            if abs(vertquad[3].r - vertquad_list[j][3].r) > EPSILON: continue
+                            if abs(vertquad[3].g - vertquad_list[j][3].g) > EPSILON: continue
+                            if abs(vertquad[3].b - vertquad_list[j][3].b) > EPSILON: continue
+                            if abs(vertquad[3].a - vertquad_list[j][3].a) > EPSILON: continue
                         # all tests passed: so yes, we already have it!
                         f_index[i] = j
                         break
@@ -1250,7 +1254,7 @@ def export_trishapes(ob, space, parent_block, parent_scale):
         count = 0
         center = Float3()
         for v in mesh.verts:
-            if show_progress >= 2: Blender.Window.DrawProgressBar(0.33 + 0.33 * float(count)/len(mesh.verts), "Converting to NIF (%s)"%ob.getName())
+            if VERBOSE: Blender.Window.DrawProgressBar(0.33 + 0.33 * float(count)/len(mesh.verts), "Converting to NIF (%s)"%ob.getName())
             count += 1
             center[0] += v[0]
             center[1] += v[1]
@@ -1264,7 +1268,7 @@ def export_trishapes(ob, space, parent_block, parent_scale):
         count = 0
         radius = 0.0
         for v in mesh.verts:
-            if show_progress >= 2: Blender.Window.DrawProgressBar(0.66 + 0.33 * float(count)/len(mesh.verts), "Converting to NIF (%s)"%ob.getName())
+            if VERBOSE: Blender.Window.DrawProgressBar(0.66 + 0.33 * float(count)/len(mesh.verts), "Converting to NIF (%s)"%ob.getName())
             count += 1
             r = get_distance(v, center)
             if (r > radius): radius = r
@@ -1282,8 +1286,72 @@ def export_trishapes(ob, space, parent_block, parent_scale):
 
 
 
-def export_bones(ob, space, parent_block, parent_scale):
-    assert( ob.getType() == 'Armature' )
+def export_bones(arm, parent_block, parent_scale):
+    # the armature was already exported as a NiNode
+    # now we must export the armature's bones
+    assert( arm.getType() == 'Armature' )
+
+    # find the root bones
+    bones = dict(arm.getData().bones.items()) # dictionary of bones (name -> bone)
+    root_bones = []
+    for root_bone in bones.values():
+        while root_bone.parent in bones.values():
+            root_bone = root_bone.parent
+        if root_bones.count(root_bone) == 0:
+            root_bones.append(root_bone)
+
+    if (arm.getAction()):
+        bones_ipo = arm.getAction().getAllChannelIpos() # dictionary of Bone Ipos (name -> ipo)
+    else:
+        bones_ipo = {} # no ipos
+
+    bones_node = {} # maps bone names to NiNode blocks
+
+    # here we add all the bones; it's a bit ugly but hopefully it works
+    # first we create all bones with their keyframes
+    # and then we fix the links in a second run
+
+    # ok, let's create the bone NiNode blocks
+    for bone in bones.values():
+        # create a new block for this bone
+        node = CreateBlock("NiNode")
+        bones_node[bone.name] = node # doing this now makes linkage very easy in second run
+
+        # add the node and the keyframe for this bone
+        node["Name"] = bone.name
+        node["Flags"] = 0x0002 # ? this seems pretty standard for bones
+        ob_translation, \
+        ob_rotation, \
+        ob_scale, \
+        ob_velocity \
+        = export_matrix(bone, 'localspace')
+        node["Rotation"]    = ob_rotation
+        node["Velocity"]    = ob_velocity
+        node["Scale"]       = ob_scale[0] # this should work...
+        ob_translation[0] *= parent_scale
+        ob_translation[1] *= parent_scale
+        ob_translation[2] *= parent_scale
+        node["Translation"] = ob_translation # take parent scale into account
+
+        if bones_ipo.has_key(bone.name):
+            export_keyframe(bones_ipo[bone.name], 'localspace', node, parent_scale)
+    
+    # now fix the linkage between the blocks
+    for bone in bones.values():
+        # link the bone's children to the bone
+        if bone.children:
+            for child in bone.children:
+                print "bone, child, child parent:"
+                print bone
+                print child
+                print child.parent
+                if child.parent.name == bone.name: # bone.children returns also grandchildren etc... we only want immediate children of course
+                    bones_node[bone.name]["Children"].AddLink(bones_node[child.name])
+        # if it is a root bone, link it to the armature
+        if not bone.parent:
+            parent_block["Children"].AddLink(bones_node[bone.name])
+
+    # that's it!!!
 
 
 
@@ -1388,7 +1456,7 @@ def export_children(ob, parent_block, parent_scale):
 # when exporting the vertex coordinates... ?
 #
 def export_matrix(ob, space):
-    global epsilon
+    global EPSILON
     nt = Float3()
     nr = Matrix33()
     ns = Float3()
@@ -1418,7 +1486,7 @@ def export_matrix(ob, space):
     nv[2] = 0.0
 
     # for now, we don't support non-uniform scaling
-    if abs(ns[0] - ns[1]) + abs(ns[1] - ns[2]) > epsilon:
+    if abs(ns[0] - ns[1]) + abs(ns[1] - ns[2]) > EPSILON:
         raise NIFExportError('ERROR%t|non-uniformly scaled objects not yet supported; apply size and rotation (CTRL-A in Object Mode) and try again.')
 
     # return result
@@ -1431,7 +1499,7 @@ def export_matrix(ob, space):
 # br is a 3x3 rotation matrix, and bt is a translation vector. It
 # should hold that "ob.getMatrix(space) == bs * br * bt".
 def getObjectSRT(ob, space):
-    global epsilon
+    global EPSILON
     if (space == 'none'):
         bs = Blender.Mathutils.Vector([1.0, 1.0, 1.0])
         br = Blender.Mathutils.Matrix()
@@ -1439,19 +1507,29 @@ def getObjectSRT(ob, space):
         bt = Blender.Mathutils.Vector([0.0, 0.0, 0.0])
         return (bs, br, bt)
     assert((space == 'worldspace') or (space == 'localspace'))
-    mat = ob.getMatrix('worldspace')
-    # localspace bug fix:
-    if (space == 'localspace'):
-        if (ob.getParent() != None):
-            matparentinv = ob.getParent().getMatrix('worldspace')
-            matparentinv.invert()
-            mat = mat * matparentinv
-    
-    # get translation
-    bt = mat.translationPart()
-    
-    # get the rotation part, this is scale * rotation
-    bsr = mat.rotationPart()
+    if (not type(ob) is Blender.Armature.BoneType):
+        mat = ob.getMatrix('worldspace')
+        # localspace bug fix:
+        if (space == 'localspace'):
+            if (ob.getParent() != None):
+                matparentinv = ob.getParent().getMatrix('worldspace')
+                matparentinv.invert()
+                mat = mat * matparentinv
+        # get translation
+        bt = mat.translationPart()        
+        # get the rotation part, this is scale * rotation
+        bsr = mat.rotationPart()
+    else: # bones, get matrix
+        assert(space == 'localspace') # bones must be calculated in localspace
+        print ob
+        print dir(ob)
+        bsr = ob.matrix['BONESPACE']
+        bt = [0.0,0.0,0.0]
+        print ob.tail
+        print dir(ob.tail)
+        bt[0] = ob.tail['BONESPACE'][0] - ob.head['BONESPACE'][0]
+        bt[1] = ob.tail['BONESPACE'][1] - ob.head['BONESPACE'][1]
+        bt[2] = ob.tail['BONESPACE'][2] - ob.head['BONESPACE'][2]
     
     # get the squared scale matrix
     bsrT = Blender.Mathutils.Matrix(bsr)
@@ -1460,7 +1538,7 @@ def getObjectSRT(ob, space):
     # debug: br2's off-diagonal elements must be zero!
     assert(abs(bs2[0][1]) + abs(bs2[0][2]) \
         + abs(bs2[1][0]) + abs(bs2[1][2]) \
-        + abs(bs2[2][0]) + abs(bs2[2][1]) < epsilon)
+        + abs(bs2[2][0]) + abs(bs2[2][1]) < EPSILON)
     
     # get scale components
     bs = Blender.Mathutils.Vector(\
@@ -1475,7 +1553,7 @@ def getObjectSRT(ob, space):
         [ bsr[2][0]/bs[2], bsr[2][1]/bs[2], bsr[2][2]/bs[2] ])
     
     # debug: rotation matrix must have determinant 1
-    assert(abs(br.determinant() - 1.0) < epsilon)
+    assert(abs(br.determinant() - 1.0) < EPSILON)
 
     # debug: rotation matrix must satisfy orthogonality constraint
     for i in range(3):
@@ -1483,11 +1561,11 @@ def getObjectSRT(ob, space):
             sum = 0.0
             for k in range(3):
                 sum += br[k][i] * br[k][j]
-            if (i == j): assert(abs(sum - 1.0) < epsilon)
-            if (i != j): assert(abs(sum) < epsilon)
+            if (i == j): assert(abs(sum - 1.0) < EPSILON)
+            if (i != j): assert(abs(sum) < EPSILON)
     
     # debug: the product of the scaling values must be equal to the determinant of the blender rotation part
-    assert(abs(bs[0]*bs[1]*bs[2] - bsr.determinant()) < epsilon)
+    assert(abs(bs[0]*bs[1]*bs[2] - bsr.determinant()) < EPSILON)
     
     # TODO: debug: check that indeed bm == bs * br * bt
 
@@ -1529,4 +1607,4 @@ def add_extra_data(block, xtra):
 
 
 
-Blender.Window.FileSelector(export_nif, 'Export NIF', export_dir)
+Blender.Window.FileSelector(export_nif, 'Export NIF', EXPORT_DIR)
