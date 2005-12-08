@@ -239,7 +239,6 @@ def export_nif(filename):
         if (animtxt == None):
             has_controllers = 0
             for block in GetNifTree(root_block):
-                print block
                 if block.IsControllable():
                     if ( not block["Controller"].asLink().is_null() ):
                         has_controllers = 1
@@ -631,10 +630,9 @@ def export_sourcetexture(texture, filename = None):
         # now pack the image
         data = []
         mipmaps = []
-        print "packing %s -> width %i, height %i"%(Blender.sys.basename(image.getFilename()),w,h)
+        if VERBOSE: print "packing %s -> width %i, height %i"%(Blender.sys.basename(image.getFilename()),w,h)
         mipmaps.append( [ w, h, 0 ] )
         for y in range( h ):
-            if VERBOSE: Blender.Window.DrawProgressBar(float(y)/float(h), "Packing image %s"%Blender.sys.basename(image.getFilename()))
             for x in range( w ):
                 r,g,b,a = image.getPixelF( x, (h-1)-y ) # nif flips y coordinate
                 if ( depth == 32 ):
@@ -653,10 +651,9 @@ def export_sourcetexture(texture, filename = None):
         lastOffset = 0
         while ( texture.imageFlags & Blender.Texture.ImageFlags.MIPMAP != 0 ):
             offset = len(data)
-            print "packing %s mipmap %i -> width %i, height %i, offset %i"%(Blender.sys.basename(image.getFilename()),len(mipmaps),w/sx,h/sy,offset)
+            if VERBOSE: print "packing %s mipmap %i -> width %i, height %i, offset %i"%(Blender.sys.basename(image.getFilename()),len(mipmaps),w/sx,h/sy,offset)
             mipmaps.append( [ w/sx, h/sy, offset ] )
             for y in range( 0, h, sy ):
-                if VERBOSE: Blender.Window.DrawProgressBar(float(y)/float(h), "Mipmapping image %s"%Blender.sys.basename(image.getFilename()))
                 for x in range( 0, w, sx ):
                     rgba = [ 0, 0, 0, 0 ]
                     for fy in range( 2 ):
@@ -1031,7 +1028,7 @@ def export_trishapes(ob, space, parent_block, parent_scale):
                 elif ( a_curve.getExtrapolation() == "Constant" ):
                     alphac["Flags"] = 0x000c
                 else:
-                    print "extrapolation \"%s\" for alpha curve not supported using \"cycle reverse\" instead"%a_curve.getExtrapolation()
+                    if VERBOSE: print "extrapolation \"%s\" for alpha curve not supported using \"cycle reverse\" instead"%a_curve.getExtrapolation()
                     alphac["Flags"] = 0x000a
 
                 # fill in timing values
@@ -1154,7 +1151,7 @@ def export_trishapes(ob, space, parent_block, parent_scale):
         trilist = []
         count = 0
         for f in mesh.faces:
-            if VERBOSE: Blender.Window.DrawProgressBar(0.33 * float(count)/len(mesh.faces), "Converting to NIF (%s)"%ob.getName())
+            #slows down too myuch #if VERBOSE: Blender.Window.DrawProgressBar(0.33 * float(count)/len(mesh.faces), "Converting to NIF (%s)"%ob.getName())
             count += 1
             # does the face belong to this trishape?
             if (mesh_mat != None): # we have a material
@@ -1254,7 +1251,7 @@ def export_trishapes(ob, space, parent_block, parent_scale):
         count = 0
         center = Float3()
         for v in mesh.verts:
-            if VERBOSE: Blender.Window.DrawProgressBar(0.33 + 0.33 * float(count)/len(mesh.verts), "Converting to NIF (%s)"%ob.getName())
+            #slows down too much #if VERBOSE: Blender.Window.DrawProgressBar(0.33 + 0.33 * float(count)/len(mesh.verts), "Converting to NIF (%s)"%ob.getName())
             count += 1
             center[0] += v[0]
             center[1] += v[1]
@@ -1268,7 +1265,7 @@ def export_trishapes(ob, space, parent_block, parent_scale):
         count = 0
         radius = 0.0
         for v in mesh.verts:
-            if VERBOSE: Blender.Window.DrawProgressBar(0.66 + 0.33 * float(count)/len(mesh.verts), "Converting to NIF (%s)"%ob.getName())
+            #slows down too much #if VERBOSE: Blender.Window.DrawProgressBar(0.66 + 0.33 * float(count)/len(mesh.verts), "Converting to NIF (%s)"%ob.getName())
             count += 1
             r = get_distance(v, center)
             if (r > radius): radius = r
@@ -1341,10 +1338,6 @@ def export_bones(arm, parent_block, parent_scale):
         # link the bone's children to the bone
         if bone.children:
             for child in bone.children:
-                print "bone, child, child parent:"
-                print bone
-                print child
-                print child.parent
                 if child.parent.name == bone.name: # bone.children returns also grandchildren etc... we only want immediate children of course
                     bones_node[bone.name]["Children"].AddLink(bones_node[child.name])
         # if it is a root bone, link it to the armature
@@ -1446,7 +1439,24 @@ def export_children(ob, parent_block, parent_scale):
                 export_textureeffect(ob_child, parent_block, parent_scale)
             # is it a regular node?
             elif (ob_child.getType() == 'Mesh') or (ob_child.getType() == 'Empty') or (ob_child.getType() == 'Armature'):
-                export_node(ob_child, 'localspace', parent_block, parent_scale, ob_child.getName())
+                if (ob.getType() != 'Armature'): # not parented to an armature...
+                    export_node(ob_child, 'localspace', parent_block, parent_scale, ob_child.getName())
+                else: # oh, this object is parented to an armature
+                    # we should check whether it is really parented to the armature using vertex weights
+                    # or whether it is parented to some bone of the armature
+                    parent_bone_name = ob_child.getParentBoneName()
+                    if parent_bone_name == None:
+                        export_node(ob_child, 'localspace', parent_block, parent_scale, ob_child.getName())
+                    else:
+                        # we should parent the object to the bone instead of to the armature
+                        # so let's find that bone!
+                        for block in GetNifTree(parent_block):
+                            if not block.GetAttr("Name").is_null():
+                                if block["Name"].asString() == parent_bone_name:
+                                    export_node(ob_child, 'localspace', block, parent_scale, ob_child.getName())
+                                    break
+                        else:
+                            assert(False) # BUG!
 
 
 
@@ -1515,18 +1525,21 @@ def getObjectSRT(ob, space):
                 matparentinv = ob.getParent().getMatrix('worldspace')
                 matparentinv.invert()
                 mat = mat * matparentinv
+                if (ob.getParent().getType() == 'Armature'):
+                    # the object is parented to the armature... we must get the matrix relative to the bone parent, of course
+                    bone_parent_name = ob.getParentBoneName()
+                    if bone_parent_name:
+                        matparentboneinv = ob.getParent().getData().bones[bone_parent_name].matrix['ARMATURESPACE']
+                        matparentboneinv.invert()
+                        mat = mat * matparentboneinv
         # get translation
         bt = mat.translationPart()        
         # get the rotation part, this is scale * rotation
         bsr = mat.rotationPart()
     else: # bones, get matrix
         assert(space == 'localspace') # bones must be calculated in localspace
-        print ob
-        print dir(ob)
         bsr = ob.matrix['BONESPACE']
         bt = [0.0,0.0,0.0]
-        print ob.tail
-        print dir(ob.tail)
         bt[0] = ob.tail['BONESPACE'][0] - ob.head['BONESPACE'][0]
         bt[1] = ob.tail['BONESPACE'][1] - ob.head['BONESPACE'][1]
         bt[2] = ob.tail['BONESPACE'][2] - ob.head['BONESPACE'][2]
