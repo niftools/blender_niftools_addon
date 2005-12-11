@@ -238,7 +238,7 @@ def export_nif(filename):
         # if we exported animations, but no animation groups are defined, define a default animation group
         if (animtxt == None):
             has_controllers = 0
-            for block in GetNifTree(root_block):
+            for block in get_block_list(root_block):
                 if block.IsControllable():
                     if ( not block["Controller"].asLink().is_null() ):
                         has_controllers = 1
@@ -257,7 +257,7 @@ def export_nif(filename):
         # if we are in that situation, add a trivial keyframe animation
         if (animtxt):
             has_keyframecontrollers = 0
-            for block in GetNifTree(root_block):
+            for block in get_block_list(root_block):
                 if block.GetBlockType() == "NiKeyframeController":
                     has_keyframecontrollers = 1
                     break
@@ -1450,7 +1450,7 @@ def export_children(ob, parent_block, parent_scale):
                     else:
                         # we should parent the object to the bone instead of to the armature
                         # so let's find that bone!
-                        for block in GetNifTree(parent_block):
+                        for block in get_block_list(parent_block):
                             if not block.GetAttr("Name").is_null():
                                 if block["Name"].asString() == parent_bone_name:
                                     export_node(ob_child, 'localspace', block, parent_scale, ob_child.getName())
@@ -1527,9 +1527,18 @@ def getObjectSRT(ob, space):
                 mat = mat * matparentinv
                 if (ob.getParent().getType() == 'Armature'):
                     # the object is parented to the armature... we must get the matrix relative to the bone parent, of course
+                    # TODO: getMatrix('worldspace') returns the global object matrix in the current animation frame... grrrr Blender...
+                    # that means that we must transform the object back to the rest pose...
+                    # for now we must assume that the rest pose is equal to this frame of animation
                     bone_parent_name = ob.getParentBoneName()
                     if bone_parent_name:
-                        matparentboneinv = ob.getParent().getData().bones[bone_parent_name].matrix['ARMATURESPACE']
+                        bone_parent = ob.getParent().getData().bones[bone_parent_name]
+                        matparentboneinv = getBoneMatrix(bone_parent, 'ARMATURESPACE') # bone matrix in armature space
+                        #print ob.getName()
+                        #print 'ARMATURESPACE'
+                        #print matparentboneinv
+                        #print ob.getParent().getData().bones[bone_parent_name].matrix['ARMATURESPACE']
+                        #print ob.getMatrix('worldspace')
                         matparentboneinv.invert()
                         mat = mat * matparentboneinv
         # get translation
@@ -1538,11 +1547,13 @@ def getObjectSRT(ob, space):
         bsr = mat.rotationPart()
     else: # bones, get matrix
         assert(space == 'localspace') # bones must be calculated in localspace
-        bsr = ob.matrix['BONESPACE']
-        bt = [0.0,0.0,0.0]
-        bt[0] = ob.tail['BONESPACE'][0] - ob.head['BONESPACE'][0]
-        bt[1] = ob.tail['BONESPACE'][1] - ob.head['BONESPACE'][1]
-        bt[2] = ob.tail['BONESPACE'][2] - ob.head['BONESPACE'][2]
+        # TODO assert bone.size == 1.0
+        mat = getBoneMatrix(ob, 'BONESPACE')
+        #print 'BONESPACE'
+        #print mat
+        #print ob.matrix['BONESPACE']
+        bsr = mat.rotationPart()
+        bt = mat.translationPart()
     
     # get the squared scale matrix
     bsrT = Blender.Mathutils.Matrix(bsr)
@@ -1586,6 +1597,37 @@ def getObjectSRT(ob, space):
 
 
 
+# get X-aligned Blender bone matrix
+# space can be ARMATURESPACE or BONESPACE
+# (code based on the blender2cal3d export script and Blender source code)
+def getBoneMatrix(bone, space):
+    bone_head = Vector3(bone.head['BONESPACE'][0], bone.head['BONESPACE'][1], bone.head['BONESPACE'][2])
+    bone_tail = Vector3(bone.tail['BONESPACE'][0], bone.tail['BONESPACE'][1], bone.tail['BONESPACE'][2])
+    bone_roll = bone.roll['BONESPACE'] * 3.14159265358979323 / 180.0
+    if bone.parent:
+        bone_parent_len = (bone.parent.tail['BONESPACE'][0]-bone.parent.head['BONESPACE'][0]) ** 2
+        bone_parent_len += (bone.parent.tail['BONESPACE'][1]-bone.parent.head['BONESPACE'][1]) ** 2
+        bone_parent_len += (bone.parent.tail['BONESPACE'][2]-bone.parent.head['BONESPACE'][2]) ** 2
+        bone_parent_len = bone_parent_len ** 0.5
+    else:
+        bone_parent_len = 0.0
+    # bone_mat = bone matrix in rotation part, and bone head + parent bone length in the translation part
+    bone_mat = BoneToMatrix44(bone_head, bone_tail, bone_roll, bone_parent_len)
+    mat = Blender.Mathutils.Matrix(
+        [bone_mat[0][0], bone_mat[0][1], bone_mat[0][2], bone_mat[0][3]],
+        [bone_mat[1][0], bone_mat[1][1], bone_mat[1][2], bone_mat[1][3]],
+        [bone_mat[2][0], bone_mat[2][1], bone_mat[2][2], bone_mat[2][3]],
+        [bone_mat[3][0], bone_mat[3][1], bone_mat[3][2], bone_mat[3][3]])
+    if (space == 'BONESPACE'):
+        return mat
+    elif (space == 'ARMATURESPACE'):
+        if (not bone.parent):
+            return mat
+        else:
+            return mat * getBoneMatrix(bone.parent, 'ARMATURESPACE')
+    else:
+        assert(False) # bug!
+
 # calculate distance between two Float3 vectors
 def get_distance(v, w):
     return ((v[0]-w[0])*(v[0]-w[0]) + (v[1]-w[1])*(v[1]-w[1]) + (v[2]-w[2])*(v[2]-w[2])) ** 0.5
@@ -1617,6 +1659,14 @@ def add_extra_data(block, xtra):
         while not lastxtra["Extra Data"].asLink().is_null():
             lastxtra = lastxtra["Extra Data"].asLink()
         lastxtra["Extra Data"] = xtra
+
+
+
+def get_block_list(block):
+    result = [ block ]
+    for link in block.GetLinks():
+        result.extend(get_block_list(link))
+    return result
 
 
 
