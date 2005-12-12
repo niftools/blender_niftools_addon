@@ -1534,6 +1534,7 @@ def getObjectSRT(ob, space):
                     if bone_parent_name:
                         bone_parent = ob.getParent().getData().bones[bone_parent_name]
                         matparentboneinv = getBoneMatrix(bone_parent, 'ARMATURESPACE') # bone matrix in armature space
+                        #print "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                         #print ob.getName()
                         #print 'ARMATURESPACE'
                         #print matparentboneinv
@@ -1601,9 +1602,9 @@ def getObjectSRT(ob, space):
 # space can be ARMATURESPACE or BONESPACE
 # (code based on the blender2cal3d export script and Blender source code)
 def getBoneMatrix(bone, space):
-    bone_head = Vector3(bone.head['BONESPACE'][0], bone.head['BONESPACE'][1], bone.head['BONESPACE'][2])
-    bone_tail = Vector3(bone.tail['BONESPACE'][0], bone.tail['BONESPACE'][1], bone.tail['BONESPACE'][2])
-    bone_roll = bone.roll['BONESPACE'] * 3.14159265358979323 / 180.0
+    bone_head = bone.head['BONESPACE']
+    bone_tail = bone.tail['BONESPACE']
+    bone_roll = bone.roll['BONESPACE']
     if bone.parent:
         bone_parent_len = (bone.parent.tail['BONESPACE'][0]-bone.parent.head['BONESPACE'][0]) ** 2
         bone_parent_len += (bone.parent.tail['BONESPACE'][1]-bone.parent.head['BONESPACE'][1]) ** 2
@@ -1611,13 +1612,12 @@ def getBoneMatrix(bone, space):
         bone_parent_len = bone_parent_len ** 0.5
     else:
         bone_parent_len = 0.0
-    # bone_mat = bone matrix in rotation part, and bone head + parent bone length in the translation part
-    bone_mat = BoneToMatrix44(bone_head, bone_tail, bone_roll, bone_parent_len)
-    mat = Blender.Mathutils.Matrix(
-        [bone_mat[0][0], bone_mat[0][1], bone_mat[0][2], bone_mat[0][3]],
-        [bone_mat[1][0], bone_mat[1][1], bone_mat[1][2], bone_mat[1][3]],
-        [bone_mat[2][0], bone_mat[2][1], bone_mat[2][2], bone_mat[2][3]],
-        [bone_mat[3][0], bone_mat[3][1], bone_mat[3][2], bone_mat[3][3]])
+    # mat = bone matrix in rotation part, and bone head + parent bone length in the translation part
+    mat = bone2matrix(bone_head, bone_tail, bone_roll, bone_parent_len)
+    #print "======================================="
+    #print bone.name
+    #print mat
+    #print bone.matrix['BONESPACE']
     if (space == 'BONESPACE'):
         return mat
     elif (space == 'ARMATURESPACE'):
@@ -1666,6 +1666,38 @@ def get_block_list(block):
     result = [ block ]
     for link in block.GetLinks():
         result.extend(get_block_list(link))
+    return result
+
+
+
+# some math helper functions
+# (see Blender source code)
+def bone2matrix(head, tail, roll, parent_len):
+    target = Blender.Mathutils.Vector([1.0, 0.0, 0.0]) # X aligned
+    delta  = Blender.Mathutils.Vector([tail[0] - head[0], tail[1] - head[1], tail[2] - head[2]])
+    nor    = delta
+    nor.normalize()
+    axis   = Blender.Mathutils.CrossVecs(target, nor)
+  
+    if Blender.Mathutils.DotVecs(axis, axis) > 0.0000000000001:
+        axis.normalize()
+        theta   = Blender.Mathutils.AngleBetweenVecs(target, nor)
+        bMatrix = Blender.Mathutils.RotationMatrix(theta, 4, "r", axis)
+    else:
+        if Blender.Mathutils.DotVecs(target, nor) > 0.0: updown =  1.0
+        else: updown = -1.0
+    
+        bMatrix = Blender.Mathutils.Matrix(
+            [updown, 0.0,    0.0, 0.0],
+            [0.0,    updown, 0.0, 0.0],
+            [0.0,    0.0,    1.0, 0.0],
+            [0.0,    0.0,    0.0, 1.0])
+  
+    rMatrix = Blender.Mathutils.RotationMatrix(roll, 4, "r", nor)
+    result = bMatrix * rMatrix
+    result[3][0] = head[0] + parent_len # X aligned
+    result[3][1] = head[1]
+    result[3][2] = head[2]
     return result
 
 
