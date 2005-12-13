@@ -234,14 +234,14 @@ def export_nif(filename):
         # create a nif object
         
         # export the root node (note that transformation is ignored on the root node)
-        root_block = export_node(None, 'none', None, 1.0, root_name)
+        root_block = export_node(None, 'none', None, root_name)
         
         # export objects
         if DEBUG: print "Exporting objects"
         for root_object in root_objects:
             # export the root objects as a NiNodes; their children are exported as well
             # note that localspace = worldspace, because root objects have no parents
-            export_node(root_object, 'localspace', root_block, SCALE_CORRECTION, root_object.getName())
+            export_node(root_object, 'localspace', root_block, root_object.getName())
 
         # if we exported animations, but no animation groups are defined, define a default animation group
         if DEBUG: print "Checking animation groups"
@@ -338,7 +338,7 @@ def export_nif(filename):
 # - for the root node, ob is None, and node_name is usually the base
 #   filename (either with or without extension)
 #
-def export_node(ob, space, parent_block, parent_scale, node_name):
+def export_node(ob, space, parent_block, node_name):
     if DEBUG: print "Exporting NiNode %s"%node_name
     ipo = None
 
@@ -372,8 +372,6 @@ def export_node(ob, space, parent_block, parent_scale, node_name):
     else:
         node["Flags"] = 0x000C # ? this seems pretty standard for static and animated ninodes
 
-    # if scale of NiNodes is not 1.0, then the engine does a bit
-    # weird... let's play safe and require it to be 1.0
     ob_translation, \
     ob_rotation, \
     ob_scale, \
@@ -381,11 +379,8 @@ def export_node(ob, space, parent_block, parent_scale, node_name):
     = export_matrix(ob, space)
     node["Rotation"]    = ob_rotation
     node["Velocity"]    = ob_velocity
-    node["Scale"]       = 1.0; # scale is transferred to export_trishapes and export_children below
-    ob_translation[0] *= parent_scale
-    ob_translation[1] *= parent_scale
-    ob_translation[2] *= parent_scale
-    node["Translation"] = ob_translation # take parent scale into account
+    node["Scale"]       = ob_scale[0]
+    node["Translation"] = ob_translation
 
     # set object bind position, in armature space (this should work)
     if ob != None and ob.getParent() and ob.getParent().getType() == 'Armature':
@@ -405,19 +400,18 @@ def export_node(ob, space, parent_block, parent_scale, node_name):
     if (ob != None):
         # export animation
         if (ipo != None):
-            export_keyframe(ipo, space, node, parent_scale)
+            export_keyframe(ipo, space, node)
     
         # if it is a mesh, export the mesh as trishape children of this ninode
-        # (we assume ob_scale[0] == ob_scale[1] == ob_scale[2])
         if (ob.getType() == 'Mesh'):
-            export_trishapes(ob, 'none', node, parent_scale * ob_scale[0]) # the transformation of the mesh is already in the ninode block (except for scaling)
+            export_trishapes(ob, 'none', node) # the transformation of the mesh is already in the NiNode
 
         # if it is an armature, export the bones as ninode children of this ninode
         elif (ob.getType() == 'Armature'):
-            export_bones(ob, node, parent_scale * ob_scale[0])
+            export_bones(ob, node)
 
         # export all children of this empty/mesh/armature/bone object as children of this NiNode
-        export_children(ob, node, parent_scale * ob_scale[0])
+        export_children(ob, node)
 
     return node
 
@@ -426,7 +420,7 @@ def export_node(ob, space, parent_block, parent_scale, node_name):
 #
 # Export the animation of blender Ipo as keyframe controller and keyframe data
 #
-def export_keyframe(ipo, space, parent_block, parent_scale, extra_quat = None):
+def export_keyframe(ipo, space, parent_block, extra_quat = None):
     if DEBUG: print "Exporting keyframe %s"%parent_block["Name"].asString()
     # -> get keyframe information
     
@@ -469,9 +463,9 @@ def export_keyframe(ipo, space, parent_block, parent_scale, extra_quat = None):
                         rot_curve[ftime] = Blender.Mathutils.CrossQuats(rot_curve[ftime], extra_quat)
                 if (curve.getName() == 'LocX') or (curve.getName() == 'LocY') or (curve.getName() == 'LocZ'):
                     trans_curve[ftime] = Vector3()
-                    trans_curve[ftime].x = ipo.getCurve('LocX').evaluate(frame) * parent_scale
-                    trans_curve[ftime].y = ipo.getCurve('LocY').evaluate(frame) * parent_scale
-                    trans_curve[ftime].z = ipo.getCurve('LocZ').evaluate(frame) * parent_scale
+                    trans_curve[ftime].x = ipo.getCurve('LocX').evaluate(frame)
+                    trans_curve[ftime].y = ipo.getCurve('LocY').evaluate(frame)
+                    trans_curve[ftime].z = ipo.getCurve('LocZ').evaluate(frame)
 
     # -> now comes the real export
 
@@ -821,7 +815,7 @@ def export_flipcontroller( fliptxt, texture, target_id, target_tex, nif ):
 # NiMaterialProperty, and NiAlphaProperty blocks. We export one
 # trishape block per mesh material. We also export vertex weights.
 # 
-def export_trishapes(ob, space, parent_block, parent_scale):
+def export_trishapes(ob, space, parent_block):
     if DEBUG: print "Exporting NiTriShapes for %s"%ob.getName()
     assert(ob.getType() == 'Mesh')
 
@@ -934,15 +928,10 @@ def export_trishapes(ob, space, parent_block, parent_scale):
         ob_scale, \
         ob_velocity \
         = export_matrix(ob, space)
-        # scale correction
-        ob_translation[0] *= parent_scale
-        ob_translation[1] *= parent_scale
-        ob_translation[2] *= parent_scale
         trishape["Translation"] = ob_translation
         trishape["Rotation"]    = ob_rotation
-        trishape["Scale"]       = 1.0 # scaling is applied on vertices... here we put it on 1.0
+        trishape["Scale"]       = ob_scale[0]
         trishape["Velocity"]    = ob_velocity
-        final_scale = parent_scale * ob_scale[0];
         
         if (mesh_base_tex != None or mesh_glow_tex != None):
             # add NiTriShape's texturing property
@@ -1202,9 +1191,6 @@ def export_trishapes(ob, space, parent_block, parent_scale):
             f_index = [ -1 ] * f_numverts
             for i in range(f_numverts):
                 fv = Vector3(*(f.v[i].co))
-                fv.x *= final_scale
-                fv.y *= final_scale
-                fv.z *= final_scale
                 # get vertex normal for lighting (smooth = Blender vertex normal, non-smooth = Blender face normal)
                 if mesh_hasnormals:
                     if f.smooth:
@@ -1264,7 +1250,7 @@ def export_trishapes(ob, space, parent_block, parent_scale):
             for i in range(f_numverts - 2):
                 f_indexed = Triangle()
                 f_indexed.v1 = f_index[0]
-                if (final_scale > 0):
+                if (ob_scale[0] > 0):
                     f_indexed.v2 = f_index[1+i]
                     f_indexed.v3 = f_index[2+i]
                 else:
@@ -1347,11 +1333,15 @@ def export_trishapes(ob, space, parent_block, parent_scale):
                 # find vertex weights
                 vert_list = ob.data.getVertsFromGroup(bone,1)
                 vert_weights = {}
-                print vertmap
                 for v in vert_list:
                     # v[0] is the original vertex index
                     # vertmap[v[0]] is the set of vertices (indices) to which v[0] was mapped
                     # so we simply export the same weight as the original vertex for each new vertex
+
+                    # TODO: get normalizing factor
+                    #infl_list = ob.data.getVertexInfluences(v[0]) # aargh! a blender bug prevents this from working
+
+                    # write the weights
                     for vert_index in vertmap[v[0]]:
                         vert_weights[vert_index] = v[1]
                 iskindata.AddBone(bone_block, vert_weights)
@@ -1360,7 +1350,7 @@ def export_trishapes(ob, space, parent_block, parent_scale):
 
 
 
-def export_bones(arm, parent_block, parent_scale):
+def export_bones(arm, parent_block):
     if DEBUG: print "Exporting bones for armature %s"%arm.getName()
     # the armature was already exported as a NiNode
     # now we must export the armature's bones
@@ -1403,17 +1393,14 @@ def export_bones(arm, parent_block, parent_scale):
         = export_matrix(bone, 'localspace')
         node["Rotation"]    = ob_rotation
         node["Velocity"]    = ob_velocity
-        node["Scale"]       = ob_scale[0] # this should work...
-        ob_translation[0] *= parent_scale
-        ob_translation[1] *= parent_scale
-        ob_translation[2] *= parent_scale
-        node["Translation"] = ob_translation # take parent scale into account
-
+        node["Scale"]       = ob_scale[0]
+        node["Translation"] = ob_translation
+        
         # bone rotations are stored in the IPO relative to the rest position
         # so we must take the rest position into account
         extra_quat = bone.matrix['BONESPACE'].toQuat()
         if bones_ipo.has_key(bone.name):
-            export_keyframe(bones_ipo[bone.name], 'localspace', node, parent_scale, extra_quat)
+            export_keyframe(bones_ipo[bone.name], 'localspace', node, extra_quat)
 
         # set the bind pose relative to the armature coordinate system (this should work)
         bbind_mat = bone.matrix['ARMATURESPACE']
@@ -1444,7 +1431,7 @@ def export_bones(arm, parent_block, parent_scale):
 #
 # EXPERIMENTAL: Export texture effect.
 # 
-def export_textureeffect(ob, parent_block, parent_scale):
+def export_textureeffect(ob, parent_block):
     assert(ob.getType() == 'Empty')
     last_id = nif.header.nblocks - 1
     
@@ -1522,31 +1509,31 @@ def export_textureeffect(ob, parent_block, parent_scale):
 # Export all children of blender object ob, already stored in
 # nif.blocks[ob_block_id], and return the updated nif.
 # 
-def export_children(ob, parent_block, parent_scale):
+def export_children(ob, parent_block):
     # loop over all ob's children
     for ob_child in Blender.Object.Get():
         if (ob_child.getParent() == ob):
             # we found a child! try to add it to ob's children
             # is it a texture effect node?
             if ((ob_child.getType() == 'Empty') and (ob_child.getName()[:13] == 'TextureEffect')):
-                export_textureeffect(ob_child, parent_block, parent_scale)
+                export_textureeffect(ob_child, parent_block)
             # is it a regular node?
             elif (ob_child.getType() == 'Mesh') or (ob_child.getType() == 'Empty') or (ob_child.getType() == 'Armature'):
                 if (ob.getType() != 'Armature'): # not parented to an armature...
-                    export_node(ob_child, 'localspace', parent_block, parent_scale, ob_child.getName())
+                    export_node(ob_child, 'localspace', parent_block, ob_child.getName())
                 else: # oh, this object is parented to an armature
                     # we should check whether it is really parented to the armature using vertex weights
                     # or whether it is parented to some bone of the armature
                     parent_bone_name = ob_child.getParentBoneName()
                     if parent_bone_name == None:
-                        export_node(ob_child, 'localspace', parent_block, parent_scale, ob_child.getName())
+                        export_node(ob_child, 'localspace', parent_block, ob_child.getName())
                     else:
                         # we should parent the object to the bone instead of to the armature
                         # so let's find that bone!
                         for block in NIF_BLOCKS:
                             if block.GetBlockType() == "NiNode":
                                 if block["Name"].asString() == parent_bone_name:
-                                    export_node(ob_child, 'localspace', block, parent_scale, ob_child.getName())
+                                    export_node(ob_child, 'localspace', block, ob_child.getName())
                                     break
                         else:
                             assert(False) # BUG!
