@@ -91,6 +91,8 @@ Download it from http://niftools.sourceforge.net/
 # Global variables.
 #
 
+DEBUG = True
+
 NIF_BLOCKS = [] # keeps track of all exported blocks
 
 NIF_VERSION_DICT = {}
@@ -235,12 +237,14 @@ def export_nif(filename):
         root_block = export_node(None, 'none', None, 1.0, root_name)
         
         # export objects
+        if DEBUG: print "Exporting objects"
         for root_object in root_objects:
             # export the root objects as a NiNodes; their children are exported as well
             # note that localspace = worldspace, because root objects have no parents
             export_node(root_object, 'localspace', root_block, SCALE_CORRECTION, root_object.getName())
 
         # if we exported animations, but no animation groups are defined, define a default animation group
+        if DEBUG: print "Checking animation groups"
         if (animtxt == None):
             has_controllers = 0
             for block in NIF_BLOCKS:
@@ -249,6 +253,7 @@ def export_nif(filename):
                         has_controllers = 1
                         break
             if has_controllers:
+                if DEBUG: print "Defining default animation group"
                 # get frame start and frame end
                 scn = Blender.Scene.GetCurrent()
                 context = scn.getRenderingContext()
@@ -260,6 +265,7 @@ def export_nif(filename):
 
         # animations without keyframe animations crash the TES CS
         # if we are in that situation, add a trivial keyframe animation
+        if DEBUG: print "Checking controllers"
         if (animtxt):
             has_keyframecontrollers = 0
             for block in NIF_BLOCKS:
@@ -267,6 +273,7 @@ def export_nif(filename):
                     has_keyframecontrollers = 1
                     break
             if has_keyframecontrollers == 0:
+                if DEBUG: print "Defining dummy keyframe controller"
                 # add a trivial keyframe controller on the first root_object node
                 #export_keyframe(None, 'localspace', root_block["Children"].asLinkList()[0], 1.0)
                 export_keyframe(None, 'localspace', root_block, 1.0)
@@ -291,6 +298,7 @@ def export_nif(filename):
 
         # write the file:
         #----------------
+        if DEBUG: print "Writing NIF file(s)"
         Blender.Window.DrawProgressBar(0.66, "Writing NIF file(s)")
 
         # make sure we have the right file extension
@@ -331,6 +339,7 @@ def export_nif(filename):
 #   filename (either with or without extension)
 #
 def export_node(ob, space, parent_block, parent_scale, node_name):
+    if DEBUG: print "Exporting NiNode %s"%node_name
     ipo = None
 
     # determine the block type, and append a new node to the nif block list
@@ -390,7 +399,8 @@ def export_node(ob, space, parent_block, parent_scale, node_name):
             bbind_mat[1][0], bbind_mat[1][1], bbind_mat[1][2], bbind_mat[1][3],
             bbind_mat[2][0], bbind_mat[2][1], bbind_mat[2][2], bbind_mat[2][3],
             bbind_mat[3][0], bbind_mat[3][1], bbind_mat[3][2], bbind_mat[3][3])
-        node.SetBindPosition(bind_mat)
+        inode = QueryNode(node)
+        inode.SetBindPosition(bind_mat)
 
     if (ob != None):
         # export animation
@@ -417,6 +427,7 @@ def export_node(ob, space, parent_block, parent_scale, node_name):
 # Export the animation of blender Ipo as keyframe controller and keyframe data
 #
 def export_keyframe(ipo, space, parent_block, parent_scale, extra_quat = None):
+    if DEBUG: print "Exporting keyframe %s"%parent_block["Name"].asString()
     # -> get keyframe information
     
     assert(space == 'localspace') # we don't support anything else (yet)
@@ -513,6 +524,7 @@ def export_keyframe(ipo, space, parent_block, parent_scale, extra_quat = None):
 
 
 def export_vcolprop(vertex_mode, lighting_mode, nif):
+    if DEBUG: print "Exporting NiVertexColorProperty"
     # create new vertex color property block
     vcolprop_id = nif.header.nblocks
     nif.blocks.append(nif4.NiVertexColorProperty())
@@ -532,6 +544,7 @@ def export_vcolprop(vertex_mode, lighting_mode, nif):
 # parented to the root block
 #
 def export_animgroups(animtxt, block_parent):
+    if DEBUG: print "Exporting animation groups"
     # -> get animation groups information
 
     # get frame start and frame end, and the number of frames per second
@@ -598,6 +611,7 @@ def export_animgroups(animtxt, block_parent):
 # TODO: filter mipmaps
 
 def export_sourcetexture(texture, filename = None):
+    if DEBUG: print "Exporting source texture %s"%texture.getName()
     # texture must be of type IMAGE
     if ( texture.type != Blender.Texture.Types.IMAGE ):
         raise NIFExportError( "Error: Texture '%s' must be of type IMAGE"%texture.getName())
@@ -759,6 +773,7 @@ def export_sourcetexture(texture, filename = None):
 # returns the modified nif and the block index of the exported NiFlipController
 
 def export_flipcontroller( fliptxt, texture, target_id, target_tex, nif ):
+    if DEBUG: print "Exporting NiFlipController for texture %s"%texture.getName()
     tlist = fliptxt.asLines()
 
     # create a NiFlipController
@@ -807,6 +822,7 @@ def export_flipcontroller( fliptxt, texture, target_id, target_tex, nif ):
 # trishape block per mesh material. We also export vertex weights.
 # 
 def export_trishapes(ob, space, parent_block, parent_scale):
+    if DEBUG: print "Exporting NiTriShapes for %s"%ob.getName()
     assert(ob.getType() == 'Mesh')
 
     # get mesh from ob
@@ -1340,6 +1356,7 @@ def export_trishapes(ob, space, parent_block, parent_scale):
 
 
 def export_bones(arm, parent_block, parent_scale):
+    if DEBUG: print "Exporting bones for armature %s"%arm.getName()
     # the armature was already exported as a NiNode
     # now we must export the armature's bones
     assert( arm.getType() == 'Armature' )
@@ -1367,6 +1384,7 @@ def export_bones(arm, parent_block, parent_scale):
     # ok, let's create the bone NiNode blocks
     for bone in bones.values():
         # create a new block for this bone
+        if DEBUG: print "Exporting NiNode for bone %s"%bone.name
         node = create_block("NiNode")
         bones_node[bone.name] = node # doing this now makes linkage very easy in second run
 
@@ -1399,10 +1417,12 @@ def export_bones(arm, parent_block, parent_scale):
             bbind_mat[1][0], bbind_mat[1][1], bbind_mat[1][2], bbind_mat[1][3],
             bbind_mat[2][0], bbind_mat[2][1], bbind_mat[2][2], bbind_mat[2][3],
             bbind_mat[3][0], bbind_mat[3][1], bbind_mat[3][2], bbind_mat[3][3])
-        node.SetBindPosition(bind_mat)
+        inode = QueryNode(node)
+        inode.SetBindPosition(bind_mat)
     
     # now fix the linkage between the blocks
     for bone in bones.values():
+        if DEBUG: print "Linking children of bone %s"%bone.name
         # link the bone's children to the bone
         if bone.children:
             for child in bone.children:
@@ -1651,8 +1671,8 @@ def getObjectSRT(ob, space, restpos = False):
         # we must go through all armatures to find the bone ipo channel
         if not restpos:
             ipo = None
-            for arm in Blender.Armature.Get():
-                if arm.getAction():
+            for arm in Blender.Object.Get(): # Blender.Armature.Get() crashes Blender
+                if arm.getType() == 'Armature' and arm.getAction():
                     try:
                         ipo = arm.getAction().getChannelIpo(ob.name)
                         break
@@ -1779,7 +1799,7 @@ def add_extra_data(block, xtra):
 #
 def create_block(blocktype):
     global NIF_BLOCKS
-    print "creating '%s'"%blocktype # DEBUG
+    if DEBUG: print "creating '%s'"%blocktype # DEBUG
     block = CreateBlock(blocktype)
     NIF_BLOCKS.append(block)
     return block
