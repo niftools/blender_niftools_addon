@@ -17,19 +17,16 @@ Usage:<br>
     Select the meshes you wish to export and run this script from "File->Export" menu. All parents and children of the selected meshes will be exported as well. Supports animation of mesh location and rotation, and material color and alpha. To define animation groups, check the script source code.
 
 Missing:<br>
-    The script does not (yet) support the export of armature.
+    Does not export not particle effects, cameras, lights.
 
 Known issues:<br>
     Ambient and emit colors are obtained by multiplication with the diffuse color.<br>
     Blender double sided faces will be one sided in the NIF file (workaround: duplicate faces).
 
-Options (Scripts->System->Scripts Config Editor->Other->nif_import_export):
-
-Scale Correction: How many NIF units is one Blender unit?
-
-Force DDS: Force textures to be exported with a .DDS extension? Usually, you can leave this disabled.
-
-Strip Texture Path: Strip texture path in NIF file? You should leave this disabled, especially when this model's textures are stored in a subdirectory of the Data Files\Textures folder.
+Options (Scripts->System->Scripts Config Editor->Export):<br>
+    Scale Correction: How many NIF units is one Blender unit?<br>
+    Force DDS: Force textures to be exported with a .DDS extension? Usually, you can leave this disabled.<br>
+    Strip Texture Path: Strip texture path in NIF file? You should leave this disabled, especially when this model's textures are stored in a subdirectory of the Data Files\Textures folder.
 """
 
 # --------------------------------------------------------------------------
@@ -601,8 +598,6 @@ def export_animgroups(animtxt, block_parent):
 # TODO: filter mipmaps
 
 def export_sourcetexture(texture, filename = None):
-    global SCALE_CORRECTION,FORCE_DDS,STRIP_TEXPATH,seams_import,last_imported,last_exported,TEXTURE_DIR
-
     # texture must be of type IMAGE
     if ( texture.type != Blender.Texture.Types.IMAGE ):
         raise NIFExportError( "Error: Texture '%s' must be of type IMAGE"%texture.getName())
@@ -812,8 +807,6 @@ def export_flipcontroller( fliptxt, texture, target_id, target_tex, nif ):
 # trishape block per mesh material. We also export vertex weights.
 # 
 def export_trishapes(ob, space, parent_block, parent_scale):
-    global SCALE_CORRECTION,FORCE_DDS,STRIP_TEXPATH,seams_import,last_imported,last_exported,TEXTURE_DIR
-    
     assert(ob.getType() == 'Mesh')
 
     # get mesh from ob
@@ -1300,7 +1293,7 @@ def export_trishapes(ob, space, parent_block, parent_scale):
         tridata["Radius"] = radius
 
         # now export the vertex weights, if there are any
-        vertgroups = ob.getVertGroupNames()
+        vertgroups = ob.data.getVertGroupNames()
         bonenames = []
         if ob.getParent():
             if ob.getParent().getType() == 'Armature':
@@ -1525,7 +1518,7 @@ def export_children(ob, parent_block, parent_scale):
                     else:
                         # we should parent the object to the bone instead of to the armature
                         # so let's find that bone!
-                        for block in NIF_BLOCK:
+                        for block in NIF_BLOCKS:
                             if block.GetBlockType() == "NiNode":
                                 if block["Name"].asString() == parent_bone_name:
                                     export_node(ob_child, 'localspace', block, parent_scale, ob_child.getName())
@@ -1543,7 +1536,6 @@ def export_children(ob, parent_block, parent_scale):
 # when exporting the vertex coordinates... ?
 #
 def export_matrix(ob, space, restpos = False):
-    global EPSILON
     nt = Float3()
     nr = Matrix33()
     ns = Float3()
@@ -1787,6 +1779,7 @@ def add_extra_data(block, xtra):
 #
 def create_block(blocktype):
     global NIF_BLOCKS
+    print "creating '%s'"%blocktype # DEBUG
     block = CreateBlock(blocktype)
     NIF_BLOCKS.append(block)
     return block
