@@ -1322,7 +1322,7 @@ def export_trishapes(ob, space, parent_block, parent_scale):
         if boneinfluences: # yes we have skinning!
             # create new skinning instance block and link it
             skininst = create_block("NiSkinInstance")
-            trishape["Children"].AddLink(skininst)
+            trishape["Skin Instance"] = skininst
             # skininst["Skeleton Root"] = automatically calculated
             # skininst["Bones"] = automatically calculated
 
@@ -1340,15 +1340,20 @@ def export_trishapes(ob, space, parent_block, parent_scale):
                 for block in NIF_BLOCKS:
                     if block.GetBlockType() == "NiNode":
                         if block["Name"].asString() == bone:
-                            bone_block = bone
+                            bone_block = block
                             break
                 else:
                     raise NIFExportError("Bone '%s' not found."%bone)
                 # find vertex weights
-                vert_list = mesh.getVertsFromGroup(bone,1)
+                vert_list = ob.data.getVertsFromGroup(bone,1)
                 vert_weights = {}
+                print vertmap
                 for v in vert_list:
-                    vert_weights[vert_map[v[0]]] = v[1]
+                    # v[0] is the original vertex index
+                    # vertmap[v[0]] is the set of vertices (indices) to which v[0] was mapped
+                    # so we simply export the same weight as the original vertex for each new vertex
+                    for vert_index in vertmap[v[0]]:
+                        vert_weights[vert_index] = v[1]
                 iskindata.AddBone(bone_block, vert_weights)
 
         materialIndex += 1 # ...and process the next material
