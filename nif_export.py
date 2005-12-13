@@ -90,9 +90,11 @@ Download it from http://niftools.sourceforge.net/
 
 
 
-# 
-# Process config files.
-# 
+#
+# Global variables.
+#
+
+NIF_BLOCKS = [] # keeps track of all exported blocks
 
 NIF_VERSION_DICT = {}
 NIF_VERSION_DICT['4.0.0.2']  = 0x04000002
@@ -126,6 +128,12 @@ tooltips = {
 limits = {
     'SCALE_CORRECTION': [0.01, 100.0]
 }
+
+
+
+# 
+# Process config files.
+# 
 
 # update registry
 def update_registry():
@@ -238,7 +246,7 @@ def export_nif(filename):
         # if we exported animations, but no animation groups are defined, define a default animation group
         if (animtxt == None):
             has_controllers = 0
-            for block in get_block_list(root_block):
+            for block in NIF_BLOCKS:
                 if block.IsControllable():
                     if ( not block["Controller"].asLink().is_null() ):
                         has_controllers = 1
@@ -257,7 +265,7 @@ def export_nif(filename):
         # if we are in that situation, add a trivial keyframe animation
         if (animtxt):
             has_keyframecontrollers = 0
-            for block in get_block_list(root_block):
+            for block in NIF_BLOCKS:
                 if block.GetBlockType() == "NiKeyframeController":
                     has_keyframecontrollers = 1
                     break
@@ -333,17 +341,17 @@ def export_node(ob, space, parent_block, parent_scale, node_name):
         # -> root node
         assert(space == 'none')
         assert(parent_block == None) # debug
-        node = CreateBlock("NiNode")
+        node = create_block("NiNode")
     else:
         assert((ob.getType() == 'Empty') or (ob.getType() == 'Mesh') or (ob.getType() == 'Armature')) # debug
         assert(parent_block) # debug
         ipo = ob.getIpo() # get animation data
         if (node_name == 'RootCollisionNode'):
             # -> root collision node
-            node = CreateBlock("RootCollisionNode")
+            node = create_block("RootCollisionNode")
         else:
             # -> regular node (static or animated object)
-            node = CreateBlock("NiNode")
+            node = create_block("NiNode")
     
     # make it child of its parent in the nif, if it has one
     if (parent_block):
@@ -373,6 +381,20 @@ def export_node(ob, space, parent_block, parent_scale, node_name):
     ob_translation[2] *= parent_scale
     node["Translation"] = ob_translation # take parent scale into account
 
+    # set object bind position, in armature space (this should work)
+    if ob != None and ob.getParent() and ob.getParent().getType() == 'Armature':
+        if ipo:
+            raise NIFExportError('%s: animated meshes parented to armatures are unsupported, animate the armature instead'%ob.getName())
+        arm_mat_inv = ob.getParent().getMatrix('worldspace')
+        arm_mat_inv.invert()
+        bbind_mat = ob.getMatrix('worldspace') * arm_mat_inv # if ob has no ipo, then this is effectively relative to the rest matrix
+        bind_mat = Matrix44(
+            bbind_mat[0][0], bbind_mat[0][1], bbind_mat[0][2], bbind_mat[0][3],
+            bbind_mat[1][0], bbind_mat[1][1], bbind_mat[1][2], bbind_mat[1][3],
+            bbind_mat[2][0], bbind_mat[2][1], bbind_mat[2][2], bbind_mat[2][3],
+            bbind_mat[3][0], bbind_mat[3][1], bbind_mat[3][2], bbind_mat[3][3])
+        node.SetBindPosition(bind_mat)
+
     if (ob != None):
         # export animation
         if (ipo != None):
@@ -397,7 +419,7 @@ def export_node(ob, space, parent_block, parent_scale, node_name):
 #
 # Export the animation of blender Ipo as keyframe controller and keyframe data
 #
-def export_keyframe(ipo, space, parent_block, parent_scale):
+def export_keyframe(ipo, space, parent_block, parent_scale, extra_quat = None):
     # -> get keyframe information
     
     assert(space == 'localspace') # we don't support anything else (yet)
@@ -427,12 +449,16 @@ def export_keyframe(ipo, space, parent_block, parent_scale):
                 ftime = (frame - 1) * fspeed
                 if (curve.getName() == 'RotX') or (curve.getName() == 'RotY') or (curve.getName() == 'RotZ'):
                     rot_curve[ftime] = Blender.Mathutils.Euler([10*ipo.getCurve('RotX').evaluate(frame), 10*ipo.getCurve('RotY').evaluate(frame), 10*ipo.getCurve('RotZ').evaluate(frame)]).toQuat()
+                    if extra_quat: # extra quaternion rotation
+                        rot_curve[ftime] = Blender.Mathutils.CrossQuats(rot_curve[ftime], extra_quat)
                 elif (curve.getName() == 'QuatX') or (curve.getName() == 'QuatY') or (curve.getName() == 'QuatZ') or  (curve.getName() == 'QuatW'):
                     rot_curve[ftime] = Quaternion()
                     rot_curve[ftime].x = ipo.getCurve('QuatX').evaluate(frame)
                     rot_curve[ftime].y = ipo.getCurve('QuatY').evaluate(frame)
                     rot_curve[ftime].z = ipo.getCurve('QuatZ').evaluate(frame)
                     rot_curve[ftime].w = ipo.getCurve('QuatW').evaluate(frame)
+                    if extra_quat: # extra quaternion rotation
+                        rot_curve[ftime] = Blender.Mathutils.CrossQuats(rot_curve[ftime], extra_quat)
                 if (curve.getName() == 'LocX') or (curve.getName() == 'LocY') or (curve.getName() == 'LocZ'):
                     trans_curve[ftime] = Vector3()
                     trans_curve[ftime].x = ipo.getCurve('LocX').evaluate(frame) * parent_scale
@@ -442,7 +468,7 @@ def export_keyframe(ipo, space, parent_block, parent_scale):
     # -> now comes the real export
 
     # add a keyframecontroller block, and refer to this block in the parent's time controller
-    kfc = CreateBlock("NiKeyframeController")
+    kfc = create_block("NiKeyframeController")
     assert( parent_block["Controller"].asLink().is_null() ) # make sure we don't overwrite
     parent_block["Controller"] = kfc
 
@@ -456,7 +482,7 @@ def export_keyframe(ipo, space, parent_block, parent_scale):
     #kfc["Target Node"] = parent_block
 
     # add the keyframe data
-    kfd = CreateBlock("NiKeyframeData")
+    kfd = create_block("NiKeyframeData")
     kfc["Data"] = kfd
 
     ikfd = QueryKeyframeData(kfd)
@@ -549,7 +575,7 @@ def export_animgroups(animtxt, block_parent):
     
     # add a NiTextKeyExtraData block, and refer to this block in the
     # parent node (we choose the root block)
-    textextra = CreateBlock("NiTextKeyExtraData")
+    textextra = create_block("NiTextKeyExtraData")
     add_extra_data(block_parent, textextra)
     
     # create a NiTextKey for each frame descriptor
@@ -593,7 +619,7 @@ def export_sourcetexture(texture, filename = None):
     #            return nif, idx
 
     # add NiSourceTexture
-    srctex = CreateBlock("NiSourceTexture")
+    srctex = create_block("NiSourceTexture")
     srctexdata = TextureSource()
     srctexdata.useExternal = ( texture.getName()[:4] != "pack" )
     
@@ -783,7 +809,7 @@ def export_flipcontroller( fliptxt, texture, target_id, target_tex, nif ):
 # parent_block, as NiTriShape and NiTriShapeData blocks, possibly
 # along with some NiTexturingProperty, NiSourceTexture,
 # NiMaterialProperty, and NiAlphaProperty blocks. We export one
-# trishape block per mesh material.
+# trishape block per mesh material. We also export vertex weights.
 # 
 def export_trishapes(ob, space, parent_block, parent_scale):
     global SCALE_CORRECTION,FORCE_DDS,STRIP_TEXPATH,seams_import,last_imported,last_exported,TEXTURE_DIR
@@ -887,7 +913,7 @@ def export_trishapes(ob, space, parent_block, parent_scale):
         # no material                    -> typically, collision mesh
 
         # add a trishape block, and refer to this block in the parent's children list
-        trishape = CreateBlock("NiTriShape")
+        trishape = create_block("NiTriShape")
         parent_block["Children"].AddLink(trishape)
         
         # fill in the NiTriShape's non-trivial values
@@ -911,7 +937,7 @@ def export_trishapes(ob, space, parent_block, parent_scale):
         
         if (mesh_base_tex != None or mesh_glow_tex != None):
             # add NiTriShape's texturing property
-            tritexprop = CreateBlock("NiTexturingProperty")
+            tritexprop = create_block("NiTexturingProperty")
             trishape["Properties"].AddLink(tritexprop)
             
             tritexprop["Flags"] = 0x0001 # standard?
@@ -960,7 +986,7 @@ def export_trishapes(ob, space, parent_block, parent_scale):
         
         if (mesh_hasalpha):
             # add NiTriShape's alpha propery (this is de facto an automated version of Detritus's method, see http://detritus.silgrad.com/alphahex.html)
-            trialphaprop = CreateBlock("NiAlphaProperty")
+            trialphaprop = create_block("NiAlphaProperty")
             trialphaprop["Flags"] = 0x00ED
             
             # refer to the alpha property in the trishape block
@@ -969,14 +995,14 @@ def export_trishapes(ob, space, parent_block, parent_scale):
         if (mesh_mat != None):
             # add NiTriShape's specular property
             if ( mesh_mat_glossiness > EPSILON ):
-                trispecprop = CreateBlock("NiSpecularProperty")
+                trispecprop = create_block("NiSpecularProperty")
                 trispecprop["Flags"] = 0x0001
             
                 # refer to the specular property in the trishape block
                 trishape["Properties"].AddLink(trispecprop)
             
             # add NiTriShape's material property
-            trimatprop = CreateBlock("NiMaterialProperty")
+            trimatprop = create_block("NiMaterialProperty")
             
             trimatprop["Name"] = mesh_mat.getName()
             trimatprop["Flags"] = 0x0001 # ? standard
@@ -1018,7 +1044,7 @@ def export_trishapes(ob, space, parent_block, parent_scale):
                 assert( ( ftimes ) > 0 )
 
                 # add a alphacontroller block, and refer to this in the parent material
-                alphac = CreateBlock("NiAlphaController")
+                alphac = create_block("NiAlphaController")
                 assert(trimatprop["Controller"].asLink().is_null()) # make sure we don't overwrite anything
                 trimatprop["Controller"] = alphac
 
@@ -1038,7 +1064,7 @@ def export_trishapes(ob, space, parent_block, parent_scale):
                 alphac["Stop Time"]  = (fend - fstart) * fspeed
 
                 # add the alpha data
-                alphad = CreateBlock("NiFloatData")
+                alphad = create_block("NiFloatData")
                 alphac["Data"] = alphad
 
                 # select interpolation mode and export the alpha curve data
@@ -1090,7 +1116,7 @@ def export_trishapes(ob, space, parent_block, parent_scale):
                 assert( len( ftimes ) > 0 )
 
                 # add a materialcolorcontroller block
-                matcolc = CreateBlock("NiMaterialColorController")
+                matcolc = create_block("NiMaterialColorController")
                 set_controller(trimatprop, matcolc)
 
                 # fill in the non-trivial values
@@ -1101,7 +1127,7 @@ def export_trishapes(ob, space, parent_block, parent_scale):
                 matcolc["Stop Time"] = (fend - fstart) * fspeed
 
                 # add the material color data
-                matcold = CreateBlock("NiColorData")
+                matcold = create_block("NiColorData")
                 matcolc["Data"] = matcold
 
                 # export the resulting rgba curve
@@ -1118,7 +1144,7 @@ def export_trishapes(ob, space, parent_block, parent_scale):
                 imatcold.SetKeys(rgba_keys)
 
         # add NiTriShape's data
-        tridata = CreateBlock("NiTriShapeData")
+        tridata = create_block("NiTriShapeData")
         trishape["Data"] = tridata
         ishapedata = QueryShapeData(tridata)
         itridata = QueryTriShapeData(tridata)
@@ -1250,34 +1276,71 @@ def export_trishapes(ob, space, parent_block, parent_scale):
         # center
         count = 0
         center = Float3()
-        for v in mesh.verts:
+        for v in vertlist:
             #slows down too much #if VERBOSE: Blender.Window.DrawProgressBar(0.33 + 0.33 * float(count)/len(mesh.verts), "Converting to NIF (%s)"%ob.getName())
             count += 1
-            center[0] += v[0]
-            center[1] += v[1]
-            center[2] += v[2]
-        assert(len(mesh.verts) > 0) # debug
-        center[0] /= len(mesh.verts)
-        center[1] /= len(mesh.verts)
-        center[2] /= len(mesh.verts)
+            center[0] += v.x
+            center[1] += v.y
+            center[2] += v.z
+        assert(len(vertlist) > 0) # debug
+        center[0] /= len(vertlist)
+        center[1] /= len(vertlist)
+        center[2] /= len(vertlist)
         
         # radius
         count = 0
         radius = 0.0
-        for v in mesh.verts:
+        for v in vertlist:
             #slows down too much #if VERBOSE: Blender.Window.DrawProgressBar(0.66 + 0.33 * float(count)/len(mesh.verts), "Converting to NIF (%s)"%ob.getName())
             count += 1
             r = get_distance(v, center)
             if (r > radius): radius = r
 
-        # correct scale
-        center[0] *= final_scale
-        center[1] *= final_scale
-        center[2] *= final_scale
-        radius *= final_scale
-
         tridata["Center"] = center
         tridata["Radius"] = radius
+
+        # now export the vertex weights, if there are any
+        vertgroups = ob.getVertGroupNames()
+        bonenames = []
+        if ob.getParent():
+            if ob.getParent().getType() == 'Armature':
+                bonenames = ob.getParent().getData().bones.keys()
+        # the vertgroups that correspond to bonenames are bones that influence the mesh
+        boneinfluences = []
+        for bone in bonenames:
+            if bone in vertgroups:
+                boneinfluences.append(bone)
+        if boneinfluences: # yes we have skinning!
+            # create new skinning instance block and link it
+            skininst = create_block("NiSkinInstance")
+            trishape["Children"].AddLink(skininst)
+            # skininst["Skeleton Root"] = automatically calculated
+            # skininst["Bones"] = automatically calculated
+
+            # create skinning data and link it
+            skindata = create_block("NiSkinData")
+            skininst["Data"] = skindata
+            iskindata = QuerySkinData(skindata)
+
+            # add vertex weights
+            # for each bone, first we get the bone block
+            # then we get the vertex weights
+            # and then we add it to the NiSkinData
+            for bone in boneinfluences:
+                # find bone in exported blocks
+                for block in NIF_BLOCKS:
+                    if block.GetBlockType() == "NiNode":
+                        if block["Name"].asString() == bone:
+                            bone_block = bone
+                            break
+                else:
+                    raise NIFExportError("Bone '%s' not found."%bone)
+                # find vertex weights
+                vert_list = mesh.getVertsFromGroup(bone,1)
+                vert_weights = {}
+                for v in vert_list:
+                    vert_weights[vert_map[v[0]]] = v[1]
+                iskindata.AddBone(bone_block, vert_weights)
 
         materialIndex += 1 # ...and process the next material
 
@@ -1311,7 +1374,7 @@ def export_bones(arm, parent_block, parent_scale):
     # ok, let's create the bone NiNode blocks
     for bone in bones.values():
         # create a new block for this bone
-        node = CreateBlock("NiNode")
+        node = create_block("NiNode")
         bones_node[bone.name] = node # doing this now makes linkage very easy in second run
 
         # add the node and the keyframe for this bone
@@ -1330,8 +1393,20 @@ def export_bones(arm, parent_block, parent_scale):
         ob_translation[2] *= parent_scale
         node["Translation"] = ob_translation # take parent scale into account
 
+        # bone rotations are stored in the IPO relative to the rest position
+        # so we must take the rest position into account
+        extra_quat = bone.matrix['BONESPACE'].toQuat()
         if bones_ipo.has_key(bone.name):
-            export_keyframe(bones_ipo[bone.name], 'localspace', node, parent_scale)
+            export_keyframe(bones_ipo[bone.name], 'localspace', node, parent_scale, extra_quat)
+
+        # set the bind pose relative to the armature coordinate system (this should work)
+        bbind_mat = bone.matrix['ARMATURESPACE']
+        bind_mat = Matrix44(
+            bbind_mat[0][0], bbind_mat[0][1], bbind_mat[0][2], bbind_mat[0][3],
+            bbind_mat[1][0], bbind_mat[1][1], bbind_mat[1][2], bbind_mat[1][3],
+            bbind_mat[2][0], bbind_mat[2][1], bbind_mat[2][2], bbind_mat[2][3],
+            bbind_mat[3][0], bbind_mat[3][1], bbind_mat[3][2], bbind_mat[3][3])
+        node.SetBindPosition(bind_mat)
     
     # now fix the linkage between the blocks
     for bone in bones.values():
@@ -1450,8 +1525,8 @@ def export_children(ob, parent_block, parent_scale):
                     else:
                         # we should parent the object to the bone instead of to the armature
                         # so let's find that bone!
-                        for block in get_block_list(parent_block):
-                            if not block.GetAttr("Name").is_null():
+                        for block in NIF_BLOCK:
+                            if block.GetBlockType() == "NiNode":
                                 if block["Name"].asString() == parent_bone_name:
                                     export_node(ob_child, 'localspace', block, parent_scale, ob_child.getName())
                                     break
@@ -1461,11 +1536,13 @@ def export_children(ob, parent_block, parent_scale):
 
 
 #
-# Convert an object's transformation matrix to a niflib quadrupple ( translate, rotate, scale, velocity ).
+# Convert an object's transformation matrix on the first frame of animation
+# to a niflib quadrupple ( translate, rotate, scale, velocity ).
+# If restpos is true then the object's rest pose is returned instead
 # The scale is a vector; but non-uniform scaling is not supported by the nif format, so for these we'll have to apply the transformation
 # when exporting the vertex coordinates... ?
 #
-def export_matrix(ob, space):
+def export_matrix(ob, space, restpos = False):
     global EPSILON
     nt = Float3()
     nr = Matrix33()
@@ -1473,7 +1550,7 @@ def export_matrix(ob, space):
     nv = Float3()
     
     # decompose
-    bs, br, bt = getObjectSRT(ob, space)
+    bs, br, bt = getObjectSRT(ob, space, restpos)
     
     # and fill in the values
     nt[0] = bt[0]
@@ -1508,17 +1585,30 @@ def export_matrix(ob, space):
 # object. Returns a triple (bs, br, bt), where bs is a scale vector,
 # br is a 3x3 rotation matrix, and bt is a translation vector. It
 # should hold that "ob.getMatrix(space) == bs * br * bt".
-def getObjectSRT(ob, space):
-    global EPSILON
+# If restpos is true then the object's rest pose is returned instead
+def getObjectSRT(ob, space, restpos = False):
+    # handle the trivial case first
     if (space == 'none'):
         bs = Blender.Mathutils.Vector([1.0, 1.0, 1.0])
         br = Blender.Mathutils.Matrix()
         br.identity()
         bt = Blender.Mathutils.Vector([0.0, 0.0, 0.0])
         return (bs, br, bt)
+    
     assert((space == 'worldspace') or (space == 'localspace'))
+
+    # set everything in the first frame of animation
+    scn = Blender.Scene.GetCurrent()
+    context = scn.getRenderingContext()
+    context.currentFrame(1) # first frame
+    scn.update(1)
+
+    # now write out spaces
     if (not type(ob) is Blender.Armature.BoneType):
+        # get matrix in first frame of animation
         mat = ob.getMatrix('worldspace')
+        # rest pose, ... buggy for regular objects so raise an exception for these
+        assert(restpos == False)
         # localspace bug fix:
         if (space == 'localspace'):
             if (ob.getParent() != None):
@@ -1527,13 +1617,25 @@ def getObjectSRT(ob, space):
                 mat = mat * matparentinv
                 if (ob.getParent().getType() == 'Armature'):
                     # the object is parented to the armature... we must get the matrix relative to the bone parent, of course
-                    # TODO: getMatrix('worldspace') returns the global object matrix in the current animation frame... grrrr Blender...
                     # that means that we must transform the object back to the rest pose...
                     # for now we must assume that the rest pose is equal to this frame of animation
                     bone_parent_name = ob.getParentBoneName()
                     if bone_parent_name:
                         bone_parent = ob.getParent().getData().bones[bone_parent_name]
-                        matparentboneinv = getBoneMatrix(bone_parent, 'ARMATURESPACE') # bone matrix in armature space
+                        # get bone parent rest matrix
+                        matparentboneinv = get_bone_restmatrix(bone_parent, 'ARMATURESPACE') # bone rest matrix in armature space
+                        # and multiply with bone parent ipo matrix, if there is one
+                        if ob.getParent().getAction():
+                            try:
+                                ipo = arm.getAction().getChannelIpo(bone_parent.name)
+                            except: pass
+                            if ipo:
+                                quat = Blender.Mathutils.Quaternion()
+                                q.x = ipo.getCurve('QuatX').evaluate(1) # first frame
+                                q.y = ipo.getCurve('QuatY').evaluate(1)
+                                q.z = ipo.getCurve('QuatZ').evaluate(1)
+                                q.w = ipo.getCurve('QuatW').evaluate(1)
+                                mat = quat.toMatrix() * matparentboneinv # left multiplication...
                         #print "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                         #print ob.getName()
                         #print 'ARMATURESPACE'
@@ -1546,13 +1648,31 @@ def getObjectSRT(ob, space):
         bt = mat.translationPart()        
         # get the rotation part, this is scale * rotation
         bsr = mat.rotationPart()
-    else: # bones, get matrix
+    else: # bones, get the matrix of the first frame of animation
         assert(space == 'localspace') # bones must be calculated in localspace
         # TODO assert bone.size == 1.0
-        mat = getBoneMatrix(ob, 'BONESPACE')
+        mat = get_bone_restmatrix(ob, 'BONESPACE')
         #print 'BONESPACE'
         #print mat
         #print ob.matrix['BONESPACE']
+        # now we have the rest matrix... multiply with the first frame of animation IPO
+        # we must go through all armatures to find the bone ipo channel
+        if not restpos:
+            ipo = None
+            for arm in Blender.Armature.Get():
+                if arm.getAction():
+                    try:
+                        ipo = arm.getAction().getChannelIpo(ob.name)
+                        break
+                    except: pass
+            if ipo:
+                quat = Blender.Mathutils.Quaternion()
+                q.x = ipo.getCurve('QuatX').evaluate(1) # first frame
+                q.y = ipo.getCurve('QuatY').evaluate(1)
+                q.z = ipo.getCurve('QuatZ').evaluate(1)
+                q.w = ipo.getCurve('QuatW').evaluate(1)
+                mat = quat.toMatrix() * mat
+        
         bsr = mat.rotationPart()
         bt = mat.translationPart()
     
@@ -1598,10 +1718,10 @@ def getObjectSRT(ob, space):
 
 
 
-# get X-aligned Blender bone matrix
+# get Y-aligned Blender bone matrix (TODO: X-aligned?)
 # space can be ARMATURESPACE or BONESPACE
 # (code based on the blender2cal3d export script and Blender source code)
-def getBoneMatrix(bone, space):
+def get_bone_restmatrix(bone, space):
     bone_head = bone.head['BONESPACE']
     bone_tail = bone.tail['BONESPACE']
     bone_roll = bone.roll['BONESPACE']
@@ -1624,13 +1744,13 @@ def getBoneMatrix(bone, space):
         if (not bone.parent):
             return mat
         else:
-            return mat * getBoneMatrix(bone.parent, 'ARMATURESPACE')
+            return mat * get_bone_restmatrix(bone.parent, 'ARMATURESPACE')
     else:
         assert(False) # bug!
 
-# calculate distance between two Float3 vectors
+# calculate distance between two vectors
 def get_distance(v, w):
-    return ((v[0]-w[0])*(v[0]-w[0]) + (v[1]-w[1])*(v[1]-w[1]) + (v[2]-w[2])*(v[2]-w[2])) ** 0.5
+    return ((v.x-w[0])**2 + (v.y-w[1])**2 + (v.z-w[2])**2) ** 0.5
 
 
 
@@ -1662,18 +1782,22 @@ def add_extra_data(block, xtra):
 
 
 
-def get_block_list(block):
-    result = [ block ]
-    for link in block.GetLinks():
-        result.extend(get_block_list(link))
-    return result
+#
+# Helper function to create a new block and add it to the list of exported blocks.
+#
+def create_block(blocktype):
+    global NIF_BLOCKS
+    block = CreateBlock(blocktype)
+    NIF_BLOCKS.append(block)
+    return block
 
 
 
-# some math helper functions
-# (see Blender source code)
+# (see Blender source code, armature.c, to understand this function)
+# for now we calculate bone matrices Y-aligned (as Blender stores them)
+# as this makes it much easier to export the IPO curves
 def bone2matrix(head, tail, roll, parent_len):
-    target = Blender.Mathutils.Vector([1.0, 0.0, 0.0]) # X aligned
+    target = Blender.Mathutils.Vector([0.0, 1.0, 0.0]) # Y-aligned
     delta  = Blender.Mathutils.Vector([tail[0] - head[0], tail[1] - head[1], tail[2] - head[2]])
     nor    = delta
     nor.normalize()
@@ -1695,8 +1819,8 @@ def bone2matrix(head, tail, roll, parent_len):
   
     rMatrix = Blender.Mathutils.RotationMatrix(roll, 4, "r", nor)
     result = bMatrix * rMatrix
-    result[3][0] = head[0] + parent_len # X aligned
-    result[3][1] = head[1]
+    result[3][0] = head[0]
+    result[3][1] = head[1] + parent_len # Y-aligned
     result[3][2] = head[2]
     return result
 
