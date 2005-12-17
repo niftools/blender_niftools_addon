@@ -199,7 +199,7 @@ class NIFExportError(Exception):
 #
 # Main export function.
 #
-def export_nif(filename):
+def export_nif(filename):    
     try: # catch NIFExportErrors
         
         # preparation:
@@ -261,7 +261,7 @@ def export_nif(filename):
                 fend = context.endFrame()
                 # write the animation group text buffer
                 animtxt = Blender.Text.New("Anim")
-                animtxt.write("%i/Idle: Start/Idle: Start Loop\n%i/Idle: Stop/Idle: Stop Loop"%(fstart,fend))
+                animtxt.write("%i/Idle: Start Loop\n%i/Idle: Stop Loop"%(fstart,fend))
 
         # animations without keyframe animations crash the TES CS
         # if we are in that situation, add a trivial keyframe animation
@@ -454,7 +454,7 @@ def export_keyframe(ipo, space, parent_block, extra_quat = None):
                     if extra_quat: # extra quaternion rotation
                         rot_curve[ftime] = Blender.Mathutils.CrossQuats(rot_curve[ftime], extra_quat)
                 elif (curve.getName() == 'QuatX') or (curve.getName() == 'QuatY') or (curve.getName() == 'QuatZ') or  (curve.getName() == 'QuatW'):
-                    rot_curve[ftime] = Quaternion()
+                    rot_curve[ftime] = Blender.Mathutils.Quaternion()
                     rot_curve[ftime].x = ipo.getCurve('QuatX').evaluate(frame)
                     rot_curve[ftime].y = ipo.getCurve('QuatY').evaluate(frame)
                     rot_curve[ftime].z = ipo.getCurve('QuatZ').evaluate(frame)
@@ -933,6 +933,21 @@ def export_trishapes(ob, space, parent_block):
         trishape["Scale"]       = ob_scale[0]
         trishape["Velocity"]    = ob_velocity
         
+        # set trishape bind position, in armature space (this should work)
+        if ob != None and ob.getParent() and ob.getParent().getType() == 'Armature':
+            if ob.getIpo():
+                raise NIFExportError('%s: animated meshes parented to armatures are unsupported, animate the armature instead'%ob.getName())
+            arm_mat_inv = ob.getParent().getMatrix('worldspace')
+            arm_mat_inv.invert()
+            bbind_mat = ob.getMatrix('worldspace') * arm_mat_inv # if ob has no ipo, then this is effectively relative to the rest matrix
+            bind_mat = Matrix44(
+                bbind_mat[0][0], bbind_mat[0][1], bbind_mat[0][2], bbind_mat[0][3],
+                bbind_mat[1][0], bbind_mat[1][1], bbind_mat[1][2], bbind_mat[1][3],
+                bbind_mat[2][0], bbind_mat[2][1], bbind_mat[2][2], bbind_mat[2][3],
+                bbind_mat[3][0], bbind_mat[3][1], bbind_mat[3][2], bbind_mat[3][3])
+            inode = QueryNode(trishape)
+            inode.SetBindPosition(bind_mat)
+
         if (mesh_base_tex != None or mesh_glow_tex != None):
             # add NiTriShape's texturing property
             tritexprop = create_block("NiTexturingProperty")
@@ -1338,12 +1353,18 @@ def export_trishapes(ob, space, parent_block):
                     # vertmap[v[0]] is the set of vertices (indices) to which v[0] was mapped
                     # so we simply export the same weight as the original vertex for each new vertex
 
-                    # TODO: get normalizing factor
+                    # get normalizing factor
                     #infl_list = ob.data.getVertexInfluences(v[0]) # aargh! a blender bug prevents this from working
+                    # alternative code:
+                    norm = 0.0
+                    for bone2 in boneinfluences:
+                        tmp = ob.data.getVertsFromGroup(bone2, 1, [v[0]])
+                        if tmp:
+                            norm += tmp[0][1]
 
                     # write the weights
                     for vert_index in vertmap[v[0]]:
-                        vert_weights[vert_index] = v[1]
+                        vert_weights[vert_index] = v[1] / norm
                 iskindata.AddBone(bone_block, vert_weights)
 
         materialIndex += 1 # ...and process the next material
@@ -1671,11 +1692,14 @@ def getObjectSRT(ob, space, restpos = False):
                     except: pass
             if ipo:
                 quat = Blender.Mathutils.Quaternion()
-                q.x = ipo.getCurve('QuatX').evaluate(1) # first frame
-                q.y = ipo.getCurve('QuatY').evaluate(1)
-                q.z = ipo.getCurve('QuatZ').evaluate(1)
-                q.w = ipo.getCurve('QuatW').evaluate(1)
-                mat = quat.toMatrix() * mat
+                quat.x = ipo.getCurve('QuatX').evaluate(1) # first frame
+                quat.y = ipo.getCurve('QuatY').evaluate(1)
+                quat.z = ipo.getCurve('QuatZ').evaluate(1)
+                quat.w = ipo.getCurve('QuatW').evaluate(1)
+                qmat = quat.toMatrix()
+                qmat.resize4x4()
+                qmat[3][3] = 1.0
+                mat = qmat * mat
         
         bsr = mat.rotationPart()
         bt = mat.translationPart()
