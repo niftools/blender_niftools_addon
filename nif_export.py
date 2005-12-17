@@ -1220,7 +1220,11 @@ def export_trishapes(ob, space, parent_block):
                 else:
                     fuv = None
                 if (mesh_hasvcol):
-                    fcol = Color(*(f.col[i])) / 255.0 # NIF stores the colour values as floats
+                    fcol = Color(0.0,0.0,0.0,0.0)
+                    fcol.r = f.col[i].r / 255.0 # NIF stores the colour values as floats
+                    fcol.g = f.col[i].g / 255.0 # NIF stores the colour values as floats
+                    fcol.b = f.col[i].b / 255.0 # NIF stores the colour values as floats
+                    fcol.a = f.col[i].a / 255.0 # NIF stores the colour values as floats
                 else:
                     fcol = None
                     
