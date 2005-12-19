@@ -372,6 +372,23 @@ def export_node(ob, space, parent_block, node_name):
     else:
         node["Flags"] = 0x000C # ? this seems pretty standard for static and animated ninodes
 
+    # ok, now comes the most weird thing about the NIF format:
+    # we have to write the WRONG transform matrix for skinned meshes
+    # (the correct transformation matrix ends up somewhere hidden in NiSkinData)
+    if ob and ob.getParent() and ob.getParent().getType() == 'Armature':
+        vertgroups = ob.data.getVertGroupNames()
+        bonenames = ob.getParent().getData().bones.keys()
+        # the vertgroups that correspond to bonenames are bones that influence the mesh
+        for bone in bonenames:
+            if bone in vertgroups:
+                # yes we have skinning!
+                space = 'none' # strange... strange... strange... but it works
+                # assert that this skinned mesh has no children
+                for ob2 in Blender.Object.Get():
+                    if ob2.getParent() == ob:
+                        raise NIFExportError('%s: skinned mesh cannot have children (this is an unsupported feature), parent to the mesh armature instead'%ob.getName())
+                break
+
     ob_translation, \
     ob_rotation, \
     ob_scale, \
