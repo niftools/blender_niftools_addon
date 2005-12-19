@@ -386,7 +386,7 @@ def export_node(ob, space, parent_block, node_name):
     if ob != None and ob.getParent() and ob.getParent().getType() == 'Armature':
         if ipo:
             raise NIFExportError('%s: animated meshes parented to armatures are unsupported, animate the armature instead'%ob.getName())
-        arm_mat_inv = ob.getParent().getMatrix('worldspace')
+        arm_mat_inv = Blender.Mathutils.Matrix(ob.getParent().getMatrix('worldspace'))
         arm_mat_inv.invert()
         bbind_mat = ob.getMatrix('worldspace') * arm_mat_inv # if ob has no ipo, then this is effectively relative to the rest matrix
         bind_mat = Matrix44(
@@ -418,9 +418,13 @@ def export_node(ob, space, parent_block, node_name):
 
 
 #
-# Export the animation of blender Ipo as keyframe controller and keyframe data
+# Export the animation of blender Ipo as keyframe controller and
+# keyframe data. Extra quaternion is multiplied prior to keyframe
+# rotation, and dito for translation. These extra fields come in handy
+# when exporting bone ipo's, which are relative to the rest pose, so
+# we can pass the rest pose through these extra transformations.
 #
-def export_keyframe(ipo, space, parent_block, extra_quat = None):
+def export_keyframe(ipo, space, parent_block, extra_trans = None, extra_quat = None):
     if DEBUG: print "Exporting keyframe %s"%parent_block["Name"].asString()
     # -> get keyframe information
     
@@ -452,7 +456,8 @@ def export_keyframe(ipo, space, parent_block, extra_quat = None):
                 if (curve.getName() == 'RotX') or (curve.getName() == 'RotY') or (curve.getName() == 'RotZ'):
                     rot_curve[ftime] = Blender.Mathutils.Euler([10*ipo.getCurve('RotX').evaluate(frame), 10*ipo.getCurve('RotY').evaluate(frame), 10*ipo.getCurve('RotZ').evaluate(frame)]).toQuat()
                     if extra_quat: # extra quaternion rotation
-                        rot_curve[ftime] = Blender.Mathutils.CrossQuats(rot_curve[ftime], extra_quat)
+                        #rot_curve[ftime] = Blender.Mathutils.CrossQuats(rot_curve[ftime], extra_quat)
+                        rot_curve[ftime] = (rot_curve[ftime].toMatrix() * extra_quat.toMatrix()).toQuat()
                 elif (curve.getName() == 'QuatX') or (curve.getName() == 'QuatY') or (curve.getName() == 'QuatZ') or  (curve.getName() == 'QuatW'):
                     rot_curve[ftime] = Blender.Mathutils.Quaternion()
                     rot_curve[ftime].x = ipo.getCurve('QuatX').evaluate(frame)
@@ -460,13 +465,17 @@ def export_keyframe(ipo, space, parent_block, extra_quat = None):
                     rot_curve[ftime].z = ipo.getCurve('QuatZ').evaluate(frame)
                     rot_curve[ftime].w = ipo.getCurve('QuatW').evaluate(frame)
                     if extra_quat: # extra quaternion rotation
-                        rot_curve[ftime] = Blender.Mathutils.CrossQuats(rot_curve[ftime], extra_quat)
+                        #rot_curve[ftime] = Blender.Mathutils.CrossQuats(rot_curve[ftime], extra_quat)
+                        rot_curve[ftime] = (rot_curve[ftime].toMatrix() * extra_quat.toMatrix()).toQuat()
                 if (curve.getName() == 'LocX') or (curve.getName() == 'LocY') or (curve.getName() == 'LocZ'):
                     trans_curve[ftime] = Vector3()
                     trans_curve[ftime].x = ipo.getCurve('LocX').evaluate(frame)
                     trans_curve[ftime].y = ipo.getCurve('LocY').evaluate(frame)
                     trans_curve[ftime].z = ipo.getCurve('LocZ').evaluate(frame)
-
+                    if extra_trans: # extra translation
+                        trans_curve[ftime].x += extra_trans[0]
+                        trans_curve[ftime].y += extra_trans[1]
+                        trans_curve[ftime].z += extra_trans[2]
     # -> now comes the real export
 
     # add a keyframecontroller block, and refer to this block in the parent's time controller
@@ -603,7 +612,7 @@ def export_animgroups(animtxt, block_parent):
 # returns the modified nif and the block index of the exported NiSourceTexture
 #
 # TODO: filter mipmaps
-
+# 
 def export_sourcetexture(texture, filename = None):
     if DEBUG: print "Exporting source texture %s"%texture.getName()
     # texture must be of type IMAGE
@@ -765,7 +774,7 @@ def export_sourcetexture(texture, filename = None):
 # target_tex is the texture to flip ( 0 = base texture, 4 = glow texture )
 #
 # returns the modified nif and the block index of the exported NiFlipController
-
+# 
 def export_flipcontroller( fliptxt, texture, target_id, target_tex, nif ):
     if DEBUG: print "Exporting NiFlipController for texture %s"%texture.getName()
     tlist = fliptxt.asLines()
@@ -845,6 +854,7 @@ def export_trishapes(ob, space, parent_block):
         mesh_hasalpha = 0 # non-zero if we have alpha properties
         mesh_hastex = 0 # non-zero if we have at least one texture
         mesh_hasvcol = mesh.hasVertexColours()
+        mesh_hasnormals = 0
         if (mesh_mat != None):
             mesh_hasnormals = 1 # for proper lighting
             # for non-textured materials, vertex colors are used to color the mesh
@@ -937,7 +947,7 @@ def export_trishapes(ob, space, parent_block):
         if ob != None and ob.getParent() and ob.getParent().getType() == 'Armature':
             if ob.getIpo():
                 raise NIFExportError('%s: animated meshes parented to armatures are unsupported, animate the armature instead'%ob.getName())
-            arm_mat_inv = ob.getParent().getMatrix('worldspace')
+            arm_mat_inv = Blender.Mathutils.Matrix(ob.getParent().getMatrix('worldspace'))
             arm_mat_inv.invert()
             bbind_mat = ob.getMatrix('worldspace') * arm_mat_inv # if ob has no ipo, then this is effectively relative to the rest matrix
             bind_mat = Matrix44(
@@ -1423,9 +1433,11 @@ def export_bones(arm, parent_block):
         
         # bone rotations are stored in the IPO relative to the rest position
         # so we must take the rest position into account
-        extra_quat = bone.matrix['BONESPACE'].toQuat()
+        bonerestmat = get_bone_restmatrix(bone, 'BONESPACE')
+        xq = bonerestmat.rotationPart().toQuat()
+        xt = bonerestmat.translationPart()
         if bones_ipo.has_key(bone.name):
-            export_keyframe(bones_ipo[bone.name], 'localspace', node, extra_quat)
+            export_keyframe(bones_ipo[bone.name], 'localspace', node, extra_trans = xt, extra_quat = xq)
 
         # set the bind pose relative to the armature coordinate system (this should work)
         bbind_mat = bone.matrix['ARMATURESPACE']
@@ -1530,6 +1542,8 @@ def export_textureeffect(ob, parent_block):
 
     return nif
 
+
+
 # 
 # Export all children of blender object ob, already stored in
 # nif.blocks[ob_block_id], and return the updated nif.
@@ -1568,18 +1582,17 @@ def export_children(ob, parent_block):
 #
 # Convert an object's transformation matrix on the first frame of animation
 # to a niflib quadrupple ( translate, rotate, scale, velocity ).
-# If restpos is true then the object's rest pose is returned instead
 # The scale is a vector; but non-uniform scaling is not supported by the nif format, so for these we'll have to apply the transformation
 # when exporting the vertex coordinates... ?
 #
-def export_matrix(ob, space, restpos = False):
+def export_matrix(ob, space):
     nt = Float3()
     nr = Matrix33()
     ns = Float3()
     nv = Float3()
     
     # decompose
-    bs, br, bt = getObjectSRT(ob, space, restpos)
+    bs, br, bt = getObjectSRT(ob, space)
     
     # and fill in the values
     nt[0] = bt[0]
@@ -1611,16 +1624,14 @@ def export_matrix(ob, space, restpos = False):
 
 
 # Find scale, rotation, and translation components of an
-# object. Returns a triple (bs, br, bt), where bs is a scale vector,
+# object in current frame of animation. Returns a triple (bs, br, bt), where bs is a scale vector,
 # br is a 3x3 rotation matrix, and bt is a translation vector. It
 # should hold that "ob.getMatrix(space) == bs * br * bt".
-# If restpos is true then the object's rest pose is returned instead
-def getObjectSRT(ob, space, restpos = False):
+def getObjectSRT(ob, space):
     # handle the trivial case first
     if (space == 'none'):
         bs = Blender.Mathutils.Vector([1.0, 1.0, 1.0])
-        br = Blender.Mathutils.Matrix()
-        br.identity()
+        br = Blender.Mathutils.Matrix([1,0,0],[0,1,0],[0,0,1])
         bt = Blender.Mathutils.Vector([0.0, 0.0, 0.0])
         return (bs, br, bt)
     
@@ -1634,43 +1645,24 @@ def getObjectSRT(ob, space, restpos = False):
 
     # now write out spaces
     if (not type(ob) is Blender.Armature.BoneType):
-        # get matrix in first frame of animation
-        mat = ob.getMatrix('worldspace')
-        # rest pose, ... buggy for regular objects so raise an exception for these
-        assert(restpos == False)
-        # localspace bug fix:
+        # get world matrix in first frame of animation
+        mat = Blender.Mathutils.Matrix(ob.getMatrix('worldspace'))
+        # handle localspace: L * Ba * B * P = W
+        # (with L localmatrix, Ba bone animation channel, B bone rest matrix (armature space), P armature parent matrix, W world matrix)
+        # so L = W * P^(-1) * (Ba * B)^(-1)
         if (space == 'localspace'):
             if (ob.getParent() != None):
-                matparentinv = ob.getParent().getMatrix('worldspace')
+                matparentinv = Blender.Mathutils.Matrix(ob.getParent().getMatrix('worldspace'))
                 matparentinv.invert()
                 mat = mat * matparentinv
                 if (ob.getParent().getType() == 'Armature'):
                     # the object is parented to the armature... we must get the matrix relative to the bone parent, of course
-                    # that means that we must transform the object back to the rest pose...
-                    # for now we must assume that the rest pose is equal to this frame of animation
                     bone_parent_name = ob.getParentBoneName()
                     if bone_parent_name:
                         bone_parent = ob.getParent().getData().bones[bone_parent_name]
-                        # get bone parent rest matrix
-                        matparentboneinv = get_bone_restmatrix(bone_parent, 'ARMATURESPACE') # bone rest matrix in armature space
-                        # and multiply with bone parent ipo matrix, if there is one
-                        if ob.getParent().getAction():
-                            try:
-                                ipo = arm.getAction().getChannelIpo(bone_parent.name)
-                            except: pass
-                            if ipo:
-                                quat = Blender.Mathutils.Quaternion()
-                                q.x = ipo.getCurve('QuatX').evaluate(1) # first frame
-                                q.y = ipo.getCurve('QuatY').evaluate(1)
-                                q.z = ipo.getCurve('QuatZ').evaluate(1)
-                                q.w = ipo.getCurve('QuatW').evaluate(1)
-                                mat = quat.toMatrix() * matparentboneinv # left multiplication...
-                        #print "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                        #print ob.getName()
-                        #print 'ARMATURESPACE'
-                        #print matparentboneinv
-                        #print ob.getParent().getData().bones[bone_parent_name].matrix['ARMATURESPACE']
-                        #print ob.getMatrix('worldspace')
+                        # get bone parent matrix
+                        matparentbone = get_bone_matrix(bone_parent, 'ARMATURESPACE') # bone matrix in armature space, first frame of animation
+                        matparentboneinv = Blender.Mathutils.Matrix(matparentbone)
                         matparentboneinv.invert()
                         mat = mat * matparentboneinv
         # get translation
@@ -1678,33 +1670,8 @@ def getObjectSRT(ob, space, restpos = False):
         # get the rotation part, this is scale * rotation
         bsr = mat.rotationPart()
     else: # bones, get the matrix of the first frame of animation
-        assert(space == 'localspace') # bones must be calculated in localspace
-        # TODO assert bone.size == 1.0
-        mat = get_bone_restmatrix(ob, 'BONESPACE')
-        #print 'BONESPACE'
-        #print mat
-        #print ob.matrix['BONESPACE']
-        # now we have the rest matrix... multiply with the first frame of animation IPO
-        # we must go through all armatures to find the bone ipo channel
-        if not restpos:
-            ipo = None
-            for arm in Blender.Object.Get(): # Blender.Armature.Get() crashes Blender
-                if arm.getType() == 'Armature' and arm.getAction():
-                    try:
-                        ipo = arm.getAction().getChannelIpo(ob.name)
-                        break
-                    except: pass
-            if ipo:
-                quat = Blender.Mathutils.Quaternion()
-                quat.x = ipo.getCurve('QuatX').evaluate(1) # first frame
-                quat.y = ipo.getCurve('QuatY').evaluate(1)
-                quat.z = ipo.getCurve('QuatZ').evaluate(1)
-                quat.w = ipo.getCurve('QuatW').evaluate(1)
-                qmat = quat.toMatrix()
-                qmat.resize4x4()
-                qmat[3][3] = 1.0
-                mat = qmat * mat
-        
+        assert(space == 'localspace') # in this function, we only need bones in localspace
+        mat = get_bone_matrix(ob, 'BONESPACE')
         bsr = mat.rotationPart()
         bt = mat.translationPart()
     
@@ -1750,35 +1717,68 @@ def getObjectSRT(ob, space, restpos = False):
 
 
 
-# get Y-aligned Blender bone matrix (TODO: X-aligned?)
+# get bone matrix in 1st frame of animation
 # space can be ARMATURESPACE or BONESPACE
-# (code based on the blender2cal3d export script and Blender source code)
-def get_bone_restmatrix(bone, space):
-    bone_head = bone.head['BONESPACE']
-    bone_tail = bone.tail['BONESPACE']
-    bone_roll = bone.roll['BONESPACE']
-    if bone.parent:
-        bone_parent_len = (bone.parent.tail['BONESPACE'][0]-bone.parent.head['BONESPACE'][0]) ** 2
-        bone_parent_len += (bone.parent.tail['BONESPACE'][1]-bone.parent.head['BONESPACE'][1]) ** 2
-        bone_parent_len += (bone.parent.tail['BONESPACE'][2]-bone.parent.head['BONESPACE'][2]) ** 2
-        bone_parent_len = bone_parent_len ** 0.5
-    else:
-        bone_parent_len = 0.0
-    # mat = bone matrix in rotation part, and bone head + parent bone length in the translation part
-    mat = bone2matrix(bone_head, bone_tail, bone_roll, bone_parent_len)
-    #print "======================================="
-    #print bone.name
-    #print mat
-    #print bone.matrix['BONESPACE']
+# this returns also a 4x4 matrix if space is BONESPACE (also see get_bone_restmatrix)
+def get_bone_matrix(bone, space):
+    # channels are applied in bone space, so let's start with BONESPACE
+    mat = get_bone_restmatrix(bone, 'BONESPACE')
+    # and multiply with bone parent ipo matrix, if there is one
+    ipo = None
+    for arm in Blender.Object.Get(): # Blender.Armature.Get() crashes Blender alpha release
+        if arm.getType() == 'Armature' and arm.getAction():
+            try:
+                ipo = arm.getAction().getChannelIpo(bone.name)
+                break
+            except: pass
+    if ipo:
+        quat = Blender.Mathutils.Quaternion()
+        quat.x = ipo.getCurve('QuatX').evaluate(1) # first frame
+        quat.y = ipo.getCurve('QuatY').evaluate(1)
+        quat.z = ipo.getCurve('QuatZ').evaluate(1)
+        quat.w = ipo.getCurve('QuatW').evaluate(1)
+        qmat = quat.toMatrix() * mat.rotationPart()
+        # channel quat only affects the rotation part, it does not affect the head (translation) of the bone
+        mat[0][0] = qmat[0][0]
+        mat[0][1] = qmat[0][1]
+        mat[0][2] = qmat[0][2]
+        mat[1][0] = qmat[1][0]
+        mat[1][1] = qmat[1][1]
+        mat[1][2] = qmat[1][2]
+        mat[2][0] = qmat[2][0]
+        mat[2][1] = qmat[2][1]
+        mat[2][2] = qmat[2][2]
+        
     if (space == 'BONESPACE'):
         return mat
     elif (space == 'ARMATURESPACE'):
         if (not bone.parent):
             return mat
         else:
-            return mat * get_bone_restmatrix(bone.parent, 'ARMATURESPACE')
+            return mat * get_bone_matrix(bone.parent, 'ARMATURESPACE')
     else:
         assert(False) # bug!
+
+
+
+# get bone matrix in rest position ("bind pose")
+# space can be ARMATURESPACE or BONESPACE
+# this returns also a 4x4 matrix if space is BONESPACE (translation is bone head plus tail from parent bone)
+def get_bone_restmatrix(bone, space):
+    # TODO assert bone.size == 1.0
+    if (space == 'ARMATURESPACE'):
+        return Blender.Mathutils.Matrix(bone.matrix['ARMATURESPACE']) # return a copy, not the wrapper
+    elif (space == 'BONESPACE'):
+        if bone.parent:
+            parinv = Blender.Mathutils.Matrix(bone.parent.matrix['ARMATURESPACE'])
+            parinv.invert()
+            return bone.matrix['ARMATURESPACE'] * parinv
+        else:
+            return Blender.Mathutils.Matrix(bone.matrix['ARMATURESPACE'])
+    else:
+        assert(False) # bug!
+
+
 
 # calculate distance between two vectors
 def get_distance(v, w):
@@ -1823,39 +1823,6 @@ def create_block(blocktype):
     block = CreateBlock(blocktype)
     NIF_BLOCKS.append(block)
     return block
-
-
-
-# (see Blender source code, armature.c, to understand this function)
-# for now we calculate bone matrices Y-aligned (as Blender stores them)
-# as this makes it much easier to export the IPO curves
-def bone2matrix(head, tail, roll, parent_len):
-    target = Blender.Mathutils.Vector([0.0, 1.0, 0.0]) # Y-aligned
-    delta  = Blender.Mathutils.Vector([tail[0] - head[0], tail[1] - head[1], tail[2] - head[2]])
-    nor    = delta
-    nor.normalize()
-    axis   = Blender.Mathutils.CrossVecs(target, nor)
-  
-    if Blender.Mathutils.DotVecs(axis, axis) > 0.0000000000001:
-        axis.normalize()
-        theta   = Blender.Mathutils.AngleBetweenVecs(target, nor)
-        bMatrix = Blender.Mathutils.RotationMatrix(theta, 4, "r", axis)
-    else:
-        if Blender.Mathutils.DotVecs(target, nor) > 0.0: updown =  1.0
-        else: updown = -1.0
-    
-        bMatrix = Blender.Mathutils.Matrix(
-            [updown, 0.0,    0.0, 0.0],
-            [0.0,    updown, 0.0, 0.0],
-            [0.0,    0.0,    1.0, 0.0],
-            [0.0,    0.0,    0.0, 1.0])
-  
-    rMatrix = Blender.Mathutils.RotationMatrix(roll, 4, "r", nor)
-    result = bMatrix * rMatrix
-    result[3][0] = head[0]
-    result[3][1] = head[1] + parent_len # Y-aligned
-    result[3][2] = head[2]
-    return result
 
 
 
