@@ -17,11 +17,15 @@ Usage:<br>
     Select the meshes you wish to export and run this script from "File->Export" menu. All parents and children of the selected meshes will be exported as well. Supports animation of mesh location and rotation, and material color and alpha. To define animation groups, check the script source code.
 
 Missing:<br>
-    Does not export not particle effects, cameras, lights.
+    Does not export particle effects, cameras, lights.<br>
+    Cannot export meshes parented to skinned meshes; parent to the armature instead.<br>
+    Actions (=animation groups) are ignored. Workaround: define actions in text buffer called "Anim".<br>
+    Texture packing has been dropped (sorry!), next release will include it again.
 
 Known issues:<br>
     Ambient and emit colors are obtained by multiplication with the diffuse color.<br>
-    Blender double sided faces will be one sided in the NIF file (workaround: duplicate faces).
+    Blender double sided faces will be one sided in the NIF file (workaround: duplicate faces).<br>
+    Non-armature animation is buggy unless you parent without parent inverse (CTRL-SHIFT-P). Animation using armatures should work flawless at all times.
 
 Options (Scripts->System->Scripts Config Editor->Export):<br>
     Scale Correction: How many NIF units is one Blender unit?<br>
@@ -205,7 +209,25 @@ def export_nif(filename):
         # preparation:
         #--------------
         Blender.Window.DrawProgressBar(0.0, "Preparing Export")
-
+        
+        # armatures should not be in rest position
+        for ob in Blender.Object.Get():
+            if ob.getType() == 'Armature':
+                ob.data.restPosition = False # ensure we get the mesh vertices in animation mode, and not in rest position!
+                if (ob.data.envelopes):
+                    raise NIFExportError("%s: Cannot export envelope skinning. Select the bones and press W to convert envelopes to vertex weights, and turn of envelopes."%ob.getName())
+        
+        # extract some useful scene
+        scn = Blender.Scene.GetCurrent()
+        context = scn.getRenderingContext()
+        fspeed = 1.0 / context.framesPerSec()
+        fstart = context.startFrame()
+        fend = context.endFrame()
+        
+        # set everything in the first frame of animation
+        context.currentFrame(fstart)
+        scn.update(1)
+        
         # strip extension from filename
         root_name, fileext = Blender.sys.splitext(Blender.sys.basename(filename))
         
@@ -243,6 +265,9 @@ def export_nif(filename):
             # note that localspace = worldspace, because root objects have no parents
             export_node(root_object, 'localspace', root_block, root_object.getName())
 
+        # post-processing:
+        #-----------------
+        
         # if we exported animations, but no animation groups are defined, define a default animation group
         if DEBUG: print "Checking animation groups"
         if (animtxt == None):
@@ -261,7 +286,7 @@ def export_nif(filename):
                 fend = context.endFrame()
                 # write the animation group text buffer
                 animtxt = Blender.Text.New("Anim")
-                animtxt.write("%i/Idle: Start Loop\n%i/Idle: Stop Loop"%(fstart,fend))
+                animtxt.write("%i/Idle: Start/Idle: Loop Start\n%i/Idle: Loop Stop/Idle: Stop"%(fstart,fend))
 
         # animations without keyframe animations crash the TES CS
         # if we are in that situation, add a trivial keyframe animation
@@ -295,6 +320,9 @@ def export_nif(filename):
 ##                pass
 ##        if has_vcolprop:
 ##            nif = export_vcolprop(2, 1, nif) # vertex_mode = 2, lighting_mode = 1, this seems standard
+
+        # scale the NIF model
+        scale_tree(root_block, SCALE_CORRECTION)
 
         # write the file:
         #----------------
@@ -473,8 +501,7 @@ def export_keyframe(ipo, space, parent_block, extra_trans = None, extra_quat = N
                 if (curve.getName() == 'RotX') or (curve.getName() == 'RotY') or (curve.getName() == 'RotZ'):
                     rot_curve[ftime] = Blender.Mathutils.Euler([10*ipo.getCurve('RotX').evaluate(frame), 10*ipo.getCurve('RotY').evaluate(frame), 10*ipo.getCurve('RotZ').evaluate(frame)]).toQuat()
                     if extra_quat: # extra quaternion rotation
-                        #rot_curve[ftime] = Blender.Mathutils.CrossQuats(rot_curve[ftime], extra_quat)
-                        rot_curve[ftime] = (rot_curve[ftime].toMatrix() * extra_quat.toMatrix()).toQuat()
+                        rot_curve[ftime] = Blender.Mathutils.CrossQuats(rot_curve[ftime], extra_quat)
                 elif (curve.getName() == 'QuatX') or (curve.getName() == 'QuatY') or (curve.getName() == 'QuatZ') or  (curve.getName() == 'QuatW'):
                     rot_curve[ftime] = Blender.Mathutils.Quaternion()
                     rot_curve[ftime].x = ipo.getCurve('QuatX').evaluate(frame)
@@ -482,8 +509,7 @@ def export_keyframe(ipo, space, parent_block, extra_trans = None, extra_quat = N
                     rot_curve[ftime].z = ipo.getCurve('QuatZ').evaluate(frame)
                     rot_curve[ftime].w = ipo.getCurve('QuatW').evaluate(frame)
                     if extra_quat: # extra quaternion rotation
-                        #rot_curve[ftime] = Blender.Mathutils.CrossQuats(rot_curve[ftime], extra_quat)
-                        rot_curve[ftime] = (rot_curve[ftime].toMatrix() * extra_quat.toMatrix()).toQuat()
+                        rot_curve[ftime] = Blender.Mathutils.CrossQuats(rot_curve[ftime], extra_quat)
                 if (curve.getName() == 'LocX') or (curve.getName() == 'LocY') or (curve.getName() == 'LocZ'):
                     trans_curve[ftime] = Vector3()
                     trans_curve[ftime].x = ipo.getCurve('LocX').evaluate(frame)
@@ -493,6 +519,7 @@ def export_keyframe(ipo, space, parent_block, extra_trans = None, extra_quat = N
                         trans_curve[ftime].x += extra_trans[0]
                         trans_curve[ftime].y += extra_trans[1]
                         trans_curve[ftime].z += extra_trans[2]
+
     # -> now comes the real export
 
     # add a keyframecontroller block, and refer to this block in the parent's time controller
@@ -559,6 +586,9 @@ def export_vcolprop(vertex_mode, lighting_mode, nif):
     nif.blocks[vcolprop_id].lighting_mode = lighting_mode
     
     return nif
+
+
+
 #
 # parse the animation groups buffer and write an extra string data block,
 # parented to the root block
@@ -782,6 +812,7 @@ def export_sourcetexture(texture, filename = None):
     return srctex
 
 
+
 #
 # export a NiFlipController
 #
@@ -834,6 +865,8 @@ def export_flipcontroller( fliptxt, texture, target_id, target_tex, nif ):
 
     return nif, flip_id
 
+
+
 #
 # Export a blender object ob of the type mesh, child of nif block
 # parent_block, as NiTriShape and NiTriShapeData blocks, possibly
@@ -870,13 +903,13 @@ def export_trishapes(ob, space, parent_block):
         mesh_glow_tex = None
         mesh_hasalpha = 0 # non-zero if we have alpha properties
         mesh_hastex = 0 # non-zero if we have at least one texture
-        mesh_hasvcol = mesh.hasVertexColours()
+        mesh_hasvcol = 0
         mesh_hasnormals = 0
         if (mesh_mat != None):
             mesh_hasnormals = 1 # for proper lighting
             # for non-textured materials, vertex colors are used to color the mesh
             # for textured materials, they represent lighting details
-            mesh_hasvcol = mesh_hasvcol or (mesh_mat.mode & Blender.Material.Modes.VCOL_LIGHT) or (mesh_mat.mode & Blender.Material.Modes.VCOL_PAINT)
+            mesh_hasvcol = mesh.hasVertexColours() and ((mesh_mat.mode & Blender.Material.Modes.VCOL_LIGHT != 0) or (mesh_mat.mode & Blender.Material.Modes.VCOL_PAINT != 0))
             # read the Blender Python API documentation to understand this hack
             mesh_mat_ambient = mesh_mat.getAmb()            # 'Amb' scrollbar in blender (MW -> 1.0 1.0 1.0)
             mesh_mat_diffuse_color = mesh_mat.getRGBCol()   # 'Col' colour in Blender (MW -> 1.0 1.0 1.0)
@@ -910,7 +943,7 @@ def export_trishapes(ob, space, parent_block):
                             mesh_base_tex = mtex.tex
                             mesh_hastex = 1 # flag that we have textures, and that we should export UV coordinates
                             # check if alpha channel is enabled for this texture
-                            if ((mesh_base_tex.imageFlags & Blender.Texture.ImageFlags.USEALPHA) and (mtex.mapto & Blender.Texture.MapTo.ALPHA)):
+                            if (mesh_base_tex.imageFlags & Blender.Texture.ImageFlags.USEALPHA != 0) and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
                                 # in this case, Blender replaces the texture transparant parts with the underlying material color...
                                 # in NIF, material alpha is multiplied with texture alpha channel...
                                 # how can we emulate the NIF alpha system (simply multiplying material alpha with texture alpha) when MapTo.ALPHA is turned on?
@@ -1442,7 +1475,7 @@ def export_bones(arm, parent_block):
         ob_rotation, \
         ob_scale, \
         ob_velocity \
-        = export_matrix(bone, 'localspace')
+        = export_matrix(bone, 'localspace') # first frame of animation!
         node["Rotation"]    = ob_rotation
         node["Velocity"]    = ob_velocity
         node["Scale"]       = ob_scale[0]
@@ -1456,8 +1489,12 @@ def export_bones(arm, parent_block):
         if bones_ipo.has_key(bone.name):
             export_keyframe(bones_ipo[bone.name], 'localspace', node, extra_trans = xt, extra_quat = xq)
 
-        # set the bind pose relative to the armature coordinate system (this should work)
-        bbind_mat = bone.matrix['ARMATURESPACE']
+        # Set the bind pose relative to the armature coordinate
+        # system; this should work, if we do the same for the trishape
+        # children. We should bind to the first frame of animation
+        # since the mesh vertices have been transformed into the first
+        # frame of animation as well.
+        bbind_mat = get_bone_matrix(bone, 'ARMATURESPACE')
         bind_mat = Matrix44(
             bbind_mat[0][0], bbind_mat[0][1], bbind_mat[0][2], bbind_mat[0][3],
             bbind_mat[1][0], bbind_mat[1][1], bbind_mat[1][2], bbind_mat[1][3],
@@ -1640,10 +1677,12 @@ def export_matrix(ob, space):
 
 
 
+# 
 # Find scale, rotation, and translation components of an
 # object in current frame of animation. Returns a triple (bs, br, bt), where bs is a scale vector,
 # br is a 3x3 rotation matrix, and bt is a translation vector. It
 # should hold that "ob.getMatrix(space) == bs * br * bt".
+# 
 def getObjectSRT(ob, space):
     # handle the trivial case first
     if (space == 'none'):
@@ -1653,12 +1692,6 @@ def getObjectSRT(ob, space):
         return (bs, br, bt)
     
     assert((space == 'worldspace') or (space == 'localspace'))
-
-    # set everything in the first frame of animation
-    scn = Blender.Scene.GetCurrent()
-    context = scn.getRenderingContext()
-    context.currentFrame(1) # first frame
-    scn.update(1)
 
     # now write out spaces
     if (not type(ob) is Blender.Armature.BoneType):
@@ -1734,9 +1767,11 @@ def getObjectSRT(ob, space):
 
 
 
-# get bone matrix in 1st frame of animation
-# space can be ARMATURESPACE or BONESPACE
-# this returns also a 4x4 matrix if space is BONESPACE (also see get_bone_restmatrix)
+# 
+# Get bone matrix in 1st frame of animation.
+# Space can be ARMATURESPACE or BONESPACE.
+# This returns also a 4x4 matrix if space is BONESPACE (also see get_bone_restmatrix).
+# 
 def get_bone_matrix(bone, space):
     # channels are applied in bone space, so let's start with BONESPACE
     mat = get_bone_restmatrix(bone, 'BONESPACE')
@@ -1778,9 +1813,11 @@ def get_bone_matrix(bone, space):
 
 
 
-# get bone matrix in rest position ("bind pose")
-# space can be ARMATURESPACE or BONESPACE
-# this returns also a 4x4 matrix if space is BONESPACE (translation is bone head plus tail from parent bone)
+# 
+# Get bone matrix in rest position ("bind pose").
+# Space can be ARMATURESPACE or BONESPACE.
+# This returns also a 4x4 matrix if space is BONESPACE (translation is bone head plus tail from parent bone).
+# 
 def get_bone_restmatrix(bone, space):
     # TODO assert bone.size == 1.0
     if (space == 'ARMATURESPACE'):
@@ -1797,7 +1834,9 @@ def get_bone_restmatrix(bone, space):
 
 
 
-# calculate distance between two vectors
+#
+# Calculate distance between two vectors.
+#
 def get_distance(v, w):
     return ((v.x-w[0])**2 + (v.y-w[1])**2 + (v.z-w[2])**2) ** 0.5
 
@@ -1842,5 +1881,76 @@ def create_block(blocktype):
     return block
 
 
+
+# 
+# Scale NIF file and ensure that all scale values are 1.0 (fixes problem with TESCS selection box).
+# 
+def scale_tree(block, scale):
+    if block.GetBlockType() in ["NiNode", "NiTriShape", "RootCollisionNode"]:
+        # Scale factor removed from this block, which we must pass on children.
+        s = block["Scale"].asFloat()
+        # NiNode transform scale
+        t = block["Translation"].asFloat3()
+        t[0] *= scale
+        t[1] *= scale
+        t[2] *= scale
+        block["Translation"] = t
+        block["Scale"] = block["Scale"].asFloat() / s
+        # NiNode bind position transform scale
+        inode = QueryNode(block)
+        mat = inode.GetBindPosition()
+        mat[0][0] /= s
+        mat[0][1] /= s
+        mat[0][2] /= s
+        mat[1][0] /= s
+        mat[1][1] /= s
+        mat[1][2] /= s
+        mat[2][0] /= s
+        mat[2][1] /= s
+        mat[2][2] /= s
+        mat[3][0] *= scale
+        mat[3][1] *= scale
+        mat[3][2] *= scale
+        inode.SetBindPosition(mat)
+        # Controller data block scale
+        ctrl = block["Controller"].asLink()
+        if not ctrl.is_null():
+            kfd = ctrl["Data"].asLink()
+            assert(not kfd.is_null())
+            assert(kfd.GetBlockType() == "NiKeyframeData") # just to make sure, NiNode/NiTriShape controllers should have keyframe data
+            ikfd = QueryKeyframeData(kfd)
+            trans_keys = ikfd.GetTranslateKeys()
+            if trans_keys:
+                for key in trans_keys:
+                    key.data.x *= scale
+                    key.data.y *= scale
+                    key.data.z *= scale
+                ikfd.SetTranslateKeys(trans_keys)
+            scale_keys = ikfd.GetScaleKeys()
+            if scale_keys:
+                for key in scale_keys:
+                    key.data /= s
+                ikfd.SetScaleKeys(scale_keys)
+        # Child block scale
+        if block.GetBlockType() != "NiTriShape": # scale the children
+            for child in block["Children"].asLinkList():
+                scale_tree(child, scale * s)
+        else:
+            scale_tree(block["Data"].asLink(), scale * s) # scale the NiTriShapeData
+    elif block.GetBlockType() == "NiTriShapeData":
+        # Scale all vertices
+        ishapedata = QueryShapeData(block)
+        vertlist = ishapedata.GetVertices()
+        if vertlist:
+            for vert in vertlist:
+                vert.x *= scale
+                vert.y *= scale
+                vert.z *= scale
+            ishapedata.SetVertices(vertlist)
+        center = block["Center"].asFloat3()
+        center[0] *= scale
+        center[1] *= scale
+        center[2] *= scale
+        block["Radius"] = block["Radius"].asFloat() * scale
 
 Blender.Window.FileSelector(export_nif, 'Export NIF', EXPORT_DIR)
