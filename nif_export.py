@@ -18,19 +18,20 @@ Usage:<br>
 
 Missing:<br>
     Does not export particle effects, cameras, lights.<br>
-    Cannot export meshes parented to skinned meshes; parent to the armature instead.<br>
     Actions (=animation groups) are ignored. Workaround: define actions in text buffer called "Anim".<br>
-    Texture packing has been dropped (sorry!), next release will include it again.
+    Texture packing has temporarily been dropped (sorry!), next release will include it again.
 
 Known issues:<br>
     Ambient and emit colors are obtained by multiplication with the diffuse color.<br>
     Blender double sided faces will be one sided in the NIF file (workaround: duplicate faces).<br>
-    Non-armature animation is buggy unless you parent without parent inverse (CTRL-SHIFT-P). Animation using armatures should work flawless at all times.
+    Non-armature animation is buggy unless you parent without parent inverse (CTRL-SHIFT-P). Parent meshes to an armature if you want to animate them.
 
 Options (Scripts->System->Scripts Config Editor->Export):<br>
     Scale Correction: How many NIF units is one Blender unit?<br>
     Force DDS: Force textures to be exported with a .DDS extension? Usually, you can leave this disabled.<br>
-    Strip Texture Path: Strip texture path in NIF file? You should leave this disabled, especially when this model's textures are stored in a subdirectory of the Data Files\Textures folder.
+    Strip Texture Path: Strip texture path in NIF file? You should leave this disabled, especially when this model's textures are stored in a subdirectory of the Data Files\Textures folder.<br>
+    Version: the NIF version to write (EXPERIMENTAL, only 4.0.0.2 has been tested)<br>
+    Export DIR: default directory when script is opened
 """
 
 # --------------------------------------------------------------------------
@@ -95,7 +96,7 @@ Download it from http://niftools.sourceforge.net/
 # Global variables.
 #
 
-DEBUG = True
+DEBUG = False # set to True for more output when exporting
 
 NIF_BLOCKS = [] # keeps track of all exported blocks
 NIF_TEXTURES = {} # keeps track of all exported textures
@@ -217,7 +218,12 @@ def export_nif(filename):
             if ob.getType() == 'Armature':
                 ob.data.restPosition = False # ensure we get the mesh vertices in animation mode, and not in rest position!
                 if (ob.data.envelopes):
-                    raise NIFExportError("%s: Cannot export envelope skinning. Select the bones and press W to convert envelopes to vertex weights, and turn of envelopes."%ob.getName())
+                    print """'%s': Cannot export envelope skinning.
+If you have vertex groups, turn off envelopes.
+If you don't have vertex groups, select the bones one by one
+press W to convert their envelopes to vertex weights,
+and turn off envelopes."%ob.getName())"""%ob.getName()        
+                    raise NIFExportError("'%s': Cannot export envelope skinning. Check console for instructions."%ob.getName())
         
         # extract some useful scene
         scn = Blender.Scene.GetCurrent()
@@ -389,23 +395,6 @@ def export_node(ob, space, parent_block, node_name):
         node["Flags"] = 0x0003 # ? this seems pretty standard for the root collision node
     else:
         node["Flags"] = 0x000C # ? this seems pretty standard for static and animated ninodes
-
-    # ok, now comes the most weird thing about the NIF format:
-    # we have to write the WRONG transform matrix for skinned meshes
-    # (the correct transformation matrix ends up somewhere hidden in NiSkinData)
-    if ob and ob.getParent() and ob.getParent().getType() == 'Armature':
-        vertgroups = ob.data.getVertGroupNames()
-        bonenames = ob.getParent().getData().bones.keys()
-        # the vertgroups that correspond to bonenames are bones that influence the mesh
-        for bone in bonenames:
-            if bone in vertgroups:
-                # yes we have skinning!
-                space = 'none' # strange... strange... strange... but it works
-                # assert that this skinned mesh has no children
-                for ob2 in Blender.Object.Get():
-                    if ob2.getParent() == ob:
-                        raise NIFExportError('%s: skinned mesh cannot have children (this is an unsupported feature), parent to the mesh armature instead'%ob.getName())
-                break
 
     ob_translation, \
     ob_rotation, \
@@ -596,9 +585,9 @@ def export_animgroups(animtxt, block_parent):
     # frame/string1[/string2[.../stringN]]
     
     # example:
-    # 000/Idle: Start/Idle: Stop/Idle2: Start/Idle2: Loop Start
-    # 050/Idle2: Stop/Idle3: Start
-    # 100/Idle3: Loop Start/Idle3: Stop
+    # 001/Idle: Start/Idle: Stop/Idle2: Start/Idle2: Loop Start
+    # 051/Idle2: Stop/Idle3: Start
+    # 101/Idle3: Loop Start/Idle3: Stop
 
     slist = animtxt.asLines()
     flist = []
@@ -914,7 +903,7 @@ def export_trishapes(ob, space, parent_block):
                         raise NIFExportError("Non-UV texture in mesh '%s', material '%s'. Either delete all non-UV textures, or in the Shading Panel, under Material Buttons, set texture 'Map Input' to 'UV'."%(ob.getName(),mesh_mat.getName()))
                     if ((mtex.mapto & Blender.Texture.MapTo.COL) == 0):
                         # it should map to colour
-                        raise NIFExportError("Non-COL-mapped texture in mesh '%s', material '%s', these cannot be exported to NIF. Either delete all non-COL-mapped textures, or in the Shading Panel, under Material Buttons, set texture 'Map To' to 'COL'."%(mesh.getName(),mesh_mat.getName()))
+                        raise NIFExportError("Non-COL-mapped texture in mesh '%s', material '%s', these cannot be exported to NIF. Either delete all non-COL-mapped textures, or in the Shading Panel, under Material Buttons, set texture 'Map To' to 'COL'."%(ob.getName(),mesh_mat.getName()))
                     if ((mtex.mapto & Blender.Texture.MapTo.EMIT) == 0):
                         if (mesh_base_tex == None):
                             # got the base texture
@@ -1775,7 +1764,6 @@ def get_bone_matrix(bone, space):
 # is BONESPACE (translation is bone head plus tail from parent bone).
 # 
 def get_bone_restmatrix(bone, space):
-    # TODO assert bone.size == 1.0
     if (space == 'ARMATURESPACE'):
         return Blender.Mathutils.Matrix(bone.matrix['ARMATURESPACE']) # return a copy, not the wrapper
     elif (space == 'BONESPACE'):
@@ -1909,4 +1897,7 @@ def scale_tree(block, scale):
         center[2] *= scale
         block["Radius"] = block["Radius"].asFloat() * scale
 
-Blender.Window.FileSelector(export_nif, 'Export NIF', EXPORT_DIR)
+if EXPORT_DIR:
+    Blender.Window.FileSelector(export_nif, 'Export NIF', EXPORT_DIR)
+else:
+    Blender.Window.FileSelector(export_nif, 'Export NIF')
