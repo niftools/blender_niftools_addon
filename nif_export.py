@@ -98,6 +98,8 @@ Download it from http://niftools.sourceforge.net/
 DEBUG = True
 
 NIF_BLOCKS = [] # keeps track of all exported blocks
+NIF_TEXTURES = {} # keeps track of all exported textures
+NIF_MATERIALS = {} # keeps track of all exported materials
 
 NIF_VERSION_DICT = {}
 NIF_VERSION_DICT['4.0.0.2']  = 0x04000002
@@ -242,6 +244,7 @@ def export_nif(filename):
                 raise NIFExportError("Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."%root_object.getName())
             if (root_objects.count(root_object) == 0): root_objects.append(root_object)
 
+        ## TODO use Blender actions for animation groups
         # check for animation groups definition in a text buffer called 'Anim'
         animtxt = None
         for txt in Blender.Text.Get():
@@ -307,19 +310,6 @@ def export_nif(filename):
         if (animtxt):
             export_animgroups(animtxt, root_block)
             #export_animgroups(animtxt, root_block["Children"].asLinkList()[0]) # we link the animation extra data to the first root_object node
-
-### TODO
-##        # export vertex color property
-##        for block in nif.blocks:
-##            has_vcolprop = 0
-##            try:
-##                if (block.has_vertex_colors != 0):
-##                    has_vcolprop = 1
-##                    break
-##            except:
-##                pass
-##        if has_vcolprop:
-##            nif = export_vcolprop(2, 1, nif) # vertex_mode = 2, lighting_mode = 1, this seems standard
 
         # scale the NIF model
         scale_tree(root_block, SCALE_CORRECTION)
@@ -570,22 +560,17 @@ def export_keyframe(ipo, space, parent_block, extra_trans = None, extra_quat = N
 
 
 
-def export_vcolprop(vertex_mode, lighting_mode, nif):
+def export_vcolprop(vertex_mode, lighting_mode):
     if DEBUG: print "Exporting NiVertexColorProperty"
     # create new vertex color property block
-    vcolprop_id = nif.header.nblocks
-    nif.blocks.append(nif4.NiVertexColorProperty())
-    nif.header.nblocks += 1
+    vcolprop = create_block("NiVertexColorProperty")
     
     # make it a property of the root node
-    nif.blocks[0].properties.indices.append(vcolprop_id)
-    nif.blocks[0].properties.num_indices += 1
+    NIF_BLOCKS[0]["Children"].AddLink(vcolprop)
 
     # and now export the parameters
-    nif.blocks[vcolprop_id].vertex_mode = vertex_mode
-    nif.blocks[vcolprop_id].lighting_mode = lighting_mode
-    
-    return nif
+    vcolprop["Vertex Mode"] = vertex_mode
+    vcolprop["Lighting Mode"] = lighting_mode
 
 
 
@@ -656,11 +641,13 @@ def export_animgroups(animtxt, block_parent):
 # texture is the texture object in blender to be exported
 # filename is the full or relative path to the texture file ( used by NiFlipController )
 #
-# returns the modified nif and the block index of the exported NiSourceTexture
+# Returns block of the exported NiSourceTexture
 #
-# TODO: filter mipmaps
+# TODO: packed textures
 # 
 def export_sourcetexture(texture, filename = None):
+    global NIF_TEXTURES
+    
     if DEBUG: print "Exporting source texture %s"%texture.getName()
     # texture must be of type IMAGE
     if ( texture.type != Blender.Texture.Types.IMAGE ):
@@ -671,11 +658,8 @@ def export_sourcetexture(texture, filename = None):
         texid = filename
     else:
         texid = texture.image.getFilename()
-    # TODO port this code to Niflib
-    #for idx, block in enumerate( nif.blocks ):
-    #    if ( block.block_type.value == 'NiSourceTexture' ):
-    #        if ( block.texid == texid ):
-    #            return nif, idx
+    if NIF_TEXTURES.has_key(texid):
+        return NIF_TEXTURES[texid]
 
     # add NiSourceTexture
     srctex = create_block("NiSourceTexture")
@@ -684,101 +668,102 @@ def export_sourcetexture(texture, filename = None):
     
     # TODO port this code
     if not srctexdata.useExternal:
-        if filename != None:
-            try:
-                image = Blender.Image.Load( filename )
-            except:
-                raise NIFExportError( "Error: Cannot pack texture '%s'; Failed to load image '%s'"%(texture.getName(),filename) )
-        else:
-            image = texture.image
-        w, h = image.getSize()
-        if ( w <= 0 ) or ( h <= 0 ):
-            image.reload()
-        if ( w <= 0 ) or ( h <= 0 ):
-            raise NIFExportError( "Error: Cannot pack texture '%s'; Failed to load image '%s'"%(texture.getName(),image.getFilename()) )
-        depth = image.getDepth()
-        if depth == 32:
-            rmask = 0x000000ff
-            gmask = 0x0000ff00
-            bmask = 0x00ff0000
-            amask = 0xff000000
-            bytes = 4
-        elif depth == 24:
-            rmask = 0x000000ff
-            gmask = 0x0000ff00
-            bmask = 0x00ff0000
-            amask = 0x00000000
-            bytes = 3
-        else:
-            raise NIFExportError( "Error: Cannot pack texture '%s' image '%s'; Unsupported image depth %i"%(texture.getName(),image.getFilename(),image.getDepth()) )
-
-        # now pack the image
-        data = []
-        mipmaps = []
-        if VERBOSE: print "packing %s -> width %i, height %i"%(Blender.sys.basename(image.getFilename()),w,h)
-        mipmaps.append( [ w, h, 0 ] )
-        for y in range( h ):
-            for x in range( w ):
-                r,g,b,a = image.getPixelF( x, (h-1)-y ) # nif flips y coordinate
-                if ( depth == 32 ):
-                    data.append( int( r * 255 ) )
-                    data.append( int( g * 255 ) )
-                    data.append( int( b * 255 ) )
-                    data.append( int( a * 255 ) )
-                elif ( depth == 24 ):
-                    data.append( int( r * 255 ) )
-                    data.append( int( g * 255 ) )
-                    data.append( int( b * 255 ) )
-
-        # filter mipmaps
-        sx = 2
-        sy = 2
-        lastOffset = 0
-        while ( texture.imageFlags & Blender.Texture.ImageFlags.MIPMAP != 0 ):
-            offset = len(data)
-            if VERBOSE: print "packing %s mipmap %i -> width %i, height %i, offset %i"%(Blender.sys.basename(image.getFilename()),len(mipmaps),w/sx,h/sy,offset)
-            mipmaps.append( [ w/sx, h/sy, offset ] )
-            for y in range( 0, h, sy ):
-                for x in range( 0, w, sx ):
-                    rgba = [ 0, 0, 0, 0 ]
-                    for fy in range( 2 ):
-                        for fx in range( 2 ):
-                            for fd in range( bytes ):
-                                rgba[fd] += data[lastOffset+((y/sy*2+fy)*w/sx*2+(x/sx*2+fx))*bytes+fd]
-                    for fd in range( bytes ):
-                        rgba[fd] = rgba[fd] / 4
-                        data.append( rgba[fd] )
-            lastOffset = offset
-            if ( sx == w ) and ( sy == h ):
-                break # now more mipmap levels left
-            if ( sx < w ):
-                sx = sx * 2
-            if ( sy < h ):
-                sy = sy * 2
-            if ( sx > w ) or ( sy > h ):
-                raise NIFExportError( "Error: Cannot pack texture '%s' image '%s'; Image dimensions must be power of two"%(texture.getName(),image.getFilename()) )
-        
-        # add NiPixelData
-        pixel_id = nif.header.nblocks
-        assert(pixel_id == len(nif.blocks)) # debug
-        nif.blocks.append(nif4.NiPixelData())
-        nif.header.nblocks += 1
-        nif.blocks[pixel_id].rmask = rmask
-        nif.blocks[pixel_id].gmask = gmask
-        nif.blocks[pixel_id].bmask = bmask
-        nif.blocks[pixel_id].amask = amask
-        nif.blocks[pixel_id].bpp = depth
-        nif.blocks[pixel_id].bytespp = nif.blocks[pixel_id].bpp / 8
-        nif.blocks[pixel_id].mipmaps = mipmaps
-        nif.blocks[pixel_id].num_mipmaps = len( nif.blocks[pixel_id].mipmaps )
-        nif.blocks[pixel_id].data = data
-        nif.blocks[pixel_id].data_size = len(nif.blocks[pixel_id].data)
-        if ( depth == 24 ):
-            nif.blocks[pixel_id].unknown2 = [ 96, 8, 130, 0, 0, 65, 0, 0 ] # ?? copy values from original files
-        elif ( depth == 32 ):
-            nif.blocks[pixel_id].unknown2 = [ 129, 8, 130, 32, 0, 65, 12, 0 ]
-        nif.blocks[tsrc_id].pixel_data = pixel_id
-        nif.blocks[tsrc_id].unknown1 = 1
+        raise NIFExportError("Packed textures not yet supported.")
+##        if filename != None:
+##            try:
+##                image = Blender.Image.Load( filename )
+##            except:
+##                raise NIFExportError( "Error: Cannot pack texture '%s'; Failed to load image '%s'"%(texture.getName(),filename) )
+##        else:
+##            image = texture.image
+##        w, h = image.getSize()
+##        if ( w <= 0 ) or ( h <= 0 ):
+##            image.reload()
+##        if ( w <= 0 ) or ( h <= 0 ):
+##            raise NIFExportError( "Error: Cannot pack texture '%s'; Failed to load image '%s'"%(texture.getName(),image.getFilename()) )
+##        depth = image.getDepth()
+##        if depth == 32:
+##            rmask = 0x000000ff
+##            gmask = 0x0000ff00
+##            bmask = 0x00ff0000
+##            amask = 0xff000000
+##            bytes = 4
+##        elif depth == 24:
+##            rmask = 0x000000ff
+##            gmask = 0x0000ff00
+##            bmask = 0x00ff0000
+##            amask = 0x00000000
+##            bytes = 3
+##        else:
+##            raise NIFExportError( "Error: Cannot pack texture '%s' image '%s'; Unsupported image depth %i"%(texture.getName(),image.getFilename(),image.getDepth()) )
+##
+##        # now pack the image
+##        data = []
+##        mipmaps = []
+##        if VERBOSE: print "packing %s -> width %i, height %i"%(Blender.sys.basename(image.getFilename()),w,h)
+##        mipmaps.append( [ w, h, 0 ] )
+##        for y in range( h ):
+##            for x in range( w ):
+##                r,g,b,a = image.getPixelF( x, (h-1)-y ) # nif flips y coordinate
+##                if ( depth == 32 ):
+##                    data.append( int( r * 255 ) )
+##                    data.append( int( g * 255 ) )
+##                    data.append( int( b * 255 ) )
+##                    data.append( int( a * 255 ) )
+##                elif ( depth == 24 ):
+##                    data.append( int( r * 255 ) )
+##                    data.append( int( g * 255 ) )
+##                    data.append( int( b * 255 ) )
+##
+##        # filter mipmaps
+##        sx = 2
+##        sy = 2
+##        lastOffset = 0
+##        while ( texture.imageFlags & Blender.Texture.ImageFlags.MIPMAP != 0 ):
+##            offset = len(data)
+##            if VERBOSE: print "packing %s mipmap %i -> width %i, height %i, offset %i"%(Blender.sys.basename(image.getFilename()),len(mipmaps),w/sx,h/sy,offset)
+##            mipmaps.append( [ w/sx, h/sy, offset ] )
+##            for y in range( 0, h, sy ):
+##                for x in range( 0, w, sx ):
+##                    rgba = [ 0, 0, 0, 0 ]
+##                    for fy in range( 2 ):
+##                        for fx in range( 2 ):
+##                            for fd in range( bytes ):
+##                                rgba[fd] += data[lastOffset+((y/sy*2+fy)*w/sx*2+(x/sx*2+fx))*bytes+fd]
+##                    for fd in range( bytes ):
+##                        rgba[fd] = rgba[fd] / 4
+##                        data.append( rgba[fd] )
+##            lastOffset = offset
+##            if ( sx == w ) and ( sy == h ):
+##                break # now more mipmap levels left
+##            if ( sx < w ):
+##                sx = sx * 2
+##            if ( sy < h ):
+##                sy = sy * 2
+##            if ( sx > w ) or ( sy > h ):
+##                raise NIFExportError( "Error: Cannot pack texture '%s' image '%s'; Image dimensions must be power of two"%(texture.getName(),image.getFilename()) )
+##        
+##        # add NiPixelData
+##        pixel_id = nif.header.nblocks
+##        assert(pixel_id == len(nif.blocks)) # debug
+##        nif.blocks.append(nif4.NiPixelData())
+##        nif.header.nblocks += 1
+##        nif.blocks[pixel_id].rmask = rmask
+##        nif.blocks[pixel_id].gmask = gmask
+##        nif.blocks[pixel_id].bmask = bmask
+##        nif.blocks[pixel_id].amask = amask
+##        nif.blocks[pixel_id].bpp = depth
+##        nif.blocks[pixel_id].bytespp = nif.blocks[pixel_id].bpp / 8
+##        nif.blocks[pixel_id].mipmaps = mipmaps
+##        nif.blocks[pixel_id].num_mipmaps = len( nif.blocks[pixel_id].mipmaps )
+##        nif.blocks[pixel_id].data = data
+##        nif.blocks[pixel_id].data_size = len(nif.blocks[pixel_id].data)
+##        if ( depth == 24 ):
+##            nif.blocks[pixel_id].unknown2 = [ 96, 8, 130, 0, 0, 65, 0, 0 ] # ?? copy values from original files
+##        elif ( depth == 32 ):
+##            nif.blocks[pixel_id].unknown2 = [ 129, 8, 130, 32, 0, 65, 12, 0 ]
+##        nif.blocks[tsrc_id].pixel_data = pixel_id
+##        nif.blocks[tsrc_id].unknown1 = 1
     # if the file is external
     else:
         if filename != None:
@@ -799,8 +784,8 @@ def export_sourcetexture(texture, filename = None):
             else:
                 srctexdata.fileName = Blender.sys.basename(tfn)
         # force dds extension, if requested
-        #if FORCE_DDS:
-        #    nif.blocks[tsrc_id].file_name.value = nif.blocks[tsrc_id].file_name.value[:-4] + '.dds'
+        if FORCE_DDS:
+            srctexdata.fileName = srctexdata.fileName[:-4] + '.dds'
 
     # fill in default values
     srctex["Texture Source"] = srctexdata
@@ -808,38 +793,32 @@ def export_sourcetexture(texture, filename = None):
     srctex["Use Mipmaps"]  = 2
     srctex["Alpha Format"] = 3
     srctex["Unknown Byte"] = 1
+
+    # save for future reference
+    NIF_TEXTURES[texid] = srctex
     
     return srctex
 
 
 
+## TODO port code to use native Blender texture flipping system
 #
 # export a NiFlipController
 #
 # fliptxt is a blender text object containing the flip definitions
 # texture is the texture object in blender ( texture is used to checked for pack and mipmap flags )
-# target_id is the block id of the NiTexturingProperty
+# target is the NiTexturingProperty
 # target_tex is the texture to flip ( 0 = base texture, 4 = glow texture )
 #
-# returns the modified nif and the block index of the exported NiFlipController
+# returns exported NiFlipController
 # 
-def export_flipcontroller( fliptxt, texture, target_id, target_tex, nif ):
+def export_flipcontroller( fliptxt, texture, target, target_tex ):
     if DEBUG: print "Exporting NiFlipController for texture %s"%texture.getName()
     tlist = fliptxt.asLines()
 
     # create a NiFlipController
-    flip_id = nif.header.nblocks
-    assert(flip_id == len(nif.blocks)) # debug
-    nif.blocks.append(nif4.NiFlipController())
-    nif.header.nblocks += 1
-
-    if ( nif.blocks[target_id].controller < 0 ):
-        nif.blocks[target_id].controller = flip_id
-    else:
-        last_controller = nif.blocks[target_id].controller
-        while ( nif.blocks[last_controller].next_controller >= 0 ):
-            last_controller = nif.blocks[last_controller].next_controller
-        nif.blocks[last_controller].next_controller = flip_id
+    flip = create_block("NiFlipController")
+    add_controller(target, flip)
 
     # get frame start and frame end, and the number of frames per second
     fspeed = 1.0 / Blender.Scene.GetCurrent().getRenderingContext().framesPerSec()
@@ -847,23 +826,22 @@ def export_flipcontroller( fliptxt, texture, target_id, target_tex, nif ):
     fend = Blender.Scene.GetCurrent().getRenderingContext().endFrame()
 
     # fill in NiFlipController's values
-    nif.blocks[flip_id].target_node = target_id
-    nif.blocks[flip_id].unknown_int_1 = target_tex
-    nif.blocks[flip_id].flags = 0x0008
-    nif.blocks[flip_id].frequency = 1.0
-    nif.blocks[flip_id].start_time = (fstart - 1) * fspeed
-    nif.blocks[flip_id].stop_time = ( fend - fstart ) * fspeed
+    # flip["Target"] automatically calculated
+    flip["Flags"] = 0x0008
+    flip["Frequency"] = 1.0
+    flip["Start Time"] = (fstart - 1) * fspeed
+    flip["Stop Time"] = ( fend - fstart ) * fspeed
+    flip["Unknown Int 1"] = target_tex
+    count = 0
     for t in tlist:
         if len( t ) == 0: continue  # skip empty lines
         # create a NiSourceTexture for each flip
-        nif, tsrc_id = export_sourcetexture( texture, nif, t )
-        nif.blocks[flip_id].sources.indices.append( tsrc_id )
-    nif.blocks[flip_id].sources.num_indices = len( nif.blocks[flip_id].sources.indices )
-    if ( nif.blocks[flip_id].sources.num_indices < 2 ):
+        tex = export_sourcetexture(texture, t)
+        flip["Sources"].AddLink(tex)
+        count += 1
+    if count < 2:
         raise NIFExportError("Error in Texture Flip buffer '%s': Must define at least two textures"%fliptxt.getName())
-    nif.blocks[flip_id].delta = nif.blocks[flip_id].stop_time / nif.blocks[flip_id].sources.num_indices
-
-    return nif, flip_id
+    flip["Delta"] = (flip["Stop Time"].asFloat() - flip["Start Time"].asFloat()) / count
 
 
 
@@ -1026,8 +1004,7 @@ def export_trishapes(ob, space, parent_block):
                 txtlist = Blender.Text.Get()
                 for fliptxt in txtlist:
                     if fliptxt.getName() == mesh_base_tex.getName():
-                        flip = export_flipcontroller( fliptxt, mesh_base_tex, tritexprop, 0 )
-                        tritexprop["Base Texture"] = flip
+                        export_flipcontroller( fliptxt, mesh_base_tex, tritexprop, 0 )
                         break
                     else:
                         fliptxt = None
@@ -1036,26 +1013,21 @@ def export_trishapes(ob, space, parent_block):
                     tritexprop["Base Texture"] = basetexsrc # isn't this confusing?
 
             if ( mesh_glow_tex != None ):
-                nif.blocks[tritexprop_id].has_glow_texture = 1
-                nif.blocks[tritexprop_id].glow_texture.clamp_mode = 3 # wrap in both directions
-                nif.blocks[tritexprop_id].glow_texture.filter_mode = 2 # standard?
-                nif.blocks[tritexprop_id].glow_texture.texture_set = 0 # ? standard
-                nif.blocks[tritexprop_id].glow_texture.ps2_l = 0 # ? standard 
-                nif.blocks[tritexprop_id].glow_texture.ps2_k = 0xFFB5 # ? standard
-                nif.blocks[tritexprop_id].glow_texture.unknown = 0x0101 # ? standard
-                
+                glowtex = Texture()
+                glowtex.isUsed = 1
+                tritexprop["Glow Texture"] = glowtex
+
                 # check for texture flip definition
                 txtlist = Blender.Text.Get()
                 for fliptxt in txtlist:
                     if fliptxt.getName() == mesh_glow_tex.getName():
-                        nif, flip_id = export_flipcontroller( fliptxt, mesh_glow_tex, tritexprop_id, 4, nif )
-                        nif.blocks[tritexprop_id].glow_texture.source = nif.blocks[flip_id].sources.indices[0]
+                        export_flipcontroller( fliptxt, mesh_glow_tex, tritexprop, 4 )
                         break
                     else:
                         fliptxt = None
                 else:
-                    nif, glowtexsrc_id = export_sourcetexture( mesh_glow_tex, nif )
-                    nif.blocks[tritexprop_id].glow_texture.source = glowtexsrc_id
+                    glowtexsrc = export_sourcetexture(mesh_glow_tex)
+                    tritexprop["Glow Texture"] = glowtexsrc # ...
         
         if (mesh_hasalpha):
             # add NiTriShape's alpha propery (this is de facto an automated version of Detritus's method, see http://detritus.silgrad.com/alphahex.html)
@@ -1524,83 +1496,65 @@ def export_bones(arm, parent_block):
 # 
 def export_textureeffect(ob, parent_block):
     assert(ob.getType() == 'Empty')
-    last_id = nif.header.nblocks - 1
     
     # add a trishape block, and refer to this block in the parent's children list
-    texeff_id = last_id + 1
-    last_id = texeff_id
-    assert(texeff_id == len(nif.blocks)) # debug
-    nif.blocks.append(nif4.NiTextureEffect()) # this should be block[texeff_id]
-    nif.blocks[parent_block_id].children.indices.append(texeff_id)
-    nif.blocks[parent_block_id].children.num_indices += 1
-    nif.blocks[parent_block_id].effects.indices.append(texeff_id)
-    nif.blocks[parent_block_id].effects.num_indices += 1
-    nif.header.nblocks += 1
+    texeff = create_block("NiTextureEffect")
+    parent_block["Children"].AddLink(texeff)
+    parent_block["Effects"].AddLink(texeff)
         
     # fill in the NiTextureEffect's non-trivial values
-    nif.blocks[texeff_id].flags = 0x0004
-    nif.blocks[texeff_id].translation, \
-    nif.blocks[texeff_id].rotation, \
-    scale, \
-    nif.blocks[texeff_id].velocity \
-    = export_matrix(ob, 'none')
-    # scale correction
-    nif.blocks[texeff_id].translation.x *= parent_scale
-    nif.blocks[texeff_id].translation.y *= parent_scale
-    nif.blocks[texeff_id].translation.z *= parent_scale
-    # ... not sure what scaling does to a texture effect
-    nif.blocks[texeff_id].scale = 1.0;
+    texeff["Flags"] = 0x0004
+    t, r, s = export_matrix(ob, 'none')
+    texeff["Translation"] = t
+    texeff["Rotation"] = r
+    texeff["Scale"] = s[0]
     
     # guessing
-    nif.blocks[texeff_id].unknown2[0] = 1.0
-    nif.blocks[texeff_id].unknown2[1] = 0.0
-    nif.blocks[texeff_id].unknown2[2] = 0.0
-    nif.blocks[texeff_id].unknown2[3] = 0.0
-    nif.blocks[texeff_id].unknown2[4] = 1.0
-    nif.blocks[texeff_id].unknown2[5] = 0.0
-    nif.blocks[texeff_id].unknown2[6] = 0.0
-    nif.blocks[texeff_id].unknown2[7] = 0.0
-    nif.blocks[texeff_id].unknown2[8] = 1.0
-    nif.blocks[texeff_id].unknown2[9] = 0.0
-    nif.blocks[texeff_id].unknown2[10] = 0.0
-    nif.blocks[texeff_id].unknown2[11] = 0.0
-    nif.blocks[texeff_id].unknown3[0] = 2
-    nif.blocks[texeff_id].unknown3[1] = 3
-    nif.blocks[texeff_id].unknown3[2] = 2
-    nif.blocks[texeff_id].unknown3[3] = 2
-    nif.blocks[texeff_id].unknown4 = 0
-    nif.blocks[texeff_id].unknown5[0] = 1.0
-    nif.blocks[texeff_id].unknown5[1] = 0.0
-    nif.blocks[texeff_id].unknown5[2] = 0.0
-    nif.blocks[texeff_id].unknown5[3] = 0.0
-    nif.blocks[texeff_id].ps2_l = 0
-    nif.blocks[texeff_id].ps2_k = 0xFFB5
-    nif.blocks[texeff_id].unknown6 = 0
+    texeff["Unknown Float 1"] = 1.0
+    texeff["Unknown Float 2"] = 0.0
+    texeff["Unknown Float 3"] = 0.0
+    texeff["Unknown Float 4"] = 0.0
+    texeff["Unknown Float 5"] = 1.0
+    texeff["Unknown Float 6"] = 0.0
+    texeff["Unknown Float 7"] = 0.0
+    texeff["Unknown Float 8"] = 0.0
+    texeff["Unknown Float 9"] = 1.0
+    texeff["Unknown Float 10"] = 0.0
+    texeff["Unknown Float 11"] = 0.0
+    texeff["Unknown Float 12"] = 0.0
+    texeff["Unknown Int 1"] = 2
+    texeff["Unknown Int 2"] = 3
+    texeff["Unknown Int 3"] = 2
+    texeff["Unknown Int 4"] = 2
+    texeff["Unknown Byte"] = 0
+    texeff["Unknown Float 13"] = 1.0
+    texeff["Unknown Float 14"] = 0.0
+    texeff["Unknown Float 15"] = 0.0
+    texeff["Unknown Float 16"] = 0.0
+    texeff["PS2 L"] = 0
+    texeff["PS2 K"] = 0xFFB5
+    texeff["Unknown Short"] = 0
 
     # add NiTextureEffect's texture source
-    nif.blocks[texeff_id].source_id = 91
+    texsrc = create_block("NiSourceTexture")
+    texeff["Source Texture"] = texsrc
 
-    texsrc_id = last_id + 1
-    last_id = texsrc_id
-    assert(texsrc_id == len(nif.blocks)) # debug
-    nif.blocks.append(nif4.NiSourceTexture())
-    nif.blocks[texeff_id].source = texsrc_id
-    nif.header.nblocks += 1
-            
-    nif.blocks[texsrc_id].use_external = 1
-    nif.blocks[texsrc_id].file_name = nif4.mystring('enviro 01.TGA') # ?
-    nif.blocks[texsrc_id].pixel_layout = 5 # default?
-    nif.blocks[texsrc_id].mipmap = 1 # default?
-    nif.blocks[texsrc_id].alpha = 3 # default?
-    nif.blocks[texsrc_id].unknown2 = 1 # ?
-
-    return nif
+    texsrcdata = TextureSource()
+    texsrcdata.useExternal = True
+    texsrcdata.fileName = "enviro 01.TGA" # ?
+    
+    srctex["Texture Source"] = srctexdata
+    srctex["Pixel Layout"] = 5
+    srctex["Use Mipmaps"]  = 1
+    srctex["Alpha Format"] = 3
+    srctex["Unknown Byte"] = 1
+    
+    # done!
 
 
 
 # 
-# Export all children of blender object ob, already stored in
-# nif.blocks[ob_block_id], and return the updated nif.
+# Export all children of blender object ob as children of parent_block.
 # 
 def export_children(ob, parent_block):
     # loop over all ob's children
@@ -1634,10 +1588,11 @@ def export_children(ob, parent_block):
 
 
 #
-# Convert an object's transformation matrix on the first frame of animation
-# to a niflib quadrupple ( translate, rotate, scale, velocity ).
-# The scale is a vector; but non-uniform scaling is not supported by the nif format, so for these we'll have to apply the transformation
-# when exporting the vertex coordinates... ?
+# Convert an object's transformation matrix on the first frame of
+# animation to a niflib quadrupple ( translate, rotate, scale,
+# velocity ). The scale is a vector; but non-uniform scaling is not
+# supported by the nif format, so for these we'll have to apply the
+# transformation when exporting the vertex coordinates... ?
 #
 def export_matrix(ob, space):
     nt = Float3()
@@ -1678,10 +1633,11 @@ def export_matrix(ob, space):
 
 
 # 
-# Find scale, rotation, and translation components of an
-# object in current frame of animation. Returns a triple (bs, br, bt), where bs is a scale vector,
-# br is a 3x3 rotation matrix, and bt is a translation vector. It
-# should hold that "ob.getMatrix(space) == bs * br * bt".
+# Find scale, rotation, and translation components of an object in
+# current frame of animation. Returns a triple (bs, br, bt), where bs
+# is a scale vector, br is a 3x3 rotation matrix, and bt is a
+# translation vector. It should hold that "ob.getMatrix(space) == bs *
+# br * bt".
 # 
 def getObjectSRT(ob, space):
     # handle the trivial case first
@@ -1768,9 +1724,9 @@ def getObjectSRT(ob, space):
 
 
 # 
-# Get bone matrix in 1st frame of animation.
-# Space can be ARMATURESPACE or BONESPACE.
-# This returns also a 4x4 matrix if space is BONESPACE (also see get_bone_restmatrix).
+# Get bone matrix in 1st frame of animation. Space can be
+# ARMATURESPACE or BONESPACE. This returns also a 4x4 matrix if space
+# is BONESPACE (also see get_bone_restmatrix).
 # 
 def get_bone_matrix(bone, space):
     # channels are applied in bone space, so let's start with BONESPACE
@@ -1814,9 +1770,9 @@ def get_bone_matrix(bone, space):
 
 
 # 
-# Get bone matrix in rest position ("bind pose").
-# Space can be ARMATURESPACE or BONESPACE.
-# This returns also a 4x4 matrix if space is BONESPACE (translation is bone head plus tail from parent bone).
+# Get bone matrix in rest position ("bind pose"). Space can be
+# ARMATURESPACE or BONESPACE. This returns also a 4x4 matrix if space
+# is BONESPACE (translation is bone head plus tail from parent bone).
 # 
 def get_bone_restmatrix(bone, space):
     # TODO assert bone.size == 1.0
