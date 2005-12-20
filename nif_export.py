@@ -11,27 +11,42 @@ __author__ = "amorilia@gamebox.net"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
 __version__ = "1.2"
 __bpydoc__ = """\
-This script exports selected meshes, along with parents and children, to the NetImmerse version 4.0.0.2 (used by Morrowind) .NIF files, along with their parents and children. If animation is present, also X***.NIF and a X***.KF files are written.
+This script exports selected meshes, along with parents, children, and
+armatures, to a .nif file. If animation is present,  X***.NIF and a X***.KF
+files are written as well.
 
-Usage:<br>
-    Select the meshes you wish to export and run this script from "File->Export" menu. All parents and children of the selected meshes will be exported as well. Supports animation of mesh location and rotation, and material color and alpha. To define animation groups, check the script source code.
+Supported:<br>
+    Vertex weight skinning.<br>
+    Animation of bones, material colors, and transparency.<br>
+    Animation groups ("Anim" text buffer).<br>
+    Texture flipping (via text buffer named to the texture).
 
 Missing:<br>
-    Does not export particle effects, cameras, lights.<br>
-    Actions (=animation groups) are ignored. Workaround: define actions in text buffer called "Anim".<br>
-    Texture packing has temporarily been dropped (sorry!), next release will include it again.
+    Particle effects, cameras, lights.<br>
+    Actions (for animation groups) are ignored. Workaround: define actions in
+text buffer called "Anim".<br>
+    Texture packing has temporarily been dropped (sorry!), next release
+will include it again.
 
 Known issues:<br>
-    Ambient and emit colors are obtained by multiplication with the diffuse color.<br>
-    Blender double sided faces will be one sided in the NIF file (workaround: duplicate faces).<br>
-    Non-armature animation is buggy unless you parent without parent inverse (CTRL-SHIFT-P). Parent meshes to an armature if you want to animate them.
+    Ambient and emit colors are obtained by multiplication with the diffuse
+color.<br>
+    Blender double sided faces will be one sided in the NIF file (workaround:
+duplicate faces).<br>
+    Direct animation of meshes is buggy unless you parent
+without parent inverse (CTRL-SHIFT-P). Workaround: don't animate meshes
+directly; instead, parent meshes to bones and animate the bones.
 
-Options (Scripts->System->Scripts Config Editor->Export):<br>
-    Scale Correction: How many NIF units is one Blender unit?<br>
-    Force DDS: Force textures to be exported with a .DDS extension? Usually, you can leave this disabled.<br>
-    Strip Texture Path: Strip texture path in NIF file? You should leave this disabled, especially when this model's textures are stored in a subdirectory of the Data Files\Textures folder.<br>
-    Version: the NIF version to write (EXPERIMENTAL, only 4.0.0.2 has been tested)<br>
-    Export DIR: default directory when script is opened
+Config options (Scripts->System->Scripts Config Editor->Export):<br>
+    force dds: Force textures to be exported with a .DDS extension? Usually,
+you can leave this disabled.<br>
+    strip texpath: Strip texture path in NIF file? You should leave this
+disabled, especially when this model's textures are stored in a subdirectory
+of the Data Files\Textures folder.<br>
+    scale correction: How many NIF units is one Blender unit?<br>
+    nif version: the NIF version to write (EXPERIMENTAL, only 4.0.0.2 has been
+tested)<br>
+    export dir: default directory to open when script starts
 """
 
 # --------------------------------------------------------------------------
@@ -127,7 +142,7 @@ tooltips = {
     'FORCE_DDS': "Force textures to be exported with a .DDS extension? Usually, you can leave this disabled.",
     'STRIP_TEXPATH': "Strip texture path in NIF file. You should leave this disabled, especially when this model's textures are stored in a subdirectory of the Data Files\Textures folder.",
     'EXPORT_DIR': "Default export directory.",
-    'NIF_VERSION': "The NIF version to write."
+    'NIF_VERSION': "The NIF version to write (EXPERIMENTAL, only 4.0.0.2 tested)."
 }
 
 # bounds
@@ -222,7 +237,7 @@ def export_nif(filename):
 If you have vertex groups, turn off envelopes.
 If you don't have vertex groups, select the bones one by one
 press W to convert their envelopes to vertex weights,
-and turn off envelopes."%ob.getName())"""%ob.getName()        
+and turn off envelopes."%ob.getName())"""%ob.getName()
                     raise NIFExportError("'%s': Cannot export envelope skinning. Check console for instructions."%ob.getName())
         
         # extract some useful scene
@@ -297,7 +312,7 @@ and turn off envelopes."%ob.getName())"""%ob.getName()
                 animtxt = Blender.Text.New("Anim")
                 animtxt.write("%i/Idle: Start/Idle: Loop Start\n%i/Idle: Loop Stop/Idle: Stop"%(fstart,fend))
 
-        # animations without keyframe animations crash the TES CS
+        # animations without keyframe animations crash the TESCS
         # if we are in that situation, add a trivial keyframe animation
         if DEBUG: print "Checking controllers"
         if (animtxt):
@@ -308,9 +323,8 @@ and turn off envelopes."%ob.getName())"""%ob.getName()
                     break
             if has_keyframecontrollers == 0:
                 if DEBUG: print "Defining dummy keyframe controller"
-                # add a trivial keyframe controller on the first root_object node
-                #export_keyframe(None, 'localspace', root_block["Children"].asLinkList()[0], 1.0)
-                export_keyframe(None, 'localspace', root_block, 1.0)
+                # add a trivial keyframe controller on the scene root
+                export_keyframe(None, 'localspace', root_block)
         
         # export animation groups
         if (animtxt):
@@ -351,14 +365,12 @@ and turn off envelopes."%ob.getName())"""%ob.getName()
 
 
 # 
-# Export a mesh/empty object ob, child of nif block parent_block_id, as a
-# NiNode block. Export also all children of ob, and return the updated
-# nif.
+# Export a mesh/empty object ob as child of parent_block.
+# Export also all children of ob.
 #
 # - space is 'none', 'worldspace', or 'localspace', and determines
 #   relative to what object the transformation should be stored.
-# - parent_block_id is the block index of the parent of the object (-1
-#   for the root node)
+# - parent_block is the parent nif block of the object (None for the root node)
 # - for the root node, ob is None, and node_name is usually the base
 #   filename (either with or without extension)
 #
@@ -412,7 +424,7 @@ def export_node(ob, space, parent_block, node_name):
             raise NIFExportError('%s: animated meshes parented to armatures are unsupported, animate the armature instead'%ob.getName())
         arm_mat_inv = Blender.Mathutils.Matrix(ob.getParent().getMatrix('worldspace'))
         arm_mat_inv.invert()
-        bbind_mat = ob.getMatrix('worldspace') * arm_mat_inv # if ob has no ipo, then this is effectively relative to the rest matrix
+        bbind_mat = ob.getMatrix('worldspace') * arm_mat_inv
         bind_mat = Matrix44(
             bbind_mat[0][0], bbind_mat[0][1], bbind_mat[0][2], bbind_mat[0][3],
             bbind_mat[1][0], bbind_mat[1][1], bbind_mat[1][2], bbind_mat[1][3],
@@ -503,8 +515,7 @@ def export_keyframe(ipo, space, parent_block, extra_trans = None, extra_quat = N
 
     # add a keyframecontroller block, and refer to this block in the parent's time controller
     kfc = create_block("NiKeyframeController")
-    assert( parent_block["Controller"].asLink().is_null() ) # make sure we don't overwrite
-    parent_block["Controller"] = kfc
+    add_controller(parent_block, kfc)
 
     # fill in the non-trivial values
     kfc["Flags"] = 0x0008
@@ -512,8 +523,6 @@ def export_keyframe(ipo, space, parent_block, extra_trans = None, extra_quat = N
     kfc["Phase"] = 0.0
     kfc["Start Time"] = (fstart - 1) * fspeed
     kfc["Stop Time"] = (fend - fstart) * fspeed
-    # The target node is automatically calculated :) Thanks Shon!
-    #kfc["Target Node"] = parent_block
 
     # add the keyframe data
     kfd = create_block("NiKeyframeData")
