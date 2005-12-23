@@ -2,7 +2,7 @@
 
 """ Registration info for Blender menus:
 Name: 'NetImmerse/Gamebryo (.nif & .kf)...'
-Blender: 239
+Blender: 240
 Group: 'Export'
 Tip: 'Export selected meshes to NIF (.nif) format.'
 """
@@ -237,7 +237,7 @@ def export_nif(filename):
 If you have vertex groups, turn off envelopes.
 If you don't have vertex groups, select the bones one by one
 press W to convert their envelopes to vertex weights,
-and turn off envelopes."%ob.getName())"""%ob.getName()
+and turn off envelopes."""%ob.getName()
                     raise NIFExportError("'%s': Cannot export envelope skinning. Check console for instructions."%ob.getName())
         
         # extract some useful scene
@@ -1174,7 +1174,7 @@ def export_trishapes(ob, space, parent_block):
                 imatcold = QueryColorData(matcold)
                 rgba_keys = []
                 for ftime in ftimes:
-                    rgba_frame = Key_Color()
+                    rgba_frame = Key_Color4()
                     rgba_frame.time = ftime
                     rgba_frame.data.r = rgba_curve[ftime][0]
                     rgba_frame.data.g = rgba_curve[ftime][1]
@@ -1247,7 +1247,7 @@ def export_trishapes(ob, space, parent_block):
                 else:
                     fuv = None
                 if (mesh_hasvcol):
-                    fcol = Color(0.0,0.0,0.0,0.0)
+                    fcol = Color4(0.0,0.0,0.0,0.0)
                     fcol.r = f.col[i].r / 255.0 # NIF stores the colour values as floats
                     fcol.g = f.col[i].g / 255.0 # NIF stores the colour values as floats
                     fcol.b = f.col[i].b / 255.0 # NIF stores the colour values as floats
@@ -1645,7 +1645,7 @@ def getObjectSRT(ob, space):
     assert((space == 'worldspace') or (space == 'localspace'))
 
     # now write out spaces
-    if (not type(ob) is Blender.Armature.BoneType):
+    if (not type(ob) is Blender.Armature.Bone):
         # get world matrix in first frame of animation
         mat = Blender.Mathutils.Matrix(ob.getMatrix('worldspace'))
         # handle localspace: L * Ba * B * P = W
