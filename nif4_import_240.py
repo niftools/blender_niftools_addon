@@ -1520,7 +1520,8 @@ def createArmature(block):
     # Armature data
     armData = Blender.Armature.Armature(block.getName())
     armData.name = block.getName()
-    #armData.drawAxes = True
+    armData.drawAxes = True
+    armObj.link(armData)
     armData.makeEditable()
     # Inverse of the armature's world coordinates transform matrix
     armatureMat = block.getMatrix('worldspace')
@@ -1610,8 +1611,7 @@ def createArmature(block):
     meshObj = Blender.Object.GetSelected()[0]
     meshObj.setMatrix(armatureMat * Blender.Mathutils.ScaleMatrix(1.0/scale_correction, 4)) # * nifToBlendXform)
     """
-    #armData.update()
-    armObj.link(armData)
+    armData.update()
     return armObj
 
 def getBoneMat(bone):
