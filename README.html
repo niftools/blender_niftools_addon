@@ -1,43 +1,54 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
+
+  
   <title>The Blender NIF Scripts v1.2 - README</title>
-
-
 </head>
 
 
-  <body>
+<body>
+
 
 <h1> The Blender NIF Scripts v1.2 - README</h1>
 
+
 <h2>BSD License </h2>
 
-<p> Copyright (c) 2005, NIF File Format Library and Tools<br />
+
+<p> Copyright (c) 2005, <a href="http://niftools.sourceforge.net/">NIF File Format Library and Tools</a><br />
+
 
 All rights reserved. </p>
+
 
 <p> Redistribution and use in source and binary forms, with or
 without modification, are permitted provided that the following
 conditions are met: </p>
 
+
 <ul>
+
 
   <li>Redistributions of source code must retain the above
 copyright notice, this list of conditions and the following disclaimer.
   </li>
+
 
   <li>Redistributions in binary form must reproduce the above
 copyright notice, this list of conditions and the following disclaimer
 in the documentation and/or other materials provided with the
 distribution. </li>
 
+
   <li>Neither the name of the NIF File Format Library and Tools
 project nor the names of its contributors may be used to endorse or
 promote products derived from this software without specific prior
 written permission. </li>
 
+
 </ul>
+
 
 <p> THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
 CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
@@ -52,40 +63,55 @@ TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGE. </p>
 
+
 <h2> Installation </h2>
+
 
 <ul>
 
+
   <li>(optional) If you wish to use Morrowind's textures:
+    
     <ul>
+
 
       <li>extract the contents of 'Morrowind.bsa' (and, if you
 have the expansions, also 'Tribunal.bsa' and 'Bloodmoon.bsa') into
 'C:\MORROWIND' </li>
 
+
       <li>convert all .dds files in 'C:\MORROWIND\textures' to
 .tga files (for instance, using 'DDS Converter 2.1')</li>
 
+
+    
     </ul>
 
+
   </li>
+
 
   <li>Remove any old versions of the scripts (nif4_import_237.py,
 nif4_export.py,
 nif4.py, and nif4.pyc).</li>
 
-  <li>Copy the export scripts "nif4_import_240.py" and
+
+  <li>Run the installer. Or, if you are installing manually from the zip file, copy
+the export scripts "nif4_import_240.py" and
 "nif_export.py", along with the
 "niflib.py" and "_niflib.dll" files into the Blender scripts folder.
 Under Windows this is by default Windows C:\Program Files\Blender
 Foundation\Blender\.blender\scripts. Either
-reload Blender or in the folders setup menu select "Re-evaluate scripts
+restart Blender, or in the folders setup menu select "Re-evaluate
+scripts
 registration in menus", and the options to import and export NIF files
 will appear in the File-Import and File-Export menu's. </li>
+
 
   <li><span style="font-weight: bold;">Make sure you
 have Blender 2.40</span>; the scripts won't run on older versions
 of Blender.</li>
+
 
   <li>IMPORTANT: <span style="font-weight: bold;">The
 scripts need a full Python 2.4 installation</span>, as they use
@@ -100,131 +126,187 @@ order to get the script running, but you need to install Python 2.4 as
 well (you can get it from http://www.python.org/). Restart Blender and
 everything should work fine. If
 you still have problems, check out this LOOOONG thread on the elysiun
-board: http://www.elysiun.com/forum/viewtopic.php?t=7723 The latest
+board: <a href="http://www.elysiun.com/forum/viewtopic.php?t=7723">http://www.elysiun.com/forum/viewtopic.php?t=7723</a> The latest
 pages will be the ones you will find more useful, as the thread started
 several Blender versions back.<br />
 
+
   </li>
+
 
 </ul>
 
+
 <h2>Exporter Notes</h2>
+
 
 <h3>Author</h3>
 
+
 <p>Amorilia ( amorilia@gamebox.net )</p>
+
 
 <h3>Thanks to... </h3>
 
+
 <ul>
+
 
   <li>Brandano, for the import script, which helped a lot writing
 this export script </li>
 
+
   <li>Taharez, for helping with the Python NIF library, and NIF
 specs </li>
 
+
   <li>Brick, for NIF specs </li>
+
 
   <li>Shon, for Niflib, NIF specs, and explaining things
 about&nbsp;skinning and programming </li>
 
+
   <li>y67_a, for pointing out the fact that the script forgot to
 export normals; and thereby opening the path to smoothing support </li>
+
 
   <li>m4444x,&nbsp;for NifSkope, non-textured object support,
 optimizing the
 main loop in the trishapedata export, animation group support, vertex
 color support, and texture flipping support </li>
 
+
 </ul>
+
 
 <br />
 
+
 <h3>Usage </h3>
+
 
 <ul>
 
+
   <li>create meshes (and empties, if you like) in blender:
+    
     <ul>
+
 
       <li>IMPORTANT: if you wish to animate meshes without using
 armatures and bones, then, when grouping, always make parent without
 inverse (in
 Object Mode, use CTRL-SHIFT-P) </li>
 
+
+    
     </ul>
+
 
   </li>
 
+
   <li>create armatures and bones for animation
+    
     <ul>
+
 
       <li>either edit bone envelopes, and parent your meshes to
 armatures with vertex groups; the vertex weights will be constructed
 using the bone envelopes</li>
 
+
       <li>or, simply parent meshes to bones (armature must be in
 pose mode)</li>
+
 
       <li>insert pose mode keys in different frames (press I to
 insert key, and select Rot, Loc, or LocRot) to compose your animation</li>
 
+
+    
     </ul>
+
 
   </li>
 
+
   <li>create UV coordinates (be sure to check the blender manual
 for more details)
+    
     <ul>
+
 
       <li>create seams (3D View, Edit Mode, select seam vertices,
 CTRL-E) </li>
 
+
       <li>in the 3D View, UV Face Select Mode, select all faces,
 press U-&gt;LSCM </li>
+
 
       <li>(optional) if you want to create your own texture: in
 the UV/Image Editor, UVs-&gt;Save UV Face Layout, and process the
 saved texture with your favorite 2D paint program </li>
 
+
+    
     </ul>
 
+
   </li>
+
 
   <li>add materials to your meshes, and add one texture to each
 material, with the following settings:
+    
     <ul>
+
 
       <li>texture map input: UV </li>
 
+
       <li>texture map output: COL for diffuse map (base texture) </li>
 
+
+    
     </ul>
+
 
   </li>
 
+
   <li>for each texture:
+    
     <ul>
 
+
       <li>set texture type to 'Image' </li>
+
 
       <li>either load a texture from 'C:\MORROWIND\textures', or
 put your custom texture in the 'C:\Program Files\Morrowind\Data
 Files\Textures' folder, and load it from there. Note that Blender does
 not read .dds files. </li>
 
+
+    
     </ul>
 
+
   </li>
+
 
   <li>(optional) animate meshes and/or empty objects (press I to
 insert key, and select Rot, Loc, or LocRot; for now, only location and
 rotation channels are exported); define the animation groups in a text
 buffer called 'Anim' (check source code for an example) </li>
 
+
   <li>(optional) to export vertex colors, turn on the VCOL_PAINT
 flag in the material tab </li>
+
 
   <li>(optional) Hull your model in a simple so-called collision
 mesh, which defines where the player cannot walk through (most of
@@ -233,17 +315,24 @@ the TES CS pressing F4 in the render window). You may want to create it
 to speed up collision detection, to help the player walk over objects
 such as stairs, or to allow the player to walk through certain parts of
 your model such as spider webs.
+    
     <ul>
+
 
       <li>create a mesh called
 'RootCollisionNode' (object name, not datablock name)</li>
 
+
       <li>don't apply any
 material to it </li>
 
+
+    
     </ul>
 
+
   </li>
+
 
   <li>(optional) if you suspect that some of the faces of your
 meshes are not convex, then you should let blender triangulate these
@@ -251,71 +340,98 @@ meshes (press CTRL-T in edit mode with all vertices selected), because
 in that case, Blender's triangulation algorithm is less error prone
 than the triangulation algorithm used in this script. </li>
 
+
   <li>select the models that you wish to export, and run this
 script from the 'File-&gt;Export' menu. Note that the script looks
 for unparented parents of the selected objects, and exports these root
 objects along with all of their children, so you don't have to select
 the whole model. </li>
 
+
 </ul>
+
 
 <h3> Notes </h3>
 
+
 <ul>
+
 
   <li>Non-uniformly scaled objects cannot be exported.
 Workaround: apply size and rotation. Unfortunately, this workaround
 does not work on empties. </li>
 
+
 </ul>
+
 
 <h3> Old History </h3>
 
+
 <p> (For recent history see the ChangeLog file) </p>
+
 
 <ul>
 
+
   <li>0.0 (Jun 15): first try </li>
+
 
   <li>0.1 (Jun 20): fixed texture mapping, fixed transformations,
 improved error handling </li>
 
+
   <li>0.2 (Jun 30): export animation, transparency, multiple
 materials per mesh </li>
+
 
   <li>0.3 (Aug 25): export normals (fixes lighting, thx y67_a),
 niflib.py updated </li>
 
+
   <li>0.4 (Aug 28): support smoothing </li>
+
 
   <li>0.5 (Sep 26): support for non-textured objects,
 optimization in trishapedata </li>
+
 
   <li>0.6 (Sep 27): support for uniformly scaled objects (fixes
 compatibility problem with Brandano's import script), fixed emissive
 and ambient colour </li>
 
+
   <li>0.7 (Sep 30): animation group support (contributed by
 m4444x) </li>
+
 
   <li>0.7.1 (Oct 4): vertex color support (contributed by m4444x)
   </li>
 
+
   <li>0.8 (Oct 12): code cleanup, moved to BSD license </li>
+
 
   <li>Newer versions: see ChangeLog file.</li>
 
+
 </ul>
+
 
 <h2>Importer Notes</h2>
 
+
 <h3>Author</h3>
+
 
 <p>Brandano</p>
 
+
 <h3>Credits</h3>
 
+
 <ul>
+
 
   <li>Portions of this programs are (were) derived (through the
 old tested method of cut'n paste) from the obj import script
@@ -323,10 +439,12 @@ obj_import.py: OBJ Import v0.9 by Campbell Barton (AKA Ideasman) (No
 more. I rewrote the lot. Nevertheless I wouldn't have been able to
 start this without Ideasman's script to read from!)</li>
 
+
   <li>Binary conversion functions are courtesy of SJH. Couldn't
 find the full name, and couldn't find any license info, I got the code
 for these from
 http://projects.blender.org/pipermail/bf-python/2004-July/001676.html</li>
+
 
   <li>The file reading strategy was 'inspired' by the NifToPoly
 script included with the DAOC mapper, which used to be available at
@@ -338,40 +456,55 @@ mention of the original copyright. An updated version of the script is
 included with the DAOC Mappergui application, available at
 http://nathrach.republicofnewhome.org/mappergui.html<br />
 
+
   </li>
+
 
 </ul>
 
+
 <h3>Thanks go to:</h3>
 
+
 <ul>
+
 
   <li>Campbell Barton (AKA Ideasman, Cambo) for making code clear
 enough to be used as a learning resource. Hey, this is my first ever
 python script!</li>
 
+
   <li>SJH for the binary conversion functions. Got the code off a
 forum somewhere, posted by Ideasman, I suppose it's allright to use it</li>
+
 
   <li>Lars Rinde (AKA Taharez), for helping me a lot with the
 file format, and with some debugging even though he doesn't 'do Python'</li>
 
+
   <li>Timothy Wakeham (AKA timmeh), for taking some of his time
 to help me get to terms with the way the UV maps work in Blender</li>
+
 
   <li>Amorilia (don't know your name buddy), for bugfixes and
 testing.<br />
 
+
   </li>
+
 
 </ul>
 
+
 <h3>Usage</h3>
+
 
 Launch the script, select the .NIF file you wish to import, and you are
 set.<br />
 
+
 <br />
+
 
 Actually, no, that's not it if you also want to load the textures.
 Blender does not support the loading of .DDS textures, so in order to
@@ -380,11 +513,14 @@ but with the extension .TGA, .PNG, .BMP or .JPG. Also, selecting a base
 folder for the textures has proved to be an impossible task, so the
 script looks for them in the same folder as the .NIF file.<br />
 
+
 However, as part of the filepath info is also stored within the .NIF
 file itself, you should copy the whole subpath from the Morrowind "Data
 Files" folder.<br />
 
+
 <br />
+
 
 This means that if your NIF file is, say, "C:\Morrowind\Data
 Files\Meshes\deadparrot.nif" and the texture is "C:\Morrowind\Data
@@ -393,102 +529,138 @@ it to "C:\Morrowind\Data Files\Meshes\Textures\parrot\dead.tga". This
 is also in order to keep the texture file path consistent for the time
 we'll be able to export the modified meshes from Blender.<br />
 
+
 <br />
 
+
 Limitations:<br />
+
 
 At the moment the script only loads the pure geometry data, some
 material info, and the first texture found on every mesh.<br />
 
+
 This should normally match the base texture, but the file format allows
 for 'unordered' textures, so some models might import badly.<br />
 
+
 Also, the script doesn't import animation, particle effects, multiple
 UV channels.... the list is too long. Working on it.<br />
+
 
 That little 'a' after the version number means: do not expect any
 support whatsoever. I might give you some, but for all purposes, try
 and act as if I didn't exist.<br />
 
+
 The script loads the armature and vertex groups-weights of the skinned
 meshes properly, but carences in Blender 2.37 armature python API do
 not allow me to apply this skinnining info to the mesh from the script.<br />
 
+
 On top of that, bugs in the armature python API make it impossible to
 save the armature as it is loaded in a .blend file.<br />
+
 
 These matters are being looked into by the Blender developers, and a
 new armature system and API should be included with the next Blender
 release.<br />
 
+
 <br />
+
 
 <h3> Old History </h3>
 
+
 <p> (For recent history see the ChangeLog file) </p>
 
+
 1.5a:<br />
+
 
 fixed a bug where texture files with trailing null characters would
 crash the importer<br />
 
+
 <br />
+
 
 1.6a:<br />
 
+
 changed the material handling, now doesn't generate duplicate materials<br />
+
 
 changed the mesh creation method. Now it builds hierarchical relations
 generating empties as correspondences to NiNodes<br />
 
+
 <br />
 
+
 1.7a:<br />
+
 
 got rid of a couple of matrix operations, now I apply the transforms to
 the mesh container rather than to the vertices, so there is no data
 loss.<br />
 
+
 The root node is scaled down to 1/10th of the original size and rotated
 -90# along the Z axis, but this is the only change introduced by the
 importer.<br />
+
 
 Now not only all the hierarchies are stored, but the empties that act
 as grouping widgets are moved to the correct relative coordinates, so
 we might start to think about animations.<br />
 
+
 <br />
+
 
 1.8a:<br />
 
+
 I did some little optimization, fixed a few things.<br />
+
 
 Now the root node is no longer rotated along the Z axis, as I realized
 that I completely forgot that I should apply his transform matrix to
 the root node as well.<br />
 
+
 It is only scaled down to 10% of the original size, and as all his
 children inherit this transformation the meshes are much easier to
 handle.<br />
+
 
 I have also added a much better support for textures and materials,
 that are now only parsed once and reused if identical (obtained from
 the same node).<br />
 
+
 I couldn't notice any speed improvement, because on my machine the
 import is pretty much istantaneous anyway, but I believe that this
 wastes less memory.<br />
 
+
 <br />
 
+
 1.9a:<br />
+
 
 Not published, it didn't really introduce much change to what was
 already there.<br />
 
+
 <br />
 
+
 2.0a:<br />
+
 
 Big things afoot, now I got bones! The script now will load single or
 multiple armatures, and build each armature's bone tree in the rest
@@ -496,13 +668,16 @@ position. The bone head position is correct, the tail is approximated
 and the rotation is botched. The trouble is that Blender's bone API is
 a little bit messy. Let's say very messy.<br />
 
+
 The NIF bones store their orientation and origin as a matrix relative
 to the parent node, while in Blender all coordinates are relative to
 the armature node.And on top of that while I have a getRestMatrix
 method I don't have an equivalent setRestMatrix one. <br />
 
+
 I am still working on this, but I already have a couple of ideas on
 what I can to to get these damn thing working properly.<br />
+
 
 I still don't have the skinning info, so moving the bones about won't
 change the pose of the model. But if you want to help me out have a
@@ -511,56 +686,76 @@ particular. NiSkinInstance holds a list of bones that influence the
 mesh, the class is already defined in the script, even though it isn't
 used<br />
 
+
 In the smaller updates, if the script can't find a full Python
 installation it will print a customized error showing the Python
 version Blender was compiled with. This is not necessarily the Python
 version you need, but is sure to work. At this time the correct version
 is Python 2.3.5<br />
 
+
 <br />
 
+
 1.0.1<br />
+
 
 I took the occasion of a new Blender version out and changed my
 versioning convention. Sorry about the confusion<br />
 
+
 Fixed a bug that would hang the script on Blender 2.37<br />
+
 
 Now bones are 'a' proper length (NIF bone systems don't report a bone
 length), and are aligned properly, well, within 1 degree of their roll
 position<br />
 
+
 <br />
 
+
 1.0.2<br />
+
 
 A few (quite a few actually) bugfixes by Amorilia (whoopee, another
 python coder onboard!).<br />
 
+
 Now the script won't crash with larger NIFs. And read the right number
 of blocks. And won't overwrite existing meshes etc.. <br />
 
+
 <br />
 
+
 1.0.3<br />
+
 
 Added a new way to roll bones to their proper position, might save a
 few cycles, tho sometimes it still needs to approximate the result<br />
 
+
 Changed the way the nif format is detected. The script now also detects
 the file version and can test against a list of different file versions.<br />
+
 
 It also allows for longer headers, like in the case of "Zoo Thycoon 2"
 NIF files.<br />
 
+
 Zoo Thycoon 2 files are way too different from Morrowind's files to be
 imported, though.<br />
 
+
 <br />
+
 
 1.0.4<br />
 
+
 Removed a bunch of debug messages to speed up things a little.<br />
+
 
 Added vertex groups to the imported info, but the skinning doesn't work
 yet. To work properly both the meshes and the armature should share the
@@ -568,40 +763,51 @@ same coordinates system apparently, and the nested transformations that
 are applied to both are making it very difficult to come up with a
 working system. I really ran out of ideas, I am afraid.<br />
 
+
 Meshes now are imported as an "object" wrapped by a NiNode, and
 therefore the outliner tree is a little simpler. This also loses a
 little transform info, but nothing you will notice on the screen anyway
 as the transform matrix of the NiNode and NiTriShape are combined while
 importing.<br />
 
+
 <br />
 
+
 1.0.5<br />
+
 
 Fixed a few typos and a couple of mistakes that Amorilia pointed out.
 Still incomplete, by far, but seems to be approaching the "usable"
 state.<br />
 
+
 <br />
 
+
 1.0.6<br />
+
 
 Added Amorilia's corrections to the import of UV seams. Changed the
 name of the file to reflect the fact that the importer is version
 specific.<br />
+
 
 As of this version the licensing is under a BSD license, to avoid
 confusion when distributing together with Amorilia's export script.
 However, copyright on the two script is still with the respective
 authors.<br />
 
+
 Also, all previous versions of this script are still to be considered
 as governed by the GPL license.<br />
+
 
 I also removed a small portion of the readme regarding python setup, as
 it was confusing, redundant and most likely just wrong. For the moment
 I'll rely on the Blender's user forums, until I can come up with a
 decent tutorial on setting up python properly.<br />
+
 
 </body>
 </html>
