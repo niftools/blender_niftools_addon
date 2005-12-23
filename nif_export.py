@@ -358,6 +358,7 @@ and turn off envelopes."%ob.getName())"""%ob.getName()
     # we can probably remove these lines once the exporter is stable
     try:
         ReadNifTree(filename)
+        if DEBUG: WriteNifTree(filename[:-4] + "_test.nif", root_block, NIF_VERSION)
     except:
         Blender.Draw.PupMenu("WARNING%t|Exported NIF file may not be valid: double check failed! This is probably due to an unknown bug in the exporter code.")
         raise # re-raise the exception
@@ -418,20 +419,16 @@ def export_node(ob, space, parent_block, node_name):
     node["Scale"]       = ob_scale[0]
     node["Translation"] = ob_translation
 
-    # set object bind position, in armature space (this should work)
-    if ob != None and ob.getParent() and ob.getParent().getType() == 'Armature':
-        if ipo:
-            raise NIFExportError('%s: animated meshes parented to armatures are unsupported, animate the armature instead'%ob.getName())
-        arm_mat_inv = Blender.Mathutils.Matrix(ob.getParent().getMatrix('worldspace'))
-        arm_mat_inv.invert()
-        bbind_mat = ob.getMatrix('worldspace') * arm_mat_inv
+    # set object bind position (we take the first frame of animation equal to the bind position)
+    if ob != None and ob.getParent():
+        bbind_mat = ob.getMatrix('worldspace')
         bind_mat = Matrix44(
             bbind_mat[0][0], bbind_mat[0][1], bbind_mat[0][2], bbind_mat[0][3],
             bbind_mat[1][0], bbind_mat[1][1], bbind_mat[1][2], bbind_mat[1][3],
             bbind_mat[2][0], bbind_mat[2][1], bbind_mat[2][2], bbind_mat[2][3],
             bbind_mat[3][0], bbind_mat[3][1], bbind_mat[3][2], bbind_mat[3][3])
         inode = QueryNode(node)
-        inode.SetBindPosition(bind_mat)
+        inode.SetWorldBindPos(bind_mat)
 
     if (ob != None):
         # export animation
@@ -661,7 +658,7 @@ def export_sourcetexture(texture, filename = None):
 
     # add NiSourceTexture
     srctex = create_block("NiSourceTexture")
-    srctexdata = TextureSource()
+    srctexdata = TexSource()
     srctexdata.useExternal = ( texture.getName()[:4] != "pack" )
     
     # TODO port this code
@@ -982,7 +979,7 @@ def export_trishapes(ob, space, parent_block):
                 bbind_mat[2][0], bbind_mat[2][1], bbind_mat[2][2], bbind_mat[2][3],
                 bbind_mat[3][0], bbind_mat[3][1], bbind_mat[3][2], bbind_mat[3][3])
             inode = QueryNode(trishape)
-            inode.SetBindPosition(bind_mat)
+            inode.SetWorldBindPos(bind_mat)
 
         if (mesh_base_tex != None or mesh_glow_tex != None):
             # add NiTriShape's texturing property
@@ -994,7 +991,7 @@ def export_trishapes(ob, space, parent_block):
             tritexprop["Texture Count?"] = 7 # standard?
 
             if ( mesh_base_tex != None ):
-                basetex = Texture()
+                basetex = TexDesc()
                 basetex.isUsed = 1
                 tritexprop["Base Texture"] = basetex
                 
@@ -1011,7 +1008,7 @@ def export_trishapes(ob, space, parent_block):
                     tritexprop["Base Texture"] = basetexsrc # isn't this confusing?
 
             if ( mesh_glow_tex != None ):
-                glowtex = Texture()
+                glowtex = TexDesc()
                 glowtex.isUsed = 1
                 tritexprop["Glow Texture"] = glowtex
 
@@ -1471,7 +1468,7 @@ def export_bones(arm, parent_block):
             bbind_mat[2][0], bbind_mat[2][1], bbind_mat[2][2], bbind_mat[2][3],
             bbind_mat[3][0], bbind_mat[3][1], bbind_mat[3][2], bbind_mat[3][3])
         inode = QueryNode(node)
-        inode.SetBindPosition(bind_mat)
+        inode.SetWorldBindPos(bind_mat)
     
     # now fix the linkage between the blocks
     for bone in bones.values():
@@ -1537,7 +1534,7 @@ def export_textureeffect(ob, parent_block):
     texsrc = create_block("NiSourceTexture")
     texeff["Source Texture"] = texsrc
 
-    texsrcdata = TextureSource()
+    texsrcdata = TexSource()
     texsrcdata.useExternal = True
     texsrcdata.fileName = "enviro 01.TGA" # ?
     
@@ -1851,7 +1848,7 @@ def scale_tree(block, scale):
         block["Scale"] = block["Scale"].asFloat() / s
         # NiNode bind position transform scale
         inode = QueryNode(block)
-        mat = inode.GetBindPosition()
+        mat = inode.GetWorldBindPos()
         mat[0][0] /= s
         mat[0][1] /= s
         mat[0][2] /= s
@@ -1864,7 +1861,7 @@ def scale_tree(block, scale):
         mat[3][0] *= scale
         mat[3][1] *= scale
         mat[3][2] *= scale
-        inode.SetBindPosition(mat)
+        inode.SetWorldBindPos(mat)
         # Controller data block scale
         ctrl = block["Controller"].asLink()
         if not ctrl.is_null():
