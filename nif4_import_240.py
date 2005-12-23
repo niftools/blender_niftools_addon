@@ -143,9 +143,9 @@ def config_read(configfile, var, val):
             if x == 'force_dds'        and var == 'force_dds':        return int(y)
             if x == 'strip_texpath'    and var == 'strip_texpath':    return int(y)
             if x == 'seams_import'     and var == 'seams_import':     return int(y)
-            if x == 'last_imported'    and var == 'last_imported':    return y
-            if x == 'last_exported'    and var == 'last_exported':    return y
-            if x == 'user_texpath'     and var == 'user_texpath':     return y
+            if x == 'last_imported'    and var == 'last_imported':    return str(y)
+            if x == 'last_exported'    and var == 'last_exported':    return str(y)
+            if x == 'user_texpath'     and var == 'user_texpath':     return str(y)
     return val
 
 datadir = Blender.Get('datadir')
@@ -1982,8 +1982,9 @@ def createMesh(block):
         #If there's a texture assigned to this material sets it to be displayed in Blender's 3D view
         if mtex:
             imgobj = mtex.tex.getImage()
-            for f in meshData.faces: 
-                f.image = imgobj
+            if imgobj:
+                for f in meshData.faces:
+                    f.image = imgobj
                 
     # Put the object in blender
     meshObj = Blender.NMesh.PutRaw(meshData, name, recalcNormals)
