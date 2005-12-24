@@ -21,3 +21,11 @@ Version 1.1 (Oct 31, 2005):
 * Import/Export: Config file support.
 * Import/Export: Now we have a GUI for setting various options.
 * Import: Solved problem with textures embedded in NIF file; textures will not load but the script will still load the meshes.
+
+Version 1.2 (Dec 23, 2005):
+* Import/Export: updated for Blender 2.40
+* Export: now uses Niflib, which implies that it runs much faster, the code is much cleaner, and multiple NIF version support is in the making
+* Export: replaced old crappy config file system with Blender's native Script Config Editor system
+* Export: new feature - texture flipping
+* Export: new feature - export of bones, armatures, and vertex weights (finally!!!)
+* Export: packed texture feature has been temporarily dropped; this functionality is being transferred to Niflib

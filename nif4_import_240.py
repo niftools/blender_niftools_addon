@@ -1,8 +1,8 @@
 #!BPY
 
 """
-Name: 'Netimmerse 4.0.0.2 (.nif)'
-Blender: 239
+Name: 'Netimmerse 4.0.0.2 (.nif)...'
+Blender: 240
 Group: 'Import'
 Tip: 'Load a Netimmerse File'
 """
