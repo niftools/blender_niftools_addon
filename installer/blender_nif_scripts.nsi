@@ -12,9 +12,13 @@ Name "Blender NIF Scripts ${VERSION}"
 !define MUI_ABORTWARNING
 
 !define MUI_WELCOMEPAGE_TEXT  "This wizard will guide you through the installation of the Blender NIF Scripts.\r\n\r\nIt is recommended that you close all other applications before starting Setup.\r\n\r\nNote to Win2k/XP users: you may require administrator privileges to install the Blender NIF Scripts successfully."
+!define MUI_FINISHPAGE_SHOWREADME "$INSTDIR\README.html"
+!define MUI_FINISHPAGE_LINK "Brought to you by NifTools (http://niftools.sourceforge.net)!"
+!define MUI_FINISHPAGE_LINK_LOCATION "http://niftools.sourceforge.net/"
 
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_LICENSE Copyright.txt
+!insertmacro MUI_PAGE_DIRECTORY
 Page custom DataLocation
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
@@ -27,22 +31,24 @@ Page custom DataLocation
 ;--------------------------------
 ;Languages
  
-  !insertmacro MUI_LANGUAGE "English"
+!insertmacro MUI_LANGUAGE "English"
     
 ;--------------------------------
 ;Language Strings
 
-  ;Description
-  LangString DESC_SecCopyUI ${LANG_ENGLISH} "Copy all required files to the application folder."
-  LangString TEXT_IO_TITLE ${LANG_ENGLISH} "Specify Blender User Data Location."
+;Description
+LangString DESC_SecCopyUI ${LANG_ENGLISH} "Copy all required files to the application folder."
+LangString TEXT_IO_TITLE ${LANG_ENGLISH} "Specify Blender User Data Location."
 
 ;--------------------------------
 ;Data
 
-Caption "Blender NIF Scripts VERSION Installer"
-OutFile "blender_nif_scripts-${VERSION}-install.exe"
+Caption "Blender NIF Scripts ${VERSION} Installer"
+OutFile "blender_nif_scripts-${VERSION}-windows.exe"
+InstallDir "$PROGRAMFILES\NifTools\Blender NIF Scripts"
 BrandingText "http://niftools.sourceforge.net/"
 ComponentText "This will install the Blender NIF Scripts ${VERSION} on your computer."
+DirText "Use the field below to specify the folder where you want the Blender NIF Scripts to be copied to. To specify a different folder, type a new name or use the Browse button to select an existing folder."
 
 ; GetWindowsVersion
 ;
@@ -134,7 +140,6 @@ FunctionEnd
 
 Var BLENDERHOME
 Var BLENDERINSTDIR
-; Var INSTDIR
 Var winversion
 
 Function SetWinXPPath
@@ -146,10 +151,18 @@ Function SetWin9xPath
 FunctionEnd
 
 Function .onInit
+  ; get Windows version
   Call GetWindowsVersion
   Pop $R0
   Strcpy $winversion $R0
   !insertmacro MUI_INSTALLOPTIONS_EXTRACT "data.ini"
+
+  ; get Blender install dir
+  ReadRegStr $BLENDERINSTDIR HKLM SOFTWARE\BlenderFoundation "Install_Dir"
+  IfErrors 0 NoAbort
+     MessageBox MB_OK "Install Blender first. Get it from http://www.blender.org/"
+     Abort ; causes installer to quit.
+  NoAbort:
 FunctionEnd
 
 Var HWND
@@ -159,9 +172,6 @@ Var is2KXP
 Function DataLocation
   !insertmacro MUI_HEADER_TEXT "$(TEXT_IO_TITLE)" ""
 
-  ; get Blender install dir
-  ReadRegStr $BLENDERINSTDIR HKLM SOFTWARE\BlenderFoundation "Install_Dir"
-  
   ; Set default choice
   !insertmacro MUI_INSTALLOPTIONS_WRITE "data.ini" "Field 3" "State" 1
   
@@ -213,41 +223,69 @@ Function DataLocation
     Call SetWin9xPath
   end:
   
-  StrCpy $INSTDIR "$BLENDERHOME\.blender\scripts"
+  IfFileExists "$BLENDERHOME\.blender\scripts\*.*" +3 0
+     MessageBox MB_OK "Invalid Blender User Data Location."
+     Quit
 FunctionEnd
 
-Section "Blender-NIF-Scripts-VERSION (required)" SecCopyUI
+Section "Blender-NIF-Scripts-${VERSION} (required)" SecCopyUI
   SectionIn RO
+  
+  ; Cleanup: remove old versions of the scripts
+  ; NIFLA versions
+  Delete "$BLENDERHOME\.blender\scripts\nif-export.py"
+  Delete "$BLENDERHOME\.blender\scripts\nif_import_237.py"
+  ; SourceForge versions
+  Delete "$BLENDERHOME\.blender\scripts\nif4_export.py"
+  Delete "$BLENDERHOME\.blender\scripts\nif4_import_237.py"
+  Delete "$BLENDERHOME\.blender\scripts\nif4.py"
+  Delete "$BLENDERHOME\.blender\scripts\nif4.pyc"
+  ; Current version, bytecode
+  Delete "$BLENDERHOME\.blender\scripts\niflib.pyc"
   
   ; Set output path to the installation directory.
   SetOutPath $INSTDIR
+  File ..\README.html
+  File ..\ChangeLog
+  File Copyright.txt
+
+  SetOutPath "$BLENDERHOME\.blender\scripts\"
   File ..\nif_export.py
   File ..\nif4_import_240.py
   File ..\..\niflib\niflib.py
   File ..\..\niflib\_niflib.dll
 
-  Delete $INSTDIR\niflib.pyc
-  
   ; Write the installation path into the registry
   WriteRegStr HKLM SOFTWARE\BlenderNIFScripts "Install_Dir" "$INSTDIR"
-  ; Write the uninstall keys for Windows
+  WriteRegStr HKLM SOFTWARE\BlenderNIFScripts "Data_Dir" "$BLENDERHOME"
+  
+  ; Write the uninstall keys & uninstaller for Windows
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BlenderNIFScripts" "DisplayName" "Blender NIF Scripts (remove only)"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BlenderNIFScripts" "UninstallString" "$INSTDIR\blender_nif_scripts-${VERSION}-uninstall.exe"
+  SetOutPath $INSTDIR
   WriteUninstaller "blender_nif_scripts-${VERSION}-uninstall.exe"
 SectionEnd
 
 UninstallText "This will uninstall the Blender NIF Scripts ${VERSION}. Hit next to continue."
 
 Section "Uninstall"
+  ; recover Blender data dir, where scripts are installed
+  ReadRegStr $BLENDERHOME HKLM SOFTWARE\BlenderNIFScripts "Data_Dir"
+  
   ; remove registry keys
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BlenderNIFScripts"
   DeleteRegKey HKLM "SOFTWARE\BlenderNIFScripts"
   ; remove files
-  Delete $INSTDIR\nif_export.py
-  Delete $INSTDIR\nif4_import_240.py
-  Delete $INSTDIR\niflib.py
-  Delete $INSTDIR\_niflib.dll
-  Delete $INSTDIR\blender_nif_scripts-uninstall.exe
+  Delete "$BLENDERHOME\.blender\scripts\nif_export.py"
+  Delete "$BLENDERHOME\.blender\scripts\nif4_import_240.py"
+  Delete "$BLENDERHOME\.blender\scripts\niflib.py"
+  Delete "$BLENDERHOME\.blender\scripts\niflib.pyc"
+  Delete "$BLENDERHOME\.blender\scripts\_niflib.dll"
+  RMDir "$BLENDERHOME\.blender\scripts" ; this will only delete if the directory is empty
+  RMDir "$BLENDERHOME\.blender" ; this will only delete if the directory is empty
+  Delete "$INSTDIR\blender_nif_scripts-${VERSION}-uninstall.exe"
+  RMDir "$INSTDIR"
+  RMDir "$INSTDIR\.."
 SectionEnd
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
