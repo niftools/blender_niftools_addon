@@ -18,7 +18,7 @@ var BLENDERHOME
 
 !insertmacro MUI_PAGE_LICENSE Copyright.txt
 
-!define MUI_DIRECTORYPAGE_TEXT_TOP "$BLENDERHOME\.blender\scripts\ has been detected as your Blender User Data directory. The Python scripts will be installed there.\r\n\r\nUse the field below to specify the folder where you want the documentation files to be copied to. To specify a different folder, type a new name or use the Browse button to select an existing folder."
+!define MUI_DIRECTORYPAGE_TEXT_TOP "$BLENDERHOME\.blender\scripts\ has been detected as your Blender User Data directory. The Python scripts will be installed there. Use the field below to specify the folder where you want the documentation files to be copied to. To specify a different folder, type a new name or use the Browse button to select an existing folder."
 !define MUI_DIRECTORYPAGE_TEXT_DESTINATION "Documentation Folder"
 !insertmacro MUI_PAGE_DIRECTORY
 
@@ -51,6 +51,8 @@ LangString DESC_SecCopyUI ${LANG_ENGLISH} "Copy all required files to the applic
 OutFile "blender_nif_scripts_${VERSION}-windows.exe"
 InstallDir "$PROGRAMFILES\NifTools\Blender NIF Scripts"
 BrandingText "http://niftools.sourceforge.net/"
+Icon inst.ico
+UninstallIcon inst.ico ; TODO create uninstall icon
 
 ;--------------------------------
 ; Functions
@@ -86,7 +88,7 @@ Function .onInit
   end:
 FunctionEnd
 
-Section "Blender-NIF-Scripts-${VERSION} (required)" SecCopyUI
+Section
   SectionIn RO
 
   SetShellVarContext all
@@ -109,8 +111,6 @@ Section "Blender-NIF-Scripts-${VERSION} (required)" SecCopyUI
   File ..\nif4_import_240.py
   File ..\..\niflib\niflib.py
   File ..\..\niflib\_niflib.dll
-
-  SetShellVarContext all
 
   ; Install documentation files
   SetOutPath $INSTDIR
