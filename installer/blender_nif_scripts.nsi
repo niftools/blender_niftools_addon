@@ -9,13 +9,15 @@
 
 Name "Blender NIF Scripts ${VERSION}"
 
-!define MUI_ABORTWARNING
+; install for all users
+SetShellVarContext all
 
+; define installer pages
+!define MUI_ABORTWARNING
 !define MUI_WELCOMEPAGE_TEXT  "This wizard will guide you through the installation of the Blender NIF Scripts.\r\n\r\nIt is recommended that you close all other applications before starting Setup.\r\n\r\nNote to Win2k/XP users: you may require administrator privileges to install the Blender NIF Scripts successfully."
 !define MUI_FINISHPAGE_SHOWREADME "$INSTDIR\README.html"
 !define MUI_FINISHPAGE_LINK "Brought to you by NifTools (http://niftools.sourceforge.net)!"
 !define MUI_FINISHPAGE_LINK_LOCATION "http://niftools.sourceforge.net/"
-
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_LICENSE Copyright.txt
 !insertmacro MUI_PAGE_DIRECTORY
@@ -222,7 +224,7 @@ Function DataLocation
   do_inst_path:
     Call SetWin9xPath
   end:
-  
+
   IfFileExists "$BLENDERHOME\.blender\scripts\*.*" +3 0
      MessageBox MB_OK "Invalid Blender User Data Location."
      Quit
@@ -243,7 +245,7 @@ Section "Blender-NIF-Scripts-${VERSION} (required)" SecCopyUI
   ; Current version, bytecode
   Delete "$BLENDERHOME\.blender\scripts\niflib.pyc"
   
-  ; Set output path to the installation directory.
+  ; Install the files
   SetOutPath $INSTDIR
   File ..\README.html
   File ..\ChangeLog
@@ -255,15 +257,23 @@ Section "Blender-NIF-Scripts-${VERSION} (required)" SecCopyUI
   File ..\..\niflib\niflib.py
   File ..\..\niflib\_niflib.dll
 
+  ; Install shortcuts
+  SetOutPath $INSTDIR
+  CreateDirectory "$SMPROGRAMS\NifTools\Blender NIF Scripts\"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Uninstall.lnk" "$INSTDIR\uninstall.exe"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Readme.lnk" "$INSTDIR\README.html"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Copyright.lnk" "$INSTDIR\Copyright.txt"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Support.lnk" "http://niftools.sourceforge.net/forum/viewforum.php?f=13"
+
   ; Write the installation path into the registry
   WriteRegStr HKLM SOFTWARE\BlenderNIFScripts "Install_Dir" "$INSTDIR"
   WriteRegStr HKLM SOFTWARE\BlenderNIFScripts "Data_Dir" "$BLENDERHOME"
-  
+
   ; Write the uninstall keys & uninstaller for Windows
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BlenderNIFScripts" "DisplayName" "Blender NIF Scripts (remove only)"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BlenderNIFScripts" "UninstallString" "$INSTDIR\blender_nif_scripts-${VERSION}-uninstall.exe"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BlenderNIFScripts" "UninstallString" "$INSTDIR\uninstall.exe"
   SetOutPath $INSTDIR
-  WriteUninstaller "blender_nif_scripts-${VERSION}-uninstall.exe"
+  WriteUninstaller "uninstall.exe"
 SectionEnd
 
 UninstallText "This will uninstall the Blender NIF Scripts ${VERSION}. Hit next to continue."
@@ -275,7 +285,8 @@ Section "Uninstall"
   ; remove registry keys
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BlenderNIFScripts"
   DeleteRegKey HKLM "SOFTWARE\BlenderNIFScripts"
-  ; remove files
+
+  ; remove script files
   Delete "$BLENDERHOME\.blender\scripts\nif_export.py"
   Delete "$BLENDERHOME\.blender\scripts\nif4_import_240.py"
   Delete "$BLENDERHOME\.blender\scripts\niflib.py"
@@ -283,11 +294,17 @@ Section "Uninstall"
   Delete "$BLENDERHOME\.blender\scripts\_niflib.dll"
   RMDir "$BLENDERHOME\.blender\scripts" ; this will only delete if the directory is empty
   RMDir "$BLENDERHOME\.blender" ; this will only delete if the directory is empty
-  Delete "$INSTDIR\blender_nif_scripts-${VERSION}-uninstall.exe"
+
+  ; remove program files
+  Delete "$INSTDIR\*.*"
   RMDir "$INSTDIR"
-  RMDir "$INSTDIR\.."
+
+  ; remove links in start menu
+  Delete "$SMPROGRAMS\NifTools\Blender NIF Scripts\*.*"
+  RMDir "$SMPROGRAMS\NifTools\Blender NIF Scripts"
+  RMDir "$SMPROGRAMS\NifTools" ; this will only delete if the directory is empty
 SectionEnd
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
-  !insertmacro MUI_DESCRIPTION_TEXT ${SecCopyUI} $(DESC_SecCopyUI)
+!insertmacro MUI_DESCRIPTION_TEXT ${SecCopyUI} $(DESC_SecCopyUI)
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
