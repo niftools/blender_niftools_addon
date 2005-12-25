@@ -9,14 +9,11 @@
 
 Name "Blender NIF Scripts ${VERSION}"
 
-; install for all users
-SetShellVarContext all
-
 ; define installer pages
 !define MUI_ABORTWARNING
 !define MUI_WELCOMEPAGE_TEXT  "This wizard will guide you through the installation of the Blender NIF Scripts.\r\n\r\nIt is recommended that you close all other applications before starting Setup.\r\n\r\nNote to Win2k/XP users: you may require administrator privileges to install the Blender NIF Scripts successfully."
 !define MUI_FINISHPAGE_SHOWREADME "$INSTDIR\README.html"
-!define MUI_FINISHPAGE_LINK "Brought to you by NifTools (http://niftools.sourceforge.net)!"
+!define MUI_FINISHPAGE_LINK "Visit us at http://niftools.sourceforge.net/"
 !define MUI_FINISHPAGE_LINK_LOCATION "http://niftools.sourceforge.net/"
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_LICENSE Copyright.txt
@@ -233,6 +230,9 @@ FunctionEnd
 Section "Blender-NIF-Scripts-${VERSION} (required)" SecCopyUI
   SectionIn RO
   
+  ; install for all users
+  SetShellVarContext all
+
   ; Cleanup: remove old versions of the scripts
   ; NIFLA versions
   Delete "$BLENDERHOME\.blender\scripts\nif-export.py"
@@ -260,10 +260,12 @@ Section "Blender-NIF-Scripts-${VERSION} (required)" SecCopyUI
   ; Install shortcuts
   SetOutPath $INSTDIR
   CreateDirectory "$SMPROGRAMS\NifTools\Blender NIF Scripts\"
-  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Uninstall.lnk" "$INSTDIR\uninstall.exe"
   CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Readme.lnk" "$INSTDIR\README.html"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Tutorial.lnk" "http://niftools.sourceforge.net/tutorial/blender/"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Support.lnk" "http://niftools.sourceforge.net/forum/viewforum.php?f=6"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Development.lnk" "http://niftools.sourceforge.net/forum/viewforum.php?f=13"
   CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Copyright.lnk" "$INSTDIR\Copyright.txt"
-  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Support.lnk" "http://niftools.sourceforge.net/forum/viewforum.php?f=13"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Uninstall.lnk" "$INSTDIR\uninstall.exe"
 
   ; Write the installation path into the registry
   WriteRegStr HKLM SOFTWARE\BlenderNIFScripts "Install_Dir" "$INSTDIR"
@@ -279,6 +281,9 @@ SectionEnd
 UninstallText "This will uninstall the Blender NIF Scripts ${VERSION}. Hit next to continue."
 
 Section "Uninstall"
+  ; uninstall for all users
+  SetShellVarContext all
+
   ; recover Blender data dir, where scripts are installed
   ReadRegStr $BLENDERHOME HKLM SOFTWARE\BlenderNIFScripts "Data_Dir"
   
@@ -305,6 +310,6 @@ Section "Uninstall"
   RMDir "$SMPROGRAMS\NifTools" ; this will only delete if the directory is empty
 SectionEnd
 
-!insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
-!insertmacro MUI_DESCRIPTION_TEXT ${SecCopyUI} $(DESC_SecCopyUI)
-!insertmacro MUI_FUNCTION_DESCRIPTION_END
+;!insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+;!insertmacro MUI_DESCRIPTION_TEXT ${SecCopyUI} $(DESC_SecCopyUI)
+;!insertmacro MUI_FUNCTION_DESCRIPTION_END
