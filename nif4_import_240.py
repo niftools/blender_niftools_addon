@@ -1541,8 +1541,10 @@ def createArmature(block):
             leafLocMat = leaf.getMatrix('worldspace') * armatureInvMat
             # NIF bones are aligned a long the X axis, and their coordinates are relative to their parent
             # so the X value of the translation part is the same as the length
-            tailBlock = leaf.getChildren()[0]
-            length = tailBlock.getMatrix().translationPart()[0]
+            #tailBlock = leaf.getChildren()[0]
+            #length = tailBlock.getMatrix().translationPart()[0]
+            # better length algo, average of children's X
+            length = sum([child.getMatrix().translationPart()[0] for child in leaf.getChildren()]) / len(leaf.getChildren())
             bone.head = Vector(*leafLocMat.translationPart())
             bone.tail = Vector(*pointTransform((length, 0.0, 0.0), leafLocMat))
 
