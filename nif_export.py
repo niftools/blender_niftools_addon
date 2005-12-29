@@ -868,10 +868,16 @@ def export_trishapes(ob, space, parent_block):
     
     # let's now export one trishape for every mesh material
     
-    materialIndex = 0 # material index of the current mesh material
-    for mesh_mat in mesh_mats:
+    materialCount = 0 # materialCount keeps track of the number of exported trishapes
+    for materialIndex, mesh_mat in enumerate( mesh_mats ):
         # -> first, extract valuable info from our ob
         
+        ob_translation, \
+        ob_rotation, \
+        ob_scale, \
+        ob_velocity \
+        = export_matrix(ob, space)
+
         mesh_base_tex = None
         mesh_glow_tex = None
         mesh_hasalpha = 0 # non-zero if we have alpha properties
@@ -882,7 +888,8 @@ def export_trishapes(ob, space, parent_block):
             mesh_hasnormals = 1 # for proper lighting
             # for non-textured materials, vertex colors are used to color the mesh
             # for textured materials, they represent lighting details
-            mesh_hasvcol = mesh.hasVertexColours() and ((mesh_mat.mode & Blender.Material.Modes.VCOL_LIGHT != 0) or (mesh_mat.mode & Blender.Material.Modes.VCOL_PAINT != 0))
+            # strange: mesh.hasVertexColours() only returns true if the mesh has no texture coordinates
+            mesh_hasvcol = mesh.hasVertexColours() or ((mesh_mat.mode & Blender.Material.Modes.VCOL_LIGHT != 0) or (mesh_mat.mode & Blender.Material.Modes.VCOL_PAINT != 0))
             # read the Blender Python API documentation to understand this hack
             mesh_mat_ambient = mesh_mat.getAmb()            # 'Amb' scrollbar in blender (MW -> 1.0 1.0 1.0)
             mesh_mat_diffuse_color = mesh_mat.getRGBCol()   # 'Col' colour in Blender (MW -> 1.0 1.0 1.0)
@@ -941,6 +948,126 @@ def export_trishapes(ob, space, parent_block):
 
         # -> now comes the real export
         
+        # m4444x: moved the following passage up because then we can skip materials without faces
+        
+        # We now extract vertices, uv-vertices, normals, and vertex
+        # colors from the mesh's face list. NIF has one uv vertex and
+        # one normal per vertex, unlike blender's uv vertices and
+        # normals per face... therefore some vertices must be
+        # duplicated. The following algorithm extracts all unique
+        # (vert, uv-vert, normal, vcol) quads, and uses this list to
+        # produce the list of vertices, uv-vertices, normals, vertex
+        # colors, and face indices.
+
+        # Blender only supports one set of uv coordinates per mesh;
+        # therefore, we shall have trouble when importing
+        # multi-textured trishapes in blender. For this export script,
+        # no problem: we must simply duplicate the uv vertex list.
+
+        # NIF uses the normal table for lighting. So, smooth faces
+        # should use Blender's vertex normals, and solid faces should
+        # use Blender's face normals.
+        
+        vertquad_list = [] # (vertex, uv coordinate, normal, vertex color) list
+        vertmap = [ None ] * len( mesh.verts ) # blender vertex -> nif vertices
+            # this map will speed up the exporter to a great degree (may be useful too when exporting NiMorphData)
+        vertlist = []
+        normlist = []
+        vcollist = []
+        uvlist = []
+        trilist = []
+        count = 0
+        for f in mesh.faces:
+            #slows down too myuch #if VERBOSE: Blender.Window.DrawProgressBar(0.33 * float(count)/len(mesh.faces), "Converting to NIF (%s)"%ob.getName())
+            count += 1
+            # does the face belong to this trishape?
+            if (mesh_mat != None): # we have a material
+                if (f.materialIndex != materialIndex): # but this face has another material
+                    continue # so skip this face
+            f_numverts = len(f.v)
+            if (f_numverts < 3): continue # ignore degenerate faces
+            assert((f_numverts == 3) or (f_numverts == 4)) # debug
+            if (mesh_hastex): # if we have uv coordinates
+                if (len(f.uv) != len(f.v)): # make sure we have UV data
+                    raise NIFExportError('ERROR%t|Create a UV map for every texture, and run the script again.')
+            # find (vert, uv-vert, normal, vcol) quad, and if not found, create it
+            f_index = [ -1 ] * f_numverts
+            for i in range(f_numverts):
+                fv = Vector3(*(f.v[i].co))
+                # get vertex normal for lighting (smooth = Blender vertex normal, non-smooth = Blender face normal)
+                if mesh_hasnormals:
+                    if f.smooth:
+                        fn = Vector3(*(f.v[i].no))
+                    else:
+                        fn = Vector3(*(f.no))
+                else:
+                    fn = None
+                if (mesh_hastex):
+                    fuv = TexCoord(*(f.uv[i]))
+                    fuv.v = 1.0 - fuv.v # NIF flips the texture V-coordinate (OpenGL standard)
+                else:
+                    fuv = None
+                if (mesh_hasvcol):
+                    fcol = Color4(0.0,0.0,0.0,0.0)
+                    fcol.r = f.col[i].r / 255.0 # NIF stores the colour values as floats
+                    fcol.g = f.col[i].g / 255.0 # NIF stores the colour values as floats
+                    fcol.b = f.col[i].b / 255.0 # NIF stores the colour values as floats
+                    fcol.a = f.col[i].a / 255.0 # NIF stores the colour values as floats
+                else:
+                    fcol = None
+                    
+                vertquad = ( fv, fuv, fn, fcol )
+
+                # do we already have this quad? (optimized by m4444x)
+                f_index[i] = len(vertquad_list)
+                v_index = f.v[i].index
+                if vertmap[v_index]:
+                    # iterate only over vertices with the same vertex index
+                    # and check if they have the same uvs, normals and colors (wow is that fast!)
+                    for j in vertmap[v_index]:
+                        if mesh_hastex:
+                            if abs(vertquad[1].u - vertquad_list[j][1].u) > EPSILON: continue
+                            if abs(vertquad[1].v - vertquad_list[j][1].v) > EPSILON: continue
+                        if mesh_hasnormals:
+                            if abs(vertquad[2].x - vertquad_list[j][2].x) > EPSILON: continue
+                            if abs(vertquad[2].y - vertquad_list[j][2].y) > EPSILON: continue
+                            if abs(vertquad[2].z - vertquad_list[j][2].z) > EPSILON: continue
+                        if mesh_hasvcol:
+                            if abs(vertquad[3].r - vertquad_list[j][3].r) > EPSILON: continue
+                            if abs(vertquad[3].g - vertquad_list[j][3].g) > EPSILON: continue
+                            if abs(vertquad[3].b - vertquad_list[j][3].b) > EPSILON: continue
+                            if abs(vertquad[3].a - vertquad_list[j][3].a) > EPSILON: continue
+                        # all tests passed: so yes, we already have it!
+                        f_index[i] = j
+                        break
+                    
+                if (f_index[i] == len(vertquad_list)):
+                    # first: add it to the vertex map
+                    if not vertmap[v_index]:
+                        vertmap[v_index] = []
+                    vertmap[v_index].append( len(vertquad_list) )
+                    # new (vert, uv-vert, normal, vcol) quad: add it
+                    vertquad_list.append(vertquad)
+                    # add the vertex
+                    vertlist.append(vertquad[0])
+                    if ( mesh_hasnormals ): normlist.append(vertquad[2])
+                    if ( mesh_hasvcol ):    vcollist.append(vertquad[3])
+                    if ( mesh_hastex ):     uvlist.append(vertquad[1])
+            # now add the (hopefully, convex) face, in triangles
+            for i in range(f_numverts - 2):
+                f_indexed = Triangle()
+                f_indexed.v1 = f_index[0]
+                if (ob_scale[0] > 0):
+                    f_indexed.v2 = f_index[1+i]
+                    f_indexed.v3 = f_index[2+i]
+                else:
+                    f_indexed.v2 = f_index[2+i]
+                    f_indexed.v3 = f_index[1+i]
+                trilist.append(f_indexed)
+
+        if len(vertlist) == 0:
+            continue            # skip 'empty' material indices
+        
         # note: we can be in any of the following five situations
         # material + base texture        -> normal object
         # material + base tex + glow tex -> normal glow mapped object
@@ -954,13 +1081,9 @@ def export_trishapes(ob, space, parent_block):
         
         # fill in the NiTriShape's non-trivial values
         if (parent_block["Name"].asString() != ""):
-            trishape["Name"] = "Tri " + parent_block["Name"].asString() + " %i"%materialIndex # Morrowind's child naming convention
+            trishape["Name"] = "Tri " + parent_block["Name"].asString() + " %i"%materialCount # Morrowind's child naming convention
         trishape["Flags"] = 0x0004 # ? this seems standard
-        ob_translation, \
-        ob_rotation, \
-        ob_scale, \
-        ob_velocity \
-        = export_matrix(ob, space)
+
         trishape["Translation"] = ob_translation
         trishape["Rotation"]    = ob_rotation
         trishape["Scale"]       = ob_scale[0]
@@ -1056,7 +1179,6 @@ def export_trishapes(ob, space, parent_block):
             # refer to the material property in the trishape block
             trishape["Properties"].AddLink(trimatprop)
 
-        
 
             # material animation
             ipo = mesh_mat.getIpo()
@@ -1189,121 +1311,6 @@ def export_trishapes(ob, space, parent_block):
         ishapedata = QueryShapeData(tridata)
         itridata = QueryTriShapeData(tridata)
         
-        # Blender only supports one set of uv coordinates per mesh;
-        # therefore, we shall have trouble when importing
-        # multi-textured trishapes in blender. For this export script,
-        # no problem: we must simply duplicate the uv vertex list.
-
-        # We now extract vertices, uv-vertices, normals, and vertex
-        # colors from the mesh's face list. NIF has one uv vertex and
-        # one normal per vertex, unlike blender's uv vertices and
-        # normals per face... therefore some vertices must be
-        # duplicated. The following algorithm extracts all unique
-        # (vert, uv-vert, normal, vcol) quads, and uses this list to
-        # produce the list of vertices, uv-vertices, normals, vertex
-        # colors, and face indices.
-
-        # NIF uses the normal table for lighting. So, smooth faces
-        # should use Blender's vertex normals, and solid faces should
-        # use Blender's face normals.
-        
-        vertquad_list = [] # (vertex, uv coordinate, normal, vertex color) list
-        vertmap = [ None ] * len( mesh.verts ) # blender vertex -> nif vertices
-            # this map will speed up the exporter to a great degree (may be useful too when exporting NiMorphData)
-        vertlist = []
-        normlist = []
-        vcollist = []
-        uvlist = []
-        trilist = []
-        count = 0
-        for f in mesh.faces:
-            #slows down too myuch #if VERBOSE: Blender.Window.DrawProgressBar(0.33 * float(count)/len(mesh.faces), "Converting to NIF (%s)"%ob.getName())
-            count += 1
-            # does the face belong to this trishape?
-            if (mesh_mat != None): # we have a material
-                if (f.materialIndex != materialIndex): # but this face has another material
-                    continue # so skip this face
-            f_numverts = len(f.v)
-            if (f_numverts < 3): continue # ignore degenerate faces
-            assert((f_numverts == 3) or (f_numverts == 4)) # debug
-            if (mesh_hastex): # if we have uv coordinates
-                if (len(f.uv) != len(f.v)): # make sure we have UV data
-                    raise NIFExportError('ERROR%t|Create a UV map for every texture, and run the script again.')
-            # find (vert, uv-vert, normal, vcol) quad, and if not found, create it
-            f_index = [ -1 ] * f_numverts
-            for i in range(f_numverts):
-                fv = Vector3(*(f.v[i].co))
-                # get vertex normal for lighting (smooth = Blender vertex normal, non-smooth = Blender face normal)
-                if mesh_hasnormals:
-                    if f.smooth:
-                        fn = Vector3(*(f.v[i].no))
-                    else:
-                        fn = Vector3(*(f.no))
-                else:
-                    fn = None
-                if (mesh_hastex):
-                    fuv = TexCoord(*(f.uv[i]))
-                    fuv.v = 1.0 - fuv.v # NIF flips the texture V-coordinate (OpenGL standard)
-                else:
-                    fuv = None
-                if (mesh_hasvcol):
-                    fcol = Color4(0.0,0.0,0.0,0.0)
-                    fcol.r = f.col[i].r / 255.0 # NIF stores the colour values as floats
-                    fcol.g = f.col[i].g / 255.0 # NIF stores the colour values as floats
-                    fcol.b = f.col[i].b / 255.0 # NIF stores the colour values as floats
-                    fcol.a = f.col[i].a / 255.0 # NIF stores the colour values as floats
-                else:
-                    fcol = None
-                    
-                vertquad = ( fv, fuv, fn, fcol )
-
-                # do we already have this quad? (optimized by m4444x)
-                f_index[i] = len(vertquad_list)
-                v_index = f.v[i].index
-                if vertmap[v_index]:
-                    # iterate only over vertices with the same vertex index
-                    # and check if they have the same uvs, normals and colors (wow is that fast!)
-                    for j in vertmap[v_index]:
-                        if mesh_hastex:
-                            if abs(vertquad[1].u - vertquad_list[j][1].u) > EPSILON: continue
-                            if abs(vertquad[1].v - vertquad_list[j][1].v) > EPSILON: continue
-                        if mesh_hasnormals:
-                            if abs(vertquad[2].x - vertquad_list[j][2].x) > EPSILON: continue
-                            if abs(vertquad[2].y - vertquad_list[j][2].y) > EPSILON: continue
-                            if abs(vertquad[2].z - vertquad_list[j][2].z) > EPSILON: continue
-                        if mesh_hasvcol:
-                            if abs(vertquad[3].r - vertquad_list[j][3].r) > EPSILON: continue
-                            if abs(vertquad[3].g - vertquad_list[j][3].g) > EPSILON: continue
-                            if abs(vertquad[3].b - vertquad_list[j][3].b) > EPSILON: continue
-                            if abs(vertquad[3].a - vertquad_list[j][3].a) > EPSILON: continue
-                        # all tests passed: so yes, we already have it!
-                        f_index[i] = j
-                        break
-                    
-                if (f_index[i] == len(vertquad_list)):
-                    # first: add it to the vertex map
-                    if not vertmap[v_index]:
-                        vertmap[v_index] = []
-                    vertmap[v_index].append( len(vertquad_list) )
-                    # new (vert, uv-vert, normal, vcol) quad: add it
-                    vertquad_list.append(vertquad)
-                    # add the vertex
-                    vertlist.append(vertquad[0])
-                    if ( mesh_hasnormals ): normlist.append(vertquad[2])
-                    if ( mesh_hasvcol ):    vcollist.append(vertquad[3])
-                    if ( mesh_hastex ):     uvlist.append(vertquad[1])
-            # now add the (hopefully, convex) face, in triangles
-            for i in range(f_numverts - 2):
-                f_indexed = Triangle()
-                f_indexed.v1 = f_index[0]
-                if (ob_scale[0] > 0):
-                    f_indexed.v2 = f_index[1+i]
-                    f_indexed.v3 = f_index[2+i]
-                else:
-                    f_indexed.v2 = f_index[2+i]
-                    f_indexed.v3 = f_index[1+i]
-                trilist.append(f_indexed)
-
         ishapedata.SetVertexCount(len(vertlist))
         ishapedata.SetVertices(vertlist)
         if mesh_hasnormals: ishapedata.SetNormals(normlist)
@@ -1323,7 +1330,6 @@ def export_trishapes(ob, space, parent_block):
             center[0] += v.x
             center[1] += v.y
             center[2] += v.z
-        assert(len(vertlist) > 0) # debug
         center[0] /= len(vertlist)
         center[1] /= len(vertlist)
         center[2] /= len(vertlist)
@@ -1381,24 +1387,34 @@ def export_trishapes(ob, space, parent_block):
                 vert_weights = {}
                 for v in vert_list:
                     # v[0] is the original vertex index
+                    # v[1] is the weight
+                    
                     # vertmap[v[0]] is the set of vertices (indices) to which v[0] was mapped
                     # so we simply export the same weight as the original vertex for each new vertex
 
                     # get normalizing factor
+                    
+                    # dunno if normalizing the weights is really nessecary
+                    # imho blender should take care of this
+                    # commented out because it slows down the exporter too much
+                    
                     #infl_list = ob.data.getVertexInfluences(v[0]) # aargh! a blender bug prevents this from working
                     # alternative code:
-                    norm = 0.0
-                    for bone2 in boneinfluences:
-                        tmp = ob.data.getVertsFromGroup(bone2, 1, [v[0]])
-                        if tmp:
-                            norm += tmp[0][1]
+                    #norm = 0.0
+                    #for bone2 in boneinfluences:
+                    #    tmp = ob.data.getVertsFromGroup(bone2, 1, [v[0]])
+                    #    if tmp:
+                    #        norm += tmp[0][1]
 
                     # write the weights
-                    for vert_index in vertmap[v[0]]:
-                        vert_weights[vert_index] = v[1] / norm
+                    if vertmap[v[0]]: # extra check for multi material meshes
+                        for vert_index in vertmap[v[0]]:
+                            vert_weights[vert_index] = v[1] #/ norm
+                
+                #if len( vert_weigths ) > 0:
                 iskindata.AddBone(bone_block, vert_weights)
 
-        materialIndex += 1 # ...and process the next material
+        materialCount += 1 # ...and process the next material
 
 
 
@@ -1734,7 +1750,7 @@ def get_bone_matrix(bone, space):
                 ipo = arm.getAction().getChannelIpo(bone.name)
                 break
             except: pass
-    if ipo:
+    if ipo and ipo.getCurve('QuatX') and ipo.getCurve('QuatY') and ipo.getCurve('QuatZ') and ipo.getCurve('QuatW'):
         quat = Blender.Mathutils.Quaternion()
         quat.x = ipo.getCurve('QuatX').evaluate(1) # first frame
         quat.y = ipo.getCurve('QuatY').evaluate(1)
