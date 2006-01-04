@@ -2055,8 +2055,8 @@ def createMesh(block):
                     meshData.verts[vertmap[count]].co[1] = y
                     meshData.verts[vertmap[count]].co[2] = z
                 meshData.update(1) # recalculate normals
-            # assign ipo to mesh (not supported by Blender API?)
-            #meshData.setIpo( ipo )
+            # assign ipo to mesh
+            meshData.key.ipo = ipo
                 
     return meshObj
 

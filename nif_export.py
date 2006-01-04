@@ -332,7 +332,7 @@ and turn off envelopes."""%ob.getName()
             #export_animgroups(animtxt, root_block["Children"].asLinkList()[0]) # we link the animation extra data to the first root_object node
 
         # scale the NIF model
-        scale_tree(root_block, SCALE_CORRECTION)
+        #scale_tree(root_block, SCALE_CORRECTION)
 
         # write the file:
         #----------------
@@ -357,7 +357,7 @@ and turn off envelopes."""%ob.getName()
     # no export error, but let's double check: try reading the file(s) we just wrote
     # we can probably remove these lines once the exporter is stable
     try:
-        ReadNifTree(filename)
+        #ReadNifTree(filename)
         if DEBUG: WriteNifTree(filename[:-4] + "_test.nif", root_block, NIF_VERSION)
     except:
         Blender.Draw.PupMenu("WARNING%t|Exported NIF file may not be valid: double check failed! This is probably due to an unknown bug in the exporter code.")
@@ -860,11 +860,13 @@ def export_trishapes(ob, space, parent_block):
     if (mesh_mats == []):
         mesh_mats = [ None ]
 
+    # GetRawFromObject seems to return the mesh with all modifiers applied, dunno if this is what we want...
     # get subsurfed mesh, we cannot update the mesh after calling this function
-    try:
-        mesh = Blender.NMesh.GetRawFromObject(ob.name) # subsurf
-    except:
-        mesh = mesh_orig
+    #try:
+    #    mesh = Blender.NMesh.GetRawFromObject(ob.name) # subsurf
+    #except:
+    #    mesh = mesh_orig
+    mesh = mesh_orig
     
     # let's now export one trishape for every mesh material
     
@@ -1207,8 +1209,7 @@ def export_trishapes(ob, space, parent_block):
 
                 # add a alphacontroller block, and refer to this in the parent material
                 alphac = create_block("NiAlphaController")
-                assert(trimatprop["Controller"].asLink().is_null()) # make sure we don't overwrite anything
-                trimatprop["Controller"] = alphac
+                add_controller( trimatprop, alphac )
 
                 # select extrapolation mode
                 if ( a_curve.getExtrapolation() == "Cyclic" ):
@@ -1279,7 +1280,7 @@ def export_trishapes(ob, space, parent_block):
 
                 # add a materialcolorcontroller block
                 matcolc = create_block("NiMaterialColorController")
-                set_controller(trimatprop, matcolc)
+                add_controller(trimatprop, matcolc)
 
                 # fill in the non-trivial values
                 matcolc["Flags"] = 0x0008 # using cycle loop for now
@@ -1413,10 +1414,86 @@ def export_trishapes(ob, space, parent_block):
                 
                 #if len( vert_weigths ) > 0:
                 iskindata.AddBone(bone_block, vert_weights)
+        
+        # shape key morphing
+        key = mesh.getKey()
+        if key and len( key.getBlocks() ) > 1:
+            # yes, there is a key object attached
+            # FIXME: check if key object contains relative shape keys
+            keyipo = key.getIpo()
+            if keyipo:
+                # yes, there is a shape ipo too
+                
+                # get frame start and the number of frames per second
+                scn = Blender.Scene.GetCurrent()
+                context = scn.getRenderingContext()
+                fspeed = 1.0 / context.framesPerSec()
+                fstart = context.startFrame()
+                fend = context.endFrame()
+                
+                # create geometry morph controller
+                morphctrl = create_block("NiGeomMorpherController")
+                add_controller( trishape, morphctrl )
+                morphctrl["Frequency"] = 1.0
+                morphctrl["Phase"] = 0.0
+                ctrlStart = 1000000.0
+                ctrlStop = 0.0
+                ctrlFlags = 0x000c
+                
+                # create geometry morph data
+                morphdata = create_block("NiMorphData")
+                morphctrl["Data"] = morphdata
+                morphdata["Unknown Byte"] = 0x01
+                imorphdata = QueryMorphData(morphdata)
+                imorphdata.SetVertexCount( len( vertlist ) );
+                imorphdata.SetMorphCount( len( key.getBlocks() ) )
+                
+                for keyblocknum, keyblock in enumerate( key.getBlocks() ):
+                    # export morphed vertices
+                    morphverts = [ None ] * len( vertlist )
+                    for vert in keyblock.data:
+                        if ( vertmap[ vert.index ] ):
+                            mv = Vector3( *(vert.co) )
+                            if keyblocknum > 0:
+                                mv.x -= mesh.verts[vert.index].co.x
+                                mv.y -= mesh.verts[vert.index].co.y
+                                mv.z -= mesh.verts[vert.index].co.z
+                            for vert_index in vertmap[ vert.index ]:
+                                morphverts[ vert_index ] = mv
+                    imorphdata.SetMorphVerts( keyblocknum, morphverts )
+                    
+                    # export ipo shape key curve
+                    #curve = keyipo.getCurve( 'Key %i'%keyblocknum ) # FIXME
+                    # workaround
+                    curve = None
+                    if ( keyblocknum - 1 ) in range( len( keyipo.getCurves() ) ):
+                        curve = keyipo.getCurves()[keyblocknum-1]
+                    # base key has no curve all other keys should have one
+                    if curve:
+                        if DEBUG: print "exporting morph curve %i"%keyblocknum
+                        if ( curve.getExtrapolation() == "Constant" ):
+                            ctrlFlags = 0x000c
+                        elif ( curve.getExtrapolation() == "Cyclic" ):
+                            ctrlFlags = 0x0008
+                        keys = []
+                        for btriple in curve.getPoints():
+                            kfloat = Key_float()
+                            knot = btriple.getPoints()
+                            kfloat.time = (knot[0] - fstart) * fspeed
+                            kfloat.data = curve.evaluate( knot[0] )
+                            kfloat.forward_tangent = 0.0 # ?
+                            kfloat.backward_tangent = 0.0 # ?
+                            keys.append(kfloat)
+                            if kfloat.time < ctrlStart:
+                                ctrlStart = kfloat.time
+                            if kfloat.time > ctrlStop:
+                                ctrlStop = kfloat.time
+                        imorphdata.SetMorphKeys( keyblocknum, keys )
+                morphctrl["Flags"] = ctrlFlags
+                morphctrl["Start Time"] = ctrlStart
+                morphctrl["Stop Time"] = ctrlStop
 
         materialCount += 1 # ...and process the next material
-
-
 
 def export_bones(arm, parent_block):
     if DEBUG: print "Exporting bones for armature %s"%arm.getName()
@@ -1855,13 +1932,14 @@ def scale_tree(block, scale):
     if block.GetBlockType() in ["NiNode", "NiTriShape", "RootCollisionNode"]:
         # Scale factor removed from this block, which we must pass on children.
         s = block["Scale"].asFloat()
+        block["Scale"] = 1.0
+        print s
         # NiNode transform scale
         t = block["Translation"].asFloat3()
         t[0] *= scale
         t[1] *= scale
         t[2] *= scale
         block["Translation"] = t
-        block["Scale"] = block["Scale"].asFloat() / s
         # NiNode bind position transform scale
         inode = QueryNode(block)
         mat = inode.GetWorldBindPos()
@@ -1880,23 +1958,37 @@ def scale_tree(block, scale):
         inode.SetWorldBindPos(mat)
         # Controller data block scale
         ctrl = block["Controller"].asLink()
-        if not ctrl.is_null():
-            kfd = ctrl["Data"].asLink()
-            assert(not kfd.is_null())
-            assert(kfd.GetBlockType() == "NiKeyframeData") # just to make sure, NiNode/NiTriShape controllers should have keyframe data
-            ikfd = QueryKeyframeData(kfd)
-            trans_keys = ikfd.GetTranslateKeys()
-            if trans_keys:
-                for key in trans_keys:
-                    key.data.x *= scale
-                    key.data.y *= scale
-                    key.data.z *= scale
-                ikfd.SetTranslateKeys(trans_keys)
-            scale_keys = ikfd.GetScaleKeys()
-            if scale_keys:
-                for key in scale_keys:
-                    key.data /= s
-                ikfd.SetScaleKeys(scale_keys)
+        while not ctrl.is_null():
+            if ctrl.GetBlockType() == "NiKeyframeController":
+                kfd = ctrl["Data"].asLink()
+                assert(not kfd.is_null())
+                assert(kfd.GetBlockType() == "NiKeyframeData") # just to make sure, NiNode/NiTriShape controllers should have keyframe data
+                ikfd = QueryKeyframeData(kfd)
+                trans_keys = ikfd.GetTranslateKeys()
+                if trans_keys:
+                    for key in trans_keys:
+                        key.data.x *= scale
+                        key.data.y *= scale
+                        key.data.z *= scale
+                    ikfd.SetTranslateKeys(trans_keys)
+                scale_keys = ikfd.GetScaleKeys()
+                if scale_keys:
+                    for key in scale_keys:
+                        key.data /= s
+                    ikfd.SetScaleKeys(scale_keys)
+            elif ctrl.GetBlockType() == "NiGeomMorpherController":
+                gmd = ctrl["Data"].asLink()
+                assert(not gmd.is_null())
+                assert(gmd.GetBlockType() == "NiMorphData")
+                igmd = QueryMorphData(gmd)
+                for key in range( igmd.GetMorphCount() ):
+                    verts = igmd.GetMorphVerts( key )
+                    for v in range( len( verts ) ):
+                        verts[v].x *= scale
+                        verts[v].y *= scale
+                        verts[v].z *= scale
+                    igmd.SetMorphVerts( key, verts )
+            ctrl = ctrl["Next Controller"].asLink()
         # Child block scale
         if block.GetBlockType() != "NiTriShape": # scale the children
             for child in block["Children"].asLinkList():
