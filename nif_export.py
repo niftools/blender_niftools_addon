@@ -332,7 +332,7 @@ and turn off envelopes."""%ob.getName()
             #export_animgroups(animtxt, root_block["Children"].asLinkList()[0]) # we link the animation extra data to the first root_object node
 
         # scale the NIF model
-        #scale_tree(root_block, SCALE_CORRECTION)
+        scale_tree(root_block, SCALE_CORRECTION)
 
         # write the file:
         #----------------
@@ -357,7 +357,7 @@ and turn off envelopes."""%ob.getName()
     # no export error, but let's double check: try reading the file(s) we just wrote
     # we can probably remove these lines once the exporter is stable
     try:
-        #ReadNifTree(filename)
+        ReadNifTree(filename)
         if DEBUG: WriteNifTree(filename[:-4] + "_test.nif", root_block, NIF_VERSION)
     except:
         Blender.Draw.PupMenu("WARNING%t|Exported NIF file may not be valid: double check failed! This is probably due to an unknown bug in the exporter code.")
@@ -1933,7 +1933,6 @@ def scale_tree(block, scale):
         # Scale factor removed from this block, which we must pass on children.
         s = block["Scale"].asFloat()
         block["Scale"] = 1.0
-        print s
         # NiNode transform scale
         t = block["Translation"].asFloat3()
         t[0] *= scale
