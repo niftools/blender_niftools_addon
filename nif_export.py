@@ -135,6 +135,7 @@ FORCE_DDS = False
 STRIP_TEXPATH = False
 EXPORT_DIR = ''
 NIF_VERSION_STR = '4.0.0.2'
+NIF_VERSION = 0x04000002
 
 # tooltips
 tooltips = {
@@ -169,30 +170,34 @@ def update_registry():
     d['limits'] = limits
     # store the key
     Blender.Registry.SetKey('nif_export', d, True)
+    read_registry()
 
 # Now we check if our key is available in the Registry or file system:
-regdict = Blender.Registry.GetKey('nif_export', True)
-# If this key already exists, update config variables with its values:
-if regdict:
-    try:
-        SCALE_CORRECTION = regdict['SCALE_CORRECTION']
-        FORCE_DDS = regdict['FORCE_DDS']
-        STRIP_TEXPATH = regdict['STRIP_TEXPATH']
-        EXPORT_DIR = regdict['EXPORT_DIR']
-        NIF_VERSION_STR = regdict['NIF_VERSION']
+def read_registry():
+    regdict = Blender.Registry.GetKey('nif_export', True)
+    # If this key already exists, update config variables with its values:
+    if regdict:
         try:
-            NIF_VERSION = NIF_VERSION_DICT[NIF_VERSION_STR]
-        except:
-            print "Warning: NIF version %s not supported; exporting version 4.0.0.2 instead."%NIF_VERSION_STR
-            NIF_VERSION_STR = '4.0.0.2'
-            NIF_VERSION = NIF_VERSION_DICT[NIF_VERSION_STR]
-            raise # data was corrupted, reraise exception
-    # if data was corrupted (or a new version of the script changed
-    # (expanded, removed, renamed) the config vars and users may have
-    # the old config file around):
-    except: update_registry() # rewrite it
-else: # if the key doesn't exist yet, use our function to create it:
-    update_registry()
+            SCALE_CORRECTION = regdict['SCALE_CORRECTION']
+            FORCE_DDS = regdict['FORCE_DDS']
+            STRIP_TEXPATH = regdict['STRIP_TEXPATH']
+            EXPORT_DIR = regdict['EXPORT_DIR']
+            NIF_VERSION_STR = regdict['NIF_VERSION']
+            try:
+                NIF_VERSION = NIF_VERSION_DICT[NIF_VERSION_STR]
+            except:
+                print "Warning: NIF version %s not supported; exporting version 4.0.0.2 instead."%NIF_VERSION_STR
+                NIF_VERSION_STR = '4.0.0.2'
+                NIF_VERSION = NIF_VERSION_DICT[NIF_VERSION_STR]
+                raise # data was corrupted, reraise exception
+        # if data was corrupted (or a new version of the script changed
+        # (expanded, removed, renamed) the config vars and users may have
+        # the old config file around):
+        except: update_registry() # rewrite it
+    else: # if the key doesn't exist yet, use our function to create it:
+        update_registry()
+
+read_registry()
 
 VERBOSE = True
 CONFIRM_OVERWRITE = True
