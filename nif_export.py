@@ -174,6 +174,8 @@ def update_registry():
 
 # Now we check if our key is available in the Registry or file system:
 def read_registry():
+    global SCALE_CORRECTION, FORCE_DDS, STRIP_TEXPATH, EXPORT_DIR, NIF_VERSION_STR, NIF_VERSION
+    
     regdict = Blender.Registry.GetKey('nif_export', True)
     # If this key already exists, update config variables with its values:
     if regdict:
@@ -865,17 +867,15 @@ def export_trishapes(ob, space, parent_block):
     if (mesh_mats == []):
         mesh_mats = [ None ]
 
-    # GetRawFromObject seems to return the mesh with all modifiers applied, dunno if this is what we want...
-    # get subsurfed mesh, we cannot update the mesh after calling this function
-    #try:
-    #    mesh = Blender.NMesh.GetRawFromObject(ob.name) # subsurf
-    #except:
-    #    mesh = mesh_orig
+    # get mesh with modifiers, such as subsurfing; we cannot update the mesh after calling this function
+    try:
+        mesh = Blender.NMesh.GetRawFromObject(ob.name) # subsurf modifiers
+    except:
+        mesh = mesh_orig
     mesh = mesh_orig
     
     # let's now export one trishape for every mesh material
     
-    materialCount = 0 # materialCount keeps track of the number of exported trishapes
     for materialIndex, mesh_mat in enumerate( mesh_mats ):
         # -> first, extract valuable info from our ob
         
@@ -955,8 +955,6 @@ def export_trishapes(ob, space, parent_block):
 
         # -> now comes the real export
         
-        # m4444x: moved the following passage up because then we can skip materials without faces
-        
         # We now extract vertices, uv-vertices, normals, and vertex
         # colors from the mesh's face list. NIF has one uv vertex and
         # one normal per vertex, unlike blender's uv vertices and
@@ -985,7 +983,7 @@ def export_trishapes(ob, space, parent_block):
         trilist = []
         count = 0
         for f in mesh.faces:
-            #slows down too myuch #if VERBOSE: Blender.Window.DrawProgressBar(0.33 * float(count)/len(mesh.faces), "Converting to NIF (%s)"%ob.getName())
+            #slows down too much #if VERBOSE: Blender.Window.DrawProgressBar(0.33 * float(count)/len(mesh.faces), "Converting to NIF (%s)"%ob.getName())
             count += 1
             # does the face belong to this trishape?
             if (mesh_mat != None): # we have a material
@@ -1073,7 +1071,7 @@ def export_trishapes(ob, space, parent_block):
                 trilist.append(f_indexed)
 
         if len(vertlist) == 0:
-            continue            # skip 'empty' material indices
+            continue # m4444x: skip 'empty' material indices
         
         # note: we can be in any of the following five situations
         # material + base texture        -> normal object
@@ -1088,7 +1086,7 @@ def export_trishapes(ob, space, parent_block):
         
         # fill in the NiTriShape's non-trivial values
         if (parent_block["Name"].asString() != ""):
-            trishape["Name"] = "Tri " + parent_block["Name"].asString() + " %i"%materialCount # Morrowind's child naming convention
+            trishape["Name"] = "Tri " + parent_block["Name"].asString() + " %i"%materialIndex # Morrowind's child naming convention
         trishape["Flags"] = 0x0004 # ? this seems standard
 
         trishape["Translation"] = ob_translation
@@ -1398,26 +1396,21 @@ def export_trishapes(ob, space, parent_block):
                     # vertmap[v[0]] is the set of vertices (indices) to which v[0] was mapped
                     # so we simply export the same weight as the original vertex for each new vertex
 
-                    # get normalizing factor
-                    
-                    # dunno if normalizing the weights is really nessecary
-                    # imho blender should take care of this
-                    # commented out because it slows down the exporter too much
+                    # get normalizing factor # TODO optimize: it slows down the exporter too much
                     
                     #infl_list = ob.data.getVertexInfluences(v[0]) # aargh! a blender bug prevents this from working
                     # alternative code:
-                    #norm = 0.0
-                    #for bone2 in boneinfluences:
-                    #    tmp = ob.data.getVertsFromGroup(bone2, 1, [v[0]])
-                    #    if tmp:
-                    #        norm += tmp[0][1]
+                    norm = 0.0
+                    for bone2 in boneinfluences:
+                        tmp = ob.data.getVertsFromGroup(bone2, 1, [v[0]])
+                        if tmp:
+                            norm += tmp[0][1]
 
                     # write the weights
                     if vertmap[v[0]]: # extra check for multi material meshes
                         for vert_index in vertmap[v[0]]:
-                            vert_weights[vert_index] = v[1] #/ norm
+                            vert_weights[vert_index] = v[1] / norm
                 
-                #if len( vert_weigths ) > 0:
                 iskindata.AddBone(bone_block, vert_weights)
         
         # shape key morphing
@@ -1497,8 +1490,6 @@ def export_trishapes(ob, space, parent_block):
                 morphctrl["Flags"] = ctrlFlags
                 morphctrl["Start Time"] = ctrlStart
                 morphctrl["Stop Time"] = ctrlStop
-
-        materialCount += 1 # ...and process the next material
 
 def export_bones(arm, parent_block):
     if DEBUG: print "Exporting bones for armature %s"%arm.getName()
