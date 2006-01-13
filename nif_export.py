@@ -1326,24 +1326,18 @@ def export_trishapes(ob, space, parent_block):
         itridata.SetTriangles(trilist)
 
         # center
-        count = 0
         center = Float3()
         for v in vertlist:
-            #slows down too much #if VERBOSE: Blender.Window.DrawProgressBar(0.33 + 0.33 * float(count)/len(mesh.verts), "Converting to NIF (%s)"%ob.getName())
-            count += 1
             center[0] += v.x
             center[1] += v.y
             center[2] += v.z
-        center[0] /= len(vertlist)
+        center[0] /= len(vertlist) # note: len(vertlist) > 0 is guaranteed
         center[1] /= len(vertlist)
         center[2] /= len(vertlist)
         
         # radius
-        count = 0
         radius = 0.0
         for v in vertlist:
-            #slows down too much #if VERBOSE: Blender.Window.DrawProgressBar(0.66 + 0.33 * float(count)/len(mesh.verts), "Converting to NIF (%s)"%ob.getName())
-            count += 1
             r = get_distance(v, center)
             if (r > radius): radius = r
 
@@ -1374,6 +1368,17 @@ def export_trishapes(ob, space, parent_block):
             iskindata = QuerySkinData(skindata)
 
             # add vertex weights
+            # first find weights and normalization factors
+            vert_list = {}
+            vert_norm = {}
+            for bone in boneinfluences:
+                vert_list[bone] = ob.data.getVertsFromGroup(bone, 1)
+                for v in vert_list[bone]:
+                    if vert_norm.has_key(v[0]):
+                        vert_norm[v[0]] += v[1]
+                    else:
+                        vert_norm[v[0]] = v[1]
+            
             # for each bone, first we get the bone block
             # then we get the vertex weights
             # and then we add it to the NiSkinData
@@ -1387,29 +1392,18 @@ def export_trishapes(ob, space, parent_block):
                 else:
                     raise NIFExportError("Bone '%s' not found."%bone)
                 # find vertex weights
-                vert_list = ob.data.getVertsFromGroup(bone,1)
                 vert_weights = {}
-                for v in vert_list:
+                for v in vert_list[bone]:
                     # v[0] is the original vertex index
                     # v[1] is the weight
                     
                     # vertmap[v[0]] is the set of vertices (indices) to which v[0] was mapped
                     # so we simply export the same weight as the original vertex for each new vertex
 
-                    # get normalizing factor # TODO optimize: it slows down the exporter too much
-                    
-                    #infl_list = ob.data.getVertexInfluences(v[0]) # aargh! a blender bug prevents this from working
-                    # alternative code:
-                    norm = 0.0
-                    for bone2 in boneinfluences:
-                        tmp = ob.data.getVertsFromGroup(bone2, 1, [v[0]])
-                        if tmp:
-                            norm += tmp[0][1]
-
                     # write the weights
                     if vertmap[v[0]]: # extra check for multi material meshes
                         for vert_index in vertmap[v[0]]:
-                            vert_weights[vert_index] = v[1] / norm
+                            vert_weights[vert_index] = v[1] / vert_norm[v[0]]
                 
                 iskindata.AddBone(bone_block, vert_weights)
         
