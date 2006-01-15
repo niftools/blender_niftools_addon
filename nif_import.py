@@ -167,6 +167,7 @@ EPSILON = 0.005 # used for checking equality with floats, NOT STORED IN CONFIG
 SCALE_CORRECTION = 10.0
 FORCE_DDS = False
 STRIP_TEXPATH = False
+TEXTURES_FOLDER = ''
 EXPORT_DIR = '' 
 NIF_VERSION_STR = '4.0.0.2'
 VERBOSE = True
@@ -253,8 +254,18 @@ class NIFImportError(Exception):
         return repr(self.value)
 
 
-
-
+#
+# Emulates the act of pressing the "home" key
+#
+def fit_view():
+    Draw.Redraw(1)
+    winid = Blender.Window.GetScreenInfo(Blender.Window.Types.VIEW3D)[0]['id']
+    Blender.Window.SetKeyQualifiers(0)
+    Blender.Window.QAdd(winid, Draw.HOMEKEY, 1)
+    Blender.Window.QHandle(winid)
+    Blender.Window.QAdd(winid, Draw.HOMEKEY, 0)
+    Draw.Redraw(1)
+    
 #
 # Main import function.
 #
@@ -268,7 +279,13 @@ def import_nif(filename):
         block_count = BlocksInMemory()
         read_progress = 0.0
         blocks_read = 0.0
-        read_branch(root_block)
+        blocks = root_block["Children"].asLinkList()
+        for niBlock in blocks:
+            b_obj = read_branch(niBlock)
+            if b_obj:
+                b_obj.setMatrix(b_obj.getMatrix() * fb_scale_mat())
+        b_scene.update()
+        #b_scene.getCurrentCamera()
         
     except NIFImportError, e: # in that case, we raise a menu instead of an exception
         Blender.Window.DrawProgressBar(1.0, "Import Failed")
@@ -316,7 +333,8 @@ def read_branch(niBlock):
                 b_obj.makeParent(b_children_list)
                 b_obj.setMatrix(fb_matrix(niBlock))
                 # set scale factor for root node
-                b_obj.setMatrix(fb_matrix(niBlock)*fb_scale_mat())
+                b_obj.setMatrix(fb_matrix(niBlock))
+                return b_obj
         elif type == "NiTriShape":
             return fb_mesh(niBlock)
         else:
@@ -362,10 +380,9 @@ def fb_armature(niBlock):
 # Creates and returns a mesh
 def fb_mesh(niBlock):
     global b_scene
-    seams_import = 0
+    seams_import = 1
     # Mesh name -> must be unique, so tag it if needed
     b_name=fb_name(niBlock)
-    msg("whoot! %s" % b_name)
     # No getRaw, this time we work directly on Blender's objects
     b_meshData = Blender.Mesh.New(b_name)
     b_mesh = Blender.Object.New("Mesh", b_name)
@@ -385,105 +402,85 @@ def fb_mesh(niBlock):
     elif iTriStripsData:
         faces = iTriStripsData.GetTriangles()
     else:
-        raise NIFImportError("no iTri-Data returned. Node name: %s " % b_name)
+        raise NIFImportError("no iTri*Data returned. Node name: %s " % b_name)
     # "Sticky" UV coordinates. these are transformed in Blender UV's
     # only the first UV set is loaded right now
-    hasVertexUV = False
+    uvco = None
     if iShapeData.GetUVSetCount()>0:
-        hasVertexUV = True
-        vertUV = iShapeData.GetUVSet(0)
+        uvco = iShapeData.GetUVSet(0)
     # Vertex colors
-    vertCol = iShapeData.GetColors()
-    hasVertexCol = len(vertCol)>0
+    vcols = iShapeData.GetColors()
     # Vertex normals
-    vertNorms = iShapeData.GetNormals()
-    # let's only duplicate vertices that have different
-    # normals (to simulate sharp edges), so we build list of unique
-    # (vertex, normal) pairs
-    vertpairs = []
-    vertmap = []
+    norms = iShapeData.GetNormals()
+    # Vertex map. This is a list of indices to the first instance of a vertex matching the one being seeked
+    v_map = [None]*len(verts)
+    # Populates the vertex mapping to merge matching vertices. This is slow for meshes with many vertices
+    # on my PC (Athlon 2800 XP) takes about 10 seconds to load a better bodies mesh
     for i in range(len(verts)):
-        x = verts[i].x
-        y = verts[i].y
-        z = verts[i].z
-        if vertNorms:
-            nx = vertNorms[i].x
-            ny = vertNorms[i].y
-            nz = vertNorms[i].z
-        found = 0
-        if (seams_import == 1): 
-            for j, vertpair in enumerate(vertpairs):
-                if abs(x - vertpair[0][0]) > epsilon: continue
-                if abs(y - vertpair[0][1]) > epsilon: continue
-                if abs(z - vertpair[0][2]) > epsilon: continue
-                if vertNorms:
-                    if abs(nx - vertpair[1][0]) > epsilon: continue
-                    if abs(ny - vertpair[1][1]) > epsilon: continue
-                    if abs(nz - vertpair[1][2]) > epsilon: continue
-                vertmap.append(j) # vertmap[i] = j
-                found = 1
-                break
-        if found == 0:
-            if vertNorms:
-                vertpairs.append( ( verts[i], vertNorms[i] ) )
-            else:
-                vertpairs.append( ( verts[i], None ) )
-            vertmap.append(len(vertpairs) - 1) # vertmap[i] = len(vertpairs) - 1
-    # now import them
-    for v, n in vertpairs:
+        v_map[i] = i
+        # This vertex map is only useful if there's vertex normal info. If the next expression is False
+        # then the map will just match the original vertex list
+        if norms and seams_import == 1:
+            v1 = verts[i]
+            n1 = norms[i]
+            # Loops ending at i to save a little time. If I haven't found a copy by the time I reach i then this is the 
+            # first instance of this vertex
+            for j in range(0,i):
+                v2 = verts[j]
+                n2 = norms[j]
+                if get_distance((v1.x, v1.y, v1.z),(v2.x, v2.y, v2.z)) <= EPSILON \
+                            and AngleBetweenVecs(Vector(n1.x, n1.y, n1.z),Vector(n2.x, n2.y, n2.z)) <= EPSILON:
+                    v_map[i] = j
+                    break
+    # Adds the vertices to the mesh, but only adds the non-duplicate vertices
+    # Due to the way the vertex map is populated all "meaningful" vertices
+    # will be at the start of the list
+    for v in verts[0:max(v_map)+1]:
         b_meshData.verts.extend(v.x, v.y, v.z)
-        # let Blender calculate the vertex normals when doing meshData.update
-        #if hasVertexNormals:
-        #   nx, ny, nz = vertpair[1]
-        #   meshData.verts[i].no[0] = nx
-        #   meshData.verts[i].no[1] = ny
-        #   meshData.verts[i].no[2] = nz
+    # Adds the faces to the mesh
     for f in faces:
-        #b_mesh.faces.extend([meshData.verts[vertmap[v1]], meshData.verts[vertmap[v2]], meshData.verts[vertmap[v3]]])
-        b_meshData.faces.extend(b_meshData.verts[vertmap[f.v1]],b_meshData.verts[vertmap[f.v2]],b_meshData.verts[vertmap[f.v3]])
+        v1=b_meshData.verts[v_map[f.v1]]
+        v2=b_meshData.verts[v_map[f.v2]]
+        v3=b_meshData.verts[v_map[f.v3]]
+        b_meshData.faces.extend(v1, v2, v3)
+    # Sets face smoothing and material
     for f in b_meshData.faces:
         f.smooth = 1
-        #b_face.mat = 0
-    
-    # Vertex colors. For both this and UV mapping info I rely on the order of the faces matching that of the lists
-    # passed as parameter to the function. Nasty but effective
-    if hasVertexCol:
-        meshData.hasVertexColours(1)
+        f.mat = 0
+    # Vertex colors
+    if vcols:
         for i, f in enumerate(faces):
-            v1, v2, v3 = f
-            for v in (v1, v2, v3):
-                R, G, B, A = vertCol[v]
-                R = int(R * 255)
-                G = int(G * 255)
-                B = int(B * 255)
-                A = int(A * 255)
-                b_mesh.faces[i].col.append(Blender.NMesh.Col(R, G, B, A))
+            for v in (f.v1, f.v2, f.v3):
+                c = vcols[v]
+                R = int(c.R * 255)
+                G = int(c.G * 255)
+                B = int(c.B * 255)
+                A = int(c.A * 255)
+                b_mesh.faces[i].col.append(Blender.Mesh.MCol(R, G, B, A))
         # vertex colors influence lighting...
         # so now we have to set the VCOL_LIGHT flag on the material
         # see below
-    
-    """
+    # UV coordinates
     # Nif files only support 'sticky' UV coordinates, and duplicates vertices to emulate hard edges and UV seams.
     # Essentially whenever an hard edge or an UV seam is present the mesh this is converted to an open mesh.
     # Blender also supports 'per face' UV coordinates, this could be a problem when exporting.
     # Also, NIF files support a series of texture sets, each one with its set of texture coordinates. For example
     # on a single "material" I could have a base texture, with a decal texture over it mapped on another set of UV
     # coordinates. I don't know if Blender can do the same.
-    if hasVertexUV:
+    if uvco:
         # Sets the face UV's for the mesh on. The NIF format only supports vertex UV's,
         # but Blender only allows explicit editing of face UV's, so I'll load vertex UV's like face UV's
-        meshData.hasFaceUV(1)
-        meshData.hasVertexUV(0)
-        for i in range(len(meshData.faces)):
-            v1, v2, v3 = faces[i]
-            meshData.faces[i].uv = []
-            for v in (v1, v2, v3):
-                (U, V) = vertUV[0][v]
-                meshData.faces[i].uv.append((U, V))
-    recalcNormals = 1
-    if hasVertexNormals:
-        recalcNormals = 0
-    """
+        b_meshData.faceUV = 1
+        b_meshData.vertexUV = 0
+        for i in range(len(b_meshData.faces)):
+            f = faces[i]
+            uvlist = []
+            for v in (f.v1, f.v2, f.v3):
+                uv=uvco[v]
+                uvlist.append(Vector(uv.u, uv.v))
+            b_meshData.faces[i].uv = tuple(uvlist)
+    # Texturing property
+    
     """
     # Texturing property. From this I can retrieve texture info
     #texProperty = triShape.getNiTexturingProperty()
@@ -587,7 +584,6 @@ def fb_mesh(niBlock):
             # assign ipo to mesh (not supported by Blender API?)
             #meshData.setIpo( ipo )
     """
-    b_meshData.update()
     b_mesh.link(b_meshData)
     b_scene.link(b_mesh)
     return b_mesh
@@ -680,3 +676,4 @@ if USE_GUI:
     Draw.Register(draw_gui, event, bevent)
 else:
     Blender.Window.FileSelector(import_nif, 'Import NIF', EXPORT_DIR)
+    
