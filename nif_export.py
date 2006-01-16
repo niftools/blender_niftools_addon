@@ -464,6 +464,11 @@ def export_node(ob, space, parent_block, node_name):
 # when exporting bone ipo's, which are relative to the rest pose, so
 # we can pass the rest pose through these extra transformations.
 #
+# Explanation of extra transformations (bind = extra):
+# Final transformation matrix is vec * Rchannel * Tchannel * Rbind * Tbind
+# So we export:
+# [ Rchannel 0 ]    [ Rbind 0 ]   [ Rchannel * Rbind            0 ]
+# [ Tchannel 1 ] *  [ Tbind 1 ] = [ Tchannel * Rbind + Tbind 1 ]
 def export_keyframe(ipo, space, parent_block, extra_trans = None, extra_quat = None):
     if DEBUG: print "Exporting keyframe %s"%parent_block["Name"].asString()
     # -> get keyframe information
@@ -492,6 +497,7 @@ def export_keyframe(ipo, space, parent_block, extra_trans = None, extra_quat = N
             for btriple in curve.getPoints():
                 knot = btriple.getPoints()
                 frame = knot[0]
+                if (frame < fstart) or (frame > fend): continue
                 ftime = (frame - 1) * fspeed
                 if (curve.getName() == 'RotX') or (curve.getName() == 'RotY') or (curve.getName() == 'RotZ'):
                     rot_curve[ftime] = Blender.Mathutils.Euler([10*ipo.getCurve('RotX').evaluate(frame), 10*ipo.getCurve('RotY').evaluate(frame), 10*ipo.getCurve('RotZ').evaluate(frame)]).toQuat()
@@ -506,14 +512,13 @@ def export_keyframe(ipo, space, parent_block, extra_trans = None, extra_quat = N
                     if extra_quat: # extra quaternion rotation
                         rot_curve[ftime] = Blender.Mathutils.CrossQuats(rot_curve[ftime], extra_quat)
                 if (curve.getName() == 'LocX') or (curve.getName() == 'LocY') or (curve.getName() == 'LocZ'):
-                    trans_curve[ftime] = Vector3()
-                    trans_curve[ftime].x = ipo.getCurve('LocX').evaluate(frame)
-                    trans_curve[ftime].y = ipo.getCurve('LocY').evaluate(frame)
-                    trans_curve[ftime].z = ipo.getCurve('LocZ').evaluate(frame)
+                    trans_curve[ftime] = Blender.Mathutils.Vector([ipo.getCurve('LocX').evaluate(frame), ipo.getCurve('LocY').evaluate(frame), ipo.getCurve('LocZ').evaluate(frame)])
+                    if extra_quat: # extra rotation
+                        trans_curve[ftime] = trans_curve[ftime] * extra_quat.toMatrix()
                     if extra_trans: # extra translation
-                        trans_curve[ftime].x += extra_trans[0]
-                        trans_curve[ftime].y += extra_trans[1]
-                        trans_curve[ftime].z += extra_trans[2]
+                        trans_curve[ftime][0] += extra_trans[0]
+                        trans_curve[ftime][1] += extra_trans[1]
+                        trans_curve[ftime][2] += extra_trans[2]
 
     # -> now comes the real export
 
@@ -554,9 +559,9 @@ def export_keyframe(ipo, space, parent_block, extra_trans = None, extra_quat = N
     for ftime in ftimes:
         trans_frame = Key_Vector3()
         trans_frame.time = ftime
-        trans_frame.data.x = trans_curve[ftime].x
-        trans_frame.data.y = trans_curve[ftime].y
-        trans_frame.data.z = trans_curve[ftime].z
+        trans_frame.data.x = trans_curve[ftime][0]
+        trans_frame.data.y = trans_curve[ftime][1]
+        trans_frame.data.z = trans_curve[ftime][2]
         trans_keys.append(trans_frame)
     ikfd.SetTranslateKeys(trans_keys)
 
@@ -1409,81 +1414,82 @@ def export_trishapes(ob, space, parent_block):
         
         # shape key morphing
         key = mesh.getKey()
-        if key and len( key.getBlocks() ) > 1:
-            # yes, there is a key object attached
-            # FIXME: check if key object contains relative shape keys
-            keyipo = key.getIpo()
-            if keyipo:
-                # yes, there is a shape ipo too
-                
-                # get frame start and the number of frames per second
-                scn = Blender.Scene.GetCurrent()
-                context = scn.getRenderingContext()
-                fspeed = 1.0 / context.framesPerSec()
-                fstart = context.startFrame()
-                fend = context.endFrame()
-                
-                # create geometry morph controller
-                morphctrl = create_block("NiGeomMorpherController")
-                add_controller( trishape, morphctrl )
-                morphctrl["Frequency"] = 1.0
-                morphctrl["Phase"] = 0.0
-                ctrlStart = 1000000.0
-                ctrlStop = 0.0
-                ctrlFlags = 0x000c
-                
-                # create geometry morph data
-                morphdata = create_block("NiMorphData")
-                morphctrl["Data"] = morphdata
-                morphdata["Unknown Byte"] = 0x01
-                imorphdata = QueryMorphData(morphdata)
-                imorphdata.SetVertexCount( len( vertlist ) );
-                imorphdata.SetMorphCount( len( key.getBlocks() ) )
-                
-                for keyblocknum, keyblock in enumerate( key.getBlocks() ):
-                    # export morphed vertices
-                    morphverts = [ None ] * len( vertlist )
-                    for vert in keyblock.data:
-                        if ( vertmap[ vert.index ] ):
-                            mv = Vector3( *(vert.co) )
-                            if keyblocknum > 0:
-                                mv.x -= mesh.verts[vert.index].co.x
-                                mv.y -= mesh.verts[vert.index].co.y
-                                mv.z -= mesh.verts[vert.index].co.z
-                            for vert_index in vertmap[ vert.index ]:
-                                morphverts[ vert_index ] = mv
-                    imorphdata.SetMorphVerts( keyblocknum, morphverts )
+        if key:
+            if len( key.getBlocks() ) > 1:
+                # yes, there is a key object attached
+                # FIXME: check if key object contains relative shape keys
+                keyipo = key.getIpo()
+                if keyipo:
+                    # yes, there is a shape ipo too
                     
-                    # export ipo shape key curve
-                    #curve = keyipo.getCurve( 'Key %i'%keyblocknum ) # FIXME
-                    # workaround
-                    curve = None
-                    if ( keyblocknum - 1 ) in range( len( keyipo.getCurves() ) ):
-                        curve = keyipo.getCurves()[keyblocknum-1]
-                    # base key has no curve all other keys should have one
-                    if curve:
-                        if DEBUG: print "exporting morph curve %i"%keyblocknum
-                        if ( curve.getExtrapolation() == "Constant" ):
-                            ctrlFlags = 0x000c
-                        elif ( curve.getExtrapolation() == "Cyclic" ):
-                            ctrlFlags = 0x0008
-                        keys = []
-                        for btriple in curve.getPoints():
-                            kfloat = Key_float()
-                            knot = btriple.getPoints()
-                            kfloat.time = (knot[0] - fstart) * fspeed
-                            kfloat.data = curve.evaluate( knot[0] )
-                            kfloat.forward_tangent = 0.0 # ?
-                            kfloat.backward_tangent = 0.0 # ?
-                            keys.append(kfloat)
-                            if kfloat.time < ctrlStart:
-                                ctrlStart = kfloat.time
-                            if kfloat.time > ctrlStop:
-                                ctrlStop = kfloat.time
-                        imorphdata.SetMorphKeys( keyblocknum, keys )
-                morphctrl["Flags"] = ctrlFlags
-                morphctrl["Start Time"] = ctrlStart
-                morphctrl["Stop Time"] = ctrlStop
+                    # get frame start and the number of frames per second
+                    scn = Blender.Scene.GetCurrent()
+                    context = scn.getRenderingContext()
+                    fspeed = 1.0 / context.framesPerSec()
+                    fstart = context.startFrame()
+                    fend = context.endFrame()
+                    
+                    # create geometry morph controller
+                    morphctrl = create_block("NiGeomMorpherController")
+                    add_controller( trishape, morphctrl )
+                    morphctrl["Frequency"] = 1.0
+                    morphctrl["Phase"] = 0.0
+                    ctrlStart = 1000000.0
+                    ctrlStop = 0.0
+                    ctrlFlags = 0x000c
+                    
+                    # create geometry morph data
+                    morphdata = create_block("NiMorphData")
+                    morphctrl["Data"] = morphdata
+                    morphdata["Unknown Byte"] = 0x01
+                    imorphdata = QueryMorphData(morphdata)
+                    imorphdata.SetVertexCount( len( vertlist ) );
+                    imorphdata.SetMorphCount( len( key.getBlocks() ) )
+                    
+                    for keyblocknum, keyblock in enumerate( key.getBlocks() ):
+                        # export morphed vertices
+                        morphverts = [ None ] * len( vertlist )
+                        for vert in keyblock.data:
+                            if ( vertmap[ vert.index ] ):
+                                mv = Vector3( *(vert.co) )
+                                if keyblocknum > 0:
+                                    mv.x -= mesh.verts[vert.index].co.x
+                                    mv.y -= mesh.verts[vert.index].co.y
+                                    mv.z -= mesh.verts[vert.index].co.z
+                                for vert_index in vertmap[ vert.index ]:
+                                    morphverts[ vert_index ] = mv
+                        imorphdata.SetMorphVerts( keyblocknum, morphverts )
+                        
+                        # export ipo shape key curve
+                        #curve = keyipo.getCurve( 'Key %i'%keyblocknum ) # FIXME
+                        # workaround
+                        curve = None
+                        if ( keyblocknum - 1 ) in range( len( keyipo.getCurves() ) ):
+                            curve = keyipo.getCurves()[keyblocknum-1]
+                        # base key has no curve all other keys should have one
+                        if curve:
+                            if DEBUG: print "exporting morph curve %i"%keyblocknum
+                            if ( curve.getExtrapolation() == "Constant" ):
+                                ctrlFlags = 0x000c
+                            elif ( curve.getExtrapolation() == "Cyclic" ):
+                                ctrlFlags = 0x0008
+                            keys = []
+                            for btriple in curve.getPoints():
+                                kfloat = Key_float()
+                                knot = btriple.getPoints()
+                                kfloat.time = (knot[0] - fstart) * fspeed
+                                kfloat.data = curve.evaluate( knot[0] )
+                                kfloat.forward_tangent = 0.0 # ?
+                                kfloat.backward_tangent = 0.0 # ?
+                                keys.append(kfloat)
+                                if kfloat.time < ctrlStart:
+                                    ctrlStart = kfloat.time
+                                if kfloat.time > ctrlStop:
+                                    ctrlStop = kfloat.time
+                            imorphdata.SetMorphKeys( keyblocknum, keys )
+                    morphctrl["Flags"] = ctrlFlags
+                    morphctrl["Start Time"] = ctrlStart
+                    morphctrl["Stop Time"] = ctrlStop
 
 def export_bones(arm, parent_block):
     if DEBUG: print "Exporting bones for armature %s"%arm.getName()
