@@ -4,7 +4,12 @@
 Name: 'NetImmerse/Gamebryo (.nif & .kf)...'
 Blender: 240
 Group: 'Export'
-Tip: 'Export selected meshes to NIF (.nif) format.'
+Submenu: 'All...' all
+Submenu: 'Without Animation (*.nif)...' noanim
+Submenu: 'Animation Only (*.kf)...' onlyanim
+Submenu: 'Morrowind (*.nif + *.kf + x*.nif)...' morrowind
+Submenu: 'Configure (gui)...' gui
+Tooltip: 'Export to NIF file (.nif)'
 """
 
 __author__ = "amorilia@gamebox.net"
@@ -52,7 +57,7 @@ tested)<br>
 # --------------------------------------------------------------------------
 # NIF Export v1.2 by Amorilia ( amorilia@gamebox.net )
 # --------------------------------------------------------------------------
-# ***** BEGIN BSD LICENSE BLOCK *****
+# ***** BEGIN LICENSE BLOCK *****
 #
 # Copyright (c) 2005, NIF File Format Library and Tools
 # All rights reserved.
@@ -87,7 +92,7 @@ tested)<br>
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# ***** END BSD LICENCE BLOCK *****
+# ***** END LICENCE BLOCK *****
 # --------------------------------------------------------------------------
 
 import Blender, sys
@@ -99,7 +104,8 @@ try:
 except:
     err = """--------------------------
 ERROR\nThis script requires the NIFLIB Python SWIG wrapper, niflib.py & _niflib.dll.
-Download it from http://niftools.sourceforge.net/
+Make sure these files reside in your Blender scripts folder.
+If you don't have them: http://niftools.sourceforge.net/
 --------------------------"""
     print err
     Blender.Draw.PupMenu("ERROR%t|NIFLIB not found, check console for details")
@@ -247,7 +253,7 @@ press W to convert their envelopes to vertex weights,
 and turn off envelopes."""%ob.getName()
                     raise NIFExportError("'%s': Cannot export envelope skinning. Check console for instructions."%ob.getName())
         
-        # extract some useful scene
+        # extract some useful scene info
         scn = Blender.Scene.GetCurrent()
         context = scn.getRenderingContext()
         fspeed = 1.0 / context.framesPerSec()
@@ -1899,13 +1905,18 @@ def add_controller(block, ctrl):
 # Helper function to add extra data
 #
 def add_extra_data(block, xtra):
-    if block["Extra Data"].asLink().is_null():
-        block["Extra Data"] = xtra
+    if NIF_VERSION < 0x0A000100:
+        # the extra data chain paradigm
+        if block["Extra Data"].asLink().is_null():
+            block["Extra Data"] = xtra
+        else:
+            lastxtra = block["Extra Data"].asLink()
+            while not lastxtra["Extra Data"].asLink().is_null():
+                lastxtra = lastxtra["Extra Data"].asLink()
+            lastxtra["Extra Data"] = xtra
     else:
-        lastxtra = block["Extra Data"].asLink()
-        while not lastxtra["Extra Data"].asLink().is_null():
-            lastxtra = lastxtra["Extra Data"].asLink()
-        lastxtra["Extra Data"] = xtra
+        # the extra data list paradigm
+        block["Extra Data List"].AddLink(xtra)
 
 
 
