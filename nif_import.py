@@ -150,6 +150,9 @@ if enableRe:
 # Process config files.
 # 
 
+global gui_texpath, gui_scale, gui_last
+global SCALE_CORRECTION, FORCE_DDS, STRIP_TEXPATH, SEAMS_IMPORT, LAST_IMPORTED, TEXTURES_DIR
+
 NIF_VERSION_DICT = {}
 NIF_VERSION_DICT['4.0.0.2']  = 0x04000002
 NIF_VERSION_DICT['4.1.0.12'] = 0x0401000C
@@ -167,18 +170,20 @@ EPSILON = 0.005 # used for checking equality with floats, NOT STORED IN CONFIG
 SCALE_CORRECTION = 10.0
 FORCE_DDS = False
 STRIP_TEXPATH = False
-TEXTURES_FOLDER = ''
-EXPORT_DIR = '' 
+TEXTURES_DIR = ''
+EXPORT_DIR = ''
+LAST_IMPORTED = ''
 NIF_VERSION_STR = '4.0.0.2'
 VERBOSE = True
 CONFIRM_OVERWRITE = True
+SEAMS_IMPORT = 1
 
 # tooltips
 tooltips = {
     'SCALE_CORRECTION': "How many NIF units is one Blender unit?",
     'FORCE_DDS': "Force textures to be exported with a .DDS extension? Usually, you can leave this disabled.",
     'STRIP_TEXPATH': "Strip texture path in NIF file. You should leave this disabled, especially when this model's textures are stored in a subdirectory of the Data Files\Textures folder.",
-    'EXPORT_DIR': "Default export directory.",
+    'EXPORT_DIR': "Default directory.",
     'NIF_VERSION': "The NIF version to write."
 }
 
@@ -194,8 +199,11 @@ def update_registry():
     d['SCALE_CORRECTION'] = SCALE_CORRECTION
     d['FORCE_DDS'] = FORCE_DDS
     d['STRIP_TEXPATH'] = STRIP_TEXPATH
+    d['TEXTURES_DIR'] = TEXTURES_DIR
     d['EXPORT_DIR'] = EXPORT_DIR
+    d['LAST_IMPORTED'] = LAST_IMPORTED
     d['NIF_VERSION'] = NIF_VERSION_STR
+    d['SEAMS_IMPORT'] = SEAMS_IMPORT
     d['tooltips'] = tooltips
     d['limits'] = limits
     # store the key
@@ -211,15 +219,11 @@ def read_registry():
             SCALE_CORRECTION = regdict['SCALE_CORRECTION']
             FORCE_DDS = regdict['FORCE_DDS']
             STRIP_TEXPATH = regdict['STRIP_TEXPATH']
+            TEXTURES_DIR = regdict['TEXTURES_DIR'] 
             EXPORT_DIR = regdict['EXPORT_DIR']
+            LAST_IMPORTED = regdict['LAST_IMPORTED']
             NIF_VERSION_STR = regdict['NIF_VERSION']
-            try:
-                NIF_VERSION = NIF_VERSION_DICT[NIF_VERSION_STR]
-            except:
-                print "Warning: NIF version %s not supported; exporting version 4.0.0.2 instead."%NIF_VERSION_STR
-                NIF_VERSION_STR = '4.0.0.2'
-                NIF_VERSION = NIF_VERSION_DICT[NIF_VERSION_STR]
-                raise # data was corrupted, reraise exception
+            SEAMS_IMPORT = regdict['SEAMS_IMPORT']
         # if data was corrupted (or a new version of the script changed
         # (expanded, removed, renamed) the config vars and users may have
         # the old config file around):
@@ -355,32 +359,43 @@ def fb_name(niBlock):
         pass
     return name
 
+# Retrieves a niBlock's transform matrix as a Mathutil.Matrix
 def fb_matrix(niBlock):
     inode=QueryNode(niBlock)
     m=inode.GetLocalTransform()
-    b_matrix_obj = Matrix([m[0][0],m[0][1],m[0][2],m[0][3]],
+    b_matrix = Matrix([m[0][0],m[0][1],m[0][2],m[0][3]],
                         [m[1][0],m[1][1],m[1][2],m[1][3]],
                         [m[2][0],m[2][1],m[2][2],m[2][3]],
                         [m[3][0],m[3][1],m[3][2],m[3][3]])
-    return b_matrix_obj
+    return b_matrix
 
+# Returns the scale correction matrix. A bit silly to calculate it all the time,
+# but the overhead is minimal and when the GUI will work again this will be useful
 def fb_scale_mat():
     s = 1.0/SCALE_CORRECTION 
     return Matrix([s,0,0,0],[0,s,0,0],[0,0,s,0],[0,0,0,1])
 
+# Creates and returns a grouping empty
 def fb_empty(niBlock):
     global b_scene
-    b_obj = Blender.Object.New("Empty", fb_name(niBlock))
-    b_scene.link(b_obj)
-    return b_obj
-    
+    b_empty = Blender.Object.New("Empty", fb_name(niBlock))
+    b_scene.link(b_empty)
+    return b_empty
+
+# scans an armature hierarchy, and returns a whole armature.
+# This is done outside the normal node tree scan to allow for positioning of the bones
 def fb_armature(niBlock):
+    #not yet implemented, for the moment I'll return a placeholder empty
     return fb_empty(niBlock)
+
+def fb_texture(niBlock):
+    print niBlock["Name"]
+    return None
 
 # Creates and returns a mesh
 def fb_mesh(niBlock):
     global b_scene
-    seams_import = 1
+    global SEAMS_IMPORT
     # Mesh name -> must be unique, so tag it if needed
     b_name=fb_name(niBlock)
     # No getRaw, this time we work directly on Blender's objects
@@ -413,14 +428,37 @@ def fb_mesh(niBlock):
     # Vertex normals
     norms = iShapeData.GetNormals()
     # Vertex map. This is a list of indices to the first instance of a vertex matching the one being seeked
+    # Yet another way to remove doubles only where the coordinates and normals are matching. This is a single loop process,
+    # but the dictionary lookup probably eats away some of the time saved. 3 seconds. "it don't get much better than this"
     v_map = [None]*len(verts)
+    n_map = {}
+    for i, v in enumerate(verts):
+        kx = int(v.x/EPSILON)*EPSILON
+        ky = int(v.y/EPSILON)*EPSILON
+        kz = int(v.z/EPSILON)*EPSILON
+        nk = (kx,ky,kz)
+        # Yeh, go and do this in Java. No, really!
+        if not nk in n_map:
+            n_map[nk] = i
+            v_map[i] = i
+        else:
+            n1 = norms[i]
+            n2 = norms[n_map[nk]]
+            # AngleBetweenVecs now returns degrees. Yeuch!
+            if AngleBetweenVecs(Vector(n1.x, n1.y, n1.z),Vector(n2.x, n2.y, n2.z)) <= EPSILON:
+                v_map[i] = n_map[nk]
+            else:
+                v_map[i] = i
+    # let's reclaim some memory
+    n_map = None
+    """
     # Populates the vertex mapping to merge matching vertices. This is slow for meshes with many vertices
     # on my PC (Athlon 2800 XP) takes about 10 seconds to load a better bodies mesh
     for i in range(len(verts)):
         v_map[i] = i
         # This vertex map is only useful if there's vertex normal info. If the next expression is False
         # then the map will just match the original vertex list
-        if norms and seams_import == 1:
+        if norms and SEAMS_IMPORT == 1:
             v1 = verts[i]
             n1 = norms[i]
             # Loops ending at i to save a little time. If I haven't found a copy by the time I reach i then this is the 
@@ -432,6 +470,8 @@ def fb_mesh(niBlock):
                             and AngleBetweenVecs(Vector(n1.x, n1.y, n1.z),Vector(n2.x, n2.y, n2.z)) <= EPSILON:
                     v_map[i] = j
                     break
+    """
+        
     # Adds the vertices to the mesh, but only adds the non-duplicate vertices
     # Due to the way the vertex map is populated all "meaningful" vertices
     # will be at the start of the list
@@ -479,8 +519,11 @@ def fb_mesh(niBlock):
                 uv=uvco[v]
                 uvlist.append(Vector(uv.u, uv.v))
             b_meshData.faces[i].uv = tuple(uvlist)
-    # Texturing property
-    
+    # Mesh texture. I only support the base texture for the moment
+    textProperty = niBlock["Properties"].FindLink( "NiTexturingProperty" )
+    texture = None
+    #if textProperty:
+    #    texture = fb_texture(textProperty.FindLink("Base Texture"))
     """
     # Texturing property. From this I can retrieve texture info
     #texProperty = triShape.getNiTexturingProperty()
@@ -601,10 +644,9 @@ def get_distance(v, w):
 #-------- Run importer GUI.
 #----------------------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------#
-
-def draw_gui():
-    global Textbox2, Slider1, Textbox1
-    global scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath
+def gui_draw():
+    global gui_texpath, gui_scale, gui_last
+    global SCALE_CORRECTION, FORCE_DDS, STRIP_TEXPATH, SEAMS_IMPORT, LAST_IMPORTED, TEXTURES_DIR
     
     BGL.glClearColor(0.753, 0.753, 0.753, 0.0)
     BGL.glClear(BGL.GL_COLOR_BUFFER_BIT)
@@ -618,62 +660,68 @@ def draw_gui():
     Draw.Button('Browse', 1, 8, 48, 55, 23, '')
     Draw.Button('Import NIF', 2, 8, 8, 87, 23, '')
     Draw.Button('Cancel', 3, 208, 8, 71, 23, '')
-    Draw.Toggle('Smoothing Flag (Slow)', 6, 88, 112, 191, 23, seams_import == 2, 'Import seams and convert them to "the Blender way", is slow and imperfect, unless model was created by Blender and had no duplicate vertices.')
-    Draw.Toggle('Vertex Duplication (Slow)', 7, 88, 144, 191, 23, seams_import == 1, 'Perfect but slow, this is the preferred method if the model you are importing is not too large.')
-    Draw.Toggle('Vertex Duplication (Fast)', 8, 88, 176, 191, 23, seams_import == 0, 'Fast but imperfect: may introduce unwanted cracks in UV seams')
-    Textbox2 = Draw.String('', 4, 72, 80, 207, 23, user_texpath, 512, 'Semi-colon separated list of texture directories.')
-    Textbox1 = Draw.String('', 5, 72, 48, 207, 23, last_imported, 512, '')
-    Slider1 = Draw.Slider('Scale Correction: ', 9, 8, 208, 271, 23, scale_correction, 0.01, 100, 0, 'How many NIF units is one Blender unit?')
+    Draw.Toggle('Smoothing Flag (Slow)', 6, 88, 112, 191, 23, SEAMS_IMPORT == 2, 'Import seams and convert them to "the Blender way", is slow and imperfect, unless model was created by Blender and had no duplicate vertices.')
+    Draw.Toggle('Vertex Duplication (Slow)', 7, 88, 144, 191, 23, SEAMS_IMPORT == 1, 'Perfect but slow, this is the preferred method if the model you are importing is not too large.')
+    Draw.Toggle('Vertex Duplication (Fast)', 8, 88, 176, 191, 23, SEAMS_IMPORT == 0, 'Fast but imperfect: may introduce unwanted cracks in UV seams')
+    gui_texpath = Draw.String('', 4, 72, 80, 207, 23, TEXTURES_DIR, 512, 'Semi-colon separated list of texture directories.')
+    gui_last = Draw.String('', 5, 72, 48, 207, 23, LAST_IMPORTED, 512, '')
+    gui_scale = Draw.Slider('Scale Correction: ', 9, 8, 208, 271, 23, SCALE_CORRECTION, 0.01, 100, 0, 'How many NIF units is one Blender unit?')
 
-def event(evt, val):
+def gui_select(filename):
+    global LAST_IMPORTED
+    LAST_IMPORTED = filename
+    Draw.Redraw(1)
+    
+def gui_evt_key(evt, val):
     if (evt == Draw.QKEY and not val):
         Draw.Exit()
 
-def bevent(evt):
-    global Textbox2, Slider1, Textbox1
-    global scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath
+def gui_evt_button(evt):
+    global gui_texpath, gui_scale, gui_last
+    global SCALE_CORRECTION, force_dds, strip_texpath, SEAMS_IMPORT, LAST_IMPORTED, TEXTURES_DIR
     
     if evt == 6: #Toggle3
-        seams_import = 2
+        SEAMS_IMPORT = 2
         Draw.Redraw(1)
     elif evt == 7: #Toggle2
-        seams_import = 1
+        SEAMS_IMPORT = 1
         Draw.Redraw(1)
     elif evt == 8: #Toggle1
-        seams_import = 0
+        SEAMS_IMPORT = 0
         Draw.Redraw(1)
     elif evt == 1: # Browse
-        Blender.Window.FileSelector(select, 'Select')
+        Blender.Window.FileSelector(gui_select, 'Select')
         Draw.Redraw(1)
     elif evt == 4: # TexPath
-        user_texpath = Textbox2.val
+        TEXTURES_DIR = gui_texpath.val
     elif evt == 5: # filename
-        last_imported = Textbox1.val
+        LAST_IMPORTED = gui_last.val
     elif evt == 9: # scale
-        scale_correction = Slider1.val
+        SCALE_CORRECTION = gui_scale.val
     elif evt == 2: # Import NIF
         # Stop GUI.
-        Textbox1 = None
-        Textbox2 = None
-        Slider1 = None
+        gui_last = None
+        gui_texpath = None
+        gui_scale = None
         Draw.Exit()
-        # Save options for next time.
-        configfile = open(configname, "w")
-        configfile.write('scale_correction=%f\nforce_dds=%i\nstrip_texpath=%i\nseams_import=%i\nlast_imported=%s\nlast_exported=%s\nuser_texpath=%s\n'%(scale_correction,force_dds,strip_texpath,seams_import,last_imported,last_exported,user_texpath))
-        configfile.close()
-        # Import file.
-        if seams_import == 2:
-            debugMsg("Smoothing import not implemented yet, selecting slow vertex duplication method instead.", 1)
-            seams_import = 1
-        readFile(last_imported)
+        gui_import()
     elif evt == 3: # Cancel
-        Textbox1 = None
-        Textbox2 = None
-        Slider1 = None
+        gui_last = None
+        gui_texpath = None
+        gui_scale = None
         Draw.Exit()
 
+def gui_import():
+    # Save options for next time.
+    update_registry()
+    # Import file.
+    if SEAMS_IMPORT == 2:
+        debugMsg("Smoothing import not implemented yet, selecting slow vertex duplication method instead.", 1)
+        SEAMS_IMPORT = 1
+    import_nif(LAST_IMPORTED)
+
 if USE_GUI:
-    Draw.Register(draw_gui, event, bevent)
+    Draw.Register(gui_draw, gui_evt_key, gui_evt_button)
 else:
     Blender.Window.FileSelector(import_nif, 'Import NIF', EXPORT_DIR)
     
