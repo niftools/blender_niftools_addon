@@ -388,9 +388,62 @@ def fb_armature(niBlock):
     #not yet implemented, for the moment I'll return a placeholder empty
     return fb_empty(niBlock)
 
-def fb_texture(niBlock):
-    print niBlock["Name"]
-    return None
+
+def fb_texture( niSourceTexture ):
+    if textures.has_key( niSourceTexture ):
+        return textures[ niSourceTexture ]
+
+    b_image = None
+    
+    niTexSource = niSourceTexture["Texture Source"].asTexSource()
+    
+    if niTexSource.useExternal:
+        # the texture uses an external image file
+        fn = niTexSource.fileName
+        if fn[-4:] == ".dds":
+            fn = fn[:-4] + ".tga"
+        # go searching for it
+        for dir in TEXTURES_DIR.split(";"):
+            if Blender.sys.exists( Blender.sys.join( dir, fn ) ):
+                b_image = Blender.Image.Load( Blender.sys.join( dir, fn ) )
+                break
+        else:
+            print "texture %s not found"%niTexSource.fileName
+    else:
+        # the texture image is packed inside the nif -> extract it
+        niPixelData = niSourceTexture["Texture Source"].asLink()
+        iPixelData = QueryPixelData( niPixelData )
+        
+        width = iPixelData.GetWidth()
+        height = iPixelData.GetHeight()
+        
+        if iPixelData.GetPixelFormat() == PX_FMT_RGB8:
+            bpp = 24
+        elif iPixelData.GetPixelFormat() == PX_FMT_RGBA8:
+            bpp = 32
+        else:
+            bpp = None
+        
+        if bpp != None:
+            b_image = Blender.Image.New( "TexImg", width, height, bpp )
+            
+            pixels = iPixelData.GetColors()
+            for x in range( width ):
+                Blender.Window.DrawProgressBar( float( x + 1 ) / float( width ), "Image Extraction")
+                for y in range( height ):
+                    pix = pixels[y*height+x]
+                    b_image.setPixelF( x, (height-1)-y, ( pix.r, pix.g, pix.b, pix.a ) )
+    
+    if b_image != None:
+        # create a texture using the loaded image
+        b_texture = Blender.Texture.New()
+        b_texture.setType( 'Image' )
+        b_texture.setImage( b_image )
+        if b_image.depth == 32: # ... crappy way to check for alpha channel in texture
+            b_texture.imageFlags |= Blender.Texture.ImageFlags.USEALPHA # use the alpha channel
+        return b_texture
+    else:
+        return None
 
 # Creates and returns a mesh
 def fb_mesh(niBlock):
@@ -487,16 +540,30 @@ def fb_mesh(niBlock):
     for f in b_meshData.faces:
         f.smooth = 1
         f.mat = 0
-    # Vertex colors
-    if vcols:
-        for i, f in enumerate(faces):
-            for v in (f.v1, f.v2, f.v3):
-                c = vcols[v]
-                R = int(c.R * 255)
-                G = int(c.G * 255)
-                B = int(c.B * 255)
-                A = int(c.A * 255)
-                b_mesh.faces[i].col.append(Blender.Mesh.MCol(R, G, B, A))
+    # vertex colors
+    vcol = iShapeData.GetColors()
+    if len( vcol ) == 0:
+        vcol = None
+    else:
+        b_meshData.vertexColors = 1
+        for i, b_face in enumerate(b_meshData.faces):
+            f = faces[i]
+            
+            vc = vcol[f.v1]
+            b_face.col[0].r = int(vc.r * 255)
+            b_face.col[0].g = int(vc.g * 255)
+            b_face.col[0].b = int(vc.b * 255)
+            b_face.col[0].a = int(vc.a * 255)
+            vc = vcol[f.v2]
+            b_face.col[1].r = int(vc.r * 255)
+            b_face.col[1].g = int(vc.g * 255)
+            b_face.col[1].b = int(vc.b * 255)
+            b_face.col[1].a = int(vc.a * 255)
+            vc = vcol[f.v3]
+            b_face.col[2].r = int(vc.r * 255)
+            b_face.col[2].g = int(vc.g * 255)
+            b_face.col[2].b = int(vc.b * 255)
+            b_face.col[2].a = int(vc.a * 255)
         # vertex colors influence lighting...
         # so now we have to set the VCOL_LIGHT flag on the material
         # see below
@@ -521,9 +588,13 @@ def fb_mesh(niBlock):
             b_meshData.faces[i].uv = tuple(uvlist)
     # Mesh texture. I only support the base texture for the moment
     textProperty = niBlock["Properties"].FindLink( "NiTexturingProperty" )
-    texture = None
-    #if textProperty:
-    #    texture = fb_texture(textProperty.FindLink("Base Texture"))
+    if textProperty:
+        b_texture = fb_texture(textProperty["Base Texture"].asLink())
+        if b_texture != None:
+            # create dummy material to test texture
+            b_material = Blender.Material.New()
+            b_material.setTexture( 0, b_texture, Blender.Texture.TexCo.UV, Blender.Texture.MapTo.COL )
+            b_meshData.materials = [b_material]
     """
     # Texturing property. From this I can retrieve texture info
     #texProperty = triShape.getNiTexturingProperty()

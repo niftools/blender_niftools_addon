@@ -656,8 +656,6 @@ def export_animgroups(animtxt, block_parent):
 #
 # Returns block of the exported NiSourceTexture
 #
-# TODO: packed textures
-# 
 def export_sourcetexture(texture, filename = None):
     global NIF_TEXTURES
     
@@ -677,108 +675,9 @@ def export_sourcetexture(texture, filename = None):
     # add NiSourceTexture
     srctex = create_block("NiSourceTexture")
     srctexdata = TexSource()
-    srctexdata.useExternal = ( texture.getName()[:4] != "pack" )
+    srctexdata.useExternal = not texture.getImage().packed #( texture.getName()[:4] != "pack" )
     
-    # TODO port this code
-    if not srctexdata.useExternal:
-        raise NIFExportError("Packed textures not yet supported.")
-##        if filename != None:
-##            try:
-##                image = Blender.Image.Load( filename )
-##            except:
-##                raise NIFExportError( "Error: Cannot pack texture '%s'; Failed to load image '%s'"%(texture.getName(),filename) )
-##        else:
-##            image = texture.image
-##        w, h = image.getSize()
-##        if ( w <= 0 ) or ( h <= 0 ):
-##            image.reload()
-##        if ( w <= 0 ) or ( h <= 0 ):
-##            raise NIFExportError( "Error: Cannot pack texture '%s'; Failed to load image '%s'"%(texture.getName(),image.getFilename()) )
-##        depth = image.getDepth()
-##        if depth == 32:
-##            rmask = 0x000000ff
-##            gmask = 0x0000ff00
-##            bmask = 0x00ff0000
-##            amask = 0xff000000
-##            bytes = 4
-##        elif depth == 24:
-##            rmask = 0x000000ff
-##            gmask = 0x0000ff00
-##            bmask = 0x00ff0000
-##            amask = 0x00000000
-##            bytes = 3
-##        else:
-##            raise NIFExportError( "Error: Cannot pack texture '%s' image '%s'; Unsupported image depth %i"%(texture.getName(),image.getFilename(),image.getDepth()) )
-##
-##        # now pack the image
-##        data = []
-##        mipmaps = []
-##        if VERBOSE: print "packing %s -> width %i, height %i"%(Blender.sys.basename(image.getFilename()),w,h)
-##        mipmaps.append( [ w, h, 0 ] )
-##        for y in range( h ):
-##            for x in range( w ):
-##                r,g,b,a = image.getPixelF( x, (h-1)-y ) # nif flips y coordinate
-##                if ( depth == 32 ):
-##                    data.append( int( r * 255 ) )
-##                    data.append( int( g * 255 ) )
-##                    data.append( int( b * 255 ) )
-##                    data.append( int( a * 255 ) )
-##                elif ( depth == 24 ):
-##                    data.append( int( r * 255 ) )
-##                    data.append( int( g * 255 ) )
-##                    data.append( int( b * 255 ) )
-##
-##        # filter mipmaps
-##        sx = 2
-##        sy = 2
-##        lastOffset = 0
-##        while ( texture.imageFlags & Blender.Texture.ImageFlags.MIPMAP != 0 ):
-##            offset = len(data)
-##            if VERBOSE: print "packing %s mipmap %i -> width %i, height %i, offset %i"%(Blender.sys.basename(image.getFilename()),len(mipmaps),w/sx,h/sy,offset)
-##            mipmaps.append( [ w/sx, h/sy, offset ] )
-##            for y in range( 0, h, sy ):
-##                for x in range( 0, w, sx ):
-##                    rgba = [ 0, 0, 0, 0 ]
-##                    for fy in range( 2 ):
-##                        for fx in range( 2 ):
-##                            for fd in range( bytes ):
-##                                rgba[fd] += data[lastOffset+((y/sy*2+fy)*w/sx*2+(x/sx*2+fx))*bytes+fd]
-##                    for fd in range( bytes ):
-##                        rgba[fd] = rgba[fd] / 4
-##                        data.append( rgba[fd] )
-##            lastOffset = offset
-##            if ( sx == w ) and ( sy == h ):
-##                break # now more mipmap levels left
-##            if ( sx < w ):
-##                sx = sx * 2
-##            if ( sy < h ):
-##                sy = sy * 2
-##            if ( sx > w ) or ( sy > h ):
-##                raise NIFExportError( "Error: Cannot pack texture '%s' image '%s'; Image dimensions must be power of two"%(texture.getName(),image.getFilename()) )
-##        
-##        # add NiPixelData
-##        pixel_id = nif.header.nblocks
-##        assert(pixel_id == len(nif.blocks)) # debug
-##        nif.blocks.append(nif4.NiPixelData())
-##        nif.header.nblocks += 1
-##        nif.blocks[pixel_id].rmask = rmask
-##        nif.blocks[pixel_id].gmask = gmask
-##        nif.blocks[pixel_id].bmask = bmask
-##        nif.blocks[pixel_id].amask = amask
-##        nif.blocks[pixel_id].bpp = depth
-##        nif.blocks[pixel_id].bytespp = nif.blocks[pixel_id].bpp / 8
-##        nif.blocks[pixel_id].mipmaps = mipmaps
-##        nif.blocks[pixel_id].num_mipmaps = len( nif.blocks[pixel_id].mipmaps )
-##        nif.blocks[pixel_id].data = data
-##        nif.blocks[pixel_id].data_size = len(nif.blocks[pixel_id].data)
-##        if ( depth == 24 ):
-##            nif.blocks[pixel_id].unknown2 = [ 96, 8, 130, 0, 0, 65, 0, 0 ] # ?? copy values from original files
-##        elif ( depth == 32 ):
-##            nif.blocks[pixel_id].unknown2 = [ 129, 8, 130, 32, 0, 65, 12, 0 ]
-##        nif.blocks[tsrc_id].pixel_data = pixel_id
-##        nif.blocks[tsrc_id].unknown1 = 1
-    # if the file is external
-    else:
+    if srctexdata.useExternal:
         if filename != None:
             tfn = filename
         else:
@@ -799,6 +698,41 @@ def export_sourcetexture(texture, filename = None):
         # force dds extension, if requested
         if FORCE_DDS:
             srctexdata.fileName = srctexdata.fileName[:-4] + '.dds'
+
+    else:   # if the file is not external
+        if filename != None:
+            try:
+                image = Blender.Image.Load( filename )
+            except:
+                raise NIFExportError( "Error: Cannot pack texture '%s'; Failed to load image '%s'"%(texture.getName(),filename) )
+        else:
+            image = texture.image
+        
+        w, h = image.getSize()
+        if ( w <= 0 ) or ( h <= 0 ):
+            image.reload()
+        if ( w <= 0 ) or ( h <= 0 ):
+            raise NIFExportError( "Error: Cannot pack texture '%s'; Failed to load image '%s'"%(texture.getName(),image.getFilename()) )
+        
+        depth = image.getDepth()
+        if image.getDepth() == 32:
+            pixelformat = PX_FMT_RGBA8
+        elif image.getDepth() == 24:
+            pixelformat = PX_FMT_RGB8
+        else:
+            raise NIFExportError( "Error: Cannot pack texture '%s' image '%s'; Unsupported image depth %i"%(texture.getName(),image.getFilename(),image.getDepth()) )
+        
+        colors = []
+        for y in range( h ):
+            for x in range( w ):
+                r, g, b, a = image.getPixelF( x, (h-1)-y )
+                colors.append( Color4( r, g, b, a ) )
+        
+        pixeldata = create_block("NiPixelData")
+        ipdata = QueryPixelData( pixeldata )
+        ipdata.Reset( w, h, pixelformat )
+        ipdata.SetColors( colors, texture.imageFlags & Blender.Texture.ImageFlags.MIPMAP != 0 )
+        srctex["Texture Source"] = pixeldata
 
     # fill in default values
     srctex["Texture Source"] = srctexdata
