@@ -144,6 +144,8 @@ Section
   Delete "$BLENDERSCRIPTS\nif4.pyc"
   ; Current version, bytecode, just in case user is running Blender at the moment
   Delete "$BLENDERSCRIPTS\niflib.pyc"
+  ; Registered script menu's, just to make sure they get updated
+  Delete "$BLENDERSCRIPTS\..\Bpymenus"
 
   ; Install scripts
   SetOutPath $BLENDERSCRIPTS
