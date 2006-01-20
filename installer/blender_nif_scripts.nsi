@@ -142,6 +142,9 @@ Section
   Delete "$BLENDERSCRIPTS\nif4_import_237.py"
   Delete "$BLENDERSCRIPTS\nif4.py"
   Delete "$BLENDERSCRIPTS\nif4.pyc"
+  ; Old location of Niflib
+  Delete "$BLENDERSCRIPTS\_niflib.dll"
+  Delete "$BLENDERSCRIPTS\niflib.py"
   ; Current version, bytecode, just in case user is running Blender at the moment
   Delete "$BLENDERSCRIPTS\niflib.pyc"
   ; Registered script menu's, just to make sure they get updated
@@ -151,6 +154,7 @@ Section
   SetOutPath $BLENDERSCRIPTS
   File ..\nif_export.py
   File ..\nif4_import_240.py
+  SetOutPath "$BLENDERSCRIPTS\bpymodules"
   File ..\..\niflib\niflib.py
   File ..\..\niflib\_niflib.dll
 
@@ -161,7 +165,6 @@ Section
   File Copyright.txt
 
   ; Install shortcuts
-  SetOutPath $INSTDIR
   CreateDirectory "$SMPROGRAMS\NifTools\Blender NIF Scripts\"
   CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Readme.lnk" "$INSTDIR\README.html"
   CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Tutorial.lnk" "http://niftools.sourceforge.net/tutorial/blender/"
