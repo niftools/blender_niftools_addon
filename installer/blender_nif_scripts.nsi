@@ -34,7 +34,7 @@
 
 !include "MUI.nsh"
 
-!define VERSION "1.2"
+!define VERSION "1.3"
 
 Name "Blender NIF Scripts ${VERSION}"
 Var BLENDERHOME
@@ -44,12 +44,12 @@ Var BLENDERSCRIPTS
 !define MUI_ABORTWARNING
 !define MUI_FINISHPAGE_NOAUTOCLOSE
 
-!define MUI_WELCOMEPAGE_TEXT  "This wizard will guide you through the installation of the Blender NIF Scripts.\r\n\r\nIt is recommended that you close all other applications.\r\n\r\nNote to Win2k/XP users: you require administrator privileges to install the Blender NIF Scripts successfully."
+!define MUI_WELCOMEPAGE_TEXT  "This wizard will guide you through the installation of the Blender NIF Scripts.\r\n\r\nYou need Blender 2.40 or higher (http://www.blender.org) and a full Python 2.4 installation (http://www.python.org) for the scripts to work properly.\r\n\r\nIt is recommended that you close all other applications, especially Blender.\r\n\r\nNote to Win2k/XP users: you require administrator privileges to install the Blender NIF Scripts successfully."
 !insertmacro MUI_PAGE_WELCOME
 
 !insertmacro MUI_PAGE_LICENSE Copyright.txt
 
-!define MUI_DIRECTORYPAGE_TEXT_TOP "The field below specifies the folder where the Blender scripts files will be copied to. This directory has been detected by analyzing your Blender installation.$\r$\n$\r$\nFor your convenience, the installer will also remove any old versions of the Blender NIF Scripts from this folder (no other scripts will be touched).$\r$\n$\r$\nUnless you really know what you are doing, you should leave the field below as it is."
+!define MUI_DIRECTORYPAGE_TEXT_TOP "The field below specifies the folder where the Blender scripts files will be copied to. This directory has been detected by analyzing your Blender installation.$\r$\n$\r$\nFor your convenience, the installer will also remove any old versions of the Blender NIF Scripts from this folder (no other files will be deleted).$\r$\n$\r$\nUnless you really know what you are doing, you should leave the field below as it is."
 !define MUI_DIRECTORYPAGE_TEXT_DESTINATION "Blender Scripts Folder"
 !define MUI_DIRECTORYPAGE_VARIABLE $BLENDERSCRIPTS
 !insertmacro MUI_PAGE_DIRECTORY
