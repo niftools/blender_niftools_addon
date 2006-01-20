@@ -9,7 +9,7 @@
 
 <body>
 
-<h1>The Blender NIF Scripts v1.2 - README</h1>
+<h1>The Blender NIF Scripts v1.3 - README</h1>
 
 <h2>Installation</h2>
 
@@ -36,8 +36,7 @@ you still have problems, check out this LOOOONG thread on the elysiun
 board: <a href="http://www.elysiun.com/forum/viewtopic.php?t=7723">http://www.elysiun.com/forum/viewtopic.php?t=7723</a>
 The latest
 pages will be the ones you will find more useful, as the thread started
-several Blender versions back.
-  </li>
+several Blender versions back. </li>
 
   <li>Run the installer (recommended). If this does not work for
 some reason, you can install the scripts
@@ -82,8 +81,11 @@ have the expansions, also 'Tribunal.bsa' and 'Bloodmoon.bsa') into
 <h2>Support</h2>
 
 <ul>
+
   <li><a href="http://niftools.sourceforge.net/forum/">http://niftools.sourceforge.net/forum/</a></li>
+
   <li><a href="http://niftools.sourceforge.net/tutorial/blender/">http://niftools.sourceforge.net/tutorial/blender/</a></li>
+
 </ul>
 
 <h2>Release Notes</h2>
@@ -103,23 +105,23 @@ if you don't have it installed, grab it from <a href="http://www.python.org">htt
   <li>The old exporter GUI has been dropped... in favor of
 Blender's native Script Config GUI. To change the exporter settings, go
 to the scripts window in Blender, and select
-Scripts-&gt;System-&gt;Scripts Config Editor-&gt;Export.
-  </li>
+Scripts-&gt;System-&gt;Scripts Config Editor-&gt;Export. </li>
 
 </ul>
 
-<h3>Highlights</h3>
+<h3>Highlights of this Release</h3>
 
 <ul>
 
-  <li>Exporter support for skinning (armatures, bones, and vertex
-weights). Armature &amp; bone animation is exported as well.</li>
+  <li>Exporter support for embedded textures has been
+reimplemented.</li>
 
-  <li>Exporter support for texture flipping, both base and glow
-textures.</li>
+  <li>Exporter &amp; importer support for vertex keys
+(geometry morphing).</li>
 
-  <li>Exporter should support NIF versions up to 4.2.2.0
-(4.0.0.2, 4.1.0.12, 4.2.1.0, and 4.2.2.0), however, <em>THIS HAS
+  <li>Exporter should support NIF versions up to 10.0.1.0
+(4.0.0.2, 4.1.0.12, 4.2.1.0,&nbsp;4.2.2.0, and 10.0.1.0), however, <em>THIS
+HAS
 NOT BEEN
 TESTED EXTENSIVELY</em>; if you want, you can try to write a
 4.2.2.0 NIF
@@ -127,21 +129,21 @@ file by setting "nif version" to 4.2.2.0 in the config editor (both
 Civilization IV and Dark Age of Camelot support this version). Bug
 reports regarding this new feature are highly appreciated!</li>
 
-  <li>Various bugs have been fixed in the importer.
-  </li>
+  <li>Various bugs have been fixed in the importer &amp; the
+exporter. </li>
 
 </ul>
 
 <h3>In the background...</h3>
 
-Support for NIF versions &gt;= 10.x.x.x comes closer. This means
-that in the short future we will be able to fully support many more
-games, most notably full import support for Civilization IV and Dark
-Age of Camelot. This is an on-going effort, and the NifTools devteam is
+Support for NIF versions &gt; 10.0.1.0 is still going on. We've
+almost completely decoded 20.0.0.4 (most NIF's in Civilization IV have
+this format), and we're starting to figure out how animations work.
+This is an on-going effort, and the NifTools devteam is
 especially grateful to the Civ modding community for the enthusiastic
 support we have recieved so far. Your patience will be rewarded!<br />
 
-The importer is currently being recoded to make use of Niflib as well,
+The importer is still being recoded to make use of Niflib,
 so keep an eye out for updates. We're working on full skinning support
 for the importer as well.
 <h2>Exporter&nbsp;Notes</h2>
@@ -244,7 +246,11 @@ material, with the following settings:
       <li>either load a texture from 'C:\MORROWIND\textures', or
 put your custom texture in the 'C:\Program Files\Morrowind\Data
 Files\Textures' folder, and load it from there. Note that Blender does
-not read .dds files. </li>
+not read .dds files.</li>
+
+      <li>although this is not recommended, textures can be
+embedded by toggling the "packed" button next to the "Reload" button in
+the Image tab</li>
 
     </ul>
 
@@ -253,7 +259,8 @@ not read .dds files. </li>
   <li>(optional) animate meshes and/or empty objects (press I to
 insert key, and select Rot, Loc, or LocRot; for now, only location and
 rotation channels are exported); define the animation groups in a text
-buffer called 'Anim' (check source code for an example) </li>
+buffer called 'Anim' (check source code for an example; so far we only
+support Morrowind-type animations) </li>
 
   <li>(optional) to export vertex colors, turn on the VCOL_PAINT
 flag in the material tab </li>
@@ -283,7 +290,7 @@ meshes (press CTRL-T in edit mode with all vertices selected), because
 in that case, Blender's triangulation algorithm is less error prone
 than the triangulation algorithm used in this script. </li>
 
-  <li>select the models that you wish to export, and run this
+  <li><strong>select the models that you wish to export</strong>, and run this
 script from the 'File-&gt;Export' menu. Note that the script looks
 for unparented parents of the selected objects, and exports these root
 objects along with all of their children, so you don't have to select
@@ -292,20 +299,32 @@ the whole model. </li>
 </ul>
 
 <h3>Limitations</h3>
+
 <ul>
+
   <li>Particle effects, cameras, and lights are not exported.</li>
-  <li>Actions (for animation groups) are ignored. Workaround: define actions in text buffer called "Anim".</li>
-  <li>Texture packing has temporarily been dropped (sorry!), next release will include it again.</li>
+
+  <li>Actions (for animation groups) are ignored. Workaround:
+define actions in text buffer called "Anim".</li>
+
+
 </ul>
+
 <h3>Known Issues </h3>
 
 <ul>
 
-  <li>Ambient and emit colors are obtained by multiplication with the diffuse color.</li>
-  <li>Blender double sided faces will be one sided in the NIF file (workaround: duplicate faces).</li>
-  <li>Export of directly animated&nbsp;meshes is buggy unless you parent without parent inverse
+  <li>Ambient and emit colors are obtained by multiplication with
+the diffuse color.</li>
+
+  <li>Blender double sided faces will be one sided in the NIF
+file (workaround: duplicate faces).</li>
+
+  <li>Export of directly animated&nbsp;meshes is buggy unless
+you parent without parent inverse
 (CTRL-SHIFT-P). Workaround: don't animate meshes directly; instead,
 parent meshes to bones and animate the bones.</li>
+
   <li>Non-uniformly scaled objects cannot be exported.
 Workaround: apply size and rotation. Unfortunately, this workaround
 does not work on empties. </li>
@@ -366,18 +385,16 @@ start this without Ideasman's script to read from!)</li>
 
   <li>Binary conversion functions are courtesy of SJH. Couldn't
 find the full name, and couldn't find any license info, I got the code
-for these from
-    <a href="http://projects.blender.org/pipermail/bf-python/2004-July/001676.html">http://projects.blender.org/pipermail/bf-python/2004-July/001676.html</a></li>
+for these from <a href="http://projects.blender.org/pipermail/bf-python/2004-July/001676.html">http://projects.blender.org/pipermail/bf-python/2004-July/001676.html</a></li>
 
   <li>The file reading strategy was 'inspired' by the NifToPoly
-script included with the DAOC mapper, which used to be available at
-    <a href="http://www.randomly.org/projects/mapper/">http://www.randomly.org/projects/mapper/</a> and was written and is
+script included with the DAOC mapper, which used to be available at <a href="http://www.randomly.org/projects/mapper/">http://www.randomly.org/projects/mapper/</a>
+and was written and is
 copyright 2002 of Oliver Jowett. His domain and e-mail address are
 however no longer reacheable. No part of the original code is included
 here, as I pretty much rewrote everything, hence this is the only
 mention of the original copyright. An updated version of the script is
-included with the DAOC Mappergui application, available at
-    <a href="http://nathrach.republicofnewhome.org/mappergui.html">http://nathrach.republicofnewhome.org/mappergui.html</a>
+included with the DAOC Mappergui application, available at <a href="http://nathrach.republicofnewhome.org/mappergui.html">http://nathrach.republicofnewhome.org/mappergui.html</a>
   </li>
 
 </ul>
@@ -407,10 +424,13 @@ testing.<br />
 </ul>
 
 <h3>Usage</h3>
+
 <ul>
-  <li>
-Launch the script, select the .NIF file you wish to import, and you are
+
+  <li>Launch the script, select the .NIF file you wish to import,
+and you are
 set.</li>
+
   <li>Actually, no, that's not it if you also want to load the
 textures.
 Blender does not support the loading of .DDS textures, so in order to
@@ -426,20 +446,26 @@ Files\Textures\parrot\dead.dds" you should convert the texture and move
 it to "C:\Morrowind\Data Files\Meshes\Textures\parrot\dead.tga". This
 is also in order to keep the texture file path consistent for the time
 we'll be able to export the modified meshes from Blender.</li>
-</ul>
 
+</ul>
 
 <h3>
 Limitations</h3>
+
 <ul>
-  <li>At the moment the script only loads the pure geometry data, some
+
+  <li>At the moment the script only loads the pure geometry data,
+some
 material info, and the first texture found on every mesh. This should
 normally match the base texture, but the file format allows
 for 'unordered' textures, so some models might import badly.</li>
-  <li>
-Also, the script doesn't import animation, particle effects, multiple
+
+  <li>Also, the script doesn't import animation, particle
+effects, multiple
 UV channels.... the list is too long. Working on it.</li>
-  <li>The script loads the armature and vertex groups-weights of the
+
+  <li>The script loads the armature and vertex groups-weights of
+the
 skinned
 meshes properly, but carences in Blender 2.37 armature python API do
 not allow me to apply this skinnining info to the mesh from the script.
@@ -448,9 +474,10 @@ save the armature as it is loaded in a .blend file. These matters are
 being looked into by the Blender developers, and a
 new armature system and API should be included with the next Blender
 release.</li>
-  <li>Meshes parented to bones are not properly imported.</li>
-</ul>
 
+  <li>Meshes parented to bones are not properly imported.</li>
+
+</ul>
 
 <h3> Old History </h3>
 

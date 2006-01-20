@@ -4,17 +4,18 @@
 Name: 'NetImmerse/Gamebryo (.nif & .kf)...'
 Blender: 240
 Group: 'Export'
-Submenu: 'All...' all
-Submenu: 'Without Animation (*.nif)...' noanim
-Submenu: 'Animation Only (*.kf)...' onlyanim
-Submenu: 'Morrowind (*.nif + *.kf + x*.nif)...' morrowind
-Submenu: 'Configure (gui)...' gui
 Tooltip: 'Export to NIF file (.nif)'
 """
 
+#Submenu: 'All...' all
+#Submenu: 'Without Animation (*.nif)...' noanim
+#Submenu: 'Animation Only (*.kf)...' onlyanim
+#Submenu: 'Morrowind (*.nif + *.kf + x*.nif)...' morrowind
+#Submenu: 'Configure (gui)...' gui
+
 __author__ = "amorilia@gamebox.net"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
-__version__ = "1.2"
+__version__ = "1.3"
 __bpydoc__ = """\
 This script exports selected meshes, along with parents, children, and
 armatures, to a .nif file. If animation is present,  X***.NIF and a X***.KF
@@ -25,13 +26,12 @@ Supported:<br>
     Animation of bones, material colors, and transparency.<br>
     Animation groups ("Anim" text buffer).<br>
     Texture flipping (via text buffer named to the texture).
+    Texture packing (toggle "packed" button next to Reload in the Image tab).
 
 Missing:<br>
     Particle effects, cameras, lights.<br>
     Actions (for animation groups) are ignored. Workaround: define actions in
 text buffer called "Anim".<br>
-    Texture packing has temporarily been dropped (sorry!), next release
-will include it again.
 
 Known issues:<br>
     Ambient and emit colors are obtained by multiplication with the diffuse
@@ -50,12 +50,13 @@ disabled, especially when this model's textures are stored in a subdirectory
 of the Data Files\Textures folder.<br>
     scale correction: How many NIF units is one Blender unit?<br>
     nif version: the NIF version to write (EXPERIMENTAL, only 4.0.0.2 has been
-tested)<br>
+extensively tested, theoretically you can write CivIV NIF files by putting
+4.2.2.0 here)<br>
     export dir: default directory to open when script starts
 """
 
 # --------------------------------------------------------------------------
-# NIF Export v1.2 by Amorilia ( amorilia@gamebox.net )
+# NIF Export v1.3 by Amorilia ( amorilia@gamebox.net )
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
 #
@@ -94,6 +95,16 @@ tested)<br>
 #
 # ***** END LICENCE BLOCK *****
 # --------------------------------------------------------------------------
+
+try:
+    import types
+except:
+    err = """--------------------------
+ERROR\nThis script requires a full Python 2.4 installation to run.
+--------------------------""" % sys.version
+    print err
+    Draw.PupMenu("ERROR%t|Python installation not found, check console for details")
+    raise
 
 import Blender, sys
 from Blender import BGL
@@ -473,7 +484,7 @@ def export_node(ob, space, parent_block, node_name):
 # Explanation of extra transformations (bind = extra):
 # Final transformation matrix is vec * Rchannel * Tchannel * Rbind * Tbind
 # So we export:
-# [ Rchannel 0 ]    [ Rbind 0 ]   [ Rchannel * Rbind            0 ]
+# [ Rchannel 0 ]    [ Rbind 0 ]   [ Rchannel * Rbind         0 ]
 # [ Tchannel 1 ] *  [ Tbind 1 ] = [ Tchannel * Rbind + Tbind 1 ]
 def export_keyframe(ipo, space, parent_block, extra_trans = None, extra_quat = None):
     if DEBUG: print "Exporting keyframe %s"%parent_block["Name"].asString()

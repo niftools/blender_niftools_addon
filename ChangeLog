@@ -29,3 +29,12 @@ Version 1.2 (Dec 23, 2005):
 * Export: new feature - texture flipping
 * Export: new feature - export of bones, armatures, and vertex weights (finally!!!)
 * Export: packed texture feature has been temporarily dropped; this functionality is being transferred to Niflib
+
+Version 1.3 (Jan 21, 2005):
+* Import/Export: Vertex key animation support (geometry morphing).
+* Export: Bugfix in bone animation export (transformations sometimes wouldn't show up correctly before).
+* Import: Improved bone length calculation.
+* Export: Added NIF v10.0.1.0 support.
+* Export: Skinning bugfix for multimaterialed meshes.
+* Export: Vertex weight calculation optimized, and no more annoying console messages!
+* Export: Embedded textures reestablished.

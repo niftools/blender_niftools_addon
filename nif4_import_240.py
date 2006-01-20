@@ -9,7 +9,7 @@ Tip: 'Load a Netimmerse File'
 
 __author__ = "Alessandro Garosi (AKA Brandano) -- tdo_brandano@hotmail.com"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net")
-__version__ = "1.2"
+__version__ = "1.3"
 __bpydoc__ = """\
 This script imports Netimmerse (the version used by Morrowind) .NIF files to Blender.
 So far the script has been tested with 4.0.0.2 format files (Morrowind, Freedom Force).
@@ -31,7 +31,7 @@ Smoothing Flag (Slow): Import seams and convert them to "the Blender way", is sl
 
 Tex Path: Semi-colon separated list of texture directories.
 """
-# nif4_import_239.py version 1.2
+# nif4_import_240.py version 1.3
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
 #
