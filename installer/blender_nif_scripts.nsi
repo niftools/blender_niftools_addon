@@ -1,5 +1,6 @@
 ;
 ; Blender NIF Scripts Self-Installer for Windows
+; (NifTools - http://niftools.sourceforge.net) 
 ; (NSIS - http://nsis.sourceforge.net)
 ;
 ; Copyright (c) 2005, NIF File Format Library and Tools
@@ -67,6 +68,7 @@ Var PYTHONPATH
 !define MUI_FINISHPAGE_LINK_LOCATION "http://niftools.sourceforge.net/"
 !insertmacro MUI_PAGE_FINISH
 
+!define MUI_WELCOMEPAGE_TEXT  "This wizard will guide you through the uninstallation of the Blender NIF Scripts 1.3.\r\n\r\nBefore starting the uninstallation, make sure Blender is not running.\r\n\r\nClick Next to continue."
 !insertmacro MUI_UNPAGE_WELCOME
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
@@ -91,6 +93,8 @@ InstallDir "$PROGRAMFILES\NifTools\Blender NIF Scripts"
 BrandingText "http://niftools.sourceforge.net/"
 Icon inst.ico
 UninstallIcon inst.ico ; TODO create uninstall icon
+ShowInstDetails show
+ShowUninstDetails show
 
 ;--------------------------------
 ; Functions
@@ -203,6 +207,7 @@ SectionEnd
 
 Section "Uninstall"
   SetShellVarContext all
+  SetAutoClose false
 
   ; recover Blender data dir, where scripts are installed
   ReadRegStr $BLENDERSCRIPTS HKLM SOFTWARE\BlenderNIFScripts "Data_Dir"
