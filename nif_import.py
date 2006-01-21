@@ -301,7 +301,6 @@ def import_nif(filename):
     
 # Reads the content of the current NIF tree branch to Blender recursively
 def read_branch(niBlock):
-    print niBlock
     global b_scene
     # used to control the progress bar
     global block_count, blocks_read, read_progress
@@ -539,13 +538,14 @@ def fb_mesh(niBlock):
         b_meshData.verts.extend(v.x, v.y, v.z)
     # Adds the faces to the mesh
     for f in faces:
-        v1=b_meshData.verts[f.v1]
-        v2=b_meshData.verts[f.v2]
-        v3=b_meshData.verts[f.v3]
-        #v1=b_meshData.verts[v_map[f.v1]]
-        #v2=b_meshData.verts[v_map[f.v2]]
-        #v3=b_meshData.verts[v_map[f.v3]]
-        b_meshData.faces.extend(v1, v2, v3)
+        if f.v1 != f.v2 and f.v1 != f.v3 and f.v2 != f.v3:
+            v1=b_meshData.verts[f.v1]
+            v2=b_meshData.verts[f.v2]
+            v3=b_meshData.verts[f.v3]
+            #v1=b_meshData.verts[v_map[f.v1]]
+            #v2=b_meshData.verts[v_map[f.v2]]
+            #v3=b_meshData.verts[v_map[f.v3]]
+            b_meshData.faces.extend(v1, v2, v3)
     # Sets face smoothing and material
     for f in b_meshData.faces:
         f.smooth = 1
