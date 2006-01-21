@@ -588,9 +588,9 @@ def fb_mesh(niBlock):
             b_meshData.faces[i].uv = tuple(uvlist)
     # Mesh texture. I only support the base texture for the moment
     textProperty = niBlock["Properties"].FindLink( "NiTexturingProperty" )
-    if textProperty:
+    if textProperty.is_null() == False:
         b_texture = fb_texture(textProperty["Base Texture"].asLink())
-        if b_texture != None:
+        if b_texture.is_null() == False:
             # create dummy material to test texture
             b_material = Blender.Material.New()
             b_material.setTexture( 0, b_texture, Blender.Texture.TexCo.UV, Blender.Texture.MapTo.COL )
