@@ -153,13 +153,16 @@ Section
   Delete "$BLENDERSCRIPTS\nif4_import_237.py"
   Delete "$BLENDERSCRIPTS\nif4.py"
   Delete "$BLENDERSCRIPTS\nif4.pyc"
-  ; Old location of Niflib
+  ; Old versions of Niflib
   Delete "$BLENDERSCRIPTS\_niflib.dll"
   Delete "$BLENDERSCRIPTS\niflib.py"
   Delete "$BLENDERSCRIPTS\niflib.pyc"
-  ; Registered script menu's, just to make sure they get updated
+  Delete "$BLENDERSCRIPTS\bpymodules\_niflib.dll"
+  Delete "$BLENDERSCRIPTS\bpymodules\niflib.py"
+  Delete "$BLENDERSCRIPTS\bpymodules\niflib.pyc"
+  ; Clean up registered script menu's, just to make sure they get updated
   Delete "$BLENDERSCRIPTS\..\Bpymenus"
-  ; Bytecode
+  ; Clean up bytecode
   Delete "$PYTHONPATH\Lib\niflib.pyc"
 
   ; Install scripts
