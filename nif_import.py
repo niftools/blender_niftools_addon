@@ -301,6 +301,7 @@ def import_nif(filename):
     
 # Reads the content of the current NIF tree branch to Blender recursively
 def read_branch(niBlock):
+    print niBlock
     global b_scene
     # used to control the progress bar
     global block_count, blocks_read, read_progress
@@ -312,7 +313,7 @@ def read_branch(niBlock):
         type=niBlock.GetBlockType()
         if type == "NiNode" or type == "RootCollisionNode":
             niChildren = niBlock["Children"].asLinkList()
-            if (niBlock["Flags"].asInt() & 8) == 0 :
+            #if (niBlock["Flags"].asInt() & 8) == 0 :
                 # the node is a mesh influence
                 #if inode.GetParent().asLink() is None or inode.GetParent().asLink()["Flags"].asInt() != 0x0002:
                 #    # armature. The parent (can only be a NiNode) either doesn't exist or isn't an influence
@@ -326,20 +327,22 @@ def read_branch(niBlock):
                 #    return b_obj
                 #else:
                 #    # bone. Do nothing, will be filled in by the armature
-                    return None
-            else:
+                #    return None
+            #else:
                 # grouping node
-                b_obj = fb_empty(niBlock)
-                b_children_list = []
-                for child in niChildren:
-                    b_child_obj = read_branch(child)
-                    if b_child_obj: b_children_list.append(b_child_obj)
-                b_obj.makeParent(b_children_list)
-                b_obj.setMatrix(fb_matrix(niBlock))
-                # set scale factor for root node
-                b_obj.setMatrix(fb_matrix(niBlock))
-                return b_obj
+            b_obj = fb_empty(niBlock)
+            b_children_list = []
+            for child in niChildren:
+                b_child_obj = read_branch(child)
+                if b_child_obj: b_children_list.append(b_child_obj)
+            b_obj.makeParent(b_children_list)
+            b_obj.setMatrix(fb_matrix(niBlock))
+            # set scale factor for root node
+            b_obj.setMatrix(fb_matrix(niBlock))
+            return b_obj
         elif type == "NiTriShape":
+            return fb_mesh(niBlock)
+        elif type == "NiTriStrips":
             return fb_mesh(niBlock)
         else:
             return None
@@ -457,9 +460,10 @@ def fb_mesh(niBlock):
     # Mesh transform matrix, sets the transform matrix for the object.
     b_mesh.setMatrix(fb_matrix(niBlock))
     # Mesh geometry data. From this I can retrieve all geometry info
-    iShapeData = QueryShapeData(niBlock["Data"].asLink())
-    iTriShapeData = QueryTriShapeData(niBlock["Data"].asLink())
-    iTriStripsData = QueryTriStripsData(niBlock["Data"].asLink())
+    data_blk = niBlock["Data"].asLink();
+    iShapeData = QueryShapeData(data_blk)
+    iTriShapeData = QueryTriShapeData(data_blk)
+    iTriStripsData = QueryTriStripsData(data_blk)
     #vertices
     if not iShapeData:
         raise NIFImportError("no iShapeData returned. Node name: %s " % b_name)
@@ -480,6 +484,7 @@ def fb_mesh(niBlock):
     vcols = iShapeData.GetColors()
     # Vertex normals
     norms = iShapeData.GetNormals()
+    """
     # Vertex map. This is a list of indices to the first instance of a vertex matching the one being seeked
     # Yet another way to remove doubles only where the coordinates and normals are matching. This is a single loop process,
     # but the dictionary lookup probably eats away some of the time saved. 3 seconds. "it don't get much better than this"
@@ -505,6 +510,7 @@ def fb_mesh(niBlock):
     # let's reclaim some memory
     n_map = None
     """
+    """
     # Populates the vertex mapping to merge matching vertices. This is slow for meshes with many vertices
     # on my PC (Athlon 2800 XP) takes about 10 seconds to load a better bodies mesh
     for i in range(len(verts)):
@@ -528,13 +534,17 @@ def fb_mesh(niBlock):
     # Adds the vertices to the mesh, but only adds the non-duplicate vertices
     # Due to the way the vertex map is populated all "meaningful" vertices
     # will be at the start of the list
-    for v in verts[0:max(v_map)+1]:
+    #for v in verts[0:max(v_map)+1]:
+    for v in verts:
         b_meshData.verts.extend(v.x, v.y, v.z)
     # Adds the faces to the mesh
     for f in faces:
-        v1=b_meshData.verts[v_map[f.v1]]
-        v2=b_meshData.verts[v_map[f.v2]]
-        v3=b_meshData.verts[v_map[f.v3]]
+        v1=b_meshData.verts[f.v1]
+        v2=b_meshData.verts[f.v2]
+        v3=b_meshData.verts[f.v3]
+        #v1=b_meshData.verts[v_map[f.v1]]
+        #v2=b_meshData.verts[v_map[f.v2]]
+        #v3=b_meshData.verts[v_map[f.v3]]
         b_meshData.faces.extend(v1, v2, v3)
     # Sets face smoothing and material
     for f in b_meshData.faces:
@@ -574,6 +584,7 @@ def fb_mesh(niBlock):
     # Also, NIF files support a series of texture sets, each one with its set of texture coordinates. For example
     # on a single "material" I could have a base texture, with a decal texture over it mapped on another set of UV
     # coordinates. I don't know if Blender can do the same.
+
     if uvco:
         # Sets the face UV's for the mesh on. The NIF format only supports vertex UV's,
         # but Blender only allows explicit editing of face UV's, so I'll load vertex UV's like face UV's
@@ -589,12 +600,14 @@ def fb_mesh(niBlock):
     # Mesh texture. I only support the base texture for the moment
     textProperty = niBlock["Properties"].FindLink( "NiTexturingProperty" )
     if textProperty.is_null() == False:
-        b_texture = fb_texture(textProperty["Base Texture"].asLink())
-        if b_texture.is_null() == False:
-            # create dummy material to test texture
-            b_material = Blender.Material.New()
-            b_material.setTexture( 0, b_texture, Blender.Texture.TexCo.UV, Blender.Texture.MapTo.COL )
-            b_meshData.materials = [b_material]
+        texture_blk = textProperty["Base Texture"].asLink();
+        if texture_blk.is_null() == False:
+            b_texture = fb_texture(texture_blk)
+            if b_texture != None:
+                # create dummy material to test texture
+                b_material = Blender.Material.New()
+                b_material.setTexture( 0, b_texture, Blender.Texture.TexCo.UV, Blender.Texture.MapTo.COL )
+                b_meshData.materials = [b_material]
     """
     # Texturing property. From this I can retrieve texture info
     #texProperty = triShape.getNiTexturingProperty()
