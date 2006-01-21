@@ -39,12 +39,13 @@
 Name "Blender NIF Scripts ${VERSION}"
 Var BLENDERHOME
 Var BLENDERSCRIPTS
+Var PYTHONPATH
 
 ; define installer pages
 !define MUI_ABORTWARNING
 !define MUI_FINISHPAGE_NOAUTOCLOSE
 
-!define MUI_WELCOMEPAGE_TEXT  "This wizard will guide you through the installation of the Blender NIF Scripts.\r\n\r\nYou need Blender 2.40 or higher (http://www.blender.org) and a full Python 2.4 installation (http://www.python.org) for the scripts to work properly.\r\n\r\nIt is recommended that you close all other applications, especially Blender.\r\n\r\nNote to Win2k/XP users: you require administrator privileges to install the Blender NIF Scripts successfully."
+!define MUI_WELCOMEPAGE_TEXT  "This wizard will guide you through the installation of the Blender NIF Scripts.\r\n\r\nIt is recommended that you close all other applications, especially Blender.\r\n\r\nNote to Win2k/XP users: you require administrator privileges to install the Blender NIF Scripts successfully."
 !insertmacro MUI_PAGE_WELCOME
 
 !insertmacro MUI_PAGE_LICENSE Copyright.txt
@@ -126,6 +127,16 @@ Function .onInit
     Abort ; causes installer to quit
 
   end:
+  
+  ; check if Python 2.4 is installed
+  ClearErrors
+  ReadRegStr $PYTHONPATH HKLM SOFTWARE\Python\PythonCore\2.4\InstallPath ""
+  IfErrors 0 +3
+
+     ; no key, that means that Python 2.4 is not installed
+     MessageBox MB_OK "Install Python 2.4 first. Get it from http://www.python.org/"
+     Abort ; causes installer to quit
+
 FunctionEnd
 
 Section
@@ -145,17 +156,19 @@ Section
   ; Old location of Niflib
   Delete "$BLENDERSCRIPTS\_niflib.dll"
   Delete "$BLENDERSCRIPTS\niflib.py"
-  ; Current version, bytecode, just in case user is running Blender at the moment
   Delete "$BLENDERSCRIPTS\niflib.pyc"
   ; Registered script menu's, just to make sure they get updated
   Delete "$BLENDERSCRIPTS\..\Bpymenus"
+  ; Bytecode
+  Delete "$PYTHONPATH\Lib\niflib.pyc"
 
   ; Install scripts
   SetOutPath $BLENDERSCRIPTS
   File ..\nif_export.py
   File ..\nif4_import_240.py
-  SetOutPath "$BLENDERSCRIPTS\bpymodules"
+  SetOutPath "$PYTHONPATH\Lib"
   File ..\..\niflib\niflib.py
+  SetOutPath "$PYTHONPATH\DLLs"
   File ..\..\niflib\_niflib.dll
 
   ; Install documentation files
@@ -176,6 +189,7 @@ Section
   ; Write the installation path into the registry
   WriteRegStr HKLM SOFTWARE\BlenderNIFScripts "Install_Dir" "$INSTDIR"
   WriteRegStr HKLM SOFTWARE\BlenderNIFScripts "Data_Dir" "$BLENDERSCRIPTS"
+  WriteRegStr HKLM SOFTWARE\BlenderNIFScripts "Python_Dir" "$PYTHONPATH"
 
   ; Write the uninstall keys & uninstaller for Windows
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BlenderNIFScripts" "DisplayName" "Blender NIF Scripts (remove only)"
@@ -189,6 +203,7 @@ Section "Uninstall"
 
   ; recover Blender data dir, where scripts are installed
   ReadRegStr $BLENDERSCRIPTS HKLM SOFTWARE\BlenderNIFScripts "Data_Dir"
+  ReadRegStr $PYTHONPATH HKLM SOFTWARE\BlenderNIFScripts "Python_Dir"
   
   ; remove registry keys
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BlenderNIFScripts"
@@ -197,9 +212,9 @@ Section "Uninstall"
   ; remove script files
   Delete "$BLENDERSCRIPTS\nif_export.py"
   Delete "$BLENDERSCRIPTS\nif4_import_240.py"
-  Delete "$BLENDERSCRIPTS\niflib.py"
-  Delete "$BLENDERSCRIPTS\niflib.pyc"
-  Delete "$BLENDERSCRIPTS\_niflib.dll"
+  Delete "$PYTHONPATH\Lib\niflib.py"
+  Delete "$PYTHONPATH\Lib\niflib.pyc"
+  Delete "$PYTHONPATH\DLLs\_niflib.dll"
 
   ; remove program files and program directory
   Delete "$INSTDIR\*.*"
