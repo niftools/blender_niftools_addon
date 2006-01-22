@@ -470,12 +470,93 @@ def fb_texture( niSourceTexture ):
         b_texture.setType( 'Image' )
         b_texture.setImage( b_image )
         b_texture.imageFlags = Blender.Texture.ImageFlags.INTERPOL + Blender.Texture.ImageFlags.MIPMAP
-        # TODO check for NiAlphaProperty, otherwise alpha channel must be ignored
-        if b_image.depth == 32: # ... crappy way to check for alpha channel in texture
-            b_texture.imageFlags |= Blender.Texture.ImageFlags.USEALPHA # use the alpha channel
         return b_texture
     else:
         return None
+
+
+
+def getTexturingPropertyCRC(textProperty):
+    s = ''
+    try:
+        s = s + textProperty["Base Texture"].asString()
+        s = s + textProperty["Glow Texture"].asString()
+    except:
+        pass
+    id = int( 0 )
+    for x in range( 0, len( s ), 2 ):
+        try:
+            id += ord( s[x+1] ) * 256
+        except:
+            pass
+        id += ord( s[x] )
+        if id > 0xffff:
+            id = id - 0x10000 + 1
+    return "%04X"%id
+
+
+# Creates and returns a material
+def fb_material(matProperty, textProperty):
+    #First I check if the material already exists
+    name = matProperty["Name"].asString()
+    material = None
+    #The same material could be used with different textures
+    if textProperty:
+        name = "%s.%s" % (name, getTexturingPropertyCRC(textProperty))
+    try:
+        material = Blender.Material.Get(name)
+        msg("reusing material: %s " % name, 3)
+        return material
+    except:
+        msg('creating material: %s' % name, 2)
+        material = Blender.Material.New(name)
+    # Sets the material colors
+    # Specular color
+    spec = matProperty["Specular Color"].asFloat3()
+    material.setSpecCol([spec[0],spec[1],spec[2]])
+    # Diffuse color
+    diff = matProperty["Diffuse Color"].asFloat3()
+    material.setRGBCol([diff[0],diff[1],diff[2]])
+    # Ambient color
+    amb = matProperty["Ambient Color"].asFloat3()
+    material.setAmb((amb[0] + amb[1] + amb[2]) / 3)
+    # Emissive color, converted to a 'glow' factor
+    # Same as ambient color
+    emit = matProperty["Emissive Color"].asFloat3()
+    material.setEmit((emit[0]+emit[1]+emit[2])/3)
+    # Shininess
+    glossiness = matProperty["Glossiness"].asFloat()
+    material.setSpec(glossiness * 2)
+    # Alpha
+    alpha = matProperty["Alpha"].asFloat()
+    material.setAlpha(alpha)
+    textures = []
+    if textProperty:
+        BaseTextureSource = textProperty["Base Texture"].asTexDesc()
+        if BaseTextureSource.isUsed:
+            baseTexture = fb_texture(textProperty["Base Texture"].asLink())
+            if baseTexture:
+                # Sets the texture to use face UV coordinates.
+                texco = Blender.Texture.TexCo.UV
+                # Maps the texture to the base color channel. Not necessarily true.
+                mapto = Blender.Texture.MapTo.COL
+                # Sets the texture for the material
+                material.setTexture(0, baseTexture, texco, mapto)
+        GlowTextureSource = textProperty["Glow Texture"].asTexDesc()
+        if GlowTextureSource.isUsed:
+            glowTexture = fb_texture(textProperty["Glow Texture"].asLink())
+            if glowTexture:
+                # glow maps use alpha from rgb intensity
+                glowTexture.imageFlags = glowTexture.imageFlags + Blender.Texture.ImageFlags.CALCALPHA
+                # Sets the texture to use face UV coordinates.
+                texco = Blender.Texture.TexCo.UV
+                # Maps the texture to the base color channel. Not necessarily true.
+                mapto = Blender.Texture.MapTo.COL | Texture.MapTo.EMIT
+                # Sets the texture for the material
+                material.setTexture(1, glowTexture, texco, mapto)
+    return material
+
+
 
 # Creates and returns a mesh
 def fb_mesh(niBlock):
@@ -579,11 +660,11 @@ def fb_mesh(niBlock):
             v1=b_meshData.verts[v_map[f.v1]]
             v2=b_meshData.verts[v_map[f.v2]]
             v3=b_meshData.verts[v_map[f.v3]]
+            tmp1 = len(b_meshData.faces)
             b_meshData.faces.extend(v1, v2, v3)
+            if tmp1 == len(b_meshData.faces): continue # ??? sometimes face is skipped
             f_map[i] = b_f_index # keep track of added faces, mapping NIF face index to Blender face index
             b_f_index += 1
-        else:
-            f_map[i] = None # throw away degenerate face
     # Sets face smoothing and material
     for f in b_meshData.faces:
         f.smooth = 1
@@ -636,52 +717,39 @@ def fb_mesh(niBlock):
                 uv=uvco[v]
                 uvlist.append(Vector(uv.u, 1.0 - uv.v))
             b_meshData.faces[f_map[i]].uv = tuple(uvlist)
-    # Mesh texture. I only support the base texture for the moment
-    textProperty = niBlock["Properties"].FindLink( "NiTexturingProperty" )
-    if textProperty.is_null() == False:
-        texture_blk = textProperty["Base Texture"].asLink();
-        if texture_blk.is_null() == False:
-            b_texture = fb_texture(texture_blk)
-            if b_texture != None:
-                # create dummy material to test texture
-                b_material = Blender.Material.New()
-                b_material.setTexture( 0, b_texture, Blender.Texture.TexCo.UV, Blender.Texture.MapTo.COL )
-                b_meshData.materials = [b_material]
-    """
+    
     # Texturing property. From this I can retrieve texture info
-    #texProperty = triShape.getNiTexturingProperty()
-    # Material Property, from this I can retrieve material info
-    #matProperty = triShape.getNiMaterialProperty()
+    textProperty = niBlock["Properties"].FindLink( "NiTexturingProperty" )
+    matProperty = niBlock["Properties"].FindLink("NiMaterialProperty" )
     # Sets the material for this mesh. NIF files only support one material for each mesh
-    if matProperty:
-        material = createMaterial(matProperty, texProperty)
-        # Alpha property
-        alphaProperty = triShape.getNiAlphaProperty()
+    if matProperty.is_null() == False:
+        material = fb_material(matProperty, textProperty)
+        alphaProperty = niBlock["Properties"].FindLink("NiAlphaProperty")
         # Texture. Only supports one atm
         mtex = material.getTextures()[0]
         # if the mesh has an alpha channel
-        if alphaProperty:
+        if alphaProperty.is_null() == False:
             material.mode |= Material.Modes.ZTRANSP # enable z-buffered transparency
             # if the image has an alpha channel => then this overrides the material alpha value
-            if mtex and mtex.tex.image.depth == 32: # ... crappy way to check for alpha channel in texture
-                mtex.tex.imageFlags |= Blender.Texture.ImageFlags.USEALPHA # use the alpha channel
-                mtex.mapto |=  Texture.MapTo.ALPHA # and map the alpha channel to transparency
-                material.setAlpha(0.0) # for proper display in Blender, we must set the alpha value to 0 and the "Val" slider in the texture Map To tab to the NIF material alpha value (but we do not have access to that button yet... we have to wait until it gets supported by the Blender Python API...)
+            if mtex:
+                if mtex.tex.image.depth == 32: # ... crappy way to check for alpha channel in texture
+                    mtex.tex.imageFlags |= Blender.Texture.ImageFlags.USEALPHA # use the alpha channel
+                    mtex.mapto |=  Blender.Texture.MapTo.ALPHA # and map the alpha channel to transparency
+                    material.setAlpha(0.0) # for proper display in Blender, we must set the alpha value to 0 and the "Val" slider in the texture Map To tab to the NIF material alpha value (but we do not have access to that button yet... we have to wait until it gets supported by the Blender Python API...)
         else:
             # no alpha property: force alpha 1.0 in Blender
             material.setAlpha(1.0)
-        if hasVertexCol:
+        if b_meshData.vertexColors == 1:
             if mtex:
                 material.mode |= Material.Modes.VCOL_LIGHT # textured material: vertex colors influence lighting
             else:
                 material.mode |= Material.Modes.VCOL_PAINT # non-textured material: vertex colors incluence color
-        meshData.addMaterial(material)
+        b_meshData.materials = [material]
         #If there's a texture assigned to this material sets it to be displayed in Blender's 3D view
         if mtex:
             imgobj = mtex.tex.getImage()
-            for f in meshData.faces: 
-                f.image = imgobj
-    """
+            for f in b_meshData.faces: 
+                f.image = imgobj # does not seem to work anymore???
     """
     # Skinning info, for meshes affected by bones. Adding groups to a mesh can be done only after this is already
     # linked to an object
@@ -731,7 +799,7 @@ def fb_mesh(niBlock):
                 elif ( morphCtrl.Flags == 0x0008 ):
                     curve.setExtrapolation( 'Cyclic' )
                 else:
-                    debugMsg( 'dunno which extrapolation to use: using constant instead', 2 )
+                    msg( 'dunno which extrapolation to use: using constant instead', 2 )
                     curve.setExtrapolation( 'Constant' )
                 # set up the curve's control points
                 for count in range( frameCnt ):
@@ -837,7 +905,7 @@ def gui_import():
     update_registry()
     # Import file.
     if SEAMS_IMPORT == 2:
-        debugMsg("Smoothing import not implemented yet, selecting slow vertex duplication method instead.", 1)
+        msg("Smoothing import not implemented yet, selecting slow vertex duplication method instead.", 1)
         SEAMS_IMPORT = 1
     import_nif(LAST_IMPORTED)
 
