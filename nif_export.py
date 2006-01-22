@@ -115,7 +115,7 @@ try:
 except:
     err = """--------------------------
 ERROR\nThis script requires the NIFLIB Python SWIG wrapper, niflib.py & _niflib.dll.
-Make sure these files reside in your Blender scripts folder.
+Make sure these files reside in your Python path or in your Blender scripts folder.
 If you don't have them: http://niftools.sourceforge.net/
 --------------------------"""
     print err

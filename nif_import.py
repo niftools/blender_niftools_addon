@@ -2,14 +2,14 @@
 
 """ Registration info for Blender menus:
 Name: 'NetImmerse/Gamebryo (.nif & .kf)...'
-Blender: 239
+Blender: 240
 Group: 'Import'
 Tip: 'Import NIF (.nif & .kf) format meshes.'
 """
 
 __author__ = "Alessandro Garosi (AKA Brandano) -- tdo_brandano@hotmail.com"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
-__version__ = "1.2"
+__version__ = "1.3"
 __bpydoc__ = """\
 This script imports Netimmerse (the version used by Morrowind) .NIF files to Blender.
 So far the script has been tested with 4.0.0.2 format files (Morrowind, Freedom Force).
@@ -32,7 +32,7 @@ Smoothing Flag (Slow): Import seams and convert them to "the Blender way", is sl
 Tex Path: Semi-colon separated list of texture directories.
 """
 
-# nif4_import.py version 1.2
+# nif_import.py version 1.3
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -102,6 +102,16 @@ Tex Path: Semi-colon separated list of texture directories.
 
 # Using the same setup as for Amorilia's exporter, so that the configuration can be shared, and to try
 # sticking a little better to conventions
+try:
+    import types, re
+except:
+    err = """--------------------------
+ERROR\nThis script requires a full Python 2.4 installation to run.
+--------------------------""" % sys.version
+    print err
+    Draw.PupMenu("ERROR%t|Python installation not found, check console for details")
+    raise
+
 import Blender, sys
 from Blender import BGL
 from Blender import Draw
@@ -112,24 +122,25 @@ try:
 except:
     err = """--------------------------
 ERROR\nThis script requires the NIFLIB Python SWIG wrapper, niflib.py & _niflib.dll.
-Download it from http://niftools.sourceforge.net/
+Make sure these files reside in your Python path or in your Blender scripts folder.
+If you don't have them: http://niftools.sourceforge.net/
 --------------------------"""
     print err
     Blender.Draw.PupMenu("ERROR%t|NIFLIB not found, check console for details")
     raise
 
-global enableRe
+# leave this, just in case we don't need a full Python installation in future for the SWIG wrapper
 enableRe = 1
-try:
-    import re
-except:
-    err = """--------------------------
-ERROR\nThis script relies on the Regular Expression (re) module for some functionality.
-advanced texture lookup will be disabled
---------------------------"""
-    print err
-    Blender.Draw.PupMenu("RE not found, check console for details")
-    enableRe = 0
+##try:
+##    import re
+##except:
+##    err = """--------------------------
+##ERROR\nThis script relies on the Regular Expression (re) module for some functionality.
+##advanced texture lookup will be disabled
+##--------------------------"""
+##    print err
+##    Blender.Draw.PupMenu("RE not found, check console for details")
+##    enableRe = 0
 
 
 # dictionary of texture files, to reuse textures
@@ -145,84 +156,57 @@ if enableRe:
     re_dds = re.compile(r'^\.dds$', re.IGNORECASE)
     re_dds_subst = re.compile(r'^\.(tga|png|jpg|bmp|gif)$', re.IGNORECASE)
     
+# some variables
+
+USE_GUI = 0
+EPSILON = 0.005 # used for checking equality with floats, NOT STORED IN CONFIG
 
 # 
 # Process config files.
 # 
 
 global gui_texpath, gui_scale, gui_last
-global SCALE_CORRECTION, FORCE_DDS, STRIP_TEXPATH, SEAMS_IMPORT, LAST_IMPORTED, TEXTURES_DIR
-
-NIF_VERSION_DICT = {}
-NIF_VERSION_DICT['4.0.0.2']  = 0x04000002
-NIF_VERSION_DICT['4.1.0.12'] = 0x0401000C
-NIF_VERSION_DICT['4.2.0.2']  = 0x04020002
-NIF_VERSION_DICT['4.2.1.0']  = 0x04020100
-NIF_VERSION_DICT['4.2.2.0']  = 0x04020200
-NIF_VERSION_DICT['10.0.1.0'] = 0x0A000100
-NIF_VERSION_DICT['10.1.0.0'] = 0x0A010000
-NIF_VERSION_DICT['10.2.0.0'] = 0x0A020000
-NIF_VERSION_DICT['20.0.0.4'] = 0x14000004
 
 # configuration default values
-USE_GUI = 0
-EPSILON = 0.005 # used for checking equality with floats, NOT STORED IN CONFIG
-SCALE_CORRECTION = 10.0
-FORCE_DDS = False
-STRIP_TEXPATH = False
 TEXTURES_DIR = ''
-EXPORT_DIR = ''
-LAST_IMPORTED = ''
-NIF_VERSION_STR = '4.0.0.2'
-VERBOSE = True
-CONFIRM_OVERWRITE = True
+IMPORT_DIR = ''
 SEAMS_IMPORT = 1
 
 # tooltips
 tooltips = {
-    'SCALE_CORRECTION': "How many NIF units is one Blender unit?",
-    'FORCE_DDS': "Force textures to be exported with a .DDS extension? Usually, you can leave this disabled.",
-    'STRIP_TEXPATH': "Strip texture path in NIF file. You should leave this disabled, especially when this model's textures are stored in a subdirectory of the Data Files\Textures folder.",
-    'EXPORT_DIR': "Default directory.",
-    'NIF_VERSION': "The NIF version to write."
+    'TEXTURES_DIR': "Texture directory.",
+    'IMPORT_DIR': "Default import directory.",
+    'SEAMS_IMPORT': "How to handle seams?"
 }
 
 # bounds
 limits = {
-    'SCALE_CORRECTION': [0.01, 100.0]
+    'SEAMS_IMPORT': [0, 2]
 }
 
 # update registry
 def update_registry():
     # populate a dict with current config values:
     d = {}
-    d['SCALE_CORRECTION'] = SCALE_CORRECTION
-    d['FORCE_DDS'] = FORCE_DDS
-    d['STRIP_TEXPATH'] = STRIP_TEXPATH
     d['TEXTURES_DIR'] = TEXTURES_DIR
-    d['EXPORT_DIR'] = EXPORT_DIR
-    d['LAST_IMPORTED'] = LAST_IMPORTED
-    d['NIF_VERSION'] = NIF_VERSION_STR
+    d['IMPORT_DIR'] = IMPORT_DIR
     d['SEAMS_IMPORT'] = SEAMS_IMPORT
     d['tooltips'] = tooltips
     d['limits'] = limits
     # store the key
-    Blender.Registry.SetKey('nif_export', d, True)
+    Blender.Registry.SetKey('nif_import', d, True)
     read_registry()
 
 # Now we check if our key is available in the Registry or file system:
 def read_registry():
-    regdict = Blender.Registry.GetKey('nif_export', True)
+    global TEXTURES_DIR, IMPORT_DIR, SEAMS_IMPORT
+    
+    regdict = Blender.Registry.GetKey('nif_import', True)
     # If this key already exists, update config variables with its values:
     if regdict:
         try:
-            SCALE_CORRECTION = regdict['SCALE_CORRECTION']
-            FORCE_DDS = regdict['FORCE_DDS']
-            STRIP_TEXPATH = regdict['STRIP_TEXPATH']
             TEXTURES_DIR = regdict['TEXTURES_DIR'] 
-            EXPORT_DIR = regdict['EXPORT_DIR']
-            LAST_IMPORTED = regdict['LAST_IMPORTED']
-            NIF_VERSION_STR = regdict['NIF_VERSION']
+            IMPORT_DIR = regdict['IMPORT_DIR']
             SEAMS_IMPORT = regdict['SEAMS_IMPORT']
         # if data was corrupted (or a new version of the script changed
         # (expanded, removed, renamed) the config vars and users may have
@@ -235,7 +219,21 @@ read_registry()
 
 
 
+# check export script config key for scale correction
+
+SCALE_CORRECTION = 10.0
+
+rd = Blender.Registry.GetKey('nif_export', True)
+if rd:
+    try:
+        SCALE_CORRECTION = rd['SCALE_CORRECTION']
+    except: pass
+
 # check General scripts config key for default behaviors
+
+VERBOSE = True
+CONFIRM_OVERWRITE = True
+
 rd = Blender.Registry.GetKey('General', True)
 if rd:
     try:
@@ -807,5 +805,7 @@ def gui_import():
 if USE_GUI:
     Draw.Register(gui_draw, gui_evt_key, gui_evt_button)
 else:
-    Blender.Window.FileSelector(import_nif, 'Import NIF', EXPORT_DIR)
-    
+    if IMPORT_DIR:
+        Blender.Window.FileSelector(import_nif, 'Import NIF', IMPORT_DIR)
+    else:
+        Blender.Window.FileSelector(import_nif, 'Import NIF')
