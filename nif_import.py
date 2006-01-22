@@ -273,8 +273,18 @@ def fit_view():
 #
 def import_nif(filename):
     try: # catch NIFImportErrors
+        global NIF_DIR, TEX_DIR
+        NIF_DIR = Blender.sys.dirname(filename)
+        # Morrowind smart texture dir
+        idx = NIF_DIR.lower().find('meshes')
+        if ( idx >= 0 ):
+            TEX_DIR = NIF_DIR[:idx] + 'textures'
+        else:
+            TEX_DIR = None
+        # scene info
         global b_scene
         b_scene = Blender.Scene.GetCurrent()
+        # read the NIF file
         root_block = ReadNifTree(filename)
         # used to control the progress bar
         global block_count, blocks_read, read_progress
@@ -401,9 +411,31 @@ def fb_texture( niSourceTexture ):
         if fn[-4:] == ".dds":
             fn = fn[:-4] + ".tga"
         # go searching for it
-        for dir in TEXTURES_DIR.split(";"):
-            if Blender.sys.exists( Blender.sys.join( dir, fn ) ):
-                b_image = Blender.Image.Load( Blender.sys.join( dir, fn ) )
+        textureFile = None
+        for texdir in TEXTURES_DIR.split(";") + [NIF_DIR, TEX_DIR]:
+            if texdir == None: continue
+            texdir.replace( '\\', Blender.sys.sep )
+            texdir.replace( '/', Blender.sys.sep )
+             # now a little trick, to satisfy many Morrowind mods
+            if (fn[:9].lower() == 'textures\\') and (texdir[-9:].lower() == '\\textures'):
+                tex = Blender.sys.join( texdir, fn[9:] ) # strip one of the two 'textures' from the path
+            else:
+                tex = Blender.sys.join( texdir, fn )
+            print tex
+            if (not re_dds.match(tex[-4:])) and Blender.sys.exists(tex) == 1: # Blender does not support .DDS
+                textureFile = tex
+                msg("Found %s" % textureFile, 3)
+            else:
+                # try other formats
+                base=tex[:-4]
+                for ext in ('.PNG','.png','.TGA','.tga','.BMP','.bmp','.JPG','.jpg'): # Blender does not support .DDS
+                    print base+ext
+                    if Blender.sys.exists(base+ext) == 1:
+                        textureFile = base+ext
+                        msg( "Found %s" % textureFile, 3 )
+                        break
+            if textureFile:
+                b_image = Blender.Image.Load( textureFile )
                 break
         else:
             print "texture %s not found"%niTexSource.fileName
@@ -437,6 +469,8 @@ def fb_texture( niSourceTexture ):
         b_texture = Blender.Texture.New()
         b_texture.setType( 'Image' )
         b_texture.setImage( b_image )
+        b_texture.imageFlags = Blender.Texture.ImageFlags.INTERPOL + Blender.Texture.ImageFlags.MIPMAP
+        # TODO check for NiAlphaProperty, otherwise alpha channel must be ignored
         if b_image.depth == 32: # ... crappy way to check for alpha channel in texture
             b_texture.imageFlags |= Blender.Texture.ImageFlags.USEALPHA # use the alpha channel
         return b_texture
@@ -600,7 +634,7 @@ def fb_mesh(niBlock):
             uvlist = []
             for v in (f.v1, f.v2, f.v3):
                 uv=uvco[v]
-                uvlist.append(Vector(uv.u, uv.v))
+                uvlist.append(Vector(uv.u, 1.0 - uv.v))
             b_meshData.faces[f_map[i]].uv = tuple(uvlist)
     # Mesh texture. I only support the base texture for the moment
     textProperty = niBlock["Properties"].FindLink( "NiTexturingProperty" )
