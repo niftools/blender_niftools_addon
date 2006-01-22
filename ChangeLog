@@ -2,11 +2,11 @@ Version 1.0 (Oct 12, 2005):
 * Initial bundled release of the importer v1.0.6 and exporter v0.8 on SourceForge.
 
 Version 1.1 (Oct 31, 2005):
-* Export: Fixed bug pointed out by Sarah, on mesh_mat_shininess.
-* Export: Applied Moritz patches to exporter (texture flipping), changed names, included exporter readme file.
+* Export: Fixed bug pointed out by Sabregirl, on mesh_mat_shininess.
+* Export: Applied m4444x's patches to exporter (texture flipping), changed names, included exporter readme file.
 * Import/Export: Changed the licensing to BSD.
 * Import: Added support for texturing in the editor 3D view. Now the textures will show up in textured mode if loaded.
-* Import: NiMorph Controllers that Moritz coded. Haven't tested it, but it doesn't break the previous functionality, so it should be fine
+* Import: NiMorph Controllers that m4444x coded. Haven't tested it, but it doesn't break the previous functionality, so it should be fine
 * Export: Added an option for stripping the texture's file path
 * Export: Support for subsurfed meshes (display level).
 * Export: Vertex export method improved, extreme speedup!
@@ -30,7 +30,7 @@ Version 1.2 (Dec 23, 2005):
 * Export: new feature - export of bones, armatures, and vertex weights (finally!!!)
 * Export: packed texture feature has been temporarily dropped; this functionality is being transferred to Niflib
 
-Version 1.3 (Jan 21, 2005):
+Version 1.3 (Jan 21, 2006):
 * Import/Export: Vertex key animation support (geometry morphing).
 * Export: Bugfix in bone animation export (transformations sometimes wouldn't show up correctly before).
 * Import: Improved bone length calculation.

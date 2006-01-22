@@ -937,10 +937,7 @@ def export_trishapes(ob, space, parent_block):
         vcollist = []
         uvlist = []
         trilist = []
-        count = 0
         for f in mesh.faces:
-            #slows down too much #if VERBOSE: Blender.Window.DrawProgressBar(0.33 * float(count)/len(mesh.faces), "Converting to NIF (%s)"%ob.getName())
-            count += 1
             # does the face belong to this trishape?
             if (mesh_mat != None): # we have a material
                 if (f.materialIndex != materialIndex): # but this face has another material
@@ -970,6 +967,8 @@ def export_trishapes(ob, space, parent_block):
                     fuv = None
                 if (mesh_hasvcol):
                     fcol = Color4(0.0,0.0,0.0,0.0)
+                    if (len(f.col) == 0):
+                        raise NIFExportError('ERROR%t|Vertex color painting/lighting enabled, but mesh has no vertex color data.')
                     fcol.r = f.col[i].r / 255.0 # NIF stores the colour values as floats
                     fcol.g = f.col[i].g / 255.0 # NIF stores the colour values as floats
                     fcol.b = f.col[i].b / 255.0 # NIF stores the colour values as floats
@@ -1001,7 +1000,9 @@ def export_trishapes(ob, space, parent_block):
                         # all tests passed: so yes, we already have it!
                         f_index[i] = j
                         break
-                    
+
+                if f_index[i] > 32767:
+                    raise NIFExportError('ERROR%t|Too many vertices. Decimate your mesh and try again.')
                 if (f_index[i] == len(vertquad_list)):
                     # first: add it to the vertex map
                     if not vertmap[v_index]:
@@ -1026,6 +1027,8 @@ def export_trishapes(ob, space, parent_block):
                     f_indexed.v3 = f_index[1+i]
                 trilist.append(f_indexed)
 
+        if len(trilist) > 32767:
+            raise NIFExportError('ERROR%t|Too many faces. Decimate your mesh and try again.')
         if len(vertlist) == 0:
             continue # m4444x: skip 'empty' material indices
         
