@@ -158,7 +158,7 @@ if enableRe:
     
 # some variables
 
-USE_GUI = 0
+USE_GUI = 0 # BROKEN, don't set to 1, we will design a GUI for importer & exporter jointly
 EPSILON = 0.005 # used for checking equality with floats, NOT STORED IN CONFIG
 
 # 
@@ -168,7 +168,7 @@ EPSILON = 0.005 # used for checking equality with floats, NOT STORED IN CONFIG
 global gui_texpath, gui_scale, gui_last
 
 # configuration default values
-TEXTURES_DIR = ''
+TEXTURES_DIR = 'C:\\Program Files\\Bethesda\\Morrowind\\Data Files\\Textures' # Morrowind: this will work on a standard installation
 IMPORT_DIR = ''
 SEAMS_IMPORT = 1
 
@@ -221,7 +221,7 @@ read_registry()
 
 # check export script config key for scale correction
 
-SCALE_CORRECTION = 10.0
+SCALE_CORRECTION = 10.0 # same default value as in export script
 
 rd = Blender.Registry.GetKey('nif_export', True)
 if rd:
@@ -334,8 +334,6 @@ def read_branch(niBlock):
                 if b_child_obj: b_children_list.append(b_child_obj)
             b_obj.makeParent(b_children_list)
             b_obj.setMatrix(fb_matrix(niBlock))
-            # set scale factor for root node
-            b_obj.setMatrix(fb_matrix(niBlock))
             return b_obj
         elif type == "NiTriShape":
             return fb_mesh(niBlock)
@@ -362,7 +360,7 @@ def fb_name(niBlock):
 # Retrieves a niBlock's transform matrix as a Mathutil.Matrix
 def fb_matrix(niBlock):
     inode=QueryNode(niBlock)
-    m=inode.GetLocalTransform()
+    m=inode.GetLocalBindPos()
     b_matrix = Matrix([m[0][0],m[0][1],m[0][2],m[0][3]],
                         [m[1][0],m[1][1],m[1][2],m[1][3]],
                         [m[2][0],m[2][1],m[2][2],m[2][3]],
@@ -448,7 +446,6 @@ def fb_texture( niSourceTexture ):
 # Creates and returns a mesh
 def fb_mesh(niBlock):
     global b_scene
-    global SEAMS_IMPORT
     # Mesh name -> must be unique, so tag it if needed
     b_name=fb_name(niBlock)
     # No getRaw, this time we work directly on Blender's objects
@@ -481,33 +478,46 @@ def fb_mesh(niBlock):
     vcols = iShapeData.GetColors()
     # Vertex normals
     norms = iShapeData.GetNormals()
-    """
     # Vertex map. This is a list of indices to the first instance of a vertex matching the one being seeked
     # Yet another way to remove doubles only where the coordinates and normals are matching. This is a single loop process,
     # but the dictionary lookup probably eats away some of the time saved. 3 seconds. "it don't get much better than this"
-    v_map = [None]*len(verts)
-    n_map = {}
+    b_v_index = 0
+    v_map = [None]*len(verts) # maps NIF indices to unique vertex / normal pair Blender indices
+    n_map = {} # dictionary of NIF vertices (or rather, vertex keys) to NIF indices that correspond to unique vertex / normal pairs
     for i, v in enumerate(verts):
-        kx = int(v.x/EPSILON)*EPSILON
-        ky = int(v.y/EPSILON)*EPSILON
-        kz = int(v.z/EPSILON)*EPSILON
+        kx = int(v.x * 200) # kx, ky, kz are used as a key to identify identical vertices
+        ky = int(v.y * 200)
+        kz = int(v.z * 200)
         nk = (kx,ky,kz)
         # Yeh, go and do this in Java. No, really!
-        if not nk in n_map:
-            n_map[nk] = i
-            v_map[i] = i
+        try:
+            n_map_nk = n_map[nk] # have we added vertex v before, and if so, what is it's NIF index?
+        except KeyError:
+            n_map_nk = None # nope, this one is unique
+        if n_map_nk == None:
+            # unique vertex! (and therefore also a unique vertex / normal pair)
+            n_map[nk] = i        # unique vertex / normal pair with key nk was added, with NIF index i
+            v_map[i] = b_v_index # NIF vertex i maps to blender vertex b_v_index
+            b_meshData.verts.extend(v.x, v.y, v.z) # add the vertex
+            b_v_index += 1
         else:
+            # vertex already added! do normals coincide?
             n1 = norms[i]
-            n2 = norms[n_map[nk]]
+            n2 = norms[n_map_nk]
             # AngleBetweenVecs now returns degrees. Yeuch!
-            if AngleBetweenVecs(Vector(n1.x, n1.y, n1.z),Vector(n2.x, n2.y, n2.z)) <= EPSILON:
-                v_map[i] = n_map[nk]
+            #if AngleBetweenVecs(Vector(n1.x, n1.y, n1.z),Vector(n2.x, n2.y, n2.z)) <= EPSILON:
+            # this is much faster:
+            if (abs(n1.x - n2.x) <= EPSILON) and (abs(n1.y - n2.y) <= EPSILON) and (abs(n1.z - n2.z) <= EPSILON):
+                # yes, normals coincide, so no need to add an extra vertex
+                v_map[i] = v_map[n_map_nk] # NIF vertex i maps to Blender v_map[vertex n_map_nk]
             else:
-                v_map[i] = i
+                # normals different, so we add a new vertex
+                v_map[i] = b_v_index # NIF vertex i maps to Blender vertex b_v_index
+                b_meshData.verts.extend(v.x, v.y, v.z) # add the vertex
+                b_v_index += 1
     # let's reclaim some memory
     n_map = None
-    """
-    """
+    """ ### old vertex mapping code
     # Populates the vertex mapping to merge matching vertices. This is slow for meshes with many vertices
     # on my PC (Athlon 2800 XP) takes about 10 seconds to load a better bodies mesh
     for i in range(len(verts)):
@@ -527,23 +537,19 @@ def fb_mesh(niBlock):
                     v_map[i] = j
                     break
     """
-        
-    # Adds the vertices to the mesh, but only adds the non-duplicate vertices
-    # Due to the way the vertex map is populated all "meaningful" vertices
-    # will be at the start of the list
-    #for v in verts[0:max(v_map)+1]:
-    for v in verts:
-        b_meshData.verts.extend(v.x, v.y, v.z)
     # Adds the faces to the mesh
-    for f in faces:
+    f_map = [None]*len(faces)
+    b_f_index = 0
+    for i, f in enumerate(faces):
         if f.v1 != f.v2 and f.v1 != f.v3 and f.v2 != f.v3:
-            v1=b_meshData.verts[f.v1]
-            v2=b_meshData.verts[f.v2]
-            v3=b_meshData.verts[f.v3]
-            #v1=b_meshData.verts[v_map[f.v1]]
-            #v2=b_meshData.verts[v_map[f.v2]]
-            #v3=b_meshData.verts[v_map[f.v3]]
+            v1=b_meshData.verts[v_map[f.v1]]
+            v2=b_meshData.verts[v_map[f.v2]]
+            v3=b_meshData.verts[v_map[f.v3]]
             b_meshData.faces.extend(v1, v2, v3)
+            f_map[i] = b_f_index # keep track of added faces, mapping NIF face index to Blender face index
+            b_f_index += 1
+        else:
+            f_map[i] = None # throw away degenerate face
     # Sets face smoothing and material
     for f in b_meshData.faces:
         f.smooth = 1
@@ -554,8 +560,9 @@ def fb_mesh(niBlock):
         vcol = None
     else:
         b_meshData.vertexColors = 1
-        for i, b_face in enumerate(b_meshData.faces):
-            f = faces[i]
+        for i, f in enumerate(faces):
+            if f_map[i] == None: continue
+            b_face = b_meshData.faces[f_map[i]]
             
             vc = vcol[f.v1]
             b_face.col[0].r = int(vc.r * 255)
@@ -588,13 +595,13 @@ def fb_mesh(niBlock):
         # but Blender only allows explicit editing of face UV's, so I'll load vertex UV's like face UV's
         b_meshData.faceUV = 1
         b_meshData.vertexUV = 0
-        for i in range(len(b_meshData.faces)):
-            f = faces[i]
+        for i, f in enumerate(faces):
+            if f_map[i] == None: continue
             uvlist = []
             for v in (f.v1, f.v2, f.v3):
                 uv=uvco[v]
                 uvlist.append(Vector(uv.u, uv.v))
-            b_meshData.faces[i].uv = tuple(uvlist)
+            b_meshData.faces[f_map[i]].uv = tuple(uvlist)
     # Mesh texture. I only support the base texture for the moment
     textProperty = niBlock["Properties"].FindLink( "NiTexturingProperty" )
     if textProperty.is_null() == False:
@@ -656,9 +663,7 @@ def fb_mesh(niBlock):
                     vert2 = vertmap[vert]
                     meshData.assignVertsToGroup(groupName, [vert2], weight, 'replace')
     """
-    """
-    meshData.update(1) # let Blender calculate vertex normals
-    """
+    b_meshData.calcNormals() # let Blender calculate vertex normals
     """
     # morphing
     #morphCtrl = triShape.getNiGeomMorpherController()
@@ -680,7 +685,7 @@ def fb_mesh(niBlock):
                     meshData.verts[vertmap[count]].co[1] = y + dy
                     meshData.verts[vertmap[count]].co[2] = z + dz
                 # update the mesh and insert key
-                meshData.update(1) # recalculate normals
+                meshData.calcNormals() # recalculate normals
                 meshData.insertKey(key, 'relative')
                 # set up the ipo key curve
                 curve = ipo.addCurve( 'Key %i'%key )
