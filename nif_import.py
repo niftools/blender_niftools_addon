@@ -756,7 +756,9 @@ def fb_mesh(niBlock):
     if matProperty.is_null() == False:
         material = fb_material(matProperty, textProperty)
         alphaProperty = niBlock["Properties"].FindLink("NiAlphaProperty")
-        # Texture. Only supports one atm
+        specProperty = niBlock["Properties"].FindLink("NiSpecularProperty")
+        # Texture. First one is the base texture.
+        # Let's just focus on the base texture for transparency, etc.
         mtex = material.getTextures()[0]
         # if the mesh has an alpha channel
         if alphaProperty.is_null() == False:
@@ -770,17 +772,24 @@ def fb_mesh(niBlock):
         else:
             # no alpha property: force alpha 1.0 in Blender
             material.setAlpha(1.0)
+        if specProperty.is_null() == True:
+            # no specular property: specular color is ignored
+            # which means that the specular color should be black
+            # and glossiness (specularity) should be zero
+            material.setSpecCol([0.0, 0.0, 0.0])
+            material.setSpec(0.0)
         if b_meshData.vertexColors == 1:
             if mtex:
                 material.mode |= Material.Modes.VCOL_LIGHT # textured material: vertex colors influence lighting
             else:
                 material.mode |= Material.Modes.VCOL_PAINT # non-textured material: vertex colors incluence color
         b_meshData.materials = [material]
-        #If there's a texture assigned to this material sets it to be displayed in Blender's 3D view
+        #If there's a base texture assigned to this material sets it to be displayed in Blender's 3D view
         if mtex:
             imgobj = mtex.tex.getImage()
-            for f in b_meshData.faces: 
-                f.image = imgobj # does not seem to work anymore???
+            if imgobj:
+                for f in b_meshData.faces:
+                    f.image = imgobj # does not seem to work anymore???
     """
     # Skinning info, for meshes affected by bones. Adding groups to a mesh can be done only after this is already
     # linked to an object
