@@ -498,18 +498,24 @@ def getTexturingPropertyCRC(textProperty):
 # Creates and returns a material
 def fb_material(matProperty, textProperty):
     #First I check if the material already exists
-    name = matProperty["Name"].asString()
-    material = None
     #The same material could be used with different textures
-    if textProperty:
-        name = "%s.%s" % (name, getTexturingPropertyCRC(textProperty))
-    try:
-        material = Blender.Material.Get(name)
-        msg("reusing material: %s " % name, 3)
-        return material
-    except:
-        msg('creating material: %s' % name, 2)
-        material = Blender.Material.New(name)
+    # Note: this is a very buggy detection method:
+    # what if another mesh uses a different material with the same name,
+    # and with other material properties (such as NiAlphaProperty,
+    # NiSpecularProperty...) involved?
+    # Find better solution!!
+    #name = matProperty["Name"].asString()
+    #if textProperty.is_null() == False:
+    #    name = "%s.%s" % (name, getTexturingPropertyCRC(textProperty))
+    #try:
+    #    material = Blender.Material.Get(name)
+    #    msg("reusing material: %s " % name, 3)
+    #    return material
+    #except:
+    #    msg('creating material: %s' % name, 2)
+    #    material = Blender.Material.New(name)
+    name = fb_name(matProperty)
+    material = Blender.Material.New(name)
     # Sets the material colors
     # Specular color
     spec = matProperty["Specular Color"].asFloat3()
@@ -517,13 +523,33 @@ def fb_material(matProperty, textProperty):
     # Diffuse color
     diff = matProperty["Diffuse Color"].asFloat3()
     material.setRGBCol([diff[0],diff[1],diff[2]])
-    # Ambient color
+    # Ambient & emissive color
+    # We assume that ambient & emissive are fractions of the diffuse color.
+    # If it is not an exact fraction, we average out.
     amb = matProperty["Ambient Color"].asFloat3()
-    material.setAmb((amb[0] + amb[1] + amb[2]) / 3)
-    # Emissive color, converted to a 'glow' factor
-    # Same as ambient color
     emit = matProperty["Emissive Color"].asFloat3()
-    material.setEmit((emit[0]+emit[1]+emit[2])/3)
+    b_amb = 0.0
+    b_emit = 0.0
+    b_n = 0
+    if (diff[0] > EPSILON):
+        b_amb += amb[0]/diff[0]
+        b_emit += emit[0]/diff[0]
+        b_n += 1
+    if (diff[1] > EPSILON):
+        b_amb += amb[1]/diff[1]
+        b_emit += emit[1]/diff[1]
+        b_n += 1
+    if (diff[2] > EPSILON):
+        b_amb += amb[2]/diff[2]
+        b_emit += emit[2]/diff[2]
+        b_n += 1
+    if (b_n > 0):
+        b_amb /= b_n
+        b_emit /= b_n
+    if (b_amb > 1.0): b_amb = 1.0
+    if (b_emit > 1.0): b_emit = 1.0
+    material.setAmb(b_amb)
+    material.setEmit(b_emit)
     # Shininess
     glossiness = matProperty["Glossiness"].asFloat()
     material.setSpec(glossiness * 2)
@@ -531,7 +557,7 @@ def fb_material(matProperty, textProperty):
     alpha = matProperty["Alpha"].asFloat()
     material.setAlpha(alpha)
     textures = []
-    if textProperty:
+    if textProperty.is_null() == False:
         BaseTextureSource = textProperty["Base Texture"].asTexDesc()
         if BaseTextureSource.isUsed:
             baseTexture = fb_texture(textProperty["Base Texture"].asLink())
@@ -661,10 +687,15 @@ def fb_mesh(niBlock):
             v2=b_meshData.verts[v_map[f.v2]]
             v3=b_meshData.verts[v_map[f.v3]]
             tmp1 = len(b_meshData.faces)
+            # extend checks for duplicate faces
+            # see http://www.blender3d.org/documentation/240PythonDoc/Mesh.MFaceSeq-class.html
             b_meshData.faces.extend(v1, v2, v3)
-            if tmp1 == len(b_meshData.faces): continue # ??? sometimes face is skipped
+            if tmp1 == len(b_meshData.faces): continue # duplicate face!
             f_map[i] = b_f_index # keep track of added faces, mapping NIF face index to Blender face index
             b_f_index += 1
+    # at this point, deleted faces (redundant or duplicate) will have
+    # f_map[i] = None
+    
     # Sets face smoothing and material
     for f in b_meshData.faces:
         f.smooth = 1
