@@ -520,6 +520,7 @@ def fb_material(matProperty, textProperty):
     # Specular color
     spec = matProperty["Specular Color"].asFloat3()
     material.setSpecCol([spec[0],spec[1],spec[2]])
+    material.setSpec(1.0) # Blender multiplies specular color with this value
     # Diffuse color
     diff = matProperty["Diffuse Color"].asFloat3()
     material.setRGBCol([diff[0],diff[1],diff[2]])
@@ -550,9 +551,12 @@ def fb_material(matProperty, textProperty):
     if (b_emit > 1.0): b_emit = 1.0
     material.setAmb(b_amb)
     material.setEmit(b_emit)
-    # Shininess
+    # glossiness
     glossiness = matProperty["Glossiness"].asFloat()
-    material.setSpec(glossiness * 2)
+    hardness = int(glossiness * 4) # just guessing really
+    if hardness < 1: hardness = 1
+    if hardness > 511: hardness = 511
+    material.setHardness(hardness)
     # Alpha
     alpha = matProperty["Alpha"].asFloat()
     material.setAlpha(alpha)
@@ -619,65 +623,39 @@ def fb_mesh(niBlock):
     vcols = iShapeData.GetColors()
     # Vertex normals
     norms = iShapeData.GetNormals()
-    # Vertex map. This is a list of indices to the first instance of a vertex matching the one being seeked
-    # Yet another way to remove doubles only where the coordinates and normals are matching. This is a single loop process,
-    # but the dictionary lookup probably eats away some of the time saved. 3 seconds. "it don't get much better than this"
+
+    # Construct vertex map to get unique vertex / normal pair list.
+    # We use a Python dictionary to remove doubles and to keep track of indices.
+    # While we are at it, we also add vertices while constructing the map.
+    # Normals are calculated by Blender.
+    n_map = {}
+    v_map = [0]*len(verts) # pre-allocate memory, for faster performance
     b_v_index = 0
-    v_map = [None]*len(verts) # maps NIF indices to unique vertex / normal pair Blender indices
-    n_map = {} # dictionary of NIF vertices (or rather, vertex keys) to NIF indices that correspond to unique vertex / normal pairs
     for i, v in enumerate(verts):
-        kx = int(v.x * 200) # kx, ky, kz are used as a key to identify identical vertices
-        ky = int(v.y * 200)
-        kz = int(v.z * 200)
-        nk = (kx,ky,kz)
-        # Yeh, go and do this in Java. No, really!
+        # The key k identifies unique vertex /normal pairs.
+        # We use a tuple of ints for key, this works MUCH faster than a
+        # tuple of floats.
+        if norms:
+            n = norms[i]
+            k = (int(v.x*200),int(v.y*200),int(v.z*200),\
+                 int(n.x*200),int(n.y*200),int(n.z*200))
+        else:
+            k = (int(v.x*200),int(v.y*200),int(v.z*200))
+        # see if we already added this guy, and if so, what index
         try:
-            n_map_nk = n_map[nk] # have we added vertex v before, and if so, what is it's NIF index?
+            n_map_k = n_map[k] # this is the bottle neck... can we speed this up?
         except KeyError:
-            n_map_nk = None # nope, this one is unique
-        if n_map_nk == None:
-            # unique vertex! (and therefore also a unique vertex / normal pair)
-            n_map[nk] = i        # unique vertex / normal pair with key nk was added, with NIF index i
+            n_map_k = None
+        if n_map_k == None:
+            # not added: new vertex / normal pair
+            n_map[k] = i         # unique vertex / normal pair with key k was added, with NIF index i
             v_map[i] = b_v_index # NIF vertex i maps to blender vertex b_v_index
             b_meshData.verts.extend(v.x, v.y, v.z) # add the vertex
             b_v_index += 1
         else:
-            # vertex already added! do normals coincide?
-            n1 = norms[i]
-            n2 = norms[n_map_nk]
-            # AngleBetweenVecs now returns degrees. Yeuch!
-            #if AngleBetweenVecs(Vector(n1.x, n1.y, n1.z),Vector(n2.x, n2.y, n2.z)) <= EPSILON:
-            # this is much faster:
-            if (abs(n1.x - n2.x) <= EPSILON) and (abs(n1.y - n2.y) <= EPSILON) and (abs(n1.z - n2.z) <= EPSILON):
-                # yes, normals coincide, so no need to add an extra vertex
-                v_map[i] = v_map[n_map_nk] # NIF vertex i maps to Blender v_map[vertex n_map_nk]
-            else:
-                # normals different, so we add a new vertex
-                v_map[i] = b_v_index # NIF vertex i maps to Blender vertex b_v_index
-                b_meshData.verts.extend(v.x, v.y, v.z) # add the vertex
-                b_v_index += 1
-    # let's reclaim some memory
-    n_map = None
-    """ ### old vertex mapping code
-    # Populates the vertex mapping to merge matching vertices. This is slow for meshes with many vertices
-    # on my PC (Athlon 2800 XP) takes about 10 seconds to load a better bodies mesh
-    for i in range(len(verts)):
-        v_map[i] = i
-        # This vertex map is only useful if there's vertex normal info. If the next expression is False
-        # then the map will just match the original vertex list
-        if norms and SEAMS_IMPORT == 1:
-            v1 = verts[i]
-            n1 = norms[i]
-            # Loops ending at i to save a little time. If I haven't found a copy by the time I reach i then this is the 
-            # first instance of this vertex
-            for j in range(0,i):
-                v2 = verts[j]
-                n2 = norms[j]
-                if get_distance((v1.x, v1.y, v1.z),(v2.x, v2.y, v2.z)) <= EPSILON \
-                            and AngleBetweenVecs(Vector(n1.x, n1.y, n1.z),Vector(n2.x, n2.y, n2.z)) <= EPSILON:
-                    v_map[i] = j
-                    break
-    """
+            # already added
+            v_map[i] = v_map[n_map_k] # NIF vertex i maps to Blender v_map[vertex n_map_nk]            
+
     # Adds the faces to the mesh
     f_map = [None]*len(faces)
     b_f_index = 0
@@ -697,9 +675,15 @@ def fb_mesh(niBlock):
     # f_map[i] = None
     
     # Sets face smoothing and material
-    for f in b_meshData.faces:
-        f.smooth = 1
-        f.mat = 0
+    if norms:
+        for f in b_meshData.faces:
+            f.smooth = 1
+            f.mat = 0
+    else:
+        for f in b_meshData.faces:
+            f.smooth = 0 # no normals, turn off smoothing
+            f.mat = 0
+
     # vertex colors
     vcol = iShapeData.GetColors()
     if len( vcol ) == 0:
@@ -762,7 +746,7 @@ def fb_mesh(niBlock):
         mtex = material.getTextures()[0]
         # if the mesh has an alpha channel
         if alphaProperty.is_null() == False:
-            material.mode |= Material.Modes.ZTRANSP # enable z-buffered transparency
+            material.mode |= Blender.Material.Modes.ZTRANSP # enable z-buffered transparency
             # if the image has an alpha channel => then this overrides the material alpha value
             if mtex:
                 if mtex.tex.image.depth == 32: # ... crappy way to check for alpha channel in texture
@@ -780,9 +764,9 @@ def fb_mesh(niBlock):
             material.setSpec(0.0)
         if b_meshData.vertexColors == 1:
             if mtex:
-                material.mode |= Material.Modes.VCOL_LIGHT # textured material: vertex colors influence lighting
+                material.mode |= Blender.Material.Modes.VCOL_LIGHT # textured material: vertex colors influence lighting
             else:
-                material.mode |= Material.Modes.VCOL_PAINT # non-textured material: vertex colors incluence color
+                material.mode |= Blender.Material.Modes.VCOL_PAINT # non-textured material: vertex colors incluence color
         b_meshData.materials = [material]
         #If there's a base texture assigned to this material sets it to be displayed in Blender's 3D view
         if mtex:

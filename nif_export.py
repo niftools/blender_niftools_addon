@@ -843,12 +843,13 @@ def export_trishapes(ob, space, parent_block):
 
         mesh_base_tex = None
         mesh_glow_tex = None
-        mesh_hasalpha = 0 # non-zero if we have alpha properties
-        mesh_hastex = 0 # non-zero if we have at least one texture
-        mesh_hasvcol = 0
-        mesh_hasnormals = 0
+        mesh_hasalpha = False # mesh has transparency
+        mesh_hastex = False   # mesh has at least one texture
+        mesh_hasspec = False  # mesh has specular properties
+        mesh_hasvcol = False
+        mesh_hasnormals = False
         if (mesh_mat != None):
-            mesh_hasnormals = 1 # for proper lighting
+            mesh_hasnormals = True # for proper lighting
             # for non-textured materials, vertex colors are used to color the mesh
             # for textured materials, they represent lighting details
             # strange: mesh.hasVertexColours() only returns true if the mesh has no texture coordinates
@@ -857,8 +858,19 @@ def export_trishapes(ob, space, parent_block):
             mesh_mat_ambient = mesh_mat.getAmb()            # 'Amb' scrollbar in blender (MW -> 1.0 1.0 1.0)
             mesh_mat_diffuse_color = mesh_mat.getRGBCol()   # 'Col' colour in Blender (MW -> 1.0 1.0 1.0)
             mesh_mat_specular_color = mesh_mat.getSpecCol() # 'Spe' colour in Blender (MW -> 0.0 0.0 0.0)
+            specval = mesh_mat.getSpec()                    # 'Spec' slider in Blender
+            mesh_mat_specular_color[0] *= specval
+            mesh_mat_specular_color[1] *= specval
+            mesh_mat_specular_color[2] *= specval
+            if mesh_mat_specular_color[0] > 1.0: mesh_mat_specular_color[0] = 1.0
+            if mesh_mat_specular_color[1] > 1.0: mesh_mat_specular_color[1] = 1.0
+            if mesh_mat_specular_color[2] > 1.0: mesh_mat_specular_color[2] = 1.0
+            if ( mesh_mat_specular_color[0] > EPSILON ) \
+                or ( mesh_mat_specular_color[1] > EPSILON ) \
+                or ( mesh_mat_specular_color[2] > EPSILON ):
+                mesh_hasspec = True
             mesh_mat_emissive = mesh_mat.getEmit()          # 'Emit' scrollbar in Blender (MW -> 0.0 0.0 0.0)
-            mesh_mat_glossiness = mesh_mat.getSpec() / 2.0  # 'Spec' scrollbar in Blender, takes values between 0.0 and 2.0 (MW -> 0.0)
+            mesh_mat_glossiness = mesh_mat.getHardness() / 4.0  # 'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
             mesh_mat_transparency = mesh_mat.getAlpha()     # 'A(lpha)' scrollbar in Blender (MW -> 1.0)
             mesh_hasalpha = (abs(mesh_mat_transparency - 1.0) > EPSILON) \
                             or (mesh_mat.getIpo() != None and mesh_mat.getIpo().getCurve('Alpha'))
@@ -884,7 +896,7 @@ def export_trishapes(ob, space, parent_block):
                         if (mesh_base_tex == None):
                             # got the base texture
                             mesh_base_tex = mtex.tex
-                            mesh_hastex = 1 # flag that we have textures, and that we should export UV coordinates
+                            mesh_hastex = True # flag that we have textures, and that we should export UV coordinates
                             # check if alpha channel is enabled for this texture
                             if (mesh_base_tex.imageFlags & Blender.Texture.ImageFlags.USEALPHA != 0) and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
                                 # in this case, Blender replaces the texture transparant parts with the underlying material color...
@@ -897,7 +909,7 @@ def export_trishapes(ob, space, parent_block):
                                 if (mesh_mat.getIpo() and mesh_mat.getIpo().getCurve('Alpha')):
                                     raise NIFExportError("Cannot export animation for this type of transparency in material '%s': remove alpha animation, or turn off MapTo.ALPHA, and try again."%mesh_mat.getName())
                                 mesh_mat_transparency = 1.0 # aargh! we should use the "Var" value, but we cannot yet access the texture blending properties in this version of Blender... we set it to 1.0
-                                mesh_hasalpha = 1
+                                mesh_hasalpha = True
                         else:
                             raise NIFExportError("Multiple base textures in mesh '%s', material '%s', this is not supported. Delete all textures, except for the base texture."%(mesh.name,mesh_mat.getName()))
                     else:
@@ -905,7 +917,7 @@ def export_trishapes(ob, space, parent_block):
                         if ( mesh_glow_tex == None ):
                             # got the glow tex
                             mesh_glow_tex = mtex.tex
-                            mesh_hastex = 1
+                            mesh_hastex = True
                         else:
                             raise NIFExportError("Multiple glow textures in mesh '%s', material '%s'. Make sure there is only one texture with MapTo.EMIT"%(mesh.name,mesh_mat.getName()))
 
@@ -1121,7 +1133,7 @@ def export_trishapes(ob, space, parent_block):
 
         if (mesh_mat != None):
             # add NiTriShape's specular property
-            if ( mesh_mat_glossiness > EPSILON ):
+            if ( mesh_hasspec ):
                 trispecprop = create_block("NiSpecularProperty")
                 trispecprop["Flags"] = 0x0001
             
