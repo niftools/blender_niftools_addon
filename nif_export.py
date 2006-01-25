@@ -4,7 +4,7 @@
 Name: 'NetImmerse/Gamebryo (.nif & .kf)...'
 Blender: 240
 Group: 'Export'
-Tooltip: 'Export to NIF file (.nif)'
+Tooltip: 'Export selected meshes to NIF File Format (*.nif & *.kf)'
 """
 
 #Submenu: 'All...' all
@@ -18,7 +18,7 @@ __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
 __version__ = "1.3"
 __bpydoc__ = """\
 This script exports selected meshes, along with parents, children, and
-armatures, to a .nif file. If animation is present,  X***.NIF and a X***.KF
+armatures, to a *.nif file. If animation is present,  x*.nif and a x*.kf
 files are written as well.
 
 Supported:<br>

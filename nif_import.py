@@ -4,7 +4,7 @@
 Name: 'NetImmerse/Gamebryo (.nif & .kf)...'
 Blender: 240
 Group: 'Import'
-Tip: 'Import NIF (.nif & .kf) format meshes.'
+Tip: 'Import NIF File Format (.nif & .kf)'
 """
 
 __author__ = "Alessandro Garosi (AKA Brandano) -- tdo_brandano@hotmail.com"
@@ -654,7 +654,9 @@ def fb_mesh(niBlock):
             b_v_index += 1
         else:
             # already added
-            v_map[i] = v_map[n_map_k] # NIF vertex i maps to Blender v_map[vertex n_map_nk]            
+            v_map[i] = v_map[n_map_k] # NIF vertex i maps to Blender v_map[vertex n_map_nk]
+    # release memory
+    n_map = None
 
     # Adds the faces to the mesh
     f_map = [None]*len(faces)
@@ -671,8 +673,8 @@ def fb_mesh(niBlock):
             if tmp1 == len(b_meshData.faces): continue # duplicate face!
             f_map[i] = b_f_index # keep track of added faces, mapping NIF face index to Blender face index
             b_f_index += 1
-    # at this point, deleted faces (redundant or duplicate) will have
-    # f_map[i] = None
+    # at this point, deleted faces (redundant or duplicate)
+    # satisfy f_map[i] = None
     
     # Sets face smoothing and material
     if norms:
@@ -774,21 +776,24 @@ def fb_mesh(niBlock):
             if imgobj:
                 for f in b_meshData.faces:
                     f.image = imgobj # does not seem to work anymore???
-    """
+
+    b_mesh.link(b_meshData)
+    b_scene.link(b_mesh)
+
     # Skinning info, for meshes affected by bones. Adding groups to a mesh can be done only after this is already
-    # linked to an object
-    #skinInstance = triShape.getNiSkinInstance()
-    if skinInstance:
-        skinData = skinInstance.getNiSkinData()
-        weights = skinData.getWeights()
-        for idx, bone in enumerate(skinInstance.getBones()):
-            if bone:
-                groupName = bone.getName()
-                meshData.addVertGroup(groupName)
-                for vert, weight in weights[idx]:
-                    vert2 = vertmap[vert]
-                    meshData.assignVertsToGroup(groupName, [vert2], weight, 'replace')
-    """
+    # linked to an object.
+    skinInstance = niBlock["Skin Instance"].asLink()
+    if skinInstance.is_null() == False:
+        skinData = skinInstance["Data"].asLink()
+        iSkinData = QuerySkinData(skinData)
+        bones = iSkinData.GetBones()
+        for idx, bone in enumerate(bones):
+            weights = iSkinData.GetWeights(bone)
+            groupName = bone["Name"].asString()
+            b_meshData.addVertGroup(groupName)
+            for vert, weight in weights.iteritems():
+                b_meshData.assignVertsToGroup(groupName, [v_map[vert]], weight, Blender.Mesh.AssignModes.REPLACE)
+
     b_meshData.calcNormals() # let Blender calculate vertex normals
     """
     # morphing
@@ -840,8 +845,6 @@ def fb_mesh(niBlock):
             # assign ipo to mesh (not supported by Blender API?)
             #meshData.setIpo( ipo )
     """
-    b_mesh.link(b_meshData)
-    b_scene.link(b_mesh)
     return b_mesh
 
 
