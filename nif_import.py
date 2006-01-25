@@ -369,10 +369,10 @@ def fb_name(niBlock):
     # find unique name for Blender to use
     uniqueInt = 0
     niName = niBlock["Name"].asString()
-    name = niName[:16] # Blender has a rather small name buffer
+    name = niName[:19] # Blender has a rather small name buffer
     try:
         while Blender.Object.Get(name):
-            name = '%s.%02d' % (niName, uniqueInt)
+            name = '%s.%02d' % (niName[:16], uniqueInt)
             uniqueInt +=1
     except:
         pass
