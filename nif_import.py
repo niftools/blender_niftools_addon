@@ -152,6 +152,9 @@ MATERIALS = {}
 # dictionary of names, to map NIF names to correct Blender names
 NAMES = {}
 
+# dictionary of armatures
+armatures = {}
+
 # Regex to handle replacement texture files
 if enableRe:
     re_dds = re.compile(r'^\.dds$', re.IGNORECASE)
@@ -165,8 +168,6 @@ EPSILON = 0.005 # used for checking equality with floats, NOT STORED IN CONFIG
 # 
 # Process config files.
 # 
-
-global gui_texpath, gui_scale, gui_last
 
 # configuration default values
 TEXTURES_DIR = 'C:\\Program Files\\Bethesda\\Morrowind\\Data Files\\Textures' # Morrowind: this will work on a standard installation
@@ -201,7 +202,6 @@ def update_registry():
 # Now we check if our key is available in the Registry or file system:
 def read_registry():
     global TEXTURES_DIR, IMPORT_DIR, SEAMS_IMPORT
-    
     regdict = Blender.Registry.GetKey('nif_import', True)
     # If this key already exists, update config variables with its values:
     if regdict:
@@ -318,9 +318,18 @@ def read_branch(niBlock):
         read_progress = blocks_read/block_count
         Blender.Window.DrawProgressBar(read_progress, "Reading NIF file")
     if not niBlock.is_null():
-        type=niBlock.GetBlockType()
+        type = niBlock.GetBlockType()
         if type == "NiNode" or type == "RootCollisionNode":
             niChildren = niBlock["Children"].asLinkList()
+            is_armature_root = False
+            if (niBlock["Flags"].asInt() & 8) != 0:
+                # the node isn't an influence
+                for child in niChildren:
+                    if child.GetBlockType()=="NiNode" and (child["Flags"].asInt() & 8) == 0:
+                        # but at least one child is
+                        is_armature_root = True
+                        break
+            print "%s is armature? %s" % (niBlock["Name"].asString(),is_armature_root)
             #if (niBlock["Flags"].asInt() & 8) == 0 :
                 # the node is a mesh influence
                 #if inode.GetParent().asLink() is None or inode.GetParent().asLink()["Flags"].asInt() != 0x0002:
@@ -346,9 +355,7 @@ def read_branch(niBlock):
             b_obj.makeParent(b_children_list)
             b_obj.setMatrix(fb_matrix(niBlock))
             return b_obj
-        elif type == "NiTriShape":
-            return fb_mesh(niBlock)
-        elif type == "NiTriStrips":
+        elif type == "NiTriShape"or type == "NiTriStrips":
             return fb_mesh(niBlock)
         else:
             return None
@@ -431,7 +438,7 @@ def fb_texture( niSourceTexture ):
                 tex = Blender.sys.join( texdir, fn[9:] ) # strip one of the two 'textures' from the path
             else:
                 tex = Blender.sys.join( texdir, fn )
-            print tex
+            #print tex
             if (not re_dds.match(tex[-4:])) and Blender.sys.exists(tex) == 1: # Blender does not support .DDS
                 textureFile = tex
                 msg("Found %s" % textureFile, 3)
@@ -790,10 +797,12 @@ def fb_mesh(niBlock):
 
         # if there's a base texture assigned to this material sets it to be displayed in Blender's 3D view
         if mbasetex:
+            TEX = Blender.Mesh.FaceModes['TEX'] # face mode bitfield value
             imgobj = mbasetex.tex.getImage()
             if imgobj:
                 for f in b_meshData.faces:
-                    f.image = imgobj # does not seem to work anymore???
+                    f.mode = TEX
+                    f.image = imgobj
 
     # Skinning info, for meshes affected by bones. Adding groups to a mesh can be done only after this is already
     # linked to an object.
@@ -893,8 +902,9 @@ def find_controller(block, controllertype):
 #-------- Run importer GUI.
 #----------------------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------#
+# global dictionary of GUI elements to keep them allocated
+gui_elem={}
 def gui_draw():
-    global gui_texpath, gui_scale, gui_last
     global SCALE_CORRECTION, FORCE_DDS, STRIP_TEXPATH, SEAMS_IMPORT, LAST_IMPORTED, TEXTURES_DIR
     
     BGL.glClearColor(0.753, 0.753, 0.753, 0.0)
@@ -902,19 +912,19 @@ def gui_draw():
 
     BGL.glColor3f(0.000, 0.000, 0.000)
     BGL.glRasterPos2i(8, 92)
-    Draw.Text('Tex Path:')
+    gui_elem["label_0"] = Draw.Text('Tex Path:')
     BGL.glRasterPos2i(8, 188)
-    Draw.Text('Seams:')
+    gui_elem["label_1"] = Draw.Text('Seams:')
 
-    Draw.Button('Browse', 1, 8, 48, 55, 23, '')
-    Draw.Button('Import NIF', 2, 8, 8, 87, 23, '')
-    Draw.Button('Cancel', 3, 208, 8, 71, 23, '')
-    Draw.Toggle('Smoothing Flag (Slow)', 6, 88, 112, 191, 23, SEAMS_IMPORT == 2, 'Import seams and convert them to "the Blender way", is slow and imperfect, unless model was created by Blender and had no duplicate vertices.')
-    Draw.Toggle('Vertex Duplication (Slow)', 7, 88, 144, 191, 23, SEAMS_IMPORT == 1, 'Perfect but slow, this is the preferred method if the model you are importing is not too large.')
-    Draw.Toggle('Vertex Duplication (Fast)', 8, 88, 176, 191, 23, SEAMS_IMPORT == 0, 'Fast but imperfect: may introduce unwanted cracks in UV seams')
-    gui_texpath = Draw.String('', 4, 72, 80, 207, 23, TEXTURES_DIR, 512, 'Semi-colon separated list of texture directories.')
-    gui_last = Draw.String('', 5, 72, 48, 207, 23, LAST_IMPORTED, 512, '')
-    gui_scale = Draw.Slider('Scale Correction: ', 9, 8, 208, 271, 23, SCALE_CORRECTION, 0.01, 100, 0, 'How many NIF units is one Blender unit?')
+    gui_elem["bt_browse"] = Draw.Button('Browse', 1, 8, 48, 55, 23, '')
+    gui_elem["bt_import"] = Draw.Button('Import NIF', 2, 8, 8, 87, 23, '')
+    gui_elem["bt_cancel"] = Draw.Button('Cancel', 3, 208, 8, 71, 23, '')
+    gui_elem["tg_smooth_0"] = Draw.Toggle('Smoothing Flag (Slow)', 6, 88, 112, 191, 23, SEAMS_IMPORT == 2, 'Import seams and convert them to "the Blender way", is slow and imperfect, unless model was created by Blender and had no duplicate vertices.')
+    gui_elem["tg_smooth_1"] = Draw.Toggle('Vertex Duplication (Slow)', 7, 88, 144, 191, 23, SEAMS_IMPORT == 1, 'Perfect but slow, this is the preferred method if the model you are importing is not too large.')
+    gui_elem["tg_smooth_2"] = Draw.Toggle('Vertex Duplication (Fast)', 8, 88, 176, 191, 23, SEAMS_IMPORT == 0, 'Fast but imperfect: may introduce unwanted cracks in UV seams')
+    gui_elem["tx_texpath"] = Draw.String('', 4, 72, 80, 207, 23, TEXTURES_DIR, 512, 'Semi-colon separated list of texture directories.')
+    gui_elem["tx_last"] = Draw.String('', 5, 72, 48, 207, 23, LAST_IMPORTED, 512, '')
+    gui_elem["sl_scale"] = Draw.Slider('Scale Correction: ', 9, 8, 208, 271, 23, SCALE_CORRECTION, 0.01, 100, 0, 'How many NIF units is one Blender unit?')
 
 def gui_select(filename):
     global LAST_IMPORTED
@@ -926,7 +936,7 @@ def gui_evt_key(evt, val):
         Draw.Exit()
 
 def gui_evt_button(evt):
-    global gui_texpath, gui_scale, gui_last
+    global SEAMS_IMPORT
     global SCALE_CORRECTION, force_dds, strip_texpath, SEAMS_IMPORT, LAST_IMPORTED, TEXTURES_DIR
     
     if evt == 6: #Toggle3
@@ -942,25 +952,22 @@ def gui_evt_button(evt):
         Blender.Window.FileSelector(gui_select, 'Select')
         Draw.Redraw(1)
     elif evt == 4: # TexPath
-        TEXTURES_DIR = gui_texpath.val
+        TEXTURES_DIR = gui_elem["tx_texpath"].val
     elif evt == 5: # filename
-        LAST_IMPORTED = gui_last.val
+        LAST_IMPORTED = gui_elem["tx_last"].val
     elif evt == 9: # scale
-        SCALE_CORRECTION = gui_scale.val
+        SCALE_CORRECTION = gui_elem["sl_scale"].val
     elif evt == 2: # Import NIF
         # Stop GUI.
-        gui_last = None
-        gui_texpath = None
-        gui_scale = None
+        gui_elem = None
         Draw.Exit()
         gui_import()
     elif evt == 3: # Cancel
-        gui_last = None
-        gui_texpath = None
-        gui_scale = None
+        gui_elem = None
         Draw.Exit()
 
 def gui_import():
+    global SEAMS_IMPORT
     # Save options for next time.
     update_registry()
     # Import file.
