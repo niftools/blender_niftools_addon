@@ -551,6 +551,8 @@ def fb_material(matProperty, textProperty, alphaProperty, specProperty):
     # Alpha
     alpha = matProperty["Alpha"].asFloat()
     material.setAlpha(alpha)
+    baseTexture = None
+    glowTexture = None
     if textProperty.is_null() == False:
         BaseTextureSource = textProperty["Base Texture"].asTexDesc()
         if BaseTextureSource.isUsed:
