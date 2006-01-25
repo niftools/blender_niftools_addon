@@ -103,7 +103,7 @@ Tex Path: Semi-colon separated list of texture directories.
 # Using the same setup as for Amorilia's exporter, so that the configuration can be shared, and to try
 # sticking a little better to conventions
 try:
-    import types, re
+    import types
 except:
     err = """--------------------------
 ERROR\nThis script requires a full Python 2.4 installation to run.
@@ -129,20 +129,6 @@ If you don't have them: http://niftools.sourceforge.net/
     Blender.Draw.PupMenu("ERROR%t|NIFLIB not found, check console for details")
     raise
 
-# leave this, just in case we don't need a full Python installation in future for the SWIG wrapper
-enableRe = 1
-##try:
-##    import re
-##except:
-##    err = """--------------------------
-##ERROR\nThis script relies on the Regular Expression (re) module for some functionality.
-##advanced texture lookup will be disabled
-##--------------------------"""
-##    print err
-##    Blender.Draw.PupMenu("RE not found, check console for details")
-##    enableRe = 0
-
-
 # dictionary of texture files, to reuse textures
 TEXTURES = {}
 
@@ -155,11 +141,6 @@ NAMES = {}
 # dictionary of armatures
 armatures = {}
 
-# Regex to handle replacement texture files
-if enableRe:
-    re_dds = re.compile(r'^\.dds$', re.IGNORECASE)
-    re_dds_subst = re.compile(r'^\.(tga|png|jpg|bmp|gif)$', re.IGNORECASE)
-    
 # some variables
 
 USE_GUI = 0 # BROKEN, don't set to 1, we will design a GUI for importer & exporter jointly
@@ -425,7 +406,7 @@ def fb_texture( niSourceTexture ):
     if niTexSource.useExternal:
         # the texture uses an external image file
         fn = niTexSource.fileName
-        if fn[-4:] == ".dds":
+        if fn[-4:].lower() == ".dds":
             fn = fn[:-4] + ".tga"
         # go searching for it
         textureFile = None
@@ -438,8 +419,7 @@ def fb_texture( niSourceTexture ):
                 tex = Blender.sys.join( texdir, fn[9:] ) # strip one of the two 'textures' from the path
             else:
                 tex = Blender.sys.join( texdir, fn )
-            #print tex
-            if (not re_dds.match(tex[-4:])) and Blender.sys.exists(tex) == 1: # Blender does not support .DDS
+            if ( tex[-4:].lower() != ".dds" ) and Blender.sys.exists(tex) == 1: # Blender does not support .DDS
                 textureFile = tex
                 msg("Found %s" % textureFile, 3)
             else:
