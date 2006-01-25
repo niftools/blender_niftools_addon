@@ -144,12 +144,13 @@ enableRe = 1
 
 
 # dictionary of texture files, to reuse textures
-global textures
-textures = {}
+TEXTURES = {}
 
 # dictionary of materials, to reuse materials
-global materials
-materials = {}
+MATERIALS = {}
+
+# dictionary of names, to map NIF names to correct Blender names
+NAMES = {}
 
 # Regex to handle replacement texture files
 if enableRe:
@@ -356,21 +357,28 @@ def read_branch(niBlock):
 # Get unique name for an object, preserving existing names
 #
 def fb_name(niBlock):
+    global NAMES
+
+    # find unique name for Blender to use
     uniqueInt = 0
     niName = niBlock["Name"].asString()
-    name = niName
+    name = niName[:16] # Blender has a rather small name buffer
     try:
         while Blender.Object.Get(name):
             name = '%s.%02d' % (niName, uniqueInt)
             uniqueInt +=1
     except:
         pass
+
+    # save mapping
+    NAMES[niName] = name
+
     return name
 
 # Retrieves a niBlock's transform matrix as a Mathutil.Matrix
 def fb_matrix(niBlock):
     inode=QueryNode(niBlock)
-    m=inode.GetLocalBindPos()
+    m=inode.GetLocalBindPos() # remind: local bind position != local transform
     b_matrix = Matrix([m[0][0],m[0][1],m[0][2],m[0][3]],
                         [m[1][0],m[1][1],m[1][2],m[1][3]],
                         [m[2][0],m[2][1],m[2][2],m[2][3]],
@@ -398,8 +406,10 @@ def fb_armature(niBlock):
 
 
 def fb_texture( niSourceTexture ):
-    if textures.has_key( niSourceTexture ):
-        return textures[ niSourceTexture ]
+    global TEXTURES
+    
+    if TEXTURES.has_key( niSourceTexture ):
+        return TEXTURES[ niSourceTexture ]
 
     b_image = None
     
@@ -429,7 +439,6 @@ def fb_texture( niSourceTexture ):
                 # try other formats
                 base=tex[:-4]
                 for ext in ('.PNG','.png','.TGA','.tga','.BMP','.bmp','.JPG','.jpg'): # Blender does not support .DDS
-                    print base+ext
                     if Blender.sys.exists(base+ext) == 1:
                         textureFile = base+ext
                         msg( "Found %s" % textureFile, 3 )
@@ -470,8 +479,10 @@ def fb_texture( niSourceTexture ):
         b_texture.setType( 'Image' )
         b_texture.setImage( b_image )
         b_texture.imageFlags = Blender.Texture.ImageFlags.INTERPOL + Blender.Texture.ImageFlags.MIPMAP
+        TEXTURES[ niSourceTexture ] = b_texture
         return b_texture
     else:
+        TEXTURES[ niSourceTexture ] = None
         return None
 
 
@@ -496,24 +507,17 @@ def getTexturingPropertyCRC(textProperty):
 
 
 # Creates and returns a material
-def fb_material(matProperty, textProperty):
-    #First I check if the material already exists
-    #The same material could be used with different textures
-    # Note: this is a very buggy detection method:
-    # what if another mesh uses a different material with the same name,
-    # and with other material properties (such as NiAlphaProperty,
-    # NiSpecularProperty...) involved?
-    # Find better solution!!
-    #name = matProperty["Name"].asString()
-    #if textProperty.is_null() == False:
-    #    name = "%s.%s" % (name, getTexturingPropertyCRC(textProperty))
-    #try:
-    #    material = Blender.Material.Get(name)
-    #    msg("reusing material: %s " % name, 3)
-    #    return material
-    #except:
-    #    msg('creating material: %s' % name, 2)
-    #    material = Blender.Material.New(name)
+def fb_material(matProperty, textProperty, alphaProperty, specProperty):
+    global MATERIALS
+    
+    # First check if material has been created before.
+    try:
+        material = MATERIALS[(matProperty, textProperty, alphaProperty, specProperty)]
+        return material
+    except KeyError:
+        pass
+    # use the material property for the name, other properties usually have
+    # no name
     name = fb_name(matProperty)
     material = Blender.Material.New(name)
     # Sets the material colors
@@ -560,7 +564,6 @@ def fb_material(matProperty, textProperty):
     # Alpha
     alpha = matProperty["Alpha"].asFloat()
     material.setAlpha(alpha)
-    textures = []
     if textProperty.is_null() == False:
         BaseTextureSource = textProperty["Base Texture"].asTexDesc()
         if BaseTextureSource.isUsed:
@@ -572,6 +575,7 @@ def fb_material(matProperty, textProperty):
                 mapto = Blender.Texture.MapTo.COL
                 # Sets the texture for the material
                 material.setTexture(0, baseTexture, texco, mapto)
+                mbaseTexture = material.getTextures()[0]
         GlowTextureSource = textProperty["Glow Texture"].asTexDesc()
         if GlowTextureSource.isUsed:
             glowTexture = fb_texture(textProperty["Glow Texture"].asLink())
@@ -584,6 +588,31 @@ def fb_material(matProperty, textProperty):
                 mapto = Blender.Texture.MapTo.COL | Texture.MapTo.EMIT
                 # Sets the texture for the material
                 material.setTexture(1, glowTexture, texco, mapto)
+                mglowTexture = material.getTextures()[1]
+    # check transparency
+    if alphaProperty.is_null() == False:
+        material.mode |= Blender.Material.Modes.ZTRANSP # enable z-buffered transparency
+        # if the image has an alpha channel => then this overrides the material alpha value
+        if baseTexture:
+            if baseTexture.image.depth == 32: # ... crappy way to check for alpha channel in texture
+                baseTexture.imageFlags |= Blender.Texture.ImageFlags.USEALPHA # use the alpha channel
+                mbaseTexture.mapto |=  Blender.Texture.MapTo.ALPHA # and map the alpha channel to transparency
+                material.setAlpha(0.0) # for proper display in Blender, we must set the alpha value to 0 and the "Val" slider in the texture Map To tab to the NIF material alpha value (but we do not have access to that button yet... we have to wait until it gets supported by the Blender Python API...)
+        if glowTexture:
+            if glowTexture.image.depth == 32: # ... crappy way to check for alpha channel in texture
+                glowTexture.imageFlags |= Blender.Texture.ImageFlags.USEALPHA # use the alpha channel
+                mglowTexture.mapto |=  Blender.Texture.MapTo.ALPHA # and map the alpha channel to transparency
+                material.setAlpha(0.0) # for proper display in Blender, we must set the alpha value to 0 and the "Val" slider in the texture Map To tab to the NIF material alpha value (but we do not have access to that button yet... we have to wait until it gets supported by the Blender Python API...)
+    else:
+        # no alpha property: force alpha 1.0 in Blender
+        material.setAlpha(1.0)
+    # check specularity
+    if specProperty.is_null() == True:
+        # no specular property: specular color is ignored
+        # we do this by setting specularity zero
+        material.setSpec(0.0)
+
+    MATERIALS[(matProperty, textProperty, alphaProperty, specProperty)] = material
     return material
 
 
@@ -593,9 +622,13 @@ def fb_mesh(niBlock):
     global b_scene
     # Mesh name -> must be unique, so tag it if needed
     b_name=fb_name(niBlock)
-    # No getRaw, this time we work directly on Blender's objects
+    # we mostly work directly on Blender's objects (b_meshData)
+    # but for some tasks we must use the Python wrapper (b_nmeshData), see further
     b_meshData = Blender.Mesh.New(b_name)
     b_mesh = Blender.Object.New("Mesh", b_name)
+    b_mesh.link(b_meshData)
+    b_scene.link(b_mesh)
+
     # Mesh transform matrix, sets the transform matrix for the object.
     b_mesh.setMatrix(fb_matrix(niBlock))
     # Mesh geometry data. From this I can retrieve all geometry info
@@ -673,7 +706,7 @@ def fb_mesh(niBlock):
             if tmp1 == len(b_meshData.faces): continue # duplicate face!
             f_map[i] = b_f_index # keep track of added faces, mapping NIF face index to Blender face index
             b_f_index += 1
-    # at this point, deleted faces (redundant or duplicate)
+    # at this point, deleted faces (degenerate or duplicate)
     # satisfy f_map[i] = None
     
     # Sets face smoothing and material
@@ -714,6 +747,7 @@ def fb_mesh(niBlock):
         # vertex colors influence lighting...
         # so now we have to set the VCOL_LIGHT flag on the material
         # see below
+        
     # UV coordinates
     # Nif files only support 'sticky' UV coordinates, and duplicates vertices to emulate hard edges and UV seams.
     # Essentially whenever an hard edge or an UV seam is present the mesh this is converted to an open mesh.
@@ -735,50 +769,31 @@ def fb_mesh(niBlock):
                 uvlist.append(Vector(uv.u, 1.0 - uv.v))
             b_meshData.faces[f_map[i]].uv = tuple(uvlist)
     
-    # Texturing property. From this I can retrieve texture info
-    textProperty = niBlock["Properties"].FindLink( "NiTexturingProperty" )
+    # Sets the material for this mesh. NIF files only support one material for each mesh.
     matProperty = niBlock["Properties"].FindLink("NiMaterialProperty" )
-    # Sets the material for this mesh. NIF files only support one material for each mesh
     if matProperty.is_null() == False:
-        material = fb_material(matProperty, textProperty)
+        # create material and assign it to the mesh
+        textProperty = niBlock["Properties"].FindLink( "NiTexturingProperty" )
         alphaProperty = niBlock["Properties"].FindLink("NiAlphaProperty")
         specProperty = niBlock["Properties"].FindLink("NiSpecularProperty")
-        # Texture. First one is the base texture.
-        # Let's just focus on the base texture for transparency, etc.
-        mtex = material.getTextures()[0]
-        # if the mesh has an alpha channel
-        if alphaProperty.is_null() == False:
-            material.mode |= Blender.Material.Modes.ZTRANSP # enable z-buffered transparency
-            # if the image has an alpha channel => then this overrides the material alpha value
-            if mtex:
-                if mtex.tex.image.depth == 32: # ... crappy way to check for alpha channel in texture
-                    mtex.tex.imageFlags |= Blender.Texture.ImageFlags.USEALPHA # use the alpha channel
-                    mtex.mapto |=  Blender.Texture.MapTo.ALPHA # and map the alpha channel to transparency
-                    material.setAlpha(0.0) # for proper display in Blender, we must set the alpha value to 0 and the "Val" slider in the texture Map To tab to the NIF material alpha value (but we do not have access to that button yet... we have to wait until it gets supported by the Blender Python API...)
-        else:
-            # no alpha property: force alpha 1.0 in Blender
-            material.setAlpha(1.0)
-        if specProperty.is_null() == True:
-            # no specular property: specular color is ignored
-            # which means that the specular color should be black
-            # and glossiness (specularity) should be zero
-            material.setSpecCol([0.0, 0.0, 0.0])
-            material.setSpec(0.0)
+        material = fb_material(matProperty, textProperty, alphaProperty, specProperty)
+        b_meshData.materials = [material]
+
+        # fix up vertex colors depending on whether we had textures in the material
+        mbasetex = material.getTextures()[0]
+        mglowtex = material.getTextures()[1]
         if b_meshData.vertexColors == 1:
-            if mtex:
+            if mbasetex or mglowtex:
                 material.mode |= Blender.Material.Modes.VCOL_LIGHT # textured material: vertex colors influence lighting
             else:
                 material.mode |= Blender.Material.Modes.VCOL_PAINT # non-textured material: vertex colors incluence color
-        b_meshData.materials = [material]
-        #If there's a base texture assigned to this material sets it to be displayed in Blender's 3D view
-        if mtex:
-            imgobj = mtex.tex.getImage()
+
+        # if there's a base texture assigned to this material sets it to be displayed in Blender's 3D view
+        if mbasetex:
+            imgobj = mbasetex.tex.getImage()
             if imgobj:
                 for f in b_meshData.faces:
                     f.image = imgobj # does not seem to work anymore???
-
-    b_mesh.link(b_meshData)
-    b_scene.link(b_mesh)
 
     # Skinning info, for meshes affected by bones. Adding groups to a mesh can be done only after this is already
     # linked to an object.
@@ -789,70 +804,88 @@ def fb_mesh(niBlock):
         bones = iSkinData.GetBones()
         for idx, bone in enumerate(bones):
             weights = iSkinData.GetWeights(bone)
-            groupName = bone["Name"].asString()
+            groupName = NAMES[bone["Name"].asString()]
             b_meshData.addVertGroup(groupName)
             for vert, weight in weights.iteritems():
                 b_meshData.assignVertsToGroup(groupName, [v_map[vert]], weight, Blender.Mesh.AssignModes.REPLACE)
 
     b_meshData.calcNormals() # let Blender calculate vertex normals
-    """
-    # morphing
-    #morphCtrl = triShape.getNiGeomMorpherController()
-    if morphCtrl:
-        morphData = morphCtrl.getNiMorphData()
-        if morphData and ( morphData.NumMorphBlocks > 0 ):
-            # insert base key
-            meshData.insertKey( 0, 'relative' )
-            frameCnt, frameType, frames, baseverts = morphData.MorphBlocks[0]
-            ipo = Blender.Ipo.New( 'Key', 'KeyIpo' )
-            # iterate through the list of other morph keys
-            for key in range( 1, morphData.NumMorphBlocks ):
-                frameCnt, frameType, frames, verts = morphData.MorphBlocks[key]
-                # for each vertex calculate the key position from base pos + delta offset
-                for count in range( morphData.NumVertices ):
-                    x, y, z = baseverts[count]
-                    dx, dy, dz = verts[count]
-                    meshData.verts[vertmap[count]].co[0] = x + dx
-                    meshData.verts[vertmap[count]].co[1] = y + dy
-                    meshData.verts[vertmap[count]].co[2] = z + dz
-                # update the mesh and insert key
-                meshData.calcNormals() # recalculate normals
-                meshData.insertKey(key, 'relative')
-                # set up the ipo key curve
-                curve = ipo.addCurve( 'Key %i'%key )
-                # dunno how to set up the bezier triples -> switching to linear instead
-                curve.setInterpolation( 'Linear' )
-                # select extrapolation
-                if ( morphCtrl.Flags == 0x000c ):
-                    curve.setExtrapolation( 'Constant' )
-                elif ( morphCtrl.Flags == 0x0008 ):
-                    curve.setExtrapolation( 'Cyclic' )
-                else:
-                    msg( 'dunno which extrapolation to use: using constant instead', 2 )
-                    curve.setExtrapolation( 'Constant' )
-                # set up the curve's control points
-                for count in range( frameCnt ):
-                    time, x, y, z = frames[count]
-                    frame = time * Blender.Scene.getCurrent().getRenderingContext().framesPerSec() + 1
-                    curve.addBezier( ( frame, x ) )
-                # finally: return to base position
-                for count in range( morphData.NumVertices ):
-                    x, y, z = baseverts[count]
-                    meshData.verts[vertmap[count]].co[0] = x
-                    meshData.verts[vertmap[count]].co[1] = y
-                    meshData.verts[vertmap[count]].co[2] = z
-                meshData.update(1) # recalculate normals
-            # assign ipo to mesh (not supported by Blender API?)
-            #meshData.setIpo( ipo )
-    """
+    
+    # geometry morphing: here we need the NMesh b_nmeshData
+    # the Mesh object has no vertex key Python API (yet?)
+    b_nmeshData = Blender.NMesh.GetRaw(b_meshData.name)
+    morphCtrl = find_controller(niBlock, "NiGeomMorpherController")
+    if morphCtrl.is_null() == False:
+        morphData = morphCtrl["Data"].asLink()
+        if ( morphData.is_null() == False ):
+            iMorphData = QueryMorphData(morphData)
+            if ( iMorphData.GetMorphCount() > 0 ):
+                # insert base key
+                b_nmeshData.insertKey( 0, 'relative' )
+                baseverts = iMorphData.GetMorphVerts( 0 )
+                ipo = Blender.Ipo.New( 'Key', 'KeyIpo' )
+                # iterate through the list of other morph keys
+                for key in range(1,iMorphData.GetMorphCount()):
+                    morphverts = iMorphData.GetMorphVerts( key )
+                    # for each vertex calculate the key position from base pos + delta offset
+                    for count in range( iMorphData.GetVertexCount() ):
+                        x = baseverts[count].x
+                        y = baseverts[count].y
+                        z = baseverts[count].z
+                        dx = morphverts[count].x
+                        dy = morphverts[count].y
+                        dz = morphverts[count].z
+                        b_nmeshData.verts[v_map[count]].co[0] = x + dx
+                        b_nmeshData.verts[v_map[count]].co[1] = y + dy
+                        b_nmeshData.verts[v_map[count]].co[2] = z + dz
+                    # update the mesh and insert key
+                    b_nmeshData.update(recalc_normals=1) # recalculate normals
+                    b_nmeshData.insertKey(key, 'relative')
+                    # set up the ipo key curve
+                    curve = ipo.addCurve( 'Key %i'%key )
+                    # dunno how to set up the bezier triples -> switching to linear instead
+                    curve.setInterpolation( 'Linear' )
+                    # select extrapolation
+                    if ( morphCtrl["Flags"].asInt() == 0x000c ):
+                        curve.setExtrapolation( 'Constant' )
+                    elif ( morphCtrl["Flags"].asInt() == 0x0008 ):
+                        curve.setExtrapolation( 'Cyclic' )
+                    else:
+                        msg( 'dunno which extrapolation to use: using constant instead', 2 )
+                        curve.setExtrapolation( 'Constant' )
+                    # set up the curve's control points
+                    morphkeys = iMorphData.GetMorphKeys(key)
+                    for count in range(len(morphkeys)):
+                        morphkey = morphkeys[count]
+                        time = morphkey.time
+                        x = morphkey.data
+                        frame = time * Blender.Scene.getCurrent().getRenderingContext().framesPerSec() + 1
+                        curve.addBezier( ( frame, x ) )
+                    # finally: return to base position
+                    for count in range( iMorphData.GetVertexCount() ):
+                        x = baseverts[count].x
+                        y = baseverts[count].y
+                        z = baseverts[count].z
+                        b_nmeshData.verts[v_map[count]].co[0] = x
+                        b_nmeshData.verts[v_map[count]].co[1] = y
+                        b_nmeshData.verts[v_map[count]].co[2] = z
+                    b_nmeshData.update(recalc_normals=1) # recalculate normals
+                # assign ipo to mesh
+                b_nmeshData.key.ipo = ipo
+
     return b_mesh
 
 
 
+# find a controller
+def find_controller(block, controllertype):
+    ctrl = block["Controller"].asLink()
+    while ctrl.is_null() == False:
+        if ctrl.GetBlockType() == controllertype:
+            break
+        ctrl = ctrl["Next Controller"].asLink()
+    return ctrl
 
-# calculate distance between two Float3 vectors
-def get_distance(v, w):
-    return ((v[0]-w[0])*(v[0]-w[0]) + (v[1]-w[1])*(v[1]-w[1]) + (v[2]-w[2])*(v[2]-w[2])) ** 0.5
 
 
 #----------------------------------------------------------------------------------------------------#
