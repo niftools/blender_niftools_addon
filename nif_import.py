@@ -367,14 +367,14 @@ def fb_name(niBlock):
 def fb_matrix(niBlock):
     inode=QueryNode(niBlock)
     m=inode.GetLocalBindPos() # remind: local bind position != local transform
-    b_matrix = Matrix([m[0][0],m[0][1],m[0][2],m[0][3]],
-                        [m[1][0],m[1][1],m[1][2],m[1][3]],
-                        [m[2][0],m[2][1],m[2][2],m[2][3]],
-                        [m[3][0],m[3][1],m[3][2],m[3][3]])
+    b_matrix = Matrix([m[0][0],m[0][1],m[0][2],m[0][3]],\
+                      [m[1][0],m[1][1],m[1][2],m[1][3]],\
+                      [m[2][0],m[2][1],m[2][2],m[2][3]],\
+                      [m[3][0],m[3][1],m[3][2],m[3][3]])
     return b_matrix
 
 # Returns the scale correction matrix. A bit silly to calculate it all the time,
-# but the overhead is minimal and when the GUI will work again this will be useful
+# but the overhead is minimal and when the GUI will work again this will be useful.
 def fb_scale_mat():
     s = 1.0/SCALE_CORRECTION 
     return Matrix([s,0,0,0],[0,s,0,0],[0,0,s,0],[0,0,0,1])
@@ -396,8 +396,13 @@ def fb_armature(niBlock):
 def fb_texture( niSourceTexture ):
     global TEXTURES
     
-    if TEXTURES.has_key( niSourceTexture ):
-        return TEXTURES[ niSourceTexture ]
+    # This won't work due to the way Niflib works
+    #if TEXTURES.has_key( niSourceTexture ):
+    #    return TEXTURES[ niSourceTexture ]
+    # Alternative:
+    for t in TEXTURES.keys():
+        if t == niSourceTexture: # invokes Niflib's block equality operator...
+            return TEXTURES[t]
 
     b_image = None
     
@@ -474,35 +479,27 @@ def fb_texture( niSourceTexture ):
 
 
 
-def getTexturingPropertyCRC(textProperty):
-    s = ''
-    try:
-        s = s + textProperty["Base Texture"].asString()
-        s = s + textProperty["Glow Texture"].asString()
-    except:
-        pass
-    id = int( 0 )
-    for x in range( 0, len( s ), 2 ):
-        try:
-            id += ord( s[x+1] ) * 256
-        except:
-            pass
-        id += ord( s[x] )
-        if id > 0xffff:
-            id = id - 0x10000 + 1
-    return "%04X"%id
-
-
 # Creates and returns a material
 def fb_material(matProperty, textProperty, alphaProperty, specProperty):
     global MATERIALS
     
     # First check if material has been created before.
-    try:
-        material = MATERIALS[(matProperty, textProperty, alphaProperty, specProperty)]
-        return material
-    except KeyError:
-        pass
+    # Won't work due to way that Niflib works...
+    #try:
+    #    material = MATERIALS[(matProperty, textProperty, alphaProperty, specProperty)]
+    #    return material
+    #except KeyError:
+    #    pass
+    # Alternative:
+    for m in MATERIALS.keys():
+        # TODO: more clever way of comparing blocks.
+        # Sometimes blocks are unnecessarily repeated in a NIF file.
+        # This will result in material duplication.
+        if ( matProperty == m[0] ) \ # invoke Niflib's block equality operator
+        and ( textProperty == m[1] ) \
+        and ( alphaProperty == m[2] ) \
+        and ( specProperty == m[3] ):
+            return MATERIALS[m]
     # use the material property for the name, other properties usually have
     # no name
     name = fb_name(matProperty)
