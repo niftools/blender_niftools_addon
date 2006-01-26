@@ -495,7 +495,8 @@ def fb_material(matProperty, textProperty, alphaProperty, specProperty):
         # TODO: more clever way of comparing blocks.
         # Sometimes blocks are unnecessarily repeated in a NIF file.
         # This will result in material duplication.
-        if ( matProperty == m[0] ) \ # invoke Niflib's block equality operator
+        # (invoke Niflib's block equality operator)
+        if ( matProperty == m[0] ) \
         and ( textProperty == m[1] ) \
         and ( alphaProperty == m[2] ) \
         and ( specProperty == m[3] ):
