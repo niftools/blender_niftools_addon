@@ -139,7 +139,7 @@ MATERIALS = {}
 NAMES = {}
 
 # dictionary of armatures
-armatures = {}
+ARMATURES = {}
 
 # some variables
 
@@ -174,8 +174,6 @@ def update_registry():
     d['TEXTURES_DIR'] = TEXTURES_DIR
     d['IMPORT_DIR'] = IMPORT_DIR
     d['SEAMS_IMPORT'] = SEAMS_IMPORT
-    d['tooltips'] = tooltips
-    d['limits'] = limits
     # store the key
     Blender.Registry.SetKey('nif_import', d, True)
     read_registry()
@@ -305,38 +303,31 @@ def read_branch(niBlock):
             is_armature_root = False
             if (niBlock["Flags"].asInt() & 8) != 0:
                 # the node isn't an influence
+                if len(niChildren) == 1 and niChildren[0].GetBlockType() == "NiTriShape" or niChildren[0].GetBlockType() == "NiTriStrips":
+                    return fb_wrapped_mesh(niBlock)
                 for child in niChildren:
-                    if child.GetBlockType()=="NiNode" and (child["Flags"].asInt() & 8) == 0:
-                        # but at least one child is
+                    if child.GetBlockType()=="NiNode" and ((child["Flags"].asInt() & 8) == 0 \
+                            or child["Name"].asString()[0:2] == "Bip"):
+                        # but at least one child is. This must be the armature root
                         is_armature_root = True
                         break
-            print "%s is armature? %s" % (niBlock["Name"].asString(),is_armature_root)
-            #if (niBlock["Flags"].asInt() & 8) == 0 :
-                # the node is a mesh influence
-                #if inode.GetParent().asLink() is None or inode.GetParent().asLink()["Flags"].asInt() != 0x0002:
-                #    # armature. The parent (can only be a NiNode) either doesn't exist or isn't an influence
-                #    msg("%s is an armature" % fb_name(niBlock))
-                #    children_list = []
-                #    for child in [child for child in niChildren if child["Flags"].asInt() != 0x0002]:
-                #        b_child = read_branch(child)
-                #        if b_child: children_list.append(b_child)
-                #    b_obj = fb_armature(niBlock)
-                #    b_obj.makeParent(children_list)
-                #    return b_obj
-                #else:
-                #    # bone. Do nothing, will be filled in by the armature
-                #    return None
-            #else:
-                # grouping node
-            b_obj = fb_empty(niBlock)
+            b_obj = None
+            if is_armature_root:
+                b_obj = fb_armature(niBlock)
+                ARMATURES[niBlock["Name"]]=b_obj
+            else:
+                b_obj = fb_empty(niBlock)
             b_children_list = []
             for child in niChildren:
-                b_child_obj = read_branch(child)
-                if b_child_obj: b_children_list.append(b_child_obj)
+                #if not is_armature_root or child.GetBlockType()!="NiNode" \
+                #        or ((child["Flags"].asInt() & 8) != 0 and child["Name"].asString()[0:3] != "Bip"):
+                    b_child_obj = read_branch(child)
+                    if b_child_obj: b_children_list.append(b_child_obj)
+                #else: 
             b_obj.makeParent(b_children_list)
             b_obj.setMatrix(fb_matrix(niBlock))
             return b_obj
-        elif type == "NiTriShape"or type == "NiTriStrips":
+        elif type == "NiTriShape" or type == "NiTriStrips":
             return fb_mesh(niBlock)
         else:
             return None
@@ -389,8 +380,26 @@ def fb_empty(niBlock):
 # scans an armature hierarchy, and returns a whole armature.
 # This is done outside the normal node tree scan to allow for positioning of the bones
 def fb_armature(niBlock):
-    #not yet implemented, for the moment I'll return a placeholder empty
-    return fb_empty(niBlock)
+    global b_scene
+    armature_name = niBlock["Name"].asString()
+    b_armature = Blender.Object.New('Armature', fb_name(niBlock))
+    ARMATURES[armature_name] = b_armature
+    
+    b_scene.link(b_armature)
+    read_bone_chain(niBlock, b_armature)
+    #niChildren = niBlock["Children"].asLinkList() 
+    #for bone in [child for child in niChildren if (child["Flags"].asInt() & 8) == 0 or child["Name"].asString()[0:2] == "Bip"]:
+    #    read_bone_chain(bone, b_armature)
+    return b_armature
+
+def read_bone_chain(niBlock, b_armature):
+    niChildren = niBlock["Children"].asLinkList() 
+    if (niBlock["Flags"].asInt() & 8) == 0 or niBlock["Name"].asString()[0:2] == "Bip":
+        # create bones here...
+        pass
+    for bone in [child for child in niChildren if (child["Flags"].asInt() & 8) == 0 or child["Name"].asString()[0:2] == "Bip"]:
+        read_bone_chain(bone, b_armature)
+
 
 
 def fb_texture( niSourceTexture ):
@@ -411,8 +420,6 @@ def fb_texture( niSourceTexture ):
     if niTexSource.useExternal:
         # the texture uses an external image file
         fn = niTexSource.fileName
-        if fn[-4:].lower() == ".dds":
-            fn = fn[:-4] + ".tga"
         # go searching for it
         textureFile = None
         for texdir in TEXTURES_DIR.split(";") + [NIF_DIR, TEX_DIR]:
@@ -602,9 +609,18 @@ def fb_material(matProperty, textProperty, alphaProperty, specProperty):
     MATERIALS[(matProperty, textProperty, alphaProperty, specProperty)] = material
     return material
 
+# Creates and returns a NiNode wrapped mesh. These happen in rigged geometries
+def fb_wrapped_mesh(niBlock):
+    global b_scene
+    niGeometry = niBlock["Children"].asLinkList()[0]
+    b_mesh = fb_mesh(niGeometry)
+    b_mesh.name = fb_name(niBlock)
+    b_mesh.setMatrix(b_mesh.getMatrix()*fb_matrix(niBlock))
+    # the mesh is linked at creation
+    # b_scene.link(b_mesh)
+    return b_mesh
 
-
-# Creates and returns a mesh
+# Creates and returns a raw mesh
 def fb_mesh(niBlock):
     global b_scene
     # Mesh name -> must be unique, so tag it if needed
