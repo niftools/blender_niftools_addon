@@ -505,8 +505,8 @@ def fb_material(matProperty, textProperty, alphaProperty, specProperty):
         # (invoke Niflib's block equality operator)
         if ( matProperty == m[0] ) \
         and ( textProperty == m[1] ) \
-        and ( alphaProperty == m[2] ) \
-        and ( specProperty == m[3] ):
+        and ( alphaProperty.is_null() == m[2].is_null() ) \
+        and ( specProperty.is_null() == m[3].is_null() ):
             return MATERIALS[m]
     # use the material property for the name, other properties usually have
     # no name
@@ -559,9 +559,10 @@ def fb_material(matProperty, textProperty, alphaProperty, specProperty):
     baseTexture = None
     glowTexture = None
     if textProperty.is_null() == False:
-        BaseTextureSource = textProperty["Base Texture"].asTexDesc()
-        if BaseTextureSource.isUsed:
-            baseTexture = fb_texture(textProperty["Base Texture"].asLink())
+        iTextProperty = QueryTexturingProperty(textProperty)
+        BaseTextureDesc = iTextProperty.GetTexture(BASE_MAP)
+        if BaseTextureDesc.isUsed:
+            baseTexture = fb_texture(BaseTextureDesc.source)
             if baseTexture:
                 # Sets the texture to use face UV coordinates.
                 texco = Blender.Texture.TexCo.UV
@@ -570,9 +571,9 @@ def fb_material(matProperty, textProperty, alphaProperty, specProperty):
                 # Sets the texture for the material
                 material.setTexture(0, baseTexture, texco, mapto)
                 mbaseTexture = material.getTextures()[0]
-        GlowTextureSource = textProperty["Glow Texture"].asTexDesc()
-        if GlowTextureSource.isUsed:
-            glowTexture = fb_texture(textProperty["Glow Texture"].asLink())
+        GlowTextureDesc = iTextProperty.GetTexture(GLOW_MAP)
+        if GlowTextureDesc.isUsed:
+            glowTexture = fb_texture(GlowTextureDesc.source)
             if glowTexture:
                 # glow maps use alpha from rgb intensity
                 glowTexture.imageFlags = glowTexture.imageFlags + Blender.Texture.ImageFlags.CALCALPHA

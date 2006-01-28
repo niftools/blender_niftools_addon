@@ -1084,15 +1084,15 @@ def export_trishapes(ob, space, parent_block):
             # add NiTriShape's texturing property
             tritexprop = create_block("NiTexturingProperty")
             trishape["Properties"].AddLink(tritexprop)
-            
+
+            itritexprop = QueryTexturingProperty(tritexprop)
             tritexprop["Flags"] = 0x0001 # standard?
-            tritexprop["Apply Mode"] = 2 # modulate?
-            tritexprop["Texture Count?"] = 7 # standard?
+            itritexprop.SetApplyMode(APPLY_MODULATE)
+            itritexprop.SetTextureCount(7)
 
             if ( mesh_base_tex != None ):
                 basetex = TexDesc()
                 basetex.isUsed = 1
-                tritexprop["Base Texture"] = basetex
                 
                 # check for texture flip definition
                 txtlist = Blender.Text.Get()
@@ -1103,13 +1103,13 @@ def export_trishapes(ob, space, parent_block):
                     else:
                         fliptxt = None
                 else:
-                    basetexsrc = export_sourcetexture(mesh_base_tex)
-                    tritexprop["Base Texture"] = basetexsrc # isn't this confusing?
+                    basetex.source = export_sourcetexture(mesh_base_tex)
+                
+                itritexprop.SetTexture(BASE_MAP, basetex)
 
             if ( mesh_glow_tex != None ):
                 glowtex = TexDesc()
                 glowtex.isUsed = 1
-                tritexprop["Glow Texture"] = glowtex
 
                 # check for texture flip definition
                 txtlist = Blender.Text.Get()
@@ -1120,8 +1120,9 @@ def export_trishapes(ob, space, parent_block):
                     else:
                         fliptxt = None
                 else:
-                    glowtexsrc = export_sourcetexture(mesh_glow_tex)
-                    tritexprop["Glow Texture"] = glowtexsrc # ...
+                    glowtex.source = export_sourcetexture(mesh_glow_tex)
+                
+                itritexprop.SetTexture(GLOW_MAP, glowtex)
         
         if (mesh_hasalpha):
             # add NiTriShape's alpha propery (this is de facto an automated version of Detritus's method, see http://detritus.silgrad.com/alphahex.html)
