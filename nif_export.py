@@ -789,7 +789,7 @@ def export_flipcontroller( fliptxt, texture, target, target_tex ):
     flip["Frequency"] = 1.0
     flip["Start Time"] = (fstart - 1) * fspeed
     flip["Stop Time"] = ( fend - fstart ) * fspeed
-    flip["Unknown Int 1"] = target_tex
+    flip["Texture Slot"] = target_tex
     count = 0
     for t in tlist:
         if len( t ) == 0: continue  # skip empty lines
@@ -869,9 +869,9 @@ def export_trishapes(ob, space, parent_block):
                 or ( mesh_mat_specular_color[1] > EPSILON ) \
                 or ( mesh_mat_specular_color[2] > EPSILON ):
                 mesh_hasspec = True
-            mesh_mat_emissive = mesh_mat.getEmit()          # 'Emit' scrollbar in Blender (MW -> 0.0 0.0 0.0)
+            mesh_mat_emissive = mesh_mat.getEmit()              # 'Emit' scrollbar in Blender (MW -> 0.0 0.0 0.0)
             mesh_mat_glossiness = mesh_mat.getHardness() / 4.0  # 'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
-            mesh_mat_transparency = mesh_mat.getAlpha()     # 'A(lpha)' scrollbar in Blender (MW -> 1.0)
+            mesh_mat_transparency = mesh_mat.getAlpha()         # 'A(lpha)' scrollbar in Blender (MW -> 1.0)
             mesh_hasalpha = (abs(mesh_mat_transparency - 1.0) > EPSILON) \
                             or (mesh_mat.getIpo() != None and mesh_mat.getIpo().getCurve('Alpha'))
             mesh_mat_ambient_color = [0.0,0.0,0.0]
@@ -915,6 +915,9 @@ def export_trishapes(ob, space, parent_block):
                     else:
                         # MapTo EMIT is checked -> glow map
                         if ( mesh_glow_tex == None ):
+                            # check if calculation of alpha channel is enabled for this texture
+                            if (mesh_base_tex.imageFlags & Blender.Texture.ImageFlags.CALCALPHA != 0) and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
+                                raise NIFExportError("In mesh '%s', material '%s': glow texture must have CALCALPHA flag set, and must have MapTo.ALPHA enabled."%(ob.getName(),mesh_mat.getName()))
                             # got the glow tex
                             mesh_glow_tex = mtex.tex
                             mesh_hastex = True
@@ -1098,7 +1101,7 @@ def export_trishapes(ob, space, parent_block):
                 txtlist = Blender.Text.Get()
                 for fliptxt in txtlist:
                     if fliptxt.getName() == mesh_base_tex.getName():
-                        export_flipcontroller( fliptxt, mesh_base_tex, tritexprop, 0 )
+                        export_flipcontroller( fliptxt, mesh_base_tex, tritexprop, BASE_MAP )
                         break
                     else:
                         fliptxt = None
@@ -1115,7 +1118,7 @@ def export_trishapes(ob, space, parent_block):
                 txtlist = Blender.Text.Get()
                 for fliptxt in txtlist:
                     if fliptxt.getName() == mesh_glow_tex.getName():
-                        export_flipcontroller( fliptxt, mesh_glow_tex, tritexprop, 4 )
+                        export_flipcontroller( fliptxt, mesh_glow_tex, tritexprop, GLOW_MAP )
                         break
                     else:
                         fliptxt = None

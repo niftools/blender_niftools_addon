@@ -174,6 +174,8 @@ def update_registry():
     d['TEXTURES_DIR'] = TEXTURES_DIR
     d['IMPORT_DIR'] = IMPORT_DIR
     d['SEAMS_IMPORT'] = SEAMS_IMPORT
+    d['limits'] = limits
+    d['tooltips'] = tooltips
     # store the key
     Blender.Registry.SetKey('nif_import', d, True)
     read_registry()
@@ -271,6 +273,7 @@ def import_nif(filename):
         block_count = BlocksInMemory()
         read_progress = 0.0
         blocks_read = 0.0
+        # read the NIF tree
         blocks = root_block["Children"].asLinkList()
         for niBlock in blocks:
             b_obj = read_branch(niBlock)
@@ -307,7 +310,7 @@ def read_branch(niBlock):
                     return fb_wrapped_mesh(niBlock)
                 for child in niChildren:
                     if child.GetBlockType()=="NiNode" and ((child["Flags"].asInt() & 8) == 0 \
-                            or child["Name"].asString()[0:2] == "Bip"):
+                            or child["Name"].asString()[:3].lower() == "bip"):
                         # but at least one child is. This must be the armature root
                         is_armature_root = True
                         break
@@ -320,7 +323,7 @@ def read_branch(niBlock):
             b_children_list = []
             for child in niChildren:
                 #if not is_armature_root or child.GetBlockType()!="NiNode" \
-                #        or ((child["Flags"].asInt() & 8) != 0 and child["Name"].asString()[0:3] != "Bip"):
+                #        or ((child["Flags"].asInt() & 8) != 0 and child["Name"].asString()[:3].lower() != "bip"):
                     b_child_obj = read_branch(child)
                     if b_child_obj: b_children_list.append(b_child_obj)
                 #else: 
@@ -388,16 +391,16 @@ def fb_armature(niBlock):
     b_scene.link(b_armature)
     read_bone_chain(niBlock, b_armature)
     #niChildren = niBlock["Children"].asLinkList() 
-    #for bone in [child for child in niChildren if (child["Flags"].asInt() & 8) == 0 or child["Name"].asString()[0:2] == "Bip"]:
+    #for bone in [child for child in niChildren if (child["Flags"].asInt() & 8) == 0 or child["Name"].asString()[:3].lower() == "bip"]:
     #    read_bone_chain(bone, b_armature)
     return b_armature
 
 def read_bone_chain(niBlock, b_armature):
     niChildren = niBlock["Children"].asLinkList() 
-    if (niBlock["Flags"].asInt() & 8) == 0 or niBlock["Name"].asString()[0:2] == "Bip":
+    if (niBlock["Flags"].asInt() & 8) == 0 or niBlock["Name"].asString()[:3].lower() == "bip":
         # create bones here...
         pass
-    for bone in [child for child in niChildren if (child["Flags"].asInt() & 8) == 0 or child["Name"].asString()[0:2] == "Bip"]:
+    for bone in [child for child in niChildren if (child["Flags"].asInt() & 8) == 0 or child["Name"].asString()[:3].lower() == "bip"]:
         read_bone_chain(bone, b_armature)
 
 
@@ -577,8 +580,7 @@ def fb_material(matProperty, textProperty, alphaProperty, specProperty):
             glowTexture = fb_texture(GlowTextureDesc.source)
             if glowTexture:
                 # glow maps use alpha from rgb intensity
-                # ???
-                #glowTexture.imageFlags |= Blender.Texture.ImageFlags.CALCALPHA
+                glowTexture.imageFlags |= Blender.Texture.ImageFlags.CALCALPHA
                 # Sets the texture to use face UV coordinates.
                 texco = Blender.Texture.TexCo.UV
                 # Maps the texture to the base color channel. Not necessarily true.
@@ -599,15 +601,9 @@ def fb_material(matProperty, textProperty, alphaProperty, specProperty):
                 # NIF material alpha value
                 material.setAlpha(0.0)
                 mbaseTexture.varfac = alpha
-        if glowTexture:
-            if glowTexture.image.depth == 32: # ... crappy way to check for alpha channel in texture
-                glowTexture.imageFlags |= Blender.Texture.ImageFlags.USEALPHA # use the alpha channel
-                mglowTexture.mapto |=  Blender.Texture.MapTo.ALPHA # and map the alpha channel to transparency
-                # for proper display in Blender, we must set the alpha value
-                # to 0 and the "Var" slider in the texture Map To tab to the
-                # NIF material alpha value
-                material.setAlpha(0.0)
-                mglowTexture.varfac = alpha
+        # non-transparent glow textures have their alpha calculated from RGB
+        # not sure what to do with glow textures that have an alpha channel
+        # for now we ignore those alpha channels
     else:
         # no alpha property: force alpha 1.0 in Blender
         material.setAlpha(1.0)
