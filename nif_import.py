@@ -2,14 +2,14 @@
 
 """ Registration info for Blender menus:
 Name: 'NetImmerse/Gamebryo (.nif & .kf)...'
-Blender: 240
+Blender: 241
 Group: 'Import'
 Tip: 'Import NIF File Format (.nif & .kf)'
 """
 
 __author__ = "Alessandro Garosi (AKA Brandano) -- tdo_brandano@hotmail.com"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
-__version__ = "1.3"
+__version__ = "1.4"
 __bpydoc__ = """\
 This script imports Netimmerse (the version used by Morrowind) .NIF files to Blender.
 So far the script has been tested with 4.0.0.2 format files (Morrowind, Freedom Force).
@@ -32,7 +32,7 @@ Smoothing Flag (Slow): Import seams and convert them to "the Blender way", is sl
 Tex Path: Semi-colon separated list of texture directories.
 """
 
-# nif_import.py version 1.3
+# nif_import.py version 1.4
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -477,7 +477,8 @@ def fb_texture( niSourceTexture ):
         b_texture = Blender.Texture.New()
         b_texture.setType( 'Image' )
         b_texture.setImage( b_image )
-        b_texture.imageFlags = Blender.Texture.ImageFlags.INTERPOL + Blender.Texture.ImageFlags.MIPMAP
+        b_texture.imageFlags |= Blender.Texture.ImageFlags.INTERPOL
+        b_texture.imageFlags |= Blender.Texture.ImageFlags.MIPMAP
         TEXTURES[ niSourceTexture ] = b_texture
         return b_texture
     else:
@@ -576,11 +577,12 @@ def fb_material(matProperty, textProperty, alphaProperty, specProperty):
             glowTexture = fb_texture(GlowTextureDesc.source)
             if glowTexture:
                 # glow maps use alpha from rgb intensity
-                glowTexture.imageFlags = glowTexture.imageFlags + Blender.Texture.ImageFlags.CALCALPHA
+                # ???
+                #glowTexture.imageFlags |= Blender.Texture.ImageFlags.CALCALPHA
                 # Sets the texture to use face UV coordinates.
                 texco = Blender.Texture.TexCo.UV
                 # Maps the texture to the base color channel. Not necessarily true.
-                mapto = Blender.Texture.MapTo.COL | Texture.MapTo.EMIT
+                mapto = Blender.Texture.MapTo.COL | Blender.Texture.MapTo.EMIT
                 # Sets the texture for the material
                 material.setTexture(1, glowTexture, texco, mapto)
                 mglowTexture = material.getTextures()[1]
@@ -592,12 +594,20 @@ def fb_material(matProperty, textProperty, alphaProperty, specProperty):
             if baseTexture.image.depth == 32: # ... crappy way to check for alpha channel in texture
                 baseTexture.imageFlags |= Blender.Texture.ImageFlags.USEALPHA # use the alpha channel
                 mbaseTexture.mapto |=  Blender.Texture.MapTo.ALPHA # and map the alpha channel to transparency
-                material.setAlpha(0.0) # for proper display in Blender, we must set the alpha value to 0 and the "Val" slider in the texture Map To tab to the NIF material alpha value (but we do not have access to that button yet... we have to wait until it gets supported by the Blender Python API...)
+                # for proper display in Blender, we must set the alpha value
+                # to 0 and the "Var" slider in the texture Map To tab to the
+                # NIF material alpha value
+                material.setAlpha(0.0)
+                mbaseTexture.varfac = alpha
         if glowTexture:
             if glowTexture.image.depth == 32: # ... crappy way to check for alpha channel in texture
                 glowTexture.imageFlags |= Blender.Texture.ImageFlags.USEALPHA # use the alpha channel
                 mglowTexture.mapto |=  Blender.Texture.MapTo.ALPHA # and map the alpha channel to transparency
-                material.setAlpha(0.0) # for proper display in Blender, we must set the alpha value to 0 and the "Val" slider in the texture Map To tab to the NIF material alpha value (but we do not have access to that button yet... we have to wait until it gets supported by the Blender Python API...)
+                # for proper display in Blender, we must set the alpha value
+                # to 0 and the "Var" slider in the texture Map To tab to the
+                # NIF material alpha value
+                material.setAlpha(0.0)
+                mglowTexture.varfac = alpha
     else:
         # no alpha property: force alpha 1.0 in Blender
         material.setAlpha(1.0)

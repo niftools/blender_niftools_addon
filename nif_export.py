@@ -2,7 +2,7 @@
 
 """ Registration info for Blender menus:
 Name: 'NetImmerse/Gamebryo (.nif & .kf)...'
-Blender: 240
+Blender: 241
 Group: 'Export'
 Tooltip: 'Export selected meshes to NIF File Format (*.nif & *.kf)'
 """
@@ -15,7 +15,7 @@ Tooltip: 'Export selected meshes to NIF File Format (*.nif & *.kf)'
 
 __author__ = "amorilia@gamebox.net"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
-__version__ = "1.3"
+__version__ = "1.4"
 __bpydoc__ = """\
 This script exports selected meshes, along with parents, children, and
 armatures, to a *.nif file. If animation is present,  x*.nif and a x*.kf
@@ -56,7 +56,7 @@ extensively tested, theoretically you can write CivIV NIF files by putting
 """
 
 # --------------------------------------------------------------------------
-# NIF Export v1.3 by Amorilia ( amorilia@gamebox.net )
+# NIF Export v1.4 by Amorilia ( amorilia@gamebox.net )
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
 #
@@ -905,10 +905,10 @@ def export_trishapes(ob, space, parent_block):
                                 # require the Blender material alpha to be 0.0 (no material color can show up), and use the "Var" slider in the texture blending mode tab!
                                 # but...
                                 if (mesh_mat_transparency > EPSILON):
-                                    raise NIFExportError("Cannot export this type of transparency in material '%s': set alpha to 0.0, or turn off MapTo.ALPHA, and try again."%mesh_mat.getName())
+                                    raise NIFExportError("Cannot export this type of transparency in material '%s': instead, try to set alpha to 0.0 and to use the 'Var' slider in the 'Map To' tab under the material buttons."%mesh_mat.getName())
                                 if (mesh_mat.getIpo() and mesh_mat.getIpo().getCurve('Alpha')):
                                     raise NIFExportError("Cannot export animation for this type of transparency in material '%s': remove alpha animation, or turn off MapTo.ALPHA, and try again."%mesh_mat.getName())
-                                mesh_mat_transparency = 1.0 # aargh! we should use the "Var" value, but we cannot yet access the texture blending properties in this version of Blender... we set it to 1.0
+                                mesh_mat_transparency = mtex.varfac # we must use the "Var" value
                                 mesh_hasalpha = True
                         else:
                             raise NIFExportError("Multiple base textures in mesh '%s', material '%s', this is not supported. Delete all textures, except for the base texture."%(mesh.name,mesh_mat.getName()))
