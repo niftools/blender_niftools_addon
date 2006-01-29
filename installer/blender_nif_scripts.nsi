@@ -35,7 +35,7 @@
 
 !include "MUI.nsh"
 
-!define VERSION "1.3"
+!define VERSION "1.4"
 
 Name "Blender NIF Scripts ${VERSION}"
 Var BLENDERHOME
@@ -46,7 +46,7 @@ Var PYTHONPATH
 !define MUI_ABORTWARNING
 !define MUI_FINISHPAGE_NOAUTOCLOSE
 
-!define MUI_WELCOMEPAGE_TEXT  "This wizard will guide you through the installation of the Blender NIF Scripts.\r\n\r\nIt is recommended that you close all other applications, especially Blender.\r\n\r\nNote to Win2k/XP users: you require administrator privileges to install the Blender NIF Scripts successfully."
+!define MUI_WELCOMEPAGE_TEXT  "This wizard will guide you through the installation of the Blender NIF Scripts ${VERSION}.\r\n\r\nIt is recommended that you close all other applications, especially Blender.\r\n\r\nNote to Win2k/XP users: you require administrator privileges to install the Blender NIF Scripts successfully."
 !insertmacro MUI_PAGE_WELCOME
 
 !insertmacro MUI_PAGE_LICENSE Copyright.txt
@@ -68,7 +68,7 @@ Var PYTHONPATH
 !define MUI_FINISHPAGE_LINK_LOCATION "http://niftools.sourceforge.net/"
 !insertmacro MUI_PAGE_FINISH
 
-!define MUI_WELCOMEPAGE_TEXT  "This wizard will guide you through the uninstallation of the Blender NIF Scripts 1.3.\r\n\r\nBefore starting the uninstallation, make sure Blender is not running.\r\n\r\nClick Next to continue."
+!define MUI_WELCOMEPAGE_TEXT  "This wizard will guide you through the uninstallation of the Blender NIF Scripts ${VERSION}.\r\n\r\nBefore starting the uninstallation, make sure Blender is not running.\r\n\r\nClick Next to continue."
 !insertmacro MUI_UNPAGE_WELCOME
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
@@ -157,17 +157,20 @@ Section
   Delete "$BLENDERSCRIPTS\nif4_import_237.py"
   Delete "$BLENDERSCRIPTS\nif4.py"
   Delete "$BLENDERSCRIPTS\nif4.pyc"
-  ; Old versions of Niflib
+  ; Old versions of Niflib, delete them wherever they could be found by Blender
   Delete "$BLENDERSCRIPTS\_niflib.dll"
   Delete "$BLENDERSCRIPTS\niflib.py"
   Delete "$BLENDERSCRIPTS\niflib.pyc"
   Delete "$BLENDERSCRIPTS\bpymodules\_niflib.dll"
   Delete "$BLENDERSCRIPTS\bpymodules\niflib.py"
   Delete "$BLENDERSCRIPTS\bpymodules\niflib.pyc"
+  Delete "$PYTHONPATH\DLLs\_niflib.dll"
+  Delete "$PYTHONPATH\Lib\niflib.py"
+  Delete "$PYTHONPATH\Lib\niflib.pyc"
+  ; Old config file
+  Delete "$BLENDERSCRIPTS\bpydata\nif4.ini"
   ; Clean up registered script menu's, just to make sure they get updated
   Delete "$BLENDERSCRIPTS\..\Bpymenus"
-  ; Clean up bytecode
-  Delete "$PYTHONPATH\Lib\niflib.pyc"
 
   ; Install scripts
   SetOutPath $BLENDERSCRIPTS
