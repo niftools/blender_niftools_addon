@@ -284,6 +284,11 @@ def import_nif(filename):
         blocks_read = 0.0
         # preprocessing: mark armature nodes and bones
         mark_armatures_bones(root_block)
+        for arm_name in ARMATURE_BLOCKS.keys():
+            print "armature '%s':"%arm_name
+            for bone_name in BONE_ARMATURE_NAMES.keys():
+                if BONE_ARMATURE_NAMES[bone_name] == arm_name:
+                    print "  bone '%s'"%bone_name
         # read the NIF tree
         blocks = root_block["Children"].asLinkList()
         for niBlock in blocks:
@@ -929,11 +934,16 @@ def mark_armatures_bones(block):
         skininst = block["Skin Instance"].asLink()
         if skininst.is_null() == False:
             # it has a skin instance, so get the skeleton root
-            # this node will be imported as an armature
+            # which is an armature only if it's not a skinning influence
+            # so mark the node to be imported as an armature
+            # unless it has been marked as a bone already
             skelroot = skininst["Skeleton Root"].asLink()
             skelroot_name = skelroot["Name"].asString()
-            ARMATURE_BLOCKS[skelroot_name] = skelroot
-            print "'%s' is an armature"%skelroot_name
+            if not BONE_BLOCKS.has_key(skelroot_name):
+                ARMATURE_BLOCKS[skelroot_name] = skelroot
+                print "'%s' is an armature"%skelroot_name
+            else:
+                skelroot_name = BONE_ARMATURE_NAMES[skelroot_name]
             # now get the skinning data interface to retrieve the list of bones
             skindata = skininst["Data"].asLink()
             iskindata = QuerySkinData(skindata)
@@ -948,8 +958,24 @@ def mark_armatures_bones(block):
                     # we've already added it
                     # make sure it belongs to no other armature
                     if BONE_ARMATURE_NAMES[bone_name] != skelroot_name:
-                        raise NIFImportError("Invalid NIF file: bone '%s' belongs to more than one armature."%bone_name)
-                # and "attach" the bone to the armature:
+                        raise NIFImportError("Cannot handle this NIF file: bone '%s'\
+belongs to more than one armature: '%s' and '%s'."\
+%(bone_name,skelroot_name,BONE_ARMATURE_NAMES[bone_name]))
+                # now check if the added bone was not previously assigned as an armature
+                # if so, fix the situation
+                if ARMATURE_BLOCKS.has_key(bone_name):
+                    # oops, we were wrong: our bone was wrongly identified as an armature
+                    # so get all children of this armature
+                    print "oops: '%s' cannot be imported as an armature"%bone_name
+                    for wronged_bone_name in BONE_ARMATURE_NAMES.keys():
+                        if BONE_ARMATURE_NAMES[wronged_bone_name] == bone_name:
+                            # and associate them with skelroot instead
+                            BONE_ARMATURE_NAMES[wronged_bone_name] = skelroot_name
+                            print "so '%s' is now a bone of armature '%s'"%(wronged_bone_name,skelroot_name)
+                    # delete the evil association
+                    del ARMATURE_BLOCKS[bone_name]
+                    
+                # now we "attach" the bone to the armature:
                 # we make sure all NiNodes from this bone all the way
                 # down to the armature NiNode are marked as bones
                 complete_bone_tree(bone, skelroot_name)
