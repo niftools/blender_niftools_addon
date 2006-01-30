@@ -916,21 +916,33 @@ def find_controller(block, controllertype):
 def mark_armatures_bones(block):
     global ARMATURE_BLOCKS
     global BONE_BLOCKS
+    # search for all NiTriShape or NiTriStrips blocks...
     if block.GetBlockType() == "NiTriShape" or block.GetBlockType() == "NiTriStrips":
+        # yes, we found one, get its skin instance
         skininst = block["Skin Instance"].asLink()
         if skininst.is_null() == False:
+            # it has a skin instance, so get the skeleton root
+            # this node will be imported as an armature
             skelroot = skininst["Skeleton Root"].asLink()
             ARMATURE_BLOCKS[skelroot["Name"].asString()] = skelroot
             print "%s is an armature"%skininst["Skeleton Root"].asLink()["Name"].asString()
+            # now get the skinning data interface to retrieve the list of bones
             skindata = skininst["Data"].asLink()
             iskindata = QuerySkinData(skindata)
             for bone in iskindata.GetBones():
+                # add them, if we haven't already
                 if not BONE_BLOCKS.has_key(bone["Name"].asString()):
                     BONE_BLOCKS[bone["Name"].asString()] = bone
                     print "%s is a bone"%bone["Name"].asString()
+                # and "attach" the bone to the armature:
+                # we make sure all NiNodes from this bone all the way
+                # down to the armature NiNode are marked as bones
                 complete_bone_tree(bone)
     else:
+        # nope, it's not a NiTriShape or NiTriStrips
+        # so if it's a NiNode
         if block.GetBlockType() == "NiNode":
+            # search for NiTriShapes or NiTriStrips in the list of children
             for child in block["Children"].asLinkList():
                 mark_armatures_bones(child)
 
@@ -941,13 +953,20 @@ def mark_armatures_bones(block):
 # just call it on all bones of a skin instance
 def complete_bone_tree(bone):
     global BONE_BLOCKS
+    # we must already have marked this one as a bone
     assert BONE_BLOCKS.has_key(bone["Name"].asString()) # debug
+    # get the parent, this should be marked as an armature or as a bone
     boneparent = bone.GetParent()
     assert boneparent.is_null() == False # debug
     if not ARMATURE_BLOCKS.has_key(boneparent["Name"].asString()):
+        # parent is not marked as an armature
         if not BONE_BLOCKS.has_key(boneparent["Name"].asString()):
+            # and neither as a bone!! so mark the parent as a bone
             BONE_BLOCKS[boneparent["Name"].asString()] = boneparent
             print "%s is a bone"%boneparent["Name"].asString()
+        # now the parent is marked as a bone
+        # recursion: complete the bone tree,
+        # this time starting from the parent bone
         complete_bone_tree(boneparent)
 
 
