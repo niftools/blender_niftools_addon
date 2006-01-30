@@ -7,7 +7,7 @@ Group: 'Import'
 Tip: 'Import NIF File Format (.nif & .kf)'
 """
 
-__author__ = "Alessandro Garosi (AKA Brandano) -- tdo_brandano@hotmail.com"
+__author__ = "The NifTools team, http://niftools.sourceforge.net/"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
 __version__ = "1.4"
 __bpydoc__ = """\
@@ -66,11 +66,6 @@ Tex Path: Semi-colon separated list of texture directories.
 #
 # ***** END LICENCE BLOCK *****
 # Note: Versions of this script previous to 1.0.6 were released under the GPL license
-# The script includes small portions of code obtained in the public domain, in particular
-# the binary conversion functions. Every attempt to contact (or actually identify!) the
-# original author has so far been fruitless.
-# I have no claim of ownership these functions and will remove and replace them with
-# a (probably less efficient) version if the original author ever will ask me to.
 # --------------------------------------------------------------------------
 #
 # Credits:
@@ -100,8 +95,6 @@ Tex Path: Semi-colon separated list of texture directories.
 
 
 
-# Using the same setup as for Amorilia's exporter, so that the configuration can be shared, and to try
-# sticking a little better to conventions
 try:
     import types
 except:
@@ -331,9 +324,8 @@ def read_branch(niBlock):
 ##                        # but at least one child is. This must be the armature root
 ##                        is_armature_root = True
 ##                        break
-            is_armature_root = ARMATURE_BLOCKS.has_key(niBlock["Name"])
             b_obj = None
-            if is_armature_root:
+            if is_armature_root(niBlock):
                 b_obj = fb_armature(niBlock)
                 ARMATURES[niBlock["Name"]]=b_obj
             else:
@@ -404,25 +396,39 @@ def fb_armature(niBlock):
     global b_scene
     armature_name = niBlock["Name"].asString()
     b_armature = Blender.Object.New('Armature', fb_name(niBlock))
-    ARMATURES[armature_name] = b_armature
-    
+    b_armatureData = Blender.Armature.Armature()
+    #read_bone_chain(niBlock, b_armature)
+    niChildren = niBlock["Children"].asLinkList()
+    niChildBones = [child for child in niChildren if is_bone(child)]
+    b_armature.link(b_armatureData)
+    b_armatureData.makeEditable()
+    for niBone in niChildBones:
+        dummy = fb_bone(niBone, b_armatureData)
+    #ARMATURES[armature_name] = b_armature
     b_scene.link(b_armature)
-    read_bone_chain(niBlock, b_armature)
-    #niChildren = niBlock["Children"].asLinkList() 
-    #for bone in [child for child in niChildren if (child["Flags"].asInt() & 8) == 0 or child["Name"].asString()[:3].lower() == "bip"]:
-    #    read_bone_chain(bone, b_armature)
     return b_armature
 
-def read_bone_chain(niBlock, b_armature):
+def fb_bone(niBlock, b_armatureData):
+    bone_name = niBlock["Name"].asString()
     niChildren = niBlock["Children"].asLinkList()
-##    if (niBlock["Flags"].asInt() & 8) == 0 or niBlock["Name"].asString()[:3].lower() == "bip":
-    if BONE_BLOCKS.has_key(niBlock["Name"]):
+    niChildBones = [child for child in niChildren if is_bone(child)]  
+    if is_bone(niBlock) and len(niChildBones) > 0:
         # create bones here...
-        pass
-##    for bone in [child for child in niChildren if (child["Flags"].asInt() & 8) == 0 or child["Name"].asString()[:3].lower() == "bip"]:
-    for bone in [child for child in niChildren if BONE_BLOCKS.has_key(child["Name"])]:
-        read_bone_chain(bone, b_armature)
-
+        b_bone = Blender.Armature.Editbone()
+        # My way to set the length of the bone is to average the x offset of all child bones.
+        # It's only a visual cue, so it isn't really important to be accurate.
+        local_matrix = fb_matrix(niBlock)
+        b_bone_length = sum([local_matrix.translationPart()[0] for niBone in niChildBones]) / len(niChildBones)
+        b_bone.head = Vector(*local_matrix.translationPart())
+        b_bone.tail = Vector(b_bone_length, 0.0, 0.0) * local_matrix
+        b_armatureData.bones[bone_name] = b_bone
+        for niBone in niChildBones:
+            b_child_bone =  fb_bone(niBone, b_armatureData)
+            if b_child_bone:
+                b_armatureData.bones[bone_name] = b_child_bone
+                b_child_bone.parent = b_bone
+        return b_bone
+    return None
 
 
 def fb_texture( niSourceTexture ):
@@ -432,9 +438,13 @@ def fb_texture( niSourceTexture ):
     #if TEXTURES.has_key( niSourceTexture ):
     #    return TEXTURES[ niSourceTexture ]
     # Alternative:
-    for t in TEXTURES.keys():
-        if t == niSourceTexture: # invokes Niflib's block equality operator...
-            return TEXTURES[t]
+    try:
+        return TEXTURES[niSourceTexture]
+    except:
+        pass
+    #for t in TEXTURES.keys():
+    #    if t == niSourceTexture: # invokes Niflib's block equality operator...
+    #        return TEXTURES[t]
 
     b_image = None
     
@@ -1019,7 +1029,21 @@ def complete_bone_tree(bone, skelroot_name):
         # this time starting from the parent bone
         complete_bone_tree(boneparent, skelroot_name)
 
+# Tests a NiNode to see if it's a bone.
+def is_bone(niBlock):
+    try:
+        dummy = BONE_BLOCKS[niBlock["Name"].asString()]
+        return True
+    except:
+        return False
 
+# Tests a NiNode to see if it's an armature.
+def is_armature_root(niBlock):
+    try:
+        dummy = ARMATURE_BLOCKS[niBlock["Name"].asString()]
+        return True
+    except:
+        return False
     
 #----------------------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------#
