@@ -144,8 +144,9 @@ ARMATURES = {}
 # dictionary of armature blocks
 ARMATURE_BLOCKS = {}
 
-# dictionary of bone blocks
+# dictionary of bone blocks & bone armature names
 BONE_BLOCKS = {}
+BONE_ARMATURE_NAMES = {}
 
 # some variables
 
@@ -290,6 +291,7 @@ def import_nif(filename):
             if b_obj:
                 b_obj.setMatrix(b_obj.getMatrix() * fb_scale_mat())
         b_scene.update()
+        #fit_view()
         #b_scene.getCurrentCamera()
         
     except NIFImportError, e: # in that case, we raise a menu instead of an exception
@@ -310,20 +312,21 @@ def read_branch(niBlock):
         read_progress = blocks_read/block_count
         Blender.Window.DrawProgressBar(read_progress, "Reading NIF file")
     if not niBlock.is_null():
-        type = niBlock.GetBlockType()
-        if type == "NiNode" or type == "RootCollisionNode":
+        btype = niBlock.GetBlockType()
+        if btype == "NiNode" or btype == "RootCollisionNode":
             niChildren = niBlock["Children"].asLinkList()
-            is_armature_root = False
-            if (niBlock["Flags"].asInt() & 8) != 0:
-                # the node isn't an influence
-                if len(niChildren) == 1 and niChildren[0].GetBlockType() == "NiTriShape" or niChildren[0].GetBlockType() == "NiTriStrips":
-                    return fb_wrapped_mesh(niBlock)
-                for child in niChildren:
-                    if child.GetBlockType()=="NiNode" and ((child["Flags"].asInt() & 8) == 0 \
-                            or child["Name"].asString()[:3].lower() == "bip"):
-                        # but at least one child is. This must be the armature root
-                        is_armature_root = True
-                        break
+##            is_armature_root = False
+##            if (niBlock["Flags"].asInt() & 8) != 0:
+##                # the node isn't an influence
+##                if len(niChildren) == 1 and niChildren[0].GetBlockType() == "NiTriShape" or niChildren[0].GetBlockType() == "NiTriStrips":
+##                    return fb_wrapped_mesh(niBlock)
+##                for child in niChildren:
+##                    if child.GetBlockType()=="NiNode" and ((child["Flags"].asInt() & 8) == 0 \
+##                            or child["Name"].asString()[:3].lower() == "bip"):
+##                        # but at least one child is. This must be the armature root
+##                        is_armature_root = True
+##                        break
+            is_armature_root = ARMATURE_BLOCKS.has_key(niBlock["Name"])
             b_obj = None
             if is_armature_root:
                 b_obj = fb_armature(niBlock)
@@ -340,7 +343,7 @@ def read_branch(niBlock):
             b_obj.makeParent(b_children_list)
             b_obj.setMatrix(fb_matrix(niBlock))
             return b_obj
-        elif type == "NiTriShape" or type == "NiTriStrips":
+        elif btype == "NiTriShape" or btype == "NiTriStrips":
             return fb_mesh(niBlock)
         else:
             return None
@@ -406,11 +409,13 @@ def fb_armature(niBlock):
     return b_armature
 
 def read_bone_chain(niBlock, b_armature):
-    niChildren = niBlock["Children"].asLinkList() 
-    if (niBlock["Flags"].asInt() & 8) == 0 or niBlock["Name"].asString()[:3].lower() == "bip":
+    niChildren = niBlock["Children"].asLinkList()
+##    if (niBlock["Flags"].asInt() & 8) == 0 or niBlock["Name"].asString()[:3].lower() == "bip":
+    if BONE_BLOCKS.has_key(niBlock["Name"]):
         # create bones here...
         pass
-    for bone in [child for child in niChildren if (child["Flags"].asInt() & 8) == 0 or child["Name"].asString()[:3].lower() == "bip"]:
+##    for bone in [child for child in niChildren if (child["Flags"].asInt() & 8) == 0 or child["Name"].asString()[:3].lower() == "bip"]:
+    for bone in [child for child in niChildren if BONE_BLOCKS.has_key(child["Name"])]:
         read_bone_chain(bone, b_armature)
 
 
@@ -917,6 +922,7 @@ def find_controller(block, controllertype):
 def mark_armatures_bones(block):
     global ARMATURE_BLOCKS
     global BONE_BLOCKS
+    global BONE_ARMATURE_NAMES
     # search for all NiTriShape or NiTriStrips blocks...
     if block.GetBlockType() == "NiTriShape" or block.GetBlockType() == "NiTriStrips":
         # yes, we found one, get its skin instance
@@ -925,20 +931,28 @@ def mark_armatures_bones(block):
             # it has a skin instance, so get the skeleton root
             # this node will be imported as an armature
             skelroot = skininst["Skeleton Root"].asLink()
-            ARMATURE_BLOCKS[skelroot["Name"].asString()] = skelroot
-            print "%s is an armature"%skininst["Skeleton Root"].asLink()["Name"].asString()
+            skelroot_name = skelroot["Name"].asString()
+            ARMATURE_BLOCKS[skelroot_name] = skelroot
+            print "'%s' is an armature"%skelroot_name
             # now get the skinning data interface to retrieve the list of bones
             skindata = skininst["Data"].asLink()
             iskindata = QuerySkinData(skindata)
             for bone in iskindata.GetBones():
                 # add them, if we haven't already
-                if not BONE_BLOCKS.has_key(bone["Name"].asString()):
-                    BONE_BLOCKS[bone["Name"].asString()] = bone
-                    print "%s is a bone"%bone["Name"].asString()
+                bone_name = bone["Name"].asString()
+                if not BONE_BLOCKS.has_key(bone_name):
+                    BONE_BLOCKS[bone_name] = bone
+                    BONE_ARMATURE_NAMES[bone_name] = skelroot_name
+                    print "'%s' is a bone of armature '%s'"%(bone_name,skelroot_name)
+                else:
+                    # we've already added it
+                    # make sure it belongs to no other armature
+                    if BONE_ARMATURE_NAMES[bone_name] != skelroot_name:
+                        raise NIFImportError("Invalid NIF file: bone '%s' belongs to more than one armature."%bone_name)
                 # and "attach" the bone to the armature:
                 # we make sure all NiNodes from this bone all the way
                 # down to the armature NiNode are marked as bones
-                complete_bone_tree(bone)
+                complete_bone_tree(bone, skelroot_name)
     else:
         # nope, it's not a NiTriShape or NiTriStrips
         # so if it's a NiNode
@@ -952,23 +966,32 @@ def mark_armatures_bones(block):
 # this function helps to make sure that the bones actually form a tree,
 # all the way down to the armature node
 # just call it on all bones of a skin instance
-def complete_bone_tree(bone):
+def complete_bone_tree(bone, skelroot_name):
     global BONE_BLOCKS
+    global BONE_ARMATURE_NAMES
     # we must already have marked this one as a bone
-    assert BONE_BLOCKS.has_key(bone["Name"].asString()) # debug
+    bone_name = bone["Name"].asString()
+    assert BONE_BLOCKS.has_key(bone_name) # debug
+    assert BONE_ARMATURE_NAMES[bone_name] == skelroot_name # debug
     # get the parent, this should be marked as an armature or as a bone
     boneparent = bone.GetParent()
     assert boneparent.is_null() == False # debug
-    if not ARMATURE_BLOCKS.has_key(boneparent["Name"].asString()):
+    boneparent_name = boneparent["Name"].asString()
+    if boneparent_name != skelroot_name:
+        # parent is not the skeleton root
+        # make sure it is not another armature
+        if ARMATURE_BLOCKS.has_key(boneparent_name):
+            raise NIFImportError("Invalid NIF file: armature '%s' is also a bone."%bone_name)
         # parent is not marked as an armature
-        if not BONE_BLOCKS.has_key(boneparent["Name"].asString()):
+        if not BONE_BLOCKS.has_key(boneparent_name):
             # and neither as a bone!! so mark the parent as a bone
-            BONE_BLOCKS[boneparent["Name"].asString()] = boneparent
-            print "%s is a bone"%boneparent["Name"].asString()
+            BONE_BLOCKS[boneparent_name] = boneparent
+            BONE_ARMATURE_NAMES[boneparent_name] = skelroot_name
+            print "'%s' is a bone of armature '%s'"%(boneparent_name, skelroot_name)
         # now the parent is marked as a bone
         # recursion: complete the bone tree,
         # this time starting from the parent bone
-        complete_bone_tree(boneparent)
+        complete_bone_tree(boneparent, skelroot_name)
 
 
     
