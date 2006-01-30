@@ -209,6 +209,8 @@ def read_registry():
                 NIF_VERSION_STR = '4.0.0.2'
                 NIF_VERSION = NIF_VERSION_DICT[NIF_VERSION_STR]
                 raise # data was corrupted, reraise exception
+            tmp_limits = regdict['limits']     # just checking if it's there
+            tmp_tooltips = regdict['tooltips'] # just checking if it's there
         # if data was corrupted (or a new version of the script changed
         # (expanded, removed, renamed) the config vars and users may have
         # the old config file around):

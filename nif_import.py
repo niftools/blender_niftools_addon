@@ -190,6 +190,8 @@ def read_registry():
             TEXTURES_DIR = regdict['TEXTURES_DIR'] 
             IMPORT_DIR = regdict['IMPORT_DIR']
             SEAMS_IMPORT = regdict['SEAMS_IMPORT']
+            tmp_limits = regdict['limits']     # just checking if it's there
+            tmp_tooltips = regdict['tooltips'] # just checking if it's there
         # if data was corrupted (or a new version of the script changed
         # (expanded, removed, renamed) the config vars and users may have
         # the old config file around):
