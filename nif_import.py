@@ -809,7 +809,8 @@ def fb_mesh(niBlock):
                 material.mode |= Blender.Material.Modes.VCOL_PAINT # non-textured material: vertex colors incluence color
 
         # if there's a base texture assigned to this material sets it to be displayed in Blender's 3D view
-        if mbasetex:
+        # but only if we have UV coordinates...
+        if mbasetex and uvco:
             TEX = Blender.Mesh.FaceModes['TEX'] # face mode bitfield value
             imgobj = mbasetex.tex.getImage()
             if imgobj:
