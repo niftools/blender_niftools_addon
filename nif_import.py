@@ -141,6 +141,12 @@ NAMES = {}
 # dictionary of armatures
 ARMATURES = {}
 
+# dictionary of armature blocks
+ARMATURE_BLOCKS = {}
+
+# dictionary of bone blocks
+BONE_BLOCKS = {}
+
 # some variables
 
 USE_GUI = 0 # BROKEN, don't set to 1, we will design a GUI for importer & exporter jointly
@@ -275,6 +281,8 @@ def import_nif(filename):
         block_count = BlocksInMemory()
         read_progress = 0.0
         blocks_read = 0.0
+        # preprocessing: mark armature nodes and bones
+        mark_armatures_bones(root_block)
         # read the NIF tree
         blocks = root_block["Children"].asLinkList()
         for niBlock in blocks:
@@ -902,6 +910,48 @@ def find_controller(block, controllertype):
 
 
 
+# mark armatures and bones by peeking into NiSkinInstance blocks
+# probably we will eventually have to use this
+# since that the "is skinning influence" flag is not reliable
+def mark_armatures_bones(block):
+    global ARMATURE_BLOCKS
+    global BONE_BLOCKS
+    if block.GetBlockType() == "NiTriShape" or block.GetBlockType() == "NiTriStrips":
+        skininst = block["Skin Instance"].asLink()
+        if skininst.is_null() == False:
+            skelroot = skininst["Skeleton Root"].asLink()
+            ARMATURE_BLOCKS[skelroot["Name"].asString()] = skelroot
+            print "%s is an armature"%skininst["Skeleton Root"].asLink()["Name"].asString()
+            skindata = skininst["Data"].asLink()
+            iskindata = QuerySkinData(skindata)
+            for bone in iskindata.GetBones():
+                if not BONE_BLOCKS.has_key(bone["Name"].asString()):
+                    BONE_BLOCKS[bone["Name"].asString()] = bone
+                    print "%s is a bone"%bone["Name"].asString()
+                complete_bone_tree(bone)
+    else:
+        if block.GetBlockType() == "NiNode":
+            for child in block["Children"].asLinkList():
+                mark_armatures_bones(child)
+
+
+
+# this function helps to make sure that the bones actually form a tree,
+# all the way down to the armature node
+# just call it on all bones of a skin instance
+def complete_bone_tree(bone):
+    global BONE_BLOCKS
+    assert BONE_BLOCKS.has_key(bone["Name"].asString()) # debug
+    boneparent = bone.GetParent()
+    assert boneparent.is_null() == False # debug
+    if not ARMATURE_BLOCKS.has_key(boneparent["Name"].asString()):
+        if not BONE_BLOCKS.has_key(boneparent["Name"].asString()):
+            BONE_BLOCKS[boneparent["Name"].asString()] = boneparent
+            print "%s is a bone"%boneparent["Name"].asString()
+        complete_bone_tree(boneparent)
+
+
+    
 #----------------------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------#
 #-------- Run importer GUI.
