@@ -395,37 +395,42 @@ def fb_empty(niBlock):
 def fb_armature(niBlock):
     global b_scene
     armature_name = niBlock["Name"].asString()
+    armature_matrix = fb_matrix(niBlock)
+    armature_matrix_inverse = Matrix(*armature_matrix)
+    armature_matrix_inverse.invert()
     b_armature = Blender.Object.New('Armature', fb_name(niBlock))
     b_armatureData = Blender.Armature.Armature()
+    b_armatureData.name = armature_name
+    b_armatureData.drawAxes = True
+    b_armature.link(b_armatureData)
+    b_armatureData.makeEditable()
     #read_bone_chain(niBlock, b_armature)
     niChildren = niBlock["Children"].asLinkList()
     niChildBones = [child for child in niChildren if is_bone(child)]
-    b_armature.link(b_armatureData)
-    b_armatureData.makeEditable()
     for niBone in niChildBones:
-        dummy = fb_bone(niBone, b_armatureData)
+        dummy = fb_bone(niBone, b_armatureData, armature_matrix_inverse)
     #ARMATURES[armature_name] = b_armature
+    b_armatureData.update()
     b_scene.link(b_armature)
     return b_armature
 
-def fb_bone(niBlock, b_armatureData):
+def fb_bone(niBlock, b_armatureData, armature_matrix_inverse):
     bone_name = niBlock["Name"].asString()
     niChildren = niBlock["Children"].asLinkList()
-    niChildBones = [child for child in niChildren if is_bone(child)]  
-    if is_bone(niBlock) and len(niChildBones) > 0:
+    niChildNodes = [child for child in niChildren if child.GetBlockType() == "NiNode"]  
+    if is_bone(niBlock) and len(niChildNodes) > 0:
         # create bones here...
         b_bone = Blender.Armature.Editbone()
         # My way to set the length of the bone is to average the x offset of all child bones.
         # It's only a visual cue, so it isn't really important to be accurate.
-        local_matrix = fb_matrix(niBlock)
-        b_bone_length = sum([local_matrix.translationPart()[0] for niBone in niChildBones]) / len(niChildBones)
+        local_matrix = fb_matrix(niBlock) * armature_matrix_inverse
+        b_bone_length = sum([local_matrix.translationPart()[0] for child in niChildNodes]) / len(niChildNodes)
         b_bone.head = Vector(*local_matrix.translationPart())
         b_bone.tail = Vector(b_bone_length, 0.0, 0.0) * local_matrix
         b_armatureData.bones[bone_name] = b_bone
-        for niBone in niChildBones:
-            b_child_bone =  fb_bone(niBone, b_armatureData)
+        for niBone in [child for child in niChildren if is_bone(child)]:
+            b_child_bone =  fb_bone(niBone, b_armatureData, armature_matrix_inverse)
             if b_child_bone:
-                b_armatureData.bones[bone_name] = b_child_bone
                 b_child_bone.parent = b_bone
         return b_bone
     return None
@@ -1031,14 +1036,18 @@ def complete_bone_tree(bone, skelroot_name):
 
 # Tests a NiNode to see if it's a bone.
 def is_bone(niBlock):
+    global BONE_BLOCKS
     try:
         dummy = BONE_BLOCKS[niBlock["Name"].asString()]
+        #print "%s is a bone" % niBlock["Name"].asString()
         return True
     except:
+        #print "%s is not a bone" % niBlock["Name"].asString()
         return False
 
 # Tests a NiNode to see if it's an armature.
 def is_armature_root(niBlock):
+    global ARMATURE_BLOCKS
     try:
         dummy = ARMATURE_BLOCKS[niBlock["Name"].asString()]
         return True
