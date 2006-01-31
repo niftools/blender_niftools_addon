@@ -134,12 +134,8 @@ NAMES = {}
 # dictionary of armatures
 ARMATURES = {}
 
-# dictionary of armature blocks
-ARMATURE_BLOCKS = {}
-
-# dictionary of bone blocks & bone armature names
-BONE_BLOCKS = {}
-BONE_ARMATURE_NAMES = {}
+# dictionary of bones that belong to a certain armature
+BONE_LIST = {}
 
 # some variables
 
@@ -275,13 +271,15 @@ def import_nif(filename):
         block_count = BlocksInMemory()
         read_progress = 0.0
         blocks_read = 0.0
-        # preprocessing: mark armature nodes and bones
+        # preprocessing:
+        # mark armature nodes and bones
+        # and merge armatures that are bones of others armatures
         mark_armatures_bones(root_block)
-        for arm_name in ARMATURE_BLOCKS.keys():
+        merge_armatures()
+        for arm_name in BONE_LIST.keys():
             print "armature '%s':"%arm_name
-            for bone_name in BONE_ARMATURE_NAMES.keys():
-                if BONE_ARMATURE_NAMES[bone_name] == arm_name:
-                    print "  bone '%s'"%bone_name
+            for bone_name in BONE_LIST[arm_name]:
+                print "  bone '%s'"%bone_name
         # read the NIF tree
         blocks = root_block["Children"].asLinkList()
         for niBlock in blocks:
@@ -755,6 +753,8 @@ def fb_mesh(niBlock):
             v1=b_meshData.verts[v_map[f.v1]]
             v2=b_meshData.verts[v_map[f.v2]]
             v3=b_meshData.verts[v_map[f.v3]]
+            if (v1 == v2) or (v2 == v3) or (v3 == v1):
+                continue # we get a ValueError on faces.extend otherwise
             tmp1 = len(b_meshData.faces)
             # extend checks for duplicate faces
             # see http://www.blender3d.org/documentation/240PythonDoc/Mesh.MFaceSeq-class.html
@@ -951,56 +951,38 @@ def find_controller(block, controllertype):
 # probably we will eventually have to use this
 # since that the "is skinning influence" flag is not reliable
 def mark_armatures_bones(block):
-    global ARMATURE_BLOCKS
-    global BONE_BLOCKS
-    global BONE_ARMATURE_NAMES
+    global BONE_LIST
     # search for all NiTriShape or NiTriStrips blocks...
     if block.GetBlockType() == "NiTriShape" or block.GetBlockType() == "NiTriStrips":
         # yes, we found one, get its skin instance
+        print "Skin instance found on block '%s'"%block["Name"].asString()
         skininst = block["Skin Instance"].asLink()
         if skininst.is_null() == False:
             # it has a skin instance, so get the skeleton root
             # which is an armature only if it's not a skinning influence
             # so mark the node to be imported as an armature
-            # unless it has been marked as a bone already
             skelroot = skininst["Skeleton Root"].asLink()
             skelroot_name = skelroot["Name"].asString()
-            if not BONE_BLOCKS.has_key(skelroot_name):
-                ARMATURE_BLOCKS[skelroot_name] = skelroot
+            if not BONE_LIST.has_key(skelroot_name):
+                BONE_LIST[skelroot_name] = []
                 print "'%s' is an armature"%skelroot_name
-            else:
-                skelroot_name = BONE_ARMATURE_NAMES[skelroot_name]
             # now get the skinning data interface to retrieve the list of bones
             skindata = skininst["Data"].asLink()
             iskindata = QuerySkinData(skindata)
             for bone in iskindata.GetBones():
                 # add them, if we haven't already
                 bone_name = bone["Name"].asString()
-                if not BONE_BLOCKS.has_key(bone_name):
-                    BONE_BLOCKS[bone_name] = bone
-                    BONE_ARMATURE_NAMES[bone_name] = skelroot_name
+                if not bone_name in BONE_LIST[skelroot_name]:
+                    BONE_LIST[skelroot_name].append(bone_name)
+                    print bone["Flags"].asInt()
                     print "'%s' is a bone of armature '%s'"%(bone_name,skelroot_name)
                 else:
                     # we've already added it
                     # make sure it belongs to no other armature
-                    if BONE_ARMATURE_NAMES[bone_name] != skelroot_name:
-                        raise NIFImportError("Cannot handle this NIF file: bone '%s'\
-belongs to more than one armature: '%s' and '%s'."\
-%(bone_name,skelroot_name,BONE_ARMATURE_NAMES[bone_name]))
-                # now check if the added bone was not previously assigned as an armature
-                # if so, fix the situation
-                if ARMATURE_BLOCKS.has_key(bone_name):
-                    # oops, we were wrong: our bone was wrongly identified as an armature
-                    # so get all children of this armature
-                    print "oops: '%s' cannot be imported as an armature"%bone_name
-                    for wronged_bone_name in BONE_ARMATURE_NAMES.keys():
-                        if BONE_ARMATURE_NAMES[wronged_bone_name] == bone_name:
-                            # and associate them with skelroot instead
-                            BONE_ARMATURE_NAMES[wronged_bone_name] = skelroot_name
-                            print "so '%s' is now a bone of armature '%s'"%(wronged_bone_name,skelroot_name)
-                    # delete the evil association
-                    del ARMATURE_BLOCKS[bone_name]
-                    
+                    #for tmp_skel in BONE_LIST.keys():
+                    #    if tmp_skel != skelroot_name and bone_name in BONE_LIST[tmp_skel]:
+                    #        raise NIFImportError("Cannot handle this NIF file: bone '%s' belongs to more than one armature: '%s' and '%s'."%(bone_name,skelroot_name,tmp_skel))
+                    pass
                 # now we "attach" the bone to the armature:
                 # we make sure all NiNodes from this bone all the way
                 # down to the armature NiNode are marked as bones
@@ -1019,51 +1001,52 @@ belongs to more than one armature: '%s' and '%s'."\
 # all the way down to the armature node
 # just call it on all bones of a skin instance
 def complete_bone_tree(bone, skelroot_name):
-    global BONE_BLOCKS
-    global BONE_ARMATURE_NAMES
+    global BONE_LIST
     # we must already have marked this one as a bone
     bone_name = bone["Name"].asString()
-    assert BONE_BLOCKS.has_key(bone_name) # debug
-    assert BONE_ARMATURE_NAMES[bone_name] == skelroot_name # debug
+    assert BONE_LIST.has_key(skelroot_name) # debug
+    assert bone_name in BONE_LIST[skelroot_name] # debug
     # get the parent, this should be marked as an armature or as a bone
     boneparent = bone.GetParent()
     assert boneparent.is_null() == False # debug
     boneparent_name = boneparent["Name"].asString()
     if boneparent_name != skelroot_name:
         # parent is not the skeleton root
-        # make sure it is not another armature
-        if ARMATURE_BLOCKS.has_key(boneparent_name):
-            raise NIFImportError("Invalid NIF file: armature '%s' is also a bone."%bone_name)
-        # parent is not marked as an armature
-        if not BONE_BLOCKS.has_key(boneparent_name):
-            # and neither as a bone!! so mark the parent as a bone
-            BONE_BLOCKS[boneparent_name] = boneparent
-            BONE_ARMATURE_NAMES[boneparent_name] = skelroot_name
+        if not boneparent_name in BONE_LIST[skelroot_name]:
+            # neither is it marked as a bone: so mark the parent as a bone
+            BONE_LIST[skelroot_name].append(boneparent_name)
             print "'%s' is a bone of armature '%s'"%(boneparent_name, skelroot_name)
         # now the parent is marked as a bone
         # recursion: complete the bone tree,
         # this time starting from the parent bone
         complete_bone_tree(boneparent, skelroot_name)
 
+
+
+# merge armatures that are bones of other armatures
+def merge_armatures():
+    global BONE_LIST
+    for arm_name, bones in BONE_LIST.items():
+        for arm_name2, bones2 in BONE_LIST.items():
+            if arm_name2 in bones and BONE_LIST.has_key(arm_name):
+                BONE_LIST[arm_name].append(arm_name2)
+                BONE_LIST[arm_name].extend(bones)
+                del BONE_LIST[arm_name2]
+
+
+
 # Tests a NiNode to see if it's a bone.
 def is_bone(niBlock):
-    global BONE_BLOCKS
-    try:
-        dummy = BONE_BLOCKS[niBlock["Name"].asString()]
-        #print "%s is a bone" % niBlock["Name"].asString()
-        return True
-    except:
-        #print "%s is not a bone" % niBlock["Name"].asString()
-        return False
+    for bones in BONE_LIST.values():
+        if niBlock["Name"].asString() in bones:
+            #print "%s is a bone" % niBlock["Name"].asString()
+            return True
+    #print "%s is not a bone" % niBlock["Name"].asString()
+    return False
 
 # Tests a NiNode to see if it's an armature.
 def is_armature_root(niBlock):
-    global ARMATURE_BLOCKS
-    try:
-        dummy = ARMATURE_BLOCKS[niBlock["Name"].asString()]
-        return True
-    except:
-        return False
+    return BONE_LIST.has_key(niBlock["Name"].asString())
     
 #----------------------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------#
