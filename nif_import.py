@@ -974,7 +974,6 @@ def mark_armatures_bones(block):
                 bone_name = bone["Name"].asString()
                 if not bone_name in BONE_LIST[skelroot_name]:
                     BONE_LIST[skelroot_name].append(bone_name)
-                    print bone["Flags"].asInt()
                     print "'%s' is a bone of armature '%s'"%(bone_name,skelroot_name)
                 else:
                     # we've already added it
