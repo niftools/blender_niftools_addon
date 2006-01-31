@@ -711,39 +711,46 @@ def fb_mesh(niBlock):
     # Vertex normals
     norms = iShapeData.GetNormals()
 
-    # Construct vertex map to get unique vertex / normal pair list.
-    # We use a Python dictionary to remove doubles and to keep track of indices.
-    # While we are at it, we also add vertices while constructing the map.
-    # Normals are calculated by Blender.
-    n_map = {}
     v_map = [0]*len(verts) # pre-allocate memory, for faster performance
-    b_v_index = 0
-    for i, v in enumerate(verts):
-        # The key k identifies unique vertex /normal pairs.
-        # We use a tuple of ints for key, this works MUCH faster than a
-        # tuple of floats.
-        if norms:
-            n = norms[i]
-            k = (int(v.x*200),int(v.y*200),int(v.z*200),\
-                 int(n.x*200),int(n.y*200),int(n.z*200))
-        else:
-            k = (int(v.x*200),int(v.y*200),int(v.z*200))
-        # see if we already added this guy, and if so, what index
-        try:
-            n_map_k = n_map[k] # this is the bottle neck... can we speed this up?
-        except KeyError:
-            n_map_k = None
-        if n_map_k == None:
-            # not added: new vertex / normal pair
-            n_map[k] = i         # unique vertex / normal pair with key k was added, with NIF index i
-            v_map[i] = b_v_index # NIF vertex i maps to blender vertex b_v_index
+    if SEAMS_IMPORT == 0:
+        # Fast method: don't care about any seams!
+        for i, v in enumerate(verts):
+            v_map[i] = i # NIF vertex i maps to blender vertex i
             b_meshData.verts.extend(v.x, v.y, v.z) # add the vertex
-            b_v_index += 1
-        else:
-            # already added
-            v_map[i] = v_map[n_map_k] # NIF vertex i maps to Blender v_map[vertex n_map_nk]
-    # release memory
-    n_map = None
+    elif SEAMS_IMPORT == 1:
+        # Slow method, but doesn't introduce unwanted cracks in UV seams:
+        # Construct vertex map to get unique vertex / normal pair list.
+        # We use a Python dictionary to remove doubles and to keep track of indices.
+        # While we are at it, we also add vertices while constructing the map.
+        # Normals are calculated by Blender.
+        n_map = {}
+        b_v_index = 0
+        for i, v in enumerate(verts):
+            # The key k identifies unique vertex /normal pairs.
+            # We use a tuple of ints for key, this works MUCH faster than a
+            # tuple of floats.
+            if norms:
+                n = norms[i]
+                k = (int(v.x*200),int(v.y*200),int(v.z*200),\
+                     int(n.x*200),int(n.y*200),int(n.z*200))
+            else:
+                k = (int(v.x*200),int(v.y*200),int(v.z*200))
+            # see if we already added this guy, and if so, what index
+            try:
+                n_map_k = n_map[k] # this is the bottle neck... can we speed this up?
+            except KeyError:
+                n_map_k = None
+            if n_map_k == None:
+                # not added: new vertex / normal pair
+                n_map[k] = i         # unique vertex / normal pair with key k was added, with NIF index i
+                v_map[i] = b_v_index # NIF vertex i maps to blender vertex b_v_index
+                b_meshData.verts.extend(v.x, v.y, v.z) # add the vertex
+                b_v_index += 1
+            else:
+                # already added
+                v_map[i] = v_map[n_map_k] # NIF vertex i maps to Blender v_map[vertex n_map_nk]
+        # release memory
+        n_map = None
 
     # Adds the faces to the mesh
     f_map = [None]*len(faces)
