@@ -408,6 +408,9 @@ def fb_armature(niBlock):
     b_armatureData = Blender.Armature.Armature()
     b_armatureData.name = armature_name
     b_armatureData.drawAxes = True
+    #b_armatureData.drawType = Blender.Armature.STICK
+    #b_armatureData.drawType = Blender.Armature.ENVELOPE
+    #b_armatureData.drawType = Blender.Armature.OCTAHEDRON
     b_armature.link(b_armatureData)
     b_armatureData.makeEditable()
     #read_bone_chain(niBlock, b_armature)
@@ -432,10 +435,14 @@ def fb_bone(niBlock, b_armatureData, armature_matrix_inverse):
         b_bone = Blender.Armature.Editbone()
         # My way to set the length of the bone is to average the x offset of all child bones.
         # It's only a visual cue, so it isn't really important to be accurate.
-        local_matrix = fb_global_matrix(niBlock) * armature_matrix_inverse
-        b_bone_length = sum([fb_matrix(child).translationPart()[0] for child in niChildNodes]) / len(niChildNodes)
-        b_bone.head = local_matrix.translationPart()
-        b_bone.tail = (Vector(b_bone_length, 0.0, 0.0).resize4D() * local_matrix).resize3D()
+        armature_space_matrix = fb_global_matrix(niBlock) * armature_matrix_inverse
+        #b_bone_length = sum([fb_matrix(child).translationPart()[0] for child in niChildNodes]) / len(niChildNodes)
+        b_bone_length = sum([fb_matrix(child)[3][0] for child in niChildNodes]) / len(niChildNodes)
+        #sets the length 
+        b_bone.head = Vector(0.0, 0.0, 0.0)
+        b_bone.tail = Vector(b_bone_length, 0.0, 0.0)
+        #swaps the x and y axis to use blender's armature conventions.possibly the values on the Y axis have to be inverted?
+        b_bone.matrix = Matrix(armature_space_matrix[1],armature_space_matrix[0],armature_space_matrix[2],armature_space_matrix[3])
         b_armatureData.bones[bone_name] = b_bone
         for niBone in [child for child in niChildren if is_bone(child)]:
             b_child_bone =  fb_bone(niBone, b_armatureData, armature_matrix_inverse)
