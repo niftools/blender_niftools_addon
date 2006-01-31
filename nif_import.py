@@ -377,6 +377,15 @@ def fb_matrix(niBlock):
                       [m[3][0],m[3][1],m[3][2],m[3][3]])
     return b_matrix
 
+def fb_global_matrix(niBlock):
+    inode=QueryNode(niBlock)
+    m=inode.GetWorldBindPos() # remind: local bind position != local transform
+    b_matrix = Matrix([m[0][0],m[0][1],m[0][2],m[0][3]],\
+                      [m[1][0],m[1][1],m[1][2],m[1][3]],\
+                      [m[2][0],m[2][1],m[2][2],m[2][3]],\
+                      [m[3][0],m[3][1],m[3][2],m[3][3]])
+    return b_matrix
+
 # Returns the scale correction matrix. A bit silly to calculate it all the time,
 # but the overhead is minimal and when the GUI will work again this will be useful.
 def fb_scale_mat():
@@ -395,8 +404,7 @@ def fb_empty(niBlock):
 def fb_armature(niBlock):
     global b_scene
     armature_name = niBlock["Name"].asString()
-    armature_matrix = fb_matrix(niBlock)
-    armature_matrix_inverse = Matrix(*armature_matrix)
+    armature_matrix_inverse = fb_global_matrix(niBlock)
     armature_matrix_inverse.invert()
     b_armature = Blender.Object.New('Armature', fb_name(niBlock))
     b_armatureData = Blender.Armature.Armature()
@@ -408,7 +416,10 @@ def fb_armature(niBlock):
     niChildren = niBlock["Children"].asLinkList()
     niChildBones = [child for child in niChildren if is_bone(child)]
     for niBone in niChildBones:
-        dummy = fb_bone(niBone, b_armatureData, armature_matrix_inverse)
+        # Ok, possibly forwarding the inverse of the armature matrix through all the bone chain is silly,
+        # but I believe it saves some processing time compared to making it global or recalculating it all the time.
+        # And serves the purpose fine
+        fb_bone(niBone, b_armatureData, armature_matrix_inverse)
     #ARMATURES[armature_name] = b_armature
     b_armatureData.update()
     b_scene.link(b_armature)
@@ -423,10 +434,10 @@ def fb_bone(niBlock, b_armatureData, armature_matrix_inverse):
         b_bone = Blender.Armature.Editbone()
         # My way to set the length of the bone is to average the x offset of all child bones.
         # It's only a visual cue, so it isn't really important to be accurate.
-        local_matrix = fb_matrix(niBlock) * armature_matrix_inverse
-        b_bone_length = sum([local_matrix.translationPart()[0] for child in niChildNodes]) / len(niChildNodes)
-        b_bone.head = Vector(*local_matrix.translationPart())
-        b_bone.tail = Vector(b_bone_length, 0.0, 0.0) * local_matrix
+        local_matrix = fb_global_matrix(niBlock) * armature_matrix_inverse
+        b_bone_length = sum([fb_matrix(child).translationPart()[0] for child in niChildNodes]) / len(niChildNodes)
+        b_bone.head = local_matrix.translationPart()
+        b_bone.tail = (Vector(b_bone_length, 0.0, 0.0).resize4D() * local_matrix).resize3D()
         b_armatureData.bones[bone_name] = b_bone
         for niBone in [child for child in niChildren if is_bone(child)]:
             b_child_bone =  fb_bone(niBone, b_armatureData, armature_matrix_inverse)
