@@ -980,9 +980,9 @@ def mark_armatures_bones(block):
     # search for all NiTriShape or NiTriStrips blocks...
     if block.GetBlockType() == "NiTriShape" or block.GetBlockType() == "NiTriStrips":
         # yes, we found one, get its skin instance
-        msg("Skin instance found on block '%s'"%block["Name"].asString(),3)
         skininst = block["Skin Instance"].asLink()
         if skininst.is_null() == False:
+            msg("Skin instance found on block '%s'"%block["Name"].asString(),3)
             # it has a skin instance, so get the skeleton root
             # which is an armature only if it's not a skinning influence
             # so mark the node to be imported as an armature
