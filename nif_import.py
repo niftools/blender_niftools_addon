@@ -276,10 +276,11 @@ def import_nif(filename):
         # and merge armatures that are bones of others armatures
         mark_armatures_bones(root_block)
         merge_armatures()
-        for arm_name in BONE_LIST.keys():
-            print "armature '%s':"%arm_name
-            for bone_name in BONE_LIST[arm_name]:
-                print "  bone '%s'"%bone_name
+        if VERBOSE:
+            for arm_name in BONE_LIST.keys():
+                print "armature '%s':"%arm_name
+                for bone_name in BONE_LIST[arm_name]:
+                    print "  bone '%s'"%bone_name
         # read the NIF tree
         blocks = root_block["Children"].asLinkList()
         for niBlock in blocks:
@@ -355,7 +356,7 @@ def fb_name(niBlock):
     name = niName[:19] # Blender has a rather small name buffer
     try:
         while Blender.Object.Get(name):
-            name = '%s.%02d' % (niName[:16], uniqueInt)
+            name = '%s.%02d' % (niName[:15], uniqueInt)
             uniqueInt +=1
     except:
         pass
@@ -431,18 +432,28 @@ def fb_bone(niBlock, b_armatureData, armature_matrix_inverse):
     niChildren = niBlock["Children"].asLinkList()
     niChildNodes = [child for child in niChildren if child.GetBlockType() == "NiNode"]  
     if is_bone(niBlock) and len(niChildNodes) > 0:
+        m_correct = RotationMatrix(-90.0, 3, 'z') # y -> x; we probably want an import option for this transform
         # create bones here...
         b_bone = Blender.Armature.Editbone()
-        # My way to set the length of the bone is to average the x offset of all child bones.
-        # It's only a visual cue, so it isn't really important to be accurate.
+        # head: get position from niBlock
         armature_space_matrix = fb_global_matrix(niBlock) * armature_matrix_inverse
-        #b_bone_length = sum([fb_matrix(child).translationPart()[0] for child in niChildNodes]) / len(niChildNodes)
-        b_bone_length = sum([fb_matrix(child)[3][0] for child in niChildNodes]) / len(niChildNodes)
-        #sets the length 
-        b_bone.head = Vector(0.0, 0.0, 0.0)
-        b_bone.tail = Vector(b_bone_length, 0.0, 0.0)
-        #swaps the x and y axis to use blender's armature conventions.possibly the values on the Y axis have to be inverted?
-        b_bone.matrix = Matrix(armature_space_matrix[1],armature_space_matrix[0],armature_space_matrix[2],armature_space_matrix[3])
+        b_bone_head_x = armature_space_matrix[3][0]
+        b_bone_head_y = armature_space_matrix[3][1]
+        b_bone_head_z = armature_space_matrix[3][2]
+        # tail: average of children location
+        child_matrices = [(fb_global_matrix(child)*armature_matrix_inverse) for child in niChildNodes]
+        b_bone_tail_x = sum([child_matrix[3][0] for child_matrix in child_matrices]) / len(child_matrices)
+        b_bone_tail_y = sum([child_matrix[3][1] for child_matrix in child_matrices]) / len(child_matrices)
+        b_bone_tail_z = sum([child_matrix[3][2] for child_matrix in child_matrices]) / len(child_matrices)
+        # sets the bone heads & tails
+        b_bone.head = Vector(b_bone_head_x, b_bone_head_y, b_bone_head_z)
+        b_bone.tail = Vector(b_bone_tail_x, b_bone_tail_y, b_bone_tail_z)
+        # now we set the matrix; this has the following consequences:
+        # - head is preserved
+        # - bone length is preserved
+        # - tail is lost (up to bone length)
+        # also, we must transform y into x to comply with Blender's armature conventions: m_correct does that
+        b_bone.matrix = m_correct * armature_space_matrix.rotationPart()
         b_armatureData.bones[bone_name] = b_bone
         for niBone in [child for child in niChildren if is_bone(child)]:
             b_child_bone =  fb_bone(niBone, b_armatureData, armature_matrix_inverse)
@@ -757,7 +768,7 @@ def fb_mesh(niBlock):
                 # already added
                 v_map[i] = v_map[n_map_k] # NIF vertex i maps to Blender v_map[vertex n_map_nk]
         # release memory
-        n_map = None
+        del n_map
 
     # Adds the faces to the mesh
     f_map = [None]*len(faces)
@@ -969,7 +980,7 @@ def mark_armatures_bones(block):
     # search for all NiTriShape or NiTriStrips blocks...
     if block.GetBlockType() == "NiTriShape" or block.GetBlockType() == "NiTriStrips":
         # yes, we found one, get its skin instance
-        print "Skin instance found on block '%s'"%block["Name"].asString()
+        msg("Skin instance found on block '%s'"%block["Name"].asString(),3)
         skininst = block["Skin Instance"].asLink()
         if skininst.is_null() == False:
             # it has a skin instance, so get the skeleton root
@@ -979,7 +990,7 @@ def mark_armatures_bones(block):
             skelroot_name = skelroot["Name"].asString()
             if not BONE_LIST.has_key(skelroot_name):
                 BONE_LIST[skelroot_name] = []
-                print "'%s' is an armature"%skelroot_name
+                msg("'%s' is an armature"%skelroot_name,3)
             # now get the skinning data interface to retrieve the list of bones
             skindata = skininst["Data"].asLink()
             iskindata = QuerySkinData(skindata)
@@ -988,14 +999,7 @@ def mark_armatures_bones(block):
                 bone_name = bone["Name"].asString()
                 if not bone_name in BONE_LIST[skelroot_name]:
                     BONE_LIST[skelroot_name].append(bone_name)
-                    print "'%s' is a bone of armature '%s'"%(bone_name,skelroot_name)
-                else:
-                    # we've already added it
-                    # make sure it belongs to no other armature
-                    #for tmp_skel in BONE_LIST.keys():
-                    #    if tmp_skel != skelroot_name and bone_name in BONE_LIST[tmp_skel]:
-                    #        raise NIFImportError("Cannot handle this NIF file: bone '%s' belongs to more than one armature: '%s' and '%s'."%(bone_name,skelroot_name,tmp_skel))
-                    pass
+                    msg("'%s' is a bone of armature '%s'"%(bone_name,skelroot_name),3)
                 # now we "attach" the bone to the armature:
                 # we make sure all NiNodes from this bone all the way
                 # down to the armature NiNode are marked as bones
@@ -1028,7 +1032,7 @@ def complete_bone_tree(bone, skelroot_name):
         if not boneparent_name in BONE_LIST[skelroot_name]:
             # neither is it marked as a bone: so mark the parent as a bone
             BONE_LIST[skelroot_name].append(boneparent_name)
-            print "'%s' is a bone of armature '%s'"%(boneparent_name, skelroot_name)
+            msg("'%s' is a bone of armature '%s'"%(boneparent_name, skelroot_name),3)
         # now the parent is marked as a bone
         # recursion: complete the bone tree,
         # this time starting from the parent bone
@@ -1042,14 +1046,20 @@ def merge_armatures():
     for arm_name, bones in BONE_LIST.items():
         for arm_name2, bones2 in BONE_LIST.items():
             if arm_name2 in bones and BONE_LIST.has_key(arm_name):
-                BONE_LIST[arm_name].append(arm_name2)
-                BONE_LIST[arm_name].extend(bones)
+                msg("merging armature '%s' into armature '%s'"%(arm_name2,arm_name),3)
+                # arm_name2 is in BONE_LIST[arm_name]
+                # so add every bone2 in BONE_LIST[arm_name2] too
+                for bone2 in bones2:
+                    if not bone2 in bones:
+                        BONE_LIST[arm_name].append(bone2)
+                # remove merged armature
                 del BONE_LIST[arm_name2]
 
 
 
 # Tests a NiNode to see if it's a bone.
 def is_bone(niBlock):
+    if niBlock["Name"].asString()[:6] == "Bip01 ": return True # heuristics
     for bones in BONE_LIST.values():
         if niBlock["Name"].asString() in bones:
             #print "%s is a bone" % niBlock["Name"].asString()
