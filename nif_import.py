@@ -287,7 +287,7 @@ def import_nif(filename):
             b_obj = read_branch(niBlock)
             if b_obj:
                 b_obj.setMatrix(b_obj.getMatrix() * fb_scale_mat())
-        b_scene.update()
+        b_scene.update(1) # do a full update to make sure all transformations get applied
         #fit_view()
         #b_scene.getCurrentCamera()
         
