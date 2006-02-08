@@ -301,7 +301,6 @@ def import_nif(filename):
     
 # Reads the content of the current NIF tree branch to Blender recursively
 def read_branch(niBlock):
-    global b_scene
     # used to control the progress bar
     global block_count, blocks_read, read_progress
     blocks_read += 1.0
@@ -312,35 +311,66 @@ def read_branch(niBlock):
         btype = niBlock.GetBlockType()
         if btype == "NiNode" or btype == "RootCollisionNode":
             niChildren = niBlock["Children"].asLinkList()
-##            is_armature_root = False
-##            if (niBlock["Flags"].asInt() & 8) != 0:
-##                # the node isn't an influence
-##                if len(niChildren) == 1 and niChildren[0].GetBlockType() == "NiTriShape" or niChildren[0].GetBlockType() == "NiTriStrips":
-##                    return fb_wrapped_mesh(niBlock)
-##                for child in niChildren:
-##                    if child.GetBlockType()=="NiNode" and ((child["Flags"].asInt() & 8) == 0 \
-##                            or child["Name"].asString()[:3].lower() == "bip"):
-##                        # but at least one child is. This must be the armature root
-##                        is_armature_root = True
-##                        break
             b_obj = None
             if is_armature_root(niBlock):
+                # the whole bone branch is imported by fb_armature as well
                 b_obj = fb_armature(niBlock)
-                ARMATURES[niBlock["Name"]]=b_obj
+                # now also do the meshes
+                read_armature_branch(b_obj, niBlock, niBlock)
             else:
                 b_obj = fb_empty(niBlock)
-            b_children_list = []
-            for child in niChildren:
-                #if not is_armature_root or child.GetBlockType()!="NiNode" \
-                #        or ((child["Flags"].asInt() & 8) != 0 and child["Name"].asString()[:3].lower() != "bip"):
+                b_children_list = []
+                for child in niChildren:
                     b_child_obj = read_branch(child)
                     if b_child_obj: b_children_list.append(b_child_obj)
-                #else: 
-            b_obj.makeParent(b_children_list)
+                b_obj.makeParent(b_children_list)
             b_obj.setMatrix(fb_matrix(niBlock))
             return b_obj
         elif btype == "NiTriShape" or btype == "NiTriStrips":
             return fb_mesh(niBlock)
+        else:
+            return None
+
+# Reads the content of the current NIF tree branch to Blender
+# recursively, as meshes parented to a given armature. Note that
+# niBlock must have been imported previously as an armature, along
+# with all its bones. This function only imports meshes.
+def read_armature_branch(b_armature, niArmature, niBlock):
+    # used to control the progress bar
+    global block_count, blocks_read, read_progress
+    blocks_read += 1.0
+    if (blocks_read/block_count) >= (read_progress + 0.1):
+        read_progress = blocks_read/block_count
+        Blender.Window.DrawProgressBar(read_progress, "Reading NIF file")
+    # check if the child is non-null
+    if not niBlock.is_null():
+        btype = niBlock.GetBlockType()
+        # bone or group node?
+        if btype == "NiNode":
+            niChildren = niBlock["Children"].asLinkList()
+            for niChild in niChildren:
+                b_mesh = read_armature_branch(b_armature, niArmature, niChild)
+                if b_mesh:
+                    # correct the transform
+                    # it's parented to the armature!
+                    armature_matrix_inverse = fb_global_matrix(niArmature)
+                    armature_matrix_inverse.invert()
+                    b_mesh.setMatrix(fb_global_matrix(niChild) * armature_matrix_inverse)
+                    # add a vertex group if it's parented to a bone
+                    par_bone = get_closest_bone(niChild)
+                    if not par_bone.is_null():
+                        # set vertex index non-zero for all these
+                        # this will mimick the fact that the mesh is parented to the bone
+                        groupName = NAMES[par_bone["Name"].asString()]
+                        b_meshData = b_mesh.getData(mesh=True)
+                        b_meshData.addVertGroup(groupName)
+                        b_meshData.assignVertsToGroup(groupName, [v.index for v in b_meshData.verts], 0.1, Blender.Mesh.AssignModes.REPLACE)
+                    # make it parent of the armature
+                    b_armature.makeParentDeform([b_mesh])
+        # mesh?
+        elif btype == "NiTriShape" or btype == "NiTriStrips":
+            return fb_mesh(niBlock)
+        # anything else: throw away
         else:
             return None
 
@@ -402,7 +432,9 @@ def fb_empty(niBlock):
 # This is done outside the normal node tree scan to allow for positioning of the bones
 def fb_armature(niBlock):
     global b_scene
-    armature_name = niBlock["Name"].asString()
+    global ARMATURES
+    
+    armature_name = fb_name(niBlock)
     armature_matrix_inverse = fb_global_matrix(niBlock)
     armature_matrix_inverse.invert()
     b_armature = Blender.Object.New('Armature', fb_name(niBlock))
@@ -416,23 +448,23 @@ def fb_armature(niBlock):
     b_armatureData.makeEditable()
     #read_bone_chain(niBlock, b_armature)
     niChildren = niBlock["Children"].asLinkList()
-    niChildBones = [child for child in niChildren if is_bone(child)]
+    niChildBones = [child for child in niChildren if is_bone(child)]  
     for niBone in niChildBones:
         # Ok, possibly forwarding the inverse of the armature matrix through all the bone chain is silly,
         # but I believe it saves some processing time compared to making it global or recalculating it all the time.
         # And serves the purpose fine
-        fb_bone(niBone, b_armatureData, armature_matrix_inverse)
-    #ARMATURES[armature_name] = b_armature
+        fb_bone(niBone, b_armature, b_armatureData, armature_matrix_inverse)
+    ARMATURES[niBlock] = b_armature
     b_armatureData.update()
     b_scene.link(b_armature)
     return b_armature
 
-def fb_bone(niBlock, b_armatureData, armature_matrix_inverse):
-    bone_name = niBlock["Name"].asString()
+def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
+    bone_name = fb_name(niBlock)
     niChildren = niBlock["Children"].asLinkList()
     niChildNodes = [child for child in niChildren if child.GetBlockType() == "NiNode"]  
-    if is_bone(niBlock) and len(niChildNodes) > 0:
-        m_correct = RotationMatrix(-90.0, 3, 'z') # y -> x; we probably want an import option for this transform
+    niChildBones = [child for child in niChildNodes if is_bone(child)]  
+    if is_bone(niBlock):
         # create bones here...
         b_bone = Blender.Armature.Editbone()
         # head: get position from niBlock
@@ -442,9 +474,20 @@ def fb_bone(niBlock, b_armatureData, armature_matrix_inverse):
         b_bone_head_z = armature_space_matrix[3][2]
         # tail: average of children location
         child_matrices = [(fb_global_matrix(child)*armature_matrix_inverse) for child in niChildNodes]
-        b_bone_tail_x = sum([child_matrix[3][0] for child_matrix in child_matrices]) / len(child_matrices)
-        b_bone_tail_y = sum([child_matrix[3][1] for child_matrix in child_matrices]) / len(child_matrices)
-        b_bone_tail_z = sum([child_matrix[3][2] for child_matrix in child_matrices]) / len(child_matrices)
+        if len(niChildNodes) > 0:
+            b_bone_tail_x = sum([child_matrix[3][0] for child_matrix in child_matrices]) / len(child_matrices)
+            b_bone_tail_y = sum([child_matrix[3][1] for child_matrix in child_matrices]) / len(child_matrices)
+            b_bone_tail_z = sum([child_matrix[3][2] for child_matrix in child_matrices]) / len(child_matrices)
+        else:
+            # no children... continue bone sequence in the same direction as parent, with the same length
+            # this seems to work fine
+            parent_matrix = fb_global_matrix(niBlock.GetParent()) * armature_matrix_inverse
+            b_parent_head_x = parent_matrix[3][0]
+            b_parent_head_y = parent_matrix[3][1]
+            b_parent_head_z = parent_matrix[3][2]
+            b_bone_tail_x = 2 * b_bone_head_x - b_parent_head_x
+            b_bone_tail_y = 2 * b_bone_head_y - b_parent_head_y
+            b_bone_tail_z = 2 * b_bone_head_z - b_parent_head_z
         # sets the bone heads & tails
         b_bone.head = Vector(b_bone_head_x, b_bone_head_y, b_bone_head_z)
         b_bone.tail = Vector(b_bone_tail_x, b_bone_tail_y, b_bone_tail_z)
@@ -453,10 +496,12 @@ def fb_bone(niBlock, b_armatureData, armature_matrix_inverse):
         # - bone length is preserved
         # - tail is lost (up to bone length)
         # also, we must transform y into x to comply with Blender's armature conventions: m_correct does that
-        b_bone.matrix = m_correct * armature_space_matrix.rotationPart()
+        ### NOTE: don't import matrix at all, works even better!
+        ### m_correct = RotationMatrix(-90.0, 3, 'z') # y -> x; we probably want an import option for this transform
+        ### b_bone.matrix = m_correct * armature_space_matrix.rotationPart()
         b_armatureData.bones[bone_name] = b_bone
-        for niBone in [child for child in niChildren if is_bone(child)]:
-            b_child_bone =  fb_bone(niBone, b_armatureData, armature_matrix_inverse)
+        for niBone in niChildBones:
+            b_child_bone =  fb_bone(niBone, b_armature, b_armatureData, armature_matrix_inverse)
             if b_child_bone:
                 b_child_bone.parent = b_bone
         return b_bone
@@ -1071,6 +1116,15 @@ def is_bone(niBlock):
 def is_armature_root(niBlock):
     return BONE_LIST.has_key(niBlock["Name"].asString())
     
+# Detect closest bone ancestor.
+def get_closest_bone(niBlock):
+    par = niBlock.GetParent()
+    while not par.is_null():
+        if is_bone(par):
+            return par
+        par = par.GetParent()
+    return par
+
 #----------------------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------#
 #-------- Run importer GUI.
