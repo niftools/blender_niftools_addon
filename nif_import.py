@@ -141,6 +141,7 @@ BONE_LIST = {}
 
 USE_GUI = 0 # BROKEN, don't set to 1, we will design a GUI for importer & exporter jointly
 EPSILON = 0.005 # used for checking equality with floats, NOT STORED IN CONFIG
+MSG_LEVEL = 2 # verbosity level
 
 # 
 # Process config files.
@@ -224,7 +225,8 @@ if rd:
 # Little wrapper for debug messages
 def msg(message='-', level=2):
     if VERBOSE:
-        print message
+        if level <= MSG_LEVEL:
+            print message
 
 #
 # A simple custom exception class.
