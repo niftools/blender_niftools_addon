@@ -284,11 +284,15 @@ def import_nif(filename):
                 for bone_name in BONE_LIST[arm_name]:
                     print "  bone '%s'"%bone_name
         # read the NIF tree
-        blocks = root_block["Children"].asLinkList()
-        for niBlock in blocks:
-            b_obj = read_branch(niBlock)
-            if b_obj:
-                b_obj.setMatrix(b_obj.getMatrix() * fb_scale_mat())
+        if not is_armature_root(root_block):
+            blocks = root_block["Children"].asLinkList()
+            for niBlock in blocks:
+                b_obj = read_branch(niBlock)
+                if b_obj:
+                    b_obj.setMatrix(b_obj.getMatrix() * fb_scale_mat())
+        else:
+            b_obj = read_branch(root_block)
+            b_obj.setMatrix(b_obj.getMatrix() * fb_scale_mat())
         b_scene.update(1) # do a full update to make sure all transformations get applied
         #fit_view()
         #b_scene.getCurrentCamera()
