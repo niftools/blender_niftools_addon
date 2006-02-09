@@ -141,7 +141,7 @@ BONE_LIST = {}
 
 USE_GUI = 0 # BROKEN, don't set to 1, we will design a GUI for importer & exporter jointly
 EPSILON = 0.005 # used for checking equality with floats, NOT STORED IN CONFIG
-MSG_LEVEL = 3 # verbosity level
+MSG_LEVEL = 2 # verbosity level
 
 # 
 # Process config files.
@@ -371,12 +371,12 @@ def read_armature_branch(b_armature, niArmature, niBlock):
                         verts = [ v.index for v in b_meshData.verts ] # copy vertices, as indices
                         for groupName in b_meshData.getVertGroupNames():
                             for v in b_meshData.getVertsFromGroup(groupName):
-                                verts.remove(v)
+                                try:
+                                    verts.remove(v)
+                                except ValueError: # remove throws value-error if vertex was already removed previously
+                                    pass
                         if verts:
                             groupName = NAMES[par_bone["Name"].asString()]
-                            print "===================="
-                            print groupName
-                            for v in verts: print v
                             b_meshData.addVertGroup(groupName)
                             b_meshData.assignVertsToGroup(groupName, verts, 1.0, Blender.Mesh.AssignModes.REPLACE)
                     # make it parent of the armature
@@ -905,10 +905,31 @@ def fb_mesh(niBlock):
         for i, f in enumerate(faces):
             if f_map[i] == None: continue
             uvlist = []
-            for v in (f.v1, f.v2, f.v3):
-                uv=uvco[v]
-                uvlist.append(Vector(uv.u, 1.0 - uv.v))
-            b_meshData.faces[f_map[i]].uv = tuple(uvlist)
+            # We have to be careful here... another Blender pitfall:
+            # faces.extend sometimes adds face vertices in different order than
+            # the order of it's arguments, here we detect how it was added, and
+            # hopefully this works in all cases :-)
+            # (note: we assume that faces.extend does not change the orientation)
+            if (v_map[f.v1] == b_meshData.faces[f_map[i]].verts[0].index):
+                # this is how it "should" be
+                for v in (f.v1, f.v2, f.v3):
+                    uv=uvco[v]
+                    uvlist.append(Vector(uv.u, 1.0 - uv.v))
+                b_meshData.faces[f_map[i]].uv = tuple(uvlist)
+            elif (v_map[f.v1] == b_meshData.faces[f_map[i]].verts[1].index):
+                # vertex 3 was added first
+                for v in (f.v3, f.v1, f.v2):
+                    uv=uvco[v]
+                    uvlist.append(Vector(uv.u, 1.0 - uv.v))
+                b_meshData.faces[f_map[i]].uv = tuple(uvlist)
+            elif (v_map[f.v1] == b_meshData.faces[f_map[i]].verts[2].index):
+                # vertex 2 was added first
+                for v in (f.v2, f.v3, f.v1):
+                    uv=uvco[v]
+                    uvlist.append(Vector(uv.u, 1.0 - uv.v))
+                b_meshData.faces[f_map[i]].uv = tuple(uvlist)
+            else:
+                raise NIFImportError("Invalid UV index (BUG?)")
     
     # Sets the material for this mesh. NIF files only support one material for each mesh.
     matProperty = niBlock["Properties"].FindLink("NiMaterialProperty" )
