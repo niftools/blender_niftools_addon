@@ -365,12 +365,20 @@ def read_armature_branch(b_armature, niArmature, niBlock):
                     # add a vertex group if it's parented to a bone
                     par_bone = get_closest_bone(niChild)
                     if not par_bone.is_null():
-                        # set vertex index non-zero for all these
+                        # set vertex index 1.0 for all vertices that don't yet have a vertex weight
                         # this will mimick the fact that the mesh is parented to the bone
-                        groupName = NAMES[par_bone["Name"].asString()]
                         b_meshData = b_mesh.getData(mesh=True)
-                        b_meshData.addVertGroup(groupName)
-                        b_meshData.assignVertsToGroup(groupName, [v.index for v in b_meshData.verts], 0.1, Blender.Mesh.AssignModes.REPLACE)
+                        verts = [ v.index for v in b_meshData.verts ] # copy vertices, as indices
+                        for groupName in b_meshData.getVertGroupNames():
+                            for v in b_meshData.getVertsFromGroup(groupName):
+                                verts.remove(v)
+                        if verts:
+                            groupName = NAMES[par_bone["Name"].asString()]
+                            print "===================="
+                            print groupName
+                            for v in verts: print v
+                            b_meshData.addVertGroup(groupName)
+                            b_meshData.assignVertsToGroup(groupName, verts, 1.0, Blender.Mesh.AssignModes.REPLACE)
                     # make it parent of the armature
                     b_armature.makeParentDeform([b_mesh])
         # mesh?
