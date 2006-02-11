@@ -315,7 +315,11 @@ def read_branch(niBlock):
         Blender.Window.DrawProgressBar(read_progress, "Reading NIF file")
     if not niBlock.is_null():
         btype = niBlock.GetBlockType()
-        if btype == "NiNode" or btype == "RootCollisionNode":
+        if btype == "NiTriShape" or btype == "NiTriStrips":
+            # it's a shape node
+            return fb_mesh(niBlock)
+        elif not niBlock["Children"].is_null():
+            # it's a parent node
             niChildren = niBlock["Children"].asLinkList()
             b_obj = None
             if is_armature_root(niBlock):
@@ -332,8 +336,6 @@ def read_branch(niBlock):
                 b_obj.makeParent(b_children_list)
             b_obj.setMatrix(fb_matrix(niBlock))
             return b_obj
-        elif btype == "NiTriShape" or btype == "NiTriStrips":
-            return fb_mesh(niBlock)
         else:
             return None
 
@@ -352,7 +354,8 @@ def read_armature_branch(b_armature, niArmature, niBlock):
     if not niBlock.is_null():
         btype = niBlock.GetBlockType()
         # bone or group node?
-        if btype == "NiNode":
+        # is it an AParentNode?
+        if not niBlock["Children"].is_null():
             niChildren = niBlock["Children"].asLinkList()
             for niChild in niChildren:
                 b_mesh = read_armature_branch(b_armature, niArmature, niChild)
@@ -1088,7 +1091,7 @@ def mark_armatures_bones(block):
     else:
         # nope, it's not a NiTriShape or NiTriStrips
         # so if it's a NiNode
-        if block.GetBlockType() == "NiNode":
+        if not block["Children"].is_null():
             # search for NiTriShapes or NiTriStrips in the list of children
             for child in block["Children"].asLinkList():
                 mark_armatures_bones(child)
