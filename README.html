@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <title>The Blender NIF Scripts v1.3 - README</title>
+  <title>The Blender NIF Scripts v1.4 - README</title>
 
 
 </head>
@@ -9,25 +9,26 @@
 
 <body>
 
-<h1>The Blender NIF Scripts v1.3 - README</h1>
+<h1>The Blender NIF Scripts v1.4 - README</h1>
 
 <h2>Installation</h2>
 
 <ul>
 
-  <li><strong>Make sure you
-have Blender 2.40</strong>; the scripts won't run on older
+  <li><strong>You
+must have&nbsp;Blender 2.41 or higher</strong>; the scripts
+won't
+run on older
 versions
-of Blender.</li>
+of Blender: <a href="http://www.blender.org">http://www.blender.org</a>.</li>
 
   <li><strong>The
-scripts need a full Python 2.4 installation</strong>, as they use
-regular
-expressions and the 'struct' class. The
+scripts need a full Python 2.4 installation</strong>: <a href="http://www.python.org">http://www.python.org</a>.
+The
 version of Python installed must be compatible with Blender, or
 the scripts just won't run.&nbsp;At the time of writing this the
-latest
-'stable' version of Blender is Blender 2.40, and it was compiled with
+latest&nbsp;stable version of Blender is Blender 2.41, and it was
+compiled with
 bindings for Python 2.4.x. You won't need to uninstall Python 2.3 in
 order to get the script running, but you need to install Python 2.4 as
 well (you can get it from http://www.python.org/). Restart Blender and
@@ -38,7 +39,9 @@ The latest
 pages will be the ones you will find more useful, as the thread started
 several Blender versions back. </li>
 
-  <li>Run the installer (recommended). If this does not work for
+  <li><strong>It is recommended that you use the windows
+installer.</strong> If
+this does not work for
 some reason, you can install the scripts
 manually
 from
@@ -47,7 +50,7 @@ the zip file:
 
       <li>Remove any old versions of the scripts (such as,
 nif-export.py, nif_import_237.py, nif4_export.py, nif4_import_237.py,
-nif4.py, nif4.pyc, ...).</li>
+nif4_import_240.py, nif4.py, nif4.pyc, ...).</li>
 
       <li>Copy
 the export scripts "nif4_import_240.py" and
@@ -59,7 +62,9 @@ Copy
 that same folder if it exists, and copy "_niflib.dll" into your Python
 2.4 DLLs folder. Restart Blender, and the options to import and export
 NIF files
-will appear in the File-Import and File-Export menu's. </li>
+will appear in the File-Import and File-Export menu's. <strong>Make
+sure you
+have no other niflib.py or _niflib.dll files in other folders.</strong></li>
 
     </ul>
 
@@ -146,6 +151,7 @@ exporter &amp; niflib. </li>
 
 <h3>In the background...</h3>
 
+<p>
 Support for NIF versions &gt; 10.0.1.0 is still going on. We've
 almost completely decoded 20.0.0.4 (most NIF's in Civilization IV have
 this format), and we're starting to figure out how animations work.
@@ -156,6 +162,8 @@ support we have recieved so far. Your patience will be rewarded!<br />
 The importer is still being recoded to make use of Niflib,
 so keep an eye out for updates. We're working on full skinning support
 for the importer as well.
+</p>
+
 <h2>Exporter&nbsp;Notes</h2>
 
 <p>Main author: Amorilia</p>
@@ -190,7 +198,7 @@ color support, texture flipping support, and geometry morphing (vertex
 keys) support</li>
 
   <li>Sabregirl, Fakku, readhead33445, DemonFire, lucifer, and
-many, many others, for&nbsp;reporting bugs</li>
+many, many others, for reporting bugs</li>
 
   <li>PlayerX and klassobanieras, for decoding the
 NiSkinPartition block which gave me so many troubles </li>
@@ -200,7 +208,7 @@ IV export</li>
 
 </ul>
 
-<h3>Usage </h3>
+<h3>Usage</h3>
 
 <ul>
 

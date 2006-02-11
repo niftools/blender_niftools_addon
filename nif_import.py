@@ -495,7 +495,7 @@ def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
         else:
             # no children... continue bone sequence in the same direction as parent, with the same length
             # this seems to work fine
-            parent = get_node_parent(niBlock)
+            parent = niBlock.GetParent()
             parent_matrix = fb_global_matrix(parent) * armature_matrix_inverse
             b_parent_head_x = parent_matrix[3][0]
             b_parent_head_y = parent_matrix[3][1]
@@ -1105,7 +1105,7 @@ def complete_bone_tree(bone, skelroot_name):
     assert BONE_LIST.has_key(skelroot_name) # debug
     assert bone_name in BONE_LIST[skelroot_name] # debug
     # get the node parent, this should be marked as an armature or as a bone
-    boneparent = get_node_parent(bone)
+    boneparent = bone.GetParent()
     boneparent_name = boneparent["Name"].asString()
     if boneparent_name != skelroot_name:
         # parent is not the skeleton root
@@ -1153,19 +1153,12 @@ def is_armature_root(niBlock):
     
 # Detect closest bone ancestor.
 def get_closest_bone(niBlock):
-    par = get_node_parent(niBlock)
+    par = niBlock.GetParent()
     while not par.is_null():
         if is_bone(par):
             return par
-        par = get_node_parent(par)
+        par = par.GetParent()
     return par
-
-def get_node_parent(niBlock):
-    ninode_pars = [ p for p in niBlock.GetParents() if p.GetBlockType() == "NiNode" ]
-    if ninode_pars:
-        return ninode_pars[0]
-    else:
-        return blk_ref()
 
 #----------------------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------#
