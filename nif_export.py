@@ -27,6 +27,7 @@ Supported:<br>
     Animation groups ("Anim" text buffer).<br>
     Texture flipping (via text buffer named to the texture).
     Texture packing (toggle "packed" button next to Reload in the Image tab).
+    Hidden meshes (set object drawtype to "Wire")
 
 Missing:<br>
     Particle effects, cameras, lights.<br>
@@ -1063,7 +1064,10 @@ def export_trishapes(ob, space, parent_block):
         # fill in the NiTriShape's non-trivial values
         if (parent_block["Name"].asString() != ""):
             trishape["Name"] = "Tri " + parent_block["Name"].asString() + " %i"%materialIndex # Morrowind's child naming convention
-        trishape["Flags"] = 0x0004 # ? this seems standard
+        if ob.getDrawType() != 2: # not wire
+            trishape["Flags"] = 0x0004 # use triangles as bounding box
+        else:
+            trishape["Flags"] = 0x0005 # use triangles as bounding box + hide
 
         trishape["Translation"] = ob_translation
         trishape["Rotation"]    = ob_rotation

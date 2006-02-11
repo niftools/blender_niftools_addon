@@ -458,6 +458,8 @@ def fb_armature(niBlock):
     b_armatureData = Blender.Armature.Armature()
     b_armatureData.name = armature_name
     b_armatureData.drawAxes = True
+    b_armatureData.envelopes = False
+    b_armatureData.vertexGroups = True
     #b_armatureData.drawType = Blender.Armature.STICK
     #b_armatureData.drawType = Blender.Armature.ENVELOPE
     #b_armatureData.drawType = Blender.Armature.OCTAHEDRON
@@ -764,6 +766,12 @@ def fb_mesh(niBlock):
     b_mesh.link(b_meshData)
     b_scene.link(b_mesh)
 
+    # Mesh hidden flag
+    if niBlock["Flags"].asInt() & 1 == 1:
+        b_mesh.setDrawType(2) # hidden: wire
+    else:
+        b_mesh.setDrawType(4) # not hidden: shaded
+
     # Mesh transform matrix, sets the transform matrix for the object.
     b_mesh.setMatrix(fb_matrix(niBlock))
     # Mesh geometry data. From this I can retrieve all geometry info
@@ -941,7 +949,11 @@ def fb_mesh(niBlock):
         textProperty = niBlock["Properties"].FindLink( "NiTexturingProperty" )
         alphaProperty = niBlock["Properties"].FindLink("NiAlphaProperty")
         specProperty = niBlock["Properties"].FindLink("NiSpecularProperty")
-        material = fb_material(matProperty, textProperty, alphaProperty, specProperty)
+        if uvco:
+            material = fb_material(matProperty, textProperty, alphaProperty, specProperty)
+        else:
+            # no UV coordinates: no texture
+            material = fb_material(matProperty, blk_ref(), alphaProperty, specProperty)
         b_meshData.materials = [material]
 
         # fix up vertex colors depending on whether we had textures in the material
