@@ -64,7 +64,8 @@ many, many others, for reporting bugs</li>
   <li>PlayerX and klassobanieras, for decoding the
 NiSkinPartition block which gave me so many troubles </li>
 
-  <li>NeOmega, for reporting bugs and confirming the first successful Civilization
+  <li>NeOmega, for reporting bugs and confirming the first
+successful Civilization
 IV export</li>
 
   <li>Campbell Barton (AKA Ideasman, Cambo) for making original
@@ -205,10 +206,10 @@ export config is also used by the importer.</em></li>
   <li>Importer has undergone a complete rewrite and now also uses
 Niflib, just like the export script. Niflib has undergone some
 upgrading as well, and therefore <strong>the scripts support all
-known NIF versions up to 20.0.0.4</strong>.
-Hence, both
+known NIF versions up to 20.0.0.4</strong>. Hence, both
 importer &amp; exporter support all Civilization IV models, except
-for animation (but armatures and skinning&nbsp;should work just fine).
+for animation (but armatures and skinning&nbsp;should work just
+fine).
 For the exporter to write Civ IV files, set "nif version" to for
 instance
 4.2.2.0 and enable&nbsp;"strip
@@ -220,7 +221,9 @@ extensively tested. Import of these higher versions has been tested a
 little bit more. In any case, if you find bugs... be sure to report
 them to the niftools forum!</li>
 
-  <li>Full skinning support for the importer (finally!).</li>
+  <li>Finally, <strong>full skinning support</strong> (armatures and vertex weights)
+for both importer and
+exporter.</li>
 
   <li>Support for hidden meshes in importer &amp; exporter:
 set the object's Drawtype to "Wire" instead of &nbsp;"Shaded".</li>
@@ -231,8 +234,8 @@ exporter &amp; Niflib. </li>
 </ul>
 
 <h3>In the background...</h3>
-
-Support for Civ IV animation files (.kf &amp; .kfm) is in progress.<br />
+All known NIF versions have been decoded. Support for Civ IV animation
+files (.kf &amp; .kfm) is in progress, as well as animation import.<br />
 
 <h2>Exporter Notes</h2>
 
@@ -374,7 +377,8 @@ the whole model. </li>
 
 <ul>
 
-  <li>Particle effects, cameras, and lights are not exported. We are working on it.</li>
+  <li>Particle effects, cameras, and lights are not exported. We
+are working on it.</li>
 
   <li>Actions (for animation groups) are ignored. Workaround:
 define actions in text buffer called "Anim".</li>
@@ -484,9 +488,11 @@ we'll be able to export the modified meshes from Blender.</li>
 Limitations</h3>
 
 <ul>
+
   <li>The script doesn't import animation, particle
 effects, multiple
 UV channels.... the list is too long. We are working on it.</li>
+
 </ul>
 
 <h3> Old History </h3>

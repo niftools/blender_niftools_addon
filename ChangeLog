@@ -38,3 +38,11 @@ Version 1.3 (Jan 21, 2006):
 * Export: Skinning bugfix for multimaterialed meshes.
 * Export: Vertex weight calculation optimized, and no more annoying console messages!
 * Export: Embedded textures reestablished.
+
+Version 1.4 (Feb 12, 2006)
+* Import: completely rewritten, uses Niflib now just like exporter
+* Import/Export: support for all NIF versions up to 20.0.0.4!!
+* Import/Export: corrected specularity import/export (thanks NeOmega)
+* Import/Export: hidden flag via object wire drawtype
+* Import: full skinning support (but still no animation)
+* Import: better bone length estimation, automatic alignment
