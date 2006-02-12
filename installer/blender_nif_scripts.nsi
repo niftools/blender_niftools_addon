@@ -155,6 +155,7 @@ Section
   ; SourceForge versions
   Delete "$BLENDERSCRIPTS\nif4_export.py"
   Delete "$BLENDERSCRIPTS\nif4_import_237.py"
+  Delete "$BLENDERSCRIPTS\nif4_import_240.py"
   Delete "$BLENDERSCRIPTS\nif4.py"
   Delete "$BLENDERSCRIPTS\nif4.pyc"
   ; Old versions of Niflib, delete them wherever they could be found by Blender
@@ -175,7 +176,7 @@ Section
   ; Install scripts
   SetOutPath $BLENDERSCRIPTS
   File ..\nif_export.py
-  File ..\nif4_import_240.py
+  File ..\nif_import.py
   SetOutPath "$PYTHONPATH\Lib"
   File ..\..\niflib\niflib.py
   SetOutPath "$PYTHONPATH\DLLs"
