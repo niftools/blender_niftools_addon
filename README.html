@@ -2,9 +2,12 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 
+
   
 
 
+  
+  
   
   <title>The Blender NIF Scripts v1.4</title>
   <style type="text/css">
@@ -26,41 +29,54 @@ a:hover.nav { color: #FF0000; background: transparent; }
 <body>
 
 
+
 <h1>The Blender NIF Scripts v1.4</h1>
+
 
 
 <h2>Contributors</h2>
 
 
+
 <p>(in random order)</p>
 
 
+
 <ul>
+
 
 
   <li>Brandano (scripts coder, original import script author)</li>
 
 
+
   <li>Amorilia (scripts coder, original export script author)</li>
+
 
 
   <li>Shon (Niflib author, scripts bugtesting)</li>
 
 
+
   <li>m4444x (scripts coder)</li>
+
 
 
 </ul>
 
 
+
 <h3>We also&nbsp;thank...</h3>
+
 
 
 <ul>
 
 
+
   <li>Mannon, who started all this!
   </li>
+
 
 
   <li>Taharez, for helping with the generated Python NIF
@@ -68,7 +84,9 @@ library,&nbsp;NIF
 specs, helping out with the file format, and some debugging</li>
 
 
+
   <li>Brick, for NIF specs </li>
+
 
 
   <li>y67_a, for pointing out the fact that the script forgot
@@ -76,18 +94,22 @@ to
 export normals; and thereby opening the path to smoothing support </li>
 
 
+
   <li>Sabregirl, Fakku, readhead33445, DemonFire, lucifer,
 Andysaurus, and
 many, many others, for reporting bugs</li>
+
 
 
   <li>PlayerX and klassobanieras, for decoding the
 NiSkinPartition block which gave me so many troubles </li>
 
 
+
   <li>NeOmega, for reporting bugs and confirming the first
 successful Civilization
 IV export</li>
+
 
 
   <li>Campbell Barton (AKA Ideasman, Cambo) for making original
@@ -96,13 +118,16 @@ clear
 enough to be used as a learning resource</li>
 
 
+
   <li>Timothy Wakeham (AKA timmeh),&nbsp;to help with the way
 the UV maps work in Blender</li>
+
 
 
   <li>Portions of the original importer were derived (through the
 old tested method of cut'n paste) from the obj import script
 obj_import.py: OBJ Import v0.9 by Campbell Barton (AKA Ideasman)</li>
+
 
 
   <li>The original importer file reading strategy was 'inspired'
@@ -116,13 +141,17 @@ included with the DAOC Mappergui application, available at <a href="http://nathr
   </li>
 
 
+
 </ul>
+
 
 
 <h2>Installation</h2>
 
 
+
 <ul>
+
 
 
   <li><strong>You
@@ -131,6 +160,7 @@ won't
 run on older
 versions
 of Blender: <a href="http://www.blender.org">http://www.blender.org</a>.</li>
+
 
 
   <li><strong>The
@@ -151,6 +181,7 @@ pages will be the ones you will find more useful, as the thread started
 several Blender versions back. </li>
 
 
+
   <li><strong>It is recommended that you use the windows
 installer.</strong> If
 this does not work for
@@ -159,7 +190,9 @@ manually
 from
 the zip file:
     
+    
     <ul>
+
 
 
       <li>Remove any old versions of the scripts (such as,
@@ -167,8 +200,9 @@ nif-export.py, nif_import_237.py, nif4_export.py, nif4_import_237.py,
 nif4_import_240.py, nif4.py, nif4.pyc, ...).</li>
 
 
+
       <li>Copy
-the export scripts "nif4_import_240.py" and
+the export scripts "nif_import.py" and
 "nif_export.py", into the Blender scripts folder.
 Under Windows this is by default C:\Program Files\Blender
 Foundation\Blender\.blender\scripts.
@@ -182,16 +216,22 @@ sure you
 have no other niflib.py or _niflib.dll files in other folders.</em></li>
 
 
+
+    
     
     </ul>
+
 
 
   </li>
 
 
+
   <li>(optional) If you wish to use Morrowind's textures:
     
+    
     <ul>
+
 
 
       <li>extract the contents of 'Morrowind.bsa' (and, if you
@@ -199,39 +239,52 @@ have the expansions, also 'Tribunal.bsa' and 'Bloodmoon.bsa') into
 'C:\MORROWIND' </li>
 
 
+
       <li>convert all .dds files in 'C:\MORROWIND\textures' to
 .tga files (for instance, using 'DDS Converter 2.1')</li>
 
 
+
+    
     
     </ul>
+
 
 
   </li>
 
 
+
 </ul>
+
 
 
 <h2>Support</h2>
 
 
+
 <ul>
+
 
 
   <li><a href="http://niftools.sourceforge.net/forum/">http://niftools.sourceforge.net/forum/</a></li>
 
 
+
   <li><a href="http://niftools.sourceforge.net/tutorial/blender/">http://niftools.sourceforge.net/tutorial/blender/</a></li>
+
 
 
 </ul>
 
 
+
 <h2>Release Notes</h2>
 
 
+
 <ul>
+
 
 
   <li>If you don't use the installer, make sure to remove any
@@ -244,6 +297,7 @@ recommended to use the installer: it detects these files and
 automatically deletes them.</li>
 
 
+
   <li>To change the importer and exporter settings, go
 to the scripts window in Blender, and select
 Scripts-&gt;System-&gt;Scripts Config
@@ -252,13 +306,17 @@ in the
 export config is also used by the importer.</em></li>
 
 
+
 </ul>
+
 
 
 <h3>Highlights of this Release</h3>
 
 
+
 <ul>
+
 
 
   <li>Importer has undergone a complete rewrite and now also uses
@@ -280,40 +338,52 @@ little bit more. In any case, if you find bugs... be sure to report
 them to the niftools forum!</li>
 
 
+
   <li>Finally, <strong>full skinning support</strong> (armatures and vertex weights)
 for both importer and
 exporter.</li>
+
 
 
   <li>Support for hidden meshes in importer &amp; exporter:
 set the object's Drawtype to "Wire" instead of &nbsp;"Shaded".</li>
 
 
+
   <li>Various bugs have been fixed in the importer &amp;
 exporter &amp; Niflib. </li>
+
 
 
 </ul>
 
 
+
 <h3>In the background...</h3>
+
 
 All known NIF versions have been decoded. Support for Civ IV animation
 files (.kf &amp; .kfm) is in progress, as well as animation import.<br />
 
 
+
 <h2>Exporter Notes</h2>
+
 
 
 <h3>Usage</h3>
 
 
+
 <ul>
+
 
 
   <li>create meshes (and empties, if you like) in blender:
     
+    
     <ul>
+
 
 
       <li>IMPORTANT: if you wish to animate meshes without
@@ -323,16 +393,22 @@ inverse (in
 Object Mode, use CTRL-SHIFT-P) </li>
 
 
+
+    
     
     </ul>
+
 
 
   </li>
 
 
+
   <li>create armatures and bones for animation
     
+    
     <ul>
+
 
 
       <li>either edit bone envelopes, and parent your meshes to
@@ -340,27 +416,35 @@ armatures with vertex groups; the vertex weights will be constructed
 using the bone envelopes</li>
 
 
+
       <li>or, simply parent meshes to bones (armature must be
 in
 pose mode)</li>
+
 
 
       <li>insert pose mode keys in different frames (press I to
 insert key, and select Rot, Loc, or LocRot) to compose your animation</li>
 
 
+
+    
     
     </ul>
 
 
+
   </li>
+
 
 
   <li>create UV coordinates (be sure to check the blender
 manual
 for more details)
     
+    
     <ul>
+
 
 
       <li>create seams (3D View, Edit Mode, select seam
@@ -368,9 +452,11 @@ vertices,
 CTRL-E) </li>
 
 
+
       <li>in the 3D View, UV Face Select Mode, select all
 faces,
 press U-&gt;LSCM </li>
+
 
 
       <li>(optional) if you want to create your own texture: in
@@ -378,39 +464,53 @@ the UV/Image Editor, UVs-&gt;Save UV Face Layout, and process the
 saved texture with your favorite 2D paint program </li>
 
 
+
+    
     
     </ul>
+
 
 
   </li>
 
 
+
   <li>add materials to your meshes, and add one texture to each
 material, with the following settings:
+    
     
     <ul>
 
 
+
       <li>texture map input: UV </li>
+
 
 
       <li>texture map output: COL for diffuse map (base
 texture) </li>
 
 
+
+    
     
     </ul>
+
 
 
   </li>
 
 
+
   <li>for each texture:
+    
     
     <ul>
 
 
+
       <li>set texture type to 'Image' </li>
+
 
 
       <li>either load a texture from 'C:\MORROWIND\textures',
@@ -420,16 +520,21 @@ Files\Textures' folder, and load it from there. Note that Blender does
 not read .dds files.</li>
 
 
+
       <li>although this is not recommended, textures can be
 embedded by toggling the "packed" button next to the "Reload" button in
 the Image tab</li>
 
 
+
+    
     
     </ul>
 
 
+
   </li>
+
 
 
   <li>(optional) animate meshes and/or empty objects (press I
@@ -440,9 +545,11 @@ buffer called 'Anim' (check source code for an example; so far we only
 support Morrowind-type animations) </li>
 
 
+
   <li>(optional) to export vertex colors, turn on the
 VCOL_PAINT
 flag in the material tab </li>
+
 
 
   <li>(optional) Hull your model in a simple so-called
@@ -454,22 +561,29 @@ to speed up collision detection, to help the player walk over objects
 such as stairs, or to allow the player to walk through certain parts of
 your model such as spider webs.
     
+    
     <ul>
+
 
 
       <li>create a mesh called
 'RootCollisionNode' (object name, not datablock name)</li>
 
 
+
       <li>don't apply any
 material to it </li>
 
 
+
+    
     
     </ul>
 
 
+
   </li>
+
 
 
   <li>(optional) if you suspect that some of the faces of your
@@ -477,6 +591,7 @@ meshes are not convex, then you should let blender triangulate these
 meshes (press CTRL-T in edit mode with all vertices selected), because
 in that case, Blender's triangulation algorithm is less error prone
 than the triangulation algorithm used in this script. </li>
+
 
 
   <li><strong>select the models that you wish to export</strong>,
@@ -487,30 +602,39 @@ objects along with all of their children, so you don't have to select
 the whole model. </li>
 
 
+
 </ul>
+
 
 
 <h3>Limitations</h3>
 
 
+
 <ul>
+
 
 
   <li>Particle effects, cameras, and lights are not exported. We
 are working on it.</li>
 
 
+
   <li>Actions (for animation groups) are ignored. Workaround:
 define actions in text buffer called "Anim".</li>
+
 
 
 </ul>
 
 
+
 <h3>Known Issues </h3>
 
 
+
 <ul>
+
 
 
   <li>Ambient and emit colors are obtained by multiplication
@@ -518,8 +642,10 @@ with
 the diffuse color.</li>
 
 
+
   <li>Blender double sided faces will be one sided in the NIF
 file (workaround: duplicate faces).</li>
+
 
 
   <li>Export of directly animated&nbsp;meshes is buggy
@@ -529,25 +655,32 @@ you parent without parent inverse
 parent meshes to bones and animate the bones.</li>
 
 
+
   <li>Non-uniformly scaled objects cannot be exported.
 Workaround: apply size and rotation (CTRL-A). Unfortunately, this
 workaround
 does not work on empties. </li>
 
 
+
 </ul>
+
 
 
 <h3>Old History</h3>
 
 
+
 <p>(For recent history see the ChangeLog file)</p>
+
 
 
 <ul>
 
 
+
   <li>0.0 (Jun 15): first try </li>
+
 
 
   <li>0.1 (Jun 20): fixed texture mapping, fixed
@@ -555,19 +688,24 @@ transformations,
 improved error handling </li>
 
 
+
   <li>0.2 (Jun 30): export animation, transparency, multiple
 materials per mesh </li>
+
 
 
   <li>0.3 (Aug 25): export normals (fixes lighting, thx y67_a),
 niflib.py updated </li>
 
 
+
   <li>0.4 (Aug 28): support smoothing </li>
+
 
 
   <li>0.5 (Sep 26): support for non-textured objects,
 optimization in trishapedata </li>
+
 
 
   <li>0.6 (Sep 27): support for uniformly scaled objects (fixes
@@ -575,8 +713,10 @@ compatibility problem with Brandano's import script), fixed emissive
 and ambient colour </li>
 
 
+
   <li>0.7 (Sep 30): animation group support (contributed by
 m4444x) </li>
+
 
 
   <li>0.7.1 (Oct 4): vertex color support (contributed by
@@ -584,37 +724,48 @@ m4444x)
   </li>
 
 
+
   <li>0.8 (Oct 12): code cleanup, moved to BSD license </li>
+
 
 
   <li>Newer versions: see ChangeLog file.</li>
 
 
+
 </ul>
+
 
 
 <h2>Importer Notes</h2>
 
 
+
 <h3>Credits</h3>
 
 
+
 <ul>
+
 
 
 </ul>
 
 
+
 <h3>Usage</h3>
 
 
+
 <ul>
+
 
 
   <li>Launch the script, select the .NIF file you wish to
 import,
 and you are
 set.</li>
+
 
 
   <li>Actually, no, that's not it if you also want to load the
@@ -634,14 +785,18 @@ is also in order to keep the texture file path consistent for the time
 we'll be able to export the modified meshes from Blender.</li>
 
 
+
 </ul>
+
 
 
 <h3>
 Limitations</h3>
 
 
+
 <ul>
+
 
 
   <li>The script doesn't import animation, particle
@@ -649,16 +804,21 @@ effects, multiple
 UV channels.... the list is too long. We are working on it.</li>
 
 
+
 </ul>
+
 
 
 <h3> Old History </h3>
 
 
+
 <p> (For recent history see the ChangeLog file) </p>
 
 
+
 <ul>
+
 
 
   <li>1.5a: fixed a bug where texture files with trailing null
@@ -666,10 +826,12 @@ characters would
 crash the importer</li>
 
 
+
   <li>1.6a: changed the material handling, now doesn't generate
 duplicate materials, changed the mesh creation method. Now it builds
 hierarchical relations
 generating empties as correspondences to NiNodes</li>
+
 
 
   <li>1.7a: got rid of a couple of matrix operations, now I
@@ -683,6 +845,7 @@ importer. Now not only all the hierarchies are stored, but the empties
 that act
 as grouping widgets are moved to the correct relative coordinates, so
 we might start to think about animations.</li>
+
 
 
   <li>1.8a: I did some little optimization, fixed a few things.
@@ -700,10 +863,12 @@ import is pretty much istantaneous anyway, but I believe that this
 wastes less memory.</li>
 
 
+
   <li>1.9a: Not published, it didn't really introduce much
 change
 to what was
 already there.</li>
+
 
 
   <li>2.0a: Big things afoot, now I got bones! The script now
@@ -730,6 +895,7 @@ version you need, but is sure to work. At this time the correct version
 is Python 2.3.5</li>
 
 
+
   <li>1.0.1: I took the occasion of a new Blender version out
 and
 changed my
@@ -740,11 +906,13 @@ length), and are aligned properly, well, within 1 degree of their roll
 position</li>
 
 
+
   <li>1.0.2: A few (quite a few actually) bugfixes by Amorilia
 (whoopee, another
 python coder onboard!). Now the script won't crash with larger NIFs.
 And read the right number
 of blocks. And won't overwrite existing meshes etc.. </li>
+
 
 
   <li>1.0.3: Added a new way to roll bones to their proper
@@ -757,6 +925,7 @@ Thycoon 2"
 NIF files. Zoo Thycoon 2 files are way too different from Morrowind's
 files to be
 imported, though.</li>
+
 
 
   <li>1.0.4: Removed a bunch of debug messages to speed up
@@ -774,10 +943,12 @@ as the transform matrix of the NiNode and NiTriShape are combined while
 importing.</li>
 
 
+
   <li>1.0.5: Fixed a few typos and a couple of mistakes that
 Amorilia pointed out.
 Still incomplete, by far, but seems to be approaching the "usable"
 state.</li>
+
 
 
   <li>1.0.6: Added Amorilia's corrections to the import of UV
@@ -796,17 +967,22 @@ I'll rely on the Blender's user forums, until I can come up with a
 decent tutorial on setting up python properly.</li>
 
 
+
 </ul>
 
 
+
 <h2>License </h2>
+
 
 
 <p> Copyright (c) 2005, <a href="http://niftools.sourceforge.net/">NIF File Format
 Library and Tools</a><br />
 
 
+
 All rights reserved. </p>
+
 
 
 <p> Redistribution and use in source and binary forms, with or
@@ -814,12 +990,15 @@ without modification, are permitted provided that the following
 conditions are met: </p>
 
 
+
 <ul>
+
 
 
   <li>Redistributions of source code must retain the above
 copyright notice, this list of conditions and the following disclaimer.
   </li>
+
 
 
   <li>Redistributions in binary form must reproduce the above
@@ -828,13 +1007,16 @@ in the documentation and/or other materials provided with the
 distribution. </li>
 
 
+
   <li>Neither the name of the NIF File Format Library and Tools
 project nor the names of its contributors may be used to endorse or
 promote products derived from this software without specific prior
 written permission. </li>
 
 
+
 </ul>
+
 
 
 <p> THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
@@ -849,6 +1031,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
 TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGE. </p>
+
 
 
 </body>
