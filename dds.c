@@ -31,8 +31,6 @@
  */
 
 #include <il.h>
-#include <ilu.h>
-/*#include <imdebug.h>*/
 
 #include "BLI_blenlib.h"
 
@@ -324,19 +322,8 @@ struct ImBuf * IMB_load_dds(unsigned char *mem, int size, int flags)
 		/* Add an image rectangle to the ImBuf structure */
 		imb_addrectImBuf(ibuf);
 
-		/* DevIL is designed for OpenGL, so the image must be flipped */
-		iluFlipImage();
-
-		if ( CheckILErrors() ) {
-			printf( "Failed to flip image.\n" );
-			ilDeleteImages( 1, &image );
-			return(0);
-		}
-
 		/* Copy the DevIL image data into the array of pixels */
 		ilCopyPixels( 0, 0, 0, (ILuint)width, (ILuint)height, 1, IL_RGBA, IL_UNSIGNED_BYTE, ibuf->rect );
-
-		/*imdebug("rgba w=%d h=%d %p",width, height, ibuf->rect );*/
 
 		if ( CheckILErrors() ) {
 			printf( "ilSetPixels call failed.\n" );
@@ -344,7 +331,8 @@ struct ImBuf * IMB_load_dds(unsigned char *mem, int size, int flags)
 			return(0);
 		}
 
-		/*printf("A DDS file was loaded completely.\n");*/
+		/* DevIL is designed for OpenGL, so the image must be flipped */
+		IMB_flipy(ibuf);
 	}
 
 	/*clean up*/
