@@ -285,7 +285,11 @@ def import_nif(filename):
                     print "  bone '%s'"%bone_name
         # read the NIF tree
         if not is_armature_root(root_block):
-            blocks = root_block["Children"].asLinkList()
+            try:
+                blocks = root_block["Children"].asLinkList()
+            except:
+                # this fixes an issue with nifs where the first block is a NiTriShape
+                blocks = [ root_block ]
             for niBlock in blocks:
                 b_obj = read_branch(niBlock)
                 if b_obj:
