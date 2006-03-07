@@ -93,8 +93,6 @@ Tex Path: Semi-colon separated list of texture directories.
 #   the UV maps work in Blender
 # Amorilia (don't know your name buddy), for bugfixes and testing.
 
-
-
 try:
     import types
 except:
@@ -543,10 +541,7 @@ def fb_texture( niSourceTexture ):
         return TEXTURES[niSourceTexture]
     except:
         pass
-    #for t in TEXTURES.keys():
-    #    if t == niSourceTexture: # invokes Niflib's block equality operator...
-    #        return TEXTURES[t]
-
+    
     b_image = None
     
     niTexSource = niSourceTexture["Texture Source"].asTexSource()
@@ -565,22 +560,36 @@ def fb_texture( niSourceTexture ):
                 tex = Blender.sys.join( texdir, fn[9:] ) # strip one of the two 'textures' from the path
             else:
                 tex = Blender.sys.join( texdir, fn )
-            if ( tex[-4:].lower() != ".dds" ) and Blender.sys.exists(tex) == 1: # Blender does not support .DDS
-                textureFile = tex
-                msg("Found %s" % textureFile, 3)
-            else:
-                # try other formats
-                base=tex[:-4]
-                for ext in ('.PNG','.png','.TGA','.tga','.BMP','.bmp','.JPG','.jpg'): # Blender does not support .DDS
-                    if Blender.sys.exists(base+ext) == 1:
-                        textureFile = base+ext
-                        msg( "Found %s" % textureFile, 3 )
-                        break
-            if textureFile:
-                b_image = Blender.Image.Load( textureFile )
-                break
-        else:
-            print "texture %s not found"%niTexSource.fileName
+            msg("Searching %s" % tex, 3)
+            if Blender.sys.exists(tex) == 1:
+                # tries to load the file
+                b_image = Blender.Image.Load(tex)
+                # Blender 2.41 will return an image object even if the file format isn't supported,
+                # so to check if the image is actually loaded I need to force an error, hence the
+                # dummy = b_image.size line.
+                try:
+                    dummy = b_image.size
+                    # file format is supported
+                    msg( "Found %s" % tex, 3 )
+                    del dummy
+                    break
+                except:
+                    del b_image
+                    # file format is not supported, tries to load alternative texture
+                    base=tex[:-4]
+                    for ext in ('.PNG','.png','.TGA','.tga','.BMP','.bmp','.JPG','.jpg'):
+                        tex = base+ext
+                        if Blender.sys.exists(tex) == 1:
+                            b_image = Blender.Image.Load(tex)
+                            try:
+                                dummy = b_image.size
+                                msg( "Found alternate %s" % tex, 3 )
+                                del dummy
+                                break
+                            except:
+                                del b_image
+        if b_image == None:
+            print "texture %s not found" % niTexSource.fileName
     else:
         # the texture image is packed inside the nif -> extract it
         niPixelData = niSourceTexture["Texture Source"].asLink()
@@ -746,17 +755,6 @@ def fb_material(matProperty, textProperty, alphaProperty, specProperty):
 
     MATERIALS[(matProperty, textProperty, alphaProperty, specProperty)] = material
     return material
-
-# Creates and returns a NiNode wrapped mesh. These happen in rigged geometries
-def fb_wrapped_mesh(niBlock):
-    global b_scene
-    niGeometry = niBlock["Children"].asLinkList()[0]
-    b_mesh = fb_mesh(niGeometry)
-    b_mesh.name = fb_name(niBlock)
-    b_mesh.setMatrix(b_mesh.getMatrix()*fb_matrix(niBlock))
-    # the mesh is linked at creation
-    # b_scene.link(b_mesh)
-    return b_mesh
 
 # Creates and returns a raw mesh
 def fb_mesh(niBlock):
