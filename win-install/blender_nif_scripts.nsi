@@ -88,7 +88,7 @@ LangString DESC_SecCopyUI ${LANG_ENGLISH} "Copy all required files to the applic
 ;--------------------------------
 ; Data
 
-OutFile "blender_nif_scripts_${VERSION}-windows.exe"
+OutFile "blender_nif_scripts-${VERSION}-windows.exe"
 InstallDir "$PROGRAMFILES\NifTools\Blender NIF Scripts"
 BrandingText "http://niftools.sourceforge.net/"
 Icon inst.ico
