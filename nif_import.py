@@ -9,7 +9,7 @@ Tip: 'Import NIF File Format (.nif & .kf)'
 
 __author__ = "The NifTools team, http://niftools.sourceforge.net/"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
-__version__ = "1.4"
+__version__ = "1.5"
 __bpydoc__ = """\
 This script imports Netimmerse (the version used by Morrowind) .NIF files to Blender.
 So far the script has been tested with 4.0.0.2 format files (Morrowind, Freedom Force).
@@ -574,7 +574,7 @@ def fb_texture( niSourceTexture ):
                     del dummy
                     break
                 except:
-                    del b_image
+                    b_image = None
                     # file format is not supported, tries to load alternative texture
                     base=tex[:-4]
                     for ext in ('.PNG','.png','.TGA','.tga','.BMP','.bmp','.JPG','.jpg'):
@@ -587,7 +587,7 @@ def fb_texture( niSourceTexture ):
                                 del dummy
                                 break
                             except:
-                                del b_image
+                                b_image = None
         if b_image == None:
             print "texture %s not found" % niTexSource.fileName
     else:

@@ -15,7 +15,7 @@ Tooltip: 'Export selected meshes to NIF File Format (*.nif & *.kf)'
 
 __author__ = "amorilia@gamebox.net"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
-__version__ = "1.4"
+__version__ = "1.5"
 __bpydoc__ = """\
 This script exports selected meshes, along with parents, children, and
 armatures, to a *.nif file. If animation is present,  x*.nif and a x*.kf
@@ -1303,27 +1303,7 @@ def export_trishapes(ob, space, parent_block):
         if mesh_hastex:
             ishapedata.SetUVSetCount(1)
             ishapedata.SetUVSet(0, uvlist)
-        itridata.SetTriangleCount(len(trilist))
         itridata.SetTriangles(trilist)
-
-        # center
-        center = Float3()
-        for v in vertlist:
-            center[0] += v.x
-            center[1] += v.y
-            center[2] += v.z
-        center[0] /= len(vertlist) # note: len(vertlist) > 0 is guaranteed
-        center[1] /= len(vertlist)
-        center[2] /= len(vertlist)
-        
-        # radius
-        radius = 0.0
-        for v in vertlist:
-            r = get_distance(v, center)
-            if (r > radius): radius = r
-
-        tridata["Center"] = center
-        tridata["Radius"] = radius
 
         # now export the vertex weights, if there are any
         vertgroups = ob.data.getVertGroupNames()
@@ -1981,11 +1961,6 @@ def scale_tree(block, scale):
                 vert.y *= scale
                 vert.z *= scale
             ishapedata.SetVertices(vertlist)
-        center = block["Center"].asFloat3()
-        center[0] *= scale
-        center[1] *= scale
-        center[2] *= scale
-        block["Radius"] = block["Radius"].asFloat() * scale
 
 if EXPORT_DIR:
     Blender.Window.FileSelector(export_nif, 'Export NIF', EXPORT_DIR)
