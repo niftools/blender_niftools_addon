@@ -13,7 +13,7 @@ Tooltip: 'Export selected meshes to NIF File Format (*.nif & *.kf)'
 #Submenu: 'Morrowind (*.nif + *.kf + x*.nif)...' morrowind
 #Submenu: 'Configure (gui)...' gui
 
-__author__ = "amorilia@gamebox.net"
+__author__ = "The NifTools team, http://niftools.sourceforge.net/"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
 __version__ = "1.5"
 __bpydoc__ = """\
@@ -25,9 +25,9 @@ Supported:<br>
     Vertex weight skinning.<br>
     Animation of bones, material colors, and transparency.<br>
     Animation groups ("Anim" text buffer).<br>
-    Texture flipping (via text buffer named to the texture).
-    Texture packing (toggle "packed" button next to Reload in the Image tab).
-    Hidden meshes (set object drawtype to "Wire")
+    Texture flipping (via text buffer named to the texture).<br>
+    Texture packing (toggle "packed" button next to Reload in the Image tab).<br>
+    Hidden meshes (set object drawtype to "Wire")<br>
 
 Missing:<br>
     Particle effects, cameras, lights.<br>
@@ -41,23 +41,23 @@ color.<br>
 duplicate faces).<br>
     Direct animation of meshes is buggy unless you parent
 without parent inverse (CTRL-SHIFT-P). Workaround: don't animate meshes
-directly; instead, parent meshes to bones and animate the bones.
+directly; instead, parent meshes to bones and animate the bones.<br>
 
 Config options (Scripts->System->Scripts Config Editor->Export):<br>
     force dds: Force textures to be exported with a .DDS extension? Usually,
-you can leave this disabled.<br>
-    strip texpath: Strip texture path in NIF file? You should leave this
-disabled, especially when this model's textures are stored in a subdirectory
-of the Data Files\Textures folder.<br>
+you can leave this disabled if you don't use DDS textures.<br>
+    strip texpath: Strip texture path in NIF file? For Morrowind, you should
+leave this disabled, especially when this model's textures are stored in a
+subdirectory of the Data Files\Textures folder. For CivIV, you should enable
+this.<br>
     scale correction: How many NIF units is one Blender unit?<br>
     nif version: the NIF version to write (EXPERIMENTAL, only 4.0.0.2 has been
-extensively tested, theoretically you can write CivIV NIF files by putting
-4.2.2.0 here)<br>
-    export dir: default directory to open when script starts
+extensively tested, theoretically you can write CivIV and DAoC NIF files by
+putting 4.2.2.0, 10.0.1.0, 10.1.0.0, 10.2.0.0, or 20.0.0.4 here)<br>
+    export dir: default directory to open when script starts<br>
 """
 
-# --------------------------------------------------------------------------
-# NIF Export v1.4 by Amorilia ( amorilia@gamebox.net )
+# nif_export.py version 1.5
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
 #

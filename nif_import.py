@@ -11,28 +11,36 @@ __author__ = "The NifTools team, http://niftools.sourceforge.net/"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
 __version__ = "1.5"
 __bpydoc__ = """\
-This script imports Netimmerse (the version used by Morrowind) .NIF files to Blender.
-So far the script has been tested with 4.0.0.2 format files (Morrowind, Freedom Force).
-There is a know issue with the import of .NIF files that have an armature; the file will import, but the meshes will be somewhat misaligned.
+This script imports Netimmerse and Gamebryo .NIF files to Blender.
 
-Usage:
+Supported:<br>
+    Bones.<br>
+    Vertex weight skinning.<br>
+    Animation groups ("Anim" text buffer).<br>
+    Texture flipping (via text buffer named to the texture).<br>
+    Packed textures ("packed" button next to Reload in the Image tab).<br>
+    Hidden meshes (object drawtype "Wire")<br>
+    Geometry morphing (vertex keys)<br>
 
-Run this script from "File->Import" menu and then select the desired NIF file.
+Missing:<br>
+    Bone animation.<br>
+    Particle effects, cameras, lights.<br>
 
-Options:
+Known issues:<br>
+    Ambient and emit colors are obtained by multiplication with the diffuse
+color.<br>
 
-Scale Correction: How many NIF units is one Blender unit?
-
-Vertex Duplication (Fast): Fast but imperfect: may introduce unwanted cracks in UV seams.
-
-Vertex Duplication (Slow): Perfect but slow, this is the preferred method if the model you are importing is not too large.
-
-Smoothing Flag (Slow): Import seams and convert them to "the Blender way", is slow and imperfect, unless model was created by Blender and had no duplicate vertices.
-
-Tex Path: Semi-colon separated list of texture directories.
+Config options (Scripts->System->Scripts Config Editor->Import):<br>
+    textures dir: Semi-colon separated list of texture directories.<br>
+    import dir: Default import directory.<br>
+    seams import: Enable to avoid cracks in UV seams. Disable if importing
+large NIF files takes too long.<br>
+    realign bones: Disable to preserve the bone matrices (usually, the result looks
+very ugly, but you may want to do this to edit animated NIF's without having
+to change the animation .kf files).<br>
 """
 
-# nif_import.py version 1.4
+# nif_import.py version 1.5
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -148,18 +156,19 @@ MSG_LEVEL = 2 # verbosity level
 # configuration default values
 TEXTURES_DIR = 'C:\\Program Files\\Bethesda\\Morrowind\\Data Files\\Textures' # Morrowind: this will work on a standard installation
 IMPORT_DIR = ''
-SEAMS_IMPORT = 1
+SEAMS_IMPORT = True
+REALIGN_BONES = True
 
 # tooltips
 tooltips = {
     'TEXTURES_DIR': "Texture directory.",
     'IMPORT_DIR': "Default import directory.",
-    'SEAMS_IMPORT': "How to handle seams?"
+    'SEAMS_IMPORT': "Import seams? Enable to avoid cracks in UV seams. Disable if importing large NIF files takes too long.",
+    'REALIGN_BONES': "Realign bones? Disable to preserve bone matrices."
 }
 
 # bounds
 limits = {
-    'SEAMS_IMPORT': [0, 2]
 }
 
 # update registry
@@ -169,6 +178,7 @@ def update_registry():
     d['TEXTURES_DIR'] = TEXTURES_DIR
     d['IMPORT_DIR'] = IMPORT_DIR
     d['SEAMS_IMPORT'] = SEAMS_IMPORT
+    d['REALIGN_BONES'] = REALIGN_BONES
     d['limits'] = limits
     d['tooltips'] = tooltips
     # store the key
@@ -177,7 +187,7 @@ def update_registry():
 
 # Now we check if our key is available in the Registry or file system:
 def read_registry():
-    global TEXTURES_DIR, IMPORT_DIR, SEAMS_IMPORT
+    global TEXTURES_DIR, IMPORT_DIR, SEAMS_IMPORT, REALIGN_BONES
     regdict = Blender.Registry.GetKey('nif_import', True)
     # If this key already exists, update config variables with its values:
     if regdict:
@@ -185,6 +195,7 @@ def read_registry():
             TEXTURES_DIR = regdict['TEXTURES_DIR'] 
             IMPORT_DIR = regdict['IMPORT_DIR']
             SEAMS_IMPORT = regdict['SEAMS_IMPORT']
+            REALIGN_BONES = regdict['REALIGN_BONES']
             tmp_limits = regdict['limits']     # just checking if it's there
             tmp_tooltips = regdict['tooltips'] # just checking if it's there
         # if data was corrupted (or a new version of the script changed
@@ -513,14 +524,12 @@ def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
         # sets the bone heads & tails
         b_bone.head = Vector(b_bone_head_x, b_bone_head_y, b_bone_head_z)
         b_bone.tail = Vector(b_bone_tail_x, b_bone_tail_y, b_bone_tail_z)
-        # now we set the matrix; this has the following consequences:
-        # - head is preserved
-        # - bone length is preserved
-        # - tail is lost (up to bone length)
-        # also, we must transform y into x to comply with Blender's armature conventions: m_correct does that
-        ### NOTE: don't import matrix at all, works even better!
-        ### m_correct = RotationMatrix(-90.0, 3, 'z') # y -> x; we probably want an import option for this transform
-        ### b_bone.matrix = m_correct * armature_space_matrix.rotationPart()
+        if not REALIGN_BONES:
+            # here we explicitly set the matrix; this has the following consequences:
+            # - head is preserved
+            # - bone length is preserved
+            # - tail is lost (up to bone length)
+            b_bone.matrix = armature_space_matrix.rotationPart()
         b_armatureData.bones[bone_name] = b_bone
         for niBone in niChildBones:
             b_child_bone =  fb_bone(niBone, b_armature, b_armatureData, armature_matrix_inverse)
@@ -803,12 +812,12 @@ def fb_mesh(niBlock):
     norms = iShapeData.GetNormals()
 
     v_map = [0]*len(verts) # pre-allocate memory, for faster performance
-    if SEAMS_IMPORT == 0:
+    if not SEAMS_IMPORT:
         # Fast method: don't care about any seams!
         for i, v in enumerate(verts):
             v_map[i] = i # NIF vertex i maps to blender vertex i
             b_meshData.verts.extend(v.x, v.y, v.z) # add the vertex
-    elif SEAMS_IMPORT == 1:
+    else:
         # Slow method, but doesn't introduce unwanted cracks in UV seams:
         # Construct vertex map to get unique vertex / normal pair list.
         # We use a Python dictionary to remove doubles and to keep track of indices.

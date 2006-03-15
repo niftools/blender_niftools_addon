@@ -172,6 +172,9 @@ Section
   Delete "$BLENDERSCRIPTS\bpydata\nif4.ini"
   ; Clean up registered script menu's, just to make sure they get updated
   Delete "$BLENDERSCRIPTS\..\Bpymenus"
+  ; Clean up config files; Blender gets confused on old config files with missing values
+  Delete "$BLENDERSCRIPTS\bpydata\config\nif_import.cfg"
+  Delete "$BLENDERSCRIPTS\bpydata\config\nif_export.cfg"
 
   ; Install scripts
   SetOutPath $BLENDERSCRIPTS
