@@ -333,6 +333,7 @@ def read_branch(niBlock):
             return fb_mesh(niBlock)
         elif not niBlock["Children"].is_null():
             # it's a parent node
+            # import object + children
             niChildren = niBlock["Children"].asLinkList()
             b_obj = None
             if is_armature_root(niBlock):
@@ -341,6 +342,7 @@ def read_branch(niBlock):
                 # now also do the meshes
                 read_armature_branch(b_obj, niBlock, niBlock)
             else:
+                # it's a grouping node
                 b_obj = fb_empty(niBlock)
                 b_children_list = []
                 for child in niChildren:
@@ -348,6 +350,9 @@ def read_branch(niBlock):
                     if b_child_obj: b_children_list.append(b_child_obj)
                 b_obj.makeParent(b_children_list)
             b_obj.setMatrix(fb_matrix(niBlock))
+            # import the extras
+            textkey = find_extra(niBlock, "NiTextKeyExtraData")
+            if not textkey.is_null(): fb_textkey(textkey)
             return b_obj
         else:
             return None
@@ -1068,6 +1073,37 @@ def fb_mesh(niBlock):
 
 
 
+# import animation groups
+def fb_textkey(block):
+    # get the number of frames per second
+    scn = Blender.Scene.GetCurrent()
+    context = scn.getRenderingContext()
+    fps = context.framesPerSec()
+
+    # get animation text buffer, and clear it if it already exists
+    animtxt = None
+    for txt in Blender.Text.Get():
+        if txt.getName() == "Anim":
+            txt.clear()
+            animtxt = txt
+            break
+    if not animtxt:
+        animtxt = Blender.Text.New("Anim")
+
+    # store keys in the animation text buffer
+    itextkey = QueryTextKeyExtraData(block)
+    frame = 1
+    for key in itextkey.GetKeys():
+        newkey = key.data.replace('\r\n', '/').rstrip('/')
+        frame = 1 + int(key.time * fps) # time 0.0 is frame 1
+        animtxt.write('%i/%s\n'%(frame, newkey))
+
+    # set start and end frames
+    context.startFrame(1)
+    context.endFrame(frame)
+
+
+
 # find a controller
 def find_controller(block, controllertype):
     ctrl = block["Controller"].asLink()
@@ -1076,6 +1112,26 @@ def find_controller(block, controllertype):
             break
         ctrl = ctrl["Next Controller"].asLink()
     return ctrl
+
+
+
+# find extra data
+def find_extra(block, extratype):
+    # pre-10.x.x.x system: extra data chain
+    extra = block["Extra Data"].asLink()
+    while not extra.is_null():
+        if extra.GetBlockType() == extratype:
+            break
+        extra = extra["Next Extra Data"].asLink()
+    if not extra.is_null():
+        return extra
+
+    # post-10.x.x.x system: extra data list
+    for extra in block["Extra Data List"].asLinkList():
+        if extra.GetBlockType() == extratype:
+            return extra
+
+    return blk_ref() # return empty block
 
 
 
