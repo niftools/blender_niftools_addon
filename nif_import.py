@@ -276,6 +276,11 @@ def import_nif(filename):
         global b_scene
         b_scene = Blender.Scene.GetCurrent()
         # read the NIF file
+        ver = CheckNifHeader(filename)
+        if ( ver == VER_INVALID ):
+            raise NIFImportError("Not a NIF file.")
+        elif ( ver == VER_UNSUPPORTED ):
+            raise NIFImportError("Unsupported NIF version.")
         root_block = ReadNifTree(filename)
         # used to control the progress bar
         global block_count, blocks_read, read_progress
