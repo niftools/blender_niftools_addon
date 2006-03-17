@@ -286,45 +286,51 @@ def import_nif(filename):
         elif ( ver == VER_UNSUPPORTED ):
             raise NIFImportError("Unsupported NIF version.")
         root_block = ReadNifTree(filename)
-        # used to control the progress bar
-        global block_count, blocks_read, read_progress
-        block_count = BlocksInMemory()
-        read_progress = 0.0
-        blocks_read = 0.0
-        # preprocessing:
-        # mark armature nodes and bones
-        # and merge armatures that are bones of others armatures
-        mark_armatures_bones(root_block)
-        merge_armatures()
-        if VERBOSE and MSG_LEVEL >= 3:
-            for arm_name in BONE_LIST.keys():
-                print "armature '%s':"%arm_name
-                for bone_name in BONE_LIST[arm_name]:
-                    print "  bone '%s'"%bone_name
-        # read the NIF tree
-        if not is_armature_root(root_block):
-            try:
-                blocks = root_block["Children"].asLinkList()
-            except:
-                # this fixes an issue with nifs where the first block is a NiTriShape
-                blocks = [ root_block ]
-            for niBlock in blocks:
-                b_obj = read_branch(niBlock)
-                if b_obj:
-                    b_obj.setMatrix(b_obj.getMatrix() * fb_scale_mat())
-        else:
-            b_obj = read_branch(root_block)
-            b_obj.setMatrix(b_obj.getMatrix() * fb_scale_mat())
-        b_scene.update(1) # do a full update to make sure all transformations get applied
-        #fit_view()
-        #b_scene.getCurrentCamera()
-        
+        import_main(root_block)
     except NIFImportError, e: # in that case, we raise a menu instead of an exception
         Blender.Window.DrawProgressBar(1.0, "Import Failed")
         print 'NIFImportError: ' + e.value
         Blender.Draw.PupMenu('ERROR%t|' + e.value)
         return
 
+
+
+#
+# Main import function.
+#
+def import_main(root_block):
+    # used to control the progress bar
+    global block_count, blocks_read, read_progress
+    block_count = BlocksInMemory()
+    read_progress = 0.0
+    blocks_read = 0.0
+    # preprocessing:
+    # mark armature nodes and bones
+    # and merge armatures that are bones of others armatures
+    mark_armatures_bones(root_block)
+    merge_armatures()
+    if VERBOSE and MSG_LEVEL >= 3:
+        for arm_name in BONE_LIST.keys():
+            print "armature '%s':"%arm_name
+            for bone_name in BONE_LIST[arm_name]:
+                print "  bone '%s'"%bone_name
+    # read the NIF tree
+    if not is_armature_root(root_block):
+        try:
+            blocks = root_block["Children"].asLinkList()
+        except:
+            # this fixes an issue with nifs where the first block is a NiTriShape
+            blocks = [ root_block ]
+        for niBlock in blocks:
+            b_obj = read_branch(niBlock)
+            if b_obj:
+                b_obj.setMatrix(b_obj.getMatrix() * fb_scale_mat())
+    else:
+        b_obj = read_branch(root_block)
+        b_obj.setMatrix(b_obj.getMatrix() * fb_scale_mat())
+    b_scene.update(1) # do a full update to make sure all transformations get applied
+    #fit_view()
+    #b_scene.getCurrentCamera()
     Blender.Window.DrawProgressBar(1.0, "Finished")
     
 # Reads the content of the current NIF tree branch to Blender recursively
@@ -1266,12 +1272,8 @@ def import_kfm(filename):
             raise NIFImportError("Not a KFM file.")
         elif ( ver == VER_UNSUPPORTED ):
             raise NIFImportError("Unsupported KFM version.")
-        # get main NIF file
-        print kfm.nif_filename
-        print kfm.actions
-        for action in kfm.actions:
-            print action.action_filename
-
+        # import the NIF tree
+        import_main(kfm.MergeActions(Blender.sys.dirname(filename)))
     except NIFImportError, e: # in that case, we raise a menu instead of an exception
         Blender.Window.DrawProgressBar(1.0, "Import Failed")
         print 'NIFImportError: ' + e.value
@@ -1363,7 +1365,6 @@ if USE_GUI:
     Draw.Register(gui_draw, gui_evt_key, gui_evt_button)
 else:
     if __script__['arg'] == 'kfm':
-        print 'KFM!!!'
         if IMPORT_DIR:
             Blender.Window.FileSelector(import_kfm, 'Import KFM', IMPORT_DIR)
         else:
