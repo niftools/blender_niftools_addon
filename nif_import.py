@@ -4,8 +4,12 @@
 Name: 'NetImmerse/Gamebryo (.nif & .kf)...'
 Blender: 241
 Group: 'Import'
-Tip: 'Import NIF File Format (.nif & .kf)'
+Submenu: 'Import NIF File...' nif
+Submenu: 'Import KFM File...' kfm
+Tooltip: 'Import NIF File Format (.nif & .kf & .kfm)'
 """
+
+#Submenu: 'Import KF File...' kf
 
 __author__ = "The NifTools team, http://niftools.sourceforge.net/"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
@@ -1247,6 +1251,35 @@ def get_closest_bone(niBlock):
         par = par.GetParent()
     return par
 
+#
+# Main KFM import function.
+#
+def import_kfm(filename):
+    try: # catch NIFImportErrors
+        # scene info
+        global b_scene
+        b_scene = Blender.Scene.GetCurrent()
+        # read the KFM file
+        kfm = Kfm()
+        ver = kfm.Read(filename)
+        if ( ver == VER_INVALID ):
+            raise NIFImportError("Not a KFM file.")
+        elif ( ver == VER_UNSUPPORTED ):
+            raise NIFImportError("Unsupported KFM version.")
+        # get main NIF file
+        print kfm.nif_filename
+        print kfm.actions
+        for action in kfm.actions:
+            print action.action_filename
+
+    except NIFImportError, e: # in that case, we raise a menu instead of an exception
+        Blender.Window.DrawProgressBar(1.0, "Import Failed")
+        print 'NIFImportError: ' + e.value
+        Blender.Draw.PupMenu('ERROR%t|' + e.value)
+        return
+
+    Blender.Window.DrawProgressBar(1.0, "Finished")
+    
 #----------------------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------#
 #-------- Run importer GUI.
@@ -1329,7 +1362,19 @@ def gui_import():
 if USE_GUI:
     Draw.Register(gui_draw, gui_evt_key, gui_evt_button)
 else:
-    if IMPORT_DIR:
-        Blender.Window.FileSelector(import_nif, 'Import NIF', IMPORT_DIR)
+    if __script__['arg'] == 'kfm':
+        print 'KFM!!!'
+        if IMPORT_DIR:
+            Blender.Window.FileSelector(import_kfm, 'Import KFM', IMPORT_DIR)
+        else:
+            Blender.Window.FileSelector(import_kfm, 'Import KFM')
+    elif __script__['arg'] == 'kf':
+        if IMPORT_DIR:
+            Blender.Window.FileSelector(import_kf, 'Import KF', IMPORT_DIR)
+        else:
+            Blender.Window.FileSelector(import_kf, 'Import KF')
     else:
-        Blender.Window.FileSelector(import_nif, 'Import NIF')
+        if IMPORT_DIR:
+            Blender.Window.FileSelector(import_nif, 'Import NIF', IMPORT_DIR)
+        else:
+            Blender.Window.FileSelector(import_nif, 'Import NIF')
