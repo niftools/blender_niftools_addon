@@ -141,10 +141,11 @@ MATERIALS = {}
 # dictionary of names, to map NIF names to correct Blender names
 NAMES = {}
 
-# dictionary of armatures
-ARMATURES = {}
+# dictionary of bones, maps Blender bone name to NIF block
+BONES = {}
 
 # dictionary of bones that belong to a certain armature
+# maps NIF armature name to list of NIF bone name
 BONE_LIST = {}
 
 # some variables
@@ -478,11 +479,11 @@ def fb_empty(niBlock):
     b_scene.link(b_empty)
     return b_empty
 
-# scans an armature hierarchy, and returns a whole armature.
-# This is done outside the normal node tree scan to allow for positioning of the bones
+# Scans an armature hierarchy, and returns a whole armature.
+# This is done outside the normal node tree scan to allow for positioning of
+# the bones.
 def fb_armature(niBlock):
     global b_scene
-    global ARMATURES
     
     armature_name = fb_name(niBlock)
     armature_matrix_inverse = fb_global_matrix(niBlock)
@@ -498,7 +499,6 @@ def fb_armature(niBlock):
     #b_armatureData.drawType = Blender.Armature.OCTAHEDRON
     b_armature.link(b_armatureData)
     b_armatureData.makeEditable()
-    #read_bone_chain(niBlock, b_armature)
     niChildren = niBlock["Children"].asLinkList()
     niChildBones = [child for child in niChildren if is_bone(child)]  
     for niBone in niChildBones:
@@ -506,12 +506,78 @@ def fb_armature(niBlock):
         # but I believe it saves some processing time compared to making it global or recalculating it all the time.
         # And serves the purpose fine
         fb_bone(niBone, b_armature, b_armatureData, armature_matrix_inverse)
-    ARMATURES[niBlock] = b_armature
     b_armatureData.update()
     b_scene.link(b_armature)
+
+    # The armature has been created in editmode,
+    # now we are ready to set the bone keyframes.
+
+    # create an action
+    action = Blender.Armature.NLA.NewAction()
+    action.setActive(b_armature)
+    # get the number of frames per second
+    scn = Blender.Scene.GetCurrent()
+    context = scn.getRenderingContext()
+    fps = context.framesPerSec()
+    # go through all armature pose bones (http://www.elysiun.com/forum/viewtopic.php?t=58693)
+    for bone_name, b_posebone in b_armature.getPose().bones.items():
+        # get bind matrix (NIF format stores full transformations in keyframes,
+        # but Blender wants relative transformations, hence we need to know
+        # the bind position for conversion).
+        niBone = BONES[bone_name]
+        niBone_bind_matrix = fb_matrix(niBone)
+        niBone_bind_trans = niBone_bind_matrix.translationPart()
+        niBone_bind_rot_inv = niBone_bind_matrix.rotationPart()
+        niBone_bind_rot_inv.invert()
+        kfc = find_controller(niBone, "NiKeyframeController")
+        if not kfc.is_null():
+            kfd = kfc["Data"].asLink()
+            assert(kfd.GetBlockType() == "NiKeyframeData")
+            ikfd = QueryKeyframeData(kfd)
+            # get keyframe data
+            rot_keys = ikfd.GetRotateKeys()
+            trans_keys = ikfd.GetTranslateKeys()
+            #scale_keys = ikfd.GetScaleKeys() ## TODO
+            # construct key dictionaries and frames list
+            # we must know when to insert just a rotation key, just a translation key, or both
+            # these dictionaries make that task a little bit easier
+            rot_keys_dict = {}
+            trans_keys_dict = {}
+            frames = []
+            for rot_key in rot_keys:
+                frame = 1+int(rot_key.time * fps) # time 0.0 is frame 1
+                rot_keys_dict[frame] = rot_key
+                if not frame in frames:
+                    frames.append(frame)
+            for trans_key in trans_keys:
+                frame = 1+int(trans_key.time * fps) # time 0.0 is frame 1
+                trans_keys_dict[frame] = trans_key
+                if not frame in frames:
+                    frames.append(frame)
+            # insert keys into the pose
+            frames.sort()
+            for frame in frames:
+                pose_options = []
+                if rot_keys_dict.has_key(frame):
+                    rot_key = rot_keys_dict[frame]
+                    rot_total = Blender.Mathutils.Quaternion([rot_key.data.w, rot_key.data.x, rot_key.data.y, rot_key.data.z]).toMatrix()
+                    b_posebone.quat = Blender.Mathutils.Quaternion((rot_total *  niBone_bind_rot_inv).toQuat())
+                    pose_options.append(Blender.Object.Pose.ROT)
+                if trans_keys_dict.has_key(frame):
+                    trans_key = trans_keys_dict[frame]
+                    trans_total = Blender.Mathutils.Vector([trans_key.data.x, trans_key.data.y, trans_key.data.z])
+                    b_posebone.loc = (trans_total - niBone_bind_trans) * niBone_bind_rot_inv
+                    pose_options.append(Blender.Object.Pose.LOC)
+                if pose_options:
+                    b_posebone.insertKey(b_armature, frame, pose_options)
     return b_armature
 
+
+
+# Adds a bone to the armature in edit mode.
 def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
+    global BONES
+    
     bone_name = fb_name(niBlock)
     niChildren = niBlock["Children"].asLinkList()
     niChildNodes = [child for child in niChildren if child.GetBlockType() == "NiNode"]  
@@ -550,13 +616,17 @@ def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
             # - bone length is preserved
             # - tail is lost (up to bone length)
             b_bone.matrix = armature_space_matrix.rotationPart()
+        # set bone name and store the niBlock for future reference
         b_armatureData.bones[bone_name] = b_bone
+        BONES[bone_name] = niBlock
+        # set bone children
         for niBone in niChildBones:
             b_child_bone =  fb_bone(niBone, b_armature, b_armatureData, armature_matrix_inverse)
             if b_child_bone:
                 b_child_bone.parent = b_bone
         return b_bone
     return None
+
 
 
 def fb_texture( niSourceTexture ):
