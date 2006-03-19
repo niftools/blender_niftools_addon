@@ -439,7 +439,7 @@ def export_node(ob, space, parent_block, node_name):
     = export_matrix(ob, space)
     node["Rotation"]    = ob_rotation
     node["Velocity"]    = ob_velocity
-    node["Scale"]       = ob_scale[0]
+    node["Scale"]       = ob_scale
     node["Translation"] = ob_translation
 
     # set object bind position
@@ -483,9 +483,13 @@ def export_node(ob, space, parent_block, node_name):
 # Explanation of extra transformations (bind = extra):
 # Final transformation matrix is vec * Rchannel * Tchannel * Rbind * Tbind
 # So we export:
-# [ Rchannel 0 ]    [ Rbind 0 ]   [ Rchannel * Rbind         0 ]
-# [ Tchannel 1 ] *  [ Tbind 1 ] = [ Tchannel * Rbind + Tbind 1 ]
-def export_keyframe(ipo, space, parent_block, extra_trans = None, extra_quat = None):
+# [ SRchannel 0 ]    [ SRbind 0 ]   [ SRchannel * SRbind        0 ]
+# [ Tchannel  1 ] *  [ Tbind  1 ] = [ Tchannel * SRbind + Tbind 1 ]
+# or, in detail,
+# S = SC * SB
+# R = RC * RB
+# T = TC * SB * RB + TB
+def export_keyframe(ipo, space, parent_block, extra_trans = None, extra_quat = None, extra_scale = None):
     if DEBUG: print "Exporting keyframe %s"%parent_block["Name"].asString()
     # -> get keyframe information
     
@@ -502,11 +506,13 @@ def export_keyframe(ipo, space, parent_block, extra_trans = None, extra_quat = N
 
     # sometimes we need to export an empty keyframe... this will take care of that
     if (ipo == None):
+        scale_curve = {}
         rot_curve = {}
         trans_curve = {}
     # the usual case comes now...
     else:
         # merge the animation curves into a rotation vector and translation vector curve
+        scale_curve = {}
         rot_curve = {}
         trans_curve = {}
         for curve in ipo.getCurves():
@@ -514,6 +520,12 @@ def export_keyframe(ipo, space, parent_block, extra_trans = None, extra_quat = N
                 knot = btriple.getPoints()
                 frame = knot[0]
                 if (frame < fstart) or (frame > fend): continue
+                if (curve.getName() == 'SizeX') or (curve.getName() == 'SizeY') or (curve.getName() == 'SizeZ'):
+                    scale_curve[frame] = ( ipo.getCurve('SizeX').evaluate(frame)\
+                                        + ipo.getCurve('SizeY').evaluate(frame)\
+                                        + ipo.getCurve('SizeZ').evaluate(frame) ) / 3.0 # support only uniform scaling... take the mean
+                    if extra_scale: # extra scale
+                        scale_curve[frame] = scale_curve[frame] * extra_scale
                 if (curve.getName() == 'RotX') or (curve.getName() == 'RotY') or (curve.getName() == 'RotZ'):
                     rot_curve[frame] = Blender.Mathutils.Euler([10*ipo.getCurve('RotX').evaluate(frame), 10*ipo.getCurve('RotY').evaluate(frame), 10*ipo.getCurve('RotZ').evaluate(frame)]).toQuat()
                     if extra_quat: # extra quaternion rotation
@@ -528,6 +540,8 @@ def export_keyframe(ipo, space, parent_block, extra_trans = None, extra_quat = N
                         rot_curve[frame] = Blender.Mathutils.CrossQuats(rot_curve[frame], extra_quat)
                 if (curve.getName() == 'LocX') or (curve.getName() == 'LocY') or (curve.getName() == 'LocZ'):
                     trans_curve[frame] = Blender.Mathutils.Vector([ipo.getCurve('LocX').evaluate(frame), ipo.getCurve('LocY').evaluate(frame), ipo.getCurve('LocZ').evaluate(frame)])
+                    if extra_scale: # extra scale
+                        trans_curve[frame] *= extra_scale
                     if extra_quat: # extra rotation
                         trans_curve[frame] = trans_curve[frame] * extra_quat.toMatrix()
                     if extra_trans: # extra translation
@@ -581,6 +595,18 @@ def export_keyframe(ipo, space, parent_block, extra_trans = None, extra_quat = N
         trans_frame.data.z = trans_curve[frame][2]
         trans_keys.append(trans_frame)
     ikfd.SetTranslateKeys(trans_keys)
+
+    ikfd.SetScaleType(LINEAR_KEY)
+    frames = scale_curve.keys()
+    frames.sort()
+    scale_keys = []
+    for frame in frames:
+        ftime = (frame - 1) * fspeed
+        scale_frame = Key_float()
+        scale_frame.time = ftime
+        scale_frame.data = scale_curve[frame]
+        scale_keys.append(scale_frame)
+    ikfd.SetScaleKeys(scale_keys)
 
 
 
@@ -1016,7 +1042,7 @@ def export_trishapes(ob, space, parent_block):
                         f_index[i] = j
                         break
 
-                if f_index[i] > 32767:
+                if f_index[i] > 65535:
                     raise NIFExportError('ERROR%t|Too many vertices. Decimate your mesh and try again.')
                 if (f_index[i] == len(vertquad_list)):
                     # first: add it to the vertex map
@@ -1034,7 +1060,7 @@ def export_trishapes(ob, space, parent_block):
             for i in range(f_numverts - 2):
                 f_indexed = Triangle()
                 f_indexed.v1 = f_index[0]
-                if (ob_scale[0] > 0):
+                if (ob_scale > 0):
                     f_indexed.v2 = f_index[1+i]
                     f_indexed.v3 = f_index[2+i]
                 else:
@@ -1042,7 +1068,7 @@ def export_trishapes(ob, space, parent_block):
                     f_indexed.v3 = f_index[1+i]
                 trilist.append(f_indexed)
 
-        if len(trilist) > 32767:
+        if len(trilist) > 65535:
             raise NIFExportError('ERROR%t|Too many faces. Decimate your mesh and try again.')
         if len(vertlist) == 0:
             continue # m4444x: skip 'empty' material indices
@@ -1068,7 +1094,7 @@ def export_trishapes(ob, space, parent_block):
 
         trishape["Translation"] = ob_translation
         trishape["Rotation"]    = ob_rotation
-        trishape["Scale"]       = ob_scale[0]
+        trishape["Scale"]       = ob_scale
         trishape["Velocity"]    = ob_velocity
         
         # set trishape bind position, in armature space (this should work)
@@ -1307,6 +1333,7 @@ def export_trishapes(ob, space, parent_block):
         bonenames = []
         if ob.getParent():
             if ob.getParent().getType() == 'Armature':
+                armaturename = ob.getParent().getName()
                 bonenames = ob.getParent().getData().bones.keys()
         # the vertgroups that correspond to bonenames are bones that influence the mesh
         boneinfluences = []
@@ -1340,6 +1367,7 @@ def export_trishapes(ob, space, parent_block):
             # for each bone, first we get the bone block
             # then we get the vertex weights
             # and then we add it to the NiSkinData
+            vert_added = [False] * len(vertlist) # allocate memory for faster performance
             for bone in boneinfluences:
                 # find bone in exported blocks
                 for block in NIF_BLOCKS:
@@ -1362,8 +1390,33 @@ def export_trishapes(ob, space, parent_block):
                     if vertmap[v[0]]: # extra check for multi material meshes
                         for vert_index in vertmap[v[0]]:
                             vert_weights[vert_index] = v[1] / vert_norm[v[0]]
+                            vert_added[vert_index] = True
                 
                 iskindata.AddBone(bone_block, vert_weights)
+
+            # each vertex must have been assigned to at least one vertex group
+            # or the model doesn't display correctly in the TESCS
+            # here we cover that case: we attach them to the armature
+            vert_weights = {}
+            for vert_index, added in enumerate(vert_added):
+                if added == False:
+                    vert_weights[vert_index] = 1.0
+            if vert_weights:
+                # find armature block
+                for block in NIF_BLOCKS:
+                    if block.GetBlockType() == "NiNode":
+                        if block["Name"].asString() == armaturename:
+                            arm_block = block
+                            break
+                else:
+                    raise NIFExportError("Armature '%s' not found."%armaturename)
+                # add vertex weights
+                iskindata.AddBone(arm_block, vert_weights)
+
+            # clean up
+            del vert_weights
+            del vert_added
+
         
         # shape key morphing
         key = mesh.getKey()
@@ -1487,16 +1540,16 @@ def export_bones(arm, parent_block):
         = export_matrix(bone, 'localspace') # rest pose
         node["Rotation"]    = ob_rotation
         node["Velocity"]    = ob_velocity
-        node["Scale"]       = ob_scale[0]
+        node["Scale"]       = ob_scale
         node["Translation"] = ob_translation
         
         # bone rotations are stored in the IPO relative to the rest position
         # so we must take the rest position into account
         bonerestmat = get_bone_restmatrix(bone, 'BONESPACE')
-        xq = bonerestmat.rotationPart().toQuat()
-        xt = bonerestmat.translationPart()
+        xs, xr, xt = decompose_srt(bonerestmat)
+        xq = xr.toQuat()
         if bones_ipo.has_key(bone.name):
-            export_keyframe(bones_ipo[bone.name], 'localspace', node, extra_trans = xt, extra_quat = xq)
+            export_keyframe(bones_ipo[bone.name], 'localspace', node, extra_trans = xt, extra_quat = xq, extra_scale = xs)
 
         # Set the bind pose relative to the armature coordinate
         # system; this should work, if we do the same for the trishape
@@ -1543,7 +1596,7 @@ def export_textureeffect(ob, parent_block):
     t, r, s = export_matrix(ob, 'none')
     texeff["Translation"] = t
     texeff["Rotation"] = r
-    texeff["Scale"] = s[0]
+    texeff["Scale"] = s
     
     # guessing
     texeff["Unknown Float 1"] = 1.0
@@ -1624,20 +1677,17 @@ def export_children(ob, parent_block):
 
 
 #
-# Convert an object's transformation matrix on the first frame of
-# animation to a niflib quadrupple ( translate, rotate, scale,
-# velocity ). The scale is a vector; but non-uniform scaling is not
-# supported by the nif format, so for these we'll have to apply the
-# transformation when exporting the vertex coordinates... ?
+# Convert an object's transformation matrix (rest pose)
+# to a niflib quadrupple ( translate, rotate, scale,
+# velocity ).
 #
 def export_matrix(ob, space):
     nt = Float3()
     nr = Matrix33()
-    ns = Float3()
     nv = Float3()
     
     # decompose
-    bs, br, bt = getObjectSRT(ob, space)
+    bs, br, bt = get_object_srt(ob, space)
     
     # and fill in the values
     nt[0] = bt[0]
@@ -1652,35 +1702,28 @@ def export_matrix(ob, space):
     nr[0][2] = br[0][2]
     nr[1][2] = br[1][2]
     nr[2][2] = br[2][2]
-    ns[0] = bs[0]
-    ns[1] = bs[1]
-    ns[2] = bs[2]
     nv[0] = 0.0
     nv[1] = 0.0
     nv[2] = 0.0
 
-    # for now, we don't support non-uniform scaling
-    if abs(ns[0] - ns[1]) + abs(ns[1] - ns[2]) > EPSILON:
-        raise NIFExportError('ERROR%t|non-uniformly scaled objects not yet supported; apply size and rotation (CTRL-A in Object Mode) and try again.')
-
     # return result
-    return (nt, nr, ns, nv)
+    return (nt, nr, bs, nv)
 
 
 
 # 
 # Find scale, rotation, and translation components of an object in
 # the rest pose. Returns a triple (bs, br, bt), where bs
-# is a scale vector, br is a 3x3 rotation matrix, and bt is a
+# is a scale float, br is a 3x3 rotation matrix, and bt is a
 # translation vector. It should hold that "ob.getMatrix(space) == bs *
 # br * bt".
 # 
-def getObjectSRT(ob, space):
+def get_object_srt(ob, space):
     # handle the trivial case first
     if (space == 'none'):
-        bs = Blender.Mathutils.Vector([1.0, 1.0, 1.0])
+        bs = 1.0
         br = Blender.Mathutils.Matrix([1,0,0],[0,1,0],[0,0,1])
-        bt = Blender.Mathutils.Vector([0.0, 0.0, 0.0])
+        bt = Blender.Mathutils.Vector([0, 0, 0])
         return (bs, br, bt)
     
     assert((space == 'worldspace') or (space == 'localspace'))
@@ -1694,7 +1737,7 @@ def getObjectSRT(ob, space):
         # so L = W * P^(-1) * (Ba * B)^(-1)
         if (space == 'localspace'):
             if (ob.getParent() != None):
-                matparentinv = Blender.Mathutils.Matrix(ob.getParent().getMatrix('worldspace')) # TODO: cancel out IPO's
+                matparentinv = Blender.Mathutils.Matrix(ob.getParent().getMatrix('worldspace')) # TODO: cancel out IPO's!
                 matparentinv.invert()
                 mat = mat * matparentinv
                 if (ob.getParent().getType() == 'Armature'):
@@ -1707,55 +1750,55 @@ def getObjectSRT(ob, space):
                         matparentboneinv = Blender.Mathutils.Matrix(matparentbone)
                         matparentboneinv.invert()
                         mat = mat * matparentboneinv
-        # get translation
-        bt = mat.translationPart()        
-        # get the rotation part, this is scale * rotation
-        bsr = mat.rotationPart()
-    else: # bones, get the matrix of the first frame of animation
+    else: # bones, get the rest matrix
         assert(space == 'localspace') # in this function, we only need bones in localspace
         mat = get_bone_restmatrix(ob, 'BONESPACE')
-        bsr = mat.rotationPart()
-        bt = mat.translationPart()
     
-    # get the squared scale matrix
-    bsrT = Blender.Mathutils.Matrix(bsr)
-    bsrT.transpose()
-    bs2 = bsr * bsrT # bsr * bsrT = bs * br * brT * bsT = bs^2
-    # debug: br2's off-diagonal elements must be zero!
-    assert(abs(bs2[0][1]) + abs(bs2[0][2]) \
-        + abs(bs2[1][0]) + abs(bs2[1][2]) \
-        + abs(bs2[2][0]) + abs(bs2[2][1]) < EPSILON)
-    
-    # get scale components
-    bs = Blender.Mathutils.Vector(\
-         [ (bs2[0][0]) ** 0.5, (bs2[1][1]) ** 0.5, (bs2[2][2]) ** 0.5 ])
-    # and fix their sign
-    if (bsr.determinant() < 0): bs.negate()
-    
-    # get the rotation matrix
-    br = Blender.Mathutils.Matrix(\
-        [ bsr[0][0]/bs[0], bsr[0][1]/bs[0], bsr[0][2]/bs[0] ],\
-        [ bsr[1][0]/bs[1], bsr[1][1]/bs[1], bsr[1][2]/bs[1] ],\
-        [ bsr[2][0]/bs[2], bsr[2][1]/bs[2], bsr[2][2]/bs[2] ])
-    
-    # debug: rotation matrix must have determinant 1
-    assert(abs(br.determinant() - 1.0) < EPSILON)
+    return decompose_srt(mat)
 
+
+
+# Decompose Blender transform matrix as a scale, rotation matrix, and translation vector
+def decompose_srt(m):
+    # get scale components
+    b_scale_rot = m.rotationPart()
+    b_scale_rot_T = Blender.Mathutils.Matrix(b_scale_rot)
+    b_scale_rot_T.transpose()
+    b_scale_rot_2 = b_scale_rot * b_scale_rot_T
+    b_scale = Blender.Mathutils.Vector(\
+        b_scale_rot_2[0][0] ** 0.5,\
+        b_scale_rot_2[1][1] ** 0.5,\
+        b_scale_rot_2[2][2] ** 0.5)
+    # and fix their sign
+    if (b_scale_rot.determinant() < 0): b_scale.negate()
+    # get rotation matrix
+    b_rot = Blender.Mathutils.Matrix(\
+        [m[0][0]/b_scale[0],m[0][1]/b_scale[0],m[0][2]/b_scale[0]],\
+        [m[1][0]/b_scale[1],m[1][1]/b_scale[1],m[1][2]/b_scale[1]],\
+        [m[2][0]/b_scale[2],m[2][1]/b_scale[2],m[2][2]/b_scale[2]])
+    # get translation
+    b_trans = m.translationPart()
+    # debug: off-diagonal elements must be zero in b_scale_rot_2
+    assert(abs(b_scale_rot_2[0][1]) + abs(b_scale_rot_2[0][2]) \
+           + abs(b_scale_rot_2[1][0]) + abs(b_scale_rot_2[1][2]) \
+           + abs(b_scale_rot_2[2][0]) + abs(b_scale_rot_2[2][1]) < EPSILON)
+    # debug: rotation matrix must have determinant 1
+    assert(abs(b_rot.determinant() - 1.0) < EPSILON)
     # debug: rotation matrix must satisfy orthogonality constraint
     for i in range(3):
         for j in range(3):
-            sum = 0.0
+            x = 0.0
             for k in range(3):
-                sum += br[k][i] * br[k][j]
-            if (i == j): assert(abs(sum - 1.0) < EPSILON)
-            if (i != j): assert(abs(sum) < EPSILON)
-    
+                x += b_rot[k][i] * b_rot[k][j]
+            if (i == j): assert(abs(x - 1.0) < EPSILON)
+            if (i != j): assert(abs(x) < EPSILON)
     # debug: the product of the scaling values must be equal to the determinant of the blender rotation part
-    assert(abs(bs[0]*bs[1]*bs[2] - bsr.determinant()) < EPSILON)
-    
-    # TODO: debug: check that indeed bm == bs * br * bt
-
-    return (bs, br, bt)
+    assert(abs(b_scale[0]*b_scale[1]*b_scale[2] - b_rot.determinant()) < EPSILON)
+    # debug: only uniform scaling
+    if abs(b_scale[0]-b_scale[1]) + abs(b_scale[1]-b_scale[2]) > EPSILON:
+        raise NIFExportError("Non-uniform scaling not supported. Workaround: apply size and rotation (CTRL-A).")
+    # done!
+    return sum(b_scale)/3.0, b_rot, b_trans
 
 
 

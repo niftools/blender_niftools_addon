@@ -474,8 +474,11 @@ def fb_global_matrix(niBlock):
                       [m[3][0],m[3][1],m[3][2],m[3][3]])
     return b_matrix
 
-# Decompose transform matrix as a scale, rotation matrix, and translation vector
+
+
+# Decompose Blender transform matrix as a scale, rotation matrix, and translation vector
 def decompose_srt(m):
+    # get scale components
     b_scale_rot = m.rotationPart()
     b_scale_rot_T = Matrix(b_scale_rot)
     b_scale_rot_T.transpose()
@@ -483,13 +486,37 @@ def decompose_srt(m):
     b_scale = Vector(b_scale_rot_2[0][0] ** 0.5,\
                      b_scale_rot_2[1][1] ** 0.5,\
                      b_scale_rot_2[2][2] ** 0.5)
+    # and fix their sign
+    if (b_scale_rot.determinant() < 0): b_scale.negate()
+    # get rotation matrix
     b_rot = Matrix([m[0][0]/b_scale[0],m[0][1]/b_scale[0],m[0][2]/b_scale[0]],\
                    [m[1][0]/b_scale[1],m[1][1]/b_scale[1],m[1][2]/b_scale[1]],\
                    [m[2][0]/b_scale[2],m[2][1]/b_scale[2],m[2][2]/b_scale[2]])
+    # get translation
     b_trans = m.translationPart()
-    assert(abs(b_scale[0]-b_scale[1])<EPSILON) # only uniform scaling
+    # debug: off-diagonal elements must be zero in b_scale_rot_2
+    assert(abs(b_scale_rot_2[0][1]) + abs(b_scale_rot_2[0][2]) \
+           + abs(b_scale_rot_2[1][0]) + abs(b_scale_rot_2[1][2]) \
+           + abs(b_scale_rot_2[2][0]) + abs(b_scale_rot_2[2][1]) < EPSILON)
+    # debug: rotation matrix must have determinant 1
+    assert(abs(b_rot.determinant() - 1.0) < EPSILON)
+    # debug: rotation matrix must satisfy orthogonality constraint
+    for i in range(3):
+        for j in range(3):
+            x = 0.0
+            for k in range(3):
+                x += b_rot[k][i] * b_rot[k][j]
+            if (i == j): assert(abs(x - 1.0) < EPSILON)
+            if (i != j): assert(abs(x) < EPSILON)
+    # debug: the product of the scaling values must be equal to the determinant of the blender rotation part
+    assert(abs(b_scale[0]*b_scale[1]*b_scale[2] - b_rot.determinant()) < EPSILON)
+    # debug: only uniform scaling
+    assert(abs(b_scale[0]-b_scale[1])<EPSILON)
     assert(abs(b_scale[1]-b_scale[2])<EPSILON)
+    # done!
     return b_scale[0], b_rot, b_trans
+
+
 
 # Returns the scale correction matrix. A bit silly to calculate it all the time,
 # but the overhead is minimal and when the GUI will work again this will be useful.
