@@ -144,6 +144,11 @@ NAMES = {}
 # dictionary of bones, maps Blender bone name to NIF block
 BONES = {}
 
+# dictionary of bones, maps Blender bone name to matrix that maps the
+# NIF bone matrix on the Blender bone matrix
+# B' = X * B, where B' is the Blender bone matrix, and B is the NIF bone matrix
+BONES_EXTRA_MATRIX = {}
+
 # dictionary of bones that belong to a certain armature
 # maps NIF armature name to list of NIF bone name
 BONE_LIST = {}
@@ -523,12 +528,36 @@ def fb_armature(niBlock):
     for bone_name, b_posebone in b_armature.getPose().bones.items():
         # get bind matrix (NIF format stores full transformations in keyframes,
         # but Blender wants relative transformations, hence we need to know
-        # the bind position for conversion).
+        # the bind position for conversion). Since
+        # [ Rchannel 0 ]    [ Rbind 0 ]   [ Rchannel * Rbind         0 ]   [ Rtotal 0 ]
+        # [ Tchannel 1 ] *  [ Tbind 1 ] = [ Tchannel * Rbind + Tbind 1 ] = [ Ttotal 1 ]
+        # it follows that
+        # Rchannel = Rtotal * inverse(Rbind)
+        # Tchannel = (Ttotal - Tbind) * inverse(Rbind)
         niBone = BONES[bone_name]
         niBone_bind_matrix = fb_matrix(niBone)
         niBone_bind_trans = niBone_bind_matrix.translationPart()
         niBone_bind_rot_inv = niBone_bind_matrix.rotationPart()
         niBone_bind_rot_inv.invert()
+        # we also need the conversion of the original matrix to the new bone matrix, say X,
+        # B' = X * B
+        # because we need that
+        # C' * B' = X * C * B
+        # and therefore
+        # C' = X * C * B * inverse(B') = X * C * inverse(X), where X = B' * inverse(B)
+        # In detail:
+        # [ RX 0 ]   [ RC 0 ]            [ RX 0 ]
+        # [ TX 1 ] * [ TC 1 ] * inverse( [ TX 1 ] ) =
+        # [ RX * RC        0 ]   [ inverse(RX)         0 ]
+        # [ TX * RC + TC   1 ] * [ -TX * inverse(RX)   1 ] =
+        # [ RX * RC * inverse(RX)               0 ]
+        # [ (TX * RC + TC - TX) * inverse(RX)   1 ]
+        extra_matrix = BONES_EXTRA_MATRIX[bone_name]
+        extra_matrix_trans = extra_matrix.translationPart()
+        extra_matrix_rot = extra_matrix.rotationPart()
+        extra_matrix_rot_inv = Blender.Mathutils.Matrix(extra_matrix_rot)
+        extra_matrix_rot_inv.invert()
+        # now import everything
         kfc = find_controller(niBone, "NiKeyframeController")
         if not kfc.is_null():
             kfd = kfc["Data"].asLink()
@@ -537,39 +566,43 @@ def fb_armature(niBlock):
             # get keyframe data
             rot_keys = ikfd.GetRotateKeys()
             trans_keys = ikfd.GetTranslateKeys()
-            #scale_keys = ikfd.GetScaleKeys() ## TODO
-            # construct key dictionaries and frames list
-            # we must know when to insert just a rotation key, just a translation key, or both
-            # these dictionaries make that task a little bit easier
-            rot_keys_dict = {}
-            trans_keys_dict = {}
-            frames = []
+            #scale_keys = ikfd.GetScaleKeys() # TODO
+            # add the keys
             for rot_key in rot_keys:
                 frame = 1+int(rot_key.time * fps) # time 0.0 is frame 1
-                rot_keys_dict[frame] = rot_key
-                if not frame in frames:
-                    frames.append(frame)
+                rot_total = Blender.Mathutils.Quaternion([rot_key.data.w, rot_key.data.x, rot_key.data.y, rot_key.data.z]).toMatrix()
+                rot_channel = rot_total * niBone_bind_rot_inv # Rchannel = Rtotal * inverse(Rbind)
+                rot_channel = extra_matrix_rot * rot_channel * extra_matrix_rot_inv # C' = X * C * inverse(X)
+                b_posebone.quat = Blender.Mathutils.Quaternion(rot_channel.toQuat())
+                b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.ROT])
             for trans_key in trans_keys:
                 frame = 1+int(trans_key.time * fps) # time 0.0 is frame 1
-                trans_keys_dict[frame] = trans_key
-                if not frame in frames:
-                    frames.append(frame)
-            # insert keys into the pose
-            frames.sort()
-            for frame in frames:
-                pose_options = []
-                if rot_keys_dict.has_key(frame):
-                    rot_key = rot_keys_dict[frame]
-                    rot_total = Blender.Mathutils.Quaternion([rot_key.data.w, rot_key.data.x, rot_key.data.y, rot_key.data.z]).toMatrix()
-                    b_posebone.quat = Blender.Mathutils.Quaternion((rot_total *  niBone_bind_rot_inv).toQuat())
-                    pose_options.append(Blender.Object.Pose.ROT)
-                if trans_keys_dict.has_key(frame):
-                    trans_key = trans_keys_dict[frame]
-                    trans_total = Blender.Mathutils.Vector([trans_key.data.x, trans_key.data.y, trans_key.data.z])
-                    b_posebone.loc = (trans_total - niBone_bind_trans) * niBone_bind_rot_inv
-                    pose_options.append(Blender.Object.Pose.LOC)
-                if pose_options:
-                    b_posebone.insertKey(b_armature, frame, pose_options)
+                trans_total = Blender.Mathutils.Vector([trans_key.data.x, trans_key.data.y, trans_key.data.z])
+                trans_channel = (trans_total - niBone_bind_trans) * niBone_bind_rot_inv # Tchannel = (Ttotal - Tbind) * inverse(Rbind)
+                # we need the rotation matrix at this frame (that's why we inserted the rotation keys first)
+                ipo = None
+                try:
+                    ipo = action.getChannelIpo(bone_name)
+                except:
+                    pass
+                if ipo and ipo.getCurve('QuatX') and ipo.getCurve('QuatY') and ipo.getCurve('QuatZ') and ipo.getCurve('QuatW'):
+                    quat = Blender.Mathutils.Quaternion()
+                    quat.x = ipo.getCurve('QuatX').evaluate(frame)
+                    quat.y = ipo.getCurve('QuatY').evaluate(frame)
+                    quat.z = ipo.getCurve('QuatZ').evaluate(frame)
+                    quat.w = ipo.getCurve('QuatW').evaluate(frame)
+                    rot_channel = quat.toMatrix()
+                else:
+                    rot_channel = Blender.Mathutils.Matrix([1,0,0],[0,1,0],[0,0,1])
+                # now we can do the final calculation
+                trans_channel = (trans_channel + extra_matrix_trans * rot_channel - extra_matrix_trans) * extra_matrix_rot_inv # C' = X * C * inverse(X)
+                b_posebone.loc = trans_channel
+                b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.LOC])
+            #for scale_key in scale_keys:
+            #    frame = 1+int(scale_key.time * fps) # time 0.0 is frame 1
+            #    scale_total = scale_key.data
+            #    b_posebone.size = Blender.Mathutils.Vector([scale_total, scale_total, scale_total]) # assume bind scale is 1.0 (TODO: generalize)
+            #    b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.SIZE])
     return b_armature
 
 
@@ -577,6 +610,7 @@ def fb_armature(niBlock):
 # Adds a bone to the armature in edit mode.
 def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
     global BONES
+    global BONES_EXTRA_MATRIX
     
     bone_name = fb_name(niBlock)
     niChildren = niBlock["Children"].asLinkList()
@@ -619,6 +653,15 @@ def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
         # set bone name and store the niBlock for future reference
         b_armatureData.bones[bone_name] = b_bone
         BONES[bone_name] = niBlock
+        # calculate bone difference matrix; we will need this when importing animation
+        old_bone_matrix_inv = Blender.Mathutils.Matrix(armature_space_matrix)
+        old_bone_matrix_inv.invert()
+        new_bone_matrix = Blender.Mathutils.Matrix(b_bone.matrix)
+        new_bone_matrix.resize4x4()
+        new_bone_matrix[3][0] = b_bone_head_x
+        new_bone_matrix[3][1] = b_bone_head_y
+        new_bone_matrix[3][2] = b_bone_head_z
+        BONES_EXTRA_MATRIX[bone_name] = new_bone_matrix * old_bone_matrix_inv # new * inverse(old)
         # set bone children
         for niBone in niChildBones:
             b_child_bone =  fb_bone(niBone, b_armature, b_armatureData, armature_matrix_inverse)
