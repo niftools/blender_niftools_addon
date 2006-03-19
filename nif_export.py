@@ -518,27 +518,26 @@ def export_keyframe(ipo, space, parent_block, extra_trans = None, extra_quat = N
                 knot = btriple.getPoints()
                 frame = knot[0]
                 if (frame < fstart) or (frame > fend): continue
-                ftime = (frame - 1) * fspeed
                 if (curve.getName() == 'RotX') or (curve.getName() == 'RotY') or (curve.getName() == 'RotZ'):
-                    rot_curve[ftime] = Blender.Mathutils.Euler([10*ipo.getCurve('RotX').evaluate(frame), 10*ipo.getCurve('RotY').evaluate(frame), 10*ipo.getCurve('RotZ').evaluate(frame)]).toQuat()
+                    rot_curve[frame] = Blender.Mathutils.Euler([10*ipo.getCurve('RotX').evaluate(frame), 10*ipo.getCurve('RotY').evaluate(frame), 10*ipo.getCurve('RotZ').evaluate(frame)]).toQuat()
                     if extra_quat: # extra quaternion rotation
-                        rot_curve[ftime] = Blender.Mathutils.CrossQuats(rot_curve[ftime], extra_quat)
+                        rot_curve[frame] = Blender.Mathutils.CrossQuats(rot_curve[frame], extra_quat)
                 elif (curve.getName() == 'QuatX') or (curve.getName() == 'QuatY') or (curve.getName() == 'QuatZ') or  (curve.getName() == 'QuatW'):
-                    rot_curve[ftime] = Blender.Mathutils.Quaternion()
-                    rot_curve[ftime].x = ipo.getCurve('QuatX').evaluate(frame)
-                    rot_curve[ftime].y = ipo.getCurve('QuatY').evaluate(frame)
-                    rot_curve[ftime].z = ipo.getCurve('QuatZ').evaluate(frame)
-                    rot_curve[ftime].w = ipo.getCurve('QuatW').evaluate(frame)
+                    rot_curve[frame] = Blender.Mathutils.Quaternion()
+                    rot_curve[frame].x = ipo.getCurve('QuatX').evaluate(frame)
+                    rot_curve[frame].y = ipo.getCurve('QuatY').evaluate(frame)
+                    rot_curve[frame].z = ipo.getCurve('QuatZ').evaluate(frame)
+                    rot_curve[frame].w = ipo.getCurve('QuatW').evaluate(frame)
                     if extra_quat: # extra quaternion rotation
-                        rot_curve[ftime] = Blender.Mathutils.CrossQuats(rot_curve[ftime], extra_quat)
+                        rot_curve[frame] = Blender.Mathutils.CrossQuats(rot_curve[frame], extra_quat)
                 if (curve.getName() == 'LocX') or (curve.getName() == 'LocY') or (curve.getName() == 'LocZ'):
-                    trans_curve[ftime] = Blender.Mathutils.Vector([ipo.getCurve('LocX').evaluate(frame), ipo.getCurve('LocY').evaluate(frame), ipo.getCurve('LocZ').evaluate(frame)])
+                    trans_curve[frame] = Blender.Mathutils.Vector([ipo.getCurve('LocX').evaluate(frame), ipo.getCurve('LocY').evaluate(frame), ipo.getCurve('LocZ').evaluate(frame)])
                     if extra_quat: # extra rotation
-                        trans_curve[ftime] = trans_curve[ftime] * extra_quat.toMatrix()
+                        trans_curve[frame] = trans_curve[frame] * extra_quat.toMatrix()
                     if extra_trans: # extra translation
-                        trans_curve[ftime][0] += extra_trans[0]
-                        trans_curve[ftime][1] += extra_trans[1]
-                        trans_curve[ftime][2] += extra_trans[2]
+                        trans_curve[frame][0] += extra_trans[0]
+                        trans_curve[frame][1] += extra_trans[1]
+                        trans_curve[frame][2] += extra_trans[2]
 
     # -> now comes the real export
 
@@ -559,29 +558,31 @@ def export_keyframe(ipo, space, parent_block, extra_trans = None, extra_quat = N
 
     ikfd = QueryKeyframeData(kfd)
     ikfd.SetRotateType(LINEAR_KEY)
-    ftimes = rot_curve.keys()
-    ftimes.sort()
+    frames = rot_curve.keys()
+    frames.sort()
     rot_keys = []
-    for ftime in ftimes:
+    for frame in frames:
+        ftime = (frame - 1) * fspeed
         rot_frame = Key_Quaternion()
         rot_frame.time = ftime
-        rot_frame.data.w = rot_curve[ftime].w
-        rot_frame.data.x = rot_curve[ftime].x
-        rot_frame.data.y = rot_curve[ftime].y
-        rot_frame.data.z = rot_curve[ftime].z
+        rot_frame.data.w = rot_curve[frame].w
+        rot_frame.data.x = rot_curve[frame].x
+        rot_frame.data.y = rot_curve[frame].y
+        rot_frame.data.z = rot_curve[frame].z
         rot_keys.append(rot_frame)
     ikfd.SetRotateKeys(rot_keys)
 
     ikfd.SetTranslateType(LINEAR_KEY)
-    ftimes = trans_curve.keys()
-    ftimes.sort()
+    frames = trans_curve.keys()
+    frames.sort()
     trans_keys = []
-    for ftime in ftimes:
+    for frame in frames:
+        ftime = (frame - 1) * fspeed
         trans_frame = Key_Vector3()
         trans_frame.time = ftime
-        trans_frame.data.x = trans_curve[ftime][0]
-        trans_frame.data.y = trans_curve[ftime][1]
-        trans_frame.data.z = trans_curve[ftime][2]
+        trans_frame.data.x = trans_curve[frame][0]
+        trans_frame.data.y = trans_curve[frame][1]
+        trans_frame.data.z = trans_curve[frame][2]
         trans_keys.append(trans_frame)
     ikfd.SetTranslateKeys(trans_keys)
 
