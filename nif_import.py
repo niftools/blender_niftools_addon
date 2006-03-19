@@ -439,6 +439,9 @@ def fb_name(niBlock):
     # find unique name for Blender to use
     uniqueInt = 0
     niName = niBlock["Name"].asString()
+    # remove the "Tri " prefix; this will help when exporting the model again
+    if niName[:4] == "Tri ":
+        niName = niName[4:]
     name = niName[:19] # Blender has a rather small name buffer
     try:
         while Blender.Object.Get(name):
