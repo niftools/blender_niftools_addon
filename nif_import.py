@@ -273,18 +273,18 @@ def fit_view():
 # Main import function.
 #
 def import_nif(filename):
+    global NIF_DIR, TEX_DIR
+    NIF_DIR = Blender.sys.dirname(filename)
+    # Morrowind smart texture dir
+    idx = NIF_DIR.lower().find('meshes')
+    if ( idx >= 0 ):
+        TEX_DIR = NIF_DIR[:idx] + 'textures'
+    else:
+        TEX_DIR = None
+    # scene info
+    global b_scene
+    b_scene = Blender.Scene.GetCurrent()
     try: # catch NIFImportErrors
-        global NIF_DIR, TEX_DIR
-        NIF_DIR = Blender.sys.dirname(filename)
-        # Morrowind smart texture dir
-        idx = NIF_DIR.lower().find('meshes')
-        if ( idx >= 0 ):
-            TEX_DIR = NIF_DIR[:idx] + 'textures'
-        else:
-            TEX_DIR = None
-        # scene info
-        global b_scene
-        b_scene = Blender.Scene.GetCurrent()
         # read the NIF file
         ver = CheckNifHeader(filename)
         if ( ver == VER_INVALID ):
@@ -780,20 +780,21 @@ def fb_texture( niSourceTexture ):
                     del dummy
                     break
                 except:
-                    b_image = None
-                    # file format is not supported, tries to load alternative texture
-                    base=tex[:-4]
-                    for ext in ('.PNG','.png','.TGA','.tga','.BMP','.bmp','.JPG','.jpg'):
-                        tex = base+ext
-                        if Blender.sys.exists(tex) == 1:
-                            b_image = Blender.Image.Load(tex)
-                            try:
-                                dummy = b_image.size
-                                msg( "Found alternate %s" % tex, 3 )
-                                del dummy
-                                break
-                            except:
-                                b_image = None
+                    b_image = None # not supported, delete image object
+            # file format is not supported or file was not found, therefore
+            # we try to load alternative texture
+            base=tex[:-4]
+            for ext in ('.PNG','.png','.TGA','.tga','.BMP','.bmp','.JPG','.jpg'):
+                tex = base+ext
+                if Blender.sys.exists(tex) == 1:
+                    b_image = Blender.Image.Load(tex)
+                    try:
+                        dummy = b_image.size
+                        msg( "Found alternate %s" % tex, 3 )
+                        del dummy
+                        break
+                    except:
+                        b_image = None
         if b_image == None:
             print "texture %s not found" % niTexSource.fileName
     else:
