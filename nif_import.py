@@ -273,6 +273,7 @@ def fit_view():
 # Main import function.
 #
 def import_nif(filename):
+    Blender.Window.DrawProgressBar(0.0, "Initializing")
     global NIF_DIR, TEX_DIR
     NIF_DIR = Blender.sys.dirname(filename)
     # Morrowind smart texture dir
@@ -291,13 +292,16 @@ def import_nif(filename):
             raise NIFImportError("Not a NIF file.")
         elif ( ver == VER_UNSUPPORTED ):
             raise NIFImportError("Unsupported NIF version.")
+        Blender.Window.DrawProgressBar(0.33, "Reading file")
         root_block = ReadNifTree(filename)
+        Blender.Window.DrawProgressBar(0.66, "Importing data")
         import_main(root_block)
     except NIFImportError, e: # in that case, we raise a menu instead of an exception
         Blender.Window.DrawProgressBar(1.0, "Import Failed")
         print 'NIFImportError: ' + e.value
         Blender.Draw.PupMenu('ERROR%t|' + e.value)
         return
+    Blender.Window.DrawProgressBar(1.0, "Finished")
 
 
 
@@ -337,16 +341,15 @@ def import_main(root_block):
     b_scene.update(1) # do a full update to make sure all transformations get applied
     #fit_view()
     #b_scene.getCurrentCamera()
-    Blender.Window.DrawProgressBar(1.0, "Finished")
     
 # Reads the content of the current NIF tree branch to Blender recursively
 def read_branch(niBlock):
     # used to control the progress bar
     global block_count, blocks_read, read_progress
     blocks_read += 1.0
-    if (blocks_read/block_count) >= (read_progress + 0.1):
-        read_progress = blocks_read/block_count
-        Blender.Window.DrawProgressBar(read_progress, "Reading NIF file")
+    if (blocks_read/(block_count+1)) >= (read_progress + 0.1):
+        read_progress = blocks_read/(block_count+1)
+        Blender.Window.DrawProgressBar(read_progress, "Importing data")
     if not niBlock.is_null():
         btype = niBlock.GetBlockType()
         if btype == "NiTriShape" or btype == "NiTriStrips":
@@ -383,12 +386,6 @@ def read_branch(niBlock):
 # niBlock must have been imported previously as an armature, along
 # with all its bones. This function only imports meshes.
 def read_armature_branch(b_armature, niArmature, niBlock):
-    # used to control the progress bar
-    global block_count, blocks_read, read_progress
-    blocks_read += 1.0
-    if (blocks_read/block_count) >= (read_progress + 0.1):
-        read_progress = blocks_read/block_count
-        Blender.Window.DrawProgressBar(read_progress, "Reading NIF file")
     # check if the child is non-null
     if not niBlock.is_null():
         btype = niBlock.GetBlockType()
@@ -555,6 +552,7 @@ def fb_armature(niBlock):
     context = scn.getRenderingContext()
     fps = context.framesPerSec()
     # go through all armature pose bones (http://www.elysiun.com/forum/viewtopic.php?t=58693)
+    progress = 0.1
     for bone_name, b_posebone in b_armature.getPose().bones.items():
         msg('Importing animation for bone %s'%bone_name, 4)
         # get bind matrix (NIF format stores full transformations in keyframes,
@@ -600,10 +598,14 @@ def fb_armature(niBlock):
         # now import everything
         kfc = find_controller(niBone, "NiKeyframeController")
         if not kfc.is_null():
+            # denote progress
+            Blender.Window.DrawProgressBar(progress, "Animation")
+            if (progress < 0.85): progress += 0.1
+            else: progress = 0.1
+            # get keyframe data
             kfd = kfc["Data"].asLink()
             assert(kfd.GetBlockType() == "NiKeyframeData")
             ikfd = QueryKeyframeData(kfd)
-            # get keyframe data
             rot_keys = ikfd.GetRotateKeys()
             trans_keys = ikfd.GetTranslateKeys()
             scale_keys = ikfd.GetScaleKeys()
@@ -1450,10 +1452,11 @@ def get_closest_bone(niBlock):
 # Main KFM import function.
 #
 def import_kfm(filename):
+    Blender.Window.DrawProgressBar(0.0, "Initializing")
+    # scene info
+    global b_scene
+    b_scene = Blender.Scene.GetCurrent()
     try: # catch NIFImportErrors
-        # scene info
-        global b_scene
-        b_scene = Blender.Scene.GetCurrent()
         # read the KFM file
         kfm = Kfm()
         ver = kfm.Read(filename)
