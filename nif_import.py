@@ -474,6 +474,23 @@ def fb_global_matrix(niBlock):
                       [m[3][0],m[3][1],m[3][2],m[3][3]])
     return b_matrix
 
+# Decompose transform matrix as a scale, rotation matrix, and translation vector
+def decompose_srt(m):
+    b_scale_rot = m.rotationPart()
+    b_scale_rot_T = Matrix(b_scale_rot)
+    b_scale_rot_T.transpose()
+    b_scale_rot_2 = b_scale_rot * b_scale_rot_T
+    b_scale = Vector(b_scale_rot_2[0][0] ** 0.5,\
+                     b_scale_rot_2[1][1] ** 0.5,\
+                     b_scale_rot_2[2][2] ** 0.5)
+    b_rot = Matrix([m[0][0]/b_scale[0],m[0][1]/b_scale[0],m[0][2]/b_scale[0]],\
+                   [m[1][0]/b_scale[1],m[1][1]/b_scale[1],m[1][2]/b_scale[1]],\
+                   [m[2][0]/b_scale[2],m[2][1]/b_scale[2],m[2][2]/b_scale[2]])
+    b_trans = m.translationPart()
+    assert(abs(b_scale[0]-b_scale[1])<EPSILON) # only uniform scaling
+    assert(abs(b_scale[1]-b_scale[2])<EPSILON)
+    return b_scale[0], b_rot, b_trans
+
 # Returns the scale correction matrix. A bit silly to calculate it all the time,
 # but the overhead is minimal and when the GUI will work again this will be useful.
 def fb_scale_mat():
@@ -532,15 +549,19 @@ def fb_armature(niBlock):
         # get bind matrix (NIF format stores full transformations in keyframes,
         # but Blender wants relative transformations, hence we need to know
         # the bind position for conversion). Since
-        # [ Rchannel 0 ]    [ Rbind 0 ]   [ Rchannel * Rbind         0 ]   [ Rtotal 0 ]
-        # [ Tchannel 1 ] *  [ Tbind 1 ] = [ Tchannel * Rbind + Tbind 1 ] = [ Ttotal 1 ]
+        # [ SRchannel 0 ]    [ SRbind 0 ]   [ SRchannel * SRbind         0 ]   [ SRtotal 0 ]
+        # [ Tchannel  1 ] *  [ Tbind  1 ] = [ Tchannel  * SRbind + Tbind 1 ] = [ Ttotal  1 ]
+        # with
+        # 'total' the transformations as stored in the NIF keyframes,
+        # 'bind' the Blender bind pose, and
+        # 'channel' the Blender IPO channel,
         # it follows that
+        # Schannel = Stotal / Sbind
         # Rchannel = Rtotal * inverse(Rbind)
-        # Tchannel = (Ttotal - Tbind) * inverse(Rbind)
+        # Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
         niBone = BONES[bone_name]
-        niBone_bind_matrix = fb_matrix(niBone)
-        niBone_bind_trans = niBone_bind_matrix.translationPart()
-        niBone_bind_rot_inv = niBone_bind_matrix.rotationPart()
+        niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = decompose_srt(fb_matrix(niBone))
+        niBone_bind_rot_inv = Matrix(niBone_bind_rot)
         niBone_bind_rot_inv.invert()
         # we also need the conversion of the original matrix to the new bone matrix, say X,
         # B' = X * B
@@ -549,16 +570,18 @@ def fb_armature(niBlock):
         # and therefore
         # C' = X * C * B * inverse(B') = X * C * inverse(X), where X = B' * inverse(B)
         # In detail:
-        # [ RX 0 ]   [ RC 0 ]            [ RX 0 ]
-        # [ TX 1 ] * [ TC 1 ] * inverse( [ TX 1 ] ) =
-        # [ RX * RC        0 ]   [ inverse(RX)         0 ]
-        # [ TX * RC + TC   1 ] * [ -TX * inverse(RX)   1 ] =
-        # [ RX * RC * inverse(RX)               0 ]
-        # [ (TX * RC + TC - TX) * inverse(RX)   1 ]
-        extra_matrix = BONES_EXTRA_MATRIX[bone_name]
-        extra_matrix_trans = extra_matrix.translationPart()
-        extra_matrix_rot = extra_matrix.rotationPart()
-        extra_matrix_rot_inv = Blender.Mathutils.Matrix(extra_matrix_rot)
+        # [ SRX 0 ]   [ SRC 0 ]            [ SRX 0 ]
+        # [ TX  1 ] * [ TC  1 ] * inverse( [ TX  1 ] ) =
+        # [ SRX * SRC       0 ]   [ inverse(SRX)         0 ]
+        # [ TX * SRC + TC   1 ] * [ -TX * inverse(SRX)   1 ] =
+        # [ SRX * SRC * inverse(SRX)              0 ]
+        # [ (TX * SRC + TC - TX) * inverse(SRX)   1 ]
+        # Hence
+        # SC' = SX * SC / SX = SC
+        # RC' = RX * RC * inverse(RX)
+        # TC' = (TX * SC * RC + TC - TX) * inverse(RX) / SX
+        extra_matrix_scale, extra_matrix_rot, extra_matrix_trans = decompose_srt(BONES_EXTRA_MATRIX[bone_name])
+        extra_matrix_rot_inv = Matrix(extra_matrix_rot)
         extra_matrix_rot_inv.invert()
         # now import everything
         kfc = find_controller(niBone, "NiKeyframeController")
@@ -569,8 +592,14 @@ def fb_armature(niBlock):
             # get keyframe data
             rot_keys = ikfd.GetRotateKeys()
             trans_keys = ikfd.GetTranslateKeys()
-            #scale_keys = ikfd.GetScaleKeys() # TODO
+            scale_keys = ikfd.GetScaleKeys() # TODO
             # add the keys
+            for scale_key in scale_keys:
+                frame = 1+int(scale_key.time * fps) # time 0.0 is frame 1
+                scale_total = scale_key.data
+                scale_channel = scale_total / niBone_bind_scale # Schannel = Stotal / Sbind
+                b_posebone.size = Blender.Mathutils.Vector([scale_channel, scale_channel, scale_channel])
+                b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.SIZE])
             for rot_key in rot_keys:
                 frame = 1+int(rot_key.time * fps) # time 0.0 is frame 1
                 rot_total = Blender.Mathutils.Quaternion([rot_key.data.w, rot_key.data.x, rot_key.data.y, rot_key.data.z]).toMatrix()
@@ -581,7 +610,7 @@ def fb_armature(niBlock):
             for trans_key in trans_keys:
                 frame = 1+int(trans_key.time * fps) # time 0.0 is frame 1
                 trans_total = Blender.Mathutils.Vector([trans_key.data.x, trans_key.data.y, trans_key.data.z])
-                trans_channel = (trans_total - niBone_bind_trans) * niBone_bind_rot_inv # Tchannel = (Ttotal - Tbind) * inverse(Rbind)
+                trans_channel = (trans_total - niBone_bind_trans) * niBone_bind_rot_inv * (1.0/niBone_bind_scale)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
                 # we need the rotation matrix at this frame (that's why we inserted the rotation keys first)
                 ipo = None
                 try:
@@ -597,15 +626,20 @@ def fb_armature(niBlock):
                     rot_channel = quat.toMatrix()
                 else:
                     rot_channel = Blender.Mathutils.Matrix([1,0,0],[0,1,0],[0,0,1])
+                # we also need the scale at this frame
+                ipo = None
+                try:
+                    ipo = action.getChannelIpo(bone_name)
+                except:
+                    pass
+                if ipo and ipo.getCurve('SizeX'): # assume uniform scale
+                    scale_channel = ipo.getCurve('SizeX').evaluate(frame)
+                else:
+                    scale_channel = 1.0
                 # now we can do the final calculation
-                trans_channel = (trans_channel + extra_matrix_trans * rot_channel - extra_matrix_trans) * extra_matrix_rot_inv # C' = X * C * inverse(X)
+                trans_channel = (extra_matrix_trans * scale_channel * rot_channel + trans_channel - extra_matrix_trans) * extra_matrix_rot_inv * (1.0/extra_matrix_scale) # C' = X * C * inverse(X)
                 b_posebone.loc = trans_channel
                 b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.LOC])
-            #for scale_key in scale_keys:
-            #    frame = 1+int(scale_key.time * fps) # time 0.0 is frame 1
-            #    scale_total = scale_key.data
-            #    b_posebone.size = Blender.Mathutils.Vector([scale_total, scale_total, scale_total]) # assume bind scale is 1.0 (TODO: generalize)
-            #    b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.SIZE])
     return b_armature
 
 
