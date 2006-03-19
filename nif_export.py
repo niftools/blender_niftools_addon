@@ -275,6 +275,7 @@ and turn off envelopes."""%ob.getName()
         fend = context.endFrame()
         
         # strip extension from filename
+        filedir = Blender.sys.dirname(filename)
         root_name, fileext = Blender.sys.splitext(Blender.sys.basename(filename))
         
         # get the root object from selected object
@@ -359,13 +360,24 @@ and turn off envelopes."""%ob.getName()
 
         # write the file:
         #----------------
-        if DEBUG: print "Writing NIF file(s)"
+        if DEBUG: print "Writing NIF file"
         Blender.Window.DrawProgressBar(0.66, "Writing NIF file(s)")
 
         # make sure we have the right file extension
-        if ((fileext != '.nif') and (fileext != '.NIF')):
+        if (fileext.lower() != '.nif'):
             filename += '.nif'
         WriteNifTree(filename, root_block, NIF_VERSION)
+
+        # Morrowind: also write animation files
+        if ( NIF_VERSION == 0x04000002 ):
+            xnif_root = blk_ref()
+            xkf_root = blk_ref()
+            SplitNifTree(root_block, xnif_root, xkf_root, GAME_MW)
+            if not xnif_root.is_null():
+                if DEBUG: print "Writing XNIF and XKF files"
+                WriteNifTree(filedir + Blender.sys.sep + "x" + root_name + ".nif", xnif_root, NIF_VERSION)
+                WriteNifTree(filedir + Blender.sys.sep + "x" + root_name + ".kf", xkf_root, NIF_VERSION)
+            
 
         
         
