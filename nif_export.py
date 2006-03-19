@@ -529,7 +529,9 @@ def export_keyframe(ipo, space, parent_block, extra_trans = None, extra_quat = N
                 if (curve.getName() == 'RotX') or (curve.getName() == 'RotY') or (curve.getName() == 'RotZ'):
                     rot_curve[frame] = Blender.Mathutils.Euler([10*ipo.getCurve('RotX').evaluate(frame), 10*ipo.getCurve('RotY').evaluate(frame), 10*ipo.getCurve('RotZ').evaluate(frame)]).toQuat()
                     if extra_quat: # extra quaternion rotation
-                        rot_curve[frame] = Blender.Mathutils.CrossQuats(rot_curve[frame], extra_quat)
+                        # beware, CrossQuats takes arguments in a counter-intuitive order:
+                        # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
+                        rot_curve[frame] = Blender.Mathutils.CrossQuats(extra_quat, rot_curve[frame])
                 elif (curve.getName() == 'QuatX') or (curve.getName() == 'QuatY') or (curve.getName() == 'QuatZ') or  (curve.getName() == 'QuatW'):
                     rot_curve[frame] = Blender.Mathutils.Quaternion()
                     rot_curve[frame].x = ipo.getCurve('QuatX').evaluate(frame)
@@ -537,7 +539,9 @@ def export_keyframe(ipo, space, parent_block, extra_trans = None, extra_quat = N
                     rot_curve[frame].z = ipo.getCurve('QuatZ').evaluate(frame)
                     rot_curve[frame].w = ipo.getCurve('QuatW').evaluate(frame)
                     if extra_quat: # extra quaternion rotation
-                        rot_curve[frame] = Blender.Mathutils.CrossQuats(rot_curve[frame], extra_quat)
+                        # beware, CrossQuats takes arguments in a counter-intuitive order:
+                        # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
+                        rot_curve[frame] = Blender.Mathutils.CrossQuats(extra_quat, rot_curve[frame])
                 if (curve.getName() == 'LocX') or (curve.getName() == 'LocY') or (curve.getName() == 'LocZ'):
                     trans_curve[frame] = Blender.Mathutils.Vector([ipo.getCurve('LocX').evaluate(frame), ipo.getCurve('LocY').evaluate(frame), ipo.getCurve('LocZ').evaluate(frame)])
                     if extra_scale: # extra scale
@@ -1566,12 +1570,31 @@ def export_bones(arm, parent_block):
     
     # now fix the linkage between the blocks
     for bone in bones.values():
-        if DEBUG: print "Linking children of bone %s"%bone.name
         # link the bone's children to the bone
         if bone.children:
+            if DEBUG: print "Linking children of bone %s"%bone.name
             for child in bone.children:
                 if child.parent.name == bone.name: # bone.children returns also grandchildren etc... we only want immediate children of course
                     bones_node[bone.name]["Children"].AddLink(bones_node[child.name])
+        else:
+            # no children: export dummy NiNode to preserve tail position
+            if DEBUG: print "Bone %s has no children: adding dummy child for tail."%bone.name
+            tail = Blender.Mathutils.Vector(bone.tail['BONESPACE'])
+            dummy = CreateBlock("NiNode")
+            dummy["Rotation"] = Matrix33(1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0)
+            dummy["Velocity"]    = Float3(0.0,0.0,0.0)
+            dummy["Scale"]       = 1.0
+            dummy["Translation"] = Float3(tail[0], tail[1], tail[2])
+            bbind_mat = get_bone_restmatrix(bone, 'ARMATURESPACE')
+            tail = Blender.Mathutils.Vector(bone.tail['ARMATURESPACE'])
+            bind_mat = Matrix44(\
+                bbind_mat[0][0], bbind_mat[0][1], bbind_mat[0][2], 0.0,\
+                bbind_mat[1][0], bbind_mat[1][1], bbind_mat[1][2], 0.0,\
+                bbind_mat[2][0], bbind_mat[2][1], bbind_mat[2][2], 0.0,\
+                tail[0], tail[1], tail[2], 1.0)
+            idummy = QueryNode(dummy)
+            idummy.SetWorldBindPos(bind_mat)
+            bones_node[bone.name]["Children"].AddLink(dummy)
         # if it is a root bone, link it to the armature
         if not bone.parent:
             parent_block["Children"].AddLink(bones_node[bone.name])
@@ -1771,34 +1794,16 @@ def decompose_srt(m):
         b_scale_rot_2[2][2] ** 0.5)
     # and fix their sign
     if (b_scale_rot.determinant() < 0): b_scale.negate()
-    # get rotation matrix
-    b_rot = Blender.Mathutils.Matrix(\
-        [m[0][0]/b_scale[0],m[0][1]/b_scale[0],m[0][2]/b_scale[0]],\
-        [m[1][0]/b_scale[1],m[1][1]/b_scale[1],m[1][2]/b_scale[1]],\
-        [m[2][0]/b_scale[2],m[2][1]/b_scale[2],m[2][2]/b_scale[2]])
-    # get translation
-    b_trans = m.translationPart()
-    # debug: off-diagonal elements must be zero in b_scale_rot_2
-    assert(abs(b_scale_rot_2[0][1]) + abs(b_scale_rot_2[0][2]) \
-           + abs(b_scale_rot_2[1][0]) + abs(b_scale_rot_2[1][2]) \
-           + abs(b_scale_rot_2[2][0]) + abs(b_scale_rot_2[2][1]) < EPSILON)
-    # debug: rotation matrix must have determinant 1
-    assert(abs(b_rot.determinant() - 1.0) < EPSILON)
-    # debug: rotation matrix must satisfy orthogonality constraint
-    for i in range(3):
-        for j in range(3):
-            x = 0.0
-            for k in range(3):
-                x += b_rot[k][i] * b_rot[k][j]
-            if (i == j): assert(abs(x - 1.0) < EPSILON)
-            if (i != j): assert(abs(x) < EPSILON)
-    # debug: the product of the scaling values must be equal to the determinant of the blender rotation part
-    assert(abs(b_scale[0]*b_scale[1]*b_scale[2] - b_rot.determinant()) < EPSILON)
-    # debug: only uniform scaling
+    # only uniform scaling
     if abs(b_scale[0]-b_scale[1]) + abs(b_scale[1]-b_scale[2]) > EPSILON:
         raise NIFExportError("Non-uniform scaling not supported. Workaround: apply size and rotation (CTRL-A).")
+    b_scale = b_scale[0]
+    # get rotation matrix
+    b_rot = b_scale_rot * (1.0/b_scale)
+    # get translation
+    b_trans = m.translationPart()
     # done!
-    return sum(b_scale)/3.0, b_rot, b_trans
+    return b_scale, b_rot, b_trans
 
 
 
