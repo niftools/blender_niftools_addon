@@ -274,10 +274,6 @@ and turn off envelopes."""%ob.getName()
         fstart = context.startFrame()
         fend = context.endFrame()
         
-        # set everything in the first frame of animation
-        context.currentFrame(fstart)
-        scn.update(1)
-        
         # strip extension from filename
         root_name, fileext = Blender.sys.splitext(Blender.sys.basename(filename))
         
@@ -446,9 +442,9 @@ def export_node(ob, space, parent_block, node_name):
     node["Scale"]       = ob_scale[0]
     node["Translation"] = ob_translation
 
-    # set object bind position (we take the first frame of animation equal to the bind position)
+    # set object bind position
     if ob != None and ob.getParent():
-        bbind_mat = ob.getMatrix('worldspace')
+        bbind_mat = ob.getMatrix('worldspace') # TODO: cancel out all IPO's
         bind_mat = Matrix44(
             bbind_mat[0][0], bbind_mat[0][1], bbind_mat[0][2], bbind_mat[0][3],
             bbind_mat[1][0], bbind_mat[1][1], bbind_mat[1][2], bbind_mat[1][3],
@@ -1488,7 +1484,7 @@ def export_bones(arm, parent_block):
         ob_rotation, \
         ob_scale, \
         ob_velocity \
-        = export_matrix(bone, 'localspace') # first frame of animation!
+        = export_matrix(bone, 'localspace') # rest pose
         node["Rotation"]    = ob_rotation
         node["Velocity"]    = ob_velocity
         node["Scale"]       = ob_scale[0]
@@ -1504,10 +1500,9 @@ def export_bones(arm, parent_block):
 
         # Set the bind pose relative to the armature coordinate
         # system; this should work, if we do the same for the trishape
-        # children. We should bind to the first frame of animation
-        # since the mesh vertices have been transformed into the first
-        # frame of animation as well.
-        bbind_mat = get_bone_matrix(bone, 'ARMATURESPACE')
+        # children. We should bind to the rest position; this is also the
+        # position in which the mesh vertices are exported.
+        bbind_mat = get_bone_restmatrix(bone, 'ARMATURESPACE')
         bind_mat = Matrix44(
             bbind_mat[0][0], bbind_mat[0][1], bbind_mat[0][2], bbind_mat[0][3],
             bbind_mat[1][0], bbind_mat[1][1], bbind_mat[1][2], bbind_mat[1][3],
@@ -1675,7 +1670,7 @@ def export_matrix(ob, space):
 
 # 
 # Find scale, rotation, and translation components of an object in
-# current frame of animation. Returns a triple (bs, br, bt), where bs
+# the rest pose. Returns a triple (bs, br, bt), where bs
 # is a scale vector, br is a 3x3 rotation matrix, and bt is a
 # translation vector. It should hold that "ob.getMatrix(space) == bs *
 # br * bt".
@@ -1692,14 +1687,14 @@ def getObjectSRT(ob, space):
 
     # now write out spaces
     if (not type(ob) is Blender.Armature.Bone):
-        # get world matrix in first frame of animation
-        mat = Blender.Mathutils.Matrix(ob.getMatrix('worldspace'))
+        # get world matrix
+        mat = Blender.Mathutils.Matrix(ob.getMatrix('worldspace')) # TODO: cancel out IPO's
         # handle localspace: L * Ba * B * P = W
         # (with L localmatrix, Ba bone animation channel, B bone rest matrix (armature space), P armature parent matrix, W world matrix)
         # so L = W * P^(-1) * (Ba * B)^(-1)
         if (space == 'localspace'):
             if (ob.getParent() != None):
-                matparentinv = Blender.Mathutils.Matrix(ob.getParent().getMatrix('worldspace'))
+                matparentinv = Blender.Mathutils.Matrix(ob.getParent().getMatrix('worldspace')) # TODO: cancel out IPO's
                 matparentinv.invert()
                 mat = mat * matparentinv
                 if (ob.getParent().getType() == 'Armature'):
@@ -1708,7 +1703,7 @@ def getObjectSRT(ob, space):
                     if bone_parent_name:
                         bone_parent = ob.getParent().getData().bones[bone_parent_name]
                         # get bone parent matrix
-                        matparentbone = get_bone_matrix(bone_parent, 'ARMATURESPACE') # bone matrix in armature space, first frame of animation
+                        matparentbone = get_bone_restmatrix(bone_parent, 'ARMATURESPACE') # bone matrix in armature space
                         matparentboneinv = Blender.Mathutils.Matrix(matparentbone)
                         matparentboneinv.invert()
                         mat = mat * matparentboneinv
@@ -1718,7 +1713,7 @@ def getObjectSRT(ob, space):
         bsr = mat.rotationPart()
     else: # bones, get the matrix of the first frame of animation
         assert(space == 'localspace') # in this function, we only need bones in localspace
-        mat = get_bone_matrix(ob, 'BONESPACE')
+        mat = get_bone_restmatrix(ob, 'BONESPACE')
         bsr = mat.rotationPart()
         bt = mat.translationPart()
     
@@ -1761,67 +1756,6 @@ def getObjectSRT(ob, space):
     # TODO: debug: check that indeed bm == bs * br * bt
 
     return (bs, br, bt)
-
-
-
-# 
-# Get bone matrix in 1st frame of animation. Space can be
-# ARMATURESPACE or BONESPACE. This returns also a 4x4 matrix if space
-# is BONESPACE (also see get_bone_restmatrix).
-# 
-def get_bone_matrix(bone, space):
-    # channels are applied in bone space, so let's start with BONESPACE
-    mat = get_bone_restmatrix(bone, 'BONESPACE')
-    # and multiply with bone parent ipo matrix, if there is one
-    ipo = None
-    for arm in Blender.Object.Get(): # Blender.Armature.Get() crashes Blender alpha release
-        if arm.getType() == 'Armature' and arm.getAction():
-            try:
-                ipo = arm.getAction().getChannelIpo(bone.name)
-                break
-            except: pass
-    # [ Rchannel 0 ]    [ Rbind 0 ]   [ Rchannel * Rbind         0 ]
-    # [ Tchannel 1 ] *  [ Tbind 1 ] = [ Tchannel * Rbind + Tbind 1 ]
-    # (the Blender bind bose is the rest matrix)
-    if ipo and ipo.getCurve('QuatX') and ipo.getCurve('QuatY') and ipo.getCurve('QuatZ') and ipo.getCurve('QuatW'):
-        cquat = Blender.Mathutils.Quaternion()
-        cquat.x = ipo.getCurve('QuatX').evaluate(1) # first frame
-        cquat.y = ipo.getCurve('QuatY').evaluate(1)
-        cquat.z = ipo.getCurve('QuatZ').evaluate(1)
-        cquat.w = ipo.getCurve('QuatW').evaluate(1)
-        rot = cquat.toMatrix() * mat.rotationPart()
-    else:
-        rot = mat.rotationPart()
-    if ipo and ipo.getCurve('LocX') and ipo.getCurve('LocY') and ipo.getCurve('LocZ'):
-        cloc = Blender.Mathutils.Vector([0,0,0])
-        cloc[0] = ipo.getCurve('LocX').evaluate(1)
-        cloc[1] = ipo.getCurve('LocY').evaluate(1)
-        cloc[2] = ipo.getCurve('LocZ').evaluate(1)
-        loc = cloc * mat.rotationPart() + mat.translationPart()
-    else:
-        loc = mat.translationPart()
-    mat[0][0] = rot[0][0]
-    mat[0][1] = rot[0][1]
-    mat[0][2] = rot[0][2]
-    mat[1][0] = rot[1][0]
-    mat[1][1] = rot[1][1]
-    mat[1][2] = rot[1][2]
-    mat[2][0] = rot[2][0]
-    mat[2][1] = rot[2][1]
-    mat[2][2] = rot[2][2]
-    mat[3][0] = loc[0]
-    mat[3][1] = loc[1]
-    mat[3][2] = loc[2]
-    
-    if (space == 'BONESPACE'):
-        return mat
-    elif (space == 'ARMATURESPACE'):
-        if (not bone.parent):
-            return mat
-        else:
-            return mat * get_bone_matrix(bone.parent, 'ARMATURESPACE')
-    else:
-        assert(False) # bug!
 
 
 
