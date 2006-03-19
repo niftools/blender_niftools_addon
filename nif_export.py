@@ -1779,24 +1779,39 @@ def get_bone_matrix(bone, space):
                 ipo = arm.getAction().getChannelIpo(bone.name)
                 break
             except: pass
+    # [ Rchannel 0 ]    [ Rbind 0 ]   [ Rchannel * Rbind         0 ]
+    # [ Tchannel 1 ] *  [ Tbind 1 ] = [ Tchannel * Rbind + Tbind 1 ]
+    # (the Blender bind bose is the rest matrix)
     if ipo and ipo.getCurve('QuatX') and ipo.getCurve('QuatY') and ipo.getCurve('QuatZ') and ipo.getCurve('QuatW'):
-        quat = Blender.Mathutils.Quaternion()
-        quat.x = ipo.getCurve('QuatX').evaluate(1) # first frame
-        quat.y = ipo.getCurve('QuatY').evaluate(1)
-        quat.z = ipo.getCurve('QuatZ').evaluate(1)
-        quat.w = ipo.getCurve('QuatW').evaluate(1)
-        qmat = quat.toMatrix() * mat.rotationPart()
-        # channel quat only affects the rotation part, it does not affect the head (translation) of the bone
-        mat[0][0] = qmat[0][0]
-        mat[0][1] = qmat[0][1]
-        mat[0][2] = qmat[0][2]
-        mat[1][0] = qmat[1][0]
-        mat[1][1] = qmat[1][1]
-        mat[1][2] = qmat[1][2]
-        mat[2][0] = qmat[2][0]
-        mat[2][1] = qmat[2][1]
-        mat[2][2] = qmat[2][2]
-        
+        cquat = Blender.Mathutils.Quaternion()
+        cquat.x = ipo.getCurve('QuatX').evaluate(1) # first frame
+        cquat.y = ipo.getCurve('QuatY').evaluate(1)
+        cquat.z = ipo.getCurve('QuatZ').evaluate(1)
+        cquat.w = ipo.getCurve('QuatW').evaluate(1)
+        rot = cquat.toMatrix() * mat.rotationPart()
+    else:
+        rot = mat.rotationPart()
+    if ipo and ipo.getCurve('LocX') and ipo.getCurve('LocY') and ipo.getCurve('LocZ'):
+        cloc = Blender.Mathutils.Vector([0,0,0])
+        cloc[0] = ipo.getCurve('LocX').evaluate(1)
+        cloc[1] = ipo.getCurve('LocY').evaluate(1)
+        cloc[2] = ipo.getCurve('LocZ').evaluate(1)
+        loc = cloc * mat.rotationPart() + mat.translationPart()
+    else:
+        loc = mat.translationPart()
+    mat[0][0] = rot[0][0]
+    mat[0][1] = rot[0][1]
+    mat[0][2] = rot[0][2]
+    mat[1][0] = rot[1][0]
+    mat[1][1] = rot[1][1]
+    mat[1][2] = rot[1][2]
+    mat[2][0] = rot[2][0]
+    mat[2][1] = rot[2][1]
+    mat[2][2] = rot[2][2]
+    mat[3][0] = loc[0]
+    mat[3][1] = loc[1]
+    mat[3][2] = loc[2]
+    
     if (space == 'BONESPACE'):
         return mat
     elif (space == 'ARMATURESPACE'):
