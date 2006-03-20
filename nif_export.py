@@ -366,18 +366,12 @@ and turn off envelopes."""%ob.getName()
         # make sure we have the right file extension
         if (fileext.lower() != '.nif'):
             filename += '.nif'
-        WriteNifTree(filename, root_block, NIF_VERSION)
-
-        # Morrowind: also write animation files
-        if ( NIF_VERSION == 0x04000002 ):
-            xnif_root = blk_ref()
-            xkf_root = blk_ref()
-            SplitNifTree(root_block, xnif_root, xkf_root, GAME_MW)
-            if not xnif_root.is_null():
-                if DEBUG: print "Writing XNIF and XKF files"
-                WriteNifTree(filedir + Blender.sys.sep + "x" + root_name + ".nif", xnif_root, NIF_VERSION)
-                WriteNifTree(filedir + Blender.sys.sep + "x" + root_name + ".kf", xkf_root, NIF_VERSION)
-            
+        if ( NIF_VERSION == 0x04000002 ): # assume Morrowind
+            WriteFileGroup(filename, root_block, NIF_VERSION, EXPORT_NIF_KF, KF_MW)
+        elif ( NIF_VERSION == 0x14000004 ): # assume Civ4
+            WriteFileGroup(filename, root_block, NIF_VERSION, EXPORT_NIF, KF_CIV4)
+        else: # default: simply write the NIF tree
+            WriteNifTree(filename, root_block, NIF_VERSION)
 
         
         
