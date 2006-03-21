@@ -4,12 +4,14 @@
 Name: 'NetImmerse/Gamebryo (.nif & .kf)...'
 Blender: 241
 Group: 'Import'
-Submenu: 'Import NIF File...' nif
-Submenu: 'Import KFM File...' kfm
-Tooltip: 'Import NIF File Format (.nif & .kf & .kfm)'
+Tooltip: 'Import NIF File Format (.nif & .kf)'
 """
 
+## in the future:
+#Submenu: 'Import NIF File...' nif
+#Submenu: 'Import KFM File...' kfm
 #Submenu: 'Import KF File...' kf
+# ...
 
 __author__ = "The NifTools team, http://niftools.sourceforge.net/"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
@@ -274,17 +276,6 @@ def fit_view():
 #
 def import_nif(filename):
     Blender.Window.DrawProgressBar(0.0, "Initializing")
-    global NIF_DIR, TEX_DIR
-    NIF_DIR = Blender.sys.dirname(filename)
-    # Morrowind smart texture dir
-    idx = NIF_DIR.lower().find('meshes')
-    if ( idx >= 0 ):
-        TEX_DIR = NIF_DIR[:idx] + 'textures'
-    else:
-        TEX_DIR = None
-    # scene info
-    global b_scene
-    b_scene = Blender.Scene.GetCurrent()
     try: # catch NIFImportErrors
         # read the NIF file
         ver = CheckNifHeader(filename)
@@ -309,6 +300,17 @@ def import_nif(filename):
 # Main import function.
 #
 def import_main(root_block):
+    # texture dirs
+    global NIF_DIR, TEX_DIR
+    NIF_DIR = Blender.sys.dirname(filename)
+    idx = NIF_DIR.lower().find('meshes')
+    if ( idx >= 0 ):
+        TEX_DIR = NIF_DIR[:idx] + 'textures'
+    else:
+        TEX_DIR = None
+    # scene info
+    global b_scene
+    b_scene = Blender.Scene.GetCurrent()
     # used to control the progress bar
     global block_count, blocks_read, read_progress
     block_count = BlocksInMemory()
@@ -1449,13 +1451,10 @@ def get_closest_bone(niBlock):
     return par
 
 #
-# Main KFM import function.
+# Main KFM import function. (BROKEN)
 #
 def import_kfm(filename):
     Blender.Window.DrawProgressBar(0.0, "Initializing")
-    # scene info
-    global b_scene
-    b_scene = Blender.Scene.GetCurrent()
     try: # catch NIFImportErrors
         # read the KFM file
         kfm = Kfm()

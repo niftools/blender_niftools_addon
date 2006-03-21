@@ -2,6 +2,8 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
   <title>The Blender NIF Scripts v1.5</title>
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=ISO-8859-1" />
   <style type="text/css">
 th { font-weight: bold; color: black; background: #D3DCE3}
 h1 { text-align: center; color: black; background: #FF6600; }
@@ -149,14 +151,14 @@ several Blender versions back.</li>
   <li><strong>It is recommended that you use the windows
 installer.</strong> If this does not work for
 some reason, you can install the scripts manually
-from the zip file:</li>
-  <ul>
-    <li>Remove any old versions of the scripts (such as,
+from the zip file:
+    <ul>
+      <li>Remove any old versions of the scripts (such as,
 nif-export.py, nif_import_237.py, nif4_export.py, nif4_import_237.py,
 nif4_import_240.py, nif4.py, nif4.pyc, ...). This is why it is
 recommended to use the installer: it detects these files and
 automatically deletes them.</li>
-    <li>Copy
+      <li>Copy
 the export scripts "nif_import.py" and
 "nif_export.py", into the Blender scripts folder.
 Under Windows this is by default C:\Program Files\Blender
@@ -169,7 +171,8 @@ NIF files
 will appear in the File-Import and File-Export menu's. <em>Make
 sure you
 have no other niflib.py or _niflib.dll files in other folders.</em></li>
-  </ul>
+    </ul>
+  </li>
 </ul>
 <h3>Using the Scripts with Morrowind</h3>
 <ul>
@@ -309,7 +312,8 @@ unless
 you parent without parent inverse
 (CTRL-SHIFT-P). Workaround: don't animate meshes directly; instead,
 parent meshes to the armature and animate the bones.</li>
-  <li>Parenting meshes to bones is buggy unless the bind pose coincides
+  <li>Parenting meshes to bones is buggy unless the bind pose
+coincides
 with the current frame of animation. There's not much we can do about
 it, this is due to a limitation in the Blender Python API.</li>
   <li>Non-uniformly scaled objects cannot be exported.
