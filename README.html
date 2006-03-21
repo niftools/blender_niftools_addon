@@ -24,29 +24,27 @@ a:hover.nav { color: #FF0000; background: transparent; }
   <li>Brandano (scripts coder, original import script author)</li>
   <li>Amorilia (scripts coder, original export script author)</li>
   <li>Shon (Niflib author, scripts bugtesting)</li>
-  <li>m4444x (scripts coder)</li>
+  <li>m4444x (scripts coder, also author of NifSkope)</li>
 </ul>
 <h3>We also&nbsp;thank...</h3>
 <ul>
-  <li>Mannon, who started all this! </li>
+  <li>All modders that have reported bugs:
+Sabregirl, y67_a, Fakku, readhead33445, DemonFire, lucifer,
+NeOmega, Andysaurus, tekener, CuteUnit, periplaneta, and
+many, many others... (drop us a note if we forgot your name here)</li>
+  <li>Mannon, who started all this!</li>
   <li>Taharez, for helping with the generated Python NIF
 library,&nbsp;NIF
 specs, helping out with the file format, and some debugging</li>
   <li>Brick, for NIF specs </li>
   <li>y67_a, for pointing out the fact that the script forgot
-to
-export normals; and thereby opening the path to smoothing support </li>
-  <li>Sabregirl, Fakku, readhead33445, DemonFire, lucifer,
-Andysaurus, tekener, and
-many, many others, for reporting bugs</li>
+to export normals; and thereby opening the path to smoothing support</li>
   <li>PlayerX and klassobanieras, for decoding the
 NiSkinPartition block which gave me so many troubles </li>
-  <li>NeOmega, for reporting bugs and confirming the first
-successful Civilization
-IV export</li>
+  <li>NeOmega, for confirming the first
+successful Civilization IV export</li>
   <li>Campbell Barton (AKA Ideasman, Cambo) for making original
-importer code
-clear
+importer code clear
 enough to be used as a learning resource</li>
   <li>Timothy Wakeham (AKA timmeh),&nbsp;to help with the way
 the UV maps work in Blender</li>
@@ -65,20 +63,75 @@ included with the DAOC Mappergui application, available at <a
  href="http://nathrach.republicofnewhome.org/mappergui.html">http://nathrach.republicofnewhome.org/mappergui.html</a>
   </li>
 </ul>
+<h2>Release Notes</h2>
+<h3>Important Remarks</h3>
+<ul>
+  <li>To change the importer and exporter settings, go
+to the scripts window in Blender, and select
+Scripts-&gt;System-&gt;Scripts Config
+Editor-&gt;Import/Export. <em>Note that the scale correction
+in the
+export config is also used by the importer.</em></li>
+  <li>Your old nif_import and nif_export settings are deleted by
+the windows installer. This avoids a number of very annoying problems
+with invalid script config files: in some cases, you wouldn't be able
+to edit the configuration anymore.</li>
+  <li><strong>Make sure to check below for importer
+&amp; exporter
+known issues and workarounds.</strong> New ones come up on every
+release.</li>
+</ul>
+<h3>Highlights of this Release</h3>
+<ul>
+  <li>Importer can now also <strong>import animation and
+animation groups</strong>. This new code is still very
+experimental, so
+be sure to report any problems you have with it. Note that the import
+of rotation keys is particularly slow. You may have to wait a minute or
+longer to import most Morrowind creatures. Re-exporting imported
+creatures seems to work, if you use the exported models as activators
+(they aren't fully working creatures just yet...).</li>
+  <li>Scale animation keys are now also&nbsp;exported.</li>
+  <li>A few very rare NIF block types have been added to Niflib:
+it now
+reads
+&amp; writes every NIF file we know about!</li>
+  <li>Various bugs have been fixed in the importer &amp;
+exporter &amp; Niflib. </li>
+</ul>
+<h3>In the Background...</h3>
+<ul>
+  <li>Support for Civ IV animation
+files (.kf &amp; .kfm) is still in progress. We have already
+decoded the
+kfm
+format.</li>
+  <li>It has been confirmed
+that Oblivion uses the NIF format as well. We also plan to support
+Oblivion although we aren't sure yet about the NIF version(s) used.</li>
+</ul>
+<h2>Support</h2>
+<ul>
+  <li><a href="http://niftools.sourceforge.net/forum/">http://niftools.sourceforge.net/forum/</a></li>
+  <li><a href="http://niftools.sourceforge.net/tutorial/blender/">http://niftools.sourceforge.net/tutorial/blender/</a></li>
+</ul>
 <h2>Installation</h2>
+<h3>Requirements</h3>
 <ul>
   <li><strong>You
-must have&nbsp;Blender 2.41 or higher</strong>; the scripts
-won't
-run on older
-versions
-of Blender: <a href="http://www.blender.org">http://www.blender.org</a>.</li>
+must have&nbsp;<a href="http://www.blender.org/">Blender
+2.41</a> or
+higher</strong>; the scripts
+won't run on older versions
+of Blender.</li>
   <li><strong>The
-scripts need a full Python 2.4 installation</strong>: <a
- href="http://www.python.org">http://www.python.org</a>.
+scripts need a full <a href="http://www.python.org/">Python
+2.4</a>
+installation</strong>.
 The
 version of Python installed must be compatible with Blender, or
-the scripts just won't run.&nbsp;At the time of writing this the
+the scripts just won't run.&nbsp;At the time of
+writing&nbsp;the
 latest&nbsp;stable version of Blender is Blender 2.41, and it was
 compiled with
 bindings for Python 2.4.x. You won't need to uninstall Python 2.3 in
@@ -89,19 +142,21 @@ you still have problems, check out this LOOOONG thread on the elysiun
 board: <a href="http://www.elysiun.com/forum/viewtopic.php?t=7723">http://www.elysiun.com/forum/viewtopic.php?t=7723</a>.
 The latest
 pages will be the ones you will find more useful, as the thread started
-several Blender versions back. </li>
+several Blender versions back.</li>
+</ul>
+<h3>Manual Install</h3>
+<ul>
   <li><strong>It is recommended that you use the windows
-installer.</strong> If
-this does not work for
-some reason, you can install the scripts
-manually
-from
-the zip file:
-    <ul>
-      <li>Remove any old versions of the scripts (such as,
+installer.</strong> If this does not work for
+some reason, you can install the scripts manually
+from the zip file:</li>
+  <ul>
+    <li>Remove any old versions of the scripts (such as,
 nif-export.py, nif_import_237.py, nif4_export.py, nif4_import_237.py,
-nif4_import_240.py, nif4.py, nif4.pyc, ...).</li>
-      <li>Copy
+nif4_import_240.py, nif4.py, nif4.pyc, ...). This is why it is
+recommended to use the installer: it detects these files and
+automatically deletes them.</li>
+    <li>Copy
 the export scripts "nif_import.py" and
 "nif_export.py", into the Blender scripts folder.
 Under Windows this is by default C:\Program Files\Blender
@@ -114,75 +169,30 @@ NIF files
 will appear in the File-Import and File-Export menu's. <em>Make
 sure you
 have no other niflib.py or _niflib.dll files in other folders.</em></li>
-    </ul>
-  </li>
-  <li>(optional) If you wish to use Morrowind's textures:
+  </ul>
+</ul>
+<h3>Using the Scripts with Morrowind</h3>
+<ul>
+  <li>If you wish to use Morrowind's textures in your models:
     <ul>
       <li>extract the contents of 'Morrowind.bsa' (and, if you
 have the expansions, also 'Tribunal.bsa' and 'Bloodmoon.bsa') into
-'C:\MORROWIND' </li>
-      <li>convert all .dds files in 'C:\MORROWIND\textures' to
-.tga files (for instance, using 'DDS Converter 2.1')</li>
+for instance 'c:\src\morrowind' (use <a
+ href="http://www34.brinkster.com/ghostwheel/">BSAPACK</a>
+or the <a href="http://www.thelys.org/toolsmisc.php?modders">BSA
+Browser</a>). </li>
+      <li>convert all .dds files in 'c:\src\morrowind\textures'
+to
+.tga files (for instance, using the <a
+ href="http://eliteforce2.filefront.com/file/DDS_Converter;29412">DDS
+Converter 2.1</a>)</li>
     </ul>
   </li>
 </ul>
-<h2>Support</h2>
-<ul>
-  <li><a href="http://niftools.sourceforge.net/forum/">http://niftools.sourceforge.net/forum/</a></li>
-  <li><a href="http://niftools.sourceforge.net/tutorial/blender/">http://niftools.sourceforge.net/tutorial/blender/</a></li>
-</ul>
-<h2>Release Notes</h2>
-<ul>
-  <li>If you don't use the installer, make sure to remove any
-old
-versions of the scripts prior
-to installing these scripts (the old files from previous versions
-are nif4_export.py,
-nif4_import_237.py, nif4.py, and nif4.pyc). This is why it is
-recommended to use the installer: it detects these files and
-automatically deletes them.</li>
-  <li>To change the importer and exporter settings, go
-to the scripts window in Blender, and select
-Scripts-&gt;System-&gt;Scripts Config
-Editor-&gt;Import/Export. <em>Note that the scale correction
-in the
-export config is also used by the importer.</em></li>
-</ul>
-<h3>Highlights of this Release</h3>
-<ul>
-  <li>Importer has undergone a complete rewrite and now also uses
-Niflib, just like the export script. Niflib has undergone some
-upgrading as well, and therefore <strong>the scripts support all
-known NIF versions up to 20.0.0.4</strong>. Hence, both
-importer &amp; exporter support all Civilization IV models, except
-for animation (but armatures and skinning&nbsp;should work just
-fine).
-For the exporter to write Civ IV files, set "nif version" to for
-instance
-4.2.2.0 and enable&nbsp;"strip
-texpath" in the config editor. Note that the export of animated Civ IV
-models is not yet supported. Also, export of higher versions (10.0.1.0,
-10.1.0.0,
-10.2.0.0, and 20.0.0.4) *should* work as well but this has not been
-extensively tested. Import of these higher versions has been tested a
-little bit more. In any case, if you find bugs... be sure to report
-them to the niftools forum!</li>
-  <li>Finally, <strong>full skinning support</strong>
-(armatures and vertex weights)
-for both importer and
-exporter.</li>
-  <li>Support for hidden meshes in importer &amp; exporter:
-set the object's Drawtype to "Wire" instead of &nbsp;"Shaded".</li>
-  <li>Various bugs have been fixed in the importer &amp;
-exporter &amp; Niflib. </li>
-</ul>
-<h3>In the background...</h3>
-All known NIF versions have been decoded. Support for Civ IV animation
-files (.kf &amp; .kfm) is in progress, as well as animation import.<br />
 <h2>Exporter Notes</h2>
 <h3>Usage</h3>
 <ul>
-  <li>create meshes (and empties, if you like) in blender:
+  <li>create meshes (and empties, if you like) in Blender:
     <ul>
       <li>IMPORTANT: if you wish to animate meshes without
 using
@@ -199,6 +209,10 @@ using the bone envelopes</li>
       <li>or, simply parent meshes to bones (armature must be
 in
 pose mode)</li>
+      <li>make sure the vertex weights are set properly: select
+the
+armature, go to pose mode, and play with the bones; the mesh should
+deform along the bones</li>
       <li>insert pose mode keys in different frames (press I to
 insert key, and select Rot, Loc, or LocRot) to compose your animation</li>
     </ul>
@@ -229,7 +243,7 @@ texture) </li>
   <li>for each texture:
     <ul>
       <li>set texture type to 'Image' </li>
-      <li>either load a texture from 'C:\MORROWIND\textures',
+      <li>either load a texture from 'c:\src\morrowind\textures',
 or
 put your custom texture in the 'C:\Program Files\Morrowind\Data
 Files\Textures' folder, and load it from there. Note that Blender does
@@ -243,7 +257,8 @@ the Image tab</li>
 to
 insert key, and select Rot, Loc, or LocRot; for now, only location and
 rotation channels are exported); define the animation groups in a text
-buffer called 'Anim' (check source code for an example; so far we only
+buffer called 'Anim' (import a Morrowind creature to get a feeling for
+how this works; so far we only
 support Morrowind-type animations) </li>
   <li>(optional) to export vertex colors, turn on the
 VCOL_PAINT
@@ -253,7 +268,8 @@ collision
 mesh, which defines where the player cannot walk through (most of
 Morrowind's static models have a collision mesh, you can see them in
 the TES CS pressing F4 in the render window). You may want to create it
-to speed up collision detection, to help the player walk over objects
+to speed up collision detection (recommended for complex models), to
+help the player walk over objects
 such as stairs, or to allow the player to walk through certain parts of
 your model such as spider webs.
     <ul>
@@ -279,21 +295,23 @@ the whole model. </li>
 <ul>
   <li>Particle effects, cameras, and lights are not exported. We
 are working on it.</li>
-  <li>Actions (for animation groups) are ignored. Workaround:
-define actions in text buffer called "Anim".</li>
+  <li>Actions (for animation groups) are ignored. You should
+define animation groups&nbsp;in text buffer called "Anim".</li>
 </ul>
-<h3>Known Issues </h3>
+<h3>Known Issues and Workarounds </h3>
 <ul>
   <li>Ambient and emit colors are obtained by multiplication
-with
-the diffuse color.</li>
+with the diffuse color.</li>
   <li>Blender double sided faces will be one sided in the NIF
 file (workaround: duplicate faces).</li>
   <li>Export of directly animated&nbsp;meshes is buggy
 unless
 you parent without parent inverse
 (CTRL-SHIFT-P). Workaround: don't animate meshes directly; instead,
-parent meshes to bones and animate the bones.</li>
+parent meshes to the armature and animate the bones.</li>
+  <li>Parenting meshes to bones is buggy unless the bind pose coincides
+with the current frame of animation. There's not much we can do about
+it, this is due to a limitation in the Blender Python API.</li>
   <li>Non-uniformly scaled objects cannot be exported.
 Workaround: apply size and rotation (CTRL-A). Unfortunately, this
 workaround
@@ -324,9 +342,6 @@ m4444x) </li>
   <li>Newer versions: see ChangeLog file.</li>
 </ul>
 <h2>Importer Notes</h2>
-<h3>Credits</h3>
-<ul>
-</ul>
 <h3>Usage</h3>
 <ul>
   <li>Launch the script, select the .NIF file you wish to
@@ -346,15 +361,48 @@ script looks for them in the same folder as the .NIF file, or in
 Files\Meshes\deadparrot.nif" and the texture is "C:\Morrowind\Data
 Files\Textures\parrot\dead.dds" you should convert the texture and move
 it to "C:\Morrowind\Data Files\Meshes\Textures\parrot\dead.tga". This
-is also in order to keep the texture file path consistent for the time
-we'll be able to export the modified meshes from Blender.</li>
+is also in order to keep the texture file path consistent on re-export.</li>
 </ul>
-<h3>
-Limitations</h3>
+<h3>Limitations</h3>
 <ul>
-  <li>The script doesn't import animation, particle
+  <li>The script doesn't import particle
 effects, multiple
 UV channels.... the list is too long. We are working on it.</li>
+</ul>
+<h3>Known Issues and Workarounds</h3>
+<ul>
+  <li>If you import an armature (say, a better bodies armature),
+and
+re-export a mesh parent, then the animation won't show
+up correctly in the game.
+This is due to the way in which animations are stored in NIF files. Put
+simply, for
+proper display of the
+bones, the bone matrices must be realigned by the importer, but because
+they aren't
+restored on export, the bone data from the base animation files won't
+work on them properly.
+There are two workarounds:
+    <ul>
+      <li>Open the exported model and cast NifSkope's Bip01 spell
+fix.</li>
+      <li>Disable bone realignment on import. There's an option
+for that in the import config.
+The imported armature will look very crappy, but you won't have those
+animation
+problems on export.</li>
+    </ul>
+  </li>
+  <li>Objects that had originally multiple materials will get
+imported
+as seperate meshes. As a consequence, if you export them again they
+cannot retain the original mesh name, which results in trouble when you
+re-export rigged stuff such as clothing simply because Morrowind is
+very picky about the names of nodes in rigged models: the engine must
+know where to attach certain nodes in the structure, and it uses the
+node name to do so. If you import rigged meshes with multiple
+materials, you probably need NifSkope to sort things out on the
+re-exported model.</li>
 </ul>
 <h3> Old History </h3>
 <p> (For recent history see the ChangeLog file) </p>
