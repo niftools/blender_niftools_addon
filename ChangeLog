@@ -46,3 +46,13 @@ Version 1.4 (Feb 12, 2006)
 * Import/Export: hidden flag via object wire drawtype
 * Import: full skinning support (but still no animation)
 * Import: better bone length estimation, automatic alignment
+
+Version 1.5 (Mar 20, 2006)
+* Import: fix for models that have a NiTriShape as root block
+* Import: added config option to retain bone matrices
+* Import: full animation support, animation groups and keyframes
+* Import: detects invalid / unsupported NIF files
+* Export: bugfix in animation export
+* Export: bugfix in vertex weight export
+* Export: large model fix (now supports up to 65535 faces / vertices per mesh
+* Export: writes a dummy node on final bones to retain bone length when re-imported
