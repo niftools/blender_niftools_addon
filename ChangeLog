@@ -47,7 +47,7 @@ Version 1.4 (Feb 12, 2006)
 * Import: full skinning support (but still no animation)
 * Import: better bone length estimation, automatic alignment
 
-Version 1.5 (Mar 20, 2006)
+Version 1.5 (Mar 21, 2006)
 * Import: fix for models that have a NiTriShape as root block
 * Import: added config option to retain bone matrices
 * Import: full animation support, animation groups and keyframes
