@@ -276,6 +276,14 @@ def fit_view():
 #
 def import_nif(filename):
     Blender.Window.DrawProgressBar(0.0, "Initializing")
+    # texture dirs
+    global NIF_DIR, TEX_DIR
+    NIF_DIR = Blender.sys.dirname(filename)
+    idx = NIF_DIR.lower().find('meshes')
+    if ( idx >= 0 ):
+        TEX_DIR = NIF_DIR[:idx] + 'textures'
+    else:
+        TEX_DIR = None
     try: # catch NIFImportErrors
         # read the NIF file
         ver = CheckNifHeader(filename)
@@ -300,14 +308,6 @@ def import_nif(filename):
 # Main import function.
 #
 def import_main(root_block):
-    # texture dirs
-    global NIF_DIR, TEX_DIR
-    NIF_DIR = Blender.sys.dirname(filename)
-    idx = NIF_DIR.lower().find('meshes')
-    if ( idx >= 0 ):
-        TEX_DIR = NIF_DIR[:idx] + 'textures'
-    else:
-        TEX_DIR = None
     # scene info
     global b_scene
     b_scene = Blender.Scene.GetCurrent()
