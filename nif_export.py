@@ -135,6 +135,11 @@ NIF_BLOCKS = [] # keeps track of all exported blocks
 NIF_TEXTURES = {} # keeps track of all exported textures
 NIF_MATERIALS = {} # keeps track of all exported materials
 
+# dictionary of bones, maps Blender bone name to matrix that maps the
+# NIF bone matrix on the Blender bone matrix
+# B = X * B', where B' is the Blender bone matrix, and B is the NIF bone matrix
+BONES_EXTRA_MATRIX = {}
+
 NIF_VERSION_DICT = {}
 NIF_VERSION_DICT['4.0.0.2']  = 0x04000002
 NIF_VERSION_DICT['4.1.0.12'] = 0x0401000C
@@ -243,6 +248,28 @@ class NIFExportError(Exception):
     def __str__(self):
         return repr(self.value)
 
+#
+# Utility function to parse the Bone extra data buffer
+#
+def rebuild_bone_extra_data():
+    global BONES_EXTRA_MATRIX
+    try:
+        bonetxt = Blender.Text.Get('BoneExMat')
+    except: 
+        return
+    # I am relying on the fact that Blender object names are unique. It might be wise to store the original
+    # node names as a dictionary in pretty much the same way as I am storing these matrices
+    for ln in bonetxt.asLines():
+        #print ln
+        if len(ln)>0:
+            b, m = ln.split('/')
+            try:
+                # Matrices are stored inverted for easier math later on
+                mat = Matrix(*[[float(f) for f in row.split(',')] for row in m.split(';')])
+                mat.invert()
+                BONES_EXTRA_MATRIX[b] = mat
+            except:
+                pass
 
 
 #
@@ -296,6 +323,9 @@ and turn off envelopes."""%ob.getName()
             if txt.getName() == "Anim":
                 animtxt = txt
                 break
+                
+        # rebuilds the bone extra data dictionaries from the 'BoneExMat' text buffer
+        rebuild_bone_extra_data()
         
         # export nif:
         #------------
@@ -1819,15 +1849,23 @@ def decompose_srt(m):
 # is BONESPACE (translation is bone head plus tail from parent bone).
 # 
 def get_bone_restmatrix(bone, space):
+    # Retrieves the offset from the original NIF matrix, if existing
+    global BONES_EXTRA_MATRIX
+    corrmat = Blender.Mathutils.Matrix()
+    try:
+        corrmat = BONES_EXTRA_MATRIX[bone.name]
+    except:
+        corrmat.identity()
     if (space == 'ARMATURESPACE'):
-        return Blender.Mathutils.Matrix(bone.matrix['ARMATURESPACE']) # return a copy, not the wrapper
+        return Blender.Mathutils.Matrix(bone.matrix['ARMATURESPACE'] * corrmat) # return a copy, not the wrapper
     elif (space == 'BONESPACE'):
         if bone.parent:
-            parinv = Blender.Mathutils.Matrix(bone.parent.matrix['ARMATURESPACE'])
+            #parinv = Blender.Mathutils.Matrix(bone.parent.matrix['ARMATURESPACE'])
+            parinv = get_bone_restmatrix(bone.parent,'ARMATURESPACE')
             parinv.invert()
-            return bone.matrix['ARMATURESPACE'] * parinv
+            return (bone.matrix['ARMATURESPACE'] * corrmat) * parinv
         else:
-            return Blender.Mathutils.Matrix(bone.matrix['ARMATURESPACE'])
+            return Blender.Mathutils.Matrix(bone.matrix['ARMATURESPACE'] * corrmat)
     else:
         assert(False) # bug!
 

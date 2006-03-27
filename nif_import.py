@@ -316,6 +316,8 @@ def import_main(root_block):
     block_count = BlocksInMemory()
     read_progress = 0.0
     blocks_read = 0.0
+    # used to store bone info for re-export
+    global BONES_EXTRA_MATRIX
     # preprocessing:
     # mark armature nodes and bones
     # and merge armatures that are bones of others armatures
@@ -340,6 +342,9 @@ def import_main(root_block):
     else:
         b_obj = read_branch(root_block)
         b_obj.setMatrix(b_obj.getMatrix() * fb_scale_mat())
+    # stores original bone matrix for re-export
+    if len(BONES_EXTRA_MATRIX.keys()) > 0: fb_bonemat()
+        
     b_scene.update(1) # do a full update to make sure all transformations get applied
     #fit_view()
     #b_scene.getCurrentCamera()
@@ -550,8 +555,7 @@ def fb_armature(niBlock):
     action = Blender.Armature.NLA.NewAction()
     action.setActive(b_armature)
     # get the number of frames per second
-    scn = Blender.Scene.GetCurrent()
-    context = scn.getRenderingContext()
+    context = b_scene.getRenderingContext()
     fps = context.framesPerSec()
     # go through all armature pose bones (http://www.elysiun.com/forum/viewtopic.php?t=58693)
     progress = 0.1
@@ -1284,8 +1288,8 @@ def fb_mesh(niBlock):
 # import animation groups
 def fb_textkey(block):
     # get the number of frames per second
-    scn = Blender.Scene.GetCurrent()
-    context = scn.getRenderingContext()
+    global b_scene
+    context = b_scene.getRenderingContext()
     fps = context.framesPerSec()
 
     # get animation text buffer, and clear it if it already exists
@@ -1309,7 +1313,26 @@ def fb_textkey(block):
     # set start and end frames
     context.startFrame(1)
     context.endFrame(frame)
-
+    
+# stores bone matrices for re-export
+def fb_bonemat():
+    # get the bone extra matrix text buffer
+    global BONE_LIST, BONES_EXTRA_MATRIX
+    bonetxt = None
+    for txt in Blender.Text.Get():
+        if txt.getName() == "BoneExMat":
+            txt.clear()
+            bonetxt = txt
+            break
+    if not bonetxt:
+        bonetxt = Blender.Text.New("BoneExMat")
+    for b in BONES_EXTRA_MATRIX.keys():
+        ln=''
+        for row in BONES_EXTRA_MATRIX[b]:
+            ln='%s;%s,%s,%s,%s' % (ln, row[0],row[1],row[2],row[3])
+        # print '%s/%s/%s\n' % (a, b, ln[1:])
+        bonetxt.write('%s/%s\n' % (b, ln[1:]))
+    
 
 
 # find a controller
