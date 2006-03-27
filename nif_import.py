@@ -29,7 +29,6 @@ Supported:<br>
     Geometry morphing (vertex keys)<br>
 
 Missing:<br>
-    Bone animation.<br>
     Particle effects, cameras, lights.<br>
 
 Known issues:<br>
@@ -231,6 +230,8 @@ if rd:
         SCALE_CORRECTION = rd['SCALE_CORRECTION']
     except: pass
 
+SCALE_MATRIX = Matrix()
+
 # check General scripts config key for default behaviors
 
 VERBOSE = True
@@ -310,6 +311,8 @@ def import_nif(filename):
 def import_main(root_block):
     # scene info
     global b_scene
+    global SCALE_MATRIX
+    SCALE_MATRIX = fb_scale_mat()
     b_scene = Blender.Scene.GetCurrent()
     # used to control the progress bar
     global block_count, blocks_read, read_progress
@@ -338,10 +341,10 @@ def import_main(root_block):
         for niBlock in blocks:
             b_obj = read_branch(niBlock)
             if b_obj:
-                b_obj.setMatrix(b_obj.getMatrix() * fb_scale_mat())
+                b_obj.setMatrix(b_obj.getMatrix() * SCALE_MATRIX)
     else:
         b_obj = read_branch(root_block)
-        b_obj.setMatrix(b_obj.getMatrix() * fb_scale_mat())
+        b_obj.setMatrix(b_obj.getMatrix() * SCALE_MATRIX)
     # stores original bone matrix for re-export
     if len(BONES_EXTRA_MATRIX.keys()) > 0: fb_bonemat()
         
@@ -381,6 +384,8 @@ def read_branch(niBlock):
                     if b_child_obj: b_children_list.append(b_child_obj)
                 b_obj.makeParent(b_children_list)
             b_obj.setMatrix(fb_matrix(niBlock))
+            # import the animations
+            set_animation(niBlock, b_obj)
             # import the extras
             textkey = find_extra(niBlock, "NiTextKeyExtraData")
             if not textkey.is_null(): fb_textkey(textkey)
@@ -689,7 +694,6 @@ def fb_armature(niBlock):
     return b_armature
 
 
-
 # Adds a bone to the armature in edit mode.
 def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
     global BONES
@@ -806,16 +810,17 @@ def fb_texture( niSourceTexture ):
             for ext in ('.PNG','.png','.TGA','.tga','.BMP','.bmp','.JPG','.jpg'):
                 tex = base+ext
                 if Blender.sys.exists(tex) == 1:
-                    b_image = Blender.Image.Load(tex)
+                    b_image = None
                     try:
+                        b_image = Blender.Image.Load(tex)
                         dummy = b_image.size
                         msg( "Found alternate %s" % tex, 3 )
                         del dummy
                         break
                     except:
-                        b_image = None
+                        pass
         if b_image == None:
-            print "texture %s not found" % niTexSource.fileName
+            print "Texture %s not found and no alternate available" % niTexSource.fileName
     else:
         # the texture image is packed inside the nif -> extract it
         niPixelData = niSourceTexture["Texture Source"].asLink()
@@ -1317,7 +1322,7 @@ def fb_textkey(block):
 # stores bone matrices for re-export
 def fb_bonemat():
     # get the bone extra matrix text buffer
-    global BONE_LIST, BONES_EXTRA_MATRIX
+    global BONES_EXTRA_MATRIX
     bonetxt = None
     for txt in Blender.Text.Get():
         if txt.getName() == "BoneExMat":
@@ -1495,7 +1500,67 @@ def import_kfm(filename):
         return
 
     Blender.Window.DrawProgressBar(1.0, "Finished")
-    
+
+#
+# Loads basic animation info for this object
+#
+def set_animation(niBlock, b_obj):
+    global b_scene
+    global SCALE_CORRECTION
+    global SCALE_MATRIX
+    context = b_scene.getRenderingContext()
+    fps = context.framesPerSec()
+    progress = 0.1
+    # ##############################################################################################
+    # ##############################################################################################
+    # ##############################################################################################
+    # ##############################################################################################
+    kfc = find_controller(niBlock, "NiKeyframeController")
+    if not kfc.is_null():
+        # create an Ipo for this object
+        b_ipo = b_obj.getIpo()
+        if b_ipo == None:
+            b_ipo = Blender.Ipo.New('Object', b_obj.name)
+            b_obj.setIpo(b_ipo)
+        # denote progress
+        Blender.Window.DrawProgressBar(progress, "Animation")
+        if (progress < 0.85): progress += 0.1
+        else: progress = 0.1
+        # get keyframe data
+        kfd = kfc["Data"].asLink()
+        assert(kfd.GetBlockType() == "NiKeyframeData")
+        ikfd = QueryKeyframeData(kfd)
+        rot_keys = ikfd.GetRotateKeys()
+        trans_keys = ikfd.GetTranslateKeys()
+        scale_keys = ikfd.GetScaleKeys()
+        # add the keys
+        msg('Scale keys...', 4)
+        for scale_key in scale_keys:
+            frame = 1+int(scale_key.time * fps) # time 0.0 is frame 1
+            Blender.Set('curframe', frame)
+            size_value = scale_key.data/SCALE_CORRECTION
+            b_obj.size = Blender.Mathutils.Vector([size_value,size_value,size_value])
+            b_obj.insertIpoKey(Blender.Object.SIZE)
+        #msg('Rotation keys...', 4)
+        #for rot_key in rot_keys:
+        #    frame = 1+int(rot_key.time * fps) # time 0.0 is frame 1
+        #    Blender.Set('curframe', frame)
+        #   b_obj.rot = Blender.Mathutils.Quaternion([rot_key.data.w, rot_key.data.x, rot_key.data.y, rot_key.data.z]).toEuler()
+        #    b_obj.insertIpoKey(Blender.Object.ROT)
+        msg('Translation keys...', 4)
+        for trans_key in trans_keys:
+            frame = 1+int(trans_key.time * fps) # time 0.0 is frame 1
+            Blender.Set('curframe', frame)
+            b_obj.loc = Blender.Mathutils.Vector([trans_key.data.x, trans_key.data.y, trans_key.data.z]) * SCALE_MATRIX
+            b_obj.insertIpoKey(Blender.Object.LOC)
+        Blender.Set('curframe', 1)
+    # ##############################################################################################
+    # ##############################################################################################
+    # ##############################################################################################
+    # ##############################################################################################
+    # ##############################################################################################
+    # ##############################################################################################
+
 #----------------------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------#
 #-------- Run importer GUI.
