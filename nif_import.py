@@ -1532,9 +1532,9 @@ def set_animation(niBlock, b_obj):
             frame = 1+int(rot_key.time * fps) # time 0.0 is frame 1
             Blender.Set('curframe', frame)
             rot = Blender.Mathutils.Quaternion(rot_key.data.w, rot_key.data.x, rot_key.data.y, rot_key.data.z).toEuler()
-            b_obj.RotX = rot.x
-            b_obj.RotY = rot.y
-            b_obj.RotZ = rot.z
+            b_obj.RotX = rot.x * 3.14159265358979 / 180.0
+            b_obj.RotY = rot.y * 3.14159265358979 / 180.0
+            b_obj.RotZ = rot.z * 3.14159265358979 / 180.0
             b_obj.insertIpoKey(Blender.Object.ROT)
         msg('Translation keys...', 4)
         for trans_key in trans_keys:
