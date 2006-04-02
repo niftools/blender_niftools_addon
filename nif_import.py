@@ -230,8 +230,6 @@ if rd:
         SCALE_CORRECTION = rd['SCALE_CORRECTION']
     except: pass
 
-SCALE_MATRIX = Matrix()
-
 # check General scripts config key for default behaviors
 
 VERBOSE = True
@@ -311,17 +309,15 @@ def import_nif(filename):
 def import_main(root_block):
     # scene info
     global b_scene
-    global SCALE_MATRIX
-    SCALE_MATRIX = fb_scale_mat()
     b_scene = Blender.Scene.GetCurrent()
     # used to control the progress bar
     global block_count, blocks_read, read_progress
     block_count = BlocksInMemory()
     read_progress = 0.0
     blocks_read = 0.0
-    # used to store bone info for re-export
-    global BONES_EXTRA_MATRIX
     # preprocessing:
+    # scale tree
+    scale_tree(root_block, 1.0/SCALE_CORRECTION)
     # mark armature nodes and bones
     # and merge armatures that are bones of others armatures
     mark_armatures_bones(root_block)
@@ -340,14 +336,11 @@ def import_main(root_block):
             blocks = [ root_block ]
         for niBlock in blocks:
             b_obj = read_branch(niBlock)
-            if b_obj:
-                b_obj.setMatrix(b_obj.getMatrix() * SCALE_MATRIX)
     else:
         b_obj = read_branch(root_block)
-        b_obj.setMatrix(b_obj.getMatrix() * SCALE_MATRIX)
-    # stores original bone matrix for re-export
+    # store bone matrix offsets for re-export
     if len(BONES_EXTRA_MATRIX.keys()) > 0: fb_bonemat()
-        
+    
     b_scene.update(1) # do a full update to make sure all transformations get applied
     #fit_view()
     #b_scene.getCurrentCamera()
@@ -510,12 +503,6 @@ def decompose_srt(m):
 
 
 
-# Returns the scale correction matrix. A bit silly to calculate it all the time,
-# but the overhead is minimal and when the GUI will work again this will be useful.
-def fb_scale_mat():
-    s = 1.0/SCALE_CORRECTION 
-    return Matrix([s,0,0,0],[0,s,0,0],[0,0,s,0],[0,0,0,1])
-
 # Creates and returns a grouping empty
 def fb_empty(niBlock):
     global b_scene
@@ -632,7 +619,7 @@ def fb_armature(niBlock):
                 frame = 1+int(scale_key.time * fps) # time 0.0 is frame 1
                 scale_total = scale_key.data
                 scale_channel = scale_total / niBone_bind_scale # Schannel = Stotal / Sbind
-                b_posebone.size = Blender.Mathutils.Vector([scale_channel, scale_channel, scale_channel])
+                b_posebone.size = Blender.Mathutils.Vector(scale_channel, scale_channel, scale_channel)
                 b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.SIZE])
                 # fill optimizer dictionary
                 if trans_keys:
@@ -658,7 +645,7 @@ def fb_armature(niBlock):
             msg('Translation keys...', 4)
             for trans_key in trans_keys:
                 frame = 1+int(trans_key.time * fps) # time 0.0 is frame 1
-                trans_total = Blender.Mathutils.Vector([trans_key.data.x, trans_key.data.y, trans_key.data.z])
+                trans_total = Blender.Mathutils.Vector(trans_key.data.x, trans_key.data.y, trans_key.data.z)
                 trans_channel = (trans_total - niBone_bind_trans) * niBone_bind_rot_inv * (1.0/niBone_bind_scale)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
                 # we need the rotation matrix at this frame (that's why we inserted the other keys first)
                 if rot_keys_dict:
@@ -1322,7 +1309,6 @@ def fb_textkey(block):
 # stores bone matrices for re-export
 def fb_bonemat():
     # get the bone extra matrix text buffer
-    global BONES_EXTRA_MATRIX
     bonetxt = None
     for txt in Blender.Text.Get():
         if txt.getName() == "BoneExMat":
@@ -1501,6 +1487,8 @@ def import_kfm(filename):
 
     Blender.Window.DrawProgressBar(1.0, "Finished")
 
+
+
 #
 # Loads basic animation info for this object
 #
@@ -1511,10 +1499,6 @@ def set_animation(niBlock, b_obj):
     context = b_scene.getRenderingContext()
     fps = context.framesPerSec()
     progress = 0.1
-    # ##############################################################################################
-    # ##############################################################################################
-    # ##############################################################################################
-    # ##############################################################################################
     kfc = find_controller(niBlock, "NiKeyframeController")
     if not kfc.is_null():
         # create an Ipo for this object
@@ -1538,28 +1522,99 @@ def set_animation(niBlock, b_obj):
         for scale_key in scale_keys:
             frame = 1+int(scale_key.time * fps) # time 0.0 is frame 1
             Blender.Set('curframe', frame)
-            size_value = scale_key.data/SCALE_CORRECTION
-            b_obj.size = Blender.Mathutils.Vector([size_value,size_value,size_value])
+            size_value = scale_key.data
+            b_obj.SizeX = size_value
+            b_obj.SizeY = size_value
+            b_obj.SizeZ = size_value
             b_obj.insertIpoKey(Blender.Object.SIZE)
-        #msg('Rotation keys...', 4)
-        #for rot_key in rot_keys:
-        #    frame = 1+int(rot_key.time * fps) # time 0.0 is frame 1
-        #    Blender.Set('curframe', frame)
-        #   b_obj.rot = Blender.Mathutils.Quaternion([rot_key.data.w, rot_key.data.x, rot_key.data.y, rot_key.data.z]).toEuler()
-        #    b_obj.insertIpoKey(Blender.Object.ROT)
+        msg('Rotation keys...', 4)
+        for rot_key in rot_keys:
+            frame = 1+int(rot_key.time * fps) # time 0.0 is frame 1
+            Blender.Set('curframe', frame)
+            rot = Blender.Mathutils.Quaternion(rot_key.data.w, rot_key.data.x, rot_key.data.y, rot_key.data.z).toEuler()
+            b_obj.RotX = rot.x
+            b_obj.RotY = rot.y
+            b_obj.RotZ = rot.z
+            b_obj.insertIpoKey(Blender.Object.ROT)
         msg('Translation keys...', 4)
         for trans_key in trans_keys:
             frame = 1+int(trans_key.time * fps) # time 0.0 is frame 1
             Blender.Set('curframe', frame)
-            b_obj.loc = Blender.Mathutils.Vector([trans_key.data.x, trans_key.data.y, trans_key.data.z]) * SCALE_MATRIX
+            b_obj.LocX = trans_key.data.x
+            b_obj.LocY = trans_key.data.y
+            b_obj.LocZ = trans_key.data.z
             b_obj.insertIpoKey(Blender.Object.LOC)
         Blender.Set('curframe', 1)
-    # ##############################################################################################
-    # ##############################################################################################
-    # ##############################################################################################
-    # ##############################################################################################
-    # ##############################################################################################
-    # ##############################################################################################
+
+
+
+# 
+# Scale NIF file.
+# 
+def scale_tree(block, scale):
+    inode = QueryNode(block)
+    if inode: # is it a node?
+        # NiNode transform scale
+        t = block["Translation"].asFloat3()
+        t[0] *= scale
+        t[1] *= scale
+        t[2] *= scale
+        block["Translation"] = t
+
+        # NiNode bind position transform scale
+        mat = inode.GetWorldBindPos()
+        mat[3][0] *= scale
+        mat[3][1] *= scale
+        mat[3][2] *= scale
+        inode.SetWorldBindPos(mat)
+        
+        # Controller data block scale
+        ctrl = block["Controller"].asLink()
+        while not ctrl.is_null():
+            if ctrl.GetBlockType() == "NiKeyframeController":
+                kfd = ctrl["Data"].asLink()
+                assert(not kfd.is_null())
+                assert(kfd.GetBlockType() == "NiKeyframeData") # just to make sure, NiNode/NiTriShape controllers should have keyframe data
+                ikfd = QueryKeyframeData(kfd)
+                trans_keys = ikfd.GetTranslateKeys()
+                if trans_keys:
+                    for key in trans_keys:
+                        key.data.x *= scale
+                        key.data.y *= scale
+                        key.data.z *= scale
+                    ikfd.SetTranslateKeys(trans_keys)
+            elif ctrl.GetBlockType() == "NiGeomMorpherController":
+                gmd = ctrl["Data"].asLink()
+                assert(not gmd.is_null())
+                assert(gmd.GetBlockType() == "NiMorphData")
+                igmd = QueryMorphData(gmd)
+                for key in range( igmd.GetMorphCount() ):
+                    verts = igmd.GetMorphVerts( key )
+                    for v in range( len( verts ) ):
+                        verts[v].x *= scale
+                        verts[v].y *= scale
+                        verts[v].z *= scale
+                    igmd.SetMorphVerts( key, verts )
+            ctrl = ctrl["Next Controller"].asLink()
+        # Child block scale
+        if not block["Children"].is_null(): # block has children
+            for child in block["Children"].asLinkList():
+                scale_tree(child, scale)
+        elif not block["Data"].is_null(): # block has data
+            scale_tree(block["Data"].asLink(), scale) # scale the data
+
+    ishapedata = QueryShapeData(block)
+    if ishapedata: # is it a shape?
+        # Scale all vertices
+        vertlist = ishapedata.GetVertices()
+        if vertlist:
+            for vert in vertlist:
+                vert.x *= scale
+                vert.y *= scale
+                vert.z *= scale
+            ishapedata.SetVertices(vertlist)
+
+
 
 #----------------------------------------------------------------------------------------------------#
 #----------------------------------------------------------------------------------------------------#

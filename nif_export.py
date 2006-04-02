@@ -129,7 +129,7 @@ If you don't have them: http://niftools.sourceforge.net/
 # Global variables.
 #
 
-DEBUG = False # set to True for more output when exporting
+DEBUG = True # set to True for more output when exporting
 
 NIF_BLOCKS = [] # keeps track of all exported blocks
 NIF_TEXTURES = {} # keeps track of all exported textures
@@ -1790,17 +1790,17 @@ def get_object_srt(ob, space):
     # now write out spaces
     if (not type(ob) is Blender.Armature.Bone):
         # get world matrix
-        mat = Blender.Mathutils.Matrix(ob.getMatrix('worldspace')) # TODO: cancel out IPO's
+        mat = get_object_restmatrix(ob, 'worldspace')
         # handle localspace: L * Ba * B * P = W
         # (with L localmatrix, Ba bone animation channel, B bone rest matrix (armature space), P armature parent matrix, W world matrix)
         # so L = W * P^(-1) * (Ba * B)^(-1)
         if (space == 'localspace'):
             if (ob.getParent() != None):
-                matparentinv = Blender.Mathutils.Matrix(ob.getParent().getMatrix('worldspace')) # TODO: cancel out IPO's!
+                matparentinv = get_object_restmatrix(ob.getParent(), 'worldspace')
                 matparentinv.invert()
-                mat = mat * matparentinv
+                mat *= matparentinv
                 if (ob.getParent().getType() == 'Armature'):
-                    # the object is parented to the armature... we must get the matrix relative to the bone parent, of course
+                    # the object is parented to the armature... we must get the matrix relative to the bone parent
                     bone_parent_name = ob.getParentBoneName()
                     if bone_parent_name:
                         bone_parent = ob.getParent().getData().bones[bone_parent_name]
@@ -1808,7 +1808,7 @@ def get_object_srt(ob, space):
                         matparentbone = get_bone_restmatrix(bone_parent, 'ARMATURESPACE') # bone matrix in armature space
                         matparentboneinv = Blender.Mathutils.Matrix(matparentbone)
                         matparentboneinv.invert()
-                        mat = mat * matparentboneinv
+                        mat *= matparentboneinv
     else: # bones, get the rest matrix
         assert(space == 'localspace') # in this function, we only need bones in localspace
         mat = get_bone_restmatrix(ob, 'BONESPACE')
@@ -1850,12 +1850,12 @@ def decompose_srt(m):
 # 
 def get_bone_restmatrix(bone, space):
     # Retrieves the offset from the original NIF matrix, if existing
-    global BONES_EXTRA_MATRIX
     corrmat = Blender.Mathutils.Matrix()
-    try:
-        corrmat = BONES_EXTRA_MATRIX[bone.name]
-    except:
-        corrmat.identity()
+    # *** temporarily disabled, will enable again later ***
+    #try:
+    #    corrmat = BONES_EXTRA_MATRIX[bone.name]
+    #except:
+    corrmat.identity()
     if (space == 'ARMATURESPACE'):
         return Blender.Mathutils.Matrix(bone.matrix['ARMATURESPACE'] * corrmat) # return a copy, not the wrapper
     elif (space == 'BONESPACE'):
@@ -1868,6 +1868,20 @@ def get_bone_restmatrix(bone, space):
             return Blender.Mathutils.Matrix(bone.matrix['ARMATURESPACE'] * corrmat)
     else:
         assert(False) # bug!
+
+
+
+# get the object's rest matrix
+# space can be 'localspace' or 'worldspace'
+def get_object_restmatrix(ob, space):
+    mat = Blender.Mathutils.Matrix(ob.getMatrix('worldspace')) # TODO cancel out IPO's
+    if (space == 'localspace'):
+        par = ob.getParent()
+        if par:
+            parinv = get_object_restmatrix(par, 'worldspace')
+            parinv.invert()
+            mat *= parinv
+    return mat
 
 
 
@@ -1925,35 +1939,25 @@ def create_block(blocktype):
 
 
 # 
-# Scale NIF file and ensure that all scale values are 1.0 (fixes problem with TESCS selection box).
+# Scale NIF file.
 # 
 def scale_tree(block, scale):
     if block.GetBlockType() in ["NiNode", "NiTriShape", "RootCollisionNode"]:
-        # Scale factor removed from this block, which we must pass on children.
-        s = block["Scale"].asFloat()
-        block["Scale"] = 1.0
         # NiNode transform scale
         t = block["Translation"].asFloat3()
         t[0] *= scale
         t[1] *= scale
         t[2] *= scale
         block["Translation"] = t
+
         # NiNode bind position transform scale
         inode = QueryNode(block)
         mat = inode.GetWorldBindPos()
-        mat[0][0] /= s
-        mat[0][1] /= s
-        mat[0][2] /= s
-        mat[1][0] /= s
-        mat[1][1] /= s
-        mat[1][2] /= s
-        mat[2][0] /= s
-        mat[2][1] /= s
-        mat[2][2] /= s
         mat[3][0] *= scale
         mat[3][1] *= scale
         mat[3][2] *= scale
         inode.SetWorldBindPos(mat)
+        
         # Controller data block scale
         ctrl = block["Controller"].asLink()
         while not ctrl.is_null():
@@ -1969,11 +1973,6 @@ def scale_tree(block, scale):
                         key.data.y *= scale
                         key.data.z *= scale
                     ikfd.SetTranslateKeys(trans_keys)
-                scale_keys = ikfd.GetScaleKeys()
-                if scale_keys:
-                    for key in scale_keys:
-                        key.data /= s
-                    ikfd.SetScaleKeys(scale_keys)
             elif ctrl.GetBlockType() == "NiGeomMorpherController":
                 gmd = ctrl["Data"].asLink()
                 assert(not gmd.is_null())
@@ -1988,11 +1987,12 @@ def scale_tree(block, scale):
                     igmd.SetMorphVerts( key, verts )
             ctrl = ctrl["Next Controller"].asLink()
         # Child block scale
-        if block.GetBlockType() != "NiTriShape": # scale the children
+        if not block["Children"].is_null(): # scale the children
             for child in block["Children"].asLinkList():
-                scale_tree(child, scale * s)
+                scale_tree(child, scale)
         else:
-            scale_tree(block["Data"].asLink(), scale * s) # scale the NiTriShapeData
+            scale_tree(block["Data"].asLink(), scale) # scale the NiTriShapeData
+
     elif block.GetBlockType() == "NiTriShapeData":
         # Scale all vertices
         ishapedata = QueryShapeData(block)
