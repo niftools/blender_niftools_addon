@@ -1942,7 +1942,8 @@ def create_block(blocktype):
 # Scale NIF file.
 # 
 def scale_tree(block, scale):
-    if block.GetBlockType() in ["NiNode", "NiTriShape", "RootCollisionNode"]:
+    inode = QueryNode(block)
+    if inode: # is it a node?
         # NiNode transform scale
         t = block["Translation"].asFloat3()
         t[0] *= scale
@@ -1951,7 +1952,6 @@ def scale_tree(block, scale):
         block["Translation"] = t
 
         # NiNode bind position transform scale
-        inode = QueryNode(block)
         mat = inode.GetWorldBindPos()
         mat[3][0] *= scale
         mat[3][1] *= scale
@@ -1987,15 +1987,15 @@ def scale_tree(block, scale):
                     igmd.SetMorphVerts( key, verts )
             ctrl = ctrl["Next Controller"].asLink()
         # Child block scale
-        if not block["Children"].is_null(): # scale the children
+        if not block["Children"].is_null(): # block has children
             for child in block["Children"].asLinkList():
                 scale_tree(child, scale)
-        else:
-            scale_tree(block["Data"].asLink(), scale) # scale the NiTriShapeData
+        elif not block["Data"].is_null(): # block has data
+            scale_tree(block["Data"].asLink(), scale) # scale the data
 
-    elif block.GetBlockType() == "NiTriShapeData":
+    ishapedata = QueryShapeData(block)
+    if ishapedata: # is it a shape?
         # Scale all vertices
-        ishapedata = QueryShapeData(block)
         vertlist = ishapedata.GetVertices()
         if vertlist:
             for vert in vertlist:
@@ -2003,6 +2003,8 @@ def scale_tree(block, scale):
                 vert.y *= scale
                 vert.z *= scale
             ishapedata.SetVertices(vertlist)
+
+
 
 if EXPORT_DIR:
     Blender.Window.FileSelector(export_nif, 'Export NIF', EXPORT_DIR)
