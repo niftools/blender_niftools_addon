@@ -160,6 +160,9 @@ USE_GUI = 0 # BROKEN, don't set to 1, we will design a GUI for importer & export
 EPSILON = 0.005 # used for checking equality with floats, NOT STORED IN CONFIG
 MSG_LEVEL = 2 # verbosity level
 
+K_R2D = 3.14159265358979/180.0 # radians to degrees conversion constant
+K_D2R = 180.0/3.14159265358979 # degrees to radians conversion constant
+
 # 
 # Process config files.
 # 
@@ -1532,9 +1535,12 @@ def set_animation(niBlock, b_obj):
             frame = 1+int(rot_key.time * fps) # time 0.0 is frame 1
             Blender.Set('curframe', frame)
             rot = Blender.Mathutils.Quaternion(rot_key.data.w, rot_key.data.x, rot_key.data.y, rot_key.data.z).toEuler()
-            b_obj.RotX = rot.x * 3.14159265358979 / 180.0
-            b_obj.RotY = rot.y * 3.14159265358979 / 180.0
-            b_obj.RotZ = rot.z * 3.14159265358979 / 180.0
+            # b_obj.RotX = rot.x * 3.14159265358979 / 180.0
+            # b_obj.RotY = rot.y * 3.14159265358979 / 180.0
+            # b_obj.RotZ = rot.z * 3.14159265358979 / 180.0
+            b_obj.RotX = rot.x * K_R2D
+            b_obj.RotY = rot.y * K_R2D
+            b_obj.RotZ = rot.z * K_R2D
             b_obj.insertIpoKey(Blender.Object.ROT)
         msg('Translation keys...', 4)
         for trans_key in trans_keys:

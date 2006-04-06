@@ -267,6 +267,7 @@ def rebuild_bone_extra_data():
                 # Matrices are stored inverted for easier math later on
                 mat = Matrix(*[[float(f) for f in row.split(',')] for row in m.split(';')])
                 mat.invert()
+                print mat
                 BONES_EXTRA_MATRIX[b] = mat
             except:
                 pass
@@ -309,10 +310,14 @@ and turn off envelopes."""%ob.getName()
         if (Blender.Object.GetSelected() == None):
             raise NIFExportError("Please select the object(s) that you wish to export, and run this script again.")
         root_objects = []
-        for root_object in Blender.Object.GetSelected():
+        # different handling of selection to allow for careless usage
+        # for root_object in Blender.Object.GetSelected():
+        export_types = ('Empty','Mesh','Armature')
+        for root_object in [ob for ob in Blender.Object.GetSelected() if ob.getType() in export_types]:
             while (root_object.getParent() != None):
                 root_object = root_object.getParent()
-            if ((root_object.getType() != 'Empty') and (root_object.getType() != 'Mesh') and (root_object.getType() != 'Armature')):
+            #if ((root_object.getType() != 'Empty') and (root_object.getType() != 'Mesh') and (root_object.getType() != 'Armature')):
+            if root_object.getType not in export_types:
                 raise NIFExportError("Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."%root_object.getName())
             if (root_objects.count(root_object) == 0): root_objects.append(root_object)
 
@@ -772,9 +777,13 @@ def export_sourcetexture(texture, filename = None):
                 srctexdata.fileName = tfn
             else:
                 srctexdata.fileName = Blender.sys.basename(tfn)
+        # try and find a DDS alternative, force it if required
+        ddsFile = "%s%s" % (srctexdata.fileName[:-4], '.dds')
+        if Blender.sys.exists(ddsFile) == 1 or FORCE_DDS:
+            srctexdata.fileName = ddsFile
         # force dds extension, if requested
-        if FORCE_DDS:
-            srctexdata.fileName = srctexdata.fileName[:-4] + '.dds'
+        # if FORCE_DDS:
+        #    srctexdata.fileName = srctexdata.fileName[:-4] + '.dds'
 
     else:   # if the file is not external
         if filename != None:
