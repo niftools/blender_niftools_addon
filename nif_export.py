@@ -129,7 +129,7 @@ If you don't have them: http://niftools.sourceforge.net/
 # Global variables.
 #
 
-DEBUG = True # set to True for more output when exporting
+DEBUG = False # set to True for more output when exporting
 
 NIF_BLOCKS = [] # keeps track of all exported blocks
 NIF_TEXTURES = {} # keeps track of all exported textures
@@ -137,8 +137,14 @@ NIF_MATERIALS = {} # keeps track of all exported materials
 
 # dictionary of bones, maps Blender bone name to matrix that maps the
 # NIF bone matrix on the Blender bone matrix
-# B = X * B', where B' is the Blender bone matrix, and B is the NIF bone matrix
-BONES_EXTRA_MATRIX = {}
+# Recall from the import script
+#   B' = X * B,
+# where B' is the Blender bone matrix, and B is the NIF bone matrix,
+# both in armature space. So to restore the NIF matrices we need to do
+#   B = X^{-1} * B'
+# Hence, we will restore the X's, invert them, and store those inverses in the
+# following dictionary.
+BONES_EXTRA_MATRIX_INV = {}
 
 NIF_VERSION_DICT = {}
 NIF_VERSION_DICT['4.0.0.2']  = 0x04000002
@@ -252,24 +258,24 @@ class NIFExportError(Exception):
 # Utility function to parse the Bone extra data buffer
 #
 def rebuild_bone_extra_data():
-    global BONES_EXTRA_MATRIX
+    global BONES_EXTRA_MATRIX_INV
     try:
         bonetxt = Blender.Text.Get('BoneExMat')
     except: 
         return
-    # I am relying on the fact that Blender object names are unique. It might be wise to store the original
-    # node names as a dictionary in pretty much the same way as I am storing these matrices
+    # Blender bone names are unique so we can use them as keys.
+    # TODO: restore the node names as well
     for ln in bonetxt.asLines():
         #print ln
         if len(ln)>0:
             b, m = ln.split('/')
+            # Matrices are stored inverted for easier math later on.
             try:
-                # Matrices are stored inverted for easier math later on
-                mat = Matrix(*[[float(f) for f in row.split(',')] for row in m.split(';')])
-                mat.invert()
-                BONES_EXTRA_MATRIX[b] = mat
+                mat = Blender.Mathutils.Matrix(*[[float(f) for f in row.split(',')] for row in m.split(';')])
             except:
-                pass
+                raise NIFExportError('Syntax error in BoneExMat buffer.')
+            mat.invert()
+            BONES_EXTRA_MATRIX_INV[b] = mat # X^{-1}
 
 
 #
@@ -1859,20 +1865,20 @@ def get_bone_restmatrix(bone, space):
     # Retrieves the offset from the original NIF matrix, if existing
     corrmat = Blender.Mathutils.Matrix()
     # *** temporarily disabled, will enable again later ***
-    #try:
-    #    corrmat = BONES_EXTRA_MATRIX[bone.name]
-    #except:
-    corrmat.identity()
+    try:
+        corrmat = BONES_EXTRA_MATRIX_INV[bone.name]
+    except:
+        corrmat.identity()
     if (space == 'ARMATURESPACE'):
-        return Blender.Mathutils.Matrix(bone.matrix['ARMATURESPACE'] * corrmat) # return a copy, not the wrapper
+        return corrmat * Blender.Mathutils.Matrix(bone.matrix['ARMATURESPACE'])
     elif (space == 'BONESPACE'):
         if bone.parent:
             #parinv = Blender.Mathutils.Matrix(bone.parent.matrix['ARMATURESPACE'])
             parinv = get_bone_restmatrix(bone.parent,'ARMATURESPACE')
             parinv.invert()
-            return (bone.matrix['ARMATURESPACE'] * corrmat) * parinv
+            return (corrmat * bone.matrix['ARMATURESPACE']) * parinv
         else:
-            return Blender.Mathutils.Matrix(bone.matrix['ARMATURESPACE'] * corrmat)
+            return corrmat * Blender.Mathutils.Matrix(bone.matrix['ARMATURESPACE'])
     else:
         assert(False) # bug!
 
