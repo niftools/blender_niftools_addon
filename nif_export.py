@@ -267,7 +267,6 @@ def rebuild_bone_extra_data():
                 # Matrices are stored inverted for easier math later on
                 mat = Matrix(*[[float(f) for f in row.split(',')] for row in m.split(';')])
                 mat.invert()
-                print mat
                 BONES_EXTRA_MATRIX[b] = mat
             except:
                 pass
@@ -316,8 +315,7 @@ and turn off envelopes."""%ob.getName()
         for root_object in [ob for ob in Blender.Object.GetSelected() if ob.getType() in export_types]:
             while (root_object.getParent() != None):
                 root_object = root_object.getParent()
-            #if ((root_object.getType() != 'Empty') and (root_object.getType() != 'Mesh') and (root_object.getType() != 'Armature')):
-            if root_object.getType not in export_types:
+            if root_object.getType() not in export_types:
                 raise NIFExportError("Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."%root_object.getName())
             if (root_objects.count(root_object) == 0): root_objects.append(root_object)
 
