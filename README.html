@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <title>The Blender NIF Scripts v1.5</title>
+  <title>The Blender NIF Scripts v1.5.1</title>
   <meta http-equiv="Content-Type"
  content="text/html; charset=ISO-8859-1" />
   <style type="text/css">
@@ -19,7 +19,7 @@ a:hover.nav { color: #FF0000; background: transparent; }
   </style>
 </head>
 <body>
-<h1>The Blender NIF Scripts v1.5</h1>
+<h1>The Blender NIF Scripts v1.5.1</h1>
 <h2>Contributors</h2>
 <p>(in random order)</p>
 <ul>
@@ -32,7 +32,7 @@ a:hover.nav { color: #FF0000; background: transparent; }
 <ul>
   <li>All modders that have reported bugs:
 Sabregirl, y67_a, Fakku, readhead33445, DemonFire, lucifer,
-NeOmega, Andysaurus, tekener, CuteUnit, periplaneta, and
+NeOmega, Andysaurus, tekener, CuteUnit, periplaneta, Pekka, and
 many, many others... (drop us a note if we forgot your name here)</li>
   <li>Mannon, who started all this!</li>
   <li>Taharez, for helping with the generated Python NIF
@@ -73,7 +73,9 @@ to the scripts window in Blender, and select
 Scripts-&gt;System-&gt;Scripts Config
 Editor-&gt;Import/Export. <em>Note that the scale correction
 in the
-export config is also used by the importer.</em></li>
+export config is also used by the importer.</em>
+Here are some <a href="http://niftools.sourceforge.net/forum/viewtopic.php?t=150">screenshots
+to find the right menu</a>.</li>
   <li>Your old nif_import and nif_export settings are deleted by
 the windows installer. This avoids a number of very annoying problems
 with invalid script config files: in some cases, you wouldn't be able
@@ -85,32 +87,10 @@ release.</li>
 </ul>
 <h3>Highlights of this Release</h3>
 <ul>
-  <li>Importer can now also <strong>import animation and
-animation groups</strong>. This new code is still very
-experimental, so
-be sure to report any problems you have with it. Note that the import
-of rotation keys is particularly slow. You may have to wait a minute or
-longer to import most Morrowind creatures. Re-exporting imported
-creatures seems to work, if you use the exported models as activators
-(they aren't fully working creatures just yet...).</li>
-  <li>Scale animation keys are now also&nbsp;exported.</li>
-  <li>A few very rare NIF block types have been added to Niflib:
-it now
-reads
-&amp; writes every NIF file we know about!</li>
-  <li>Various bugs have been fixed in the importer &amp;
-exporter &amp; Niflib. </li>
-</ul>
-<h3>In the Background...</h3>
-<ul>
-  <li>Support for Civ IV animation
-files (.kf &amp; .kfm) is still in progress. We have already
-decoded the
-kfm
-format.</li>
-  <li>It has been confirmed
-that Oblivion uses the NIF format as well. We also plan to support
-Oblivion although we aren't sure yet about the NIF version(s) used.</li>
+  <li>This is a bugfix release, which fixes an issue with exporting 20.0.0.4 NIF files
+(used by Oblivion and Civ IV).</li>
+  <li>Bone matrices are now restored when re-exported. In practice this means that you
+won't need to cast NifSkope's Bip 01 spell anymore.</li>
 </ul>
 <h2>Support</h2>
 <ul>
@@ -191,6 +171,16 @@ to
 Converter 2.1</a>)</li>
     </ul>
   </li>
+</ul>
+<h3>Using the Scripts with Oblivion</h3>
+<ul>
+  <li>Oblivion support is still far from complete.
+Basically, right now, the only thing you can do is export 20.0.0.4 models.
+These exported models will however lack physics. Most of the NIF files
+in Oblivion are of version 20.0.0.5 which aren't supported at all by Niflib,
+and therefore also not by the scripts.
+  <li>If you wish to use the Oblivion textures in your models, you can unpack
+the BSA files using <a href="http://www34.brinkster.com/ghostwheel/">Ghostwheel's TES4 BSA unpacker</a>.</li>
 </ul>
 <h2>Exporter Notes</h2>
 <h3>Usage</h3>
@@ -375,28 +365,6 @@ UV channels.... the list is too long. We are working on it.</li>
 </ul>
 <h3>Known Issues and Workarounds</h3>
 <ul>
-  <li>If you import an armature (say, a better bodies armature),
-and
-re-export a mesh parent, then the animation won't show
-up correctly in the game.
-This is due to the way in which animations are stored in NIF files. Put
-simply, for
-proper display of the
-bones, the bone matrices must be realigned by the importer, but because
-they aren't
-restored on export, the bone data from the base animation files won't
-work on them properly.
-There are two workarounds:
-    <ul>
-      <li>Open the exported model and cast NifSkope's Bip01 spell
-fix.</li>
-      <li>Disable bone realignment on import. There's an option
-for that in the import config.
-The imported armature will look very crappy, but you won't have those
-animation
-problems on export.</li>
-    </ul>
-  </li>
   <li>Objects that had originally multiple materials will get
 imported
 as seperate meshes. As a consequence, if you export them again they
