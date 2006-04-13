@@ -15,7 +15,7 @@ Tooltip: 'Import NIF File Format (.nif & .kf)'
 
 __author__ = "The NifTools team, http://niftools.sourceforge.net/"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
-__version__ = "1.5"
+__version__ = "1.5.1"
 __bpydoc__ = """\
 This script imports Netimmerse and Gamebryo .NIF files to Blender.
 
@@ -45,7 +45,7 @@ very ugly, but you may want to do this to edit animated NIF's without having
 to change the animation .kf files).<br>
 """
 
-# nif_import.py version 1.5
+# nif_import.py version 1.5.1
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
 # 

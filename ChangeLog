@@ -57,7 +57,7 @@ Version 1.5 (Mar 21, 2006)
 * Export: large model fix (now supports up to 65535 faces / vertices per mesh
 * Export: writes a dummy node on final bones to retain bone length when re-imported
 
-Version 1.5.1 (Apr 12, 2006)
+Version 1.5.1 (Apr 13, 2006)
 * Export: a 20.0.0.4 bug is fixed
 * Import/Export: restoring bone matrices, no longer need for NifSkope's Bip01 spell
 * Import: animated nodes that aren't bones have their animation imported too
