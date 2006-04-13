@@ -525,22 +525,68 @@ def export_node(ob, space, parent_block, node_name):
 # when exporting bone ipo's, which are relative to the rest pose, so
 # we can pass the rest pose through these extra transformations.
 #
-# Explanation of extra transformations (bind = extra):
+# bind_mat is the original Blender bind matrix (the B' matrix below)
+# extra_mat_inv is the inverse matrix which transforms the Blender bone matrix
+# to the NIF bone matrx (the inverse of the X matrix below)
+#
+# Explanation of extra transformations:
 # Final transformation matrix is vec * Rchannel * Tchannel * Rbind * Tbind
 # So we export:
 # [ SRchannel 0 ]    [ SRbind 0 ]   [ SRchannel * SRbind        0 ]
 # [ Tchannel  1 ] *  [ Tbind  1 ] = [ Tchannel * SRbind + Tbind 1 ]
 # or, in detail,
-# S = SC * SB
-# R = RC * RB
-# T = TC * SB * RB + TB
-def export_keyframe(ipo, space, parent_block, extra_trans = None, extra_quat = None, extra_scale = None):
+# Stotal = Schannel * Sbind
+# Rtotal = Rchannel * Rbind
+# Ttotal = Tchannel * Sbind * Rbind + Tbind
+# We also need the conversion of the new bone matrix to the original matrix, say X,
+# B' = X * B
+# (with B' the Blender matrix and B the NIF matrix) because we need that
+# C' * B' = X * C * B
+# and therefore
+# C * B = inverse(X) * C' * B'
+# (we need to write out C * B, the NIF format stores total transformation in keyframes).
+# In detail:
+#          [ SRX 0 ]     [ SRC' 0 ]   [ SRB' 0 ]
+# inverse( [ TX  1 ] ) * [ TC'  1 ] * [ TB'  1 ] =
+# [ inverse(SRX)         0 ]   [ SRC' * SRB'         0 ]
+# [ -TX * inverse(SRX)   1 ] * [ TC' * SRB' + TB'    1 ] =
+# [ inverse(SRX) * SRC' * SRB'                       0 ]
+# [ (-TX * inverse(SRX) * SRC' + TC') * SRB' + TB'    1 ]
+# Hence
+# S = SC' * SB' / SX
+# R = inverse(RX) * RC' * RB'
+# T = - TX * inverse(RX) * RC' * RB' * SC' * SB' / SX + TC' * SB' * RB' + TB'
+#
+# Finally, note that
+# - TX * inverse(RX) / SX = translation part of inverse(X)
+# inverse(RX) = rotation part of inverse(X)
+# 1 / SX = scale part of inverse(X)
+# so having inverse(X) around saves on calculations
+def export_keyframe(ipo, space, parent_block, bind_mat = None, extra_mat_inv = None):
     if DEBUG: print "Exporting keyframe %s"%parent_block["Name"].asString()
     # -> get keyframe information
     
     assert(space == 'localspace') # we don't support anything else (yet)
     assert(parent_block.GetBlockType() == "NiNode") # make sure the parent is of the right type
     
+    # some calculations
+    if bind_mat:
+        bind_scale, bind_rot, bind_trans = decompose_srt(bind_mat)
+        bind_quat = bind_rot.toQuat()
+    else:
+        bind_scale = 1.0
+        bind_rot = Blender.Mathutils.Matrix([1,0,0],[0,1,0],[0,0,1])
+        bind_quat = Blender.Mathutils.Quaternion(1,0,0,0)
+        bind_trans = Blender.Mathutils.Vector(0,0,0)
+    if extra_mat_inv:
+        extra_scale_inv, extra_rot_inv, extra_trans_inv = decompose_srt(extra_mat_inv)
+        extra_quat_inv = extra_rot_inv.toQuat()
+    else:
+        extra_scale_inv = 1.0
+        extra_rot_inv = Blender.Mathutils.Matrix([1,0,0],[0,1,0],[0,0,1])
+        extra_quat_inv = Blender.Mathutils.Quaternion(1,0,0,0)
+        extra_trans_inv = Blender.Mathutils.Vector(0,0,0)
+
     # get frame start and frame end, and the number of frames per second
     scn = Blender.Scene.GetCurrent()
     context = scn.getRenderingContext()
@@ -569,34 +615,46 @@ def export_keyframe(ipo, space, parent_block, extra_trans = None, extra_quat = N
                     scale_curve[frame] = ( ipo.getCurve('SizeX').evaluate(frame)\
                                         + ipo.getCurve('SizeY').evaluate(frame)\
                                         + ipo.getCurve('SizeZ').evaluate(frame) ) / 3.0 # support only uniform scaling... take the mean
-                    if extra_scale: # extra scale
-                        scale_curve[frame] = scale_curve[frame] * extra_scale
+                    scale_curve[frame] = scale_curve[frame] * bind_scale * extra_scale_inv # SC' * SB' / SX
                 if (curve.getName() == 'RotX') or (curve.getName() == 'RotY') or (curve.getName() == 'RotZ'):
                     rot_curve[frame] = Blender.Mathutils.Euler([10*ipo.getCurve('RotX').evaluate(frame), 10*ipo.getCurve('RotY').evaluate(frame), 10*ipo.getCurve('RotZ').evaluate(frame)]).toQuat()
-                    if extra_quat: # extra quaternion rotation
-                        # beware, CrossQuats takes arguments in a counter-intuitive order:
-                        # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
-                        rot_curve[frame] = Blender.Mathutils.CrossQuats(extra_quat, rot_curve[frame])
+                    # beware, CrossQuats takes arguments in a counter-intuitive order:
+                    # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
+                    rot_curve[frame] = Blender.Mathutils.CrossQuats(Blender.Mathutils.CrossQuats(bind_quat, rot_curve[frame]), extra_quat_inv) # inverse(RX) * RC' * RB'
                 elif (curve.getName() == 'QuatX') or (curve.getName() == 'QuatY') or (curve.getName() == 'QuatZ') or  (curve.getName() == 'QuatW'):
                     rot_curve[frame] = Blender.Mathutils.Quaternion()
                     rot_curve[frame].x = ipo.getCurve('QuatX').evaluate(frame)
                     rot_curve[frame].y = ipo.getCurve('QuatY').evaluate(frame)
                     rot_curve[frame].z = ipo.getCurve('QuatZ').evaluate(frame)
                     rot_curve[frame].w = ipo.getCurve('QuatW').evaluate(frame)
-                    if extra_quat: # extra quaternion rotation
-                        # beware, CrossQuats takes arguments in a counter-intuitive order:
-                        # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
-                        rot_curve[frame] = Blender.Mathutils.CrossQuats(extra_quat, rot_curve[frame])
+                    # beware, CrossQuats takes arguments in a counter-intuitive order:
+                    # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
+                    rot_curve[frame] = Blender.Mathutils.CrossQuats(Blender.Mathutils.CrossQuats(bind_quat, rot_curve[frame]), extra_quat_inv) # inverse(RX) * RC' * RB'
                 if (curve.getName() == 'LocX') or (curve.getName() == 'LocY') or (curve.getName() == 'LocZ'):
                     trans_curve[frame] = Blender.Mathutils.Vector([ipo.getCurve('LocX').evaluate(frame), ipo.getCurve('LocY').evaluate(frame), ipo.getCurve('LocZ').evaluate(frame)])
-                    if extra_scale: # extra scale
-                        trans_curve[frame] *= extra_scale
-                    if extra_quat: # extra rotation
-                        trans_curve[frame] = trans_curve[frame] * extra_quat.toMatrix()
-                    if extra_trans: # extra translation
-                        trans_curve[frame][0] += extra_trans[0]
-                        trans_curve[frame][1] += extra_trans[1]
-                        trans_curve[frame][2] += extra_trans[2]
+                    # T = - TX * inverse(RX) * RC' * RB' * SC' * SB' / SX + TC' * SB' * RB' + TB'
+                    trans_curve[frame] *= bind_scale
+                    trans_curve[frame] *= bind_rot
+                    trans_curve[frame] += bind_trans
+                    # we need RC' and SC'
+                    if ipo.getCurve('RotX'):
+                        rot_c = Blender.Mathutils.Euler([10*ipo.getCurve('RotX').evaluate(frame), 10*ipo.getCurve('RotY').evaluate(frame), 10*ipo.getCurve('RotZ').evaluate(frame)]).toMatrix()
+                    elif ipo.getCurve('QuatX'):
+                        rot_c = Blender.Mathutils.Quaternion()
+                        rot_c.x = ipo.getCurve('QuatX').evaluate(frame)
+                        rot_c.y = ipo.getCurve('QuatY').evaluate(frame)
+                        rot_c.z = ipo.getCurve('QuatZ').evaluate(frame)
+                        rot_c.w = ipo.getCurve('QuatW').evaluate(frame)
+                        rot_c = rot_c.toMatrix()
+                    else:
+                        rot_c = Blender.Mathutils.Matrix([1,0,0],[0,1,0],[0,0,1])
+                    if ipo.getCurve('SizeX'):
+                        scale_c = ( ipo.getCurve('SizeX').evaluate(frame)\
+                                  + ipo.getCurve('SizeY').evaluate(frame)\
+                                  + ipo.getCurve('SizeZ').evaluate(frame) ) / 3.0 # support only uniform scaling... take the mean
+                    else:
+                        scale_c = 1.0
+                    trans_curve[frame] += extra_trans_inv * rot_c * bind_rot * scale_c * bind_scale
 
     # -> now comes the real export
 
@@ -1598,11 +1656,10 @@ def export_bones(arm, parent_block):
         
         # bone rotations are stored in the IPO relative to the rest position
         # so we must take the rest position into account
-        bonerestmat = get_bone_restmatrix(bone, 'BONESPACE')
-        xs, xr, xt = decompose_srt(bonerestmat)
-        xq = xr.toQuat()
+        bonerestmat = get_bone_restmatrix(bone, 'BONESPACE', extra = False) # we need the original one, without extra transforms
+        bonexmat_inv = BONES_EXTRA_MATRIX_INV[bone.name]
         if bones_ipo.has_key(bone.name):
-            export_keyframe(bones_ipo[bone.name], 'localspace', node, extra_trans = xt, extra_quat = xq, extra_scale = xs)
+            export_keyframe(bones_ipo[bone.name], 'localspace', node, bind_mat = bonerestmat, extra_mat_inv = bonexmat_inv)
 
         # Set the bind pose relative to the armature coordinate
         # system; this should work, if we do the same for the trishape
@@ -1861,13 +1918,15 @@ def decompose_srt(m):
 # ARMATURESPACE or BONESPACE. This returns also a 4x4 matrix if space
 # is BONESPACE (translation is bone head plus tail from parent bone).
 # 
-def get_bone_restmatrix(bone, space):
+def get_bone_restmatrix(bone, space, extra = True):
     # Retrieves the offset from the original NIF matrix, if existing
     corrmat = Blender.Mathutils.Matrix()
-    # *** temporarily disabled, will enable again later ***
-    try:
-        corrmat = BONES_EXTRA_MATRIX_INV[bone.name]
-    except:
+    if extra:
+        try:
+            corrmat = BONES_EXTRA_MATRIX_INV[bone.name]
+        except:
+            corrmat.identity()
+    else:
         corrmat.identity()
     if (space == 'ARMATURESPACE'):
         return corrmat * Blender.Mathutils.Matrix(bone.matrix['ARMATURESPACE'])
@@ -1886,7 +1945,7 @@ def get_bone_restmatrix(bone, space):
 
 # get the object's rest matrix
 # space can be 'localspace' or 'worldspace'
-def get_object_restmatrix(ob, space):
+def get_object_restmatrix(ob, space, extra = True):
     mat = Blender.Mathutils.Matrix(ob.getMatrix('worldspace')) # TODO cancel out IPO's
     if (space == 'localspace'):
         par = ob.getParent()

@@ -592,7 +592,7 @@ def fb_armature(niBlock):
         niBone_bind_quat_inv = niBone_bind_rot_inv.toQuat()
         # we also need the conversion of the original matrix to the new bone matrix, say X,
         # B' = X * B
-        # because we need that
+        # (with B' the Blender matrix and B the NIF matrix) because we need that
         # C' * B' = X * C * B
         # and therefore
         # C' = X * C * B * inverse(B') = X * C * inverse(X), where X = B' * inverse(B)
