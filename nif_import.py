@@ -158,7 +158,14 @@ BONE_REALIGN_MODE = "Auto"
 BONE_AUTO_XYZ = Vector(0.0, 0.0, 0.0)
 # bone correction matrix
 BONE_CORRECTION = Matrix([1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0])
-
+# correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z.
+BONE_CORRECTION_MATRICES = (\
+            Matrix([ 0.0,-1.0, 0.0],[ 1.0,-0.0, 0.0],[ 0.0, 0.0, 1.0]),\
+            Matrix([ 1.0, 0.0, 0.0],[ 0.0, 1.0, 0.0],[ 0.0, 0.0, 1.0]),\
+            Matrix([ 1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0],[ 0.0,-1.0, 0.0]),\
+            Matrix([ 0.0, 1.0, 0.0],[-1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0]),\
+            Matrix([ 1.0, 0.0, 0.0],[ 0.0,-1.0, 0.0],[ 0.0, 0.0, 1.0]),\
+            Matrix([ 1.0, 0.0, 0.0],[ 0.0, 0.0,-1.0],[ 0.0, 1.0, 0.0]))
 
 # some variables
 
@@ -332,7 +339,7 @@ def import_main(root_block):
     mark_armatures_bones(root_block)
     merge_armatures()
     # tries to detect how the bones are aligned
-    set_auto_realign_mode()
+    #set_auto_realign_mode()
     # print "Autodetected alignment method is %s" % (BONE_REALIGN_MODE)
     if VERBOSE and MSG_LEVEL >= 3:
         for arm_name in BONE_LIST.keys():
@@ -769,8 +776,7 @@ def fb_armature(niBlock):
 
 # Adds a bone to the armature in edit mode.
 def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
-    global BONES
-    global BONES_EXTRA_MATRIX
+    global BONES, BONES_EXTRA_MATRIX, BONE_CORRECTION_MATRICES
     
     bone_name = fb_name(niBlock)
     niChildren = niBlock["Children"].asLinkList()
@@ -785,8 +791,8 @@ def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
         b_bone_head_y = armature_space_matrix[3][1]
         b_bone_head_z = armature_space_matrix[3][2]
         # tail: average of children location
-        child_matrices = [(fb_global_matrix(child)*armature_matrix_inverse) for child in niChildNodes]
         if len(niChildNodes) > 0:
+            child_matrices = [(fb_global_matrix(child)*armature_matrix_inverse) for child in niChildNodes]
             b_bone_tail_x = sum([child_matrix[3][0] for child_matrix in child_matrices]) / len(child_matrices)
             b_bone_tail_y = sum([child_matrix[3][1] for child_matrix in child_matrices]) / len(child_matrices)
             b_bone_tail_z = sum([child_matrix[3][2] for child_matrix in child_matrices]) / len(child_matrices)
@@ -809,8 +815,18 @@ def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
             # - head is preserved
             # - bone length is preserved
             # - tail is lost (up to bone length)
-            
-            b_bone.matrix = BONE_CORRECTION * armature_space_matrix.rotationPart()
+            (sum_x, sum_y, sum_z, dummy) = fb_matrix(niBlock)[3]
+            if len(niChildNodes) > 0:
+                child_local_matrices = [fb_matrix(child) for child in niChildNodes]
+                sum_x = sum([cm[3][0] for cm in child_local_matrices])
+                sum_y = sum([cm[3][1] for cm in child_local_matrices])
+                sum_z = sum([cm[3][2] for cm in child_local_matrices])
+            listXYZ = [int(c*200) for c in (sum_x, sum_y, sum_z, -sum_x, -sum_y, -sum_z)]
+            idx_correction = listXYZ.index(max(listXYZ))
+            print bone_name, idx_correction
+            m_correction = BONE_CORRECTION_MATRICES[idx_correction]
+            b_bone.matrix = m_correction * armature_space_matrix.rotationPart()
+            #b_bone.matrix = BONE_CORRECTION * armature_space_matrix.rotationPart()
         # set bone name and store the niBlock for future reference
         b_armatureData.bones[bone_name] = b_bone
         BONES[bone_name] = niBlock
@@ -1489,7 +1505,7 @@ def mark_armatures_bones(block):
             skelroot_name = skelroot["Name"].asString()
             if not BONE_LIST.has_key(skelroot_name):
                 BONE_LIST[skelroot_name] = []
-                build_auto_realign_data(skelroot)
+                #build_auto_realign_data(skelroot)
                 msg("'%s' is an armature"%skelroot_name,3)
             # now get the skinning data interface to retrieve the list of bones
             skindata = skininst["Data"].asLink()
@@ -1499,7 +1515,7 @@ def mark_armatures_bones(block):
                 bone_name = bone["Name"].asString()
                 if not bone_name in BONE_LIST[skelroot_name]:
                     BONE_LIST[skelroot_name].append(bone_name)
-                    build_auto_realign_data(bone)
+                    #build_auto_realign_data(bone)
                     msg("'%s' is a bone of armature '%s'"%(bone_name,skelroot_name),3)
                 # now we "attach" the bone to the armature:
                 # we make sure all NiNodes from this bone all the way
@@ -1533,7 +1549,7 @@ def complete_bone_tree(bone, skelroot_name):
             # neither is it marked as a bone: so mark the parent as a bone
             BONE_LIST[skelroot_name].append(boneparent_name)
             # store the coordinates for realignement autodetection 
-            build_auto_realign_data(boneparent)
+            #build_auto_realign_data(boneparent)
             msg("'%s' is a bone of armature '%s'"%(boneparent_name, skelroot_name),3)
         # now the parent is marked as a bone
         # recursion: complete the bone tree,
