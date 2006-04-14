@@ -106,16 +106,6 @@ to change the animation .kf files).<br>
 #   the UV maps work in Blender
 # Amorilia (don't know your name buddy), for bugfixes and testing.
 
-try:
-    import types
-except:
-    err = """--------------------------
-ERROR\nThis script requires a full Python 2.4 installation to run.
---------------------------""" % sys.version
-    print err
-    Draw.PupMenu("ERROR%t|Python installation not found, check console for details")
-    raise
-
 import Blender, sys
 from Blender import BGL
 from Blender import Draw
@@ -454,6 +444,80 @@ def read_armature_branch(b_armature, niArmature, niBlock):
         else:
             return None
 
+
+#
+# hash functions, for object comparison and dictionary keys
+#
+def float_hash(x):
+    return int(x*200)
+
+def float3_hash(x):
+    return (float_hash(x[0]), float_hash(x[1]), float_hash(x[2]))
+
+# blk_ref hash
+def block_hash(b):
+    if b.is_null():
+        return None
+    else:
+        return b.GetBlockNum()
+
+# NiSourceTexture hash
+def texsource_hash(texsource):
+    return (\
+        block_hash(texsource["Controller"].asLink()),\
+        str(texsource["Texture Source"].asTexSource().fileName),\
+        texsource["Pixel Layout"].asInt(),\
+        texsource["Use Mipmaps"].asInt(),\
+        texsource["Alpha Format"].asInt()\
+    )
+
+# TexDesc hash
+def texdesc_hash(texdesc):
+    if texdesc.isUsed:
+        return (texdesc.clampMode, texdesc.filterMode, texsource_hash(texdesc.source))
+    else:
+        return None
+
+# "material" property hash
+def material_hash(matProperty, textProperty, alphaProperty, specProperty):
+    if not matProperty.is_null():
+        mathash = (\
+            block_hash(matProperty["Controller"].asLink()),\
+            matProperty["Flags"].asInt(),\
+            float3_hash(matProperty["Ambient Color"].asFloat3()),\
+            float3_hash(matProperty["Diffuse Color"].asFloat3()),\
+            float3_hash(matProperty["Specular Color"].asFloat3()),\
+            float3_hash(matProperty["Emissive Color"].asFloat3()),\
+            float_hash(matProperty["Glossiness"].asFloat()),\
+            float_hash(matProperty["Alpha"].asFloat())\
+        )
+    else:
+        mathash = None
+    if not textProperty.is_null():
+        itexprop = QueryTexturingProperty(textProperty)
+        bastex = itexprop.GetTexture(0)
+        glowtex = itexprop.GetTexture(4)
+        texthash = (\
+            block_hash(textProperty["Controller"].asLink()),\
+            textProperty["Flags"].asInt(),\
+            itexprop.GetApplyMode(),\
+            texdesc_hash(bastex),\
+            texdesc_hash(glowtex)\
+        )
+    else:
+        texthash = None
+    if not alphaProperty.is_null():
+        alphahash = block_hash(alphaProperty["Controller"].asLink())
+    else:
+        alphahash = None
+    if not specProperty.is_null():
+        spechash = block_hash(specProperty["Controller"].asLink())
+    else:
+        spechash = None
+    return (mathash, texthash, alphahash, spechash)
+
+
+
 #
 # Get unique name for an object, preserving existing names
 #
@@ -772,12 +836,8 @@ def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
 def fb_texture( niSourceTexture ):
     global TEXTURES
     
-    # This won't work due to the way Niflib works
-    #if TEXTURES.has_key( niSourceTexture ):
-    #    return TEXTURES[ niSourceTexture ]
-    # Alternative:
     try:
-        return TEXTURES[niSourceTexture]
+        return TEXTURES[texsource_hash(niSourceTexture)]
     except:
         pass
     
@@ -865,10 +925,10 @@ def fb_texture( niSourceTexture ):
         b_texture.setImage( b_image )
         b_texture.imageFlags |= Blender.Texture.ImageFlags.INTERPOL
         b_texture.imageFlags |= Blender.Texture.ImageFlags.MIPMAP
-        TEXTURES[ niSourceTexture ] = b_texture
+        TEXTURES[ texsource_hash(niSourceTexture) ] = b_texture
         return b_texture
     else:
-        TEXTURES[ niSourceTexture ] = None
+        TEXTURES[ texsource_hash(niSourceTexture) ] = None
         return None
 
 
@@ -878,23 +938,11 @@ def fb_material(matProperty, textProperty, alphaProperty, specProperty):
     global MATERIALS
     
     # First check if material has been created before.
-    # Won't work due to way that Niflib works...
-    #try:
-    #    material = MATERIALS[(matProperty, textProperty, alphaProperty, specProperty)]
-    #    return material
-    #except KeyError:
-    #    pass
-    # Alternative:
-    for m in MATERIALS.keys():
-        # TODO: more clever way of comparing blocks.
-        # Sometimes blocks are unnecessarily repeated in a NIF file.
-        # This will result in material duplication.
-        # (invoke Niflib's block equality operator)
-        if ( matProperty == m[0] ) \
-        and ( textProperty == m[1] ) \
-        and ( alphaProperty.is_null() == m[2].is_null() ) \
-        and ( specProperty.is_null() == m[3].is_null() ):
-            return MATERIALS[m]
+    try:
+        material = MATERIALS[material_hash(matProperty, textProperty, alphaProperty, specProperty)]
+        return material
+    except KeyError:
+        pass
     # use the material property for the name, other properties usually have
     # no name
     name = fb_name(matProperty)
@@ -996,7 +1044,7 @@ def fb_material(matProperty, textProperty, alphaProperty, specProperty):
         # we do this by setting specularity zero
         material.setSpec(0.0)
 
-    MATERIALS[(matProperty, textProperty, alphaProperty, specProperty)] = material
+    MATERIALS[material_hash(matProperty, textProperty, alphaProperty, specProperty)] = material
     return material
 
 # Creates and returns a raw mesh

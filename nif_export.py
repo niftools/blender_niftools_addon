@@ -97,16 +97,6 @@ putting 4.2.2.0, 10.0.1.0, 10.1.0.0, 10.2.0.0, or 20.0.0.4 here)<br>
 # ***** END LICENCE BLOCK *****
 # --------------------------------------------------------------------------
 
-try:
-    import types
-except:
-    err = """--------------------------
-ERROR\nThis script requires a full Python 2.4 installation to run.
---------------------------""" % sys.version
-    print err
-    Draw.PupMenu("ERROR%t|Python installation not found, check console for details")
-    raise
-
 import Blender, sys
 from Blender import BGL
 from Blender import Draw
