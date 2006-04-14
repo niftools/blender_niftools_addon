@@ -165,7 +165,7 @@ BONE_LIST = {}
 # "Auto": attempts to auto detect the bone alignment
 BONE_REALIGN_MODE = "Auto"
 # Used to automatically detecty alignment
-BONE_AUTO_XYZ = (0.0, 0.0, 0.0)
+BONE_AUTO_XYZ = Vector(0.0, 0.0, 0.0)
 # bone correction matrix
 BONE_CORRECTION = Matrix([1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0])
 
@@ -1384,39 +1384,41 @@ def find_extra(block, extratype):
 # Builds up the data for auto detection of realignment method
 def build_auto_realign_data(block):
     global BONE_AUTO_XYZ
-    (x, y, z, w) = fb_matrix(block)[3]
-    BONE_AUTO_XYZ = (BONE_AUTO_XYZ[0]+x, BONE_AUTO_XYZ[1]+y, BONE_AUTO_XYZ[2]+z)
+    bone_head = fb_matrix(block).translationPart()
+    BONE_AUTO_XYZ += bone_head
 
 # Sets the autodetected realign mode according to the stored data
 def set_auto_realign_mode():
     global BONE_AUTO_XYZ, BONE_REALIGN_MODE, BONE_CORRECTION
-    maxval = max([abs(val) for val in BONE_AUTO_XYZ])
-    if maxval == BONE_AUTO_XYZ[0]:
+    # this resolves rounding errors that prevent align detection
+    BONE_AUTO_XYZ_INT = [int(200*val) for val in BONE_AUTO_XYZ]
+    maxval = max([abs(val) for val in BONE_AUTO_XYZ_INT])
+    #print BONE_AUTO_XYZ_INT
+    #print maxval
+    if maxval == BONE_AUTO_XYZ_INT[0]:
         BONE_REALIGN_MODE = "+X"
         e = Euler(0.0,0.0,-90.0)
         BONE_CORRECTION = e.toMatrix()
-    elif maxval == BONE_AUTO_XYZ[1]:
+    elif maxval == BONE_AUTO_XYZ_INT[1]:
         BONE_REALIGN_MODE = "+Y"
-    elif maxval == BONE_AUTO_XYZ[2]:
+    elif maxval == BONE_AUTO_XYZ_INT[2]:
         BONE_REALIGN_MODE = "+Z"
-        e = Euler(-90.0,0.0,0.0)
+        e = Euler(90.0,0.0,0.0)
         BONE_CORRECTION = e.toMatrix()
-    if maxval == -BONE_AUTO_XYZ[0]:
+    elif maxval == -BONE_AUTO_XYZ_INT[0]:
         BONE_REALIGN_MODE = "-X"
         e = Euler(0.0,0.0,90.0)
         BONE_CORRECTION = e.toMatrix()
-    elif maxval == -BONE_AUTO_XYZ[1]:
+    elif maxval == -BONE_AUTO_XYZ_INT[1]:
         BONE_REALIGN_MODE = "-Y"
         e = Euler(0.0,0.0,180.0)
         BONE_CORRECTION = e.toMatrix()
-    elif maxval == -BONE_AUTO_XYZ[2]:
+    elif maxval == -BONE_AUTO_XYZ_INT[2]:
         BONE_REALIGN_MODE = "-Z"
-        e = Euler(90.0,0.0,0.0)
+        e = Euler(-90.0,0.0,0.0)
         BONE_CORRECTION = e.toMatrix()
     else:
-        BONE_REALIGN_MODE = "None"
-    #print BONE_AUTO_XYZ
-    #print maxval
+        raise NIFImportError("Bone realign mode not detected? This is a bug.")
     #print "Bone realign mode: %s" % (BONE_REALIGN_MODE)
 
 
