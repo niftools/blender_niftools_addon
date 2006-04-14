@@ -1685,7 +1685,9 @@ def export_bones(arm, parent_block):
         else:
             # no children: export dummy NiNode to preserve tail position
             if DEBUG: print "Bone %s has no children: adding dummy child for tail."%bone.name
-            tail = Blender.Mathutils.Vector(bone.tail['BONESPACE'])
+            mat = get_bone_restmatrix(bone, 'ARMATURESPACE')
+            mat.invert()
+            tail = bone.tail['ARMATURESPACE'] * mat.rotationPart() + mat.translationPart()
             dummy = CreateBlock("NiNode")
             dummy["Rotation"] = Matrix33(1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0)
             dummy["Velocity"]    = Float3(0.0,0.0,0.0)
@@ -1932,7 +1934,6 @@ def get_bone_restmatrix(bone, space, extra = True):
         return corrmat * Blender.Mathutils.Matrix(bone.matrix['ARMATURESPACE'])
     elif (space == 'BONESPACE'):
         if bone.parent:
-            #parinv = Blender.Mathutils.Matrix(bone.parent.matrix['ARMATURESPACE'])
             parinv = get_bone_restmatrix(bone.parent,'ARMATURESPACE')
             parinv.invert()
             return (corrmat * bone.matrix['ARMATURESPACE']) * parinv
