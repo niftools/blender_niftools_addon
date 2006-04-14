@@ -156,9 +156,12 @@ BONE_LIST = {}
 
 # Bone alignment method, valid values are
 # "None": no alignment is done, the bone is only defined by head and tail
-# "X":  the bone is aligned along the X axis
-# "Y":  the bone is aligned along the Y axis
-# "Z":  the bone is aligned along the Z axis
+# "+X":  the bone is aligned along the positive side of the X axis
+# "+Y":  the bone is aligned along the positive side of the Y axis
+# "+Z":  the bone is aligned along the positive side of the Z axis
+# "-X":  the bone is aligned along the negative side of the X axis
+# "-Y":  the bone is aligned along the negative side of the  Y axis
+# "-Z":  the bone is aligned along the negative side of the  Z axis
 # "Auto": attempts to auto detect the bone alignment
 BONE_REALIGN_MODE = "Auto"
 # Used to automatically detecty alignment
@@ -1387,19 +1390,35 @@ def build_auto_realign_data(block):
 # Sets the autodetected realign mode according to the stored data
 def set_auto_realign_mode():
     global BONE_AUTO_XYZ, BONE_REALIGN_MODE, BONE_CORRECTION
-    maxval = max(BONE_AUTO_XYZ)
+    maxval = max([abs(val) for val in BONE_AUTO_XYZ])
     if maxval == BONE_AUTO_XYZ[0]:
-        BONE_REALIGN_MODE = "X"
+        BONE_REALIGN_MODE = "+X"
         e = Euler(0.0,0.0,-90.0)
         BONE_CORRECTION = e.toMatrix()
     elif maxval == BONE_AUTO_XYZ[1]:
-        BONE_REALIGN_MODE = "Y"
+        BONE_REALIGN_MODE = "+Y"
     elif maxval == BONE_AUTO_XYZ[2]:
+        BONE_REALIGN_MODE = "+Z"
+        e = Euler(-90.0,0.0,0.0)
         BONE_REALIGN_MODE = "Z"
         e = Euler(-90.0,0.0,0.0)
         BONE_CORRECTION = e.toMatrix()
+    if maxval == -BONE_AUTO_XYZ[0]:
+        BONE_REALIGN_MODE = "-X"
+        e = Euler(0.0,0.0,90.0)
+        BONE_CORRECTION = e.toMatrix()
+    elif maxval == -BONE_AUTO_XYZ[1]:
+        BONE_REALIGN_MODE = "-Y"
+        e = Euler(0.0,0.0,180.0)
+        BONE_CORRECTION = e.toMatrix()
+    elif maxval == -BONE_AUTO_XYZ[2]:
+        BONE_REALIGN_MODE = "-Z"
+        e = Euler(90.0,0.0,0.0)
+        BONE_CORRECTION = e.toMatrix()
     else:
         BONE_REALIGN_MODE = "None"
+    #print BONE_AUTO_XYZ
+    #print maxval
     #print "Bone realign mode: %s" % (BONE_REALIGN_MODE)
 
 
