@@ -1400,8 +1400,6 @@ def set_auto_realign_mode():
     elif maxval == BONE_AUTO_XYZ[2]:
         BONE_REALIGN_MODE = "+Z"
         e = Euler(-90.0,0.0,0.0)
-        BONE_REALIGN_MODE = "Z"
-        e = Euler(-90.0,0.0,0.0)
         BONE_CORRECTION = e.toMatrix()
     if maxval == -BONE_AUTO_XYZ[0]:
         BONE_REALIGN_MODE = "-X"
