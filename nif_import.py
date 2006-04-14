@@ -815,19 +815,21 @@ def fb_texture( niSourceTexture ):
             # we try to load alternative texture
             base=tex[:-4]
             for ext in ('.PNG','.png','.TGA','.tga','.BMP','.bmp','.JPG','.jpg'):
-                tex = base+ext
-                if Blender.sys.exists(tex) == 1:
+                alt_tex = base+ext
+                if Blender.sys.exists(alt_tex) == 1:
                     b_image = None
                     try:
-                        b_image = Blender.Image.Load(tex)
+                        b_image = Blender.Image.Load(alt_tex)
                         dummy = b_image.size
-                        msg( "Found alternate %s" % tex, 3 )
+                        msg( "Found alternate %s" % alt_tex, 3 )
                         del dummy
                         break
                     except:
                         pass
         if b_image == None:
             print "Texture %s not found and no alternate available" % niTexSource.fileName
+            b_image = Blender.Image.New(tex, 1, 1, 24) # create a stub
+            b_image.filename = tex
     else:
         # the texture image is packed inside the nif -> extract it
         niPixelData = niSourceTexture["Texture Source"].asLink()
