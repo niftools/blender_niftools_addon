@@ -1512,8 +1512,9 @@ def export_trishapes(ob, space, parent_block):
                             break
                 else:
                     raise NIFExportError("Armature '%s' not found."%armaturename)
-                # add vertex weights
-                iskindata.AddBone(arm_block, vert_weights)
+                # add vertex weights, if there are any
+                if vert_weights:
+                    iskindata.AddBone(arm_block, vert_weights)
 
             # clean up
             del vert_weights
