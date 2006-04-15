@@ -1492,8 +1492,9 @@ def export_trishapes(ob, space, parent_block):
                         for vert_index in vertmap[v[0]]:
                             vert_weights[vert_index] = v[1] / vert_norm[v[0]]
                             vert_added[vert_index] = True
-                
-                iskindata.AddBone(bone_block, vert_weights)
+                # add bone as influence, but only if there were actually any vertices influenced by the bone
+                if vert_weights:
+                    iskindata.AddBone(bone_block, vert_weights)
 
             # each vertex must have been assigned to at least one vertex group
             # or the model doesn't display correctly in the TESCS
