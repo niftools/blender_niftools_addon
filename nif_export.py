@@ -15,7 +15,7 @@ Tooltip: 'Export selected meshes to NIF File Format (*.nif & *.kf)'
 
 __author__ = "The NifTools team, http://niftools.sourceforge.net/"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
-__version__ = "1.5.1"
+__version__ = "1.5.2"
 __bpydoc__ = """\
 This script exports selected meshes, along with parents, children, and
 armatures, to a *.nif file. If animation is present,  x*.nif and a x*.kf
@@ -44,6 +44,10 @@ without parent inverse (CTRL-SHIFT-P). Workaround: don't animate meshes
 directly; instead, parent meshes to bones and animate the bones.<br>
 
 Config options (Scripts->System->Scripts Config Editor->Export):<br>
+    apply scale: Enable to apply scale on all transformation matrices. This
+will resolve an issue with skinned Blender files resulting from older versions
+of the NIF import script, and it will also solve an issue with the Morrowind
+TESCS selection boxes.
     force dds: Force textures to be exported with a .DDS extension? Usually,
 you can leave this disabled if you don't use DDS textures.<br>
     strip texpath: Strip texture path in NIF file? For Morrowind, you should
@@ -57,7 +61,7 @@ putting 4.2.2.0, 10.0.1.0, 10.1.0.0, 10.2.0.0, or 20.0.0.4 here)<br>
     export dir: default directory to open when script starts<br>
 """
 
-# nif_export.py version 1.5.1
+# nif_export.py version 1.5.2
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
 #
@@ -150,6 +154,7 @@ NIF_VERSION_DICT['20.0.0.4'] = 0x14000004
 # configuration default values
 EPSILON = 0.005 # used for checking equality with floats, NOT STORED IN CONFIG
 SCALE_CORRECTION = 10.0
+APPLY_SCALE = True
 FORCE_DDS = False
 STRIP_TEXPATH = False
 EXPORT_DIR = ''
@@ -159,6 +164,7 @@ NIF_VERSION = 0x04000002
 # tooltips
 tooltips = {
     'SCALE_CORRECTION': "How many NIF units is one Blender unit?",
+    'APPLY_SCALE': "Apply scale? Enable to work around TESCS selection box issues.",
     'FORCE_DDS': "Force textures to be exported with a .DDS extension? Usually, you can leave this disabled.",
     'STRIP_TEXPATH': "Strip texture path in NIF file. You should leave this disabled, especially when this model's textures are stored in a subdirectory of the Data Files\Textures folder.",
     'EXPORT_DIR': "Default export directory.",
@@ -181,6 +187,7 @@ def update_registry():
     # populate a dict with current config values:
     d = {}
     d['SCALE_CORRECTION'] = SCALE_CORRECTION
+    d['APPLY_SCALE'] = APPLY_SCALE
     d['FORCE_DDS'] = FORCE_DDS
     d['STRIP_TEXPATH'] = STRIP_TEXPATH
     d['EXPORT_DIR'] = EXPORT_DIR
@@ -193,13 +200,14 @@ def update_registry():
 
 # Now we check if our key is available in the Registry or file system:
 def read_registry():
-    global SCALE_CORRECTION, FORCE_DDS, STRIP_TEXPATH, EXPORT_DIR, NIF_VERSION_STR, NIF_VERSION
+    global SCALE_CORRECTION, APPLY_SCALE, FORCE_DDS, STRIP_TEXPATH, EXPORT_DIR, NIF_VERSION_STR, NIF_VERSION
     
     regdict = Blender.Registry.GetKey('nif_export', True)
     # If this key already exists, update config variables with its values:
     if regdict:
         try:
             SCALE_CORRECTION = regdict['SCALE_CORRECTION']
+            APPLY_SCALE = regdict['APPLY_SCALE']
             FORCE_DDS = regdict['FORCE_DDS']
             STRIP_TEXPATH = regdict['STRIP_TEXPATH']
             EXPORT_DIR = regdict['EXPORT_DIR']
@@ -251,7 +259,7 @@ def rebuild_bone_extra_data():
     global BONES_EXTRA_MATRIX_INV
     try:
         bonetxt = Blender.Text.Get('BoneExMat')
-    except: 
+    except:
         return
     # Blender bone names are unique so we can use them as keys.
     # TODO: restore the node names as well
@@ -386,6 +394,10 @@ and turn off envelopes."""%ob.getName()
 
         # scale the NIF model
         scale_tree(root_block, SCALE_CORRECTION)
+
+        # apply scale (fixes issues with TESCS selection box and old imports)
+        if APPLY_SCALE:
+            apply_scale_tree(root_block)
 
         # write the file:
         #----------------
@@ -1649,7 +1661,11 @@ def export_bones(arm, parent_block):
         # bone rotations are stored in the IPO relative to the rest position
         # so we must take the rest position into account
         bonerestmat = get_bone_restmatrix(bone, 'BONESPACE', extra = False) # we need the original one, without extra transforms
-        bonexmat_inv = BONES_EXTRA_MATRIX_INV[bone.name]
+        try:
+            bonexmat_inv = BONES_EXTRA_MATRIX_INV[bone.name]
+        except KeyError:
+            bonexmat_inv = Blender.Mathutils.Matrix()
+            bonexmat_inv.identity()
         if bones_ipo.has_key(bone.name):
             export_keyframe(bones_ipo[bone.name], 'localspace', node, bind_mat = bonerestmat, extra_mat_inv = bonexmat_inv)
 
@@ -2004,7 +2020,7 @@ def create_block(blocktype):
 
 
 # 
-# Scale NIF file.
+# Scale NIF file data.
 # 
 def scale_tree(block, scale):
     inode = QueryNode(block)
@@ -2068,6 +2084,61 @@ def scale_tree(block, scale):
                 vert.y *= scale
                 vert.z *= scale
             ishapedata.SetVertices(vertlist)
+
+
+
+# reset scale on all NiNodes in the tree to 1.0
+def apply_scale_tree(block):
+    inode = QueryNode(block)
+    if inode: # make sure it is a node
+        scale = block["Scale"].asFloat()
+        if abs(scale - 1.0) > EPSILON:
+            # NiNode local transform scale.
+            block["Scale"] = 1.0
+
+            # NiNode bind position transform scale
+            scale_worldbindpos(block, 1.0 / scale)
+        
+            # apply the scale on the children
+            for child in block["Children"].asLinkList():
+                scale_tree(child, scale)
+
+    # reset scale on the children
+    if not block["Children"].is_null(): # block has children
+        for child in block["Children"].asLinkList():
+            apply_scale_tree(child)
+
+
+
+# This function changes the bind position scale of a single NiNode.
+# Used as a helper function for apply_scale.
+# Should be called right after you change the "Scale" attribute
+# of a NiNode to fix the bind position. We need to do this recursively
+# because the bind position is stored in world coordinates.
+def scale_worldbindpos(block, scale, trans = False):
+    inode = QueryNode(block)
+    if inode: # make sure it is a node
+        # NiNode bind position transform scale
+        mat = inode.GetWorldBindPos()
+        mat[0][0] *= scale
+        mat[0][1] *= scale
+        mat[0][2] *= scale
+        mat[1][0] *= scale
+        mat[1][1] *= scale
+        mat[1][2] *= scale
+        mat[2][0] *= scale
+        mat[2][1] *= scale
+        mat[2][2] *= scale
+        if trans:
+            mat[3][0] *= scale
+            mat[3][1] *= scale
+            mat[3][2] *= scale
+        inode.SetWorldBindPos(mat)
+        
+        # do the child nodes as well
+        if not block["Children"].is_null(): # block has children
+            for child in block["Children"].asLinkList():
+                scale_worldbindpos(child, scale, trans = True) # also scale translation
 
 
 

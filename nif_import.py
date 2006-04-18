@@ -15,7 +15,7 @@ Tooltip: 'Import NIF File Format (.nif & .kf)'
 
 __author__ = "The NifTools team, http://niftools.sourceforge.net/"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
-__version__ = "1.5.1"
+__version__ = "1.5.2"
 __bpydoc__ = """\
 This script imports Netimmerse and Gamebryo .NIF files to Blender.
 
@@ -40,12 +40,9 @@ Config options (Scripts->System->Scripts Config Editor->Import):<br>
     import dir: Default import directory.<br>
     seams import: Enable to avoid cracks in UV seams. Disable if importing
 large NIF files takes too long.<br>
-    realign bones: Disable to preserve the bone matrices (usually, the result looks
-very ugly, but you may want to do this to edit animated NIF's without having
-to change the animation .kf files).<br>
 """
 
-# nif_import.py version 1.5.1
+# nif_import.py version 1.5.2
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -184,14 +181,12 @@ K_D2R = 180.0/3.14159265358979 # degrees to radians conversion constant
 TEXTURES_DIR = 'C:\\Program Files\\Bethesda\\Morrowind\\Data Files\\Textures' # Morrowind: this will work on a standard installation
 IMPORT_DIR = ''
 SEAMS_IMPORT = True
-REALIGN_BONES = True
 
 # tooltips
 tooltips = {
     'TEXTURES_DIR': "Texture directory.",
     'IMPORT_DIR': "Default import directory.",
     'SEAMS_IMPORT': "Import seams? Enable to avoid cracks in UV seams. Disable if importing large NIF files takes too long.",
-    'REALIGN_BONES': "Realign bones? Disable to preserve bone matrices."
 }
 
 # bounds
@@ -205,7 +200,6 @@ def update_registry():
     d['TEXTURES_DIR'] = TEXTURES_DIR
     d['IMPORT_DIR'] = IMPORT_DIR
     d['SEAMS_IMPORT'] = SEAMS_IMPORT
-    d['REALIGN_BONES'] = REALIGN_BONES
     d['limits'] = limits
     d['tooltips'] = tooltips
     # store the key
@@ -214,7 +208,7 @@ def update_registry():
 
 # Now we check if our key is available in the Registry or file system:
 def read_registry():
-    global TEXTURES_DIR, IMPORT_DIR, SEAMS_IMPORT, REALIGN_BONES
+    global TEXTURES_DIR, IMPORT_DIR, SEAMS_IMPORT
     regdict = Blender.Registry.GetKey('nif_import', True)
     # If this key already exists, update config variables with its values:
     if regdict:
@@ -222,7 +216,6 @@ def read_registry():
             TEXTURES_DIR = regdict['TEXTURES_DIR'] 
             IMPORT_DIR = regdict['IMPORT_DIR']
             SEAMS_IMPORT = regdict['SEAMS_IMPORT']
-            REALIGN_BONES = regdict['REALIGN_BONES']
             tmp_limits = regdict['limits']     # just checking if it's there
             tmp_tooltips = regdict['tooltips'] # just checking if it's there
         # if data was corrupted (or a new version of the script changed
