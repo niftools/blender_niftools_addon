@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <title>The Blender NIF Scripts v1.5.1</title>
+  <title>The Blender NIF Scripts v1.5.2</title>
   <meta http-equiv="Content-Type"
  content="text/html; charset=ISO-8859-1" />
   <style type="text/css">
@@ -19,7 +19,7 @@ a:hover.nav { color: #FF0000; background: transparent; }
   </style>
 </head>
 <body>
-<h1>The Blender NIF Scripts v1.5.1</h1>
+<h1>The Blender NIF Scripts v1.5.2</h1>
 <h2>Contributors</h2>
 <p>(in random order)</p>
 <ul>
@@ -36,7 +36,7 @@ NeOmega, Andysaurus, tekener, CuteUnit, periplaneta, Pekka, and
 many, many others... (drop us a note if we forgot your name here)</li>
   <li>Mannon, who started all this!</li>
   <li>Taharez, for helping with the generated Python NIF
-library,&nbsp;NIF
+library, NIF
 specs, helping out with the file format, and some debugging</li>
   <li>Brick, for NIF specs </li>
   <li>y67_a, for pointing out the fact that the script forgot
@@ -68,18 +68,20 @@ included with the DAOC Mappergui application, available at <a
 <h2>Release Notes</h2>
 <h3>Important Remarks</h3>
 <ul>
-  <li>To change the importer and exporter settings, go
-to the scripts window in Blender, and select
-Scripts-&gt;System-&gt;Scripts Config
-Editor-&gt;Import/Export. <em>Note that the scale correction
-in the
-export config is also used by the importer.</em>
-Here are some <a href="http://niftools.sourceforge.net/forum/viewtopic.php?t=150">screenshots
-to find the right menu</a>.</li>
   <li>Your old nif_import and nif_export settings are deleted by
 the windows installer. This avoids a number of very annoying problems
 with invalid script config files: in some cases, you wouldn't be able
 to edit the configuration anymore.</li>
+  <li>To change the importer and exporter settings, go
+to the scripts window in Blender, and select
+Scripts-&gt;System-&gt;Scripts Config
+Editor-&gt;Import/Export. Note that the scale correction
+in the
+export config is also used by the importer. Also, <strong>you'll need to
+run the import &amp; export script at least once before the options show up.</strong>
+This is a limitation of the native Blender config system.
+Here are some <a href="http://niftools.sourceforge.net/forum/viewtopic.php?t=150">screenshots
+to find the right menu</a>.</li>
   <li><strong>Make sure to check below for importer
 &amp; exporter
 known issues and workarounds.</strong> New ones come up on every
@@ -87,10 +89,14 @@ release.</li>
 </ul>
 <h3>Highlights of this Release</h3>
 <ul>
-  <li>This is a bugfix release, which fixes an issue with exporting 20.0.0.4 NIF files
-(used by Oblivion and Civ IV).</li>
-  <li>Bone matrices are now restored when re-exported. In practice this means that you
-won't need to cast NifSkope's Bip 01 spell anymore.</li>
+  <li>This is a bugfix release, which fixes a scaling issue
+when exporting files that were imported with the 1.5 (or older) scripts.</li>
+  <li>Even though bone matrices are restored when re-exported, you'll still
+need to cast NifSkope's Bip 01 spell on skinned models, or if that doesn't work (for instance,
+for Morrowind's dresses), it should also be sufficient to apply transformation on the
+body NiNode (the NiNode in between the Bip01 NiNode and the NiTriShape) in NifSkope.
+The latter will only work for files that were imported using the 1.5.1 or 1.5.2 scripts.</li>
+  <li>No full Python installation required anymore.</li>
 </ul>
 <h2>Support</h2>
 <ul>
@@ -106,25 +112,6 @@ must have&nbsp;<a href="http://www.blender.org/">Blender
 higher</strong>; the scripts
 won't run on older versions
 of Blender.</li>
-  <li><strong>The
-scripts need a full <a href="http://www.python.org/">Python
-2.4</a>
-installation</strong>.
-The
-version of Python installed must be compatible with Blender, or
-the scripts just won't run.&nbsp;At the time of
-writing&nbsp;the
-latest&nbsp;stable version of Blender is Blender 2.41, and it was
-compiled with
-bindings for Python 2.4.x. You won't need to uninstall Python 2.3 in
-order to get the script running, but you need to install Python 2.4 as
-well (you can get it from http://www.python.org/). Restart Blender and
-everything should work fine. If
-you still have problems, check out this LOOOONG thread on the elysiun
-board: <a href="http://www.elysiun.com/forum/viewtopic.php?t=7723">http://www.elysiun.com/forum/viewtopic.php?t=7723</a>.
-The latest
-pages will be the ones you will find more useful, as the thread started
-several Blender versions back.</li>
 </ul>
 <h3>Manual Install</h3>
 <ul>
@@ -144,13 +131,15 @@ the export scripts "nif_import.py" and
 Under Windows this is by default C:\Program Files\Blender
 Foundation\Blender\.blender\scripts.
 Copy
-"niflib.py" into your Python 2.4 Lib folder, delete niflib.pyc from
-that same folder if it exists, and copy "_niflib.dll" into your Python
-2.4 DLLs folder. Restart Blender, and the options to import and export
+"niflib.py" and "_niflib.dll" into your Blender modules folder (scripts\bpymodules),
+and delete niflib.pyc from
+that same folder if it exists. Restart Blender, and the options to import and export
 NIF files
 will appear in the File-Import and File-Export menu's. <em>Make
 sure you
-have no other niflib.py or _niflib.dll files in other folders.</em></li>
+have no niflib.py or _niflib.dll or niflib.pyc files in any other folder!</em>
+Especially, you should check the Blender scripts folder, and your Python folders
+if you have Python installed.</li>
     </ul>
   </li>
 </ul>
@@ -178,7 +167,9 @@ Converter 2.1</a>)</li>
 Basically, right now, the only thing you can do is export 20.0.0.4 models.
 These exported models will however lack physics. Most of the NIF files
 in Oblivion are of version 20.0.0.5 which aren't supported at all by Niflib,
-and therefore also not by the scripts.
+and therefore also not by the scripts. The recommended method for creating
+new meshes in Oblivion is via NifSkope and the .obj format. Check the
+<a href="http://www.elderscrolls.com/forums/">TES forums</a> as well!</li>
   <li>If you wish to use the Oblivion textures in your models, you can unpack
 the BSA files using <a href="http://www34.brinkster.com/ghostwheel/">Ghostwheel's TES4 BSA unpacker</a>.</li>
 </ul>

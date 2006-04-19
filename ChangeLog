@@ -63,3 +63,13 @@ Version 1.5.1 (Apr 13, 2006)
 * Import: animated nodes that aren't bones have their animation imported too
 * Import/Export: scaling fix
 * Import: initial attempt to use the original NIF bone matrices if auto-align is turned off
+
+Version 1.5.2 (Apr 19, 2006)
+* Export: new option APPLY_SCALE (on by default) which resolves TESCS selection box issue and a 1.5 incompatibility problem
+* Import/Export: full Python installation no longer needed
+* Export: keyframe data realigned as well (should allow us, in theory, to re-export base animation files)
+* Export: transform fix on dummy tail NiNodes
+* Import: if texture not found, a stub is created
+* Export: bone optimization fix
+* Import: realignment is now always automatic
+* Import/Export: correction on 1.5.1 ChangeLog, you'll still need the Bip01 spell, but we're getting closer
