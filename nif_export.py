@@ -456,9 +456,16 @@ def export_node(ob, space, parent_block, node_name):
         assert(parent_block == None) # debug
         node = create_block("NiNode")
     else:
-        assert((ob.getType() == 'Empty') or (ob.getType() == 'Mesh') or (ob.getType() == 'Armature')) # debug
+        ob_type = ob.getType()
+        assert((ob_type == 'Empty') or (ob_type == 'Mesh') or (ob_type == 'Armature')) # debug
         assert(parent_block) # debug
         ipo = ob.getIpo() # get animation data
+        if ob_type == 'Mesh':
+            # -> mesh data. No children other than what is handled in the export_trishapes function,
+            # so there's no need to go any further
+            export_trishapes(ob, 'localspace', parent_block)
+            return None
+            
         if (node_name == 'RootCollisionNode'):
             # -> root collision node
             node = create_block("RootCollisionNode")
@@ -506,8 +513,9 @@ def export_node(ob, space, parent_block, node_name):
             export_keyframe(ipo, space, node)
     
         # if it is a mesh, export the mesh as trishape children of this ninode
-        if (ob.getType() == 'Mesh'):
-            export_trishapes(ob, 'none', node) # the transformation of the mesh is already in the NiNode
+        #if (ob.getType() == 'Mesh'):
+        #    export_trishapes(ob, 'none', node) # the transformation of the mesh is already in the NiNode
+            
 
         # if it is an armature, export the bones as ninode children of this ninode
         elif (ob.getType() == 'Armature'):
