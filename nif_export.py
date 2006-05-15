@@ -460,19 +460,26 @@ def export_node(ob, space, parent_block, node_name):
         assert((ob_type == 'Empty') or (ob_type == 'Mesh') or (ob_type == 'Armature')) # debug
         assert(parent_block) # debug
         ipo = ob.getIpo() # get animation data
+        
         if ob_type == 'Mesh':
-            # -> mesh data. No children other than what is handled in the export_trishapes function,
-            # so there's no need to go any further
-            export_trishapes(ob, 'localspace', parent_block)
-            return None
-            
-        if (node_name == 'RootCollisionNode'):
-            # -> root collision node
-            node = create_block("RootCollisionNode")
+            # -> mesh data.
+            # If this has children or animations it gets wrapped in a purpose made NiNode.
+            # Maye it should be extended to multimaterial meshes?
+            ob_children = [child for child in Blender.Object.Get() if child.parent == ob]
+            if ob.getIpo() or len(ob_children) > 0:
+                node = create_block('NiNode')
+                export_trishapes(ob, 'localspace', node)
+            else:
+                export_trishapes(ob, 'localspace', parent_block)
+                return None
         else:
-            # -> regular node (static or animated object)
-            node = create_block("NiNode")
-    
+            if (node_name == 'RootCollisionNode'):
+                # -> root collision node
+                node = create_block("RootCollisionNode")
+            else:
+                # -> regular node (static or animated object)
+                node = create_block("NiNode")
+                
     # make it child of its parent in the nif, if it has one
     if (parent_block):
         parent_block["Children"].AddLink(node)
@@ -947,7 +954,6 @@ def export_flipcontroller( fliptxt, texture, target, target_tex ):
     if count < 2:
         raise NIFExportError("Error in Texture Flip buffer '%s': Must define at least two textures"%fliptxt.getName())
     flip["Delta"] = (flip["Stop Time"].asFloat() - flip["Start Time"].asFloat()) / count
-
 
 
 #
@@ -1794,32 +1800,30 @@ def export_textureeffect(ob, parent_block):
 # 
 def export_children(ob, parent_block):
     # loop over all ob's children
-    for ob_child in Blender.Object.Get():
-        if (ob_child.getParent() == ob):
-            # we found a child! try to add it to ob's children
-            # is it a texture effect node?
-            if ((ob_child.getType() == 'Empty') and (ob_child.getName()[:13] == 'TextureEffect')):
-                export_textureeffect(ob_child, parent_block)
-            # is it a regular node?
-            elif (ob_child.getType() == 'Mesh') or (ob_child.getType() == 'Empty') or (ob_child.getType() == 'Armature'):
-                if (ob.getType() != 'Armature'): # not parented to an armature...
+    for ob_child in [cld  for cld in Blender.Object.Get() if cld.getParent() == ob]:
+        # is it a texture effect node?
+        if ((ob_child.getType() == 'Empty') and (ob_child.getName()[:13] == 'TextureEffect')):
+            export_textureeffect(ob_child, parent_block)
+        # is it a regular node?
+        elif (ob_child.getType() == 'Mesh') or (ob_child.getType() == 'Empty') or (ob_child.getType() == 'Armature'):
+            if (ob.getType() != 'Armature'): # not parented to an armature...
+                export_node(ob_child, 'localspace', parent_block, ob_child.getName())
+            else: # oh, this object is parented to an armature
+                # we should check whether it is really parented to the armature using vertex weights
+                # or whether it is parented to some bone of the armature
+                parent_bone_name = ob_child.getParentBoneName()
+                if parent_bone_name == None:
                     export_node(ob_child, 'localspace', parent_block, ob_child.getName())
-                else: # oh, this object is parented to an armature
-                    # we should check whether it is really parented to the armature using vertex weights
-                    # or whether it is parented to some bone of the armature
-                    parent_bone_name = ob_child.getParentBoneName()
-                    if parent_bone_name == None:
-                        export_node(ob_child, 'localspace', parent_block, ob_child.getName())
+                else:
+                    # we should parent the object to the bone instead of to the armature
+                    # so let's find that bone!
+                    for block in NIF_BLOCKS:
+                        if block.GetBlockType() == "NiNode":
+                            if block["Name"].asString() == parent_bone_name:
+                                export_node(ob_child, 'localspace', block, ob_child.getName())
+                                break
                     else:
-                        # we should parent the object to the bone instead of to the armature
-                        # so let's find that bone!
-                        for block in NIF_BLOCKS:
-                            if block.GetBlockType() == "NiNode":
-                                if block["Name"].asString() == parent_bone_name:
-                                    export_node(ob_child, 'localspace', block, ob_child.getName())
-                                    break
-                        else:
-                            assert(False) # BUG!
+                        assert(False) # BUG!
 
 
 
