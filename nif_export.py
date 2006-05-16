@@ -459,14 +459,14 @@ def export_node(ob, space, parent_block, node_name):
         ob_type = ob.getType()
         assert((ob_type == 'Empty') or (ob_type == 'Mesh') or (ob_type == 'Armature')) # debug
         assert(parent_block) # debug
-        ipo = ob.getIpo() # get animation data
+        ob_ipo = ob.getIpo() # get animation data
+        ob_children = [child for child in Blender.Object.Get() if child.parent == ob]
         
         if ob_type == 'Mesh':
             # -> mesh data.
-            # If this has children or animations it gets wrapped in a purpose made NiNode.
-            # Maye it should be extended to multimaterial meshes?
-            ob_children = [child for child in Blender.Object.Get() if child.parent == ob]
-            if ob.getIpo() or len(ob_children) > 0:
+            # If this has children or animations or more than one material
+            # it gets wrapped in a purpose made NiNode.
+            if ob_ipo or len(ob_children) > 0 or len(ob.data.materials) > 1:
                 node = create_block('NiNode')
                 export_trishapes(ob, 'localspace', node)
             else:
@@ -516,8 +516,8 @@ def export_node(ob, space, parent_block, node_name):
 
     if (ob != None):
         # export animation
-        if (ipo != None):
-            export_keyframe(ipo, space, node)
+        if (ob_ipo != None):
+            export_keyframe(ob_ipo, space, node)
     
         # if it is a mesh, export the mesh as trishape children of this ninode
         #if (ob.getType() == 'Mesh'):
