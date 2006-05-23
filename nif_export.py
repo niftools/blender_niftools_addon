@@ -466,7 +466,10 @@ def export_node(ob, space, parent_block, node_name):
             # -> mesh data.
             # If this has children or animations or more than one material
             # it gets wrapped in a purpose made NiNode.
-            if ob_ipo or len(ob_children) > 0 or len(ob.data.materials) > 1:
+            has_ipo = ob_ipo and len(ob_ipo.getCurves()) > 0
+            has_children = len(ob_children) > 0
+            is_multimaterial = len(set([f.mat for f in ob.data.faces])) > 1
+            if has_ipo or has_children or is_multimaterial:
                 node = create_block('NiNode')
                 export_trishapes(ob, 'localspace', node)
             else:
