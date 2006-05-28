@@ -160,6 +160,7 @@ STRIP_TEXPATH = False
 EXPORT_DIR = ''
 NIF_VERSION_STR = '4.0.0.2'
 NIF_VERSION = 0x04000002
+ADD_BONE_NUB = False
 
 # tooltips
 tooltips = {
@@ -1708,26 +1709,27 @@ def export_bones(arm, parent_block):
                 if child.parent.name == bone.name: # bone.children returns also grandchildren etc... we only want immediate children of course
                     bones_node[bone.name]["Children"].AddLink(bones_node[child.name])
         else:
-            # no children: export dummy NiNode to preserve tail position
-            if DEBUG: print "Bone %s has no children: adding dummy child for tail."%bone.name
-            mat = get_bone_restmatrix(bone, 'ARMATURESPACE')
-            mat.invert()
-            tail = bone.tail['ARMATURESPACE'] * mat.rotationPart() + mat.translationPart()
-            dummy = CreateBlock("NiNode")
-            dummy["Rotation"] = Matrix33(1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0)
-            dummy["Velocity"]    = Float3(0.0,0.0,0.0)
-            dummy["Scale"]       = 1.0
-            dummy["Translation"] = Float3(tail[0], tail[1], tail[2])
-            bbind_mat = get_bone_restmatrix(bone, 'ARMATURESPACE')
-            tail = Blender.Mathutils.Vector(bone.tail['ARMATURESPACE'])
-            bind_mat = Matrix44(\
-                bbind_mat[0][0], bbind_mat[0][1], bbind_mat[0][2], 0.0,\
-                bbind_mat[1][0], bbind_mat[1][1], bbind_mat[1][2], 0.0,\
-                bbind_mat[2][0], bbind_mat[2][1], bbind_mat[2][2], 0.0,\
-                tail[0], tail[1], tail[2], 1.0)
-            idummy = QueryNode(dummy)
-            idummy.SetWorldBindPos(bind_mat)
-            bones_node[bone.name]["Children"].AddLink(dummy)
+            if ADD_BONE_NUB:
+                # no children: export dummy NiNode to preserve tail position
+                if DEBUG: print "Bone %s has no children: adding dummy child for tail."%bone.name
+                mat = get_bone_restmatrix(bone, 'ARMATURESPACE')
+                mat.invert()
+                tail = bone.tail['ARMATURESPACE'] * mat.rotationPart() + mat.translationPart()
+                dummy = CreateBlock("NiNode")
+                dummy["Rotation"] = Matrix33(1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0)
+                dummy["Velocity"]    = Float3(0.0,0.0,0.0)
+                dummy["Scale"]       = 1.0
+                dummy["Translation"] = Float3(tail[0], tail[1], tail[2])
+                bbind_mat = get_bone_restmatrix(bone, 'ARMATURESPACE')
+                tail = Blender.Mathutils.Vector(bone.tail['ARMATURESPACE'])
+                bind_mat = Matrix44(\
+                    bbind_mat[0][0], bbind_mat[0][1], bbind_mat[0][2], 0.0,\
+                    bbind_mat[1][0], bbind_mat[1][1], bbind_mat[1][2], 0.0,\
+                    bbind_mat[2][0], bbind_mat[2][1], bbind_mat[2][2], 0.0,\
+                    tail[0], tail[1], tail[2], 1.0)
+                idummy = QueryNode(dummy)
+                idummy.SetWorldBindPos(bind_mat)
+                bones_node[bone.name]["Children"].AddLink(dummy)
         # if it is a root bone, link it to the armature
         if not bone.parent:
             parent_block["Children"].AddLink(bones_node[bone.name])
