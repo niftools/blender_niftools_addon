@@ -463,7 +463,10 @@ def export_node(ob, space, parent_block, node_name):
         ob_ipo = ob.getIpo() # get animation data
         ob_children = [child for child in Blender.Object.Get() if child.parent == ob]
         
-        if ob_type == 'Mesh':
+        if (node_name == 'RootCollisionNode'):
+            # -> root collision node (can be mesh or empty)
+            node = create_block("RootCollisionNode")
+        elif ob_type == 'Mesh':
             # -> mesh data.
             # If this has children or animations or more than one material
             # it gets wrapped in a purpose made NiNode.
@@ -471,18 +474,16 @@ def export_node(ob, space, parent_block, node_name):
             has_children = len(ob_children) > 0
             is_multimaterial = len(set([f.mat for f in ob.data.faces])) > 1
             if has_ipo or has_children or is_multimaterial:
+                # -> mesh ninode for the hierarchy to work out
                 node = create_block('NiNode')
-                export_trishapes(ob, 'localspace', node)
             else:
-                export_trishapes(ob, 'localspace', parent_block)
+                # don't create intermediate ninode for this guy
+                export_trishapes(ob, space, parent_block)
+                # we didn't create a ninode, return nothing
                 return None
         else:
-            if (node_name == 'RootCollisionNode'):
-                # -> root collision node
-                node = create_block("RootCollisionNode")
-            else:
-                # -> regular node (static or animated object)
-                node = create_block("NiNode")
+            # -> everything else (empty/armature) is a regular node
+            node = create_block("NiNode")
                 
     # make it child of its parent in the nif, if it has one
     if (parent_block):
@@ -524,10 +525,9 @@ def export_node(ob, space, parent_block, node_name):
             export_keyframe(ob_ipo, space, node)
     
         # if it is a mesh, export the mesh as trishape children of this ninode
-        #if (ob.getType() == 'Mesh'):
-        #    export_trishapes(ob, 'none', node) # the transformation of the mesh is already in the NiNode
+        if (ob.getType() == 'Mesh'):
+            export_trishapes(ob, 'none', node) # the transformation of the mesh is already in the NiNode
             
-
         # if it is an armature, export the bones as ninode children of this ninode
         elif (ob.getType() == 'Armature'):
             export_bones(ob, node)
