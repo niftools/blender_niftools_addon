@@ -108,6 +108,7 @@ from Blender import BGL
 from Blender import Draw
 from Blender.Mathutils import *
 
+
 try:
     from niflib import *
 except:
@@ -119,6 +120,15 @@ If you don't have them: http://niftools.sourceforge.net/
     print err
     Blender.Draw.PupMenu("ERROR%t|NIFLIB not found, check console for details")
     raise
+
+# Attempt to load psyco to speed things up
+#try:
+#	import psyco
+#	psyco.full()
+#	print 'using psyco'
+#except:
+#	#print 'psyco is not present on this system'
+#	pass
 
 # dictionary of texture files, to reuse textures
 TEXTURES = {}
@@ -141,20 +151,6 @@ BONES_EXTRA_MATRIX = {}
 # maps NIF armature name to list of NIF bone name
 BONE_LIST = {}
 
-# Bone alignment method, valid values are
-# "None": no alignment is done, the bone is only defined by head and tail
-# "+X":  the bone is aligned along the positive side of the X axis
-# "+Y":  the bone is aligned along the positive side of the Y axis
-# "+Z":  the bone is aligned along the positive side of the Z axis
-# "-X":  the bone is aligned along the negative side of the X axis
-# "-Y":  the bone is aligned along the negative side of the  Y axis
-# "-Z":  the bone is aligned along the negative side of the  Z axis
-# "Auto": attempts to auto detect the bone alignment
-BONE_REALIGN_MODE = "Auto"
-# Used to automatically detecty alignment
-BONE_AUTO_XYZ = Vector(0.0, 0.0, 0.0)
-# bone correction matrix
-BONE_CORRECTION = Matrix([1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0])
 # correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z
 BONE_CORRECTION_MATRICES = (\
             Matrix([ 0.0,-1.0, 0.0],[ 1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0]),\
@@ -331,9 +327,6 @@ def import_main(root_block):
     # and merge armatures that are bones of others armatures
     mark_armatures_bones(root_block)
     merge_armatures()
-    # tries to detect how the bones are aligned
-    #set_auto_realign_mode()
-    # print "Autodetected alignment method is %s" % (BONE_REALIGN_MODE)
     if VERBOSE and MSG_LEVEL >= 3:
         for arm_name in BONE_LIST.keys():
             print "armature '%s':"%arm_name
@@ -352,7 +345,8 @@ def import_main(root_block):
         b_obj = read_branch(root_block)
     # store bone matrix offsets for re-export
     if len(BONES_EXTRA_MATRIX.keys()) > 0: fb_bonemat()
-    
+    # store original names for re-export
+    if len(NAMES) > 0: fb_fullnames()
     b_scene.update(1) # do a full update to make sure all transformations get applied
     #fit_view()
     #b_scene.getCurrentCamera()
@@ -403,6 +397,12 @@ def read_branch(niBlock):
 # niBlock must have been imported previously as an armature, along
 # with all its bones. This function only imports meshes.
 def read_armature_branch(b_armature, niArmature, niBlock):
+    """
+    Reads the content of the current NIF tree branch to Blender
+    recursively, as meshes parented to a given armature. Note that
+    niBlock must have been imported previously as an armature, along
+    with all its bones. This function only imports meshes.
+    """
     # check if the child is non-null
     if not niBlock.is_null():
         btype = niBlock.GetBlockType()
@@ -521,7 +521,13 @@ def material_hash(matProperty, textProperty, alphaProperty, specProperty):
 #
 # Get unique name for an object, preserving existing names
 #
-def fb_name(niBlock):
+def fb_name(niBlock,max_length=22):
+    """
+    Get unique name for an object, preserving existing names
+    The maximum name length defaults to 22, since this is the
+    maximum for Blender objects, but bone names can reach 32.
+    The task of catching errors is left to the user
+    """
     global NAMES
 
     # find unique name for Blender to use
@@ -530,10 +536,10 @@ def fb_name(niBlock):
     # remove the "Tri " prefix; this will help when exporting the model again
     if niName[:4] == "Tri ":
         niName = niName[4:]
-    name = niName[:19] # Blender has a rather small name buffer
+    name = niName[:max_length-1] # Blender has a rather small name buffer
     try:
         while Blender.Object.Get(name):
-            name = '%s.%02d' % (niName[:15], uniqueInt)
+            name = '%s.%02d' % (niName[:max_length-4], uniqueInt)
             uniqueInt +=1
     except:
         pass
@@ -592,7 +598,7 @@ def decompose_srt(m):
 # Creates and returns a grouping empty
 def fb_empty(niBlock):
     global b_scene
-    b_empty = Blender.Object.New("Empty", fb_name(niBlock))
+    b_empty = Blender.Object.New("Empty", fb_name(niBlock,22))
     b_scene.link(b_empty)
     return b_empty
 
@@ -602,10 +608,10 @@ def fb_empty(niBlock):
 def fb_armature(niBlock):
     global b_scene
     
-    armature_name = fb_name(niBlock)
+    armature_name = fb_name(niBlock,)
     armature_matrix_inverse = fb_global_matrix(niBlock)
     armature_matrix_inverse.invert()
-    b_armature = Blender.Object.New('Armature', fb_name(niBlock))
+    b_armature = Blender.Object.New('Armature', fb_name(niBlock,22))
     b_armatureData = Blender.Armature.Armature()
     b_armatureData.name = armature_name
     b_armatureData.drawAxes = True
@@ -771,7 +777,7 @@ def fb_armature(niBlock):
 def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
     global BONES, BONES_EXTRA_MATRIX, BONE_CORRECTION_MATRICES
     
-    bone_name = fb_name(niBlock)
+    bone_name = fb_name(niBlock, 32)
     niChildren = niBlock["Children"].asLinkList()
     niChildNodes = [child for child in niChildren if child.GetBlockType() == "NiNode"]  
     niChildBones = [child for child in niChildNodes if is_bone(child)]  
@@ -826,9 +832,6 @@ def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
         if alignment_offset < 0.25:
             m_correction = BONE_CORRECTION_MATRICES[idx_correction]
             b_bone.matrix = m_correction * armature_space_matrix.rotationPart()
-        #else:
-        #    print "%s realigned" % bone_name
-        #b_bone.matrix = BONE_CORRECTION * armature_space_matrix.rotationPart()
         # set bone name and store the niBlock for future reference
         b_armatureData.bones[bone_name] = b_bone
         BONES[bone_name] = niBlock
@@ -1069,7 +1072,7 @@ def fb_material(matProperty, textProperty, alphaProperty, specProperty):
 def fb_mesh(niBlock):
     global b_scene
     # Mesh name -> must be unique, so tag it if needed
-    b_name=fb_name(niBlock)
+    b_name=fb_name(niBlock,22)
     # we mostly work directly on Blender's objects (b_meshData)
     # but for some tasks we must use the Python wrapper (b_nmeshData), see further
     b_meshData = Blender.Mesh.New(b_name)
@@ -1370,20 +1373,31 @@ def fb_mesh(niBlock):
 
 # import animation groups
 def fb_textkey(block):
+    """
+    Stores the text keys that define animation start and end in a text buffer,
+    so that they can be re-exported.
+    Since the text buffer is cleared on each import only the last import will be exported
+    correctly
+    """
     # get the number of frames per second
     global b_scene
     context = b_scene.getRenderingContext()
     fps = context.framesPerSec()
 
     # get animation text buffer, and clear it if it already exists
-    animtxt = None
-    for txt in Blender.Text.Get():
-        if txt.getName() == "Anim":
-            txt.clear()
-            animtxt = txt
-            break
-    if not animtxt:
+    try:
+        animtxt = [txt for txt in Blender.Text.Get() if txt.getName() == "Anim"][0]
+        animtxt.clear()
+    except:
         animtxt = Blender.Text.New("Anim")
+    #animtxt = None
+    #for txt in Blender.Text.Get():
+    #    if txt.getName() == "Anim":
+    #        txt.clear()
+    #        animtxt = txt
+    #        break
+    #if not animtxt:
+    #    animtxt = Blender.Text.New("Anim")
 
     # store keys in the animation text buffer
     itextkey = QueryTextKeyExtraData(block)
@@ -1397,16 +1411,25 @@ def fb_textkey(block):
     context.startFrame(1)
     context.endFrame(frame)
     
-# stores bone matrices for re-export
 def fb_bonemat():
+    """
+    Stores correction matrices in a text buffer so that the original alignment can be re-exported.
+    In order for this to work it is necessary to mantain the imported names unaltered
+    Since the text buffer is cleared on each import only the last import will be exported
+    correctly
+    """
+    global BONES_EXTRA_MATRIX
     # get the bone extra matrix text buffer
-    bonetxt = None
-    for txt in Blender.Text.Get():
-        if txt.getName() == "BoneExMat":
-            txt.clear()
-            bonetxt = txt
-            break
-    if not bonetxt:
+    #bonetxt = None
+    #for txt in Blender.Text.Get():
+    #    if txt.getName() == "BoneExMat":
+    #        txt.clear()
+    #        bonetxt = txt
+    #        break
+    try:
+        bonetxt = [txt for txt in Blender.Text.Get() if txt.getName() == "BoneExMat"][0]
+        bonetxt.clear()
+    except:
         bonetxt = Blender.Text.New("BoneExMat")
     for b in BONES_EXTRA_MATRIX.keys():
         ln=''
@@ -1416,9 +1439,28 @@ def fb_bonemat():
         bonetxt.write('%s/%s\n' % (b, ln[1:]))
     
 
-
+def fb_fullnames():
+    """
+    Stores the original, long object names so that they can be re-exported.
+    In order for this to work it is necessary to mantain the imported names unaltered.
+    Since the text buffer is cleared on each import only the last import will be exported
+    correctly
+    """
+    global NAMES
+    # get the names text buffer
+    try:
+        namestxt = [txt for txt in Blender.Text.Get() if txt.getName() == "FullNames"][0]
+        namestxt.clear()
+    except:
+        namestxt = Blender.Text.New("FullNames")
+    for n in NAMES.keys():
+        namestxt.write('%s;%s\n'% (NAMES[n], n))
+    
 # find a controller
 def find_controller(block, controllertype):
+    """
+    Finds a controller
+    """
     ctrl = block["Controller"].asLink()
     while ctrl.is_null() == False:
         if ctrl.GetBlockType() == controllertype:
@@ -1447,48 +1489,6 @@ def find_extra(block, extratype):
     return blk_ref() # return empty block
 
 
-# Builds up the data for auto detection of realignment method
-def build_auto_realign_data(block):
-    global BONE_AUTO_XYZ
-    bone_head = fb_matrix(block).translationPart()
-    BONE_AUTO_XYZ += bone_head
-
-# Sets the autodetected realign mode according to the stored data
-def set_auto_realign_mode():
-    global BONE_AUTO_XYZ, BONE_REALIGN_MODE, BONE_CORRECTION
-    # this resolves rounding errors that prevent align detection
-    BONE_AUTO_XYZ_INT = [int(200*val) for val in BONE_AUTO_XYZ]
-    maxval = max([abs(val) for val in BONE_AUTO_XYZ_INT])
-    #print BONE_AUTO_XYZ_INT
-    #print maxval
-    if maxval == BONE_AUTO_XYZ_INT[0]:
-        BONE_REALIGN_MODE = "+X"
-        e = Euler(0.0,0.0,-90.0)
-        BONE_CORRECTION = e.toMatrix()
-    elif maxval == BONE_AUTO_XYZ_INT[1]:
-        BONE_REALIGN_MODE = "+Y"
-    elif maxval == BONE_AUTO_XYZ_INT[2]:
-        BONE_REALIGN_MODE = "+Z"
-        e = Euler(90.0,0.0,0.0)
-        BONE_CORRECTION = e.toMatrix()
-    elif maxval == -BONE_AUTO_XYZ_INT[0]:
-        BONE_REALIGN_MODE = "-X"
-        e = Euler(0.0,0.0,90.0)
-        BONE_CORRECTION = e.toMatrix()
-    elif maxval == -BONE_AUTO_XYZ_INT[1]:
-        BONE_REALIGN_MODE = "-Y"
-        e = Euler(0.0,0.0,180.0)
-        BONE_CORRECTION = e.toMatrix()
-    elif maxval == -BONE_AUTO_XYZ_INT[2]:
-        BONE_REALIGN_MODE = "-Z"
-        e = Euler(-90.0,0.0,0.0)
-        BONE_CORRECTION = e.toMatrix()
-    else:
-        raise NIFImportError("Bone realign mode not detected? This is a bug.")
-    #print "Bone realign mode: %s" % (BONE_REALIGN_MODE)
-
-
-
 # mark armatures and bones by peeking into NiSkinInstance blocks
 # probably we will eventually have to use this
 # since that the "is skinning influence" flag is not reliable
@@ -1507,7 +1507,6 @@ def mark_armatures_bones(block):
             skelroot_name = skelroot["Name"].asString()
             if not BONE_LIST.has_key(skelroot_name):
                 BONE_LIST[skelroot_name] = []
-                #build_auto_realign_data(skelroot)
                 msg("'%s' is an armature"%skelroot_name,3)
             # now get the skinning data interface to retrieve the list of bones
             skindata = skininst["Data"].asLink()
@@ -1517,7 +1516,6 @@ def mark_armatures_bones(block):
                 bone_name = bone["Name"].asString()
                 if not bone_name in BONE_LIST[skelroot_name]:
                     BONE_LIST[skelroot_name].append(bone_name)
-                    #build_auto_realign_data(bone)
                     msg("'%s' is a bone of armature '%s'"%(bone_name,skelroot_name),3)
                 # now we "attach" the bone to the armature:
                 # we make sure all NiNodes from this bone all the way
@@ -1551,7 +1549,6 @@ def complete_bone_tree(bone, skelroot_name):
             # neither is it marked as a bone: so mark the parent as a bone
             BONE_LIST[skelroot_name].append(boneparent_name)
             # store the coordinates for realignement autodetection 
-            #build_auto_realign_data(boneparent)
             msg("'%s' is a bone of armature '%s'"%(boneparent_name, skelroot_name),3)
         # now the parent is marked as a bone
         # recursion: complete the bone tree,
@@ -1650,40 +1647,74 @@ def set_animation(niBlock, b_obj):
         kfd = kfc["Data"].asLink()
         assert(kfd.GetBlockType() == "NiKeyframeData")
         ikfd = QueryKeyframeData(kfd)
-        rot_keys = ikfd.GetRotateKeys()
-        trans_keys = ikfd.GetTranslateKeys()
-        scale_keys = ikfd.GetScaleKeys()
-        # add the keys
-        msg('Scale keys...', 4)
-        for scale_key in scale_keys:
-            frame = 1+int(scale_key.time * fps) # time 0.0 is frame 1
-            Blender.Set('curframe', frame)
-            size_value = scale_key.data
-            b_obj.SizeX = size_value
-            b_obj.SizeY = size_value
-            b_obj.SizeZ = size_value
-            b_obj.insertIpoKey(Blender.Object.SIZE)
-        msg('Rotation keys...', 4)
-        for rot_key in rot_keys:
-            frame = 1+int(rot_key.time * fps) # time 0.0 is frame 1
-            Blender.Set('curframe', frame)
-            rot = Blender.Mathutils.Quaternion(rot_key.data.w, rot_key.data.x, rot_key.data.y, rot_key.data.z).toEuler()
-            # b_obj.RotX = rot.x * 3.14159265358979 / 180.0
-            # b_obj.RotY = rot.y * 3.14159265358979 / 180.0
-            # b_obj.RotZ = rot.z * 3.14159265358979 / 180.0
-            b_obj.RotX = rot.x * K_R2D
-            b_obj.RotY = rot.y * K_R2D
-            b_obj.RotZ = rot.z * K_R2D
-            b_obj.insertIpoKey(Blender.Object.ROT)
-        msg('Translation keys...', 4)
-        for trans_key in trans_keys:
-            frame = 1+int(trans_key.time * fps) # time 0.0 is frame 1
-            Blender.Set('curframe', frame)
-            b_obj.LocX = trans_key.data.x
-            b_obj.LocY = trans_key.data.y
-            b_obj.LocZ = trans_key.data.z
-            b_obj.insertIpoKey(Blender.Object.LOC)
-        Blender.Set('curframe', 1)
+        if 1: #---------------------------------------------------------------------------------------------
+            rot_keys = ikfd.GetRotateKeys()
+            trans_keys = ikfd.GetTranslateKeys()
+            scale_keys = ikfd.GetScaleKeys()
+            # add the keys
+            msg('Scale keys...', 4)
+            for scale_key in scale_keys:
+                frame = 1+int(scale_key.time * fps) # time 0.0 is frame 1
+                Blender.Set('curframe', frame)
+                size_value = scale_key.data
+                b_obj.SizeX = size_value
+                b_obj.SizeY = size_value
+                b_obj.SizeZ = size_value
+                b_obj.insertIpoKey(Blender.Object.SIZE)
+            msg('Rotation keys...', 4)
+            for rot_key in rot_keys:
+                frame = 1+int(rot_key.time * fps) # time 0.0 is frame 1
+                Blender.Set('curframe', frame)
+                rot = Blender.Mathutils.Quaternion(rot_key.data.w, rot_key.data.x, rot_key.data.y, rot_key.data.z).toEuler()
+                # b_obj.RotX = rot.x * 3.14159265358979 / 180.0
+                # b_obj.RotY = rot.y * 3.14159265358979 / 180.0
+                # b_obj.RotZ = rot.z * 3.14159265358979 / 180.0
+                b_obj.RotX = rot.x * K_R2D
+                b_obj.RotY = rot.y * K_R2D
+                b_obj.RotZ = rot.z * K_R2D
+                b_obj.insertIpoKey(Blender.Object.ROT)
+            msg('Translation keys...', 4)
+            for trans_key in trans_keys:
+                frame = 1+int(trans_key.time * fps) # time 0.0 is frame 1
+                Blender.Set('curframe', frame)
+                b_obj.LocX = trans_key.data.x
+                b_obj.LocY = trans_key.data.y
+                b_obj.LocZ = trans_key.data.z
+                b_obj.insertIpoKey(Blender.Object.LOC)
+            Blender.Set('curframe', 1)
+        else:
+            rot_keys = ikfd.GetRotateKeys()
+            if rot_keys:
+                RotX = b_ipo.addCurve("RotX")
+                RotY = b_ipo.addCurve("RotY")
+                RotZ = b_ipo.addCurve("RotZ")
+                for rot_key in rot_keys:
+                    time = 1.0+(rot_key.time * fps)
+                    rot = Blender.Mathutils.Quaternion(rot_key.data.w, rot_key.data.x, rot_key.data.y, rot_key.data.z).toEuler()
+                    RotX.addBezier((time, rot.x * K_R2D))
+                    RotY.addBezier((time, rot.y * K_R2D))
+                    RotZ.addBezier((time, rot.z * K_R2D))
+            loc_keys = ikfd.GetTranslateKeys()
+            if loc_keys:
+                LocX = b_ipo.addCurve("LocX")
+                LocY = b_ipo.addCurve("LocY")
+                LocZ = b_ipo.addCurve("LocZ")
+                for loc_key in loc_keys:
+                    time = 1.0+(loc_key.time * fps)
+                    LocX.addBezier((time, loc_key.data.x))
+                    LocY.addBezier((time, loc_key.data.y))
+                    LocZ.addBezier((time, loc_key.data.z))
+            size_keys = ikfd.GetScaleKeys()
+            if size_keys:
+                SizeX = b_ipo.addCurve("SizeX")
+                SizeY = b_ipo.addCurve("SizeY")
+                SizeZ = b_ipo.addCurve("SizeZ")
+                for size_key in size_keys:
+                    time = 1.0+(size_key.time * fps)
+                    size = size_key.data
+                    SizeX.addBezier((time, size))
+                    SizeY.addBezier((time, size))
+                    SizeZ.addBezier((time, size))
 
 
 

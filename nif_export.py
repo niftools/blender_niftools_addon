@@ -105,6 +105,8 @@ import Blender, sys
 from Blender import BGL
 from Blender import Draw
 
+
+
 try:
     from niflib import *
 except:
@@ -118,6 +120,14 @@ If you don't have them: http://niftools.sourceforge.net/
     raise
 
 
+# Attempt to load psyco to speed things up
+#try:
+#	import psyco
+#	psyco.full()	
+#	print 'using psyco'
+#except:
+#	#print 'psyco is not present on this system'
+#	pass
 
 #
 # Global variables.
@@ -128,6 +138,7 @@ DEBUG = False # set to True for more output when exporting
 NIF_BLOCKS = [] # keeps track of all exported blocks
 NIF_TEXTURES = {} # keeps track of all exported textures
 NIF_MATERIALS = {} # keeps track of all exported materials
+NAMES = {} # maps Blender names to imported names if present
 
 # dictionary of bones, maps Blender bone name to matrix that maps the
 # NIF bone matrix on the Blender bone matrix
@@ -277,6 +288,31 @@ def rebuild_bone_extra_data():
             BONES_EXTRA_MATRIX_INV[b] = mat # X^{-1}
 
 
+def rebuild_full_name_map():
+    """
+    Recovers the full object names from the text buffer and rebuilds
+    the names dictionary
+    """
+    global NAMES
+    try:
+        namestxt = Blender.Text.Get('FullNames')
+    except:
+        return
+    for ln in namestxt.asLines():
+        if len(ln)>0:
+            name, fullname = ln.split(';')
+            NAMES[name] = fullname
+
+def get_full_name(blender_name):
+    """
+    Returns the original imported name if present
+    """
+    global NAMES
+    try:
+        return NAMES[blender_name]
+    except:
+        return blender_name
+
 #
 # Main export function.
 #
@@ -334,6 +370,9 @@ and turn off envelopes."""%ob.getName()
                 
         # rebuilds the bone extra data dictionaries from the 'BoneExMat' text buffer
         rebuild_bone_extra_data()
+        
+        # rebuilds the full name dictionary from the 'FullNames' text buffer 
+        rebuild_full_name_map()
         
         # export nif:
         #------------
@@ -490,7 +529,7 @@ def export_node(ob, space, parent_block, node_name):
         parent_block["Children"].AddLink(node)
     
     # and fill in this node's non-trivial values
-    node["Name"] = node_name
+    node["Name"] = get_full_name(node_name)
     if (ob == None):
         node["Flags"] = 0x000C # ? this seems pretty standard for the root node
     elif (node_name == 'RootCollisionNode'):
@@ -1307,7 +1346,7 @@ def export_trishapes(ob, space, parent_block):
             # add NiTriShape's material property
             trimatprop = create_block("NiMaterialProperty")
             
-            trimatprop["Name"] = mesh_mat.getName()
+            trimatprop["Name"] = get_full_name(mesh_mat.getName())
             trimatprop["Flags"] = 0x0001 # ? standard
             trimatprop["Ambient Color"] = Float3(*mesh_mat_ambient_color)
             trimatprop["Diffuse Color"] = Float3(*mesh_mat_diffuse_color)
@@ -1664,7 +1703,7 @@ def export_bones(arm, parent_block):
         bones_node[bone.name] = node # doing this now makes linkage very easy in second run
 
         # add the node and the keyframe for this bone
-        node["Name"] = bone.name
+        node["Name"] = get_full_name(bone.name)
         node["Flags"] = 0x0002 # ? this seems pretty standard for bones
         ob_translation, \
         ob_rotation, \
