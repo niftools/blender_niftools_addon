@@ -334,9 +334,14 @@ def import_main(root_block):
                 print "  bone '%s'"%bone_name
     # read the NIF tree
     if not is_armature_root(root_block):
-        try:
+        if not root_block["Children"].is_null(): # it's a ninode?
+            # yes, we'll process all children of the root node
+            # (this prevents us having to create an empty as a root)
             blocks = root_block["Children"].asLinkList()
-        except:
+            # import the extras
+            textkey = find_extra(root_block, "NiTextKeyExtraData")
+            if not textkey.is_null(): fb_textkey(textkey)
+        else:
             # this fixes an issue with nifs where the first block is a NiTriShape
             blocks = [ root_block ]
         for niBlock in blocks:
