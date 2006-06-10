@@ -1276,7 +1276,7 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
             else:
                 # this is a hack for single materialed meshes
                 assert(materialIndex == 0)
-                trishape["Name"] = trishape_name
+                trishape["Name"] = get_full_name(trishape_name)
         if ob.getDrawType() != 2: # not wire
             trishape["Flags"] = 0x0004 # use triangles as bounding box
         else:
