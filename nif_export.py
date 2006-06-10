@@ -15,7 +15,7 @@ Tooltip: 'Export selected meshes to NIF File Format (*.nif & *.kf)'
 
 __author__ = "The NifTools team, http://niftools.sourceforge.net/"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
-__version__ = "1.5.2"
+__version__ = "1.5.3"
 __bpydoc__ = """\
 This script exports selected meshes, along with parents, children, and
 armatures, to a *.nif file. If animation is present,  x*.nif and a x*.kf
@@ -61,7 +61,7 @@ putting 4.2.2.0, 10.0.1.0, 10.1.0.0, 10.2.0.0, or 20.0.0.4 here)<br>
     export dir: default directory to open when script starts<br>
 """
 
-# nif_export.py version 1.5.2
+# nif_export.py version 1.5.3
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
 #
@@ -518,7 +518,7 @@ def export_node(ob, space, parent_block, node_name):
                 node = create_block('NiNode')
             else:
                 # don't create intermediate ninode for this guy
-                export_trishapes(ob, space, parent_block)
+                export_trishapes(ob, space, parent_block, node_name)
                 # we didn't create a ninode, return nothing
                 return None
         else:
@@ -1010,14 +1010,18 @@ def export_flipcontroller( fliptxt, texture, target, target_tex ):
     flip["Delta"] = (flip["Stop Time"].asFloat() - flip["Start Time"].asFloat()) / count
 
 
-#
+
+# 
 # Export a blender object ob of the type mesh, child of nif block
 # parent_block, as NiTriShape and NiTriShapeData blocks, possibly
 # along with some NiTexturingProperty, NiSourceTexture,
 # NiMaterialProperty, and NiAlphaProperty blocks. We export one
 # trishape block per mesh material. We also export vertex weights.
 # 
-def export_trishapes(ob, space, parent_block):
+# The parameter trishape_name passes on the name for meshes that
+# should be exported as a single mesh.
+# 
+def export_trishapes(ob, space, parent_block, trishape_name = None):
     if DEBUG: print "Exporting NiTriShapes for %s"%ob.getName()
     assert(ob.getType() == 'Mesh')
 
@@ -1267,7 +1271,12 @@ def export_trishapes(ob, space, parent_block):
         
         # fill in the NiTriShape's non-trivial values
         if (parent_block["Name"].asString() != ""):
-            trishape["Name"] = "Tri " + parent_block["Name"].asString() + " %i"%materialIndex # Morrowind's child naming convention
+            if (trishape_name == None):
+                trishape["Name"] = "Tri " + parent_block["Name"].asString() + " %i"%materialIndex # Morrowind's child naming convention
+            else:
+                # this is a hack for single materialed meshes
+                assert(materialIndex == 0)
+                trishape["Name"] = trishape_name
         if ob.getDrawType() != 2: # not wire
             trishape["Flags"] = 0x0004 # use triangles as bounding box
         else:

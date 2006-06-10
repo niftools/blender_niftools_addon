@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <title>The Blender NIF Scripts v1.5.2</title>
+  <title>The Blender NIF Scripts v1.5.3</title>
   <meta http-equiv="Content-Type"
  content="text/html; charset=ISO-8859-1" />
   <style type="text/css">
@@ -19,7 +19,7 @@ a:hover.nav { color: #FF0000; background: transparent; }
   </style>
 </head>
 <body>
-<h1>The Blender NIF Scripts v1.5.2</h1>
+<h1>The Blender NIF Scripts v1.5.3</h1>
 <h2>Contributors</h2>
 <p>(in random order)</p>
 <ul>
@@ -32,7 +32,7 @@ a:hover.nav { color: #FF0000; background: transparent; }
 <ul>
   <li>All modders that have reported bugs:
 Sabregirl, y67_a, Fakku, readhead33445, DemonFire, lucifer,
-NeOmega, Andysaurus, tekener, CuteUnit, periplaneta, Pekka, and
+NeOmega, Andysaurus, tekener, CuteUnit, periplaneta, Pekka, submarine, throttlekitty and
 many, many others... (drop us a note if we forgot your name here)</li>
   <li>Mannon, who started all this!</li>
   <li>Taharez, for helping with the generated Python NIF
@@ -89,14 +89,15 @@ release.</li>
 </ul>
 <h3>Highlights of this Release</h3>
 <ul>
-  <li>This is a bugfix release, which fixes a scaling issue
-when exporting files that were imported with the 1.5 (or older) scripts.</li>
-  <li>Even though bone matrices are restored when re-exported, you'll still
-need to cast NifSkope's Bip 01 spell on skinned models, or if that doesn't work (for instance,
-for Morrowind's dresses), it should also be sufficient to apply transformation on the
-body NiNode (the NiNode in between the Bip01 NiNode and the NiTriShape) in NifSkope.
-The latter will only work for files that were imported using the 1.5.1 or 1.5.2 scripts.</li>
-  <li>No full Python installation required anymore.</li>
+  <li>Sorry, no Oblivion support yet... the new Niflib is close to completion
+so Oblivion support is definitely coming! This is just a small bugfix release.</li>
+  <li>Fixed an issue with skinned models.
+Clothing slots now no longer require to be applied transformation with NifSkope.</li>
+  <li>Fixed import/export of Morrowind heads and possibly also other animated models:
+due to a silly bug the animation text keys were lost on import. This is no longer the case.</li>
+  <li>No more empty NiNode at the end of bone chains. This should help with modding
+Oblivion skins.</li>
+  <li>Optimized the export of single materialed, non-animated meshes.</li>
 </ul>
 <h2>Support</h2>
 <ul>
@@ -111,31 +112,21 @@ must have&nbsp;<a href="http://www.blender.org/">Blender
 2.41</a> or
 higher</strong>; the scripts
 won't run on older versions
-of Blender.</li>
+of Blender. It is recommended that you use the Blender .exe installer, and not the Blender .zip.</li>
 </ul>
 <h3>Manual Install</h3>
 <ul>
-  <li><strong>It is recommended that you use the windows
-installer.</strong> If this does not work for
-some reason, you can install the scripts manually
-from the zip file:
-    <ul>
-      <li>Remove any old versions of the scripts (such as,
-nif-export.py, nif_import_237.py, nif4_export.py, nif4_import_237.py,
-nif4_import_240.py, nif4.py, nif4.pyc, ...). This is why it is
-recommended to use the installer: it detects these files and
-automatically deletes them.</li>
-      <li>Copy
-the export scripts "nif_import.py" and
-"nif_export.py", into the Blender scripts folder.
-Under Windows this is by default C:\Program Files\Blender
+  <li><strong>If you installed Blender using the .exe installer, 
+you're best off using the Blender NIF Scripts .exe 
+installer.</strong> If you installed Blender from the .zip, then you 
+should download the .zip and extract its contents in the 
+Blender scripts directory. This is by default C:\Program Files\Blender
 Foundation\Blender\.blender\scripts.
-Copy
-"niflib.py" and "_niflib.dll" into your Blender modules folder (scripts\bpymodules),
-and delete niflib.pyc from
-that same folder if it exists. Restart Blender, and the options to import and export
-NIF files
-will appear in the File-Import and File-Export menu's. <em>Make
+If you used the .zip, make sure
+you don't have any niflib.py, niflib.dll, or niflib.pyc 
+files in folders outside the Blender scripts directory.
+Restart Blender, and the options to import and export
+NIF files will appear in the File-Import and File-Export menu's. <em>Make
 sure you
 have no niflib.py or _niflib.dll or niflib.pyc files in any other folder!</em>
 Especially, you should check the Blender scripts folder, and your Python folders
@@ -152,7 +143,8 @@ have the expansions, also 'Tribunal.bsa' and 'Bloodmoon.bsa') into
 for instance 'c:\src\morrowind' (use <a
  href="http://www34.brinkster.com/ghostwheel/">BSAPACK</a>
 or the <a href="http://www.thelys.org/toolsmisc.php?modders">BSA
-Browser</a>). </li>
+Browser</a>; if you use the latter, make sure you copy the BSA files to
+'c:\src\morrwind' before extracting them).</li>
       <li>convert all .dds files in 'c:\src\morrowind\textures'
 to
 .tga files (for instance, using the <a
@@ -166,8 +158,8 @@ Converter 2.1</a>)</li>
   <li>Oblivion support is still far from complete.
 Basically, right now, the only thing you can do is export 20.0.0.4 models.
 These exported models will however lack physics. Most of the NIF files
-in Oblivion are of version 20.0.0.5 which aren't supported at all by Niflib,
-and therefore also not by the scripts. The recommended method for creating
+in Oblivion are of version 20.0.0.5 which aren't supported at all by the version of Niflib used by the scripts.
+The recommended method for creating
 new meshes in Oblivion is via NifSkope and the .obj format. Check the
 <a href="http://www.elderscrolls.com/forums/">TES forums</a> as well!</li>
   <li>If you wish to use the Oblivion textures in your models, you can unpack
@@ -220,16 +212,14 @@ saved texture with your favorite 2D paint program </li>
 material, with the following settings:
     <ul>
       <li>texture map input: UV </li>
-      <li>texture map output: COL for diffuse map (base
-texture) </li>
+      <li>texture map output: COL for diffuse map (base texture)</li>
     </ul>
   </li>
   <li>for each texture:
     <ul>
       <li>set texture type to 'Image' </li>
       <li>either load a texture from 'c:\src\morrowind\textures',
-or
-put your custom texture in the 'C:\Program Files\Morrowind\Data
+or put your custom texture in the 'C:\Program Files\Morrowind\Data
 Files\Textures' folder, and load it from there. Note that Blender does
 not read .dds files.</li>
       <li>although this is not recommended, textures can be
@@ -238,8 +228,7 @@ the Image tab</li>
     </ul>
   </li>
   <li>(optional) animate meshes and/or empty objects (press I
-to
-insert key, and select Rot, Loc, or LocRot; for now, only location and
+to insert key, and select Rot, Loc, or LocRot; for now, only location and
 rotation channels are exported); define the animation groups in a text
 buffer called 'Anim' (import a Morrowind creature to get a feeling for
 how this works; so far we only
@@ -280,15 +269,15 @@ the whole model. </li>
   <li>Particle effects, cameras, and lights are not exported. We
 are working on it.</li>
   <li>Actions (for animation groups) are ignored. You should
-define animation groups&nbsp;in text buffer called "Anim".</li>
+define animation groups in text buffer called "Anim".</li>
 </ul>
 <h3>Known Issues and Workarounds </h3>
 <ul>
   <li>Ambient and emit colors are obtained by multiplication
 with the diffuse color.</li>
   <li>Blender double sided faces will be one sided in the NIF
-file (workaround: duplicate faces).</li>
-  <li>Export of directly animated&nbsp;meshes is buggy
+file (workaround: duplicate faces, or even better, use NifSkope and add a NiStencilProperty).</li>
+  <li>Export of directly animated meshes is buggy
 unless
 you parent without parent inverse
 (CTRL-SHIFT-P). Workaround: don't animate meshes directly; instead,
@@ -299,8 +288,7 @@ with the current frame of animation. There's not much we can do about
 it, this is due to a limitation in the Blender Python API.</li>
   <li>Non-uniformly scaled objects cannot be exported.
 Workaround: apply size and rotation (CTRL-A). Unfortunately, this
-workaround
-does not work on empties. </li>
+workaround does not work on empties. </li>
 </ul>
 <h3>Old History</h3>
 <p>(For recent history see the ChangeLog file)</p>

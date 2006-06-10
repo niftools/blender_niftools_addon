@@ -73,3 +73,10 @@ Version 1.5.2 (Apr 19, 2006)
 * Export: bone optimization fix
 * Import: realignment is now always automatic
 * Import/Export: correction on 1.5.1 ChangeLog, you'll still need the Bip01 spell, but we're getting closer
+
+Version 1.5.3 (Jun 10, 2006)
+* Export: fixed an issue with skinned models (clothing slots
+now no longer require to be applied transformation with NifSkope)
+* Import: fixed import of animation keys
+* Export: no more empty NiNode at the end of bone chains
+* Export: optimized the export of single materialed, non-animated meshes.
