@@ -495,6 +495,7 @@ def export_node(ob, space, parent_block, node_name):
         assert(space == 'none')
         assert(parent_block == None) # debug
         node = create_block("NiNode")
+        ob_type = None
     else:
         ob_type = ob.getType()
         assert((ob_type == 'Empty') or (ob_type == 'Mesh') or (ob_type == 'Armature')) # debug
@@ -523,7 +524,17 @@ def export_node(ob, space, parent_block, node_name):
         else:
             # -> everything else (empty/armature) is a regular node
             node = create_block("NiNode")
-                
+
+    # set transform on trishapes rather than on NiNode for skinned meshes
+    # this fixes an issue with clothing slots
+    if ob_type == 'Mesh':
+        ob_parent = ob.getParent()
+        if ob_parent.getType() == 'Armature':
+            trishape_space = space
+            space = 'none'
+        else:
+            trishape_space = 'none'
+
     # make it child of its parent in the nif, if it has one
     if (parent_block):
         parent_block["Children"].AddLink(node)
@@ -565,7 +576,7 @@ def export_node(ob, space, parent_block, node_name):
     
         # if it is a mesh, export the mesh as trishape children of this ninode
         if (ob.getType() == 'Mesh'):
-            export_trishapes(ob, 'none', node) # the transformation of the mesh is already in the NiNode
+            export_trishapes(ob, trishape_space, node) # see definition of trishape_space above
             
         # if it is an armature, export the bones as ninode children of this ninode
         elif (ob.getType() == 'Armature'):
