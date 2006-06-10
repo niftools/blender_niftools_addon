@@ -98,21 +98,22 @@ due to a silly bug the animation text keys were lost on import. This is no longe
   <li>No more empty NiNode at the end of bone chains. This should help with modding
 Oblivion skins.</li>
   <li>Optimized the export of single materialed, non-animated meshes.</li>
+  <li>Bone names are restored.</li>
 </ul>
 <h2>Support</h2>
 <ul>
   <li><a href="http://niftools.sourceforge.net/forum/">http://niftools.sourceforge.net/forum/</a></li>
-  <li><a href="http://niftools.sourceforge.net/tutorial/blender/">http://niftools.sourceforge.net/tutorial/blender/</a></li>
+  <li><a href="http://niftools.sourceforge.net/tutorial/blender/">
+http://niftools.sourceforge.net/tutorial/blender/</a></li>
 </ul>
 <h2>Installation</h2>
 <h3>Requirements</h3>
 <ul>
   <li><strong>You
-must have&nbsp;<a href="http://www.blender.org/">Blender
-2.41</a> or
-higher</strong>; the scripts
-won't run on older versions
-of Blender. It is recommended that you use the Blender .exe installer, and not the Blender .zip.</li>
+must have <a href="http://www.blender.org/">Blender 2.41</a> or
+higher</strong>; the scripts won't run on older versions
+of Blender. It is recommended that you use the Blender .exe installer,
+and not the Blender .zip.</li>
 </ul>
 <h3>Manual Install</h3>
 <ul>
@@ -146,9 +147,8 @@ or the <a href="http://www.thelys.org/toolsmisc.php?modders">BSA
 Browser</a>; if you use the latter, make sure you copy the BSA files to
 'c:\src\morrwind' before extracting them).</li>
       <li>convert all .dds files in 'c:\src\morrowind\textures'
-to
-.tga files (for instance, using the <a
- href="http://eliteforce2.filefront.com/file/DDS_Converter;29412">DDS
+to .tga files (for instance, using the
+<a href="http://eliteforce2.filefront.com/file/DDS_Converter;29412">DDS
 Converter 2.1</a>)</li>
     </ul>
   </li>
@@ -158,7 +158,8 @@ Converter 2.1</a>)</li>
   <li>Oblivion support is still far from complete.
 Basically, right now, the only thing you can do is export 20.0.0.4 models.
 These exported models will however lack physics. Most of the NIF files
-in Oblivion are of version 20.0.0.5 which aren't supported at all by the version of Niflib used by the scripts.
+in Oblivion are of version 20.0.0.5 which aren't supported at all by the
+version of Niflib used by the scripts.
 The recommended method for creating
 new meshes in Oblivion is via NifSkope and the .obj format. Check the
 <a href="http://www.elderscrolls.com/forums/">TES forums</a> as well!</li>
@@ -170,11 +171,9 @@ the BSA files using <a href="http://www34.brinkster.com/ghostwheel/">Ghostwheel'
 <ul>
   <li>create meshes (and empties, if you like) in Blender:
     <ul>
-      <li>IMPORTANT: if you wish to animate meshes without
-using
+      <li>IMPORTANT: if you wish to animate meshes without using
 armatures and bones, then, when grouping, always make parent without
-inverse (in
-Object Mode, use CTRL-SHIFT-P) </li>
+inverse (in Object Mode, use CTRL-SHIFT-P)</li>
     </ul>
   </li>
   <li>create armatures and bones for animation
@@ -183,26 +182,21 @@ Object Mode, use CTRL-SHIFT-P) </li>
 armatures with vertex groups; the vertex weights will be constructed
 using the bone envelopes</li>
       <li>or, simply parent meshes to bones (armature must be
-in
-pose mode)</li>
+in pose mode)</li>
       <li>make sure the vertex weights are set properly: select
-the
-armature, go to pose mode, and play with the bones; the mesh should
+the armature, go to pose mode, and play with the bones; the mesh should
 deform along the bones</li>
       <li>insert pose mode keys in different frames (press I to
 insert key, and select Rot, Loc, or LocRot) to compose your animation</li>
     </ul>
   </li>
   <li>create UV coordinates (be sure to check the blender
-manual
-for more details)
+manual for more details)
     <ul>
       <li>create seams (3D View, Edit Mode, select seam
-vertices,
-CTRL-E) </li>
+vertices, CTRL-E) </li>
       <li>in the 3D View, UV Face Select Mode, select all
-faces,
-press U-&gt;LSCM </li>
+faces, press U-&gt;LSCM </li>
       <li>(optional) if you want to create your own texture: in
 the UV/Image Editor, UVs-&gt;Save UV Face Layout, and process the
 saved texture with your favorite 2D paint program </li>
@@ -234,8 +228,7 @@ buffer called 'Anim' (import a Morrowind creature to get a feeling for
 how this works; so far we only
 support Morrowind-type animations) </li>
   <li>(optional) to export vertex colors, turn on the
-VCOL_PAINT
-flag in the material tab </li>
+VCOL_PAINT flag in the material tab </li>
   <li>(optional) Hull your model in a simple so-called
 collision
 mesh, which defines where the player cannot walk through (most of
