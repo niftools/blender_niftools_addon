@@ -2176,8 +2176,9 @@ def apply_scale_tree(block):
             scale_worldbindpos(block, 1.0 / scale)
         
             # apply the scale on the children
-            for child in block["Children"].asLinkList():
-                scale_tree(child, scale)
+            if not block["Children"].is_null(): # block has children
+                for child in block["Children"].asLinkList():
+                    scale_tree(child, scale)
 
     # reset scale on the children
     if not block["Children"].is_null(): # block has children
