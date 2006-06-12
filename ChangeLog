@@ -81,3 +81,6 @@ now no longer require to be applied transformation with NifSkope)
 * Export: no more empty NiNode at the end of bone chains
 * Export: optimized the export of single materialed, non-animated meshes.
 * Import/Export: bone names are restored
+
+Version 1.5.4 (Jun 12, 2006)
+* Export: fixed a bug in with apply_scale_tree

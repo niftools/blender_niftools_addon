@@ -15,7 +15,7 @@ Tooltip: 'Import NIF File Format (.nif & .kf)'
 
 __author__ = "The NifTools team, http://niftools.sourceforge.net/"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
-__version__ = "1.5.3"
+__version__ = "1.5.4"
 __bpydoc__ = """\
 This script imports Netimmerse and Gamebryo .NIF files to Blender.
 
@@ -42,7 +42,7 @@ Config options (Scripts->System->Scripts Config Editor->Import):<br>
 large NIF files takes too long.<br>
 """
 
-# nif_import.py version 1.5.3
+# nif_import.py version 1.5.4
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
 # 
