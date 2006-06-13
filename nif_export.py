@@ -529,7 +529,7 @@ def export_node(ob, space, parent_block, node_name):
     # this fixes an issue with clothing slots
     if ob_type == 'Mesh':
         ob_parent = ob.getParent()
-        if ob_parent.getType() == 'Armature':
+        if ob_parent and ob_parent.getType() == 'Armature':
             trishape_space = space
             space = 'none'
         else:
