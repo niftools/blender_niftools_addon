@@ -811,32 +811,44 @@ def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
             b_bone_tail_x = 2 * b_bone_head_x - b_parent_head_x
             b_bone_tail_y = 2 * b_bone_head_y - b_parent_head_y
             b_bone_tail_z = 2 * b_bone_head_z - b_parent_head_z
+        is_zero_length = b_bone_head_x == b_bone_tail_x and b_bone_head_y == b_bone_tail_y and b_bone_head_z == b_bone_tail_z
+        if is_zero_length:
+            # this is a 0 length bone, to avoid it being removed I set a default minimum length
+            # Since we later set the matrix explicitly any axis will do here.
+            # TO DO: Compensate for scale
+            b_bone_tail_x = b_bone_head_x + 0.5
         # sets the bone heads & tails
         b_bone.head = Vector(b_bone_head_x, b_bone_head_y, b_bone_head_z)
         b_bone.tail = Vector(b_bone_tail_x, b_bone_tail_y, b_bone_tail_z)
-        # here we explicitly try to set the matrix from the NIF matrix; this has the following consequences:
-        # - head is preserved
-        # - bone length is preserved
-        # - tail is lost (up to bone length)
-        (sum_x, sum_y, sum_z, dummy) = fb_matrix(niBlock)[3]
-        if len(niChildNodes) > 0:
-            child_local_matrices = [fb_matrix(child) for child in niChildNodes]
-            sum_x = sum([cm[3][0] for cm in child_local_matrices])
-            sum_y = sum([cm[3][1] for cm in child_local_matrices])
-            sum_z = sum([cm[3][2] for cm in child_local_matrices])
-        listXYZ = [int(c*200) for c in (sum_x, sum_y, sum_z, -sum_x, -sum_y, -sum_z)]
-        idx_correction = listXYZ.index(max(listXYZ))
-        if idx_correction == 0 or idx_correction == 3:
-            alignment_offset = float(abs(sum_y) + abs(sum_z)) / abs(sum_x)
-        elif idx_correction == 1 or idx_correction == 4:
-            alignment_offset = float(abs(sum_z) + abs(sum_x)) / abs(sum_y)
+        if is_zero_length:
+            # Can't test zero length bones, we keep the original alignment
+            # with no further correction
+            b_bone.matrix = armature_space_matrix.rotationPart()
         else:
-            alignment_offset = float(abs(sum_x) + abs(sum_y)) / abs(sum_z)
-        #print bone_name, idx_correction, alignment_offset
-        # if alignment is good enough, use the (corrected) NIF matrix
-        if alignment_offset < 0.25:
-            m_correction = BONE_CORRECTION_MATRICES[idx_correction]
-            b_bone.matrix = m_correction * armature_space_matrix.rotationPart()
+            # here we explicitly try to set the matrix from the NIF matrix; this has the following consequences:
+            # - head is preserved
+            # - bone length is preserved
+            # - tail is lost (up to bone length)
+            (sum_x, sum_y, sum_z, dummy) = fb_matrix(niBlock)[3]
+            if len(niChildNodes) > 0:
+                child_local_matrices = [fb_matrix(child) for child in niChildNodes]
+                sum_x = sum([cm[3][0] for cm in child_local_matrices])
+                sum_y = sum([cm[3][1] for cm in child_local_matrices])
+                sum_z = sum([cm[3][2] for cm in child_local_matrices])
+            listXYZ = [int(c*200) for c in (sum_x, sum_y, sum_z, -sum_x, -sum_y, -sum_z)]
+            idx_correction = listXYZ.index(max(listXYZ))
+            alignment_offset = 0.0
+            if idx_correction == 0 or idx_correction == 3:
+                alignment_offset = float(abs(sum_y) + abs(sum_z)) / abs(sum_x)
+            elif idx_correction == 1 or idx_correction == 4:
+                alignment_offset = float(abs(sum_z) + abs(sum_x)) / abs(sum_y)
+            else:
+                alignment_offset = float(abs(sum_x) + abs(sum_y)) / abs(sum_z)
+            #print bone_name, idx_correction, alignment_offset
+            # if alignment is good enough, use the (corrected) NIF matrix
+            if alignment_offset < 0.25:
+                m_correction = BONE_CORRECTION_MATRICES[idx_correction]
+                b_bone.matrix = m_correction * armature_space_matrix.rotationPart()
         # set bone name and store the niBlock for future reference
         b_armatureData.bones[bone_name] = b_bone
         BONES[bone_name] = niBlock
@@ -860,6 +872,9 @@ def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
 
 
 def fb_texture( niSourceTexture ):
+    """
+    Returns a Blender Texture object, and stores it in the global TEXTURES dictionary
+    """
     global TEXTURES
     
     try:
