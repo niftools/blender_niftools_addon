@@ -84,3 +84,7 @@ now no longer require to be applied transformation with NifSkope)
 
 Version 1.5.4 (Jun 12, 2006)
 * Export: fixed a bug in with apply_scale_tree
+
+Version 1.5.4 (Jun 15, 2006)
+* Import: fixed import of zero length bones.
+* Export: fixed export of meshes with no parents. 

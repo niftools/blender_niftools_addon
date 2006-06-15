@@ -89,17 +89,13 @@ release.</li>
 </ul>
 <h3>Highlights of this Release</h3>
 <ul>
-  <li>This is a very small but important bugfix release. Following again the highlights of the 1.5.3 release.
-  <li>Sorry, no Oblivion support yet... the new Niflib is close to completion
-so Oblivion support is definitely coming! This is just a small bugfix release.</li>
-  <li>Fixed an issue with skinned models.
-Clothing slots now no longer require to be applied transformation with NifSkope.</li>
-  <li>Fixed import/export of Morrowind heads and possibly also other animated models:
-due to a silly bug the animation text keys were lost on import. This is no longer the case.</li>
-  <li>No more empty NiNode at the end of bone chains. This should help with modding
-Oblivion skins.</li>
-  <li>Optimized the export of single materialed, non-animated meshes.</li>
-  <li>Bone names are restored.</li>
+  <li>Again just a bugfix release, no new functionality added since 1.4.4</li>
+  <li>Again, no Oblivion support yet... the new Niflib is close to completion
+so Oblivion support is definitely coming!</li>
+  <li>Fixed an issue with zero length bones on import. These are now imported at a fixed length,
+and with the original orientation</li>
+  <li>Fixed export of meshes with no parents. We had our attemption fixed on skinned meshes
+so much that this bug never came out in testing!</li>
 </ul>
 <h2>Support</h2>
 <ul>
