@@ -15,7 +15,7 @@ Tooltip: 'Export selected meshes to NIF File Format (*.nif & *.kf)'
 
 __author__ = "The NifTools team, http://niftools.sourceforge.net/"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
-__version__ = "1.5.4"
+__version__ = "1.5.6"
 __bpydoc__ = """\
 This script exports selected meshes, along with parents, children, and
 armatures, to a *.nif file. If animation is present,  x*.nif and a x*.kf

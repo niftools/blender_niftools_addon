@@ -35,7 +35,7 @@
 
 !include "MUI.nsh"
 
-!define VERSION "1.5.5"
+!define VERSION "1.5.6"
 
 Name "Blender NIF Scripts ${VERSION}"
 Var BLENDERHOME
