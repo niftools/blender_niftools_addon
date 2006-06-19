@@ -1581,7 +1581,7 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                     # so we simply export the same weight as the original vertex for each new vertex
 
                     # write the weights
-                    if vertmap[v[0]]: # extra check for multi material meshes
+                    if vertmap[v[0]] and vert_norm[v[0]]: # extra check for multi material meshes
                         for vert_index in vertmap[v[0]]:
                             vert_weights[vert_index] = v[1] / vert_norm[v[0]]
                             vert_added[vert_index] = True
