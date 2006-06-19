@@ -1271,8 +1271,12 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
         
         # fill in the NiTriShape's non-trivial values
         if (parent_block["Name"].asString() != ""):
-            if (trishape_name == None):
-                trishape["Name"] = "Tri " + parent_block["Name"].asString() + " %i"%materialIndex # Morrowind's child naming convention
+            if len(mesh_mats) > 1:
+                if (trishape_name == None):
+                    trishape["Name"] = "Tri " + parent_block["Name"].asString() + " %i"%materialIndex # Morrowind's child naming convention
+                else:
+                    # This should take care of "manually merged" meshes. 
+                    trishape["Name"] = trishape_name + " %i"%materialIndex
             else:
                 # this is a hack for single materialed meshes
                 assert(materialIndex == 0)
