@@ -15,7 +15,7 @@ Tooltip: 'Import NIF File Format (.nif & .kf)'
 
 __author__ = "The NifTools team, http://niftools.sourceforge.net/"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
-__version__ = "1.5.4"
+__version__ = "1.5.6"
 __bpydoc__ = """\
 This script imports Netimmerse and Gamebryo .NIF files to Blender.
 
@@ -317,7 +317,7 @@ def import_main(root_block):
     b_scene = Blender.Scene.GetCurrent()
     # used to control the progress bar
     global block_count, blocks_read, read_progress
-    block_count = NiObject_NumObjectsInMemory()
+    block_count = BlocksInMemory()
     read_progress = 0.0
     blocks_read = 0.0
     # preprocessing:
@@ -334,15 +334,13 @@ def import_main(root_block):
                 print "  bone '%s'"%bone_name
     # read the NIF tree
     if not is_armature_root(root_block):
-        # it's a ninode?
-        root_node = DynamicCastToNiNode(root_block.Ptr());
-        if root_node != NULL: 
+        if not root_block["Children"].is_null(): # it's a ninode?
             # yes, we'll process all children of the root node
             # (this prevents us having to create an empty as a root)
-            blocks = root_node.Ptr().GetChildren()
+            blocks = root_block["Children"].asLinkList()
             # import the extras
             textkey = find_extra(root_block, "NiTextKeyExtraData")
-            if textkey != NULL: fb_textkey(textkey)
+            if not textkey.is_null(): fb_textkey(textkey)
         else:
             # this fixes an issue with nifs where the first block is a NiTriShape
             blocks = [ root_block ]
@@ -366,15 +364,15 @@ def read_branch(niBlock):
     if (blocks_read/(block_count+1)) >= (read_progress + 0.1):
         read_progress = blocks_read/(block_count+1)
         Blender.Window.DrawProgressBar(read_progress, "Importing data")
-    if niBlock != NULL:
-        if niBlock.Ptr().IsDerivedType( NiTriBasedGeom_TypeConst() ):
+    if not niBlock.is_null():
+        btype = niBlock.GetBlockType()
+        if btype == "NiTriShape" or btype == "NiTriStrips":
             # it's a shape node
             return fb_mesh(niBlock)
-        elif niBlock.Ptr().IsDerivedType( NiNode_TypeConst() ):
+        elif not niBlock["Children"].is_null():
             # it's a parent node
             # import object + children
-            niNode = DynamicCastToNiNode( niBlock.Ptr() )
-            niChildren = niNode.Ptr().GetChildren()
+            niChildren = niBlock["Children"].asLinkList()
             b_obj = None
             if is_armature_root(niBlock):
                 # the whole bone branch is imported by fb_armature as well
@@ -411,13 +409,12 @@ def read_armature_branch(b_armature, niArmature, niBlock):
     with all its bones. This function only imports meshes.
     """
     # check if the child is non-null
-    if niBlock != NULL:
+    if not niBlock.is_null():
         btype = niBlock.GetBlockType()
         # bone or group node?
         # is it an AParentNode?
-        niNode = DynamicCastToNiNode(niBlock.Ptr())
-        if niNode != NULL:
-            niChildren = niNode.Ptr().GetChildren()
+        if not niBlock["Children"].is_null():
+            niChildren = niBlock["Children"].asLinkList()
             for niChild in niChildren:
                 b_mesh = read_armature_branch(b_armature, niArmature, niChild)
                 if b_mesh:
@@ -440,13 +437,13 @@ def read_armature_branch(b_armature, niArmature, niBlock):
                                 except ValueError: # remove throws value-error if vertex was already removed previously
                                     pass
                         if verts:
-                            groupName = NAMES[par_bone.Ptr().GetName()]
+                            groupName = NAMES[par_bone["Name"].asString()]
                             b_meshData.addVertGroup(groupName)
                             b_meshData.assignVertsToGroup(groupName, verts, 1.0, Blender.Mesh.AssignModes.REPLACE)
                     # make it parent of the armature
                     b_armature.makeParentDeform([b_mesh])
         # mesh?
-        elif niBlock.IsDerivedType( NiTriBasedGeom_TypeConst() ):
+        elif btype == "NiTriShape" or btype == "NiTriStrips":
             return fb_mesh(niBlock)
         # anything else: throw away
         else:
@@ -464,10 +461,10 @@ def float3_hash(x):
 
 # blk_ref hash
 def block_hash(b):
-    if b == NULL:
+    if b.is_null():
         return None
     else:
-        return b.Ptr()
+        return b.GetBlockNum()
 
 # NiSourceTexture hash
 def texsource_hash(texsource):
