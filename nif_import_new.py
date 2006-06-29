@@ -110,7 +110,7 @@ from Blender.Mathutils import *
 
 
 try:
-    from niflib import *
+    #from niflib import *
     from new_niflib import *
 except:
     err = """--------------------------
@@ -280,10 +280,11 @@ def import_nif(filename):
     try: # catch NIFImportErrors
         # read the NIF file
         ver = CheckNifHeader(filename)
-        if ( ver == VER_INVALID ):
-            raise NIFImportError("Not a NIF file.")
-        elif ( ver == VER_UNSUPPORTED ):
-            raise NIFImportError("Unsupported NIF version.")
+        print "\n\nthe NIF version is supported?: %s" % IsVersionSupported(ver)
+        #if ( ver == VER_INVALID ):
+        #    raise NIFImportError("Not a NIF file.")
+        #elif ( ver == VER_UNSUPPORTED ):
+        #    raise NIFImportError("Unsupported NIF version.")
         Blender.Window.DrawProgressBar(0.33, "Reading file")
         root_block = ReadNifTree(filename)
         Blender.Window.DrawProgressBar(0.66, "Importing data")
@@ -324,7 +325,7 @@ def import_main(root_block):
     # read the NIF tree
     if not is_armature_root(root_block):
         # it's a ninode?
-        root_node = DynamicCastToNiNode(root_block.Ptr());
+        root_node = DynamicCastToNiNode(root_block.Ptr())
         if root_node != NULL: 
             # yes, we'll process all children of the root node
             # (this prevents us having to create an empty as a root)
@@ -1503,42 +1504,45 @@ def find_extra(block, extratype):
 # mark armatures and bones by peeking into NiSkinInstance blocks
 # probably we will eventually have to use this
 # since that the "is skinning influence" flag is not reliable
-def mark_armatures_bones(block):
+def mark_armatures_bones(objRef):
     global BONE_LIST
     # search for all NiTriShape or NiTriStrips blocks...
-    if block.GetBlockType() == "NiTriShape" or block.GetBlockType() == "NiTriStrips":
-        # yes, we found one, get its skin instance
-        skininst = block["Skin Instance"].asLink()
-        if skininst.is_null() == False:
-            msg("Skin instance found on block '%s'"%block["Name"].asString(),3)
-            # it has a skin instance, so get the skeleton root
-            # which is an armature only if it's not a skinning influence
-            # so mark the node to be imported as an armature
-            skelroot = skininst["Skeleton Root"].asLink()
-            skelroot_name = skelroot["Name"].asString()
-            if not BONE_LIST.has_key(skelroot_name):
-                BONE_LIST[skelroot_name] = []
-                msg("'%s' is an armature"%skelroot_name,3)
-            # now get the skinning data interface to retrieve the list of bones
-            skindata = skininst["Data"].asLink()
-            iskindata = QuerySkinData(skindata)
-            for bone in iskindata.GetBones():
-                # add them, if we haven't already
-                bone_name = bone["Name"].asString()
-                if not bone_name in BONE_LIST[skelroot_name]:
-                    BONE_LIST[skelroot_name].append(bone_name)
-                    msg("'%s' is a bone of armature '%s'"%(bone_name,skelroot_name),3)
-                # now we "attach" the bone to the armature:
-                # we make sure all NiNodes from this bone all the way
-                # down to the armature NiNode are marked as bones
-                complete_bone_tree(bone, skelroot_name)
-    else:
-        # nope, it's not a NiTriShape or NiTriStrips
-        # so if it's a NiNode
-        if not block["Children"].is_null():
+    niObjRef = DynamicCastToNiObject(objRef.Ptr())
+    if niObjRef != None:
+        niObj = niObjRef.Ptr()
+        if niObj.GetType() in ("NiTriShape", "NiTriStrips"):
+            # yes, we found one, get its skin instance
+            triObj = DynamicCastToNiTriBasedGeom(objRef.Ptr()).Ptr()
+            skinRef = triObj.GetSkinInstance()
+            if skinRef != None:
+                msg("Skin instance found on block '%s'" % triObj.GetName(), 3)
+                # it has a skin instance, so get the skeleton root
+                # which is an armature only if it's not a skinning influence
+                # so mark the node to be imported as an armature
+                skinObj = skinRef.Ptr()
+                skelRoot = skinObj.GetSkeletonRoot().Ptr()
+                skelRootName = skelRoot.GetName()
+                if not BONE_LIST.has_key(skelRootName):
+                    BONE_LIST[skelRootName] = []
+                    msg("'%s' is an armature" % skelRootName, 3)
+                # now retrieve the list of bones
+                for boneRef in skinObj.GetBones():
+                    # add them, if we haven't already
+                    boneName = boneRef.Ptr().GetName()
+                    if not boneName in BONE_LIST[skelRootName]:
+                        BONE_LIST[skelRootName].append(boneName)
+                        msg("'%s' is a bone of armature '%s'" % (boneName, skelRootName), 3)
+                    # now we "attach" the bone to the armature:
+                    # we make sure all NiNodes from this bone all the way
+                    # down to the armature NiNode are marked as bones
+                    complete_bone_tree(boneRef, skelRootName)
+        elif niObj.GetType() == "NiNode":
+            # nope, it's not a NiTriShape or NiTriStrips
+            # so if it's a NiNode
+            children = niObj.GetChildren()
             # search for NiTriShapes or NiTriStrips in the list of children
-            for child in block["Children"].asLinkList():
-                mark_armatures_bones(child)
+            for childRef in children:
+                mark_armatures_bones(childRef)
 
 
 
@@ -1596,8 +1600,9 @@ def is_bone(niBlock):
     return False
 
 # Tests a NiNode to see if it's an armature.
-def is_armature_root(niBlock):
-    return BONE_LIST.has_key(niBlock["Name"].asString())
+def is_armature_root(objRef):
+    print objRef
+    return BONE_LIST.has_key(objRef.GetName())
     
 # Detect closest bone ancestor.
 def get_closest_bone(niBlock):
@@ -1732,24 +1737,27 @@ def set_animation(niBlock, b_obj):
 # 
 # Scale NIF file.
 # 
-def scale_tree(block, scale):
-    inode = QueryNode(block)
-    if inode: # is it a node?
+def scale_tree(objRef, scale):
+    #inode = QueryNode(block)
+    nodeRef = DynamicCastToNiNode(objRef.Ptr())
+    if nodeRef != None: # is it a node?
+        nodeObj = nodeRef.Ptr()
         # NiNode transform scale
-        t = block["Translation"].asFloat3()
-        t[0] *= scale
-        t[1] *= scale
-        t[2] *= scale
-        block["Translation"] = t
-
+        t = nodeObj.GetLocalTranslation()
+        t.x *= scale
+        t.y *= scale
+        t.z *= scale
+        nodeObj.SetLocalTranslation(t)
+        """
         # NiNode bind position transform scale
         mat = inode.GetWorldBindPos()
         mat[3][0] *= scale
         mat[3][1] *= scale
         mat[3][2] *= scale
         inode.SetWorldBindPos(mat)
-        
+        """
         # Controller data block scale
+        """
         ctrl = block["Controller"].asLink()
         while not ctrl.is_null():
             if ctrl.GetBlockType() == "NiKeyframeController":
@@ -1777,13 +1785,29 @@ def scale_tree(block, scale):
                         verts[v].z *= scale
                     igmd.SetMorphVerts( key, verts )
             ctrl = ctrl["Next Controller"].asLink()
+        """
         # Child block scale
-        if not block["Children"].is_null(): # block has children
-            for child in block["Children"].asLinkList():
-                scale_tree(child, scale)
+        children = nodeObj.GetChildren()
+        if children != None:
+        #if not block["Children"].is_null(): # block has children
+            for childRef in children:
+                scale_tree(childRef, scale)
+        """
         elif not block["Data"].is_null(): # block has data
             scale_tree(block["Data"].asLink(), scale) # scale the data
-
+        """
+    triRef = DynamicCastToNiTriBasedGeom(objRef.Ptr())
+    if triRef != None:
+        #triObj = triRef.Ptr()
+        #triData = triObj.GetData().Ptr()
+        triData = triRef.Ptr().GetData().Ptr()
+        vertList = triData.GetVertices()
+        for vert in vertList:
+            vert.x *= scale
+            vert.y *= scale
+            vert.z *= scale
+        triData.SetVertices(vertList)
+    """
     ishapedata = QueryShapeData(block)
     if ishapedata: # is it a shape?
         # Scale all vertices
@@ -1794,6 +1818,7 @@ def scale_tree(block, scale):
                 vert.y *= scale
                 vert.z *= scale
             ishapedata.SetVertices(vertlist)
+    """
 
 
 
