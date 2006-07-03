@@ -785,7 +785,7 @@ def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
     bone_name = fb_name(niBlock, 32)
     niChildren = niBlock["Children"].asLinkList()
     niChildNodes = [child for child in niChildren if child.GetBlockType() == "NiNode"]  
-    niChildBones = [child for child in niChildNodes if is_bone(child)]  
+    niChildBones = [child for child in niChildNodes if is_bone(child)]
     if is_bone(niBlock):
         # create bones here...
         b_bone = Blender.Armature.Editbone()
@@ -811,7 +811,7 @@ def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
             b_bone_tail_x = 2 * b_bone_head_x - b_parent_head_x
             b_bone_tail_y = 2 * b_bone_head_y - b_parent_head_y
             b_bone_tail_z = 2 * b_bone_head_z - b_parent_head_z
-        is_zero_length = b_bone_head_x == b_bone_tail_x and b_bone_head_y == b_bone_tail_y and b_bone_head_z == b_bone_tail_z
+        is_zero_length = (int(sum([b_bone_head_x-b_bone_tail_x, b_bone_head_y-b_bone_tail_y, b_bone_head_z-b_bone_tail_z])*200) == 0)
         if is_zero_length:
             # this is a 0 length bone, to avoid it being removed I set a default minimum length
             # Since we later set the matrix explicitly any axis will do here.
@@ -844,7 +844,6 @@ def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
                 alignment_offset = float(abs(sum_z) + abs(sum_x)) / abs(sum_y)
             else:
                 alignment_offset = float(abs(sum_x) + abs(sum_y)) / abs(sum_z)
-            #print bone_name, idx_correction, alignment_offset
             # if alignment is good enough, use the (corrected) NIF matrix
             if alignment_offset < 0.25:
                 m_correction = BONE_CORRECTION_MATRICES[idx_correction]
