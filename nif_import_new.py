@@ -312,7 +312,7 @@ def import_main(root_block):
     blocks_read = 0.0
     # preprocessing:
     # scale tree
-    scale_tree(root_block, 1.0/SCALE_CORRECTION)
+    #scale_tree(root_block, 1.0/SCALE_CORRECTION)
     # mark armature nodes and bones
     # and merge armatures that are bones of others armatures
     mark_armatures_bones(root_block)
@@ -326,13 +326,13 @@ def import_main(root_block):
     if not is_armature_root(root_block):
         # it's a ninode?
         root_node = DynamicCastToNiNode(root_block.Ptr())
-        if root_node != NULL: 
+        if root_node != None: 
             # yes, we'll process all children of the root node
             # (this prevents us having to create an empty as a root)
             blocks = root_node.Ptr().GetChildren()
             # import the extras
-            textkey = find_extra(root_block, "NiTextKeyExtraData")
-            if textkey != NULL: fb_textkey(textkey)
+            #textkey = find_extra(root_block, "NiTextKeyExtraData")
+            #if textkey != None: fb_textkey(textkey)
         else:
             # this fixes an issue with nifs where the first block is a NiTriShape
             blocks = [ root_block ]
@@ -349,41 +349,41 @@ def import_main(root_block):
     #b_scene.getCurrentCamera()
     
 # Reads the content of the current NIF tree branch to Blender recursively
-def read_branch(niBlock):
+def read_branch(objRef):
     # used to control the progress bar
     global block_count, blocks_read, read_progress
     blocks_read += 1.0
     if (blocks_read/(block_count+1)) >= (read_progress + 0.1):
         read_progress = blocks_read/(block_count+1)
         Blender.Window.DrawProgressBar(read_progress, "Importing data")
-    if niBlock != NULL:
-        if niBlock.Ptr().IsDerivedType( NiTriBasedGeom_TypeConst() ):
+    if objRef != None:
+        if objRef.Ptr().IsDerivedType( NiTriBasedGeom_TypeConst() ):
             # it's a shape node
-            return fb_mesh(niBlock)
-        elif niBlock.Ptr().IsDerivedType( NiNode_TypeConst() ):
+            return fb_mesh(objRef)
+        elif objRef.Ptr().IsDerivedType( NiNode_TypeConst() ):
             # it's a parent node
             # import object + children
-            niNode = DynamicCastToNiNode( niBlock.Ptr() )
-            niChildren = niNode.Ptr().GetChildren()
+            niNodeRef = DynamicCastToNiNode( objRef.Ptr() )
+            niChildren = objRef.Ptr().GetChildren()
             b_obj = None
-            if is_armature_root(niBlock):
+            if is_armature_root(niNodeRef):
                 # the whole bone branch is imported by fb_armature as well
-                b_obj = fb_armature(niBlock)
+                b_obj = fb_armature(objRef)
                 # now also do the meshes
-                read_armature_branch(b_obj, niBlock, niBlock)
+                read_armature_branch(b_obj, objRef, objRef)
             else:
                 # it's a grouping node
-                b_obj = fb_empty(niBlock)
+                b_obj = fb_empty(objRef)
                 b_children_list = []
                 for child in niChildren:
                     b_child_obj = read_branch(child)
                     if b_child_obj: b_children_list.append(b_child_obj)
                 b_obj.makeParent(b_children_list)
-            b_obj.setMatrix(fb_matrix(niBlock))
+            b_obj.setMatrix(fb_matrix(objRef))
             # import the animations
-            set_animation(niBlock, b_obj)
+            set_animation(objRef, b_obj)
             # import the extras
-            textkey = find_extra(niBlock, "NiTextKeyExtraData")
+            textkey = find_extra(objRef, "NiTextKeyExtraData")
             if not textkey.is_null(): fb_textkey(textkey)
             return b_obj
         else:
@@ -518,7 +518,7 @@ def material_hash(matProperty, textProperty, alphaProperty, specProperty):
 #
 # Get unique name for an object, preserving existing names
 #
-def fb_name(niBlock,max_length=22):
+def fb_name(objRef, max_length=22):
     """
     Get unique name for an object, preserving existing names
     The maximum name length defaults to 22, since this is the
@@ -529,7 +529,8 @@ def fb_name(niBlock,max_length=22):
 
     # find unique name for Blender to use
     uniqueInt = 0
-    niName = niBlock["Name"].asString()
+    AVObjectRef = DynamicCastToNiAVObject(objRef.Ptr())
+    niName = AVObjectRef.Ptr().GetName()
     # remove the "Tri " prefix; this will help when exporting the model again
     if niName[:4] == "Tri ":
         niName = niName[4:]
@@ -537,10 +538,10 @@ def fb_name(niBlock,max_length=22):
     try:
         while Blender.Object.Get(name):
             name = '%s.%02d' % (niName[:max_length-4], uniqueInt)
+            print name
             uniqueInt +=1
     except:
         pass
-
     # save mapping
     NAMES[niName] = name
 
@@ -593,16 +594,16 @@ def decompose_srt(m):
 
 
 # Creates and returns a grouping empty
-def fb_empty(niBlock):
+def fb_empty(objRef):
     global b_scene
-    b_empty = Blender.Object.New("Empty", fb_name(niBlock,22))
+    b_empty = Blender.Object.New("Empty", fb_name(objRef,22))
     b_scene.link(b_empty)
     return b_empty
 
 # Scans an armature hierarchy, and returns a whole armature.
 # This is done outside the normal node tree scan to allow for positioning of
 # the bones.
-def fb_armature(niBlock):
+def fb_armature(objRef):
     global b_scene
     
     armature_name = fb_name(niBlock,)
@@ -1081,10 +1082,10 @@ def fb_material(matProperty, textProperty, alphaProperty, specProperty):
     return material
 
 # Creates and returns a raw mesh
-def fb_mesh(niBlock):
+def fb_mesh(objRef):
     global b_scene
     # Mesh name -> must be unique, so tag it if needed
-    b_name=fb_name(niBlock,22)
+    b_name=fb_name(objRef,22)
     # we mostly work directly on Blender's objects (b_meshData)
     # but for some tasks we must use the Python wrapper (b_nmeshData), see further
     b_meshData = Blender.Mesh.New(b_name)
@@ -1153,17 +1154,14 @@ def fb_mesh(niBlock):
             # see if we already added this guy, and if so, what index
             try:
                 n_map_k = n_map[k] # this is the bottle neck... can we speed this up?
+                # the exception will be raised here, so the next section is skipped if the vertex is not found
+                v_map[i] = v_map[n_map_k] # NIF vertex i maps to Blender v_map[vertex n_map_nk]                
             except KeyError:
-                n_map_k = None
-            if n_map_k == None:
                 # not added: new vertex / normal pair
                 n_map[k] = i         # unique vertex / normal pair with key k was added, with NIF index i
                 v_map[i] = b_v_index # NIF vertex i maps to blender vertex b_v_index
                 b_meshData.verts.extend(v.x, v.y, v.z) # add the vertex
                 b_v_index += 1
-            else:
-                # already added
-                v_map[i] = v_map[n_map_k] # NIF vertex i maps to Blender v_map[vertex n_map_nk]
         # release memory
         del n_map
 
@@ -1601,8 +1599,9 @@ def is_bone(niBlock):
 
 # Tests a NiNode to see if it's an armature.
 def is_armature_root(objRef):
-    print objRef
-    return BONE_LIST.has_key(objRef.GetName())
+    AVObjectRef = DynamicCastToNiAVObject(objRef.Ptr())
+    #print "-----------------%s\n\n" % (AVObjectRef)
+    return BONE_LIST.has_key(AVObjectRef.Ptr().GetName())
     
 # Detect closest bone ancestor.
 def get_closest_bone(niBlock):
@@ -1741,13 +1740,13 @@ def scale_tree(objRef, scale):
     #inode = QueryNode(block)
     nodeRef = DynamicCastToNiNode(objRef.Ptr())
     if nodeRef != None: # is it a node?
-        nodeObj = nodeRef.Ptr()
+        #nodeObj = nodeRef.Ptr()
         # NiNode transform scale
-        t = nodeObj.GetLocalTranslation()
-        t.x *= scale
-        t.y *= scale
-        t.z *= scale
-        nodeObj.SetLocalTranslation(t)
+        #t = nodeObj.GetLocalTranslation()
+        #t.x *= scale
+        #t.y *= scale
+        #t.z *= scale
+        nodeRef.Ptr().SetLocalTranslation(nodeRef.Ptr().GetLocalTranslation() * scale)
         """
         # NiNode bind position transform scale
         mat = inode.GetWorldBindPos()
@@ -1787,7 +1786,7 @@ def scale_tree(objRef, scale):
             ctrl = ctrl["Next Controller"].asLink()
         """
         # Child block scale
-        children = nodeObj.GetChildren()
+        children = nodeRef.Ptr().GetChildren()
         if children != None:
         #if not block["Children"].is_null(): # block has children
             for childRef in children:
@@ -1800,13 +1799,13 @@ def scale_tree(objRef, scale):
     if triRef != None:
         #triObj = triRef.Ptr()
         #triData = triObj.GetData().Ptr()
-        triData = triRef.Ptr().GetData().Ptr()
-        vertList = triData.GetVertices()
+        triDataRef = triRef.Ptr().GetData()
+        vertList = triDataRef.Ptr().GetVertices()
         for vert in vertList:
             vert.x *= scale
             vert.y *= scale
             vert.z *= scale
-        triData.SetVertices(vertList)
+        triDataRef.Ptr().SetVertices(vertList)
     """
     ishapedata = QueryShapeData(block)
     if ishapedata: # is it a shape?
