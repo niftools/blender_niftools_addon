@@ -139,6 +139,7 @@ NIF_BLOCKS = [] # keeps track of all exported blocks
 NIF_TEXTURES = {} # keeps track of all exported textures
 NIF_MATERIALS = {} # keeps track of all exported materials
 NAMES = {} # maps Blender names to imported names if present
+NIF_BLOCK_NAMES = [] # keeps track of block names, to make sure they are unique
 
 # dictionary of bones, maps Blender bone name to matrix that maps the
 # NIF bone matrix on the Blender bone matrix
@@ -303,15 +304,35 @@ def rebuild_full_name_map():
             name, fullname = ln.split(';')
             NAMES[name] = fullname
 
+
+def get_unique_name(blender_name):
+    """
+    Returns an unique name
+    """
+    global NIF_BLOCK_NAMES
+    unique_name = "default_name"
+    if blender_name != None:
+        unique_name = blender_name
+    if unique_name in NIF_BLOCK_NAMES:
+        unique_int = 0
+        old_name = unique_name
+        while unique_name in NIF_BLOCK_NAMES:
+            # since the name length is an unsigned int I think I can avoid setting a maximum length
+            #unique_name = '%s.%02d' % (old_name[:max_length-4], unique_int)
+            unique_name = '%s.%02d' % (old_name, unique_int)
+            unique_int +=1
+    NIF_BLOCK_NAMES.append(unique_name)
+    return unique_name
+
 def get_full_name(blender_name):
     """
     Returns the original imported name if present
     """
-    global NAMES
+    global NAMES, NIFOBJECT_NAMES
     try:
-        return NAMES[blender_name]
-    except:
-        return blender_name
+        return get_unique_name(NAMES[blender_name])
+    except KeyError:
+        return get_unique_name(blender_name)
 
 #
 # Main export function.
