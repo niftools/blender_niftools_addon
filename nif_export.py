@@ -1294,14 +1294,16 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
         if (parent_block["Name"].asString() != ""):
             if len(mesh_mats) > 1:
                 if (trishape_name == None):
-                    trishape["Name"] = "Tri " + parent_block["Name"].asString() + " %i"%materialIndex # Morrowind's child naming convention
+                    trishape_name = "Tri " + parent_block["Name"].asString() + " %i"%materialIndex # Morrowind's child naming convention
                 else:
                     # This should take care of "manually merged" meshes. 
-                    trishape["Name"] = trishape_name + " %i"%materialIndex
+                    trishape_name = trishape_name + " %i"%materialIndex
             else:
                 # this is a hack for single materialed meshes
                 assert(materialIndex == 0)
-                trishape["Name"] = get_full_name(trishape_name)
+                if (trishape_name == None):
+                    trishape_name = "Tri " + parent_block["Name"].asString()
+        trishape["Name"] = get_full_name(trishape_name)
         if ob.getDrawType() != 2: # not wire
             trishape["Flags"] = 0x0004 # use triangles as bounding box
         else:
