@@ -15,7 +15,7 @@ Tooltip: 'Import NIF File Format (.nif & .kf)'
 
 __author__ = "The NifTools team, http://niftools.sourceforge.net/"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
-__version__ = "1.5.6"
+__version__ = "1.5.7"
 __bpydoc__ = """\
 This script imports Netimmerse and Gamebryo .NIF files to Blender.
 
@@ -42,7 +42,7 @@ Config options (Scripts->System->Scripts Config Editor->Import):<br>
 large NIF files takes too long.<br>
 """
 
-# nif_import.py version 1.5.4
+# nif_import.py version 1.5.7
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -279,16 +279,17 @@ def fit_view():
 # Main import function.
 #
 def import_nif(filename):
-    Blender.Window.DrawProgressBar(0.0, "Initializing")
-    # texture dirs
-    global NIF_DIR, TEX_DIR
-    NIF_DIR = Blender.sys.dirname(filename)
-    idx = NIF_DIR.lower().find('meshes')
-    if ( idx >= 0 ):
-        TEX_DIR = NIF_DIR[:idx] + 'textures'
-    else:
-        TEX_DIR = None
     try: # catch NIFImportErrors
+        print "NIFTools NIF import script version %s" % (__version__)
+        Blender.Window.DrawProgressBar(0.0, "Initializing")
+        # texture dirs
+        global NIF_DIR, TEX_DIR
+        NIF_DIR = Blender.sys.dirname(filename)
+        idx = NIF_DIR.lower().find('meshes')
+        if ( idx >= 0 ):
+            TEX_DIR = NIF_DIR[:idx] + 'textures'
+        else:
+            TEX_DIR = None
         # read the NIF file
         ver = CheckNifHeader(filename)
         if ( ver == VER_INVALID ):

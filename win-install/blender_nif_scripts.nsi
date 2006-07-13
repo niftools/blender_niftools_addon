@@ -3,7 +3,7 @@
 ; (NifTools - http://niftools.sourceforge.net) 
 ; (NSIS - http://nsis.sourceforge.net)
 ;
-; Copyright (c) 2005, NIF File Format Library and Tools
+; Copyright (c) 2005-2006, NIF File Format Library and Tools
 ; All rights reserved.
 ; 
 ; Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@
 
 !include "MUI.nsh"
 
-!define VERSION "1.5.6"
+!define VERSION "1.5.7"
 
 Name "Blender NIF Scripts ${VERSION}"
 Var BLENDERHOME

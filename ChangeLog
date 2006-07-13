@@ -83,7 +83,7 @@ now no longer require to be applied transformation with NifSkope)
 * Import/Export: bone names are restored
 
 Version 1.5.4 (Jun 12, 2006)
-* Export: fixed a bug in with apply_scale_tree
+* Export: fixed a bug in apply_scale_tree
 
 Version 1.5.5 (Jun 15, 2006)
 * Import: fixed import of zero length bones.
@@ -92,3 +92,8 @@ Version 1.5.5 (Jun 15, 2006)
 Version 1.5.6 (Jun 19, 2006)
 * Export: fixed export of multi-material meshes.
 * Export: fixed export of zero-weighted vertexes.
+
+Version 1.5.7 (Jul 13, 2006)
+* Import: further fix on zero length bones.
+* Export: fixed export of unnamed objects.
+* Export: fixed export of meshes parented to other meshes.

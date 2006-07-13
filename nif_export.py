@@ -15,7 +15,7 @@ Tooltip: 'Export selected meshes to NIF File Format (*.nif & *.kf)'
 
 __author__ = "The NifTools team, http://niftools.sourceforge.net/"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
-__version__ = "1.5.6"
+__version__ = "1.5.7"
 __bpydoc__ = """\
 This script exports selected meshes, along with parents, children, and
 armatures, to a *.nif file. If animation is present,  x*.nif and a x*.kf
@@ -61,7 +61,7 @@ putting 4.2.2.0, 10.0.1.0, 10.1.0.0, 10.2.0.0, or 20.0.0.4 here)<br>
     export dir: default directory to open when script starts<br>
 """
 
-# nif_export.py version 1.5.4
+# nif_export.py version 1.5.7
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
 #
@@ -337,11 +337,12 @@ def get_full_name(blender_name):
 #
 # Main export function.
 #
-def export_nif(filename):    
+def export_nif(filename):
     try: # catch NIFExportErrors
         
         # preparation:
         #--------------
+        print "NIFTools NIF export script version %s" % (__version__)
         Blender.Window.DrawProgressBar(0.0, "Preparing Export")
         
         # armatures should not be in rest position
