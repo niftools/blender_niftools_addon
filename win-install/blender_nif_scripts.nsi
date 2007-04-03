@@ -3,7 +3,7 @@
 ; (NifTools - http://niftools.sourceforge.net) 
 ; (NSIS - http://nsis.sourceforge.net)
 ;
-; Copyright (c) 2005-2006, NIF File Format Library and Tools
+; Copyright (c) 2005-2007, NIF File Format Library and Tools
 ; All rights reserved.
 ; 
 ; Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@
 
 !include "MUI.nsh"
 
-!define VERSION "1.5.7"
+!define VERSION "1.9.0"
 
 Name "Blender NIF Scripts ${VERSION}"
 Var BLENDERHOME
@@ -190,10 +190,14 @@ Section
   SetOutPath $BLENDERSCRIPTS
   File ..\nif_export.py
   File ..\nif_import.py
+  ; TODO update to pyniflib (or, bundle pyniflib separately?)
+  ;      This suggestion will create a mess in the Blender modules directory.
+  ;      Better perhaps, separate module directory (using __init__) instead?
   SetOutPath "$PYTHONPATH_LIB"
-  File ..\..\niflib\niflib.py
+  ;File ..\..\contrib\niflib\pywrap\Release\Lib\*.py
   SetOutPath "$PYTHONPATH_DLL"
-  File ..\..\niflib\_niflib.dll
+  ;File ..\..\contrib\niflib\pywrap\Release\DLLs\_*.dll
+  ; TODO what with niflib.dll?
 
   ; Install documentation files
   SetOutPath $INSTDIR

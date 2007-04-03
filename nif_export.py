@@ -2,7 +2,7 @@
 
 """ Registration info for Blender menus:
 Name: 'NetImmerse/Gamebryo (.nif & .kf)...'
-Blender: 241
+Blender: 243
 Group: 'Export'
 Tooltip: 'Export selected meshes to NIF File Format (*.nif & *.kf)'
 """
@@ -15,7 +15,7 @@ Tooltip: 'Export selected meshes to NIF File Format (*.nif & *.kf)'
 
 __author__ = "The NifTools team, http://niftools.sourceforge.net/"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
-__version__ = "1.5.7"
+__version__ = "1.9.0"
 __bpydoc__ = """\
 This script exports selected meshes, along with parents, children, and
 armatures, to a *.nif file. If animation is present,  x*.nif and a x*.kf
@@ -61,11 +61,11 @@ putting 4.2.2.0, 10.0.1.0, 10.1.0.0, 10.2.0.0, or 20.0.0.4 here)<br>
     export dir: default directory to open when script starts<br>
 """
 
-# nif_export.py version 1.5.7
+# nif_export.py version 1.9.0
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
 #
-# Copyright (c) 2005, NIF File Format Library and Tools
+# Copyright (c) 2005-2007, NIF File Format Library and Tools
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without

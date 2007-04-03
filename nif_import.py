@@ -2,7 +2,7 @@
 
 """ Registration info for Blender menus:
 Name: 'NetImmerse/Gamebryo (.nif & .kf)...'
-Blender: 241
+Blender: 243
 Group: 'Import'
 Tooltip: 'Import NIF File Format (.nif & .kf)'
 """
@@ -15,7 +15,7 @@ Tooltip: 'Import NIF File Format (.nif & .kf)'
 
 __author__ = "The NifTools team, http://niftools.sourceforge.net/"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
-__version__ = "1.5.7"
+__version__ = "1.9.0"
 __bpydoc__ = """\
 This script imports Netimmerse and Gamebryo .NIF files to Blender.
 
@@ -42,13 +42,13 @@ Config options (Scripts->System->Scripts Config Editor->Import):<br>
 large NIF files takes too long.<br>
 """
 
-# nif_import.py version 1.5.7
+# nif_import.py version 1.9.0
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
 # 
 # BSD License
 # 
-# Copyright (c) 2005, NIF File Format Library and Tools
+# Copyright (c) 2005-2007, NIF File Format Library and Tools
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -110,12 +110,12 @@ from Blender.Mathutils import *
 
 
 try:
-    from niflib import *
+    from pyniflib import *
 except:
     err = """--------------------------
-ERROR\nThis script requires the NIFLIB Python SWIG wrapper, niflib.py & _niflib.dll.
-Make sure these files reside in your Python path or in your Blender scripts folder.
-If you don't have them: http://niftools.sourceforge.net/
+ERROR\nThis script requires the NIFLIB Python SWIG wrapper.
+Make sure this module resides in your Python path or in your Blender scripts folder.
+You can download it from: http://niftools.sourceforge.net/
 --------------------------"""
     print err
     Blender.Draw.PupMenu("ERROR%t|NIFLIB not found, check console for details")
