@@ -1,6 +1,6 @@
 import Blender
 from Blender import Draw
-import Defaults, Config
+import Defaults, Config, Read
 
 # All UI elements are kept in this dictionary to make sure they never go out of scope
 _GUI_ELEMENTS = {}
@@ -13,14 +13,14 @@ def __init__():
 def gui():
     global _GUI_ELEMENTS
     global _WINDOW_SIZE
-    WW = _WINDOW_SIZE[0]
-    WH = _WINDOW_SIZE[1]
+    #W = _WINDOW_SIZE[0]
+    H = _WINDOW_SIZE[1]
     #Draw.String(name, event, x, y, width, height, initial, length, tooltip=None)
-    _GUI_ELEMENTS["CONFIG"]     = Draw.PushButton('configure',  100, 70, WH-75, 100, 20)
-    #_GUI_ELEMENTS["TOOLS"]      = Draw.PushButton('tools',      110, 70, WH-100, 100, 20)
-    _GUI_ELEMENTS["IMPORT"]     = Draw.PushButton('import',     120, 70, WH-100, 100, 20)
-    _GUI_ELEMENTS["EXPORT"]     = Draw.PushButton('export',     130, 70, WH-125, 100, 20)
-    _GUI_ELEMENTS["CLOSE"]      = Draw.PushButton('close',      140, 70, WH-250, 100, 20)
+    _GUI_ELEMENTS["CONFIG"]     = Draw.PushButton('configure',  100, 50, H-75, 100, 20)
+    #_GUI_ELEMENTS["TOOLS"]      = Draw.PushButton('tools',      110, 50, WH-100, 100, 20)
+    _GUI_ELEMENTS["IMPORT"]     = Draw.PushButton('import',     120, 50, H-100, 100, 20)
+    _GUI_ELEMENTS["EXPORT"]     = Draw.PushButton('export',     130, 50, H-125, 100, 20)
+    _GUI_ELEMENTS["CLOSE"]      = Draw.PushButton('close',      140, 50, H-250, 100, 20)
     Draw.Redraw(1)
 
 
@@ -35,6 +35,10 @@ def buttonEvent(idEvent):
         close()
         reload(Config)
         Config.open()
+    elif idEvent == 120:
+        close()
+        reload(Read)
+        Read.open()
     else:
         Draw.Redraw(1)
         

@@ -1,6 +1,80 @@
+import Blender
+import Config, Main
+from Blender import Draw
+from Blender.Mathutils import *
+
+_CONFIG = {}
+_GUI_ELEMENTS = {}
+_WINDOW_SIZE = Blender.Window.GetAreaSize()
 
 
-import Blender, sys, os
+
+def __init__():
+    global _CONFIG
+    global _WINDOW_SIZE
+    _WINDOW_SIZE = Blender.Window.GetAreaSize()
+    reload(Config)
+    _CONFIG = Config._CONFIG
+    print "--------", _CONFIG
+
+def gui():
+    global _GUI_ELEMENTS
+    global _WINDOW_SIZE
+    global _CONFIG
+    # These are to save me some typing
+    #W = _WINDOW_SIZE[0]
+    H = _WINDOW_SIZE[1]
+    E = {}
+    # Draw.String(name, event, x, y, width, height, initial, length, tooltip=None) 
+    E["_NIF_IMPORT_PATH"]       = Draw.String("",          150,  50, H- 75, 350, 20, _CONFIG["_NIF_IMPORT_PATH"],        350, "export path")
+    E["_BROWSE_IMPORT_PATH"]    = Draw.PushButton('browse',155, 410, H- 75, 100, 20)
+    E["CANCEL"]                 = Draw.PushButton('cancel',250,  50, H-225, 100, 20)
+    _GUI_ELEMENTS = E
+    Draw.Redraw(1)
+
+def buttonEvent(idEvent):
+    """
+    Event handler for buttons
+    """
+    print  "buttonEvent(idEvent=%i)"%(idEvent)
+    if idEvent == 260:
+        save()
+        exit()
+    elif  idEvent == 250:
+        exit()
+    elif  idEvent == 240:
+        _CONFIG["_REALIGN_BONES"] = (not _CONFIG["_REALIGN_BONES"])
+    else:
+        None
+    Draw.Redraw(1)
+
+def event(arg1, arg2):
+    """
+    Event handler for GUI elements
+    """
+    #print  "event(%i,%i)"%(arg1,arg2)
+    None
+
+def open():
+    """
+    Opens the import GUI
+    """
+    global _WINDOW_SIZE
+    _WINDOW_SIZE = Blender.Window.GetAreaSize()
+    reload(Config)
+    Config.clean()
+    global _CONFIG
+    _CONFIG = Config._CONFIG
+    Draw.Register(gui, event, buttonEvent)
+
+def exit():
+    """
+    Closes the config GUI
+    """
+    Draw.Exit()
+    reload(Main)
+    Main.open()
+
 
 try:
     from pyniflib import *
@@ -64,70 +138,11 @@ _D2R = 180.0/3.14159265358979 # degrees to radians conversion constant
 _SCENE = Blender.Scene.GetCurrent()
 _FPS = _SCENE.getRenderingContext().framesPerSec() #frames per second
 
-# 
-# Process config files.
-# 
-
-# configuration default values
-# Morrowind: this will work on a standard installation
-_TEXTURES_DIR = os.getEnv('ProgramFiles') + r'\Bethesda\Morrowind\Data Files\Textures'
-_IMPORT_DIR = os.getEnv('ProgramFiles') + r'\Bethesda\Morrowind\Data Files\Meshes'
-_SEAMS_IMPORT = True
-
-
-# update registry
-def update_registry():
-    # populate a dict with current config values:
-    d = {}
-    d['_TEXTURES_DIR'] = _TEXTURES_DIR
-    d['_IMPORT_DIR'] = _IMPORT_DIR
-    d['_SEAMS_IMPORT'] = _SEAMS_IMPORT
-    # store the key
-    Blender.Registry.SetKey('nif_import', d, True)
-    read_registry()
-
-# Now we check if our key is available in the Registry or file system:
-def read_registry():
-    global _TEXTURES_DIR, _IMPORT_DIR, _SEAMS_IMPORT
-    regdict = Blender.Registry.GetKey('nif_import', True)
-    # If this key already exists, update config variables with its values:
-    if regdict:
-        try:
-            _TEXTURES_DIR = regdict['_TEXTURES_DIR'] 
-            _IMPORT_DIR = regdict['_IMPORT_DIR']
-            _SEAMS_IMPORT = regdict['_SEAMS_IMPORT']
-        # if data was corrupted (or a new version of the script changed
-        # (expanded, removed, renamed) the config vars and users may have
-        # the old config file around):
-        except: update_registry() # rewrite it
-    else: # if the key doesn't exist yet, use our function to create it:
-        update_registry()
-
-read_registry()
-
-
-
-# check export script config key for scale correction
-
-SCALE_CORRECTION = 10.0 # same default value as in export script
-
-rd = Blender.Registry.GetKey('nif_export', True)
-if rd:
-    try:
-        SCALE_CORRECTION = rd['SCALE_CORRECTION']
-    except: pass
 
 # check General scripts config key for default behaviors
-
 VERBOSE = True
 CONFIRM_OVERWRITE = True
 
-rd = Blender.Registry.GetKey('General', True)
-if rd:
-    try:
-        VERBOSE = rd['verbose']
-        CONFIRM_OVERWRITE = rd['confirm_overwrite']
-    except: pass
 
 # Little wrapper for debug messages
 def msg(message='-', level=2):
@@ -1214,70 +1229,7 @@ def fb_mesh(niBlock):
                 b_meshData.assignVertsToGroup(groupName, [v_map[vert]], weight, Blender.Mesh.AssignModes.REPLACE)
 
     b_meshData.calcNormals() # let Blender calculate vertex normals
-    
-    """
-    # geometry morphing: here we need the NMesh b_nmeshData
-    # the Mesh object has no vertex key Python API (yet?)
-    b_nmeshData = Blender.NMesh.GetRaw(b_meshData.name)
-    morphCtrl = find_controller(niBlock, "NiGeomMorpherController")
-    if morphCtrl.is_null() == False:
-        morphData = morphCtrl["Data"].asLink()
-        if ( morphData.is_null() == False ):
-            iMorphData = QueryMorphData(morphData)
-            if ( iMorphData.GetMorphCount() > 0 ):
-                # insert base key
-                b_nmeshData.insertKey( 0, 'relative' )
-                baseverts = iMorphData.GetMorphVerts( 0 )
-                ipo = Blender.Ipo.New( 'Key', 'KeyIpo' )
-                # iterate through the list of other morph keys
-                for key in range(1,iMorphData.GetMorphCount()):
-                    morphverts = iMorphData.GetMorphVerts( key )
-                    # for each vertex calculate the key position from base pos + delta offset
-                    for count in range( iMorphData.GetVertexCount() ):
-                        x = baseverts[count].x
-                        y = baseverts[count].y
-                        z = baseverts[count].z
-                        dx = morphverts[count].x
-                        dy = morphverts[count].y
-                        dz = morphverts[count].z
-                        b_nmeshData.verts[v_map[count]].co[0] = x + dx
-                        b_nmeshData.verts[v_map[count]].co[1] = y + dy
-                        b_nmeshData.verts[v_map[count]].co[2] = z + dz
-                    # update the mesh and insert key
-                    b_nmeshData.update(recalc_normals=1) # recalculate normals
-                    b_nmeshData.insertKey(key, 'relative')
-                    # set up the ipo key curve
-                    curve = ipo.addCurve( 'Key %i'%key )
-                    # dunno how to set up the bezier triples -> switching to linear instead
-                    curve.setInterpolation( 'Linear' )
-                    # select extrapolation
-                    if ( morphCtrl["Flags"].asInt() == 0x000c ):
-                        curve.setExtrapolation( 'Constant' )
-                    elif ( morphCtrl["Flags"].asInt() == 0x0008 ):
-                        curve.setExtrapolation( 'Cyclic' )
-                    else:
-                        msg( 'dunno which extrapolation to use: using constant instead', 2 )
-                        curve.setExtrapolation( 'Constant' )
-                    # set up the curve's control points
-                    morphkeys = iMorphData.GetMorphKeys(key)
-                    for count in range(len(morphkeys)):
-                        morphkey = morphkeys[count]
-                        time = morphkey.time
-                        x = morphkey.data
-                        frame = time * Blender.Scene.GetCurrent().getRenderingContext().framesPerSec() + 1
-                        curve.addBezier( ( frame, x ) )
-                    # finally: return to base position
-                    for count in range( iMorphData.GetVertexCount() ):
-                        x = baseverts[count].x
-                        y = baseverts[count].y
-                        z = baseverts[count].z
-                        b_nmeshData.verts[v_map[count]].co[0] = x
-                        b_nmeshData.verts[v_map[count]].co[1] = y
-                        b_nmeshData.verts[v_map[count]].co[2] = z
-                    b_nmeshData.update(recalc_normals=1) # recalculate normals
-                # assign ipo to mesh
-                b_nmeshData.key.ipo = ipo
-    """
+
     # new implementation, uses Mesh instead
     morphCtrl = find_controller(niBlock, "NiGeomMorpherController")
     if morphCtrl.is_null() == False:
@@ -1743,102 +1695,3 @@ def scale_tree(block, scale):
                 vert.z *= scale
             ishapedata.SetVertices(vertlist)
 
-
-
-#----------------------------------------------------------------------------------------------------#
-#----------------------------------------------------------------------------------------------------#
-#-------- Run importer GUI.
-#----------------------------------------------------------------------------------------------------#
-#----------------------------------------------------------------------------------------------------#
-# global dictionary of GUI elements to keep them allocated
-gui_elem={}
-def gui_draw():
-    global SCALE_CORRECTION, FORCE_DDS, STRIP_TEXPATH, _SEAMS_IMPORT, LAST_IMPORTED, _TEXTURES_DIR
-    
-    BGL.glClearColor(0.753, 0.753, 0.753, 0.0)
-    BGL.glClear(BGL.GL_COLOR_BUFFER_BIT)
-
-    BGL.glColor3f(0.000, 0.000, 0.000)
-    BGL.glRasterPos2i(8, 92)
-    gui_elem["label_0"] = Draw.Text('Tex Path:')
-    BGL.glRasterPos2i(8, 188)
-    gui_elem["label_1"] = Draw.Text('Seams:')
-
-    gui_elem["bt_browse"] = Draw.Button('Browse', 1, 8, 48, 55, 23, '')
-    gui_elem["bt_import"] = Draw.Button('Import NIF', 2, 8, 8, 87, 23, '')
-    gui_elem["bt_cancel"] = Draw.Button('Cancel', 3, 208, 8, 71, 23, '')
-    gui_elem["tg_smooth_0"] = Draw.Toggle('Smoothing Flag (Slow)', 6, 88, 112, 191, 23, _SEAMS_IMPORT == 2, 'Import seams and convert them to "the Blender way", is slow and imperfect, unless model was created by Blender and had no duplicate vertices.')
-    gui_elem["tg_smooth_1"] = Draw.Toggle('Vertex Duplication (Slow)', 7, 88, 144, 191, 23, _SEAMS_IMPORT == 1, 'Perfect but slow, this is the preferred method if the model you are importing is not too large.')
-    gui_elem["tg_smooth_2"] = Draw.Toggle('Vertex Duplication (Fast)', 8, 88, 176, 191, 23, _SEAMS_IMPORT == 0, 'Fast but imperfect: may introduce unwanted cracks in UV seams')
-    gui_elem["tx_texpath"] = Draw.String('', 4, 72, 80, 207, 23, _TEXTURES_DIR, 512, 'Semi-colon separated list of texture directories.')
-    gui_elem["tx_last"] = Draw.String('', 5, 72, 48, 207, 23, LAST_IMPORTED, 512, '')
-    gui_elem["sl_scale"] = Draw.Slider('Scale Correction: ', 9, 8, 208, 271, 23, SCALE_CORRECTION, 0.01, 100, 0, 'How many NIF units is one Blender unit?')
-
-def gui_select(filename):
-    global LAST_IMPORTED
-    LAST_IMPORTED = filename
-    Draw.Redraw(1)
-    
-def gui_evt_key(evt, val):
-    if (evt == Draw.QKEY and not val):
-        Draw.Exit()
-
-def gui_evt_button(evt):
-    global _SEAMS_IMPORT
-    global SCALE_CORRECTION, force_dds, strip_texpath, _SEAMS_IMPORT, LAST_IMPORTED, _TEXTURES_DIR
-    
-    if evt == 6: #Toggle3
-        _SEAMS_IMPORT = 2
-        Draw.Redraw(1)
-    elif evt == 7: #Toggle2
-        _SEAMS_IMPORT = 1
-        Draw.Redraw(1)
-    elif evt == 8: #Toggle1
-        _SEAMS_IMPORT = 0
-        Draw.Redraw(1)
-    elif evt == 1: # Browse
-        Blender.Window.FileSelector(gui_select, 'Select')
-        Draw.Redraw(1)
-    elif evt == 4: # TexPath
-        _TEXTURES_DIR = gui_elem["tx_texpath"].val
-    elif evt == 5: # filename
-        LAST_IMPORTED = gui_elem["tx_last"].val
-    elif evt == 9: # scale
-        SCALE_CORRECTION = gui_elem["sl_scale"].val
-    elif evt == 2: # Import NIF
-        # Stop GUI.
-        gui_elem = None
-        Draw.Exit()
-        gui_import()
-    elif evt == 3: # Cancel
-        gui_elem = None
-        Draw.Exit()
-
-def gui_import():
-    global _SEAMS_IMPORT
-    # Save options for next time.
-    update_registry()
-    # Import file.
-    if _SEAMS_IMPORT == 2:
-        msg("Smoothing import not implemented yet, selecting slow vertex duplication method instead.", 1)
-        _SEAMS_IMPORT = 1
-    import_nif(LAST_IMPORTED)
-
-if USE_GUI:
-    Draw.Register(gui_draw, gui_evt_key, gui_evt_button)
-else:
-    if __script__['arg'] == 'kfm':
-        if _IMPORT_DIR:
-            Blender.Window.FileSelector(import_kfm, 'Import KFM', _IMPORT_DIR)
-        else:
-            Blender.Window.FileSelector(import_kfm, 'Import KFM')
-    elif __script__['arg'] == 'kf':
-        if _IMPORT_DIR:
-            Blender.Window.FileSelector(import_kf, 'Import KF', _IMPORT_DIR)
-        else:
-            Blender.Window.FileSelector(import_kf, 'Import KF')
-    else:
-        if _IMPORT_DIR:
-            Blender.Window.FileSelector(import_nif, 'Import NIF', _IMPORT_DIR)
-        else:
-            Blender.Window.FileSelector(import_nif, 'Import NIF')
