@@ -242,7 +242,7 @@ Section "Uninstall"
 
   ; remove script files
   Delete "$BLENDERSCRIPTS\nif_export.py"
-  Delete "$BLENDERSCRIPTS\nif4_import_240.py"
+  Delete "$BLENDERSCRIPTS\nif_import.py"
   Delete "$PYTHONPATH_LIB\niflib.py"
   Delete "$PYTHONPATH_LIB\niflib.pyc"
   Delete "$PYTHONPATH_DLL\_niflib.dll"
