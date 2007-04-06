@@ -3,8 +3,8 @@
 """ Registration info for Blender menus:
 Name: 'NetImmerse/Gamebryo (.nif & .kf) - NEW'
 Blender: 243
-Group: 'Import'
-Tooltip: 'Import NIF File Format (.nif & .kf) - NEW'
+Group: 'Export'
+Tooltip: 'Export NIF File Format (.nif & .kf) - NEW'
 """
 
 __author__ = "The NifTools team, http://niftools.sourceforge.net/"
@@ -17,7 +17,8 @@ Supported:<br>
     Nothing right now<br>
 
 Missing:<br>
-    Everything<br>
+    The actual script<br>
+
 """
 
 # nif_import.py version 1.*.*
@@ -83,9 +84,9 @@ Missing:<br>
 
 
 import nifImEx
-from nifImEx import Read
-reload(nifImEx.Read)
+from nifImEx import Write
+reload(nifImEx.Write)
 
-nifImEx.Read.open()
+nifImEx.Write.open()
 
 

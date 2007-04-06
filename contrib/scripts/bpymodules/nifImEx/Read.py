@@ -1,59 +1,88 @@
 import Blender
-import Config, Main
-from Blender import Draw
+import Config
+from Blender import Draw, BGL, sys
 from Blender.Mathutils import *
 
 _CONFIG = {}
 _GUI_ELEMENTS = {}
 _WINDOW_SIZE = Blender.Window.GetAreaSize()
+_LOGO_PATH = sys.sep.join((Blender.Get('scriptsdir'),"bpymodules","nifImEx","niftools_logo.png"))
+_LOGO_IMAGE = Blender.Image.Load(_LOGO_PATH)
 
 
 
 def __init__():
-    global _CONFIG
-    global _WINDOW_SIZE
+    global _CONFIG, _WINDOW_SIZE
     _WINDOW_SIZE = Blender.Window.GetAreaSize()
-    reload(Config)
     _CONFIG = Config._CONFIG
     print "--------", _CONFIG
 
 def gui():
-    global _GUI_ELEMENTS
-    global _WINDOW_SIZE
-    global _CONFIG
+    global _GUI_ELEMENTS, _CONFIG, _LOGO_IMAGE, _WINDOW_SIZE
     # These are to save me some typing
     #W = _WINDOW_SIZE[0]
     H = _WINDOW_SIZE[1]
     E = {}
-    # Draw.String(name, event, x, y, width, height, initial, length, tooltip=None) 
-    E["_NIF_IMPORT_PATH"]       = Draw.String("",          150,  50, H- 75, 350, 20, _CONFIG["_NIF_IMPORT_PATH"],        350, "export path")
-    E["_BROWSE_IMPORT_PATH"]    = Draw.PushButton('browse',155, 410, H- 75, 100, 20)
-    E["CANCEL"]                 = Draw.PushButton('cancel',250,  50, H-225, 100, 20)
+    # Draw NifTools logo
+    BGL.glEnable(BGL.GL_BLEND ) # enable alpha blending
+    # The odd scale and clip values seem necessary to avoid image artifacts
+    #Draw.Image(_LOGO_IMAGE, 50.0, H-100.0, 1.0001, 1.0001)
+    #Draw.Image(logoImg, 50, H-100, 1.0, 1.0, 1.0, 0)
+    # Draw.String(name, event, x, y, width, height, initial, length, tooltip=None)
+    nifFilePath = sys.sep.join((_CONFIG["_NIF_IMPORT_PATH"], _CONFIG["_NIF_IMPORT_FILE"]))
+    E["_NIF_FILE_PATH"]       = Draw.String("",             150,  50, H-150, 390, 20, nifFilePath, 350, '')
+    E["_BROWSE_FILE_PATH"]    = Draw.PushButton('...',   155, 440, H-150, 30, 20, 'browse')
+    E["_ADVANCED"]            = Draw.PushButton('advanced', 250, 410, H-225, 100, 20)
+    E["_CANCEL"]              = Draw.PushButton('cancel',   260, 160, H-225, 100, 20)
+    E["_IMPORT"]              = Draw.PushButton('import',   270,  50, H-225, 100, 20)
     _GUI_ELEMENTS = E
     Draw.Redraw(1)
 
-def buttonEvent(idEvent):
+def buttonEvent(evt):
     """
     Event handler for buttons
     """
-    print  "buttonEvent(idEvent=%i)"%(idEvent)
-    if idEvent == 260:
-        save()
+    global _CONFIG
+    if evt == 270:
+        # import and close
+        exit() #closes the GUI
+        nifFilePath = sys.sep.join((_CONFIG["_NIF_IMPORT_PATH"], _CONFIG["_NIF_IMPORT_FILE"]))
+        import_nif(nifFilePath)
+    elif  evt == 260:
+        # cancel
         exit()
-    elif  idEvent == 250:
+    elif  evt == 250:
+        # advanced
         exit()
-    elif  idEvent == 240:
-        _CONFIG["_REALIGN_BONES"] = (not _CONFIG["_REALIGN_BONES"])
+        Config.open("Import")
+    elif evt == 155:
+        # browse file
+        nifFilePath = sys.sep.join((_CONFIG["_NIF_IMPORT_PATH"], _CONFIG["_NIF_IMPORT_FILE"]))
+        Blender.Window.FileSelector(select, "import .nif", nifFilePath)
+        Draw.Redraw(1)
     else:
-        None
+        Draw.Redraw(1)
+
+def select(nifFilePath):
+    global _GUI_ELEMENTS, _CONFIG
+    if nifFilePath == '' or  sys.exists(nifFilePath) != 1:
+        Draw.PupMenu('No file selected or file does not exist%t|Ok')
+    else:
+        _CONFIG["_NIF_IMPORT_PATH"] = sys.dirname(nifFilePath)
+        _CONFIG["_NIF_IMPORT_FILE"] = sys.basename(nifFilePath)
+        Config._CONFIG = _CONFIG
+        Config.save()
     Draw.Redraw(1)
 
-def event(arg1, arg2):
+
+
+def event(evt, val):
     """
     Event handler for GUI elements
     """
     #print  "event(%i,%i)"%(arg1,arg2)
-    None
+    if evt == Draw.ESCKEY:
+        exit()
 
 def open():
     """
@@ -72,9 +101,6 @@ def exit():
     Closes the config GUI
     """
     Draw.Exit()
-    reload(Main)
-    Main.open()
-
 
 try:
     from pyniflib import *

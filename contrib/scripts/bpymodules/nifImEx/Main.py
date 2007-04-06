@@ -24,18 +24,17 @@ def gui():
     Draw.Redraw(1)
 
 
-def buttonEvent(idEvent):
+def buttonEvent(evt):
     """
     Event handler for buttons
     """
-    print  "buttonEvent(idEvent=%i)"%(idEvent)
-    if idEvent == 140:
+    if evt == 140:
         close()
-    elif idEvent == 100:
+    elif evt == 100:
         close()
         reload(Config)
         Config.open()
-    elif idEvent == 120:
+    elif evt == 120:
         close()
         reload(Read)
         Read.open()

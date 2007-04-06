@@ -1,6 +1,7 @@
 import Blender
 from Blender import Draw, BGL, Registry
 
+import Read, Write, Main
 import Defaults as _DEF
 
 # All UI elements are kept in this dictionary to make sure they never go out of scope
@@ -11,19 +12,18 @@ _WINDOW_SIZE = Blender.Window.GetAreaSize()
 _CONFIG = {}
 _CONFIG_NAME = "NIFSCRIPTS"
 
+# Back target for exit
+_BACK_TARGET = None
+
 def __init__():
-    global _GUI_ELEMENTS
-    global _WINDOW_SIZE
-    global _CONFIG
+    global _GUI_ELEMENTS, _WINDOW_SIZE, _CONFIG
     _GUI_ELEMENTS = {}
     _WINDOW_SIZE = Blender.Window.GetAreaSize()
     _CONFIG = {}
     clean()
 
 def gui():
-    global _GUI_ELEMENTS
-    global _WINDOW_SIZE
-    global _CONFIG
+    global _GUI_ELEMENTS, _WINDOW_SIZE, _CONFIG
     # These are to save me some typing
     #W = _WINDOW_SIZE[0]
     H = _WINDOW_SIZE[1]
@@ -51,33 +51,36 @@ def gui():
     _GUI_ELEMENTS = E
     Draw.Redraw(1)
 
-def buttonEvent(idEvent):
+def buttonEvent(evt):
     """
     Event handler for buttons
     """
-    print  "buttonEvent(idEvent=%i)"%(idEvent)
-    if idEvent == 260:
+    if evt == 260:
         save()
         exit()
-    elif  idEvent == 250:
+    elif  evt == 250:
         exit()
-    elif  idEvent == 240:
+    elif  evt == 240:
         _CONFIG["_REALIGN_BONES"] = (not _CONFIG["_REALIGN_BONES"])
     else:
         None
     Draw.Redraw(1)
 
-def event(arg1, arg2):
+def event(evt, val):
     """
     Event handler for GUI elements
     """
     #print  "event(%i,%i)"%(arg1,arg2)
-    None
+    if evt == Draw.ESCKEY:
+        exit()
 
-def open():
+def open(back_target=None):
     """
     Opens the config GUI
     """
+    # defines what script called the config screen
+    global _BACK_TARGET
+    _BACK_TARGET = back_target
     clean()
     Draw.Register(gui, event, buttonEvent)
     
@@ -85,18 +88,25 @@ def exit():
     """
     Closes the config GUI
     """
+    global _BACK_TARGET
     Draw.Exit()
-    reload(Main)
-    Main.open()
+    if _BACK_TARGET == "Import":
+        reload(Read)
+        Read.open()
+    elif _BACK_TARGET == "Export":
+        reload(Write)
+        Write.open()
+    elif _BACK_TARGET == "Main":
+        reload(Main)
+        Main.open()
+
 
 def save():
     """
     Saves the current configuration
     """
-    global _CONFIG
-    global _CONFIG_NAME
-    #for key in _CONFIG.keys():
-    #    print key, _CONFIG[key], "\n"
+    global _CONFIG, _CONFIG_NAME
+    print "--",_CONFIG_NAME, _CONFIG, "\n\n"
     Registry.SetKey(_CONFIG_NAME, _CONFIG, True)
     
 def clean():
@@ -105,12 +115,13 @@ def clean():
     """
     # There's still some trouble with this.
     # For some reason the default values seem to drive even though the config has been properly saved.
-    global _CONFIG
-    global _CONFIG_NAME
+    global _CONFIG, _CONFIG_NAME
     reload(_DEF)
     _CONFIG = {
         "_NIF_IMPORT_PATH" : _DEF._NIF_IMPORT_PATH, \
         "_NIF_EXPORT_PATH" : _DEF._NIF_EXPORT_PATH, \
+        "_NIF_IMPORT_FILE" : _DEF._NIF_IMPORT_FILE, \
+        "_NIF_EXPORT_FILE" : _DEF._NIF_EXPORT_FILE, \
         "_TEXTURE_SEARCH_PATH" : _DEF._TEXTURE_SEARCH_PATH, \
         "_REALIGN_BONES" : _DEF._REALIGN_BONES, \
         "_IMPORT_SCALE_CORRECTION" : _DEF._IMPORT_SCALE_CORRECTION, \
@@ -118,14 +129,16 @@ def clean():
         "_BASE_TEXTURE_FOLDER" : _DEF._BASE_TEXTURE_FOLDER, \
         "_EXPORT_TEXTURE_PATH" : _DEF._EXPORT_TEXTURE_PATH, \
         "_CONVERT_DDS" : _DEF._CONVERT_DDS}
-    storedConf = Registry.GetKey(_CONFIG_NAME, True)
-    cleanConf = {}
+    oldConfig = Blender.Registry.GetKey(_CONFIG_NAME, True)
+    print "oldConfig", oldConfig, "\n\n"
+    newConfig = {}
     for key in _CONFIG.keys():
         try:
-            cleanConf[key] = storedConf[key]
+            newConfig[key] = oldConfig[key]
             #print  "-", key, _CONFIG[key], cleanConf[key], "/n"
         except:
-            cleanConf[key] = _CONFIG[key]
+            newConfig[key] = _CONFIG[key]
             #print  "!", key, _CONFIG[key], storedConf[key], "/n"
-    print cleanConf
-    Registry.SetKey(_CONFIG_NAME, cleanConf, True)
+    print "newConfig", newConfig, "\n\n"
+    Blender.Registry.SetKey(_CONFIG_NAME, newConfig, True)
+    _CONFIG = newConfig

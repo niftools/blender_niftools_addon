@@ -5,7 +5,10 @@ _NIF_IMPORT_PATH = r"%s\Bethesda\Oblivion\Data\Meshes" % (os.getenv("ProgramFile
 # The 'r' before the string definition sets this as "raw". This means that escape
 # sequences (those preceded by '\' won't be interpreted. Handy to set paths in
 # Win32, and let's face it, almost all the script users will be Win32 users.
-_NIF_EXPORT_PATH = r""
+_NIF_EXPORT_PATH = r"%s\Bethesda\Oblivion\Data\Meshes" % (os.getenv("ProgramFiles"))
+# These next two are selected in the import and export screens, not in the config
+_NIF_IMPORT_FILE = ""
+_NIF_EXPORT_FILE = "export.nif"
 _REALIGN_BONES = True
 _IMPORT_SCALE_CORRECTION = 0.1
 _EXPORT_SCALE_CORRECTION = 10.0
