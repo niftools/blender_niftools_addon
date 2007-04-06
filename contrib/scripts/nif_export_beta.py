@@ -1,7 +1,7 @@
 #!BPY
 
 """ Registration info for Blender menus:
-Name: 'NetImmerse/Gamebryo (.nif & .kf)...'
+Name: 'NetImmerse/Gamebryo (.nif & .kf)... - BETA'
 Blender: 243
 Group: 'Export'
 Tooltip: 'Export selected meshes to NIF File Format (*.nif & *.kf)'
@@ -108,7 +108,7 @@ from Blender import Draw
 
 
 try:
-    from niflib import *
+    from pyniflib import *
 except:
     err = """--------------------------
 ERROR\nThis script requires the NIFLIB Python SWIG wrapper, niflib.py & _niflib.dll.
@@ -119,6 +119,9 @@ If you don't have them: http://niftools.sourceforge.net/
     Blender.Draw.PupMenu("ERROR%t|NIFLIB not found, check console for details")
     raise
 
+from pyniflib.NiObject import *
+from pyniflib.NiObjectNET import *
+from pyniflib.NiTimeController import *
 
 # Attempt to load psyco to speed things up
 #try:
@@ -419,9 +422,12 @@ and turn off envelopes."""%ob.getName()
         if DEBUG: print "Checking animation groups"
         if (animtxt == None):
             has_controllers = 0
+            print NIF_BLOCKS
             for block in NIF_BLOCKS:
-                if block.IsControllable():
-                    if ( not block["Controller"].asLink().is_null() ):
+                if block.IsDerivedType(NiObjectNETTypeConst()): # has it a controller field?
+                    print block
+                    print block.GetControllers() # crash!
+                    if ( block.GetControllers() != []):
                         has_controllers = 1
                         break
             if has_controllers:
@@ -562,23 +568,23 @@ def export_node(ob, space, parent_block, node_name):
         parent_block["Children"].AddLink(node)
     
     # and fill in this node's non-trivial values
-    node["Name"] = get_full_name(node_name)
+    node.SetName(get_full_name(node_name))
     if (ob == None):
-        node["Flags"] = 0x000C # ? this seems pretty standard for the root node
+        node.SetFlags(0x000C) # ? this seems pretty standard for the root node
     elif (node_name == 'RootCollisionNode'):
-        node["Flags"] = 0x0003 # ? this seems pretty standard for the root collision node
+        node.SetFlags(0x0003) # ? this seems pretty standard for the root collision node
     else:
-        node["Flags"] = 0x000C # ? this seems pretty standard for static and animated ninodes
+        node.SetFlags(0x000C) # ? this seems pretty standard for static and animated ninodes
 
     ob_translation, \
     ob_rotation, \
     ob_scale, \
     ob_velocity \
     = export_matrix(ob, space)
-    node["Rotation"]    = ob_rotation
-    node["Velocity"]    = ob_velocity
-    node["Scale"]       = ob_scale
-    node["Translation"] = ob_translation
+    node.SetLocalRotation(ob_rotation)
+    node.SetVelocity(ob_velocity)
+    node.SetLocalScale(ob_scale)
+    node.SetLocalTranslation(ob_translation)
 
     # set object bind position
     if ob != None and ob.getParent():
@@ -588,8 +594,7 @@ def export_node(ob, space, parent_block, node_name):
             bbind_mat[1][0], bbind_mat[1][1], bbind_mat[1][2], bbind_mat[1][3],
             bbind_mat[2][0], bbind_mat[2][1], bbind_mat[2][2], bbind_mat[2][3],
             bbind_mat[3][0], bbind_mat[3][1], bbind_mat[3][2], bbind_mat[3][3])
-        inode = QueryNode(node)
-        inode.SetWorldBindPos(bind_mat)
+        node.SetWorldBindPos(bind_mat)
 
     if (ob != None):
         # export animation
@@ -1925,29 +1930,20 @@ def export_children(ob, parent_block):
 # velocity ).
 #
 def export_matrix(ob, space):
-    nt = Float3()
+    nt = Vector3()
     nr = Matrix33()
-    nv = Float3()
+    nv = Vector3()
     
     # decompose
     bs, br, bt = get_object_srt(ob, space)
     
     # and fill in the values
-    nt[0] = bt[0]
-    nt[1] = bt[1]
-    nt[2] = bt[2]
-    nr[0][0] = br[0][0]
-    nr[1][0] = br[1][0]
-    nr[2][0] = br[2][0]
-    nr[0][1] = br[0][1]
-    nr[1][1] = br[1][1]
-    nr[2][1] = br[2][1]
-    nr[0][2] = br[0][2]
-    nr[1][2] = br[1][2]
-    nr[2][2] = br[2][2]
-    nv[0] = 0.0
-    nv[1] = 0.0
-    nv[2] = 0.0
+    nt.Set(bt[0], bt[1], bt[2])
+    nr.Set(\
+        br[0][0], br[0][1], br[0][2],\
+        br[1][0], br[1][1], br[1][2],\
+        br[2][0], br[2][1], br[2][2])
+    nv.Set(0,0,0)
 
     # return result
     return (nt, nr, bs, nv)
@@ -2117,7 +2113,11 @@ def add_extra_data(block, xtra):
 def create_block(blocktype):
     global NIF_BLOCKS
     if DEBUG: print "creating '%s'"%blocktype # DEBUG
-    block = CreateBlock(blocktype)
+    if blocktype == "NiNode":
+        from pyniflib.NiNode import *
+        block = NewNiNode()
+    else:
+        raise NIFExportError("'%s': Unknown block type (this is a bug).")
     NIF_BLOCKS.append(block)
     return block
 
