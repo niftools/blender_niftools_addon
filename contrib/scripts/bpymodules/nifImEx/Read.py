@@ -1,21 +1,93 @@
 import Blender
 import Config
+reload (Config)
 from Blender import Draw, BGL, sys
 from Blender.Mathutils import *
+
+try:
+    import pyniflib
+    from pyniflib import *
+except:
+    err = """--------------------------
+ERROR\nThis script requires the PYNIFLIB Python SWIG wrapper, pyniflib.py & niflib.dll.
+Make sure these files reside in your Python path or in your Blender scripts folder.
+If you don't have them: http://niftools.sourceforge.net/
+--------------------------"""
+    print err
+    Blender.Draw.PupMenu("ERROR%t|PYNIFLIB not found, check console for details")
+    raise
+
+
+#
+# Global variables.
+#
 
 _CONFIG = {}
 _GUI_ELEMENTS = {}
 _WINDOW_SIZE = Blender.Window.GetAreaSize()
 _LOGO_PATH = sys.sep.join((Blender.Get('scriptsdir'),"bpymodules","nifImEx","niftools_logo.png"))
 _LOGO_IMAGE = Blender.Image.Load(_LOGO_PATH)
+_SCRIPT_VERSION = "1.9.0a"
+_BLOCK_COUNT = 0
+_READ_PROGRESS = 0.0
+_BLOCKS_READ = 0.0
+
+# dictionary of texture files, to reuse textures
+_TEXTURES = {}
+
+# dictionary of materials, to reuse materials
+_MATERIALS = {}
+
+# dictionary of names, to map NIF names to correct Blender names
+_NAMES = {}
+
+# dictionary of bones, maps Blender bone name to NIF block
+_BONES = {}
+
+# dictionary of bones, maps Blender bone name to matrix that maps the
+# NIF bone matrix on the Blender bone matrix
+# B' = X * B, where B' is the Blender bone matrix, and B is the NIF bone matrix
+_BONES_EXTRA_MATRIX = {}
+
+# dictionary of bones that belong to a certain armature
+# maps NIF armature name to list of NIF bone name
+_BONE_LIST = {}
+
+# correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z
+_BONE_CORRECTION_MATRICES = (\
+            Matrix([ 0.0,-1.0, 0.0],[ 1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0]),\
+            Matrix([ 1.0, 0.0, 0.0],[ 0.0, 1.0, 0.0],[ 0.0, 0.0, 1.0]),\
+            Matrix([ 1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0],[ 0.0,-1.0, 0.0]),\
+            Matrix([ 0.0, 1.0, 0.0],[-1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0]),\
+            Matrix([-1.0, 0.0, 0.0],[ 0.0,-1.0, 0.0],[ 0.0, 0.0, 1.0]),\
+            Matrix([ 1.0, 0.0, 0.0],[ 0.0, 0.0,-1.0],[ 0.0, 1.0, 0.0]))
+
+# some variables
+
+_EPSILON = 0.005 # used for checking equality with floats, NOT STORED IN CONFIG
+_IMPORT_SCALE_CORRECTION = 0.1
+_MSG_LEVEL = 2 # verbosity level
+
+_R2D = 3.14159265358979/180.0 # radians to degrees conversion constant
+_D2R = 180.0/3.14159265358979 # degrees to radians conversion constant
+
+_SCENE = Blender.Scene.GetCurrent() #Blender scene, to avoid redundant code
+_FPS = _SCENE.getRenderingContext().framesPerSec() #frames per second
+
+
+# check General scripts config key for default behaviors
+_VERBOSE = True
 
 
 
 def __init__():
-    global _CONFIG, _WINDOW_SIZE
-    _WINDOW_SIZE = Blender.Window.GetAreaSize()
+    global _CONFIG, _VERBOSE, _EPSILON, _IMPORT_SCALE_CORRECTION
+    reload(Config)
     _CONFIG = Config._CONFIG
-    print "--------", _CONFIG
+    _EPSILON = _CONFIG['_EPSILON'] # used for checking equality with floats, NOT STORED IN CONFIG
+    _IMPORT_SCALE_CORRECTION = _CONFIG['_IMPORT_SCALE_CORRECTION']
+    _VERBOSE = _CONFIG['_VERBOSE']
+
 
 def gui():
     global _GUI_ELEMENTS, _CONFIG, _LOGO_IMAGE, _WINDOW_SIZE
@@ -26,7 +98,7 @@ def gui():
     # Draw NifTools logo
     BGL.glEnable(BGL.GL_BLEND ) # enable alpha blending
     # The odd scale and clip values seem necessary to avoid image artifacts
-    #Draw.Image(_LOGO_IMAGE, 50.0, H-100.0, 1.0001, 1.0001)
+    Draw.Image(_LOGO_IMAGE, 50.0, H-100.0, 1.0001, 1.0001)
     #Draw.Image(logoImg, 50, H-100, 1.0, 1.0, 1.0, 0)
     # Draw.String(name, event, x, y, width, height, initial, length, tooltip=None)
     nifFilePath = sys.sep.join((_CONFIG["_NIF_IMPORT_PATH"], _CONFIG["_NIF_IMPORT_FILE"]))
@@ -102,77 +174,14 @@ def exit():
     """
     Draw.Exit()
 
-try:
-    from pyniflib import *
-except:
-    err = """--------------------------
-ERROR\nThis script requires the PYNIFLIB Python SWIG wrapper, pyniflib.py & niflib.dll.
-Make sure these files reside in your Python path or in your Blender scripts folder.
-If you don't have them: http://niftools.sourceforge.net/
---------------------------"""
-    print err
-    Blender.Draw.PupMenu("ERROR%t|PYNIFLIB not found, check console for details")
-    raise
-
-# Attempt to load psyco to speed things up
-#try:
-#	import psyco
-#	psyco.full()
-#	print 'using psyco'
-#except:
-#	#print 'psyco is not present on this system'
-#	pass
-
-# dictionary of texture files, to reuse textures
-_TEXTURES = {}
-
-# dictionary of materials, to reuse materials
-_MATERIALS = {}
-
-# dictionary of names, to map NIF names to correct Blender names
-_NAMES = {}
-
-# dictionary of bones, maps Blender bone name to NIF block
-_BONES = {}
-
-# dictionary of bones, maps Blender bone name to matrix that maps the
-# NIF bone matrix on the Blender bone matrix
-# B' = X * B, where B' is the Blender bone matrix, and B is the NIF bone matrix
-_BONES_EXTRA_MATRIX = {}
-
-# dictionary of bones that belong to a certain armature
-# maps NIF armature name to list of NIF bone name
-_BONE_LIST = {}
-
-# correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z
-_BONE_CORRECTION_MATRICES = (\
-            Matrix([ 0.0,-1.0, 0.0],[ 1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0]),\
-            Matrix([ 1.0, 0.0, 0.0],[ 0.0, 1.0, 0.0],[ 0.0, 0.0, 1.0]),\
-            Matrix([ 1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0],[ 0.0,-1.0, 0.0]),\
-            Matrix([ 0.0, 1.0, 0.0],[-1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0]),\
-            Matrix([-1.0, 0.0, 0.0],[ 0.0,-1.0, 0.0],[ 0.0, 0.0, 1.0]),\
-            Matrix([ 1.0, 0.0, 0.0],[ 0.0, 0.0,-1.0],[ 0.0, 1.0, 0.0]))
-
-# some variables
-
-_EPSILON = 0.005 # used for checking equality with floats, NOT STORED IN CONFIG
-_MSG_LEVEL = 2 # verbosity level
-
-_R2D = 3.14159265358979/180.0 # radians to degrees conversion constant
-_D2R = 180.0/3.14159265358979 # degrees to radians conversion constant
-
-_SCENE = Blender.Scene.GetCurrent()
-_FPS = _SCENE.getRenderingContext().framesPerSec() #frames per second
 
 
-# check General scripts config key for default behaviors
-VERBOSE = True
-CONFIRM_OVERWRITE = True
+
 
 
 # Little wrapper for debug messages
 def msg(message='-', level=2):
-    if VERBOSE:
+    if _VERBOSE:
         if level <= _MSG_LEVEL:
             print message
             
@@ -204,19 +213,12 @@ def fit_view():
 # Main import function.
 #
 def import_nif(filename):
+    global _SCRIPT_VERSION
     try: # catch NIFImportErrors
-        print "NIFTools NIF import script version %s" % (__version__)
+        print "NIFTools NIF import script version %s" % (_SCRIPT_VERSION)
         Blender.Window.DrawProgressBar(0.0, "Initializing")
-        # texture dirs
-        global NIF_DIR, TEX_DIR
-        NIF_DIR = Blender.sys.dirname(filename)
-        idx = NIF_DIR.lower().find('meshes')
-        if ( idx >= 0 ):
-            TEX_DIR = NIF_DIR[:idx] + 'textures'
-        else:
-            TEX_DIR = None
         # read the NIF file
-        ver = CheckNifHeader(filename)
+        ver = pyniflib.GetNifVersion(filename)
         if ( ver == VER_INVALID ):
             raise NIFImportError("Not a NIF file.")
         elif ( ver == VER_UNSUPPORTED ):
@@ -240,11 +242,10 @@ def import_nif(filename):
 def import_main(root_block):
     # scene info
     # used to control the progress bar
-    global _SCENE
-    global block_count, blocks_read, read_progress
-    block_count = BlocksInMemory()
-    read_progress = 0.0
-    blocks_read = 0.0
+    global _SCENE, _CONFIG, _BLOCK_COUNT, _BLOCKS_READ, _READ_PROGRESS
+    _BLOCK_COUNT = BlocksInMemory()
+    _READ_PROGRESS = 0.0
+    _BLOCKS_READ = 0.0
     # preprocessing:
     # scale tree
     scale_tree(root_block, 1.0/SCALE_CORRECTION)
@@ -252,7 +253,7 @@ def import_main(root_block):
     # and merge armatures that are bones of others armatures
     mark_armatures_bones(root_block)
     merge_armatures()
-    if VERBOSE and _MSG_LEVEL >= 3:
+    if _VERBOSE and _MSG_LEVEL >= 3:
         for arm_name in _BONE_LIST.keys():
             print "armature '%s':"%arm_name
             for bone_name in _BONE_LIST[arm_name]:
@@ -284,11 +285,11 @@ def import_main(root_block):
 # Reads the content of the current NIF tree branch to Blender recursively
 def read_branch(niBlock):
     # used to control the progress bar
-    global block_count, blocks_read, read_progress
-    blocks_read += 1.0
-    if (blocks_read/(block_count+1)) >= (read_progress + 0.1):
-        read_progress = blocks_read/(block_count+1)
-        Blender.Window.DrawProgressBar(read_progress, "Importing data")
+    global _BLOCK_COUNT, _BLOCKS_READ, _READ_PROGRESS
+    _BLOCKS_READ += 1.0
+    if (_BLOCKS_READ/(_BLOCK_COUNT+1.0)) >= (_READ_PROGRESS + 0.1):
+        _READ_PROGRESS = _BLOCKS_READ/(_BLOCK_COUNT+1.0)
+        Blender.Window.DrawProgressBar(_READ_PROGRESS, "Importing data")
     if not niBlock.is_null():
         btype = niBlock.GetBlockType()
         if btype == "NiTriShape" or btype == "NiTriStrips":

@@ -118,27 +118,28 @@ def clean():
     global _CONFIG, _CONFIG_NAME
     reload(_DEF)
     _CONFIG = {
-        "_NIF_IMPORT_PATH" : _DEF._NIF_IMPORT_PATH, \
-        "_NIF_EXPORT_PATH" : _DEF._NIF_EXPORT_PATH, \
-        "_NIF_IMPORT_FILE" : _DEF._NIF_IMPORT_FILE, \
-        "_NIF_EXPORT_FILE" : _DEF._NIF_EXPORT_FILE, \
-        "_TEXTURE_SEARCH_PATH" : _DEF._TEXTURE_SEARCH_PATH, \
-        "_REALIGN_BONES" : _DEF._REALIGN_BONES, \
-        "_IMPORT_SCALE_CORRECTION" : _DEF._IMPORT_SCALE_CORRECTION, \
-        "_EXPORT_SCALE_CORRECTION" : _DEF._EXPORT_SCALE_CORRECTION, \
-        "_BASE_TEXTURE_FOLDER" : _DEF._BASE_TEXTURE_FOLDER, \
-        "_EXPORT_TEXTURE_PATH" : _DEF._EXPORT_TEXTURE_PATH, \
-        "_CONVERT_DDS" : _DEF._CONVERT_DDS}
+        '_NIF_IMPORT_PATH'          : _DEF._NIF_IMPORT_PATH, \
+        '_NIF_EXPORT_PATH'          : _DEF._NIF_EXPORT_PATH, \
+        '_NIF_IMPORT_FILE'          : _DEF._NIF_IMPORT_FILE, \
+        '_NIF_EXPORT_FILE'          : _DEF._NIF_EXPORT_FILE, \
+        '_TEXTURE_SEARCH_PATH'      : _DEF._TEXTURE_SEARCH_PATH, \
+        '_REALIGN_BONES'            : _DEF._REALIGN_BONES, \
+        '_IMPORT_SCALE_CORRECTION'  : _DEF._IMPORT_SCALE_CORRECTION, \
+        '_EXPORT_SCALE_CORRECTION'  : _DEF._EXPORT_SCALE_CORRECTION, \
+        '_BASE_TEXTURE_FOLDER'      : _DEF._BASE_TEXTURE_FOLDER, \
+        '_EXPORT_TEXTURE_PATH'      : _DEF._EXPORT_TEXTURE_PATH, \
+        '_CONVERT_DDS'              : _DEF._CONVERT_DDS, \
+        '_NIF_VERSIONS'             : _DEF._NIF_VERSIONS, \
+        '_EPSILON'                  : _DEF._EPSILON, \
+        '_VERBOSE'                  : _DEF._VERBOSE}
     oldConfig = Blender.Registry.GetKey(_CONFIG_NAME, True)
-    print "oldConfig", oldConfig, "\n\n"
+    #print "oldConfig", oldConfig, "\n\n"
     newConfig = {}
     for key in _CONFIG.keys():
         try:
             newConfig[key] = oldConfig[key]
-            #print  "-", key, _CONFIG[key], cleanConf[key], "/n"
         except:
             newConfig[key] = _CONFIG[key]
-            #print  "!", key, _CONFIG[key], storedConf[key], "/n"
-    print "newConfig", newConfig, "\n\n"
+    #print "newConfig", newConfig, "\n\n"
     Blender.Registry.SetKey(_CONFIG_NAME, newConfig, True)
     _CONFIG = newConfig

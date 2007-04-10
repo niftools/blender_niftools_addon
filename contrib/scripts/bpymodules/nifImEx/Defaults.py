@@ -11,16 +11,29 @@ _NIF_IMPORT_FILE = ""
 _NIF_EXPORT_FILE = "export.nif"
 _REALIGN_BONES = True
 _IMPORT_SCALE_CORRECTION = 0.1
-_EXPORT_SCALE_CORRECTION = 10.0
+_EXPORT_SCALE_CORRECTION = 1.0 / _IMPORT_SCALE_CORRECTION
 _BASE_TEXTURE_FOLDER = r"%s\Bethesda\Oblivion\Data\Textures" % (os.getenv("ProgramFiles"))
 _TEXTURE_SEARCH_PATH = []
 _TEXTURE_SEARCH_PATH.append(_BASE_TEXTURE_FOLDER)
-_EXPORT_VERSION = "20.0.0.5"
+_EXPORT_VERSION = '20.0.0.5'
 _EXPORT_TEXTURE_PATH = "R"
 # (R)elative to NIF,
 # (F)ull,
 # (N)one (strip folders),
 # Relative to (B)ase texture folder
+_NIF_VERSIONS = { \
+    '4.0.0.2' : 0x04000002,\
+    '4.1.0.12': 0x0401000C,\
+    '4.2.0.2' : 0x04020002,\
+    '4.2.1.0' : 0x04020100,\
+    '4.2.2.0' : 0x04020200,\
+    '10.0.1.0': 0x0A000100,\
+    '10.1.0.0': 0x0A010000,\
+    '10.2.0.0': 0x0A020000,\
+    '20.0.0.4': 0x14000004}
+_EPSILON = 0.005 # used for checking equality with floats
+_VERBOSE = True # enables debug output
+
 
 _CONVERT_DDS = True
 # Not really implemented yet... might have to call a command line tool. Hence..
