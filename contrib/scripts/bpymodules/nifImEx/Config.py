@@ -1,8 +1,11 @@
-import Blender
+import Blender, os, sys
+import Read, Write, Defaults
 from Blender import Draw, BGL, Registry
 
-import Read, Write, Main
-import Defaults as _DEF
+if sys.platform in ('linux-i386','linux2'):
+    os.system("clear")
+elif sys.platform in ('win32','dos','ms-dos'):
+    os.system("cls")
 
 # All UI elements are kept in this dictionary to make sure they never go out of scope
 _GUI_ELEMENTS = {}
@@ -10,13 +13,14 @@ _WINDOW_SIZE = Blender.Window.GetAreaSize()
 
 # Configuration
 _CONFIG = {}
-_CONFIG_NAME = "NIFSCRIPTS"
+_CONFIG_NAME = "nifscripts"
 
 # Back target for exit
 _BACK_TARGET = None
 
 def __init__():
     global _GUI_ELEMENTS, _WINDOW_SIZE, _CONFIG
+    reload(Defaults)
     _GUI_ELEMENTS = {}
     _WINDOW_SIZE = Blender.Window.GetAreaSize()
     _CONFIG = {}
@@ -28,20 +32,21 @@ def gui():
     #W = _WINDOW_SIZE[0]
     H = _WINDOW_SIZE[1]
     E = {}
+    # IMPORTANT: Don't start dictionary keys with an underscore, the Registry module doesn't like that, apparently
     # Draw.String(name, event, x, y, width, height, initial, length, tooltip=None) 
-    E["_NIF_IMPORT_PATH"]       = Draw.String("",          150,  50, H- 75, 350, 20, _CONFIG["_NIF_IMPORT_PATH"],        350, "export path")
-    E["_BROWSE_IMPORT_PATH"]    = Draw.PushButton('browse',155, 410, H- 75, 100, 20)
-    E["_NIF_EXPORT_PATH"]       = Draw.String("",          160,  50, H-100, 350, 20, _CONFIG["_NIF_EXPORT_PATH"],        350, "import path")
-    E["_BROWSE_EXPORT_PATH"]    = Draw.PushButton('browse',165, 410, H-100, 100, 20)
-    E["_BASE_TEXTURE_FOLDER"]   = Draw.String("",          170,  50, H-125, 350, 20, _CONFIG["_BASE_TEXTURE_FOLDER"],    350, "import path")
-    E["_BROWSE_TEXBASE"]        = Draw.PushButton('browse',175, 410, H-125, 100, 20)
-    E["_TEXTURE_SEARCH_PATH"]   = Draw.String("",          180,  50, H-150, 350, 20, _CONFIG["_TEXTURE_SEARCH_PATH"][0], 350, "texture search path")
-    E["_TEXPATH_ITEM"]          = Draw.String("",          190,  50, H-170, 350, 20, "" , 290)
-    E["_TEXPATH_PREV"]          = Draw.PushButton('<',     200, 340, H-170,  20, 20)
-    E["_TEXPATH_NEXT"]          = Draw.PushButton('>',     210, 360, H-170,  20, 20)
-    E["_TEXPATH_REMOVE"]        = Draw.PushButton('X',     230, 380, H-170,  20, 20)
-    E["_BROWSE_TEXPATH"]        = Draw.PushButton('browse',235, 410, H-170, 100, 20)
-    E["_REALIGN_BONES"]         = Draw.Toggle(" ",         240,  50, H-200,  20, 20, _CONFIG["_REALIGN_BONES"])
+    E["NIF_IMPORT_PATH"]        = Draw.String("",          150,  50, H- 75, 350, 20, _CONFIG["NIF_IMPORT_PATH"],        350, "export path")
+    E["BROWSE_IMPORT_PATH"]     = Draw.PushButton('browse',155, 410, H- 75, 100, 20)
+    E["NIF_EXPORT_PATH"]        = Draw.String("",          160,  50, H-100, 350, 20, _CONFIG["NIF_EXPORT_PATH"],        350, "import path")
+    E["BROWSE_EXPORT_PATH"]     = Draw.PushButton('browse',165, 410, H-100, 100, 20)
+    E["BASE_TEXTURE_FOLDER"]    = Draw.String("",          170,  50, H-125, 350, 20, _CONFIG["BASE_TEXTURE_FOLDER"],    350, "import path")
+    E["BROWSE_TEXBASE"]         = Draw.PushButton('browse',175, 410, H-125, 100, 20)
+    E["TEXTURE_SEARCH_PATH"]    = Draw.String("",          180,  50, H-150, 350, 20, _CONFIG["TEXTURE_SEARCH_PATH"], 350, "texture search path")
+    E["TEXPATH_ITEM"]           = Draw.String("",          190,  50, H-170, 350, 20, "" , 290)
+    E["TEXPATH_PREV"]           = Draw.PushButton('<',     200, 340, H-170,  20, 20)
+    E["TEXPATH_NEXT"]           = Draw.PushButton('>',     210, 360, H-170,  20, 20)
+    E["TEXPATH_REMOVE"]         = Draw.PushButton('X',     230, 380, H-170,  20, 20)
+    E["BROWSE_TEXPATH"]         = Draw.PushButton('browse',235, 410, H-170, 100, 20)
+    E["REALIGN_BONES"]          = Draw.Toggle(" ",         240,  50, H-200,  20, 20, _CONFIG["REALIGN_BONES"])
     # To draw text on the screen I have to position its start point first
     BGL.glRasterPos2i( 75, H-195)
     Draw.Text("try to realign bones")
@@ -61,7 +66,7 @@ def buttonEvent(evt):
     elif  evt == 250:
         exit()
     elif  evt == 240:
-        _CONFIG["_REALIGN_BONES"] = (not _CONFIG["_REALIGN_BONES"])
+        _CONFIG["REALIGN_BONES"] = not _CONFIG["REALIGN_BONES"]
     else:
         None
     Draw.Redraw(1)
@@ -106,32 +111,38 @@ def save():
     Saves the current configuration
     """
     global _CONFIG, _CONFIG_NAME
+    print "datadir", Blender.Get('datadir'), "\n\n"
     print "--",_CONFIG_NAME, _CONFIG, "\n\n"
     Registry.SetKey(_CONFIG_NAME, _CONFIG, True)
-    
+
+def load():
+    """
+    Loads the stored configuration
+    """
+    global _CONFIG
+    #_CONFIG = Blender.Registry.GetKey(_CONFIG_NAME, True)
+    clean()
+
 def clean():
     """
     Checks saved configuration for incompatible values
     """
-    # There's still some trouble with this.
-    # For some reason the default values seem to drive even though the config has been properly saved.
     global _CONFIG, _CONFIG_NAME
-    reload(_DEF)
+    reload(Defaults)
     _CONFIG = {
-        '_NIF_IMPORT_PATH'          : _DEF._NIF_IMPORT_PATH, \
-        '_NIF_EXPORT_PATH'          : _DEF._NIF_EXPORT_PATH, \
-        '_NIF_IMPORT_FILE'          : _DEF._NIF_IMPORT_FILE, \
-        '_NIF_EXPORT_FILE'          : _DEF._NIF_EXPORT_FILE, \
-        '_TEXTURE_SEARCH_PATH'      : _DEF._TEXTURE_SEARCH_PATH, \
-        '_REALIGN_BONES'            : _DEF._REALIGN_BONES, \
-        '_IMPORT_SCALE_CORRECTION'  : _DEF._IMPORT_SCALE_CORRECTION, \
-        '_EXPORT_SCALE_CORRECTION'  : _DEF._EXPORT_SCALE_CORRECTION, \
-        '_BASE_TEXTURE_FOLDER'      : _DEF._BASE_TEXTURE_FOLDER, \
-        '_EXPORT_TEXTURE_PATH'      : _DEF._EXPORT_TEXTURE_PATH, \
-        '_CONVERT_DDS'              : _DEF._CONVERT_DDS, \
-        '_NIF_VERSIONS'             : _DEF._NIF_VERSIONS, \
-        '_EPSILON'                  : _DEF._EPSILON, \
-        '_VERBOSE'                  : _DEF._VERBOSE}
+        'NIF_IMPORT_PATH'          : Defaults._NIF_IMPORT_PATH, \
+        'NIF_EXPORT_PATH'          : Defaults._NIF_EXPORT_PATH, \
+        'NIF_IMPORT_FILE'          : Defaults._NIF_IMPORT_FILE, \
+        'NIF_EXPORT_FILE'          : Defaults._NIF_EXPORT_FILE, \
+        'TEXTURE_SEARCH_PATH'      : Defaults._TEXTURE_SEARCH_PATH, \
+        'REALIGN_BONES'            : Defaults._REALIGN_BONES, \
+        'IMPORT_SCALE_CORRECTION'  : Defaults._IMPORT_SCALE_CORRECTION, \
+        'EXPORT_SCALE_CORRECTION'  : Defaults._EXPORT_SCALE_CORRECTION, \
+        'BASE_TEXTURE_FOLDER'      : Defaults._BASE_TEXTURE_FOLDER, \
+        'EXPORT_TEXTURE_PATH'      : Defaults._EXPORT_TEXTURE_PATH, \
+        'NIF_VERSIONS'             : Defaults._NIF_VERSIONS, \
+        'EPSILON'                  : Defaults._EPSILON, \
+        'VERBOSE'                  : Defaults._VERBOSE}
     oldConfig = Blender.Registry.GetKey(_CONFIG_NAME, True)
     #print "oldConfig", oldConfig, "\n\n"
     newConfig = {}
@@ -141,5 +152,6 @@ def clean():
         except:
             newConfig[key] = _CONFIG[key]
     #print "newConfig", newConfig, "\n\n"
-    Blender.Registry.SetKey(_CONFIG_NAME, newConfig, True)
     _CONFIG = newConfig
+    Blender.Registry.SetKey(_CONFIG_NAME, _CONFIG, True)
+

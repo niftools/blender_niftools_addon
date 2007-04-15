@@ -1,5 +1,4 @@
-import Blender
-import Config
+import Blender, Config
 from Blender import Draw, BGL, sys
 
 try:
@@ -16,6 +15,7 @@ If you don't have them: http://niftools.sourceforge.net/
     raise
     
 from pyniflib.NiObject import *
+from pyniflib.NiNode import *
 from pyniflib.NiObjectNET import *
 from pyniflib.NiTimeController import *
 from pyniflib.NiAVObject import *
@@ -47,7 +47,7 @@ _BONES_EXTRA_MATRIX_INV = {}
 
 
 # configuration default values
-_CONFIG = Config._CONFIG
+_CONFIG = {}
 _VERBOSE = True # Enables debug output
 _EPSILON = 0.005 # used for checking equality with floats
 _EXPORT_SCALE_CORRECTION = 10.0
@@ -76,9 +76,9 @@ def __init__():
     global _CONFIG, _VERBOSE, _EPSILON, _IMPORT_SCALE_CORRECTION
     reload(Config)
     _CONFIG = Config._CONFIG
-    _EPSILON = _CONFIG['_EPSILON'] # used for checking equality with floats
-    _IMPORT_SCALE_CORRECTION = _CONFIG['_IMPORT_SCALE_CORRECTION']
-    _VERBOSE = _CONFIG['_VERBOSE'] # Enables debug output
+    _EPSILON = _CONFIG['EPSILON'] # used for checking equality with floats
+    _IMPORT_SCALE_CORRECTION = _CONFIG['IMPORT_SCALE_CORRECTION']
+    _VERBOSE = _CONFIG['VERBOSE'] # Enables debug output
 
     
 def gui():
@@ -93,12 +93,12 @@ def gui():
     Draw.Image(_LOGO_IMAGE, 50.0, H-100.0, 1.0001, 1.0001)
     #Draw.Image(logoImg, 50, H-100, 1.0, 1.0, 1.0, 0)
     # Draw.String(name, event, x, y, width, height, initial, length, tooltip=None)
-    nifFilePath = sys.sep.join((_CONFIG["_NIF_EXPORT_PATH"], _CONFIG["_NIF_EXPORT_FILE"]))
-    E["_NIF_FILE_PATH"]       = Draw.String("",             150,  50, H-150, 390, 20, nifFilePath, 350, '')
-    E["_BROWSE_FILE_PATH"]    = Draw.PushButton('...',   155, 440, H-150, 30, 20, 'browse')
-    E["_ADVANCED"]            = Draw.PushButton('advanced', 250, 410, H-225, 100, 20)
-    E["_CANCEL"]              = Draw.PushButton('cancel',   260, 160, H-225, 100, 20)
-    E["_IMPORT"]              = Draw.PushButton('export',   270,  50, H-225, 100, 20)
+    nifFilePath = sys.sep.join((_CONFIG["NIF_EXPORT_PATH"], _CONFIG["NIF_EXPORT_FILE"]))
+    E["NIF_FILE_PATH"]       = Draw.String("",             150,  50, H-150, 390, 20, nifFilePath, 350, '')
+    E["BROWSE_FILE_PATH"]    = Draw.PushButton('...',   155, 440, H-150, 30, 20, 'browse')
+    E["ADVANCED"]            = Draw.PushButton('advanced', 250, 410, H-225, 100, 20)
+    E["CANCEL"]              = Draw.PushButton('cancel',   260, 160, H-225, 100, 20)
+    E["IMPORT"]              = Draw.PushButton('export',   270,  50, H-225, 100, 20)
     _GUI_ELEMENTS = E
     Draw.Redraw(1)
 
@@ -110,7 +110,7 @@ def buttonEvent(evt):
     if evt == 270:
         # import and close
         exit() #closes the GUI
-        nifFilePath = sys.sep.join((_CONFIG["_NIF_EXPORT_PATH"], _CONFIG["_NIF_EXPORT_FILE"]))
+        nifFilePath = sys.sep.join((_CONFIG["NIF_EXPORT_PATH"], _CONFIG["NIF_EXPORT_FILE"]))
         export_nif(nifFilePath)
     elif  evt == 260:
         # cancel
@@ -121,7 +121,7 @@ def buttonEvent(evt):
         Config.open("Import")
     elif evt == 155:
         # browse file
-        nifFilePath = sys.sep.join((_CONFIG["_NIF_EXPORT_PATH"], _CONFIG["_NIF_EXPORT_FILE"]))
+        nifFilePath = sys.sep.join((_CONFIG["NIF_EXPORT_PATH"], _CONFIG["NIF_EXPORT_FILE"]))
         Blender.Window.FileSelector(select, "export .nif", nifFilePath)
         Draw.Redraw(1)
     else:
@@ -132,8 +132,8 @@ def select(nifFilePath):
     if nifFilePath == '':
         Draw.PupMenu('No file name selected')
     else:
-        _CONFIG["_NIF_EXPORT_PATH"] = sys.dirname(nifFilePath)
-        _CONFIG["_NIF_EXPORT_FILE"] = sys.basename(nifFilePath)
+        _CONFIG["NIF_EXPORT_PATH"] = sys.dirname(nifFilePath)
+        _CONFIG["NIF_EXPORT_FILE"] = sys.basename(nifFilePath)
         Config._CONFIG = _CONFIG
         Config.save()
     Draw.Redraw(1)
@@ -2027,7 +2027,6 @@ def create_block(blocktype):
     global _NIF_BLOCKS
     if _VERBOSE: print "creating '%s'"%blocktype # DEBUG
     if blocktype == "NiNode":
-        from pyniflib.NiNode import *
         block = NewNiNode()
     else:
         raise NIFExportError("'%s': Unknown block type (this is a bug).")
@@ -2041,7 +2040,9 @@ def create_block(blocktype):
 # 
 def scale_tree(block, scale):
     # TODO: check if we can do this directly using a niflib function
-    if block.IsDerivedType(NiObjectNETTypeConst()): # is it a node?
+    global _EPSILON
+    # scale only works for nodes, and there's no point in scaling if the scale is 1/1
+    if abs(1.0 - scale) > _EPSILON and block.IsDerivedType(NiObjectNETTypeConst()): # is it a node?
         # NiNode transform scale
         t = block.GetLocalTranslation()
         t.x *= scale

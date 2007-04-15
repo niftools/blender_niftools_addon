@@ -1,6 +1,4 @@
-import Blender
-import Config
-reload (Config)
+import Blender, Config
 from Blender import Draw, BGL, sys
 from Blender.Mathutils import *
 
@@ -16,6 +14,14 @@ If you don't have them: http://niftools.sourceforge.net/
     print err
     Blender.Draw.PupMenu("ERROR%t|PYNIFLIB not found, check console for details")
     raise
+
+from pyniflib.NiObject import *
+from pyniflib.NiNode import *
+from pyniflib.NiObjectNET import *
+from pyniflib.NiTimeController import *
+from pyniflib.NiAVObject import *
+from pyniflib.NiGeometry import *
+from pyniflib.NiGeometryData import *
 
 
 #
@@ -84,9 +90,9 @@ def __init__():
     global _CONFIG, _VERBOSE, _EPSILON, _IMPORT_SCALE_CORRECTION
     reload(Config)
     _CONFIG = Config._CONFIG
-    _EPSILON = _CONFIG['_EPSILON'] # used for checking equality with floats, NOT STORED IN CONFIG
-    _IMPORT_SCALE_CORRECTION = _CONFIG['_IMPORT_SCALE_CORRECTION']
-    _VERBOSE = _CONFIG['_VERBOSE']
+    _EPSILON = _CONFIG['EPSILON'] # used for checking equality with floats, NOT STORED IN CONFIG
+    _IMPORT_SCALE_CORRECTION = _CONFIG['IMPORT_SCALE_CORRECTION']
+    _VERBOSE = _CONFIG['VERBOSE']
 
 
 def gui():
@@ -101,12 +107,12 @@ def gui():
     Draw.Image(_LOGO_IMAGE, 50.0, H-100.0, 1.0001, 1.0001)
     #Draw.Image(logoImg, 50, H-100, 1.0, 1.0, 1.0, 0)
     # Draw.String(name, event, x, y, width, height, initial, length, tooltip=None)
-    nifFilePath = sys.sep.join((_CONFIG["_NIF_IMPORT_PATH"], _CONFIG["_NIF_IMPORT_FILE"]))
-    E["_NIF_FILE_PATH"]       = Draw.String("",             150,  50, H-150, 390, 20, nifFilePath, 350, '')
-    E["_BROWSE_FILE_PATH"]    = Draw.PushButton('...',   155, 440, H-150, 30, 20, 'browse')
-    E["_ADVANCED"]            = Draw.PushButton('advanced', 250, 410, H-225, 100, 20)
-    E["_CANCEL"]              = Draw.PushButton('cancel',   260, 160, H-225, 100, 20)
-    E["_IMPORT"]              = Draw.PushButton('import',   270,  50, H-225, 100, 20)
+    nifFilePath = sys.sep.join((_CONFIG["NIF_IMPORT_PATH"], _CONFIG["NIF_IMPORT_FILE"]))
+    E["NIF_FILE_PATH"]       = Draw.String("",             150,  50, H-150, 390, 20, nifFilePath, 350, '')
+    E["BROWSE_FILE_PATH"]    = Draw.PushButton('...',      155, 440, H-150, 30, 20, 'browse')
+    E["ADVANCED"]            = Draw.PushButton('advanced', 250, 410, H-225, 100, 20)
+    E["CANCEL"]              = Draw.PushButton('cancel',   260, 160, H-225, 100, 20)
+    E["IMPORT"]              = Draw.PushButton('import',   270,  50, H-225, 100, 20)
     _GUI_ELEMENTS = E
     Draw.Redraw(1)
 
@@ -118,7 +124,7 @@ def buttonEvent(evt):
     if evt == 270:
         # import and close
         exit() #closes the GUI
-        nifFilePath = sys.sep.join((_CONFIG["_NIF_IMPORT_PATH"], _CONFIG["_NIF_IMPORT_FILE"]))
+        nifFilePath = sys.sep.join((_CONFIG["NIF_IMPORT_PATH"], _CONFIG["NIF_IMPORT_FILE"]))
         import_nif(nifFilePath)
     elif  evt == 260:
         # cancel
@@ -129,7 +135,7 @@ def buttonEvent(evt):
         Config.open("Import")
     elif evt == 155:
         # browse file
-        nifFilePath = sys.sep.join((_CONFIG["_NIF_IMPORT_PATH"], _CONFIG["_NIF_IMPORT_FILE"]))
+        nifFilePath = sys.sep.join((_CONFIG["NIF_IMPORT_PATH"], _CONFIG["NIF_IMPORT_FILE"]))
         Blender.Window.FileSelector(select, "import .nif", nifFilePath)
         Draw.Redraw(1)
     else:
@@ -140,8 +146,8 @@ def select(nifFilePath):
     if nifFilePath == '' or  sys.exists(nifFilePath) != 1:
         Draw.PupMenu('No file selected or file does not exist%t|Ok')
     else:
-        _CONFIG["_NIF_IMPORT_PATH"] = sys.dirname(nifFilePath)
-        _CONFIG["_NIF_IMPORT_FILE"] = sys.basename(nifFilePath)
+        _CONFIG["NIF_IMPORT_PATH"] = sys.dirname(nifFilePath)
+        _CONFIG["NIF_IMPORT_FILE"] = sys.basename(nifFilePath)
         Config._CONFIG = _CONFIG
         Config.save()
     Draw.Redraw(1)
@@ -243,12 +249,12 @@ def import_main(root_block):
     # scene info
     # used to control the progress bar
     global _SCENE, _CONFIG, _BLOCK_COUNT, _BLOCKS_READ, _READ_PROGRESS
-    _BLOCK_COUNT = BlocksInMemory()
+    _BLOCK_COUNT = NiObject_NumObjectsInMemory() 
     _READ_PROGRESS = 0.0
     _BLOCKS_READ = 0.0
     # preprocessing:
     # scale tree
-    scale_tree(root_block, 1.0/SCALE_CORRECTION)
+    scale_tree(root_block, _IMPORT_SCALE_CORRECTION)
     # mark armature nodes and bones
     # and merge armatures that are bones of others armatures
     mark_armatures_bones(root_block)
@@ -1660,21 +1666,23 @@ def set_animation(niBlock, b_obj):
 # Scale NIF file.
 # 
 def scale_tree(block, scale):
-    inode = QueryNode(block)
-    if inode: # is it a node?
+    global _EPSILON
+    # scale only works for nodes, and there's no point in scaling if the scale is 1/1
+    if abs(1.0 - scale) > _EPSILON and block.IsDerivedType(NiAVObject_TypeConst()): # is it a node?
+        obAVObject = CastToNiAVObject(block)
         # NiNode transform scale
-        t = block["Translation"].asFloat3()
-        t[0] *= scale
-        t[1] *= scale
-        t[2] *= scale
-        block["Translation"] = t
-
+        t = obAVObject.GetLocalTranslation()
+        t.x *= scale
+        t.y *= scale
+        t.z *= scale
+        obAVObject.SetLocalTranslation(t)
+        
         # NiNode bind position transform scale
-        mat = inode.GetWorldBindPos()
-        mat[3][0] *= scale
-        mat[3][1] *= scale
-        mat[3][2] *= scale
-        inode.SetWorldBindPos(mat)
+        #mat = inode.GetWorldBindPos()
+        #mat[3][0] *= scale
+        #mat[3][1] *= scale
+        #mat[3][2] *= scale
+        #inode.SetWorldBindPos(mat)
         
         # Controller data block scale
         ctrl = block["Controller"].asLink()

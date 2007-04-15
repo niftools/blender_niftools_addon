@@ -13,8 +13,7 @@ _REALIGN_BONES = True
 _IMPORT_SCALE_CORRECTION = 0.1
 _EXPORT_SCALE_CORRECTION = 1.0 / _IMPORT_SCALE_CORRECTION
 _BASE_TEXTURE_FOLDER = r"%s\Bethesda\Oblivion\Data\Textures" % (os.getenv("ProgramFiles"))
-_TEXTURE_SEARCH_PATH = []
-_TEXTURE_SEARCH_PATH.append(_BASE_TEXTURE_FOLDER)
+_TEXTURE_SEARCH_PATH = [_BASE_TEXTURE_FOLDER]
 _EXPORT_VERSION = '20.0.0.5'
 _EXPORT_TEXTURE_PATH = "R"
 # (R)elative to NIF,
@@ -30,11 +29,12 @@ _NIF_VERSIONS = { \
     '10.0.1.0': 0x0A000100,\
     '10.1.0.0': 0x0A010000,\
     '10.2.0.0': 0x0A020000,\
-    '20.0.0.4': 0x14000004}
+    '20.0.0.4': 0x14000004,\
+    '20.0.0.5': 0x14000005}
 _EPSILON = 0.005 # used for checking equality with floats
 _VERBOSE = True # enables debug output
 
 
-_CONVERT_DDS = True
 # Not really implemented yet... might have to call a command line tool. Hence..
+# _CONVERT_DDS = True
 # _CONVERTER_COMMAND_LINE = ... using wildcards for filenames and such.
