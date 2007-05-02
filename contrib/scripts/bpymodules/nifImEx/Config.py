@@ -10,7 +10,6 @@ elif sys.platform in ('win32','dos','ms-dos'):
 
 # All UI elements are kept in this dictionary to make sure they never go out of scope
 _GUI_ELEMENTS = {}
-_WINDOW_SIZE = Blender.Window.GetAreaSize()
 
 # To avoid confusion with event ID handling I register them all in a list
 _GUI_EVENTS = []
@@ -29,10 +28,29 @@ _IDX_TEXPATH = 0
 
 def __init__():
     global _GUI_ELEMENTS, _WINDOW_SIZE, _CONFIG
-    _GUI_ELEMENTS = {}
-    _WINDOW_SIZE = Blender.Window.GetAreaSize()
-    _CONFIG = {}
+    _GUI_ELEMENTS.clear()
+    _CONFIG.clear()
     load()
+
+def setImportPath(nifImportPath):
+    global _CONFIG
+    print nifImportPath, Blender.sys.exists(nifImportPath)
+    if nifImportPath == '' or not Blender.sys.exists(nifImportPath):
+        Draw.PupMenu('No path selected or path does not exist%t|Ok')
+    else:
+        _CONFIG["NIF_IMPORT_PATH"] = Blender.sys.dirname(nifImportPath)
+        print _CONFIG["NIF_IMPORT_PATH"]
+        save()
+
+def setExportPath(nifExportPath):
+    global _CONFIG
+    print nifExportPath, Blender.sys.exists(nifExportPath)
+    if nifExportPath == '' or not Blender.sys.exists(nifExportPath):
+        Draw.PupMenu('No path selected or path does not exist%t|Ok')
+    else:
+        _CONFIG["NIF_EXPORT_PATH"] = Blender.sys.dirname(nifExportPath)
+        print _CONFIG["NIF_EXPORT_PATH"]
+        save()
 
 def addEvent(evName = "NO_NAME"):
     global _GUI_EVENTS
@@ -40,18 +58,15 @@ def addEvent(evName = "NO_NAME"):
     if eventId >= 16383:
         raise "Maximum number of events exceeded"
         return None
-    #if evName in _GUI_EVENTS:
-    #    evName = "%s_%05d" % (evName, eventId)
     _GUI_EVENTS.append(evName)
-    #print "id assigned: %05d" % eventId
     return eventId
 
 def gui():
-    global _GUI_ELEMENTS, _WINDOW_SIZE, _CONFIG, _IDX_TEXPATH, _GUI_EVENTS
-    _GUI_EVENTS = []
+    global _GUI_ELEMENTS, _CONFIG, _IDX_TEXPATH, _GUI_EVENTS
+    del _GUI_EVENTS[:]
     # These are to save me some typing
     #W = _WINDOW_SIZE[0]
-    H = _WINDOW_SIZE[1]
+    H = Blender.Window.GetAreaSize()[1]
     # dictionary of GUI elements
     E = {}
     # dictionary of GUI events
@@ -92,17 +107,17 @@ def buttonEvent(evt):
         exit()
     elif evName == "CANCEL":
         _CONFIG = _CONFIG_BACK
+        save()
         exit()
     elif evName == "REALIGN_BONES":
         _CONFIG["REALIGN_BONES"] = not _CONFIG["REALIGN_BONES"]
     elif evName == "BROWSE_IMPORT_PATH":
         # browse import path
+        print _CONFIG["NIF_IMPORT_PATH"]
         Blender.Window.FileSelector(setImportPath, "set import path", _CONFIG["NIF_IMPORT_PATH"])
-        Draw.Redraw(1)
     elif evName == "BROWSE_EXPORT_PATH":
         # browse import path
         Blender.Window.FileSelector(setExportPath, "set export path", _CONFIG["NIF_EXPORT_PATH"])
-        Draw.Redraw(1)
     else:
         None
     Draw.Redraw(1)
@@ -133,24 +148,21 @@ def exit():
     global _BACK_TARGET
     Draw.Exit()
     if _BACK_TARGET == "Import":
-        reload(Read)
         Read.open()
     elif _BACK_TARGET == "Export":
-        reload(Write)
         Write.open()
-    elif _BACK_TARGET == "Main":
-        reload(Main)
-        Main.open()
 
 def save():
     """
     Saves the current configuration
     """
     global _CONFIG, _CONFIG_BACK, _CONFIG_NAME
-    print "datadir", Blender.Get('datadir'), "\n\n"
-    print "--",_CONFIG_NAME, _CONFIG, "\n\n"
+    #print "datadir", Blender.Get('datadir'), "\n\n"
+    #print "--",_CONFIG_NAME, _CONFIG, "\n\n"
     Registry.SetKey(_CONFIG_NAME, _CONFIG, True)
+    load()
     _CONFIG_BACK = _CONFIG
+    
 
 def load():
     """
@@ -176,24 +188,13 @@ def load():
     oldConfig = Blender.Registry.GetKey(_CONFIG_NAME, True)
     #print "oldConfig", oldConfig, "\n\n"
     newConfig = {}
-    for key in _CONFIG.keys():
+    for key, val in _CONFIG.iteritems():
         try:
             newConfig[key] = oldConfig[key]
         except:
-            newConfig[key] = _CONFIG[key]
+            newConfig[key] = val
     #print "newConfig", newConfig, "\n\n"
     _CONFIG = newConfig
     _CONFIG_BACK = newConfig
     Blender.Registry.SetKey(_CONFIG_NAME, _CONFIG, True)
 
-def setImportPath(nifImportPath):
-    if nifImportPath == '' or  sys.exists(nifImportPath) != 1:
-        Draw.PupMenu('No path selected or path does not exist%t|Ok')
-    else:
-        _CONFIG["NIF_IMPORT_PATH"] = sys.dirname(nifImportPath)
-
-def setExportPath(nifExportPath):
-    if nifFilePath == '' or  sys.exists(nifExportPath) != 1:
-        Draw.PupMenu('No path selected or path does not exist%t|Ok')
-    else:
-        _CONFIG["NIF_EXPORT_PATH"] = sys.dirname(nifExportPath)

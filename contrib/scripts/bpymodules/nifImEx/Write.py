@@ -63,7 +63,11 @@ ADD_BONE_NUB = False
 
 
 
+# All UI elements are kept in this dictionary to make sure they never go out of scope
 _GUI_ELEMENTS = {}
+# To avoid confusion with event ID handling I register them all in a list
+_GUI_EVENTS = []
+
 _WINDOW_SIZE = Blender.Window.GetAreaSize()
 _LOGO_PATH = sys.sep.join((Blender.Get('scriptsdir'),"bpymodules","nifImEx","niftools_logo.png"))
 _LOGO_IMAGE = Blender.Image.Load(_LOGO_PATH)
@@ -73,19 +77,28 @@ _NIF_VERSION_DICT = {}
 
 
 def __init__():
-    global _CONFIG, _VERBOSE, _EPSILON, _IMPORT_SCALE_CORRECTION
+    global _CONFIG, _VERBOSE, _EPSILON, _EXPORT_SCALE_CORRECTION
     reload(Config)
     _CONFIG = Config._CONFIG
     _EPSILON = _CONFIG['EPSILON'] # used for checking equality with floats
-    _IMPORT_SCALE_CORRECTION = _CONFIG['IMPORT_SCALE_CORRECTION']
     _VERBOSE = _CONFIG['VERBOSE'] # Enables debug output
+
+
+def addEvent(evName = "NO_NAME"):
+    global _GUI_EVENTS
+    eventId = len(_GUI_EVENTS)
+    if eventId >= 16383:
+        raise "Maximum number of events exceeded"
+        return None
+    _GUI_EVENTS.append(evName)
+    return eventId
 
     
 def gui():
-    global _GUI_ELEMENTS, _CONFIG, _LOGO_IMAGE, _WINDOW_SIZE
+    global _GUI_ELEMENTS, _GUI_EVENTS, _CONFIG, _LOGO_IMAGE, _WINDOW_SIZE
+    del _GUI_EVENTS[:]
     # These are to save me some typing
-    #W = _WINDOW_SIZE[0]
-    H = _WINDOW_SIZE[1]
+    H = Blender.Window.GetAreaSize()[1]
     E = {}
     # Draw NifTools logo
     BGL.glEnable(BGL.GL_BLEND ) # enable alpha blending
@@ -94,11 +107,11 @@ def gui():
     #Draw.Image(logoImg, 50, H-100, 1.0, 1.0, 1.0, 0)
     # Draw.String(name, event, x, y, width, height, initial, length, tooltip=None)
     nifFilePath = sys.sep.join((_CONFIG["NIF_EXPORT_PATH"], _CONFIG["NIF_EXPORT_FILE"]))
-    E["NIF_FILE_PATH"]       = Draw.String("",             150,  50, H-150, 390, 20, nifFilePath, 350, '')
-    E["BROWSE_FILE_PATH"]    = Draw.PushButton('...',   155, 440, H-150, 30, 20, 'browse')
-    E["ADVANCED"]            = Draw.PushButton('advanced', 250, 410, H-225, 100, 20)
-    E["CANCEL"]              = Draw.PushButton('cancel',   260, 160, H-225, 100, 20)
-    E["IMPORT"]              = Draw.PushButton('export',   270,  50, H-225, 100, 20)
+    E["NIF_FILE_PATH"]       = Draw.String("",              addEvent("NIF_FILE_PATH"),  50, H-150, 390, 20, nifFilePath, 350, '')
+    E["BROWSE_FILE_PATH"]    = Draw.PushButton('...',       addEvent("BROWSE_FILE_PATH"), 440, H-150, 30, 20, 'browse')
+    E["ADVANCED"]            = Draw.PushButton('advanced',  addEvent("ADVANCED"), 410, H-225, 100, 20)
+    E["CANCEL"]              = Draw.PushButton('cancel',    addEvent("CANCEL"), 160, H-225, 100, 20)
+    E["EXPORT"]              = Draw.PushButton('export',    addEvent("EXPORT"),  50, H-225, 100, 20)
     _GUI_ELEMENTS = E
     Draw.Redraw(1)
 
@@ -106,29 +119,36 @@ def buttonEvent(evt):
     """
     Event handler for buttons
     """
-    global _CONFIG
-    if evt == 270:
+    global _CONFIG, _GUI_EVENTS
+    evName = _GUI_EVENTS[evt]
+    
+    if evName == "EXPORT":
         # import and close
         exit() #closes the GUI
         nifFilePath = sys.sep.join((_CONFIG["NIF_EXPORT_PATH"], _CONFIG["NIF_EXPORT_FILE"]))
         export_nif(nifFilePath)
-    elif  evt == 260:
+    elif  evName == "CANCEL":
         # cancel
         exit()
-    elif  evt == 250:
+    elif  evName == "ADVANCED":
         # advanced
         exit()
-        Config.open("Import")
-    elif evt == 155:
+        Config.open("Export")
+    elif evName == "BROWSE_FILE_PATH":
         # browse file
         nifFilePath = sys.sep.join((_CONFIG["NIF_EXPORT_PATH"], _CONFIG["NIF_EXPORT_FILE"]))
         Blender.Window.FileSelector(select, "export .nif", nifFilePath)
-        Draw.Redraw(1)
-    else:
-        Draw.Redraw(1)
+
+def event(evt, val):
+    """
+    Event handler for GUI elements
+    """
+    #print  "event(%i,%i)"%(arg1,arg2)
+    if evt == Draw.ESCKEY:
+        exit()
 
 def select(nifFilePath):
-    global _GUI_ELEMENTS, _CONFIG
+    global _CONFIG
     if nifFilePath == '':
         Draw.PupMenu('No file name selected')
     else:
@@ -152,11 +172,9 @@ def open():
     """
     Opens the import GUI
     """
-    global _WINDOW_SIZE
-    _WINDOW_SIZE = Blender.Window.GetAreaSize()
-    reload(Config)
-    Config.clean()
     global _CONFIG
+    reload(Config)
+    Config.load()
     _CONFIG = Config._CONFIG
     Draw.Register(gui, event, buttonEvent)
 

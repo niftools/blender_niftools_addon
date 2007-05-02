@@ -3,8 +3,14 @@ from Blender import Draw, BGL, sys
 from Blender.Mathutils import *
 
 try:
-    import pyniflib
-    from pyniflib import *
+    from pyniflib.pyniflib import *
+    from pyniflib.NiObject import *
+    from pyniflib.NiNode import *
+    from pyniflib.NiObjectNET import *
+    from pyniflib.NiTimeController import *
+    from pyniflib.NiAVObject import *
+    from pyniflib.NiGeometry import *
+    from pyniflib.NiGeometryData import *
 except:
     err = """--------------------------
 ERROR\nThis script requires the PYNIFLIB Python SWIG wrapper, pyniflib.py & niflib.dll.
@@ -13,15 +19,8 @@ If you don't have them: http://niftools.sourceforge.net/
 --------------------------"""
     print err
     Blender.Draw.PupMenu("ERROR%t|PYNIFLIB not found, check console for details")
-    raise
+    #raise
 
-from pyniflib.NiObject import *
-from pyniflib.NiNode import *
-from pyniflib.NiObjectNET import *
-from pyniflib.NiTimeController import *
-from pyniflib.NiAVObject import *
-from pyniflib.NiGeometry import *
-from pyniflib.NiGeometryData import *
 
 
 #
@@ -29,8 +28,12 @@ from pyniflib.NiGeometryData import *
 #
 
 _CONFIG = {}
+
+# All UI elements are kept in this dictionary to make sure they never go out of scope
 _GUI_ELEMENTS = {}
-_WINDOW_SIZE = Blender.Window.GetAreaSize()
+# To avoid confusion with event ID handling I register them all in a list
+_GUI_EVENTS = []
+
 _LOGO_PATH = sys.sep.join((Blender.Get('scriptsdir'),"bpymodules","nifImEx","niftools_logo.png"))
 _LOGO_IMAGE = Blender.Image.Load(_LOGO_PATH)
 _SCRIPT_VERSION = "1.9.0a"
@@ -71,7 +74,6 @@ _BONE_CORRECTION_MATRICES = (\
 # some variables
 
 _EPSILON = 0.005 # used for checking equality with floats, NOT STORED IN CONFIG
-_IMPORT_SCALE_CORRECTION = 0.1
 _MSG_LEVEL = 2 # verbosity level
 
 _R2D = 3.14159265358979/180.0 # radians to degrees conversion constant
@@ -87,19 +89,26 @@ _VERBOSE = True
 
 
 def __init__():
-    global _CONFIG, _VERBOSE, _EPSILON, _IMPORT_SCALE_CORRECTION
+    global _CONFIG, _VERBOSE, _EPSILON
     reload(Config)
     _CONFIG = Config._CONFIG
     _EPSILON = _CONFIG['EPSILON'] # used for checking equality with floats, NOT STORED IN CONFIG
-    _IMPORT_SCALE_CORRECTION = _CONFIG['IMPORT_SCALE_CORRECTION']
     _VERBOSE = _CONFIG['VERBOSE']
 
+def addEvent(evName = "NO_NAME"):
+    global _GUI_EVENTS
+    eventId = len(_GUI_EVENTS)
+    if eventId >= 16383:
+        raise "Maximum number of events exceeded"
+        return None
+    _GUI_EVENTS.append(evName)
+    return eventId
 
 def gui():
-    global _GUI_ELEMENTS, _CONFIG, _LOGO_IMAGE, _WINDOW_SIZE
+    global _GUI_ELEMENTS, _GUI_EVENTS, _CONFIG, _LOGO_IMAGE
+    del _GUI_EVENTS[:]
     # These are to save me some typing
-    #W = _WINDOW_SIZE[0]
-    H = _WINDOW_SIZE[1]
+    H = Blender.Window.GetAreaSize()[1]
     E = {}
     # Draw NifTools logo
     BGL.glEnable(BGL.GL_BLEND ) # enable alpha blending
@@ -108,11 +117,11 @@ def gui():
     #Draw.Image(logoImg, 50, H-100, 1.0, 1.0, 1.0, 0)
     # Draw.String(name, event, x, y, width, height, initial, length, tooltip=None)
     nifFilePath = sys.sep.join((_CONFIG["NIF_IMPORT_PATH"], _CONFIG["NIF_IMPORT_FILE"]))
-    E["NIF_FILE_PATH"]       = Draw.String("",             150,  50, H-150, 390, 20, nifFilePath, 350, '')
-    E["BROWSE_FILE_PATH"]    = Draw.PushButton('...',      155, 440, H-150, 30, 20, 'browse')
-    E["ADVANCED"]            = Draw.PushButton('advanced', 250, 410, H-225, 100, 20)
-    E["CANCEL"]              = Draw.PushButton('cancel',   260, 160, H-225, 100, 20)
-    E["IMPORT"]              = Draw.PushButton('import',   270,  50, H-225, 100, 20)
+    E["NIF_FILE_PATH"]       = Draw.String("",             addEvent("NIF_FILE_PATH"),  50, H-150, 390, 20, nifFilePath, 350, '')
+    E["BROWSE_FILE_PATH"]    = Draw.PushButton('...',      addEvent("BROWSE_FILE_PATH"), 440, H-150, 30, 20, 'browse')
+    E["ADVANCED"]            = Draw.PushButton('advanced', addEvent("ADVANCED"), 410, H-225, 100, 20)
+    E["CANCEL"]              = Draw.PushButton('cancel',   addEvent("CANCEL"), 160, H-225, 100, 20)
+    E["IMPORT"]              = Draw.PushButton('import',   addEvent("IMPORT"),  50, H-225, 100, 20)
     _GUI_ELEMENTS = E
     Draw.Redraw(1)
 
@@ -120,39 +129,24 @@ def buttonEvent(evt):
     """
     Event handler for buttons
     """
-    global _CONFIG
-    if evt == 270:
+    global _CONFIG, _GUI_EVENTS
+    evName = _GUI_EVENTS[evt]
+    if evName == "IMPORT":
         # import and close
         exit() #closes the GUI
         nifFilePath = sys.sep.join((_CONFIG["NIF_IMPORT_PATH"], _CONFIG["NIF_IMPORT_FILE"]))
         import_nif(nifFilePath)
-    elif  evt == 260:
+    elif evName == "CANCEL":
         # cancel
         exit()
-    elif  evt == 250:
+    elif evName == "ADVANCED":
         # advanced
         exit()
         Config.open("Import")
-    elif evt == 155:
+    elif evName == "BROWSE_FILE_PATH":
         # browse file
         nifFilePath = sys.sep.join((_CONFIG["NIF_IMPORT_PATH"], _CONFIG["NIF_IMPORT_FILE"]))
         Blender.Window.FileSelector(select, "import .nif", nifFilePath)
-        Draw.Redraw(1)
-    else:
-        Draw.Redraw(1)
-
-def select(nifFilePath):
-    global _GUI_ELEMENTS, _CONFIG
-    if nifFilePath == '' or  sys.exists(nifFilePath) != 1:
-        Draw.PupMenu('No file selected or file does not exist%t|Ok')
-    else:
-        _CONFIG["NIF_IMPORT_PATH"] = sys.dirname(nifFilePath)
-        _CONFIG["NIF_IMPORT_FILE"] = sys.basename(nifFilePath)
-        Config._CONFIG = _CONFIG
-        Config.save()
-    Draw.Redraw(1)
-
-
 
 def event(evt, val):
     """
@@ -161,16 +155,24 @@ def event(evt, val):
     #print  "event(%i,%i)"%(arg1,arg2)
     if evt == Draw.ESCKEY:
         exit()
+        
+def select(nifFilePath):
+    global _CONFIG
+    if nifFilePath == '' or not sys.exists(nifFilePath):
+        Draw.PupMenu('No file selected or file does not exist%t|Ok')
+    else:
+        _CONFIG["NIF_IMPORT_PATH"] = sys.dirname(nifFilePath)
+        _CONFIG["NIF_IMPORT_FILE"] = sys.basename(nifFilePath)
+        Config._CONFIG = _CONFIG
+        Config.save()
 
 def open():
     """
     Opens the import GUI
     """
-    global _WINDOW_SIZE
-    _WINDOW_SIZE = Blender.Window.GetAreaSize()
-    reload(Config)
-    Config.clean()
     global _CONFIG
+    reload(Config)
+    Config.load()
     _CONFIG = Config._CONFIG
     Draw.Register(gui, event, buttonEvent)
 
@@ -178,6 +180,8 @@ def exit():
     """
     Closes the config GUI
     """
+    Config._CONFIG = _CONFIG
+    Config.save()
     Draw.Exit()
 
 
@@ -224,7 +228,7 @@ def import_nif(filename):
         print "NIFTools NIF import script version %s" % (_SCRIPT_VERSION)
         Blender.Window.DrawProgressBar(0.0, "Initializing")
         # read the NIF file
-        ver = pyniflib.GetNifVersion(filename)
+        ver = GetNifVersion(filename)
         if ( ver == VER_INVALID ):
             raise NIFImportError("Not a NIF file.")
         elif ( ver == VER_UNSUPPORTED ):
@@ -254,7 +258,7 @@ def import_main(root_block):
     _BLOCKS_READ = 0.0
     # preprocessing:
     # scale tree
-    scale_tree(root_block, _IMPORT_SCALE_CORRECTION)
+    scale_tree(root_block, _CONFIG['IMPORT_SCALE_CORRECTION'])
     # mark armature nodes and bones
     # and merge armatures that are bones of others armatures
     mark_armatures_bones(root_block)
@@ -1669,7 +1673,7 @@ def scale_tree(block, scale):
     global _EPSILON
     # scale only works for nodes, and there's no point in scaling if the scale is 1/1
     if abs(1.0 - scale) > _EPSILON and block.IsDerivedType(NiAVObject_TypeConst()): # is it a node?
-        obAVObject = CastToNiAVObject(block)
+        obAVObject = CastToNiAVObject(block())
         # NiNode transform scale
         t = obAVObject.GetLocalTranslation()
         t.x *= scale
