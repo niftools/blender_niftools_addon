@@ -2,27 +2,16 @@ import Blender, Config
 from Blender import Draw, BGL, sys
 
 try:
-    import pyniflib
-    from pyniflib import *
+    from NifFormat.NifFormat import NifFormat
 except:
     err = """--------------------------
-ERROR\nThis script requires the PYNIFLIB Python SWIG wrapper, pyniflib.py & niflib.dll.
-Make sure these files reside in your Python path or in your Blender scripts folder.
-If you don't have them: http://niftools.sourceforge.net/
+ERROR\nThis script requires the NifFormat Python library.
+Make sure the NifFormat module resides in your Python path or in your Blender scripts folder.
+If you do not have it: http://niftools.sourceforge.net/
 --------------------------"""
     print err
-    Blender.Draw.PupMenu("ERROR%t|PYNIFLIB not found, check console for details")
+    Blender.Draw.PupMenu("ERROR%t|NifFormat not found, check console for details")
     raise
-    
-from pyniflib.NiObject import *
-from pyniflib.NiNode import *
-from pyniflib.NiObjectNET import *
-from pyniflib.NiTimeController import *
-from pyniflib.NiAVObject import *
-from pyniflib.NiGeometry import *
-from pyniflib.NiGeometryData import *
-
-
 
 #
 # Global variables.
@@ -499,13 +488,13 @@ def export_node(ob, space, parent_block, node_name):
         parent_block["Children"].AddLink(node)
     
     # and fill in this node's non-trivial values
-    node.SetName(get_full_name(node_name))
+    node.name = get_full_name(node_name)
     if (ob == None):
-        node.SetFlags(0x000C) # ? this seems pretty standard for the root node
+        node.flags = 0x000C # ? this seems pretty standard for the root node
     elif (node_name == 'RootCollisionNode'):
-        node.SetFlags(0x0003) # ? this seems pretty standard for the root collision node
+        node.flags = 0x0003 # ? this seems pretty standard for the root collision node
     else:
-        node.SetFlags(0x000C) # ? this seems pretty standard for static and animated ninodes
+        node.flags = 0x000C # ? this seems pretty standard for static and animated ninodes
 
     ob_translation, \
     ob_rotation, \
@@ -2044,10 +2033,10 @@ def add_extra_data(block, xtra):
 def create_block(blocktype):
     global _NIF_BLOCKS
     if _VERBOSE: print "creating '%s'"%blocktype # DEBUG
-    if blocktype == "NiNode":
-        block = NewNiNode()
-    else:
-        raise NIFExportError("'%s': Unknown block type (this is a bug).")
+    try:
+        block = getattr(NifFormat, blocktype)()
+    except AttributeError:
+        raise NIFExportError("'%s': Unknown block type (this is probably a bug).")
     _NIF_BLOCKS.append(block)
     return block
 
