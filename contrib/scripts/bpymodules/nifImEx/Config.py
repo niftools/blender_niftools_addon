@@ -39,7 +39,6 @@ def setImportPath(nifImportPath):
         Draw.PupMenu('No path selected or path does not exist%t|Ok')
     else:
         _CONFIG["NIF_IMPORT_PATH"] = nifImportPath
-        save()
 
 def setExportPath(nifExportPath):
     global _CONFIG
@@ -48,7 +47,25 @@ def setExportPath(nifExportPath):
         Draw.PupMenu('No path selected or path does not exist%t|Ok')
     else:
         _CONFIG["NIF_EXPORT_PATH"] = nifExportPath
-        save()
+
+def setTextureBase(textureBaseFolder):
+    global _CONFIG
+    textureBaseFolder = Blender.sys.dirname(textureBaseFolder)
+    if textureBaseFolder == '' or not Blender.sys.exists(textureBaseFolder):
+        Draw.PupMenu('No path selected or path does not exist%t|Ok')
+    else:
+        _CONFIG["BASE_TEXTURE_FOLDER"] = textureBaseFolder
+        
+def addTexturePath(nifTexturePath):
+    global _CONFIG, _IDX_TEXPATH
+    nifTexturePath = Blender.sys.dirname(nifTexturePath)
+    if nifTexturePath == '' or not Blender.sys.exists(nifTexturePath):
+        Draw.PupMenu('No path selected or path does not exist%t|Ok')
+    else:
+        _CONFIG["TEXTURE_SEARCH_PATH"].append(nifTexturePath)
+        _IDX_TEXPATH = len(_CONFIG["TEXTURE_SEARCH_PATH"]) - 1
+
+
 
 def addEvent(evName = "NO_NAME"):
     global _GUI_EVENTS
@@ -67,22 +84,30 @@ def gui():
     H = Blender.Window.GetAreaSize()[1]
     # dictionary of GUI elements
     E = {}
-    # dictionary of GUI events
+    
+    texpathString = ""
+    texpathItemString = ""
+    if len(_CONFIG["TEXTURE_SEARCH_PATH"]) > 0:
+        texpathString = ";".join(_CONFIG["TEXTURE_SEARCH_PATH"])
+        if not _IDX_TEXPATH in xrange(len(_CONFIG["TEXTURE_SEARCH_PATH"])):
+            _IDX_TEXPATH = 0
+        texpathItemString = _CONFIG["TEXTURE_SEARCH_PATH"][_IDX_TEXPATH]
+    
     
     # IMPORTANT: Don't start dictionary keys with an underscore, the Registry module doesn't like that, apparently
     # Draw.String(name, event, x, y, width, height, initial, length, tooltip=None) 
-    E["NIF_IMPORT_PATH"]        = Draw.String("",       addEvent("NIF_IMPORT_PATH"),     50, H- 75, 390, 20, _CONFIG["NIF_IMPORT_PATH"],       390, "export path")
+    E["NIF_IMPORT_PATH"]        = Draw.String("",       addEvent("NIF_IMPORT_PATH"),     50, H- 75, 390, 20, _CONFIG["NIF_IMPORT_PATH"],        390, "export path")
     E["BROWSE_IMPORT_PATH"]     = Draw.PushButton('...',addEvent("BROWSE_IMPORT_PATH"), 440, H- 75,  30, 20)
-    E["NIF_EXPORT_PATH"]        = Draw.String("",       addEvent("NIF_EXPORT_PATH"),     50, H-100, 390, 20, _CONFIG["NIF_EXPORT_PATH"],       390, "import path")
+    E["NIF_EXPORT_PATH"]        = Draw.String("",       addEvent("NIF_EXPORT_PATH"),     50, H-100, 390, 20, _CONFIG["NIF_EXPORT_PATH"],        390, "import path")
     E["BROWSE_EXPORT_PATH"]     = Draw.PushButton('...',addEvent("BROWSE_EXPORT_PATH"), 440, H-100,  30, 20)
-    E["BASE_TEXTURE_FOLDER"]    = Draw.String("",       addEvent("BASE_TEXTURE_FOLDER"), 50, H-125, 390, 20, _CONFIG["BASE_TEXTURE_FOLDER"],   390, "import path")
+    E["BASE_TEXTURE_FOLDER"]    = Draw.String("",       addEvent("BASE_TEXTURE_FOLDER"), 50, H-125, 390, 20, _CONFIG["BASE_TEXTURE_FOLDER"],    390, "import path")
     E["BROWSE_TEXBASE"]         = Draw.PushButton('...',addEvent("BROWSE_TEXBASE"),     440, H-125,  30, 20)
-    E["TEXTURE_SEARCH_PATH"]    = Draw.String("",       addEvent("TEXTURE_SEARCH_PATH"), 50, H-150, 390, 20, "\n".join(_CONFIG["TEXTURE_SEARCH_PATH"]), 390, "texture search path")
-    E["TEXPATH_ITEM"]           = Draw.String("",       addEvent("TEXPATH_ITEM"),        50, H-170, 350, 20, "" , 290)
-    E["TEXPATH_PREV"]           = Draw.PushButton('<',  addEvent("TEXPATH_PREV"),       400, H-170,  20, 20)
-    E["TEXPATH_NEXT"]           = Draw.PushButton('>',  addEvent("TEXPATH_NEXT"),       420, H-170,  20, 20)
-    E["TEXPATH_REMOVE"]         = Draw.PushButton('X',  addEvent("TEXPATH_REMOVE"),     440, H-170,  20, 20)
-    E["BROWSE_TEXPATH"]         = Draw.PushButton('...',addEvent("BROWSE_TEXPATH"),     460, H-170,  30, 20)
+    E["TEXTURE_SEARCH_PATH"]    = Draw.String("",       addEvent("TEXTURE_SEARCH_PATH"), 50, H-150, 390, 20, texpathString,                     390, "texture search path")
+    E["BROWSE_TEXPATH"]         = Draw.PushButton('...',addEvent("BROWSE_TEXPATH"),     440, H-150,  30, 20)
+    E["TEXPATH_ITEM"]           = Draw.String("",       addEvent("TEXPATH_ITEM"),        50, H-170, 360, 20, texpathItemString,                 290)
+    E["TEXPATH_PREV"]           = Draw.PushButton('<',  addEvent("TEXPATH_PREV"),       410, H-170,  20, 20)
+    E["TEXPATH_NEXT"]           = Draw.PushButton('>',  addEvent("TEXPATH_NEXT"),       430, H-170,  20, 20)
+    E["TEXPATH_REMOVE"]         = Draw.PushButton('X',  addEvent("TEXPATH_REMOVE"),     450, H-170,  20, 20)
     E["REALIGN_BONES"]          = Draw.Toggle(" ",      addEvent("REALIGN_BONES"),       50, H-200,  20, 20, _CONFIG["REALIGN_BONES"])
     # To draw text on the screen I have to position its start point first
     BGL.glRasterPos2i( 75, H-195)
@@ -98,7 +123,7 @@ def buttonEvent(evt):
     """
     Event handler for buttons
     """
-    global _GUI_EVENTS, _CONFIG, _CONFIG_BACK
+    global _GUI_EVENTS, _CONFIG, _CONFIG_BACK, _IDX_TEXPATH
     evName = _GUI_EVENTS[evt]
     if evName == "OK":
         save()
@@ -116,6 +141,23 @@ def buttonEvent(evt):
     elif evName == "BROWSE_EXPORT_PATH":
         # browse import path
         Blender.Window.FileSelector(setExportPath, "set export path", _CONFIG["NIF_EXPORT_PATH"])
+    elif evName == "BROWSE_TEXBASE":
+        # browse and add texture search path
+        Blender.Window.FileSelector(setTextureBase, "set texture base folder")
+    elif evName == "BROWSE_TEXPATH":
+        # browse and add texture search path
+        Blender.Window.FileSelector(addTexturePath, "add texture search path")
+    elif evName == "TEXPATH_NEXT":
+        if _IDX_TEXPATH < (len(_CONFIG["TEXTURE_SEARCH_PATH"])-1):
+            _IDX_TEXPATH += 1
+    elif evName == "TEXPATH_PREV":
+        if _IDX_TEXPATH > 0:
+            _IDX_TEXPATH -= 1
+    elif evName == "TEXPATH_REMOVE":
+        if _IDX_TEXPATH in xrange(len(_CONFIG["TEXTURE_SEARCH_PATH"])):
+            del _CONFIG["TEXTURE_SEARCH_PATH"][_IDX_TEXPATH]
+        if _IDX_TEXPATH > 0:
+            _IDX_TEXPATH-=1
     else:
         None
     Draw.Redraw(1)
