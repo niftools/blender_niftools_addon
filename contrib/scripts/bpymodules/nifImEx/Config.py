@@ -34,22 +34,20 @@ def __init__():
 
 def setImportPath(nifImportPath):
     global _CONFIG
-    print nifImportPath, Blender.sys.exists(nifImportPath)
+    nifImportPath = Blender.sys.dirname(nifImportPath)
     if nifImportPath == '' or not Blender.sys.exists(nifImportPath):
         Draw.PupMenu('No path selected or path does not exist%t|Ok')
     else:
-        _CONFIG["NIF_IMPORT_PATH"] = Blender.sys.dirname(nifImportPath)
-        print _CONFIG["NIF_IMPORT_PATH"]
+        _CONFIG["NIF_IMPORT_PATH"] = nifImportPath
         save()
 
 def setExportPath(nifExportPath):
     global _CONFIG
-    print nifExportPath, Blender.sys.exists(nifExportPath)
+    nifExportPath = Blender.sys.dirname(nifExportPath)
     if nifExportPath == '' or not Blender.sys.exists(nifExportPath):
         Draw.PupMenu('No path selected or path does not exist%t|Ok')
     else:
-        _CONFIG["NIF_EXPORT_PATH"] = Blender.sys.dirname(nifExportPath)
-        print _CONFIG["NIF_EXPORT_PATH"]
+        _CONFIG["NIF_EXPORT_PATH"] = nifExportPath
         save()
 
 def addEvent(evName = "NO_NAME"):

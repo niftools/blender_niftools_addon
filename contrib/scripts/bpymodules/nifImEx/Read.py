@@ -8,6 +8,7 @@ try:
     from pyniflib.NiNode import *
     from pyniflib.NiObjectNET import *
     from pyniflib.NiTimeController import *
+    from pyniflib.NiSkinInstance import *
     from pyniflib.NiAVObject import *
     from pyniflib.NiGeometry import *
     from pyniflib.NiGeometryData import *
@@ -258,7 +259,7 @@ def import_main(root_block):
     _BLOCKS_READ = 0.0
     # preprocessing:
     # scale tree
-    scale_tree(root_block, _CONFIG['IMPORT_SCALE_CORRECTION'])
+    #scale_tree(root_block, _CONFIG['IMPORT_SCALE_CORRECTION'])
     # mark armature nodes and bones
     # and merge armatures that are bones of others armatures
     mark_armatures_bones(root_block)
@@ -1445,11 +1446,16 @@ def find_extra(block, extratype):
 def mark_armatures_bones(block):
     global _BONE_LIST
     # search for all NiTriShape or NiTriStrips blocks...
-    if block.GetBlockType() == "NiTriShape" or block.GetBlockType() == "NiTriStrips":
-        # yes, we found one, get its skin instance
-        skininst = block["Skin Instance"].asLink()
+    #if block.GetBlockType() == "NiTriShape" or block.GetBlockType() == "NiTriStrips":
+    if block.IsDerivedType(NiGeometry_TypeConst()):
+        oNiGeometry = CastToNiGeometry(block())
+        children = oNiGeometry.GetChildren()
+         # yes, we found one, get its skin instance
+        skininst =  [b for b in children if b.IsDerivedType(NiSkinInstance_TypeConst())][0]
+        #skininst = block["Skin Instance"].asLink()
         if skininst.is_null() == False:
-            msg("Skin instance found on block '%s'"%block["Name"].asString(),3)
+            #msg("Skin instance found on block '%s'"%block["Name"].asString(),3)
+            msg("Skin instance found on block '%s'" % oNiGeometry.GetName(),3)
             # it has a skin instance, so get the skeleton root
             # which is an armature only if it's not a skinning influence
             # so mark the node to be imported as an armature
@@ -1457,7 +1463,7 @@ def mark_armatures_bones(block):
             skelroot_name = skelroot["Name"].asString()
             if not _BONE_LIST.has_key(skelroot_name):
                 _BONE_LIST[skelroot_name] = []
-                msg("'%s' is an armature"%skelroot_name,3)
+                msg("'%s' is an armature" % skelroot_name,3)
             # now get the skinning data interface to retrieve the list of bones
             skindata = skininst["Data"].asLink()
             iskindata = QuerySkinData(skindata)
@@ -1466,17 +1472,22 @@ def mark_armatures_bones(block):
                 bone_name = bone["Name"].asString()
                 if not bone_name in _BONE_LIST[skelroot_name]:
                     _BONE_LIST[skelroot_name].append(bone_name)
-                    msg("'%s' is a bone of armature '%s'"%(bone_name,skelroot_name),3)
+                    msg("'%s' is a bone of armature '%s'" % (bone_name,skelroot_name),3)
                 # now we "attach" the bone to the armature:
                 # we make sure all NiNodes from this bone all the way
                 # down to the armature NiNode are marked as bones
                 complete_bone_tree(bone, skelroot_name)
-    else:
-        # nope, it's not a NiTriShape or NiTriStrips
-        # so if it's a NiNode
-        if not block["Children"].is_null():
-            # search for NiTriShapes or NiTriStrips in the list of children
-            for child in block["Children"].asLinkList():
+    #else:
+    # nope, it's not a NiTriShape or NiTriStrips
+    # so if it's a NiNode
+    #if not block["Children"].is_null():
+    # search for NiTriShapes or NiTriStrips in the list of children
+    #for child in block["Children"].asLinkList():
+    elif block.IsDerivedType(NiNode_TypeConst()):
+        oNiNode = CastToNiNode(block())
+        children = oNiNode.GetChildren()
+        if children: # empty tuple is false
+            for child in children:
                 mark_armatures_bones(child)
 
 
@@ -1534,9 +1545,14 @@ def is_bone(niBlock):
     #print "%s is not a bone" % niBlock["Name"].asString()
     return False
 
-# Tests a NiNode to see if it's an armature.
-def is_armature_root(niBlock):
-    return _BONE_LIST.has_key(niBlock["Name"].asString())
+# Tests a NiNode to see if it's an armature. (this doesn't work, only tests to see if it's IN an armature!)
+def is_armature_root(block):
+    #return _BONE_LIST.has_key(niBlock["Name"].asString())
+    if block.IsDerivedType(NiNode_TypeConst()):
+        oNiNode = CastToNiNode(block())
+        return  _BONE_LIST.has_key(oNiNode.GetName())
+    else:
+        return False
     
 # Detect closest bone ancestor.
 def get_closest_bone(niBlock):
