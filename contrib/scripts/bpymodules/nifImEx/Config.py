@@ -127,11 +127,11 @@ def buttonEvent(evt):
     evName = _GUI_EVENTS[evt]
     if evName == "OK":
         save()
-        exit()
+        exitGUI()
     elif evName == "CANCEL":
         _CONFIG = _CONFIG_BACK
         save()
-        exit()
+        exitGUI()
     elif evName == "REALIGN_BONES":
         _CONFIG["REALIGN_BONES"] = not _CONFIG["REALIGN_BONES"]
     elif evName == "BROWSE_IMPORT_PATH":
@@ -169,9 +169,9 @@ def event(evt, val):
     global _GUI_EVENTS
     #print  "event(%i,%i)"%(arg1,arg2)
     if evt == Draw.ESCKEY:
-        exit()
+        exitGUI()
 
-def open(back_target=None):
+def openGUI(back_target=None):
     """
     Opens the config GUI
     """
@@ -181,16 +181,16 @@ def open(back_target=None):
     load()
     Draw.Register(gui, event, buttonEvent)
     
-def exit():
+def exitGUI():
     """
     Closes the config GUI
     """
     global _BACK_TARGET
     Draw.Exit()
     if _BACK_TARGET == "Import":
-        Read.open()
+        Read.openGUI()
     elif _BACK_TARGET == "Export":
-        Write.open()
+        Write.openGUI()
 
 def save():
     """

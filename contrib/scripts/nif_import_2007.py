@@ -86,6 +86,6 @@ import nifImEx
 from nifImEx import Read
 reload(nifImEx.Read)
 
-nifImEx.Read.open()
+nifImEx.Read.openGUI()
 
 

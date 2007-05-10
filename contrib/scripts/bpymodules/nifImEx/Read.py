@@ -3,6 +3,19 @@ from Blender import Draw, BGL, sys
 from Blender.Mathutils import *
 
 try:
+    from NifFormat.NifFormat import NifFormat
+except:
+    err = """--------------------------
+ERROR\nThis script requires the NifFormat Python library.
+Make sure the NifFormat module resides in your Python path or in your Blender scripts folder.
+If you do not have it: http://niftools.sourceforge.net/
+--------------------------"""
+    print err
+    Blender.Draw.PupMenu("ERROR%t|NifFormat not found, check console for details")
+    raise
+
+"""
+try:
     from pyniflib.pyniflib import *
     from pyniflib.NiObject import *
     from pyniflib.NiNode import *
@@ -13,15 +26,15 @@ try:
     from pyniflib.NiGeometry import *
     from pyniflib.NiGeometryData import *
 except:
-    err = """--------------------------
+    err =" ""--------------------------
 ERROR\nThis script requires the PYNIFLIB Python SWIG wrapper, pyniflib.py & niflib.dll.
 Make sure these files reside in your Python path or in your Blender scripts folder.
 If you don't have them: http://niftools.sourceforge.net/
---------------------------"""
+--------------------------"" "
     print err
     Blender.Draw.PupMenu("ERROR%t|PYNIFLIB not found, check console for details")
     #raise
-
+"""
 
 
 #
@@ -75,7 +88,7 @@ _BONE_CORRECTION_MATRICES = (\
 # some variables
 
 _EPSILON = 0.005 # used for checking equality with floats, NOT STORED IN CONFIG
-_MSG_LEVEL = 2 # verbosity level
+_MSG_LEVEL = 3 # verbosity level
 
 _R2D = 3.14159265358979/180.0 # radians to degrees conversion constant
 _D2R = 180.0/3.14159265358979 # degrees to radians conversion constant
@@ -134,20 +147,20 @@ def buttonEvent(evt):
     evName = _GUI_EVENTS[evt]
     if evName == "IMPORT":
         # import and close
-        exit() #closes the GUI
+        exitGUI() #closes the GUI
         nifFilePath = sys.sep.join((_CONFIG["NIF_IMPORT_PATH"], _CONFIG["NIF_IMPORT_FILE"]))
         import_nif(nifFilePath)
     elif evName == "CANCEL":
         # cancel
-        exit()
+        exitGUI()
     elif evName == "ADVANCED":
         # advanced
-        exit()
-        Config.open("Import")
+        exitGUI()
+        Config.openGUI("Import")
     elif evName == "BROWSE_FILE_PATH":
         # browse file
         nifFilePath = sys.sep.join((_CONFIG["NIF_IMPORT_PATH"], _CONFIG["NIF_IMPORT_FILE"]))
-        Blender.Window.FileSelector(select, "import .nif", nifFilePath)
+        Blender.Window.FileSelector(selectFile, "import .nif", nifFilePath)
 
 def event(evt, val):
     """
@@ -155,9 +168,9 @@ def event(evt, val):
     """
     #print  "event(%i,%i)"%(arg1,arg2)
     if evt == Draw.ESCKEY:
-        exit()
+        exitGUI()
         
-def select(nifFilePath):
+def selectFile(nifFilePath):
     global _CONFIG
     if nifFilePath == '' or not sys.exists(nifFilePath):
         Draw.PupMenu('No file selected or file does not exist%t|Ok')
@@ -167,7 +180,7 @@ def select(nifFilePath):
         Config._CONFIG = _CONFIG
         Config.save()
 
-def open():
+def openGUI():
     """
     Opens the import GUI
     """
@@ -177,13 +190,14 @@ def open():
     _CONFIG = Config._CONFIG
     Draw.Register(gui, event, buttonEvent)
 
-def exit():
+def exitGUI():
     """
     Closes the config GUI
     """
     Config._CONFIG = _CONFIG
     Config.save()
     Draw.Exit()
+    Draw.Redraw(1)
 
 
 
@@ -229,15 +243,28 @@ def import_nif(filename):
         print "NIFTools NIF import script version %s" % (_SCRIPT_VERSION)
         Blender.Window.DrawProgressBar(0.0, "Initializing")
         # read the NIF file
-        ver = GetNifVersion(filename)
-        if ( ver == VER_INVALID ):
-            raise NIFImportError("Not a NIF file.")
-        elif ( ver == VER_UNSUPPORTED ):
+        f = open(filename, "rb")
+        version, user_version = NifFormat.getVersion(f)
+        if version >= 0:
+                print "(version 0x%08X)"%version
+                Blender.Window.DrawProgressBar(0.33, "Reading file")
+                root_blocks = NifFormat.read(version, user_version, f, verbose = 0)
+                Blender.Window.DrawProgressBar(0.66, "Importing data")
+                for block in root_blocks:
+                    import_main(block)
+        elif version == -1:
             raise NIFImportError("Unsupported NIF version.")
-        Blender.Window.DrawProgressBar(0.33, "Reading file")
-        root_block = ReadNifTree(filename)
-        Blender.Window.DrawProgressBar(0.66, "Importing data")
-        import_main(root_block)
+        else:
+            raise NIFImportError("Not a NIF file.")
+        #ver = GetNifVersion(filename)
+        #if ( ver == VER_INVALID ):
+        #    raise NIFImportError("Not a NIF file.")
+        #elif ( ver == VER_UNSUPPORTED ):
+        #    raise NIFImportError("Unsupported NIF version.")
+        #Blender.Window.DrawProgressBar(0.33, "Reading file")
+        #root_block = ReadNifTree(filename)
+        #Blender.Window.DrawProgressBar(0.66, "Importing data")
+        #import_main(root_block)
     except NIFImportError, e: # in that case, we raise a menu instead of an exception
         Blender.Window.DrawProgressBar(1.0, "Import Failed")
         print 'NIFImportError: ' + e.value
@@ -254,7 +281,7 @@ def import_main(root_block):
     # scene info
     # used to control the progress bar
     global _SCENE, _CONFIG, _BLOCK_COUNT, _BLOCKS_READ, _READ_PROGRESS
-    _BLOCK_COUNT = NiObject_NumObjectsInMemory() 
+    #_BLOCK_COUNT = NiObject_NumObjectsInMemory() 
     _READ_PROGRESS = 0.0
     _BLOCKS_READ = 0.0
     # preprocessing:
@@ -271,13 +298,16 @@ def import_main(root_block):
                 print "  bone '%s'"%bone_name
     # read the NIF tree
     if not is_armature_root(root_block):
-        if not root_block["Children"].is_null(): # it's a ninode?
+        #if not root_block["Children"].is_null(): # it's a ninode?
+        if root_block.children:
             # yes, we'll process all children of the root node
             # (this prevents us having to create an empty as a root)
-            blocks = root_block["Children"].asLinkList()
+            #blocks = root_block["Children"].asLinkList()
+            blocks = root_block.children
             # import the extras
-            textkey = find_extra(root_block, "NiTextKeyExtraData")
-            if not textkey.is_null(): fb_textkey(textkey)
+            
+            #textkey = find_extra(root_block, "NiTextKeyExtraData")
+            #if not textkey.is_null(): fb_textkey(textkey)
         else:
             # this fixes an issue with nifs where the first block is a NiTriShape
             blocks = [ root_block ]
@@ -1424,6 +1454,7 @@ def find_controller(block, controllertype):
 # find extra data
 def find_extra(block, extratype):
     # pre-10.x.x.x system: extra data chain
+    
     extra = block["Extra Data"].asLink()
     while not extra.is_null():
         if extra.GetBlockType() == extratype:
@@ -1447,47 +1478,58 @@ def mark_armatures_bones(block):
     global _BONE_LIST
     # search for all NiTriShape or NiTriStrips blocks...
     #if block.GetBlockType() == "NiTriShape" or block.GetBlockType() == "NiTriStrips":
-    if block.IsDerivedType(NiGeometry_TypeConst()):
-        oNiGeometry = CastToNiGeometry(block())
-        children = oNiGeometry.GetChildren()
-         # yes, we found one, get its skin instance
-        skininst =  [b for b in children if b.IsDerivedType(NiSkinInstance_TypeConst())][0]
+    #if block.IsDerivedType(NiGeometry_TypeConst()):
+    if isinstance(block, NifFormat.NiGeometry):
+        #oNiGeometry = CastToNiGeometry(block())
+        #children = oNiGeometry.GetChildren()
+        # yes, we found one, get its skin instance
+        #skininst =  [b for b in children if b.IsDerivedType(NiSkinInstance_TypeConst())][0]
         #skininst = block["Skin Instance"].asLink()
-        if skininst.is_null() == False:
+        #if skininst.is_null() == False:
+        skininst = block.skinInstance
+        if skininst:
             #msg("Skin instance found on block '%s'"%block["Name"].asString(),3)
-            msg("Skin instance found on block '%s'" % oNiGeometry.GetName(),3)
+            #msg("Skin instance found on block '%s'" % oNiGeometry.GetName(),3)
+            msg("Skin instance found on block '%s'" % block.name,3)
             # it has a skin instance, so get the skeleton root
             # which is an armature only if it's not a skinning influence
             # so mark the node to be imported as an armature
-            skelroot = skininst["Skeleton Root"].asLink()
-            skelroot_name = skelroot["Name"].asString()
+            #skelroot = skininst["Skeleton Root"].asLink()
+            skelroot = skininst.skeletonRoot
+            #skelroot_name = skelroot["Name"].asString()
+            skelroot_name = skelroot.name
             if not _BONE_LIST.has_key(skelroot_name):
                 _BONE_LIST[skelroot_name] = []
                 msg("'%s' is an armature" % skelroot_name,3)
-            # now get the skinning data interface to retrieve the list of bones
-            skindata = skininst["Data"].asLink()
-            iskindata = QuerySkinData(skindata)
-            for bone in iskindata.GetBones():
+            ## now get the skinning data interface to retrieve the list of bones
+            #skindata = skininst["Data"].asLink()
+            #iskindata = QuerySkinData(skindata)
+            #for bone in iskindata.GetBones():
+            for bone in skininst.bones:
                 # add them, if we haven't already
-                bone_name = bone["Name"].asString()
+                #bone_name = bone["Name"].asString()
+                bone_name = bone.name
                 if not bone_name in _BONE_LIST[skelroot_name]:
                     _BONE_LIST[skelroot_name].append(bone_name)
-                    msg("'%s' is a bone of armature '%s'" % (bone_name,skelroot_name),3)
+                    msg("'%s' is a bone of armature '%s'" % (bone_name, skelroot_name), 3)
                 # now we "attach" the bone to the armature:
                 # we make sure all NiNodes from this bone all the way
                 # down to the armature NiNode are marked as bones
-                complete_bone_tree(bone, skelroot_name)
+                #complete_bone_tree(bone, skelroot_name)
     #else:
     # nope, it's not a NiTriShape or NiTriStrips
     # so if it's a NiNode
     #if not block["Children"].is_null():
     # search for NiTriShapes or NiTriStrips in the list of children
     #for child in block["Children"].asLinkList():
-    elif block.IsDerivedType(NiNode_TypeConst()):
-        oNiNode = CastToNiNode(block())
-        children = oNiNode.GetChildren()
-        if children: # empty tuple is false
-            for child in children:
+    #elif block.IsDerivedType(NiNode_TypeConst()):
+    elif isinstance(block, NifFormat.NiNode):
+        #oNiNode = CastToNiNode(block())
+        #children = oNiNode.GetChildren()
+        if block.children: # empty tuple is false
+            for child in block.children:
+                #sets the block parent. I need this later on
+                child.parent = block
                 mark_armatures_bones(child)
 
 
@@ -1498,12 +1540,15 @@ def mark_armatures_bones(block):
 def complete_bone_tree(bone, skelroot_name):
     global _BONE_LIST
     # we must already have marked this one as a bone
-    bone_name = bone["Name"].asString()
+    #bone_name = bone["Name"].asString()
+    bone_name = bone.name
     assert _BONE_LIST.has_key(skelroot_name) # debug
     assert bone_name in _BONE_LIST[skelroot_name] # debug
     # get the node parent, this should be marked as an armature or as a bone
-    boneparent = bone.GetParent()
-    boneparent_name = boneparent["Name"].asString()
+    #boneparent = bone.GetParent()
+    #boneparent_name = boneparent["Name"].asString()
+    boneparent = bone.parent
+    boneparent_name = boneparent.name
     if boneparent_name != skelroot_name:
         # parent is not the skeleton root
         if not boneparent_name in _BONE_LIST[skelroot_name]:
@@ -1545,12 +1590,14 @@ def is_bone(niBlock):
     #print "%s is not a bone" % niBlock["Name"].asString()
     return False
 
-# Tests a NiNode to see if it's an armature. (this doesn't work, only tests to see if it's IN an armature!)
+# Tests a block to see if it's an armature.
 def is_armature_root(block):
     #return _BONE_LIST.has_key(niBlock["Name"].asString())
-    if block.IsDerivedType(NiNode_TypeConst()):
-        oNiNode = CastToNiNode(block())
-        return  _BONE_LIST.has_key(oNiNode.GetName())
+    #if block.IsDerivedType(NiNode_TypeConst()):
+    #    oNiNode = CastToNiNode(block())
+    #    return  _BONE_LIST.has_key(oNiNode.GetName())
+    if isinstance(block, NifFormat.NiNode):
+        return  _BONE_LIST.has_key(block.name)
     else:
         return False
     

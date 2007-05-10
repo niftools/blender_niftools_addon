@@ -87,6 +87,6 @@ import nifImEx
 from nifImEx import Write
 reload(nifImEx.Write)
 
-nifImEx.Write.open()
+nifImEx.Write.openGUI()
 
 

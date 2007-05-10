@@ -113,30 +113,23 @@ def buttonEvent(evt):
     
     if evName == "EXPORT":
         # import and close
-        exit() #closes the GUI
+        exitGUI() #closes the GUI
         nifFilePath = sys.sep.join((_CONFIG["NIF_EXPORT_PATH"], _CONFIG["NIF_EXPORT_FILE"]))
         export_nif(nifFilePath)
     elif  evName == "CANCEL":
         # cancel
-        exit()
+        exitGUI()
     elif  evName == "ADVANCED":
         # advanced
-        exit()
-        Config.open("Export")
+        exitGUI()
+        Config.openGUI("Export")
     elif evName == "BROWSE_FILE_PATH":
         # browse file
         nifFilePath = sys.sep.join((_CONFIG["NIF_EXPORT_PATH"], _CONFIG["NIF_EXPORT_FILE"]))
-        Blender.Window.FileSelector(select, "export .nif", nifFilePath)
+        Blender.Window.FileSelector(selectFile, "export .nif", nifFilePath)
 
-def event(evt, val):
-    """
-    Event handler for GUI elements
-    """
-    #print  "event(%i,%i)"%(arg1,arg2)
-    if evt == Draw.ESCKEY:
-        exit()
 
-def select(nifFilePath):
+def selectFile(nifFilePath):
     global _CONFIG
     if nifFilePath == '':
         Draw.PupMenu('No file name selected')
@@ -148,16 +141,15 @@ def select(nifFilePath):
     Draw.Redraw(1)
 
 
-
 def event(evt, val):
     """
     Event handler for GUI elements
     """
     #print  "event(%i,%i)"%(arg1,arg2)
     if evt == Draw.ESCKEY:
-        exit()
+        exitGUI()
 
-def open():
+def openGUI():
     """
     Opens the import GUI
     """
@@ -167,7 +159,7 @@ def open():
     _CONFIG = Config._CONFIG
     Draw.Register(gui, event, buttonEvent)
 
-def exit():
+def exitGUI():
     """
     Closes the config GUI
     """
