@@ -2,6 +2,12 @@ import Blender, Config
 from Blender import Draw, BGL, sys
 from Blender.Mathutils import *
 
+#try:
+#    import psyco
+#    psyco.full()
+#except:
+#    print 'no psyco for you!'
+
 try:
     from NifFormat.NifFormat import NifFormat
 except:
@@ -14,27 +20,6 @@ If you do not have it: http://niftools.sourceforge.net/
     Blender.Draw.PupMenu("ERROR%t|NifFormat not found, check console for details")
     raise
 
-"""
-try:
-    from pyniflib.pyniflib import *
-    from pyniflib.NiObject import *
-    from pyniflib.NiNode import *
-    from pyniflib.NiObjectNET import *
-    from pyniflib.NiTimeController import *
-    from pyniflib.NiSkinInstance import *
-    from pyniflib.NiAVObject import *
-    from pyniflib.NiGeometry import *
-    from pyniflib.NiGeometryData import *
-except:
-    err =" ""--------------------------
-ERROR\nThis script requires the PYNIFLIB Python SWIG wrapper, pyniflib.py & niflib.dll.
-Make sure these files reside in your Python path or in your Blender scripts folder.
-If you don't have them: http://niftools.sourceforge.net/
---------------------------"" "
-    print err
-    Blender.Draw.PupMenu("ERROR%t|PYNIFLIB not found, check console for details")
-    #raise
-"""
 
 
 #
@@ -194,6 +179,7 @@ def exitGUI():
     """
     Closes the config GUI
     """
+    global _CONFIG
     Config._CONFIG = _CONFIG
     Config.save()
     Draw.Exit()
@@ -331,16 +317,20 @@ def read_branch(niBlock):
     if (_BLOCKS_READ/(_BLOCK_COUNT+1.0)) >= (_READ_PROGRESS + 0.1):
         _READ_PROGRESS = _BLOCKS_READ/(_BLOCK_COUNT+1.0)
         Blender.Window.DrawProgressBar(_READ_PROGRESS, "Importing data")
-    if not niBlock.is_null():
-        btype = niBlock.GetBlockType()
-        if btype == "NiTriShape" or btype == "NiTriStrips":
+    #if not niBlock.is_null():
+    if niBlock:
+        #btype = niBlock.GetBlockType()
+        #if btype == "NiTriShape" or btype == "NiTriStrips":
+        if isinstance(niBlock, NifFormat.NiTriBasedGeom):
             # it's a shape node
             return fb_mesh(niBlock)
-        elif not niBlock["Children"].is_null():
+        #elif not niBlock["Children"].is_null():
+        elif niBlock.children:
             # it's a parent node
             # import object + children
-            niChildren = niBlock["Children"].asLinkList()
-            b_obj = None
+            #niChildren = niBlock["Children"].asLinkList()
+            niChildren = niBlock.children
+            #b_obj = None
             if is_armature_root(niBlock):
                 # the whole bone branch is imported by fb_armature as well
                 b_obj = fb_armature(niBlock)
@@ -364,10 +354,6 @@ def read_branch(niBlock):
         else:
             return None
 
-# Reads the content of the current NIF tree branch to Blender
-# recursively, as meshes parented to a given armature. Note that
-# niBlock must have been imported previously as an armature, along
-# with all its bones. This function only imports meshes.
 def read_armature_branch(b_armature, niArmature, niBlock):
     """
     Reads the content of the current NIF tree branch to Blender
@@ -376,45 +362,47 @@ def read_armature_branch(b_armature, niArmature, niBlock):
     with all its bones. This function only imports meshes.
     """
     # check if the child is non-null
-    if not niBlock.is_null():
-        btype = niBlock.GetBlockType()
+    #if not niBlock.is_null():
+    if niBlock:
+        #btype = niBlock.GetBlockType()
         # bone or group node?
         # is it an AParentNode?
-        if not niBlock["Children"].is_null():
-            niChildren = niBlock["Children"].asLinkList()
-            for niChild in niChildren:
-                b_mesh = read_armature_branch(b_armature, niArmature, niChild)
-                if b_mesh:
-                    # correct the transform
-                    # it's parented to the armature!
-                    armature_matrix_inverse = fb_global_matrix(niArmature)
-                    armature_matrix_inverse.invert()
-                    b_mesh.setMatrix(fb_global_matrix(niChild) * armature_matrix_inverse)
-                    # add a vertex group if it's parented to a bone
-                    par_bone = get_closest_bone(niChild)
-                    if not par_bone.is_null():
-                        # set vertex index 1.0 for all vertices that don't yet have a vertex weight
-                        # this will mimick the fact that the mesh is parented to the bone
-                        b_meshData = b_mesh.getData(mesh=True)
-                        verts = [ v.index for v in b_meshData.verts ] # copy vertices, as indices
-                        for groupName in b_meshData.getVertGroupNames():
-                            for v in b_meshData.getVertsFromGroup(groupName):
-                                try:
-                                    verts.remove(v)
-                                except ValueError: # remove throws value-error if vertex was already removed previously
-                                    pass
-                        if verts:
-                            groupName = _NAMES[par_bone["Name"].asString()]
-                            b_meshData.addVertGroup(groupName)
-                            b_meshData.assignVertsToGroup(groupName, verts, 1.0, Blender.Mesh.AssignModes.REPLACE)
-                    # make it parent of the armature
-                    b_armature.makeParentDeform([b_mesh])
         # mesh?
-        elif btype == "NiTriShape" or btype == "NiTriStrips":
+        #if btype == "NiTriShape" or btype == "NiTriStrips":
+        if isinstance(niBlock, NifFormat.NiTriBasedGeom):
             return fb_mesh(niBlock)
-        # anything else: throw away
         else:
-            return None
+            niChildren = niBlock.children
+            if niChildren:
+                for niChild in niChildren:
+                    b_mesh = read_armature_branch(b_armature, niArmature, niChild)
+                    if b_mesh:
+                        # correct the transform
+                        # it's parented to the armature!
+                        armature_matrix_inverse = fb_global_matrix(niArmature)
+                        armature_matrix_inverse.invert()
+                        b_mesh.setMatrix(fb_global_matrix(niChild) * armature_matrix_inverse)
+                        # add a vertex group if it's parented to a bone
+                        par_bone = get_closest_bone(niChild)
+                        if not par_bone.is_null():
+                            # set vertex index 1.0 for all vertices that don't yet have a vertex weight
+                            # this will mimick the fact that the mesh is parented to the bone
+                            b_meshData = b_mesh.getData(mesh=True)
+                            verts = [ v.index for v in b_meshData.verts ] # copy vertices, as indices
+                            for groupName in b_meshData.getVertGroupNames():
+                                for v in b_meshData.getVertsFromGroup(groupName):
+                                    try:
+                                        verts.remove(v)
+                                    except ValueError: # remove throws value-error if vertex was already removed previously
+                                        pass
+                            if verts:
+                                groupName = _NAMES[par_bone["Name"].asString()]
+                                b_meshData.addVertGroup(groupName)
+                                b_meshData.assignVertsToGroup(groupName, verts, 1.0, Blender.Mesh.AssignModes.REPLACE)
+                        # make it parent of the armature
+                        b_armature.makeParentDeform([b_mesh])
+    # anything else: throw away
+    return None
 
 
 #
@@ -493,7 +481,7 @@ def material_hash(matProperty, textProperty, alphaProperty, specProperty):
 #
 # Get unique name for an object, preserving existing names
 #
-def fb_name(niBlock,max_length=22):
+def fb_name(niBlock, max_length=22):
     """
     Get unique name for an object, preserving existing names
     The maximum name length defaults to 22, since this is the
@@ -504,7 +492,8 @@ def fb_name(niBlock,max_length=22):
 
     # find unique name for Blender to use
     uniqueInt = 0
-    niName = niBlock["Name"].asString()
+    #niName = niBlock["Name"].asString()
+    niName = niBlock.name
     # remove the "Tri " prefix; this will help when exporting the model again
     if niName[:4] == "Tri ":
         niName = niName[4:]
@@ -523,21 +512,30 @@ def fb_name(niBlock,max_length=22):
 
 # Retrieves a niBlock's transform matrix as a Mathutil.Matrix
 def fb_matrix(niBlock):
-    inode=QueryNode(niBlock)
-    m=inode.GetLocalBindPos() # remind: local bind position != local transform
-    b_matrix = Matrix([m[0][0],m[0][1],m[0][2],m[0][3]],\
-                      [m[1][0],m[1][1],m[1][2],m[1][3]],\
-                      [m[2][0],m[2][1],m[2][2],m[2][3]],\
-                      [m[3][0],m[3][1],m[3][2],m[3][3]])
+    #inode=QueryNode(niBlock)
+    #m=inode.GetLocalBindPos() # remind: local bind position != local transform
+    #b_matrix = Matrix([m[0][0],m[0][1],m[0][2],m[0][3]],\
+    #                  [m[1][0],m[1][1],m[1][2],m[1][3]],\
+    #                  [m[2][0],m[2][1],m[2][2],m[2][3]],\
+    #                  [m[3][0],m[3][1],m[3][2],m[3][3]])
+    b_matrix = Matrix()
     return b_matrix
 
 def fb_global_matrix(niBlock):
-    inode=QueryNode(niBlock)
-    m=inode.GetWorldBindPos() # remind: local bind position != local transform
-    b_matrix = Matrix([m[0][0],m[0][1],m[0][2],m[0][3]],\
-                      [m[1][0],m[1][1],m[1][2],m[1][3]],\
-                      [m[2][0],m[2][1],m[2][2],m[2][3]],\
-                      [m[3][0],m[3][1],m[3][2],m[3][3]])
+    #inode=QueryNode(niBlock)
+    #m=inode.GetWorldBindPos() # remind: local bind position != local transform
+    #b_matrix = Matrix([m[0][0],m[0][1],m[0][2],m[0][3]],\
+    #                  [m[1][0],m[1][1],m[1][2],m[1][3]],\
+    #                  [m[2][0],m[2][1],m[2][2],m[2][3]],\
+    #                  [m[3][0],m[3][1],m[3][2],m[3][3]])
+    r = niBlock.rotation # 3*3 matrix 
+    t = niBlock.translation # translation, vector3
+    v = niBlock.velocity # ??? velocity, vector3, pretty much always 0, 0, 0
+    b_matrix = Matrix(  [r.m11, r.m12, r.m13, t.x],\
+                        [r.m21, r.m22, r.m23, t.y],\
+                        [r.m31, r.m32, r.m33, t.z],\
+                        [  v.x,   v.y,   v.z, 1.0])
+    print b_matrix
     return b_matrix
 
 
@@ -593,7 +591,8 @@ def fb_armature(niBlock):
     #b_armatureData.drawType = Blender.Armature.OCTAHEDRON
     b_armature.link(b_armatureData)
     b_armatureData.makeEditable()
-    niChildren = niBlock["Children"].asLinkList()
+    #niChildren = niBlock["Children"].asLinkList()
+    niChildren = niBlock.children
     niChildBones = [child for child in niChildren if is_bone(child)]  
     for niBone in niChildBones:
         # Ok, possibly forwarding the inverse of the armature matrix through all the bone chain is silly,
@@ -663,8 +662,11 @@ def fb_armature(niBlock):
         extra_matrix_rot_inv.invert()
         extra_matrix_quat_inv = extra_matrix_rot_inv.toQuat()
         # now import everything
-        kfc = find_controller(niBone, "NiKeyframeController")
-        if not kfc.is_null():
+        kfc = find_controller(niBone, NifFormat.NiKeyframeController)
+        #if not kfc.is_null():
+        #if kfc:
+        print "disabled animations, fix"
+        if False:
             # get keyframe data
             kfd = kfc["Data"].asLink()
             assert(kfd.GetBlockType() == "NiKeyframeData")
@@ -754,8 +756,10 @@ def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
     global _BONES, _BONES_EXTRA_MATRIX, _BONE_CORRECTION_MATRICES
     
     bone_name = fb_name(niBlock, 32)
-    niChildren = niBlock["Children"].asLinkList()
-    niChildNodes = [child for child in niChildren if child.GetBlockType() == "NiNode"]  
+    #niChildren = niBlock["Children"].asLinkList()
+    niChildren = niBlock.children
+    #niChildNodes = [child for child in niChildren if child.GetBlockType() == "NiNode"]
+    niChildNodes = [child for child in niChildren if isinstance(child, NifFormat.NiNode)]  
     niChildBones = [child for child in niChildNodes if is_bone(child)]
     if is_bone(niBlock):
         # create bones here...
@@ -774,7 +778,8 @@ def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
         else:
             # no children... continue bone sequence in the same direction as parent, with the same length
             # this seems to work fine
-            parent = niBlock.GetParent()
+            #parent = niBlock.GetParent()
+            parent = niBlock.parent
             parent_matrix = fb_global_matrix(parent) * armature_matrix_inverse
             b_parent_head_x = parent_matrix[3][0]
             b_parent_head_y = parent_matrix[3][1]
@@ -788,14 +793,16 @@ def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
             # Since we later set the matrix explicitly any axis will do here.
             # TO DO: Compensate for scale
             b_bone_tail_x = b_bone_head_x + 0.5
-        # sets the bone heads & tails
-        b_bone.head = Vector(b_bone_head_x, b_bone_head_y, b_bone_head_z)
-        b_bone.tail = Vector(b_bone_tail_x, b_bone_tail_y, b_bone_tail_z)
-        if is_zero_length:
+            # sets the bone heads & tails
+            b_bone.head = Vector(b_bone_head_x, b_bone_head_y, b_bone_head_z)
+            b_bone.tail = Vector(b_bone_tail_x, b_bone_tail_y, b_bone_tail_z)
             # Can't test zero length bones, we keep the original alignment
             # with no further correction
             b_bone.matrix = armature_space_matrix.rotationPart()
         else:
+            # sets the bone heads & tails
+            b_bone.head = Vector(b_bone_head_x, b_bone_head_y, b_bone_head_z)
+            b_bone.tail = Vector(b_bone_tail_x, b_bone_tail_y, b_bone_tail_z)
             # here we explicitly try to set the matrix from the NIF matrix; this has the following consequences:
             # - head is preserved
             # - bone length is preserved
@@ -1072,9 +1079,9 @@ def fb_mesh(niBlock):
    
     _SCENE.objects.link(b_mesh)
     
-
     # Mesh hidden flag
-    if niBlock["Flags"].asInt() & 1 == 1:
+    #if niBlock["Flags"].asInt() & 1 == 1:
+    if niBlock.flags & 1 == 1:
         b_mesh.setDrawType(2) # hidden: wire
     else:
         b_mesh.setDrawType(4) # not hidden: shaded
@@ -1299,7 +1306,7 @@ def fb_mesh(niBlock):
     b_meshData.calcNormals() # let Blender calculate vertex normals
 
     # new implementation, uses Mesh instead
-    morphCtrl = find_controller(niBlock, "NiGeomMorpherController")
+    morphCtrl = find_controller(niBlock, NifFormat.NiGeomMorpherController)
     if morphCtrl.is_null() == False:
         morphData = morphCtrl["Data"].asLink()
         if ( morphData.is_null() == False ):
@@ -1438,37 +1445,51 @@ def fb_fullnames():
         namestxt.write('%s;%s\n'% (_NAMES[n], n))
     
 # find a controller
-def find_controller(block, controllertype):
+def find_controller(niBlock, controllertype):
     """
     Finds a controller
     """
-    ctrl = block["Controller"].asLink()
-    while ctrl.is_null() == False:
-        if ctrl.GetBlockType() == controllertype:
+    ctrl = niBlock.controller
+    while ctrl:
+        if isinstance(ctrl, controllertype):
             break
-        ctrl = ctrl["Next Controller"].asLink()
+        ctrl = ctrl.nextController
     return ctrl
+        
+    #ctrl = niBlock["Controller"].asLink()
+    #while ctrl.is_null() == False:
+    #    if ctrl.GetBlockType() == controllertype:
+    #        break
+    #    ctrl = ctrl["Next Controller"].asLink()
+    #return ctrl
+
 
 
 
 # find extra data
-def find_extra(block, extratype):
+def find_extra(niBlock, extratype):
     # pre-10.x.x.x system: extra data chain
-    
-    extra = block["Extra Data"].asLink()
-    while not extra.is_null():
-        if extra.GetBlockType() == extratype:
+    extra = niBlock.extraData
+    #extra = niBlock["Extra Data"].asLink()
+    #while not extra.is_null():
+    while extra:
+        #if extra.GetBlockType() == extratype:
+        if isinstance(extra, extratype):
             break
-        extra = extra["Next Extra Data"].asLink()
-    if not extra.is_null():
+        #extra = extra["Next Extra Data"].asLink()
+        extra = extra.nextExtraData
+    #if not extra.is_null():
+    if extra:
         return extra
 
     # post-10.x.x.x system: extra data list
-    for extra in block["Extra Data List"].asLinkList():
-        if extra.GetBlockType() == extratype:
+    #for extra in niBlock["Extra Data List"].asLinkList():
+    for extra in niBlock.extraDataList:
+        #if extra.GetBlockType() == extratype:
+        if isinstance(extra, extratype):
             return extra
-
-    return blk_ref() # return empty block
+    return None
+    #return blk_ref() # return empty block
 
 
 # mark armatures and bones by peeking into NiSkinInstance blocks
@@ -1479,7 +1500,7 @@ def mark_armatures_bones(block):
     # search for all NiTriShape or NiTriStrips blocks...
     #if block.GetBlockType() == "NiTriShape" or block.GetBlockType() == "NiTriStrips":
     #if block.IsDerivedType(NiGeometry_TypeConst()):
-    if isinstance(block, NifFormat.NiGeometry):
+    if isinstance(block, NifFormat.NiTriBasedGeom):
         #oNiGeometry = CastToNiGeometry(block())
         #children = oNiGeometry.GetChildren()
         # yes, we found one, get its skin instance
@@ -1582,22 +1603,25 @@ def merge_armatures():
 
 # Tests a NiNode to see if it's a bone.
 def is_bone(niBlock):
-    if niBlock["Name"].asString()[:6] == "Bip01 ": return True # heuristics
+    #if niBlock["Name"].asString()[:6] == "Bip01 ": return True # heuristics
+    blockName = niBlock.name
+    if blockName == "Bip01 ": return True # heuristics
     for bones in _BONE_LIST.values():
-        if niBlock["Name"].asString() in bones:
+        #if niBlock["Name"].asString() in bones:
+        if blockName in bones:
             #print "%s is a bone" % niBlock["Name"].asString()
             return True
     #print "%s is not a bone" % niBlock["Name"].asString()
     return False
 
 # Tests a block to see if it's an armature.
-def is_armature_root(block):
+def is_armature_root(niBlock):
     #return _BONE_LIST.has_key(niBlock["Name"].asString())
     #if block.IsDerivedType(NiNode_TypeConst()):
     #    oNiNode = CastToNiNode(block())
     #    return  _BONE_LIST.has_key(oNiNode.GetName())
-    if isinstance(block, NifFormat.NiNode):
-        return  _BONE_LIST.has_key(block.name)
+    if isinstance(niBlock, NifFormat.NiNode):
+        return  _BONE_LIST.has_key(niBlock.name)
     else:
         return False
     
@@ -1643,7 +1667,7 @@ def set_animation(niBlock, b_obj):
     global SCALE_CORRECTION
     global SCALE_MATRIX
     progress = 0.1
-    kfc = find_controller(niBlock, "NiKeyframeController")
+    kfc = find_controller(niBlock, NifFormat.NiKeyframeController)
     if not kfc.is_null():
         # create an Ipo for this object
         b_ipo = b_obj.getIpo()

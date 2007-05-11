@@ -1,6 +1,12 @@
 import Blender, Config
 from Blender import Draw, BGL, sys
 
+#try:
+#    import psyco
+#    psyco.full()
+#except:
+#    print 'no psyco for you!'
+
 try:
     from NifFormat.NifFormat import NifFormat
 except:
@@ -57,7 +63,6 @@ _GUI_ELEMENTS = {}
 # To avoid confusion with event ID handling I register them all in a list
 _GUI_EVENTS = []
 
-_WINDOW_SIZE = Blender.Window.GetAreaSize()
 _LOGO_PATH = sys.sep.join((Blender.Get('scriptsdir'),"bpymodules","nifImEx","niftools_logo.png"))
 _LOGO_IMAGE = Blender.Image.Load(_LOGO_PATH)
 _SCRIPT_VERSION = "1.9.0a"
@@ -128,7 +133,6 @@ def buttonEvent(evt):
         nifFilePath = sys.sep.join((_CONFIG["NIF_EXPORT_PATH"], _CONFIG["NIF_EXPORT_FILE"]))
         Blender.Window.FileSelector(selectFile, "export .nif", nifFilePath)
 
-
 def selectFile(nifFilePath):
     global _CONFIG
     if nifFilePath == '':
@@ -138,7 +142,7 @@ def selectFile(nifFilePath):
         _CONFIG["NIF_EXPORT_FILE"] = sys.basename(nifFilePath)
         Config._CONFIG = _CONFIG
         Config.save()
-    Draw.Redraw(1)
+
 
 
 def event(evt, val):
@@ -163,7 +167,11 @@ def exitGUI():
     """
     Closes the config GUI
     """
+    global _CONFIG
+    Config._CONFIG = _CONFIG
+    Config.save()
     Draw.Exit()
+    Draw.Redraw(1)
 
 
 
