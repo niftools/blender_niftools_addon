@@ -211,6 +211,7 @@ def load():
     # both loads and cleans up the configuration from the registry
     global _CONFIG, _CONFIG_NAME
     reload(Defaults)
+    # I'll do something smarter with dir() here
     _CONFIG = {
         'NIF_IMPORT_PATH'          : Defaults._NIF_IMPORT_PATH, \
         'NIF_EXPORT_PATH'          : Defaults._NIF_EXPORT_PATH, \
@@ -222,7 +223,6 @@ def load():
         'EXPORT_SCALE_CORRECTION'  : Defaults._EXPORT_SCALE_CORRECTION, \
         'BASE_TEXTURE_FOLDER'      : Defaults._BASE_TEXTURE_FOLDER, \
         'EXPORT_TEXTURE_PATH'      : Defaults._EXPORT_TEXTURE_PATH, \
-        'NIF_VERSIONS'             : Defaults._NIF_VERSIONS, \
         'EPSILON'                  : Defaults._EPSILON, \
         'VERBOSE'                  : Defaults._VERBOSE}
     oldConfig = Blender.Registry.GetKey(_CONFIG_NAME, True)

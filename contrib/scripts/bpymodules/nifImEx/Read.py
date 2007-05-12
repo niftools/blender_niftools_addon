@@ -33,7 +33,7 @@ _GUI_ELEMENTS = {}
 # To avoid confusion with event ID handling I register them all in a list
 _GUI_EVENTS = []
 
-_LOGO_PATH = sys.sep.join((Blender.Get('scriptsdir'),"bpymodules","nifImEx","niftools_logo.png"))
+_LOGO_PATH = sys.sep.join((Blender.Get('scriptsdir'), "bpymodules", "nifImEx", "niftools_logo.png"))
 _LOGO_IMAGE = Blender.Image.Load(_LOGO_PATH)
 _SCRIPT_VERSION = "1.9.0a"
 _BLOCK_COUNT = 0
@@ -415,11 +415,10 @@ def float3_hash(x):
     return (float_hash(x[0]), float_hash(x[1]), float_hash(x[2]))
 
 # blk_ref hash
-def block_hash(b):
-    if b.is_null():
-        return None
-    else:
+def block_hash(niBlock):
+    if b:
         return b.GetBlockNum()
+    return None
 
 # NiSourceTexture hash
 def texsource_hash(texsource):
@@ -440,23 +439,22 @@ def texdesc_hash(texdesc):
 
 # "material" property hash
 def material_hash(matProperty, textProperty, alphaProperty, specProperty):
-    if not matProperty.is_null():
+    if matProperty:
         mathash = (\
-            block_hash(matProperty["Controller"].asLink()),\
-            matProperty["Flags"].asInt(),\
-            float3_hash(matProperty["Ambient Color"].asFloat3()),\
-            float3_hash(matProperty["Diffuse Color"].asFloat3()),\
-            float3_hash(matProperty["Specular Color"].asFloat3()),\
-            float3_hash(matProperty["Emissive Color"].asFloat3()),\
-            float_hash(matProperty["Glossiness"].asFloat()),\
-            float_hash(matProperty["Alpha"].asFloat())\
+            block_hash(matProperty.controller),\
+            matProperty.flags,\
+            float3_hash(matProperty.ambientColor),\
+            float3_hash(matProperty.diffuseColor),\
+            float3_hash(matProperty.specularColor),\
+            float3_hash(matProperty.emissiveColor),\
+            float_hash(matProperty.glossiness),\
+            float_hash(matProperty.alpha)\
         )
     else:
         mathash = None
-    if not textProperty.is_null():
-        itexprop = QueryTexturingProperty(textProperty)
-        bastex = itexprop.GetTexture(0)
-        glowtex = itexprop.GetTexture(4)
+    if textProperty:
+        bastex = textProperty.GetTexture(0)
+        glowtex = textProperty.GetTexture(4)
         texthash = (\
             block_hash(textProperty["Controller"].asLink()),\
             textProperty["Flags"].asInt(),\
@@ -518,7 +516,13 @@ def fb_matrix(niBlock):
     #                  [m[1][0],m[1][1],m[1][2],m[1][3]],\
     #                  [m[2][0],m[2][1],m[2][2],m[2][3]],\
     #                  [m[3][0],m[3][1],m[3][2],m[3][3]])
-    b_matrix = Matrix()
+    r = niBlock.rotation # 3*3 matrix 
+    t = niBlock.translation # translation, vector3
+    v = niBlock.velocity # ??? velocity, vector3, pretty much always 0, 0, 0
+    b_matrix = Matrix(  [r.m11, r.m12, r.m13, t.x],\
+                        [r.m21, r.m22, r.m23, t.y],\
+                        [r.m31, r.m32, r.m33, t.z],\
+                        [  v.x,   v.y,   v.z, 1.0])
     return b_matrix
 
 def fb_global_matrix(niBlock):
@@ -535,8 +539,10 @@ def fb_global_matrix(niBlock):
                         [r.m21, r.m22, r.m23, t.y],\
                         [r.m31, r.m32, r.m33, t.z],\
                         [  v.x,   v.y,   v.z, 1.0])
-    print b_matrix
-    return b_matrix
+    try:
+        return b_matrix * fb_global_matrix(niBlock.parent) # yay, recursion
+    except:
+        return b_matrix
 
 
 
@@ -1068,10 +1074,9 @@ def fb_material(matProperty, textProperty, alphaProperty, specProperty):
 # Creates and returns a raw mesh
 def fb_mesh(niBlock):
     global _SCENE
+    assert(isinstance(niBlock, NifFormat.NiTriBasedGeom))
     # Mesh name -> must be unique, so tag it if needed
-    b_name=fb_name(niBlock,22)
-    # we mostly work directly on Blender's objects (b_meshData)
-    # but for some tasks we must use the Python wrapper (b_nmeshData), see further
+    b_name = fb_name(niBlock, 22)
     b_meshData = Blender.Mesh.New(b_name)
     b_mesh = _SCENE.objects.new(b_meshData, b_name)
     b_mesh = Blender.Object.New("Mesh", b_name)
@@ -1080,7 +1085,6 @@ def fb_mesh(niBlock):
     _SCENE.objects.link(b_mesh)
     
     # Mesh hidden flag
-    #if niBlock["Flags"].asInt() & 1 == 1:
     if niBlock.flags & 1 == 1:
         b_mesh.setDrawType(2) # hidden: wire
     else:
@@ -1088,33 +1092,27 @@ def fb_mesh(niBlock):
 
     # Mesh transform matrix, sets the transform matrix for the object.
     b_mesh.setMatrix(fb_matrix(niBlock))
+    
     # Mesh geometry data. From this I can retrieve all geometry info
-    data_blk = niBlock["Data"].asLink();
-    iShapeData = QueryShapeData(data_blk)
-    iTriShapeData = QueryTriShapeData(data_blk)
-    iTriStripsData = QueryTriStripsData(data_blk)
-    #vertices
-    if not iShapeData:
+    niData = niBlock.data
+    if not niData:
         raise NIFImportError("no iShapeData returned. Node name: %s " % b_name)
-    verts = iShapeData.GetVertices()
+        
+    # Vertices
+    verts = niData.vertices
+    
     # Faces
-    if iTriShapeData:
-        faces = iTriShapeData.GetTriangles()
-    elif iTriStripsData:
-        faces = iTriStripsData.GetTriangles()
-    else:
-        raise NIFImportError("no iTri*Data returned. Node name: %s " % b_name)
+    tris = niData.triangles
+    
     # "Sticky" UV coordinates. these are transformed in Blender UV's
     # only the first UV set is loaded right now
-    uvco = None
-    if iShapeData.GetUVSetCount()>0:
-        uvco = iShapeData.GetUVSet(0)
-    # Vertex colors
-    vcols = iShapeData.GetColors()
+    uvco = niData.uvSets
+        
     # Vertex normals
-    norms = iShapeData.GetNormals()
+    norms = niData.normals
 
     v_map = [0]*len(verts) # pre-allocate memory, for faster performance
+    _SEAMS_IMPORT = False
     if not _SEAMS_IMPORT:
         # Fast method: don't care about any seams!
         for i, v in enumerate(verts):
@@ -1156,9 +1154,9 @@ def fb_mesh(niBlock):
         del n_map
 
     # Adds the faces to the mesh
-    f_map = [None]*len(faces)
+    f_map = [None]*len(tris)
     b_f_index = 0
-    for i, f in enumerate(faces):
+    for i, f in enumerate(tris):
         if f.v1 != f.v2 and f.v1 != f.v3 and f.v2 != f.v3:
             v1=b_meshData.verts[v_map[f.v1]]
             v2=b_meshData.verts[v_map[f.v2]]
@@ -1186,7 +1184,8 @@ def fb_mesh(niBlock):
             f.mat = 0
 
     # vertex colors
-    vcol = iShapeData.GetColors()
+    vcol = niData.vertexColors
+    
     if len( vcol ) == 0:
         vcol = None
     else:
@@ -1222,7 +1221,7 @@ def fb_mesh(niBlock):
     # on a single "material" I could have a base texture, with a decal texture over it mapped on another set of UV
     # coordinates. I don't know if Blender can do the same.
 
-    if uvco:
+    for uvSet in uvco:
         # Sets the face UV's for the mesh on. The NIF format only supports vertex UV's,
         # but Blender only allows explicit editing of face UV's, so I'll load vertex UV's like face UV's
         b_meshData.faceUV = 1
@@ -1238,36 +1237,41 @@ def fb_mesh(niBlock):
             if (v_map[f.v1] == b_meshData.faces[f_map[i]].verts[0].index):
                 # this is how it "should" be
                 for v in (f.v1, f.v2, f.v3):
-                    uv=uvco[v]
+                    uv=uvco[uvSet][v]
                     uvlist.append(Vector(uv.u, 1.0 - uv.v))
                 b_meshData.faces[f_map[i]].uv = tuple(uvlist)
             elif (v_map[f.v1] == b_meshData.faces[f_map[i]].verts[1].index):
                 # vertex 3 was added first
                 for v in (f.v3, f.v1, f.v2):
-                    uv=uvco[v]
+                    uv=uvco[uvSet][v]
                     uvlist.append(Vector(uv.u, 1.0 - uv.v))
                 b_meshData.faces[f_map[i]].uv = tuple(uvlist)
             elif (v_map[f.v1] == b_meshData.faces[f_map[i]].verts[2].index):
                 # vertex 2 was added first
                 for v in (f.v2, f.v3, f.v1):
-                    uv=uvco[v]
+                    uv=uvco[uvSet][v]
                     uvlist.append(Vector(uv.u, 1.0 - uv.v))
                 b_meshData.faces[f_map[i]].uv = tuple(uvlist)
             else:
                 raise NIFImportError("Invalid UV index (BUG?)")
     
     # Sets the material for this mesh. NIF files only support one material for each mesh.
-    matProperty = niBlock["Properties"].FindLink("NiMaterialProperty" )
-    if matProperty.is_null() == False:
-        # create material and assign it to the mesh
-        textProperty = niBlock["Properties"].FindLink( "NiTexturingProperty" )
-        alphaProperty = niBlock["Properties"].FindLink("NiAlphaProperty")
-        specProperty = niBlock["Properties"].FindLink("NiSpecularProperty")
+    matProperty = find_property(niBlock, NifFormat.NiMaterialProperty)
+    if matProperty:
+        # Texture
+        textProperty = None
         if uvco:
-            material = fb_material(matProperty, textProperty, alphaProperty, specProperty)
-        else:
-            # no UV coordinates: no texture
-            material = fb_material(matProperty, blk_ref(), alphaProperty, specProperty)
+            textProperty = find_property(niBlock, NifFormat.NiTexturingProperty)
+        
+        # Alpha
+        alphaProperty = find_property(niBlock, NifFormat.NiAlphaProperty)
+        
+        # Specularity
+        specProperty = find_property(niBlock, NifFormat.NiSpecularProperty)
+        
+        # create material and assign it to the mesh
+        material = fb_material(matProperty, textProperty, alphaProperty, specProperty)
+        
         b_meshData.materials = [material]
 
         # fix up vertex colors depending on whether we had textures in the material
@@ -1445,25 +1449,26 @@ def fb_fullnames():
         namestxt.write('%s;%s\n'% (_NAMES[n], n))
     
 # find a controller
-def find_controller(niBlock, controllertype):
+def find_controller(niBlock, controllerType):
     """
     Finds a controller
     """
     ctrl = niBlock.controller
     while ctrl:
-        if isinstance(ctrl, controllertype):
+        if isinstance(ctrl, controllerType):
             break
         ctrl = ctrl.nextController
     return ctrl
-        
-    #ctrl = niBlock["Controller"].asLink()
-    #while ctrl.is_null() == False:
-    #    if ctrl.GetBlockType() == controllertype:
-    #        break
-    #    ctrl = ctrl["Next Controller"].asLink()
-    #return ctrl
 
-
+# find a property
+def find_property(niBlock, propertyType):
+    """
+    Finds a controller
+    """
+    prop = [p for p in niBlock.properties if isinstance(p, propertyType)]
+    if prop:
+        return prop[0]
+    return None
 
 
 # find extra data
