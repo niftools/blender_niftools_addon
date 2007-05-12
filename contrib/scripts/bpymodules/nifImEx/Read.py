@@ -242,15 +242,6 @@ def import_nif(filename):
             raise NIFImportError("Unsupported NIF version.")
         else:
             raise NIFImportError("Not a NIF file.")
-        #ver = GetNifVersion(filename)
-        #if ( ver == VER_INVALID ):
-        #    raise NIFImportError("Not a NIF file.")
-        #elif ( ver == VER_UNSUPPORTED ):
-        #    raise NIFImportError("Unsupported NIF version.")
-        #Blender.Window.DrawProgressBar(0.33, "Reading file")
-        #root_block = ReadNifTree(filename)
-        #Blender.Window.DrawProgressBar(0.66, "Importing data")
-        #import_main(root_block)
     except NIFImportError, e: # in that case, we raise a menu instead of an exception
         Blender.Window.DrawProgressBar(1.0, "Import Failed")
         print 'NIFImportError: ' + e.value
@@ -266,6 +257,8 @@ def import_nif(filename):
 def import_main(root_block):
     # sets the block parent to None, so that when crawling back the script won't barf
     root_block.parent = None
+    # set the block parent through the tree, to ensure I can always move backward
+    set_parents(root_block)
     # scene info
     # used to control the progress bar
     global _SCENE, _CONFIG, _BLOCK_COUNT, _BLOCKS_READ, _READ_PROGRESS
@@ -343,8 +336,6 @@ def read_branch(niBlock):
                 b_obj = fb_empty(niBlock)
                 b_children_list = []
                 for child in niChildren:
-                    # sets the parent, to allow me to crawl back
-                    child.parent = niBlock
                     b_child_obj = read_branch(child)
                     if b_child_obj: b_children_list.append(b_child_obj)
                 b_obj.makeParent(b_children_list)
@@ -848,7 +839,7 @@ def fb_texture(niSourceTexture):
                         except:
                             pass
             if b_image == None:
-                print "Texture %s not found and no alternate available" % niSourceTexture.fileName
+                print "Texture %s not found and no alternate available" % fn
                 b_image = Blender.Image.New(tex, 1, 1, 24) # create a stub
                 b_image.filename = tex
         else:
@@ -1314,22 +1305,23 @@ def fb_textkey(niBlock):
     Since the text buffer is cleared on each import only the last import will be exported
     correctly
     """
-    # get animation text buffer, and clear it if it already exists
-    try:
-        animtxt = [txt for txt in Blender.Text.Get() if txt.getName() == "Anim"][0]
-        animtxt.clear()
-    except:
-        animtxt = Blender.Text.New("Anim")
-
-    frame = 1
-    for key in niBlock.keys:
-        newkey = key.data.replace('\r\n', '/').rstrip('/')
-        frame = 1 + int(key.time * _FPS) # time 0.0 is frame 1
-        animtxt.write('%i/%s\n'%(frame, newkey))
-
-    # set start and end frames
-    _SCENE.getRenderingContext().startFrame(1)
-    _SCENE.getRenderingContext().endFrame(frame)
+    if niBlock and niBlock.keys:
+        # get animation text buffer, and clear it if it already exists
+        try:
+            animtxt = [txt for txt in Blender.Text.Get() if txt.getName() == "Anim"][0]
+            animtxt.clear()
+        except:
+            animtxt = Blender.Text.New("Anim")
+        
+        frame = 1
+        for key in niBlock.keys:
+            newkey = key.data.replace('\r\n', '/').rstrip('/')
+            frame = 1 + int(key.time * _FPS) # time 0.0 is frame 1
+            animtxt.write('%i/%s\n'%(frame, newkey))
+        
+        # set start and end frames
+        _SCENE.getRenderingContext().startFrame(1)
+        _SCENE.getRenderingContext().endFrame(frame)
     
 def fb_bonemat():
     """
@@ -1417,25 +1409,24 @@ def find_extra(niBlock, extratype):
     return None
     #return blk_ref() # return empty block
 
+# sets the parent block recursively through the tree, to allow me to crawl back as needed
+def set_parents(niBlock):
+    if isinstance(niBlock, NifFormat.NiNode):
+        children = niBlock.children
+        if children:
+            for child in children:
+                child.parent = niBlock
+                set_parents(child)
 
 # mark armatures and bones by peeking into NiSkinInstance blocks
-def mark_armatures_bones(block):
+def mark_armatures_bones(niBlock):
     global _BONE_LIST
     # search for all NiTriShape or NiTriStrips blocks...
-    #if block.GetBlockType() == "NiTriShape" or block.GetBlockType() == "NiTriStrips":
-    #if block.IsDerivedType(NiGeometry_TypeConst()):
-    if isinstance(block, NifFormat.NiTriBasedGeom):
-        #oNiGeometry = CastToNiGeometry(block())
-        #children = oNiGeometry.GetChildren()
+    if isinstance(niBlock, NifFormat.NiTriBasedGeom):
         # yes, we found one, get its skin instance
-        #skininst =  [b for b in children if b.IsDerivedType(NiSkinInstance_TypeConst())][0]
-        #skininst = block["Skin Instance"].asLink()
-        #if skininst.is_null() == False:
-        skininst = block.skinInstance
+        skininst = niBlock.skinInstance
         if skininst:
-            #msg("Skin instance found on block '%s'"%block["Name"].asString(),3)
-            #msg("Skin instance found on block '%s'" % oNiGeometry.GetName(),3)
-            msg("Skin instance found on block '%s'" % block.name,3)
+            msg("Skin instance found on block '%s'" % niBlock.name,3)
             # it has a skin instance, so get the skeleton root
             # which is an armature only if it's not a skinning influence
             # so mark the node to be imported as an armature
@@ -1454,14 +1445,12 @@ def mark_armatures_bones(block):
                 # we make sure all NiNodes from this bone all the way
                 # down to the armature NiNode are marked as bones
                 complete_bone_tree(bone, skelroot_name)
-    #else:
     # nope, it's not a NiTriShape or NiTriStrips
     # so if it's a NiNode
-    elif isinstance(block, NifFormat.NiNode):
-        if block.children: # empty tuple is false
-            for child in block.children:
-                #sets the block parent. I need this later on to enable me to crawl back
-                child.parent = block
+    elif isinstance(niBlock, NifFormat.NiNode):
+        children = niBlock.children
+        if children: # empty tuple is false
+            for child in children:
                 mark_armatures_bones(child)
 
 
