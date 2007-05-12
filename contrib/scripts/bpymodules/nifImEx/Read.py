@@ -232,7 +232,7 @@ def import_nif(filename):
         f = open(filename, "rb")
         version, user_version = NifFormat.getVersion(f)
         if version >= 0:
-                print "(version 0x%08X)"%version
+                #print "(version 0x%08X)"%version
                 Blender.Window.DrawProgressBar(0.33, "Reading file")
                 root_blocks = NifFormat.read(version, user_version, f, verbose = 0)
                 Blender.Window.DrawProgressBar(0.66, "Importing data")
@@ -264,6 +264,8 @@ def import_nif(filename):
 # Main import function.
 #
 def import_main(root_block):
+    # sets the block parent to None, so that when crawling back the script won't barf
+    root_block.parent = None
     # scene info
     # used to control the progress bar
     global _SCENE, _CONFIG, _BLOCK_COUNT, _BLOCKS_READ, _READ_PROGRESS
@@ -341,6 +343,8 @@ def read_branch(niBlock):
                 b_obj = fb_empty(niBlock)
                 b_children_list = []
                 for child in niChildren:
+                    # sets the parent, to allow me to crawl back
+                    child.parent = niBlock
                     b_child_obj = read_branch(child)
                     if b_child_obj: b_children_list.append(b_child_obj)
                 b_obj.makeParent(b_children_list)
@@ -348,8 +352,8 @@ def read_branch(niBlock):
             # import the animations
             set_animation(niBlock, b_obj)
             # import the extras
-            textkey = find_extra(niBlock, "NiTextKeyExtraData")
-            if not textkey.is_null(): fb_textkey(textkey)
+            textkey = find_extra(niBlock, NifFormat.NiTextKeyExtraData)
+            if not textkey: fb_textkey(textkey)
             return b_obj
         else:
             return None
@@ -384,7 +388,7 @@ def read_armature_branch(b_armature, niArmature, niBlock):
                         b_mesh.setMatrix(fb_global_matrix(niChild) * armature_matrix_inverse)
                         # add a vertex group if it's parented to a bone
                         par_bone = get_closest_bone(niChild)
-                        if not par_bone.is_null():
+                        if par_bone:
                             # set vertex index 1.0 for all vertices that don't yet have a vertex weight
                             # this will mimick the fact that the mesh is parented to the bone
                             b_meshData = b_mesh.getData(mesh=True)
@@ -396,83 +400,13 @@ def read_armature_branch(b_armature, niArmature, niBlock):
                                     except ValueError: # remove throws value-error if vertex was already removed previously
                                         pass
                             if verts:
-                                groupName = _NAMES[par_bone["Name"].asString()]
+                                groupName = _NAMES[par_bone.name]
                                 b_meshData.addVertGroup(groupName)
                                 b_meshData.assignVertsToGroup(groupName, verts, 1.0, Blender.Mesh.AssignModes.REPLACE)
                         # make it parent of the armature
                         b_armature.makeParentDeform([b_mesh])
     # anything else: throw away
     return None
-
-
-#
-# hash functions, for object comparison and dictionary keys
-#
-def float_hash(x):
-    return int(x*200)
-
-def float3_hash(x):
-    return (float_hash(x[0]), float_hash(x[1]), float_hash(x[2]))
-
-# blk_ref hash
-def block_hash(niBlock):
-    if b:
-        return b.GetBlockNum()
-    return None
-
-# NiSourceTexture hash
-def texsource_hash(texsource):
-    return (\
-        block_hash(texsource["Controller"].asLink()),\
-        str(texsource["Texture Source"].asTexSource().fileName),\
-        texsource["Pixel Layout"].asInt(),\
-        texsource["Use Mipmaps"].asInt(),\
-        texsource["Alpha Format"].asInt()\
-    )
-
-# TexDesc hash
-def texdesc_hash(texdesc):
-    if texdesc.isUsed:
-        return (texdesc.clampMode, texdesc.filterMode, texsource_hash(texdesc.source))
-    else:
-        return None
-
-# "material" property hash
-def material_hash(matProperty, textProperty, alphaProperty, specProperty):
-    if matProperty:
-        mathash = (\
-            block_hash(matProperty.controller),\
-            matProperty.flags,\
-            float3_hash(matProperty.ambientColor),\
-            float3_hash(matProperty.diffuseColor),\
-            float3_hash(matProperty.specularColor),\
-            float3_hash(matProperty.emissiveColor),\
-            float_hash(matProperty.glossiness),\
-            float_hash(matProperty.alpha)\
-        )
-    else:
-        mathash = None
-    if textProperty:
-        bastex = textProperty.GetTexture(0)
-        glowtex = textProperty.GetTexture(4)
-        texthash = (\
-            block_hash(textProperty["Controller"].asLink()),\
-            textProperty["Flags"].asInt(),\
-            itexprop.GetApplyMode(),\
-            texdesc_hash(bastex),\
-            texdesc_hash(glowtex)\
-        )
-    else:
-        texthash = None
-    if not alphaProperty.is_null():
-        alphahash = block_hash(alphaProperty["Controller"].asLink())
-    else:
-        alphahash = None
-    if not specProperty.is_null():
-        spechash = block_hash(specProperty["Controller"].asLink())
-    else:
-        spechash = None
-    return (mathash, texthash, alphahash, spechash)
 
 
 
@@ -671,7 +605,7 @@ def fb_armature(niBlock):
         kfc = find_controller(niBone, NifFormat.NiKeyframeController)
         #if not kfc.is_null():
         #if kfc:
-        print "disabled animations, fix"
+        print "todo: disabled animations, fix"
         if False:
             # get keyframe data
             kfd = kfc["Data"].asLink()
@@ -854,106 +788,107 @@ def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
 
 
 
-def fb_texture( niSourceTexture ):
+def fb_texture(niSourceTexture):
     """
     Returns a Blender Texture object, and stores it in the global TEXTURES dictionary
     """
-    global _TEXTURES
+    global _TEXTURES, _CONFIG
     
-    try:
-        return _TEXTURES[texsource_hash(niSourceTexture)]
-    except:
-        pass
-    
-    b_image = None
-    
-    niTexSource = niSourceTexture["Texture Source"].asTexSource()
-    
-    if niTexSource.useExternal:
-        # the texture uses an external image file
-        fn = niTexSource.fileName
-        # go searching for it
-        textureFile = None
-        for texdir in _TEXTURES_DIR.split(";") + [NIF_DIR, TEX_DIR]:
-            if texdir == None: continue
-            texdir.replace( '\\', Blender.sys.sep )
-            texdir.replace( '/', Blender.sys.sep )
-             # now a little trick, to satisfy many Morrowind mods
-            if (fn[:9].lower() == 'textures\\') and (texdir[-9:].lower() == '\\textures'):
-                tex = Blender.sys.join( texdir, fn[9:] ) # strip one of the two 'textures' from the path
-            else:
-                tex = Blender.sys.join( texdir, fn )
-            msg("Searching %s" % tex, 3)
-            if Blender.sys.exists(tex) == 1:
-                # tries to load the file
-                b_image = Blender.Image.Load(tex)
-                # Blender 2.41 will return an image object even if the file format isn't supported,
-                # so to check if the image is actually loaded I need to force an error, hence the
-                # dummy = b_image.size line.
-                try:
-                    dummy = b_image.size
-                    # file format is supported
-                    msg( "Found %s" % tex, 3 )
-                    del dummy
-                    break
-                except:
-                    b_image = None # not supported, delete image object
-            # file format is not supported or file was not found, therefore
-            # we try to load alternative texture
-            base=tex[:-4]
-            for ext in ('.PNG','.png','.TGA','.tga','.BMP','.bmp','.JPG','.jpg'):
-                alt_tex = base+ext
-                if Blender.sys.exists(alt_tex) == 1:
-                    b_image = None
+    if niSourceTexture:
+        
+        try:
+            return _TEXTURES[niSourceTexture]
+        except:
+            pass
+        
+        b_image = None
+        
+        if niSourceTexture.useExternal:
+            # the texture uses an external image file
+            fn = "".join(niSourceTexture.fileName.value)
+            # go searching for it
+            textureFile = None
+            searchPathList = [_CONFIG["NIF_IMPORT_PATH"], _CONFIG["BASE_TEXTURE_FOLDER"]] + _CONFIG["TEXTURE_SEARCH_PATH"]
+            for texdir in searchPathList:
+                texdir.replace( '\\', Blender.sys.sep )
+                texdir.replace( '/', Blender.sys.sep )
+                 # now a little trick, to satisfy many Morrowind mods
+                if (fn[:9].lower() == 'textures\\') and (texdir[-9:].lower() == '\\textures'):
+                    tex = Blender.sys.join( texdir, fn[9:] ) # strip one of the two 'textures' from the path
+                else:
+                    tex = Blender.sys.join( texdir, fn )
+                msg("Searching %s" % tex, 3)
+                if Blender.sys.exists(tex) == 1:
+                    # tries to load the file
+                    b_image = Blender.Image.Load(tex)
+                    # Blender 2.41 will return an image object even if the file format isn't supported,
+                    # so to check if the image is actually loaded I need to force an error, hence the
+                    # dummy = b_image.size line.
                     try:
-                        b_image = Blender.Image.Load(alt_tex)
                         dummy = b_image.size
-                        msg( "Found alternate %s" % alt_tex, 3 )
+                        # file format is supported
+                        msg( "Found %s" % tex, 3 )
                         del dummy
                         break
                     except:
-                        pass
-        if b_image == None:
-            print "Texture %s not found and no alternate available" % niTexSource.fileName
-            b_image = Blender.Image.New(tex, 1, 1, 24) # create a stub
-            b_image.filename = tex
-    else:
-        # the texture image is packed inside the nif -> extract it
-        niPixelData = niSourceTexture["Texture Source"].asLink()
-        iPixelData = QueryPixelData( niPixelData )
-        
-        width = iPixelData.GetWidth()
-        height = iPixelData.GetHeight()
-        
-        if iPixelData.GetPixelFormat() == PX_FMT_RGB8:
-            bpp = 24
-        elif iPixelData.GetPixelFormat() == PX_FMT_RGBA8:
-            bpp = 32
+                        b_image = None # not supported, delete image object
+                # file format is not supported or file was not found, therefore
+                # we try to load alternative texture
+                base=tex[:-4]
+                for ext in ('.PNG','.png','.TGA','.tga','.BMP','.bmp','.JPG','.jpg'):
+                    alt_tex = base+ext
+                    if Blender.sys.exists(alt_tex) == 1:
+                        b_image = None
+                        try:
+                            b_image = Blender.Image.Load(alt_tex)
+                            dummy = b_image.size
+                            msg( "Found alternate %s" % alt_tex, 3 )
+                            del dummy
+                            break
+                        except:
+                            pass
+            if b_image == None:
+                print "Texture %s not found and no alternate available" % niSourceTexture.fileName
+                b_image = Blender.Image.New(tex, 1, 1, 24) # create a stub
+                b_image.filename = tex
         else:
-            bpp = None
-        
-        if bpp != None:
-            b_image = Blender.Image.New( "TexImg", width, height, bpp )
+            # the texture image is packed inside the nif -> extract it
+            niPixelData = niSourceTexture.pixelData
             
-            pixels = iPixelData.GetColors()
-            for x in range( width ):
-                Blender.Window.DrawProgressBar( float( x + 1 ) / float( width ), "Image Extraction")
-                for y in range( height ):
-                    pix = pixels[y*height+x]
-                    b_image.setPixelF( x, (height-1)-y, ( pix.r, pix.g, pix.b, pix.a ) )
-    
-    if b_image != None:
-        # create a texture using the loaded image
-        b_texture = Blender.Texture.New()
-        b_texture.setType( 'Image' )
-        b_texture.setImage( b_image )
-        b_texture.imageFlags |= Blender.Texture.ImageFlags.INTERPOL
-        b_texture.imageFlags |= Blender.Texture.ImageFlags.MIPMAP
-        _TEXTURES[ texsource_hash(niSourceTexture) ] = b_texture
-        return b_texture
-    else:
-        _TEXTURES[ texsource_hash(niSourceTexture) ] = None
-        return None
+            # we only load the first mipmap
+            width = iPixelData.mipmap[0].width
+            height = iPixelData.mipmap[0].height
+            
+            if niPixelData.pixelFormat == 0:
+                bpp = 24
+            elif niPixelData.pixelFormat == 1:
+                bpp = 32
+            else:
+                bpp = None
+            
+            if bpp != None:
+                b_image = Blender.Image.New( "TexImg", width, height, bpp )
+                
+                pixels = iPixelData.GetColors()
+                for x in range( width ):
+                    Blender.Window.DrawProgressBar( float( x + 1 ) / float( width ), "Image Extraction")
+                    for y in range( height ):
+                        pix = pixels[y*height+x]
+                        b_image.setPixelF( x, (height-1)-y, ( pix.r, pix.g, pix.b, pix.a ) )
+        
+        if b_image != None:
+            # create a texture using the loaded image
+            b_texture = Blender.Texture.New()
+            b_texture.setType( 'Image' )
+            b_texture.setImage( b_image )
+            b_texture.imageFlags |= Blender.Texture.ImageFlags.INTERPOL
+            b_texture.imageFlags |= Blender.Texture.ImageFlags.MIPMAP
+            _TEXTURES[niSourceTexture] = b_texture
+            return b_texture
+        else:
+            _TEXTURES[ texsource_hash(niSourceTexture) ] = None
+            return None
+    return None
 
 
 
@@ -963,7 +898,7 @@ def fb_material(matProperty, textProperty, alphaProperty, specProperty):
     
     # First check if material has been created before.
     try:
-        material = _MATERIALS[material_hash(matProperty, textProperty, alphaProperty, specProperty)]
+        material = _MATERIALS[(matProperty, textProperty, alphaProperty, specProperty)]
         return material
     except KeyError:
         pass
@@ -973,31 +908,31 @@ def fb_material(matProperty, textProperty, alphaProperty, specProperty):
     material = Blender.Material.New(name)
     # Sets the material colors
     # Specular color
-    spec = matProperty["Specular Color"].asFloat3()
-    material.setSpecCol([spec[0],spec[1],spec[2]])
+    spec = matProperty.specularColor
+    material.setSpecCol([spec.r, spec.g, spec.b])
     material.setSpec(1.0) # Blender multiplies specular color with this value
     # Diffuse color
-    diff = matProperty["Diffuse Color"].asFloat3()
-    material.setRGBCol([diff[0],diff[1],diff[2]])
+    diff = matProperty.diffuseColor
+    material.setRGBCol([diff.r, diff.g, diff.b])
     # Ambient & emissive color
     # We assume that ambient & emissive are fractions of the diffuse color.
     # If it is not an exact fraction, we average out.
-    amb = matProperty["Ambient Color"].asFloat3()
-    emit = matProperty["Emissive Color"].asFloat3()
+    amb = matProperty.ambientColor
+    emit = matProperty.emissiveColor
     b_amb = 0.0
     b_emit = 0.0
     b_n = 0
-    if (diff[0] > _EPSILON):
-        b_amb += amb[0]/diff[0]
-        b_emit += emit[0]/diff[0]
+    if (diff.r > _EPSILON):
+        b_amb += amb.r/diff.r
+        b_emit += emit.r/diff.r
         b_n += 1
-    if (diff[1] > _EPSILON):
-        b_amb += amb[1]/diff[1]
-        b_emit += emit[1]/diff[1]
+    if (diff.g > _EPSILON):
+        b_amb += amb.g/diff.g
+        b_emit += emit.g/diff.g
         b_n += 1
-    if (diff[2] > _EPSILON):
-        b_amb += amb[2]/diff[2]
-        b_emit += emit[2]/diff[2]
+    if (diff.b > _EPSILON):
+        b_amb += amb.b/diff.b
+        b_emit += emit.b/diff.b
         b_n += 1
     if (b_n > 0):
         b_amb /= b_n
@@ -1007,44 +942,43 @@ def fb_material(matProperty, textProperty, alphaProperty, specProperty):
     material.setAmb(b_amb)
     material.setEmit(b_emit)
     # glossiness
-    glossiness = matProperty["Glossiness"].asFloat()
+    glossiness = matProperty.glossiness
     hardness = int(glossiness * 4) # just guessing really
     if hardness < 1: hardness = 1
     if hardness > 511: hardness = 511
     material.setHardness(hardness)
     # Alpha
-    alpha = matProperty["Alpha"].asFloat()
+    alpha = matProperty.alpha
     material.setAlpha(alpha)
     baseTexture = None
     glowTexture = None
-    if textProperty.is_null() == False:
-        iTextProperty = QueryTexturingProperty(textProperty)
-        BaseTextureDesc = iTextProperty.GetTexture(BASE_MAP)
-        if BaseTextureDesc.isUsed:
-            baseTexture = fb_texture(BaseTextureDesc.source)
+    if textProperty:
+        baseTextureDesc = textProperty.baseTexture
+        if baseTextureDesc:
+            baseTexture = fb_texture(baseTextureDesc.source)
             if baseTexture:
                 # Sets the texture to use face UV coordinates.
                 texco = Blender.Texture.TexCo.UV
-                # Maps the texture to the base color channel. Not necessarily true.
+                # Maps the texture to the base color channel.
                 mapto = Blender.Texture.MapTo.COL
                 # Sets the texture for the material
                 material.setTexture(0, baseTexture, texco, mapto)
                 mbaseTexture = material.getTextures()[0]
-        GlowTextureDesc = iTextProperty.GetTexture(GLOW_MAP)
-        if GlowTextureDesc.isUsed:
-            glowTexture = fb_texture(GlowTextureDesc.source)
+        glowTextureDesc = textProperty.glowTexture
+        if glowTextureDesc:
+            glowTexture = fb_texture(glowTextureDesc.source)
             if glowTexture:
                 # glow maps use alpha from rgb intensity
                 glowTexture.imageFlags |= Blender.Texture.ImageFlags.CALCALPHA
                 # Sets the texture to use face UV coordinates.
                 texco = Blender.Texture.TexCo.UV
-                # Maps the texture to the base color channel. Not necessarily true.
+                # Maps the texture to the base color channel.
                 mapto = Blender.Texture.MapTo.COL | Blender.Texture.MapTo.EMIT
                 # Sets the texture for the material
                 material.setTexture(1, glowTexture, texco, mapto)
                 mglowTexture = material.getTextures()[1]
     # check transparency
-    if alphaProperty.is_null() == False:
+    if alphaProperty:
         material.mode |= Blender.Material.Modes.ZTRANSP # enable z-buffered transparency
         # if the image has an alpha channel => then this overrides the material alpha value
         if baseTexture:
@@ -1063,12 +997,12 @@ def fb_material(matProperty, textProperty, alphaProperty, specProperty):
         # no alpha property: force alpha 1.0 in Blender
         material.setAlpha(1.0)
     # check specularity
-    if specProperty.is_null() == True:
+    if not specProperty:
         # no specular property: specular color is ignored
         # we do this by setting specularity zero
         material.setSpec(0.0)
 
-    _MATERIALS[material_hash(matProperty, textProperty, alphaProperty, specProperty)] = material
+    _MATERIALS[(matProperty, textProperty, alphaProperty, specProperty)] = material
     return material
 
 # Creates and returns a raw mesh
@@ -1112,7 +1046,8 @@ def fb_mesh(niBlock):
     norms = niData.normals
 
     v_map = [0]*len(verts) # pre-allocate memory, for faster performance
-    _SEAMS_IMPORT = False
+    print "todo: add option for seams import"
+    _SEAMS_IMPORT = True
     if not _SEAMS_IMPORT:
         # Fast method: don't care about any seams!
         for i, v in enumerate(verts):
@@ -1226,7 +1161,7 @@ def fb_mesh(niBlock):
         # but Blender only allows explicit editing of face UV's, so I'll load vertex UV's like face UV's
         b_meshData.faceUV = 1
         b_meshData.vertexUV = 0
-        for i, f in enumerate(faces):
+        for i, f in enumerate(tris):
             if f_map[i] == None: continue
             uvlist = []
             # We have to be careful here... another Blender pitfall:
@@ -1237,19 +1172,19 @@ def fb_mesh(niBlock):
             if (v_map[f.v1] == b_meshData.faces[f_map[i]].verts[0].index):
                 # this is how it "should" be
                 for v in (f.v1, f.v2, f.v3):
-                    uv=uvco[uvSet][v]
+                    uv=uvSet[v]
                     uvlist.append(Vector(uv.u, 1.0 - uv.v))
                 b_meshData.faces[f_map[i]].uv = tuple(uvlist)
             elif (v_map[f.v1] == b_meshData.faces[f_map[i]].verts[1].index):
                 # vertex 3 was added first
                 for v in (f.v3, f.v1, f.v2):
-                    uv=uvco[uvSet][v]
+                    uv=uvSet[v]
                     uvlist.append(Vector(uv.u, 1.0 - uv.v))
                 b_meshData.faces[f_map[i]].uv = tuple(uvlist)
             elif (v_map[f.v1] == b_meshData.faces[f_map[i]].verts[2].index):
                 # vertex 2 was added first
                 for v in (f.v2, f.v3, f.v1):
-                    uv=uvco[uvSet][v]
+                    uv=uvSet[v]
                     uvlist.append(Vector(uv.u, 1.0 - uv.v))
                 b_meshData.faces[f_map[i]].uv = tuple(uvlist)
             else:
@@ -1295,14 +1230,15 @@ def fb_mesh(niBlock):
 
     # Skinning info, for meshes affected by bones. Adding groups to a mesh can be done only after this is already
     # linked to an object.
-    skinInstance = niBlock["Skin Instance"].asLink()
-    if skinInstance.is_null() == False:
-        skinData = skinInstance["Data"].asLink()
-        iSkinData = QuerySkinData(skinData)
-        bones = iSkinData.GetBones()
-        for idx, bone in enumerate(bones):
+    skinInstance = niBlock.skinInstance
+    print "todo: fix skin data"
+    #if skinInstance:
+    if False:
+        skinData = skinInstance.data
+        bones = skinData.bones
+        for bone in bones:
             weights = iSkinData.GetWeights(bone)
-            groupName = _NAMES[bone["Name"].asString()]
+            groupName = _NAMES[bone.name]
             b_meshData.addVertGroup(groupName)
             for vert, weight in weights.iteritems():
                 b_meshData.assignVertsToGroup(groupName, [v_map[vert]], weight, Blender.Mesh.AssignModes.REPLACE)
@@ -1310,8 +1246,10 @@ def fb_mesh(niBlock):
     b_meshData.calcNormals() # let Blender calculate vertex normals
 
     # new implementation, uses Mesh instead
+    print "todo: fix morphs"
     morphCtrl = find_controller(niBlock, NifFormat.NiGeomMorpherController)
-    if morphCtrl.is_null() == False:
+    #if morphCtrl.is_null() == False:
+    if False:
         morphData = morphCtrl["Data"].asLink()
         if ( morphData.is_null() == False ):
             iMorphData = QueryMorphData(morphData)
@@ -1369,7 +1307,7 @@ def fb_mesh(niBlock):
 
 
 # import animation groups
-def fb_textkey(block):
+def fb_textkey(niBlock):
     """
     Stores the text keys that define animation start and end in a text buffer,
     so that they can be re-exported.
@@ -1382,19 +1320,9 @@ def fb_textkey(block):
         animtxt.clear()
     except:
         animtxt = Blender.Text.New("Anim")
-    #animtxt = None
-    #for txt in Blender.Text.Get():
-    #    if txt.getName() == "Anim":
-    #        txt.clear()
-    #        animtxt = txt
-    #        break
-    #if not animtxt:
-    #    animtxt = Blender.Text.New("Anim")
 
-    # store keys in the animation text buffer
-    itextkey = QueryTextKeyExtraData(block)
     frame = 1
-    for key in itextkey.GetKeys():
+    for key in niBlock.keys:
         newkey = key.data.replace('\r\n', '/').rstrip('/')
         frame = 1 + int(key.time * _FPS) # time 0.0 is frame 1
         animtxt.write('%i/%s\n'%(frame, newkey))
@@ -1411,13 +1339,6 @@ def fb_bonemat():
     correctly
     """
     global _BONES_EXTRA_MATRIX
-    # get the bone extra matrix text buffer
-    #bonetxt = None
-    #for txt in Blender.Text.Get():
-    #    if txt.getName() == "BoneExMat":
-    #        txt.clear()
-    #        bonetxt = txt
-    #        break
     try:
         bonetxt = [txt for txt in Blender.Text.Get() if txt.getName() == "BoneExMat"][0]
         bonetxt.clear()
@@ -1498,8 +1419,6 @@ def find_extra(niBlock, extratype):
 
 
 # mark armatures and bones by peeking into NiSkinInstance blocks
-# probably we will eventually have to use this
-# since that the "is skinning influence" flag is not reliable
 def mark_armatures_bones(block):
     global _BONE_LIST
     # search for all NiTriShape or NiTriStrips blocks...
@@ -1520,20 +1439,13 @@ def mark_armatures_bones(block):
             # it has a skin instance, so get the skeleton root
             # which is an armature only if it's not a skinning influence
             # so mark the node to be imported as an armature
-            #skelroot = skininst["Skeleton Root"].asLink()
             skelroot = skininst.skeletonRoot
-            #skelroot_name = skelroot["Name"].asString()
             skelroot_name = skelroot.name
             if not _BONE_LIST.has_key(skelroot_name):
                 _BONE_LIST[skelroot_name] = []
                 msg("'%s' is an armature" % skelroot_name,3)
-            ## now get the skinning data interface to retrieve the list of bones
-            #skindata = skininst["Data"].asLink()
-            #iskindata = QuerySkinData(skindata)
-            #for bone in iskindata.GetBones():
             for bone in skininst.bones:
                 # add them, if we haven't already
-                #bone_name = bone["Name"].asString()
                 bone_name = bone.name
                 if not bone_name in _BONE_LIST[skelroot_name]:
                     _BONE_LIST[skelroot_name].append(bone_name)
@@ -1541,20 +1453,14 @@ def mark_armatures_bones(block):
                 # now we "attach" the bone to the armature:
                 # we make sure all NiNodes from this bone all the way
                 # down to the armature NiNode are marked as bones
-                #complete_bone_tree(bone, skelroot_name)
+                complete_bone_tree(bone, skelroot_name)
     #else:
     # nope, it's not a NiTriShape or NiTriStrips
     # so if it's a NiNode
-    #if not block["Children"].is_null():
-    # search for NiTriShapes or NiTriStrips in the list of children
-    #for child in block["Children"].asLinkList():
-    #elif block.IsDerivedType(NiNode_TypeConst()):
     elif isinstance(block, NifFormat.NiNode):
-        #oNiNode = CastToNiNode(block())
-        #children = oNiNode.GetChildren()
         if block.children: # empty tuple is false
             for child in block.children:
-                #sets the block parent. I need this later on
+                #sets the block parent. I need this later on to enable me to crawl back
                 child.parent = block
                 mark_armatures_bones(child)
 
@@ -1632,11 +1538,11 @@ def is_armature_root(niBlock):
     
 # Detect closest bone ancestor.
 def get_closest_bone(niBlock):
-    par = niBlock.GetParent()
-    while not par.is_null():
+    par = niBlock.parent
+    while par:
         if is_bone(par):
             return par
-        par = par.GetParent()
+        par = par.parent
     return par
 
 #
@@ -1668,12 +1574,12 @@ def import_kfm(filename):
 # Loads basic animation info for this object
 #
 def set_animation(niBlock, b_obj):
-    global _SCENE
-    global SCALE_CORRECTION
-    global SCALE_MATRIX
+    global _SCENE, SCALE_CORRECTION, SCALE_MATRIX
     progress = 0.1
     kfc = find_controller(niBlock, NifFormat.NiKeyframeController)
-    if not kfc.is_null():
+    print "Todo: fix animation import, set_animation"
+    #if kfc:
+    if False:
         # create an Ipo for this object
         b_ipo = b_obj.getIpo()
         if b_ipo == None:
