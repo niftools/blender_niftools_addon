@@ -57,6 +57,10 @@ _BONES = {}
 # B' = X * B, where B' is the Blender bone matrix, and B is the NIF bone matrix
 _BONES_EXTRA_MATRIX = {}
 
+# dictionary of bone offset matrices. Some NIF files store the file in a posed state,
+# the bind offset matrix is the offset from the posed state to the bind position
+_BIND_OFFSETS = {}
+
 # dictionary of bones that belong to a certain armature
 # maps NIF armature name to list of NIF bone name
 _BONE_LIST = {}
@@ -69,6 +73,12 @@ _BONE_CORRECTION_MATRICES = (\
             Matrix([ 0.0, 1.0, 0.0],[-1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0]),\
             Matrix([-1.0, 0.0, 0.0],[ 0.0,-1.0, 0.0],[ 0.0, 0.0, 1.0]),\
             Matrix([ 1.0, 0.0, 0.0],[ 0.0, 0.0,-1.0],[ 0.0, 1.0, 0.0]))
+
+# identity matrix, for comparisons
+_IDENTITY44 = Matrix([ 1.0,0.0, 0.0, 0.0],\
+            [ 0.0, 1.0, 0.0, 0.0],\
+            [ 0.0, 0.0, 1.0, 0.0],\
+            [ 0.0, 0.0, 0.0, 1.0])
 
 # some variables
 
@@ -132,6 +142,7 @@ def buttonEvent(evt):
     evName = _GUI_EVENTS[evt]
     if evName == "IMPORT":
         # import and close
+        print "todo: add checks for file input box"
         exitGUI() #closes the GUI
         nifFilePath = sys.sep.join((_CONFIG["NIF_IMPORT_PATH"], _CONFIG["NIF_IMPORT_FILE"]))
         import_nif(nifFilePath)
@@ -237,7 +248,7 @@ def import_nif(filename):
                 root_blocks = NifFormat.read(version, user_version, f, verbose = 0)
                 Blender.Window.DrawProgressBar(0.66, "Importing data")
                 for block in root_blocks:
-                    print "------", block.name
+                    msg("root block: %s" % (block.name), 3)
                     import_main(block)
         elif version == -1:
             raise NIFImportError("Unsupported NIF version.")
@@ -268,7 +279,7 @@ def import_main(root_block):
     scale_tree(root_block, _CONFIG['IMPORT_SCALE_CORRECTION'])
     
     # sets the root block parent to None, so that when crawling back the script won't barf
-    root_block.parent = None
+    root_block._parent = None
     
     # set the block parent through the tree, to ensure I can always move backward
     set_parents(root_block)
@@ -279,7 +290,7 @@ def import_main(root_block):
     # and merge armatures that are bones of others armatures
     merge_armatures()
     
-    if _VERBOSE and _MSG_LEVEL >= 3:
+    if _VERBOSE and _MSG_LEVEL >= 4:
         for arm_name in _BONE_LIST.keys():
             print "armature '%s':"%arm_name
             for bone_name in _BONE_LIST[arm_name]:
@@ -287,6 +298,7 @@ def import_main(root_block):
                 
     # read the NIF tree
     if not is_armature_root(root_block):
+        msg("%s is not an armature root" % (root_block.name), 3)
         if root_block.children:
             # yes, we'll process all children of the root node
             # (this prevents us having to create an empty as a root)
@@ -318,10 +330,10 @@ def read_branch(niBlock):
     if (_BLOCKS_READ/(_BLOCK_COUNT+1.0)) >= (_READ_PROGRESS + 0.1):
         _READ_PROGRESS = _BLOCKS_READ/(_BLOCK_COUNT+1.0)
         Blender.Window.DrawProgressBar(_READ_PROGRESS, "Importing data")
-    #if not niBlock.is_null():
     if niBlock:
         if isinstance(niBlock, NifFormat.NiTriBasedGeom):
             # it's a shape node
+            msg("building mesh in read_branch",3)
             return fb_mesh(niBlock)
         else:
             children = niBlock.children
@@ -340,7 +352,8 @@ def read_branch(niBlock):
                     children = niBlock.children
                     for child in children:
                         b_child_obj = read_branch(child)
-                        if b_child_obj: b_children_list.append(b_child_obj)
+                        if b_child_obj:
+                            b_children_list.append(b_child_obj)
                     b_obj.makeParent(b_children_list)
                 b_obj.setMatrix(fb_matrix(niBlock))
                 # import the animations
@@ -365,6 +378,7 @@ def read_armature_branch(b_armature, niArmature, niBlock):
         # is it an AParentNode?
         # mesh?
         if isinstance(niBlock, NifFormat.NiTriBasedGeom):
+            msg("building mesh in read_armature_branch",3)
             return fb_mesh(niBlock)
         else:
             children = niBlock.children
@@ -374,9 +388,9 @@ def read_armature_branch(b_armature, niArmature, niBlock):
                     if b_mesh:
                         # correct the transform
                         # it's parented to the armature!
-                        armature_matrix_inverse = fb_global_matrix(niArmature)
+                        armature_matrix_inverse = fb_global_bind_matrix(niArmature)
                         armature_matrix_inverse.invert()
-                        b_mesh.setMatrix(fb_global_matrix(child) * armature_matrix_inverse)
+                        b_mesh.setMatrix(fb_global_bind_matrix(child) * armature_matrix_inverse)
                         # add a vertex group if it's parented to a bone
                         par_bone = get_closest_bone(child)
                         if par_bone:
@@ -429,12 +443,13 @@ def fb_name(niBlock, max_length=22):
         pass
 
     # save mapping
-    _NAMES[niName] = name
+    _NAMES[niBlock] = name
 
     return name
 
 # Retrieves a niBlock's transform matrix as a Mathutil.Matrix
 def fb_matrix(niBlock):
+    """Retrieves a niBlock's transform matrix as a Mathutil.Matrix"""
     r = niBlock.rotation # 3*3 matrix 
     t = niBlock.translation # translation, vector3
     v = niBlock.velocity # ??? velocity, vector3, pretty much always 0, 0, 0
@@ -444,11 +459,29 @@ def fb_matrix(niBlock):
                         [  t.x,   t.y,   t.z, 1.0])
     return b_matrix
 
+# Retrieves a block's global transform matrix
 def fb_global_matrix(niBlock):
+    """Retrieves a block's global transform matrix"""
     b_matrix = fb_matrix(niBlock)
-    if niBlock.parent:
-        return b_matrix * fb_global_matrix(niBlock.parent) # yay, recursion
-        
+    if niBlock._parent:
+        return b_matrix * fb_global_matrix(niBlock._parent) # yay, recursion
+    return b_matrix
+
+# Retrieves a node's bind position matrix
+def fb_bind_matrix(niBlock):
+    """Retrieves a node's bind position matrix"""
+    # I need this hack to trap a few errors
+    b_matrix = fb_matrix(niBlock)
+    if niBlock in _BIND_OFFSETS:
+        return b_matrix * _BIND_OFFSETS[niBlock]
+    return b_matrix
+
+# Retrieves a block's global bind position matrix
+def fb_global_bind_matrix(niBlock):
+    """Retrieves a node's global bind position matrix"""
+    b_matrix = fb_bind_matrix(niBlock)
+    if niBlock._parent:
+        return b_matrix * fb_global_matrix(niBlock._parent) # yay, recursion
     return b_matrix
 
 
@@ -491,11 +524,12 @@ def fb_empty(niBlock):
 def fb_armature(niBlock):
     global _SCENE
     armature_name = fb_name(niBlock,)
-    armature_matrix_inverse = fb_global_matrix(niBlock)
+    armature_matrix_inverse = fb_global_bind_matrix(niBlock)
     armature_matrix_inverse.invert()
     b_armature = Blender.Object.New('Armature', fb_name(niBlock,22))
     b_armatureData = Blender.Armature.Armature()
     b_armatureData.name = armature_name
+    b_armatureData.makeEditable()
     b_armatureData.drawAxes = True
     b_armatureData.envelopes = False
     b_armatureData.vertexGroups = True
@@ -526,13 +560,13 @@ def fb_armature(niBlock):
     Blender.Window.DrawProgressBar(progress, 'Importing Animations')
     for bone_idx, (bone_name, b_posebone) in enumerate(b_armature.getPose().bones.items()):
         # denote progress
-        if (bone_idx*1.0)/(bone_count*1.0) > (progress + 0.1):
+        if (bone_idx*1.0)/bone_count > (progress + 0.1):
             progress += 0.1
-            Blender.Window.DrawProgressBar(progress, 'Animation: %s'%bone_name)
+            Blender.Window.DrawProgressBar(progress, 'Animation: %s' % bone_name)
         #if (progress < 0.85): progress += 0.1
         #else: progress = 0.1
         
-        msg('Importing animation for bone %s'%bone_name, 4)
+        msg('Importing animation for bone %s' % bone_name, 4)
         # get bind matrix (NIF format stores full transformations in keyframes,
         # but Blender wants relative transformations, hence we need to know
         # the bind position for conversion). Since
@@ -547,7 +581,7 @@ def fb_armature(niBlock):
         # Rchannel = Rtotal * inverse(Rbind)
         # Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
         niBone = _BONES[bone_name]
-        niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = decompose_srt(fb_matrix(niBone))
+        niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = decompose_srt(fb_bind_matrix(niBone))
         niBone_bind_rot_inv = Matrix(niBone_bind_rot)
         niBone_bind_rot_inv.invert()
         niBone_bind_quat_inv = niBone_bind_rot_inv.toQuat()
@@ -577,15 +611,14 @@ def fb_armature(niBlock):
         kfc = find_controller(niBone, NifFormat.NiKeyframeController)
         #if not kfc.is_null():
         #if kfc:
-        print "todo: disabled animations, fix"
-        if False:
+        #print "todo: disabled animations, fix"
+        if kfc:
             # get keyframe data
-            kfd = kfc["Data"].asLink()
-            assert(kfd.GetBlockType() == "NiKeyframeData")
-            ikfd = QueryKeyframeData(kfd)
-            rot_keys = ikfd.GetRotateKeys()
-            trans_keys = ikfd.GetTranslateKeys()
-            scale_keys = ikfd.GetScaleKeys()
+            kfd = kfc.data
+            assert(isinstance(kfd, NifFormat.NiKeyframeData))
+            rot_keys = kfd.rotateKeys
+            trans_keys = kfd.translateKeys
+            scale_keys = kfd.scaleKeys
             # if we have translation keys, we make a dictionary of
             # rot_keys and scale_keys, this makes the script work MUCH faster
             # in most cases
@@ -599,7 +632,7 @@ def fb_armature(niBlock):
                 scale_total = scale_key.data
                 scale_channel = scale_total / niBone_bind_scale # Schannel = Stotal / Sbind
                 b_posebone.size = Blender.Mathutils.Vector(scale_channel, scale_channel, scale_channel)
-                b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.SIZE])
+                b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.SIZE]) # this is very slow... :(
                 # fill optimizer dictionary
                 if trans_keys:
                     scale_keys_dict[frame] = scale_channel
@@ -665,8 +698,7 @@ def fb_armature(niBlock):
 
 # Adds a bone to the armature in edit mode.
 def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
-    global _BONES, _BONES_EXTRA_MATRIX, _BONE_CORRECTION_MATRICES
-    
+    global _BONES, _BONES_EXTRA_MATRIX, _BONE_CORRECTION_MATRICES, _CONFIG
     bone_name = fb_name(niBlock, 32)
     niChildren = niBlock.children
     niChildNodes = [child for child in niChildren if isinstance(child, NifFormat.NiNode)]  
@@ -675,20 +707,20 @@ def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
         # create bones here...
         b_bone = Blender.Armature.Editbone()
         # head: get position from niBlock
-        armature_space_matrix = fb_global_matrix(niBlock) * armature_matrix_inverse
+        armature_space_matrix = fb_global_bind_matrix(niBlock) * armature_matrix_inverse
         b_bone_head_x = armature_space_matrix[3][0]
         b_bone_head_y = armature_space_matrix[3][1]
         b_bone_head_z = armature_space_matrix[3][2]
         # tail: average of children location
         if len(niChildNodes) > 0:
-            child_matrices = [(fb_global_matrix(child) * armature_matrix_inverse) for child in niChildNodes]
+            child_matrices = [(fb_global_bind_matrix(child) * armature_matrix_inverse) for child in niChildNodes]
             b_bone_tail_x = sum([child_matrix[3][0] for child_matrix in child_matrices]) / len(child_matrices)
             b_bone_tail_y = sum([child_matrix[3][1] for child_matrix in child_matrices]) / len(child_matrices)
             b_bone_tail_z = sum([child_matrix[3][2] for child_matrix in child_matrices]) / len(child_matrices)
         else:
             # no children... continue bone sequence in the same direction as parent, with the same length
             # this seems to work fine
-            parent_matrix = fb_global_matrix(niBlock.parent) * armature_matrix_inverse
+            parent_matrix = fb_global_bind_matrix(niBlock._parent) * armature_matrix_inverse
             b_parent_head_x = parent_matrix[3][0]
             b_parent_head_y = parent_matrix[3][1]
             b_parent_head_z = parent_matrix[3][2]
@@ -749,8 +781,7 @@ def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
         # set bone children
         for niBone in niChildBones:
             b_child_bone =  fb_bone(niBone, b_armature, b_armatureData, armature_matrix_inverse)
-            if b_child_bone:
-                b_child_bone.parent = b_bone
+            b_child_bone.parent = b_bone
         return b_bone
     return None
 
@@ -980,7 +1011,7 @@ def fb_mesh(niBlock):
     # Mesh name -> must be unique, so tag it if needed
     b_name = fb_name(niBlock, 22)
     b_meshData = Blender.Mesh.New(b_name)
-    b_mesh = _SCENE.objects.new(b_meshData, b_name)
+    #b_mesh = _SCENE.objects.new(b_meshData, b_name)
     b_mesh = Blender.Object.New("Mesh", b_name)
     b_mesh.link(b_meshData)
    
@@ -1206,7 +1237,7 @@ def fb_mesh(niBlock):
         bones = skinData.bones
         for bone in bones:
             weights = iSkinData.GetWeights(bone)
-            groupName = _NAMES[bone.name]
+            groupName = _NAMES[bone]
             b_meshData.addVertGroup(groupName)
             for vert, weight in weights.iteritems():
                 b_meshData.assignVertsToGroup(groupName, [v_map[vert]], weight, Blender.Mesh.AssignModes.REPLACE)
@@ -1214,61 +1245,59 @@ def fb_mesh(niBlock):
     b_meshData.calcNormals() # let Blender calculate vertex normals
 
     # new implementation, uses Mesh instead
-    print "todo: fix morphs"
+    #print "todo: fix morphs"
     morphCtrl = find_controller(niBlock, NifFormat.NiGeomMorpherController)
     #if morphCtrl.is_null() == False:
-    if False:
-        morphData = morphCtrl["Data"].asLink()
-        if ( morphData.is_null() == False ):
-            iMorphData = QueryMorphData(morphData)
-            if ( iMorphData.GetMorphCount() > 0 ):
-                # insert base key at frame 1
-                b_meshData.insertKey( 1, 'absolute' )
-                baseverts = iMorphData.GetMorphVerts( 0 )
-                b_ipo = Blender.Ipo.New( 'Key' , 'KeyIpo' )
-                b_meshData.key.ipo = b_ipo
-                for idxMorph in xrange(1,iMorphData.GetMorphCount()):
-                    morphverts = iMorphData.GetMorphVerts(idxMorph)
-                    # for each vertex calculate the key position from base pos + delta offset
-                    for count in range( iMorphData.GetVertexCount() ):
-                        x = baseverts[count].x
-                        y = baseverts[count].y
-                        z = baseverts[count].z
-                        dx = morphverts[count].x
-                        dy = morphverts[count].y
-                        dz = morphverts[count].z
-                        b_meshData.verts[v_map[count]].co[0] = x + dx
-                        b_meshData.verts[v_map[count]].co[1] = y + dy
-                        b_meshData.verts[v_map[count]].co[2] = z + dz
-                    # update the mesh and insert key
-                    b_meshData.insertKey(idxMorph, 'relative')
-                    # set up the ipo key curve
-                    b_curve = b_ipo.addCurve('Key %i' % idxMorph)
-                    # dunno how to set up the bezier triples -> switching to linear instead
-                    b_curve.setInterpolation('Linear')
-                    # select extrapolation
-                    if ( morphCtrl["Flags"].asInt() == 0x000c ):
-                        b_curve.setExtrapolation( 'Constant' )
-                    elif ( morphCtrl["Flags"].asInt() == 0x0008 ):
-                        b_curve.setExtrapolation( 'Cyclic' )
-                    else:
-                        msg( 'dunno which extrapolation to use: using constant instead', 2 )
-                        b_curve.setExtrapolation( 'Constant' )
-                    # set up the curve's control points
-                    morphkeys = iMorphData.GetMorphKeys(idxMorph)
-                    for morphkey in morphkeys:
-                        x =  morphkey.data
-                        frame =  1+int(morphkey.time * _FPS)
-                        b_curve.addBezier( ( frame, x ) )
-                    # finally: return to base position
-                    for count in xrange( iMorphData.GetVertexCount() ):
-                        x = baseverts[count].x
-                        y = baseverts[count].y
-                        z = baseverts[count].z
-                        b_meshData.verts[v_map[count]].co[0] = x
-                        b_meshData.verts[v_map[count]].co[1] = y
-                        b_meshData.verts[v_map[count]].co[2] = z
-                # assign ipo to mesh
+    if morphCtrl:
+        morphData = morphCtrl.data
+        if morphData.numMorphs:
+            # insert base key at frame 1
+            b_meshData.insertKey( 1, 'absolute' )
+            baseverts = morphData.morphs[0]
+            b_ipo = Blender.Ipo.New( 'Key' , 'KeyIpo' )
+            b_meshData.key.ipo = b_ipo
+            for idxMorph in xrange(1, morphData.numMorphs):
+                morphverts = morphData.morphs[idxMorph]
+                # for each vertex calculate the key position from base pos + delta offset
+                for count in xrange(morphData.numVertices):
+                    x = baseverts[count].x
+                    y = baseverts[count].y
+                    z = baseverts[count].z
+                    dx = morphverts[count].x
+                    dy = morphverts[count].y
+                    dz = morphverts[count].z
+                    b_meshData.verts[v_map[count]].co[0] = x + dx
+                    b_meshData.verts[v_map[count]].co[1] = y + dy
+                    b_meshData.verts[v_map[count]].co[2] = z + dz
+                # update the mesh and insert key
+                b_meshData.insertKey(idxMorph, 'relative')
+                # set up the ipo key curve
+                b_curve = b_ipo.addCurve('Key %i' % idxMorph)
+                # dunno how to set up the bezier triples -> switching to linear instead
+                b_curve.setInterpolation('Linear')
+                # select extrapolation
+                if ( morphCtrl.flags == 0x000c ):
+                    b_curve.setExtrapolation( 'Constant' )
+                elif ( morphCtrl.flags == 0x0008 ):
+                    b_curve.setExtrapolation( 'Cyclic' )
+                else:
+                    msg( 'dunno which extrapolation to use: using constant instead', 2 )
+                    b_curve.setExtrapolation( 'Constant' )
+                # set up the curve's control points
+                morphkeys = iMorphData.GetMorphKeys(idxMorph)
+                for morphkey in morphkeys:
+                    x =  morphkey.data
+                    frame =  1+int(morphkey.time * _FPS)
+                    b_curve.addBezier( ( frame, x ) )
+                # finally: return to base position
+                for count in xrange(morphData.numVertices):
+                    x = baseverts[count].x
+                    y = baseverts[count].y
+                    z = baseverts[count].z
+                    b_meshData.verts[v_map[count]].co[0] = x
+                    b_meshData.verts[v_map[count]].co[1] = y
+                    b_meshData.verts[v_map[count]].co[2] = z
+            # assign ipo to mesh
                 
     return b_mesh
 
@@ -1282,7 +1311,7 @@ def fb_textkey(niBlock):
     Since the text buffer is cleared on each import only the last import will be exported
     correctly
     """
-    if niBlock and niBlock.keys:
+    if isinstance(niBlock, NifFormat.NiTextKeyExtraData) and niBlock.textKeys:
         # get animation text buffer, and clear it if it already exists
         try:
             animtxt = [txt for txt in Blender.Text.Get() if txt.getName() == "Anim"][0]
@@ -1291,8 +1320,9 @@ def fb_textkey(niBlock):
             animtxt = Blender.Text.New("Anim")
         
         frame = 1
-        for key in niBlock.keys:
-            newkey = key.data.replace('\r\n', '/').rstrip('/')
+        for key in niBlock.textKeys:
+            print key.value
+            newkey = str(key.value).replace('\r\n', '/').rstrip('/')
             frame = 1 + int(key.time * _FPS) # time 0.0 is frame 1
             animtxt.write('%i/%s\n'%(frame, newkey))
         
@@ -1335,8 +1365,8 @@ def fb_fullnames():
         namestxt.clear()
     except:
         namestxt = Blender.Text.New("FullNames")
-    for n in _NAMES.keys():
-        namestxt.write('%s;%s\n'% (_NAMES[n], n))
+    for niBlock in _NAMES.keys():
+        namestxt.write('%s;%s\n'% (_NAMES[niBlock], niBlock.name))
     
 # find a controller
 def find_controller(niBlock, controllerType):
@@ -1392,12 +1422,13 @@ def set_parents(niBlock):
         children = niBlock.children
         if children:
             for child in children:
-                child.parent = niBlock
+                child._parent = niBlock
                 set_parents(child)
 
 # mark armatures and bones by peeking into NiSkinInstance blocks
+# also adds the bind position matrix for correct import of skinning info
 def mark_armatures_bones(niBlock):
-    global _BONE_LIST
+    global _BONE_LIST, _BIND_OFFSETS
     # search for all NiTriShape or NiTriStrips blocks...
     if isinstance(niBlock, NifFormat.NiTriBasedGeom):
         # yes, we found one, get its skin instance
@@ -1409,6 +1440,29 @@ def mark_armatures_bones(niBlock):
             # so mark the node to be imported as an armature
             skelroot = skininst.skeletonRoot
             skelroot_name = skelroot.name
+            
+            # stores the bind offset matrices for later use
+            skindata = skininst.data
+            r = skindata.rotation
+            s = skindata.scale
+            t = skindata.translation
+            
+            # applies scaling corrections. I have to do it here because skin instances
+            # are not affected by the scale_tree function. Might be fixed later
+            scale = _CONFIG["IMPORT_SCALE_CORRECTION"]
+            bindOffset = Matrix(
+                [r.m11, r.m12, r.m13, 0.0],\
+                [r.m21, r.m22, r.m23, 0.0],\
+                [r.m31, r.m32, r.m33, 0.0],\
+                [t.x*scale, t.y*scale, t.z*scale, 1.0])
+            
+            # only non-identity matrices are stored in the bind offset list
+            isIdentity = (bindOffset == _IDENTITY44)
+            
+            # sets the bind offset for the affected skin
+            if not isIdentity:
+                _BIND_OFFSETS[niBlock] = bindOffset
+                
             if not _BONE_LIST.has_key(skelroot_name):
                 _BONE_LIST[skelroot_name] = []
                 msg("'%s' is an armature" % skelroot_name,3)
@@ -1416,6 +1470,8 @@ def mark_armatures_bones(niBlock):
                 # add them, if we haven't already
                 bone_name = bone.name
                 if not bone_name in _BONE_LIST[skelroot_name]:
+                    if not isIdentity:
+                        _BIND_OFFSETS[bone] = bindOffset
                     _BONE_LIST[skelroot_name].append(bone_name)
                     msg("'%s' is a bone of armature '%s'" % (bone_name, skelroot_name), 3)
                 # now we "attach" the bone to the armature:
@@ -1445,7 +1501,7 @@ def complete_bone_tree(bone, skelroot_name):
     # get the node parent, this should be marked as an armature or as a bone
     #boneparent = bone.GetParent()
     #boneparent_name = boneparent["Name"].asString()
-    boneparent = bone.parent
+    boneparent = bone._parent
     boneparent_name = boneparent.name
     if boneparent_name != skelroot_name:
         # parent is not the skeleton root
@@ -1481,7 +1537,7 @@ def merge_armatures():
 # Tests a NiNode to see if it's a bone.
 def is_bone(niBlock):
     blockName = niBlock.name
-    if blockName == "Bip01 ": return True # heuristics
+    if blockName[:6] == "Bip01 ": return True # heuristics
     for bones in _BONE_LIST.values():
         if blockName in bones:
             return True
@@ -1495,11 +1551,11 @@ def is_armature_root(niBlock):
     
 # Detect closest bone ancestor.
 def get_closest_bone(niBlock):
-    par = niBlock.parent
+    par = niBlock._parent
     while par:
         if is_bone(par):
             return par
-        par = par.parent
+        par = par._parent
     return par
 
 #
@@ -1534,9 +1590,7 @@ def set_animation(niBlock, b_obj):
     global _SCENE, SCALE_CORRECTION, SCALE_MATRIX
     progress = 0.1
     kfc = find_controller(niBlock, NifFormat.NiKeyframeController)
-    print "Todo: fix animation import, set_animation"
-    #if kfc:
-    if False:
+    if kfc:
         # create an Ipo for this object
         b_ipo = b_obj.getIpo()
         if b_ipo == None:
@@ -1547,42 +1601,41 @@ def set_animation(niBlock, b_obj):
         if (progress < 0.85): progress += 0.1
         else: progress = 0.1
         # get keyframe data
-        kfd = kfc["Data"].asLink()
-        assert(kfd.GetBlockType() == "NiKeyframeData")
-        ikfd = QueryKeyframeData(kfd)
-        if 1: #---------------------------------------------------------------------------------------------
-            rot_keys = ikfd.GetRotateKeys()
-            trans_keys = ikfd.GetTranslateKeys()
-            scale_keys = ikfd.GetScaleKeys()
-            # add the keys
-            msg('Scale keys...', 4)
-            for scale_key in scale_keys:
-                frame = 1+int(scale_key.time * _FPS) # time 0.0 is frame 1
-                Blender.Set('curframe', frame)
-                size_value = scale_key.data
-                b_obj.SizeX = size_value
-                b_obj.SizeY = size_value
-                b_obj.SizeZ = size_value
-                b_obj.insertIpoKey(Blender.Object.SIZE)
-            msg('Rotation keys...', 4)
-            for rot_key in rot_keys:
-                frame = 1+int(rot_key.time * _FPS) # time 0.0 is frame 1
-                Blender.Set('curframe', frame)
-                rot = Blender.Mathutils.Quaternion(rot_key.data.w, rot_key.data.x, rot_key.data.y, rot_key.data.z).toEuler()
-                b_obj.RotX = rot.x * _R2D
-                b_obj.RotY = rot.y * _R2D
-                b_obj.RotZ = rot.z * _R2D
-                b_obj.insertIpoKey(Blender.Object.ROT)
-            msg('Translation keys...', 4)
-            for trans_key in trans_keys:
-                frame = 1+int(trans_key.time * _FPS) # time 0.0 is frame 1
-                Blender.Set('curframe', frame)
-                b_obj.LocX = trans_key.data.x
-                b_obj.LocY = trans_key.data.y
-                b_obj.LocZ = trans_key.data.z
-                b_obj.insertIpoKey(Blender.Object.LOC)
-            Blender.Set('curframe', 1)
-        else:
+        kfd = kfc.data
+        assert(isinstance(kfd, NifFormat.NiKeyframeData))
+        #get the animation keys
+        rot_keys = kfd.XYZRotations
+        trans_keys = kfd.translations
+        scale_keys = kfd.scales
+        # add the keys
+        msg('Scale keys...', 4)
+        for scale_key in scale_keys:
+            frame = 1+int(scale_key.time * _FPS) # time 0.0 is frame 1
+            Blender.Set('curframe', frame)
+            size_value = scale_key.value
+            b_obj.SizeX = size_value
+            b_obj.SizeY = size_value
+            b_obj.SizeZ = size_value
+            b_obj.insertIpoKey(Blender.Object.SIZE)
+        msg('Rotation keys...', 4)
+        for rot_key in rot_keys:
+            frame = 1+int(rot_key.time * _FPS) # time 0.0 is frame 1
+            Blender.Set('curframe', frame)
+            rot = Blender.Mathutils.Quaternion(rot_key.value.w, rot_key.value.x, rot_key.value.y, rot_key.value.z).toEuler()
+            b_obj.RotX = rot.x * _R2D
+            b_obj.RotY = rot.y * _R2D
+            b_obj.RotZ = rot.z * _R2D
+            b_obj.insertIpoKey(Blender.Object.ROT)
+        msg('Translation keys...', 4)
+        for trans_key in trans_keys:
+            frame = 1+int(trans_key.time * _FPS) # time 0.0 is frame 1
+            Blender.Set('curframe', frame)
+            b_obj.LocX = trans_key.value.x
+            b_obj.LocY = trans_key.value.y
+            b_obj.LocZ = trans_key.value.z
+            b_obj.insertIpoKey(Blender.Object.LOC)
+        Blender.Set('curframe', 1)
+        """
             rot_keys = ikfd.GetRotateKeys()
             if rot_keys:
                 RotX = b_ipo.addCurve("RotX")
@@ -1615,6 +1668,7 @@ def set_animation(niBlock, b_obj):
                     SizeX.addBezier((time, size))
                     SizeY.addBezier((time, size))
                     SizeZ.addBezier((time, size))
+        """
 
 
 
@@ -1624,61 +1678,56 @@ def set_animation(niBlock, b_obj):
 def scale_tree(niBlock, scale):
     global _EPSILON
     # scale only works for nodes, and there's no point in scaling if the scale is 1/1
-    if abs(1.0 - scale) > _EPSILON and isinstance(niBlock, NifFormat.NiAVObject): # is it a node?
-        # NiNode transform scale
-        niBlock.translation.x *= scale
-        niBlock.translation.y *= scale
-        niBlock.translation.z *= scale
+    if abs(1.0 - scale) > _EPSILON:
+        # is it a node or a data?
+        if isinstance(niBlock, NifFormat.NiAVObject):
+            
+            niBlock.translation.x *= scale
+            niBlock.translation.y *= scale
+            niBlock.translation.z *= scale
+            
+            # Controller data block scale
+            ctrl = niBlock.controller
+            while ctrl:
+                if isinstance(ctrl, NifFormat.NiKeyframeController):
+                    kfd = ctrl.data
+                    assert(kfd)
+                    assert(isinstance(kfd, NifFormat.NiKeyframeData)) # just to make sure, NiNode/NiTriShape controllers should have keyframe data
+                    trans_keys = kfd.translations
+                    if trans_keys:
+                        for key in trans_keys:
+                            key.data.x *= scale
+                            key.data.y *= scale
+                            key.data.z *= scale
+                elif isinstance(ctrl, NifFormat.NiGeomMorpherController):
+                    gmd = ctrl.data
+                    assert(gmd)
+                    assert(isinstance(gmd, NifFormat.NiMorphData))
+                    for morph in igmd.morphs:
+                        vects = morph.vectors
+                        for v in range( len( vects ) ):
+                            vects[v].x *= scale
+                            vects[v].y *= scale
+                            vects[v].z *= scale
+                ctrl = ctrl.nextController
+            # Child block scale
+            if isinstance(niBlock, NifFormat.NiNode):
+                children = niBlock.children
+                if children: # block has children
+                    for child in children:
+                        scale_tree(child, scale)
+            else:
+                blockData = niBlock.data
+                if blockData: # block has data
+                    scale_tree(blockData, scale) # scale the data
         
-        # NiNode bind position transform scale
-        #mat = inode.GetWorldBindPos()
-        #mat[3][0] *= scale
-        #mat[3][1] *= scale
-        #mat[3][2] *= scale
-        #inode.SetWorldBindPos(mat)
-        
-        # Controller data block scale
-        ctrl = niBlock.controller
-        while ctrl:
-            if isistance(ctrl, NifFormat.NiKeyframeController):
-                kfd = ctrl.data
-                assert(kfd)
-                assert(isinstance(kfd, NifFormat.NiKeyframeData)) # just to make sure, NiNode/NiTriShape controllers should have keyframe data
-                trans_keys = kfd.translations
-                if trans_keys:
-                    for key in trans_keys:
-                        key.data.x *= scale
-                        key.data.y *= scale
-                        key.data.z *= scale
-            elif isistance(ctrl, NifFormat.NiGeomMorpherController):
-                gmd = ctrl.data
-                assert(gmd)
-                assert(isinstance(gmd, NifFormat.NiMorphData))
-                for morph in igmd.morphs:
-                    vects = morph.vectors
-                    for v in range( len( vects ) ):
-                        vects[v].x *= scale
-                        vects[v].y *= scale
-                        vects[v].z *= scale
-            ctrl = ctrl.nextController
-        # Child block scale
-        if isinstance(niBlock, NifFormat.NiNode):
-            children = niBlock.children
-            if children: # block has children
-                for child in children:
-                    scale_tree(child, scale)
-        else:
-            blockData = niBlock.data
-            if blockData: # block has data
-                scale_tree(blockData, scale) # scale the data
-
-    if isinstance(niBlock, NifFormat.NiTriBasedGeom): # is it a shape?
-        # Scale all vertices
-        shapedata = niBlock.data
-        vertlist = shapedata.vertices
-        if vertlist:
-            for vert in vertlist:
-                vert.x *= scale
-                vert.y *= scale
-                vert.z *= scale
+        if isinstance(niBlock, NifFormat.NiTriBasedGeom): # is it a shape?
+            # Scale all vertices
+            shapedata = niBlock.data
+            vertlist = shapedata.vertices
+            if vertlist:
+                for vert in vertlist:
+                    vert.x *= scale
+                    vert.y *= scale
+                    vert.z *= scale
 
