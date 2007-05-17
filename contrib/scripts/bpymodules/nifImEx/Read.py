@@ -347,7 +347,6 @@ def read_branch(niBlock):
                     read_armature_branch(b_obj, niBlock, niBlock)
                 else:
                     # it's a grouping node
-                    b_obj = fb_empty(niBlock)
                     b_children_list = []
                     children = niBlock.children
                     for child in children:
@@ -515,6 +514,7 @@ def decompose_srt(m):
 def fb_empty(niBlock):
     global _SCENE
     b_empty = Blender.Object.New("Empty", fb_name(niBlock,22))
+    b_empty.prop['longName'] = niBlock.name
     _SCENE.objects.link(b_empty)
     return b_empty
 
@@ -1004,9 +1004,13 @@ def fb_mesh(niBlock):
     # Mesh name -> must be unique, so tag it if needed
     b_name = fb_name(niBlock, 22)
     b_meshData = Blender.Mesh.New(b_name)
+    b_meshData.properties['longName'] = niBlock.name
     #b_mesh = _SCENE.objects.new(b_meshData, b_name)
     b_mesh = Blender.Object.New("Mesh", b_name)
     b_mesh.link(b_meshData)
+    
+    # Sets the mesh as one-sided. This fixes some issue with normals
+    b_meshData.mode = 0
    
     _SCENE.objects.link(b_mesh)
     
@@ -1057,6 +1061,12 @@ def fb_mesh(niBlock):
         for i, v in enumerate(verts):
             v_map[i] = i # NIF vertex i maps to blender vertex i
             b_meshData.verts.extend(v.x, v.y, v.z) # add the vertex
+            # adds normal info if present.
+            # Blender doesn't calculate these quite properly when importing strips
+            if norms:
+                mv = b_meshData.verts[i]
+                n = norms[i]
+                mv.no = Blender.Mathutils.Vector(n.x, n.y, n.z)
     else:
         # Slow method, but doesn't introduce unwanted cracks in UV seams:
         # Construct vertex map to get unique vertex / normal pair list.
@@ -1080,11 +1090,17 @@ def fb_mesh(niBlock):
                 n_map_k = n_map[k] # this is the bottle neck... can we speed this up?
             except KeyError:
                 n_map_k = None
-            if n_map_k == None:
+            if not n_map_k:
                 # not added: new vertex / normal pair
                 n_map[k] = i         # unique vertex / normal pair with key k was added, with NIF index i
                 v_map[i] = b_v_index # NIF vertex i maps to blender vertex b_v_index
                 b_meshData.verts.extend(v.x, v.y, v.z) # add the vertex
+                # adds normal info if present.
+                # Blender doesn't calculate these quite properly when importing strips
+                if norms:
+                    mv = b_meshData.verts[b_v_index]
+                    n = norms[i]
+                    mv.no = Blender.Mathutils.Vector(n.x, n.y, n.z)
                 b_v_index += 1
             else:
                 # already added
@@ -1125,9 +1141,7 @@ def fb_mesh(niBlock):
     # vertex colors
     vcol = niData.vertexColors
     
-    if len( vcol ) == 0:
-        vcol = None
-    else:
+    if vcol: # empty list is false
         b_meshData.vertexColors = 1
         for i, f in enumerate(tris):
             if f_map[i] == None: continue
@@ -1247,8 +1261,9 @@ def fb_mesh(niBlock):
                 vert = skinWeight.index
                 weight = skinWeight.weight
                 b_meshData.assignVertsToGroup(groupName, [v_map[vert]], weight, Blender.Mesh.AssignModes.REPLACE)
-
-    b_meshData.calcNormals() # let Blender calculate vertex normals
+    
+    # this doesn't quite work as well as it ought to
+    #b_meshData.calcNormals() # let Blender calculate vertex normals
 
     # new implementation, uses Mesh instead
     print "todo: fix morphs"
