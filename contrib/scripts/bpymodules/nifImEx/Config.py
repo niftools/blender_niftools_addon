@@ -76,6 +76,12 @@ def addEvent(evName = "NO_NAME"):
     _GUI_EVENTS.append(evName)
     return eventId
 
+
+def guiText(str = "", xpos = 0, ypos = 0):
+    # To draw text on the screen I have to position its start point first
+    BGL.glRasterPos2i( xpos, ypos)
+    Draw.Text(str)
+
 def gui():
     global _GUI_ELEMENTS, _CONFIG, _IDX_TEXPATH, _GUI_EVENTS
     del _GUI_EVENTS[:]
@@ -110,8 +116,9 @@ def gui():
     E["TEXPATH_REMOVE"]         = Draw.PushButton('X',  addEvent("TEXPATH_REMOVE"),     450, H-170,  20, 20)
     E["REALIGN_BONES"]          = Draw.Toggle(" ",      addEvent("REALIGN_BONES"),       50, H-200,  20, 20, _CONFIG["REALIGN_BONES"])
     # To draw text on the screen I have to position its start point first
-    BGL.glRasterPos2i( 75, H-195)
-    Draw.Text("try to realign bones")
+    #BGL.glRasterPos2i( 75, H-195)
+    #Draw.Text("try to realign bones")
+    guiText("try to realign bones", 75, H-195)
     
     E["CANCEL"]                 = Draw.PushButton('cancel',addEvent("CANCEL"),  50, H-225, 100, 20)
     E["OK"]                     = Draw.PushButton('ok',    addEvent("OK"),  50, H-250, 100, 20)

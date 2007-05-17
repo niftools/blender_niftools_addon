@@ -243,7 +243,7 @@ def import_nif(filename):
         f = open(filename, "rb")
         version, user_version = NifFormat.getVersion(f)
         if version >= 0:
-                #print "(version 0x%08X)"%version
+                print "(version 0x%08X)"%version
                 Blender.Window.DrawProgressBar(0.33, "Reading file")
                 root_blocks = NifFormat.read(version, user_version, f, verbose = 0)
                 Blender.Window.DrawProgressBar(0.66, "Importing data")
@@ -609,9 +609,6 @@ def fb_armature(niBlock):
         extra_matrix_quat_inv = extra_matrix_rot_inv.toQuat()
         # now import everything
         kfc = find_controller(niBone, NifFormat.NiKeyframeController)
-        #if not kfc.is_null():
-        #if kfc:
-        #print "todo: disabled animations, fix"
         if kfc:
             # get keyframe data
             kfd = kfc.data
@@ -639,10 +636,6 @@ def fb_armature(niBlock):
             msg('Rotation keys...', 4)
             for rot_key in rot_keys:
                 frame = 1+int(rot_key.time * _FPS) # time 0.0 is frame 1
-                #rot_total = Blender.Mathutils.Quaternion([rot_key.data.w, rot_key.data.x, rot_key.data.y, rot_key.data.z]).toMatrix()
-                #rot_channel = rot_total * niBone_bind_rot_inv # Rchannel = Rtotal * inverse(Rbind)
-                #rot_channel = extra_matrix_rot * rot_channel * extra_matrix_rot_inv # C' = X * C * inverse(X)
-                # faster alternative below
                 # beware, CrossQuats takes arguments in a counter-intuitive order:
                 # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
                 rot_total = Blender.Mathutils.Quaternion([rot_key.data.w, rot_key.data.x, rot_key.data.y, rot_key.data.z])
@@ -1035,7 +1028,19 @@ def fb_mesh(niBlock):
     verts = niData.vertices
     
     # Faces
-    tris = niData.triangles
+    tris = []
+    if isinstance(niData, NifFormat.NiTriShapeData):
+        tris = niData.triangles
+    elif isinstance(niData, NifFormat.NiTriStripsData):
+        msg("---loading tristrips",3)
+        stripPoints = niData.points
+        for strip in stripPoints:
+            for vert in xrange(2, len(strip)):
+                tri = NifFormat.Triangle()
+                tri.v1 = strip[vert-2]
+                tri.v2 = strip[vert-1]
+                tri.v3 = strip[vert]
+                tris.append(tri)
     
     # "Sticky" UV coordinates. these are transformed in Blender UV's
     # only the first UV set is loaded right now
@@ -1124,7 +1129,7 @@ def fb_mesh(niBlock):
         vcol = None
     else:
         b_meshData.vertexColors = 1
-        for i, f in enumerate(faces):
+        for i, f in enumerate(tris):
             if f_map[i] == None: continue
             b_face = b_meshData.faces[f_map[i]]
             
@@ -1230,24 +1235,25 @@ def fb_mesh(niBlock):
     # Skinning info, for meshes affected by bones. Adding groups to a mesh can be done only after this is already
     # linked to an object.
     skinInstance = niBlock.skinInstance
-    print "todo: fix skin data"
-    #if skinInstance:
-    if False:
+    if skinInstance:
         skinData = skinInstance.data
-        bones = skinData.bones
-        for bone in bones:
-            weights = iSkinData.GetWeights(bone)
+        bones = skinInstance.bones
+        boneWeights = skinData.boneList
+        for idx, bone in enumerate(bones):
+            vertexWeights =boneWeights[idx].vertexWeights
             groupName = _NAMES[bone]
             b_meshData.addVertGroup(groupName)
-            for vert, weight in weights.iteritems():
+            for skinWeight in vertexWeights:
+                vert = skinWeight.index
+                weight = skinWeight.weight
                 b_meshData.assignVertsToGroup(groupName, [v_map[vert]], weight, Blender.Mesh.AssignModes.REPLACE)
 
     b_meshData.calcNormals() # let Blender calculate vertex normals
 
     # new implementation, uses Mesh instead
-    #print "todo: fix morphs"
-    morphCtrl = find_controller(niBlock, NifFormat.NiGeomMorpherController)
-    #if morphCtrl.is_null() == False:
+    print "todo: fix morphs"
+    morphCtrl = False
+    #morphCtrl = find_controller(niBlock, NifFormat.NiGeomMorpherController)
     if morphCtrl:
         morphData = morphCtrl.data
         if morphData.numMorphs:
@@ -1395,35 +1401,27 @@ def find_property(niBlock, propertyType):
 def find_extra(niBlock, extratype):
     # pre-10.x.x.x system: extra data chain
     extra = niBlock.extraData
-    #extra = niBlock["Extra Data"].asLink()
-    #while not extra.is_null():
     while extra:
-        #if extra.GetBlockType() == extratype:
         if isinstance(extra, extratype):
             break
-        #extra = extra["Next Extra Data"].asLink()
         extra = extra.nextExtraData
-    #if not extra.is_null():
     if extra:
         return extra
 
     # post-10.x.x.x system: extra data list
-    #for extra in niBlock["Extra Data List"].asLinkList():
     for extra in niBlock.extraDataList:
-        #if extra.GetBlockType() == extratype:
         if isinstance(extra, extratype):
             return extra
     return None
-    #return blk_ref() # return empty block
 
 # sets the parent block recursively through the tree, to allow me to crawl back as needed
 def set_parents(niBlock):
     if isinstance(niBlock, NifFormat.NiNode):
-        children = niBlock.children
-        if children:
-            for child in children:
-                child._parent = niBlock
-                set_parents(child)
+        # list of non-null children
+        children = [child for child in niBlock.children if child]
+        for child in children:
+            child._parent = niBlock
+            set_parents(child)
 
 # mark armatures and bones by peeking into NiSkinInstance blocks
 # also adds the bind position matrix for correct import of skinning info
@@ -1494,13 +1492,10 @@ def mark_armatures_bones(niBlock):
 def complete_bone_tree(bone, skelroot_name):
     global _BONE_LIST
     # we must already have marked this one as a bone
-    #bone_name = bone["Name"].asString()
     bone_name = bone.name
     assert _BONE_LIST.has_key(skelroot_name) # debug
     assert bone_name in _BONE_LIST[skelroot_name] # debug
     # get the node parent, this should be marked as an armature or as a bone
-    #boneparent = bone.GetParent()
-    #boneparent_name = boneparent["Name"].asString()
     boneparent = bone._parent
     boneparent_name = boneparent.name
     if boneparent_name != skelroot_name:
@@ -1558,9 +1553,8 @@ def get_closest_bone(niBlock):
         par = par._parent
     return par
 
-#
+
 # Main KFM import function. (BROKEN)
-#
 def import_kfm(filename):
     Blender.Window.DrawProgressBar(0.0, "Initializing")
     try: # catch NIFImportErrors
@@ -1583,9 +1577,8 @@ def import_kfm(filename):
 
 
 
-#
+
 # Loads basic animation info for this object
-#
 def set_animation(niBlock, b_obj):
     global _SCENE, SCALE_CORRECTION, SCALE_MATRIX
     progress = 0.1
@@ -1672,27 +1665,25 @@ def set_animation(niBlock, b_obj):
 
 
 
-# 
 # Scale NIF file.
-# 
 def scale_tree(niBlock, scale):
     global _EPSILON
     # scale only works for nodes, and there's no point in scaling if the scale is 1/1
     if abs(1.0 - scale) > _EPSILON:
-        # is it a node or a data?
+        # is it a node?
+        # data should be scaled here as well, but isn't necessarily linked in the tree, so I scale it as I find it
         if isinstance(niBlock, NifFormat.NiAVObject):
-            
             niBlock.translation.x *= scale
             niBlock.translation.y *= scale
             niBlock.translation.z *= scale
-            
             # Controller data block scale
             ctrl = niBlock.controller
             while ctrl:
                 if isinstance(ctrl, NifFormat.NiKeyframeController):
                     kfd = ctrl.data
                     assert(kfd)
-                    assert(isinstance(kfd, NifFormat.NiKeyframeData)) # just to make sure, NiNode/NiTriShape controllers should have keyframe data
+                    # just to make sure, NiNode/NiTriShape controllers should have keyframe data
+                    assert(isinstance(kfd, NifFormat.NiKeyframeData))
                     trans_keys = kfd.translations
                     if trans_keys:
                         for key in trans_keys:
