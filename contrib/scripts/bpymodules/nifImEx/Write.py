@@ -51,8 +51,8 @@ APPLY_SCALE = True
 FORCE_DDS = False
 STRIP_TEXPATH = False
 EXPORT_DIR = ''
-NIF_VERSION_STR = '4.0.0.2'
-NIF_VERSION = 0x04000002
+NIF_VERSION_STR = '20.0.0.5'
+NIF_VERSION = 0x14000005
 ADD_BONE_NUB = False
 
 
@@ -339,9 +339,9 @@ and turn off envelopes."""%ob.getName()
         if _VERBOSE: print "Checking animation groups"
         if (animtxt == None):
             has_controllers = False
-            for block in NIF_BLOCKS:
-                if block.IsDerivedType(NiObjectNETTypeConst()): # has it a controller field?
-                    if ( block.GetControllers() ):
+            for block in _NIF_BLOCKS:
+                if isinstance(block, NifFormat.NiObjectNET): # has it a controller field?
+                    if block.controller:
                         has_controllers = True
                         break
             if has_controllers:
@@ -361,7 +361,7 @@ and turn off envelopes."""%ob.getName()
         if (animtxt):
             has_keyframecontrollers = False
             for block in _NIF_BLOCKS:
-                if block.IsSameType(NiKeyframeControllerTypeConst()):
+                if type(block) is NifFormat.NiKeyframeController:
                     has_keyframecontrollers = True
                     break
             if has_keyframecontrollers:
@@ -398,8 +398,12 @@ and turn off envelopes."""%ob.getName()
         #    WriteFileGroup(filename, root_block, NIF_VERSION, EXPORT_NIF, KF_CIV4)
         #else: # default: simply write the NIF tree
         #    WriteNifTree(filename, root_block, NIF_VERSION)
-        info = NifInfo(NIF_VERSION)
-        WriteNifTree(filename, root_block.Object(), info)
+        NIF_USER_VERSION = 0 if NIF_VERSION != 0x14000005 else 11
+        f = open(filename, "wb")
+        try:
+            NifFormat.write(NIF_VERSION, NIF_USER_VERSION, f, [root_block])
+        finally:
+            f.close()
 
         
         
@@ -414,8 +418,26 @@ and turn off envelopes."""%ob.getName()
     # no export error, but let's double check: try reading the file(s) we just wrote
     # we can probably remove these lines once the exporter is stable
     try:
-        ReadNifTree(filename, info)
-        if _VERBOSE: WriteNifTree(filename[:-4] + "_test.nif", root_block.Object(), info)
+        f = open(filename, "rb")
+        try:
+            NifFormat.read(NIF_VERSION, NIF_USER_VERSION, f)
+        finally:
+            f.close()
+        f = open(filename[:-4] + "_test.nif", "wb")
+        try:
+            NifFormat.write(NIF_VERSION, NIF_USER_VERSION, f, [root_block])
+        finally:
+            f.close()
+        f1 = open(filename, "rb")
+        f2 = open(filename[:-4] + "_test.nif", "rb")
+        try:
+            f1.seek(2,0)
+            f2.seek(2,0)
+            if f1.tell() != f2.tell(): # comparing the files will usually be different because blocks may have been written back in a different order, so cheaply just compare file sizes
+                raise NifExportError('write check failed: file sizes differ')
+        finally:
+            f1.close()
+            f2.close()
     except:
         Blender.Draw.PupMenu("WARNING%t|Exported NIF file may not be valid: double check failed! This is probably due to an unknown bug in the exporter code.")
         raise # re-raise the exception
@@ -496,25 +518,19 @@ def export_node(ob, space, parent_block, node_name):
     else:
         node.flags = 0x000C # ? this seems pretty standard for static and animated ninodes
 
-    ob_translation, \
-    ob_rotation, \
-    ob_scale, \
-    ob_velocity \
-    = export_matrix(ob, space)
-    node.SetLocalRotation(ob_rotation)
-    node.SetVelocity(ob_velocity)
-    node.SetLocalScale(ob_scale)
-    node.SetLocalTranslation(ob_translation)
+    export_matrix(ob, space, node)
 
     # set object bind position
     if ob != None and ob.getParent():
-        bbind_mat = ob.getMatrix('worldspace') # TODO: cancel out all IPO's
-        bind_mat = Matrix44(
-            bbind_mat[0][0], bbind_mat[0][1], bbind_mat[0][2], bbind_mat[0][3],
-            bbind_mat[1][0], bbind_mat[1][1], bbind_mat[1][2], bbind_mat[1][3],
-            bbind_mat[2][0], bbind_mat[2][1], bbind_mat[2][2], bbind_mat[2][3],
-            bbind_mat[3][0], bbind_mat[3][1], bbind_mat[3][2], bbind_mat[3][3])
-        node.SetWorldBindPos(bind_mat)
+        pass
+        # TODO
+        #bbind_mat = ob.getMatrix('worldspace') # TODO: cancel out all IPO's
+        #bind_mat = Matrix44(
+        #    bbind_mat[0][0], bbind_mat[0][1], bbind_mat[0][2], bbind_mat[0][3],
+        #    bbind_mat[1][0], bbind_mat[1][1], bbind_mat[1][2], bbind_mat[1][3],
+        #    bbind_mat[2][0], bbind_mat[2][1], bbind_mat[2][2], bbind_mat[2][3],
+        #    bbind_mat[3][0], bbind_mat[3][1], bbind_mat[3][2], bbind_mat[3][3])
+        #node.SetWorldBindPos(bind_mat)
 
     if (ob != None):
         # export animation
@@ -836,34 +852,29 @@ def export_sourcetexture(texture, filename = None):
 
     # add NiSourceTexture
     srctex = create_block("NiSourceTexture")
-    srctexdata = TexSource()
-    srctexdata.useExternal = not texture.getImage().packed #( texture.getName()[:4] != "pack" )
-    
-    if srctexdata.useExternal:
+    srctex.useExternal = not texture.getImage().packed
+    if srctex.useExternal:
         if filename != None:
             tfn = filename
         else:
             tfn = texture.image.getFilename()
         if ( STRIP_TEXPATH == 1 ):
             # strip texture file path (original morrowind style)
-            srctexdata.fileName = Blender.sys.basename(tfn)
+            srctex.fileName = Blender.sys.basename(tfn)
         elif ( STRIP_TEXPATH == 0 ):
             # strip the data files prefix from the texture's file name
             tfn = tfn.lower()
             idx = tfn.find( "textures" )
             if ( idx >= 0 ):
                 tfn = tfn[idx:]
-                tfn = tfn.replace(Blender.sys.sep, '\\') # for my linux fellows
-                srctexdata.fileName = tfn
+                tfn = tfn.replace(Blender.sys.sep, '\\') # for linux
+                srctex.fileName = tfn
             else:
-                srctexdata.fileName = Blender.sys.basename(tfn)
+                srctex.fileName = Blender.sys.basename(tfn)
         # try and find a DDS alternative, force it if required
-        ddsFile = "%s%s" % (srctexdata.fileName[:-4], '.dds')
+        ddsFile = "%s%s" % (srctex.fileName[:-4], '.dds')
         if Blender.sys.exists(ddsFile) == 1 or FORCE_DDS:
-            srctexdata.fileName = ddsFile
-        # force dds extension, if requested
-        # if FORCE_DDS:
-        #    srctexdata.fileName = srctexdata.fileName[:-4] + '.dds'
+            srctex.fileName = ddsFile
 
     else:   # if the file is not external
         if filename != None:
@@ -901,11 +912,11 @@ def export_sourcetexture(texture, filename = None):
         srctex["Texture Source"] = pixeldata
 
     # fill in default values
-    srctex["Texture Source"] = srctexdata
-    srctex["Pixel Layout"] = 5
-    srctex["Use Mipmaps"]  = 2
-    srctex["Alpha Format"] = 3
-    srctex["Unknown Byte"] = 1
+    srctex.pixelLayout = 5
+    srctex.useMipmaps = 2
+    srctex.alphaFormat = 3
+    srctex.unknownByte = 1
+    srctex.unknownByte2 = 1
 
     # save for future reference
     _NIF_TEXTURES[texid] = srctex
@@ -993,12 +1004,6 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
     for materialIndex, mesh_mat in enumerate( mesh_mats ):
         # -> first, extract valuable info from our ob
         
-        ob_translation, \
-        ob_rotation, \
-        ob_scale, \
-        ob_velocity \
-        = export_matrix(ob, space)
-
         mesh_base_tex = None
         mesh_glow_tex = None
         mesh_hasalpha = False # mesh has transparency
@@ -1124,28 +1129,24 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
             # find (vert, uv-vert, normal, vcol) quad, and if not found, create it
             f_index = [ -1 ] * f_numverts
             for i in range(f_numverts):
-                fv = Vector3(*(f.v[i].co))
+                fv = f.v[i].co
                 # get vertex normal for lighting (smooth = Blender vertex normal, non-smooth = Blender face normal)
                 if mesh_hasnormals:
                     if f.smooth:
-                        fn = Vector3(*(f.v[i].no))
+                        fn = f.v[i].no
                     else:
-                        fn = Vector3(*(f.no))
+                        fn = f.no
                 else:
                     fn = None
                 if (mesh_hastex):
-                    fuv = TexCoord(*(f.uv[i]))
-                    fuv.v = 1.0 - fuv.v # NIF flips the texture V-coordinate (OpenGL standard)
+                    fuv = f.uv[i]
                 else:
                     fuv = None
                 if (mesh_hasvcol):
-                    fcol = Color4(0.0,0.0,0.0,0.0)
                     if (len(f.col) == 0):
                         raise NIFExportError('ERROR%t|Vertex color painting/lighting enabled, but mesh has no vertex color data.')
-                    fcol.r = f.col[i].r / 255.0 # NIF stores the colour values as floats
-                    fcol.g = f.col[i].g / 255.0 # NIF stores the colour values as floats
-                    fcol.b = f.col[i].b / 255.0 # NIF stores the colour values as floats
-                    fcol.a = f.col[i].a / 255.0 # NIF stores the colour values as floats
+                    # NIF stores the colour values as floats
+                    fcol = f.col[i]
                 else:
                     fcol = None
                     
@@ -1159,12 +1160,12 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                     # and check if they have the same uvs, normals and colors (wow is that fast!)
                     for j in vertmap[v_index]:
                         if mesh_hastex:
-                            if abs(vertquad[1].u - vertquad_list[j][1].u) > _EPSILON: continue
-                            if abs(vertquad[1].v - vertquad_list[j][1].v) > _EPSILON: continue
+                            if abs(vertquad[1][0] - vertquad_list[j][1][0]) > _EPSILON: continue
+                            if abs(vertquad[1][1] - vertquad_list[j][1][1]) > _EPSILON: continue
                         if mesh_hasnormals:
-                            if abs(vertquad[2].x - vertquad_list[j][2].x) > _EPSILON: continue
-                            if abs(vertquad[2].y - vertquad_list[j][2].y) > _EPSILON: continue
-                            if abs(vertquad[2].z - vertquad_list[j][2].z) > _EPSILON: continue
+                            if abs(vertquad[2][0] - vertquad_list[j][2][0]) > _EPSILON: continue
+                            if abs(vertquad[2][1] - vertquad_list[j][2][1]) > _EPSILON: continue
+                            if abs(vertquad[2][2] - vertquad_list[j][2][2]) > _EPSILON: continue
                         if mesh_hasvcol:
                             if abs(vertquad[3].r - vertquad_list[j][3].r) > _EPSILON: continue
                             if abs(vertquad[3].g - vertquad_list[j][3].g) > _EPSILON: continue
@@ -1190,14 +1191,10 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                     if ( mesh_hastex ):     uvlist.append(vertquad[1])
             # now add the (hopefully, convex) face, in triangles
             for i in range(f_numverts - 2):
-                f_indexed = Triangle()
-                f_indexed.v1 = f_index[0]
-                if (ob_scale > 0):
-                    f_indexed.v2 = f_index[1+i]
-                    f_indexed.v3 = f_index[2+i]
+                if True: #TODO: #(ob_scale > 0):
+                    f_indexed = (f_index[0], f_index[1+i], f_index[2+i])
                 else:
-                    f_indexed.v2 = f_index[2+i]
-                    f_indexed.v3 = f_index[1+i]
+                    f_indexed = (f_index[0], f_index[2+i], f_index[1+i])
                 trilist.append(f_indexed)
 
         if len(trilist) > 65535:
@@ -1214,13 +1211,13 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
 
         # add a trishape block, and refer to this block in the parent's children list
         trishape = create_block("NiTriShape")
-        parent_block["Children"].AddLink(trishape)
+        parent_block.addChild(trishape)
         
         # fill in the NiTriShape's non-trivial values
-        if (parent_block["Name"].asString() != ""):
+        if (parent_block.name != ""):
             if len(mesh_mats) > 1:
                 if (trishape_name == None):
-                    trishape_name = "Tri " + parent_block["Name"].asString() + " %i"%materialIndex # Morrowind's child naming convention
+                    trishape_name = "Tri " + parent_block.name + " %i"%materialIndex # Morrowind's child naming convention
                 else:
                     # This should take care of "manually merged" meshes. 
                     trishape_name = trishape_name + " %i"%materialIndex
@@ -1228,17 +1225,14 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                 # this is a hack for single materialed meshes
                 assert(materialIndex == 0)
                 if (trishape_name == None):
-                    trishape_name = "Tri " + parent_block["Name"].asString()
-        trishape["Name"] = get_full_name(trishape_name)
+                    trishape_name = "Tri " + parent_block.name
+        trishape.name = get_full_name(trishape_name)
         if ob.getDrawType() != 2: # not wire
-            trishape["Flags"] = 0x0004 # use triangles as bounding box
+            trishape.flags = 0x0004 # use triangles as bounding box
         else:
-            trishape["Flags"] = 0x0005 # use triangles as bounding box + hide
+            trishape.flags = 0x0005 # use triangles as bounding box + hide
 
-        trishape["Translation"] = ob_translation
-        trishape["Rotation"]    = ob_rotation
-        trishape["Scale"]       = ob_scale
-        trishape["Velocity"]    = ob_velocity
+        export_matrix(ob, space, trishape)
         
         # set trishape bind position, in armature space (this should work)
         if ob != None and ob.getParent() and ob.getParent().getType() == 'Armature':
@@ -1258,16 +1252,16 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
         if (mesh_base_tex != None or mesh_glow_tex != None):
             # add NiTriShape's texturing property
             tritexprop = create_block("NiTexturingProperty")
-            trishape["Properties"].AddLink(tritexprop)
+            trishape.addProperty(tritexprop)
 
-            itritexprop = QueryTexturingProperty(tritexprop)
-            tritexprop["Flags"] = 0x0001 # standard?
-            itritexprop.SetApplyMode(APPLY_MODULATE)
-            itritexprop.SetTextureCount(7)
+            tritexprop.flags = 0x0001 # standard
+            tritexprop.applyMode = NifFormat.ApplyMode.APPLY_MODULATE
+            tritexprop.textureCount = 7
 
             if ( mesh_base_tex != None ):
-                basetex = TexDesc()
-                basetex.isUsed = 1
+                tritexprop.hasBaseTexture = True
+                basetex = tritexprop.baseTexture
+                basetex.isUsed = True
                 
                 # check for texture flip definition
                 txtlist = Blender.Text.Get()
@@ -1279,8 +1273,6 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                         fliptxt = None
                 else:
                     basetex.source = export_sourcetexture(mesh_base_tex)
-                
-                itritexprop.SetTexture(BASE_MAP, basetex)
 
             if ( mesh_glow_tex != None ):
                 glowtex = TexDesc()
@@ -1311,25 +1303,33 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
             # add NiTriShape's specular property
             if ( mesh_hasspec ):
                 trispecprop = create_block("NiSpecularProperty")
-                trispecprop["Flags"] = 0x0001
+                trispecprop.flags = 0x0001
             
                 # refer to the specular property in the trishape block
-                trishape["Properties"].AddLink(trispecprop)
+                trishape.addProperty(trispecprop)
             
             # add NiTriShape's material property
             trimatprop = create_block("NiMaterialProperty")
             
-            trimatprop["Name"] = get_full_name(mesh_mat.getName())
-            trimatprop["Flags"] = 0x0001 # ? standard
-            trimatprop["Ambient Color"] = Float3(*mesh_mat_ambient_color)
-            trimatprop["Diffuse Color"] = Float3(*mesh_mat_diffuse_color)
-            trimatprop["Specular Color"] = Float3(*mesh_mat_specular_color)
-            trimatprop["Emissive Color"] = Float3(*mesh_mat_emissive_color)
-            trimatprop["Glossiness"] = mesh_mat_glossiness
-            trimatprop["Alpha"] = mesh_mat_transparency
+            trimatprop.name = get_full_name(mesh_mat.getName())
+            trimatprop.flags = 0x0001 # ? standard
+            trimatprop.ambientColor.r = mesh_mat_ambient_color[0]
+            trimatprop.ambientColor.g = mesh_mat_ambient_color[1]
+            trimatprop.ambientColor.b = mesh_mat_ambient_color[2]
+            trimatprop.diffuseColor.r = mesh_mat_diffuse_color[0]
+            trimatprop.diffuseColor.g = mesh_mat_diffuse_color[1]
+            trimatprop.diffuseColor.b = mesh_mat_diffuse_color[2]
+            trimatprop.specularColor.r = mesh_mat_specular_color[0]
+            trimatprop.specularColor.g = mesh_mat_specular_color[1]
+            trimatprop.specularColor.b = mesh_mat_specular_color[2]
+            trimatprop.emissiveColor.r = mesh_mat_emissive_color[0]
+            trimatprop.emissiveColor.g = mesh_mat_emissive_color[1]
+            trimatprop.emissiveColor.b = mesh_mat_emissive_color[2]
+            trimatprop.glossiness = mesh_mat_glossiness
+            trimatprop.alpha = mesh_mat_transparency
             
             # refer to the material property in the trishape block
-            trishape["Properties"].AddLink(trimatprop)
+            trishape.addProperty(trimatprop)
 
 
             # material animation
@@ -1457,19 +1457,51 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                 imatcold.SetKeys(rgba_keys)
 
         # add NiTriShape's data
+        # NIF flips the texture V-coordinate (OpenGL standard)
         tridata = create_block("NiTriShapeData")
-        trishape["Data"] = tridata
-        ishapedata = QueryShapeData(tridata)
-        itridata = QueryTriShapeData(tridata)
+        trishape.data = tridata
+
+        tridata.numVertices = len(vertlist)
+        tridata.hasVertices = True
+        tridata.vertices.updateSize()
+        for i, v in enumerate(tridata.vertices):
+            v.x = vertlist[i][0]
+            v.y = vertlist[i][1]
+            v.z = vertlist[i][2]
         
-        ishapedata.SetVertexCount(len(vertlist))
-        ishapedata.SetVertices(vertlist)
-        if mesh_hasnormals: ishapedata.SetNormals(normlist)
-        if mesh_hasvcol:    ishapedata.SetColors(vcollist)
+        if mesh_hasnormals:
+            tridata.hasNormals = True
+            tridata.normals.updateSize()
+            for i, v in enumerate(tridata.normals):
+                v.x = normlist[i][0]
+                v.y = normlist[i][1]
+                v.z = normlist[i][2]
+            
+        if mesh_hasvcol:
+            tridata.hasVertexColors = True
+            tridata.vertexColors.updateSize()
+            for i, v in enumerate(tridata.vertexColors):
+                v.r = vcollist[i].r / 255.0
+                v.g = vcollist[i].g / 255.0
+                v.b = vcollist[i].b / 255.0
+                v.a = vcollist[i].a / 255.0
+
         if mesh_hastex:
-            ishapedata.SetUVSetCount(1)
-            ishapedata.SetUVSet(0, uvlist)
-        itridata.SetTriangles(trilist)
+            tridata.numUvSets = 1
+            tridata.hasUv = True
+            tridata.uvSets.updateSize()
+            for i, uv in enumerate(tridata.uvSets[0]):
+                uv.u = uvlist[i][0]
+                uv.v = 1.0 - uvlist[i][1] # opengl standard
+
+        tridata.numTriangles = len(trilist)
+        tridata.numTrianglePoints = 3*len(trilist)
+        tridata.hasTriangles = True
+        tridata.triangles.updateSize()
+        for i, v in enumerate(tridata.triangles):
+            v.v1 = trilist[i][0]
+            v.v2 = trilist[i][1]
+            v.v3 = trilist[i][2]
 
         # now export the vertex weights, if there are any
         vertgroups = ob.data.getVertGroupNames()
@@ -1678,15 +1710,7 @@ def export_bones(arm, parent_block):
         # add the node and the keyframe for this bone
         node["Name"] = get_full_name(bone.name)
         node["Flags"] = 0x0002 # ? this seems pretty standard for bones
-        ob_translation, \
-        ob_rotation, \
-        ob_scale, \
-        ob_velocity \
-        = export_matrix(bone, 'localspace') # rest pose
-        node["Rotation"]    = ob_rotation
-        node["Velocity"]    = ob_velocity
-        node["Scale"]       = ob_scale
-        node["Translation"] = ob_translation
+        export_matrix(bone, 'localspace', node) # rest pose
         
         # bone rotations are stored in the IPO relative to the rest position
         # so we must take the rest position into account
@@ -1763,10 +1787,7 @@ def export_textureeffect(ob, parent_block):
         
     # fill in the NiTextureEffect's non-trivial values
     texeff["Flags"] = 0x0004
-    t, r, s = export_matrix(ob, 'none')
-    texeff["Translation"] = t
-    texeff["Rotation"] = r
-    texeff["Scale"] = s
+    export_matrix(ob, 'none', texeff)
     
     # guessing
     texeff["Unknown Float 1"] = 1.0
@@ -1845,30 +1866,32 @@ def export_children(ob, parent_block):
 
 
 #
-# Convert an object's transformation matrix (rest pose)
-# to a niflib quadrupple ( translate, rotate, scale,
-# velocity ).
+# Set a NiNode's transform matrix to an object's
+# transformation matrix (rest pose)
 #
-def export_matrix(ob, space):
-    nt = Vector3()
-    nr = Matrix33()
-    nv = Vector3()
-    
+def export_matrix(ob, space, block):
     # decompose
     bs, br, bt = get_object_srt(ob, space)
     
     # and fill in the values
-    nt.Set(bt[0], bt[1], bt[2])
-    nr.Set(\
-        br[0][0], br[0][1], br[0][2],\
-        br[1][0], br[1][1], br[1][2],\
-        br[2][0], br[2][1], br[2][2])
-    nv.Set(0,0,0)
+    block.translation.x = bt[0]
+    block.translation.y = bt[1]
+    block.translation.z = bt[2]
+    block.rotation.m11 = br[0][0]
+    block.rotation.m12 = br[0][1]
+    block.rotation.m13 = br[0][2]
+    block.rotation.m21 = br[1][0]
+    block.rotation.m22 = br[1][1]
+    block.rotation.m23 = br[1][2]
+    block.rotation.m31 = br[2][0]
+    block.rotation.m32 = br[2][1]
+    block.rotation.m33 = br[2][2]
+    block.velocity.x = 0.0
+    block.velocity.y = 0.0
+    block.velocity.z = 0.0
+    block.scale = bs
 
-    # return result
-    return (nt, nr, bs, nv)
-
-
+    return bs, br, bt
 
 # 
 # Find scale, rotation, and translation components of an object in
@@ -2049,7 +2072,7 @@ def scale_tree(block, scale):
     # TODO: check if we can do this directly using a niflib function
     global _EPSILON
     # scale only works for nodes, and there's no point in scaling if the scale is 1/1
-    if abs(1.0 - scale) > _EPSILON and block.IsDerivedType(NiObjectNETTypeConst()): # is it a node?
+    if abs(1.0 - scale) > _EPSILON and isinstance(block, NifFormat.NiObjectNET): # is it a node?
         # NiNode transform scale
         t = block.GetLocalTranslation()
         t.x *= scale
@@ -2066,9 +2089,8 @@ def scale_tree(block, scale):
         #block.SetWorldBindPos(mat)
         
         # Controller data block scale
-        # TODO make GetControllers return vector<> : cannot iterate over empty tuple
         if False: #for ctrl in block.GetControllers():
-            # TODO convert to pyniflib
+            # TODO convert to NifFormat
             if ctrl.IsSameType(NiKeyframeControllerTypeConst()):
                 kfd = ctrl.GetData()
                 assert(not kfd.is_null())
@@ -2102,7 +2124,7 @@ def scale_tree(block, scale):
         #elif block["Data"].is_null(): # block has data
         #    scale_tree(block["Data"].asLink(), scale) # scale the data
 
-    if block.IsDerivedType(NiGeometryTypeConst()): # is it a shape?
+    if isinstance(block, NifFormat.NiGeometry): # is it a shape?
         # Scale all vertices
         geomdata = block.GetData()
         vertlist = geomdata.GetVertices()
@@ -2118,7 +2140,7 @@ def scale_tree(block, scale):
 # reset scale on all NiNodes in the tree to 1.0
 def apply_scale_tree(block):
     return # TODO: fix this later
-    if block.IsDerivedType(NiObjectNETTypeConst()): # make sure it is a node
+    if isinstance(block, NifFormat.NiObjectNET): # make sure it is a node
         scale = block.GetScale()
         if abs(scale - 1.0) > _EPSILON:
             # NiNode local transform scale.

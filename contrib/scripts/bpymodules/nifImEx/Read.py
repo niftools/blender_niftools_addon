@@ -804,7 +804,7 @@ def fb_texture(niSourceTexture):
         
         if niSourceTexture.useExternal:
             # the texture uses an external image file
-            fn = "".join(niSourceTexture.fileName.value)
+            fn = niSourceTexture.fileName
             # go searching for it
             textureFile = None
             searchPathList = [_CONFIG["NIF_IMPORT_PATH"], _CONFIG["BASE_TEXTURE_FOLDER"]] + _CONFIG["TEXTURE_SEARCH_PATH"]
@@ -1730,4 +1730,3 @@ def scale_tree(niBlock, scale):
                     vert.x *= scale
                     vert.y *= scale
                     vert.z *= scale
-
