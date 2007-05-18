@@ -374,14 +374,9 @@ and turn off envelopes."""%ob.getName()
             export_animgroups(animtxt, root_block)
             #export_animgroups(animtxt, root_block["Children"].asLinkList()[0]) # we link the animation extra data to the first root_object node
 
-        # scale the NIF model
-        # TODO: sort this out
-        #scale_tree(root_block, _EXPORT_SCALE_CORRECTION)
-
-        # apply scale (fixes issues with TESCS selection box and old imports)
-        # TODO: sort this out
-        #if APPLY_SCALE:
-        #    apply_scale_tree(root_block)
+        # apply scale
+        if APPLY_SCALE:
+            root_block.applyScale(_EXPORT_SCALE_CORRECTION)
 
         # write the file:
         #----------------
@@ -1468,6 +1463,7 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
             v.x = vertlist[i][0]
             v.y = vertlist[i][1]
             v.z = vertlist[i][2]
+        tridata.updateCenterRadius()
         
         if mesh_hasnormals:
             tridata.hasNormals = True
