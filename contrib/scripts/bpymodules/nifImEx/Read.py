@@ -404,7 +404,7 @@ def read_armature_branch(b_armature, niArmature, niBlock):
                                     except ValueError: # remove throws value-error if vertex was already removed previously
                                         pass
                             if verts:
-                                groupName = _NAMES[par_bone.name]
+                                groupName = _NAMES[par_bone]
                                 b_meshData.addVertGroup(groupName)
                                 b_meshData.assignVertsToGroup(groupName, verts, 1.0, Blender.Mesh.AssignModes.REPLACE)
                         # make it parent of the armature
@@ -613,49 +613,74 @@ def fb_armature(niBlock):
             # get keyframe data
             kfd = kfc.data
             assert(isinstance(kfd, NifFormat.NiKeyframeData))
-            rot_keys = kfd.rotateKeys
-            trans_keys = kfd.translateKeys
-            scale_keys = kfd.scaleKeys
+            translations = kfd.translations
+            scales = kfd.scales
             # if we have translation keys, we make a dictionary of
             # rot_keys and scale_keys, this makes the script work MUCH faster
             # in most cases
-            if trans_keys:
+            if translations:
                 scale_keys_dict = {}
                 rot_keys_dict = {}
             # add the keys
             msg('Scale keys...', 4)
-            for scale_key in scale_keys:
-                frame = 1+int(scale_key.time * _FPS) # time 0.0 is frame 1
-                scale_total = scale_key.data
-                scale_channel = scale_total / niBone_bind_scale # Schannel = Stotal / Sbind
-                b_posebone.size = Blender.Mathutils.Vector(scale_channel, scale_channel, scale_channel)
+            for scaleKey in scales.keys:
+                frame = 1+int(scaleKey.time * _FPS) # time 0.0 is frame 1
+                sizeVal = scaleKey.value.getValue()
+                size = sizeVal / niBone_bind_scale # Schannel = Stotal / Sbind
+                b_posebone.size = Blender.Mathutils.Vector(size, size, size)
                 b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.SIZE]) # this is very slow... :(
                 # fill optimizer dictionary
-                if trans_keys:
-                    scale_keys_dict[frame] = scale_channel
-            msg('Rotation keys...', 4)
-            for rot_key in rot_keys:
-                frame = 1+int(rot_key.time * _FPS) # time 0.0 is frame 1
-                # beware, CrossQuats takes arguments in a counter-intuitive order:
-                # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
-                rot_total = Blender.Mathutils.Quaternion([rot_key.data.w, rot_key.data.x, rot_key.data.y, rot_key.data.z])
-                rot_channel = CrossQuats(niBone_bind_quat_inv, rot_total) # Rchannel = Rtotal * inverse(Rbind)
-                rot_channel = CrossQuats(CrossQuats(extra_matrix_quat_inv, rot_channel), extra_matrix_quat) # C' = X * C * inverse(X)
-                
-                b_posebone.quat = rot_channel
-                b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.ROT]) # this is very slow... :(
-                # fill optimizer dictionary
-                if trans_keys:
-                    rot_keys_dict[frame] = Blender.Mathutils.Quaternion(rot_channel)
+                if translations:
+                    scale_keys_dict[frame] = size
+            
+            # detect the type of rotation keys
+            rotationType = kfd.rotationType
+            if rotationType == 4:
+                # uses xyz rotation
+                msg('Rotation keys...(euler)', 4)
+                xyzRotations = kfd.xyzRotations
+                for key in xyzRotations:
+                    frame = 1+int(quatKey.time * _FPS) # time 0.0 is frame 1
+                    keyVal = key.value
+                    euler = Blender.Mathutils.Euler([keyVal.x, keyVal.y, keyVal.z])
+                    quat = euler.toQuat()
+                    # beware, CrossQuats takes arguments in a counter-intuitive order:
+                    # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
+                    quatVal = CrossQuats(niBone_bind_quat_inv, quatKey) # Rchannel = Rtotal * inverse(Rbind)
+                    rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
+                    b_posebone.quat = rot
+                    b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.ROT]) # this is very slow... :(
+                    # fill optimizer dictionary
+                    if translations:
+                        rot_keys_dict[frame] = Blender.Mathutils.Quaternion(rot)                
+            else:
+                # uses quaternions
+                msg('Rotation keys...(quaternions)', 4)
+                quaternionKeys = kfd.quaternionKeys
+                for key in quaternionKeys:
+                    frame = 1+int(key.time * _FPS) # time 0.0 is frame 1
+                    keyVal = key.value
+                    quat = Blender.Mathutils.Quaternion([keyVal.w, keyVal.x, keyVal.y, keyVal.z])
+                    # beware, CrossQuats takes arguments in a counter-intuitive order:
+                    # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
+                    quatVal = CrossQuats(niBone_bind_quat_inv, quat) # Rchannel = Rtotal * inverse(Rbind)
+                    rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
+                    b_posebone.quat = rot
+                    b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.ROT]) # this is very slow... :(
+                    # fill optimizer dictionary
+                    if translations:
+                        rot_keys_dict[frame] = Blender.Mathutils.Quaternion(rot)
+
             msg('Translation keys...', 4)
-            for trans_key in trans_keys:
-                frame = 1+int(trans_key.time * _FPS) # time 0.0 is frame 1
-                trans_total = Blender.Mathutils.Vector(trans_key.data.x, trans_key.data.y, trans_key.data.z)
-                trans_channel = (trans_total - niBone_bind_trans) * niBone_bind_rot_inv * (1.0/niBone_bind_scale)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
+            for key in translations.keys:
+                frame = 1+int(key.time * _FPS) # time 0.0 is frame 1
+                keyVal = key.value
+                trans = Blender.Mathutils.Vector(keyVal.x, keyVal.y, keyVal.z)
+                locVal = (trans - niBone_bind_trans) * niBone_bind_rot_inv * (1.0/niBone_bind_scale)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
                 # we need the rotation matrix at this frame (that's why we inserted the other keys first)
                 if rot_keys_dict:
                     try:
-                        rot_channel = rot_keys_dict[frame].toMatrix()
+                        rot = rot_keys_dict[frame].toMatrix()
                     except KeyError:
                         # fall back on slow method
                         ipo = action.getChannelIpo(bone_name)
@@ -664,26 +689,27 @@ def fb_armature(niBlock):
                         quat.y = ipo.getCurve('QuatY').evaluate(frame)
                         quat.z = ipo.getCurve('QuatZ').evaluate(frame)
                         quat.w = ipo.getCurve('QuatW').evaluate(frame)
-                        rot_channel = quat.toMatrix()
+                        rot = quat.toMatrix()
                 else:
-                    rot_channel = Blender.Mathutils.Matrix([1,0,0],[0,1,0],[0,0,1])
+                    rot = Blender.Mathutils.Matrix([1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0])
                 # we also need the scale at this frame
                 if scale_keys_dict:
                     try:
-                        scale_channel = scale_keys_dict[frame]
+                        sizeVal = scale_keys_dict[frame]
                     except KeyError:
                         ipo = action.getChannelIpo(bone_name)
                         if ipo.getCurve('SizeX'):
-                            scale_channel = ipo.getCurve('SizeX').evaluate(frame) # assume uniform scale
+                            sizeVal = ipo.getCurve('SizeX').evaluate(frame) # assume uniform scale
                         else:
-                            scale_channel = 1.0
+                            sizeVal = 1.0
                 else:
-                    scale_channel = 1.0
+                    sizeVal = 1.0
+                size = Blender.Mathutils.Matrix([sizeVal, 0.0, 0.0], [0.0, sizeVal, 0.0], [0.0, 0.0, sizeVal])
                 # now we can do the final calculation
-                trans_channel = (extra_matrix_trans * scale_channel * rot_channel + trans_channel - extra_matrix_trans) * extra_matrix_rot_inv * (1.0/extra_matrix_scale) # C' = X * C * inverse(X)
-                b_posebone.loc = trans_channel
+                loc = (extra_matrix_trans * size * rot + locVal - extra_matrix_trans) * extra_matrix_rot_inv * (1.0/extra_matrix_scale) # C' = X * C * inverse(X)
+                b_posebone.loc = loc
                 b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.LOC])
-            if trans_keys:
+            if translations:
                 del scale_keys_dict
                 del rot_keys_dict
     return b_armature
@@ -1612,36 +1638,58 @@ def set_animation(niBlock, b_obj):
         kfd = kfc.data
         assert(isinstance(kfd, NifFormat.NiKeyframeData))
         #get the animation keys
-        rot_keys = kfd.XYZRotations
-        trans_keys = kfd.translations
-        scale_keys = kfd.scales
+        translations = kfd.translations
+        scales = kfd.scales
         # add the keys
         msg('Scale keys...', 4)
-        for scale_key in scale_keys:
-            frame = 1+int(scale_key.time * _FPS) # time 0.0 is frame 1
+        for key in scales.keys:
+            frame = 1+int(key.time * _FPS) # time 0.0 is frame 1
             Blender.Set('curframe', frame)
-            size_value = scale_key.value
-            b_obj.SizeX = size_value
-            b_obj.SizeY = size_value
-            b_obj.SizeZ = size_value
+            size = key.value.getValue()
+            b_obj.SizeX = size
+            b_obj.SizeY = size
+            b_obj.SizeZ = size
             b_obj.insertIpoKey(Blender.Object.SIZE)
-        msg('Rotation keys...', 4)
-        for rot_key in rot_keys:
-            frame = 1+int(rot_key.time * _FPS) # time 0.0 is frame 1
-            Blender.Set('curframe', frame)
-            rot = Blender.Mathutils.Quaternion(rot_key.value.w, rot_key.value.x, rot_key.value.y, rot_key.value.z).toEuler()
-            b_obj.RotX = rot.x * _R2D
-            b_obj.RotY = rot.y * _R2D
-            b_obj.RotZ = rot.z * _R2D
-            b_obj.insertIpoKey(Blender.Object.ROT)
+
+        # detect the type of rotation keys
+        rotationType = kfd.rotationType
+        if rotationType == 4:
+            # uses xyz rotation
+            xyzRotations = kfd.xyzRotations
+            msg('Rotation keys...(euler)', 4)
+            for key in xyzRotations:
+                frame = 1+int(key.time * _FPS) # time 0.0 is frame 1
+                Blender.Set('curframe', frame)
+                keyValue = key.value
+                rot = (keyValue.x, keyValue.y, keyValue.z)
+                b_obj.RotX = rot.x * _R2D
+                b_obj.RotY = rot.y * _R2D
+                b_obj.RotZ = rot.z * _R2D
+                b_obj.insertIpoKey(Blender.Object.ROT)           
+        else:
+            # uses quaternions
+            quaternionKeys = kfd.quaternionKeys
+            msg('Rotation keys...(quaternions)', 4)
+            for key in quaternionKeys:
+                frame = 1+int(key.time * _FPS) # time 0.0 is frame 1
+                Blender.Set('curframe', frame)
+                keyValue = key.value
+                rot = Blender.Mathutils.Quaternion(keyValue.w, keyValue.x, keyValue.y, keyValue.z).toEuler()
+                b_obj.RotX = rot.x * _R2D
+                b_obj.RotY = rot.y * _R2D
+                b_obj.RotZ = rot.z * _R2D
+                b_obj.insertIpoKey(Blender.Object.ROT)
+        
         msg('Translation keys...', 4)
-        for trans_key in trans_keys:
-            frame = 1+int(trans_key.time * _FPS) # time 0.0 is frame 1
+        for key in translations.keys:
+            frame = 1+int(key.time * _FPS) # time 0.0 is frame 1
             Blender.Set('curframe', frame)
-            b_obj.LocX = trans_key.value.x
-            b_obj.LocY = trans_key.value.y
-            b_obj.LocZ = trans_key.value.z
+            loc = key.value
+            b_obj.LocX = loc.x
+            b_obj.LocY = loc.y
+            b_obj.LocZ = loc.z
             b_obj.insertIpoKey(Blender.Object.LOC)
+            
         Blender.Set('curframe', 1)
         """
             rot_keys = ikfd.GetRotateKeys()
@@ -1699,17 +1747,17 @@ def scale_tree(niBlock, scale):
                     assert(kfd)
                     # just to make sure, NiNode/NiTriShape controllers should have keyframe data
                     assert(isinstance(kfd, NifFormat.NiKeyframeData))
-                    trans_keys = kfd.translations
-                    if trans_keys:
-                        for key in trans_keys:
-                            key.data.x *= scale
-                            key.data.y *= scale
-                            key.data.z *= scale
+                    translations = kfd.translations
+                    if translations:
+                        for key in translations.keys:
+                            key.value.x *= scale
+                            key.value.y *= scale
+                            key.value.z *= scale
                 elif isinstance(ctrl, NifFormat.NiGeomMorpherController):
                     gmd = ctrl.data
                     assert(gmd)
                     assert(isinstance(gmd, NifFormat.NiMorphData))
-                    for morph in igmd.morphs:
+                    for morph in gmd.morphs:
                         vects = morph.vectors
                         for v in range( len( vects ) ):
                             vects[v].x *= scale
