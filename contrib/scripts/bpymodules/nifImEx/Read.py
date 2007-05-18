@@ -63,7 +63,7 @@ _BIND_OFFSETS = {}
 
 # dictionary of bones that belong to a certain armature
 # maps NIF armature name to list of NIF bone name
-_BONE_LIST = {}
+_ARMATURES = {}
 
 # correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z
 _BONE_CORRECTION_MATRICES = (\
@@ -113,6 +113,11 @@ def addEvent(evName = "NO_NAME"):
     _GUI_EVENTS.append(evName)
     return eventId
 
+def guiText(str = "", xpos = 0, ypos = 0):
+    # To draw text on the screen I have to position its start point first
+    BGL.glRasterPos2i( xpos, ypos)
+    Draw.Text(str)
+    
 def gui():
     global _GUI_ELEMENTS, _GUI_EVENTS, _CONFIG, _LOGO_IMAGE
     del _GUI_EVENTS[:]
@@ -126,6 +131,7 @@ def gui():
     #Draw.Image(logoImg, 50, H-100, 1.0, 1.0, 1.0, 0)
     # Draw.String(name, event, x, y, width, height, initial, length, tooltip=None)
     nifFilePath = sys.sep.join((_CONFIG["NIF_IMPORT_PATH"], _CONFIG["NIF_IMPORT_FILE"]))
+    guiText("NIF file path", 500, H-250)
     E["NIF_FILE_PATH"]       = Draw.String("",             addEvent("NIF_FILE_PATH"),  50, H-150, 390, 20, nifFilePath, 350, '')
     E["BROWSE_FILE_PATH"]    = Draw.PushButton('...',      addEvent("BROWSE_FILE_PATH"), 440, H-150, 30, 20, 'browse')
     E["ADVANCED"]            = Draw.PushButton('advanced', addEvent("ADVANCED"), 410, H-225, 100, 20)
@@ -291,9 +297,9 @@ def import_main(root_block):
     merge_armatures()
     
     if _VERBOSE and _MSG_LEVEL >= 4:
-        for arm_name in _BONE_LIST.keys():
+        for arm_name in _ARMATURES.keys():
             print "armature '%s':"%arm_name
-            for bone_name in _BONE_LIST[arm_name]:
+            for bone_name in _ARMATURES[arm_name]:
                 print "  bone '%s'"%bone_name
                 
     # read the NIF tree
@@ -347,6 +353,7 @@ def read_branch(niBlock):
                     read_armature_branch(b_obj, niBlock, niBlock)
                 else:
                     # it's a grouping node
+                    b_obj = fb_empty(niBlock)
                     b_children_list = []
                     children = niBlock.children
                     for child in children:
@@ -478,9 +485,9 @@ def fb_bind_matrix(niBlock):
 # Retrieves a block's global bind position matrix
 def fb_global_bind_matrix(niBlock):
     """Retrieves a node's global bind position matrix"""
-    b_matrix = fb_bind_matrix(niBlock)
-    if niBlock._parent:
-        return b_matrix * fb_global_matrix(niBlock._parent) # yay, recursion
+    b_matrix = fb_global_matrix(niBlock)
+    if niBlock in _BIND_OFFSETS:
+        return b_matrix * _BIND_OFFSETS[niBlock]
     return b_matrix
 
 
@@ -514,7 +521,7 @@ def decompose_srt(m):
 def fb_empty(niBlock):
     global _SCENE
     b_empty = Blender.Object.New("Empty", fb_name(niBlock,22))
-    b_empty.prop['longName'] = niBlock.name
+    b_empty.properties['longName'] = niBlock.name
     _SCENE.objects.link(b_empty)
     return b_empty
 
@@ -523,10 +530,10 @@ def fb_empty(niBlock):
 # the bones.
 def fb_armature(niBlock):
     global _SCENE
-    armature_name = fb_name(niBlock,)
+    armature_name = fb_name(niBlock,22)
     armature_matrix_inverse = fb_global_bind_matrix(niBlock)
     armature_matrix_inverse.invert()
-    b_armature = Blender.Object.New('Armature', fb_name(niBlock,22))
+    b_armature = Blender.Object.New('Armature', armature_name)
     b_armatureData = Blender.Armature.Armature()
     b_armatureData.name = armature_name
     b_armatureData.makeEditable()
@@ -608,6 +615,9 @@ def fb_armature(niBlock):
         extra_matrix_rot_inv.invert()
         extra_matrix_quat_inv = extra_matrix_rot_inv.toQuat()
         # now import everything
+        # ##############################
+        #print "disabled armature animation for debug"
+        #kfc = False
         kfc = find_controller(niBone, NifFormat.NiKeyframeController)
         if kfc:
             # get keyframe data
@@ -866,7 +876,7 @@ def fb_texture(niSourceTexture):
                         except:
                             pass
             if b_image == None:
-                print "Texture %s not found and no alternate available" % fn
+                msg("Texture %s not found and no alternate available" % fn, 2)
                 b_image = Blender.Image.New(tex, 1, 1, 24) # create a stub
                 b_image.filename = tex
         else:
@@ -1292,30 +1302,28 @@ def fb_mesh(niBlock):
     #b_meshData.calcNormals() # let Blender calculate vertex normals
 
     # new implementation, uses Mesh instead
-    print "todo: fix morphs"
-    morphCtrl = False
-    #morphCtrl = find_controller(niBlock, NifFormat.NiGeomMorpherController)
+    morphCtrl = find_controller(niBlock, NifFormat.NiGeomMorpherController)
     if morphCtrl:
         morphData = morphCtrl.data
         if morphData.numMorphs:
             # insert base key at frame 1
             b_meshData.insertKey( 1, 'absolute' )
-            baseverts = morphData.morphs[0]
+            baseverts = morphData.morphs[0].vectors
             b_ipo = Blender.Ipo.New( 'Key' , 'KeyIpo' )
             b_meshData.key.ipo = b_ipo
             for idxMorph in xrange(1, morphData.numMorphs):
-                morphverts = morphData.morphs[idxMorph]
+                morphverts = morphData.morphs[idxMorph].vectors
                 # for each vertex calculate the key position from base pos + delta offset
-                for count in xrange(morphData.numVertices):
-                    x = baseverts[count].x
-                    y = baseverts[count].y
-                    z = baseverts[count].z
-                    dx = morphverts[count].x
-                    dy = morphverts[count].y
-                    dz = morphverts[count].z
-                    b_meshData.verts[v_map[count]].co[0] = x + dx
-                    b_meshData.verts[v_map[count]].co[1] = y + dy
-                    b_meshData.verts[v_map[count]].co[2] = z + dz
+                for i in xrange(morphData.numVertices):
+                    x = baseverts[i].x
+                    y = baseverts[i].y
+                    z = baseverts[i].z
+                    dx = morphverts[i].x
+                    dy = morphverts[i].y
+                    dz = morphverts[i].z
+                    b_meshData.verts[v_map[i]].co[0] = x + dx
+                    b_meshData.verts[v_map[i]].co[1] = y + dy
+                    b_meshData.verts[v_map[i]].co[2] = z + dz
                 # update the mesh and insert key
                 b_meshData.insertKey(idxMorph, 'relative')
                 # set up the ipo key curve
@@ -1331,19 +1339,19 @@ def fb_mesh(niBlock):
                     msg( 'dunno which extrapolation to use: using constant instead', 2 )
                     b_curve.setExtrapolation( 'Constant' )
                 # set up the curve's control points
-                morphkeys = iMorphData.GetMorphKeys(idxMorph)
-                for morphkey in morphkeys:
-                    x =  morphkey.data
-                    frame =  1+int(morphkey.time * _FPS)
+                morphkeys = morphData.morphs[idxMorph].keys
+                for key in morphkeys:
+                    x =  key.value.getValue()
+                    frame =  1+int(key.time * _FPS)
                     b_curve.addBezier( ( frame, x ) )
                 # finally: return to base position
-                for count in xrange(morphData.numVertices):
-                    x = baseverts[count].x
-                    y = baseverts[count].y
-                    z = baseverts[count].z
-                    b_meshData.verts[v_map[count]].co[0] = x
-                    b_meshData.verts[v_map[count]].co[1] = y
-                    b_meshData.verts[v_map[count]].co[2] = z
+                for i in xrange(morphData.numVertices):
+                    x = baseverts[i].x
+                    y = baseverts[i].y
+                    z = baseverts[i].z
+                    b_meshData.verts[v_map[i]].co[0] = x
+                    b_meshData.verts[v_map[i]].co[1] = y
+                    b_meshData.verts[v_map[i]].co[2] = z
             # assign ipo to mesh
                 
     return b_mesh
@@ -1368,7 +1376,6 @@ def fb_textkey(niBlock):
         
         frame = 1
         for key in niBlock.textKeys:
-            print key.value
             newkey = str(key.value).replace('\r\n', '/').rstrip('/')
             frame = 1 + int(key.time * _FPS) # time 0.0 is frame 1
             animtxt.write('%i/%s\n'%(frame, newkey))
@@ -1465,30 +1472,32 @@ def set_parents(niBlock):
             set_parents(child)
 
 # mark armatures and bones by peeking into NiSkinInstance blocks
-# also adds the bind position matrix for correct import of skinning info
+# also stores the bind position matrix for correct import of skinning info
 def mark_armatures_bones(niBlock):
-    global _BONE_LIST, _BIND_OFFSETS
+    global _ARMATURES, _BIND_OFFSETS
     # search for all NiTriShape or NiTriStrips blocks...
     if isinstance(niBlock, NifFormat.NiTriBasedGeom):
         # yes, we found one, get its skin instance
         skininst = niBlock.skinInstance
         if skininst:
             msg("Skin instance found on block '%s'" % niBlock.name,3)
-            # it has a skin instance, so get the skeleton root
-            # which is an armature only if it's not a skinning influence
-            # so mark the node to be imported as an armature
-            skelroot = skininst.skeletonRoot
-            skelroot_name = skelroot.name
-            
-            # stores the bind offset matrices for later use
-            skindata = skininst.data
-            r = skindata.rotation
-            s = skindata.scale
-            t = skindata.translation
             
             # applies scaling corrections. I have to do it here because skin instances
             # are not affected by the scale_tree function. Might be fixed later
             scale = _CONFIG["IMPORT_SCALE_CORRECTION"]
+            
+            # it has a skin instance, so get the skeleton root
+            # which is an armature only if it's not a skinning influence
+            # so mark the node to be imported as an armature
+            skelroot = skininst.skeletonRoot
+            
+            # stores the bind offset matrices for later use
+            skinInstData = skininst.data
+            r = skinInstData.rotation
+            s = skinInstData.scale
+            t = skinInstData.translation
+            
+
             bindOffset = Matrix(
                 [r.m11, r.m12, r.m13, 0.0],\
                 [r.m21, r.m22, r.m23, 0.0],\
@@ -1496,27 +1505,36 @@ def mark_armatures_bones(niBlock):
                 [t.x*scale, t.y*scale, t.z*scale, 1.0])
             
             # only non-identity matrices are stored in the bind offset list
-            isIdentity = (bindOffset == _IDENTITY44)
-            
             # sets the bind offset for the affected skin
-            if not isIdentity:
+            if (bindOffset != _IDENTITY44):
                 _BIND_OFFSETS[niBlock] = bindOffset
                 
-            if not _BONE_LIST.has_key(skelroot_name):
-                _BONE_LIST[skelroot_name] = []
-                msg("'%s' is an armature" % skelroot_name,3)
-            for bone in skininst.bones:
+            if not _ARMATURES.has_key(skelroot):
+                _ARMATURES[skelroot] = []
+                msg("'%s' is an armature" % skelroot.name,3)
+                
+            for i, bone in enumerate(skininst.bones):
                 # add them, if we haven't already
-                bone_name = bone.name
-                if not bone_name in _BONE_LIST[skelroot_name]:
-                    if not isIdentity:
+                if not bone in _ARMATURES[skelroot]:
+                    skinData = skinInstData.boneList[i]
+                    r = skinData.rotation
+                    s = skinData.scale
+                    t = skinData.translation
+                    bindOffset = Matrix(
+                        [r.m11, r.m12, r.m13, 0.0],\
+                        [r.m21, r.m22, r.m23, 0.0],\
+                        [r.m31, r.m32, r.m33, 0.0],\
+                        [t.x*scale, t.y*scale, t.z*scale, 1.0])
+                    # only non-identity matrices are stored in the bind offset list
+                    # sets the bind offset for the affected skin
+                    if (bindOffset != _IDENTITY44):
                         _BIND_OFFSETS[bone] = bindOffset
-                    _BONE_LIST[skelroot_name].append(bone_name)
-                    msg("'%s' is a bone of armature '%s'" % (bone_name, skelroot_name), 3)
+                    _ARMATURES[skelroot].append(bone)
+                    msg("'%s' is a bone of armature '%s'" % (bone.name, skelroot.name), 3)
                 # now we "attach" the bone to the armature:
                 # we make sure all NiNodes from this bone all the way
                 # down to the armature NiNode are marked as bones
-                complete_bone_tree(bone, skelroot_name)
+                complete_bone_tree(bone, skelroot)
     # nope, it's not a NiTriShape or NiTriStrips
     # so if it's a NiNode
     elif isinstance(niBlock, NifFormat.NiNode):
@@ -1530,59 +1548,56 @@ def mark_armatures_bones(niBlock):
 # this function helps to make sure that the bones actually form a tree,
 # all the way down to the armature node
 # just call it on all bones of a skin instance
-def complete_bone_tree(bone, skelroot_name):
-    global _BONE_LIST
+def complete_bone_tree(bone, skelroot):
+    global _ARMATURES
     # we must already have marked this one as a bone
-    bone_name = bone.name
-    assert _BONE_LIST.has_key(skelroot_name) # debug
-    assert bone_name in _BONE_LIST[skelroot_name] # debug
+    assert _ARMATURES.has_key(skelroot) # debug
+    assert bone in _ARMATURES[skelroot] # debug
     # get the node parent, this should be marked as an armature or as a bone
     boneparent = bone._parent
-    boneparent_name = boneparent.name
-    if boneparent_name != skelroot_name:
+    if boneparent != skelroot:
         # parent is not the skeleton root
-        if not boneparent_name in _BONE_LIST[skelroot_name]:
+        if not boneparent in _ARMATURES[skelroot]:
             # neither is it marked as a bone: so mark the parent as a bone
-            _BONE_LIST[skelroot_name].append(boneparent_name)
+            _ARMATURES[skelroot].append(boneparent)
             # store the coordinates for realignement autodetection 
-            msg("'%s' is a bone of armature '%s'"%(boneparent_name, skelroot_name),3)
+            msg("'%s' is a bone of armature '%s'"%(boneparent.name, skelroot.name),3)
         # now the parent is marked as a bone
         # recursion: complete the bone tree,
         # this time starting from the parent bone
-        complete_bone_tree(boneparent, skelroot_name)
+        complete_bone_tree(boneparent, skelroot)
 
 
 
 # merge armatures that are bones of other armatures
 def merge_armatures():
-    global _BONE_LIST
-    for arm_name, bones in _BONE_LIST.items():
-        for arm_name2, bones2 in _BONE_LIST.items():
-            if arm_name2 in bones and _BONE_LIST.has_key(arm_name):
-                msg("merging armature '%s' into armature '%s'"%(arm_name2,arm_name),3)
-                # arm_name2 is in _BONE_LIST[arm_name]
-                # so add every bone2 in _BONE_LIST[arm_name2] too
+    global _ARMATURES
+    for arm, bones in _ARMATURES.items():
+        for arm2, bones2 in _ARMATURES.items():
+            if arm2 in bones and _ARMATURES.has_key(arm):
+                msg("merging armature '%s' into armature '%s'"%(arm2.name, arm.name),3)
+                # arm_name2 is in _ARMATURES[arm_name]
+                # so add every bone2 in _ARMATURES[arm_name2] too
                 for bone2 in bones2:
                     if not bone2 in bones:
-                        _BONE_LIST[arm_name].append(bone2)
+                        _ARMATURES[arm].append(bone2)
                 # remove merged armature
-                del _BONE_LIST[arm_name2]
+                del _ARMATURES[arm2]
 
 
 
 # Tests a NiNode to see if it's a bone.
 def is_bone(niBlock):
-    blockName = niBlock.name
-    if blockName[:6] == "Bip01 ": return True # heuristics
-    for bones in _BONE_LIST.values():
-        if blockName in bones:
+    if niBlock.name[:6] == "Bip01 ": return True # heuristics
+    for bones in _ARMATURES.values():
+        if niBlock in bones:
             return True
     return False
 
 # Tests a block to see if it's an armature.
 def is_armature_root(niBlock):
     if isinstance(niBlock, NifFormat.NiNode):
-        return  _BONE_LIST.has_key(niBlock.name)
+        return  _ARMATURES.has_key(niBlock)
     return False
     
 # Detect closest bone ancestor.
