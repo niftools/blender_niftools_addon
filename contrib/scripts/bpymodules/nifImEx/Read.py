@@ -837,6 +837,10 @@ def fb_texture(niSourceTexture):
             # go searching for it
             textureFile = None
             searchPathList = [_CONFIG["NIF_IMPORT_PATH"], _CONFIG["BASE_TEXTURE_FOLDER"]] + _CONFIG["TEXTURE_SEARCH_PATH"]
+            # if it looks like a Morrowind style path, use common sense to guess texture path
+            meshes_index = _CONFIG["NIF_IMPORT_PATH"].find("meshes")
+            if meshes_index != -1:
+                searchPathList.append(_CONFIG["NIF_IMPORT_PATH"][:meshes_index] + 'textures')
             for texdir in searchPathList:
                 texdir.replace( '\\', Blender.sys.sep )
                 texdir.replace( '/', Blender.sys.sep )
