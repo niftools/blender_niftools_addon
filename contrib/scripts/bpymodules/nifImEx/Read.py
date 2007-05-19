@@ -57,10 +57,6 @@ _BONES = {}
 # B' = X * B, where B' is the Blender bone matrix, and B is the NIF bone matrix
 _BONES_EXTRA_MATRIX = {}
 
-# dictionary of bone offset matrices. Some NIF files store the file in a posed state,
-# the bind offset matrix is the offset from the posed state to the bind position
-_BIND_OFFSETS = {}
-
 # dictionary of bones that belong to a certain armature
 # maps NIF armature name to list of NIF bone name
 _ARMATURES = {}
@@ -249,7 +245,7 @@ def import_nif(filename):
         f = open(filename, "rb")
         version, user_version = NifFormat.getVersion(f)
         if version >= 0:
-                print "(version 0x%08X)"%version
+                msg("Nif file version: 0x%08X" % (version), 2)
                 Blender.Window.DrawProgressBar(0.33, "Reading file")
                 root_blocks = NifFormat.read(version, user_version, f, verbose = 0)
                 Blender.Window.DrawProgressBar(0.66, "Importing data")
@@ -297,10 +293,10 @@ def import_main(root_block):
     merge_armatures()
     
     if _VERBOSE and _MSG_LEVEL >= 4:
-        for arm_name in _ARMATURES.keys():
-            print "armature '%s':"%arm_name
-            for bone_name in _ARMATURES[arm_name]:
-                print "  bone '%s'"%bone_name
+        for arm in _ARMATURES.keys():
+            print "armature '%s':" % (arm.name)
+            for bone in _ARMATURES[arm]:
+                print "  bone '%s'" % (bone.name)
                 
     # read the NIF tree
     if not is_armature_root(root_block):
@@ -477,20 +473,17 @@ def fb_global_matrix(niBlock):
 def fb_bind_matrix(niBlock):
     """Retrieves a node's bind position matrix"""
     # I need this hack to trap a few errors
-    b_matrix = fb_matrix(niBlock)
-    if niBlock in _BIND_OFFSETS:
-        return b_matrix * _BIND_OFFSETS[niBlock]
-    return b_matrix
+    try:
+        return niBlock._bindMatrix
+    except AttributeError:
+        return fb_matrix(niBlock)
 
 # Retrieves a block's global bind position matrix
 def fb_global_bind_matrix(niBlock):
     """Retrieves a node's global bind position matrix"""
-    b_matrix = fb_global_matrix(niBlock)
-    if niBlock in _BIND_OFFSETS:
-        return b_matrix * _BIND_OFFSETS[niBlock]
-    return b_matrix
-
-
+    if niBlock._parent:
+        return fb_bind_matrix(niBlock) * fb_global_bind_matrix(niBlock._parent) # yay, recursion
+    return fb_bind_matrix(niBlock)
 
 # Decompose Blender transform matrix as a scale, rotation matrix, and translation vector
 def decompose_srt(m):
@@ -609,7 +602,7 @@ def fb_armature(niBlock):
         # SC' = SX * SC / SX = SC
         # RC' = RX * RC * inverse(RX)
         # TC' = (TX * SC * RC + TC - TX) * inverse(RX) / SX
-        extra_matrix_scale, extra_matrix_rot, extra_matrix_trans = decompose_srt(_BONES_EXTRA_MATRIX[bone_name])
+        extra_matrix_scale, extra_matrix_rot, extra_matrix_trans = decompose_srt(_BONES_EXTRA_MATRIX[niBone])
         extra_matrix_quat = extra_matrix_rot.toQuat()
         extra_matrix_rot_inv = Matrix(extra_matrix_rot)
         extra_matrix_rot_inv.invert()
@@ -806,7 +799,7 @@ def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
         new_bone_matrix[3][0] = b_bone_head_x
         new_bone_matrix[3][1] = b_bone_head_y
         new_bone_matrix[3][2] = b_bone_head_z
-        _BONES_EXTRA_MATRIX[bone_name] = new_bone_matrix * old_bone_matrix_inv # new * inverse(old)
+        _BONES_EXTRA_MATRIX[niBlock] = new_bone_matrix * old_bone_matrix_inv # new * inverse(old)
         # set bone children
         for niBone in niChildBones:
             b_child_bone =  fb_bone(niBone, b_armature, b_armatureData, armature_matrix_inverse)
@@ -1061,7 +1054,7 @@ def fb_mesh(niBlock):
         b_mesh.setDrawType(4) # not hidden: shaded
 
     # Mesh transform matrix, sets the transform matrix for the object.
-    b_mesh.setMatrix(fb_matrix(niBlock))
+    b_mesh.setMatrix(fb_bind_matrix(niBlock))
     
     # Mesh geometry data. From this I can retrieve all geometry info
     niData = niBlock.data
@@ -1395,18 +1388,17 @@ def fb_bonemat():
     Since the text buffer is cleared on each import only the last import will be exported
     correctly
     """
-    global _BONES_EXTRA_MATRIX
     try:
         bonetxt = [txt for txt in Blender.Text.Get() if txt.getName() == "BoneExMat"][0]
         bonetxt.clear()
     except:
         bonetxt = Blender.Text.New("BoneExMat")
-    for b in _BONES_EXTRA_MATRIX.keys():
+    for niBone in _BONES_EXTRA_MATRIX.keys():
         ln=''
-        for row in _BONES_EXTRA_MATRIX[b]:
+        for row in _BONES_EXTRA_MATRIX[niBone]:
             ln='%s;%s,%s,%s,%s' % (ln, row[0],row[1],row[2],row[3])
         # print '%s/%s/%s\n' % (a, b, ln[1:])
-        bonetxt.write('%s/%s\n' % (b, ln[1:]))
+        bonetxt.write('%s/%s\n' % (niBone.name, ln[1:]))
     
 
 def fb_fullnames():
@@ -1478,7 +1470,7 @@ def set_parents(niBlock):
 # mark armatures and bones by peeking into NiSkinInstance blocks
 # also stores the bind position matrix for correct import of skinning info
 def mark_armatures_bones(niBlock):
-    global _ARMATURES, _BIND_OFFSETS
+    global _ARMATURES 
     # search for all NiTriShape or NiTriStrips blocks...
     if isinstance(niBlock, NifFormat.NiTriBasedGeom):
         # yes, we found one, get its skin instance
@@ -1486,7 +1478,8 @@ def mark_armatures_bones(niBlock):
         if skininst:
             msg("Skin instance found on block '%s'" % niBlock.name,3)
             
-            # applies scaling corrections. I have to do it here because skin instances
+            
+            # retrieves scaling corrections. I have to do it here because skin instances
             # are not affected by the scale_tree function. Might be fixed later
             scale = _CONFIG["IMPORT_SCALE_CORRECTION"]
             
@@ -1502,7 +1495,7 @@ def mark_armatures_bones(niBlock):
             t = skinInstData.translation
             
 
-            bindOffset = Matrix(
+            bindMatrix = Matrix(
                 [r.m11, r.m12, r.m13, 0.0],\
                 [r.m21, r.m22, r.m23, 0.0],\
                 [r.m31, r.m32, r.m33, 0.0],\
@@ -1510,8 +1503,8 @@ def mark_armatures_bones(niBlock):
             
             # only non-identity matrices are stored in the bind offset list
             # sets the bind offset for the affected skin
-            if (bindOffset != _IDENTITY44):
-                _BIND_OFFSETS[niBlock] = bindOffset
+            if (bindMatrix != _IDENTITY44):
+                niBlock._bindMatrix = bindMatrix
                 
             if not _ARMATURES.has_key(skelroot):
                 _ARMATURES[skelroot] = []
@@ -1524,15 +1517,15 @@ def mark_armatures_bones(niBlock):
                     r = skinData.rotation
                     s = skinData.scale
                     t = skinData.translation
-                    bindOffset = Matrix(
+                    bindMatrix = Matrix(
                         [r.m11, r.m12, r.m13, 0.0],\
                         [r.m21, r.m22, r.m23, 0.0],\
                         [r.m31, r.m32, r.m33, 0.0],\
-                        [t.x*scale, t.y*scale, t.z*scale, 1.0])
+                        [t.x*s*scale, t.y*s*scale, t.z*s*scale, 1.0])
                     # only non-identity matrices are stored in the bind offset list
                     # sets the bind offset for the affected skin
-                    if (bindOffset != _IDENTITY44):
-                        _BIND_OFFSETS[bone] = bindOffset
+                    if (bindMatrix != _IDENTITY44):
+                        bone._bindMatrix = bindMatrix
                     _ARMATURES[skelroot].append(bone)
                     msg("'%s' is a bone of armature '%s'" % (bone.name, skelroot.name), 3)
                 # now we "attach" the bone to the armature:
@@ -1640,7 +1633,6 @@ def import_kfm(filename):
 
 # Loads basic animation info for this object
 def set_animation(niBlock, b_obj):
-    global _SCENE, SCALE_CORRECTION, SCALE_MATRIX
     progress = 0.1
     kfc = find_controller(niBlock, NifFormat.NiKeyframeController)
     if kfc:
@@ -1710,46 +1702,10 @@ def set_animation(niBlock, b_obj):
             b_obj.insertIpoKey(Blender.Object.LOC)
             
         Blender.Set('curframe', 1)
-        """
-            rot_keys = ikfd.GetRotateKeys()
-            if rot_keys:
-                RotX = b_ipo.addCurve("RotX")
-                RotY = b_ipo.addCurve("RotY")
-                RotZ = b_ipo.addCurve("RotZ")
-                for rot_key in rot_keys:
-                    time = 1.0+(rot_key.time * _FPS)
-                    rot = Blender.Mathutils.Quaternion(rot_key.data.w, rot_key.data.x, rot_key.data.y, rot_key.data.z).toEuler()
-                    RotX.addBezier((time, rot.x * _R2D))
-                    RotY.addBezier((time, rot.y * _R2D))
-                    RotZ.addBezier((time, rot.z * _R2D))
-            loc_keys = ikfd.GetTranslateKeys()
-            if loc_keys:
-                LocX = b_ipo.addCurve("LocX")
-                LocY = b_ipo.addCurve("LocY")
-                LocZ = b_ipo.addCurve("LocZ")
-                for loc_key in loc_keys:
-                    time = 1.0+(loc_key.time * _FPS)
-                    LocX.addBezier((time, loc_key.data.x))
-                    LocY.addBezier((time, loc_key.data.y))
-                    LocZ.addBezier((time, loc_key.data.z))
-            size_keys = ikfd.GetScaleKeys()
-            if size_keys:
-                SizeX = b_ipo.addCurve("SizeX")
-                SizeY = b_ipo.addCurve("SizeY")
-                SizeZ = b_ipo.addCurve("SizeZ")
-                for size_key in size_keys:
-                    time = 1.0+(size_key.time * _FPS)
-                    size = size_key.data
-                    SizeX.addBezier((time, size))
-                    SizeY.addBezier((time, size))
-                    SizeZ.addBezier((time, size))
-        """
-
 
 
 # Scale NIF file.
 def scale_tree(niBlock, scale):
-    global _EPSILON
     # scale only works for nodes, and there's no point in scaling if the scale is 1/1
     if abs(1.0 - scale) > _EPSILON:
         # is it a node?
