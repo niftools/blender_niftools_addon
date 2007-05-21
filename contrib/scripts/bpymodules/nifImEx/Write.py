@@ -51,8 +51,8 @@ APPLY_SCALE = True
 FORCE_DDS = False
 STRIP_TEXPATH = False
 EXPORT_DIR = ''
-NIF_VERSION_STR = '20.0.0.5'
-NIF_VERSION = 0x14000005
+NIF_VERSION_STR = '4.0.0.2'
+NIF_VERSION = 0x04000002
 ADD_BONE_NUB = False
 
 
@@ -179,7 +179,7 @@ def exitGUI():
 #
 # A simple custom exception class.
 #
-class NIFExportError(Exception):
+class NIFExportError(StandardError):
     def __init__(self, value):
         self.value = value
     def __str__(self):
@@ -291,16 +291,15 @@ and turn off envelopes."""%ob.getName()
         # get the root object from selected object
         if (Blender.Object.GetSelected() == None):
             raise NIFExportError("Please select the object(s) that you wish to export, and run this script again.")
-        root_objects = []
+        root_objects = set()
         # different handling of selection to allow for careless usage
-        # for root_object in Blender.Object.GetSelected():
         export_types = ('Empty','Mesh','Armature')
         for root_object in [ob for ob in Blender.Object.GetSelected() if ob.getType() in export_types]:
             while (root_object.getParent() != None):
                 root_object = root_object.getParent()
             if root_object.getType() not in export_types:
                 raise NIFExportError("Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."%root_object.getName())
-            if (root_objects.count(root_object) == 0): root_objects.append(root_object)
+            root_objects.add(root_object)
 
         ## TODO use Blender actions for animation groups
         # check for animation groups definition in a text buffer called 'Anim'
@@ -463,7 +462,7 @@ def export_node(ob, space, parent_block, node_name):
         ob_type = None
     else:
         ob_type = ob.getType()
-        assert((ob_type == 'Empty') or (ob_type == 'Mesh') or (ob_type == 'Armature')) # debug
+        assert(ob_type in ['Empty', 'Mesh', 'Armature']) # debug
         assert(parent_block) # debug
         ob_ipo = ob.getIpo() # get animation data
         ob_children = [child for child in Blender.Object.Get() if child.parent == ob]
@@ -502,7 +501,7 @@ def export_node(ob, space, parent_block, node_name):
 
     # make it child of its parent in the nif, if it has one
     if (parent_block):
-        parent_block["Children"].AddLink(node)
+        parent_block.addChild(node)
     
     # and fill in this node's non-trivial values
     node.name = get_full_name(node_name)
@@ -1704,8 +1703,8 @@ def export_bones(arm, parent_block):
         bones_node[bone.name] = node # doing this now makes linkage very easy in second run
 
         # add the node and the keyframe for this bone
-        node["Name"] = get_full_name(bone.name)
-        node["Flags"] = 0x0002 # ? this seems pretty standard for bones
+        node.name = get_full_name(bone.name)
+        node.flags = 0x0002 # ? this seems pretty standard for bones
         export_matrix(bone, 'localspace', node) # rest pose
         
         # bone rotations are stored in the IPO relative to the rest position
