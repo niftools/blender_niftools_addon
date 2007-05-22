@@ -1,6 +1,8 @@
 import Blender, Config
 from Blender import Draw, BGL, sys
 
+import tempfile
+
 #try:
 #    import psyco
 #    psyco.full()
@@ -289,10 +291,10 @@ and turn off envelopes."""%ob.getName()
         root_name, fileext = Blender.sys.splitext(Blender.sys.basename(filename))
         
         # get the root object from selected object
+        # only export empties, meshes, and armatures
         if (Blender.Object.GetSelected() == None):
             raise NIFExportError("Please select the object(s) that you wish to export, and run this script again.")
         root_objects = set()
-        # different handling of selection to allow for careless usage
         export_types = ('Empty','Mesh','Armature')
         for root_object in [ob for ob in Blender.Object.GetSelected() if ob.getType() in export_types]:
             while (root_object.getParent() != None):
@@ -415,23 +417,17 @@ and turn off envelopes."""%ob.getName()
         f = open(filename, "rb")
         try:
             NifFormat.read(NIF_VERSION, NIF_USER_VERSION, f)
+            f_tmp = tempfile.TemporaryFile()
+            try:
+                NifFormat.write(NIF_VERSION, NIF_USER_VERSION, f_tmp, [root_block])
+                f.seek(2,0)
+                f_tmp.seek(2,0)
+                if f.tell() != f_tmp.tell(): # comparing the files will usually be different because blocks may have been written back in a different order, so cheaply just compare file sizes
+                    raise NifExportError('write check failed: file sizes differ')
+            finally:
+                f_tmp.close()
         finally:
             f.close()
-        f = open(filename[:-4] + "_test.nif", "wb")
-        try:
-            NifFormat.write(NIF_VERSION, NIF_USER_VERSION, f, [root_block])
-        finally:
-            f.close()
-        f1 = open(filename, "rb")
-        f2 = open(filename[:-4] + "_test.nif", "rb")
-        try:
-            f1.seek(2,0)
-            f2.seek(2,0)
-            if f1.tell() != f2.tell(): # comparing the files will usually be different because blocks may have been written back in a different order, so cheaply just compare file sizes
-                raise NifExportError('write check failed: file sizes differ')
-        finally:
-            f1.close()
-            f2.close()
     except:
         Blender.Draw.PupMenu("WARNING%t|Exported NIF file may not be valid: double check failed! This is probably due to an unknown bug in the exporter code.")
         raise # re-raise the exception
@@ -440,7 +436,7 @@ and turn off envelopes."""%ob.getName()
 
 
 # 
-# Export a mesh/empty object ob as child of parent_block.
+# Export a mesh/armature/empty object ob as child of parent_block.
 # Export also all children of ob.
 #
 # - space is 'none', 'worldspace', or 'localspace', and determines
@@ -451,16 +447,18 @@ and turn off envelopes."""%ob.getName()
 #
 def export_node(ob, space, parent_block, node_name):
     if _VERBOSE: print "Exporting NiNode %s"%node_name
-    ipo = None
 
-    # determine the block type, and append a new node to the nif block list
+    # ob_type: determine the block type (None, 'Mesh', 'Empty' or 'Armature')
+    # ob_ipo:  object animation ipo
+    # node:    contains new NifFormat.NiNode instance
     if (ob == None):
         # -> root node
-        assert(space == 'none')
         assert(parent_block == None) # debug
         node = create_block("NiNode")
         ob_type = None
+        ob_ipo = None
     else:
+        # -> empty, mesh, or armature
         ob_type = ob.getType()
         assert(ob_type in ['Empty', 'Mesh', 'Armature']) # debug
         assert(parent_block) # debug
@@ -555,7 +553,7 @@ def export_node(ob, space, parent_block, node_name):
 #
 # bind_mat is the original Blender bind matrix (the B' matrix below)
 # extra_mat_inv is the inverse matrix which transforms the Blender bone matrix
-# to the NIF bone matrx (the inverse of the X matrix below)
+# to the NIF bone matrix (the inverse of the X matrix below)
 #
 # Explanation of extra transformations:
 # Final transformation matrix is vec * Rchannel * Tchannel * Rbind * Tbind
