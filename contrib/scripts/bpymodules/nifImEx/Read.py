@@ -127,12 +127,12 @@ def gui():
     #Draw.Image(logoImg, 50, H-100, 1.0, 1.0, 1.0, 0)
     # Draw.String(name, event, x, y, width, height, initial, length, tooltip=None)
     nifFilePath = sys.sep.join((_CONFIG["NIF_IMPORT_PATH"], _CONFIG["NIF_IMPORT_FILE"]))
-    guiText("NIF file path", 500, H-250)
-    E["NIF_FILE_PATH"]       = Draw.String("",             addEvent("NIF_FILE_PATH"),  50, H-150, 390, 20, nifFilePath, 350, '')
-    E["BROWSE_FILE_PATH"]    = Draw.PushButton('...',      addEvent("BROWSE_FILE_PATH"), 440, H-150, 30, 20, 'browse')
-    E["ADVANCED"]            = Draw.PushButton('advanced', addEvent("ADVANCED"), 410, H-225, 100, 20)
-    E["CANCEL"]              = Draw.PushButton('cancel',   addEvent("CANCEL"), 160, H-225, 100, 20)
-    E["IMPORT"]              = Draw.PushButton('import',   addEvent("IMPORT"),  50, H-225, 100, 20)
+    E["TXT_NIF_FILE_PATH"]  = guiText("NIF file path", 500, H-250)
+    E["NIF_FILE_PATH"]      = Draw.String("",             addEvent("NIF_FILE_PATH"),  50, H-150, 390, 20, nifFilePath, 350, '')
+    E["BROWSE_FILE_PATH"]   = Draw.PushButton('...',      addEvent("BROWSE_FILE_PATH"), 440, H-150, 30, 20, 'browse')
+    E["ADVANCED"]           = Draw.PushButton('advanced', addEvent("ADVANCED"), 410, H-225, 100, 20)
+    E["CANCEL"]             = Draw.PushButton('cancel',   addEvent("CANCEL"), 160, H-225, 100, 20)
+    E["IMPORT"]             = Draw.PushButton('import',   addEvent("IMPORT"),  50, H-225, 100, 20)
     _GUI_ELEMENTS = E
     Draw.Redraw(1)
 
@@ -276,10 +276,10 @@ def import_main(root_block):
     _READ_PROGRESS = 0.0
     _BLOCKS_READ = 0.0
     # preprocessing:
-    
+
     # scale tree
-    scale_tree(root_block, _CONFIG['IMPORT_SCALE_CORRECTION'])
-    
+    root_block.applyScale(_CONFIG['IMPORT_SCALE_CORRECTION'])
+
     # sets the root block parent to None, so that when crawling back the script won't barf
     root_block._parent = None
     
@@ -290,7 +290,8 @@ def import_main(root_block):
     mark_armatures_bones(root_block)
     
     # and merge armatures that are bones of others armatures
-    merge_armatures()
+    # *** DISABLED *** only single skeleton root supported
+    #merge_armatures()
     
     if _VERBOSE and _MSG_LEVEL >= 4:
         for arm in _ARMATURES.keys():
@@ -390,9 +391,9 @@ def read_armature_branch(b_armature, niArmature, niBlock):
                     if b_mesh:
                         # correct the transform
                         # it's parented to the armature!
-                        armature_matrix_inverse = fb_global_bind_matrix(niArmature)
+                        armature_matrix_inverse = fb_global_matrix(niArmature)
                         armature_matrix_inverse.invert()
-                        b_mesh.setMatrix(fb_global_bind_matrix(child) * armature_matrix_inverse)
+                        b_mesh.setMatrix(fb_global_matrix(child) * armature_matrix_inverse)
                         # add a vertex group if it's parented to a bone
                         par_bone = get_closest_bone(child)
                         if par_bone:
@@ -452,14 +453,7 @@ def fb_name(niBlock, max_length=22):
 # Retrieves a niBlock's transform matrix as a Mathutil.Matrix
 def fb_matrix(niBlock):
     """Retrieves a niBlock's transform matrix as a Mathutil.Matrix"""
-    r = niBlock.rotation # 3*3 matrix 
-    t = niBlock.translation # translation, vector3
-    v = niBlock.velocity # ??? velocity, vector3, pretty much always 0, 0, 0
-    b_matrix = Matrix(  [r.m11, r.m12, r.m13, v.x],\
-                        [r.m21, r.m22, r.m23, v.y],\
-                        [r.m31, r.m32, r.m33, v.z],\
-                        [  t.x,   t.y,   t.z, 1.0])
-    return b_matrix
+    return Matrix(*niBlock.getTransform().asList())
 
 # Retrieves a block's global transform matrix
 def fb_global_matrix(niBlock):
@@ -470,20 +464,23 @@ def fb_global_matrix(niBlock):
     return b_matrix
 
 # Retrieves a node's bind position matrix
-def fb_bind_matrix(niBlock):
-    """Retrieves a node's bind position matrix"""
-    # I need this hack to trap a few errors
-    try:
-        return niBlock._bindMatrix
-    except AttributeError:
-        return fb_matrix(niBlock)
+# *** DISABLED *** doesn't do what it should do...
+##def fb_bind_matrix(niBlock):
+##    """Retrieves a node's bind position matrix relative to the armature."""
+##    # I need this hack to trap a few errors
+##    try:
+##        return niBlock._bindMatrix
+##    except AttributeError:
+##        return fb_matrix(niBlock)
+
 
 # Retrieves a block's global bind position matrix
-def fb_global_bind_matrix(niBlock):
-    """Retrieves a node's global bind position matrix"""
-    if niBlock._parent:
-        return fb_bind_matrix(niBlock) * fb_global_bind_matrix(niBlock._parent) # yay, recursion
-    return fb_bind_matrix(niBlock)
+# *** DISABLED *** doesn't do what it should do...
+##def fb_global_bind_matrix(niBlock):
+##    """Retrieves a node's global bind position matrix"""
+##    if niBlock._parent:
+##        return fb_bind_matrix(niBlock) * fb_global_bind_matrix(niBlock._parent) # yay, recursion
+##    return fb_bind_matrix(niBlock)
 
 # Decompose Blender transform matrix as a scale, rotation matrix, and translation vector
 def decompose_srt(m):
@@ -524,7 +521,7 @@ def fb_empty(niBlock):
 def fb_armature(niBlock):
     global _SCENE
     armature_name = fb_name(niBlock,22)
-    armature_matrix_inverse = fb_global_bind_matrix(niBlock)
+    armature_matrix_inverse = fb_global_matrix(niBlock)
     armature_matrix_inverse.invert()
     b_armature = Blender.Object.New('Armature', armature_name)
     b_armatureData = Blender.Armature.Armature()
@@ -550,6 +547,9 @@ def fb_armature(niBlock):
 
     # The armature has been created in editmode,
     # now we are ready to set the bone keyframes.
+
+    # *** DISABLED *** until everything else works :-)
+    return b_armature
 
     # create an action
     action = Blender.Armature.NLA.NewAction()
@@ -609,9 +609,9 @@ def fb_armature(niBlock):
         extra_matrix_quat_inv = extra_matrix_rot_inv.toQuat()
         # now import everything
         # ##############################
-        #print "disabled armature animation for debug"
-        #kfc = False
-        kfc = find_controller(niBone, NifFormat.NiKeyframeController)
+        print "disabled armature animation for debug"
+        kfc = False
+        #kfc = find_controller(niBone, NifFormat.NiKeyframeController)
         if kfc:
             # get keyframe data
             kfd = kfc.data
@@ -720,6 +720,7 @@ def fb_armature(niBlock):
 
 # Adds a bone to the armature in edit mode.
 def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
+    # check if it is used at all
     global _BONES, _BONES_EXTRA_MATRIX, _BONE_CORRECTION_MATRICES, _CONFIG
     bone_name = fb_name(niBlock, 32)
     niChildren = niBlock.children
@@ -729,20 +730,23 @@ def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
         # create bones here...
         b_bone = Blender.Armature.Editbone()
         # head: get position from niBlock
-        armature_space_matrix = fb_global_bind_matrix(niBlock) * armature_matrix_inverse
+        #armature_space_matrix = fb_global_bind_matrix(niBlock) * armature_matrix_inverse
+        armature_space_matrix = getattr(niBlock, '_bindMatrix', fb_global_matrix(niBlock) * armature_matrix_inverse)
         b_bone_head_x = armature_space_matrix[3][0]
         b_bone_head_y = armature_space_matrix[3][1]
         b_bone_head_z = armature_space_matrix[3][2]
         # tail: average of children location
-        if len(niChildNodes) > 0:
-            child_matrices = [(fb_global_bind_matrix(child) * armature_matrix_inverse) for child in niChildNodes]
+        if len(niChildBones) > 0:
+            #child_matrices = [(fb_global_matrix(child) * armature_matrix_inverse) for child in niChildBones]
+            child_matrices = [getattr(child, '_bindMatrix', fb_global_matrix(child) * armature_matrix_inverse) for child in niChildBones]
             b_bone_tail_x = sum([child_matrix[3][0] for child_matrix in child_matrices]) / len(child_matrices)
             b_bone_tail_y = sum([child_matrix[3][1] for child_matrix in child_matrices]) / len(child_matrices)
             b_bone_tail_z = sum([child_matrix[3][2] for child_matrix in child_matrices]) / len(child_matrices)
         else:
             # no children... continue bone sequence in the same direction as parent, with the same length
             # this seems to work fine
-            parent_matrix = fb_global_bind_matrix(niBlock._parent) * armature_matrix_inverse
+            #parent_matrix = fb_global_bind_matrix(niBlock._parent) * armature_matrix_inverse
+            parent_matrix = niBlock._parent._bindMatrix
             b_parent_head_x = parent_matrix[3][0]
             b_parent_head_y = parent_matrix[3][1]
             b_parent_head_z = parent_matrix[3][2]
@@ -765,6 +769,8 @@ def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
             # sets the bone heads & tails
             b_bone.head = Vector(b_bone_head_x, b_bone_head_y, b_bone_head_z)
             b_bone.tail = Vector(b_bone_tail_x, b_bone_tail_y, b_bone_tail_z)
+            b_bone.matrix = armature_space_matrix.rotationPart()
+            
             # here we explicitly try to set the matrix from the NIF matrix; this has the following consequences:
             # - head is preserved
             # - bone length is preserved
@@ -1054,7 +1060,7 @@ def fb_mesh(niBlock):
         b_mesh.setDrawType(4) # not hidden: shaded
 
     # Mesh transform matrix, sets the transform matrix for the object.
-    b_mesh.setMatrix(fb_bind_matrix(niBlock))
+    b_mesh.setMatrix(fb_matrix(niBlock))
     
     # Mesh geometry data. From this I can retrieve all geometry info
     niData = niBlock.data
@@ -1474,71 +1480,56 @@ def mark_armatures_bones(niBlock):
     # search for all NiTriShape or NiTriStrips blocks...
     if isinstance(niBlock, NifFormat.NiTriBasedGeom):
         # yes, we found one, get its skin instance
-        skininst = niBlock.skinInstance
-        if skininst:
-            msg("Skin instance found on block '%s'" % niBlock.name,3)
-            
-            
-            # retrieves scaling corrections. I have to do it here because skin instances
-            # are not affected by the scale_tree function. Might be fixed later
-            scale = _CONFIG["IMPORT_SCALE_CORRECTION"]
-            
+        if niBlock.isSkin():
+            msg("skin found on block '%s'" % niBlock.name,3)
+
             # it has a skin instance, so get the skeleton root
             # which is an armature only if it's not a skinning influence
             # so mark the node to be imported as an armature
-            skelroot = skininst.skeletonRoot
-            
-            # stores the bind offset matrices for later use
-            skinInstData = skininst.data
-            r = skinInstData.rotation
-            s = skinInstData.scale
-            t = skinInstData.translation
-            
-
-            bindMatrix = Matrix(
-                [r.m11, r.m12, r.m13, 0.0],\
-                [r.m21, r.m22, r.m23, 0.0],\
-                [r.m31, r.m32, r.m33, 0.0],\
-                [t.x*scale, t.y*scale, t.z*scale, 1.0])
-            
-            # only non-identity matrices are stored in the bind offset list
-            # sets the bind offset for the affected skin
-            if (bindMatrix != _IDENTITY44):
-                niBlock._bindMatrix = bindMatrix
-                
+            skelroot = niBlock.skinInstance.skeletonRoot
             if not _ARMATURES.has_key(skelroot):
+                if _ARMATURES.keys():
+                    raise NIFImportError('models with multiple skeleton roots not yet supported')
                 _ARMATURES[skelroot] = []
                 msg("'%s' is an armature" % skelroot.name,3)
-                
-            for i, bone in enumerate(skininst.bones):
+            
+            # stores the mesh bind position for later use
+            # note that this matrix is relative to the skeleton root
+            geomBindMatrix = Matrix(*niBlock.getGeometryRestPosition().asList())
+            niBlock._bindMatrix = geomBindMatrix
+            geomBindMatrixInverse = Matrix(geomBindMatrix)
+            geomBindMatrixInverse.invert()
+            for boneBlock, boneRestPos in niBlock.getBoneRestPositions().items():
+                boneBindMatrix =  Matrix(*boneRestPos.asList()) * geomBindMatrixInverse
                 # add them, if we haven't already
-                if not bone in _ARMATURES[skelroot]:
-                    skinData = skinInstData.boneList[i]
-                    r = skinData.rotation
-                    s = skinData.scale
-                    t = skinData.translation
-                    bindMatrix = Matrix(
-                        [r.m11, r.m12, r.m13, 0.0],\
-                        [r.m21, r.m22, r.m23, 0.0],\
-                        [r.m31, r.m32, r.m33, 0.0],\
-                        [t.x*s*scale, t.y*s*scale, t.z*s*scale, 1.0])
-                    # only non-identity matrices are stored in the bind offset list
-                    # sets the bind offset for the affected skin
-                    if (bindMatrix != _IDENTITY44):
-                        bone._bindMatrix = bindMatrix
-                    _ARMATURES[skelroot].append(bone)
-                    msg("'%s' is a bone of armature '%s'" % (bone.name, skelroot.name), 3)
+                if not boneBlock in _ARMATURES[skelroot]:
+                    # sets the rest position for the affected skin
+                    boneBlock._bindMatrix = boneBindMatrix
+                    _ARMATURES[skelroot].append(boneBlock)
+                    msg("'%s' is a bone of armature '%s'" % (boneBlock.name, skelroot.name), 3)
+                else:
+                    # ensure that rest position is unique
+                    # ... hmmm Blender docs say matrix comparison works
+                    # but apparently it doesn't so commented out for now ...
+                    #if Matrix(*boneRestPos.asList()) != boneBlock._bindMatrix:
+                    tmp = 0.0
+                    for v in boneBindMatrix - boneBlock._bindMatrix:
+                        tmp += v.length
+                    if tmp > _EPSILON:
+                        print 'warning for bone', boneBlock.name
+                        print Matrix(*boneRestPos.asList())
+                        print boneBlock._bindMatrix
+                        print 'multiple geometries influenced by the same bone with different rest poses'
                 # now we "attach" the bone to the armature:
                 # we make sure all NiNodes from this bone all the way
                 # down to the armature NiNode are marked as bones
-                complete_bone_tree(bone, skelroot)
+                # *** DISABLED ***
+                #complete_bone_tree(bone, skelroot)
     # nope, it's not a NiTriShape or NiTriStrips
-    # so if it's a NiNode
-    elif isinstance(niBlock, NifFormat.NiNode):
-        children = niBlock.children
-        if children: # empty tuple is false
-            for child in children:
-                mark_armatures_bones(child)
+    # so continue down the tree
+    else:
+        for child in niBlock.getRefs():
+            mark_armatures_bones(child)
 
 
 
@@ -1546,6 +1537,9 @@ def mark_armatures_bones(niBlock):
 # all the way down to the armature node
 # just call it on all bones of a skin instance
 def complete_bone_tree(bone, skelroot):
+    # *** DISABLED ***
+    return
+
     global _ARMATURES
     # we must already have marked this one as a bone
     assert _ARMATURES.has_key(skelroot) # debug
@@ -1568,6 +1562,9 @@ def complete_bone_tree(bone, skelroot):
 
 # merge armatures that are bones of other armatures
 def merge_armatures():
+    # *** DISABLED ***
+    return
+
     global _ARMATURES
     for arm, bones in _ARMATURES.items():
         for arm2, bones2 in _ARMATURES.items():
@@ -1633,6 +1630,9 @@ def import_kfm(filename):
 
 # Loads basic animation info for this object
 def set_animation(niBlock, b_obj):
+    # *** DISABLED ***
+    return
+
     progress = 0.1
     kfc = find_controller(niBlock, NifFormat.NiKeyframeController)
     if kfc:
@@ -1702,60 +1702,3 @@ def set_animation(niBlock, b_obj):
             b_obj.insertIpoKey(Blender.Object.LOC)
             
         Blender.Set('curframe', 1)
-
-
-# Scale NIF file.
-def scale_tree(niBlock, scale):
-    # scale only works for nodes, and there's no point in scaling if the scale is 1/1
-    if abs(1.0 - scale) > _EPSILON:
-        # is it a node?
-        # data should be scaled here as well, but isn't necessarily linked in the tree, so I scale it as I find it
-        if isinstance(niBlock, NifFormat.NiAVObject):
-            niBlock.translation.x *= scale
-            niBlock.translation.y *= scale
-            niBlock.translation.z *= scale
-            # Controller data block scale
-            ctrl = niBlock.controller
-            while ctrl:
-                if isinstance(ctrl, NifFormat.NiKeyframeController):
-                    kfd = ctrl.data
-                    assert(kfd)
-                    # just to make sure, NiNode/NiTriShape controllers should have keyframe data
-                    assert(isinstance(kfd, NifFormat.NiKeyframeData))
-                    translations = kfd.translations
-                    if translations:
-                        for key in translations.keys:
-                            key.value.x *= scale
-                            key.value.y *= scale
-                            key.value.z *= scale
-                elif isinstance(ctrl, NifFormat.NiGeomMorpherController):
-                    gmd = ctrl.data
-                    assert(gmd)
-                    assert(isinstance(gmd, NifFormat.NiMorphData))
-                    for morph in gmd.morphs:
-                        vects = morph.vectors
-                        for v in range( len( vects ) ):
-                            vects[v].x *= scale
-                            vects[v].y *= scale
-                            vects[v].z *= scale
-                ctrl = ctrl.nextController
-            # Child block scale
-            if isinstance(niBlock, NifFormat.NiNode):
-                children = niBlock.children
-                if children: # block has children
-                    for child in children:
-                        scale_tree(child, scale)
-            else:
-                blockData = niBlock.data
-                if blockData: # block has data
-                    scale_tree(blockData, scale) # scale the data
-        
-        if isinstance(niBlock, NifFormat.NiTriBasedGeom): # is it a shape?
-            # Scale all vertices
-            shapedata = niBlock.data
-            vertlist = shapedata.vertices
-            if vertlist:
-                for vert in vertlist:
-                    vert.x *= scale
-                    vert.y *= scale
-                    vert.z *= scale
