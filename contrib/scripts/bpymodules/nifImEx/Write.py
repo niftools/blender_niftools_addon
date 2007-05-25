@@ -1226,21 +1226,6 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
 
         export_matrix(ob, space, trishape)
         
-        # set trishape bind position, in armature space (this should work)
-        if ob != None and ob.getParent() and ob.getParent().getType() == 'Armature':
-            if ob.getIpo():
-                raise NIFExportError('%s: animated meshes parented to armatures are unsupported, animate the armature instead'%ob.getName())
-            arm_mat_inv = Blender.Mathutils.Matrix(ob.getParent().getMatrix('worldspace'))
-            arm_mat_inv.invert()
-            bbind_mat = ob.getMatrix('worldspace') * arm_mat_inv # if ob has no ipo, then this is effectively relative to the rest matrix
-            bind_mat = Matrix44(
-                bbind_mat[0][0], bbind_mat[0][1], bbind_mat[0][2], bbind_mat[0][3],
-                bbind_mat[1][0], bbind_mat[1][1], bbind_mat[1][2], bbind_mat[1][3],
-                bbind_mat[2][0], bbind_mat[2][1], bbind_mat[2][2], bbind_mat[2][3],
-                bbind_mat[3][0], bbind_mat[3][1], bbind_mat[3][2], bbind_mat[3][3])
-            inode = QueryNode(trishape)
-            inode.SetWorldBindPos(bind_mat)
-
         if (mesh_base_tex != None or mesh_glow_tex != None):
             # add NiTriShape's texturing property
             tritexprop = create_block("NiTexturingProperty")
@@ -1511,14 +1496,15 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
         if boneinfluences: # yes we have skinning!
             # create new skinning instance block and link it
             skininst = create_block("NiSkinInstance")
-            trishape["Skin Instance"] = skininst
-            # skininst["Skeleton Root"] = automatically calculated
-            # skininst["Bones"] = automatically calculated
+            trishape.skinInstance = skininst
+            skininst.skeletonRoot = None # TODO armature node
+            skininst.numBones = 0 # TODO get them from the armature
+            skininst.bones.updateSize()
+            # TODO set the bones
 
             # create skinning data and link it
             skindata = create_block("NiSkinData")
-            skininst["Data"] = skindata
-            iskindata = QuerySkinData(skindata)
+            skininst.data = skindata
 
             # add vertex weights
             # first find weights and normalization factors
@@ -1709,26 +1695,14 @@ def export_bones(arm, parent_block):
         # so we must take the rest position into account
         bonerestmat = get_bone_restmatrix(bone, 'BONESPACE', extra = False) # we need the original one, without extra transforms
         try:
-            bonexmat_inv = _BONES_EXTRA_MATRIX_INV[bone.name]
+            #bonexmat_inv = _BONES_EXTRA_MATRIX_INV[bone.name]
+            raise KeyError # (TODO: check maths with brandano)
         except KeyError:
             bonexmat_inv = Blender.Mathutils.Matrix()
             bonexmat_inv.identity()
         if bones_ipo.has_key(bone.name):
             export_keyframe(bones_ipo[bone.name], 'localspace', node, bind_mat = bonerestmat, extra_mat_inv = bonexmat_inv)
 
-        # Set the bind pose relative to the armature coordinate
-        # system; this should work, if we do the same for the trishape
-        # children. We should bind to the rest position; this is also the
-        # position in which the mesh vertices are exported.
-        bbind_mat = get_bone_restmatrix(bone, 'ARMATURESPACE')
-        bind_mat = Matrix44(
-            bbind_mat[0][0], bbind_mat[0][1], bbind_mat[0][2], bbind_mat[0][3],
-            bbind_mat[1][0], bbind_mat[1][1], bbind_mat[1][2], bbind_mat[1][3],
-            bbind_mat[2][0], bbind_mat[2][1], bbind_mat[2][2], bbind_mat[2][3],
-            bbind_mat[3][0], bbind_mat[3][1], bbind_mat[3][2], bbind_mat[3][3])
-        inode = QueryNode(node)
-        inode.SetWorldBindPos(bind_mat)
-    
     # now fix the linkage between the blocks
     for bone in bones.values():
         # link the bone's children to the bone
@@ -1736,9 +1710,9 @@ def export_bones(arm, parent_block):
             if _VERBOSE: print "Linking children of bone %s"%bone.name
             for child in bone.children:
                 if child.parent.name == bone.name: # bone.children returns also grandchildren etc... we only want immediate children of course
-                    bones_node[bone.name]["Children"].AddLink(bones_node[child.name])
+                    bones_node[bone.name].addChild(bones_node[child.name])
         else:
-            if ADD_BONE_NUB:
+            if False: # *** disabled for now *** #if ADD_BONE_NUB:
                 # no children: export dummy NiNode to preserve tail position
                 if _VERBOSE: print "Bone %s has no children: adding dummy child for tail."%bone.name
                 mat = get_bone_restmatrix(bone, 'ARMATURESPACE')
@@ -1761,7 +1735,7 @@ def export_bones(arm, parent_block):
                 bones_node[bone.name]["Children"].AddLink(dummy)
         # if it is a root bone, link it to the armature
         if not bone.parent:
-            parent_block["Children"].AddLink(bones_node[bone.name])
+            parent_block.addChild(bones_node[bone.name])
 
     # that's it!!!
 
