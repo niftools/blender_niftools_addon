@@ -589,11 +589,11 @@ def export_node(ob, space, parent_block, node_name):
 # 1 / SX = scale part of inverse(X)
 # so having inverse(X) around saves on calculations
 def export_keyframe(ipo, space, parent_block, bind_mat = None, extra_mat_inv = None):
-    if _VERBOSE: print "Exporting keyframe %s"%parent_block["Name"].asString()
+    if _VERBOSE: print "Exporting keyframe %s"%parent_block.name
     # -> get keyframe information
     
     assert(space == 'localspace') # we don't support anything else (yet)
-    assert(parent_block.GetBlockType() == "NiNode") # make sure the parent is of the right type
+    assert(isinstance(parent_block, NifFormat.NiNode)) # make sure the parent is of the right type
     
     # some calculations
     if bind_mat:
@@ -689,57 +689,50 @@ def export_keyframe(ipo, space, parent_block, bind_mat = None, extra_mat_inv = N
     add_controller(parent_block, kfc)
 
     # fill in the non-trivial values
-    kfc["Flags"] = 0x0008
-    kfc["Frequency"] = 1.0
-    kfc["Phase"] = 0.0
-    kfc["Start Time"] = (fstart - 1) * fspeed
-    kfc["Stop Time"] = (fend - fstart) * fspeed
+    kfc.flags = 0x0008
+    kfc.frequency = 1.0
+    kfc.phase = 0.0
+    kfc.startTime = (fstart - 1) * fspeed
+    kfc.stopTime = (fend - fstart) * fspeed
 
     # add the keyframe data
     kfd = create_block("NiKeyframeData")
-    kfc["Data"] = kfd
+    kfc.data = kfd
 
-    ikfd = QueryKeyframeData(kfd)
-    ikfd.SetRotateType(LINEAR_KEY)
     frames = rot_curve.keys()
     frames.sort()
-    rot_keys = []
-    for frame in frames:
-        ftime = (frame - 1) * fspeed
-        rot_frame = Key_Quaternion()
-        rot_frame.time = ftime
-        rot_frame.data.w = rot_curve[frame].w
-        rot_frame.data.x = rot_curve[frame].x
-        rot_frame.data.y = rot_curve[frame].y
-        rot_frame.data.z = rot_curve[frame].z
-        rot_keys.append(rot_frame)
-    ikfd.SetRotateKeys(rot_keys)
+    kfd.rotationType = NifFormat.KeyType.LINEAR_KEY
+    kfd.numRotationKeys = len(frames)
+    kfd.quaternionKeys.updateSize()
+    for i, frame in enumerate(frames):
+        rot_frame = kfd.quaternionKeys[i]
+        rot_frame.time = (frame - 1) * fspeed
+        rot_frame.value.w = rot_curve[frame].w
+        rot_frame.value.x = rot_curve[frame].x
+        rot_frame.value.y = rot_curve[frame].y
+        rot_frame.value.z = rot_curve[frame].z
 
-    ikfd.SetTranslateType(LINEAR_KEY)
     frames = trans_curve.keys()
     frames.sort()
-    trans_keys = []
-    for frame in frames:
-        ftime = (frame - 1) * fspeed
-        trans_frame = Key_Vector3()
-        trans_frame.time = ftime
-        trans_frame.data.x = trans_curve[frame][0]
-        trans_frame.data.y = trans_curve[frame][1]
-        trans_frame.data.z = trans_curve[frame][2]
-        trans_keys.append(trans_frame)
-    ikfd.SetTranslateKeys(trans_keys)
+    kfd.translations.interpolation = NifFormat.KeyType.LINEAR_KEY
+    kfd.translations.numKeys = len(frames)
+    kfd.translations.keys.updateSize()
+    for i, frame in enumerate(frames):
+        trans_frame = kfd.translations.keys[i]
+        trans_frame.time = (frame - 1) * fspeed
+        trans_frame.value.x = trans_curve[frame][0]
+        trans_frame.value.y = trans_curve[frame][1]
+        trans_frame.value.z = trans_curve[frame][2]
 
-    ikfd.SetScaleType(LINEAR_KEY)
     frames = scale_curve.keys()
     frames.sort()
-    scale_keys = []
+    kfd.scales.interpolation = NifFormat.KeyType.LINEAR_KEY
+    kfd.scales.numKeys = len(frames)
+    kfd.scales.keys.updateSize()
     for frame in frames:
-        ftime = (frame - 1) * fspeed
-        scale_frame = Key_float()
-        scale_frame.time = ftime
-        scale_frame.data = scale_curve[frame]
-        scale_keys.append(scale_frame)
-    ikfd.SetScaleKeys(scale_keys)
+        scale_frame = kfd.scales.keys[i]
+        scale_frame.time = (frame - 1) * fspeed
+        scale_frame.value = scale_curve[frame]
 
 
 
@@ -807,14 +800,12 @@ def export_animgroups(animtxt, block_parent):
     add_extra_data(block_parent, textextra)
     
     # create a NiTextKey for each frame descriptor
-    keys = []
+    textextra.numTextKeys = len(flist)
+    textextra.textKeys.updateSize()
     for i in range(len(flist)):
-        key = Key_string()
-        key.time = fspeed * (flist[i]-1);
-        key.data = dlist[i];
-        keys.append(key)
-    itextextra = QueryTextKeyExtraData(textextra)
-    itextextra.SetKeys(keys)
+        key = textextra.textKeys[i]
+        key.time = fspeed * (flist[i]-1)
+        #key.value = dlist[i] # TODO fix
 
 
 
@@ -1497,14 +1488,23 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
             # create new skinning instance block and link it
             skininst = create_block("NiSkinInstance")
             trishape.skinInstance = skininst
-            skininst.skeletonRoot = None # TODO armature node
-            skininst.numBones = 0 # TODO get them from the armature
+            for block in _NIF_BLOCKS:
+                if isinstance(block, NifFormat.NiNode):
+                    if block.name == armaturename:
+                        skininst.skeletonRoot = block
+                        break
+            else:
+                raise NIFExportError("Skeleton root '%s' not found."%armaturename)
+            skininst.numBones = len(boneinfluences)
             skininst.bones.updateSize()
-            # TODO set the bones
 
             # create skinning data and link it
             skindata = create_block("NiSkinData")
             skininst.data = skindata
+
+            skindata.numBones = len(boneinfluences)
+            skindata.boneList.updateSize()
+            skindata.hasVertexWeights = True
 
             # add vertex weights
             # first find weights and normalization factors
@@ -1522,12 +1522,13 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
             # then we get the vertex weights
             # and then we add it to the NiSkinData
             vert_added = [False] * len(vertlist) # allocate memory for faster performance
-            for bone in boneinfluences:
+            for bone_index, bone in enumerate(boneinfluences):
                 # find bone in exported blocks
                 for block in _NIF_BLOCKS:
-                    if block.GetBlockType() == "NiNode":
-                        if block["Name"].asString() == bone:
+                    if isinstance(block, NifFormat.NiNode):
+                        if block.name == bone:
                             bone_block = block
+                            skininst.bones[bone_index] = bone_block
                             break
                 else:
                     raise NIFExportError("Bone '%s' not found."%bone)
@@ -1547,7 +1548,12 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                             vert_added[vert_index] = True
                 # add bone as influence, but only if there were actually any vertices influenced by the bone
                 if vert_weights:
-                    iskindata.AddBone(bone_block, vert_weights)
+                    skinbonedata = skindata.boneList[bone_index]
+                    skinbonedata.numVertices = len(vert_weights)
+                    skinbonedata.vertexWeights.updateSize()
+                    for i, (vert_index, vert_weight) in enumerate(vert_weights.iteritems()):
+                        skinbonedata.vertexWeights[i].index = vert_index
+                        skinbonedata.vertexWeights[i].weight = vert_weight
 
             # each vertex must have been assigned to at least one vertex group
             # or the model doesn't display correctly in the TESCS
@@ -1560,14 +1566,19 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                 # find armature block
                 for block in _NIF_BLOCKS:
                     if block.GetBlockType() == "NiNode":
-                        if block["Name"].asString() == armaturename:
+                        if block.name == armaturename:
                             arm_block = block
                             break
                 else:
                     raise NIFExportError("Armature '%s' not found."%armaturename)
                 # add vertex weights, if there are any
                 if vert_weights:
-                    iskindata.AddBone(arm_block, vert_weights)
+                    skinbonedata = skindata.boneList[arm_block]
+                    skinbonedata.numVertices = len(vert_weights)
+                    skinbonedata.vertexWeights.updateSize()
+                    for i, (vert_index, vert_weight) in enumerate(vert_weights.iteritems()):
+                        skinbonedata.vertexWeights[i].index = vert_index
+                        skinbonedata.vertexWeights[i].weight = vert_weight
 
             # clean up
             del vert_weights
@@ -1988,13 +1999,13 @@ def get_distance(v, w):
 # Helper function to add a controller to a controllable block.
 #
 def add_controller(block, ctrl):
-    if block["Controller"].asLink().is_null():
-        block["Controller"] = ctrl
+    if block.controller == None:
+        block.controller = ctrl
     else:
-        lastctrl = block["Controller"].asLink()
-        while not lastctrl["Next Controller"].asLink().is_null():
-            lastctrl = lastctrl["Next Controller"].asLink()
-        lastctrl["Next Controller"] = ctrl
+        lastctrl = block.controller
+        while lastctrl.nextController != None:
+            lastctrl = lastctrl.nextController
+        lastctrl.nextController = ctrl
 
 
 
@@ -2004,16 +2015,16 @@ def add_controller(block, ctrl):
 def add_extra_data(block, xtra):
     if NIF_VERSION < 0x0A000100:
         # the extra data chain paradigm
-        if block["Extra Data"].asLink().is_null():
-            block["Extra Data"] = xtra
+        if not block.extraData:
+            block.extraData = xtra
         else:
-            lastxtra = block["Extra Data"].asLink()
-            while not lastxtra["Extra Data"].asLink().is_null():
-                lastxtra = lastxtra["Extra Data"].asLink()
-            lastxtra["Extra Data"] = xtra
+            lastxtra = block.extraData
+            while lastxtra.extraData:
+                lastxtra = lastxtra.extraData
+            lastxtra.extraData = xtra
     else:
         # the extra data list paradigm
-        block["Extra Data List"].AddLink(xtra)
+        block.extraDataList.addLink(xtra) # TODO: add function in NifFormat lib
 
 
 
