@@ -1076,14 +1076,12 @@ def fb_mesh(niBlock):
         tris = niData.triangles
     elif isinstance(niData, NifFormat.NiTriStripsData):
         msg("---loading tristrips",3)
-        stripPoints = niData.points
-        for strip in stripPoints:
-            for vert in xrange(2, len(strip)):
-                tri = NifFormat.Triangle()
-                tri.v1 = strip[vert-2]
-                tri.v2 = strip[vert-1]
-                tri.v3 = strip[vert]
-                tris.append(tri)
+        for face in niData.getTriangles():
+            tri = NifFormat.Triangle()
+            tri.v1 = face[0]
+            tri.v2 = face[1]
+            tri.v3 = face[2]
+            tris.append(tri)
     
     # "Sticky" UV coordinates. these are transformed in Blender UV's
     # only the first UV set is loaded right now
