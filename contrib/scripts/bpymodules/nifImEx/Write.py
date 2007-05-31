@@ -57,8 +57,8 @@ NIF_VERSION_STR = '4.0.0.2'
 NIF_VERSION = 0x04000002
 ADD_BONE_NUB = False
 
-
-
+_IDENTITY44 = NifFormat.Matrix44()
+_IDENTITY44.setIdentity()
 
 # All UI elements are kept in this dictionary to make sure they never go out of scope
 _GUI_ELEMENTS = {}
@@ -805,7 +805,7 @@ def export_animgroups(animtxt, block_parent):
     for i in range(len(flist)):
         key = textextra.textKeys[i]
         key.time = fspeed * (flist[i]-1)
-        #key.value = dlist[i] # TODO fix
+        key.value = dlist[i]
 
 
 
@@ -1477,8 +1477,10 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
         bonenames = []
         if ob.getParent():
             if ob.getParent().getType() == 'Armature':
-                armaturename = ob.getParent().getName()
-                bonenames = ob.getParent().getData().bones.keys()
+                ob_armature = ob.getParent()
+                armaturename = ob_armature.getName()
+                bonenames = ob_armature.getData().bones.keys()
+        boneobjects = ob_armature.getData().bones
         # the vertgroups that correspond to bonenames are bones that influence the mesh
         boneinfluences = []
         for bone in bonenames:
@@ -1505,6 +1507,8 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
             skindata.numBones = len(boneinfluences)
             skindata.boneList.updateSize()
             skindata.hasVertexWeights = True
+            # fix geometry rest pose: transform relative to skeleton root
+            skindata.setTransform(get_object_matrix(ob, 'localspace').getInverse())
 
             # add vertex weights
             # first find weights and normalization factors
@@ -1549,6 +1553,9 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                 # add bone as influence, but only if there were actually any vertices influenced by the bone
                 if vert_weights:
                     skinbonedata = skindata.boneList[bone_index]
+                    # set rest pose
+                    skinbonedata.setTransform(bmatrix_to_matrix(get_bone_restmatrix(boneobjects[bone], 'ARMATURESPACE')).getInverse())
+                    # set vertex weights
                     skinbonedata.numVertices = len(vert_weights)
                     skinbonedata.vertexWeights.updateSize()
                     for i, (vert_index, vert_weight) in enumerate(vert_weights.iteritems()):
@@ -1560,25 +1567,25 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
             # here we cover that case: we attach them to the armature
             vert_weights = {}
             for vert_index, added in enumerate(vert_added):
-                if added == False:
+                if not added:
                     vert_weights[vert_index] = 1.0
             if vert_weights:
-                # find armature block
-                for block in _NIF_BLOCKS:
-                    if block.GetBlockType() == "NiNode":
-                        if block.name == armaturename:
-                            arm_block = block
-                            break
-                else:
-                    raise NIFExportError("Armature '%s' not found."%armaturename)
-                # add vertex weights, if there are any
-                if vert_weights:
-                    skinbonedata = skindata.boneList[arm_block]
-                    skinbonedata.numVertices = len(vert_weights)
-                    skinbonedata.vertexWeights.updateSize()
-                    for i, (vert_index, vert_weight) in enumerate(vert_weights.iteritems()):
-                        skinbonedata.vertexWeights[i].index = vert_index
-                        skinbonedata.vertexWeights[i].weight = vert_weight
+                # add armature as bone (TODO add bone functions to NifFormat)
+                bone_index = len(boneinfluences)
+                skininst.numBones = bone_index+1
+                skininst.bones.updateSize()
+                skininst.bones[bone_index] = skininst.skeletonRoot
+                skindata.numBones = bone_index+1
+                skindata.boneList.updateSize()
+                skinbonedata = skindata.boneList[bone_index]
+                # set rest pose
+                skinbonedata.setTransform(_IDENTITY44)
+                # set vertex weights
+                skinbonedata.numVertices = len(vert_weights)
+                skinbonedata.vertexWeights.updateSize()
+                for i, (vert_index, vert_weight) in enumerate(vert_weights.iteritems()):
+                    skinbonedata.vertexWeights[i].index = vert_index
+                    skinbonedata.vertexWeights[i].weight = vert_weight
 
             # clean up
             del vert_weights
@@ -1844,7 +1851,7 @@ def export_children(ob, parent_block):
 
 
 #
-# Set a NiNode's transform matrix to an object's
+# Set a block's transform matrix to an object's
 # transformation matrix (rest pose)
 #
 def export_matrix(ob, space, block):
@@ -1870,6 +1877,61 @@ def export_matrix(ob, space, block):
     block.scale = bs
 
     return bs, br, bt
+
+#
+# Get an object's matrix
+#
+def get_object_matrix(ob, space):
+    bs, br, bt = get_object_srt(ob, space)
+    m = NifFormat.Matrix44()
+    
+    m.m41 = bt[0]
+    m.m42 = bt[1]
+    m.m43 = bt[2]
+
+    m.m11 = br[0][0]*bs
+    m.m12 = br[0][1]*bs
+    m.m13 = br[0][2]*bs
+    m.m21 = br[1][0]*bs
+    m.m22 = br[1][1]*bs
+    m.m23 = br[1][2]*bs
+    m.m31 = br[2][0]*bs
+    m.m32 = br[2][1]*bs
+    m.m33 = br[2][2]*bs
+
+    m.m14 = 0.0
+    m.m24 = 0.0
+    m.m34 = 0.0
+    m.m44 = 1.0
+    
+    return m
+
+#
+# Convert blender matrix to NifFormat.Matrix44
+#
+def bmatrix_to_matrix(bm):
+    m = NifFormat.Matrix44()
+    
+    m.m41 = bm[3][0]
+    m.m42 = bm[3][1]
+    m.m43 = bm[3][2]
+
+    m.m11 = bm[0][0]*bm[3][3]
+    m.m12 = bm[0][1]*bm[3][3]
+    m.m13 = bm[0][2]*bm[3][3]
+    m.m21 = bm[1][0]*bm[3][3]
+    m.m22 = bm[1][1]*bm[3][3]
+    m.m23 = bm[1][2]*bm[3][3]
+    m.m31 = bm[2][0]*bm[3][3]
+    m.m32 = bm[2][1]*bm[3][3]
+    m.m33 = bm[2][2]*bm[3][3]
+
+    m.m14 = 0.0
+    m.m24 = 0.0
+    m.m34 = 0.0
+    m.m44 = 1.0
+    
+    return m
 
 # 
 # Find scale, rotation, and translation components of an object in
@@ -2040,134 +2102,3 @@ def create_block(blocktype):
         raise NIFExportError("'%s': Unknown block type (this is probably a bug).")
     _NIF_BLOCKS.append(block)
     return block
-
-
-
-# 
-# Scale NIF file data.
-# 
-def scale_tree(block, scale):
-    # TODO: check if we can do this directly using a niflib function
-    global _EPSILON
-    # scale only works for nodes, and there's no point in scaling if the scale is 1/1
-    if abs(1.0 - scale) > _EPSILON and isinstance(block, NifFormat.NiObjectNET): # is it a node?
-        # NiNode transform scale
-        t = block.GetLocalTranslation()
-        t.x *= scale
-        t.y *= scale
-        t.z *= scale
-        block.SetLocalTranslation(t)
-
-        # NiNode bind position transform scale
-        #TODO: find out what happend with GetWorldBindBos()
-        #mat = block.GetWorldBindPos()
-        #mat[3][0] *= scale
-        #mat[3][1] *= scale
-        #mat[3][2] *= scale
-        #block.SetWorldBindPos(mat)
-        
-        # Controller data block scale
-        if False: #for ctrl in block.GetControllers():
-            # TODO convert to NifFormat
-            if ctrl.IsSameType(NiKeyframeControllerTypeConst()):
-                kfd = ctrl.GetData()
-                assert(not kfd.is_null())
-                assert(kfd.GetBlockType() == "NiKeyframeData") # just to make sure, NiNode/NiTriShape controllers should have keyframe data
-                ikfd = QueryKeyframeData(kfd)
-                trans_keys = ikfd.GetTranslateKeys()
-                if trans_keys:
-                    for key in trans_keys:
-                        key.data.x *= scale
-                        key.data.y *= scale
-                        key.data.z *= scale
-                    ikfd.SetTranslateKeys(trans_keys)
-            elif ctrl.GetBlockType() == "NiGeomMorpherController":
-                gmd = ctrl["Data"].asLink()
-                assert(not gmd.is_null())
-                assert(gmd.GetBlockType() == "NiMorphData")
-                igmd = QueryMorphData(gmd)
-                for key in range( igmd.GetMorphCount() ):
-                    verts = igmd.GetMorphVerts( key )
-                    for v in range( len( verts ) ):
-                        verts[v].x *= scale
-                        verts[v].y *= scale
-                        verts[v].z *= scale
-                    igmd.SetMorphVerts( key, verts )
-            ctrl = ctrl["Next Controller"].asLink()
-        # Child block scale
-        # TODO: make GetChildren return vector<> ; cannot iterate over empty tuple
-        if False: #for child in block.GetChildren():
-            scale_tree(child, scale)
-        # TODO: figure this out in the new scheme
-        #elif block["Data"].is_null(): # block has data
-        #    scale_tree(block["Data"].asLink(), scale) # scale the data
-
-    if isinstance(block, NifFormat.NiGeometry): # is it a shape?
-        # Scale all vertices
-        geomdata = block.GetData()
-        vertlist = geomdata.GetVertices()
-        if vertlist:
-            for vert in vertlist:
-                vert.x *= scale
-                vert.y *= scale
-                vert.z *= scale
-            geomdata.SetVertices(vertlist)
-
-
-
-# reset scale on all NiNodes in the tree to 1.0
-def apply_scale_tree(block):
-    return # TODO: fix this later
-    if isinstance(block, NifFormat.NiObjectNET): # make sure it is a node
-        scale = block.GetScale()
-        if abs(scale - 1.0) > _EPSILON:
-            # NiNode local transform scale.
-            block.SetScale(1.0)
-
-            # NiNode bind position transform scale
-            scale_worldbindpos(block, 1.0 / scale)
-        
-            # apply the scale on the children
-            if not block["Children"].is_null(): # block has children
-                for child in block["Children"].asLinkList():
-                    scale_tree(child, scale)
-
-    # reset scale on the children
-    if not block["Children"].is_null(): # block has children
-        for child in block["Children"].asLinkList():
-            apply_scale_tree(child)
-
-
-# This function changes the bind position scale of a single NiNode.
-# Used as a helper function for apply_scale.
-# Should be called right after you change the "Scale" attribute
-# of a NiNode to fix the bind position. We need to do this recursively
-# because the bind position is stored in world coordinates.
-def scale_worldbindpos(block, scale, trans = False):
-    inode = QueryNode(block)
-    if inode: # make sure it is a node
-        # NiNode bind position transform scale
-        mat = inode.GetWorldBindPos()
-        mat[0][0] *= scale
-        mat[0][1] *= scale
-        mat[0][2] *= scale
-        mat[1][0] *= scale
-        mat[1][1] *= scale
-        mat[1][2] *= scale
-        mat[2][0] *= scale
-        mat[2][1] *= scale
-        mat[2][2] *= scale
-        if trans:
-            mat[3][0] *= scale
-            mat[3][1] *= scale
-            mat[3][2] *= scale
-        inode.SetWorldBindPos(mat)
-        
-        # do the child nodes as well
-        if not block["Children"].is_null(): # block has children
-            for child in block["Children"].asLinkList():
-                scale_worldbindpos(child, scale, trans = True) # also scale translation
-
-
-
-
