@@ -1480,112 +1480,112 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                 ob_armature = ob.getParent()
                 armaturename = ob_armature.getName()
                 bonenames = ob_armature.getData().bones.keys()
-        boneobjects = ob_armature.getData().bones
-        # the vertgroups that correspond to bonenames are bones that influence the mesh
-        boneinfluences = []
-        for bone in bonenames:
-            if bone in vertgroups:
-                boneinfluences.append(bone)
-        if boneinfluences: # yes we have skinning!
-            # create new skinning instance block and link it
-            skininst = create_block("NiSkinInstance")
-            trishape.skinInstance = skininst
-            for block in _NIF_BLOCKS:
-                if isinstance(block, NifFormat.NiNode):
-                    if block.name == armaturename:
-                        skininst.skeletonRoot = block
-                        break
-            else:
-                raise NIFExportError("Skeleton root '%s' not found."%armaturename)
-            skininst.numBones = len(boneinfluences)
-            skininst.bones.updateSize()
-
-            # create skinning data and link it
-            skindata = create_block("NiSkinData")
-            skininst.data = skindata
-
-            skindata.numBones = len(boneinfluences)
-            skindata.boneList.updateSize()
-            skindata.hasVertexWeights = True
-            # fix geometry rest pose: transform relative to skeleton root
-            skindata.setTransform(get_object_matrix(ob, 'localspace').getInverse())
-
-            # add vertex weights
-            # first find weights and normalization factors
-            vert_list = {}
-            vert_norm = {}
-            for bone in boneinfluences:
-                vert_list[bone] = ob.data.getVertsFromGroup(bone, 1)
-                for v in vert_list[bone]:
-                    if vert_norm.has_key(v[0]):
-                        vert_norm[v[0]] += v[1]
+                boneobjects = ob_armature.getData().bones
+                # the vertgroups that correspond to bonenames are bones that influence the mesh
+                boneinfluences = []
+                for bone in bonenames:
+                    if bone in vertgroups:
+                        boneinfluences.append(bone)
+                if boneinfluences: # yes we have skinning!
+                    # create new skinning instance block and link it
+                    skininst = create_block("NiSkinInstance")
+                    trishape.skinInstance = skininst
+                    for block in _NIF_BLOCKS:
+                        if isinstance(block, NifFormat.NiNode):
+                            if block.name == armaturename:
+                                skininst.skeletonRoot = block
+                                break
                     else:
-                        vert_norm[v[0]] = v[1]
-            
-            # for each bone, first we get the bone block
-            # then we get the vertex weights
-            # and then we add it to the NiSkinData
-            vert_added = [False] * len(vertlist) # allocate memory for faster performance
-            for bone_index, bone in enumerate(boneinfluences):
-                # find bone in exported blocks
-                for block in _NIF_BLOCKS:
-                    if isinstance(block, NifFormat.NiNode):
-                        if block.name == bone:
-                            bone_block = block
-                            skininst.bones[bone_index] = bone_block
-                            break
-                else:
-                    raise NIFExportError("Bone '%s' not found."%bone)
-                # find vertex weights
-                vert_weights = {}
-                for v in vert_list[bone]:
-                    # v[0] is the original vertex index
-                    # v[1] is the weight
+                        raise NIFExportError("Skeleton root '%s' not found."%armaturename)
+                    skininst.numBones = len(boneinfluences)
+                    skininst.bones.updateSize()
+        
+                    # create skinning data and link it
+                    skindata = create_block("NiSkinData")
+                    skininst.data = skindata
+        
+                    skindata.numBones = len(boneinfluences)
+                    skindata.boneList.updateSize()
+                    skindata.hasVertexWeights = True
+                    # fix geometry rest pose: transform relative to skeleton root
+                    skindata.setTransform(get_object_matrix(ob, 'localspace').getInverse())
+        
+                    # add vertex weights
+                    # first find weights and normalization factors
+                    vert_list = {}
+                    vert_norm = {}
+                    for bone in boneinfluences:
+                        vert_list[bone] = ob.data.getVertsFromGroup(bone, 1)
+                        for v in vert_list[bone]:
+                            if vert_norm.has_key(v[0]):
+                                vert_norm[v[0]] += v[1]
+                            else:
+                                vert_norm[v[0]] = v[1]
                     
-                    # vertmap[v[0]] is the set of vertices (indices) to which v[0] was mapped
-                    # so we simply export the same weight as the original vertex for each new vertex
-
-                    # write the weights
-                    if vertmap[v[0]] and vert_norm[v[0]]: # extra check for multi material meshes
-                        for vert_index in vertmap[v[0]]:
-                            vert_weights[vert_index] = v[1] / vert_norm[v[0]]
-                            vert_added[vert_index] = True
-                # add bone as influence, but only if there were actually any vertices influenced by the bone
-                if vert_weights:
-                    skinbonedata = skindata.boneList[bone_index]
-                    # set rest pose
-                    skinbonedata.setTransform(bmatrix_to_matrix(get_bone_restmatrix(boneobjects[bone], 'ARMATURESPACE')).getInverse())
-                    # set vertex weights
-                    skinbonedata.numVertices = len(vert_weights)
-                    skinbonedata.vertexWeights.updateSize()
-                    for i, (vert_index, vert_weight) in enumerate(vert_weights.iteritems()):
-                        skinbonedata.vertexWeights[i].index = vert_index
-                        skinbonedata.vertexWeights[i].weight = vert_weight
-
-            # each vertex must have been assigned to at least one vertex group
-            # or the model doesn't display correctly in the TESCS
-            # here we cover that case: we attach them to the armature
-            vert_weights = {}
-            for vert_index, added in enumerate(vert_added):
-                if not added:
-                    vert_weights[vert_index] = 1.0
-            if vert_weights:
-                # add armature as bone (TODO add bone functions to NifFormat)
-                bone_index = len(boneinfluences)
-                skininst.numBones = bone_index+1
-                skininst.bones.updateSize()
-                skininst.bones[bone_index] = skininst.skeletonRoot
-                skindata.numBones = bone_index+1
-                skindata.boneList.updateSize()
-                skinbonedata = skindata.boneList[bone_index]
-                # set rest pose
-                skinbonedata.setTransform(_IDENTITY44)
-                # set vertex weights
-                skinbonedata.numVertices = len(vert_weights)
-                skinbonedata.vertexWeights.updateSize()
-                for i, (vert_index, vert_weight) in enumerate(vert_weights.iteritems()):
-                    skinbonedata.vertexWeights[i].index = vert_index
-                    skinbonedata.vertexWeights[i].weight = vert_weight
+                    # for each bone, first we get the bone block
+                    # then we get the vertex weights
+                    # and then we add it to the NiSkinData
+                    vert_added = [False] * len(vertlist) # allocate memory for faster performance
+                    for bone_index, bone in enumerate(boneinfluences):
+                        # find bone in exported blocks
+                        for block in _NIF_BLOCKS:
+                            if isinstance(block, NifFormat.NiNode):
+                                if block.name == bone:
+                                    bone_block = block
+                                    skininst.bones[bone_index] = bone_block
+                                    break
+                        else:
+                            raise NIFExportError("Bone '%s' not found."%bone)
+                        # find vertex weights
+                        vert_weights = {}
+                        for v in vert_list[bone]:
+                            # v[0] is the original vertex index
+                            # v[1] is the weight
+                            
+                            # vertmap[v[0]] is the set of vertices (indices) to which v[0] was mapped
+                            # so we simply export the same weight as the original vertex for each new vertex
+        
+                            # write the weights
+                            if vertmap[v[0]] and vert_norm[v[0]]: # extra check for multi material meshes
+                                for vert_index in vertmap[v[0]]:
+                                    vert_weights[vert_index] = v[1] / vert_norm[v[0]]
+                                    vert_added[vert_index] = True
+                        # add bone as influence, but only if there were actually any vertices influenced by the bone
+                        if vert_weights:
+                            skinbonedata = skindata.boneList[bone_index]
+                            # set rest pose
+                            skinbonedata.setTransform(bmatrix_to_matrix(get_bone_restmatrix(boneobjects[bone], 'ARMATURESPACE')).getInverse())
+                            # set vertex weights
+                            skinbonedata.numVertices = len(vert_weights)
+                            skinbonedata.vertexWeights.updateSize()
+                            for i, (vert_index, vert_weight) in enumerate(vert_weights.iteritems()):
+                                skinbonedata.vertexWeights[i].index = vert_index
+                                skinbonedata.vertexWeights[i].weight = vert_weight
+        
+                    # each vertex must have been assigned to at least one vertex group
+                    # or the model doesn't display correctly in the TESCS
+                    # here we cover that case: we attach them to the armature
+                    vert_weights = {}
+                    for vert_index, added in enumerate(vert_added):
+                        if not added:
+                            vert_weights[vert_index] = 1.0
+                    if vert_weights:
+                        # add armature as bone (TODO add bone functions to NifFormat)
+                        bone_index = len(boneinfluences)
+                        skininst.numBones = bone_index+1
+                        skininst.bones.updateSize()
+                        skininst.bones[bone_index] = skininst.skeletonRoot
+                        skindata.numBones = bone_index+1
+                        skindata.boneList.updateSize()
+                        skinbonedata = skindata.boneList[bone_index]
+                        # set rest pose
+                        skinbonedata.setTransform(_IDENTITY44)
+                        # set vertex weights
+                        skinbonedata.numVertices = len(vert_weights)
+                        skinbonedata.vertexWeights.updateSize()
+                        for i, (vert_index, vert_weight) in enumerate(vert_weights.iteritems()):
+                            skinbonedata.vertexWeights[i].index = vert_index
+                            skinbonedata.vertexWeights[i].weight = vert_weight
 
             # clean up
             del vert_weights
