@@ -46,11 +46,11 @@ _TEXTURES = {}
 # dictionary of materials, to reuse materials
 _MATERIALS = {}
 
-# dictionary of names, to map NIF names to correct Blender names
+# dictionary of names, to map NIF blocks to correct Blender names
 _NAMES = {}
 
-# dictionary of bones, maps Blender bone name to NIF block
-_BONES = {}
+# dictionary of bones, maps Blender name to NIF block
+_BLOCKS = {}
 
 # dictionary of bones, maps Blender bone name to matrix that maps the
 # NIF bone matrix on the Blender bone matrix
@@ -381,19 +381,21 @@ def read_armature_branch(b_armature, niArmature, niBlock):
         # is it an AParentNode?
         # mesh?
         if isinstance(niBlock, NifFormat.NiTriBasedGeom):
-            msg("building mesh in read_armature_branch",3)
+            msg("building mesh %s in read_armature_branch" % (niBlock.name),3)
             return fb_mesh(niBlock)
         else:
             children = niBlock.children
             if children:
+                # I need this to work out the transform in armaturespace
+                armature_matrix_inverse = fb_global_matrix(niArmature)
+                armature_matrix_inverse.invert()
                 for child in children:
                     b_mesh = read_armature_branch(b_armature, niArmature, child)
                     if b_mesh:
                         # correct the transform
                         # it's parented to the armature!
-                        armature_matrix_inverse = fb_global_matrix(niArmature)
-                        armature_matrix_inverse.invert()
                         b_mesh.setMatrix(fb_global_matrix(child) * armature_matrix_inverse)
+                        #b_mesh.setMatrix(child._bindMatrix)
                         # add a vertex group if it's parented to a bone
                         par_bone = get_closest_bone(child)
                         if par_bone:
@@ -428,7 +430,7 @@ def fb_name(niBlock, max_length=22):
     maximum for Blender objects, but bone names can reach 32.
     The task of catching errors is left to the user
     """
-    global _NAMES
+    global _NAMES, _BLOCKS
 
     # find unique name for Blender to use
     uniqueInt = 0
@@ -447,6 +449,7 @@ def fb_name(niBlock, max_length=22):
 
     # save mapping
     _NAMES[niBlock] = name
+    _BLOCKS[name] = niBlock
 
     return name
 
@@ -535,8 +538,7 @@ def fb_armature(niBlock):
     #b_armatureData.drawType = Blender.Armature.OCTAHEDRON
     b_armature.link(b_armatureData)
     b_armatureData.makeEditable()
-    niChildren = niBlock.children
-    niChildBones = [child for child in niChildren if is_bone(child)]  
+    niChildBones = [child for child in niBlock.children if is_bone(child)]  
     for niBone in niChildBones:
         # Ok, possibly forwarding the inverse of the armature matrix through all the bone chain is silly,
         # but I believe it saves some processing time compared to making it global or recalculating it all the time.
@@ -580,7 +582,7 @@ def fb_armature(niBlock):
         # Schannel = Stotal / Sbind
         # Rchannel = Rtotal * inverse(Rbind)
         # Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
-        niBone = _BONES[bone_name]
+        niBone = _BLOCKS[bone_name]
         niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = decompose_srt(fb_bind_matrix(niBone))
         niBone_bind_rot_inv = Matrix(niBone_bind_rot)
         niBone_bind_rot_inv.invert()
@@ -721,20 +723,25 @@ def fb_armature(niBlock):
 # Adds a bone to the armature in edit mode.
 def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
     # check if it is used at all
-    global _BONES, _BONES_EXTRA_MATRIX, _BONE_CORRECTION_MATRICES, _CONFIG
+    global _BLOCKS, _BONES_EXTRA_MATRIX, _BONE_CORRECTION_MATRICES, _CONFIG
+    # bone length for nubs and zero length bones
+    nub_length = 5.0
+    # bone name
     bone_name = fb_name(niBlock, 32)
-    niChildren = niBlock.children
-    niChildNodes = [child for child in niChildren if isinstance(child, NifFormat.NiNode)]  
-    niChildBones = [child for child in niChildNodes if is_bone(child)]
+    niChildBones = [child for child in niBlock.children if is_bone(child)]
     if is_bone(niBlock):
         # create bones here...
         b_bone = Blender.Armature.Editbone()
         # head: get position from niBlock
-        #armature_space_matrix = fb_global_bind_matrix(niBlock) * armature_matrix_inverse
+        #armature_space_matrix = fb_global_matrix(niBlock) * armature_matrix_inverse
         armature_space_matrix = getattr(niBlock, '_bindMatrix', fb_global_matrix(niBlock) * armature_matrix_inverse)
         b_bone_head_x = armature_space_matrix[3][0]
         b_bone_head_y = armature_space_matrix[3][1]
         b_bone_head_z = armature_space_matrix[3][2]
+        # temporarily sets the tail for a 0 length bone
+        b_bone_tail_x = b_bone_head_x
+        b_bone_tail_y = b_bone_head_y
+        b_bone_tail_z = b_bone_head_z
         # tail: average of children location
         if len(niChildBones) > 0:
             #child_matrices = [(fb_global_matrix(child) * armature_matrix_inverse) for child in niChildBones]
@@ -743,22 +750,21 @@ def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
             b_bone_tail_y = sum([child_matrix[3][1] for child_matrix in child_matrices]) / len(child_matrices)
             b_bone_tail_z = sum([child_matrix[3][2] for child_matrix in child_matrices]) / len(child_matrices)
         else:
-            # no children... continue bone sequence in the same direction as parent, with the same length
-            # this seems to work fine
-            #parent_matrix = fb_global_bind_matrix(niBlock._parent) * armature_matrix_inverse
-            parent_matrix = niBlock._parent._bindMatrix
+            # no children... continue bone sequence in the same direction as parent, with minimum length
+            # Since we later set the matrix explicitly any axis will do here this seems to work fine
+            #parent_matrix = fb_global_matrix(niBlock._parent) * armature_matrix_inverse
+            parent_correction = find_correction_matrix(niBlock._parent, armature_matrix_inverse).resize4x4()
+            parent_matrix = getattr(niBlock._parent, '_bindMatrix', fb_global_matrix(niBlock._parent) * armature_matrix_inverse) * parent_correction
             b_parent_head_x = parent_matrix[3][0]
             b_parent_head_y = parent_matrix[3][1]
             b_parent_head_z = parent_matrix[3][2]
-            b_bone_tail_x = 2 * b_bone_head_x - b_parent_head_x
-            b_bone_tail_y = 2 * b_bone_head_y - b_parent_head_y
-            b_bone_tail_z = 2 * b_bone_head_z - b_parent_head_z
+            b_bone_tail_x = b_bone_head_x + (nub_length * _CONFIG["IMPORT_SCALE_CORRECTION"])
+            b_bone.matrix = parent_matrix.rotationPart()
         is_zero_length = (int(sum([b_bone_head_x-b_bone_tail_x, b_bone_head_y-b_bone_tail_y, b_bone_head_z-b_bone_tail_z])*200) == 0)
         if is_zero_length:
             # this is a 0 length bone, to avoid it being removed I set a default minimum length
             # Since we later set the matrix explicitly any axis will do here.
-            # TO DO: Compensate for scale
-            b_bone_tail_x = b_bone_head_x + 0.5
+            b_bone_tail_x = b_bone_head_x + (nub_length * _CONFIG["IMPORT_SCALE_CORRECTION"])
             # sets the bone heads & tails
             b_bone.head = Vector(b_bone_head_x, b_bone_head_y, b_bone_head_z)
             b_bone.tail = Vector(b_bone_tail_x, b_bone_tail_y, b_bone_tail_z)
@@ -769,34 +775,13 @@ def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
             # sets the bone heads & tails
             b_bone.head = Vector(b_bone_head_x, b_bone_head_y, b_bone_head_z)
             b_bone.tail = Vector(b_bone_tail_x, b_bone_tail_y, b_bone_tail_z)
-            b_bone.matrix = armature_space_matrix.rotationPart()
+            #b_bone.matrix = armature_space_matrix.rotationPart()
             
-            # here we explicitly try to set the matrix from the NIF matrix; this has the following consequences:
-            # - head is preserved
-            # - bone length is preserved
-            # - tail is lost (up to bone length)
-            (sum_x, sum_y, sum_z, dummy) = fb_matrix(niBlock)[3]
-            if len(niChildNodes) > 0:
-                child_local_matrices = [fb_matrix(child) for child in niChildNodes]
-                sum_x = sum([cm[3][0] for cm in child_local_matrices])
-                sum_y = sum([cm[3][1] for cm in child_local_matrices])
-                sum_z = sum([cm[3][2] for cm in child_local_matrices])
-            listXYZ = [int(c*200) for c in (sum_x, sum_y, sum_z, -sum_x, -sum_y, -sum_z)]
-            idx_correction = listXYZ.index(max(listXYZ))
-            alignment_offset = 0.0
-            if idx_correction == 0 or idx_correction == 3:
-                alignment_offset = float(abs(sum_y) + abs(sum_z)) / abs(sum_x)
-            elif idx_correction == 1 or idx_correction == 4:
-                alignment_offset = float(abs(sum_z) + abs(sum_x)) / abs(sum_y)
-            else:
-                alignment_offset = float(abs(sum_x) + abs(sum_y)) / abs(sum_z)
-            # if alignment is good enough, use the (corrected) NIF matrix
-            if alignment_offset < 0.25:
-                m_correction = _BONE_CORRECTION_MATRICES[idx_correction]
-                b_bone.matrix = m_correction * armature_space_matrix.rotationPart()
+            m_correction = find_correction_matrix(niBlock, armature_matrix_inverse)
+            b_bone.matrix = m_correction.rotationPart() * armature_space_matrix.rotationPart()
+                
         # set bone name and store the niBlock for future reference
         b_armatureData.bones[bone_name] = b_bone
-        _BONES[bone_name] = niBlock
         # calculate bone difference matrix; we will need this when importing animation
         old_bone_matrix_inv = Blender.Mathutils.Matrix(armature_space_matrix)
         old_bone_matrix_inv.invert()
@@ -813,6 +798,34 @@ def fb_bone(niBlock, b_armature, b_armatureData, armature_matrix_inverse):
         return b_bone
     return None
 
+
+def find_correction_matrix(niBlock, armature_matrix_inverse):
+    """
+    Returns the correction matrix for a bone
+    """
+    m_correction = _IDENTITY44.rotationPart()
+    if is_bone(niBlock):
+        armature_space_matrix = getattr(niBlock, '_bindMatrix', fb_global_matrix(niBlock) * armature_matrix_inverse)
+        niChildBones = [child for child in niBlock.children if is_bone(child)]
+        (sum_x, sum_y, sum_z, dummy) = armature_space_matrix[3]
+        if len(niChildBones) > 0:
+            child_local_matrices = [fb_matrix(child) for child in niChildBones]
+            sum_x = sum([cm[3][0] for cm in child_local_matrices])
+            sum_y = sum([cm[3][1] for cm in child_local_matrices])
+            sum_z = sum([cm[3][2] for cm in child_local_matrices])
+        listXYZ = [int(c*200) for c in (sum_x, sum_y, sum_z, -sum_x, -sum_y, -sum_z)]
+        idx_correction = listXYZ.index(max(listXYZ))
+        alignment_offset = 0.0
+        if idx_correction == 0 or idx_correction == 3:
+            alignment_offset = float(abs(sum_y) + abs(sum_z)) / abs(sum_x)
+        elif idx_correction == 1 or idx_correction == 4:
+            alignment_offset = float(abs(sum_z) + abs(sum_x)) / abs(sum_y)
+        else:
+            alignment_offset = float(abs(sum_x) + abs(sum_y)) / abs(sum_z)
+        # if alignment is good enough, use the (corrected) NIF matrix
+        if alignment_offset < 0.25:
+            m_correction = _BONE_CORRECTION_MATRICES[idx_correction]
+    return m_correction
 
 
 def fb_texture(niSourceTexture):
@@ -1060,7 +1073,8 @@ def fb_mesh(niBlock):
         b_mesh.setDrawType(4) # not hidden: shaded
 
     # Mesh transform matrix, sets the transform matrix for the object.
-    b_mesh.setMatrix(fb_matrix(niBlock))
+    meshBindMatrix = getattr(niBlock, '_bindMatrix', fb_matrix(niBlock))
+    b_mesh.setMatrix(meshBindMatrix)
     
     # Mesh geometry data. From this I can retrieve all geometry info
     niData = niBlock.data
@@ -1109,7 +1123,6 @@ def fb_mesh(niBlock):
         # Construct vertex map to get unique vertex / normal pair list.
         # We use a Python dictionary to remove doubles and to keep track of indices.
         # While we are at it, we also add vertices while constructing the map.
-        # Normals are calculated by Blender.
         n_map = {}
         b_v_index = 0
         for i, v in enumerate(verts):
@@ -1480,7 +1493,6 @@ def mark_armatures_bones(niBlock):
         # yes, we found one, get its skin instance
         if niBlock.isSkin():
             msg("skin found on block '%s'" % niBlock.name,3)
-
             # it has a skin instance, so get the skeleton root
             # which is an armature only if it's not a skinning influence
             # so mark the node to be imported as an armature
@@ -1495,14 +1507,17 @@ def mark_armatures_bones(niBlock):
             # note that this matrix is relative to the skeleton root
             geomBindMatrix = Matrix(*niBlock.getGeometryRestPosition().asList())
             niBlock._bindMatrix = geomBindMatrix
-            geomBindMatrixInverse = Matrix(geomBindMatrix)
-            geomBindMatrixInverse.invert()
+            if geomBindMatrix != _IDENTITY44:
+                print 'geometry bind matrix is not identity'
+                print geomBindMatrix
+            #geomBindMatrixInverse = Matrix(geomBindMatrix)
+            #geomBindMatrixInverse.invert()
             for boneBlock, boneRestPos in niBlock.getBoneRestPositions().items():
-                boneBindMatrix =  Matrix(*boneRestPos.asList()) * geomBindMatrixInverse
+                boneBindMatrix =  Matrix(*boneRestPos.asList())
+                # sets the rest position for the affected skin
+                boneBlock._bindMatrix = boneBindMatrix
                 # add them, if we haven't already
                 if not boneBlock in _ARMATURES[skelroot]:
-                    # sets the rest position for the affected skin
-                    boneBlock._bindMatrix = boneBindMatrix
                     _ARMATURES[skelroot].append(boneBlock)
                     msg("'%s' is a bone of armature '%s'" % (boneBlock.name, skelroot.name), 3)
                 else:
@@ -1521,8 +1536,7 @@ def mark_armatures_bones(niBlock):
                 # now we "attach" the bone to the armature:
                 # we make sure all NiNodes from this bone all the way
                 # down to the armature NiNode are marked as bones
-                # *** DISABLED ***
-                #complete_bone_tree(bone, skelroot)
+                complete_bone_tree(boneBlock, skelroot)
     # nope, it's not a NiTriShape or NiTriStrips
     # so continue down the tree
     else:
@@ -1535,9 +1549,6 @@ def mark_armatures_bones(niBlock):
 # all the way down to the armature node
 # just call it on all bones of a skin instance
 def complete_bone_tree(bone, skelroot):
-    # *** DISABLED ***
-    return
-
     global _ARMATURES
     # we must already have marked this one as a bone
     assert _ARMATURES.has_key(skelroot) # debug
@@ -1560,9 +1571,6 @@ def complete_bone_tree(bone, skelroot):
 
 # merge armatures that are bones of other armatures
 def merge_armatures():
-    # *** DISABLED ***
-    return
-
     global _ARMATURES
     for arm, bones in _ARMATURES.items():
         for arm2, bones2 in _ARMATURES.items():
