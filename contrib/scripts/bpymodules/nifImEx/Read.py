@@ -1196,22 +1196,37 @@ def fb_mesh(niBlock):
         for i, f in enumerate(tris):
             if f_map[i] == None: continue
             b_face = b_meshData.faces[f_map[i]]
-            
+            # make sure we get the order right
+            if (v_map[f.v1] == b_face.verts[0].index):
+                v1_index = 0
+                v2_index = 1
+                v3_index = 2
+            elif (v_map[f.v1] == b_face.verts[1].index):
+                v3_index = 0
+                v1_index = 1
+                v2_index = 2
+            elif (v_map[f.v1] == b_face.verts[2].index):
+                v2_index = 0
+                v3_index = 1
+                v1_index = 2
+            else:
+                raise NIFImportError("Invalid face index (BUG?)")
+            # now set the vertex colors
             vc = vcol[f.v1]
-            b_face.col[0].r = int(vc.r * 255)
-            b_face.col[0].g = int(vc.g * 255)
-            b_face.col[0].b = int(vc.b * 255)
-            b_face.col[0].a = int(vc.a * 255)
+            b_face.col[v1_index].r = int(vc.r * 255)
+            b_face.col[v1_index].g = int(vc.g * 255)
+            b_face.col[v1_index].b = int(vc.b * 255)
+            b_face.col[v1_index].a = int(vc.a * 255)
             vc = vcol[f.v2]
-            b_face.col[1].r = int(vc.r * 255)
-            b_face.col[1].g = int(vc.g * 255)
-            b_face.col[1].b = int(vc.b * 255)
-            b_face.col[1].a = int(vc.a * 255)
+            b_face.col[v2_index].r = int(vc.r * 255)
+            b_face.col[v2_index].g = int(vc.g * 255)
+            b_face.col[v2_index].b = int(vc.b * 255)
+            b_face.col[v2_index].a = int(vc.a * 255)
             vc = vcol[f.v3]
-            b_face.col[2].r = int(vc.r * 255)
-            b_face.col[2].g = int(vc.g * 255)
-            b_face.col[2].b = int(vc.b * 255)
-            b_face.col[2].a = int(vc.a * 255)
+            b_face.col[v3_index].r = int(vc.r * 255)
+            b_face.col[v3_index].g = int(vc.g * 255)
+            b_face.col[v3_index].b = int(vc.b * 255)
+            b_face.col[v3_index].a = int(vc.a * 255)
         # vertex colors influence lighting...
         # so now we have to set the VCOL_LIGHT flag on the material
         # see below
@@ -1256,7 +1271,7 @@ def fb_mesh(niBlock):
                     uvlist.append(Vector(uv.u, 1.0 - uv.v))
                 b_meshData.faces[f_map[i]].uv = tuple(uvlist)
             else:
-                raise NIFImportError("Invalid UV index (BUG?)")
+                raise NIFImportError("Invalid face index (BUG?)")
     
     # Sets the material for this mesh. NIF files only support one material for each mesh.
     matProperty = find_property(niBlock, NifFormat.NiMaterialProperty)
