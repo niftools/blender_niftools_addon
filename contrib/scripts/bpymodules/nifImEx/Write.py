@@ -3,12 +3,6 @@ from Blender import Draw, BGL, sys
 
 import tempfile
 
-#try:
-#    import psyco
-#    psyco.full()
-#except:
-#    print 'no psyco for you!'
-
 try:
     from NifFormat.NifFormat import NifFormat
 except:
@@ -53,8 +47,8 @@ APPLY_SCALE = True
 FORCE_DDS = False
 STRIP_TEXPATH = False
 EXPORT_DIR = ''
-NIF_VERSION_STR = '4.0.0.2'
-NIF_VERSION = 0x04000002
+NIF_VERSION_STR = '20.0.0.5'
+NIF_VERSION = 0x14000005
 ADD_BONE_NUB = False
 
 _IDENTITY44 = NifFormat.Matrix44()
@@ -1471,6 +1465,10 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
             v.v1 = trilist[i][0]
             v.v2 = trilist[i][1]
             v.v3 = trilist[i][2]
+
+        # update tangent space
+        if NIF_VERSION >= 0x14000005:
+            trishape.updateTangentSpace()
 
         # now export the vertex weights, if there are any
         vertgroups = ob.data.getVertGroupNames()
