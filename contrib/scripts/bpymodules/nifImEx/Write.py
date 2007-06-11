@@ -1476,8 +1476,9 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
         tridata.setTriangles(trilist, stitchstrips = (NIF_VERSION == 0x14000004))
 
         # update tangent space
-        if NIF_VERSION >= 0x14000005:
-            trishape.updateTangentSpace()
+        if mesh_hastex and mesh_hasnormals:
+            if NIF_VERSION >= 0x14000005:
+                trishape.updateTangentSpace()
 
         # now export the vertex weights, if there are any
         vertgroups = ob.data.getVertGroupNames()
