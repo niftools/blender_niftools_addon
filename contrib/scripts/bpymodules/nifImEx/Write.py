@@ -223,7 +223,8 @@ def rebuild_full_name_map():
 
 def get_unique_name(blender_name):
     """
-    Returns an unique name
+    Returns an unique name for use in the NIF file, from the name of a Blender
+    object.
     """
     global _NIF_BLOCK_NAMES
     unique_name = "default_name"
@@ -233,8 +234,6 @@ def get_unique_name(blender_name):
         unique_int = 0
         old_name = unique_name
         while unique_name in _NIF_BLOCK_NAMES:
-            # since the name length is an unsigned int I think I can avoid setting a maximum length
-            #unique_name = '%s.%02d' % (old_name[:max_length-4], unique_int)
             unique_name = '%s.%02d' % (old_name, unique_int)
             unique_int +=1
     _NIF_BLOCK_NAMES.append(unique_name)
@@ -366,8 +365,18 @@ and turn off envelopes."""%ob.getName()
         
         # export animation groups
         if (animtxt):
-            export_animgroups(animtxt, root_block)
-            #export_animgroups(animtxt, root_block["Children"].asLinkList()[0]) # we link the animation extra data to the first root_object node
+            export_animgroups(animtxt, root_block.children[0])
+
+        # activate oblivion collision and physics
+        if NIF_VERSION == 0x14000005:
+            bsx = create_block("BSXFlags")
+            bsx.name = 'BSX'
+            bsx.integerData = 2 # enable collision
+            root_block.addExtraData(bsx)
+            upb = create_block("NiStringExtraData")
+            upb.name = 'UPB'
+            upb.stringData = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
+            root_block.addExtraData(upb)
 
         # apply scale
         if APPLY_SCALE:
@@ -736,11 +745,11 @@ def export_vcolprop(vertex_mode, lighting_mode):
     vcolprop = create_block("NiVertexColorProperty")
     
     # make it a property of the root node
-    _NIF_BLOCKS[0]["Children"].AddLink(vcolprop)
+    _NIF_BLOCKS[0].addChild(vcolprop)
 
     # and now export the parameters
-    vcolprop["Vertex Mode"] = vertex_mode
-    vcolprop["Lighting Mode"] = lighting_mode
+    vcolprop.vertexMode = vertex_mode
+    vcolprop.lightingMode = lighting_mode
 
 
 
@@ -1086,7 +1095,6 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
         
         vertquad_list = [] # (vertex, uv coordinate, normal, vertex color) list
         vertmap = [ None ] * len( mesh.verts ) # blender vertex -> nif vertices
-            # this map will speed up the exporter to a great degree (may be useful too when exporting NiMorphData)
         vertlist = []
         normlist = []
         vcollist = []
@@ -1187,7 +1195,10 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
         # no material                    -> typically, collision mesh
 
         # add a trishape block, and refer to this block in the parent's children list
-        trishape = create_block("NiTriShape")
+        if NIF_VERSION <= 0x04000002:
+            trishape = create_block("NiTriShape")
+        else:
+            trishape = create_block("NiTriStrips")
         parent_block.addChild(trishape)
         
         # fill in the NiTriShape's non-trivial values
@@ -1256,10 +1267,10 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
         if (mesh_hasalpha):
             # add NiTriShape's alpha propery (this is de facto an automated version of Detritus's method, see http://detritus.silgrad.com/alphahex.html)
             trialphaprop = create_block("NiAlphaProperty")
-            trialphaprop["Flags"] = 0x00ED
+            trialphaprop.flags = 0x00ED
             
             # refer to the alpha property in the trishape block
-            trishape["Properties"].AddLink(trialphaprop)
+            trishape.addProperty(trialphaprop)
 
         if (mesh_mat != None):
             # add NiTriShape's specular property
@@ -1325,18 +1336,18 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
 
                 # select extrapolation mode
                 if ( a_curve.getExtrapolation() == "Cyclic" ):
-                    alphac["Flags"] = 0x0008
+                    alphac.flags = 0x0008
                 elif ( a_curve.getExtrapolation() == "Constant" ):
-                    alphac["Flags"] = 0x000c
+                    alphac.flags = 0x000c
                 else:
                     if VERBOSE: print "extrapolation \"%s\" for alpha curve not supported using \"cycle reverse\" instead"%a_curve.getExtrapolation()
-                    alphac["Flags"] = 0x000a
+                    alphac.flags = 0x000a
 
                 # fill in timing values
-                alphac["Frequency"] = 1.0
-                alphac["Phase"] = 0.0
-                alphac["Start Time"] = (fstart - 1) * fspeed
-                alphac["Stop Time"]  = (fend - fstart) * fspeed
+                alphac.frequency = 1.0
+                alphac.phase = 0.0
+                alphac.startTime = (fstart - 1) * fspeed
+                alphac.stopTime = (fend - fstart) * fspeed
 
                 # add the alpha data
                 alphad = create_block("NiFloatData")
@@ -1420,7 +1431,10 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
 
         # add NiTriShape's data
         # NIF flips the texture V-coordinate (OpenGL standard)
-        tridata = create_block("NiTriShapeData")
+        if NIF_VERSION <= 0x04000002:
+            tridata = create_block("NiTriShapeData")
+        else:
+            tridata = create_block("NiTriStripsData")
         trishape.data = tridata
 
         tridata.numVertices = len(vertlist)
@@ -1457,14 +1471,9 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                 uv.u = uvlist[i][0]
                 uv.v = 1.0 - uvlist[i][1] # opengl standard
 
-        tridata.numTriangles = len(trilist)
-        tridata.numTrianglePoints = 3*len(trilist)
-        tridata.hasTriangles = True
-        tridata.triangles.updateSize()
-        for i, v in enumerate(tridata.triangles):
-            v.v1 = trilist[i][0]
-            v.v2 = trilist[i][1]
-            v.v3 = trilist[i][2]
+        # set triangles
+        # stitch strips for civ4
+        tridata.setTriangles(trilist, stitchstrips = (NIF_VERSION == 0x14000004))
 
         # update tangent space
         if NIF_VERSION >= 0x14000005:
