@@ -48,7 +48,15 @@ FORCE_DDS = False
 STRIP_TEXPATH = False
 EXPORT_DIR = ''
 NIF_VERSION_STR = '20.0.0.5'
-NIF_VERSION = 0x14000005
+try:
+    NIF_VERSION = NifFormat.versions[NIF_VERSION_STR]
+except KeyError:
+    print 'Supported NIF versions:'
+    for vstr, vnum in sorted(NifFormat.versions.items(), key=lambda x: x[1]):
+        print vstr
+    Blender.Draw.PupMenu("ERROR%t|Writing NIF version '%s' is not supported. See console for list of supported NIF versions, and set configuration accordingly."%NIF_VERSION_STR)
+    raise
+FLATTEN_SKINS = False
 ADD_BONE_NUB = False
 
 _IDENTITY44 = NifFormat.Matrix44()
@@ -377,6 +385,23 @@ and turn off envelopes."""%ob.getName()
             upb.name = 'UPB'
             upb.stringData = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
             root_block.addExtraData(upb)
+
+        if FLATTEN_SKINS:
+            # (warning: trouble if armatures parent other armatures)
+            # flatten skins
+            skelroots = []
+            affectedbones = []
+            for block in _NIF_BLOCKS:
+                if isinstance(block, NifFormat.NiGeometry) and block.isSkin():
+                    affectedbones.extend(block.flattenSkin())
+                    skelroots.append(block.skinInstance.skeletonRoot)
+            # remove NiNodes that do not affect skin
+            for skelroot in skelroots:
+                skelrootchildren = [child for child in skelroot.children if (not isinstance(child, NifFormat.NiNode)) or (child in affectedbones)]
+                skelroot.numChildren = len(skelrootchildren)
+                skelroot.children.updateSize()
+                for i, child in enumerate(skelrootchildren):
+                    skelroot.children[i] = child
 
         # apply scale
         if APPLY_SCALE:
