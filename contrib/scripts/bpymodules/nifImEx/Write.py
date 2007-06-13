@@ -434,17 +434,19 @@ and turn off envelopes."""%ob.getName()
     except NIFExportError, e: # export error: raise a menu instead of an exception
         Blender.Window.DrawProgressBar(1.0, "Export Failed")
         Blender.Draw.PupMenu('EXPORT ERROR%t|' + e.value)
+        print 'NifExportError: ' + e.value
         return
 
     except IOError, e: # IO error: raise a menu instead of an exception
         Blender.Window.DrawProgressBar(1.0, "Export Failed")
         Blender.Draw.PupMenu('I/O ERROR%t|' + str(e))
+        print 'IOError: ' + str(e)
         return
 
     except StandardError, e: # IO error: raise a menu instead of an exception
         Blender.Window.DrawProgressBar(1.0, "Export Failed")
         Blender.Draw.PupMenu('ERROR%t|' + str(e) + '    Check console for possibly more details.')
-        return
+        raise
 
     Blender.Window.DrawProgressBar(1.0, "Finished")
     
