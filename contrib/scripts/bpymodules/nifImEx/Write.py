@@ -40,7 +40,6 @@ _BONES_EXTRA_MATRIX_INV = {}
 # configuration default values
 _CONFIG = {}
 _VERBOSE = True # Enables debug output
-_EPSILON = 0.005 # used for checking equality with floats
 _EXPORT_SCALE_CORRECTION = 10.0
 
 APPLY_SCALE = True
@@ -54,7 +53,7 @@ except KeyError:
     print 'Supported NIF versions:'
     for vstr, vnum in sorted(NifFormat.versions.items(), key=lambda x: x[1]):
         print vstr
-    Blender.Draw.PupMenu("ERROR%t|Writing NIF version '%s' is not supported. See console for list of supported NIF versions, and set configuration accordingly."%NIF_VERSION_STR)
+    Blender.Draw.PupMenu("ERROR%t|" + "Writing NIF version '%s' is not supported. See console for list of supported NIF versions, and set configuration accordingly."%NIF_VERSION_STR)
     raise
 FLATTEN_SKINS = False
 ADD_BONE_NUB = False
@@ -69,16 +68,15 @@ _GUI_EVENTS = []
 
 _LOGO_PATH = sys.sep.join((Blender.Get('scriptsdir'),"bpymodules","nifImEx","niftools_logo.png"))
 _LOGO_IMAGE = Blender.Image.Load(_LOGO_PATH)
-_SCRIPT_VERSION = "1.9.0a"
+_SCRIPT_VERSION = "2.0"
 _NIF_VERSION_DICT = {}
 
 
 
 def __init__():
-    global _CONFIG, _VERBOSE, _EPSILON, _EXPORT_SCALE_CORRECTION
+    global _CONFIG, _VERBOSE, _EXPORT_SCALE_CORRECTION
     reload(Config)
     _CONFIG = Config._CONFIG
-    _EPSILON = _CONFIG['EPSILON'] # used for checking equality with floats
     _VERBOSE = _CONFIG['VERBOSE'] # Enables debug output
 
 
@@ -86,8 +84,7 @@ def addEvent(evName = "NO_NAME"):
     global _GUI_EVENTS
     eventId = len(_GUI_EVENTS)
     if eventId >= 16383:
-        raise "Maximum number of events exceeded"
-        return None
+        raise RuntimeError("Maximum number of events exceeded")
     _GUI_EVENTS.append(evName)
     return eventId
 
@@ -104,12 +101,17 @@ def gui():
     Draw.Image(_LOGO_IMAGE, 50.0, H-100.0, 1.0001, 1.0001)
     #Draw.Image(logoImg, 50, H-100, 1.0, 1.0, 1.0, 0)
     # Draw.String(name, event, x, y, width, height, initial, length, tooltip=None)
+    if not Blender.sys.exists(_CONFIG["NIF_EXPORT_PATH"]):
+        # if export path does not exist, fall back on blender program path
+        _CONFIG["NIF_EXPORT_PATH"] = Blender.sys.dirname(Blender.sys.progname)
+        Config._CONFIG = _CONFIG
+        Config.save()
     nifFilePath = sys.sep.join((_CONFIG["NIF_EXPORT_PATH"], _CONFIG["NIF_EXPORT_FILE"]))
     E["NIF_FILE_PATH"]       = Draw.String("",              addEvent("NIF_FILE_PATH"),  50, H-150, 390, 20, nifFilePath, 350, '')
-    E["BROWSE_FILE_PATH"]    = Draw.PushButton('...',       addEvent("BROWSE_FILE_PATH"), 440, H-150, 30, 20, 'browse')
-    E["ADVANCED"]            = Draw.PushButton('advanced',  addEvent("ADVANCED"), 410, H-225, 100, 20)
-    E["CANCEL"]              = Draw.PushButton('cancel',    addEvent("CANCEL"), 160, H-225, 100, 20)
-    E["EXPORT"]              = Draw.PushButton('export',    addEvent("EXPORT"),  50, H-225, 100, 20)
+    E["BROWSE_FILE_PATH"]    = Draw.PushButton('...',       addEvent("BROWSE_FILE_PATH"), 440, H-150, 30, 20, 'Browse')
+    E["ADVANCED"]            = Draw.PushButton('Advanced',  addEvent("ADVANCED"), 410, H-225, 100, 20)
+    E["CANCEL"]              = Draw.PushButton('Cancel',    addEvent("CANCEL"), 160, H-225, 100, 20)
+    E["EXPORT"]              = Draw.PushButton('Export',    addEvent("EXPORT"),  50, H-225, 100, 20)
     _GUI_ELEMENTS = E
     Draw.Redraw(1)
 
@@ -135,7 +137,7 @@ def buttonEvent(evt):
     elif evName == "BROWSE_FILE_PATH":
         # browse file
         nifFilePath = sys.sep.join((_CONFIG["NIF_EXPORT_PATH"], _CONFIG["NIF_EXPORT_FILE"]))
-        Blender.Window.FileSelector(selectFile, "export .nif", nifFilePath)
+        Blender.Window.FileSelector(selectFile, "Export .nif", nifFilePath)
 
 def selectFile(nifFilePath):
     global _CONFIG
@@ -251,7 +253,7 @@ def get_full_name(blender_name):
     """
     Returns the original imported name if present
     """
-    global _NAMES, NIFOBJECT_NAMES
+    global _NAMES
     try:
         return get_unique_name(_NAMES[blender_name])
     except KeyError:
@@ -363,17 +365,17 @@ and turn off envelopes."""%ob.getName()
         if (animtxt):
             has_keyframecontrollers = False
             for block in _NIF_BLOCKS:
-                if type(block) is NifFormat.NiKeyframeController:
+                if isinstance(block, NifFormat.NiKeyframeController):
                     has_keyframecontrollers = True
                     break
-            if has_keyframecontrollers:
+            if not has_keyframecontrollers:
                 if _VERBOSE: print "Defining dummy keyframe controller"
                 # add a trivial keyframe controller on the scene root
                 export_keyframe(None, 'localspace', root_block)
         
         # export animation groups
         if (animtxt):
-            export_animgroups(animtxt, root_block.children[0])
+            export_animgroups(animtxt, root_block)
 
         # activate oblivion collision and physics
         if NIF_VERSION == 0x14000005:
@@ -429,12 +431,19 @@ and turn off envelopes."""%ob.getName()
         finally:
             f.close()
 
-        
-        
-    except NIFExportError, e: # in that case, we raise a menu instead of an exception
+    except NIFExportError, e: # export error: raise a menu instead of an exception
         Blender.Window.DrawProgressBar(1.0, "Export Failed")
-        print 'NIFExportError: ' + e.value
-        Blender.Draw.PupMenu('ERROR%t|' + e.value)
+        Blender.Draw.PupMenu('EXPORT ERROR%t|' + e.value)
+        return
+
+    except IOError, e: # IO error: raise a menu instead of an exception
+        Blender.Window.DrawProgressBar(1.0, "Export Failed")
+        Blender.Draw.PupMenu('I/O ERROR%t|' + str(e))
+        return
+
+    except StandardError, e: # IO error: raise a menu instead of an exception
+        Blender.Window.DrawProgressBar(1.0, "Export Failed")
+        Blender.Draw.PupMenu('ERROR%t|' + str(e) + '    Check console for possibly more details.')
         return
 
     Blender.Window.DrawProgressBar(1.0, "Finished")
@@ -714,7 +723,7 @@ def export_keyframe(ipo, space, parent_block, bind_mat = None, extra_mat_inv = N
 
     # add a keyframecontroller block, and refer to this block in the parent's time controller
     kfc = create_block("NiKeyframeController")
-    add_controller(parent_block, kfc)
+    parent_block.addController(kfc)
 
     # fill in the non-trivial values
     kfc.flags = 0x0008
@@ -825,7 +834,7 @@ def export_animgroups(animtxt, block_parent):
     # add a NiTextKeyExtraData block, and refer to this block in the
     # parent node (we choose the root block)
     textextra = create_block("NiTextKeyExtraData")
-    add_extra_data(block_parent, textextra)
+    block_parent.addExtraData(textextra)
     
     # create a NiTextKey for each frame descriptor
     textextra.numTextKeys = len(flist)
@@ -953,7 +962,7 @@ def export_flipcontroller( fliptxt, texture, target, target_tex ):
 
     # create a NiFlipController
     flip = create_block("NiFlipController")
-    add_controller(target, flip)
+    target.addController(flip)
 
     # get frame start and frame end, and the number of frames per second
     fspeed = 1.0 / Blender.Scene.GetCurrent().getRenderingContext().framesPerSec()
@@ -1039,14 +1048,14 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
             if mesh_mat_specular_color[0] > 1.0: mesh_mat_specular_color[0] = 1.0
             if mesh_mat_specular_color[1] > 1.0: mesh_mat_specular_color[1] = 1.0
             if mesh_mat_specular_color[2] > 1.0: mesh_mat_specular_color[2] = 1.0
-            if ( mesh_mat_specular_color[0] > _EPSILON ) \
-                or ( mesh_mat_specular_color[1] > _EPSILON ) \
-                or ( mesh_mat_specular_color[2] > _EPSILON ):
+            if ( mesh_mat_specular_color[0] > NifFormat._EPSILON ) \
+                or ( mesh_mat_specular_color[1] > NifFormat._EPSILON ) \
+                or ( mesh_mat_specular_color[2] > NifFormat._EPSILON ):
                 mesh_hasspec = True
             mesh_mat_emissive = mesh_mat.getEmit()              # 'Emit' scrollbar in Blender (MW -> 0.0 0.0 0.0)
             mesh_mat_glossiness = mesh_mat.getHardness() / 4.0  # 'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
             mesh_mat_transparency = mesh_mat.getAlpha()         # 'A(lpha)' scrollbar in Blender (MW -> 1.0)
-            mesh_hasalpha = (abs(mesh_mat_transparency - 1.0) > _EPSILON) \
+            mesh_hasalpha = (abs(mesh_mat_transparency - 1.0) > NifFormat._EPSILON) \
                             or (mesh_mat.getIpo() != None and mesh_mat.getIpo().getCurve('Alpha'))
             mesh_mat_ambient_color = [0.0,0.0,0.0]
             mesh_mat_ambient_color[0] = mesh_mat_diffuse_color[0] * mesh_mat_ambient
@@ -1078,7 +1087,7 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                                 # how can we emulate the NIF alpha system (simply multiplying material alpha with texture alpha) when MapTo.ALPHA is turned on?
                                 # require the Blender material alpha to be 0.0 (no material color can show up), and use the "Var" slider in the texture blending mode tab!
                                 # but...
-                                if (mesh_mat_transparency > _EPSILON):
+                                if (mesh_mat_transparency > NifFormat._EPSILON):
                                     raise NIFExportError("Cannot export this type of transparency in material '%s': instead, try to set alpha to 0.0 and to use the 'Var' slider in the 'Map To' tab under the material buttons."%mesh_mat.getName())
                                 if (mesh_mat.getIpo() and mesh_mat.getIpo().getCurve('Alpha')):
                                     raise NIFExportError("Cannot export animation for this type of transparency in material '%s': remove alpha animation, or turn off MapTo.ALPHA, and try again."%mesh_mat.getName())
@@ -1170,17 +1179,17 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                     # and check if they have the same uvs, normals and colors (wow is that fast!)
                     for j in vertmap[v_index]:
                         if mesh_hastex:
-                            if abs(vertquad[1][0] - vertquad_list[j][1][0]) > _EPSILON: continue
-                            if abs(vertquad[1][1] - vertquad_list[j][1][1]) > _EPSILON: continue
+                            if abs(vertquad[1][0] - vertquad_list[j][1][0]) > NifFormat._EPSILON: continue
+                            if abs(vertquad[1][1] - vertquad_list[j][1][1]) > NifFormat._EPSILON: continue
                         if mesh_hasnormals:
-                            if abs(vertquad[2][0] - vertquad_list[j][2][0]) > _EPSILON: continue
-                            if abs(vertquad[2][1] - vertquad_list[j][2][1]) > _EPSILON: continue
-                            if abs(vertquad[2][2] - vertquad_list[j][2][2]) > _EPSILON: continue
+                            if abs(vertquad[2][0] - vertquad_list[j][2][0]) > NifFormat._EPSILON: continue
+                            if abs(vertquad[2][1] - vertquad_list[j][2][1]) > NifFormat._EPSILON: continue
+                            if abs(vertquad[2][2] - vertquad_list[j][2][2]) > NifFormat._EPSILON: continue
                         if mesh_hasvcol:
-                            if abs(vertquad[3].r - vertquad_list[j][3].r) > _EPSILON: continue
-                            if abs(vertquad[3].g - vertquad_list[j][3].g) > _EPSILON: continue
-                            if abs(vertquad[3].b - vertquad_list[j][3].b) > _EPSILON: continue
-                            if abs(vertquad[3].a - vertquad_list[j][3].a) > _EPSILON: continue
+                            if abs(vertquad[3].r - vertquad_list[j][3].r) > NifFormat._EPSILON: continue
+                            if abs(vertquad[3].g - vertquad_list[j][3].g) > NifFormat._EPSILON: continue
+                            if abs(vertquad[3].b - vertquad_list[j][3].b) > NifFormat._EPSILON: continue
+                            if abs(vertquad[3].a - vertquad_list[j][3].a) > NifFormat._EPSILON: continue
                         # all tests passed: so yes, we already have it!
                         f_index[i] = j
                         break
@@ -1357,7 +1366,7 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
 
                 # add a alphacontroller block, and refer to this in the parent material
                 alphac = create_block("NiAlphaController")
-                add_controller( trimatprop, alphac )
+                trimatprop.addController(alphac)
 
                 # select extrapolation mode
                 if ( a_curve.getExtrapolation() == "Cyclic" ):
@@ -1428,7 +1437,7 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
 
                 # add a materialcolorcontroller block
                 matcolc = create_block("NiMaterialColorController")
-                add_controller(trimatprop, matcolc)
+                trimatprop.addController(matcolc)
 
                 # fill in the non-trivial values
                 matcolc["Flags"] = 0x0008 # using cycle loop for now
@@ -1603,11 +1612,18 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                         if not added:
                             vert_weights[vert_index] = 1.0
                     if vert_weights:
-                        # add armature as bone (TODO add bone functions to NifFormat)
+                        if _VERBOSE: print "some vertices had no vertex weights, they will be attached to a bone nub:", vert_weights.keys()
+                        # create bone NiNode for armature
+                        arm_bone_block = NifFormat.NiNode()
+                        arm_bone_block.name = get_unique_name(armaturename)
+                        arm_bone_block.setTransform(_IDENTITY44)
+                        arm_bone_block.flags = 0x0002 # ? this seems pretty standard for bones
+                        skininst.skeletonRoot.addChild(arm_bone_block, front = True)
+                        # add bone (TODO add bone functions to NifFormat)
                         bone_index = len(boneinfluences)
                         skininst.numBones = bone_index+1
                         skininst.bones.updateSize()
-                        skininst.bones[bone_index] = skininst.skeletonRoot
+                        skininst.bones[bone_index] = arm_bone_block
                         skindata.numBones = bone_index+1
                         skindata.boneList.updateSize()
                         skinbonedata = skindata.boneList[bone_index]
@@ -1619,6 +1635,13 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                         for i, (vert_index, vert_weight) in enumerate(vert_weights.iteritems()):
                             skinbonedata.vertexWeights[i].index = vert_index
                             skinbonedata.vertexWeights[i].weight = vert_weight
+                    if NIF_VERSION >= 0x04020100:
+                        if _VERBOSE: print "creating 'NiSkinPartition'"
+                        # 18 bones per partition for oblivion, 4 bones per partition for civ4
+                        maxbpp = 18 if NIF_VERSION == 0x14000005 else 4
+                        lostweight = trishape.updateSkinPartition(maxbonesperpartition = maxbpp, maxbonespervertex = 4)
+                        if lostweight > NifFormat._EPSILON:
+                            print "WARNING: lost %f in vertex weights while creating skin partition"%lostweight
 
             # clean up
             del vert_weights
@@ -1644,7 +1667,7 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                     
                     # create geometry morph controller
                     morphctrl = create_block("NiGeomMorpherController")
-                    add_controller( trishape, morphctrl )
+                    trishape.addController(morphctrl)
                     morphctrl["Frequency"] = 1.0
                     morphctrl["Phase"] = 0.0
                     ctrlStart = 1000000.0
@@ -2027,7 +2050,7 @@ def decompose_srt(m):
     # and fix their sign
     if (b_scale_rot.determinant() < 0): b_scale.negate()
     # only uniform scaling
-    if abs(b_scale[0]-b_scale[1]) + abs(b_scale[1]-b_scale[2]) > _EPSILON:
+    if abs(b_scale[0]-b_scale[1]) + abs(b_scale[1]-b_scale[2]) > NifFormat._EPSILON:
         raise NIFExportError("Non-uniform scaling not supported. Workaround: apply size and rotation (CTRL-A).")
     b_scale = b_scale[0]
     # get rotation matrix
@@ -2079,47 +2102,6 @@ def get_object_restmatrix(ob, space, extra = True):
             parinv.invert()
             mat *= parinv
     return mat
-
-
-
-#
-# Calculate distance between two vectors.
-#
-def get_distance(v, w):
-    return ((v.x-w[0])**2 + (v.y-w[1])**2 + (v.z-w[2])**2) ** 0.5
-
-
-
-#
-# Helper function to add a controller to a controllable block.
-#
-def add_controller(block, ctrl):
-    if block.controller == None:
-        block.controller = ctrl
-    else:
-        lastctrl = block.controller
-        while lastctrl.nextController != None:
-            lastctrl = lastctrl.nextController
-        lastctrl.nextController = ctrl
-
-
-
-#
-# Helper function to add extra data
-#
-def add_extra_data(block, xtra):
-    if NIF_VERSION < 0x0A000100:
-        # the extra data chain paradigm
-        if not block.extraData:
-            block.extraData = xtra
-        else:
-            lastxtra = block.extraData
-            while lastxtra.extraData:
-                lastxtra = lastxtra.extraData
-            lastxtra.extraData = xtra
-    else:
-        # the extra data list paradigm
-        block.extraDataList.addLink(xtra) # TODO: add function in NifFormat lib
 
 
 
