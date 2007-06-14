@@ -443,7 +443,7 @@ and turn off envelopes."""%ob.getName()
         print 'IOError: ' + str(e)
         return
 
-    except StandardError, e: # IO error: raise a menu instead of an exception
+    except StandardError, e: # other error: raise a menu and an exception
         Blender.Window.DrawProgressBar(1.0, "Export Failed")
         Blender.Draw.PupMenu('ERROR%t|' + str(e) + '    Check console for possibly more details.')
         raise
