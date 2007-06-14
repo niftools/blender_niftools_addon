@@ -199,10 +199,6 @@ def exitGUI():
     Draw.Redraw(1)
 
 
-
-
-
-
 # Little wrapper for debug messages
 def msg(message='-', level=2):
     if _VERBOSE:
@@ -498,29 +494,6 @@ def fb_global_matrix(niBlock):
     if niBlock._parent:
         return b_matrix * fb_global_matrix(niBlock._parent) # yay, recursion
     return b_matrix
-
-# Retrieves a node's bind position matrix
-# *** DISABLED *** doesn't do what it should do...
-#def fb_bind_matrix(niBone, niArmature):
-#    """Retrieves a node's bind position matrix relative to the armature."""
-#    b_parent = niBone._parent
-#    if _ARMATURES.has_key(b_parent):
-#        return _IDENTITY44
-#    else:
-#        # the inverse matrix HAS to be set, if it isn't, well, we'll throw an error
-#        a_invMatrix = niArmature._invMatrix
-#        # the rotationpart of the skindata stored matrix seems to be correct, so we just use that
-#        parent_bind_rpmatrix = getattr(b_parent, '_bindMatrix', fb_global_matrix(b_parent) * a_invMatrix).rotationPart()
-#        b_matrix = fb_matrix(niBone)
-#        [hx, hy, hz, dummy] = b_matrix[3]
-#        head = Vector(hx, hy, hz) * parent_bind_rpmatrix
-#        # rotationpart of the skindata stored matrix
-#        m = getattr(niBone, '_bindMatrix', fb_global_matrix(niBone) * a_invMatrix).rotationPart()
-#        b_bind_matrix = Matrix([m[0][0], m[0][1], m[0][2], 0.0],\
-#                            [m[1][0], m[1][1], m[1][2], 0.0],\
-#                            [m[2][0], m[2][1], m[2][2], 0.0],\
-#                            [head.x, head.y, head.z, 1.0])
-#        return b_bind_matrix * fb_bind_matrix(b_parent, niArmature)
 
 
 # Decompose Blender transform matrix as a scale, rotation matrix, and translation vector
@@ -851,11 +824,11 @@ def find_correction_matrix(niBlock, niArmature):
         listXYZ = [int(c * 200) for c in (sum_x, sum_y, sum_z, -sum_x, -sum_y, -sum_z)]
         idx_correction = listXYZ.index(max(listXYZ))
         alignment_offset = 0.0
-        if idx_correction == 0 or idx_correction == 3:
+        if (idx_correction == 0 or idx_correction == 3) and abs(sum_x) > 0:
             alignment_offset = float(abs(sum_y) + abs(sum_z)) / abs(sum_x)
-        elif idx_correction == 1 or idx_correction == 4:
+        elif (idx_correction == 1 or idx_correction == 4) and abs(sum_y) > 0:
             alignment_offset = float(abs(sum_z) + abs(sum_x)) / abs(sum_y)
-        else:
+        elif abs(sum_z) > 0:
             alignment_offset = float(abs(sum_x) + abs(sum_y)) / abs(sum_z)
         # if alignment is good enough, use the (corrected) NIF matrix
         if alignment_offset < 0.25:
