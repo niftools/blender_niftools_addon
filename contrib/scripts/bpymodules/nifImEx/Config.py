@@ -115,13 +115,12 @@ def gui():
     E["TEXPATH_NEXT"]           = Draw.PushButton('>',  addEvent("TEXPATH_NEXT"),       430, H-170,  20, 20)
     E["TEXPATH_REMOVE"]         = Draw.PushButton('X',  addEvent("TEXPATH_REMOVE"),     450, H-170,  20, 20)
     E["REALIGN_BONES"]          = Draw.Toggle(" ",      addEvent("REALIGN_BONES"),       50, H-200,  20, 20, _CONFIG["REALIGN_BONES"])
-    # To draw text on the screen I have to position its start point first
-    #BGL.glRasterPos2i( 75, H-195)
-    #Draw.Text("try to realign bones")
     guiText("try to realign bones", 75, H-195)
+    E["IMPORT_ANIMATION"]          = Draw.Toggle(" ",      addEvent("IMPORT_ANIMATION"),       50, H-220,  20, 20, _CONFIG["IMPORT_ANIMATION"])
+    guiText("import animation (if present)", 75, H-215)
     
-    E["CANCEL"]                 = Draw.PushButton('cancel',addEvent("CANCEL"),  50, H-225, 100, 20)
-    E["OK"]                     = Draw.PushButton('ok',    addEvent("OK"),  50, H-250, 100, 20)
+    E["CANCEL"]                 = Draw.PushButton('cancel',addEvent("CANCEL"),  50, H-245, 100, 20)
+    E["OK"]                     = Draw.PushButton('ok',    addEvent("OK"),  50, H-270, 100, 20)
     # Sets the GUI elements to a global var to avoid them going out of scope (cases segfaults)
     _GUI_ELEMENTS = E
     Draw.Redraw(1)
@@ -141,6 +140,8 @@ def buttonEvent(evt):
         exitGUI()
     elif evName == "REALIGN_BONES":
         _CONFIG["REALIGN_BONES"] = not _CONFIG["REALIGN_BONES"]
+    elif evName == "IMPORT_ANIMATION":
+        _CONFIG["IMPORT_ANIMATION"] = not _CONFIG["IMPORT_ANIMATION"]
     elif evName == "BROWSE_IMPORT_PATH":
         # browse import path
         print _CONFIG["NIF_IMPORT_PATH"]
@@ -226,6 +227,7 @@ def load():
         'NIF_EXPORT_FILE'          : Defaults._NIF_EXPORT_FILE, \
         'TEXTURE_SEARCH_PATH'      : Defaults._TEXTURE_SEARCH_PATH, \
         'REALIGN_BONES'            : Defaults._REALIGN_BONES, \
+        'IMPORT_ANIMATION'         : Defaults._IMPORT_ANIMATION, \
         'IMPORT_SCALE_CORRECTION'  : Defaults._IMPORT_SCALE_CORRECTION, \
         'EXPORT_SCALE_CORRECTION'  : Defaults._EXPORT_SCALE_CORRECTION, \
         'BASE_TEXTURE_FOLDER'      : Defaults._BASE_TEXTURE_FOLDER, \
