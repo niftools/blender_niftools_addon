@@ -551,18 +551,6 @@ def export_node(ob, space, parent_block, node_name):
 
     export_matrix(ob, space, node)
 
-    # set object bind position
-    if ob != None and ob.getParent():
-        pass
-        # TODO
-        #bbind_mat = ob.getMatrix('worldspace') # TODO: cancel out all IPO's
-        #bind_mat = Matrix44(
-        #    bbind_mat[0][0], bbind_mat[0][1], bbind_mat[0][2], bbind_mat[0][3],
-        #    bbind_mat[1][0], bbind_mat[1][1], bbind_mat[1][2], bbind_mat[1][3],
-        #    bbind_mat[2][0], bbind_mat[2][1], bbind_mat[2][2], bbind_mat[2][3],
-        #    bbind_mat[3][0], bbind_mat[3][1], bbind_mat[3][2], bbind_mat[3][3])
-        #node.SetWorldBindPos(bind_mat)
-
     if (ob != None):
         # export animation
         if (ob_ipo != None):
@@ -1787,92 +1775,11 @@ def export_bones(arm, parent_block):
             for child in bone.children:
                 if child.parent.name == bone.name: # bone.children returns also grandchildren etc... we only want immediate children of course
                     bones_node[bone.name].addChild(bones_node[child.name])
-        else:
-            if False: # *** disabled for now *** #if ADD_BONE_NUB:
-                # no children: export dummy NiNode to preserve tail position
-                if _VERBOSE: print "Bone %s has no children: adding dummy child for tail."%bone.name
-                mat = get_bone_restmatrix(bone, 'ARMATURESPACE')
-                mat.invert()
-                tail = bone.tail['ARMATURESPACE'] * mat.rotationPart() + mat.translationPart()
-                dummy = CreateBlock("NiNode")
-                dummy["Rotation"] = Matrix33(1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0)
-                dummy["Velocity"]    = Float3(0.0,0.0,0.0)
-                dummy["Scale"]       = 1.0
-                dummy["Translation"] = Float3(tail[0], tail[1], tail[2])
-                bbind_mat = get_bone_restmatrix(bone, 'ARMATURESPACE')
-                tail = Blender.Mathutils.Vector(bone.tail['ARMATURESPACE'])
-                bind_mat = Matrix44(\
-                    bbind_mat[0][0], bbind_mat[0][1], bbind_mat[0][2], 0.0,\
-                    bbind_mat[1][0], bbind_mat[1][1], bbind_mat[1][2], 0.0,\
-                    bbind_mat[2][0], bbind_mat[2][1], bbind_mat[2][2], 0.0,\
-                    tail[0], tail[1], tail[2], 1.0)
-                idummy = QueryNode(dummy)
-                idummy.SetWorldBindPos(bind_mat)
-                bones_node[bone.name]["Children"].AddLink(dummy)
         # if it is a root bone, link it to the armature
         if not bone.parent:
             parent_block.addChild(bones_node[bone.name])
 
     # that's it!!!
-
-
-
-#
-# EXPERIMENTAL: Export texture effect.
-# 
-def export_textureeffect(ob, parent_block):
-    assert(ob.getType() == 'Empty')
-    
-    # add a trishape block, and refer to this block in the parent's children list
-    texeff = create_block("NiTextureEffect")
-    parent_block["Children"].AddLink(texeff)
-    parent_block["Effects"].AddLink(texeff)
-        
-    # fill in the NiTextureEffect's non-trivial values
-    texeff["Flags"] = 0x0004
-    export_matrix(ob, 'none', texeff)
-    
-    # guessing
-    texeff["Unknown Float 1"] = 1.0
-    texeff["Unknown Float 2"] = 0.0
-    texeff["Unknown Float 3"] = 0.0
-    texeff["Unknown Float 4"] = 0.0
-    texeff["Unknown Float 5"] = 1.0
-    texeff["Unknown Float 6"] = 0.0
-    texeff["Unknown Float 7"] = 0.0
-    texeff["Unknown Float 8"] = 0.0
-    texeff["Unknown Float 9"] = 1.0
-    texeff["Unknown Float 10"] = 0.0
-    texeff["Unknown Float 11"] = 0.0
-    texeff["Unknown Float 12"] = 0.0
-    texeff["Unknown Int 1"] = 2
-    texeff["Unknown Int 2"] = 3
-    texeff["Unknown Int 3"] = 2
-    texeff["Unknown Int 4"] = 2
-    texeff["Unknown Byte"] = 0
-    texeff["Unknown Float 13"] = 1.0
-    texeff["Unknown Float 14"] = 0.0
-    texeff["Unknown Float 15"] = 0.0
-    texeff["Unknown Float 16"] = 0.0
-    texeff["PS2 L"] = 0
-    texeff["PS2 K"] = 0xFFB5
-    texeff["Unknown Short"] = 0
-
-    # add NiTextureEffect's texture source
-    texsrc = create_block("NiSourceTexture")
-    texeff["Source Texture"] = texsrc
-
-    texsrcdata = TexSource()
-    texsrcdata.useExternal = True
-    texsrcdata.fileName = "enviro 01.TGA" # ?
-    
-    srctex["Texture Source"] = srctexdata
-    srctex["Pixel Layout"] = 5
-    srctex["Use Mipmaps"]  = 1
-    srctex["Alpha Format"] = 3
-    srctex["Unknown Byte"] = 1
-    
-    # done!
 
 
 
