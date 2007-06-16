@@ -273,19 +273,6 @@ def import_main(root_block):
     _BLOCKS_READ = 0.0
     # preprocessing:
 
-    # scale tree
-    root_block.applyScale(_CONFIG['IMPORT_SCALE_CORRECTION'])
-
-    # sets the root block parent to None, so that when crawling back the script won't barf
-    root_block._parent = None
-    
-    # set the block parent through the tree, to ensure I can always move backward
-    set_parents(root_block)
-    
-    # and merge armatures that are bones of others armatures
-    # *** DISABLED *** only single skeleton root supported
-    #merge_armatures()
-
     # merge skeleton roots
     for niBlock in root_block.tree():
         if not isinstance(niBlock, NifFormat.NiGeometry): continue
@@ -323,9 +310,18 @@ def import_main(root_block):
             msg('WARNING: failed to merge rest position of ' + niBlock.name + ' with following geometries:', 2)
             msg([node.name for node in failed], 3)
     
+    # sets the root block parent to None, so that when crawling back the script won't barf
+    root_block._parent = None
+    
+    # set the block parent through the tree, to ensure I can always move backward
+    set_parents(root_block)
+    
+    # scale tree
+    root_block.applyScale(_CONFIG['IMPORT_SCALE_CORRECTION'])
+    
     # mark armature nodes and bones
     mark_armatures_bones(root_block)
-               
+    
     # read the NIF tree
     if not is_armature_root(root_block):
         msg("%s is not an armature root" % (root_block.name), 3)
@@ -619,8 +615,6 @@ def fb_armature(niArmature):
             extra_matrix_quat_inv = extra_matrix_rot_inv.toQuat()
             # now import everything
             # ##############################
-            print "disabled armature animation for debug"
-            #kfc = False
             kfc = find_controller(niBone, NifFormat.NiKeyframeController)
             if kfc:
                 # get keyframe data
@@ -734,6 +728,8 @@ def fb_bone(niBlock, b_armature, b_armatureData, niArmature):
     armature_matrix_inverse = niArmature._invMatrix
     # bone length for nubs and zero length bones
     nub_length = 5.0
+    scale = _CONFIG["IMPORT_SCALE_CORRECTION"]
+    realign_enabled = _CONFIG['REALIGN_BONES']
     # bone name
     bone_name = fb_name(niBlock, 32)
     niChildBones = [child for child in niBlock.children if is_bone(child)]
@@ -746,10 +742,11 @@ def fb_bone(niBlock, b_armature, b_armatureData, niArmature):
         b_bone_head_x = armature_space_matrix[3][0]
         b_bone_head_y = armature_space_matrix[3][1]
         b_bone_head_z = armature_space_matrix[3][2]
-        # temporarily sets the tail for a 0 length bone
+        # temporarily sets the tail as for a 0 length bone
         b_bone_tail_x = b_bone_head_x
         b_bone_tail_y = b_bone_head_y
         b_bone_tail_z = b_bone_head_z
+        is_zero_length = True
         # tail: average of children location
         if len(niChildBones) > 0:
             m_correction = find_correction_matrix(niBlock, niArmature)
@@ -758,28 +755,47 @@ def fb_bone(niBlock, b_armature, b_armatureData, niArmature):
             b_bone_tail_x = sum([child_matrix[3][0] for child_matrix in child_matrices]) / len(child_matrices)
             b_bone_tail_y = sum([child_matrix[3][1] for child_matrix in child_matrices]) / len(child_matrices)
             b_bone_tail_z = sum([child_matrix[3][2] for child_matrix in child_matrices]) / len(child_matrices)
-        else:
-            # the correction matrix value is based on the children's head position. If these are missing
-            # I just set it as the same as the parent
+            # checking bone length
+            dx = b_bone_head_x - b_bone_tail_x
+            dy = b_bone_head_y - b_bone_tail_y
+            dz = b_bone_head_z - b_bone_tail_z
+            is_zero_length = abs(dx + dy + dz) * 200 < _EPSILON
+        elif realign_enabled:
+            # the correction matrix value is based on the children's head position
+            # If these are missing I just set it as the same as the parent's
             m_correction = find_correction_matrix(niBlock._parent, niArmature)
-            
-        is_zero_length = (int(sum([b_bone_head_x-b_bone_tail_x, b_bone_head_y-b_bone_tail_y, b_bone_head_z-b_bone_tail_z])*200) == 0)
+        
         if is_zero_length:
             # this is a 0 length bone, to avoid it being removed I set a default minimum length
-            # Since we later set the matrix explicitly any axis will do here.
-            b_bone_tail_x = b_bone_head_x + (nub_length * _CONFIG["IMPORT_SCALE_CORRECTION"])
-            # sets the bone heads & tails
-            b_bone.head = Vector(b_bone_head_x, b_bone_head_y, b_bone_head_z)
-            b_bone.tail = Vector(b_bone_tail_x, b_bone_tail_y, b_bone_tail_z)
-            # Can't test zero length bones, we keep the original alignment
-            # with no further correction
-        else:
-            # sets the bone heads & tails
-            b_bone.head = Vector(b_bone_head_x, b_bone_head_y, b_bone_head_z)
-            b_bone.tail = Vector(b_bone_tail_x, b_bone_tail_y, b_bone_tail_z)
-            #b_bone.matrix = armature_space_matrix.rotationPart()
-            
-        b_bone.matrix = m_correction.rotationPart() * armature_space_matrix.rotationPart()
+            if realign_enabled or not is_bone(niBlock._parent):
+                # no parent bone, or bone is realigned with correction. I just set one random direction.
+                b_bone_tail_x = b_bone_head_x + (nub_length * scale)
+            else:
+                # to keep things neat if bones aren't realigned on import I try and orient it as the vector between this
+                # bone's head and the parent's tail
+                parent_tail = b_armatureData.bones[_NAMES[niBlock._parent]].tail
+                dx = b_bone_head_x - parent_tail[0]
+                dy = b_bone_head_y - parent_tail[1]
+                dz = b_bone_head_z - parent_tail[2]
+                if abs(dx + dy + dz) * 200 < _EPSILON:
+                    # no offset from the parent, we follow the parent's orientation
+                    parent_head = b_armatureData.bones[_NAMES[niBlock._parent]].head
+                    dx = parent_tail[0] - parent_head[0]
+                    dy = parent_tail[1] - parent_head[1]
+                    dz = parent_tail[2] - parent_head[2]
+                direction = Vector(dx, dy, dz)
+                direction.normalize()
+                b_bone_tail_x = b_bone_head_x + (direction[0] * nub_length * scale)
+                b_bone_tail_y = b_bone_head_y + (direction[1] * nub_length * scale)
+                b_bone_tail_z = b_bone_head_z + (direction[2] * nub_length * scale)
+                
+        # sets the bone heads & tails
+        b_bone.head = Vector(b_bone_head_x, b_bone_head_y, b_bone_head_z)
+        b_bone.tail = Vector(b_bone_tail_x, b_bone_tail_y, b_bone_tail_z)
+        
+        if realign_enabled:
+            # applies the corrected matrix explicitly
+            b_bone.matrix = m_correction.resize4x4() * armature_space_matrix
                 
         # set bone name and store the niBlock for future reference
         b_armatureData.bones[bone_name] = b_bone
@@ -791,6 +807,7 @@ def fb_bone(niBlock, b_armature, b_armatureData, niArmature):
         new_bone_matrix[3][0] = b_bone_head_x
         new_bone_matrix[3][1] = b_bone_head_y
         new_bone_matrix[3][2] = b_bone_head_z
+        # stores any correction or alteration applied to the bone matrix
         _BONES_EXTRA_MATRIX[niBlock] = new_bone_matrix * old_bone_matrix_inv # new * inverse(old)
         # set bone children
         for niBone in niChildBones:
@@ -806,7 +823,7 @@ def find_correction_matrix(niBlock, niArmature):
     """
     armature_matrix_inverse = niArmature._invMatrix
     m_correction = _IDENTITY44.rotationPart()
-    if is_bone(niBlock):
+    if _CONFIG['REALIGN_BONES'] and is_bone(niBlock):
         armature_space_matrix = getattr(niBlock, '_bindMatrix', fb_global_matrix(niBlock) * armature_matrix_inverse)
         niChildBones = [child for child in niBlock.children if is_bone(child)]
         (sum_x, sum_y, sum_z, dummy) = armature_space_matrix[3]
@@ -825,10 +842,9 @@ def find_correction_matrix(niBlock, niArmature):
         elif abs(sum_z) > 0:
             alignment_offset = float(abs(sum_x) + abs(sum_y)) / abs(sum_z)
         # if alignment is good enough, use the (corrected) NIF matrix
+        # this gives nice ortogonal matrices
         if alignment_offset < 0.25:
             m_correction = _BONE_CORRECTION_MATRICES[idx_correction]
-        else:
-            m_correction = find_correction_matrix(niBlock._parent, niArmature)
     return m_correction
 
 
