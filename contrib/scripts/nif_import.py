@@ -1,27 +1,26 @@
 #!BPY
 
 """ Registration info for Blender menus:
-Name: 'NetImmerse/Gamebryo (.nif & .kf) - NEW'
-Blender: 243
-Group: 'Export'
-Tooltip: 'Export NIF File Format (.nif & .kf) - NEW'
+Name: 'NetImmerse/Gamebryo (.nif & .kf)'
+Blender: 244
+Group: 'Import'
+Tooltip: 'Import NIF File Format (.nif & .kf)'
 """
 
 __author__ = "The NifTools team, http://niftools.sourceforge.net/"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
-__version__ = "1.*.*"
+__version__ = "2.0"
 __bpydoc__ = """\
 This script imports Netimmerse and Gamebryo .NIF files to Blender.
 
 Supported:<br>
-    Nothing right now<br>
+    [...]<br>
 
 Missing:<br>
-    The actual script<br>
-
+    [...]<br>
 """
 
-# nif_import.py version 1.*.*
+# nif_import.py version 2.0
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -84,9 +83,8 @@ Missing:<br>
 
 
 import nifImEx
-from nifImEx import Write
-reload(nifImEx.Write)
+from nifImEx import Read
+reload(nifImEx.Read)
 
-nifImEx.Write.openGUI()
-
+nifImEx.Read.openGUI()
 
