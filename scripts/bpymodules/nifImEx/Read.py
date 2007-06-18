@@ -586,8 +586,11 @@ def fb_armature(niArmature):
             # Rchannel = Rtotal * inverse(Rbind)
             # Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
             niBone = _BLOCKS[bone_name]
-            bone_bind_matrix = getattr(niBone, '_bindMatrix', fb_global_matrix(niBone) * armature_matrix_inverse)
-            niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = decompose_srt(bone_bind_matrix)
+            bone_parent_bm_inv = getattr(niBone._parent, '_bindMatrix', fb_global_matrix(niBone._parent) * armature_matrix_inverse)
+            bone_parent_bm_inv.invert()
+            # bind matrix in local space
+            bone_bm = getattr(niBone, '_bindMatrix', fb_global_matrix(niBone) * armature_matrix_inverse) * bone_parent_bm_inv 
+            niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = decompose_srt(bone_bm)
             niBone_bind_rot_inv = Matrix(niBone_bind_rot)
             niBone_bind_rot_inv.invert()
             niBone_bind_quat_inv = niBone_bind_rot_inv.toQuat()
@@ -1391,7 +1394,7 @@ def fb_mesh(niBlock):
                     # set up the curve's control points
                     morphkeys = morphData.morphs[idxMorph].keys
                     for key in morphkeys:
-                        x =  key.value.getValue()
+                        x =  key.value
                         frame =  1+int(key.time * _FPS)
                         b_curve.addBezier( ( frame, x ) )
                     # finally: return to base position
@@ -1674,7 +1677,7 @@ def set_animation(niBlock, b_obj):
         for key in scales.keys:
             frame = 1+int(key.time * _FPS) # time 0.0 is frame 1
             Blender.Set('curframe', frame)
-            size = key.value.getValue()
+            size = key.value
             b_obj.SizeX = size
             b_obj.SizeY = size
             b_obj.SizeZ = size
