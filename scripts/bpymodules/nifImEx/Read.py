@@ -585,11 +585,7 @@ def fb_armature(niArmature):
             # Schannel = Stotal / Sbind
             # Rchannel = Rtotal * inverse(Rbind)
             # Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
-            niBone = _BLOCKS[bone_name]
-            bone_parent_bm_inv = getattr(niBone._parent, '_bindMatrix', fb_global_matrix(niBone._parent) * armature_matrix_inverse)
-            bone_parent_bm_inv.invert()
-            # bind matrix in local space
-            bone_bm = getattr(niBone, '_bindMatrix', fb_global_matrix(niBone) * armature_matrix_inverse) * bone_parent_bm_inv 
+            bone_bm = fb_matrix(_BLOCKS[bone_name]) # base pose
             niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = decompose_srt(bone_bm)
             niBone_bind_rot_inv = Matrix(niBone_bind_rot)
             niBone_bind_rot_inv.invert()
