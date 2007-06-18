@@ -585,7 +585,8 @@ def fb_armature(niArmature):
             # Schannel = Stotal / Sbind
             # Rchannel = Rtotal * inverse(Rbind)
             # Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
-            bone_bm = fb_matrix(_BLOCKS[bone_name]) # base pose
+            niBone = _BLOCKS[bone_name]
+            bone_bm = fb_matrix(niBone) # base pose
             niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = decompose_srt(bone_bm)
             niBone_bind_rot_inv = Matrix(niBone_bind_rot)
             niBone_bind_rot_inv.invert()
