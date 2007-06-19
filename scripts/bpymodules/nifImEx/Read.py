@@ -1603,6 +1603,7 @@ def complete_bone_tree(bone, skelroot):
 
 # Tests a NiNode to see if it's a bone.
 def is_bone(niBlock):
+    if not niBlock : return False
     if niBlock.name[:6] == "Bip01 ": return True # heuristics
     for bones in _ARMATURES.values():
         if niBlock in bones:

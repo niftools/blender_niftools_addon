@@ -62,8 +62,9 @@ def addTexturePath(nifTexturePath):
     if nifTexturePath == '' or not Blender.sys.exists(nifTexturePath):
         Draw.PupMenu('No path selected or path does not exist%t|Ok')
     else:
-        _CONFIG["TEXTURE_SEARCH_PATH"].append(nifTexturePath)
-        _IDX_TEXPATH = len(_CONFIG["TEXTURE_SEARCH_PATH"]) - 1
+        if nifTexturePath not in _CONFIG["TEXTURE_SEARCH_PATH"]:
+            _CONFIG["TEXTURE_SEARCH_PATH"].append(nifTexturePath)
+        _IDX_TEXPATH = _CONFIG["TEXTURE_SEARCH_PATH"].index(nifTexturePath)
 
 
 
