@@ -895,11 +895,11 @@ def fb_texture(niSourceTexture):
                         del dummy
                         break
                     except:
-                        b_image = None # not supported, delete image object
+                        del b_image # not supported, delete image object
                 # file format is not supported or file was not found, therefore
                 # we try to load alternative texture
                 base=tex[:-4]
-                for ext in ('.PNG','.png','.TGA','.tga','.BMP','.bmp','.JPG','.jpg'):
+                for ext in ('.DDS','.dds','.PNG','.png','.TGA','.tga','.BMP','.bmp','.JPG','.jpg'):
                     alt_tex = base+ext
                     if Blender.sys.exists(alt_tex) == 1:
                         b_image = None
@@ -910,7 +910,7 @@ def fb_texture(niSourceTexture):
                             del dummy
                             break
                         except:
-                            pass
+                            del b_image # not supported, delete image object
             if b_image == None:
                 msg("Texture %s not found and no alternate available" % fn, 2)
                 b_image = Blender.Image.New(tex, 1, 1, 24) # create a stub
