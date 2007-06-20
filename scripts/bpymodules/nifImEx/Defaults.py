@@ -1,6 +1,9 @@
 import os, Blender
 
-nifDataPath = Blender.sys.sep.join((os.getenv("ProgramFiles"), "Bethesda", "Oblivion", "Data", ""))
+try:
+    nifDataPath = Blender.sys.sep.join((os.getenv("ProgramFiles"), "Bethesda", "Oblivion", "Data", ""))
+except TypeError:
+    nifDataPath = ''
 
 # This "module" holds all the fallback values for the script configuration. This
 # makes sure the configuration will never be invalid
