@@ -1633,9 +1633,9 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                         if lostweight > NifFormat._EPSILON:
                             print "WARNING: lost %f in vertex weights while creating skin partition"%lostweight
 
-            # clean up
-            del vert_weights
-            del vert_added
+                    # clean up
+                    del vert_weights
+                    del vert_added
 
         
         # shape key morphing

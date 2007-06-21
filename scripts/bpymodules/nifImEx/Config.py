@@ -1,14 +1,6 @@
 import Blender
 
-# check if python is installed
-try:
-    import sys, os
-except ImportError:
-    print """ERROR\nThis script requires a full Python installation."""
-    Blender.Draw.PupMenu("ERROR%t|This script requires a full Python installation")
-
-# force import to look in .blender/scripts/bpymodules first
-sys.path = [pth for pth in sys.path if pth.find('blender') != -1] + [pth for pth in sys.path if pth.find('blender') == -1]
+import sys, os
 
 import Read, Write, Defaults
 from Blender import Draw, BGL, Registry
