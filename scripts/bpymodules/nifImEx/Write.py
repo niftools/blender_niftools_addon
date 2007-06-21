@@ -383,10 +383,12 @@ and turn off envelopes."""%ob.getName()
             bsx.name = 'BSX'
             bsx.integerData = 2 # enable collision
             root_block.addExtraData(bsx)
-            upb = create_block("NiStringExtraData")
-            upb.name = 'UPB'
-            upb.stringData = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
-            root_block.addExtraData(upb)
+            # many Oblivion nifs have a UPB, but export is disabled as
+            # they do not seem to affect anything in the game
+            #upb = create_block("NiStringExtraData")
+            #upb.name = 'UPB'
+            #upb.stringData = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
+            #root_block.addExtraData(upb)
 
         if FLATTEN_SKINS:
             # (warning: trouble if armatures parent other armatures)
