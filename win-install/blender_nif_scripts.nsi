@@ -35,7 +35,7 @@
 
 !include "MUI.nsh"
 
-!define VERSION "1.9.0"
+!define VERSION "2.0"
 
 Name "Blender NIF Scripts ${VERSION}"
 Var BLENDERHOME
@@ -134,16 +134,19 @@ Function .onInit
 
   end:
   
-  ; check if Python 2.4 is installed
+  ; check if Python 2.5 is installed
   ClearErrors
-  ReadRegStr $PYTHONPATH HKLM SOFTWARE\Python\PythonCore\2.4\InstallPath ""
+  ReadRegStr $PYTHONPATH HKLM SOFTWARE\Python\PythonCore\2.5\InstallPath ""
   IfErrors 0 python_check_installed
 
-    ; no key, that means that Python 2.4 is not installed
-    ; so let's install niflib in the Blender modules directory
-    StrCpy $PYTHONPATH_DLL "$BLENDERHOME\.blender\scripts\bpymodules"
-    StrCpy $PYTHONPATH_LIB "$BLENDERHOME\.blender\scripts\bpymodules"
-    Goto python_check_end
+    ; no key, that means that Python 2.5 is not installed
+    MessageBox MB_OK "Install Python 2.5 first. Get it from http://www.python.org/"
+    Abort ; causes installer to quit
+
+    ; alternative? install libs in the Blender modules directory
+    ;StrCpy $PYTHONPATH_DLL "$BLENDERHOME\.blender\scripts\bpymodules"
+    ;StrCpy $PYTHONPATH_LIB "$BLENDERHOME\.blender\scripts\bpymodules"
+    ;Goto python_check_end
 
 python_check_installed:
   StrCpy $PYTHONPATH_DLL "$PYTHONPATH\DLLs"
