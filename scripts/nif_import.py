@@ -87,6 +87,7 @@ from nifImEx import Read
 reload(nifImEx.Read)
 
 #nifImEx.Read.openGUI()
+nifImEx.Read.updateConfig()
 nifImEx.Read.openFileSelector()
 
 

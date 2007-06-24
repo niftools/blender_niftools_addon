@@ -73,13 +73,6 @@ _NIF_VERSION_DICT = {}
 
 
 
-def __init__():
-    global _CONFIG, _VERBOSE, _EXPORT_SCALE_CORRECTION
-    reload(Config)
-    _CONFIG = Config._CONFIG
-    _VERBOSE = _CONFIG['VERBOSE'] # Enables debug output
-
-
 def addEvent(evName = "NO_NAME"):
     global _GUI_EVENTS
     eventId = len(_GUI_EVENTS)
@@ -136,8 +129,19 @@ def buttonEvent(evt):
         Config.openGUI("Export")
     elif evName == "BROWSE_FILE_PATH":
         # browse file
-        nifFilePath = sys.sep.join((_CONFIG["NIF_EXPORT_PATH"], _CONFIG["NIF_EXPORT_FILE"]))
-        Blender.Window.FileSelector(selectFile, "Export .nif", nifFilePath)
+        #nifFilePath = sys.sep.join((_CONFIG["NIF_EXPORT_PATH"], _CONFIG["NIF_EXPORT_FILE"]))
+        #Blender.Window.FileSelector(selectFile, "Export .nif", nifFilePath)
+        openFileSelector()
+
+def updateConfig():
+    global _CONFIG
+    reload(Config)
+    Config.load()
+    _CONFIG = Config._CONFIG
+
+def openFileSelector():
+    nifFilePath = sys.sep.join((_CONFIG["NIF_EXPORT_PATH"], _CONFIG["NIF_EXPORT_FILE"]))
+    Blender.Window.FileSelector(selectFile, "Export .nif", nifFilePath)
 
 def selectFile(nifFilePath):
     global _CONFIG
@@ -148,6 +152,8 @@ def selectFile(nifFilePath):
         _CONFIG["NIF_EXPORT_FILE"] = sys.basename(nifFilePath)
         Config._CONFIG = _CONFIG
         Config.save()
+    exitGUI()
+    openGUI()
 
 
 

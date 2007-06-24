@@ -160,12 +160,14 @@ def event(evt, val):
     #print  "event(%i,%i)"%(arg1,arg2)
     if evt == Draw.ESCKEY:
         exitGUI()
-        
-def openFileSelector():
+
+def updateConfig():
     global _CONFIG
     reload(Config)
     Config.load()
     _CONFIG = Config._CONFIG
+
+def openFileSelector():
     nifFilePath = sys.sep.join((_CONFIG["NIF_IMPORT_PATH"], _CONFIG["NIF_IMPORT_FILE"]))
     Blender.Window.FileSelector(selectFile, "import .nif", nifFilePath)
         
@@ -1654,6 +1656,8 @@ def import_kfm(filename):
         return
 
     Blender.Window.DrawProgressBar(1.0, "Finished")
+
+
 
 
 
