@@ -78,7 +78,7 @@ _IDENTITY44 = Matrix([ 1.0,0.0, 0.0, 0.0],\
 
 # some variables
 
-_EPSILON = 0.005 # used for checking equality with floats, NOT STORED IN CONFIG
+#_EPSILON = 0.005 # used for checking equality with floats
 _MSG_LEVEL = 3 # verbosity level
 
 _R2D = 3.14159265358979/180.0 # radians to degrees conversion constant
@@ -90,15 +90,6 @@ _FPS = _SCENE.getRenderingContext().framesPerSec() #frames per second
 
 # check General scripts config key for default behaviors
 _VERBOSE = True
-
-
-
-def __init__():
-    global _CONFIG, _VERBOSE, _EPSILON
-    reload(Config)
-    _CONFIG = Config._CONFIG
-    _EPSILON = _CONFIG['EPSILON'] # used for checking equality with floats, NOT STORED IN CONFIG
-    _VERBOSE = _CONFIG['VERBOSE']
 
 def addEvent(evName = "NO_NAME"):
     global _GUI_EVENTS
@@ -127,12 +118,13 @@ def gui():
     #Draw.Image(logoImg, 50, H-100, 1.0, 1.0, 1.0, 0)
     # Draw.String(name, event, x, y, width, height, initial, length, tooltip=None)
     nifFilePath = sys.sep.join((_CONFIG["NIF_IMPORT_PATH"], _CONFIG["NIF_IMPORT_FILE"]))
-    E["TXT_NIF_FILE_PATH"]  = guiText("NIF file path", 500, H-250)
+    skfilepath = ""
     E["NIF_FILE_PATH"]      = Draw.String("",             addEvent("NIF_FILE_PATH"),  50, H-150, 390, 20, nifFilePath, 350, '')
     E["BROWSE_FILE_PATH"]   = Draw.PushButton('...',      addEvent("BROWSE_FILE_PATH"), 440, H-150, 30, 20, 'browse')
     E["ADVANCED"]           = Draw.PushButton('advanced', addEvent("ADVANCED"), 410, H-225, 100, 20)
     E["CANCEL"]             = Draw.PushButton('cancel',   addEvent("CANCEL"), 160, H-225, 100, 20)
     E["IMPORT"]             = Draw.PushButton('import',   addEvent("IMPORT"),  50, H-225, 100, 20)
+    E["TXT_NIF_FILE_PATH"]  = guiText("NIF file path", 50, H-125)
     _GUI_ELEMENTS = E
     Draw.Redraw(1)
 
@@ -140,7 +132,7 @@ def buttonEvent(evt):
     """
     Event handler for buttons
     """
-    global _CONFIG, _GUI_EVENTS
+    global _GUI_EVENTS
     evName = _GUI_EVENTS[evt]
     if evName == "IMPORT":
         # import and close
@@ -157,8 +149,9 @@ def buttonEvent(evt):
         Config.openGUI("Import")
     elif evName == "BROWSE_FILE_PATH":
         # browse file
-        nifFilePath = sys.sep.join((_CONFIG["NIF_IMPORT_PATH"], _CONFIG["NIF_IMPORT_FILE"]))
-        Blender.Window.FileSelector(selectFile, "import .nif", nifFilePath)
+        #nifFilePath = sys.sep.join((_CONFIG["NIF_IMPORT_PATH"], _CONFIG["NIF_IMPORT_FILE"]))
+        #Blender.Window.FileSelector(selectFile, "import .nif", nifFilePath)
+        openFileSelector()
 
 def event(evt, val):
     """
@@ -167,6 +160,14 @@ def event(evt, val):
     #print  "event(%i,%i)"%(arg1,arg2)
     if evt == Draw.ESCKEY:
         exitGUI()
+        
+def openFileSelector():
+    global _CONFIG
+    reload(Config)
+    Config.load()
+    _CONFIG = Config._CONFIG
+    nifFilePath = sys.sep.join((_CONFIG["NIF_IMPORT_PATH"], _CONFIG["NIF_IMPORT_FILE"]))
+    Blender.Window.FileSelector(selectFile, "import .nif", nifFilePath)
         
 def selectFile(nifFilePath):
     global _CONFIG
@@ -177,6 +178,8 @@ def selectFile(nifFilePath):
         _CONFIG["NIF_IMPORT_FILE"] = sys.basename(nifFilePath)
         Config._CONFIG = _CONFIG
         Config.save()
+    exitGUI()
+    openGUI()
 
 def openGUI():
     """
@@ -361,7 +364,7 @@ def read_branch(niBlock):
             # it's a shape node
             msg("building mesh in read_branch",3)
             return fb_mesh(niBlock)
-        else:
+        elif isinstance(niBlock, NifFormat.NiNode):
             children = niBlock.children
             if children:
                 # it's a parent node
@@ -390,6 +393,8 @@ def read_branch(niBlock):
                 if textkey:
                     fb_textkey(textkey)
                 return b_obj
+        # all else is currently discarded
+        print "todo: add cameras, lights and particle systems"
         return None
 
 def read_armature_branch(b_armature, niArmature, niBlock):
@@ -464,20 +469,18 @@ def fb_name(niBlock, max_length=22):
     # remove the "Tri " prefix; this will help when exporting the model again
     if niName[:4] == "Tri ":
         niName = niName[4:]
-    name = niName[:max_length-1] # Blender has a rather small name buffer
+    shortName = niName[:max_length-1] # Blender has a rather small name buffer
     try:
         while Blender.Object.Get(name):
-            name = '%s.%02d' % (niName[:max_length-4], uniqueInt)
-            uniqueInt +=1
+            shortName = '%s.%02d' % (niName[:max_length-4], uniqueInt)
+            uniqueInt += 1
     except:
         pass
-
     # save mapping
-    _NAMES[niBlock] = name
-    _BLOCKS[name] = niBlock
-
-    return name
-
+    _NAMES[niBlock] = shortName
+    _BLOCKS[shortName] = niBlock
+    return shortName
+    
 # Retrieves a niBlock's transform matrix as a Mathutil.Matrix
 def fb_matrix(niBlock):
     """Retrieves a niBlock's transform matrix as a Mathutil.Matrix"""
@@ -495,6 +498,7 @@ def fb_global_matrix(niBlock):
 # Decompose Blender transform matrix as a scale, rotation matrix, and translation vector
 def decompose_srt(m):
     # get scale components
+    _EPSILON = _CONFIG["EPSILON"]
     b_scale_rot = m.rotationPart()
     b_scale_rot_T = Matrix(b_scale_rot)
     b_scale_rot_T.transpose()
@@ -516,11 +520,13 @@ def decompose_srt(m):
     return b_scale, b_rot, b_trans
 
 
+    
 
 # Creates and returns a grouping empty
 def fb_empty(niBlock):
     global _SCENE
-    b_empty = Blender.Object.New("Empty", fb_name(niBlock,22))
+    shortName = fb_name(niBlock,22)
+    b_empty = Blender.Object.New("Empty", shortName)
     b_empty.properties['longName'] = niBlock.name
     _SCENE.objects.link(b_empty)
     return b_empty
@@ -542,8 +548,8 @@ def fb_armature(niArmature):
     b_armatureData.drawAxes = True
     b_armatureData.envelopes = False
     b_armatureData.vertexGroups = True
-    #b_armatureData.drawType = Blender.Armature.STICK
-    b_armatureData.drawType = Blender.Armature.ENVELOPE
+    b_armatureData.drawType = Blender.Armature.STICK
+    #b_armatureData.drawType = Blender.Armature.ENVELOPE
     #b_armatureData.drawType = Blender.Armature.OCTAHEDRON
     b_armature.link(b_armatureData)
     b_armatureData.makeEditable()
@@ -725,6 +731,7 @@ def fb_armature(niArmature):
 # Adds a bone to the armature in edit mode.
 def fb_bone(niBlock, b_armature, b_armatureData, niArmature):
     global _BONES_EXTRA_MATRIX, _BONE_CORRECTION_MATRICES
+    _EPSILON = _CONFIG["EPSILON"]
     armature_matrix_inverse = niArmature._invMatrix
     # bone length for nubs and zero length bones
     nub_length = 5.0
@@ -959,7 +966,7 @@ def fb_texture(niSourceTexture):
 # Creates and returns a material
 def fb_material(matProperty, textProperty, alphaProperty, specProperty):
     global _MATERIALS
-    
+    _EPSILON = _CONFIG["EPSILON"]
     # First check if material has been created before.
     try:
         material = _MATERIALS[(matProperty, textProperty, alphaProperty, specProperty)]
@@ -1524,6 +1531,7 @@ def set_parents(niBlock):
 # also stores the bind position matrix for correct import of skinning info
 def mark_armatures_bones(niBlock):
     global _ARMATURES 
+    _EPSILON = _CONFIG["EPSILON"]
     # search for all NiTriShape or NiTriStrips blocks...
     if isinstance(niBlock, NifFormat.NiTriBasedGeom):
         # yes, we found one, get its skin instance
@@ -1654,7 +1662,7 @@ def import_kfm(filename):
 def set_animation(niBlock, b_obj):
     progress = 0.1
     kfc = find_controller(niBlock, NifFormat.NiKeyframeController)
-    if kfc:
+    if kfc and kfc.data:
         # create an Ipo for this object
         b_ipo = b_obj.getIpo()
         if b_ipo == None:

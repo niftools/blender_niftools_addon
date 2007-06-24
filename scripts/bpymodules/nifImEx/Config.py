@@ -120,11 +120,11 @@ def gui():
     E["TEXPATH_REMOVE"]         = Draw.PushButton('X',  addEvent("TEXPATH_REMOVE"),     450, H-170,  20, 20)
     E["REALIGN_BONES"]          = Draw.Toggle(" ",      addEvent("REALIGN_BONES"),       50, H-200,  20, 20, _CONFIG["REALIGN_BONES"])
     guiText("try to realign bones", 75, H-195)
-    E["IMPORT_ANIMATION"]          = Draw.Toggle(" ",      addEvent("IMPORT_ANIMATION"),       50, H-220,  20, 20, _CONFIG["IMPORT_ANIMATION"])
+    E["IMPORT_ANIMATION"]       = Draw.Toggle(" ",      addEvent("IMPORT_ANIMATION"),       50, H-220,  20, 20, _CONFIG["IMPORT_ANIMATION"])
     guiText("import animation (if present)", 75, H-215)
     
-    E["CANCEL"]                 = Draw.PushButton('cancel',addEvent("CANCEL"),  50, H-245, 100, 20)
-    E["OK"]                     = Draw.PushButton('ok',    addEvent("OK"),  50, H-270, 100, 20)
+    E["CANCEL"]                 = Draw.PushButton('cancel',addEvent("CANCEL"),  50, H-265, 100, 20)
+    E["OK"]                     = Draw.PushButton('ok',    addEvent("OK"),  50, H-290, 100, 20)
     # Sets the GUI elements to a global var to avoid them going out of scope (cases segfaults)
     _GUI_ELEMENTS = E
     Draw.Redraw(1)
