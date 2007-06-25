@@ -4,15 +4,15 @@ from Blender import Draw, BGL, sys
 import tempfile
 
 try:
-    from NifFormat.NifFormat import NifFormat
+    from PyFFI.NIF import NifFormat
 except:
     err = """--------------------------
-ERROR\nThis script requires the NifFormat Python library.
-Make sure the NifFormat module resides in your Python path or in your Blender scripts folder.
-If you do not have it: http://niftools.sourceforge.net/
+ERROR\nThis script requires the Python File Format Interface (PyFFI).
+Make sure that PyFFI resides in your Python path or in your Blender scripts folder.
+If you do not have it: http://pyffi.sourceforge.net/
 --------------------------"""
     print err
-    Blender.Draw.PupMenu("ERROR%t|NifFormat not found, check console for details")
+    Blender.Draw.PupMenu("ERROR%t|PyFFI not found, check console for details")
     raise
 
 #
