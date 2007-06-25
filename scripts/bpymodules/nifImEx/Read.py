@@ -251,8 +251,14 @@ def import_nif(filename):
                 root_blocks = NifFormat.read(version, user_version, f, verbose = 0)
                 Blender.Window.DrawProgressBar(0.66, "Importing data")
                 for block in root_blocks:
-                    msg("root block: %s" % (block.name), 3)
-                    import_main(block)
+                    # hack for corrupt better bodies meshes
+                    root = block
+                    for b in [b for b in block.tree() if isinstance(b, NifFormat.NiGeometry)]:
+                        if b.isSkin():
+                            if root in [c for c in b.skinInstance.skeletonRoot.children]:
+                                root = b.skinInstance.skeletonRoot
+                    msg("root block: %s" % (root.name), 3)
+                    import_main(root)
         elif version == -1:
             raise NIFImportError("Unsupported NIF version.")
         else:
