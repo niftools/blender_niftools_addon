@@ -223,21 +223,10 @@ def load():
     # both loads and cleans up the configuration from the registry
     global _CONFIG, _CONFIG_NAME
     reload(Defaults)
-    # I'll do something smarter with dir() here
-    _CONFIG = {
-        'NIF_IMPORT_PATH'          : Defaults._NIF_IMPORT_PATH, \
-        'NIF_EXPORT_PATH'          : Defaults._NIF_EXPORT_PATH, \
-        'NIF_IMPORT_FILE'          : Defaults._NIF_IMPORT_FILE, \
-        'NIF_EXPORT_FILE'          : Defaults._NIF_EXPORT_FILE, \
-        'TEXTURE_SEARCH_PATH'      : Defaults._TEXTURE_SEARCH_PATH, \
-        'REALIGN_BONES'            : Defaults._REALIGN_BONES, \
-        'IMPORT_ANIMATION'         : Defaults._IMPORT_ANIMATION, \
-        'IMPORT_SCALE_CORRECTION'  : Defaults._IMPORT_SCALE_CORRECTION, \
-        'EXPORT_SCALE_CORRECTION'  : Defaults._EXPORT_SCALE_CORRECTION, \
-        'BASE_TEXTURE_FOLDER'      : Defaults._BASE_TEXTURE_FOLDER, \
-        'EXPORT_TEXTURE_PATH'      : Defaults._EXPORT_TEXTURE_PATH, \
-        'EPSILON'                  : Defaults._EPSILON, \
-        'VERBOSE'                  : Defaults._VERBOSE}
+    _CONFIG = {}
+    for key in dir(Defaults):
+        if key[:5] == "_CFG_":
+            _CONFIG[key[5:]] = getattr(Defaults, key)
     oldConfig = Blender.Registry.GetKey(_CONFIG_NAME, True)
     #print "oldConfig", oldConfig, "\n\n"
     newConfig = {}

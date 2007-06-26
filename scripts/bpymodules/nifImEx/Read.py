@@ -20,13 +20,36 @@ If you do not have it: http://pyffi.sourceforge.net/
     Blender.Draw.PupMenu("ERROR%t|PyFFI not found, check console for details")
     raise
 
+#
+# Configuration
+#
 
+_CONFIG = {}
+
+# Retrieves the stored configuration
+def loadConfig():
+    global _CONFIG
+    reload(Config)
+    Config.load()
+    _CONFIG = Config._CONFIG
+    
+# Stores the altered configuration
+def saveConfig():
+    Config._CONFIG = _CONFIG
+    Config.save()
+    
+loadConfig()
 
 #
 # Global variables.
 #
 
-_CONFIG = {}
+
+# Sets the amount of generated debug output
+_VERBOSITY = _CONFIG["VERBOSITY"]
+
+# Sets the resolution used for float comparisons
+_EPSILON = _CONFIG["EPSILON"]
 
 # All UI elements are kept in this dictionary to make sure they never go out of scope
 _GUI_ELEMENTS = {}
@@ -78,18 +101,11 @@ _IDENTITY44 = Matrix([ 1.0,0.0, 0.0, 0.0],\
 
 # some variables
 
-#_EPSILON = 0.005 # used for checking equality with floats
-_MSG_LEVEL = 3 # verbosity level
-
 _R2D = 3.14159265358979/180.0 # radians to degrees conversion constant
 _D2R = 180.0/3.14159265358979 # degrees to radians conversion constant
 
 _SCENE = Blender.Scene.GetCurrent() #Blender scene, to avoid redundant code
 _FPS = _SCENE.getRenderingContext().framesPerSec() #frames per second
-
-
-# check General scripts config key for default behaviors
-_VERBOSE = True
 
 def addEvent(evName = "NO_NAME"):
     global _GUI_EVENTS
@@ -161,12 +177,6 @@ def event(evt, val):
     if evt == Draw.ESCKEY:
         exitGUI()
 
-def updateConfig():
-    global _CONFIG
-    reload(Config)
-    Config.load()
-    _CONFIG = Config._CONFIG
-
 def openFileSelector():
     nifFilePath = sys.sep.join((_CONFIG["NIF_IMPORT_PATH"], _CONFIG["NIF_IMPORT_FILE"]))
     Blender.Window.FileSelector(selectFile, "import .nif", nifFilePath)
@@ -178,8 +188,7 @@ def selectFile(nifFilePath):
     else:
         _CONFIG["NIF_IMPORT_PATH"] = sys.dirname(nifFilePath)
         _CONFIG["NIF_IMPORT_FILE"] = sys.basename(nifFilePath)
-        Config._CONFIG = _CONFIG
-        Config.save()
+        saveConfig()
     exitGUI()
     openGUI()
 
@@ -187,28 +196,22 @@ def openGUI():
     """
     Opens the import GUI
     """
-    global _CONFIG
-    reload(Config)
-    Config.load()
-    _CONFIG = Config._CONFIG
+    loadConfig()
     Draw.Register(gui, event, buttonEvent)
 
 def exitGUI():
     """
     Closes the config GUI
     """
-    global _CONFIG
-    Config._CONFIG = _CONFIG
-    Config.save()
+    saveConfig()
     Draw.Exit()
     Draw.Redraw(1)
 
 
 # Little wrapper for debug messages
 def msg(message='-', level=2):
-    if _VERBOSE:
-        if level <= _MSG_LEVEL:
-            print message
+    if _VERBOSITY and level <= _VERBOSITY:
+        print message
             
 
 
@@ -506,7 +509,7 @@ def fb_global_matrix(niBlock):
 # Decompose Blender transform matrix as a scale, rotation matrix, and translation vector
 def decompose_srt(m):
     # get scale components
-    _EPSILON = _CONFIG["EPSILON"]
+    #_EPSILON = _CONFIG["EPSILON"]
     b_scale_rot = m.rotationPart()
     b_scale_rot_T = Matrix(b_scale_rot)
     b_scale_rot_T.transpose()
@@ -739,7 +742,7 @@ def fb_armature(niArmature):
 # Adds a bone to the armature in edit mode.
 def fb_bone(niBlock, b_armature, b_armatureData, niArmature):
     global _BONES_EXTRA_MATRIX, _BONE_CORRECTION_MATRICES
-    _EPSILON = _CONFIG["EPSILON"]
+    #_EPSILON = _CONFIG["EPSILON"]
     armature_matrix_inverse = niArmature._invMatrix
     # bone length for nubs and zero length bones
     nub_length = 5.0
@@ -974,7 +977,7 @@ def fb_texture(niSourceTexture):
 # Creates and returns a material
 def fb_material(matProperty, textProperty, alphaProperty, specProperty):
     global _MATERIALS
-    _EPSILON = _CONFIG["EPSILON"]
+    #_EPSILON = _CONFIG["EPSILON"]
     # First check if material has been created before.
     try:
         material = _MATERIALS[(matProperty, textProperty, alphaProperty, specProperty)]
@@ -1539,7 +1542,7 @@ def set_parents(niBlock):
 # also stores the bind position matrix for correct import of skinning info
 def mark_armatures_bones(niBlock):
     global _ARMATURES 
-    _EPSILON = _CONFIG["EPSILON"]
+    #_EPSILON = _CONFIG["EPSILON"]
     # search for all NiTriShape or NiTriStrips blocks...
     if isinstance(niBlock, NifFormat.NiTriBasedGeom):
         # yes, we found one, get its skin instance

@@ -37,12 +37,35 @@ _NIF_BLOCK_NAMES = [] # keeps track of block names, to make sure they are unique
 _BONES_EXTRA_MATRIX_INV = {}
 
 
-# configuration default values
-_CONFIG = {}
-_VERBOSE = True # Enables debug output
-_EXPORT_SCALE_CORRECTION = 10.0
+#
+# Configuration
+#
 
-APPLY_SCALE = True
+_CONFIG = {}
+
+# Retrieves the stored configuration
+def loadConfig():
+    global _CONFIG
+    reload(Config)
+    Config.load()
+    _CONFIG = Config._CONFIG
+    
+# Stores the altered configuration
+def saveConfig():
+    Config._CONFIG = _CONFIG
+    Config.save()
+    
+loadConfig()
+
+# Sets the amount of generated debug output
+_VERBOSITY = _CONFIG["VERBOSITY"]
+
+
+# Little wrapper for debug messages
+def msg(message='-', level=2):
+    if _VERBOSITY and level <= _VERBOSITY:
+        print message
+
 FORCE_DDS = False
 STRIP_TEXPATH = False
 EXPORT_DIR = ''
@@ -97,8 +120,7 @@ def gui():
     if not Blender.sys.exists(_CONFIG["NIF_EXPORT_PATH"]):
         # if export path does not exist, fall back on blender program path
         _CONFIG["NIF_EXPORT_PATH"] = Blender.sys.dirname(Blender.sys.progname)
-        Config._CONFIG = _CONFIG
-        Config.save()
+        saveConfig()
     nifFilePath = sys.sep.join((_CONFIG["NIF_EXPORT_PATH"], _CONFIG["NIF_EXPORT_FILE"]))
     E["NIF_FILE_PATH"]       = Draw.String("",              addEvent("NIF_FILE_PATH"),  50, H-150, 390, 20, nifFilePath, 350, '')
     E["BROWSE_FILE_PATH"]    = Draw.PushButton('...',       addEvent("BROWSE_FILE_PATH"), 440, H-150, 30, 20, 'Browse')
@@ -133,12 +155,6 @@ def buttonEvent(evt):
         #Blender.Window.FileSelector(selectFile, "Export .nif", nifFilePath)
         openFileSelector()
 
-def updateConfig():
-    global _CONFIG
-    reload(Config)
-    Config.load()
-    _CONFIG = Config._CONFIG
-
 def openFileSelector():
     nifFilePath = sys.sep.join((_CONFIG["NIF_EXPORT_PATH"], _CONFIG["NIF_EXPORT_FILE"]))
     Blender.Window.FileSelector(selectFile, "Export .nif", nifFilePath)
@@ -150,8 +166,7 @@ def selectFile(nifFilePath):
     else:
         _CONFIG["NIF_EXPORT_PATH"] = sys.dirname(nifFilePath)
         _CONFIG["NIF_EXPORT_FILE"] = sys.basename(nifFilePath)
-        Config._CONFIG = _CONFIG
-        Config.save()
+        saveConfig()
     exitGUI()
     openGUI()
 
@@ -169,24 +184,16 @@ def openGUI():
     """
     Opens the import GUI
     """
-    global _CONFIG
-    reload(Config)
-    Config.load()
-    _CONFIG = Config._CONFIG
+    loadConfig()
     Draw.Register(gui, event, buttonEvent)
 
 def exitGUI():
     """
     Closes the config GUI
     """
-    global _CONFIG
-    Config._CONFIG = _CONFIG
-    Config.save()
+    saveConfig()
     Draw.Exit()
     Draw.Redraw(1)
-
-
-
 
 #
 # A simple custom exception class.
@@ -336,7 +343,7 @@ and turn off envelopes."""%ob.getName()
         root_block = export_node(None, 'none', None, root_name)
         
         # export objects
-        if _VERBOSE: print "Exporting objects"
+        msg("Exporting objects")
         for root_object in root_objects:
             # export the root objects as a NiNodes; their children are exported as well
             # note that localspace = worldspace, because root objects have no parents
@@ -346,7 +353,7 @@ and turn off envelopes."""%ob.getName()
         #-----------------
         
         # if we exported animations, but no animation groups are defined, define a default animation group
-        if _VERBOSE: print "Checking animation groups"
+        msg("Checking animation groups")
         if (animtxt == None):
             has_controllers = False
             for block in _NIF_BLOCKS:
@@ -355,7 +362,7 @@ and turn off envelopes."""%ob.getName()
                         has_controllers = True
                         break
             if has_controllers:
-                if _VERBOSE: print "Defining default animation group"
+                msg("Defining default animation group")
                 # get frame start and frame end
                 scn = Blender.Scene.GetCurrent()
                 context = scn.getRenderingContext()
@@ -367,7 +374,7 @@ and turn off envelopes."""%ob.getName()
 
         # animations without keyframe animations crash the TESCS
         # if we are in that situation, add a trivial keyframe animation
-        if _VERBOSE: print "Checking controllers"
+        msg("Checking controllers")
         if (animtxt):
             has_keyframecontrollers = False
             for block in _NIF_BLOCKS:
@@ -375,7 +382,7 @@ and turn off envelopes."""%ob.getName()
                     has_keyframecontrollers = True
                     break
             if not has_keyframecontrollers:
-                if _VERBOSE: print "Defining dummy keyframe controller"
+                msg("Defining dummy keyframe controller")
                 # add a trivial keyframe controller on the scene root
                 export_keyframe(None, 'localspace', root_block)
         
@@ -414,12 +421,13 @@ and turn off envelopes."""%ob.getName()
                     skelroot.children[i] = child
 
         # apply scale
-        if APPLY_SCALE:
+        _EXPORT_SCALE_CORRECTION = _CONFIG["EXPORT_SCALE_CORRECTION"]
+        if abs(_EXPORT_SCALE_CORRECTION - 1.0) > NifFormat._EPSILON:
             root_block.applyScale(_EXPORT_SCALE_CORRECTION)
 
         # write the file:
         #----------------
-        if _VERBOSE: print "Writing NIF file"
+        msg("Writing NIF file")
         Blender.Window.DrawProgressBar(0.66, "Writing NIF file(s)")
 
         # make sure we have the right file extension
@@ -493,7 +501,7 @@ and turn off envelopes."""%ob.getName()
 #   filename (either with or without extension)
 #
 def export_node(ob, space, parent_block, node_name):
-    if _VERBOSE: print "Exporting NiNode %s"%node_name
+    msg("Exporting NiNode %s"%node_name)
 
     # ob_type: determine the block type (None, 'Mesh', 'Empty' or 'Armature')
     # ob_ipo:  object animation ipo
@@ -624,7 +632,7 @@ def export_node(ob, space, parent_block, node_name):
 # 1 / SX = scale part of inverse(X)
 # so having inverse(X) around saves on calculations
 def export_keyframe(ipo, space, parent_block, bind_mat = None, extra_mat_inv = None):
-    if _VERBOSE: print "Exporting keyframe %s"%parent_block.name
+    msg("Exporting keyframe %s"%parent_block.name)
     # -> get keyframe information
     
     assert(space == 'localspace') # we don't support anything else (yet)
@@ -772,7 +780,7 @@ def export_keyframe(ipo, space, parent_block, bind_mat = None, extra_mat_inv = N
 
 
 def export_vcolprop(vertex_mode, lighting_mode):
-    if _VERBOSE: print "Exporting NiVertexColorProperty"
+    msg("Exporting NiVertexColorProperty")
     # create new vertex color property block
     vcolprop = create_block("NiVertexColorProperty")
     
@@ -790,7 +798,7 @@ def export_vcolprop(vertex_mode, lighting_mode):
 # parented to the root block
 #
 def export_animgroups(animtxt, block_parent):
-    if _VERBOSE: print "Exporting animation groups"
+    msg("Exporting animation groups")
     # -> get animation groups information
 
     # get frame start and frame end, and the number of frames per second
@@ -855,7 +863,7 @@ def export_animgroups(animtxt, block_parent):
 def export_sourcetexture(texture, filename = None):
     global _NIF_TEXTURES
     
-    if _VERBOSE: print "Exporting source texture %s"%texture.getName()
+    msg("Exporting source texture %s"%texture.getName())
     # texture must be of type IMAGE
     if ( texture.type != Blender.Texture.Types.IMAGE ):
         raise NIFExportError( "Error: Texture '%s' must be of type IMAGE"%texture.getName())
@@ -955,7 +963,7 @@ def export_sourcetexture(texture, filename = None):
 # returns exported NiFlipController
 # 
 def export_flipcontroller( fliptxt, texture, target, target_tex ):
-    if _VERBOSE: print "Exporting NiFlipController for texture %s"%texture.getName()
+    msg("Exporting NiFlipController for texture %s"%texture.getName())
     tlist = fliptxt.asLines()
 
     # create a NiFlipController
@@ -998,7 +1006,7 @@ def export_flipcontroller( fliptxt, texture, target, target_tex ):
 # should be exported as a single mesh.
 # 
 def export_trishapes(ob, space, parent_block, trishape_name = None):
-    if _VERBOSE: print "Exporting NiTriShapes for %s"%ob.getName()
+    msg("Exporting NiTriShapes for %s"%ob.getName())
     assert(ob.getType() == 'Mesh')
 
     # get mesh from ob
@@ -1610,7 +1618,7 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                         if not added:
                             vert_weights[vert_index] = 1.0
                     if vert_weights:
-                        if _VERBOSE: print "some vertices had no vertex weights, they will be attached to a bone nub:", vert_weights.keys()
+                        msg("some vertices had no vertex weights, they will be attached to a bone nub:", vert_weights.keys())
                         # create bone NiNode for armature
                         arm_bone_block = NifFormat.NiNode()
                         arm_bone_block.name = get_unique_name(armaturename)
@@ -1634,7 +1642,7 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                             skinbonedata.vertexWeights[i].index = vert_index
                             skinbonedata.vertexWeights[i].weight = vert_weight
                     if NIF_VERSION >= 0x04020100:
-                        if _VERBOSE: print "creating 'NiSkinPartition'"
+                        msg("creating 'NiSkinPartition'")
                         # 18 bones per partition for oblivion, 4 bones per partition for civ4
                         maxbpp = 18 if NIF_VERSION == 0x14000005 else 4
                         lostweight = trishape.updateSkinPartition(maxbonesperpartition = maxbpp, maxbonespervertex = 4)
@@ -1702,7 +1710,7 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                             curve = keyipo.getCurves()[keyblocknum-1]
                         # base key has no curve all other keys should have one
                         if curve:
-                            if _VERBOSE: print "exporting morph curve %i"%keyblocknum
+                            msg("exporting morph curve %i"%keyblocknum)
                             if ( curve.getExtrapolation() == "Constant" ):
                                 ctrlFlags = 0x000c
                             elif ( curve.getExtrapolation() == "Cyclic" ):
@@ -1726,7 +1734,7 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                     morphctrl["Stop Time"] = ctrlStop
 
 def export_bones(arm, parent_block):
-    if _VERBOSE: print "Exporting bones for armature %s"%arm.getName()
+    msg("Exporting bones for armature %s"%arm.getName())
     # the armature was already exported as a NiNode
     # now we must export the armature's bones
     assert( arm.getType() == 'Armature' )
@@ -1754,7 +1762,7 @@ def export_bones(arm, parent_block):
     # ok, let's create the bone NiNode blocks
     for bone in bones.values():
         # create a new block for this bone
-        if _VERBOSE: print "Exporting NiNode for bone %s"%bone.name
+        msg("Exporting NiNode for bone %s"%bone.name)
         node = create_block("NiNode")
         bones_node[bone.name] = node # doing this now makes linkage very easy in second run
 
@@ -1779,7 +1787,7 @@ def export_bones(arm, parent_block):
     for bone in bones.values():
         # link the bone's children to the bone
         if bone.children:
-            if _VERBOSE: print "Linking children of bone %s"%bone.name
+            msg("Linking children of bone %s"%bone.name)
             for child in bone.children:
                 if child.parent.name == bone.name: # bone.children returns also grandchildren etc... we only want immediate children of course
                     bones_node[bone.name].addChild(bones_node[child.name])
@@ -2027,7 +2035,7 @@ def get_object_restmatrix(ob, space, extra = True):
 #
 def create_block(blocktype):
     global _NIF_BLOCKS
-    if _VERBOSE: print "creating '%s'"%blocktype # DEBUG
+    msg("creating '%s'"%blocktype) # DEBUG
     try:
         block = getattr(NifFormat, blocktype)()
     except AttributeError:

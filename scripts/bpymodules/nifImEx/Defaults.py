@@ -7,30 +7,30 @@ except TypeError:
 
 # This "module" holds all the fallback values for the script configuration. This
 # makes sure the configuration will never be invalid
-_NIF_IMPORT_PATH = "%sMeshes" % (nifDataPath)
+_CFG_NIF_IMPORT_PATH = "%sMeshes" % (nifDataPath)
 # The 'r' before the string definition sets this as "raw". This means that escape
 # sequences (those preceded by '\' won't be interpreted. Handy to set paths in
 # Win32, and let's face it, almost all the script users will be Win32 users.
-_NIF_EXPORT_PATH = "%sMeshes" % (nifDataPath)
+_CFG_NIF_EXPORT_PATH = "%sMeshes" % (nifDataPath)
 # These next two are selected in the import and export screens, not in the config
-_NIF_IMPORT_FILE = ""
-_NIF_EXPORT_FILE = "export.nif"
-_REALIGN_BONES = True
-_IMPORT_ANIMATION = True
-_IMPORT_SCALE_CORRECTION = 0.1
-_EXPORT_SCALE_CORRECTION = 1.0 / _IMPORT_SCALE_CORRECTION
-_BASE_TEXTURE_FOLDER = "%sTextures" % (nifDataPath)
-_TEXTURE_SEARCH_PATH = [_BASE_TEXTURE_FOLDER]
-_EXPORT_VERSION = '20.0.0.5'
-_EXPORT_TEXTURE_PATH = "R"
+_CFG_NIF_IMPORT_FILE = ""
+_CFG_NIF_EXPORT_FILE = "export.nif"
+_CFG_REALIGN_BONES = True
+_CFG_IMPORT_ANIMATION = True
+_CFG_IMPORT_SCALE_CORRECTION = 0.1
+_CFG_EXPORT_SCALE_CORRECTION = 1.0 / _CFG_IMPORT_SCALE_CORRECTION
+_CFG_BASE_TEXTURE_FOLDER = "%sTextures" % (nifDataPath)
+_CFG_TEXTURE_SEARCH_PATH = [_CFG_BASE_TEXTURE_FOLDER]
+_CFG_EXPORT_VERSION = '20.0.0.5'
+_CFG_EXPORT_TEXTURE_PATH = "R"
 # (R)elative to NIF,
 # (F)ull,
 # (N)one (strip folders),
 # Relative to (B)ase texture folder
-_EPSILON = 0.005 # used for checking equality with floats
-_VERBOSE = True # enables debug output
+
+# the following items are used for dtermining internal
+_CFG_EPSILON = 0.005 # used for checking equality with floats
+_CFG_VERBOSITY = 3 # verbosity level, determines how much debug output will be generated
 
 
-# Not really implemented yet... might have to call a command line tool. Hence..
-# _CONVERT_DDS = True
-# _CONVERTER_COMMAND_LINE = ... using wildcards for filenames and such.
+
