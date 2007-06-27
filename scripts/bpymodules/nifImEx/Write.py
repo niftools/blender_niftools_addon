@@ -1641,6 +1641,10 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                         for i, (vert_index, vert_weight) in enumerate(vert_weights.iteritems()):
                             skinbonedata.vertexWeights[i].index = vert_index
                             skinbonedata.vertexWeights[i].weight = vert_weight
+
+                    # calculate center and radius for each skin bone data block
+                    trishape.updateSkinCenterRadius()
+
                     if NIF_VERSION >= 0x04020100:
                         msg("creating 'NiSkinPartition'")
                         # 18 bones per partition for oblivion, 4 bones per partition for civ4
