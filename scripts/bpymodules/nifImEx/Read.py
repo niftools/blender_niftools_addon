@@ -884,8 +884,8 @@ def fb_texture(niSourceTexture):
         if niSourceTexture.useExternal:
             # the texture uses an external image file
             fn = niSourceTexture.fileName
-            fn.replace( '\\', Blender.sys.sep )
-            fn.replace( '/', Blender.sys.sep )
+            fn = fn.replace( '\\', Blender.sys.sep )
+            fn = fn.replace( '/', Blender.sys.sep )
             # go searching for it
             textureFile = None
             searchPathList = [_CONFIG["NIF_IMPORT_PATH"], _CONFIG["BASE_TEXTURE_FOLDER"]] + _CONFIG["TEXTURE_SEARCH_PATH"]
@@ -894,8 +894,8 @@ def fb_texture(niSourceTexture):
             if meshes_index != -1:
                 searchPathList.append(_CONFIG["NIF_IMPORT_PATH"][:meshes_index] + 'textures')
             for texdir in searchPathList:
-                texdir.replace( '\\', Blender.sys.sep )
-                texdir.replace( '/', Blender.sys.sep )
+                texdir = texdir.replace( '\\', Blender.sys.sep )
+                texdir = texdir.replace( '/', Blender.sys.sep )
                  # now a little trick, to satisfy many Morrowind mods
                 if (fn[:9].lower() == 'textures' + Blender.sys.sep) and (texdir[-9:].lower() == Blender.sys.sep + 'textures'):
                     tex = Blender.sys.join( texdir, fn[9:] ) # strip one of the two 'textures' from the path
