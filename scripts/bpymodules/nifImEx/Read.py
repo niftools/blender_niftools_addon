@@ -58,7 +58,7 @@ _GUI_EVENTS = []
 
 _LOGO_PATH = sys.sep.join((Blender.Get('scriptsdir'), "bpymodules", "nifImEx", "niftools_logo.png"))
 _LOGO_IMAGE = Blender.Image.Load(_LOGO_PATH)
-_SCRIPT_VERSION = "1.9.0a"
+_SCRIPT_VERSION = "2.0"
 _BLOCK_COUNT = 0
 _READ_PROGRESS = 0.0
 _BLOCKS_READ = 0.0
@@ -913,7 +913,7 @@ def fb_texture(niSourceTexture):
                         del dummy
                         break
                     except:
-                        del b_image # not supported, delete image object
+                        b_image = None # not supported, delete image object
                 # file format is not supported or file was not found, therefore
                 # we try to load alternative texture
                 base=tex[:-4]
@@ -928,7 +928,7 @@ def fb_texture(niSourceTexture):
                             del dummy
                             break
                         except:
-                            del b_image # not supported, delete image object
+                            b_image = None # not supported, delete image object
             if b_image == None:
                 msg("Texture %s not found and no alternate available" % fn, 2)
                 b_image = Blender.Image.New(tex, 1, 1, 24) # create a stub
