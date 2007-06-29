@@ -940,12 +940,12 @@ def fb_texture(niSourceTexture):
             niPixelData = niSourceTexture.pixelData
             
             # we only load the first mipmap
-            width = iPixelData.mipmap[0].width
-            height = iPixelData.mipmap[0].height
+            width = niPixelData.mipmaps[0].width
+            height = niPixelData.mipmaps[0].height
             
-            if niPixelData.pixelFormat == 0:
+            if niPixelData.pixelFormat == NifFormat.PixelFormat.PX_FMT_RGBA8:
                 bpp = 24
-            elif niPixelData.pixelFormat == 1:
+            elif niPixelData.pixelFormat == NifFormat.PixelFormat.PX_FMT_RGB8:
                 bpp = 32
             else:
                 bpp = None
@@ -953,12 +953,20 @@ def fb_texture(niSourceTexture):
             if bpp != None:
                 b_image = Blender.Image.New( "TexImg", width, height, bpp )
                 
-                pixels = iPixelData.GetColors()
-                for x in range( width ):
-                    Blender.Window.DrawProgressBar( float( x + 1 ) / float( width ), "Image Extraction")
-                    for y in range( height ):
-                        pix = pixels[y*height+x]
-                        b_image.setPixelF( x, (height-1)-y, ( pix.r, pix.g, pix.b, pix.a ) )
+                pixels = niPixelData.pixelData.data
+                pixeloffset = 0
+                a = 0xff
+                for y in xrange( height ):
+                    Blender.Window.DrawProgressBar( float( y + 1 ) / float( height ), "Image Extraction")
+                    for x in xrange( width ):
+                        # TODO delegate color extraction to generator in PyFFI/NIF
+                        r = pixels[pixeloffset]
+                        g = pixels[pixeloffset+1]
+                        b = pixels[pixeloffset+2]
+                        if bpp == 32:
+                            a = pixels[pixeloffset+3]
+                        b_image.setPixelI( x, (height-1)-y, ( r, g, b, a ) )
+                        pixeloffset += bpp/8
         
         if b_image != None:
             # create a texture using the loaded image
@@ -970,7 +978,7 @@ def fb_texture(niSourceTexture):
             _TEXTURES[niSourceTexture] = b_texture
             return b_texture
         else:
-            _TEXTURES[ texsource_hash(niSourceTexture) ] = None
+            _TEXTURES[niSourceTexture] = None
             return None
     return None
 
