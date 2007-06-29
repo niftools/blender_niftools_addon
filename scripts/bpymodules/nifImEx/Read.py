@@ -949,7 +949,9 @@ def fb_texture(niSourceTexture):
                 bpp = 32
             else:
                 bpp = None
-            
+
+            if bpp == None: msg("unknown pixel format (%i), cannot extract texture"%niPixelData.pixelFormat, 1)
+
             if bpp != None:
                 b_image = Blender.Image.New( "TexImg", width, height, bpp )
                 
