@@ -158,25 +158,26 @@ def gui():
         V = 50
         HH = H
         j = 0
+        MAXJ = 7
         for i, game in enumerate(games_list):
-            if j >= 10:
+            if j >= MAXJ:
                 H = HH
                 j = 0
                 V += 150
-            state = (_CONFIG["EXPORT_VERSION"].lower() == game.lower())
-            E["GAME_%s"%game.upper()] = Draw.Toggle(game, addEvent("GAME_%s"%game.upper()), V, H-j*20, 150, 20, state)
+            state = (_CONFIG["EXPORT_VERSION"] == game)
+            E["GAME_%s"%game.upper()] = Draw.Toggle(game, addEvent("GAME_%s"%game), V, H-j*20, 150, 20, state)
             j += 1
         j = 0
         V += 160
         for i, version in enumerate(versions_list):
-            if j >= 10:
+            if j >= MAXJ:
                 H = HH
                 j = 0
-                V += 80
-            state = (_CONFIG["EXPORT_VERSION"].lower() == version.lower())
-            E["VERSION_%s"%game.upper()] = Draw.Toggle(version, addEvent("VERSION_%s"%game.upper()), V, H-j*20, 80, 20, state)
+                V += 70
+            state = (_CONFIG["EXPORT_VERSION"] == version)
+            E["VERSION_%s"%version] = Draw.Toggle(version, addEvent("VERSION_%s"%version), V, H-j*20, 70, 20, state)
             j += 1
-        H = HH - 20 - 20*min(10, max(len(NifFormat.versions), len(NifFormat.games)))
+        H = HH - 20 - 20*min(MAXJ, max(len(NifFormat.versions), len(NifFormat.games)))
 
     H -= 20 # leave some space
     
@@ -236,6 +237,10 @@ def buttonEvent(evt):
             del _CONFIG["TEXTURE_SEARCH_PATH"][_IDX_TEXPATH]
         if _IDX_TEXPATH > 0:
             _IDX_TEXPATH-=1
+    elif evName[:5] == "GAME_":
+        _CONFIG["EXPORT_VERSION"] = evName[5:]
+    elif evName[:8] == "VERSION_":
+        _CONFIG["EXPORT_VERSION"] = evName[8:]
     Draw.Redraw(1)
 
 def event(evt, val):
