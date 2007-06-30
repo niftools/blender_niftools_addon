@@ -54,7 +54,7 @@ def loadConfig():
 def saveConfig():
     Config._CONFIG = _CONFIG
     Config.save()
-    
+
 loadConfig()
 
 # Sets the amount of generated debug output
@@ -96,104 +96,19 @@ _NIF_VERSION_DICT = {}
 
 
 
-def addEvent(evName = "NO_NAME"):
-    global _GUI_EVENTS
-    eventId = len(_GUI_EVENTS)
-    if eventId >= 16383:
-        raise RuntimeError("Maximum number of events exceeded")
-    _GUI_EVENTS.append(evName)
-    return eventId
-
-    
-def gui():
-    global _GUI_ELEMENTS, _GUI_EVENTS, _CONFIG, _LOGO_IMAGE, _WINDOW_SIZE
-    del _GUI_EVENTS[:]
-    # These are to save me some typing
-    H = Blender.Window.GetAreaSize()[1]
-    E = {}
-    # Draw NifTools logo
-    BGL.glEnable(BGL.GL_BLEND ) # enable alpha blending
-    # The odd scale and clip values seem necessary to avoid image artifacts
-    Draw.Image(_LOGO_IMAGE, 50.0, H-100.0, 1.0001, 1.0001)
-    #Draw.Image(logoImg, 50, H-100, 1.0, 1.0, 1.0, 0)
-    # Draw.String(name, event, x, y, width, height, initial, length, tooltip=None)
-    if not Blender.sys.exists(_CONFIG["NIF_EXPORT_PATH"]):
-        # if export path does not exist, fall back on blender program path
-        _CONFIG["NIF_EXPORT_PATH"] = Blender.sys.dirname(Blender.sys.progname)
-        saveConfig()
-    nifFilePath = sys.sep.join((_CONFIG["NIF_EXPORT_PATH"], _CONFIG["NIF_EXPORT_FILE"]))
-    E["NIF_FILE_PATH"]       = Draw.String("",              addEvent("NIF_FILE_PATH"),  50, H-150, 390, 20, nifFilePath, 350, '')
-    E["BROWSE_FILE_PATH"]    = Draw.PushButton('...',       addEvent("BROWSE_FILE_PATH"), 440, H-150, 30, 20, 'Browse')
-    E["ADVANCED"]            = Draw.PushButton('Advanced',  addEvent("ADVANCED"), 410, H-225, 100, 20)
-    E["CANCEL"]              = Draw.PushButton('Cancel',    addEvent("CANCEL"), 160, H-225, 100, 20)
-    E["EXPORT"]              = Draw.PushButton('Export',    addEvent("EXPORT"),  50, H-225, 100, 20)
-    _GUI_ELEMENTS = E
-    Draw.Redraw(1)
-
-def buttonEvent(evt):
-    """
-    Event handler for buttons
-    """
-    global _CONFIG, _GUI_EVENTS
-    evName = _GUI_EVENTS[evt]
-    
-    if evName == "EXPORT":
-        # import and close
-        exitGUI() #closes the GUI
-        nifFilePath = sys.sep.join((_CONFIG["NIF_EXPORT_PATH"], _CONFIG["NIF_EXPORT_FILE"]))
-        export_nif(nifFilePath)
-    elif  evName == "CANCEL":
-        # cancel
-        exitGUI()
-    elif  evName == "ADVANCED":
-        # advanced
-        exitGUI()
-        Config.openGUI("Export")
-    elif evName == "BROWSE_FILE_PATH":
-        # browse file
-        #nifFilePath = sys.sep.join((_CONFIG["NIF_EXPORT_PATH"], _CONFIG["NIF_EXPORT_FILE"]))
-        #Blender.Window.FileSelector(selectFile, "Export .nif", nifFilePath)
-        openFileSelector()
-
 def openFileSelector():
-    nifFilePath = sys.sep.join((_CONFIG["NIF_EXPORT_PATH"], _CONFIG["NIF_EXPORT_FILE"]))
-    Blender.Window.FileSelector(selectFile, "Export .nif", nifFilePath)
+    Blender.Window.FileSelector(selectFile, "Export .nif", _CONFIG["NIF_EXPORT_FILE"])
 
-def selectFile(nifFilePath):
+def selectFile(nifFile):
     global _CONFIG
-    if nifFilePath == '':
+    if nifFile == '':
         Draw.PupMenu('No file name selected')
-    else:
-        _CONFIG["NIF_EXPORT_PATH"] = sys.dirname(nifFilePath)
-        _CONFIG["NIF_EXPORT_FILE"] = sys.basename(nifFilePath)
-        saveConfig()
-    exitGUI()
-    openGUI()
-
-
-
-def event(evt, val):
-    """
-    Event handler for GUI elements
-    """
-    #print  "event(%i,%i)"%(arg1,arg2)
-    if evt == Draw.ESCKEY:
-        exitGUI()
-
-def openGUI():
-    """
-    Opens the import GUI
-    """
-    loadConfig()
-    Draw.Register(gui, event, buttonEvent)
-
-def exitGUI():
-    """
-    Closes the config GUI
-    """
+        raise ValueError('No file name selected')
+    _CONFIG["NIF_EXPORT_FILE"] = nifFile
     saveConfig()
-    Draw.Exit()
-    Draw.Redraw(1)
+    Config.openGUI("Export") # calls Write.nif_export on Config.exitGUI()
+
+
 
 #
 # A simple custom exception class.

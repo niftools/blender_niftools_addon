@@ -4,6 +4,7 @@ import sys, os
 
 import Read, Write, Defaults
 from Blender import Draw, BGL, Registry
+from math import log
 
 # clears the console window
 if sys.platform in ('linux-i386','linux2'):
@@ -69,6 +70,10 @@ def addTexturePath(nifTexturePath):
             _CONFIG["TEXTURE_SEARCH_PATH"].append(nifTexturePath)
         _IDX_TEXPATH = _CONFIG["TEXTURE_SEARCH_PATH"].index(nifTexturePath)
 
+def updateScale(evt, val):
+    _CONFIG["EXPORT_SCALE_CORRECTION"] = 10 ** val
+    _CONFIG["IMPORT_SCALE_CORRECTION"] = 1.0 / _CONFIG["EXPORT_SCALE_CORRECTION"]
+
 
 
 def addEvent(evName = "NO_NAME"):
@@ -86,9 +91,11 @@ def guiText(str = "", xpos = 0, ypos = 0):
     BGL.glRasterPos2i( xpos, ypos)
     Draw.Text(str)
 
+
 def gui():
     global _GUI_ELEMENTS, _CONFIG, _IDX_TEXPATH, _GUI_EVENTS
     del _GUI_EVENTS[:]
+
     # These are to save me some typing
     #W = _WINDOW_SIZE[0]
     H = Blender.Window.GetAreaSize()[1]
@@ -105,27 +112,46 @@ def gui():
     
     
     # IMPORTANT: Don't start dictionary keys with an underscore, the Registry module doesn't like that, apparently
-    # Draw.String(name, event, x, y, width, height, initial, length, tooltip=None) 
-    E["NIF_IMPORT_PATH"]        = Draw.String("",       addEvent("NIF_IMPORT_PATH"),     50, H- 75, 390, 20, _CONFIG["NIF_IMPORT_PATH"],        390, "export path")
-    E["BROWSE_IMPORT_PATH"]     = Draw.PushButton('...',addEvent("BROWSE_IMPORT_PATH"), 440, H- 75,  30, 20)
-    E["NIF_EXPORT_PATH"]        = Draw.String("",       addEvent("NIF_EXPORT_PATH"),     50, H-100, 390, 20, _CONFIG["NIF_EXPORT_PATH"],        390, "import path")
-    E["BROWSE_EXPORT_PATH"]     = Draw.PushButton('...',addEvent("BROWSE_EXPORT_PATH"), 440, H-100,  30, 20)
-    E["BASE_TEXTURE_FOLDER"]    = Draw.String("",       addEvent("BASE_TEXTURE_FOLDER"), 50, H-125, 390, 20, _CONFIG["BASE_TEXTURE_FOLDER"],    390, "import path")
-    E["BROWSE_TEXBASE"]         = Draw.PushButton('...',addEvent("BROWSE_TEXBASE"),     440, H-125,  30, 20)
-    E["TEXTURE_SEARCH_PATH"]    = Draw.String("",       addEvent("TEXTURE_SEARCH_PATH"), 50, H-150, 390, 20, texpathString,                     390, "texture search path")
-    E["BROWSE_TEXPATH"]         = Draw.PushButton('...',addEvent("BROWSE_TEXPATH"),     440, H-150,  30, 20)
-    E["TEXPATH_ITEM"]           = Draw.String("",       addEvent("TEXPATH_ITEM"),        50, H-170, 360, 20, texpathItemString,                 290)
-    E["TEXPATH_PREV"]           = Draw.PushButton('<',  addEvent("TEXPATH_PREV"),       410, H-170,  20, 20)
-    E["TEXPATH_NEXT"]           = Draw.PushButton('>',  addEvent("TEXPATH_NEXT"),       430, H-170,  20, 20)
-    E["TEXPATH_REMOVE"]         = Draw.PushButton('X',  addEvent("TEXPATH_REMOVE"),     450, H-170,  20, 20)
-    E["REALIGN_BONES"]          = Draw.Toggle(" ",      addEvent("REALIGN_BONES"),       50, H-200,  20, 20, _CONFIG["REALIGN_BONES"])
-    guiText("try to realign bones", 75, H-195)
-    E["IMPORT_ANIMATION"]       = Draw.Toggle(" ",      addEvent("IMPORT_ANIMATION"),       50, H-220,  20, 20, _CONFIG["IMPORT_ANIMATION"])
-    guiText("import animation (if present)", 75, H-215)
+    # Draw.String(name, event, x, y, width, height, initial, length, tooltip=None)
+
+    # common options
+    guiText("How many nif units is one blender unit?", 50, H-75)
+    guiText("(log scale: -1 is 0.1, 0 is 1, +1 is 10, +2 is 100, ...)", 50, H-90)
+    E["LOG_SCALE"] = Draw.Slider("", addEvent("LOG_SCALE"), 50, H-125, 390, 20, log(_CONFIG["EXPORT_SCALE_CORRECTION"])/log(10), -3, 3, 0, "scale", updateScale)
+
+    H -= 155
+
+    # import-only options
+    if _BACK_TARGET == "Import":
+        H += 75 # TODO shift values below...
+        E["NIF_IMPORT_PATH"]        = Draw.String("",       addEvent("NIF_IMPORT_PATH"),     50, H- 75, 390, 20, _CONFIG["NIF_IMPORT_PATH"],        390, "import path")
+        E["BROWSE_IMPORT_PATH"]     = Draw.PushButton('...',addEvent("BROWSE_IMPORT_PATH"), 440, H- 75,  30, 20)
+        E["BASE_TEXTURE_FOLDER"]    = Draw.String("",       addEvent("BASE_TEXTURE_FOLDER"), 50, H-125, 390, 20, _CONFIG["BASE_TEXTURE_FOLDER"],    390, "base texture folder")
+        E["BROWSE_TEXBASE"]         = Draw.PushButton('...',addEvent("BROWSE_TEXBASE"),     440, H-125,  30, 20)
+        E["TEXTURE_SEARCH_PATH"]    = Draw.String("",       addEvent("TEXTURE_SEARCH_PATH"), 50, H-150, 390, 20, texpathString,                     390, "texture search path")
+        E["BROWSE_TEXPATH"]         = Draw.PushButton('...',addEvent("BROWSE_TEXPATH"),     440, H-150,  30, 20)
+        E["TEXPATH_ITEM"]           = Draw.String("",       addEvent("TEXPATH_ITEM"),        50, H-170, 360, 20, texpathItemString,                 290)
+        E["TEXPATH_PREV"]           = Draw.PushButton('<',  addEvent("TEXPATH_PREV"),       410, H-170,  20, 20)
+        E["TEXPATH_NEXT"]           = Draw.PushButton('>',  addEvent("TEXPATH_NEXT"),       430, H-170,  20, 20)
+        E["TEXPATH_REMOVE"]         = Draw.PushButton('X',  addEvent("TEXPATH_REMOVE"),     450, H-170,  20, 20)
+        E["REALIGN_BONES"]          = Draw.Toggle(" ",      addEvent("REALIGN_BONES"),       50, H-200,  20, 20, _CONFIG["REALIGN_BONES"])
+        guiText("try to realign bones", 75, H-195)
+        E["IMPORT_ANIMATION"]       = Draw.Toggle(" ",      addEvent("IMPORT_ANIMATION"),    50, H-220,  20, 20, _CONFIG["IMPORT_ANIMATION"])
+        guiText("import animation (if present)", 75, H-215)
+
+        H -= 245
+
+    # export-only options
+    if _BACK_TARGET == "Export":
+        #E["NIF_EXPORT_PATH"]        = Draw.String("",       addEvent("NIF_EXPORT_PATH"),     50, H-100, 390, 20, _CONFIG["NIF_EXPORT_PATH"],        390, "export path")
+        #E["BROWSE_EXPORT_PATH"]     = Draw.PushButton('...',addEvent("BROWSE_EXPORT_PATH"), 440, H-100,  30, 20)
+        pass
+
+    H -= 20 # leave some space
     
-    E["CANCEL"]                 = Draw.PushButton('cancel',addEvent("CANCEL"),  50, H-265, 100, 20)
-    E["OK"]                     = Draw.PushButton('ok',    addEvent("OK"),  50, H-290, 100, 20)
-    # Sets the GUI elements to a global var to avoid them going out of scope (cases segfaults)
+    E["CANCEL"]                 = Draw.PushButton('cancel',addEvent("CANCEL"),  50, H, 100, 20)
+    E["OK"]                     = Draw.PushButton('ok',    addEvent("OK"),  50, H-25, 100, 20)
+    # Sets the GUI elements to a global var to avoid them going out of scope (causes segfaults)
     _GUI_ELEMENTS = E
     Draw.Redraw(1)
 
@@ -134,14 +160,23 @@ def buttonEvent(evt):
     Event handler for buttons
     """
     global _GUI_EVENTS, _CONFIG, _CONFIG_BACK, _IDX_TEXPATH
-    evName = _GUI_EVENTS[evt]
+
+    try:
+        evName = _GUI_EVENTS[evt]
+    except IndexError:
+        evName = None
+
     if evName == "OK":
         save()
         exitGUI()
     elif evName == "CANCEL":
         _CONFIG = _CONFIG_BACK
         save()
-        exitGUI()
+        if _BACK_TARGET == "Import":
+            exitGUI()
+        else:
+            Draw.Exit()
+            return
     elif evName == "REALIGN_BONES":
         _CONFIG["REALIGN_BONES"] = not _CONFIG["REALIGN_BONES"]
     elif evName == "IMPORT_ANIMATION":
@@ -170,18 +205,24 @@ def buttonEvent(evt):
             del _CONFIG["TEXTURE_SEARCH_PATH"][_IDX_TEXPATH]
         if _IDX_TEXPATH > 0:
             _IDX_TEXPATH-=1
-    else:
-        None
     Draw.Redraw(1)
 
 def event(evt, val):
     """
     Event handler for GUI elements
     """
-    global _GUI_EVENTS
-    #print  "event(%i,%i)"%(arg1,arg2)
+    global _CONFIG, _CONFIG_BACK, _BACK_TARGET
+
     if evt == Draw.ESCKEY:
-        exitGUI()
+        _CONFIG = _CONFIG_BACK
+        save()
+        if _BACK_TARGET == "Import":
+            exitGUI()
+        else:
+            Draw.Exit()
+            return
+
+    Draw.Redraw(1)
 
 def openGUI(back_target=None):
     """
@@ -202,7 +243,7 @@ def exitGUI():
     if _BACK_TARGET == "Import":
         Read.openGUI()
     elif _BACK_TARGET == "Export":
-        Write.openGUI()
+        Write.export_nif(_CONFIG["NIF_EXPORT_FILE"])
 
 def save():
     """

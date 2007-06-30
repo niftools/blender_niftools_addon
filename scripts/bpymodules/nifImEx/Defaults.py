@@ -11,10 +11,15 @@ _CFG_NIF_IMPORT_PATH = "%sMeshes" % (nifDataPath)
 # The 'r' before the string definition sets this as "raw". This means that escape
 # sequences (those preceded by '\' won't be interpreted. Handy to set paths in
 # Win32, and let's face it, almost all the script users will be Win32 users.
-_CFG_NIF_EXPORT_PATH = "%sMeshes" % (nifDataPath)
 # These next two are selected in the import and export screens, not in the config
 _CFG_NIF_IMPORT_FILE = ""
-_CFG_NIF_EXPORT_FILE = "export.nif"
+
+oblpath = Blender.sys.join(nifDataPath, "meshes")
+if Blender.sys.exists(oblpath):
+    _CFG_NIF_EXPORT_FILE = Blender.sys.join(oblpath, "export.nif")
+else:
+    _CFG_NIF_EXPORT_FILE = Blender.sys.join(Blender.sys.dirname(Blender.sys.progname), "export.nif")
+
 _CFG_REALIGN_BONES = True
 _CFG_IMPORT_ANIMATION = True
 _CFG_IMPORT_SCALE_CORRECTION = 0.1
