@@ -57,27 +57,15 @@ def saveConfig():
 
 loadConfig()
 
-# Sets the amount of generated debug output
-_VERBOSITY = _CONFIG["VERBOSITY"]
-
-
 # Little wrapper for debug messages
 def msg(message='-', level=2):
-    if _VERBOSITY and level <= _VERBOSITY:
+    if _CONFIG["VERBOSITY"] and level <= _CONFIG["VERBOSITY"]:
         print message
 
 FORCE_DDS = False
 STRIP_TEXPATH = False
 EXPORT_DIR = ''
-NIF_VERSION_STR = '20.0.0.5'
-try:
-    NIF_VERSION = NifFormat.versions[NIF_VERSION_STR]
-except KeyError:
-    print 'Supported NIF versions:'
-    for vstr, vnum in sorted(NifFormat.versions.items(), key=lambda x: x[1]):
-        print vstr
-    Blender.Draw.PupMenu("ERROR%t|" + "Writing NIF version '%s' is not supported. See console for list of supported NIF versions, and set configuration accordingly."%NIF_VERSION_STR)
-    raise
+
 FLATTEN_SKINS = False
 ADD_BONE_NUB = False
 
@@ -92,7 +80,6 @@ _GUI_EVENTS = []
 _LOGO_PATH = sys.sep.join((Blender.Get('scriptsdir'),"bpymodules","nifImEx","niftools_logo.png"))
 _LOGO_IMAGE = Blender.Image.Load(_LOGO_PATH)
 _SCRIPT_VERSION = "2.0"
-_NIF_VERSION_DICT = {}
 
 
 
@@ -191,13 +178,24 @@ def get_full_name(blender_name):
 # Main export function.
 #
 def export_nif(filename):
+    global NIF_VERSION
+    loadConfig() # ensure config is up-to-date
+
     try: # catch NIFExportErrors
         
         # preparation:
         #--------------
-        print "NIFTools NIF export script version %s" % (_SCRIPT_VERSION)
+        print "NifTools NIF export script version %s" % (_SCRIPT_VERSION)
         Blender.Window.DrawProgressBar(0.0, "Preparing Export")
         
+        NIF_VERSION_STR = _CONFIG["EXPORT_VERSION"]
+        try:
+            NIF_VERSION = NifFormat.versions[NIF_VERSION_STR]
+            msg("Writing NIF version 0x%08X"%NIF_VERSION)
+        except KeyError:
+            NIF_VERSION = NifFormat.games[NIF_VERSION_STR][-1] # select highest nif version that the game supports
+            msg("Writing %s NIF (version 0x%08X)"%(NIF_VERSION_STR,NIF_VERSION))
+
         # armatures should not be in rest position
         for ob in Blender.Object.Get():
             if ob.getType() == 'Armature':
@@ -338,6 +336,7 @@ and turn off envelopes."""%ob.getName()
         # apply scale
         _EXPORT_SCALE_CORRECTION = _CONFIG["EXPORT_SCALE_CORRECTION"]
         if abs(_EXPORT_SCALE_CORRECTION - 1.0) > NifFormat._EPSILON:
+            msg("Applying scale correction %f"%_EXPORT_SCALE_CORRECTION)
             root_block.applyScale(_EXPORT_SCALE_CORRECTION)
 
         # write the file:

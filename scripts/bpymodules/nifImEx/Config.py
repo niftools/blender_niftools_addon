@@ -72,7 +72,7 @@ def addTexturePath(nifTexturePath):
         _IDX_TEXPATH = _CONFIG["TEXTURE_SEARCH_PATH"].index(nifTexturePath)
 
 def updateScale(evt, val):
-    _CONFIG["EXPORT_SCALE_CORRECTION"] = 10 ** val
+    _CONFIG["EXPORT_SCALE_CORRECTION"] = val
     _CONFIG["IMPORT_SCALE_CORRECTION"] = 1.0 / _CONFIG["EXPORT_SCALE_CORRECTION"]
 
 
@@ -118,14 +118,10 @@ def gui():
     H -= 75
 
     # common options
-    guiText("Scale correction (ignore the number on the left side of the slider)", 50, H)
-    if _CONFIG["EXPORT_SCALE_CORRECTION"] >= 1.0:
-        guiText("%7.2f nif units are %7.2f blender units"%(_CONFIG["EXPORT_SCALE_CORRECTION"],1.0), 50, H-15)
-    else:
-        guiText("%7.2f nif units are %7.2f blender units"%(1.0, _CONFIG["IMPORT_SCALE_CORRECTION"]), 50, H-15)
-    E["LOG_SCALE"] = Draw.Slider("", addEvent("LOG_SCALE"), 50, H-40, 390, 20, log(_CONFIG["EXPORT_SCALE_CORRECTION"])/log(10), -3, 3, 0, "scale", updateScale)
+    guiText("Scale correction", 50, H)
+    E["SCALE_CORRECTION"] = Draw.Slider("", addEvent("SCALE_CORRECTION"), 50, H-25, 390, 20, _CONFIG["EXPORT_SCALE_CORRECTION"], 0.01, 100, 0, "scale", updateScale)
 
-    H -= 80
+    H -= 50
 
     # import-only options
     if _BACK_TARGET == "Import":

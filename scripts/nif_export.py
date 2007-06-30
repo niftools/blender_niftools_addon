@@ -61,5 +61,6 @@ from nifImEx import Write
 reload(nifImEx.Write)
 
 #nifImEx.Write.openGUI()
-nifImEx.Write.loadConfig()
+#nifImEx.Write.loadConfig()
 nifImEx.Write.openFileSelector()
+
