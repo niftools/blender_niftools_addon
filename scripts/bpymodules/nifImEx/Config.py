@@ -5,6 +5,7 @@ import sys, os
 import Read, Write, Defaults
 from Blender import Draw, BGL, Registry
 from math import log
+from PyFFI.NIF import NifFormat
 
 # clears the console window
 if sys.platform in ('linux-i386','linux2'):
@@ -148,9 +149,34 @@ def gui():
 
     # export-only options
     if _BACK_TARGET == "Export":
+        games_list = sorted(NifFormat.games.keys())
+        versions_list = sorted(NifFormat.versions.keys(), key=lambda x: NifFormat.versions[x])
         #E["NIF_EXPORT_PATH"]        = Draw.String("",       addEvent("NIF_EXPORT_PATH"),     50, H-100, 390, 20, _CONFIG["NIF_EXPORT_PATH"],        390, "export path")
         #E["BROWSE_EXPORT_PATH"]     = Draw.PushButton('...',addEvent("BROWSE_EXPORT_PATH"), 440, H-100,  30, 20)
-        pass
+        guiText("Game or NIF version", 50, H)
+        H -= 30
+        V = 50
+        HH = H
+        j = 0
+        for i, game in enumerate(games_list):
+            if j >= 10:
+                H = HH
+                j = 0
+                V += 150
+            state = (_CONFIG["EXPORT_VERSION"].lower() == game.lower())
+            E["GAME_%s"%game.upper()] = Draw.Toggle(game, addEvent("GAME_%s"%game.upper()), V, H-j*20, 150, 20, state)
+            j += 1
+        j = 0
+        V += 160
+        for i, version in enumerate(versions_list):
+            if j >= 10:
+                H = HH
+                j = 0
+                V += 80
+            state = (_CONFIG["EXPORT_VERSION"].lower() == version.lower())
+            E["VERSION_%s"%game.upper()] = Draw.Toggle(version, addEvent("VERSION_%s"%game.upper()), V, H-j*20, 80, 20, state)
+            j += 1
+        H = HH - 20 - 20*min(10, max(len(NifFormat.versions), len(NifFormat.games)))
 
     H -= 20 # leave some space
     
