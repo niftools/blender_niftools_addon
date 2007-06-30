@@ -114,15 +114,17 @@ def gui():
     # IMPORTANT: Don't start dictionary keys with an underscore, the Registry module doesn't like that, apparently
     # Draw.String(name, event, x, y, width, height, initial, length, tooltip=None)
 
-    # common options
-    guiText("Scale correction (ignore the number on the left side of the slider)", 50, H-75)
-    if _CONFIG["EXPORT_SCALE_CORRECTION"] >= 1.0:
-        guiText("%7.2f nif units are %7.2f blender units"%(_CONFIG["EXPORT_SCALE_CORRECTION"],1.0), 50, H-90)
-    else:
-        guiText("%7.2f nif units = %7.2f blender units"%(1.0, _CONFIG["IMPORT_SCALE_CORRECTION"]), 50, H-90)
-    E["LOG_SCALE"] = Draw.Slider("", addEvent("LOG_SCALE"), 50, H-115, 390, 20, log(_CONFIG["EXPORT_SCALE_CORRECTION"])/log(10), -3, 3, 0, "scale", updateScale)
+    H -= 75
 
-    H -= 155
+    # common options
+    guiText("Scale correction (ignore the number on the left side of the slider)", 50, H)
+    if _CONFIG["EXPORT_SCALE_CORRECTION"] >= 1.0:
+        guiText("%7.2f nif units are %7.2f blender units"%(_CONFIG["EXPORT_SCALE_CORRECTION"],1.0), 50, H-15)
+    else:
+        guiText("%7.2f nif units are %7.2f blender units"%(1.0, _CONFIG["IMPORT_SCALE_CORRECTION"]), 50, H-15)
+    E["LOG_SCALE"] = Draw.Slider("", addEvent("LOG_SCALE"), 50, H-40, 390, 20, log(_CONFIG["EXPORT_SCALE_CORRECTION"])/log(10), -3, 3, 0, "scale", updateScale)
+
+    H -= 80
 
     # import-only options
     if _BACK_TARGET == "Import":
