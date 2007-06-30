@@ -115,8 +115,11 @@ def gui():
     # Draw.String(name, event, x, y, width, height, initial, length, tooltip=None)
 
     # common options
-    guiText("How many nif units is one blender unit?", 50, H-75)
-    guiText("(log scale: -1 is 0.1, 0 is 1, +1 is 10, +2 is 100, ...)", 50, H-90)
+    if _CONFIG["EXPORT_SCALE_CORRECTION"] >= 1.0:
+        guiText("%7.2f nif units are %7.2f blender units"%(_CONFIG["EXPORT_SCALE_CORRECTION"],1.0), 50, H-75)
+    else:
+        guiText("%7.2f nif units = %7.2f blender units"%(1.0, _CONFIG["IMPORT_SCALE_CORRECTION"]), 50, H-75)
+    guiText("(ignore the number on the left side of the slider)", 50, H-90)
     E["LOG_SCALE"] = Draw.Slider("", addEvent("LOG_SCALE"), 50, H-125, 390, 20, log(_CONFIG["EXPORT_SCALE_CORRECTION"])/log(10), -3, 3, 0, "scale", updateScale)
 
     H -= 155
