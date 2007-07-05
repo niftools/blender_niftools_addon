@@ -5,6 +5,7 @@ import sys, os
 import Read, Write, Defaults
 from Blender import Draw, BGL, Registry
 from math import log
+from copy import deepcopy
 from PyFFI.NIF import NifFormat
 
 # clears the console window
@@ -22,7 +23,6 @@ _GUI_EVENTS = []
 # Configuration
 _CONFIG = {}
 # Old configuration for cancel button
-_CONFIG_BACK = _CONFIG
 _CONFIG_NAME = "nifscripts"
 
 # Back target for exit
@@ -93,7 +93,7 @@ def guiText(str = "", xpos = 0, ypos = 0):
     Draw.Text(str)
 
 
-def gui():
+def drawGUI():
     global _GUI_ELEMENTS, _CONFIG, _IDX_TEXPATH, _GUI_EVENTS
     del _GUI_EVENTS[:]
 
@@ -126,10 +126,12 @@ def gui():
     # import-only options
     if _BACK_TARGET == "Import":
         H += 75 # TODO shift values below...
-        E["NIF_IMPORT_PATH"]        = Draw.String("",       addEvent("NIF_IMPORT_PATH"),     50, H- 75, 390, 20, _CONFIG["NIF_IMPORT_PATH"],        390, "import path")
-        E["BROWSE_IMPORT_PATH"]     = Draw.PushButton('...',addEvent("BROWSE_IMPORT_PATH"), 440, H- 75,  30, 20)
-        E["BASE_TEXTURE_FOLDER"]    = Draw.String("",       addEvent("BASE_TEXTURE_FOLDER"), 50, H-125, 390, 20, _CONFIG["BASE_TEXTURE_FOLDER"],    390, "base texture folder")
-        E["BROWSE_TEXBASE"]         = Draw.PushButton('...',addEvent("BROWSE_TEXBASE"),     440, H-125,  30, 20)
+        
+        #E["NIF_IMPORT_PATH"]        = Draw.String("",       addEvent("NIF_IMPORT_PATH"),     50, H- 75, 390, 20, _CONFIG["NIF_IMPORT_PATH"],        390, "import path")
+        #E["BROWSE_IMPORT_PATH"]     = Draw.PushButton('...',addEvent("BROWSE_IMPORT_PATH"), 440, H- 75,  30, 20)
+        #E["BASE_TEXTURE_FOLDER"]    = Draw.String("",       addEvent("BASE_TEXTURE_FOLDER"), 50, H-125, 390, 20, _CONFIG["BASE_TEXTURE_FOLDER"],    390, "base texture folder")
+        #E["BROWSE_TEXBASE"]         = Draw.PushButton('...',addEvent("BROWSE_TEXBASE"),     440, H-125,  30, 20)
+        guiText("texture search path", 75, H-125)
         E["TEXTURE_SEARCH_PATH"]    = Draw.String("",       addEvent("TEXTURE_SEARCH_PATH"), 50, H-150, 390, 20, texpathString,                     390, "texture search path")
         E["BROWSE_TEXPATH"]         = Draw.PushButton('...',addEvent("BROWSE_TEXPATH"),     440, H-150,  30, 20)
         E["TEXPATH_ITEM"]           = Draw.String("",       addEvent("TEXPATH_ITEM"),        50, H-170, 360, 20, texpathItemString,                 290)
@@ -141,7 +143,8 @@ def gui():
         E["IMPORT_ANIMATION"]       = Draw.Toggle(" ",      addEvent("IMPORT_ANIMATION"),    50, H-220,  20, 20, _CONFIG["IMPORT_ANIMATION"])
         guiText("import animation (if present)", 75, H-215)
 
-        H -= 245
+        H -= 265
+        E["BACK"]                     = Draw.PushButton('back',    addEvent("BACK"),  50, H-25, 100, 20)
 
     # export-only options
     if _BACK_TARGET == "Export":
@@ -174,11 +177,10 @@ def gui():
             E["VERSION_%s"%version] = Draw.Toggle(version, addEvent("VERSION_%s"%version), V, H-j*20, 70, 20, state)
             j += 1
         H = HH - 20 - 20*min(MAXJ, max(len(NifFormat.versions), len(NifFormat.games)))
+        H -= 20 # leave some space
+        E["CANCEL"]                 = Draw.PushButton('cancel',addEvent("CANCEL"),  50, H, 100, 20)
+        E["OK"]                     = Draw.PushButton('ok',    addEvent("OK"),  50, H-25, 100, 20)
 
-    H -= 20 # leave some space
-    
-    E["CANCEL"]                 = Draw.PushButton('cancel',addEvent("CANCEL"),  50, H, 100, 20)
-    E["OK"]                     = Draw.PushButton('ok',    addEvent("OK"),  50, H-25, 100, 20)
     # Sets the GUI elements to a global var to avoid them going out of scope (causes segfaults)
     _GUI_ELEMENTS = E
     Draw.Redraw(1)
@@ -187,24 +189,19 @@ def buttonEvent(evt):
     """
     Event handler for buttons
     """
-    global _GUI_EVENTS, _CONFIG, _CONFIG_BACK, _IDX_TEXPATH
+    global _GUI_EVENTS, _CONFIG, _IDX_TEXPATH
 
     try:
         evName = _GUI_EVENTS[evt]
     except IndexError:
         evName = None
 
-    if evName == "OK":
+    if evName in  ["OK", "BACK"]:
         save()
         exitGUI()
     elif evName == "CANCEL":
-        _CONFIG = _CONFIG_BACK
-        save()
-        if _BACK_TARGET == "Import":
-            exitGUI()
-        else:
-            Draw.Exit()
-            return
+        Draw.Exit()
+        return
     elif evName == "REALIGN_BONES":
         _CONFIG["REALIGN_BONES"] = not _CONFIG["REALIGN_BONES"]
     elif evName == "IMPORT_ANIMATION":
@@ -243,10 +240,9 @@ def event(evt, val):
     """
     Event handler for GUI elements
     """
-    global _CONFIG, _CONFIG_BACK, _BACK_TARGET
+    global _CONFIG, _BACK_TARGET
 
     if evt == Draw.ESCKEY:
-        _CONFIG = _CONFIG_BACK
         save()
         if _BACK_TARGET == "Import":
             exitGUI()
@@ -264,13 +260,12 @@ def openGUI(back_target=None):
     global _BACK_TARGET
     _BACK_TARGET = back_target
     load()
-    Draw.Register(gui, event, buttonEvent)
+    Draw.Register(drawGUI, event, buttonEvent)
     
 def exitGUI():
     """
     Closes the config GUI
     """
-    global _BACK_TARGET
     Draw.Exit()
     if _BACK_TARGET == "Import":
         Read.openGUI()
@@ -281,12 +276,11 @@ def save():
     """
     Saves the current configuration
     """
-    global _CONFIG, _CONFIG_BACK, _CONFIG_NAME
+    global _CONFIG, _CONFIG_NAME
     #print "datadir", Blender.Get('datadir'), "\n\n"
     #print "--",_CONFIG_NAME, _CONFIG, "\n\n"
     Registry.SetKey(_CONFIG_NAME, _CONFIG, True)
     load()
-    _CONFIG_BACK = _CONFIG
     
 
 def load():
@@ -310,6 +304,5 @@ def load():
             newConfig[key] = val
     #print "newConfig", newConfig, "\n\n"
     _CONFIG = newConfig
-    _CONFIG_BACK = newConfig
     Blender.Registry.SetKey(_CONFIG_NAME, _CONFIG, True)
 

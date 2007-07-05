@@ -1,6 +1,7 @@
 import Blender, Config
 from Blender import Draw, BGL, sys
 from Blender.Mathutils import *
+from GUI import *
 
 #try:
 #    import psyco
@@ -1574,7 +1575,9 @@ def mark_armatures_bones(niBlock):
             # note that this matrix is relative to the skeleton root
             geomBindMatrix = Matrix(*niBlock.getGeometryRestPosition().asList())
             niBlock._bindMatrix = geomBindMatrix
-            if geomBindMatrix != _IDENTITY44:
+            
+            #if geomBindMatrix != _IDENTITY44:
+            if len([row for row in geomBindMatrix if abs(sum(row) - 1.0) > _EPSILON]) > 0:
                 print 'geometry bind matrix is not identity'
                 print geomBindMatrix
             #geomBindMatrixInverse = Matrix(geomBindMatrix)
