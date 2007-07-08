@@ -1,7 +1,7 @@
 import Blender, Config
 from Blender import Draw, BGL, sys
 from Blender.Mathutils import *
-from GUI import *
+#from GUI import *
 
 #try:
 #    import psyco
