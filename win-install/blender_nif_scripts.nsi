@@ -152,8 +152,7 @@ python_check_end:
   IfErrors 0 pyffi_check_end
 
     ; no key, that means that PyFFI is not installed
-    MessageBox MB_OK "Install PyFFI first. Get it from http://www.sourceforge.net/projects/pyffi"
-    Abort ; causes installer to quit
+    Call GetPyFFI
 
 pyffi_check_end:
 
@@ -247,3 +246,52 @@ Section "Uninstall"
   RMDir "$SMPROGRAMS\NifTools\Blender NIF Scripts"
   RMDir "$SMPROGRAMS\NifTools" ; this will only delete if the directory is empty
 SectionEnd
+
+Function GetPyFFI
+
+  MessageBox MB_YESNO "The Blender NIF Scripts need the PyFFI library. Download and install PyFFI 0.0, OK?" IDYES download
+    MessageBox MB_OK "Please download and install PyFFI manually from http://www.sourceforge.net/projects/pyffi"
+    Abort
+
+download:
+
+  Call ConnectInternet ;Make an internet connection (if no connection available)
+
+  StrCpy $2 "$TEMP\PyFFI-0.0.win32.exe"
+  ; TODO randomize mirrors
+  NSISdl::download http://belnet.dl.sourceforge.net/sourceforge/pyffi/PyFFI-0.0.win32.exe $2
+  Pop $0
+  StrCmp $0 success success
+    SetDetailsView show
+    DetailPrint "download failed: $0"
+    MessageBox MB_OK "Downloading PyFFI failed. Please download and install PyFFI manually from http://www.sourceforge.net/projects/pyffi"
+    Abort
+  success:
+    ExecWait '"$2"'
+    Delete $2
+    
+FunctionEnd
+
+Function ConnectInternet
+
+  Push $R0
+    
+    ClearErrors
+    Dialer::AttemptConnect
+    IfErrors noie3
+    
+    Pop $R0
+    StrCmp $R0 "online" connected
+      MessageBox MB_OK|MB_ICONSTOP "Cannot connect to the internet. Please download and install PyFFI manually from http://www.sourceforge.net/projects/pyffi"
+      Abort
+    
+    noie3:
+  
+    ; IE3 not installed
+    MessageBox MB_OK|MB_ICONINFORMATION "Please connect to the internet now."
+    
+    connected:
+  
+  Pop $R0
+  
+FunctionEnd
