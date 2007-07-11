@@ -148,10 +148,13 @@ def drawGUI():
 
     # export-only options
     if _BACK_TARGET == "Export":
-        games_list = sorted(NifFormat.games.keys())
-        versions_list = sorted(NifFormat.versions.keys(), key=lambda x: NifFormat.versions[x])
+        E["EXPORT_FLATTENSKIN"] = Draw.Toggle("Flatten Skin", addEvent("EXPORT_FLATTENSKIN"), 50, H, 390, 20, _CONFIG["EXPORT_FLATTENSKIN"])
+        H -= 30
         #E["NIF_EXPORT_PATH"]        = Draw.String("",       addEvent("NIF_EXPORT_PATH"),     50, H-100, 390, 20, _CONFIG["NIF_EXPORT_PATH"],        390, "export path")
         #E["BROWSE_EXPORT_PATH"]     = Draw.PushButton('...',addEvent("BROWSE_EXPORT_PATH"), 440, H-100,  30, 20)
+        
+        games_list = sorted(NifFormat.games.keys())
+        versions_list = sorted(NifFormat.versions.keys(), key=lambda x: NifFormat.versions[x])
         guiText("Game or NIF version", 50, H)
         H -= 30
         V = 50
@@ -234,6 +237,8 @@ def buttonEvent(evt):
         _CONFIG["EXPORT_VERSION"] = evName[5:]
     elif evName[:8] == "VERSION_":
         _CONFIG["EXPORT_VERSION"] = evName[8:]
+    elif evName == "EXPORT_FLATTENSKIN":
+        _CONFIG["EXPORT_FLATTENSKIN"] = not _CONFIG["EXPORT_FLATTENSKIN"]
     Draw.Redraw(1)
 
 def event(evt, val):

@@ -1740,8 +1740,8 @@ def export_children(ob, parent_block):
                     # we should parent the object to the bone instead of to the armature
                     # so let's find that bone!
                     for block in _NIF_BLOCKS:
-                        if block.GetBlockType() == "NiNode":
-                            if block["Name"].asString() == parent_bone_name:
+                        if isinstance(block, NifFormat.NiNode):
+                            if block.name == parent_bone_name:
                                 export_node(ob_child, 'localspace', block, ob_child.getName())
                                 break
                     else:
