@@ -66,7 +66,6 @@ FORCE_DDS = False
 STRIP_TEXPATH = False
 EXPORT_DIR = ''
 
-FLATTEN_SKINS = False
 ADD_BONE_NUB = False
 
 _IDENTITY44 = NifFormat.Matrix44()
@@ -316,13 +315,15 @@ and turn off envelopes."""%ob.getName()
             #upb.stringData = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
             #root_block.addExtraData(upb)
 
-        if FLATTEN_SKINS:
-            # (warning: trouble if armatures parent other armatures)
+        if _CONFIG["EXPORT_FLATTENSKIN"]:
+            # (warning: trouble if armatures parent other armatures or
+            # if bones parent geometries)
             # flatten skins
             skelroots = []
             affectedbones = []
             for block in _NIF_BLOCKS:
                 if isinstance(block, NifFormat.NiGeometry) and block.isSkin():
+                    msg("Flattening skin on geometry %s"%block.name)
                     affectedbones.extend(block.flattenSkin())
                     skelroots.append(block.skinInstance.skeletonRoot)
             # remove NiNodes that do not affect skin
