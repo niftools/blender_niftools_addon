@@ -97,3 +97,9 @@ Version 1.5.7 (Jul 13, 2006)
 * Import: further fix on zero length bones.
 * Export: fixed export of unnamed objects.
 * Export: fixed export of meshes parented to other meshes.
+
+Version 2.0 (Jul 12, 2007)
+* Import/Export: switched to PyFFI, support for NIF versions up to 20.1.0.3
+* Import/Export: GUI revamped
+* Export: skin data bounding sphere calculation
+* Export: flattening skin hierarchy for oblivion

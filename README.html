@@ -24,9 +24,9 @@ a:hover.nav { color: #FF0000; background: transparent; }
 The Blender NIF Scripts have undergone serious changes since the last release. Although we have done our best to squash all bugs we could find, it is unlikely that we have found them all. If you find bugs, PLEASE REPORT THEM ON THE SOURCEFORGE TRACKER.
 <h3>Highlights of this Release</h3>
 <ul>
-  <li>support of NIF versions up to 20.1.0.3 - this includes Oblivion and Megami Tensei Imagine</li>
+  <li>supports NIF versions up to 20.1.0.3 - this includes Oblivion and Megami Tensei Imagine</li>
   <li>revamped graphical user interface</li>
-  <li>uses PyFFI which is a NifSkope-like file format parser written in Python</li>
+  <li>uses PyFFI as a low level interface to process NIF files (PyFFI is a NifSkope-like file format parser written in Python)</li>
   <li>recent builds of Blender support DDS (read only) so you no longer need to convert textures; you can get recent builds at <a href="http://www.graphicall.org">http://www.graphicall.org/</a></li>
 </ul>
 <h2>Support</h2>
@@ -42,17 +42,16 @@ http://niftools.sourceforge.net/wiki/Blender</a></li>
   <li><strong><a href="http://www.blender.org/">Blender 2.44</a> or
 higher</strong>; the scripts will not run on older versions
 of Blender.</li>
-  <li><strong><a href="http://www.python.org/">Python 2.5 or higher</a></strong>.
-  <li><strong><a href="http://www.sourceforge.net/projects/pyffi/">PyFFI 0.0 or higher</a></strong>; the Blender NIF Scripts .exe installer will attempt to download and install PyFFI if you do not have it installed.
+  <li><strong><a href="http://www.python.org/">Python 2.5</a> or higher</strong>.
+  <li><strong><a href="http://www.sourceforge.net/projects/pyffi/">PyFFI 0.0</a> or higher</strong>; the Blender NIF Scripts .exe installer will attempt to download and install PyFFI if you do not have it installed.
 </ul>
 <h3>Manual Install</h3>
 <ul>
   <li><strong>If you installed Blender using the .exe installer, 
 you're best off using the Blender NIF Scripts .exe 
-installer.</strong> If you installed Blender from the .zip, then you 
+installer.</strong> If you installed Blender from a .zip, then you 
 should download the .zip and extract its contents in the 
-Blender scripts directory. This is by default C:\Program Files\Blender
-Foundation\Blender\.blender\scripts.
+Blender scripts directory. This is by default C:\Program Files\Blender Foundation\Blender\.blender\scripts.
 Restart Blender, and the options to import and export
 NIF files will appear in the File-Import and File-Export menu's. <em>Make
 sure you
@@ -63,16 +62,14 @@ have Python 2.5 and PyFFI installed as well!</em>
 </ul>
 <h3>Using the Scripts with Morrowind</h3>
 <ul>
-  <li>If you wish to use Morrowind's textures in your models:
-    <ul>
-      <li>extract the contents of 'Morrowind.bsa' (and, if you
+  <li>If you wish to use Morrowind's textures in your models
+extract the contents of 'Morrowind.bsa' (and, if you
 have the expansions, also 'Tribunal.bsa' and 'Bloodmoon.bsa') into
 for instance 'c:\src\morrowind' (use <a
  href="http://www34.brinkster.com/ghostwheel/">BSAPACK</a>
-or the <a href="http://www.thelys.org/toolsmisc.php?modders">BSA
+or the <a href="http://www.morrowind-oblivion.com/utilities.php#bsabrowser_">BSA
 Browser</a>; if you use the latter, make sure you copy the BSA files to
-'c:\src\morrwind' before extracting them).</li>
-    </ul>
+'c:\src\morrwind' before extracting them).
   </li>
 </ul>
 <h3>Using the Scripts with Oblivion</h3>
