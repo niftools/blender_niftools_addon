@@ -27,6 +27,7 @@ The Blender NIF Scripts have undergone serious changes since the last release. A
   <li>supports NIF versions up to 20.1.0.3 - this includes Oblivion and Megami Tensei Imagine</li>
   <li>revamped graphical user interface</li>
   <li>uses PyFFI as a low level interface to process NIF files (PyFFI is a NifSkope-like file format parser written in Python)</li>
+  <li>since it uses PyFFI it is no longer a Windows only application, should work on any architecture capable of running Blender and Python 2.5</li>
   <li>recent builds of Blender support DDS (read only) so you no longer need to convert textures; you can get recent builds at <a href="http://www.graphicall.org">http://www.graphicall.org/</a></li>
 </ul>
 <h2>Support</h2>
@@ -210,7 +211,8 @@ set.</li>
 <ul>
   <li>The script doesn't import particle
 effects, multiple
-UV channels...</li>
+UV channels or collision meshes.
+</li>
 </ul>
 <h3>Known Issues and Workarounds</h3>
 <ul>
@@ -224,6 +226,15 @@ know where to attach certain nodes in the structure, and it uses the
 node name to do so. If you import rigged meshes with multiple
 materials, you probably need NifSkope to sort things out on the
 re-exported model.</li>
+  <li>The import of animation is quite slow, and it won't yet
+import or merge standalone animation tracks.
+These have to be merged in a geometry with skinning info beforehand,
+or the script won't be able to recognize bones as such.
+This is a limitation of the NIF file format, and while there's no
+"proper" workaround the operation might be automatized in the future.</li>
+  <li>The animation track is imported as a single long sequence rather
+than as a list of Blender actions, the start and end points of the actions
+are stored in a text buffer and have to be edited manually</li>
 </ul>
 <h2>License </h2>
 <p> Copyright (c) 2005-2007, <a href="http://niftools.sourceforge.net/">NIF
