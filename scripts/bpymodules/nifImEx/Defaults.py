@@ -36,7 +36,7 @@ _CFG_EXPORT_TEXTURE_PATH = "R"
 
 # the following items are used for dtermining internal
 _CFG_EPSILON = 0.005 # used for checking equality with floats
-_CFG_VERBOSITY = 3 # verbosity level, determines how much debug output will be generated
+_CFG_VERBOSITY = 0 # verbosity level, determines how much debug output will be generated
 
 
 

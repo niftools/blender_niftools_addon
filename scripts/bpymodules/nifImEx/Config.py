@@ -304,8 +304,11 @@ def load():
     newConfig = {}
     for key, val in _CONFIG.iteritems():
         try:
-            newConfig[key] = oldConfig[key]
-        except:
+            if type(oldConfig[key]) == type(val):
+                newConfig[key] = oldConfig[key]
+            else:
+                newConfig[key] = val
+        except KeyError:
             newConfig[key] = val
     #print "newConfig", newConfig, "\n\n"
     _CONFIG = newConfig

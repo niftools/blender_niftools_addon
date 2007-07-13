@@ -1577,7 +1577,13 @@ def mark_armatures_bones(niBlock):
             niBlock._bindMatrix = geomBindMatrix
             
             #if geomBindMatrix != _IDENTITY44:
-            if len([row for row in geomBindMatrix if abs(sum(row) - 1.0) > _EPSILON]) > 0:
+            
+            is_identity = True
+            for row in range(4):
+                for col in range(4):
+                    if geomBindMatrix[row][col] - _IDENTITY44[row][col] > _EPSILON:
+                        is_identity = False
+            if not is_identity:
                 print 'geometry bind matrix is not identity'
                 print geomBindMatrix
             #geomBindMatrixInverse = Matrix(geomBindMatrix)
