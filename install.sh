@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# quick and dirty script to install the scripts in a user's local blender dir
+# quick and dirty linux shell script to install the scripts in a user's local blender dir
 
 cp scripts/nif_import.py scripts/nif_export.py ~/.blender/scripts
 mkdir -p ~/.blender/scripts/bpymodules/nifImEx

@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <title>The Blender NIF Scripts v2.0</title>
+  <title>The Blender NIF Scripts v2.0.1</title>
   <meta http-equiv="Content-Type"
  content="text/html; charset=ISO-8859-1" />
   <style type="text/css">
@@ -19,16 +19,12 @@ a:hover.nav { color: #FF0000; background: transparent; }
   </style>
 </head>
 <body>
-<h1>The Blender NIF Scripts v2.0</h1>
+<h1>The Blender NIF Scripts v2.0.1</h1>
 <h2>Release Notes</h2>
 The Blender NIF Scripts have undergone serious changes since the last release. Although we have done our best to squash all bugs we could find, it is unlikely that we have found them all. If you find bugs, PLEASE REPORT THEM ON THE SOURCEFORGE TRACKER.
 <h3>Highlights of this Release</h3>
 <ul>
-  <li>supports NIF versions up to 20.1.0.3 - this includes Oblivion and Megami Tensei Imagine</li>
-  <li>revamped graphical user interface</li>
-  <li>uses PyFFI as a low level interface to process NIF files (PyFFI is a NifSkope-like file format parser written in Python)</li>
-  <li>since it uses PyFFI it is no longer a Windows only application, should work on any architecture capable of running Blender and Python 2.5</li>
-  <li>recent builds of Blender support DDS (read only) so you no longer need to convert textures; you can get recent builds at <a href="http://www.graphicall.org">http://www.graphicall.org/</a></li>
+  <li>fix in transform of some skinned meshes</li>
 </ul>
 <h2>Support</h2>
 <ul>
@@ -57,6 +53,7 @@ Restart Blender, and the options to import and export
 NIF files will appear in the File-Import and File-Export menu's. <em>Make
 sure you
 have Python 2.5 and PyFFI installed as well!</em></li>
+  <li>For use with linux, the .zip includes an install.sh script which copies the relevant files to your ~/.blender folder.</li>
 </ul>
 <h3>Using the Scripts with Morrowind</h3>
 <ul>

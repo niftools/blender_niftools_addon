@@ -9,12 +9,12 @@ Tooltip: 'Export NIF File Format (.nif)'
 
 __author__ = "The NifTools team, http://niftools.sourceforge.net/"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
-__version__ = "2.0"
+__version__ = "2.0.1"
 __bpydoc__ = """\
 This script exports Netimmerse and Gamebryo .NIF files from Blender.
 """
 
-# nif_export.py version 2.0
+# nif_export.py version 2.0.1
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
 # 
