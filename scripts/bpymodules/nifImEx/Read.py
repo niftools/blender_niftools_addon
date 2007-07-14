@@ -434,10 +434,6 @@ def read_armature_branch(b_armature, niArmature, niBlock):
                 for child in children:
                     b_mesh = read_armature_branch(b_armature, niArmature, child)
                     if b_mesh:
-                        # correct the transform
-                        # it's parented to the armature!
-                        b_mesh.setMatrix(fb_global_matrix(child) * armature_matrix_inverse)
-                        #b_mesh.setMatrix(child._bindMatrix)
                         # add a vertex group if it's parented to a bone
                         par_bone = get_closest_bone(child)
                         if par_bone:
