@@ -106,3 +106,6 @@ Version 2.0 (Jul 12, 2007)
 * Export: skin data bounding sphere calculation
 * Export: flattening skin hierarchy for oblivion
 
+Version 2.0.1 (Jul 14, 2007)
+* Import: fix in transform of some skinned meshes
+* Import/Export: simple local install script in .zip for linux
