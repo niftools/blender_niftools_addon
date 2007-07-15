@@ -308,7 +308,7 @@ def load():
                 newConfig[key] = oldConfig[key]
             else:
                 newConfig[key] = val
-        except KeyError:
+        except KeyError, TypeError:
             newConfig[key] = val
     #print "newConfig", newConfig, "\n\n"
     _CONFIG = newConfig
