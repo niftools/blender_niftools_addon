@@ -109,3 +109,6 @@ Version 2.0 (Jul 12, 2007)
 Version 2.0.1 (Jul 14, 2007)
 * Import: fix in transform of some skinned meshes
 * Import/Export: simple local install script in .zip for linux
+
+Version 2.0.2 (Jul 16, 2007)
+* Import/Export: fix for config problem if nifscripts.cfg did not exist yet
