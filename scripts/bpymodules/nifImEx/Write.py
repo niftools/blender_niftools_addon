@@ -1460,15 +1460,11 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                                 break
                     else:
                         raise NIFExportError("Skeleton root '%s' not found."%armaturename)
-                    skininst.numBones = len(boneinfluences)
-                    skininst.bones.updateSize()
         
                     # create skinning data and link it
                     skindata = create_block("NiSkinData")
                     skininst.data = skindata
         
-                    skindata.numBones = len(boneinfluences)
-                    skindata.boneList.updateSize()
                     skindata.hasVertexWeights = True
                     # fix geometry rest pose: transform relative to skeleton root
                     skindata.setTransform(get_object_matrix(ob, 'localspace').getInverse())
@@ -1495,7 +1491,6 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                             if isinstance(block, NifFormat.NiNode):
                                 if block.name == bone:
                                     bone_block = block
-                                    skininst.bones[bone_index] = bone_block
                                     break
                         else:
                             raise NIFExportError("Bone '%s' not found."%bone)
@@ -1515,15 +1510,7 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                                     vert_added[vert_index] = True
                         # add bone as influence, but only if there were actually any vertices influenced by the bone
                         if vert_weights:
-                            skinbonedata = skindata.boneList[bone_index]
-                            # set rest pose
-                            skinbonedata.setTransform(bmatrix_to_matrix(get_bone_restmatrix(boneobjects[bone], 'ARMATURESPACE')).getInverse())
-                            # set vertex weights
-                            skinbonedata.numVertices = len(vert_weights)
-                            skinbonedata.vertexWeights.updateSize()
-                            for i, (vert_index, vert_weight) in enumerate(vert_weights.iteritems()):
-                                skinbonedata.vertexWeights[i].index = vert_index
-                                skinbonedata.vertexWeights[i].weight = vert_weight
+                            trishape.addBone(bone_block, bmatrix_to_matrix(get_bone_restmatrix(boneobjects[bone], 'ARMATURESPACE')), vert_weights)
         
                     # each vertex must have been assigned to at least one vertex group
                     # or the model doesn't display correctly in the TESCS
@@ -1540,22 +1527,8 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                         arm_bone_block.setTransform(_IDENTITY44)
                         arm_bone_block.flags = 0x0002 # ? this seems pretty standard for bones
                         skininst.skeletonRoot.addChild(arm_bone_block, front = True)
-                        # add bone (TODO add bone functions to NifFormat)
-                        bone_index = len(boneinfluences)
-                        skininst.numBones = bone_index+1
-                        skininst.bones.updateSize()
-                        skininst.bones[bone_index] = arm_bone_block
-                        skindata.numBones = bone_index+1
-                        skindata.boneList.updateSize()
-                        skinbonedata = skindata.boneList[bone_index]
-                        # set rest pose
-                        skinbonedata.setTransform(_IDENTITY44)
-                        # set vertex weights
-                        skinbonedata.numVertices = len(vert_weights)
-                        skinbonedata.vertexWeights.updateSize()
-                        for i, (vert_index, vert_weight) in enumerate(vert_weights.iteritems()):
-                            skinbonedata.vertexWeights[i].index = vert_index
-                            skinbonedata.vertexWeights[i].weight = vert_weight
+                        # add bone
+                        trishape.addBone(arm_bone_block, _IDENTITY44, vert_weights)
 
                     # calculate center and radius for each skin bone data block
                     trishape.updateSkinCenterRadius()
