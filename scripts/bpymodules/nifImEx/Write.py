@@ -1667,8 +1667,7 @@ def export_bones(arm, parent_block):
         # so we must take the rest position into account
         bonerestmat = get_bone_restmatrix(bone, 'BONESPACE', extra = False) # we need the original one, without extra transforms
         try:
-            #bonexmat_inv = _BONES_EXTRA_MATRIX_INV[bone.name]
-            raise KeyError # (TODO: check maths with brandano)
+            bonexmat_inv = _BONES_EXTRA_MATRIX_INV[bone.name]
         except KeyError:
             bonexmat_inv = Blender.Mathutils.Matrix()
             bonexmat_inv.identity()
