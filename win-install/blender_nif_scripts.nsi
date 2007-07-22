@@ -36,8 +36,10 @@
 SetCompressor /SOLID lzma
 
 !include "MUI.nsh"
+!include "WordFunc.nsh"
+!insertmacro VersionCompare
 
-!define VERSION "2.0.2"
+!define VERSION "2.0.3"
 
 Name "Blender NIF Scripts ${VERSION}"
 Var BLENDERHOME
@@ -148,13 +150,25 @@ python_check_end:
 
   ; check if PyFFI is installed (the bdist_wininst installer only creates an uninstaller registry key, so that's how we check)
   ClearErrors
-  ReadRegStr $PYFFI HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\PyFFI-py2.5 "UninstallString"
+  ReadRegStr $PYFFI HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\PyFFI-py2.5 "DisplayName"
   IfErrors 0 pyffi_check_end
 
     ; no key, that means that PyFFI is not installed
-    Call GetPyFFI
+    MessageBox MB_OK "Install PyFFI first. Get it from http://www.sourceforge.net/projects/pyffi"
+    Abort ; causes installer to quit
 
 pyffi_check_end:
+
+  ; check PyFFI version
+  StrCpy $R0 $PYFFI "" 17 ; strip "Python 2.5 PyFFI-"
+  ${VersionCompare} "$R0" "0.1" $R1
+  IntCmp $R1 0 pyffi_vercheck_end ; installed version is 0.1
+  IntCmp $R1 1 pyffi_vercheck_end ; installed version is more recent than 0.1
+
+    MessageBox MB_OK "The installed version of PyFFI is outdated. Get the most recent version from http://www.sourceforge.net/projects/pyffi"
+    Abort ; causes installer to quit
+
+pyffi_vercheck_end:
 
 FunctionEnd
 
@@ -246,52 +260,3 @@ Section "Uninstall"
   RMDir "$SMPROGRAMS\NifTools\Blender NIF Scripts"
   RMDir "$SMPROGRAMS\NifTools" ; this will only delete if the directory is empty
 SectionEnd
-
-Function GetPyFFI
-
-  MessageBox MB_YESNO "The Blender NIF Scripts need the PyFFI library. Download and install PyFFI 0.0, OK?" IDYES download
-    MessageBox MB_OK "Please download and install PyFFI manually from http://www.sourceforge.net/projects/pyffi"
-    Abort
-
-download:
-
-  Call ConnectInternet ;Make an internet connection (if no connection available)
-
-  StrCpy $2 "$TEMP\PyFFI-0.0.win32.exe"
-  ; TODO randomize mirrors
-  NSISdl::download http://belnet.dl.sourceforge.net/sourceforge/pyffi/PyFFI-0.0.win32.exe $2
-  Pop $0
-  StrCmp $0 success success
-    SetDetailsView show
-    DetailPrint "download failed: $0"
-    MessageBox MB_OK "Downloading PyFFI failed. Please download and install PyFFI manually from http://www.sourceforge.net/projects/pyffi"
-    Abort
-  success:
-    ExecWait '"$2"'
-    Delete $2
-    
-FunctionEnd
-
-Function ConnectInternet
-
-  Push $R0
-    
-    ClearErrors
-    Dialer::AttemptConnect
-    IfErrors noie3
-    
-    Pop $R0
-    StrCmp $R0 "online" connected
-      MessageBox MB_OK|MB_ICONSTOP "Cannot connect to the internet. Please download and install PyFFI manually from http://www.sourceforge.net/projects/pyffi"
-      Abort
-    
-    noie3:
-  
-    ; IE3 not installed
-    MessageBox MB_OK|MB_ICONINFORMATION "Please connect to the internet now."
-    
-    connected:
-  
-  Pop $R0
-  
-FunctionEnd

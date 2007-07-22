@@ -112,3 +112,8 @@ Version 2.0.1 (Jul 14, 2007)
 
 Version 2.0.2 (Jul 16, 2007)
 * Import/Export: fix for config problem if nifscripts.cfg did not exist yet
+
+Version 2.0.3 (Jul 22, 2007)
+* Export: fixed skin export in case some bones did not influence any vertices
+* Export: fixed transform error in skinned meshes such as better bodies and oblivion skeleton
+* Export: support for 20.3.0.3 and 20.3.0.6 (experimental)
