@@ -262,7 +262,7 @@ def import_nif(filename):
                             if root in [c for c in b.skinInstance.skeletonRoot.children]:
                                 root = b.skinInstance.skeletonRoot
                     msg("root block: %s" % (root.name), 3)
-                    import_main(root)
+                    import_main(root, version)
         elif version == -1:
             raise NIFImportError("Unsupported NIF version.")
         else:
@@ -279,7 +279,7 @@ def import_nif(filename):
 #
 # Main import function.
 #
-def import_main(root_block):
+def import_main(root_block, version):
     # scene info
     # used to control the progress bar
     global _SCENE, _CONFIG, _BLOCK_COUNT, _BLOCKS_READ, _READ_PROGRESS
@@ -288,42 +288,48 @@ def import_main(root_block):
     _BLOCKS_READ = 0.0
     # preprocessing:
 
-    # merge skeleton roots
-    for niBlock in root_block.tree():
-        if not isinstance(niBlock, NifFormat.NiGeometry): continue
-        if not niBlock.isSkin(): continue
-        merged, failed = niBlock.mergeSkeletonRoots()
-        if merged:
-            print
-            msg('reparented following blocks to skeleton root of ' + niBlock.name + ':', 2)
-            msg([node.name for node in merged], 3)
-        if failed:
-            msg('WARNING: failed to reparent following blocks ' + niBlock.name + ':', 2)
-            msg([node.name for node in failed], 3)
+    # 4.0.0.2 nifs tend to be nasty: in the next piece of code
+    # the skeleton roots are merged and a rest position is fixed
+    # this does not quite work well for files that have non-identity
+    # skindata transforms, which is common in oblivion;
+    # but oblivion files have well behaved skeletons, so we only do this
+    # for morrowind files
+    if version == 0x04000002:
+        for niBlock in root_block.tree():
+            if not isinstance(niBlock, NifFormat.NiGeometry): continue
+            if not niBlock.isSkin(): continue
+            merged, failed = niBlock.mergeSkeletonRoots()
+            if merged:
+                print
+                msg('reparented following blocks to skeleton root of ' + niBlock.name + ':', 2)
+                msg([node.name for node in merged], 3)
+            if failed:
+                msg('WARNING: failed to reparent following blocks ' + niBlock.name + ':', 2)
+                msg([node.name for node in failed], 3)
 
-    # find reference geometries for each skeleton root, i.e. geometry with largest number of bones
-    skelrootrefgeom = {}
-    for niBlock in root_block.tree():
-        if not isinstance(niBlock, NifFormat.NiGeometry): continue
-        if not niBlock.isSkin(): continue
-        skelroot = niBlock.skinInstance.skeletonRoot
-        numbones = len(niBlock.skinInstance.bones)
-        if skelrootrefgeom.has_key(skelroot):
-            if numbones > len(skelrootrefgeom[skelroot].skinInstance.bones):
+        # find reference geometries for each skeleton root, i.e. geometry with largest number of bones
+        skelrootrefgeom = {}
+        for niBlock in root_block.tree():
+            if not isinstance(niBlock, NifFormat.NiGeometry): continue
+            if not niBlock.isSkin(): continue
+            skelroot = niBlock.skinInstance.skeletonRoot
+            numbones = len(niBlock.skinInstance.bones)
+            if skelrootrefgeom.has_key(skelroot):
+                if numbones > len(skelrootrefgeom[skelroot].skinInstance.bones):
+                    skelrootrefgeom[skelroot] = niBlock
+            else:
                 skelrootrefgeom[skelroot] = niBlock
-        else:
-            skelrootrefgeom[skelroot] = niBlock
 
-    # fix rest pose
-    for skelroot, niBlock in skelrootrefgeom.iteritems():
-        merged, failed = niBlock.mergeBoneRestPositions(force = True)
-        msg('fixing rest position of skeleton root ' + skelroot.name, 2)
-        if merged:
-            msg('merging rest position of ' + niBlock.name + ' with following geometries:', 2)
-            msg([node.name for node in merged], 3)
-        if failed: # should not happen if force = True
-            msg('WARNING: failed to merge rest position of ' + niBlock.name + ' with following geometries:', 2)
-            msg([node.name for node in failed], 3)
+        # fix rest pose
+        for skelroot, niBlock in skelrootrefgeom.iteritems():
+            merged, failed = niBlock.mergeBoneRestPositions(force = True)
+            msg('fixing rest position of skeleton root ' + skelroot.name, 2)
+            if merged:
+                msg('merging rest position of ' + niBlock.name + ' with following geometries:', 2)
+                msg([node.name for node in merged], 3)
+            if failed: # should not happen if force = True
+                msg('WARNING: failed to merge rest position of ' + niBlock.name + ' with following geometries:', 2)
+                msg([node.name for node in failed], 3)
     
     # sets the root block parent to None, so that when crawling back the script won't barf
     root_block._parent = None
@@ -1578,14 +1584,14 @@ def mark_armatures_bones(niBlock):
             
             #if geomBindMatrix != _IDENTITY44:
             
-            is_identity = True
-            for row in range(4):
-                for col in range(4):
-                    if geomBindMatrix[row][col] - _IDENTITY44[row][col] > _EPSILON:
-                        is_identity = False
-            if not is_identity:
-                print 'geometry bind matrix is not identity'
-                print geomBindMatrix
+            #is_identity = True
+            #for row in range(4):
+            #    for col in range(4):
+            #        if geomBindMatrix[row][col] - _IDENTITY44[row][col] > _EPSILON:
+            #            is_identity = False
+            #if not is_identity:
+            #    print 'geometry bind matrix is not identity'
+            #    print geomBindMatrix
             #geomBindMatrixInverse = Matrix(geomBindMatrix)
             #geomBindMatrixInverse.invert()
             for i, boneBlock in enumerate(skininst.bones):
