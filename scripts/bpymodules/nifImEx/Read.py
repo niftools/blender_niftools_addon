@@ -1560,7 +1560,9 @@ def mark_armatures_bones(niBlock):
             # it has a skin instance, so get the skeleton root
             # which is an armature only if it's not a skinning influence
             # so mark the node to be imported as an armature
-            skelroot = niBlock.skinInstance.skeletonRoot
+            skininst = niBlock.skinInstance
+            skindata = skininst.data
+            skelroot = skininst.skeletonRoot
             if not _ARMATURES.has_key(skelroot):
                 if _ARMATURES.keys():
                     raise NIFImportError('models with multiple skeleton roots not yet supported')
@@ -1569,7 +1571,9 @@ def mark_armatures_bones(niBlock):
             
             # stores the mesh bind position for later use
             # note that this matrix is relative to the skeleton root
-            geomBindMatrix = Matrix(*niBlock.getGeometryRestPosition().asList())
+            #geomBindMatrix = Matrix(*(skindata.getTransform().getInverse().asList()))
+            #geomBindMatrix = Matrix(*((skindata.getTransform() * niBlock.getTransform(skelroot)).asList()))
+            geomBindMatrix = Matrix(*(niBlock.getTransform(skelroot).asList()))
             niBlock._bindMatrix = geomBindMatrix
             
             #if geomBindMatrix != _IDENTITY44:
@@ -1584,8 +1588,9 @@ def mark_armatures_bones(niBlock):
                 print geomBindMatrix
             #geomBindMatrixInverse = Matrix(geomBindMatrix)
             #geomBindMatrixInverse.invert()
-            for boneBlock, boneRestPos in niBlock.getBoneRestPositions().items():
-                boneBindMatrix =  Matrix(*boneRestPos.asList())
+            for i, boneBlock in enumerate(skininst.bones):
+                skinbonedata = skindata.boneList[i]
+                boneBindMatrix = Matrix(*((skindata.getTransform() * skinbonedata.getTransform()).getInverse().asList()))
                 # sets the rest position for the affected skin
                 boneBlock._bindMatrix = boneBindMatrix
                 # add them, if we haven't already
