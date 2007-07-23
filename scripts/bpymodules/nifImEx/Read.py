@@ -59,7 +59,7 @@ _GUI_EVENTS = []
 
 _LOGO_PATH = sys.sep.join((Blender.Get('scriptsdir'), "bpymodules", "nifImEx", "niftools_logo.png"))
 _LOGO_IMAGE = Blender.Image.Load(_LOGO_PATH)
-_SCRIPT_VERSION = "2.0.3"
+_SCRIPT_VERSION = "2.0.4"
 _BLOCK_COUNT = 0
 _READ_PROGRESS = 0.0
 _BLOCKS_READ = 0.0

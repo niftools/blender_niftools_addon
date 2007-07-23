@@ -117,3 +117,6 @@ Version 2.0.3 (Jul 22, 2007)
 * Export: fixed skin export in case some bones did not influence any vertices
 * Export: fixed transform error in skinned meshes such as better bodies and oblivion skeleton
 * Export: support for 20.3.0.3 and 20.3.0.6 (experimental)
+
+Version 2.0.4 (Jul 23, 2007)
+* Import: fixed a few skin import transform errors (morrowind better bodies, oblivion armor)
