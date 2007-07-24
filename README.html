@@ -40,7 +40,7 @@ http://niftools.sourceforge.net/wiki/Blender</a></li>
 higher</strong>; the scripts will not run on older versions
 of Blender.</li>
   <li><strong><a href="http://www.python.org/">Python 2.5</a> or higher</strong>.
-  <li><strong><a href="http://www.sourceforge.net/projects/pyffi/">PyFFI 0.1</a> or higher</strong>; the Blender NIF Scripts .exe installer will attempt to download and install PyFFI if you do not have it installed.
+  <li><strong><a href="http://www.sourceforge.net/projects/pyffi/">PyFFI 0.1</a> or higher</strong>.
 </ul>
 <h3>Manual Install</h3>
 <ul>
@@ -95,16 +95,18 @@ using the bone envelopes</li>
 in pose mode)</li>
       <li>make sure the vertex weights are set properly: select
 the armature, go to pose mode, and play with the bones; the mesh should
-deform along the bones</li>
+move with the bones</li>
+<!--
       <li>insert pose mode keys in different frames (press I to
 insert key, and select Rot, Loc, or LocRot) to compose your animation</li>
+-->
     </ul>
   </li>
   <li>create UV coordinates (be sure to check the blender
 manual for more details)
     <ul>
       <li>create seams (3D View, Edit Mode, select seam
-vertices, CTRL-E) </li>
+vertices, CTRL-E)</li>
       <li>in the 3D View, UV Face Select Mode, select all
 faces, press U-&gt;LSCM </li>
       <li>(optional) if you want to create your own texture: in
@@ -131,12 +133,14 @@ embedded in your exported NIF file by toggling the "packed" button next to the "
 the Image tab</li>
     </ul>
   </li>
+<!--
   <li>(optional) animate meshes and/or empty objects (press I
 to insert key, and select Rot, Loc, or LocRot; for now, only location and
 rotation channels are exported); define the animation groups in a text
 buffer called 'Anim' (import a Morrowind creature to get a feeling for
 how this works; so far we only
 support Morrowind-type animations) </li>
+-->
   <li>(optional) to export vertex colors, turn on the
 VCOL_PAINT flag in the material tab </li>
   <li>(optional) Hull your model in a simple so-called
