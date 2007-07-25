@@ -1557,7 +1557,7 @@ def set_parents(niBlock):
 # also stores the bind position matrix for correct import of skinning info
 def mark_armatures_bones(niBlock):
     global _ARMATURES 
-    #_EPSILON = _CONFIG["EPSILON"]
+
     # search for all NiTriShape or NiTriStrips blocks...
     if isinstance(niBlock, NifFormat.NiTriBasedGeom):
         # yes, we found one, get its skin instance
@@ -1620,11 +1620,23 @@ def mark_armatures_bones(niBlock):
                 # we make sure all NiNodes from this bone all the way
                 # down to the armature NiNode are marked as bones
                 complete_bone_tree(boneBlock, skelroot)
-    # nope, it's not a NiTriShape or NiTriStrips
-    # so continue down the tree
-    else:
-        for child in niBlock.getRefs():
-            mark_armatures_bones(child)
+
+    # heuristic for importing skeleton.nif files: mark Bip01 as armature
+    if isinstance(niBlock, NifFormat.NiNode) and niBlock.name == "Bip01":
+        if not _ARMATURES.has_key(niBlock):
+            if _ARMATURES.keys():
+                raise NIFImportError('models with multiple skeleton roots not yet supported')
+            _ARMATURES[niBlock] = []
+        # add bones
+        for bone in niBlock.tree():
+            if not isinstance(bone, NifFormat.NiNode): continue
+            if bone.name[:6] == "Bip01 ":
+                _ARMATURES[niBlock].append(bone)
+                complete_bone_tree(bone, niBlock)
+
+    # continue down the tree
+    for child in niBlock.getRefs():
+        mark_armatures_bones(child)
 
 # this function helps to make sure that the bones actually form a tree,
 # all the way down to the armature node
