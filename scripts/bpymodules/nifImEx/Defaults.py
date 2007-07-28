@@ -39,4 +39,4 @@ _CFG_EPSILON = 0.005 # used for checking equality with floats
 _CFG_VERBOSITY = 0 # verbosity level, determines how much debug output will be generated
 
 _CFG_IMPORT_SKELETON = False # import file as skeleton
-
+_CFG_EXPORT_ANIMATION = 0 # export everything (1=geometry only, 2=animation only)

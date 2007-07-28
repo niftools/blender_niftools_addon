@@ -115,17 +115,17 @@ def drawGUI():
     # IMPORTANT: Don't start dictionary keys with an underscore, the Registry module doesn't like that, apparently
     # Draw.String(name, event, x, y, width, height, initial, length, tooltip=None)
 
-    H -= 75
+    H -= 20
 
     # common options
     guiText("Scale correction", 50, H)
     E["SCALE_CORRECTION"] = Draw.Slider("", addEvent("SCALE_CORRECTION"), 50, H-25, 390, 20, _CONFIG["EXPORT_SCALE_CORRECTION"], 0.01, 100, 0, "scale", updateScale)
 
-    H -= 50
+    H -= 60
 
     # import-only options
     if _BACK_TARGET == "Import":
-        H += 75 # TODO shift values below...
+        H += 125 # TODO shift values below...
         
         #E["NIF_IMPORT_PATH"]        = Draw.String("",       addEvent("NIF_IMPORT_PATH"),     50, H- 75, 390, 20, _CONFIG["NIF_IMPORT_PATH"],        390, "import path")
         #E["BROWSE_IMPORT_PATH"]     = Draw.PushButton('...',addEvent("BROWSE_IMPORT_PATH"), 440, H- 75,  30, 20)
@@ -149,8 +149,14 @@ def drawGUI():
 
     # export-only options
     if _BACK_TARGET == "Export":
+        E["EXPORT_ANIMATION_0"] = Draw.Toggle("Export Geometry + Animation (.nif)", addEvent("EXPORT_ANIMATION_0"), 50, H, 390, 20, _CONFIG["EXPORT_ANIMATION"] == 0)
+        E["EXPORT_ANIMATION_1"] = Draw.Toggle("Export Geometry Only (.nif)",        addEvent("EXPORT_ANIMATION_1"), 50, H-20, 390, 20, _CONFIG["EXPORT_ANIMATION"] == 1)
+        E["EXPORT_ANIMATION_2"] = Draw.Toggle("Export Animation Only (.kf)",        addEvent("EXPORT_ANIMATION_2"), 50, H-40, 390, 20, _CONFIG["EXPORT_ANIMATION"] == 2)
+        H -= 70
+
         E["EXPORT_FLATTENSKIN"] = Draw.Toggle("Flatten Skin", addEvent("EXPORT_FLATTENSKIN"), 50, H, 390, 20, _CONFIG["EXPORT_FLATTENSKIN"])
         H -= 30
+
         #E["NIF_EXPORT_PATH"]        = Draw.String("",       addEvent("NIF_EXPORT_PATH"),     50, H-100, 390, 20, _CONFIG["NIF_EXPORT_PATH"],        390, "export path")
         #E["BROWSE_EXPORT_PATH"]     = Draw.PushButton('...',addEvent("BROWSE_EXPORT_PATH"), 440, H-100,  30, 20)
         
@@ -242,6 +248,8 @@ def buttonEvent(evt):
         _CONFIG["EXPORT_VERSION"] = evName[8:]
     elif evName == "EXPORT_FLATTENSKIN":
         _CONFIG["EXPORT_FLATTENSKIN"] = not _CONFIG["EXPORT_FLATTENSKIN"]
+    elif evName[:17] == "EXPORT_ANIMATION_":
+         _CONFIG["EXPORT_ANIMATION"] = int(evName[17:])
     Draw.Redraw(1)
 
 def event(evt, val):
