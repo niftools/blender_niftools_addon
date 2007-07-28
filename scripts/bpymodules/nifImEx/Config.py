@@ -142,8 +142,9 @@ def drawGUI():
         guiText("try to realign bones", 75, H-195)
         E["IMPORT_ANIMATION"]       = Draw.Toggle(" ",      addEvent("IMPORT_ANIMATION"),    50, H-220,  20, 20, _CONFIG["IMPORT_ANIMATION"])
         guiText("import animation (if present)", 75, H-215)
+        E["IMPORT_SKELETON"]       = Draw.Toggle("Import Skeleton Only", addEvent("IMPORT_SKELETON"), 50, H-250, 390, 20, _CONFIG["IMPORT_SKELETON"])
 
-        H -= 265
+        H -= 295
         E["BACK"]                     = Draw.PushButton('back',    addEvent("BACK"),  50, H-25, 100, 20)
 
     # export-only options
@@ -209,6 +210,8 @@ def buttonEvent(evt):
         _CONFIG["REALIGN_BONES"] = not _CONFIG["REALIGN_BONES"]
     elif evName == "IMPORT_ANIMATION":
         _CONFIG["IMPORT_ANIMATION"] = not _CONFIG["IMPORT_ANIMATION"]
+    elif evName == "IMPORT_SKELETON":
+        _CONFIG["IMPORT_SKELETON"] = not _CONFIG["IMPORT_SKELETON"]
     elif evName == "BROWSE_IMPORT_PATH":
         # browse import path
         print _CONFIG["NIF_IMPORT_PATH"]

@@ -378,8 +378,8 @@ def read_branch(niBlock):
         _READ_PROGRESS = _BLOCKS_READ/(_BLOCK_COUNT+1.0)
         Blender.Window.DrawProgressBar(_READ_PROGRESS, "Importing data")
     if niBlock:
-        if isinstance(niBlock, NifFormat.NiTriBasedGeom):
-            # it's a shape node
+        if isinstance(niBlock, NifFormat.NiTriBasedGeom) and not _CONFIG["IMPORT_SKELETON"]:
+            # it's a shape node and we're not importing skeleton only
             msg("building mesh in read_branch",3)
             return fb_mesh(niBlock)
         elif isinstance(niBlock, NifFormat.NiNode):
@@ -419,7 +419,7 @@ def read_armature_branch(b_armature, niArmature, niBlock):
     """
     Reads the content of the current NIF tree branch to Blender
     recursively, as meshes parented to a given armature. Note that
-    niBlock must have been imported previously as an armature, along
+    niArmature must have been imported previously as an armature, along
     with all its bones. This function only imports meshes.
     """
     # check if the block is non-null
@@ -427,10 +427,10 @@ def read_armature_branch(b_armature, niArmature, niBlock):
         # bone or group node?
         # is it an AParentNode?
         # mesh?
-        if isinstance(niBlock, NifFormat.NiTriBasedGeom):
+        if isinstance(niBlock, NifFormat.NiTriBasedGeom) and not _CONFIG["IMPORT_SKELETON"]:
             msg("building mesh %s in read_armature_branch" % (niBlock.name),3)
             return fb_mesh(niBlock)
-        else:
+        elif isinstance(niBlock, NifFormat.NiNode):
             children = niBlock.children
             if children:
                 # I need this to work out the transform in armaturespace
@@ -1558,6 +1558,21 @@ def set_parents(niBlock):
 def mark_armatures_bones(niBlock):
     global _ARMATURES 
 
+    # case where we import skeleton only: do all NiNode's as bones
+    if _CONFIG["IMPORT_SKELETON"]:
+        if not isinstance(niBlock, NifFormat.NiNode):
+            raise NIFImportError('cannot import skeleton: root is not a NiNode')
+        if not _ARMATURES.has_key(niBlock):
+            if _ARMATURES.keys():
+                raise NIFImportError('models with multiple skeleton roots not yet supported')
+            _ARMATURES[niBlock] = []
+        # add bones
+        for bone in niBlock.tree():
+            if bone == niBlock: continue
+            if not isinstance(bone, NifFormat.NiNode): continue
+            _ARMATURES[niBlock].append(bone)
+        return # done!
+
     # search for all NiTriShape or NiTriStrips blocks...
     if isinstance(niBlock, NifFormat.NiTriBasedGeom):
         # yes, we found one, get its skin instance
@@ -1620,19 +1635,6 @@ def mark_armatures_bones(niBlock):
                 # we make sure all NiNodes from this bone all the way
                 # down to the armature NiNode are marked as bones
                 complete_bone_tree(boneBlock, skelroot)
-
-    # heuristic for importing skeleton.nif files: mark Bip01 as armature
-    if isinstance(niBlock, NifFormat.NiNode) and niBlock.name == "Bip01":
-        if not _ARMATURES.has_key(niBlock):
-            if _ARMATURES.keys():
-                raise NIFImportError('models with multiple skeleton roots not yet supported')
-            _ARMATURES[niBlock] = []
-        # add bones
-        for bone in niBlock.tree():
-            if not isinstance(bone, NifFormat.NiNode): continue
-            if bone.name[:6] == "Bip01 ":
-                _ARMATURES[niBlock].append(bone)
-                complete_bone_tree(bone, niBlock)
 
     # continue down the tree
     for child in niBlock.getRefs():

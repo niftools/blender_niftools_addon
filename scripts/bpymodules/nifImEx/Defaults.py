@@ -38,5 +38,5 @@ _CFG_EXPORT_TEXTURE_PATH = "R"
 _CFG_EPSILON = 0.005 # used for checking equality with floats
 _CFG_VERBOSITY = 0 # verbosity level, determines how much debug output will be generated
 
-
+_CFG_IMPORT_SKELETON = False # import file as skeleton
 
