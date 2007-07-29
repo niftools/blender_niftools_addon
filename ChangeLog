@@ -124,3 +124,5 @@ Version 2.0.4 (Jul 23, 2007)
 Version 2.0.5 (***)
 * Import: new option to import skeleton only
 * Export: new option to export animation
+* Export: fixed morph controller and morph data export (requires PyFFI 0.2)
+

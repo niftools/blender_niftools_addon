@@ -1581,33 +1581,36 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                     # create geometry morph controller
                     morphctrl = create_block("NiGeomMorpherController")
                     trishape.addController(morphctrl)
-                    morphctrl["Frequency"] = 1.0
-                    morphctrl["Phase"] = 0.0
+                    morphctrl.frequency = 1.0
+                    morphctrl.phase = 0.0
                     ctrlStart = 1000000.0
-                    ctrlStop = 0.0
+                    ctrlStop = -1000000.0
                     ctrlFlags = 0x000c
                     
                     # create geometry morph data
                     morphdata = create_block("NiMorphData")
-                    morphctrl["Data"] = morphdata
-                    morphdata["Unknown Byte"] = 0x01
-                    imorphdata = QueryMorphData(morphdata)
-                    imorphdata.SetVertexCount( len( vertlist ) );
-                    imorphdata.SetMorphCount( len( key.getBlocks() ) )
+                    morphctrl.data = morphdata
+                    morphdata.numMorphs = len(key.getBlocks())
+                    morphdata.numVertices = len(vertlist)
+                    morphdata.morphs.updateSize()
                     
                     for keyblocknum, keyblock in enumerate( key.getBlocks() ):
                         # export morphed vertices
-                        morphverts = [ None ] * len( vertlist )
+                        morph = morphdata.morphs[keyblocknum]
+                        msg("exporting morph %i: vertices"%keyblocknum)
+                        morph.arg = morphdata.numVertices
+                        morph.vectors.updateSize()
                         for vert in keyblock.data:
                             if ( vertmap[ vert.index ] ):
-                                mv = Vector3( *(vert.co) )
+                                mv = Blender.Mathutils.Vector( *(vert.co) )
                                 if keyblocknum > 0:
                                     mv.x -= mesh.verts[vert.index].co.x
                                     mv.y -= mesh.verts[vert.index].co.y
                                     mv.z -= mesh.verts[vert.index].co.z
                                 for vert_index in vertmap[ vert.index ]:
-                                    morphverts[ vert_index ] = mv
-                        imorphdata.SetMorphVerts( keyblocknum, morphverts )
+                                    morph.vectors[vert_index].x = mv.x
+                                    morph.vectors[vert_index].y = mv.y
+                                    morph.vectors[vert_index].z = mv.z
                         
                         # export ipo shape key curve
                         #curve = keyipo.getCurve( 'Key %i'%keyblocknum ) # FIXME
@@ -1617,28 +1620,28 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                             curve = keyipo.getCurves()[keyblocknum-1]
                         # base key has no curve all other keys should have one
                         if curve:
-                            msg("exporting morph curve %i"%keyblocknum)
+                            msg("exporting morph %i: curve"%keyblocknum)
                             if ( curve.getExtrapolation() == "Constant" ):
                                 ctrlFlags = 0x000c
                             elif ( curve.getExtrapolation() == "Cyclic" ):
                                 ctrlFlags = 0x0008
-                            keys = []
-                            for btriple in curve.getPoints():
-                                kfloat = Key_float()
+                            morph.interpolation = NifFormat.KeyType.LINEAR_KEY
+                            morph.numKeys = len(curve.getPoints())
+                            morph.keys.updateSize()
+                            for i, btriple in enumerate(curve.getPoints()):
                                 knot = btriple.getPoints()
-                                kfloat.time = (knot[0] - fstart) * fspeed
-                                kfloat.data = curve.evaluate( knot[0] )
-                                kfloat.forward_tangent = 0.0 # ?
-                                kfloat.backward_tangent = 0.0 # ?
-                                keys.append(kfloat)
-                                if kfloat.time < ctrlStart:
-                                    ctrlStart = kfloat.time
-                                if kfloat.time > ctrlStop:
-                                    ctrlStop = kfloat.time
-                            imorphdata.SetMorphKeys( keyblocknum, keys )
-                    morphctrl["Flags"] = ctrlFlags
-                    morphctrl["Start Time"] = ctrlStart
-                    morphctrl["Stop Time"] = ctrlStop
+                                morph.keys[i].arg = morph.interpolation
+                                morph.keys[i].time = (knot[0] - fstart) * fspeed
+                                morph.keys[i].value = curve.evaluate( knot[0] )
+                                #morph.keys[i].forwardTangent = 0.0 # ?
+                                #morph.keys[i].backwardTangent = 0.0 # ?
+                                ctrlStart = min(ctrlStart, morph.keys[i].time)
+                                ctrlStop  = max(ctrlStop,  morph.keys[i].time)
+                    morphctrl.flags = ctrlFlags
+                    morphctrl.startTime = ctrlStart
+                    morphctrl.stopTime = ctrlStop
+
+
 
 def export_bones(arm, parent_block):
     msg("Exporting bones for armature %s"%arm.getName())
