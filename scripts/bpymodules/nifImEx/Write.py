@@ -198,9 +198,9 @@ def export_nif(filename):
         if _CONFIG["EXPORT_ANIMATION"] == 0:
             msg("Exporting geometry and animation")
         elif _CONFIG["EXPORT_ANIMATION"] == 1:
-            msg("Exporting geometry only")
+            msg("Exporting geometry only") # for morrowind: everything except keyframe controllers
         elif _CONFIG["EXPORT_ANIMATION"] == 2:
-            msg("Exporting animation only (as .kf file)")
+            msg("Exporting animation only (as .kf file)") # for morrowind: only keyframe controllers
 
         # armatures should not be in rest position
         for ob in Blender.Object.Get():
@@ -307,7 +307,7 @@ and turn off envelopes."""%ob.getName()
         
         # export animation groups
         if (animtxt):
-            export_animgroups(animtxt, root_block)
+            anim_textextra = export_animgroups(animtxt, root_block)
 
         # activate oblivion collision and physics
         if NIF_VERSION == 0x14000005:
@@ -349,14 +349,46 @@ and turn off envelopes."""%ob.getName()
 
         # create keyframe file:
         #----------------------
+
+        # convert root_block tree into a keyframe tree
         if _CONFIG["EXPORT_ANIMATION"] == 2:
             # morrowind
             if _CONFIG["EXPORT_VERSION"] == "Morrowind":
-                pass
-            elif _CONFIG["EXPORT_VERSION"] == "Oblivion":
-                pass
+                # create kf root header
+                kf_root = create_block("NiSequenceStreamHelper")
+                kf_root.addExtraData(anim_textextra)
+                # find all nodes and keyframe controllers
+                nodekfs = {}
+                for node in root_block.tree():
+                    if not isinstance(node, NifFormat.NiNode): continue
+                    nodekfs[node] = []
+                    ctrls = node.getControllers()
+                    for ctrl in ctrls:
+                        if not isinstance(ctrl, NifFormat.NiKeyframeController): continue
+                        nodekfs[node].append(ctrl)
+                # reparent controller tree
+                lastctrl = None
+                for node, ctrls in nodekfs.iteritems():
+                    for ctrl in ctrls:
+                        # create node reference by name
+                        nodename_extra = create_block("NiStringExtraData")
+                        nodename_extra.bytesRemaining = len(node.name) + 4
+                        nodename_extra.stringData = node.name
+
+                        # break the controller chain
+                        ctrl.nextController = None
+
+                        # add node reference and controller
+                        kf_root.addExtraData(nodename_extra)
+                        kf_root.addController(ctrl)
+
+            #elif _CONFIG["EXPORT_VERSION"] == "Oblivion":
+            #    pass
             else:
                 raise NIFExportError("Keyframe export for '%s' is not supported (can only export Morrowind and Oblivion keyframes)."%_CONFIG["EXPORT_VERSION"])
+
+            # make keyframe root block the root block to be written
+            root_block = kf_root
 
         # write the file:
         #----------------
@@ -562,7 +594,7 @@ def export_node(ob, space, parent_block, node_name):
 # 1 / SX = scale part of inverse(X)
 # so having inverse(X) around saves on calculations
 def export_keyframecontroller(ipo, space, parent_block, bind_mat = None, extra_mat_inv = None):
-    if _CONFIG["EXPORT_ANIMATION"] == 1: # geometry only
+    if _CONFIG["EXPORT_ANIMATION"] == 1: # keyframe controllers are not present in geometry only files
         return
 
     msg("Exporting keyframe %s"%parent_block.name)
@@ -731,7 +763,7 @@ def export_vcolprop(vertex_mode, lighting_mode):
 # parented to the root block
 #
 def export_animgroups(animtxt, block_parent):
-    if _CONFIG["EXPORT_ANIMATION"] == 1: # export geometry only
+    if _CONFIG["EXPORT_ANIMATION"] == 1: # animation group extra data is not present in geometry only files
         return
 
     msg("Exporting animation groups")
@@ -786,6 +818,7 @@ def export_animgroups(animtxt, block_parent):
         key.time = fspeed * (flist[i]-1)
         key.value = dlist[i]
 
+    return textextra
 
 
 #
@@ -899,9 +932,6 @@ def export_sourcetexture(texture, filename = None):
 # returns exported NiFlipController
 # 
 def export_flipcontroller( fliptxt, texture, target, target_tex ):
-    if _CONFIG["EXPORT_ANIMATION"] == 1: # geometry only
-        return
-
     msg("Exporting NiFlipController for texture %s"%texture.getName())
     tlist = fliptxt.asLines()
 
@@ -1310,48 +1340,46 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                 assert( ( ftimes ) > 0 )
 
                 # add a alphacontroller block, and refer to this in the parent material
-                if _CONFIG["EXPORT_ANIMATION"] != 1:
-                    # TODO handle export option 2 (kf only)
-                    alphac = create_block("NiAlphaController")
-                    trimatprop.addController(alphac)
+                alphac = create_block("NiAlphaController")
+                trimatprop.addController(alphac)
 
-                    # select extrapolation mode
-                    if ( a_curve.getExtrapolation() == "Cyclic" ):
-                        alphac.flags = 0x0008
-                    elif ( a_curve.getExtrapolation() == "Constant" ):
-                        alphac.flags = 0x000c
-                    else:
-                        if VERBOSE: print "extrapolation \"%s\" for alpha curve not supported using \"cycle reverse\" instead"%a_curve.getExtrapolation()
-                        alphac.flags = 0x000a
+                # select extrapolation mode
+                if ( a_curve.getExtrapolation() == "Cyclic" ):
+                    alphac.flags = 0x0008
+                elif ( a_curve.getExtrapolation() == "Constant" ):
+                    alphac.flags = 0x000c
+                else:
+                    if VERBOSE: print "extrapolation \"%s\" for alpha curve not supported using \"cycle reverse\" instead"%a_curve.getExtrapolation()
+                    alphac.flags = 0x000a
 
-                    # fill in timing values
-                    alphac.frequency = 1.0
-                    alphac.phase = 0.0
-                    alphac.startTime = (fstart - 1) * fspeed
-                    alphac.stopTime = (fend - fstart) * fspeed
+                # fill in timing values
+                alphac.frequency = 1.0
+                alphac.phase = 0.0
+                alphac.startTime = (fstart - 1) * fspeed
+                alphac.stopTime = (fend - fstart) * fspeed
 
-                    # add the alpha data
-                    alphad = create_block("NiFloatData")
-                    alphac["Data"] = alphad
+                # add the alpha data
+                alphad = create_block("NiFloatData")
+                alphac["Data"] = alphad
 
-                    # select interpolation mode and export the alpha curve data
-                    ialphad = QueryFloatData(alphad)
-                    if ( a_curve.getInterpolation() == "Linear" ):
-                        ialphad.SetKeyType(LINEAR_KEY)
-                    elif ( a_curve.getInterpolation() == "Bezier" ):
-                        ialphad.SetKeyType(QUADRATIC_KEY)
-                    else:
-                        raise NIFExportError( 'interpolation %s for alpha curve not supported use linear or bezier instead'%a_curve.getInterpolation() )
+                # select interpolation mode and export the alpha curve data
+                ialphad = QueryFloatData(alphad)
+                if ( a_curve.getInterpolation() == "Linear" ):
+                    ialphad.SetKeyType(LINEAR_KEY)
+                elif ( a_curve.getInterpolation() == "Bezier" ):
+                    ialphad.SetKeyType(QUADRATIC_KEY)
+                else:
+                    raise NIFExportError( 'interpolation %s for alpha curve not supported use linear or bezier instead'%a_curve.getInterpolation() )
 
-                    a_keys = []
-                    for ftime in ftimes:
-                        a_frame = Key_float()
-                        a_frame.time = ftime
-                        a_frame.data = alpha[ftime]
-                        a_frame.forward_tangent = 0.0 # ?
-                        a_frame.backward_tangent = 0.0 # ?
-                        a_keys.append(a_frame)
-                    ialphad.SetKeys(a_keys)
+                a_keys = []
+                for ftime in ftimes:
+                    a_frame = Key_float()
+                    a_frame.time = ftime
+                    a_frame.data = alpha[ftime]
+                    a_frame.forward_tangent = 0.0 # ?
+                    a_frame.backward_tangent = 0.0 # ?
+                    a_keys.append(a_frame)
+                ialphad.SetKeys(a_keys)
 
             # export animated material colors
             if ( ipo != None and ( ipo.getCurve( 'R' ) != None or ipo.getCurve( 'G' ) != None or ipo.getCurve( 'B' ) != None ) ):
