@@ -78,12 +78,12 @@ _GUI_EVENTS = []
 
 _LOGO_PATH = sys.sep.join((Blender.Get('scriptsdir'),"bpymodules","nifImEx","niftools_logo.png"))
 _LOGO_IMAGE = Blender.Image.Load(_LOGO_PATH)
-_SCRIPT_VERSION = "2.0.4"
+_SCRIPT_VERSION = "2.0.5"
 
 
 
 def openFileSelector():
-    Blender.Window.FileSelector(selectFile, "Export .nif", _CONFIG["NIF_EXPORT_FILE"])
+    Blender.Window.FileSelector(selectFile, "Export .nif/.kf", _CONFIG["NIF_EXPORT_FILE"])
 
 def selectFile(nifFile):
     global _CONFIG
@@ -303,7 +303,7 @@ and turn off envelopes."""%ob.getName()
             if not has_keyframecontrollers:
                 msg("Defining dummy keyframe controller")
                 # add a trivial keyframe controller on the scene root
-                export_keyframe(None, 'localspace', root_block)
+                export_keyframecontroller(None, 'localspace', root_block)
         
         # export animation groups
         if (animtxt):
@@ -347,21 +347,27 @@ and turn off envelopes."""%ob.getName()
             msg("Applying scale correction %f"%_EXPORT_SCALE_CORRECTION)
             root_block.applyScale(_EXPORT_SCALE_CORRECTION)
 
+        # create keyframe file:
+        #----------------------
+        if _CONFIG["EXPORT_ANIMATION"] == 2:
+            # morrowind
+            if _CONFIG["EXPORT_VERSION"] == "Morrowind":
+                pass
+            elif _CONFIG["EXPORT_VERSION"] == "Oblivion":
+                pass
+            else:
+                raise NIFExportError("Keyframe export for '%s' is not supported (can only export Morrowind and Oblivion keyframes)."%_CONFIG["EXPORT_VERSION"])
+
         # write the file:
         #----------------
-        msg("Writing NIF file")
-        Blender.Window.DrawProgressBar(0.66, "Writing NIF file(s)")
+        ext = ".nif" if (_CONFIG["EXPORT_ANIMATION"] != 2) else ".kf"
+        msg("Writing %s file"%ext)
+        Blender.Window.DrawProgressBar(0.66, "Writing %s file"%ext)
 
         # make sure we have the right file extension
-        if (fileext.lower() != '.nif'):
-            filename += '.nif'
-        # TODO: sort this out later
-        #if ( NIF_VERSION == 0x04000002 ): # assume Morrowind
-        #    WriteFileGroup(filename, root_block, NIF_VERSION, EXPORT_NIF_KF, KF_MW)
-        #elif ( NIF_VERSION == 0x14000004 ): # assume Civ4
-        #    WriteFileGroup(filename, root_block, NIF_VERSION, EXPORT_NIF, KF_CIV4)
-        #else: # default: simply write the NIF tree
-        #    WriteNifTree(filename, root_block, NIF_VERSION)
+        if (fileext.lower() != ext):
+            msg("WARNING: changing extension from %s to %s on output file"%(fileext,ext))
+            filename = Blender.sys.join(filedir, root_name + ext)
         NIF_USER_VERSION = 0 if NIF_VERSION != 0x14000005 else 11
         f = open(filename, "wb")
         try:
@@ -388,6 +394,8 @@ and turn off envelopes."""%ob.getName()
 
     Blender.Window.DrawProgressBar(1.0, "Finished")
     
+    return # uncomment to enable double check
+
     # no export error, but let's double check: try reading the file(s) we just wrote
     # we can probably remove these lines once the exporter is stable
     try:
@@ -492,7 +500,7 @@ def export_node(ob, space, parent_block, node_name):
     if (ob != None):
         # export animation
         if (ob_ipo != None):
-            export_keyframe(ob_ipo, space, node)
+            export_keyframecontroller(ob_ipo, space, node)
     
         # if it is a mesh, export the mesh as trishape children of this ninode
         if (ob.getType() == 'Mesh'):
@@ -553,7 +561,7 @@ def export_node(ob, space, parent_block, node_name):
 # inverse(RX) = rotation part of inverse(X)
 # 1 / SX = scale part of inverse(X)
 # so having inverse(X) around saves on calculations
-def export_keyframe(ipo, space, parent_block, bind_mat = None, extra_mat_inv = None):
+def export_keyframecontroller(ipo, space, parent_block, bind_mat = None, extra_mat_inv = None):
     if _CONFIG["EXPORT_ANIMATION"] == 1: # geometry only
         return
 
@@ -891,6 +899,9 @@ def export_sourcetexture(texture, filename = None):
 # returns exported NiFlipController
 # 
 def export_flipcontroller( fliptxt, texture, target, target_tex ):
+    if _CONFIG["EXPORT_ANIMATION"] == 1: # geometry only
+        return
+
     msg("Exporting NiFlipController for texture %s"%texture.getName())
     tlist = fliptxt.asLines()
 
@@ -1690,7 +1701,7 @@ def export_bones(arm, parent_block):
             bonexmat_inv = Blender.Mathutils.Matrix()
             bonexmat_inv.identity()
         if bones_ipo.has_key(bone.name):
-            export_keyframe(bones_ipo[bone.name], 'localspace', node, bind_mat = bonerestmat, extra_mat_inv = bonexmat_inv)
+            export_keyframecontroller(bones_ipo[bone.name], 'localspace', node, bind_mat = bonerestmat, extra_mat_inv = bonexmat_inv)
 
     # now fix the linkage between the blocks
     for bone in bones.values():

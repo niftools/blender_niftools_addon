@@ -1,20 +1,20 @@
 #!BPY
 
 """ Registration info for Blender menus:
-Name: 'NetImmerse/Gamebryo (.nif)'
+Name: 'NetImmerse/Gamebryo (.nif & .kf)'
 Blender: 244
 Group: 'Export'
-Tooltip: 'Export NIF File Format (.nif)'
+Tooltip: 'Export NIF File Format (.nif & .kf)'
 """
 
 __author__ = "The NifTools team, http://niftools.sourceforge.net/"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
-__version__ = "2.0.4"
+__version__ = "2.0.5"
 __bpydoc__ = """\
 This script exports Netimmerse and Gamebryo .NIF files from Blender.
 """
 
-# nif_export.py version 2.0.4
+# nif_export.py version 2.0.5
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
 # 
