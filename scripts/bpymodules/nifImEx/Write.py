@@ -693,7 +693,12 @@ def export_keyframecontroller(ipo, space, parent_block, bind_mat = None, extra_m
     # -> now comes the real export
 
     # add a keyframecontroller block, and refer to this block in the parent's time controller
-    kfc = create_block("NiKeyframeController")
+    if NIF_VERSION < 0x0A020000:
+        kfc = create_block("NiKeyframeController")
+    else:
+        kfc = create_block("NiTransformController")
+        kfi = create_block("NiTransformInterpolator")
+        kfc.interpolator = kfi
     parent_block.addController(kfc)
 
     # fill in the non-trivial values
@@ -704,8 +709,12 @@ def export_keyframecontroller(ipo, space, parent_block, bind_mat = None, extra_m
     kfc.stopTime = (fend - fstart) * fspeed
 
     # add the keyframe data
-    kfd = create_block("NiKeyframeData")
-    kfc.data = kfd
+    if NIF_VERSION < 0x0A020000:
+        kfd = create_block("NiKeyframeData")
+        kfc.data = kfd
+    else:
+        kfd = create_block("NiTransformData")
+        kfi.data = kfd
 
     frames = rot_curve.keys()
     frames.sort()
