@@ -121,8 +121,10 @@ Version 2.0.3 (Jul 22, 2007)
 Version 2.0.4 (Jul 23, 2007)
 * Import: fixed a few skin import transform errors (morrowind better bodies, oblivion armor)
 
-Version 2.0.5 (***)
+Version 2.0.5 (Jul 30, 2007)
 * Import: new option to import skeleton only
-* Export: new option to export animation
-* Export: fixed morph controller and morph data export (requires PyFFI 0.2)
-
+* Export: new options to export animation
+* Export: 10.2.0.0-style transform controllers (includes Oblivion)
+* Export: Morrowind style .kf files
+* Export: fixed morph controller and morph data export
+* Export: fixed getTransform on Zoo Tycoon 2 creatures

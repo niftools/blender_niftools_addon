@@ -161,9 +161,9 @@ pyffi_check_end:
 
   ; check PyFFI version
   StrCpy $R0 $PYFFI "" 17 ; strip "Python 2.5 PyFFI-"
-  ${VersionCompare} "$R0" "0.1" $R1
-  IntCmp $R1 0 pyffi_vercheck_end ; installed version is 0.1
-  IntCmp $R1 1 pyffi_vercheck_end ; installed version is more recent than 0.1
+  ${VersionCompare} "$R0" "0.2.1" $R1
+  IntCmp $R1 0 pyffi_vercheck_end ; installed version is as indicated
+  IntCmp $R1 1 pyffi_vercheck_end ; installed version is more recent than as indicated
 
     MessageBox MB_OK "The installed version of PyFFI is outdated. Get the most recent version from http://www.sourceforge.net/projects/pyffi"
     Abort ; causes installer to quit

@@ -151,7 +151,7 @@ def drawGUI():
     if _BACK_TARGET == "Export":
         E["EXPORT_ANIMATION_0"] = Draw.Toggle("Export Geometry + Animation (.nif)", addEvent("EXPORT_ANIMATION_0"), 50, H, 390, 20, _CONFIG["EXPORT_ANIMATION"] == 0)
         E["EXPORT_ANIMATION_1"] = Draw.Toggle("Export Geometry Only (.nif)",        addEvent("EXPORT_ANIMATION_1"), 50, H-20, 390, 20, _CONFIG["EXPORT_ANIMATION"] == 1)
-        E["EXPORT_ANIMATION_2"] = Draw.Toggle("Export Animation Only (.kf)",        addEvent("EXPORT_ANIMATION_2"), 50, H-40, 390, 20, _CONFIG["EXPORT_ANIMATION"] == 2)
+        E["EXPORT_ANIMATION_2"] = Draw.Toggle("Export Animation Only (.kf) - MORROWIND ONLY FOR NOW",        addEvent("EXPORT_ANIMATION_2"), 50, H-40, 390, 20, _CONFIG["EXPORT_ANIMATION"] == 2)
         H -= 70
 
         E["EXPORT_FLATTENSKIN"] = Draw.Toggle("Flatten Skin", addEvent("EXPORT_FLATTENSKIN"), 50, H, 390, 20, _CONFIG["EXPORT_FLATTENSKIN"])

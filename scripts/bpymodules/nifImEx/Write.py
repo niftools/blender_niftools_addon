@@ -385,7 +385,7 @@ and turn off envelopes."""%ob.getName()
             #elif _CONFIG["EXPORT_VERSION"] == "Oblivion":
             #    pass
             else:
-                raise NIFExportError("Keyframe export for '%s' is not supported (can only export Morrowind and Oblivion keyframes)."%_CONFIG["EXPORT_VERSION"])
+                raise NIFExportError("Keyframe export for '%s' is not supported. Only Morrowind keyframes are supported."%_CONFIG["EXPORT_VERSION"])
 
             # make keyframe root block the root block to be written
             root_block = kf_root
