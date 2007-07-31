@@ -85,6 +85,13 @@ _BONES_EXTRA_MATRIX = {}
 # maps NIF armature name to list of NIF bone name
 _ARMATURES = {}
 
+# dictionary of keyframe controllers
+_ANIMATION_DATA = {}
+
+# dictionary of text keys
+_MARKER_DATA = {}
+
+
 # correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z
 _BONE_CORRECTION_MATRICES = (\
             Matrix([ 0.0,-1.0, 0.0],[ 1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0]),\
@@ -105,8 +112,9 @@ _IDENTITY44 = Matrix([ 1.0,0.0, 0.0, 0.0],\
 _R2D = 3.14159265358979/180.0 # radians to degrees conversion constant
 _D2R = 180.0/3.14159265358979 # degrees to radians conversion constant
 
+
 _SCENE = Blender.Scene.GetCurrent() #Blender scene, to avoid redundant code
-_FPS = _SCENE.getRenderingContext().framesPerSec() #frames per second
+_FPS = None #_SCENE.getRenderingContext().framesPerSec() #frames per second
 
 def addEvent(evName = "NO_NAME"):
     global _GUI_EVENTS
@@ -143,7 +151,7 @@ def gui():
     E["IMPORT"]             = Draw.PushButton('import',   addEvent("IMPORT"),  50, H-225, 100, 20)
     E["TXT_NIF_FILE_PATH"]  = guiText("NIF file path", 50, H-125)
     _GUI_ELEMENTS = E
-    Draw.Redraw(1)
+    #Draw.Redraw(1)
 
 def buttonEvent(evt):
     """
@@ -282,7 +290,7 @@ def import_nif(filename):
 def import_main(root_block, version):
     # scene info
     # used to control the progress bar
-    global _SCENE, _CONFIG, _BLOCK_COUNT, _BLOCKS_READ, _READ_PROGRESS
+    global _SCENE, _CONFIG, _BLOCK_COUNT, _BLOCKS_READ, _READ_PROGRESS, _FPS
     #_BLOCK_COUNT = NiObject_NumObjectsInMemory() 
     _READ_PROGRESS = 0.0
     _BLOCKS_READ = 0.0
@@ -343,6 +351,36 @@ def import_main(root_block, version):
     # mark armature nodes and bones
     mark_armatures_bones(root_block)
     
+    # store animation data for later import
+    store_animation_data(root_block)
+    
+    # detect the file's FPS setting
+    # the check on _FPS is hackish, but ensures it's only done once even if there's multiple roots
+    # there should be a little additional code to handle geomorph controller and text keys as well
+    if _CONFIG['IMPORT_ANIMATION'] and not _FPS:
+        keyTimes = []
+        for kfc in _ANIMATION_DATA.values():
+            kfd = kfc.data
+            for key in kfd.translations.keys:
+                keyTimes.append(key.time)
+            for key in kfd.scales.keys:
+                keyTimes.append(key.time)
+            if kfd.rotationType == 4:
+                for key in kfd.xyzRotations.keys:
+                    keyTimes.append(key.time)
+            else:
+                for key in kfd.quaternionKeys:
+                    keyTimes.append(key.time)
+        lowest = sum([abs(int(time)-time) for time in keyTimes])
+        # for fps in xrange(1,120): #disabled, used for testing
+        for fps in [20,25,30,35]:
+            delta = sum([abs(int(time*fps)-(time*fps)) for time in keyTimes])
+            if delta < lowest:
+                lowest = delta
+                _FPS = fps
+        _SCENE.getRenderingContext().fps = _FPS
+            
+    
     # read the NIF tree
     if not is_armature_root(root_block):
         msg("%s is not an armature root" % (root_block.name), 3)
@@ -351,9 +389,7 @@ def import_main(root_block, version):
             # (this prevents us having to create an empty as a root)
             blocks = root_block.children
             # import the extras
-            textkey = find_extra(root_block, NifFormat.NiTextKeyExtraData)
-            if textkey:
-                fb_textkey(textkey)
+            fb_textkey(root_block)
         else:
             # this fixes an issue with nifs where the first block is a NiTriShape
             blocks = [ root_block ]
@@ -407,12 +443,9 @@ def read_branch(niBlock):
                 if _CONFIG['IMPORT_ANIMATION']:
                     set_animation(niBlock, b_obj)
                 # import the extras
-                textkey = find_extra(niBlock, NifFormat.NiTextKeyExtraData)
-                if textkey:
-                    fb_textkey(textkey)
-                return b_obj
+                fb_textkey(niBlock)
         # all else is currently discarded
-        print "todo: add cameras, lights and particle systems"
+        print "todo: add cameras, lights, colliders and particle systems"
         return None
 
 def read_armature_branch(b_armature, niArmature, niBlock):
@@ -1158,58 +1191,61 @@ def fb_mesh(niBlock):
     norms = niData.normals
 
     v_map = [0]*len(verts) # pre-allocate memory, for faster performance
-    print "todo: add option for seams import"
-    _SEAMS_IMPORT = True
-    if not _SEAMS_IMPORT:
-        # Fast method: don't care about any seams!
-        for i, v in enumerate(verts):
-            v_map[i] = i # NIF vertex i maps to blender vertex i
+    
+    # The slow method is plenty quick enough, no point in not using it
+    #print "todo: add option for seams import"
+    #_SEAMS_IMPORT = True
+    #if not _SEAMS_IMPORT:
+    #    # Fast method: don't care about any seams!
+    #    for i, v in enumerate(verts):
+    #        v_map[i] = i # NIF vertex i maps to blender vertex i
+    #        b_meshData.verts.extend(v.x, v.y, v.z) # add the vertex
+    #        # adds normal info if present.
+    #        # Blender doesn't calculate these quite properly when importing strips
+    #        if norms:
+    #            mv = b_meshData.verts[i]
+    #            n = norms[i]
+    #            mv.no = Blender.Mathutils.Vector(n.x, n.y, n.z)
+    #else:
+    
+    # Slow method, but doesn't introduce unwanted cracks in UV seams:
+    # Construct vertex map to get unique vertex / normal pair list.
+    # We use a Python dictionary to remove doubles and to keep track of indices.
+    # While we are at it, we also add vertices while constructing the map.
+    n_map = {}
+    b_v_index = 0
+    for i, v in enumerate(verts):
+        # The key k identifies unique vertex /normal pairs.
+        # We use a tuple of ints for key, this works MUCH faster than a
+        # tuple of floats.
+        if norms:
+            n = norms[i]
+            k = (int(v.x*200),int(v.y*200),int(v.z*200),\
+                 int(n.x*200),int(n.y*200),int(n.z*200))
+        else:
+            k = (int(v.x*200),int(v.y*200),int(v.z*200))
+        # see if we already added this guy, and if so, what index
+        try:
+            n_map_k = n_map[k] # this is the bottle neck... can we speed this up?
+        except KeyError:
+            n_map_k = None
+        if not n_map_k:
+            # not added: new vertex / normal pair
+            n_map[k] = i         # unique vertex / normal pair with key k was added, with NIF index i
+            v_map[i] = b_v_index # NIF vertex i maps to blender vertex b_v_index
             b_meshData.verts.extend(v.x, v.y, v.z) # add the vertex
             # adds normal info if present.
             # Blender doesn't calculate these quite properly when importing strips
             if norms:
-                mv = b_meshData.verts[i]
+                mv = b_meshData.verts[b_v_index]
                 n = norms[i]
                 mv.no = Blender.Mathutils.Vector(n.x, n.y, n.z)
-    else:
-        # Slow method, but doesn't introduce unwanted cracks in UV seams:
-        # Construct vertex map to get unique vertex / normal pair list.
-        # We use a Python dictionary to remove doubles and to keep track of indices.
-        # While we are at it, we also add vertices while constructing the map.
-        n_map = {}
-        b_v_index = 0
-        for i, v in enumerate(verts):
-            # The key k identifies unique vertex /normal pairs.
-            # We use a tuple of ints for key, this works MUCH faster than a
-            # tuple of floats.
-            if norms:
-                n = norms[i]
-                k = (int(v.x*200),int(v.y*200),int(v.z*200),\
-                     int(n.x*200),int(n.y*200),int(n.z*200))
-            else:
-                k = (int(v.x*200),int(v.y*200),int(v.z*200))
-            # see if we already added this guy, and if so, what index
-            try:
-                n_map_k = n_map[k] # this is the bottle neck... can we speed this up?
-            except KeyError:
-                n_map_k = None
-            if not n_map_k:
-                # not added: new vertex / normal pair
-                n_map[k] = i         # unique vertex / normal pair with key k was added, with NIF index i
-                v_map[i] = b_v_index # NIF vertex i maps to blender vertex b_v_index
-                b_meshData.verts.extend(v.x, v.y, v.z) # add the vertex
-                # adds normal info if present.
-                # Blender doesn't calculate these quite properly when importing strips
-                if norms:
-                    mv = b_meshData.verts[b_v_index]
-                    n = norms[i]
-                    mv.no = Blender.Mathutils.Vector(n.x, n.y, n.z)
-                b_v_index += 1
-            else:
-                # already added
-                v_map[i] = v_map[n_map_k] # NIF vertex i maps to Blender v_map[vertex n_map_nk]
-        # release memory
-        del n_map
+            b_v_index += 1
+        else:
+            # already added
+            v_map[i] = v_map[n_map_k] # NIF vertex i maps to Blender v_map[vertex n_map_nk]
+    # release memory
+    del n_map
 
     # Adds the faces to the mesh
     f_map = [None]*len(tris)
@@ -1449,7 +1485,8 @@ def fb_textkey(niBlock):
     Since the text buffer is cleared on each import only the last import will be exported
     correctly
     """
-    if isinstance(niBlock, NifFormat.NiTextKeyExtraData) and niBlock.textKeys:
+    txk = find_extra(niBlock, NifFormat.NiTextKeyExtraData)
+    if txk:
         # get animation text buffer, and clear it if it already exists
         try:
             animtxt = [txt for txt in Blender.Text.Get() if txt.getName() == "Anim"][0]
@@ -1458,7 +1495,7 @@ def fb_textkey(niBlock):
             animtxt = Blender.Text.New("Anim")
         
         frame = 1
-        for key in niBlock.textKeys:
+        for key in txk.textKeys:
             newkey = str(key.value).replace('\r\n', '/').rstrip('/')
             frame = 1 + int(key.time * _FPS) # time 0.0 is frame 1
             animtxt.write('%i/%s\n'%(frame, newkey))
@@ -1503,6 +1540,15 @@ def fb_fullnames():
         namestxt = Blender.Text.New("FullNames")
     for niBlock in _NAMES.keys():
         namestxt.write('%s;%s\n'% (_NAMES[niBlock], niBlock.name))
+
+# scan the root block for animation data
+def store_animation_data(rootBlock):
+    global _ANIMATION_DATA
+    niBlockList = [block for block in rootBlock.tree() if isinstance(block, NifFormat.NiAVObject)]
+    for niBlock in niBlockList:
+        kfc = find_controller(niBlock, NifFormat.NiKeyframeController)
+        if kfc:
+            _ANIMATION_DATA[niBlock] = kfc
     
 # find a controller
 def find_controller(niBlock, controllerType):
