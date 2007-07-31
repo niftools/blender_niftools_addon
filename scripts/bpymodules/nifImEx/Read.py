@@ -371,7 +371,8 @@ def import_main(root_block, version):
             else:
                 for key in kfd.quaternionKeys:
                     keyTimes.append(key.time)
-        lowest = sum([abs(int(time)-time) for time in keyTimes])
+        lowest = 1000000000.0
+        fps = 30
         # for fps in xrange(1,120): #disabled, used for testing
         for fps in [20,25,30,35]:
             delta = sum([abs(int(time*fps)-(time*fps)) for time in keyTimes])
@@ -444,6 +445,7 @@ def read_branch(niBlock):
                     set_animation(niBlock, b_obj)
                 # import the extras
                 fb_textkey(niBlock)
+                return b_obj
         # all else is currently discarded
         print "todo: add cameras, lights, colliders and particle systems"
         return None
@@ -1684,6 +1686,7 @@ def mark_armatures_bones(niBlock):
 
     # continue down the tree
     for child in niBlock.getRefs():
+        if not isinstance(child, NifFormat.NiAVObject): continue # skip blocks that don't have transforms
         mark_armatures_bones(child)
 
 # this function helps to make sure that the bones actually form a tree,
