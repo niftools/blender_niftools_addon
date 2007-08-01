@@ -371,14 +371,15 @@ def import_main(root_block, version):
             else:
                 for key in kfd.quaternionKeys:
                     keyTimes.append(key.time)
-        lowest = 1000000000.0
-        fps = 30
+        _FPS = 30
+        #lowestDiff = 1000000000.0
+        lowestDiff = sum([abs(int(time*_FPS)-(time*_FPS)) for time in keyTimes])
         # for fps in xrange(1,120): #disabled, used for testing
-        for fps in [20,25,30,35]:
-            delta = sum([abs(int(time*fps)-(time*fps)) for time in keyTimes])
-            if delta < lowest:
-                lowest = delta
-                _FPS = fps
+        for testFps in [20, 25, 35]:
+            diff = sum([abs(int(time*testFps)-(time*testFps)) for time in keyTimes])
+            if diff < lowestDiff:
+                lowestDiff = diff
+                _FPS = testFps
         _SCENE.getRenderingContext().fps = _FPS
             
     
