@@ -390,8 +390,9 @@ def import_main(root_block, version):
             # yes, we'll process all children of the root node
             # (this prevents us having to create an empty as a root)
             blocks = root_block.children
-            # import the extras
-            fb_textkey(root_block)
+            if _CONFIG['IMPORT_ANIMATION']:
+                # import the extras
+                fb_textkey(root_block)
         else:
             # this fixes an issue with nifs where the first block is a NiTriShape
             blocks = [ root_block ]
@@ -444,8 +445,8 @@ def read_branch(niBlock):
                 # import the animations
                 if _CONFIG['IMPORT_ANIMATION']:
                     set_animation(niBlock, b_obj)
-                # import the extras
-                fb_textkey(niBlock)
+                    # import the extras
+                    fb_textkey(niBlock)
                 return b_obj
         # all else is currently discarded
         print "todo: add cameras, lights, colliders and particle systems"
