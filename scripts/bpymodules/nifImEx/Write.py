@@ -1596,11 +1596,10 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                     # calculate center and radius for each skin bone data block
                     trishape.updateSkinCenterRadius()
 
-                    if NIF_VERSION >= 0x04020100:
+                    if NIF_VERSION >= 0x04020100 and _CONFIG["EXPORT_SKINPARTITION"]:
                         msg("creating 'NiSkinPartition'")
-                        # 18 bones per partition for oblivion, 4 bones per partition for civ4
-                        maxbpp = 18 if NIF_VERSION == 0x14000005 else 4
-                        lostweight = trishape.updateSkinPartition(maxbonesperpartition = maxbpp, maxbonespervertex = 4)
+                        maxbpp = _CONFIG["EXPORT_BONESPERPARTITION"]
+                        lostweight = trishape.updateSkinPartition(maxbonesperpartition = _CONFIG["EXPORT_BONESPERPARTITION"], maxbonespervertex = _CONFIG["EXPORT_BONESPERVERTEX"])
                         if lostweight > NifFormat._EPSILON:
                             print "WARNING: lost %f in vertex weights while creating skin partition"%lostweight
 

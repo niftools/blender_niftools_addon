@@ -75,7 +75,8 @@ def updateScale(evt, val):
     _CONFIG["EXPORT_SCALE_CORRECTION"] = val
     _CONFIG["IMPORT_SCALE_CORRECTION"] = 1.0 / _CONFIG["EXPORT_SCALE_CORRECTION"]
 
-
+def updateBonesPerPartition(evt, val):
+    _CONFIG["EXPORT_BONESPERPARTITION"] = val
 
 def addEvent(evName = "NO_NAME"):
     global _GUI_EVENTS
@@ -156,6 +157,12 @@ def drawGUI():
 
         E["EXPORT_FLATTENSKIN"] = Draw.Toggle("Flatten Skin", addEvent("EXPORT_FLATTENSKIN"), 50, H, 390, 20, _CONFIG["EXPORT_FLATTENSKIN"])
         H -= 30
+
+        E["EXPORT_SKINPARTITION"] = Draw.Toggle("Export Skin Partition", addEvent("EXPORT_SKINPARTITION"), 50, H, 390, 20, _CONFIG["EXPORT_SKINPARTITION"])
+        E["EXPORT_BONESPERPARTITION"] = Draw.Number("Max Bones Per Partition", addEvent("EXPORT_BONESPERPARTITION"), 50, H-20, 390, 20, _CONFIG["EXPORT_BONESPERPARTITION"], 4, 18, "maximum number of bones per partition", updateBonesPerPartition)
+        # the value 4 does for all games, so let's not let user change it
+        #E["EXPORT_BONESPERVERTEX"] = Draw.Number("Max Bones Per Vertex", addEvent("EXPORT_BONESPERVERTEX"), 50, H-65, 390, 20, _CONFIG["EXPORT_BONESPERVERTEX"], 2, 8)
+        H -= 50
 
         #E["NIF_EXPORT_PATH"]        = Draw.String("",       addEvent("NIF_EXPORT_PATH"),     50, H-100, 390, 20, _CONFIG["NIF_EXPORT_PATH"],        390, "export path")
         #E["BROWSE_EXPORT_PATH"]     = Draw.PushButton('...',addEvent("BROWSE_EXPORT_PATH"), 440, H-100,  30, 20)
@@ -250,6 +257,8 @@ def buttonEvent(evt):
         _CONFIG["EXPORT_FLATTENSKIN"] = not _CONFIG["EXPORT_FLATTENSKIN"]
     elif evName[:17] == "EXPORT_ANIMATION_":
          _CONFIG["EXPORT_ANIMATION"] = int(evName[17:])
+    elif evName == "EXPORT_SKINPARTITION":
+        _CONFIG["EXPORT_SKINPARTITION"] = not _CONFIG["EXPORT_SKINPARTITION"]
     Draw.Redraw(1)
 
 def event(evt, val):
