@@ -59,7 +59,7 @@ _GUI_EVENTS = []
 
 _LOGO_PATH = sys.sep.join((Blender.Get('scriptsdir'), "bpymodules", "nifImEx", "niftools_logo.png"))
 _LOGO_IMAGE = Blender.Image.Load(_LOGO_PATH)
-_SCRIPT_VERSION = "2.0.5"
+_SCRIPT_VERSION = "2.0.6"
 _BLOCK_COUNT = 0
 _READ_PROGRESS = 0.0
 _BLOCKS_READ = 0.0
@@ -457,9 +457,9 @@ def read_armature_branch(b_armature, niArmature, niBlock):
                 for child in children:
                     b_mesh = read_armature_branch(b_armature, niArmature, child)
                     if b_mesh:
-                        # fix the mesh matrix: RELATIVE TO THE ARMATURE
-                        # meshes are not parented to bones
-                        # all meshes are reparented to the armature in blender
+                        # fix the mesh matrix relative to the armature
+                        # (for simplicity meshes are not parented to bones
+                        # all meshes are parented to the armature)
                         b_mesh.setMatrix(fb_matrix(child, relative_to = niArmature))
                         # add a vertex group if it's parented to a bone
                         par_bone = get_closest_bone(child)

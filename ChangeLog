@@ -128,3 +128,10 @@ Version 2.0.5 (Jul 30, 2007)
 * Export: Morrowind style .kf files
 * Export: fixed morph controller and morph data export
 * Export: fixed getTransform on Zoo Tycoon 2 creatures
+
+Version 2.0.6 (***)
+* Import/Export: fixed various transform errors
+* Import: frames/sec detection
+* Import: new and more reliable skinning import method
+* Export: new options to control export of skin partition
+

@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <title>The Blender NIF Scripts v2.0.5</title>
+  <title>The Blender NIF Scripts v2.0.6</title>
   <meta http-equiv="Content-Type"
  content="text/html; charset=ISO-8859-1" />
   <style type="text/css">
@@ -19,17 +19,15 @@ a:hover.nav { color: #FF0000; background: transparent; }
   </style>
 </head>
 <body>
-<h1>The Blender NIF Scripts v2.0.5</h1>
+<h1>The Blender NIF Scripts v2.0.6</h1>
 <h2>Release Notes</h2>
 The Blender NIF Scripts have undergone serious changes since the 1.5.7 release. Although we have done our best to squash all bugs we could find, it is unlikely that we have found them all. If you find bugs, PLEASE REPORT THEM ON THE SOURCEFORGE TRACKER.
 <h3>Highlights of this Release</h3>
 <ul>
-  <li>new option to import skeleton only</li>
-  <li>new options to export animation</li>
-  <li>Morrowind .kf export</li>
-  <li>10.2.0.0-style transform controllers (includes Oblivion)</li>
-  <li>fixed morph controller and morph data export</li>
-  <li>fixed getTransform on Zoo Tycoon 2 creatures</li>
+  <li>frames/sec detection on import</li>
+  <li>new options to control export of skin partition</li>
+  <li>new and more reliable skinning import method</li>
+  <li>fixed various transform errors</li>
 </ul>
 <h2>Support</h2>
 <ul>
@@ -42,10 +40,9 @@ http://niftools.sourceforge.net/wiki/Blender</a></li>
 <h3>Requirements</h3>
 <ul>
   <li><strong><a href="http://www.blender.org/">Blender 2.44</a> or
-higher</strong>; the scripts will not run on older versions
-of Blender.</li>
-  <li><strong><a href="http://www.python.org/">Python 2.5</a> or higher</strong>.
-  <li><strong><a href="http://www.sourceforge.net/projects/pyffi/">PyFFI 0.2.1</a> or higher</strong>.
+higher</strong>.</li>
+  <li><strong><a href="http://www.python.org/">Python 2.5</a> or higher</strong>.</li>
+  <li><strong><a href="http://pyffi.sourceforge.net/">PyFFI 0.3.1</a> or higher</strong>.</li>
 </ul>
 <h3>Manual Install</h3>
 <ul>
