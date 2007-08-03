@@ -296,48 +296,28 @@ def import_main(root_block, version):
     _BLOCKS_READ = 0.0
     # preprocessing:
 
-    # 4.0.0.2 nifs tend to be nasty: in the next piece of code
-    # the skeleton roots are merged and a rest position is fixed
-    # this does not quite work well for files that have non-identity
-    # skindata transforms, which is common in oblivion;
-    # but oblivion files have well behaved skeletons, so we only do this
-    # for morrowind files
-    if version == 0x04000002:
-        for niBlock in root_block.tree():
-            if not isinstance(niBlock, NifFormat.NiGeometry): continue
-            if not niBlock.isSkin(): continue
-            merged, failed = niBlock.mergeSkeletonRoots()
-            if merged:
-                print
-                msg('reparented following blocks to skeleton root of ' + niBlock.name + ':', 2)
-                msg([node.name for node in merged], 3)
-            if failed:
-                msg('WARNING: failed to reparent following blocks ' + niBlock.name + ':', 2)
-                msg([node.name for node in failed], 3)
+    # merge skeleton roots
+    for niBlock in root_block.tree():
+        if not isinstance(niBlock, NifFormat.NiGeometry): continue
+        if not niBlock.isSkin(): continue
+        merged, failed = niBlock.mergeSkeletonRoots()
+        if merged:
+            msg('reparented following blocks to skeleton root of ' + niBlock.name + ':', 2)
+            msg([node.name for node in merged], 3)
+        if failed:
+            msg('WARNING: failed to reparent following blocks ' + niBlock.name + ':', 2)
+            msg([node.name for node in failed], 3)
 
-        # find reference geometries for each skeleton root, i.e. geometry with largest number of bones
-        skelrootrefgeom = {}
-        for niBlock in root_block.tree():
-            if not isinstance(niBlock, NifFormat.NiGeometry): continue
-            if not niBlock.isSkin(): continue
-            skelroot = niBlock.skinInstance.skeletonRoot
-            numbones = len(niBlock.skinInstance.bones)
-            if skelrootrefgeom.has_key(skelroot):
-                if numbones > len(skelrootrefgeom[skelroot].skinInstance.bones):
-                    skelrootrefgeom[skelroot] = niBlock
-            else:
-                skelrootrefgeom[skelroot] = niBlock
-
-        # fix rest pose
-        for skelroot, niBlock in skelrootrefgeom.iteritems():
-            merged, failed = niBlock.mergeBoneRestPositions(force = True)
-            msg('fixing rest position of skeleton root ' + skelroot.name, 2)
-            if merged:
-                msg('merging rest position of ' + niBlock.name + ' with following geometries:', 2)
-                msg([node.name for node in merged], 3)
-            if failed: # should not happen if force = True
-                msg('WARNING: failed to merge rest position of ' + niBlock.name + ' with following geometries:', 2)
-                msg([node.name for node in failed], 3)
+    # transform geometry into the rest pose
+    for niBlock in root_block.tree():
+        if not isinstance(niBlock, NifFormat.NiGeometry): continue
+        if not niBlock.isSkin(): continue
+        msg('applying skin deformation on geometry ' + niBlock.name, 2)
+        vertices, normals = niBlock.getSkinDeformation()
+        for vold, vnew in zip(niBlock.data.vertices, vertices):
+            vold.x = vnew.x
+            vold.y = vnew.y
+            vold.z = vnew.z
     
     # sets the root block parent to None, so that when crawling back the script won't barf
     root_block._parent = None
@@ -854,7 +834,9 @@ def fb_bone(niBlock, b_armature, b_armatureData, niArmature):
         if realign_enabled:
             # applies the corrected matrix explicitly
             b_bone.matrix = m_correction.resize4x4() * armature_space_matrix
-                
+        else:
+            b_bone.matrix = armature_space_matrix
+
         # set bone name and store the niBlock for future reference
         b_armatureData.bones[bone_name] = b_bone
         # calculate bone difference matrix; we will need this when importing animation
@@ -1640,47 +1622,10 @@ def mark_armatures_bones(niBlock):
                 _ARMATURES[skelroot] = []
                 msg("'%s' is an armature" % skelroot.name,3)
             
-            # stores the mesh bind position for later use
-            # note that this matrix is relative to the skeleton root
-            #geomBindMatrix = Matrix(*(skindata.getTransform().getInverse().asList()))
-            #geomBindMatrix = Matrix(*((skindata.getTransform() * niBlock.getTransform(skelroot)).asList()))
-            geomBindMatrix = Matrix(*(niBlock.getTransform(skelroot).asList()))
-            niBlock._bindMatrix = geomBindMatrix
-            
-            #if geomBindMatrix != _IDENTITY44:
-            
-            #is_identity = True
-            #for row in range(4):
-            #    for col in range(4):
-            #        if geomBindMatrix[row][col] - _IDENTITY44[row][col] > _EPSILON:
-            #            is_identity = False
-            #if not is_identity:
-            #    print 'geometry bind matrix is not identity'
-            #    print geomBindMatrix
-            #geomBindMatrixInverse = Matrix(geomBindMatrix)
-            #geomBindMatrixInverse.invert()
             for i, boneBlock in enumerate(skininst.bones):
-                skinbonedata = skindata.boneList[i]
-                boneBindMatrix = Matrix(*((skindata.getTransform() * skinbonedata.getTransform()).getInverse().asList()))
-                # sets the rest position for the affected skin
-                boneBlock._bindMatrix = boneBindMatrix
-                # add them, if we haven't already
                 if not boneBlock in _ARMATURES[skelroot]:
                     _ARMATURES[skelroot].append(boneBlock)
                     msg("'%s' is a bone of armature '%s'" % (boneBlock.name, skelroot.name), 3)
-                else:
-                    # ensure that rest position is unique
-                    # ... hmmm Blender docs say matrix comparison works
-                    # but apparently it doesn't so commented out for now ...
-                    #if Matrix(*boneRestPos.asList()) != boneBlock._bindMatrix:
-                    tmp = 0.0
-                    for v in boneBindMatrix - boneBlock._bindMatrix:
-                        tmp += v.length
-                    if tmp > _EPSILON:
-                        print 'warning for bone', boneBlock.name
-                        print Matrix(*boneRestPos.asList())
-                        print boneBlock._bindMatrix
-                        print 'multiple geometries influenced by the same bone with different rest poses'
                 # now we "attach" the bone to the armature:
                 # we make sure all NiNodes from this bone all the way
                 # down to the armature NiNode are marked as bones
