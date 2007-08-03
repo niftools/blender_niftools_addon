@@ -457,6 +457,10 @@ def read_armature_branch(b_armature, niArmature, niBlock):
                 for child in children:
                     b_mesh = read_armature_branch(b_armature, niArmature, child)
                     if b_mesh:
+                        # fix the mesh matrix: RELATIVE TO THE ARMATURE
+                        # meshes are not parented to bones
+                        # all meshes are reparented to the armature in blender
+                        b_mesh.setMatrix(fb_matrix(child, relative_to = niArmature))
                         # add a vertex group if it's parented to a bone
                         par_bone = get_closest_bone(child)
                         if par_bone:
@@ -513,9 +517,9 @@ def fb_name(niBlock, max_length=22):
     return shortName
     
 # Retrieves a niBlock's transform matrix as a Mathutil.Matrix
-def fb_matrix(niBlock):
+def fb_matrix(niBlock, relative_to = None):
     """Retrieves a niBlock's transform matrix as a Mathutil.Matrix"""
-    return Matrix(*niBlock.getTransform().asList())
+    return Matrix(*niBlock.getTransform(relative_to).asList())
 
 # Retrieves a block's global transform matrix
 def fb_global_matrix(niBlock):
