@@ -1,5 +1,115 @@
-Version 1.0 (Oct 12, 2005):
-* Initial bundled release of the importer v1.0.6 and exporter v0.8 on SourceForge.
+Version 2.0.6 (Aug 6, 2007)
+* Import/Export: fixed various transform errors
+* Import: frames/sec detection
+* Import: new and more reliable skinning import method
+* Export: new options to control export of skin partition
+
+Version 2.0.5 (Jul 30, 2007)
+* Import: new option to import skeleton only
+* Export: new options to export animation
+* Export: 10.2.0.0-style transform controllers (includes Oblivion)
+* Export: Morrowind style .kf files
+* Export: fixed morph controller and morph data export
+* Export: fixed getTransform on Zoo Tycoon 2 creatures
+
+Version 2.0.4 (Jul 23, 2007)
+* Import: fixed a few skin import transform errors (morrowind better bodies, oblivion armor)
+
+Version 2.0.3 (Jul 22, 2007)
+* Export: fixed skin export in case some bones did not influence any vertices
+* Export: fixed transform error in skinned meshes such as better bodies and oblivion skeleton
+* Export: support for 20.3.0.3 and 20.3.0.6 (experimental)
+
+Version 2.0.2 (Jul 16, 2007)
+* Import/Export: fix for config problem if nifscripts.cfg did not exist yet
+
+Version 2.0.1 (Jul 14, 2007)
+* Import: fix in transform of some skinned meshes
+* Import/Export: simple local install script in .zip for linux
+
+Version 2.0 (Jul 12, 2007)
+* Import/Export: switched to PyFFI, support for NIF versions up to 20.1.0.3
+* Import/Export: GUI revamped
+* Export: tangent space calculation
+* Export: skin partition calculation
+* Export: skin data bounding sphere calculation
+* Export: flattening skin hierarchy for oblivion
+
+Version 1.5.7 (Jul 13, 2006)
+* Import: further fix on zero length bones.
+* Export: fixed export of unnamed objects.
+* Export: fixed export of meshes parented to other meshes.
+
+Version 1.5.6 (Jun 19, 2006)
+* Export: fixed export of multi-material meshes.
+* Export: fixed export of zero-weighted vertexes.
+
+Version 1.5.5 (Jun 15, 2006)
+* Import: fixed import of zero length bones.
+* Export: fixed export of meshes with no parents. 
+
+Version 1.5.4 (Jun 12, 2006)
+* Export: fixed a bug in apply_scale_tree
+
+Version 1.5.3 (Jun 10, 2006)
+* Export: fixed an issue with skinned models (clothing slots
+now no longer require to be applied transformation with NifSkope)
+* Import: fixed import of animation keys
+* Export: no more empty NiNode at the end of bone chains
+* Export: optimized the export of single materialed, non-animated meshes.
+* Import/Export: bone names are restored
+
+Version 1.5.2 (Apr 19, 2006)
+* Export: new option APPLY_SCALE (on by default) which resolves TESCS selection box issue and a 1.5 incompatibility problem
+* Import/Export: full Python installation no longer needed
+* Export: keyframe data realigned as well (should allow us, in theory, to re-export base animation files)
+* Export: transform fix on dummy tail NiNodes
+* Import: if texture not found, a stub is created
+* Export: bone optimization fix
+* Import: realignment is now always automatic
+* Import/Export: correction on 1.5.1 ChangeLog, you'll still need the Bip01 spell, but we're getting closer
+
+Version 1.5.1 (Apr 13, 2006)
+* Export: a 20.0.0.4 bug is fixed
+* Import/Export: restoring bone matrices, no longer need for NifSkope's Bip01 spell
+* Import: animated nodes that aren't bones have their animation imported too
+* Import/Export: scaling fix
+* Import: initial attempt to use the original NIF bone matrices if auto-align is turned off
+
+Version 1.5 (Mar 21, 2006)
+* Import: fix for models that have a NiTriShape as root block
+* Import: added config option to retain bone matrices
+* Import: full animation support, animation groups and keyframes
+* Import: detects invalid / unsupported NIF files
+* Export: bugfix in animation export
+* Export: bugfix in vertex weight export
+* Export: large model fix (now supports up to 65535 faces / vertices per mesh
+* Export: writes a dummy node on final bones to retain bone length when re-imported
+
+Version 1.4 (Feb 12, 2006)
+* Import: completely rewritten, uses Niflib now just like exporter
+* Import/Export: support for all NIF versions up to 20.0.0.4!!
+* Import/Export: corrected specularity import/export (thanks NeOmega)
+* Import/Export: hidden flag via object wire drawtype
+* Import: full skinning support (but still no animation)
+* Import: better bone length estimation, automatic alignment
+
+Version 1.3 (Jan 21, 2006):
+* Import/Export: Vertex key animation support (geometry morphing).
+* Export: Bugfix in bone animation export (transformations sometimes wouldn't show up correctly before).
+* Import: Improved bone length calculation.
+* Export: Added NIF v10.0.1.0 support.
+* Export: Skinning bugfix for multimaterialed meshes.
+* Export: Vertex weight calculation optimized, and no more annoying console messages!
+* Export: Embedded textures reestablished.
+
+Version 1.2 (Dec 23, 2005):
+* Import/Export: updated for Blender 2.40
+* Export: now uses Niflib, which implies that it runs much faster, the code is much cleaner, and multiple NIF version support is in the making
+* Export: replaced old crappy config file system with Blender's native Script Config Editor system
+* Export: new feature - texture flipping
+* Export: new feature - export of bones, armatures, and vertex weights (finally!!!)
+* Export: packed texture feature has been temporarily dropped; this functionality is being transferred to Niflib
 
 Version 1.1 (Oct 31, 2005):
 * Export: Fixed bug pointed out by Sabregirl, on mesh_mat_shininess.
@@ -22,116 +132,6 @@ Version 1.1 (Oct 31, 2005):
 * Import/Export: Now we have a GUI for setting various options.
 * Import: Solved problem with textures embedded in NIF file; textures will not load but the script will still load the meshes.
 
-Version 1.2 (Dec 23, 2005):
-* Import/Export: updated for Blender 2.40
-* Export: now uses Niflib, which implies that it runs much faster, the code is much cleaner, and multiple NIF version support is in the making
-* Export: replaced old crappy config file system with Blender's native Script Config Editor system
-* Export: new feature - texture flipping
-* Export: new feature - export of bones, armatures, and vertex weights (finally!!!)
-* Export: packed texture feature has been temporarily dropped; this functionality is being transferred to Niflib
-
-Version 1.3 (Jan 21, 2006):
-* Import/Export: Vertex key animation support (geometry morphing).
-* Export: Bugfix in bone animation export (transformations sometimes wouldn't show up correctly before).
-* Import: Improved bone length calculation.
-* Export: Added NIF v10.0.1.0 support.
-* Export: Skinning bugfix for multimaterialed meshes.
-* Export: Vertex weight calculation optimized, and no more annoying console messages!
-* Export: Embedded textures reestablished.
-
-Version 1.4 (Feb 12, 2006)
-* Import: completely rewritten, uses Niflib now just like exporter
-* Import/Export: support for all NIF versions up to 20.0.0.4!!
-* Import/Export: corrected specularity import/export (thanks NeOmega)
-* Import/Export: hidden flag via object wire drawtype
-* Import: full skinning support (but still no animation)
-* Import: better bone length estimation, automatic alignment
-
-Version 1.5 (Mar 21, 2006)
-* Import: fix for models that have a NiTriShape as root block
-* Import: added config option to retain bone matrices
-* Import: full animation support, animation groups and keyframes
-* Import: detects invalid / unsupported NIF files
-* Export: bugfix in animation export
-* Export: bugfix in vertex weight export
-* Export: large model fix (now supports up to 65535 faces / vertices per mesh
-* Export: writes a dummy node on final bones to retain bone length when re-imported
-
-Version 1.5.1 (Apr 13, 2006)
-* Export: a 20.0.0.4 bug is fixed
-* Import/Export: restoring bone matrices, no longer need for NifSkope's Bip01 spell
-* Import: animated nodes that aren't bones have their animation imported too
-* Import/Export: scaling fix
-* Import: initial attempt to use the original NIF bone matrices if auto-align is turned off
-
-Version 1.5.2 (Apr 19, 2006)
-* Export: new option APPLY_SCALE (on by default) which resolves TESCS selection box issue and a 1.5 incompatibility problem
-* Import/Export: full Python installation no longer needed
-* Export: keyframe data realigned as well (should allow us, in theory, to re-export base animation files)
-* Export: transform fix on dummy tail NiNodes
-* Import: if texture not found, a stub is created
-* Export: bone optimization fix
-* Import: realignment is now always automatic
-* Import/Export: correction on 1.5.1 ChangeLog, you'll still need the Bip01 spell, but we're getting closer
-
-Version 1.5.3 (Jun 10, 2006)
-* Export: fixed an issue with skinned models (clothing slots
-now no longer require to be applied transformation with NifSkope)
-* Import: fixed import of animation keys
-* Export: no more empty NiNode at the end of bone chains
-* Export: optimized the export of single materialed, non-animated meshes.
-* Import/Export: bone names are restored
-
-Version 1.5.4 (Jun 12, 2006)
-* Export: fixed a bug in apply_scale_tree
-
-Version 1.5.5 (Jun 15, 2006)
-* Import: fixed import of zero length bones.
-* Export: fixed export of meshes with no parents. 
-
-Version 1.5.6 (Jun 19, 2006)
-* Export: fixed export of multi-material meshes.
-* Export: fixed export of zero-weighted vertexes.
-
-Version 1.5.7 (Jul 13, 2006)
-* Import: further fix on zero length bones.
-* Export: fixed export of unnamed objects.
-* Export: fixed export of meshes parented to other meshes.
-
-Version 2.0 (Jul 12, 2007)
-* Import/Export: switched to PyFFI, support for NIF versions up to 20.1.0.3
-* Import/Export: GUI revamped
-* Export: tangent space calculation
-* Export: skin partition calculation
-* Export: skin data bounding sphere calculation
-* Export: flattening skin hierarchy for oblivion
-
-Version 2.0.1 (Jul 14, 2007)
-* Import: fix in transform of some skinned meshes
-* Import/Export: simple local install script in .zip for linux
-
-Version 2.0.2 (Jul 16, 2007)
-* Import/Export: fix for config problem if nifscripts.cfg did not exist yet
-
-Version 2.0.3 (Jul 22, 2007)
-* Export: fixed skin export in case some bones did not influence any vertices
-* Export: fixed transform error in skinned meshes such as better bodies and oblivion skeleton
-* Export: support for 20.3.0.3 and 20.3.0.6 (experimental)
-
-Version 2.0.4 (Jul 23, 2007)
-* Import: fixed a few skin import transform errors (morrowind better bodies, oblivion armor)
-
-Version 2.0.5 (Jul 30, 2007)
-* Import: new option to import skeleton only
-* Export: new options to export animation
-* Export: 10.2.0.0-style transform controllers (includes Oblivion)
-* Export: Morrowind style .kf files
-* Export: fixed morph controller and morph data export
-* Export: fixed getTransform on Zoo Tycoon 2 creatures
-
-Version 2.0.6 (Aug 6, 2007)
-* Import/Export: fixed various transform errors
-* Import: frames/sec detection
-* Import: new and more reliable skinning import method
-* Export: new options to control export of skin partition
+Version 1.0 (Oct 12, 2005):
+* Initial bundled release of the importer v1.0.6 and exporter v0.8 on SourceForge.
 
