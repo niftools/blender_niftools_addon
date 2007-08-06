@@ -447,6 +447,12 @@ def read_armature_branch(b_armature, niArmature, niBlock):
         if isinstance(niBlock, NifFormat.NiTriBasedGeom) and not _CONFIG["IMPORT_SKELETON"]:
             msg("building mesh %s in read_armature_branch" % (niBlock.name),3)
             return fb_mesh(niBlock)
+        elif is_armature_root(niBlock) and niBlock != niArmature:
+            # an armature parented to this armature
+            fb_arm= fb_armature(niBlock)
+            # import the armature branch
+            read_armature_branch(fb_arm, niBlock, niBlock)
+            return fb_arm
         elif isinstance(niBlock, NifFormat.NiNode):
             children = niBlock.children
             if children:
@@ -456,7 +462,7 @@ def read_armature_branch(b_armature, niArmature, niBlock):
                 niArmature._invMatrix = armature_matrix_inverse
                 for child in children:
                     b_mesh = read_armature_branch(b_armature, niArmature, child)
-                    if b_mesh:
+                    if b_mesh: # mesh or armature
                         par_bone = get_closest_bone(child, skelroot = niArmature)
                         if par_bone:
                             # first find the matrix in armature space we want
@@ -1598,8 +1604,6 @@ def mark_armatures_bones(niBlock):
         if not isinstance(niBlock, NifFormat.NiNode):
             raise NIFImportError('cannot import skeleton: root is not a NiNode')
         if not _ARMATURES.has_key(niBlock):
-            if _ARMATURES.keys():
-                raise NIFImportError('models with multiple skeleton roots not yet supported')
             _ARMATURES[niBlock] = []
         # add bones
         for bone in niBlock.tree():
@@ -1620,8 +1624,6 @@ def mark_armatures_bones(niBlock):
             skindata = skininst.data
             skelroot = skininst.skeletonRoot
             if not _ARMATURES.has_key(skelroot):
-                if _ARMATURES.keys():
-                    raise NIFImportError('models with multiple skeleton roots not yet supported')
                 _ARMATURES[skelroot] = []
                 msg("'%s' is an armature" % skelroot.name,3)
             
