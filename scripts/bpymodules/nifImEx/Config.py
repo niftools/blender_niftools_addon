@@ -160,6 +160,10 @@ def drawGUI():
         E["EXPORT_FLATTENSKIN"] = Draw.Toggle("Flatten Skin", addEvent("EXPORT_FLATTENSKIN"), 50, H, 390, 20, _CONFIG["EXPORT_FLATTENSKIN"])
         H -= 30
 
+        E["EXPORT_STRIPIFY"] = Draw.Toggle("Stripify Geometries", addEvent("EXPORT_STRIPIFY"), 50, H, 390, 20, _CONFIG["EXPORT_STRIPIFY"])
+        E["EXPORT_STITCHSTRIPS"] = Draw.Toggle("Stitch Strips", addEvent("EXPORT_STITCHSTRIPS"), 50, H-20, 390, 20, _CONFIG["EXPORT_STITCHSTRIPS"])
+        H -= 50
+
         E["EXPORT_SKINPARTITION"] = Draw.Toggle("Export Skin Partition", addEvent("EXPORT_SKINPARTITION"), 50, H, 390, 20, _CONFIG["EXPORT_SKINPARTITION"])
         E["EXPORT_BONESPERPARTITION"] = Draw.Number("Max Bones Per Partition", addEvent("EXPORT_BONESPERPARTITION"), 50, H-20, 390, 20, _CONFIG["EXPORT_BONESPERPARTITION"], 4, 18, "maximum number of bones per partition", updateBonesPerPartition)
         # the value 4 does for all games, so let's not let user change it
@@ -257,6 +261,10 @@ def buttonEvent(evt):
         _CONFIG["EXPORT_VERSION"] = evName[8:]
     elif evName == "EXPORT_FLATTENSKIN":
         _CONFIG["EXPORT_FLATTENSKIN"] = not _CONFIG["EXPORT_FLATTENSKIN"]
+    elif evName == "EXPORT_STRIPIFY":
+        _CONFIG["EXPORT_STRIPIFY"] = not _CONFIG["EXPORT_STRIPIFY"]
+    elif evName == "EXPORT_STITCHSTRIPS":
+        _CONFIG["EXPORT_STITCHSTRIPS"] = not _CONFIG["EXPORT_STITCHSTRIPS"]
     elif evName[:17] == "EXPORT_ANIMATION_":
          _CONFIG["EXPORT_ANIMATION"] = int(evName[17:])
     elif evName == "EXPORT_SKINPARTITION":

@@ -1,3 +1,8 @@
+Version 2.0.7 (***)
+* added support for multiple skeleton roots
+* fixed issue with non-uniform scaling on Freedom Force vs. 3rd Reich nifs
+* fixed issue with skin partition creation on older nif versions (such as Freedom Force vs. 3rd Reich nifs)
+
 Version 2.0.6 (Aug 6, 2007)
 * Import/Export: fixed various transform errors
 * Import: frames/sec detection

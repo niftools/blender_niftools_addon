@@ -1213,7 +1213,7 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
         # no material                    -> typically, collision mesh
 
         # add a trishape block, and refer to this block in the parent's children list
-        if NIF_VERSION <= 0x04000002:
+        if not _CONFIG["EXPORT_STRIPIFY"]:
             trishape = create_block("NiTriShape")
         else:
             trishape = create_block("NiTriStrips")
@@ -1449,7 +1449,7 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
 
         # add NiTriShape's data
         # NIF flips the texture V-coordinate (OpenGL standard)
-        if NIF_VERSION <= 0x04000002:
+        if isinstance(trishape, NifFormat.NiTriShape):
             tridata = create_block("NiTriShapeData")
         else:
             tridata = create_block("NiTriStripsData")
@@ -1491,7 +1491,7 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
 
         # set triangles
         # stitch strips for civ4
-        tridata.setTriangles(trilist, stitchstrips = (NIF_VERSION == 0x14000004))
+        tridata.setTriangles(trilist, stitchstrips = _CONFIG["EXPORT_STITCHSTRIPS"])
 
         # update tangent space
         if mesh_hastex and mesh_hasnormals:
@@ -1599,7 +1599,7 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                     if NIF_VERSION >= 0x04020100 and _CONFIG["EXPORT_SKINPARTITION"]:
                         msg("creating 'NiSkinPartition'")
                         maxbpp = _CONFIG["EXPORT_BONESPERPARTITION"]
-                        lostweight = trishape.updateSkinPartition(maxbonesperpartition = _CONFIG["EXPORT_BONESPERPARTITION"], maxbonespervertex = _CONFIG["EXPORT_BONESPERVERTEX"])
+                        lostweight = trishape.updateSkinPartition(maxbonesperpartition = _CONFIG["EXPORT_BONESPERPARTITION"], maxbonespervertex = _CONFIG["EXPORT_BONESPERVERTEX"], stripify = _CONFIG["EXPORT_STRIPIFY"], stitchstrips = _CONFIG["EXPORT_STITCHSTRIPS"])
                         if lostweight > NifFormat._EPSILON:
                             print "WARNING: lost %f in vertex weights while creating skin partition"%lostweight
 
