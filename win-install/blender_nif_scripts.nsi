@@ -39,7 +39,7 @@ SetCompressor /SOLID lzma
 !include "WordFunc.nsh"
 !insertmacro VersionCompare
 
-!define VERSION "2.0.5"
+!define VERSION "2.0.6"
 
 Name "Blender NIF Scripts ${VERSION}"
 Var BLENDERHOME
@@ -161,11 +161,11 @@ pyffi_check_end:
 
   ; check PyFFI version
   StrCpy $R0 $PYFFI "" 17 ; strip "Python 2.5 PyFFI-"
-  ${VersionCompare} "$R0" "0.2.1" $R1
+  ${VersionCompare} "$R0" "0.3.1" $R1
   IntCmp $R1 0 pyffi_vercheck_end ; installed version is as indicated
   IntCmp $R1 1 pyffi_vercheck_end ; installed version is more recent than as indicated
 
-    MessageBox MB_OK "The installed version of PyFFI is outdated. Get the most recent version from http://www.sourceforge.net/projects/pyffi"
+    MessageBox MB_OK "The installed version of PyFFI is outdated. Get the most recent version from http://pyffi.sourceforge.net/"
     Abort ; causes installer to quit
 
 pyffi_vercheck_end:
