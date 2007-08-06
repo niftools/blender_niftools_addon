@@ -1,3 +1,5 @@
+__version__ = "2.0.6"
+
 import Blender
 
 import sys, os

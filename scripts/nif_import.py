@@ -7,14 +7,16 @@ Group: 'Import'
 Tooltip: 'Import NIF File Format (.nif)'
 """
 
+import nifImEx.Config
+
 __author__ = "The NifTools team, http://niftools.sourceforge.net/"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
-__version__ = "2.0.6"
+__version__ = nifImEx.Config.__version__
 __bpydoc__ = """\
 This script imports Netimmerse and Gamebryo .NIF files to Blender.
 """
 
-# nif_import.py version 2.0.6
+# nif_import.py
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
 # 
