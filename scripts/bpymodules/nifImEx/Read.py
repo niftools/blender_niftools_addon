@@ -457,29 +457,28 @@ def read_armature_branch(b_armature, niArmature, niBlock):
                 for child in children:
                     b_mesh = read_armature_branch(b_armature, niArmature, child)
                     if b_mesh:
-                        # fix the mesh matrix relative to the armature
-                        # (for simplicity meshes are not parented to bones
-                        # all meshes are parented to the armature)
-                        b_mesh.setMatrix(fb_matrix(child, relative_to = niArmature))
-                        # add a vertex group if it's parented to a bone
-                        par_bone = get_closest_bone(child)
+                        par_bone = get_closest_bone(child, skelroot = niArmature)
                         if par_bone:
-                            # set vertex index 1.0 for all vertices that don't yet have a vertex weight
-                            # this will mimick the fact that the mesh is parented to the bone
-                            b_meshData = b_mesh.getData(mesh=True)
-                            verts = [ v.index for v in b_meshData.verts ] # copy vertices, as indices
-                            for groupName in b_meshData.getVertGroupNames():
-                                for v in b_meshData.getVertsFromGroup(groupName):
-                                    try:
-                                        verts.remove(v)
-                                    except ValueError: # remove throws value-error if vertex was already removed previously
-                                        pass
-                            if verts:
-                                groupName = _NAMES[par_bone]
-                                b_meshData.addVertGroup(groupName)
-                                b_meshData.assignVertsToGroup(groupName, verts, 1.0, Blender.Mesh.AssignModes.REPLACE)
-                        # make it parent of the armature
-                        b_armature.makeParentDeform([b_mesh])
+                            # first find the matrix in armature space we want
+                            # the mesh to have
+                            a_geom_matrix = fb_matrix(child, relative_to = niArmature)
+                            # next find the tail matrix of the bone parent
+                            b_par_bone_name = _NAMES[par_bone] # blender bone name
+                            b_par_bone = b_armature.data.bones[b_par_bone_name]
+                            a_tail_matrix = b_par_bone.matrix['ARMATURESPACE'].copy()
+                            a_tail_pos    = b_par_bone.tail['ARMATURESPACE']
+                            a_tail_matrix[3][0] = a_tail_pos[0]
+                            a_tail_matrix[3][1] = a_tail_pos[1]
+                            a_tail_matrix[3][2] = a_tail_pos[2]
+                            # fix the mesh matrix relative to the bone tail
+                            b_mesh.setMatrix(a_geom_matrix * a_tail_matrix.invert())
+                            # make it parent of the bone
+                            b_armature.makeParentBone([b_mesh], _NAMES[par_bone])
+                        else:
+                            # fix the mesh matrix relative to the armature
+                            b_mesh.setMatrix(fb_matrix(child, relative_to = niArmature))
+                            # make it parent of the armature
+                            b_armature.makeParentDeform([b_mesh])
     # anything else: throw away
     return None
 
@@ -1665,7 +1664,7 @@ def complete_bone_tree(bone, skelroot):
 # Tests a NiNode to see if it's a bone.
 def is_bone(niBlock):
     if not niBlock : return False
-    if niBlock.name[:6] == "Bip01 ": return True # heuristics
+    #if niBlock.name[:6] == "Bip01 ": return True # heuristics
     for bones in _ARMATURES.values():
         if niBlock in bones:
             return True
@@ -1678,9 +1677,11 @@ def is_armature_root(niBlock):
     return False
     
 # Detect closest bone ancestor.
-def get_closest_bone(niBlock):
+def get_closest_bone(niBlock, skelroot):
     par = niBlock._parent
     while par:
+        if par == skelroot:
+            return None
         if is_bone(par):
             return par
         par = par._parent
