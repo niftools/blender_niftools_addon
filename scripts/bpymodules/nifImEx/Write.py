@@ -1931,7 +1931,7 @@ def decompose_srt(m):
     # and fix their sign
     if (b_scale_rot.determinant() < 0): b_scale.negate()
     # only uniform scaling
-    if abs(b_scale[0]-b_scale[1]) + abs(b_scale[1]-b_scale[2]) > NifFormat._EPSILON:
+    if abs(b_scale[0]-b_scale[1]) + abs(b_scale[1]-b_scale[2]) > 0.02: # allow rather large error to accomodate some nifs
         raise NIFExportError("Non-uniform scaling not supported. Workaround: apply size and rotation (CTRL-A).")
     b_scale = b_scale[0]
     # get rotation matrix
