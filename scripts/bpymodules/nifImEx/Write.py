@@ -1147,9 +1147,12 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                     fuv = None
                 if (mesh_hasvcol):
                     if (len(f.col) == 0):
-                        raise NIFExportError('ERROR%t|Vertex color painting/lighting enabled, but mesh has no vertex color data.')
-                    # NIF stores the colour values as floats
-                    fcol = f.col[i]
+                        print 'WARNING: vertex color painting/lighting enabled, but mesh has no vertex color data; vertex weights will not be written.'
+                        fcol = None
+                        mesh_hasvcol = False
+                    else:
+                        # NIF stores the colour values as floats
+                        fcol = f.col[i]
                 else:
                     fcol = None
                     
