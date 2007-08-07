@@ -3,6 +3,7 @@ Version 2.0.7 (***)
 * Import: better support for meshes/armatures parented to bones
 * Import: added option to send bones to bind position
 * Import: added option to control application of skin deform
+* Export: added option for stripification and strip stitching
 * Export: fixed issue with non-uniform scaling on Freedom Force vs. 3rd Reich nifs
 * Export: fixed issue with skin partition creation on older nif versions (such as Freedom Force vs. 3rd Reich nifs)
 * Export: fixed problem with meshes sharing the same vcol lighting enabled material but not all having vertex weights (such as the Oblivion steel cuirass); the exporter now issues a warning rather than throwing an exception
