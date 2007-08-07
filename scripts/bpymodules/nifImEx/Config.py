@@ -146,8 +146,10 @@ def drawGUI():
         E["IMPORT_ANIMATION"]       = Draw.Toggle(" ",      addEvent("IMPORT_ANIMATION"),    50, H-220,  20, 20, _CONFIG["IMPORT_ANIMATION"])
         guiText("import animation (if present)", 75, H-215)
         E["IMPORT_SKELETON"]       = Draw.Toggle("Import Skeleton Only", addEvent("IMPORT_SKELETON"), 50, H-250, 390, 20, _CONFIG["IMPORT_SKELETON"])
+        E["IMPORT_SENDBONESTOBINDPOS"] = Draw.Toggle("Send Bones To Bind Position", addEvent("IMPORT_SENDBONESTOBINDPOS"), 50, H-270, 390, 20, _CONFIG["IMPORT_SENDBONESTOBINDPOS"])
+        E["IMPORT_APPLYSKINDEFORM"] = Draw.Toggle("Apply Skin Deformation", addEvent("IMPORT_APPLYSKINDEFORM"), 50, H-290, 390, 20, _CONFIG["IMPORT_APPLYSKINDEFORM"])
 
-        H -= 295
+        H -= 335
         E["BACK"]                     = Draw.PushButton('back',    addEvent("BACK"),  50, H-25, 100, 20)
 
     # export-only options
@@ -231,6 +233,10 @@ def buttonEvent(evt):
         _CONFIG["IMPORT_ANIMATION"] = not _CONFIG["IMPORT_ANIMATION"]
     elif evName == "IMPORT_SKELETON":
         _CONFIG["IMPORT_SKELETON"] = not _CONFIG["IMPORT_SKELETON"]
+    elif evName == "IMPORT_SENDBONESTOBINDPOS":
+        _CONFIG["IMPORT_SENDBONESTOBINDPOS"] = not _CONFIG["IMPORT_SENDBONESTOBINDPOS"]
+    elif evName == "IMPORT_APPLYSKINDEFORM":
+        _CONFIG["IMPORT_APPLYSKINDEFORM"] = not _CONFIG["IMPORT_APPLYSKINDEFORM"]
     elif evName == "BROWSE_IMPORT_PATH":
         # browse import path
         print _CONFIG["NIF_IMPORT_PATH"]

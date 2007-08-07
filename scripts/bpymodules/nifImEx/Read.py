@@ -309,15 +309,22 @@ def import_main(root_block, version):
             msg([node.name for node in failed], 3)
 
     # transform geometry into the rest pose
-    for niBlock in root_block.tree():
-        if not isinstance(niBlock, NifFormat.NiGeometry): continue
-        if not niBlock.isSkin(): continue
-        msg('applying skin deformation on geometry ' + niBlock.name, 2)
-        vertices, normals = niBlock.getSkinDeformation()
-        for vold, vnew in zip(niBlock.data.vertices, vertices):
-            vold.x = vnew.x
-            vold.y = vnew.y
-            vold.z = vnew.z
+    if _CONFIG["IMPORT_SENDBONESTOBINDPOS"]:
+        for niBlock in root_block.tree():
+            if not isinstance(niBlock, NifFormat.NiGeometry): continue
+            if not niBlock.isSkin(): continue
+            msg('sending bones of geometry ' + niBlock.name + " to their bind position", 2)
+            niBlock.sendBonesToBindPosition()
+    if _CONFIG["IMPORT_APPLYSKINDEFORM"]:
+        for niBlock in root_block.tree():
+            if not isinstance(niBlock, NifFormat.NiGeometry): continue
+            if not niBlock.isSkin(): continue
+            msg('applying skin deformation on geometry ' + niBlock.name, 2)
+            vertices, normals = niBlock.getSkinDeformation()
+            for vold, vnew in zip(niBlock.data.vertices, vertices):
+                vold.x = vnew.x
+                vold.y = vnew.y
+                vold.z = vnew.z
     
     # sets the root block parent to None, so that when crawling back the script won't barf
     root_block._parent = None
