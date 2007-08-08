@@ -10,6 +10,18 @@ from math import log
 from copy import deepcopy
 from PyFFI.NIF import NifFormat
 
+# check PyFFI version
+from PyFFI import __version__ as PyFFIVersion
+if PyFFIVersion < '0.3.3':
+    err = """--------------------------
+ERROR\nThis script requires Python File Format Interface 0.3.3 or higher.
+It seems that you have an older version installed (%s).
+Get a newer version at http://pyffi.sourceforge.net/
+--------------------------"""%PyFFIVersion
+    print err
+    Blender.Draw.PupMenu("ERROR%t|PyFFI outdated, check console for details")
+    raise ImportError
+
 # clears the console window
 if sys.platform in ('linux-i386','linux2'):
     os.system("clear")
