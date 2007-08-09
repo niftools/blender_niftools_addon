@@ -1,5 +1,5 @@
 Version 2.0.8 (***)
-* Export: added initial support for Oblivion collisions (bhkBoxShape only)
+* Export: added initial support for Oblivion collisions (bhkBoxShape and bhkNiTriStripsShape)
 * Export: fixed a few minor bugs
 
 Version 2.0.7 (Aug 8, 2007)

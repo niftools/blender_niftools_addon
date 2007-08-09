@@ -2021,8 +2021,8 @@ def export_collision(ob, parent_block):
     maxy = max([v[1] for v in verts])
     maxz = max([v[2] for v in verts])
 
-    # note: collision settings are taken from lowerclasschair01.nif
     if not parent_block.collisionObject:
+        # note: collision settings are taken from lowerclasschair01.nif
         colobj = create_block("bhkCollisionObject")
         parent_block.collisionObject = colobj
         colobj.target = parent_block
@@ -2042,6 +2042,13 @@ def export_collision(ob, parent_block):
         colbody.unknown7Shorts[3] = 62977
         colbody.unknown7Shorts[4] = 65535
         colbody.unknown7Shorts[5] = 44
+        colbody.translation.x = 0.0
+        colbody.translation.y = 0.0
+        colbody.translation.z = 0.0
+        colbody.rotation.w = 1.0
+        colbody.rotation.x = 0.0
+        colbody.rotation.y = 0.0
+        colbody.rotation.z = 0.0
         colbody.linearDamping = 0.1
         colbody.angularDamping = 0.05
         colbody.friction = 0.3
@@ -2065,45 +2072,100 @@ def export_collision(ob, parent_block):
         colbody = colobj.body
         colshape = colbody.shape
 
-    if ob.rbShapeBoundType != Blender.Object.RBShapes['BOX']:
-       print 'WARNING: collision shape of type %s is not supported; exporting as box'%ob.rbShapeBoundType
+    if ob.rbShapeBoundType == Blender.Object.RBShapes['BOX']:
+        # note: collision settings are taken from lowerclasschair01.nif
+        coltf = create_block("bhkConvexTransformShape")
+        coltf.material = NifFormat.HavokMaterial.HAV_MAT_WOOD
+        coltf.unknownFloat1 = 0.1
+        coltf.unknown8Bytes[0] = 96
+        coltf.unknown8Bytes[1] = 120
+        coltf.unknown8Bytes[2] = 53
+        coltf.unknown8Bytes[3] = 19
+        coltf.unknown8Bytes[4] = 24
+        coltf.unknown8Bytes[5] = 9
+        coltf.unknown8Bytes[6] = 253
+        coltf.unknown8Bytes[7] = 4
+        hktf = ob.getMatrix('localspace').copy()
+        hktf.transpose()
+        coltf.transform.setRows(*hktf) # the transpose of the transform is stored
+        coltf.transform.m14 += (minx + maxx) / 2.0 # doesn't work quite well (?)
+        coltf.transform.m24 += (miny + maxy) / 2.0 # doesn't work quite well (?)
+        coltf.transform.m34 += (minz + maxz) / 2.0 # doesn't work quite well (?)
+        coltf.transform.m14 /= 7.0
+        coltf.transform.m24 /= 7.0
+        coltf.transform.m34 /= 7.0
 
-    coltf = create_block("bhkConvexTransformShape")
-    colshape.addShape(coltf)
-    coltf.material = NifFormat.HavokMaterial.HAV_MAT_WOOD
-    coltf.unknownFloat1 = 0.1
-    coltf.unknown8Bytes[0] = 96
-    coltf.unknown8Bytes[1] = 120
-    coltf.unknown8Bytes[2] = 53
-    coltf.unknown8Bytes[3] = 19
-    coltf.unknown8Bytes[4] = 24
-    coltf.unknown8Bytes[5] = 9
-    coltf.unknown8Bytes[6] = 253
-    coltf.unknown8Bytes[7] = 4
-    hktf = ob.getMatrix('localspace').copy()
-    hktf.transpose()
-    coltf.transform.setRows(*hktf) # the transpose of the transform is stored
-    coltf.transform.m14 += (minx + maxx) / 2.0 # doesn't work quite well (?)
-    coltf.transform.m24 += (miny + maxy) / 2.0 # doesn't work quite well (?)
-    coltf.transform.m34 += (minz + maxz) / 2.0 # doesn't work quite well (?)
-    coltf.transform.m14 /= 7.0
-    coltf.transform.m24 /= 7.0
-    coltf.transform.m34 /= 7.0
+        colbox = create_block("bhkBoxShape")
+        coltf.shape = colbox
+        colbox.material = NifFormat.HavokMaterial.HAV_MAT_WOOD
+        colbox.radius = 0.1
+        colbox.unknownString.value[0] = '\x6b'
+        colbox.unknownString.value[1] = '\xee'
+        colbox.unknownString.value[2] = '\x43'
+        colbox.unknownString.value[3] = '\x40'
+        colbox.unknownString.value[4] = '\x3a'
+        colbox.unknownString.value[5] = '\xef'
+        colbox.unknownString.value[6] = '\x8e'
+        colbox.unknownString.value[7] = '\x3e'
+        colbox.dimensions.x = (maxx - minx) / 14.0
+        colbox.dimensions.y = (maxy - miny) / 14.0
+        colbox.dimensions.z = (maxz - minz) / 14.0
+        colbox.minimumSize = min(colbox.dimensions.x, colbox.dimensions.y, colbox.dimensions.z)
 
-    colbox = create_block("bhkBoxShape")
-    coltf.shape = colbox
-    colbox.material = NifFormat.HavokMaterial.HAV_MAT_WOOD
-    colbox.radius = 0.1
-    colbox.unknownString.value[0] = '\x6b'
-    colbox.unknownString.value[1] = '\xee'
-    colbox.unknownString.value[2] = '\x43'
-    colbox.unknownString.value[3] = '\x40'
-    colbox.unknownString.value[4] = '\x3a'
-    colbox.unknownString.value[5] = '\xef'
-    colbox.unknownString.value[6] = '\x8e'
-    colbox.unknownString.value[7] = '\x3e'
-    colbox.dimensions.x = (maxx - minx) / 14.0
-    colbox.dimensions.y = (maxy - miny) / 14.0
-    colbox.dimensions.z = (maxz - minz) / 14.0
-    colbox.minimumSize = min(colbox.dimensions.x, colbox.dimensions.y, colbox.dimensions.z)
+    else:
+        # note: collision settings are taken from arstatue01.nif
+        if ob.rbShapeBoundType != Blender.Object.RBShapes['POLYHEDERON']:
+            print 'WARNING: collision shape of type %s is not supported; exporting as polyhedron'%ob.rbShapeBoundType
+        colstrips = create_block("bhkNiTriStripsShape")
+        colshape.addShape(colstrips)
+        colstrips.material =  NifFormat.HavokMaterial.HAV_MAT_WOOD
+        colstrips.unknownFloat1 = 0.1
+        colstrips.unknownInt1 = 4898400
+        colstrips.unknownInt2 = 1
+        colstrips.scale.x = 1.0
+        colstrips.scale.y = 1.0
+        colstrips.scale.z = 1.0
+        colstrips.numStripsData = 1
+        colstrips.stripsData.updateSize()
+        colstrips.numDataLayers = 1
+        colstrips.dataLayers.updateSize()
+        colstrips.dataLayers[0].layer = NifFormat.OblivionLayer.OL_STATIC
 
+        strips = create_block("NiTriStripsData")
+        colstrips.stripsData[0] = strips
+        transform = ob.getMatrix('localspace').copy()
+        rotation = transform.rotationPart()
+
+        mesh = ob.data
+
+        vertlist = [v.co * transform for v in mesh.verts]
+        normlist = [v.no * rotation for v in mesh.verts]
+        trilist = []
+        for f in mesh.faces:
+            if len(f.v) < 3: continue # ignore degenerate faces
+            trilist.append([f.v[i].index for i in [0,1,2]])
+            if len(f.v) == 4:
+                trilist.append([f.v[i].index for i in [0,2,3]])
+
+        if len(trilist) > 65535 or len(vertlist) > 65535:
+            raise NIFExportError('ERROR%t|Too many faces/vertices. Decimate your mesh and try again.')
+
+        strips.numVertices = len(vertlist)
+        strips.hasVertices = True
+        strips.vertices.updateSize()
+        for vstrip, v in zip(strips.vertices, vertlist):
+            vstrip.x = v[0]
+            vstrip.y = v[1]
+            vstrip.z = v[2]
+        
+        strips.hasNormals = True
+        strips.normals.updateSize()
+        for nstrip, n in zip(strips.normals, normlist):
+            nstrip.x = n[0]
+            nstrip.y = n[1]
+            nstrip.z = n[2]
+        
+        strips.updateCenterRadius()
+        strips.consistencyFlags = NifFormat.ConsistencyType.CT_STATIC
+
+        strips.setTriangles(trilist, stitchstrips = _CONFIG["EXPORT_STITCHSTRIPS"])
