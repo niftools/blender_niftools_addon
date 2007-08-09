@@ -491,10 +491,14 @@ def export_node(ob, space, parent_block, node_name):
             # -> mesh data.
             # If this has children or animations or more than one material
             # it gets wrapped in a purpose made NiNode.
+            is_collision = (ob.getDrawType() == Blender.Object.DrawTypes['BOUNDBOX'])
             has_ipo = ob_ipo and len(ob_ipo.getCurves()) > 0
             has_children = len(ob_children) > 0
             is_multimaterial = len(set([f.mat for f in ob.data.faces])) > 1
-            if has_ipo or has_children or is_multimaterial:
+            if is_collision:
+                export_collision(ob, parent_block)
+                return None # done; stop here
+            elif has_ipo or has_children or is_multimaterial:
                 # -> mesh ninode for the hierarchy to work out
                 node = create_block('NiNode')
             else:
@@ -517,9 +521,9 @@ def export_node(ob, space, parent_block, node_name):
             trishape_space = 'none'
 
     # make it child of its parent in the nif, if it has one
-    if (parent_block):
+    if parent_block:
         parent_block.addChild(node)
-    
+
     # and fill in this node's non-trivial values
     node.name = get_full_name(node_name)
     if (ob == None):
@@ -2004,3 +2008,9 @@ def create_block(blocktype):
         raise NIFExportError("'%s': Unknown block type (this is probably a bug).")
     _NIF_BLOCKS.append(block)
     return block
+
+
+
+def export_collision(ob, parent_block):
+    pass
+
