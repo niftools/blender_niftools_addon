@@ -338,27 +338,10 @@ def import_main(root_block, version):
     # mark armature nodes and bones
     mark_armatures_bones(root_block)
     
-    
-    # detect the file's FPS setting
-    # the check on _FPS is hackish, but ensures it's only done once even if there's multiple roots
-    # there should be a little additional code to handle geomorph controller and text keys as well
-    if _CONFIG['IMPORT_ANIMATION'] and not _FPS:
-        # store animation data for later import
+    # store animation data for later import. This also detects and applies the FPS for the scene
+    # It's only done if anuimation is imported to avoid wasting cycles
+    if _CONFIG['IMPORT_ANIMATION']:
         store_animation_data(root_block)
-        _FPS = 30
-        keyTimes = [key['data'].time for key in _ANIMATION_DATA]
-        lowestDiff = sum([abs(int(time*_FPS)-(time*_FPS)) for time in keyTimes])
-        # for fps in xrange(1,120): #disabled, used for testing
-        for testFps in [20, 25, 35]:
-            diff = sum([abs(int(time*testFps)-(time*testFps)) for time in keyTimes])
-            if diff < lowestDiff:
-                lowestDiff = diff
-                _FPS = testFps
-        _SCENE.getRenderingContext().fps = _FPS
-        # set the frames in the _ANIMATION_DATA list
-        for key in _ANIMATION_DATA:
-            # time 0 is frame 1
-            key['frame'] = 1 + int(key['data'].time * _FPS)
     
     # read the NIF tree
     if not is_armature_root(root_block):
@@ -403,7 +386,6 @@ def import_main(root_block, version):
             else:
                 keyFrameList.extend([(int(key.time*_FPS), b_obj, key, 'Q') for key in kfd.quaternionKeys])
         # sorting by frame
-        keyFrameList.sort(lambda k1, k2: cmp(k1[0], k2[0]))
         for keyFrame in keyFrameList:
             print keyFrame
     """
@@ -1565,7 +1547,7 @@ def fb_fullnames():
 
 # scan the root block for animation data
 def store_animation_data(rootBlock):
-    global _ANIMATION_DATA
+    global _ANIMATION_DATA, _FPS, _SCENE
     niBlockList = [block for block in rootBlock.tree() if isinstance(block, NifFormat.NiAVObject)]
     for niBlock in niBlockList:
         kfc = find_controller(niBlock, NifFormat.NiKeyframeController)
@@ -1577,9 +1559,29 @@ def store_animation_data(rootBlock):
                 _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.xyzRotations.keys])
             else:
                 _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.quaternionKeys])
+                    
+    # detect the file's FPS setting
+    # the check on _FPS is hackish, but ensures it's only done once even if there's multiple roots
+    # there should be a little additional code to handle geomorph controller and text keys as well
+    if not _FPS:
+        _FPS = 30
+        keyTimes = [key['data'].time for key in _ANIMATION_DATA]
+        lowestDiff = sum([abs(int(time*_FPS)-(time*_FPS)) for time in keyTimes])
+        # for fps in xrange(1,120): #disabled, used for testing
+        for testFps in [20, 25, 35]:
+            diff = sum([abs(int(time*testFps)-(time*testFps)) for time in keyTimes])
+            if diff < lowestDiff:
+                lowestDiff = diff
+                _FPS = testFps
+        _SCENE.getRenderingContext().fps = _FPS
     
-    # sort by time, I need this later
-    _ANIMATION_DATA.sort(lambda key1, key2: cmp(key1['data'].time, key2['data'].time))
+    # set the frames in the _ANIMATION_DATA list
+    for key in _ANIMATION_DATA:
+        # time 0 is frame 1
+        key['frame'] = 1 + int(key['data'].time * _FPS)
+
+    # sort by frame, I need this later
+    _ANIMATION_DATA.sort(lambda key1, key2: cmp(key1['frame'], key2['frame']))
 
 
 # find a controller
