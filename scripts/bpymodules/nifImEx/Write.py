@@ -2012,5 +2012,47 @@ def create_block(blocktype):
 
 
 def export_collision(ob, parent_block):
-    pass
+    # note: collision settings are taken from lowerclasschair01.nif
+    if not parent_block.collisionObject:
+        colobj = create_block("bhkCollisionObject")
+        parent_block.collisionObject = colobj
+        colobj.target = parent_block
+        colobj.unknownShort = 1
+
+        colbody = create_block("bhkRigidBodyT")
+        colobj.body = colbody
+        colbody.layer = NifFormat.OblivionLayer.OL_STATIC
+        colbody.unknown5Floats[1] = 3.8139e+36
+        colbody.unknown4Shorts[0] = 1
+        colbody.unknown4Shorts[1] = 65535
+        colbody.unknown4Shorts[2] = 35899
+        colbody.unknown4Shorts[3] = 16336
+        colbody.layerCopy = NifFormat.OblivionLayer.OL_STATIC
+        colbody.unknown7Shorts[1] = 21280
+        colbody.unknown7Shorts[2] = 4581
+        colbody.unknown7Shorts[3] = 62977
+        colbody.unknown7Shorts[4] = 65535
+        colbody.unknown7Shorts[5] = 44
+        colbody.linearDamping = 0.1
+        colbody.angularDamping = 0.05
+        colbody.friction = 0.3
+        colbody.restitution = 0.3
+        colbody.maxLinearVelocity = 250.0
+        colbody.maxAngularVelocity = 31.4159
+        colbody.penetrationDepth = 0.15
+        colbody.motionSystem = NifFormat.MotionSystem.MO_SYS_KEYFRAMED
+        colbody.unknownByte1 = 1
+        colbody.unknownByte2 = 1
+        colbody.qualityType = NifFormat.MotionQuality.MO_QUAL_FIXED
+        colbody.unknownInt6 = 3216641024
+        colbody.unknownInt7 = 3249467941
+        colbody.unknownInt8 = 83276283
+
+        colshape = create_block("bhkListShape")
+        colbody.shape = colshape
+        colshape.material = NifFormat.HavokMaterial.HAV_MAT_WOOD
+    else:
+        colobj = parent_block.collisionObject
+        colbody = colobj.body
+        colshape = colbody.shape
 
