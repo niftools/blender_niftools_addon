@@ -85,11 +85,11 @@ _BONES_EXTRA_MATRIX = {}
 # maps NIF armature name to list of NIF bone name
 _ARMATURES = {}
 
-# dictionary of keyframe controllers
-_ANIMATION_DATA = {}
+# list of keyframe data 
+_ANIMATION_DATA = []
 
-# dictionary of text keys
-_MARKER_DATA = {}
+# dictionary of blender objects, maps NiBlocks to the corresponding Blender object
+_BLENDER_OBJECTS = {}
 
 
 # correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z
@@ -338,28 +338,15 @@ def import_main(root_block, version):
     # mark armature nodes and bones
     mark_armatures_bones(root_block)
     
-    # store animation data for later import
-    store_animation_data(root_block)
     
     # detect the file's FPS setting
     # the check on _FPS is hackish, but ensures it's only done once even if there's multiple roots
     # there should be a little additional code to handle geomorph controller and text keys as well
     if _CONFIG['IMPORT_ANIMATION'] and not _FPS:
-        keyTimes = []
-        for kfc in _ANIMATION_DATA.values():
-            kfd = kfc.data
-            for key in kfd.translations.keys:
-                keyTimes.append(key.time)
-            for key in kfd.scales.keys:
-                keyTimes.append(key.time)
-            if kfd.rotationType == 4:
-                for key in kfd.xyzRotations.keys:
-                    keyTimes.append(key.time)
-            else:
-                for key in kfd.quaternionKeys:
-                    keyTimes.append(key.time)
+        # store animation data for later import
+        store_animation_data(root_block)
         _FPS = 30
-        #lowestDiff = 1000000000.0
+        keyTimes = [key['data'].time for key in _ANIMATION_DATA]
         lowestDiff = sum([abs(int(time*_FPS)-(time*_FPS)) for time in keyTimes])
         # for fps in xrange(1,120): #disabled, used for testing
         for testFps in [20, 25, 35]:
@@ -368,7 +355,10 @@ def import_main(root_block, version):
                 lowestDiff = diff
                 _FPS = testFps
         _SCENE.getRenderingContext().fps = _FPS
-            
+        # set the frames in the _ANIMATION_DATA list
+        for key in _ANIMATION_DATA:
+            # time 0 is frame 1
+            key['frame'] = 1 + int(key['data'].time * _FPS)
     
     # read the NIF tree
     if not is_armature_root(root_block):
@@ -391,6 +381,35 @@ def import_main(root_block, version):
     if len(_BONES_EXTRA_MATRIX.keys()) > 0: fb_bonemat()
     # store original names for re-export
     if len(_NAMES) > 0: fb_fullnames()
+    
+    """ #no good, can't get bones by name
+    # import all animation data except morphs and text keys
+    if _CONFIG['IMPORT_ANIMATION']:
+        #store all keys in a flat list
+        keyFrameList = []
+        for niBlock, kfc in _ANIMATION_DATA.iteritems():
+            
+            b_obj = Blender.Object.Get(_NAMES[niBlock])
+            b_ipo = b_obj.getIpo()
+            if b_ipo == None:
+                b_ipo = Blender.Ipo.New('Object', b_obj.name)
+                b_obj.setIpo(b_ipo)
+                
+            kfd = kfc.data
+            keyFrameList.extend([(int(key.time*_FPS), b_obj, key, 'T') for key in kfd.translations.keys])
+            keyFrameList.extend([(int(key.time*_FPS), b_obj, key, 'S') for key in kfd.scales.keys])
+            if kfd.rotationType == 4:
+                keyFrameList.extend([(int(key.time*_FPS), b_obj, key, 'R') for key in kfd.xyzRotations.keys])
+            else:
+                keyFrameList.extend([(int(key.time*_FPS), b_obj, key, 'Q') for key in kfd.quaternionKeys])
+        # sorting by frame
+        keyFrameList.sort(lambda k1, k2: cmp(k1[0], k2[0]))
+        for keyFrame in keyFrameList:
+            print keyFrame
+    """
+            
+
+        
     _SCENE.update(1) # do a full update to make sure all transformations get applied
     #fit_view()
     #_SCENE.getCurrentCamera()
@@ -608,6 +627,7 @@ def fb_armature(niArmature):
 
     # The armature has been created in editmode,
     # now we are ready to set the bone keyframes.
+    #if False:
     if _CONFIG['IMPORT_ANIMATION']:
         # create an action
         action = Blender.Armature.NLA.NewAction()
@@ -1550,8 +1570,18 @@ def store_animation_data(rootBlock):
     for niBlock in niBlockList:
         kfc = find_controller(niBlock, NifFormat.NiKeyframeController)
         if kfc:
-            _ANIMATION_DATA[niBlock] = kfc
+            kfd = kfc.data
+            _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.translations.keys])
+            _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.scales.keys])
+            if kfd.rotationType == 4:
+                _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.xyzRotations.keys])
+            else:
+                _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.quaternionKeys])
     
+    # sort by time, I need this later
+    _ANIMATION_DATA.sort(lambda key1, key2: cmp(key1['data'].time, key2['data'].time))
+
+
 # find a controller
 def find_controller(niBlock, controllerType):
     """
