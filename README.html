@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <title>The Blender NIF Scripts v2.0.7</title>
+  <title>The Blender NIF Scripts v2.0.8</title>
   <meta http-equiv="Content-Type"
  content="text/html; charset=ISO-8859-1" />
   <style type="text/css">
@@ -19,20 +19,12 @@ a:hover.nav { color: #FF0000; background: transparent; }
   </style>
 </head>
 <body>
-<h1>The Blender NIF Scripts v2.0.7</h1>
+<h1>The Blender NIF Scripts v2.0.8</h1>
 <h2>Release Notes</h2>
 The Blender NIF Scripts have undergone serious changes since the 1.5.7 release. Although we have done our best to squash all bugs we could find, it is unlikely that we have found them all. If you find bugs, PLEASE REPORT THEM ON THE SOURCEFORGE TRACKER.
 <h3>Highlights of this Release</h3>
 <ul>
-<li>fixed skin bounds calculation on export (this might solve some problems with disappearing skinned meshes in oblivion)</li>
-<li>added support for import of models with multiple skeleton roots</li>
-<li>better support for meshes/armatures parented to bones</li>
-<li>new import option to send bones to bind position</li>
-<li>new import option to control application of skin deform</li>
-<li>new export options for stripification and strip stitching</li>
-<li>fixed export issue with non-uniform scaling on Freedom Force vs. 3rd Reich nifs</li>
-<li>fixed export issue with skin partition creation on older nif versions (such as Freedom Force vs. 3rd Reich nifs)</li>
-<li>fixed export problem with meshes sharing the same vcol lighting enabled material but not all having vertex weights (such as the Oblivion steel cuirass); the exporter now issues a warning rather than throwing an exception</li>
+<li> added initial support for Oblivion collisions (bhkBoxShape only)</li>
 </ul>
 <h2>Support</h2>
 <ul>

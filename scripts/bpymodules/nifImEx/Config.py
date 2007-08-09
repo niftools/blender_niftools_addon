@@ -1,4 +1,4 @@
-__version__ = "2.0.7"
+__version__ = "2.0.8"
 
 import Blender
 
@@ -12,7 +12,7 @@ from PyFFI.NIF import NifFormat
 
 # check PyFFI version
 from PyFFI import __version__ as PyFFIVersion
-if PyFFIVersion < '0.3.3':
+if PyFFIVersion < '0.3.4':
     err = """--------------------------
 ERROR\nThis script requires Python File Format Interface 0.3.3 or higher.
 It seems that you have an older version installed (%s).

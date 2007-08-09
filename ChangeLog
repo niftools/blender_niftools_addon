@@ -1,3 +1,7 @@
+Version 2.0.8 (***)
+* Export: added initial support for Oblivion collisions (bhkBoxShape only)
+* Export: fixed a few minor bugs
+
 Version 2.0.7 (Aug 8, 2007)
 * Import: added support for multiple skeleton roots
 * Import: better support for meshes/armatures parented to bones
