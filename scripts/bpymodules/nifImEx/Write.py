@@ -150,26 +150,28 @@ def get_unique_name(blender_name):
     Returns an unique name for use in the NIF file, from the name of a Blender
     object.
     """
-    global _NIF_BLOCK_NAMES
+    global _NIF_BLOCK_NAMES, _NAMES
     unique_name = "default_name"
     if blender_name != None:
         unique_name = blender_name
-    if unique_name in _NIF_BLOCK_NAMES:
+    if unique_name in _NIF_BLOCK_NAMES or unique_name in _NAMES.values():
         unique_int = 0
         old_name = unique_name
-        while unique_name in _NIF_BLOCK_NAMES:
+        while unique_name in _NIF_BLOCK_NAMES or unique_name in _NAMES.values():
             unique_name = '%s.%02d' % (old_name, unique_int)
             unique_int +=1
     _NIF_BLOCK_NAMES.append(unique_name)
+    _NAMES[blender_name] = unique_name
     return unique_name
 
 def get_full_name(blender_name):
     """
-    Returns the original imported name if present
+    Returns the original imported name if present, or the name by which the
+    object was exported already.
     """
     global _NAMES
     try:
-        return get_unique_name(_NAMES[blender_name])
+        return _NAMES[blender_name]
     except KeyError:
         return get_unique_name(blender_name)
 
@@ -1780,9 +1782,10 @@ def export_children(ob, parent_block):
                 else:
                     # we should parent the object to the bone instead of to the armature
                     # so let's find that bone!
+                    nif_bone_name = get_full_name(parent_bone_name)
                     for block in _NIF_BLOCKS:
                         if isinstance(block, NifFormat.NiNode):
-                            if block.name == parent_bone_name:
+                            if block.name == nif_bone_name:
                                 export_node(ob_child, 'localspace', block, ob_child.getName())
                                 break
                     else:
