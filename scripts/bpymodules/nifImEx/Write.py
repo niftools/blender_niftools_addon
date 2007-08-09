@@ -2012,6 +2012,15 @@ def create_block(blocktype):
 
 
 def export_collision(ob, parent_block):
+    # find bounding box data
+    verts = ob.data.verts
+    minx = min([v[0] for v in verts])
+    miny = min([v[1] for v in verts])
+    minz = min([v[2] for v in verts])
+    maxx = max([v[0] for v in verts])
+    maxy = max([v[1] for v in verts])
+    maxz = max([v[2] for v in verts])
+
     # note: collision settings are taken from lowerclasschair01.nif
     if not parent_block.collisionObject:
         colobj = create_block("bhkCollisionObject")
@@ -2055,4 +2064,43 @@ def export_collision(ob, parent_block):
         colobj = parent_block.collisionObject
         colbody = colobj.body
         colshape = colbody.shape
+
+    if ob.rbShapeBoundType != Blender.Object.RBShapes['BOX']:
+       print 'WARNING: collision shape of type %s is not supported; exporting as box'%ob.rbShapeBoundType
+
+    coltf = create_block("bhkConvexTransformShape")
+    colshape.addShape(coltf)
+    coltf.material = NifFormat.HavokMaterial.HAV_MAT_WOOD
+    coltf.unknownFloat1 = 0.1
+    coltf.unknown8Bytes[0] = 96
+    coltf.unknown8Bytes[1] = 120
+    coltf.unknown8Bytes[2] = 53
+    coltf.unknown8Bytes[3] = 19
+    coltf.unknown8Bytes[4] = 24
+    coltf.unknown8Bytes[5] = 9
+    coltf.unknown8Bytes[6] = 253
+    coltf.unknown8Bytes[7] = 4
+    hktf = ob.getMatrix('localspace').copy()
+    hktf.transpose()
+    coltf.transform.setRows(*hktf) # the transpose of the transform is stored
+    coltf.transform.m14 /= 7.0
+    coltf.transform.m24 /= 7.0
+    coltf.transform.m34 /= 7.0
+
+    colbox = create_block("bhkBoxShape")
+    coltf.shape = colbox
+    colbox.material = NifFormat.HavokMaterial.HAV_MAT_WOOD
+    colbox.radius = 0.1
+    colbox.unknownString.value[0] = '\x6b'
+    colbox.unknownString.value[1] = '\xee'
+    colbox.unknownString.value[2] = '\x43'
+    colbox.unknownString.value[3] = '\x40'
+    colbox.unknownString.value[4] = '\x3a'
+    colbox.unknownString.value[5] = '\xef'
+    colbox.unknownString.value[6] = '\x8e'
+    colbox.unknownString.value[7] = '\x3e'
+    colbox.dimensions.x = (maxx - minx) / 14.0
+    colbox.dimensions.y = (maxy - miny) / 14.0
+    colbox.dimensions.z = (maxz - minz) / 14.0
+    colbox.minimumSize = min(colbox.dimensions.x, colbox.dimensions.y, colbox.dimensions.z)
 
