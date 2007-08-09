@@ -2083,6 +2083,9 @@ def export_collision(ob, parent_block):
     hktf = ob.getMatrix('localspace').copy()
     hktf.transpose()
     coltf.transform.setRows(*hktf) # the transpose of the transform is stored
+    coltf.transform.m14 += (minx + maxx) / 2.0 # doesn't work quite well (?)
+    coltf.transform.m24 += (miny + maxy) / 2.0 # doesn't work quite well (?)
+    coltf.transform.m34 += (minz + maxz) / 2.0 # doesn't work quite well (?)
     coltf.transform.m14 /= 7.0
     coltf.transform.m24 /= 7.0
     coltf.transform.m34 /= 7.0
