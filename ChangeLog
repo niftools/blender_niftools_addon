@@ -1,7 +1,8 @@
 Version 2.1 (***)
 * Export: added support for Oblivion collisions
-  - bhkBoxShape (for BOX bounding shape)
-  - bhkPackedNiTriStripsShape (for POLYHEDER bounding shape)
+  - bhkBoxShape (from Blender BOX bounding shape)
+  - bhkBoxSphere (from Blender SPHERE bounding shape)
+  - bhkPackedNiTriStripsShape (from Blender POLYHEDER bounding shape)
 * Export: fixed a few minor bugs
 
 Version 2.0.7 (Aug 8, 2007)
