@@ -1,4 +1,4 @@
-__version__ = "2.0.8"
+__version__ = "2.1"
 
 import Blender
 
@@ -302,6 +302,9 @@ def event(evt, val):
         else:
             Draw.Exit()
             return
+    elif evt == Draw.RETKEY:
+        save()
+        exitGUI()
 
     Draw.Redraw(1)
 

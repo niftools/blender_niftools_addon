@@ -39,7 +39,7 @@ SetCompressor /SOLID lzma
 !include "WordFunc.nsh"
 !insertmacro VersionCompare
 
-!define VERSION "2.0.8"
+!define VERSION "2.1"
 
 Name "Blender NIF Scripts ${VERSION}"
 Var BLENDERHOME

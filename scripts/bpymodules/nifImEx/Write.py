@@ -2130,6 +2130,64 @@ def export_collision(ob, parent_block):
         # note: collision settings are taken from arstatue01.nif
         if ob.rbShapeBoundType != Blender.Object.RBShapes['POLYHEDERON']:
             print 'WARNING: collision shape of type %s is not supported; exporting as polyhedron'%ob.rbShapeBoundType
+
+        mesh = ob.data
+        transform = ob.getMatrix('localspace').copy()
+        rotation = transform.rotationPart()
+
+        vertlist = [v.co * transform for v in mesh.verts]
+        trilist = []
+        fnormlist = []
+        for f in mesh.faces:
+            if len(f.v) < 3: continue # ignore degenerate faces
+            trilist.append([f.v[i].index for i in [0,1,2]])
+            fnormlist.append(Blender.Mathutils.Vector(f.no) * rotation) # f.no is a Python list, not a vector
+            if len(f.v) == 4:
+                trilist.append([f.v[i].index for i in [0,2,3]])
+                fnormlist.append(Blender.Mathutils.Vector(f.no) * rotation)
+
+        if len(trilist) > 65535 or len(vertlist) > 65535:
+            raise NIFExportError('ERROR%t|Too many faces/vertices. Decimate your mesh and try again.')
+
+        # store as packed tristrips shape
+        colstrips = create_block("bhkPackedNiTriStripsShape")
+        colshape.addShape(colstrips)
+        colstrips.numSubShapes = 1
+        colstrips.subShapes.updateSize()
+        colstrips.subShapes[0].layer = NifFormat.OblivionLayer.OL_STATIC
+        colstrips.subShapes[0].numVertices = len(vertlist)
+        colstrips.subShapes[0].material = NifFormat.HavokMaterial.HAV_MAT_WOOD
+        colstrips.unknownFloats[2] = 0.1
+        colstrips.unknownFloats[4] = 1.0
+        colstrips.unknownFloats[5] = 1.0
+        colstrips.unknownFloats[6] = 1.0
+        colstrips.unknownFloats[8] = 0.1
+        colstrips.scale = 1.0
+        colstrips.unknownFloats2[0] = 1.0
+        colstrips.unknownFloats2[1] = 1.0
+        strips = create_block("hkPackedNiTriStripsData")
+        colstrips.data = strips
+        strips.numTriangles = len(trilist)
+        strips.triangles.updateSize()
+        for tstrip, t, n in zip(strips.triangles, trilist, fnormlist):
+            tstrip.triangle.v1 = t[0]
+            tstrip.triangle.v2 = t[1]
+            tstrip.triangle.v3 = t[2]
+            tstrip.normal.x = n[0]
+            tstrip.normal.y = n[1]
+            tstrip.normal.z = n[2]
+        strips.numVertices = len(vertlist)
+        strips.vertices.updateSize()
+        for vstrip, v in zip(strips.vertices, vertlist):
+            vstrip.x = v[0] / 7.0
+            vstrip.y = v[1] / 7.0
+            vstrip.z = v[2] / 7.0
+
+        return
+
+        # DISABLED:
+        # alternative code for unpacked collision strip
+        normlist = [v.no * rotation for v in mesh.verts]
         colstrips = create_block("bhkNiTriStripsShape")
         colshape.addShape(colstrips)
         colstrips.material =  NifFormat.HavokMaterial.HAV_MAT_WOOD
@@ -2147,22 +2205,6 @@ def export_collision(ob, parent_block):
 
         strips = create_block("NiTriStripsData")
         colstrips.stripsData[0] = strips
-        transform = ob.getMatrix('localspace').copy()
-        rotation = transform.rotationPart()
-
-        mesh = ob.data
-
-        vertlist = [v.co * transform for v in mesh.verts]
-        normlist = [v.no * rotation for v in mesh.verts]
-        trilist = []
-        for f in mesh.faces:
-            if len(f.v) < 3: continue # ignore degenerate faces
-            trilist.append([f.v[i].index for i in [0,1,2]])
-            if len(f.v) == 4:
-                trilist.append([f.v[i].index for i in [0,2,3]])
-
-        if len(trilist) > 65535 or len(vertlist) > 65535:
-            raise NIFExportError('ERROR%t|Too many faces/vertices. Decimate your mesh and try again.')
 
         strips.numVertices = len(vertlist)
         strips.hasVertices = True
