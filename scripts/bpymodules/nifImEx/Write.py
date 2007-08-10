@@ -2126,12 +2126,34 @@ def export_collision(ob, parent_block):
             colbox.dimensions.y = (maxy - miny) / 14.0
             colbox.dimensions.z = (maxz - minz) / 14.0
             colbox.minimumSize = min(colbox.dimensions.x, colbox.dimensions.y, colbox.dimensions.z)
-        else: # SPHERE
+        elif ob.rbShapeBoundType == Blender.Object.RBShapes['SPHERE']:
             colsphere = create_block("bhkSphereShape")
             coltf.shape = colsphere
             colsphere.material = NifFormat.HavokMaterial.HAV_MAT_WOOD
-            # fix for havok coordinate system
-            colsphere.radius = (maxx - minx) / 14.0
+            # take average radius and
+            # fix for havok coordinate system (6 * 7 = 42)
+            colsphere.radius = (maxx + maxy + maxz - minx - miny -minz) / 42.0
+
+    elif ob.rbShapeBoundType == Blender.Object.RBShapes['CYLINDER']:
+        colcaps = create_block("bhkCapsuleShape")
+        colshape.addShape(colcaps)
+        colcaps.material = NifFormat.HavokMaterial.HAV_MAT_WOOD
+        # take average radius and
+        # fix for havok coordinate system (4 * 7 = 28)
+        colcaps.radius = (maxx + maxy - minx - miny) / 28.0
+        colcaps.radius1 = colcaps.radius
+        colcaps.radius2 = colcaps.radius
+        transform = ob.getMatrix('localspace').copy()
+        v1 = Blender.Mathutils.Vector([(maxx+minx)/2.0,(maxy+miny)/2.0,minz])
+        v2 = Blender.Mathutils.Vector([(maxx+minx)/2.0,(maxy+miny)/2.0,maxz])
+        v1 *= transform
+        v2 *= transform
+        colcaps.point1.x = v1[0] / 7.0
+        colcaps.point1.y = v1[1] / 7.0
+        colcaps.point1.z = v1[2] / 7.0
+        colcaps.point2.x = v2[0] / 7.0
+        colcaps.point2.y = v2[1] / 7.0
+        colcaps.point2.z = v2[2] / 7.0
 
     else:
         # note: collision settings are taken from arstatue01.nif
