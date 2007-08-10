@@ -2021,6 +2021,11 @@ def export_collision(ob, parent_block):
     maxy = max([v[1] for v in verts])
     maxz = max([v[2] for v in verts])
 
+    # if no collisions have been exported yet to this parent_block
+    # then create new collision tree on parent_block
+    # bhkCollisionObject -> bhkRigidBodyT -> bhkListShape
+    # (this works in all cases, can be simplified just before
+    # the file is written)
     if not parent_block.collisionObject:
         # note: collision settings are taken from lowerclasschair01.nif
         colobj = create_block("bhkCollisionObject")
@@ -2075,6 +2080,7 @@ def export_collision(ob, parent_block):
     if ob.rbShapeBoundType == Blender.Object.RBShapes['BOX']:
         # note: collision settings are taken from lowerclasschair01.nif
         coltf = create_block("bhkConvexTransformShape")
+        colshape.addShape(coltf)
         coltf.material = NifFormat.HavokMaterial.HAV_MAT_WOOD
         coltf.unknownFloat1 = 0.1
         coltf.unknown8Bytes[0] = 96
@@ -2086,11 +2092,18 @@ def export_collision(ob, parent_block):
         coltf.unknown8Bytes[6] = 253
         coltf.unknown8Bytes[7] = 4
         hktf = ob.getMatrix('localspace').copy()
+        # the translation part must point to the center of the data
+        # so calculate the center in local coordinates
+        center = Blender.Mathutils.Vector((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0)
+        # and transform it to global coordinates
+        center *= hktf
+        hktf[3][0] = center[0]
+        hktf[3][1] = center[1]
+        hktf[3][2] = center[2]
+        # we need to store the transpose of the matrix
         hktf.transpose()
-        coltf.transform.setRows(*hktf) # the transpose of the transform is stored
-        coltf.transform.m14 += (minx + maxx) / 2.0 # doesn't work quite well (?)
-        coltf.transform.m24 += (miny + maxy) / 2.0 # doesn't work quite well (?)
-        coltf.transform.m34 += (minz + maxz) / 2.0 # doesn't work quite well (?)
+        coltf.transform.setRows(*hktf)
+        # fix matrix for havok coordinate system
         coltf.transform.m14 /= 7.0
         coltf.transform.m24 /= 7.0
         coltf.transform.m34 /= 7.0
@@ -2107,6 +2120,7 @@ def export_collision(ob, parent_block):
         colbox.unknownString.value[5] = '\xef'
         colbox.unknownString.value[6] = '\x8e'
         colbox.unknownString.value[7] = '\x3e'
+        # fix dimensions for havok coordinate system
         colbox.dimensions.x = (maxx - minx) / 14.0
         colbox.dimensions.y = (maxy - miny) / 14.0
         colbox.dimensions.z = (maxz - minz) / 14.0
