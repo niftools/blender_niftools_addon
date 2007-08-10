@@ -2021,6 +2021,18 @@ def export_collision(ob, parent_block):
     maxy = max([v[1] for v in verts])
     maxz = max([v[2] for v in verts])
 
+    # find physics properties
+    ob_havmat = NifFormat.HavokMaterial.HAV_MAT_WOOD
+    ob_olayer = NifFormat.OblivionLayer.OL_STATIC
+    ob_mosys = NifFormat.MotionSystem.MO_SYS_KEYFRAMED
+    for prop in ob.getAllProperties():
+        if prop.getName() == 'HavokMaterial':
+            ob_havmat = getattr(NifFormat.HavokMaterial, prop.getData())
+        elif prop.getName() == 'OblivionLayer':
+            ob_olayer = getattr(NifFormat.OblivionLayer, prop.getData())
+        #elif prop.getName() == 'MotionSystem':
+        #    ob_mosys = getattr(NifFormat.MotionSystem, prop.getData())
+
     # if no collisions have been exported yet to this parent_block
     # then create new collision tree on parent_block
     # bhkCollisionObject -> bhkRigidBodyT -> bhkListShape
@@ -2035,13 +2047,13 @@ def export_collision(ob, parent_block):
 
         colbody = create_block("bhkRigidBodyT")
         colobj.body = colbody
-        colbody.layer = NifFormat.OblivionLayer.OL_STATIC
+        colbody.layer = ob_olayer
         colbody.unknown5Floats[1] = 3.8139e+36
         colbody.unknown4Shorts[0] = 1
         colbody.unknown4Shorts[1] = 65535
         colbody.unknown4Shorts[2] = 35899
         colbody.unknown4Shorts[3] = 16336
-        colbody.layerCopy = NifFormat.OblivionLayer.OL_STATIC
+        colbody.layerCopy = ob_olayer
         colbody.unknown7Shorts[1] = 21280
         colbody.unknown7Shorts[2] = 4581
         colbody.unknown7Shorts[3] = 62977
@@ -2061,7 +2073,7 @@ def export_collision(ob, parent_block):
         colbody.maxLinearVelocity = 250.0
         colbody.maxAngularVelocity = 31.4159
         colbody.penetrationDepth = 0.15
-        colbody.motionSystem = NifFormat.MotionSystem.MO_SYS_KEYFRAMED
+        colbody.motionSystem = ob_mosys
         colbody.unknownByte1 = 1
         colbody.unknownByte2 = 1
         colbody.qualityType = NifFormat.MotionQuality.MO_QUAL_FIXED
@@ -2071,7 +2083,7 @@ def export_collision(ob, parent_block):
 
         colshape = create_block("bhkListShape")
         colbody.shape = colshape
-        colshape.material = NifFormat.HavokMaterial.HAV_MAT_WOOD
+        colshape.material = ob_havmat
     else:
         colobj = parent_block.collisionObject
         colbody = colobj.body
@@ -2081,7 +2093,7 @@ def export_collision(ob, parent_block):
         # note: collision settings are taken from lowerclasschair01.nif
         coltf = create_block("bhkConvexTransformShape")
         colshape.addShape(coltf)
-        coltf.material = NifFormat.HavokMaterial.HAV_MAT_WOOD
+        coltf.material = ob_havmat
         coltf.unknownFloat1 = 0.1
         coltf.unknown8Bytes[0] = 96
         coltf.unknown8Bytes[1] = 120
@@ -2111,7 +2123,7 @@ def export_collision(ob, parent_block):
         if ob.rbShapeBoundType == Blender.Object.RBShapes['BOX']:
             colbox = create_block("bhkBoxShape")
             coltf.shape = colbox
-            colbox.material = NifFormat.HavokMaterial.HAV_MAT_WOOD
+            colbox.material = ob_havmat
             colbox.radius = 0.1
             colbox.unknownString.value[0] = '\x6b'
             colbox.unknownString.value[1] = '\xee'
@@ -2129,7 +2141,7 @@ def export_collision(ob, parent_block):
         elif ob.rbShapeBoundType == Blender.Object.RBShapes['SPHERE']:
             colsphere = create_block("bhkSphereShape")
             coltf.shape = colsphere
-            colsphere.material = NifFormat.HavokMaterial.HAV_MAT_WOOD
+            colsphere.material = ob_havmat
             # take average radius and
             # fix for havok coordinate system (6 * 7 = 42)
             colsphere.radius = (maxx + maxy + maxz - minx - miny -minz) / 42.0
@@ -2137,7 +2149,7 @@ def export_collision(ob, parent_block):
     elif ob.rbShapeBoundType == Blender.Object.RBShapes['CYLINDER']:
         colcaps = create_block("bhkCapsuleShape")
         colshape.addShape(colcaps)
-        colcaps.material = NifFormat.HavokMaterial.HAV_MAT_WOOD
+        colcaps.material = ob_havmat
         # take average radius and
         # fix for havok coordinate system (4 * 7 = 28)
         colcaps.radius = (maxx + maxy - minx - miny) / 28.0
@@ -2183,9 +2195,9 @@ def export_collision(ob, parent_block):
         colshape.addShape(colstrips)
         colstrips.numSubShapes = 1
         colstrips.subShapes.updateSize()
-        colstrips.subShapes[0].layer = NifFormat.OblivionLayer.OL_STATIC
+        colstrips.subShapes[0].layer = ob_olayer
         colstrips.subShapes[0].numVertices = len(vertlist)
-        colstrips.subShapes[0].material = NifFormat.HavokMaterial.HAV_MAT_WOOD
+        colstrips.subShapes[0].material = ob_havmat
         colstrips.unknownFloats[2] = 0.1
         colstrips.unknownFloats[4] = 1.0
         colstrips.unknownFloats[5] = 1.0
@@ -2219,7 +2231,7 @@ def export_collision(ob, parent_block):
         normlist = [v.no * rotation for v in mesh.verts]
         colstrips = create_block("bhkNiTriStripsShape")
         colshape.addShape(colstrips)
-        colstrips.material =  NifFormat.HavokMaterial.HAV_MAT_WOOD
+        colstrips.material =  ob_havmat
         colstrips.unknownFloat1 = 0.1
         colstrips.unknownInt1 = 4898400
         colstrips.unknownInt2 = 1
@@ -2230,7 +2242,7 @@ def export_collision(ob, parent_block):
         colstrips.stripsData.updateSize()
         colstrips.numDataLayers = 1
         colstrips.dataLayers.updateSize()
-        colstrips.dataLayers[0].layer = NifFormat.OblivionLayer.OL_STATIC
+        colstrips.dataLayers[0].layer = ob_olayer
 
         strips = create_block("NiTriStripsData")
         colstrips.stripsData[0] = strips
