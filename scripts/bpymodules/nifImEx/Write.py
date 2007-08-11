@@ -312,11 +312,18 @@ and turn off envelopes."""%ob.getName()
             anim_textextra = export_animgroups(animtxt, root_block)
 
         # activate oblivion collision and physics
-        if NIF_VERSION == 0x14000005:
-            bsx = create_block("BSXFlags")
-            bsx.name = 'BSX'
-            bsx.integerData = 2 # enable collision
-            root_block.addExtraData(bsx)
+        if _CONFIG["EXPORT_VERSION"] == 'Oblivion':
+            hascollision = False
+            for block in _NIF_BLOCKS:
+                if isinstance(block, NifFormat.bhkCollisionObject):
+                   hascollision = True
+                   break
+            if hascollision:
+                bsx = create_block("BSXFlags")
+                bsx.name = 'BSX'
+                bsx.integerData = 2 # enable collision
+                root_block.addExtraData(bsx)
+
             # many Oblivion nifs have a UPB, but export is disabled as
             # they do not seem to affect anything in the game
             #upb = create_block("NiStringExtraData")
@@ -2012,6 +2019,9 @@ def create_block(blocktype):
 
 
 def export_collision(ob, parent_block):
+    if _CONFIG["EXPORT_VERSION"] != 'Oblivion':
+        print "WARNING: only Oblivion collisions are supported, skipped collision object '%s'"%ob.name
+        return
     # find bounding box data
     verts = ob.data.verts
     minx = min([v[0] for v in verts])
@@ -2150,14 +2160,13 @@ def export_collision(ob, parent_block):
         colcaps = create_block("bhkCapsuleShape")
         colshape.addShape(colcaps)
         colcaps.material = ob_havmat
-        # take average radius and
-        # fix for havok coordinate system (4 * 7 = 28)
-        colcaps.radius = (maxx + maxy - minx - miny) / 28.0
+        # take average radius
+        colcaps.radius = (maxx + maxy - minx - miny) / 4.0
         colcaps.radius1 = colcaps.radius
         colcaps.radius2 = colcaps.radius
         transform = ob.getMatrix('localspace').copy()
-        v1 = Blender.Mathutils.Vector([(maxx+minx)/2.0,(maxy+miny)/2.0,minz])
-        v2 = Blender.Mathutils.Vector([(maxx+minx)/2.0,(maxy+miny)/2.0,maxz])
+        v1 = Blender.Mathutils.Vector([(maxx+minx)/2.0,(maxy+miny)/2.0,minz+colcaps.radius])
+        v2 = Blender.Mathutils.Vector([(maxx+minx)/2.0,(maxy+miny)/2.0,maxz-colcaps.radius])
         v1 *= transform
         v2 *= transform
         colcaps.point1.x = v1[0] / 7.0
@@ -2166,6 +2175,10 @@ def export_collision(ob, parent_block):
         colcaps.point2.x = v2[0] / 7.0
         colcaps.point2.y = v2[1] / 7.0
         colcaps.point2.z = v2[2] / 7.0
+        # fix havok coordinate system for radii
+        colcaps.radius /= 7.0
+        colcaps.radius1 /= 7.0
+        colcaps.radius2 /= 7.0
 
     elif ob.rbShapeBoundType == 5: # convex hull polytope; not in Python API
         mesh = ob.data
