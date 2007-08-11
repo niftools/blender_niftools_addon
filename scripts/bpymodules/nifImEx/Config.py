@@ -1,4 +1,5 @@
 __version__ = "2.1"
+__requiredpyffiversion__ = "0.3.4"
 
 import Blender
 
@@ -12,12 +13,12 @@ from PyFFI.NIF import NifFormat
 
 # check PyFFI version
 from PyFFI import __version__ as PyFFIVersion
-if PyFFIVersion < '0.3.4':
+if PyFFIVersion < __requiredpyffiversion__:
     err = """--------------------------
-ERROR\nThis script requires Python File Format Interface 0.3.3 or higher.
+ERROR\nThis script requires Python File Format Interface %s or higher.
 It seems that you have an older version installed (%s).
 Get a newer version at http://pyffi.sourceforge.net/
---------------------------"""%PyFFIVersion
+--------------------------"""%(__requiredpyffiversion__, PyFFIVersion)
     print err
     Blender.Draw.PupMenu("ERROR%t|PyFFI outdated, check console for details")
     raise ImportError
