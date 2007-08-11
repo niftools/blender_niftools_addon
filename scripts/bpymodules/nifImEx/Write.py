@@ -2167,6 +2167,40 @@ def export_collision(ob, parent_block):
         colcaps.point2.y = v2[1] / 7.0
         colcaps.point2.z = v2[2] / 7.0
 
+    elif ob.rbShapeBoundType == 5: # convex hull polytope; not in Python API
+        mesh = ob.data
+        transform = ob.getMatrix('localspace').copy()
+        rotation = transform.rotationPart()
+
+        vertlist = [v.co * transform for v in mesh.verts]
+        fnormlist = [Blender.Mathutils.Vector(f.no) * rotation for f in mesh.faces]
+        meshcenter = reduce(lambda x,y:x+y, [v.co for v in mesh.verts]) / len(mesh.verts)
+        fdistlist = [Blender.Mathutils.DotVecs(meshcenter - f.v[0].co, Blender.Mathutils.Vector(f.no)) for f in mesh.faces]
+
+        if len(fnormlist) > 65535 or len(vertlist) > 65535:
+            raise NIFExportError('ERROR%t|Too many faces/vertices. Decimate your mesh and try again.')
+        
+        colhull = create_block("bhkConvexVerticesShape")
+        colshape.addShape(colhull)
+        colhull.material = ob_havmat
+        colhull.radius = 0.1
+        # note: unknown 6 floats are usually all 0
+        colhull.numVertices = len(vertlist)
+        colhull.vertices.updateSize()
+        for vhull, v in zip(colhull.vertices, vertlist):
+            vhull.x = v[0] / 7.0
+            vhull.y = v[1] / 7.0
+            vhull.z = v[2] / 7.0
+            # w component is 0
+        colhull.numNormals = len(fnormlist)
+        colhull.normals.updateSize()
+        # TODO figure out proper order of the normals (affects arrow detection)
+        for nhull, n, d in zip(colhull.normals, fnormlist, fdistlist):
+            nhull.x = n[0]
+            nhull.y = n[1]
+            nhull.z = n[2]
+            nhull.w = d / 7.0
+
     else:
         # note: collision settings are taken from arstatue01.nif
         if ob.rbShapeBoundType != Blender.Object.RBShapes['POLYHEDERON']:

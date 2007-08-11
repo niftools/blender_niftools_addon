@@ -1,9 +1,10 @@
 Version 2.1 (***)
 * Export: added support for Oblivion collisions
-  - bhkBoxShape (from Blender BOX bounding shape)
-  - bhkSphereShape (from Blender SPHERE bounding shape)
-  - bhkCapsuleShape (from Blender CYLINDER bounding shape)
-  - bhkPackedNiTriStripsShape (from Blender POLYHEDER bounding shape)
+  - bhkBoxShape (from Blender 'Box' bounding shape)
+  - bhkSphereShape (from Blender 'Sphere' bounding shape)
+  - bhkCapsuleShape (from Blender 'Cylinder' bounding shape)
+  - bhkPackedNiTriStripsShape (from Blender 'Static TriangleMesh' bounding shape)
+  - bhkConvexVerticesShape (from Blender 'Convex Hull Polytope' bounding shape)
 * Export: fixed a few minor bugs
 
 Version 2.0.7 (Aug 8, 2007)
