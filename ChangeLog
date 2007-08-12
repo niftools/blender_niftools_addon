@@ -1,11 +1,15 @@
-Version 2.1 (***)
+Version 2.1 (Aug 12, 2007)
 * Export: added support for Oblivion collisions
   - bhkBoxShape (from Blender 'Box' bounding shape)
   - bhkSphereShape (from Blender 'Sphere' bounding shape)
   - bhkCapsuleShape (from Blender 'Cylinder' bounding shape)
   - bhkPackedNiTriStripsShape (from Blender 'Static TriangleMesh' bounding shape)
   - bhkConvexVerticesShape (from Blender 'Convex Hull Polytope' bounding shape)
-* Export: fixed a few minor bugs
+  Note that many of the settings are not well understood, so you probably still
+  have to tweak the collision settings in nifskope. But at least the collision
+  geometries should be properly exported.
+* Export: fixed another bind position transform bug (reported by Corvus)
+* Export: fixed a few other minor bugs
 
 Version 2.0.7 (Aug 8, 2007)
 * Import: added support for multiple skeleton roots
