@@ -1609,11 +1609,11 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                         # add bone
                         trishape.addBone(arm_bone_block, vert_weights)
 
-                    # calculate center and radius for each skin bone data block
-                    trishape.updateSkinCenterRadius()
-
                     # update bind position skinning data
                     trishape.updateBindPosition()
+
+                    # calculate center and radius for each skin bone data block
+                    trishape.updateSkinCenterRadius()
 
                     if NIF_VERSION >= 0x04020100 and _CONFIG["EXPORT_SKINPARTITION"]:
                         msg("creating 'NiSkinPartition'")
