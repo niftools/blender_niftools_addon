@@ -1589,7 +1589,7 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                                     vert_added[vert_index] = True
                         # add bone as influence, but only if there were actually any vertices influenced by the bone
                         if vert_weights:
-                            trishape.addBone(bone_block, bmatrix_to_matrix(get_bone_restmatrix(boneobjects[bone], 'ARMATURESPACE')), vert_weights)
+                            trishape.addBone(bone_block, vert_weights)
         
                     # each vertex must have been assigned to at least one vertex group
                     # or the model doesn't display correctly in the TESCS
@@ -1607,10 +1607,13 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                         arm_bone_block.flags = 0x0002 # ? this seems pretty standard for bones
                         skininst.skeletonRoot.addChild(arm_bone_block, front = True)
                         # add bone
-                        trishape.addBone(arm_bone_block, _IDENTITY44, vert_weights)
+                        trishape.addBone(arm_bone_block, vert_weights)
 
                     # calculate center and radius for each skin bone data block
                     trishape.updateSkinCenterRadius()
+
+                    # update bind position skinning data
+                    trishape.updateBindPosition()
 
                     if NIF_VERSION >= 0x04020100 and _CONFIG["EXPORT_SKINPARTITION"]:
                         msg("creating 'NiSkinPartition'")
