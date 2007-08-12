@@ -21,17 +21,18 @@ a:hover.nav { color: #FF0000; background: transparent; }
 <body>
 <h1>The Blender NIF Scripts v2.1</h1>
 <h2>Release Notes</h2>
-The Blender NIF Scripts have undergone serious changes since the 1.5.7 release. Although we have done our best to squash all bugs we could find, it is unlikely that we have found them all. If you find bugs, PLEASE REPORT THEM ON THE SOURCEFORGE TRACKER.
+Although we have done our best to squash all bugs we could find, it is unlikely that we have found them all. If you find bugs, PLEASE REPORT THEM ON THE SOURCEFORGE TRACKER.
 <h3>Highlights of this Release</h3>
 <ul>
-<li> added initial support for Oblivion collisions</li>
+<li>Support for Oblivion collisions. See <a href="http://niftools.sourceforge.net/wiki/Blender/Collision">http://niftools.sourceforge.net/wiki/Blender/Collision</a> for more information on how to use this new feature. This is still very experimental and there are quite likely still to be some bugs with collision objects - if you run into trouble, report them on the tracker or on the forum.</li>
+<li>Fixed yet another skinning bug with some Oblivion nifs: enable "send bones to bind position" in the import advanced settings if you run into trouble with re-exporting skinned meshes. It is recommended that you always leave this option enabled.</li>
 </ul>
 <h2>Support</h2>
 <ul>
-  <li><a href="http://sourceforge.net/tracker/?group_id=149157">http://sourceforge.net/tracker/?group_id=149157</a> for reporting bugs
   <li><a href="http://niftools.sourceforge.net/wiki/Blender">
 http://niftools.sourceforge.net/wiki/Blender</a></li>
   <li><a href="http://niftools.sourceforge.net/forum/">http://niftools.sourceforge.net/forum/</a></li>
+  <li><a href="http://sourceforge.net/tracker/?group_id=149157">http://sourceforge.net/tracker/?group_id=149157</a> for reporting bugs
 </ul>
 <h2>Installation</h2>
 <h3>Requirements</h3>
@@ -51,7 +52,7 @@ Blender's scripts directory. This is by default C:\Program Files\Blender Foundat
 Restart Blender, and the options to import and export
 NIF files will appear in the File-Import and File-Export menu's. <em>Make
 sure you
-have Python 2.5 and PyFFI installed as well!</em></li>
+have Python and PyFFI installed as well!</em></li>
   <li>For use with linux, the .zip includes an install.sh script which copies the relevant files to your ~/.blender folder.</li>
 </ul>
 <h3>Using the Scripts with Morrowind</h3>
@@ -69,7 +70,7 @@ Browser</a>; if you use the latter, make sure you copy the BSA files to
 <h3>Using the Scripts with Oblivion</h3>
 <ul>
   <li>Oblivion support is not quite complete.
-In particular, havok (physics) is not imported/exported.
+In particular, collision objects are not imported.
 Animation support is limited.
 </li>
   <li>If you wish to use the Oblivion textures in your models, you can unpack
