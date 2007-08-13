@@ -42,8 +42,9 @@ SetCompressor /SOLID lzma
 !define VERSION "2.1"
 
 Name "Blender NIF Scripts ${VERSION}"
-Var BLENDERHOME
-Var BLENDERSCRIPTS
+Var BLENDERHOME    ; blender settings location
+Var BLENDERSCRIPTS ; blender scripts location ($BLENDERHOME/.blender/scripts)
+Var BLENDERINST    ; blender.exe location
 Var PYTHONPATH
 Var PYFFI
 
@@ -69,6 +70,8 @@ Var PYFFI
 !insertmacro MUI_PAGE_INSTFILES
 
 !define MUI_FINISHPAGE_SHOWREADME "$INSTDIR\README.html"
+!define MUI_FINISHPAGE_RUN "$BLENDERINST\blender.exe"
+!define MUI_FINISHPAGE_RUN_TEXT "Run Blender"
 !define MUI_FINISHPAGE_LINK "Visit us at http://niftools.sourceforge.net/"
 !define MUI_FINISHPAGE_LINK_LOCATION "http://niftools.sourceforge.net/"
 !insertmacro MUI_PAGE_FINISH
@@ -104,47 +107,91 @@ ShowUninstDetails show
 ;--------------------------------
 ; Functions
 
+; taken from http://nsis.sourceforge.net/Open_link_in_new_browser_window
+# uses $0
+Function openLinkNewWindow
+  Push $3 
+  Push $2
+  Push $1
+  Push $0
+  ReadRegStr $0 HKCR "http\shell\open\command" ""
+# Get browser path
+    DetailPrint $0
+  StrCpy $2 '"'
+  StrCpy $1 $0 1
+  StrCmp $1 $2 +2 # if path is not enclosed in " look for space as final char
+    StrCpy $2 ' '
+  StrCpy $3 1
+  loop:
+    StrCpy $1 $0 1 $3
+    DetailPrint $1
+    StrCmp $1 $2 found
+    StrCmp $1 "" found
+    IntOp $3 $3 + 1
+    Goto loop
+ 
+  found:
+    StrCpy $1 $0 $3
+    StrCmp $2 " " +2
+      StrCpy $1 '$1"'
+ 
+  Pop $0
+  Exec '$1 $0'
+  Pop $1
+  Pop $2
+  Pop $3
+FunctionEnd
+
 Function .onInit
   ; check if Blender is installed
 
   ClearErrors
   ReadRegStr $BLENDERHOME HKLM SOFTWARE\BlenderFoundation "Install_Dir"
-  IfErrors 0 +3
+  IfErrors 0 blender_check_end
 
      ; no key, that means that Blender is not installed
-     MessageBox MB_OK "Install Blender first. Get it from http://www.blender.org/"
+     MessageBox MB_OK "You will need to download Blender in order to run the Blender NIF Scripts. Pressing OK will take you to the Blender download page. Please download and run the Blender windows installer. When you are done, rerun the Blender NIF Scripts installer."
+     StrCpy $0 "http://www.blender.org/download/get-blender/"
+     Call openLinkNewWindow
      Abort ; causes installer to quit
+
+blender_check_end:
+  StrCpy $BLENDERINST $BLENDERHOME
 
   ; get Blender scripts dir
 
   ; first try Blender's global install dir
   StrCpy $BLENDERSCRIPTS "$BLENDERHOME\.blender\scripts"
-  IfFileExists "$BLENDERSCRIPTS\*.*" end 0
+  IfFileExists "$BLENDERSCRIPTS\*.*" blender_scripts_end 0
 
   ; now try Blender's application data directory
   StrCpy $BLENDERHOME "$PROFILE\Application Data\Blender Foundation\Blender"
   StrCpy $BLENDERSCRIPTS "$BLENDERHOME\.blender\scripts"
-  IfFileExists "$BLENDERSCRIPTS\*.*" end 0
+  IfFileExists "$BLENDERSCRIPTS\*.*" blender_scripts_end 0
   
   ; finally, try the %HOME% variable
   ReadEnvStr $BLENDERHOME "HOME"
   StrCpy $BLENDERSCRIPTS "$BLENDERHOME\.blender\scripts"
-  IfFileExists "$BLENDERSCRIPTS\*.*" end 0
+  IfFileExists "$BLENDERSCRIPTS\*.*" blender_scripts_end 0
   
     ; all failed!
     MessageBox MB_OK "Blender scripts directory directory not found. This is a bug. Please report to http://niftools.sourceforge.net/forum/"
     Abort ; causes installer to quit
 
-end:
+blender_scripts_end:
 
   ; check if Python 2.5 is installed
   ClearErrors
   ReadRegStr $PYTHONPATH HKLM SOFTWARE\Python\PythonCore\2.5\InstallPath ""
   IfErrors 0 python_check_end
 
-    ; no key, that means that Python 2.5 is not installed
-    MessageBox MB_OK "Install Python 2.5 first. Get it from http://www.python.org/"
-    Abort ; causes installer to quit
+     ; no key, that means that Python 2.5 is not installed
+     MessageBox MB_OK "You will need to download Python 2.5 and PyFFI in order to run the Blender NIF Scripts. Pressing OK will take you to the Python and PyFFI download pages. Please download and run the Python windows installer, then download and run the PyFFI windows installer. When you are done, rerun the Blender NIF Scripts installer."
+     StrCpy $0 "http://sourceforge.net/project/platformdownload.php?group_id=199269&sel_platform=3089"
+     Call openLinkNewWindow
+     StrCpy $0 "http://www.python.org/download/"
+     Call openLinkNewWindow
+     Abort ; causes installer to quit
 
 python_check_end:
 
@@ -154,8 +201,10 @@ python_check_end:
   IfErrors 0 pyffi_check_end
 
     ; no key, that means that PyFFI is not installed
-    MessageBox MB_OK "Install PyFFI first. Get it from http://www.sourceforge.net/projects/pyffi"
-    Abort ; causes installer to quit
+     MessageBox MB_OK "You will need to download PyFFI in order to run the Blender NIF Scripts. Pressing OK will take you to the PyFFI download page. Please download and run the PyFFI windows installer. When you are done, rerun the Blender NIF Scripts installer."
+     StrCpy $0 "http://sourceforge.net/project/platformdownload.php?group_id=199269&sel_platform=3089"
+     Call openLinkNewWindow
+     Abort ; causes installer to quit
 
 pyffi_check_end:
 
@@ -165,8 +214,10 @@ pyffi_check_end:
   IntCmp $R1 0 pyffi_vercheck_end ; installed version is as indicated
   IntCmp $R1 1 pyffi_vercheck_end ; installed version is more recent than as indicated
 
-    MessageBox MB_OK "The installed version of PyFFI is outdated. Get the most recent version from http://pyffi.sourceforge.net/"
-    Abort ; causes installer to quit
+     MessageBox MB_OK "You will need a more recent version of PyFFI in order to run the Blender NIF Scripts. Pressing OK will take you to the PyFFI download page. Please download and run the PyFFI windows installer. When you are done, rerun the Blender NIF Scripts installer."
+     StrCpy $0 "http://sourceforge.net/project/platformdownload.php?group_id=199269&sel_platform=3089"
+     Call openLinkNewWindow
+     Abort ; causes installer to quit
 
 pyffi_vercheck_end:
 
