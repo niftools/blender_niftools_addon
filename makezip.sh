@@ -5,3 +5,7 @@ FILES="scripts/nif_import.py scripts/nif_export.py scripts/bpymodules/nifImEx/__
 rm -f "${NAME}-${VERSION}".*
 zip -9 "${NAME}-${VERSION}.zip" ${FILES}
 tar cfvj "${NAME}-${VERSION}.tar.bz2" ${FILES}
+
+# create windows installer
+rm -f "win-install/${NAME}-${VERSION}-windows.exe"
+wine ~/.wine/drive_c/Program\ Files/NSIS/makensis.exe win-install/blender_nif_scripts.nsi
