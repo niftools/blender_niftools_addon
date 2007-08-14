@@ -2050,6 +2050,7 @@ def export_collision(ob, parent_block):
         node = NifFormat.NiNode()
         node.setTransform(_IDENTITY44)
         node.name = 'collisiondummy%i'%parent_block.numChildren
+        node.flags = 8 # not a skin influence
         parent_block.addChild(node)
         export_collision_helper(ob, node)
 
