@@ -852,8 +852,8 @@ def fb_bone(niBlock, b_armature, b_armatureData, niArmature):
         if realign_enabled:
             # applies the corrected matrix explicitly
             b_bone.matrix = m_correction.resize4x4() * armature_space_matrix
-        else:
-            b_bone.matrix = armature_space_matrix
+        #else:
+        #    b_bone.matrix = armature_space_matrix
 
         # set bone name and store the niBlock for future reference
         b_armatureData.bones[bone_name] = b_bone
