@@ -671,7 +671,7 @@ def fb_armature(niArmature):
             # now import everything
             # ##############################
             kfc = find_controller(niBone, NifFormat.NiKeyframeController)
-            if kfc:
+            if kfc and kfc.data:
                 # get keyframe data
                 kfd = kfc.data
                 assert(isinstance(kfd, NifFormat.NiKeyframeData))
@@ -1551,14 +1551,15 @@ def store_animation_data(rootBlock):
     niBlockList = [block for block in rootBlock.tree() if isinstance(block, NifFormat.NiAVObject)]
     for niBlock in niBlockList:
         kfc = find_controller(niBlock, NifFormat.NiKeyframeController)
-        if kfc:
-            kfd = kfc.data
-            _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.translations.keys])
-            _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.scales.keys])
-            if kfd.rotationType == 4:
-                _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.xyzRotations.keys])
-            else:
-                _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.quaternionKeys])
+        if not kfc: continue
+        kfd = kfc.data
+        if not kfd: continue
+        _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.translations.keys])
+        _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.scales.keys])
+        if kfd.rotationType == 4:
+            _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.xyzRotations.keys])
+        else:
+            _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.quaternionKeys])
                     
     # detect the file's FPS setting
     # the check on _FPS is hackish, but ensures it's only done once even if there's multiple roots
