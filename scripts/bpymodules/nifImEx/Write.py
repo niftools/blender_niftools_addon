@@ -179,7 +179,7 @@ def get_full_name(blender_name):
 # Main export function.
 #
 def export_nif(filename):
-    global NIF_VERSION
+    global NIF_VERSION, _NIF_BLOCKS
     loadConfig() # ensure config is up-to-date
 
     try: # catch NIFExportErrors
@@ -225,8 +225,12 @@ and turn off envelopes."""%ob.getName()
         
         # strip extension from filename
         filedir = Blender.sys.dirname(filename)
-        root_name, fileext = Blender.sys.splitext(Blender.sys.basename(filename))
-        
+        filebase, fileext = Blender.sys.splitext(Blender.sys.basename(filename))
+        if _CONFIG["EXPORT_VERSION"] == 'Oblivion':
+            root_name = 'Scene Root'
+        else:
+            root_name = filebase
+ 
         # get the root object from selected object
         # only export empties, meshes, and armatures
         if (Blender.Object.GetSelected() == None):
@@ -260,8 +264,9 @@ and turn off envelopes."""%ob.getName()
         
         # create a nif object
         
-        # export the root node (note that transformation is ignored on the root node)
-        root_block = export_node(None, 'none', None, root_name)
+        # export the root node (the name is fixed later to avoid confusing the
+        # exporter with duplicate names)
+        root_block = export_node(None, 'none', None, '')
         
         # export objects
         msg("Exporting objects")
@@ -272,7 +277,7 @@ and turn off envelopes."""%ob.getName()
 
         # post-processing:
         #-----------------
-        
+
         # if we exported animations, but no animation groups are defined, define a default animation group
         msg("Checking animation groups")
         if (animtxt == None):
@@ -333,7 +338,7 @@ and turn off envelopes."""%ob.getName()
 
         if _CONFIG["EXPORT_FLATTENSKIN"]:
             # (warning: trouble if armatures parent other armatures or
-            # if bones parent geometries)
+            # if bones parent geometries, or if object is animated)
             # flatten skins
             skelroots = []
             affectedbones = []
@@ -356,6 +361,16 @@ and turn off envelopes."""%ob.getName()
             msg("Applying scale correction %f"%_EXPORT_SCALE_CORRECTION)
             root_block.applyScale(_EXPORT_SCALE_CORRECTION)
 
+        # delete original scene root if a scene root object was already defined
+        if (root_block.numChildren == 1) and (root_block.children[0].name == 'Scene Root'):
+            msg("Making 'Scene Root' the root block")
+            # remove root_block from _NIF_BLOCKS
+            _NIF_BLOCKS = [b for b in _NIF_BLOCKS if b != root_block] 
+            # set new root block
+            root_block = root_block.children[0]
+        else:
+            root_block.name = root_name
+ 
         # create keyframe file:
         #----------------------
 
@@ -408,7 +423,7 @@ and turn off envelopes."""%ob.getName()
         # make sure we have the right file extension
         if (fileext.lower() != ext):
             msg("WARNING: changing extension from %s to %s on output file"%(fileext,ext))
-            filename = Blender.sys.join(filedir, root_name + ext)
+            filename = Blender.sys.join(filedir, filebase + ext)
         NIF_USER_VERSION = 0 if NIF_VERSION != 0x14000005 else 11
         f = open(filename, "wb")
         try:
