@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <title>The Blender NIF Scripts v2.1</title>
+  <title>The Blender NIF Scripts v2.1.1</title>
   <meta http-equiv="Content-Type"
  content="text/html; charset=ISO-8859-1" />
   <style type="text/css">
@@ -19,13 +19,15 @@ a:hover.nav { color: #FF0000; background: transparent; }
   </style>
 </head>
 <body>
-<h1>The Blender NIF Scripts v2.1</h1>
+<h1>The Blender NIF Scripts v2.1.1</h1>
 <h2>Release Notes</h2>
 Although we have done our best to squash all bugs we could find, it is unlikely that we have found them all. If you find bugs, PLEASE REPORT THEM ON THE SOURCEFORGE TRACKER.
 <h3>Highlights of this Release</h3>
 <ul>
-<li>Support for Oblivion collisions. See <a href="http://niftools.sourceforge.net/wiki/Blender/Collision">http://niftools.sourceforge.net/wiki/Blender/Collision</a> for more information on how to use this new feature. This is still very experimental and there are quite likely still to be some bugs with collision objects - if you run into trouble, report them on the tracker or on the forum.</li>
-<li>Fixed yet another skinning bug with some Oblivion nifs: enable "send bones to bind position" in the import advanced settings if you run into trouble with re-exporting skinned meshes. It is recommended that you always leave this option enabled.</li>
+<li>The installer opens a download page if a dependency is not satisfied.</li>
+<li>The 'Scene Root' object effectively becomes the scene root node in exported nifs.</li>
+<li>Many bugs fixed in Oblivion collision export (see <a href="http://niftools.sourceforge.net/wiki/Blender/Collision">http://niftools.sourceforge.net/wiki/Blender/Collision</a> for more information on exporting collisions).</li>
+<li>Import of bones, if bone alignment is turned off, has been reverted to the 2.0.5 bone import system as this looks much better for Oblivion imports.</li>
 </ul>
 <h2>Support</h2>
 <ul>

@@ -1,3 +1,11 @@
+Version 2.1.1 (Aug 14, 2007)
+* Installer: open download page if dependency not found
+* Export: make 'Scene Root' node scene root
+* Export: quite a few bug fixes in Oblivion collision export, saner settings
+* Export: option to toggle the use of bhkListShape
+* Import: fix for skeleton.nif files
+* Import: reverted to 2.0.5 bone import system if bone alignment is turned off, looks much better for Oblivion imports
+
 Version 2.1 (Aug 12, 2007)
 * Export: added support for Oblivion collisions
   - bhkBoxShape (from Blender 'Box' bounding shape)
