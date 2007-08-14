@@ -185,6 +185,9 @@ def drawGUI():
         #E["EXPORT_BONESPERVERTEX"] = Draw.Number("Max Bones Per Vertex", addEvent("EXPORT_BONESPERVERTEX"), 50, H-65, 390, 20, _CONFIG["EXPORT_BONESPERVERTEX"], 2, 8)
         H -= 50
 
+        E["EXPORT_BHKLISTSHAPE"] = Draw.Toggle("Use Collision List (bhkListShape)", addEvent("EXPORT_BHKLISTSHAPE"), 50, H, 390, 20, _CONFIG["EXPORT_BHKLISTSHAPE"])
+        H -= 30
+
         #E["NIF_EXPORT_PATH"]        = Draw.String("",       addEvent("NIF_EXPORT_PATH"),     50, H-100, 390, 20, _CONFIG["NIF_EXPORT_PATH"],        390, "export path")
         #E["BROWSE_EXPORT_PATH"]     = Draw.PushButton('...',addEvent("BROWSE_EXPORT_PATH"), 440, H-100,  30, 20)
         
@@ -293,6 +296,8 @@ def buttonEvent(evt):
              _CONFIG["EXPORT_FLATTENSKIN"] = False # disable flattening skin
     elif evName == "EXPORT_SKINPARTITION":
         _CONFIG["EXPORT_SKINPARTITION"] = not _CONFIG["EXPORT_SKINPARTITION"]
+    elif evName == "EXPORT_BHKLISTSHAPE":
+        _CONFIG["EXPORT_BHKLISTSHAPE"] = not _CONFIG["EXPORT_BHKLISTSHAPE"]
     Draw.Redraw(1)
 
 def event(evt, val):

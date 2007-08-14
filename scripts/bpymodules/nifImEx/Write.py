@@ -2129,7 +2129,10 @@ def export_collision_helper(ob, parent_block):
     if coll_ispacked:
         export_collision_packed(ob, colbody, layer, material)
     else:
-        export_collision_list(ob, colbody, layer, material)
+        if _CONFIG["EXPORT_BHKLISTSHAPE"]:
+            export_collision_list(ob, colbody, layer, material)
+        else:
+            export_collision_single(ob, colbody, layer, material)
 
 
 
@@ -2173,6 +2176,15 @@ def export_collision_packed(ob, colbody, layer, material):
     colshape.addShape(triangles, normals, vertices, layer, material)
 
 
+
+def export_collision_single(ob, colbody, layer, material):
+    """Add collision object to colbody.
+    If colbody already has a collision shape, throw ValueError."""
+    if colbody.shape: raise ValueError('collision body already has a shape')
+    colbody.shape = export_collision_object(ob, layer, material)
+
+
+
 def export_collision_list(ob, colbody, layer, material):
     """Add collision object ob to the list of collision objects of colbody.
     If colbody hasn't any collisions yet, a new list is created.
@@ -2187,7 +2199,7 @@ def export_collision_list(ob, colbody, layer, material):
     if not colbody.shape:
         colshape = create_block("bhkListShape")
         colbody.shape = colshape
-        colshape.material = 0 # real material is defined elsewhere
+        colshape.material = material
     else:
         colshape = colbody.shape
         if not isinstance(colshape, NifFormat.bhkListShape):
@@ -2330,70 +2342,3 @@ def export_collision_object(ob, layer, material):
     else:
         raise NIFExportError('cannot export collision type %s to collision shape list'%ob.rbShapeBoundType)
 
-        ### OLD CODE FOLLOWS ###
-
-        # note: collision settings are taken from arstatue01.nif
-
-        if len(trilist) > 65535 or len(vertlist) > 65535:
-            raise NIFExportError('ERROR%t|Too many faces/vertices. Decimate your mesh and try again.')
-
-        # store as packed tristrips shape
-        strips = create_block("hkPackedNiTriStripsData")
-        colstrips.data = strips
-        strips.numTriangles = len(trilist)
-        strips.triangles.updateSize()
-        for tstrip, t, n in zip(strips.triangles, trilist, fnormlist):
-            tstrip.triangle.v1 = t[0]
-            tstrip.triangle.v2 = t[1]
-            tstrip.triangle.v3 = t[2]
-            tstrip.normal.x = n[0]
-            tstrip.normal.y = n[1]
-            tstrip.normal.z = n[2]
-        strips.numVertices = len(vertlist)
-        strips.vertices.updateSize()
-        for vstrip, v in zip(strips.vertices, vertlist):
-            vstrip.x = v[0] / 7.0
-            vstrip.y = v[1] / 7.0
-            vstrip.z = v[2] / 7.0
-
-        return strips
-
-        # DISABLED:
-        # alternative code for unpacked collision strip
-        normlist = [v.no * rotation for v in mesh.verts]
-        colstrips = create_block("bhkNiTriStripsShape")
-        colstrips.material =  ob_havmat
-        colstrips.unknownFloat1 = 0.1
-        colstrips.unknownInt1 = 4898400
-        colstrips.unknownInt2 = 1
-        colstrips.scale.x = 1.0
-        colstrips.scale.y = 1.0
-        colstrips.scale.z = 1.0
-        colstrips.numStripsData = 1
-        colstrips.stripsData.updateSize()
-        colstrips.numDataLayers = 1
-        colstrips.dataLayers.updateSize()
-        colstrips.dataLayers[0].layer = ob_olayer
-
-        strips = create_block("NiTriStripsData")
-        colstrips.stripsData[0] = strips
-
-        strips.numVertices = len(vertlist)
-        strips.hasVertices = True
-        strips.vertices.updateSize()
-        for vstrip, v in zip(strips.vertices, vertlist):
-            vstrip.x = v[0]
-            vstrip.y = v[1]
-            vstrip.z = v[2]
-        
-        strips.hasNormals = True
-        strips.normals.updateSize()
-        for nstrip, n in zip(strips.normals, normlist):
-            nstrip.x = n[0]
-            nstrip.y = n[1]
-            nstrip.z = n[2]
-        
-        strips.updateCenterRadius()
-        strips.consistencyFlags = NifFormat.ConsistencyType.CT_STATIC
-
-        strips.setTriangles(trilist, stitchstrips = _CONFIG["EXPORT_STITCHSTRIPS"])
