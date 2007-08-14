@@ -280,12 +280,17 @@ def buttonEvent(evt):
         _CONFIG["EXPORT_VERSION"] = evName[8:]
     elif evName == "EXPORT_FLATTENSKIN":
         _CONFIG["EXPORT_FLATTENSKIN"] = not _CONFIG["EXPORT_FLATTENSKIN"]
+        if _CONFIG["EXPORT_FLATTENSKIN"]: # if skin is flattened
+            _CONFIG["EXPORT_ANIMATION"] = 1 # force geometry only
     elif evName == "EXPORT_STRIPIFY":
         _CONFIG["EXPORT_STRIPIFY"] = not _CONFIG["EXPORT_STRIPIFY"]
     elif evName == "EXPORT_STITCHSTRIPS":
         _CONFIG["EXPORT_STITCHSTRIPS"] = not _CONFIG["EXPORT_STITCHSTRIPS"]
     elif evName[:17] == "EXPORT_ANIMATION_":
-         _CONFIG["EXPORT_ANIMATION"] = int(evName[17:])
+         value = int(evName[17:])
+         _CONFIG["EXPORT_ANIMATION"] = value
+         if value == 0 or value == 2: # if animation is exported
+             _CONFIG["EXPORT_FLATTENSKIN"] = False # disable flattening skin
     elif evName == "EXPORT_SKINPARTITION":
         _CONFIG["EXPORT_SKINPARTITION"] = not _CONFIG["EXPORT_SKINPARTITION"]
     Draw.Redraw(1)
