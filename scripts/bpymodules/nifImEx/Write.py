@@ -2037,35 +2037,30 @@ def create_block(blocktype):
 
 
 def export_collision(ob, parent_block):
+    """Main function to add collision objects to a node."""
+
     if _CONFIG["EXPORT_VERSION"] != 'Oblivion':
         print "WARNING: only Oblivion collisions are supported, skipped collision object '%s'"%ob.name
         return
-    # find bounding box data
-    verts = ob.data.verts
-    minx = min([v[0] for v in verts])
-    miny = min([v[1] for v in verts])
-    minz = min([v[2] for v in verts])
-    maxx = max([v[0] for v in verts])
-    maxy = max([v[1] for v in verts])
-    maxz = max([v[2] for v in verts])
+
+    # is it packed
+    coll_ispacked = (ob.rbShapeBoundType == Blender.Object.RBShapes['POLYHEDERON'])
 
     # find physics properties
-    ob_havmat = NifFormat.HavokMaterial.HAV_MAT_WOOD
-    ob_olayer = NifFormat.OblivionLayer.OL_STATIC
-    ob_mosys = NifFormat.MotionSystem.MO_SYS_KEYFRAMED
+    material = NifFormat.HavokMaterial.HAV_MAT_WOOD
+    layer = NifFormat.OblivionLayer.OL_STATIC
+    motionsys = NifFormat.MotionSystem.MO_SYS_KEYFRAMED
     for prop in ob.getAllProperties():
         if prop.getName() == 'HavokMaterial':
-            ob_havmat = getattr(NifFormat.HavokMaterial, prop.getData())
+            material = getattr(NifFormat.HavokMaterial, prop.getData())
         elif prop.getName() == 'OblivionLayer':
-            ob_olayer = getattr(NifFormat.OblivionLayer, prop.getData())
+            layer = getattr(NifFormat.OblivionLayer, prop.getData())
         #elif prop.getName() == 'MotionSystem':
         #    ob_mosys = getattr(NifFormat.MotionSystem, prop.getData())
 
     # if no collisions have been exported yet to this parent_block
     # then create new collision tree on parent_block
-    # bhkCollisionObject -> bhkRigidBodyT -> bhkListShape
-    # (this works in all cases, can be simplified just before
-    # the file is written)
+    # bhkCollisionObject -> bhkRigidBodyT
     if not parent_block.collisionObject:
         # note: collision settings are taken from lowerclasschair01.nif
         colobj = create_block("bhkCollisionObject")
@@ -2075,13 +2070,13 @@ def export_collision(ob, parent_block):
 
         colbody = create_block("bhkRigidBodyT")
         colobj.body = colbody
-        colbody.layer = ob_olayer
+        colbody.layer = layer
         colbody.unknown5Floats[1] = 3.8139e+36
         colbody.unknown4Shorts[0] = 1
         colbody.unknown4Shorts[1] = 65535
         colbody.unknown4Shorts[2] = 35899
         colbody.unknown4Shorts[3] = 16336
-        colbody.layerCopy = ob_olayer
+        colbody.layerCopy = layer
         colbody.unknown7Shorts[1] = 21280
         colbody.unknown7Shorts[2] = 4581
         colbody.unknown7Shorts[3] = 62977
@@ -2101,27 +2096,103 @@ def export_collision(ob, parent_block):
         colbody.maxLinearVelocity = 250.0
         colbody.maxAngularVelocity = 31.4159
         colbody.penetrationDepth = 0.15
-        colbody.motionSystem = ob_mosys
+        colbody.motionSystem = motionsys
         colbody.unknownByte1 = 1
         colbody.unknownByte2 = 1
         colbody.qualityType = NifFormat.MotionQuality.MO_QUAL_FIXED
         colbody.unknownInt6 = 3216641024
         colbody.unknownInt7 = 3249467941
         colbody.unknownInt8 = 83276283
+    else:
+        colbody = parent_block.collisionObject.body
 
+    if coll_ispacked:
+        export_collision_packed(ob, colbody, layer, material)
+    else:
+        export_collision_list(ob, colbody, layer, material)
+
+
+
+def export_collision_packed(ob, colbody, layer, material):
+    """Add object ob as packed collision object to collision body colbody.
+    If parent_block hasn't any collisions yet, a new packed list is created.
+    If the current collision system is not a packed list of collisions (bhkPackedNiTriStripsShape), then
+    a ValueError is raised."""
+
+    if not colbody.shape:
+        colshape = create_block("bhkPackedNiTriStripsShape")
+        colbody.shape = colshape
+        colshape.unknownFloats[2] = 0.1
+        colshape.unknownFloats[4] = 1.0
+        colshape.unknownFloats[5] = 1.0
+        colshape.unknownFloats[6] = 1.0
+        colshape.unknownFloats[8] = 0.1
+        colshape.scale = 1.0
+        colshape.unknownFloats2[0] = 1.0
+        colshape.unknownFloats2[1] = 1.0
+    else:
+        colshape = colbody.shape
+        if not isinstance(colshape, NifFormat.bhkPackedNiTriStripsShape):
+            raise ValueError('not a packed list of collisions')
+
+    mesh = ob.data
+    transform = ob.getMatrix('localspace').copy()
+    rotation = transform.rotationPart()
+
+    vertices = [v.co * transform for v in mesh.verts]
+    triangles = []
+    normals = []
+    for f in mesh.faces:
+        if len(f.v) < 3: continue # ignore degenerate faces
+        triangles.append([f.v[i].index for i in [0,1,2]])
+        normals.append(Blender.Mathutils.Vector(f.no) * rotation) # f.no is a Python list, not a vector
+        if len(f.v) == 4:
+            triangles.append([f.v[i].index for i in [0,2,3]])
+            normals.append(Blender.Mathutils.Vector(f.no) * rotation)
+
+    colshape.addShape(triangles, normals, vertices, layer, material)
+
+
+def export_collision_list(ob, colbody, layer, material):
+    """Add collision object ob to the list of collision objects of colbody.
+    If colbody hasn't any collisions yet, a new list is created.
+    If the current collision system is not a list of collisions (bhkListShape), then
+    a ValueError is raised."""
+
+    # if no collisions have been exported yet to this parent_block
+    # then create new collision tree on parent_block
+    # bhkCollisionObject -> bhkRigidBodyT -> bhkListShape
+    # (this works in all cases, can be simplified just before
+    # the file is written)
+    if not colbody.shape:
         colshape = create_block("bhkListShape")
         colbody.shape = colshape
-        colshape.material = ob_havmat
+        colshape.material = 0 # real material is defined elsewhere
     else:
-        colobj = parent_block.collisionObject
-        colbody = colobj.body
         colshape = colbody.shape
+        if not isinstance(colshape, NifFormat.bhkListShape):
+            raise ValueError('not a list of collisions')
+
+    colshape.addShape(export_collision_object(ob, layer, material))
+
+def export_collision_object(ob, layer, material):
+    """Export object ob as box, sphere, capsule, or convex hull.
+    Note: polyheder is handled by export_collision_packed."""
+
+    # find bounding box data
+    verts = ob.data.verts
+    minx = min([v[0] for v in verts])
+    miny = min([v[1] for v in verts])
+    minz = min([v[2] for v in verts])
+    maxx = max([v[0] for v in verts])
+    maxy = max([v[1] for v in verts])
+    maxz = max([v[2] for v in verts])
+
 
     if ob.rbShapeBoundType in [ Blender.Object.RBShapes['BOX'], Blender.Object.RBShapes['SPHERE'] ]:
         # note: collision settings are taken from lowerclasschair01.nif
         coltf = create_block("bhkConvexTransformShape")
-        colshape.addShape(coltf)
-        coltf.material = ob_havmat
+        coltf.material = material
         coltf.unknownFloat1 = 0.1
         coltf.unknown8Bytes[0] = 96
         coltf.unknown8Bytes[1] = 120
@@ -2151,7 +2222,7 @@ def export_collision(ob, parent_block):
         if ob.rbShapeBoundType == Blender.Object.RBShapes['BOX']:
             colbox = create_block("bhkBoxShape")
             coltf.shape = colbox
-            colbox.material = ob_havmat
+            colbox.material = material
             colbox.radius = 0.1
             colbox.unknownString.value[0] = '\x6b'
             colbox.unknownString.value[1] = '\xee'
@@ -2169,15 +2240,16 @@ def export_collision(ob, parent_block):
         elif ob.rbShapeBoundType == Blender.Object.RBShapes['SPHERE']:
             colsphere = create_block("bhkSphereShape")
             coltf.shape = colsphere
-            colsphere.material = ob_havmat
+            colsphere.material = material
             # take average radius and
             # fix for havok coordinate system (6 * 7 = 42)
             colsphere.radius = (maxx + maxy + maxz - minx - miny -minz) / 42.0
 
+        return coltf
+
     elif ob.rbShapeBoundType == Blender.Object.RBShapes['CYLINDER']:
         colcaps = create_block("bhkCapsuleShape")
-        colshape.addShape(colcaps)
-        colcaps.material = ob_havmat
+        colcaps.material = material
         # take average radius
         colcaps.radius = (maxx + maxy - minx - miny) / 4.0
         colcaps.radius1 = colcaps.radius
@@ -2198,6 +2270,8 @@ def export_collision(ob, parent_block):
         colcaps.radius1 /= 7.0
         colcaps.radius2 /= 7.0
 
+        return colcaps
+
     elif ob.rbShapeBoundType == 5: # convex hull polytope; not in Python API
         mesh = ob.data
         transform = ob.getMatrix('localspace').copy()
@@ -2212,8 +2286,7 @@ def export_collision(ob, parent_block):
             raise NIFExportError('ERROR%t|Too many faces/vertices. Decimate your mesh and try again.')
         
         colhull = create_block("bhkConvexVerticesShape")
-        colshape.addShape(colhull)
-        colhull.material = ob_havmat
+        colhull.material = material
         colhull.radius = 0.1
         # note: unknown 6 floats are usually all 0
         colhull.numVertices = len(vertlist)
@@ -2232,45 +2305,19 @@ def export_collision(ob, parent_block):
             nhull.z = n[2]
             nhull.w = d / 7.0
 
+        return colhull
+
     else:
+        raise NIFExportError('cannot export collision type %s to collision shape list'%ob.rbShapeBoundType)
+
+        ### OLD CODE FOLLOWS ###
+
         # note: collision settings are taken from arstatue01.nif
-        if ob.rbShapeBoundType != Blender.Object.RBShapes['POLYHEDERON']:
-            print 'WARNING: collision shape of type %s is not supported; exporting as polyhedron'%ob.rbShapeBoundType
-
-        mesh = ob.data
-        transform = ob.getMatrix('localspace').copy()
-        rotation = transform.rotationPart()
-
-        vertlist = [v.co * transform for v in mesh.verts]
-        trilist = []
-        fnormlist = []
-        for f in mesh.faces:
-            if len(f.v) < 3: continue # ignore degenerate faces
-            trilist.append([f.v[i].index for i in [0,1,2]])
-            fnormlist.append(Blender.Mathutils.Vector(f.no) * rotation) # f.no is a Python list, not a vector
-            if len(f.v) == 4:
-                trilist.append([f.v[i].index for i in [0,2,3]])
-                fnormlist.append(Blender.Mathutils.Vector(f.no) * rotation)
 
         if len(trilist) > 65535 or len(vertlist) > 65535:
             raise NIFExportError('ERROR%t|Too many faces/vertices. Decimate your mesh and try again.')
 
         # store as packed tristrips shape
-        colstrips = create_block("bhkPackedNiTriStripsShape")
-        colshape.addShape(colstrips)
-        colstrips.numSubShapes = 1
-        colstrips.subShapes.updateSize()
-        colstrips.subShapes[0].layer = ob_olayer
-        colstrips.subShapes[0].numVertices = len(vertlist)
-        colstrips.subShapes[0].material = ob_havmat
-        colstrips.unknownFloats[2] = 0.1
-        colstrips.unknownFloats[4] = 1.0
-        colstrips.unknownFloats[5] = 1.0
-        colstrips.unknownFloats[6] = 1.0
-        colstrips.unknownFloats[8] = 0.1
-        colstrips.scale = 1.0
-        colstrips.unknownFloats2[0] = 1.0
-        colstrips.unknownFloats2[1] = 1.0
         strips = create_block("hkPackedNiTriStripsData")
         colstrips.data = strips
         strips.numTriangles = len(trilist)
@@ -2289,13 +2336,12 @@ def export_collision(ob, parent_block):
             vstrip.y = v[1] / 7.0
             vstrip.z = v[2] / 7.0
 
-        return
+        return strips
 
         # DISABLED:
         # alternative code for unpacked collision strip
         normlist = [v.no * rotation for v in mesh.verts]
         colstrips = create_block("bhkNiTriStripsShape")
-        colshape.addShape(colstrips)
         colstrips.material =  ob_havmat
         colstrips.unknownFloat1 = 0.1
         colstrips.unknownInt1 = 4898400
