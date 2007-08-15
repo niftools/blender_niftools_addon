@@ -900,10 +900,10 @@ def export_sourcetexture(texture, filename = None):
             tfn = filename
         else:
             tfn = texture.image.getFilename()
-        if ( STRIP_TEXPATH == 1 ):
+        if STRIP_TEXPATH:
             # strip texture file path (original morrowind style)
             srctex.fileName = Blender.sys.basename(tfn)
-        elif ( STRIP_TEXPATH == 0 ):
+        else:
             # strip the data files prefix from the texture's file name
             tfn = tfn.lower()
             idx = tfn.find( "textures" )
