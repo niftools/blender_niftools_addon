@@ -365,6 +365,10 @@ def import_main(root_block, version):
     # store original names for re-export
     if len(_NAMES) > 0: fb_fullnames()
     
+    # parent selected meshes to imported skeleton
+    if _CONFIG["IMPORT_SKELETON"]:
+        b_obj.makeParentDeform(Blender.Object.GetSelected())
+
     """ #no good, can't get bones by name
     # import all animation data except morphs and text keys
     if _CONFIG['IMPORT_ANIMATION']:
@@ -388,10 +392,7 @@ def import_main(root_block, version):
         # sorting by frame
         for keyFrame in keyFrameList:
             print keyFrame
-    """
-            
-
-        
+    """ 
     _SCENE.update(1) # do a full update to make sure all transformations get applied
     #fit_view()
     #_SCENE.getCurrentCamera()
