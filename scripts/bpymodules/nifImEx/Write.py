@@ -367,7 +367,17 @@ and turn off envelopes."""%ob.getName()
             # remove root_block from _NIF_BLOCKS
             _NIF_BLOCKS = [b for b in _NIF_BLOCKS if b != root_block] 
             # set new root block
-            root_block = root_block.children[0]
+            old_root_block = root_block
+            root_block = old_root_block.children[0]
+            # copy extra data and properties
+            for b in old_root_block.getExtraDatas():
+                root_block.addExtraData(b)
+            for b in old_root_block.getControllers():
+                root_block.addController(b)
+            for b in old_root_block.properties:
+                root_block.addProperty(b)
+            for b in old_root_block.effects:
+                root_block.addEffect(b)
         else:
             root_block.name = root_name
  
