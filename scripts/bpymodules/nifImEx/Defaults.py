@@ -52,3 +52,5 @@ _CFG_IMPORT_APPLYSKINDEFORM = True
 
 _CFG_EXPORT_BHKLISTSHAPE = False
 
+_CFG_PROFILE = '' # name of file where Python profiler dumps the profile; set to empty string to turn off profiling
+

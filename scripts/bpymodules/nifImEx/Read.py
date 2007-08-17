@@ -45,7 +45,6 @@ loadConfig()
 # Global variables.
 #
 
-
 # Sets the amount of generated debug output
 _VERBOSITY = _CONFIG["VERBOSITY"]
 
@@ -164,7 +163,18 @@ def buttonEvent(evt):
         print "todo: add checks for file input box"
         exitGUI() #closes the GUI
         nifFilePath = sys.sep.join((_CONFIG["NIF_IMPORT_PATH"], _CONFIG["NIF_IMPORT_FILE"]))
-        import_nif(nifFilePath)
+        if not _CONFIG["PROFILE"]:
+            import_nif(nifFilePath)
+        else:
+            import cProfile
+            import pstats
+            prof = cProfile.Profile()
+            prof.runctx('import_nif(nifFilePath)', locals(), globals())
+            prof.dump_stats(_CONFIG["PROFILE"])
+            stats = pstats.Stats(_CONFIG["PROFILE"])
+            stats.strip_dirs()
+            stats.sort_stats('cumulative')
+            stats.print_stats()
     elif evName == "CANCEL":
         # cancel
         exitGUI()
@@ -1549,6 +1559,29 @@ def fb_fullnames():
 # scan the root block for animation data
 def store_animation_data(rootBlock):
     global _ANIMATION_DATA, _FPS, _SCENE
+    # find all key times
+    keyTimes = []
+    for kfd in rootBlock.findAll(block_type = NifFormat.NiKeyframeData):
+        keyTimes.extend([key.time for key in kfd.translations.keys])
+        keyTimes.extend([key.time for key in kfd.scales.keys])
+        keyTimes.extend([key.time for key in kfd.quaternionKeys])
+        keyTimes.extend([key.time for key in kfd.xyzRotations[0].keys])
+        keyTimes.extend([key.time for key in kfd.xyzRotations[1].keys])
+        keyTimes.extend([key.time for key in kfd.xyzRotations[2].keys])
+    # calculate FPS
+    if not _FPS:
+        _FPS = 30
+        lowestDiff = sum([abs(int(time*_FPS)-(time*_FPS)) for time in keyTimes])
+        # for fps in xrange(1,120): #disabled, used for testing
+        for testFps in [20, 25, 35]:
+            diff = sum([abs(int(time*testFps)-(time*testFps)) for time in keyTimes])
+            if diff < lowestDiff:
+                lowestDiff = diff
+                _FPS = testFps
+        _SCENE.getRenderingContext().fps = _FPS
+
+    return # for now, code below slows down importer needlessly
+
     niBlockList = [block for block in rootBlock.tree() if isinstance(block, NifFormat.NiAVObject)]
     for niBlock in niBlockList:
         kfc = find_controller(niBlock, NifFormat.NiKeyframeController)
