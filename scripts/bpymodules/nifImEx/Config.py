@@ -1,5 +1,5 @@
-__version__ = "2.1.1"
-__requiredpyffiversion__ = "0.4.1"
+__version__ = "2.1.2"
+__requiredpyffiversion__ = "0.4.3"
 
 import Blender
 
