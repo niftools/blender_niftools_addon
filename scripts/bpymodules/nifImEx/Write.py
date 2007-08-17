@@ -71,13 +71,6 @@ ADD_BONE_NUB = False
 _IDENTITY44 = NifFormat.Matrix44()
 _IDENTITY44.setIdentity()
 
-# All UI elements are kept in this dictionary to make sure they never go out of scope
-_GUI_ELEMENTS = {}
-# To avoid confusion with event ID handling I register them all in a list
-_GUI_EVENTS = []
-
-_LOGO_PATH = sys.sep.join((Blender.Get('scriptsdir'),"bpymodules","nifImEx","niftools_logo.png"))
-_LOGO_IMAGE = Blender.Image.Load(_LOGO_PATH)
 _SCRIPT_VERSION = Config.__version__
 
 

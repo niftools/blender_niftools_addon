@@ -337,7 +337,18 @@ def exitGUI():
     if _BACK_TARGET == "Import":
         Read.openGUI()
     elif _BACK_TARGET == "Export":
-        Write.export_nif(_CONFIG["NIF_EXPORT_FILE"])
+        if not _CONFIG["PROFILE"]:
+            Write.export_nif(_CONFIG["NIF_EXPORT_FILE"])
+        else:
+            import cProfile
+            import pstats
+            prof = cProfile.Profile()
+            prof.runctx('Write.export_nif(_CONFIG["NIF_EXPORT_FILE"])', locals(), globals())
+            prof.dump_stats(_CONFIG["PROFILE"])
+            stats = pstats.Stats(_CONFIG["PROFILE"])
+            stats.strip_dirs()
+            stats.sort_stats('cumulative')
+            stats.print_stats()
 
 def save():
     """
