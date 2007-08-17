@@ -154,7 +154,7 @@ Function .onInit
   strCmp $0 "Admin" +3
   
     ; if there is not a match, print message and return
-    messageBox MB_OK "You require administrator privileges to install the Blender NIF Scripts successfully. Make sure Blender, Python, and PyFFI have been installed as administrator as well."
+    messageBox MB_OK "You require administrator privileges to install the Blender NIF Scripts successfully."
     Abort ; quit installer
    
 
