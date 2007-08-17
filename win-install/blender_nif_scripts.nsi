@@ -225,7 +225,7 @@ pyffi_check_end:
 
   ; check PyFFI version
   StrCpy $R0 $PYFFI "" 17 ; strip "Python 2.5 PyFFI-"
-  ${VersionCompare} "$R0" "0.4.1" $R1
+  ${VersionCompare} "$R0" "0.4.3" $R1
   IntCmp $R1 0 pyffi_vercheck_end ; installed version is as indicated
   IntCmp $R1 1 pyffi_vercheck_end ; installed version is more recent than as indicated
 
