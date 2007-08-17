@@ -1561,7 +1561,7 @@ def store_animation_data(rootBlock):
     global _ANIMATION_DATA, _FPS, _SCENE
     # find all key times
     keyTimes = []
-    for kfd in rootBlock.findAll(block_type = NifFormat.NiKeyframeData):
+    for kfd in rootBlock.tree(block_type = NifFormat.NiKeyframeData):
         keyTimes.extend([key.time for key in kfd.translations.keys])
         keyTimes.extend([key.time for key in kfd.scales.keys])
         keyTimes.extend([key.time for key in kfd.quaternionKeys])
