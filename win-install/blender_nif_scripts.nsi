@@ -143,6 +143,21 @@ Function openLinkNewWindow
 FunctionEnd
 
 Function .onInit
+  ; check if user is admin
+  ; call userInfo plugin to get user info.  The plugin puts the result in the stack
+  userInfo::getAccountType
+
+  ; pop the result from the stack into $0
+  pop $0
+
+  ; compare the result with the string "Admin" to see if the user is admin. If match, jump 3 lines down.
+  strCmp $0 "Admin" +3
+  
+    ; if there is not a match, print message and return
+    messageBox MB_OK "You require administrator privileges to install the Blender NIF Scripts successfully. Make sure Blender, Python, and PyFFI have been installed as administrator as well."
+    Abort ; quit installer
+   
+
   ; check if Blender is installed
 
   ClearErrors
