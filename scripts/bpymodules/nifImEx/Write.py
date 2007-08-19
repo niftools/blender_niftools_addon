@@ -2316,23 +2316,32 @@ def export_collision_object(ob, layer, material):
             scale = - (-scale)**(1.0/3)
         else:
             scale = scale**(1.0/3)
-        rotation *= 1.0/scale
+        rotation *= 1.0/scale # /= not supported in Python API
 
-        vertlist = [v.co * transform for v in mesh.verts]
-        fnormlist = [Blender.Mathutils.Vector(f.no) * rotation for f in mesh.faces]
+        # calculate vertices, normals, and distances
+        vertlist = [v.co for v in mesh.verts]
+        fnormlist = [Blender.Mathutils.Vector(f.no) for f in mesh.faces]
+        meshcenter = reduce(lambda x,y:x+y, [v.co for v in mesh.verts]) / len(mesh.verts)
+        fdistlist = [Blender.Mathutils.DotVecs(meshcenter - f.v[0].co, Blender.Mathutils.Vector(f.no)) for f in mesh.faces]
+
+        # apply transformation
+        vertlist = [v * transform for v in vertlist]
+        fnormlist = [n * rotation for n in fnormlist]
+        fdistlist = [d * scale for d in fdistlist]
+
         # remove duplicates through dictionary
         vertdict = {}
         for i, v in enumerate(vertlist):
             vertdict[(int(v[0]*200),int(v[1]*200),int(v[2]*200))] = i
-        fnormdict = {}
-        for i, n in enumerate(fnormlist):
-            fnormdict[(int(n[0]*200),int(n[1]*200),int(n[2]*200))] = i
+        fdict = {}
+        for i, (n, d) in enumerate(zip(fnormlist, fdistlist)):
+            fdict[(int(n[0]*200),int(n[1]*200),int(n[2]*200),int(d*200))] = i
         # sort vertices and normals
-        vertlist = [ vertlist[vertdict[hsh]] for hsh in sorted(vertdict.keys()) ]
-        fnormlist = [ fnormlist[fnormdict[hsh]] for hsh in sorted(fnormdict.keys()) ]
-        for n in fnormlist: print n
-        meshcenter = reduce(lambda x,y:x+y, [v.co for v in mesh.verts]) / len(mesh.verts)
-        fdistlist = [Blender.Mathutils.DotVecs(meshcenter - f.v[0].co, Blender.Mathutils.Vector(f.no)) for f in mesh.faces]
+        vertkeys = sorted(vertdict.keys())
+        fkeys = sorted(fdict.keys())
+        vertlist = [ vertlist[vertdict[hsh]] for hsh in vertkeys ]
+        fnormlist = [ fnormlist[fdict[hsh]] for hsh in fkeys ]
+        fdistlist = [ fdistlist[fdict[hsh]] for hsh in fkeys ]
 
         if len(fnormlist) > 65535 or len(vertlist) > 65535:
             raise NIFExportError('ERROR%t|Too many faces/vertices. Decimate your mesh and try again.')
