@@ -2321,8 +2321,7 @@ def export_collision_object(ob, layer, material):
         # calculate vertices, normals, and distances
         vertlist = [v.co for v in mesh.verts]
         fnormlist = [Blender.Mathutils.Vector(f.no) for f in mesh.faces]
-        meshcenter = reduce(lambda x,y:x+y, [v.co for v in mesh.verts]) / len(mesh.verts)
-        fdistlist = [Blender.Mathutils.DotVecs(meshcenter - f.v[0].co, Blender.Mathutils.Vector(f.no)) for f in mesh.faces]
+        fdistlist = [Blender.Mathutils.DotVecs(-f.v[0].co, Blender.Mathutils.Vector(f.no)) for f in mesh.faces]
 
         # apply transformation
         vertlist = [v * transform for v in vertlist]
