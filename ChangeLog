@@ -1,3 +1,10 @@
+Version 2.1.3 (Aug 19, 2007)
+* Installer: also check in HKCU for registry keys of Python and PyFFI (fixes
+rare installation issue, see bug #1775859 on the SF tracker)
+* new script for reducing number of influences per vertex, running this script
+before export helps if the skin partitioning algorithm complains about losing
+weights
+
 Version 2.1.2 (Aug 17, 2007)
 * Installer: make sure user is admin ("fixes" the Vista bug)
 * Import: parent selected objects to armature when importing skeleton only
