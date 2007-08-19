@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <title>The Blender NIF Scripts v2.1.2</title>
+  <title>The Blender NIF Scripts v2.1.3</title>
   <meta http-equiv="Content-Type"
  content="text/html; charset=ISO-8859-1" />
   <style type="text/css">
@@ -19,14 +19,13 @@ a:hover.nav { color: #FF0000; background: transparent; }
   </style>
 </head>
 <body>
-<h1>The Blender NIF Scripts v2.1.2</h1>
+<h1>The Blender NIF Scripts v2.1.3</h1>
 <h2>Release Notes</h2>
 Although we have done our best to squash all bugs we could find, it is unlikely that we have found them all. If you find bugs, PLEASE REPORT THEM ON THE SOURCEFORGE TRACKER.
 <h3>Highlights of this Release</h3>
 <ul>
-<li>Installer complains if you're not admin.</li>
-<li>Importing skeleton only will parent selected objects to it.</li>
-<li>Small bugfixes.</li>
+<li>In rare cases the installer would not work even if Python and PyFFI were correctly installed. This should now be fixed.</li>
+<li>Added a script (under Scripts-&gt;Mesh) to squash vertex weights; use this if skin partitioning complains about losing weight and you observe gaps in your model. The cut-off value should be chosed just a bit higher than the number reported by the warning.</li>
 </ul>
 <h2>Support</h2>
 <ul>
@@ -107,12 +106,13 @@ insert key, and select Rot, Loc, or LocRot) to compose your animation</li>
 manual for more details)
     <ul>
       <li>create seams (3D View, Edit Mode, select seam
-vertices, CTRL-E)</li>
+vertices, CTRL-E) where you want the UV seams (as you cannot project
+for instance a sphere onto a plane, usually you'll need at least one seam)</li>
       <li>in the 3D View, UV Face Select Mode, select all
-faces, press U-&gt;LSCM </li>
+faces, press U-&gt;Unwrap</li>
       <li>(optional) if you want to create your own texture: in
 the UV/Image Editor, UVs-&gt;Save UV Face Layout, and process the
-saved texture with your favorite 2D paint program </li>
+saved texture with your favorite 2D paint program</li>
     </ul>
   </li>
   <li>add materials to your meshes, and add one texture to each
@@ -127,11 +127,8 @@ material, with the following settings:
       <li>set texture type to 'Image' </li>
       <li>either load a texture from 'c:\src\morrowind\textures',
 or put your custom texture in the 'C:\Program Files\Morrowind\Data
-Files\Textures' folder, and load it from there. Note that Blender does
-not read .dds files.</li>
-      <li>although this is not recommended, textures can be
-embedded in your exported NIF file by toggling the "packed" button next to the "Reload" button in
-the Image tab</li>
+Files\Textures' folder, and load it from there. The official Blender release
+does not yet read .dds files, but any recent SVN build will.</li>
     </ul>
   </li>
 <!--
