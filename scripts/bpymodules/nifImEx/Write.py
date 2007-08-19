@@ -2319,14 +2319,9 @@ def export_collision_object(ob, layer, material):
         rotation *= 1.0/scale # /= not supported in Python API
 
         # calculate vertices, normals, and distances
-        vertlist = [v.co for v in mesh.verts]
-        fnormlist = [Blender.Mathutils.Vector(f.no) for f in mesh.faces]
-        fdistlist = [Blender.Mathutils.DotVecs(-f.v[0].co, Blender.Mathutils.Vector(f.no)) for f in mesh.faces]
-
-        # apply transformation
-        vertlist = [v * transform for v in vertlist]
-        fnormlist = [n * rotation for n in fnormlist]
-        fdistlist = [d * scale for d in fdistlist]
+        vertlist = [v.co * transform for v in mesh.verts]
+        fnormlist = [Blender.Mathutils.Vector(f.no) * rotation for f in mesh.faces]
+        fdistlist = [Blender.Mathutils.DotVecs(-f.v[0].co * transform, Blender.Mathutils.Vector(f.no) * rotation) for f in mesh.faces]
 
         # remove duplicates through dictionary
         vertdict = {}
@@ -2348,6 +2343,8 @@ def export_collision_object(ob, layer, material):
         colhull = create_block("bhkConvexVerticesShape")
         colhull.material = material
         colhull.radius = 0.1
+        colhull.unknown6Floats[2] = -0.0 # enables arrow detection
+        colhull.unknown6Floats[5] = -0.0 # enables arrow detection
         # note: unknown 6 floats are usually all 0
         colhull.numVertices = len(vertlist)
         colhull.vertices.updateSize()
