@@ -199,6 +199,8 @@ blender_scripts_end:
   ClearErrors
   ReadRegStr $PYTHONPATH HKLM SOFTWARE\Python\PythonCore\2.5\InstallPath ""
   IfErrors 0 python_check_end
+  ReadRegStr $PYTHONPATH HKCU SOFTWARE\Python\PythonCore\2.5\InstallPath ""
+  IfErrors 0 python_check_end
 
      ; no key, that means that Python 2.5 is not installed
      MessageBox MB_OK "You will need to download Python 2.5 and PyFFI in order to run the Blender NIF Scripts. Pressing OK will take you to the Python and PyFFI download pages. Please download and run the Python windows installer, then download and run the PyFFI windows installer. When you are done, rerun the Blender NIF Scripts installer."
@@ -213,6 +215,8 @@ python_check_end:
   ; check if PyFFI is installed (the bdist_wininst installer only creates an uninstaller registry key, so that's how we check)
   ClearErrors
   ReadRegStr $PYFFI HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\PyFFI-py2.5 "DisplayName"
+  IfErrors 0 pyffi_check_end
+  ReadRegStr $PYFFI HKCU SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\PyFFI-py2.5 "DisplayName"
   IfErrors 0 pyffi_check_end
 
     ; no key, that means that PyFFI is not installed
