@@ -2311,9 +2311,26 @@ def export_collision_object(ob, layer, material):
         mesh = ob.data
         transform = ob.getMatrix('localspace').copy()
         rotation = transform.rotationPart()
+        scale = rotation.determinant()
+        if scale < 0:
+            scale = - (-scale)**(1.0/3)
+        else:
+            scale = scale**(1.0/3)
+        rotation *= 1.0/scale
 
         vertlist = [v.co * transform for v in mesh.verts]
         fnormlist = [Blender.Mathutils.Vector(f.no) * rotation for f in mesh.faces]
+        # remove duplicates through dictionary
+        vertdict = {}
+        for i, v in enumerate(vertlist):
+            vertdict[(int(v[0]*200),int(v[1]*200),int(v[2]*200))] = i
+        fnormdict = {}
+        for i, n in enumerate(fnormlist):
+            fnormdict[(int(n[0]*200),int(n[1]*200),int(n[2]*200))] = i
+        # sort vertices and normals
+        vertlist = [ vertlist[vertdict[hsh]] for hsh in sorted(vertdict.keys()) ]
+        fnormlist = [ fnormlist[fnormdict[hsh]] for hsh in sorted(fnormdict.keys()) ]
+        for n in fnormlist: print n
         meshcenter = reduce(lambda x,y:x+y, [v.co for v in mesh.verts]) / len(mesh.verts)
         fdistlist = [Blender.Mathutils.DotVecs(meshcenter - f.v[0].co, Blender.Mathutils.Vector(f.no)) for f in mesh.faces]
 
@@ -2333,7 +2350,6 @@ def export_collision_object(ob, layer, material):
             # w component is 0
         colhull.numNormals = len(fnormlist)
         colhull.normals.updateSize()
-        # TODO figure out proper order of the normals (affects arrow detection)
         for nhull, n, d in zip(colhull.normals, fnormlist, fdistlist):
             nhull.x = n[0]
             nhull.y = n[1]
