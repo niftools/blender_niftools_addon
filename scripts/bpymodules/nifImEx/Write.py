@@ -219,7 +219,7 @@ and turn off envelopes."""%ob.getName()
         # strip extension from filename
         filedir = Blender.sys.dirname(filename)
         filebase, fileext = Blender.sys.splitext(Blender.sys.basename(filename))
-        if _CONFIG["EXPORT_VERSION"] == 'Oblivion':
+        if _CONFIG["EXPORT_VERSION"] in ['Oblivion', 'Civilization IV']:
             root_name = 'Scene Root'
         else:
             root_name = filebase
@@ -328,6 +328,18 @@ and turn off envelopes."""%ob.getName()
             #upb.name = 'UPB'
             #upb.stringData = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
             #root_block.addExtraData(upb)
+
+        # add vertex color and zbuffer properties for civ4
+        if _CONFIG["EXPORT_VERSION"] == 'Civilization IV':
+            vcol = create_block("NiVertexColorProperty")
+            vcol.flags = 1
+            vcol.vertexMode = 0
+            vcol.lightingMode = 1
+            zbuf = create_block("NiZBufferProperty")
+            zbuf.flags = 15
+            zbuf.function = 3
+            root_block.addProperty(vcol)
+            root_block.addProperty(zbuf)
 
         if _CONFIG["EXPORT_FLATTENSKIN"]:
             # (warning: trouble if armatures parent other armatures or
