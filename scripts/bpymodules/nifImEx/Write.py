@@ -366,6 +366,18 @@ and turn off envelopes."""%ob.getName()
             msg("Applying scale correction %f"%_EXPORT_SCALE_CORRECTION)
             root_block.applyScale(_EXPORT_SCALE_CORRECTION)
 
+        # generate mopps (must be done after applying scale!)
+        if _CONFIG["EXPORT_VERSION"] == 'Oblivion':
+            for block in _NIF_BLOCKS:
+                if isinstance(block, NifFormat.bhkMoppBvTreeShape):
+                   msg("Generating mopp...")
+                   block.updateOriginScale()
+                   block.updateTree()
+                   print "=== DEBUG: MOPP TREE ==="
+                   block.printTree()
+                   print "=== END OF MOPP TREE ==="
+
+
         # delete original scene root if a scene root object was already defined
         if (root_block.numChildren == 1) and (root_block.children[0].name == 'Scene Root'):
             msg("Making 'Scene Root' the root block")
@@ -2158,8 +2170,22 @@ def export_collision_packed(ob, colbody, layer, material):
     a ValueError is raised."""
 
     if not colbody.shape:
+        colmopp = create_block("bhkMoppBvTreeShape")
+        colbody.shape = colmopp
+        colmopp.material = material
+        colmopp.unknown8Bytes[0] = 160
+        colmopp.unknown8Bytes[1] = 13
+        colmopp.unknown8Bytes[2] = 75
+        colmopp.unknown8Bytes[3] = 1
+        colmopp.unknown8Bytes[4] = 192
+        colmopp.unknown8Bytes[5] = 207
+        colmopp.unknown8Bytes[6] = 144
+        colmopp.unknown8Bytes[7] = 11
+        colmopp.unknownFloat = 1.0
+        # the mopp origin, scale, and data are written later
+
         colshape = create_block("bhkPackedNiTriStripsShape")
-        colbody.shape = colshape
+        colmopp.shape = colshape
         colshape.unknownFloats[2] = 0.1
         colshape.unknownFloats[4] = 1.0
         colshape.unknownFloats[5] = 1.0
@@ -2169,7 +2195,8 @@ def export_collision_packed(ob, colbody, layer, material):
         colshape.unknownFloats2[0] = 1.0
         colshape.unknownFloats2[1] = 1.0
     else:
-        colshape = colbody.shape
+        colmopp = colbody.shape
+        colshape = colmopp.shape
         if not isinstance(colshape, NifFormat.bhkPackedNiTriStripsShape):
             raise ValueError('not a packed list of collisions')
 
