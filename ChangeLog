@@ -1,3 +1,6 @@
+Version 2.1.5 (***)
+* Export: mopps for packed shapes
+
 Version 2.1.4 (Aug 29, 2007)
 * Export: fixed more bugs in bhkConvexVerticesShape
 * Export: NiVertexColorProperty and NiZBufferProperty blocks for CivIV

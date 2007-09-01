@@ -374,7 +374,7 @@ and turn off envelopes."""%ob.getName()
                    block.updateOriginScale()
                    block.updateTree()
                    print "=== DEBUG: MOPP TREE ==="
-                   block.printTree()
+                   block.parseTree(verbose = True)
                    print "=== END OF MOPP TREE ==="
 
 
