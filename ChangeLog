@@ -1,5 +1,10 @@
-Version 2.1.5 (***)
+Version 2.1.5 (Sep 2, 2007)
 * Export: mopps for packed shapes
+* Export: always strip texture paths (except for Morrowind and Oblivion)
+* Import: shared texture folder detection for CivIV
+* Import: assume stub has alpha channel if texture was not found and alpha
+property is present; this will ensure that NiAlphaProperty is written back on
+export
 
 Version 2.1.4 (Aug 29, 2007)
 * Export: fixed more bugs in bhkConvexVerticesShape
