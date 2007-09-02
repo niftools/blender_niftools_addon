@@ -24,7 +24,12 @@ a:hover.nav { color: #FF0000; background: transparent; }
 Although we have done our best to squash all bugs we could find, it is unlikely that we have found them all. If you find bugs, PLEASE REPORT THEM ON THE SOURCEFORGE TRACKER.
 <h3>Highlights of this Release</h3>
 <ul>
-<li>export simple mopps for packed collision shapes: a bhkMoppBvTreeShape is inserted between the body and the packed collision shape, the resulting collisions may reduce the frame rate hit for complex collision meshes</li>
+<li>for packed collisions (i.e. the 'static triangle mesh' collision object in Blender) a bhkMoppBvTreeShape with a simple mopp is inserted between the body and the packed collision shape, and as a result:
+<ul>
+<li>reduced frame rate hit for complex collision meshes</li>
+<li>the walking sound can be set through the mopp material setting</li>
+</ul>
+</li>
 <li>export now always strips texture paths, except for Morrowind and Oblivion; this fixes a rare issue with Civilization IV texture paths</li>
 <li>import tries to autodetect the shared texture folder for Civilization IV</li>
 <li>import now assumes that an alpha channel is present if the texture was not found and an alpha property is present; this ensures that NiAlphaProperty is written back on export if the texture was not found</li>

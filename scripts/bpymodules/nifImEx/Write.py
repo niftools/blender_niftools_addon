@@ -373,9 +373,9 @@ and turn off envelopes."""%ob.getName()
                    msg("Generating mopp...")
                    block.updateOriginScale()
                    block.updateMopp()
-                   print "=== DEBUG: MOPP TREE ==="
-                   block.parseMopp(verbose = True)
-                   print "=== END OF MOPP TREE ==="
+                   #print "=== DEBUG: MOPP TREE ==="
+                   #block.parseMopp(verbose = True)
+                   #print "=== END OF MOPP TREE ==="
 
 
         # delete original scene root if a scene root object was already defined
@@ -2170,22 +2170,26 @@ def export_collision_packed(ob, colbody, layer, material):
     a ValueError is raised."""
 
     if not colbody.shape:
-        colmopp = create_block("bhkMoppBvTreeShape")
-        colbody.shape = colmopp
-        colmopp.material = material
-        colmopp.unknown8Bytes[0] = 160
-        colmopp.unknown8Bytes[1] = 13
-        colmopp.unknown8Bytes[2] = 75
-        colmopp.unknown8Bytes[3] = 1
-        colmopp.unknown8Bytes[4] = 192
-        colmopp.unknown8Bytes[5] = 207
-        colmopp.unknown8Bytes[6] = 144
-        colmopp.unknown8Bytes[7] = 11
-        colmopp.unknownFloat = 1.0
-        # the mopp origin, scale, and data are written later
-
         colshape = create_block("bhkPackedNiTriStripsShape")
-        colmopp.shape = colshape
+
+        if _CONFIG["EXPORT_MOPP"]:
+            colmopp = create_block("bhkMoppBvTreeShape")
+            colbody.shape = colmopp
+            colmopp.material = material
+            colmopp.unknown8Bytes[0] = 160
+            colmopp.unknown8Bytes[1] = 13
+            colmopp.unknown8Bytes[2] = 75
+            colmopp.unknown8Bytes[3] = 1
+            colmopp.unknown8Bytes[4] = 192
+            colmopp.unknown8Bytes[5] = 207
+            colmopp.unknown8Bytes[6] = 144
+            colmopp.unknown8Bytes[7] = 11
+            colmopp.unknownFloat = 1.0
+            # the mopp origin, scale, and data are written later
+            colmopp.shape = colshape
+        else:
+            colbody.shape = colshape
+
         colshape.unknownFloats[2] = 0.1
         colshape.unknownFloats[4] = 1.0
         colshape.unknownFloats[5] = 1.0

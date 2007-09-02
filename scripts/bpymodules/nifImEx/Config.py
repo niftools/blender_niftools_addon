@@ -186,7 +186,8 @@ def drawGUI():
         H -= 50
 
         E["EXPORT_BHKLISTSHAPE"] = Draw.Toggle("Use Collision List (bhkListShape)", addEvent("EXPORT_BHKLISTSHAPE"), 50, H, 390, 20, _CONFIG["EXPORT_BHKLISTSHAPE"])
-        H -= 30
+        E["EXPORT_MOPP"] = Draw.Toggle("Export Collision Mopp (EXPERIMENTAL)", addEvent("EXPORT_MOPP"), 50, H-20, 390, 20, _CONFIG["EXPORT_MOPP"])
+        H -= 50
 
         #E["NIF_EXPORT_PATH"]        = Draw.String("",       addEvent("NIF_EXPORT_PATH"),     50, H-100, 390, 20, _CONFIG["NIF_EXPORT_PATH"],        390, "export path")
         #E["BROWSE_EXPORT_PATH"]     = Draw.PushButton('...',addEvent("BROWSE_EXPORT_PATH"), 440, H-100,  30, 20)
@@ -298,6 +299,8 @@ def buttonEvent(evt):
         _CONFIG["EXPORT_SKINPARTITION"] = not _CONFIG["EXPORT_SKINPARTITION"]
     elif evName == "EXPORT_BHKLISTSHAPE":
         _CONFIG["EXPORT_BHKLISTSHAPE"] = not _CONFIG["EXPORT_BHKLISTSHAPE"]
+    elif evName == "EXPORT_MOPP":
+        _CONFIG["EXPORT_MOPP"] = not _CONFIG["EXPORT_MOPP"]
     Draw.Redraw(1)
 
 def event(evt, val):
