@@ -372,9 +372,9 @@ and turn off envelopes."""%ob.getName()
                 if isinstance(block, NifFormat.bhkMoppBvTreeShape):
                    msg("Generating mopp...")
                    block.updateOriginScale()
-                   block.updateTree()
+                   block.updateMopp()
                    print "=== DEBUG: MOPP TREE ==="
-                   block.parseTree(verbose = True)
+                   block.parseMopp(verbose = True)
                    print "=== END OF MOPP TREE ==="
 
 
