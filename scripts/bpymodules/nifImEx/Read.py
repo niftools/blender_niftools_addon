@@ -944,6 +944,10 @@ def fb_texture(niSourceTexture):
             meshes_index = _CONFIG["NIF_IMPORT_PATH"].lower().find("meshes")
             if meshes_index != -1:
                 searchPathList.append(_CONFIG["NIF_IMPORT_PATH"][:meshes_index] + 'textures')
+            # if it looks like a Civilization IV style path, use common sense to guess texture path
+            art_index = _CONFIG["NIF_IMPORT_PATH"].lower().find("art")
+            if art_index != -1:
+                searchPathList.append(_CONFIG["NIF_IMPORT_PATH"][:art_index] + 'shared')
             for texdir in searchPathList:
                 texdir = texdir.replace( '\\', Blender.sys.sep )
                 texdir = texdir.replace( '/', Blender.sys.sep )
@@ -1127,7 +1131,7 @@ def fb_material(matProperty, textProperty, alphaProperty, specProperty):
         material.mode |= Blender.Material.Modes.ZTRANSP # enable z-buffered transparency
         # if the image has an alpha channel => then this overrides the material alpha value
         if baseTexture:
-            if baseTexture.image.depth == 32: # ... crappy way to check for alpha channel in texture
+            if baseTexture.image.depth == 32 or baseTexture.image.size == [1,1]: # check for alpha channel in texture; if it's a stub then assume alpha channel
                 baseTexture.imageFlags |= Blender.Texture.ImageFlags.USEALPHA # use the alpha channel
                 mbaseTexture.mapto |=  Blender.Texture.MapTo.ALPHA # and map the alpha channel to transparency
                 # for proper display in Blender, we must set the alpha value

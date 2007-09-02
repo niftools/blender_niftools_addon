@@ -917,8 +917,8 @@ def export_sourcetexture(texture, filename = None):
             tfn = filename
         else:
             tfn = texture.image.getFilename()
-        if STRIP_TEXPATH:
-            # strip texture file path (original morrowind style)
+        if not _CONFIG["EXPORT_VERSION"] in ['Morrowind', 'Oblivion']:
+            # strip texture file path
             srctex.fileName = Blender.sys.basename(tfn)
         else:
             # strip the data files prefix from the texture's file name
@@ -1341,7 +1341,7 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                 itritexprop.SetTexture(GLOW_MAP, glowtex)
         
         if (mesh_hasalpha):
-            # add NiTriShape's alpha propery (this is de facto an automated version of Detritus's method, see http://detritus.silgrad.com/alphahex.html)
+            # add NiTriShape's alpha propery
             trialphaprop = create_block("NiAlphaProperty")
             trialphaprop.flags = 0x00ED
             
