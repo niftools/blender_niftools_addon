@@ -278,7 +278,7 @@ def import_nif(filename):
                     for b in [b for b in block.tree() if isinstance(b, NifFormat.NiGeometry)]:
                         if b.isSkin():
                             if root in [c for c in b.skinInstance.skeletonRoot.children]:
-                                root = b.skinInstance.skeletonRoot
+                                b.skinInstance.skeletonRoot = root
                     msg("root block: %s" % (root.name), 3)
                     import_main(root, version)
         elif version == -1:
