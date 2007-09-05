@@ -280,6 +280,10 @@ def import_nif(filename):
                             if root in [c for c in b.skinInstance.skeletonRoot.children]:
                                 b.skinInstance.data.setTransform(root.getTransform() * b.skinInstance.data.getTransform())
                                 b.skinInstance.skeletonRoot = root
+                                # delete non-skeleton nodes if we're importing skeleton only
+                                if _CONFIG["IMPORT_SKELETON"]:
+                                    nonbip_children = [ child for child in root.children if child.name[:6] != 'Bip01 ' ]
+                                    for child in nonbip_children: root.removeChild(child)
                     msg("root block: %s" % (root.name), 3)
                     import_main(root, version)
         elif version == -1:
