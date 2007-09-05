@@ -1,3 +1,8 @@
+Version 2.1.6 (Sep 5, 2007)
+* Import: morrowind - better skeleton only import for better bodies
+* Import: morrowind - better import for better bodies
+* Export: make 'Bip01' root node also root of nif tree
+
 Version 2.1.5 (Sep 2, 2007)
 * Export: mopps for packed shapes
 * Export: always strip texture paths (except for Morrowind and Oblivion)

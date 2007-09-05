@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <title>The Blender NIF Scripts v2.1.5</title>
+  <title>The Blender NIF Scripts v2.1.6</title>
   <meta http-equiv="Content-Type"
  content="text/html; charset=ISO-8859-1" />
   <style type="text/css">
@@ -19,20 +19,13 @@ a:hover.nav { color: #FF0000; background: transparent; }
   </style>
 </head>
 <body>
-<h1>The Blender NIF Scripts v2.1.5</h1>
+<h1>The Blender NIF Scripts v2.1.6</h1>
 <h2>Release Notes</h2>
 Although we have done our best to squash all bugs we could find, it is unlikely that we have found them all. If you find bugs, PLEASE REPORT THEM ON THE SOURCEFORGE TRACKER.
 <h3>Highlights of this Release</h3>
 <ul>
-<li>for packed collisions (i.e. the 'static triangle mesh' collision object in Blender) a bhkMoppBvTreeShape with a simple mopp is inserted between the body and the packed collision shape, and as a result:
-<ul>
-<li>reduced frame rate hit for complex collision meshes</li>
-<li>the walking sound can be set through the mopp material setting</li>
-</ul>
-</li>
-<li>export now always strips texture paths, except for Morrowind and Oblivion; this fixes a rare issue with Civilization IV texture paths</li>
-<li>import tries to autodetect the shared texture folder for Civilization IV</li>
-<li>import now assumes that an alpha channel is present if the texture was not found and an alpha property is present; this ensures that NiAlphaProperty is written back on export if the texture was not found</li>
+<li>Import of Morrowind's better bodies meshes has been significantly improved.</li>
+<li>If the root armature is called 'Bip01' then it will now be used as root node of the nif tree.</li>
 </ul>
 <h2>Support</h2>
 <ul>
