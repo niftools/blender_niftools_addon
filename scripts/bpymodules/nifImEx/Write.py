@@ -379,7 +379,7 @@ and turn off envelopes."""%ob.getName()
 
 
         # delete original scene root if a scene root object was already defined
-        if (root_block.numChildren == 1) and (root_block.children[0].name == 'Scene Root'):
+        if (root_block.numChildren == 1) and (root_block.children[0].name in ['Scene Root', 'Bip01']):
             msg("Making 'Scene Root' the root block")
             # remove root_block from _NIF_BLOCKS
             _NIF_BLOCKS = [b for b in _NIF_BLOCKS if b != root_block] 
