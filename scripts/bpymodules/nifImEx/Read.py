@@ -359,8 +359,13 @@ def import_main(root_block, version):
         store_animation_data(root_block)
     
     # read the NIF tree
-    if not is_armature_root(root_block):
-        msg("%s is not an armature root" % (root_block.name), 3)
+    if is_armature_root(root_block):
+        msg("%s is an armature root" % (root_block.name), 3)
+        b_obj = read_branch(root_block)
+    elif is_grouping_node(root_block):
+        msg("%s is a grouping node" % (root_block.name), 3)
+        b_obj = read_branch(root_block)
+    else:
         if root_block.children:
             # yes, we'll process all children of the root node
             # (this prevents us having to create an empty as a root)
@@ -373,8 +378,6 @@ def import_main(root_block, version):
             blocks = [ root_block ]
         for niBlock in blocks:
             b_obj = read_branch(niBlock)
-    else:
-        b_obj = read_branch(root_block)
     # store bone matrix offsets for re-export
     if len(_BONES_EXTRA_MATRIX.keys()) > 0: fb_bonemat()
     # store original names for re-export
@@ -437,9 +440,22 @@ def read_branch(niBlock):
                     read_armature_branch(b_obj, niBlock, niBlock)
                 else:
                     # it's a grouping node
-                    b_obj = fb_empty(niBlock)
+                    geom_group = is_grouping_node(niBlock)
+                    if not geom_group:
+                        # no grouping node, so import it as an empty
+                        b_obj = fb_empty(niBlock)
+                    else:
+                        # node groups geometries, so import it as a mesh
+                        b_obj = None
+                        for child in geom_group:
+                            b_obj = fb_mesh(child, group_mesh = b_obj)
+                        # apply transform on mesh
+                        print "joining geometries %s to single object '%s'"%([child.name for child in geom_group], niBlock.name)
+                        b_obj.getData(mesh=True).transform(fb_matrix(geom_group[0]), recalc_normals = True)
+                        b_obj.name = niBlock.name
+                    # import children that aren't part of the geometry group
                     b_children_list = []
-                    children = niBlock.children
+                    children = [ child for child in niBlock.children if child not in geom_group ]
                     for child in children:
                         b_child_obj = read_branch(child)
                         if b_child_obj:
@@ -1289,8 +1305,8 @@ def fb_mesh(niBlock, group_mesh = None):
             n_map[k] = i         # unique vertex / normal pair with key k was added, with NIF index i
             v_map[i] = b_v_index # NIF vertex i maps to blender vertex b_v_index
             b_meshData.verts.extend(v.x, v.y, v.z) # add the vertex
-            # adds normal info if present.
-            # Blender doesn't calculate these quite properly when importing strips
+            # adds normal info if present (Blender recalculates these when
+            # switching between edit mode and object mode, handled further)
             #if norms:
             #    mv = b_meshData.verts[b_v_index]
             #    n = norms[i]
@@ -1477,6 +1493,9 @@ def fb_mesh(niBlock, group_mesh = None):
     # remove dummy vertex
     if remove_dummy:
         b_meshData.verts.delete(0)
+
+    # recalculate normals
+    b_meshData.calcNormals()
  
     return b_mesh
 
