@@ -4,6 +4,7 @@ resulting merged mesh is named after the grouping NiNode
 * Import: 'Tri ' prefix is no longer removed from name
 * Import: simplified uv import and vertex color import code
 * Export: simplified heuristic for naming blocks
+* Export: raise exception if bone names are not unique
 
 Version 2.1.6 (Sep 5, 2007)
 * Import: morrowind - better skeleton only import for better bodies

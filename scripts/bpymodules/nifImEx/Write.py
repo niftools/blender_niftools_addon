@@ -1606,12 +1606,15 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                     vert_added = [False] * len(vertlist) # allocate memory for faster performance
                     for bone_index, bone in enumerate(boneinfluences):
                         # find bone in exported blocks
+                        bone_block = None
                         for block in _NIF_BLOCKS:
                             if isinstance(block, NifFormat.NiNode):
                                 if block.name == bone:
-                                    bone_block = block
-                                    break
-                        else:
+                                    if not bone_block:
+                                        bone_block = block
+                                    else:
+                                        raise NIFExportError("multiple bones with name '%s': probably you have multiple armatures, please parent all meshes to a single armature and try again"%bone)
+                        if not bone_block:
                             raise NIFExportError("Bone '%s' not found."%bone)
                         # find vertex weights
                         vert_weights = {}
