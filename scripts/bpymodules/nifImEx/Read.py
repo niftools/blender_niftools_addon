@@ -487,18 +487,10 @@ def read_armature_branch(b_armature, niArmature, niBlock, group_mesh = None):
                 # check if geometries should be merged on import
                 node_name = niBlock.name
                 geom_children = [ child for child in niBlock.children if isinstance(child, NifFormat.NiTriBasedGeom) ]
-                is_group = False
-                if geom_children and node_name:
-                    # check if node name occurs in all children
-                    is_group = True
-                    for child in geom_children:
-                        if child.name.find(node_name) == -1:
-                            # no, trishapes don't form group
-                            is_group = False
-                            break
+                geom_group = is_grouping_node(niBlock)
                 b_mesh = None
                 for child in children:
-                    if is_group:
+                    if geom_group:
                         b_mesh = read_armature_branch(b_armature, niArmature, child, group_mesh = b_mesh)
                     else:
                         b_mesh = read_armature_branch(b_armature, niArmature, child, group_mesh = None)
@@ -527,8 +519,8 @@ def read_armature_branch(b_armature, niArmature, niBlock, group_mesh = None):
                             # make it parent of the armature
                             b_armature.makeParentDeform([b_mesh])
                 # set group name
-                if is_group and b_mesh:
-                    print "joining geometries %s to single object '%s'"%([child.name for child in geom_children], node_name)
+                if geom_group and b_mesh:
+                    print "joining geometries %s to single object '%s'"%([child.name for child in geom_group], node_name)
                     b_mesh.name = node_name
     # anything else: throw away
     return None
@@ -1760,6 +1752,25 @@ def get_closest_bone(niBlock, skelroot):
             return par
         par = par._parent
     return par
+
+def is_grouping_node(niBlock):
+    """Determine whether node is grouping node.
+    Returns the children which are grouped, or empty list if it is not a
+    grouping node."""
+    # check that it is a ninode
+    if not isinstance(niBlock, NifFormat.NiNode): return []
+    # check that node has name
+    node_name = niBlock.name
+    if not node_name: return []
+    # get all geometry children
+    geom_children = [ child for child in niBlock.children if isinstance(child, NifFormat.NiTriBasedGeom) ]
+    # check if node name occurs in all children
+    for child in geom_children:
+        if child.name.find(node_name) == -1:
+            # no, trishapes don't form group
+            return []
+    # yes, they form a group
+    return geom_children
 
 
 # Main KFM import function. (BROKEN)
