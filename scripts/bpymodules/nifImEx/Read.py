@@ -1252,13 +1252,12 @@ def fb_mesh(niBlock, group_mesh = None):
         
         # create material and assign it to the mesh
         material = fb_material(matProperty, textProperty, alphaProperty, specProperty)
-        mesh_materials = b_mesh.getMaterials(1)
+        b_mesh_materials = b_meshData.materials
         try:
-            materialIndex = mesh_materials.index(material)
+            materialIndex = b_mesh_materials.index(material)
         except ValueError:
-            materialIndex = len(mesh_materials)
-            mesh_materials.append(material)
-            b_meshData.materials = mesh_materials
+            materialIndex = len(b_mesh_materials)
+            b_meshData.materials += [material]
     else:
         material = None
         materialIndex = 0

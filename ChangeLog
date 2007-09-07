@@ -1,3 +1,10 @@
+Version 2.1.7 (***)
+* Import: trishapes/tristrips of grouping NiNodes are merged on import and the
+resulting merged mesh is named after the grouping NiNode
+* Import: 'Tri ' prefix is no longer removed from name
+* Import: simplified uv import and vertex color import code
+* Export: simplified heuristic for naming blocks
+
 Version 2.1.6 (Sep 5, 2007)
 * Import: morrowind - better skeleton only import for better bodies
 * Import: morrowind - better import for better bodies
