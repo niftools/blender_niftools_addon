@@ -456,7 +456,7 @@ def read_branch(niBlock):
         print "todo: add cameras, lights, colliders and particle systems"
         return None
 
-def read_armature_branch(b_armature, niArmature, niBlock):
+def read_armature_branch(b_armature, niArmature, niBlock, group_mesh = None):
     """
     Reads the content of the current NIF tree branch to Blender
     recursively, as meshes parented to a given armature. Note that
@@ -470,7 +470,7 @@ def read_armature_branch(b_armature, niArmature, niBlock):
         # mesh?
         if isinstance(niBlock, NifFormat.NiTriBasedGeom) and not _CONFIG["IMPORT_SKELETON"]:
             msg("building mesh %s in read_armature_branch" % (niBlock.name),3)
-            return fb_mesh(niBlock)
+            return fb_mesh(niBlock, group_mesh = group_mesh)
         elif is_armature_root(niBlock) and niBlock != niArmature:
             # an armature parented to this armature
             fb_arm= fb_armature(niBlock)
@@ -484,9 +484,26 @@ def read_armature_branch(b_armature, niArmature, niBlock):
                 armature_matrix_inverse = fb_global_matrix(niArmature)
                 armature_matrix_inverse.invert()
                 niArmature._invMatrix = armature_matrix_inverse
+                # check if geometries should be merged on import
+                node_name = niBlock.name
+                geom_children = [ child for child in niBlock.children if isinstance(child, NifFormat.NiTriBasedGeom) ]
+                is_group = False
+                if geom_children and node_name:
+                    # check if node name occurs in all children
+                    is_group = True
+                    for child in geom_children:
+                        if child.name.find(node_name) == -1:
+                            # no, trishapes don't form group
+                            is_group = False
+                            break
+                b_mesh = None
                 for child in children:
-                    b_mesh = read_armature_branch(b_armature, niArmature, child)
+                    if is_group:
+                        b_mesh = read_armature_branch(b_armature, niArmature, child, group_mesh = b_mesh)
+                    else:
+                        b_mesh = read_armature_branch(b_armature, niArmature, child, group_mesh = None)
                     if b_mesh: # mesh or armature
+                        # check if it is parented to a bone or not
                         par_bone = get_closest_bone(child, skelroot = niArmature)
                         if par_bone:
                             # first find the matrix in armature space we want
@@ -509,6 +526,10 @@ def read_armature_branch(b_armature, niArmature, niBlock):
                             b_mesh.setMatrix(fb_matrix(child, relative_to = niArmature))
                             # make it parent of the armature
                             b_armature.makeParentDeform([b_mesh])
+                # set group name
+                if is_group:
+                    print "joining geometries %s to single object '%s'"%([child.name for child in geom_children], node_name)
+                    b_mesh.name = node_name
     # anything else: throw away
     return None
 
@@ -528,11 +549,7 @@ def fb_name(niBlock, max_length=22):
 
     # find unique name for Blender to use
     uniqueInt = 0
-    #niName = niBlock["Name"].asString()
     niName = niBlock.name
-    # remove the "Tri " prefix; this will help when exporting the model again
-    if niName[:4] == "Tri ":
-        niName = niName[4:]
     shortName = niName[:max_length-1] # Blender has a rather small name buffer
     try:
         while Blender.Object.Get(name):
@@ -1159,32 +1176,36 @@ def fb_material(matProperty, textProperty, alphaProperty, specProperty):
     _MATERIALS[(matProperty, textProperty, alphaProperty, specProperty)] = material
     return material
 
-# Creates and returns a raw mesh
-def fb_mesh(niBlock):
+# Creates and returns a raw mesh, or appends geometry data to group_mesh
+def fb_mesh(niBlock, group_mesh = None):
     global _SCENE
     assert(isinstance(niBlock, NifFormat.NiTriBasedGeom))
-    # Mesh name -> must be unique, so tag it if needed
-    b_name = fb_name(niBlock, 22)
-    b_meshData = Blender.Mesh.New(b_name)
-    b_meshData.properties['longName'] = niBlock.name
-    #b_mesh = _SCENE.objects.new(b_meshData, b_name)
-    b_mesh = Blender.Object.New("Mesh", b_name)
-    b_mesh.link(b_meshData)
-    
-    # Sets the mesh as one-sided. This fixes some issue with normals
-    b_meshData.mode = 0
-   
-    _SCENE.objects.link(b_mesh)
-    
-    # Mesh hidden flag
-    if niBlock.flags & 1 == 1:
-        b_mesh.setDrawType(2) # hidden: wire
+    if group_mesh:
+        b_mesh = group_mesh
+        b_meshData = group_mesh.getData(mesh=True)
     else:
-        b_mesh.setDrawType(4) # not hidden: shaded
+        # Mesh name -> must be unique, so tag it if needed
+        b_name = fb_name(niBlock, 22)
+        b_meshData = Blender.Mesh.New(b_name)
+        b_meshData.properties['longName'] = niBlock.name
+        #b_mesh = _SCENE.objects.new(b_meshData, b_name)
+        b_mesh = Blender.Object.New("Mesh", b_name)
+        b_mesh.link(b_meshData)
 
-    # Mesh transform matrix, sets the transform matrix for the object.
-    meshBindMatrix = getattr(niBlock, '_bindMatrix', fb_matrix(niBlock))
-    b_mesh.setMatrix(meshBindMatrix)
+        # Sets the mesh as one-sided. This fixes some issue with normals
+        b_meshData.mode = 0
+   
+        _SCENE.objects.link(b_mesh)
+    
+        # Mesh hidden flag
+        if niBlock.flags & 1 == 1:
+            b_mesh.setDrawType(2) # hidden: wire
+        else:
+            b_mesh.setDrawType(4) # not hidden: shaded
+
+        # Mesh transform matrix, sets the transform matrix for the object.
+        meshBindMatrix = getattr(niBlock, '_bindMatrix', fb_matrix(niBlock))
+        b_mesh.setMatrix(meshBindMatrix)
     
     # Mesh geometry data. From this I can retrieve all geometry info
     niData = niBlock.data
@@ -1214,30 +1235,49 @@ def fb_mesh(niBlock):
     # Vertex normals
     norms = niData.normals
 
+    # Material
+    # note that NIF files only support one material for each trishape
+    matProperty = find_property(niBlock, NifFormat.NiMaterialProperty)
+    if matProperty:
+        # Texture
+        textProperty = None
+        if uvco:
+            textProperty = find_property(niBlock, NifFormat.NiTexturingProperty)
+        
+        # Alpha
+        alphaProperty = find_property(niBlock, NifFormat.NiAlphaProperty)
+        
+        # Specularity
+        specProperty = find_property(niBlock, NifFormat.NiSpecularProperty)
+        
+        # create material and assign it to the mesh
+        material = fb_material(matProperty, textProperty, alphaProperty, specProperty)
+        mesh_materials = b_mesh.getMaterials(1)
+        try:
+            materialIndex = mesh_materials.index(material)
+        except ValueError:
+            materialIndex = len(mesh_materials)
+            mesh_materials.append(material)
+            b_meshData.materials = mesh_materials
+    else:
+        material = None
+        materialIndex = 0
+
+    # add dummy vertex at index 0; this avoids trouble with indexing
+    if len(b_meshData.verts) == 0:
+        b_meshData.verts.extend(0, 0, 0)
+        remove_dummy = True
+    else:
+        remove_dummy = False
+
     v_map = [0]*len(verts) # pre-allocate memory, for faster performance
     
-    # The slow method is plenty quick enough, no point in not using it
-    #print "todo: add option for seams import"
-    #_SEAMS_IMPORT = True
-    #if not _SEAMS_IMPORT:
-    #    # Fast method: don't care about any seams!
-    #    for i, v in enumerate(verts):
-    #        v_map[i] = i # NIF vertex i maps to blender vertex i
-    #        b_meshData.verts.extend(v.x, v.y, v.z) # add the vertex
-    #        # adds normal info if present.
-    #        # Blender doesn't calculate these quite properly when importing strips
-    #        if norms:
-    #            mv = b_meshData.verts[i]
-    #            n = norms[i]
-    #            mv.no = Blender.Mathutils.Vector(n.x, n.y, n.z)
-    #else:
-    
-    # Slow method, but doesn't introduce unwanted cracks in UV seams:
+    # Following code avoids introducing unwanted cracks in UV seams:
     # Construct vertex map to get unique vertex / normal pair list.
     # We use a Python dictionary to remove doubles and to keep track of indices.
     # While we are at it, we also add vertices while constructing the map.
     n_map = {}
-    b_v_index = 0
+    b_v_index = len(b_meshData.verts)
     for i, v in enumerate(verts):
         # The key k identifies unique vertex /normal pairs.
         # We use a tuple of ints for key, this works MUCH faster than a
@@ -1260,20 +1300,20 @@ def fb_mesh(niBlock):
             b_meshData.verts.extend(v.x, v.y, v.z) # add the vertex
             # adds normal info if present.
             # Blender doesn't calculate these quite properly when importing strips
-            if norms:
-                mv = b_meshData.verts[b_v_index]
-                n = norms[i]
-                mv.no = Blender.Mathutils.Vector(n.x, n.y, n.z)
+            #if norms:
+            #    mv = b_meshData.verts[b_v_index]
+            #    n = norms[i]
+            #    mv.no = Blender.Mathutils.Vector(n.x, n.y, n.z)
             b_v_index += 1
         else:
             # already added
-            v_map[i] = v_map[n_map_k] # NIF vertex i maps to Blender v_map[vertex n_map_nk]
+            v_map[i] = v_map[n_map_k] # NIF vertex i maps to Blender vertex v_map[n_map_k]
     # release memory
     del n_map
 
     # Adds the faces to the mesh
     f_map = [None]*len(tris)
-    b_f_index = 0
+    b_f_index = len(b_meshData.faces)
     for i, f in enumerate(tris):
         if f.v1 != f.v2 and f.v1 != f.v3 and f.v2 != f.v3:
             v1=b_meshData.verts[v_map[f.v1]]
@@ -1292,54 +1332,36 @@ def fb_mesh(niBlock):
     # satisfy f_map[i] = None
     
     # Sets face smoothing and material
-    if norms:
-        for f in b_meshData.faces:
-            f.smooth = 1
-            f.mat = 0
-    else:
-        for f in b_meshData.faces:
-            f.smooth = 0 # no normals, turn off smoothing
-            f.mat = 0
+    for b_f_index in f_map:
+        if b_f_index == None: continue
+        f = b_meshData.faces[b_f_index]
+        f.smooth = 1 if norms else 0
+        f.mat = materialIndex
 
     # vertex colors
     vcol = niData.vertexColors
     
-    if vcol: # empty list is false
+    if vcol:
         b_meshData.vertexColors = 1
         for i, f in enumerate(tris):
             if f_map[i] == None: continue
             b_face = b_meshData.faces[f_map[i]]
-            # make sure we get the order right
-            if (v_map[f.v1] == b_face.verts[0].index):
-                v1_index = 0
-                v2_index = 1
-                v3_index = 2
-            elif (v_map[f.v1] == b_face.verts[1].index):
-                v3_index = 0
-                v1_index = 1
-                v2_index = 2
-            elif (v_map[f.v1] == b_face.verts[2].index):
-                v2_index = 0
-                v3_index = 1
-                v1_index = 2
-            else:
-                raise NIFImportError("Invalid face index (BUG?)")
             # now set the vertex colors
             vc = vcol[f.v1]
-            b_face.col[v1_index].r = int(vc.r * 255)
-            b_face.col[v1_index].g = int(vc.g * 255)
-            b_face.col[v1_index].b = int(vc.b * 255)
-            b_face.col[v1_index].a = int(vc.a * 255)
+            b_face.col[0].r = int(vc.r * 255)
+            b_face.col[0].g = int(vc.g * 255)
+            b_face.col[0].b = int(vc.b * 255)
+            b_face.col[0].a = int(vc.a * 255)
             vc = vcol[f.v2]
-            b_face.col[v2_index].r = int(vc.r * 255)
-            b_face.col[v2_index].g = int(vc.g * 255)
-            b_face.col[v2_index].b = int(vc.b * 255)
-            b_face.col[v2_index].a = int(vc.a * 255)
+            b_face.col[1].r = int(vc.r * 255)
+            b_face.col[1].g = int(vc.g * 255)
+            b_face.col[1].b = int(vc.b * 255)
+            b_face.col[1].a = int(vc.a * 255)
             vc = vcol[f.v3]
-            b_face.col[v3_index].r = int(vc.r * 255)
-            b_face.col[v3_index].g = int(vc.g * 255)
-            b_face.col[v3_index].b = int(vc.b * 255)
-            b_face.col[v3_index].a = int(vc.a * 255)
+            b_face.col[2].r = int(vc.r * 255)
+            b_face.col[2].g = int(vc.g * 255)
+            b_face.col[2].b = int(vc.b * 255)
+            b_face.col[2].a = int(vc.a * 255)
         # vertex colors influence lighting...
         # so now we have to set the VCOL_LIGHT flag on the material
         # see below
@@ -1360,51 +1382,12 @@ def fb_mesh(niBlock):
         for i, f in enumerate(tris):
             if f_map[i] == None: continue
             uvlist = []
-            # We have to be careful here... another Blender pitfall:
-            # faces.extend sometimes adds face vertices in different order than
-            # the order of it's arguments, here we detect how it was added, and
-            # hopefully this works in all cases :-)
-            # (note: we assume that faces.extend does not change the orientation)
-            if (v_map[f.v1] == b_meshData.faces[f_map[i]].verts[0].index):
-                # this is how it "should" be
-                for v in (f.v1, f.v2, f.v3):
-                    uv=uvSet[v]
-                    uvlist.append(Vector(uv.u, 1.0 - uv.v))
-                b_meshData.faces[f_map[i]].uv = tuple(uvlist)
-            elif (v_map[f.v1] == b_meshData.faces[f_map[i]].verts[1].index):
-                # vertex 3 was added first
-                for v in (f.v3, f.v1, f.v2):
-                    uv=uvSet[v]
-                    uvlist.append(Vector(uv.u, 1.0 - uv.v))
-                b_meshData.faces[f_map[i]].uv = tuple(uvlist)
-            elif (v_map[f.v1] == b_meshData.faces[f_map[i]].verts[2].index):
-                # vertex 2 was added first
-                for v in (f.v2, f.v3, f.v1):
-                    uv=uvSet[v]
-                    uvlist.append(Vector(uv.u, 1.0 - uv.v))
-                b_meshData.faces[f_map[i]].uv = tuple(uvlist)
-            else:
-                raise NIFImportError("Invalid face index (BUG?)")
-    
-    # Sets the material for this mesh. NIF files only support one material for each mesh.
-    matProperty = find_property(niBlock, NifFormat.NiMaterialProperty)
-    if matProperty:
-        # Texture
-        textProperty = None
-        if uvco:
-            textProperty = find_property(niBlock, NifFormat.NiTexturingProperty)
-        
-        # Alpha
-        alphaProperty = find_property(niBlock, NifFormat.NiAlphaProperty)
-        
-        # Specularity
-        specProperty = find_property(niBlock, NifFormat.NiSpecularProperty)
-        
-        # create material and assign it to the mesh
-        material = fb_material(matProperty, textProperty, alphaProperty, specProperty)
-        
-        b_meshData.materials = [material]
-
+            for v in (f.v1, f.v2, f.v3):
+                uv=uvSet[v]
+                uvlist.append(Vector(uv.u, 1.0 - uv.v))
+            b_meshData.faces[f_map[i]].uv = tuple(uvlist)
+   
+    if material:
         # fix up vertex colors depending on whether we had textures in the material
         mbasetex = material.getTextures()[0]
         mglowtex = material.getTextures()[1]
@@ -1420,7 +1403,9 @@ def fb_mesh(niBlock):
             TEX = Blender.Mesh.FaceModes['TEX'] # face mode bitfield value
             imgobj = mbasetex.tex.getImage()
             if imgobj:
-                for f in b_meshData.faces:
+                for b_f_index in f_map:
+                    if b_f_index == None: continue
+                    f = b_meshData.faces[b_f_index]
                     f.mode = TEX
                     f.image = imgobj
 
@@ -1432,9 +1417,10 @@ def fb_mesh(niBlock):
         bones = skinInstance.bones
         boneWeights = skinData.boneList
         for idx, bone in enumerate(bones):
-            vertexWeights =boneWeights[idx].vertexWeights
+            vertexWeights = boneWeights[idx].vertexWeights
             groupName = _NAMES[bone]
-            b_meshData.addVertGroup(groupName)
+            if not groupName in b_meshData.getVertGroupNames():
+                b_meshData.addVertGroup(groupName)
             for skinWeight in vertexWeights:
                 vert = skinWeight.index
                 weight = skinWeight.weight
@@ -1496,7 +1482,11 @@ def fb_mesh(niBlock):
                         b_meshData.verts[v_map[i]].co[1] = y
                         b_meshData.verts[v_map[i]].co[2] = z
                 # assign ipo to mesh
-                
+ 
+    # remove dummy vertex
+    if remove_dummy:
+        b_meshData.verts.delete(0)
+ 
     return b_mesh
 
 
