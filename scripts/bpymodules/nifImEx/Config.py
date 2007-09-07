@@ -280,6 +280,32 @@ def buttonEvent(evt):
             _IDX_TEXPATH-=1
     elif evName[:5] == "GAME_":
         _CONFIG["EXPORT_VERSION"] = evName[5:]
+        # set default settings per game
+        if _CONFIG["EXPORT_VERSION"] == "Morrowind":
+            _CONFIG["EXPORT_STRIPIFY"] = False
+            _CONFIG["EXPORT_STITCHSTRIPS"] = False
+            _CONFIG["EXPORT_ANIMATION"] = 1
+            _CONFIG["EXPORT_FLATTENSKIN"] = False
+            _CONFIG["EXPORT_SKINPARTITION"] = False
+            _CONFIG["EXPORT_BHKLISTSHAPE"] = False
+            _CONFIG["EXPORT_MOPP"] = False
+        elif _CONFIG["EXPORT_VERSION"] == "Civilization IV":
+            _CONFIG["EXPORT_STRIPIFY"] = True
+            _CONFIG["EXPORT_STITCHSTRIPS"] = True
+            _CONFIG["EXPORT_ANIMATION"] = 1
+            _CONFIG["EXPORT_FLATTENSKIN"] = False
+            _CONFIG["EXPORT_BONESPERPARTITION"] = 4
+            _CONFIG["EXPORT_SKINPARTITION"] = True
+            _CONFIG["EXPORT_BHKLISTSHAPE"] = False
+            _CONFIG["EXPORT_MOPP"] = False
+        elif _CONFIG["EXPORT_VERSION"] == "Oblivion":
+            _CONFIG["EXPORT_STRIPIFY"] = True
+            _CONFIG["EXPORT_ANIMATION"] = 1
+            _CONFIG["EXPORT_FLATTENSKIN"] = True
+            _CONFIG["EXPORT_BONESPERPARTITION"] = 18
+            _CONFIG["EXPORT_SKINPARTITION"] = True
+            _CONFIG["EXPORT_BHKLISTSHAPE"] = False
+            _CONFIG["EXPORT_MOPP"] = False
     elif evName[:8] == "VERSION_":
         _CONFIG["EXPORT_VERSION"] = evName[8:]
     elif evName == "EXPORT_FLATTENSKIN":
