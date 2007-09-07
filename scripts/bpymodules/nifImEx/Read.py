@@ -527,7 +527,7 @@ def read_armature_branch(b_armature, niArmature, niBlock, group_mesh = None):
                             # make it parent of the armature
                             b_armature.makeParentDeform([b_mesh])
                 # set group name
-                if is_group:
+                if is_group and b_mesh:
                     print "joining geometries %s to single object '%s'"%([child.name for child in geom_children], node_name)
                     b_mesh.name = node_name
     # anything else: throw away
