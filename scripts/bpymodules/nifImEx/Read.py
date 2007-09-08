@@ -454,7 +454,7 @@ def read_branch(niBlock):
                         # apply transform on mesh
                         print "joining geometries %s to single object '%s'"%([child.name for child in geom_group], niBlock.name)
                         b_obj.getData(mesh=True).transform(fb_matrix(geom_group[0]), recalc_normals = True)
-                        b_obj.name = niBlock.name
+                        b_obj.name = fb_name(niBlock, 22)
                     # import children that aren't part of the geometry group
                     b_children_list = []
                     children = [ child for child in niBlock.children if child not in geom_group ]
@@ -515,7 +515,7 @@ def read_armature_branch(b_armature, niArmature, niBlock, group_mesh = None):
                     b_mesh = read_armature_branch(b_armature, niArmature, child, group_mesh = b_mesh)
                 if b_mesh:
                     b_mesh.getData(mesh=True).transform(fb_matrix(geom_group[0]), recalc_normals = True)
-                    b_mesh.name = node_name
+                    b_mesh.name = fb_name(niBlock)
                     b_objects.append((niBlock, b_mesh))
                 # import other objects
                 for child in geom_other:
@@ -565,10 +565,23 @@ def fb_name(niBlock, max_length=22):
     """
     global _NAMES, _BLOCKS
 
+    try:
+        return _NAMES[niBlock]
+    except KeyError:
+        pass
+
     # find unique name for Blender to use
     uniqueInt = 0
     niName = niBlock.name
-    shortName = niName[:max_length-1] # Blender has a rather small name buffer
+    # if name is empty, create something non-empty
+    if not niName:
+        if isinstance(niBlock, NifFormat.RootCollisionNode):
+            niName = "collision"
+        else:
+            niName = "noname"
+    # limit name length
+    shortName = niName[:max_length-1]
+    # make unique
     try:
         while Blender.Object.Get(name):
             shortName = '%s.%02d' % (niName[:max_length-4], uniqueInt)
@@ -1572,8 +1585,9 @@ def fb_fullnames():
         namestxt.clear()
     except:
         namestxt = Blender.Text.New("FullNames")
-    for niBlock in _NAMES.keys():
-        namestxt.write('%s;%s\n'% (_NAMES[niBlock], niBlock.name))
+    for block, shortname in _NAMES.iteritems():
+        if block.name and shortname != block.name:
+            namestxt.write('%s;%s\n'% (shortname, block.name))
 
 # scan the root block for animation data
 def store_animation_data(rootBlock):
