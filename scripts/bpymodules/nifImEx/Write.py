@@ -1278,7 +1278,9 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
         parent_block.addChild(trishape)
         
         # fill in the NiTriShape's non-trivial values
-        if not trishape_name:
+        if isinstance(parent_block, NifFormat.RootCollisionNode):
+            trishape.name = ""
+        elif not trishape_name:
             if parent_block.name:
                 trishape.name = "Tri " + parent_block.name
             else:
@@ -2066,30 +2068,36 @@ def create_block(blocktype):
 
 def export_collision(ob, parent_block):
     """Main function for adding collision object ob to a node.""" 
-    nodes = [ parent_block ]
-    nodes.extend([ b for b in parent_block.children if b.name[:14] == 'collisiondummy' ])
-    for node in nodes:
-        try:
+    if _CONFIG["EXPORT_VERSION"] == 'Morrowind':
+         node = create_block("RootCollisionNode")
+         parent_block.addChild(node)
+         node.flags = 0x000C
+         export_matrix(ob, 'localspace', node)
+         export_trishapes(ob, 'none', node)
+
+    elif _CONFIG["EXPORT_VERSION"] == 'Oblivion':
+
+        nodes = [ parent_block ]
+        nodes.extend([ b for b in parent_block.children if b.name[:14] == 'collisiondummy' ])
+        for node in nodes:
+            try:
+                export_collision_helper(ob, node)
+                break
+            except ValueError: # adding collision failed
+                continue
+        else: # all nodes failed so add new one
+            node = NifFormat.NiNode()
+            node.setTransform(_IDENTITY44)
+            node.name = 'collisiondummy%i'%parent_block.numChildren
+            node.flags = 8 # not a skin influence
+            parent_block.addChild(node)
             export_collision_helper(ob, node)
-            break
-        except ValueError: # adding collision failed
-            continue
-    else: # all nodes failed so add new one
-        node = NifFormat.NiNode()
-        node.setTransform(_IDENTITY44)
-        node.name = 'collisiondummy%i'%parent_block.numChildren
-        node.flags = 8 # not a skin influence
-        parent_block.addChild(node)
-        export_collision_helper(ob, node)
 
-
+    else:
+        print "WARNING: only Morrowind and Oblivion collisions are supported, skipped collision object '%s'"%ob.name
 
 def export_collision_helper(ob, parent_block):
     """Helper function to add collision objects to a node."""
-
-    if _CONFIG["EXPORT_VERSION"] != 'Oblivion':
-        print "WARNING: only Oblivion collisions are supported, skipped collision object '%s'"%ob.name
-        return
 
     # is it packed
     coll_ispacked = (ob.rbShapeBoundType == Blender.Object.RBShapes['POLYHEDERON'])

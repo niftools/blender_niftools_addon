@@ -455,6 +455,11 @@ def read_branch(niBlock):
                         print "joining geometries %s to single object '%s'"%([child.name for child in geom_group], niBlock.name)
                         b_obj.getData(mesh=True).transform(fb_matrix(geom_group[0]), recalc_normals = True)
                         b_obj.name = fb_name(niBlock, 22)
+                        # settings for collision node
+                        if isinstance(niBlock, NifFormat.RootCollisionNode):
+                            b_obj.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
+                            b_obj.setDrawMode(32) # wire
+                            b_obj.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
                     # import children that aren't part of the geometry group
                     b_children_list = []
                     children = [ child for child in niBlock.children if child not in geom_group ]
