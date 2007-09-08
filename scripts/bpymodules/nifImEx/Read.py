@@ -357,27 +357,29 @@ def import_main(root_block, version):
     # It's only done if anuimation is imported to avoid wasting cycles
     if _CONFIG['IMPORT_ANIMATION']:
         store_animation_data(root_block)
-    
+        # import the extras
+        fb_textkey(root_block)
+
     # read the NIF tree
     if is_armature_root(root_block):
+        # special case 1: root node is skeleton root
         msg("%s is an armature root" % (root_block.name), 3)
         b_obj = read_branch(root_block)
     elif is_grouping_node(root_block):
+        # special case 2: root node is grouping node
         msg("%s is a grouping node" % (root_block.name), 3)
         b_obj = read_branch(root_block)
+    elif isinstance(root_block, NifFormat.NiTriBasedGeom):
+        # trishape/tristrips root
+        b_obj = read_branch(root_block)
+    elif isinstance(root_block, NifFormat.NiNode):
+        # root node is dummy scene node
+        # process all its children
+        for child in root_block.children:
+            b_obj = read_branch(child)
     else:
-        if root_block.children:
-            # yes, we'll process all children of the root node
-            # (this prevents us having to create an empty as a root)
-            blocks = root_block.children
-            if _CONFIG['IMPORT_ANIMATION']:
-                # import the extras
-                fb_textkey(root_block)
-        else:
-            # this fixes an issue with nifs where the first block is a NiTriShape
-            blocks = [ root_block ]
-        for niBlock in blocks:
-            b_obj = read_branch(niBlock)
+        raise NIFImportError("don't know how to import nif file with root block of type '%s'"%root_block.__class__)
+
     # store bone matrix offsets for re-export
     if len(_BONES_EXTRA_MATRIX.keys()) > 0: fb_bonemat()
     # store original names for re-export
