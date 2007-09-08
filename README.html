@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <title>The Blender NIF Scripts v2.1.6</title>
+  <title>The Blender NIF Scripts v2.1.7</title>
   <meta http-equiv="Content-Type"
  content="text/html; charset=ISO-8859-1" />
   <style type="text/css">
@@ -19,13 +19,16 @@ a:hover.nav { color: #FF0000; background: transparent; }
   </style>
 </head>
 <body>
-<h1>The Blender NIF Scripts v2.1.6</h1>
+<h1>The Blender NIF Scripts v2.1.7</h1>
 <h2>Release Notes</h2>
 Although we have done our best to squash all bugs we could find, it is unlikely that we have found them all. If you find bugs, PLEASE REPORT THEM ON THE SOURCEFORGE TRACKER.
 <h3>Highlights of this Release</h3>
 <ul>
-<li>Import of Morrowind's better bodies meshes has been significantly improved.</li>
-<li>If the root armature is called 'Bip01' then it will now be used as root node of the nif tree.</li>
+<li>NiTriShape/NiTriStrips blocks grouped by NiNodes are merged on import, the resulting merged mesh is named after the grouping NiNode</li>
+<li>The 'Tri ' prefix is no longer removed from name on import.</li>
+<li>Import of nifs with NiTriShape/NiTriStrips root has been fixed.<li>
+<li>Export raises an exception if bone names are not unique (for example, if you try to export multiple imported skeletons).</li>
+<li>Export no longer fails if bone name or armature name is longer than 22 characters.</li>
 </ul>
 <h2>Support</h2>
 <ul>

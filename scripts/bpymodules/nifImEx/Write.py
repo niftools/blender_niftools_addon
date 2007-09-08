@@ -1574,7 +1574,7 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                     trishape.skinInstance = skininst
                     for block in _NIF_BLOCKS:
                         if isinstance(block, NifFormat.NiNode):
-                            if block.name == armaturename:
+                            if block.name == get_full_name(armaturename):
                                 skininst.skeletonRoot = block
                                 break
                     else:
@@ -1609,7 +1609,7 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                         bone_block = None
                         for block in _NIF_BLOCKS:
                             if isinstance(block, NifFormat.NiNode):
-                                if block.name == bone:
+                                if block.name == get_full_name(bone):
                                     if not bone_block:
                                         bone_block = block
                                     else:
