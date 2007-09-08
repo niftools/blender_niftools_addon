@@ -504,42 +504,50 @@ def read_armature_branch(b_armature, niArmature, niBlock, group_mesh = None):
                 niArmature._invMatrix = armature_matrix_inverse
                 # check if geometries should be merged on import
                 node_name = niBlock.name
-                geom_children = [ child for child in niBlock.children if isinstance(child, NifFormat.NiTriBasedGeom) ]
                 geom_group = is_grouping_node(niBlock)
-                b_mesh = None
-                for child in children:
-                    if geom_group:
-                        b_mesh = read_armature_branch(b_armature, niArmature, child, group_mesh = b_mesh)
-                    else:
-                        b_mesh = read_armature_branch(b_armature, niArmature, child, group_mesh = None)
-                    if b_mesh: # mesh or armature
-                        # check if it is parented to a bone or not
-                        par_bone = get_closest_bone(child, skelroot = niArmature)
-                        if par_bone:
-                            # first find the matrix in armature space we want
-                            # the mesh to have
-                            a_geom_matrix = fb_matrix(child, relative_to = niArmature)
-                            # next find the tail matrix of the bone parent
-                            b_par_bone_name = _NAMES[par_bone] # blender bone name
-                            b_par_bone = b_armature.data.bones[b_par_bone_name]
-                            a_tail_matrix = b_par_bone.matrix['ARMATURESPACE'].copy()
-                            a_tail_pos    = b_par_bone.tail['ARMATURESPACE']
-                            a_tail_matrix[3][0] = a_tail_pos[0]
-                            a_tail_matrix[3][1] = a_tail_pos[1]
-                            a_tail_matrix[3][2] = a_tail_pos[2]
-                            # fix the mesh matrix relative to the bone tail
-                            b_mesh.setMatrix(a_geom_matrix * a_tail_matrix.invert())
-                            # make it parent of the bone
-                            b_armature.makeParentBone([b_mesh], _NAMES[par_bone])
-                        else:
-                            # fix the mesh matrix relative to the armature
-                            b_mesh.setMatrix(fb_matrix(child, relative_to = niArmature))
-                            # make it parent of the armature
-                            b_armature.makeParentDeform([b_mesh])
-                # set group name
-                if geom_group and b_mesh:
+                geom_other = [ child for child in niBlock.children if not child in geom_group ]
+                if geom_group:
                     print "joining geometries %s to single object '%s'"%([child.name for child in geom_group], node_name)
+                b_objects = [] # list of (nif block, blender object) pairs
+                # import grouped geometries
+                b_mesh = None
+                for child in geom_group:
+                    b_mesh = read_armature_branch(b_armature, niArmature, child, group_mesh = b_mesh)
+                if b_mesh:
+                    b_mesh.getData(mesh=True).transform(fb_matrix(geom_group[0]), recalc_normals = True)
                     b_mesh.name = node_name
+                    b_objects.append((niBlock, b_mesh))
+                # import other objects
+                for child in geom_other:
+                    b_obj = read_armature_branch(b_armature, niArmature, child, group_mesh = None)
+                    if b_obj:
+                        b_objects.append((child, b_obj))
+                # fix transform and parentship
+                for child, b_obj in b_objects:
+                    # note, b_obj is either a mesh or an armature
+                    # check if it is parented to a bone or not
+                    par_bone = get_closest_bone(child, skelroot = niArmature)
+                    if par_bone:
+                        # first find the matrix in armature space we want
+                        # the mesh to have
+                        a_geom_matrix = fb_matrix(child, relative_to = niArmature)
+                        # next find the tail matrix of the bone parent
+                        b_par_bone_name = _NAMES[par_bone] # blender bone name
+                        b_par_bone = b_armature.data.bones[b_par_bone_name]
+                        a_tail_matrix = b_par_bone.matrix['ARMATURESPACE'].copy()
+                        a_tail_pos    = b_par_bone.tail['ARMATURESPACE']
+                        a_tail_matrix[3][0] = a_tail_pos[0]
+                        a_tail_matrix[3][1] = a_tail_pos[1]
+                        a_tail_matrix[3][2] = a_tail_pos[2]
+                        # fix the object matrix relative to the bone tail
+                        b_obj.setMatrix(a_geom_matrix * a_tail_matrix.invert())
+                        # make it parent of the bone
+                        b_armature.makeParentBone([b_obj], _NAMES[par_bone])
+                    else:
+                        # fix the mesh matrix relative to the armature
+                        b_obj.setMatrix(fb_matrix(child, relative_to = niArmature))
+                        # make it parent of the armature
+                        b_armature.makeParentDeform([b_obj])
     # anything else: throw away
     return None
 
@@ -1780,18 +1788,14 @@ def is_grouping_node(niBlock):
     grouping node."""
     # check that it is a ninode
     if not isinstance(niBlock, NifFormat.NiNode): return []
+    # root collision node: join everything
+    if isinstance(niBlock, NifFormat.RootCollisionNode):
+        return [ child for child in niBlock.children if isinstance(child, NifFormat.NiTriBasedGeom) ]
     # check that node has name
     node_name = niBlock.name
     if not node_name: return []
     # get all geometry children
-    geom_children = [ child for child in niBlock.children if isinstance(child, NifFormat.NiTriBasedGeom) ]
-    # check if node name occurs in all children
-    for child in geom_children:
-        if child.name.find(node_name) == -1:
-            # no, trishapes don't form group
-            return []
-    # yes, they form a group
-    return geom_children
+    return [ child for child in niBlock.children if isinstance(child, NifFormat.NiTriBasedGeom) and child.name.find(node_name) != -1 ]
 
 
 # Main KFM import function. (BROKEN)
