@@ -1046,7 +1046,11 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
     mesh_orig = Blender.NMesh.GetRaw(ob.data.name) # original non-subsurfed mesh
     
     # get the mesh's materials, this updates the mesh material list
-    mesh_mats = mesh_orig.getMaterials(1) # the argument guarantees that the material list agrees with the face material indices
+    if not isinstance(parent_block, NifFormat.RootCollisionNode):
+        mesh_mats = mesh_orig.getMaterials(1) # the argument guarantees that the material list agrees with the face material indices
+    else:
+        # ignore materials on collision trishapes
+        mesh_mats = []
     # if the mesh has no materials, all face material indices should be 0, so it's ok to fake one material in the material list
     if (mesh_mats == []):
         mesh_mats = [ None ]
