@@ -1,4 +1,4 @@
-Version 2.1.7 (***)
+Version 2.1.7 (Sep 9, 2007)
 * Import: trishapes/tristrips of grouping NiNodes are merged on import and the
 resulting merged mesh is named after the grouping NiNode
 * Import: 'Tri ' prefix is no longer removed from name

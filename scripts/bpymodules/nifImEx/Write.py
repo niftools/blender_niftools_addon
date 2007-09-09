@@ -2073,6 +2073,8 @@ def create_block(blocktype):
 def export_collision(ob, parent_block):
     """Main function for adding collision object ob to a node.""" 
     if _CONFIG["EXPORT_VERSION"] == 'Morrowind':
+         if ob.rbShapeBoundType != Blender.Object.RBShapes['POLYHEDERON']:
+             raise NIFExportError("Morrowind only supports Polyhedron/Static TriangleMesh collisions.")
          node = create_block("RootCollisionNode")
          parent_block.addChild(node)
          node.flags = 0x000C
