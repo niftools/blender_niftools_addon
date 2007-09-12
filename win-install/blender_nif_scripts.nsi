@@ -270,6 +270,7 @@ Section
   File ..\scripts\nif_export.py
   File ..\scripts\nif_import.py
   File ..\scripts\mesh_weightsquash.py
+  File ..\scripts\mesh_hull.py
   SetOutPath "$BLENDERSCRIPTS\bpymodules\nifImEx"
   File ..\scripts\bpymodules\nifImEx\__init__.py
   File ..\scripts\bpymodules\nifImEx\Config.py
