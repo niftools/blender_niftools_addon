@@ -172,22 +172,20 @@ def drawGUI():
         E["EXPORT_ANIMATION_2"] = Draw.Toggle("Export Animation Only (.kf) - MORROWIND ONLY FOR NOW",        addEvent("EXPORT_ANIMATION_2"), 50, H-40, 390, 20, _CONFIG["EXPORT_ANIMATION"] == 2)
         H -= 70
 
-        E["EXPORT_FLATTENSKIN"] = Draw.Toggle("Flatten Skin", addEvent("EXPORT_FLATTENSKIN"), 50, H, 390, 20, _CONFIG["EXPORT_FLATTENSKIN"])
+        E["EXPORT_STRIPIFY"] = Draw.Toggle("Stripify Geometries", addEvent("EXPORT_STRIPIFY"), 50, H, 195, 20, _CONFIG["EXPORT_STRIPIFY"])
+        E["EXPORT_STITCHSTRIPS"] = Draw.Toggle("Stitch Strips", addEvent("EXPORT_STITCHSTRIPS"), 245, H, 195, 20, _CONFIG["EXPORT_STITCHSTRIPS"])
         H -= 30
 
-        E["EXPORT_STRIPIFY"] = Draw.Toggle("Stripify Geometries", addEvent("EXPORT_STRIPIFY"), 50, H, 390, 20, _CONFIG["EXPORT_STRIPIFY"])
-        E["EXPORT_STITCHSTRIPS"] = Draw.Toggle("Stitch Strips", addEvent("EXPORT_STITCHSTRIPS"), 50, H-20, 390, 20, _CONFIG["EXPORT_STITCHSTRIPS"])
-        H -= 50
-
-        E["EXPORT_SKINPARTITION"] = Draw.Toggle("Export Skin Partition", addEvent("EXPORT_SKINPARTITION"), 50, H, 390, 20, _CONFIG["EXPORT_SKINPARTITION"])
-        E["EXPORT_BONESPERPARTITION"] = Draw.Number("Max Bones Per Partition", addEvent("EXPORT_BONESPERPARTITION"), 50, H-20, 390, 20, _CONFIG["EXPORT_BONESPERPARTITION"], 4, 18, "maximum number of bones per partition", updateBonesPerPartition)
+        E["EXPORT_FLATTENSKIN"] = Draw.Toggle("Flatten Skin", addEvent("EXPORT_FLATTENSKIN"), 50, H, 130, 20, _CONFIG["EXPORT_FLATTENSKIN"])
+        E["EXPORT_SKINPARTITION"] = Draw.Toggle("Export Skin Partition", addEvent("EXPORT_SKINPARTITION"), 180, H, 130, 20, _CONFIG["EXPORT_SKINPARTITION"])
+        E["EXPORT_BONESPERPARTITION"] = Draw.Number("Max Bones", addEvent("EXPORT_BONESPERPARTITION"), 310, H, 130, 20, _CONFIG["EXPORT_BONESPERPARTITION"], 4, 18, "maximum number of bones per partition", updateBonesPerPartition)
         # the value 4 does for all games, so let's not let user change it
         #E["EXPORT_BONESPERVERTEX"] = Draw.Number("Max Bones Per Vertex", addEvent("EXPORT_BONESPERVERTEX"), 50, H-65, 390, 20, _CONFIG["EXPORT_BONESPERVERTEX"], 2, 8)
-        H -= 50
+        H -= 30
 
-        E["EXPORT_BHKLISTSHAPE"] = Draw.Toggle("Use Collision List (bhkListShape)", addEvent("EXPORT_BHKLISTSHAPE"), 50, H, 390, 20, _CONFIG["EXPORT_BHKLISTSHAPE"])
-        E["EXPORT_MOPP"] = Draw.Toggle("Export Collision Mopp (EXPERIMENTAL)", addEvent("EXPORT_MOPP"), 50, H-20, 390, 20, _CONFIG["EXPORT_MOPP"])
-        H -= 50
+        E["EXPORT_BHKLISTSHAPE"] = Draw.Toggle("Use bhkListShape", addEvent("EXPORT_BHKLISTSHAPE"), 50, H, 195, 20, _CONFIG["EXPORT_BHKLISTSHAPE"])
+        E["EXPORT_MOPP"] = Draw.Toggle("Export Mopp (EXPERIMENTAL)", addEvent("EXPORT_MOPP"), 245, H, 195, 20, _CONFIG["EXPORT_MOPP"])
+        H -= 30
 
         #E["NIF_EXPORT_PATH"]        = Draw.String("",       addEvent("NIF_EXPORT_PATH"),     50, H-100, 390, 20, _CONFIG["NIF_EXPORT_PATH"],        390, "export path")
         #E["BROWSE_EXPORT_PATH"]     = Draw.PushButton('...',addEvent("BROWSE_EXPORT_PATH"), 440, H-100,  30, 20)
