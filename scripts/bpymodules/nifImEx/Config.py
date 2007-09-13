@@ -289,6 +289,15 @@ def buttonEvent(evt):
             _CONFIG["EXPORT_SKINPARTITION"] = False
             _CONFIG["EXPORT_BHKLISTSHAPE"] = False
             _CONFIG["EXPORT_MOPP"] = False
+        if _CONFIG["EXPORT_VERSION"] == "Freedom Force vs. the 3rd Reich":
+            _CONFIG["EXPORT_STRIPIFY"] = False
+            _CONFIG["EXPORT_STITCHSTRIPS"] = False
+            _CONFIG["EXPORT_ANIMATION"] = 1
+            _CONFIG["EXPORT_FLATTENSKIN"] = False
+            _CONFIG["EXPORT_BONESPERPARTITION"] = 4
+            _CONFIG["EXPORT_SKINPARTITION"] = True
+            _CONFIG["EXPORT_BHKLISTSHAPE"] = False
+            _CONFIG["EXPORT_MOPP"] = False
         elif _CONFIG["EXPORT_VERSION"] == "Civilization IV":
             _CONFIG["EXPORT_STRIPIFY"] = True
             _CONFIG["EXPORT_STITCHSTRIPS"] = True
