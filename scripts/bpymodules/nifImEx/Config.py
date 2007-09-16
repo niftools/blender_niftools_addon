@@ -92,6 +92,7 @@ def updateScale(evt, val):
 
 def updateBonesPerPartition(evt, val):
     _CONFIG["EXPORT_BONESPERPARTITION"] = val
+    _CONFIG["EXPORT_PADBONES"] = False
 
 def addEvent(evName = "NO_NAME"):
     global _GUI_EVENTS
@@ -176,12 +177,13 @@ def drawGUI():
         E["EXPORT_STITCHSTRIPS"] = Draw.Toggle("Stitch Strips", addEvent("EXPORT_STITCHSTRIPS"), 245, H, 195, 20, _CONFIG["EXPORT_STITCHSTRIPS"])
         H -= 30
 
-        E["EXPORT_FLATTENSKIN"] = Draw.Toggle("Flatten Skin", addEvent("EXPORT_FLATTENSKIN"), 50, H, 130, 20, _CONFIG["EXPORT_FLATTENSKIN"])
-        E["EXPORT_SKINPARTITION"] = Draw.Toggle("Export Skin Partition", addEvent("EXPORT_SKINPARTITION"), 180, H, 130, 20, _CONFIG["EXPORT_SKINPARTITION"])
-        E["EXPORT_BONESPERPARTITION"] = Draw.Number("Max Bones", addEvent("EXPORT_BONESPERPARTITION"), 310, H, 130, 20, _CONFIG["EXPORT_BONESPERPARTITION"], 4, 18, "maximum number of bones per partition", updateBonesPerPartition)
+        E["EXPORT_FLATTENSKIN"] = Draw.Toggle("Flatten Skin", addEvent("EXPORT_FLATTENSKIN"), 50, H, 390, 20, _CONFIG["EXPORT_FLATTENSKIN"])
+        E["EXPORT_SKINPARTITION"] = Draw.Toggle("Export Skin Partition", addEvent("EXPORT_SKINPARTITION"), 50, H-20, 130, 20, _CONFIG["EXPORT_SKINPARTITION"])
+        E["EXPORT_PADBONES"] = Draw.Toggle("Pad & Sort Bones", addEvent("EXPORT_PADBONES"), 180, H-20, 130, 20, _CONFIG["EXPORT_PADBONES"])
+        E["EXPORT_BONESPERPARTITION"] = Draw.Number("Max Bones", addEvent("EXPORT_BONESPERPARTITION"), 310, H-20, 130, 20, _CONFIG["EXPORT_BONESPERPARTITION"], 4, 18, "maximum number of bones per partition", updateBonesPerPartition)
         # the value 4 does for all games, so let's not let user change it
         #E["EXPORT_BONESPERVERTEX"] = Draw.Number("Max Bones Per Vertex", addEvent("EXPORT_BONESPERVERTEX"), 50, H-65, 390, 20, _CONFIG["EXPORT_BONESPERVERTEX"], 2, 8)
-        H -= 30
+        H -= 50
 
         E["EXPORT_BHKLISTSHAPE"] = Draw.Toggle("Use bhkListShape", addEvent("EXPORT_BHKLISTSHAPE"), 50, H, 195, 20, _CONFIG["EXPORT_BHKLISTSHAPE"])
         E["EXPORT_MOPP"] = Draw.Toggle("Export Mopp (EXPERIMENTAL)", addEvent("EXPORT_MOPP"), 245, H, 195, 20, _CONFIG["EXPORT_MOPP"])
@@ -285,6 +287,7 @@ def buttonEvent(evt):
             _CONFIG["EXPORT_ANIMATION"] = 1
             _CONFIG["EXPORT_FLATTENSKIN"] = False
             _CONFIG["EXPORT_SKINPARTITION"] = False
+            _CONFIG["EXPORT_PADBONES"] = False
             _CONFIG["EXPORT_BHKLISTSHAPE"] = False
             _CONFIG["EXPORT_MOPP"] = False
         if _CONFIG["EXPORT_VERSION"] == "Freedom Force vs. the 3rd Reich":
@@ -294,6 +297,7 @@ def buttonEvent(evt):
             _CONFIG["EXPORT_FLATTENSKIN"] = False
             _CONFIG["EXPORT_BONESPERPARTITION"] = 4
             _CONFIG["EXPORT_SKINPARTITION"] = True
+            _CONFIG["EXPORT_PADBONES"] = True
             _CONFIG["EXPORT_BHKLISTSHAPE"] = False
             _CONFIG["EXPORT_MOPP"] = False
         elif _CONFIG["EXPORT_VERSION"] == "Civilization IV":
@@ -303,6 +307,7 @@ def buttonEvent(evt):
             _CONFIG["EXPORT_FLATTENSKIN"] = False
             _CONFIG["EXPORT_BONESPERPARTITION"] = 4
             _CONFIG["EXPORT_SKINPARTITION"] = True
+            _CONFIG["EXPORT_PADBONES"] = False
             _CONFIG["EXPORT_BHKLISTSHAPE"] = False
             _CONFIG["EXPORT_MOPP"] = False
         elif _CONFIG["EXPORT_VERSION"] == "Oblivion":
@@ -311,6 +316,7 @@ def buttonEvent(evt):
             _CONFIG["EXPORT_FLATTENSKIN"] = True
             _CONFIG["EXPORT_BONESPERPARTITION"] = 18
             _CONFIG["EXPORT_SKINPARTITION"] = True
+            _CONFIG["EXPORT_PADBONES"] = False
             _CONFIG["EXPORT_BHKLISTSHAPE"] = False
             _CONFIG["EXPORT_MOPP"] = False
     elif evName[:8] == "VERSION_":
@@ -330,6 +336,10 @@ def buttonEvent(evt):
              _CONFIG["EXPORT_FLATTENSKIN"] = False # disable flattening skin
     elif evName == "EXPORT_SKINPARTITION":
         _CONFIG["EXPORT_SKINPARTITION"] = not _CONFIG["EXPORT_SKINPARTITION"]
+    elif evName == "EXPORT_PADBONES":
+        _CONFIG["EXPORT_PADBONES"] = not _CONFIG["EXPORT_PADBONES"]
+        if _CONFIG["EXPORT_PADBONES"]: # bones are padded
+            _CONFIG["EXPORT_BONESPERPARTITION"] = 4 # force 4 bones per partition
     elif evName == "EXPORT_BHKLISTSHAPE":
         _CONFIG["EXPORT_BHKLISTSHAPE"] = not _CONFIG["EXPORT_BHKLISTSHAPE"]
     elif evName == "EXPORT_MOPP":

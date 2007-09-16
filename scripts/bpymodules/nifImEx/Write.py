@@ -1667,7 +1667,7 @@ def export_trishapes(ob, space, parent_block, trishape_name = None):
                     if NIF_VERSION >= 0x04020100 and _CONFIG["EXPORT_SKINPARTITION"]:
                         msg("creating 'NiSkinPartition'")
                         maxbpp = _CONFIG["EXPORT_BONESPERPARTITION"]
-                        lostweight = trishape.updateSkinPartition(maxbonesperpartition = _CONFIG["EXPORT_BONESPERPARTITION"], maxbonespervertex = _CONFIG["EXPORT_BONESPERVERTEX"], stripify = _CONFIG["EXPORT_STRIPIFY"], stitchstrips = _CONFIG["EXPORT_STITCHSTRIPS"])
+                        lostweight = trishape.updateSkinPartition(maxbonesperpartition = _CONFIG["EXPORT_BONESPERPARTITION"], maxbonespervertex = _CONFIG["EXPORT_BONESPERVERTEX"], stripify = _CONFIG["EXPORT_STRIPIFY"], stitchstrips = _CONFIG["EXPORT_STITCHSTRIPS"], padbones = _CONFIG["EXPORT_PADBONES"])
                         if lostweight > NifFormat._EPSILON:
                             print "WARNING: lost %f in vertex weights while creating skin partition"%lostweight
 
