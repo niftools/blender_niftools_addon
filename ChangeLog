@@ -3,6 +3,7 @@ Version 2.1.8 (Sep 17, 2007)
 Freedom Force vs. The 3rd Reich
 * Export: automatic settings for Freedom Force vs. The 3rd Reich
 * Export: compacter gui
+* new script for quickly creating bounding boxes 
 
 Version 2.1.7 (Sep 9, 2007)
 * Import: trishapes/tristrips of grouping NiNodes are merged on import and the

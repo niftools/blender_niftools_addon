@@ -4,12 +4,11 @@ Name: 'Hull'
 Blender: 244
 Group: 'Mesh'
 Submenu: 'Box' box
-Submenu: 'Sphere' sphere
-Submenu: 'Cylinder' cylinder
 Tooltip: 'Hull Selected Objects'
 """
 
-# note: this script is not quite functional yet
+#Submenu: 'Sphere' sphere
+#Submenu: 'Cylinder' cylinder
 
 # -------------------------------------------------------------------------- 
 # Hull 1.0 by Amorilia 
@@ -50,17 +49,34 @@ Tooltip: 'Hull Selected Objects'
 import Blender
 from Blender import Window, sys
 
-def hull_box(me):
+def hull_box(ob, me):
     """Hull mesh in a box."""
 
     # find box hull
-    best_face = me.faces[0]
-    for f in me.faces:
-        # find box along this face
-        # first find face normal
-        n = f.no
-        #for v in me.vertices:
-        #   pass 
+    # todo: improve algorithm
+    minx = min([v.co[0] for v in me.verts])
+    miny = min([v.co[1] for v in me.verts])
+    minz = min([v.co[2] for v in me.verts])
+    maxx = max([v.co[0] for v in me.verts])
+    maxy = max([v.co[1] for v in me.verts])
+    maxz = max([v.co[2] for v in me.verts])
+
+    # create box
+    box = Blender.Mesh.New('box')
+    for x in [minx, maxx]:
+        for y in [miny, maxy]:
+            for z in [minz, maxz]:
+                box.verts.extend(x,y,z)
+    box.faces.extend([[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
+
+    # link box to scene and set transform
+    scn = Blender.Scene.GetCurrent()
+    boxob = scn.objects.new(box, 'box')
+    boxob.setMatrix(ob.getMatrix('worldspace'))
+
+    # set bounds type
+    boxob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
+    boxob.rbShapeBoundType = Blender.Object.RBShapes['BOX']
 
 def main():
     # get selected meshes
@@ -77,7 +93,7 @@ def main():
     num_affected = 0
     for ob in obs:
         me = ob.getData(mesh=1) # get Mesh, not NMesh
-        hull_box(me)
+        hull_box(ob, me)
 
     print 'Hull finished in %.2f seconds' % (sys.time()-t)
     Window.WaitCursor(0)
