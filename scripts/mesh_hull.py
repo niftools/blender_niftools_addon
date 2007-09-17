@@ -9,6 +9,8 @@ Submenu: 'Cylinder' cylinder
 Tooltip: 'Hull Selected Objects'
 """
 
+# note: this script is not quite functional yet
+
 # -------------------------------------------------------------------------- 
 # Hull 1.0 by Amorilia 
 # -------------------------------------------------------------------------- 
