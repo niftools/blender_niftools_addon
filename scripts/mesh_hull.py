@@ -4,10 +4,10 @@ Name: 'Hull'
 Blender: 244
 Group: 'Mesh'
 Submenu: 'Box' box
+Submenu: 'Sphere' sphere
 Tooltip: 'Hull Selected Objects'
 """
 
-#Submenu: 'Sphere' sphere
 #Submenu: 'Cylinder' cylinder
 
 # -------------------------------------------------------------------------- 
@@ -78,7 +78,52 @@ def hull_box(ob, me):
     boxob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
     boxob.rbShapeBoundType = Blender.Object.RBShapes['BOX']
 
-def main():
+def hull_sphere(ob, me):
+    """Hull mesh in a sphere."""
+
+    # find square box hull
+    minx = min([v.co[0] for v in me.verts])
+    miny = min([v.co[1] for v in me.verts])
+    minz = min([v.co[2] for v in me.verts])
+    maxx = max([v.co[0] for v in me.verts])
+    maxy = max([v.co[1] for v in me.verts])
+    maxz = max([v.co[2] for v in me.verts])
+
+    cx = (minx+maxx)*0.5
+    cy = (miny+maxy)*0.5
+    cz = (minz+maxz)*0.5
+
+    lx = maxx-minx
+    ly = maxy-miny
+    lz = maxz-minz
+
+    l = max([lx,ly,lz])*0.5
+
+    minx = cx-l
+    miny = cy-l
+    minz = cz-l
+    maxx = cx+l
+    maxy = cy+l
+    maxz = cz+l
+
+    # create sphere
+    box = Blender.Mesh.New('sphere')
+    for x in [minx, maxx]:
+        for y in [miny, maxy]:
+            for z in [minz, maxz]:
+                box.verts.extend(x,y,z)
+    box.faces.extend([[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
+
+    # link box to scene and set transform
+    scn = Blender.Scene.GetCurrent()
+    boxob = scn.objects.new(box, 'sphere')
+    boxob.setMatrix(ob.getMatrix('worldspace'))
+
+    # set bounds type
+    boxob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
+    boxob.rbShapeBoundType = Blender.Object.RBShapes['SPHERE']
+
+def main(arg):
     # get selected meshes
     obs = [ob for ob in Blender.Object.GetSelected() if ob.type == 'Mesh']
     
@@ -93,11 +138,12 @@ def main():
     num_affected = 0
     for ob in obs:
         me = ob.getData(mesh=1) # get Mesh, not NMesh
-        hull_box(ob, me)
+        if arg == 'box': hull_box(ob, me)
+        elif arg == 'sphere': hull_sphere(ob, me)
 
     print 'Hull finished in %.2f seconds' % (sys.time()-t)
     Window.WaitCursor(0)
     if is_editmode: Window.EditMode(1)
     
 if __name__ == '__main__':
-    main()
+    main(__script__['arg'])
