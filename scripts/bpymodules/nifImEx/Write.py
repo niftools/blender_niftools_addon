@@ -62,7 +62,6 @@ def msg(message='-', level=2):
     if _CONFIG["VERBOSITY"] and level <= _CONFIG["VERBOSITY"]:
         print message
 
-FORCE_DDS = False
 STRIP_TEXPATH = False
 EXPORT_DIR = ''
 
@@ -932,7 +931,7 @@ def export_sourcetexture(texture, filename = None):
                 srctex.fileName = Blender.sys.basename(tfn)
         # try and find a DDS alternative, force it if required
         ddsFile = "%s%s" % (srctex.fileName[:-4], '.dds')
-        if Blender.sys.exists(ddsFile) == 1 or FORCE_DDS:
+        if Blender.sys.exists(ddsFile) or _CONFIG["EXPORT_FORCEDDS"]:
             srctex.fileName = ddsFile
 
     else:   # if the file is not external

@@ -173,6 +173,9 @@ def drawGUI():
         E["EXPORT_ANIMATION_2"] = Draw.Toggle("Export Animation Only (.kf) - MORROWIND ONLY FOR NOW",        addEvent("EXPORT_ANIMATION_2"), 50, H-40, 390, 20, _CONFIG["EXPORT_ANIMATION"] == 2)
         H -= 70
 
+        E["EXPORT_FORCEDDS"] = Draw.Toggle("Force DDS Extension", addEvent("EXPORT_FORCEDDS"), 50, H, 390, 20, _CONFIG["EXPORT_FORCEDDS"])
+        H -= 30
+
         E["EXPORT_STRIPIFY"] = Draw.Toggle("Stripify Geometries", addEvent("EXPORT_STRIPIFY"), 50, H, 195, 20, _CONFIG["EXPORT_STRIPIFY"])
         E["EXPORT_STITCHSTRIPS"] = Draw.Toggle("Stitch Strips", addEvent("EXPORT_STITCHSTRIPS"), 245, H, 195, 20, _CONFIG["EXPORT_STITCHSTRIPS"])
         H -= 30
@@ -325,6 +328,8 @@ def buttonEvent(evt):
         _CONFIG["EXPORT_FLATTENSKIN"] = not _CONFIG["EXPORT_FLATTENSKIN"]
         if _CONFIG["EXPORT_FLATTENSKIN"]: # if skin is flattened
             _CONFIG["EXPORT_ANIMATION"] = 1 # force geometry only
+    elif evName == "EXPORT_FORCEDDS":
+        _CONFIG["EXPORT_FORCEDDS"] = not _CONFIG["EXPORT_FORCEDDS"]
     elif evName == "EXPORT_STRIPIFY":
         _CONFIG["EXPORT_STRIPIFY"] = not _CONFIG["EXPORT_STRIPIFY"]
     elif evName == "EXPORT_STITCHSTRIPS":

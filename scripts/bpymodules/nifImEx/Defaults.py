@@ -40,6 +40,7 @@ _CFG_VERBOSITY = 0 # verbosity level, determines how much debug output will be g
 
 _CFG_IMPORT_SKELETON = False # import file as skeleton
 _CFG_EXPORT_ANIMATION = 0 # export everything (1=geometry only, 2=animation only)
+_CFG_EXPORT_FORCEDDS = False # force dds extension
 _CFG_EXPORT_SKINPARTITION = True
 _CFG_EXPORT_BONESPERVERTEX = 4
 _CFG_EXPORT_BONESPERPARTITION = 18
