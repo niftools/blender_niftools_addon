@@ -1,3 +1,7 @@
+Version 2.1.9 (Sep 21, 2007)
+* Export: new option to force dds extension of texture paths
+* updated hull script for quickly creating bounding spheres
+
 Version 2.1.8 (Sep 17, 2007)
 * Export: new padbones option which pads and sorts bones as required by
 Freedom Force vs. The 3rd Reich

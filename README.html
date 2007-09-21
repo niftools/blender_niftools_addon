@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <title>The Blender NIF Scripts v2.1.8</title>
+  <title>The Blender NIF Scripts v2.1.9</title>
   <meta http-equiv="Content-Type"
  content="text/html; charset=ISO-8859-1" />
   <style type="text/css">
@@ -19,14 +19,13 @@ a:hover.nav { color: #FF0000; background: transparent; }
   </style>
 </head>
 <body>
-<h1>The Blender NIF Scripts v2.1.8</h1>
+<h1>The Blender NIF Scripts v2.1.9</h1>
 <h2>Release Notes</h2>
 Although we have done our best to squash all bugs we could find, it is unlikely that we have found them all. If you find bugs, PLEASE REPORT THEM ON THE SOURCEFORGE TRACKER.
 <h3>Highlights of this Release</h3>
 <ul>
-<li>New export option 'padbones' for sorting and padding bones, as required by Freedom Force vs. The 3rd Reich.</li>
-<li>Fixed skin partition bug which caused parts of the geometry to vanish in certain cases. The produced skin partitions should also be more optimal.</li>
-<li>New script for quick creation of collision bounding boxes (Scripts -&gt; Mesh -&gt; Hull).</li>
+<li>New export option to force dds extension of texture paths.</li>
+<li>Updated hull script for quick creation of collision bounding spheres as well as bounding boxes (Scripts -&gt; Mesh -&gt; Hull).</li>
 </ul>
 <h2>Support</h2>
 <ul>
@@ -213,16 +212,6 @@ UV channels or collision meshes.
 </ul>
 <h3>Known Issues and Workarounds</h3>
 <ul>
-  <li>Objects that had originally multiple materials will get
-imported
-as seperate meshes. As a consequence, if you export them again they
-cannot retain the original mesh name, which results in trouble when you
-re-export rigged stuff such as clothing simply because Morrowind is
-very picky about the names of nodes in rigged models: the engine must
-know where to attach certain nodes in the structure, and it uses the
-node name to do so. If you import rigged meshes with multiple
-materials, you probably need NifSkope to sort things out on the
-re-exported model.</li>
   <li>The import of animation is quite slow, and it won't yet
 import or merge standalone animation tracks.
 These have to be merged in a geometry with skinning info beforehand,
