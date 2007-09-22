@@ -1,8 +1,6 @@
 import Blender, Config
 from Blender import Draw, BGL, sys
 
-import tempfile
-
 try:
     from PyFFI.NIF import NifFormat
 except:
@@ -476,30 +474,6 @@ and turn off envelopes."""%ob.getName()
 
     Blender.Window.DrawProgressBar(1.0, "Finished")
     
-    return # uncomment to enable double check
-
-    # no export error, but let's double check: try reading the file(s) we just wrote
-    # we can probably remove these lines once the exporter is stable
-    try:
-        f = open(filename, "rb")
-        try:
-            NifFormat.read(NIF_VERSION, NIF_USER_VERSION, f)
-            f_tmp = tempfile.TemporaryFile()
-            try:
-                NifFormat.write(NIF_VERSION, NIF_USER_VERSION, f_tmp, [root_block])
-                f.seek(2,0)
-                f_tmp.seek(2,0)
-                if f.tell() != f_tmp.tell(): # comparing the files will usually be different because blocks may have been written back in a different order, so cheaply just compare file sizes
-                    raise NifExportError('write check failed: file sizes differ')
-            finally:
-                f_tmp.close()
-        finally:
-            f.close()
-    except:
-        Blender.Draw.PupMenu("WARNING%t|Exported NIF file may not be valid: double check failed! This is probably due to an unknown bug in the exporter code.")
-        raise # re-raise the exception
-
-
 
 
 # 
