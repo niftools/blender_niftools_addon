@@ -418,7 +418,7 @@ def load():
     """
     # both loads and cleans up the configuration from the registry
     global _CONFIG, _CONFIG_NAME
-    reload(Defaults)
+    #reload(Defaults)
     _CONFIG = {}
     for key in dir(Defaults):
         if key[:5] == "_CFG_":

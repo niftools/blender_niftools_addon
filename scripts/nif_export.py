@@ -8,6 +8,7 @@ Tooltip: 'Export NIF File Format (.nif & .kf)'
 """
 
 import nifImEx.Config
+import nifImEx.Write
 
 __author__ = "The NifTools team, http://niftools.sourceforge.net/"
 __url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
@@ -51,11 +52,5 @@ This script exports Netimmerse and Gamebryo .NIF files from Blender.
 # ***** END LICENCE BLOCK *****
 # --------------------------------------------------------------------------
 
-import nifImEx
-from nifImEx import Write
-reload(nifImEx.Write)
-
-#nifImEx.Write.openGUI()
-#nifImEx.Write.loadConfig()
 nifImEx.Write.openFileSelector()
 
