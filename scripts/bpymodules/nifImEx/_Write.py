@@ -71,7 +71,7 @@ class NifExport:
         if self.VERBOSITY and level <= self.VERBOSITY:
             print message
 
-    def rebuild_bone_extra_data(self):
+    def rebuildBonesExtraMatrices(self):
         """Recover bone extra matrices."""
         try:
             bonetxt = Blender.Text.Get('BoneExMat')
@@ -91,7 +91,7 @@ class NifExport:
                 mat.invert()
                 self.bonesExtraMatrixInv[b] = mat # X^{-1}
 
-    def rebuild_full_name_map(self):
+    def rebuildFullNames(self):
         """Recovers the full object names from the text buffer and rebuilds
         the names dictionary."""
         try:
@@ -104,7 +104,7 @@ class NifExport:
                 self.names[name] = fullname
 
 
-    def get_unique_name(self, blender_name):
+    def getUniqueName(self, blender_name):
         """Returns an unique name for use in the NIF file, from the name of a
         Blender object."""
         unique_name = "default_name"
@@ -120,13 +120,13 @@ class NifExport:
         self.names[blender_name] = unique_name
         return unique_name
 
-    def get_full_name(self, blender_name):
+    def getFullName(self, blender_name):
         """Returns the original imported name if present, or the name by which
         the object was exported already."""
         try:
             return self.names[blender_name]
         except KeyError:
-            return get_unique_name(blender_name)
+            return self.getUniqueName(blender_name)
 
     def __init__(self, filename, **config):
         """Main export function."""
@@ -221,10 +221,10 @@ and turn off envelopes."""%ob.getName()
                 break
                 
         # rebuilds the bone extra data dictionaries from the 'BoneExMat' text buffer
-        self.rebuild_bone_extra_data()
+        self.rebuildBonesExtraMatrices()
         
         # rebuilds the full name dictionary from the 'FullNames' text buffer 
-        self.rebuild_full_name_map()
+        self.rebuildFullNames()
         
         # export nif:
         #------------
@@ -234,14 +234,14 @@ and turn off envelopes."""%ob.getName()
         
         # export the root node (the name is fixed later to avoid confusing the
         # exporter with duplicate names)
-        root_block = self.export_node(None, 'none', None, '')
+        root_block = self.exportNode(None, 'none', None, '')
         
         # export objects
         msg("Exporting objects")
         for root_object in root_objects:
             # export the root objects as a NiNodes; their children are exported as well
             # note that localspace = worldspace, because root objects have no parents
-            self.export_node(root_object, 'localspace', root_block, root_object.getName())
+            self.exportNode(root_object, 'localspace', root_block, root_object.getName())
 
         # post-processing:
         #-----------------
@@ -273,11 +273,11 @@ and turn off envelopes."""%ob.getName()
             if not has_keyframecontrollers:
                 msg("Defining dummy keyframe controller")
                 # add a trivial keyframe controller on the scene root
-                export_keyframecontroller(None, 'localspace', root_block)
+                self.exportKeyframes(None, 'localspace', root_block)
         
         # export animation groups
         if (animtxt):
-            anim_textextra = export_animgroups(animtxt, root_block)
+            anim_textextra = self.exportAnimGroups(animtxt, root_block)
 
         # activate oblivion collision and physics
         if self.EXPORT_VERSION == 'Oblivion':
@@ -287,25 +287,25 @@ and turn off envelopes."""%ob.getName()
                    hascollision = True
                    break
             if hascollision:
-                bsx = create_block("BSXFlags")
+                bsx = self.createBlock("BSXFlags")
                 bsx.name = 'BSX'
                 bsx.integerData = 2 # enable collision
                 root_block.addExtraData(bsx)
 
             # many Oblivion nifs have a UPB, but export is disabled as
             # they do not seem to affect anything in the game
-            #upb = create_block("NiStringExtraData")
+            #upb = self.createBlock("NiStringExtraData")
             #upb.name = 'UPB'
             #upb.stringData = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
             #root_block.addExtraData(upb)
 
         # add vertex color and zbuffer properties for civ4
         if self.EXPORT_VERSION == 'Civilization IV':
-            vcol = create_block("NiVertexColorProperty")
+            vcol = self.createBlock("NiVertexColorProperty")
             vcol.flags = 1
             vcol.vertexMode = 0
             vcol.lightingMode = 1
-            zbuf = create_block("NiZBufferProperty")
+            zbuf = self.createBlock("NiZBufferProperty")
             zbuf.flags = 15
             zbuf.function = 3
             root_block.addProperty(vcol)
@@ -375,7 +375,7 @@ and turn off envelopes."""%ob.getName()
             # morrowind
             if self.EXPORT_VERSION == "Morrowind":
                 # create kf root header
-                kf_root = create_block("NiSequenceStreamHelper")
+                kf_root = self.createBlock("NiSequenceStreamHelper")
                 kf_root.addExtraData(anim_textextra)
                 # find all nodes and keyframe controllers
                 nodekfs = {}
@@ -391,7 +391,7 @@ and turn off envelopes."""%ob.getName()
                 for node, ctrls in nodekfs.iteritems():
                     for ctrl in ctrls:
                         # create node reference by name
-                        nodename_extra = create_block("NiStringExtraData")
+                        nodename_extra = self.createBlock("NiStringExtraData")
                         nodename_extra.bytesRemaining = len(node.name) + 4
                         nodename_extra.stringData = node.name
 
@@ -448,17 +448,16 @@ and turn off envelopes."""%ob.getName()
     
 
 
-    # 
-    # Export a mesh/armature/empty object ob as child of parent_block.
-    # Export also all children of ob.
-    #
-    # - space is 'none', 'worldspace', or 'localspace', and determines
-    #   relative to what object the transformation should be stored.
-    # - parent_block is the parent nif block of the object (None for the root node)
-    # - for the root node, ob is None, and node_name is usually the base
-    #   filename (either with or without extension)
-    #
-    def export_node(ob, space, parent_block, node_name):
+    def exportNode(self, ob, space, parent_block, node_name):
+        """
+        Export a mesh/armature/empty object ob as child of parent_block.
+        Export also all children of ob.
+        - space is 'none', 'worldspace', or 'localspace', and determines
+          relative to what object the transformation should be stored.
+        - parent_block is the parent nif block of the object (None for the root node)
+        - for the root node, ob is None, and node_name is usually the base
+          filename (either with or without extension)
+        """
         msg("Exporting NiNode %s"%node_name)
 
         # ob_type: determine the block type (None, 'Mesh', 'Empty' or 'Armature')
@@ -467,7 +466,7 @@ and turn off envelopes."""%ob.getName()
         if (ob == None):
             # -> root node
             assert(parent_block == None) # debug
-            node = create_block("NiNode")
+            node = self.createBlock("NiNode")
             ob_type = None
             ob_ipo = None
         else:
@@ -480,7 +479,7 @@ and turn off envelopes."""%ob.getName()
             
             if (node_name == 'RootCollisionNode'):
                 # -> root collision node (can be mesh or empty)
-                node = create_block("RootCollisionNode")
+                node = self.createBlock("RootCollisionNode")
             elif ob_type == 'Mesh':
                 # -> mesh data.
                 # If this has children or animations or more than one material
@@ -490,11 +489,11 @@ and turn off envelopes."""%ob.getName()
                 has_children = len(ob_children) > 0
                 is_multimaterial = len(set([f.mat for f in ob.data.faces])) > 1
                 if is_collision:
-                    export_collision(ob, parent_block)
+                    self.exportCollision(ob, parent_block)
                     return None # done; stop here
                 elif has_ipo or has_children or is_multimaterial:
                     # -> mesh ninode for the hierarchy to work out
-                    node = create_block('NiNode')
+                    node = self.createBlock('NiNode')
                 else:
                     # don't create intermediate ninode for this guy
                     export_trishapes(ob, space, parent_block, node_name)
@@ -502,7 +501,7 @@ and turn off envelopes."""%ob.getName()
                     return None
             else:
                 # -> everything else (empty/armature) is a regular node
-                node = create_block("NiNode")
+                node = self.createBlock("NiNode")
 
         # set transform on trishapes rather than on NiNode for skinned meshes
         # this fixes an issue with clothing slots
@@ -519,7 +518,7 @@ and turn off envelopes."""%ob.getName()
             parent_block.addChild(node)
 
         # and fill in this node's non-trivial values
-        node.name = get_full_name(node_name)
+        node.name = self.getFullName(node_name)
         if (ob == None):
             node.flags = 0x000C # ? this seems pretty standard for the root node
         elif (node_name == 'RootCollisionNode'):
@@ -527,12 +526,12 @@ and turn off envelopes."""%ob.getName()
         else:
             node.flags = 0x000C # ? this seems pretty standard for static and animated ninodes
 
-        export_matrix(ob, space, node)
+        self.exportMatrix(ob, space, node)
 
         if (ob != None):
             # export animation
             if (ob_ipo != None):
-                export_keyframecontroller(ob_ipo, space, node)
+                self.exportKeyframes(ob_ipo, space, node)
         
             # if it is a mesh, export the mesh as trishape children of this ninode
             if (ob.getType() == 'Mesh'):
@@ -543,7 +542,7 @@ and turn off envelopes."""%ob.getName()
                 export_bones(ob, node)
 
             # export all children of this empty/mesh/armature/bone object as children of this NiNode
-            export_children(ob, node)
+            self.exportChildren(ob, node)
 
         return node
 
@@ -593,7 +592,7 @@ and turn off envelopes."""%ob.getName()
     # inverse(RX) = rotation part of inverse(X)
     # 1 / SX = scale part of inverse(X)
     # so having inverse(X) around saves on calculations
-    def export_keyframecontroller(ipo, space, parent_block, bind_mat = None, extra_mat_inv = None):
+    def exportKeyframes(self, ipo, space, parent_block, bind_mat = None, extra_mat_inv = None):
         if self.EXPORT_ANIMATION == 1: # keyframe controllers are not present in geometry only files
             return
 
@@ -694,10 +693,10 @@ and turn off envelopes."""%ob.getName()
 
         # add a keyframecontroller block, and refer to this block in the parent's time controller
         if NIF_VERSION < 0x0A020000:
-            kfc = create_block("NiKeyframeController")
+            kfc = self.createBlock("NiKeyframeController")
         else:
-            kfc = create_block("NiTransformController")
-            kfi = create_block("NiTransformInterpolator")
+            kfc = self.createBlock("NiTransformController")
+            kfi = self.createBlock("NiTransformInterpolator")
             kfc.interpolator = kfi
         parent_block.addController(kfc)
 
@@ -710,10 +709,10 @@ and turn off envelopes."""%ob.getName()
 
         # add the keyframe data
         if NIF_VERSION < 0x0A020000:
-            kfd = create_block("NiKeyframeData")
+            kfd = self.createBlock("NiKeyframeData")
             kfc.data = kfd
         else:
-            kfd = create_block("NiTransformData")
+            kfd = self.createBlock("NiTransformData")
             kfi.data = kfd
 
         frames = rot_curve.keys()
@@ -753,10 +752,10 @@ and turn off envelopes."""%ob.getName()
 
 
 
-    def export_vcolprop(vertex_mode, lighting_mode):
+    def exportVColProp(self, vertex_mode, lighting_mode):
         msg("Exporting NiVertexColorProperty")
         # create new vertex color property block
-        vcolprop = create_block("NiVertexColorProperty")
+        vcolprop = self.createBlock("NiVertexColorProperty")
         
         # make it a property of the root node
         self.blocks[0].addChild(vcolprop)
@@ -771,7 +770,7 @@ and turn off envelopes."""%ob.getName()
     # parse the animation groups buffer and write an extra string data block,
     # parented to the root block
     #
-    def export_animgroups(animtxt, block_parent):
+    def exportAnimGroups(self, animtxt, block_parent):
         if self.EXPORT_ANIMATION == 1: # animation group extra data is not present in geometry only files
             return
 
@@ -816,7 +815,7 @@ and turn off envelopes."""%ob.getName()
         
         # add a NiTextKeyExtraData block, and refer to this block in the
         # parent node (we choose the root block)
-        textextra = create_block("NiTextKeyExtraData")
+        textextra = self.createBlock("NiTextKeyExtraData")
         block_parent.addExtraData(textextra)
         
         # create a NiTextKey for each frame descriptor
@@ -838,7 +837,7 @@ and turn off envelopes."""%ob.getName()
     #
     # Returns block of the exported NiSourceTexture
     #
-    def export_sourcetexture(self, texture, filename = None):
+    def exportSourceTexture(self, texture, filename = None):
         
         msg("Exporting source texture %s"%texture.getName())
         # texture must be of type IMAGE
@@ -854,7 +853,7 @@ and turn off envelopes."""%ob.getName()
             return self.textures[texid]
 
         # add NiSourceTexture
-        srctex = create_block("NiSourceTexture")
+        srctex = self.createBlock("NiSourceTexture")
         srctex.useExternal = not texture.getImage().packed
         if srctex.useExternal:
             if filename != None:
@@ -876,7 +875,7 @@ and turn off envelopes."""%ob.getName()
                     srctex.fileName = Blender.sys.basename(tfn)
             # try and find a DDS alternative, force it if required
             ddsFile = "%s%s" % (srctex.fileName[:-4], '.dds')
-            if Blender.sys.exists(ddsFile) or _CONFIG["EXPORT_FORCEDDS"]:
+            if Blender.sys.exists(ddsFile) or self.EXPORT_FORCEDDS:
                 srctex.fileName = ddsFile
 
         else:   # if the file is not external
@@ -908,7 +907,7 @@ and turn off envelopes."""%ob.getName()
                     r, g, b, a = image.getPixelF( x, (h-1)-y )
                     colors.append( Color4( r, g, b, a ) )
             
-            pixeldata = create_block("NiPixelData")
+            pixeldata = self.createBlock("NiPixelData")
             ipdata = QueryPixelData( pixeldata )
             ipdata.Reset( w, h, pixelformat )
             ipdata.SetColors( colors, texture.imageFlags & Blender.Texture.ImageFlags.MIPMAP != 0 )
@@ -939,12 +938,12 @@ and turn off envelopes."""%ob.getName()
     #
     # returns exported NiFlipController
     # 
-    def export_flipcontroller( fliptxt, texture, target, target_tex ):
+    def exportFlipController(self, fliptxt, texture, target, target_tex):
         msg("Exporting NiFlipController for texture %s"%texture.getName())
         tlist = fliptxt.asLines()
 
         # create a NiFlipController
-        flip = create_block("NiFlipController")
+        flip = self.createBlock("NiFlipController")
         target.addController(flip)
 
         # get frame start and frame end, and the number of frames per second
@@ -963,7 +962,7 @@ and turn off envelopes."""%ob.getName()
         for t in tlist:
             if len( t ) == 0: continue  # skip empty lines
             # create a NiSourceTexture for each flip
-            tex = export_sourcetexture(texture, t)
+            tex = self.exportSourceTexture(texture, t)
             flip["Sources"].AddLink(tex)
             count += 1
         if count < 2:
@@ -1219,10 +1218,10 @@ and turn off envelopes."""%ob.getName()
             # no material                    -> typically, collision mesh
 
             # add a trishape block, and refer to this block in the parent's children list
-            if not _CONFIG["EXPORT_STRIPIFY"]:
-                trishape = create_block("NiTriShape")
+            if not self.EXPORT_STRIPIFY:
+                trishape = self.createBlock("NiTriShape")
             else:
-                trishape = create_block("NiTriStrips")
+                trishape = self.createBlock("NiTriStrips")
             parent_block.addChild(trishape)
             
             # fill in the NiTriShape's non-trivial values
@@ -1238,17 +1237,17 @@ and turn off envelopes."""%ob.getName()
             if len(mesh_mats) > 1:
                 # multimaterial meshes: add material index
                 trishape.name += " %i"%materialIndex # Morrowind's child naming convention
-            trishape.name = get_full_name(trishape.name)
+            trishape.name = self.getFullName(trishape.name)
             if ob.getDrawType() != 2: # not wire
                 trishape.flags = 0x0004 # use triangles as bounding box
             else:
                 trishape.flags = 0x0005 # use triangles as bounding box + hide
 
-            export_matrix(ob, space, trishape)
+            self.exportMatrix(ob, space, trishape)
             
             if (mesh_base_tex != None or mesh_glow_tex != None):
                 # add NiTriShape's texturing property
-                tritexprop = create_block("NiTexturingProperty")
+                tritexprop = self.createBlock("NiTexturingProperty")
                 trishape.addProperty(tritexprop)
 
                 tritexprop.flags = 0x0001 # standard
@@ -1264,12 +1263,12 @@ and turn off envelopes."""%ob.getName()
                     txtlist = Blender.Text.Get()
                     for fliptxt in txtlist:
                         if fliptxt.getName() == mesh_base_tex.getName():
-                            export_flipcontroller( fliptxt, mesh_base_tex, tritexprop, BASE_MAP )
+                            self.exportFlipController( fliptxt, mesh_base_tex, tritexprop, BASE_MAP )
                             break
                         else:
                             fliptxt = None
                     else:
-                        basetex.source = export_sourcetexture(mesh_base_tex)
+                        basetex.source = self.exportSourceTexture(mesh_base_tex)
 
                 if ( mesh_glow_tex != None ):
                     glowtex = TexDesc()
@@ -1279,18 +1278,18 @@ and turn off envelopes."""%ob.getName()
                     txtlist = Blender.Text.Get()
                     for fliptxt in txtlist:
                         if fliptxt.getName() == mesh_glow_tex.getName():
-                            export_flipcontroller( fliptxt, mesh_glow_tex, tritexprop, GLOW_MAP )
+                            self.exportFlipController( fliptxt, mesh_glow_tex, tritexprop, GLOW_MAP )
                             break
                         else:
                             fliptxt = None
                     else:
-                        glowtex.source = export_sourcetexture(mesh_glow_tex)
+                        glowtex.source = self.exportSourceTexture(mesh_glow_tex)
                     
                     itritexprop.SetTexture(GLOW_MAP, glowtex)
             
             if (mesh_hasalpha):
                 # add NiTriShape's alpha propery
-                trialphaprop = create_block("NiAlphaProperty")
+                trialphaprop = self.createBlock("NiAlphaProperty")
                 trialphaprop.flags = 0x00ED
                 
                 # refer to the alpha property in the trishape block
@@ -1299,16 +1298,16 @@ and turn off envelopes."""%ob.getName()
             if (mesh_mat != None):
                 # add NiTriShape's specular property
                 if ( mesh_hasspec ):
-                    trispecprop = create_block("NiSpecularProperty")
+                    trispecprop = self.createBlock("NiSpecularProperty")
                     trispecprop.flags = 0x0001
                 
                     # refer to the specular property in the trishape block
                     trishape.addProperty(trispecprop)
                 
                 # add NiTriShape's material property
-                trimatprop = create_block("NiMaterialProperty")
+                trimatprop = self.createBlock("NiMaterialProperty")
                 
-                trimatprop.name = get_full_name(mesh_mat.getName())
+                trimatprop.name = self.getFullName(mesh_mat.getName())
                 trimatprop.flags = 0x0001 # ? standard
                 trimatprop.ambientColor.r = mesh_mat_ambient_color[0]
                 trimatprop.ambientColor.g = mesh_mat_ambient_color[1]
@@ -1355,7 +1354,7 @@ and turn off envelopes."""%ob.getName()
                     assert( ( ftimes ) > 0 )
 
                     # add a alphacontroller block, and refer to this in the parent material
-                    alphac = create_block("NiAlphaController")
+                    alphac = self.createBlock("NiAlphaController")
                     trimatprop.addController(alphac)
 
                     # select extrapolation mode
@@ -1374,7 +1373,7 @@ and turn off envelopes."""%ob.getName()
                     alphac.stopTime = (fend - fstart) * fspeed
 
                     # add the alpha data
-                    alphad = create_block("NiFloatData")
+                    alphad = self.createBlock("NiFloatData")
                     alphac["Data"] = alphad
 
                     # select interpolation mode and export the alpha curve data
@@ -1426,7 +1425,7 @@ and turn off envelopes."""%ob.getName()
                     assert( len( ftimes ) > 0 )
 
                     # add a materialcolorcontroller block
-                    matcolc = create_block("NiMaterialColorController")
+                    matcolc = self.createBlock("NiMaterialColorController")
                     trimatprop.addController(matcolc)
 
                     # fill in the non-trivial values
@@ -1437,7 +1436,7 @@ and turn off envelopes."""%ob.getName()
                     matcolc["Stop Time"] = (fend - fstart) * fspeed
 
                     # add the material color data
-                    matcold = create_block("NiColorData")
+                    matcold = self.createBlock("NiColorData")
                     matcolc["Data"] = matcold
 
                     # export the resulting rgba curve
@@ -1456,9 +1455,9 @@ and turn off envelopes."""%ob.getName()
             # add NiTriShape's data
             # NIF flips the texture V-coordinate (OpenGL standard)
             if isinstance(trishape, NifFormat.NiTriShape):
-                tridata = create_block("NiTriShapeData")
+                tridata = self.createBlock("NiTriShapeData")
             else:
-                tridata = create_block("NiTriStripsData")
+                tridata = self.createBlock("NiTriStripsData")
             trishape.data = tridata
 
             tridata.numVertices = len(vertlist)
@@ -1497,7 +1496,7 @@ and turn off envelopes."""%ob.getName()
 
             # set triangles
             # stitch strips for civ4
-            tridata.setTriangles(trilist, stitchstrips = _CONFIG["EXPORT_STITCHSTRIPS"])
+            tridata.setTriangles(trilist, stitchstrips = self.EXPORT_STITCHSTRIPS)
 
             # update tangent space
             if mesh_hastex and mesh_hasnormals:
@@ -1520,18 +1519,18 @@ and turn off envelopes."""%ob.getName()
                             boneinfluences.append(bone)
                     if boneinfluences: # yes we have skinning!
                         # create new skinning instance block and link it
-                        skininst = create_block("NiSkinInstance")
+                        skininst = self.createBlock("NiSkinInstance")
                         trishape.skinInstance = skininst
                         for block in self.blocks:
                             if isinstance(block, NifFormat.NiNode):
-                                if block.name == get_full_name(armaturename):
+                                if block.name == self.getFullName(armaturename):
                                     skininst.skeletonRoot = block
                                     break
                         else:
                             raise NIFExportError("Skeleton root '%s' not found."%armaturename)
             
                         # create skinning data and link it
-                        skindata = create_block("NiSkinData")
+                        skindata = self.createBlock("NiSkinData")
                         skininst.data = skindata
             
                         skindata.hasVertexWeights = True
@@ -1559,7 +1558,7 @@ and turn off envelopes."""%ob.getName()
                             bone_block = None
                             for block in self.blocks:
                                 if isinstance(block, NifFormat.NiNode):
-                                    if block.name == get_full_name(bone):
+                                    if block.name == self.getFullName(bone):
                                         if not bone_block:
                                             bone_block = block
                                         else:
@@ -1595,7 +1594,7 @@ and turn off envelopes."""%ob.getName()
                             msg("some vertices had no vertex weights, they will be attached to a bone nub:", vert_weights.keys())
                             # create bone NiNode for armature
                             arm_bone_block = NifFormat.NiNode()
-                            arm_bone_block.name = get_unique_name(armaturename)
+                            arm_bone_block.name = self.getUniqueName(armaturename)
                             arm_bone_block.setTransform(_IDENTITY44)
                             arm_bone_block.flags = 0x0002 # ? this seems pretty standard for bones
                             skininst.skeletonRoot.addChild(arm_bone_block, front = True)
@@ -1608,10 +1607,10 @@ and turn off envelopes."""%ob.getName()
                         # calculate center and radius for each skin bone data block
                         trishape.updateSkinCenterRadius()
 
-                        if NIF_VERSION >= 0x04020100 and _CONFIG["EXPORT_SKINPARTITION"]:
+                        if NIF_VERSION >= 0x04020100 and self.EXPORT_SKINPARTITION:
                             msg("creating 'NiSkinPartition'")
-                            maxbpp = _CONFIG["EXPORT_BONESPERPARTITION"]
-                            lostweight = trishape.updateSkinPartition(maxbonesperpartition = _CONFIG["EXPORT_BONESPERPARTITION"], maxbonespervertex = _CONFIG["EXPORT_BONESPERVERTEX"], stripify = _CONFIG["EXPORT_STRIPIFY"], stitchstrips = _CONFIG["EXPORT_STITCHSTRIPS"], padbones = _CONFIG["EXPORT_PADBONES"])
+                            maxbpp = self.EXPORT_BONESPERPARTITION
+                            lostweight = trishape.updateSkinPartition(maxbonesperpartition = self.EXPORT_BONESPERPARTITION, maxbonespervertex = self.EXPORT_BONESPERVERTEX, stripify = self.EXPORT_STRIPIFY, stitchstrips = self.EXPORT_STITCHSTRIPS, padbones = self.EXPORT_PADBONES)
                             if lostweight > NifFormat._EPSILON:
                                 print "WARNING: lost %f in vertex weights while creating skin partition"%lostweight
 
@@ -1638,7 +1637,7 @@ and turn off envelopes."""%ob.getName()
                         fend = context.endFrame()
                         
                         # create geometry morph controller
-                        morphctrl = create_block("NiGeomMorpherController")
+                        morphctrl = self.createBlock("NiGeomMorpherController")
                         trishape.addController(morphctrl)
                         morphctrl.frequency = 1.0
                         morphctrl.phase = 0.0
@@ -1647,7 +1646,7 @@ and turn off envelopes."""%ob.getName()
                         ctrlFlags = 0x000c
                         
                         # create geometry morph data
-                        morphdata = create_block("NiMorphData")
+                        morphdata = self.createBlock("NiMorphData")
                         morphctrl.data = morphdata
                         morphdata.numMorphs = len(key.getBlocks())
                         morphdata.numVertices = len(vertlist)
@@ -1732,24 +1731,24 @@ and turn off envelopes."""%ob.getName()
         for bone in bones.values():
             # create a new block for this bone
             msg("Exporting NiNode for bone %s"%bone.name)
-            node = create_block("NiNode")
+            node = self.createBlock("NiNode")
             bones_node[bone.name] = node # doing this now makes linkage very easy in second run
 
             # add the node and the keyframe for this bone
-            node.name = get_full_name(bone.name)
+            node.name = self.getFullName(bone.name)
             node.flags = 0x0002 # ? this seems pretty standard for bones
-            export_matrix(bone, 'localspace', node) # rest pose
+            self.exportMatrix(bone, 'localspace', node) # rest pose
             
             # bone rotations are stored in the IPO relative to the rest position
             # so we must take the rest position into account
-            bonerestmat = get_bone_restmatrix(bone, 'BONESPACE', extra = False) # we need the original one, without extra transforms
+            bonerestmat = self.getBoneRestMatrix(bone, 'BONESPACE', extra = False) # we need the original one, without extra transforms
             try:
-                bonexmat_inv = _BONES_EXTRA_MATRIX_INV[bone.name]
+                bonexmat_inv = self.bonesExtraMatrixInv[bone.name]
             except KeyError:
                 bonexmat_inv = Blender.Mathutils.Matrix()
                 bonexmat_inv.identity()
             if bones_ipo.has_key(bone.name):
-                export_keyframecontroller(bones_ipo[bone.name], 'localspace', node, bind_mat = bonerestmat, extra_mat_inv = bonexmat_inv)
+                self.exportKeyframes(bones_ipo[bone.name], 'localspace', node, bind_mat = bonerestmat, extra_mat_inv = bonexmat_inv)
 
         # now fix the linkage between the blocks
         for bone in bones.values():
@@ -1770,30 +1769,27 @@ and turn off envelopes."""%ob.getName()
     # 
     # Export all children of blender object ob as children of parent_block.
     # 
-    def export_children(ob, parent_block):
+    def exportChildren(self, ob, parent_block):
         # loop over all ob's children
         for ob_child in [cld  for cld in Blender.Object.Get() if cld.getParent() == ob]:
-            # is it a texture effect node?
-            if ((ob_child.getType() == 'Empty') and (ob_child.getName()[:13] == 'TextureEffect')):
-                export_textureeffect(ob_child, parent_block)
             # is it a regular node?
             elif (ob_child.getType() == 'Mesh') or (ob_child.getType() == 'Empty') or (ob_child.getType() == 'Armature'):
                 if (ob.getType() != 'Armature'): # not parented to an armature...
-                    export_node(ob_child, 'localspace', parent_block, ob_child.getName())
+                    self.exportNode(ob_child, 'localspace', parent_block, ob_child.getName())
                 else: # oh, this object is parented to an armature
                     # we should check whether it is really parented to the armature using vertex weights
                     # or whether it is parented to some bone of the armature
                     parent_bone_name = ob_child.getParentBoneName()
                     if parent_bone_name == None:
-                        export_node(ob_child, 'localspace', parent_block, ob_child.getName())
+                        self.exportNode(ob_child, 'localspace', parent_block, ob_child.getName())
                     else:
                         # we should parent the object to the bone instead of to the armature
                         # so let's find that bone!
-                        nif_bone_name = get_full_name(parent_bone_name)
+                        nif_bone_name = self.getFullName(parent_bone_name)
                         for block in self.blocks:
                             if isinstance(block, NifFormat.NiNode):
                                 if block.name == nif_bone_name:
-                                    export_node(ob_child, 'localspace', block, ob_child.getName())
+                                    self.exportNode(ob_child, 'localspace', block, ob_child.getName())
                                     break
                         else:
                             assert(False) # BUG!
@@ -1804,9 +1800,9 @@ and turn off envelopes."""%ob.getName()
     # Set a block's transform matrix to an object's
     # transformation matrix (rest pose)
     #
-    def export_matrix(ob, space, block):
+    def exportMatrix(self, ob, space, block):
         # decompose
-        bs, br, bt = get_object_srt(ob, space)
+        bs, br, bt = self.getObjectSRT(ob, space)
         
         # and fill in the values
         block.translation.x = bt[0]
@@ -1832,7 +1828,7 @@ and turn off envelopes."""%ob.getName()
     # Get an object's matrix
     #
     def get_object_matrix(ob, space):
-        bs, br, bt = get_object_srt(ob, space)
+        bs, br, bt = self.getObjectSRT(ob, space)
         m = NifFormat.Matrix44()
         
         m.m41 = bt[0]
@@ -1859,7 +1855,7 @@ and turn off envelopes."""%ob.getName()
     #
     # Convert blender matrix to NifFormat.Matrix44
     #
-    def bmatrix_to_matrix(bm):
+    def bmatrix_to_matrix(self, bm):
         m = NifFormat.Matrix44()
         
         m.m41 = bm[3][0]
@@ -1890,7 +1886,7 @@ and turn off envelopes."""%ob.getName()
     # translation vector. It should hold that "ob.getMatrix(space) == bs *
     # br * bt".
     # 
-    def get_object_srt(ob, space):
+    def getObjectSRT(self, ob, space):
         # handle the trivial case first
         if (space == 'none'):
             bs = 1.0
@@ -1903,13 +1899,13 @@ and turn off envelopes."""%ob.getName()
         # now write out spaces
         if (not type(ob) is Blender.Armature.Bone):
             # get world matrix
-            mat = get_object_restmatrix(ob, 'worldspace')
+            mat = self.getObjectRestMatrix(ob, 'worldspace')
             # handle localspace: L * Ba * B * P = W
             # (with L localmatrix, Ba bone animation channel, B bone rest matrix (armature space), P armature parent matrix, W world matrix)
             # so L = W * P^(-1) * (Ba * B)^(-1)
             if (space == 'localspace'):
                 if (ob.getParent() != None):
-                    matparentinv = get_object_restmatrix(ob.getParent(), 'worldspace')
+                    matparentinv = self.getObjectRestMatrix(ob.getParent(), 'worldspace')
                     matparentinv.invert()
                     mat *= matparentinv
                     if (ob.getParent().getType() == 'Armature'):
@@ -1918,20 +1914,20 @@ and turn off envelopes."""%ob.getName()
                         if bone_parent_name:
                             bone_parent = ob.getParent().getData().bones[bone_parent_name]
                             # get bone parent matrix
-                            matparentbone = get_bone_restmatrix(bone_parent, 'ARMATURESPACE') # bone matrix in armature space
+                            matparentbone = self.getBoneRestMatrix(bone_parent, 'ARMATURESPACE') # bone matrix in armature space
                             matparentboneinv = Blender.Mathutils.Matrix(matparentbone)
                             matparentboneinv.invert()
                             mat *= matparentboneinv
         else: # bones, get the rest matrix
             assert(space == 'localspace') # in this function, we only need bones in localspace
-            mat = get_bone_restmatrix(ob, 'BONESPACE')
+            mat = self.getBoneRestMatrix(ob, 'BONESPACE')
         
         return decompose_srt(mat)
 
 
 
     # Decompose Blender transform matrix as a scale, rotation matrix, and translation vector
-    def decompose_srt(m):
+    def decompose_srt(self, m):
         # get scale components
         b_scale_rot = m.rotationPart()
         b_scale_rot_T = Blender.Mathutils.Matrix(b_scale_rot)
@@ -1961,12 +1957,12 @@ and turn off envelopes."""%ob.getName()
     # ARMATURESPACE or BONESPACE. This returns also a 4x4 matrix if space
     # is BONESPACE (translation is bone head plus tail from parent bone).
     # 
-    def get_bone_restmatrix(bone, space, extra = True):
+    def getBoneRestMatrix(self, bone, space, extra = True):
         # Retrieves the offset from the original NIF matrix, if existing
         corrmat = Blender.Mathutils.Matrix()
         if extra:
             try:
-                corrmat = _BONES_EXTRA_MATRIX_INV[bone.name]
+                corrmat = self.bonesExtraMatrixInv[bone.name]
             except:
                 corrmat.identity()
         else:
@@ -1975,7 +1971,7 @@ and turn off envelopes."""%ob.getName()
             return corrmat * Blender.Mathutils.Matrix(bone.matrix['ARMATURESPACE'])
         elif (space == 'BONESPACE'):
             if bone.parent:
-                parinv = get_bone_restmatrix(bone.parent,'ARMATURESPACE')
+                parinv = self.getBoneRestMatrix(bone.parent,'ARMATURESPACE')
                 parinv.invert()
                 return (corrmat * bone.matrix['ARMATURESPACE']) * parinv
             else:
@@ -1987,12 +1983,12 @@ and turn off envelopes."""%ob.getName()
 
     # get the object's rest matrix
     # space can be 'localspace' or 'worldspace'
-    def get_object_restmatrix(ob, space, extra = True):
+    def getObjectRestMatrix(self, ob, space, extra = True):
         mat = Blender.Mathutils.Matrix(ob.getMatrix('worldspace')) # TODO cancel out IPO's
         if (space == 'localspace'):
             par = ob.getParent()
             if par:
-                parinv = get_object_restmatrix(par, 'worldspace')
+                parinv = self.getObjectRestMatrix(par, 'worldspace')
                 parinv.invert()
                 mat *= parinv
         return mat
@@ -2002,7 +1998,7 @@ and turn off envelopes."""%ob.getName()
     #
     # Helper function to create a new block and add it to the list of exported blocks.
     #
-    def create_block(blocktype):
+    def createBlock(self, blocktype):
         msg("creating '%s'"%blocktype) # DEBUG
         try:
             block = getattr(NifFormat, blocktype)()
@@ -2013,15 +2009,15 @@ and turn off envelopes."""%ob.getName()
 
 
 
-    def export_collision(ob, parent_block):
+    def exportCollision(self, ob, parent_block):
         """Main function for adding collision object ob to a node.""" 
         if self.EXPORT_VERSION == 'Morrowind':
              if ob.rbShapeBoundType != Blender.Object.RBShapes['POLYHEDERON']:
                  raise NIFExportError("Morrowind only supports Polyhedron/Static TriangleMesh collisions.")
-             node = create_block("RootCollisionNode")
+             node = self.createBlock("RootCollisionNode")
              parent_block.addChild(node)
              node.flags = 0x000C
-             export_matrix(ob, 'localspace', node)
+             self.exportMatrix(ob, 'localspace', node)
              export_trishapes(ob, 'none', node)
 
         elif self.EXPORT_VERSION == 'Oblivion':
@@ -2030,7 +2026,7 @@ and turn off envelopes."""%ob.getName()
             nodes.extend([ b for b in parent_block.children if b.name[:14] == 'collisiondummy' ])
             for node in nodes:
                 try:
-                    export_collision_helper(ob, node)
+                    self.exportCollisionHelper(ob, node)
                     break
                 except ValueError: # adding collision failed
                     continue
@@ -2040,12 +2036,12 @@ and turn off envelopes."""%ob.getName()
                 node.name = 'collisiondummy%i'%parent_block.numChildren
                 node.flags = 8 # not a skin influence
                 parent_block.addChild(node)
-                export_collision_helper(ob, node)
+                self.exportCollisionHelper(ob, node)
 
         else:
             print "WARNING: only Morrowind and Oblivion collisions are supported, skipped collision object '%s'"%ob.name
 
-    def export_collision_helper(ob, parent_block):
+    def exportCollisionHelper(self, ob, parent_block):
         """Helper function to add collision objects to a node."""
 
         # is it packed
@@ -2068,12 +2064,12 @@ and turn off envelopes."""%ob.getName()
         # bhkCollisionObject -> bhkRigidBodyT
         if not parent_block.collisionObject:
             # note: collision settings are taken from lowerclasschair01.nif
-            colobj = create_block("bhkCollisionObject")
+            colobj = self.createBlock("bhkCollisionObject")
             parent_block.collisionObject = colobj
             colobj.target = parent_block
             colobj.unknownShort = 1
 
-            colbody = create_block("bhkRigidBodyT")
+            colbody = self.createBlock("bhkRigidBodyT")
             colobj.body = colbody
             colbody.layer = layer
             colbody.unknown5Floats[1] = 3.8139e+36
@@ -2112,26 +2108,26 @@ and turn off envelopes."""%ob.getName()
             colbody = parent_block.collisionObject.body
 
         if coll_ispacked:
-            export_collision_packed(ob, colbody, layer, material)
+            self.exportCollisionPacked(ob, colbody, layer, material)
         else:
-            if _CONFIG["EXPORT_BHKLISTSHAPE"]:
-                export_collision_list(ob, colbody, layer, material)
+            if self.EXPORT_BHKLISTSHAPE:
+                self.exportCollisionList(ob, colbody, layer, material)
             else:
-                export_collision_single(ob, colbody, layer, material)
+                self.exportCollisionSingle(ob, colbody, layer, material)
 
 
 
-    def export_collision_packed(ob, colbody, layer, material):
+    def exportCollisionPacked(self, ob, colbody, layer, material):
         """Add object ob as packed collision object to collision body colbody.
         If parent_block hasn't any collisions yet, a new packed list is created.
         If the current collision system is not a packed list of collisions (bhkPackedNiTriStripsShape), then
         a ValueError is raised."""
 
         if not colbody.shape:
-            colshape = create_block("bhkPackedNiTriStripsShape")
+            colshape = self.createBlock("bhkPackedNiTriStripsShape")
 
-            if _CONFIG["EXPORT_MOPP"]:
-                colmopp = create_block("bhkMoppBvTreeShape")
+            if self.EXPORT_MOPP:
+                colmopp = self.createBlock("bhkMoppBvTreeShape")
                 colbody.shape = colmopp
                 colmopp.material = material
                 colmopp.unknown8Bytes[0] = 160
@@ -2181,15 +2177,15 @@ and turn off envelopes."""%ob.getName()
 
 
 
-    def export_collision_single(ob, colbody, layer, material):
+    def exportCollisionSingle(self, ob, colbody, layer, material):
         """Add collision object to colbody.
         If colbody already has a collision shape, throw ValueError."""
         if colbody.shape: raise ValueError('collision body already has a shape')
-        colbody.shape = export_collision_object(ob, layer, material)
+        colbody.shape = self.exportCollisionObject(ob, layer, material)
 
 
 
-    def export_collision_list(ob, colbody, layer, material):
+    def exportCollisionList(self, ob, colbody, layer, material):
         """Add collision object ob to the list of collision objects of colbody.
         If colbody hasn't any collisions yet, a new list is created.
         If the current collision system is not a list of collisions (bhkListShape), then
@@ -2201,7 +2197,7 @@ and turn off envelopes."""%ob.getName()
         # (this works in all cases, can be simplified just before
         # the file is written)
         if not colbody.shape:
-            colshape = create_block("bhkListShape")
+            colshape = self.createBlock("bhkListShape")
             colbody.shape = colshape
             colshape.material = material
         else:
@@ -2209,11 +2205,11 @@ and turn off envelopes."""%ob.getName()
             if not isinstance(colshape, NifFormat.bhkListShape):
                 raise ValueError('not a list of collisions')
 
-        colshape.addShape(export_collision_object(ob, layer, material))
+        colshape.addShape(self.exportCollisionObject(ob, layer, material))
 
-    def export_collision_object(ob, layer, material):
+    def exportCollisionObject(self, ob, layer, material):
         """Export object ob as box, sphere, capsule, or convex hull.
-        Note: polyheder is handled by export_collision_packed."""
+        Note: polyheder is handled by exportCollisionPacked."""
 
         # find bounding box data
         verts = ob.data.verts
@@ -2227,7 +2223,7 @@ and turn off envelopes."""%ob.getName()
 
         if ob.rbShapeBoundType in [ Blender.Object.RBShapes['BOX'], Blender.Object.RBShapes['SPHERE'] ]:
             # note: collision settings are taken from lowerclasschair01.nif
-            coltf = create_block("bhkConvexTransformShape")
+            coltf = self.createBlock("bhkConvexTransformShape")
             coltf.material = material
             coltf.unknownFloat1 = 0.1
             coltf.unknown8Bytes[0] = 96
@@ -2256,7 +2252,7 @@ and turn off envelopes."""%ob.getName()
             coltf.transform.m34 /= 7.0
 
             if ob.rbShapeBoundType == Blender.Object.RBShapes['BOX']:
-                colbox = create_block("bhkBoxShape")
+                colbox = self.createBlock("bhkBoxShape")
                 coltf.shape = colbox
                 colbox.material = material
                 colbox.radius = 0.1
@@ -2274,7 +2270,7 @@ and turn off envelopes."""%ob.getName()
                 colbox.dimensions.z = (maxz - minz) / 14.0
                 colbox.minimumSize = min(colbox.dimensions.x, colbox.dimensions.y, colbox.dimensions.z)
             elif ob.rbShapeBoundType == Blender.Object.RBShapes['SPHERE']:
-                colsphere = create_block("bhkSphereShape")
+                colsphere = self.createBlock("bhkSphereShape")
                 coltf.shape = colsphere
                 colsphere.material = material
                 # take average radius and
@@ -2284,7 +2280,7 @@ and turn off envelopes."""%ob.getName()
             return coltf
 
         elif ob.rbShapeBoundType == Blender.Object.RBShapes['CYLINDER']:
-            colcaps = create_block("bhkCapsuleShape")
+            colcaps = self.createBlock("bhkCapsuleShape")
             colcaps.material = material
             # take average radius
             colcaps.radius = (maxx + maxy - minx - miny) / 4.0
@@ -2341,7 +2337,7 @@ and turn off envelopes."""%ob.getName()
             if len(fnormlist) > 65535 or len(vertlist) > 65535:
                 raise NIFExportError('ERROR%t|Too many faces/vertices. Decimate your mesh and try again.')
             
-            colhull = create_block("bhkConvexVerticesShape")
+            colhull = self.createBlock("bhkConvexVerticesShape")
             colhull.material = material
             colhull.radius = 0.1
             colhull.unknown6Floats[2] = -0.0 # enables arrow detection
