@@ -2083,8 +2083,11 @@ and turn off envelopes."""%ob.getName()
             colshape.unknownFloats2[0] = 1.0
             colshape.unknownFloats2[1] = 1.0
         else:
-            colmopp = colbody.shape
-            colshape = colmopp.shape
+            if self.EXPORT_MOPP:
+                colmopp = colbody.shape
+                colshape = colmopp.shape
+            else:
+                colshape = colbody.shape
             if not isinstance(colshape, NifFormat.bhkPackedNiTriStripsShape):
                 raise ValueError('not a packed list of collisions')
 
