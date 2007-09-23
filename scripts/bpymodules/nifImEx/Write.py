@@ -13,15 +13,6 @@ If you do not have it: http://pyffi.sourceforge.net/
     Blender.Draw.PupMenu("ERROR%t|PyFFI not found, check console for details")
     raise
 
-#
-# Configuration
-#
-
-STRIP_TEXPATH = False
-EXPORT_DIR = ''
-
-ADD_BONE_NUB = False
-
 _IDENTITY44 = NifFormat.Matrix44()
 _IDENTITY44.setIdentity()
 
