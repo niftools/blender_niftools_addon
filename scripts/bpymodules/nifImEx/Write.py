@@ -57,9 +57,7 @@ class NifExport:
         except:
             return
         # Blender bone names are unique so we can use them as keys.
-        # TODO: restore the node names as well
         for ln in bonetxt.asLines():
-            #print ln
             if len(ln)>0:
                 b, m = ln.split('/')
                 # Matrices are stored inverted for easier math later on.
@@ -200,10 +198,10 @@ and turn off envelopes."""%ob.getName()
                     animtxt = txt
                     break
                     
-            # rebuilds the bone extra data dictionaries from the 'BoneExMat' text buffer
+            # rebuild the bone extra matrix dictionary from the 'BoneExMat' text buffer
             self.rebuildBonesExtraMatrices()
             
-            # rebuilds the full name dictionary from the 'FullNames' text buffer 
+            # rebuild the full name dictionary from the 'FullNames' text buffer 
             self.rebuildFullNames()
             
             # export nif:
@@ -1329,8 +1327,6 @@ and turn off envelopes."""%ob.getName()
                     alphac.startTime = (self.fstart - 1) * self.fspeed
                     alphac.stopTime = (self.fend - self.fstart) * self.fspeed
 
-                    # add the alpha data
-
                     # select interpolation mode and export the alpha curve data
                     if ( a_curve.getInterpolation() == "Linear" ):
                         alphad.data.interpolation = NifFormat.KeyType.LINEAR_KEY
@@ -1346,63 +1342,6 @@ and turn off envelopes."""%ob.getName()
                         key.value = alpha[ftime]
                         key.forward = 0.0 # ?
                         key.backward = 0.0 # ?
-
-                # export animated material colors
-                if ( ipo != None and ( ipo.getCurve( 'R' ) != None or ipo.getCurve( 'G' ) != None or ipo.getCurve( 'B' ) != None ) ):
-                    # merge r, g, b curves into one rgba curve
-                    rgba_curve = {}
-                    for curve in ipo.getCurves():
-                        for btriple in curve.getPoints():
-                            knot = btriple.getPoints()
-                            frame = knot[0]
-                            ftime = (frame - self.fstart) * self.fspeed
-                            if (curve.getName() == 'R') or (curve.getName() == 'G') or (curve.getName() == 'B'):
-                                rgba_curve[ftime] = nif4.NiRGBA()
-                                if ( ipo.getCurve( 'R' ) != None):
-                                    rgba_curve[ftime].r = ipo.getCurve('R').evaluate(frame)
-                                else:
-                                    rgba_curve[ftime].r = mesh_mat_diffuse_colour[0]
-                                if ( ipo.getCurve( 'G' ) != None):
-                                    rgba_curve[ftime].g = ipo.getCurve('G').evaluate(frame)
-                                else:
-                                    rgba_curve[ftime].g = mesh_mat_diffuse_colour[1]
-                                if ( ipo.getCurve( 'B' ) != None):
-                                    rgba_curve[ftime].b = ipo.getCurve('B').evaluate(frame)
-                                else:
-                                    rgba_curve[ftime].b = mesh_mat_diffuse_colour[2]
-                                rgba_curve[ftime].a = mesh_mat_transparency # alpha ignored?
-
-                    ftimes = rgba_curve.keys()
-                    ftimes.sort()
-                    assert( len( ftimes ) > 0 )
-
-                    # add a materialcolorcontroller block
-                    matcolc = self.createBlock("NiMaterialColorController")
-                    trimatprop.addController(matcolc)
-
-                    # fill in the non-trivial values
-                    matcolc.flags = 0x0008 # using cycle loop for now
-                    matcolc.frequency = 1.0
-                    matcolc.phase = 0.0
-                    matcolc.startTime =  (self.fstart - 1) * self.fspeed
-                    matcolc.stopTime = (self.fend - self.fstart) * self.fspeed
-
-                    # add the material color data
-                    matcold = self.createBlock("NiColorData")
-                    matcolc.data = matcold
-
-                    # export the resulting rgba curve
-                    imatcold = QueryColorData(matcold)
-                    rgba_keys = []
-                    for ftime in ftimes:
-                        rgba_frame = Key_Color4()
-                        rgba_frame.time = ftime
-                        rgba_frame.data.r = rgba_curve[ftime][0]
-                        rgba_frame.data.g = rgba_curve[ftime][1]
-                        rgba_frame.data.b = rgba_curve[ftime][2]
-                        rgba_frame.data.a = rgba_curve[ftime][3]
-                        rgba_keys.append(rgba_frame)
-                    imatcold.SetKeys(rgba_keys)
 
             # add NiTriShape's data
             # NIF flips the texture V-coordinate (OpenGL standard)
