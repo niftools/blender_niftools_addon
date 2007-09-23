@@ -157,294 +157,296 @@ class NifExport:
         # following dictionary.
         self.bonesExtraMatrixInv = {}
 
-        # find nif version to write
-        try:
-            self.version = NifFormat.versions[self.EXPORT_VERSION]
-            msg("Writing NIF version 0x%08X"%self.version)
-        except KeyError:
-            self.version = NifFormat.games[self.EXPORT_VERSION][-1] # select highest nif version that the game supports
-            msg("Writing %s NIF (version 0x%08X)"%(self.EXPORT_VERSION,self.version))
+        try: # catch export errors
 
-        if self.EXPORT_ANIMATION == 0:
-            msg("Exporting geometry and animation")
-        elif self.EXPORT_ANIMATION == 1:
-            msg("Exporting geometry only") # for morrowind: everything except keyframe controllers
-        elif self.EXPORT_ANIMATION == 2:
-            msg("Exporting animation only (as .kf file)") # for morrowind: only keyframe controllers
+            # find nif version to write
+            try:
+                self.version = NifFormat.versions[self.EXPORT_VERSION]
+                msg("Writing NIF version 0x%08X"%self.version)
+            except KeyError:
+                self.version = NifFormat.games[self.EXPORT_VERSION][-1] # select highest nif version that the game supports
+                msg("Writing %s NIF (version 0x%08X)"%(self.EXPORT_VERSION,self.version))
 
-        # armatures should not be in rest position
-        for ob in Blender.Object.Get():
-            if ob.getType() == 'Armature':
-                ob.data.restPosition = False # ensure we get the mesh vertices in animation mode, and not in rest position!
-                if (ob.data.envelopes):
-                    print """'%s': Cannot export envelope skinning.
-If you have vertex groups, turn off envelopes.
-If you don't have vertex groups, select the bones one by one
-press W to convert their envelopes to vertex weights,
-and turn off envelopes."""%ob.getName()
-                    raise NIFExportError("'%s': Cannot export envelope skinning. Check console for instructions."%ob.getName())
-        
-        # extract some useful scene info
-        self.scn = Blender.Scene.GetCurrent()
-        self.context = scn.getRenderingContext()
-        self.fspeed = 1.0 / context.framesPerSec()
-        self.fstart = context.startFrame()
-        self.fend = context.endFrame()
-        
-        # strip extension from filename
-        filedir = Blender.sys.dirname(filename)
-        filebase, fileext = Blender.sys.splitext(Blender.sys.basename(filename))
-        if self.EXPORT_VERSION in ['Oblivion', 'Civilization IV']:
-            root_name = 'Scene Root'
-        else:
-            root_name = filebase
- 
-        # get the root object from selected object
-        # only export empties, meshes, and armatures
-        if (Blender.Object.GetSelected() == None):
-            raise NIFExportError("Please select the object(s) that you wish to export, and run this script again.")
-        root_objects = set()
-        export_types = ('Empty','Mesh','Armature')
-        for root_object in [ob for ob in Blender.Object.GetSelected() if ob.getType() in export_types]:
-            while (root_object.getParent() != None):
-                root_object = root_object.getParent()
-            if root_object.getType() not in export_types:
-                raise NIFExportError("Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."%root_object.getName())
-            root_objects.add(root_object)
+            if self.EXPORT_ANIMATION == 0:
+                msg("Exporting geometry and animation")
+            elif self.EXPORT_ANIMATION == 1:
+                msg("Exporting geometry only") # for morrowind: everything except keyframe controllers
+            elif self.EXPORT_ANIMATION == 2:
+                msg("Exporting animation only (as .kf file)") # for morrowind: only keyframe controllers
 
-        ## TODO use Blender actions for animation groups
-        # check for animation groups definition in a text buffer called 'Anim'
-        animtxt = None
-        for txt in Blender.Text.Get():
-            if txt.getName() == "Anim":
-                animtxt = txt
-                break
-                
-        # rebuilds the bone extra data dictionaries from the 'BoneExMat' text buffer
-        self.rebuildBonesExtraMatrices()
-        
-        # rebuilds the full name dictionary from the 'FullNames' text buffer 
-        self.rebuildFullNames()
-        
-        # export nif:
-        #------------
-        Blender.Window.DrawProgressBar(0.33, "Converting to NIF")
-        
-        # create a nif object
-        
-        # export the root node (the name is fixed later to avoid confusing the
-        # exporter with duplicate names)
-        root_block = self.exportNode(None, 'none', None, '')
-        
-        # export objects
-        msg("Exporting objects")
-        for root_object in root_objects:
-            # export the root objects as a NiNodes; their children are exported as well
-            # note that localspace = worldspace, because root objects have no parents
-            self.exportNode(root_object, 'localspace', root_block, root_object.getName())
-
-        # post-processing:
-        #-----------------
-
-        # if we exported animations, but no animation groups are defined, define a default animation group
-        msg("Checking animation groups")
-        if (animtxt == None):
-            has_controllers = False
-            for block in self.blocks:
-                if isinstance(block, NifFormat.NiObjectNET): # has it a controller field?
-                    if block.controller:
-                        has_controllers = True
-                        break
-            if has_controllers:
-                msg("Defining default animation group")
-                # write the animation group text buffer
-                animtxt = Blender.Text.New("Anim")
-                animtxt.write("%i/Idle: Start/Idle: Loop Start\n%i/Idle: Loop Stop/Idle: Stop"%(self.fstart,self.fend))
-
-        # animations without keyframe animations crash the TESCS
-        # if we are in that situation, add a trivial keyframe animation
-        msg("Checking controllers")
-        if (animtxt):
-            has_keyframecontrollers = False
-            for block in self.blocks:
-                if isinstance(block, NifFormat.NiKeyframeController):
-                    has_keyframecontrollers = True
-                    break
-            if not has_keyframecontrollers:
-                msg("Defining dummy keyframe controller")
-                # add a trivial keyframe controller on the scene root
-                self.exportKeyframes(None, 'localspace', root_block)
-        
-        # export animation groups
-        if (animtxt):
-            anim_textextra = self.exportAnimGroups(animtxt, root_block)
-
-        # activate oblivion collision and physics
-        if self.EXPORT_VERSION == 'Oblivion':
-            hascollision = False
-            for block in self.blocks:
-                if isinstance(block, NifFormat.bhkCollisionObject):
-                   hascollision = True
-                   break
-            if hascollision:
-                bsx = self.createBlock("BSXFlags")
-                bsx.name = 'BSX'
-                bsx.integerData = 2 # enable collision
-                root_block.addExtraData(bsx)
-
-            # many Oblivion nifs have a UPB, but export is disabled as
-            # they do not seem to affect anything in the game
-            #upb = self.createBlock("NiStringExtraData")
-            #upb.name = 'UPB'
-            #upb.stringData = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
-            #root_block.addExtraData(upb)
-
-        # add vertex color and zbuffer properties for civ4
-        if self.EXPORT_VERSION == 'Civilization IV':
-            vcol = self.createBlock("NiVertexColorProperty")
-            vcol.flags = 1
-            vcol.vertexMode = 0
-            vcol.lightingMode = 1
-            zbuf = self.createBlock("NiZBufferProperty")
-            zbuf.flags = 15
-            zbuf.function = 3
-            root_block.addProperty(vcol)
-            root_block.addProperty(zbuf)
-
-        if self.EXPORT_FLATTENSKIN:
-            # (warning: trouble if armatures parent other armatures or
-            # if bones parent geometries, or if object is animated)
-            # flatten skins
-            skelroots = []
-            affectedbones = []
-            for block in self.blocks:
-                if isinstance(block, NifFormat.NiGeometry) and block.isSkin():
-                    msg("Flattening skin on geometry %s"%block.name)
-                    affectedbones.extend(block.flattenSkin())
-                    skelroots.append(block.skinInstance.skeletonRoot)
-            # remove NiNodes that do not affect skin
-            for skelroot in skelroots:
-                skelrootchildren = [child for child in skelroot.children if (not isinstance(child, NifFormat.NiNode)) or (child in affectedbones)]
-                skelroot.numChildren = len(skelrootchildren)
-                skelroot.children.updateSize()
-                for i, child in enumerate(skelrootchildren):
-                    skelroot.children[i] = child
-
-        # apply scale
-        if abs(self.EXPORT_SCALE_CORRECTION - 1.0) > NifFormat._EPSILON:
-            msg("Applying scale correction %f"%self.EXPORT_SCALE_CORRECTION)
-            root_block.applyScale(self.EXPORT_SCALE_CORRECTION)
-
-        # generate mopps (must be done after applying scale!)
-        if self.EXPORT_VERSION == 'Oblivion':
-            for block in self.blocks:
-                if isinstance(block, NifFormat.bhkMoppBvTreeShape):
-                   msg("Generating mopp...")
-                   block.updateOriginScale()
-                   block.updateMopp()
-                   #print "=== DEBUG: MOPP TREE ==="
-                   #block.parseMopp(verbose = True)
-                   #print "=== END OF MOPP TREE ==="
-
-
-        # delete original scene root if a scene root object was already defined
-        if (root_block.numChildren == 1) and (root_block.children[0].name in ['Scene Root', 'Bip01']):
-            msg("Making 'Scene Root' the root block")
-            # remove root_block from self.blocks
-            self.blocks = [b for b in self.blocks if b != root_block] 
-            # set new root block
-            old_root_block = root_block
-            root_block = old_root_block.children[0]
-            # copy extra data and properties
-            for b in old_root_block.getExtraDatas():
-                root_block.addExtraData(b)
-            for b in old_root_block.getControllers():
-                root_block.addController(b)
-            for b in old_root_block.properties:
-                root_block.addProperty(b)
-            for b in old_root_block.effects:
-                root_block.addEffect(b)
-        else:
-            root_block.name = root_name
- 
-        # create keyframe file:
-        #----------------------
-
-        # convert root_block tree into a keyframe tree
-        if self.EXPORT_ANIMATION == 2:
-            # morrowind
-            if self.EXPORT_VERSION == "Morrowind":
-                # create kf root header
-                kf_root = self.createBlock("NiSequenceStreamHelper")
-                kf_root.addExtraData(anim_textextra)
-                # find all nodes and keyframe controllers
-                nodekfs = {}
-                for node in root_block.tree():
-                    if not isinstance(node, NifFormat.NiNode): continue
-                    nodekfs[node] = []
-                    ctrls = node.getControllers()
-                    for ctrl in ctrls:
-                        if not isinstance(ctrl, NifFormat.NiKeyframeController): continue
-                        nodekfs[node].append(ctrl)
-                # reparent controller tree
-                lastctrl = None
-                for node, ctrls in nodekfs.iteritems():
-                    for ctrl in ctrls:
-                        # create node reference by name
-                        nodename_extra = self.createBlock("NiStringExtraData")
-                        nodename_extra.bytesRemaining = len(node.name) + 4
-                        nodename_extra.stringData = node.name
-
-                        # break the controller chain
-                        ctrl.nextController = None
-
-                        # add node reference and controller
-                        kf_root.addExtraData(nodename_extra)
-                        kf_root.addController(ctrl)
-
-            #elif self.EXPORT_VERSION == "Oblivion":
-            #    pass
+            # armatures should not be in rest position
+            for ob in Blender.Object.Get():
+                if ob.getType() == 'Armature':
+                    ob.data.restPosition = False # ensure we get the mesh vertices in animation mode, and not in rest position!
+                    if (ob.data.envelopes):
+                        print """'%s': Cannot export envelope skinning.
+    If you have vertex groups, turn off envelopes.
+    If you don't have vertex groups, select the bones one by one
+    press W to convert their envelopes to vertex weights,
+    and turn off envelopes."""%ob.getName()
+                        raise NIFExportError("'%s': Cannot export envelope skinning. Check console for instructions."%ob.getName())
+            
+            # extract some useful scene info
+            self.scn = Blender.Scene.GetCurrent()
+            self.context = scn.getRenderingContext()
+            self.fspeed = 1.0 / context.framesPerSec()
+            self.fstart = context.startFrame()
+            self.fend = context.endFrame()
+            
+            # strip extension from filename
+            filedir = Blender.sys.dirname(filename)
+            filebase, fileext = Blender.sys.splitext(Blender.sys.basename(filename))
+            if self.EXPORT_VERSION in ['Oblivion', 'Civilization IV']:
+                root_name = 'Scene Root'
             else:
-                raise NIFExportError("Keyframe export for '%s' is not supported. Only Morrowind keyframes are supported."%self.EXPORT_VERSION)
+                root_name = filebase
+     
+            # get the root object from selected object
+            # only export empties, meshes, and armatures
+            if (Blender.Object.GetSelected() == None):
+                raise NIFExportError("Please select the object(s) that you wish to export, and run this script again.")
+            root_objects = set()
+            export_types = ('Empty','Mesh','Armature')
+            for root_object in [ob for ob in Blender.Object.GetSelected() if ob.getType() in export_types]:
+                while (root_object.getParent() != None):
+                    root_object = root_object.getParent()
+                if root_object.getType() not in export_types:
+                    raise NIFExportError("Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."%root_object.getName())
+                root_objects.add(root_object)
 
-            # make keyframe root block the root block to be written
-            root_block = kf_root
+            ## TODO use Blender actions for animation groups
+            # check for animation groups definition in a text buffer called 'Anim'
+            animtxt = None
+            for txt in Blender.Text.Get():
+                if txt.getName() == "Anim":
+                    animtxt = txt
+                    break
+                    
+            # rebuilds the bone extra data dictionaries from the 'BoneExMat' text buffer
+            self.rebuildBonesExtraMatrices()
+            
+            # rebuilds the full name dictionary from the 'FullNames' text buffer 
+            self.rebuildFullNames()
+            
+            # export nif:
+            #------------
+            Blender.Window.DrawProgressBar(0.33, "Converting to NIF")
+            
+            # create a nif object
+            
+            # export the root node (the name is fixed later to avoid confusing the
+            # exporter with duplicate names)
+            root_block = self.exportNode(None, 'none', None, '')
+            
+            # export objects
+            msg("Exporting objects")
+            for root_object in root_objects:
+                # export the root objects as a NiNodes; their children are exported as well
+                # note that localspace = worldspace, because root objects have no parents
+                self.exportNode(root_object, 'localspace', root_block, root_object.getName())
 
-        # write the file:
-        #----------------
-        ext = ".nif" if (self.EXPORT_ANIMATION != 2) else ".kf"
-        msg("Writing %s file"%ext)
-        Blender.Window.DrawProgressBar(0.66, "Writing %s file"%ext)
+            # post-processing:
+            #-----------------
 
-        # make sure we have the right file extension
-        if (fileext.lower() != ext):
-            msg("WARNING: changing extension from %s to %s on output file"%(fileext,ext))
-            filename = Blender.sys.join(filedir, filebase + ext)
-        NIF_USER_VERSION = 0 if self.version != 0x14000005 else 11
-        f = open(filename, "wb")
-        try:
-            NifFormat.write(self.version, NIF_USER_VERSION, f, [root_block])
-        finally:
-            f.close()
+            # if we exported animations, but no animation groups are defined, define a default animation group
+            msg("Checking animation groups")
+            if (animtxt == None):
+                has_controllers = False
+                for block in self.blocks:
+                    if isinstance(block, NifFormat.NiObjectNET): # has it a controller field?
+                        if block.controller:
+                            has_controllers = True
+                            break
+                if has_controllers:
+                    msg("Defining default animation group")
+                    # write the animation group text buffer
+                    animtxt = Blender.Text.New("Anim")
+                    animtxt.write("%i/Idle: Start/Idle: Loop Start\n%i/Idle: Loop Stop/Idle: Stop"%(self.fstart,self.fend))
 
-    except NIFExportError, e: # export error: raise a menu instead of an exception
-        Blender.Window.DrawProgressBar(1.0, "Export Failed")
-        Blender.Draw.PupMenu('EXPORT ERROR%t|' + e.value)
-        print 'NifExportError: ' + e.value
-        return
+            # animations without keyframe animations crash the TESCS
+            # if we are in that situation, add a trivial keyframe animation
+            msg("Checking controllers")
+            if (animtxt):
+                has_keyframecontrollers = False
+                for block in self.blocks:
+                    if isinstance(block, NifFormat.NiKeyframeController):
+                        has_keyframecontrollers = True
+                        break
+                if not has_keyframecontrollers:
+                    msg("Defining dummy keyframe controller")
+                    # add a trivial keyframe controller on the scene root
+                    self.exportKeyframes(None, 'localspace', root_block)
+            
+            # export animation groups
+            if (animtxt):
+                anim_textextra = self.exportAnimGroups(animtxt, root_block)
 
-    except IOError, e: # IO error: raise a menu instead of an exception
-        Blender.Window.DrawProgressBar(1.0, "Export Failed")
-        Blender.Draw.PupMenu('I/O ERROR%t|' + str(e))
-        print 'IOError: ' + str(e)
-        return
+            # activate oblivion collision and physics
+            if self.EXPORT_VERSION == 'Oblivion':
+                hascollision = False
+                for block in self.blocks:
+                    if isinstance(block, NifFormat.bhkCollisionObject):
+                       hascollision = True
+                       break
+                if hascollision:
+                    bsx = self.createBlock("BSXFlags")
+                    bsx.name = 'BSX'
+                    bsx.integerData = 2 # enable collision
+                    root_block.addExtraData(bsx)
 
-    except StandardError, e: # other error: raise a menu and an exception
-        Blender.Window.DrawProgressBar(1.0, "Export Failed")
-        Blender.Draw.PupMenu('ERROR%t|' + str(e) + '    Check console for possibly more details.')
-        raise
+                # many Oblivion nifs have a UPB, but export is disabled as
+                # they do not seem to affect anything in the game
+                #upb = self.createBlock("NiStringExtraData")
+                #upb.name = 'UPB'
+                #upb.stringData = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
+                #root_block.addExtraData(upb)
 
-    Blender.Window.DrawProgressBar(1.0, "Finished")
+            # add vertex color and zbuffer properties for civ4
+            if self.EXPORT_VERSION == 'Civilization IV':
+                vcol = self.createBlock("NiVertexColorProperty")
+                vcol.flags = 1
+                vcol.vertexMode = 0
+                vcol.lightingMode = 1
+                zbuf = self.createBlock("NiZBufferProperty")
+                zbuf.flags = 15
+                zbuf.function = 3
+                root_block.addProperty(vcol)
+                root_block.addProperty(zbuf)
+
+            if self.EXPORT_FLATTENSKIN:
+                # (warning: trouble if armatures parent other armatures or
+                # if bones parent geometries, or if object is animated)
+                # flatten skins
+                skelroots = []
+                affectedbones = []
+                for block in self.blocks:
+                    if isinstance(block, NifFormat.NiGeometry) and block.isSkin():
+                        msg("Flattening skin on geometry %s"%block.name)
+                        affectedbones.extend(block.flattenSkin())
+                        skelroots.append(block.skinInstance.skeletonRoot)
+                # remove NiNodes that do not affect skin
+                for skelroot in skelroots:
+                    skelrootchildren = [child for child in skelroot.children if (not isinstance(child, NifFormat.NiNode)) or (child in affectedbones)]
+                    skelroot.numChildren = len(skelrootchildren)
+                    skelroot.children.updateSize()
+                    for i, child in enumerate(skelrootchildren):
+                        skelroot.children[i] = child
+
+            # apply scale
+            if abs(self.EXPORT_SCALE_CORRECTION - 1.0) > NifFormat._EPSILON:
+                msg("Applying scale correction %f"%self.EXPORT_SCALE_CORRECTION)
+                root_block.applyScale(self.EXPORT_SCALE_CORRECTION)
+
+            # generate mopps (must be done after applying scale!)
+            if self.EXPORT_VERSION == 'Oblivion':
+                for block in self.blocks:
+                    if isinstance(block, NifFormat.bhkMoppBvTreeShape):
+                       msg("Generating mopp...")
+                       block.updateOriginScale()
+                       block.updateMopp()
+                       #print "=== DEBUG: MOPP TREE ==="
+                       #block.parseMopp(verbose = True)
+                       #print "=== END OF MOPP TREE ==="
+
+
+            # delete original scene root if a scene root object was already defined
+            if (root_block.numChildren == 1) and (root_block.children[0].name in ['Scene Root', 'Bip01']):
+                msg("Making 'Scene Root' the root block")
+                # remove root_block from self.blocks
+                self.blocks = [b for b in self.blocks if b != root_block] 
+                # set new root block
+                old_root_block = root_block
+                root_block = old_root_block.children[0]
+                # copy extra data and properties
+                for b in old_root_block.getExtraDatas():
+                    root_block.addExtraData(b)
+                for b in old_root_block.getControllers():
+                    root_block.addController(b)
+                for b in old_root_block.properties:
+                    root_block.addProperty(b)
+                for b in old_root_block.effects:
+                    root_block.addEffect(b)
+            else:
+                root_block.name = root_name
+     
+            # create keyframe file:
+            #----------------------
+
+            # convert root_block tree into a keyframe tree
+            if self.EXPORT_ANIMATION == 2:
+                # morrowind
+                if self.EXPORT_VERSION == "Morrowind":
+                    # create kf root header
+                    kf_root = self.createBlock("NiSequenceStreamHelper")
+                    kf_root.addExtraData(anim_textextra)
+                    # find all nodes and keyframe controllers
+                    nodekfs = {}
+                    for node in root_block.tree():
+                        if not isinstance(node, NifFormat.NiNode): continue
+                        nodekfs[node] = []
+                        ctrls = node.getControllers()
+                        for ctrl in ctrls:
+                            if not isinstance(ctrl, NifFormat.NiKeyframeController): continue
+                            nodekfs[node].append(ctrl)
+                    # reparent controller tree
+                    lastctrl = None
+                    for node, ctrls in nodekfs.iteritems():
+                        for ctrl in ctrls:
+                            # create node reference by name
+                            nodename_extra = self.createBlock("NiStringExtraData")
+                            nodename_extra.bytesRemaining = len(node.name) + 4
+                            nodename_extra.stringData = node.name
+
+                            # break the controller chain
+                            ctrl.nextController = None
+
+                            # add node reference and controller
+                            kf_root.addExtraData(nodename_extra)
+                            kf_root.addController(ctrl)
+
+                #elif self.EXPORT_VERSION == "Oblivion":
+                #    pass
+                else:
+                    raise NIFExportError("Keyframe export for '%s' is not supported. Only Morrowind keyframes are supported."%self.EXPORT_VERSION)
+
+                # make keyframe root block the root block to be written
+                root_block = kf_root
+
+            # write the file:
+            #----------------
+            ext = ".nif" if (self.EXPORT_ANIMATION != 2) else ".kf"
+            msg("Writing %s file"%ext)
+            Blender.Window.DrawProgressBar(0.66, "Writing %s file"%ext)
+
+            # make sure we have the right file extension
+            if (fileext.lower() != ext):
+                msg("WARNING: changing extension from %s to %s on output file"%(fileext,ext))
+                filename = Blender.sys.join(filedir, filebase + ext)
+            NIF_USER_VERSION = 0 if self.version != 0x14000005 else 11
+            f = open(filename, "wb")
+            try:
+                NifFormat.write(self.version, NIF_USER_VERSION, f, [root_block])
+            finally:
+                f.close()
+
+        except NIFExportError, e: # export error: raise a menu instead of an exception
+            Blender.Window.DrawProgressBar(1.0, "Export Failed")
+            Blender.Draw.PupMenu('EXPORT ERROR%t|' + e.value)
+            print 'NifExportError: ' + e.value
+            return
+
+        except IOError, e: # IO error: raise a menu instead of an exception
+            Blender.Window.DrawProgressBar(1.0, "Export Failed")
+            Blender.Draw.PupMenu('I/O ERROR%t|' + str(e))
+            print 'IOError: ' + str(e)
+            return
+
+        except StandardError, e: # other error: raise a menu and an exception
+            Blender.Window.DrawProgressBar(1.0, "Export Failed")
+            Blender.Draw.PupMenu('ERROR%t|' + str(e) + '    Check console for possibly more details.')
+            raise
+
+        Blender.Window.DrawProgressBar(1.0, "Finished")
     
 
 
@@ -1773,7 +1775,7 @@ and turn off envelopes."""%ob.getName()
         # loop over all ob's children
         for ob_child in [cld  for cld in Blender.Object.Get() if cld.getParent() == ob]:
             # is it a regular node?
-            elif (ob_child.getType() == 'Mesh') or (ob_child.getType() == 'Empty') or (ob_child.getType() == 'Armature'):
+            if ob_child.getType() in ['Mesh', 'Empty', 'Armature']:
                 if (ob.getType() != 'Armature'): # not parented to an armature...
                     self.exportNode(ob_child, 'localspace', parent_block, ob_child.getName())
                 else: # oh, this object is parented to an armature
