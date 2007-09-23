@@ -66,7 +66,7 @@ class NIFExportError(StandardError):
 
 # main export class (not functional yet, wip)
 class NifExport:
-    def msg(message='-', level=2):
+    def msg(self, message, level=2):
         """Wrapper for debug messages."""
         if self.VERBOSITY and level <= self.VERBOSITY:
             print message
@@ -162,17 +162,17 @@ class NifExport:
             # find nif version to write
             try:
                 self.version = NifFormat.versions[self.EXPORT_VERSION]
-                msg("Writing NIF version 0x%08X"%self.version)
+                self.msg("Writing NIF version 0x%08X"%self.version)
             except KeyError:
                 self.version = NifFormat.games[self.EXPORT_VERSION][-1] # select highest nif version that the game supports
-                msg("Writing %s NIF (version 0x%08X)"%(self.EXPORT_VERSION,self.version))
+                self.msg("Writing %s NIF (version 0x%08X)"%(self.EXPORT_VERSION,self.version))
 
             if self.EXPORT_ANIMATION == 0:
-                msg("Exporting geometry and animation")
+                self.msg("Exporting geometry and animation")
             elif self.EXPORT_ANIMATION == 1:
-                msg("Exporting geometry only") # for morrowind: everything except keyframe controllers
+                self.msg("Exporting geometry only") # for morrowind: everything except keyframe controllers
             elif self.EXPORT_ANIMATION == 2:
-                msg("Exporting animation only (as .kf file)") # for morrowind: only keyframe controllers
+                self.msg("Exporting animation only (as .kf file)") # for morrowind: only keyframe controllers
 
             # armatures should not be in rest position
             for ob in Blender.Object.Get():
@@ -180,15 +180,15 @@ class NifExport:
                     ob.data.restPosition = False # ensure we get the mesh vertices in animation mode, and not in rest position!
                     if (ob.data.envelopes):
                         print """'%s': Cannot export envelope skinning.
-    If you have vertex groups, turn off envelopes.
-    If you don't have vertex groups, select the bones one by one
-    press W to convert their envelopes to vertex weights,
-    and turn off envelopes."""%ob.getName()
+If you have vertex groups, turn off envelopes.
+If you don't have vertex groups, select the bones one by one
+press W to convert their envelopes to vertex weights,
+and turn off envelopes."""%ob.getName()
                         raise NIFExportError("'%s': Cannot export envelope skinning. Check console for instructions."%ob.getName())
             
             # extract some useful scene info
-            self.scn = Blender.Scene.GetCurrent()
-            self.context = scn.getRenderingContext()
+            scn = Blender.Scene.GetCurrent()
+            context = scn.getRenderingContext()
             self.fspeed = 1.0 / context.framesPerSec()
             self.fstart = context.startFrame()
             self.fend = context.endFrame()
@@ -239,7 +239,7 @@ class NifExport:
             root_block = self.exportNode(None, 'none', None, '')
             
             # export objects
-            msg("Exporting objects")
+            self.msg("Exporting objects")
             for root_object in root_objects:
                 # export the root objects as a NiNodes; their children are exported as well
                 # note that localspace = worldspace, because root objects have no parents
@@ -249,7 +249,7 @@ class NifExport:
             #-----------------
 
             # if we exported animations, but no animation groups are defined, define a default animation group
-            msg("Checking animation groups")
+            self.msg("Checking animation groups")
             if (animtxt == None):
                 has_controllers = False
                 for block in self.blocks:
@@ -258,14 +258,14 @@ class NifExport:
                             has_controllers = True
                             break
                 if has_controllers:
-                    msg("Defining default animation group")
+                    self.msg("Defining default animation group")
                     # write the animation group text buffer
                     animtxt = Blender.Text.New("Anim")
                     animtxt.write("%i/Idle: Start/Idle: Loop Start\n%i/Idle: Loop Stop/Idle: Stop"%(self.fstart,self.fend))
 
             # animations without keyframe animations crash the TESCS
             # if we are in that situation, add a trivial keyframe animation
-            msg("Checking controllers")
+            self.msg("Checking controllers")
             if (animtxt):
                 has_keyframecontrollers = False
                 for block in self.blocks:
@@ -273,7 +273,7 @@ class NifExport:
                         has_keyframecontrollers = True
                         break
                 if not has_keyframecontrollers:
-                    msg("Defining dummy keyframe controller")
+                    self.msg("Defining dummy keyframe controller")
                     # add a trivial keyframe controller on the scene root
                     self.exportKeyframes(None, 'localspace', root_block)
             
@@ -321,7 +321,7 @@ class NifExport:
                 affectedbones = []
                 for block in self.blocks:
                     if isinstance(block, NifFormat.NiGeometry) and block.isSkin():
-                        msg("Flattening skin on geometry %s"%block.name)
+                        self.msg("Flattening skin on geometry %s"%block.name)
                         affectedbones.extend(block.flattenSkin())
                         skelroots.append(block.skinInstance.skeletonRoot)
                 # remove NiNodes that do not affect skin
@@ -334,14 +334,14 @@ class NifExport:
 
             # apply scale
             if abs(self.EXPORT_SCALE_CORRECTION - 1.0) > NifFormat._EPSILON:
-                msg("Applying scale correction %f"%self.EXPORT_SCALE_CORRECTION)
+                self.msg("Applying scale correction %f"%self.EXPORT_SCALE_CORRECTION)
                 root_block.applyScale(self.EXPORT_SCALE_CORRECTION)
 
             # generate mopps (must be done after applying scale!)
             if self.EXPORT_VERSION == 'Oblivion':
                 for block in self.blocks:
                     if isinstance(block, NifFormat.bhkMoppBvTreeShape):
-                       msg("Generating mopp...")
+                       self.msg("Generating mopp...")
                        block.updateOriginScale()
                        block.updateMopp()
                        #print "=== DEBUG: MOPP TREE ==="
@@ -351,7 +351,7 @@ class NifExport:
 
             # delete original scene root if a scene root object was already defined
             if (root_block.numChildren == 1) and (root_block.children[0].name in ['Scene Root', 'Bip01']):
-                msg("Making 'Scene Root' the root block")
+                self.msg("Making 'Scene Root' the root block")
                 # remove root_block from self.blocks
                 self.blocks = [b for b in self.blocks if b != root_block] 
                 # set new root block
@@ -415,12 +415,12 @@ class NifExport:
             # write the file:
             #----------------
             ext = ".nif" if (self.EXPORT_ANIMATION != 2) else ".kf"
-            msg("Writing %s file"%ext)
+            self.msg("Writing %s file"%ext)
             Blender.Window.DrawProgressBar(0.66, "Writing %s file"%ext)
 
             # make sure we have the right file extension
             if (fileext.lower() != ext):
-                msg("WARNING: changing extension from %s to %s on output file"%(fileext,ext))
+                self.msg("WARNING: changing extension from %s to %s on output file"%(fileext,ext))
                 filename = Blender.sys.join(filedir, filebase + ext)
             NIF_USER_VERSION = 0 if self.version != 0x14000005 else 11
             f = open(filename, "wb")
@@ -460,7 +460,7 @@ class NifExport:
         - for the root node, ob is None, and node_name is usually the base
           filename (either with or without extension)
         """
-        msg("Exporting NiNode %s"%node_name)
+        self.msg("Exporting NiNode %s"%node_name)
 
         # ob_type: determine the block type (None, 'Mesh', 'Empty' or 'Armature')
         # ob_ipo:  object animation ipo
@@ -498,7 +498,7 @@ class NifExport:
                     node = self.createBlock('NiNode')
                 else:
                     # don't create intermediate ninode for this guy
-                    export_trishapes(ob, space, parent_block, node_name)
+                    self.exportTriShapes(ob, space, parent_block, node_name)
                     # we didn't create a ninode, return nothing
                     return None
             else:
@@ -537,7 +537,7 @@ class NifExport:
         
             # if it is a mesh, export the mesh as trishape children of this ninode
             if (ob.getType() == 'Mesh'):
-                export_trishapes(ob, trishape_space, node) # see definition of trishape_space above
+                self.exportTriShapes(ob, trishape_space, node) # see definition of trishape_space above
                 
             # if it is an armature, export the bones as ninode children of this ninode
             elif (ob.getType() == 'Armature'):
@@ -598,7 +598,7 @@ class NifExport:
         if self.EXPORT_ANIMATION == 1: # keyframe controllers are not present in geometry only files
             return
 
-        msg("Exporting keyframe %s"%parent_block.name)
+        self.msg("Exporting keyframe %s"%parent_block.name)
         # -> get keyframe information
         
         assert(space == 'localspace') # we don't support anything else (yet)
@@ -606,7 +606,7 @@ class NifExport:
         
         # some calculations
         if bind_mat:
-            bind_scale, bind_rot, bind_trans = decompose_srt(bind_mat)
+            bind_scale, bind_rot, bind_trans = self.decomposeSRT(bind_mat)
             bind_quat = bind_rot.toQuat()
         else:
             bind_scale = 1.0
@@ -614,21 +614,13 @@ class NifExport:
             bind_quat = Blender.Mathutils.Quaternion(1,0,0,0)
             bind_trans = Blender.Mathutils.Vector(0,0,0)
         if extra_mat_inv:
-            extra_scale_inv, extra_rot_inv, extra_trans_inv = decompose_srt(extra_mat_inv)
+            extra_scale_inv, extra_rot_inv, extra_trans_inv = self.decomposeSRT(extra_mat_inv)
             extra_quat_inv = extra_rot_inv.toQuat()
         else:
             extra_scale_inv = 1.0
             extra_rot_inv = Blender.Mathutils.Matrix([1,0,0],[0,1,0],[0,0,1])
             extra_quat_inv = Blender.Mathutils.Quaternion(1,0,0,0)
             extra_trans_inv = Blender.Mathutils.Vector(0,0,0)
-
-        # get frame start and frame end, and the number of frames per second
-        scn = Blender.Scene.GetCurrent()
-        context = scn.getRenderingContext()
-     
-        fspeed = 1.0 / context.framesPerSec()
-        fstart = context.startFrame()
-        fend = context.endFrame()
 
         # sometimes we need to export an empty keyframe... this will take care of that
         if (ipo == None):
@@ -706,8 +698,8 @@ class NifExport:
         kfc.flags = 0x0008
         kfc.frequency = 1.0
         kfc.phase = 0.0
-        kfc.startTime = (fstart - 1) * fspeed
-        kfc.stopTime = (fend - fstart) * fspeed
+        kfc.startTime = (self.fstart - 1) * self.fspeed
+        kfc.stopTime = (self.fend - self.fstart) * self.fspeed
 
         # add the keyframe data
         if NIF_VERSION < 0x0A020000:
@@ -724,7 +716,7 @@ class NifExport:
         kfd.quaternionKeys.updateSize()
         for i, frame in enumerate(frames):
             rot_frame = kfd.quaternionKeys[i]
-            rot_frame.time = (frame - 1) * fspeed
+            rot_frame.time = (frame - 1) * self.fspeed
             rot_frame.value.w = rot_curve[frame].w
             rot_frame.value.x = rot_curve[frame].x
             rot_frame.value.y = rot_curve[frame].y
@@ -737,7 +729,7 @@ class NifExport:
         kfd.translations.keys.updateSize()
         for i, frame in enumerate(frames):
             trans_frame = kfd.translations.keys[i]
-            trans_frame.time = (frame - 1) * fspeed
+            trans_frame.time = (frame - 1) * self.fspeed
             trans_frame.value.x = trans_curve[frame][0]
             trans_frame.value.y = trans_curve[frame][1]
             trans_frame.value.z = trans_curve[frame][2]
@@ -749,13 +741,13 @@ class NifExport:
         kfd.scales.keys.updateSize()
         for frame in frames:
             scale_frame = kfd.scales.keys[i]
-            scale_frame.time = (frame - 1) * fspeed
+            scale_frame.time = (frame - 1) * self.fspeed
             scale_frame.value = scale_curve[frame]
 
 
 
     def exportVColProp(self, vertex_mode, lighting_mode):
-        msg("Exporting NiVertexColorProperty")
+        self.msg("Exporting NiVertexColorProperty")
         # create new vertex color property block
         vcolprop = self.createBlock("NiVertexColorProperty")
         
@@ -776,16 +768,8 @@ class NifExport:
         if self.EXPORT_ANIMATION == 1: # animation group extra data is not present in geometry only files
             return
 
-        msg("Exporting animation groups")
+        self.msg("Exporting animation groups")
         # -> get animation groups information
-
-        # get frame start and frame end, and the number of frames per second
-        scn = Blender.Scene.GetCurrent()
-        context = scn.getRenderingContext()
-     
-        fspeed = 1.0 / context.framesPerSec()
-        fstart = context.startFrame()
-        fend = context.endFrame()
 
         # parse the anim text descriptor
         
@@ -825,7 +809,7 @@ class NifExport:
         textextra.textKeys.updateSize()
         for i in range(len(flist)):
             key = textextra.textKeys[i]
-            key.time = fspeed * (flist[i]-1)
+            key.time = self.fspeed * (flist[i]-1)
             key.value = dlist[i]
 
         return textextra
@@ -841,7 +825,7 @@ class NifExport:
     #
     def exportSourceTexture(self, texture, filename = None):
         
-        msg("Exporting source texture %s"%texture.getName())
+        self.msg("Exporting source texture %s"%texture.getName())
         # texture must be of type IMAGE
         if ( texture.type != Blender.Texture.Types.IMAGE ):
             raise NIFExportError( "Error: Texture '%s' must be of type IMAGE"%texture.getName())
@@ -941,35 +925,32 @@ class NifExport:
     # returns exported NiFlipController
     # 
     def exportFlipController(self, fliptxt, texture, target, target_tex):
-        msg("Exporting NiFlipController for texture %s"%texture.getName())
+        self.msg("Exporting NiFlipController for texture %s"%texture.getName())
         tlist = fliptxt.asLines()
 
         # create a NiFlipController
         flip = self.createBlock("NiFlipController")
         target.addController(flip)
 
-        # get frame start and frame end, and the number of frames per second
-        fspeed = 1.0 / Blender.Scene.GetCurrent().getRenderingContext().framesPerSec()
-        fstart = Blender.Scene.GetCurrent().getRenderingContext().startFrame()
-        fend = Blender.Scene.GetCurrent().getRenderingContext().endFrame()
-
         # fill in NiFlipController's values
         # flip["Target"] automatically calculated
-        flip["Flags"] = 0x0008
-        flip["Frequency"] = 1.0
-        flip["Start Time"] = (fstart - 1) * fspeed
-        flip["Stop Time"] = ( fend - fstart ) * fspeed
-        flip["Texture Slot"] = target_tex
+        flip.flags = 0x0008
+        flip.frequency = 1.0
+        flip.startTime = (self.fstart - 1) * self.fspeed
+        flip.stopTime = ( self.fend - self.fstart ) * self.fspeed
+        flip.textureSlot = target_tex
         count = 0
         for t in tlist:
             if len( t ) == 0: continue  # skip empty lines
             # create a NiSourceTexture for each flip
             tex = self.exportSourceTexture(texture, t)
-            flip["Sources"].AddLink(tex)
+            flip.numSources += 1
+            flip.sources.updateSize()
+            flip.sources[flip.numSources-1] = tex
             count += 1
         if count < 2:
             raise NIFExportError("Error in Texture Flip buffer '%s': Must define at least two textures"%fliptxt.getName())
-        flip["Delta"] = (flip["Stop Time"].asFloat() - flip["Start Time"].asFloat()) / count
+        flip.delta = (flip.stopTime - flip.startTime) / count
 
 
 
@@ -983,8 +964,8 @@ class NifExport:
     # The parameter trishape_name passes on the name for meshes that
     # should be exported as a single mesh.
     # 
-    def export_trishapes(ob, space, parent_block, trishape_name = None):
-        msg("Exporting NiTriShapes/NiTriStrips for %s"%ob.getName())
+    def exportTriShapes(self, ob, space, parent_block, trishape_name = None):
+        self.msg("Exporting NiTriShapes/NiTriStrips for %s"%ob.getName())
         assert(ob.getType() == 'Mesh')
 
         # get mesh from ob
@@ -1335,12 +1316,6 @@ class NifExport:
                 a_curve = None
                 if ( ipo != None ):
                     a_curve = ipo.getCurve( 'Alpha' )
-                    # get frame start and the number of frames per second
-                    scn = Blender.Scene.GetCurrent()
-                    context = scn.getRenderingContext()
-                    fspeed = 1.0 / context.framesPerSec()
-                    fstart = context.startFrame()
-                    fend = context.endFrame()
                 
                 if ( a_curve != None ):
                     # get the alpha keyframes from blender's ipo curve
@@ -1348,7 +1323,7 @@ class NifExport:
                     for btriple in a_curve.getPoints():
                         knot = btriple.getPoints()
                         frame = knot[0]
-                        ftime = (frame - fstart) * fspeed
+                        ftime = (frame - self.fstart) * self.fspeed
                         alpha[ftime] = ipo.getCurve( 'Alpha' ).evaluate(frame)
 
                     ftimes = alpha.keys()
@@ -1371,8 +1346,8 @@ class NifExport:
                     # fill in timing values
                     alphac.frequency = 1.0
                     alphac.phase = 0.0
-                    alphac.startTime = (fstart - 1) * fspeed
-                    alphac.stopTime = (fend - fstart) * fspeed
+                    alphac.startTime = (self.fstart - 1) * self.fspeed
+                    alphac.stopTime = (self.fend - self.fstart) * self.fspeed
 
                     # add the alpha data
                     alphad = self.createBlock("NiFloatData")
@@ -1405,7 +1380,7 @@ class NifExport:
                         for btriple in curve.getPoints():
                             knot = btriple.getPoints()
                             frame = knot[0]
-                            ftime = (frame - fstart) * fspeed
+                            ftime = (frame - self.fstart) * self.fspeed
                             if (curve.getName() == 'R') or (curve.getName() == 'G') or (curve.getName() == 'B'):
                                 rgba_curve[ftime] = nif4.NiRGBA()
                                 if ( ipo.getCurve( 'R' ) != None):
@@ -1434,8 +1409,8 @@ class NifExport:
                     matcolc["Flags"] = 0x0008 # using cycle loop for now
                     matcolc["Frequency"] = 1.0
                     matcolc["Phase"] = 0.0
-                    matcolc["Start Time"] =  (fstart - 1) * fspeed
-                    matcolc["Stop Time"] = (fend - fstart) * fspeed
+                    matcolc["Start Time"] =  (self.fstart - 1) * self.fspeed
+                    matcolc["Stop Time"] = (self.fend - self.fstart) * self.fspeed
 
                     # add the material color data
                     matcold = self.createBlock("NiColorData")
@@ -1593,7 +1568,7 @@ class NifExport:
                             if not added:
                                 vert_weights[vert_index] = 1.0
                         if vert_weights:
-                            msg("some vertices had no vertex weights, they will be attached to a bone nub:", vert_weights.keys())
+                            self.msg("some vertices had no vertex weights, they will be attached to a bone nub:", vert_weights.keys())
                             # create bone NiNode for armature
                             arm_bone_block = NifFormat.NiNode()
                             arm_bone_block.name = self.getUniqueName(armaturename)
@@ -1610,7 +1585,7 @@ class NifExport:
                         trishape.updateSkinCenterRadius()
 
                         if NIF_VERSION >= 0x04020100 and self.EXPORT_SKINPARTITION:
-                            msg("creating 'NiSkinPartition'")
+                            self.msg("creating 'NiSkinPartition'")
                             maxbpp = self.EXPORT_BONESPERPARTITION
                             lostweight = trishape.updateSkinPartition(maxbonesperpartition = self.EXPORT_BONESPERPARTITION, maxbonespervertex = self.EXPORT_BONESPERVERTEX, stripify = self.EXPORT_STRIPIFY, stitchstrips = self.EXPORT_STITCHSTRIPS, padbones = self.EXPORT_PADBONES)
                             if lostweight > NifFormat._EPSILON:
@@ -1631,13 +1606,6 @@ class NifExport:
                     if keyipo:
                         # yes, there is a shape ipo too
                         
-                        # get frame start and the number of frames per second
-                        scn = Blender.Scene.GetCurrent()
-                        context = scn.getRenderingContext()
-                        fspeed = 1.0 / context.framesPerSec()
-                        fstart = context.startFrame()
-                        fend = context.endFrame()
-                        
                         # create geometry morph controller
                         morphctrl = self.createBlock("NiGeomMorpherController")
                         trishape.addController(morphctrl)
@@ -1657,7 +1625,7 @@ class NifExport:
                         for keyblocknum, keyblock in enumerate( key.getBlocks() ):
                             # export morphed vertices
                             morph = morphdata.morphs[keyblocknum]
-                            msg("exporting morph %i: vertices"%keyblocknum)
+                            self.msg("exporting morph %i: vertices"%keyblocknum)
                             morph.arg = morphdata.numVertices
                             morph.vectors.updateSize()
                             for vert in keyblock.data:
@@ -1680,7 +1648,7 @@ class NifExport:
                                 curve = keyipo.getCurves()[keyblocknum-1]
                             # base key has no curve all other keys should have one
                             if curve:
-                                msg("exporting morph %i: curve"%keyblocknum)
+                                self.msg("exporting morph %i: curve"%keyblocknum)
                                 if ( curve.getExtrapolation() == "Constant" ):
                                     ctrlFlags = 0x000c
                                 elif ( curve.getExtrapolation() == "Cyclic" ):
@@ -1691,7 +1659,7 @@ class NifExport:
                                 for i, btriple in enumerate(curve.getPoints()):
                                     knot = btriple.getPoints()
                                     morph.keys[i].arg = morph.interpolation
-                                    morph.keys[i].time = (knot[0] - fstart) * fspeed
+                                    morph.keys[i].time = (knot[0] - self.fstart) * self.fspeed
                                     morph.keys[i].value = curve.evaluate( knot[0] )
                                     #morph.keys[i].forwardTangent = 0.0 # ?
                                     #morph.keys[i].backwardTangent = 0.0 # ?
@@ -1704,7 +1672,7 @@ class NifExport:
 
 
     def export_bones(arm, parent_block):
-        msg("Exporting bones for armature %s"%arm.getName())
+        self.msg("Exporting bones for armature %s"%arm.getName())
         # the armature was already exported as a NiNode
         # now we must export the armature's bones
         assert( arm.getType() == 'Armature' )
@@ -1732,7 +1700,7 @@ class NifExport:
         # ok, let's create the bone NiNode blocks
         for bone in bones.values():
             # create a new block for this bone
-            msg("Exporting NiNode for bone %s"%bone.name)
+            self.msg("Exporting NiNode for bone %s"%bone.name)
             node = self.createBlock("NiNode")
             bones_node[bone.name] = node # doing this now makes linkage very easy in second run
 
@@ -1756,7 +1724,7 @@ class NifExport:
         for bone in bones.values():
             # link the bone's children to the bone
             if bone.children:
-                msg("Linking children of bone %s"%bone.name)
+                self.msg("Linking children of bone %s"%bone.name)
                 for child in bone.children:
                     if child.parent.name == bone.name: # bone.children returns also grandchildren etc... we only want immediate children of course
                         bones_node[bone.name].addChild(bones_node[child.name])
@@ -1924,12 +1892,12 @@ class NifExport:
             assert(space == 'localspace') # in this function, we only need bones in localspace
             mat = self.getBoneRestMatrix(ob, 'BONESPACE')
         
-        return decompose_srt(mat)
+        return self.decomposeSRT(mat)
 
 
 
     # Decompose Blender transform matrix as a scale, rotation matrix, and translation vector
-    def decompose_srt(self, m):
+    def decomposeSRT(self, m):
         # get scale components
         b_scale_rot = m.rotationPart()
         b_scale_rot_T = Blender.Mathutils.Matrix(b_scale_rot)
@@ -2001,7 +1969,7 @@ class NifExport:
     # Helper function to create a new block and add it to the list of exported blocks.
     #
     def createBlock(self, blocktype):
-        msg("creating '%s'"%blocktype) # DEBUG
+        self.msg("creating '%s'"%blocktype) # DEBUG
         try:
             block = getattr(NifFormat, blocktype)()
         except AttributeError:
@@ -2020,7 +1988,7 @@ class NifExport:
              parent_block.addChild(node)
              node.flags = 0x000C
              self.exportMatrix(ob, 'localspace', node)
-             export_trishapes(ob, 'none', node)
+             self.exportTriShapes(ob, 'none', node)
 
         elif self.EXPORT_VERSION == 'Oblivion':
 
