@@ -43,7 +43,7 @@ class NIFExportError(StandardError):
     def __str__(self):
         return repr(self.value)
 
-# main export class (not functional yet, wip)
+# main export class
 class NifExport:
     def msg(self, message, level=2):
         """Wrapper for debug messages."""
@@ -120,8 +120,7 @@ class NifExport:
             setattr(self, name, value)
         # variables
         self.blocks = [] # keeps track of all exported blocks
-        self.textures = {} # keeps track of all exported textures
-        #self.materials = {} # keeps track of all exported materials
+        self.textures = {} # keeps track of all exported textures, maps filename to exported NiSourceTexture
         self.names = {} # maps Blender names to imported names if present
         self.blockNames = [] # keeps track of block names, to make sure they are unique
 
@@ -768,7 +767,7 @@ and turn off envelopes."""%ob.getName()
             t = s.split('/')
             if (len(t) < 2): raise NIFExportError("Syntax error in Anim buffer ('%s')"%s)
             f = int(t[0])
-            if ((f < fstart) or (f > fend)): raise NIFExportError("Error in Anim buffer: frame out of range (%i not in [%i, %i])"%(f, fstart, fend))
+            if ((f < self.fstart) or (f > self.fend)): raise NIFExportError("Error in Anim buffer: frame out of range (%i not in [%i, %i])"%(f, self.fstart, self.fend))
             d = t[1].strip(' ')
             for i in range(2, len(t)):
                 d = d + '\r\n' + t[i].strip(' ')
@@ -834,7 +833,6 @@ and turn off envelopes."""%ob.getName()
                 idx = tfn.find( "textures" )
                 if ( idx >= 0 ):
                     tfn = tfn[idx:]
-                    tfn = tfn.replace(Blender.sys.sep, '\\') # for linux
                     srctex.fileName = tfn
                 else:
                     srctex.fileName = Blender.sys.basename(tfn)
@@ -842,6 +840,8 @@ and turn off envelopes."""%ob.getName()
             ddsFile = "%s%s" % (srctex.fileName[:-4], '.dds')
             if Blender.sys.exists(ddsFile) or self.EXPORT_FORCEDDS:
                 srctex.fileName = ddsFile
+            # for linux export: fix path
+            srctex.fileName = srctex.fileName.replace('/', '\\')
 
         else:   # if the file is not external
             if filename != None:
@@ -1304,13 +1304,15 @@ and turn off envelopes."""%ob.getName()
                         ftime = (frame - self.fstart) * self.fspeed
                         alpha[ftime] = ipo.getCurve( 'Alpha' ).evaluate(frame)
 
-                    ftimes = alpha.keys()
-                    ftimes.sort()
-                    assert( ( ftimes ) > 0 )
-
-                    # add a alphacontroller block, and refer to this in the parent material
+                    # add and link alpha controller, data and interpolator blocks
                     alphac = self.createBlock("NiAlphaController")
+                    alphad = self.createBlock("NiFloatData")
+                    alphai = self.createBlock("NiFloatInterpolator")
+
                     trimatprop.addController(alphac)
+                    alphac.interpolator = alphai
+                    alphac.data = alphad
+                    alphai.data = alphad
 
                     # select extrapolation mode
                     if ( a_curve.getExtrapolation() == "Cyclic" ):
@@ -1328,27 +1330,22 @@ and turn off envelopes."""%ob.getName()
                     alphac.stopTime = (self.fend - self.fstart) * self.fspeed
 
                     # add the alpha data
-                    alphad = self.createBlock("NiFloatData")
-                    alphac["Data"] = alphad
 
                     # select interpolation mode and export the alpha curve data
-                    ialphad = QueryFloatData(alphad)
                     if ( a_curve.getInterpolation() == "Linear" ):
-                        ialphad.SetKeyType(LINEAR_KEY)
+                        alphad.data.interpolation = NifFormat.KeyType.LINEAR_KEY
                     elif ( a_curve.getInterpolation() == "Bezier" ):
-                        ialphad.SetKeyType(QUADRATIC_KEY)
+                        alphad.data.interpolation = NifFormat.KeyType.QUADRATIC_KEY
                     else:
                         raise NIFExportError( 'interpolation %s for alpha curve not supported use linear or bezier instead'%a_curve.getInterpolation() )
 
-                    a_keys = []
-                    for ftime in ftimes:
-                        a_frame = Key_float()
-                        a_frame.time = ftime
-                        a_frame.data = alpha[ftime]
-                        a_frame.forward_tangent = 0.0 # ?
-                        a_frame.backward_tangent = 0.0 # ?
-                        a_keys.append(a_frame)
-                    ialphad.SetKeys(a_keys)
+                    alphad.data.numKeys = len(alpha)
+                    alphad.data.keys.updateSize()
+                    for ftime, key in zip(sorted(alpha), alphad.data.keys):
+                        key.time = ftime
+                        key.value = alpha[ftime]
+                        key.forward = 0.0 # ?
+                        key.backward = 0.0 # ?
 
                 # export animated material colors
                 if ( ipo != None and ( ipo.getCurve( 'R' ) != None or ipo.getCurve( 'G' ) != None or ipo.getCurve( 'B' ) != None ) ):
@@ -1384,15 +1381,15 @@ and turn off envelopes."""%ob.getName()
                     trimatprop.addController(matcolc)
 
                     # fill in the non-trivial values
-                    matcolc["Flags"] = 0x0008 # using cycle loop for now
-                    matcolc["Frequency"] = 1.0
-                    matcolc["Phase"] = 0.0
-                    matcolc["Start Time"] =  (self.fstart - 1) * self.fspeed
-                    matcolc["Stop Time"] = (self.fend - self.fstart) * self.fspeed
+                    matcolc.flags = 0x0008 # using cycle loop for now
+                    matcolc.frequency = 1.0
+                    matcolc.phase = 0.0
+                    matcolc.startTime =  (self.fstart - 1) * self.fspeed
+                    matcolc.stopTime = (self.fend - self.fstart) * self.fspeed
 
                     # add the material color data
                     matcold = self.createBlock("NiColorData")
-                    matcolc["Data"] = matcold
+                    matcolc.data = matcold
 
                     # export the resulting rgba curve
                     imatcold = QueryColorData(matcold)
