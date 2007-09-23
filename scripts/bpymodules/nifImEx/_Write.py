@@ -17,22 +17,6 @@ If you do not have it: http://pyffi.sourceforge.net/
 # Configuration
 #
 
-_CONFIG = {}
-
-# Retrieves the stored configuration
-def loadConfig():
-    global _CONFIG
-    reload(Config)
-    Config.load()
-    _CONFIG = Config._CONFIG
-    
-# Stores the altered configuration
-def saveConfig():
-    Config._CONFIG = _CONFIG
-    Config.save()
-
-loadConfig()
-
 STRIP_TEXPATH = False
 EXPORT_DIR = ''
 
@@ -42,15 +26,19 @@ _IDENTITY44 = NifFormat.Matrix44()
 _IDENTITY44.setIdentity()
 
 def openFileSelector():
-    Blender.Window.FileSelector(selectFile, "Export .nif/.kf", _CONFIG["NIF_EXPORT_FILE"])
+    """File selector (this is the exporter entry point)."""
+    Config.load()
+    Blender.Window.FileSelector(selectFile, "Export .nif/.kf", Config._CONFIG["NIF_EXPORT_FILE"])
 
 def selectFile(nifFile):
-    global _CONFIG
+    """Called when file is selected. Saves exported file path and calls
+    exporter configuration interface."""
+    Config.load()
     if nifFile == '':
         Draw.PupMenu('No file name selected')
         raise ValueError('No file name selected')
-    _CONFIG["NIF_EXPORT_FILE"] = nifFile
-    saveConfig()
+    Config._CONFIG["NIF_EXPORT_FILE"] = nifFile
+    Config.save()
     Config.openGUI("Export") # calls Write.nif_export on Config.exitGUI()
 
 
@@ -2334,5 +2322,6 @@ and turn off envelopes."""%ob.getName()
             raise NIFExportError('cannot export collision type %s to collision shape list'%ob.rbShapeBoundType)
 
 def export_nif(filename):
-    loadConfig() # ensure config is up-to-date
-    export = NifExport(filename, **_CONFIG)
+    Config.load() # ensure config is up-to-date
+    export = NifExport(filename, **Config._CONFIG)
+
