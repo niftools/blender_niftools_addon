@@ -529,7 +529,7 @@ and turn off envelopes."""%ob.getName()
                 
             # if it is an armature, export the bones as ninode children of this ninode
             elif (ob.getType() == 'Armature'):
-                export_bones(ob, node)
+                self.exportBones(ob, node)
 
             # export all children of this empty/mesh/armature/bone object as children of this NiNode
             self.exportChildren(ob, node)
@@ -674,7 +674,7 @@ and turn off envelopes."""%ob.getName()
         # -> now comes the real export
 
         # add a keyframecontroller block, and refer to this block in the parent's time controller
-        if NIF_VERSION < 0x0A020000:
+        if self.version < 0x0A020000:
             kfc = self.createBlock("NiKeyframeController")
         else:
             kfc = self.createBlock("NiTransformController")
@@ -690,7 +690,7 @@ and turn off envelopes."""%ob.getName()
         kfc.stopTime = (self.fend - self.fstart) * self.fspeed
 
         # add the keyframe data
-        if NIF_VERSION < 0x0A020000:
+        if self.version < 0x0A020000:
             kfd = self.createBlock("NiKeyframeData")
             kfc.data = kfd
         else:
@@ -1242,8 +1242,9 @@ and turn off envelopes."""%ob.getName()
                         basetex.source = self.exportSourceTexture(mesh_base_tex)
 
                 if ( mesh_glow_tex != None ):
-                    glowtex = TexDesc()
-                    glowtex.isUsed = 1
+                    tritexprop.hasGlowTexture = True
+                    glowtex = tritexprop.glowTexture
+                    glowtex.isUsed = True
 
                     # check for texture flip definition
                     txtlist = Blender.Text.Get()
@@ -1256,8 +1257,6 @@ and turn off envelopes."""%ob.getName()
                     else:
                         glowtex.source = self.exportSourceTexture(mesh_glow_tex)
                     
-                    itritexprop.SetTexture(GLOW_MAP, glowtex)
-            
             if (mesh_hasalpha):
                 # add NiTriShape's alpha propery
                 trialphaprop = self.createBlock("NiAlphaProperty")
@@ -1465,7 +1464,7 @@ and turn off envelopes."""%ob.getName()
 
             # update tangent space
             if mesh_hastex and mesh_hasnormals:
-                if NIF_VERSION >= 0x14000005:
+                if self.version >= 0x14000005:
                     trishape.updateTangentSpace()
 
             # now export the vertex weights, if there are any
@@ -1500,7 +1499,7 @@ and turn off envelopes."""%ob.getName()
             
                         skindata.hasVertexWeights = True
                         # fix geometry rest pose: transform relative to skeleton root
-                        skindata.setTransform(get_object_matrix(ob, 'localspace').getInverse())
+                        skindata.setTransform(self.getObjectMatrix(ob, 'localspace').getInverse())
             
                         # add vertex weights
                         # first find weights and normalization factors
@@ -1572,7 +1571,7 @@ and turn off envelopes."""%ob.getName()
                         # calculate center and radius for each skin bone data block
                         trishape.updateSkinCenterRadius()
 
-                        if NIF_VERSION >= 0x04020100 and self.EXPORT_SKINPARTITION:
+                        if self.version >= 0x04020100 and self.EXPORT_SKINPARTITION:
                             self.msg("creating 'NiSkinPartition'")
                             maxbpp = self.EXPORT_BONESPERPARTITION
                             lostweight = trishape.updateSkinPartition(maxbonesperpartition = self.EXPORT_BONESPERPARTITION, maxbonespervertex = self.EXPORT_BONESPERVERTEX, stripify = self.EXPORT_STRIPIFY, stitchstrips = self.EXPORT_STITCHSTRIPS, padbones = self.EXPORT_PADBONES)
@@ -1659,7 +1658,7 @@ and turn off envelopes."""%ob.getName()
 
 
 
-    def export_bones(arm, parent_block):
+    def exportBones(self, arm, parent_block):
         self.msg("Exporting bones for armature %s"%arm.getName())
         # the armature was already exported as a NiNode
         # now we must export the armature's bones
@@ -1785,7 +1784,7 @@ and turn off envelopes."""%ob.getName()
     #
     # Get an object's matrix
     #
-    def get_object_matrix(ob, space):
+    def getObjectMatrix(self, ob, space):
         bs, br, bt = self.getObjectSRT(ob, space)
         m = NifFormat.Matrix44()
         
@@ -1802,33 +1801,6 @@ and turn off envelopes."""%ob.getName()
         m.m31 = br[2][0]*bs
         m.m32 = br[2][1]*bs
         m.m33 = br[2][2]*bs
-
-        m.m14 = 0.0
-        m.m24 = 0.0
-        m.m34 = 0.0
-        m.m44 = 1.0
-        
-        return m
-
-    #
-    # Convert blender matrix to NifFormat.Matrix44
-    #
-    def bmatrix_to_matrix(self, bm):
-        m = NifFormat.Matrix44()
-        
-        m.m41 = bm[3][0]
-        m.m42 = bm[3][1]
-        m.m43 = bm[3][2]
-
-        m.m11 = bm[0][0]*bm[3][3]
-        m.m12 = bm[0][1]*bm[3][3]
-        m.m13 = bm[0][2]*bm[3][3]
-        m.m21 = bm[1][0]*bm[3][3]
-        m.m22 = bm[1][1]*bm[3][3]
-        m.m23 = bm[1][2]*bm[3][3]
-        m.m31 = bm[2][0]*bm[3][3]
-        m.m32 = bm[2][1]*bm[3][3]
-        m.m33 = bm[2][2]*bm[3][3]
 
         m.m14 = 0.0
         m.m24 = 0.0
