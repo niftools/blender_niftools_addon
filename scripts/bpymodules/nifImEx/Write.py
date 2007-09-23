@@ -2225,5 +2225,7 @@ and turn off envelopes."""%ob.getName()
 
 def export_nif(filename):
     Config.load() # ensure config is up-to-date
+    t = sys.time()
     export = NifExport(filename, **Config._CONFIG)
+    print 'NIF export finished in %.2f seconds' % (sys.time()-t)
 
