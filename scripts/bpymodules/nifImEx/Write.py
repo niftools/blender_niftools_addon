@@ -197,22 +197,30 @@ and turn off envelopes."""%ob.getName()
                 vdict = {}
                 for ob in [ob for ob in self.scene.objects if ob.getType() == 'Mesh']:
                     mesh = ob.getData(mesh=1)
-                    for v in mesh.verts:
-                        vkey = (int(v.co[0]*200), int(v.co[1]*200), int(v.co[2]*200))
-                        try:
-                            vdict[vkey].append(v)
-                        except KeyError:
-                            vdict[vkey] = [v]
+                    #for v in mesh.verts:
+                    #    v.sel = False
+                    for f in mesh.faces:
+                        for v in f.verts:
+                            vkey = (int(v.co[0]*200), int(v.co[1]*200), int(v.co[2]*200))
+                            try:
+                                vdict[vkey].append((v, f, mesh))
+                            except KeyError:
+                                vdict[vkey] = [(v, f, mesh)]
                 # set normals on shared vertices
                 nv = 0
-                for vkey, vlist in vdict.iteritems():
-                    if len(vlist) <= 1: continue
+                for vlist in vdict.itervalues():
+                    if len(vlist) <= 1: continue # not shared
+                    meshes = set([mesh for v, f, mesh in vlist])
+                    if len(meshes) <= 1: continue # not shared
+                    # take average of all face normals of faces that have this vertex
                     norm = Blender.Mathutils.Vector(0,0,0)
-                    for v in vlist:
-                        norm += v.no
+                    for v, f, mesh in vlist:
+                        norm += f.no
                     norm.normalize()
-                    for v in vlist:
+                    # set normal of this vertex
+                    for v, f, mesh in vlist:
                         v.no = norm
+                        #v.sel = True
                     nv += 1
                 self.msg("fixed normals on %i vertices"%nv)
 
