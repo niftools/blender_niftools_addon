@@ -163,8 +163,8 @@ and turn off envelopes."""%ob.getName()
                         raise NIFExportError("'%s': Cannot export envelope skinning. Check console for instructions."%ob.getName())
             
             # extract some useful scene info
-            scn = Blender.Scene.GetCurrent()
-            context = scn.getRenderingContext()
+            self.scene = Blender.Scene.GetCurrent()
+            context = self.scene.getRenderingContext()
             self.fspeed = 1.0 / context.framesPerSec()
             self.fstart = context.startFrame()
             self.fend = context.endFrame()
@@ -189,6 +189,32 @@ and turn off envelopes."""%ob.getName()
                 if root_object.getType() not in export_types:
                     raise NIFExportError("Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."%root_object.getName())
                 root_objects.add(root_object)
+
+            # smoothen seams of objects
+            if self.EXPORT_SMOOTHOBJECTSEAMS:
+                # get shared vertices
+                self.msg("smoothing seams between objects...")
+                vdict = {}
+                for ob in [ob for ob in self.scene.objects if ob.getType() == 'Mesh']:
+                    mesh = ob.getData(mesh=1)
+                    for v in mesh.verts:
+                        vkey = (int(v.co[0]*200), int(v.co[1]*200), int(v.co[2]*200))
+                        try:
+                            vdict[vkey].append(v)
+                        except KeyError:
+                            vdict[vkey] = [v]
+                # set normals on shared vertices
+                nv = 0
+                for vkey, vlist in vdict.iteritems():
+                    if len(vlist) <= 1: continue
+                    norm = Blender.Mathutils.Vector(0,0,0)
+                    for v in vlist:
+                        norm += v.no
+                    norm.normalize()
+                    for v in vlist:
+                        v.no = norm
+                    nv += 1
+                self.msg("fixed normals on %i vertices"%nv)
 
             ## TODO use Blender actions for animation groups
             # check for animation groups definition in a text buffer called 'Anim'

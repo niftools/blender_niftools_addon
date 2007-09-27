@@ -180,6 +180,9 @@ def drawGUI():
         E["EXPORT_STITCHSTRIPS"] = Draw.Toggle("Stitch Strips", addEvent("EXPORT_STITCHSTRIPS"), 245, H, 195, 20, _CONFIG["EXPORT_STITCHSTRIPS"])
         H -= 30
 
+        E["EXPORT_SMOOTHOBJECTSEAMS"] = Draw.Toggle("Smoothen Inter-Object Seams", addEvent("EXPORT_SMOOTHOBJECTSEAMS"), 50, H, 390, 20, _CONFIG["EXPORT_SMOOTHOBJECTSEAMS"])
+        H -= 30
+
         E["EXPORT_FLATTENSKIN"] = Draw.Toggle("Flatten Skin", addEvent("EXPORT_FLATTENSKIN"), 50, H, 390, 20, _CONFIG["EXPORT_FLATTENSKIN"])
         E["EXPORT_SKINPARTITION"] = Draw.Toggle("Export Skin Partition", addEvent("EXPORT_SKINPARTITION"), 50, H-20, 130, 20, _CONFIG["EXPORT_SKINPARTITION"])
         E["EXPORT_PADBONES"] = Draw.Toggle("Pad & Sort Bones", addEvent("EXPORT_PADBONES"), 180, H-20, 130, 20, _CONFIG["EXPORT_PADBONES"])
@@ -334,6 +337,8 @@ def buttonEvent(evt):
         _CONFIG["EXPORT_STRIPIFY"] = not _CONFIG["EXPORT_STRIPIFY"]
     elif evName == "EXPORT_STITCHSTRIPS":
         _CONFIG["EXPORT_STITCHSTRIPS"] = not _CONFIG["EXPORT_STITCHSTRIPS"]
+    elif evName == "EXPORT_SMOOTHOBJECTSEAMS":
+        _CONFIG["EXPORT_SMOOTHOBJECTSEAMS"] = not _CONFIG["EXPORT_SMOOTHOBJECTSEAMS"]
     elif evName[:17] == "EXPORT_ANIMATION_":
          value = int(evName[17:])
          _CONFIG["EXPORT_ANIMATION"] = value
