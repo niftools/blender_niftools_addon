@@ -1,3 +1,15 @@
+Version 2.1.10 (Sep 27, 2007)
+* Export: fairly large restructuring of the code, the Python modules are only
+loaded once
+* Export: fixed alpha controller export
+* Export: removed disfunctional material color controller export
+* Export: added a timer
+* Export: new option to merge seams between objects, if you separated meshes
+in different parts then on export often seams could appear between the parts
+(the better bodies meshes are good examples of this problem), now there is an
+option to recalculate the normals on seams between objects on export (for
+better bodies the result is a seamless body on re-export)
+
 Version 2.1.9 (Sep 21, 2007)
 * Export: new option to force dds extension of texture paths
 * updated hull script for quickly creating bounding spheres
