@@ -217,7 +217,17 @@ and turn off envelopes."""%ob.getName()
                     for v, f, mesh in vlist:
                         norm += f.no
                     norm.normalize()
-                    # set normal of this vertex
+                    # remove outliers (fixes better bodies issue)
+                    # first calculate fitness of each face
+                    fitlist = [Blender.Mathutils.DotVecs(f.no, norm) for v, f, mesh in vlist]
+                    bestfit = max(fitlist)
+                    # recalculate normals only taking into account well-fitting faces
+                    norm = Blender.Mathutils.Vector(0,0,0)
+                    for (v, f, mesh), fit in zip(vlist, fitlist):
+                        if fit >= bestfit - 0.2:
+                            norm += f.no
+                    norm.normalize()
+                    # save normal of this vertex
                     for v, f, mesh in vlist:
                         v.no = norm
                         #v.sel = True
