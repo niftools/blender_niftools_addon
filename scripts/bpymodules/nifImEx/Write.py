@@ -1018,8 +1018,8 @@ and turn off envelopes."""%ob.getName()
                 mesh_hasnormals = True # for proper lighting
                 # for non-textured materials, vertex colors are used to color the mesh
                 # for textured materials, they represent lighting details
-                # strange: mesh.hasVertexColours() only returns true if the mesh has no texture coordinates
-                mesh_hasvcol = mesh.hasVertexColours() or ((mesh_mat.mode & Blender.Material.Modes.VCOL_LIGHT != 0) or (mesh_mat.mode & Blender.Material.Modes.VCOL_PAINT != 0))
+                # strange: mesh.vertexColors only returns true if the mesh has no texture coordinates
+                mesh_hasvcol = mesh.vertexColors or ((mesh_mat.mode & Blender.Material.Modes.VCOL_LIGHT != 0) or (mesh_mat.mode & Blender.Material.Modes.VCOL_PAINT != 0))
                 # read the Blender Python API documentation to understand this hack
                 mesh_mat_ambient = mesh_mat.getAmb()            # 'Amb' scrollbar in blender (MW -> 1.0 1.0 1.0)
                 mesh_mat_diffuse_color = mesh_mat.getRGBCol()   # 'Col' colour in Blender (MW -> 1.0 1.0 1.0)
@@ -1120,7 +1120,7 @@ and turn off envelopes."""%ob.getName()
             for f in mesh.faces:
                 # does the face belong to this trishape?
                 if (mesh_mat != None): # we have a material
-                    if (f.materialIndex != materialIndex): # but this face has another material
+                    if (f.mat != materialIndex): # but this face has another material
                         continue # so skip this face
                 f_numverts = len(f.v)
                 if (f_numverts < 3): continue # ignore degenerate faces
