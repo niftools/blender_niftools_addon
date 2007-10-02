@@ -1526,7 +1526,7 @@ and turn off envelopes."""%ob.getName()
                             for i, added in enumerate(vert_added):
                                 if not added:
                                     for j, vlist in enumerate(vertmap):
-                                        if i in vlist:
+                                        if vlist and (i in vlist):
                                             idx = j
                                             break
                                     else:
