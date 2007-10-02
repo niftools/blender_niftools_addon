@@ -990,11 +990,11 @@ and turn off envelopes."""%ob.getName()
         assert(ob.getType() == 'Mesh')
 
         # get mesh from ob
-        mesh_orig = Blender.NMesh.GetRaw(ob.data.name) # original non-subsurfed mesh
+        mesh = ob.getData(mesh=1) # get mesh data
         
         # get the mesh's materials, this updates the mesh material list
         if not isinstance(parent_block, NifFormat.RootCollisionNode):
-            mesh_mats = mesh_orig.getMaterials(1) # the argument guarantees that the material list agrees with the face material indices
+            mesh_mats = mesh.materials
         else:
             # ignore materials on collision trishapes
             mesh_mats = []
@@ -1002,13 +1002,6 @@ and turn off envelopes."""%ob.getName()
         if (mesh_mats == []):
             mesh_mats = [ None ]
 
-        # get mesh with modifiers, such as subsurfing; we cannot update the mesh after calling this function
-        try:
-            mesh = Blender.NMesh.GetRawFromObject(ob.name) # subsurf modifiers
-        except:
-            mesh = mesh_orig
-        mesh = mesh_orig
-        
         # let's now export one trishape for every mesh material
         
         for materialIndex, mesh_mat in enumerate( mesh_mats ):
@@ -1118,7 +1111,7 @@ and turn off envelopes."""%ob.getName()
             # use Blender's face normals.
             
             vertquad_list = [] # (vertex, uv coordinate, normal, vertex color) list
-            vertmap = [ None ] * len( mesh.verts ) # blender vertex -> nif vertices
+            vertmap = [ None for i in xrange(len(mesh.verts)) ] # blender vertex -> nif vertices
             vertlist = []
             normlist = []
             vcollist = []
@@ -1193,7 +1186,7 @@ and turn off envelopes."""%ob.getName()
                         # first: add it to the vertex map
                         if not vertmap[v_index]:
                             vertmap[v_index] = []
-                        vertmap[v_index].append( len(vertquad_list) )
+                        vertmap[v_index].append(len(vertquad_list))
                         # new (vert, uv-vert, normal, vcol) quad: add it
                         vertquad_list.append(vertquad)
                         # add the vertex
@@ -1487,7 +1480,7 @@ and turn off envelopes."""%ob.getName()
                         # for each bone, first we get the bone block
                         # then we get the vertex weights
                         # and then we add it to the NiSkinData
-                        vert_added = [False] * len(vertlist) # allocate memory for faster performance
+                        vert_added = [False for i in xrange(len(vertlist))] # allocate memory for faster performance
                         for bone_index, bone in enumerate(boneinfluences):
                             # find bone in exported blocks
                             bone_block = None
@@ -1520,21 +1513,28 @@ and turn off envelopes."""%ob.getName()
             
                         # each vertex must have been assigned to at least one vertex group
                         # or the model doesn't display correctly in the TESCS
-                        # here we cover that case: we attach them to the armature
                         vert_weights = {}
-                        for vert_index, added in enumerate(vert_added):
-                            if not added:
-                                vert_weights[vert_index] = 1.0
-                        if vert_weights:
-                            self.msg("some vertices had no vertex weights, they will be attached to a bone nub:", vert_weights.keys())
-                            # create bone NiNode for armature
-                            arm_bone_block = NifFormat.NiNode()
-                            arm_bone_block.name = self.getUniqueName(armaturename)
-                            arm_bone_block.setTransform(_IDENTITY44)
-                            arm_bone_block.flags = 0x0002 # ? this seems pretty standard for bones
-                            skininst.skeletonRoot.addChild(arm_bone_block, front = True)
-                            # add bone
-                            trishape.addBone(arm_bone_block, vert_weights)
+                        if False in vert_added:
+                            # select mesh object
+                            for bobj in self.scene.objects:
+                                bobj.sel = False
+                            self.scene.objects.active = ob
+                            ob.sel = 1
+                            # select bad vertices
+                            for v in mesh.verts:
+                                v.sel = 0
+                            for i, added in enumerate(vert_added):
+                                if not added:
+                                    for j, vlist in enumerate(vertmap):
+                                        if i in vlist:
+                                            idx = j
+                                            break
+                                    else:
+                                        raise RuntimeError("vertmap bug")
+                                    mesh.verts[idx].sel = 1
+                            # switch to edit mode and raise exception
+                            Blender.Window.EditMode(1)
+                            raise NIFExportError("Cannot export mesh with unweighted vertices. The unweighted vertices have been selected in the mesh so they can me easily identified.")
 
                         # update bind position skinning data
                         trishape.updateBindPosition()
@@ -1555,7 +1555,7 @@ and turn off envelopes."""%ob.getName()
 
             
             # shape key morphing
-            key = mesh.getKey()
+            key = mesh.key
             if key:
                 if len( key.getBlocks() ) > 1:
                     # yes, there is a key object attached
