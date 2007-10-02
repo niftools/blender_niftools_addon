@@ -657,7 +657,7 @@ and turn off envelopes."""%ob.getName()
                 for btriple in curve.getPoints():
                     knot = btriple.getPoints()
                     frame = knot[0]
-                    if (frame < fstart) or (frame > fend): continue
+                    if (frame < self.fstart) or (frame > self.fend): continue
                     if (curve.getName() == 'SizeX') or (curve.getName() == 'SizeY') or (curve.getName() == 'SizeZ'):
                         scale_curve[frame] = ( ipo.getCurve('SizeX').evaluate(frame)\
                                             + ipo.getCurve('SizeY').evaluate(frame)\
@@ -1587,6 +1587,15 @@ and turn off envelopes."""%ob.getName()
                             morph.arg = morphdata.numVertices
                             morph.vectors.updateSize()
                             for vert in keyblock.data:
+                                ## TODO
+                                ## 1) figure out why keyblock.data has vertices outside the mesh vertex range
+                                ## maybe this has something to do with the dummy vertex added & removed on import
+                                ## 2) note that the SVN version of blender returns a list of regular Blender vectors
+                                ## for keyblock.data which breaks the code below
+                                #print len(vertmap), len(mesh.verts), vert.index
+                                if vert.index >= len(vertmap):
+                                    print "WARNING: corrupt keyblock data?"
+                                    continue # hack to make it work
                                 if ( vertmap[ vert.index ] ):
                                     mv = Blender.Mathutils.Vector( *(vert.co) )
                                     if keyblocknum > 0:
