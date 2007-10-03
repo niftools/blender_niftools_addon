@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <title>The Blender NIF Scripts v2.1.10</title>
+  <title>The Blender NIF Scripts v2.1.11</title>
   <meta http-equiv="Content-Type"
  content="text/html; charset=ISO-8859-1" />
   <style type="text/css">
@@ -19,21 +19,21 @@ a:hover.nav { color: #FF0000; background: transparent; }
   </style>
 </head>
 <body>
-<h1>The Blender NIF Scripts v2.1.10</h1>
+<h1>The Blender NIF Scripts v2.1.11</h1>
 <h2>Release Notes</h2>
 Although we have done our best to squash all bugs we could find, it is unlikely that we have found them all. If you find bugs, PLEASE REPORT THEM ON THE SOURCEFORGE TRACKER.
 <h3>Highlights of this Release</h3>
 <ul>
-<li>Fairly large restructuring of the exporter code: the Python modules are only loaded once resulting in a small speedup when calling the scripts more than once during the same session.</li>
-<li>Fixed alpha controller export.</li>
-<li>Removed disfunctional material color controller export.</li>
-<li>Export now has a timer.</li>
-<li>New export option to merge seams between objects. If you separated meshes
-in different parts then on export often seams could appear between the parts
-(the better bodies meshes are good examples of this problem). Now there is an
-option to recalculate the normals on seams between objects on export. For
-example, re-exporting the better bodies meshes with this option enabled 
-results in a nice seamless body.</li>
+
+<li>The exporter will now complain about unweighted vertices, and
+select them instead of adding an extra bone. This is a better
+alternative to the Scene Root.00 "feature" which was pretty
+frustrating at times when you had to hunt down unweighted vertices.</li>
+<li>A frame time bug on export was fixed.</li>
+<li>The scripts check your Blender version and raise an exception if
+Blender is outdated.</li>
+<li>Morph export has been fixed to work with Blender 2.45.</li>
+<li>Some minor other cleanups (check the ChangeLog for full details).</li>
 </ul>
 <h2>Support</h2>
 <ul>

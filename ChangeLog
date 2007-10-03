@@ -1,3 +1,16 @@
+Version 2.1.11 (Oct 3, 2007)
+* Export: complain on unweighted vertices and select them, instead of adding an
+extra bone (this is a better alternative to the Scene Root.00 "feature" which
+was pretty frustrating at times when you had to hunt down unweighted vertices)
+* Export: switched to using Mesh instead of using the deprecated NMesh
+* Export: fixed frame time bug
+* Import: removing dummy index does not properly delete the vertex from
+the mesh (yielding errors in the vertex key data), so reverted back to shift
+checking algorithm to fix face index order; the vertex order is shifted in
+place yielding simpler code and faster performance
+* Import: removed _bindMatrix zombies, other minor cleanups
+* Config: check blender version and raise exception if blender is outdated
+
 Version 2.1.10 (Sep 27, 2007)
 * Export: fairly large restructuring of the code, the Python modules are only
 loaded once
