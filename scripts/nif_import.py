@@ -2,7 +2,7 @@
 
 """ Registration info for Blender menus:
 Name: 'NetImmerse/Gamebryo (.nif)'
-Blender: 244
+Blender: 245
 Group: 'Import'
 Tooltip: 'Import NIF File Format (.nif)'
 """

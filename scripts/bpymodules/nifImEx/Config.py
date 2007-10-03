@@ -1,5 +1,6 @@
 __version__ = "2.1.10"
 __requiredpyffiversion__ = "0.4.5"
+__requiredblenderversion__ = "245"
 
 import Blender
 
@@ -11,14 +12,27 @@ from math import log
 from copy import deepcopy
 from PyFFI.NIF import NifFormat
 
+# check Blender version
+blenderversion = Blender.Get('version')
+if int(blenderversion) < int(__requiredblenderversion__):
+    err = """--------------------------
+ERROR\nThis script requires Blender %s or higher.
+It seems that you have an older version installed (%s).
+Get a newer version at http://www.blender.org/
+--------------------------"""%(__requiredblenderversion__, blenderversion)
+    print err
+    Blender.Draw.PupMenu("ERROR%t|Blender outdated, check console for details")
+    raise ImportError
+
+
 # check PyFFI version
-from PyFFI import __version__ as PyFFIVersion
-if PyFFIVersion < __requiredpyffiversion__:
+from PyFFI import __version__ as pyffiversion
+if pyffiversion < __requiredpyffiversion__:
     err = """--------------------------
 ERROR\nThis script requires Python File Format Interface %s or higher.
 It seems that you have an older version installed (%s).
 Get a newer version at http://pyffi.sourceforge.net/
---------------------------"""%(__requiredpyffiversion__, PyFFIVersion)
+--------------------------"""%(__requiredpyffiversion__, pyffiversion)
     print err
     Blender.Draw.PupMenu("ERROR%t|PyFFI outdated, check console for details")
     raise ImportError
@@ -28,6 +42,8 @@ if sys.platform in ('linux-i386','linux2'):
     os.system("clear")
 elif sys.platform in ('win32','dos','ms-dos'):
     os.system("cls")
+
+print 'Blender NIF Scripts %s (running on Blender %s, PyFFI %s)'%(__version__, blenderversion, pyffiversion)
 
 # All UI elements are kept in this dictionary to make sure they never go out of scope
 _GUI_ELEMENTS = {}

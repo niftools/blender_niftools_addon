@@ -2,7 +2,7 @@
 
 """ Registration info for Blender menus:
 Name: 'NetImmerse/Gamebryo (.nif & .kf)'
-Blender: 244
+Blender: 245
 Group: 'Export'
 Tooltip: 'Export NIF File Format (.nif & .kf)'
 """
