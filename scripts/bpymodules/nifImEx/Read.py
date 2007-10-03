@@ -1252,17 +1252,7 @@ def fb_mesh(niBlock, group_mesh = None):
     verts = niData.vertices
     
     # Faces
-    tris = []
-    if isinstance(niData, NifFormat.NiTriShapeData):
-        tris = niData.triangles
-    elif isinstance(niData, NifFormat.NiTriStripsData):
-        msg("---loading tristrips",3)
-        for face in niData.getTriangles():
-            tri = NifFormat.Triangle()
-            tri.v1 = face[0]
-            tri.v2 = face[1]
-            tri.v3 = face[2]
-            tris.append(tri)
+    tris = niData.getTriangles()
     
     # "Sticky" UV coordinates. these are transformed in Blender UV's
     # only the first UV set is loaded right now
@@ -1350,35 +1340,36 @@ def fb_mesh(niBlock, group_mesh = None):
 
     # Adds the faces to the mesh
     f_map = [None]*len(tris)
-    f_order = [(0,1,2) for i in xrange(len(tris))] # tracks shift in face indices
     b_f_index = len(b_meshData.faces)
     for i, f in enumerate(tris):
-        if f.v1 != f.v2 and f.v1 != f.v3 and f.v2 != f.v3:
-            v1=b_meshData.verts[v_map[f.v1]]
-            v2=b_meshData.verts[v_map[f.v2]]
-            v3=b_meshData.verts[v_map[f.v3]]
-            if (v1 == v2) or (v2 == v3) or (v3 == v1):
-                continue # we get a ValueError on faces.extend otherwise
-            tmp1 = len(b_meshData.faces)
-            # extend checks for duplicate faces
-            # see http://www.blender3d.org/documentation/240PythonDoc/Mesh.MFaceSeq-class.html
-            b_meshData.faces.extend(v1, v2, v3)
-            if tmp1 == len(b_meshData.faces): continue # duplicate face!
-            if check_shift:
-                added_face = b_meshData.faces[-1]
-                if added_face.verts[0] == v1: # most common case, check first
-                    pass
-                elif added_face.verts[2] == v1:
-                    f_order[i] = (2,0,1)
-                elif added_face.verts[1] == v1: # this never seems to occur, leave it just in case
-                    f_order[i] = (1,2,0)
-                else:
-                    raise RuntimeError("face extend index bug")
-            f_map[i] = b_f_index # keep track of added faces, mapping NIF face index to Blender face index
-            b_f_index += 1
+        # get face index
+        verts = [b_meshData.verts[v_map[vert_index]] for vert_index in f]
+        # skip degenerate faces
+        # we get a ValueError on faces.extend otherwise
+        if (verts[0] == verts[1]) or (verts[1] == verts[2]) or (verts[2] == verts[0]): continue
+        tmp1 = len(b_meshData.faces)
+        # extend checks for duplicate faces
+        # see http://www.blender3d.org/documentation/240PythonDoc/Mesh.MFaceSeq-class.html
+        b_meshData.faces.extend(*verts)
+        if tmp1 == len(b_meshData.faces): continue # duplicate face!
+        # faces.extend does not necessarily add vertices in the order
+        # they were given in the argument list
+        # so we must fix the face index order
+        if check_shift:
+            added_face = b_meshData.faces[-1]
+            if added_face.verts[0] == verts[0]: # most common case, checking it first will speed up the script
+                pass # f[0] comes first, everything ok
+            elif added_face.verts[2] == verts[0]: # second most common case
+                f[0], f[1], f[2] = f[1], f[2], f[0] # f[0] comes last
+            elif added_face.verts[1] == verts[0]: # this never seems to occur, leave it just in case
+                f[0], f[1], f[2] = f[2], f[0], f[1] # f[0] comes second
+            else:
+                raise RuntimeError("face extend index bug")
+        f_map[i] = b_f_index # keep track of added faces, mapping NIF face index to Blender face index
+        b_f_index += 1
     # at this point, deleted faces (degenerate or duplicate)
     # satisfy f_map[i] = None
-    
+
     # Sets face smoothing and material
     for b_f_index in f_map:
         if b_f_index == None: continue
@@ -1391,15 +1382,15 @@ def fb_mesh(niBlock, group_mesh = None):
     
     if vcol:
         b_meshData.vertexColors = 1
-        for i, f in enumerate(tris):
-            if f_map[i] == None: continue
-            b_face = b_meshData.faces[f_map[i]]
+        for f, b_f_index in zip(tris, f_map):
+            if b_f_index == None: continue
+            b_face = b_meshData.faces[b_f_index]
             # now set the vertex colors
-            for vc, f_vert_index in zip((vcol[f.v1], vcol[f.v2], vcol[f.v3]), f_order[i]):
-                b_face.col[f_vert_index].r = int(vc.r * 255)
-                b_face.col[f_vert_index].g = int(vc.g * 255)
-                b_face.col[f_vert_index].b = int(vc.b * 255)
-                b_face.col[f_vert_index].a = int(vc.a * 255)
+            for f_vert_index, vert_index in enumerate(f):
+                b_face.col[f_vert_index].r = int(vcol[vert_index].r * 255)
+                b_face.col[f_vert_index].g = int(vcol[vert_index].g * 255)
+                b_face.col[f_vert_index].b = int(vcol[vert_index].b * 255)
+                b_face.col[f_vert_index].a = int(vcol[vert_index].a * 255)
         # vertex colors influence lighting...
         # so now we have to set the VCOL_LIGHT flag on the material
         # see below
@@ -1417,13 +1408,10 @@ def fb_mesh(niBlock, group_mesh = None):
         # but Blender only allows explicit editing of face UV's, so I'll load vertex UV's like face UV's
         b_meshData.faceUV = 1
         b_meshData.vertexUV = 0
-        for i, f in enumerate(tris):
-            if f_map[i] == None: continue
-            uvlist = [None, None, None]
-            for v, f_vert_index in zip((f.v1, f.v2, f.v3), f_order[i]):
-                uv=uvSet[v]
-                uvlist[f_vert_index] = Vector(uv.u, 1.0 - uv.v)
-            b_meshData.faces[f_map[i]].uv = tuple(uvlist)
+        for f, b_f_index in zip(tris, f_map):
+            if b_f_index == None: continue
+            uvlist = [ Vector(uvSet[vert_index].u, 1.0 - uvSet[vert_index].v) for vert_index in f ]
+            b_meshData.faces[b_f_index].uv = tuple(uvlist)
    
     if material:
         # fix up vertex colors depending on whether we had textures in the material
