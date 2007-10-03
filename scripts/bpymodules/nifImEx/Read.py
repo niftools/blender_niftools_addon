@@ -1368,9 +1368,9 @@ def fb_mesh(niBlock, group_mesh = None):
                 added_face = b_meshData.faces[-1]
                 if added_face.verts[0] == v1: # most common case, check first
                     pass
-                elif added_face.verts[1] == v1:
-                    f_order[i] = (2,0,1)
                 elif added_face.verts[2] == v1:
+                    f_order[i] = (2,0,1)
+                elif added_face.verts[1] == v1: # this never seems to occur, leave it just in case
                     f_order[i] = (1,2,0)
                 else:
                     raise RuntimeError("face extend index bug")
