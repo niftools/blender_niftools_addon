@@ -1586,26 +1586,16 @@ and turn off envelopes."""%ob.getName()
                             self.msg("exporting morph %i: vertices"%keyblocknum)
                             morph.arg = morphdata.numVertices
                             morph.vectors.updateSize()
-                            for vert in keyblock.data:
-                                ## TODO
-                                ## 1) figure out why keyblock.data has vertices outside the mesh vertex range
-                                ## maybe this has something to do with the dummy vertex added & removed on import
-                                ## 2) note that the SVN version of blender returns a list of regular Blender vectors
-                                ## for keyblock.data which breaks the code below
-                                #print len(vertmap), len(mesh.verts), vert.index
-                                if vert.index >= len(vertmap):
-                                    print "WARNING: corrupt keyblock data?"
-                                    continue # hack to make it work
-                                if ( vertmap[ vert.index ] ):
-                                    mv = Blender.Mathutils.Vector( *(vert.co) )
-                                    if keyblocknum > 0:
-                                        mv.x -= mesh.verts[vert.index].co.x
-                                        mv.y -= mesh.verts[vert.index].co.y
-                                        mv.z -= mesh.verts[vert.index].co.z
-                                    for vert_index in vertmap[ vert.index ]:
-                                        morph.vectors[vert_index].x = mv.x
-                                        morph.vectors[vert_index].y = mv.y
-                                        morph.vectors[vert_index].z = mv.z
+                            for b_v_index, (vert_indices, vert) in enumerate(zip(vertmap, keyblock.data)):
+                                mv = vert.copy()
+                                if keyblocknum > 0:
+                                    mv.x -= mesh.verts[b_v_index].co.x
+                                    mv.y -= mesh.verts[b_v_index].co.y
+                                    mv.z -= mesh.verts[b_v_index].co.z
+                                for vert_index in vert_indices:
+                                    morph.vectors[vert_index].x = mv.x
+                                    morph.vectors[vert_index].y = mv.y
+                                    morph.vectors[vert_index].z = mv.z
                             
                             # export ipo shape key curve
                             #curve = keyipo.getCurve( 'Key %i'%keyblocknum ) # FIXME
@@ -1823,8 +1813,9 @@ and turn off envelopes."""%ob.getName()
                         bone_parent_name = ob.getParentBoneName()
                         if bone_parent_name:
                             bone_parent = ob.getParent().getData().bones[bone_parent_name]
-                            # get bone parent matrix
-                            matparentbone = self.getBoneRestMatrix(bone_parent, 'ARMATURESPACE') # bone matrix in armature space
+                            # get bone parent matrix, including tail
+                            # NOTE still a transform bug to iron out (see babelfish.nif)
+                            matparentbone = self.getBoneRestMatrix(bone_parent, 'ARMATURESPACE', extra = True, tail = True)
                             matparentboneinv = Blender.Mathutils.Matrix(matparentbone)
                             matparentboneinv.invert()
                             mat *= matparentboneinv
@@ -1866,8 +1857,9 @@ and turn off envelopes."""%ob.getName()
     # Get bone matrix in rest position ("bind pose"). Space can be
     # ARMATURESPACE or BONESPACE. This returns also a 4x4 matrix if space
     # is BONESPACE (translation is bone head plus tail from parent bone).
+    # If tail is True then the matrix translation includes the bone tail.
     # 
-    def getBoneRestMatrix(self, bone, space, extra = True):
+    def getBoneRestMatrix(self, bone, space, extra = True, tail = False):
         # Retrieves the offset from the original NIF matrix, if existing
         corrmat = Blender.Mathutils.Matrix()
         if extra:
@@ -1878,14 +1870,22 @@ and turn off envelopes."""%ob.getName()
         else:
             corrmat.identity()
         if (space == 'ARMATURESPACE'):
-            return corrmat * Blender.Mathutils.Matrix(bone.matrix['ARMATURESPACE'])
+            m = bone.matrix['ARMATURESPACE'].copy()
+            if tail:
+                tail_pos = bone.tail['ARMATURESPACE']
+                m[3][0] = tail_pos[0]
+                m[3][1] = tail_pos[1]
+                m[3][2] = tail_pos[2]
+            return corrmat * m
         elif (space == 'BONESPACE'):
             if bone.parent:
-                parinv = self.getBoneRestMatrix(bone.parent,'ARMATURESPACE')
+                # not sure why extra = True is required here
+                # but if extra = extra then transforms are messed up, so keep for now
+                parinv = self.getBoneRestMatrix(bone.parent,'ARMATURESPACE', extra = True, tail = False)
                 parinv.invert()
-                return (corrmat * bone.matrix['ARMATURESPACE']) * parinv
+                return self.getBoneRestMatrix(bone, 'ARMATURESPACE', extra = extra, tail = tail) * parinv
             else:
-                return corrmat * Blender.Mathutils.Matrix(bone.matrix['ARMATURESPACE'])
+                return self.getBoneRestMatrix(bone, 'ARMATURESPACE', extra = extra, tail = tail)
         else:
             assert(False) # bug!
 
