@@ -862,8 +862,7 @@ def fb_bone(niBlock, b_armature, b_armatureData, niArmature):
         # create bones here...
         b_bone = Blender.Armature.Editbone()
         # head: get position from niBlock
-        #armature_space_matrix = fb_global_matrix(niBlock) * armature_matrix_inverse
-        armature_space_matrix = getattr(niBlock, '_bindMatrix', fb_global_matrix(niBlock) * armature_matrix_inverse)
+        armature_space_matrix = fb_global_matrix(niBlock) * armature_matrix_inverse
         b_bone_head_x = armature_space_matrix[3][0]
         b_bone_head_y = armature_space_matrix[3][1]
         b_bone_head_z = armature_space_matrix[3][2]
@@ -875,8 +874,7 @@ def fb_bone(niBlock, b_armature, b_armatureData, niArmature):
         # tail: average of children location
         if len(niChildBones) > 0:
             m_correction = find_correction_matrix(niBlock, niArmature)
-            #child_matrices = [(fb_global_matrix(child) * armature_matrix_inverse) for child in niChildBones]
-            child_matrices = [getattr(child, '_bindMatrix', fb_global_matrix(child) * armature_matrix_inverse) for child in niChildBones]
+            child_matrices = [fb_global_matrix(child) * armature_matrix_inverse for child in niChildBones]
             b_bone_tail_x = sum([child_matrix[3][0] for child_matrix in child_matrices]) / len(child_matrices)
             b_bone_tail_y = sum([child_matrix[3][1] for child_matrix in child_matrices]) / len(child_matrices)
             b_bone_tail_z = sum([child_matrix[3][2] for child_matrix in child_matrices]) / len(child_matrices)
@@ -951,7 +949,7 @@ def find_correction_matrix(niBlock, niArmature):
     armature_matrix_inverse = niArmature._invMatrix
     m_correction = _IDENTITY44.rotationPart()
     if _CONFIG['REALIGN_BONES'] and is_bone(niBlock):
-        armature_space_matrix = getattr(niBlock, '_bindMatrix', fb_global_matrix(niBlock) * armature_matrix_inverse)
+        armature_space_matrix = fb_global_matrix(niBlock) * armature_matrix_inverse
         niChildBones = [child for child in niBlock.children if is_bone(child)]
         (sum_x, sum_y, sum_z, dummy) = armature_space_matrix[3]
         if len(niChildBones) > 0:
@@ -1222,17 +1220,12 @@ def fb_mesh(niBlock, group_mesh = None):
     else:
         # Mesh name -> must be unique, so tag it if needed
         b_name = fb_name(niBlock, 22)
+        # create mesh data
         b_meshData = Blender.Mesh.New(b_name)
         b_meshData.properties['longName'] = niBlock.name
-        #b_mesh = _SCENE.objects.new(b_meshData, b_name)
-        b_mesh = Blender.Object.New("Mesh", b_name)
-        b_mesh.link(b_meshData)
+        # create mesh object and link to data
+        b_mesh = _SCENE.objects.new(b_meshData, b_name)
 
-        # Sets the mesh as one-sided. This fixes some issue with normals
-        b_meshData.mode = 0
-   
-        _SCENE.objects.link(b_mesh)
-    
         # Mesh hidden flag
         if niBlock.flags & 1 == 1:
             b_mesh.setDrawType(2) # hidden: wire
@@ -1240,8 +1233,7 @@ def fb_mesh(niBlock, group_mesh = None):
             b_mesh.setDrawType(4) # not hidden: shaded
 
         # Mesh transform matrix, sets the transform matrix for the object.
-        meshBindMatrix = getattr(niBlock, '_bindMatrix', fb_matrix(niBlock))
-        b_mesh.setMatrix(meshBindMatrix)
+        b_mesh.setMatrix(fb_matrix(niBlock))
     
     # Mesh geometry data. From this I can retrieve all geometry info
     niData = niBlock.data
@@ -1343,25 +1335,25 @@ def fb_mesh(niBlock, group_mesh = None):
     b_f_index = len(b_meshData.faces)
     for i, f in enumerate(tris):
         # get face index
-        verts = [b_meshData.verts[v_map[vert_index]] for vert_index in f]
+        f_verts = [b_meshData.verts[v_map[vert_index]] for vert_index in f]
         # skip degenerate faces
         # we get a ValueError on faces.extend otherwise
-        if (verts[0] == verts[1]) or (verts[1] == verts[2]) or (verts[2] == verts[0]): continue
+        if (f_verts[0] == f_verts[1]) or (f_verts[1] == f_verts[2]) or (f_verts[2] == f_verts[0]): continue
         tmp1 = len(b_meshData.faces)
         # extend checks for duplicate faces
         # see http://www.blender3d.org/documentation/240PythonDoc/Mesh.MFaceSeq-class.html
-        b_meshData.faces.extend(*verts)
+        b_meshData.faces.extend(*f_verts)
         if tmp1 == len(b_meshData.faces): continue # duplicate face!
         # faces.extend does not necessarily add vertices in the order
         # they were given in the argument list
         # so we must fix the face index order
         if check_shift:
             added_face = b_meshData.faces[-1]
-            if added_face.verts[0] == verts[0]: # most common case, checking it first will speed up the script
+            if added_face.verts[0] == f_verts[0]: # most common case, checking it first will speed up the script
                 pass # f[0] comes first, everything ok
-            elif added_face.verts[2] == verts[0]: # second most common case
+            elif added_face.verts[2] == f_verts[0]: # second most common case
                 f[0], f[1], f[2] = f[1], f[2], f[0] # f[0] comes last
-            elif added_face.verts[1] == verts[0]: # this never seems to occur, leave it just in case
+            elif added_face.verts[1] == f_verts[0]: # this never seems to occur, leave it just in case
                 f[0], f[1], f[2] = f[2], f[0], f[1] # f[0] comes second
             else:
                 raise RuntimeError("face extend index bug")
@@ -1435,7 +1427,8 @@ def fb_mesh(niBlock, group_mesh = None):
                     f.mode = TEX
                     f.image = imgobj
 
-    # Skinning info, for meshes affected by bones. Adding groups to a mesh can be done only after this is already
+    # import skinning info, for meshes affected by bones
+    # Adding groups to a mesh can be done only after this is already
     # linked to an object.
     skinInstance = niBlock.skinInstance
     if skinInstance:
@@ -1452,10 +1445,7 @@ def fb_mesh(niBlock, group_mesh = None):
                 weight = skinWeight.weight
                 b_meshData.assignVertsToGroup(groupName, [v_map[vert]], weight, Blender.Mesh.AssignModes.REPLACE)
     
-    # this doesn't quite work as well as it ought to
-    #b_meshData.calcNormals() # let Blender calculate vertex normals
-
-    # new implementation, uses Mesh instead
+    # import morph controller
     if _CONFIG['IMPORT_ANIMATION']:
         morphCtrl = find_controller(niBlock, NifFormat.NiGeomMorpherController)
         if morphCtrl:
