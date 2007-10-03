@@ -1298,14 +1298,16 @@ def fb_mesh(niBlock, group_mesh = None):
         material = None
         materialIndex = 0
 
-    # add dummy vertex at index 0; this avoids trouble with indexing
+    # if there are no vertices then enable face index shifts
+    # (this fixes an issue with indexing)
     if len(b_meshData.verts) == 0:
-        b_meshData.verts.extend(0, 0, 0)
-        remove_dummy = True
+        check_shift = True
     else:
-        remove_dummy = False
+        check_shift = False
 
-    v_map = [0]*len(verts) # pre-allocate memory, for faster performance
+    # v_map will store the vertex index mapping
+    # nif vertex i maps to blender vertex v_map[i]
+    v_map = [0 for i in xrange(len(verts))] # pre-allocate memory, for faster performance
     
     # Following code avoids introducing unwanted cracks in UV seams:
     # Construct vertex map to get unique vertex / normal pair list.
@@ -1348,6 +1350,7 @@ def fb_mesh(niBlock, group_mesh = None):
 
     # Adds the faces to the mesh
     f_map = [None]*len(tris)
+    f_order = [(0,1,2) for i in xrange(len(tris))] # tracks shift in face indices
     b_f_index = len(b_meshData.faces)
     for i, f in enumerate(tris):
         if f.v1 != f.v2 and f.v1 != f.v3 and f.v2 != f.v3:
@@ -1361,6 +1364,16 @@ def fb_mesh(niBlock, group_mesh = None):
             # see http://www.blender3d.org/documentation/240PythonDoc/Mesh.MFaceSeq-class.html
             b_meshData.faces.extend(v1, v2, v3)
             if tmp1 == len(b_meshData.faces): continue # duplicate face!
+            if check_shift:
+                added_face = b_meshData.faces[-1]
+                if added_face.verts[0] == v1: # most common case, check first
+                    pass
+                elif added_face.verts[1] == v1:
+                    f_order[i] = (2,0,1)
+                elif added_face.verts[2] == v1:
+                    f_order[i] = (1,2,0)
+                else:
+                    raise RuntimeError("face extend index bug")
             f_map[i] = b_f_index # keep track of added faces, mapping NIF face index to Blender face index
             b_f_index += 1
     # at this point, deleted faces (degenerate or duplicate)
@@ -1382,21 +1395,11 @@ def fb_mesh(niBlock, group_mesh = None):
             if f_map[i] == None: continue
             b_face = b_meshData.faces[f_map[i]]
             # now set the vertex colors
-            vc = vcol[f.v1]
-            b_face.col[0].r = int(vc.r * 255)
-            b_face.col[0].g = int(vc.g * 255)
-            b_face.col[0].b = int(vc.b * 255)
-            b_face.col[0].a = int(vc.a * 255)
-            vc = vcol[f.v2]
-            b_face.col[1].r = int(vc.r * 255)
-            b_face.col[1].g = int(vc.g * 255)
-            b_face.col[1].b = int(vc.b * 255)
-            b_face.col[1].a = int(vc.a * 255)
-            vc = vcol[f.v3]
-            b_face.col[2].r = int(vc.r * 255)
-            b_face.col[2].g = int(vc.g * 255)
-            b_face.col[2].b = int(vc.b * 255)
-            b_face.col[2].a = int(vc.a * 255)
+            for vc, f_vert_index in zip((vcol[f.v1], vcol[f.v2], vcol[f.v3]), f_order[i]):
+                b_face.col[f_vert_index].r = int(vc.r * 255)
+                b_face.col[f_vert_index].g = int(vc.g * 255)
+                b_face.col[f_vert_index].b = int(vc.b * 255)
+                b_face.col[f_vert_index].a = int(vc.a * 255)
         # vertex colors influence lighting...
         # so now we have to set the VCOL_LIGHT flag on the material
         # see below
@@ -1416,10 +1419,10 @@ def fb_mesh(niBlock, group_mesh = None):
         b_meshData.vertexUV = 0
         for i, f in enumerate(tris):
             if f_map[i] == None: continue
-            uvlist = []
-            for v in (f.v1, f.v2, f.v3):
+            uvlist = [None, None, None]
+            for v, f_vert_index in zip((f.v1, f.v2, f.v3), f_order[i]):
                 uv=uvSet[v]
-                uvlist.append(Vector(uv.u, 1.0 - uv.v))
+                uvlist[f_vert_index] = Vector(uv.u, 1.0 - uv.v)
             b_meshData.faces[f_map[i]].uv = tuple(uvlist)
    
     if material:
@@ -1518,10 +1521,6 @@ def fb_mesh(niBlock, group_mesh = None):
                         b_meshData.verts[v_map[i]].co[2] = z
                 # assign ipo to mesh
  
-    # remove dummy vertex
-    if remove_dummy:
-        b_meshData.verts.delete(0)
-
     # recalculate normals
     b_meshData.calcNormals()
  
