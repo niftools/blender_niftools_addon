@@ -311,6 +311,10 @@ def import_main(root_block, version):
     _BLOCKS_READ = 0.0
     # preprocessing:
 
+    # check that this is not a kf file
+    if isinstance(root_block, (NifFormat.NiSequence, NifFormat.NiSequenceStreamHelper)):
+        raise NIFImportError(".kf import not supported")
+
     # merge skeleton roots
     for niBlock in root_block.tree():
         if not isinstance(niBlock, NifFormat.NiGeometry): continue
