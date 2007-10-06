@@ -501,7 +501,11 @@ and turn off envelopes."""%ob.getName()
             
             if (node_name == 'RootCollisionNode'):
                 # -> root collision node (can be mesh or empty)
-                node = self.createBlock("RootCollisionNode")
+                ob.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
+                ob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
+                ob.drawMode = Blender.Object.DrawModes['WIRE']
+                self.exportCollision(ob, parent_block)
+                return None # done; stop here
             elif ob_type == 'Mesh':
                 # -> mesh data.
                 # If this has children or animations or more than one material
@@ -541,12 +545,13 @@ and turn off envelopes."""%ob.getName()
 
         # and fill in this node's non-trivial values
         node.name = self.getFullName(node_name)
-        if (ob == None):
-            node.flags = 0x000C # ? this seems pretty standard for the root node
-        elif (node_name == 'RootCollisionNode'):
-            node.flags = 0x0003 # ? this seems pretty standard for the root collision node
+
+        # default node flags
+        if self.EXPORT_VERSION == 'Oblivion':
+            node.flags = 0x000E
         else:
-            node.flags = 0x000C # ? this seems pretty standard for static and animated ninodes
+            # morrowind
+            node.flags = 0x000C
 
         self.exportMatrix(ob, space, node)
 
@@ -1235,10 +1240,14 @@ and turn off envelopes."""%ob.getName()
                 # multimaterial meshes: add material index
                 trishape.name += " %i"%materialIndex # Morrowind's child naming convention
             trishape.name = self.getFullName(trishape.name)
-            if ob.getDrawType() != 2: # not wire
-                trishape.flags = 0x0004 # use triangles as bounding box
+            if self.EXPORT_VERSION == 'Oblivion':
+                trishape.flags = 0x000E
             else:
-                trishape.flags = 0x0005 # use triangles as bounding box + hide
+                # morrowind
+                if ob.getDrawType() != 2: # not wire
+                    trishape.flags = 0x0004 # use triangles as bounding box
+                else:
+                    trishape.flags = 0x0005 # use triangles as bounding box + hide
 
             self.exportMatrix(ob, space, trishape)
             
@@ -1663,7 +1672,10 @@ and turn off envelopes."""%ob.getName()
 
             # add the node and the keyframe for this bone
             node.name = self.getFullName(bone.name)
-            node.flags = 0x0002 # ? this seems pretty standard for bones
+            if self.EXPORT_VERSION == 'Oblivion':
+                node.flags = 0x000E # default for Oblivion bones (note: bodies have 0x000E, clothing has 0x000F)
+            else:
+                node.flags = 0x0002 # default for Morrowind bones
             self.exportMatrix(bone, 'localspace', node) # rest pose
             
             # bone rotations are stored in the IPO relative to the rest position
@@ -1926,7 +1938,7 @@ and turn off envelopes."""%ob.getName()
                  raise NIFExportError("Morrowind only supports Polyhedron/Static TriangleMesh collisions.")
              node = self.createBlock("RootCollisionNode")
              parent_block.addChild(node)
-             node.flags = 0x000C
+             node.flags = 0x0003 # default
              self.exportMatrix(ob, 'localspace', node)
              self.exportTriShapes(ob, 'none', node)
 
@@ -1944,7 +1956,7 @@ and turn off envelopes."""%ob.getName()
                 node = NifFormat.NiNode()
                 node.setTransform(_IDENTITY44)
                 node.name = 'collisiondummy%i'%parent_block.numChildren
-                node.flags = 8 # not a skin influence
+                node.flags = 0x000E # default
                 parent_block.addChild(node)
                 self.exportCollisionHelper(ob, node)
 
