@@ -1,3 +1,9 @@
+Version 2.1.12 (Oct 11, 2007)
+Import: provide sensible error message on kf import
+Export: set flags to 0x000E for Oblivion ninodes and nitrishapes/nitristrips
+Export: automatically set blender collision type, draw type, and draw mode on
+old style (RootCollisionNode named mesh) morrowind collision export
+
 Version 2.1.11 (Oct 3, 2007)
 * Export: complain on unweighted vertices and select them, instead of adding an
 extra bone (this is a better alternative to the Scene Root.00 "feature" which

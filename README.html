@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <title>The Blender NIF Scripts v2.1.11</title>
+  <title>The Blender NIF Scripts v2.1.12</title>
   <meta http-equiv="Content-Type"
  content="text/html; charset=ISO-8859-1" />
   <style type="text/css">
@@ -19,21 +19,13 @@ a:hover.nav { color: #FF0000; background: transparent; }
   </style>
 </head>
 <body>
-<h1>The Blender NIF Scripts v2.1.11</h1>
+<h1>The Blender NIF Scripts v2.1.12</h1>
 <h2>Release Notes</h2>
 Although we have done our best to squash all bugs we could find, it is unlikely that we have found them all. If you find bugs, PLEASE REPORT THEM ON THE SOURCEFORGE TRACKER.
 <h3>Highlights of this Release</h3>
 <ul>
-
-<li>The exporter will now complain about unweighted vertices, and
-select them instead of adding an extra bone. This is a better
-alternative to the Scene Root.00 "feature" which was pretty
-frustrating at times when you had to hunt down unweighted vertices.</li>
-<li>A frame time bug on export was fixed.</li>
-<li>The scripts check your Blender version and raise an exception if
-Blender is outdated.</li>
-<li>Morph export has been fixed to work with Blender 2.45.</li>
-<li>Some minor other cleanups (check the ChangeLog for full details).</li>
+<li>The scripts complain when you try to import a kf file.</li>
+<li>NiTriStrips/NiTriShapes/NiNodes have their flags set to 0x000E on Oblivion export, as in the official game nifs.</li>
 </ul>
 <h2>Support</h2>
 <ul>
@@ -151,19 +143,7 @@ support Morrowind-type animations) </li>
 VCOL_PAINT flag in the material tab </li>
   <li>(optional) Hull your model in a simple so-called
 collision
-mesh, which defines where the player cannot walk through (most of
-Morrowind's static models have a collision mesh, you can see them in
-the TES CS pressing F4 in the render window). You may want to create it
-to speed up collision detection (recommended for complex models), to
-help the player walk over objects
-such as stairs, or to allow the player to walk through certain parts of
-your model such as spider webs.
-    <ul>
-      <li>create a mesh called
-'RootCollisionNode' (object name, not datablock name)</li>
-      <li>don't apply any
-material to it </li>
-    </ul>
+mesh: see <a href="http://niftools.sourceforge.net/wiki/Blender/Collision">http://niftools.sourceforge.net/wiki/Blender/Collision</a>.
   </li>
   <li>(optional) if you suspect that some of the faces of your
 meshes are not convex, then you should let blender triangulate these
