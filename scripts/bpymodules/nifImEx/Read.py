@@ -452,12 +452,10 @@ def read_branch(niBlock):
                         b_obj = fb_empty(niBlock)
                     else:
                         # node groups geometries, so import it as a mesh
+                        print "joining geometries %s to single object '%s'"%([child.name for child in geom_group], niBlock.name)
                         b_obj = None
                         for child in geom_group:
-                            b_obj = fb_mesh(child, group_mesh = b_obj)
-                        # apply transform on mesh
-                        print "joining geometries %s to single object '%s'"%([child.name for child in geom_group], niBlock.name)
-                        b_obj.getData(mesh=True).transform(fb_matrix(geom_group[0]), recalc_normals = True)
+                            b_obj = fb_mesh(child, group_mesh = b_obj, applytransform = True)
                         b_obj.name = fb_name(niBlock, 22)
                         # settings for collision node
                         if isinstance(niBlock, NifFormat.RootCollisionNode):
@@ -1215,7 +1213,8 @@ def fb_material(matProperty, textProperty, alphaProperty, specProperty):
     return material
 
 # Creates and returns a raw mesh, or appends geometry data to group_mesh
-def fb_mesh(niBlock, group_mesh = None):
+# If group_mesh is not None, then applytransform must be True.
+def fb_mesh(niBlock, group_mesh = None, applytransform = False):
     global _SCENE
     assert(isinstance(niBlock, NifFormat.NiTriBasedGeom))
     if group_mesh:
@@ -1236,9 +1235,13 @@ def fb_mesh(niBlock, group_mesh = None):
         else:
             b_mesh.setDrawType(4) # not hidden: shaded
 
-        # Mesh transform matrix, sets the transform matrix for the object.
+    # set transform matrix for the mesh
+    if not applytransform:
+        if group_mesh: raise NIFImportError('BUG: cannot set transform when importing meshes in groups; use applytransform = False')
         b_mesh.setMatrix(fb_matrix(niBlock))
-    
+    else:
+        transform = fb_matrix(niBlock) # used later on
+
     # Mesh geometry data. From this I can retrieve all geometry info
     niData = niBlock.data
     if not niData:
@@ -1320,7 +1323,13 @@ def fb_mesh(niBlock, group_mesh = None):
             # not added: new vertex / normal pair
             n_map[k] = i         # unique vertex / normal pair with key k was added, with NIF index i
             v_map[i] = b_v_index # NIF vertex i maps to blender vertex b_v_index
-            b_meshData.verts.extend(v.x, v.y, v.z) # add the vertex
+            # add the vertex
+            if applytransform:
+                v = Blender.Mathutils.Vector(v.x, v.y, v.z)
+                v *= transform
+                b_meshData.verts.extend(v)
+            else:
+                b_meshData.verts.extend(v.x, v.y, v.z)
             # adds normal info if present (Blender recalculates these when
             # switching between edit mode and object mode, handled further)
             #if norms:
@@ -1463,16 +1472,16 @@ def fb_mesh(niBlock, group_mesh = None):
                 for idxMorph in xrange(1, morphData.numMorphs):
                     morphverts = morphData.morphs[idxMorph].vectors
                     # for each vertex calculate the key position from base pos + delta offset
-                    for i in xrange(morphData.numVertices):
-                        x = baseverts[i].x
-                        y = baseverts[i].y
-                        z = baseverts[i].z
-                        dx = morphverts[i].x
-                        dy = morphverts[i].y
-                        dz = morphverts[i].z
-                        b_meshData.verts[v_map[i]].co[0] = x + dx
-                        b_meshData.verts[v_map[i]].co[1] = y + dy
-                        b_meshData.verts[v_map[i]].co[2] = z + dz
+                    assert(len(baseverts) == len(morphverts) == len(v_map))
+                    for bv, mv, b_v_index in zip(baseverts, morphverts, v_map):
+                        base = Blender.Mathutils.Vector(bv.x, bv.y, bv.z)
+                        delta = Blender.Mathutils.Vector(mv.x, mv.y, mv.z)
+                        v = base + delta
+                        if applytransform:
+                            v *= transform
+                        b_meshData.verts[b_v_index].co[0] = v.x
+                        b_meshData.verts[b_v_index].co[1] = v.y
+                        b_meshData.verts[b_v_index].co[2] = v.z
                     # update the mesh and insert key
                     b_meshData.insertKey(idxMorph, 'relative')
                     # set up the ipo key curve
@@ -1494,14 +1503,13 @@ def fb_mesh(niBlock, group_mesh = None):
                         frame =  1+int(key.time * _FPS)
                         b_curve.addBezier( ( frame, x ) )
                     # finally: return to base position
-                    for i in xrange(morphData.numVertices):
-                        x = baseverts[i].x
-                        y = baseverts[i].y
-                        z = baseverts[i].z
-                        b_meshData.verts[v_map[i]].co[0] = x
-                        b_meshData.verts[v_map[i]].co[1] = y
-                        b_meshData.verts[v_map[i]].co[2] = z
-                # assign ipo to mesh
+                    for bv, b_v_index in zip(baseverts, v_map):
+                        base = Blender.Mathutils.Vector(bv.x, bv.y, bv.z)
+                        if applytransform:
+                            base *= transform
+                        b_meshData.verts[b_v_index].co[0] = base.x
+                        b_meshData.verts[b_v_index].co[1] = base.y
+                        b_meshData.verts[b_v_index].co[2] = base.z
  
     # recalculate normals
     b_meshData.calcNormals()
