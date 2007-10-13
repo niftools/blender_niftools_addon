@@ -1,154 +1,59 @@
-import Blender, Config
-from Blender import Draw, BGL, sys
+#!BPY
+
+""" 
+Name: 'BETA NetImmerse/Gamebryo (.nif)'
+Blender: 245
+Group: 'Import'
+Tip: 'BETA Import NIF File Format (.nif)'
+"""
+
+
+__author__ = "The NifTools team, http://niftools.sourceforge.net/"
+__url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
+__bpydoc__ = """\
+This script imports Netimmerse and Gamebryo .NIF files to Blender.
+"""
+
+import Blender
 from Blender.Mathutils import *
 
-from Config import __version__
-from Config import NifFormat
+from nif_common import NifConfig
+from nif_common import NifFormat
+from nif_common import __version__
 
+# --------------------------------------------------------------------------
+# ***** BEGIN LICENSE BLOCK *****
+# 
+# BSD License
+# 
+# Copyright (c) 2007, NIF File Format Library and Tools
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. The name of the NIF File Format Library and Tools project may not be
+#    used to endorse or promote products derived from this software
+#    without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-# Configuration
-#
-
-_CONFIG = {}
-
-# Retrieves the stored configuration
-def loadConfig():
-    global _CONFIG
-    reload(Config)
-    Config.load()
-    _CONFIG = Config._CONFIG
-    
-# Stores the altered configuration
-def saveConfig():
-    Config._CONFIG = _CONFIG
-    Config.save()
-    
-loadConfig()
-
-#
-# Global variables.
-#
-
-# All UI elements are kept in this dictionary to make sure they never go out of scope
-_GUI_ELEMENTS = {}
-# To avoid confusion with event ID handling I register them all in a list
-_GUI_EVENTS = []
-
-_LOGO_PATH = sys.sep.join((Blender.Get('scriptsdir'), "bpymodules", "nifImEx", "niftools_logo.png"))
-_LOGO_IMAGE = Blender.Image.Load(_LOGO_PATH)
-
-def addEvent(evName = "NO_NAME"):
-    global _GUI_EVENTS
-    eventId = len(_GUI_EVENTS)
-    if eventId >= 16383:
-        raise "Maximum number of events exceeded"
-        return None
-    _GUI_EVENTS.append(evName)
-    return eventId
-
-def guiText(str = "", xpos = 0, ypos = 0):
-    # To draw text on the screen I have to position its start point first
-    BGL.glRasterPos2i( xpos, ypos)
-    Draw.Text(str)
-    
-def gui():
-    global _GUI_ELEMENTS, _GUI_EVENTS, _CONFIG, _LOGO_IMAGE
-    del _GUI_EVENTS[:]
-    # These are to save me some typing
-    H = Blender.Window.GetAreaSize()[1]
-    E = {}
-    # Draw NifTools logo
-    BGL.glEnable(BGL.GL_BLEND ) # enable alpha blending
-    # The odd scale and clip values seem necessary to avoid image artifacts
-    Draw.Image(_LOGO_IMAGE, 50.0, H-100.0, 1.0001, 1.0001)
-    #Draw.Image(logoImg, 50, H-100, 1.0, 1.0, 1.0, 0)
-    # Draw.String(name, event, x, y, width, height, initial, length, tooltip=None)
-    nifFilePath = sys.sep.join((_CONFIG["NIF_IMPORT_PATH"], _CONFIG["NIF_IMPORT_FILE"]))
-    skfilepath = ""
-    E["NIF_FILE_PATH"]      = Draw.String("",             addEvent("NIF_FILE_PATH"),  50, H-150, 390, 20, nifFilePath, 350, '')
-    E["BROWSE_FILE_PATH"]   = Draw.PushButton('...',      addEvent("BROWSE_FILE_PATH"), 440, H-150, 30, 20, 'browse')
-    E["ADVANCED"]           = Draw.PushButton('advanced', addEvent("ADVANCED"), 410, H-225, 100, 20)
-    E["CANCEL"]             = Draw.PushButton('cancel',   addEvent("CANCEL"), 160, H-225, 100, 20)
-    E["IMPORT"]             = Draw.PushButton('import',   addEvent("IMPORT"),  50, H-225, 100, 20)
-    E["TXT_NIF_FILE_PATH"]  = guiText("NIF file path", 50, H-125)
-    _GUI_ELEMENTS = E
-    #Draw.Redraw(1)
-
-def buttonEvent(evt):
-    """
-    Event handler for buttons
-    """
-    global _GUI_EVENTS
-    evName = _GUI_EVENTS[evt]
-    if evName == "IMPORT":
-        # import and close
-        print "todo: add checks for file input box"
-        exitGUI() #closes the GUI
-        config = dict(**_CONFIG)
-        config['IMPORT_FILE'] = sys.sep.join((_CONFIG["NIF_IMPORT_PATH"], _CONFIG["NIF_IMPORT_FILE"]))
-        if not _CONFIG["PROFILE"]:
-            NifImport(**config)
-        else:
-            import cProfile
-            import pstats
-            prof = cProfile.Profile()
-            prof.runctx('NifImport(**config)', locals(), globals())
-            prof.dump_stats(_CONFIG["PROFILE"])
-            stats = pstats.Stats(_CONFIG["PROFILE"])
-            stats.strip_dirs()
-            stats.sort_stats('cumulative')
-            stats.print_stats()
-    elif evName == "CANCEL":
-        # cancel
-        exitGUI()
-    elif evName == "ADVANCED":
-        # advanced
-        exitGUI()
-        Config.openGUI("Import")
-    elif evName == "BROWSE_FILE_PATH":
-        # browse file
-        #nifFilePath = sys.sep.join((_CONFIG["NIF_IMPORT_PATH"], _CONFIG["NIF_IMPORT_FILE"]))
-        #Blender.Window.FileSelector(selectFile, "import .nif", nifFilePath)
-        openFileSelector()
-
-def event(evt, val):
-    """
-    Event handler for GUI elements
-    """
-    #print  "event(%i,%i)"%(arg1,arg2)
-    if evt == Draw.ESCKEY:
-        exitGUI()
-
-def openFileSelector():
-    nifFilePath = sys.sep.join((_CONFIG["NIF_IMPORT_PATH"], _CONFIG["NIF_IMPORT_FILE"]))
-    Blender.Window.FileSelector(selectFile, "import .nif", nifFilePath)
-        
-def selectFile(nifFilePath):
-    global _CONFIG
-    if nifFilePath == '' or not sys.exists(nifFilePath):
-        Draw.PupMenu('No file selected or file does not exist%t|Ok')
-    else:
-        _CONFIG["NIF_IMPORT_PATH"] = sys.dirname(nifFilePath)
-        _CONFIG["NIF_IMPORT_FILE"] = sys.basename(nifFilePath)
-        saveConfig()
-    exitGUI()
-    openGUI()
-
-def openGUI():
-    """
-    Opens the import GUI
-    """
-    loadConfig()
-    Draw.Register(gui, event, buttonEvent)
-
-def exitGUI():
-    """
-    Closes the config GUI
-    """
-    saveConfig()
-    Draw.Exit()
-    Draw.Redraw(1)
-
+# ***** END LICENSE BLOCK *****
+# --------------------------------------------------------------------------
 
 #
 # A simple custom exception class.
@@ -461,7 +366,7 @@ class NifImport:
             # mesh?
             if isinstance(niBlock, NifFormat.NiTriBasedGeom) and not self.IMPORT_SKELETON:
                 self.msg("building mesh %s in read_armature_branch" % (niBlock.name),3)
-                return self.fb_mesh(niBlock, group_mesh = group_mesh, applytransform = True)
+                return self.fb_mesh(niBlock, group_mesh = group_mesh)
             elif self.is_armature_root(niBlock) and niBlock != niArmature:
                 # an armature parented to this armature
                 fb_arm= self.fb_armature(niBlock)
@@ -945,15 +850,16 @@ class NifImport:
                 fn = fn.replace( '/', Blender.sys.sep )
                 # go searching for it
                 textureFile = None
-                searchPathList = [self.NIF_IMPORT_PATH, self.BASE_TEXTURE_FOLDER] + self.TEXTURE_SEARCH_PATH
+                importpath = Blender.sys.dirname(self.IMPORT_FILE)
+                searchPathList = [importpath] + self.IMPORT_TEXTURE_PATH
                 # if it looks like a Morrowind style path, use common sense to guess texture path
-                meshes_index = self.NIF_IMPORT_PATH.lower().find("meshes")
+                meshes_index = importpath.lower().find("meshes")
                 if meshes_index != -1:
-                    searchPathList.append(self.NIF_IMPORT_PATH[:meshes_index] + 'textures')
+                    searchPathList.append(importpath[:meshes_index] + 'textures')
                 # if it looks like a Civilization IV style path, use common sense to guess texture path
-                art_index = self.NIF_IMPORT_PATH.lower().find("art")
+                art_index = importpath.lower().find("art")
                 if art_index != -1:
-                    searchPathList.append(self.NIF_IMPORT_PATH[:art_index] + 'shared')
+                    searchPathList.append(importpath[:art_index] + 'shared')
                 # go through all texture search paths
                 for texdir in searchPathList:
                     texdir = texdir.replace( '\\', Blender.sys.sep )
@@ -1814,3 +1720,32 @@ class NifImport:
                 b_obj.insertIpoKey(Blender.Object.LOC)
                 
             Blender.Set('curframe', 1)
+
+def config_callback(**config):
+    """Called when config script is done. Starts and times import."""
+    # saves editmode state and exit editmode if it is enabled
+    # (cannot make changes mesh data in editmode)
+    is_editmode = Blender.Window.EditMode()
+    Blender.Window.EditMode(0)
+    Blender.Window.WaitCursor(1)
+    t = Blender.sys.time()
+
+    # run importer
+    NifImport(**config)
+
+    # finish import
+    print 'nif import finished in %.2f seconds' % (Blender.sys.time()-t)
+    Blender.Window.WaitCursor(0)
+    if is_editmode: Blender.Window.EditMode(1)
+
+def fileselect_callback(filename):
+    """Called once file is selected. Starts config GUI."""
+    global _config
+    _config.run(NifConfig.TARGET_IMPORT, filename, config_callback)
+
+arg = __script__['arg']
+
+if __name__ == '__main__':
+    _config = NifConfig() # use global so gui elements don't go out of skope
+    Blender.Window.FileSelector(fileselect_callback, "Import NIF", _config.config["IMPORT_FILE"])
+

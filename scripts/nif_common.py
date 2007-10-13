@@ -231,15 +231,16 @@ class NifConfig:
             self.guiElements["IMPORT_APPLYSKINDEFORM"] = Draw.Toggle(
                 "Apply Skin Deformation",
                 self.eventId("IMPORT_APPLYSKINDEFORM"),
-                50, H-290, 390, 20,
-                config["IMPORT_APPLYSKINDEFORM"])
+                50, H, 390, 20,
+                self.config["IMPORT_APPLYSKINDEFORM"])
             H -= 30
             
             self.guiElements["IMPORT_SKELETON"] = Draw.Toggle(
                 "Import Skeleton Only + Parent Selected",
                 self.eventId("IMPORT_SKELETON"),
-                50, H-250, 390, 20,
-                config["IMPORT_SKELETON"])
+                50, H, 390, 20,
+                self.config["IMPORT_SKELETON"])
+            H -= 30
 
         # export-only options
         if self.target == self.TARGET_EXPORT:
