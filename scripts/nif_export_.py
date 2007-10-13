@@ -121,17 +121,22 @@ class NifExport:
         except KeyError:
             return self.getUniqueName(blender_name)
 
-    def __init__(self, filename, **config):
+    def __init__(self, **config):
         """Main export function."""
 
         # preparation:
         #--------------
-        print "NifTools NIF export script version %s" % (Config.__version__)
-        Blender.Window.DrawProgressBar(0.0, "Preparing Export")
+        Blender.Window.DrawProgressBar(0, "Preparing Export")
         
         # store configuration in self
         for name, value in config.iteritems():
             setattr(self, name, value)
+
+        # save file name
+        self.filename = self.EXPORT_FILE[:]
+        self.filepath = Blender.sys.dirname(self.filename)
+        self.filebase, self.fileext = Blender.sys.splitext(Blender.sys.basename(self.filename))
+
         # variables
         self.blocks = [] # keeps track of all exported blocks
         self.textures = {} # keeps track of all exported textures, maps filename to exported NiSourceTexture
@@ -185,13 +190,10 @@ and turn off envelopes."""%ob.getName()
             self.fstart = context.startFrame()
             self.fend = context.endFrame()
             
-            # strip extension from filename
-            filedir = Blender.sys.dirname(filename)
-            filebase, fileext = Blender.sys.splitext(Blender.sys.basename(filename))
             if self.EXPORT_VERSION in ['Oblivion', 'Civilization IV']:
                 root_name = 'Scene Root'
             else:
-                root_name = filebase
+                root_name = self.filebase
      
             # get the root object from selected object
             # only export empties, meshes, and armatures
@@ -455,11 +457,11 @@ and turn off envelopes."""%ob.getName()
             Blender.Window.DrawProgressBar(0.66, "Writing %s file"%ext)
 
             # make sure we have the right file extension
-            if (fileext.lower() != ext):
-                self.msg("WARNING: changing extension from %s to %s on output file"%(fileext,ext))
-                filename = Blender.sys.join(filedir, filebase + ext)
+            if (self.fileext.lower() != ext):
+                self.msg("WARNING: changing extension from %s to %s on output file"%(self.fileext,ext))
+                self.filename = Blender.sys.join(self.filepath, self.filebase + ext)
             NIF_USER_VERSION = 0 if self.version != 0x14000005 else 11
-            f = open(filename, "wb")
+            f = open(self.filename, "wb")
             try:
                 NifFormat.write(self.version, NIF_USER_VERSION, f, [root_block])
             finally:

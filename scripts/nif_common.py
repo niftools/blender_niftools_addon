@@ -63,8 +63,7 @@ class NifConfig:
         IMPORT_ANIMATION = True,
         IMPORT_SCALE_CORRECTION = 0.1,
         EXPORT_SCALE_CORRECTION = 10.0, # 1/import scale correction
-        BASE_TEXTURE_FOLDER = Blender.sys.dirname(Blender.sys.progname),
-        TEXTURE_SEARCH_PATH = [],
+        IMPORT_TEXTURE_PATH = [],
         EXPORT_FLATTENSKIN = False,
         EXPORT_VERSION = 'Oblivion',
         EPSILON = 0.005, # used for checking equality with floats
@@ -142,6 +141,11 @@ class NifConfig:
         self.config = dict(**self.DEFAULTS)
         # read configuration
         savedconfig = Blender.Registry.GetKey(self.CONFIG_NAME, True)
+        # hacks for renaming keys
+        try:
+            self.config["IMPORT_TEXTURE_PATH"] = savedconfig["TEXTURE_SEARCH_PATH"]
+        except:
+            pass
         # merge configuration with defaults
         if savedconfig:
             for key, val in self.DEFAULTS.iteritems():
@@ -272,7 +276,7 @@ class NifConfig:
             self.guiElements["EXPORT_FLATTENSKIN"] = Draw.Toggle("Flatten Skin", self.eventId("EXPORT_FLATTENSKIN"), 50, H, 390, 20, self.config["EXPORT_FLATTENSKIN"])
             self.guiElements["EXPORT_SKINPARTITION"] = Draw.Toggle("Export Skin Partition", self.eventId("EXPORT_SKINPARTITION"), 50, H-20, 130, 20, self.config["EXPORT_SKINPARTITION"])
             self.guiElements["EXPORT_PADBONES"] = Draw.Toggle("Pad & Sort Bones", self.eventId("EXPORT_PADBONES"), 180, H-20, 130, 20, self.config["EXPORT_PADBONES"])
-            self.guiElements["EXPORT_BONESPERPARTITION"] = Draw.Number("Max Bones", self.eventId("EXPORT_BONESPERPARTITION"), 310, H-20, 130, 20, self.config["EXPORT_BONESPERPARTITION"], 4, 18, "maximum number of bones per partition", updateBonesPerPartition)
+            self.guiElements["EXPORT_BONESPERPARTITION"] = Draw.Number("Max Bones", self.eventId("EXPORT_BONESPERPARTITION"), 310, H-20, 130, 20, self.config["EXPORT_BONESPERPARTITION"], 4, 18, "maximum number of bones per partition", self.updateBonesPerPartition)
             # the value 4 does for all games, so let's not let user change it
             #self.guiElements["EXPORT_BONESPERVERTEX"] = Draw.Number("Max Bones Per Vertex", self.eventId("EXPORT_BONESPERVERTEX"), 50, H-65, 390, 20, self.config["EXPORT_BONESPERVERTEX"], 2, 8)
             H -= 50
@@ -286,8 +290,6 @@ class NifConfig:
             
             games_list = sorted(NifFormat.games.keys())
             versions_list = sorted(NifFormat.versions.keys(), key=lambda x: NifFormat.versions[x])
-            guiText("Game or NIF version", 50, H)
-            H -= 30
             V = 50
             HH = H
             j = 0
