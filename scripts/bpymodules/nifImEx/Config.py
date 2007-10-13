@@ -3,11 +3,8 @@ __requiredpyffiversion__ = "0.4.5"
 __requiredblenderversion__ = "245"
 
 import Blender
-
-import sys, os
-
-import Read, Write, Defaults
 from Blender import Draw, BGL, Registry
+import sys, os
 
 # utility functions
     
@@ -67,6 +64,8 @@ elif sys.platform in ('win32','dos','ms-dos'):
     os.system("cls")
 
 print 'Blender NIF Scripts %s (running on Blender %s, PyFFI %s)'%(__version__, __blenderversion__, __pyffiversion__)
+
+import Read, Write, Defaults
 
 # All UI elements are kept in this dictionary to make sure they never go out of scope
 _GUI_ELEMENTS = {}
