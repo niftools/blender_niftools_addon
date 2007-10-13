@@ -2,6 +2,8 @@ Version 2.1.13 (Oct 13, 2007)
 Import: fixed transform error while joining geometries (this mostly affects
 the import of collision geometries)
 Import: optimized morph import yielding less array lookups and faster code
+Import: simplified texture searching and better linux support by looking for
+lower case versions of names too
 
 Version 2.1.12 (Oct 11, 2007)
 Import: provide sensible error message on kf import

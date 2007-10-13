@@ -1006,46 +1006,39 @@ def fb_texture(niSourceTexture):
             art_index = _CONFIG["NIF_IMPORT_PATH"].lower().find("art")
             if art_index != -1:
                 searchPathList.append(_CONFIG["NIF_IMPORT_PATH"][:art_index] + 'shared')
+            # go through all texture search paths
             for texdir in searchPathList:
                 texdir = texdir.replace( '\\', Blender.sys.sep )
                 texdir = texdir.replace( '/', Blender.sys.sep )
-                 # now a little trick, to satisfy many Morrowind mods
-                if (fn[:9].lower() == 'textures' + Blender.sys.sep) and (texdir[-9:].lower() == Blender.sys.sep + 'textures'):
-                    tex = Blender.sys.join( texdir, fn[9:] ) # strip one of the two 'textures' from the path
-                else:
-                    tex = Blender.sys.join( texdir, fn )
-                msg("Searching %s" % tex, 3)
-                if Blender.sys.exists(tex) == 1:
-                    # tries to load the file
-                    b_image = Blender.Image.Load(tex)
-                    # Blender 2.41 will return an image object even if the file format isn't supported,
-                    # so to check if the image is actually loaded I need to force an error, hence the
-                    # dummy = b_image.size line.
-                    try:
-                        dummy = b_image.size
-                        # file format is supported
-                        msg( "Found %s" % tex, 3 )
-                        del dummy
-                        break
-                    except:
-                        b_image = None # not supported, delete image object
-                # file format is not supported or file was not found, therefore
-                # we try to load alternative texture
-                base=tex[:-4]
-                for ext in ('.DDS','.dds','.PNG','.png','.TGA','.tga','.BMP','.bmp','.JPG','.jpg'):
-                    alt_tex = base+ext
-                    if Blender.sys.exists(alt_tex) == 1:
-                        b_image = None
+                # go through all possible file names, try alternate extensions too
+                # for linux, also try lower case versions of filenames
+                texfns = reduce(lambda x,y: x+y, [[fn[:-4]+ext, fn[:-4].lower()+ext] for ext in ('.DDS','.dds','.PNG','.png','.TGA','.tga','.BMP','.bmp','.JPG','.jpg')])
+                texfns = [fn, fn.lower()] + list(set(texfns))
+                for texfn in texfns:
+                     # now a little trick, to satisfy many Morrowind mods
+                    if (texfn[:9].lower() == 'textures' + Blender.sys.sep) and (texdir[-9:].lower() == Blender.sys.sep + 'textures'):
+                        tex = Blender.sys.join( texdir[:-9], texfn ) # strip one of the two 'textures' from the path
+                    else:
+                        tex = Blender.sys.join( texdir, texfn )
+                    #msg("Searching %s" % tex, 3)
+                    if Blender.sys.exists(tex) == 1:
+                        # tries to load the file
+                        b_image = Blender.Image.Load(tex)
+                        # Blender 2.41 will return an image object even if the file format isn't supported,
+                        # so to check if the image is actually loaded I need to force an error, hence the
+                        # dummy = b_image.size line.
                         try:
-                            b_image = Blender.Image.Load(alt_tex)
                             dummy = b_image.size
-                            msg( "Found alternate %s" % alt_tex, 3 )
+                            # file format is supported
+                            msg( "Found '%s' at %s" %(fn, tex), 3 )
                             del dummy
                             break
                         except:
                             b_image = None # not supported, delete image object
+                if b_image:
+                    break
             if b_image == None:
-                msg("Texture %s not found and no alternate available" % fn, 2)
+                msg("Texture '%s' not found and no alternate available" % fn, 2)
                 b_image = Blender.Image.New(tex, 1, 1, 24) # create a stub
                 b_image.filename = tex
         else:
