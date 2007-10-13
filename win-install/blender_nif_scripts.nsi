@@ -39,7 +39,7 @@ SetCompressor /SOLID lzma
 !include "WordFunc.nsh"
 !insertmacro VersionCompare
 
-!define VERSION "2.1.13"
+!define VERSION "2.1.14"
 
 Name "Blender NIF Scripts ${VERSION}"
 Var BLENDERHOME    ; blender settings location
@@ -261,23 +261,30 @@ Section
   Delete "$BLENDERSCRIPTS\bpydata\nif4.ini"
   Delete "$BLENDERSCRIPTS\bpydata\config\nif_import.cfg"
   Delete "$BLENDERSCRIPTS\bpydata\config\nif_export.cfg"
+  ; old nifImEx lib
+  Delete "$BLENDERSCRIPTS\bpymodules\nifImEx\__init__.py"
+  Delete "$BLENDERSCRIPTS\bpymodules\nifImEx\Config.py"
+  Delete "$BLENDERSCRIPTS\bpymodules\nifImEx\Defaults.py"
+  Delete "$BLENDERSCRIPTS\bpymodules\nifImEx\Read.py"
+  Delete "$BLENDERSCRIPTS\bpymodules\nifImEx\Write.py"
+  Delete "$BLENDERSCRIPTS\bpymodules\nifImEx\__init__.pyc"
+  Delete "$BLENDERSCRIPTS\bpymodules\nifImEx\Config.pyc"
+  Delete "$BLENDERSCRIPTS\bpymodules\nifImEx\Defaults.pyc"
+  Delete "$BLENDERSCRIPTS\bpymodules\nifImEx\Read.pyc"
+  Delete "$BLENDERSCRIPTS\bpymodules\nifImEx\Write.pyc"
+  Delete "$BLENDERSCRIPTS\bpymodules\nifImEx\niftools_logo.png"
+  Delete "$BLENDERSCRIPTS\bpymodules\nifImEx"
 
   ; Clean up registered script menu's, just to make sure they get updated
   Delete "$BLENDERSCRIPTS\..\Bpymenus"
 
   ; Install scripts
   SetOutPath $BLENDERSCRIPTS
+  File ..\scripts\nif_common.py
   File ..\scripts\nif_export.py
   File ..\scripts\nif_import.py
   File ..\scripts\mesh_weightsquash.py
   File ..\scripts\mesh_hull.py
-  SetOutPath "$BLENDERSCRIPTS\bpymodules\nifImEx"
-  File ..\scripts\bpymodules\nifImEx\__init__.py
-  File ..\scripts\bpymodules\nifImEx\Config.py
-  File ..\scripts\bpymodules\nifImEx\Defaults.py
-  File ..\scripts\bpymodules\nifImEx\Read.py
-  File ..\scripts\bpymodules\nifImEx\Write.py
-  File ..\scripts\bpymodules\nifImEx\niftools_logo.png
 
   ; Install documentation files
   SetOutPath $INSTDIR
