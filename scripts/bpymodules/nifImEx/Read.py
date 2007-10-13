@@ -181,13 +181,14 @@ class NifImport:
 
     def msgProgress(self, message, progbar = None):
         """Message wrapper for the Blender progress bar."""
+        # update progress bar level
         if progbar is None:
             self.progressBar += 0.099
             while self.progressBar > 1:
                 self.progressBar -= 1
         else:
             self.progressBar = progbar
-        print progbar
+        # draw the progress bar
         Blender.Window.DrawProgressBar(self.progressBar, message)
 
     def __init__(self, **config):
