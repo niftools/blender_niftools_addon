@@ -352,7 +352,7 @@ class NifImport:
             print "todo: add cameras, lights, colliders and particle systems"
             return None
 
-    def read_armature_branch(self, b_armature, niArmature, niBlock, group_mesh = None):
+    def read_armature_branch(self, b_armature, niArmature, niBlock, group_mesh = None, applytransform = False):
         """
         Reads the content of the current NIF tree branch to Blender
         recursively, as meshes parented to a given armature. Note that
@@ -366,7 +366,7 @@ class NifImport:
             # mesh?
             if isinstance(niBlock, NifFormat.NiTriBasedGeom) and not self.IMPORT_SKELETON:
                 self.msg("building mesh %s in read_armature_branch" % (niBlock.name),3)
-                return self.fb_mesh(niBlock, group_mesh = group_mesh)
+                return self.fb_mesh(niBlock, group_mesh = group_mesh, applytransform = applytransform)
             elif self.is_armature_root(niBlock) and niBlock != niArmature:
                 # an armature parented to this armature
                 fb_arm= self.fb_armature(niBlock)
@@ -390,7 +390,8 @@ class NifImport:
                     # import grouped geometries
                     b_mesh = None
                     for child in geom_group:
-                        b_mesh = self.read_armature_branch(b_armature, niArmature, child, group_mesh = b_mesh)
+                        # do not apply transform now, we shall do that later
+                        b_mesh = self.read_armature_branch(b_armature, niArmature, child, group_mesh = b_mesh, applytransform = False)
                     if b_mesh:
                         b_mesh.getData(mesh=True).transform(self.fb_matrix(geom_group[0]), recalc_normals = True)
                         b_mesh.name = self.fb_name(niBlock)
