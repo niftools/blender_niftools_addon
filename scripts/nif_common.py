@@ -64,7 +64,7 @@ class NifConfig:
         IMPORT_SCALE_CORRECTION = 0.1,
         EXPORT_SCALE_CORRECTION = 10.0, # 1/import scale correction
         BASE_TEXTURE_FOLDER = Blender.sys.dirname(Blender.sys.progname),
-        TEXTURE_SEARCH_PATH = []
+        TEXTURE_SEARCH_PATH = [],
         EXPORT_FLATTENSKIN = False,
         EXPORT_VERSION = 'Oblivion',
         EPSILON = 0.005, # used for checking equality with floats
