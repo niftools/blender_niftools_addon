@@ -179,7 +179,7 @@ class NifConfig:
         self.guiElements["SCALE_CORRECTION"] = Draw.Slider(
             "Scale Correction:  ",
             self.eventId("SCALE_CORRECTION"),
-            50, H-25, 390, 20,
+            50, H, 390, 20,
             self.config["EXPORT_SCALE_CORRECTION"],
             0.01, 100, 0, "scale", self.updateScale)
         H -= 30
@@ -194,19 +194,19 @@ class NifConfig:
             self.guiElements["TEXPATH_PREV"]   = Draw.PushButton(
                 '<',
                 self.eventId("TEXPATH_PREV"),
-                350, H,  20, 20)
+                350, H, 20, 20)
             self.guiElements["TEXPATH_NEXT"]   = Draw.PushButton(
                 '>',
                 self.eventId("TEXPATH_NEXT"),
-                370, H,  20, 20)
+                370, H, 20, 20)
             self.guiElements["TEXPATH_REMOVE"] = Draw.PushButton(
                 'X',
                 self.eventId("TEXPATH_REMOVE"),
-                390, H,  20, 20)
+                390, H, 20, 20)
             self.guiElements["TEXPATH_ADD"]    = Draw.PushButton(
                 '...',
                 self.eventId("TEXPATH_ADD"),
-                410, H,  30, 20)
+                410, H, 30, 20)
             H -= 30
 
             self.guiElements["IMPORT_ANIMATION"] = Draw.Toggle(
@@ -266,23 +266,58 @@ class NifConfig:
                 self.config["EXPORT_FORCEDDS"])
             H -= 30
 
-            self.guiElements["EXPORT_STRIPIFY"] = Draw.Toggle("Stripify Geometries", self.eventId("EXPORT_STRIPIFY"), 50, H, 195, 20, self.config["EXPORT_STRIPIFY"])
-            self.guiElements["EXPORT_STITCHSTRIPS"] = Draw.Toggle("Stitch Strips", self.eventId("EXPORT_STITCHSTRIPS"), 245, H, 195, 20, self.config["EXPORT_STITCHSTRIPS"])
+            self.guiElements["EXPORT_STRIPIFY"] = Draw.Toggle(
+                "Stripify Geometries",
+                self.eventId("EXPORT_STRIPIFY"),
+                50, H, 195, 20,
+                self.config["EXPORT_STRIPIFY"])
+            self.guiElements["EXPORT_STITCHSTRIPS"] = Draw.Toggle(
+                "Stitch Strips",
+                self.eventId("EXPORT_STITCHSTRIPS"),
+                245, H, 195, 20,
+                self.config["EXPORT_STITCHSTRIPS"])
             H -= 30
 
-            self.guiElements["EXPORT_SMOOTHOBJECTSEAMS"] = Draw.Toggle("Smoothen Inter-Object Seams", self.eventId("EXPORT_SMOOTHOBJECTSEAMS"), 50, H, 390, 20, self.config["EXPORT_SMOOTHOBJECTSEAMS"])
+            self.guiElements["EXPORT_SMOOTHOBJECTSEAMS"] = Draw.Toggle(
+                "Smoothen Inter-Object Seams",
+                self.eventId("EXPORT_SMOOTHOBJECTSEAMS"),
+                50, H, 390, 20,
+                self.config["EXPORT_SMOOTHOBJECTSEAMS"])
             H -= 30
 
-            self.guiElements["EXPORT_FLATTENSKIN"] = Draw.Toggle("Flatten Skin", self.eventId("EXPORT_FLATTENSKIN"), 50, H, 390, 20, self.config["EXPORT_FLATTENSKIN"])
-            self.guiElements["EXPORT_SKINPARTITION"] = Draw.Toggle("Export Skin Partition", self.eventId("EXPORT_SKINPARTITION"), 50, H-20, 130, 20, self.config["EXPORT_SKINPARTITION"])
-            self.guiElements["EXPORT_PADBONES"] = Draw.Toggle("Pad & Sort Bones", self.eventId("EXPORT_PADBONES"), 180, H-20, 130, 20, self.config["EXPORT_PADBONES"])
-            self.guiElements["EXPORT_BONESPERPARTITION"] = Draw.Number("Max Bones", self.eventId("EXPORT_BONESPERPARTITION"), 310, H-20, 130, 20, self.config["EXPORT_BONESPERPARTITION"], 4, 18, "maximum number of bones per partition", self.updateBonesPerPartition)
+            self.guiElements["EXPORT_FLATTENSKIN"] = Draw.Toggle(
+                "Flatten Skin", self.eventId("EXPORT_FLATTENSKIN"),
+                50, H, 390, 20,
+                self.config["EXPORT_FLATTENSKIN"])
+            self.guiElements["EXPORT_SKINPARTITION"] = Draw.Toggle(
+                "Export Skin Partition",
+                self.eventId("EXPORT_SKINPARTITION"),
+                50, H-20, 130, 20,
+                self.config["EXPORT_SKINPARTITION"])
+            self.guiElements["EXPORT_PADBONES"] = Draw.Toggle(
+                "Pad & Sort Bones",
+                self.eventId("EXPORT_PADBONES"),
+                180, H-20, 130, 20,
+                self.config["EXPORT_PADBONES"])
+            self.guiElements["EXPORT_BONESPERPARTITION"] = Draw.Number(
+                "Max Bones", self.eventId("EXPORT_BONESPERPARTITION"),
+                310, H-20, 130, 20,
+                self.config["EXPORT_BONESPERPARTITION"],
+                4, 18, "maximum number of bones per partition", self.updateBonesPerPartition)
             # the value 4 does for all games, so let's not let user change it
             #self.guiElements["EXPORT_BONESPERVERTEX"] = Draw.Number("Max Bones Per Vertex", self.eventId("EXPORT_BONESPERVERTEX"), 50, H-65, 390, 20, self.config["EXPORT_BONESPERVERTEX"], 2, 8)
             H -= 50
 
-            self.guiElements["EXPORT_BHKLISTSHAPE"] = Draw.Toggle("Use bhkListShape", self.eventId("EXPORT_BHKLISTSHAPE"), 50, H, 195, 20, self.config["EXPORT_BHKLISTSHAPE"])
-            self.guiElements["EXPORT_MOPP"] = Draw.Toggle("Export Mopp (EXPERIMENTAL)", self.eventId("EXPORT_MOPP"), 245, H, 195, 20, self.config["EXPORT_MOPP"])
+            self.guiElements["EXPORT_BHKLISTSHAPE"] = Draw.Toggle(
+                "Use bhkListShape",
+                self.eventId("EXPORT_BHKLISTSHAPE"),
+                50, H, 195, 20,
+                self.config["EXPORT_BHKLISTSHAPE"])
+            self.guiElements["EXPORT_MOPP"] = Draw.Toggle(
+                "Export Mopp (EXPERIMENTAL)",
+                self.eventId("EXPORT_MOPP"),
+                245, H, 195, 20,
+                self.config["EXPORT_MOPP"])
             H -= 30
 
             #self.guiElements["NIF_EXPORT_PATH"]        = Draw.String("",       self.eventId("NIF_EXPORT_PATH"),     50, H-100, 390, 20, self.config["NIF_EXPORT_PATH"],        390, "export path")
