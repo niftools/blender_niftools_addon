@@ -21,10 +21,12 @@ a:hover.nav { color: #FF0000; background: transparent; }
 <body>
 <h1>The Blender NIF Scripts v2.1.13</h1>
 <h2>Release Notes</h2>
-Although we have done our best to squash all bugs we could find, it is unlikely that we have found them all. If you find bugs, PLEASE REPORT THEM ON THE SOURCEFORGE TRACKER.
+<strong><a href="http://sourceforge.net/tracker/?group_id=149157">If you find bugs, please report them on the sourceforge tracker, along with a .blend or .nif that caused the error and a brief description of how to reproduce the error.</a></strong>
+Although we have done our best to squash all bugs we could find, it is unlikely that we have found them all.
 <h3>Highlights of this Release</h3>
 <ul>
 <li>A transform error is fixed while joining geometries. This mostly affects the import of collision geometries in Morrowind.</li>
+<li>Improved linux texture search support on import: the import script looks also for alternate textures with lower case names.</li>
 </ul>
 <h2>Support</h2>
 <ul>
@@ -54,161 +56,10 @@ sure you
 have Python and PyFFI installed as well!</em></li>
   <li>For use with linux, the .zip includes an install.sh script which copies the relevant files to your ~/.blender folder.</li>
 </ul>
-<h3>Using the Scripts with Morrowind</h3>
-<ul>
-  <li>If you wish to use Morrowind's textures in your models
-extract the contents of 'Morrowind.bsa' (and, if you
-have the expansions, also 'Tribunal.bsa' and 'Bloodmoon.bsa') into
-for instance 'c:\src\morrowind' (use <a
- href="http://www34.brinkster.com/ghostwheel/">BSAPACK</a>
-or the <a href="http://www.morrowind-oblivion.com/utilities.php#bsabrowser_">BSA
-Browser</a>; if you use the latter, make sure you copy the BSA files to
-'c:\src\morrwind' before extracting them).
-  </li>
-</ul>
-<h3>Using the Scripts with Oblivion</h3>
-<ul>
-  <li>Oblivion support is not quite complete.
-In particular, collision objects are not imported.
-Animation support is limited.
-</li>
-  <li>If you wish to use the Oblivion textures in your models, you can unpack
-the BSA files using <a href="http://www34.brinkster.com/ghostwheel/">Ghostwheel's TES4 BSA unpacker</a>.</li>
-</ul>
-<h2>Exporter Notes</h2>
-<h3>Usage</h3>
-<ul>
-  <li>create meshes (and empties, if you like) in Blender:
-    <ul>
-      <li>IMPORTANT: if you wish to animate meshes without using
-armatures and bones, then, when grouping, always make parent without
-inverse (in Object Mode, use CTRL-SHIFT-P)</li>
-    </ul>
-  </li>
-  <li>create armatures and bones for animation
-    <ul>
-      <li>either edit bone envelopes, and parent your meshes to
-armatures with vertex groups; the vertex weights will be constructed
-using the bone envelopes</li>
-      <li>or, simply parent meshes to bones (armature must be
-in pose mode)</li>
-      <li>make sure the vertex weights are set properly: select
-the armature, go to pose mode, and play with the bones; the mesh should
-move with the bones</li>
-<!--
-      <li>insert pose mode keys in different frames (press I to
-insert key, and select Rot, Loc, or LocRot) to compose your animation</li>
--->
-    </ul>
-  </li>
-  <li>create UV coordinates (be sure to check the blender
-manual for more details)
-    <ul>
-      <li>create seams (3D View, Edit Mode, select seam
-vertices, CTRL-E) where you want the UV seams (as you cannot project
-for instance a sphere onto a plane, usually you'll need at least one seam)</li>
-      <li>in the 3D View, UV Face Select Mode, select all
-faces, press U-&gt;Unwrap</li>
-      <li>(optional) if you want to create your own texture: in
-the UV/Image Editor, UVs-&gt;Save UV Face Layout, and process the
-saved texture with your favorite 2D paint program</li>
-    </ul>
-  </li>
-  <li>add materials to your meshes, and add one texture to each
-material, with the following settings:
-    <ul>
-      <li>texture map input: UV </li>
-      <li>texture map output: COL for diffuse map (base texture)</li>
-    </ul>
-  </li>
-  <li>for each texture:
-    <ul>
-      <li>set texture type to 'Image' </li>
-      <li>either load a texture from 'c:\src\morrowind\textures',
-or put your custom texture in the 'C:\Program Files\Morrowind\Data
-Files\Textures' folder, and load it from there. The official Blender release
-does not yet read .dds files, but any recent SVN build will.</li>
-    </ul>
-  </li>
-<!--
-  <li>(optional) animate meshes and/or empty objects (press I
-to insert key, and select Rot, Loc, or LocRot; for now, only location and
-rotation channels are exported); define the animation groups in a text
-buffer called 'Anim' (import a Morrowind creature to get a feeling for
-how this works; so far we only
-support Morrowind-type animations) </li>
--->
-  <li>(optional) to export vertex colors, turn on the
-VCOL_PAINT flag in the material tab </li>
-  <li>(optional) Hull your model in a simple so-called
-collision
-mesh: see <a href="http://niftools.sourceforge.net/wiki/Blender/Collision">http://niftools.sourceforge.net/wiki/Blender/Collision</a>.
-  </li>
-  <li>(optional) if you suspect that some of the faces of your
-meshes are not convex, then you should let blender triangulate these
-meshes (press CTRL-T in edit mode with all vertices selected), because
-in that case, Blender's triangulation algorithm gives better results
-than the naive triangulation algorithm used in this script. </li>
-  <li><strong>select the models that you wish to export</strong>,
-and run this
-script from the 'File-&gt;Export' menu. Note that the script looks
-for unparented parents of the selected objects, and exports these root
-objects along with all of their children, so you don't have to select
-the whole model. </li>
-</ul>
-<h3>Limitations</h3>
-<ul>
-  <li>Particle effects, cameras, and lights are not exported. We
-are working on it.</li>
-  <li>Actions (for animation groups) are ignored. You should
-define animation groups in text buffer called "Anim".</li>
-</ul>
-<h3>Known Issues and Workarounds </h3>
-<ul>
-  <li>Ambient and emit colors are obtained by multiplication
-with the diffuse color.</li>
-  <li>Blender double sided faces will be one sided in the NIF
-file (workaround: duplicate faces, or even better, use NifSkope and add a NiStencilProperty).</li>
-  <li>Export of directly animated meshes is buggy
-unless
-you parent without parent inverse
-(CTRL-SHIFT-P). Workaround: don't animate meshes directly; instead,
-parent meshes to the armature and animate the bones.</li>
-  <li>Parenting meshes to bones is buggy unless the bind pose
-coincides
-with the current frame of animation. There's not much we can do about
-it, this is due to a limitation in the Blender Python API.</li>
-  <li>Non-uniformly scaled objects cannot be exported.
-Workaround: apply size and rotation (CTRL-A). Unfortunately, this
-workaround does not work on empties. </li>
-</ul>
-<h2>Importer Notes</h2>
-<h3>Usage</h3>
-<ul>
-  <li>Launch the script, select the .NIF file you wish to
-import,
-and you are
-set.</li>
-</ul>
-<h3>Limitations</h3>
-<ul>
-  <li>The script doesn't import particle
-effects, multiple
-UV channels or collision meshes.
-</li>
-</ul>
-<h3>Known Issues and Workarounds</h3>
-<ul>
-  <li>The import of animation is quite slow, and it won't yet
-import or merge standalone animation tracks.
-These have to be merged in a geometry with skinning info beforehand,
-or the script won't be able to recognize bones as such.
-This is a limitation of the NIF file format, and while there's no
-"proper" workaround the operation might be automatized in the future.</li>
-  <li>The animation track is imported as a single long sequence rather
-than as a list of Blender actions, the start and end points of the actions
-are stored in a text buffer and have to be edited manually</li>
-</ul>
+<h2>Using the Scripts</h2>
+<p>
+The <a href="http://niftools.sourceforge.net/wiki/Blender/Quick_Start">quick-start guide</a> describes how to prepare your textures, how you can use the scripts. The guide also lists the limitations of the scripts, known issues, and workarounds for some issues.
+</p>
 <h2>License </h2>
 <p> Copyright (c) 2005-2007, <a href="http://niftools.sourceforge.net/">NIF
 File Format
