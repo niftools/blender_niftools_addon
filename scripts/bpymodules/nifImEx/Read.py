@@ -462,6 +462,12 @@ def read_branch(niBlock):
                             b_obj.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
                             b_obj.setDrawMode(32) # wire
                             b_obj.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
+                            # also remove duplicate vertices
+                            b_mesh = b_obj.getData(mesh=True)
+                            numverts = len(b_mesh.verts)
+                            numdel = b_mesh.remDoubles(0.005) # 0.005 = 1/200
+                            if numdel:
+                                msg('removed %i duplicate vertices (out of %i) from collision mesh'%(numdel, numverts), 3)
                     # import children that aren't part of the geometry group
                     b_children_list = []
                     children = [ child for child in niBlock.children if child not in geom_group ]
