@@ -968,7 +968,7 @@ class NifImport:
                             tex = Blender.sys.join( texdir[:-9], texfn ) # strip one of the two 'textures' from the path
                         else:
                             tex = Blender.sys.join( texdir, texfn )
-                        self.msg("Searching %s" % tex, 3)
+                        #self.msg("Searching %s" % tex, 3) # DEBUG
                         if Blender.sys.exists(tex) == 1:
                             # tries to load the file
                             b_image = Blender.Image.Load(tex)
@@ -977,12 +977,13 @@ class NifImport:
                             # dummy = b_image.size line.
                             try:
                                 dummy = b_image.size
+                            except: # RuntimeError: couldn't load image data in Blender
+                                b_image = None # not supported, delete image object
+                            else:
                                 # file format is supported
-                                msg( "Found '%s' at %s" %(fn, tex), 3 )
+                                self.msg( "Found '%s' at %s" %(fn, tex), 3 )
                                 del dummy
                                 break
-                            except:
-                                b_image = None # not supported, delete image object
                     if b_image:
                         break
                 if b_image == None:
