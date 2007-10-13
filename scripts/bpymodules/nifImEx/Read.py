@@ -495,7 +495,7 @@ def read_armature_branch(b_armature, niArmature, niBlock, group_mesh = None):
         # mesh?
         if isinstance(niBlock, NifFormat.NiTriBasedGeom) and not _CONFIG["IMPORT_SKELETON"]:
             msg("building mesh %s in read_armature_branch" % (niBlock.name),3)
-            return fb_mesh(niBlock, group_mesh = group_mesh)
+            return fb_mesh(niBlock, group_mesh = group_mesh, applytransform = True)
         elif is_armature_root(niBlock) and niBlock != niArmature:
             # an armature parented to this armature
             fb_arm= fb_armature(niBlock)

@@ -1,3 +1,8 @@
+Version 2.1.13 (Oct 13, 2007)
+Import: fixed transform error while joining geometries (this mostly affects
+the import of collision geometries)
+Import: optimized morph import yielding less array lookups and faster code
+
 Version 2.1.12 (Oct 11, 2007)
 Import: provide sensible error message on kf import
 Export: set flags to 0x000E for Oblivion ninodes and nitrishapes/nitristrips
