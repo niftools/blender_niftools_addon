@@ -1,10 +1,10 @@
 #!BPY
 
 """
-Name: 'BETA NetImmerse/Gamebryo (.nif & .kf)'
+Name: 'NetImmerse/Gamebryo (.nif & .kf)'
 Blender: 245
 Group: 'Export'
-Tooltip: 'BETA Export NIF File Format (.nif & .kf)'
+Tooltip: 'Export NIF File Format (.nif & .kf)'
 """
 
 __author__ = "The NifTools team, http://niftools.sourceforge.net/"

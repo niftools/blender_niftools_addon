@@ -7,4 +7,4 @@ mkdir -p ~/.blender/scripts/bpymodules/nifImEx
 cp scripts/bpymodules/nifImEx/__init__.py scripts/bpymodules/nifImEx/Config.py  scripts/bpymodules/nifImEx/Defaults.py scripts/bpymodules/nifImEx/Read.py scripts/bpymodules/nifImEx/Write.py scripts/bpymodules/nifImEx/niftools_logo.png ~/.blender/scripts/bpymodules/nifImEx
 
 # experimental
-cp scripts/nif_import_.py scripts/nif_export_.py scripts/nif_common.py ~/.blender/scripts
+cp scripts/nif_import_.py scripts/nif_common.py ~/.blender/scripts
