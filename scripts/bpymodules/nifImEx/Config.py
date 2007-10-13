@@ -1,4 +1,4 @@
-__version__ = "2.1.12"
+__version__ = "2.1.13"
 __requiredpyffiversion__ = "0.4.5"
 __requiredblenderversion__ = "245"
 
