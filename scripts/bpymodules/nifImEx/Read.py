@@ -196,8 +196,7 @@ class NifImport:
         print "NIF Import v%s"%__version__
 
         # initialize progress bar
-        self.progressBar = 0.0
-        self.msgProgress("Initializing")
+        self.msgProgress("Initializing", progbar = 0)
 
         # store config settings
         for name, value in config.iteritems():
@@ -273,7 +272,7 @@ class NifImport:
             Blender.Draw.PupMenu('ERROR%t|' + '%s'%e)
             return
         finally:
-            self.msgProgress("Finished", progbar = 1.0)
+            self.msgProgress("Finished", progbar = 1)
 
 
 
