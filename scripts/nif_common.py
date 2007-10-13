@@ -49,7 +49,7 @@ import sys, os
 
 class NifConfig:
     # class global constants
-    CONFIG_NAME = "cgfscripts" # name of the config file
+    CONFIG_NAME = "nifscripts" # name of the config file
     TARGET_IMPORT = 0          # config target value when importing
     TARGET_EXPORT = 1          # config target value when exporting
     # the DEFAULTS dict defines the valid config variables, default values,
