@@ -1,3 +1,17 @@
+Version 2.1.14 (Oct 14, 2007)
+Import: fixed a transform bug which was introduced in 2.1.13, skinned
+geometries had their transform applied twice, so this fixes import of those
+skinned models that do not have a unit transform.
+Export: fixed a typo
+Import/Export/Config/GUI: restructured the scripts, in particular the
+import script has been transformed into an OOP class, so it requires
+no more globals for various settings. All gui and config related
+things have moved to a new nif_common.py library, as well as some
+common settings such as checking for Blender and PyFFI version. The
+result is that the code has been substantially simplified. The import
+and export script now also use exactly the same system to run the
+config gui.
+
 Version 2.1.13 (Oct 13, 2007)
 Import: fixed transform error while joining geometries (this mostly affects
 the import of collision geometries)
