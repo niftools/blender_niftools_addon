@@ -257,7 +257,7 @@ Section
   Delete "$BLENDERSCRIPTS\nif4_import_240.py"
   Delete "$BLENDERSCRIPTS\nif4.py"
   Delete "$BLENDERSCRIPTS\nif4.pyc"
-  ; Old config files
+  ; old config files
   Delete "$BLENDERSCRIPTS\bpydata\nif4.ini"
   Delete "$BLENDERSCRIPTS\bpydata\config\nif_import.cfg"
   Delete "$BLENDERSCRIPTS\bpydata\config\nif_export.cfg"
@@ -274,17 +274,22 @@ Section
   Delete "$BLENDERSCRIPTS\bpymodules\nifImEx\Write.pyc"
   Delete "$BLENDERSCRIPTS\bpymodules\nifImEx\niftools_logo.png"
   RMDir "$BLENDERSCRIPTS\bpymodules\nifImEx"
+  ; clutter from svn 2905 revisions
+  Delete "$BLENDERSCRIPTS\nif_common.py"
+  Delete "$BLENDERSCRIPTS\nif_common.pyc"
 
   ; Clean up registered script menu's, just to make sure they get updated
   Delete "$BLENDERSCRIPTS\..\Bpymenus"
 
   ; Install scripts
   SetOutPath $BLENDERSCRIPTS
-  File ..\scripts\nif_common.py
   File ..\scripts\nif_export.py
   File ..\scripts\nif_import.py
   File ..\scripts\mesh_weightsquash.py
   File ..\scripts\mesh_hull.py
+  ; Install libraries
+  SetOutPath $BLENDERSCRIPTS\bpymodules
+  File ..\scripts\bpymodules\nif_common.py
 
   ; Install documentation files
   SetOutPath $INSTDIR

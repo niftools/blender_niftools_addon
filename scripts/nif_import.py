@@ -1,10 +1,10 @@
 #!BPY
 
 """ 
-Name: 'BETA NetImmerse/Gamebryo (.nif)'
+Name: 'NetImmerse/Gamebryo (.nif)'
 Blender: 245
 Group: 'Import'
-Tip: 'BETA Import NIF File Format (.nif)'
+Tip: 'Import NIF File Format (.nif)'
 """
 
 
