@@ -59,7 +59,7 @@ from nif_common import __version__
 # A simple custom exception class.
 #
 
-class NIFImportError(StandardError):
+class NifImportError(StandardError):
     pass
 
 class NifImport:
@@ -98,7 +98,6 @@ class NifImport:
 
     def __init__(self, **config):
         """Main import function: open file and import all trees."""
-        print "NIF Import v%s"%__version__
 
         # initialize progress bar
         self.msgProgress("Initializing", progbar = 0)
@@ -135,24 +134,26 @@ class NifImport:
         # Blender scene
         self.scene = Blender.Scene.GetCurrent()
         
-        # open file for binary reading
-        f = open(self.filename, "rb")
+        # catch NifImportError
         try:
-            # check if nif file is valid
-            self.version, self.user_version = NifFormat.getVersion(f)
-            if self.version >= 0:
-                # it is valid, so read the file
-                self.msg("NIF file version: 0x%08X"%self.version, 2)
-                self.msgProgress("Reading file")
-                root_blocks = NifFormat.read(self.version, self.user_version, f, verbose = 0)
-            elif self.version == -1:
-                raise NIFImportError("Unsupported NIF version.")
-            else:
-                raise NIFImportError("Not a NIF file.")
-        finally:
-            f.close()
+            # open file for binary reading
+            f = open(self.filename, "rb")
+            try:
+                # check if nif file is valid
+                self.version, self.user_version = NifFormat.getVersion(f)
+                if self.version >= 0:
+                    # it is valid, so read the file
+                    self.msg("NIF file version: 0x%08X"%self.version, 2)
+                    self.msgProgress("Reading file")
+                    root_blocks = NifFormat.read(self.version, self.user_version, f, verbose = 0)
+                elif self.version == -1:
+                    raise NifImportError("Unsupported NIF version.")
+                else:
+                    raise NifImportError("Not a NIF file.")
+            finally:
+                # the file has been read or an error occurred: close file
+                f.close()
 
-        try:
             self.msgProgress("Importing data")
             # calculate and set frames per second
             if self.IMPORT_ANIMATION:
@@ -172,9 +173,9 @@ class NifImport:
                                 for child in nonbip_children: root.removeChild(child)
                 self.msg("root block: %s" % (root.name), 3)
                 self.importRoot(root)
-        except NIFImportError, e: # in that case, we raise a menu instead of an exception
-            print 'NIFImportError: %s'%e
-            Blender.Draw.PupMenu('ERROR%t|' + '%s'%e)
+        except NifImportError, e: # in that case, we raise a menu instead of an exception
+            print 'NifImportError: %s'%e
+            Blender.Draw.PupMenu('ERROR%t|' + str(e))
             return
         finally:
             self.msgProgress("Finished", progbar = 1)
@@ -187,7 +188,7 @@ class NifImport:
 
         # check that this is not a kf file
         if isinstance(root_block, (NifFormat.NiSequence, NifFormat.NiSequenceStreamHelper)):
-            raise NIFImportError(".kf import not supported")
+            raise NifImportError(".kf import not supported")
 
         # merge skeleton roots
         for niBlock in root_block.tree():
@@ -253,7 +254,7 @@ class NifImport:
             for child in root_block.children:
                 b_obj = self.read_branch(child)
         else:
-            raise NIFImportError("don't know how to import nif file with root block of type '%s'"%root_block.__class__)
+            raise NifImportError("don't know how to import nif file with root block of type '%s'"%root_block.__class__)
 
         # store bone matrix offsets for re-export
         if len(self.bonesExtraMatrix.keys()) > 0: self.fb_bonemat()
@@ -353,12 +354,10 @@ class NifImport:
             return None
 
     def read_armature_branch(self, b_armature, niArmature, niBlock, group_mesh = None, applytransform = False):
-        """
-        Reads the content of the current NIF tree branch to Blender
+        """Reads the content of the current NIF tree branch to Blender
         recursively, as meshes parented to a given armature. Note that
         niArmature must have been imported previously as an armature, along
-        with all its bones. This function only imports meshes.
-        """
+        with all its bones. This function only imports meshes."""
         # check if the block is non-null
         if niBlock:
             # bone or group node?
@@ -432,16 +431,10 @@ class NifImport:
 
 
 
-    #
-    # Get unique name for an object, preserving existing names
-    #
     def fb_name(self, niBlock, max_length=22):
-        """
-        Get unique name for an object, preserving existing names
+        """Get unique name for an object, preserving existing names.
         The maximum name length defaults to 22, since this is the
-        maximum for Blender objects, but bone names can reach 32.
-        The task of catching errors is left to the user
-        """
+        maximum for Blender objects. Bone names can reach 32."""
         try:
             return self.names[niBlock]
         except KeyError:
@@ -471,7 +464,7 @@ class NifImport:
         return shortName
         
     def fb_matrix(self, niBlock, relative_to = None):
-        """Retrieves a niBlock's transform matrix as a Mathutil.Matrix"""
+        """Retrieves a niBlock's transform matrix as a Mathutil.Matrix."""
         return Matrix(*niBlock.getTransform(relative_to).asList())
 
     def fb_global_matrix(self, niBlock):
@@ -505,21 +498,18 @@ class NifImport:
         # done!
         return b_scale, b_rot, b_trans
 
-
-        
-
-    # Creates and returns a grouping empty
     def fb_empty(self, niBlock):
+        """Creates and returns a grouping empty."""
         shortName = self.fb_name(niBlock,22)
         b_empty = Blender.Object.New("Empty", shortName)
         b_empty.properties['longName'] = niBlock.name
         self.scene.objects.link(b_empty)
         return b_empty
 
-    # Scans an armature hierarchy, and returns a whole armature.
-    # This is done outside the normal node tree scan to allow for positioning of
-    # the bones.
     def fb_armature(self, niArmature):
+        """Scans an armature hierarchy, and returns a whole armature.
+        This is done outside the normal node tree scan to allow for positioning
+        of the bones before skins are attached."""
         armature_name = self.fb_name(niArmature,22)
         armature_matrix_inverse = self.fb_global_matrix(niArmature)
         armature_matrix_inverse.invert()
@@ -545,7 +535,6 @@ class NifImport:
 
         # The armature has been created in editmode,
         # now we are ready to set the bone keyframes.
-        #if False:
         if self.IMPORT_ANIMATION:
             # create an action
             action = Blender.Armature.NLA.NewAction()
@@ -707,9 +696,8 @@ class NifImport:
                         del rot_keys_dict
         return b_armature
 
-
-    # Adds a bone to the armature in edit mode.
     def fb_bone(self, niBlock, b_armature, b_armatureData, niArmature):
+        """Adds a bone to the armature in edit mode."""
         armature_matrix_inverse = niArmature._invMatrix
         # bone length for nubs and zero length bones
         nub_length = 5.0
@@ -832,124 +820,121 @@ class NifImport:
 
 
     def fb_texture(self, niSourceTexture):
-        """
-        Returns a Blender Texture object, and stores it in the global TEXTURES dictionary
-        """
-        if niSourceTexture:
+        """Returns a Blender Texture object, and stores it in the
+        self.textures dictionary."""
+
+        if not niSourceTexture: return None
             
-            try:
-                return self.textures[niSourceTexture]
-            except:
-                pass
-            
-            b_image = None
-            
-            if niSourceTexture.useExternal:
-                # the texture uses an external image file
-                fn = niSourceTexture.fileName
-                fn = fn.replace( '\\', Blender.sys.sep )
-                fn = fn.replace( '/', Blender.sys.sep )
-                # go searching for it
-                textureFile = None
-                importpath = Blender.sys.dirname(self.IMPORT_FILE)
-                searchPathList = [importpath] + self.IMPORT_TEXTURE_PATH
-                # if it looks like a Morrowind style path, use common sense to guess texture path
-                meshes_index = importpath.lower().find("meshes")
-                if meshes_index != -1:
-                    searchPathList.append(importpath[:meshes_index] + 'textures')
-                # if it looks like a Civilization IV style path, use common sense to guess texture path
-                art_index = importpath.lower().find("art")
-                if art_index != -1:
-                    searchPathList.append(importpath[:art_index] + 'shared')
-                # go through all texture search paths
-                for texdir in searchPathList:
-                    texdir = texdir.replace( '\\', Blender.sys.sep )
-                    texdir = texdir.replace( '/', Blender.sys.sep )
-                    # go through all possible file names, try alternate extensions too
-                    # for linux, also try lower case versions of filenames
-                    texfns = reduce(lambda x,y: x+y, [[fn[:-4]+ext, fn[:-4].lower()+ext] for ext in ('.DDS','.dds','.PNG','.png','.TGA','.tga','.BMP','.bmp','.JPG','.jpg')])
-                    texfns = [fn, fn.lower()] + list(set(texfns))
-                    for texfn in texfns:
-                         # now a little trick, to satisfy many Morrowind mods
-                        if (texfn[:9].lower() == 'textures' + Blender.sys.sep) and (texdir[-9:].lower() == Blender.sys.sep + 'textures'):
-                            tex = Blender.sys.join( texdir[:-9], texfn ) # strip one of the two 'textures' from the path
+        try:
+            return self.textures[niSourceTexture]
+        except:
+            pass
+        
+        b_image = None
+        
+        if niSourceTexture.useExternal:
+            # the texture uses an external image file
+            fn = niSourceTexture.fileName
+            fn = fn.replace( '\\', Blender.sys.sep )
+            fn = fn.replace( '/', Blender.sys.sep )
+            # go searching for it
+            textureFile = None
+            importpath = Blender.sys.dirname(self.IMPORT_FILE)
+            searchPathList = [importpath] + self.IMPORT_TEXTURE_PATH
+            # if it looks like a Morrowind style path, use common sense to guess texture path
+            meshes_index = importpath.lower().find("meshes")
+            if meshes_index != -1:
+                searchPathList.append(importpath[:meshes_index] + 'textures')
+            # if it looks like a Civilization IV style path, use common sense to guess texture path
+            art_index = importpath.lower().find("art")
+            if art_index != -1:
+                searchPathList.append(importpath[:art_index] + 'shared')
+            # go through all texture search paths
+            for texdir in searchPathList:
+                texdir = texdir.replace( '\\', Blender.sys.sep )
+                texdir = texdir.replace( '/', Blender.sys.sep )
+                # go through all possible file names, try alternate extensions too
+                # for linux, also try lower case versions of filenames
+                texfns = reduce(lambda x,y: x+y, [[fn[:-4]+ext, fn[:-4].lower()+ext] for ext in ('.DDS','.dds','.PNG','.png','.TGA','.tga','.BMP','.bmp','.JPG','.jpg')])
+                texfns = [fn, fn.lower()] + list(set(texfns))
+                for texfn in texfns:
+                     # now a little trick, to satisfy many Morrowind mods
+                    if (texfn[:9].lower() == 'textures' + Blender.sys.sep) and (texdir[-9:].lower() == Blender.sys.sep + 'textures'):
+                        tex = Blender.sys.join( texdir[:-9], texfn ) # strip one of the two 'textures' from the path
+                    else:
+                        tex = Blender.sys.join( texdir, texfn )
+                    #self.msg("Searching %s" % tex, 3) # DEBUG
+                    if Blender.sys.exists(tex) == 1:
+                        # tries to load the file
+                        b_image = Blender.Image.Load(tex)
+                        # Blender 2.41 will return an image object even if the file format isn't supported,
+                        # so to check if the image is actually loaded I need to force an error, hence the
+                        # dummy = b_image.size line.
+                        try:
+                            dummy = b_image.size
+                        except: # RuntimeError: couldn't load image data in Blender
+                            b_image = None # not supported, delete image object
                         else:
-                            tex = Blender.sys.join( texdir, texfn )
-                        #self.msg("Searching %s" % tex, 3) # DEBUG
-                        if Blender.sys.exists(tex) == 1:
-                            # tries to load the file
-                            b_image = Blender.Image.Load(tex)
-                            # Blender 2.41 will return an image object even if the file format isn't supported,
-                            # so to check if the image is actually loaded I need to force an error, hence the
-                            # dummy = b_image.size line.
-                            try:
-                                dummy = b_image.size
-                            except: # RuntimeError: couldn't load image data in Blender
-                                b_image = None # not supported, delete image object
-                            else:
-                                # file format is supported
-                                self.msg( "Found '%s' at %s" %(fn, tex), 3 )
-                                del dummy
-                                break
-                    if b_image:
-                        break
-                if b_image == None:
-                    self.msg("Texture '%s' not found and no alternate available" % fn, 2)
-                    b_image = Blender.Image.New(tex, 1, 1, 24) # create a stub
-                    b_image.filename = tex
-            else:
-                # the texture image is packed inside the nif -> extract it
-                niPixelData = niSourceTexture.pixelData
-                
-                # we only load the first mipmap
-                width = niPixelData.mipmaps[0].width
-                height = niPixelData.mipmaps[0].height
-                
-                if niPixelData.pixelFormat == NifFormat.PixelFormat.PX_FMT_RGBA8:
-                    bpp = 24
-                elif niPixelData.pixelFormat == NifFormat.PixelFormat.PX_FMT_RGB8:
-                    bpp = 32
-                else:
-                    bpp = None
-
-                if bpp == None: self.msg("unknown pixel format (%i), cannot extract texture"%niPixelData.pixelFormat, 1)
-
-                if bpp != None:
-                    b_image = Blender.Image.New( "TexImg", width, height, bpp )
-                    
-                    pixels = niPixelData.pixelData.data
-                    pixeloffset = 0
-                    a = 0xff
-                    for y in xrange( height ):
-                        Blender.Window.DrawProgressBar( float( y + 1 ) / float( height ), "Image Extraction")
-                        for x in xrange( width ):
-                            # TODO delegate color extraction to generator in PyFFI/NIF
-                            r = pixels[pixeloffset]
-                            g = pixels[pixeloffset+1]
-                            b = pixels[pixeloffset+2]
-                            if bpp == 32:
-                                a = pixels[pixeloffset+3]
-                            b_image.setPixelI( x, (height-1)-y, ( r, g, b, a ) )
-                            pixeloffset += bpp/8
+                            # file format is supported
+                            self.msg( "Found '%s' at %s" %(fn, tex), 3 )
+                            del dummy
+                            break
+                if b_image:
+                    break
+            if b_image == None:
+                self.msg("Texture '%s' not found and no alternate available" % fn, 2)
+                b_image = Blender.Image.New(tex, 1, 1, 24) # create a stub
+                b_image.filename = tex
+        else:
+            # the texture image is packed inside the nif -> extract it
+            niPixelData = niSourceTexture.pixelData
             
-            if b_image != None:
-                # create a texture using the loaded image
-                b_texture = Blender.Texture.New()
-                b_texture.setType( 'Image' )
-                b_texture.setImage( b_image )
-                b_texture.imageFlags |= Blender.Texture.ImageFlags.INTERPOL
-                b_texture.imageFlags |= Blender.Texture.ImageFlags.MIPMAP
-                self.textures[niSourceTexture] = b_texture
-                return b_texture
+            # we only load the first mipmap
+            width = niPixelData.mipmaps[0].width
+            height = niPixelData.mipmaps[0].height
+            
+            if niPixelData.pixelFormat == NifFormat.PixelFormat.PX_FMT_RGBA8:
+                bpp = 24
+            elif niPixelData.pixelFormat == NifFormat.PixelFormat.PX_FMT_RGB8:
+                bpp = 32
             else:
-                self.textures[niSourceTexture] = None
-                return None
-        return None
+                bpp = None
 
+            if bpp == None: self.msg("unknown pixel format (%i), cannot extract texture"%niPixelData.pixelFormat, 1)
 
+            if bpp != None:
+                b_image = Blender.Image.New( "TexImg", width, height, bpp )
+                
+                pixels = niPixelData.pixelData.data
+                pixeloffset = 0
+                a = 0xff
+                self.msgProgress("Image Extraction")
+                for y in xrange( height ):
+                    for x in xrange( width ):
+                        # TODO delegate color extraction to generator in PyFFI/NIF
+                        r = pixels[pixeloffset]
+                        g = pixels[pixeloffset+1]
+                        b = pixels[pixeloffset+2]
+                        if bpp == 32:
+                            a = pixels[pixeloffset+3]
+                        b_image.setPixelI( x, (height-1)-y, ( r, g, b, a ) )
+                        pixeloffset += bpp/8
+        
+        if b_image != None:
+            # create a texture using the loaded image
+            b_texture = Blender.Texture.New()
+            b_texture.setType( 'Image' )
+            b_texture.setImage( b_image )
+            b_texture.imageFlags |= Blender.Texture.ImageFlags.INTERPOL
+            b_texture.imageFlags |= Blender.Texture.ImageFlags.MIPMAP
+            self.textures[niSourceTexture] = b_texture
+            return b_texture
+        else:
+            self.textures[niSourceTexture] = None
+            return None
 
-    # Creates and returns a material
     def fb_material(self, matProperty, textProperty, alphaProperty, specProperty):
+        """Creates and returns a material."""
         # First check if material has been created before.
         try:
             material = self.materials[(matProperty, textProperty, alphaProperty, specProperty)]
@@ -1059,9 +1044,10 @@ class NifImport:
         self.materials[(matProperty, textProperty, alphaProperty, specProperty)] = material
         return material
 
-    # Creates and returns a raw mesh, or appends geometry data to group_mesh
-    # If group_mesh is not None, then applytransform must be True.
     def fb_mesh(self, niBlock, group_mesh = None, applytransform = False):
+        """Creates and returns a raw mesh, or appends geometry data to
+        group_mesh. If group_mesh is not None, then applytransform must be
+        True."""
         assert(isinstance(niBlock, NifFormat.NiTriBasedGeom))
         if group_mesh:
             b_mesh = group_mesh
@@ -1083,7 +1069,7 @@ class NifImport:
 
         # set transform matrix for the mesh
         if not applytransform:
-            if group_mesh: raise NIFImportError('BUG: cannot set transform when importing meshes in groups; use applytransform = False')
+            if group_mesh: raise NifImportError('BUG: cannot set transform when importing meshes in groups; use applytransform = False')
             b_mesh.setMatrix(self.fb_matrix(niBlock))
         else:
             transform = self.fb_matrix(niBlock) # used later on
@@ -1091,7 +1077,7 @@ class NifImport:
         # Mesh geometry data. From this I can retrieve all geometry info
         niData = niBlock.data
         if not niData:
-            raise NIFImportError("no ShapeData returned. Node name: %s " % b_name)
+            raise NifImportError("no ShapeData returned. Node name: %s " % b_name)
             
         # Vertices
         verts = niData.vertices
@@ -1366,12 +1352,10 @@ class NifImport:
 
     # import animation groups
     def fb_textkey(self, niBlock):
-        """
-        Stores the text keys that define animation start and end in a text buffer,
-        so that they can be re-exported.
-        Since the text buffer is cleared on each import only the last import will be exported
-        correctly
-        """
+        """Stores the text keys that define animation start and end in a text
+        buffer, so that they can be re-exported. Since the text buffer is
+        cleared on each import only the last import will be exported
+        correctly."""
         txk = self.find_extra(niBlock, NifFormat.NiTextKeyExtraData)
         if txk:
             # get animation text buffer, and clear it if it already exists
@@ -1392,12 +1376,11 @@ class NifImport:
             self.scene.getRenderingContext().endFrame(frame)
         
     def fb_bonemat(self):
-        """
-        Stores correction matrices in a text buffer so that the original alignment can be re-exported.
-        In order for this to work it is necessary to mantain the imported names unaltered
-        Since the text buffer is cleared on each import only the last import will be exported
-        correctly
-        """
+        """Stores correction matrices in a text buffer so that the original
+        alignment can be re-exported. In order for this to work it is necessary
+        to mantain the imported names unaltered. Since the text buffer is
+        cleared on each import only the last import will be exported
+        correctly."""
         try:
             bonetxt = [txt for txt in Blender.Text.Get() if txt.getName() == "BoneExMat"][0]
             bonetxt.clear()
@@ -1412,12 +1395,10 @@ class NifImport:
         
 
     def fb_fullnames(self):
-        """
-        Stores the original, long object names so that they can be re-exported.
-        In order for this to work it is necessary to mantain the imported names unaltered.
-        Since the text buffer is cleared on each import only the last import will be exported
-        correctly
-        """
+        """Stores the original, long object names so that they can be
+        re-exported. In order for this to work it is necessary to mantain the
+        imported names unaltered. Since the text buffer is cleared on each
+        import only the last import will be exported correctly."""
         # get the names text buffer
         try:
             namestxt = [txt for txt in Blender.Text.Get() if txt.getName() == "FullNames"][0]
@@ -1428,8 +1409,8 @@ class NifImport:
             if block.name and shortname != block.name:
                 namestxt.write('%s;%s\n'% (shortname, block.name))
 
-    # scan all blocks and return a reasonable number for FPS
     def getFramesPerSecond(self, roots):
+        """Scan all blocks and return a reasonable number for FPS."""
         # find all key times
         key_times = []
         for root in roots:
@@ -1530,7 +1511,7 @@ class NifImport:
         # case where we import skeleton only: do all NiNode's as bones
         if self.IMPORT_SKELETON:
             if not isinstance(niBlock, NifFormat.NiNode):
-                raise NIFImportError('cannot import skeleton: root is not a NiNode')
+                raise NifImportError('cannot import skeleton: root is not a NiNode')
             if not self.armatures.has_key(niBlock):
                 self.armatures[niBlock] = []
             # add bones
@@ -1633,19 +1614,19 @@ class NifImport:
     def importKfm(self, filename):
         """Main KFM import function. (BROKEN)"""
         Blender.Window.DrawProgressBar(0.0, "Initializing")
-        try: # catch NIFImportErrors
+        try: # catch NifImportErrors
             # read the KFM file
             kfm = Kfm()
             ver = kfm.Read(filename)
             if ( ver == VER_INVALID ):
-                raise NIFImportError("Not a KFM file.")
+                raise NifImportError("Not a KFM file.")
             elif ( ver == VER_UNSUPPORTED ):
-                raise NIFImportError("Unsupported KFM version.")
+                raise NifImportError("Unsupported KFM version.")
             # import the NIF tree
             importRoot(kfm.MergeActions(Blender.sys.dirname(filename)))
-        except NIFImportError, e: # in that case, we raise a menu instead of an exception
+        except NifImportError, e: # in that case, we raise a menu instead of an exception
             Blender.Window.DrawProgressBar(1.0, "Import Failed")
-            print 'NIFImportError: ' + e.value
+            print 'NifImportError: ' + e.value
             Blender.Draw.PupMenu('ERROR%t|' + e.value)
             return
 
@@ -1749,4 +1730,3 @@ arg = __script__['arg']
 if __name__ == '__main__':
     _config = NifConfig() # use global so gui elements don't go out of skope
     Blender.Window.FileSelector(fileselect_callback, "Import NIF", _config.config["IMPORT_FILE"])
-
