@@ -273,7 +273,7 @@ Section
   Delete "$BLENDERSCRIPTS\bpymodules\nifImEx\Read.pyc"
   Delete "$BLENDERSCRIPTS\bpymodules\nifImEx\Write.pyc"
   Delete "$BLENDERSCRIPTS\bpymodules\nifImEx\niftools_logo.png"
-  Delete "$BLENDERSCRIPTS\bpymodules\nifImEx"
+  RMDir "$BLENDERSCRIPTS\bpymodules\nifImEx"
 
   ; Clean up registered script menu's, just to make sure they get updated
   Delete "$BLENDERSCRIPTS\..\Bpymenus"
