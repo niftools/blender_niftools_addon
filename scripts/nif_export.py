@@ -1561,7 +1561,7 @@ and turn off envelopes."""%ob.getName()
                                     mesh.verts[idx].sel = 1
                             # switch to edit mode and raise exception
                             Blender.Window.EditMode(1)
-                            raise NifExportError("Cannot export mesh with unweighted vertices. The unweighted vertices have been selected in the mesh so they can me easily identified.")
+                            raise NifExportError("Cannot export mesh with unweighted vertices. The unweighted vertices have been selected in the mesh so they can easily be identified.")
 
                         # update bind position skinning data
                         trishape.updateBindPosition()
