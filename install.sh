@@ -8,6 +8,10 @@ rm -f ~/.blender/scripts/nif_common.py
 rm -f ~/.blender/scripts/nif_common.pyc
 rm -rf ~/.blender/scripts/bpymodules/nifImEx
 
+# make sure menu's get updated
+
+rm -f ~/.blender/Bpymenus
+
 # install
 
 cp scripts/nif_import.py scripts/nif_export.py scripts/mesh_weightsquash.py scripts/mesh_hull.py ~/.blender/scripts

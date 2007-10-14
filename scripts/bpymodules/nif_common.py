@@ -148,6 +148,14 @@ class NifConfig:
             self.config["IMPORT_TEXTURE_PATH"] = savedconfig["TEXTURE_SEARCH_PATH"]
         except:
             pass
+        try:
+            self.config["IMPORT_FILE"] = Blender.sys.join(savedconfig["NIF_IMPORT_PATH"], savedconfig["NIF_IMPORT_FILE"])
+        except:
+            pass
+        try:
+            self.config["EXPORT_FILE"] = savedconfig["NIF_EXPORT_FILE"]
+        except:
+            pass
         # merge configuration with defaults
         if savedconfig:
             for key, val in self.DEFAULTS.iteritems():
