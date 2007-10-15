@@ -355,15 +355,16 @@ and turn off envelopes."""%ob.getName()
                 # (warning: trouble if armatures parent other armatures or
                 # if bones parent geometries, or if object is animated)
                 # flatten skins
-                skelroots = []
+                skelroots = set()
                 affectedbones = []
                 for block in self.blocks:
                     if isinstance(block, NifFormat.NiGeometry) and block.isSkin():
                         self.msg("Flattening skin on geometry %s"%block.name)
                         affectedbones.extend(block.flattenSkin())
-                        skelroots.append(block.skinInstance.skeletonRoot)
+                        skelroots.add(block.skinInstance.skeletonRoot)
                 # remove NiNodes that do not affect skin
                 for skelroot in skelroots:
+                    self.msg("Removing unused NiNodes in '%s'"%skelroot.name)
                     skelrootchildren = [child for child in skelroot.children if (not isinstance(child, NifFormat.NiNode)) or (child in affectedbones)]
                     skelroot.numChildren = len(skelrootchildren)
                     skelroot.children.updateSize()
@@ -389,7 +390,7 @@ and turn off envelopes."""%ob.getName()
 
             # delete original scene root if a scene root object was already defined
             if (root_block.numChildren == 1) and (root_block.children[0].name in ['Scene Root', 'Bip01']):
-                self.msg("Making 'Scene Root' the root block")
+                self.msg("Making '%s' the root block"%root_block.children[0].name)
                 # remove root_block from self.blocks
                 self.blocks = [b for b in self.blocks if b != root_block] 
                 # set new root block
