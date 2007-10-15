@@ -253,6 +253,8 @@ class NifImport:
             # process all its children
             for child in root_block.children:
                 b_obj = self.read_branch(child)
+        elif isinstance(root_block, NifFormat.NiCamera):
+            self.msg('WARNING: skipped NiCamera root')
         else:
             raise NifImportError("don't know how to import nif file with root block of type '%s'"%root_block.__class__)
 

@@ -1,3 +1,6 @@
+Version 2.1.15 (***)
+Import: ignore NiCamera root blocks instead of raising an exception on them
+
 Version 2.1.14 (Oct 14, 2007)
 Import: fixed a transform bug which was introduced in 2.1.13, skinned
 geometries had their transform applied twice, so this fixes import of those
