@@ -2199,14 +2199,14 @@ and turn off envelopes."""%ob.getName()
                 coltf.shape = colbox
                 colbox.material = material
                 colbox.radius = 0.1
-                colbox.unknownString.value[0] = '\x6b'
-                colbox.unknownString.value[1] = '\xee'
-                colbox.unknownString.value[2] = '\x43'
-                colbox.unknownString.value[3] = '\x40'
-                colbox.unknownString.value[4] = '\x3a'
-                colbox.unknownString.value[5] = '\xef'
-                colbox.unknownString.value[6] = '\x8e'
-                colbox.unknownString.value[7] = '\x3e'
+                colbox.unknown8Bytes[0] = 0x6b
+                colbox.unknown8Bytes[1] = 0xee
+                colbox.unknown8Bytes[2] = 0x43
+                colbox.unknown8Bytes[3] = 0x40
+                colbox.unknown8Bytes[4] = 0x3a
+                colbox.unknown8Bytes[5] = 0xef
+                colbox.unknown8Bytes[6] = 0x8e
+                colbox.unknown8Bytes[7] = 0x3e
                 # fix dimensions for havok coordinate system
                 colbox.dimensions.x = (maxx - minx) / 14.0
                 colbox.dimensions.y = (maxy - miny) / 14.0
@@ -2234,12 +2234,12 @@ and turn off envelopes."""%ob.getName()
             v2 = Blender.Mathutils.Vector([(maxx+minx)/2.0,(maxy+miny)/2.0,maxz-colcaps.radius])
             v1 *= transform
             v2 *= transform
-            colcaps.point1.x = v1[0] / 7.0
-            colcaps.point1.y = v1[1] / 7.0
-            colcaps.point1.z = v1[2] / 7.0
-            colcaps.point2.x = v2[0] / 7.0
-            colcaps.point2.y = v2[1] / 7.0
-            colcaps.point2.z = v2[2] / 7.0
+            colcaps.firstPoint.x = v1[0] / 7.0
+            colcaps.firstPoint.y = v1[1] / 7.0
+            colcaps.firstPoint.z = v1[2] / 7.0
+            colcaps.secondPoint.x = v2[0] / 7.0
+            colcaps.secondPoint.y = v2[1] / 7.0
+            colcaps.secondPoint.z = v2[2] / 7.0
             # fix havok coordinate system for radii
             colcaps.radius /= 7.0
             colcaps.radius1 /= 7.0

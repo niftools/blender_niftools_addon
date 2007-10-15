@@ -1,7 +1,7 @@
 # common functions for the nif import and export scripts
 
-__version__ = "2.1.14"
-__requiredpyffiversion__ = "0.4.5"
+__version__ = "2.1.15"
+__requiredpyffiversion__ = "0.5"
 __requiredblenderversion__ = "245"
 
 # --------------------------------------------------------------------------
