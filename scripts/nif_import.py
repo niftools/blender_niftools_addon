@@ -630,7 +630,7 @@ class NifImport:
                             quat = euler.toQuat()
                             # beware, CrossQuats takes arguments in a counter-intuitive order:
                             # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
-                            quatVal = CrossQuats(niBone_bind_quat_inv, quatKey) # Rchannel = Rtotal * inverse(Rbind)
+                            quatVal = CrossQuats(niBone_bind_quat_inv, quat) # Rchannel = Rtotal * inverse(Rbind)
                             rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
                             b_posebone.quat = rot
                             b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.ROT]) # this is very slow... :(
@@ -1328,7 +1328,7 @@ class NifImport:
                         elif ( morphCtrl.flags == 0x0008 ):
                             b_curve.setExtrapolation( 'Cyclic' )
                         else:
-                            msg( 'dunno which extrapolation to use: using constant instead', 2 )
+                            print('WARNING: no idea which extrapolation to use, using constant')
                             b_curve.setExtrapolation( 'Constant' )
                         # set up the curve's control points
                         morphkeys = morphData.morphs[idxMorph].keys
