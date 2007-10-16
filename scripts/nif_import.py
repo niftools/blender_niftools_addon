@@ -385,10 +385,6 @@ class NifImport:
         elif isinstance(niBlock, NifFormat.NiNode):
             children = niBlock.children
             if children:
-                # I need this to work out the transform in armaturespace
-                armature_matrix_inverse = self.fb_global_matrix(niArmature)
-                armature_matrix_inverse.invert()
-                niArmature._invMatrix = armature_matrix_inverse
                 # check if geometries should be merged on import
                 node_name = niBlock.name
                 geom_group = self.is_grouping_node(niBlock)
@@ -526,7 +522,6 @@ class NifImport:
         armature_matrix_inverse.invert()
         # store the matrix inverse within the niArmature, so that we won't have to recalculate it
         niArmature._invMatrix = armature_matrix_inverse
-        b_armature = Blender.Object.New('Armature', armature_name)
         b_armatureData = Blender.Armature.Armature()
         b_armatureData.name = armature_name
         b_armatureData.makeEditable()
@@ -534,15 +529,14 @@ class NifImport:
         b_armatureData.envelopes = False
         b_armatureData.vertexGroups = True
         b_armatureData.drawType = Blender.Armature.STICK
-        #b_armatureData.drawType = Blender.Armature.ENVELOPE
-        #b_armatureData.drawType = Blender.Armature.OCTAHEDRON
-        b_armature.link(b_armatureData)
+        b_armature = self.scene.objects.new(b_armatureData, armature_name)
+
+        # make armature editable and create bones
         b_armatureData.makeEditable()
         niChildBones = [child for child in niArmature.children if self.is_bone(child)]  
         for niBone in niChildBones:
             self.fb_bone(niBone, b_armature, b_armatureData, niArmature)
         b_armatureData.update()
-        self.scene.objects.link(b_armature)
 
         # The armature has been created in editmode,
         # now we are ready to set the bone keyframes.
