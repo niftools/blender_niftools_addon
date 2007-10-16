@@ -1,4 +1,4 @@
-VERSION="2.1.14"
+VERSION="2.1.15"
 NAME="blender_nif_scripts"
 FILES="scripts/nif_import.py scripts/nif_export.py scripts/bpymodules/nif_common.py scripts/mesh_weightsquash.py scripts/mesh_hull.py ChangeLog README.html install.sh"
 
@@ -10,4 +10,4 @@ read -p "Press any key to build the windows installer..."
 
 # create windows installer
 rm -f "win-install/${NAME}-${VERSION}-windows.exe"
-wine ~/.wine/drive_c/Program\ Files/NSIS/makensis.exe /v3 win-install/blender_nif_scripts.nsi
+wine ~/.wine/drive_c/Program\ Files/NSIS/makensis.exe /v3 win-install/${NAME}.nsi
