@@ -61,7 +61,7 @@ class NifConfig:
     DEFAULTS = dict(
         IMPORT_FILE = Blender.sys.join(Blender.sys.dirname(Blender.sys.progname), "import.nif"),
         EXPORT_FILE = Blender.sys.join(Blender.sys.dirname(Blender.sys.progname), "export.nif"),
-        REALIGN_BONES = True,
+        IMPORT_REALIGN_BONES = True,
         IMPORT_ANIMATION = True,
         IMPORT_SCALE_CORRECTION = 0.1,
         EXPORT_SCALE_CORRECTION = 10.0, # 1/import scale correction
@@ -143,7 +143,7 @@ class NifConfig:
         self.config = dict(**self.DEFAULTS)
         # read configuration
         savedconfig = Blender.Registry.GetKey(self.CONFIG_NAME, True)
-        # hacks for renaming keys
+        # port config keys from old versions to current version
         try:
             self.config["IMPORT_TEXTURE_PATH"] = savedconfig["TEXTURE_SEARCH_PATH"]
         except:
@@ -154,6 +154,10 @@ class NifConfig:
             pass
         try:
             self.config["EXPORT_FILE"] = savedconfig["NIF_EXPORT_FILE"]
+        except:
+            pass
+        try:
+            self.config["IMPORT_REALIGN_BONES"] = savedconfig["REALIGN_BONES"]
         except:
             pass
         # merge configuration with defaults
@@ -226,11 +230,11 @@ class NifConfig:
                 self.config["IMPORT_ANIMATION"])
             H -= 30
 
-            self.guiElements["REALIGN_BONES"] = Draw.Toggle(
+            self.guiElements["IMPORT_REALIGN_BONES"] = Draw.Toggle(
                 "Realign Bones",
-                self.eventId("REALIGN_BONES"),
+                self.eventId("IMPORT_REALIGN_BONES"),
                 50, H, 390, 20,
-                self.config["REALIGN_BONES"])
+                self.config["IMPORT_REALIGN_BONES"])
             H -= 20
             self.guiElements["IMPORT_SENDBONESTOBINDPOS"] = Draw.Toggle(
                 "Send Bones To Bind Position",
@@ -402,8 +406,8 @@ class NifConfig:
             if self.texpathIndex > 0:
                 self.texpathIndex -= 1
             self.updateTexpathCurrent()
-        elif evName == "REALIGN_BONES":
-            self.config["REALIGN_BONES"] = not self.config["REALIGN_BONES"]
+        elif evName == "IMPORT_REALIGN_BONES":
+            self.config["IMPORT_REALIGN_BONES"] = not self.config["IMPORT_REALIGN_BONES"]
         elif evName == "IMPORT_ANIMATION":
             self.config["IMPORT_ANIMATION"] = not self.config["IMPORT_ANIMATION"]
         elif evName == "IMPORT_SKELETON":

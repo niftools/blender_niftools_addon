@@ -712,7 +712,6 @@ class NifImport:
         # bone length for nubs and zero length bones
         nub_length = 5.0
         scale = self.IMPORT_SCALE_CORRECTION
-        realign_enabled = self.REALIGN_BONES
         # bone name
         bone_name = self.fb_name(niBlock, 32)
         niChildBones = [child for child in niBlock.children if self.is_bone(child)]
@@ -741,14 +740,14 @@ class NifImport:
                 dy = b_bone_head_y - b_bone_tail_y
                 dz = b_bone_head_z - b_bone_tail_z
                 is_zero_length = abs(dx + dy + dz) * 200 < self.EPSILON
-            elif realign_enabled:
+            elif self.IMPORT_REALIGN_BONES:
                 # the correction matrix value is based on the children's head position
                 # If these are missing I just set it as the same as the parent's
                 m_correction = self.find_correction_matrix(niBlock._parent, niArmature)
             
             if is_zero_length:
                 # this is a 0 length bone, to avoid it being removed I set a default minimum length
-                if realign_enabled or not self.is_bone(niBlock._parent):
+                if self.IMPORT_REALIGN_BONES or not self.is_bone(niBlock._parent):
                     # no parent bone, or bone is realigned with correction. I just set one random direction.
                     b_bone_tail_x = b_bone_head_x + (nub_length * scale)
                 else:
@@ -774,7 +773,7 @@ class NifImport:
             b_bone.head = Vector(b_bone_head_x, b_bone_head_y, b_bone_head_z)
             b_bone.tail = Vector(b_bone_tail_x, b_bone_tail_y, b_bone_tail_z)
             
-            if realign_enabled:
+            if self.IMPORT_REALIGN_BONES:
                 # applies the corrected matrix explicitly
                 b_bone.matrix = m_correction.resize4x4() * armature_space_matrix
             #else:
@@ -804,7 +803,7 @@ class NifImport:
         """Returns the correction matrix for a bone."""
         armature_matrix_inverse = niArmature._invMatrix
         m_correction = self.IDENTITY44.rotationPart()
-        if self.REALIGN_BONES and self.is_bone(niBlock):
+        if self.IMPORT_REALIGN_BONES and self.is_bone(niBlock):
             armature_space_matrix = self.fb_global_matrix(niBlock) * armature_matrix_inverse
             niChildBones = [child for child in niBlock.children if self.is_bone(child)]
             (sum_x, sum_y, sum_z, dummy) = armature_space_matrix[3]
