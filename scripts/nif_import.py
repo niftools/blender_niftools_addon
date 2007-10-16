@@ -88,11 +88,11 @@ class NifImport:
         """Message wrapper for the Blender progress bar."""
         # update progress bar level
         if progbar is None:
-            if self.progressBar + 0.099 > 1:
+            if self.progressBar > 0.89:
                 # reset progress bar
                 self.progressBar = 0
                 Blender.Window.DrawProgressBar(0, message)
-            self.progressBar += 0.099
+            self.progressBar += 0.1
         else:
             self.progressBar = progbar
         # draw the progress bar
@@ -362,7 +362,7 @@ class NifImport:
         recursively, as meshes parented to a given armature or parented
         to the closest bone in the armature. Note that
         niArmature must have been imported previously as an armature, along
-        with all its bones. This function only imports meshes."""
+        with all its bones. This function only imports meshes and armature ninodes."""
         # check if the block is non-null
         if not niBlock: return None, None
         branch_parent = self.get_closest_bone(niBlock, skelroot = niArmature)
@@ -377,10 +377,11 @@ class NifImport:
         # is it another armature?
         elif self.is_armature_root(niBlock) and niBlock != niArmature:
             # an armature parented to this armature
-            fb_arm= self.fb_armature(niBlock)
+            fb_arm = self.fb_armature(niBlock)
             # import the armature branch
             self.read_armature_branch(fb_arm, niBlock, niBlock)
-            return fb_arm
+            return branch_parent, fb_arm # the matrix will be set by the caller
+        # is it a NiNode in the niArmature tree (possibly niArmature itself, on first call)?
         elif isinstance(niBlock, NifFormat.NiNode):
             children = niBlock.children
             if children:
@@ -433,6 +434,7 @@ class NifImport:
                         # mesh is parented to the armature
                         # the transform has already been applied
                         # still need to make it parent of the armature
+                        # (if b_obj is an armature then this falls back to the usual parenting)
                         b_armature.makeParentDeform([b_obj])
 
         # anything else: throw away
