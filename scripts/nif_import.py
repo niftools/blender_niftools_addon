@@ -197,10 +197,10 @@ class NifImport:
             merged, failed = niBlock.mergeSkeletonRoots()
             if merged:
                 self.msg('reparented following blocks to skeleton root of ' + niBlock.name + ':', 2)
-                msg([node.name for node in merged], 3)
+                self.msg([node.name for node in merged], 3)
             if failed:
                 self.msg('WARNING: failed to reparent following blocks ' + niBlock.name + ':', 2)
-                msg([node.name for node in failed], 3)
+                self.msg([node.name for node in failed], 3)
 
         # transform geometry into the rest pose
         if self.IMPORT_SENDBONESTOBINDPOS:
@@ -455,14 +455,14 @@ class NifImport:
         shortName = niName[:max_length-1]
         # make unique
         try:
-            while Blender.Object.Get(name):
+            while Blender.Object.Get(shortName):
                 shortName = '%s.%02d' % (niName[:max_length-4], uniqueInt)
                 uniqueInt += 1
-        except:
+        except ValueError: # short name not found
             pass
         # save mapping
-        self.names[niBlock] = shortName
-        self.blocks[shortName] = niBlock
+        self.names[niBlock] = shortName  # block niBlock has Blender name shortName
+        self.blocks[shortName] = niBlock # Blender name shortName corresponds to niBlock
         return shortName
         
     def fb_matrix(self, niBlock, relative_to = None):
@@ -624,7 +624,7 @@ class NifImport:
                         self.msg('Rotation keys...(euler)', 4)
                         xyzRotations = kfd.xyzRotations
                         for key in xyzRotations:
-                            frame = 1+int(quatKey.time * self.fps) # time 0.0 is frame 1
+                            frame = 1+int(key.time * self.fps) # time 0.0 is frame 1
                             keyVal = key.value
                             euler = Blender.Mathutils.Euler([keyVal.x, keyVal.y, keyVal.z])
                             quat = euler.toQuat()
@@ -1612,30 +1612,6 @@ class NifImport:
         # get all geometry children
         return [ child for child in niBlock.children if isinstance(child, NifFormat.NiTriBasedGeom) and child.name.find(node_name) != -1 ]
 
-
-    def importKfm(self, filename):
-        """Main KFM import function. (BROKEN)"""
-        Blender.Window.DrawProgressBar(0.0, "Initializing")
-        try: # catch NifImportErrors
-            # read the KFM file
-            kfm = Kfm()
-            ver = kfm.Read(filename)
-            if ( ver == VER_INVALID ):
-                raise NifImportError("Not a KFM file.")
-            elif ( ver == VER_UNSUPPORTED ):
-                raise NifImportError("Unsupported KFM version.")
-            # import the NIF tree
-            importRoot(kfm.MergeActions(Blender.sys.dirname(filename)))
-        except NifImportError, e: # in that case, we raise a menu instead of an exception
-            Blender.Window.DrawProgressBar(1.0, "Import Failed")
-            print 'NifImportError: ' + e.value
-            Blender.Draw.PupMenu('ERROR%t|' + e.value)
-            return
-
-        Blender.Window.DrawProgressBar(1.0, "Finished")
-
-
-
     def set_animation(self, niBlock, b_obj):
         """Load basic animation info for this object."""
         kfc = self.find_controller(niBlock, NifFormat.NiKeyframeController)
@@ -1658,10 +1634,9 @@ class NifImport:
             for key in scales.keys:
                 frame = 1+int(key.time * self.fps) # time 0.0 is frame 1
                 Blender.Set('curframe', frame)
-                size = key.value
-                b_obj.SizeX = size
-                b_obj.SizeY = size
-                b_obj.SizeZ = size
+                b_obj.SizeX = key.value
+                b_obj.SizeY = key.value
+                b_obj.SizeZ = key.value
                 b_obj.insertIpoKey(Blender.Object.SIZE)
 
             # detect the type of rotation keys
@@ -1673,11 +1648,9 @@ class NifImport:
                 for key in xyzRotations:
                     frame = 1+int(key.time * self.fps) # time 0.0 is frame 1
                     Blender.Set('curframe', frame)
-                    keyValue = key.value
-                    rot = (keyValue.x, keyValue.y, keyValue.z)
-                    b_obj.RotX = rot.x * self.R2D
-                    b_obj.RotY = rot.y * self.R2D
-                    b_obj.RotZ = rot.z * self.R2D
+                    b_obj.RotX = key.value.x * self.R2D
+                    b_obj.RotY = key.value.y * self.R2D
+                    b_obj.RotZ = key.value.z * self.R2D
                     b_obj.insertIpoKey(Blender.Object.ROT)           
             else:
                 # uses quaternions
@@ -1686,8 +1659,7 @@ class NifImport:
                 for key in quaternionKeys:
                     frame = 1+int(key.time * self.fps) # time 0.0 is frame 1
                     Blender.Set('curframe', frame)
-                    keyValue = key.value
-                    rot = Blender.Mathutils.Quaternion(keyValue.w, keyValue.x, keyValue.y, keyValue.z).toEuler()
+                    rot = Blender.Mathutils.Quaternion(key.value.w, key.value.x, key.value.y, key.value.z).toEuler()
                     b_obj.RotX = rot.x * self.R2D
                     b_obj.RotY = rot.y * self.R2D
                     b_obj.RotZ = rot.z * self.R2D
@@ -1697,10 +1669,9 @@ class NifImport:
             for key in translations.keys:
                 frame = 1+int(key.time * self.fps) # time 0.0 is frame 1
                 Blender.Set('curframe', frame)
-                loc = key.value
-                b_obj.LocX = loc.x
-                b_obj.LocY = loc.y
-                b_obj.LocZ = loc.z
+                b_obj.LocX = key.value.x
+                b_obj.LocY = key.value.y
+                b_obj.LocZ = key.value.z
                 b_obj.insertIpoKey(Blender.Object.LOC)
                 
             Blender.Set('curframe', 1)
@@ -1726,8 +1697,6 @@ def fileselect_callback(filename):
     """Called once file is selected. Starts config GUI."""
     global _config
     _config.run(NifConfig.TARGET_IMPORT, filename, config_callback)
-
-arg = __script__['arg']
 
 if __name__ == '__main__':
     _config = NifConfig() # use global so gui elements don't go out of skope

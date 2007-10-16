@@ -910,6 +910,8 @@ and turn off envelopes."""%ob.getName()
             srctex.fileName = srctex.fileName.replace('/', '\\')
 
         else:   # if the file is not external
+            raise NifExportError("export of packed textures is not supprted ('%s')"%texture.getName())
+"""
             if filename != None:
                 try:
                     image = Blender.Image.Load( filename )
@@ -943,7 +945,7 @@ and turn off envelopes."""%ob.getName()
             ipdata.Reset( w, h, pixelformat )
             ipdata.SetColors( colors, texture.imageFlags & Blender.Texture.ImageFlags.MIPMAP != 0 )
             srctex["Texture Source"] = pixeldata
-
+"""
         # fill in default values
         srctex.pixelLayout = 5
         srctex.useMipmaps = 2
@@ -978,7 +980,6 @@ and turn off envelopes."""%ob.getName()
         target.addController(flip)
 
         # fill in NiFlipController's values
-        # flip["Target"] automatically calculated
         flip.flags = 0x0008
         flip.frequency = 1.0
         flip.startTime = (self.fstart - 1) * self.fspeed
@@ -1288,7 +1289,7 @@ and turn off envelopes."""%ob.getName()
                     txtlist = Blender.Text.Get()
                     for fliptxt in txtlist:
                         if fliptxt.getName() == mesh_base_tex.getName():
-                            self.exportFlipController( fliptxt, mesh_base_tex, tritexprop, BASE_MAP )
+                            self.exportFlipController( fliptxt, mesh_base_tex, tritexprop, 0 ) # texture slot 0 = base
                             break
                         else:
                             fliptxt = None
@@ -1304,7 +1305,7 @@ and turn off envelopes."""%ob.getName()
                     txtlist = Blender.Text.Get()
                     for fliptxt in txtlist:
                         if fliptxt.getName() == mesh_glow_tex.getName():
-                            self.exportFlipController( fliptxt, mesh_glow_tex, tritexprop, GLOW_MAP )
+                            self.exportFlipController( fliptxt, mesh_glow_tex, tritexprop, 4 ) # texture slot 4 = glow
                             break
                         else:
                             fliptxt = None
@@ -1383,7 +1384,7 @@ and turn off envelopes."""%ob.getName()
                     elif ( a_curve.getExtrapolation() == "Constant" ):
                         alphac.flags = 0x000c
                     else:
-                        if VERBOSE: print "extrapolation \"%s\" for alpha curve not supported using \"cycle reverse\" instead"%a_curve.getExtrapolation()
+                        print "WARNING: extrapolation \"%s\" for alpha curve not supported using \"cycle reverse\" instead"%a_curve.getExtrapolation()
                         alphac.flags = 0x000a
 
                     # fill in timing values
@@ -2320,8 +2321,6 @@ def fileselect_callback(filename):
     """Called once file is selected. Starts config GUI."""
     global _config
     _config.run(NifConfig.TARGET_EXPORT, filename, config_callback)
-
-arg = __script__['arg']
 
 if __name__ == '__main__':
     _config = NifConfig() # use global so gui elements don't go out of skope
