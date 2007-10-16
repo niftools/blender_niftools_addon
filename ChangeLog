@@ -3,6 +3,7 @@ Import: ignore NiCamera root blocks instead of raising an exception on them
 Import: fixed a bugs preventing animation import
 Import/Export: PyFFI 0.5 is now required; the Blender scripts can now read
 and write a whole range of new nif versions (see PyFFI ChangeLog for details)
+pycheck: added pychecker script (see http://pychecker.sourceforge.net/)
 
 Version 2.1.14 (Oct 14, 2007)
 Import: fixed a transform bug which was introduced in 2.1.13, skinned

@@ -88,9 +88,11 @@ class NifImport:
         """Message wrapper for the Blender progress bar."""
         # update progress bar level
         if progbar is None:
+            if self.progressBar + 0.099 > 1:
+                # reset progress bar
+                self.progressBar = 0
+                Blender.Window.DrawProgressBar(0, message)
             self.progressBar += 0.099
-            while self.progressBar > 1:
-                self.progressBar -= 1
         else:
             self.progressBar = progbar
         # draw the progress bar
@@ -173,10 +175,10 @@ class NifImport:
                                 for child in nonbip_children: root.removeChild(child)
                 self.msg("root block: %s" % (root.name), 3)
                 self.importRoot(root)
-        except NifImportError, e: # in that case, we raise a menu instead of an exception
+        except NifImportError, e: # in that case, we raise a menu too
             print 'NifImportError: %s'%e
             Blender.Draw.PupMenu('ERROR%t|' + str(e))
-            return
+            raise
         finally:
             self.msgProgress("Finished", progbar = 1)
 
@@ -1682,13 +1684,14 @@ def config_callback(**config):
     Blender.Window.WaitCursor(1)
     t = Blender.sys.time()
 
-    # run importer
-    NifImport(**config)
-
-    # finish import
-    print 'nif import finished in %.2f seconds' % (Blender.sys.time()-t)
-    Blender.Window.WaitCursor(0)
-    if is_editmode: Blender.Window.EditMode(1)
+    try:
+        # run importer
+        NifImport(**config)
+    finally:
+        # finish import
+        print 'nif import finished in %.2f seconds' % (Blender.sys.time()-t)
+        Blender.Window.WaitCursor(0)
+        if is_editmode: Blender.Window.EditMode(1)
 
 def fileselect_callback(filename):
     """Called once file is selected. Starts config GUI."""
