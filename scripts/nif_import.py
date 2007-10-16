@@ -157,7 +157,7 @@ class NifImport:
             self.msgProgress("Importing data")
             # calculate and set frames per second
             if self.IMPORT_ANIMATION:
-                self.fps = self.getFramesPerSecond(roots)
+                self.fps = self.getFramesPerSecond(root_blocks)
                 self.scene.getRenderingContext().fps = self.fps
             # hack for corrupt better bodies meshes
             for block in root_blocks:
@@ -347,7 +347,7 @@ class NifImport:
                     b_obj.setMatrix(self.fb_matrix(niBlock))
                     # import the animations
                     if self.IMPORT_ANIMATION:
-                        set_animation(niBlock, b_obj)
+                        self.set_animation(niBlock, b_obj)
                         # import the extras
                         self.fb_textkey(niBlock)
                     return b_obj
