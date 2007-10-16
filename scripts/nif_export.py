@@ -428,7 +428,6 @@ and turn off envelopes."""%ob.getName()
                             if not isinstance(ctrl, NifFormat.NiKeyframeController): continue
                             nodekfs[node].append(ctrl)
                     # reparent controller tree
-                    lastctrl = None
                     for node, ctrls in nodekfs.iteritems():
                         for ctrl in ctrls:
                             # create node reference by name
@@ -911,7 +910,7 @@ and turn off envelopes."""%ob.getName()
 
         else:   # if the file is not external
             raise NifExportError("export of packed textures is not supprted ('%s')"%texture.getName())
-"""
+            """
             if filename != None:
                 try:
                     image = Blender.Image.Load( filename )
@@ -945,7 +944,7 @@ and turn off envelopes."""%ob.getName()
             ipdata.Reset( w, h, pixelformat )
             ipdata.SetColors( colors, texture.imageFlags & Blender.Texture.ImageFlags.MIPMAP != 0 )
             srctex["Texture Source"] = pixeldata
-"""
+            """
         # fill in default values
         srctex.pixelLayout = 5
         srctex.useMipmaps = 2
@@ -1468,7 +1467,6 @@ and turn off envelopes."""%ob.getName()
                     ob_armature = ob.getParent()
                     armaturename = ob_armature.getName()
                     bonenames = ob_armature.getData().bones.keys()
-                    boneobjects = ob_armature.getData().bones
                     # the vertgroups that correspond to bonenames are bones that influence the mesh
                     boneinfluences = []
                     for bone in bonenames:
@@ -1573,7 +1571,6 @@ and turn off envelopes."""%ob.getName()
 
                         if self.version >= 0x04020100 and self.EXPORT_SKINPARTITION:
                             self.msg("creating 'NiSkinPartition'")
-                            maxbpp = self.EXPORT_BONESPERPARTITION
                             lostweight = trishape.updateSkinPartition(maxbonesperpartition = self.EXPORT_BONESPERPARTITION, maxbonespervertex = self.EXPORT_BONESPERVERTEX, stripify = self.EXPORT_STRIPIFY, stitchstrips = self.EXPORT_STITCHSTRIPS, padbones = self.EXPORT_PADBONES)
                             if lostweight > NifFormat._EPSILON:
                                 print "WARNING: lost %f in vertex weights while creating skin partition"%lostweight

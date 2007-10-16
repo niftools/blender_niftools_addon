@@ -542,7 +542,6 @@ class NifImport:
             action = Blender.Armature.NLA.NewAction()
             action.setActive(b_armature)
             # go through all armature pose bones (http://www.elysiun.com/forum/viewtopic.php?t=58693)
-            bone_count = len(b_armature.getPose().bones)
             self.msgProgress('Importing Animations')
             for bone_idx, (bone_name, b_posebone) in enumerate(b_armature.getPose().bones.items()):
                 # denote progress
@@ -840,7 +839,6 @@ class NifImport:
             fn = fn.replace( '\\', Blender.sys.sep )
             fn = fn.replace( '/', Blender.sys.sep )
             # go searching for it
-            textureFile = None
             importpath = Blender.sys.dirname(self.IMPORT_FILE)
             searchPathList = [importpath] + self.IMPORT_TEXTURE_PATH
             # if it looks like a Morrowind style path, use common sense to guess texture path
@@ -1532,7 +1530,6 @@ class NifImport:
                 # which is an armature only if it's not a skinning influence
                 # so mark the node to be imported as an armature
                 skininst = niBlock.skinInstance
-                skindata = skininst.data
                 skelroot = skininst.skeletonRoot
                 if not self.armatures.has_key(skelroot):
                     self.armatures[skelroot] = []
