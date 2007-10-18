@@ -200,8 +200,12 @@ class NifConfig:
 
         # import-only options
         if self.target == self.TARGET_IMPORT:
+            self.guiElements["TEXPATH_TEXT"] = Draw.Label(
+                "Texture Search Paths:",
+                50, H, 300, 20)
+            H -= 20
             self.guiElements["TEXPATH_ITEM"]   = Draw.String(
-                "Tex Paths:  ",
+                "",
                 self.eventId("TEXPATH_ITEM"),
                 50, H, 300, 20,
                 self.texpathCurrent, 290)
@@ -338,7 +342,7 @@ class NifConfig:
             #self.guiElements["NIF_EXPORT_PATH"]        = Draw.String("",       self.eventId("NIF_EXPORT_PATH"),     50, H-100, 390, 20, self.config["NIF_EXPORT_PATH"],        390, "export path")
             #self.guiElements["BROWSE_EXPORT_PATH"]     = Draw.PushButton('...',self.eventId("BROWSE_EXPORT_PATH"), 440, H-100,  30, 20)
             
-            games_list = sorted(NifFormat.games.keys())
+            games_list = sorted(filter(lambda x: x != '?', NifFormat.games.keys()))
             versions_list = sorted(NifFormat.versions.keys(), key=lambda x: NifFormat.versions[x])
             V = 50
             HH = H
@@ -362,7 +366,7 @@ class NifConfig:
                 state = (self.config["EXPORT_VERSION"] == version)
                 self.guiElements["VERSION_%s"%version] = Draw.Toggle(version, self.eventId("VERSION_%s"%version), V, H-j*20, 70, 20, state)
                 j += 1
-            H = HH - 20 - 20*min(MAXJ, max(len(NifFormat.versions), len(NifFormat.games)))
+            H = HH - 20*min(MAXJ, max(len(NifFormat.versions), len(NifFormat.games)))
             H -= 30 # leave some space
 
         self.guiElements["OK"]     = Draw.PushButton(
