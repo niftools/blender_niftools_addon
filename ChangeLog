@@ -1,9 +1,20 @@
-Version 2.1.15 (***)
-Import: ignore NiCamera root blocks instead of raising an exception on them
-Import: fixed a bugs preventing animation import
+Version 2.1.15 (Oct 19, 2007)
+pycheck: added pychecker script (see http://pychecker.sourceforge.net/)
+test: added test script to automatically run importer and exporter on a range
+of selected nif and blend files
 Import/Export: PyFFI 0.5 is now required; the Blender scripts can now read
 and write a whole range of new nif versions (see PyFFI ChangeLog for details)
-pycheck: added pychecker script (see http://pychecker.sourceforge.net/)
+Import/Export: small GUI improvements
+Import: ignore NiCamera root blocks instead of raising an exception on them
+Import: fixed a bug preventing animation import
+Import: fixed some progress bar issues
+Import: fixed bug in case armature parents another armature (i.e. solstheim's
+ice minion raider), this is still not working perfectly but at least the import
+completes without raising exceptions
+Import: IMPORT_ prefix for realign option (in accordance with all other keys)
+Import: removed duplicate calculation of armature inverse matrix
+Import: replaced the deprecated method of linking armature to the scene
+Export: improved flatten skin so it works better in some cases
 
 Version 2.1.14 (Oct 14, 2007)
 Import: fixed a transform bug which was introduced in 2.1.13, skinned
