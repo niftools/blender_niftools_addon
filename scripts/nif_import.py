@@ -1601,6 +1601,22 @@ class NifImport:
             par = par._parent
         return par
 
+    def get_blender_object(self, niBlock):
+        """Retrieves the Blender object matching the block. This is a workaround to retrieve a bone by name"""
+        if self.is_bone(niBlock):
+            boneName = _NAMES[niBlock]
+            armatureName = None
+            for armatureBlock, boneBlocks in self.armatures.iteritems():
+                if niBlock in boneBlocks:
+                    armatureName = self.names[armatureBlock]
+                    break
+            armatureObject = Blender.Object.Get(armatureName)
+            armatureData = armatureObject.getData()
+            bone = armatureData.bones[boneName]
+            return bone
+        else:
+            return Blender.Object.Get(self.names[niBlock])
+
     def is_grouping_node(self, niBlock):
         """Determine whether node is grouping node.
         Returns the children which are grouped, or empty list if it is not a
@@ -1615,6 +1631,27 @@ class NifImport:
         if not node_name: return []
         # get all geometry children
         return [ child for child in niBlock.children if isinstance(child, NifFormat.NiTriBasedGeom) and child.name.find(node_name) != -1 ]
+
+    """
+    #can't retrieve bone ipo's?
+    def import_animation(self):
+        global _ANIMATION_DATA
+        #store all keys in a flat list
+        keyFrameList = []
+        # _ANIMATION_DATA is sorted by frame already
+        for key in _ANIMATION_DATA:
+            niBlock = key['block']
+            b_obj = get_blender_object(niBlock)
+            b_ipo = b_obj.getIpo()
+            if b_ipo == None:
+                if is_bone(niBlock):
+                    b_ipo = Blender.Ipo.New('Pose', b_obj.name)
+                else:
+                    b_ipo = Blender.Ipo.New('Object', b_obj.name)
+                b_obj.setIpo(b_ipo)
+                
+            print key
+    """
 
     def set_animation(self, niBlock, b_obj):
         """Load basic animation info for this object."""
