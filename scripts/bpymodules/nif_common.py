@@ -70,7 +70,7 @@ class NifConfig:
         EXPORT_VERSION = 'Oblivion',
         EPSILON = 0.005, # used for checking equality with floats
         VERBOSITY = 0,   # verbosity level, determines how much debug output will be generated
-        IMPORT_SKELETON = False, # import file as skeleton
+        IMPORT_SKELETON = 0, # 0 = normal import, 1 = import file as skeleton, 2 = import mesh and attach to skeleton
         EXPORT_ANIMATION = 0, # export everything (1=geometry only, 2=animation only)
         EXPORT_FORCEDDS = False, # force dds extension on texture files
         EXPORT_SKINPARTITION = True, # generate skin partition
@@ -158,6 +158,13 @@ class NifConfig:
             pass
         try:
             self.config["IMPORT_REALIGN_BONES"] = savedconfig["REALIGN_BONES"]
+        except:
+            pass
+        try:
+            if savedconfig["IMPORT_SKELETON"] == True:
+                self.config["IMPORT_SKELETON"] = 1
+            elif savedconfig["IMPORT_SKELETON"] == False:
+                self.config["IMPORT_SKELETON"] = 0
         except:
             pass
         # merge configuration with defaults
@@ -253,11 +260,17 @@ class NifConfig:
                 self.config["IMPORT_APPLYSKINDEFORM"])
             H -= 30
             
-            self.guiElements["IMPORT_SKELETON"] = Draw.Toggle(
+            self.guiElements["IMPORT_SKELETON_1"] = Draw.Toggle(
                 "Import Skeleton Only + Parent Selected",
-                self.eventId("IMPORT_SKELETON"),
+                self.eventId("IMPORT_SKELETON_1"),
                 50, H, 390, 20,
-                self.config["IMPORT_SKELETON"])
+                self.config["IMPORT_SKELETON"] == 1)
+            H -= 20
+            self.guiElements["IMPORT_SKELETON_2"] = Draw.Toggle(
+                "Import Geometry Only + Parent To Selected Armature",
+                self.eventId("IMPORT_SKELETON_2"),
+                50, H, 390, 20,
+                self.config["IMPORT_SKELETON"] == 2)
             H -= 30
 
         # export-only options
@@ -414,8 +427,16 @@ class NifConfig:
             self.config["IMPORT_REALIGN_BONES"] = not self.config["IMPORT_REALIGN_BONES"]
         elif evName == "IMPORT_ANIMATION":
             self.config["IMPORT_ANIMATION"] = not self.config["IMPORT_ANIMATION"]
-        elif evName == "IMPORT_SKELETON":
-            self.config["IMPORT_SKELETON"] = not self.config["IMPORT_SKELETON"]
+        elif evName == "IMPORT_SKELETON_1":
+            if self.config["IMPORT_SKELETON"] == 1:
+                self.config["IMPORT_SKELETON"] = 0
+            else:
+                self.config["IMPORT_SKELETON"] = 1
+        elif evName == "IMPORT_SKELETON_2":
+            if self.config["IMPORT_SKELETON"] == 2:
+                self.config["IMPORT_SKELETON"] = 0
+            else:
+                self.config["IMPORT_SKELETON"] = 2
         elif evName == "IMPORT_SENDBONESTOBINDPOS":
             self.config["IMPORT_SENDBONESTOBINDPOS"] = not self.config["IMPORT_SENDBONESTOBINDPOS"]
         elif evName == "IMPORT_APPLYSKINDEFORM":

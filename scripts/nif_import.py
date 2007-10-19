@@ -135,6 +135,11 @@ class NifImport:
 
         # Blender scene
         self.scene = Blender.Scene.GetCurrent()
+
+        # selected objects
+        # find and store this list now, as creating new objects adds them
+        # to the selection list
+        self.selectedObjects = [ob for ob in Blender.Object.GetSelected()]
         
         # catch NifImportError
         try:
@@ -170,7 +175,7 @@ class NifImport:
                             b.skinInstance.data.setTransform(root.getTransform() * b.skinInstance.data.getTransform())
                             b.skinInstance.skeletonRoot = root
                             # delete non-skeleton nodes if we're importing skeleton only
-                            if self.IMPORT_SKELETON:
+                            if self.IMPORT_SKELETON == 1:
                                 nonbip_children = [ child for child in root.children if child.name[:6] != 'Bip01 ' ]
                                 for child in nonbip_children: root.removeChild(child)
                 self.msg("root block: %s" % (root.name), 3)
@@ -266,8 +271,8 @@ class NifImport:
         if len(self.names) > 0: self.fb_fullnames()
         
         # parent selected meshes to imported skeleton
-        if self.IMPORT_SKELETON:
-            b_obj.makeParentDeform(Blender.Object.GetSelected())
+        if self.IMPORT_SKELETON == 1:
+            b_obj.makeParentDeform(self.selectedObjects)
 
         """ #no good, can't get bones by name
         # import all animation data except morphs and text keys
@@ -300,7 +305,7 @@ class NifImport:
         """Read the content of the current NIF tree branch to Blender recursively."""
         self.msgProgress("Importing data")
         if niBlock:
-            if isinstance(niBlock, NifFormat.NiTriBasedGeom) and not self.IMPORT_SKELETON:
+            if isinstance(niBlock, NifFormat.NiTriBasedGeom) and self.IMPORT_SKELETON != 1:
                 # it's a shape node and we're not importing skeleton only
                 self.msg("building mesh in read_branch",3)
                 return self.fb_mesh(niBlock)
@@ -369,7 +374,7 @@ class NifImport:
         if not branch_parent:
             branch_parent = niArmature
         # is it a mesh?
-        if isinstance(niBlock, NifFormat.NiTriBasedGeom) and not self.IMPORT_SKELETON:
+        if isinstance(niBlock, NifFormat.NiTriBasedGeom) and self.IMPORT_SKELETON != 1:
 
             self.msg("building mesh %s in read_armature_branch" % (niBlock.name),3)
             # apply transform relative to the armature node
@@ -389,17 +394,17 @@ class NifImport:
                 node_name = niBlock.name
                 geom_group = self.is_grouping_node(niBlock)
                 geom_other = [ child for child in niBlock.children if not child in geom_group ]
-                if geom_group:
-                    print "joining geometries %s to single object '%s'"%([child.name for child in geom_group], node_name)
                 b_objects = [] # list of (nif block, blender object) pairs
                 # import grouped geometries
-                b_mesh = None
-                for child in geom_group:
-                    b_mesh_branch_parent, b_mesh = self.read_armature_branch(b_armature, niArmature, child, group_mesh = b_mesh)
-                    assert(b_mesh_branch_parent == branch_parent) # DEBUG
-                if b_mesh:
-                    b_mesh.name = self.fb_name(niBlock)
-                    b_objects.append((niBlock, branch_parent, b_mesh))
+                if geom_group and self.IMPORT_SKELETON != 1:
+                    print "joining geometries %s to single object '%s'"%([child.name for child in geom_group], node_name)
+                    b_mesh = None
+                    for child in geom_group:
+                        b_mesh_branch_parent, b_mesh = self.read_armature_branch(b_armature, niArmature, child, group_mesh = b_mesh)
+                        assert(b_mesh_branch_parent == branch_parent) # DEBUG
+                    if b_mesh:
+                        b_mesh.name = self.fb_name(niBlock)
+                        b_objects.append((niBlock, branch_parent, b_mesh))
                 # import other objects
                 for child in geom_other:
                     b_obj_branch_parent, b_obj = self.read_armature_branch(b_armature, niArmature, child, group_mesh = None)
@@ -1511,7 +1516,7 @@ class NifImport:
     def markArmaturesBones(self, niBlock):
         """Mark armatures and bones by peeking into NiSkinInstance blocks."""
         # case where we import skeleton only: do all NiNode's as bones
-        if self.IMPORT_SKELETON:
+        if self.IMPORT_SKELETON == 1:
             if not isinstance(niBlock, NifFormat.NiNode):
                 raise NifImportError('cannot import skeleton: root is not a NiNode')
             if not self.armatures.has_key(niBlock):
