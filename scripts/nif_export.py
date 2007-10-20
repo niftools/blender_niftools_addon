@@ -1573,7 +1573,7 @@ and turn off envelopes."""%ob.getName()
                             self.msg("creating 'NiSkinPartition'")
                             lostweight = trishape.updateSkinPartition(maxbonesperpartition = self.EXPORT_BONESPERPARTITION, maxbonespervertex = self.EXPORT_BONESPERVERTEX, stripify = self.EXPORT_STRIPIFY, stitchstrips = self.EXPORT_STITCHSTRIPS, padbones = self.EXPORT_PADBONES)
                             if lostweight > NifFormat._EPSILON:
-                                print "WARNING: lost %f in vertex weights while creating skin partition"%lostweight
+                                print "WARNING: lost %f in vertex weights while creating a skin partition for\n         Blender object '%s' (nif block '%s')"%(lostweight, ob.name, trishape.name)
 
                         # clean up
                         del vert_weights
