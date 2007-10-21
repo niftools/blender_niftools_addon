@@ -139,10 +139,15 @@ class NifImport:
         # selected objects
         # find and store this list now, as creating new objects adds them
         # to the selection list
-        self.selectedObjects = [ob for ob in Blender.Object.GetSelected()]
+        self.selectedObjects = [ob for ob in self.scene.objects.selected]
         
         # catch NifImportError
         try:
+            # check that one armature is selected in 'import geometry + parent
+            # to armature' mode
+            if self.IMPORT_SKELETON == 2:
+                if len(self.selectedObjects) != 1 or self.selectedObjects[0].getType() != 'Armature':
+                    raise NifImportError("You must select exactly one armature in 'Import Geometry Only + Parent To Selected Armature' mode.")
             # open file for binary reading
             f = open(self.filename, "rb")
             try:
