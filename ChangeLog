@@ -1,7 +1,13 @@
-Version 2.1.16 (***)
+Version 2.1.16 (Oct 21, 2007)
 Import: inform about name of Blender object and nif block when losing vertex
 weights
 Import: update scene even if import fails
+Import: fixed error with parentship if you imported a skeleton without
+selecting anything
+Import: new experimental option for importing meshes and parenting them to the
+selected armature (it seems to work pretty well for Oblivion meshes but not so
+good on Morrowind meshes)
+Import: improved morrowind skeleton import (for example via base_anim files)
 
 Version 2.1.15 (Oct 19, 2007)
 pycheck: added pychecker script (see http://pychecker.sourceforge.net/)
