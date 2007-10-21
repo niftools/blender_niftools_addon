@@ -251,6 +251,17 @@ class NifImport:
         if self.IMPORT_ANIMATION:
             self.fb_textkey(root_block)
 
+        # if we are attaching the tree to an existing armature
+        # (IMPORT_SKELETON == 2) then identify blocks in current nif
+        # with bones in selected armature
+        if self.IMPORT_SKELETON == 2:
+            for bone_name in self.selectedObjects[0].data.bones.keys():
+                bone_block = root_block.find(block_name = bone_name)
+                # add it to the name list if there is a bone with that name
+                if bone_block:
+                    self.msg("identified nif block '%s' with bone in selected armature"%bone_name)
+                    self.names[bone_block] = bone_name
+
         # read the NIF tree
         if self.is_armature_root(root_block):
             # special case 1: root node is skeleton root
@@ -283,11 +294,14 @@ class NifImport:
             b_obj.makeParentDeform(self.selectedObjects)
 
     def read_branch(self, niBlock):
-        """Read the content of the current NIF tree branch to Blender recursively."""
+        """Read the content of the current NIF tree branch to Blender
+        recursively."""
         self.msgProgress("Importing data")
         if niBlock:
-            if isinstance(niBlock, NifFormat.NiTriBasedGeom) and self.IMPORT_SKELETON != 1:
+            if isinstance(niBlock, NifFormat.NiTriBasedGeom) and self.IMPORT_SKELETON == 0:
                 # it's a shape node and we're not importing skeleton only
+                # (IMPORT_SKELETON == 1) and not importing skinned geometries
+                # only (IMPORT_SKELETON == 2)
                 self.msg("building mesh in read_branch",3)
                 return self.fb_mesh(niBlock)
             elif isinstance(niBlock, NifFormat.NiNode):
@@ -296,12 +310,18 @@ class NifImport:
                     # it's a parent node
                     # import object + children
                     if self.is_armature_root(niBlock):
-                        # the whole bone branch is imported by fb_armature as well
-                        b_obj = self.fb_armature(niBlock)
+                        # all bones in the tree are also imported by fb_armature
+                        if self.IMPORT_SKELETON != 2:
+                            b_obj = self.fb_armature(niBlock)
+                        else:
+                            b_obj = self.selectedObjects[0]
+                            self.msg("merging nif tree '%s' with armature '%s'"%(niBlock.name, b_obj.name))
+                            if niBlock.name != b_obj.name:
+                                print("WARNING: taking nif block '%s' as armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                         # now also do the meshes
                         self.read_armature_branch(b_obj, niBlock, niBlock)
                     else:
-                        # it's a grouping node
+                        # is it a grouping node?
                         geom_group = self.is_grouping_node(niBlock)
                         if not geom_group:
                             # no grouping node, so import it as an empty
@@ -1582,22 +1602,6 @@ class NifImport:
             par = par._parent
         return par
 
-    def get_blender_object(self, niBlock):
-        """Retrieves the Blender object matching the block. This is a workaround to retrieve a bone by name"""
-        if self.is_bone(niBlock):
-            boneName = _NAMES[niBlock]
-            armatureName = None
-            for armatureBlock, boneBlocks in self.armatures.iteritems():
-                if niBlock in boneBlocks:
-                    armatureName = self.names[armatureBlock]
-                    break
-            armatureObject = Blender.Object.Get(armatureName)
-            armatureData = armatureObject.getData()
-            bone = armatureData.bones[boneName]
-            return bone
-        else:
-            return Blender.Object.Get(self.names[niBlock])
-
     def is_grouping_node(self, niBlock):
         """Determine whether node is grouping node.
         Returns the children which are grouped, or empty list if it is not a
@@ -1612,27 +1616,6 @@ class NifImport:
         if not node_name: return []
         # get all geometry children
         return [ child for child in niBlock.children if isinstance(child, NifFormat.NiTriBasedGeom) and child.name.find(node_name) != -1 ]
-
-    """
-    #can't retrieve bone ipo's?
-    def import_animation(self):
-        global _ANIMATION_DATA
-        #store all keys in a flat list
-        keyFrameList = []
-        # _ANIMATION_DATA is sorted by frame already
-        for key in _ANIMATION_DATA:
-            niBlock = key['block']
-            b_obj = get_blender_object(niBlock)
-            b_ipo = b_obj.getIpo()
-            if b_ipo == None:
-                if is_bone(niBlock):
-                    b_ipo = Blender.Ipo.New('Pose', b_obj.name)
-                else:
-                    b_ipo = Blender.Ipo.New('Object', b_obj.name)
-                b_obj.setIpo(b_ipo)
-                
-            print key
-    """
 
     def set_animation(self, niBlock, b_obj):
         """Load basic animation info for this object."""
