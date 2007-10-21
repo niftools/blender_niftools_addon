@@ -185,7 +185,10 @@ class NifImport:
             Blender.Draw.PupMenu('ERROR%t|' + str(e))
             raise
         finally:
+            # clear progress bar
             self.msgProgress("Finished", progbar = 1)
+            # do a full scene update to ensure that transformations are applied
+            self.scene.update(1)
 
 
 
@@ -274,33 +277,6 @@ class NifImport:
         if self.IMPORT_SKELETON == 1:
             b_obj.makeParentDeform(self.selectedObjects)
 
-        """ #no good, can't get bones by name
-        # import all animation data except morphs and text keys
-        if self.IMPORT_ANIMATION:
-            #store all keys in a flat list
-            keyFrameList = []
-            for niBlock, kfc in _ANIMATION_DATA.iteritems():
-                
-                b_obj = Blender.Object.Get(self.names[niBlock])
-                b_ipo = b_obj.getIpo()
-                if b_ipo == None:
-                    b_ipo = Blender.Ipo.New('Object', b_obj.name)
-                    b_obj.setIpo(b_ipo)
-                    
-                kfd = kfc.data
-                keyFrameList.extend([(int(key.time*self.fps), b_obj, key, 'T') for key in kfd.translations.keys])
-                keyFrameList.extend([(int(key.time*self.fps), b_obj, key, 'S') for key in kfd.scales.keys])
-                if kfd.rotationType == 4:
-                    keyFrameList.extend([(int(key.time*self.fps), b_obj, key, 'R') for key in kfd.xyzRotations.keys])
-                else:
-                    keyFrameList.extend([(int(key.time*self.fps), b_obj, key, 'Q') for key in kfd.quaternionKeys])
-            # sorting by frame
-            for keyFrame in keyFrameList:
-                print keyFrame
-        """
-
-        self.scene.update(1) # do a full update to make sure all transformations get applied
-        
     def read_branch(self, niBlock):
         """Read the content of the current NIF tree branch to Blender recursively."""
         self.msgProgress("Importing data")
