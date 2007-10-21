@@ -1520,13 +1520,21 @@ class NifImport:
         if self.IMPORT_SKELETON == 1:
             if not isinstance(niBlock, NifFormat.NiNode):
                 raise NifImportError('cannot import skeleton: root is not a NiNode')
-            if not self.armatures.has_key(niBlock):
-                self.armatures[niBlock] = []
+            # for morrowind, take the Bip01 node to be the skeleton root
+            if self.version == 0x04000002:
+                skelroot = niBlock.find(block_name = 'Bip01', block_type = NifFormat.NiNode)
+                if not skelroot: skelroot = niBlock
+            else:
+                skelroot = niBlock
+            if not self.armatures.has_key(skelroot):
+                self.armatures[skelroot] = []
+            self.msg("selecting node '%s' as skeleton root"%skelroot.name)
             # add bones
-            for bone in niBlock.tree():
-                if bone == niBlock: continue
+            for bone in skelroot.tree():
+                if bone == skelroot: continue
                 if not isinstance(bone, NifFormat.NiNode): continue
-                self.armatures[niBlock].append(bone)
+                if self.is_grouping_node(bone): continue
+                self.armatures[skelroot].append(bone)
             return # done!
 
         # search for all NiTriShape or NiTriStrips blocks...
