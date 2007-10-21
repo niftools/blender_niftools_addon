@@ -251,17 +251,6 @@ class NifImport:
         if self.IMPORT_ANIMATION:
             self.fb_textkey(root_block)
 
-        # if we are attaching the tree to an existing armature
-        # (IMPORT_SKELETON == 2) then identify blocks in current nif
-        # with bones in selected armature
-        if self.IMPORT_SKELETON == 2:
-            for bone_name in self.selectedObjects[0].data.bones.keys():
-                bone_block = root_block.find(block_name = bone_name)
-                # add it to the name list if there is a bone with that name
-                if bone_block:
-                    self.msg("identified nif block '%s' with bone in selected armature"%bone_name)
-                    self.names[bone_block] = bone_name
-
         # read the NIF tree
         if self.is_armature_root(root_block):
             # special case 1: root node is skeleton root
@@ -1537,6 +1526,22 @@ class NifImport:
                 self.armatures[skelroot].append(bone)
             return # done!
 
+        # attaching to selected armature -> first identify armature and bones
+        elif self.IMPORT_SKELETON == 2 and not self.armatures:
+            skelroot = niBlock.find(block_name = self.selectedObjects[0].name)
+            if not skelroot:
+                raise NifImportError("nif has no armature '%s'"%self.selectedObjects[0].name)
+            self.msg("identified '%s' as armature" % skelroot.name,3)
+            self.armatures[skelroot] = []
+            for bone_name in self.selectedObjects[0].data.bones.keys():
+                bone_block = skelroot.find(block_name = bone_name)
+                # add it to the name list if there is a bone with that name
+                if bone_block:
+                    self.msg("identified nif block '%s' with bone in selected armature"%bone_name)
+                    self.names[bone_block] = bone_name
+                    self.armatures[skelroot].append(bone_block)
+                    self.complete_bone_tree(bone_block, skelroot)
+
         # search for all NiTriShape or NiTriStrips blocks...
         if isinstance(niBlock, NifFormat.NiTriBasedGeom):
             # yes, we found one, get its skin instance
@@ -1547,10 +1552,16 @@ class NifImport:
                 # so mark the node to be imported as an armature
                 skininst = niBlock.skinInstance
                 skelroot = skininst.skeletonRoot
-                if not self.armatures.has_key(skelroot):
-                    self.armatures[skelroot] = []
-                    self.msg("'%s' is an armature" % skelroot.name,3)
-                
+                if self.IMPORT_SKELETON == 0:
+                    if not self.armatures.has_key(skelroot):
+                        self.armatures[skelroot] = []
+                        self.msg("'%s' is an armature" % skelroot.name,3)
+                elif self.IMPORT_SKELETON == 2:
+                    if not self.armatures.has_key(skelroot):
+                        #self.armatures[skelroot] = []
+                        #self.msg("'%s' is an armature" % skelroot.name,3)
+                        raise NifImportError("nif structure incompatible with '%s' as armature: \nnode '%s' has '%s' as armature"%(self.selectedObjects[0].name, niBlock.name, skelroot.name))
+
                 for i, boneBlock in enumerate(skininst.bones):
                     if not boneBlock in self.armatures[skelroot]:
                         self.armatures[skelroot].append(boneBlock)
