@@ -1,3 +1,8 @@
+Version 2.1.16 (***)
+Import: inform about name of Blender object and nif block when losing vertex
+weights
+Import: update scene even if import fails
+
 Version 2.1.15 (Oct 19, 2007)
 pycheck: added pychecker script (see http://pychecker.sourceforge.net/)
 test: added test script to automatically run importer and exporter on a range
