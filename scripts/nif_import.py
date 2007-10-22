@@ -729,14 +729,14 @@ class NifImport:
                 dy = b_bone_head_y - b_bone_tail_y
                 dz = b_bone_head_z - b_bone_tail_z
                 is_zero_length = abs(dx + dy + dz) * 200 < self.EPSILON
-            elif self.IMPORT_REALIGN_BONES:
+            elif self.IMPORT_REALIGN_BONES == 2:
                 # the correction matrix value is based on the children's head position
                 # If these are missing I just set it as the same as the parent's
                 m_correction = self.find_correction_matrix(niBlock._parent, niArmature)
             
             if is_zero_length:
                 # this is a 0 length bone, to avoid it being removed I set a default minimum length
-                if self.IMPORT_REALIGN_BONES or not self.is_bone(niBlock._parent):
+                if (self.IMPORT_REALIGN_BONES == 2) or not self.is_bone(niBlock._parent):
                     # no parent bone, or bone is realigned with correction. I just set one random direction.
                     b_bone_tail_x = b_bone_head_x + (nub_length * scale)
                 else:
@@ -762,11 +762,15 @@ class NifImport:
             b_bone.head = Vector(b_bone_head_x, b_bone_head_y, b_bone_head_z)
             b_bone.tail = Vector(b_bone_tail_x, b_bone_tail_y, b_bone_tail_z)
             
-            if self.IMPORT_REALIGN_BONES:
+            if self.IMPORT_REALIGN_BONES == 2:
                 # applies the corrected matrix explicitly
                 b_bone.matrix = m_correction.resize4x4() * armature_space_matrix
-            #else:
-            #    b_bone.matrix = armature_space_matrix
+            elif self.IMPORT_REALIGN_BONES == 1:
+                # do not do anything, keep unit matrix
+                pass
+            else:
+                # no realign, so use original matrix
+                b_bone.matrix = armature_space_matrix
 
             # set bone name and store the niBlock for future reference
             b_armatureData.bones[bone_name] = b_bone
@@ -790,10 +794,17 @@ class NifImport:
 
     def find_correction_matrix(self, niBlock, niArmature):
         """Returns the correction matrix for a bone."""
-        armature_matrix_inverse = niArmature._invMatrix
         m_correction = self.IDENTITY44.rotationPart()
-        if self.IMPORT_REALIGN_BONES and self.is_bone(niBlock):
-            armature_space_matrix = self.fb_global_matrix(niBlock) * armature_matrix_inverse
+        if (self.IMPORT_REALIGN_BONES == 2) and self.is_bone(niBlock):
+            armature_space_matrix = self.fb_matrix(niBlock, relative_to = niArmature)
+
+            # DEBUG, double checking if above calculation is equivalent with old code
+            # remove this for release
+            tmp = sum(sum(abs(x) for x in row) for row in (armature_space_matrix - self.fb_global_matrix(niBlock) * niArmature._invMatrix))
+            if tmp > 0.01:
+                raise NifImportError("CORRECTION MATRIX TRANSFORM BUG")
+                print tmp
+
             niChildBones = [child for child in niBlock.children if self.is_bone(child)]
             (sum_x, sum_y, sum_z, dummy) = armature_space_matrix[3]
             if len(niChildBones) > 0:
@@ -1378,16 +1389,21 @@ class NifImport:
         to mantain the imported names unaltered. Since the text buffer is
         cleared on each import only the last import will be exported
         correctly."""
+        # clear the text buffer, or create new buffer
         try:
-            bonetxt = [txt for txt in Blender.Text.Get() if txt.getName() == "BoneExMat"][0]
-            bonetxt.clear()
-        except:
+            bonetxt = Blender.Text.Get("BoneExMat")
+        except NameError:
             bonetxt = Blender.Text.New("BoneExMat")
-        for niBone in self.bonesExtraMatrix.keys():
+        bonetxt.clear()
+        # write correction matrices to text buffer
+        for niBone, correction_matrix in self.bonesExtraMatrix.iteritems():
+            # skip identity transforms
+            if sum(sum(abs(x) for x in row) for row in (correction_matrix - self.IDENTITY44)) < self.EPSILON: continue
+            # 'pickle' the correction matrix
             ln=''
-            for row in self.bonesExtraMatrix[niBone]:
+            for row in correction_matrix:
                 ln='%s;%s,%s,%s,%s' % (ln, row[0],row[1],row[2],row[3])
-            # print '%s/%s/%s\n' % (a, b, ln[1:])
+            # write it to the text buffer
             bonetxt.write('%s/%s\n' % (niBone.name, ln[1:]))
         
 

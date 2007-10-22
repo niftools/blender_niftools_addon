@@ -61,7 +61,7 @@ class NifConfig:
     DEFAULTS = dict(
         IMPORT_FILE = Blender.sys.join(Blender.sys.dirname(Blender.sys.progname), "import.nif"),
         EXPORT_FILE = Blender.sys.join(Blender.sys.dirname(Blender.sys.progname), "export.nif"),
-        IMPORT_REALIGN_BONES = True,
+        IMPORT_REALIGN_BONES = 2, # 0 = use original nif matrix, 1 = realign tail, 2 = realign tail and rotation
         IMPORT_ANIMATION = True,
         IMPORT_SCALE_CORRECTION = 0.1,
         EXPORT_SCALE_CORRECTION = 10.0, # 1/import scale correction
@@ -161,6 +161,13 @@ class NifConfig:
         except:
             pass
         try:
+            if self.config["IMPORT_REALIGN_BONES"] == True:
+               self.config["IMPORT_REALIGN_BONES"] = 2
+            if self.config["IMPORT_REALIGN_BONES"] == False:
+               self.config["IMPORT_REALIGN_BONES"] = 1
+        except:
+            pass
+        try:
             if savedconfig["IMPORT_SKELETON"] == True:
                 self.config["IMPORT_SKELETON"] = 1
             elif savedconfig["IMPORT_SKELETON"] == False:
@@ -242,10 +249,15 @@ class NifConfig:
             H -= 30
 
             self.guiElements["IMPORT_REALIGN_BONES"] = Draw.Toggle(
-                "Realign Bones",
-                self.eventId("IMPORT_REALIGN_BONES"),
-                50, H, 390, 20,
-                self.config["IMPORT_REALIGN_BONES"])
+                "Realign Bone Tail Only",
+                self.eventId("IMPORT_REALIGN_BONES_1"),
+                50, H, 195, 20,
+                self.config["IMPORT_REALIGN_BONES"] == 1)
+            self.guiElements["IMPORT_REALIGN_BONES"] = Draw.Toggle(
+                "Realign Bone Tail + Roll",
+                self.eventId("IMPORT_REALIGN_BONES_2"),
+                245, H, 195, 20,
+                self.config["IMPORT_REALIGN_BONES"] == 2)
             H -= 20
             self.guiElements["IMPORT_SENDBONESTOBINDPOS"] = Draw.Toggle(
                 "Send Bones To Bind Position",
@@ -423,8 +435,16 @@ class NifConfig:
             if self.texpathIndex > 0:
                 self.texpathIndex -= 1
             self.updateTexpathCurrent()
-        elif evName == "IMPORT_REALIGN_BONES":
-            self.config["IMPORT_REALIGN_BONES"] = not self.config["IMPORT_REALIGN_BONES"]
+        elif evName == "IMPORT_REALIGN_BONES_1":
+            if self.config["IMPORT_REALIGN_BONES"] == 1:
+                self.config["IMPORT_REALIGN_BONES"] = 0
+            else:
+                self.config["IMPORT_REALIGN_BONES"] = 1
+        elif evName == "IMPORT_REALIGN_BONES_2":
+            if self.config["IMPORT_REALIGN_BONES"] == 2:
+                self.config["IMPORT_REALIGN_BONES"] = 0
+            else:
+                self.config["IMPORT_REALIGN_BONES"] = 2
         elif evName == "IMPORT_ANIMATION":
             self.config["IMPORT_ANIMATION"] = not self.config["IMPORT_ANIMATION"]
         elif evName == "IMPORT_SKELETON_1":
