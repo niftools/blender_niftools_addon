@@ -66,6 +66,20 @@ class NifExport:
         if self.VERBOSITY and level <= self.VERBOSITY:
             print message
 
+    def msgProgress(self, message, progbar = None):
+        """Message wrapper for the Blender progress bar."""
+        # update progress bar level
+        if progbar is None:
+            if self.progressBar > 0.89:
+                # reset progress bar
+                self.progressBar = 0
+                Blender.Window.DrawProgressBar(0, message)
+            self.progressBar += 0.1
+        else:
+            self.progressBar = progbar
+        # draw the progress bar
+        Blender.Window.DrawProgressBar(self.progressBar, message)
+
     def rebuildBonesExtraMatrices(self):
         """Recover bone extra matrices."""
         try:
@@ -126,7 +140,7 @@ class NifExport:
 
         # preparation:
         #--------------
-        Blender.Window.DrawProgressBar(0, "Preparing Export")
+        self.msgProgress("Initializing", progbar = 0)
         
         # store configuration in self
         for name, value in config.iteritems():
@@ -268,7 +282,7 @@ and turn off envelopes."""%ob.getName()
             
             # export nif:
             #------------
-            Blender.Window.DrawProgressBar(0.33, "Converting to NIF")
+            self.msgProgress("Converting to NIF")
             
             # create a nif object
             
@@ -454,7 +468,7 @@ and turn off envelopes."""%ob.getName()
             #----------------
             ext = ".nif" if (self.EXPORT_ANIMATION != 2) else ".kf"
             self.msg("Writing %s file"%ext)
-            Blender.Window.DrawProgressBar(0.66, "Writing %s file"%ext)
+            self.msgProgress("Writing %s file"%ext)
 
             # make sure we have the right file extension
             if (self.fileext.lower() != ext):
@@ -468,23 +482,22 @@ and turn off envelopes."""%ob.getName()
                 f.close()
 
         except NifExportError, e: # export error: raise a menu instead of an exception
-            Blender.Window.DrawProgressBar(1, "Export Failed")
             Blender.Draw.PupMenu('EXPORT ERROR%t|' + str(e))
             print 'NifExportError: ' + str(e)
             return
 
         except IOError, e: # IO error: raise a menu instead of an exception
-            Blender.Window.DrawProgressBar(1, "Export Failed")
             Blender.Draw.PupMenu('I/O ERROR%t|' + str(e))
             print 'IOError: ' + str(e)
             return
 
         except StandardError, e: # other error: raise a menu and an exception
-            Blender.Window.DrawProgressBar(1, "Export Failed")
             Blender.Draw.PupMenu('ERROR%t|' + str(e) + '    Check console for possibly more details.')
             raise
 
-        Blender.Window.DrawProgressBar(1, "Finished")
+        finally:
+            # clear progress bar
+            self.msgProgress("Finished", progbar = 1)
     
 
 
