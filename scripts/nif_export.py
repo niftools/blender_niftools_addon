@@ -282,7 +282,7 @@ and turn off envelopes."""%ob.getName()
             
             # export nif:
             #------------
-            self.msgProgress("Converting to NIF")
+            self.msgProgress("Exporting")
             
             # create a nif object
             
@@ -1023,7 +1023,8 @@ and turn off envelopes."""%ob.getName()
     # should be exported as a single mesh.
     # 
     def exportTriShapes(self, ob, space, parent_block, trishape_name = None):
-        self.msg("Exporting NiTriShapes/NiTriStrips for %s"%ob.getName())
+        self.msg("Exporting NiTriShapes/NiTriStrips for %s"%ob.name)
+        self.msgProgress("Exporting %s"%ob.name)
         assert(ob.getType() == 'Mesh')
 
         # get mesh from ob
