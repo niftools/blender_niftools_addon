@@ -274,9 +274,9 @@ class NifImport:
             raise NifImportError("don't know how to import nif file with root block of type '%s'"%root_block.__class__)
 
         # store bone matrix offsets for re-export
-        if len(self.bonesExtraMatrix.keys()) > 0: self.fb_bonemat()
+        if self.bonesExtraMatrix: self.fb_bonemat()
         # store original names for re-export
-        if len(self.names) > 0: self.fb_fullnames()
+        if self.names: self.fb_fullnames()
         
         # parent selected meshes to imported skeleton
         if self.IMPORT_SKELETON == 1:
