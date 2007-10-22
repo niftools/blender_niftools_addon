@@ -469,8 +469,10 @@ class NifImport:
         """Retrieves a niBlock's transform matrix as a Mathutil.Matrix."""
         return Matrix(*niBlock.getTransform(relative_to).asList())
 
+    # DEBUG: function is deprecated, use fb_matrix with relative_to argument
     def fb_global_matrix(self, niBlock):
         """Retrieves a block's global transform matrix"""
+        self.msg("WARNING: use of fb_global_matrix is deprecated, use fb_matrix with\nrelative_to argument instead",3)
         b_matrix = self.fb_matrix(niBlock)
         if niBlock._parent:
             return b_matrix * self.fb_global_matrix(niBlock._parent)
@@ -513,10 +515,14 @@ class NifImport:
         This is done outside the normal node tree scan to allow for positioning
         of the bones before skins are attached."""
         armature_name = self.fb_name(niArmature,22)
+
+        # DEBUG: remove _invMatrix in a later release, everything has been
+        # converted to use the relative_to = niArmature keyword argument
+        # store the matrix inverse within the niArmature, so that we won't have to recalculate it
         armature_matrix_inverse = self.fb_global_matrix(niArmature)
         armature_matrix_inverse.invert()
-        # store the matrix inverse within the niArmature, so that we won't have to recalculate it
         niArmature._invMatrix = armature_matrix_inverse
+
         b_armatureData = Blender.Armature.Armature()
         b_armatureData.name = armature_name
         b_armatureData.makeEditable()
@@ -697,7 +703,6 @@ class NifImport:
 
     def fb_bone(self, niBlock, b_armature, b_armatureData, niArmature):
         """Adds a bone to the armature in edit mode."""
-        armature_matrix_inverse = niArmature._invMatrix
         # bone length for nubs and zero length bones
         nub_length = 5.0
         scale = self.IMPORT_SCALE_CORRECTION
@@ -708,7 +713,15 @@ class NifImport:
             # create bones here...
             b_bone = Blender.Armature.Editbone()
             # head: get position from niBlock
-            armature_space_matrix = self.fb_global_matrix(niBlock) * armature_matrix_inverse
+            armature_space_matrix = self.fb_matrix(niBlock, relative_to = niArmature)
+
+            # DEBUG, double checking if above calculation is equivalent with old code
+            # remove this for release
+            tmp = sum(sum(abs(x) for x in row) for row in (armature_space_matrix - self.fb_global_matrix(niBlock) * niArmature._invMatrix))
+            if tmp > 0.01:
+                raise NifImportError("BONE MATRIX TRANSFORM BUG")
+                print tmp
+
             b_bone_head_x = armature_space_matrix[3][0]
             b_bone_head_y = armature_space_matrix[3][1]
             b_bone_head_z = armature_space_matrix[3][2]
@@ -720,7 +733,7 @@ class NifImport:
             # tail: average of children location
             if len(niChildBones) > 0:
                 m_correction = self.find_correction_matrix(niBlock, niArmature)
-                child_matrices = [self.fb_global_matrix(child) * armature_matrix_inverse for child in niChildBones]
+                child_matrices = [self.fb_matrix(child, relative_to = niArmature) for child in niChildBones]
                 b_bone_tail_x = sum([child_matrix[3][0] for child_matrix in child_matrices]) / len(child_matrices)
                 b_bone_tail_y = sum([child_matrix[3][1] for child_matrix in child_matrices]) / len(child_matrices)
                 b_bone_tail_z = sum([child_matrix[3][2] for child_matrix in child_matrices]) / len(child_matrices)
