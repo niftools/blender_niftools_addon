@@ -1,4 +1,4 @@
-VERSION="2.1.16"
+VERSION="2.1.17"
 NAME="blender_nif_scripts"
 FILES="scripts/nif_import.py scripts/nif_export.py scripts/bpymodules/nif_common.py scripts/mesh_weightsquash.py scripts/mesh_hull.py ChangeLog README.html install.sh"
 

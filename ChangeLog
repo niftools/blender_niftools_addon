@@ -1,3 +1,9 @@
+Version 2.1.17 (***)
+Import: new option to import bones with original nif matrices (useful in
+some cases where you do not want to bother with the correction matrices)
+Import: some minor optimizations and code cleanups
+Export: improved progress bar
+
 Version 2.1.16 (Oct 21, 2007)
 Import: inform about name of Blender object and nif block when losing vertex
 weights
