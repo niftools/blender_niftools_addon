@@ -185,8 +185,8 @@ class NifExport:
             elif self.EXPORT_ANIMATION == 2:
                 self.msg("Exporting animation only (as .kf file)") # for morrowind: only keyframe controllers
 
-            # armatures should not be in rest position
             for ob in Blender.Object.Get():
+                # armatures should not be in rest position
                 if ob.getType() == 'Armature':
                     ob.data.restPosition = False # ensure we get the mesh vertices in animation mode, and not in rest position!
                     if (ob.data.envelopes):
@@ -196,7 +196,13 @@ If you don't have vertex groups, select the bones one by one
 press W to convert their envelopes to vertex weights,
 and turn off envelopes."""%ob.getName()
                         raise NifExportError("'%s': Cannot export envelope skinning. Check console for instructions."%ob.getName())
-            
+
+                # check for non-uniform transforms
+                try:
+                    self.decomposeSRT(ob.getMatrix('localspace'))
+                except NifExportError: # non-uniform scaling
+                    raise NifExportError("Non-uniform scaling not supported. Workaround: apply size and rotation (CTRL-A) on '%s'."%ob.name)
+
             # extract some useful scene info
             self.scene = Blender.Scene.GetCurrent()
             context = self.scene.getRenderingContext()
@@ -1586,13 +1592,14 @@ and turn off envelopes."""%ob.getName()
                         if self.version >= 0x04020100 and self.EXPORT_SKINPARTITION:
                             self.msg("creating 'NiSkinPartition'")
                             lostweight = trishape.updateSkinPartition(maxbonesperpartition = self.EXPORT_BONESPERPARTITION, maxbonespervertex = self.EXPORT_BONESPERVERTEX, stripify = self.EXPORT_STRIPIFY, stitchstrips = self.EXPORT_STITCHSTRIPS, padbones = self.EXPORT_PADBONES)
+                            # warn on bad config settings
                             if self.EXPORT_VERSION == 'Oblivion':
                                if self.EXPORT_PADBONES:
-                                   print "WARNING: using padbones on Oblivion export, you probably do not want to do this\n         disable the pad bones option to get higher quality skin partitions"
+                                   print("WARNING: using padbones on Oblivion export, you probably do not want to do this\n         disable the pad bones option to get higher quality skin partitions")
                                if self.EXPORT_BONESPERPARTITION < 18:
-                                   print "WARNING: using less than 18 bones per partition on Oblivion export\n         set it to 18 to get higher quality skin partitions"
+                                   print("WARNING: using less than 18 bones per partition on Oblivion export\n         set it to 18 to get higher quality skin partitions")
                             if lostweight > NifFormat._EPSILON:
-                                print "WARNING: lost %f in vertex weights while creating a skin partition for\n         Blender object '%s' (nif block '%s')"%(lostweight, ob.name, trishape.name)
+                                print("WARNING: lost %f in vertex weights while creating a skin partition for\n         Blender object '%s' (nif block '%s')"%(lostweight, ob.name, trishape.name))
 
                         # clean up
                         del vert_weights
