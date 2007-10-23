@@ -472,7 +472,7 @@ class NifImport:
     # DEBUG: function is deprecated, use fb_matrix with relative_to argument
     def fb_global_matrix(self, niBlock):
         """Retrieves a block's global transform matrix"""
-        self.msg("WARNING: use of fb_global_matrix is deprecated, use fb_matrix with\nrelative_to argument instead",3)
+        #self.msg("WARNING: use of fb_global_matrix is deprecated, use fb_matrix with\nrelative_to argument instead",3)
         b_matrix = self.fb_matrix(niBlock)
         if niBlock._parent:
             return b_matrix * self.fb_global_matrix(niBlock._parent)
