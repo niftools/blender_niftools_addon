@@ -1,8 +1,14 @@
-Version 2.1.17 (***)
+Version 2.1.17 (Oct 23, 2007)
+Test: unselect objects when running each test (prevents duplicate exports)
 Import: new option to import bones with original nif matrices (useful in
 some cases where you do not want to bother with the correction matrices)
 Import: some minor optimizations and code cleanups
+Import: changed some lists to generators to save on memory
+Import: fixed trivial bug in get_blender_object
 Export: improved progress bar
+Export: warn when skin partition settings could be improved on Oblivion export
+Export: check blender objects on non-uniform scaling before export so you do not
+need to wait too long before the scripts complain about it
 
 Version 2.1.16 (Oct 21, 2007)
 Import: inform about name of Blender object and nif block when losing vertex
