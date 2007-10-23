@@ -1586,6 +1586,11 @@ and turn off envelopes."""%ob.getName()
                         if self.version >= 0x04020100 and self.EXPORT_SKINPARTITION:
                             self.msg("creating 'NiSkinPartition'")
                             lostweight = trishape.updateSkinPartition(maxbonesperpartition = self.EXPORT_BONESPERPARTITION, maxbonespervertex = self.EXPORT_BONESPERVERTEX, stripify = self.EXPORT_STRIPIFY, stitchstrips = self.EXPORT_STITCHSTRIPS, padbones = self.EXPORT_PADBONES)
+                            if self.EXPORT_VERSION == 'Oblivion':
+                               if self.EXPORT_PADBONES:
+                                   print "WARNING: using padbones on Oblivion export, you probably do not want to do this\n         disable the pad bones option to get higher quality skin partitions"
+                               if self.EXPORT_BONESPERPARTITION < 18:
+                                   print "WARNING: using less than 18 bones per partition on Oblivion export\n         set it to 18 to get higher quality skin partitions"
                             if lostweight > NifFormat._EPSILON:
                                 print "WARNING: lost %f in vertex weights while creating a skin partition for\n         Blender object '%s' (nif block '%s')"%(lostweight, ob.name, trishape.name)
 
