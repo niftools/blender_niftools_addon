@@ -24,6 +24,9 @@ for filename, filecfg in test_files:
     config["IMPORT_FILE"] = "test/nif/%s"%filename
     config["EXPORT_FILE"] = "test/nif/_%s"%filename
 
+    # unselect all objects
+    scene.objects.selected = []
+
     # select layer: put different import tests into different blender layers,
     # so the imports can be visually inspected
     scene.setLayers([layer+1]) # layers are numbered from 1 till 20

@@ -174,7 +174,7 @@ class NifImport:
             # hack for corrupt better bodies meshes
             for block in root_blocks:
                 root = block
-                for b in [b for b in block.tree() if isinstance(b, NifFormat.NiGeometry)]:
+                for b in (b for b in block.tree() if isinstance(b, NifFormat.NiGeometry)):
                     if b.isSkin():
                         if root in [c for c in b.skinInstance.skeletonRoot.children]:
                             b.skinInstance.data.setTransform(root.getTransform() * b.skinInstance.data.getTransform())
@@ -734,9 +734,9 @@ class NifImport:
             if len(niChildBones) > 0:
                 m_correction = self.find_correction_matrix(niBlock, niArmature)
                 child_matrices = [self.fb_matrix(child, relative_to = niArmature) for child in niChildBones]
-                b_bone_tail_x = sum([child_matrix[3][0] for child_matrix in child_matrices]) / len(child_matrices)
-                b_bone_tail_y = sum([child_matrix[3][1] for child_matrix in child_matrices]) / len(child_matrices)
-                b_bone_tail_z = sum([child_matrix[3][2] for child_matrix in child_matrices]) / len(child_matrices)
+                b_bone_tail_x = sum(child_matrix[3][0] for child_matrix in child_matrices) / len(child_matrices)
+                b_bone_tail_y = sum(child_matrix[3][1] for child_matrix in child_matrices) / len(child_matrices)
+                b_bone_tail_z = sum(child_matrix[3][2] for child_matrix in child_matrices) / len(child_matrices)
                 # checking bone length
                 dx = b_bone_head_x - b_bone_tail_x
                 dy = b_bone_head_y - b_bone_tail_y
@@ -822,9 +822,9 @@ class NifImport:
             (sum_x, sum_y, sum_z, dummy) = armature_space_matrix[3]
             if len(niChildBones) > 0:
                 child_local_matrices = [self.fb_matrix(child) for child in niChildBones]
-                sum_x = sum([cm[3][0] for cm in child_local_matrices])
-                sum_y = sum([cm[3][1] for cm in child_local_matrices])
-                sum_z = sum([cm[3][2] for cm in child_local_matrices])
+                sum_x = sum(cm[3][0] for cm in child_local_matrices)
+                sum_y = sum(cm[3][1] for cm in child_local_matrices)
+                sum_z = sum(cm[3][2] for cm in child_local_matrices)
             listXYZ = [int(c * 200) for c in (sum_x, sum_y, sum_z, -sum_x, -sum_y, -sum_z)]
             idx_correction = listXYZ.index(max(listXYZ))
             alignment_offset = 0.0
@@ -1452,10 +1452,10 @@ class NifImport:
             return 30
         # calculate FPS
         fps = 30
-        lowestDiff = sum([abs(int(time*fps)-(time*fps)) for time in key_times])
+        lowestDiff = sum(abs(int(time*fps)-(time*fps)) for time in key_times)
         # for fps in xrange(1,120): #disabled, used for testing
         for testFps in [20, 25, 35]:
-            diff = sum([abs(int(time*testFps)-(time*testFps)) for time in key_times])
+            diff = sum(abs(int(time*testFps)-(time*testFps)) for time in key_times)
             if diff < lowestDiff:
                 lowestDiff = diff
                 fps = testFps
@@ -1499,9 +1499,9 @@ class NifImport:
 
     def find_property(self, niBlock, propertyType):
         """Find a property."""
-        prop = [p for p in niBlock.properties if isinstance(p, propertyType)]
-        if prop:
-            return prop[0]
+        for prop in niBlock.properties:
+            if isinstance(prop, propertyType):
+                return prop
         return None
 
 
@@ -1651,18 +1651,18 @@ class NifImport:
         return par
 
     def get_blender_object(self, niBlock):
-        """Retrieves the Blender object matching the block. This is a workaround to retrieve a bone by name"""
+        """Retrieves the Blender object or Blender bone matching the block."""
         if self.is_bone(niBlock):
-            boneName = _NAMES[niBlock]
+            boneName = self.names[niBlock]
             armatureName = None
             for armatureBlock, boneBlocks in self.armatures.iteritems():
                 if niBlock in boneBlocks:
                     armatureName = self.names[armatureBlock]
                     break
+            else:
+                raise NifImportError("cannot find bone '%s'"%boneName)
             armatureObject = Blender.Object.Get(armatureName)
-            armatureData = armatureObject.getData()
-            bone = armatureData.bones[boneName]
-            return bone
+            return armatureObject.data.bones[boneName]
         else:
             return Blender.Object.Get(self.names[niBlock])
 
