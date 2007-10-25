@@ -1333,40 +1333,25 @@ and turn off envelopes."""%ob.getName()
                     
             if (mesh_hasalpha):
                 # add NiTriShape's alpha propery
-                trialphaprop = self.createBlock("NiAlphaProperty")
-                trialphaprop.flags = 0x00ED
-                
                 # refer to the alpha property in the trishape block
-                trishape.addProperty(trialphaprop)
+                trishape.addProperty(self.exportAlphaProperty(flags = 0x00ED))
 
             if (mesh_mat != None):
                 # add NiTriShape's specular property
                 if ( mesh_hasspec ):
-                    trispecprop = self.createBlock("NiSpecularProperty")
-                    trispecprop.flags = 0x0001
-                
                     # refer to the specular property in the trishape block
-                    trishape.addProperty(trispecprop)
+                    trishape.addProperty(self.exportSpecularProperty(flags = 0x0001))
                 
                 # add NiTriShape's material property
-                trimatprop = self.createBlock("NiMaterialProperty")
-                
-                trimatprop.name = self.getFullName(mesh_mat.getName())
-                trimatprop.flags = 0x0001 # ? standard
-                trimatprop.ambientColor.r = mesh_mat_ambient_color[0]
-                trimatprop.ambientColor.g = mesh_mat_ambient_color[1]
-                trimatprop.ambientColor.b = mesh_mat_ambient_color[2]
-                trimatprop.diffuseColor.r = mesh_mat_diffuse_color[0]
-                trimatprop.diffuseColor.g = mesh_mat_diffuse_color[1]
-                trimatprop.diffuseColor.b = mesh_mat_diffuse_color[2]
-                trimatprop.specularColor.r = mesh_mat_specular_color[0]
-                trimatprop.specularColor.g = mesh_mat_specular_color[1]
-                trimatprop.specularColor.b = mesh_mat_specular_color[2]
-                trimatprop.emissiveColor.r = mesh_mat_emissive_color[0]
-                trimatprop.emissiveColor.g = mesh_mat_emissive_color[1]
-                trimatprop.emissiveColor.b = mesh_mat_emissive_color[2]
-                trimatprop.glossiness = mesh_mat_glossiness
-                trimatprop.alpha = mesh_mat_transparency
+                trimatprop = self.exportMaterialProperty(
+                    name = self.getFullName(mesh_mat.getName()),
+                    flags = 0x0001, # ? standard
+                    ambient = mesh_mat_ambient_color,
+                    diffuse = mesh_mat_diffuse_color,
+                    specular = mesh_mat_specular_color,
+                    emissive = mesh_mat_emissive_color,
+                    glossiness = mesh_mat_glossiness,
+                    alpha = mesh_mat_transparency)
                 
                 # refer to the material property in the trishape block
                 trishape.addProperty(trimatprop)
@@ -1960,18 +1945,21 @@ and turn off envelopes."""%ob.getName()
 
 
 
-    #
-    # Helper function to create a new block and add it to the list of exported blocks.
-    #
     def createBlock(self, blocktype):
-        self.msg("creating '%s'"%blocktype) # DEBUG
+        """Helper function to create a new block and register it in the list of
+        exported blocks."""
         try:
             block = getattr(NifFormat, blocktype)()
         except AttributeError:
             raise NifExportError("'%s': Unknown block type (this is probably a bug).")
+        return self.registerBlock(block)
+
+    def registerBlock(self, block):
+        """Helper function to register a newly created block in the list of
+        exported blocks."""
+        self.msg("registering '%s'"%block.__class__.__name__) # DEBUG
         self.blocks.append(block)
         return block
-
 
 
     def exportCollision(self, ob, parent_block):
@@ -2330,6 +2318,63 @@ and turn off envelopes."""%ob.getName()
 
         else:
             raise NifExportError('cannot export collision type %s to collision shape list'%ob.rbShapeBoundType)
+
+    def exportAlphaProperty(self, flags = 0x00ED):
+        """Return existing alpha property with given flags, or create new one
+        if an alpha property with required flags is not found."""
+        # search for duplicate
+        for block in self.blocks:
+            if isinstance(block, NifFormat.NiAlphaProperty) and block.flags == flags:
+                return block
+        # no alpha property with given flag found, so create new one
+        alphaprop = self.createBlock("NiAlphaProperty")
+        alphaprop.flags = flags
+        return alphaprop        
+
+    def exportSpecularProperty(self, flags = 0x00ED):
+        """Return existing specular property with given flags, or create new one
+        if a specular property with required flags is not found."""
+        # search for duplicate
+        for block in self.blocks:
+            if isinstance(block, NifFormat.NiSpecularProperty) and block.flags == flags:
+                return block
+        # no specular property with given flag found, so create new one
+        specprop = self.createBlock("NiSpecularProperty")
+        specprop.flags = flags
+        return specprop        
+
+    def exportMaterialProperty(self, name = '', flags = 0x0001, ambient = (1.0,1.0,1.0), diffuse = (1.0,1.0,1.0), specular = (0.0,0.0,0.0), emissive = (0.0,0.0,0.0), glossiness = 10.0, alpha = 1.0):
+        """Return existing material property with given flags, or create new one
+        if a specular property with required flags is not found."""
+
+        # create block (but don't register it yet in self.blocks)
+        matprop = NifFormat.NiMaterialProperty()
+   
+        matprop.name = name
+        matprop.flags = flags
+        matprop.ambientColor.r = ambient[0]
+        matprop.ambientColor.g = ambient[1]
+        matprop.ambientColor.b = ambient[2]
+        matprop.diffuseColor.r = diffuse[0]
+        matprop.diffuseColor.g = diffuse[1]
+        matprop.diffuseColor.b = diffuse[2]
+        matprop.specularColor.r = specular[0]
+        matprop.specularColor.g = specular[1]
+        matprop.specularColor.b = specular[2]
+        matprop.emissiveColor.r = emissive[0]
+        matprop.emissiveColor.g = emissive[1]
+        matprop.emissiveColor.b = emissive[2]
+        matprop.glossiness = glossiness
+        matprop.alpha = alpha
+
+        # search for duplicate
+        for block in self.blocks:
+            if isinstance(block, NifFormat.NiMaterialProperty) and block.getHash() == matprop.getHash():
+                return block
+
+        # no material property with given settings found, so use and register
+        # the new one
+        return self.registerBlock(matprop)
 
 def config_callback(**config):
     """Called when config script is done. Starts and times import."""
