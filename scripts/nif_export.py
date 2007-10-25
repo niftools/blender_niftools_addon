@@ -877,93 +877,48 @@ and turn off envelopes."""%ob.getName()
         return textextra
 
 
-    #
-    # export a NiSourceTexture
-    #
-    # texture is the texture object in blender to be exported
-    # filename is the full or relative path to the texture file ( used by NiFlipController )
-    #
-    # Returns block of the exported NiSourceTexture
-    #
     def exportSourceTexture(self, texture, filename = None):
+        """Export a NiSourceTexture.
+
+        The texture argument is the texture object in blender to be exported
+        and filename is the full or relative path to the texture file
+        (this argument is used when exporting NiFlipControllers).
+        Returns block of the exported NiSourceTexture."""
         
-        self.msg("Exporting source texture %s"%texture.getName())
         # texture must be of type IMAGE
         if ( texture.type != Blender.Texture.Types.IMAGE ):
-            raise NifExportError( "Error: Texture '%s' must be of type IMAGE"%texture.getName())
+            raise NifExportError("Error: Texture '%s' must be of type IMAGE"%texture.getName())
+
+        # texture must not be packed
+        if texture.getImage().packed:
+            raise NifExportError("export of packed textures is not supported ('%s')"%texture.getName())
         
-        # check if the texture is already exported
-        if filename != None:
-            texid = filename
+        # create NiSourceTexture
+        srctex = NifFormat.NiSourceTexture()
+        srctex.useExternal = True
+        if not filename is None:
+            tfn = filename
         else:
-            texid = texture.image.getFilename()
-        if self.textures.has_key(texid):
-            return self.textures[texid]
-
-        # add NiSourceTexture
-        srctex = self.createBlock("NiSourceTexture")
-        srctex.useExternal = not texture.getImage().packed
-        if srctex.useExternal:
-            if filename != None:
-                tfn = filename
+            tfn = texture.image.getFilename()
+        if not self.EXPORT_VERSION in ['Morrowind', 'Oblivion']:
+            # strip texture file path
+            srctex.fileName = Blender.sys.basename(tfn)
+        else:
+            # strip the data files prefix from the texture's file name
+            tfn = tfn.lower()
+            idx = tfn.find("textures")
+            if ( idx >= 0 ):
+                tfn = tfn[idx:]
+                srctex.fileName = tfn
             else:
-                tfn = texture.image.getFilename()
-            if not self.EXPORT_VERSION in ['Morrowind', 'Oblivion']:
-                # strip texture file path
                 srctex.fileName = Blender.sys.basename(tfn)
-            else:
-                # strip the data files prefix from the texture's file name
-                tfn = tfn.lower()
-                idx = tfn.find( "textures" )
-                if ( idx >= 0 ):
-                    tfn = tfn[idx:]
-                    srctex.fileName = tfn
-                else:
-                    srctex.fileName = Blender.sys.basename(tfn)
-            # try and find a DDS alternative, force it if required
-            ddsFile = "%s%s" % (srctex.fileName[:-4], '.dds')
-            if Blender.sys.exists(ddsFile) or self.EXPORT_FORCEDDS:
-                srctex.fileName = ddsFile
-            # for linux export: fix path
-            srctex.fileName = srctex.fileName.replace('/', '\\')
+        # try and find a DDS alternative, force it if required
+        ddsFile = "%s%s" % (srctex.fileName[:-4], '.dds')
+        if Blender.sys.exists(ddsFile) or self.EXPORT_FORCEDDS:
+            srctex.fileName = ddsFile
+        # for linux export: fix path
+        srctex.fileName = srctex.fileName.replace('/', '\\')
 
-        else:   # if the file is not external
-            raise NifExportError("export of packed textures is not supprted ('%s')"%texture.getName())
-            """
-            if filename != None:
-                try:
-                    image = Blender.Image.Load( filename )
-                except:
-                    raise NifExportError( "Error: Cannot pack texture '%s'; Failed to load image '%s'"%(texture.getName(),filename) )
-            else:
-                image = texture.image
-            
-            w, h = image.getSize()
-            if ( w <= 0 ) or ( h <= 0 ):
-                image.reload()
-            if ( w <= 0 ) or ( h <= 0 ):
-                raise NifExportError( "Error: Cannot pack texture '%s'; Failed to load image '%s'"%(texture.getName(),image.getFilename()) )
-            
-            depth = image.getDepth()
-            if image.getDepth() == 32:
-                pixelformat = PX_FMT_RGBA8
-            elif image.getDepth() == 24:
-                pixelformat = PX_FMT_RGB8
-            else:
-                raise NifExportError( "Error: Cannot pack texture '%s' image '%s'; Unsupported image depth %i"%(texture.getName(),image.getFilename(),image.getDepth()) )
-            
-            colors = []
-            for y in range( h ):
-                for x in range( w ):
-                    r, g, b, a = image.getPixelF( x, (h-1)-y )
-                    colors.append( Color4( r, g, b, a ) )
-            
-            pixeldata = self.createBlock("NiPixelData")
-            ipdata = QueryPixelData( pixeldata )
-            ipdata.Reset( w, h, pixelformat )
-            ipdata.SetColors( colors, texture.imageFlags & Blender.Texture.ImageFlags.MIPMAP != 0 )
-            srctex["Texture Source"] = pixeldata
-            """
         # fill in default values
         srctex.pixelLayout = 5
         srctex.useMipmaps = 2
@@ -971,10 +926,16 @@ and turn off envelopes."""%ob.getName()
         srctex.unknownByte = 1
         srctex.unknownByte2 = 1
 
-        # save for future reference
-        self.textures[texid] = srctex
-        
-        return srctex
+        # search for duplicate
+        for block in self.blocks:
+            if isinstance(block, NifFormat.NiSourceTexture) and block.getHash() == srctex.getHash():
+                return block
+
+        self.msg("Exporting source texture %s"%texture.getName())
+
+        # no identical source texture found, so use and register
+        # the new one
+        return self.registerBlock(srctex)
 
 
 
@@ -1290,55 +1251,22 @@ and turn off envelopes."""%ob.getName()
 
             self.exportMatrix(ob, space, trishape)
             
-            if (mesh_base_tex != None or mesh_glow_tex != None):
+            if mesh_base_tex or mesh_glow_tex:
                 # add NiTriShape's texturing property
-                tritexprop = self.createBlock("NiTexturingProperty")
-                trishape.addProperty(tritexprop)
+                trishape.addProperty(self.exportTexturingProperty(
+                    flags = 0x0001, # standard
+                    applymode = NifFormat.ApplyMode.APPLY_MODULATE,
+                    basetex = mesh_base_tex,
+                    glowtex = mesh_glow_tex))
 
-                tritexprop.flags = 0x0001 # standard
-                tritexprop.applyMode = NifFormat.ApplyMode.APPLY_MODULATE
-                tritexprop.textureCount = 7
-
-                if ( mesh_base_tex != None ):
-                    tritexprop.hasBaseTexture = True
-                    basetex = tritexprop.baseTexture
-                    basetex.isUsed = True
-                    
-                    # check for texture flip definition
-                    txtlist = Blender.Text.Get()
-                    for fliptxt in txtlist:
-                        if fliptxt.getName() == mesh_base_tex.getName():
-                            self.exportFlipController( fliptxt, mesh_base_tex, tritexprop, 0 ) # texture slot 0 = base
-                            break
-                        else:
-                            fliptxt = None
-                    else:
-                        basetex.source = self.exportSourceTexture(mesh_base_tex)
-
-                if ( mesh_glow_tex != None ):
-                    tritexprop.hasGlowTexture = True
-                    glowtex = tritexprop.glowTexture
-                    glowtex.isUsed = True
-
-                    # check for texture flip definition
-                    txtlist = Blender.Text.Get()
-                    for fliptxt in txtlist:
-                        if fliptxt.getName() == mesh_glow_tex.getName():
-                            self.exportFlipController( fliptxt, mesh_glow_tex, tritexprop, 4 ) # texture slot 4 = glow
-                            break
-                        else:
-                            fliptxt = None
-                    else:
-                        glowtex.source = self.exportSourceTexture(mesh_glow_tex)
-                    
-            if (mesh_hasalpha):
+            if mesh_hasalpha:
                 # add NiTriShape's alpha propery
                 # refer to the alpha property in the trishape block
                 trishape.addProperty(self.exportAlphaProperty(flags = 0x00ED))
 
-            if (mesh_mat != None):
+            if mesh_mat:
                 # add NiTriShape's specular property
-                if ( mesh_hasspec ):
+                if mesh_hasspec:
                     # refer to the specular property in the trishape block
                     trishape.addProperty(self.exportSpecularProperty(flags = 0x0001))
                 
@@ -2375,6 +2303,57 @@ and turn off envelopes."""%ob.getName()
         # no material property with given settings found, so use and register
         # the new one
         return self.registerBlock(matprop)
+
+    def exportTexturingProperty(self, flags = 0x0001, applymode = None, basetex = None, glowtex = None):
+        """Export texturing property. The parameters basetex and glowtex are
+        the Blender material textures (Texture, not MTex) that correspond to
+        the base and glow textures."""
+
+        texprop = NifFormat.NiTexturingProperty()
+
+        texprop.flags = 0x0001 # standard
+        texprop.applyMode = NifFormat.ApplyMode.APPLY_MODULATE
+        texprop.textureCount = 7
+
+        if basetex:
+            texprop.hasBaseTexture = True
+            texprop.baseTexture.isUsed = True 
+            # check for texture flip definition
+            txtlist = Blender.Text.Get()
+            for fliptxt in txtlist:
+                if fliptxt.getName() == basetex.getName():
+                    # texture slot 0 = base
+                    self.exportFlipController(fliptxt, basetex, texprop, 0)
+                    break
+                else:
+                    fliptxt = None
+            else:
+                texprop.baseTexture.source = self.exportSourceTexture(basetex)
+
+        if glowtex:
+            texprop.hasGlowTexture = True
+            texprop.glowTexture.isUsed = True
+
+            # check for texture flip definition
+            txtlist = Blender.Text.Get()
+            for fliptxt in txtlist:
+                if fliptxt.getName() == glowtex.getName():
+                    # texture slot 4 = glow
+                    self.exportFlipController( fliptxt, glowtex, texprop, 4 )
+                    break
+                else:
+                    fliptxt = None
+            else:
+                texprop.glowTexture.source = self.exportSourceTexture(glowtex)
+                    
+        # search for duplicate
+        for block in self.blocks:
+            if isinstance(block, NifFormat.NiTexturingProperty) and block.getHash() == texprop.getHash():
+                return block
+
+        # no material property with given settings found, so use and register
+        # the new one
+        return self.registerBlock(texprop)
 
 def config_callback(**config):
     """Called when config script is done. Starts and times import."""
