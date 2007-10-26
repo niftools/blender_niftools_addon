@@ -1,3 +1,6 @@
+Version 2.1.19
+Import/Export: emulate apply mode via Blender's texture blending mode
+
 Version 2.1.18 (Oct 25, 2007)
 Export: recycle material, alpha, specular, and texturing properties
 

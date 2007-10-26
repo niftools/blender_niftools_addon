@@ -966,6 +966,21 @@ class NifImport:
         # no name
         name = self.fb_name(matProperty)
         material = Blender.Material.New(name)
+        # get apply mode, and convert to blender "blending mode"
+        blendmode = Blender.Texture.BlendModes["MIX"] # default
+        if textProperty:
+            if textProperty.applyMode == NifFormat.ApplyMode.APPLY_MODULATE:
+                blendmode = Blender.Texture.BlendModes["MIX"]
+            elif textProperty.applyMode == NifFormat.ApplyMode.APPLY_REPLACE:
+                blendmode = Blender.Texture.BlendModes["MIX"]
+            elif textProperty.applyMode == NifFormat.ApplyMode.APPLY_DECAL:
+                blendmode = Blender.Texture.BlendModes["MIX"]
+            elif textProperty.applyMode == NifFormat.ApplyMode.APPLY_HILIGHT:
+                blendmode = Blender.Texture.BlendModes["LIGHTEN"]
+            elif textProperty.applyMode == NifFormat.ApplyMode.APPLY_HILIGHT2:
+                blendmode = Blender.Texture.BlendModes["MULTIPLY"]
+            else:
+                print "WARNING: unknown apply mode (%i) in material '%s', using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name)
         # Sets the material colors
         # Specular color
         spec = matProperty.specularColor
@@ -1024,6 +1039,7 @@ class NifImport:
                     # Sets the texture for the material
                     material.setTexture(0, baseTexture, texco, mapto)
                     mbaseTexture = material.getTextures()[0]
+                    mbaseTexture.blendmode = blendmode
             glowTextureDesc = textProperty.glowTexture
             if glowTextureDesc:
                 glowTexture = self.fb_texture(glowTextureDesc.source)
