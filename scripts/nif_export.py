@@ -60,6 +60,12 @@ class NifExportError(StandardError):
 class NifExport:
     IDENTITY44 = NifFormat.Matrix44()
     IDENTITY44.setIdentity()
+    # map blending modes to apply modes
+    APPLYMODE = {
+        Blender.Texture.BlendModes["MIX"] : NifFormat.ApplyMode.APPLY_MODULATE,
+        Blender.Texture.BlendModes["LIGHTEN"] : NifFormat.ApplyMode.APPLY_HILIGHT,
+        Blender.Texture.BlendModes["MULTIPLY"] : NifFormat.ApplyMode.APPLY_HILIGHT2
+    }
 
     def msg(self, message, level=2):
         """Wrapper for debug messages."""
@@ -1066,6 +1072,7 @@ and turn off envelopes."""%ob.getName()
                         if ((mtex.mapto & Blender.Texture.MapTo.EMIT) == 0):
                             if (mesh_base_tex == None):
                                 # got the base texture
+                                mesh_base_mtex = mtex
                                 mesh_base_tex = mtex.tex
                                 mesh_hastex = True # flag that we have textures, and that we should export UV coordinates
                                 # check if alpha channel is enabled for this texture
@@ -1255,7 +1262,7 @@ and turn off envelopes."""%ob.getName()
                 # add NiTriShape's texturing property
                 trishape.addProperty(self.exportTexturingProperty(
                     flags = 0x0001, # standard
-                    applymode = NifFormat.ApplyMode.APPLY_MODULATE,
+                    applymode = self.APPLYMODE[mesh_base_mtex.blendmode if mesh_base_mtex else Blender.Texture.BlendModes["MIX"]],
                     basetex = mesh_base_tex,
                     glowtex = mesh_glow_tex))
 
@@ -2312,7 +2319,7 @@ and turn off envelopes."""%ob.getName()
         texprop = NifFormat.NiTexturingProperty()
 
         texprop.flags = 0x0001 # standard
-        texprop.applyMode = NifFormat.ApplyMode.APPLY_MODULATE
+        texprop.applyMode = applymode
         texprop.textureCount = 7
 
         if basetex:
