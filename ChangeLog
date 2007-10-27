@@ -1,3 +1,6 @@
+Version 2.1.20 (***)
+Import/Export: updated for PyFFI 0.6
+
 Version 2.1.19 (Oct 26, 2007)
 Import/Export: emulate apply mode via Blender's texture blending mode
 
