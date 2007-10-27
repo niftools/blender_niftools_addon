@@ -157,7 +157,7 @@ class NifImport:
                     # it is valid, so read the file
                     self.msg("NIF file version: 0x%08X"%self.version, 2)
                     self.msgProgress("Reading file")
-                    root_blocks = NifFormat.read(self.version, self.user_version, f, verbose = 0)
+                    root_blocks = NifFormat.read(f, version = self.version, user_version = self.user_version, verbose = 0)
                 elif self.version == -1:
                     raise NifImportError("Unsupported NIF version.")
                 else:

@@ -10,7 +10,11 @@ layer = 1 # current layer (each test gets its layer)
 
 # some tests to import and export nif files
 
-test_files = [('bb_skinf_br.nif', dict(EXPORT_VERSION = 'Morrowind', EXPORT_SMOOTHOBJECTSEAMS = True))]
+test_files = [
+    ('babelfish.nif', dict(EXPORT_VERSION = 'Morrowind')),
+    ('bb_skinf_br.nif', dict(
+        EXPORT_VERSION = 'Morrowind', EXPORT_SMOOTHOBJECTSEAMS = True)),
+]
 
 for filename, filecfg in test_files:
     print "*** testing: %s ***"%filename

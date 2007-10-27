@@ -489,7 +489,7 @@ and turn off envelopes."""%ob.getName()
             NIF_USER_VERSION = 0 if self.version != 0x14000005 else 11
             f = open(self.filename, "wb")
             try:
-                NifFormat.write(self.version, NIF_USER_VERSION, f, [root_block])
+                NifFormat.write(f, version = self.version, user_version = NIF_USER_VERSION, roots = [root_block])
             finally:
                 f.close()
 
