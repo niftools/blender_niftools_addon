@@ -905,7 +905,7 @@ class NifImport:
             if b_image == None:
                 self.msg("Texture '%s' not found and no alternate available" % fn, 2)
                 b_image = Blender.Image.New(tex, 1, 1, 24) # create a stub
-                b_image.filename = tex
+                b_image.filename = Blender.sys.join(searchPathList[0], fn)
         else:
             # the texture image is packed inside the nif -> extract it
             niPixelData = niSourceTexture.pixelData

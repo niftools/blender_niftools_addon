@@ -1,4 +1,4 @@
-import pychecker.checker
-import nif_import
-import nif_export
+from pylint import lint
+lint.Run(['nif_import'])
+lint.Run(['nif_export'])
 
