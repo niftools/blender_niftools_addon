@@ -1,23 +1,47 @@
-# blender scripts tests
+"""Automated tests for the blender nif scripts."""
 
 import Blender
 from nif_import import NifImport
 from nif_export import NifExport
 from nif_common import NifConfig
 
-scene = Blender.Scene.GetCurrent() # current scene
-layer = 1 # current layer (each test gets its layer)
+SCENE = Blender.Scene.GetCurrent() # current scene
+LAYER = 1
 
 # some tests to import and export nif files
-
-test_files = [
-    ('babelfish.nif', dict(EXPORT_VERSION = 'Morrowind')),
-    ('bb_skinf_br.nif', dict(
-        EXPORT_VERSION = 'Morrowind', EXPORT_SMOOTHOBJECTSEAMS = True)),
+# as list of (filename, config dictionary, list of objects to be selected)
+# if the config has a EXPORT_VERSION key then the test is an export test
+# otherwise it's an import test
+TEST_FILES = [
+    # oblivion full body
+    ('skeleton.nif',  dict(IMPORT_SKELETON = 1), []),
+    ('upperbody.nif', dict(IMPORT_SKELETON = 2), ['Scene Root']),
+    ('lowerbody.nif', dict(IMPORT_SKELETON = 2), ['Scene Root']),
+    ('hand.nif',      dict(IMPORT_SKELETON = 2), ['Scene Root']),
+    ('foot.nif',      dict(IMPORT_SKELETON = 2), ['Scene Root']),
+    ('_fulloblivionbody.nif',
+     dict(
+        EXPORT_VERSION = 'Oblivion', EXPORT_SMOOTHOBJECTSEAMS = True,
+        EXPORT_FLATTENSKIN = True),
+     ['Scene Root']),
+    # morrowind creature
+    ('babelfish.nif', {}, []),
+    ('_babelfish.nif', dict(
+        EXPORT_VERSION = 'Morrowind',
+        EXPORT_STRIPIFY = False, EXPORT_SKINPARTITION = False),
+     ['Root Bone']),
+    # morrowind better bodies mesh
+    ('bb_skinf_br.nif', {}, []),
+    ('_bb_skinf_br.nif', dict(
+        EXPORT_VERSION = 'Morrowind', EXPORT_SMOOTHOBJECTSEAMS = True,
+        EXPORT_STRIPIFY = False, EXPORT_SKINPARTITION = False),
+     ['Bip01']),
 ]
 
-for filename, filecfg in test_files:
-    print "*** testing: %s ***"%filename
+for filename, filecfg, selection in TEST_FILES:
+    # select objects
+    SCENE.objects.selected = [
+        ob for ob in SCENE.objects if ob.name in selection]
 
     # set script configuration
     config = dict(**NifConfig.DEFAULTS)
@@ -25,23 +49,33 @@ for filename, filecfg in test_files:
     for key, value in filecfg.items():
         config[key] = value
 
-    config["IMPORT_FILE"] = "test/nif/%s"%filename
-    config["EXPORT_FILE"] = "test/nif/_%s"%filename
+    # run test
+    if 'EXPORT_VERSION' in filecfg:
+        # export the imported files
+        print "*** exporting %s ***" % filename
 
-    # unselect all objects
-    scene.objects.selected = []
+        config["EXPORT_FILE"] = "test/nif/%s" % filename
+        NifExport(**config)
 
-    # select layer: put different import tests into different blender layers,
-    # so the imports can be visually inspected
-    scene.setLayers([layer+1]) # layers are numbered from 1 till 20
+        # deselect everything before changing active layer
+        # (otherwise objects do not get placed in the correct layer)
+        SCENE.objects.selected = []
 
-    # import <filename>
-    print "import..."
-    NifImport(**config)
+        # increment active layer for next import
+        # different tests are put into different blender layers,
+        # so the results can be easily visually inspected
+        LAYER += 1
+        SCENE.setLayers([LAYER])
+    else:
+        print "*** importing %s ***" % filename
 
-    # export the imported file as _<filename>
-    print "export..."
-    NifExport(**config)
+        config["IMPORT_FILE"] = "test/nif/%s" % filename
 
-    layer += 1
+        # import <filename>
+        print "import..."
+        NifImport(**config)
 
+    # deselect everything
+    SCENE.objects.selected = []
+    # reset active layer
+    SCENE.setLayers([1])
