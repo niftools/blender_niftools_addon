@@ -57,10 +57,6 @@ for filename, filecfg, selection in TEST_FILES:
         config["EXPORT_FILE"] = "test/nif/%s" % filename
         NifExport(**config)
 
-        # deselect everything before changing active layer
-        # (otherwise objects do not get placed in the correct layer)
-        SCENE.objects.selected = []
-
         # increment active layer for next import
         # different tests are put into different blender layers,
         # so the results can be easily visually inspected
@@ -75,7 +71,7 @@ for filename, filecfg, selection in TEST_FILES:
         print "import..."
         NifImport(**config)
 
-    # deselect everything
-    SCENE.objects.selected = []
-    # reset active layer
-    SCENE.setLayers([1])
+# deselect everything
+SCENE.objects.selected = []
+# reset active layer
+SCENE.setLayers([1])
