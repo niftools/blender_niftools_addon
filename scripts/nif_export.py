@@ -2306,8 +2306,10 @@ and turn off envelopes."""%ob.getName()
         matprop.alpha = alpha
 
         # search for duplicate
+        # (ignore the name string as sometimes import needs to create different
+        # materials even when NiMaterialProperty is the same)
         for block in self.blocks:
-            if isinstance(block, NifFormat.NiMaterialProperty) and block.getHash() == matprop.getHash():
+            if isinstance(block, NifFormat.NiMaterialProperty) and block.getHash(ignore_strings = True) == matprop.getHash(ignore_strings = True):
                 return block
 
         # no material property with given settings found, so use and register

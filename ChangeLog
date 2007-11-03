@@ -1,5 +1,8 @@
-Version 2.1.20 (***)
+Version 2.1.20 (Nov 3, 2007)
 Import/Export: updated for PyFFI 0.6
+Export: ignore lattices when checking for non-uniformly scaled objects
+Export: ignore name when avoiding duplicate material properties
+Test: added babelfish and oblivion full body import/export tests
 
 Version 2.1.19 (Oct 26, 2007)
 Import/Export: emulate apply mode via Blender's texture blending mode
