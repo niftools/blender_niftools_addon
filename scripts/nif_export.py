@@ -204,10 +204,13 @@ and turn off envelopes."""%ob.getName()
                         raise NifExportError("'%s': Cannot export envelope skinning. Check console for instructions."%ob.getName())
 
                 # check for non-uniform transforms
-                try:
-                    self.decomposeSRT(ob.getMatrix('localspace'))
-                except NifExportError: # non-uniform scaling
-                    raise NifExportError("Non-uniform scaling not supported. Workaround: apply size and rotation (CTRL-A) on '%s'."%ob.name)
+                # (lattices are not exported so ignore them as they often tend
+                # to have non-uniform scaling)
+                if ob.getType() != 'Lattice':
+                    try:
+                        self.decomposeSRT(ob.getMatrix('localspace'))
+                    except NifExportError: # non-uniform scaling
+                        raise NifExportError("Non-uniform scaling not supported. Workaround: apply size and rotation (CTRL-A) on '%s'."%ob.name)
 
             # extract some useful scene info
             self.scene = Blender.Scene.GetCurrent()
