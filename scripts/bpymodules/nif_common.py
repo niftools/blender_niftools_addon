@@ -44,24 +44,33 @@ import Blender
 from Blender import Draw, Registry
 import sys, os
 
-# nif config class
-# note: keep every instance of this class in a global variable
-# (otherwise gui elements might go out of skope which will crash
-# Blender)
-
 class NifConfig:
+    """Class which handles configuration of nif import and export in Blender.
+
+    Important: keep every instance of this class in a global variable
+    (otherwise gui elements might go out of skope which will crash
+    Blender)."""
     # class global constants
     CONFIG_NAME = "nifscripts" # name of the config file
     TARGET_IMPORT = 0          # config target value when importing
     TARGET_EXPORT = 1          # config target value when exporting
+    # GUI stuff
+    XORIGIN     = 50  # x coordinate of origin
+    XCOLUMNSKIP = 390 # width of a column
+    XCOLUMNSEP  = 10  # width of the column separator
+    YORIGIN     = -40 # y coordinate of origin relative to Blender.Window.GetAreaSize()[1]
+    YLINESKIP   = 20  # height of a line
+    YLINESEP    = 10  # height of a line separator
     # the DEFAULTS dict defines the valid config variables, default values,
     # and their type
     # IMPORTANT: don't start dictionary keys with an underscore
     # the Registry module doesn't like that, apparently
     DEFAULTS = dict(
-        IMPORT_FILE = Blender.sys.join(Blender.sys.dirname(Blender.sys.progname), "import.nif"),
-        EXPORT_FILE = Blender.sys.join(Blender.sys.dirname(Blender.sys.progname), "export.nif"),
-        IMPORT_REALIGN_BONES = 2, # 0 = use original nif matrix, 1 = realign tail, 2 = realign tail and rotation
+        IMPORT_FILE = Blender.sys.join(
+            Blender.sys.dirname(Blender.sys.progname), "import.nif"),
+        EXPORT_FILE = Blender.sys.join(
+            Blender.sys.dirname(Blender.sys.progname), "export.nif"),
+        IMPORT_REALIGN_BONES = 2, # 0 = no, 1 = tail, 2 = tail+rotation
         IMPORT_ANIMATION = True,
         IMPORT_SCALE_CORRECTION = 0.1,
         EXPORT_SCALE_CORRECTION = 10.0, # 1/import scale correction
@@ -98,6 +107,10 @@ class NifConfig:
         self.texpathIndex = 0
         self.texpathCurrent = ''
 
+        # reset GUI coordinates
+        self.xPos = self.XORIGIN
+        self.yPos = self.YORIGIN + Blender.Window.GetAreaSize()[1]
+
         # load configuration
         self.load()
 
@@ -108,7 +121,8 @@ class NifConfig:
             os.system("cls")
 
         # print scripts info
-        print 'Blender NIF Scripts %s (running on Blender %s, PyFFI %s)'%(__version__, __blenderversion__, __pyffiversion__)
+        print('Blender NIF Scripts %s (running on Blender %s, PyFFI %s)'
+              %(__version__, __blenderversion__, __pyffiversion__))
 
     def run(self, target, filename, callback):
         """Run the config gui."""
@@ -135,10 +149,8 @@ class NifConfig:
         self.load() # for validation
 
     def load(self):
-        """
-        Load the configuration stored in the Blender registry and checks
-        configuration for incompatible values.
-        """
+        """Load the configuration stored in the Blender registry and checks
+        configuration for incompatible values."""
         # copy defaults
         self.config = dict(**self.DEFAULTS)
         # read configuration
@@ -149,7 +161,8 @@ class NifConfig:
         except:
             pass
         try:
-            self.config["IMPORT_FILE"] = Blender.sys.join(savedconfig["NIF_IMPORT_PATH"], savedconfig["NIF_IMPORT_FILE"])
+            self.config["IMPORT_FILE"] = Blender.sys.join(
+                savedconfig["NIF_IMPORT_PATH"], savedconfig["NIF_IMPORT_FILE"])
         except:
             pass
         try:
@@ -163,7 +176,7 @@ class NifConfig:
         try:
             if self.config["IMPORT_REALIGN_BONES"] == True:
                self.config["IMPORT_REALIGN_BONES"] = 2
-            if self.config["IMPORT_REALIGN_BONES"] == False:
+            elif self.config["IMPORT_REALIGN_BONES"] == False:
                self.config["IMPORT_REALIGN_BONES"] = 1
         except:
             pass
@@ -199,178 +212,230 @@ class NifConfig:
             raise RuntimeError("Maximum number of events exceeded")
         return event_id
 
+    def drawYSep(self):
+        """Vertical skip."""
+        self.yPos -= self.YLINESEP
+
+    def drawNextColumn(self):
+        """Start a new column."""
+        self.xPos += self.XCOLUMNSKIP + self.XCOLUMNSEP
+        self.yPos = self.YORIGIN + Blender.Window.GetAreaSize()[1]
+
+    def drawSlider(
+        self, text, event_name, val, min_val, max_val, callback):
+        """Draw a slider."""
+        self.guiElements[event_name] = Draw.Slider(
+            text,
+            self.eventId(event_name),
+            self.xPos, self.yPos, self.XCOLUMNSKIP, self.YLINESKIP,
+            val, min_val, max_val,
+            0, # realtime
+            "", # tooltip,
+            callback)
+        self.yPos -= self.YLINESKIP
+
+    def drawLabel(self, text, event_name):
+        """Draw a line of text."""
+        self.guiElements[event_name] = Draw.Label(
+            text,
+            self.xPos, self.yPos, self.XCOLUMNSKIP, self.YLINESKIP)
+        self.yPos -= self.YLINESKIP
+
+    def drawList(self, text, event_name_prefix, val):
+        """Create elements to select a list of things.
+
+        Registers events PREFIX_ITEM, PREFIX_PREV, PREFIX_NEXT, PREFIX_REMOVE
+        and PREFIX_ADD."""
+        self.guiElements["%s_ITEM"%event_name_prefix]   = Draw.String(
+            text,
+            self.eventId("%s_ITEM"%event_name_prefix),
+            self.xPos, self.yPos, self.XCOLUMNSKIP-90, self.YLINESKIP,
+            val, 255)
+        self.guiElements["%s_PREV"%event_name_prefix]   = Draw.PushButton(
+            '<',
+            self.eventId("%s_PREV"%event_name_prefix),
+            self.xPos+self.XCOLUMNSKIP-90, self.yPos, 20, self.YLINESKIP)
+        self.guiElements["%s_NEXT"%event_name_prefix]   = Draw.PushButton(
+            '>',
+            self.eventId("%s_NEXT"%event_name_prefix),
+            self.xPos+self.XCOLUMNSKIP-70, self.yPos, 20, self.YLINESKIP)
+        self.guiElements["%s_REMOVE"%event_name_prefix] = Draw.PushButton(
+            'X',
+            self.eventId("%s_REMOVE"%event_name_prefix),
+            self.xPos+self.XCOLUMNSKIP-50, self.yPos, 20, self.YLINESKIP)
+        self.guiElements["%s_ADD"%event_name_prefix]    = Draw.PushButton(
+            '...',
+            self.eventId("%s_ADD"%event_name_prefix),
+            self.xPos+self.XCOLUMNSKIP-30, self.yPos, 30, self.YLINESKIP)
+        self.yPos -= self.YLINESKIP
+
+    def drawToggle(self, text, event_name, val, num_items = 1, item = 0):
+        """Draw a toggle button."""
+        width = self.XCOLUMNSKIP//num_items
+        self.guiElements[event_name] = Draw.Toggle(
+            text,
+            self.eventId(event_name),
+            self.xPos + item*width, self.yPos, width, self.YLINESKIP,
+            val)
+        if item + 1 == num_items:
+            self.yPos -= self.YLINESKIP
+
+    def drawPushButton(self, text, event_name, num_items = 1, item = 0):
+        """Draw a push button."""
+        width = self.XCOLUMNSKIP//num_items
+        self.guiElements[event_name] = Draw.PushButton(
+            text,
+            self.eventId(event_name),
+            self.xPos + item*width, self.yPos, width, self.YLINESKIP)
+        if item + 1 == num_items:
+            self.yPos -= self.YLINESKIP
+
+    def drawNumber(
+        self, text, event_name, val, min_val, max_val, callback,
+        num_items = 1, item = 0):
+        """Draw an input widget for numbers."""
+        width = self.XCOLUMNSKIP//num_items
+        self.guiElements[event_name] = Draw.Number(
+            text,
+            self.eventId(event_name),
+            self.xPos + item*width, self.yPos, width, self.YLINESKIP,
+            val,
+            min_val, max_val,
+            "", # tooltip
+            callback)
+        self.yPos -= self.YLINESKIP
+        if item + 1 == num_items:
+            self.yPos -= self.YLINESKIP
+
     def guiDraw(self):
         """Draw config GUI."""
-        H = Blender.Window.GetAreaSize()[1]-40
+        # reset position
+        self.xPos = self.XORIGIN
+        self.yPos = self.YORIGIN + Blender.Window.GetAreaSize()[1]
 
         # common options
-        self.guiElements["SCALE_CORRECTION"] = Draw.Slider(
-            "Scale Correction:  ",
-            self.eventId("SCALE_CORRECTION"),
-            50, H, 390, 20,
-            self.config["EXPORT_SCALE_CORRECTION"],
-            0.01, 100, 0, "scale", self.updateScale)
-        H -= 30
+        self.drawSlider(
+            text = "Scale Correction:  ",
+            event_name = "SCALE_CORRECTION",
+            val = self.config["EXPORT_SCALE_CORRECTION"],
+            min_val = 0.01, max_val = 100.0,
+            callback = self.updateScale)
+        self.drawYSep()
 
         # import-only options
         if self.target == self.TARGET_IMPORT:
-            self.guiElements["TEXPATH_TEXT"] = Draw.Label(
-                "Texture Search Paths:",
-                50, H, 300, 20)
-            H -= 20
-            self.guiElements["TEXPATH_ITEM"]   = Draw.String(
-                "",
-                self.eventId("TEXPATH_ITEM"),
-                50, H, 300, 20,
-                self.texpathCurrent, 290)
-            self.guiElements["TEXPATH_PREV"]   = Draw.PushButton(
-                '<',
-                self.eventId("TEXPATH_PREV"),
-                350, H, 20, 20)
-            self.guiElements["TEXPATH_NEXT"]   = Draw.PushButton(
-                '>',
-                self.eventId("TEXPATH_NEXT"),
-                370, H, 20, 20)
-            self.guiElements["TEXPATH_REMOVE"] = Draw.PushButton(
-                'X',
-                self.eventId("TEXPATH_REMOVE"),
-                390, H, 20, 20)
-            self.guiElements["TEXPATH_ADD"]    = Draw.PushButton(
-                '...',
-                self.eventId("TEXPATH_ADD"),
-                410, H, 30, 20)
-            H -= 30
+            self.drawLabel(
+                text = "Texture Search Paths:",
+                event_name = "TEXPATH_TEXT")
+            self.drawList(
+                text = "",
+                event_name_prefix = "TEXPATH",
+                val = self.texpathCurrent)
+            self.drawYSep()
 
-            self.guiElements["IMPORT_ANIMATION"] = Draw.Toggle(
-                "Import Animation",
-                self.eventId("IMPORT_ANIMATION"),
-                50, H, 390, 20,
-                self.config["IMPORT_ANIMATION"])
-            H -= 30
+            self.drawToggle(
+                text = "Import Animation",
+                event_name = "IMPORT_ANIMATION",
+                val = self.config["IMPORT_ANIMATION"])
+            self.drawYSep()
 
-            self.guiElements["IMPORT_REALIGN_BONES"] = Draw.Toggle(
-                "Realign Bone Tail Only",
-                self.eventId("IMPORT_REALIGN_BONES_1"),
-                50, H, 195, 20,
-                self.config["IMPORT_REALIGN_BONES"] == 1)
-            self.guiElements["IMPORT_REALIGN_BONES"] = Draw.Toggle(
-                "Realign Bone Tail + Roll",
-                self.eventId("IMPORT_REALIGN_BONES_2"),
-                245, H, 195, 20,
-                self.config["IMPORT_REALIGN_BONES"] == 2)
-            H -= 20
-            self.guiElements["IMPORT_SENDBONESTOBINDPOS"] = Draw.Toggle(
-                "Send Bones To Bind Position",
-                self.eventId("IMPORT_SENDBONESTOBINDPOS"),
-                50, H, 390, 20,
-                self.config["IMPORT_SENDBONESTOBINDPOS"])
-            H -= 20
-            self.guiElements["IMPORT_APPLYSKINDEFORM"] = Draw.Toggle(
-                "Apply Skin Deformation",
-                self.eventId("IMPORT_APPLYSKINDEFORM"),
-                50, H, 390, 20,
-                self.config["IMPORT_APPLYSKINDEFORM"])
-            H -= 30
+            self.drawToggle(
+                text = "Realign Bone Tail Only",
+                event_name = "IMPORT_REALIGN_BONES_1",
+                val = (self.config["IMPORT_REALIGN_BONES"] == 1),
+                num_items = 2, item = 0)
+            self.drawToggle(
+                text = "Realign Bone Tail + Roll",
+                event_name = "IMPORT_REALIGN_BONES_2",
+                val = (self.config["IMPORT_REALIGN_BONES"] == 2),
+                num_items = 2, item = 1)
+            self.drawToggle(
+                text = "Send Bones To Bind Position",
+                event_name = "IMPORT_SENDBONESTOBINDPOS",
+                val = self.config["IMPORT_SENDBONESTOBINDPOS"])
+            self.drawToggle(
+                text = "Apply Skin Deformation",
+                event_name = "IMPORT_APPLYSKINDEFORM",
+                val = self.config["IMPORT_APPLYSKINDEFORM"])
+            self.drawYSep()
             
-            self.guiElements["IMPORT_SKELETON_1"] = Draw.Toggle(
-                "Import Skeleton Only + Parent Selected",
-                self.eventId("IMPORT_SKELETON_1"),
-                50, H, 390, 20,
-                self.config["IMPORT_SKELETON"] == 1)
-            H -= 20
-            self.guiElements["IMPORT_SKELETON_2"] = Draw.Toggle(
-                "Import Geometry Only + Parent To Selected Armature",
-                self.eventId("IMPORT_SKELETON_2"),
-                50, H, 390, 20,
-                self.config["IMPORT_SKELETON"] == 2)
-            H -= 30
+            self.drawToggle(
+                text = "Import Skeleton Only + Parent Selected",
+                event_name = "IMPORT_SKELETON_1",
+                val = (self.config["IMPORT_SKELETON"] == 1))
+            self.drawToggle(
+                text = "Import Geometry Only + Parent To Selected Armature",
+                event_name = "IMPORT_SKELETON_2",
+                val = (self.config["IMPORT_SKELETON"] == 2))
+            self.drawYSep()
 
         # export-only options
         if self.target == self.TARGET_EXPORT:
-            self.guiElements["EXPORT_ANIMATION_0"] = Draw.Toggle(
-                "Export Geometry + Animation (.nif)",
-                self.eventId("EXPORT_ANIMATION_0"),
-                50, H, 390, 20, self.config["EXPORT_ANIMATION"] == 0)
-            self.guiElements["EXPORT_ANIMATION_1"] = Draw.Toggle(
-                "Export Geometry Only (.nif)",
-                self.eventId("EXPORT_ANIMATION_1"),
-                50, H-20, 390, 20,
-                self.config["EXPORT_ANIMATION"] == 1)
-            self.guiElements["EXPORT_ANIMATION_2"] = Draw.Toggle(
-                "Export Animation Only (.kf) - MORROWIND ONLY FOR NOW",
-                self.eventId("EXPORT_ANIMATION_2"),
-                50, H-40, 390, 20,
-                self.config["EXPORT_ANIMATION"] == 2)
-            H -= 70
+            self.drawToggle(
+                text = "Export Geometry + Animation (.nif)",
+                event_name = "EXPORT_ANIMATION_0",
+                val = (self.config["EXPORT_ANIMATION"] == 0))
+            self.drawToggle(
+                text = "Export Geometry Only (.nif)",
+                event_name = "EXPORT_ANIMATION_1",
+                val = (self.config["EXPORT_ANIMATION"] == 1))
+            self.drawToggle(
+                text = "Export Animation Only (.kf) - MORROWIND ONLY FOR NOW",
+                event_name = "EXPORT_ANIMATION_2",
+                val = (self.config["EXPORT_ANIMATION"] == 2))
+            self.drawYSep()
 
-            self.guiElements["EXPORT_FORCEDDS"] = Draw.Toggle(
-                "Force DDS Extension",
-                self.eventId("EXPORT_FORCEDDS"),
-                50, H, 390, 20,
-                self.config["EXPORT_FORCEDDS"])
-            H -= 30
+            self.drawToggle(
+                text = "Force DDS Extension",
+                event_name = "EXPORT_FORCEDDS",
+                val = self.config["EXPORT_FORCEDDS"])
+            self.drawYSep()
 
-            self.guiElements["EXPORT_STRIPIFY"] = Draw.Toggle(
-                "Stripify Geometries",
-                self.eventId("EXPORT_STRIPIFY"),
-                50, H, 195, 20,
-                self.config["EXPORT_STRIPIFY"])
-            self.guiElements["EXPORT_STITCHSTRIPS"] = Draw.Toggle(
-                "Stitch Strips",
-                self.eventId("EXPORT_STITCHSTRIPS"),
-                245, H, 195, 20,
-                self.config["EXPORT_STITCHSTRIPS"])
-            H -= 30
+            self.drawToggle(
+                text = "Stripify Geometries",
+                event_name = "EXPORT_STRIPIFY",
+                val = self.config["EXPORT_STRIPIFY"],
+                num_items = 2, item = 0)
+            self.drawToggle(
+                text = "Stitch Strips",
+                event_name = "EXPORT_STITCHSTRIPS",
+                val = self.config["EXPORT_STITCHSTRIPS"],
+                num_items = 2, item = 1)
+            self.drawYSep()
 
-            self.guiElements["EXPORT_SMOOTHOBJECTSEAMS"] = Draw.Toggle(
-                "Smoothen Inter-Object Seams",
-                self.eventId("EXPORT_SMOOTHOBJECTSEAMS"),
-                50, H, 390, 20,
-                self.config["EXPORT_SMOOTHOBJECTSEAMS"])
-            H -= 30
+            self.drawToggle(
+                text = "Smoothen Inter-Object Seams",
+                event_name = "EXPORT_SMOOTHOBJECTSEAMS",
+                val = self.config["EXPORT_SMOOTHOBJECTSEAMS"])
+            self.drawYSep()
 
-            self.guiElements["EXPORT_FLATTENSKIN"] = Draw.Toggle(
-                "Flatten Skin", self.eventId("EXPORT_FLATTENSKIN"),
-                50, H, 390, 20,
-                self.config["EXPORT_FLATTENSKIN"])
-            self.guiElements["EXPORT_SKINPARTITION"] = Draw.Toggle(
-                "Export Skin Partition",
-                self.eventId("EXPORT_SKINPARTITION"),
-                50, H-20, 130, 20,
-                self.config["EXPORT_SKINPARTITION"])
-            self.guiElements["EXPORT_PADBONES"] = Draw.Toggle(
-                "Pad & Sort Bones",
-                self.eventId("EXPORT_PADBONES"),
-                180, H-20, 130, 20,
-                self.config["EXPORT_PADBONES"])
-            self.guiElements["EXPORT_BONESPERPARTITION"] = Draw.Number(
-                "Max Bones", self.eventId("EXPORT_BONESPERPARTITION"),
-                310, H-20, 130, 20,
-                self.config["EXPORT_BONESPERPARTITION"],
-                4, 18, "maximum number of bones per partition", self.updateBonesPerPartition)
-            # the value 4 does for all games, so let's not let user change it
-            #self.guiElements["EXPORT_BONESPERVERTEX"] = Draw.Number("Max Bones Per Vertex", self.eventId("EXPORT_BONESPERVERTEX"), 50, H-65, 390, 20, self.config["EXPORT_BONESPERVERTEX"], 2, 8)
-            H -= 50
+            self.drawToggle(
+                text = "Flatten Skin",
+                event_name = "EXPORT_FLATTENSKIN",
+                val = self.config["EXPORT_FLATTENSKIN"])
+            self.drawToggle(
+                text = "Export Skin Partition",
+                event_name = "EXPORT_SKINPARTITION",
+                val = self.config["EXPORT_SKINPARTITION"],
+                num_items = 3, item = 0)
+            self.drawToggle(
+                text = "Pad & Sort Bones",
+                event_name = "EXPORT_PADBONES",
+                val = self.config["EXPORT_PADBONES"],
+                num_items = 3, item = 1)
+            self.drawNumber(
+                text = "Max Bones",
+                event_name = "EXPORT_BONESPERPARTITION",
+                val = self.config["EXPORT_BONESPERPARTITION"],
+                min_val = 4, max_val = 18,
+                callback = self.updateBonesPerPartition,
+                num_items = 3, item = 2)
+            self.drawYSep()
 
-            self.guiElements["EXPORT_BHKLISTSHAPE"] = Draw.Toggle(
-                "Use bhkListShape",
-                self.eventId("EXPORT_BHKLISTSHAPE"),
-                50, H, 195, 20,
-                self.config["EXPORT_BHKLISTSHAPE"])
-            self.guiElements["EXPORT_MOPP"] = Draw.Toggle(
-                "Export Mopp (EXPERIMENTAL)",
-                self.eventId("EXPORT_MOPP"),
-                245, H, 195, 20,
-                self.config["EXPORT_MOPP"])
-            H -= 30
-
-            #self.guiElements["NIF_EXPORT_PATH"]        = Draw.String("",       self.eventId("NIF_EXPORT_PATH"),     50, H-100, 390, 20, self.config["NIF_EXPORT_PATH"],        390, "export path")
-            #self.guiElements["BROWSE_EXPORT_PATH"]     = Draw.PushButton('...',self.eventId("BROWSE_EXPORT_PATH"), 440, H-100,  30, 20)
-            
             games_list = sorted(filter(lambda x: x != '?', NifFormat.games.keys()))
             versions_list = sorted(NifFormat.versions.keys(), key=lambda x: NifFormat.versions[x])
-            V = 50
-            HH = H
+            V = self.xPos
+            H = HH = self.yPos
             j = 0
             MAXJ = 7
             for i, game in enumerate(games_list):
@@ -391,17 +456,40 @@ class NifConfig:
                 state = (self.config["EXPORT_VERSION"] == version)
                 self.guiElements["VERSION_%s"%version] = Draw.Toggle(version, self.eventId("VERSION_%s"%version), V, H-j*20, 70, 20, state)
                 j += 1
-            H = HH - 20*min(MAXJ, max(len(NifFormat.versions), len(NifFormat.games)))
-            H -= 30 # leave some space
+            self.yPos -= 20*min(MAXJ, max(len(NifFormat.versions), len(NifFormat.games)))
+            self.drawYSep()
+            
+            if self.config["EXPORT_VERSION"] in games_list:
+                self.guiElements["EXPORT_RESET"] = Draw.PushButton(
+                    "Reset Default Settings For Selected Game",
+                    self.eventId("GAME_%s"%self.config["EXPORT_VERSION"]),
+                    self.xPos, self.yPos, self.XCOLUMNSKIP, self.YLINESKIP)
+                self.yPos -= self.YLINESKIP
+                self.drawYSep()
+            
+        self.drawPushButton(
+            text = "Ok",
+            event_name = "OK",
+            num_items = 3, item = 0)
+        # (item 1 is whitespace)
+        self.drawPushButton(
+            text = "Cancel",
+            event_name = "CANCEL",
+            num_items = 3, item = 2)
 
-        self.guiElements["OK"]     = Draw.PushButton(
-            'Ok',
-            self.eventId("OK"),
-            50,  H, 100, 20)
-        self.guiElements["CANCEL"] = Draw.PushButton(
-            'Cancel',
-            self.eventId("CANCEL"),
-            180, H, 100, 20)
+        # export-only options
+        if self.target == self.TARGET_EXPORT and self.config["EXPORT_VERSION"] == "Oblivion":
+            self.drawNextColumn()
+            
+            self.drawToggle(
+                text = "Use bhkListShape",
+                event_name = "EXPORT_BHKLISTSHAPE",
+                val = self.config["EXPORT_BHKLISTSHAPE"])
+            self.drawToggle(
+                text = "Export Mopp (EXPERIMENTAL)",
+                event_name = "EXPORT_MOPP",
+                val = self.config["EXPORT_MOPP"])
+            self.drawYSep()
 
         Draw.Redraw(1)
 
