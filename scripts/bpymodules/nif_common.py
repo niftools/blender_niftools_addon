@@ -81,7 +81,7 @@ class NifConfig:
         VERBOSITY = 0,   # verbosity level, determines how much debug output will be generated
         IMPORT_SKELETON = 0, # 0 = normal import, 1 = import file as skeleton, 2 = import mesh and attach to skeleton
         EXPORT_ANIMATION = 0, # export everything (1=geometry only, 2=animation only)
-        EXPORT_FORCEDDS = False, # force dds extension on texture files
+        EXPORT_FORCEDDS = True, # force dds extension on texture files
         EXPORT_SKINPARTITION = True, # generate skin partition
         EXPORT_BONESPERVERTEX = 4,
         EXPORT_BONESPERPARTITION = 18,
@@ -469,7 +469,7 @@ class NifConfig:
             
             if self.config["EXPORT_VERSION"] in games_list:
                 self.guiElements["EXPORT_RESET"] = Draw.PushButton(
-                    "Reset Default Settings For Selected Game",
+                    "Restore Default Settings For Selected Game",
                     self.eventId("GAME_%s"%self.config["EXPORT_VERSION"]),
                     self.xPos, self.yPos, self.XCOLUMNSKIP, self.YLINESKIP)
                 self.yPos -= self.YLINESKIP
@@ -625,40 +625,35 @@ class NifConfig:
             self.config["IMPORT_APPLYSKINDEFORM"] = not self.config["IMPORT_APPLYSKINDEFORM"]
         elif evName[:5] == "GAME_":
             self.config["EXPORT_VERSION"] = evName[5:]
+            # settings that usually make sense, fail-safe
+            self.config["EXPORT_FORCEDDS"] = True
+            self.config["EXPORT_SMOOTHOBJECTSEAMS"] = True
+            self.config["EXPORT_STRIPIFY"] = False
+            self.config["EXPORT_STITCHSTRIPS"] = False
+            self.config["EXPORT_ANIMATION"] = 1
+            self.config["EXPORT_FLATTENSKIN"] = False
+            self.config["EXPORT_SKINPARTITION"] = False
+            self.config["EXPORT_BONESPERPARTITION"] = 4
+            self.config["EXPORT_PADBONES"] = False
             # set default settings per game
             if self.config["EXPORT_VERSION"] == "Morrowind":
-                self.config["EXPORT_STRIPIFY"] = False
-                self.config["EXPORT_STITCHSTRIPS"] = False
-                self.config["EXPORT_ANIMATION"] = 1
-                self.config["EXPORT_FLATTENSKIN"] = False
-                self.config["EXPORT_SKINPARTITION"] = False
-                self.config["EXPORT_PADBONES"] = False
+                pass # fail-safe settings work
             if self.config["EXPORT_VERSION"] == "Freedom Force vs. the 3rd Reich":
-                self.config["EXPORT_STRIPIFY"] = False
-                self.config["EXPORT_STITCHSTRIPS"] = False
-                self.config["EXPORT_ANIMATION"] = 1
-                self.config["EXPORT_FLATTENSKIN"] = False
-                self.config["EXPORT_BONESPERPARTITION"] = 4
                 self.config["EXPORT_SKINPARTITION"] = True
                 self.config["EXPORT_PADBONES"] = True
             elif self.config["EXPORT_VERSION"] == "Civilization IV":
                 self.config["EXPORT_STRIPIFY"] = True
                 self.config["EXPORT_STITCHSTRIPS"] = True
-                self.config["EXPORT_ANIMATION"] = 1
-                self.config["EXPORT_FLATTENSKIN"] = False
-                self.config["EXPORT_BONESPERPARTITION"] = 4
                 self.config["EXPORT_SKINPARTITION"] = True
-                self.config["EXPORT_PADBONES"] = False
             elif self.config["EXPORT_VERSION"] == "Oblivion":
                 self.config["EXPORT_STRIPIFY"] = True
-                self.config["EXPORT_STITCHSTRIPS"] = False
-                self.config["EXPORT_ANIMATION"] = 1
                 self.config["EXPORT_FLATTENSKIN"] = True
                 self.config["EXPORT_BONESPERPARTITION"] = 18
                 self.config["EXPORT_SKINPARTITION"] = True
-                self.config["EXPORT_PADBONES"] = False
+                # oblivion specific settings
                 self.config["EXPORT_BHKLISTSHAPE"] = False
                 self.config["EXPORT_MOPP"] = False
+                self.config["EXPORT_OB_MATERIAL"] = 9 # wood
                 # rigid body: static
                 self.config["EXPORT_OB_BSXFLAGS"] = 2
                 self.config["EXPORT_OB_MASS"] = 1.0
