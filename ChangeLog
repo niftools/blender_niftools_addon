@@ -1,3 +1,8 @@
+Version 2.1.21 (***)
+Export: new settings for Oblivion to control rigid body parameters and material
+Config: refactored the config gui to get rid of most geometry parameters when
+drawing the gui
+
 Version 2.1.20 (Nov 3, 2007)
 Import/Export: updated for PyFFI 0.6
 Export: ignore lattices when checking for non-uniformly scaled objects
