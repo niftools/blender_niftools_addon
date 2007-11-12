@@ -358,7 +358,7 @@ and turn off envelopes."""%ob.getName()
                 if hascollision:
                     bsx = self.createBlock("BSXFlags")
                     bsx.name = 'BSX'
-                    bsx.integerData = 2 # enable collision
+                    bsx.integerData = self.EXPORT_OB_BSXFLAGS # enable collision
                     root_block.addExtraData(bsx)
 
                 # many Oblivion nifs have a UPB, but export is disabled as
@@ -1939,9 +1939,10 @@ and turn off envelopes."""%ob.getName()
         coll_ispacked = (ob.rbShapeBoundType == Blender.Object.RBShapes['POLYHEDERON'])
 
         # find physics properties
-        material = NifFormat.HavokMaterial.HAV_MAT_WOOD
-        layer = NifFormat.OblivionLayer.OL_STATIC
-        motionsys = NifFormat.MotionSystem.MO_SYS_KEYFRAMED
+        material = self.EXPORT_OB_MATERIAL
+        layer = self.EXPORT_OB_LAYER
+        motionsys = self.EXPORT_OB_MOTIONSYSTEM
+        # copy physics properties from Blender properties, if they exist
         for prop in ob.getAllProperties():
             if prop.getName() == 'HavokMaterial':
                 material = getattr(NifFormat.HavokMaterial, prop.getData())
@@ -1981,6 +1982,7 @@ and turn off envelopes."""%ob.getName()
             colbody.rotation.x = 0.0
             colbody.rotation.y = 0.0
             colbody.rotation.z = 0.0
+            colbody.mass = self.EXPORT_OB_MASS
             colbody.linearDamping = 0.1
             colbody.angularDamping = 0.05
             colbody.friction = 0.3
@@ -1989,12 +1991,13 @@ and turn off envelopes."""%ob.getName()
             colbody.maxAngularVelocity = 31.4159
             colbody.penetrationDepth = 0.15
             colbody.motionSystem = motionsys
-            colbody.unknownByte1 = 1
-            colbody.unknownByte2 = 1
-            colbody.qualityType = NifFormat.MotionQuality.MO_QUAL_FIXED
+            colbody.unknownByte1 = self.EXPORT_OB_UNKNOWNBYTE1
+            colbody.unknownByte2 = self.EXPORT_OB_UNKNOWNBYTE2
+            colbody.qualityType = self.EXPORT_OB_QUALITYTYPE
             colbody.unknownInt6 = 3216641024
             colbody.unknownInt7 = 3249467941
             colbody.unknownInt8 = 83276283
+            colbody.unknownInt9 = self.EXPORT_OB_WIND
         else:
             colbody = parent_block.collisionObject.body
 

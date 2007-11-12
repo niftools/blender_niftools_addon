@@ -88,11 +88,20 @@ class NifConfig:
         EXPORT_PADBONES = False,
         EXPORT_STRIPIFY = True,
         EXPORT_STITCHSTRIPS = False,
-        EXPORT_SMOOTHOBJECTSEAMS = False,
+        EXPORT_SMOOTHOBJECTSEAMS = True,
         IMPORT_SENDBONESTOBINDPOS = True,
-        IMPORT_APPLYSKINDEFORM = True,
+        IMPORT_APPLYSKINDEFORM = False,
         EXPORT_BHKLISTSHAPE = False,
-        EXPORT_MOPP = True,
+        EXPORT_MOPP = False,
+        EXPORT_OB_BSXFLAGS = 2,
+        EXPORT_OB_MASS = 1.0,
+        EXPORT_OB_MOTIONSYSTEM = 7, # keyframed
+        EXPORT_OB_UNKNOWNBYTE1 = 1,
+        EXPORT_OB_UNKNOWNBYTE2 = 1,
+        EXPORT_OB_QUALITYTYPE = 1, # fixed
+        EXPORT_OB_WIND = 0,
+        EXPORT_OB_LAYER = 1, # static
+        EXPORT_OB_MATERIAL = 9, # wood
         PROFILE = '') # name of file where Python profiler dumps the profile; set to empty string to turn off profiling
 
     def __init__(self):
@@ -222,24 +231,31 @@ class NifConfig:
         self.yPos = self.YORIGIN + Blender.Window.GetAreaSize()[1]
 
     def drawSlider(
-        self, text, event_name, val, min_val, max_val, callback):
+        self, text, event_name, min_val, max_val, callback, val = None,
+        num_items = 1, item = 0):
         """Draw a slider."""
+        if val is None:
+            val = self.config[event_name]
+        width = self.XCOLUMNSKIP//num_items
         self.guiElements[event_name] = Draw.Slider(
             text,
             self.eventId(event_name),
-            self.xPos, self.yPos, self.XCOLUMNSKIP, self.YLINESKIP,
+            self.xPos + item*width, self.yPos, width, self.YLINESKIP,
             val, min_val, max_val,
             0, # realtime
             "", # tooltip,
             callback)
-        self.yPos -= self.YLINESKIP
+        if item + 1 == num_items:
+            self.yPos -= self.YLINESKIP
 
-    def drawLabel(self, text, event_name):
+    def drawLabel(self, text, event_name, num_items = 1, item = 0):
         """Draw a line of text."""
+        width = self.XCOLUMNSKIP//num_items
         self.guiElements[event_name] = Draw.Label(
             text,
-            self.xPos, self.yPos, self.XCOLUMNSKIP, self.YLINESKIP)
-        self.yPos -= self.YLINESKIP
+            self.xPos + item*width, self.yPos, width, self.YLINESKIP)
+        if item + 1 == num_items:
+            self.yPos -= self.YLINESKIP
 
     def drawList(self, text, event_name_prefix, val):
         """Create elements to select a list of things.
@@ -269,8 +285,10 @@ class NifConfig:
             self.xPos+self.XCOLUMNSKIP-30, self.yPos, 30, self.YLINESKIP)
         self.yPos -= self.YLINESKIP
 
-    def drawToggle(self, text, event_name, val, num_items = 1, item = 0):
+    def drawToggle(self, text, event_name, val = None, num_items = 1, item = 0):
         """Draw a toggle button."""
+        if val == None:
+            val = self.config[event_name]
         width = self.XCOLUMNSKIP//num_items
         self.guiElements[event_name] = Draw.Toggle(
             text,
@@ -291,9 +309,11 @@ class NifConfig:
             self.yPos -= self.YLINESKIP
 
     def drawNumber(
-        self, text, event_name, val, min_val, max_val, callback,
+        self, text, event_name, min_val, max_val, callback, val = None,
         num_items = 1, item = 0):
         """Draw an input widget for numbers."""
+        if val is None:
+            val = self.config[event_name]
         width = self.XCOLUMNSKIP//num_items
         self.guiElements[event_name] = Draw.Number(
             text,
@@ -303,7 +323,6 @@ class NifConfig:
             min_val, max_val,
             "", # tooltip
             callback)
-        self.yPos -= self.YLINESKIP
         if item + 1 == num_items:
             self.yPos -= self.YLINESKIP
 
@@ -335,8 +354,7 @@ class NifConfig:
 
             self.drawToggle(
                 text = "Import Animation",
-                event_name = "IMPORT_ANIMATION",
-                val = self.config["IMPORT_ANIMATION"])
+                event_name = "IMPORT_ANIMATION")
             self.drawYSep()
 
             self.drawToggle(
@@ -351,12 +369,10 @@ class NifConfig:
                 num_items = 2, item = 1)
             self.drawToggle(
                 text = "Send Bones To Bind Position",
-                event_name = "IMPORT_SENDBONESTOBINDPOS",
-                val = self.config["IMPORT_SENDBONESTOBINDPOS"])
+                event_name = "IMPORT_SENDBONESTOBINDPOS")
             self.drawToggle(
                 text = "Apply Skin Deformation",
-                event_name = "IMPORT_APPLYSKINDEFORM",
-                val = self.config["IMPORT_APPLYSKINDEFORM"])
+                event_name = "IMPORT_APPLYSKINDEFORM")
             self.drawYSep()
             
             self.drawToggle(
@@ -387,46 +403,38 @@ class NifConfig:
 
             self.drawToggle(
                 text = "Force DDS Extension",
-                event_name = "EXPORT_FORCEDDS",
-                val = self.config["EXPORT_FORCEDDS"])
+                event_name = "EXPORT_FORCEDDS")
             self.drawYSep()
 
             self.drawToggle(
                 text = "Stripify Geometries",
                 event_name = "EXPORT_STRIPIFY",
-                val = self.config["EXPORT_STRIPIFY"],
                 num_items = 2, item = 0)
             self.drawToggle(
                 text = "Stitch Strips",
                 event_name = "EXPORT_STITCHSTRIPS",
-                val = self.config["EXPORT_STITCHSTRIPS"],
                 num_items = 2, item = 1)
             self.drawYSep()
 
             self.drawToggle(
                 text = "Smoothen Inter-Object Seams",
-                event_name = "EXPORT_SMOOTHOBJECTSEAMS",
-                val = self.config["EXPORT_SMOOTHOBJECTSEAMS"])
+                event_name = "EXPORT_SMOOTHOBJECTSEAMS")
             self.drawYSep()
 
             self.drawToggle(
                 text = "Flatten Skin",
-                event_name = "EXPORT_FLATTENSKIN",
-                val = self.config["EXPORT_FLATTENSKIN"])
+                event_name = "EXPORT_FLATTENSKIN")
             self.drawToggle(
                 text = "Export Skin Partition",
                 event_name = "EXPORT_SKINPARTITION",
-                val = self.config["EXPORT_SKINPARTITION"],
                 num_items = 3, item = 0)
             self.drawToggle(
                 text = "Pad & Sort Bones",
                 event_name = "EXPORT_PADBONES",
-                val = self.config["EXPORT_PADBONES"],
                 num_items = 3, item = 1)
             self.drawNumber(
                 text = "Max Bones",
                 event_name = "EXPORT_BONESPERPARTITION",
-                val = self.config["EXPORT_BONESPERPARTITION"],
                 min_val = 4, max_val = 18,
                 callback = self.updateBonesPerPartition,
                 num_items = 3, item = 2)
@@ -477,19 +485,85 @@ class NifConfig:
             event_name = "CANCEL",
             num_items = 3, item = 2)
 
-        # export-only options
+        # export-only options for oblivion
         if self.target == self.TARGET_EXPORT and self.config["EXPORT_VERSION"] == "Oblivion":
             self.drawNextColumn()
             
             self.drawToggle(
                 text = "Use bhkListShape",
-                event_name = "EXPORT_BHKLISTSHAPE",
-                val = self.config["EXPORT_BHKLISTSHAPE"])
+                event_name = "EXPORT_BHKLISTSHAPE")
             self.drawToggle(
                 text = "Export Mopp (EXPERIMENTAL)",
-                event_name = "EXPORT_MOPP",
-                val = self.config["EXPORT_MOPP"])
+                event_name = "EXPORT_MOPP")
             self.drawYSep()
+
+            self.drawNumber(
+                text = "Material:  ",
+                event_name = "EXPORT_OB_MATERIAL",
+                min_val = 0, max_val = 30,
+                callback = self.updateObMaterial)
+            self.drawYSep()
+
+            self.drawLabel(
+                text = "Rigid Body Settings",
+                event_name = "EXPORT_OB_RIGIDBODY_LABEL",
+                num_items = 3, item = 0)
+            self.drawPushButton(
+                text = "Static",
+                event_name = "EXPORT_OB_RIGIDBODY_STATIC",
+                num_items = 3, item = 1)
+            self.drawPushButton(
+                text = "Clutter",
+                event_name = "EXPORT_OB_RIGIDBODY_CLUTTER",
+                num_items = 3, item = 2)
+            self.drawNumber(
+                text = "BSX Flags:  ",
+                event_name = "EXPORT_OB_BSXFLAGS",
+                min_val = 2, max_val = 3,
+                callback = self.updateObBSXFlags,
+                num_items = 2, item = 0)
+            self.drawSlider(
+                text = "Mass:  ",
+                event_name = "EXPORT_OB_MASS",
+                min_val = 0.0, max_val = 120.0,
+                callback = self.updateObMass,
+                num_items = 2, item = 1)
+            self.drawNumber(
+                text = "Layer:  ",
+                event_name = "EXPORT_OB_LAYER",
+                min_val = 0, max_val = 57,
+                callback = self.updateObLayer,
+                num_items = 3, item = 0)
+            self.drawNumber(
+                text = "Motion System:  ",
+                event_name = "EXPORT_OB_MOTIONSYSTEM",
+                min_val = 0, max_val = 9,
+                callback = self.updateObMotionSystem,
+                num_items = 3, item = 1)
+            self.drawNumber(
+                text = "Quality Type:  ",
+                event_name = "EXPORT_OB_QUALITYTYPE",
+                min_val = 0, max_val = 8,
+                callback = self.updateObQualityType,
+                num_items = 3, item = 2)
+            self.drawNumber(
+                text = "Unk Byte 1:  ",
+                event_name = "EXPORT_OB_UNKNOWNBYTE1",
+                min_val = 1, max_val = 2,
+                callback = self.updateObUnknownByte1,
+                num_items = 3, item = 0)
+            self.drawNumber(
+                text = "Unk Byte 2:  ",
+                event_name = "EXPORT_OB_UNKNOWNBYTE2",
+                min_val = 1, max_val = 2,
+                callback = self.updateObUnknownByte2,
+                num_items = 3, item = 1)
+            self.drawNumber(
+                text = "Wind:  ",
+                event_name = "EXPORT_OB_WIND",
+                min_val = 0, max_val = 1,
+                callback = self.updateObWind,
+                num_items = 3, item = 2)
 
         Draw.Redraw(1)
 
@@ -559,8 +633,6 @@ class NifConfig:
                 self.config["EXPORT_FLATTENSKIN"] = False
                 self.config["EXPORT_SKINPARTITION"] = False
                 self.config["EXPORT_PADBONES"] = False
-                self.config["EXPORT_BHKLISTSHAPE"] = False
-                self.config["EXPORT_MOPP"] = False
             if self.config["EXPORT_VERSION"] == "Freedom Force vs. the 3rd Reich":
                 self.config["EXPORT_STRIPIFY"] = False
                 self.config["EXPORT_STITCHSTRIPS"] = False
@@ -569,8 +641,6 @@ class NifConfig:
                 self.config["EXPORT_BONESPERPARTITION"] = 4
                 self.config["EXPORT_SKINPARTITION"] = True
                 self.config["EXPORT_PADBONES"] = True
-                self.config["EXPORT_BHKLISTSHAPE"] = False
-                self.config["EXPORT_MOPP"] = False
             elif self.config["EXPORT_VERSION"] == "Civilization IV":
                 self.config["EXPORT_STRIPIFY"] = True
                 self.config["EXPORT_STITCHSTRIPS"] = True
@@ -579,10 +649,9 @@ class NifConfig:
                 self.config["EXPORT_BONESPERPARTITION"] = 4
                 self.config["EXPORT_SKINPARTITION"] = True
                 self.config["EXPORT_PADBONES"] = False
-                self.config["EXPORT_BHKLISTSHAPE"] = False
-                self.config["EXPORT_MOPP"] = False
             elif self.config["EXPORT_VERSION"] == "Oblivion":
                 self.config["EXPORT_STRIPIFY"] = True
+                self.config["EXPORT_STITCHSTRIPS"] = False
                 self.config["EXPORT_ANIMATION"] = 1
                 self.config["EXPORT_FLATTENSKIN"] = True
                 self.config["EXPORT_BONESPERPARTITION"] = 18
@@ -590,6 +659,15 @@ class NifConfig:
                 self.config["EXPORT_PADBONES"] = False
                 self.config["EXPORT_BHKLISTSHAPE"] = False
                 self.config["EXPORT_MOPP"] = False
+                # rigid body: static
+                self.config["EXPORT_OB_BSXFLAGS"] = 2
+                self.config["EXPORT_OB_MASS"] = 1.0
+                self.config["EXPORT_OB_MOTIONSYSTEM"] = 7 # keyframed
+                self.config["EXPORT_OB_UNKNOWNBYTE1"] = 1
+                self.config["EXPORT_OB_UNKNOWNBYTE2"] = 1
+                self.config["EXPORT_OB_QUALITYTYPE"] = 1 # fixed
+                self.config["EXPORT_OB_WIND"] = 0
+                self.config["EXPORT_OB_LAYER"] = 1 # static
         elif evName[:8] == "VERSION_":
             self.config["EXPORT_VERSION"] = evName[8:]
         elif evName == "EXPORT_FLATTENSKIN":
@@ -619,6 +697,24 @@ class NifConfig:
             self.config["EXPORT_BHKLISTSHAPE"] = not self.config["EXPORT_BHKLISTSHAPE"]
         elif evName == "EXPORT_MOPP":
             self.config["EXPORT_MOPP"] = not self.config["EXPORT_MOPP"]
+        elif evName == "EXPORT_OB_RIGIDBODY_STATIC":
+            self.config["EXPORT_OB_BSXFLAGS"] = 2
+            self.config["EXPORT_OB_MASS"] = 1.0
+            self.config["EXPORT_OB_MOTIONSYSTEM"] = 7 # keyframed
+            self.config["EXPORT_OB_UNKNOWNBYTE1"] = 1
+            self.config["EXPORT_OB_UNKNOWNBYTE2"] = 1
+            self.config["EXPORT_OB_QUALITYTYPE"] = 1 # fixed
+            self.config["EXPORT_OB_WIND"] = 0
+            self.config["EXPORT_OB_LAYER"] = 1 # static
+        elif evName == "EXPORT_OB_RIGIDBODY_CLUTTER":
+            self.config["EXPORT_OB_BSXFLAGS"] = 3
+            self.config["EXPORT_OB_MASS"] = 1.0
+            self.config["EXPORT_OB_MOTIONSYSTEM"] = 4 # keyframed
+            self.config["EXPORT_OB_UNKNOWNBYTE1"] = 2
+            self.config["EXPORT_OB_UNKNOWNBYTE2"] = 2
+            self.config["EXPORT_OB_QUALITYTYPE"] = 3 # fixed
+            self.config["EXPORT_OB_WIND"] = 0
+            self.config["EXPORT_OB_LAYER"] = 4 # clutter
         Draw.Redraw(1)
 
     def guiEvent(self, evt, val):
@@ -677,6 +773,33 @@ class NifConfig:
     def updateBonesPerPartition(self, evt, val):
         self.config["EXPORT_BONESPERPARTITION"] = val
         self.config["EXPORT_PADBONES"] = False
+
+    def updateObBSXFlags(self, evt, val):
+        self.config["EXPORT_OB_BSXFLAGS"] = val
+
+    def updateObMaterial(self, evt, val):
+        self.config["EXPORT_OB_MATERIAL"] = val
+
+    def updateObLayer(self, evt, val):
+        self.config["EXPORT_OB_LAYER"] = val
+
+    def updateObMass(self, evt, val):
+        self.config["EXPORT_OB_MASS"] = val
+
+    def updateObMotionSystem(self, evt, val):
+        self.config["EXPORT_OB_MOTIONSYSTEM"] = val
+
+    def updateObQualityType(self, evt, val):
+        self.config["EXPORT_OB_QUALITYTYPE"] = val
+
+    def updateObUnknownByte1(self, evt, val):
+        self.config["EXPORT_OB_UNKNOWNBYTE1"] = val
+
+    def updateObUnknownByte2(self, evt, val):
+        self.config["EXPORT_OB_UNKNOWNBYTE2"] = val
+
+    def updateObWind(self, evt, val):
+        self.config["EXPORT_OB_WIND"] = val
 
 # utility functions
     
