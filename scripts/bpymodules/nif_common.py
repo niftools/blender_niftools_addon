@@ -489,6 +489,11 @@ class NifConfig:
         if self.target == self.TARGET_EXPORT and self.config["EXPORT_VERSION"] == "Oblivion":
             self.drawNextColumn()
             
+            self.drawLabel(
+                text = "(see http://niftools.sourceforge.net/wiki/Blender/Collision)",
+                event_name = "EXPORT_OB_COLLISIONHTML")
+            self.drawYSep()
+
             self.drawToggle(
                 text = "Use bhkListShape",
                 event_name = "EXPORT_BHKLISTSHAPE")
