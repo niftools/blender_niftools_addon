@@ -360,6 +360,10 @@ and turn off envelopes."""%ob.getName()
                     bsx.name = 'BSX'
                     bsx.integerData = self.EXPORT_OB_BSXFLAGS # enable collision
                     root_block.addExtraData(bsx)
+                # update rigid body center of gravity
+                for block in self.blocks:
+                    if isinstance(block, NifFormat.bhkRigidBody):
+                        block.updateCenter()
 
                 # many Oblivion nifs have a UPB, but export is disabled as
                 # they do not seem to affect anything in the game

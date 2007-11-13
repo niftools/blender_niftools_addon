@@ -1,5 +1,6 @@
 Version 2.1.21 (***)
 Export: new settings for Oblivion to control rigid body parameters and material
+Export: calculation of center of gravitation in rigid body
 Config: refactored the config gui to get rid of most geometry parameters when
 drawing the gui
 
