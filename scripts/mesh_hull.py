@@ -9,6 +9,7 @@ Tooltip: 'Hull Selected Objects'
 """
 
 #Submenu: 'Cylinder' cylinder
+#Submenu: 'Convex' convex
 
 # -------------------------------------------------------------------------- 
 # Hull 1.0 by Amorilia 
@@ -54,12 +55,12 @@ def hull_box(ob, me):
 
     # find box hull
     # todo: improve algorithm
-    minx = min([v.co[0] for v in me.verts])
-    miny = min([v.co[1] for v in me.verts])
-    minz = min([v.co[2] for v in me.verts])
-    maxx = max([v.co[0] for v in me.verts])
-    maxy = max([v.co[1] for v in me.verts])
-    maxz = max([v.co[2] for v in me.verts])
+    minx = min(v.co[0] for v in me.verts)
+    miny = min(v.co[1] for v in me.verts)
+    minz = min(v.co[2] for v in me.verts)
+    maxx = max(v.co[0] for v in me.verts)
+    maxy = max(v.co[1] for v in me.verts)
+    maxz = max(v.co[2] for v in me.verts)
 
     # create box
     box = Blender.Mesh.New('box')
@@ -82,12 +83,12 @@ def hull_sphere(ob, me):
     """Hull mesh in a sphere."""
 
     # find square box hull
-    minx = min([v.co[0] for v in me.verts])
-    miny = min([v.co[1] for v in me.verts])
-    minz = min([v.co[2] for v in me.verts])
-    maxx = max([v.co[0] for v in me.verts])
-    maxy = max([v.co[1] for v in me.verts])
-    maxz = max([v.co[2] for v in me.verts])
+    minx = min(v.co[0] for v in me.verts)
+    miny = min(v.co[1] for v in me.verts)
+    minz = min(v.co[2] for v in me.verts)
+    maxx = max(v.co[0] for v in me.verts)
+    maxy = max(v.co[1] for v in me.verts)
+    maxz = max(v.co[2] for v in me.verts)
 
     cx = (minx+maxx)*0.5
     cy = (miny+maxy)*0.5
