@@ -5,14 +5,14 @@ Blender: 244
 Group: 'Mesh'
 Submenu: 'Box' box
 Submenu: 'Sphere' sphere
+Submenu: 'Convex' convex
 Tooltip: 'Hull Selected Objects'
 """
 
 #Submenu: 'Cylinder' cylinder
-#Submenu: 'Convex' convex
 
 # -------------------------------------------------------------------------- 
-# Hull 1.0 by Amorilia 
+# Hull 1.1 by Amorilia 
 # -------------------------------------------------------------------------- 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -49,6 +49,8 @@ Tooltip: 'Hull Selected Objects'
 
 import Blender
 from Blender import Window, sys
+
+from PyFFI.Utils import QuickHull
 
 def hull_box(ob, me):
     """Hull mesh in a box."""
@@ -124,6 +126,29 @@ def hull_sphere(ob, me):
     boxob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
     boxob.rbShapeBoundType = Blender.Object.RBShapes['SPHERE']
 
+def hull_convex(ob, me, precision = 0.1):
+    """Hull mesh in a convex shape."""
+
+    # find convex hull
+    vertices, triangles = QuickHull.qhull3d([ tuple(v.co) for v in me.verts ])
+
+    # create convex mesh
+    box = Blender.Mesh.New('convexpoly')
+    for vert in vertices:
+        box.verts.extend(*vert)
+    for triangle in triangles:
+        box.faces.extend(triangle)
+
+    # link mesh to scene and set transform
+    scn = Blender.Scene.GetCurrent()
+    boxob = scn.objects.new(box, 'convexpoly')
+    boxob.setMatrix(ob.getMatrix('worldspace'))
+
+    # set bounds type
+    boxob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
+    boxob.rbShapeBoundType = 5 # convex hull shape not in blender Python API; Blender.Object.RBShapes['CONVEXHULL']?
+    boxob.drawMode = Blender.Object.DrawModes['WIRE']
+
 def main(arg):
     # get selected meshes
     obs = [ob for ob in Blender.Object.GetSelected() if ob.type == 'Mesh']
@@ -141,6 +166,13 @@ def main(arg):
         me = ob.getData(mesh=1) # get Mesh, not NMesh
         if arg == 'box': hull_box(ob, me)
         elif arg == 'sphere': hull_sphere(ob, me)
+        elif arg == 'convex':
+            PREF_PRECISION = Blender.Draw.Create(0.1)
+            pup_block = [
+                ('Precision', PREF_PRECISION, 0.001, 2.0, 'Maximum distance by which a vertex may fall outside the hull: larger values yield simpler hulls at the expense of missing more vertices.') ]
+            if not Blender.Draw.PupBlock('Convex Hull', pup_block):
+                return
+            hull_convex(ob, me, precision = PREF_PRECISION.val)
 
     print 'Hull finished in %.2f seconds' % (sys.time()-t)
     Window.WaitCursor(0)
