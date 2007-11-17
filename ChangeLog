@@ -1,68 +1,71 @@
-Version 2.1.21 (***)
-Export: new settings for Oblivion to control rigid body parameters and material
-Export: calculation of center of gravitation in rigid body
-Config: refactored the config gui to get rid of most geometry parameters when
+Version 2.2.0 (***)
+* Export: new settings for Oblivion to control rigid body parameters and
+material
+* Export: calculation of mass, center of gravity, and inertia tensor in rigid 
+body, which is useful for non-static clutter
+* Config: refactored the config gui to get rid of most geometry parameters when
 drawing the gui
+* updated hull script for quickly creating approximate convex bounding shapes
 
 Version 2.1.20 (Nov 3, 2007)
-Import/Export: updated for PyFFI 0.6
-Export: ignore lattices when checking for non-uniformly scaled objects
-Export: ignore name when avoiding duplicate material properties
-Test: added babelfish and oblivion full body import/export tests
+* Import/Export: updated for PyFFI 0.6
+* Export: ignore lattices when checking for non-uniformly scaled objects
+* Export: ignore name when avoiding duplicate material properties
+* Test: added babelfish and oblivion full body import/export tests
 
 Version 2.1.19 (Oct 26, 2007)
-Import/Export: emulate apply mode via Blender's texture blending mode
+* Import/Export: emulate apply mode via Blender's texture blending mode
 
-Version 2.1.18 (Oct 25, 2007)
+* Version 2.1.18 (Oct 25, 2007)
 Export: recycle material, alpha, specular, and texturing properties
 
 Version 2.1.17 (Oct 23, 2007)
-Test: unselect objects when running each test (prevents duplicate exports)
-Import: new option to import bones with original nif matrices (useful in
+* Test: unselect objects when running each test (prevents duplicate exports)
+* Import: new option to import bones with original nif matrices (useful in
 some cases where you do not want to bother with the correction matrices)
-Import: some minor optimizations and code cleanups
-Import: changed some lists to generators to save on memory
-Import: fixed trivial bug in get_blender_object
-Export: improved progress bar
-Export: warn when skin partition settings could be improved on Oblivion export
-Export: check blender objects on non-uniform scaling before export so you do not
-need to wait too long before the scripts complain about it
+* Import: some minor optimizations and code cleanups
+* Import: changed some lists to generators to save on memory
+* Import: fixed trivial bug in get_blender_object
+* Export: improved progress bar
+* Export: warn when skin partition settings could be improved on Oblivion export
+* Export: check blender objects on non-uniform scaling before export so you do
+not need to wait too long before the scripts complain about it
 
 Version 2.1.16 (Oct 21, 2007)
-Import: inform about name of Blender object and nif block when losing vertex
+* Import: inform about name of Blender object and nif block when losing vertex
 weights
-Import: update scene even if import fails
-Import: fixed error with parentship if you imported a skeleton without
+* Import: update scene even if import fails
+* Import: fixed error with parentship if you imported a skeleton without
 selecting anything
-Import: new experimental option for importing meshes and parenting them to the
+* Import: new experimental option for importing meshes and parenting them to the
 selected armature (it seems to work pretty well for Oblivion meshes but not so
 good on Morrowind meshes)
-Import: improved morrowind skeleton import (for example via base_anim files)
+* Import: improved morrowind skeleton import (for example via base_anim files)
 
 Version 2.1.15 (Oct 19, 2007)
-pycheck: added pychecker script (see http://pychecker.sourceforge.net/)
-test: added test script to automatically run importer and exporter on a range
+* pycheck: added pychecker script (see http://pychecker.sourceforge.net/)
+* test: added test script to automatically run importer and exporter on a range
 of selected nif and blend files
-Import/Export: PyFFI 0.5 is now required; the Blender scripts can now read
+* Import/Export: PyFFI 0.5 is now required; the Blender scripts can now read
 and write a whole range of new nif versions (see PyFFI ChangeLog for details)
-Import/Export: small GUI improvements
-Import: ignore NiCamera root blocks instead of raising an exception on them
-Import: fixed a bug preventing animation import
-Import: fixed some progress bar issues
-Import: fixed bug in case armature parents another armature (i.e. solstheim's
+* Import/Export: small GUI improvements
+* Import: ignore NiCamera root blocks instead of raising an exception on them
+* Import: fixed a bug preventing animation import
+* Import: fixed some progress bar issues
+* Import: fixed bug in case armature parents another armature (i.e. solstheim's
 ice minion raider), this is still not working perfectly but at least the import
 completes without raising exceptions
-Import: IMPORT_ prefix for realign option (in accordance with all other keys)
-Import: removed duplicate calculation of armature inverse matrix
-Import: replaced the deprecated method of linking armature to the scene
-Export: improved flatten skin so it works better in some cases
+* Import: IMPORT_ prefix for realign option (in accordance with all other keys)
+* Import: removed duplicate calculation of armature inverse matrix
+* Import: replaced the deprecated method of linking armature to the scene
+* Export: improved flatten skin so it works better in some cases
 
 Version 2.1.14 (Oct 14, 2007)
-Import: fixed a transform bug which was introduced in 2.1.13, skinned
+* Import: fixed a transform bug which was introduced in 2.1.13, skinned
 geometries had their transform applied twice, so this fixes import of those
 skinned models that do not have a unit transform.
-Export: fixed a typo
-Import/Export/Config/GUI: restructured the scripts, in particular the
+* Export: fixed a typo
+* Import/Export/Config/GUI: restructured the scripts, in particular the
 import script has been transformed into an OOP class, so it requires
 no more globals for various settings. All gui and config related
 things have moved to a new nif_common.py library, as well as some
@@ -72,18 +75,18 @@ and export script now also use exactly the same system to run the
 config gui.
 
 Version 2.1.13 (Oct 13, 2007)
-Import: fixed transform error while joining geometries (this mostly affects
+* Import: fixed transform error while joining geometries (this mostly affects
 the import of collision geometries)
-Import: optimized morph import yielding less array lookups and faster code
-Import: simplified texture searching and better linux support by looking for
+* Import: optimized morph import yielding less array lookups and faster code
+* Import: simplified texture searching and better linux support by looking for
 lower case versions of names too
-Import: automatically remove duplicate vertices after joining Morrowind
+* Import: automatically remove duplicate vertices after joining Morrowind
 collision geometries
 
 Version 2.1.12 (Oct 11, 2007)
-Import: provide sensible error message on kf import
-Export: set flags to 0x000E for Oblivion ninodes and nitrishapes/nitristrips
-Export: automatically set blender collision type, draw type, and draw mode on
+* Import: provide sensible error message on kf import
+* Export: set flags to 0x000E for Oblivion ninodes and nitrishapes/nitristrips
+* Export: automatically set blender collision type, draw type, and draw mode on
 old style (RootCollisionNode named mesh) morrowind collision export
 
 Version 2.1.11 (Oct 3, 2007)

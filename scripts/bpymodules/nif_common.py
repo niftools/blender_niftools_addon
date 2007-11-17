@@ -1,7 +1,7 @@
 """Common functions for the Blender nif import and export scripts."""
 
-__version__ = "2.1.21"
-__requiredpyffiversion__ = "0.6"
+__version__ = "2.2.0"
+__requiredpyffiversion__ = "0.7"
 __requiredblenderversion__ = "245"
 
 # --------------------------------------------------------------------------
@@ -94,7 +94,7 @@ class NifConfig:
         EXPORT_BHKLISTSHAPE = False,
         EXPORT_MOPP = False,
         EXPORT_OB_BSXFLAGS = 2,
-        EXPORT_OB_MASS = 1.0,
+        EXPORT_OB_DENSITY = 1.0,
         EXPORT_OB_MOTIONSYSTEM = 7, # keyframed
         EXPORT_OB_UNKNOWNBYTE1 = 1,
         EXPORT_OB_UNKNOWNBYTE2 = 1,
@@ -528,10 +528,10 @@ class NifConfig:
                 callback = self.updateObBSXFlags,
                 num_items = 2, item = 0)
             self.drawSlider(
-                text = "Mass:  ",
-                event_name = "EXPORT_OB_MASS",
-                min_val = 0.0, max_val = 120.0,
-                callback = self.updateObMass,
+                text = "Mass Density:  ",
+                event_name = "EXPORT_OB_DENSITY",
+                min_val = 0.1, max_val = 10.0,
+                callback = self.updateObDensity,
                 num_items = 2, item = 1)
             self.drawNumber(
                 text = "Layer:  ",
@@ -661,7 +661,7 @@ class NifConfig:
                 self.config["EXPORT_OB_MATERIAL"] = 9 # wood
                 # rigid body: static
                 self.config["EXPORT_OB_BSXFLAGS"] = 2
-                self.config["EXPORT_OB_MASS"] = 1.0
+                self.config["EXPORT_OB_DENSITY"] = 1.0
                 self.config["EXPORT_OB_MOTIONSYSTEM"] = 7 # keyframed
                 self.config["EXPORT_OB_UNKNOWNBYTE1"] = 1
                 self.config["EXPORT_OB_UNKNOWNBYTE2"] = 1
@@ -699,7 +699,7 @@ class NifConfig:
             self.config["EXPORT_MOPP"] = not self.config["EXPORT_MOPP"]
         elif evName == "EXPORT_OB_RIGIDBODY_STATIC":
             self.config["EXPORT_OB_BSXFLAGS"] = 2
-            self.config["EXPORT_OB_MASS"] = 1.0
+            self.config["EXPORT_OB_DENSITY"] = 1.0
             self.config["EXPORT_OB_MOTIONSYSTEM"] = 7 # keyframed
             self.config["EXPORT_OB_UNKNOWNBYTE1"] = 1
             self.config["EXPORT_OB_UNKNOWNBYTE2"] = 1
@@ -708,7 +708,7 @@ class NifConfig:
             self.config["EXPORT_OB_LAYER"] = 1 # static
         elif evName == "EXPORT_OB_RIGIDBODY_CLUTTER":
             self.config["EXPORT_OB_BSXFLAGS"] = 3
-            self.config["EXPORT_OB_MASS"] = 1.0
+            self.config["EXPORT_OB_DENSITY"] = 1.0
             self.config["EXPORT_OB_MOTIONSYSTEM"] = 4 # keyframed
             self.config["EXPORT_OB_UNKNOWNBYTE1"] = 2
             self.config["EXPORT_OB_UNKNOWNBYTE2"] = 2
@@ -783,8 +783,8 @@ class NifConfig:
     def updateObLayer(self, evt, val):
         self.config["EXPORT_OB_LAYER"] = val
 
-    def updateObMass(self, evt, val):
-        self.config["EXPORT_OB_MASS"] = val
+    def updateObDensity(self, evt, val):
+        self.config["EXPORT_OB_DENSITY"] = val
 
     def updateObMotionSystem(self, evt, val):
         self.config["EXPORT_OB_MOTIONSYSTEM"] = val

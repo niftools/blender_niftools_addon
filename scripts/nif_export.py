@@ -363,7 +363,7 @@ and turn off envelopes."""%ob.getName()
                 # update rigid body center of gravity
                 for block in self.blocks:
                     if isinstance(block, NifFormat.bhkRigidBody):
-                        block.updateCenter()
+                        block.updateMassCenterInertia(density = self.EXPORT_OB_DENSITY)
 
                 # many Oblivion nifs have a UPB, but export is disabled as
                 # they do not seem to affect anything in the game
@@ -1986,7 +1986,7 @@ and turn off envelopes."""%ob.getName()
             colbody.rotation.x = 0.0
             colbody.rotation.y = 0.0
             colbody.rotation.z = 0.0
-            colbody.mass = self.EXPORT_OB_MASS
+            colbody.mass = 1.0 # will be fixed later
             colbody.linearDamping = 0.1
             colbody.angularDamping = 0.05
             colbody.friction = 0.3
