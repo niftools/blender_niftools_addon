@@ -4,7 +4,6 @@ __version__ = "2.2.0"
 __requiredpyffiversion__ = "0.7"
 __requiredblenderversion__ = "245"
 
-# --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
 # 
 # BSD License
@@ -36,9 +35,6 @@ __requiredblenderversion__ = "245"
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENCE BLOCK *****
-# --------------------------------------------------------------------------
-
-# imports
 
 import Blender
 from Blender import Draw, Registry
@@ -528,7 +524,7 @@ class NifConfig:
                 callback = self.updateObBSXFlags,
                 num_items = 2, item = 0)
             self.drawSlider(
-                text = "Mass Density:  ",
+                text = "Density:  ",
                 event_name = "EXPORT_OB_DENSITY",
                 min_val = 0.1, max_val = 10.0,
                 callback = self.updateObDensity,
