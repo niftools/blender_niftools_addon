@@ -1120,7 +1120,7 @@ class NifImport:
         verts = niData.vertices
         
         # Faces
-        tris = niData.getTriangles()
+        tris = [ list(tri) for tri in niData.getTriangles() ]
         
         # "Sticky" UV coordinates. these are transformed in Blender UV's
         # only the first UV set is loaded right now
