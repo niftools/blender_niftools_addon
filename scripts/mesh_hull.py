@@ -52,17 +52,17 @@ from Blender import Window, sys
 
 from PyFFI.Utils import QuickHull
 
-def hull_box(ob, me):
+def hull_box(ob, me, selected_only):
     """Hull mesh in a box."""
 
     # find box hull
     # todo: improve algorithm
-    minx = min(v.co[0] for v in me.verts)
-    miny = min(v.co[1] for v in me.verts)
-    minz = min(v.co[2] for v in me.verts)
-    maxx = max(v.co[0] for v in me.verts)
-    maxy = max(v.co[1] for v in me.verts)
-    maxz = max(v.co[2] for v in me.verts)
+    minx = min(v.co[0] for v in me.verts if v.sel or not selected_only)
+    miny = min(v.co[1] for v in me.verts if v.sel or not selected_only)
+    minz = min(v.co[2] for v in me.verts if v.sel or not selected_only)
+    maxx = max(v.co[0] for v in me.verts if v.sel or not selected_only)
+    maxy = max(v.co[1] for v in me.verts if v.sel or not selected_only)
+    maxz = max(v.co[2] for v in me.verts if v.sel or not selected_only)
 
     # create box
     box = Blender.Mesh.New('box')
@@ -70,7 +70,8 @@ def hull_box(ob, me):
         for y in [miny, maxy]:
             for z in [minz, maxz]:
                 box.verts.extend(x,y,z)
-    box.faces.extend([[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
+    box.faces.extend(
+        [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
 
     # link box to scene and set transform
     scn = Blender.Scene.GetCurrent()
@@ -81,16 +82,16 @@ def hull_box(ob, me):
     boxob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
     boxob.rbShapeBoundType = Blender.Object.RBShapes['BOX']
 
-def hull_sphere(ob, me):
+def hull_sphere(ob, me, selected_only):
     """Hull mesh in a sphere."""
 
     # find square box hull
-    minx = min(v.co[0] for v in me.verts)
-    miny = min(v.co[1] for v in me.verts)
-    minz = min(v.co[2] for v in me.verts)
-    maxx = max(v.co[0] for v in me.verts)
-    maxy = max(v.co[1] for v in me.verts)
-    maxz = max(v.co[2] for v in me.verts)
+    minx = min(v.co[0] for v in me.verts if v.sel or not selected_only)
+    miny = min(v.co[1] for v in me.verts if v.sel or not selected_only)
+    minz = min(v.co[2] for v in me.verts if v.sel or not selected_only)
+    maxx = max(v.co[0] for v in me.verts if v.sel or not selected_only)
+    maxy = max(v.co[1] for v in me.verts if v.sel or not selected_only)
+    maxz = max(v.co[2] for v in me.verts if v.sel or not selected_only)
 
     cx = (minx+maxx)*0.5
     cy = (miny+maxy)*0.5
@@ -115,7 +116,8 @@ def hull_sphere(ob, me):
         for y in [miny, maxy]:
             for z in [minz, maxz]:
                 box.verts.extend(x,y,z)
-    box.faces.extend([[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
+    box.faces.extend(
+        [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
 
     # link box to scene and set transform
     scn = Blender.Scene.GetCurrent()
@@ -126,11 +128,13 @@ def hull_sphere(ob, me):
     boxob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
     boxob.rbShapeBoundType = Blender.Object.RBShapes['SPHERE']
 
-def hull_convex(ob, me, precision = 0.1):
+def hull_convex(ob, me, selected_only, precision = 0.1):
     """Hull mesh in a convex shape."""
 
     # find convex hull
-    vertices, triangles = QuickHull.qhull3d([ tuple(v.co) for v in me.verts ],
+    vertices, triangles = QuickHull.qhull3d([ tuple(v.co)
+                                              for v in me.verts
+                                              if v.sel or not selected_only ],
                                             precision = precision)
 
     # create convex mesh
@@ -165,15 +169,18 @@ def main(arg):
     num_affected = 0
     for ob in obs:
         me = ob.getData(mesh=1) # get Mesh, not NMesh
-        if arg == 'box': hull_box(ob, me)
-        elif arg == 'sphere': hull_sphere(ob, me)
+        # are any vertices selected?
+        selected_only = is_editmode and (1 in ( vert.sel for vert in me.verts ))
+        # create mesh by requested type
+        if arg == 'box': hull_box(ob, me, selected_only)
+        elif arg == 'sphere': hull_sphere(ob, me, selected_only)
         elif arg == 'convex':
             PREF_PRECISION = Blender.Draw.Create(0.1)
             pup_block = [
                 ('Precision', PREF_PRECISION, 0.001, 2.0, 'Maximum distance by which a vertex may fall outside the hull: larger values yield simpler hulls at the expense of missing more vertices.') ]
             if not Blender.Draw.PupBlock('Convex Hull', pup_block):
                 return
-            hull_convex(ob, me, precision = PREF_PRECISION.val)
+            hull_convex(ob, me, selected_only, precision = PREF_PRECISION.val)
 
     print 'Hull finished in %.2f seconds' % (sys.time()-t)
     Window.WaitCursor(0)

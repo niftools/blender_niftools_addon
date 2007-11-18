@@ -6,6 +6,8 @@ body, which is useful for non-static clutter
 * Config: refactored the config gui to get rid of most geometry parameters when
 drawing the gui
 * updated hull script for quickly creating approximate convex bounding shapes
+* the hull script will only hull selected vertices when you run the script
+in edit mode
 
 Version 2.1.20 (Nov 3, 2007)
 * Import/Export: updated for PyFFI 0.6
