@@ -130,7 +130,8 @@ def hull_convex(ob, me, precision = 0.1):
     """Hull mesh in a convex shape."""
 
     # find convex hull
-    vertices, triangles = QuickHull.qhull3d([ tuple(v.co) for v in me.verts ])
+    vertices, triangles = QuickHull.qhull3d([ tuple(v.co) for v in me.verts ],
+                                            precision = precision)
 
     # create convex mesh
     box = Blender.Mesh.New('convexpoly')
