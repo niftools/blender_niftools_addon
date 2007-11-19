@@ -364,21 +364,8 @@ and turn off envelopes."""%ob.getName()
                 for block in self.blocks:
                     if isinstance(block, NifFormat.bhkRigidBody):
                         block.updateMassCenterInertia(
-                            density = 1, solid = self.EXPORT_OB_SOLID)
-                        mass_correction = self.EXPORT_OB_MASS / block.mass
-                        block.mass *= mass_correction
-                        block.inertia[0] *= mass_correction
-                        block.inertia[1] *= mass_correction
-                        block.inertia[2] *= mass_correction
-                        block.inertia[3] *= mass_correction
-                        block.inertia[4] *= mass_correction
-                        block.inertia[5] *= mass_correction
-                        block.inertia[6] *= mass_correction
-                        block.inertia[7] *= mass_correction
-                        block.inertia[8] *= mass_correction
-                        block.inertia[9] *= mass_correction
-                        block.inertia[10] *= mass_correction
-                        block.inertia[11] *= mass_correction
+                            mass = self.EXPORT_OB_MASS,
+                            solid = self.EXPORT_OB_SOLID)
 
                 # many Oblivion nifs have a UPB, but export is disabled as
                 # they do not seem to affect anything in the game
