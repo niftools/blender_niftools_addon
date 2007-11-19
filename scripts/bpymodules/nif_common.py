@@ -91,6 +91,7 @@ class NifConfig:
         EXPORT_MOPP = False,
         EXPORT_OB_BSXFLAGS = 2,
         EXPORT_OB_MASS = 10.0,
+        EXPORT_OB_SOLID = True,
         EXPORT_OB_MOTIONSYSTEM = 7, # keyframed
         EXPORT_OB_UNKNOWNBYTE1 = 1,
         EXPORT_OB_UNKNOWNBYTE2 = 1,
@@ -565,6 +566,15 @@ class NifConfig:
                 min_val = 0, max_val = 1,
                 callback = self.updateObWind,
                 num_items = 3, item = 2)
+            self.drawToggle(
+                text = "Solid",
+                event_name = "EXPORT_OB_SOLID",
+                num_items = 2, item = 0)
+            self.drawToggle(
+                text = "Hollow",
+                event_name = "EXPORT_OB_HOLLOW",
+                val = not self.config["EXPORT_OB_SOLID"],
+                num_items = 2, item = 1)
 
         Draw.Redraw(1)
 
@@ -636,6 +646,7 @@ class NifConfig:
             self.config["EXPORT_SKINPARTITION"] = False
             self.config["EXPORT_BONESPERPARTITION"] = 4
             self.config["EXPORT_PADBONES"] = False
+            self.config["EXPORT_OB_SOLID"] = True
             # set default settings per game
             if self.config["EXPORT_VERSION"] == "Morrowind":
                 pass # fail-safe settings work
@@ -693,6 +704,10 @@ class NifConfig:
             self.config["EXPORT_BHKLISTSHAPE"] = not self.config["EXPORT_BHKLISTSHAPE"]
         elif evName == "EXPORT_MOPP":
             self.config["EXPORT_MOPP"] = not self.config["EXPORT_MOPP"]
+        elif evName == "EXPORT_OB_SOLID":
+            self.config["EXPORT_OB_SOLID"] = True
+        elif evName == "EXPORT_OB_HOLLOW":
+            self.config["EXPORT_OB_SOLID"] = False
         elif evName == "EXPORT_OB_RIGIDBODY_STATIC":
             self.config["EXPORT_OB_BSXFLAGS"] = 2
             self.config["EXPORT_OB_MASS"] = 10.0
@@ -702,6 +717,7 @@ class NifConfig:
             self.config["EXPORT_OB_QUALITYTYPE"] = 1 # fixed
             self.config["EXPORT_OB_WIND"] = 0
             self.config["EXPORT_OB_LAYER"] = 1 # static
+            self.config["EXPORT_OB_SOLID"] = True
         elif evName == "EXPORT_OB_RIGIDBODY_CLUTTER":
             self.config["EXPORT_OB_BSXFLAGS"] = 3
             self.config["EXPORT_OB_MASS"] = 10.0
@@ -711,6 +727,7 @@ class NifConfig:
             self.config["EXPORT_OB_QUALITYTYPE"] = 3 # fixed
             self.config["EXPORT_OB_WIND"] = 0
             self.config["EXPORT_OB_LAYER"] = 4 # clutter
+            self.config["EXPORT_OB_SOLID"] = True
         Draw.Redraw(1)
 
     def guiEvent(self, evt, val):

@@ -363,7 +363,8 @@ and turn off envelopes."""%ob.getName()
                 # update rigid body center of gravity
                 for block in self.blocks:
                     if isinstance(block, NifFormat.bhkRigidBody):
-                        block.updateMassCenterInertia(density = 1)
+                        block.updateMassCenterInertia(
+                            density = 1, solid = self.EXPORT_OB_SOLID)
                         mass_correction = self.EXPORT_OB_MASS / block.mass
                         block.mass *= mass_correction
                         block.inertia[0] *= mass_correction
