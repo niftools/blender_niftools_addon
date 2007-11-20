@@ -332,6 +332,8 @@ Section "Uninstall"
   ; remove script files
   Delete "$BLENDERSCRIPTS\nif_export.py"
   Delete "$BLENDERSCRIPTS\nif_import.py"
+  Delete "$BLENDERSCRIPTS\mesh_weightsquash"
+  Delete "$BLENDERSCRIPTS\mesh_hull.py"
   Delete "$BLENDERSCRIPTS\bpymodules\nifImEx\*.*"
   RMDir "$BLENDERSCRIPTS\bpymodules\nifImEx"
   Delete "$BLENDERSCRIPTS\bpydata\config\nifscripts.cfg"
