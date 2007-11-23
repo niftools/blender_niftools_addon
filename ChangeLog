@@ -1,4 +1,6 @@
-Version 2.2.0 (***)
+Version 2.2.1 (***)
+
+Version 2.2.0 (Nov 19, 2007)
 * Export: new settings for Oblivion to control rigid body parameters and
 material
 * Export: calculation of mass, center of gravity, and inertia tensor in rigid 
