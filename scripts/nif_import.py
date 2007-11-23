@@ -55,28 +55,27 @@ from nif_common import __version__
 # ***** END LICENSE BLOCK *****
 # --------------------------------------------------------------------------
 
-#
-# A simple custom exception class.
-#
-
 class NifImportError(StandardError):
+    """A simple custom exception class for import errors."""
     pass
 
 class NifImport:
+    """A class which bundles the main import function along with all helper
+    functions and data shared between these functions."""
     # class constants:
     # correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z
-    BONE_CORRECTION_MATRICES = (\
-                Matrix([ 0.0,-1.0, 0.0],[ 1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0]),\
-                Matrix([ 1.0, 0.0, 0.0],[ 0.0, 1.0, 0.0],[ 0.0, 0.0, 1.0]),\
-                Matrix([ 1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0],[ 0.0,-1.0, 0.0]),\
-                Matrix([ 0.0, 1.0, 0.0],[-1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0]),\
-                Matrix([-1.0, 0.0, 0.0],[ 0.0,-1.0, 0.0],[ 0.0, 0.0, 1.0]),\
-                Matrix([ 1.0, 0.0, 0.0],[ 0.0, 0.0,-1.0],[ 0.0, 1.0, 0.0]))
+    BONE_CORRECTION_MATRICES = (
+        Matrix([ 0.0,-1.0, 0.0],[ 1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0]),
+        Matrix([ 1.0, 0.0, 0.0],[ 0.0, 1.0, 0.0],[ 0.0, 0.0, 1.0]),
+        Matrix([ 1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0],[ 0.0,-1.0, 0.0]),
+        Matrix([ 0.0, 1.0, 0.0],[-1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0]),
+        Matrix([-1.0, 0.0, 0.0],[ 0.0,-1.0, 0.0],[ 0.0, 0.0, 1.0]),
+        Matrix([ 1.0, 0.0, 0.0],[ 0.0, 0.0,-1.0],[ 0.0, 1.0, 0.0]) )
     # identity matrix, for comparisons
-    IDENTITY44 = Matrix([ 1.0,0.0, 0.0, 0.0],\
-                [ 0.0, 1.0, 0.0, 0.0],\
-                [ 0.0, 0.0, 1.0, 0.0],\
-                [ 0.0, 0.0, 0.0, 1.0])
+    IDENTITY44 = Matrix( [ 1.0,0.0, 0.0, 0.0],
+                         [ 0.0, 1.0, 0.0, 0.0],
+                         [ 0.0, 0.0, 1.0, 0.0],
+                         [ 0.0, 0.0, 0.0, 1.0] )
     # radians to degrees conversion constant
     R2D = 3.14159265358979/180.0
     
@@ -235,10 +234,12 @@ class NifImport:
                     vold.y = vnew.y
                     vold.z = vnew.z
         
-        # sets the root block parent to None, so that when crawling back the script won't barf
+        # sets the root block parent to None, so that when crawling back the
+        # script won't barf
         root_block._parent = None
         
-        # set the block parent through the tree, to ensure I can always move backward
+        # set the block parent through the tree, to ensure I can always move
+        # backward
         self.set_parents(root_block)
         
         # scale tree
@@ -271,7 +272,9 @@ class NifImport:
         elif isinstance(root_block, NifFormat.NiCamera):
             self.msg('WARNING: skipped NiCamera root')
         else:
-            raise NifImportError("don't know how to import nif file with root block of type '%s'"%root_block.__class__)
+            raise NifImportError(
+                "Cannot import nif file with root block of type '%s'"
+                %root_block.__class__)
 
         # store bone matrix offsets for re-export
         if self.bonesExtraMatrix: self.fb_bonemat()
@@ -287,7 +290,8 @@ class NifImport:
         recursively."""
         self.msgProgress("Importing data")
         if niBlock:
-            if isinstance(niBlock, NifFormat.NiTriBasedGeom) and self.IMPORT_SKELETON == 0:
+            if isinstance(niBlock, NifFormat.NiTriBasedGeom) \
+               and self.IMPORT_SKELETON == 0:
                 # it's a shape node and we're not importing skeleton only
                 # (IMPORT_SKELETON == 1) and not importing skinned geometries
                 # only (IMPORT_SKELETON == 2)
@@ -304,9 +308,11 @@ class NifImport:
                             b_obj = self.fb_armature(niBlock)
                         else:
                             b_obj = self.selectedObjects[0]
-                            self.msg("merging nif tree '%s' with armature '%s'"%(niBlock.name, b_obj.name))
+                            self.msg("merging nif tree '%s' with armature '%s'"
+                                     %(niBlock.name, b_obj.name))
                             if niBlock.name != b_obj.name:
-                                print("WARNING: taking nif block '%s' as armature '%s' but names do not match"%(niBlock.name, b_obj.name))
+                                print("WARNING: taking nif block '%s' as \
+armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                         # now also do the meshes
                         self.read_armature_branch(b_obj, niBlock, niBlock)
                     else:
@@ -317,25 +323,32 @@ class NifImport:
                             b_obj = self.fb_empty(niBlock)
                         else:
                             # node groups geometries, so import it as a mesh
-                            print "joining geometries %s to single object '%s'"%([child.name for child in geom_group], niBlock.name)
+                            print("joining geometries %s to single object '%s'"
+                                  %([child.name for child in geom_group],
+                                    niBlock.name))
                             b_obj = None
                             for child in geom_group:
                                 b_obj = self.fb_mesh(child, group_mesh = b_obj, applytransform = True)
                             b_obj.name = self.fb_name(niBlock, 22)
                             # settings for collision node
                             if isinstance(niBlock, NifFormat.RootCollisionNode):
-                                b_obj.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
+                                b_obj.setDrawType(
+                                    Blender.Object.DrawTypes['BOUNDBOX'])
                                 b_obj.setDrawMode(32) # wire
-                                b_obj.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
+                                b_obj.rbShapeBoundType = \
+                                    Blender.Object.RBShapes['POLYHEDERON']
                                 # also remove duplicate vertices
                                 b_mesh = b_obj.getData(mesh=True)
                                 numverts = len(b_mesh.verts)
-                                numdel = b_mesh.remDoubles(0.005) # 0.005 = 1/200
+                                # 0.005 = 1/200
+                                numdel = b_mesh.remDoubles(0.005)
                                 if numdel:
-                                    self.msg('removed %i duplicate vertices (out of %i) from collision mesh'%(numdel, numverts), 3)
+                                    self.msg('removed %i duplicate vertices \
+(out of %i) from collision mesh'%(numdel, numverts), 3)
                         # import children that aren't part of the geometry group
                         b_children_list = []
-                        children = [ child for child in niBlock.children if child not in geom_group ]
+                        children = [ child for child in niBlock.children
+                                     if child not in geom_group ]
                         for child in children:
                             b_child_obj = self.read_branch(child)
                             if b_child_obj:
@@ -349,10 +362,10 @@ class NifImport:
                         self.fb_textkey(niBlock)
                     return b_obj
             # all else is currently discarded
-            print "todo: add cameras, lights, colliders and particle systems"
             return None
 
-    def read_armature_branch(self, b_armature, niArmature, niBlock, group_mesh = None):
+    def read_armature_branch(
+        self, b_armature, niArmature, niBlock, group_mesh = None):
         """Reads the content of the current NIF tree branch to Blender
         recursively, as meshes parented to a given armature or parented
         to the closest bone in the armature. Note that
@@ -364,11 +377,15 @@ class NifImport:
         if not branch_parent:
             branch_parent = niArmature
         # is it a mesh?
-        if isinstance(niBlock, NifFormat.NiTriBasedGeom) and self.IMPORT_SKELETON != 1:
+        if isinstance(niBlock, NifFormat.NiTriBasedGeom) \
+           and self.IMPORT_SKELETON != 1:
 
             self.msg("building mesh %s in read_armature_branch" % (niBlock.name),3)
             # apply transform relative to the armature node
-            return branch_parent, self.fb_mesh(niBlock, group_mesh = group_mesh, applytransform = True, relative_to = branch_parent)
+            return branch_parent, self.fb_mesh(niBlock,
+                                               group_mesh = group_mesh,
+                                               applytransform = True,
+                                               relative_to = branch_parent)
         # is it another armature?
         elif self.is_armature_root(niBlock) and niBlock != niArmature:
             # an armature parented to this armature
@@ -376,7 +393,8 @@ class NifImport:
             # import the armature branch
             self.read_armature_branch(fb_arm, niBlock, niBlock)
             return branch_parent, fb_arm # the matrix will be set by the caller
-        # is it a NiNode in the niArmature tree (possibly niArmature itself, on first call)?
+        # is it a NiNode in the niArmature tree (possibly niArmature itself,
+        # on first call)?
         elif isinstance(niBlock, NifFormat.NiNode):
             children = niBlock.children
             if children:
@@ -410,7 +428,8 @@ class NifImport:
                         # the mesh to have
                         a_geom_matrix = self.fb_matrix(b_obj_branch_parent, relative_to = niArmature)
                         # next find the tail matrix of the bone parent
-                        b_par_bone_name = self.names[b_obj_branch_parent] # blender bone name
+                        # first get blender bone name
+                        b_par_bone_name = self.names[b_obj_branch_parent]
                         b_par_bone = b_armature.data.bones[b_par_bone_name]
                         a_tail_matrix = b_par_bone.matrix['ARMATURESPACE'].copy()
                         a_tail_pos    = b_par_bone.tail['ARMATURESPACE']
@@ -420,12 +439,14 @@ class NifImport:
                         # fix the object matrix relative to the bone tail
                         b_obj.setMatrix(a_geom_matrix * a_tail_matrix.invert())
                         # make it parent of the bone
-                        b_armature.makeParentBone([b_obj], self.names[b_obj_branch_parent])
+                        b_armature.makeParentBone(
+                            [b_obj], self.names[b_obj_branch_parent])
                     else:
                         # mesh is parented to the armature
                         # the transform has already been applied
                         # still need to make it parent of the armature
-                        # (if b_obj is an armature then this falls back to the usual parenting)
+                        # (if b_obj is an armature then this falls back to the
+                        # usual parenting)
                         b_armature.makeParentDeform([b_obj])
 
         # anything else: throw away
@@ -461,23 +482,15 @@ class NifImport:
         except ValueError: # short name not found
             pass
         # save mapping
-        self.names[niBlock] = shortName  # block niBlock has Blender name shortName
-        self.blocks[shortName] = niBlock # Blender name shortName corresponds to niBlock
+        # block niBlock has Blender name shortName
+        self.names[niBlock] = shortName
+        # Blender name shortName corresponds to niBlock
+        self.blocks[shortName] = niBlock
         return shortName
         
     def fb_matrix(self, niBlock, relative_to = None):
         """Retrieves a niBlock's transform matrix as a Mathutil.Matrix."""
         return Matrix(*niBlock.getTransform(relative_to).asList())
-
-    # DEBUG: function is deprecated, use fb_matrix with relative_to argument
-    def fb_global_matrix(self, niBlock):
-        """Retrieves a block's global transform matrix"""
-        #self.msg("WARNING: use of fb_global_matrix is deprecated, use fb_matrix with\nrelative_to argument instead",3)
-        b_matrix = self.fb_matrix(niBlock)
-        if niBlock._parent:
-            return b_matrix * self.fb_global_matrix(niBlock._parent)
-        return b_matrix
-
 
     def decompose_srt(self, m):
         """Decompose Blender transform matrix as a scale, rotation matrix, and translation vector."""
@@ -515,13 +528,6 @@ class NifImport:
         This is done outside the normal node tree scan to allow for positioning
         of the bones before skins are attached."""
         armature_name = self.fb_name(niArmature,22)
-
-        # DEBUG: remove _invMatrix in a later release, everything has been
-        # converted to use the relative_to = niArmature keyword argument
-        # store the matrix inverse within the niArmature, so that we won't have to recalculate it
-        armature_matrix_inverse = self.fb_global_matrix(niArmature)
-        armature_matrix_inverse.invert()
-        niArmature._invMatrix = armature_matrix_inverse
 
         b_armatureData = Blender.Armature.Armature()
         b_armatureData.name = armature_name
@@ -715,13 +721,6 @@ class NifImport:
             # head: get position from niBlock
             armature_space_matrix = self.fb_matrix(niBlock, relative_to = niArmature)
 
-            # DEBUG, double checking if above calculation is equivalent with old code
-            # remove this for release
-            tmp = sum(sum(abs(x) for x in row) for row in (armature_space_matrix - self.fb_global_matrix(niBlock) * niArmature._invMatrix))
-            if tmp > 0.01:
-                raise NifImportError("BONE MATRIX TRANSFORM BUG")
-                print tmp
-
             b_bone_head_x = armature_space_matrix[3][0]
             b_bone_head_y = armature_space_matrix[3][1]
             b_bone_head_z = armature_space_matrix[3][2]
@@ -810,13 +809,6 @@ class NifImport:
         m_correction = self.IDENTITY44.rotationPart()
         if (self.IMPORT_REALIGN_BONES == 2) and self.is_bone(niBlock):
             armature_space_matrix = self.fb_matrix(niBlock, relative_to = niArmature)
-
-            # DEBUG, double checking if above calculation is equivalent with old code
-            # remove this for release
-            tmp = sum(sum(abs(x) for x in row) for row in (armature_space_matrix - self.fb_global_matrix(niBlock) * niArmature._invMatrix))
-            if tmp > 0.01:
-                raise NifImportError("CORRECTION MATRIX TRANSFORM BUG")
-                print tmp
 
             niChildBones = [child for child in niBlock.children if self.is_bone(child)]
             (sum_x, sum_y, sum_z, dummy) = armature_space_matrix[3]
