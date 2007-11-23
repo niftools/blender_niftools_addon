@@ -1449,12 +1449,12 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
         key_times = []
         for root in roots:
             for kfd in root.tree(block_type = NifFormat.NiKeyframeData):
-                key_times.extend([key.time for key in kfd.translations.keys])
-                key_times.extend([key.time for key in kfd.scales.keys])
-                key_times.extend([key.time for key in kfd.quaternionKeys])
-                key_times.extend([key.time for key in kfd.xyzRotations[0].keys])
-                key_times.extend([key.time for key in kfd.xyzRotations[1].keys])
-                key_times.extend([key.time for key in kfd.xyzRotations[2].keys])
+                key_times.extend(key.time for key in kfd.translations.keys)
+                key_times.extend(key.time for key in kfd.scales.keys)
+                key_times.extend(key.time for key in kfd.quaternionKeys)
+                key_times.extend(key.time for key in kfd.xyzRotations[0].keys)
+                key_times.extend(key.time for key in kfd.xyzRotations[1].keys)
+                key_times.extend(key.time for key in kfd.xyzRotations[2].keys)
         # not animated, return a reasonable default
         if not key_times:
             return 30
