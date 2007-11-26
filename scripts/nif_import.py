@@ -1923,8 +1923,50 @@ under node %s" % niBlock.name)
             ob.rbShapeBoundType = Blender.Object.RBShapes['SPHERE']
             return [ ob ]
 
-        #elif isinstance(bhkshape, NifFormat.bhkCapsuleShape):
-        #    return []
+        elif isinstance(bhkshape, NifFormat.bhkCapsuleShape):
+            # create capsule mesh
+            length = (bhkshape.firstPoint - bhkshape.secondPoint).norm()
+            minx = miny = -bhkshape.radius * 7
+            maxx = maxy = +bhkshape.radius * 7
+            minz = -(length + 2*bhkshape.radius) * 3.5
+            maxz = +(length + 2*bhkshape.radius) * 3.5
+
+            me = Blender.Mesh.New('capsule')
+            for x in [minx, maxx]:
+                for y in [miny, maxy]:
+                    for z in [minz, maxz]:
+                        me.verts.extend(x,y,z)
+            me.faces.extend(
+                [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
+
+            # link box to scene and set transform
+            ob = self.scene.objects.new(me, 'capsule')
+
+            # set bounds type
+            ob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
+            ob.rbShapeBoundType = Blender.Object.RBShapes['CYLINDER']
+
+            # find transform
+            normal = (bhkshape.firstPoint - bhkshape.secondPoint) / length
+            normal = Blender.Mathutils.Vector(normal.x, normal.y, normal.z)
+            minindex = min((abs(x), i) for i, x in enumerate(normal))[1]
+            orthvec = Blender.Mathutils.Vector([(1 if i == minindex else 0)
+                                                for i in (0,1,2)])
+            vec1 = Blender.Mathutils.CrossVecs(normal, orthvec)
+            vec1.normalize()
+            vec2 = Blender.Mathutils.CrossVecs(normal, vec1)
+            # the rotation matrix should be such that
+            # (0,0,1) maps to normal
+            transform = Blender.Mathutils.Matrix(vec1, vec2, normal)
+            transform.resize4x4()
+            transform[3][0] = 3.5 * (bhkshape.firstPoint.x
+                                     + bhkshape.secondPoint.x)
+            transform[3][1] = 3.5 * (bhkshape.firstPoint.y
+                                     + bhkshape.secondPoint.y)
+            transform[3][2] = 3.5 * (bhkshape.firstPoint.z
+                                     + bhkshape.secondPoint.z)
+            ob.setMatrix(transform)
+            return [ ob ]
 
         #elif isinstance(bhkshape, NifFormat.bhkPackedNiTriStripsShape):
         #    return []
