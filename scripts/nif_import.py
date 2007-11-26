@@ -1852,8 +1852,7 @@ under node %s" % niBlock.name)
                 me.faces.extend(triangle)
 
             # link mesh to scene and set transform
-            scn = Blender.Scene.GetCurrent()
-            ob = scn.objects.new(me, 'convexpoly')
+            ob = self.scene.objects.new(me, 'convexpoly')
 
             # set bounds type
             ob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
@@ -1868,7 +1867,7 @@ under node %s" % niBlock.name)
             # import shapes
             collision_objs = self.importBhkShape(bhkshape.shape)
             # find transformation matrix
-            transform = Blender.Mathutils.Matrix(bhkshape.transform.asList())
+            transform = Blender.Mathutils.Matrix(*bhkshape.transform.asList())
             transform.transpose()
             # fix scale
             transform[3][0] *= 7
@@ -1876,12 +1875,34 @@ under node %s" % niBlock.name)
             transform[3][2] *= 7
             # apply transform
             for ob in collision_objs:
-                ob.setMatrix(ob.getMatrix(space = 'localspace') * transform)
+                ob.setMatrix(ob.getMatrix('localspace') * transform)
             # and return a list of transformed collision shapes
             return collision_objs
         
-        #elif isinstance(bhkshape, NifFormat.bhkBoxShape):
-        #    return []
+        elif isinstance(bhkshape, NifFormat.bhkBoxShape):
+            # create box
+            minx = -bhkshape.dimensions.x * 7
+            maxx = +bhkshape.dimensions.x * 7
+            miny = -bhkshape.dimensions.y * 7
+            maxy = +bhkshape.dimensions.y * 7
+            minz = -bhkshape.dimensions.z * 7
+            maxz = +bhkshape.dimensions.z * 7
+
+            me = Blender.Mesh.New('box')
+            for x in [minx, maxx]:
+                for y in [miny, maxy]:
+                    for z in [minz, maxz]:
+                        me.verts.extend(x,y,z)
+            me.faces.extend(
+                [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
+
+            # link box to scene and set transform
+            ob = self.scene.objects.new(me, 'box')
+
+            # set bounds type
+            ob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
+            ob.rbShapeBoundType = Blender.Object.RBShapes['BOX']
+            return [ ob ]
 
         #elif isinstance(bhkshape, NifFormat.bhkSphereShape):
         #    return []
@@ -1898,7 +1919,9 @@ under node %s" % niBlock.name)
         elif isinstance(bhkshape, NifFormat.bhkListShape):
             return reduce(operator.add, ( self.importBhkShape(subshape)
                                           for subshape in bhkshape.subShapes ))
+
         print "WARNING: unsupported bhk shape %s" % bhkshape.__class__.__name__
+        return []
 
 def config_callback(**config):
     """Called when config script is done. Starts and times import."""
