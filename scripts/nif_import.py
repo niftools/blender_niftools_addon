@@ -210,24 +210,28 @@ class NifImport:
             if not niBlock.isSkin(): continue
             merged, failed = niBlock.mergeSkeletonRoots()
             if merged:
-                self.msg('reparented following blocks to skeleton root of ' + niBlock.name + ':', 2)
-                self.msg([node.name for node in merged], 3)
+                self.msg('reparented following blocks to skeleton root of %s:'%
+                         niBlock.name, 2)
+                self.msg([node.name for node in merged], 2)
             if failed:
-                self.msg('WARNING: failed to reparent following blocks ' + niBlock.name + ':', 2)
-                self.msg([node.name for node in failed], 3)
+                self.msg('WARNING: failed to reparent following blocks %s:'%
+                         niBlock.name, 2)
+                self.msg([node.name for node in failed], 2)
 
         # transform geometry into the rest pose
         if self.IMPORT_SENDBONESTOBINDPOS:
             for niBlock in root_block.tree():
                 if not isinstance(niBlock, NifFormat.NiGeometry): continue
                 if not niBlock.isSkin(): continue
-                self.msg('sending bones of geometry ' + niBlock.name + " to their bind position", 2)
+                self.msg('sending bones of geometry %s to their bind position'%
+                         niBlock.name, 2)
                 niBlock.sendBonesToBindPosition()
         if self.IMPORT_APPLYSKINDEFORM:
             for niBlock in root_block.tree():
                 if not isinstance(niBlock, NifFormat.NiGeometry): continue
                 if not niBlock.isSkin(): continue
-                self.msg('applying skin deformation on geometry ' + niBlock.name, 2)
+                self.msg('applying skin deformation on geometry %s'%
+                         niBlock.name, 2)
                 vertices, normals = niBlock.getSkinDeformation()
                 for vold, vnew in zip(niBlock.data.vertices, vertices):
                     vold.x = vnew.x
@@ -250,25 +254,25 @@ class NifImport:
         
         # import the keyframe notes
         if self.IMPORT_ANIMATION:
-            self.fb_textkey(root_block)
+            self.importTextkey(root_block)
 
         # read the NIF tree
         if self.is_armature_root(root_block):
             # special case 1: root node is skeleton root
             self.msg("%s is an armature root" % (root_block.name), 3)
-            b_obj = self.read_branch(root_block)
+            b_obj = self.importBranch(root_block)
         elif self.is_grouping_node(root_block):
             # special case 2: root node is grouping node
             self.msg("%s is a grouping node" % (root_block.name), 3)
-            b_obj = self.read_branch(root_block)
+            b_obj = self.importBranch(root_block)
         elif isinstance(root_block, NifFormat.NiTriBasedGeom):
             # trishape/tristrips root
-            b_obj = self.read_branch(root_block)
+            b_obj = self.importBranch(root_block)
         elif isinstance(root_block, NifFormat.NiNode):
             # root node is dummy scene node
             # process all its children
             for child in root_block.children:
-                b_obj = self.read_branch(child)
+                b_obj = self.importBranch(child)
         elif isinstance(root_block, NifFormat.NiCamera):
             self.msg('WARNING: skipped NiCamera root')
         else:
@@ -285,7 +289,7 @@ class NifImport:
         if self.IMPORT_SKELETON == 1:
             b_obj.makeParentDeform(self.selectedObjects)
 
-    def read_branch(self, niBlock):
+    def importBranch(self, niBlock):
         """Read the content of the current NIF tree branch to Blender
         recursively."""
         self.msgProgress("Importing data")
@@ -295,7 +299,7 @@ class NifImport:
                 # it's a shape node and we're not importing skeleton only
                 # (IMPORT_SKELETON == 1) and not importing skinned geometries
                 # only (IMPORT_SKELETON == 2)
-                self.msg("building mesh in read_branch",3)
+                self.msg("building mesh in importBranch",3)
                 return self.fb_mesh(niBlock)
             elif isinstance(niBlock, NifFormat.NiNode):
                 children = niBlock.children
@@ -303,9 +307,10 @@ class NifImport:
                     # it's a parent node
                     # import object + children
                     if self.is_armature_root(niBlock):
-                        # all bones in the tree are also imported by fb_armature
+                        # all bones in the tree are also imported by
+                        # importArmature
                         if self.IMPORT_SKELETON != 2:
-                            b_obj = self.fb_armature(niBlock)
+                            b_obj = self.importArmature(niBlock)
                         else:
                             b_obj = self.selectedObjects[0]
                             self.msg("merging nif tree '%s' with armature '%s'"
@@ -314,7 +319,7 @@ class NifImport:
                                 print("WARNING: taking nif block '%s' as \
 armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                         # now also do the meshes
-                        self.read_armature_branch(b_obj, niBlock, niBlock)
+                        self.importArmatureBranch(b_obj, niBlock, niBlock)
                     else:
                         # is it a grouping node?
                         geom_group = self.is_grouping_node(niBlock)
@@ -350,27 +355,40 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                         children = [ child for child in niBlock.children
                                      if child not in geom_group ]
                         for child in children:
-                            b_child_obj = self.read_branch(child)
+                            b_child_obj = self.importBranch(child)
                             if b_child_obj:
                                 b_children_list.append(b_child_obj)
                         b_obj.makeParent(b_children_list)
                     b_obj.setMatrix(self.fb_matrix(niBlock))
+
                     # import the animations
                     if self.IMPORT_ANIMATION:
                         self.set_animation(niBlock, b_obj)
                         # import the extras
-                        self.fb_textkey(niBlock)
+                        self.importTextkey(niBlock)
+
+                    # import collision objects
+                    if niBlock.collisionObject:
+                        bhk_body = niBlock.collisionObject.body
+                        if not isinstance(bhk_body, NifFormat.bhkRigidBody):
+                            print("WARNING: unsupported collision structure \
+under node %s" % niBlock.name)
+                        bhk_obj = self.importBhkShape(bhk_body.shape)
+                        if bhk_obj:
+                            b_obj.makeParent(bhk_obj)
+
                     return b_obj
             # all else is currently discarded
             return None
 
-    def read_armature_branch(
+    def importArmatureBranch(
         self, b_armature, niArmature, niBlock, group_mesh = None):
         """Reads the content of the current NIF tree branch to Blender
         recursively, as meshes parented to a given armature or parented
         to the closest bone in the armature. Note that
         niArmature must have been imported previously as an armature, along
-        with all its bones. This function only imports meshes and armature ninodes."""
+        with all its bones. This function only imports meshes and armature
+        ninodes."""
         # check if the block is non-null
         if not niBlock: return None, None
         branch_parent = self.get_closest_bone(niBlock, skelroot = niArmature)
@@ -380,7 +398,8 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
         if isinstance(niBlock, NifFormat.NiTriBasedGeom) \
            and self.IMPORT_SKELETON != 1:
 
-            self.msg("building mesh %s in read_armature_branch" % (niBlock.name),3)
+            self.msg("building mesh %s in importArmatureBranch"%
+                     niBlock.name, 3)
             # apply transform relative to the armature node
             return branch_parent, self.fb_mesh(niBlock,
                                                group_mesh = group_mesh,
@@ -389,9 +408,9 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
         # is it another armature?
         elif self.is_armature_root(niBlock) and niBlock != niArmature:
             # an armature parented to this armature
-            fb_arm = self.fb_armature(niBlock)
+            fb_arm = self.importArmature(niBlock)
             # import the armature branch
-            self.read_armature_branch(fb_arm, niBlock, niBlock)
+            self.importArmatureBranch(fb_arm, niBlock, niBlock)
             return branch_parent, fb_arm # the matrix will be set by the caller
         # is it a NiNode in the niArmature tree (possibly niArmature itself,
         # on first call)?
@@ -408,14 +427,14 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                     print "joining geometries %s to single object '%s'"%([child.name for child in geom_group], node_name)
                     b_mesh = None
                     for child in geom_group:
-                        b_mesh_branch_parent, b_mesh = self.read_armature_branch(b_armature, niArmature, child, group_mesh = b_mesh)
+                        b_mesh_branch_parent, b_mesh = self.importArmatureBranch(b_armature, niArmature, child, group_mesh = b_mesh)
                         assert(b_mesh_branch_parent == branch_parent) # DEBUG
                     if b_mesh:
                         b_mesh.name = self.fb_name(niBlock)
                         b_objects.append((niBlock, branch_parent, b_mesh))
                 # import other objects
                 for child in geom_other:
-                    b_obj_branch_parent, b_obj = self.read_armature_branch(b_armature, niArmature, child, group_mesh = None)
+                    b_obj_branch_parent, b_obj = self.importArmatureBranch(b_armature, niArmature, child, group_mesh = None)
                     if b_obj:
                         b_objects.append((child, b_obj_branch_parent, b_obj))
                 # fix transform and parentship
@@ -426,7 +445,8 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                         # object was parented to a bone
                         # first find the matrix in armature space we want
                         # the mesh to have
-                        a_geom_matrix = self.fb_matrix(b_obj_branch_parent, relative_to = niArmature)
+                        a_geom_matrix = self.fb_matrix(b_obj_branch_parent,
+                                                       relative_to = niArmature)
                         # next find the tail matrix of the bone parent
                         # first get blender bone name
                         b_par_bone_name = self.names[b_obj_branch_parent]
@@ -493,7 +513,8 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
         return Matrix(*niBlock.getTransform(relative_to).asList())
 
     def decompose_srt(self, m):
-        """Decompose Blender transform matrix as a scale, rotation matrix, and translation vector."""
+        """Decompose Blender transform matrix as a scale, rotation matrix, and
+        translation vector."""
         # get scale components
         b_scale_rot = m.rotationPart()
         b_scale_rot_T = Matrix(b_scale_rot)
@@ -523,7 +544,7 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
         self.scene.objects.link(b_empty)
         return b_empty
 
-    def fb_armature(self, niArmature):
+    def importArmature(self, niArmature):
         """Scans an armature hierarchy, and returns a whole armature.
         This is done outside the normal node tree scan to allow for positioning
         of the bones before skins are attached."""
@@ -540,7 +561,8 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
 
         # make armature editable and create bones
         b_armatureData.makeEditable()
-        niChildBones = [child for child in niArmature.children if self.is_bone(child)]  
+        niChildBones = [child for child in niArmature.children
+                        if self.is_bone(child)]  
         for niBone in niChildBones:
             self.fb_bone(niBone, b_armature, b_armatureData, niArmature)
         b_armatureData.update()
@@ -551,7 +573,8 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
             # create an action
             action = Blender.Armature.NLA.NewAction()
             action.setActive(b_armature)
-            # go through all armature pose bones (http://www.elysiun.com/forum/viewtopic.php?t=58693)
+            # go through all armature pose bones
+            # see http://www.elysiun.com/forum/viewtopic.php?t=58693
             self.msgProgress('Importing Animations')
             for bone_idx, (bone_name, b_posebone) in enumerate(b_armature.getPose().bones.items()):
                 # denote progress
@@ -601,7 +624,8 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                 extra_matrix_quat_inv = extra_matrix_rot_inv.toQuat()
                 # now import everything
                 # ##############################
-                kfc = self.find_controller(niBone, NifFormat.NiKeyframeController)
+                kfc = self.find_controller(niBone,
+                                           NifFormat.NiKeyframeController)
                 if kfc and kfc.data:
                     # get keyframe data
                     kfd = kfc.data
@@ -617,7 +641,8 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                     # add the keys
                     self.msg('Scale keys...', 4)
                     for scaleKey in scales.keys:
-                        frame = 1+int(scaleKey.time * self.fps) # time 0.0 is frame 1
+                        # time 0.0 is frame 1
+                        frame = 1 + int(scaleKey.time * self.fps)
                         sizeVal = scaleKey.value
                         size = sizeVal / niBone_bind_scale # Schannel = Stotal / Sbind
                         b_posebone.size = Blender.Mathutils.Vector(size, size, size)
@@ -633,7 +658,8 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                         self.msg('Rotation keys...(euler)', 4)
                         xyzRotations = kfd.xyzRotations
                         for key in xyzRotations:
-                            frame = 1+int(key.time * self.fps) # time 0.0 is frame 1
+                            # time 0.0 is frame 1
+                            frame = 1 + int(key.time * self.fps)
                             keyVal = key.value
                             euler = Blender.Mathutils.Euler([keyVal.x, keyVal.y, keyVal.z])
                             quat = euler.toQuat()
@@ -651,26 +677,31 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                         self.msg('Rotation keys...(quaternions)', 4)
                         quaternionKeys = kfd.quaternionKeys
                         for key in quaternionKeys:
-                            frame = 1+int(key.time * self.fps) # time 0.0 is frame 1
+                            # time 0.0 is frame 1
+                            frame = 1 + int(key.time * self.fps)
                             keyVal = key.value
                             quat = Blender.Mathutils.Quaternion([keyVal.w, keyVal.x, keyVal.y, keyVal.z])
-                            # beware, CrossQuats takes arguments in a counter-intuitive order:
+                            # beware, CrossQuats takes arguments in a
+                            # counter-intuitive order:
                             # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
                             quatVal = CrossQuats(niBone_bind_quat_inv, quat) # Rchannel = Rtotal * inverse(Rbind)
                             rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
                             b_posebone.quat = rot
-                            b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.ROT]) # this is very slow... :(
+                            b_posebone.insertKey(b_armature, frame,
+                                                 [Blender.Object.Pose.ROT])
                             # fill optimizer dictionary
                             if translations:
                                 rot_keys_dict[frame] = Blender.Mathutils.Quaternion(rot)
         
                     self.msg('Translation keys...', 4)
                     for key in translations.keys:
-                        frame = 1+int(key.time * self.fps) # time 0.0 is frame 1
+                        # time 0.0 is frame 1
+                        frame = 1 + int(key.time * self.fps)
                         keyVal = key.value
                         trans = Blender.Mathutils.Vector(keyVal.x, keyVal.y, keyVal.z)
                         locVal = (trans - niBone_bind_trans) * niBone_bind_rot_inv * (1.0/niBone_bind_scale)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
-                        # we need the rotation matrix at this frame (that's why we inserted the other keys first)
+                        # the rotation matrix is needed at this frame (that's
+                        # why the other keys are inserted first)
                         if rot_keys_dict:
                             try:
                                 rot = rot_keys_dict[frame].toMatrix()
@@ -684,7 +715,9 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                                 quat.w = ipo.getCurve('QuatW').evaluate(frame)
                                 rot = quat.toMatrix()
                         else:
-                            rot = Blender.Mathutils.Matrix([1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0])
+                            rot = Blender.Mathutils.Matrix([1.0,0.0,0.0],
+                                                           [0.0,1.0,0.0],
+                                                           [0.0,0.0,1.0])
                         # we also need the scale at this frame
                         if scale_keys_dict:
                             try:
@@ -697,7 +730,9 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                                     sizeVal = 1.0
                         else:
                             sizeVal = 1.0
-                        size = Blender.Mathutils.Matrix([sizeVal, 0.0, 0.0], [0.0, sizeVal, 0.0], [0.0, 0.0, sizeVal])
+                        size = Blender.Mathutils.Matrix([sizeVal, 0.0, 0.0],
+                                                        [0.0, sizeVal, 0.0],
+                                                        [0.0, 0.0, sizeVal])
                         # now we can do the final calculation
                         loc = (extra_matrix_trans * size * rot + locVal - extra_matrix_trans) * extra_matrix_rot_inv * (1.0/extra_matrix_scale) # C' = X * C * inverse(X)
                         b_posebone.loc = loc
@@ -714,12 +749,14 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
         scale = self.IMPORT_SCALE_CORRECTION
         # bone name
         bone_name = self.fb_name(niBlock, 32)
-        niChildBones = [child for child in niBlock.children if self.is_bone(child)]
+        niChildBones = [ child for child in niBlock.children
+                         if self.is_bone(child) ]
         if self.is_bone(niBlock):
             # create bones here...
             b_bone = Blender.Armature.Editbone()
             # head: get position from niBlock
-            armature_space_matrix = self.fb_matrix(niBlock, relative_to = niArmature)
+            armature_space_matrix = self.fb_matrix(niBlock,
+                                                   relative_to = niArmature)
 
             b_bone_head_x = armature_space_matrix[3][0]
             b_bone_head_y = armature_space_matrix[3][1]
@@ -732,23 +769,35 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
             # tail: average of children location
             if len(niChildBones) > 0:
                 m_correction = self.find_correction_matrix(niBlock, niArmature)
-                child_matrices = [self.fb_matrix(child, relative_to = niArmature) for child in niChildBones]
-                b_bone_tail_x = sum(child_matrix[3][0] for child_matrix in child_matrices) / len(child_matrices)
-                b_bone_tail_y = sum(child_matrix[3][1] for child_matrix in child_matrices) / len(child_matrices)
-                b_bone_tail_z = sum(child_matrix[3][2] for child_matrix in child_matrices) / len(child_matrices)
+                child_matrices = [ self.fb_matrix(child,
+                                                  relative_to = niArmature)
+                                   for child in niChildBones ]
+                b_bone_tail_x = sum(child_matrix[3][0]
+                                    for child_matrix
+                                    in child_matrices) / len(child_matrices)
+                b_bone_tail_y = sum(child_matrix[3][1]
+                                    for child_matrix
+                                    in child_matrices) / len(child_matrices)
+                b_bone_tail_z = sum(child_matrix[3][2]
+                                    for child_matrix
+                                    in child_matrices) / len(child_matrices)
                 # checking bone length
                 dx = b_bone_head_x - b_bone_tail_x
                 dy = b_bone_head_y - b_bone_tail_y
                 dz = b_bone_head_z - b_bone_tail_z
                 is_zero_length = abs(dx + dy + dz) * 200 < self.EPSILON
             elif self.IMPORT_REALIGN_BONES == 2:
-                # the correction matrix value is based on the children's head position
-                # If these are missing I just set it as the same as the parent's
-                m_correction = self.find_correction_matrix(niBlock._parent, niArmature)
+                # The correction matrix value is based on the childrens' head
+                # positions.
+                # If there are no children then set it as the same as the
+                # parent's correction matrix.
+                m_correction = self.find_correction_matrix(niBlock._parent,
+                                                           niArmature)
             
             if is_zero_length:
                 # this is a 0 length bone, to avoid it being removed I set a default minimum length
-                if (self.IMPORT_REALIGN_BONES == 2) or not self.is_bone(niBlock._parent):
+                if (self.IMPORT_REALIGN_BONES == 2) \
+                   or not self.is_bone(niBlock._parent):
                     # no parent bone, or bone is realigned with correction. I just set one random direction.
                     b_bone_tail_x = b_bone_head_x + (nub_length * scale)
                 else:
@@ -759,7 +808,8 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                     dy = b_bone_head_y - parent_tail[1]
                     dz = b_bone_head_z - parent_tail[2]
                     if abs(dx + dy + dz) * 200 < self.EPSILON:
-                        # no offset from the parent, we follow the parent's orientation
+                        # no offset from the parent: follow the parent's
+                        # orientation
                         parent_head = b_armatureData.bones[self.names[niBlock._parent]].head
                         dx = parent_tail[0] - parent_head[0]
                         dy = parent_tail[1] - parent_head[1]
@@ -786,7 +836,8 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
 
             # set bone name and store the niBlock for future reference
             b_armatureData.bones[bone_name] = b_bone
-            # calculate bone difference matrix; we will need this when importing animation
+            # calculate bone difference matrix; we will need this when
+            # importing animation
             old_bone_matrix_inv = Blender.Mathutils.Matrix(armature_space_matrix)
             old_bone_matrix_inv.invert()
             new_bone_matrix = Blender.Mathutils.Matrix(b_bone.matrix)
@@ -808,16 +859,20 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
         """Returns the correction matrix for a bone."""
         m_correction = self.IDENTITY44.rotationPart()
         if (self.IMPORT_REALIGN_BONES == 2) and self.is_bone(niBlock):
-            armature_space_matrix = self.fb_matrix(niBlock, relative_to = niArmature)
+            armature_space_matrix = self.fb_matrix(niBlock,
+                                                   relative_to = niArmature)
 
-            niChildBones = [child for child in niBlock.children if self.is_bone(child)]
+            niChildBones = [ child for child in niBlock.children
+                             if self.is_bone(child) ]
             (sum_x, sum_y, sum_z, dummy) = armature_space_matrix[3]
             if len(niChildBones) > 0:
-                child_local_matrices = [self.fb_matrix(child) for child in niChildBones]
+                child_local_matrices = [ self.fb_matrix(child)
+                                         for child in niChildBones ]
                 sum_x = sum(cm[3][0] for cm in child_local_matrices)
                 sum_y = sum(cm[3][1] for cm in child_local_matrices)
                 sum_z = sum(cm[3][2] for cm in child_local_matrices)
-            listXYZ = [int(c * 200) for c in (sum_x, sum_y, sum_z, -sum_x, -sum_y, -sum_z)]
+            listXYZ = [ int(c * 200)
+                        for c in (sum_x, sum_y, sum_z, -sum_x, -sum_y, -sum_z) ]
             idx_correction = listXYZ.index(max(listXYZ))
             alignment_offset = 0.0
             if (idx_correction == 0 or idx_correction == 3) and abs(sum_x) > 0:
@@ -833,11 +888,12 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
         return m_correction
 
 
-    def fb_texture(self, niSourceTexture):
+    def importTexture(self, niSourceTexture):
         """Returns a Blender Texture object, and stores it in the
         self.textures dictionary."""
 
-        if not niSourceTexture: return None
+        if not niSourceTexture:
+            return None
             
         try:
             return self.textures[niSourceTexture]
@@ -946,11 +1002,13 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
             self.textures[niSourceTexture] = None
             return None
 
-    def fb_material(self, matProperty, textProperty, alphaProperty, specProperty):
+    def importMaterial(self, matProperty, textProperty,
+                    alphaProperty, specProperty):
         """Creates and returns a material."""
         # First check if material has been created before.
         try:
-            material = self.materials[(matProperty, textProperty, alphaProperty, specProperty)]
+            material = self.materials[(matProperty, textProperty,
+                                       alphaProperty, specProperty)]
             return material
         except KeyError:
             pass
@@ -977,7 +1035,8 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
         # Specular color
         spec = matProperty.specularColor
         material.setSpecCol([spec.r, spec.g, spec.b])
-        material.setSpec(1.0) # Blender multiplies specular color with this value
+        # Blender multiplies specular color with this value
+        material.setSpec(1.0)
         # Diffuse color
         diff = matProperty.diffuseColor
         material.setRGBCol([diff.r, diff.g, diff.b])
@@ -1022,7 +1081,7 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
         if textProperty:
             baseTextureDesc = textProperty.baseTexture
             if baseTextureDesc:
-                baseTexture = self.fb_texture(baseTextureDesc.source)
+                baseTexture = self.importTexture(baseTextureDesc.source)
                 if baseTexture:
                     # Sets the texture to use face UV coordinates.
                     texco = Blender.Texture.TexCo.UV
@@ -1034,7 +1093,7 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                     mbaseTexture.blendmode = blendmode
             glowTextureDesc = textProperty.glowTexture
             if glowTextureDesc:
-                glowTexture = self.fb_texture(glowTextureDesc.source)
+                glowTexture = self.importTexture(glowTextureDesc.source)
                 if glowTexture:
                     # glow maps use alpha from rgb intensity
                     glowTexture.imageFlags |= Blender.Texture.ImageFlags.CALCALPHA
@@ -1137,7 +1196,8 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
             specProperty = self.find_property(niBlock, NifFormat.NiSpecularProperty)
             
             # create material and assign it to the mesh
-            material = self.fb_material(matProperty, textProperty, alphaProperty, specProperty)
+            material = self.importMaterial(matProperty, textProperty,
+                                           alphaProperty, specProperty)
             b_mesh_materials = b_meshData.materials
             try:
                 materialIndex = b_mesh_materials.index(material)
@@ -1380,7 +1440,7 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
 
 
     # import animation groups
-    def fb_textkey(self, niBlock):
+    def importTextkey(self, niBlock):
         """Stores the text keys that define animation start and end in a text
         buffer, so that they can be re-exported. Since the text buffer is
         cleared on each import only the last import will be exported
@@ -1773,6 +1833,10 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                 b_obj.insertIpoKey(Blender.Object.LOC)
                 
             Blender.Set('curframe', 1)
+
+    def importBhkShape(bhkshape):
+        """Import an oblivion collision shape as blender mesh."""
+        pass
 
 def config_callback(**config):
     """Called when config script is done. Starts and times import."""
