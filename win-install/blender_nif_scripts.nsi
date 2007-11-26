@@ -295,15 +295,20 @@ Section
   ; Install documentation files
   SetOutPath $INSTDIR
   File ..\README.html
-  File ..\ChangeLog
+  File /oname=ChangeLog.txt ..\ChangeLog
   File Copyright.txt
+
+  ; Remove old shortcuts
+  Delete "$SMPROGRAMS\NifTools\Blender NIF Scripts\*.lnk"
 
   ; Install shortcuts
   CreateDirectory "$SMPROGRAMS\NifTools\Blender NIF Scripts\"
   CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Readme.lnk" "$INSTDIR\README.html"
-  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Tutorial.lnk" "http://niftools.sourceforge.net/tutorial/blender/"
-  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Support.lnk" "http://niftools.sourceforge.net/forum/viewforum.php?f=6"
-  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Development.lnk" "http://niftools.sourceforge.net/forum/viewforum.php?f=13"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\ChangeLog.lnk" "$INSTDIR\ChangeLog.txt"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Documentation.lnk" "http://niftools.sourceforge.net/wiki/Blender"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Bug Reports.lnk" "http://sourceforge.net/tracker/?group_id=149157&atid=776343"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Feature Requests.lnk" "http://sourceforge.net/tracker/?group_id=149157&atid=776346"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Forum.lnk" "http://niftools.sourceforge.net/forum/"
   CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Copyright.lnk" "$INSTDIR\Copyright.txt"
   CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Uninstall.lnk" "$INSTDIR\uninstall.exe"
 
@@ -334,8 +339,8 @@ Section "Uninstall"
   Delete "$BLENDERSCRIPTS\nif_import.py"
   Delete "$BLENDERSCRIPTS\mesh_weightsquash"
   Delete "$BLENDERSCRIPTS\mesh_hull.py"
-  Delete "$BLENDERSCRIPTS\bpymodules\nifImEx\*.*"
-  RMDir "$BLENDERSCRIPTS\bpymodules\nifImEx"
+  Delete "$BLENDERSCRIPTS\bpymodules\nif_common.py"
+  Delete "$BLENDERSCRIPTS\bpymodules\nif_common.pyc"
   Delete "$BLENDERSCRIPTS\bpydata\config\nifscripts.cfg"
 
   ; remove program files and program directory
