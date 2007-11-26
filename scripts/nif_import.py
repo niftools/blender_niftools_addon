@@ -21,6 +21,9 @@ from nif_common import NifConfig
 from nif_common import NifFormat
 from nif_common import __version__
 
+import operator
+from PyFFI.Utils import QuickHull
+
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -373,9 +376,8 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                         if not isinstance(bhk_body, NifFormat.bhkRigidBody):
                             print("WARNING: unsupported collision structure \
 under node %s" % niBlock.name)
-                        bhk_obj = self.importBhkShape(bhk_body.shape)
-                        if bhk_obj:
-                            b_obj.makeParent(bhk_obj)
+                        collision_objs = self.importBhkShape(bhk_body.shape)
+                        b_obj.makeParent(collision_objs)
 
                     return b_obj
             # all else is currently discarded
@@ -1834,9 +1836,69 @@ under node %s" % niBlock.name)
                 
             Blender.Set('curframe', 1)
 
-    def importBhkShape(bhkshape):
-        """Import an oblivion collision shape as blender mesh."""
-        pass
+    def importBhkShape(self, bhkshape):
+        """Import an oblivion collision shape as list of blender meshes."""
+        if isinstance(bhkshape, NifFormat.bhkConvexVerticesShape):
+            # find vertices (and fix scale)
+            vertices, triangles = QuickHull.qhull3d(
+                [ (7 * vert.x, 7 * vert.y, 7 * vert.z)
+                  for vert in bhkshape.vertices ])
+
+            # create convex mesh
+            me = Blender.Mesh.New('convexpoly')
+            for vert in vertices:
+                me.verts.extend(*vert)
+            for triangle in triangles:
+                me.faces.extend(triangle)
+
+            # link mesh to scene and set transform
+            scn = Blender.Scene.GetCurrent()
+            ob = scn.objects.new(me, 'convexpoly')
+
+            # set bounds type
+            ob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
+            # convex hull shape not in blender Python API
+            # Blender.Object.RBShapes['CONVEXHULL'] should be 5
+            ob.rbShapeBoundType = 5
+            ob.drawMode = Blender.Object.DrawModes['WIRE']
+
+            return [ ob ]
+
+        elif isinstance(bhkshape, NifFormat.bhkTransformShape):
+            # import shapes
+            collision_objs = self.importBhkShape(bhkshape.shape)
+            # find transformation matrix
+            transform = Blender.Mathutils.Matrix(bhkshape.transform.asList())
+            transform.transpose()
+            # fix scale
+            transform[3][0] *= 7
+            transform[3][1] *= 7
+            transform[3][2] *= 7
+            # apply transform
+            for ob in collision_objs:
+                ob.setMatrix(ob.getMatrix(space = 'localspace') * transform)
+            # and return a list of transformed collision shapes
+            return collision_objs
+        
+        #elif isinstance(bhkshape, NifFormat.bhkBoxShape):
+        #    return []
+
+        #elif isinstance(bhkshape, NifFormat.bhkSphereShape):
+        #    return []
+
+        #elif isinstance(bhkshape, NifFormat.bhkCapsuleShape):
+        #    return []
+
+        #elif isinstance(bhkshape, NifFormat.bhkPackedNiTriStripsShape):
+        #    return []
+
+        elif isinstance(bhkshape, NifFormat.bhkMoppBvTreeShape):
+            return self.importBhkShape(bhkshape.shape)
+
+        elif isinstance(bhkshape, NifFormat.bhkListShape):
+            return reduce(operator.add, ( self.importBhkShape(subshape)
+                                          for subshape in bhkshape.subShapes ))
+        print "WARNING: unsupported bhk shape %s" % bhkshape.__class__.__name__
 
 def config_callback(**config):
     """Called when config script is done. Starts and times import."""
