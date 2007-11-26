@@ -1968,8 +1968,25 @@ under node %s" % niBlock.name)
             ob.setMatrix(transform)
             return [ ob ]
 
-        #elif isinstance(bhkshape, NifFormat.bhkPackedNiTriStripsShape):
-        #    return []
+        elif isinstance(bhkshape, NifFormat.bhkPackedNiTriStripsShape):
+            # create mesh
+            me = Blender.Mesh.New('poly')
+            for vert in bhkshape.data.vertices:
+                me.verts.extend(vert.x * 7, vert.y * 7, vert.z * 7)
+            for hktriangle in bhkshape.data.triangles:
+                me.faces.extend(hktriangle.triangle.v1,
+                                hktriangle.triangle.v2,
+                                hktriangle.triangle.v3)
+
+            # link mesh to scene and set transform
+            ob = self.scene.objects.new(me, 'poly')
+
+            # set bounds type
+            ob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
+            ob.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
+            ob.drawMode = Blender.Object.DrawModes['WIRE']
+
+            return [ ob ]
 
         elif isinstance(bhkshape, NifFormat.bhkMoppBvTreeShape):
             return self.importBhkShape(bhkshape.shape)
@@ -1978,7 +1995,7 @@ under node %s" % niBlock.name)
             return reduce(operator.add, ( self.importBhkShape(subshape)
                                           for subshape in bhkshape.subShapes ))
 
-        print "WARNING: unsupported bhk shape %s" % bhkshape.__class__.__name__
+        print("WARNING: unsupported bhk shape %s" % bhkshape.__class__.__name__)
         return []
 
 def config_callback(**config):
