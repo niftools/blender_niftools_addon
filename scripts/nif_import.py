@@ -1904,8 +1904,24 @@ under node %s" % niBlock.name)
             ob.rbShapeBoundType = Blender.Object.RBShapes['BOX']
             return [ ob ]
 
-        #elif isinstance(bhkshape, NifFormat.bhkSphereShape):
-        #    return []
+        elif isinstance(bhkshape, NifFormat.bhkSphereShape):
+            minx = miny = minz = -bhkshape.radius * 7
+            maxx = maxy = maxz = +bhkshape.radius * 7
+            me = Blender.Mesh.New('sphere')
+            for x in [minx, maxx]:
+                for y in [miny, maxy]:
+                    for z in [minz, maxz]:
+                        me.verts.extend(x,y,z)
+            me.faces.extend(
+                [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
+
+            # link box to scene and set transform
+            ob = self.scene.objects.new(me, 'sphere')
+
+            # set bounds type
+            ob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
+            ob.rbShapeBoundType = Blender.Object.RBShapes['SPHERE']
+            return [ ob ]
 
         #elif isinstance(bhkshape, NifFormat.bhkCapsuleShape):
         #    return []
