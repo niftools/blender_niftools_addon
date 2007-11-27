@@ -291,6 +291,7 @@ Section
   ; Install libraries
   SetOutPath $BLENDERSCRIPTS\bpymodules
   File ..\scripts\bpymodules\nif_common.py
+  File ..\scripts\bpymodules\nif_test.py
 
   ; Install documentation files
   SetOutPath $INSTDIR
@@ -341,6 +342,8 @@ Section "Uninstall"
   Delete "$BLENDERSCRIPTS\mesh_hull.py"
   Delete "$BLENDERSCRIPTS\bpymodules\nif_common.py"
   Delete "$BLENDERSCRIPTS\bpymodules\nif_common.pyc"
+  Delete "$BLENDERSCRIPTS\bpymodules\nif_test.py"
+  Delete "$BLENDERSCRIPTS\bpymodules\nif_test.pyc"
   Delete "$BLENDERSCRIPTS\bpydata\config\nifscripts.cfg"
 
   ; remove program files and program directory
