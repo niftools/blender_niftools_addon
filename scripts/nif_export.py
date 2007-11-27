@@ -1959,7 +1959,7 @@ and turn off envelopes."""%ob.getName()
 
         # if no collisions have been exported yet to this parent_block
         # then create new collision tree on parent_block
-        # bhkCollisionObject -> bhkRigidBodyT
+        # bhkCollisionObject -> bhkRigidBody
         if not parent_block.collisionObject:
             # note: collision settings are taken from lowerclasschair01.nif
             colobj = self.createBlock("bhkCollisionObject")
@@ -1967,7 +1967,7 @@ and turn off envelopes."""%ob.getName()
             colobj.target = parent_block
             colobj.unknownShort = 1
 
-            colbody = self.createBlock("bhkRigidBodyT")
+            colbody = self.createBlock("bhkRigidBody")
             colobj.body = colbody
             colbody.layer = layer
             colbody.unknown5Floats[1] = 3.8139e+36
@@ -2096,7 +2096,7 @@ and turn off envelopes."""%ob.getName()
 
         # if no collisions have been exported yet to this parent_block
         # then create new collision tree on parent_block
-        # bhkCollisionObject -> bhkRigidBodyT -> bhkListShape
+        # bhkCollisionObject -> bhkRigidBody -> bhkListShape
         # (this works in all cases, can be simplified just before
         # the file is written)
         if not colbody.shape:
