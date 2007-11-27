@@ -1,6 +1,6 @@
 """Automated skinning tests for the blender nif scripts."""
 
-from test import runtest
+from nif_test import runtest
 
 # some tests to import and export nif files
 # as list of (filename, config dictionary, list of objects to be selected)
