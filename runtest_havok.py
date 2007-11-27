@@ -19,5 +19,9 @@ runtest("test/nif", [
     ('anvilcirclebench01.nif', {}, []),
     ('_anvilcirclebench01.nif',
      dict(EXPORT_VERSION = 'Oblivion'),
-     ['AnvilCircleBench01'])
+     ['AnvilCircleBench01']),
+    ('frostatron.nif', {}, []),
+    ('_frostatron.nif',
+     dict(EXPORT_VERSION = 'Oblivion'),
+     ['FrostAtron'])
 ])

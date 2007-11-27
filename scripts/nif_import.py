@@ -376,7 +376,7 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                         if not isinstance(bhk_body, NifFormat.bhkRigidBody):
                             print("WARNING: unsupported collision structure \
 under node %s" % niBlock.name)
-                        collision_objs = self.importBhkShape(bhk_body.shape)
+                        collision_objs = self.importBhkShape(bhk_body)
                         b_obj.makeParent(collision_objs)
 
                     return b_obj
@@ -1876,6 +1876,26 @@ under node %s" % niBlock.name)
             # apply transform
             for ob in collision_objs:
                 ob.setMatrix(ob.getMatrix('localspace') * transform)
+            # and return a list of transformed collision shapes
+            return collision_objs
+
+        elif isinstance(bhkshape, NifFormat.bhkRigidBody):
+            # import shapes
+            collision_objs = self.importBhkShape(bhkshape.shape)
+            # find transformation matrix in case of the T version
+            if isinstance(bhkshape, NifFormat.bhkRigidBodyT):
+                # set rotation
+                transform = Blender.Mathutils.Quaternion(
+                    bhkshape.rotation.w, bhkshape.rotation.x,
+                    bhkshape.rotation.y, bhkshape.rotation.z).toMatrix()
+                transform.resize4x4()
+                # set translation
+                transform[3][0] = bhkshape.translation.x * 7
+                transform[3][1] = bhkshape.translation.y * 7
+                transform[3][2] = bhkshape.translation.z * 7
+                # apply transform
+                for ob in collision_objs:
+                    ob.setMatrix(ob.getMatrix('localspace') * transform)
             # and return a list of transformed collision shapes
             return collision_objs
         
