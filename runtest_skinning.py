@@ -7,7 +7,7 @@ from nif_test import runtest
 # if the config has a EXPORT_VERSION key then the test is an export test
 # otherwise it's an import test
 
-runtest([
+runtest("test/nif", [
     # oblivion full body
     ('skeleton.nif',  dict(IMPORT_SKELETON = 1), []),
     ('upperbody.nif', dict(IMPORT_SKELETON = 2), ['Scene Root']),

@@ -37,7 +37,7 @@ from nif_import import NifImport
 from nif_export import NifExport
 from nif_common import NifConfig
 
-def runtest(test_files):
+def runtest(directory, files):
     """Test the specified files.
 
     @param test_files: A list of all files to test. Each entry in the list
@@ -49,7 +49,7 @@ def runtest(test_files):
     scene = Blender.Scene.GetCurrent() # current scene
     layer = 1
 
-    for filename, filecfg, selection in test_files:
+    for filename, filecfg, selection in files:
         # select objects
         scene.objects.selected = [
             ob for ob in scene.objects if ob.name in selection]
@@ -65,7 +65,7 @@ def runtest(test_files):
             # export the imported files
             print("*** exporting %s ***" % filename)
 
-            config["EXPORT_FILE"] = "nif/%s" % filename
+            config["EXPORT_FILE"] = "%s/%s" % (directory, filename)
             NifExport(**config)
 
             # increment active layer for next import
@@ -76,7 +76,7 @@ def runtest(test_files):
         else:
             print("*** importing %s ***" % filename)
 
-            config["IMPORT_FILE"] = "nif/%s" % filename
+            config["IMPORT_FILE"] = "%s/%s" % (directory, filename)
 
             # import <filename>
             print "import..."
