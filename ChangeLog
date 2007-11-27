@@ -1,5 +1,6 @@
 Version 2.2.1 (Nov 27, 2007)
 * Import: havok blocks (still experimental, but seems to work on most nifs)
+* Export: use bhkRigidBody instead of bhkRigidBodyT
 * new tester for Blender import and export of havok related blocks
 
 Version 2.2.0 (Nov 19, 2007)
