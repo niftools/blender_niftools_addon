@@ -1861,6 +1861,14 @@ under node %s" % niBlock.name)
             ob.rbShapeBoundType = 5
             ob.drawMode = Blender.Object.DrawModes['WIRE']
 
+            # also remove duplicate vertices
+            numverts = len(me.verts)
+            # 0.005 = 1/200
+            numdel = me.remDoubles(0.005)
+            if numdel:
+                self.msg('removed %i duplicate vertices \
+(out of %i) from collision mesh'%(numdel, numverts), 3)
+
             return [ ob ]
 
         elif isinstance(bhkshape, NifFormat.bhkTransformShape):
@@ -2005,6 +2013,14 @@ under node %s" % niBlock.name)
             ob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
             ob.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
             ob.drawMode = Blender.Object.DrawModes['WIRE']
+
+            # also remove duplicate vertices
+            numverts = len(me.verts)
+            # 0.005 = 1/200
+            numdel = me.remDoubles(0.005)
+            if numdel:
+                self.msg('removed %i duplicate vertices \
+(out of %i) from collision mesh'%(numdel, numverts), 3)
 
             return [ ob ]
 
