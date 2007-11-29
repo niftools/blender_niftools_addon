@@ -900,39 +900,50 @@ and turn off envelopes."""%ob.getName()
         (this argument is used when exporting NiFlipControllers).
         Returns block of the exported NiSourceTexture."""
         
-        # texture must be of type IMAGE
-        if ( texture.type != Blender.Texture.Types.IMAGE ):
-            raise NifExportError("Error: Texture '%s' must be of type IMAGE"%texture.getName())
-
-        # texture must not be packed
-        if texture.getImage().packed:
-            raise NifExportError("export of packed textures is not supported ('%s')"%texture.getName())
-        
         # create NiSourceTexture
         srctex = NifFormat.NiSourceTexture()
         srctex.useExternal = True
         if not filename is None:
+            # preset filename
             tfn = filename
-        else:
+        elif ( texture.type == Blender.Texture.Types.ENVMAP ):
+            # morrowind only
+            tfn = "enviro 01.TGA"
+        elif ( texture.type == Blender.Texture.Types.IMAGE ):
+            # get filename from image
+
+            # texture must not be packed
+            if texture.getImage().packed:
+                raise NifExportError(
+                    "export of packed textures is not supported ('%s')"
+                    %texture.getName())
+            
             tfn = texture.image.getFilename()
-        if not self.EXPORT_VERSION in ['Morrowind', 'Oblivion']:
-            # strip texture file path
-            srctex.fileName = Blender.sys.basename(tfn)
-        else:
-            # strip the data files prefix from the texture's file name
-            tfn = tfn.lower()
-            idx = tfn.find("textures")
-            if ( idx >= 0 ):
-                tfn = tfn[idx:]
-                srctex.fileName = tfn
-            else:
+
+            if not self.EXPORT_VERSION in ['Morrowind', 'Oblivion']:
+                # strip texture file path
                 srctex.fileName = Blender.sys.basename(tfn)
-        # try and find a DDS alternative, force it if required
-        ddsFile = "%s%s" % (srctex.fileName[:-4], '.dds')
-        if Blender.sys.exists(ddsFile) or self.EXPORT_FORCEDDS:
-            srctex.fileName = ddsFile
-        # for linux export: fix path
-        srctex.fileName = srctex.fileName.replace('/', '\\')
+            else:
+                # strip the data files prefix from the texture's file name
+                tfn = tfn.lower()
+                idx = tfn.find("textures")
+                if ( idx >= 0 ):
+                    tfn = tfn[idx:]
+                    srctex.fileName = tfn
+                else:
+                    srctex.fileName = Blender.sys.basename(tfn)
+            # try and find a DDS alternative, force it if required
+            ddsFile = "%s%s" % (srctex.fileName[:-4], '.dds')
+            if Blender.sys.exists(ddsFile) or self.EXPORT_FORCEDDS:
+                srctex.fileName = ddsFile
+            # for linux export: fix path
+            srctex.fileName = srctex.fileName.replace('/', '\\')
+        else:
+            # texture must be of type IMAGE or ENVMAP
+            raise NifExportError(
+                "Error: Texture '%s' must be of type IMAGE or ENVMAP"
+                %texture.getName())
+
 
         # fill in default values
         srctex.pixelLayout = 5
@@ -1068,48 +1079,67 @@ and turn off envelopes."""%ob.getName()
                 mesh_mat_emissive_color[0] = mesh_mat_diffuse_color[0] * mesh_mat_emissive
                 mesh_mat_emissive_color[1] = mesh_mat_diffuse_color[1] * mesh_mat_emissive
                 mesh_mat_emissive_color[2] = mesh_mat_diffuse_color[2] * mesh_mat_emissive
+                # NiTextureEffect block is used to add reflectivity
+                # it will be set to True if one of the textures has the
+                # MapTo.REF setting
+                # (used for Morrowind only)
+                mesh_hastexeff = False
                 # the base texture = first material texture
                 # note that most morrowind files only have a base texture, so let's for now only support single textured materials
                 for mtex in mesh_mat.getTextures():
-                    if (mtex != None):
-                        if (mtex.texco != Blender.Texture.TexCo.UV):
-                            # nif only support UV-mapped textures
-                            raise NifExportError("Non-UV texture in mesh '%s', material '%s'. Either delete all non-UV textures, or in the Shading Panel, under Material Buttons, set texture 'Map Input' to 'UV'."%(ob.getName(),mesh_mat.getName()))
-                        if ((mtex.mapto & Blender.Texture.MapTo.COL) == 0):
-                            # it should map to colour
-                            raise NifExportError("Non-COL-mapped texture in mesh '%s', material '%s', these cannot be exported to NIF. Either delete all non-COL-mapped textures, or in the Shading Panel, under Material Buttons, set texture 'Map To' to 'COL'."%(ob.getName(),mesh_mat.getName()))
-                        if ((mtex.mapto & Blender.Texture.MapTo.EMIT) == 0):
-                            if (mesh_base_tex == None):
-                                # got the base texture
-                                mesh_base_mtex = mtex
-                                mesh_base_tex = mtex.tex
-                                mesh_hastex = True # flag that we have textures, and that we should export UV coordinates
-                                # check if alpha channel is enabled for this texture
-                                if (mesh_base_tex.imageFlags & Blender.Texture.ImageFlags.USEALPHA != 0) and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
-                                    # in this case, Blender replaces the texture transparant parts with the underlying material color...
-                                    # in NIF, material alpha is multiplied with texture alpha channel...
-                                    # how can we emulate the NIF alpha system (simply multiplying material alpha with texture alpha) when MapTo.ALPHA is turned on?
-                                    # require the Blender material alpha to be 0.0 (no material color can show up), and use the "Var" slider in the texture blending mode tab!
-                                    # but...
-                                    if (mesh_mat_transparency > NifFormat._EPSILON):
-                                        raise NifExportError("Cannot export this type of transparency in material '%s': instead, try to set alpha to 0.0 and to use the 'Var' slider in the 'Map To' tab under the material buttons."%mesh_mat.getName())
-                                    if (mesh_mat.getIpo() and mesh_mat.getIpo().getCurve('Alpha')):
-                                        raise NifExportError("Cannot export animation for this type of transparency in material '%s': remove alpha animation, or turn off MapTo.ALPHA, and try again."%mesh_mat.getName())
-                                    mesh_mat_transparency = mtex.varfac # we must use the "Var" value
-                                    mesh_hasalpha = True
-                            else:
-                                raise NifExportError("Multiple base textures in mesh '%s', material '%s', this is not supported. Delete all textures, except for the base texture."%(mesh.name,mesh_mat.getName()))
+                    if (mtex == None):
+                        continue
+                    # detect non-UV-mapped textures first
+                    if (mtex.mapto & Blender.Texture.MapTo.REF):
+                        mesh_hastexeff = True
+                        mesh_texeff_mtex = mtex
+                        mesh_texeff_tex = mtex.tex
+                        continue
+
+                    # now check that texture is UV-mapped
+                    if (mtex.texco != Blender.Texture.TexCo.UV):
+                        # nif only support UV-mapped textures
+                        raise NifExportError("Non-UV texture in mesh '%s', \
+material '%s'. Either delete all non-UV textures, or in the Shading Panel, \
+under Material Buttons, set texture 'Map Input' to 'UV'."%
+                                             (ob.getName(),mesh_mat.getName()))
+
+                    # now detect UV-mapped textures
+                    if ((mtex.mapto & Blender.Texture.MapTo.COL) == 0):
+                        # it should map to colour
+                        raise NifExportError("Non-COL-mapped texture in mesh '%s', material '%s', these cannot be exported to NIF. Either delete all non-COL-mapped textures, or in the Shading Panel, under Material Buttons, set texture 'Map To' to 'COL'."%(ob.getName(),mesh_mat.getName()))
+                    if ((mtex.mapto & Blender.Texture.MapTo.EMIT) == 0):
+                        if (mesh_base_tex == None):
+                            # got the base texture
+                            mesh_base_mtex = mtex
+                            mesh_base_tex = mtex.tex
+                            mesh_hastex = True # flag that we have textures, and that we should export UV coordinates
+                            # check if alpha channel is enabled for this texture
+                            if (mesh_base_tex.imageFlags & Blender.Texture.ImageFlags.USEALPHA != 0) and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
+                                # in this case, Blender replaces the texture transparant parts with the underlying material color...
+                                # in NIF, material alpha is multiplied with texture alpha channel...
+                                # how can we emulate the NIF alpha system (simply multiplying material alpha with texture alpha) when MapTo.ALPHA is turned on?
+                                # require the Blender material alpha to be 0.0 (no material color can show up), and use the "Var" slider in the texture blending mode tab!
+                                # but...
+                                if (mesh_mat_transparency > NifFormat._EPSILON):
+                                    raise NifExportError("Cannot export this type of transparency in material '%s': instead, try to set alpha to 0.0 and to use the 'Var' slider in the 'Map To' tab under the material buttons."%mesh_mat.getName())
+                                if (mesh_mat.getIpo() and mesh_mat.getIpo().getCurve('Alpha')):
+                                    raise NifExportError("Cannot export animation for this type of transparency in material '%s': remove alpha animation, or turn off MapTo.ALPHA, and try again."%mesh_mat.getName())
+                                mesh_mat_transparency = mtex.varfac # we must use the "Var" value
+                                mesh_hasalpha = True
                         else:
-                            # MapTo EMIT is checked -> glow map
-                            if ( mesh_glow_tex == None ):
-                                # check if calculation of alpha channel is enabled for this texture
-                                if (mesh_base_tex.imageFlags & Blender.Texture.ImageFlags.CALCALPHA != 0) and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
-                                    raise NifExportError("In mesh '%s', material '%s': glow texture must have CALCALPHA flag set, and must have MapTo.ALPHA enabled."%(ob.getName(),mesh_mat.getName()))
-                                # got the glow tex
-                                mesh_glow_tex = mtex.tex
-                                mesh_hastex = True
-                            else:
-                                raise NifExportError("Multiple glow textures in mesh '%s', material '%s'. Make sure there is only one texture with MapTo.EMIT"%(mesh.name,mesh_mat.getName()))
+                            raise NifExportError("Multiple base textures in mesh '%s', material '%s', this is not supported. Delete all textures, except for the base texture."%(mesh.name,mesh_mat.getName()))
+                    else:
+                        # MapTo EMIT is checked -> glow map
+                        if ( mesh_glow_tex == None ):
+                            # check if calculation of alpha channel is enabled for this texture
+                            if (mesh_base_tex.imageFlags & Blender.Texture.ImageFlags.CALCALPHA != 0) and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
+                                raise NifExportError("In mesh '%s', material '%s': glow texture must have CALCALPHA flag set, and must have MapTo.ALPHA enabled."%(ob.getName(),mesh_mat.getName()))
+                            # got the glow tex
+                            mesh_glow_tex = mtex.tex
+                            mesh_hastex = True
+                        else:
+                            raise NifExportError("Multiple glow textures in mesh '%s', material '%s'. Make sure there is only one texture with MapTo.EMIT"%(mesh.name,mesh_mat.getName()))
 
             # -> now comes the real export
             
@@ -1234,6 +1264,12 @@ and turn off envelopes."""%ob.getName()
             # material + glow texture        -> (needs to be tested)
             # material, but no texture       -> uniformly coloured object
             # no material                    -> typically, collision mesh
+
+            # add texture effect block (must be added as preceeding child of
+            # the trishape)
+            if self.EXPORT_VERSION == "Morrowind" and mesh_hastexeff:
+                parent_block.addChild(
+                    self.exportTextureEffect(mesh_texeff_tex))
 
             # add a trishape block, and refer to this block in the parent's children list
             if not self.EXPORT_STRIPIFY:
@@ -2318,14 +2354,16 @@ and turn off envelopes."""%ob.getName()
         # (ignore the name string as sometimes import needs to create different
         # materials even when NiMaterialProperty is the same)
         for block in self.blocks:
-            if isinstance(block, NifFormat.NiMaterialProperty) and block.getHash(ignore_strings = True) == matprop.getHash(ignore_strings = True):
+            if isinstance(block, NifFormat.NiMaterialProperty) \
+               and block.getHash(ignore_strings = True) == matprop.getHash(ignore_strings = True):
                 return block
 
         # no material property with given settings found, so use and register
         # the new one
         return self.registerBlock(matprop)
 
-    def exportTexturingProperty(self, flags = 0x0001, applymode = None, basetex = None, glowtex = None):
+    def exportTexturingProperty(
+        self, flags = 0x0001, applymode = None, basetex = None, glowtex = None):
         """Export texturing property. The parameters basetex and glowtex are
         the Blender material textures (Texture, not MTex) that correspond to
         the base and glow textures."""
@@ -2369,12 +2407,27 @@ and turn off envelopes."""%ob.getName()
                     
         # search for duplicate
         for block in self.blocks:
-            if isinstance(block, NifFormat.NiTexturingProperty) and block.getHash() == texprop.getHash():
+            if isinstance(block, NifFormat.NiTexturingProperty) \
+               and block.getHash() == texprop.getHash():
                 return block
 
         # no material property with given settings found, so use and register
         # the new one
         return self.registerBlock(texprop)
+
+    def exportTextureEffect(self, tex = None):
+        texeff = NifFormat.NiTextureEffect()
+        texeff.flags = 4
+        texeff.scale = 1.0
+        texeff.textureFiltering = NifFormat.TexFilterMode.FILTER_TRILERP
+        texeff.textureClamping  = NifFormat.TexClampMode.WRAP_S_WRAP_T
+        texeff.textureType = NifFormat.EffectType.EFFECT_ENVIRONMENT_MAP
+        texeff.coordinateGenerationType = NifFormat.CoordGenType.CG_SPHERE_MAP
+        if tex:
+            texeff.sourceTexture = self.exportSourceTexture(tex)
+        texeff.unknownVector.x = 1.0
+        texeff.ps2K = 65461
+        return self.registerBlock(texeff)
 
 def config_callback(**config):
     """Called when config script is done. Starts and times import."""
