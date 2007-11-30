@@ -907,7 +907,11 @@ and turn off envelopes."""%ob.getName()
             # preset filename
             srctex.fileName = filename
         elif ( texture.type == Blender.Texture.Types.ENVMAP ):
-            # morrowind only
+            # this works for morrowind only
+            if self.EXPORT_VERSION != "Morrowind":
+                raise NifExportError(
+                    "cannot export environment maps for nif version '%s'"%
+                    self.EXPORT_VERSION)
             srctex.fileName = "enviro 01.TGA"
         elif ( texture.type == Blender.Texture.Types.IMAGE ):
             # get filename from image
@@ -1087,30 +1091,43 @@ and turn off envelopes."""%ob.getName()
                 # the base texture = first material texture
                 # note that most morrowind files only have a base texture, so let's for now only support single textured materials
                 for mtex in mesh_mat.getTextures():
-                    if (mtex == None):
+                    if not mtex:
+                        # skip empty texture slots
                         continue
-                    # detect non-UV-mapped textures first
-                    if (mtex.mapto & Blender.Texture.MapTo.REF):
+
+                    # check REFL-mapped textures
+                    # (used for "NiTextureEffect" materials)
+                    if mtex.texco == Blender.Texture.TexCo.REFL:
+                        # of course the user should set all kinds of other
+                        # settings to make the environment mapping come out
+                        # (MapTo "COL", blending mode "Add")
+                        # but let's not care too much about that
+                        # only do some simple checks
+                        if (mtex.mapto & Blender.Texture.MapTo.COL) == 0:
+                            # it should map to colour
+                            raise NifExportError("Non-COL-mapped texture in \
+mesh '%s', material '%s', these cannot be exported to NIF. Either delete all \
+non-COL-mapped textures, or in the Shading Panel, under Material Buttons, set \
+texture 'Map To' to 'COL'."%(ob.getName(),mesh_mat.getName()))
+                        if mtex.blendmode != Blender.Texture.BlendModes["ADD"]:
+                            # it should have "ADD" blending mode
+                            raise NifExportError("Reflection texture should \
+have blending mode 'Add' on texture in \
+mesh '%s', material '%s')."%(ob.getName(),mesh_mat.getName()))
+                            # an envmap image should have an empty... don't care
                         mesh_hastexeff = True
                         mesh_texeff_mtex = mtex
                         mesh_texeff_tex = mtex.tex
-                        continue
 
-                    # now check that texture is UV-mapped
-                    if (mtex.texco != Blender.Texture.TexCo.UV):
-                        # nif only support UV-mapped textures
-                        raise NifExportError("Non-UV texture in mesh '%s', \
-material '%s'. Either delete all non-UV textures, or in the Shading Panel, \
-under Material Buttons, set texture 'Map Input' to 'UV'."%
-                                             (ob.getName(),mesh_mat.getName()))
-
-                    # now detect UV-mapped textures
-                    if ((mtex.mapto & Blender.Texture.MapTo.COL) == 0):
-                        # it should map to colour
-                        raise NifExportError("Non-COL-mapped texture in mesh '%s', material '%s', these cannot be exported to NIF. Either delete all non-COL-mapped textures, or in the Shading Panel, under Material Buttons, set texture 'Map To' to 'COL'."%(ob.getName(),mesh_mat.getName()))
-                    if ((mtex.mapto & Blender.Texture.MapTo.EMIT) == 0):
-                        if (mesh_base_tex == None):
+                    # check UV-mapped textures
+                    elif mtex.texco == Blender.Texture.TexCo.UV:
+                        if (mtex.mapto & Blender.Texture.MapTo.COL) == 0:
+                            # it should map to colour
+                            raise NifExportError("Non-COL-mapped texture in mesh '%s', material '%s', these cannot be exported to NIF. Either delete all non-COL-mapped textures, or in the Shading Panel, under Material Buttons, set texture 'Map To' to 'COL'."%(ob.getName(),mesh_mat.getName()))
+                        if (mtex.mapto & Blender.Texture.MapTo.EMIT) == 0:
                             # got the base texture
+                            if mesh_base_tex:
+                                raise NifExportError("Multiple base textures in mesh '%s', material '%s', this is not supported. Delete all textures, except for the base texture."%(mesh.name,mesh_mat.getName()))
                             mesh_base_mtex = mtex
                             mesh_base_tex = mtex.tex
                             mesh_hastex = True # flag that we have textures, and that we should export UV coordinates
@@ -1121,25 +1138,30 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                                 # how can we emulate the NIF alpha system (simply multiplying material alpha with texture alpha) when MapTo.ALPHA is turned on?
                                 # require the Blender material alpha to be 0.0 (no material color can show up), and use the "Var" slider in the texture blending mode tab!
                                 # but...
-                                if (mesh_mat_transparency > NifFormat._EPSILON):
+                                if mesh_mat_transparency > NifFormat._EPSILON:
                                     raise NifExportError("Cannot export this type of transparency in material '%s': instead, try to set alpha to 0.0 and to use the 'Var' slider in the 'Map To' tab under the material buttons."%mesh_mat.getName())
                                 if (mesh_mat.getIpo() and mesh_mat.getIpo().getCurve('Alpha')):
                                     raise NifExportError("Cannot export animation for this type of transparency in material '%s': remove alpha animation, or turn off MapTo.ALPHA, and try again."%mesh_mat.getName())
                                 mesh_mat_transparency = mtex.varfac # we must use the "Var" value
                                 mesh_hasalpha = True
                         else:
-                            raise NifExportError("Multiple base textures in mesh '%s', material '%s', this is not supported. Delete all textures, except for the base texture."%(mesh.name,mesh_mat.getName()))
-                    else:
-                        # MapTo EMIT is checked -> glow map
-                        if ( mesh_glow_tex == None ):
-                            # check if calculation of alpha channel is enabled for this texture
+                            # MapTo EMIT is checked -> glow map
+                            # got the glow tex
+                            if mesh_glow_tex:
+                                raise NifExportError("Multiple glow textures in mesh '%s', material '%s'. Make sure there is only one texture with MapTo.EMIT"%(mesh.name,mesh_mat.getName()))
+                            # check if calculation of alpha channel is enabled
+                            # for this texture
                             if (mesh_base_tex.imageFlags & Blender.Texture.ImageFlags.CALCALPHA != 0) and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
                                 raise NifExportError("In mesh '%s', material '%s': glow texture must have CALCALPHA flag set, and must have MapTo.ALPHA enabled."%(ob.getName(),mesh_mat.getName()))
-                            # got the glow tex
                             mesh_glow_tex = mtex.tex
                             mesh_hastex = True
-                        else:
-                            raise NifExportError("Multiple glow textures in mesh '%s', material '%s'. Make sure there is only one texture with MapTo.EMIT"%(mesh.name,mesh_mat.getName()))
+                    else:
+                        # nif only support UV-mapped textures
+                        raise NifExportError("Non-UV texture in mesh '%s', \
+material '%s'. Either delete all non-UV textures, or in the Shading Panel, \
+under Material Buttons, set texture 'Map Input' to 'UV'."%
+                                             (ob.getName(),mesh_mat.getName()))
+
 
             # -> now comes the real export
             
