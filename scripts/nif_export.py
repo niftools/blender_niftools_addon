@@ -2418,7 +2418,9 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
     def exportTextureEffect(self, tex = None):
         texeff = NifFormat.NiTextureEffect()
         texeff.flags = 4
+        texeff.rotation.setIdentity()
         texeff.scale = 1.0
+        texeff.modelProjectionMatrix.setIdentity()
         texeff.textureFiltering = NifFormat.TexFilterMode.FILTER_TRILERP
         texeff.textureClamping  = NifFormat.TexClampMode.WRAP_S_WRAP_T
         texeff.textureType = NifFormat.EffectType.EFFECT_ENVIRONMENT_MAP
