@@ -1265,18 +1265,32 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
             # material, but no texture       -> uniformly coloured object
             # no material                    -> typically, collision mesh
 
-            # add texture effect block (must be added as preceeding child of
-            # the trishape)
-            if self.EXPORT_VERSION == "Morrowind" and mesh_hastexeff:
-                parent_block.addChild(
-                    self.exportTextureEffect(mesh_texeff_tex))
-
-            # add a trishape block, and refer to this block in the parent's children list
+            # create a trishape block
             if not self.EXPORT_STRIPIFY:
                 trishape = self.createBlock("NiTriShape")
             else:
                 trishape = self.createBlock("NiTriStrips")
-            parent_block.addChild(trishape)
+
+            # add texture effect block (must be added as preceeding child of
+            # the trishape)
+            if self.EXPORT_VERSION == "Morrowind" and mesh_hastexeff:
+                # create a new parent block for this shape
+                extra_node = self.createBlock("NiNode")
+                parent_block.addChild(extra_node)
+                # set default values for this ninode
+                extra_node.rotation.setIdentity()
+                extra_node.scale = 1.0
+                extra_node.flags = 0x000C # morrowind
+                # create texture effect block and parent the
+                # texture effect and trishape to it
+                texeff = self.exportTextureEffect(mesh_texeff_tex)
+                extra_node.addChild(texeff)
+                extra_node.addChild(trishape)
+                extra_node.addEffect(texeff)
+            else:
+                # refer to this block in the parent's
+                # children list
+                parent_block.addChild(trishape)
             
             # fill in the NiTriShape's non-trivial values
             if isinstance(parent_block, NifFormat.RootCollisionNode):
