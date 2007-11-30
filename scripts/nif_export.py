@@ -905,10 +905,10 @@ and turn off envelopes."""%ob.getName()
         srctex.useExternal = True
         if not filename is None:
             # preset filename
-            tfn = filename
+            srctex.fileName = filename
         elif ( texture.type == Blender.Texture.Types.ENVMAP ):
             # morrowind only
-            tfn = "enviro 01.TGA"
+            srctex.fileName = "enviro 01.TGA"
         elif ( texture.type == Blender.Texture.Types.IMAGE ):
             # get filename from image
 
