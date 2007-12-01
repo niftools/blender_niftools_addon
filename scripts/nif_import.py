@@ -898,7 +898,7 @@ under node %s" % niBlock.name)
             return None
             
         try:
-            return self.textures[niSourceTexture]
+            return self.textures[niSourceTexture.getHash()]
         except:
             pass
         
@@ -1005,10 +1005,10 @@ under node %s" % niBlock.name)
             b_texture.setImage( b_image )
             b_texture.imageFlags |= Blender.Texture.ImageFlags.INTERPOL
             b_texture.imageFlags |= Blender.Texture.ImageFlags.MIPMAP
-            self.textures[niSourceTexture] = b_texture
+            self.textures[niSourceTexture.getHash()] = b_texture
             return b_texture
         else:
-            self.textures[niSourceTexture] = None
+            self.textures[niSourceTexture.getHash()] = None
             return None
 
     def importMaterial(self, matProperty, textProperty,
