@@ -284,7 +284,7 @@ class NifImport:
                 %root_block.__class__)
 
         # store bone matrix offsets for re-export
-        if self.bonesExtraMatrix: self.fb_bonemat()
+        if self.bonesExtraMatrix: self.storeBonesExtraMatrix()
         # store original names for re-export
         if self.names: self.fb_fullnames()
         
@@ -328,7 +328,7 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                         geom_group = self.is_grouping_node(niBlock)
                         if not geom_group:
                             # no grouping node, so import it as an empty
-                            b_obj = self.fb_empty(niBlock)
+                            b_obj = self.importEmpty(niBlock)
                         else:
                             # node groups geometries, so import it as a mesh
                             print("joining geometries %s to single object '%s'"
@@ -337,7 +337,7 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                             b_obj = None
                             for child in geom_group:
                                 b_obj = self.fb_mesh(child, group_mesh = b_obj, applytransform = True)
-                            b_obj.name = self.fb_name(niBlock, 22)
+                            b_obj.name = self.importName(niBlock, 22)
                             # settings for collision node
                             if isinstance(niBlock, NifFormat.RootCollisionNode):
                                 b_obj.setDrawType(
@@ -362,7 +362,7 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                             if b_child_obj:
                                 b_children_list.append(b_child_obj)
                         b_obj.makeParent(b_children_list)
-                    b_obj.setMatrix(self.fb_matrix(niBlock))
+                    b_obj.setMatrix(self.importMatrix(niBlock))
 
                     # import the animations
                     if self.IMPORT_ANIMATION:
@@ -432,7 +432,7 @@ under node %s" % niBlock.name)
                         b_mesh_branch_parent, b_mesh = self.importArmatureBranch(b_armature, niArmature, child, group_mesh = b_mesh)
                         assert(b_mesh_branch_parent == branch_parent) # DEBUG
                     if b_mesh:
-                        b_mesh.name = self.fb_name(niBlock)
+                        b_mesh.name = self.importName(niBlock)
                         b_objects.append((niBlock, branch_parent, b_mesh))
                 # import other objects
                 for child in geom_other:
@@ -447,8 +447,8 @@ under node %s" % niBlock.name)
                         # object was parented to a bone
                         # first find the matrix in armature space we want
                         # the mesh to have
-                        a_geom_matrix = self.fb_matrix(b_obj_branch_parent,
-                                                       relative_to = niArmature)
+                        a_geom_matrix = self.importMatrix(b_obj_branch_parent,
+                                                          relative_to = niArmature)
                         # next find the tail matrix of the bone parent
                         # first get blender bone name
                         b_par_bone_name = self.names[b_obj_branch_parent]
@@ -476,7 +476,7 @@ under node %s" % niBlock.name)
 
 
 
-    def fb_name(self, niBlock, max_length=22):
+    def importName(self, niBlock, max_length=22):
         """Get unique name for an object, preserving existing names.
         The maximum name length defaults to 22, since this is the
         maximum for Blender objects. Bone names can reach 32."""
@@ -510,7 +510,7 @@ under node %s" % niBlock.name)
         self.blocks[shortName] = niBlock
         return shortName
         
-    def fb_matrix(self, niBlock, relative_to = None):
+    def importMatrix(self, niBlock, relative_to = None):
         """Retrieves a niBlock's transform matrix as a Mathutil.Matrix."""
         return Matrix(*niBlock.getTransform(relative_to).asList())
 
@@ -538,9 +538,9 @@ under node %s" % niBlock.name)
         # done!
         return b_scale, b_rot, b_trans
 
-    def fb_empty(self, niBlock):
+    def importEmpty(self, niBlock):
         """Creates and returns a grouping empty."""
-        shortName = self.fb_name(niBlock,22)
+        shortName = self.importName(niBlock,22)
         b_empty = Blender.Object.New("Empty", shortName)
         b_empty.properties['longName'] = niBlock.name
         self.scene.objects.link(b_empty)
@@ -550,7 +550,7 @@ under node %s" % niBlock.name)
         """Scans an armature hierarchy, and returns a whole armature.
         This is done outside the normal node tree scan to allow for positioning
         of the bones before skins are attached."""
-        armature_name = self.fb_name(niArmature,22)
+        armature_name = self.importName(niArmature,22)
 
         b_armatureData = Blender.Armature.Armature()
         b_armatureData.name = armature_name
@@ -566,7 +566,7 @@ under node %s" % niBlock.name)
         niChildBones = [child for child in niArmature.children
                         if self.is_bone(child)]  
         for niBone in niChildBones:
-            self.fb_bone(niBone, b_armature, b_armatureData, niArmature)
+            self.importBone(niBone, b_armature, b_armatureData, niArmature)
         b_armatureData.update()
 
         # The armature has been created in editmode,
@@ -597,7 +597,7 @@ under node %s" % niBlock.name)
                 # Rchannel = Rtotal * inverse(Rbind)
                 # Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
                 niBone = self.blocks[bone_name]
-                bone_bm = self.fb_matrix(niBone) # base pose
+                bone_bm = self.importMatrix(niBone) # base pose
                 niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = self.decompose_srt(bone_bm)
                 niBone_bind_rot_inv = Matrix(niBone_bind_rot)
                 niBone_bind_rot_inv.invert()
@@ -744,21 +744,21 @@ under node %s" % niBlock.name)
                         del rot_keys_dict
         return b_armature
 
-    def fb_bone(self, niBlock, b_armature, b_armatureData, niArmature):
+    def importBone(self, niBlock, b_armature, b_armatureData, niArmature):
         """Adds a bone to the armature in edit mode."""
         # bone length for nubs and zero length bones
         nub_length = 5.0
         scale = self.IMPORT_SCALE_CORRECTION
         # bone name
-        bone_name = self.fb_name(niBlock, 32)
+        bone_name = self.importName(niBlock, 32)
         niChildBones = [ child for child in niBlock.children
                          if self.is_bone(child) ]
         if self.is_bone(niBlock):
             # create bones here...
             b_bone = Blender.Armature.Editbone()
             # head: get position from niBlock
-            armature_space_matrix = self.fb_matrix(niBlock,
-                                                   relative_to = niArmature)
+            armature_space_matrix = self.importMatrix(niBlock,
+                                                      relative_to = niArmature)
 
             b_bone_head_x = armature_space_matrix[3][0]
             b_bone_head_y = armature_space_matrix[3][1]
@@ -771,8 +771,8 @@ under node %s" % niBlock.name)
             # tail: average of children location
             if len(niChildBones) > 0:
                 m_correction = self.find_correction_matrix(niBlock, niArmature)
-                child_matrices = [ self.fb_matrix(child,
-                                                  relative_to = niArmature)
+                child_matrices = [ self.importMatrix(child,
+                                                     relative_to = niArmature)
                                    for child in niChildBones ]
                 b_bone_tail_x = sum(child_matrix[3][0]
                                     for child_matrix
@@ -851,7 +851,7 @@ under node %s" % niBlock.name)
             self.bonesExtraMatrix[niBlock] = new_bone_matrix * old_bone_matrix_inv # new * inverse(old)
             # set bone children
             for niBone in niChildBones:
-                b_child_bone =  self.fb_bone(niBone, b_armature, b_armatureData, niArmature)
+                b_child_bone =  self.importBone(niBone, b_armature, b_armatureData, niArmature)
                 b_child_bone.parent = b_bone
             return b_bone
         return None
@@ -861,14 +861,14 @@ under node %s" % niBlock.name)
         """Returns the correction matrix for a bone."""
         m_correction = self.IDENTITY44.rotationPart()
         if (self.IMPORT_REALIGN_BONES == 2) and self.is_bone(niBlock):
-            armature_space_matrix = self.fb_matrix(niBlock,
-                                                   relative_to = niArmature)
+            armature_space_matrix = self.importMatrix(niBlock,
+                                                      relative_to = niArmature)
 
             niChildBones = [ child for child in niBlock.children
                              if self.is_bone(child) ]
             (sum_x, sum_y, sum_z, dummy) = armature_space_matrix[3]
             if len(niChildBones) > 0:
-                child_local_matrices = [ self.fb_matrix(child)
+                child_local_matrices = [ self.importMatrix(child)
                                          for child in niChildBones ]
                 sum_x = sum(cm[3][0] for cm in child_local_matrices)
                 sum_y = sum(cm[3][1] for cm in child_local_matrices)
@@ -924,9 +924,13 @@ under node %s" % niBlock.name)
             for texdir in searchPathList:
                 texdir = texdir.replace( '\\', Blender.sys.sep )
                 texdir = texdir.replace( '/', Blender.sys.sep )
-                # go through all possible file names, try alternate extensions too
-                # for linux, also try lower case versions of filenames
-                texfns = reduce(lambda x,y: x+y, [[fn[:-4]+ext, fn[:-4].lower()+ext] for ext in ('.DDS','.dds','.PNG','.png','.TGA','.tga','.BMP','.bmp','.JPG','.jpg')])
+                # go through all possible file names, try alternate extensions
+                # too; for linux, also try lower case versions of filenames
+                texfns = reduce(operator.add,
+                                [ [ fn[:-4]+ext, fn[:-4].lower()+ext ]
+                                  for ext in ('.DDS','.dds','.PNG','.png',
+                                             '.TGA','.tga','.BMP','.bmp',
+                                             '.JPG','.jpg') ] )
                 texfns = [fn, fn.lower()] + list(set(texfns))
                 for texfn in texfns:
                      # now a little trick, to satisfy many Morrowind mods
@@ -938,11 +942,12 @@ under node %s" % niBlock.name)
                     if Blender.sys.exists(tex) == 1:
                         # tries to load the file
                         b_image = Blender.Image.Load(tex)
-                        # Blender 2.41 will return an image object even if the file format isn't supported,
-                        # so to check if the image is actually loaded I need to force an error, hence the
-                        # dummy = b_image.size line.
+                        # Blender will return an image object even if the
+                        # file format isn't supported,
+                        # so to check if the image is actually loaded an error
+                        # is forced via "b_image.size"
                         try:
-                            dummy = b_image.size
+                            b_image.size
                         except: # RuntimeError: couldn't load image data in Blender
                             b_image = None # not supported, delete image object
                         else:
@@ -953,7 +958,8 @@ under node %s" % niBlock.name)
                 if b_image:
                     break
             if b_image == None:
-                self.msg("Texture '%s' not found and no alternate available" % fn, 2)
+                self.msg("Texture '%s' not found and no alternate available"
+                         %fn, 2)
                 b_image = Blender.Image.New(tex, 1, 1, 24) # create a stub
                 b_image.filename = Blender.sys.join(searchPathList[0], fn)
         else:
@@ -971,9 +977,9 @@ under node %s" % niBlock.name)
             else:
                 bpp = None
 
-            if bpp == None: self.msg("unknown pixel format (%i), cannot extract texture"%niPixelData.pixelFormat, 1)
-
-            if bpp != None:
+            if bpp is None:
+                self.msg("unknown pixel format (%i), cannot extract texture"%niPixelData.pixelFormat, 1)
+            else:
                 b_image = Blender.Image.New( "TexImg", width, height, bpp )
                 
                 pixels = niPixelData.pixelData.data
@@ -982,7 +988,8 @@ under node %s" % niBlock.name)
                 self.msgProgress("Image Extraction")
                 for y in xrange( height ):
                     for x in xrange( width ):
-                        # TODO delegate color extraction to generator in PyFFI/NIF
+                        # TODO delegate color extraction to generator in
+                        # PyFFI/NIF
                         r = pixels[pixeloffset]
                         g = pixels[pixeloffset+1]
                         b = pixels[pixeloffset+2]
@@ -1005,18 +1012,20 @@ under node %s" % niBlock.name)
             return None
 
     def importMaterial(self, matProperty, textProperty,
-                    alphaProperty, specProperty):
+                       alphaProperty, specProperty):
         """Creates and returns a material."""
         # First check if material has been created before.
         try:
-            material = self.materials[(matProperty, textProperty,
-                                       alphaProperty, specProperty)]
-            return material
+            return self.materials[
+                ( matProperty.getHash()   if matProperty   else None,
+                  textProperty.getHash()  if textProperty  else None,
+                  alphaProperty.getHash() if alphaProperty else None,
+                  specProperty.getHash()  if specProperty  else None ) ]
         except KeyError:
             pass
         # use the material property for the name, other properties usually have
         # no name
-        name = self.fb_name(matProperty)
+        name = self.importName(matProperty)
         material = Blender.Material.New(name)
         # get apply mode, and convert to blender "blending mode"
         blendmode = Blender.Texture.BlendModes["MIX"] # default
@@ -1131,7 +1140,11 @@ under node %s" % niBlock.name)
             # we do this by setting specularity zero
             material.setSpec(0.0)
 
-        self.materials[(matProperty, textProperty, alphaProperty, specProperty)] = material
+        self.materials[
+            ( matProperty.getHash()   if matProperty   else None,
+              textProperty.getHash()  if textProperty  else None,
+              alphaProperty.getHash() if alphaProperty else None,
+              specProperty.getHash()  if specProperty  else None ) ] = material
         return material
 
     def fb_mesh(self, niBlock, group_mesh = None, applytransform = False, relative_to = None):
@@ -1144,7 +1157,7 @@ under node %s" % niBlock.name)
             b_meshData = group_mesh.getData(mesh=True)
         else:
             # Mesh name -> must be unique, so tag it if needed
-            b_name = self.fb_name(niBlock, 22)
+            b_name = self.importName(niBlock, 22)
             # create mesh data
             b_meshData = Blender.Mesh.New(b_name)
             b_meshData.properties['longName'] = niBlock.name
@@ -1160,9 +1173,11 @@ under node %s" % niBlock.name)
         # set transform matrix for the mesh
         if not applytransform:
             if group_mesh: raise NifImportError('BUG: cannot set matrix when importing meshes in groups; use applytransform = True')
-            b_mesh.setMatrix(self.fb_matrix(niBlock, relative_to = relative_to))
+            b_mesh.setMatrix(self.importMatrix(niBlock,
+                                               relative_to = relative_to))
         else:
-            transform = self.fb_matrix(niBlock, relative_to = relative_to) # used later on
+            # used later on
+            transform = self.importMatrix(niBlock, relative_to = relative_to)
 
         # Mesh geometry data. From this I can retrieve all geometry info
         niData = niBlock.data
@@ -1466,7 +1481,7 @@ under node %s" % niBlock.name)
             self.scene.getRenderingContext().startFrame(1)
             self.scene.getRenderingContext().endFrame(frame)
         
-    def fb_bonemat(self):
+    def storeBonesExtraMatrix(self):
         """Stores correction matrices in a text buffer so that the original
         alignment can be re-exported. In order for this to work it is necessary
         to mantain the imported names unaltered. Since the text buffer is
