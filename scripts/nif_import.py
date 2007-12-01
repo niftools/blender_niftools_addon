@@ -890,16 +890,21 @@ under node %s" % niBlock.name)
         return m_correction
 
 
+    def getTextureHash(self, niSourceTexture):
+        return ( niSourceTexture.getHash() if niSourceTexture else None )
+
     def importTexture(self, niSourceTexture):
         """Returns a Blender Texture object, and stores it in the
         self.textures dictionary."""
 
         if not niSourceTexture:
             return None
-            
+
+        texture_hash = self.getTextureHash(niSourceTexture)
+
         try:
-            return self.textures[niSourceTexture.getHash()]
-        except:
+            return self.textures[texture_hash]
+        except KeyError:
             pass
         
         b_image = None
@@ -912,11 +917,13 @@ under node %s" % niBlock.name)
             # go searching for it
             importpath = Blender.sys.dirname(self.IMPORT_FILE)
             searchPathList = [importpath] + self.IMPORT_TEXTURE_PATH
-            # if it looks like a Morrowind style path, use common sense to guess texture path
+            # if it looks like a Morrowind style path, use common sense to
+            # guess texture path
             meshes_index = importpath.lower().find("meshes")
             if meshes_index != -1:
                 searchPathList.append(importpath[:meshes_index] + 'textures')
-            # if it looks like a Civilization IV style path, use common sense to guess texture path
+            # if it looks like a Civilization IV style path, use common sense
+            # to guess texture path
             art_index = importpath.lower().find("art")
             if art_index != -1:
                 searchPathList.append(importpath[:art_index] + 'shared')
@@ -935,7 +942,8 @@ under node %s" % niBlock.name)
                 for texfn in texfns:
                      # now a little trick, to satisfy many Morrowind mods
                     if (texfn[:9].lower() == 'textures' + Blender.sys.sep) and (texdir[-9:].lower() == Blender.sys.sep + 'textures'):
-                        tex = Blender.sys.join( texdir[:-9], texfn ) # strip one of the two 'textures' from the path
+                        # strip one of the two 'textures' from the path
+                        tex = Blender.sys.join( texdir[:-9], texfn )
                     else:
                         tex = Blender.sys.join( texdir, texfn )
                     #self.msg("Searching %s" % tex, 3) # DEBUG
@@ -943,7 +951,7 @@ under node %s" % niBlock.name)
                         # tries to load the file
                         b_image = Blender.Image.Load(tex)
                         # Blender will return an image object even if the
-                        # file format isn't supported,
+                        # file format is not supported,
                         # so to check if the image is actually loaded an error
                         # is forced via "b_image.size"
                         try:
@@ -953,7 +961,6 @@ under node %s" % niBlock.name)
                         else:
                             # file format is supported
                             self.msg( "Found '%s' at %s" %(fn, tex), 3 )
-                            del dummy
                             break
                 if b_image:
                     break
@@ -1005,22 +1012,31 @@ under node %s" % niBlock.name)
             b_texture.setImage( b_image )
             b_texture.imageFlags |= Blender.Texture.ImageFlags.INTERPOL
             b_texture.imageFlags |= Blender.Texture.ImageFlags.MIPMAP
-            self.textures[niSourceTexture.getHash()] = b_texture
+            self.textures[texture_hash] = b_texture
             return b_texture
         else:
-            self.textures[niSourceTexture.getHash()] = None
+            self.textures[texture_hash] = None
             return None
+
+    def getMaterialHash(self, matProperty, textProperty,
+                       alphaProperty, specProperty):
+        """Helper function for importMaterial. Returns a key that uniquely
+        identifies a material from its properties. The key ignores the material
+        name as that does not affect the rendering."""
+        return ( matProperty.getHash(ignore_strings = True)
+                 if matProperty else None,
+                 textProperty.getHash()  if textProperty  else None,
+                 alphaProperty.getHash() if alphaProperty else None,
+                 specProperty.getHash()  if specProperty  else None )
 
     def importMaterial(self, matProperty, textProperty,
                        alphaProperty, specProperty):
         """Creates and returns a material."""
         # First check if material has been created before.
+        material_hash = self.getMaterialHash(matProperty, textProperty,
+                                             alphaProperty, specProperty)
         try:
-            return self.materials[
-                ( matProperty.getHash()   if matProperty   else None,
-                  textProperty.getHash()  if textProperty  else None,
-                  alphaProperty.getHash() if alphaProperty else None,
-                  specProperty.getHash()  if specProperty  else None ) ]
+            return self.materials[material_hash]                
         except KeyError:
             pass
         # use the material property for the name, other properties usually have
@@ -1140,11 +1156,7 @@ under node %s" % niBlock.name)
             # we do this by setting specularity zero
             material.setSpec(0.0)
 
-        self.materials[
-            ( matProperty.getHash()   if matProperty   else None,
-              textProperty.getHash()  if textProperty  else None,
-              alphaProperty.getHash() if alphaProperty else None,
-              specProperty.getHash()  if specProperty  else None ) ] = material
+        self.materials[material_hash] = material
         return material
 
     def fb_mesh(self, niBlock, group_mesh = None, applytransform = False, relative_to = None):
