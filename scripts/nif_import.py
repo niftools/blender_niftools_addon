@@ -286,7 +286,7 @@ class NifImport:
         # store bone matrix offsets for re-export
         if self.bonesExtraMatrix: self.storeBonesExtraMatrix()
         # store original names for re-export
-        if self.names: self.fb_fullnames()
+        if self.names: self.storeNames()
         
         # parent selected meshes to imported skeleton
         if self.IMPORT_SKELETON == 1:
@@ -894,22 +894,29 @@ under node %s" % niBlock.name)
 
 
     def getTextureHash(self, niSourceTexture):
+        """Helper function for importTexture. Returns a key that uniquely
+        identifies a texture from its NiSourceTexture block."""
         return ( niSourceTexture.getHash() if niSourceTexture else None )
 
     def importTexture(self, niSourceTexture):
-        """Returns a Blender Texture object, and stores it in the
-        self.textures dictionary."""
+        """Convert a NiSourceTexture block to a Blender Texture object,
+        return the Texture object and stores it in the self.textures
+        dictionary to avoid future duplicate imports."""
 
+        # if the niSourceTexture block is not linked then return None
         if not niSourceTexture:
             return None
 
+        # calculate the texture hash key
         texture_hash = self.getTextureHash(niSourceTexture)
 
         try:
+            # look up the texture in the dictionary of imported textures
+            # and return it if found
             return self.textures[texture_hash]
         except KeyError:
             pass
-        
+
         b_image = None
         
         if niSourceTexture.useExternal:
@@ -1526,17 +1533,18 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             bonetxt.write('%s/%s\n' % (niBone.name, ln[1:]))
         
 
-    def fb_fullnames(self):
+    def storeNames(self):
         """Stores the original, long object names so that they can be
         re-exported. In order for this to work it is necessary to mantain the
         imported names unaltered. Since the text buffer is cleared on each
         import only the last import will be exported correctly."""
-        # get the names text buffer
+        # clear the text buffer, or create new buffer
         try:
-            namestxt = [txt for txt in Blender.Text.Get() if txt.getName() == "FullNames"][0]
-            namestxt.clear()
-        except:
+            namestxt = Blender.Text.Get("FullNames")
+        except NameError:
             namestxt = Blender.Text.New("FullNames")
+        namestxt.clear()
+        # write the names to the text buffer
         for block, shortname in self.names.iteritems():
             if block.name and shortname != block.name:
                 namestxt.write('%s;%s\n'% (shortname, block.name))

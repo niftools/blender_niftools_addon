@@ -1,6 +1,10 @@
 Version 2.2.2 (***)
-* Export: support for Morrowind NiTextureEffect blocks (set Blender Map Input
-to "Refl" for the NiTextureEffect texture)
+* Export: support for Morrowind environment maps and bump mapping via
+NiTextureEffect blocks (set Blender Map Input to "Refl" for the
+NiTextureEffect texture, see release notes for more details)
+* Import: fixed a bug which caused material duplication if materials were
+shared between more than one NiTriShape/NiTriStrips block
+* Import: various small code improvements
 
 Version 2.2.1 (Nov 27, 2007)
 * Import: havok blocks (still experimental, but seems to work on most nifs)
