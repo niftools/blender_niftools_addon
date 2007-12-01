@@ -303,7 +303,7 @@ class NifImport:
                 # (IMPORT_SKELETON == 1) and not importing skinned geometries
                 # only (IMPORT_SKELETON == 2)
                 self.msg("building mesh in importBranch",3)
-                return self.fb_mesh(niBlock)
+                return self.importMesh(niBlock)
             elif isinstance(niBlock, NifFormat.NiNode):
                 children = niBlock.children
                 if children:
@@ -336,7 +336,9 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                                     niBlock.name))
                             b_obj = None
                             for child in geom_group:
-                                b_obj = self.fb_mesh(child, group_mesh = b_obj, applytransform = True)
+                                b_obj = self.importMesh(child,
+                                                        group_mesh = b_obj,
+                                                        applytransform = True)
                             b_obj.name = self.importName(niBlock, 22)
                             # settings for collision node
                             if isinstance(niBlock, NifFormat.RootCollisionNode):
@@ -403,10 +405,10 @@ under node %s" % niBlock.name)
             self.msg("building mesh %s in importArmatureBranch"%
                      niBlock.name, 3)
             # apply transform relative to the armature node
-            return branch_parent, self.fb_mesh(niBlock,
-                                               group_mesh = group_mesh,
-                                               applytransform = True,
-                                               relative_to = branch_parent)
+            return branch_parent, self.importMesh(niBlock,
+                                                  group_mesh = group_mesh,
+                                                  applytransform = True,
+                                                  relative_to = branch_parent)
         # is it another armature?
         elif self.is_armature_root(niBlock) and niBlock != niArmature:
             # an armature parented to this armature
@@ -873,9 +875,10 @@ under node %s" % niBlock.name)
                 sum_x = sum(cm[3][0] for cm in child_local_matrices)
                 sum_y = sum(cm[3][1] for cm in child_local_matrices)
                 sum_z = sum(cm[3][2] for cm in child_local_matrices)
-            listXYZ = [ int(c * 200)
-                        for c in (sum_x, sum_y, sum_z, -sum_x, -sum_y, -sum_z) ]
-            idx_correction = listXYZ.index(max(listXYZ))
+            list_xyz = [ int(c * 200)
+                         for c in (sum_x, sum_y, sum_z,
+                                   -sum_x, -sum_y, -sum_z) ]
+            idx_correction = list_xyz.index(max(list_xyz))
             alignment_offset = 0.0
             if (idx_correction == 0 or idx_correction == 3) and abs(sum_x) > 0:
                 alignment_offset = float(abs(sum_y) + abs(sum_z)) / abs(sum_x)
@@ -941,7 +944,8 @@ under node %s" % niBlock.name)
                 texfns = [fn, fn.lower()] + list(set(texfns))
                 for texfn in texfns:
                      # now a little trick, to satisfy many Morrowind mods
-                    if (texfn[:9].lower() == 'textures' + Blender.sys.sep) and (texdir[-9:].lower() == Blender.sys.sep + 'textures'):
+                    if (texfn[:9].lower() == 'textures' + Blender.sys.sep) \
+                       and (texdir[-9:].lower() == Blender.sys.sep + 'textures'):
                         # strip one of the two 'textures' from the path
                         tex = Blender.sys.join( texdir[:-9], texfn )
                     else:
@@ -985,7 +989,8 @@ under node %s" % niBlock.name)
                 bpp = None
 
             if bpp is None:
-                self.msg("unknown pixel format (%i), cannot extract texture"%niPixelData.pixelFormat, 1)
+                self.msg("unknown pixel format (%i), cannot extract texture"
+                         %niPixelData.pixelFormat, 1)
             else:
                 b_image = Blender.Image.New( "TexImg", width, height, bpp )
                 
@@ -1057,7 +1062,8 @@ under node %s" % niBlock.name)
             elif textProperty.applyMode == NifFormat.ApplyMode.APPLY_HILIGHT2:
                 blendmode = Blender.Texture.BlendModes["MULTIPLY"]
             else:
-                print "WARNING: unknown apply mode (%i) in material '%s', using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name)
+                print("WARNING: unknown apply mode (%i) in material '%s', \
+using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
         # Sets the material colors
         # Specular color
         spec = matProperty.specularColor
@@ -1159,7 +1165,10 @@ under node %s" % niBlock.name)
         self.materials[material_hash] = material
         return material
 
-    def fb_mesh(self, niBlock, group_mesh = None, applytransform = False, relative_to = None):
+    def importMesh(self, niBlock,
+                   group_mesh = None,
+                   applytransform = False,
+                   relative_to = None):
         """Creates and returns a raw mesh, or appends geometry data to
         group_mesh. If group_mesh is not None, then applytransform must be
         True."""
