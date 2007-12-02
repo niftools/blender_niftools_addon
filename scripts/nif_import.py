@@ -1129,16 +1129,17 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
         baseTexture = None
         glowTexture = None
         envmapTexture = None # for NiTextureEffect
+        bumpTexture = None
         if textProperty:
             baseTextureDesc = textProperty.baseTexture
             if baseTextureDesc:
                 baseTexture = self.importTexture(baseTextureDesc.source)
                 if baseTexture:
-                    # Sets the texture to use face UV coordinates.
+                    # set the texture to use face UV coordinates
                     texco = Blender.Texture.TexCo.UV
-                    # Maps the texture to the base color channel.
+                    # map the texture to the base color channel
                     mapto = Blender.Texture.MapTo.COL
-                    # Sets the texture for the material
+                    # set the texture for the material
                     material.setTexture(0, baseTexture, texco, mapto)
                     mbaseTexture = material.getTextures()[0]
                     mbaseTexture.blendmode = blendmode
@@ -1148,23 +1149,34 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                 if glowTexture:
                     # glow maps use alpha from rgb intensity
                     glowTexture.imageFlags |= Blender.Texture.ImageFlags.CALCALPHA
-                    # Sets the texture to use face UV coordinates.
+                    # set the texture to use face UV coordinates
                     texco = Blender.Texture.TexCo.UV
-                    # Maps the texture to the base color channel.
+                    # map the texture to the base color and emit channel
                     mapto = Blender.Texture.MapTo.COL | Blender.Texture.MapTo.EMIT
-                    # Sets the texture for the material
+                    # set the texture for the material
                     material.setTexture(1, glowTexture, texco, mapto)
                     mglowTexture = material.getTextures()[1]
+            bumpTextureDesc = textProperty.bumpMapTexture
+            if bumpTextureDesc:
+                bumpTexture = self.importTexture(bumpTextureDesc.source)
+                if bumpTexture:
+                    # set the texture to use face UV coordinates
+                    texco = Blender.Texture.TexCo.UV
+                    # map the texture to the normal channel
+                    mapto = Blender.Texture.MapTo.NOR
+                    # set the texture for the material
+                    material.setTexture(2, bumpTexture, texco, mapto)
+                    mbumpTexture = material.getTextures()[2]
         if textureEffect:
             envmapTexture = self.importTexture(textureEffect.sourceTexture)
             if envmapTexture:
-                # set the texture to use face reflection coordinates.
+                # set the texture to use face reflection coordinates
                 texco = Blender.Texture.TexCo.REFL
                 # map the texture to the base color channel
                 mapto = Blender.Texture.MapTo.COL
-                # Sets the texture for the material
-                material.setTexture(2, envmapTexture, texco, mapto)
-                menvmapTexture = material.getTextures()[2]
+                # set the texture for the material
+                material.setTexture(3, envmapTexture, texco, mapto)
+                menvmapTexture = material.getTextures()[3]
                 menvmapTexture.blendmode = Blender.Texture.BlendModes["ADD"]
         # check transparency
         if alphaProperty:
