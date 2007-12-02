@@ -284,9 +284,11 @@ class NifImport:
                 %root_block.__class__)
 
         # store bone matrix offsets for re-export
-        if self.bonesExtraMatrix: self.storeBonesExtraMatrix()
+        if self.bonesExtraMatrix:
+            self.storeBonesExtraMatrix()
         # store original names for re-export
-        if self.names: self.storeNames()
+        if self.names:
+            self.storeNames()
         
         # parent selected meshes to imported skeleton
         if self.IMPORT_SKELETON == 1:
@@ -424,21 +426,25 @@ under node %s" % niBlock.name)
                 # check if geometries should be merged on import
                 node_name = niBlock.name
                 geom_group = self.is_grouping_node(niBlock)
-                geom_other = [ child for child in niBlock.children if not child in geom_group ]
+                geom_other = [ child for child in niBlock.children
+                               if not child in geom_group ]
                 b_objects = [] # list of (nif block, blender object) pairs
                 # import grouped geometries
                 if geom_group and self.IMPORT_SKELETON != 1:
-                    print "joining geometries %s to single object '%s'"%([child.name for child in geom_group], node_name)
+                    print("joining geometries %s to single object '%s'"
+                          %([child.name for child in geom_group], node_name))
                     b_mesh = None
                     for child in geom_group:
-                        b_mesh_branch_parent, b_mesh = self.importArmatureBranch(b_armature, niArmature, child, group_mesh = b_mesh)
+                        b_mesh_branch_parent, b_mesh = self.importArmatureBranch(
+                            b_armature, niArmature, child, group_mesh = b_mesh)
                         assert(b_mesh_branch_parent == branch_parent) # DEBUG
                     if b_mesh:
                         b_mesh.name = self.importName(niBlock)
                         b_objects.append((niBlock, branch_parent, b_mesh))
                 # import other objects
                 for child in geom_other:
-                    b_obj_branch_parent, b_obj = self.importArmatureBranch(b_armature, niArmature, child, group_mesh = None)
+                    b_obj_branch_parent, b_obj = self.importArmatureBranch(
+                        b_armature, niArmature, child, group_mesh = None)
                     if b_obj:
                         b_objects.append((child, b_obj_branch_parent, b_obj))
                 # fix transform and parentship
@@ -1207,22 +1213,22 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             # used later on
             transform = self.importMatrix(niBlock, relative_to = relative_to)
 
-        # Mesh geometry data. From this I can retrieve all geometry info
+        # shortcut for mesh geometry data
         niData = niBlock.data
         if not niData:
             raise NifImportError("no ShapeData returned. Node name: %s " % b_name)
             
-        # Vertices
+        # vertices
         verts = niData.vertices
         
-        # Faces
+        # faces
         tris = [ list(tri) for tri in niData.getTriangles() ]
         
-        # "Sticky" UV coordinates. these are transformed in Blender UV's
-        # only the first UV set is loaded right now
+        # "sticky" UV coordinates: these are transformed in Blender UV's
+        # only the first UV set is loaded
         uvco = niData.uvSets
             
-        # Vertex normals
+        # vertex normals
         norms = niData.normals
 
         # Material
@@ -1280,9 +1286,11 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                      int(n.x*200),int(n.y*200),int(n.z*200))
             else:
                 k = (int(v.x*200),int(v.y*200),int(v.z*200))
-            # see if we already added this guy, and if so, what index
+            # check if vertex was already added, and if so, what index
             try:
-                n_map_k = n_map[k] # this is the bottle neck... can we speed this up?
+                # this is the bottle neck...
+                # can we speed this up?
+                n_map_k = n_map[k]
             except KeyError:
                 n_map_k = None
             if not n_map_k:
@@ -1305,7 +1313,8 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                 b_v_index += 1
             else:
                 # already added
-                v_map[i] = v_map[n_map_k] # NIF vertex i maps to Blender vertex v_map[n_map_k]
+                # NIF vertex i maps to Blender vertex v_map[n_map_k]
+                v_map[i] = v_map[n_map_k]
         # release memory
         del n_map
 
@@ -1336,12 +1345,14 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                     f[0], f[1], f[2] = f[2], f[0], f[1] # f[0] comes second
                 else:
                     raise RuntimeError("face extend index bug")
-            f_map[i] = b_f_index # keep track of added faces, mapping NIF face index to Blender face index
+            # keep track of added faces, mapping NIF face index to
+            # Blender face index
+            f_map[i] = b_f_index
             b_f_index += 1
         # at this point, deleted faces (degenerate or duplicate)
         # satisfy f_map[i] = None
 
-        # Sets face smoothing and material
+        # set face smoothing and material
         for b_f_index in f_map:
             if b_f_index == None: continue
             f = b_meshData.faces[b_f_index]
@@ -1367,16 +1378,16 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             # see below
             
         # UV coordinates
-        # Nif files only support 'sticky' UV coordinates, and duplicates vertices to emulate hard edges and UV seams.
-        # Essentially whenever an hard edge or an UV seam is present the mesh this is converted to an open mesh.
-        # Blender also supports 'per face' UV coordinates, this could be a problem when exporting.
-        # Also, NIF files support a series of texture sets, each one with its set of texture coordinates. For example
-        # on a single "material" I could have a base texture, with a decal texture over it mapped on another set of UV
-        # coordinates. I don't know if Blender can do the same.
+        # NIF files only support 'sticky' UV coordinates, and duplicates
+        # vertices to emulate hard edges and UV seam. So whenever a hard edge
+        # or a UV seam is present the mesh, vertices are duplicated. Blender
+        # only must duplicate vertices for hard edges; duplicating for UV seams
+        # would introduce unnecessary hard edges.
 
         for uvSet in uvco:
-            # Sets the face UV's for the mesh on. The NIF format only supports vertex UV's,
-            # but Blender only allows explicit editing of face UV's, so I'll load vertex UV's like face UV's
+            # Set the face UV's for the mesh. The NIF format only supports
+            # vertex UV's, but Blender only allows explicit editing of face
+            # UV's, so load vertex UV's as face UV's
             b_meshData.faceUV = 1
             b_meshData.vertexUV = 0
             for f, b_f_index in zip(tris, f_map):
@@ -1385,17 +1396,21 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                 b_meshData.faces[b_f_index].uv = tuple(uvlist)
        
         if material:
-            # fix up vertex colors depending on whether we had textures in the material
+            # fix up vertex colors depending on whether we had textures in the
+            # material
             mbasetex = material.getTextures()[0]
             mglowtex = material.getTextures()[1]
             if b_meshData.vertexColors == 1:
                 if mbasetex or mglowtex:
-                    material.mode |= Blender.Material.Modes.VCOL_LIGHT # textured material: vertex colors influence lighting
+                    # textured material: vertex colors influence lighting
+                    material.mode |= Blender.Material.Modes.VCOL_LIGHT
                 else:
-                    material.mode |= Blender.Material.Modes.VCOL_PAINT # non-textured material: vertex colors incluence color
+                    # non-textured material: vertex colors incluence color
+                    material.mode |= Blender.Material.Modes.VCOL_PAINT
 
-            # if there's a base texture assigned to this material sets it to be displayed in Blender's 3D view
-            # but only if we have UV coordinates...
+            # if there's a base texture assigned to this material sets it to
+            # be displayed in Blender's 3D view
+            # but only if there are UV coordinates
             if mbasetex and uvco:
                 TEX = Blender.Mesh.FaceModes['TEX'] # face mode bitfield value
                 imgobj = mbasetex.tex.getImage()
@@ -1407,8 +1422,6 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                         f.image = imgobj
 
         # import skinning info, for meshes affected by bones
-        # Adding groups to a mesh can be done only after this is already
-        # linked to an object.
         skinInstance = niBlock.skinInstance
         if skinInstance:
             skinData = skinInstance.data
@@ -1437,7 +1450,8 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                     b_meshData.key.ipo = b_ipo
                     for idxMorph in xrange(1, morphData.numMorphs):
                         morphverts = morphData.morphs[idxMorph].vectors
-                        # for each vertex calculate the key position from base pos + delta offset
+                        # for each vertex calculate the key position from base
+                        # pos + delta offset
                         assert(len(baseverts) == len(morphverts) == len(v_map))
                         for bv, mv, b_v_index in zip(baseverts, morphverts, v_map):
                             base = Blender.Mathutils.Vector(bv.x, bv.y, bv.z)
@@ -1452,7 +1466,8 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                         b_meshData.insertKey(idxMorph, 'relative')
                         # set up the ipo key curve
                         b_curve = b_ipo.addCurve('Key %i' % idxMorph)
-                        # dunno how to set up the bezier triples -> switching to linear instead
+                        # dunno how to set up the bezier triples -> switching
+                        # to linear instead
                         b_curve.setInterpolation('Linear')
                         # select extrapolation
                         if ( morphCtrl.flags == 0x000c ):
