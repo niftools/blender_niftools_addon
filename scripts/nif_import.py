@@ -1275,8 +1275,8 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             specProperty = self.find_property(niBlock, NifFormat.NiSpecularProperty)
 
             # texturing effect for environment map
-            # this is activated by a NiTextureEffect child preceeding the
-            # niBlock
+            # in official files this is activated by a NiTextureEffect child
+            # preceeding the niBlock
             textureEffect = None
             if isinstance(niBlock._parent, NifFormat.NiNode):
                 lastchild = None
@@ -1288,7 +1288,14 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                     lastchild = child
                 else:
                     raise RuntimeError("texture effect scanning bug")
-            
+                # in some mods the NiTextureEffect child follows the niBlock
+                # but it still works because it is listed in the effect list
+                # so handle this case separately
+                if not textureEffect:
+                    for effect in niBlock._parent.effects:
+                        if isinstance(effect, NifFormat.NiTextureEffect):
+                            textureEffect = effect
+                            break
             # create material and assign it to the mesh
             material = self.importMaterial(matProperty, textProperty,
                                            alphaProperty, specProperty,
