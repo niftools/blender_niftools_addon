@@ -1106,10 +1106,11 @@ and turn off envelopes."""%ob.getName()
                         # only do some simple checks
                         if (mtex.mapto & Blender.Texture.MapTo.COL) == 0:
                             # it should map to colour
-                            raise NifExportError("Non-COL-mapped texture in \
-mesh '%s', material '%s', these cannot be exported to NIF. Either delete all \
-non-COL-mapped textures, or in the Shading Panel, under Material Buttons, set \
-texture 'Map To' to 'COL'."%(ob.getName(),mesh_mat.getName()))
+                            raise NifExportError("Non-COL-mapped reflection \
+texture in mesh '%s', material '%s', these cannot be exported to NIF. Either \
+delete all non-COL-mapped reflection textures, or in the Shading Panel, under \
+Material Buttons, set texture 'Map To' to \
+'COL'." % (ob.getName(),mesh_mat.getName()))
                         if mtex.blendmode != Blender.Texture.BlendModes["ADD"]:
                             # it should have "ADD" blending mode
                             raise NifExportError("Reflection texture should \
@@ -1122,8 +1123,33 @@ mesh '%s', material '%s')."%(ob.getName(),mesh_mat.getName()))
 
                     # check UV-mapped textures
                     elif mtex.texco == Blender.Texture.TexCo.UV:
-                        if mtex.mapto == Blender.Texture.MapTo.COL:
-                            # got the base texture
+                        if mtex.mapto & Blender.Texture.MapTo.COL \
+                           and mtex.mapto & Blender.Texture.MapTo.EMIT:
+                            # got the glow tex
+                            if mesh_glow_tex:
+                                raise NifExportError("Multiple glow textures \
+in mesh '%s', material '%s'. Make sure there is only one texture with \
+MapTo.EMIT"%(mesh.name,mesh_mat.getName()))
+                            # check if calculation of alpha channel is enabled
+                            # for this texture
+                            if (mtex.tex.imageFlags & Blender.Texture.ImageFlags.CALCALPHA != 0) \
+                               and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
+                                raise NifExportError("In mesh '%s', material \
+'%s': glow texture must have CALCALPHA flag set, and must have MapTo.ALPHA \
+enabled."%(ob.getName(),mesh_mat.getName()))
+                            mesh_glow_tex = mtex.tex
+                            mesh_hastex = True
+                        elif mtex.mapto & Blender.Texture.MapTo.NOR:
+                            # got the normal map
+                            if mesh_bump_tex:
+                                raise NifExportError("Multiple bump textures \
+in mesh '%s', material '%s'. Make sure there is only one texture with \
+MapTo.NOR"%(mesh.name,mesh_mat.getName()))
+                            mesh_bump_tex = mtex.tex
+                            mesh_hastex = True
+                        elif mtex.mapto & Blender.Texture.MapTo.COL:
+                            # anything else that maps to COL is considered
+                            # as base texture
                             if mesh_base_tex:
                                 raise NifExportError("Multiple base textures \
 in mesh '%s', material '%s', this is not supported. Delete all textures, \
@@ -1149,32 +1175,14 @@ animation for this type of transparency in material '%s': remove alpha \
 animation, or turn off MapTo.ALPHA, and try again."%mesh_mat.getName())
                                 mesh_mat_transparency = mtex.varfac # we must use the "Var" value
                                 mesh_hasalpha = True
-                        elif mtex.mapto == ( Blender.Texture.MapTo.COL
-                                             | Blender.Texture.MapTo.EMIT ):
-                            # got the glow tex
-                            if mesh_glow_tex:
-                                raise NifExportError("Multiple glow textures \
-in mesh '%s', material '%s'. Make sure there is only one texture with \
-MapTo.EMIT"%(mesh.name,mesh_mat.getName()))
-                            # check if calculation of alpha channel is enabled
-                            # for this texture
-                            if (mesh_base_tex.imageFlags & Blender.Texture.ImageFlags.CALCALPHA != 0) and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
-                                raise NifExportError("In mesh '%s', material \
-'%s': glow texture must have CALCALPHA flag set, and must have MapTo.ALPHA \
-enabled."%(ob.getName(),mesh_mat.getName()))
-                            mesh_glow_tex = mtex.tex
-                            mesh_hastex = True
-                        elif mtex.mapto == Blender.Texture.MapTo.NOR:
-                            # got the normal map
-                            if mesh_bump_tex:
-                                raise NifExportError("Multiple bump textures \
-in mesh '%s', material '%s'. Make sure there is only one texture with \
-MapTo.NOR"%(mesh.name,mesh_mat.getName()))
-                            mesh_bump_tex = mtex.tex
-                            mesh_hastex = True
                         else:
                             # unknown map
-                            raise NifExportError("Non-COL-mapped texture in mesh '%s', material '%s', these cannot be exported to NIF. Either delete all non-COL-mapped textures, or in the Shading Panel, under Material Buttons, set texture 'Map To' to 'COL'."%(ob.getName(),mesh_mat.getName()))
+                            raise NifExportError("Do not know how to export \
+texture '%s', in mesh '%s', material '%s'. Either delete it, or if this \
+texture is to be your base texture, go to the Shading Panel, Material Buttons, \
+and set texture 'Map To' to 'COL'." % (mtex.tex.getName(),
+                                       ob.getName(),
+                                       mesh_mat.getName()))
                     else:
                         # nif only support UV-mapped textures
                         raise NifExportError("Non-UV texture in mesh '%s', \
@@ -1364,7 +1372,7 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                 # add NiTriShape's texturing property
                 trishape.addProperty(self.exportTexturingProperty(
                     flags = 0x0001, # standard
-                    applymode = self.APPLYMODE[mesh_base_mtex.blendmode if mesh_base_mtex else Blender.Texture.BlendModes["MIX"]],
+                    applymode = self.APPLYMODE[mesh_base_mtex.blendmode if mesh_base_tex else Blender.Texture.BlendModes["MIX"]],
                     basetex = mesh_base_tex,
                     glowtex = mesh_glow_tex,
                     bumptex = mesh_bump_tex))
