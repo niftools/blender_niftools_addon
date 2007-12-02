@@ -1044,6 +1044,7 @@ and turn off envelopes."""%ob.getName()
             
             mesh_base_tex = None
             mesh_glow_tex = None
+            mesh_bump_tex = None
             mesh_hasalpha = False # mesh has transparency
             mesh_hastex = False   # mesh has at least one texture
             mesh_hasspec = False  # mesh has specular properties
@@ -1121,13 +1122,12 @@ mesh '%s', material '%s')."%(ob.getName(),mesh_mat.getName()))
 
                     # check UV-mapped textures
                     elif mtex.texco == Blender.Texture.TexCo.UV:
-                        if (mtex.mapto & Blender.Texture.MapTo.COL) == 0:
-                            # it should map to colour
-                            raise NifExportError("Non-COL-mapped texture in mesh '%s', material '%s', these cannot be exported to NIF. Either delete all non-COL-mapped textures, or in the Shading Panel, under Material Buttons, set texture 'Map To' to 'COL'."%(ob.getName(),mesh_mat.getName()))
-                        if (mtex.mapto & Blender.Texture.MapTo.EMIT) == 0:
+                        if mtex.mapto == Blender.Texture.MapTo.COL:
                             # got the base texture
                             if mesh_base_tex:
-                                raise NifExportError("Multiple base textures in mesh '%s', material '%s', this is not supported. Delete all textures, except for the base texture."%(mesh.name,mesh_mat.getName()))
+                                raise NifExportError("Multiple base textures \
+in mesh '%s', material '%s', this is not supported. Delete all textures, \
+except for the base texture."%(mesh.name,mesh_mat.getName()))
                             mesh_base_mtex = mtex
                             mesh_base_tex = mtex.tex
                             mesh_hastex = True # flag that we have textures, and that we should export UV coordinates
@@ -1139,22 +1139,42 @@ mesh '%s', material '%s')."%(ob.getName(),mesh_mat.getName()))
                                 # require the Blender material alpha to be 0.0 (no material color can show up), and use the "Var" slider in the texture blending mode tab!
                                 # but...
                                 if mesh_mat_transparency > NifFormat._EPSILON:
-                                    raise NifExportError("Cannot export this type of transparency in material '%s': instead, try to set alpha to 0.0 and to use the 'Var' slider in the 'Map To' tab under the material buttons."%mesh_mat.getName())
+                                    raise NifExportError("Cannot export this \
+type of transparency in material '%s': instead, try to set alpha to 0.0 and to \
+use the 'Var' slider in the 'Map To' tab under the material \
+buttons."%mesh_mat.getName())
                                 if (mesh_mat.getIpo() and mesh_mat.getIpo().getCurve('Alpha')):
-                                    raise NifExportError("Cannot export animation for this type of transparency in material '%s': remove alpha animation, or turn off MapTo.ALPHA, and try again."%mesh_mat.getName())
+                                    raise NifExportError("Cannot export \
+animation for this type of transparency in material '%s': remove alpha \
+animation, or turn off MapTo.ALPHA, and try again."%mesh_mat.getName())
                                 mesh_mat_transparency = mtex.varfac # we must use the "Var" value
                                 mesh_hasalpha = True
-                        else:
-                            # MapTo EMIT is checked -> glow map
+                        elif mtex.mapto == ( Blender.Texture.MapTo.COL
+                                             | Blender.Texture.MapTo.EMIT ):
                             # got the glow tex
                             if mesh_glow_tex:
-                                raise NifExportError("Multiple glow textures in mesh '%s', material '%s'. Make sure there is only one texture with MapTo.EMIT"%(mesh.name,mesh_mat.getName()))
+                                raise NifExportError("Multiple glow textures \
+in mesh '%s', material '%s'. Make sure there is only one texture with \
+MapTo.EMIT"%(mesh.name,mesh_mat.getName()))
                             # check if calculation of alpha channel is enabled
                             # for this texture
                             if (mesh_base_tex.imageFlags & Blender.Texture.ImageFlags.CALCALPHA != 0) and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
-                                raise NifExportError("In mesh '%s', material '%s': glow texture must have CALCALPHA flag set, and must have MapTo.ALPHA enabled."%(ob.getName(),mesh_mat.getName()))
+                                raise NifExportError("In mesh '%s', material \
+'%s': glow texture must have CALCALPHA flag set, and must have MapTo.ALPHA \
+enabled."%(ob.getName(),mesh_mat.getName()))
                             mesh_glow_tex = mtex.tex
                             mesh_hastex = True
+                        elif mtex.mapto == Blender.Texture.MapTo.NOR:
+                            # got the normal map
+                            if mesh_bump_tex:
+                                raise NifExportError("Multiple bump textures \
+in mesh '%s', material '%s'. Make sure there is only one texture with \
+MapTo.NOR"%(mesh.name,mesh_mat.getName()))
+                            mesh_bump_tex = mtex.tex
+                            mesh_hastex = True
+                        else:
+                            # unknown map
+                            raise NifExportError("Non-COL-mapped texture in mesh '%s', material '%s', these cannot be exported to NIF. Either delete all non-COL-mapped textures, or in the Shading Panel, under Material Buttons, set texture 'Map To' to 'COL'."%(ob.getName(),mesh_mat.getName()))
                     else:
                         # nif only support UV-mapped textures
                         raise NifExportError("Non-UV texture in mesh '%s', \
@@ -1276,7 +1296,8 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                     trilist.append(f_indexed)
 
             if len(trilist) > 65535:
-                raise NifExportError('ERROR%t|Too many faces. Decimate your mesh and try again.')
+                raise NifExportError(
+                    'ERROR%t|Too many faces. Decimate your mesh and try again.')
             if len(vertlist) == 0:
                 continue # m4444x: skip 'empty' material indices
             
@@ -1345,7 +1366,8 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                     flags = 0x0001, # standard
                     applymode = self.APPLYMODE[mesh_base_mtex.blendmode if mesh_base_mtex else Blender.Texture.BlendModes["MIX"]],
                     basetex = mesh_base_tex,
-                    glowtex = mesh_glow_tex))
+                    glowtex = mesh_glow_tex,
+                    bumptex = mesh_bump_tex))
 
             if mesh_hasalpha:
                 # add NiTriShape's alpha propery
@@ -2399,10 +2421,11 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
         return self.registerBlock(matprop)
 
     def exportTexturingProperty(
-        self, flags = 0x0001, applymode = None, basetex = None, glowtex = None):
-        """Export texturing property. The parameters basetex and glowtex are
-        the Blender material textures (Texture, not MTex) that correspond to
-        the base and glow textures."""
+        self, flags = 0x0001, applymode = None,
+        basetex = None, glowtex = None, bumptex = None):
+        """Export texturing property. The parameters basetex, glowtex, and
+        bumptex are the Blender material textures (Texture, not MTex) that
+        correspond to the base, glow, and bump map textures."""
 
         texprop = NifFormat.NiTexturingProperty()
 
@@ -2440,6 +2463,17 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                     fliptxt = None
             else:
                 texprop.glowTexture.source = self.exportSourceTexture(glowtex)
+                    
+        if bumptex:
+            texprop.hasBumpMapTexture = True
+            texprop.bumpMapTexture.isUsed = True
+            texprop.bumpMapTexture.source = self.exportSourceTexture(bumptex)
+            texprop.bumpMapLumaScale = 1.0
+            texprop.bumpMapLumaOffset = 0.0
+            texprop.bumpMapMatrix.m11 = 1.0
+            texprop.bumpMapMatrix.m12 = 0.0
+            texprop.bumpMapMatrix.m21 = 0.0
+            texprop.bumpMapMatrix.m22 = 1.0
                     
         # search for duplicate
         for block in self.blocks:
