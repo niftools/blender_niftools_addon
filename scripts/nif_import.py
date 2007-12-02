@@ -1037,7 +1037,8 @@ under node %s" % niBlock.name)
             return None
 
     def getMaterialHash(self, matProperty, textProperty,
-                       alphaProperty, specProperty):
+                        alphaProperty, specProperty,
+                        textureEffect):
         """Helper function for importMaterial. Returns a key that uniquely
         identifies a material from its properties. The key ignores the material
         name as that does not affect the rendering."""
@@ -1045,14 +1046,17 @@ under node %s" % niBlock.name)
                  if matProperty else None,
                  textProperty.getHash()  if textProperty  else None,
                  alphaProperty.getHash() if alphaProperty else None,
-                 specProperty.getHash()  if specProperty  else None )
+                 specProperty.getHash()  if specProperty  else None,
+                 textureEffect.getHash() if textureEffect else None )
 
     def importMaterial(self, matProperty, textProperty,
-                       alphaProperty, specProperty):
+                       alphaProperty, specProperty,
+                       textureEffect):
         """Creates and returns a material."""
         # First check if material has been created before.
         material_hash = self.getMaterialHash(matProperty, textProperty,
-                                             alphaProperty, specProperty)
+                                             alphaProperty, specProperty,
+                                             textureEffect)
         try:
             return self.materials[material_hash]                
         except KeyError:
@@ -1124,6 +1128,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
         material.setAlpha(alpha)
         baseTexture = None
         glowTexture = None
+        envmapTexture = None # for NiTextureEffect
         if textProperty:
             baseTextureDesc = textProperty.baseTexture
             if baseTextureDesc:
@@ -1150,6 +1155,17 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                     # Sets the texture for the material
                     material.setTexture(1, glowTexture, texco, mapto)
                     mglowTexture = material.getTextures()[1]
+        if textureEffect:
+            envmapTexture = self.importTexture(textureEffect.sourceTexture)
+            if envmapTexture:
+                # set the texture to use face reflection coordinates.
+                texco = Blender.Texture.TexCo.REFL
+                # map the texture to the base color channel
+                mapto = Blender.Texture.MapTo.COL
+                # Sets the texture for the material
+                material.setTexture(2, envmapTexture, texco, mapto)
+                menvmapTexture = material.getTextures()[2]
+                menvmapTexture.blendmode = Blender.Texture.BlendModes["ADD"]
         # check transparency
         if alphaProperty:
             material.mode |= Blender.Material.Modes.ZTRANSP # enable z-buffered transparency
@@ -1245,10 +1261,26 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             
             # Specularity
             specProperty = self.find_property(niBlock, NifFormat.NiSpecularProperty)
+
+            # texturing effect for environment map
+            # this is activated by a NiTextureEffect child preceeding the
+            # niBlock
+            textureEffect = None
+            if isinstance(niBlock._parent, NifFormat.NiNode):
+                lastchild = None
+                for child in niBlock._parent.children:
+                    if child is niBlock:
+                        if isinstance(lastchild, NifFormat.NiTextureEffect):
+                            textureEffect = lastchild
+                        break
+                    lastchild = child
+                else:
+                    raise RuntimeError("texture effect scanning bug")
             
             # create material and assign it to the mesh
             material = self.importMaterial(matProperty, textProperty,
-                                           alphaProperty, specProperty)
+                                           alphaProperty, specProperty,
+                                           textureEffect)
             b_mesh_materials = b_meshData.materials
             try:
                 materialIndex = b_mesh_materials.index(material)
