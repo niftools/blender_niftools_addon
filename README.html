@@ -28,7 +28,9 @@ Although we have done our best to squash all bugs we could find, it is unlikely 
 </p>
 <h2>Highlights of this Release</h2>
 <ul>
-<li>Export of NiTextureEffect blocks for Morrowind: add a texture with Map Input 'Refl', Map To 'COL', and blending mode 'Add', to trigger the export of the texture effect. If the texture is of type 'EnvMap' then the default Morrowind environment map will be used (envir 01.tga), otherwise set the type to 'Image' and then the selected image will be used as a reflection map.</li>
+<li>Import and export of NiTextureEffect blocks for Morrowind. For export, add a texture with Map Input 'Refl', Map To 'Col', and blending mode 'Add', to trigger the export of the texture effect. If the texture is of type 'EnvMap' then the default Morrowind environment map will be used (envir 01.dds), otherwise set the type to 'Image' and then the selected image will be used as a environment map. See <a href="http://niftools.sourceforge.net/wiki/Advanced_Texture_Settings_in_Blender">http://niftools.sourceforge.net/wiki/Advanced_Texture_Settings_in_Blender</a> for more information.</li>
+<li>Import and export of bump maps. These can be used on top of environment maps for Morrowind.</li>
+<li>Fixed a bug which caused material duplication on import if materials were shared between more than one NiTriShape/NiTriStrips block.</li>
 </ul>
 <h2>Using the Scripts</h2>
 <p>

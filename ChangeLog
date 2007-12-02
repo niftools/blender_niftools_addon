@@ -1,4 +1,4 @@
-Version 2.2.2 (***)
+Version 2.2.2 (Dec 2, 2007)
 * Import/Export: support for Morrowind environment maps and bump mapping via
 NiTextureEffect blocks (set Blender Map Input to "Refl" for the
 NiTextureEffect texture, see release notes for more details)
