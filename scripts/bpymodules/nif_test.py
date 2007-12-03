@@ -40,7 +40,9 @@ from nif_common import NifConfig
 def runtest(directory, files):
     """Test the specified files.
 
-    @param test_files: A list of all files to test. Each entry in the list
+    @param directory: Folder where the test nif files reside.
+
+    @param files: A list of all files to test. Each entry in the list
         is a tuple containing the filename, a dictionary of config options
         that differ from their default values, and a list of names of
         objects to select before running the import. If the dictionary
