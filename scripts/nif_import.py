@@ -278,6 +278,8 @@ class NifImport:
                 b_obj = self.importBranch(child)
         elif isinstance(root_block, NifFormat.NiCamera):
             self.msg('WARNING: skipped NiCamera root')
+        elif isinstance(root_block, NifFormat.NiPhysXProp):
+            self.msg('WARNING: skipped NiPhysXProp root')
         else:
             raise NifImportError(
                 "Cannot import nif file with root block of type '%s'"
@@ -987,41 +989,43 @@ under node %s" % niBlock.name)
                 b_image = Blender.Image.New(tex, 1, 1, 24) # create a stub
                 b_image.filename = Blender.sys.join(searchPathList[0], fn)
         else:
-            # the texture image is packed inside the nif -> extract it
-            niPixelData = niSourceTexture.pixelData
-            
-            # we only load the first mipmap
-            width = niPixelData.mipmaps[0].width
-            height = niPixelData.mipmaps[0].height
-            
-            if niPixelData.pixelFormat == NifFormat.PixelFormat.PX_FMT_RGBA8:
-                bpp = 24
-            elif niPixelData.pixelFormat == NifFormat.PixelFormat.PX_FMT_RGB8:
-                bpp = 32
-            else:
-                bpp = None
-
-            if bpp is None:
-                self.msg("unknown pixel format (%i), cannot extract texture"
-                         %niPixelData.pixelFormat, 1)
-            else:
-                b_image = Blender.Image.New( "TexImg", width, height, bpp )
-                
-                pixels = niPixelData.pixelData.data
-                pixeloffset = 0
-                a = 0xff
-                self.msgProgress("Image Extraction")
-                for y in xrange( height ):
-                    for x in xrange( width ):
-                        # TODO delegate color extraction to generator in
-                        # PyFFI/NIF
-                        r = pixels[pixeloffset]
-                        g = pixels[pixeloffset+1]
-                        b = pixels[pixeloffset+2]
-                        if bpp == 32:
-                            a = pixels[pixeloffset+3]
-                        b_image.setPixelI( x, (height-1)-y, ( r, g, b, a ) )
-                        pixeloffset += bpp/8
+            # BROKEN; disabled for now
+            pass
+##            # the texture image is packed inside the nif -> extract it
+##            niPixelData = niSourceTexture.pixelData
+##            
+##            # we only load the first mipmap
+##            width = niPixelData.mipmaps[0].width
+##            height = niPixelData.mipmaps[0].height
+##            
+##            if niPixelData.pixelFormat == NifFormat.PixelFormat.PX_FMT_RGBA8:
+##                bpp = 24
+##            elif niPixelData.pixelFormat == NifFormat.PixelFormat.PX_FMT_RGB8:
+##                bpp = 32
+##            else:
+##                bpp = None
+##
+##            if bpp is None:
+##                self.msg("unknown pixel format (%i), cannot extract texture"
+##                         %niPixelData.pixelFormat, 1)
+##            else:
+##                b_image = Blender.Image.New( "TexImg", width, height, bpp )
+##                
+##                pixels = niPixelData.pixelData
+##                pixeloffset = 0
+##                a = 0xff
+##                self.msgProgress("Image Extraction")
+##                for y in xrange( height ):
+##                    for x in xrange( width ):
+##                        # TODO delegate color extraction to generator in
+##                        # PyFFI/NIF
+##                        r = ord(pixels[pixeloffset])
+##                        g = ord(pixels[pixeloffset+1])
+##                        b = ord(pixels[pixeloffset+2])
+##                        if bpp == 32:
+##                            a = ord(pixels[pixeloffset+3])
+##                        b_image.setPixelI( x, (height-1)-y, ( r, g, b, a ) )
+##                        pixeloffset += bpp/8
         
         if b_image != None:
             # create a texture using the loaded image
