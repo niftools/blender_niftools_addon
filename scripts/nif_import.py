@@ -1249,17 +1249,16 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
         niData = niBlock.data
         if not niData:
             raise NifImportError("no ShapeData returned. Node name: %s " % b_name)
-            
+
         # vertices
         verts = niData.vertices
-        
+
         # faces
         tris = [ list(tri) for tri in niData.getTriangles() ]
-        
+
         # "sticky" UV coordinates: these are transformed in Blender UV's
-        # only the first UV set is loaded
         uvco = niData.uvSets
-            
+
         # vertex normals
         norms = niData.normals
 
@@ -1439,16 +1438,21 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
         # only must duplicate vertices for hard edges; duplicating for UV seams
         # would introduce unnecessary hard edges.
 
-        for uvSet in uvco:
+        b_meshData.faceUV = 1
+        b_meshData.vertexUV = 0
+        for i, uvSet in enumerate(uvco):
             # Set the face UV's for the mesh. The NIF format only supports
             # vertex UV's, but Blender only allows explicit editing of face
             # UV's, so load vertex UV's as face UV's
-            b_meshData.faceUV = 1
-            b_meshData.vertexUV = 0
+            uvlayer = "UVTex.%03i" % i if i > 0 else "UVTex"
+            if not uvlayer in b_meshData.getUVLayerNames():
+                b_meshData.addUVLayer(uvlayer)
+            b_meshData.activeUVLayer = uvlayer
             for f, b_f_index in zip(tris, f_map):
                 if b_f_index == None: continue
                 uvlist = [ Vector(uvSet[vert_index].u, 1.0 - uvSet[vert_index].v) for vert_index in f ]
                 b_meshData.faces[b_f_index].uv = tuple(uvlist)
+        b_meshData.activeUVLayer = "UVTex"
        
         if material:
             # fix up vertex colors depending on whether we had textures in the
