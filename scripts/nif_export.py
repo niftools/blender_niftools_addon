@@ -1189,6 +1189,11 @@ and set texture 'Map To' to 'COL'." % (mtex.tex.getName(),
 material '%s'. Either delete all non-UV textures, or in the Shading Panel, \
 under Material Buttons, set texture 'Map Input' to 'UV'."%
                                              (ob.getName(),mesh_mat.getName()))
+            if mesh_hastex:
+                # list of uv layers that need to be exported
+                mesh_uvlayers = mesh.getUVLayerNames()
+            else:
+                mesh_uvlayers = []
 
 
             # -> now comes the real export
@@ -1241,10 +1246,11 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                             fn = f.no
                     else:
                         fn = None
-                    if (mesh_hastex):
-                        fuv = f.uv[i]
-                    else:
-                        fuv = None
+                    fuv = []
+                    if mesh_hastex:
+                        for uvlayer in mesh_uvlayers:
+                            mesh.activeUVLayer = uvlayer
+                            fuv.append(f.uv[i])
                     if (mesh_hasvcol):
                         if (len(f.col) == 0):
                             print 'WARNING: vertex color painting/lighting enabled, but mesh has no vertex color data; vertex weights will not be written.'
@@ -1265,9 +1271,9 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                         # iterate only over vertices with the same vertex index
                         # and check if they have the same uvs, normals and colors (wow is that fast!)
                         for j in vertmap[v_index]:
-                            if mesh_hastex:
-                                if abs(vertquad[1][0] - vertquad_list[j][1][0]) > NifFormat._EPSILON: continue
-                                if abs(vertquad[1][1] - vertquad_list[j][1][1]) > NifFormat._EPSILON: continue
+                            for uvlayer in xrange(len(mesh_uvlayers)):
+                                if abs(vertquad[1][uvlayer][0] - vertquad_list[j][1][uvlayer][0]) > NifFormat._EPSILON: continue
+                                if abs(vertquad[1][uvlayer][1] - vertquad_list[j][1][uvlayer][1]) > NifFormat._EPSILON: continue
                             if mesh_hasnormals:
                                 if abs(vertquad[2][0] - vertquad_list[j][2][0]) > NifFormat._EPSILON: continue
                                 if abs(vertquad[2][1] - vertquad_list[j][2][1]) > NifFormat._EPSILON: continue
@@ -1292,9 +1298,9 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                         vertquad_list.append(vertquad)
                         # add the vertex
                         vertlist.append(vertquad[0])
-                        if ( mesh_hasnormals ): normlist.append(vertquad[2])
-                        if ( mesh_hasvcol ):    vcollist.append(vertquad[3])
-                        if ( mesh_hastex ):     uvlist.append(vertquad[1])
+                        if mesh_hasnormals: normlist.append(vertquad[2])
+                        if mesh_hasvcol:    vcollist.append(vertquad[3])
+                        if mesh_hastex:     uvlist.append(vertquad[1])
                 # now add the (hopefully, convex) face, in triangles
                 for i in range(f_numverts - 2):
                     if True: #TODO: #(ob_scale > 0):
@@ -1494,12 +1500,13 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                     v.a = vcollist[i].a / 255.0
 
             if mesh_hastex:
-                tridata.numUvSets = 1
+                tridata.numUvSets = len(mesh_uvlayers)
                 tridata.hasUv = True
                 tridata.uvSets.updateSize()
-                for i, uv in enumerate(tridata.uvSets[0]):
-                    uv.u = uvlist[i][0]
-                    uv.v = 1.0 - uvlist[i][1] # opengl standard
+                for j, uvlayer in enumerate(mesh_uvlayers):
+                    for i, uv in enumerate(tridata.uvSets[j]):
+                        uv.u = uvlist[i][j][0]
+                        uv.v = 1.0 - uvlist[i][j][1] # opengl standard
 
             # set triangles
             # stitch strips for civ4
@@ -2489,7 +2496,7 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                and block.getHash() == texprop.getHash():
                 return block
 
-        # no material property with given settings found, so use and register
+        # no texturing property with given settings found, so use and register
         # the new one
         return self.registerBlock(texprop)
 

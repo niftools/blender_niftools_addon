@@ -1,3 +1,6 @@
+Version 2.2.3 (***)
+* Export: added support for multiple UV layers
+
 Version 2.2.2 (Dec 2, 2007)
 * Import/Export: support for Morrowind environment maps and bump mapping via
 NiTextureEffect blocks (set Blender Map Input to "Refl" for the
