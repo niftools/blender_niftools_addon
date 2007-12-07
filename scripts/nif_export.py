@@ -1045,6 +1045,7 @@ and turn off envelopes."""%ob.getName()
             mesh_base_mtex = None
             mesh_glow_mtex = None
             mesh_bump_mtex = None
+            mesh_gloss_mtex = None
             mesh_hasalpha = False # mesh has transparency
             mesh_hastex = False   # mesh has at least one texture
             mesh_hasspec = False  # mesh has specular properties
@@ -1137,6 +1138,14 @@ MapTo.EMIT"%(mesh.name,mesh_mat.getName()))
 '%s': glow texture must have CALCALPHA flag set, and must have MapTo.ALPHA \
 enabled."%(ob.getName(),mesh_mat.getName()))
                             mesh_glow_mtex = mtex
+                            mesh_hastex = True
+                        elif mtex.mapto & Blender.Texture.MapTo.SPEC:
+                            # got the gloss map
+                            if mesh_gloss_mtex:
+                                raise NifExportError("Multiple gloss textures \
+in mesh '%s', material '%s'. Make sure there is only one texture with \
+MapTo.SPEC"%(mesh.name,mesh_mat.getName()))
+                            mesh_gloss_mtex = mtex
                             mesh_hastex = True
                         elif mtex.mapto & Blender.Texture.MapTo.NOR:
                             # got the normal map
@@ -1380,7 +1389,8 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                     uvlayers = mesh_uvlayers,
                     basemtex = mesh_base_mtex,
                     glowmtex = mesh_glow_mtex,
-                    bumpmtex = mesh_bump_mtex))
+                    bumpmtex = mesh_bump_mtex,
+                    glossmtex = mesh_gloss_mtex))
 
             if mesh_hasalpha:
                 # add NiTriShape's alpha propery
@@ -2462,15 +2472,15 @@ WARNING: bad uv layer name '%s' in texture '%s'
 
     def exportTexturingProperty(
         self, flags = 0x0001, applymode = None, uvlayers = None,
-        basemtex = None, glowmtex = None, bumpmtex = None):
-        """Export texturing property. The parameters basemtex, glowmtex, and
-        bumpmtex are the Blender material textures (MTex, not Texture) that
-        correspond to the base, glow, and bump map textures. The uvlayers
+        basemtex = None, glowmtex = None, bumpmtex = None, glossmtex = None):
+        """Export texturing property. The parameters basemtex, glowmtex,
+        bumpmtex, ... are the Blender material textures (MTex, not Texture)
+        that correspond to the base, glow, bump map, ... textures. The uvlayers
         parameter is a list of uvlayer strings, that is, mesh.getUVLayers()."""
 
         texprop = NifFormat.NiTexturingProperty()
 
-        texprop.flags = 0x0001 # standard
+        texprop.flags = flags
         texprop.applyMode = applymode
         texprop.textureCount = 7
 
@@ -2493,7 +2503,7 @@ WARNING: bad uv layer name '%s' in texture '%s'
             self.exportTexDesc(texdesc = texprop.glowTexture,
                                uvlayers = uvlayers,
                                mtex = glowmtex)
-                    
+
         if bumpmtex:
             texprop.hasBumpMapTexture = True
             self.exportTexDesc(texdesc = texprop.bumpMapTexture,
@@ -2505,7 +2515,13 @@ WARNING: bad uv layer name '%s' in texture '%s'
             texprop.bumpMapMatrix.m12 = 0.0
             texprop.bumpMapMatrix.m21 = 0.0
             texprop.bumpMapMatrix.m22 = 1.0
-                    
+
+        if glossmtex:
+            texprop.hasGlossTexture = True
+            self.exportTexDesc(texdesc = texprop.glossTexture,
+                               uvlayers = uvlayers,
+                               mtex = glossmtex)
+
         # search for duplicate
         for block in self.blocks:
             if isinstance(block, NifFormat.NiTexturingProperty) \

@@ -1,4 +1,5 @@
 Version 2.2.3 (***)
+* Export: added support for gloss textures (use MapTo.SPEC)
 * Import/Export: added support for multiple UV layers
 
 Version 2.2.2 (Dec 2, 2007)
