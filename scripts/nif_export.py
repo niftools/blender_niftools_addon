@@ -1042,9 +1042,9 @@ and turn off envelopes."""%ob.getName()
         for materialIndex, mesh_mat in enumerate( mesh_mats ):
             # -> first, extract valuable info from our ob
             
-            mesh_base_tex = None
-            mesh_glow_tex = None
-            mesh_bump_tex = None
+            mesh_base_mtex = None
+            mesh_glow_mtex = None
+            mesh_bump_mtex = None
             mesh_hasalpha = False # mesh has transparency
             mesh_hastex = False   # mesh has at least one texture
             mesh_hasspec = False  # mesh has specular properties
@@ -1119,14 +1119,13 @@ mesh '%s', material '%s')."%(ob.getName(),mesh_mat.getName()))
                             # an envmap image should have an empty... don't care
                         mesh_hastexeff = True
                         mesh_texeff_mtex = mtex
-                        mesh_texeff_tex = mtex.tex
 
                     # check UV-mapped textures
                     elif mtex.texco == Blender.Texture.TexCo.UV:
                         if mtex.mapto & Blender.Texture.MapTo.COL \
                            and mtex.mapto & Blender.Texture.MapTo.EMIT:
                             # got the glow tex
-                            if mesh_glow_tex:
+                            if mesh_glow_mtex:
                                 raise NifExportError("Multiple glow textures \
 in mesh '%s', material '%s'. Make sure there is only one texture with \
 MapTo.EMIT"%(mesh.name,mesh_mat.getName()))
@@ -1137,28 +1136,27 @@ MapTo.EMIT"%(mesh.name,mesh_mat.getName()))
                                 raise NifExportError("In mesh '%s', material \
 '%s': glow texture must have CALCALPHA flag set, and must have MapTo.ALPHA \
 enabled."%(ob.getName(),mesh_mat.getName()))
-                            mesh_glow_tex = mtex.tex
+                            mesh_glow_mtex = mtex
                             mesh_hastex = True
                         elif mtex.mapto & Blender.Texture.MapTo.NOR:
                             # got the normal map
-                            if mesh_bump_tex:
+                            if mesh_bump_mtex:
                                 raise NifExportError("Multiple bump textures \
 in mesh '%s', material '%s'. Make sure there is only one texture with \
 MapTo.NOR"%(mesh.name,mesh_mat.getName()))
-                            mesh_bump_tex = mtex.tex
+                            mesh_bump_mtex = mtex
                             mesh_hastex = True
                         elif mtex.mapto & Blender.Texture.MapTo.COL:
                             # anything else that maps to COL is considered
                             # as base texture
-                            if mesh_base_tex:
+                            if mesh_base_mtex:
                                 raise NifExportError("Multiple base textures \
 in mesh '%s', material '%s', this is not supported. Delete all textures, \
 except for the base texture."%(mesh.name,mesh_mat.getName()))
                             mesh_base_mtex = mtex
-                            mesh_base_tex = mtex.tex
                             mesh_hastex = True # flag that we have textures, and that we should export UV coordinates
                             # check if alpha channel is enabled for this texture
-                            if (mesh_base_tex.imageFlags & Blender.Texture.ImageFlags.USEALPHA != 0) and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
+                            if (mesh_base_mtex.tex.imageFlags & Blender.Texture.ImageFlags.USEALPHA != 0) and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
                                 # in this case, Blender replaces the texture transparant parts with the underlying material color...
                                 # in NIF, material alpha is multiplied with texture alpha channel...
                                 # how can we emulate the NIF alpha system (simply multiplying material alpha with texture alpha) when MapTo.ALPHA is turned on?
@@ -1340,7 +1338,7 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                 extra_node.flags = 0x000C # morrowind
                 # create texture effect block and parent the
                 # texture effect and trishape to it
-                texeff = self.exportTextureEffect(mesh_texeff_tex)
+                texeff = self.exportTextureEffect(mesh_texeff_mtex)
                 extra_node.addChild(texeff)
                 extra_node.addChild(trishape)
                 extra_node.addEffect(texeff)
@@ -1374,14 +1372,15 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
 
             self.exportMatrix(ob, space, trishape)
             
-            if mesh_base_tex or mesh_glow_tex:
+            if mesh_base_mtex or mesh_glow_mtex:
                 # add NiTriShape's texturing property
                 trishape.addProperty(self.exportTexturingProperty(
                     flags = 0x0001, # standard
-                    applymode = self.APPLYMODE[mesh_base_mtex.blendmode if mesh_base_tex else Blender.Texture.BlendModes["MIX"]],
-                    basetex = mesh_base_tex,
-                    glowtex = mesh_glow_tex,
-                    bumptex = mesh_bump_tex))
+                    applymode = self.APPLYMODE[mesh_base_mtex.blendmode if mesh_base_mtex else Blender.Texture.BlendModes["MIX"]],
+                    uvlayers = mesh_uvlayers,
+                    basemtex = mesh_base_mtex,
+                    glowmtex = mesh_glow_mtex,
+                    bumpmtex = mesh_bump_mtex))
 
             if mesh_hasalpha:
                 # add NiTriShape's alpha propery
@@ -1584,8 +1583,10 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                                 # v[0] is the original vertex index
                                 # v[1] is the weight
                                 
-                                # vertmap[v[0]] is the set of vertices (indices) to which v[0] was mapped
-                                # so we simply export the same weight as the original vertex for each new vertex
+                                # vertmap[v[0]] is the set of vertices (indices)
+                                # to which v[0] was mapped
+                                # so we simply export the same weight as the
+                                # original vertex for each new vertex
             
                                 # write the weights
                                 if vertmap[v[0]] and vert_norm[v[0]]: # extra check for multi material meshes
@@ -1619,7 +1620,9 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                                     mesh.verts[idx].sel = 1
                             # switch to edit mode and raise exception
                             Blender.Window.EditMode(1)
-                            raise NifExportError("Cannot export mesh with unweighted vertices. The unweighted vertices have been selected in the mesh so they can easily be identified.")
+                            raise NifExportError("Cannot export mesh with \
+unweighted vertices. The unweighted vertices have been selected in the mesh so \
+they can easily be identified.")
 
                         # update bind position skinning data
                         trishape.updateBindPosition()
@@ -1633,11 +1636,18 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                             # warn on bad config settings
                             if self.EXPORT_VERSION == 'Oblivion':
                                if self.EXPORT_PADBONES:
-                                   print("WARNING: using padbones on Oblivion export, you probably do not want to do this\n         disable the pad bones option to get higher quality skin partitions")
+                                   print("""\
+WARNING: using padbones on Oblivion export, you probably do not want to do this
+         disable the pad bones option to get higher quality skin partitions""")
                                if self.EXPORT_BONESPERPARTITION < 18:
-                                   print("WARNING: using less than 18 bones per partition on Oblivion export\n         set it to 18 to get higher quality skin partitions")
+                                   print("""\
+WARNING: using less than 18 bones per partition on Oblivion export
+         set it to 18 to get higher quality skin partitions""")
                             if lostweight > NifFormat._EPSILON:
-                                print("WARNING: lost %f in vertex weights while creating a skin partition for\n         Blender object '%s' (nif block '%s')"%(lostweight, ob.name, trishape.name))
+                                print("""\
+WARNING: lost %f in vertex weights while creating a skin partition for
+         Blender object '%s' (nif block '%s')""" % (lostweight,
+                                                    ob.name, trishape.name))
 
                         # clean up
                         del vert_weights
@@ -1725,7 +1735,8 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
         assert( arm.getType() == 'Armature' )
 
         # find the root bones
-        bones = dict(arm.getData().bones.items()) # dictionary of bones (name -> bone)
+        # dictionary of bones (name -> bone)
+        bones = dict(arm.getData().bones.items())
         root_bones = []
         for root_bone in bones.values():
             while root_bone.parent in bones.values():
@@ -1740,9 +1751,9 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
 
         bones_node = {} # maps bone names to NiNode blocks
 
-        # here we add all the bones; it's a bit ugly but hopefully it works
-        # first we create all bones with their keyframes
-        # and then we fix the links in a second run
+        # here all the bones are added
+        # first create all bones with their keyframes
+        # and then fix the links in a second run
 
         # ok, let's create the bone NiNode blocks
         for bone in bones.values():
@@ -1761,7 +1772,9 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
             
             # bone rotations are stored in the IPO relative to the rest position
             # so we must take the rest position into account
-            bonerestmat = self.getBoneRestMatrix(bone, 'BONESPACE', extra = False) # we need the original one, without extra transforms
+            # (need original one, without extra transforms, so extra = False)
+            bonerestmat = self.getBoneRestMatrix(bone, 'BONESPACE',
+                                                 extra = False)
             try:
                 bonexmat_inv = self.bonesExtraMatrixInv[bone.name]
             except KeyError:
@@ -1782,14 +1795,11 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
             if not bone.parent:
                 parent_block.addChild(bones_node[bone.name])
 
-        # that's it!!!
 
 
-
-    # 
-    # Export all children of blender object ob as children of parent_block.
-    # 
     def exportChildren(self, ob, parent_block):
+        """Export all children of blender object ob as children of
+        parent_block."""
         # loop over all ob's children
         for ob_child in [cld  for cld in Blender.Object.Get() if cld.getParent() == ob]:
             # is it a regular node?
@@ -2435,12 +2445,28 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
         # the new one
         return self.registerBlock(matprop)
 
+    def exportTexDesc(self, texdesc = None, uvlayers = None, mtex = None):
+        """Helper function for exportTexturingProperty to export each texture
+        slot."""
+        texdesc.isUsed = True
+
+        try:
+            texdesc.uvSet = uvlayers.index(mtex.uvlayer) if mtex.uvlayer else 0
+        except ValueError: # mtex.uvlayer not in uvlayers list
+            print("""\
+WARNING: bad uv layer name '%s' in texture '%s'
+         falling back on first uv layer""" % (mtex.uvlayer, mtex.tex.getName()))
+            texdesc.uvSet = 0 # assume 0 is active layer
+
+        texdesc.source = self.exportSourceTexture(mtex.tex)
+
     def exportTexturingProperty(
-        self, flags = 0x0001, applymode = None,
-        basetex = None, glowtex = None, bumptex = None):
-        """Export texturing property. The parameters basetex, glowtex, and
-        bumptex are the Blender material textures (Texture, not MTex) that
-        correspond to the base, glow, and bump map textures."""
+        self, flags = 0x0001, applymode = None, uvlayers = None,
+        basemtex = None, glowmtex = None, bumpmtex = None):
+        """Export texturing property. The parameters basemtex, glowmtex, and
+        bumpmtex are the Blender material textures (MTex, not Texture) that
+        correspond to the base, glow, and bump map textures. The uvlayers
+        parameter is a list of uvlayer strings, that is, mesh.getUVLayers()."""
 
         texprop = NifFormat.NiTexturingProperty()
 
@@ -2448,41 +2474,31 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
         texprop.applyMode = applymode
         texprop.textureCount = 7
 
-        if basetex:
+        if basemtex:
             texprop.hasBaseTexture = True
-            texprop.baseTexture.isUsed = True 
+            self.exportTexDesc(texdesc = texprop.baseTexture,
+                               uvlayers = uvlayers,
+                               mtex = basemtex)
             # check for texture flip definition
-            txtlist = Blender.Text.Get()
-            for fliptxt in txtlist:
-                if fliptxt.getName() == basetex.getName():
-                    # texture slot 0 = base
-                    self.exportFlipController(fliptxt, basetex, texprop, 0)
-                    break
-                else:
-                    fliptxt = None
+            try:
+                fliptxt = Blender.Text.Get(mtex.tex.getName())
+            except:
+                pass
             else:
-                texprop.baseTexture.source = self.exportSourceTexture(basetex)
+                # texture slot 0 = base
+                self.exportFlipController(fliptxt, basemtex.tex, texprop, 0)
 
-        if glowtex:
+        if glowmtex:
             texprop.hasGlowTexture = True
-            texprop.glowTexture.isUsed = True
-
-            # check for texture flip definition
-            txtlist = Blender.Text.Get()
-            for fliptxt in txtlist:
-                if fliptxt.getName() == glowtex.getName():
-                    # texture slot 4 = glow
-                    self.exportFlipController( fliptxt, glowtex, texprop, 4 )
-                    break
-                else:
-                    fliptxt = None
-            else:
-                texprop.glowTexture.source = self.exportSourceTexture(glowtex)
+            self.exportTexDesc(texdesc = texprop.glowTexture,
+                               uvlayers = uvlayers,
+                               mtex = glowmtex)
                     
-        if bumptex:
+        if bumpmtex:
             texprop.hasBumpMapTexture = True
-            texprop.bumpMapTexture.isUsed = True
-            texprop.bumpMapTexture.source = self.exportSourceTexture(bumptex)
+            self.exportTexDesc(texdesc = texprop.bumpMapTexture,
+                               uvlayers = uvlayers,
+                               mtex = bumpmtex)
             texprop.bumpMapLumaScale = 1.0
             texprop.bumpMapLumaOffset = 0.0
             texprop.bumpMapMatrix.m11 = 1.0
@@ -2500,7 +2516,7 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
         # the new one
         return self.registerBlock(texprop)
 
-    def exportTextureEffect(self, tex = None):
+    def exportTextureEffect(self, mtex = None):
         texeff = NifFormat.NiTextureEffect()
         texeff.flags = 4
         texeff.rotation.setIdentity()
@@ -2510,8 +2526,8 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
         texeff.textureClamping  = NifFormat.TexClampMode.WRAP_S_WRAP_T
         texeff.textureType = NifFormat.EffectType.EFFECT_ENVIRONMENT_MAP
         texeff.coordinateGenerationType = NifFormat.CoordGenType.CG_SPHERE_MAP
-        if tex:
-            texeff.sourceTexture = self.exportSourceTexture(tex)
+        if mtex:
+            texeff.sourceTexture = self.exportSourceTexture(mtex.tex)
         texeff.unknownVector.x = 1.0
         texeff.ps2K = 65461
         return self.registerBlock(texeff)
