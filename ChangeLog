@@ -1,6 +1,12 @@
-Version 2.2.3 (***)
+Version 2.2.3 (Dec 8, 2007)
 * Import/Export: added support for gloss textures (use MapTo.SPEC)
+* Import/Export: added support for dark textures (use MapTo.COL and blendmode
+"darken")
+* Import/Export: added support for detail textures (add a second base texture,
+that is, MapTo.COL)
 * Import/Export: added support for multiple UV layers
+* Import: removed broken pixel data decompression code, so recent nif versions
+with embedded textures can import (e.g. the copetech nifs)
 
 Version 2.2.2 (Dec 2, 2007)
 * Import/Export: support for Morrowind environment maps and bump mapping via
