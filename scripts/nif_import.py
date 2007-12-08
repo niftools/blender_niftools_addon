@@ -1136,6 +1136,8 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
         glowTexture = None
         envmapTexture = None # for NiTextureEffect
         bumpTexture = None
+        darkTexture = None
+        detailTexture = None
         if textProperty:
             baseTexDesc = textProperty.baseTexture
             if baseTexDesc:
@@ -1188,6 +1190,33 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                     material.setTexture(4, glossTexture, texco, mapto)
                     mglossTexture = material.getTextures()[4]
                     mglossTexture.uvlayer = self.getUVLayerName(glossTexDesc.uvSet)
+            darkTexDesc = textProperty.darkTexture
+            if darkTexDesc:
+                darkTexture = self.importTexture(darkTexDesc.source)
+                if darkTexture:
+                    # set the texture to use face UV coordinates
+                    texco = Blender.Texture.TexCo.UV
+                    # map the texture to the COL channel
+                    mapto = Blender.Texture.MapTo.COL
+                    # set the texture for the material
+                    material.setTexture(5, darkTexture, texco, mapto)
+                    mdarkTexture = material.getTextures()[5]
+                    mdarkTexture.uvlayer = self.getUVLayerName(darkTexDesc.uvSet)
+                    # set blend mode to "DARKEN"
+                    mdarkTexture.blendmode = Blender.Texture.BlendModes["DARKEN"]
+            detailTexDesc = textProperty.detailTexture
+            if detailTexDesc:
+                detailTexture = self.importTexture(detailTexDesc.source)
+                if detailTexture:
+                    # import detail texture as extra base texture
+                    # set the texture to use face UV coordinates
+                    texco = Blender.Texture.TexCo.UV
+                    # map the texture to the COL channel
+                    mapto = Blender.Texture.MapTo.COL
+                    # set the texture for the material
+                    material.setTexture(6, detailTexture, texco, mapto)
+                    mdetailTexture = material.getTextures()[6]
+                    mdetailTexture.uvlayer = self.getUVLayerName(detailTexDesc.uvSet)
         if textureEffect:
             envmapTexture = self.importTexture(textureEffect.sourceTexture)
             if envmapTexture:

@@ -1050,8 +1050,11 @@ and turn off envelopes."""%ob.getName()
             mesh_glow_mtex = None
             mesh_bump_mtex = None
             mesh_gloss_mtex = None
+            mesh_dark_mtex = None
+            mesh_detail_mtex = None
+            mesh_texeff_mtex = None
+            mesh_uvlayers = []    # uv layers used by this material
             mesh_hasalpha = False # mesh has transparency
-            mesh_hastex = False   # mesh has at least one texture
             mesh_hasspec = False  # mesh has specular properties
             mesh_hasvcol = False
             mesh_hasnormals = False
@@ -1089,11 +1092,6 @@ and turn off envelopes."""%ob.getName()
                 mesh_mat_emissive_color[0] = mesh_mat_diffuse_color[0] * mesh_mat_emissive
                 mesh_mat_emissive_color[1] = mesh_mat_diffuse_color[1] * mesh_mat_emissive
                 mesh_mat_emissive_color[2] = mesh_mat_diffuse_color[2] * mesh_mat_emissive
-                # NiTextureEffect block is used to add reflectivity
-                # it will be set to True if one of the textures has the
-                # MapTo.REF setting
-                # (used for Morrowind only)
-                mesh_hastexeff = False
                 # the base texture = first material texture
                 # note that most morrowind files only have a base texture, so let's for now only support single textured materials
                 for mtex in mesh_mat.getTextures():
@@ -1122,11 +1120,16 @@ Material Buttons, set texture 'Map To' to \
 have blending mode 'Add' on texture in \
 mesh '%s', material '%s')."%(ob.getName(),mesh_mat.getName()))
                             # an envmap image should have an empty... don't care
-                        mesh_hastexeff = True
                         mesh_texeff_mtex = mtex
 
                     # check UV-mapped textures
                     elif mtex.texco == Blender.Texture.TexCo.UV:
+                        # update set of uv layers that must be exported
+                        uvlayer = ( mtex.uvlayer if mtex.uvlayer
+                                    else mesh.activeUVLayer )
+                        if not uvlayer in mesh_uvlayers:
+                            mesh_uvlayers.append(uvlayer)
+                        # check which texture slot this mtex belongs to
                         if mtex.mapto & Blender.Texture.MapTo.COL \
                            and mtex.mapto & Blender.Texture.MapTo.EMIT:
                             # got the glow tex
@@ -1142,7 +1145,6 @@ MapTo.EMIT"%(mesh.name,mesh_mat.getName()))
 '%s': glow texture must have CALCALPHA flag set, and must have MapTo.ALPHA \
 enabled."%(ob.getName(),mesh_mat.getName()))
                             mesh_glow_mtex = mtex
-                            mesh_hastex = True
                         elif mtex.mapto & Blender.Texture.MapTo.SPEC:
                             # got the gloss map
                             if mesh_gloss_mtex:
@@ -1150,7 +1152,6 @@ enabled."%(ob.getName(),mesh_mat.getName()))
 in mesh '%s', material '%s'. Make sure there is only one texture with \
 MapTo.SPEC"%(mesh.name,mesh_mat.getName()))
                             mesh_gloss_mtex = mtex
-                            mesh_hastex = True
                         elif mtex.mapto & Blender.Texture.MapTo.NOR:
                             # got the normal map
                             if mesh_bump_mtex:
@@ -1158,16 +1159,16 @@ MapTo.SPEC"%(mesh.name,mesh_mat.getName()))
 in mesh '%s', material '%s'. Make sure there is only one texture with \
 MapTo.NOR"%(mesh.name,mesh_mat.getName()))
                             mesh_bump_mtex = mtex
-                            mesh_hastex = True
-                        elif mtex.mapto & Blender.Texture.MapTo.COL:
+                        elif mtex.mapto & Blender.Texture.MapTo.COL and \
+                             mtex.blendmode == Blender.Texture.BlendModes["DARKEN"] and \
+                             not mesh_dark_mtex:
+                            # got the dark map
+                            mesh_dark_mtex = mtex
+                        elif mtex.mapto & Blender.Texture.MapTo.COL and \
+                             not mesh_base_mtex:
                             # anything else that maps to COL is considered
                             # as base texture
-                            if mesh_base_mtex:
-                                raise NifExportError("Multiple base textures \
-in mesh '%s', material '%s', this is not supported. Delete all textures, \
-except for the base texture."%(mesh.name,mesh_mat.getName()))
                             mesh_base_mtex = mtex
-                            mesh_hastex = True # flag that we have textures, and that we should export UV coordinates
                             # check if alpha channel is enabled for this texture
                             if (mesh_base_mtex.tex.imageFlags & Blender.Texture.ImageFlags.USEALPHA != 0) and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
                                 # in this case, Blender replaces the texture transparant parts with the underlying material color...
@@ -1186,6 +1187,11 @@ animation for this type of transparency in material '%s': remove alpha \
 animation, or turn off MapTo.ALPHA, and try again."%mesh_mat.getName())
                                 mesh_mat_transparency = mtex.varfac # we must use the "Var" value
                                 mesh_hasalpha = True
+                        elif mtex.mapto & Blender.Texture.MapTo.COL and \
+                             not mesh_detail_mtex:
+                            # extra COL channel is considered
+                            # as detail texture
+                            mesh_detail_mtex = mtex
                         else:
                             # unknown map
                             raise NifExportError("Do not know how to export \
@@ -1200,11 +1206,7 @@ and set texture 'Map To' to 'COL'." % (mtex.tex.getName(),
 material '%s'. Either delete all non-UV textures, or in the Shading Panel, \
 under Material Buttons, set texture 'Map Input' to 'UV'."%
                                              (ob.getName(),mesh_mat.getName()))
-            if mesh_hastex:
-                # list of uv layers that need to be exported
-                mesh_uvlayers = mesh.getUVLayerNames()
-            else:
-                mesh_uvlayers = []
+
 
 
             # -> now comes the real export
@@ -1242,8 +1244,8 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                 f_numverts = len(f.v)
                 if (f_numverts < 3): continue # ignore degenerate faces
                 assert((f_numverts == 3) or (f_numverts == 4)) # debug
-                if (mesh_hastex): # if we have uv coordinates
-                    if (len(f.uv) != len(f.v)): # make sure we have UV data
+                if mesh_uvlayers: # if we have uv coordinates
+                    if len(f.uv) != len(f.v): # make sure we have UV data
                         raise NifExportError('ERROR%t|Create a UV map for every texture, and run the script again.')
                 # find (vert, uv-vert, normal, vcol) quad, and if not found, create it
                 f_index = [ -1 ] * f_numverts
@@ -1258,11 +1260,10 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                     else:
                         fn = None
                     fuv = []
-                    if mesh_hastex:
-                        for uvlayer in mesh_uvlayers:
-                            mesh.activeUVLayer = uvlayer
-                            fuv.append(f.uv[i])
-                    if (mesh_hasvcol):
+                    for uvlayer in mesh_uvlayers:
+                        mesh.activeUVLayer = uvlayer
+                        fuv.append(f.uv[i])
+                    if mesh_hasvcol:
                         if (len(f.col) == 0):
                             print 'WARNING: vertex color painting/lighting enabled, but mesh has no vertex color data; vertex weights will not be written.'
                             fcol = None
@@ -1311,7 +1312,7 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                         vertlist.append(vertquad[0])
                         if mesh_hasnormals: normlist.append(vertquad[2])
                         if mesh_hasvcol:    vcollist.append(vertquad[3])
-                        if mesh_hastex:     uvlist.append(vertquad[1])
+                        if mesh_uvlayers:   uvlist.append(vertquad[1])
                 # now add the (hopefully, convex) face, in triangles
                 for i in range(f_numverts - 2):
                     if True: #TODO: #(ob_scale > 0):
@@ -1341,7 +1342,7 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
 
             # add texture effect block (must be added as preceeding child of
             # the trishape)
-            if self.EXPORT_VERSION == "Morrowind" and mesh_hastexeff:
+            if self.EXPORT_VERSION == "Morrowind" and mesh_texeff_mtex:
                 # create a new parent block for this shape
                 extra_node = self.createBlock("NiNode")
                 parent_block.addChild(extra_node)
@@ -1394,7 +1395,9 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                     basemtex = mesh_base_mtex,
                     glowmtex = mesh_glow_mtex,
                     bumpmtex = mesh_bump_mtex,
-                    glossmtex = mesh_gloss_mtex))
+                    glossmtex = mesh_gloss_mtex,
+                    darkmtex = mesh_dark_mtex,
+                    detailmtex = mesh_detail_mtex))
 
             if mesh_hasalpha:
                 # add NiTriShape's alpha propery
@@ -1512,7 +1515,7 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                     v.b = vcollist[i].b / 255.0
                     v.a = vcollist[i].a / 255.0
 
-            if mesh_hastex:
+            if mesh_uvlayers:
                 tridata.numUvSets = len(mesh_uvlayers)
                 tridata.hasUv = True
                 tridata.uvSets.updateSize()
@@ -1526,7 +1529,7 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
             tridata.setTriangles(trilist, stitchstrips = self.EXPORT_STITCHSTRIPS)
 
             # update tangent space
-            if mesh_hastex and mesh_hasnormals:
+            if mesh_uvlayers and mesh_hasnormals:
                 if self.version >= 0x14000005:
                     trishape.updateTangentSpace()
 
@@ -2525,7 +2528,8 @@ WARNING: bad uv layer name '%s' in texture '%s'
 
     def exportTexturingProperty(
         self, flags = 0x0001, applymode = None, uvlayers = None,
-        basemtex = None, glowmtex = None, bumpmtex = None, glossmtex = None):
+        basemtex = None, glowmtex = None, bumpmtex = None, glossmtex = None,
+        darkmtex = None, detailmtex = None):
         """Export texturing property. The parameters basemtex, glowmtex,
         bumpmtex, ... are the Blender material textures (MTex, not Texture)
         that correspond to the base, glow, bump map, ... textures. The uvlayers
@@ -2574,6 +2578,18 @@ WARNING: bad uv layer name '%s' in texture '%s'
             self.exportTexDesc(texdesc = texprop.glossTexture,
                                uvlayers = uvlayers,
                                mtex = glossmtex)
+
+        if darkmtex:
+            texprop.hasDarkTexture = True
+            self.exportTexDesc(texdesc = texprop.darkTexture,
+                               uvlayers = uvlayers,
+                               mtex = darkmtex)
+
+        if detailmtex:
+            texprop.hasDetailTexture = True
+            self.exportTexDesc(texdesc = texprop.detailTexture,
+                               uvlayers = uvlayers,
+                               mtex = detailmtex)
 
         # search for duplicate
         for block in self.blocks:
