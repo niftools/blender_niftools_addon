@@ -90,7 +90,7 @@ class NifExport:
         """Recover bone extra matrices."""
         try:
             bonetxt = Blender.Text.Get('BoneExMat')
-        except:
+        except NameError:
             return
         # Blender bone names are unique so we can use them as keys.
         for ln in bonetxt.asLines():
@@ -109,7 +109,7 @@ class NifExport:
         the names dictionary."""
         try:
             namestxt = Blender.Text.Get('FullNames')
-        except:
+        except NameError:
             return
         for ln in namestxt.asLines():
             if len(ln)>0:
@@ -155,13 +155,18 @@ class NifExport:
         # save file name
         self.filename = self.EXPORT_FILE[:]
         self.filepath = Blender.sys.dirname(self.filename)
-        self.filebase, self.fileext = Blender.sys.splitext(Blender.sys.basename(self.filename))
+        self.filebase, self.fileext = Blender.sys.splitext(
+            Blender.sys.basename(self.filename))
 
         # variables
-        self.blocks = [] # keeps track of all exported blocks
-        self.textures = {} # keeps track of all exported textures, maps filename to exported NiSourceTexture
-        self.names = {} # maps Blender names to imported names if present
-        self.blockNames = [] # keeps track of block names, to make sure they are unique
+        self.progressBar = 0
+        # list of all exported blocks
+        self.blocks = []
+        # maps Blender names to previously imported names from the FullNames
+        # buffer (see self.rebuildFullNames())
+        self.names = {}
+        # keeps track of names of exported blocks, to make sure they are unique
+        self.blockNames = []
 
         # dictionary of bones, maps Blender bone name to matrix that maps the
         # NIF bone matrix on the Blender bone matrix
@@ -1739,6 +1744,7 @@ WARNING: lost %f in vertex weights while creating a skin partition for
 
 
     def exportBones(self, arm, parent_block):
+        """Export the bones of an armature."""
         self.msg("Exporting bones for armature %s"%arm.getName())
         # the armature was already exported as a NiNode
         # now we must export the armature's bones
@@ -1799,7 +1805,9 @@ WARNING: lost %f in vertex weights while creating a skin partition for
             if bone.children:
                 self.msg("Linking children of bone %s"%bone.name)
                 for child in bone.children:
-                    if child.parent.name == bone.name: # bone.children returns also grandchildren etc... we only want immediate children of course
+                    # bone.children returns also grandchildren etc.
+                    # we only want immediate children, so do a parent check
+                    if child.parent.name == bone.name:
                         bones_node[bone.name].addChild(bones_node[child.name])
             # if it is a root bone, link it to the armature
             if not bone.parent:
@@ -1807,125 +1815,128 @@ WARNING: lost %f in vertex weights while creating a skin partition for
 
 
 
-    def exportChildren(self, ob, parent_block):
+    def exportChildren(self, obj, parent_block):
         """Export all children of blender object ob as children of
         parent_block."""
-        # loop over all ob's children
-        for ob_child in [cld  for cld in Blender.Object.Get() if cld.getParent() == ob]:
+        # loop over all obj's children
+        for ob_child in [ cld  for cld in Blender.Object.Get()
+                          if cld.getParent() == obj ]:
             # is it a regular node?
             if ob_child.getType() in ['Mesh', 'Empty', 'Armature']:
-                if (ob.getType() != 'Armature'): # not parented to an armature...
-                    self.exportNode(ob_child, 'localspace', parent_block, ob_child.getName())
-                else: # oh, this object is parented to an armature
-                    # we should check whether it is really parented to the armature using vertex weights
+                if (obj.getType() != 'Armature'):
+                    # not parented to an armature
+                    self.exportNode(ob_child, 'localspace',
+                                    parent_block, ob_child.getName())
+                else:
+                    # this object is parented to an armature
+                    # we should check whether it is really parented to the
+                    # armature using vertex weights
                     # or whether it is parented to some bone of the armature
                     parent_bone_name = ob_child.getParentBoneName()
                     if parent_bone_name == None:
-                        self.exportNode(ob_child, 'localspace', parent_block, ob_child.getName())
+                        self.exportNode(ob_child, 'localspace',
+                                        parent_block, ob_child.getName())
                     else:
-                        # we should parent the object to the bone instead of to the armature
+                        # we should parent the object to the bone instead of
+                        # to the armature
                         # so let's find that bone!
                         nif_bone_name = self.getFullName(parent_bone_name)
                         for block in self.blocks:
                             if isinstance(block, NifFormat.NiNode):
                                 if block.name == nif_bone_name:
-                                    self.exportNode(ob_child, 'localspace', block, ob_child.getName())
+                                    self.exportNode(ob_child, 'localspace',
+                                                    block, ob_child.getName())
                                     break
                         else:
                             assert(False) # BUG!
 
 
 
-    #
-    # Set a block's transform matrix to an object's
-    # transformation matrix (rest pose)
-    #
-    def exportMatrix(self, ob, space, block):
+    def exportMatrix(self, obj, space, block):
+        """Set a block's transform matrix to an object's
+        transformation matrix in rest pose."""
         # decompose
-        bs, br, bt = self.getObjectSRT(ob, space)
+        bscale, brot, btrans = self.getObjectSRT(obj, space)
         
         # and fill in the values
-        block.translation.x = bt[0]
-        block.translation.y = bt[1]
-        block.translation.z = bt[2]
-        block.rotation.m11 = br[0][0]
-        block.rotation.m12 = br[0][1]
-        block.rotation.m13 = br[0][2]
-        block.rotation.m21 = br[1][0]
-        block.rotation.m22 = br[1][1]
-        block.rotation.m23 = br[1][2]
-        block.rotation.m31 = br[2][0]
-        block.rotation.m32 = br[2][1]
-        block.rotation.m33 = br[2][2]
+        block.translation.x = btrans[0]
+        block.translation.y = btrans[1]
+        block.translation.z = btrans[2]
+        block.rotation.m11 = brot[0][0]
+        block.rotation.m12 = brot[0][1]
+        block.rotation.m13 = brot[0][2]
+        block.rotation.m21 = brot[1][0]
+        block.rotation.m22 = brot[1][1]
+        block.rotation.m23 = brot[1][2]
+        block.rotation.m31 = brot[2][0]
+        block.rotation.m32 = brot[2][1]
+        block.rotation.m33 = brot[2][2]
         block.velocity.x = 0.0
         block.velocity.y = 0.0
         block.velocity.z = 0.0
-        block.scale = bs
+        block.scale = bscale
 
-        return bs, br, bt
+        return bscale, brot, btrans
 
-    #
-    # Get an object's matrix
-    #
-    def getObjectMatrix(self, ob, space):
-        bs, br, bt = self.getObjectSRT(ob, space)
-        m = NifFormat.Matrix44()
+    def getObjectMatrix(self, obj, space):
+        """Get an object's matrix as NifFormat.Matrix44"""
+        bscale, brot, btrans = self.getObjectSRT(obj, space)
+        mat = NifFormat.Matrix44()
         
-        m.m41 = bt[0]
-        m.m42 = bt[1]
-        m.m43 = bt[2]
+        mat.m41 = btrans[0]
+        mat.m42 = btrans[1]
+        mat.m43 = btrans[2]
 
-        m.m11 = br[0][0]*bs
-        m.m12 = br[0][1]*bs
-        m.m13 = br[0][2]*bs
-        m.m21 = br[1][0]*bs
-        m.m22 = br[1][1]*bs
-        m.m23 = br[1][2]*bs
-        m.m31 = br[2][0]*bs
-        m.m32 = br[2][1]*bs
-        m.m33 = br[2][2]*bs
+        mat.m11 = brot[0][0] * bscale
+        mat.m12 = brot[0][1] * bscale
+        mat.m13 = brot[0][2] * bscale
+        mat.m21 = brot[1][0] * bscale
+        mat.m22 = brot[1][1] * bscale
+        mat.m23 = brot[1][2] * bscale
+        mat.m31 = brot[2][0] * bscale
+        mat.m32 = brot[2][1] * bscale
+        mat.m33 = brot[2][2] * bscale
 
-        m.m14 = 0.0
-        m.m24 = 0.0
-        m.m34 = 0.0
-        m.m44 = 1.0
+        mat.m14 = 0.0
+        mat.m24 = 0.0
+        mat.m34 = 0.0
+        mat.m44 = 1.0
         
-        return m
+        return mat
 
-    # 
-    # Find scale, rotation, and translation components of an object in
-    # the rest pose. Returns a triple (bs, br, bt), where bs
-    # is a scale float, br is a 3x3 rotation matrix, and bt is a
-    # translation vector. It should hold that "ob.getMatrix(space) == bs *
-    # br * bt".
-    # 
-    def getObjectSRT(self, ob, space):
+    def getObjectSRT(self, obj, space):
+        """Find scale, rotation, and translation components of an object in
+        the rest pose. Returns a triple (bs, br, bt), where bs
+        is a scale float, br is a 3x3 rotation matrix, and bt is a
+        translation vector. It should hold that
+        ob.getMatrix(space) == bs * br * bt""" 
         # handle the trivial case first
         if (space == 'none'):
-            bs = 1.0
-            br = Blender.Mathutils.Matrix([1,0,0],[0,1,0],[0,0,1])
-            bt = Blender.Mathutils.Vector([0, 0, 0])
-            return (bs, br, bt)
+            return ( 1.0,
+                     Blender.Mathutils.Matrix([1,0,0],[0,1,0],[0,0,1]),
+                     Blender.Mathutils.Vector([0, 0, 0]) )
         
         assert((space == 'worldspace') or (space == 'localspace'))
 
         # now write out spaces
-        if (not type(ob) is Blender.Armature.Bone):
+        if (not type(obj) is Blender.Armature.Bone):
             # get world matrix
-            mat = self.getObjectRestMatrix(ob, 'worldspace')
+            mat = self.getObjectRestMatrix(obj, 'worldspace')
             # handle localspace: L * Ba * B * P = W
             # (with L localmatrix, Ba bone animation channel, B bone rest matrix (armature space), P armature parent matrix, W world matrix)
             # so L = W * P^(-1) * (Ba * B)^(-1)
             if (space == 'localspace'):
-                if (ob.getParent() != None):
-                    matparentinv = self.getObjectRestMatrix(ob.getParent(), 'worldspace')
+                if (obj.getParent() != None):
+                    matparentinv = self.getObjectRestMatrix(obj.getParent(),
+                                                            'worldspace')
                     matparentinv.invert()
                     mat *= matparentinv
-                    if (ob.getParent().getType() == 'Armature'):
-                        # the object is parented to the armature... we must get the matrix relative to the bone parent
-                        bone_parent_name = ob.getParentBoneName()
+                    if (obj.getParent().getType() == 'Armature'):
+                        # the object is parented to the armature...
+                        # we must get the matrix relative to the bone parent
+                        bone_parent_name = obj.getParentBoneName()
                         if bone_parent_name:
-                            bone_parent = ob.getParent().getData().bones[bone_parent_name]
+                            bone_parent = obj.getParent().getData().bones[bone_parent_name]
                             # get bone parent matrix, including tail
                             # NOTE still a transform bug to iron out (see babelfish.nif)
                             matparentbone = self.getBoneRestMatrix(bone_parent, 'ARMATURESPACE', extra = True, tail = True)
@@ -1934,82 +1945,91 @@ WARNING: lost %f in vertex weights while creating a skin partition for
                             mat *= matparentboneinv
         else: # bones, get the rest matrix
             assert(space == 'localspace') # in this function, we only need bones in localspace
-            mat = self.getBoneRestMatrix(ob, 'BONESPACE')
+            mat = self.getBoneRestMatrix(obj, 'BONESPACE')
         
         return self.decomposeSRT(mat)
 
 
 
-    # Decompose Blender transform matrix as a scale, rotation matrix, and translation vector
-    def decomposeSRT(self, m):
+    def decomposeSRT(self, mat):
+        """Decompose Blender transform matrix as a scale, rotation matrix, and
+        translation vector."""
         # get scale components
-        b_scale_rot = m.rotationPart()
-        b_scale_rot_T = Blender.Mathutils.Matrix(b_scale_rot)
-        b_scale_rot_T.transpose()
-        b_scale_rot_2 = b_scale_rot * b_scale_rot_T
+        b_scale_rot = mat.rotationPart()
+        b_scale_rot_t = Blender.Mathutils.Matrix(b_scale_rot)
+        b_scale_rot_t.transpose()
+        b_scale_rot_2 = b_scale_rot * b_scale_rot_t
         b_scale = Blender.Mathutils.Vector(\
             b_scale_rot_2[0][0] ** 0.5,\
             b_scale_rot_2[1][1] ** 0.5,\
             b_scale_rot_2[2][2] ** 0.5)
         # and fix their sign
-        if (b_scale_rot.determinant() < 0): b_scale.negate()
+        if (b_scale_rot.determinant() < 0):
+            b_scale.negate()
         # only uniform scaling
-        if abs(b_scale[0]-b_scale[1]) + abs(b_scale[1]-b_scale[2]) > 0.02: # allow rather large error to accomodate some nifs
-            raise NifExportError("Non-uniform scaling not supported. Workaround: apply size and rotation (CTRL-A).")
+        # allow rather large error to accomodate some nifs
+        if abs(b_scale[0]-b_scale[1]) + abs(b_scale[1]-b_scale[2]) > 0.02:
+            raise NifExportError("""\
+Non-uniform scaling not supported.
+Workaround: apply size and rotation (CTRL-A).""")
         b_scale = b_scale[0]
         # get rotation matrix
-        b_rot = b_scale_rot * (1.0/b_scale)
+        b_rot = b_scale_rot * (1.0 / b_scale)
         # get translation
-        b_trans = m.translationPart()
+        b_trans = mat.translationPart()
         # done!
         return b_scale, b_rot, b_trans
 
 
 
-    # 
-    # Get bone matrix in rest position ("bind pose"). Space can be
-    # ARMATURESPACE or BONESPACE. This returns also a 4x4 matrix if space
-    # is BONESPACE (translation is bone head plus tail from parent bone).
-    # If tail is True then the matrix translation includes the bone tail.
-    # 
     def getBoneRestMatrix(self, bone, space, extra = True, tail = False):
+        """Get bone matrix in rest position ("bind pose"). Space can be
+        ARMATURESPACE or BONESPACE. This returns also a 4x4 matrix if space
+        is BONESPACE (translation is bone head plus tail from parent bone).
+        If tail is True then the matrix translation includes the bone tail."""
         # Retrieves the offset from the original NIF matrix, if existing
         corrmat = Blender.Mathutils.Matrix()
         if extra:
             try:
                 corrmat = self.bonesExtraMatrixInv[bone.name]
-            except:
+            except KeyError:
                 corrmat.identity()
         else:
             corrmat.identity()
         if (space == 'ARMATURESPACE'):
-            m = bone.matrix['ARMATURESPACE'].copy()
+            mat = bone.matrix['ARMATURESPACE'].copy()
             if tail:
                 tail_pos = bone.tail['ARMATURESPACE']
-                m[3][0] = tail_pos[0]
-                m[3][1] = tail_pos[1]
-                m[3][2] = tail_pos[2]
-            return corrmat * m
+                mat[3][0] = tail_pos[0]
+                mat[3][1] = tail_pos[1]
+                mat[3][2] = tail_pos[2]
+            return corrmat * mat
         elif (space == 'BONESPACE'):
             if bone.parent:
                 # not sure why extra = True is required here
-                # but if extra = extra then transforms are messed up, so keep for now
-                parinv = self.getBoneRestMatrix(bone.parent,'ARMATURESPACE', extra = True, tail = False)
+                # but if extra = extra then transforms are messed up, so keep
+                # for now
+                parinv = self.getBoneRestMatrix(bone.parent, 'ARMATURESPACE',
+                                                extra = True, tail = False)
                 parinv.invert()
-                return self.getBoneRestMatrix(bone, 'ARMATURESPACE', extra = extra, tail = tail) * parinv
+                return self.getBoneRestMatrix(bone,
+                                              'ARMATURESPACE',
+                                              extra = extra,
+                                              tail = tail) * parinv
             else:
-                return self.getBoneRestMatrix(bone, 'ARMATURESPACE', extra = extra, tail = tail)
+                return self.getBoneRestMatrix(bone, 'ARMATURESPACE',
+                                              extra = extra, tail = tail)
         else:
             assert(False) # bug!
 
 
 
-    # get the object's rest matrix
-    # space can be 'localspace' or 'worldspace'
-    def getObjectRestMatrix(self, ob, space, extra = True):
-        mat = Blender.Mathutils.Matrix(ob.getMatrix('worldspace')) # TODO cancel out IPO's
+    def getObjectRestMatrix(self, obj, space, extra = True):
+        """Get the object's rest matrix; space can be 'localspace' or
+        'worldspace'."""
+        mat = Blender.Mathutils.Matrix(obj.getMatrix('worldspace')) # TODO cancel out IPO's
         if (space == 'localspace'):
-            par = ob.getParent()
+            par = obj.getParent()
             if par:
                 parinv = self.getObjectRestMatrix(par, 'worldspace')
                 parinv.invert()
@@ -2035,50 +2055,54 @@ WARNING: lost %f in vertex weights while creating a skin partition for
         return block
 
 
-    def exportCollision(self, ob, parent_block):
-        """Main function for adding collision object ob to a node.""" 
+    def exportCollision(self, obj, parent_block):
+        """Main function for adding collision object obj to a node.""" 
         if self.EXPORT_VERSION == 'Morrowind':
-             if ob.rbShapeBoundType != Blender.Object.RBShapes['POLYHEDERON']:
-                 raise NifExportError("Morrowind only supports Polyhedron/Static TriangleMesh collisions.")
+             if obj.rbShapeBoundType != Blender.Object.RBShapes['POLYHEDERON']:
+                 raise NifExportError("""\
+Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
              node = self.createBlock("RootCollisionNode")
              parent_block.addChild(node)
              node.flags = 0x0003 # default
-             self.exportMatrix(ob, 'localspace', node)
-             self.exportTriShapes(ob, 'none', node)
+             self.exportMatrix(obj, 'localspace', node)
+             self.exportTriShapes(obj, 'none', node)
 
         elif self.EXPORT_VERSION == 'Oblivion':
 
             nodes = [ parent_block ]
-            nodes.extend([ b for b in parent_block.children if b.name[:14] == 'collisiondummy' ])
+            nodes.extend([ block for block in parent_block.children
+                           if block.name[:14] == 'collisiondummy' ])
             for node in nodes:
                 try:
-                    self.exportCollisionHelper(ob, node)
+                    self.exportCollisionHelper(obj, node)
                     break
                 except ValueError: # adding collision failed
                     continue
             else: # all nodes failed so add new one
                 node = NifFormat.NiNode()
                 node.setTransform(self.IDENTITY44)
-                node.name = 'collisiondummy%i'%parent_block.numChildren
+                node.name = 'collisiondummy%i' % parent_block.numChildren
                 node.flags = 0x000E # default
                 parent_block.addChild(node)
-                self.exportCollisionHelper(ob, node)
+                self.exportCollisionHelper(obj, node)
 
         else:
-            print "WARNING: only Morrowind and Oblivion collisions are supported, skipped collision object '%s'"%ob.name
+            print("""\
+WARNING: only Morrowind and Oblivion collisions are supported, skipped
+         collision object '%s'""" % obj.name)
 
-    def exportCollisionHelper(self, ob, parent_block):
+    def exportCollisionHelper(self, obj, parent_block):
         """Helper function to add collision objects to a node."""
 
         # is it packed
-        coll_ispacked = (ob.rbShapeBoundType == Blender.Object.RBShapes['POLYHEDERON'])
+        coll_ispacked = (obj.rbShapeBoundType == Blender.Object.RBShapes['POLYHEDERON'])
 
         # find physics properties
         material = self.EXPORT_OB_MATERIAL
         layer = self.EXPORT_OB_LAYER
         motionsys = self.EXPORT_OB_MOTIONSYSTEM
         # copy physics properties from Blender properties, if they exist
-        for prop in ob.getAllProperties():
+        for prop in obj.getAllProperties():
             if prop.getName() == 'HavokMaterial':
                 material = getattr(NifFormat.HavokMaterial, prop.getData())
             elif prop.getName() == 'OblivionLayer':
@@ -2137,16 +2161,16 @@ WARNING: lost %f in vertex weights while creating a skin partition for
             colbody = parent_block.collisionObject.body
 
         if coll_ispacked:
-            self.exportCollisionPacked(ob, colbody, layer, material)
+            self.exportCollisionPacked(obj, colbody, layer, material)
         else:
             if self.EXPORT_BHKLISTSHAPE:
-                self.exportCollisionList(ob, colbody, layer, material)
+                self.exportCollisionList(obj, colbody, layer, material)
             else:
-                self.exportCollisionSingle(ob, colbody, layer, material)
+                self.exportCollisionSingle(obj, colbody, layer, material)
 
 
 
-    def exportCollisionPacked(self, ob, colbody, layer, material):
+    def exportCollisionPacked(self, obj, colbody, layer, material):
         """Add object ob as packed collision object to collision body colbody.
         If parent_block hasn't any collisions yet, a new packed list is created.
         If the current collision system is not a packed list of collisions (bhkPackedNiTriStripsShape), then
@@ -2190,38 +2214,41 @@ WARNING: lost %f in vertex weights while creating a skin partition for
             if not isinstance(colshape, NifFormat.bhkPackedNiTriStripsShape):
                 raise ValueError('not a packed list of collisions')
 
-        mesh = ob.data
-        transform = ob.getMatrix('localspace').copy()
+        mesh = obj.data
+        transform = obj.getMatrix('localspace').copy()
         rotation = transform.rotationPart()
 
-        vertices = [v.co * transform for v in mesh.verts]
+        vertices = [vert.co * transform for vert in mesh.verts]
         triangles = []
         normals = []
-        for f in mesh.faces:
-            if len(f.v) < 3: continue # ignore degenerate faces
-            triangles.append([f.v[i].index for i in [0,1,2]])
-            normals.append(Blender.Mathutils.Vector(f.no) * rotation) # f.no is a Python list, not a vector
-            if len(f.v) == 4:
-                triangles.append([f.v[i].index for i in [0,2,3]])
-                normals.append(Blender.Mathutils.Vector(f.no) * rotation)
+        for face in mesh.faces:
+            if len(face.v) < 3:
+                continue # ignore degenerate faces
+            triangles.append([face.v[i].index for i in (0, 1, 2)])
+            # note: face.no is a Python list, not a vector
+            normals.append(Blender.Mathutils.Vector(face.no) * rotation)
+            if len(face.v) == 4:
+                triangles.append([face.v[i].index for i in (0, 2, 3)])
+                normals.append(Blender.Mathutils.Vector(face.no) * rotation)
 
         colshape.addShape(triangles, normals, vertices, layer, material)
 
 
 
-    def exportCollisionSingle(self, ob, colbody, layer, material):
+    def exportCollisionSingle(self, obj, colbody, layer, material):
         """Add collision object to colbody.
         If colbody already has a collision shape, throw ValueError."""
-        if colbody.shape: raise ValueError('collision body already has a shape')
-        colbody.shape = self.exportCollisionObject(ob, layer, material)
+        if colbody.shape:
+            raise ValueError('collision body already has a shape')
+        colbody.shape = self.exportCollisionObject(obj, layer, material)
 
 
 
-    def exportCollisionList(self, ob, colbody, layer, material):
-        """Add collision object ob to the list of collision objects of colbody.
-        If colbody hasn't any collisions yet, a new list is created.
-        If the current collision system is not a list of collisions (bhkListShape), then
-        a ValueError is raised."""
+    def exportCollisionList(self, obj, colbody, layer, material):
+        """Add collision object obj to the list of collision objects of colbody.
+        If colbody has no collisions yet, a new list is created.
+        If the current collision system is not a list of collisions
+        (bhkListShape), then a ValueError is raised."""
 
         # if no collisions have been exported yet to this parent_block
         # then create new collision tree on parent_block
@@ -2237,23 +2264,24 @@ WARNING: lost %f in vertex weights while creating a skin partition for
             if not isinstance(colshape, NifFormat.bhkListShape):
                 raise ValueError('not a list of collisions')
 
-        colshape.addShape(self.exportCollisionObject(ob, layer, material))
+        colshape.addShape(self.exportCollisionObject(obj, layer, material))
 
-    def exportCollisionObject(self, ob, layer, material):
-        """Export object ob as box, sphere, capsule, or convex hull.
+
+
+    def exportCollisionObject(self, obj, layer, material):
+        """Export object obj as box, sphere, capsule, or convex hull.
         Note: polyheder is handled by exportCollisionPacked."""
 
         # find bounding box data
-        verts = ob.data.verts
-        minx = min([v[0] for v in verts])
-        miny = min([v[1] for v in verts])
-        minz = min([v[2] for v in verts])
-        maxx = max([v[0] for v in verts])
-        maxy = max([v[1] for v in verts])
-        maxz = max([v[2] for v in verts])
+        minx = min([vert[0] for vert in obj.data.verts])
+        miny = min([vert[1] for vert in obj.data.verts])
+        minz = min([vert[2] for vert in obj.data.verts])
+        maxx = max([vert[0] for vert in obj.data.verts])
+        maxy = max([vert[1] for vert in obj.data.verts])
+        maxz = max([vert[2] for vert in obj.data.verts])
 
-
-        if ob.rbShapeBoundType in [ Blender.Object.RBShapes['BOX'], Blender.Object.RBShapes['SPHERE'] ]:
+        if obj.rbShapeBoundType in ( Blender.Object.RBShapes['BOX'],
+                                    Blender.Object.RBShapes['SPHERE'] ):
             # note: collision settings are taken from lowerclasschair01.nif
             coltf = self.createBlock("bhkConvexTransformShape")
             coltf.material = material
@@ -2266,7 +2294,7 @@ WARNING: lost %f in vertex weights while creating a skin partition for
             coltf.unknown8Bytes[5] = 9
             coltf.unknown8Bytes[6] = 253
             coltf.unknown8Bytes[7] = 4
-            hktf = ob.getMatrix('localspace').copy()
+            hktf = obj.getMatrix('localspace').copy()
             # the translation part must point to the center of the data
             # so calculate the center in local coordinates
             center = Blender.Mathutils.Vector((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0)
@@ -2283,7 +2311,7 @@ WARNING: lost %f in vertex weights while creating a skin partition for
             coltf.transform.m24 /= 7.0
             coltf.transform.m34 /= 7.0
 
-            if ob.rbShapeBoundType == Blender.Object.RBShapes['BOX']:
+            if obj.rbShapeBoundType == Blender.Object.RBShapes['BOX']:
                 colbox = self.createBlock("bhkBoxShape")
                 coltf.shape = colbox
                 colbox.material = material
@@ -2301,7 +2329,7 @@ WARNING: lost %f in vertex weights while creating a skin partition for
                 colbox.dimensions.y = (maxy - miny) / 14.0
                 colbox.dimensions.z = (maxz - minz) / 14.0
                 colbox.minimumSize = min(colbox.dimensions.x, colbox.dimensions.y, colbox.dimensions.z)
-            elif ob.rbShapeBoundType == Blender.Object.RBShapes['SPHERE']:
+            elif obj.rbShapeBoundType == Blender.Object.RBShapes['SPHERE']:
                 colsphere = self.createBlock("bhkSphereShape")
                 coltf.shape = colsphere
                 colsphere.material = material
@@ -2311,24 +2339,28 @@ WARNING: lost %f in vertex weights while creating a skin partition for
 
             return coltf
 
-        elif ob.rbShapeBoundType == Blender.Object.RBShapes['CYLINDER']:
+        elif obj.rbShapeBoundType == Blender.Object.RBShapes['CYLINDER']:
             colcaps = self.createBlock("bhkCapsuleShape")
             colcaps.material = material
             # take average radius
             colcaps.radius = (maxx + maxy - minx - miny) / 4.0
             colcaps.radius1 = colcaps.radius
             colcaps.radius2 = colcaps.radius
-            transform = ob.getMatrix('localspace').copy()
-            v1 = Blender.Mathutils.Vector([(maxx+minx)/2.0,(maxy+miny)/2.0,minz+colcaps.radius])
-            v2 = Blender.Mathutils.Vector([(maxx+minx)/2.0,(maxy+miny)/2.0,maxz-colcaps.radius])
-            v1 *= transform
-            v2 *= transform
-            colcaps.firstPoint.x = v1[0] / 7.0
-            colcaps.firstPoint.y = v1[1] / 7.0
-            colcaps.firstPoint.z = v1[2] / 7.0
-            colcaps.secondPoint.x = v2[0] / 7.0
-            colcaps.secondPoint.y = v2[1] / 7.0
-            colcaps.secondPoint.z = v2[2] / 7.0
+            transform = obj.getMatrix('localspace').copy()
+            vert1 = Blender.Mathutils.Vector( [ (maxx + minx)/2.0,
+                                                (maxy + miny)/2.0,
+                                                minz + colcaps.radius ] )
+            vert2 = Blender.Mathutils.Vector( [ (maxx + minx) / 2.0,
+                                                (maxy + miny) / 2.0,
+                                                maxz - colcaps.radius ] )
+            vert1 *= transform
+            vert2 *= transform
+            colcaps.firstPoint.x = vert1[0] / 7.0
+            colcaps.firstPoint.y = vert1[1] / 7.0
+            colcaps.firstPoint.z = vert1[2] / 7.0
+            colcaps.secondPoint.x = vert2[0] / 7.0
+            colcaps.secondPoint.y = vert2[1] / 7.0
+            colcaps.secondPoint.z = vert2[2] / 7.0
             # fix havok coordinate system for radii
             colcaps.radius /= 7.0
             colcaps.radius1 /= 7.0
@@ -2336,29 +2368,41 @@ WARNING: lost %f in vertex weights while creating a skin partition for
 
             return colcaps
 
-        elif ob.rbShapeBoundType == 5: # convex hull polytope; not in Python API
-            mesh = ob.data
-            transform = ob.getMatrix('localspace').copy()
+        elif obj.rbShapeBoundType == 5:
+            # convex hull polytope; not in Python API
+            # bound type has value 5
+            mesh = obj.data
+            transform = obj.getMatrix('localspace').copy()
             rotation = transform.rotationPart()
             scale = rotation.determinant()
             if scale < 0:
-                scale = - (-scale)**(1.0/3)
+                scale = - (-scale) ** (1.0 / 3)
             else:
-                scale = scale**(1.0/3)
-            rotation *= 1.0/scale # /= not supported in Python API
+                scale = scale ** (1.0 / 3)
+            rotation *= 1.0 / scale # /= not supported in Python API
 
             # calculate vertices, normals, and distances
-            vertlist = [v.co * transform for v in mesh.verts]
-            fnormlist = [Blender.Mathutils.Vector(f.no) * rotation for f in mesh.faces]
-            fdistlist = [Blender.Mathutils.DotVecs(-f.v[0].co * transform, Blender.Mathutils.Vector(f.no) * rotation) for f in mesh.faces]
+            vertlist = [ vert.co * transform for vert in mesh.verts ]
+            fnormlist = [ Blender.Mathutils.Vector(face.no) * rotation
+                          for face in mesh.faces]
+            fdistlist = [
+                Blender.Mathutils.DotVecs(
+                    -face.v[0].co * transform,
+                    Blender.Mathutils.Vector(face.no) * rotation)
+                for face in mesh.faces ]
 
             # remove duplicates through dictionary
             vertdict = {}
-            for i, v in enumerate(vertlist):
-                vertdict[(int(v[0]*200),int(v[1]*200),int(v[2]*200))] = i
+            for i, vert in enumerate(vertlist):
+                vertdict[(int(vert[0]*200),
+                          int(vert[1]*200),
+                          int(vert[2]*200))] = i
             fdict = {}
-            for i, (n, d) in enumerate(zip(fnormlist, fdistlist)):
-                fdict[(int(n[0]*200),int(n[1]*200),int(n[2]*200),int(d*200))] = i
+            for i, (norm, dist) in enumerate(zip(fnormlist, fdistlist)):
+                fdict[(int(norm[0]*200),
+                       int(norm[1]*200),
+                       int(norm[2]*200),
+                       int(dist*200))] = i
             # sort vertices and normals
             vertkeys = sorted(vertdict.keys())
             fkeys = sorted(fdict.keys())
@@ -2377,30 +2421,33 @@ WARNING: lost %f in vertex weights while creating a skin partition for
             # note: unknown 6 floats are usually all 0
             colhull.numVertices = len(vertlist)
             colhull.vertices.updateSize()
-            for vhull, v in zip(colhull.vertices, vertlist):
-                vhull.x = v[0] / 7.0
-                vhull.y = v[1] / 7.0
-                vhull.z = v[2] / 7.0
+            for vhull, vert in zip(colhull.vertices, vertlist):
+                vhull.x = vert[0] / 7.0
+                vhull.y = vert[1] / 7.0
+                vhull.z = vert[2] / 7.0
                 # w component is 0
             colhull.numNormals = len(fnormlist)
             colhull.normals.updateSize()
-            for nhull, n, d in zip(colhull.normals, fnormlist, fdistlist):
-                nhull.x = n[0]
-                nhull.y = n[1]
-                nhull.z = n[2]
-                nhull.w = d / 7.0
+            for nhull, norm, dist in zip(colhull.normals, fnormlist, fdistlist):
+                nhull.x = norm[0]
+                nhull.y = norm[1]
+                nhull.z = norm[2]
+                nhull.w = dist / 7.0
 
             return colhull
 
         else:
-            raise NifExportError('cannot export collision type %s to collision shape list'%ob.rbShapeBoundType)
+            raise NifExportError(
+                'cannot export collision type %s to collision shape list'
+                % obj.rbShapeBoundType)
 
     def exportAlphaProperty(self, flags = 0x00ED):
         """Return existing alpha property with given flags, or create new one
         if an alpha property with required flags is not found."""
         # search for duplicate
         for block in self.blocks:
-            if isinstance(block, NifFormat.NiAlphaProperty) and block.flags == flags:
+            if isinstance(block, NifFormat.NiAlphaProperty) \
+               and block.flags == flags:
                 return block
         # no alpha property with given flag found, so create new one
         alphaprop = self.createBlock("NiAlphaProperty")
@@ -2412,16 +2459,23 @@ WARNING: lost %f in vertex weights while creating a skin partition for
         if a specular property with required flags is not found."""
         # search for duplicate
         for block in self.blocks:
-            if isinstance(block, NifFormat.NiSpecularProperty) and block.flags == flags:
+            if isinstance(block, NifFormat.NiSpecularProperty) \
+               and block.flags == flags:
                 return block
         # no specular property with given flag found, so create new one
         specprop = self.createBlock("NiSpecularProperty")
         specprop.flags = flags
         return specprop        
 
-    def exportMaterialProperty(self, name = '', flags = 0x0001, ambient = (1.0,1.0,1.0), diffuse = (1.0,1.0,1.0), specular = (0.0,0.0,0.0), emissive = (0.0,0.0,0.0), glossiness = 10.0, alpha = 1.0):
-        """Return existing material property with given flags, or create new one
-        if a specular property with required flags is not found."""
+    def exportMaterialProperty(self, name = '', flags = 0x0001,
+                               ambient = (1.0, 1.0, 1.0),
+                               diffuse = (1.0, 1.0, 1.0),
+                               specular = (0.0, 0.0, 0.0),
+                               emissive = (0.0, 0.0, 0.0),
+                               glossiness = 10.0,
+                               alpha = 1.0):
+        """Return existing material property with given settings, or create
+        a new one if a material property with these settings is not found."""
 
         # create block (but don't register it yet in self.blocks)
         matprop = NifFormat.NiMaterialProperty()
@@ -2491,8 +2545,8 @@ WARNING: bad uv layer name '%s' in texture '%s'
                                mtex = basemtex)
             # check for texture flip definition
             try:
-                fliptxt = Blender.Text.Get(mtex.tex.getName())
-            except:
+                fliptxt = Blender.Text.Get(basemtex.tex.getName())
+            except NameError:
                 pass
             else:
                 # texture slot 0 = base
@@ -2533,6 +2587,8 @@ WARNING: bad uv layer name '%s' in texture '%s'
         return self.registerBlock(texprop)
 
     def exportTextureEffect(self, mtex = None):
+        """Export a texture effect block from material texture mtex (MTex, not
+        Texture)."""
         texeff = NifFormat.NiTextureEffect()
         texeff.flags = 4
         texeff.rotation.setIdentity()
@@ -2550,18 +2606,19 @@ WARNING: bad uv layer name '%s' in texture '%s'
 
 def config_callback(**config):
     """Called when config script is done. Starts and times import."""
-    t = Blender.sys.time()
+    starttime = Blender.sys.time()
     # run exporter
     NifExport(**config)
     # finish export
-    print 'nif export finished in %.2f seconds' % (Blender.sys.time()-t)
+    print('nif export finished in %.2f seconds'
+          % (Blender.sys.time() - starttime))
     Blender.Window.WaitCursor(0)
 
 def fileselect_callback(filename):
     """Called once file is selected. Starts config GUI."""
-    global _config
-    _config.run(NifConfig.TARGET_EXPORT, filename, config_callback)
+    global _CONFIG
+    _CONFIG.run(NifConfig.TARGET_EXPORT, filename, config_callback)
 
 if __name__ == '__main__':
-    _config = NifConfig() # use global so gui elements don't go out of skope
-    Blender.Window.FileSelector(fileselect_callback, "Export NIF", _config.config["EXPORT_FILE"])
+    _CONFIG = NifConfig() # use global so gui elements don't go out of skope
+    Blender.Window.FileSelector(fileselect_callback, "Export NIF", _CONFIG.config["EXPORT_FILE"])
