@@ -1102,23 +1102,25 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
         b_amb = 0.0
         b_emit = 0.0
         b_n = 0
-        if (diff.r > self.EPSILON):
+        if diff.r > self.EPSILON:
             b_amb += amb.r/diff.r
             b_emit += emit.r/diff.r
             b_n += 1
-        if (diff.g > self.EPSILON):
+        if diff.g > self.EPSILON:
             b_amb += amb.g/diff.g
             b_emit += emit.g/diff.g
             b_n += 1
-        if (diff.b > self.EPSILON):
+        if diff.b > self.EPSILON:
             b_amb += amb.b/diff.b
             b_emit += emit.b/diff.b
             b_n += 1
-        if (b_n > 0):
+        if b_n > 0:
             b_amb /= b_n
             b_emit /= b_n
-        if (b_amb > 1.0): b_amb = 1.0
-        if (b_emit > 1.0): b_emit = 1.0
+        if b_amb > 1.0:
+            b_amb = 1.0
+        if b_emit > 1.0:
+            b_emit = 1.0
         material.setAmb(b_amb)
         material.setEmit(b_emit)
         # glossiness
@@ -1174,6 +1176,18 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                     material.setTexture(2, bumpTexture, texco, mapto)
                     mbumpTexture = material.getTextures()[2]
                     mbumpTexture.uvlayer = self.getUVLayerName(bumpTexDesc.uvSet)
+            glossTexDesc = textProperty.glossTexture
+            if glossTexDesc:
+                glossTexture = self.importTexture(glossTexDesc.source)
+                if glossTexture:
+                    # set the texture to use face UV coordinates
+                    texco = Blender.Texture.TexCo.UV
+                    # map the texture to the specularity channel
+                    mapto = Blender.Texture.MapTo.SPEC
+                    # set the texture for the material
+                    material.setTexture(4, glossTexture, texco, mapto)
+                    mglossTexture = material.getTextures()[4]
+                    mglossTexture.uvlayer = self.getUVLayerName(glossTexDesc.uvSet)
         if textureEffect:
             envmapTexture = self.importTexture(textureEffect.sourceTexture)
             if envmapTexture:
@@ -1342,10 +1356,10 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             # tuple of floats.
             if norms:
                 n = norms[i]
-                k = (int(v.x*200),int(v.y*200),int(v.z*200),\
-                     int(n.x*200),int(n.y*200),int(n.z*200))
+                k = ( int(v.x*200), int(v.y*200), int(v.z*200),
+                      int(n.x*200), int(n.y*200), int(n.z*200) )
             else:
-                k = (int(v.x*200),int(v.y*200),int(v.z*200))
+                k = ( int(v.x*200), int(v.y*200), int(v.z*200) )
             # check if vertex was already added, and if so, what index
             try:
                 # this is the bottle neck...
