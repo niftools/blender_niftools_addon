@@ -1135,9 +1135,9 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
         envmapTexture = None # for NiTextureEffect
         bumpTexture = None
         if textProperty:
-            baseTextureDesc = textProperty.baseTexture
-            if baseTextureDesc:
-                baseTexture = self.importTexture(baseTextureDesc.source)
+            baseTexDesc = textProperty.baseTexture
+            if baseTexDesc:
+                baseTexture = self.importTexture(baseTexDesc.source)
                 if baseTexture:
                     # set the texture to use face UV coordinates
                     texco = Blender.Texture.TexCo.UV
@@ -1147,9 +1147,10 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                     material.setTexture(0, baseTexture, texco, mapto)
                     mbaseTexture = material.getTextures()[0]
                     mbaseTexture.blendmode = blendmode
-            glowTextureDesc = textProperty.glowTexture
-            if glowTextureDesc:
-                glowTexture = self.importTexture(glowTextureDesc.source)
+                    mbaseTexture.uvlayer = self.getUVLayerName(baseTexDesc.uvSet)
+            glowTexDesc = textProperty.glowTexture
+            if glowTexDesc:
+                glowTexture = self.importTexture(glowTexDesc.source)
                 if glowTexture:
                     # glow maps use alpha from rgb intensity
                     glowTexture.imageFlags |= Blender.Texture.ImageFlags.CALCALPHA
@@ -1160,9 +1161,10 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                     # set the texture for the material
                     material.setTexture(1, glowTexture, texco, mapto)
                     mglowTexture = material.getTextures()[1]
-            bumpTextureDesc = textProperty.bumpMapTexture
-            if bumpTextureDesc:
-                bumpTexture = self.importTexture(bumpTextureDesc.source)
+                    mglowTexture.uvlayer = self.getUVLayerName(glowTexDesc.uvSet)
+            bumpTexDesc = textProperty.bumpMapTexture
+            if bumpTexDesc:
+                bumpTexture = self.importTexture(bumpTexDesc.source)
                 if bumpTexture:
                     # set the texture to use face UV coordinates
                     texco = Blender.Texture.TexCo.UV
@@ -1171,6 +1173,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                     # set the texture for the material
                     material.setTexture(2, bumpTexture, texco, mapto)
                     mbumpTexture = material.getTextures()[2]
+                    mbumpTexture.uvlayer = self.getUVLayerName(bumpTexDesc.uvSet)
         if textureEffect:
             envmapTexture = self.importTexture(textureEffect.sourceTexture)
             if envmapTexture:
@@ -1269,13 +1272,16 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             # Texture
             textProperty = None
             if uvco:
-                textProperty = self.find_property(niBlock, NifFormat.NiTexturingProperty)
+                textProperty = self.find_property(niBlock,
+                                                  NifFormat.NiTexturingProperty)
             
             # Alpha
-            alphaProperty = self.find_property(niBlock, NifFormat.NiAlphaProperty)
+            alphaProperty = self.find_property(niBlock,
+                                               NifFormat.NiAlphaProperty)
             
             # Specularity
-            specProperty = self.find_property(niBlock, NifFormat.NiSpecularProperty)
+            specProperty = self.find_property(niBlock,
+                                              NifFormat.NiSpecularProperty)
 
             # texturing effect for environment map
             # in official files this is activated by a NiTextureEffect child
@@ -1444,7 +1450,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             # Set the face UV's for the mesh. The NIF format only supports
             # vertex UV's, but Blender only allows explicit editing of face
             # UV's, so load vertex UV's as face UV's
-            uvlayer = "UVTex.%03i" % i if i > 0 else "UVTex"
+            uvlayer = self.getUVLayerName(i)
             if not uvlayer in b_meshData.getUVLayerNames():
                 b_meshData.addUVLayer(uvlayer)
             b_meshData.activeUVLayer = uvlayer
@@ -1452,8 +1458,8 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                 if b_f_index == None: continue
                 uvlist = [ Vector(uvSet[vert_index].u, 1.0 - uvSet[vert_index].v) for vert_index in f ]
                 b_meshData.faces[b_f_index].uv = tuple(uvlist)
-        b_meshData.activeUVLayer = "UVTex"
-       
+        b_meshData.activeUVLayer = self.getUVLayerName(0)
+        
         if material:
             # fix up vertex colors depending on whether we had textures in the
             # material
@@ -2151,6 +2157,9 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
 
         print("WARNING: unsupported bhk shape %s" % bhkshape.__class__.__name__)
         return []
+
+    def getUVLayerName(self, uvset):
+        return "UVTex.%03i" % uvset if uvset != 0 else "UVTex"
 
 def config_callback(**config):
     """Called when config script is done. Starts and times import."""

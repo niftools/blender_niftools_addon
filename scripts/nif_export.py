@@ -287,12 +287,11 @@ and turn off envelopes."""%ob.getName()
                 self.msg("fixed normals on %i vertices"%nv)
 
             ## TODO use Blender actions for animation groups
-            # check for animation groups definition in a text buffer called 'Anim'
-            animtxt = None
-            for txt in Blender.Text.Get():
-                if txt.getName() == "Anim":
-                    animtxt = txt
-                    break
+            # check for animation groups definition in a text buffer 'Anim'
+            try:
+                animtxt = Blender.Text.Get("Anim")
+            except NameError:
+                animtxt = None
                     
             # rebuild the bone extra matrix dictionary from the 'BoneExMat' text buffer
             self.rebuildBonesExtraMatrices()
@@ -322,7 +321,7 @@ and turn off envelopes."""%ob.getName()
 
             # if we exported animations, but no animation groups are defined, define a default animation group
             self.msg("Checking animation groups")
-            if (animtxt == None):
+            if not animtxt:
                 has_controllers = False
                 for block in self.blocks:
                     if isinstance(block, NifFormat.NiObjectNET): # has it a controller field?
@@ -338,7 +337,7 @@ and turn off envelopes."""%ob.getName()
             # animations without keyframe animations crash the TESCS
             # if we are in that situation, add a trivial keyframe animation
             self.msg("Checking controllers")
-            if (animtxt):
+            if animtxt:
                 has_keyframecontrollers = False
                 for block in self.blocks:
                     if isinstance(block, NifFormat.NiKeyframeController):
@@ -350,7 +349,7 @@ and turn off envelopes."""%ob.getName()
                     self.exportKeyframes(None, 'localspace', root_block)
             
             # export animation groups
-            if (animtxt):
+            if animtxt:
                 anim_textextra = self.exportAnimGroups(animtxt, root_block)
 
             # activate oblivion collision and physics
