@@ -310,7 +310,7 @@ class NifImport:
                 return self.importMesh(niBlock)
             elif isinstance(niBlock, NifFormat.NiNode):
                 children = niBlock.children
-                if children:
+                if children or niBlock.collisionObject:
                     # it's a parent node
                     # import object + children
                     if self.is_armature_root(niBlock):
