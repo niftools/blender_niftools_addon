@@ -1,5 +1,6 @@
-Version 2.2.4 (***)
+Version 2.2.4 (Dec 10, 2007)
 * Import: fixed face orientation of imported bhkPackedNiTriStripsShapes
+* Import: also import collisions of non-grouping NiNodes
 
 Version 2.2.3 (Dec 8, 2007)
 * Import/Export: added support for gloss textures (use MapTo.SPEC)
