@@ -1,3 +1,6 @@
+Version 2.2.4 (***)
+* Import: fixed face orientation of imported bhkPackedNiTriStripsShapes
+
 Version 2.2.3 (Dec 8, 2007)
 * Import/Export: added support for gloss textures (use MapTo.SPEC)
 * Import/Export: added support for dark textures (use MapTo.COL and blendmode

@@ -75,7 +75,7 @@ class NifImport:
         Matrix([-1.0, 0.0, 0.0],[ 0.0,-1.0, 0.0],[ 0.0, 0.0, 1.0]),
         Matrix([ 1.0, 0.0, 0.0],[ 0.0, 0.0,-1.0],[ 0.0, 1.0, 0.0]) )
     # identity matrix, for comparisons
-    IDENTITY44 = Matrix( [ 1.0,0.0, 0.0, 0.0],
+    IDENTITY44 = Matrix( [ 1.0, 0.0, 0.0, 0.0],
                          [ 0.0, 1.0, 0.0, 0.0],
                          [ 0.0, 0.0, 1.0, 0.0],
                          [ 0.0, 0.0, 0.0, 1.0] )
@@ -2172,6 +2172,26 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                 me.faces.extend(hktriangle.triangle.v1,
                                 hktriangle.triangle.v2,
                                 hktriangle.triangle.v3)
+                # check face normal
+                align_plus = sum(abs(x)
+                                 for x in ( me.faces[-1].no[0]
+                                            + hktriangle.normal.x,
+                                            me.faces[-1].no[1]
+                                            + hktriangle.normal.y,
+                                            me.faces[-1].no[2]
+                                            + hktriangle.normal.z ))
+                align_minus = sum(abs(x)
+                                  for x in ( me.faces[-1].no[0]
+                                             - hktriangle.normal.x,
+                                             me.faces[-1].no[1]
+                                             - hktriangle.normal.y,
+                                             me.faces[-1].no[2]
+                                             - hktriangle.normal.z ))
+                # fix face orientation
+                if align_plus < align_minus:
+                    me.faces[-1].verts = ( me.faces[-1].verts[1],
+                                           me.faces[-1].verts[0],
+                                           me.faces[-1].verts[2] )
 
             # link mesh to scene and set transform
             ob = self.scene.objects.new(me, 'poly')
@@ -2224,9 +2244,9 @@ def config_callback(**config):
 
 def fileselect_callback(filename):
     """Called once file is selected. Starts config GUI."""
-    global _config
-    _config.run(NifConfig.TARGET_IMPORT, filename, config_callback)
+    global _CONFIG
+    _CONFIG.run(NifConfig.TARGET_IMPORT, filename, config_callback)
 
 if __name__ == '__main__':
-    _config = NifConfig() # use global so gui elements don't go out of skope
-    Blender.Window.FileSelector(fileselect_callback, "Import NIF", _config.config["IMPORT_FILE"])
+    _CONFIG = NifConfig() # use global so gui elements don't go out of skope
+    Blender.Window.FileSelector(fileselect_callback, "Import NIF", _CONFIG.config["IMPORT_FILE"])
