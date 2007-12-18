@@ -1281,9 +1281,18 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                         # iterate only over vertices with the same vertex index
                         # and check if they have the same uvs, normals and colors (wow is that fast!)
                         for j in vertmap[v_index]:
-                            for uvlayer in xrange(len(mesh_uvlayers)):
-                                if abs(vertquad[1][uvlayer][0] - vertquad_list[j][1][uvlayer][0]) > NifFormat._EPSILON: continue
-                                if abs(vertquad[1][uvlayer][1] - vertquad_list[j][1][uvlayer][1]) > NifFormat._EPSILON: continue
+                            if max(abs(vertquad[1][uvlayer][0]
+                                       - vertquad_list[j][1][uvlayer][0])
+                                   for uvlayer
+                                   in xrange(len(mesh_uvlayers))) \
+                                   > NifFormat._EPSILON:
+                                continue
+                            if max(abs(vertquad[1][uvlayer][1]
+                                       - vertquad_list[j][1][uvlayer][1])
+                                   for uvlayer
+                                   in xrange(len(mesh_uvlayers))) \
+                                   > NifFormat._EPSILON:
+                                continue
                             if mesh_hasnormals:
                                 if abs(vertquad[2][0] - vertquad_list[j][2][0]) > NifFormat._EPSILON: continue
                                 if abs(vertquad[2][1] - vertquad_list[j][2][1]) > NifFormat._EPSILON: continue
