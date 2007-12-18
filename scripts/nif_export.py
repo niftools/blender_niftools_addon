@@ -58,8 +58,6 @@ class NifExportError(StandardError):
 
 # main export class
 class NifExport:
-    IDENTITY44 = NifFormat.Matrix44()
-    IDENTITY44.setIdentity()
     # map blending modes to apply modes
     APPLYMODE = {
         Blender.Texture.BlendModes["MIX"] : NifFormat.ApplyMode.APPLY_MODULATE,
@@ -2082,7 +2080,8 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
                     continue
             else: # all nodes failed so add new one
                 node = NifFormat.NiNode()
-                node.setTransform(self.IDENTITY44)
+                node.rotation = ((1, 0, 0), (0, 1, 0), (0, 0, 1))
+                node.scale = 1
                 node.name = 'collisiondummy%i' % parent_block.numChildren
                 node.flags = 0x000E # default
                 parent_block.addChild(node)
