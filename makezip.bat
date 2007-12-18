@@ -1,5 +1,5 @@
 set NAME=blender_nif_scripts
-set VERSION=2.2.4
+set VERSION=2.2.5
 set FILES=scripts\nif_import.py scripts\nif_export.py scripts\mesh_weightsquash.py scripts\mesh_hull.py scripts\bpymodules\nif_common.py scripts\bpymodules\nif_test.py ChangeLog README.html install.sh
 
 del %NAME%-%VERSION%.*

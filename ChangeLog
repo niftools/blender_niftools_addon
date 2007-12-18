@@ -1,3 +1,6 @@
+Version 2.2.5 (Dec 18, 2007)
+* Export: fixed bug in uv map export with smooth objects
+
 Version 2.2.4 (Dec 10, 2007)
 * Import: fixed face orientation of imported bhkPackedNiTriStripsShapes
 * Import: also import collisions of non-grouping NiNodes
