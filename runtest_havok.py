@@ -11,13 +11,16 @@ runtest("test/nif", [
     ('battleaxe.nif', {}, []),
     ('_battleaxe.nif',
      dict(EXPORT_VERSION = 'Oblivion',
-          EXPORT_OB_LAYER = 5,
+          EXPORT_OB_LAYER = 5, # weapon
           EXPORT_BHKLISTSHAPE = True,
           EXPORT_OB_MASS = 23.0),
      ['BattleAxe']),
     ('crystalball02.nif', {}, []),
     ('_crystalball02.nif',
-     dict(EXPORT_VERSION = 'Oblivion'),
+     dict(EXPORT_VERSION = 'Oblivion',
+          EXPORT_BHKLISTSHAPE = True,
+          EXPORT_OB_LAYER = 4, # clutter
+          EXPORT_OB_MASS = 9.5),
      ['CrystalBall02']),
     ('anvilcirclebench01.nif', {}, []),
     ('_anvilcirclebench01.nif',
