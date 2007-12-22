@@ -28,6 +28,7 @@ runtest("test/nif", [
      ['AnvilCircleBench01']),
     ('frostatron.nif', {}, []),
     ('_frostatron.nif',
-     dict(EXPORT_VERSION = 'Oblivion'),
+     dict(EXPORT_VERSION = 'Oblivion',
+          EXPORT_MOPP = True),
      ['FrostAtron'])
 ])
