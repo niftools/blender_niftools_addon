@@ -10,7 +10,10 @@ from nif_test import runtest
 runtest("test/nif", [
     ('battleaxe.nif', {}, []),
     ('_battleaxe.nif',
-     dict(EXPORT_VERSION = 'Oblivion'),
+     dict(EXPORT_VERSION = 'Oblivion',
+          EXPORT_OB_LAYER = 5,
+          EXPORT_BHKLISTSHAPE = True,
+          EXPORT_OB_MASS = 23.0),
      ['BattleAxe']),
     ('crystalball02.nif', {}, []),
     ('_crystalball02.nif',
