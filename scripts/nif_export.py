@@ -1565,8 +1565,11 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                         skininst.data = skindata
             
                         skindata.hasVertexWeights = True
-                        # fix geometry rest pose: transform relative to skeleton root
-                        skindata.setTransform(self.getObjectMatrix(ob, 'localspace').getInverse())
+                        # fix geometry rest pose: transform relative to
+                        # skeleton root
+                        geommat = self.getObjectMatrix(ob, 'localspace')
+                        geommat.invert()
+                        skindata.setTransform(geommat)
             
                         # add vertex weights
                         # first find weights and normalization factors
@@ -1864,33 +1867,7 @@ WARNING: lost %f in vertex weights while creating a skin partition for
         block.velocity = (0, 0, 0)
         block.scale = bscale
 
-        return bscale, brot, btrans
 
-    def getObjectMatrix(self, obj, space):
-        """Get an object's matrix as NifFormat.Matrix44"""
-        bscale, brot, btrans = self.getObjectSRT(obj, space)
-        mat = NifFormat.Matrix44()
-        
-        mat.m41 = btrans[0]
-        mat.m42 = btrans[1]
-        mat.m43 = btrans[2]
-
-        mat.m11 = brot[0][0] * bscale
-        mat.m12 = brot[0][1] * bscale
-        mat.m13 = brot[0][2] * bscale
-        mat.m21 = brot[1][0] * bscale
-        mat.m22 = brot[1][1] * bscale
-        mat.m23 = brot[1][2] * bscale
-        mat.m31 = brot[2][0] * bscale
-        mat.m32 = brot[2][1] * bscale
-        mat.m33 = brot[2][2] * bscale
-
-        mat.m14 = 0.0
-        mat.m24 = 0.0
-        mat.m34 = 0.0
-        mat.m44 = 1.0
-        
-        return mat
 
     def getObjectSRT(self, obj, space):
         """Find scale, rotation, and translation components of an object in
@@ -1898,11 +1875,16 @@ WARNING: lost %f in vertex weights while creating a skin partition for
         is a scale float, br is a 3x3 rotation matrix, and bt is a
         translation vector. It should hold that
         ob.getMatrix(space) == bs * br * bt""" 
+        mat = self.getObjectMatrix(obj, space)
+        return self.decomposeSRT(mat)
+
+
+
+    def getObjectMatrix(self, obj, space):
+        """Get an object's matrix as Blender matrix"""
         # handle the trivial case first
         if (space == 'none'):
-            return ( 1.0,
-                     Blender.Mathutils.Matrix([1,0,0],[0,1,0],[0,0,1]),
-                     Blender.Mathutils.Vector([0, 0, 0]) )
+            return Blender.Mathutils.Matrix([1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1])
         
         assert((space == 'worldspace') or (space == 'localspace'))
 
@@ -1934,8 +1916,8 @@ WARNING: lost %f in vertex weights while creating a skin partition for
         else: # bones, get the rest matrix
             assert(space == 'localspace') # in this function, we only need bones in localspace
             mat = self.getBoneRestMatrix(obj, 'BONESPACE')
-        
-        return self.decomposeSRT(mat)
+
+        return mat
 
 
 
