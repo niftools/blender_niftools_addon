@@ -236,8 +236,10 @@ class NifImport:
                 self.msg('applying skin deformation on geometry %s'%
                          niBlock.name, 2)
                 vertices, normals = niBlock.getSkinDeformation()
-                for i, vnew in enumerate(vertices):
-                    niBlock.data.vertices[i] = vnew
+                for vold, vnew in zip(niBlock.data.vertices, vertices):
+                    vold.x = vnew.x
+                    vold.y = vnew.y
+                    vold.z = vnew.z
         
         # sets the root block parent to None, so that when crawling back the
         # script won't barf
@@ -519,8 +521,8 @@ under node %s" % niBlock.name)
         return shortName
         
     def importMatrix(self, niBlock, relative_to = None):
-        """Return a niBlock's transform matrix as a Blender.Mathutil.Matrix."""
-        return Matrix(*niBlock.getTransform(relative_to))
+        """Retrieves a niBlock's transform matrix as a Mathutil.Matrix."""
+        return Matrix(*niBlock.getTransform(relative_to).asList())
 
     def decompose_srt(self, m):
         """Decompose Blender transform matrix as a scale, rotation matrix, and
@@ -671,7 +673,7 @@ under node %s" % niBlock.name)
                             # time 0.0 is frame 1
                             frame = 1 + int(key.time * self.fps)
                             keyVal = key.value
-                            euler = Blender.Mathutils.Euler([keyVal[0], keyVal[1], keyVal[2]])
+                            euler = Blender.Mathutils.Euler([keyVal.x, keyVal.y, keyVal.z])
                             quat = euler.toQuat()
                             # beware, CrossQuats takes arguments in a counter-intuitive order:
                             # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
@@ -690,7 +692,7 @@ under node %s" % niBlock.name)
                             # time 0.0 is frame 1
                             frame = 1 + int(key.time * self.fps)
                             keyVal = key.value
-                            quat = Blender.Mathutils.Quaternion([keyVal[3], keyVal[0], keyVal[1], keyVal[2]])
+                            quat = Blender.Mathutils.Quaternion([keyVal.w, keyVal.x, keyVal.y, keyVal.z])
                             # beware, CrossQuats takes arguments in a
                             # counter-intuitive order:
                             # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
@@ -708,7 +710,7 @@ under node %s" % niBlock.name)
                         # time 0.0 is frame 1
                         frame = 1 + int(key.time * self.fps)
                         keyVal = key.value
-                        trans = Blender.Mathutils.Vector(keyVal[0], keyVal[1], keyVal[2])
+                        trans = Blender.Mathutils.Vector(keyVal.x, keyVal.y, keyVal.z)
                         locVal = (trans - niBone_bind_trans) * niBone_bind_rot_inv * (1.0/niBone_bind_scale)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
                         # the rotation matrix is needed at this frame (that's
                         # why the other keys are inserted first)
@@ -719,10 +721,10 @@ under node %s" % niBlock.name)
                                 # fall back on slow method
                                 ipo = action.getChannelIpo(bone_name)
                                 quat = Blender.Mathutils.Quaternion()
-                                quat[0] = ipo.getCurve('QuatX').evaluate(frame)
-                                quat[1] = ipo.getCurve('QuatY').evaluate(frame)
-                                quat[2] = ipo.getCurve('QuatZ').evaluate(frame)
-                                quat[3] = ipo.getCurve('QuatW').evaluate(frame)
+                                quat.x = ipo.getCurve('QuatX').evaluate(frame)
+                                quat.y = ipo.getCurve('QuatY').evaluate(frame)
+                                quat.z = ipo.getCurve('QuatZ').evaluate(frame)
+                                quat.w = ipo.getCurve('QuatW').evaluate(frame)
                                 rot = quat.toMatrix()
                         else:
                             rot = Blender.Mathutils.Matrix([1.0,0.0,0.0],
@@ -1383,10 +1385,10 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             # tuple of floats.
             if norms:
                 n = norms[i]
-                k = ( tuple(int(x * 200) for x in v),
-                      tuple(int(x * 200) for x in n) )
+                k = ( int(v.x*200), int(v.y*200), int(v.z*200),
+                      int(n.x*200), int(n.y*200), int(n.z*200) )
             else:
-                k = tuple(int(x * 200) for x in v)
+                k = ( int(v.x*200), int(v.y*200), int(v.z*200) )
             # check if vertex was already added, and if so, what index
             try:
                 # this is the bottle neck...
@@ -1400,11 +1402,11 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                 v_map[i] = b_v_index # NIF vertex i maps to blender vertex b_v_index
                 # add the vertex
                 if applytransform:
-                    v = Blender.Mathutils.Vector(*v)
+                    v = Blender.Mathutils.Vector(v.x, v.y, v.z)
                     v *= transform
                     b_meshData.verts.extend(v)
                 else:
-                    b_meshData.verts.extend(*v)
+                    b_meshData.verts.extend(v.x, v.y, v.z)
                 # adds normal info if present (Blender recalculates these when
                 # switching between edit mode and object mode, handled further)
                 #if norms:
@@ -1560,14 +1562,14 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                         # pos + delta offset
                         assert(len(baseverts) == len(morphverts) == len(v_map))
                         for bv, mv, b_v_index in zip(baseverts, morphverts, v_map):
-                            base = Blender.Mathutils.Vector(*bv)
-                            delta = Blender.Mathutils.Vector(*mv)
+                            base = Blender.Mathutils.Vector(bv.x, bv.y, bv.z)
+                            delta = Blender.Mathutils.Vector(mv.x, mv.y, mv.z)
                             v = base + delta
                             if applytransform:
                                 v *= transform
-                            b_meshData.verts[b_v_index].co[0] = v[0]
-                            b_meshData.verts[b_v_index].co[1] = v[1]
-                            b_meshData.verts[b_v_index].co[2] = v[2]
+                            b_meshData.verts[b_v_index].co[0] = v.x
+                            b_meshData.verts[b_v_index].co[1] = v.y
+                            b_meshData.verts[b_v_index].co[2] = v.z
                         # update the mesh and insert key
                         b_meshData.insertKey(idxMorph, 'relative')
                         # set up the ipo key curve
@@ -1591,12 +1593,12 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                             b_curve.addBezier( ( frame, x ) )
                         # finally: return to base position
                         for bv, b_v_index in zip(baseverts, v_map):
-                            base = Blender.Mathutils.Vector(*bv)
+                            base = Blender.Mathutils.Vector(bv.x, bv.y, bv.z)
                             if applytransform:
                                 base *= transform
-                            b_meshData.verts[b_v_index].co[0] = base[0]
-                            b_meshData.verts[b_v_index].co[1] = base[1]
-                            b_meshData.verts[b_v_index].co[2] = base[2]
+                            b_meshData.verts[b_v_index].co[0] = base.x
+                            b_meshData.verts[b_v_index].co[1] = base.y
+                            b_meshData.verts[b_v_index].co[2] = base.z
      
         # recalculate normals
         b_meshData.calcNormals()
@@ -1973,9 +1975,9 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                 for key in xyzRotations:
                     frame = 1+int(key.time * self.fps) # time 0.0 is frame 1
                     Blender.Set('curframe', frame)
-                    b_obj.RotX = key.value[0] * self.R2D
-                    b_obj.RotY = key.value[1] * self.R2D
-                    b_obj.RotZ = key.value[2] * self.R2D
+                    b_obj.RotX = key.value.x * self.R2D
+                    b_obj.RotY = key.value.y * self.R2D
+                    b_obj.RotZ = key.value.z * self.R2D
                     b_obj.insertIpoKey(Blender.Object.ROT)           
             else:
                 # uses quaternions
@@ -1984,19 +1986,19 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                 for key in quaternionKeys:
                     frame = 1+int(key.time * self.fps) # time 0.0 is frame 1
                     Blender.Set('curframe', frame)
-                    rot = Blender.Mathutils.Quaternion(key.value[3], key.value[0], key.value[1], key.value[2]).toEuler()
-                    b_obj.RotX = rot[0] * self.R2D
-                    b_obj.RotY = rot[1] * self.R2D
-                    b_obj.RotZ = rot[2] * self.R2D
+                    rot = Blender.Mathutils.Quaternion(key.value.w, key.value.x, key.value.y, key.value.z).toEuler()
+                    b_obj.RotX = rot.x * self.R2D
+                    b_obj.RotY = rot.y * self.R2D
+                    b_obj.RotZ = rot.z * self.R2D
                     b_obj.insertIpoKey(Blender.Object.ROT)
             
             self.msg('Translation keys...', 4)
             for key in translations.keys:
                 frame = 1+int(key.time * self.fps) # time 0.0 is frame 1
                 Blender.Set('curframe', frame)
-                b_obj.LocX = key.value[0]
-                b_obj.LocY = key.value[1]
-                b_obj.LocZ = key.value[2]
+                b_obj.LocX = key.value.x
+                b_obj.LocY = key.value.y
+                b_obj.LocZ = key.value.z
                 b_obj.insertIpoKey(Blender.Object.LOC)
                 
             Blender.Set('curframe', 1)
@@ -2006,7 +2008,8 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
         if isinstance(bhkshape, NifFormat.bhkConvexVerticesShape):
             # find vertices (and fix scale)
             vertices, triangles = QuickHull.qhull3d(
-                [ 7 * vert for vert in bhkshape.vertices ])
+                [ (7 * vert.x, 7 * vert.y, 7 * vert.z)
+                  for vert in bhkshape.vertices ])
 
             # create convex mesh
             me = Blender.Mesh.New('convexpoly')
@@ -2039,7 +2042,8 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             # import shapes
             collision_objs = self.importBhkShape(bhkshape.shape)
             # find transformation matrix
-            transform = Blender.Mathutils.Matrix(*bhkshape.transform)
+            transform = Blender.Mathutils.Matrix(*bhkshape.transform.asList())
+            transform.transpose()
             # fix scale
             transform[3][0] *= 7
             transform[3][1] *= 7
@@ -2057,13 +2061,13 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             if isinstance(bhkshape, NifFormat.bhkRigidBodyT):
                 # set rotation
                 transform = Blender.Mathutils.Quaternion(
-                    bhkshape.rotation[3], bhkshape.rotation[0],
-                    bhkshape.rotation[1], bhkshape.rotation[2]).toMatrix()
+                    bhkshape.rotation.w, bhkshape.rotation.x,
+                    bhkshape.rotation.y, bhkshape.rotation.z).toMatrix()
                 transform.resize4x4()
                 # set translation
-                transform[3][0] = bhkshape.translation[0] * 7
-                transform[3][1] = bhkshape.translation[1] * 7
-                transform[3][2] = bhkshape.translation[2] * 7
+                transform[3][0] = bhkshape.translation.x * 7
+                transform[3][1] = bhkshape.translation.y * 7
+                transform[3][2] = bhkshape.translation.z * 7
                 # apply transform
                 for ob in collision_objs:
                     ob.setMatrix(ob.getMatrix('localspace') * transform)
@@ -2072,12 +2076,12 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
         
         elif isinstance(bhkshape, NifFormat.bhkBoxShape):
             # create box
-            minx = -bhkshape.dimensions[0] * 7
-            maxx = +bhkshape.dimensions[0] * 7
-            miny = -bhkshape.dimensions[1] * 7
-            maxy = +bhkshape.dimensions[1] * 7
-            minz = -bhkshape.dimensions[2] * 7
-            maxz = +bhkshape.dimensions[2] * 7
+            minx = -bhkshape.dimensions.x * 7
+            maxx = +bhkshape.dimensions.x * 7
+            miny = -bhkshape.dimensions.y * 7
+            maxy = +bhkshape.dimensions.y * 7
+            minz = -bhkshape.dimensions.z * 7
+            maxz = +bhkshape.dimensions.z * 7
 
             me = Blender.Mesh.New('box')
             for x in [minx, maxx]:
@@ -2116,7 +2120,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
 
         elif isinstance(bhkshape, NifFormat.bhkCapsuleShape):
             # create capsule mesh
-            length = (bhkshape.firstPoint - bhkshape.secondPoint).getNorm()
+            length = (bhkshape.firstPoint - bhkshape.secondPoint).norm()
             minx = miny = -bhkshape.radius * 7
             maxx = maxy = +bhkshape.radius * 7
             minz = -(length + 2*bhkshape.radius) * 3.5
@@ -2139,7 +2143,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
 
             # find transform
             normal = (bhkshape.firstPoint - bhkshape.secondPoint) / length
-            normal = Blender.Mathutils.Vector(*normal)
+            normal = Blender.Mathutils.Vector(normal.x, normal.y, normal.z)
             minindex = min((abs(x), i) for i, x in enumerate(normal))[1]
             orthvec = Blender.Mathutils.Vector([(1 if i == minindex else 0)
                                                 for i in (0,1,2)])
@@ -2150,12 +2154,12 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             # (0,0,1) maps to normal
             transform = Blender.Mathutils.Matrix(vec1, vec2, normal)
             transform.resize4x4()
-            transform[3][0] = 3.5 * (bhkshape.firstPoint[0]
-                                     + bhkshape.secondPoint[0])
-            transform[3][1] = 3.5 * (bhkshape.firstPoint[1]
-                                     + bhkshape.secondPoint[1])
-            transform[3][2] = 3.5 * (bhkshape.firstPoint[2]
-                                     + bhkshape.secondPoint[2])
+            transform[3][0] = 3.5 * (bhkshape.firstPoint.x
+                                     + bhkshape.secondPoint.x)
+            transform[3][1] = 3.5 * (bhkshape.firstPoint.y
+                                     + bhkshape.secondPoint.y)
+            transform[3][2] = 3.5 * (bhkshape.firstPoint.z
+                                     + bhkshape.secondPoint.z)
             ob.setMatrix(transform)
             return [ ob ]
 
@@ -2163,7 +2167,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             # create mesh
             me = Blender.Mesh.New('poly')
             for vert in bhkshape.data.vertices:
-                me.verts.extend(*(vert * 7))
+                me.verts.extend(vert.x * 7, vert.y * 7, vert.z * 7)
             for hktriangle in bhkshape.data.triangles:
                 me.faces.extend(hktriangle.triangle.v1,
                                 hktriangle.triangle.v2,
@@ -2171,18 +2175,18 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                 # check face normal
                 align_plus = sum(abs(x)
                                  for x in ( me.faces[-1].no[0]
-                                            + hktriangle.normal[0],
+                                            + hktriangle.normal.x,
                                             me.faces[-1].no[1]
-                                            + hktriangle.normal[1],
+                                            + hktriangle.normal.y,
                                             me.faces[-1].no[2]
-                                            + hktriangle.normal[2] ))
+                                            + hktriangle.normal.z ))
                 align_minus = sum(abs(x)
                                   for x in ( me.faces[-1].no[0]
-                                             - hktriangle.normal[0],
+                                             - hktriangle.normal.x,
                                              me.faces[-1].no[1]
-                                             - hktriangle.normal[1],
+                                             - hktriangle.normal.y,
                                              me.faces[-1].no[2]
-                                             - hktriangle.normal[2] ))
+                                             - hktriangle.normal.z ))
                 # fix face orientation
                 if align_plus < align_minus:
                     me.faces[-1].verts = ( me.faces[-1].verts[1],

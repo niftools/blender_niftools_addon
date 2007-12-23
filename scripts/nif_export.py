@@ -58,6 +58,8 @@ class NifExportError(StandardError):
 
 # main export class
 class NifExport:
+    IDENTITY44 = NifFormat.Matrix44()
+    IDENTITY44.setIdentity()
     # map blending modes to apply modes
     APPLYMODE = {
         Blender.Texture.BlendModes["MIX"] : NifFormat.ApplyMode.APPLY_MODULATE,
@@ -796,10 +798,10 @@ and turn off envelopes."""%ob.getName()
         for i, frame in enumerate(frames):
             rot_frame = kfd.quaternionKeys[i]
             rot_frame.time = (frame - 1) * self.fspeed
-            rot_frame.value = (rot_curve[frame].x,
-                               rot_curve[frame].y,
-                               rot_curve[frame].z,
-                               rot_curve[frame].w)
+            rot_frame.value.w = rot_curve[frame].w
+            rot_frame.value.x = rot_curve[frame].x
+            rot_frame.value.y = rot_curve[frame].y
+            rot_frame.value.z = rot_curve[frame].z
 
         frames = trans_curve.keys()
         frames.sort()
@@ -809,7 +811,9 @@ and turn off envelopes."""%ob.getName()
         for i, frame in enumerate(frames):
             trans_frame = kfd.translations.keys[i]
             trans_frame.time = (frame - 1) * self.fspeed
-            trans_frame.value = trans_curve[frame]
+            trans_frame.value.x = trans_curve[frame][0]
+            trans_frame.value.y = trans_curve[frame][1]
+            trans_frame.value.z = trans_curve[frame][2]
 
         frames = scale_curve.keys()
         frames.sort()
@@ -1498,15 +1502,19 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
             tridata.numVertices = len(vertlist)
             tridata.hasVertices = True
             tridata.vertices.updateSize()
-            for i, v in enumerate(vertlist):
-                tridata.vertices[i] = v
+            for i, v in enumerate(tridata.vertices):
+                v.x = vertlist[i][0]
+                v.y = vertlist[i][1]
+                v.z = vertlist[i][2]
             tridata.updateCenterRadius()
             
             if mesh_hasnormals:
                 tridata.hasNormals = True
                 tridata.normals.updateSize()
-                for i, n in enumerate(normlist):
-                    tridata.normals[i] = n
+                for i, v in enumerate(tridata.normals):
+                    v.x = normlist[i][0]
+                    v.y = normlist[i][1]
+                    v.z = normlist[i][2]
                 
             if mesh_hasvcol:
                 tridata.hasVertexColors = True
@@ -1565,11 +1573,8 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                         skininst.data = skindata
             
                         skindata.hasVertexWeights = True
-                        # fix geometry rest pose: transform relative to
-                        # skeleton root
-                        geommat = self.getObjectMatrix(ob, 'localspace')
-                        geommat.invert()
-                        skindata.setTransform(geommat)
+                        # fix geometry rest pose: transform relative to skeleton root
+                        skindata.setTransform(self.getObjectMatrix(ob, 'localspace').getInverse())
             
                         # add vertex weights
                         # first find weights and normalization factors
@@ -1711,9 +1716,13 @@ WARNING: lost %f in vertex weights while creating a skin partition for
                             for b_v_index, (vert_indices, vert) in enumerate(zip(vertmap, keyblock.data)):
                                 mv = vert.copy()
                                 if keyblocknum > 0:
-                                    mv -= mesh.verts[b_v_index].co
+                                    mv.x -= mesh.verts[b_v_index].co.x
+                                    mv.y -= mesh.verts[b_v_index].co.y
+                                    mv.z -= mesh.verts[b_v_index].co.z
                                 for vert_index in vert_indices:
-                                    morph.vectors[vert_index] = mv
+                                    morph.vectors[vert_index].x = mv.x
+                                    morph.vectors[vert_index].y = mv.y
+                                    morph.vectors[vert_index].z = mv.z
                             
                             # export ipo shape key curve
                             #curve = keyipo.getCurve( 'Key %i'%keyblocknum ) # FIXME
@@ -1862,12 +1871,50 @@ WARNING: lost %f in vertex weights while creating a skin partition for
         bscale, brot, btrans = self.getObjectSRT(obj, space)
         
         # and fill in the values
-        block.translation = btrans
-        block.rotation = brot
-        block.velocity = (0, 0, 0)
+        block.translation.x = btrans[0]
+        block.translation.y = btrans[1]
+        block.translation.z = btrans[2]
+        block.rotation.m11 = brot[0][0]
+        block.rotation.m12 = brot[0][1]
+        block.rotation.m13 = brot[0][2]
+        block.rotation.m21 = brot[1][0]
+        block.rotation.m22 = brot[1][1]
+        block.rotation.m23 = brot[1][2]
+        block.rotation.m31 = brot[2][0]
+        block.rotation.m32 = brot[2][1]
+        block.rotation.m33 = brot[2][2]
+        block.velocity.x = 0.0
+        block.velocity.y = 0.0
+        block.velocity.z = 0.0
         block.scale = bscale
 
+        return bscale, brot, btrans
 
+    def getObjectMatrix(self, obj, space):
+        """Get an object's matrix as NifFormat.Matrix44"""
+        bscale, brot, btrans = self.getObjectSRT(obj, space)
+        mat = NifFormat.Matrix44()
+        
+        mat.m41 = btrans[0]
+        mat.m42 = btrans[1]
+        mat.m43 = btrans[2]
+
+        mat.m11 = brot[0][0] * bscale
+        mat.m12 = brot[0][1] * bscale
+        mat.m13 = brot[0][2] * bscale
+        mat.m21 = brot[1][0] * bscale
+        mat.m22 = brot[1][1] * bscale
+        mat.m23 = brot[1][2] * bscale
+        mat.m31 = brot[2][0] * bscale
+        mat.m32 = brot[2][1] * bscale
+        mat.m33 = brot[2][2] * bscale
+
+        mat.m14 = 0.0
+        mat.m24 = 0.0
+        mat.m34 = 0.0
+        mat.m44 = 1.0
+        
+        return mat
 
     def getObjectSRT(self, obj, space):
         """Find scale, rotation, and translation components of an object in
@@ -1875,16 +1922,11 @@ WARNING: lost %f in vertex weights while creating a skin partition for
         is a scale float, br is a 3x3 rotation matrix, and bt is a
         translation vector. It should hold that
         ob.getMatrix(space) == bs * br * bt""" 
-        mat = self.getObjectMatrix(obj, space)
-        return self.decomposeSRT(mat)
-
-
-
-    def getObjectMatrix(self, obj, space):
-        """Get an object's matrix as Blender matrix"""
         # handle the trivial case first
         if (space == 'none'):
-            return Blender.Mathutils.Matrix([1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1])
+            return ( 1.0,
+                     Blender.Mathutils.Matrix([1,0,0],[0,1,0],[0,0,1]),
+                     Blender.Mathutils.Vector([0, 0, 0]) )
         
         assert((space == 'worldspace') or (space == 'localspace'))
 
@@ -1916,8 +1958,8 @@ WARNING: lost %f in vertex weights while creating a skin partition for
         else: # bones, get the rest matrix
             assert(space == 'localspace') # in this function, we only need bones in localspace
             mat = self.getBoneRestMatrix(obj, 'BONESPACE')
-
-        return mat
+        
+        return self.decomposeSRT(mat)
 
 
 
@@ -2050,8 +2092,7 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
                     continue
             else: # all nodes failed so add new one
                 node = NifFormat.NiNode()
-                node.rotation = ((1, 0, 0), (0, 1, 0), (0, 0, 1))
-                node.scale = 1
+                node.setTransform(self.IDENTITY44)
                 node.name = 'collisiondummy%i' % parent_block.numChildren
                 node.flags = 0x000E # default
                 parent_block.addChild(node)
@@ -2105,8 +2146,13 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
             colbody.unknown7Shorts[3] = 62977
             colbody.unknown7Shorts[4] = 65535
             colbody.unknown7Shorts[5] = 44
-            colbody.translation = (0, 0, 0)
-            colbody.rotation = (0, 0, 0, 1)
+            colbody.translation.x = 0.0
+            colbody.translation.y = 0.0
+            colbody.translation.z = 0.0
+            colbody.rotation.w = 1.0
+            colbody.rotation.x = 0.0
+            colbody.rotation.y = 0.0
+            colbody.rotation.z = 0.0
             colbody.mass = 1.0 # will be fixed later
             colbody.linearDamping = 0.1
             colbody.angularDamping = 0.05
@@ -2266,13 +2312,16 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
             center = Blender.Mathutils.Vector((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0)
             # and transform it to global coordinates
             center *= hktf
-            # fix for havok coordinate system
-            center /= 7.0
-            # store transform matrix
             hktf[3][0] = center[0]
             hktf[3][1] = center[1]
             hktf[3][2] = center[2]
-            coltf.transform = hktf
+            # we need to store the transpose of the matrix
+            hktf.transpose()
+            coltf.transform.setRows(*hktf)
+            # fix matrix for havok coordinate system
+            coltf.transform.m14 /= 7.0
+            coltf.transform.m24 /= 7.0
+            coltf.transform.m34 /= 7.0
 
             if obj.rbShapeBoundType == Blender.Object.RBShapes['BOX']:
                 colbox = self.createBlock("bhkBoxShape")
@@ -2288,10 +2337,10 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
                 colbox.unknown8Bytes[6] = 0x8e
                 colbox.unknown8Bytes[7] = 0x3e
                 # fix dimensions for havok coordinate system
-                colbox.dimensions = ((maxx - minx) / 14.0,
-                                     (maxy - miny) / 14.0,
-                                     (maxz - minz) / 14.0)
-                colbox.minimumSize = min(colbox.dimensions)
+                colbox.dimensions.x = (maxx - minx) / 14.0
+                colbox.dimensions.y = (maxy - miny) / 14.0
+                colbox.dimensions.z = (maxz - minz) / 14.0
+                colbox.minimumSize = min(colbox.dimensions.x, colbox.dimensions.y, colbox.dimensions.z)
             elif obj.rbShapeBoundType == Blender.Object.RBShapes['SPHERE']:
                 colsphere = self.createBlock("bhkSphereShape")
                 coltf.shape = colsphere
@@ -2318,8 +2367,12 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
                                                 maxz - colcaps.radius ] )
             vert1 *= transform
             vert2 *= transform
-            colcaps.firstPoint = vert1 / 7.0
-            colcaps.secondPoint = vert2 / 7.0
+            colcaps.firstPoint.x = vert1[0] / 7.0
+            colcaps.firstPoint.y = vert1[1] / 7.0
+            colcaps.firstPoint.z = vert1[2] / 7.0
+            colcaps.secondPoint.x = vert2[0] / 7.0
+            colcaps.secondPoint.y = vert2[1] / 7.0
+            colcaps.secondPoint.z = vert2[2] / 7.0
             # fix havok coordinate system for radii
             colcaps.radius /= 7.0
             colcaps.radius1 /= 7.0
@@ -2380,13 +2433,18 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
             # note: unknown 6 floats are usually all 0
             colhull.numVertices = len(vertlist)
             colhull.vertices.updateSize()
-            for i, vert in enumerate(vertlist):
-                colhull.vertices[i] = vert / 7.0
+            for vhull, vert in zip(colhull.vertices, vertlist):
+                vhull.x = vert[0] / 7.0
+                vhull.y = vert[1] / 7.0
+                vhull.z = vert[2] / 7.0
                 # w component is 0
             colhull.numNormals = len(fnormlist)
             colhull.normals.updateSize()
-            for i, (norm, dist) in enumerate(fnormlist, fdistlist):
-                colhull.normals[i] = (norm[0], norm[1], norm[2], dist / 7.0)
+            for nhull, norm, dist in zip(colhull.normals, fnormlist, fdistlist):
+                nhull.x = norm[0]
+                nhull.y = norm[1]
+                nhull.z = norm[2]
+                nhull.w = dist / 7.0
 
             return colhull
 
@@ -2567,7 +2625,7 @@ WARNING: bad uv layer name '%s' in texture '%s'
         texeff.coordinateGenerationType = NifFormat.CoordGenType.CG_SPHERE_MAP
         if mtex:
             texeff.sourceTexture = self.exportSourceTexture(mtex.tex)
-        texeff.unknownVector = (1, 0, 0)
+        texeff.unknownVector.x = 1.0
         texeff.ps2K = 65461
         return self.registerBlock(texeff)
 
