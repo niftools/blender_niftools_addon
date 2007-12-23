@@ -236,10 +236,8 @@ class NifImport:
                 self.msg('applying skin deformation on geometry %s'%
                          niBlock.name, 2)
                 vertices, normals = niBlock.getSkinDeformation()
-                for vold, vnew in zip(niBlock.data.vertices, vertices):
-                    vold[0] = vnew[0]
-                    vold[1] = vnew[1]
-                    vold[2] = vnew[2]
+                for i, vnew in enumerate(vertices):
+                    niBlock.data.vertices[i] = vnew
         
         # sets the root block parent to None, so that when crawling back the
         # script won't barf
