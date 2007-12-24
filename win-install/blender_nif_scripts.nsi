@@ -70,7 +70,9 @@ Var PYFFI
 
 !insertmacro MUI_PAGE_INSTFILES
 
-!define MUI_FINISHPAGE_SHOWREADME "$INSTDIR\README.html"
+!define MUI_FINISHPAGE_SHOWREADME
+!define MUI_FINISHPAGE_SHOWREADME_TEXT "Show Readme and Changelog"
+!define MUI_FINISHPAGE_SHOWREADME_FUNCTION finishShowReadmeChangelog
 !define MUI_FINISHPAGE_RUN "$BLENDERINST\blender.exe"
 !define MUI_FINISHPAGE_RUN_TEXT "Run Blender"
 !define MUI_FINISHPAGE_LINK "Visit us at http://niftools.sourceforge.net/"
@@ -241,6 +243,11 @@ pyffi_check_end:
 
 pyffi_vercheck_end:
 
+FunctionEnd
+
+Function finishShowReadmeChangelog
+	ExecShell "open" "$INSTDIR\README.html"
+	ExecShell "open" "$INSTDIR\ChangeLog.txt"
 FunctionEnd
 
 Section
