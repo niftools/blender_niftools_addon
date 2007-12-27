@@ -36,7 +36,59 @@ __requiredblenderversion__ = "245"
 #
 # ***** END LICENCE BLOCK *****
 
+# utility functions
+    
+def cmp_versions(version1, version2):
+    """Compare version strings."""
+    def version_intlist(version):
+        """Convert version string to list of integers."""
+        return [int(x) for x in version.__str__().split(".")]
+    return cmp(version_intlist(version1), version_intlist(version2))
+
+# things to do on import and export
+
+# check Blender version
+
 import Blender
+__blenderversion__ = Blender.Get('version')
+
+if cmp_versions(__blenderversion__, __requiredblenderversion__) == -1:
+    err = """--------------------------
+ERROR\nThis script requires Blender %s or higher.
+It seems that you have an older version installed (%s).
+Get a newer version at http://www.blender.org/
+--------------------------"""%(__requiredblenderversion__, __blenderversion__)
+    print err
+    Blender.Draw.PupMenu("ERROR%t|Blender outdated, check console for details")
+    raise ImportError
+
+# check if PyFFI is installed and import NifFormat
+
+try:
+    from PyFFI import __version__ as __pyffiversion__
+    from PyFFI.NIF import NifFormat
+except ImportError:
+    err = """--------------------------
+ERROR\nThis script requires the Python File Format Interface (PyFFI).
+Make sure that PyFFI resides in your Python path or in your Blender scripts folder.
+If you do not have it: http://pyffi.sourceforge.net/
+--------------------------"""
+    print err
+    Blender.Draw.PupMenu("ERROR%t|PyFFI not found, check console for details")
+    raise
+
+# check PyFFI version
+
+if cmp_versions(__pyffiversion__, __requiredpyffiversion__) == -1:
+    err = """--------------------------
+ERROR\nThis script requires Python File Format Interface %s or higher.
+It seems that you have an older version installed (%s).
+Get a newer version at http://pyffi.sourceforge.net/
+--------------------------"""%(__requiredpyffiversion__, __pyffiversion__)
+    print err
+    Blender.Draw.PupMenu("ERROR%t|PyFFI outdated, check console for details")
+    raise ImportError
+
 from Blender import Draw, Registry
 import sys, os
 
@@ -47,6 +99,7 @@ class NifConfig:
     (otherwise gui elements might go out of skope which will crash
     Blender)."""
     # class global constants
+    WELCOME_MESSAGE = 'Blender NIF Scripts %s (running on Blender %s, PyFFI %s)'%(__version__, __blenderversion__, __pyffiversion__)
     CONFIG_NAME = "nifscripts" # name of the config file
     TARGET_IMPORT = 0          # config target value when importing
     TARGET_EXPORT = 1          # config target value when exporting
@@ -103,6 +156,15 @@ class NifConfig:
 
     def __init__(self):
         """Initialize and load configuration."""
+        # clears the console window
+        if sys.platform in ('linux-i386','linux2'):
+            os.system("clear")
+        elif sys.platform in ('win32','dos','ms-dos'):
+            os.system("cls")
+
+        # print scripts info
+        print self.WELCOME_MESSAGE
+
         # initialize all instance variables
         self.guiElements = {} # dictionary of gui elements (buttons, strings, sliders, ...)
         self.guiEvents = []   # list of events
@@ -119,16 +181,6 @@ class NifConfig:
 
         # load configuration
         self.load()
-
-        # clears the console window
-        if sys.platform in ('linux-i386','linux2'):
-            os.system("clear")
-        elif sys.platform in ('win32','dos','ms-dos'):
-            os.system("cls")
-
-        # print scripts info
-        print('Blender NIF Scripts %s (running on Blender %s, PyFFI %s)'
-              %(__version__, __blenderversion__, __pyffiversion__))
 
     def run(self, target, filename, callback):
         """Run the config gui."""
@@ -156,7 +208,8 @@ class NifConfig:
 
     def load(self):
         """Load the configuration stored in the Blender registry and checks
-        configuration for incompatible values."""
+        configuration for incompatible values.
+        """
         # copy defaults
         self.config = dict(**self.DEFAULTS)
         # read configuration
@@ -813,54 +866,3 @@ class NifConfig:
 
     def updateObWind(self, evt, val):
         self.config["EXPORT_OB_WIND"] = val
-
-# utility functions
-    
-def cmp_versions(version1, version2):
-    """Compare version strings."""
-    def version_intlist(version):
-        """Convert version string to list of integers."""
-        return [int(x) for x in version.__str__().split(".")]
-    return cmp(version_intlist(version1), version_intlist(version2))
-
-# things to do on import and export
-
-# check Blender version
-
-__blenderversion__ = Blender.Get('version')
-if cmp_versions(__blenderversion__, __requiredblenderversion__) == -1:
-    err = """--------------------------
-ERROR\nThis script requires Blender %s or higher.
-It seems that you have an older version installed (%s).
-Get a newer version at http://www.blender.org/
---------------------------"""%(__requiredblenderversion__, __blenderversion__)
-    print err
-    Blender.Draw.PupMenu("ERROR%t|Blender outdated, check console for details")
-    raise ImportError
-
-# check if PyFFI is installed and import NifFormat
-
-try:
-    from PyFFI import __version__ as __pyffiversion__
-    from PyFFI.NIF import NifFormat
-except ImportError:
-    err = """--------------------------
-ERROR\nThis script requires the Python File Format Interface (PyFFI).
-Make sure that PyFFI resides in your Python path or in your Blender scripts folder.
-If you do not have it: http://pyffi.sourceforge.net/
---------------------------"""
-    print err
-    Blender.Draw.PupMenu("ERROR%t|PyFFI not found, check console for details")
-    raise
-
-# check PyFFI version
-
-if cmp_versions(__pyffiversion__, __requiredpyffiversion__) == -1:
-    err = """--------------------------
-ERROR\nThis script requires Python File Format Interface %s or higher.
-It seems that you have an older version installed (%s).
-Get a newer version at http://pyffi.sourceforge.net/
---------------------------"""%(__requiredpyffiversion__, __pyffiversion__)
-    print err
-    Blender.Draw.PupMenu("ERROR%t|PyFFI outdated, check console for details")
-    raise ImportError
