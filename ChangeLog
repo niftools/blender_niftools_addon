@@ -1,3 +1,6 @@
+Version 2.2.6 (Jan 8, 2007)
+* Installer: fixed required PyFFI version
+
 Version 2.2.5 (Dec 18, 2007)
 * Export: fixed bug in uv map export with smooth objects
 
