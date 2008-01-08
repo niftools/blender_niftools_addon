@@ -1,7 +1,7 @@
 """Common functions for the Blender nif import and export scripts."""
 
 __version__ = "2.2.5"
-__requiredpyffiversion__ = "0.7.1"
+__requiredpyffiversion__ = "0.7.4"
 __requiredblenderversion__ = "245"
 
 # ***** BEGIN LICENSE BLOCK *****
