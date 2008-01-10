@@ -1914,7 +1914,11 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             return [ child for child in niBlock.children if isinstance(child, NifFormat.NiTriBasedGeom) ]
         # check that node has name
         node_name = niBlock.name
-        if not node_name: return []
+        if not node_name:
+            return []
+        # strip "NonAccum" trailer, if present
+        if node_name[-9:].lower() == " nonaccum":
+            node_name = node_name[:-9]
         # get all geometry children
         return [ child for child in niBlock.children if isinstance(child, NifFormat.NiTriBasedGeom) and child.name.find(node_name) != -1 ]
 
