@@ -368,6 +368,8 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                             if b_child_obj:
                                 b_children_list.append(b_child_obj)
                         b_obj.makeParent(b_children_list)
+
+                    # set object transform
                     b_obj.setMatrix(self.importMatrix(niBlock))
 
                     # import the animations
@@ -1764,7 +1766,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
         crawling back as needed."""
         if isinstance(niBlock, NifFormat.NiNode):
             # list of non-null children
-            children = [child for child in niBlock.children if child]
+            children = [ child for child in niBlock.children if child ]
             for child in children:
                 child._parent = niBlock
                 self.set_parents(child)
@@ -1777,13 +1779,15 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                 raise NifImportError('cannot import skeleton: root is not a NiNode')
             # for morrowind, take the Bip01 node to be the skeleton root
             if self.version == 0x04000002:
-                skelroot = niBlock.find(block_name = 'Bip01', block_type = NifFormat.NiNode)
-                if not skelroot: skelroot = niBlock
+                skelroot = niBlock.find(block_name = 'Bip01',
+                                        block_type = NifFormat.NiNode)
+                if not skelroot:
+                    skelroot = niBlock
             else:
                 skelroot = niBlock
             if not self.armatures.has_key(skelroot):
                 self.armatures[skelroot] = []
-            self.msg("selecting node '%s' as skeleton root"%skelroot.name)
+            self.msg("selecting node '%s' as skeleton root" % skelroot.name)
             # add bones
             for bone in skelroot.tree():
                 if bone == skelroot: continue
@@ -1911,7 +1915,8 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
         if not isinstance(niBlock, NifFormat.NiNode): return []
         # root collision node: join everything
         if isinstance(niBlock, NifFormat.RootCollisionNode):
-            return [ child for child in niBlock.children if isinstance(child, NifFormat.NiTriBasedGeom) ]
+            return [ child for child in niBlock.children if
+                     isinstance(child, NifFormat.NiTriBasedGeom) ]
         # check that node has name
         node_name = niBlock.name
         if not node_name:
@@ -1920,7 +1925,9 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
         if node_name[-9:].lower() == " nonaccum":
             node_name = node_name[:-9]
         # get all geometry children
-        return [ child for child in niBlock.children if isinstance(child, NifFormat.NiTriBasedGeom) and child.name.find(node_name) != -1 ]
+        return [ child for child in niBlock.children
+                 if (isinstance(child, NifFormat.NiTriBasedGeom)
+                     and child.name.find(node_name) != -1) ]
 
     """
     #can't retrieve bone ipo's?
