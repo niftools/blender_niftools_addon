@@ -385,7 +385,8 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                             print("WARNING: unsupported collision structure \
 under node %s" % niBlock.name)
                         collision_objs = self.importBhkShape(bhk_body)
-                        b_obj.makeParent(collision_objs)
+                        # make parent without inverse
+                        b_obj.makeParent(collision_objs, 1)
 
                     return b_obj
             # all else is currently discarded
