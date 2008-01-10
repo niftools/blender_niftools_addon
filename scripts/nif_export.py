@@ -1060,10 +1060,10 @@ and turn off envelopes."""%ob.getName()
             mesh_hasnormals = False
             if (mesh_mat != None):
                 mesh_hasnormals = True # for proper lighting
-                # for non-textured materials, vertex colors are used to color the mesh
+                # for non-textured materials, vertex colors are used to color
+                # the mesh
                 # for textured materials, they represent lighting details
-                # strange: mesh.vertexColors only returns true if the mesh has no texture coordinates
-                mesh_hasvcol = mesh.vertexColors or ((mesh_mat.mode & Blender.Material.Modes.VCOL_LIGHT != 0) or (mesh_mat.mode & Blender.Material.Modes.VCOL_PAINT != 0))
+                mesh_hasvcol = mesh.vertexColors
                 # read the Blender Python API documentation to understand this hack
                 mesh_mat_ambient = mesh_mat.getAmb()            # 'Amb' scrollbar in blender (MW -> 1.0 1.0 1.0)
                 mesh_mat_diffuse_color = mesh_mat.getRGBCol()   # 'Col' colour in Blender (MW -> 1.0 1.0 1.0)
