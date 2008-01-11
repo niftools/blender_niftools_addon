@@ -1,11 +1,11 @@
-Version 2.2.7 (Jan 11, 2007)
+Version 2.2.7 (Jan 11, 2008)
 * Export: fixed exception when mesh used material with vcol flags enabled but
 without any vertex colors present
 * Import: strip "NonAccum" from name when checking for node grouping
 * Import: fixed misaligned collision boxes (sometimes you still have to switch
 to edit mode and back to align them correctly, seems to be a Blender bug)
 
-Version 2.2.6 (Jan 8, 2007)
+Version 2.2.6 (Jan 8, 2008)
 * Installer: fixed required PyFFI version
 
 Version 2.2.5 (Dec 18, 2007)
