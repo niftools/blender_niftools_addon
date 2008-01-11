@@ -369,15 +369,6 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                                 b_children_list.append(b_child_obj)
                         b_obj.makeParent(b_children_list)
 
-                    # set object transform
-                    b_obj.setMatrix(self.importMatrix(niBlock))
-
-                    # import the animations
-                    if self.IMPORT_ANIMATION:
-                        self.set_animation(niBlock, b_obj)
-                        # import the extras
-                        self.importTextkey(niBlock)
-
                     # import collision objects
                     if niBlock.collisionObject:
                         bhk_body = niBlock.collisionObject.body
@@ -385,8 +376,19 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                             print("WARNING: unsupported collision structure \
 under node %s" % niBlock.name)
                         collision_objs = self.importBhkShape(bhk_body)
-                        # make parent without inverse
-                        b_obj.makeParent(collision_objs, 1)
+                        # make parent
+                        b_obj.makeParent(collision_objs)
+
+                    # set object transform
+                    # this must be done after all children objects have been
+                    # parented to b_obj
+                    b_obj.setMatrix(self.importMatrix(niBlock))
+
+                    # import the animations
+                    if self.IMPORT_ANIMATION:
+                        self.set_animation(niBlock, b_obj)
+                        # import the extras
+                        self.importTextkey(niBlock)
 
                     return b_obj
             # all else is currently discarded
