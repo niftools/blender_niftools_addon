@@ -1,3 +1,7 @@
+Version 2.2.8 (***)
+* Export: more informative error messages if mesh has no uv data and if
+texture of type image has no image loaded
+
 Version 2.2.7 (Jan 11, 2008)
 * Export: fixed exception when mesh used material with vcol flags enabled but
 without any vertex colors present

@@ -920,6 +920,12 @@ and turn off envelopes."""%ob.getName()
         elif ( texture.type == Blender.Texture.Types.IMAGE ):
             # get filename from image
 
+            # check that image is loaded
+            if texture.getImage() is None:
+                raise NifExportError(
+                    "image type texture has no file loaded ('%s')"
+                    %texture.getName())                    
+
             # texture must not be packed
             if texture.getImage().packed:
                 raise NifExportError(
@@ -1244,9 +1250,12 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                 f_numverts = len(f.v)
                 if (f_numverts < 3): continue # ignore degenerate faces
                 assert((f_numverts == 3) or (f_numverts == 4)) # debug
-                if mesh_uvlayers: # if we have uv coordinates
-                    if len(f.uv) != len(f.v): # make sure we have UV data
-                        raise NifExportError('ERROR%t|Create a UV map for every texture, and run the script again.')
+                if mesh_uvlayers:
+                    # if we have uv coordinates
+                    # double check that we have uv data
+                    if not mesh.faceUV or len(f.uv) != len(f.v):
+                        raise NifExportError(
+                            'ERROR%t|Create a UV map for every texture, and run the script again.')
                 # find (vert, uv-vert, normal, vcol) quad, and if not found, create it
                 f_index = [ -1 ] * f_numverts
                 for i in range(f_numverts):
