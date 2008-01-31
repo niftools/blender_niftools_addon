@@ -1545,7 +1545,8 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
 
             # set triangles
             # stitch strips for civ4
-            tridata.setTriangles(trilist, stitchstrips = self.EXPORT_STITCHSTRIPS)
+            tridata.setTriangles(trilist,
+                                 stitchstrips = self.EXPORT_STITCHSTRIPS)
 
             # update tangent space
             if mesh_uvlayers and mesh_hasnormals:
@@ -1560,7 +1561,8 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                     ob_armature = ob.getParent()
                     armaturename = ob_armature.getName()
                     bonenames = ob_armature.getData().bones.keys()
-                    # the vertgroups that correspond to bonenames are bones that influence the mesh
+                    # the vertgroups that correspond to bonenames are bones
+                    # that influence the mesh
                     boneinfluences = []
                     for bone in bonenames:
                         if bone in vertgroups:
@@ -1575,15 +1577,18 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                                     skininst.skeletonRoot = block
                                     break
                         else:
-                            raise NifExportError("Skeleton root '%s' not found."%armaturename)
+                            raise NifExportError(
+                                "Skeleton root '%s' not found."%armaturename)
             
                         # create skinning data and link it
                         skindata = self.createBlock("NiSkinData")
                         skininst.data = skindata
             
                         skindata.hasVertexWeights = True
-                        # fix geometry rest pose: transform relative to skeleton root
-                        skindata.setTransform(self.getObjectMatrix(ob, 'localspace').getInverse())
+                        # fix geometry rest pose: transform relative to
+                        # skeleton root
+                        skindata.setTransform(
+                            self.getObjectMatrix(ob, 'localspace').getInverse())
             
                         # add vertex weights
                         # first find weights and normalization factors
@@ -1600,7 +1605,8 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                         # for each bone, first we get the bone block
                         # then we get the vertex weights
                         # and then we add it to the NiSkinData
-                        vert_added = [False for i in xrange(len(vertlist))] # allocate memory for faster performance
+                        # note: allocate memory for faster performance
+                        vert_added = [False for i in xrange(len(vertlist))]
                         for bone_index, bone in enumerate(boneinfluences):
                             # find bone in exported blocks
                             bone_block = None
@@ -1610,9 +1616,12 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                                         if not bone_block:
                                             bone_block = block
                                         else:
-                                            raise NifExportError("multiple bones with name '%s': probably you have multiple armatures, please parent all meshes to a single armature and try again"%bone)
+                                            raise NifExportError("""\
+multiple bones with name '%s': probably you have multiple armatures, please
+parent all meshes to a single armature and try again""" % bone)
                             if not bone_block:
-                                raise NifExportError("Bone '%s' not found."%bone)
+                                raise NifExportError(
+                                    "Bone '%s' not found." % bone)
                             # find vertex weights
                             vert_weights = {}
                             for v in vert_list[bone]:
@@ -1625,15 +1634,18 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                                 # original vertex for each new vertex
             
                                 # write the weights
-                                if vertmap[v[0]] and vert_norm[v[0]]: # extra check for multi material meshes
+                                # extra check for multi material meshes
+                                if vertmap[v[0]] and vert_norm[v[0]]:
                                     for vert_index in vertmap[v[0]]:
                                         vert_weights[vert_index] = v[1] / vert_norm[v[0]]
                                         vert_added[vert_index] = True
-                            # add bone as influence, but only if there were actually any vertices influenced by the bone
+                            # add bone as influence, but only if there were
+                            # actually any vertices influenced by the bone
                             if vert_weights:
                                 trishape.addBone(bone_block, vert_weights)
             
-                        # each vertex must have been assigned to at least one vertex group
+                        # each vertex must have been assigned to at least one
+                        # vertex group
                         # or the model doesn't display correctly in the TESCS
                         vert_weights = {}
                         if False in vert_added:
