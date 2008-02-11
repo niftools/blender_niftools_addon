@@ -1715,6 +1715,7 @@ WARNING: lost %f in vertex weights while creating a skin partition for
                         # create geometry morph controller
                         morphctrl = self.createBlock("NiGeomMorpherController")
                         trishape.addController(morphctrl)
+                        morphctrl.target = trishape
                         morphctrl.frequency = 1.0
                         morphctrl.phase = 0.0
                         ctrlStart = 1000000.0
