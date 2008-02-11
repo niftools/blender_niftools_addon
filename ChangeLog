@@ -1,4 +1,4 @@
-Version 2.2.8 (***)
+Version 2.2.8 (Feb 11, 2008)
 * Export: more informative error messages if mesh has no uv data and if
 texture of type image has no image loaded
 * Export: fixed NiGeomMorpherController target
