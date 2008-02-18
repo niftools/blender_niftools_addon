@@ -152,7 +152,8 @@ class NifConfig:
         EXPORT_OB_WIND = 0,
         EXPORT_OB_LAYER = 1, # static
         EXPORT_OB_MATERIAL = 9, # wood
-        PROFILE = '') # name of file where Python profiler dumps the profile; set to empty string to turn off profiling
+        PROFILE = '', # name of file where Python profiler dumps the profile; set to empty string to turn off profiling
+        IMPORT_EXPORTEMBEDDEDTEXTURES = False)
 
     def __init__(self):
         """Initialize and load configuration."""
@@ -435,6 +436,11 @@ class NifConfig:
                 val = (self.config["IMPORT_SKELETON"] == 2))
             self.drawYSep()
 
+            self.drawToggle(
+                text = "Save Embedded Textures As DDS",
+                event_name = "IMPORT_EXPORTEMBEDDEDTEXTURES")
+            self.drawYSep()
+
         # export-only options
         if self.target == self.TARGET_EXPORT:
             self.drawToggle(
@@ -687,6 +693,8 @@ class NifConfig:
             self.config["IMPORT_SENDBONESTOBINDPOS"] = not self.config["IMPORT_SENDBONESTOBINDPOS"]
         elif evName == "IMPORT_APPLYSKINDEFORM":
             self.config["IMPORT_APPLYSKINDEFORM"] = not self.config["IMPORT_APPLYSKINDEFORM"]
+        elif evName == "IMPORT_EXPORTEMBEDDEDTEXTURES":
+            self.config["IMPORT_EXPORTEMBEDDEDTEXTURES"] = not self.config["IMPORT_EXPORTEMBEDDEDTEXTURES"]
         elif evName[:5] == "GAME_":
             self.config["EXPORT_VERSION"] = evName[5:]
             # settings that usually make sense, fail-safe

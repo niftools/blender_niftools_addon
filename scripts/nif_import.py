@@ -964,27 +964,30 @@ WARNING: constraint for billboard node on %s added but target not set due to
                 if not Blender.sys.exists(tex):
                     break
                 n += 1
-            # save embedded texture as dds file
-            stream = open(tex, "wb")
-            try:
-                print "saving embedded texture as %s" % tex
-                niSourceTexture.pixelData.saveAsDDS(stream)
-            except ValueError:
-                # value error means that the pixel format is not supported
-                b_image = None
-            else:
-                # saving dds succeeded so load the file
-                b_image = Blender.Image.Load(tex)
-                # Blender will return an image object even if the
-                # file format is not supported,
-                # so to check if the image is actually loaded an error
-                # is forced via "b_image.size"
+            if self.IMPORT_EXPORTEMBEDDEDTEXTURES:
+                # save embedded texture as dds file
+                stream = open(tex, "wb")
                 try:
-                    b_image.size
-                except: # RuntimeError: couldn't load image data in Blender
-                    b_image = None # not supported, delete image object
-            finally:
-                stream.close()
+                    print "saving embedded texture as %s" % tex
+                    niSourceTexture.pixelData.saveAsDDS(stream)
+                except ValueError:
+                    # value error means that the pixel format is not supported
+                    b_image = None
+                else:
+                    # saving dds succeeded so load the file
+                    b_image = Blender.Image.Load(tex)
+                    # Blender will return an image object even if the
+                    # file format is not supported,
+                    # so to check if the image is actually loaded an error
+                    # is forced via "b_image.size"
+                    try:
+                        b_image.size
+                    except: # RuntimeError: couldn't load image data in Blender
+                        b_image = None # not supported, delete image object
+                finally:
+                    stream.close()
+            else:
+                b_image = None
         else:
             # the texture uses an external image file
             fn = niSourceTexture.fileName
@@ -1041,14 +1044,16 @@ WARNING: constraint for billboard node on %s added but target not set due to
                             break
                 if b_image:
                     break
+            else:
+                tex = Blender.sys.join(searchPathList[0], fn)
 
         # create a stub image if the image could not be loaded
         if not b_image:
             self.msg("""\
 Texture '%s' not found or not supported and no alternate available"""
 % fn, 2)
-            b_image = Blender.Image.New(tex, 1, 1, 24) # create a stub
-            b_image.filename = Blender.sys.join(searchPathList[0], fn)
+            b_image = Blender.Image.New(fn, 1, 1, 24) # create a stub
+            b_image.filename = tex
 
         # create a texture
         b_texture = Blender.Texture.New()
