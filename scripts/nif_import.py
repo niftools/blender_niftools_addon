@@ -379,6 +379,28 @@ under node %s" % niBlock.name)
                         # make parent
                         b_obj.makeParent(collision_objs)
 
+                    # track camera for billboard nodes
+                    if isinstance(niBlock, NifFormat.NiBillboardNode):
+                        # find camera object
+                        for obj in self.scene.objects:
+                            if obj.getType() == "Camera":
+                                break
+                        else:
+                            raise NifImportError("""\
+ERROR: scene needs camera for billboard node (add a camera and try again)""")
+                        # make b_obj track camera object
+                        #b_obj.setEuler(0,0,0)
+                        b_obj.constraints.append(
+                            Blender.Constraint.Type.TRACKTO)
+                        print """\
+WARNING: constraint for billboard node on %s added but target not set due to
+         transform bug in Blender. Set target to Camera manually."""
+                        constr = b_obj.constraints[-1]
+                        constr[Blender.Constraint.Settings.TRACK] = Blender.Constraint.Settings.TRACKZ
+                        constr[Blender.Constraint.Settings.UP] = Blender.Constraint.Settings.UPY
+                        # yields transform bug!
+                        #constr[Blender.Constraint.Settings.TARGET] = obj
+
                     # set object transform
                     # this must be done after all children objects have been
                     # parented to b_obj
