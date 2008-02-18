@@ -570,12 +570,21 @@ and turn off envelopes."""%ob.getName()
                 has_ipo = ob_ipo and len(ob_ipo.getCurves()) > 0
                 has_children = len(ob_children) > 0
                 is_multimaterial = len(set([f.mat for f in ob.data.faces])) > 1
+                # determine if object tracks camera
+                has_track = False
+                for constr in ob.constraints:
+                    if constr.type == Blender.Constraint.Type.TRACKTO:
+                        has_track = True
+                        break
                 if is_collision:
                     self.exportCollision(ob, parent_block)
                     return None # done; stop here
-                elif has_ipo or has_children or is_multimaterial:
+                elif has_ipo or has_children or is_multimaterial or has_track:
                     # -> mesh ninode for the hierarchy to work out
-                    node = self.createBlock('NiNode')
+                    if not has_track:
+                        node = self.createBlock('NiNode')
+                    else:
+                        node = self.createBlock('NiBillboardNode')
                 else:
                     # don't create intermediate ninode for this guy
                     self.exportTriShapes(ob, space, parent_block, node_name)
