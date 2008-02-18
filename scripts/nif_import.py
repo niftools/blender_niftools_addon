@@ -954,7 +954,38 @@ WARNING: constraint for billboard node on %s added but target not set due to
 
         b_image = None
         
-        if niSourceTexture.useExternal:
+        if not niSourceTexture.useExternal:
+            # find a file name (but avoid overwriting)
+            n = 0
+            while True:
+                fn = "image%03i.dds" % n
+                tex = Blender.sys.join(Blender.sys.dirname(self.IMPORT_FILE),
+                                       fn)
+                if not Blender.sys.exists(tex):
+                    break
+                n += 1
+            # save embedded texture as dds file
+            stream = open(tex, "wb")
+            try:
+                print "saving embedded texture as %s" % tex
+                niSourceTexture.pixelData.saveAsDDS(stream)
+            except ValueError:
+                # value error means that the pixel format is not supported
+                b_image = None
+            else:
+                # saving dds succeeded so load the file
+                b_image = Blender.Image.Load(tex)
+                # Blender will return an image object even if the
+                # file format is not supported,
+                # so to check if the image is actually loaded an error
+                # is forced via "b_image.size"
+                try:
+                    b_image.size
+                except: # RuntimeError: couldn't load image data in Blender
+                    b_image = None # not supported, delete image object
+            finally:
+                stream.close()
+        else:
             # the texture uses an external image file
             fn = niSourceTexture.fileName
             fn = fn.replace( '\\', Blender.sys.sep )
@@ -1010,62 +1041,25 @@ WARNING: constraint for billboard node on %s added but target not set due to
                             break
                 if b_image:
                     break
-            if b_image == None:
-                self.msg("Texture '%s' not found and no alternate available"
-                         %fn, 2)
-                b_image = Blender.Image.New(tex, 1, 1, 24) # create a stub
-                b_image.filename = Blender.sys.join(searchPathList[0], fn)
-        else:
-            # BROKEN; disabled for now
-            pass
-##            # the texture image is packed inside the nif -> extract it
-##            niPixelData = niSourceTexture.pixelData
-##            
-##            # we only load the first mipmap
-##            width = niPixelData.mipmaps[0].width
-##            height = niPixelData.mipmaps[0].height
-##            
-##            if niPixelData.pixelFormat == NifFormat.PixelFormat.PX_FMT_RGBA8:
-##                bpp = 24
-##            elif niPixelData.pixelFormat == NifFormat.PixelFormat.PX_FMT_RGB8:
-##                bpp = 32
-##            else:
-##                bpp = None
-##
-##            if bpp is None:
-##                self.msg("unknown pixel format (%i), cannot extract texture"
-##                         %niPixelData.pixelFormat, 1)
-##            else:
-##                b_image = Blender.Image.New( "TexImg", width, height, bpp )
-##                
-##                pixels = niPixelData.pixelData
-##                pixeloffset = 0
-##                a = 0xff
-##                self.msgProgress("Image Extraction")
-##                for y in xrange( height ):
-##                    for x in xrange( width ):
-##                        # TODO delegate color extraction to generator in
-##                        # PyFFI/NIF
-##                        r = ord(pixels[pixeloffset])
-##                        g = ord(pixels[pixeloffset+1])
-##                        b = ord(pixels[pixeloffset+2])
-##                        if bpp == 32:
-##                            a = ord(pixels[pixeloffset+3])
-##                        b_image.setPixelI( x, (height-1)-y, ( r, g, b, a ) )
-##                        pixeloffset += bpp/8
-        
-        if b_image != None:
-            # create a texture using the loaded image
-            b_texture = Blender.Texture.New()
-            b_texture.setType( 'Image' )
-            b_texture.setImage( b_image )
-            b_texture.imageFlags |= Blender.Texture.ImageFlags.INTERPOL
-            b_texture.imageFlags |= Blender.Texture.ImageFlags.MIPMAP
-            self.textures[texture_hash] = b_texture
-            return b_texture
-        else:
-            self.textures[texture_hash] = None
-            return None
+
+        # create a stub image if the image could not be loaded
+        if not b_image:
+            self.msg("""\
+Texture '%s' not found or not supported and no alternate available"""
+% fn, 2)
+            b_image = Blender.Image.New(tex, 1, 1, 24) # create a stub
+            b_image.filename = Blender.sys.join(searchPathList[0], fn)
+
+        # create a texture
+        b_texture = Blender.Texture.New()
+        b_texture.setType( 'Image' )
+        b_texture.setImage( b_image )
+        b_texture.imageFlags |= Blender.Texture.ImageFlags.INTERPOL
+        b_texture.imageFlags |= Blender.Texture.ImageFlags.MIPMAP
+
+        # save texture to avoid duplicate imports, and return it
+        self.textures[texture_hash] = b_texture
+        return b_texture
 
     def getMaterialHash(self, matProperty, textProperty,
                         alphaProperty, specProperty,

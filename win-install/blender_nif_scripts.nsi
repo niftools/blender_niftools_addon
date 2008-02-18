@@ -40,7 +40,7 @@ SetCompressor /SOLID lzma
 !insertmacro VersionCompare
 
 !define VERSION "2.2.9"
-!define PYFFIVERSION "0.9.0"
+!define PYFFIVERSION "0.9.1"
 
 Name "Blender NIF Scripts ${VERSION}"
 Var BLENDERHOME    ; blender settings location
