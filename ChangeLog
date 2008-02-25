@@ -1,3 +1,6 @@
+Version 2.2.10 (Feb 25, 2008)
+* Export: fix for bug in reflection map export.
+
 Version 2.2.9 (Feb 22, 2008)
 * Import/Export: support for billboard nodes via TRACKTO constraint
 * Import: re-enabled embedded texture support (they are saved to DDS)
