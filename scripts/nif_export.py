@@ -2657,7 +2657,6 @@ WARNING: bad uv layer name '%s' in texture '%s'
         if mtex:
             texeff.sourceTexture = self.exportSourceTexture(mtex.tex)
         texeff.unknownVector.x = 1.0
-        texeff.ps2K = -75
         return self.registerBlock(texeff)
 
 def config_callback(**config):
