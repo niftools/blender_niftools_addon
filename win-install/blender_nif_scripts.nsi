@@ -193,7 +193,7 @@ blender_check_end:
   IfFileExists "$BLENDERSCRIPTS\*.*" blender_scripts_end 0
   
     ; all failed!
-    MessageBox MB_OK "Blender scripts directory directory not found. This is a bug. Please report to http://niftools.sourceforge.net/forum/"
+    MessageBox MB_OK "Blender scripts directory not found. Reinstall Blender, and rerun the Blender NIF Scripts installer. If that does not solve the problem, then this is probably a bug. In that case, please report to http://niftools.sourceforge.net/forum/"
     Abort ; causes installer to quit
 
 blender_scripts_end:
