@@ -378,8 +378,9 @@ and turn off envelopes."""%ob.getName()
                 #upb.stringData = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
                 #root_block.addExtraData(upb)
 
-            # add vertex color and zbuffer properties for civ4
-            if self.EXPORT_VERSION == 'Civilization IV':
+            # add vertex color and zbuffer properties for civ4 and railroads
+            if self.EXPORT_VERSION in ["Civilization IV",
+                                       "Sid Meier's Railroads"]:
                 vcol = self.createBlock("NiVertexColorProperty")
                 vcol.flags = 1
                 vcol.vertexMode = 0
