@@ -247,7 +247,8 @@ and turn off envelopes."""%ob.getName()
                 # get shared vertices
                 self.msg("smoothing seams between objects...")
                 vdict = {}
-                for ob in [ob for ob in self.scene.objects if ob.getType() == 'Mesh']:
+                for ob in [ob for ob in self.scene.objects
+                           if ob.getType() == 'Mesh']:
                     mesh = ob.getData(mesh=1)
                     #for v in mesh.verts:
                     #    v.sel = False
@@ -264,16 +265,19 @@ and turn off envelopes."""%ob.getName()
                     if len(vlist) <= 1: continue # not shared
                     meshes = set([mesh for v, f, mesh in vlist])
                     if len(meshes) <= 1: continue # not shared
-                    # take average of all face normals of faces that have this vertex
+                    # take average of all face normals of faces that have this
+                    # vertex
                     norm = Blender.Mathutils.Vector(0,0,0)
                     for v, f, mesh in vlist:
                         norm += f.no
                     norm.normalize()
                     # remove outliers (fixes better bodies issue)
                     # first calculate fitness of each face
-                    fitlist = [Blender.Mathutils.DotVecs(f.no, norm) for v, f, mesh in vlist]
+                    fitlist = [Blender.Mathutils.DotVecs(f.no, norm)
+                               for v, f, mesh in vlist]
                     bestfit = max(fitlist)
-                    # recalculate normals only taking into account well-fitting faces
+                    # recalculate normals only taking into account
+                    # well-fitting faces
                     norm = Blender.Mathutils.Vector(0,0,0)
                     for (v, f, mesh), fit in zip(vlist, fitlist):
                         if fit >= bestfit - 0.2:
@@ -284,7 +288,7 @@ and turn off envelopes."""%ob.getName()
                         v.no = norm
                         #v.sel = True
                     nv += 1
-                self.msg("fixed normals on %i vertices"%nv)
+                self.msg("fixed normals on %i vertices" % nv)
 
             ## TODO use Blender actions for animation groups
             # check for animation groups definition in a text buffer 'Anim'
