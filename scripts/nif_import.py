@@ -746,7 +746,8 @@ WARNING: bspline animation data found, but bspline import not yet supported;
                     # add the keys
 
                     # Scaling
-                    self.msg('Scale keys...', 4)
+                    if scales.keys:
+                        self.msg('Scale keys...', 4)
                     for scaleKey in scales.keys:
                         # time 0.0 is frame 1
                         frame = 1 + int(scaleKey.time * self.fps + 0.5)
@@ -764,7 +765,8 @@ WARNING: bspline animation data found, but bspline import not yet supported;
                     # Euler Rotations
                     if rotationType == 4:
                         # uses xyz rotation
-                        self.msg('Rotation keys...(euler)', 4)
+                        if kfd.xyzRotations[0].keys:
+                            self.msg('Rotation keys...(euler)', 4)
                         for xkey, ykey, zkey in izip(kfd.xyzRotations[0].keys,
                                                      kfd.xyzRotations[1].keys,
                                                      kfd.xyzRotations[2].keys):
@@ -789,7 +791,8 @@ WARNING: bspline animation data found, but bspline import not yet supported;
 
                     # Quaternion Rotations
                     elif rotationType == 1:
-                        self.msg('Rotation keys...(quaternions)', 4)
+                        if kfd.quaternionKeys:
+                            self.msg('Rotation keys...(quaternions)', 4)
                         quaternionKeys = kfd.quaternionKeys
                         for key in quaternionKeys:
                             frame = 1 + int(key.time * self.fps + 0.5)
@@ -812,8 +815,8 @@ WARNING: rotation animation data of type %i found, but this type is not yet
          supported; data has been skipped""" % rotationType)                        
         
                     # Translations
-                    
-                    self.msg('Translation keys...', 4)
+                    if translations.keys:
+                        self.msg('Translation keys...', 4)
                     for key in translations.keys:
                         # time 0.0 is frame 1
                         frame = 1 + int(key.time * self.fps + 0.5)
@@ -2100,9 +2103,9 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                     b_obj.insertIpoKey(Blender.Object.ROT)           
             else:
                 # uses quaternions
-                quaternionKeys = kfd.quaternionKeys
-                self.msg('Rotation keys...(quaternions)', 4)
-                for key in quaternionKeys:
+                if kfd.quaternionKeys:
+                    self.msg('Rotation keys...(quaternions)', 4)
+                for key in kfd.quaternionKeys:
                     frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                     Blender.Set('curframe', frame)
                     rot = Blender.Mathutils.Quaternion(key.value.w, key.value.x, key.value.y, key.value.z).toEuler()
@@ -2110,8 +2113,9 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                     b_obj.RotY = rot.y * self.R2D
                     b_obj.RotZ = rot.z * self.R2D
                     b_obj.insertIpoKey(Blender.Object.ROT)
-            
-            self.msg('Translation keys...', 4)
+
+            if translations.keys:
+                self.msg('Translation keys...', 4)
             for key in translations.keys:
                 frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                 Blender.Set('curframe', frame)
