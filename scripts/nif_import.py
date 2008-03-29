@@ -85,7 +85,8 @@ class NifImport:
     
     def msg(self, message, level = 0):
         """Message wrapper."""
-        if self.VERBOSITY >= level: print message
+        if self.VERBOSITY >= level:
+            print message
 
     def msgProgress(self, message, progbar = None):
         """Message wrapper for the Blender progress bar."""
@@ -151,31 +152,64 @@ class NifImport:
             if self.IMPORT_SKELETON == 2:
                 if len(self.selectedObjects) != 1 or self.selectedObjects[0].getType() != 'Armature':
                     raise NifImportError("You must select exactly one armature in 'Import Geometry Only + Parent To Selected Armature' mode.")
+
             # open file for binary reading
-            f = open(self.filename, "rb")
+            self.msg(self.filename)
+            niffile = open(self.filename, "rb")
             try:
                 # check if nif file is valid
-                self.version, self.user_version = NifFormat.getVersion(f)
+                self.version, self.user_version = NifFormat.getVersion(niffile)
                 if self.version >= 0:
                     # it is valid, so read the file
                     self.msg("NIF file version: 0x%08X"%self.version, 2)
                     self.msgProgress("Reading file")
-                    root_blocks = NifFormat.read(f, version = self.version, user_version = self.user_version, verbose = 0)
+                    root_blocks = NifFormat.read(
+                        niffile,
+                        version = self.version,
+                        user_version = self.user_version,
+                        verbose = 0)
                 elif self.version == -1:
                     raise NifImportError("Unsupported NIF version.")
                 else:
                     raise NifImportError("Not a NIF file.")
             finally:
                 # the file has been read or an error occurred: close file
-                f.close()
+                niffile.close()
+
+            if self.IMPORT_KEYFRAMEFILE:
+                # open keyframe file for binary reading
+                self.msg(self.IMPORT_KEYFRAMEFILE)
+                niffile = open(self.IMPORT_KEYFRAMEFILE, "rb")
+                try:
+                    # check if nif file is valid
+                    self.version, self.user_version = NifFormat.getVersion(niffile)
+                    if self.version >= 0:
+                        # it is valid, so read the file
+                        self.msg("NIF file version: 0x%08X"%self.version, 2)
+                        self.msgProgress("Reading keyframe file")
+                        kf_root_blocks = NifFormat.read(
+                            niffile,
+                            version = self.version,
+                            user_version = self.user_version,
+                            verbose = 0)
+                    elif self.version == -1:
+                        raise NifImportError("Unsupported NIF version.")
+                    else:
+                        raise NifImportError("Not a NIF file.")
+                finally:
+                    # the file has been read or an error occurred: close file
+                    niffile.close()
+            else:
+                kf_root_blocks = []
 
             self.msgProgress("Importing data")
             # calculate and set frames per second
             if self.IMPORT_ANIMATION:
                 self.fps = self.getFramesPerSecond(root_blocks)
                 self.scene.getRenderingContext().fps = self.fps
-            # hack for corrupt better bodies meshes
+            # import all root blocks
             for block in root_blocks:
+                # hack for corrupt better bodies meshes
                 root = block
                 for b in (b for b in block.tree() if isinstance(b, NifFormat.NiGeometry)):
                     if b.isSkin():
@@ -186,7 +220,12 @@ class NifImport:
                             if self.IMPORT_SKELETON == 1:
                                 nonbip_children = [ child for child in root.children if child.name[:6] != 'Bip01 ' ]
                                 for child in nonbip_children: root.removeChild(child)
+                # import this root block
                 self.msg("root block: %s" % (root.name), 3)
+                # merge animation from kf tree into nif tree
+                for kf_root in kf_root_blocks:
+                    self.importKfRoot(kf_root, root)
+                # import the nif tree
                 self.importRoot(root)
         except NifImportError, e: # in that case, we raise a menu too
             print 'NifImportError: %s'%e
@@ -682,7 +721,7 @@ WARNING: constraint for billboard node on %s added but target not set due to
                     # for now, in this case, ignore interpolator
                     kfi = None
 
-                # B-spline curve plotting
+                # B-spline curve import
                 # NOT FINISHED, EXPERIMENTAL!
                 if isinstance(kfi, NifFormat.NiBSplineInterpolator):
                     # Each splineData appears to have the same controlPoints,
@@ -714,10 +753,10 @@ WARNING: constraint for billboard node on %s added but target not set due to
                     pointZ = tfs.shortControlPoints[rotateOffset+2]/32768.0*math.pi
                     pointW = tfs.shortControlPoints[rotateOffset+3]/32768.0*math.pi
 
-                    newCurve.appendNurb([pointX, pointY, pointZ, pointW])
+                    #newCurve.appendNurb([pointX, pointY, pointZ, pointW])
 
                     # first point creates a curve, then we take that curve and append to it
-                    nurbCurve = newCurve[0]
+                    #nurbCurve = newCurve[0]
 
                     for i in range(rotateOffset+4, rotateOffset + maximumControlPoints, 4):
                         pointX = tfs.shortControlPoints[i+0]/32768.0*math.pi
@@ -725,10 +764,10 @@ WARNING: constraint for billboard node on %s added but target not set due to
                         pointZ = tfs.shortControlPoints[i+2]/32768.0*math.pi
                         pointW = tfs.shortControlPoints[i+3]/32768.0*math.pi
 
-                        nurbCurve.append([pointX, pointY, pointZ, pointW])
+                    #    nurbCurve.append([pointX, pointY, pointZ, pointW])
 
                     # Put the curve into the scene ...then what?
-                    curveObject = self.scene.objects.new(newCurve)
+                    #curveObject = self.scene.objects.new(newCurve)
 
                 # Support for NiTransform*, mostly identical to NiKeyFrame*
                 # What follows is largely copied from the kfd section below
@@ -737,8 +776,8 @@ WARNING: constraint for billboard node on %s added but target not set due to
                     translations = kfd.translations
                     scales = kfd.scales
                     # if we have translation keys, we make a dictionary of
-                    # rot_keys and scale_keys, this makes the script work MUCH faster
-                    # in most cases
+                    # rot_keys and scale_keys, this makes the script work MUCH
+                    # faster in most cases
                     if translations:
                         scale_keys_dict = {}
                         rot_keys_dict = {}
@@ -2334,6 +2373,53 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
 
     def getUVLayerName(self, uvset):
         return "UVTex.%03i" % uvset if uvset != 0 else "UVTex"
+
+
+
+
+    def importKfRoot(self, kf_root, root):
+        """Merge kf into nif.
+
+        *** Note: this function will eventually move to PyFFI. ***
+        """
+
+        self.msg("merging kf tree into nif tree")
+
+        # check that this is an Oblivion style kf file
+        if not isinstance(kf_root, NifFormat.NiControllerSequence):
+            raise NifImportError("non-Oblivion .kf import not supported")
+
+        # go over all controlled blocks
+        for controlledblock in kf_root.controlledBlocks:
+            # get the name
+            nodename = controlledblock.getNodeName()
+            # match from nif tree?
+            node = root.find(block_name = nodename)
+            if not node:
+                self.msg(
+                    "animation for %s but no such node found in nif tree"
+                    % nodename)
+                continue
+            # node found, now find the controller
+            controllertype = controlledblock.getControllerType()
+            if not controllertype:
+                self.msg(
+                    "animation for %s without controller type, so skipping"
+                    % nodename)
+                continue
+            controller = self.find_controller(node, getattr(NifFormat, controllertype))
+            if not controller:
+                self.msg("""\
+animation for %s with %s controller,
+but no such controller type found in corresponding node, so skipping"""
+                    % nodename)
+            # yes! attach interpolator
+            controller.interpolator = controlledblock.interpolator
+
+        # DEBUG: save the file for manual inspection
+        niffile = open("C:\\test.nif", "wb")
+        NifFormat.write(niffile,
+                        version = 0x14000005, user_version = 11, roots = [root])
 
 def config_callback(**config):
     """Called when config script is done. Starts and times import."""
