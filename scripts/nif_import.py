@@ -722,55 +722,17 @@ WARNING: constraint for billboard node on %s added but target not set due to
                     kfi = None
 
                 # B-spline curve import
-                # NOT FINISHED, EXPERIMENTAL!
+                # STILL TO BE IMPLEMENTED!
                 if isinstance(kfi, NifFormat.NiBSplineInterpolator):
-                    # Each splineData appears to have the same controlPoints,
-                    # as though there is only one set of data in each file for
-                    # all b-splines. The interpolator marks an offset in the
-                    # data list (rotateOffset) which says where in the list to
-                    # begin looking at splineData. The data appears to be in
-                    # sets of four, with the number of (X,Y,Z,W) points equal
-                    # to tfb.numControlPt, so each individual set of data is
-                    # of length tfb.numControlPt*4.
-                    startTime = kfi.startTime
-                    stopTime = kfi.stopTime
-                    tfs = kfi.splineData
-                    tfb = kfi.basisData
-                    rotateOffset = kfi.rotateOffset
-                    maximumControlPoints = tfb.numControlPt * 4
-                    # What do the following variables mean?
-                    splineLoc = kfi.translation
-                    splineRot = kfi.rotation
-                    rBias = kfi.rotationBias
-                    rMultiplier = kfi.rotationMultiplier
+                    print("""\
+WARNING: bspline animation data found, but bspline import not yet supported;
+         data has been skipped""")
+                    # see nifskope glcontroller.cpp,
+                    # niflib NiBSplineTransformCompInterpolator.cpp and
+                    # NiBSplineTransformInterpolator for more information
+                    # on importing bsplines
 
-                    # Create a curve under this bone's name
-                    newCurve = Blender.Curve.New("curve" + bone_name)
-
-                    # plot only the first point to create the curve
-                    pointX = tfs.shortControlPoints[rotateOffset+0]/32768.0*math.pi
-                    pointY = tfs.shortControlPoints[rotateOffset+1]/32768.0*math.pi
-                    pointZ = tfs.shortControlPoints[rotateOffset+2]/32768.0*math.pi
-                    pointW = tfs.shortControlPoints[rotateOffset+3]/32768.0*math.pi
-
-                    #newCurve.appendNurb([pointX, pointY, pointZ, pointW])
-
-                    # first point creates a curve, then we take that curve and append to it
-                    #nurbCurve = newCurve[0]
-
-                    for i in range(rotateOffset+4, rotateOffset + maximumControlPoints, 4):
-                        pointX = tfs.shortControlPoints[i+0]/32768.0*math.pi
-                        pointY = tfs.shortControlPoints[i+1]/32768.0*math.pi
-                        pointZ = tfs.shortControlPoints[i+2]/32768.0*math.pi
-                        pointW = tfs.shortControlPoints[i+3]/32768.0*math.pi
-
-                    #    nurbCurve.append([pointX, pointY, pointZ, pointW])
-
-                    # Put the curve into the scene ...then what?
-                    #curveObject = self.scene.objects.new(newCurve)
-
-                # Support for NiTransform*, mostly identical to NiKeyFrame*
-                # What follows is largely copied from the kfd section below
+                # NiKeyframeData and NiTransformData import
                 elif isinstance(kfd, NifFormat.NiKeyframeData):
 
                     translations = kfd.translations
@@ -844,6 +806,10 @@ WARNING: constraint for billboard node on %s added but target not set due to
                             # fill optimizer dictionary
                             if translations:
                                 rot_keys_dict[frame] = Blender.Mathutils.Quaternion(rot)
+                    else:
+                        print("""Rotation keys...(unknown)
+WARNING: rotation animation data of type %i found, but this type is not yet
+         supported; data has been skipped""" % rotationType)                        
         
                     # Translations
                     
