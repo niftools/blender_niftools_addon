@@ -129,6 +129,7 @@ class NifConfig:
         EPSILON = 0.005, # used for checking equality with floats
         VERBOSITY = 0,   # verbosity level, determines how much debug output will be generated
         IMPORT_SKELETON = 0, # 0 = normal import, 1 = import file as skeleton, 2 = import mesh and attach to skeleton
+        IMPORT_KEYFRAMEFILE = '', # keyframe file for animations
         EXPORT_ANIMATION = 0, # export everything (1=geometry only, 2=animation only)
         EXPORT_FORCEDDS = True, # force dds extension on texture files
         EXPORT_SKINPARTITION = True, # generate skin partition
@@ -377,6 +378,27 @@ class NifConfig:
         if item + 1 == num_items:
             self.yPos -= self.YLINESKIP
 
+    def drawFileBrowse(self, text, event_name_prefix, val = None):
+        """Create elements to select a file.
+
+        Registers events PREFIX_ITEM, PREFIX_REMOVE, PREFIX_ADD."""
+        if val is None:
+            val = self.config[event_name_prefix]
+        self.guiElements["%s_ITEM"%event_name_prefix]   = Draw.String(
+            text,
+            self.eventId("%s_ITEM"%event_name_prefix),
+            self.xPos, self.yPos, self.XCOLUMNSKIP-50, self.YLINESKIP,
+            val, 255)
+        self.guiElements["%s_REMOVE"%event_name_prefix] = Draw.PushButton(
+            'X',
+            self.eventId("%s_REMOVE"%event_name_prefix),
+            self.xPos+self.XCOLUMNSKIP-50, self.yPos, 20, self.YLINESKIP)
+        self.guiElements["%s_ADD"%event_name_prefix]    = Draw.PushButton(
+            '...',
+            self.eventId("%s_ADD"%event_name_prefix),
+            self.xPos+self.XCOLUMNSKIP-30, self.yPos, 30, self.YLINESKIP)
+        self.yPos -= self.YLINESKIP
+
     def guiDraw(self):
         """Draw config GUI."""
         # reset position
@@ -439,6 +461,14 @@ class NifConfig:
             self.drawToggle(
                 text = "Save Embedded Textures As DDS",
                 event_name = "IMPORT_EXPORTEMBEDDEDTEXTURES")
+            self.drawYSep()
+
+            self.drawLabel(
+                text = "Keyframe File:",
+                event_name = "IMPORT_KEYFRAMEFILE_TEXT")
+            self.drawFileBrowse(
+                text = "",
+                event_name_prefix = "IMPORT_KEYFRAMEFILE")
             self.drawYSep()
 
         # export-only options
@@ -667,6 +697,15 @@ class NifConfig:
             if self.texpathIndex > 0:
                 self.texpathIndex -= 1
             self.updateTexpathCurrent()
+        elif evName == "IMPORT_KEYFRAMEFILE_ADD":
+            kffile = self.config["IMPORT_KEYFRAMEFILE"]
+            if not kffile:
+                kffile = Blender.sys.dirname(self.config["IMPORT_FILE"])
+            # browse and add keyframe file
+            Blender.Window.FileSelector(
+                self.selectKeyframeFile, "Select Keyframe File", kffile)
+        elif evName == "IMPORT_KEYFRAMEFILE_REMOVE":
+            self.config["IMPORT_KEYFRAMEFILE"] = ''
         elif evName == "IMPORT_REALIGN_BONES_1":
             if self.config["IMPORT_REALIGN_BONES"] == 1:
                 self.config["IMPORT_REALIGN_BONES"] = 0
@@ -839,6 +878,12 @@ class NifConfig:
             self.texpathCurrent = self.config["IMPORT_TEXTURE_PATH"][self.texpathIndex]
         else:
             self.texpathCurrent = ''
+
+    def selectKeyframeFile(self, keyframefile):
+        if keyframefile == '' or not Blender.sys.exists(keyframefile):
+            Draw.PupMenu('No file selected or file does not exist%t|Ok')
+        else:
+            self.config["IMPORT_KEYFRAMEFILE"] = keyframefile
 
     def updateScale(self, evt, val):
         self.config["EXPORT_SCALE_CORRECTION"] = val
