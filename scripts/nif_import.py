@@ -22,6 +22,7 @@ from nif_common import NifFormat
 from nif_common import __version__
 
 import operator
+import math
 from PyFFI.Utils import QuickHull
 
 # --------------------------------------------------------------------------
@@ -663,12 +664,76 @@ WARNING: constraint for billboard node on %s added but target not set due to
                 extra_matrix_quat_inv = extra_matrix_rot_inv.toQuat()
                 # now import everything
                 # ##############################
+
+                # get controller, interpolator, and data
+                # note: the NiKeyframeController check also includes
+                #       NiTransformController (see hierarchy!)
                 kfc = self.find_controller(niBone,
                                            NifFormat.NiKeyframeController)
-                if kfc and kfc.data:
-                    # get keyframe data
-                    kfd = kfc.data
-                    assert(isinstance(kfd, NifFormat.NiKeyframeData))
+                # old style: data directly on controller
+                kfd = kfc.data if kfc else None
+                # new style: data via interpolator
+                kfi = kfc.interpolator if kfc else None
+                # next is a quick hack to make the new transform
+                # interpolator work as if it is an old style keyframe data
+                # block parented directly on the controller
+                if isinstance(kfi, NifFormat.NiTransformInterpolator):
+                    kfd = kfi.data
+                    # for now, in this case, ignore interpolator
+                    kfi = None
+
+                # B-spline curve plotting
+                # NOT FINISHED, EXPERIMENTAL!
+                if isinstance(kfi, NifFormat.NiBSplineInterpolator):
+                    # Each splineData appears to have the same controlPoints,
+                    # as though there is only one set of data in each file for
+                    # all b-splines. The interpolator marks an offset in the
+                    # data list (rotateOffset) which says where in the list to
+                    # begin looking at splineData. The data appears to be in
+                    # sets of four, with the number of (X,Y,Z,W) points equal
+                    # to tfb.numControlPt, so each individual set of data is
+                    # of length tfb.numControlPt*4.
+                    startTime = kfi.startTime
+                    stopTime = kfi.stopTime
+                    tfs = kfi.splineData
+                    tfb = kfi.basisData
+                    rotateOffset = kfi.rotateOffset
+                    maximumControlPoints = tfb.numControlPt * 4
+                    # What do the following variables mean?
+                    splineLoc = kfi.translation
+                    splineRot = kfi.rotation
+                    rBias = kfi.rotationBias
+                    rMultiplier = kfi.rotationMultiplier
+
+                    # Create a curve under this bone's name
+                    newCurve = Blender.Curve.New("curve" + bone_name)
+
+                    # plot only the first point to create the curve
+                    pointX = tfs.shortControlPoints[rotateOffset+0]/32768.0*math.pi
+                    pointY = tfs.shortControlPoints[rotateOffset+1]/32768.0*math.pi
+                    pointZ = tfs.shortControlPoints[rotateOffset+2]/32768.0*math.pi
+                    pointW = tfs.shortControlPoints[rotateOffset+3]/32768.0*math.pi
+
+                    newCurve.appendNurb([pointX, pointY, pointZ, pointW])
+
+                    # first point creates a curve, then we take that curve and append to it
+                    nurbCurve = newCurve[0]
+
+                    for i in range(rotateOffset+4, rotateOffset + maximumControlPoints, 4):
+                        pointX = tfs.shortControlPoints[i+0]/32768.0*math.pi
+                        pointY = tfs.shortControlPoints[i+1]/32768.0*math.pi
+                        pointZ = tfs.shortControlPoints[i+2]/32768.0*math.pi
+                        pointW = tfs.shortControlPoints[i+3]/32768.0*math.pi
+
+                        nurbCurve.append([pointX, pointY, pointZ, pointW])
+
+                    # Put the curve into the scene ...then what?
+                    curveObject = self.scene.objects.new(newCurve)
+
+                # Support for NiTransform*, mostly identical to NiKeyFrame*
+                # What follows is largely copied from the kfd section below
+                elif isinstance(kfd, NifFormat.NiKeyframeData):
+
                     translations = kfd.translations
                     scales = kfd.scales
                     # if we have translation keys, we make a dictionary of
@@ -678,6 +743,8 @@ WARNING: constraint for billboard node on %s added but target not set due to
                         scale_keys_dict = {}
                         rot_keys_dict = {}
                     # add the keys
+
+                    # Scaling
                     self.msg('Scale keys...', 4)
                     for scaleKey in scales.keys:
                         # time 0.0 is frame 1
@@ -689,37 +756,44 @@ WARNING: constraint for billboard node on %s added but target not set due to
                         # fill optimizer dictionary
                         if translations:
                             scale_keys_dict[frame] = size
-                    
+
                     # detect the type of rotation keys
                     rotationType = kfd.rotationType
+
+                    # Euler Rotations
                     if rotationType == 4:
                         # uses xyz rotation
                         self.msg('Rotation keys...(euler)', 4)
-                        xyzRotations = kfd.xyzRotations
-                        for key in xyzRotations:
+                        for xkey, ykey, zkey in izip(kfd.xyzRotations[0].keys,
+                                                     kfd.xyzRotations[1].keys,
+                                                     kfd.xyzRotations[2].keys):
                             # time 0.0 is frame 1
                             frame = 1 + int(key.time * self.fps)
-                            keyVal = key.value
-                            euler = Blender.Mathutils.Euler([keyVal.x, keyVal.y, keyVal.z])
+                            euler = Blender.Mathutils.Euler(
+                                [xkey.value*180.0/math.pi,
+                                 ykey.value*180.0/math.pi,
+                                 zkey.value*180.0/math.pi])
                             quat = euler.toQuat()
+
                             # beware, CrossQuats takes arguments in a counter-intuitive order:
                             # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
+
                             quatVal = CrossQuats(niBone_bind_quat_inv, quat) # Rchannel = Rtotal * inverse(Rbind)
                             rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
                             b_posebone.quat = rot
                             b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.ROT]) # this is very slow... :(
                             # fill optimizer dictionary
                             if translations:
-                                rot_keys_dict[frame] = Blender.Mathutils.Quaternion(rot)                
-                    else:
-                        # uses quaternions
+                                rot_keys_dict[frame] = Blender.Mathutils.Quaternion(rot) 
+
+                    # Quaternion Rotations
+                    elif rotationType == 1:
                         self.msg('Rotation keys...(quaternions)', 4)
                         quaternionKeys = kfd.quaternionKeys
                         for key in quaternionKeys:
-                            # time 0.0 is frame 1
                             frame = 1 + int(key.time * self.fps)
                             keyVal = key.value
-                            quat = Blender.Mathutils.Quaternion([keyVal.w, keyVal.x, keyVal.y, keyVal.z])
+                            quat = Blender.Mathutils.Quaternion([keyVal.w, keyVal.x, keyVal.y,  keyVal.z])
                             # beware, CrossQuats takes arguments in a
                             # counter-intuitive order:
                             # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
@@ -732,6 +806,8 @@ WARNING: constraint for billboard node on %s added but target not set due to
                             if translations:
                                 rot_keys_dict[frame] = Blender.Mathutils.Quaternion(rot)
         
+                    # Translations
+                    
                     self.msg('Translation keys...', 4)
                     for key in translations.keys:
                         # time 0.0 is frame 1
