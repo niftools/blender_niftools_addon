@@ -13,9 +13,9 @@ echo Blender not found! Cannot run tests.
 goto end
 )
 
-echo .
+echo.
 echo Running tests...
-echo .
+echo.
 
 %BLENDERHOME%\blender.exe -P runtest_skinning.py
 %BLENDERHOME%\blender.exe -P runtest_havok.py
