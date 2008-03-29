@@ -50,18 +50,23 @@ higher</strong>.</li>
   <li><strong><a href="http://sourceforge.net/project/platformdownload.php?group_id=199269">PyFFI 0.9.1</a> or higher</strong>.</li>
 </ul>
 <h3>Manual Install</h3>
-<ul>
-  <li><strong>If you installed Blender using the .exe installer, 
+<p>
+First, <em>make sure you have Python and PyFFI installed!</em>
+Also, <strong>if you installed Blender using the .exe installer, 
 you're best off using the Blender NIF Scripts .exe 
 installer.</strong> If you installed Blender from a .zip, then you 
-should download the .zip, extract its contents, and copy the extracted scripts directory to
-Blender's scripts directory. This is by default C:\Program Files\Blender Foundation\Blender\.blender\scripts.
-Restart Blender, and the options to import and export
-NIF files will appear in the File-Import and File-Export menu's. <em>Make
-sure you
-have Python and PyFFI installed as well!</em></li>
+should download the .zip, extract its contents, and do one of the following:
+<ul>
+  <li>For use with Windows, the .zip includes an install.bat file which copies the relevant files to the Blender installation folder. If you have installed Blender via the .exe installer, then it suffices to simply double click install.bat. If you have installed Blender via the .zip, then you should run install.bat from the console. Click Start->Run... and type <code>cmd.exe</code>. A console window pops up. In the console, <code>cd</code> to the location where you extracted the files. Now call install.bat but pass the Blender directory (the directory where your blender.exe resides) as a first argument, between quotes, for instance
+  <p><code>install.bat &quot;C:\Documents and Settings\me\My Documents\blender-svn&quot;</code></p></li>
   <li>For use with linux, the .zip includes an install.sh script which copies the relevant files to your ~/.blender folder.</li>
+  <li>If for some reason the install script does not work, simply copy the extracted scripts directory to
+Blender's scripts directory, for instance to
+  <p><code>C:\Documents and Settings\me\My Documents\blender-svn\.blender\scripts</code></p>
+</li>
 </ul>
+<p>Restart Blender, and the options to import and export
+NIF files will appear in the File-Import and File-Export menu's.</p>
 <h2>License </h2>
 <p> Copyright (c) 2005-2008, <a href="http://niftools.sourceforge.net/">NIF
 File Format
