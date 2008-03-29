@@ -15,6 +15,8 @@ This script exports Netimmerse and Gamebryo .nif files from Blender.
 
 import Blender
 
+from itertools import izip
+
 from nif_common import NifConfig
 from nif_common import NifFormat
 from nif_common import __version__
@@ -457,25 +459,30 @@ and turn off envelopes."""%ob.getName()
 
             # convert root_block tree into a keyframe tree
             if self.EXPORT_ANIMATION == 2:
+                # find all nodes and keyframe controllers
+                node_kfctrls = {}
+                for node in root_block.tree():
+                    if not isinstance(node, NifFormat.NiNode):
+                        continue
+                    ctrls = node.getControllers()
+                    for ctrl in ctrls:
+                        if not isinstance(ctrl,
+                                          NifFormat.NiKeyframeController):
+                            continue
+                        if not node in node_kfctrls:
+                            node_kfctrls[node] = []
+                        node_kfctrls[node].append(ctrl)
                 # morrowind
                 if self.EXPORT_VERSION == "Morrowind":
                     # create kf root header
                     kf_root = self.createBlock("NiSequenceStreamHelper")
                     kf_root.addExtraData(anim_textextra)
-                    # find all nodes and keyframe controllers
-                    nodekfs = {}
-                    for node in root_block.tree():
-                        if not isinstance(node, NifFormat.NiNode): continue
-                        nodekfs[node] = []
-                        ctrls = node.getControllers()
-                        for ctrl in ctrls:
-                            if not isinstance(ctrl, NifFormat.NiKeyframeController): continue
-                            nodekfs[node].append(ctrl)
                     # reparent controller tree
-                    for node, ctrls in nodekfs.iteritems():
+                    for node, ctrls in node_kfctrls.iteritems():
                         for ctrl in ctrls:
                             # create node reference by name
-                            nodename_extra = self.createBlock("NiStringExtraData")
+                            nodename_extra = self.createBlock(
+                                "NiStringExtraData")
                             nodename_extra.bytesRemaining = len(node.name) + 4
                             nodename_extra.stringData = node.name
 
@@ -486,10 +493,35 @@ and turn off envelopes."""%ob.getName()
                             kf_root.addExtraData(nodename_extra)
                             kf_root.addController(ctrl)
 
-                #elif self.EXPORT_VERSION == "Oblivion":
-                #    pass
+                elif self.EXPORT_VERSION == "Oblivion":
+                    # create kf root header
+                    kf_root = self.createBlock("NiControllerSequence")
+                    kf_root.unknownInt1 = 1
+                    kf_root.weight = 1.0
+                    kf_root.textKeys = anim_textextra
+                    kf_root.cycleType = NifFormat.CycleType.CYCLE_CLAMP
+                    kf_root.frequency = 1.0
+                    kf_root.startTime =(self.fstart - 1) * self.fspeed
+                    kf_root.stopTime = (self.fend - self.fstart) * self.fspeed
+                    kf_root.targetName = root_block.name
+                    kf_root.stringPalette = NifFormat.NiStringPalette()
+                    # create ControlledLink for each controlled block
+                    kf_root.numControlledBlocks = len(node_kfctrls)
+                    kf_root.controlledBlocks.updateSize()
+                    for controlledblock, node, ctrls \
+                        in izip(kf_root.controlledBlocks,
+                                node_kfctrls.iterkeys(),
+                                node_kfctrls.itervalues()):
+                        ctrl = ctrls[0] # only export first keyframe controller
+                        controlledblock.interpolator = ctrl.interpolator
+                        controlledblock.priority = 30
+                        controlledblock.stringPalette = kf_root.stringPalette
+                        controlledblock.setNodeName(node.name)
+                        controlledblock.setControllerType(ctrl.__class__.__name__)
                 else:
-                    raise NifExportError("Keyframe export for '%s' is not supported. Only Morrowind keyframes are supported."%self.EXPORT_VERSION)
+                    raise NifExportError("""\
+Keyframe export for '%s' is not supported. Only Morrowind and Oblivion keyframes
+are supported." % self.EXPORT_VERSION""")
 
                 # make keyframe root block the root block to be written
                 root_block = kf_root
