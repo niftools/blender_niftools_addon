@@ -137,6 +137,12 @@ class NifImport:
         # maps NIF armature name to list of NIF bone name
         self.armatures = {}
 
+        # bone animation priorities (maps bone NiNode to priority number);
+        # priorities are set in importKfRoot and are stored into the name
+        # of a NULL constraint (for lack of something better) in
+        # importArmature
+        self.bonePriorities = {}
+
         # Blender scene
         self.scene = Blender.Scene.GetCurrent()
 
@@ -658,8 +664,15 @@ WARNING: constraint for billboard node on %s added but target not set due to
             for bone_idx, (bone_name, b_posebone) in enumerate(b_armature.getPose().bones.items()):
                 # denote progress
                 self.msgProgress('Animation: %s' % bone_name)
-                
                 self.msg('Importing animation for bone %s' % bone_name, 4)
+                niBone = self.blocks[bone_name]
+
+                # store bone priority, if applicable
+                if niBone in self.bonePriorities:
+                    constr = b_posebone.constraints.append(
+                        Blender.Constraint.Type.NULL)
+                    constr.name = "priority:%i" % self.bonePriorities[niBone]
+                
                 # get bind matrix (NIF format stores full transformations in keyframes,
                 # but Blender wants relative transformations, hence we need to know
                 # the bind position for conversion). Since
@@ -673,7 +686,6 @@ WARNING: constraint for billboard node on %s added but target not set due to
                 # Schannel = Stotal / Sbind
                 # Rchannel = Rtotal * inverse(Rbind)
                 # Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
-                niBone = self.blocks[bone_name]
                 bone_bm = self.importMatrix(niBone) # base pose
                 niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = self.decompose_srt(bone_bm)
                 niBone_bind_rot_inv = Matrix(niBone_bind_rot)
@@ -2424,10 +2436,15 @@ but no such controller type found in corresponding node, so skipping"""
                 kfd.translations.keys[0].value.z = kfi.translation.z
                 # ignore scale, usually contains invalid data in interpolator
 
+            # save priority for future reference
+            # (priorities will be stored into the name of a NULL constraint on
+            # bones, see importArmature function)
+            self.bonePriorities[node] = controlledblock.priority
+
         # DEBUG: save the file for manual inspection
-        niffile = open("C:\\test.nif", "wb")
-        NifFormat.write(niffile,
-                        version = 0x14000005, user_version = 11, roots = [root])
+        #niffile = open("C:\\test.nif", "wb")
+        #NifFormat.write(niffile,
+        #                version = 0x14000005, user_version = 11, roots = [root])
 
 def config_callback(**config):
     """Called when config script is done. Starts and times import."""
