@@ -181,6 +181,11 @@ class NifExport:
         # following dictionary.
         self.bonesExtraMatrixInv = {}
 
+        # store bone priorities (from NULL constraints) as the armature bones
+        # are parsed, so they are available when writing the kf file
+        # maps bone NiNode to priority value
+        self.bonePriorities = {}
+
         try: # catch export errors
 
             # find nif version to write
@@ -519,9 +524,20 @@ and turn off envelopes."""%ob.getName()
                         in izip(kf_root.controlledBlocks,
                                 node_kfctrls.iterkeys(),
                                 node_kfctrls.itervalues()):
-                        ctrl = ctrls[0] # only export first keyframe controller
+                        # only export first keyframe controller
+                        ctrl = ctrls[0]
                         controlledblock.interpolator = ctrl.interpolator
-                        controlledblock.priority = 30
+                        # get bone animation priority (previously fetched from
+                        # the constraints during exportBones)
+                        if not node in self.bonePriorities:
+                            priority = 26
+                            self.msg("""\
+no priority set for bone %s, falling back on default value (%i)"""
+                                     % (node.name, priority))
+                        else:
+                            priority = self.bonePriorities[node]
+                        controlledblock.priority = priority
+                        # set palette, and node and controller type names
                         controlledblock.stringPalette = kf_root.stringPalette
                         controlledblock.setNodeName(node.name)
                         controlledblock.setControllerType(ctrl.__class__.__name__)
@@ -854,7 +870,21 @@ are supported." % self.EXPORT_VERSION""")
             # only add data if number of keys is > 1
             # (see importer comments with importKfRoot: a single frame
             # keyframe denotes an interpolator without further data)
-            # insufficient keys, so we're done!
+            # insufficient keys, so set the data and we're done!
+            if trans_curve:
+                trans = trans_curve.values()[0]
+                kfi.translation.x = trans[0]
+                kfi.translation.y = trans[1]
+                kfi.translation.z = trans[2]
+            if rot_curve:
+                rot = rot_curve.values()[0]
+                kfi.rotation.x = rot.x
+                kfi.rotation.y = rot.y
+                kfi.rotation.z = rot.z
+                kfi.rotation.w = rot.w
+            # ignore scale for now...
+            kfi.scale = 1.0
+            # done!
             return
 
         # add the keyframe data
@@ -1908,6 +1938,12 @@ WARNING: lost %f in vertex weights while creating a skin partition for
                 bonexmat_inv.identity()
             if bones_ipo.has_key(bone.name):
                 self.exportKeyframes(bones_ipo[bone.name], 'localspace', node, bind_mat = bonerestmat, extra_mat_inv = bonexmat_inv)
+
+            # does bone have priority value in NULL constraint?
+            for constr in arm.getPose().bones[bone.name].constraints:
+                # yes! store it for reference when creating the kf file
+                if constr.name[:9].lower() == "priority:":
+                    self.bonePriorities[node] = int(constr.name[9:])
 
         # now fix the linkage between the blocks
         for bone in bones.values():
