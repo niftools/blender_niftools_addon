@@ -492,10 +492,11 @@ and turn off envelopes."""%ob.getName()
                             # add node reference and controller
                             kf_root.addExtraData(nodename_extra)
                             kf_root.addController(ctrl)
-
+                # oblivion
                 elif self.EXPORT_VERSION == "Oblivion":
                     # create kf root header
                     kf_root = self.createBlock("NiControllerSequence")
+                    kf_root.name = self.filebase
                     kf_root.unknownInt1 = 1
                     kf_root.weight = 1.0
                     kf_root.textKeys = anim_textextra
@@ -821,7 +822,18 @@ are supported." % self.EXPORT_VERSION""")
         else:
             kfc = self.createBlock("NiTransformController")
             kfi = self.createBlock("NiTransformInterpolator")
+            # link interpolator from the controller
             kfc.interpolator = kfi
+            # set interpolator default data
+            scale, quat, trans = parent_block.getTransform().getScaleQuatTranslation()
+            kfi.translation.x = trans.x
+            kfi.translation.y = trans.y
+            kfi.translation.z = trans.z
+            kfi.rotation.x = quat.x
+            kfi.rotation.y = quat.y
+            kfi.rotation.z = quat.z
+            kfi.rotation.w = quat.w
+            kfi.scale = scale
         parent_block.addController(kfc)
 
         # fill in the non-trivial values
