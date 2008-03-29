@@ -504,7 +504,13 @@ and turn off envelopes."""%ob.getName()
                     kf_root.frequency = 1.0
                     kf_root.startTime =(self.fstart - 1) * self.fspeed
                     kf_root.stopTime = (self.fend - self.fstart) * self.fspeed
-                    kf_root.targetName = root_block.name
+                    # quick hack to set correct target name
+                    if "Bip01" in [node.name for
+                                   node in node_kfctrls.iterkeys()]:
+                        targetname = "Bip01"
+                    else:
+                        targetname = root_block.name
+                    kf_root.targetName = targetname
                     kf_root.stringPalette = NifFormat.NiStringPalette()
                     # create ControlledLink for each controlled block
                     kf_root.numControlledBlocks = len(node_kfctrls)
@@ -726,7 +732,8 @@ are supported." % self.EXPORT_VERSION""")
     # 1 / SX = scale part of inverse(X)
     # so having inverse(X) around saves on calculations
     def exportKeyframes(self, ipo, space, parent_block, bind_mat = None, extra_mat_inv = None):
-        if self.EXPORT_ANIMATION == 1: # keyframe controllers are not present in geometry only files
+        if self.EXPORT_ANIMATION == 1:
+            # keyframe controllers are not present in geometry only files
             return
 
         self.msg("Exporting keyframe %s"%parent_block.name)
@@ -843,11 +850,19 @@ are supported." % self.EXPORT_VERSION""")
         kfc.startTime = (self.fstart - 1) * self.fspeed
         kfc.stopTime = (self.fend - self.fstart) * self.fspeed
 
+        if max(len(rot_curve), len(trans_curve), len(scale_curve)) <= 1:
+            # only add data if number of keys is > 1
+            # (see importer comments with importKfRoot: a single frame
+            # keyframe denotes an interpolator without further data)
+            # insufficient keys, so we're done!
+            return
+
         # add the keyframe data
         if self.version < 0x0A020000:
             kfd = self.createBlock("NiKeyframeData")
             kfc.data = kfd
         else:
+            # number of frames is > 1, so add transform data
             kfd = self.createBlock("NiTransformData")
             kfi.data = kfd
 

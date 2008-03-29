@@ -2388,6 +2388,37 @@ but no such controller type found in corresponding node, so skipping"""
                     % nodename)
             # yes! attach interpolator
             controller.interpolator = controlledblock.interpolator
+            # in case of a NiTransformInterpolator without a data block
+            # we still must re-export the interpolator for Oblivion to
+            # accept the file
+            # so simply add dummy keyframe data for this one with just a single
+            # key to flag the exporter to export the keyframe as interpolator
+            # (i.e. length 1 keyframes are simply interpolators)
+            if isinstance(controller.interpolator,
+                          NifFormat.NiTransformInterpolator) \
+                and controller.interpolator.data is None:
+                # create data block
+                kfi = controller.interpolator
+                kfi.data = NifFormat.NiTransformData()
+                # fill with info from interpolator
+                kfd = controller.interpolator.data
+                # copy rotation
+                kfd.numRotationKeys = 1
+                kfd.rotationType = NifFormat.KeyType.LINEAR_KEY
+                kfd.quaternionKeys.updateSize()
+                kfd.quaternionKeys[0].time = 0.0
+                kfd.quaternionKeys[0].value.x = kfi.rotation.x
+                kfd.quaternionKeys[0].value.y = kfi.rotation.y
+                kfd.quaternionKeys[0].value.z = kfi.rotation.z
+                kfd.quaternionKeys[0].value.w = kfi.rotation.w
+                # copy translation
+                kfd.translations.numKeys = 1
+                kfd.translations.keys.updateSize()
+                kfd.translations.keys[0].time = 0.0
+                kfd.translations.keys[0].value.x = kfi.translation.x
+                kfd.translations.keys[0].value.y = kfi.translation.y
+                kfd.translations.keys[0].value.z = kfi.translation.z
+                # ignore scale, usually contains invalid data in interpolator
 
         # DEBUG: save the file for manual inspection
         niffile = open("C:\\test.nif", "wb")
