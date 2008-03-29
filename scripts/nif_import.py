@@ -749,7 +749,7 @@ WARNING: bspline animation data found, but bspline import not yet supported;
                     self.msg('Scale keys...', 4)
                     for scaleKey in scales.keys:
                         # time 0.0 is frame 1
-                        frame = 1 + int(scaleKey.time * self.fps)
+                        frame = 1 + int(scaleKey.time * self.fps + 0.5)
                         sizeVal = scaleKey.value
                         size = sizeVal / niBone_bind_scale # Schannel = Stotal / Sbind
                         b_posebone.size = Blender.Mathutils.Vector(size, size, size)
@@ -769,7 +769,7 @@ WARNING: bspline animation data found, but bspline import not yet supported;
                                                      kfd.xyzRotations[1].keys,
                                                      kfd.xyzRotations[2].keys):
                             # time 0.0 is frame 1
-                            frame = 1 + int(key.time * self.fps)
+                            frame = 1 + int(key.time * self.fps + 0.5)
                             euler = Blender.Mathutils.Euler(
                                 [xkey.value*180.0/math.pi,
                                  ykey.value*180.0/math.pi,
@@ -792,7 +792,7 @@ WARNING: bspline animation data found, but bspline import not yet supported;
                         self.msg('Rotation keys...(quaternions)', 4)
                         quaternionKeys = kfd.quaternionKeys
                         for key in quaternionKeys:
-                            frame = 1 + int(key.time * self.fps)
+                            frame = 1 + int(key.time * self.fps + 0.5)
                             keyVal = key.value
                             quat = Blender.Mathutils.Quaternion([keyVal.w, keyVal.x, keyVal.y,  keyVal.z])
                             # beware, CrossQuats takes arguments in a
@@ -816,7 +816,7 @@ WARNING: rotation animation data of type %i found, but this type is not yet
                     self.msg('Translation keys...', 4)
                     for key in translations.keys:
                         # time 0.0 is frame 1
-                        frame = 1 + int(key.time * self.fps)
+                        frame = 1 + int(key.time * self.fps + 0.5)
                         keyVal = key.value
                         trans = Blender.Mathutils.Vector(keyVal.x, keyVal.y, keyVal.z)
                         locVal = (trans - niBone_bind_trans) * niBone_bind_rot_inv * (1.0/niBone_bind_scale)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
@@ -1696,7 +1696,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                         morphkeys = morphData.morphs[idxMorph].keys
                         for key in morphkeys:
                             x =  key.value
-                            frame =  1+int(key.time * self.fps)
+                            frame =  1+int(key.time * self.fps + 0.5)
                             b_curve.addBezier( ( frame, x ) )
                         # finally: return to base position
                         for bv, b_v_index in zip(baseverts, v_map):
@@ -1720,7 +1720,10 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
         buffer, so that they can be re-exported. Since the text buffer is
         cleared on each import only the last import will be exported
         correctly."""
-        txk = self.find_extra(niBlock, NifFormat.NiTextKeyExtraData)
+        if isinstance(niBlock, NifFormat.NiControllerSequence):
+            txk = niBlock.textKeys
+        else:
+            txk = self.find_extra(niBlock, NifFormat.NiTextKeyExtraData)
         if txk:
             # get animation text buffer, and clear it if it already exists
             try:
@@ -1732,7 +1735,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             frame = 1
             for key in txk.textKeys:
                 newkey = str(key.value).replace('\r\n', '/').rstrip('/')
-                frame = 1 + int(key.time * self.fps) # time 0.0 is frame 1
+                frame = 1 + int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                 animtxt.write('%i/%s\n'%(frame, newkey))
             
             # set start and end frames
@@ -1825,7 +1828,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
         # set the frames in the _ANIMATION_DATA list
         for key in _ANIMATION_DATA:
             # time 0 is frame 1
-            key['frame'] = 1 + int(key['data'].time * self.fps)
+            key['frame'] = 1 + int(key['data'].time * self.fps + 0.5)
 
         # sort by frame, I need this later
         _ANIMATION_DATA.sort(lambda key1, key2: cmp(key1['frame'], key2['frame']))
@@ -2075,7 +2078,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             # add the keys
             self.msg('Scale keys...', 4)
             for key in scales.keys:
-                frame = 1+int(key.time * self.fps) # time 0.0 is frame 1
+                frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                 Blender.Set('curframe', frame)
                 b_obj.SizeX = key.value
                 b_obj.SizeY = key.value
@@ -2089,7 +2092,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                 xyzRotations = kfd.xyzRotations
                 self.msg('Rotation keys...(euler)', 4)
                 for key in xyzRotations:
-                    frame = 1+int(key.time * self.fps) # time 0.0 is frame 1
+                    frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                     Blender.Set('curframe', frame)
                     b_obj.RotX = key.value.x * self.R2D
                     b_obj.RotY = key.value.y * self.R2D
@@ -2100,7 +2103,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                 quaternionKeys = kfd.quaternionKeys
                 self.msg('Rotation keys...(quaternions)', 4)
                 for key in quaternionKeys:
-                    frame = 1+int(key.time * self.fps) # time 0.0 is frame 1
+                    frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                     Blender.Set('curframe', frame)
                     rot = Blender.Mathutils.Quaternion(key.value.w, key.value.x, key.value.y, key.value.z).toEuler()
                     b_obj.RotX = rot.x * self.R2D
@@ -2110,7 +2113,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             
             self.msg('Translation keys...', 4)
             for key in translations.keys:
-                frame = 1+int(key.time * self.fps) # time 0.0 is frame 1
+                frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                 Blender.Set('curframe', frame)
                 b_obj.LocX = key.value.x
                 b_obj.LocY = key.value.y
@@ -2354,6 +2357,10 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
         # check that this is an Oblivion style kf file
         if not isinstance(kf_root, NifFormat.NiControllerSequence):
             raise NifImportError("non-Oblivion .kf import not supported")
+
+        # import text keys
+        self.importTextkey(kf_root)
+
 
         # go over all controlled blocks
         for controlledblock in kf_root.controlledBlocks:
