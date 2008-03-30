@@ -1,3 +1,9 @@
+Version 2.3.0 (Mar 30, 2008)
+* Import/Export: experimental support for Oblivion animation
+  - bspline data is skipped on import
+  - only tested on character animations (skeletonbeast.nif + any of the
+  character/_male keyframe animations that don't contain bsplines)
+
 Version 2.2.11 (Mar 21, 2008)
 * Export: NiVertexColorProperty and NiZBufferProperty blocks for
 Sid Meier's Railroads

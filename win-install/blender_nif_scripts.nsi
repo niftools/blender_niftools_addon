@@ -39,8 +39,8 @@ SetCompressor /SOLID lzma
 !include "WordFunc.nsh"
 !insertmacro VersionCompare
 
-!define VERSION "2.2.11"
-!define PYFFIVERSION "0.9.1"
+!define VERSION "2.3.0"
+!define PYFFIVERSION "0.10.6"
 
 Name "Blender NIF Scripts ${VERSION}"
 Var BLENDERHOME    ; blender settings location
