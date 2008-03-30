@@ -2780,4 +2780,4 @@ def fileselect_callback(filename):
 
 if __name__ == '__main__':
     _CONFIG = NifConfig() # use global so gui elements don't go out of skope
-    Blender.Window.FileSelector(fileselect_callback, "Export NIF", _CONFIG.config["EXPORT_FILE"])
+    Blender.Window.FileSelector(fileselect_callback, "Export NIF/KF", _CONFIG.config["EXPORT_FILE"])
