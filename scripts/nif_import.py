@@ -469,10 +469,26 @@ WARNING: constraint for billboard node on %s added but target not set due to
         to the closest bone in the armature. Note that
         niArmature must have been imported previously as an armature, along
         with all its bones. This function only imports meshes and armature
-        ninodes."""
+        ninodes.
+
+        If this imports a mesh, then it returns the a nif block and a mesh
+        object. The nif block is the one relative to which the mesh transform
+        is calculated (so the mesh should be parented to the blender object
+        corresponding to this block by the caller). It corresponds either to
+        a Blender bone or to a Blender armature."""
         # check if the block is non-null
-        if not niBlock: return None, None
-        branch_parent = self.get_closest_bone(niBlock, skelroot = niArmature)
+        if not niBlock:
+            return None, None
+        # get the block that is considered as parent of this block within this
+        # branch; this is a block corresponding to a bone in Blender
+        # if niBlock is a bone, then this is the branch parent
+        if self.is_bone(niBlock):
+            branch_parent = niBlock
+        # otherwise, find closest bone in this armature
+        else:
+            branch_parent = self.get_closest_bone(niBlock, skelroot = niArmature)
+        # no bone parent, so then simply take nif block of armature object as
+        # parent
         if not branch_parent:
             branch_parent = niArmature
         # is it a mesh?
@@ -481,7 +497,7 @@ WARNING: constraint for billboard node on %s added but target not set due to
 
             self.msg("building mesh %s in importArmatureBranch"%
                      niBlock.name, 3)
-            # apply transform relative to the armature node
+            # apply transform relative to the branch parent
             return branch_parent, self.importMesh(niBlock,
                                                   group_mesh = group_mesh,
                                                   applytransform = True,
@@ -496,8 +512,8 @@ WARNING: constraint for billboard node on %s added but target not set due to
         # is it a NiNode in the niArmature tree (possibly niArmature itself,
         # on first call)?
         elif isinstance(niBlock, NifFormat.NiNode):
-            children = niBlock.children
-            if children:
+            # import children
+            if niBlock.children:
                 # check if geometries should be merged on import
                 node_name = niBlock.name
                 geom_group = self.is_grouping_node(niBlock)
@@ -528,21 +544,59 @@ WARNING: constraint for billboard node on %s added but target not set due to
                     # check if it is parented to a bone or not
                     if b_obj_branch_parent != niArmature:
                         # object was parented to a bone
-                        # first find the matrix in armature space we want
-                        # the mesh to have
-                        a_geom_matrix = self.importMatrix(b_obj_branch_parent,
-                                                          relative_to = niArmature)
-                        # next find the tail matrix of the bone parent
-                        # first get blender bone name
-                        b_par_bone_name = self.names[b_obj_branch_parent]
+
+                        # get parent bone and its name
+                        b_par_bone_name = self.names[branch_parent]
                         b_par_bone = b_armature.data.bones[b_par_bone_name]
-                        a_tail_matrix = b_par_bone.matrix['ARMATURESPACE'].copy()
-                        a_tail_pos    = b_par_bone.tail['ARMATURESPACE']
-                        a_tail_matrix[3][0] = a_tail_pos[0]
-                        a_tail_matrix[3][1] = a_tail_pos[1]
-                        a_tail_matrix[3][2] = a_tail_pos[2]
+## *** OLD INCOMPREHENSIBLE CODE ***
+##                        # first find the matrix in armature space
+##                        # of the bone
+##                        a_geom_matrix = self.importMatrix(branch_parent,
+##                                                          relative_to = niArmature)
+##                        # next find the tail matrix of the bone parent
+##                        # first get blender bone name
+##                        b_par_bone_name = self.names[b_obj_branch_parent]
+##                        b_par_bone = b_armature.data.bones[b_par_bone_name]
+##                        a_tail_matrix = b_par_bone.matrix['ARMATURESPACE'].copy()
+##                        a_tail_pos    = b_par_bone.tail['ARMATURESPACE']
+##                        a_tail_matrix[3][0] = a_tail_pos[0]
+##                        a_tail_matrix[3][1] = a_tail_pos[1]
+##                        a_tail_matrix[3][2] = a_tail_pos[2]
+##                        # fix the object matrix relative to the bone tail
+##                        b_obj.setMatrix(a_geom_matrix * a_tail_matrix.invert())
+
+                        # get transform matrix of collision object;
+                        # note that this matrix is already relative to
+                        # branch_parent because the call to importMesh has
+                        # relative_to = branch_parent
+                        b_obj_matrix = b_obj.getMatrix()
+                        # fix transform
+                        # the bone has in the nif file an armature space transform
+                        # given by niBlock.getTransform(relative_to = niArmature)
+                        #
+                        # in detail:
+                        # a vertex in the collision object has global coordinates
+                        #   v * O * B
+                        # with v the vertex, O the object transform (b_obj_matrix)
+                        # and B the nif bone matrix
+                        # however... in blender the bone has transform B'
+                        #   B' = X * B
+                        # with X = self.bonesExtraMatrix[B]
+                        # so we post multiply O with X^{-1} to make sure the vertex
+                        # coordinates come out correctly:
+                        #   v * O * {X^-1} * B' = v * O * B
+                        extra = self.bonesExtraMatrix[branch_parent]
+                        extra.invert()
+                        b_obj_matrix = b_obj_matrix * extra
+                        # now that's out of the way... but objects parented to bones
+                        # get an extra translation along the tail! so...
+                        # cancel out the tail (the tail causes a translation along
+                        # the local Y axis)
                         # fix the object matrix relative to the bone tail
-                        b_obj.setMatrix(a_geom_matrix * a_tail_matrix.invert())
+                        b_obj_matrix[3][1] -= b_par_bone.length
+                        # set the matrix
+                        b_obj.setMatrix(b_obj_matrix)
+
                         # make it parent of the bone
                         b_armature.makeParentBone(
                             [b_obj], self.names[b_obj_branch_parent])
@@ -553,6 +607,58 @@ WARNING: constraint for billboard node on %s added but target not set due to
                         # (if b_obj is an armature then this falls back to the
                         # usual parenting)
                         b_armature.makeParentDeform([b_obj])
+
+            # import collisions
+            if niBlock.collisionObject:
+                # collision object parented to a bone
+                # first import collision object
+                bhk_body = niBlock.collisionObject.body
+                if not isinstance(bhk_body, NifFormat.bhkRigidBody):
+                    print("""\
+WARNING: unsupported collision structure under node %s""" % niBlock.name)
+                collision_objs = self.importBhkShape(bhk_body)
+                # get blender bone and its name
+                # (TODO also cover case where niBlock != branch_parent)
+                if niBlock != branch_parent:
+                    print("""\
+WARNING: collision object has non-bone parent, this is not supported
+         transform errors may result""")
+                b_par_bone_name = self.names[branch_parent]
+                b_par_bone = b_armature.data.bones[b_par_bone_name]
+                for b_obj in collision_objs:
+                    # get transform matrix of collision object
+                    # this is relative to niBlock
+                    # (TODO fix so it's relative to branch_parent!)
+                    b_obj_matrix = b_obj.getMatrix()
+                    # fix transform
+                    # the bone has in the nif file an armature space transform
+                    # given by niBlock.getTransform(relative_to = niArmature)
+                    #
+                    # in detail:
+                    # a vertex in the collision object has global coordinates
+                    #   v * O * B
+                    # with v the vertex, O the object transform (b_obj_matrix)
+                    # and B the nif bone matrix
+                    # however... in blender the bone has transform B'
+                    #   B' = X * B
+                    # with X = self.bonesExtraMatrix[B]
+                    # so we post multiply O with X^{-1} to make sure the vertex
+                    # coordinates come out correctly:
+                    #   v * O * {X^-1} * B' = v * O * B
+                    extra = self.bonesExtraMatrix[branch_parent]
+                    extra.invert()
+                    b_obj_matrix = b_obj_matrix * extra
+                    # now that's out of the way... but objects parented to bones
+                    # get an extra translation along the tail! so...
+                    # cancel out the tail (the tail causes a translation along
+                    # the local Y axis)
+                    # fix the object matrix relative to the bone tail
+                    b_obj_matrix[3][1] -= b_par_bone.length
+                    # set the matrix
+                    b_obj.setMatrix(b_obj_matrix)
+                    # make it parent of the bone
+                    b_armature.makeParentBone(
+                        [b_obj], self.names[niBlock])
 
         # anything else: throw away
         return None, None
@@ -691,12 +797,16 @@ WARNING: constraint for billboard node on %s added but target not set due to
                 niBone_bind_rot_inv = Matrix(niBone_bind_rot)
                 niBone_bind_rot_inv.invert()
                 niBone_bind_quat_inv = niBone_bind_rot_inv.toQuat()
-                # we also need the conversion of the original matrix to the new bone matrix, say X,
+                # we also need the conversion of the original matrix to the
+                # new bone matrix, say X,
                 # B' = X * B
-                # (with B' the Blender matrix and B the NIF matrix) because we need that
+                # (with B' the Blender matrix and B the NIF matrix) because we
+                # need that
                 # C' * B' = X * C * B
                 # and therefore
-                # C' = X * C * B * inverse(B') = X * C * inverse(X), where X = B' * inverse(B)
+                # C' = X * C * B * inverse(B') = X * C * inverse(X),
+                # where X = B' * inverse(B)
+                #
                 # In detail:
                 # [ SRX 0 ]   [ SRC 0 ]            [ SRX 0 ]
                 # [ TX  1 ] * [ TC  1 ] * inverse( [ TX  1 ] ) =
