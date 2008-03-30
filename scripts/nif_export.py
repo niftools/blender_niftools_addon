@@ -866,7 +866,8 @@ are supported." % self.EXPORT_VERSION""")
         kfc.startTime = (self.fstart - 1) * self.fspeed
         kfc.stopTime = (self.fend - self.fstart) * self.fspeed
 
-        if max(len(rot_curve), len(trans_curve), len(scale_curve)) <= 1:
+        if max(len(rot_curve), len(trans_curve), len(scale_curve)) <= 1 \
+            and self.version >= 0x0A020000:
             # only add data if number of keys is > 1
             # (see importer comments with importKfRoot: a single frame
             # keyframe denotes an interpolator without further data)
