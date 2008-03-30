@@ -27,8 +27,16 @@ a:hover.nav { color: #FF0000; background: transparent; }
 Although we have done our best to squash all bugs we could find, it is unlikely that we have found them all.
 </p>
 <h2>Highlights of this Release</h2>
+<p>
+With this release, Oblivion character animation import and export is introduced.
 <ul>
-<li>Oblivion character animation import and export.</li>
+<li>You can select a keyframe file to go with your skeleton in the import dialog.</li>
+<li>Length 1 animations are exported as interpolators without further
+transform data, and interpolators without further transform data are
+imported as length 1 animations.</li>
+<li>Bone priorities are modelled via a pose bone NULL constraint name ("priority:xx"); switch to pose mode and select a bone to view/edit the bone constraints.</li>
+<li>Note that bspline data is skipped on import. The console will tell you if this occurs.</li>
+<li>Only thouroughly tested on non-bspline character animations, that is, characters/_male/skeletonbeast.nif with any of the characters/_male/*.kf animations that do not contain bsplines (which includes many of those animations).</li>
 </ul>
 <h2>Using the Scripts</h2>
 <p>
@@ -47,7 +55,7 @@ http://niftools.sourceforge.net/wiki/Blender</a></li>
   <li><strong><a href="http://www.blender.org/download/get-blender/">Blender 2.45</a> or
 higher</strong>.</li>
   <li><strong><a href="http://www.python.org/download/">Python 2.5</a> or higher</strong>.</li>
-  <li><strong><a href="http://sourceforge.net/project/platformdownload.php?group_id=199269">PyFFI 0.9.1</a> or higher</strong>.</li>
+  <li><strong><a href="http://sourceforge.net/project/platformdownload.php?group_id=199269">PyFFI 0.10.6</a> or higher</strong>.</li>
 </ul>
 <h3>Manual Install</h3>
 <p>
