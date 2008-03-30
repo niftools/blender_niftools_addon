@@ -482,7 +482,7 @@ class NifConfig:
                 event_name = "EXPORT_ANIMATION_1",
                 val = (self.config["EXPORT_ANIMATION"] == 1))
             self.drawToggle(
-                text = "Export Animation Only (.kf) - MORROWIND ONLY FOR NOW",
+                text = "Export Animation Only (.kf)",
                 event_name = "EXPORT_ANIMATION_2",
                 val = (self.config["EXPORT_ANIMATION"] == 2))
             self.drawYSep()

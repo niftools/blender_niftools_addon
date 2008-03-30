@@ -1,8 +1,17 @@
 Version 2.3.0 (Mar 30, 2008)
 * Import/Export: experimental support for Oblivion animation
+  - added keyframe file selection to import dialog
+  - kf file is merged with nif tree on import
+  - includes text keys import from kf file
+  - length 1 animations are exported as interpolators without further
+  transform data, and interpolators without further transform data are
+  imported as length 1 animations
+  - bone priorities via NULL bone constraint name ("priority:xx")
+  - fixed euler rotation animation import (contributed by ahkmos)
   - bspline data is skipped on import
   - only tested on character animations (skeletonbeast.nif + any of the
   character/_male keyframe animations that don't contain bsplines)
+* install.bat for quick windows installation
 
 Version 2.2.11 (Mar 21, 2008)
 * Export: NiVertexColorProperty and NiZBufferProperty blocks for
