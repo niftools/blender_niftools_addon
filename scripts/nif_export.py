@@ -441,18 +441,23 @@ and turn off envelopes."""%ob.getName()
                        #block.parseMopp(verbose = True)
                        #print "=== END OF MOPP TREE ==="
 
-
-            # delete original scene root if a scene root object was already defined
-            if (root_block.numChildren == 1) and (root_block.children[0].name in ['Scene Root', 'Bip01']):
-                self.msg("Making '%s' the root block"%root_block.children[0].name)
+            # delete original scene root if a scene root object was already
+            # defined
+            if (root_block.numChildren == 1) \
+               and (root_block.children[0].name in ['Scene Root', 'Bip01']):
+                self.msg(
+                    "Making '%s' the root block" % root_block.children[0].name)
                 # remove root_block from self.blocks
                 self.blocks = [b for b in self.blocks if b != root_block] 
                 # set new root block
                 old_root_block = root_block
                 root_block = old_root_block.children[0]
                 # copy extra data and properties
-                for b in old_root_block.getExtraDatas():
-                    root_block.addExtraData(b)
+                for extra in old_root_block.getExtraDatas():
+                    # delete links in extras to avoid parentship problems
+                    extra.nextExtraData = None
+                    # now add it
+                    root_block.addExtraData(extra)
                 for b in old_root_block.getControllers():
                     root_block.addController(b)
                 for b in old_root_block.properties:
@@ -461,7 +466,7 @@ and turn off envelopes."""%ob.getName()
                     root_block.addEffect(b)
             else:
                 root_block.name = root_name
-     
+
             # create keyframe file:
             #----------------------
 

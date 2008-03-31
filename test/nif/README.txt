@@ -7,6 +7,7 @@ characters/_male/upperbody.nif
 characters/_male/lowerbody.nif
 characters/_male/hand.nif
 characters/_male/foot.nif
+characters/_male/castself.kf
 
 architecture/anvil/anvilcirclebench01.nif (bhk packed tristrips)
 architecture/magestower/frostatron.nif (rigidbody with translation)

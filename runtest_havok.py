@@ -8,6 +8,14 @@ from nif_test import runtest
 # otherwise it's an import test
 
 runtest("test/nif", [
+    ('skeleton.nif',
+      dict(IMPORT_SKELETON = 1),
+      []),
+    ('_skeleton.nif',
+     dict(EXPORT_VERSION = 'Oblivion',
+          EXPORT_OB_LAYER = 8, # biped
+          EXPORT_OB_MASS = 30.0),
+     ['Scene Root']),
     ('battleaxe.nif', {}, []),
     ('_battleaxe.nif',
      dict(EXPORT_VERSION = 'Oblivion',
