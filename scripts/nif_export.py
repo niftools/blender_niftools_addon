@@ -2069,78 +2069,74 @@ WARNING: lost %f in vertex weights while creating a skin partition for
         
         return mat
 
-    def getObjectSRT(self, obj, space):
+    def getObjectSRT(self, obj, space = 'localspace'):
         """Find scale, rotation, and translation components of an object in
         the rest pose. Returns a triple (bs, br, bt), where bs
         is a scale float, br is a 3x3 rotation matrix, and bt is a
         translation vector. It should hold that
-        ob.getMatrix(space) == bs * br * bt""" 
+
+        ob.getMatrix(space) == bs * br * bt
+
+        Note: for objects parented to bones, this will return the transform
+        relative to the bone parent head, this differs from getMatrix which
+        returns the transform relative to the armature.
+
+        space is either 'none' (gives identity transform) or 'localspace'"""
+        # TODO remove the space argument, always do local space
         # handle the trivial case first
         if (space == 'none'):
             return ( 1.0,
                      Blender.Mathutils.Matrix([1,0,0],[0,1,0],[0,0,1]),
                      Blender.Mathutils.Vector([0, 0, 0]) )
         
-        assert((space == 'worldspace') or (space == 'localspace'))
+        assert(space == 'localspace')
 
         # now write out spaces
         if (not type(obj) is Blender.Armature.Bone):
-            # get world matrix
-            mat = self.getObjectRestMatrix(obj, 'worldspace')
-            # handle localspace: L * Ba * B * P = W
-            # (with L localmatrix, Ba bone animation channel, B bone rest matrix (armature space), P armature parent matrix, W world matrix)
-            # so L = W * P^(-1) * (Ba * B)^(-1)
-            if (space == 'localspace'):
-                if (obj.getParent() != None):
-                    matparentinv = self.getObjectRestMatrix(obj.getParent(),
-                                                            'worldspace')
-                    matparentinv.invert()
-                    mat *= matparentinv
-                    if (obj.getParent().getType() == 'Armature'):
-                        # the object is parented to the armature...
-                        # we must get the matrix relative to the bone parent
-                        bone_parent_name = obj.getParentBoneName()
-                        if bone_parent_name:
-                            # only do this for localspace
-                            # (TODO upgrade to worldspace, if needed)
-                            assert(space == 'localspace')
-                            bone_parent = obj.getParent().getData().bones[
-                                bone_parent_name]
-                            # this gets object local transform matrix, relative
-                            # to the armature!! (not relative to the bone)
-                            mat = obj.getMatrix('localspace').copy()
-                            # so v * O * B' = v * mat
-                            # where B' is the Blender bone matrix in armature
-                            # space and O is the object matrix we would like
-                            # to find
-                            # hence, O = mat * B'^-1
-                            boneinv = bone_parent.matrix['ARMATURESPACE'].copy()
-                            boneinv.invert()
-                            mat = mat * boneinv
-                            # fix for extra transform
-                            #
-                            # in detail:
-                            # a vertex in the object has global coordinates
-                            #   v * T * O * B'
-                            # with v the vertex, O the object transform, T
-                            # the tail translation (so mat = T * O at this
-                            # point) and B the blender bone matrix
-                            # however... in the nif the bone has transform B
-                            #   B = X^-1 * B'
-                            # with X^-1 = self.bonesExtraMatrixInv[B]
-                            # so we post multiply mat with X to make sure the
-                            # vertex coordinates come out correctly:
-                            #   v * mat * X * B = v * T * O * B'
-                            try:
-                                extra = self.bonesExtraMatrixInv[
-                                    bone_parent_name].copy()
-                                extra.invert()
-                                mat = mat * extra
-                            except KeyError:
-                                # no extra local transform
-                                pass
-        else: # bones, get the rest matrix
-            assert(space == 'localspace') # in this function, we only need bones in localspace
+            mat = obj.getMatrix('localspace').copy()
+            bone_parent_name = obj.getParentBoneName()
+            # if there is a bone parent then the object is parented
+            # then get the matrix relative to the bone parent head
+            if bone_parent_name:
+                # mat = obj.getMatrix('localspace').copy()
+                # gets the object local transform matrix, relative
+                # to the armature!! (not relative to the bone)
+
+                # first get the bone
+                bone_parent = obj.getParent().getData().bones[
+                    bone_parent_name]
+                # so v * O * B' = v * mat
+                # where B' is the Blender bone matrix in armature
+                # space and O is the object matrix we would like
+                # to find
+                # hence, O = mat * B'^-1
+                boneinv = bone_parent.matrix['ARMATURESPACE'].copy()
+                boneinv.invert()
+                mat = mat * boneinv
+                # fix for extra transform
+                #
+                # in detail:
+                # a vertex in the object has global coordinates
+                #   v * T * O * B'
+                # with v the vertex, O the object transform, T
+                # the tail translation (so mat = T * O at this
+                # point) and B the blender bone matrix
+                # however... in the nif the bone has transform B
+                #   B = X^-1 * B'
+                # with X^-1 = self.bonesExtraMatrixInv[B]
+                # so we post multiply mat with X to make sure the
+                # vertex coordinates come out correctly:
+                #   v * mat * X * B = v * T * O * B'
+                try:
+                    extra = self.bonesExtraMatrixInv[
+                        bone_parent_name].copy()
+                    extra.invert()
+                    mat = mat * extra
+                except KeyError:
+                    # no extra local transform
+                    pass
+        else:
+            # bones, get the rest matrix
             mat = self.getBoneRestMatrix(obj, 'BONESPACE')
         
         return self.decomposeSRT(mat)
@@ -2217,20 +2213,6 @@ Workaround: apply size and rotation (CTRL-A).""")
                                               extra = extra, tail = tail)
         else:
             assert(False) # bug!
-
-
-
-    def getObjectRestMatrix(self, obj, space, extra = True):
-        """Get the object's rest matrix; space can be 'localspace' or
-        'worldspace'."""
-        mat = obj.getMatrix('worldspace').copy() # TODO cancel out IPO's
-        if (space == 'localspace'):
-            par = obj.getParent()
-            if par:
-                parinv = self.getObjectRestMatrix(par, 'worldspace')
-                parinv.invert()
-                mat *= parinv
-        return mat
 
 
 

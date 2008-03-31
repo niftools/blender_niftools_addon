@@ -2409,6 +2409,8 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             transform[3][2] = 3.5 * (bhkshape.firstPoint.z
                                      + bhkshape.secondPoint.z)
             ob.setMatrix(transform)
+
+            # return object
             return [ ob ]
 
         elif isinstance(bhkshape, NifFormat.bhkPackedNiTriStripsShape):
