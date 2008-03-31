@@ -97,12 +97,15 @@ class NifExport:
         # Blender bone names are unique so we can use them as keys.
         for ln in bonetxt.asLines():
             if len(ln)>0:
+                # reconstruct matrix from text
                 b, m = ln.split('/')
-                # Matrices are stored inverted for easier math later on.
                 try:
-                    mat = Blender.Mathutils.Matrix(*[[float(f) for f in row.split(',')] for row in m.split(';')])
+                    mat = Blender.Mathutils.Matrix(
+                        *[[float(f) for f in row.split(',')]
+                          for row in m.split(';')])
                 except:
                     raise NifExportError('Syntax error in BoneExMat buffer.')
+                # Matrices are stored inverted for easier math later on.
                 mat.invert()
                 self.bonesExtraMatrixInv[b] = mat # X^{-1}
 
@@ -1986,7 +1989,7 @@ WARNING: lost %f in vertex weights while creating a skin partition for
                     # armature using vertex weights
                     # or whether it is parented to some bone of the armature
                     parent_bone_name = ob_child.getParentBoneName()
-                    if parent_bone_name == None:
+                    if parent_bone_name is None:
                         self.exportNode(ob_child, 'localspace',
                                         parent_block, ob_child.getName())
                     else:
@@ -1994,12 +1997,21 @@ WARNING: lost %f in vertex weights while creating a skin partition for
                         # to the armature
                         # so let's find that bone!
                         nif_bone_name = self.getFullName(parent_bone_name)
-                        for block in self.blocks:
-                            if isinstance(block, NifFormat.NiNode):
-                                if block.name == nif_bone_name:
-                                    self.exportNode(ob_child, 'localspace',
-                                                    block, ob_child.getName())
-                                    break
+                        for bone_block in self.blocks:
+                            if isinstance(bone_block, NifFormat.NiNode) and \
+                                bone_block.name == nif_bone_name:
+                                # ok, we should parent to block
+                                # instead of to parent_block
+                                # two problems to resolve:
+                                #   - blender bone matrix is not the exported
+                                #     bone matrix!
+                                #   - blender objects parented to bone have
+                                #     extra translation along the Y axis
+                                #     with length of the bone ("tail")
+                                # this is handled in the getObjectSRT function
+                                self.exportNode(ob_child, 'localspace',
+                                                bone_block, ob_child.getName())
+                                break
                         else:
                             assert(False) # BUG!
 
@@ -2089,13 +2101,44 @@ WARNING: lost %f in vertex weights while creating a skin partition for
                         # we must get the matrix relative to the bone parent
                         bone_parent_name = obj.getParentBoneName()
                         if bone_parent_name:
-                            bone_parent = obj.getParent().getData().bones[bone_parent_name]
-                            # get bone parent matrix, including tail
-                            # NOTE still a transform bug to iron out (see babelfish.nif)
-                            matparentbone = self.getBoneRestMatrix(bone_parent, 'ARMATURESPACE', extra = True, tail = True)
-                            matparentboneinv = Blender.Mathutils.Matrix(matparentbone)
-                            matparentboneinv.invert()
-                            mat *= matparentboneinv
+                            # only do this for localspace
+                            # (TODO upgrade to worldspace, if needed)
+                            assert(space == 'localspace')
+                            bone_parent = obj.getParent().getData().bones[
+                                bone_parent_name]
+                            # this gets object local transform matrix, relative
+                            # to the armature!! (not relative to the bone)
+                            mat = obj.getMatrix('localspace').copy()
+                            # so v * O * B' = v * mat
+                            # where B' is the Blender bone matrix in armature
+                            # space and O is the object matrix we would like
+                            # to find
+                            # hence, O = mat * B'^-1
+                            boneinv = bone_parent.matrix['ARMATURESPACE'].copy()
+                            boneinv.invert()
+                            mat = mat * boneinv
+                            # fix for extra transform
+                            #
+                            # in detail:
+                            # a vertex in the object has global coordinates
+                            #   v * T * O * B'
+                            # with v the vertex, O the object transform, T
+                            # the tail translation (so mat = T * O at this
+                            # point) and B the blender bone matrix
+                            # however... in the nif the bone has transform B
+                            #   B = X^-1 * B'
+                            # with X^-1 = self.bonesExtraMatrixInv[B]
+                            # so we post multiply mat with X to make sure the
+                            # vertex coordinates come out correctly:
+                            #   v * mat * X * B = v * T * O * B'
+                            try:
+                                extra = self.bonesExtraMatrixInv[
+                                    bone_parent_name].copy()
+                                extra.invert()
+                                mat = mat * extra
+                            except KeyError:
+                                # no extra local transform
+                                pass
         else: # bones, get the rest matrix
             assert(space == 'localspace') # in this function, we only need bones in localspace
             mat = self.getBoneRestMatrix(obj, 'BONESPACE')
@@ -2180,7 +2223,7 @@ Workaround: apply size and rotation (CTRL-A).""")
     def getObjectRestMatrix(self, obj, space, extra = True):
         """Get the object's rest matrix; space can be 'localspace' or
         'worldspace'."""
-        mat = Blender.Mathutils.Matrix(obj.getMatrix('worldspace')) # TODO cancel out IPO's
+        mat = obj.getMatrix('worldspace').copy() # TODO cancel out IPO's
         if (space == 'localspace'):
             par = obj.getParent()
             if par:
@@ -2369,7 +2412,8 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
                 raise ValueError('not a packed list of collisions')
 
         mesh = obj.data
-        transform = obj.getMatrix('localspace').copy()
+        transform = Blender.Mathutils.Matrix(
+            *self.getObjectMatrix(obj, 'localspace').asList())
         rotation = transform.rotationPart()
 
         vertices = [vert.co * transform for vert in mesh.verts]
@@ -2448,7 +2492,8 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
             coltf.unknown8Bytes[5] = 9
             coltf.unknown8Bytes[6] = 253
             coltf.unknown8Bytes[7] = 4
-            hktf = obj.getMatrix('localspace').copy()
+            hktf = Blender.Mathutils.Matrix(
+                *self.getObjectMatrix(obj, 'localspace').asList())
             # the translation part must point to the center of the data
             # so calculate the center in local coordinates
             center = Blender.Mathutils.Vector((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0)
@@ -2500,7 +2545,8 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
             colcaps.radius = (maxx + maxy - minx - miny) / 4.0
             colcaps.radius1 = colcaps.radius
             colcaps.radius2 = colcaps.radius
-            transform = obj.getMatrix('localspace').copy()
+            transform = Blender.Mathutils.Matrix(
+                *self.getObjectMatrix(obj, 'localspace').asList())
             vert1 = Blender.Mathutils.Vector( [ (maxx + minx)/2.0,
                                                 (maxy + miny)/2.0,
                                                 minz + colcaps.radius ] )
@@ -2526,7 +2572,8 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
             # convex hull polytope; not in Python API
             # bound type has value 5
             mesh = obj.data
-            transform = obj.getMatrix('localspace').copy()
+            transform = Blender.Mathutils.Matrix(
+                *self.getObjectMatrix(obj, 'localspace').asList())
             rotation = transform.rotationPart()
             scale = rotation.determinant()
             if scale < 0:

@@ -585,7 +585,7 @@ WARNING: constraint for billboard node on %s added but target not set due to
                         # so we post multiply O with X^{-1} to make sure the vertex
                         # coordinates come out correctly:
                         #   v * O * {X^-1} * B' = v * O * B
-                        extra = self.bonesExtraMatrix[branch_parent]
+                        extra = self.bonesExtraMatrix[branch_parent].copy()
                         extra.invert()
                         b_obj_matrix = b_obj_matrix * extra
                         # now that's out of the way... but objects parented to bones
@@ -1882,13 +1882,16 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
         # write correction matrices to text buffer
         for niBone, correction_matrix in self.bonesExtraMatrix.iteritems():
             # skip identity transforms
-            if sum(sum(abs(x) for x in row) for row in (correction_matrix - self.IDENTITY44)) < self.EPSILON: continue
+            if sum(sum(abs(x) for x in row)
+                   for row in (correction_matrix - self.IDENTITY44)) \
+                < self.EPSILON:
+                continue
             # 'pickle' the correction matrix
-            ln=''
+            line = ''
             for row in correction_matrix:
-                ln='%s;%s,%s,%s,%s' % (ln, row[0],row[1],row[2],row[3])
+                line = '%s;%s,%s,%s,%s' % (line, row[0], row[1], row[2], row[3])
             # write it to the text buffer
-            bonetxt.write('%s/%s\n' % (niBone.name, ln[1:]))
+            bonetxt.write('%s/%s\n' % (niBone.name, line[1:]))
         
 
     def storeNames(self):
