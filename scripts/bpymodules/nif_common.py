@@ -598,25 +598,29 @@ class NifConfig:
             self.drawLabel(
                 text = "Rigid Body Settings",
                 event_name = "EXPORT_OB_RIGIDBODY_LABEL",
-                num_items = 3, item = 0)
+                num_items = 4, item = 0)
             self.drawPushButton(
                 text = "Static",
                 event_name = "EXPORT_OB_RIGIDBODY_STATIC",
-                num_items = 3, item = 1)
+                num_items = 4, item = 1)
             self.drawPushButton(
                 text = "Clutter",
                 event_name = "EXPORT_OB_RIGIDBODY_CLUTTER",
-                num_items = 3, item = 2)
+                num_items = 4, item = 2)
+            self.drawPushButton(
+                text = "Creature",
+                event_name = "EXPORT_OB_RIGIDBODY_CREATURE",
+                num_items = 4, item = 3)
             self.drawNumber(
                 text = "BSX Flags:  ",
                 event_name = "EXPORT_OB_BSXFLAGS",
-                min_val = 2, max_val = 3,
+                min_val = 0, max_val = 63,
                 callback = self.updateObBSXFlags,
                 num_items = 2, item = 0)
             self.drawSlider(
                 text = "Mass:  ",
                 event_name = "EXPORT_OB_MASS",
-                min_val = 0.1, max_val = 150.0,
+                min_val = 0.1, max_val = 1500.0,
                 callback = self.updateObMass,
                 num_items = 2, item = 1)
             self.drawNumber(
@@ -829,6 +833,17 @@ class NifConfig:
             self.config["EXPORT_OB_QUALITYTYPE"] = 3 # fixed
             self.config["EXPORT_OB_WIND"] = 0
             self.config["EXPORT_OB_LAYER"] = 4 # clutter
+            self.config["EXPORT_OB_SOLID"] = True
+        elif evName == "EXPORT_OB_RIGIDBODY_CREATURE":
+            self.config["EXPORT_OB_MATERIAL"] = 7 # skin
+            self.config["EXPORT_OB_BSXFLAGS"] = 7 # anim + havok + skeleton
+            self.config["EXPORT_OB_MASS"] = 600.0 # single person's weight in Oblivion
+            self.config["EXPORT_OB_MOTIONSYSTEM"] = 6 # unknown
+            self.config["EXPORT_OB_UNKNOWNBYTE1"] = 2
+            self.config["EXPORT_OB_UNKNOWNBYTE2"] = 2
+            self.config["EXPORT_OB_QUALITYTYPE"] = 2 # keyframed
+            self.config["EXPORT_OB_WIND"] = 0
+            self.config["EXPORT_OB_LAYER"] = 8 # biped
             self.config["EXPORT_OB_SOLID"] = True
         Draw.Redraw(1)
 

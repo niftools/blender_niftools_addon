@@ -13,8 +13,12 @@ runtest("test/nif", [
       []),
     ('_skeleton.nif',
      dict(EXPORT_VERSION = 'Oblivion',
-          EXPORT_OB_LAYER = 8, # biped
-          EXPORT_OB_MASS = 605.0), # total mass, divided over all blocks
+          EXPORT_OB_MATERIAL = 7, # skin
+          EXPORT_OB_BSXFLAGS = 7, # anim + havok + skel
+          EXPORT_OB_MASS = 605.0, # total mass, divided over all blocks
+          EXPORT_OB_MOTIONSYSTEM = 6,
+          EXPORT_OB_QUALITYTYPE = 2,
+          EXPORT_OB_LAYER = 8), # biped
      ['Scene Root']),
     ('battleaxe.nif', {}, []),
     ('_battleaxe.nif',

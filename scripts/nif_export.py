@@ -2315,7 +2315,11 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
         # bhkCollisionObject -> bhkRigidBody
         if not parent_block.collisionObject:
             # note: collision settings are taken from lowerclasschair01.nif
-            colobj = self.createBlock("bhkCollisionObject")
+            if self.EXPORT_OB_LAYER == NifFormat.OblivionLayer.OL_BIPED:
+                # special collision object for creatures
+                colobj = self.createBlock("bhkBlendCollisionObject")
+            else:
+                colobj = self.createBlock("bhkCollisionObject")
             parent_block.collisionObject = colobj
             colobj.target = parent_block
             colobj.unknownShort = 1
