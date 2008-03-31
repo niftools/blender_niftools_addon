@@ -211,8 +211,9 @@ class NifImport:
             self.msgProgress("Importing data")
             # calculate and set frames per second
             if self.IMPORT_ANIMATION:
-                self.fps = self.getFramesPerSecond(root_blocks)
+                self.fps = self.getFramesPerSecond(root_blocks + kf_root_blocks)
                 self.scene.getRenderingContext().fps = self.fps
+
             # import all root blocks
             for block in root_blocks:
                 # hack for corrupt better bodies meshes
@@ -229,8 +230,9 @@ class NifImport:
                 # import this root block
                 self.msg("root block: %s" % (root.name), 3)
                 # merge animation from kf tree into nif tree
-                for kf_root in kf_root_blocks:
-                    self.importKfRoot(kf_root, root)
+                if self.IMPORT_ANIMATION:
+                    for kf_root in kf_root_blocks:
+                        self.importKfRoot(kf_root, root)
                 # import the nif tree
                 self.importRoot(root)
         except NifImportError, e: # in that case, we raise a menu too

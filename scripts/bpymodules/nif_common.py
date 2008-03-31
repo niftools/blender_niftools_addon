@@ -1,6 +1,6 @@
 """Common functions for the Blender nif import and export scripts."""
 
-__version__ = "2.3.0"
+__version__ = "2.3.1"
 __requiredpyffiversion__ = "0.10.6"
 __requiredblenderversion__ = "245"
 
@@ -704,8 +704,10 @@ class NifConfig:
             # browse and add keyframe file
             Blender.Window.FileSelector(
                 self.selectKeyframeFile, "Select Keyframe File", kffile)
+            self.config["IMPORT_ANIMATION"] = True
         elif evName == "IMPORT_KEYFRAMEFILE_REMOVE":
             self.config["IMPORT_KEYFRAMEFILE"] = ''
+            self.config["IMPORT_ANIMATION"] = False
         elif evName == "IMPORT_REALIGN_BONES_1":
             if self.config["IMPORT_REALIGN_BONES"] == 1:
                 self.config["IMPORT_REALIGN_BONES"] = 0
