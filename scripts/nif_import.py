@@ -216,17 +216,27 @@ class NifImport:
 
             # import all root blocks
             for block in root_blocks:
-                # hack for corrupt better bodies meshes
                 root = block
-                for b in (b for b in block.tree() if isinstance(b, NifFormat.NiGeometry)):
-                    if b.isSkin():
-                        if root in [c for c in b.skinInstance.skeletonRoot.children]:
-                            b.skinInstance.data.setTransform(root.getTransform() * b.skinInstance.data.getTransform())
-                            b.skinInstance.skeletonRoot = root
-                            # delete non-skeleton nodes if we're importing skeleton only
-                            if self.IMPORT_SKELETON == 1:
-                                nonbip_children = [ child for child in root.children if child.name[:6] != 'Bip01 ' ]
-                                for child in nonbip_children: root.removeChild(child)
+                # root hack for corrupt better bodies meshes
+                # and remove geometry from better bodies on skeleton import
+                for b in (b for b in block.tree()
+                          if isinstance(b, NifFormat.NiGeometry)
+                          and b.isSkin()):
+                    # check if root belongs to the children list of the
+                    # skeleton root (can only happen for better bodies meshes)
+                    if root in [c for c in b.skinInstance.skeletonRoot.children]:
+                        # fix parenting and update transform accordingly
+                        b.skinInstance.data.setTransform(
+                            root.getTransform()
+                            * b.skinInstance.data.getTransform())
+                        b.skinInstance.skeletonRoot = root
+                        # delete non-skeleton nodes if we're importing
+                        # skeleton only
+                        if self.IMPORT_SKELETON == 1:
+                            nonbip_children = (child for child in root.children
+                                               if child.name[:6] != 'Bip01 ')
+                            for child in nonbip_children:
+                                root.removeChild(child)
                 # import this root block
                 self.msg("root block: %s" % (root.name), 3)
                 # merge animation from kf tree into nif tree
