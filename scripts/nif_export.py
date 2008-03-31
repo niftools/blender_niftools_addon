@@ -68,6 +68,8 @@ class NifExport:
         Blender.Texture.BlendModes["LIGHTEN"] : NifFormat.ApplyMode.APPLY_HILIGHT,
         Blender.Texture.BlendModes["MULTIPLY"] : NifFormat.ApplyMode.APPLY_HILIGHT2
     }
+    FLOAT_MIN = -3.4028234663852886e+38
+    FLOAT_MAX = +3.4028234663852886e+38
 
     def msg(self, message, level=2):
         """Wrapper for debug messages."""
@@ -351,7 +353,7 @@ and turn off envelopes."""%ob.getName()
             # animations without keyframe animations crash the TESCS
             # if we are in that situation, add a trivial keyframe animation
             self.msg("Checking controllers")
-            if animtxt:
+            if animtxt and self.EXPORT_VERSION == "Morrowind":
                 has_keyframecontrollers = False
                 for block in self.blocks:
                     if isinstance(block, NifFormat.NiKeyframeController):
@@ -768,15 +770,52 @@ are supported." % self.EXPORT_VERSION""")
     # 1 / SX = scale part of inverse(X)
     # so having inverse(X) around saves on calculations
     def exportKeyframes(self, ipo, space, parent_block, bind_mat = None, extra_mat_inv = None):
-        if self.EXPORT_ANIMATION == 1:
+        if self.EXPORT_ANIMATION == 1 and self.version < 0x0A020000:
             # keyframe controllers are not present in geometry only files
+            # for more recent versions, the controller and interpolators are
+            # present, only the data is not present (see further on)
             return
 
-        self.msg("Exporting keyframe %s"%parent_block.name)
-        # -> get keyframe information
+        # only localspace keyframes need to be exported
+        assert(space == 'localspace')
+
+        # make sure the parent is of the right type
+        assert(isinstance(parent_block, NifFormat.NiNode))
         
-        assert(space == 'localspace') # we don't support anything else (yet)
-        assert(isinstance(parent_block, NifFormat.NiNode)) # make sure the parent is of the right type
+        # add a keyframecontroller block, and refer to this block in the
+        # parent's time controller
+        if self.version < 0x0A020000:
+            kfc = self.createBlock("NiKeyframeController")
+        else:
+            kfc = self.createBlock("NiTransformController")
+            kfi = self.createBlock("NiTransformInterpolator")
+            # link interpolator from the controller
+            kfc.interpolator = kfi
+            # set interpolator default data
+            scale, quat, trans = parent_block.getTransform().getScaleQuatTranslation()
+            kfi.translation.x = trans.x
+            kfi.translation.y = trans.y
+            kfi.translation.z = trans.z
+            kfi.rotation.x = quat.x
+            kfi.rotation.y = quat.y
+            kfi.rotation.z = quat.z
+            kfi.rotation.w = quat.w
+            kfi.scale = scale
+
+        parent_block.addController(kfc)
+
+        # fill in the non-trivial values
+        kfc.flags = 0x0008
+        kfc.frequency = 1.0
+        kfc.phase = 0.0
+        kfc.startTime = (self.fstart - 1) * self.fspeed
+        kfc.stopTime = (self.fend - self.fstart) * self.fspeed
+
+        if self.EXPORT_ANIMATION == 1:
+            # keyframe data is not present in geometry files
+            return
+
+        # -> get keyframe information
         
         # some calculations
         if bind_mat:
@@ -859,32 +898,7 @@ are supported." % self.EXPORT_VERSION""")
 
         # -> now comes the real export
 
-        # add a keyframecontroller block, and refer to this block in the parent's time controller
-        if self.version < 0x0A020000:
-            kfc = self.createBlock("NiKeyframeController")
-        else:
-            kfc = self.createBlock("NiTransformController")
-            kfi = self.createBlock("NiTransformInterpolator")
-            # link interpolator from the controller
-            kfc.interpolator = kfi
-            # set interpolator default data
-            scale, quat, trans = parent_block.getTransform().getScaleQuatTranslation()
-            kfi.translation.x = trans.x
-            kfi.translation.y = trans.y
-            kfi.translation.z = trans.z
-            kfi.rotation.x = quat.x
-            kfi.rotation.y = quat.y
-            kfi.rotation.z = quat.z
-            kfi.rotation.w = quat.w
-            kfi.scale = scale
-        parent_block.addController(kfc)
-
-        # fill in the non-trivial values
-        kfc.flags = 0x0008
-        kfc.frequency = 1.0
-        kfc.phase = 0.0
-        kfc.startTime = (self.fstart - 1) * self.fspeed
-        kfc.stopTime = (self.fend - self.fstart) * self.fspeed
+        self.msg("Exporting keyframe %s"%parent_block.name)
 
         if max(len(rot_curve), len(trans_curve), len(scale_curve)) <= 1 \
             and self.version >= 0x0A020000:
@@ -2318,11 +2332,23 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
             if self.EXPORT_OB_LAYER == NifFormat.OblivionLayer.OL_BIPED:
                 # special collision object for creatures
                 colobj = self.createBlock("bhkBlendCollisionObject")
+                colobj.flags = 9
+                colobj.unknownFloat1 = 1.0
+                colobj.unknownFloat2 = 1.0
+                # also add a controller for it
+                blendctrl = self.createBlock("bhkBlendController")
+                blendctrl.flags = 12
+                blendctrl.frequency = 1.0
+                blendctrl.phase = 0.0
+                blendctrl.startTime = self.FLOAT_MAX
+                blendctrl.stopTime = self.FLOAT_MIN
+                parent_block.addController(blendctrl)
             else:
+                # usual collision object
                 colobj = self.createBlock("bhkCollisionObject")
+                colobj.flags = 1
             parent_block.collisionObject = colobj
             colobj.target = parent_block
-            colobj.unknownShort = 1
 
             colbody = self.createBlock("bhkRigidBody")
             colobj.body = colbody
