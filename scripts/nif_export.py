@@ -593,15 +593,17 @@ are supported." % self.EXPORT_VERSION""")
         """
         Export a mesh/armature/empty object ob as child of parent_block.
         Export also all children of ob.
-        - space is 'none', 'worldspace', or 'localspace', and determines
-          relative to what object the transformation should be stored.
-        - parent_block is the parent nif block of the object (None for the root node)
-        - for the root node, ob is None, and node_name is usually the base
-          filename (either with or without extension)
+          - space is 'none', 'worldspace', or 'localspace', and determines
+            relative to what object the transformation should be stored.
+          - parent_block is the parent nif block of the object (None for the
+            root node)
+          - for the root node, ob is None, and node_name is usually the base
+            filename (either with or without extension)
         """
         self.msg("Exporting NiNode %s"%node_name)
 
-        # ob_type: determine the block type (None, 'Mesh', 'Empty' or 'Armature')
+        # ob_type: determine the block type
+        #          (None, 'Mesh', 'Empty' or 'Armature')
         # ob_ipo:  object animation ipo
         # node:    contains new NifFormat.NiNode instance
         if (ob == None):
@@ -629,7 +631,8 @@ are supported." % self.EXPORT_VERSION""")
                 # -> mesh data.
                 # If this has children or animations or more than one material
                 # it gets wrapped in a purpose made NiNode.
-                is_collision = (ob.getDrawType() == Blender.Object.DrawTypes['BOUNDBOX'])
+                is_collision = (ob.getDrawType()
+                                == Blender.Object.DrawTypes['BOUNDBOX'])
                 has_ipo = ob_ipo and len(ob_ipo.getCurves()) > 0
                 has_children = len(ob_children) > 0
                 is_multimaterial = len(set([f.mat for f in ob.data.faces])) > 1
@@ -1917,7 +1920,8 @@ WARNING: lost %f in vertex weights while creating a skin partition for
             # create a new block for this bone
             self.msg("Exporting NiNode for bone %s"%bone.name)
             node = self.createBlock("NiNode")
-            bones_node[bone.name] = node # doing this now makes linkage very easy in second run
+            # doing bone map now makes linkage very easy in second run
+            bones_node[bone.name] = node
 
             # add the node and the keyframe for this bone
             node.name = self.getFullName(bone.name)
@@ -1938,7 +1942,9 @@ WARNING: lost %f in vertex weights while creating a skin partition for
                 bonexmat_inv = Blender.Mathutils.Matrix()
                 bonexmat_inv.identity()
             if bones_ipo.has_key(bone.name):
-                self.exportKeyframes(bones_ipo[bone.name], 'localspace', node, bind_mat = bonerestmat, extra_mat_inv = bonexmat_inv)
+                self.exportKeyframes(
+                    bones_ipo[bone.name], 'localspace', node,
+                    bind_mat = bonerestmat, extra_mat_inv = bonexmat_inv)
 
             # does bone have priority value in NULL constraint?
             for constr in arm.getPose().bones[bone.name].constraints:
@@ -2242,7 +2248,8 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
         """Helper function to add collision objects to a node."""
 
         # is it packed
-        coll_ispacked = (obj.rbShapeBoundType == Blender.Object.RBShapes['POLYHEDERON'])
+        coll_ispacked = (obj.rbShapeBoundType
+                         == Blender.Object.RBShapes['POLYHEDERON'])
 
         # find physics properties
         material = self.EXPORT_OB_MATERIAL
@@ -2320,8 +2327,8 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
     def exportCollisionPacked(self, obj, colbody, layer, material):
         """Add object ob as packed collision object to collision body colbody.
         If parent_block hasn't any collisions yet, a new packed list is created.
-        If the current collision system is not a packed list of collisions (bhkPackedNiTriStripsShape), then
-        a ValueError is raised."""
+        If the current collision system is not a packed list of collisions
+        (bhkPackedNiTriStripsShape), then a ValueError is raised."""
 
         if not colbody.shape:
             colshape = self.createBlock("bhkPackedNiTriStripsShape")
@@ -2558,7 +2565,8 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
             fdistlist = [ fdistlist[fdict[hsh]] for hsh in fkeys ]
 
             if len(fnormlist) > 65535 or len(vertlist) > 65535:
-                raise NifExportError('ERROR%t|Too many faces/vertices. Decimate your mesh and try again.')
+                raise NifExportError("""
+ERROR%t|Too many faces/vertices. Decimate/split your mesh and try again.""")
             
             colhull = self.createBlock("bhkConvexVerticesShape")
             colhull.material = material
@@ -2779,5 +2787,8 @@ def fileselect_callback(filename):
     _CONFIG.run(NifConfig.TARGET_EXPORT, filename, config_callback)
 
 if __name__ == '__main__':
-    _CONFIG = NifConfig() # use global so gui elements don't go out of skope
-    Blender.Window.FileSelector(fileselect_callback, "Export NIF/KF", _CONFIG.config["EXPORT_FILE"])
+    # use global config variableso gui elements don't go out of skope
+    _CONFIG = NifConfig()
+    # open file selector window, and then call fileselect_callback
+    Blender.Window.FileSelector(
+        fileselect_callback, "Export NIF/KF", _CONFIG.config["EXPORT_FILE"])
