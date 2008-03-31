@@ -378,11 +378,20 @@ and turn off envelopes."""%ob.getName()
                     bsx.name = 'BSX'
                     bsx.integerData = self.EXPORT_OB_BSXFLAGS # enable collision
                     root_block.addExtraData(bsx)
-                # update rigid body center of gravity
+                # update rigid body center of gravity and mass
+                # first calculate distribution of mass
+                total_mass = 0
                 for block in self.blocks:
                     if isinstance(block, NifFormat.bhkRigidBody):
                         block.updateMassCenterInertia(
-                            mass = self.EXPORT_OB_MASS,
+                            solid = self.EXPORT_OB_SOLID)
+                        total_mass += block.mass
+                # now update the mass ensuring that total mass is
+                # self.EXPORT_OB_MASS
+                for block in self.blocks:
+                    if isinstance(block, NifFormat.bhkRigidBody):
+                        block.updateMassCenterInertia(
+                            mass = self.EXPORT_OB_MASS * block.mass / total_mass,
                             solid = self.EXPORT_OB_SOLID)
 
                 # many Oblivion nifs have a UPB, but export is disabled as
