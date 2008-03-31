@@ -973,7 +973,8 @@ are supported." % self.EXPORT_VERSION""")
     # parented to the root block
     #
     def exportAnimGroups(self, animtxt, block_parent):
-        if self.EXPORT_ANIMATION == 1: # animation group extra data is not present in geometry only files
+        if self.EXPORT_ANIMATION == 1:
+            # animation group extra data is not present in geometry only files
             return
 
         self.msg("Exporting animation groups")
@@ -993,11 +994,18 @@ are supported." % self.EXPORT_VERSION""")
         flist = []
         dlist = []
         for s in slist:
-            if ( s == '' ): continue # ignore empty lines
+            # ignore empty lines
+            if not s:
+                continue
+            # parse line
             t = s.split('/')
-            if (len(t) < 2): raise NifExportError("Syntax error in Anim buffer ('%s')"%s)
+            if (len(t) < 2):
+                raise NifExportError("Syntax error in Anim buffer ('%s')" % s)
             f = int(t[0])
-            if ((f < self.fstart) or (f > self.fend)): raise NifExportError("Error in Anim buffer: frame out of range (%i not in [%i, %i])"%(f, self.fstart, self.fend))
+            if ((f < self.fstart) or (f > self.fend)):
+                raise NifExportError("""\
+Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
+                                     % (f, self.fstart, self.fend))
             d = t[1].strip(' ')
             for i in range(2, len(t)):
                 d = d + '\r\n' + t[i].strip(' ')
@@ -1012,11 +1020,10 @@ are supported." % self.EXPORT_VERSION""")
         textextra = self.createBlock("NiTextKeyExtraData")
         block_parent.addExtraData(textextra)
         
-        # create a NiTextKey for each frame descriptor
+        # create a text key for each frame descriptor
         textextra.numTextKeys = len(flist)
         textextra.textKeys.updateSize()
-        for i in range(len(flist)):
-            key = textextra.textKeys[i]
+        for i, key in enumerate(textextra.textKeys):
             key.time = self.fspeed * (flist[i]-1)
             key.value = dlist[i]
 

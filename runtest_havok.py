@@ -14,7 +14,7 @@ runtest("test/nif", [
     ('_skeleton.nif',
      dict(EXPORT_VERSION = 'Oblivion',
           EXPORT_OB_LAYER = 8, # biped
-          EXPORT_OB_MASS = 600.0), # total mass, divided over all blocks
+          EXPORT_OB_MASS = 605.0), # total mass, divided over all blocks
      ['Scene Root']),
     ('battleaxe.nif', {}, []),
     ('_battleaxe.nif',
