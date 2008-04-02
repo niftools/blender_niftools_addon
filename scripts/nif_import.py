@@ -143,6 +143,11 @@ class NifImport:
         # importArmature
         self.bonePriorities = {}
 
+        # dictionary mapping bhkRigidBody objects to list of objects imported
+        # in Blender; after we've imported the tree, we use this dictionary
+        # to set the physics constraints (ragdoll etc)
+        self.havokObjects = {}
+
         # Blender scene
         self.scene = Blender.Scene.GetCurrent()
 
@@ -346,10 +351,16 @@ class NifImport:
         # store bone matrix offsets for re-export
         if self.bonesExtraMatrix:
             self.storeBonesExtraMatrix()
+
         # store original names for re-export
         if self.names:
             self.storeNames()
         
+        # now all havok objects are imported, so we are
+        # ready to import the havok constraints
+        for hkbody in self.havokObjects:
+            self.importHavokConstraints(hkbody)
+
         # parent selected meshes to imported skeleton
         if self.IMPORT_SKELETON == 1:
             b_obj.makeParentDeform(self.selectedObjects)
@@ -767,16 +778,9 @@ WARNING: collision object has non-bone parent, this is not supported
         niChildBones = [child for child in niArmature.children
                         if self.is_bone(child)]
         for niBone in niChildBones:
-            self.importBone(niBone, b_armature, b_armatureData, niArmature)
+            self.importBone(
+                niBone, b_armature, b_armatureData, niArmature)
         b_armatureData.update()
-
-        # set bone constraints (these are translated from bone constraints,
-        # won't work perfectly but it beats having nothing)
-        # must be done oudside edit mode hence after calling
-        # b_armatureData.update()
-        #for niBone in niChildBones:
-        #    self.importConstraint(niBone, b_armature, b_armatureData, niArmature)
-        #    ***
 
         # The armature has been created in editmode,
         # now we are ready to set the bone keyframes.
@@ -787,18 +791,12 @@ WARNING: collision object has non-bone parent, this is not supported
             # go through all armature pose bones
             # see http://www.elysiun.com/forum/viewtopic.php?t=58693
             self.msgProgress('Importing Animations')
-            for bone_idx, (bone_name, b_posebone) in enumerate(b_armature.getPose().bones.items()):
+            for bone_name, b_posebone in b_armature.getPose().bones.items():
                 # denote progress
                 self.msgProgress('Animation: %s' % bone_name)
                 self.msg('Importing animation for bone %s' % bone_name, 4)
                 niBone = self.blocks[bone_name]
 
-                # store bone priority, if applicable
-                if niBone in self.bonePriorities:
-                    constr = b_posebone.constraints.append(
-                        Blender.Constraint.Type.NULL)
-                    constr.name = "priority:%i" % self.bonePriorities[niBone]
-                
                 # get bind matrix (NIF format stores full transformations in keyframes,
                 # but Blender wants relative transformations, hence we need to know
                 # the bind position for conversion). Since
@@ -1005,6 +1003,19 @@ WARNING: rotation animation data of type %i found, but this type is not yet
                     if translations:
                         del scale_keys_dict
                         del rot_keys_dict
+
+        # constraints (priority)
+        # must be done oudside edit mode hence after calling
+        # b_armatureData.update()
+        for bone_name, b_posebone in b_armature.getPose().bones.items():
+            # find bone nif block
+            niBone = self.blocks[bone_name]
+            # store bone priority, if applicable
+            if niBone in self.bonePriorities:
+                constr = b_posebone.constraints.append(
+                    Blender.Constraint.Type.NULL)
+                constr.name = "priority:%i" % self.bonePriorities[niBone]                
+
         return b_armature
 
     def importBone(self, niBlock, b_armature, b_armatureData, niArmature):
@@ -1122,11 +1133,11 @@ WARNING: rotation animation data of type %i found, but this type is not yet
         self.bonesExtraMatrix[niBlock] = new_bone_matrix * old_bone_matrix_inv # new * inverse(old)
         # set bone children
         for niBone in niChildBones:
-            b_child_bone =  self.importBone(niBone, b_armature, b_armatureData, niArmature)
+            b_child_bone =  self.importBone(
+                niBone, b_armature, b_armatureData, niArmature)
             b_child_bone.parent = b_bone
 
         return b_bone
-
 
     def find_correction_matrix(self, niBlock, niArmature):
         """Returns the correction matrix for a bone."""
@@ -2347,6 +2358,14 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                 # apply transform
                 for ob in collision_objs:
                     ob.setMatrix(ob.getMatrix('localspace') * transform)
+            # set physics (actor, dynamic)
+            for ob in collision_objs:
+                # not yet in Python API
+                pass
+            # import constraints
+            # this is done once all objects are imported
+            # for now, store all imported havok shapes with object lists
+            self.havokObjects[bhkshape] = collision_objs
             # and return a list of transformed collision shapes
             return collision_objs
         
@@ -2499,9 +2518,104 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
         print("WARNING: unsupported bhk shape %s" % bhkshape.__class__.__name__)
         return []
 
+
+
+    def importHavokConstraints(self, hkbody):
+        """Imports a bone havok constraint as Blender object constraint."""
+        assert(isinstance(hkbody, NifFormat.bhkRigidBody))
+
+        # check for constraints
+        if not hkbody.constraints:
+            return
+
+        # find objects
+        if len(self.havokObjects[hkbody]) != 1:
+            self.msg("""\
+WARNING: rigid body with no or multiple shapes, constraints skipped""")
+            return
+
+        b_hkobj = self.havokObjects[hkbody][0]
+        
+        self.msg("importing constraints for %s" % b_hkobj.name)
+
+        # now import all constraints
+        for hkconstraint in hkbody.constraints:
+
+            # check constraint entities
+            if not hkconstraint.numEntities == 2:
+                self.msg("WARNING: constraint with more than 2 entities, skipped")
+                continue
+            if not hkconstraint.entities[0] is hkbody:
+                self.msg("WARNING: first constraint entity not self, skipped")
+                continue
+            if not hkconstraint.entities[1] in self.havokObjects:
+                self.msg("WARNING: second constraint entity not imported, skipped")
+                continue
+
+            # add the constraint as a rigid body joint
+            b_constr = b_hkobj.constraints.append(Blender.Constraint.Type.RIGIDBODYJOINT)
+            # set constraint target
+            b_constr[Blender.Constraint.Settings.TARGET] = \
+                self.havokObjects[hkconstraint.entities[1]][0]
+            # set the constraint parameters
+            if isinstance(hkconstraint, NifFormat.bhkRagdollConstraint):
+                hkdescriptor = hkconstraint.ragdoll
+            elif isinstance(hkconstraint, NifFormat.bhkMalleableConstraint):
+                if hkconstraint.type == 7:
+                    hkdescriptor = hkconstraint.ragdoll
+                elif hkconstraint.type == 2:
+                    hkdescriptor = hkconstraint.limitedHinge
+                else:
+                    raise ValueError("unknown malleable constraint type (%i)"
+                                     % hkconstraint.type)
+            else:
+                self.msg("WARNING: unknown constraint type (%s), skipped"
+                         % hkconstraint.__class__.__name__)
+                continue
+
+            pivot = Blender.Mathutils.Vector(
+                hkdescriptor.pivotA.x,
+                hkdescriptor.pivotA.y,
+                hkdescriptor.pivotA.z)
+
+            # the pivot point v is in hkbody coordinates
+            # however blender expects it in object coordinates, v'
+            # v * R * B = v' * O * T * B'
+            # with R = rigid body transform (usually unit tf)
+            # B = nif bone matrix
+            # O = blender object transform
+            # T = bone tail matrix (translation in Y direction)
+            # B' = blender bone matrix
+            # so we need to cancel out the object transformation by
+            # v' = v * R * B * B'^{-1} * T^{-1} * O^{-1}
+
+            # cancel out bone matrix correction
+            # note that B' = X * B with X = self.bonesExtraMatrix[B]
+            for niBone in self.bonesExtraMatrix:
+                if niBone.collisionObject \
+                   and niBone.collisionObject.body is hkbody:
+                    transform = self.bonesExtraMatrix[niBone]
+                    transform.invert()
+                    pivot = pivot * transform
+                break
+
+            # cancel out bone tail translation
+            if b_hkobj.parentbonename:
+                pivot[1] -= b_hkobj.getParent().data.bones[
+                    b_hkobj.parentbonename].length
+
+            # cancel out object transform
+            transform = b_hkobj.getMatrix('localspace').copy()
+            transform.invert()
+            pivot = pivot * transform
+
+            # set pivot point            
+            b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVX] = pivot[0]
+            b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVY] = pivot[1]
+            b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVZ] = pivot[2]
+
     def getUVLayerName(self, uvset):
         return "UVTex.%03i" % uvset if uvset != 0 else "UVTex"
-
 
 
 

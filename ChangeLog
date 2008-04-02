@@ -1,3 +1,7 @@
+Version 2.3.1 (***)
+* new script to set bone priorities on multiple bones at once
+* Oblivion skeleton import and export including havok and constraints
+
 Version 2.3.0 (Mar 30, 2008)
 * Import/Export: experimental support for Oblivion animation
   - added keyframe file selection to import dialog
