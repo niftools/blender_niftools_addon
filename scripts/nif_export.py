@@ -562,8 +562,8 @@ no priority set for bone %s, falling back on default value (%i)"""
                         controlledblock.setControllerType(ctrl.__class__.__name__)
                 else:
                     raise NifExportError("""\
-Keyframe export for '%s' is not supported. Only Morrowind and Oblivion keyframes
-are supported." % self.EXPORT_VERSION""")
+Keyframe export for '%s' is not supported. Only Morrowind and Oblivion
+keyframes are supported.""" % self.EXPORT_VERSION)
 
                 # make keyframe root block the root block to be written
                 root_block = kf_root
