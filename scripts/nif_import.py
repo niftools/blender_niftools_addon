@@ -2609,11 +2609,40 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
                          % hkconstraint.__class__.__name__)
                 continue
 
-            # set pivot point
+            # get pivot point
             pivot = Blender.Mathutils.Vector(
                 hkdescriptor.pivotA.x,
                 hkdescriptor.pivotA.y,
                 hkdescriptor.pivotA.z)
+
+            # get z- and x-axes of the constraint
+            if isinstance(hkdescriptor, NifFormat.RagdollDescriptor):
+                # for ragdoll, take z to be the twist axis (central axis of the
+                # cone, that is)
+                axis_z = Blender.Mathutils.Vector(
+                    hkdescriptor.twistA.x,
+                    hkdescriptor.twistA.y,
+                    hkdescriptor.twistA.z)
+                axis_x = Blender.Mathutils.Vector(
+                    hkdescriptor.planeA.x,
+                    hkdescriptor.planeA.y,
+                    hkdescriptor.planeA.z)
+                # for ragdoll, let x be the plane vector
+            elif isinstance(hkdescriptor, NifFormat.LimitedHingeDescriptor):
+                # for hinge, take z to be the the axis of rotation
+                axis_z = Blender.Mathutils.Vector(
+                    hkdescriptor.axleA.x,
+                    hkdescriptor.axleA.y,
+                    hkdescriptor.axleA.z)
+                # for hinge, x is the vector on the plane of rotation defining
+                # the zero angle
+                axis_x = Blender.Mathutils.Vector(
+                    hkdescriptor.perp2AxleInA1.x,
+                    hkdescriptor.perp2AxleInA1.y,
+                    hkdescriptor.perp2AxleInA1.z)
+            else:
+                raise ValueError("unknown descriptor %s"
+                                 % hkdescriptor.__class__.__name__)
 
             # the pivot point v is in hkbody coordinates
             # however blender expects it in object coordinates, v'
@@ -2626,6 +2655,15 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
             # so we need to cancel out the object transformation by
             # v' = v * R * B * B'^{-1} * T^{-1} * O^{-1}
 
+            # the local rotation L at the pivot point must be such that
+            # (axis_z + v) * R * B = ([0 0 1] * L + v') * O * T * B'
+            # so (taking the rotation parts of all matrices!!!)
+            # [0 0 1] * L = axis_z * R * B * B'^{-1} * T^{-1} * O^{-1}
+            # and similarly
+            # [1 0 0] * L = axis_x * R * B * B'^{-1} * T^{-1} * O^{-1}
+            # hence these give us the first and last row of L
+            # which is exactly enough to provide the euler angles
+
             # assume R is unit transform...
 
             # next, cancel out bone matrix correction
@@ -2637,6 +2675,9 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
                     transform = self.bonesExtraMatrix[niBone]
                     transform.invert()
                     pivot = pivot * transform
+                    transform = transform.rotationPart()
+                    axis_z = axis_z * transform
+                    axis_x = axis_x * transform
                 break
 
             # cancel out bone tail translation
@@ -2648,11 +2689,27 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
             transform = b_hkobj.getMatrix('localspace').copy()
             transform.invert()
             pivot = pivot * transform
+            transform = transform.rotationPart()
+            axis_z = axis_z * transform
+            axis_x = axis_x * transform
 
             # set pivot point            
             b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVX] = pivot[0]
             b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVY] = pivot[1]
             b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVZ] = pivot[2]
+
+            # set euler angles
+            constr_matrix = Blender.Mathutils.Matrix(
+                axis_x,
+                Blender.Mathutils.CrossVecs(axis_z, axis_x),
+                axis_z)
+            constr_euler = constr_matrix.toEuler()
+            b_constr[Blender.Constraint.Settings.CONSTR_RB_AXX] = constr_euler.x
+            b_constr[Blender.Constraint.Settings.CONSTR_RB_AXY] = constr_euler.y
+            b_constr[Blender.Constraint.Settings.CONSTR_RB_AXZ] = constr_euler.z
+            # DEBUG
+            assert((axis_x - Blender.Mathutils.Vector(1,0,0) * constr_matrix).length < 0.0001)
+            assert((axis_z - Blender.Mathutils.Vector(0,0,1) * constr_matrix).length < 0.0001)
 
     def getUVLayerName(self, uvset):
         return "UVTex.%03i" % uvset if uvset != 0 else "UVTex"
