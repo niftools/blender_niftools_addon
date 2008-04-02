@@ -2678,7 +2678,7 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
                     transform = transform.rotationPart()
                     axis_z = axis_z * transform
                     axis_x = axis_x * transform
-                break
+                    break
 
             # cancel out bone tail translation
             if b_hkobj.parentbonename:
