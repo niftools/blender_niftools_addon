@@ -81,16 +81,16 @@ def main(arg):
     # run script
     for bonename, bone in boneitems:
         # get priorty null constraint
-        print("setting bone priority on %s" % bonename)
+        print("setting priority %i on %s" % (PREF_PRIORITY.val, bonename))
         priorityconstr = None
         for constr in bone.constraints:
-            if constr.type == Blender.Constraints.Type.NULL \
+            if constr.type == Blender.Constraint.Type.NULL \
                and constr.name[:9] == "priority:":
                 priorityconstr = constr
                 break
         if not priorityconstr:
             priorityconstr = bone.constraints.append(
-                Blender.Constraints.Type.NULL)
+                Blender.Constraint.Type.NULL)
         priorityconstr.name = "priority:%i" % PREF_PRIORITY.val
 
     print 'Set bone priority finished in %.2f seconds' % (sys.time()-t)
