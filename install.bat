@@ -60,7 +60,7 @@ echo Installing files
 
 @echo on
 
-@for %%A in (scripts\nif_import.py, scripts\nif_export.py, scripts\mesh_weightsquash.py, scripts\mesh_hull.py) do copy "%%A" %BLENDERSCRIPTS%
+@for %%A in (scripts\nif_import.py, scripts\nif_export.py, scripts\mesh_weightsquash.py, scripts\mesh_hull.py, scripts\object_setbonepriority.py) do copy "%%A" %BLENDERSCRIPTS%
 
 @for %%A in (scripts\bpymodules\nif_common.py, scripts\bpymodules\nif_test.py) do copy "%%A" %BLENDERSCRIPTS%\bpymodules
 

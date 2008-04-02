@@ -295,6 +295,7 @@ Section
   File ..\scripts\nif_import.py
   File ..\scripts\mesh_weightsquash.py
   File ..\scripts\mesh_hull.py
+  File ..\scripts\object_setbonepriority.py
   ; Install libraries
   SetOutPath $BLENDERSCRIPTS\bpymodules
   File ..\scripts\bpymodules\nif_common.py
