@@ -2554,10 +2554,46 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
 
             # add the constraint as a rigid body joint
             b_constr = b_hkobj.constraints.append(Blender.Constraint.Type.RIGIDBODYJOINT)
+
+            # note: rigidbodyjoint parameters (from Constraint.c)
+            # CONSTR_RB_AXX 0.0
+            # CONSTR_RB_AXY 0.0
+            # CONSTR_RB_AXZ 0.0
+            # CONSTR_RB_EXTRAFZ 0.0
+            # CONSTR_RB_MAXLIMIT0 0.0
+            # CONSTR_RB_MAXLIMIT1 0.0
+            # CONSTR_RB_MAXLIMIT2 0.0
+            # CONSTR_RB_MAXLIMIT3 0.0
+            # CONSTR_RB_MAXLIMIT4 0.0
+            # CONSTR_RB_MAXLIMIT5 0.0
+            # CONSTR_RB_MINLIMIT0 0.0
+            # CONSTR_RB_MINLIMIT1 0.0
+            # CONSTR_RB_MINLIMIT2 0.0
+            # CONSTR_RB_MINLIMIT3 0.0
+            # CONSTR_RB_MINLIMIT4 0.0
+            # CONSTR_RB_MINLIMIT5 0.0
+            # CONSTR_RB_PIVX 0.0
+            # CONSTR_RB_PIVY 0.0
+            # CONSTR_RB_PIVZ 0.0
+            # CONSTR_RB_TYPE 12
+            # LIMIT 63
+            # PARSIZEY 63
+            # TARGET [Object "capsule.002"]
+
+            # limit 3, 4, 5 correspond to angular limits along x, y and z
+            # and are measured in degrees
+
+            # pivx/y/z is the pivot point
+
             # set constraint target
             b_constr[Blender.Constraint.Settings.TARGET] = \
                 self.havokObjects[hkconstraint.entities[1]][0]
-            # set the constraint parameters
+            # set rigid body type (generic)
+            b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE] = 12
+            # limiting parameters (limit everything)
+            b_constr[Blender.Constraint.Settings.LIMIT] = 63
+
+            # get constraint descriptor
             if isinstance(hkconstraint, NifFormat.bhkRagdollConstraint):
                 hkdescriptor = hkconstraint.ragdoll
             elif isinstance(hkconstraint, NifFormat.bhkMalleableConstraint):
@@ -2573,6 +2609,7 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
                          % hkconstraint.__class__.__name__)
                 continue
 
+            # set pivot point
             pivot = Blender.Mathutils.Vector(
                 hkdescriptor.pivotA.x,
                 hkdescriptor.pivotA.y,
