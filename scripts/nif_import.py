@@ -2589,8 +2589,11 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
             # so we need to cancel out the object transformation by
             # v' = v * R * B * B'^{-1} * T^{-1} * O^{-1}
 
-            # cancel out bone matrix correction
+            # assume R is unit transform...
+
+            # next, cancel out bone matrix correction
             # note that B' = X * B with X = self.bonesExtraMatrix[B]
+            # so multiply with the inverse of X
             for niBone in self.bonesExtraMatrix:
                 if niBone.collisionObject \
                    and niBone.collisionObject.body is hkbody:
