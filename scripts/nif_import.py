@@ -765,10 +765,18 @@ WARNING: collision object has non-bone parent, this is not supported
         # make armature editable and create bones
         b_armatureData.makeEditable()
         niChildBones = [child for child in niArmature.children
-                        if self.is_bone(child)]  
+                        if self.is_bone(child)]
         for niBone in niChildBones:
             self.importBone(niBone, b_armature, b_armatureData, niArmature)
         b_armatureData.update()
+
+        # set bone constraints (these are translated from bone constraints,
+        # won't work perfectly but it beats having nothing)
+        # must be done oudside edit mode hence after calling
+        # b_armatureData.update()
+        #for niBone in niChildBones:
+        #    self.importConstraint(niBone, b_armature, b_armatureData, niArmature)
+        #    ***
 
         # The armature has been created in editmode,
         # now we are ready to set the bone keyframes.
@@ -1001,6 +1009,10 @@ WARNING: rotation animation data of type %i found, but this type is not yet
 
     def importBone(self, niBlock, b_armature, b_armatureData, niArmature):
         """Adds a bone to the armature in edit mode."""
+        # check that niBlock is indeed a bone
+        if not self.is_bone(niBlock):
+            return None
+
         # bone length for nubs and zero length bones
         nub_length = 5.0
         scale = self.IMPORT_SCALE_CORRECTION
@@ -1008,108 +1020,112 @@ WARNING: rotation animation data of type %i found, but this type is not yet
         bone_name = self.importName(niBlock, 32)
         niChildBones = [ child for child in niBlock.children
                          if self.is_bone(child) ]
-        if self.is_bone(niBlock):
-            # create bones here...
-            b_bone = Blender.Armature.Editbone()
-            # head: get position from niBlock
-            armature_space_matrix = self.importMatrix(niBlock,
-                                                      relative_to = niArmature)
+        # create a new bone
+        b_bone = Blender.Armature.Editbone()
+        # head: get position from niBlock
+        armature_space_matrix = self.importMatrix(niBlock,
+                                                  relative_to = niArmature)
 
-            b_bone_head_x = armature_space_matrix[3][0]
-            b_bone_head_y = armature_space_matrix[3][1]
-            b_bone_head_z = armature_space_matrix[3][2]
-            # temporarily sets the tail as for a 0 length bone
-            b_bone_tail_x = b_bone_head_x
-            b_bone_tail_y = b_bone_head_y
-            b_bone_tail_z = b_bone_head_z
-            is_zero_length = True
-            # tail: average of children location
-            if len(niChildBones) > 0:
-                m_correction = self.find_correction_matrix(niBlock, niArmature)
-                child_matrices = [ self.importMatrix(child,
-                                                     relative_to = niArmature)
-                                   for child in niChildBones ]
-                b_bone_tail_x = sum(child_matrix[3][0]
-                                    for child_matrix
-                                    in child_matrices) / len(child_matrices)
-                b_bone_tail_y = sum(child_matrix[3][1]
-                                    for child_matrix
-                                    in child_matrices) / len(child_matrices)
-                b_bone_tail_z = sum(child_matrix[3][2]
-                                    for child_matrix
-                                    in child_matrices) / len(child_matrices)
-                # checking bone length
-                dx = b_bone_head_x - b_bone_tail_x
-                dy = b_bone_head_y - b_bone_tail_y
-                dz = b_bone_head_z - b_bone_tail_z
-                is_zero_length = abs(dx + dy + dz) * 200 < self.EPSILON
-            elif self.IMPORT_REALIGN_BONES == 2:
-                # The correction matrix value is based on the childrens' head
-                # positions.
-                # If there are no children then set it as the same as the
-                # parent's correction matrix.
-                m_correction = self.find_correction_matrix(niBlock._parent,
-                                                           niArmature)
-            
-            if is_zero_length:
-                # this is a 0 length bone, to avoid it being removed I set a default minimum length
-                if (self.IMPORT_REALIGN_BONES == 2) \
-                   or not self.is_bone(niBlock._parent):
-                    # no parent bone, or bone is realigned with correction. I just set one random direction.
-                    b_bone_tail_x = b_bone_head_x + (nub_length * scale)
-                else:
-                    # to keep things neat if bones aren't realigned on import I try and orient it as the vector between this
-                    # bone's head and the parent's tail
-                    parent_tail = b_armatureData.bones[self.names[niBlock._parent]].tail
-                    dx = b_bone_head_x - parent_tail[0]
-                    dy = b_bone_head_y - parent_tail[1]
-                    dz = b_bone_head_z - parent_tail[2]
-                    if abs(dx + dy + dz) * 200 < self.EPSILON:
-                        # no offset from the parent: follow the parent's
-                        # orientation
-                        parent_head = b_armatureData.bones[self.names[niBlock._parent]].head
-                        dx = parent_tail[0] - parent_head[0]
-                        dy = parent_tail[1] - parent_head[1]
-                        dz = parent_tail[2] - parent_head[2]
-                    direction = Vector(dx, dy, dz)
-                    direction.normalize()
-                    b_bone_tail_x = b_bone_head_x + (direction[0] * nub_length * scale)
-                    b_bone_tail_y = b_bone_head_y + (direction[1] * nub_length * scale)
-                    b_bone_tail_z = b_bone_head_z + (direction[2] * nub_length * scale)
-                    
-            # sets the bone heads & tails
-            b_bone.head = Vector(b_bone_head_x, b_bone_head_y, b_bone_head_z)
-            b_bone.tail = Vector(b_bone_tail_x, b_bone_tail_y, b_bone_tail_z)
-            
-            if self.IMPORT_REALIGN_BONES == 2:
-                # applies the corrected matrix explicitly
-                b_bone.matrix = m_correction.resize4x4() * armature_space_matrix
-            elif self.IMPORT_REALIGN_BONES == 1:
-                # do not do anything, keep unit matrix
-                pass
+        b_bone_head_x = armature_space_matrix[3][0]
+        b_bone_head_y = armature_space_matrix[3][1]
+        b_bone_head_z = armature_space_matrix[3][2]
+        # temporarily sets the tail as for a 0 length bone
+        b_bone_tail_x = b_bone_head_x
+        b_bone_tail_y = b_bone_head_y
+        b_bone_tail_z = b_bone_head_z
+        is_zero_length = True
+        # tail: average of children location
+        if len(niChildBones) > 0:
+            m_correction = self.find_correction_matrix(niBlock, niArmature)
+            child_matrices = [ self.importMatrix(child,
+                                                 relative_to = niArmature)
+                               for child in niChildBones ]
+            b_bone_tail_x = sum(child_matrix[3][0]
+                                for child_matrix
+                                in child_matrices) / len(child_matrices)
+            b_bone_tail_y = sum(child_matrix[3][1]
+                                for child_matrix
+                                in child_matrices) / len(child_matrices)
+            b_bone_tail_z = sum(child_matrix[3][2]
+                                for child_matrix
+                                in child_matrices) / len(child_matrices)
+            # checking bone length
+            dx = b_bone_head_x - b_bone_tail_x
+            dy = b_bone_head_y - b_bone_tail_y
+            dz = b_bone_head_z - b_bone_tail_z
+            is_zero_length = abs(dx + dy + dz) * 200 < self.EPSILON
+        elif self.IMPORT_REALIGN_BONES == 2:
+            # The correction matrix value is based on the childrens' head
+            # positions.
+            # If there are no children then set it as the same as the
+            # parent's correction matrix.
+            m_correction = self.find_correction_matrix(niBlock._parent,
+                                                       niArmature)
+        
+        if is_zero_length:
+            # this is a 0 length bone, to avoid it being removed
+            # set a default minimum length
+            if (self.IMPORT_REALIGN_BONES == 2) \
+               or not self.is_bone(niBlock._parent):
+                # no parent bone, or bone is realigned with correction
+                # set one random direction
+                b_bone_tail_x = b_bone_head_x + (nub_length * scale)
             else:
-                # no realign, so use original matrix
-                b_bone.matrix = armature_space_matrix
+                # to keep things neat if bones aren't realigned on import
+                # orient it as the vector between this
+                # bone's head and the parent's tail
+                parent_tail = b_armatureData.bones[
+                    self.names[niBlock._parent]].tail
+                dx = b_bone_head_x - parent_tail[0]
+                dy = b_bone_head_y - parent_tail[1]
+                dz = b_bone_head_z - parent_tail[2]
+                if abs(dx + dy + dz) * 200 < self.EPSILON:
+                    # no offset from the parent: follow the parent's
+                    # orientation
+                    parent_head = b_armatureData.bones[
+                        self.names[niBlock._parent]].head
+                    dx = parent_tail[0] - parent_head[0]
+                    dy = parent_tail[1] - parent_head[1]
+                    dz = parent_tail[2] - parent_head[2]
+                direction = Vector(dx, dy, dz)
+                direction.normalize()
+                b_bone_tail_x = b_bone_head_x + (direction[0] * nub_length * scale)
+                b_bone_tail_y = b_bone_head_y + (direction[1] * nub_length * scale)
+                b_bone_tail_z = b_bone_head_z + (direction[2] * nub_length * scale)
+                
+        # sets the bone heads & tails
+        b_bone.head = Vector(b_bone_head_x, b_bone_head_y, b_bone_head_z)
+        b_bone.tail = Vector(b_bone_tail_x, b_bone_tail_y, b_bone_tail_z)
+        
+        if self.IMPORT_REALIGN_BONES == 2:
+            # applies the corrected matrix explicitly
+            b_bone.matrix = m_correction.resize4x4() * armature_space_matrix
+        elif self.IMPORT_REALIGN_BONES == 1:
+            # do not do anything, keep unit matrix
+            pass
+        else:
+            # no realign, so use original matrix
+            b_bone.matrix = armature_space_matrix
 
-            # set bone name and store the niBlock for future reference
-            b_armatureData.bones[bone_name] = b_bone
-            # calculate bone difference matrix; we will need this when
-            # importing animation
-            old_bone_matrix_inv = Blender.Mathutils.Matrix(armature_space_matrix)
-            old_bone_matrix_inv.invert()
-            new_bone_matrix = Blender.Mathutils.Matrix(b_bone.matrix)
-            new_bone_matrix.resize4x4()
-            new_bone_matrix[3][0] = b_bone_head_x
-            new_bone_matrix[3][1] = b_bone_head_y
-            new_bone_matrix[3][2] = b_bone_head_z
-            # stores any correction or alteration applied to the bone matrix
-            self.bonesExtraMatrix[niBlock] = new_bone_matrix * old_bone_matrix_inv # new * inverse(old)
-            # set bone children
-            for niBone in niChildBones:
-                b_child_bone =  self.importBone(niBone, b_armature, b_armatureData, niArmature)
-                b_child_bone.parent = b_bone
-            return b_bone
-        return None
+        # set bone name and store the niBlock for future reference
+        b_armatureData.bones[bone_name] = b_bone
+        # calculate bone difference matrix; we will need this when
+        # importing animation
+        old_bone_matrix_inv = Blender.Mathutils.Matrix(armature_space_matrix)
+        old_bone_matrix_inv.invert()
+        new_bone_matrix = Blender.Mathutils.Matrix(b_bone.matrix)
+        new_bone_matrix.resize4x4()
+        new_bone_matrix[3][0] = b_bone_head_x
+        new_bone_matrix[3][1] = b_bone_head_y
+        new_bone_matrix[3][2] = b_bone_head_z
+        # stores any correction or alteration applied to the bone matrix
+        self.bonesExtraMatrix[niBlock] = new_bone_matrix * old_bone_matrix_inv # new * inverse(old)
+        # set bone children
+        for niBone in niChildBones:
+            b_child_bone =  self.importBone(niBone, b_armature, b_armatureData, niArmature)
+            b_child_bone.parent = b_bone
+
+        return b_bone
 
 
     def find_correction_matrix(self, niBlock, niArmature):
