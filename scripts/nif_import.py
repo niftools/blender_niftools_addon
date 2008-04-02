@@ -2619,15 +2619,31 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
             if isinstance(hkdescriptor, NifFormat.RagdollDescriptor):
                 # for ragdoll, take z to be the twist axis (central axis of the
                 # cone, that is)
+                # need to invert the axis to work well with Bullet's system
                 axis_z = Blender.Mathutils.Vector(
-                    hkdescriptor.twistA.x,
-                    hkdescriptor.twistA.y,
-                    hkdescriptor.twistA.z)
+                    -hkdescriptor.twistA.x,
+                    -hkdescriptor.twistA.y,
+                    -hkdescriptor.twistA.z)
+                # for ragdoll, let x be the plane vector
                 axis_x = Blender.Mathutils.Vector(
                     hkdescriptor.planeA.x,
                     hkdescriptor.planeA.y,
                     hkdescriptor.planeA.z)
-                # for ragdoll, let x be the plane vector
+                # set the angle limits
+                # (see http://niftools.sourceforge.net/wiki/Oblivion/Bhk_Objects/Ragdoll_Constraint
+                # for a nice picture explaining this)
+                b_constr[Blender.Constraint.Settings.CONSTR_RB_MINLIMIT5] = \
+                    hkdescriptor.twistMinAngle
+                b_constr[Blender.Constraint.Settings.CONSTR_RB_MAXLIMIT5] = \
+                    hkdescriptor.twistMaxAngle
+                b_constr[Blender.Constraint.Settings.CONSTR_RB_MINLIMIT3] = \
+                    -hkdescriptor.coneAngle
+                b_constr[Blender.Constraint.Settings.CONSTR_RB_MAXLIMIT3] = \
+                    hkdescriptor.coneAngle
+                b_constr[Blender.Constraint.Settings.CONSTR_RB_MINLIMIT4] = \
+                    hkdescriptor.planeMinAngle
+                b_constr[Blender.Constraint.Settings.CONSTR_RB_MAXLIMIT4] = \
+                    hkdescriptor.planeMaxAngle
             elif isinstance(hkdescriptor, NifFormat.LimitedHingeDescriptor):
                 # for hinge, take z to be the the axis of rotation
                 axis_z = Blender.Mathutils.Vector(
