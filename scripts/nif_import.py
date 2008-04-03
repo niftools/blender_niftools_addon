@@ -336,6 +336,13 @@ class NifImport:
             b_obj = self.importBranch(root_block)
         elif isinstance(root_block, NifFormat.NiNode):
             # root node is dummy scene node
+            # process collision
+            if root_block.collisionObject:
+                bhk_body = root_block.collisionObject.body
+                if not isinstance(bhk_body, NifFormat.bhkRigidBody):
+                    print("""\
+WARNING: unsupported collision structure under node %s""" % root_block.name)
+                self.importBhkShape(bhk_body)
             # process all its children
             for child in root_block.children:
                 b_obj = self.importBranch(child)
