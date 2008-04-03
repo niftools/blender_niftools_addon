@@ -2321,6 +2321,8 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             # Blender.Object.RBShapes['CONVEXHULL'] should be 5
             ob.rbShapeBoundType = 5
             ob.drawMode = Blender.Object.DrawModes['WIRE']
+            # radius: quick estimate
+            ob.rbRadius = min(vert.co.length for vert in me.verts)
 
             # also remove duplicate vertices
             numverts = len(me.verts)
@@ -2365,10 +2367,14 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                 # apply transform
                 for ob in collision_objs:
                     ob.setMatrix(ob.getMatrix('localspace') * transform)
-            # set physics (actor, dynamic)
+            # set physics flags and mass
             for ob in collision_objs:
-                # not yet in Python API
-                pass
+                ob.rbFlags = \
+                    Blender.Object.RBFlags["ACTOR"] + \
+                    Blender.Object.RBFlags["DYNAMIC"] + \
+                    Blender.Object.RBFlags["RIGIDBODY"]
+                if bhkshape.mass > 0.0001:
+                    ob.rbMass = bhkshape.mass
             # import constraints
             # this is done once all objects are imported
             # for now, store all imported havok shapes with object lists
@@ -2399,6 +2405,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             # set bounds type
             ob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
             ob.rbShapeBoundType = Blender.Object.RBShapes['BOX']
+            ob.rbRadius = min(maxx, maxy, maxz)
             return [ ob ]
 
         elif isinstance(bhkshape, NifFormat.bhkSphereShape):
@@ -2418,6 +2425,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             # set bounds type
             ob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
             ob.rbShapeBoundType = Blender.Object.RBShapes['SPHERE']
+            ob.rbRadius = maxx
             return [ ob ]
 
         elif isinstance(bhkshape, NifFormat.bhkCapsuleShape):
@@ -2442,6 +2450,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             # set bounds type
             ob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
             ob.rbShapeBoundType = Blender.Object.RBShapes['CYLINDER']
+            ob.rbRadius = maxx
 
             # find transform
             normal = (bhkshape.firstPoint - bhkshape.secondPoint) / length
@@ -2504,6 +2513,8 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             ob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
             ob.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
             ob.drawMode = Blender.Object.DrawModes['WIRE']
+            # radius: quick estimate
+            ob.rbRadius = min(vert.co.length for vert in me.verts)
 
             # also remove duplicate vertices
             numverts = len(me.verts)
@@ -2652,17 +2663,18 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
                 b_constr[Blender.Constraint.Settings.CONSTR_RB_MAXLIMIT4] = \
                     hkdescriptor.planeMaxAngle
             elif isinstance(hkdescriptor, NifFormat.LimitedHingeDescriptor):
-                # for hinge, take z to be the the axis of rotation
-                axis_z = Blender.Mathutils.Vector(
-                    hkdescriptor.axleA.x,
-                    hkdescriptor.axleA.y,
-                    hkdescriptor.axleA.z)
-                # for hinge, x is the vector on the plane of rotation defining
+                # for hinge, z is the vector on the plane of rotation defining
                 # the zero angle
-                axis_x = Blender.Mathutils.Vector(
+                axis_z = Blender.Mathutils.Vector(
                     hkdescriptor.perp2AxleInA1.x,
                     hkdescriptor.perp2AxleInA1.y,
                     hkdescriptor.perp2AxleInA1.z)
+                # for hinge, take x to be the the axis of rotation
+                # (this corresponds with Blender's convention for hinges)
+                axis_x = Blender.Mathutils.Vector(
+                    hkdescriptor.axleA.x,
+                    hkdescriptor.axleA.y,
+                    hkdescriptor.axleA.z)
             else:
                 raise ValueError("unknown descriptor %s"
                                  % hkdescriptor.__class__.__name__)
@@ -2733,6 +2745,16 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
             # DEBUG
             assert((axis_x - Blender.Mathutils.Vector(1,0,0) * constr_matrix).length < 0.0001)
             assert((axis_z - Blender.Mathutils.Vector(0,0,1) * constr_matrix).length < 0.0001)
+
+            # the generic rigid body type is very buggy... so for simulation
+            # purposes let's transform it into ball and hinge
+            if isinstance(hkdescriptor, NifFormat.RagdollDescriptor):
+                # ball
+                b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE] = 1
+            if isinstance(hkdescriptor, NifFormat.LimitedHingeDescriptor):
+                # hinge
+                b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE] = 2
+
 
     def getUVLayerName(self, uvset):
         return "UVTex.%03i" % uvset if uvset != 0 else "UVTex"
