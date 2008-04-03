@@ -2372,7 +2372,8 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                 ob.rbFlags = \
                     Blender.Object.RBFlags["ACTOR"] + \
                     Blender.Object.RBFlags["DYNAMIC"] + \
-                    Blender.Object.RBFlags["RIGIDBODY"]
+                    Blender.Object.RBFlags["RIGIDBODY"] + \
+                    Blender.Object.RBFlags["BOUNDS"]
                 if bhkshape.mass > 0.0001:
                     ob.rbMass = bhkshape.mass
             # import constraints
