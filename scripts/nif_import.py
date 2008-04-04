@@ -2656,9 +2656,9 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
                 b_constr[Blender.Constraint.Settings.CONSTR_RB_MAXLIMIT5] = \
                     hkdescriptor.twistMaxAngle
                 b_constr[Blender.Constraint.Settings.CONSTR_RB_MINLIMIT3] = \
-                    -hkdescriptor.coneAngle
+                    -hkdescriptor.coneMaxAngle
                 b_constr[Blender.Constraint.Settings.CONSTR_RB_MAXLIMIT3] = \
-                    hkdescriptor.coneAngle
+                    hkdescriptor.coneMaxAngle
                 b_constr[Blender.Constraint.Settings.CONSTR_RB_MINLIMIT4] = \
                     hkdescriptor.planeMinAngle
                 b_constr[Blender.Constraint.Settings.CONSTR_RB_MAXLIMIT4] = \
