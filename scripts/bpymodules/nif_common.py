@@ -580,37 +580,57 @@ class NifConfig:
                 event_name = "EXPORT_OB_COLLISIONHTML")
             self.drawYSep()
 
-            self.drawToggle(
-                text = "Use bhkListShape",
-                event_name = "EXPORT_BHKLISTSHAPE")
-            self.drawToggle(
-                text = "Export Mopp (EXPERIMENTAL)",
-                event_name = "EXPORT_MOPP")
-            self.drawYSep()
-
-            self.drawNumber(
-                text = "Material:  ",
-                event_name = "EXPORT_OB_MATERIAL",
-                min_val = 0, max_val = 30,
-                callback = self.updateObMaterial)
-            self.drawYSep()
-
-            self.drawLabel(
-                text = "Rigid Body Settings",
-                event_name = "EXPORT_OB_RIGIDBODY_LABEL",
-                num_items = 4, item = 0)
             self.drawPushButton(
                 text = "Static",
                 event_name = "EXPORT_OB_RIGIDBODY_STATIC",
-                num_items = 4, item = 1)
+                num_items = 4, item = 0)
             self.drawPushButton(
                 text = "Clutter",
                 event_name = "EXPORT_OB_RIGIDBODY_CLUTTER",
+                num_items = 4, item = 1)
+            self.drawPushButton(
+                text = "Weapon",
+                event_name = "EXPORT_OB_RIGIDBODY_WEAPON",
                 num_items = 4, item = 2)
             self.drawPushButton(
                 text = "Creature",
                 event_name = "EXPORT_OB_RIGIDBODY_CREATURE",
                 num_items = 4, item = 3)
+            self.drawToggle(
+                text = "Stone",
+                event_name = "EXPORT_OB_MATERIAL_STONE",
+                val = self.config["EXPORT_OB_MATERIAL"] == 0,
+                num_items = 6, item = 0)
+            self.drawToggle(
+                text = "Cloth",
+                event_name = "EXPORT_OB_MATERIAL_CLOTH",
+                val = self.config["EXPORT_OB_MATERIAL"] == 1,
+                num_items = 6, item = 1)
+            self.drawToggle(
+                text = "Glass",
+                event_name = "EXPORT_OB_MATERIAL_GLASS",
+                val = self.config["EXPORT_OB_MATERIAL"] == 3,
+                num_items = 6, item = 2)
+            self.drawToggle(
+                text = "Metal",
+                event_name = "EXPORT_OB_MATERIAL_METAL",
+                val = self.config["EXPORT_OB_MATERIAL"] == 5,
+                num_items = 6, item = 3)
+            self.drawToggle(
+                text = "Skin",
+                event_name = "EXPORT_OB_MATERIAL_SKIN",
+                val = self.config["EXPORT_OB_MATERIAL"] == 7,
+                num_items = 6, item = 4)
+            self.drawToggle(
+                text = "Wood",
+                event_name = "EXPORT_OB_MATERIAL_WOOD",
+                val = self.config["EXPORT_OB_MATERIAL"] == 9,
+                num_items = 6, item = 5)
+            self.drawNumber(
+                text = "Material:  ",
+                event_name = "EXPORT_OB_MATERIAL",
+                min_val = 0, max_val = 30,
+                callback = self.updateObMaterial)
             self.drawNumber(
                 text = "BSX Flags:  ",
                 event_name = "EXPORT_OB_BSXFLAGS",
@@ -667,6 +687,16 @@ class NifConfig:
                 text = "Hollow",
                 event_name = "EXPORT_OB_HOLLOW",
                 val = not self.config["EXPORT_OB_SOLID"],
+                num_items = 2, item = 1)
+            self.drawYSep()
+
+            self.drawToggle(
+                text = "Use bhkListShape",
+                event_name = "EXPORT_BHKLISTSHAPE",
+                num_items = 2, item = 0)
+            self.drawToggle(
+                text = "Export Mopp (EXPERIMENTAL)",
+                event_name = "EXPORT_MOPP",
                 num_items = 2, item = 1)
 
         Draw.Redraw(1)
@@ -774,7 +804,7 @@ class NifConfig:
                 self.config["EXPORT_OB_MATERIAL"] = 9 # wood
                 # rigid body: static
                 self.config["EXPORT_OB_BSXFLAGS"] = 2
-                self.config["EXPORT_OB_MASS"] = 10.0
+                self.config["EXPORT_OB_MASS"] = 1000.0
                 self.config["EXPORT_OB_MOTIONSYSTEM"] = 7 # keyframed
                 self.config["EXPORT_OB_UNKNOWNBYTE1"] = 1
                 self.config["EXPORT_OB_UNKNOWNBYTE2"] = 1
@@ -815,7 +845,8 @@ class NifConfig:
         elif evName == "EXPORT_OB_HOLLOW":
             self.config["EXPORT_OB_SOLID"] = False
         elif evName == "EXPORT_OB_RIGIDBODY_STATIC":
-            self.config["EXPORT_OB_BSXFLAGS"] = 2
+            self.config["EXPORT_OB_MATERIAL"] = 0 # stone
+            self.config["EXPORT_OB_BSXFLAGS"] = 2 # havok
             self.config["EXPORT_OB_MASS"] = 10.0
             self.config["EXPORT_OB_MOTIONSYSTEM"] = 7 # keyframed
             self.config["EXPORT_OB_UNKNOWNBYTE1"] = 1
@@ -825,14 +856,25 @@ class NifConfig:
             self.config["EXPORT_OB_LAYER"] = 1 # static
             self.config["EXPORT_OB_SOLID"] = True
         elif evName == "EXPORT_OB_RIGIDBODY_CLUTTER":
-            self.config["EXPORT_OB_BSXFLAGS"] = 3
-            self.config["EXPORT_OB_MASS"] = 10.0
+            self.config["EXPORT_OB_BSXFLAGS"] = 3 # anim + havok
+            self.config["EXPORT_OB_MASS"] = 10.0 # typical
             self.config["EXPORT_OB_MOTIONSYSTEM"] = 4 # keyframed
             self.config["EXPORT_OB_UNKNOWNBYTE1"] = 2
             self.config["EXPORT_OB_UNKNOWNBYTE2"] = 2
             self.config["EXPORT_OB_QUALITYTYPE"] = 3 # fixed
             self.config["EXPORT_OB_WIND"] = 0
             self.config["EXPORT_OB_LAYER"] = 4 # clutter
+            self.config["EXPORT_OB_SOLID"] = True
+        elif evName == "EXPORT_OB_RIGIDBODY_WEAPON":
+            self.config["EXPORT_OB_MATERIAL"] = 5 # metal
+            self.config["EXPORT_OB_BSXFLAGS"] = 3 # anim + havok
+            self.config["EXPORT_OB_MASS"] = 25.0 # typical
+            self.config["EXPORT_OB_MOTIONSYSTEM"] = 4 # MO_SYS_BOX
+            self.config["EXPORT_OB_UNKNOWNBYTE1"] = 2
+            self.config["EXPORT_OB_UNKNOWNBYTE2"] = 2
+            self.config["EXPORT_OB_QUALITYTYPE"] = 3 # MO_QUAL_MOVING2
+            self.config["EXPORT_OB_WIND"] = 0
+            self.config["EXPORT_OB_LAYER"] = 5 # weapin
             self.config["EXPORT_OB_SOLID"] = True
         elif evName == "EXPORT_OB_RIGIDBODY_CREATURE":
             self.config["EXPORT_OB_MATERIAL"] = 7 # skin
@@ -845,6 +887,18 @@ class NifConfig:
             self.config["EXPORT_OB_WIND"] = 0
             self.config["EXPORT_OB_LAYER"] = 8 # biped
             self.config["EXPORT_OB_SOLID"] = True
+        elif evName == "EXPORT_OB_MATERIAL_STONE":
+            self.config["EXPORT_OB_MATERIAL"] = 0
+        elif evName == "EXPORT_OB_MATERIAL_CLOTH":
+            self.config["EXPORT_OB_MATERIAL"] = 1
+        elif evName == "EXPORT_OB_MATERIAL_GLASS":
+            self.config["EXPORT_OB_MATERIAL"] = 3
+        elif evName == "EXPORT_OB_MATERIAL_METAL":
+            self.config["EXPORT_OB_MATERIAL"] = 5
+        elif evName == "EXPORT_OB_MATERIAL_SKIN":
+            self.config["EXPORT_OB_MATERIAL"] = 7
+        elif evName == "EXPORT_OB_MATERIAL_WOOD":
+            self.config["EXPORT_OB_MATERIAL"] = 9
         Draw.Redraw(1)
 
     def guiEvent(self, evt, val):
