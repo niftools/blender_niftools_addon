@@ -5,6 +5,7 @@ Version 2.3.1 (***)
 * new settings in export dialog to set material and extra havok presets for
 creature and weapon
 * support for NiWireframeProperty via material WIRE mode
+* furniture marker export
 
 Version 2.3.0 (Mar 30, 2008)
 * Import/Export: experimental support for Oblivion animation

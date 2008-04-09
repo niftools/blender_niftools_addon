@@ -204,21 +204,27 @@ class NifExport:
             if self.EXPORT_ANIMATION == 0:
                 self.msg("Exporting geometry and animation")
             elif self.EXPORT_ANIMATION == 1:
-                self.msg("Exporting geometry only") # for morrowind: everything except keyframe controllers
+                # for morrowind: everything except keyframe controllers
+                self.msg("Exporting geometry only")
             elif self.EXPORT_ANIMATION == 2:
-                self.msg("Exporting animation only (as .kf file)") # for morrowind: only keyframe controllers
+                # for morrowind: only keyframe controllers
+                self.msg("Exporting animation only (as .kf file)")
 
             for ob in Blender.Object.Get():
                 # armatures should not be in rest position
                 if ob.getType() == 'Armature':
-                    ob.data.restPosition = False # ensure we get the mesh vertices in animation mode, and not in rest position!
+                    # ensure we get the mesh vertices in animation mode,
+                    # and not in rest position!
+                    ob.data.restPosition = False
                     if (ob.data.envelopes):
                         print """'%s': Cannot export envelope skinning.
 If you have vertex groups, turn off envelopes.
 If you don't have vertex groups, select the bones one by one
 press W to convert their envelopes to vertex weights,
 and turn off envelopes."""%ob.getName()
-                        raise NifExportError("'%s': Cannot export envelope skinning. Check console for instructions."%ob.getName())
+                        raise NifExportError("""\
+'%s': Cannot export envelope skinning. Check console for instructions."""
+                                             % ob.getName())
 
                 # check for non-uniform transforms
                 # (lattices are not exported so ignore them as they often tend
@@ -227,7 +233,9 @@ and turn off envelopes."""%ob.getName()
                     try:
                         self.decomposeSRT(ob.getMatrix('localspace'))
                     except NifExportError: # non-uniform scaling
-                        raise NifExportError("Non-uniform scaling not supported. Workaround: apply size and rotation (CTRL-A) on '%s'."%ob.name)
+                        raise NifExportError("""\
+Non-uniform scaling not supported.
+Workaround: apply size and rotation (CTRL-A) on '%s'.""" % ob.name)
 
             # extract some useful scene info
             self.scene = Blender.Scene.GetCurrent()
@@ -236,22 +244,28 @@ and turn off envelopes."""%ob.getName()
             self.fstart = context.startFrame()
             self.fend = context.endFrame()
             
+            # oblivion and civ4
             if self.EXPORT_VERSION in ['Oblivion', 'Civilization IV']:
                 root_name = 'Scene Root'
+            # other games
             else:
                 root_name = self.filebase
      
             # get the root object from selected object
             # only export empties, meshes, and armatures
             if (Blender.Object.GetSelected() == None):
-                raise NifExportError("Please select the object(s) that you wish to export, and run this script again.")
+                raise NifExportError("""\
+Please select the object(s) to export, and run this script again.""")
             root_objects = set()
             export_types = ('Empty','Mesh','Armature')
-            for root_object in [ob for ob in Blender.Object.GetSelected() if ob.getType() in export_types]:
+            for root_object in [ob for ob in Blender.Object.GetSelected()
+                                if ob.getType() in export_types]:
                 while (root_object.getParent() != None):
                     root_object = root_object.getParent()
                 if root_object.getType() not in export_types:
-                    raise NifExportError("Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."%root_object.getName())
+                    raise NifExportError("""\
+Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
+                                         % root_object.getName())
                 root_objects.add(root_object)
 
             # smoothen seams of objects
@@ -266,7 +280,9 @@ and turn off envelopes."""%ob.getName()
                     #    v.sel = False
                     for f in mesh.faces:
                         for v in f.verts:
-                            vkey = (int(v.co[0]*200), int(v.co[1]*200), int(v.co[2]*200))
+                            vkey = (int(v.co[0]*200),
+                                    int(v.co[1]*200),
+                                    int(v.co[2]*200))
                             try:
                                 vdict[vkey].append((v, f, mesh))
                             except KeyError:
@@ -328,19 +344,24 @@ and turn off envelopes."""%ob.getName()
             # export objects
             self.msg("Exporting objects")
             for root_object in root_objects:
-                # export the root objects as a NiNodes; their children are exported as well
-                # note that localspace = worldspace, because root objects have no parents
-                self.exportNode(root_object, 'localspace', root_block, root_object.getName())
+                # export the root objects as a NiNodes; their children are
+                # exported as well
+                # note that localspace = worldspace, because root objects have
+                # no parents
+                self.exportNode(root_object, 'localspace',
+                                root_block, root_object.getName())
 
             # post-processing:
             #-----------------
 
-            # if we exported animations, but no animation groups are defined, define a default animation group
+            # if we exported animations, but no animation groups are defined,
+            # define a default animation group
             self.msg("Checking animation groups")
             if not animtxt:
                 has_controllers = False
                 for block in self.blocks:
-                    if isinstance(block, NifFormat.NiObjectNET): # has it a controller field?
+                    # has it a controller field?
+                    if isinstance(block, NifFormat.NiObjectNET):
                         if block.controller:
                             has_controllers = True
                             break
@@ -368,6 +389,28 @@ and turn off envelopes."""%ob.getName()
             if animtxt:
                 anim_textextra = self.exportAnimGroups(animtxt, root_block)
 
+            # oblivion furniture markers
+            if self.EXPORT_VERSION == 'Oblivion' \
+                and self.filebase[:15].lower() == 'furnituremarker':
+                # exporting a furniture marker for Oblivion
+                furniturenumber = int(self.filebase[15:])
+                # name scene root name the file base name
+                root_name = self.filebase
+                # create furniture marker block
+                furnmark = self.createBlock("BSFurnitureMarker")
+                furnmark.name = "FRN"
+                furnmark.numPositions = 1
+                furnmark.positions.updateSize()
+                furnmark.positions[0].positionRef1 = furniturenumber
+                furnmark.positions[0].positionRef2 = furniturenumber
+                # create extra string data sgoKeep
+                sgokeep = self.createBlock("NiStringExtraData")
+                sgokeep.name = "UBP"
+                sgokeep.stringData = "sgoKeep"
+                # add extra blocks
+                root_block.addExtraData(furnmark)
+                root_block.addExtraData(sgokeep)
+
             # activate oblivion collision and physics
             if self.EXPORT_VERSION == 'Oblivion':
                 hascollision = False
@@ -376,9 +419,10 @@ and turn off envelopes."""%ob.getName()
                        hascollision = True
                        break
                 if hascollision:
+                    # enable collision
                     bsx = self.createBlock("BSXFlags")
                     bsx.name = 'BSX'
-                    bsx.integerData = self.EXPORT_OB_BSXFLAGS # enable collision
+                    bsx.integerData = self.EXPORT_OB_BSXFLAGS
                     root_block.addExtraData(bsx)
                 # update rigid body center of gravity and mass
                 # first calculate distribution of mass

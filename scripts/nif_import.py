@@ -340,10 +340,6 @@ class NifImport:
         elif isinstance(root_block, NifFormat.NiTriBasedGeom):
             # trishape/tristrips root
             b_obj = self.importBranch(root_block)
-        elif isinstance(root_block, NifFormat.NiNode) \
-            and root_block.name[:15].lower() == "furnituremarker":
-            # Oblivion furniture marker
-            b_obj = self.importBranch(root_block)
         elif isinstance(root_block, NifFormat.NiNode):
             # root node is dummy scene node
             # process collision
