@@ -272,8 +272,10 @@ class NifImport:
 
         # merge skeleton roots
         for niBlock in root_block.tree():
-            if not isinstance(niBlock, NifFormat.NiGeometry): continue
-            if not niBlock.isSkin(): continue
+            if not isinstance(niBlock, NifFormat.NiGeometry):
+                continue
+            if not niBlock.isSkin():
+                continue
             merged, failed = niBlock.mergeSkeletonRoots()
             if merged:
                 self.msg('reparented following blocks to skeleton root of %s:'%
@@ -287,15 +289,19 @@ class NifImport:
         # transform geometry into the rest pose
         if self.IMPORT_SENDBONESTOBINDPOS:
             for niBlock in root_block.tree():
-                if not isinstance(niBlock, NifFormat.NiGeometry): continue
-                if not niBlock.isSkin(): continue
+                if not isinstance(niBlock, NifFormat.NiGeometry):
+                    continue
+                if not niBlock.isSkin():
+                    continue
                 self.msg('sending bones of geometry %s to their bind position'%
                          niBlock.name, 2)
                 niBlock.sendBonesToBindPosition()
         if self.IMPORT_APPLYSKINDEFORM:
             for niBlock in root_block.tree():
-                if not isinstance(niBlock, NifFormat.NiGeometry): continue
-                if not niBlock.isSkin(): continue
+                if not isinstance(niBlock, NifFormat.NiGeometry):
+                    continue
+                if not niBlock.isSkin():
+                    continue
                 self.msg('applying skin deformation on geometry %s'%
                          niBlock.name, 2)
                 vertices, normals = niBlock.getSkinDeformation()
@@ -333,6 +339,10 @@ class NifImport:
             b_obj = self.importBranch(root_block)
         elif isinstance(root_block, NifFormat.NiTriBasedGeom):
             # trishape/tristrips root
+            b_obj = self.importBranch(root_block)
+        elif isinstance(root_block, NifFormat.NiNode) \
+            and root_block.name[:15].lower() == "furnituremarker":
+            # Oblivion furniture marker
             b_obj = self.importBranch(root_block)
         elif isinstance(root_block, NifFormat.NiNode):
             # root node is dummy scene node
@@ -1626,6 +1636,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                         if isinstance(effect, NifFormat.NiTextureEffect):
                             textureEffect = effect
                             break
+
             # create material and assign it to the mesh
             material = self.importMaterial(matProperty, textProperty,
                                            alphaProperty, specProperty,
