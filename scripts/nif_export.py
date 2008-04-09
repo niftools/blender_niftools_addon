@@ -1209,6 +1209,7 @@ Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
             mesh_texeff_mtex = None
             mesh_uvlayers = []    # uv layers used by this material
             mesh_hasalpha = False # mesh has transparency
+            mesh_haswire = False  # mesh rendered as wireframe
             mesh_hasspec = False  # mesh has specular properties
             mesh_hasvcol = False
             mesh_hasnormals = False
@@ -1237,7 +1238,9 @@ Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
                 mesh_mat_glossiness = mesh_mat.getHardness() / 4.0  # 'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
                 mesh_mat_transparency = mesh_mat.getAlpha()         # 'A(lpha)' scrollbar in Blender (MW -> 1.0)
                 mesh_hasalpha = (abs(mesh_mat_transparency - 1.0) > NifFormat._EPSILON) \
-                                or (mesh_mat.getIpo() != None and mesh_mat.getIpo().getCurve('Alpha'))
+                                or (mesh_mat.getIpo() != None
+                                    and mesh_mat.getIpo().getCurve('Alpha'))
+                mesh_haswire = mesh_mat.mode & Blender.Material.Modes.WIRE
                 mesh_mat_ambient_color = [0.0,0.0,0.0]
                 mesh_mat_ambient_color[0] = mesh_mat_diffuse_color[0] * mesh_mat_ambient
                 mesh_mat_ambient_color[1] = mesh_mat_diffuse_color[1] * mesh_mat_ambient
@@ -1570,6 +1573,10 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                 # add NiTriShape's alpha propery
                 # refer to the alpha property in the trishape block
                 trishape.addProperty(self.exportAlphaProperty(flags = 0x00ED))
+
+            if mesh_haswire:
+                # add NiWireframeProperty
+                trishape.addProperty(self.exportWireframeProperty(flags = 1))
 
             if mesh_mat:
                 # add NiTriShape's specular property
@@ -2701,6 +2708,19 @@ ERROR%t|Too many faces/vertices. Decimate/split your mesh and try again.""")
         specprop = self.createBlock("NiSpecularProperty")
         specprop.flags = flags
         return specprop        
+
+    def exportWireframeProperty(self, flags = 0x0001):
+        """Return existing alpha property with given flags, or create new one
+        if an alpha property with required flags is not found."""
+        # search for duplicate
+        for block in self.blocks:
+            if isinstance(block, NifFormat.NiWireframeProperty) \
+               and block.flags == flags:
+                return block
+        # no alpha property with given flag found, so create new one
+        wireprop = self.createBlock("NiWireframeProperty")
+        wireprop.flags = flags
+        return wireprop        
 
     def exportMaterialProperty(self, name = '', flags = 0x0001,
                                ambient = (1.0, 1.0, 1.0),
