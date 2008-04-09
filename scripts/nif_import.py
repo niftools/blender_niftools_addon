@@ -1330,7 +1330,7 @@ Texture '%s' not found or not supported and no alternate available"""
 
     def getMaterialHash(self, matProperty, textProperty,
                         alphaProperty, specProperty,
-                        textureEffect):
+                        textureEffect, wireProperty):
         """Helper function for importMaterial. Returns a key that uniquely
         identifies a material from its properties. The key ignores the material
         name as that does not affect the rendering."""
@@ -1339,16 +1339,17 @@ Texture '%s' not found or not supported and no alternate available"""
                  textProperty.getHash()  if textProperty  else None,
                  alphaProperty.getHash() if alphaProperty else None,
                  specProperty.getHash()  if specProperty  else None,
-                 textureEffect.getHash() if textureEffect else None )
+                 textureEffect.getHash() if textureEffect else None,
+                 wireProperty.getHash()  if wireProperty  else None)
 
     def importMaterial(self, matProperty, textProperty,
                        alphaProperty, specProperty,
-                       textureEffect):
+                       textureEffect, wireProperty):
         """Creates and returns a material."""
         # First check if material has been created before.
         material_hash = self.getMaterialHash(matProperty, textProperty,
                                              alphaProperty, specProperty,
-                                             textureEffect)
+                                             textureEffect, wireProperty)
         try:
             return self.materials[material_hash]                
         except KeyError:
@@ -1540,6 +1541,10 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             # no specular property: specular color is ignored
             # we do this by setting specularity zero
             material.setSpec(0.0)
+        # check wireframe property
+        if wireProperty:
+            # enable wireframe rendering
+            material.mode |= Blender.Material.Modes.WIRE
 
         self.materials[material_hash] = material
         return material
@@ -1614,6 +1619,10 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             specProperty = self.find_property(niBlock,
                                               NifFormat.NiSpecularProperty)
 
+            # Wireframe
+            wireProperty = self.find_property(niBlock,
+                                              NifFormat.NiWireframeProperty)
+
             # texturing effect for environment map
             # in official files this is activated by a NiTextureEffect child
             # preceeding the niBlock
@@ -1640,13 +1649,17 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             # create material and assign it to the mesh
             material = self.importMaterial(matProperty, textProperty,
                                            alphaProperty, specProperty,
-                                           textureEffect)
+                                           textureEffect, wireProperty)
             b_mesh_materials = b_meshData.materials
             try:
                 materialIndex = b_mesh_materials.index(material)
             except ValueError:
                 materialIndex = len(b_mesh_materials)
                 b_meshData.materials += [material]
+            # if mesh has one material with wireproperty, then make the mesh
+            # wire in 3D view
+            if wireProperty:
+                b_mesh.drawType = Blender.Object.DrawTypes["WIRE"]
         else:
             material = None
             materialIndex = 0
