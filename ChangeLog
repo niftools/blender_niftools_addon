@@ -8,6 +8,7 @@ creature and weapon
 * furniture marker export
 * prevent merging of EnvMap2 materials with other materials
 * import of type 2 and 3 quaternion rotations
+* import and export of BSBound bounding boxes for creatures
 * many other minor enhancements
 
 Version 2.3.0 (Mar 30, 2008)

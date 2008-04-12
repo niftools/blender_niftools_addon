@@ -741,6 +741,10 @@ keyframes are supported.""" % self.EXPORT_VERSION)
                 ob.drawMode = Blender.Object.DrawModes['WIRE']
                 self.exportCollision(ob, parent_block)
                 return None # done; stop here
+            elif ob_type == 'Mesh' and ob.name.lower()[:7] == 'bsbound':
+                # add a bounding box
+                self.exportBSBound(ob, parent_block)
+                return None # done; stop here
             elif ob_type == 'Mesh':
                 # -> mesh data.
                 # If this has children or animations or more than one material
@@ -3235,6 +3239,36 @@ WARNING: bad uv layer name '%s' in texture '%s'
             texeff.sourceTexture = self.exportSourceTexture(mtex.tex)
         texeff.unknownVector.x = 1.0
         return self.registerBlock(texeff)
+
+    def exportBSBound(self, obj, block_parent):
+        """Export an Oblivion bounding box."""
+        bbox = self.createBlock("BSBound")
+        # ... the following incurs double scaling because it will be added in
+        # both the extra data list and in the old extra data sequence!!!
+        #block_parent.addExtraData(bbox)
+        # quick hack (better solution would be to make applyScale non-recursive)
+        block_parent.numExtraDataList += 1
+        block_parent.extraDataList.updateSize()
+        block_parent.extraDataList[-1] = bbox
+        
+        bbox.name = "BBX"
+        # calculate bounding box extents
+        objbbox = obj.getBoundBox()
+        minx = min(vert[0] for vert in objbbox)
+        miny = min(vert[1] for vert in objbbox)
+        minz = min(vert[2] for vert in objbbox)
+        maxx = max(vert[0] for vert in objbbox)
+        maxy = max(vert[1] for vert in objbbox)
+        maxz = max(vert[2] for vert in objbbox)
+        # set the center and dimensions
+        bbox.center.x = (minx + maxx) * 0.5
+        bbox.center.y = (miny + maxy) * 0.5
+        bbox.center.z = (minz + maxz) * 0.5
+        bbox.dimensions.x = maxx - minx
+        bbox.dimensions.y = maxy - miny
+        bbox.dimensions.z = maxz - minz
+
+
 
 def config_callback(**config):
     """Called when config script is done. Starts and times import."""

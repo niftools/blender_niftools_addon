@@ -392,7 +392,8 @@ WARNING: unsupported collision structure under node %s""" % root_block.name)
                 return self.importMesh(niBlock)
             elif isinstance(niBlock, NifFormat.NiNode):
                 children = niBlock.children
-                if children or niBlock.collisionObject:
+                bbox = self.find_extra(niBlock, NifFormat.BSBound)
+                if children or niBlock.collisionObject or bbox:
                     # it's a parent node
                     # import object + children
                     if self.is_armature_root(niBlock):
@@ -460,6 +461,10 @@ under node %s" % niBlock.name)
                         collision_objs = self.importBhkShape(bhk_body)
                         # make parent
                         b_obj.makeParent(collision_objs)
+                    
+                    # import bounding box
+                    if bbox:
+                        b_obj.makeParent([self.importBSBound(bbox)])
 
                     # track camera for billboard nodes
                     if isinstance(niBlock, NifFormat.NiBillboardNode):
@@ -671,6 +676,9 @@ WARNING: collision object has non-bone parent, this is not supported
                     # make it parent of the bone
                     b_armature.makeParentBone(
                         [b_obj], self.names[niBlock])
+
+            ### import bounding box?
+            ### not supported within armature branch (no need so far)
 
         # anything else: throw away
         return None, None
@@ -2764,6 +2772,30 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
                 # hinge
                 b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE] = 2
 
+    def importBSBound(self, bbox):
+        """Import a bounding box."""
+        me = Blender.Mesh.New('BSBound')
+        minx = bbox.center.x - bbox.dimensions.x * 0.5
+        miny = bbox.center.y - bbox.dimensions.y * 0.5
+        minz = bbox.center.z - bbox.dimensions.z * 0.5
+        maxx = bbox.center.x + bbox.dimensions.x * 0.5
+        maxy = bbox.center.y + bbox.dimensions.y * 0.5
+        maxz = bbox.center.z + bbox.dimensions.z * 0.5
+        for x in [minx, maxx]:
+            for y in [miny, maxy]:
+                for z in [minz, maxz]:
+                    me.verts.extend(x,y,z)
+        me.faces.extend(
+            [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
+
+        # link box to scene and set transform
+        ob = self.scene.objects.new(me, 'BSBound')
+
+        # set bounds type
+        ob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
+        ob.rbShapeBoundType = Blender.Object.RBShapes['BOX']
+        ob.rbRadius = min(maxx, maxy, maxz)
+        return ob
 
     def getUVLayerName(self, uvset):
         return "UVTex.%03i" % uvset if uvset != 0 else "UVTex"
