@@ -167,8 +167,9 @@ class NifExport:
 
         # variables
         self.progressBar = 0
-        # list of all exported blocks
-        self.blocks = []
+        # dictionary mapping exported blocks to either None or to an
+        # associated Blender object
+        self.blocks = {}
         # maps Blender names to previously imported names from the FullNames
         # buffer (see self.rebuildFullNames())
         self.names = {}
@@ -502,7 +503,7 @@ Furniture marker has invalid number (%s). Name your file
                 self.msg(
                     "Making '%s' the root block" % root_block.children[0].name)
                 # remove root_block from self.blocks
-                self.blocks = [b for b in self.blocks if b != root_block] 
+                self.blocks.pop(root_block)
                 # set new root block
                 old_root_block = root_block
                 root_block = old_root_block.children[0]
@@ -662,8 +663,6 @@ keyframes are supported.""" % self.EXPORT_VERSION)
           - for the root node, ob is None, and node_name is usually the base
             filename (either with or without extension)
         """
-        self.msg("Exporting NiNode %s"%node_name)
-
         # ob_type: determine the block type
         #          (None, 'Mesh', 'Empty' or 'Armature')
         # ob_ipo:  object animation ipo
@@ -710,9 +709,9 @@ keyframes are supported.""" % self.EXPORT_VERSION)
                 elif has_ipo or has_children or is_multimaterial or has_track:
                     # -> mesh ninode for the hierarchy to work out
                     if not has_track:
-                        node = self.createBlock('NiNode')
+                        node = self.createBlock('NiNode', ob)
                     else:
-                        node = self.createBlock('NiBillboardNode')
+                        node = self.createBlock('NiBillboardNode', ob)
                 else:
                     # don't create intermediate ninode for this guy
                     self.exportTriShapes(ob, space, parent_block, node_name)
@@ -720,7 +719,7 @@ keyframes are supported.""" % self.EXPORT_VERSION)
                     return None
             else:
                 # -> everything else (empty/armature) is a regular node
-                node = self.createBlock("NiNode")
+                node = self.createBlock("NiNode", ob)
 
         # set transform on trishapes rather than on NiNode for skinned meshes
         # this fixes an issue with clothing slots
@@ -828,10 +827,10 @@ keyframes are supported.""" % self.EXPORT_VERSION)
         # add a keyframecontroller block, and refer to this block in the
         # parent's time controller
         if self.version < 0x0A020000:
-            kfc = self.createBlock("NiKeyframeController")
+            kfc = self.createBlock("NiKeyframeController", ipo)
         else:
-            kfc = self.createBlock("NiTransformController")
-            kfi = self.createBlock("NiTransformInterpolator")
+            kfc = self.createBlock("NiTransformController", ipo)
+            kfi = self.createBlock("NiTransformInterpolator", ipo)
             # link interpolator from the controller
             kfc.interpolator = kfi
             # set interpolator default data
@@ -941,8 +940,6 @@ keyframes are supported.""" % self.EXPORT_VERSION)
 
         # -> now comes the real export
 
-        self.msg("Exporting keyframe %s"%parent_block.name)
-
         if max(len(rot_curve), len(trans_curve), len(scale_curve)) <= 1 \
             and self.version >= 0x0A020000:
             # only add data if number of keys is > 1
@@ -967,11 +964,11 @@ keyframes are supported.""" % self.EXPORT_VERSION)
 
         # add the keyframe data
         if self.version < 0x0A020000:
-            kfd = self.createBlock("NiKeyframeData")
+            kfd = self.createBlock("NiKeyframeData", ipo)
             kfc.data = kfd
         else:
             # number of frames is > 1, so add transform data
-            kfd = self.createBlock("NiTransformData")
+            kfd = self.createBlock("NiTransformData", ipo)
             kfi.data = kfd
 
         frames = rot_curve.keys()
@@ -1104,7 +1101,7 @@ Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
         
         # add a NiTextKeyExtraData block, and refer to this block in the
         # parent node (we choose the root block)
-        textextra = self.createBlock("NiTextKeyExtraData")
+        textextra = self.createBlock("NiTextKeyExtraData", animtxt)
         block_parent.addExtraData(textextra)
         
         # create a text key for each frame descriptor
@@ -1120,10 +1117,10 @@ Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
     def exportSourceTexture(self, texture, filename = None):
         """Export a NiSourceTexture.
 
-        The texture argument is the texture object in blender to be exported
-        and filename is the full or relative path to the texture file
-        (this argument is used when exporting NiFlipControllers).
-        Returns block of the exported NiSourceTexture."""
+        @param texture: The texture object in blender to be exported.
+        @param filename: The full or relative path to the texture file
+            (this argument is used when exporting NiFlipControllers).
+        @return: The exported NiSourceTexture block."""
         
         # create NiSourceTexture
         srctex = NifFormat.NiSourceTexture()
@@ -1192,11 +1189,9 @@ Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
             if isinstance(block, NifFormat.NiSourceTexture) and block.getHash() == srctex.getHash():
                 return block
 
-        self.msg("Exporting source texture %s"%texture.getName())
-
         # no identical source texture found, so use and register
         # the new one
-        return self.registerBlock(srctex)
+        return self.registerBlock(srctex, texture)
 
 
 
@@ -1212,11 +1207,10 @@ Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
     # returns exported NiFlipController
     # 
     def exportFlipController(self, fliptxt, texture, target, target_tex):
-        self.msg("Exporting NiFlipController for texture %s"%texture.getName())
         tlist = fliptxt.asLines()
 
         # create a NiFlipController
-        flip = self.createBlock("NiFlipController")
+        flip = self.createBlock("NiFlipController", fliptxt)
         target.addController(flip)
 
         # fill in NiFlipController's values
@@ -1251,8 +1245,8 @@ Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
     # should be exported as a single mesh.
     # 
     def exportTriShapes(self, ob, space, parent_block, trishape_name = None):
-        self.msg("Exporting NiTriShapes/NiTriStrips for %s"%ob.name)
-        self.msgProgress("Exporting %s"%ob.name)
+        self.msg("Exporting %s" % ob)
+        self.msgProgress("Exporting %s" % ob.name)
         assert(ob.getType() == 'Mesh')
 
         # get mesh from ob
@@ -1269,7 +1263,8 @@ Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
             mesh_mats = [ None ]
 
         # let's now export one trishape for every mesh material
-        
+        ### TODO: needs refactoring - move material, texture, etc.
+        ### to separate function
         for materialIndex, mesh_mat in enumerate( mesh_mats ):
             # -> first, extract valuable info from our ob
             
@@ -1579,15 +1574,15 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
 
             # create a trishape block
             if not self.EXPORT_STRIPIFY:
-                trishape = self.createBlock("NiTriShape")
+                trishape = self.createBlock("NiTriShape", ob)
             else:
-                trishape = self.createBlock("NiTriStrips")
+                trishape = self.createBlock("NiTriStrips", ob)
 
             # add texture effect block (must be added as preceeding child of
             # the trishape)
             if self.EXPORT_VERSION == "Morrowind" and mesh_texeff_mtex:
                 # create a new parent block for this shape
-                extra_node = self.createBlock("NiNode")
+                extra_node = self.createBlock("NiNode", mesh_texeff_mtex)
                 parent_block.addChild(extra_node)
                 # set default values for this ninode
                 extra_node.rotation.setIdentity()
@@ -1616,7 +1611,8 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                 trishape.name = trishape_name
             if len(mesh_mats) > 1:
                 # multimaterial meshes: add material index
-                trishape.name += " %i"%materialIndex # Morrowind's child naming convention
+                # (Morrowind's child naming convention)
+                trishape.name += " %i"%materialIndex
             trishape.name = self.getFullName(trishape.name)
             if self.EXPORT_VERSION == 'Oblivion':
                 trishape.flags = 0x000E
@@ -1688,9 +1684,9 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                         alpha[ftime] = ipo.getCurve( 'Alpha' ).evaluate(frame)
 
                     # add and link alpha controller, data and interpolator blocks
-                    alphac = self.createBlock("NiAlphaController")
-                    alphad = self.createBlock("NiFloatData")
-                    alphai = self.createBlock("NiFloatInterpolator")
+                    alphac = self.createBlock("NiAlphaController", ipo)
+                    alphad = self.createBlock("NiFloatData", ipo)
+                    alphai = self.createBlock("NiFloatInterpolator", ipo)
 
                     trimatprop.addController(alphac)
                     alphac.interpolator = alphai
@@ -1731,9 +1727,9 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
             # add NiTriShape's data
             # NIF flips the texture V-coordinate (OpenGL standard)
             if isinstance(trishape, NifFormat.NiTriShape):
-                tridata = self.createBlock("NiTriShapeData")
+                tridata = self.createBlock("NiTriShapeData", ob)
             else:
-                tridata = self.createBlock("NiTriStripsData")
+                tridata = self.createBlock("NiTriStripsData", ob)
             trishape.data = tridata
 
             tridata.numVertices = len(vertlist)
@@ -1797,7 +1793,7 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                             boneinfluences.append(bone)
                     if boneinfluences: # yes we have skinning!
                         # create new skinning instance block and link it
-                        skininst = self.createBlock("NiSkinInstance")
+                        skininst = self.createBlock("NiSkinInstance", ob)
                         trishape.skinInstance = skininst
                         for block in self.blocks:
                             if isinstance(block, NifFormat.NiNode):
@@ -1809,7 +1805,7 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                                 "Skeleton root '%s' not found."%armaturename)
             
                         # create skinning data and link it
-                        skindata = self.createBlock("NiSkinData")
+                        skindata = self.createBlock("NiSkinData", ob)
                         skininst.data = skindata
             
                         skindata.hasVertexWeights = True
@@ -1907,7 +1903,7 @@ they can easily be identified.")
                         trishape.updateSkinCenterRadius()
 
                         if self.version >= 0x04020100 and self.EXPORT_SKINPARTITION:
-                            self.msg("creating 'NiSkinPartition'")
+                            self.msg("  creating skin partition")
                             lostweight = trishape.updateSkinPartition(maxbonesperpartition = self.EXPORT_BONESPERPARTITION, maxbonespervertex = self.EXPORT_BONESPERVERTEX, stripify = self.EXPORT_STRIPIFY, stitchstrips = self.EXPORT_STITCHSTRIPS, padbones = self.EXPORT_PADBONES)
                             # warn on bad config settings
                             if self.EXPORT_VERSION == 'Oblivion':
@@ -1941,7 +1937,7 @@ WARNING: lost %f in vertex weights while creating a skin partition for
                         # yes, there is a shape ipo too
                         
                         # create geometry morph controller
-                        morphctrl = self.createBlock("NiGeomMorpherController")
+                        morphctrl = self.createBlock("NiGeomMorpherController", keyipo)
                         trishape.addController(morphctrl)
                         morphctrl.target = trishape
                         morphctrl.frequency = 1.0
@@ -1951,7 +1947,7 @@ WARNING: lost %f in vertex weights while creating a skin partition for
                         ctrlFlags = 0x000c
                         
                         # create geometry morph data
-                        morphdata = self.createBlock("NiMorphData")
+                        morphdata = self.createBlock("NiMorphData", keyipo)
                         morphctrl.data = morphdata
                         morphdata.numMorphs = len(key.getBlocks())
                         morphdata.numVertices = len(vertlist)
@@ -1960,7 +1956,8 @@ WARNING: lost %f in vertex weights while creating a skin partition for
                         for keyblocknum, keyblock in enumerate( key.getBlocks() ):
                             # export morphed vertices
                             morph = morphdata.morphs[keyblocknum]
-                            self.msg("exporting morph %i: vertices"%keyblocknum)
+                            self.msg("  exporting morph %i: vertices"
+                                     % keyblocknum)
                             morph.arg = morphdata.numVertices
                             morph.vectors.updateSize()
                             for b_v_index, (vert_indices, vert) in enumerate(zip(vertmap, keyblock.data)):
@@ -1982,7 +1979,8 @@ WARNING: lost %f in vertex weights while creating a skin partition for
                                 curve = keyipo.getCurves()[keyblocknum-1]
                             # base key has no curve all other keys should have one
                             if curve:
-                                self.msg("exporting morph %i: curve"%keyblocknum)
+                                self.msg("  exporting morph %i: curve"
+                                         % keyblocknum)
                                 if ( curve.getExtrapolation() == "Constant" ):
                                     ctrlFlags = 0x000c
                                 elif ( curve.getExtrapolation() == "Cyclic" ):
@@ -2007,7 +2005,6 @@ WARNING: lost %f in vertex weights while creating a skin partition for
 
     def exportBones(self, arm, parent_block):
         """Export the bones of an armature."""
-        self.msg("Exporting bones for armature %s"%arm.getName())
         # the armature was already exported as a NiNode
         # now we must export the armature's bones
         assert( arm.getType() == 'Armature' )
@@ -2036,8 +2033,7 @@ WARNING: lost %f in vertex weights while creating a skin partition for
         # ok, let's create the bone NiNode blocks
         for bone in bones.values():
             # create a new block for this bone
-            self.msg("Exporting NiNode for bone %s"%bone.name)
-            node = self.createBlock("NiNode")
+            node = self.createBlock("NiNode", bone)
             # doing bone map now makes linkage very easy in second run
             bones_node[bone.name] = node
 
@@ -2074,7 +2070,7 @@ WARNING: lost %f in vertex weights while creating a skin partition for
         for bone in bones.values():
             # link the bone's children to the bone
             if bone.children:
-                self.msg("Linking children of bone %s"%bone.name)
+                self.msg("  linking children of bone %s" % bone.name)
                 for child in bone.children:
                     # bone.children returns also grandchildren etc.
                     # we only want immediate children, so do a parent check
@@ -2331,22 +2327,41 @@ Workaround: apply size and rotation (CTRL-A).""")
 
 
 
-    def createBlock(self, blocktype):
-        """Helper function to create a new block and register it in the list of
-        exported blocks."""
+    def createBlock(self, blocktype, b_obj = None):
+        """Helper function to create a new block, register it in the list of
+        exported blocks, and associate it with a Blender object.
+
+        @param block: The nif block type (for instance "NiNode").
+        @param b_obj: The Blender object.
+        @return: The newly created block."""
         try:
             block = getattr(NifFormat, blocktype)()
         except AttributeError:
-            raise NifExportError("'%s': Unknown block type (this is probably a bug).")
-        return self.registerBlock(block)
+            raise NifExportError("""\
+'%s': Unknown block type (this is probably a bug).""" % blocktype)
+        return self.registerBlock(block, b_obj)
 
-    def registerBlock(self, block):
+    def registerBlock(self, block, b_obj = None):
         """Helper function to register a newly created block in the list of
-        exported blocks."""
-        self.msg("registering '%s'"%block.__class__.__name__) # DEBUG
-        self.blocks.append(block)
+        exported blocks and to associate it with a Blender object.
+
+        @param block: The nif block.
+        @param b_obj: The Blender object.
+        @return: C{block}"""
+        if b_obj is None:
+            self.msg("Exporting %s block"%block.__class__.__name__)
+        else:
+            self.msg("Exporting %s as %s block"
+                     % (b_obj, block.__class__.__name__))
+        self.blocks[block] = b_obj
         return block
 
+    def registerBlenderObject(self, block, b_obj):
+        """Helper function to associate a nif block with a Blender object.
+
+        @param block: The nif block.
+        @param b_obj: The Blender object.
+        @return: C{block}"""
 
     def exportCollision(self, obj, parent_block):
         """Main function for adding collision object obj to a node.""" 
@@ -2354,7 +2369,7 @@ Workaround: apply size and rotation (CTRL-A).""")
              if obj.rbShapeBoundType != Blender.Object.RBShapes['POLYHEDERON']:
                  raise NifExportError("""\
 Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
-             node = self.createBlock("RootCollisionNode")
+             node = self.createBlock("RootCollisionNode", obj)
              parent_block.addChild(node)
              node.flags = 0x0003 # default
              self.exportMatrix(obj, 'localspace', node)
@@ -2372,7 +2387,7 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
                 except ValueError: # adding collision failed
                     continue
             else: # all nodes failed so add new one
-                node = NifFormat.NiNode()
+                node = self.createBlock("NiNode", obj)
                 node.setTransform(self.IDENTITY44)
                 node.name = 'collisiondummy%i' % parent_block.numChildren
                 node.flags = 0x000E # default
@@ -2411,12 +2426,12 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
             # note: collision settings are taken from lowerclasschair01.nif
             if self.EXPORT_OB_LAYER == NifFormat.OblivionLayer.OL_BIPED:
                 # special collision object for creatures
-                colobj = self.createBlock("bhkBlendCollisionObject")
+                colobj = self.createBlock("bhkBlendCollisionObject", obj)
                 colobj.flags = 9
                 colobj.unknownFloat1 = 1.0
                 colobj.unknownFloat2 = 1.0
                 # also add a controller for it
-                blendctrl = self.createBlock("bhkBlendController")
+                blendctrl = self.createBlock("bhkBlendController", obj)
                 blendctrl.flags = 12
                 blendctrl.frequency = 1.0
                 blendctrl.phase = 0.0
@@ -2425,12 +2440,12 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
                 parent_block.addController(blendctrl)
             else:
                 # usual collision object
-                colobj = self.createBlock("bhkCollisionObject")
+                colobj = self.createBlock("bhkCollisionObject", obj)
                 colobj.flags = 1
             parent_block.collisionObject = colobj
             colobj.target = parent_block
 
-            colbody = self.createBlock("bhkRigidBody")
+            colbody = self.createBlock("bhkRigidBody", obj)
             colobj.body = colbody
             colbody.layer = layer
             colbody.unknown5Floats[1] = 3.8139e+36
@@ -2487,10 +2502,10 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
         (bhkPackedNiTriStripsShape), then a ValueError is raised."""
 
         if not colbody.shape:
-            colshape = self.createBlock("bhkPackedNiTriStripsShape")
+            colshape = self.createBlock("bhkPackedNiTriStripsShape", obj)
 
             if self.EXPORT_MOPP:
-                colmopp = self.createBlock("bhkMoppBvTreeShape")
+                colmopp = self.createBlock("bhkMoppBvTreeShape", obj)
                 colbody.shape = colmopp
                 colmopp.material = material
                 colmopp.unknown8Bytes[0] = 160
@@ -2594,7 +2609,7 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
         if obj.rbShapeBoundType in ( Blender.Object.RBShapes['BOX'],
                                     Blender.Object.RBShapes['SPHERE'] ):
             # note: collision settings are taken from lowerclasschair01.nif
-            coltf = self.createBlock("bhkConvexTransformShape")
+            coltf = self.createBlock("bhkConvexTransformShape", obj)
             coltf.material = material
             coltf.unknownFloat1 = 0.1
             coltf.unknown8Bytes[0] = 96
@@ -2624,7 +2639,7 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
             coltf.transform.m34 /= 7.0
 
             if obj.rbShapeBoundType == Blender.Object.RBShapes['BOX']:
-                colbox = self.createBlock("bhkBoxShape")
+                colbox = self.createBlock("bhkBoxShape", obj)
                 coltf.shape = colbox
                 colbox.material = material
                 colbox.radius = 0.1
@@ -2642,7 +2657,7 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
                 colbox.dimensions.z = (maxz - minz) / 14.0
                 colbox.minimumSize = min(colbox.dimensions.x, colbox.dimensions.y, colbox.dimensions.z)
             elif obj.rbShapeBoundType == Blender.Object.RBShapes['SPHERE']:
-                colsphere = self.createBlock("bhkSphereShape")
+                colsphere = self.createBlock("bhkSphereShape", obj)
                 coltf.shape = colsphere
                 colsphere.material = material
                 # take average radius and
@@ -2652,7 +2667,7 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
             return coltf
 
         elif obj.rbShapeBoundType == Blender.Object.RBShapes['CYLINDER']:
-            colcaps = self.createBlock("bhkCapsuleShape")
+            colcaps = self.createBlock("bhkCapsuleShape", obj)
             colcaps.material = material
             # take average radius
             colcaps.radius = (maxx + maxy - minx - miny) / 4.0
@@ -2728,7 +2743,7 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
                 raise NifExportError("""
 ERROR%t|Too many faces/vertices. Decimate/split your mesh and try again.""")
             
-            colhull = self.createBlock("bhkConvexVerticesShape")
+            colhull = self.createBlock("bhkConvexVerticesShape", obj)
             colhull.material = material
             colhull.radius = 0.1
             colhull.unknown6Floats[2] = -0.0 # enables arrow detection
