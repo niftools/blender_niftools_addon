@@ -2644,6 +2644,9 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
                 else:
                     raise ValueError("unknown malleable constraint type (%i)"
                                      % hkconstraint.type)
+                # extra malleable constraint settings
+                ### damping parameters not yet in Blender Python API
+                ### tau (force between bodies) not supported by Blender
             else:
                 self.msg("WARNING: unknown constraint type (%s), skipped"
                          % hkconstraint.__class__.__name__)

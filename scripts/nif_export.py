@@ -148,6 +148,23 @@ class NifExport:
         except KeyError:
             return self.getUniqueName(blender_name)
 
+    def getExportedObjects(self):
+        """Return a list of exported objects."""
+        exported_objects = []
+        # iterating over self.blocks.itervalues() will count some objects
+        # twice
+        for obj in self.blocks.itervalues():
+            # skip empty objects
+            if obj is None:
+                continue
+            # detect doubles
+            if obj in exported_objects:
+                continue
+            # append new object
+            exported_objects.append(obj)
+        # return the list of unique exported objects
+        return exported_objects
+
     def __init__(self, **config):
         """Main export function."""
 
@@ -453,6 +470,10 @@ Furniture marker has invalid number (%s). Name your file
                 #upb.name = 'UPB'
                 #upb.stringData = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
                 #root_block.addExtraData(upb)
+
+            # export constraints
+            for obj in self.getExportedObjects():
+                self.exportConstraints(obj)
 
             # add vertex color and zbuffer properties for civ4 and railroads
             if self.EXPORT_VERSION in ["Civilization IV",
@@ -2400,7 +2421,13 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
          collision object '%s'""" % obj.name)
 
     def exportCollisionHelper(self, obj, parent_block):
-        """Helper function to add collision objects to a node."""
+        """Helper function to add collision objects to a node. This function
+        exports the rigid body, and calls the appropriate function to export
+        the collision geometry in the desired format.
+
+        @param obj: The object to export as collision.
+        @param parent_block: The NiNode parent of the collision.
+        """
 
         # is it packed
         coll_ispacked = (obj.rbShapeBoundType
@@ -2492,8 +2519,6 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
                 self.exportCollisionList(obj, colbody, layer, material)
             else:
                 self.exportCollisionSingle(obj, colbody, layer, material)
-
-
 
     def exportCollisionPacked(self, obj, colbody, layer, material):
         """Add object ob as packed collision object to collision body colbody.
@@ -2770,6 +2795,106 @@ ERROR%t|Too many faces/vertices. Decimate/split your mesh and try again.""")
             raise NifExportError(
                 'cannot export collision type %s to collision shape list'
                 % obj.rbShapeBoundType)
+
+    def exportConstraints(self, obj):
+        """Export the constraints of an object.
+
+        @param obj: The object whose constraints to export."""
+        if isinstance(obj, Blender.Armature.Bone):
+            # bone object has its constraints stored in the posebone
+            # so now we should get the posebone, but no constraints for
+            # bones are exported anyway for now
+            # so skip this object
+            return
+
+        for b_constr in obj.constraints:
+            # rigid body joints
+            if b_constr.type == Blender.Constraint.Type.RIGIDBODYJOINT:
+                if self.EXPORT_VERSION != "Oblivion":
+                    self.msg("""\
+  only Oblivion rigid body constraints can be exported
+  skipped %s""" % b_constr)
+                    continue
+                # check that the object is a rigid body
+                for otherbody, otherobj in self.blocks.iteritems():
+                    if isinstance(otherbody, NifFormat.bhkRigidBody) \
+                        and otherobj is obj:
+                        colbody = otherbody
+                        break
+                else:
+                    # no collision body for this object
+                    raise NifExportError("""\
+Object %s has a rigid body constraint, 
+but is not exported as collision object""")
+                # yes there is a rigid body constraint
+                # is it of a type that is supported?
+                if b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE] == 1:
+                    # ball
+                    if not self.EXPORT_OB_MALLEABLECONSTRAINT:
+                        hkconstraint = self.createBlock(
+                            "bhkRagdollConstraint", b_constr)
+                    else:
+                        hkconstraint = self.createBlock(
+                            "bhkMalleableConstraint", b_constr)
+                        hkconstraint.type = 7
+                    hkdescriptor = hkconstraint.ragdoll
+                elif b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE] == 2:
+                    # hinge
+                    if not self.EXPORT_OB_MALLEABLECONSTRAINT:
+                        hkconstraint = self.createBlock(
+                            "bhkLimitedHingeConstraint", b_constr)
+                    else:
+                        hkconstraint = self.createBlock(
+                            "bhkMalleableConstraint", b_constr)
+                        hkconstraint.type = 2
+                    hkdescriptor = hkconstraint.limitedHinge
+                else:
+                    raise NifExportError("""\
+Unsupported rigid body joint type (%i), only ball and hinge are supported.""" \
+% b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE])
+
+                # parent constraint to colbody
+                colbody.numConstraints += 1
+                colbody.constraints.updateSize()
+                colbody.constraints[-1] = hkconstraint
+
+                # export hkconstraint settings
+                hkconstraint.numEntities = 2
+                hkconstraint.entities.updateSize()
+                hkconstraint.entities[0] = colbody
+                # is there a target?
+                targetobj = b_constr[Blender.Constraint.Settings.TARGET]
+                if not targetobj:
+                    self.msg("  WARNING: constraint %s has no target, skipped")
+                    continue
+                # find target's bhkRigidBody
+                for otherbody, otherobj in self.blocks.iteritems():
+                    if isinstance(otherbody, NifFormat.bhkRigidBody) \
+                        and otherobj == targetobj:
+                        hkconstraint.entities[1] = otherbody
+                        break
+                else:
+                    # not found
+                    raise NifExportError("""\
+Rigid body target not exported in nif tree, 
+check that %s is selected during export.""" % targetobj)
+                # priority
+                hkconstraint.priority = 1
+                # extra malleable constraint settings
+                if isinstance(hkconstraint, NifFormat.bhkMalleableConstraint):
+                    # unknowns
+                    hkconstraint.unknownInt2 = 2
+                    hkconstraint.unknownInt3 = 1
+                    # force required to keep bodies together
+                    # 0.5 seems a good standard value for creatures
+                    hkconstraint.tau = 0.5
+                    # default damping settings
+                    # (cannot access rbDamping in Blender Python API)
+                    hkconstraint.damping = 0.5
+                                                 
+                # export hkdescriptor settings
+
+
 
     def exportAlphaProperty(self, flags = 0x00ED):
         """Return existing alpha property with given flags, or create new one
