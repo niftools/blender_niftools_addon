@@ -2654,11 +2654,12 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
 
             # get pivot point
             pivot = Blender.Mathutils.Vector(
-                hkdescriptor.pivotA.x,
-                hkdescriptor.pivotA.y,
-                hkdescriptor.pivotA.z)
+                hkdescriptor.pivotA.x * 7,
+                hkdescriptor.pivotA.y * 7,
+                hkdescriptor.pivotA.z * 7)
 
             # get z- and x-axes of the constraint
+            # (also see nif_export.py NifImport.exportConstraints)
             if isinstance(hkdescriptor, NifFormat.RagdollDescriptor):
                 # for ragdoll, take z to be the twist axis (central axis of the
                 # cone, that is)
@@ -2704,6 +2705,10 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
                 raise ValueError("unknown descriptor %s"
                                  % hkdescriptor.__class__.__name__)
 
+            # transform pivot point and constraint matrix into object
+            # coordinates
+            # (also see nif_export.py NifImport.exportConstraints)
+            
             # the pivot point v is in hkbody coordinates
             # however blender expects it in object coordinates, v'
             # v * R * B = v' * O * T * B'
@@ -2732,7 +2737,7 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
             for niBone in self.bonesExtraMatrix:
                 if niBone.collisionObject \
                    and niBone.collisionObject.body is hkbody:
-                    transform = self.bonesExtraMatrix[niBone]
+                    transform = self.bonesExtraMatrix[niBone].copy()
                     transform.invert()
                     pivot = pivot * transform
                     transform = transform.rotationPart()
