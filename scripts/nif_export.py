@@ -2809,6 +2809,10 @@ ERROR%t|Too many faces/vertices. Decimate/split your mesh and try again.""")
             # so skip this object
             return
 
+        if not hasattr(b_obj, "constraints"):
+            # skip text buffers etc
+            return
+
         for b_constr in b_obj.constraints:
             # rigid body joints
             if b_constr.type == Blender.Constraint.Type.RIGIDBODYJOINT:
