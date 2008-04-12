@@ -2179,7 +2179,8 @@ WARNING: lost %f in vertex weights while creating a skin partition for
         """Get an object's matrix as NifFormat.Matrix44
 
         Note: for objects parented to bones, this will return the transform
-        relative to the bone parent head, this differs from getMatrix which
+        relative to the bone parent head in nif coordinates (that is, including
+        the bone correction); this differs from getMatrix which
         returns the transform relative to the armature."""
         bscale, brot, btrans = self.getObjectSRT(obj, space)
         mat = NifFormat.Matrix44()
@@ -2214,8 +2215,7 @@ WARNING: lost %f in vertex weights while creating a skin partition for
         ob.getMatrix(space) == bs * br * bt
 
         Note: for objects parented to bones, this will return the transform
-        relative to the bone parent head, this differs from getMatrix which
-        returns the transform relative to the armature.
+        relative to the bone parent head including bone correction.
 
         space is either 'none' (gives identity transform) or 'localspace'"""
         # TODO remove the space argument, always do local space
@@ -2234,35 +2234,29 @@ WARNING: lost %f in vertex weights while creating a skin partition for
             # if there is a bone parent then the object is parented
             # then get the matrix relative to the bone parent head
             if bone_parent_name:
+                # so v * T * O * B' = v * Z * B
+                # where B' is the Blender bone matrix in armature
+                # space, T is the bone tail translation, O is the object
+                # matrix (relative to the head), and B is the nif bone matrix;
+                # we wish to find Z
+
                 # mat = obj.getMatrix('localspace').copy()
                 # gets the object local transform matrix, relative
                 # to the armature!! (not relative to the bone)
+                # so at this point, mat = T * O * B'
+                # hence it must hold that mat = Z * B,
+                # or equivalently Z = mat * B^{-1}
 
-                # first get the bone
+                # now, B^{-1} = B'^{-1} * X
+                # so Z = mat * B'^{-1} * X
+
+                # first multiply with inverse of the Blender bone matrix
                 bone_parent = obj.getParent().getData().bones[
                     bone_parent_name]
-                # so v * T * O * B' = v * mat
-                # where B' is the Blender bone matrix in armature
-                # space and T * O is the object matrix we would like
-                # to find
-                # hence, T * O = mat * B'^-1
                 boneinv = bone_parent.matrix['ARMATURESPACE'].copy()
                 boneinv.invert()
                 mat = mat * boneinv
-                # fix for extra transform
-                #
-                # in detail:
-                # a vertex in the object has global coordinates
-                #   v * T * O * B'
-                # with v the vertex, O the object transform, T
-                # the tail translation (so mat = T * O at this
-                # point) and B the blender bone matrix
-                # however... in the nif the bone has transform B
-                #   B = X^-1 * B'
-                # with X^-1 = self.bonesExtraMatrixInv[B]
-                # so we post multiply mat with X to make sure the
-                # vertex coordinates come out correctly:
-                #   v * mat * X * B = v * T * O * B'
+                # now multiply with the bone correction matrix X
                 try:
                     extra = self.bonesExtraMatrixInv[
                         bone_parent_name].copy()
