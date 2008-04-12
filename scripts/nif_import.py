@@ -943,7 +943,8 @@ WARNING: bspline animation data found, but bspline import not yet supported;
                                 rot_keys_dict[frame] = Blender.Mathutils.Quaternion(rot) 
 
                     # Quaternion Rotations
-                    elif rotationType == 1:
+                    else:
+                        # TODO take rotation type into account for interpolation
                         if kfd.quaternionKeys:
                             self.msg('Rotation keys...(quaternions)', 4)
                         quaternionKeys = kfd.quaternionKeys
@@ -962,10 +963,10 @@ WARNING: bspline animation data found, but bspline import not yet supported;
                             # fill optimizer dictionary
                             if translations:
                                 rot_keys_dict[frame] = Blender.Mathutils.Quaternion(rot)
-                    else:
-                        print("""Rotation keys...(unknown)
-WARNING: rotation animation data of type %i found, but this type is not yet
-         supported; data has been skipped""" % rotationType)                        
+#                    else:
+#                        print("""Rotation keys...(unknown)
+#WARNING: rotation animation data of type %i found, but this type is not yet
+#         supported; data has been skipped""" % rotationType)                        
         
                     # Translations
                     if translations.keys:

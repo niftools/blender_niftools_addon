@@ -7,6 +7,7 @@ creature and weapon
 * support for NiWireframeProperty via material WIRE mode
 * furniture marker export
 * prevent merging of EnvMap2 materials with other materials
+* import of type 2 and 3 quaternion rotations
 * many other minor enhancements
 
 Version 2.3.0 (Mar 30, 2008)
