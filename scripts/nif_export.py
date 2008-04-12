@@ -393,7 +393,13 @@ Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
             if self.EXPORT_VERSION == 'Oblivion' \
                 and self.filebase[:15].lower() == 'furnituremarker':
                 # exporting a furniture marker for Oblivion
-                furniturenumber = int(self.filebase[15:])
+                try:
+                    furniturenumber = int(self.filebase[15:])
+                except ValueError:
+                    raise NifExportError("""\
+Furniture marker has invalid number (%s). Name your file 
+'furnituremarkerxx.nif' where xx is a number between 00 and 19."""
+                                         % self.filebase[15:])
                 # name scene root name the file base name
                 root_name = self.filebase
                 # create furniture marker block
@@ -450,15 +456,8 @@ Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
             # add vertex color and zbuffer properties for civ4 and railroads
             if self.EXPORT_VERSION in ["Civilization IV",
                                        "Sid Meier's Railroads"]:
-                vcol = self.createBlock("NiVertexColorProperty")
-                vcol.flags = 1
-                vcol.vertexMode = 0
-                vcol.lightingMode = 1
-                zbuf = self.createBlock("NiZBufferProperty")
-                zbuf.flags = 15
-                zbuf.function = 3
-                root_block.addProperty(vcol)
-                root_block.addProperty(zbuf)
+                self.exportVertexColorProperty(root_block)
+                self.exportZBufferProperty(root_block)
 
             if self.EXPORT_FLATTENSKIN:
                 # (warning: trouble if armatures parent other armatures or
@@ -1010,27 +1009,57 @@ keyframes are supported.""" % self.EXPORT_VERSION)
             scale_frame.time = (frame - 1) * self.fspeed
             scale_frame.value = scale_curve[frame]
 
+    def exportVertexColorProperty(self, block_parent,
+                                  flags = 1,
+                                  vertex_mode = 0, lighting_mode = 1):
+        """Create a vertex color property, and attach it to an existing block
+        (typically, the root of the nif tree).
 
-
-    def exportVColProp(self, vertex_mode, lighting_mode):
-        self.msg("Exporting NiVertexColorProperty")
+        @param block_parent: The block to which to attach the new property.
+        @param flags: The C{flags} of the new property.
+        @param vertex_mode: The C{vertexMode} of the new property.
+        @param lighting_mode: The C{lightingMode} of the new property.
+        @return: The new property block.
+        """
         # create new vertex color property block
         vcolprop = self.createBlock("NiVertexColorProperty")
         
-        # make it a property of the root node
-        self.blocks[0].addChild(vcolprop)
+        # make it a property of the parent
+        block_parent.addProperty(vcolprop)
 
         # and now export the parameters
+        vcolprop.flags = flags
         vcolprop.vertexMode = vertex_mode
         vcolprop.lightingMode = lighting_mode
 
+        return vcolprop
 
+    def exportZBufferProperty(self, block_parent,
+                              flags = 15, function = 3):
+        """Create a z-buffer property, and attach it to an existing block
+        (typically, the root of the nif tree).
 
-    #
-    # parse the animation groups buffer and write an extra string data block,
-    # parented to the root block
-    #
+        @param block_parent: The block to which to attach the new property.
+        @param flags: The C{flags} of the new property.
+        @param function: The C{function} of the new property.
+        @return: The new property block.
+        """
+        # create new z-buffer property block
+        zbuf = self.createBlock("NiZBufferProperty")
+
+        # make it a property of the parent
+        block_parent.addProperty(zbuf)
+
+        # and now export the parameters
+        zbuf.flags = 15
+        zbuf.function = 3
+
+        return zbuf
+
     def exportAnimGroups(self, animtxt, block_parent):
+        """Parse the animation groups buffer and write an extra string
+        data block, and attach it to an existing block (typically, the root
+        of the nif tree)."""
         if self.EXPORT_ANIMATION == 1:
             # animation group extra data is not present in geometry only files
             return
@@ -2779,6 +2808,21 @@ ERROR%t|Too many faces/vertices. Decimate/split your mesh and try again.""")
         # create block (but don't register it yet in self.blocks)
         matprop = NifFormat.NiMaterialProperty()
    
+        # flag which determines whether the material name is relevant or not
+        # only for particular names this holds, such as EnvMap2
+        # by default, the material name does not affect rendering
+        is_mat_name_irrelevant = True
+
+        # hack to preserve EnvMap2 named blocks (even if they got renamed to
+        # EnvMap2.xxx on import)
+        if self.EXPORT_VERSION == 'Oblivion' \
+            and name[:7].lower() == "envmap2":
+            if name.lower() != "envmap2":
+                self.msg("Renaming material '%s' to 'EnvMap2'" % name)
+            name = "EnvMap2"
+            # this one affects rendering
+            is_mat_name_irrelevant = False
+
         matprop.name = name
         matprop.flags = flags
         matprop.ambientColor.r = ambient[0]
@@ -2801,7 +2845,7 @@ ERROR%t|Too many faces/vertices. Decimate/split your mesh and try again.""")
         # materials even when NiMaterialProperty is the same)
         for block in self.blocks:
             if isinstance(block, NifFormat.NiMaterialProperty) \
-               and block.getHash(ignore_strings = True) == matprop.getHash(ignore_strings = True):
+               and block.getHash(ignore_strings = is_mat_name_irrelevant) == matprop.getHash(ignore_strings = is_mat_name_irrelevant):
                 return block
 
         # no material property with given settings found, so use and register

@@ -6,6 +6,8 @@ Version 2.3.1 (***)
 creature and weapon
 * support for NiWireframeProperty via material WIRE mode
 * furniture marker export
+* prevent merging of EnvMap2 materials with other materials
+* many other minor enhancements
 
 Version 2.3.0 (Mar 30, 2008)
 * Import/Export: experimental support for Oblivion animation
