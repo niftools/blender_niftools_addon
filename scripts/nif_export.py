@@ -473,7 +473,7 @@ Furniture marker has invalid number (%s). Name your file
 
             # export constraints
             for b_obj in self.getExportedObjects():
-                self.exportConstraints(b_obj)
+                self.exportConstraints(b_obj, root_block)
 
             # add vertex color and zbuffer properties for civ4 and railroads
             if self.EXPORT_VERSION in ["Civilization IV",
@@ -2797,10 +2797,11 @@ ERROR%t|Too many faces/vertices. Decimate/split your mesh and try again.""")
                 'cannot export collision type %s to collision shape list'
                 % obj.rbShapeBoundType)
 
-    def exportConstraints(self, b_obj):
+    def exportConstraints(self, b_obj, root_block):
         """Export the constraints of an object.
 
-        @param b_obj: The object whose constraints to export."""
+        @param b_obj: The object whose constraints to export.
+        @param root: The root of the nif tree (required for updateAB)."""
         if isinstance(b_obj, Blender.Armature.Bone):
             # bone object has its constraints stored in the posebone
             # so now we should get the posebone, but no constraints for
@@ -2966,10 +2967,10 @@ check that %s is selected during export.""" % targetobj)
                     hkdescriptor.axleA.x = axis_x[0]
                     hkdescriptor.axleA.y = axis_x[1]
                     hkdescriptor.axleA.z = axis_x[2]
-                    # y is the remaining axis
-                    hkdescriptor.perp2AxleInA2.x = axis_y[0]
-                    hkdescriptor.perp2AxleInA2.y = axis_y[1]
-                    hkdescriptor.perp2AxleInA2.z = axis_y[2]
+                    # y is the remaining axis; it's usually inverted
+                    hkdescriptor.perp2AxleInA2.x = -axis_y[0]
+                    hkdescriptor.perp2AxleInA2.y = -axis_y[1]
+                    hkdescriptor.perp2AxleInA2.z = -axis_y[2]
                     # angle limits
                     # typically, the constraint on one side is defined
                     # by the z axis
@@ -2992,6 +2993,8 @@ check that %s is selected during export.""" % targetobj)
                     # non-malleable typically have 10
                     hkdescriptor.maxFriction = 10.0
 
+                # do AB
+                hkconstraint.updateAB(root_block)
 
 
     def exportAlphaProperty(self, flags = 0x00ED):
