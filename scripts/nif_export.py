@@ -399,10 +399,41 @@ Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
                         has_keyframecontrollers = True
                         break
                 if not has_keyframecontrollers:
-                    self.msg("Defining dummy keyframe controller")
+                    self.msg("  defining dummy keyframe controller")
                     # add a trivial keyframe controller on the scene root
                     self.exportKeyframes(None, 'localspace', root_block)
-            
+
+            # oblivion skeleton export: check that all bones have a
+            # transform controller and transform interpolator
+            if self.EXPORT_VERSION == "Oblivion" \
+                and self.filebase.lower() in ('skeleton', 'skeletonbeast'):
+                # skeleton export
+                self.msg("  adding controllers and interpolators for skeleton")
+                for block in self.blocks.keys():
+                    if isinstance(block, NifFormat.NiNode) \
+                        and block.name == "Bip01":
+                        for bone in block.tree(block_type = NifFormat.NiNode):
+                            if bone.name != "Bip01":
+                                ctrl = self.createBlock("NiTransformController")
+                                interp = self.createBlock("NiTransformInterpolator")
+                                ctrl.interpolator = interp
+                                bone.addController(ctrl)
+
+                                ctrl.flags = 12
+                                ctrl.frequency = 1.0
+                                ctrl.phase = 0.0
+                                ctrl.startTime = self.FLOAT_MAX
+                                ctrl.stopTime = self.FLOAT_MIN
+                                interp.translation.x = bone.translation.x
+                                interp.translation.y = bone.translation.y
+                                interp.translation.z = bone.translation.z
+                                scale, quat = bone.rotation.getScaleQuat()
+                                interp.rotation.x = quat.x
+                                interp.rotation.y = quat.y
+                                interp.rotation.z = quat.z
+                                interp.rotation.w = quat.w
+                                interp.scale = bone.scale
+
             # export animation groups
             if animtxt:
                 anim_textextra = self.exportAnimGroups(animtxt, root_block)
@@ -435,6 +466,7 @@ Furniture marker has invalid number (%s). Name your file
                 root_block.addExtraData(furnmark)
                 root_block.addExtraData(sgokeep)
 
+            self.msg("Checking collision")
             # activate oblivion collision and physics
             if self.EXPORT_VERSION == 'Oblivion':
                 hascollision = False
