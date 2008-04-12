@@ -472,8 +472,8 @@ Furniture marker has invalid number (%s). Name your file
                 #root_block.addExtraData(upb)
 
             # export constraints
-            for obj in self.getExportedObjects():
-                self.exportConstraints(obj)
+            for b_obj in self.getExportedObjects():
+                self.exportConstraints(b_obj)
 
             # add vertex color and zbuffer properties for civ4 and railroads
             if self.EXPORT_VERSION in ["Civilization IV",
@@ -2176,7 +2176,11 @@ WARNING: lost %f in vertex weights while creating a skin partition for
         return bscale, brot, btrans
 
     def getObjectMatrix(self, obj, space):
-        """Get an object's matrix as NifFormat.Matrix44"""
+        """Get an object's matrix as NifFormat.Matrix44
+
+        Note: for objects parented to bones, this will return the transform
+        relative to the bone parent head, this differs from getMatrix which
+        returns the transform relative to the armature."""
         bscale, brot, btrans = self.getObjectSRT(obj, space)
         mat = NifFormat.Matrix44()
         
@@ -2237,11 +2241,11 @@ WARNING: lost %f in vertex weights while creating a skin partition for
                 # first get the bone
                 bone_parent = obj.getParent().getData().bones[
                     bone_parent_name]
-                # so v * O * B' = v * mat
+                # so v * T * O * B' = v * mat
                 # where B' is the Blender bone matrix in armature
-                # space and O is the object matrix we would like
+                # space and T * O is the object matrix we would like
                 # to find
-                # hence, O = mat * B'^-1
+                # hence, T * O = mat * B'^-1
                 boneinv = bone_parent.matrix['ARMATURESPACE'].copy()
                 boneinv.invert()
                 mat = mat * boneinv
@@ -2796,18 +2800,18 @@ ERROR%t|Too many faces/vertices. Decimate/split your mesh and try again.""")
                 'cannot export collision type %s to collision shape list'
                 % obj.rbShapeBoundType)
 
-    def exportConstraints(self, obj):
+    def exportConstraints(self, b_obj):
         """Export the constraints of an object.
 
-        @param obj: The object whose constraints to export."""
-        if isinstance(obj, Blender.Armature.Bone):
+        @param b_obj: The object whose constraints to export."""
+        if isinstance(b_obj, Blender.Armature.Bone):
             # bone object has its constraints stored in the posebone
             # so now we should get the posebone, but no constraints for
             # bones are exported anyway for now
             # so skip this object
             return
 
-        for b_constr in obj.constraints:
+        for b_constr in b_obj.constraints:
             # rigid body joints
             if b_constr.type == Blender.Constraint.Type.RIGIDBODYJOINT:
                 if self.EXPORT_VERSION != "Oblivion":
@@ -2818,8 +2822,8 @@ ERROR%t|Too many faces/vertices. Decimate/split your mesh and try again.""")
                 # check that the object is a rigid body
                 for otherbody, otherobj in self.blocks.iteritems():
                     if isinstance(otherbody, NifFormat.bhkRigidBody) \
-                        and otherobj is obj:
-                        colbody = otherbody
+                        and otherobj is b_obj:
+                        hkbody = otherbody
                         break
                 else:
                     # no collision body for this object
@@ -2853,15 +2857,15 @@ but is not exported as collision object""")
 Unsupported rigid body joint type (%i), only ball and hinge are supported.""" \
 % b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE])
 
-                # parent constraint to colbody
-                colbody.numConstraints += 1
-                colbody.constraints.updateSize()
-                colbody.constraints[-1] = hkconstraint
+                # parent constraint to hkbody
+                hkbody.numConstraints += 1
+                hkbody.constraints.updateSize()
+                hkbody.constraints[-1] = hkconstraint
 
                 # export hkconstraint settings
                 hkconstraint.numEntities = 2
                 hkconstraint.entities.updateSize()
-                hkconstraint.entities[0] = colbody
+                hkconstraint.entities[0] = hkbody
                 # is there a target?
                 targetobj = b_constr[Blender.Constraint.Settings.TARGET]
                 if not targetobj:
@@ -2891,8 +2895,105 @@ check that %s is selected during export.""" % targetobj)
                     # default damping settings
                     # (cannot access rbDamping in Blender Python API)
                     hkconstraint.damping = 0.5
-                                                 
-                # export hkdescriptor settings
+
+                # calculate pivot point and constraint matrix
+                pivot = Blender.Mathutils.Vector(
+                    b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVX],
+                    b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVY],
+                    b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVZ])
+                constr_matrix = Blender.Mathutils.Euler(
+                    b_constr[Blender.Constraint.Settings.CONSTR_RB_AXX],
+                    b_constr[Blender.Constraint.Settings.CONSTR_RB_AXY],
+                    b_constr[Blender.Constraint.Settings.CONSTR_RB_AXZ])
+                constr_matrix = constr_matrix.toMatrix()
+
+                # transform pivot point and constraint matrix into bhkRigidBody
+                # coordinates (also see nif_import.py, the
+                # NifImport.importHavokConstraints method)
+                
+                # the pivot point v' is in object coordinates
+                # however nif expects it in hkbody coordinates, v
+                # v * R * B = v' * O * T * B'
+                # with R = rigid body transform (usually unit tf)
+                # B = nif bone matrix
+                # O = blender object transform
+                # T = bone tail matrix (translation in Y direction)
+                # B' = blender bone matrix
+                # so we need to cancel out the object transformation by
+                # v = v' * O * T * B' * B^{-1} * R^{-1}
+
+                # for the rotation matrix, we transform in the same way
+                # but ignore all translation parts
+
+                # assume R is unit transform...
+
+                # apply object transform relative to the bone head
+                # (this is O * T * B' * B^{-1} at once)
+                transform = Blender.Mathutils.Matrix(
+                    *self.getObjectMatrix(b_obj, 'localspace').asList())
+                pivot = pivot * transform
+                constr_matrix = constr_matrix * transform.rotationPart()
+
+                # export hkdescriptor pivot point
+                hkdescriptor.pivotA.x = pivot[0] / 7.0
+                hkdescriptor.pivotA.y = pivot[1] / 7.0
+                hkdescriptor.pivotA.z = pivot[2] / 7.0
+                # export hkdescriptor axes and other parameters
+                # (also see nif_import.py NifImport.importHavokConstraints)
+                axis_x = Blender.Mathutils.Vector(1,0,0) * constr_matrix
+                axis_y = Blender.Mathutils.Vector(0,1,0) * constr_matrix
+                axis_z = Blender.Mathutils.Vector(0,0,1) * constr_matrix
+                if isinstance(hkdescriptor, NifFormat.RagdollDescriptor):
+                    # z axis is the twist vector
+                    hkdescriptor.twistA.x = -axis_z[0]
+                    hkdescriptor.twistA.y = -axis_z[1]
+                    hkdescriptor.twistA.z = -axis_z[2]
+                    # x axis is the plane vector
+                    hkdescriptor.planeA.x = axis_x[0]
+                    hkdescriptor.planeA.y = axis_x[1]
+                    hkdescriptor.planeA.z = axis_x[2]
+                    # angle limits
+                    # take them twist and plane to be 45 deg (3.14 / 4 = 0.8)
+                    hkdescriptor.twistMinAngle = -0.8
+                    hkdescriptor.twistMaxAngle = +0.8
+                    hkdescriptor.planeMinAngle = -0.8
+                    hkdescriptor.planeMaxAngle = +0.8
+                    # take cone to be 90 deg (3.14 / 2 = 1.5)
+                    hkdescriptor.coneMaxAngle  = +1.5
+                elif isinstance(hkdescriptor, NifFormat.LimitedHingeDescriptor):
+                    # z axis is the zero angle vector on the plane of rotation
+                    hkdescriptor.perp2AxleInA1.x = axis_z[0]
+                    hkdescriptor.perp2AxleInA1.y = axis_z[1]
+                    hkdescriptor.perp2AxleInA1.z = axis_z[2]
+                    # x axis is the axis of rotation
+                    hkdescriptor.axleA.x = axis_x[0]
+                    hkdescriptor.axleA.y = axis_x[1]
+                    hkdescriptor.axleA.z = axis_x[2]
+                    # y is the remaining axis
+                    hkdescriptor.perp2AxleInA2.x = axis_y[0]
+                    hkdescriptor.perp2AxleInA2.y = axis_y[1]
+                    hkdescriptor.perp2AxleInA2.z = axis_y[2]
+                    # angle limits
+                    # typically, the constraint on one side is defined
+                    # by the z axis
+                    hkdescriptor.minAngle = 0.0
+                    # the maximum axis is typically about 90 degrees
+                    # 3.14 / 2 = 1.5
+                    hkdescriptor.maxAngle = 1.5
+                    
+                else:
+                    raise ValueError("unknown descriptor %s"
+                                     % hkdescriptor.__class__.__name__)
+
+                # friction: again, just picking a reasonable value
+                if isinstance(hkconstraint,
+                              NifFormat.bhkMalleableConstraint):
+                    # malleable typically have 0
+                    # (perhaps because they have a damping parameter)
+                    hkdescriptor.maxFriction = 0.0
+                else:
+                    # non-malleable typically have 10
+                    hkdescriptor.maxFriction = 10.0
 
 
 
