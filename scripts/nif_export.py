@@ -2952,8 +2952,8 @@ check that %s is selected during export.""" % targetobj)
                     hkdescriptor.twistMaxAngle = +0.8
                     hkdescriptor.planeMinAngle = -0.8
                     hkdescriptor.planeMaxAngle = +0.8
-                    # take cone to be 90 deg (3.14 / 2 = 1.5)
-                    hkdescriptor.coneMaxAngle  = +1.5
+                    # same for maximum cone angle
+                    hkdescriptor.coneMaxAngle  = +0.8
                 elif isinstance(hkdescriptor, NifFormat.LimitedHingeDescriptor):
                     # z axis is the zero angle vector on the plane of rotation
                     hkdescriptor.perp2AxleInA1.x = axis_z[0]
