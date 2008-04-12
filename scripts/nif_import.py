@@ -584,51 +584,44 @@ WARNING: constraint for billboard node on %s added but target not set due to
                         # get parent bone and its name
                         b_par_bone_name = self.names[branch_parent]
                         b_par_bone = b_armature.data.bones[b_par_bone_name]
-## *** OLD INCOMPREHENSIBLE CODE ***
-##                        # first find the matrix in armature space
-##                        # of the bone
-##                        a_geom_matrix = self.importMatrix(branch_parent,
-##                                                          relative_to = niArmature)
-##                        # next find the tail matrix of the bone parent
-##                        # first get blender bone name
-##                        b_par_bone_name = self.names[b_obj_branch_parent]
-##                        b_par_bone = b_armature.data.bones[b_par_bone_name]
-##                        a_tail_matrix = b_par_bone.matrix['ARMATURESPACE'].copy()
-##                        a_tail_pos    = b_par_bone.tail['ARMATURESPACE']
-##                        a_tail_matrix[3][0] = a_tail_pos[0]
-##                        a_tail_matrix[3][1] = a_tail_pos[1]
-##                        a_tail_matrix[3][2] = a_tail_pos[2]
-##                        # fix the object matrix relative to the bone tail
-##                        b_obj.setMatrix(a_geom_matrix * a_tail_matrix.invert())
 
                         # get transform matrix of collision object;
                         # note that this matrix is already relative to
                         # branch_parent because the call to importMesh has
                         # relative_to = branch_parent
-                        b_obj_matrix = b_obj.getMatrix()
+                        b_obj_matrix = Blender.Mathutils.Matrix(
+                            b_obj.getMatrix())
                         # fix transform
                         # the bone has in the nif file an armature space transform
                         # given by niBlock.getTransform(relative_to = niArmature)
                         #
                         # in detail:
-                        # a vertex in the collision object has global coordinates
-                        #   v * O * B
-                        # with v the vertex, O the object transform (b_obj_matrix)
+                        # a vertex in the collision object has global
+                        # coordinates
+                        #   v * Z * B
+                        # with v the vertex, Z the object transform
+                        # (currently b_obj_matrix)
                         # and B the nif bone matrix
-                        # however... in blender the bone has transform B'
+
+                        # in Blender however a vertex has coordinates
+                        #   v * O * T * B'
+                        # with B' the Blender bone matrix
+                        # so we need that
+                        #   Z * B = O * T * B' or equivalently
+                        #   O = Z * B * B'^{-1} * T^{-1}
+                        #     = Z * X^{-1} * T^{-1}
+                        # since
                         #   B' = X * B
                         # with X = self.bonesExtraMatrix[B]
-                        # so we post multiply O with X^{-1} to make sure the vertex
-                        # coordinates come out correctly:
-                        #   v * O * {X^-1} * B' = v * O * B
-                        extra = self.bonesExtraMatrix[branch_parent].copy()
+
+                        # post multiply Z with X^{-1}
+                        extra = Blender.Mathutils.Matrix(
+                            self.bonesExtraMatrix[branch_parent])
                         extra.invert()
                         b_obj_matrix = b_obj_matrix * extra
-                        # now that's out of the way... but objects parented to bones
-                        # get an extra translation along the tail! so...
-                        # cancel out the tail (the tail causes a translation along
+                        # cancel out the tail translation T
+                        # (the tail causes a translation along
                         # the local Y axis)
-                        # fix the object matrix relative to the bone tail
                         b_obj_matrix[3][1] -= b_par_bone.length
                         # set the matrix
                         b_obj.setMatrix(b_obj_matrix)
@@ -666,29 +659,12 @@ WARNING: collision object has non-bone parent, this is not supported
                     # this is relative to niBlock
                     # (TODO fix so it's relative to branch_parent!)
                     b_obj_matrix = b_obj.getMatrix()
-                    # fix transform
-                    # the bone has in the nif file an armature space transform
-                    # given by niBlock.getTransform(relative_to = niArmature)
-                    #
-                    # in detail:
-                    # a vertex in the collision object has global coordinates
-                    #   v * O * B
-                    # with v the vertex, O the object transform (b_obj_matrix)
-                    # and B the nif bone matrix
-                    # however... in blender the bone has transform B'
-                    #   B' = X * B
-                    # with X = self.bonesExtraMatrix[B]
-                    # so we post multiply O with X^{-1} to make sure the vertex
-                    # coordinates come out correctly:
-                    #   v * O * {X^-1} * B' = v * O * B
-                    extra = self.bonesExtraMatrix[branch_parent]
+                    # fix transform, see explanation above
+                    #   O = Z * X^{-1} * T^{-1}
+                    extra = Blender.Mathutils.Matrix(
+                        self.bonesExtraMatrix[branch_parent])
                     extra.invert()
                     b_obj_matrix = b_obj_matrix * extra
-                    # now that's out of the way... but objects parented to bones
-                    # get an extra translation along the tail! so...
-                    # cancel out the tail (the tail causes a translation along
-                    # the local Y axis)
-                    # fix the object matrix relative to the bone tail
                     b_obj_matrix[3][1] -= b_par_bone.length
                     # set the matrix
                     b_obj.setMatrix(b_obj_matrix)
@@ -1144,7 +1120,8 @@ WARNING: bspline animation data found, but bspline import not yet supported;
         new_bone_matrix[3][1] = b_bone_head_y
         new_bone_matrix[3][2] = b_bone_head_z
         # stores any correction or alteration applied to the bone matrix
-        self.bonesExtraMatrix[niBlock] = new_bone_matrix * old_bone_matrix_inv # new * inverse(old)
+        # new * inverse(old)
+        self.bonesExtraMatrix[niBlock] = new_bone_matrix * old_bone_matrix_inv
         # set bone children
         for niBone in niChildBones:
             b_child_bone =  self.importBone(
@@ -2737,7 +2714,8 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
             for niBone in self.bonesExtraMatrix:
                 if niBone.collisionObject \
                    and niBone.collisionObject.body is hkbody:
-                    transform = self.bonesExtraMatrix[niBone].copy()
+                    transform = Blender.Mathutils.Matrix(
+                        self.bonesExtraMatrix[niBone])
                     transform.invert()
                     pivot = pivot * transform
                     transform = transform.rotationPart()
@@ -2751,14 +2729,15 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
                     b_hkobj.parentbonename].length
 
             # cancel out object transform
-            transform = b_hkobj.getMatrix('localspace').copy()
+            transform = Blender.Mathutils.Matrix(
+                b_hkobj.getMatrix('localspace'))
             transform.invert()
             pivot = pivot * transform
             transform = transform.rotationPart()
             axis_z = axis_z * transform
             axis_x = axis_x * transform
 
-            # set pivot point            
+            # set pivot point           
             b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVX] = pivot[0]
             b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVY] = pivot[1]
             b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVZ] = pivot[2]

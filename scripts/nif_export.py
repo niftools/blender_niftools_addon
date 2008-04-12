@@ -2072,7 +2072,8 @@ WARNING: lost %f in vertex weights while creating a skin partition for
             bonerestmat = self.getBoneRestMatrix(bone, 'BONESPACE',
                                                  extra = False)
             try:
-                bonexmat_inv = self.bonesExtraMatrixInv[bone.name]
+                bonexmat_inv = Blender.Mathutils.Matrix(
+                    self.bonesExtraMatrixInv[bone.name])
             except KeyError:
                 bonexmat_inv = Blender.Mathutils.Matrix()
                 bonexmat_inv.identity()
@@ -2229,37 +2230,38 @@ WARNING: lost %f in vertex weights while creating a skin partition for
 
         # now write out spaces
         if (not type(obj) is Blender.Armature.Bone):
-            mat = obj.getMatrix('localspace').copy()
+            mat = Blender.Mathutils.Matrix(obj.getMatrix('localspace'))
             bone_parent_name = obj.getParentBoneName()
             # if there is a bone parent then the object is parented
             # then get the matrix relative to the bone parent head
             if bone_parent_name:
-                # so v * T * O * B' = v * Z * B
+                # so v * O * T * B' = v * Z * B
                 # where B' is the Blender bone matrix in armature
                 # space, T is the bone tail translation, O is the object
                 # matrix (relative to the head), and B is the nif bone matrix;
                 # we wish to find Z
 
-                # mat = obj.getMatrix('localspace').copy()
+                # obj.getMatrix('localspace')
                 # gets the object local transform matrix, relative
                 # to the armature!! (not relative to the bone)
-                # so at this point, mat = T * O * B'
+                # so at this point, mat = O * T * B'
                 # hence it must hold that mat = Z * B,
                 # or equivalently Z = mat * B^{-1}
 
-                # now, B^{-1} = B'^{-1} * X
-                # so Z = mat * B'^{-1} * X
+                # now, B' = X * B, so B^{-1} = B'^{-1} * X
+                # hence Z = mat * B'^{-1} * X
 
                 # first multiply with inverse of the Blender bone matrix
                 bone_parent = obj.getParent().getData().bones[
                     bone_parent_name]
-                boneinv = bone_parent.matrix['ARMATURESPACE'].copy()
+                boneinv = Blender.Mathutils.Matrix(
+                    bone_parent.matrix['ARMATURESPACE'])
                 boneinv.invert()
                 mat = mat * boneinv
                 # now multiply with the bone correction matrix X
                 try:
-                    extra = self.bonesExtraMatrixInv[
-                        bone_parent_name].copy()
+                    extra = Blender.Mathutils.Matrix(
+                        self.bonesExtraMatrixInv[bone_parent_name])
                     extra.invert()
                     mat = mat * extra
                 except KeyError:
@@ -2313,13 +2315,14 @@ Workaround: apply size and rotation (CTRL-A).""")
         corrmat = Blender.Mathutils.Matrix()
         if extra:
             try:
-                corrmat = self.bonesExtraMatrixInv[bone.name]
+                corrmat = Blender.Mathutils.Matrix(
+                    self.bonesExtraMatrixInv[bone.name])
             except KeyError:
                 corrmat.identity()
         else:
             corrmat.identity()
         if (space == 'ARMATURESPACE'):
-            mat = bone.matrix['ARMATURESPACE'].copy()
+            mat = Blender.Mathutils.Matrix(bone.matrix['ARMATURESPACE'])
             if tail:
                 tail_pos = bone.tail['ARMATURESPACE']
                 mat[3][0] = tail_pos[0]
