@@ -115,6 +115,8 @@ class NifImport:
         # save file name
         self.filename = self.IMPORT_FILE[:]
         self.filepath = Blender.sys.dirname(self.filename)
+        self.filebase, self.fileext = Blender.sys.splitext(
+            Blender.sys.basename(self.filename))
         
         # dictionary of texture files, to reuse textures
         self.textures = {}
@@ -452,19 +454,21 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                                 b_children_list.append(b_child_obj)
                         b_obj.makeParent(b_children_list)
 
-                    # import collision objects
-                    if niBlock.collisionObject:
-                        bhk_body = niBlock.collisionObject.body
-                        if not isinstance(bhk_body, NifFormat.bhkRigidBody):
-                            print("WARNING: unsupported collision structure \
-under node %s" % niBlock.name)
-                        collision_objs = self.importBhkShape(bhk_body)
-                        # make parent
-                        b_obj.makeParent(collision_objs)
-                    
-                    # import bounding box
-                    if bbox:
-                        b_obj.makeParent([self.importBSBound(bbox)])
+                    # if not importing skeleton only
+                    if self.IMPORT_SKELETON != 1:
+                        # import collision objects
+                        if niBlock.collisionObject:
+                            bhk_body = niBlock.collisionObject.body
+                            if not isinstance(bhk_body, NifFormat.bhkRigidBody):
+                                print("WARNING: unsupported collision structure \
+    under node %s" % niBlock.name)
+                            collision_objs = self.importBhkShape(bhk_body)
+                            # make parent
+                            b_obj.makeParent(collision_objs)
+                        
+                        # import bounding box
+                        if bbox:
+                            b_obj.makeParent([self.importBSBound(bbox)])
 
                     # track camera for billboard nodes
                     if isinstance(niBlock, NifFormat.NiBillboardNode):
@@ -642,43 +646,45 @@ WARNING: constraint for billboard node on %s added but target not set due to
                         # usual parenting)
                         b_armature.makeParentDeform([b_obj])
 
-            # import collisions
-            if niBlock.collisionObject:
-                # collision object parented to a bone
-                # first import collision object
-                bhk_body = niBlock.collisionObject.body
-                if not isinstance(bhk_body, NifFormat.bhkRigidBody):
-                    print("""\
+            # if not importing skeleton only
+            if self.IMPORT_SKELETON != 1:
+                # import collisions
+                if niBlock.collisionObject:
+                    # collision object parented to a bone
+                    # first import collision object
+                    bhk_body = niBlock.collisionObject.body
+                    if not isinstance(bhk_body, NifFormat.bhkRigidBody):
+                        print("""\
 WARNING: unsupported collision structure under node %s""" % niBlock.name)
-                collision_objs = self.importBhkShape(bhk_body)
-                # get blender bone and its name
-                # (TODO also cover case where niBlock != branch_parent)
-                if niBlock != branch_parent:
-                    print("""\
+                    collision_objs = self.importBhkShape(bhk_body)
+                    # get blender bone and its name
+                    # (TODO also cover case where niBlock != branch_parent)
+                    if niBlock != branch_parent:
+                        print("""\
 WARNING: collision object has non-bone parent, this is not supported
          transform errors may result""")
-                b_par_bone_name = self.names[branch_parent]
-                b_par_bone = b_armature.data.bones[b_par_bone_name]
-                for b_obj in collision_objs:
-                    # get transform matrix of collision object
-                    # this is relative to niBlock
-                    # (TODO fix so it's relative to branch_parent!)
-                    b_obj_matrix = b_obj.getMatrix()
-                    # fix transform, see explanation above
-                    #   O = Z * X^{-1} * T^{-1}
-                    extra = Blender.Mathutils.Matrix(
-                        self.bonesExtraMatrix[branch_parent])
-                    extra.invert()
-                    b_obj_matrix = b_obj_matrix * extra
-                    b_obj_matrix[3][1] -= b_par_bone.length
-                    # set the matrix
-                    b_obj.setMatrix(b_obj_matrix)
-                    # make it parent of the bone
-                    b_armature.makeParentBone(
-                        [b_obj], self.names[niBlock])
+                    b_par_bone_name = self.names[branch_parent]
+                    b_par_bone = b_armature.data.bones[b_par_bone_name]
+                    for b_obj in collision_objs:
+                        # get transform matrix of collision object
+                        # this is relative to niBlock
+                        # (TODO fix so it's relative to branch_parent!)
+                        b_obj_matrix = b_obj.getMatrix()
+                        # fix transform, see explanation above
+                        #   O = Z * X^{-1} * T^{-1}
+                        extra = Blender.Mathutils.Matrix(
+                            self.bonesExtraMatrix[branch_parent])
+                        extra.invert()
+                        b_obj_matrix = b_obj_matrix * extra
+                        b_obj_matrix[3][1] -= b_par_bone.length
+                        # set the matrix
+                        b_obj.setMatrix(b_obj_matrix)
+                        # make it parent of the bone
+                        b_armature.makeParentBone(
+                            [b_obj], self.names[niBlock])
 
-            ### import bounding box?
-            ### not supported within armature branch (no need so far)
+                ### import bounding box?
+                ### not supported within armature branch (no need so far)
 
         # anything else: throw away
         return None, None
@@ -2061,8 +2067,12 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
 
     def markArmaturesBones(self, niBlock):
         """Mark armatures and bones by peeking into NiSkinInstance blocks."""
-        # case where we import skeleton only: do all NiNode's as bones
-        if self.IMPORT_SKELETON == 1:
+        # case where we import skeleton only,
+        # or importing an Oblivion skeleton:
+        # do all NiNode's as bones
+        if self.IMPORT_SKELETON == 1 or (
+            self.version == 0x14000005 and
+            self.filebase.lower() in ('skeleton', 'skeletonbeast')):
             if not isinstance(niBlock, NifFormat.NiNode):
                 raise NifImportError('cannot import skeleton: root is not a NiNode')
             # for morrowind, take the Bip01 node to be the skeleton root
