@@ -2580,7 +2580,7 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
             # get constraint descriptor
             if isinstance(hkconstraint, NifFormat.bhkRagdollConstraint):
                 hkdescriptor = hkconstraint.ragdoll
-            if isinstance(hkconstraint, NifFormat.bhkLimitedHingeConstraint):
+            elif isinstance(hkconstraint, NifFormat.bhkLimitedHingeConstraint):
                 hkdescriptor = hkconstraint.limitedHinge
             elif isinstance(hkconstraint, NifFormat.bhkMalleableConstraint):
                 if hkconstraint.type == 7:
@@ -2696,9 +2696,19 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
                 # they should form a orthogonal basis
                 if (Blender.Mathutils.CrossVecs(axis_x, axis_y)
                     - axis_z).length > 0.01:
-                    raise NifImportError(
-                        "axes do not form an orthogonal basis in %s"
-                        % hkdescriptor.__class__.__name__)
+                    # either not orthogonal, or negative orientation
+                    if (Blender.Mathutils.CrossVecs(-axis_x, axis_y)
+                        - axis_z).length > 0.01:
+                        self.msg("""\
+  note: axes do not form an orthogonal basis in %s
+        an arbitrary orientation has been chosen"""
+                                 % hkdescriptor.__class__.__name__)
+                        axis_z = Blender.Mathutils.CrossVecs(axis_x, axis_y)
+                    else:
+                        # fix orientation
+                        self.msg("""
+  note: x axis flipped to fix orientation""")
+                        axis_x = -axis_x
             else:
                 raise ValueError("unknown descriptor %s"
                                  % hkdescriptor.__class__.__name__)
