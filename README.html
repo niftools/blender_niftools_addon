@@ -11,6 +11,7 @@ h1 { text-align: center; color: black; background: #FF6600; margin-top: 0; }
 h2 { text-align: center; font-size: large; color: black; background: #FFCC33; }
 h3 { text-align: left; font-size: medium; color: black; background: #FFCC66; padding: 0 2em; }
 p, ul { padding: 0 12%; }
+ul ul { padding: 0 3%; }
 a:link { text-decoration: none; color: #006699; background: transparent; }
 a:visited { text-decoration: none; color: #006699; background: transparent; }
 a:hover { text-decoration: underline; color: #DD6900; background: transparent; }
@@ -28,7 +29,23 @@ Although we have done our best to squash all bugs we could find, it is unlikely 
 </p>
 <h2>Highlights of this Release</h2>
 <ul>
-<li></li>
+<li>Full Oblivion skeleton.nif and skeletonbeast.nif import and export including
+<ul>
+<li>havok parented to bones using bhkBlendCollisionObjects,</li>
+<li>ragdoll and hinge constraints (this also works for non-skeleton nifs, although not tested as much),</li>
+<li>BSBound bounding boxes,</li>
+<li>automatic extra dummy bhkBlendCollisionControllers, NiTransformControllers and NiTransformInterpolators.</li>
+</ul>
+For all of this to work make sure you set the layer to BIPED during export of your skeleton.nif. Exported skeletons *should* work out of the box in the game, although of course this feature is still very experimental and things can go wrong. If it does not work, check your nif with nifskope by comparing with an existing skeleton.nif (and report the bug!).</li>
+<li>A new script to set bone priorities on all selected bones at once.</li>
+<li>Fixed a bug which prevented import of collision on scene root.</li>
+<li>New settings in export dialog to set material and extra havok presets for
+creature and weapon.</li>
+<li>Support for NiWireframeProperty via material WIRE mode.</li>
+<li>Furniture marker export.</li>
+<li>Fixed a bug with EnvMap2 materials: these are no longer merged with other materials during export.</li>
+<li>Type 2 and 3 quaternion rotations are now again imported.</li>
+<li>Many other minor enhancements.</li>
 </ul>
 <h2>Using the Scripts</h2>
 <p>
