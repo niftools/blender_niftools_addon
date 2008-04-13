@@ -755,10 +755,9 @@ WARNING: collision object has non-bone parent, this is not supported
 
     def importEmpty(self, niBlock):
         """Creates and returns a grouping empty."""
-        shortName = self.importName(niBlock,22)
-        b_empty = Blender.Object.New("Empty", shortName)
+        shortName = self.importName(niBlock, 22)
+        b_empty = self.scene.objects.new("Empty", shortName)
         b_empty.properties['longName'] = niBlock.name
-        self.scene.objects.link(b_empty)
         return b_empty
 
     def importArmature(self, niArmature):
@@ -769,7 +768,6 @@ WARNING: collision object has non-bone parent, this is not supported
 
         b_armatureData = Blender.Armature.Armature()
         b_armatureData.name = armature_name
-        b_armatureData.makeEditable()
         b_armatureData.drawAxes = True
         b_armatureData.envelopes = False
         b_armatureData.vertexGroups = True
@@ -2073,6 +2071,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
         if self.IMPORT_SKELETON == 1 or (
             self.version == 0x14000005 and
             self.filebase.lower() in ('skeleton', 'skeletonbeast')):
+            
             if not isinstance(niBlock, NifFormat.NiNode):
                 raise NifImportError('cannot import skeleton: root is not a NiNode')
             # for morrowind, take the Bip01 node to be the skeleton root

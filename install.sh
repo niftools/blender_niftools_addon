@@ -4,6 +4,8 @@
 
 # remove clutter
 
+rm -f ~/.blender/scripts/nif_import.pyc
+rm -f ~/.blender/scripts/nif_export.pyc
 rm -f ~/.blender/scripts/nif_common.py
 rm -f ~/.blender/scripts/nif_common.pyc
 rm -rf ~/.blender/scripts/bpymodules/nifImEx
