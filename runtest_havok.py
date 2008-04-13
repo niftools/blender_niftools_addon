@@ -8,9 +8,7 @@ from nif_test import runtest
 # otherwise it's an import test
 
 runtest("test/nif", [
-    ('skeleton.nif',
-      dict(IMPORT_SKELETON = 1),
-      []),
+    ('skeleton.nif', {}, []),
     ('_skeleton.nif',
      dict(EXPORT_VERSION = 'Oblivion',
           EXPORT_OB_MATERIAL = 7, # skin
