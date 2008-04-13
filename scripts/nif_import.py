@@ -2577,6 +2577,27 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
                 self.msg("WARNING: second constraint entity not imported, skipped")
                 continue
 
+            # get constraint descriptor
+            if isinstance(hkconstraint, NifFormat.bhkRagdollConstraint):
+                hkdescriptor = hkconstraint.ragdoll
+            if isinstance(hkconstraint, NifFormat.bhkLimitedHingeConstraint):
+                hkdescriptor = hkconstraint.limitedHinge
+            elif isinstance(hkconstraint, NifFormat.bhkMalleableConstraint):
+                if hkconstraint.type == 7:
+                    hkdescriptor = hkconstraint.ragdoll
+                elif hkconstraint.type == 2:
+                    hkdescriptor = hkconstraint.limitedHinge
+                else:
+                    self.msg("WARNING: unknown malleable type (%i), skipped"
+                             % hkconstraint.type)
+                # extra malleable constraint settings
+                ### damping parameters not yet in Blender Python API
+                ### tau (force between bodies) not supported by Blender
+            else:
+                self.msg("WARNING: unknown constraint type (%s), skipped"
+                         % hkconstraint.__class__.__name__)
+                continue
+
             # add the constraint as a rigid body joint
             b_constr = b_hkobj.constraints.append(Blender.Constraint.Type.RIGIDBODYJOINT)
 
@@ -2618,25 +2639,6 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
             # limiting parameters (limit everything)
             b_constr[Blender.Constraint.Settings.LIMIT] = 63
 
-            # get constraint descriptor
-            if isinstance(hkconstraint, NifFormat.bhkRagdollConstraint):
-                hkdescriptor = hkconstraint.ragdoll
-            elif isinstance(hkconstraint, NifFormat.bhkMalleableConstraint):
-                if hkconstraint.type == 7:
-                    hkdescriptor = hkconstraint.ragdoll
-                elif hkconstraint.type == 2:
-                    hkdescriptor = hkconstraint.limitedHinge
-                else:
-                    raise ValueError("unknown malleable constraint type (%i)"
-                                     % hkconstraint.type)
-                # extra malleable constraint settings
-                ### damping parameters not yet in Blender Python API
-                ### tau (force between bodies) not supported by Blender
-            else:
-                self.msg("WARNING: unknown constraint type (%s), skipped"
-                         % hkconstraint.__class__.__name__)
-                continue
-
             # get pivot point
             pivot = Blender.Mathutils.Vector(
                 hkdescriptor.pivotA.x * 7,
@@ -2648,11 +2650,10 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
             if isinstance(hkdescriptor, NifFormat.RagdollDescriptor):
                 # for ragdoll, take z to be the twist axis (central axis of the
                 # cone, that is)
-                # need to invert the axis to work well with Bullet's system
                 axis_z = Blender.Mathutils.Vector(
-                    -hkdescriptor.twistA.x,
-                    -hkdescriptor.twistA.y,
-                    -hkdescriptor.twistA.z)
+                    hkdescriptor.twistA.x,
+                    hkdescriptor.twistA.y,
+                    hkdescriptor.twistA.z)
                 # for ragdoll, let x be the plane vector
                 axis_x = Blender.Mathutils.Vector(
                     hkdescriptor.planeA.x,
@@ -2674,9 +2675,9 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
                 b_constr[Blender.Constraint.Settings.CONSTR_RB_MAXLIMIT4] = \
                     hkdescriptor.planeMaxAngle
             elif isinstance(hkdescriptor, NifFormat.LimitedHingeDescriptor):
-                # for hinge, z is the vector on the plane of rotation defining
+                # for hinge, y is the vector on the plane of rotation defining
                 # the zero angle
-                axis_z = Blender.Mathutils.Vector(
+                axis_y = Blender.Mathutils.Vector(
                     hkdescriptor.perp2AxleInA1.x,
                     hkdescriptor.perp2AxleInA1.y,
                     hkdescriptor.perp2AxleInA1.z)
@@ -2686,6 +2687,18 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
                     hkdescriptor.axleA.x,
                     hkdescriptor.axleA.y,
                     hkdescriptor.axleA.z)
+                # for hinge, z is the vector on the plane of rotation defining
+                # the positive direction of rotation
+                axis_z = Blender.Mathutils.Vector(
+                    hkdescriptor.perp2AxleInA2.x,
+                    hkdescriptor.perp2AxleInA2.y,
+                    hkdescriptor.perp2AxleInA2.z)
+                # they should form a orthogonal basis
+                if (Blender.Mathutils.CrossVecs(axis_x, axis_y)
+                    - axis_z).length > 0.01:
+                    raise NifImportError(
+                        "axes do not form an orthogonal basis in %s"
+                        % hkdescriptor.__class__.__name__)
             else:
                 raise ValueError("unknown descriptor %s"
                                  % hkdescriptor.__class__.__name__)

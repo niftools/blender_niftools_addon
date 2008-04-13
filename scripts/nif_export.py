@@ -2983,9 +2983,9 @@ check that %s is selected during export.""" % targetobj)
                 axis_z = Blender.Mathutils.Vector(0,0,1) * constr_matrix
                 if isinstance(hkdescriptor, NifFormat.RagdollDescriptor):
                     # z axis is the twist vector
-                    hkdescriptor.twistA.x = -axis_z[0]
-                    hkdescriptor.twistA.y = -axis_z[1]
-                    hkdescriptor.twistA.z = -axis_z[2]
+                    hkdescriptor.twistA.x = axis_z[0]
+                    hkdescriptor.twistA.y = axis_z[1]
+                    hkdescriptor.twistA.z = axis_z[2]
                     # x axis is the plane vector
                     hkdescriptor.planeA.x = axis_x[0]
                     hkdescriptor.planeA.y = axis_x[1]
@@ -2999,18 +2999,19 @@ check that %s is selected during export.""" % targetobj)
                     # same for maximum cone angle
                     hkdescriptor.coneMaxAngle  = +0.8
                 elif isinstance(hkdescriptor, NifFormat.LimitedHingeDescriptor):
-                    # z axis is the zero angle vector on the plane of rotation
-                    hkdescriptor.perp2AxleInA1.x = axis_z[0]
-                    hkdescriptor.perp2AxleInA1.y = axis_z[1]
-                    hkdescriptor.perp2AxleInA1.z = axis_z[2]
+                    # y axis is the zero angle vector on the plane of rotation
+                    hkdescriptor.perp2AxleInA1.x = axis_y[0]
+                    hkdescriptor.perp2AxleInA1.y = axis_y[1]
+                    hkdescriptor.perp2AxleInA1.z = axis_y[2]
                     # x axis is the axis of rotation
                     hkdescriptor.axleA.x = axis_x[0]
                     hkdescriptor.axleA.y = axis_x[1]
                     hkdescriptor.axleA.z = axis_x[2]
-                    # y is the remaining axis; it's usually inverted
-                    hkdescriptor.perp2AxleInA2.x = -axis_y[0]
-                    hkdescriptor.perp2AxleInA2.y = -axis_y[1]
-                    hkdescriptor.perp2AxleInA2.z = -axis_y[2]
+                    # z is the remaining axis determining the positive
+                    # direction of rotation
+                    hkdescriptor.perp2AxleInA2.x = axis_z[0]
+                    hkdescriptor.perp2AxleInA2.y = axis_z[1]
+                    hkdescriptor.perp2AxleInA2.z = axis_z[2]
                     # angle limits
                     # typically, the constraint on one side is defined
                     # by the z axis
