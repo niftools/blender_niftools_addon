@@ -2582,6 +2582,8 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
                 hkdescriptor = hkconstraint.ragdoll
             elif isinstance(hkconstraint, NifFormat.bhkLimitedHingeConstraint):
                 hkdescriptor = hkconstraint.limitedHinge
+            elif isinstance(hkconstraint, NifFormat.bhkHingeConstraint):
+                hkdescriptor = hkconstraint.hinge
             elif isinstance(hkconstraint, NifFormat.bhkMalleableConstraint):
                 if hkconstraint.type == 7:
                     hkdescriptor = hkconstraint.ragdoll
@@ -2709,6 +2711,22 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
                         self.msg("""
   note: x axis flipped to fix orientation""")
                         axis_x = -axis_x
+            elif isinstance(hkdescriptor, NifFormat.HingeDescriptor):
+                # for hinge, y is the vector on the plane of rotation defining
+                # the zero angle
+                axis_y = Blender.Mathutils.Vector(
+                    hkdescriptor.perp2AxleInA1.x,
+                    hkdescriptor.perp2AxleInA1.y,
+                    hkdescriptor.perp2AxleInA1.z)
+                # for hinge, z is the vector on the plane of rotation defining
+                # the positive direction of rotation
+                axis_z = Blender.Mathutils.Vector(
+                    hkdescriptor.perp2AxleInA2.x,
+                    hkdescriptor.perp2AxleInA2.y,
+                    hkdescriptor.perp2AxleInA2.z)
+                # take x to be the the axis of rotation
+                # (this corresponds with Blender's convention for hinges)
+                axis_x = Blender.Mathutils.CrossVecs(axis_y, axis_z)
             else:
                 raise ValueError("unknown descriptor %s"
                                  % hkdescriptor.__class__.__name__)
@@ -2737,7 +2755,22 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
             # hence these give us the first and last row of L
             # which is exactly enough to provide the euler angles
 
-            # assume R is unit transform...
+            # multiply with rigid body transform
+            if isinstance(hkbody, NifFormat.bhkRigidBodyT):
+                # set rotation
+                transform = Blender.Mathutils.Quaternion(
+                    hkbody.rotation.w, hkbody.rotation.x,
+                    hkbody.rotation.y, hkbody.rotation.z).toMatrix()
+                transform.resize4x4()
+                # set translation
+                transform[3][0] = hkbody.translation.x * 7
+                transform[3][1] = hkbody.translation.y * 7
+                transform[3][2] = hkbody.translation.z * 7
+                # apply transform
+                pivot = pivot * transform
+                transform = transform.rotationPart()
+                axis_z = axis_z * transform
+                axis_x = axis_x * transform
 
             # next, cancel out bone matrix correction
             # note that B' = X * B with X = self.bonesExtraMatrix[B]
@@ -2791,9 +2824,13 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
             if isinstance(hkdescriptor, NifFormat.RagdollDescriptor):
                 # ball
                 b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE] = 1
-            if isinstance(hkdescriptor, NifFormat.LimitedHingeDescriptor):
-                # hinge
+            elif isinstance(hkdescriptor, (NifFormat.LimitedHingeDescriptor,
+                                         NifFormat.HingeDescriptor)):
+                # (limited) hinge
                 b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE] = 2
+            else:
+                raise ValueError("unknown descriptor %s"
+                                 % hkdescriptor.__class__.__name__)
 
     def importBSBound(self, bbox):
         """Import a bounding box."""
