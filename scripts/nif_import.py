@@ -1008,7 +1008,6 @@ WARNING: bspline animation data found, but bspline import not yet supported;
 
         # constraints (priority)
         # must be done oudside edit mode hence after calling
-        # b_armatureData.update()
         for bone_name, b_posebone in b_armature.getPose().bones.items():
             # find bone nif block
             niBone = self.blocks[bone_name]
