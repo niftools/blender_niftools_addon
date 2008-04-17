@@ -23,6 +23,7 @@ from nif_common import __version__
 
 import operator
 import math
+from itertools import izip
 from PyFFI.Utils import QuickHull
 
 # --------------------------------------------------------------------------
@@ -307,7 +308,7 @@ class NifImport:
                 self.msg('applying skin deformation on geometry %s'%
                          niBlock.name, 2)
                 vertices, normals = niBlock.getSkinDeformation()
-                for vold, vnew in zip(niBlock.data.vertices, vertices):
+                for vold, vnew in izip(niBlock.data.vertices, vertices):
                     vold.x = vnew.x
                     vold.y = vnew.y
                     vold.z = vnew.z
@@ -863,15 +864,92 @@ WARNING: collision object has non-bone parent, this is not supported
                     kfi = None
 
                 # B-spline curve import
-                # STILL TO BE IMPLEMENTED!
                 if isinstance(kfi, NifFormat.NiBSplineInterpolator):
-                    print("""\
-WARNING: bspline animation data found, but bspline import not yet supported;
-         data has been skipped""")
-                    # see nifskope glcontroller.cpp,
-                    # niflib NiBSplineTransformCompInterpolator.cpp and
-                    # NiBSplineTransformInterpolator for more information
-                    # on importing bsplines
+                    times = list(kfi.getTimes())
+                    translations = list(kfi.getTranslations())
+                    scales = list(kfi.getScales())
+                    rotations = list(kfi.getRotations())
+
+                    # if we have translation keys, we make a dictionary of
+                    # rot_keys and scale_keys, this makes the script work MUCH
+                    # faster in most cases
+                    if translations:
+                        scale_keys_dict = {}
+                        rot_keys_dict = {}
+
+                    # scales: ignore for now, implement later
+                    #         should come here
+                    scales = None
+
+                    # rotations
+                    if rotations:
+                        self.msg('Rotation keys...(bspline quaternions)', 4)
+                        for time, quat in izip(times, rotations):
+                            frame = 1 + int(time * self.fps + 0.5)
+                            quat = Blender.Mathutils.Quaternion(
+                                [quat[0], quat[1], quat[2],  quat[3]])
+                            # beware, CrossQuats takes arguments in a
+                            # counter-intuitive order:
+                            # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
+                            quatVal = CrossQuats(niBone_bind_quat_inv, quat) # Rchannel = Rtotal * inverse(Rbind)
+                            rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
+                            b_posebone.quat = rot
+                            b_posebone.insertKey(b_armature, frame,
+                                                 [Blender.Object.Pose.ROT])
+                            # fill optimizer dictionary
+                            if translations:
+                                rot_keys_dict[frame] = Blender.Mathutils.Quaternion(rot)
+
+                    # translations
+                    if translations:
+                        self.msg('Translation keys...(bspline)', 4)
+                        for time, translation in izip(times, translations):
+                            # time 0.0 is frame 1
+                            frame = 1 + int(time * self.fps + 0.5)
+                            trans = Blender.Mathutils.Vector(*translation)
+                            locVal = (trans - niBone_bind_trans) * niBone_bind_rot_inv * (1.0/niBone_bind_scale)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
+                            # the rotation matrix is needed at this frame (that's
+                            # why the other keys are inserted first)
+                            if rot_keys_dict:
+                                try:
+                                    rot = rot_keys_dict[frame].toMatrix()
+                                except KeyError:
+                                    # fall back on slow method
+                                    ipo = action.getChannelIpo(bone_name)
+                                    quat = Blender.Mathutils.Quaternion()
+                                    quat.x = ipo.getCurve('QuatX').evaluate(frame)
+                                    quat.y = ipo.getCurve('QuatY').evaluate(frame)
+                                    quat.z = ipo.getCurve('QuatZ').evaluate(frame)
+                                    quat.w = ipo.getCurve('QuatW').evaluate(frame)
+                                    rot = quat.toMatrix()
+                            else:
+                                rot = Blender.Mathutils.Matrix([1.0,0.0,0.0],
+                                                               [0.0,1.0,0.0],
+                                                               [0.0,0.0,1.0])
+                            # we also need the scale at this frame
+                            if scale_keys_dict:
+                                try:
+                                    sizeVal = scale_keys_dict[frame]
+                                except KeyError:
+                                    ipo = action.getChannelIpo(bone_name)
+                                    if ipo.getCurve('SizeX'):
+                                        sizeVal = ipo.getCurve('SizeX').evaluate(frame) # assume uniform scale
+                                    else:
+                                        sizeVal = 1.0
+                            else:
+                                sizeVal = 1.0
+                            size = Blender.Mathutils.Matrix([sizeVal, 0.0, 0.0],
+                                                            [0.0, sizeVal, 0.0],
+                                                            [0.0, 0.0, sizeVal])
+                            # now we can do the final calculation
+                            loc = (extra_matrix_trans * size * rot + locVal - extra_matrix_trans) * extra_matrix_rot_inv * (1.0/extra_matrix_scale) # C' = X * C * inverse(X)
+                            b_posebone.loc = loc
+                            b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.LOC])
+
+                    # delete temporary dictionaries
+                    if translations:
+                        del scale_keys_dict
+                        del rot_keys_dict
 
                 # NiKeyframeData and NiTransformData import
                 elif isinstance(kfd, NifFormat.NiKeyframeData):
@@ -1754,7 +1832,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
         
         if vcol:
             b_meshData.vertexColors = 1
-            for f, b_f_index in zip(tris, f_map):
+            for f, b_f_index in izip(tris, f_map):
                 if b_f_index == None: continue
                 b_face = b_meshData.faces[b_f_index]
                 # now set the vertex colors
@@ -1784,7 +1862,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             if not uvlayer in b_meshData.getUVLayerNames():
                 b_meshData.addUVLayer(uvlayer)
             b_meshData.activeUVLayer = uvlayer
-            for f, b_f_index in zip(tris, f_map):
+            for f, b_f_index in izip(tris, f_map):
                 if b_f_index == None: continue
                 uvlist = [ Vector(uvSet[vert_index].u, 1.0 - uvSet[vert_index].v) for vert_index in f ]
                 b_meshData.faces[b_f_index].uv = tuple(uvlist)
@@ -1848,7 +1926,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                         # for each vertex calculate the key position from base
                         # pos + delta offset
                         assert(len(baseverts) == len(morphverts) == len(v_map))
-                        for bv, mv, b_v_index in zip(baseverts, morphverts, v_map):
+                        for bv, mv, b_v_index in izip(baseverts, morphverts, v_map):
                             base = Blender.Mathutils.Vector(bv.x, bv.y, bv.z)
                             delta = Blender.Mathutils.Vector(mv.x, mv.y, mv.z)
                             v = base + delta
@@ -1879,7 +1957,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                             frame =  1+int(key.time * self.fps + 0.5)
                             b_curve.addBezier( ( frame, x ) )
                         # finally: return to base position
-                        for bv, b_v_index in zip(baseverts, v_map):
+                        for bv, b_v_index in izip(baseverts, v_map):
                             base = Blender.Mathutils.Vector(bv.x, bv.y, bv.z)
                             if applytransform:
                                 base *= transform
