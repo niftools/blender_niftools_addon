@@ -19,6 +19,7 @@ echo.
 
 %BLENDERHOME%\blender.exe -P runtest_skinning.py
 %BLENDERHOME%\blender.exe -P runtest_havok.py
+%BLENDERHOME%\blender.exe -P runtest_animation.py
 
 echo.
 echo Done!
