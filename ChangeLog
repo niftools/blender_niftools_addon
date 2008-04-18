@@ -1,3 +1,9 @@
+Version 2.3.2 (***)
+* B-spline animations are now also imported
+* new scripts to save and load current pose of bones to a text buffer
+(this is useful when changing existing animations and starting/ending pose
+must be copied over from an existing animation)
+
 Version 2.3.1 (Apr 13, 2008)
 * new script to set bone priorities on multiple bones at once
 * Oblivion skeleton import and export including havok and constraints

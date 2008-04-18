@@ -296,6 +296,8 @@ Section
   File ..\scripts\mesh_weightsquash.py
   File ..\scripts\mesh_hull.py
   File ..\scripts\object_setbonepriority.py
+  File ..\scripts\object_savebonepose.py
+  File ..\scripts\object_loadbonepose.py
   ; Install libraries
   SetOutPath $BLENDERSCRIPTS\bpymodules
   File ..\scripts\bpymodules\nif_common.py
@@ -348,6 +350,9 @@ Section "Uninstall"
   Delete "$BLENDERSCRIPTS\nif_import.py"
   Delete "$BLENDERSCRIPTS\mesh_weightsquash.py"
   Delete "$BLENDERSCRIPTS\mesh_hull.py"
+  Delete "$BLENDERSCRIPTS\object_setbonepriority.py"
+  Delete "$BLENDERSCRIPTS\object_savebonepose.py"
+  Delete "$BLENDERSCRIPTS\object_loadbonepose.py"
   Delete "$BLENDERSCRIPTS\bpymodules\nif_common.py"
   Delete "$BLENDERSCRIPTS\bpymodules\nif_common.pyc"
   Delete "$BLENDERSCRIPTS\bpymodules\nif_test.py"
