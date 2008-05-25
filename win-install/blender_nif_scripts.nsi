@@ -39,7 +39,7 @@ SetCompressor /SOLID lzma
 !include "WordFunc.nsh"
 !insertmacro VersionCompare
 
-!define VERSION "2.3.1"
+!define VERSION "2.3.2"
 !define PYFFIVERSION "0.10.8"
 
 Name "Blender NIF Scripts ${VERSION}"
