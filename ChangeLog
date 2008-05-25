@@ -3,6 +3,9 @@ Version 2.3.2 (***)
 * new scripts to save and load current pose of bones to a text buffer
 (this is useful when changing existing animations and starting/ending pose
 must be copied over from an existing animation)
+* transform controller and interpolator also exported on the Bip01 node on
+Oblivion skeleton exports
+* exporter no longer creates a NiTextKeyExtraData block on skeleton exports
 
 Version 2.3.1 (Apr 13, 2008)
 * new script to set bone priorities on multiple bones at once
