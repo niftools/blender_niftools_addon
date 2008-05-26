@@ -28,8 +28,15 @@ a:hover.nav { color: #FF0000; background: transparent; }
 Although we have done our best to squash all bugs we could find, it is unlikely that we have found them all.
 </p>
 <h2>Highlights of this Release</h2>
+<p>
+This release fixes some issues with custom Oblivion skeleton exports. Special thanks go to Malo for identifying the remaining problems and helping fixing them. Some new features have been added as well.
 <ul>
-<li>***</li>
+<li>B-spline animations are now also imported,</li>
+<li>new scripts have been added to save and load current pose of bones to a text buffer
+(this is useful when changing existing animations and starting/ending pose
+must be copied over from an existing animation),</li>
+<li>Oblivion skeleton exports now also have a transform controller and interpolator on the Bip01 node,</li>
+<li>and finally, the exporter will no longer create a NiTextKeyExtraData block on skeleton exports even if you have a text key buffer in Blender.</li>
 </ul>
 <h2>Using the Scripts</h2>
 <p>
@@ -46,7 +53,7 @@ http://niftools.sourceforge.net/wiki/Blender</a></li>
 <h3>Requirements</h3>
 <ul>
   <li><strong><a href="http://www.blender.org/download/get-blender/">Blender 2.45</a> or
-higher</strong>.</li>
+higher</strong> (Blender 2.46 is recommended).</li>
   <li><strong><a href="http://www.python.org/download/">Python 2.5</a> or higher</strong>.</li>
   <li><strong><a href="http://sourceforge.net/project/platformdownload.php?group_id=199269">PyFFI 0.10.8</a> or higher</strong>.</li>
 </ul>

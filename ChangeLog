@@ -1,4 +1,4 @@
-Version 2.3.2 (***)
+Version 2.3.2 (May 27, 2008)
 * B-spline animations are now also imported
 * new scripts to save and load current pose of bones to a text buffer
 (this is useful when changing existing animations and starting/ending pose
