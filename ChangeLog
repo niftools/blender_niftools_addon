@@ -1,3 +1,6 @@
+Version 2.3.3 (May 27, 2008)
+* updated installer to make sure PyFFI 0.10.9 is installed
+
 Version 2.3.2 (May 27, 2008)
 * B-spline animations are now also imported
 * new scripts to save and load current pose of bones to a text buffer
