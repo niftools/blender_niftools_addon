@@ -649,8 +649,9 @@ WARNING: constraint for billboard node on %s added but target not set due to
 
             # if not importing skeleton only
             if self.IMPORT_SKELETON != 1:
-                # import collisions
-                if niBlock.collisionObject:
+                # import collisions (only bhkNiCollisionObjects for now)
+                if isinstance(niBlock.collisionObject,
+                              NifFormat.bhkNiCollisionObject):
                     # collision object parented to a bone
                     # first import collision object
                     bhk_body = niBlock.collisionObject.body
