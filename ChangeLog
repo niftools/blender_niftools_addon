@@ -1,5 +1,8 @@
 Version 2.3.4 (***)
 * fix for megami tensei imagine collision import
+* on merge, do not skip keyframe controller block if the controller is not
+found in original nif file; instead add a controller to the node in the nif
+file
 
 Version 2.3.3 (May 27, 2008)
 * updated installer to make sure PyFFI 0.10.9 is installed

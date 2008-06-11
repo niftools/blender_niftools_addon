@@ -2987,8 +2987,11 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
             if not controller:
                 self.msg("""\
 animation for %s with %s controller,
-but no such controller type found in corresponding node, so skipping"""
-                    % nodename)
+but no such controller type found in corresponding node, so creating one"""
+                    % (nodename, controllertype))
+                controller = getattr(NifFormat, controllertype)()
+                # TODO set all the fields of this controller
+                node.addController(controller)
             # yes! attach interpolator
             controller.interpolator = controlledblock.interpolator
             # in case of a NiTransformInterpolator without a data block
