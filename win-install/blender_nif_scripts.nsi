@@ -39,8 +39,8 @@ SetCompressor /SOLID lzma
 !include "WordFunc.nsh"
 !insertmacro VersionCompare
 
-!define VERSION "2.3.3"
-!define PYFFIVERSION "0.10.9"
+!define VERSION "2.3.4"
+!define PYFFIVERSION "1.0.0"
 
 Name "Blender NIF Scripts ${VERSION}"
 Var BLENDERHOME    ; blender settings location
@@ -145,6 +145,100 @@ Function openLinkNewWindow
   Pop $3
 FunctionEnd
 
+; see http://nsis.sourceforge.net/Get_Windows_version
+; GetWindowsVersion
+;
+; Based on Yazno's function, http://yazno.tripod.com/powerpimpit/
+; Updated by Joost Verburg
+;
+; Returns on top of stack
+;
+; Windows Version (95, 98, ME, NT x.x, 2000, XP, 2003, Vista)
+; or
+; '' (Unknown Windows Version)
+;
+; Usage:
+;   Call GetWindowsVersion
+;   Pop $R0
+;   ; at this point $R0 is "NT 4.0" or whatnot
+Function GetWindowsVersion
+ 
+  Push $R0
+  Push $R1
+ 
+  ClearErrors
+ 
+  ReadRegStr $R0 HKLM \
+  "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion
+ 
+  IfErrors 0 lbl_winnt
+ 
+  ; we are not NT
+  ReadRegStr $R0 HKLM \
+  "SOFTWARE\Microsoft\Windows\CurrentVersion" VersionNumber
+ 
+  StrCpy $R1 $R0 1
+  StrCmp $R1 '4' 0 lbl_error
+ 
+  StrCpy $R1 $R0 3
+ 
+  StrCmp $R1 '4.0' lbl_win32_95
+  StrCmp $R1 '4.9' lbl_win32_ME lbl_win32_98
+ 
+  lbl_win32_95:
+    StrCpy $R0 '95'
+  Goto lbl_done
+ 
+  lbl_win32_98:
+    StrCpy $R0 '98'
+  Goto lbl_done
+ 
+  lbl_win32_ME:
+    StrCpy $R0 'ME'
+  Goto lbl_done
+ 
+  lbl_winnt:
+ 
+  StrCpy $R1 $R0 1
+ 
+  StrCmp $R1 '3' lbl_winnt_x
+  StrCmp $R1 '4' lbl_winnt_x
+ 
+  StrCpy $R1 $R0 3
+ 
+  StrCmp $R1 '5.0' lbl_winnt_2000
+  StrCmp $R1 '5.1' lbl_winnt_XP
+  StrCmp $R1 '5.2' lbl_winnt_2003
+  StrCmp $R1 '6.0' lbl_winnt_vista lbl_error
+ 
+  lbl_winnt_x:
+    StrCpy $R0 "NT $R0" 6
+  Goto lbl_done
+ 
+  lbl_winnt_2000:
+    Strcpy $R0 '2000'
+  Goto lbl_done
+ 
+  lbl_winnt_XP:
+    Strcpy $R0 'XP'
+  Goto lbl_done
+ 
+  lbl_winnt_2003:
+    Strcpy $R0 '2003'
+  Goto lbl_done
+ 
+  lbl_winnt_vista:
+    Strcpy $R0 'Vista'
+  Goto lbl_done
+ 
+  lbl_error:
+    Strcpy $R0 ''
+  lbl_done:
+ 
+  Pop $R1
+  Exch $R0
+FunctionEnd
+
 Function .onInit
   ; check if user is admin
   ; call userInfo plugin to get user info.  The plugin puts the result in the stack
@@ -166,9 +260,11 @@ Function .onInit
   ClearErrors
   ReadRegStr $BLENDERHOME HKLM SOFTWARE\BlenderFoundation "Install_Dir"
   IfErrors 0 blender_check_end
+  ReadRegStr $BLENDERHOME HKCU SOFTWARE\BlenderFoundation "Install_Dir"
+  IfErrors 0 blender_check_end
 
      ; no key, that means that Blender is not installed
-     MessageBox MB_OK "You will need to download Blender in order to run the Blender NIF Scripts. Pressing OK will take you to the Blender download page. Please download and run the Blender windows installer. When you are done, rerun the Blender NIF Scripts installer."
+     MessageBox MB_OK "You will need to download Blender in order to run the Blender NIF Scripts. Pressing OK will take you to the Blender download page. Please download and run the Blender windows installer. On Windows Vista, it is strongly recommended that you select 'Use the installation directory' when the Blender installer asks you to specify where to install Blender's user data files. When you are done, rerun the Blender NIF Scripts installer."
      StrCpy $0 "http://www.blender.org/download/get-blender/"
      Call openLinkNewWindow
      Abort ; causes installer to quit
@@ -182,8 +278,27 @@ blender_check_end:
   StrCpy $BLENDERSCRIPTS "$BLENDERHOME\.blender\scripts"
   IfFileExists "$BLENDERSCRIPTS\*.*" blender_scripts_end 0
 
-  ; now try Blender's application data directory
-  StrCpy $BLENDERHOME "$PROFILE\Application Data\Blender Foundation\Blender"
+  ; check if we are running vista, if so, complain to user because scripts are not in the "safe" location
+  Call GetWindowsVersion
+  Pop $0
+  StrCmp $0 "Vista" 0 blender_scripts_notininstallfolder
+  
+    MessageBox MB_YESNO "You are running Windows Vista, but Blender's user data files (such as scripts) do not reside in Blender's installation directory. On Vista, Blender will sometimes only find its scripts if Blender's user data files reside in Blender's installation directory. Do you wish to abort installation, and first reinstall Blender, selecting 'Use the installation directory' when the Blender installer asks you to specify where to install Blender's user data files?" IDNO blender_scripts_notininstallfolder
+    MessageBox MB_OK "Pressing OK will take you to the Blender download page. Please download and run the Blender windows installer. Select 'Use the installation directory' when the Blender installer asks you to specify where to install Blender's user data files. When you are done, rerun the Blender NIF Scripts installer."
+    StrCpy $0 "http://www.blender.org/download/get-blender/"
+    Call openLinkNewWindow
+    Abort ; causes installer to quit
+
+blender_scripts_notininstallfolder:
+  ; now try Blender's application data directory (current user)
+  SetShellVarContext current
+  StrCpy $BLENDERHOME "$APPDATA\Blender Foundation\Blender"
+  StrCpy $BLENDERSCRIPTS "$BLENDERHOME\.blender\scripts"
+  IfFileExists "$BLENDERSCRIPTS\*.*" blender_scripts_end 0
+  
+  ; now try Blender's application data directory (everyone)
+  SetShellVarContext all
+  StrCpy $BLENDERHOME "$APPDATA\Blender Foundation\Blender"
   StrCpy $BLENDERSCRIPTS "$BLENDERHOME\.blender\scripts"
   IfFileExists "$BLENDERSCRIPTS\*.*" blender_scripts_end 0
   
@@ -206,7 +321,7 @@ blender_scripts_end:
   IfErrors 0 python_check_end
 
      ; no key, that means that Python 2.5 is not installed
-     MessageBox MB_OK "You will need to download Python 2.5 and PyFFI in order to run the Blender NIF Scripts. Pressing OK will take you to the Python and PyFFI download pages. Please download and run the Python windows installer, then download and run the PyFFI windows installer. When you are done, rerun the Blender NIF Scripts installer."
+     MessageBox MB_OK "You will need to download Python 2.5 and PyFFI in order to run the Blender NIF Scripts. Pressing OK will take you to the Python and PyFFI download pages. Please download and run the Python windows installer, then download and run the PyFFI windows installer. On Vista, make sure you right click the PyFFI installer and select 'Run as administrator'. When you are done, rerun the Blender NIF Scripts installer."
      StrCpy $0 "http://sourceforge.net/project/platformdownload.php?group_id=199269&sel_platform=3089"
      Call openLinkNewWindow
      StrCpy $0 "http://www.python.org/download/"
@@ -223,7 +338,7 @@ python_check_end:
   IfErrors 0 pyffi_check_end
 
     ; no key, that means that PyFFI is not installed
-     MessageBox MB_OK "You will need to download PyFFI in order to run the Blender NIF Scripts. Pressing OK will take you to the PyFFI download page. Please download and run the PyFFI windows installer. When you are done, rerun the Blender NIF Scripts installer."
+     MessageBox MB_OK "You will need to download PyFFI in order to run the Blender NIF Scripts. Pressing OK will take you to the PyFFI download page. Please download and run the PyFFI windows installer. On Vista, make sure you right click the PyFFI installer and select 'Run as administrator'. When you are done, rerun the Blender NIF Scripts installer."
      StrCpy $0 "http://sourceforge.net/project/platformdownload.php?group_id=199269&sel_platform=3089"
      Call openLinkNewWindow
      Abort ; causes installer to quit
@@ -236,7 +351,7 @@ pyffi_check_end:
   IntCmp $R1 0 pyffi_vercheck_end ; installed version is as indicated
   IntCmp $R1 1 pyffi_vercheck_end ; installed version is more recent than as indicated
 
-     MessageBox MB_OK "You will need a more recent version of PyFFI in order to run the Blender NIF Scripts. Pressing OK will take you to the PyFFI download page. Please download and run the PyFFI windows installer. When you are done, rerun the Blender NIF Scripts installer."
+     MessageBox MB_OK "You will need a more recent version of PyFFI in order to run the Blender NIF Scripts. Pressing OK will take you to the PyFFI download page. Please download and run the PyFFI windows installer. On Vista, make sure you right click the PyFFI installer and select 'Run as administrator'. When you are done, rerun the Blender NIF Scripts installer."
      StrCpy $0 "http://sourceforge.net/project/platformdownload.php?group_id=199269&sel_platform=3089"
      Call openLinkNewWindow
      Abort ; causes installer to quit
