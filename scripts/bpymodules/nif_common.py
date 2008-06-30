@@ -66,7 +66,7 @@ Get a newer version at http://www.blender.org/
 
 try:
     from PyFFI import __version__ as __pyffiversion__
-    from PyFFI.NIF import NifFormat
+    from PyFFI.Formats.NIF import NifFormat
 except ImportError:
     err = """--------------------------
 ERROR\nThis script requires the Python File Format Interface (PyFFI).
