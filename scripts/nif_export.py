@@ -3098,15 +3098,17 @@ check that %s is selected during export.""" % targetobj)
         # by default, the material name does not affect rendering
         is_mat_name_irrelevant = True
 
-        # hack to preserve EnvMap2 named blocks (even if they got renamed to
-        # EnvMap2.xxx on import)
-        if self.EXPORT_VERSION == 'Oblivion' \
-            and name[:7].lower() == "envmap2":
-            if name.lower() != "envmap2":
-                self.msg("Renaming material '%s' to 'EnvMap2'" % name)
-            name = "EnvMap2"
-            # this one affects rendering
-            is_mat_name_irrelevant = False
+        # hack to preserve EnvMap2 and Skin named blocks (even if they got
+        # renamed to EnvMap2.xxx or Skin.xxx on import)
+        if self.EXPORT_VERSION == 'Oblivion':
+            for specialname in ("EnvMap2", "Skin"):
+                if name.lower().startswith(specialname.lower()):
+                    if name != specialname:
+                        self.msg("Renaming material '%s' to '%s'"
+                                 % (name, specialname))
+                    name = specialname
+                    # this one affects rendering
+                    is_mat_name_irrelevant = False
 
         matprop.name = name
         matprop.flags = flags
