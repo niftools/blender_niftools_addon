@@ -5,7 +5,7 @@ found in original nif file; instead add a controller to the node in the nif
 file
 * installer fixes for Vista and Blender 2.46
 * updated for PyFFI 1.0.0
-* preserve the "skin" material name
+* preserve the "skin", "dynalpha", ... material names
 
 Version 2.3.3 (May 27, 2008)
 * updated installer to make sure PyFFI 0.10.9 is installed
