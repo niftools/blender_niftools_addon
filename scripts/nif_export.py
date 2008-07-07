@@ -3102,7 +3102,7 @@ check that %s is selected during export.""" % targetobj)
         # renamed to EnvMap2.xxx or skin.xxx on import)
         if self.EXPORT_VERSION == 'Oblivion':
             for specialname in ("EnvMap2", "EnvMap", "skin", "Hair",
-                                "dynalpha", "secretblack", "Lava"):
+                                "dynalpha", "HideSecret", "Lava"):
                 if name.lower().startswith(specialname.lower()):
                     if name != specialname:
                         self.msg("Renaming material '%s' to '%s'"
