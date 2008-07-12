@@ -3109,8 +3109,6 @@ check that %s is selected during export.""" % targetobj)
                         print("Renaming material '%s' to '%s'"
                               % (name, specialname))
                     name = specialname
-                    # this one affects rendering
-                    is_mat_name_irrelevant = False
 
         matprop.name = name
         matprop.flags = flags
