@@ -3093,20 +3093,21 @@ check that %s is selected during export.""" % targetobj)
         # create block (but don't register it yet in self.blocks)
         matprop = NifFormat.NiMaterialProperty()
    
-        # flag which determines whether the material name is relevant or not
+        # list which determines whether the material name is relevant or not
         # only for particular names this holds, such as EnvMap2
         # by default, the material name does not affect rendering
-        is_mat_name_irrelevant = True
+        specialnames = ("EnvMap2", "EnvMap", "skin", "Hair",
+                        "dynalpha", "HideSecret", "Lava")
 
         # hack to preserve EnvMap2, skinm, ... named blocks (even if they got
         # renamed to EnvMap2.xxx or skin.xxx on import)
         if self.EXPORT_VERSION == 'Oblivion':
-            for specialname in ("EnvMap2", "EnvMap", "skin", "Hair",
-                                "dynalpha", "HideSecret", "Lava"):
-                if name.lower().startswith(specialname.lower()):
+            for specialname in specialnames:
+                if (name.lower() == specialname.lower()
+                    or name.lower().startswith(specialname.lower() + ".")):
                     if name != specialname:
-                        self.msg("Renaming material '%s' to '%s'"
-                                 % (name, specialname))
+                        print("Renaming material '%s' to '%s'"
+                              % (name, specialname))
                     name = specialname
                     # this one affects rendering
                     is_mat_name_irrelevant = False
@@ -3132,8 +3133,14 @@ check that %s is selected during export.""" % targetobj)
         # (ignore the name string as sometimes import needs to create different
         # materials even when NiMaterialProperty is the same)
         for block in self.blocks:
-            if isinstance(block, NifFormat.NiMaterialProperty) \
-               and block.getHash(ignore_strings = is_mat_name_irrelevant) == matprop.getHash(ignore_strings = is_mat_name_irrelevant):
+            if not isinstance(block, NifFormat.NiMaterialProperty):
+                continue
+            if (block.getHash(ignore_strings=not(block.name in specialnames)) ==
+                matprop.getHash(
+                    ignore_strings=not(matprop.name in specialnames))):
+                print("Merging materials '%s' and '%s' \
+(they are identical in nif)"
+                      % (matprop.name, block.name))
                 return block
 
         # no material property with given settings found, so use and register
