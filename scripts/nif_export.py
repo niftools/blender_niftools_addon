@@ -546,7 +546,6 @@ Furniture marker has invalid number (%s). Name your file
                 for block in self.blocks:
                     if isinstance(block, NifFormat.bhkMoppBvTreeShape):
                        self.msg("Generating mopp...")
-                       block.updateOriginScale()
                        block.updateMopp()
                        #print "=== DEBUG: MOPP TREE ==="
                        #block.parseMopp(verbose = True)
