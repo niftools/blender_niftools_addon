@@ -416,9 +416,12 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                     else:
                         # is it a grouping node?
                         geom_group = self.is_grouping_node(niBlock)
-                        if not geom_group:
-                            # no grouping node, so import it as an empty
+                        if not geom_group or len(geom_group) > 16:
+                            # no grouping node, or too many materials to
+                            # group the geometry into a single mesh
+                            # so import it as an empty
                             b_obj = self.importEmpty(niBlock)
+                            geom_group = []
                         else:
                             # node groups geometries, so import it as a mesh
                             print("joining geometries %s to single object '%s'"
