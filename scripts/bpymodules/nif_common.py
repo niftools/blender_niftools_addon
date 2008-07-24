@@ -142,7 +142,6 @@ class NifConfig:
         IMPORT_SENDBONESTOBINDPOS = True,
         IMPORT_APPLYSKINDEFORM = False,
         EXPORT_BHKLISTSHAPE = False,
-        EXPORT_MOPP = False,
         EXPORT_OB_BSXFLAGS = 2,
         EXPORT_OB_MASS = 10.0,
         EXPORT_OB_SOLID = True,
@@ -699,9 +698,6 @@ class NifConfig:
                 text = "Use bhkMalleableConstraint",
                 event_name = "EXPORT_OB_MALLEABLECONSTRAINT",
                 num_items = 2, item = 1)
-            self.drawToggle(
-                text = "Export Mopp (EXPERIMENTAL)",
-                event_name = "EXPORT_MOPP")
 
 
         Draw.Redraw(1)
@@ -805,7 +801,6 @@ class NifConfig:
                 self.config["EXPORT_SKINPARTITION"] = True
                 # oblivion specific settings
                 self.config["EXPORT_BHKLISTSHAPE"] = False
-                self.config["EXPORT_MOPP"] = False
                 self.config["EXPORT_OB_MATERIAL"] = 9 # wood
                 self.config["EXPORT_OB_MALLEABLECONSTRAINT"] = False
                 # rigid body: static
@@ -844,8 +839,6 @@ class NifConfig:
                 self.config["EXPORT_BONESPERPARTITION"] = 4 # force 4 bones per partition
         elif evName == "EXPORT_BHKLISTSHAPE":
             self.config["EXPORT_BHKLISTSHAPE"] = not self.config["EXPORT_BHKLISTSHAPE"]
-        elif evName == "EXPORT_MOPP":
-            self.config["EXPORT_MOPP"] = not self.config["EXPORT_MOPP"]
         elif evName == "EXPORT_OB_MALLEABLECONSTRAINT":
             self.config["EXPORT_OB_MALLEABLECONSTRAINT"] = not self.config["EXPORT_OB_MALLEABLECONSTRAINT"]
         elif evName == "EXPORT_OB_SOLID":

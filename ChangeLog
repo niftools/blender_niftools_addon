@@ -6,6 +6,7 @@ file
 * installer fixes for Vista and Blender 2.46
 * updated for PyFFI 1.0.0, which includes the new mopp generator based on
 havok's recently released SDK
+* removed mopp option from export config dialog (they are now always generated)
 * preserve the "skin", "dynalpha", ... material names
 * fixed material merge bug
 * fix for nif imports with more than 16 materials per mesh (the materials

@@ -2568,23 +2568,20 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
         if not colbody.shape:
             colshape = self.createBlock("bhkPackedNiTriStripsShape", obj)
 
-            if self.EXPORT_MOPP:
-                colmopp = self.createBlock("bhkMoppBvTreeShape", obj)
-                colbody.shape = colmopp
-                colmopp.material = material
-                colmopp.unknown8Bytes[0] = 160
-                colmopp.unknown8Bytes[1] = 13
-                colmopp.unknown8Bytes[2] = 75
-                colmopp.unknown8Bytes[3] = 1
-                colmopp.unknown8Bytes[4] = 192
-                colmopp.unknown8Bytes[5] = 207
-                colmopp.unknown8Bytes[6] = 144
-                colmopp.unknown8Bytes[7] = 11
-                colmopp.unknownFloat = 1.0
-                # the mopp origin, scale, and data are written later
-                colmopp.shape = colshape
-            else:
-                colbody.shape = colshape
+            colmopp = self.createBlock("bhkMoppBvTreeShape", obj)
+            colbody.shape = colmopp
+            colmopp.material = material
+            colmopp.unknown8Bytes[0] = 160
+            colmopp.unknown8Bytes[1] = 13
+            colmopp.unknown8Bytes[2] = 75
+            colmopp.unknown8Bytes[3] = 1
+            colmopp.unknown8Bytes[4] = 192
+            colmopp.unknown8Bytes[5] = 207
+            colmopp.unknown8Bytes[6] = 144
+            colmopp.unknown8Bytes[7] = 11
+            colmopp.unknownFloat = 1.0
+            # the mopp origin, scale, and data are written later
+            colmopp.shape = colshape
 
             colshape.unknownFloats[2] = 0.1
             colshape.unknownFloats[4] = 1.0
