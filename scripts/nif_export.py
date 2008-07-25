@@ -2592,11 +2592,8 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
             colshape.unknownFloats2[0] = 1.0
             colshape.unknownFloats2[1] = 1.0
         else:
-            if self.EXPORT_MOPP:
-                colmopp = colbody.shape
-                colshape = colmopp.shape
-            else:
-                colshape = colbody.shape
+            colmopp = colbody.shape
+            colshape = colmopp.shape
             if not isinstance(colshape, NifFormat.bhkPackedNiTriStripsShape):
                 raise ValueError('not a packed list of collisions')
 
