@@ -2593,6 +2593,8 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
             colshape.unknownFloats2[1] = 1.0
         else:
             colmopp = colbody.shape
+            if not isinstance(colmopp, NifFormat.bhkMoppBvTreeShape):
+                raise ValueError('not a packed list of collisions')
             colshape = colmopp.shape
             if not isinstance(colshape, NifFormat.bhkPackedNiTriStripsShape):
                 raise ValueError('not a packed list of collisions')
