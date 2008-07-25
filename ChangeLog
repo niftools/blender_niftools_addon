@@ -1,3 +1,6 @@
+Version 2.3.5 (25 Jul 2008)
+* quick bug fix if you had multiple materials in your mopp
+
 Version 2.3.4 (24 Jul 2008)
 * fix for megami tensei imagine collision import
 * on merge, do not skip keyframe controller block if the controller is not
