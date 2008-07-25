@@ -2623,6 +2623,38 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
 
             return [ ob ]
 
+        elif isinstance(bhkshape, NifFormat.bhkNiTriStripsShape):
+            return reduce(operator.add,
+                          (self.importBhkShape(strips)
+                           for strips in bhkshape.stripsData))
+                
+        elif isinstance(bhkshape, NifFormat.NiTriStripsData):
+            me = Blender.Mesh.New('poly')
+            # no factor 7 correction!!!
+            for vert in bhkshape.vertices:
+                me.verts.extend(vert.x, vert.y, vert.z)
+            me.faces.extend(list(bhkshape.getTriangles()))
+
+            # link mesh to scene and set transform
+            ob = self.scene.objects.new(me, 'poly')
+
+            # set bounds type
+            ob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
+            ob.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
+            ob.drawMode = Blender.Object.DrawModes['WIRE']
+            # radius: quick estimate
+            ob.rbRadius = min(vert.co.length for vert in me.verts)
+
+            # also remove duplicate vertices
+            numverts = len(me.verts)
+            # 0.005 = 1/200
+            numdel = me.remDoubles(0.005)
+            if numdel:
+                self.msg('removed %i duplicate vertices \
+(out of %i) from collision mesh'%(numdel, numverts), 3)
+
+            return [ ob ]
+
         elif isinstance(bhkshape, NifFormat.bhkMoppBvTreeShape):
             return self.importBhkShape(bhkshape.shape)
 
