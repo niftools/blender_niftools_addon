@@ -954,6 +954,28 @@ keyframes are supported.""" % self.EXPORT_VERSION)
             # the following code makes these assumptions
             assert(Ipo.PO_SCALEX == Ipo.OB_SCALEX)
             assert(Ipo.PO_LOCX == Ipo.OB_LOCX)
+            # check validity of curves
+            for curvecollection in (
+                (Ipo.PO_SCALEX, Ipo.PO_SCALEY, Ipo.PO_SCALEZ),
+                (Ipo.PO_LOCX, Ipo.PO_LOCY, Ipo.PO_LOCZ),
+                (Ipo.PO_QUATX, Ipo.PO_QUATY, Ipo.PO_QUATZ, Ipo.PO_QUATW),
+                (Ipo.OB_ROTX, Ipo.OB_ROTY, Ipo.OB_ROTZ)):
+                # skip invalid curves
+                try:
+                    ipo[curvecollection[0]]
+                except KeyError:
+                    continue
+                # check that if any curve is defined in the collection
+                # then all curves are defined in the collection
+                if (any(ipo[curve] for curve in curvecollection)
+                    and not all(ipo[curve] for curve in curvecollection)):
+                    keytype = {Ipo.PO_SCALEX: "SCALE",
+                               Ipo.PO_LOCX: "LOC",
+                               Ipo.PO_QUATX: "ROT",
+                               Ipo.OB_ROTX: "ROT"}
+                    raise NifExportError("""\
+missing curves in %s; insert %s key at frame 1 and try again"""
+                                         % (ipo, keytype[curvecollection[0]]))
             # go over all curves
             ipo_curves = ipo.curveConsts.values()
             for curve in ipo_curves:

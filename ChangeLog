@@ -3,6 +3,8 @@ Version 2.3.6 (***)
 * fix for exception when mixing mopps with other primitive shapes
 * updated deprecated ipo and curve methods in keyframe export code
 * improved FPS estimation on import
+* check ipo curve completeness on export (solves the "NoneType has no evaluate
+attribute" problem)
 
 Version 2.3.5 (25 Jul 2008)
 * quick bug fix if you had multiple materials in your mopp
