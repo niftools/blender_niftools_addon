@@ -2059,6 +2059,11 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                 key_times.extend(key.time for key in kfd.xyzRotations[0].keys)
                 key_times.extend(key.time for key in kfd.xyzRotations[1].keys)
                 key_times.extend(key.time for key in kfd.xyzRotations[2].keys)
+            for kfi in root.tree(block_type = NifFormat.NiBSplineInterpolator):
+                key_times.extend(
+                    point * (kfi.stopTime - kfi.startTime)
+                    / (kfi.basisData.numControlPoints - 2)
+                    for point in xrange(kfi.basisData.numControlPoints - 2))
         # not animated, return a reasonable default
         if not key_times:
             return 30
