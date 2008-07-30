@@ -13,9 +13,10 @@ __bpydoc__ = """\
 This script exports Netimmerse and Gamebryo .nif files from Blender.
 """
 
-import Blender
-
 from itertools import izip
+
+import Blender
+from Blender import Ipo # for all the Ipo curve constants
 
 from nif_common import NifConfig
 from nif_common import NifFormat
@@ -870,7 +871,8 @@ keyframes are supported.""" % self.EXPORT_VERSION)
     # inverse(RX) = rotation part of inverse(X)
     # 1 / SX = scale part of inverse(X)
     # so having inverse(X) around saves on calculations
-    def exportKeyframes(self, ipo, space, parent_block, bind_mat = None, extra_mat_inv = None):
+    def exportKeyframes(self, ipo, space, parent_block, bind_mat = None,
+                        extra_mat_inv = None):
         if self.EXPORT_ANIMATION == 1 and self.version < 0x0A020000:
             # keyframe controllers are not present in geometry only files
             # for more recent versions, the controller and interpolators are
@@ -893,7 +895,8 @@ keyframes are supported.""" % self.EXPORT_VERSION)
             # link interpolator from the controller
             kfc.interpolator = kfi
             # set interpolator default data
-            scale, quat, trans = parent_block.getTransform().getScaleQuatTranslation()
+            scale, quat, trans = \
+                parent_block.getTransform().getScaleQuatTranslation()
             kfi.translation.x = trans.x
             kfi.translation.y = trans.y
             kfi.translation.z = trans.z
@@ -928,7 +931,8 @@ keyframes are supported.""" % self.EXPORT_VERSION)
             bind_quat = Blender.Mathutils.Quaternion(1,0,0,0)
             bind_trans = Blender.Mathutils.Vector(0,0,0)
         if extra_mat_inv:
-            extra_scale_inv, extra_rot_inv, extra_trans_inv = self.decomposeSRT(extra_mat_inv)
+            extra_scale_inv, extra_rot_inv, extra_trans_inv = \
+                self.decomposeSRT(extra_mat_inv)
             extra_quat_inv = extra_rot_inv.toQuat()
         else:
             extra_scale_inv = 1.0
@@ -947,55 +951,87 @@ keyframes are supported.""" % self.EXPORT_VERSION)
             scale_curve = {}
             rot_curve = {}
             trans_curve = {}
-            for curve in ipo.getCurves():
-                for btriple in curve.getPoints():
-                    knot = btriple.getPoints()
-                    frame = knot[0]
-                    if (frame < self.fstart) or (frame > self.fend): continue
-                    if (curve.getName() == 'SizeX') or (curve.getName() == 'SizeY') or (curve.getName() == 'SizeZ'):
-                        scale_curve[frame] = ( ipo.getCurve('SizeX').evaluate(frame)\
-                                            + ipo.getCurve('SizeY').evaluate(frame)\
-                                            + ipo.getCurve('SizeZ').evaluate(frame) ) / 3.0 # support only uniform scaling... take the mean
-                        scale_curve[frame] = scale_curve[frame] * bind_scale * extra_scale_inv # SC' * SB' / SX
-                    if (curve.getName() == 'RotX') or (curve.getName() == 'RotY') or (curve.getName() == 'RotZ'):
-                        rot_curve[frame] = Blender.Mathutils.Euler([10*ipo.getCurve('RotX').evaluate(frame), 10*ipo.getCurve('RotY').evaluate(frame), 10*ipo.getCurve('RotZ').evaluate(frame)]).toQuat()
+            # the following code makes these assumptions
+            assert(Ipo.PO_SCALEX == Ipo.OB_SCALEX)
+            assert(Ipo.PO_LOCX == Ipo.OB_LOCX)
+            # go over all curves
+            ipo_curves = ipo.curveConsts.values()
+            for curve in ipo_curves:
+                # skip empty curves
+                if ipo[curve] is None:
+                    continue
+                # non-empty curve: go over all frames of the curve
+                for btriple in ipo[curve].bezierPoints:
+                    frame = btriple.pt[0]
+                    if (frame < self.fstart) or (frame > self.fend):
+                        continue
+                    # PO_SCALEX == OB_SCALEX, so this does both pose and object
+                    # scale
+                    if curve in (Ipo.PO_SCALEX, Ipo.PO_SCALEY, Ipo.PO_SCALEZ):
+                        # support only uniform scaling... take the mean
+                        scale_curve[frame] = (ipo[Ipo.PO_SCALEX][frame]
+                                              + ipo[Ipo.PO_SCALEY][frame]
+                                              + ipo[Ipo.PO_SCALEZ][frame]) / 3.0
+                        # SC' * SB' / SX
+                        scale_curve[frame] = \
+                            scale_curve[frame] * bind_scale * extra_scale_inv
+                    # object rotation
+                    elif curve in (Ipo.OB_ROTX, Ipo.OB_ROTY, Ipo.OB_ROTZ):
+                        rot_curve[frame] = Blender.Mathutils.Euler(
+                            [10 * ipo[Ipo.OB_ROTX][frame],
+                             10 * ipo[Ipo.OB_ROTY][frame],
+                             10 * ipo[Ipo.OB_ROTZ][frame]]).toQuat()
                         # beware, CrossQuats takes arguments in a counter-intuitive order:
                         # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
                         rot_curve[frame] = Blender.Mathutils.CrossQuats(Blender.Mathutils.CrossQuats(bind_quat, rot_curve[frame]), extra_quat_inv) # inverse(RX) * RC' * RB'
-                    elif (curve.getName() == 'QuatX') or (curve.getName() == 'QuatY') or (curve.getName() == 'QuatZ') or  (curve.getName() == 'QuatW'):
+                    # pose rotation
+                    elif curve in (Ipo.PO_QUATX, Ipo.PO_QUATY,
+                                   Ipo.PO_QUATZ, Ipo.PO_QUATW):
                         rot_curve[frame] = Blender.Mathutils.Quaternion()
-                        rot_curve[frame].x = ipo.getCurve('QuatX').evaluate(frame)
-                        rot_curve[frame].y = ipo.getCurve('QuatY').evaluate(frame)
-                        rot_curve[frame].z = ipo.getCurve('QuatZ').evaluate(frame)
-                        rot_curve[frame].w = ipo.getCurve('QuatW').evaluate(frame)
+                        rot_curve[frame].x = ipo[Ipo.PO_QUATX][frame]
+                        rot_curve[frame].y = ipo[Ipo.PO_QUATY][frame]
+                        rot_curve[frame].z = ipo[Ipo.PO_QUATZ][frame]
+                        rot_curve[frame].w = ipo[Ipo.PO_QUATW][frame]
                         # beware, CrossQuats takes arguments in a counter-intuitive order:
                         # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
                         rot_curve[frame] = Blender.Mathutils.CrossQuats(Blender.Mathutils.CrossQuats(bind_quat, rot_curve[frame]), extra_quat_inv) # inverse(RX) * RC' * RB'
-                    if (curve.getName() == 'LocX') or (curve.getName() == 'LocY') or (curve.getName() == 'LocZ'):
-                        trans_curve[frame] = Blender.Mathutils.Vector([ipo.getCurve('LocX').evaluate(frame), ipo.getCurve('LocY').evaluate(frame), ipo.getCurve('LocZ').evaluate(frame)])
+                    # PO_LOCX == OB_LOCX, so this does both pose and object
+                    # location
+                    elif curve in (Ipo.PO_LOCX, Ipo.PO_LOCY, Ipo.PO_LOCZ):
+                        trans_curve[frame] = Blender.Mathutils.Vector(
+                            [ipo[Ipo.PO_LOCX][frame],
+                             ipo[Ipo.PO_LOCY][frame],
+                             ipo[Ipo.PO_LOCZ][frame]])
                         # T = - TX * inverse(RX) * RC' * RB' * SC' * SB' / SX + TC' * SB' * RB' + TB'
                         trans_curve[frame] *= bind_scale
                         trans_curve[frame] *= bind_rot
                         trans_curve[frame] += bind_trans
                         # we need RC' and SC'
-                        if ipo.getCurve('RotX'):
-                            rot_c = Blender.Mathutils.Euler([10*ipo.getCurve('RotX').evaluate(frame), 10*ipo.getCurve('RotY').evaluate(frame), 10*ipo.getCurve('RotZ').evaluate(frame)]).toMatrix()
-                        elif ipo.getCurve('QuatX'):
+                        if Ipo.OB_ROTX in ipo_curves and ipo[Ipo.OB_ROTX]:
+                            rot_c = Blender.Mathutils.Euler(
+                                [10 * ipo[Ipo.OB_ROTX][frame],
+                                 10 * ipo[Ipo.OB_ROTY][frame],
+                                 10 * ipo[Ipo.OB_ROTZ][frame]]).toMatrix()
+                        elif Ipo.PO_QUATX in ipo_curves and ipo[Ipo.PO_QUATX]:
                             rot_c = Blender.Mathutils.Quaternion()
-                            rot_c.x = ipo.getCurve('QuatX').evaluate(frame)
-                            rot_c.y = ipo.getCurve('QuatY').evaluate(frame)
-                            rot_c.z = ipo.getCurve('QuatZ').evaluate(frame)
-                            rot_c.w = ipo.getCurve('QuatW').evaluate(frame)
+                            rot_c.x = ipo[Ipo.PO_QUATX][frame]
+                            rot_c.y = ipo[Ipo.PO_QUATY][frame]
+                            rot_c.z = ipo[Ipo.PO_QUATZ][frame]
+                            rot_c.w = ipo[Ipo.PO_QUATW][frame]
                             rot_c = rot_c.toMatrix()
                         else:
                             rot_c = Blender.Mathutils.Matrix([1,0,0],[0,1,0],[0,0,1])
-                        if ipo.getCurve('SizeX'):
-                            scale_c = ( ipo.getCurve('SizeX').evaluate(frame)\
-                                      + ipo.getCurve('SizeY').evaluate(frame)\
-                                      + ipo.getCurve('SizeZ').evaluate(frame) ) / 3.0 # support only uniform scaling... take the mean
+                        # note, PO_SCALEX == OB_SCALEX, so this does both
+                        if ipo[Ipo.PO_SCALEX]:
+                            # support only uniform scaling... take the mean
+                            scale_c = (ipo[Ipo.PO_SCALEX][frame]
+                                       + ipo[Ipo.PO_SCALEY][frame]
+                                       + ipo[Ipo.PO_SCALEZ][frame]) / 3.0
                         else:
                             scale_c = 1.0
-                        trans_curve[frame] += extra_trans_inv * rot_c * bind_rot * scale_c * bind_scale
+                        trans_curve[frame] += \
+                            extra_trans_inv * rot_c * bind_rot * \
+                            scale_c * bind_scale
 
         # -> now comes the real export
 
@@ -1730,17 +1766,17 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                 # material animation
                 ipo = mesh_mat.getIpo()
                 a_curve = None
-                if ( ipo != None ):
-                    a_curve = ipo.getCurve( 'Alpha' )
+                if not(ipo is None):
+                    a_curve = ipo[Ipo.MA_ALPHA]
                 
-                if ( a_curve != None ):
+                if not(a_curve is None):
                     # get the alpha keyframes from blender's ipo curve
                     alpha = {}
                     for btriple in a_curve.getPoints():
                         knot = btriple.getPoints()
                         frame = knot[0]
                         ftime = (frame - self.fstart) * self.fspeed
-                        alpha[ftime] = ipo.getCurve( 'Alpha' ).evaluate(frame)
+                        alpha[ftime] = ipo[Ipo.MA_ALPHA][frame]
 
                     # add and link alpha controller, data and interpolator blocks
                     alphac = self.createBlock("NiAlphaController", ipo)
@@ -2031,7 +2067,7 @@ WARNING: lost %f in vertex weights while creating a skin partition for
                                     morph.vectors[vert_index].z = mv.z
                             
                             # export ipo shape key curve
-                            #curve = keyipo.getCurve( 'Key %i'%keyblocknum ) # FIXME
+                            #curve = keyipo['Key %i' % keyblocknum] # FIXME
                             # workaround
                             curve = None
                             if ( keyblocknum - 1 ) in range( len( keyipo.getCurves() ) ):
