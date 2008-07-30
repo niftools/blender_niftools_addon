@@ -2064,10 +2064,10 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             return 30
         # calculate FPS
         fps = 30
-        lowestDiff = sum(abs(int(time*fps)-(time*fps)) for time in key_times)
+        lowestDiff = sum(abs(int(time*fps+0.5)-(time*fps)) for time in key_times)
         # for fps in xrange(1,120): #disabled, used for testing
         for testFps in [20, 25, 35]:
-            diff = sum(abs(int(time*testFps)-(time*testFps)) for time in key_times)
+            diff = sum(abs(int(time*testFps+0.5)-(time*testFps)) for time in key_times)
             if diff < lowestDiff:
                 lowestDiff = diff
                 fps = testFps
