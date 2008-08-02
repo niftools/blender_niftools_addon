@@ -5,6 +5,7 @@ Version 2.3.6 (***)
 * improved FPS estimation on import
 * check ipo curve completeness on export (solves the "NoneType has no evaluate
 attribute" problem)
+* fixed scale keys import
 
 Version 2.3.5 (25 Jul 2008)
 * quick bug fix if you had multiple materials in your mopp

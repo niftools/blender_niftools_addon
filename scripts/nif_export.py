@@ -1118,7 +1118,7 @@ missing curves in %s; insert %s key at frame 1 and try again"""
         kfd.scales.interpolation = NifFormat.KeyType.LINEAR_KEY
         kfd.scales.numKeys = len(frames)
         kfd.scales.keys.updateSize()
-        for frame in frames:
+        for i, frame in enumerate(frames):
             scale_frame = kfd.scales.keys[i]
             scale_frame.time = (frame - 1) * self.fspeed
             scale_frame.value = scale_curve[frame]
