@@ -1,4 +1,4 @@
-Version 2.3.6 (***)
+Version 2.3.6 (19 Aug 2008)
 * added import of bhkNiTriStripsShape collisions
 * fix for exception when mixing mopps with other primitive shapes
 * updated deprecated ipo and curve methods in keyframe export code
