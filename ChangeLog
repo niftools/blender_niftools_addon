@@ -1,4 +1,5 @@
 Version 2.3.7 (***)
+* fixed export of cylinder radius on scaled objects
 
 Version 2.3.6 (19 Aug 2008)
 * added import of bhkNiTriStripsShape collisions

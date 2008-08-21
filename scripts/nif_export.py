@@ -2788,17 +2788,15 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
             colcaps = self.createBlock("bhkCapsuleShape", obj)
             colcaps.material = material
             # take average radius
-            colcaps.radius = (maxx + maxy - minx - miny) / 4.0
-            colcaps.radius1 = colcaps.radius
-            colcaps.radius2 = colcaps.radius
+            localradius = (maxx + maxy - minx - miny) / 4.0
             transform = Blender.Mathutils.Matrix(
                 *self.getObjectMatrix(obj, 'localspace').asList())
             vert1 = Blender.Mathutils.Vector( [ (maxx + minx)/2.0,
                                                 (maxy + miny)/2.0,
-                                                minz + colcaps.radius ] )
+                                                minz + localradius ] )
             vert2 = Blender.Mathutils.Vector( [ (maxx + minx) / 2.0,
                                                 (maxy + miny) / 2.0,
-                                                maxz - colcaps.radius ] )
+                                                maxz - localradius ] )
             vert1 *= transform
             vert2 *= transform
             colcaps.firstPoint.x = vert1[0] / 7.0
@@ -2807,6 +2805,11 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
             colcaps.secondPoint.x = vert2[0] / 7.0
             colcaps.secondPoint.y = vert2[1] / 7.0
             colcaps.secondPoint.z = vert2[2] / 7.0
+            # set radius, with correct scale
+            sizex, sizey, sizez = obj.getSize()
+            colcaps.radius = localradius * (sizex + sizey) * 0.5
+            colcaps.radius1 = colcaps.radius
+            colcaps.radius2 = colcaps.radius
             # fix havok coordinate system for radii
             colcaps.radius /= 7.0
             colcaps.radius1 /= 7.0
