@@ -131,12 +131,19 @@ class NifExport:
         unique_name = "default_name"
         if blender_name != None:
             unique_name = blender_name
+        # blender bone naming -> nif bone naming
+        if unique_name.startswith("Bip01 "):
+            if unique_name.endswith(".L"):
+                unique_name = "Bip01 L " + unique_name[6:-2]
+            if unique_name.endswith(".R"):
+                unique_name = "Bip01 R " + unique_name[6:-2]
+        # ensure uniqueness
         if unique_name in self.blockNames or unique_name in self.names.values():
             unique_int = 0
             old_name = unique_name
             while unique_name in self.blockNames or unique_name in self.names.values():
                 unique_name = '%s.%02d' % (old_name, unique_int)
-                unique_int +=1
+                unique_int += 1
         self.blockNames.append(unique_name)
         self.names[blender_name] = unique_name
         return unique_name
