@@ -714,15 +714,24 @@ WARNING: collision object has non-bone parent, this is not supported
                 niName = "collision"
             else:
                 niName = "noname"
-        # limit name length
-        shortName = niName[:max_length-1]
-        # make unique
-        try:
-            while Blender.Object.Get(shortName):
-                shortName = '%s.%02d' % (niName[:max_length-4], uniqueInt)
-                uniqueInt += 1
-        except ValueError: # short name not found
-            pass
+        for uniqueInt in xrange(-1, 100):
+            # limit name length
+            if uniqueInt == -1:
+                shortName = niName[:max_length-2]
+            else:
+                shortName = '%s.%02d' % (niName[:max_length-5], uniqueInt)
+            # bone naming convention for blender
+            if shortName.startswith("Bip01 L"):
+                shortName = "Bip01 " + shortName[8:] + ".L"
+            elif shortName.startswith("Bip01 R"):
+                shortName = "Bip01 " + shortName[8:] + ".R"
+            # make sure it is unique
+            try:
+                Blender.Object.Get(shortName)
+            except ValueError: # short name not found
+                break
+        else:
+            raise RuntimeError("ran out of names")
         # save mapping
         # block niBlock has Blender name shortName
         self.names[niBlock] = shortName
