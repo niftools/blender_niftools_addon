@@ -717,13 +717,13 @@ WARNING: collision object has non-bone parent, this is not supported
         for uniqueInt in xrange(-1, 100):
             # limit name length
             if uniqueInt == -1:
-                shortName = niName[:max_length-2]
+                shortName = niName[:max_length-1]
             else:
-                shortName = '%s.%02d' % (niName[:max_length-5], uniqueInt)
+                shortName = '%s.%02d' % (niName[:max_length-4], uniqueInt)
             # bone naming convention for blender
-            if shortName.startswith("Bip01 L"):
+            if shortName.startswith("Bip01 L "):
                 shortName = "Bip01 " + shortName[8:] + ".L"
-            elif shortName.startswith("Bip01 R"):
+            elif shortName.startswith("Bip01 R "):
                 shortName = "Bip01 " + shortName[8:] + ".R"
             # make sure it is unique
             try:
@@ -2196,10 +2196,21 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             self.msg("identified '%s' as armature" % skelroot.name,3)
             self.armatures[skelroot] = []
             for bone_name in self.selectedObjects[0].data.bones.keys():
-                bone_block = skelroot.find(block_name = bone_name)
+                # blender bone naming -> nif bone naming
+                if bone_name.startswith("Bip01 "):
+                    if bone_name.endswith(".L"):
+                        nif_bone_name = "Bip01 L " + bone_name[6:-2]
+                    elif bone_name.endswith(".R"):
+                        nif_bone_name = "Bip01 R " + bone_name[6:-2]
+                    else:
+                        nif_bone_name = bone_name
+                else:
+                    nif_bone_name = bone_name
+                # find a block with bone name
+                bone_block = skelroot.find(block_name = nif_bone_name)
                 # add it to the name list if there is a bone with that name
                 if bone_block:
-                    self.msg("identified nif block '%s' with bone in selected armature"%bone_name)
+                    self.msg("identified nif block '%s' with bone '%s' in selected armature" % (nif_bone_name, bone_name))
                     self.names[bone_block] = bone_name
                     self.armatures[skelroot].append(bone_block)
                     self.complete_bone_tree(bone_block, skelroot)
