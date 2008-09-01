@@ -145,10 +145,10 @@ class NifConfig:
         EXPORT_OB_BSXFLAGS = 2,
         EXPORT_OB_MASS = 10.0,
         EXPORT_OB_SOLID = True,
-        EXPORT_OB_MOTIONSYSTEM = 7, # keyframed
+        EXPORT_OB_MOTIONSYSTEM = 7, # MO_SYS_FIXED
         EXPORT_OB_UNKNOWNBYTE1 = 1,
         EXPORT_OB_UNKNOWNBYTE2 = 1,
-        EXPORT_OB_QUALITYTYPE = 1, # fixed
+        EXPORT_OB_QUALITYTYPE = 1, # MO_QUAL_FIXED
         EXPORT_OB_WIND = 0,
         EXPORT_OB_LAYER = 1, # static
         EXPORT_OB_MATERIAL = 9, # wood
@@ -806,10 +806,10 @@ class NifConfig:
                 # rigid body: static
                 self.config["EXPORT_OB_BSXFLAGS"] = 2
                 self.config["EXPORT_OB_MASS"] = 1000.0
-                self.config["EXPORT_OB_MOTIONSYSTEM"] = 7 # keyframed
+                self.config["EXPORT_OB_MOTIONSYSTEM"] = 7 # MO_SYS_FIXED
                 self.config["EXPORT_OB_UNKNOWNBYTE1"] = 1
                 self.config["EXPORT_OB_UNKNOWNBYTE2"] = 1
-                self.config["EXPORT_OB_QUALITYTYPE"] = 1 # fixed
+                self.config["EXPORT_OB_QUALITYTYPE"] = 1 # MO_QUAL_FIXED
                 self.config["EXPORT_OB_WIND"] = 0
                 self.config["EXPORT_OB_LAYER"] = 1 # static
         elif evName[:8] == "VERSION_":
@@ -849,20 +849,20 @@ class NifConfig:
             self.config["EXPORT_OB_MATERIAL"] = 0 # stone
             self.config["EXPORT_OB_BSXFLAGS"] = 2 # havok
             self.config["EXPORT_OB_MASS"] = 10.0
-            self.config["EXPORT_OB_MOTIONSYSTEM"] = 7 # keyframed
+            self.config["EXPORT_OB_MOTIONSYSTEM"] = 7 # MO_SYS_FIXED
             self.config["EXPORT_OB_UNKNOWNBYTE1"] = 1
             self.config["EXPORT_OB_UNKNOWNBYTE2"] = 1
-            self.config["EXPORT_OB_QUALITYTYPE"] = 1 # fixed
+            self.config["EXPORT_OB_QUALITYTYPE"] = 1 # MO_QUAL_FIXED
             self.config["EXPORT_OB_WIND"] = 0
             self.config["EXPORT_OB_LAYER"] = 1 # static
             self.config["EXPORT_OB_SOLID"] = True
         elif evName == "EXPORT_OB_RIGIDBODY_CLUTTER":
             self.config["EXPORT_OB_BSXFLAGS"] = 3 # anim + havok
             self.config["EXPORT_OB_MASS"] = 10.0 # typical
-            self.config["EXPORT_OB_MOTIONSYSTEM"] = 4 # keyframed
+            self.config["EXPORT_OB_MOTIONSYSTEM"] = 4 # MO_SYS_BOX
             self.config["EXPORT_OB_UNKNOWNBYTE1"] = 2
             self.config["EXPORT_OB_UNKNOWNBYTE2"] = 2
-            self.config["EXPORT_OB_QUALITYTYPE"] = 3 # fixed
+            self.config["EXPORT_OB_QUALITYTYPE"] = 3 # MO_QUAL_DEBRIS
             self.config["EXPORT_OB_WIND"] = 0
             self.config["EXPORT_OB_LAYER"] = 4 # clutter
             self.config["EXPORT_OB_SOLID"] = True
@@ -873,7 +873,7 @@ class NifConfig:
             self.config["EXPORT_OB_MOTIONSYSTEM"] = 4 # MO_SYS_BOX
             self.config["EXPORT_OB_UNKNOWNBYTE1"] = 2
             self.config["EXPORT_OB_UNKNOWNBYTE2"] = 2
-            self.config["EXPORT_OB_QUALITYTYPE"] = 3 # MO_QUAL_MOVING2
+            self.config["EXPORT_OB_QUALITYTYPE"] = 3 # MO_QUAL_DEBRIS
             self.config["EXPORT_OB_WIND"] = 0
             self.config["EXPORT_OB_LAYER"] = 5 # weapin
             self.config["EXPORT_OB_SOLID"] = True
@@ -881,10 +881,10 @@ class NifConfig:
             self.config["EXPORT_OB_MATERIAL"] = 7 # skin
             self.config["EXPORT_OB_BSXFLAGS"] = 7 # anim + havok + skeleton
             self.config["EXPORT_OB_MASS"] = 600.0 # single person's weight in Oblivion
-            self.config["EXPORT_OB_MOTIONSYSTEM"] = 6 # unknown
+            self.config["EXPORT_OB_MOTIONSYSTEM"] = 6 # MO_SYS_KEYFRAMED
             self.config["EXPORT_OB_UNKNOWNBYTE1"] = 2
             self.config["EXPORT_OB_UNKNOWNBYTE2"] = 2
-            self.config["EXPORT_OB_QUALITYTYPE"] = 2 # keyframed
+            self.config["EXPORT_OB_QUALITYTYPE"] = 2 # MO_QUAL_KEYFRAMED
             self.config["EXPORT_OB_WIND"] = 0
             self.config["EXPORT_OB_LAYER"] = 8 # biped
             self.config["EXPORT_OB_SOLID"] = True
