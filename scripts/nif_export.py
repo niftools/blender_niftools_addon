@@ -2061,7 +2061,8 @@ WARNING: lost %f in vertex weights while creating a skin partition for
                         # yes, there is a shape ipo too
                         
                         # create geometry morph controller
-                        morphctrl = self.createBlock("NiGeomMorpherController", keyipo)
+                        morphctrl = self.createBlock("NiGeomMorpherController",
+                                                     keyipo)
                         trishape.addController(morphctrl)
                         morphctrl.target = trishape
                         morphctrl.frequency = 1.0
@@ -2077,14 +2078,19 @@ WARNING: lost %f in vertex weights while creating a skin partition for
                         morphdata.numVertices = len(vertlist)
                         morphdata.morphs.updateSize()
                         
-                        for keyblocknum, keyblock in enumerate( key.getBlocks() ):
+                        for keyblocknum, keyblock in enumerate(key.getBlocks()):
                             # export morphed vertices
                             morph = morphdata.morphs[keyblocknum]
                             self.msg("  exporting morph %i: vertices"
                                      % keyblocknum)
                             morph.arg = morphdata.numVertices
                             morph.vectors.updateSize()
-                            for b_v_index, (vert_indices, vert) in enumerate(zip(vertmap, keyblock.data)):
+                            for b_v_index, (vert_indices, vert) \
+                                in enumerate(zip(vertmap, keyblock.data)):
+                                # vertmap check
+                                if not vert_indices:
+                                    continue
+                                # copy vertex and assign morph vertex
                                 mv = vert.copy()
                                 if keyblocknum > 0:
                                     mv.x -= mesh.verts[b_v_index].co.x
