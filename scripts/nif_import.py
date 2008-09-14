@@ -416,6 +416,14 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                     else:
                         # is it a grouping node?
                         geom_group = self.is_grouping_node(niBlock)
+                        # if importing animation, remove children that have
+                        # morph controllers from geometry group
+                        if self.IMPORT_ANIMATION:
+                            for child in geom_group:
+                                if self.find_controller(
+                                    child, NifFormat.NiGeomMorpherController):
+                                    geom_group.remove(child)
+                        # import geometry/empty + remaining children
                         if not geom_group or len(geom_group) > 16:
                             # no grouping node, or too many materials to
                             # group the geometry into a single mesh
