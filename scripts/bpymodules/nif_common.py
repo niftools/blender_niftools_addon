@@ -153,6 +153,7 @@ class NifConfig:
         EXPORT_OB_LAYER = 1, # static
         EXPORT_OB_MATERIAL = 9, # wood
         EXPORT_OB_MALLEABLECONSTRAINT = False, # use malleable constraint for ragdoll and hinge
+        EXPORT_OB_PRN = "NONE", # determines bone where to attach weapon
         PROFILE = '', # name of file where Python profiler dumps the profile; set to empty string to turn off profiling
         IMPORT_EXPORTEMBEDDEDTEXTURES = False)
 
@@ -703,7 +704,46 @@ class NifConfig:
                 text = "Use bhkMalleableConstraint",
                 event_name = "EXPORT_OB_MALLEABLECONSTRAINT",
                 num_items = 2, item = 1)
+            self.drawYSep()
 
+            self.drawLabel(
+                text = "Weapon Location",
+                event_name = "LABEL_WEAPON_LOCATION")
+            self.drawToggle(
+                text = "None",
+                val = self.config["EXPORT_OB_PRN"] == "NONE",
+                event_name = "EXPORT_OB_PRN_NONE",
+                num_items = 7, item = 0)
+            self.drawToggle(
+                text = "Back",
+                val = self.config["EXPORT_OB_PRN"] == "BACK",
+                event_name = "EXPORT_OB_PRN_BACK",
+                num_items = 7, item = 1)
+            self.drawToggle(
+                text = "Side",
+                val = self.config["EXPORT_OB_PRN"] == "SIDE",
+                event_name = "EXPORT_OB_PRN_SIDE",
+                num_items = 7, item = 2)
+            self.drawToggle(
+                text = "Quiver",
+                val = self.config["EXPORT_OB_PRN"] == "QUIVER",
+                event_name = "EXPORT_OB_PRN_QUIVER",
+                num_items = 7, item = 3)
+            self.drawToggle(
+                text = "Shield",
+                val = self.config["EXPORT_OB_PRN"] == "SHIELD",
+                event_name = "EXPORT_OB_PRN_SHIELD",
+                num_items = 7, item = 4)
+            self.drawToggle(
+                text = "Helm",
+                val = self.config["EXPORT_OB_PRN"] == "HELM",
+                event_name = "EXPORT_OB_PRN_HELM",
+                num_items = 7, item = 5)
+            self.drawToggle(
+                text = "Ring",
+                val = self.config["EXPORT_OB_PRN"] == "RING",
+                event_name = "EXPORT_OB_PRN_RING",
+                num_items = 7, item = 6)
 
         Draw.Redraw(1)
 
@@ -905,6 +945,8 @@ class NifConfig:
             self.config["EXPORT_OB_MATERIAL"] = 7
         elif evName == "EXPORT_OB_MATERIAL_WOOD":
             self.config["EXPORT_OB_MATERIAL"] = 9
+        elif evName[:14] == "EXPORT_OB_PRN_":
+            self.config["EXPORT_OB_PRN"] = evName[14:]
         Draw.Redraw(1)
 
     def guiEvent(self, evt, val):

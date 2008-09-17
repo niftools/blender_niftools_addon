@@ -2,6 +2,10 @@ Version 2.3.8 (***)
 * convert Bip01 L/R xxx to Bip01 xxx.L/R on import, and conversely on export
 (contributed by melianv, issue #2054493)
 * fix for multimaterial geometry morph (shape key) import and export
+* show versions of scripts, blender, and pyffi, in import/export dialog (issue
+#2112995)
+* new export dialog options to determine Oblivion weapon location as
+NiStringExtraData Prn value (issue #1966134)
 
 Version 2.3.7 (25 Aug 2008)
 * fixed export of cylinder radius on scaled objects
