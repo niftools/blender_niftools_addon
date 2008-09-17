@@ -518,6 +518,21 @@ Furniture marker has invalid number (%s). Name your file
             for b_obj in self.getExportedObjects():
                 self.exportConstraints(b_obj, root_block)
 
+            # export weapon location
+            if self.EXPORT_VERSION == "Oblivion":
+                if self.EXPORT_OB_PRN != "NONE":
+                    # add string extra data
+                    prn = self.createBlock("NiStringExtraData")
+                    prn.name = 'Prn'
+                    prn.stringData = {
+                        "BACK": "BackWeapon",
+                        "SIDE": "SideWeapon",
+                        "QUIVER": "Quiver",
+                        "SHIELD": "Bip01 L ForearmTwist",
+                        "HELM": "Bip01 Head",
+                        "RING": "Bip01 R Finger1"}[self.EXPORT_OB_PRN]
+                    root_block.addExtraData(prn)
+
             # add vertex color and zbuffer properties for civ4 and railroads
             if self.EXPORT_VERSION in ["Civilization IV",
                                        "Sid Meier's Railroads"]:

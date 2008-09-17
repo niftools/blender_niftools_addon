@@ -707,7 +707,7 @@ class NifConfig:
             self.drawYSep()
 
             self.drawLabel(
-                text = "Weapon Location",
+                text = "Weapon Body Location",
                 event_name = "LABEL_WEAPON_LOCATION")
             self.drawToggle(
                 text = "None",
@@ -901,6 +901,7 @@ class NifConfig:
             self.config["EXPORT_OB_WIND"] = 0
             self.config["EXPORT_OB_LAYER"] = 1 # static
             self.config["EXPORT_OB_SOLID"] = True
+            self.config["EXPORT_OB_PRN"] = "NONE"
         elif evName == "EXPORT_OB_RIGIDBODY_CLUTTER":
             self.config["EXPORT_OB_BSXFLAGS"] = 3 # anim + havok
             self.config["EXPORT_OB_MASS"] = 10.0 # typical
@@ -911,6 +912,7 @@ class NifConfig:
             self.config["EXPORT_OB_WIND"] = 0
             self.config["EXPORT_OB_LAYER"] = 4 # clutter
             self.config["EXPORT_OB_SOLID"] = True
+            self.config["EXPORT_OB_PRN"] = "NONE"
         elif evName == "EXPORT_OB_RIGIDBODY_WEAPON":
             self.config["EXPORT_OB_MATERIAL"] = 5 # metal
             self.config["EXPORT_OB_BSXFLAGS"] = 3 # anim + havok
@@ -922,6 +924,7 @@ class NifConfig:
             self.config["EXPORT_OB_WIND"] = 0
             self.config["EXPORT_OB_LAYER"] = 5 # weapin
             self.config["EXPORT_OB_SOLID"] = True
+            self.config["EXPORT_OB_PRN"] = "SIDE"
         elif evName == "EXPORT_OB_RIGIDBODY_CREATURE":
             self.config["EXPORT_OB_MATERIAL"] = 7 # skin
             self.config["EXPORT_OB_BSXFLAGS"] = 7 # anim + havok + skeleton
@@ -933,6 +936,7 @@ class NifConfig:
             self.config["EXPORT_OB_WIND"] = 0
             self.config["EXPORT_OB_LAYER"] = 8 # biped
             self.config["EXPORT_OB_SOLID"] = True
+            self.config["EXPORT_OB_PRN"] = "NONE"
         elif evName == "EXPORT_OB_MATERIAL_STONE":
             self.config["EXPORT_OB_MATERIAL"] = 0
         elif evName == "EXPORT_OB_MATERIAL_CLOTH":
