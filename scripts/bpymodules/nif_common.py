@@ -406,6 +406,11 @@ class NifConfig:
         self.yPos = self.YORIGIN + Blender.Window.GetAreaSize()[1]
 
         # common options
+        self.drawLabel(
+            text = self.WELCOME_MESSAGE,
+            event_name = "LABEL_WELCOME_MESSAGE")
+        self.drawYSep()
+
         self.drawSlider(
             text = "Scale Correction:  ",
             event_name = "SCALE_CORRECTION",
