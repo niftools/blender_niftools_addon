@@ -1,4 +1,4 @@
-Version 2.3.8 (***)
+Version 2.3.8 (27 Sep 2008)
 * convert Bip01 L/R xxx to Bip01 xxx.L/R on import, and conversely on export
 (contributed by melianv, issue #2054493)
 * fix for multimaterial geometry morph (shape key) import and export
