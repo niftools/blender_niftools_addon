@@ -727,7 +727,10 @@ keyframes are supported.""" % self.EXPORT_VERSION)
         finally:
             # clear progress bar
             self.msgProgress("Finished", progbar = 1)
-    
+
+        # save exported file (this is used by the test suite)
+        self.root_blocks = [root_block]
+
 
 
     def exportNode(self, ob, space, parent_block, node_name):

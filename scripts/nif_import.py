@@ -263,6 +263,8 @@ class NifImport:
             # do a full scene update to ensure that transformations are applied
             self.scene.update(1)
 
+        # save nif root blocks (used by test suites)
+        self.root_blocks = root_blocks
 
 
     def importRoot(self, root_block):
@@ -270,8 +272,10 @@ class NifImport:
         # preprocessing:
 
         # check that this is not a kf file
-        if isinstance(root_block, (NifFormat.NiSequence, NifFormat.NiSequenceStreamHelper)):
-            raise NifImportError(".kf import not supported")
+        if isinstance(root_block,
+                      (NifFormat.NiSequence,
+                       NifFormat.NiSequenceStreamHelper)):
+            raise NifImportError("direct .kf import not supported")
 
         # merge skeleton roots
         for niBlock in root_block.tree():
@@ -281,12 +285,12 @@ class NifImport:
                 continue
             merged, failed = niBlock.mergeSkeletonRoots()
             if merged:
-                self.msg('reparented following blocks to skeleton root of %s:'%
-                         niBlock.name, 2)
+                self.msg('reparented following blocks to skeleton root of %s:'
+                         % niBlock.name, 2)
                 self.msg([node.name for node in merged], 2)
             if failed:
-                self.msg('WARNING: failed to reparent following blocks %s:'%
-                         niBlock.name, 2)
+                self.msg('WARNING: failed to reparent following blocks %s:'
+                         % niBlock.name, 2)
                 self.msg([node.name for node in failed], 2)
 
         # transform geometry into the rest pose
@@ -296,8 +300,8 @@ class NifImport:
                     continue
                 if not niBlock.isSkin():
                     continue
-                self.msg('sending bones of geometry %s to their bind position'%
-                         niBlock.name, 2)
+                self.msg('sending bones of geometry %s to their bind position'
+                         % niBlock.name, 2)
                 niBlock.sendBonesToBindPosition()
         if self.IMPORT_APPLYSKINDEFORM:
             for niBlock in root_block.tree():
@@ -305,8 +309,8 @@ class NifImport:
                     continue
                 if not niBlock.isSkin():
                     continue
-                self.msg('applying skin deformation on geometry %s'%
-                         niBlock.name, 2)
+                self.msg('applying skin deformation on geometry %s'
+                         % niBlock.name, 2)
                 vertices, normals = niBlock.getSkinDeformation()
                 for vold, vnew in izip(niBlock.data.vertices, vertices):
                     vold.x = vnew.x

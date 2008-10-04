@@ -1,3 +1,10 @@
+Version 2.3.9 (***)
+* improved installer to point to Python 2.5.2 instead of Python 2.6
+if Python installation is not found
+* improved the test suite
+  - allow comparison between imported and exported nif data
+  - exported skinning data is now tested against imported skinning data
+
 Version 2.3.8 (27 Sep 2008)
 * convert Bip01 L/R xxx to Bip01 xxx.L/R on import, and conversely on export
 (contributed by melianv, issue #2054493)
