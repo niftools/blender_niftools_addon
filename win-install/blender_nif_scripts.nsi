@@ -324,7 +324,7 @@ blender_scripts_end:
      MessageBox MB_OK "You will need to download Python 2.5 and PyFFI in order to run the Blender NIF Scripts. Pressing OK will take you to the Python and PyFFI download pages. Please download and run the Python windows installer, then download and run the PyFFI windows installer. When you are done, rerun the Blender NIF Scripts installer."
      StrCpy $0 "http://sourceforge.net/project/platformdownload.php?group_id=199269&sel_platform=3089"
      Call openLinkNewWindow
-     StrCpy $0 "http://www.python.org/download/"
+     StrCpy $0 "http://www.python.org/download/releases/2.5.2/"
      Call openLinkNewWindow
      Abort ; causes installer to quit
 
