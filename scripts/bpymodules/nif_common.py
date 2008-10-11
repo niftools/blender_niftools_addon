@@ -92,6 +92,41 @@ Get a newer version at http://pyffi.sourceforge.net/
 from Blender import Draw, Registry
 import sys, os
 
+class NifImportExport:
+    """Abstract base class for import and export. Contains utility functions
+    that are commonly used in both import and export."""
+
+    def getBoneNameForBlender(self, name):
+        """Convert a bone name to a name that can be used by Blender: turns
+        'Bip01 R xxx' into 'Bip01 xxx.R', and similar for L.
+
+        @param name: The bone name as in the nif file.
+        @type name: C{str}
+        @return: Bone name in Blender convention.
+        @rtype: C{str}
+        """
+        if name.startswith("Bip01 L "):
+            return "Bip01 " + name[8:] + ".L"
+        elif name.startswith("Bip01 R "):
+            return "Bip01 " + name[8:] + ".R"
+        return name
+
+    def getBoneNameForNif(self, name):
+        """Convert a bone name to a name that can be used by the nif file:
+        turns 'Bip01 xxx.R' into 'Bip01 R xxx', and similar for L.
+
+        @param name: The bone name as in Blender.
+        @type name: C{str}
+        @return: Bone name in nif convention.
+        @rtype: C{str}
+        """
+        if name.startswith("Bip01 "):
+            if name.endswith(".L"):
+                return "Bip01 L " + name[6:-2]
+            elif name.endswith(".R"):
+                return "Bip01 R " + name[6:-2]
+        return name
+
 class NifConfig:
     """Class which handles configuration of nif import and export in Blender.
 

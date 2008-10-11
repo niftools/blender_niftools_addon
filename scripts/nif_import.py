@@ -17,6 +17,7 @@ This script imports Netimmerse and Gamebryo .NIF files to Blender.
 import Blender
 from Blender.Mathutils import *
 
+from nif_common import NifImportExport
 from nif_common import NifConfig
 from nif_common import NifFormat
 from nif_common import __version__
@@ -64,7 +65,7 @@ class NifImportError(StandardError):
     """A simple custom exception class for import errors."""
     pass
 
-class NifImport:
+class NifImport(NifImportExport):
     """A class which bundles the main import function along with all helper
     functions and data shared between these functions."""
     # class constants:
@@ -733,10 +734,7 @@ WARNING: collision object has non-bone parent, this is not supported
             else:
                 shortName = '%s.%02d' % (niName[:max_length-4], uniqueInt)
             # bone naming convention for blender
-            if shortName.startswith("Bip01 L "):
-                shortName = "Bip01 " + shortName[8:] + ".L"
-            elif shortName.startswith("Bip01 R "):
-                shortName = "Bip01 " + shortName[8:] + ".R"
+            shortName = self.getBoneNameForBlender(shortName)
             # make sure it is unique
             try:
                 Blender.Object.Get(shortName)
@@ -2048,8 +2046,10 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             line = ''
             for row in correction_matrix:
                 line = '%s;%s,%s,%s,%s' % (line, row[0], row[1], row[2], row[3])
+            # we write the bone names with their blender name!
+            blender_bone_name = self.names[niBone] # NOT niBone.name !!
             # write it to the text buffer
-            bonetxt.write('%s/%s\n' % (niBone.name, line[1:]))
+            bonetxt.write('%s/%s\n' % (blender_bone_name, line[1:]))
         
 
     def storeNames(self):
@@ -2209,15 +2209,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             self.armatures[skelroot] = []
             for bone_name in self.selectedObjects[0].data.bones.keys():
                 # blender bone naming -> nif bone naming
-                if bone_name.startswith("Bip01 "):
-                    if bone_name.endswith(".L"):
-                        nif_bone_name = "Bip01 L " + bone_name[6:-2]
-                    elif bone_name.endswith(".R"):
-                        nif_bone_name = "Bip01 R " + bone_name[6:-2]
-                    else:
-                        nif_bone_name = bone_name
-                else:
-                    nif_bone_name = bone_name
+                nif_bone_name = self.getBoneNameForNif(bone_name)
                 # find a block with bone name
                 bone_block = skelroot.find(block_name = nif_bone_name)
                 # add it to the name list if there is a bone with that name

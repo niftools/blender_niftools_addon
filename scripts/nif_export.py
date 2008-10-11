@@ -18,6 +18,7 @@ from itertools import izip
 import Blender
 from Blender import Ipo # for all the Ipo curve constants
 
+from nif_common import NifImportExport
 from nif_common import NifConfig
 from nif_common import NifFormat
 from nif_common import __version__
@@ -60,7 +61,7 @@ class NifExportError(StandardError):
     pass
 
 # main export class
-class NifExport:
+class NifExport(NifImportExport):
     IDENTITY44 = NifFormat.Matrix44()
     IDENTITY44.setIdentity()
     # map blending modes to apply modes
@@ -102,6 +103,9 @@ class NifExport:
             if len(ln)>0:
                 # reconstruct matrix from text
                 b, m = ln.split('/')
+                # this is probably not necessary, but just to make sure:
+                # convert the bone name to a Blender type bone name
+                b = self.getBoneNameForBlender(b)
                 try:
                     mat = Blender.Mathutils.Matrix(
                         *[[float(f) for f in row.split(',')]
@@ -132,11 +136,7 @@ class NifExport:
         if blender_name != None:
             unique_name = blender_name
         # blender bone naming -> nif bone naming
-        if unique_name.startswith("Bip01 "):
-            if unique_name.endswith(".L"):
-                unique_name = "Bip01 L " + unique_name[6:-2]
-            if unique_name.endswith(".R"):
-                unique_name = "Bip01 R " + unique_name[6:-2]
+        unique_name = self.getBoneNameForNif(unique_name)
         # ensure uniqueness
         if unique_name in self.blockNames or unique_name in self.names.values():
             unique_int = 0

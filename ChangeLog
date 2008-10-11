@@ -4,6 +4,9 @@ if Python installation is not found
 * improved the test suite
   - allow comparison between imported and exported nif data
   - exported skinning data is now tested against imported skinning data
+* added common base class for importer and exporter, for code sharing
+* fixed bone correction application which would fail under certain
+circumstances
 
 Version 2.3.8 (27 Sep 2008)
 * convert Bip01 L/R xxx to Bip01 xxx.L/R on import, and conversely on export
