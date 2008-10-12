@@ -86,7 +86,6 @@ class TestSuite:
         # select objects
         self.scene.objects.selected = [
             ob for ob in self.scene.objects if ob.name in selection]
-        print [ob for ob in self.scene.objects.selected]
 
         # set script configuration
         finalconfig = dict(**NifConfig.DEFAULTS)
