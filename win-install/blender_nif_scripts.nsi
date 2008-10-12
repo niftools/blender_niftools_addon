@@ -478,6 +478,8 @@ Section "Uninstall"
   Delete "$BLENDERSCRIPTS\bpydata\config\nifscripts.cfg"
 
   ; remove program files and program directory
+  Delete "$INSTDIR\docs\*.*"
+  RMDir "$INSTDIR\docs"
   Delete "$INSTDIR\*.*"
   RMDir "$INSTDIR"
 
