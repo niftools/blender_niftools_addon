@@ -65,7 +65,7 @@ def compare_skinning_info(oldroot, newroot):
                                 "translation mismatch\n%s\n!=\n%s\n"
                                 % (oldbonedata.translation,
                                    newbonedata.translation))
-                        if oldbonedata.scale != newbonedata.scale:
+                        if abs(oldbonedata.scale - newbonedata.scale) > 0.0001:
                             raise ValueError(
                                 "scale mismatch %s != %s"
                                 % (oldbonedata.scale, newbonedata.scale))
@@ -102,16 +102,16 @@ class SkinningTestSuite(TestSuite):
                 EXPORT_FLATTENSKIN = True),
             selection = ['Scene Root'])
         compare_skinning_info(
-            bodyupp.root_blocks[0],
+            NifFormat.read(open("test/nif/upperbody.nif", "rb"), version=0x14000005, user_version=11)[0],
             body_export.root_blocks[0])
         compare_skinning_info(
-            bodylow.root_blocks[0],
+            NifFormat.read(open("test/nif/lowerbody.nif", "rb"), version=0x14000005, user_version=11)[0],
             body_export.root_blocks[0])
         compare_skinning_info(
-            bodyhand.root_blocks[0],
+            NifFormat.read(open("test/nif/hand.nif", "rb"), version=0x14000005, user_version=11)[0],
             body_export.root_blocks[0])
         compare_skinning_info(
-            bodyfoot.root_blocks[0],
+            NifFormat.read(open("test/nif/foot.nif", "rb"), version=0x14000005, user_version=11)[0],
             body_export.root_blocks[0])
         # morrowind creature
         self.test(filename = 'test/nif/babelfish.nif')
