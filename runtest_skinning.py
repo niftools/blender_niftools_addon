@@ -39,6 +39,19 @@ from PyFFI.Formats.NIF import NifFormat
 
 # helper functions
 
+def are_vectors_equal(oldvec, newvec, tolerance = 0.01):
+    return (max([abs(x-y)
+            for (x,y) in izip(oldvec.asList(), newvec.asList())]) < tolerance)
+
+def are_matrices_equal(oldmat, newmat, tolerance = 0.01):
+    return (max([max([abs(x-y)
+                 for (x,y) in izip(oldrow, newrow)])
+                for (oldrow, newrow) in izip(oldmat.asList(), newmat.asList())])
+            < tolerance)
+
+def are_floats_equal(oldfloat, newfloat, tolerance = 0.01):
+    return abs(oldfloat - newfloat) < tolerance
+
 def compare_skinning_info(oldroot, newroot):
     """Raises a C{ValueError} if skinning info is different between old and
     new."""
@@ -56,17 +69,20 @@ def compare_skinning_info(oldroot, newroot):
                     if oldbone.name == newbone.name:
                         print ("  checking bone %s" % oldbone.name)
                         # comparing
-                        if oldbonedata.rotation != newbonedata.rotation:
-                            raise ValueError(
+                        if not are_matrices_equal(oldbonedata.rotation, newbonedata.rotation):
+                            #raise ValueError(
+                            print(
                                 "rotation mismatch\n%s\n!=\n%s\n"
                                 % (oldbonedata.rotation, newbonedata.rotation))
-                        if oldbonedata.translation != newbonedata.translation:
-                            raise ValueError(
+                        if not are_vectors_equal(oldbonedata.translation, newbonedata.translation):
+                            #raise ValueError(
+                            print(
                                 "translation mismatch\n%s\n!=\n%s\n"
                                 % (oldbonedata.translation,
                                    newbonedata.translation))
-                        if abs(oldbonedata.scale - newbonedata.scale) > 0.0001:
-                            raise ValueError(
+                        if not are_floats_equal(oldbonedata.scale, newbonedata.scale):
+                            #raise ValueError(
+                            print(
                                 "scale mismatch %s != %s"
                                 % (oldbonedata.scale, newbonedata.scale))
     return
