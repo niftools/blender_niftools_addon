@@ -7,7 +7,7 @@ if Python installation is not found
 * added common base class for importer and exporter, for code sharing
 * fixed bone correction application which would fail under certain
 circumstances
-* epydoc documentation can now be generated (not yet included with install)
+* epydoc documentation can now be generated and is included with installation
 
 Version 2.3.8 (27 Sep 2008)
 * convert Bip01 L/R xxx to Bip01 xxx.L/R on import, and conversely on export

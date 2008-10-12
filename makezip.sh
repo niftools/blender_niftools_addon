@@ -1,6 +1,6 @@
 VERSION="2.3.9"
 NAME="blender_nif_scripts"
-FILES="scripts/nif_import.py scripts/nif_export.py scripts/bpymodules/nif_common.py scripts/bpymodules/nif_test.py scripts/mesh_weightsquash.py scripts/mesh_hull.py scripts/object_setbonepriority.py scripts/object_savebonepose.py scripts/object_loadbonepose.py ChangeLog README.html install.sh install.bat"
+FILES="scripts/nif_import.py scripts/nif_export.py scripts/bpymodules/nif_common.py scripts/bpymodules/nif_test.py scripts/mesh_weightsquash.py scripts/mesh_hull.py scripts/object_setbonepriority.py scripts/object_savebonepose.py scripts/object_loadbonepose.py ChangeLog README.html install.sh install.bat docs/*.*"
 
 rm -f "${NAME}-${VERSION}".*
 zip -9 "${NAME}-${VERSION}.zip" ${FILES}

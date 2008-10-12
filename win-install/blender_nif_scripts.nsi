@@ -423,6 +423,8 @@ Section
   File ..\README.html
   File /oname=ChangeLog.txt ..\ChangeLog
   File Copyright.txt
+  SetOutPath $INSTDIR\docs
+  File ..\docs\*.*
 
   ; Remove old shortcuts
   Delete "$SMPROGRAMS\NifTools\Blender NIF Scripts\*.lnk"
@@ -431,7 +433,8 @@ Section
   CreateDirectory "$SMPROGRAMS\NifTools\Blender NIF Scripts\"
   CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Readme.lnk" "$INSTDIR\README.html"
   CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\ChangeLog.lnk" "$INSTDIR\ChangeLog.txt"
-  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Documentation.lnk" "http://niftools.sourceforge.net/wiki/Blender"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\User Documentation.lnk" "http://niftools.sourceforge.net/wiki/Blender"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Developer Documentation.lnk" "$INSTDIR\docs\index.html"
   CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Bug Reports.lnk" "http://sourceforge.net/tracker/?group_id=149157&atid=776343"
   CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Feature Requests.lnk" "http://sourceforge.net/tracker/?group_id=149157&atid=776346"
   CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Forum.lnk" "http://niftools.sourceforge.net/forum/"
