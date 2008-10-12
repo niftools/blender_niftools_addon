@@ -32,7 +32,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from nif_test import TestSuite, Test
+from nif_test import TestSuite
 
 # helper functions
 
@@ -44,44 +44,65 @@ def compare_skinning_info(oldroot, newroot):
 # some tests to import and export nif files
 
 class SkinningTestSuite(TestSuite):
-    FOLDER = "test/nif"
-    
-    # list of tests (characterized by filename, config dictionary, and list
-    # of objects to be selected)
-    # if the config has a EXPORT_VERSION key then the test is an export test
-    # otherwise it's an import test
-    TESTS = [
+    def run(self):
         # oblivion full body
-        Test('skeleton.nif',  dict(IMPORT_SKELETON = 1), []),
-        Test('upperbody.nif', dict(IMPORT_SKELETON = 2), ['Scene Root']),
-        Test('lowerbody.nif', dict(IMPORT_SKELETON = 2), ['Scene Root']),
-        Test('hand.nif',      dict(IMPORT_SKELETON = 2), ['Scene Root']),
-        Test('foot.nif',      dict(IMPORT_SKELETON = 2), ['Scene Root']),
-        Test('_fulloblivionbody.nif',
-         dict(
-            EXPORT_VERSION = 'Oblivion', EXPORT_SMOOTHOBJECTSEAMS = True,
-            EXPORT_FLATTENSKIN = True),
-         ['Scene Root']),
+        bodyskel = self.test(
+            filename = 'test/nif/skeleton.nif',
+            config = dict(IMPORT_SKELETON = 1))
+        bodyupp = self.test(
+            filename = 'test/nif/upperbody.nif',
+            config = dict(IMPORT_SKELETON = 2),
+            selection = ['Scene Root'])
+        bodylow = self.test(
+            filename = 'test/nif/lowerbody.nif',
+            config = dict(IMPORT_SKELETON = 2),
+            selection = ['Scene Root'])
+        bodyhand = self.test(
+            filename = 'test/nif/hand.nif',
+            config = dict(IMPORT_SKELETON = 2),
+            selection = ['Scene Root'])
+        bodyfoot = self.test(
+            filename = 'test/nif/foot.nif',
+            config = dict(IMPORT_SKELETON = 2),
+            selection = ['Scene Root'])
+        body_export = self.test(
+            filename = 'test/nif/_fulloblivionbody.nif',
+            config = dict(
+                EXPORT_VERSION = 'Oblivion', EXPORT_SMOOTHOBJECTSEAMS = True,
+                EXPORT_FLATTENSKIN = True),
+            selection = ['Scene Root'])
+        compare_skinning_info(
+            bodyupp.root_blocks[0],
+            body_export.root_blocks[0])
+        compare_skinning_info(
+            bodylow.root_blocks[0],
+            body_export.root_blocks[0])
+        compare_skinning_info(
+            bodyhand.root_blocks[0],
+            body_export.root_blocks[0])
+        compare_skinning_info(
+            bodyfoot.root_blocks[0],
+            body_export.root_blocks[0])
         # morrowind creature
-        Test('babelfish.nif', {}, []),
-        Test('_babelfish.nif', dict(
-            EXPORT_VERSION = 'Morrowind',
-            EXPORT_STRIPIFY = False, EXPORT_SKINPARTITION = False),
-         ['Root Bone']),
+        self.test(filename = 'test/nif/babelfish.nif')
+        self.test(
+            filename = 'test/nif/_babelfish.nif',
+            config = dict(
+                EXPORT_VERSION = 'Morrowind',
+                EXPORT_STRIPIFY = False, EXPORT_SKINPARTITION = False),
+            selection = ['Root Bone'])
         # morrowind better bodies mesh
-        Test('bb_skinf_br.nif', {}, []),
-        Test('_bb_skinf_br.nif', dict(
-            EXPORT_VERSION = 'Morrowind', EXPORT_SMOOTHOBJECTSEAMS = True,
-            EXPORT_STRIPIFY = False, EXPORT_SKINPARTITION = False),
-         ['Bip01']),
-    ]
+        bbskin_import = self.test(filename = 'test/nif/bb_skinf_br.nif')
+        bbskin_export = self.test(
+            filename = 'test/nif/_bb_skinf_br.nif',
+            config = dict(
+                EXPORT_VERSION = 'Morrowind', EXPORT_SMOOTHOBJECTSEAMS = True,
+                EXPORT_STRIPIFY = False, EXPORT_SKINPARTITION = False),
+            selection = ['Bip01'])
+        compare_skinning_info(
+            bbskin_import.root_blocks[0],
+            bbskin_export.root_blocks[0])
 
-    def test_callback(self, filename):
-        """Called after every import or export."""
-        if filename == '_bb_skinf_br.nif':
-            compare_skinning_info(
-                self.data['bb_skinf_br.nif'].root_blocks[0],
-                self.data['_bb_skinf_br.nif'].root_blocks[0])
-
-suite = SkinningTestSuite()
+suite = SkinningTestSuite("skinning")
 suite.run()
+

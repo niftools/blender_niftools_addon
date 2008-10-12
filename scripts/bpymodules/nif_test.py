@@ -37,96 +37,89 @@ from nif_import import NifImport
 from nif_export import NifExport
 from nif_common import NifConfig
 
-class Test:
-    """A single test, describing import or export of a file."""
-    def __init__(self, filename = None, config = None, selection = None):
-        """Initializes a test.
+class TestSuite:
+    """A test suite class.
+
+    @ivar scene: The Blender scene for this test suite.
+    @type scene: Blender.Scene.Scene
+    @ivar layer: The current Blender layer in the scene.
+    @type layer: C{int}
+    """
+    def __init__(self, name):
+        """Initialize a new test suite with given name.
+
+        @param name: The name of the test (will be used as name of the scene
+            for this test).
+        @type name: C{str}
+        """
+        self.scene = Blender.Scene.New(name) # new scene
+        self.layer = 1 # current layer
+
+        # set active scene
+        self.scene.makeCurrent()
+        # set active layer
+        self.scene.setLayers([self.layer])
+
+    def test(self, filename = None, config = None, selection = None):
+        """Run given test, and increase layer after export.
 
         @param filename: The name of the file to test.
         @type filename: C{str}
         @param config: Configuration options that differ from their default
             values. If the dictionary has the key EXPORT_VERSION then the
-            selection is exported, otherwise a file is imported.
+            selection is exported, otherwise a file is imported. Optional.
         @type config: C{dict}
         @param selection: List of names of objects to select before running
-            the test.
+            the test. Optional.
         @type selection: C{list} of C{str}
+        @return: The import or export object.
+        @rtype: L{NifImport} or L{NifExport}
         """
+
         if filename is None:
             raise ValueError("A test must specify a filename.")
-        self.filename = filename
-        self.config = config if not(config is None) else {}
-        self.selection = selection if not(selection is None) else []
+        if config is None:
+            config = {}
+        if selection is None:
+            selection = []
 
-class TestSuite:
-    """A test suite class.
+        # select objects
+        self.scene.objects.selected = [
+            ob for ob in self.scene.objects if ob.name in selection]
+        print [ob for ob in self.scene.objects.selected]
 
-    @cvar FOLDER: The folder where all files for this test reside.
-    @type FOLDER: C{str}
-    @cvar SCRIPTS: List of L{Test} instances which describe the files which
-        are imported and exported, along with options and objects to be
-        selected.
-    @type SCRIPTS: C{list} of L{Test}
-    @ivar data: Dictionary mapping file name to L{NifExport} or L{NifImport}
-        instances.
-    @type data: C{dict}
-    """
-    FOLDER = ""
-    TESTS = []
-    def __init__(self):
-        self.data = {}
+        # set script configuration
+        finalconfig = dict(**NifConfig.DEFAULTS)
+        finalconfig["VERBOSITY"] = 99
+        for key, value in config.items():
+            finalconfig[key] = value
+
+        # run test
+        if 'EXPORT_VERSION' in config:
+            # export the imported files
+            print("*** exporting %s ***" % filename)
+
+            finalconfig["EXPORT_FILE"] = filename
+            result = NifExport(**finalconfig)
+
+            # increment active layer for next import
+            # different tests are put into different blender layers,
+            # so the results can be easily visually inspected
+            self.layer += 1
+            self.scene.setLayers([self.layer])
+
+            # return test result
+            return result
+        else:
+            print("*** importing %s ***" % filename)
+
+            # import file and return test result
+            finalconfig["IMPORT_FILE"] =  filename
+            return NifImport(**finalconfig)
 
     def run(self):
-        """Test the files in L{FOLDER} specified by L{TESTS}."""
-        scene = Blender.Scene.GetCurrent() # current scene
-        layer = 1
-
-        for test in self.TESTS:
-            filename = test.filename
-
-            # select objects
-            scene.objects.selected = [
-                ob for ob in scene.objects if ob.name in test.selection]
-
-            # set script configuration
-            config = dict(**NifConfig.DEFAULTS)
-            config["VERBOSITY"] = 99
-            for key, value in test.config.items():
-                config[key] = value
-
-            # run test
-            if 'EXPORT_VERSION' in test.config:
-                # export the imported files
-                print("*** exporting %s ***" % filename)
-
-                config["EXPORT_FILE"] = "%s/%s" % (self.FOLDER, filename)
-                self.data[filename] = NifExport(**config)
-
-                # increment active layer for next import
-                # different tests are put into different blender layers,
-                # so the results can be easily visually inspected
-                layer += 1
-                scene.setLayers([layer])
-            else:
-                print("*** importing %s ***" % filename)
-
-                config["IMPORT_FILE"] = "%s/%s" % (self.FOLDER, filename)
-
-                # import <filename>
-                print "import..."
-                self.data[filename] = NifImport(**config)
-
-            # callback after every import/export
-            self.test_callback(filename)
-
-        # deselect everything
-        scene.objects.selected = []
-        # reset active layer
-        scene.setLayers([1])
-
-    def test_callback(self, filename):
-        """Called after every import or export."""
-        return
+        """Run the test suite. Override."""
+        raise NotImplementedError
 
 def runtest(directory, files):
     """Test the specified files.
