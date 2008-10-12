@@ -89,6 +89,21 @@ def compare_skinning_info(oldroot, newroot):
 
 # some tests to import and export nif files
 
+class TestSuiteChampionArmor(TestSuite):
+    def run(self):
+        # champion armor
+        champ = self.test(
+            filename = 'test/nif/cuirass.nif')
+        champ_export = self.test(
+            filename = 'test/nif/_cuirass.nif',
+            config = dict(
+                EXPORT_VERSION = 'Oblivion', EXPORT_SMOOTHOBJECTSEAMS = True,
+                EXPORT_FLATTENSKIN = True),
+            selection = ['Scene Root'])
+        compare_skinning_info(
+            NifFormat.read(open("test/nif/cuirass.nif", "rb"), version=0x14000005, user_version=11)[0],
+            champ_export.root_blocks[0])
+
 class SkinningTestSuite(TestSuite):
     def run(self):
         # oblivion full body
@@ -149,6 +164,10 @@ class SkinningTestSuite(TestSuite):
             bbskin_import.root_blocks[0],
             bbskin_export.root_blocks[0])
 
+### "Scene Root" of champion armor conflicts with "Scene Root" of full body
+### test below, so for now this test is disabled until a solution is found
+#suite = TestSuiteChampionArmor("champion_armor")
+#suite.run()
 suite = SkinningTestSuite("skinning")
 suite.run()
 
