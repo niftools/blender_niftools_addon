@@ -2480,7 +2480,8 @@ Workaround: apply size and rotation (CTRL-A).""")
         """Helper function to create a new block, register it in the list of
         exported blocks, and associate it with a Blender object.
 
-        @param block: The nif block type (for instance "NiNode").
+        @param blocktype: The nif block type (for instance "NiNode").
+        @type blocktype: C{str}
         @param b_obj: The Blender object.
         @return: The newly created block."""
         try:
@@ -2927,7 +2928,7 @@ ERROR%t|Too many faces/vertices. Decimate/split your mesh and try again.""")
         """Export the constraints of an object.
 
         @param b_obj: The object whose constraints to export.
-        @param root: The root of the nif tree (required for updateAB)."""
+        @param root_block: The root of the nif tree (required for updateAB)."""
         if isinstance(b_obj, Blender.Armature.Bone):
             # bone object has its constraints stored in the posebone
             # so now we should get the posebone, but no constraints for
