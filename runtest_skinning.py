@@ -32,13 +32,43 @@
 #
 # ***** END LICENSE BLOCK *****
 
+from itertools import izip
+
 from nif_test import TestSuite
+from PyFFI.Formats.NIF import NifFormat
 
 # helper functions
 
 def compare_skinning_info(oldroot, newroot):
     """Raises a C{ValueError} if skinning info is different between old and
     new."""
+    print("checking skinning data...")
+    # get the geometries
+    for oldgeom in oldroot.tree(block_type = NifFormat.NiGeometry):
+        for newgeom in newroot.tree(block_type = NifFormat.NiGeometry):
+            # list all old bones
+            for oldbone, oldbonedata \
+                in izip(oldgeom.skinInstance.bones,
+                        oldgeom.skinInstance.data.boneList):
+                for newbone, newbonedata \
+                    in izip(newgeom.skinInstance.bones,
+                        newgeom.skinInstance.data.boneList):
+                    if oldbone.name == newbone.name:
+                        print ("  checking bone %s" % oldbone.name)
+                        # comparing
+                        if oldbonedata.rotation != newbonedata.rotation:
+                            raise ValueError(
+                                "rotation mismatch\n%s\n!=\n%s\n"
+                                % (oldbonedata.rotation, newbonedata.rotation))
+                        if oldbonedata.translation != newbonedata.translation:
+                            raise ValueError(
+                                "translation mismatch\n%s\n!=\n%s\n"
+                                % (oldbonedata.translation,
+                                   newbonedata.translation))
+                        if oldbonedata.scale != newbonedata.scale:
+                            raise ValueError(
+                                "scale mismatch %s != %s"
+                                % (oldbonedata.scale, newbonedata.scale))
     return
 
 # some tests to import and export nif files
