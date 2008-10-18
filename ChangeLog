@@ -1,4 +1,6 @@
-Version 2.3.10 (***)
+Version 2.3.10 (18 Oct 2008)
+* fix for skin exports from blends imported with older script versions
+(reported by periplaneta)
 
 Version 2.3.9 (12 Oct 2008)
 * improved installer to point to Python 2.5.2 instead of Python 2.6

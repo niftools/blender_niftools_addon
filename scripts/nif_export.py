@@ -103,9 +103,6 @@ class NifExport(NifImportExport):
             if len(ln)>0:
                 # reconstruct matrix from text
                 b, m = ln.split('/')
-                # this is probably not necessary, but just to make sure:
-                # convert the bone name to a Blender type bone name
-                b = self.getBoneNameForBlender(b)
                 try:
                     mat = Blender.Mathutils.Matrix(
                         *[[float(f) for f in row.split(',')]
@@ -114,7 +111,19 @@ class NifExport(NifImportExport):
                     raise NifExportError('Syntax error in BoneExMat buffer.')
                 # Matrices are stored inverted for easier math later on.
                 mat.invert()
-                self.bonesExtraMatrixInv[b] = mat # X^{-1}
+                self.setBoneExtraMatrixInv(b, mat)
+
+    def setBoneExtraMatrixInv(self, bonename, mat):
+        """Set bone extra matrix, inverted. The bonename is first converted
+        to blender style (to ensure compatibility with older imports).
+        """
+        self.bonesExtraMatrixInv[self.getBoneNameForBlender(bonename)] = mat
+
+    def getBoneExtraMatrixInv(self, bonename):
+        """Get bone extra matrix, inverted. The bonename is first converted
+        to blender style (to ensure compatibility with older imports).
+        """
+        return self.bonesExtraMatrixInv[self.getBoneNameForBlender(bonename)]
 
     def rebuildFullNames(self):
         """Recovers the full object names from the text buffer and rebuilds
@@ -2200,7 +2209,7 @@ WARNING: lost %f in vertex weights while creating a skin partition for
                                                  extra = False)
             try:
                 bonexmat_inv = Blender.Mathutils.Matrix(
-                    self.bonesExtraMatrixInv[bone.name])
+                    self.getBoneExtraMatrixInv(bone.name))
             except KeyError:
                 bonexmat_inv = Blender.Mathutils.Matrix()
                 bonexmat_inv.identity()
@@ -2388,7 +2397,7 @@ WARNING: lost %f in vertex weights while creating a skin partition for
                 # now multiply with the bone correction matrix X
                 try:
                     extra = Blender.Mathutils.Matrix(
-                        self.bonesExtraMatrixInv[bone_parent_name])
+                        self.getBoneExtraMatrixInv(bone_parent_name))
                     extra.invert()
                     mat = mat * extra
                 except KeyError:
@@ -2443,7 +2452,7 @@ Workaround: apply size and rotation (CTRL-A).""")
         if extra:
             try:
                 corrmat = Blender.Mathutils.Matrix(
-                    self.bonesExtraMatrixInv[bone.name])
+                    self.getBoneExtraMatrixInv(bone.name))
             except KeyError:
                 corrmat.identity()
         else:
