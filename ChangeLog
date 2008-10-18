@@ -1,3 +1,5 @@
+Version 2.3.10 (***)
+
 Version 2.3.9 (12 Oct 2008)
 * improved installer to point to Python 2.5.2 instead of Python 2.6
 if Python installation is not found
