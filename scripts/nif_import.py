@@ -384,6 +384,19 @@ WARNING: unsupported collision structure under node %s""" % root_block.name)
 
         # parent selected meshes to imported skeleton
         if self.IMPORT_SKELETON == 1:
+            # rename vertex groups to reflect bone names
+            # (for blends imported with older versions of the scripts!)
+            for b_child_obj in self.selectedObjects:
+                if b_child_obj.getType() == "Mesh":
+                    for oldgroupname in b_child_obj.data.getVertGroupNames():
+                        newgroupname = self.getBoneNameForBlender(oldgroupname)
+                        if oldgroupname != newgroupname:
+                            self.msg(
+                                "%s: renaming vertex group %s to %s"
+                                % (b_child_obj, oldgroupname, newgroupname))
+                            b_child_obj.data.renameVertGroup(
+                                oldgroupname, newgroupname)
+            # set parenting
             b_obj.makeParentDeform(self.selectedObjects)
 
     def importBranch(self, niBlock):

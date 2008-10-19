@@ -1,3 +1,7 @@
+Version 2.3.11 (19 Oct 2008)
+* fix for fresh skeleton import into blends imported with older script
+versions (again reported by periplaneta)
+
 Version 2.3.10 (18 Oct 2008)
 * fix for skin exports from blends imported with older script versions
 (reported by periplaneta)
