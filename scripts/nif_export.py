@@ -648,7 +648,7 @@ Furniture marker has invalid number (%s). Name your file
                             kf_root.addExtraData(nodename_extra)
                             kf_root.addController(ctrl)
                 # oblivion
-                elif self.EXPORT_VERSION == "Oblivion":
+                elif self.EXPORT_VERSION in ("Oblivion", "Civilization IV"):
                     # create kf root header
                     kf_root = self.createBlock("NiControllerSequence")
                     kf_root.name = self.filebase
@@ -693,8 +693,8 @@ no priority set for bone %s, falling back on default value (%i)"""
                         controlledblock.setControllerType(ctrl.__class__.__name__)
                 else:
                     raise NifExportError("""\
-Keyframe export for '%s' is not supported. Only Morrowind and Oblivion
-keyframes are supported.""" % self.EXPORT_VERSION)
+Keyframe export for '%s' is not supported. Only Morrowind, Oblivion, and 
+Civilization IV keyframes are supported.""" % self.EXPORT_VERSION)
 
                 # make keyframe root block the root block to be written
                 root_block = kf_root
