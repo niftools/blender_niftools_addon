@@ -187,7 +187,8 @@ class NifConfig:
         EXPORT_OB_MALLEABLECONSTRAINT = False, # use malleable constraint for ragdoll and hinge
         EXPORT_OB_PRN = "NONE", # determines bone where to attach weapon
         PROFILE = '', # name of file where Python profiler dumps the profile; set to empty string to turn off profiling
-        IMPORT_EXPORTEMBEDDEDTEXTURES = False)
+        IMPORT_EXPORTEMBEDDEDTEXTURES = False,
+        EXPORT_OPTIMIZE_MATERIALS = True)
 
     def __init__(self):
         """Initialize and load configuration."""
@@ -562,6 +563,11 @@ class NifConfig:
                 min_val = 4, max_val = 18,
                 callback = self.updateBonesPerPartition,
                 num_items = 3, item = 2)
+            self.drawYSep()
+
+            self.drawToggle(
+                text = "Combine Materials to Increase Performance",
+                event_name = "EXPORT_OPTIMIZE_MATERIALS")
             self.drawYSep()
 
             games_list = sorted(filter(lambda x: x != '?', NifFormat.games.keys()))
@@ -983,6 +989,8 @@ class NifConfig:
             self.config["EXPORT_OB_MATERIAL"] = 9
         elif evName[:14] == "EXPORT_OB_PRN_":
             self.config["EXPORT_OB_PRN"] = evName[14:]
+        elif evName == "EXPORT_OPTIMIZE_MATERIALS":
+            self.config["EXPORT_OPTIMIZE_MATERIALS"] = not self.config["EXPORT_OPTIMIZE_MATERIALS"]
         Draw.Redraw(1)
 
     def guiEvent(self, evt, val):

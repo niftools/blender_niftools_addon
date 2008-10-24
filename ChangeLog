@@ -1,5 +1,6 @@
 Version 2.3.12 (***)
 * activated CivIV kf file export (uses Oblivion style kf, experimental!)
+* added option to disable material optimization (prevents "merging")
 
 Version 2.3.11 (19 Oct 2008)
 * fix for fresh skeleton import into blends imported with older script
