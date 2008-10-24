@@ -3230,9 +3230,15 @@ check that %s is selected during export.""" % targetobj)
         for block in self.blocks:
             if not isinstance(block, NifFormat.NiMaterialProperty):
                 continue
-            if (block.getHash(ignore_strings=not(block.name in specialnames)) ==
+            # when optimization is enabled, ignore material name
+            if self.EXPORT_OPTIMIZE_MATERIALS:
+                ignore_strings = not(block.name in specialnames)
+            else:
+                ignore_strings = False
+            # check hash
+            if (block.getHash(ignore_strings=ignore_strings) ==
                 matprop.getHash(
-                    ignore_strings=not(matprop.name in specialnames))):
+                    ignore_strings=ignore_strings)):
                 print("Merging materials '%s' and '%s' \
 (they are identical in nif)"
                       % (matprop.name, block.name))
