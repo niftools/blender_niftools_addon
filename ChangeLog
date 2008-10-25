@@ -1,3 +1,6 @@
+Version 2.3.13 (***)
+* better error message if mesh has bone vertex group but no weights
+
 Version 2.3.12 (24 Oct 2008)
 * activated CivIV kf file export (uses Oblivion style kf, experimental!)
 * added option to disable material optimization (prevents "merging")
