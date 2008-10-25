@@ -720,16 +720,19 @@ Civilization IV keyframes are supported.""" % self.EXPORT_VERSION)
                 f.close()
 
         except NifExportError, e: # export error: raise a menu instead of an exception
+            e = str(e).replace("\n", " ")
             Blender.Draw.PupMenu('EXPORT ERROR%t|' + str(e))
             print 'NifExportError: ' + str(e)
             return
 
         except IOError, e: # IO error: raise a menu instead of an exception
+            e = str(e).replace("\n", " ")
             Blender.Draw.PupMenu('I/O ERROR%t|' + str(e))
             print 'IOError: ' + str(e)
             return
 
         except StandardError, e: # other error: raise a menu and an exception
+            e = str(e).replace("\n", " ")
             Blender.Draw.PupMenu('ERROR%t|' + str(e) + '    Check console for possibly more details.')
             raise
 
@@ -1970,7 +1973,15 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                         vert_list = {}
                         vert_norm = {}
                         for bone in boneinfluences:
-                            vert_list[bone] = ob.data.getVertsFromGroup(bone, 1)
+                            try:
+                                vert_list[bone] = ob.data.getVertsFromGroup(bone, 1)
+                            except AttributeError:
+                                # this happens when the vertex group has been
+                                # added, but the weights have not been painted
+                                raise NifExportError("""\
+Mesh %s has vertex group for bone %s, but no weights.
+Please select the mesh, and either delete the vertex group, or
+go to weight paint mode, and paint weights.""" % (ob.name, bone))
                             for v in vert_list[bone]:
                                 if vert_norm.has_key(v[0]):
                                     vert_norm[v[0]] += v[1]
