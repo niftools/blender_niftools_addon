@@ -2208,7 +2208,16 @@ WARNING: lost %f in vertex weights while creating a skin partition for
             # add the node and the keyframe for this bone
             node.name = self.getFullName(bone.name)
             if self.EXPORT_VERSION == 'Oblivion':
-                node.flags = 0x000E # default for Oblivion bones (note: bodies have 0x000E, clothing has 0x000F)
+                # default for Oblivion bones
+                # note: bodies have 0x000E, clothing has 0x000F
+                node.flags = 0x000E
+            elif self.EXPORT_VERSION == 'Civilization IV':
+                if bone.children:
+                    # default for Civ IV bones with children
+                    node.flags = 0x0006
+                else:
+                    # default for Civ IV final bones
+                    node.flags = 0x0016
             else:
                 node.flags = 0x0002 # default for Morrowind bones
             self.exportMatrix(bone, 'localspace', node) # rest pose
