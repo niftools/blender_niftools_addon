@@ -2,6 +2,8 @@ Version 2.3.13 (***)
 * better error message if mesh has bone vertex group but no weights
 * fix for Civ IV bone flags export (0x6 for intermediate bones, 0x16 for
 final ones)
+* support for double sided meshes via NiStencilProperty and Blender's
+double sided flag
 
 Version 2.3.12 (24 Oct 2008)
 * activated CivIV kf file export (uses Oblivion style kf, experimental!)

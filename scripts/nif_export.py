@@ -1416,6 +1416,9 @@ Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
         if (mesh_mats == []):
             mesh_mats = [ None ]
 
+        # is mesh double sided?
+        mesh_doublesided = (mesh.mode & Blender.Mesh.Modes.TWOSIDED)
+
         # let's now export one trishape for every mesh material
         ### TODO: needs refactoring - move material, texture, etc.
         ### to separate function
@@ -1800,6 +1803,10 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
             if mesh_haswire:
                 # add NiWireframeProperty
                 trishape.addProperty(self.exportWireframeProperty(flags = 1))
+
+            if mesh_doublesided:
+                # add NiStencilProperty
+                trishape.addProperty(self.exportStencilProperty())
 
             if mesh_mat:
                 # add NiTriShape's specular property
@@ -3185,8 +3192,8 @@ check that %s is selected during export.""" % targetobj)
         return specprop        
 
     def exportWireframeProperty(self, flags = 0x0001):
-        """Return existing alpha property with given flags, or create new one
-        if an alpha property with required flags is not found."""
+        """Return existing wire property with given flags, or create new one
+        if an wire property with required flags is not found."""
         # search for duplicate
         for block in self.blocks:
             if isinstance(block, NifFormat.NiWireframeProperty) \
@@ -3196,6 +3203,19 @@ check that %s is selected during export.""" % targetobj)
         wireprop = self.createBlock("NiWireframeProperty")
         wireprop.flags = flags
         return wireprop        
+
+    def exportStencilProperty(self):
+        """Return existing stencil property with given flags, or create new one
+        if an identical stencil property."""
+        # search for duplicate
+        for block in self.blocks:
+            if isinstance(block, NifFormat.NiStencilProperty):
+                # all these blocks have the same setting, no further check
+                # is needed
+                return block
+        # no stencil property found, so create new one
+        stencilprop = self.createBlock("NiStencilProperty")
+        return stencilprop        
 
     def exportMaterialProperty(self, name = '', flags = 0x0001,
                                ambient = (1.0, 1.0, 1.0),

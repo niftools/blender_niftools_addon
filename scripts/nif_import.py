@@ -1700,6 +1700,15 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
         # vertex normals
         norms = niData.normals
 
+        # Stencil (for double sided meshes)
+        stencilProperty = self.find_property(niBlock,
+                                             NifFormat.NiStencilProperty)
+        # we don't check flags for now, nothing fancy
+        if stencilProperty:
+            b_meshData.mode |= Blender.Mesh.Modes.TWOSIDED
+        else:
+            b_meshData.mode &= ~Blender.Mesh.Modes.TWOSIDED
+
         # Material
         # note that NIF files only support one material for each trishape
         matProperty = self.find_property(niBlock, NifFormat.NiMaterialProperty)
