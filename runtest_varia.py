@@ -49,7 +49,7 @@ class StencilTestSuite(TestSuite):
                    for prop in nif_geom.properties)
 
     def run(self):
-        # champion armor
+        # stencil test
         self.test(
             filename = 'test/nif/stenciltest.nif')
         assert(self.isTwoSided(Blender.Object.Get("Stencil")))
@@ -58,11 +58,35 @@ class StencilTestSuite(TestSuite):
             filename = 'test/nif/_stenciltest.nif',
             config = dict(EXPORT_VERSION = 'Oblivion'),
             selection = ['NoStencil', 'Stencil'])
-        nif_stencil = nif_export.root_blocks[0].find(block_type = NifFormat.NiGeometry, block_name = "Stencil")
-        nif_nostencil = nif_export.root_blocks[0].find(block_type = NifFormat.NiGeometry, block_name = "NoStencil")
+        nif_stencil = nif_export.root_blocks[0].find(
+            block_type = NifFormat.NiGeometry, block_name = "Stencil")
+        nif_nostencil = nif_export.root_blocks[0].find(
+            block_type = NifFormat.NiGeometry, block_name = "NoStencil")
         assert(self.hasStencil(nif_stencil))
         assert(not self.hasStencil(nif_nostencil))
 
-suite = StencilTestSuite("stencil")
+        # alpha property test
+        self.test(
+            filename = 'test/nif/alphatest.nif')
+        alpha_obj = Blender.Object.Get("Alpha")
+        # check Z transparency
+        assert(alpha_obj.data.materials[0].mode & Blender.Material.Modes.ZTRANSP)
+        # check that transparency was exported
+        alpha_obj_alpha = alpha_obj.data.materials[0].alpha
+        assert(alpha_obj_alpha < 0.99)
+        nif_export = self.test(
+            filename = 'test/nif/_alphatest.nif',
+            config = dict(EXPORT_VERSION = 'Oblivion'),
+            selection = ['Alpha'])
+        nif_alpha = nif_export.root_blocks[0].find(
+            block_type = NifFormat.NiGeometry, block_name = "Alpha")
+        nif_alpha_mat = nif_alpha.find(
+            block_type = NifFormat.NiMaterialProperty)
+        nif_alpha_alpha = nif_alpha.find(
+            block_type = NifFormat.NiAlphaProperty)
+        assert(nif_alpha_alpha.flags == 0x12ED)
+        assert(nif_alpha_mat.alpha == alpha_obj_alpha)
+
+suite = StencilTestSuite("stencil_alpha")
 suite.run()
 
