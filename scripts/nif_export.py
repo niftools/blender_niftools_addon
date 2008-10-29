@@ -1798,7 +1798,9 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
             if mesh_hasalpha:
                 # add NiTriShape's alpha propery
                 # refer to the alpha property in the trishape block
-                trishape.addProperty(self.exportAlphaProperty(flags = 0x00ED))
+                alphaflags = 0x12ED # do we need to customize this by game?
+                trishape.addProperty(
+                    self.exportAlphaProperty(flags = alphaflags))
 
             if mesh_haswire:
                 # add NiWireframeProperty
@@ -3178,7 +3180,7 @@ check that %s is selected during export.""" % targetobj)
         alphaprop.flags = flags
         return alphaprop        
 
-    def exportSpecularProperty(self, flags = 0x00ED):
+    def exportSpecularProperty(self, flags = 0x0001):
         """Return existing specular property with given flags, or create new one
         if a specular property with required flags is not found."""
         # search for duplicate
