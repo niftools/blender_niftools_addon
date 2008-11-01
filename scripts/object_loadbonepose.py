@@ -45,6 +45,22 @@ Tooltip: 'Load pose of bones of selected armature from a text buffer'
 import Blender
 from Blender import Window, sys
 
+def bonenamematch(name1, name2):
+    """Heuristic bone name matching algorithm."""
+    if name1 == name2:
+        return True
+    if name1.startswith("Bip01 L "):
+        name1 = "Bip01 " + name1[8:] + ".L"
+    elif name1.startswith("Bip01 R "):
+        name1 = "Bip01 " + name1[8:] + ".R"
+    if name2.startswith("Bip01 L "):
+        name2 = "Bip01 " + name2[8:] + ".L"
+    elif name2.startswith("Bip01 R "):
+        name2 = "Bip01 " + name2[8:] + ".R"
+    if name1 == name2:
+        return True
+    return False
+
 def main(arg):
     # get armature and its bones
     obs = [ob for ob in Blender.Object.GetSelected() if ob.type == 'Armature']
@@ -64,7 +80,7 @@ def main(arg):
     PREF_BUFFER = Blender.Draw.Create("BonePose")
 
     pup_block = [\
-    ('Text Buffer', PREF_BUFFER, 0, 20, 'The text buffer to load the bone poses from.'),\
+    ('Text Buffer: ', PREF_BUFFER, 0, 20, 'The text buffer to load the bone poses from.'),\
     ]
 
     if not Blender.Draw.PupBlock('Load Bone Pose', pup_block):
@@ -103,7 +119,7 @@ def main(arg):
             return
         # save pose matrix
         for bonename2, bone in boneitems:
-            if bonename2 == bonename:
+            if bonenamematch(bonename, bonename2):
                 bone.quat = matrix.rotationPart().toQuat()
                 bone.loc = matrix.translationPart()
                 break
