@@ -5,6 +5,7 @@ final ones)
 * support for double sided meshes via NiStencilProperty and Blender's
 double sided flag
 * NiAlphaProperty flags now defaults to 0x12ED (more useful to modders)
+* load bone pose script now works again with saved poses from older blends
 
 Version 2.3.12 (24 Oct 2008)
 * activated CivIV kf file export (uses Oblivion style kf, experimental!)
