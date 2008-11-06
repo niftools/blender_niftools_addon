@@ -2103,6 +2103,10 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                 key_times.extend(key.time for key in kfd.xyzRotations[1].keys)
                 key_times.extend(key.time for key in kfd.xyzRotations[2].keys)
             for kfi in root.tree(block_type = NifFormat.NiBSplineInterpolator):
+                if not kfi.basisData:
+                    # skip bsplines without basis data (eg bowidle.kf in
+                    # Oblivion)
+                    continue
                 key_times.extend(
                     point * (kfi.stopTime - kfi.startTime)
                     / (kfi.basisData.numControlPoints - 2)
