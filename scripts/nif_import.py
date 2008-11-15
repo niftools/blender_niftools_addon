@@ -1289,22 +1289,33 @@ WARNING: collision object has non-bone parent, this is not supported
         return m_correction
 
 
-    def getTextureHash(self, niSourceTexture):
+    def getTextureHash(self, source):
         """Helper function for importTexture. Returns a key that uniquely
-        identifies a texture from its NiSourceTexture block."""
-        return ( niSourceTexture.getHash() if niSourceTexture else None )
+        identifies a texture from its source (which is either a
+        NiSourceTexture block, or simply a path string).
+        """
+        if not source:
+            return None
+        elif isinstance(source, NifFormat.NiSourceTexture):
+            return source.getHash()
+        elif isinstance(source, basestring):
+            return source.lower()
+        else:
+            raise TypeError("source must be NiSourceTexture block or string")
 
-    def importTexture(self, niSourceTexture):
-        """Convert a NiSourceTexture block to a Blender Texture object,
-        return the Texture object and stores it in the self.textures
-        dictionary to avoid future duplicate imports."""
+    def importTexture(self, source):
+        """Convert a NiSourceTexture block, or simply a path string,
+        to a Blender Texture object, return the Texture object and
+        stores it in the self.textures dictionary to avoid future
+        duplicate imports.
+        """
 
-        # if the niSourceTexture block is not linked then return None
-        if not niSourceTexture:
+        # if the source block is not linked then return None
+        if not source:
             return None
 
         # calculate the texture hash key
-        texture_hash = self.getTextureHash(niSourceTexture)
+        texture_hash = self.getTextureHash(source)
 
         try:
             # look up the texture in the dictionary of imported textures
@@ -1315,7 +1326,8 @@ WARNING: collision object has non-bone parent, this is not supported
 
         b_image = None
         
-        if not niSourceTexture.useExternal:
+        if (isinstance(source, NifFormat.NiSourceTexture)
+            and not source.useExternal):
             # find a file name (but avoid overwriting)
             n = 0
             while True:
@@ -1330,7 +1342,7 @@ WARNING: collision object has non-bone parent, this is not supported
                 stream = open(tex, "wb")
                 try:
                     print "saving embedded texture as %s" % tex
-                    niSourceTexture.pixelData.saveAsDDS(stream)
+                    source.pixelData.saveAsDDS(stream)
                 except ValueError:
                     # value error means that the pixel format is not supported
                     b_image = None
@@ -1351,7 +1363,13 @@ WARNING: collision object has non-bone parent, this is not supported
                 b_image = None
         else:
             # the texture uses an external image file
-            fn = niSourceTexture.fileName
+            if isinstance(source, NifFormat.NiSourceTexture):
+                fn = source.fileName
+            elif isinstance(source, basestring):
+                fn = source
+            else:
+                raise TypeError(
+                    "source must be NiSourceTexture block or string")
             fn = fn.replace( '\\', Blender.sys.sep )
             fn = fn.replace( '/', Blender.sys.sep )
             # go searching for it
@@ -1429,26 +1447,30 @@ Texture '%s' not found or not supported and no alternate available"""
 
     def getMaterialHash(self, matProperty, textProperty,
                         alphaProperty, specProperty,
-                        textureEffect, wireProperty):
+                        textureEffect, wireProperty,
+                        bsShaderProperty):
         """Helper function for importMaterial. Returns a key that uniquely
         identifies a material from its properties. The key ignores the material
         name as that does not affect the rendering."""
         return ( matProperty.getHash(ignore_strings = True)
                  if matProperty else None,
-                 textProperty.getHash()  if textProperty  else None,
-                 alphaProperty.getHash() if alphaProperty else None,
-                 specProperty.getHash()  if specProperty  else None,
-                 textureEffect.getHash() if textureEffect else None,
-                 wireProperty.getHash()  if wireProperty  else None)
+                 textProperty.getHash()     if textProperty  else None,
+                 alphaProperty.getHash()    if alphaProperty else None,
+                 specProperty.getHash()     if specProperty  else None,
+                 textureEffect.getHash()    if textureEffect else None,
+                 wireProperty.getHash()     if wireProperty  else None,
+                 bsShaderProperty.getHash() if bsShaderProperty else None)
 
     def importMaterial(self, matProperty, textProperty,
                        alphaProperty, specProperty,
-                       textureEffect, wireProperty):
+                       textureEffect, wireProperty,
+                       bsShaderProperty):
         """Creates and returns a material."""
         # First check if material has been created before.
         material_hash = self.getMaterialHash(matProperty, textProperty,
                                              alphaProperty, specProperty,
-                                             textureEffect, wireProperty)
+                                             textureEffect, wireProperty,
+                                             bsShaderProperty)
         try:
             return self.materials[material_hash]                
         except KeyError:
@@ -1473,6 +1495,9 @@ Texture '%s' not found or not supported and no alternate available"""
             else:
                 print("WARNING: unknown apply mode (%i) in material '%s', \
 using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
+        elif bsShaderProperty:
+            # default blending mode for fallout 3
+            blendmode = Blender.Texture.BlendModes["MIX"]
         # Sets the material colors
         # Specular color
         spec = matProperty.specularColor
@@ -1605,6 +1630,35 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                     material.setTexture(6, detailTexture, texco, mapto)
                     mdetailTexture = material.getTextures()[6]
                     mdetailTexture.uvlayer = self.getUVLayerName(detailTexDesc.uvSet)
+        # if not a texture property, but a bethesda shader property...
+        elif bsShaderProperty:
+            # also contains textures, used in fallout 3
+            baseTexFile = bsShaderProperty.textureSet.textures[0]
+            if baseTexFile:
+                baseTexture = self.importTexture(baseTexFile)
+                if baseTexture:
+                    # set the texture to use face UV coordinates
+                    texco = Blender.Texture.TexCo.UV
+                    # map the texture to the base color channel
+                    mapto = Blender.Texture.MapTo.COL
+                    # set the texture for the material
+                    material.setTexture(0, baseTexture, texco, mapto)
+                    mbaseTexture = material.getTextures()[0]
+                    mbaseTexture.blendmode = blendmode
+
+            normTexFile = bsShaderProperty.textureSet.textures[1]
+            if normTexFile:
+                normTexture = self.importTexture(normTexFile)
+                if normTexture:
+                    # set the texture to use face UV coordinates
+                    texco = Blender.Texture.TexCo.UV
+                    # map the texture to the normal channel
+                    mapto = Blender.Texture.MapTo.NOR
+                    # set the texture for the material
+                    material.setTexture(1, normTexture, texco, mapto)
+                    mbaseTexture = material.getTextures()[1]
+                    mbaseTexture.blendmode = blendmode
+
         if textureEffect:
             envmapTexture = self.importTexture(textureEffect.sourceTexture)
             if envmapTexture:
@@ -1731,6 +1785,10 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             wireProperty = self.find_property(niBlock,
                                               NifFormat.NiWireframeProperty)
 
+            # bethesda shader
+            bsShaderProperty = self.find_property(
+                niBlock, NifFormat.BSShaderPPLightingProperty)
+
             # texturing effect for environment map
             # in official files this is activated by a NiTextureEffect child
             # preceeding the niBlock
@@ -1757,7 +1815,8 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             # create material and assign it to the mesh
             material = self.importMaterial(matProperty, textProperty,
                                            alphaProperty, specProperty,
-                                           textureEffect, wireProperty)
+                                           textureEffect, wireProperty,
+                                           bsShaderProperty)
             b_mesh_materials = b_meshData.materials
             try:
                 materialIndex = b_mesh_materials.index(material)

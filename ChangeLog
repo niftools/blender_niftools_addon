@@ -8,6 +8,7 @@ double sided flag
 * load bone pose script now works again with saved poses from older blends
 * fixed numControlPoints attribute error when importing some kf files such
 as bowidle.kf (reported by Malo)
+* fallout 3 import (very experimental)
 
 Version 2.3.12 (24 Oct 2008)
 * activated CivIV kf file export (uses Oblivion style kf, experimental!)
