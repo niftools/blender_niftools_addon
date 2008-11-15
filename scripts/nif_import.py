@@ -171,18 +171,17 @@ class NifImport(NifImportExport):
             # open file for binary reading
             self.msg(self.filename)
             niffile = open(self.filename, "rb")
+            data = NifFormat.Data()
             try:
                 # check if nif file is valid
-                self.version, self.user_version = NifFormat.getVersion(niffile)
+                data.inspect(niffile)
+                self.version = data.version
                 if self.version >= 0:
                     # it is valid, so read the file
                     self.msg("NIF file version: 0x%08X"%self.version, 2)
                     self.msgProgress("Reading file")
-                    root_blocks = NifFormat.read(
-                        niffile,
-                        version = self.version,
-                        user_version = self.user_version,
-                        verbose = 0)
+                    data.read(niffile)
+                    root_blocks = data.roots
                 elif self.version == -1:
                     raise NifImportError("Unsupported NIF version.")
                 else:
@@ -194,26 +193,25 @@ class NifImport(NifImportExport):
             if self.IMPORT_KEYFRAMEFILE:
                 # open keyframe file for binary reading
                 self.msg(self.IMPORT_KEYFRAMEFILE)
-                niffile = open(self.IMPORT_KEYFRAMEFILE, "rb")
+                kffile = open(self.IMPORT_KEYFRAMEFILE, "rb")
+                kfdata = NifFormat.Data()
                 try:
-                    # check if nif file is valid
-                    self.version, self.user_version = NifFormat.getVersion(niffile)
-                    if self.version >= 0:
+                    # check if kf file is valid
+                    kfdata.inspect(kffile)
+                    self.kfversion = kfdata.version
+                    if self.kfversion >= 0:
                         # it is valid, so read the file
-                        self.msg("NIF file version: 0x%08X"%self.version, 2)
+                        self.msg("KF file version: 0x%08X" % self.kfversion, 2)
                         self.msgProgress("Reading keyframe file")
-                        kf_root_blocks = NifFormat.read(
-                            niffile,
-                            version = self.version,
-                            user_version = self.user_version,
-                            verbose = 0)
-                    elif self.version == -1:
-                        raise NifImportError("Unsupported NIF version.")
+                        kfdata.read(kffile)
+                        kf_root_blocks = kfdata.roots
+                    elif self.kfversion == -1:
+                        raise NifImportError("Unsupported KF version.")
                     else:
-                        raise NifImportError("Not a NIF file.")
+                        raise NifImportError("Not a KF file.")
                 finally:
                     # the file has been read or an error occurred: close file
-                    niffile.close()
+                    kffile.close()
             else:
                 kf_root_blocks = []
 
