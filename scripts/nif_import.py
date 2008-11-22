@@ -2686,54 +2686,69 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             return [ ob ]
 
         elif isinstance(bhkshape, NifFormat.bhkPackedNiTriStripsShape):
-            # create mesh
-            me = Blender.Mesh.New('poly')
-            for vert in bhkshape.data.vertices:
-                me.verts.extend(vert.x * 7, vert.y * 7, vert.z * 7)
-            for hktriangle in bhkshape.data.triangles:
-                me.faces.extend(hktriangle.triangle.v1,
-                                hktriangle.triangle.v2,
-                                hktriangle.triangle.v3)
-                # check face normal
-                align_plus = sum(abs(x)
-                                 for x in ( me.faces[-1].no[0]
-                                            + hktriangle.normal.x,
-                                            me.faces[-1].no[1]
-                                            + hktriangle.normal.y,
-                                            me.faces[-1].no[2]
-                                            + hktriangle.normal.z ))
-                align_minus = sum(abs(x)
-                                  for x in ( me.faces[-1].no[0]
-                                             - hktriangle.normal.x,
-                                             me.faces[-1].no[1]
-                                             - hktriangle.normal.y,
-                                             me.faces[-1].no[2]
-                                             - hktriangle.normal.z ))
-                # fix face orientation
-                if align_plus < align_minus:
-                    me.faces[-1].verts = ( me.faces[-1].verts[1],
-                                           me.faces[-1].verts[0],
-                                           me.faces[-1].verts[2] )
+            # create mesh for each sub shape
+            hk_objects = []
+            vertex_offset = 0
+            for subshape_num, subshape in enumerate(bhkshape.subShapes):
+                me = Blender.Mesh.New('poly%i' % subshape_num)
+                for vert_index in xrange(vertex_offset,
+                                         vertex_offset + subshape.numVertices):
+                    vert = bhkshape.data.vertices[vert_index]
+                    me.verts.extend(vert.x * 7, vert.y * 7, vert.z * 7)
+                for hktriangle in bhkshape.data.triangles:
+                    if ((vertex_offset <= hktriangle.triangle.v1)
+                        and (hktriangle.triangle.v1
+                             < vertex_offset + subshape.numVertices)):
+                        me.faces.extend(hktriangle.triangle.v1 - vertex_offset,
+                                        hktriangle.triangle.v2 - vertex_offset,
+                                        hktriangle.triangle.v3 - vertex_offset)
+                    else:
+                        continue
+                    # check face normal
+                    align_plus = sum(abs(x)
+                                     for x in ( me.faces[-1].no[0]
+                                                + hktriangle.normal.x,
+                                                me.faces[-1].no[1]
+                                                + hktriangle.normal.y,
+                                                me.faces[-1].no[2]
+                                                + hktriangle.normal.z ))
+                    align_minus = sum(abs(x)
+                                      for x in ( me.faces[-1].no[0]
+                                                 - hktriangle.normal.x,
+                                                 me.faces[-1].no[1]
+                                                 - hktriangle.normal.y,
+                                                 me.faces[-1].no[2]
+                                                 - hktriangle.normal.z ))
+                    # fix face orientation
+                    if align_plus < align_minus:
+                        me.faces[-1].verts = ( me.faces[-1].verts[1],
+                                               me.faces[-1].verts[0],
+                                               me.faces[-1].verts[2] )
 
-            # link mesh to scene and set transform
-            ob = self.scene.objects.new(me, 'poly')
+                # link mesh to scene and set transform
+                ob = self.scene.objects.new(me, 'poly%i' % subshape_num)
 
-            # set bounds type
-            ob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
-            ob.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
-            ob.drawMode = Blender.Object.DrawModes['WIRE']
-            # radius: quick estimate
-            ob.rbRadius = min(vert.co.length for vert in me.verts)
+                # set bounds type
+                ob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
+                ob.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
+                ob.drawMode = Blender.Object.DrawModes['WIRE']
+                # radius: quick estimate
+                ob.rbRadius = min(vert.co.length for vert in me.verts)
+                # set material
+                ob.addProperty("HavokMaterial", subshape.material, "INT")
 
-            # also remove duplicate vertices
-            numverts = len(me.verts)
-            # 0.005 = 1/200
-            numdel = me.remDoubles(0.005)
-            if numdel:
-                self.msg('removed %i duplicate vertices \
-(out of %i) from collision mesh'%(numdel, numverts), 3)
+                # also remove duplicate vertices
+                numverts = len(me.verts)
+                # 0.005 = 1/200
+                numdel = me.remDoubles(0.005)
+                if numdel:
+                    self.msg('removed %i duplicate vertices \
+    (out of %i) from collision mesh'%(numdel, numverts), 3)
 
-            return [ ob ]
+                vertex_offset += subshape.numVertices
+                hk_objects.append(ob)
+
+            return hk_objects
 
         elif isinstance(bhkshape, NifFormat.bhkNiTriStripsShape):
             return reduce(operator.add,

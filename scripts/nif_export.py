@@ -2607,7 +2607,10 @@ WARNING: only Morrowind and Oblivion collisions are supported, skipped
         # copy physics properties from Blender properties, if they exist
         for prop in obj.getAllProperties():
             if prop.getName() == 'HavokMaterial':
-                material = getattr(NifFormat.HavokMaterial, prop.getData())
+                material = prop.getData()
+                if isinstance(material, basestring):
+                    # given as a string, not as an integer
+                    material = getattr(NifFormat.HavokMaterial, material)
             elif prop.getName() == 'OblivionLayer':
                 layer = getattr(NifFormat.OblivionLayer, prop.getData())
             #elif prop.getName() == 'MotionSystem':

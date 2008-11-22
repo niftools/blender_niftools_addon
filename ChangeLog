@@ -1,3 +1,6 @@
+Version 2.3.14 (***)
+* multi-material mopp import and export
+
 Version 2.3.13 (18 Nov 2008)
 * better error message if mesh has bone vertex group but no weights
 * improved Civ IV bone flags export (0x6 for intermediate bones, 0x16 for
