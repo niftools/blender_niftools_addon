@@ -36,114 +36,63 @@ from itertools import izip
 
 from nif_test import TestSuite
 from PyFFI.Formats.NIF import NifFormat
-
-# helper functions
-
-def are_vectors_equal(oldvec, newvec, tolerance = 0.01):
-    return (max([abs(x-y)
-            for (x,y) in izip(oldvec.asList(), newvec.asList())]) < tolerance)
-
-def are_matrices_equal(oldmat, newmat, tolerance = 0.01):
-    return (max([max([abs(x-y)
-                 for (x,y) in izip(oldrow, newrow)])
-                for (oldrow, newrow) in izip(oldmat.asList(), newmat.asList())])
-            < tolerance)
-
-def are_floats_equal(oldfloat, newfloat, tolerance = 0.01):
-    return abs(oldfloat - newfloat) < tolerance
-
-def compare_skinning_info(oldroot, newroot):
-    """Raises a C{ValueError} if skinning info is different between old and
-    new."""
-    print("checking skinning data...")
-    # get the geometries
-    for oldgeom in oldroot.tree(block_type = NifFormat.NiGeometry):
-        for newgeom in newroot.tree(block_type = NifFormat.NiGeometry):
-            # list all old bones
-            for oldbone, oldbonedata \
-                in izip(oldgeom.skinInstance.bones,
-                        oldgeom.skinInstance.data.boneList):
-                for newbone, newbonedata \
-                    in izip(newgeom.skinInstance.bones,
-                        newgeom.skinInstance.data.boneList):
-                    if oldbone.name == newbone.name:
-                        print ("  checking bone %s" % oldbone.name)
-                        # comparing
-                        if not are_matrices_equal(oldbonedata.rotation, newbonedata.rotation):
-                            #raise ValueError(
-                            print(
-                                "rotation mismatch\n%s\n!=\n%s\n"
-                                % (oldbonedata.rotation, newbonedata.rotation))
-                        if not are_vectors_equal(oldbonedata.translation, newbonedata.translation):
-                            #raise ValueError(
-                            print(
-                                "translation mismatch\n%s\n!=\n%s\n"
-                                % (oldbonedata.translation,
-                                   newbonedata.translation))
-                        if not are_floats_equal(oldbonedata.scale, newbonedata.scale):
-                            #raise ValueError(
-                            print(
-                                "scale mismatch %s != %s"
-                                % (oldbonedata.scale, newbonedata.scale))
-    return
+from PyFFI.Spells.NIF.check import SpellCompareSkinData
+from PyFFI.Spells.NIF import NifToaster
 
 # some tests to import and export nif files
 
 class TestSuiteChampionArmor(TestSuite):
     def run(self):
         # champion armor
-        champ = self.test(
+        self.test(
             filename = 'test/nif/cuirass.nif')
-        champ_export = self.test(
+        self.test(
             filename = 'test/nif/_cuirass.nif',
             config = dict(
                 EXPORT_VERSION = 'Oblivion', EXPORT_SMOOTHOBJECTSEAMS = True,
                 EXPORT_FLATTENSKIN = True),
             selection = ['Scene Root'])
-        compare_skinning_info(
-            NifFormat.read(open("test/nif/cuirass.nif", "rb"), version=0x14000005, user_version=11)[0],
-            champ_export.root_blocks[0])
+        toaster = NifToaster(spellclass=SpellCompareSkinData,
+                             options=dict(arg="test/nif/_cuirass.nif",
+                                          verbose=99))
+        toaster.toast(top="test/nif/cuirass.nif")
 
 class SkinningTestSuite(TestSuite):
     def run(self):
         # oblivion full body
-        bodyskel = self.test(
+        self.test(
             filename = 'test/nif/skeleton.nif',
             config = dict(IMPORT_SKELETON = 1))
-        bodyupp = self.test(
+        self.test(
             filename = 'test/nif/upperbody.nif',
             config = dict(IMPORT_SKELETON = 2),
             selection = ['Scene Root'])
-        bodylow = self.test(
+        self.test(
             filename = 'test/nif/lowerbody.nif',
             config = dict(IMPORT_SKELETON = 2),
             selection = ['Scene Root'])
-        bodyhand = self.test(
+        self.test(
             filename = 'test/nif/hand.nif',
             config = dict(IMPORT_SKELETON = 2),
             selection = ['Scene Root'])
-        bodyfoot = self.test(
+        self.test(
             filename = 'test/nif/foot.nif',
             config = dict(IMPORT_SKELETON = 2),
             selection = ['Scene Root'])
-        body_export = self.test(
+        self.test(
             filename = 'test/nif/_fulloblivionbody.nif',
             config = dict(
                 EXPORT_VERSION = 'Oblivion', EXPORT_SMOOTHOBJECTSEAMS = True,
                 EXPORT_FLATTENSKIN = True),
             selection = ['Scene Root'])
-        compare_skinning_info(
-            NifFormat.read(open("test/nif/upperbody.nif", "rb"), version=0x14000005, user_version=11)[0],
-            body_export.root_blocks[0])
-        compare_skinning_info(
-            NifFormat.read(open("test/nif/lowerbody.nif", "rb"), version=0x14000005, user_version=11)[0],
-            body_export.root_blocks[0])
-        compare_skinning_info(
-            NifFormat.read(open("test/nif/hand.nif", "rb"), version=0x14000005, user_version=11)[0],
-            body_export.root_blocks[0])
-        compare_skinning_info(
-            NifFormat.read(open("test/nif/foot.nif", "rb"), version=0x14000005, user_version=11)[0],
-            body_export.root_blocks[0])
+        # compare skindata
+        toaster = NifToaster(spellclass=SpellCompareSkinData,
+                             options=dict(arg="test/nif/_fulloblivionbody.nif",
+                                          verbose=99))
+        toaster.toast(top="test/nif/upperbody.nif")
+        toaster.toast(top="test/nif/lowerbody.nif")
+        toaster.toast(top="test/nif/hand.nif")
+        toaster.toast(top="test/nif/foot.nif")
         # morrowind creature
         self.test(filename = 'test/nif/babelfish.nif')
         self.test(
@@ -160,9 +109,10 @@ class SkinningTestSuite(TestSuite):
                 EXPORT_VERSION = 'Morrowind', EXPORT_SMOOTHOBJECTSEAMS = True,
                 EXPORT_STRIPIFY = False, EXPORT_SKINPARTITION = False),
             selection = ['Bip01'])
-        compare_skinning_info(
-            bbskin_import.root_blocks[0],
-            bbskin_export.root_blocks[0])
+        toaster = NifToaster(spellclass=SpellCompareSkinData,
+                             options=dict(arg="test/nif/_bb_skinf_br.nif",
+                                          verbose=99))
+        toaster.toast(top="test/nif/bb_skinf_br.nif")
 
 ### "Scene Root" of champion armor conflicts with "Scene Root" of full body
 ### test below, so for now this test is disabled until a solution is found
