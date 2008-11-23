@@ -35,5 +35,5 @@ for block in skeleton.roots[0].tree():
     block.collisionObject = None
 
 # write result
-with closing(open("fo3_bodybindpos.nif", "wb")) as stream:
+with closing(open("fo3_bodybindpose.nif", "wb")) as stream:
     skeleton.write(stream)
