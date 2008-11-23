@@ -280,7 +280,8 @@ Workaround: apply size and rotation (CTRL-A) on '%s'.""" % ob.name)
             self.fend = context.endFrame()
             
             # oblivion and civ4
-            if self.EXPORT_VERSION in ['Oblivion', 'Civilization IV']:
+            if (self.EXPORT_VERSION
+                in ('Civilization IV', 'Oblivion', 'Fallout 3')):
                 root_name = 'Scene Root'
             # other games
             else:
@@ -422,7 +423,7 @@ Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
 
             # oblivion skeleton export: check that all bones have a
             # transform controller and transform interpolator
-            if self.EXPORT_VERSION == "Oblivion" \
+            if self.EXPORT_VERSION in ("Oblivion", "Fallout 3") \
                 and self.filebase.lower() in ('skeleton', 'skeletonbeast'):
                 # here comes everything that is Oblivion skeleton export
                 # specific
@@ -459,8 +460,8 @@ Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
                     anim_textextra = self.exportAnimGroups(animtxt, root_block)
 
             # oblivion furniture markers
-            if self.EXPORT_VERSION == 'Oblivion' \
-                and self.filebase[:15].lower() == 'furnituremarker':
+            if (self.EXPORT_VERSION in ('Oblivion', 'Fallout 3')
+                and self.filebase[:15].lower() == 'furnituremarker'):
                 # exporting a furniture marker for Oblivion
                 try:
                     furniturenumber = int(self.filebase[15:])
@@ -488,7 +489,7 @@ Furniture marker has invalid number (%s). Name your file
 
             self.msg("Checking collision")
             # activate oblivion collision and physics
-            if self.EXPORT_VERSION == 'Oblivion':
+            if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
                 hascollision = False
                 for block in self.blocks:
                     if isinstance(block, NifFormat.bhkCollisionObject):
@@ -528,7 +529,7 @@ Furniture marker has invalid number (%s). Name your file
                 self.exportConstraints(b_obj, root_block)
 
             # export weapon location
-            if self.EXPORT_VERSION == "Oblivion":
+            if self.EXPORT_VERSION in ("Oblivion", "Fallout 3"):
                 if self.EXPORT_OB_PRN != "NONE":
                     # add string extra data
                     prn = self.createBlock("NiStringExtraData")
@@ -574,7 +575,7 @@ Furniture marker has invalid number (%s). Name your file
                 root_block.applyScale(self.EXPORT_SCALE_CORRECTION)
 
             # generate mopps (must be done after applying scale!)
-            if self.EXPORT_VERSION == 'Oblivion':
+            if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
                 for block in self.blocks:
                     if isinstance(block, NifFormat.bhkMoppBvTreeShape):
                        self.msg("Generating mopp...")
@@ -648,7 +649,8 @@ Furniture marker has invalid number (%s). Name your file
                             kf_root.addExtraData(nodename_extra)
                             kf_root.addController(ctrl)
                 # oblivion
-                elif self.EXPORT_VERSION in ("Oblivion", "Civilization IV"):
+                elif self.EXPORT_VERSION in ("Oblivion", "Fallout 3",
+                                             "Civilization IV"):
                     # create kf root header
                     kf_root = self.createBlock("NiControllerSequence")
                     kf_root.name = self.filebase
@@ -693,8 +695,8 @@ no priority set for bone %s, falling back on default value (%i)"""
                         controlledblock.setControllerType(ctrl.__class__.__name__)
                 else:
                     raise NifExportError("""\
-Keyframe export for '%s' is not supported. Only Morrowind, Oblivion, and 
-Civilization IV keyframes are supported.""" % self.EXPORT_VERSION)
+Keyframe export for '%s' is not supported. Only Morrowind, Oblivion, Fallout 3,
+and Civilization IV keyframes are supported.""" % self.EXPORT_VERSION)
 
                 # make keyframe root block the root block to be written
                 root_block = kf_root
@@ -836,7 +838,7 @@ Civilization IV keyframes are supported.""" % self.EXPORT_VERSION)
         node.name = self.getFullName(node_name)
 
         # default node flags
-        if self.EXPORT_VERSION == 'Oblivion':
+        if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
             node.flags = 0x000E
         else:
             # morrowind
@@ -1306,7 +1308,8 @@ Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
             
             tfn = texture.image.getFilename()
 
-            if not self.EXPORT_VERSION in ['Morrowind', 'Oblivion']:
+            if not self.EXPORT_VERSION in ('Morrowind', 'Oblivion',
+                                           'Fallout 3'):
                 # strip texture file path
                 srctex.fileName = Blender.sys.basename(tfn)
             else:
@@ -1771,7 +1774,7 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                 # (Morrowind's child naming convention)
                 trishape.name += " %i"%materialIndex
             trishape.name = self.getFullName(trishape.name)
-            if self.EXPORT_VERSION == 'Oblivion':
+            if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
                 trishape.flags = 0x000E
             else:
                 # morrowind
@@ -2070,21 +2073,29 @@ they can easily be identified.")
                         # update bind position skinning data
                         trishape.updateBindPosition()
 
-                        # calculate center and radius for each skin bone data block
+                        # calculate center and radius for each skin bone data
+                        # block
                         trishape.updateSkinCenterRadius()
 
-                        if self.version >= 0x04020100 and self.EXPORT_SKINPARTITION:
+                        if (self.version >= 0x04020100
+                            and self.EXPORT_SKINPARTITION):
                             self.msg("  creating skin partition")
-                            lostweight = trishape.updateSkinPartition(maxbonesperpartition = self.EXPORT_BONESPERPARTITION, maxbonespervertex = self.EXPORT_BONESPERVERTEX, stripify = self.EXPORT_STRIPIFY, stitchstrips = self.EXPORT_STITCHSTRIPS, padbones = self.EXPORT_PADBONES)
+                            lostweight = trishape.updateSkinPartition(
+                                maxbonesperpartition=self.EXPORT_BONESPERPARTITION,
+                                maxbonespervertex=self.EXPORT_BONESPERVERTEX,
+                                stripify=self.EXPORT_STRIPIFY,
+                                stitchstrips=self.EXPORT_STITCHSTRIPS,
+                                padbones=self.EXPORT_PADBONES)
                             # warn on bad config settings
                             if self.EXPORT_VERSION == 'Oblivion':
                                if self.EXPORT_PADBONES:
                                    print("""\
 WARNING: using padbones on Oblivion export, you probably do not want to do this
          disable the pad bones option to get higher quality skin partitions""")
+                            if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
                                if self.EXPORT_BONESPERPARTITION < 18:
                                    print("""\
-WARNING: using less than 18 bones per partition on Oblivion export
+WARNING: using less than 18 bones per partition on Oblivion/Fallout 3 export
          set it to 18 to get higher quality skin partitions""")
                             if lostweight > NifFormat._EPSILON:
                                 print("""\
@@ -2216,7 +2227,7 @@ WARNING: lost %f in vertex weights while creating a skin partition for
 
             # add the node and the keyframe for this bone
             node.name = self.getFullName(bone.name)
-            if self.EXPORT_VERSION == 'Oblivion':
+            if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
                 # default for Oblivion bones
                 # note: bodies have 0x000E, clothing has 0x000F
                 node.flags = 0x000E
@@ -2563,7 +2574,7 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
              self.exportMatrix(obj, 'localspace', node)
              self.exportTriShapes(obj, 'none', node)
 
-        elif self.EXPORT_VERSION == 'Oblivion':
+        elif self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
 
             nodes = [ parent_block ]
             nodes.extend([ block for block in parent_block.children
@@ -2584,8 +2595,8 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
 
         else:
             print("""\
-WARNING: only Morrowind and Oblivion collisions are supported, skipped
-         collision object '%s'""" % obj.name)
+WARNING: only Morrowind, Oblivion, and Fallout 3 collisions are supported,
+         skipped collision object '%s'""" % obj.name)
 
     def exportCollisionHelper(self, obj, parent_block):
         """Helper function to add collision objects to a node. This function
@@ -2984,10 +2995,10 @@ ERROR%t|Too many faces/vertices. Decimate/split your mesh and try again.""")
         for b_constr in b_obj.constraints:
             # rigid body joints
             if b_constr.type == Blender.Constraint.Type.RIGIDBODYJOINT:
-                if self.EXPORT_VERSION != "Oblivion":
+                if self.EXPORT_VERSION not in ("Oblivion", "Fallout 3"):
                     self.msg("""\
-  only Oblivion rigid body constraints can be exported
-  skipped %s""" % b_constr)
+only Oblivion/Fallout 3 rigid body constraints can be exported
+skipped %s""" % b_constr)
                     continue
                 # check that the object is a rigid body
                 for otherbody, otherobj in self.blocks.iteritems():
@@ -3243,7 +3254,7 @@ check that %s is selected during export.""" % targetobj)
 
         # hack to preserve EnvMap2, skinm, ... named blocks (even if they got
         # renamed to EnvMap2.xxx or skin.xxx on import)
-        if self.EXPORT_VERSION == 'Oblivion':
+        if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
             for specialname in specialnames:
                 if (name.lower() == specialname.lower()
                     or name.lower().startswith(specialname.lower() + ".")):

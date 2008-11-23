@@ -615,8 +615,9 @@ class NifConfig:
             event_name = "CANCEL",
             num_items = 3, item = 2)
 
-        # export-only options for oblivion
-        if self.target == self.TARGET_EXPORT and self.config["EXPORT_VERSION"] == "Oblivion":
+        # export-only options for oblivion/fallout 3
+        if (self.target == self.TARGET_EXPORT
+            and self.config["EXPORT_VERSION"] in ("Oblivion", "Fallout 3")):
             self.drawNextColumn()
             
             self.drawLabel(
@@ -877,7 +878,7 @@ class NifConfig:
                 self.config["EXPORT_STRIPIFY"] = True
                 self.config["EXPORT_STITCHSTRIPS"] = True
                 self.config["EXPORT_SKINPARTITION"] = True
-            elif self.config["EXPORT_VERSION"] == "Oblivion":
+            elif self.config["EXPORT_VERSION"] in ("Oblivion", "Fallout 3"):
                 self.config["EXPORT_STRIPIFY"] = True
                 self.config["EXPORT_FLATTENSKIN"] = True
                 self.config["EXPORT_BONESPERPARTITION"] = 18

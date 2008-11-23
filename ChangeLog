@@ -1,5 +1,7 @@
 Version 2.3.14 (***)
-* multi-material mopp import and export
+* improvements for multi-material mopp import and export (but not entirely
+functional yet)
+* better Fallout 3 export options
 
 Version 2.3.13 (18 Nov 2008)
 * better error message if mesh has bone vertex group but no weights
