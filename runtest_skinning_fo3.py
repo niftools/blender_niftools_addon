@@ -62,10 +62,6 @@ class SkinningTestSuite(TestSuite):
                                           verbose=99))
         toaster.toast(top="test/nif/fo3/femaleupperbody.nif")
 
-### "Scene Root" of champion armor conflicts with "Scene Root" of full body
-### test below, so for now this test is disabled until a solution is found
-#suite = TestSuiteChampionArmor("champion_armor")
-#suite.run()
 suite = SkinningTestSuite("skinning")
 suite.run()
 
