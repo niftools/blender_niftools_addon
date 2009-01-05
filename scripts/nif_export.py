@@ -711,15 +711,24 @@ and Civilization IV keyframes are supported.""" % self.EXPORT_VERSION)
             if (self.fileext.lower() != ext):
                 self.msg("WARNING: changing extension from %s to %s on output file"%(self.fileext,ext))
                 self.filename = Blender.sys.join(self.filepath, self.filebase + ext)
-            NIF_USER_VERSION = 0 if self.version != 0x14000005 else 11
-            f = open(self.filename, "wb")
+            if self.EXPORT_VERSION == "Oblivion":
+                NIF_USER_VERSION = 11
+                NIF_USER_VERSION2 = 11
+            elif self.EXPORT_VERSION == "Fallout 3":
+                NIF_USER_VERSION = 11
+                NIF_USER_VERSION2 = 34
+            else:
+                NIF_USER_VERSION = 0
+                NIF_USER_VERSION2 = 0
+            data = NifFormat.Data(version=self.version,
+                                  user_version=NIF_USER_VERSION,
+                                  user_version2=NIF_USER_VERSION2)
+            data.roots = [root_block]
+            stream = open(self.filename, "wb")
             try:
-                NifFormat.write(
-                    f,
-                    version = self.version, user_version = NIF_USER_VERSION,
-                    roots = [root_block])
+                data.write(stream)
             finally:
-                f.close()
+                stream.close()
 
         except NifExportError, e: # export error: raise a menu instead of an exception
             e = str(e).replace("\n", " ")
