@@ -1926,6 +1926,11 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
 
             if mesh_uvlayers:
                 tridata.numUvSets = len(mesh_uvlayers)
+                tridata.bsNumUvSets = len(mesh_uvlayers)
+                if self.EXPORT_VERSION == "Fallout 3":
+                    if len(mesh_uvlayers) > 1:
+                        raise NifExportError(
+                            "Fallout 3 does not support multiple UV layers")
                 tridata.hasUv = True
                 tridata.uvSets.updateSize()
                 for j, uvlayer in enumerate(mesh_uvlayers):
@@ -1938,10 +1943,11 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
             tridata.setTriangles(trilist,
                                  stitchstrips = self.EXPORT_STITCHSTRIPS)
 
-            # update tangent space
+            # update tangent space (as binary extra data only for Oblivion)
             if mesh_uvlayers and mesh_hasnormals:
-                if self.version >= 0x14000005:
-                    trishape.updateTangentSpace()
+                if self.EXPORT_VERSION in ("Oblivion", "Fallout 3"):
+                    trishape.updateTangentSpace(
+                        as_extra=(self.EXPORT_VERSION == "Oblivion"))
 
             # now export the vertex weights, if there are any
             vertgroups = ob.data.getVertGroupNames()
