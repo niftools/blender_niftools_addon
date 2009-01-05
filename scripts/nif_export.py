@@ -1278,8 +1278,63 @@ Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
 
         return textextra
 
+    def exportTextureFilename(self, texture):
+        """Returns file name from texture.
 
-    def exportSourceTexture(self, texture, filename = None):
+        @param texture: The texture object in blender.
+        @return: The file name of the image used in the texture.
+        """
+        if texture.type == Blender.Texture.Types.ENVMAP:
+            # this works for morrowind only
+            if self.EXPORT_VERSION != "Morrowind":
+                raise NifExportError(
+                    "cannot export environment maps for nif version '%s'"%
+                    self.EXPORT_VERSION)
+            return "enviro 01.TGA"
+        elif texture.type == Blender.Texture.Types.IMAGE:
+            # get filename from image
+
+            # check that image is loaded
+            if texture.getImage() is None:
+                raise NifExportError(
+                    "image type texture has no file loaded ('%s')"
+                    % texture.getName())                    
+
+            # texture must not be packed
+            if texture.getImage().packed:
+                raise NifExportError(
+                    "export of packed textures is not supported ('%s')"
+                    % texture.getName())
+            
+            filename = texture.image.getFilename()
+
+            # try and find a DDS alternative, force it if required
+            ddsfilename = "%s%s" % (filename[:-4], '.dds')
+            if Blender.sys.exists(ddsfilename) or self.EXPORT_FORCEDDS:
+                filename = ddsfilename
+
+            # sanitize file path
+            if not self.EXPORT_VERSION in ('Morrowind', 'Oblivion',
+                                           'Fallout 3'):
+                # strip texture file path
+                filename = Blender.sys.basename(filename)
+            else:
+                # strip the data files prefix from the texture's file name
+                filename = filename.lower()
+                idx = filename.find("textures")
+                if ( idx >= 0 ):
+                    filename = filename[idx:]
+                else:
+                    filename = Blender.sys.basename(filename)
+            # for linux export: fix path seperators
+            return filename.replace('/', '\\')
+        else:
+            # texture must be of type IMAGE or ENVMAP
+            raise NifExportError(
+                "Error: Texture '%s' must be of type IMAGE or ENVMAP"
+                % texture.getName())
+
+    def exportSourceTexture(self, texture, filename=None):
         """Export a NiSourceTexture.
 
         @param texture: The texture object in blender to be exported.
@@ -1293,55 +1348,8 @@ Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
         if not filename is None:
             # preset filename
             srctex.fileName = filename
-        elif ( texture.type == Blender.Texture.Types.ENVMAP ):
-            # this works for morrowind only
-            if self.EXPORT_VERSION != "Morrowind":
-                raise NifExportError(
-                    "cannot export environment maps for nif version '%s'"%
-                    self.EXPORT_VERSION)
-            srctex.fileName = "enviro 01.TGA"
-        elif ( texture.type == Blender.Texture.Types.IMAGE ):
-            # get filename from image
-
-            # check that image is loaded
-            if texture.getImage() is None:
-                raise NifExportError(
-                    "image type texture has no file loaded ('%s')"
-                    %texture.getName())                    
-
-            # texture must not be packed
-            if texture.getImage().packed:
-                raise NifExportError(
-                    "export of packed textures is not supported ('%s')"
-                    %texture.getName())
-            
-            tfn = texture.image.getFilename()
-
-            if not self.EXPORT_VERSION in ('Morrowind', 'Oblivion',
-                                           'Fallout 3'):
-                # strip texture file path
-                srctex.fileName = Blender.sys.basename(tfn)
-            else:
-                # strip the data files prefix from the texture's file name
-                tfn = tfn.lower()
-                idx = tfn.find("textures")
-                if ( idx >= 0 ):
-                    tfn = tfn[idx:]
-                    srctex.fileName = tfn
-                else:
-                    srctex.fileName = Blender.sys.basename(tfn)
-            # try and find a DDS alternative, force it if required
-            ddsFile = "%s%s" % (srctex.fileName[:-4], '.dds')
-            if Blender.sys.exists(ddsFile) or self.EXPORT_FORCEDDS:
-                srctex.fileName = ddsFile
-            # for linux export: fix path
-            srctex.fileName = srctex.fileName.replace('/', '\\')
         else:
-            # texture must be of type IMAGE or ENVMAP
-            raise NifExportError(
-                "Error: Texture '%s' must be of type IMAGE or ENVMAP"
-                %texture.getName())
-
+            srctex.fileName = self.exportTextureFilename(texture)
 
         # fill in default values
         srctex.pixelLayout = 5
@@ -1549,7 +1557,7 @@ MapTo.SPEC"%(mesh.name,mesh_mat.getName()))
                         elif mtex.mapto & Blender.Texture.MapTo.NOR:
                             # got the normal map
                             if mesh_bump_mtex:
-                                raise NifExportError("Multiple bump textures \
+                                raise NifExportError("Multiple bump/normal textures \
 in mesh '%s', material '%s'. Make sure there is only one texture with \
 MapTo.NOR"%(mesh.name,mesh_mat.getName()))
                             mesh_bump_mtex = mtex
@@ -1662,7 +1670,7 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                         fuv.append(f.uv[i])
                     if mesh_hasvcol:
                         if (len(f.col) == 0):
-                            print 'WARNING: vertex color painting/lighting enabled, but mesh has no vertex color data; vertex weights will not be written.'
+                            print 'WARNING: vertex color painting/lighting enabled, but mesh has no vertex color data; vertex colors will not be written.'
                             fcol = None
                             mesh_hasvcol = False
                         else:
@@ -1796,16 +1804,25 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
             
             if mesh_base_mtex or mesh_glow_mtex:
                 # add NiTriShape's texturing property
-                trishape.addProperty(self.exportTexturingProperty(
-                    flags = 0x0001, # standard
-                    applymode = self.APPLYMODE[mesh_base_mtex.blendmode if mesh_base_mtex else Blender.Texture.BlendModes["MIX"]],
-                    uvlayers = mesh_uvlayers,
-                    basemtex = mesh_base_mtex,
-                    glowmtex = mesh_glow_mtex,
-                    bumpmtex = mesh_bump_mtex,
-                    glossmtex = mesh_gloss_mtex,
-                    darkmtex = mesh_dark_mtex,
-                    detailmtex = mesh_detail_mtex))
+                if self.EXPORT_VERSION == "Fallout 3":
+                    trishape.addProperty(self.exportBSShaderProperty(
+                        basemtex = mesh_base_mtex,
+                        #glowmtex = mesh_glow_mtex,
+                        bumpmtex = mesh_bump_mtex))
+                        #glossmtex = mesh_gloss_mtex,
+                        #darkmtex = mesh_dark_mtex,
+                        #detailmtex = mesh_detail_mtex)) 
+                else:
+                    trishape.addProperty(self.exportTexturingProperty(
+                        flags = 0x0001, # standard
+                        applymode = self.APPLYMODE[mesh_base_mtex.blendmode if mesh_base_mtex else Blender.Texture.BlendModes["MIX"]],
+                        uvlayers = mesh_uvlayers,
+                        basemtex = mesh_base_mtex,
+                        glowmtex = mesh_glow_mtex,
+                        bumpmtex = mesh_bump_mtex,
+                        glossmtex = mesh_gloss_mtex,
+                        darkmtex = mesh_dark_mtex,
+                        detailmtex = mesh_detail_mtex))
 
             if mesh_hasalpha:
                 # add NiTriShape's alpha propery
@@ -1974,7 +1991,10 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                             boneinfluences.append(bone)
                     if boneinfluences: # yes we have skinning!
                         # create new skinning instance block and link it
-                        skininst = self.createBlock("NiSkinInstance", ob)
+                        if self.EXPORT_VERSION == "Fallout 3":
+                            skininst = self.createBlock("BSDismemberSkinInstance", ob)
+                        else:
+                            skininst = self.createBlock("NiSkinInstance", ob)
                         trishape.skinInstance = skininst
                         for block in self.blocks:
                             if isinstance(block, NifFormat.NiNode):
@@ -3408,6 +3428,33 @@ WARNING: bad uv layer name '%s' in texture '%s'
         # no texturing property with given settings found, so use and register
         # the new one
         return self.registerBlock(texprop)
+
+    def exportBSShaderProperty(
+        self, basemtex=None, bumpmtex=None):
+        """Export a Bethesda shader property block."""
+
+        # create new block
+        bsshader = NifFormat.BSShaderPPLightingProperty()
+        # set non-default fields (TODO check which are really needed)
+        #bsshader.shaderFlags.zbufferTest = 1
+        #bsshader.shaderFlags.shadowMap = 1
+        #bsshader.shaderFlags.shadowFrustrum = 1
+        # set textures
+        texset = NifFormat.BSShaderTextureSet()
+        bsshader.textureSet = texset
+        if basemtex:
+            texset.textures[0] = self.exportTextureFilename(basemtex.tex)
+        if bumpmtex:
+            texset.textures[1] = self.exportTextureFilename(bumpmtex.tex)
+
+        # search for duplicate
+        for block in self.blocks:
+            if (isinstance(block, NifFormat.BSShaderPPLightingProperty)
+                and block.getHash() == bsshader.getHash()):
+                return block
+
+        # no duplicate found, so use and register new one
+        return self.registerBlock(bsshader)
 
     def exportTextureEffect(self, mtex = None):
         """Export a texture effect block from material texture mtex (MTex, not
