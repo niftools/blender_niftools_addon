@@ -87,7 +87,25 @@ Get a newer version at http://pyffi.sourceforge.net/
     raise ImportError
 
 from Blender import Draw, Registry
-import sys, os
+import logging
+import sys
+import os
+
+def initLoggers():
+    """Set up loggers."""
+    niftoolslogger = logging.getLogger("niftools")
+    niftoolslogger.setLevel(logging.WARNING)
+    pyffilogger = logging.getLogger("pyffi")
+    pyffilogger.setLevel(logging.WARNING)
+    loghandler = logging.StreamHandler()
+    loghandler.setLevel(logging.DEBUG)
+    logformatter = logging.Formatter("%(name)s:%(levelname)s:%(message)s")
+    loghandler.setFormatter(logformatter)
+    niftoolslogger.addHandler(loghandler)
+    pyffilogger.addHandler(loghandler)
+
+# set up the loggers: call it as a function to avoid polluting namespace
+initLoggers()
 
 class NifImportExport:
     """Abstract base class for import and export. Contains utility functions
@@ -159,7 +177,7 @@ class NifConfig:
         EXPORT_FLATTENSKIN = False,
         EXPORT_VERSION = 'Oblivion',
         EPSILON = 0.005, # used for checking equality with floats
-        VERBOSITY = 0,   # verbosity level, determines how much debug output will be generated
+        LOG_LEVEL = logging.WARNING, # log level
         IMPORT_SKELETON = 0, # 0 = normal import, 1 = import file as skeleton, 2 = import mesh and attach to skeleton
         IMPORT_KEYFRAMEFILE = '', # keyframe file for animations
         EXPORT_ANIMATION = 0, # export everything (1=geometry only, 2=animation only)
@@ -294,6 +312,8 @@ class NifConfig:
                         self.config[key] = savedval
         # store configuration
         Blender.Registry.SetKey(self.CONFIG_NAME, self.config, True)
+        # special case: set log level here
+        self.updateLogLevel("LOG_LEVEL", self.config["LOG_LEVEL"])
 
     def eventId(self, event_name):
         """Return event id from event name, and register event if it is new."""
@@ -443,6 +463,26 @@ class NifConfig:
         self.drawLabel(
             text = self.WELCOME_MESSAGE,
             event_name = "LABEL_WELCOME_MESSAGE")
+        self.drawYSep()
+
+        self.drawNumber(
+            text = "Log Level",
+            event_name = "LOG_LEVEL",
+            min_val = 0, max_val = 99,
+            callback = self.updateLogLevel,
+            num_items = 4, item = 0)
+        self.drawPushButton(
+            text = "Warn",
+            event_name = "LOG_LEVEL_WARN",
+            num_items = 4, item = 1)
+        self.drawPushButton(
+            text = "Info",
+            event_name = "LOG_LEVEL_INFO",
+            num_items = 4, item = 2)
+        self.drawPushButton(
+            text = "Debug",
+            event_name = "LOG_LEVEL_DEBUG",
+            num_items = 4, item = 3)
         self.drawYSep()
 
         self.drawSlider(
@@ -992,6 +1032,12 @@ class NifConfig:
             self.config["EXPORT_OB_PRN"] = evName[14:]
         elif evName == "EXPORT_OPTIMIZE_MATERIALS":
             self.config["EXPORT_OPTIMIZE_MATERIALS"] = not self.config["EXPORT_OPTIMIZE_MATERIALS"]
+        elif evName == "LOG_LEVEL_WARN":
+            self.updateLogLevel(evName, logging.WARNING)
+        elif evName == "LOG_LEVEL_INFO":
+            self.updateLogLevel(evName, logging.INFO)
+        elif evName == "LOG_LEVEL_DEBUG":
+            self.updateLogLevel(evName, logging.DEBUG)
         Draw.Redraw(1)
 
     def guiEvent(self, evt, val):
@@ -1048,6 +1094,11 @@ class NifConfig:
             Draw.PupMenu('No file selected or file does not exist%t|Ok')
         else:
             self.config["IMPORT_KEYFRAMEFILE"] = keyframefile
+
+    def updateLogLevel(self, evt, val):
+        self.config["LOG_LEVEL"] = val
+        logging.getLogger("niftools").setLevel(val)
+        logging.getLogger("pyffi").setLevel(val)
 
     def updateScale(self, evt, val):
         self.config["EXPORT_SCALE_CORRECTION"] = val

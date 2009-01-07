@@ -32,6 +32,8 @@
 #
 # ***** END LICENCE BLOCK *****
 
+import logging
+
 import Blender
 from nif_import import NifImport
 from nif_export import NifExport
@@ -89,14 +91,17 @@ class TestSuite:
 
         # set script configuration
         finalconfig = dict(**NifConfig.DEFAULTS)
-        finalconfig["VERBOSITY"] = 99
+        logger = logging.getLogger("niftools.blender.test")
+        logging.getLogger("niftools").setLevel(logging.DEBUG)
+        logging.getLogger("pyffi").setLevel(logging.WARNING)
+
         for key, value in config.items():
             finalconfig[key] = value
 
         # run test
         if 'EXPORT_VERSION' in config:
             # export the imported files
-            print("*** exporting %s ***" % filename)
+            logger.info("Exporting %s" % filename)
 
             finalconfig["EXPORT_FILE"] = filename
             result = NifExport(**finalconfig)
@@ -110,7 +115,7 @@ class TestSuite:
             # return test result
             return result
         else:
-            print("*** importing %s ***" % filename)
+            logger.info("Importing %s" % filename)
 
             # import file and return test result
             finalconfig["IMPORT_FILE"] =  filename
@@ -141,14 +146,16 @@ def runtest(directory, files):
 
         # set script configuration
         config = dict(**NifConfig.DEFAULTS)
-        config["VERBOSITY"] = 99
         for key, value in filecfg.items():
             config[key] = value
+        logger = logging.getLogger("niftools.blender.test")
+        logging.getLogger("niftools").setLevel(logging.DEBUG)
+        logging.getLogger("pyffi").setLevel(logging.WARNING)
 
         # run test
         if 'EXPORT_VERSION' in filecfg:
             # export the imported files
-            print("*** exporting %s ***" % filename)
+            logger.info("Exporting %s" % filename)
 
             config["EXPORT_FILE"] = "%s/%s" % (directory, filename)
             NifExport(**config)
@@ -159,12 +166,11 @@ def runtest(directory, files):
             layer += 1
             scene.setLayers([layer])
         else:
-            print("*** importing %s ***" % filename)
+            logger.info("Importing %s" % filename)
 
             config["IMPORT_FILE"] = "%s/%s" % (directory, filename)
 
             # import <filename>
-            print "import..."
             NifImport(**config)
 
     # deselect everything

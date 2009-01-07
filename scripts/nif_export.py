@@ -14,6 +14,7 @@ This script exports Netimmerse and Gamebryo .nif files from Blender.
 """
 
 from itertools import izip
+import logging
 
 import Blender
 from Blender import Ipo # for all the Ipo curve constants
@@ -73,12 +74,7 @@ class NifExport(NifImportExport):
     FLOAT_MIN = -3.4028234663852886e+38
     FLOAT_MAX = +3.4028234663852886e+38
 
-    def msg(self, message, level=2):
-        """Wrapper for debug messages."""
-        if self.VERBOSITY and level <= self.VERBOSITY:
-            print message
-
-    def msgProgress(self, message, progbar = None):
+    def msgProgress(self, message, progbar=None):
         """Message wrapper for the Blender progress bar."""
         # update progress bar level
         if progbar is None:
@@ -187,11 +183,14 @@ class NifExport(NifImportExport):
 
         # preparation:
         #--------------
-        self.msgProgress("Initializing", progbar = 0)
-        
+        self.msgProgress("Initializing", progbar=0)
+
         # store configuration in self
         for name, value in config.iteritems():
             setattr(self, name, value)
+
+        # shortcut to export logger
+        self.logger = logging.getLogger("niftools.blender.export")
 
         # save file name
         self.filename = self.EXPORT_FILE[:]
@@ -231,19 +230,21 @@ class NifExport(NifImportExport):
             # find nif version to write
             try:
                 self.version = NifFormat.versions[self.EXPORT_VERSION]
-                self.msg("Writing NIF version 0x%08X"%self.version)
+                self.logger.info("Writing NIF version 0x%08X" % self.version)
             except KeyError:
-                self.version = NifFormat.games[self.EXPORT_VERSION][-1] # select highest nif version that the game supports
-                self.msg("Writing %s NIF (version 0x%08X)"%(self.EXPORT_VERSION,self.version))
+                # select highest nif version that the game supports
+                self.version = NifFormat.games[self.EXPORT_VERSION][-1]
+                self.logger.info("Writing %s NIF (version 0x%08X)"
+                                 % (self.EXPORT_VERSION, self.version))
 
             if self.EXPORT_ANIMATION == 0:
-                self.msg("Exporting geometry and animation")
+                self.logger.info("Exporting geometry and animation")
             elif self.EXPORT_ANIMATION == 1:
                 # for morrowind: everything except keyframe controllers
-                self.msg("Exporting geometry only")
+                self.logger.info("Exporting geometry only")
             elif self.EXPORT_ANIMATION == 2:
                 # for morrowind: only keyframe controllers
-                self.msg("Exporting animation only (as .kf file)")
+                self.logger.info("Exporting animation only (as .kf file)")
 
             for ob in Blender.Object.Get():
                 # armatures should not be in rest position
@@ -307,7 +308,7 @@ Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
             # smoothen seams of objects
             if self.EXPORT_SMOOTHOBJECTSEAMS:
                 # get shared vertices
-                self.msg("smoothing seams between objects...")
+                self.logger.info("Smoothing seams between objects...")
                 vdict = {}
                 for ob in [ob for ob in self.scene.objects
                            if ob.getType() == 'Mesh']:
@@ -352,7 +353,7 @@ Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
                         v.no = norm
                         #v.sel = True
                     nv += 1
-                self.msg("fixed normals on %i vertices" % nv)
+                self.logger.info("Fixed normals on %i vertices" % nv)
 
             ## TODO use Blender actions for animation groups
             # check for animation groups definition in a text buffer 'Anim'
@@ -378,7 +379,7 @@ Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
             root_block = self.exportNode(None, 'none', None, '')
             
             # export objects
-            self.msg("Exporting objects")
+            self.logger.info("Exporting objects")
             for root_object in root_objects:
                 # export the root objects as a NiNodes; their children are
                 # exported as well
@@ -392,7 +393,7 @@ Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
 
             # if we exported animations, but no animation groups are defined,
             # define a default animation group
-            self.msg("Checking animation groups")
+            self.logger.info("Checking animation groups")
             if not animtxt:
                 has_controllers = False
                 for block in self.blocks:
@@ -402,14 +403,14 @@ Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
                             has_controllers = True
                             break
                 if has_controllers:
-                    self.msg("Defining default animation group")
+                    self.logger.info("Defining default animation group")
                     # write the animation group text buffer
                     animtxt = Blender.Text.New("Anim")
                     animtxt.write("%i/Idle: Start/Idle: Loop Start\n%i/Idle: Loop Stop/Idle: Stop"%(self.fstart,self.fend))
 
             # animations without keyframe animations crash the TESCS
             # if we are in that situation, add a trivial keyframe animation
-            self.msg("Checking controllers")
+            self.logger.info("Checking controllers")
             if animtxt and self.EXPORT_VERSION == "Morrowind":
                 has_keyframecontrollers = False
                 for block in self.blocks:
@@ -417,7 +418,7 @@ Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
                         has_keyframecontrollers = True
                         break
                 if not has_keyframecontrollers:
-                    self.msg("  defining dummy keyframe controller")
+                    self.logger.info("Defining dummy keyframe controller")
                     # add a trivial keyframe controller on the scene root
                     self.exportKeyframes(None, 'localspace', root_block)
 
@@ -427,7 +428,7 @@ Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
                 and self.filebase.lower() in ('skeleton', 'skeletonbeast'):
                 # here comes everything that is Oblivion skeleton export
                 # specific
-                self.msg("  adding controllers and interpolators for skeleton")
+                self.logger.info("Adding controllers and interpolators for skeleton")
                 for block in self.blocks.keys():
                     if isinstance(block, NifFormat.NiNode) \
                         and block.name == "Bip01":
@@ -487,7 +488,7 @@ Furniture marker has invalid number (%s). Name your file
                 root_block.addExtraData(furnmark)
                 root_block.addExtraData(sgokeep)
 
-            self.msg("Checking collision")
+            self.logger.info("Checking collision")
             # activate oblivion collision and physics
             if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
                 hascollision = False
@@ -557,13 +558,18 @@ Furniture marker has invalid number (%s). Name your file
                 affectedbones = []
                 for block in self.blocks:
                     if isinstance(block, NifFormat.NiGeometry) and block.isSkin():
-                        self.msg("Flattening skin on geometry %s"%block.name)
+                        self.logger.info("Flattening skin on geometry %s"
+                                         % block.name)
                         affectedbones.extend(block.flattenSkin())
                         skelroots.add(block.skinInstance.skeletonRoot)
                 # remove NiNodes that do not affect skin
                 for skelroot in skelroots:
-                    self.msg("Removing unused NiNodes in '%s'"%skelroot.name)
-                    skelrootchildren = [child for child in skelroot.children if (not isinstance(child, NifFormat.NiNode)) or (child in affectedbones)]
+                    self.logger.info("Removing unused NiNodes in '%s'"
+                                     % skelroot.name)
+                    skelrootchildren = [child for child in skelroot.children
+                                        if ((not isinstance(child,
+                                                            NifFormat.NiNode))
+                                            or (child in affectedbones))]
                     skelroot.numChildren = len(skelrootchildren)
                     skelroot.children.updateSize()
                     for i, child in enumerate(skelrootchildren):
@@ -571,14 +577,15 @@ Furniture marker has invalid number (%s). Name your file
 
             # apply scale
             if abs(self.EXPORT_SCALE_CORRECTION - 1.0) > NifFormat._EPSILON:
-                self.msg("Applying scale correction %f"%self.EXPORT_SCALE_CORRECTION)
+                self.logger.info("Applying scale correction %f"
+                                 % self.EXPORT_SCALE_CORRECTION)
                 root_block.applyScale(self.EXPORT_SCALE_CORRECTION)
 
             # generate mopps (must be done after applying scale!)
             if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
                 for block in self.blocks:
                     if isinstance(block, NifFormat.bhkMoppBvTreeShape):
-                       self.msg("Generating mopp...")
+                       self.logger.info("Generating mopp...")
                        block.updateMopp()
                        #print "=== DEBUG: MOPP TREE ==="
                        #block.parseMopp(verbose = True)
@@ -588,7 +595,7 @@ Furniture marker has invalid number (%s). Name your file
             # defined
             if (root_block.numChildren == 1) \
                and (root_block.children[0].name in ['Scene Root', 'Bip01']):
-                self.msg(
+                self.logger.info(
                     "Making '%s' the root block" % root_block.children[0].name)
                 # remove root_block from self.blocks
                 self.blocks.pop(root_block)
@@ -683,8 +690,8 @@ Furniture marker has invalid number (%s). Name your file
                         # the constraints during exportBones)
                         if not node in self.bonePriorities:
                             priority = 26
-                            self.msg("""\
-no priority set for bone %s, falling back on default value (%i)"""
+                            self.logger.warning("""\
+No priority set for bone %s, falling back on default value (%i)"""
                                      % (node.name, priority))
                         else:
                             priority = self.bonePriorities[node]
@@ -704,12 +711,14 @@ and Civilization IV keyframes are supported.""" % self.EXPORT_VERSION)
             # write the file:
             #----------------
             ext = ".nif" if (self.EXPORT_ANIMATION != 2) else ".kf"
-            self.msg("Writing %s file"%ext)
+            self.logger.info("Writing %s file"%ext)
             self.msgProgress("Writing %s file"%ext)
 
             # make sure we have the right file extension
             if (self.fileext.lower() != ext):
-                self.msg("WARNING: changing extension from %s to %s on output file"%(self.fileext,ext))
+                self.logger.warning(
+                    "Changing extension from %s to %s on output file"
+                    % (self.fileext, ext))
                 self.filename = Blender.sys.join(self.filepath, self.filebase + ext)
             if self.EXPORT_VERSION == "Oblivion":
                 NIF_USER_VERSION = 11
@@ -1226,7 +1235,7 @@ missing curves in %s; insert %s key at frame 1 and try again"""
             # animation group extra data is not present in geometry only files
             return
 
-        self.msg("Exporting animation groups")
+        self.logger.info("Exporting animation groups")
         # -> get animation groups information
 
         # parse the anim text descriptor
@@ -1419,7 +1428,7 @@ Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
     # should be exported as a single mesh.
     # 
     def exportTriShapes(self, ob, space, parent_block, trishape_name = None):
-        self.msg("Exporting %s" % ob)
+        self.logger.info("Exporting %s" % ob)
         self.msgProgress("Exporting %s" % ob.name)
         assert(ob.getType() == 'Mesh')
 
@@ -2114,7 +2123,7 @@ they can easily be identified.")
 
                         if (self.version >= 0x04020100
                             and self.EXPORT_SKINPARTITION):
-                            self.msg("  creating skin partition")
+                            self.logger.info("Creating skin partition")
                             lostweight = trishape.updateSkinPartition(
                                 maxbonesperpartition=self.EXPORT_BONESPERPARTITION,
                                 maxbonespervertex=self.EXPORT_BONESPERVERTEX,
@@ -2174,8 +2183,8 @@ WARNING: lost %f in vertex weights while creating a skin partition for
                         for keyblocknum, keyblock in enumerate(key.getBlocks()):
                             # export morphed vertices
                             morph = morphdata.morphs[keyblocknum]
-                            self.msg("  exporting morph %i: vertices"
-                                     % keyblocknum)
+                            self.logger.info("Exporting morph %i: vertices"
+                                             % keyblocknum)
                             morph.arg = morphdata.numVertices
                             morph.vectors.updateSize()
                             for b_v_index, (vert_indices, vert) \
@@ -2202,8 +2211,8 @@ WARNING: lost %f in vertex weights while creating a skin partition for
                                 curve = keyipo.getCurves()[keyblocknum-1]
                             # base key has no curve all other keys should have one
                             if curve:
-                                self.msg("  exporting morph %i: curve"
-                                         % keyblocknum)
+                                self.logger.info("Exporting morph %i: curve"
+                                                 % keyblocknum)
                                 if ( curve.getExtrapolation() == "Constant" ):
                                     ctrlFlags = 0x000c
                                 elif ( curve.getExtrapolation() == "Cyclic" ):
@@ -2303,7 +2312,7 @@ WARNING: lost %f in vertex weights while creating a skin partition for
         for bone in bones.values():
             # link the bone's children to the bone
             if bone.children:
-                self.msg("  linking children of bone %s" % bone.name)
+                self.logger.debug("Linking children of bone %s" % bone.name)
                 for child in bone.children:
                     # bone.children returns also grandchildren etc.
                     # we only want immediate children, so do a parent check
@@ -2583,9 +2592,9 @@ Workaround: apply size and rotation (CTRL-A).""")
         @param b_obj: The Blender object.
         @return: C{block}"""
         if b_obj is None:
-            self.msg("Exporting %s block"%block.__class__.__name__)
+            self.logger.info("Exporting %s block"%block.__class__.__name__)
         else:
-            self.msg("Exporting %s as %s block"
+            self.logger.info("Exporting %s as %s block"
                      % (b_obj, block.__class__.__name__))
         self.blocks[block] = b_obj
         return block
@@ -3031,8 +3040,8 @@ ERROR%t|Too many faces/vertices. Decimate/split your mesh and try again.""")
             # rigid body joints
             if b_constr.type == Blender.Constraint.Type.RIGIDBODYJOINT:
                 if self.EXPORT_VERSION not in ("Oblivion", "Fallout 3"):
-                    self.msg("""\
-only Oblivion/Fallout 3 rigid body constraints can be exported
+                    self.logger.warning("""\
+Only Oblivion/Fallout 3 rigid body constraints can be exported
 skipped %s""" % b_constr)
                     continue
                 # check that the object is a rigid body
@@ -3085,7 +3094,7 @@ Unsupported rigid body joint type (%i), only ball and hinge are supported.""" \
                 # is there a target?
                 targetobj = b_constr[Blender.Constraint.Settings.TARGET]
                 if not targetobj:
-                    self.msg("  WARNING: constraint %s has no target, skipped")
+                    self.logger.warning("Constraint %s has no target, skipped")
                     continue
                 # find target's bhkRigidBody
                 for otherbody, otherobj in self.blocks.iteritems():

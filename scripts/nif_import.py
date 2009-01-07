@@ -22,9 +22,11 @@ from nif_common import NifConfig
 from nif_common import NifFormat
 from nif_common import __version__
 
-import operator
-import math
 from itertools import izip
+import logging
+import math
+import operator
+
 from PyFFI.Utils import QuickHull
 
 # --------------------------------------------------------------------------
@@ -85,11 +87,6 @@ class NifImport(NifImportExport):
     # radians to degrees conversion constant
     R2D = 3.14159265358979/180.0
     
-    def msg(self, message, level = 0):
-        """Message wrapper."""
-        if self.VERBOSITY >= level:
-            print message
-
     def msgProgress(self, message, progbar = None):
         """Message wrapper for the Blender progress bar."""
         # update progress bar level
@@ -113,6 +110,9 @@ class NifImport(NifImportExport):
         # store config settings
         for name, value in config.iteritems():
             setattr(self, name, value)
+
+        # shortcut to import logger
+        self.logger = logging.getLogger("niftools.blender.import")
 
         # save file name
         self.filename = self.IMPORT_FILE[:]
@@ -169,7 +169,7 @@ class NifImport(NifImportExport):
                     raise NifImportError("You must select exactly one armature in 'Import Geometry Only + Parent To Selected Armature' mode.")
 
             # open file for binary reading
-            self.msg(self.filename)
+            self.logger.info("Importing %s" % self.filename)
             niffile = open(self.filename, "rb")
             data = NifFormat.Data()
             try:
@@ -178,7 +178,7 @@ class NifImport(NifImportExport):
                 self.version = data.version
                 if self.version >= 0:
                     # it is valid, so read the file
-                    self.msg("NIF file version: 0x%08X"%self.version, 2)
+                    self.logger.info("NIF file version: 0x%08X" % self.version)
                     self.msgProgress("Reading file")
                     data.read(niffile)
                     root_blocks = data.roots
@@ -192,7 +192,7 @@ class NifImport(NifImportExport):
 
             if self.IMPORT_KEYFRAMEFILE:
                 # open keyframe file for binary reading
-                self.msg(self.IMPORT_KEYFRAMEFILE)
+                self.logger.info("Importing %s" % self.IMPORT_KEYFRAMEFILE)
                 kffile = open(self.IMPORT_KEYFRAMEFILE, "rb")
                 kfdata = NifFormat.Data()
                 try:
@@ -201,7 +201,7 @@ class NifImport(NifImportExport):
                     self.kfversion = kfdata.version
                     if self.kfversion >= 0:
                         # it is valid, so read the file
-                        self.msg("KF file version: 0x%08X" % self.kfversion, 2)
+                        self.logger.info("KF file version: 0x%08X" % self.kfversion)
                         self.msgProgress("Reading keyframe file")
                         kfdata.read(kffile)
                         kf_root_blocks = kfdata.roots
@@ -245,7 +245,7 @@ class NifImport(NifImportExport):
                             for child in nonbip_children:
                                 root.removeChild(child)
                 # import this root block
-                self.msg("root block: %s" % (root.name), 3)
+                self.logger.debug("Root block: %s" % root.name)
                 # merge animation from kf tree into nif tree
                 if self.IMPORT_ANIMATION:
                     for kf_root in kf_root_blocks:
@@ -253,7 +253,7 @@ class NifImport(NifImportExport):
                 # import the nif tree
                 self.importRoot(root)
         except NifImportError, e: # in that case, we raise a menu too
-            print 'NifImportError: %s'%e
+            self.logger.exception('NifImportError: %s' % e)
             Blender.Draw.PupMenu('ERROR%t|' + str(e))
             raise
         finally:
@@ -284,13 +284,14 @@ class NifImport(NifImportExport):
                 continue
             merged, failed = niBlock.mergeSkeletonRoots()
             if merged:
-                self.msg('reparented following blocks to skeleton root of %s:'
-                         % niBlock.name, 2)
-                self.msg([node.name for node in merged], 2)
+                self.logger.debug(
+                    'Reparented following blocks to skeleton root of %s:'
+                    % niBlock.name)
+                self.logger.debug(",".join([node.name for node in merged]))
             if failed:
-                self.msg('WARNING: failed to reparent following blocks %s:'
-                         % niBlock.name, 2)
-                self.msg([node.name for node in failed], 2)
+                self.logger.warning('Failed to reparent following blocks %s:'
+                                     % niBlock.name, 2)
+                self.logger.warning(",".join([node.name for node in failed]))
 
         # transform geometry into the rest pose
         if self.IMPORT_SENDBONESTOBINDPOS:
@@ -299,8 +300,8 @@ class NifImport(NifImportExport):
                     continue
                 if not niBlock.isSkin():
                     continue
-                self.msg('sending bones of geometry %s to their bind position'
-                         % niBlock.name, 2)
+                self.logger.info('Sending bones of %s to bind position'
+                                 % niBlock.name)
                 niBlock.sendBonesToBindPosition()
         if self.IMPORT_APPLYSKINDEFORM:
             for niBlock in root_block.tree():
@@ -308,8 +309,8 @@ class NifImport(NifImportExport):
                     continue
                 if not niBlock.isSkin():
                     continue
-                self.msg('applying skin deformation on geometry %s'
-                         % niBlock.name, 2)
+                self.logger.info('Applying skin deformation on geometry %s'
+                                 % niBlock.name)
                 vertices, normals = niBlock.getSkinDeformation()
                 for vold, vnew in izip(niBlock.data.vertices, vertices):
                     vold.x = vnew.x
@@ -337,11 +338,11 @@ class NifImport(NifImportExport):
         # read the NIF tree
         if self.is_armature_root(root_block):
             # special case 1: root node is skeleton root
-            self.msg("%s is an armature root" % (root_block.name), 3)
+            self.logger.debug("%s is an armature root" % root_block.name)
             b_obj = self.importBranch(root_block)
         elif self.is_grouping_node(root_block):
             # special case 2: root node is grouping node
-            self.msg("%s is a grouping node" % (root_block.name), 3)
+            self.logger.debug("%s is a grouping node" % root_block.name)
             b_obj = self.importBranch(root_block)
         elif isinstance(root_block, NifFormat.NiTriBasedGeom):
             # trishape/tristrips root
@@ -359,13 +360,13 @@ WARNING: unsupported collision structure under node %s""" % root_block.name)
             for child in root_block.children:
                 b_obj = self.importBranch(child)
         elif isinstance(root_block, NifFormat.NiCamera):
-            self.msg('WARNING: skipped NiCamera root')
+            self.logger.warning('Skipped NiCamera root')
         elif isinstance(root_block, NifFormat.NiPhysXProp):
-            self.msg('WARNING: skipped NiPhysXProp root')
+            self.logger.warning('Skipped NiPhysXProp root')
         else:
             raise NifImportError(
                 "Cannot import nif file with root block of type '%s'"
-                %root_block.__class__)
+                % root_block.__class__)
 
         # store bone matrix offsets for re-export
         if self.bonesExtraMatrix:
@@ -389,7 +390,7 @@ WARNING: unsupported collision structure under node %s""" % root_block.name)
                     for oldgroupname in b_child_obj.data.getVertGroupNames():
                         newgroupname = self.getBoneNameForBlender(oldgroupname)
                         if oldgroupname != newgroupname:
-                            self.msg(
+                            self.logger.info(
                                 "%s: renaming vertex group %s to %s"
                                 % (b_child_obj, oldgroupname, newgroupname))
                             b_child_obj.data.renameVertGroup(
@@ -407,7 +408,7 @@ WARNING: unsupported collision structure under node %s""" % root_block.name)
                 # it's a shape node and we're not importing skeleton only
                 # (IMPORT_SKELETON == 1) and not importing skinned geometries
                 # only (IMPORT_SKELETON == 2)
-                self.msg("building mesh in importBranch",3)
+                self.logger.debug("Building mesh in importBranch")
                 return self.importMesh(niBlock)
             elif isinstance(niBlock, NifFormat.NiNode):
                 children = niBlock.children
@@ -422,8 +423,8 @@ WARNING: unsupported collision structure under node %s""" % root_block.name)
                             b_obj = self.importArmature(niBlock)
                         else:
                             b_obj = self.selectedObjects[0]
-                            self.msg("merging nif tree '%s' with armature '%s'"
-                                     %(niBlock.name, b_obj.name))
+                            self.logger.info("Merging nif tree '%s' with armature '%s'"
+                                             % (niBlock.name, b_obj.name))
                             if niBlock.name != b_obj.name:
                                 print("WARNING: taking nif block '%s' as \
 armature '%s' but names do not match"%(niBlock.name, b_obj.name))
@@ -470,8 +471,7 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                                 # 0.005 = 1/200
                                 numdel = b_mesh.remDoubles(0.005)
                                 if numdel:
-                                    self.msg('removed %i duplicate vertices \
-(out of %i) from collision mesh'%(numdel, numverts), 3)
+                                    self.logger.info('Removed %i duplicate vertices (out of %i) from collision mesh' % (numdel, numverts))
                         # import children that aren't part of the geometry group
                         b_children_list = []
                         children = [ child for child in niBlock.children
@@ -505,15 +505,12 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                             if obj.getType() == "Camera":
                                 break
                         else:
-                            raise NifImportError("""\
-ERROR: scene needs camera for billboard node (add a camera and try again)""")
+                            raise NifImportError("""Scene needs camera for billboard node (add a camera and try again)""")
                         # make b_obj track camera object
                         #b_obj.setEuler(0,0,0)
                         b_obj.constraints.append(
                             Blender.Constraint.Type.TRACKTO)
-                        print """\
-WARNING: constraint for billboard node on %s added but target not set due to
-         transform bug in Blender. Set target to Camera manually."""
+                        self.logger.warning("""Constraint for billboard node on %s added but target not set due to transform bug in Blender. Set target to Camera manually.""" % b_obj)
                         constr = b_obj.constraints[-1]
                         constr[Blender.Constraint.Settings.TRACK] = Blender.Constraint.Settings.TRACKZ
                         constr[Blender.Constraint.Settings.UP] = Blender.Constraint.Settings.UPY
@@ -568,8 +565,8 @@ WARNING: constraint for billboard node on %s added but target not set due to
         if isinstance(niBlock, NifFormat.NiTriBasedGeom) \
            and self.IMPORT_SKELETON != 1:
 
-            self.msg("building mesh %s in importArmatureBranch"%
-                     niBlock.name, 3)
+            self.logger.debug("Building mesh %s in importArmatureBranch" %
+                              niBlock.name)
             # apply transform relative to the branch parent
             return branch_parent, self.importMesh(niBlock,
                                                   group_mesh = group_mesh,
@@ -830,7 +827,7 @@ WARNING: collision object has non-bone parent, this is not supported
             for bone_name, b_posebone in b_armature.getPose().bones.items():
                 # denote progress
                 self.msgProgress('Animation: %s' % bone_name)
-                self.msg('Importing animation for bone %s' % bone_name, 4)
+                self.logger.debug('Importing animation for bone %s' % bone_name)
                 niBone = self.blocks[bone_name]
 
                 # get bind matrix (NIF format stores full transformations in keyframes,
@@ -917,7 +914,7 @@ WARNING: collision object has non-bone parent, this is not supported
 
                     # rotations
                     if rotations:
-                        self.msg('Rotation keys...(bspline quaternions)', 4)
+                        self.logger.debug('Rotation keys...(bspline quaternions)')
                         for time, quat in izip(times, rotations):
                             frame = 1 + int(time * self.fps + 0.5)
                             quat = Blender.Mathutils.Quaternion(
@@ -936,7 +933,7 @@ WARNING: collision object has non-bone parent, this is not supported
 
                     # translations
                     if translations:
-                        self.msg('Translation keys...(bspline)', 4)
+                        self.logger.debug('Translation keys...(bspline)')
                         for time, translation in izip(times, translations):
                             # time 0.0 is frame 1
                             frame = 1 + int(time * self.fps + 0.5)
@@ -1000,7 +997,7 @@ WARNING: collision object has non-bone parent, this is not supported
 
                     # Scaling
                     if scales.keys:
-                        self.msg('Scale keys...', 4)
+                        self.logger.debug('Scale keys...')
                     for scaleKey in scales.keys:
                         # time 0.0 is frame 1
                         frame = 1 + int(scaleKey.time * self.fps + 0.5)
@@ -1019,7 +1016,7 @@ WARNING: collision object has non-bone parent, this is not supported
                     if rotationType == 4:
                         # uses xyz rotation
                         if kfd.xyzRotations[0].keys:
-                            self.msg('Rotation keys...(euler)', 4)
+                            self.logger.debug('Rotation keys...(euler)')
                         for xkey, ykey, zkey in izip(kfd.xyzRotations[0].keys,
                                                      kfd.xyzRotations[1].keys,
                                                      kfd.xyzRotations[2].keys):
@@ -1046,7 +1043,7 @@ WARNING: collision object has non-bone parent, this is not supported
                     else:
                         # TODO take rotation type into account for interpolation
                         if kfd.quaternionKeys:
-                            self.msg('Rotation keys...(quaternions)', 4)
+                            self.logger.debug('Rotation keys...(quaternions)')
                         quaternionKeys = kfd.quaternionKeys
                         for key in quaternionKeys:
                             frame = 1 + int(key.time * self.fps + 0.5)
@@ -1070,7 +1067,7 @@ WARNING: collision object has non-bone parent, this is not supported
         
                     # Translations
                     if translations.keys:
-                        self.msg('Translation keys...', 4)
+                        self.logger.debug('Translation keys...')
                     for key in translations.keys:
                         # time 0.0 is frame 1
                         frame = 1 + int(key.time * self.fps + 0.5)
@@ -1339,7 +1336,7 @@ WARNING: collision object has non-bone parent, this is not supported
                 # save embedded texture as dds file
                 stream = open(tex, "wb")
                 try:
-                    print "saving embedded texture as %s" % tex
+                    self.logger.info("Saving embedded texture as %s" % tex)
                     source.pixelData.saveAsDDS(stream)
                 except ValueError:
                     # value error means that the pixel format is not supported
@@ -1403,7 +1400,7 @@ WARNING: collision object has non-bone parent, this is not supported
                         tex = Blender.sys.join( texdir[:-9], texfn )
                     else:
                         tex = Blender.sys.join( texdir, texfn )
-                    #self.msg("Searching %s" % tex, 3) # DEBUG
+                    self.logger.debug("Searching %s" % tex)
                     if Blender.sys.exists(tex) == 1:
                         # tries to load the file
                         b_image = Blender.Image.Load(tex)
@@ -1417,7 +1414,7 @@ WARNING: collision object has non-bone parent, this is not supported
                             b_image = None # not supported, delete image object
                         else:
                             # file format is supported
-                            self.msg( "Found '%s' at %s" %(fn, tex), 3 )
+                            self.logger.debug("Found '%s' at %s" % (fn, tex))
                             break
                 if b_image:
                     break
@@ -1426,9 +1423,9 @@ WARNING: collision object has non-bone parent, this is not supported
 
         # create a stub image if the image could not be loaded
         if not b_image:
-            self.msg("""\
+            self.logger.warning("""\
 Texture '%s' not found or not supported and no alternate available"""
-% fn, 2)
+% fn)
             b_image = Blender.Image.New(fn, 1, 1, 24) # create a stub
             b_image.filename = tex
 
@@ -2274,7 +2271,8 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                 skelroot = niBlock
             if not self.armatures.has_key(skelroot):
                 self.armatures[skelroot] = []
-            self.msg("selecting node '%s' as skeleton root" % skelroot.name)
+            self.logger.info("Selecting node '%s' as skeleton root"
+                             % skelroot.name)
             # add bones
             for bone in skelroot.tree():
                 if bone == skelroot: continue
@@ -2288,7 +2286,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             skelroot = niBlock.find(block_name = self.selectedObjects[0].name)
             if not skelroot:
                 raise NifImportError("nif has no armature '%s'"%self.selectedObjects[0].name)
-            self.msg("identified '%s' as armature" % skelroot.name,3)
+            self.logger.debug("Identified '%s' as armature" % skelroot.name)
             self.armatures[skelroot] = []
             for bone_name in self.selectedObjects[0].data.bones.keys():
                 # blender bone naming -> nif bone naming
@@ -2297,7 +2295,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                 bone_block = skelroot.find(block_name = nif_bone_name)
                 # add it to the name list if there is a bone with that name
                 if bone_block:
-                    self.msg("identified nif block '%s' with bone '%s' in selected armature" % (nif_bone_name, bone_name))
+                    self.logger.info("Identified nif block '%s' with bone '%s' in selected armature" % (nif_bone_name, bone_name))
                     self.names[bone_block] = bone_name
                     self.armatures[skelroot].append(bone_block)
                     self.complete_bone_tree(bone_block, skelroot)
@@ -2306,7 +2304,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
         if isinstance(niBlock, NifFormat.NiTriBasedGeom):
             # yes, we found one, get its skin instance
             if niBlock.isSkin():
-                self.msg("skin found on block '%s'" % niBlock.name,3)
+                self.logger.debug("Skin found on block '%s'" % niBlock.name)
                 # it has a skin instance, so get the skeleton root
                 # which is an armature only if it's not a skinning influence
                 # so mark the node to be imported as an armature
@@ -2315,17 +2313,15 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                 if self.IMPORT_SKELETON == 0:
                     if not self.armatures.has_key(skelroot):
                         self.armatures[skelroot] = []
-                        self.msg("'%s' is an armature" % skelroot.name,3)
+                        self.logger.debug("'%s' is an armature" % skelroot.name)
                 elif self.IMPORT_SKELETON == 2:
                     if not self.armatures.has_key(skelroot):
-                        #self.armatures[skelroot] = []
-                        #self.msg("'%s' is an armature" % skelroot.name,3)
                         raise NifImportError("nif structure incompatible with '%s' as armature: \nnode '%s' has '%s' as armature"%(self.selectedObjects[0].name, niBlock.name, skelroot.name))
 
                 for i, boneBlock in enumerate(skininst.bones):
                     if not boneBlock in self.armatures[skelroot]:
                         self.armatures[skelroot].append(boneBlock)
-                        self.msg("'%s' is a bone of armature '%s'" % (boneBlock.name, skelroot.name), 3)
+                        self.logger.debug("'%s' is a bone of armature '%s'" % (boneBlock.name, skelroot.name))
                     # now we "attach" the bone to the armature:
                     # we make sure all NiNodes from this bone all the way
                     # down to the armature NiNode are marked as bones
@@ -2350,7 +2346,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                 # neither is it marked as a bone: so mark the parent as a bone
                 self.armatures[skelroot].append(boneparent)
                 # store the coordinates for realignement autodetection 
-                self.msg("'%s' is a bone of armature '%s'"%(boneparent.name, skelroot.name),3)
+                self.logger.debug("'%s' is a bone of armature '%s'" % (boneparent.name, skelroot.name))
             # now the parent is marked as a bone
             # recursion: complete the bone tree,
             # this time starting from the parent bone
@@ -2419,27 +2415,6 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                  if (isinstance(child, NifFormat.NiTriBasedGeom)
                      and child.name.find(node_name) != -1) ]
 
-    """
-    #can't retrieve bone ipo's?
-    def import_animation(self):
-        global _ANIMATION_DATA
-        #store all keys in a flat list
-        keyFrameList = []
-        # _ANIMATION_DATA is sorted by frame already
-        for key in _ANIMATION_DATA:
-            niBlock = key['block']
-            b_obj = get_blender_object(niBlock)
-            b_ipo = b_obj.getIpo()
-            if b_ipo == None:
-                if is_bone(niBlock):
-                    b_ipo = Blender.Ipo.New('Pose', b_obj.name)
-                else:
-                    b_ipo = Blender.Ipo.New('Object', b_obj.name)
-                b_obj.setIpo(b_ipo)
-                
-            print key
-    """
-
     def set_animation(self, niBlock, b_obj):
         """Load basic animation info for this object."""
         kfc = self.find_controller(niBlock, NifFormat.NiKeyframeController)
@@ -2458,7 +2433,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             translations = kfd.translations
             scales = kfd.scales
             # add the keys
-            self.msg('Scale keys...', 4)
+            self.logger.debug('Scale keys...')
             for key in scales.keys:
                 frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                 Blender.Set('curframe', frame)
@@ -2472,7 +2447,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             if rotationType == 4:
                 # uses xyz rotation
                 xyzRotations = kfd.xyzRotations
-                self.msg('Rotation keys...(euler)', 4)
+                self.logger.debug('Rotation keys...(euler)')
                 for key in xyzRotations:
                     frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                     Blender.Set('curframe', frame)
@@ -2483,7 +2458,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             else:
                 # uses quaternions
                 if kfd.quaternionKeys:
-                    self.msg('Rotation keys...(quaternions)', 4)
+                    self.logger.debug('Rotation keys...(quaternions)')
                 for key in kfd.quaternionKeys:
                     frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                     Blender.Set('curframe', frame)
@@ -2494,7 +2469,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                     b_obj.insertIpoKey(Blender.Object.ROT)
 
             if translations.keys:
-                self.msg('Translation keys...', 4)
+                self.logger.debug('Translation keys...')
             for key in translations.keys:
                 frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                 Blender.Set('curframe', frame)
@@ -2537,8 +2512,8 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             # 0.005 = 1/200
             numdel = me.remDoubles(0.005)
             if numdel:
-                self.msg('removed %i duplicate vertices \
-(out of %i) from collision mesh'%(numdel, numverts), 3)
+                self.logger.info('Removed %i duplicate vertices \
+(out of %i) from collision mesh' % (numdel, numverts))
 
             return [ ob ]
 
@@ -2742,8 +2717,8 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                 # 0.005 = 1/200
                 numdel = me.remDoubles(0.005)
                 if numdel:
-                    self.msg('removed %i duplicate vertices \
-    (out of %i) from collision mesh'%(numdel, numverts), 3)
+                    self.logger.info('Removed %i duplicate vertices \
+(out of %i) from collision mesh' % (numdel, numverts))
 
                 vertex_offset += subshape.numVertices
                 hk_objects.append(ob)
@@ -2777,8 +2752,8 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             # 0.005 = 1/200
             numdel = me.remDoubles(0.005)
             if numdel:
-                self.msg('removed %i duplicate vertices \
-(out of %i) from collision mesh'%(numdel, numverts), 3)
+                self.logger.info('Removed %i duplicate vertices \
+(out of %i) from collision mesh' % (numdel, numverts))
 
             return [ ob ]
 
@@ -2804,26 +2779,26 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
 
         # find objects
         if len(self.havokObjects[hkbody]) != 1:
-            self.msg("""\
-WARNING: rigid body with no or multiple shapes, constraints skipped""")
+            self.logger.warning("""\
+Rigid body with no or multiple shapes, constraints skipped""")
             return
 
         b_hkobj = self.havokObjects[hkbody][0]
         
-        self.msg("importing constraints for %s" % b_hkobj.name)
+        self.logger.info("Importing constraints for %s" % b_hkobj.name)
 
         # now import all constraints
         for hkconstraint in hkbody.constraints:
 
             # check constraint entities
             if not hkconstraint.numEntities == 2:
-                self.msg("WARNING: constraint with more than 2 entities, skipped")
+                self.logger.warning("Constraint with more than 2 entities, skipped")
                 continue
             if not hkconstraint.entities[0] is hkbody:
-                self.msg("WARNING: first constraint entity not self, skipped")
+                self.logger.warning("First constraint entity not self, skipped")
                 continue
             if not hkconstraint.entities[1] in self.havokObjects:
-                self.msg("WARNING: second constraint entity not imported, skipped")
+                self.logger.warning("Second constraint entity not imported, skipped")
                 continue
 
             # get constraint descriptor
@@ -2839,14 +2814,14 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
                 elif hkconstraint.type == 2:
                     hkdescriptor = hkconstraint.limitedHinge
                 else:
-                    self.msg("WARNING: unknown malleable type (%i), skipped"
-                             % hkconstraint.type)
+                    self.logger.warning("Unknown malleable type (%i), skipped"
+                                        % hkconstraint.type)
                 # extra malleable constraint settings
                 ### damping parameters not yet in Blender Python API
                 ### tau (force between bodies) not supported by Blender
             else:
-                self.msg("WARNING: unknown constraint type (%s), skipped"
-                         % hkconstraint.__class__.__name__)
+                self.logger.warning("Unknown constraint type (%s), skipped"
+                                    % hkconstraint.__class__.__name__)
                 continue
 
             # add the constraint as a rigid body joint
@@ -2950,15 +2925,14 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
                     # either not orthogonal, or negative orientation
                     if (Blender.Mathutils.CrossVecs(-axis_x, axis_y)
                         - axis_z).length > 0.01:
-                        self.msg("""\
-  note: axes do not form an orthogonal basis in %s
-        an arbitrary orientation has been chosen"""
-                                 % hkdescriptor.__class__.__name__)
+                        self.logger.warning("""\
+Axes are not orthogonal in %s; arbitrary orientation has been chosen"""
+                                         % hkdescriptor.__class__.__name__)
                         axis_z = Blender.Mathutils.CrossVecs(axis_x, axis_y)
                     else:
                         # fix orientation
-                        self.msg("""
-  note: x axis flipped to fix orientation""")
+                        self.logger.warning("""\
+X axis flipped in %s to fix orientation""" % hkdescriptor.__class__.__name__)
                         axis_x = -axis_x
             elif isinstance(hkdescriptor, NifFormat.HingeDescriptor):
                 # for hinge, y is the vector on the plane of rotation defining
@@ -3117,7 +3091,7 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
         *** Note: this function will eventually move to PyFFI. ***
         """
 
-        self.msg("merging kf tree into nif tree")
+        self.logger.info("Merging kf tree into nif tree")
 
         # check that this is an Oblivion style kf file
         if not isinstance(kf_root, NifFormat.NiControllerSequence):
@@ -3134,23 +3108,21 @@ WARNING: rigid body with no or multiple shapes, constraints skipped""")
             # match from nif tree?
             node = root.find(block_name = nodename)
             if not node:
-                self.msg(
-                    "animation for %s but no such node found in nif tree"
+                self.logger.info(
+                    "Animation for %s but no such node found in nif tree"
                     % nodename)
                 continue
             # node found, now find the controller
             controllertype = controlledblock.getControllerType()
             if not controllertype:
-                self.msg(
-                    "animation for %s without controller type, so skipping"
+                self.logger.info(
+                    "Animation for %s without controller type, so skipping"
                     % nodename)
                 continue
             controller = self.find_controller(node, getattr(NifFormat, controllertype))
             if not controller:
-                self.msg("""\
-animation for %s with %s controller,
-but no such controller type found in corresponding node, so creating one"""
-                    % (nodename, controllertype))
+                self.logger.info("Animation for %s with %s controller, but no such controller type found in corresponding node, so creating one"
+                                 % (nodename, controllertype))
                 controller = getattr(NifFormat, controllertype)()
                 # TODO set all the fields of this controller
                 node.addController(controller)
@@ -3212,7 +3184,7 @@ def config_callback(**config):
         NifImport(**config)
     finally:
         # finish import
-        print 'nif import finished in %.2f seconds' % (Blender.sys.time()-t)
+        self.logger.info('Finished in %.2f seconds' % (Blender.sys.time()-t))
         Blender.Window.WaitCursor(0)
         if is_editmode: Blender.Window.EditMode(1)
 
