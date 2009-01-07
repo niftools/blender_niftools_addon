@@ -353,8 +353,7 @@ class NifImport(NifImportExport):
             if root_block.collisionObject:
                 bhk_body = root_block.collisionObject.body
                 if not isinstance(bhk_body, NifFormat.bhkRigidBody):
-                    print("""\
-WARNING: unsupported collision structure under node %s""" % root_block.name)
+                    self.logger.warning("Unsupported collision structure under node %s" % root_block.name)
                 self.importBhkShape(bhk_body)
             # process all its children
             for child in root_block.children:
@@ -426,8 +425,7 @@ WARNING: unsupported collision structure under node %s""" % root_block.name)
                             self.logger.info("Merging nif tree '%s' with armature '%s'"
                                              % (niBlock.name, b_obj.name))
                             if niBlock.name != b_obj.name:
-                                print("WARNING: taking nif block '%s' as \
-armature '%s' but names do not match"%(niBlock.name, b_obj.name))
+                                self.logger.warning("Taking nif block '%s' as armature '%s' but names do not match" % (niBlock.name, b_obj.name))
                         # now also do the meshes
                         self.importArmatureBranch(b_obj, niBlock, niBlock)
                     else:
@@ -449,9 +447,10 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                             geom_group = []
                         else:
                             # node groups geometries, so import it as a mesh
-                            print("joining geometries %s to single object '%s'"
-                                  %([child.name for child in geom_group],
-                                    niBlock.name))
+                            self.logger.info(
+                                "joining geometries %s to single object '%s'"
+                                %([child.name for child in geom_group],
+                                  niBlock.name))
                             b_obj = None
                             for child in geom_group:
                                 b_obj = self.importMesh(child,
@@ -488,8 +487,7 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                         if niBlock.collisionObject:
                             bhk_body = niBlock.collisionObject.body
                             if not isinstance(bhk_body, NifFormat.bhkRigidBody):
-                                print("WARNING: unsupported collision structure \
-    under node %s" % niBlock.name)
+                                self.logger.warning("Unsupported collision structure under node %s" % niBlock.name)
                             collision_objs = self.importBhkShape(bhk_body)
                             # make parent
                             b_obj.makeParent(collision_objs)
@@ -592,8 +590,9 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                 b_objects = [] # list of (nif block, blender object) pairs
                 # import grouped geometries
                 if geom_group and self.IMPORT_SKELETON != 1:
-                    print("joining geometries %s to single object '%s'"
-                          %([child.name for child in geom_group], node_name))
+                    self.logger.info(
+                        "joining geometries %s to single object '%s'"
+                        %([child.name for child in geom_group], node_name))
                     b_mesh = None
                     for child in geom_group:
                         b_mesh_branch_parent, b_mesh = self.importArmatureBranch(
@@ -680,15 +679,14 @@ armature '%s' but names do not match"%(niBlock.name, b_obj.name))
                     # first import collision object
                     bhk_body = niBlock.collisionObject.body
                     if not isinstance(bhk_body, NifFormat.bhkRigidBody):
-                        print("""\
-WARNING: unsupported collision structure under node %s""" % niBlock.name)
+                        self.logger.warning(
+                            "Unsupported collision structure under node %s"
+                            % niBlock.name)
                     collision_objs = self.importBhkShape(bhk_body)
                     # get blender bone and its name
                     # (TODO also cover case where niBlock != branch_parent)
                     if niBlock != branch_parent:
-                        print("""\
-WARNING: collision object has non-bone parent, this is not supported
-         transform errors may result""")
+                        self.logger.warning("Collision object has non-bone parent, this is not supported and transform errors may result")
                     b_par_bone_name = self.names[branch_parent]
                     b_par_bone = b_armature.data.bones[b_par_bone_name]
                     for b_obj in collision_objs:
@@ -1488,8 +1486,7 @@ Texture '%s' not found or not supported and no alternate available"""
             elif textProperty.applyMode == NifFormat.ApplyMode.APPLY_HILIGHT2:
                 blendmode = Blender.Texture.BlendModes["MULTIPLY"]
             else:
-                print("WARNING: unknown apply mode (%i) in material '%s', \
-using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
+                self.logger.warning("Unknown apply mode (%i) in material '%s', using blending mode 'MIX'"% (textProperty.applyMode, matProperty.name))
         elif bsShaderProperty:
             # default blending mode for fallout 3
             blendmode = Blender.Texture.BlendModes["MIX"]
@@ -2047,7 +2044,7 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
                         elif ( morphCtrl.flags == 0x0008 ):
                             b_curve.setExtrapolation( 'Cyclic' )
                         else:
-                            print('WARNING: no idea which extrapolation to use, using constant')
+                            self.logger.warning('No idea which extrapolation to use, using constant')
                             b_curve.setExtrapolation( 'Constant' )
                         # set up the curve's control points
                         morphkeys = morphData.morphs[idxMorph].keys
@@ -2764,7 +2761,8 @@ using blending mode 'MIX'"%(textProperty.applyMode, matProperty.name))
             return reduce(operator.add, ( self.importBhkShape(subshape)
                                           for subshape in bhkshape.subShapes ))
 
-        print("WARNING: unsupported bhk shape %s" % bhkshape.__class__.__name__)
+        self.logger.warning("Unsupported bhk shape %s"
+                            % bhkshape.__class__.__name__)
         return []
 
 

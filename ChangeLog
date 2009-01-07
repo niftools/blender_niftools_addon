@@ -1,4 +1,5 @@
 Version 2.3.14 (***)
+* switched to using the standard logging module for log messages
 * improvements for multi-material mopp import and export (but not entirely
 functional yet)
 * better Fallout 3 export options

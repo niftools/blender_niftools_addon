@@ -253,11 +253,7 @@ class NifExport(NifImportExport):
                     # and not in rest position!
                     ob.data.restPosition = False
                     if (ob.data.envelopes):
-                        print """'%s': Cannot export envelope skinning.
-If you have vertex groups, turn off envelopes.
-If you don't have vertex groups, select the bones one by one
-press W to convert their envelopes to vertex weights,
-and turn off envelopes."""%ob.getName()
+                        self.logger.critical("'%s': Cannot export envelope skinning. If you have vertex groups, turn off envelopes. If you don't have vertex groups, select the bones one by one press W to convert their envelopes to vertex weights, and turn off envelopes." % ob.getName())
                         raise NifExportError("""\
 '%s': Cannot export envelope skinning. Check console for instructions."""
                                              % ob.getName())
@@ -1679,7 +1675,7 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                         fuv.append(f.uv[i])
                     if mesh_hasvcol:
                         if (len(f.col) == 0):
-                            print 'WARNING: vertex color painting/lighting enabled, but mesh has no vertex color data; vertex colors will not be written.'
+                            self.logger.warning('Vertex color painting/lighting enabled, but mesh has no vertex color data; vertex colors will not be written.')
                             fcol = None
                             mesh_hasvcol = False
                         else:
@@ -1900,7 +1896,7 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                     elif ( a_curve.getExtrapolation() == "Constant" ):
                         alphac.flags = 0x000c
                     else:
-                        print "WARNING: extrapolation \"%s\" for alpha curve not supported using \"cycle reverse\" instead"%a_curve.getExtrapolation()
+                        self.logger.warning("Extrapolation \"%s\" for alpha curve not supported using \"cycle reverse\" instead" % a_curve.getExtrapolation())
                         alphac.flags = 0x000a
 
                     # fill in timing values
@@ -2133,19 +2129,12 @@ they can easily be identified.")
                             # warn on bad config settings
                             if self.EXPORT_VERSION == 'Oblivion':
                                if self.EXPORT_PADBONES:
-                                   print("""\
-WARNING: using padbones on Oblivion export, you probably do not want to do this
-         disable the pad bones option to get higher quality skin partitions""")
+                                   self.logger.warning("Using padbones on Oblivion export, but you probably do not want to do this. Disable the pad bones option to get higher quality skin partitions.")
                             if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
                                if self.EXPORT_BONESPERPARTITION < 18:
-                                   print("""\
-WARNING: using less than 18 bones per partition on Oblivion/Fallout 3 export
-         set it to 18 to get higher quality skin partitions""")
+                                   self.logger.warning("Using less than 18 bones per partition on Oblivion/Fallout 3 export. Set it to 18 to get higher quality skin partitions")
                             if lostweight > NifFormat._EPSILON:
-                                print("""\
-WARNING: lost %f in vertex weights while creating a skin partition for
-         Blender object '%s' (nif block '%s')""" % (lostweight,
-                                                    ob.name, trishape.name))
+                                self.logger.warning("Lost %f in vertex weights while creating a skin partition for Blender object '%s' (nif block '%s')" % (lostweight, ob.name, trishape.name))
 
                         # clean up
                         del vert_weights
@@ -2638,9 +2627,7 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
                 self.exportCollisionHelper(obj, node)
 
         else:
-            print("""\
-WARNING: only Morrowind, Oblivion, and Fallout 3 collisions are supported,
-         skipped collision object '%s'""" % obj.name)
+            self.logger.warning("Only Morrowind, Oblivion, and Fallout 3 collisions are supported, skipped collision object '%s'" % obj.name)
 
     def exportCollisionHelper(self, obj, parent_block):
         """Helper function to add collision objects to a node. This function
@@ -3303,8 +3290,8 @@ check that %s is selected during export.""" % targetobj)
                 if (name.lower() == specialname.lower()
                     or name.lower().startswith(specialname.lower() + ".")):
                     if name != specialname:
-                        print("Renaming material '%s' to '%s'"
-                              % (name, specialname))
+                        self.logger.warning("Renaming material '%s' to '%s'"
+                                            % (name, specialname))
                     name = specialname
 
         matprop.name = name
@@ -3339,9 +3326,9 @@ check that %s is selected during export.""" % targetobj)
             if (block.getHash(ignore_strings=ignore_strings) ==
                 matprop.getHash(
                     ignore_strings=ignore_strings)):
-                print("Merging materials '%s' and '%s' \
+                self.logger.warning("Merging materials '%s' and '%s' \
 (they are identical in nif)"
-                      % (matprop.name, block.name))
+                                    % (matprop.name, block.name))
                 return block
 
         # no material property with given settings found, so use and register
@@ -3356,9 +3343,7 @@ check that %s is selected during export.""" % targetobj)
         try:
             texdesc.uvSet = uvlayers.index(mtex.uvlayer) if mtex.uvlayer else 0
         except ValueError: # mtex.uvlayer not in uvlayers list
-            print("""\
-WARNING: bad uv layer name '%s' in texture '%s'
-         falling back on first uv layer""" % (mtex.uvlayer, mtex.tex.getName()))
+            self.logger.warning("""Bad uv layer name '%s' in texture '%s'. Falling back on first uv layer""" % (mtex.uvlayer, mtex.tex.getName()))
             texdesc.uvSet = 0 # assume 0 is active layer
 
         texdesc.source = self.exportSourceTexture(mtex.tex)
@@ -3518,8 +3503,8 @@ def config_callback(**config):
     # run exporter
     NifExport(**config)
     # finish export
-    print('nif export finished in %.2f seconds'
-          % (Blender.sys.time() - starttime))
+    self.logger.info('Finished in %.2f seconds'
+                     % (Blender.sys.time() - starttime))
     Blender.Window.WaitCursor(0)
 
 def fileselect_callback(filename):
