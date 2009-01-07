@@ -3501,10 +3501,10 @@ def config_callback(**config):
     """Called when config script is done. Starts and times import."""
     starttime = Blender.sys.time()
     # run exporter
-    NifExport(**config)
+    exporter = NifExport(**config)
     # finish export
-    self.logger.info('Finished in %.2f seconds'
-                     % (Blender.sys.time() - starttime))
+    exporter.logger.info('Finished in %.2f seconds'
+                         % (Blender.sys.time() - starttime))
     Blender.Window.WaitCursor(0)
 
 def fileselect_callback(filename):

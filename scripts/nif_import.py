@@ -3179,10 +3179,11 @@ def config_callback(**config):
 
     try:
         # run importer
-        NifImport(**config)
+        importer = NifImport(**config)
     finally:
         # finish import
-        self.logger.info('Finished in %.2f seconds' % (Blender.sys.time()-t))
+        importer.logger.info('Finished in %.2f seconds'
+                             % (Blender.sys.time()-t))
         Blender.Window.WaitCursor(0)
         if is_editmode: Blender.Window.EditMode(1)
 
