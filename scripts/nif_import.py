@@ -28,6 +28,7 @@ import math
 import operator
 
 from PyFFI.Utils import QuickHull
+import PyFFI.Spells.NIF.fix
 
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
@@ -294,15 +295,24 @@ class NifImport(NifImportExport):
                 self.logger.warning(",".join([node.name for node in failed]))
 
         # transform geometry into the rest pose
+        # fake a data element with given root, for spells
+        # TODO: use data element directly, i.e. upgrade this importRoot
+        #       function to an importData function
+        data = NifFormat.Data()
+        data.roots = [root_block]
+        if self.IMPORT_SENDGEOMETRIESTOBINDPOS:
+            PyFFI.Spells.NIF.fix.SpellSendGeometriesToBindPosition(data=data).recurse()
         if self.IMPORT_SENDBONESTOBINDPOS:
-            for niBlock in root_block.tree():
-                if not isinstance(niBlock, NifFormat.NiGeometry):
-                    continue
-                if not niBlock.isSkin():
-                    continue
-                self.logger.info('Sending bones of %s to bind position'
-                                 % niBlock.name)
-                niBlock.sendBonesToBindPosition()
+            PyFFI.Spells.NIF.fix.SpellSendBonesToBindPosition(data=data).recurse()
+            ### old code:
+            #for niBlock in root_block.tree():
+            #    if not isinstance(niBlock, NifFormat.NiGeometry):
+            #        continue
+            #    if not niBlock.isSkin():
+            #        continue
+            #    self.logger.info('Sending bones of %s to bind position'
+            #                     % niBlock.name)
+            #    niBlock.sendBonesToBindPosition()
         if self.IMPORT_APPLYSKINDEFORM:
             for niBlock in root_block.tree():
                 if not isinstance(niBlock, NifFormat.NiGeometry):
@@ -3180,12 +3190,12 @@ def config_callback(**config):
     try:
         # run importer
         importer = NifImport(**config)
+        importer.logger.info(
+            'Finished in %.2f seconds' % (Blender.sys.time()-t))
     finally:
-        # finish import
-        importer.logger.info('Finished in %.2f seconds'
-                             % (Blender.sys.time()-t))
         Blender.Window.WaitCursor(0)
-        if is_editmode: Blender.Window.EditMode(1)
+        if is_editmode:
+            Blender.Window.EditMode(1)
 
 def fileselect_callback(filename):
     """Called once file is selected. Starts config GUI."""

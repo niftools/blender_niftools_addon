@@ -189,6 +189,7 @@ class NifConfig:
         EXPORT_STRIPIFY = True,
         EXPORT_STITCHSTRIPS = False,
         EXPORT_SMOOTHOBJECTSEAMS = True,
+        IMPORT_SENDGEOMETRIESTOBINDPOS = True,
         IMPORT_SENDBONESTOBINDPOS = True,
         IMPORT_APPLYSKINDEFORM = False,
         EXPORT_BHKLISTSHAPE = False,
@@ -520,8 +521,11 @@ class NifConfig:
                 val = (self.config["IMPORT_REALIGN_BONES"] == 2),
                 num_items = 2, item = 1)
             self.drawToggle(
-                text = "Send Bones To Bind Position",
-                event_name = "IMPORT_SENDBONESTOBINDPOS")
+                text="Send Geometries To Bind Position",
+                event_name="IMPORT_SENDGEOMETRIESTOBINDPOS")
+            self.drawToggle(
+                text="Send Bones To Bind Position",
+                event_name="IMPORT_SENDBONESTOBINDPOS")
             self.drawToggle(
                 text = "Apply Skin Deformation",
                 event_name = "IMPORT_APPLYSKINDEFORM")
@@ -889,6 +893,8 @@ class NifConfig:
                 self.config["IMPORT_SKELETON"] = 0
             else:
                 self.config["IMPORT_SKELETON"] = 2
+        elif evName == "IMPORT_SENDGEOMETRIESTOBINDPOS":
+            self.config["IMPORT_SENDGEOMETRIESTOBINDPOS"] = not self.config["IMPORT_SENDGEOMETRIESTOBINDPOS"]
         elif evName == "IMPORT_SENDBONESTOBINDPOS":
             self.config["IMPORT_SENDBONESTOBINDPOS"] = not self.config["IMPORT_SENDBONESTOBINDPOS"]
         elif evName == "IMPORT_APPLYSKINDEFORM":

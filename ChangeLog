@@ -2,6 +2,14 @@ Version 2.3.14 (***)
 * switched to using the standard logging module for log messages
 * improvements for multi-material mopp import and export (but not entirely
 functional yet)
+* improved self-validating bind position algorithm
+  - geometries are transformed first to a common bind pose (if it exists, a
+  warning is issued if no common bind pose is found) - some misaligned
+  geometry pieces will now be aligned correctly with the armature, this is
+  most noticable with Morrowind imports
+  - bone nodes are transformed to bind position in two phases, to reduce
+  rounding errors - some bones that were not sent to the bind pose with the
+  older algorithm will now be correct
 * better Fallout 3 export options
 * added export of Fallout 3 tangent space
 * added export of Fallout 3 BSShaderPPLightingProperty for textures

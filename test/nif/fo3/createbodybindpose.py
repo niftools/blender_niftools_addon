@@ -12,7 +12,7 @@ from PyFFI.Formats.NIF import NifFormat
 niftoolslogger = logging.getLogger("niftools")
 niftoolslogger.setLevel(logging.DEBUG)
 pyffilogger = logging.getLogger("pyffi")
-pyffilogger.setLevel(logging.INFO)
+pyffilogger.setLevel(logging.DEBUG)
 loghandler = logging.StreamHandler()
 loghandler.setLevel(logging.DEBUG)
 logformatter = logging.Formatter("%(name)s:%(levelname)s:%(message)s")
@@ -43,19 +43,20 @@ logger.info("Sending geometries to bind position")
 skeleton.roots[0].sendGeometriesToBindPosition()
 # send all bones to their bind position
 logger.info("Sending bones to bind position")
-for block in skeleton.roots[0].tree():
-    if isinstance(block, NifFormat.NiGeometry):
-        block.sendBonesToBindPosition()
+skeleton.roots[0].sendBonesToBindPosition()
+#for block in skeleton.roots[0].tree():
+#    if isinstance(block, NifFormat.NiGeometry):
+#        block.sendBonesToBindPosition()
 # remove non-ninode children
-logger.info("Removing non-NiNode children")
-for block in skeleton.roots[0].tree():
-    block.setChildren([child
-                       for child in block.getChildren()
-                       if isinstance(child, NifFormat.NiNode)])
-    block.setExtraDatas([])
-    block.setProperties([])
-    block.controller = None
-    block.collisionObject = None
+#logger.info("Removing non-NiNode children")
+#for block in skeleton.roots[0].tree():
+#    block.setChildren([child
+#                       for child in block.getChildren()
+#                       if isinstance(child, NifFormat.NiNode)])
+#    block.setExtraDatas([])
+#    block.setProperties([])
+#    block.controller = None
+#    block.collisionObject = None
 
 # write result
 logger.info("Writing fo3_bodybindpose.nif")
