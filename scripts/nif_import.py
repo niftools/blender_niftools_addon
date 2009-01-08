@@ -1710,8 +1710,13 @@ Texture '%s' not found or not supported and no alternate available"""
                    relative_to = None):
         """Creates and returns a raw mesh, or appends geometry data to
         group_mesh. If group_mesh is not None, then applytransform must be
-        True."""
+        True.
+        """
         assert(isinstance(niBlock, NifFormat.NiTriBasedGeom))
+
+        logger = logging.getLogger("niftools.blender.import.mesh")
+        logger.info("Importing mesh data for geometry %s" % niBlock.name)
+
         if group_mesh:
             b_mesh = group_mesh
             b_meshData = group_mesh.getData(mesh=True)
@@ -1889,12 +1894,15 @@ Texture '%s' not found or not supported and no alternate available"""
                 # already added
                 # NIF vertex i maps to Blender vertex v_map[n_map_k]
                 v_map[i] = v_map[n_map_k]
+        # report
+        logger.debug("%i unique vertex-normal pairs" % len(n_map))
         # release memory
         del n_map
 
         # Adds the faces to the mesh
         f_map = [None]*len(tris)
         b_f_index = len(b_meshData.faces)
+        num_new_faces = 0 # counter for debugging
         for i, f in enumerate(tris):
             # get face index
             f_verts = [b_meshData.verts[v_map[vert_index]] for vert_index in f]
@@ -1923,12 +1931,16 @@ Texture '%s' not found or not supported and no alternate available"""
             # Blender face index
             f_map[i] = b_f_index
             b_f_index += 1
+            num_new_faces += 1
         # at this point, deleted faces (degenerate or duplicate)
         # satisfy f_map[i] = None
 
+        logger.debug("%i unique faces" % num_new_faces)
+
         # set face smoothing and material
         for b_f_index in f_map:
-            if b_f_index == None: continue
+            if b_f_index == None:
+                continue
             f = b_meshData.faces[b_f_index]
             f.smooth = 1 if norms else 0
             f.mat = materialIndex
@@ -1958,21 +1970,25 @@ Texture '%s' not found or not supported and no alternate available"""
         # only must duplicate vertices for hard edges; duplicating for UV seams
         # would introduce unnecessary hard edges.
 
-        b_meshData.faceUV = 1
-        b_meshData.vertexUV = 0
-        for i, uvSet in enumerate(uvco):
-            # Set the face UV's for the mesh. The NIF format only supports
-            # vertex UV's, but Blender only allows explicit editing of face
-            # UV's, so load vertex UV's as face UV's
-            uvlayer = self.getUVLayerName(i)
-            if not uvlayer in b_meshData.getUVLayerNames():
-                b_meshData.addUVLayer(uvlayer)
-            b_meshData.activeUVLayer = uvlayer
-            for f, b_f_index in izip(tris, f_map):
-                if b_f_index == None: continue
-                uvlist = [ Vector(uvSet[vert_index].u, 1.0 - uvSet[vert_index].v) for vert_index in f ]
-                b_meshData.faces[b_f_index].uv = tuple(uvlist)
-        b_meshData.activeUVLayer = self.getUVLayerName(0)
+        # only import UV if there are faces
+        # (some corner cases have only one vertex, and no faces,
+        # and b_meshData.faceUV = 1 on such mesh raises a runtime error)
+        if b_meshData.faces:
+            b_meshData.faceUV = 1
+            b_meshData.vertexUV = 0
+            for i, uvSet in enumerate(uvco):
+                # Set the face UV's for the mesh. The NIF format only supports
+                # vertex UV's, but Blender only allows explicit editing of face
+                # UV's, so load vertex UV's as face UV's
+                uvlayer = self.getUVLayerName(i)
+                if not uvlayer in b_meshData.getUVLayerNames():
+                    b_meshData.addUVLayer(uvlayer)
+                b_meshData.activeUVLayer = uvlayer
+                for f, b_f_index in izip(tris, f_map):
+                    if b_f_index == None: continue
+                    uvlist = [ Vector(uvSet[vert_index].u, 1.0 - uvSet[vert_index].v) for vert_index in f ]
+                    b_meshData.faces[b_f_index].uv = tuple(uvlist)
+            b_meshData.activeUVLayer = self.getUVLayerName(0)
         
         if material:
             # fix up vertex colors depending on whether we had textures in the

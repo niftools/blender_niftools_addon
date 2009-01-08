@@ -13,6 +13,7 @@ functional yet)
 * better Fallout 3 export options
 * added export of Fallout 3 tangent space
 * added export of Fallout 3 BSShaderPPLightingProperty for textures
+* fixed RuntimeError when importing mesh without faces
 
 Version 2.3.13 (18 Nov 2008)
 * better error message if mesh has bone vertex group but no weights
