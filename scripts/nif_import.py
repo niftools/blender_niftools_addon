@@ -1903,8 +1903,8 @@ Texture '%s' not found or not supported and no alternate available"""
                     self.logger.info("Partitions as materials requested, but mesh has no skin parition info, so importing %s as single material." % matProperty.name)
                 # single part, no postfix
                 partition_postfixes = [""]
-                # all vertics belong to the same partition
-                vertex_partition = [0] * len(verts)
+                # all faces belong to the same partition
+                face_partition = [0] * len(tris)
             else:
                 # one material per partition
                 if isinstance(skininst,
@@ -1921,17 +1921,30 @@ Texture '%s' not found or not supported and no alternate available"""
                         ":%i" % partnum
                         for partnum in xrange(skinpart.numSkinPartitionBlocks)]
                 # find out which vertex belongs to which partition
-                vertex_partition = [None] * len(verts)
+                face_partition = [None] * len(tris)
                 for partnum, partblock in enumerate(
                     skinpart.skinPartitionBlocks):
-                    for vert_index in partblock.vertexMap:
-                        if vertex_partition[vert_index] is None:
-                            vertex_partition[vert_index] = partnum
+                    for face_index in niData.getTriangleIndices(partblock.getTriangles()):
+                        # faces are sometimes duplicated
+                        # so "in (None, partnum)" instead of "is None"
+                        # to avoid void warning in this case
+                        if face_partition[face_index] in (None, partnum):
+                            face_partition[face_index] = partnum
                         else:
-                            self.logger.warning("Vertex %i belongs to multiple partitions (%i and %i)" % (vert_index, vertex_partition[vert_index], partnum))
-                if None in vertex_partition:
-                    raise ValueError("Unpartitioned vertex %i"
-                                     % vertex_partition.index(None))
+                            self.logger.warning("Face %i belongs to multiple partitions (%i and %i) of %s" % (face_index, face_partition[face_index], partnum, niBlock.name))
+                if None in face_partition:
+                    bad_face_index = face_partition.index(None)
+                    self.logger.warning(
+                        "Found %i unpartitioned faces in %s"
+                        % (face_partition.count(None), niBlock.name))
+                    for bad_face_index, partnum in enumerate(face_partition):
+                        if partnum is None:
+                            self.logger.warning(
+                                "Face at %i, vertices (%i, %i, %i)"
+                                % (bad_face_index,
+                                   tris[bad_face_index][0],
+                                   tris[bad_face_index][1],
+                                   tris[bad_face_index][2]))
 
             # create all materials
             # indices of imported materials for this mesh
@@ -2067,12 +2080,8 @@ Texture '%s' not found or not supported and no alternate available"""
                 continue
             f = b_meshData.faces[b_f_index]
             f.smooth = 1 if norms else 0
-            # get vertices of this face, and determine partition number
-            partnum = vertex_partition[tris[f_index][0]]
-            if (vertex_partition[tris[f_index][1]] != partnum
-                or vertex_partition[tris[f_index][2]] != partnum):
-                self.logger.warning("face %i has vertices belonging to multiple partitions (%i, %i, %i)" % (f_index, partnum, vertex_partition[tris[f_index][1]], vertex_partition[tris[f_index][2]]))
-            f.mat = materialIndices[partnum]
+            # set material index based on face partition index
+            f.mat = materialIndices[face_partition[f_index]]
 
         # vertex colors
         vcol = niData.vertexColors
