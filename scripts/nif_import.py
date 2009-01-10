@@ -1922,16 +1922,45 @@ Texture '%s' not found or not supported and no alternate available"""
                         for partnum in xrange(skinpart.numSkinPartitionBlocks)]
                 # find out which vertex belongs to which partition
                 face_partition = [None] * len(tris)
+                has_duplicates = False
                 for partnum, partblock in enumerate(
                     skinpart.skinPartitionBlocks):
                     for face_index in niData.getTriangleIndices(partblock.getTriangles()):
-                        # faces are sometimes duplicated
-                        # so "in (None, partnum)" instead of "is None"
-                        # to avoid void warning in this case
-                        if face_partition[face_index] in (None, partnum):
+                        if face_partition[face_index] is None:
                             face_partition[face_index] = partnum
+                        elif face_partition[face_index] == partnum:
+                            # in rare cases, faces are sometimes duplicated
+                            # see for example femaleupperbody.nif, headmeat
+                            # faces 520, 521, 522, 531, ... and a few more
+                            # are duplicated
+                            has_duplicates = True
                         else:
-                            self.logger.warning("Face %i belongs to multiple partitions (%i and %i) of %s" % (face_index, face_partition[face_index], partnum, niBlock.name))
+                            raise ValueError("Face %i belongs to multiple partitions (%i and %i) of %s" % (face_index, face_partition[face_index], partnum, niBlock.name))
+                if has_duplicates:
+                    # this rarely happens, but sometimes the face list has
+                    # duplicates, and we must fix up their indices
+                    # (they have not been set because getTriangleIndices only
+                    # returns the index of the first match!)
+                    self.logger.debug("Found duplicate faces, fixing up partition indices")
+                    for face_index, (face, partnum) in enumerate(izip(tris, face_partition)):
+                        if partnum is None:
+                            for other_face_index, (other_face, other_partnum) in enumerate(izip(tris, face_partition)):
+                                if not(other_partnum is None):
+                                    if ((other_face[0] == face[0]
+                                         and other_face[1] == face[1]
+                                         and other_face[2] == face[2])
+                                        or
+                                        (other_face[0] == face[1]
+                                         and other_face[1] == face[2]
+                                         and other_face[2] == face[0])
+                                        or
+                                        (other_face[0] == face[2]
+                                         and other_face[1] == face[0]
+                                         and other_face[2] == face[1])):
+                                        self.logger.debug("Fixing partition number for face index %i using face index %i" % (face_index, other_face_index))
+                                        face_partition[face_index] = \
+                                            face_partition[other_face_index]
+                                        break
                 if None in face_partition:
                     bad_face_index = face_partition.index(None)
                     self.logger.warning(
