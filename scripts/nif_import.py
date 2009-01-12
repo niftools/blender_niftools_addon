@@ -2062,21 +2062,42 @@ Texture '%s' not found or not supported and no alternate available"""
                         f.image = imgobj
 
         # import skinning info, for meshes affected by bones
-        skinInstance = niBlock.skinInstance
-        if skinInstance:
-            skinData = skinInstance.data
-            bones = skinInstance.bones
-            boneWeights = skinData.boneList
+        skininst = niBlock.skinInstance
+        if skininst:
+            skindata = skininst.data
+            bones = skininst.bones
+            boneWeights = skindata.boneList
             for idx, bone in enumerate(bones):
                 vertexWeights = boneWeights[idx].vertexWeights
-                groupName = self.names[bone]
-                if not groupName in b_meshData.getVertGroupNames():
-                    b_meshData.addVertGroup(groupName)
+                groupname = self.names[bone]
+                if not groupname in b_meshData.getVertGroupNames():
+                    b_meshData.addVertGroup(groupname)
                 for skinWeight in vertexWeights:
                     vert = skinWeight.index
                     weight = skinWeight.weight
-                    b_meshData.assignVertsToGroup(groupName, [v_map[vert]], weight, Blender.Mesh.AssignModes.REPLACE)
-        
+                    b_meshData.assignVertsToGroup(
+                        groupname, [v_map[vert]], weight,
+                        Blender.Mesh.AssignModes.REPLACE)
+
+        # import body parts as vertex groups
+        if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
+            skinpart = niBlock.getSkinPartition()
+            for bodypart, skinpartblock in izip(
+                skininst.partitions, skinpart.skinPartitionBlocks):
+                bodypart_wrap = NifFormat.BSDismemberBodyPartType()
+                bodypart_wrap.setValue(bodypart.bodyPart)
+                groupname = bodypart_wrap.getDetailDisplay()
+                # create vertex group if it did not exist yet
+                if not(groupname in b_meshData.getVertGroupNames()):
+                    b_meshData.addVertGroup(groupname)
+                # find vertex indices of this group
+                groupverts = [v_map[v_index]
+                              for v_index in skinpartblock.vertexMap]
+                # create the group
+                b_meshData.assignVertsToGroup(
+                    groupname, groupverts, 1,
+                    Blender.Mesh.AssignModes.ADD)
+
         # import morph controller
         if self.IMPORT_ANIMATION:
             morphCtrl = self.find_controller(niBlock, NifFormat.NiGeomMorpherController)
