@@ -1736,9 +1736,9 @@ Texture '%s' not found or not supported and no alternate available"""
         return material
 
     def importMesh(self, niBlock,
-                   group_mesh = None,
-                   applytransform = False,
-                   relative_to = None):
+                   group_mesh=None,
+                   applytransform=False,
+                   relative_to=None):
         """Creates and returns a raw mesh, or appends geometry data to
         group_mesh.
 
@@ -1980,7 +1980,7 @@ Texture '%s' not found or not supported and no alternate available"""
 
         # set face smoothing and material
         for b_f_index in f_map:
-            if b_f_index == None:
+            if b_f_index is None:
                 continue
             f = b_meshData.faces[b_f_index]
             f.smooth = 1 if norms else 0
@@ -1992,7 +1992,7 @@ Texture '%s' not found or not supported and no alternate available"""
         if vcol:
             b_meshData.vertexColors = 1
             for f, b_f_index in izip(tris, f_map):
-                if b_f_index == None:
+                if b_f_index is None:
                     continue
                 b_face = b_meshData.faces[b_f_index]
                 # now set the vertex colors
@@ -2489,7 +2489,7 @@ Texture '%s' not found or not supported and no alternate available"""
         if kfc and kfc.data:
             # create an Ipo for this object
             b_ipo = b_obj.getIpo()
-            if b_ipo == None:
+            if b_ipo is None:
                 b_ipo = Blender.Ipo.New('Object', b_obj.name)
                 b_obj.setIpo(b_ipo)
             # denote progress
