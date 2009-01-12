@@ -1480,45 +1480,38 @@ Texture '%s' not found or not supported and no alternate available"""
     def getMaterialHash(self, matProperty, textProperty,
                         alphaProperty, specProperty,
                         textureEffect, wireProperty,
-                        bsShaderProperty, postfix=""):
+                        bsShaderProperty):
         """Helper function for importMaterial. Returns a key that
         uniquely identifies a material from its properties. The key
         ignores the material name as that does not affect the
         rendering.
         """
-        return (matProperty.getHash(ignore_strings = True)
-                if matProperty else None,
-                textProperty.getHash()     if textProperty  else None,
-                alphaProperty.getHash()    if alphaProperty else None,
-                specProperty.getHash()     if specProperty  else None,
-                textureEffect.getHash()    if textureEffect else None,
-                wireProperty.getHash()     if wireProperty  else None,
-                bsShaderProperty.getHash() if bsShaderProperty else None,
-                postfix)
+        return ( matProperty.getHash(ignore_strings = True)
+                 if matProperty else None,
+                 textProperty.getHash()     if textProperty  else None,
+                 alphaProperty.getHash()    if alphaProperty else None,
+                 specProperty.getHash()     if specProperty  else None,
+                 textureEffect.getHash()    if textureEffect else None,
+                 wireProperty.getHash()     if wireProperty  else None,
+                 bsShaderProperty.getHash() if bsShaderProperty else None)
 
     def importMaterial(self, matProperty, textProperty,
                        alphaProperty, specProperty,
                        textureEffect, wireProperty,
-                       bsShaderProperty, postfix=""):
-        """Creates and returns a material.
-
-        @param postfix: A string to append to the material name. This
-            is useful if the material must be split into different
-            parts, for instance for dismember body parts.
-        @type postfix: C{str}
-        """
+                       bsShaderProperty):
+        """Creates and returns a material."""
         # First check if material has been created before.
         material_hash = self.getMaterialHash(matProperty, textProperty,
                                              alphaProperty, specProperty,
                                              textureEffect, wireProperty,
-                                             bsShaderProperty, postfix)
+                                             bsShaderProperty)
         try:
             return self.materials[material_hash]                
         except KeyError:
             pass
         # use the material property for the name, other properties usually have
         # no name
-        name = self.importName(matProperty, postfix=postfix)
+        name = self.importName(matProperty)
         material = Blender.Material.New(name)
         # get apply mode, and convert to blender "blending mode"
         blendmode = Blender.Texture.BlendModes["MIX"] # default
@@ -1743,10 +1736,9 @@ Texture '%s' not found or not supported and no alternate available"""
         return material
 
     def importMesh(self, niBlock,
-                   group_mesh=None,
-                   applytransform=False,
-                   relative_to=None,
-                   partitions_as_materials=None):
+                   group_mesh = None,
+                   applytransform = False,
+                   relative_to = None):
         """Creates and returns a raw mesh, or appends geometry data to
         group_mesh.
 
@@ -1759,23 +1751,11 @@ Texture '%s' not found or not supported and no alternate available"""
             transformation to the mesh. If group_mesh is not C{None},
             then applytransform must be C{True}.
         @type applytransform: C{bool}
-        @param partitions_as_materials: Whether to import skin
-            partitions to materials. If C{False}, all skin partitions
-            are merged into the same mesh (this is the default). The
-            main use of this parameter is to import Fallout 3
-            dismember partitions. If C{None}, then this is
-            automatically detected (i.e. only enabled when a
-            BSDismemberSkinInstance is found).
-        @type partitions_as_materials: C{NoneType} or C{bool}
         """
         assert(isinstance(niBlock, NifFormat.NiTriBasedGeom))
 
         logger = logging.getLogger("niftools.blender.import.mesh")
         logger.info("Importing mesh data for geometry %s" % niBlock.name)
-
-        if partitions_as_materials is None:
-            partitions_as_materials= isinstance(
-                niBlock.skinInstance, NifFormat.BSDismemberSkinInstance)
 
         if group_mesh:
             b_mesh = group_mesh
@@ -1834,32 +1814,29 @@ Texture '%s' not found or not supported and no alternate available"""
         # note that NIF files only support one material for each trishape
         # find material property
         matProperty = self.find_property(niBlock, NifFormat.NiMaterialProperty)
-        # if we are importing skin partitions as materials, we MUST have
-        # a material, so create a dummy material property in that case
-        if partitions_as_materials and not matProperty:
-            matProperty = NifFormat.NiMaterialProperty()
-            matProperty.name = "dummy"
-            self.logger.warning("Partitioned mesh has no material, so will create dummy materials to import skin partitions into different material slots")
-
-        # import material
         if matProperty:
             # Texture
             textProperty = None
             if uvco:
                 textProperty = self.find_property(niBlock,
                                                   NifFormat.NiTexturingProperty)
+            
             # Alpha
             alphaProperty = self.find_property(niBlock,
                                                NifFormat.NiAlphaProperty)
+            
             # Specularity
             specProperty = self.find_property(niBlock,
                                               NifFormat.NiSpecularProperty)
+
             # Wireframe
             wireProperty = self.find_property(niBlock,
                                               NifFormat.NiWireframeProperty)
+
             # bethesda shader
             bsShaderProperty = self.find_property(
                 niBlock, NifFormat.BSShaderPPLightingProperty)
+
             # texturing effect for environment map
             # in official files this is activated by a NiTextureEffect child
             # preceeding the niBlock
@@ -1883,126 +1860,24 @@ Texture '%s' not found or not supported and no alternate available"""
                             textureEffect = effect
                             break
 
-            # create material(s) and assign it to the mesh
-            # first find skin partition block
-            skininst = niBlock.skinInstance
-            if not skininst:
-                skinpart = None
-            else:
-                skinpart = skininst.skinPartition
-                if not skinpart:
-                    skindata = skininst.data
-                    if skindata:
-                        skinpart = skindata.skinPartition
-            # now import material, or materials if there is a skin partition
-            # block and partitions_as_materials is True
-            if not partitions_as_materials or (skinpart is None):
-                # single material for all partitions
-                # or unpartitioned mesh
-                if partitions_as_materials:
-                    self.logger.info("Partitions as materials requested, but mesh has no skin parition info, so importing %s as single material." % matProperty.name)
-                # single part, no postfix
-                partition_postfixes = [""]
-                # all faces belong to the same partition
-                face_partition = [0] * len(tris)
-            else:
-                # one material per partition
-                if isinstance(skininst,
-                              NifFormat.BSDismemberSkinInstance):
-                    partition_postfixes = [
-                        ":%s" % self.BS_BODY_PART_NAMES[part.bodyPart]
-                        for part in skininst.partitions]
-                    self.logger.debug("Found dismember parts %s"
-                                      % partition_postfixes)
-                else:
-                    if not skinpart:
-                        raise ValueError("weird nif construction: skinned mesh")
-                    partition_postfixes = [
-                        ":%i" % partnum
-                        for partnum in xrange(skinpart.numSkinPartitionBlocks)]
-                # find out which vertex belongs to which partition
-                face_partition = [None] * len(tris)
-                has_duplicates = False
-                for partnum, partblock in enumerate(
-                    skinpart.skinPartitionBlocks):
-                    for face_index in niData.getTriangleIndices(partblock.getTriangles()):
-                        if face_partition[face_index] is None:
-                            face_partition[face_index] = partnum
-                        elif face_partition[face_index] == partnum:
-                            # in rare cases, faces are sometimes duplicated
-                            # see for example femaleupperbody.nif, headmeat
-                            # faces 520, 521, 522, 531, ... and a few more
-                            # are duplicated
-                            has_duplicates = True
-                        else:
-                            raise ValueError("Face %i belongs to multiple partitions (%i and %i) of %s" % (face_index, face_partition[face_index], partnum, niBlock.name))
-                if has_duplicates:
-                    # this rarely happens, but sometimes the face list has
-                    # duplicates, and we must fix up their indices
-                    # (they have not been set because getTriangleIndices only
-                    # returns the index of the first match!)
-                    self.logger.debug("Found duplicate faces, fixing up partition indices")
-                    for face_index, (face, partnum) in enumerate(izip(tris, face_partition)):
-                        if partnum is None:
-                            for other_face_index, (other_face, other_partnum) in enumerate(izip(tris, face_partition)):
-                                if not(other_partnum is None):
-                                    if ((other_face[0] == face[0]
-                                         and other_face[1] == face[1]
-                                         and other_face[2] == face[2])
-                                        or
-                                        (other_face[0] == face[1]
-                                         and other_face[1] == face[2]
-                                         and other_face[2] == face[0])
-                                        or
-                                        (other_face[0] == face[2]
-                                         and other_face[1] == face[0]
-                                         and other_face[2] == face[1])):
-                                        self.logger.debug("Fixing partition number for face index %i using face index %i" % (face_index, other_face_index))
-                                        face_partition[face_index] = \
-                                            face_partition[other_face_index]
-                                        break
-                if None in face_partition:
-                    bad_face_index = face_partition.index(None)
-                    self.logger.warning(
-                        "Found %i unpartitioned faces in %s"
-                        % (face_partition.count(None), niBlock.name))
-                    for bad_face_index, partnum in enumerate(face_partition):
-                        if partnum is None:
-                            self.logger.warning(
-                                "Face at %i, vertices (%i, %i, %i)"
-                                % (bad_face_index,
-                                   tris[bad_face_index][0],
-                                   tris[bad_face_index][1],
-                                   tris[bad_face_index][2]))
-
-            # create all materials
-            # indices of imported materials for this mesh
-            # (one index per partition)
-            materialIndices = []
-            # imported materials (one material per partition)
-            materials = []
-            for partition_postfix in partition_postfixes:
-                material = self.importMaterial(matProperty, textProperty,
-                                               alphaProperty, specProperty,
-                                               textureEffect, wireProperty,
-                                               bsShaderProperty,
-                                               postfix=partition_postfix)
-                materials += [material]
-                b_mesh_materials = b_meshData.materials
-                try:
-                    materialIndices += [b_mesh_materials.index(material)]
-                except ValueError:
-                    materialIndices += [len(b_mesh_materials)]
-                    b_meshData.materials += [material]
-                    
+            # create material and assign it to the mesh
+            material = self.importMaterial(matProperty, textProperty,
+                                           alphaProperty, specProperty,
+                                           textureEffect, wireProperty,
+                                           bsShaderProperty)
+            b_mesh_materials = b_meshData.materials
+            try:
+                materialIndex = b_mesh_materials.index(material)
+            except ValueError:
+                materialIndex = len(b_mesh_materials)
+                b_meshData.materials += [material]
             # if mesh has one material with wireproperty, then make the mesh
             # wire in 3D view
             if wireProperty:
                 b_mesh.drawType = Blender.Object.DrawTypes["WIRE"]
         else:
-            # no material info
-            materials = []
-            materialIndices = [0]
+            material = None
+            materialIndex = 0
 
         # if there are no vertices then enable face index shifts
         # (this fixes an issue with indexing)
@@ -2104,13 +1979,12 @@ Texture '%s' not found or not supported and no alternate available"""
         logger.debug("%i unique faces" % num_new_faces)
 
         # set face smoothing and material
-        for f_index, b_f_index in enumerate(f_map):
+        for b_f_index in f_map:
             if b_f_index == None:
                 continue
             f = b_meshData.faces[b_f_index]
             f.smooth = 1 if norms else 0
-            # set material index based on face partition index
-            f.mat = materialIndices[face_partition[f_index]]
+            f.mat = materialIndex
 
         # vertex colors
         vcol = niData.vertexColors
@@ -2118,7 +1992,8 @@ Texture '%s' not found or not supported and no alternate available"""
         if vcol:
             b_meshData.vertexColors = 1
             for f, b_f_index in izip(tris, f_map):
-                if b_f_index == None: continue
+                if b_f_index == None:
+                    continue
                 b_face = b_meshData.faces[b_f_index]
                 # now set the vertex colors
                 for f_vert_index, vert_index in enumerate(f):
@@ -2152,39 +2027,39 @@ Texture '%s' not found or not supported and no alternate available"""
                     b_meshData.addUVLayer(uvlayer)
                 b_meshData.activeUVLayer = uvlayer
                 for f, b_f_index in izip(tris, f_map):
-                    if b_f_index == None: continue
+                    if b_f_index is None:
+                        continue
                     uvlist = [ Vector(uvSet[vert_index].u, 1.0 - uvSet[vert_index].v) for vert_index in f ]
                     b_meshData.faces[b_f_index].uv = tuple(uvlist)
             b_meshData.activeUVLayer = self.getUVLayerName(0)
         
-        if materials:
-            for material in materials:
-                # fix up vertex colors depending on whether we had textures
-                # in the material
-                mbasetex = material.getTextures()[0]
-                mglowtex = material.getTextures()[1]
-                if b_meshData.vertexColors == 1:
-                    if mbasetex or mglowtex:
-                        # textured material: vertex colors influence lighting
-                        material.mode |= Blender.Material.Modes.VCOL_LIGHT
-                    else:
-                        # non-textured material: vertex colors incluence color
-                        material.mode |= Blender.Material.Modes.VCOL_PAINT
+        if material:
+            # fix up vertex colors depending on whether we had textures in the
+            # material
+            mbasetex = material.getTextures()[0]
+            mglowtex = material.getTextures()[1]
+            if b_meshData.vertexColors == 1:
+                if mbasetex or mglowtex:
+                    # textured material: vertex colors influence lighting
+                    material.mode |= Blender.Material.Modes.VCOL_LIGHT
+                else:
+                    # non-textured material: vertex colors incluence color
+                    material.mode |= Blender.Material.Modes.VCOL_PAINT
 
-                # if there's a base texture assigned to this material sets it
-                # to be displayed in Blender's 3D view
-                # but only if there are UV coordinates
-                if mbasetex and uvco:
-                    # face mode bitfield value
-                    TEX = Blender.Mesh.FaceModes['TEX']
-                    imgobj = mbasetex.tex.getImage()
-                    if imgobj:
-                        for b_f_index in f_map:
-                            if b_f_index is None:
-                                continue
-                            f = b_meshData.faces[b_f_index]
-                            f.mode = TEX
-                            f.image = imgobj
+            # if there's a base texture assigned to this material sets it
+            # to be displayed in Blender's 3D view
+            # but only if there are UV coordinates
+            if mbasetex and uvco:
+                # face mode bitfield value
+                TEX = Blender.Mesh.FaceModes['TEX']
+                imgobj = mbasetex.tex.getImage()
+                if imgobj:
+                    for b_f_index in f_map:
+                        if b_f_index is None:
+                            continue
+                        f = b_meshData.faces[b_f_index]
+                        f.mode = TEX
+                        f.image = imgobj
 
         # import skinning info, for meshes affected by bones
         skinInstance = niBlock.skinInstance
