@@ -290,7 +290,7 @@ Workaround: apply size and rotation (CTRL-A) on '%s'.""" % ob.name)
                 raise NifExportError("""\
 Please select the object(s) to export, and run this script again.""")
             root_objects = set()
-            export_types = ('Empty','Mesh','Armature')
+            export_types = ('Empty', 'Mesh', 'Armature')
             for root_object in [ob for ob in Blender.Object.GetSelected()
                                 if ob.getType() in export_types]:
                 while (root_object.getParent() != None):
@@ -349,7 +349,7 @@ Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
                         v.no = norm
                         #v.sel = True
                     nv += 1
-                self.logger.info("Fixed normals on %i vertices" % nv)
+                self.logger.info("Fixed normals on %i vertices." % nv)
 
             ## TODO use Blender actions for animation groups
             # check for animation groups definition in a text buffer 'Anim'
@@ -399,10 +399,10 @@ Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
                             has_controllers = True
                             break
                 if has_controllers:
-                    self.logger.info("Defining default animation group")
+                    self.logger.info("Defining default animation group.")
                     # write the animation group text buffer
                     animtxt = Blender.Text.New("Anim")
-                    animtxt.write("%i/Idle: Start/Idle: Loop Start\n%i/Idle: Loop Stop/Idle: Stop"%(self.fstart,self.fend))
+                    animtxt.write("%i/Idle: Start/Idle: Loop Start\n%i/Idle: Loop Stop/Idle: Stop" % (self.fstart, self.fend))
 
             # animations without keyframe animations crash the TESCS
             # if we are in that situation, add a trivial keyframe animation
@@ -1439,7 +1439,7 @@ Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
             mesh_mats = []
         # if the mesh has no materials, all face material indices should be 0, so it's ok to fake one material in the material list
         if (mesh_mats == []):
-            mesh_mats = [ None ]
+            mesh_mats = [None]
 
         # is mesh double sided?
         mesh_doublesided = (mesh.mode & Blender.Mesh.Modes.TWOSIDED)
@@ -1447,7 +1447,7 @@ Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
         # let's now export one trishape for every mesh material
         ### TODO: needs refactoring - move material, texture, etc.
         ### to separate function
-        for materialIndex, mesh_mat in enumerate( mesh_mats ):
+        for materialIndex, mesh_mat in enumerate(mesh_mats):
             # -> first, extract valuable info from our ob
             
             mesh_base_mtex = None
@@ -1491,11 +1491,11 @@ Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
                                 or (mesh_mat.getIpo() != None
                                     and mesh_mat.getIpo().getCurve('Alpha'))
                 mesh_haswire = mesh_mat.mode & Blender.Material.Modes.WIRE
-                mesh_mat_ambient_color = [0.0,0.0,0.0]
+                mesh_mat_ambient_color = [0.0, 0.0, 0.0]
                 mesh_mat_ambient_color[0] = mesh_mat_diffuse_color[0] * mesh_mat_ambient
                 mesh_mat_ambient_color[1] = mesh_mat_diffuse_color[1] * mesh_mat_ambient
                 mesh_mat_ambient_color[2] = mesh_mat_diffuse_color[2] * mesh_mat_ambient
-                mesh_mat_emissive_color = [0.0,0.0,0.0]
+                mesh_mat_emissive_color = [0.0, 0.0, 0.0]
                 mesh_mat_emissive_color[0] = mesh_mat_diffuse_color[0] * mesh_mat_emissive
                 mesh_mat_emissive_color[1] = mesh_mat_diffuse_color[1] * mesh_mat_emissive
                 mesh_mat_emissive_color[2] = mesh_mat_diffuse_color[2] * mesh_mat_emissive
