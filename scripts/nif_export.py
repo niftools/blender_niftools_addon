@@ -1615,6 +1615,17 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                                              (ob.getName(),mesh_mat.getName()))
 
 
+            # list of body part (name, index, vertices) in this mesh
+            bodypartgroups = []
+            for bodypartgroupname in NifFormat.BSDismemberBodyPartType().getEditorKeys():
+                if bodypartgroupname in ob.data.getVertGroupNames():
+                    self.logger.debug("Found body part %s"
+                                      % bodypartgroupname)
+                    bodypartgroups.append(
+                        [bodypartgroupname,
+                         getattr(NifFormat.BSDismemberBodyPartType,
+                                 bodypartgroupname),
+                         set(ob.data.getVertsFromGroup(bodypartgroupname))])
 
             # -> now comes the real export
             
@@ -1637,12 +1648,14 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
             # use Blender's face normals.
             
             vertquad_list = [] # (vertex, uv coordinate, normal, vertex color) list
-            vertmap = [ None for i in xrange(len(mesh.verts)) ] # blender vertex -> nif vertices
+            vertmap = [None for i in xrange(len(mesh.verts))] # blender vertex -> nif vertices
             vertlist = []
             normlist = []
             vcollist = []
             uvlist = []
             trilist = []
+            # for each face in trilist, a body part index
+            bodypartfacemap = []
             for f in mesh.faces:
                 # does the face belong to this trishape?
                 if (mesh_mat != None): # we have a material
@@ -1740,6 +1753,22 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                     else:
                         f_indexed = (f_index[0], f_index[2+i], f_index[1+i])
                     trilist.append(f_indexed)
+                    # add body part number
+                    if (self.EXPORT_VERSION != "Fallout 3"
+                        or not bodypartgroups):
+                        bodypartfacemap.append(0)
+                    else:
+                        for bodypartname, bodypartindex, bodypartverts in bodypartgroups:
+                            if (set(b_vert.index for b_vert in f.verts)
+                                <= bodypartverts):
+                                bodypartfacemap.append(bodypartindex)
+                                break
+                        else:
+                            # TODO: if this happens, select unassigned faces
+                            # in the editor
+                            raise ValueError(
+                                "Face %s of %s not assigned to any body part."
+                                % (f, b_mesh))
 
             if len(trilist) > 65535:
                 raise NifExportError(
@@ -1972,7 +2001,7 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
             # set triangles
             # stitch strips for civ4
             tridata.setTriangles(trilist,
-                                 stitchstrips = self.EXPORT_STITCHSTRIPS)
+                                 stitchstrips=self.EXPORT_STITCHSTRIPS)
 
             # update tangent space (as binary extra data only for Oblivion)
             if mesh_uvlayers and mesh_hasnormals:
@@ -2125,7 +2154,9 @@ they can easily be identified.")
                                 maxbonespervertex=self.EXPORT_BONESPERVERTEX,
                                 stripify=self.EXPORT_STRIPIFY,
                                 stitchstrips=self.EXPORT_STITCHSTRIPS,
-                                padbones=self.EXPORT_PADBONES)
+                                padbones=self.EXPORT_PADBONES,
+                                triangles=trilist,
+                                trianglepartmap=bodypartfacemap)
                             # warn on bad config settings
                             if self.EXPORT_VERSION == 'Oblivion':
                                if self.EXPORT_PADBONES:

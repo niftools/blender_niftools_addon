@@ -13,7 +13,7 @@ functional yet)
 * better Fallout 3 export options
 * added export of Fallout 3 tangent space
 * added export of Fallout 3 BSShaderPPLightingProperty for textures
-* body parts can now be imported via vertex groups
+* body parts can now be imported and exported via vertex groups
 * fixed RuntimeError when importing mesh without faces
 
 Version 2.3.13 (18 Nov 2008)
