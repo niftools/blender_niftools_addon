@@ -1577,7 +1577,6 @@ Texture '%s' not found or not supported and no alternate available"""
             b_amb = 1.0
         if b_emit > 1.0:
             b_emit = 1.0
-        b_emit = max(b_emit, matProperty.emitMulti)
         material.setAmb(b_amb)
         material.setEmit(b_emit)
         # glossiness

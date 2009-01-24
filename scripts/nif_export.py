@@ -3341,7 +3341,6 @@ check that %s is selected during export.""" % targetobj)
         matprop.emissiveColor.b = emissive[2]
         matprop.glossiness = glossiness
         matprop.alpha = alpha
-        matprop.emitMulti = sum(emissive) / len(emissive) # FO3
 
         # search for duplicate
         # (ignore the name string as sometimes import needs to create different
