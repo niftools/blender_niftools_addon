@@ -3463,7 +3463,7 @@ check that %s is selected during export.""" % targetobj)
         # set non-default fields (TODO check which are really needed)
         bsshader.shaderFlags.zbufferTest = 1
         bsshader.shaderFlags.shadowMap = 1
-        bsshader.shaderFlags.shadowFrustrum = 1
+        bsshader.shaderFlags.shadowFrustum = 1
         bsshader.shaderFlags.empty = 1
         bsshader.shaderFlags.unknown31 = 1
         # set textures
