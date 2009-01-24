@@ -1689,18 +1689,18 @@ Texture '%s' not found or not supported and no alternate available"""
                     mbaseTexture = material.getTextures()[0]
                     mbaseTexture.blendmode = blendmode
 
-            normTexFile = bsShaderProperty.textureSet.textures[1]
-            if normTexFile:
-                normTexture = self.importTexture(normTexFile)
-                if normTexture:
+            bumpTexFile = bsShaderProperty.textureSet.textures[1]
+            if bumpTexFile:
+                bumpTexture = self.importTexture(bumpTexFile)
+                if bumpTexture:
                     # set the texture to use face UV coordinates
                     texco = Blender.Texture.TexCo.UV
                     # map the texture to the normal channel
                     mapto = Blender.Texture.MapTo.NOR
                     # set the texture for the material
-                    material.setTexture(1, normTexture, texco, mapto)
-                    mbaseTexture = material.getTextures()[1]
-                    mbaseTexture.blendmode = blendmode
+                    material.setTexture(1, bumpTexture, texco, mapto)
+                    mbumpTexture = material.getTextures()[1]
+                    mbumpTexture.blendmode = blendmode
 
         if textureEffect:
             envmapTexture = self.importTexture(textureEffect.sourceTexture)
