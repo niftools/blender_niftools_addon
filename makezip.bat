@@ -13,6 +13,7 @@ del %NAME%-%VERSION%.tar
 pause
 
 del win-install\%NAME%-%VERSION%-windows.exe
-"%PROGRAMFILES%\NSIS\makensis.exe" /v3 win-install\%NAME%.nsi
+if exist "%PROGRAMFILES%\NSIS\makensis.exe" "%PROGRAMFILES%\NSIS\makensis.exe" /v3 win-install\%NAME%.nsi
+if exist "%PROGRAMFILES(x86)%\NSIS\makensis.exe" "%PROGRAMFILES(x86)%\NSIS\makensis.exe" /v3 win-install\%NAME%.nsi
 
 pause
