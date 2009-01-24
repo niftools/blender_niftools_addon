@@ -1539,7 +1539,16 @@ Texture '%s' not found or not supported and no alternate available"""
         material.setSpec(1.0)
         # Diffuse color
         diff = matProperty.diffuseColor
-        material.setRGBCol([diff.r, diff.g, diff.b])
+        # fallout 3 hack: convert diffuse and ambient black to white
+        if diff.r < self.EPSILON and diff.g < self.EPSILON and diff.b < self.EPSILON:
+            diff.r = 1.0
+            diff.g = 1.0
+            diff.b = 1.0
+        if amb.r < self.EPSILON and amb.g < self.EPSILON and amb.b < self.EPSILON:
+            amb.r = 1.0
+            amb.g = 1.0
+            amb.b = 1.0
+        material.setRGBCol(diff.r, diff.g, diff.b)
         # Ambient & emissive color
         # We assume that ambient & emissive are fractions of the diffuse color.
         # If it is not an exact fraction, we average out.
