@@ -1958,6 +1958,11 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                 tridata = self.createBlock("NiTriStripsData", ob)
             trishape.data = tridata
 
+            # flags
+            tridata.consistencyFlags = NifFormat.ConsistencyType.CT_STATIC
+
+            # data
+
             tridata.numVertices = len(vertlist)
             tridata.hasVertices = True
             tridata.vertices.updateSize()
@@ -2156,7 +2161,9 @@ they can easily be identified.")
                                 stitchstrips=self.EXPORT_STITCHSTRIPS,
                                 padbones=self.EXPORT_PADBONES,
                                 triangles=trilist,
-                                trianglepartmap=bodypartfacemap)
+                                trianglepartmap=bodypartfacemap,
+                                maximize_bone_sharing=(
+                                    self.EXPORT_VERSION == 'Fallout 3'))
                             # warn on bad config settings
                             if self.EXPORT_VERSION == 'Oblivion':
                                if self.EXPORT_PADBONES:
