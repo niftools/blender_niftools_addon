@@ -1,6 +1,6 @@
 """Common functions for the Blender nif import and export scripts."""
 
-__version__ = "2.3.14"
+__version__ = "2.4.0"
 __requiredpyffiversion__ = "1.2.0"
 __requiredblenderversion__ = "245"
 
