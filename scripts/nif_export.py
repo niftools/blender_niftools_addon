@@ -3481,11 +3481,12 @@ check that %s is selected during export.""" % targetobj)
         if bumpmtex:
             texset.textures[1] = self.exportTextureFilename(bumpmtex.tex)
 
-        # search for duplicate
-        for block in self.blocks:
-            if (isinstance(block, NifFormat.BSShaderPPLightingProperty)
-                and block.getHash() == bsshader.getHash()):
-                return block
+        # search for duplicates
+        # DISABLED: the Fallout 3 engine cannot handle them
+        #for block in self.blocks:
+        #    if (isinstance(block, NifFormat.BSShaderPPLightingProperty)
+        #        and block.getHash() == bsshader.getHash()):
+        #        return block
 
         # no duplicate found, so use and register new one
         return self.registerBlock(bsshader)
