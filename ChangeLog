@@ -1,5 +1,15 @@
 Version 2.4.1 (***)
 * Fallout 3 BSShaderXXX blocks are no longer shared to avoid issues with the engine
+* NiSourceTexture improvements:
+  - pixel layout exports as "6" (DEFAULT) for versions 10.0.1.0 and higher
+  - use mipmaps exports as "1" (YES)
+* Sid Meier's Railroads:
+  - new regression test
+  - fixed import and export of specular color
+  - automatic integer extra data export for shader texture indices
+  - automatic export of RRT_Engine_Env_map.dds and RRT_Cube_Light_map_128.dds
+  shader texture slots
+* minor cleanups in the code
 
 Version 2.4.0 (25 Jan 2009)
 * switched to using the standard logging module for log messages

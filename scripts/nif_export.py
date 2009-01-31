@@ -1339,12 +1339,14 @@ Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
                 "Error: Texture '%s' must be of type IMAGE or ENVMAP"
                 % texture.getName())
 
-    def exportSourceTexture(self, texture, filename=None):
+    def exportSourceTexture(self, texture=None, filename=None):
         """Export a NiSourceTexture.
 
         @param texture: The texture object in blender to be exported.
         @param filename: The full or relative path to the texture file
-            (this argument is used when exporting NiFlipControllers).
+            (this argument is used when exporting NiFlipControllers
+            and when exporting default shader slots that have no use in
+            being imported into Blender).
         @return: The exported NiSourceTexture block."""
         
         # create NiSourceTexture
@@ -1353,15 +1355,21 @@ Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
         if not filename is None:
             # preset filename
             srctex.fileName = filename
-        else:
+        elif not texture is None:
             srctex.fileName = self.exportTextureFilename(texture)
+        else:
+            # this probably should not happen
+            logger.warning(
+                "Exporting source texture without texture or filename (bug?).")
 
-        # fill in default values
-        srctex.pixelLayout = 5
-        srctex.useMipmaps = 2
+        # fill in default values (TODO: can we use 6 for everything?)
+        if self.version >= 0x0a000100:
+            srctex.pixelLayout = 6
+        else:
+            srctex.pixelLayout = 5
+        srctex.useMipmaps = 1
         srctex.alphaFormat = 3
         srctex.unknownByte = 1
-        srctex.unknownByte2 = 1
 
         # search for duplicate
         for block in self.blocks:
@@ -1847,8 +1855,9 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                         #darkmtex = mesh_dark_mtex,
                         #detailmtex = mesh_detail_mtex)) 
                 else:
-                    # sid meier's railroad: set shader slots in extra data
                     if self.EXPORT_VERSION == "Sid Meier's Railroads":
+                        # sid meier's railroad:
+                        # set shader slots in extra data
                         self.addSMRRTShaderIntegerExtraDatas(trishape)
                     trishape.addProperty(self.exportTexturingProperty(
                         flags = 0x0001, # standard
@@ -3379,11 +3388,9 @@ check that %s is selected during export.""" % targetobj)
         # the new one
         return self.registerBlock(matprop)
 
-    def exportTexDesc(self, texdesc = None, uvlayers = None, mtex = None):
+    def exportTexDesc(self, texdesc=None, uvlayers=None, mtex=None):
         """Helper function for exportTexturingProperty to export each texture
         slot."""
-        texdesc.isUsed = True
-
         try:
             texdesc.uvSet = uvlayers.index(mtex.uvlayer) if mtex.uvlayer else 0
         except ValueError: # mtex.uvlayer not in uvlayers list
@@ -3393,9 +3400,9 @@ check that %s is selected during export.""" % targetobj)
         texdesc.source = self.exportSourceTexture(mtex.tex)
 
     def exportTexturingProperty(
-        self, flags = 0x0001, applymode = None, uvlayers = None,
-        basemtex = None, glowmtex = None, bumpmtex = None, glossmtex = None,
-        darkmtex = None, detailmtex = None):
+        self, flags=0x0001, applymode=None, uvlayers=None,
+        basemtex=None, glowmtex=None, bumpmtex=None, glossmtex=None,
+        darkmtex=None, detailmtex=None):
         """Export texturing property. The parameters basemtex, glowmtex,
         bumpmtex, ... are the Blender material textures (MTex, not Texture)
         that correspond to the base, glow, bump map, ... textures. The uvlayers
@@ -3406,6 +3413,28 @@ check that %s is selected during export.""" % targetobj)
         texprop.flags = flags
         texprop.applyMode = applymode
         texprop.textureCount = 7
+
+        if self.EXPORT_VERSION == "Sid Meier's Railroads":
+            # sid meier's railroads:
+            # some textures end up in the shader texture list
+            # there are 5 slots available, so set them up
+            texprop.numShaderTextures = 5
+            texprop.shaderTextures.updateSize()
+            for mapindex, shadertexdesc in enumerate(texprop.shaderTextures):
+                # set default values
+                shadertexdesc.isUsed = False
+                shadertexdesc.mapIndex = mapindex
+
+            # some texture slots required by the engine
+            shadertexdesc_envmap = texprop.shaderTextures[0]
+            shadertexdesc_envmap.isUsed = True
+            shadertexdesc_envmap.textureData.source = \
+                self.exportSourceTexture(filename="RRT_Engine_Env_map.dds")
+
+            shadertexdesc_cubelightmap = texprop.shaderTextures[4]
+            shadertexdesc_cubelightmap.isUsed = True
+            shadertexdesc_cubelightmap.textureData.source = \
+                self.exportSourceTexture(filename="RRT_Cube_Light_map_128.dds")
 
         if basemtex:
             texprop.hasBaseTexture = True
