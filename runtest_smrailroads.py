@@ -144,6 +144,16 @@ class SMRailroadsTestSuite(TestSuite):
             config = dict(EXPORT_VERSION = "Sid Meier's Railroads"),
             selection = ['Test'])
         root_block = nif_export.root_blocks[0]
+
+        # check exported specularity
+        self.logger.info("Checking specular color export.")
+        testgeom_export = root_block.find(block_type=NifFormat.NiGeometry,
+                                   block_name="Test")
+        nifspec_export = testgeom.find(block_type=NifFormat.NiMaterialProperty).specularColor
+        assert(abs(nifspec.r - nifspec_export.r) < 1e-5)
+        assert(abs(nifspec.g - nifspec_export.g) < 1e-5)
+        assert(abs(nifspec.b - nifspec_export.b) < 1e-5)
+
         # check that the re-exported file still passes the check
         self.logger.info("Checking exported nif...")
         self.checkSMRailRoads(root_block)
