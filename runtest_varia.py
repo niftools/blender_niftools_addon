@@ -1,4 +1,4 @@
-"""Automated skinning tests for the blender nif scripts."""
+"""Automated various tests for the blender nif scripts."""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
