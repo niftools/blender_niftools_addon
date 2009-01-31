@@ -102,8 +102,6 @@ class SMRailroadsTestSuite(TestSuite):
         # find texturing property
         texprop = geom.find(block_type=NifFormat.NiTexturingProperty)
 
-        self.logger.info("Checking base texture.")
-
         # geometry diffuse texture test
         self.logger.info("Checking base texture.")
         assert(texprop.hasBaseTexture)
