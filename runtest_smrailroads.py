@@ -88,6 +88,9 @@ class SMRailroadsTestSuite(TestSuite):
 
         assert(self.hasZBufProp(root_block))
 
+        # geometry property test
+        assert(self.hasNoSpecProp(geom))
+
         # geometry extra data test
         assert(self.hasIntegerExtra(geom, "EnvironmentIntensityIndex", 3))
         assert(self.hasIntegerExtra(geom, "EnvironmentMapIndex", 0))
