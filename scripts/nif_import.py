@@ -1477,7 +1477,7 @@ Texture '%s' not found or not supported and no alternate available"""
         ignores the material name as that does not affect the
         rendering.
         """
-        return (matProperty.getHash(ignore_strings = True)
+        return (matProperty.getHash(ignore_strings=True)
                 if matProperty else None,
                 textProperty.getHash()     if textProperty  else None,
                 alphaProperty.getHash()    if alphaProperty else None,
@@ -1485,7 +1485,7 @@ Texture '%s' not found or not supported and no alternate available"""
                 textureEffect.getHash()    if textureEffect else None,
                 wireProperty.getHash()     if wireProperty  else None,
                 bsShaderProperty.getHash() if bsShaderProperty else None,
-                extraDatas.getHash()       if extraDatas else None)
+                tuple(extra.getHash() for extra in extraDatas))
 
     def importMaterial(self, matProperty, textProperty,
                        alphaProperty, specProperty,
@@ -1588,7 +1588,62 @@ Texture '%s' not found or not supported and no alternate available"""
         darkTexture = None
         detailTexture = None
         if textProperty:
+            # standard texture slots
             baseTexDesc = textProperty.baseTexture
+            glowTexDesc = textProperty.glowTexture
+            bumpTexDesc = textProperty.bumpMapTexture
+            glossTexDesc = textProperty.glossTexture
+            darkTexDesc = textProperty.darkTexture
+            detailTexDesc = textProperty.detailTexture
+            # extra texture shader slots
+            for shaderTexDesc in textProperty.shaderTextures:
+                if not shaderTexDesc.isUsed:
+                    continue
+                # it is used, figure out the slot it is used for
+                for extra in extraDatas:
+                    if extra.integerData == shaderTexDesc.mapIndex:
+                        # found!
+                        shader_name = extra.name
+                        break
+                else:
+                    # none found
+                    self.logger.warn(
+                        "No slot for shader texture %s."
+                        % shaderTexDesc.textureData.source.fileName)
+                    continue
+                # currently, only sid meier's railroads has these slots
+                # so assume sid meier's railroads system
+                try:
+                    smrrt_shader_index = (
+                        self.SMRRT_SHADER_TEXTURES.index(shader_name))
+                except ValueError:
+                    # shader_name not in self.SMRRT_SHADER_TEXTURES
+                    self.logger.warn(
+                        "No slot for shader texture %s."
+                        % shaderTexDesc.textureData.source.fileName)
+                    continue
+                if smrrt_shader_index == 0:
+                    # EnvironmentMapIndex
+                    self.logger.warn("Skipping environment map texture.")
+                    continue
+                elif smrrt_shader_index == 1:
+                    # NormalMapIndex
+                    bumpTexDesc = shaderTexDesc.textureData
+                elif smrrt_shader_index == 2:
+                    # SpecularIntensityIndex
+                    glossTexDesc = shaderTexDesc.textureData
+                elif smrrt_shader_index == 3:
+                    # EnvironmentIntensityIndex
+                    glowTexDesc = shaderTexDesc.textureData
+                elif smrrt_shader_index == 4:
+                    # LightCubeMapIndex
+                    self.logger.warn("Skipping light cube texture.")
+                    continue
+                elif smrrt_shader_index == 5:
+                    # ShadowTextureIndex
+                    self.logger.warn("Skipping shadow texture.")
+                    continue
+                    
             if baseTexDesc:
                 baseTexture = self.importTexture(baseTexDesc.source)
                 if baseTexture:
@@ -1601,7 +1656,6 @@ Texture '%s' not found or not supported and no alternate available"""
                     mbaseTexture = material.getTextures()[0]
                     mbaseTexture.blendmode = blendmode
                     mbaseTexture.uvlayer = self.getUVLayerName(baseTexDesc.uvSet)
-            glowTexDesc = textProperty.glowTexture
             if glowTexDesc:
                 glowTexture = self.importTexture(glowTexDesc.source)
                 if glowTexture:
@@ -1615,7 +1669,6 @@ Texture '%s' not found or not supported and no alternate available"""
                     material.setTexture(1, glowTexture, texco, mapto)
                     mglowTexture = material.getTextures()[1]
                     mglowTexture.uvlayer = self.getUVLayerName(glowTexDesc.uvSet)
-            bumpTexDesc = textProperty.bumpMapTexture
             if bumpTexDesc:
                 bumpTexture = self.importTexture(bumpTexDesc.source)
                 if bumpTexture:
@@ -1627,7 +1680,6 @@ Texture '%s' not found or not supported and no alternate available"""
                     material.setTexture(2, bumpTexture, texco, mapto)
                     mbumpTexture = material.getTextures()[2]
                     mbumpTexture.uvlayer = self.getUVLayerName(bumpTexDesc.uvSet)
-            glossTexDesc = textProperty.glossTexture
             if glossTexDesc:
                 glossTexture = self.importTexture(glossTexDesc.source)
                 if glossTexture:
@@ -1639,7 +1691,6 @@ Texture '%s' not found or not supported and no alternate available"""
                     material.setTexture(4, glossTexture, texco, mapto)
                     mglossTexture = material.getTextures()[4]
                     mglossTexture.uvlayer = self.getUVLayerName(glossTexDesc.uvSet)
-            darkTexDesc = textProperty.darkTexture
             if darkTexDesc:
                 darkTexture = self.importTexture(darkTexDesc.source)
                 if darkTexture:
@@ -1653,7 +1704,6 @@ Texture '%s' not found or not supported and no alternate available"""
                     mdarkTexture.uvlayer = self.getUVLayerName(darkTexDesc.uvSet)
                     # set blend mode to "DARKEN"
                     mdarkTexture.blendmode = Blender.Texture.BlendModes["DARKEN"]
-            detailTexDesc = textProperty.detailTexture
             if detailTexDesc:
                 detailTexture = self.importTexture(detailTexDesc.source)
                 if detailTexture:
@@ -1666,9 +1716,6 @@ Texture '%s' not found or not supported and no alternate available"""
                     material.setTexture(6, detailTexture, texco, mapto)
                     mdetailTexture = material.getTextures()[6]
                     mdetailTexture.uvlayer = self.getUVLayerName(detailTexDesc.uvSet)
-            # now import extra texture shader slots
-            # currently, only sid meier's railroads has these
-            # TODO
         # if not a texture property, but a bethesda shader property...
         elif bsShaderProperty:
             # also contains textures, used in fallout 3
@@ -1869,14 +1916,19 @@ Texture '%s' not found or not supported and no alternate available"""
                             textureEffect = effect
                             break
 
-            # extra datas (for sid meier's railroads)
-            # TODO
+            # extra datas (for sid meier's railroads) that have material info
+            extraDatas = []
+            for extra in niBlock.getExtraDatas():
+                if isinstance(extra, NifFormat.NiIntegerExtraData):
+                    if extra.name in self.SMRRT_SHADER_TEXTURES:
+                        # yes, it describes the shader slot number
+                        extraDatas.append(extra)
 
             # create material and assign it to the mesh
             material = self.importMaterial(matProperty, textProperty,
                                            alphaProperty, specProperty,
                                            textureEffect, wireProperty,
-                                           bsShaderProperty, extraDatas=None)
+                                           bsShaderProperty, extraDatas)
             b_mesh_materials = b_meshData.materials
             try:
                 materialIndex = b_mesh_materials.index(material)

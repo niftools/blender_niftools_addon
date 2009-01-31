@@ -9,6 +9,10 @@ Version 2.4.1 (***)
   - automatic integer extra data export for shader texture indices
   - automatic export of RRT_Engine_Env_map.dds and RRT_Cube_Light_map_128.dds
   shader texture slots
+  - import of extra shader textures, using extra integer data to find the right
+  texture slot
+  - bump (i.e. normal), gloss (i.e. spec), and glow (i.e. emsk) are exported
+  into the extra shader slots instead of in the regular slots
 * minor cleanups in the code
 
 Version 2.4.0 (25 Jan 2009)

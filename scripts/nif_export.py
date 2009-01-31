@@ -3436,6 +3436,8 @@ check that %s is selected during export.""" % targetobj)
             shadertexdesc_cubelightmap.textureData.source = \
                 self.exportSourceTexture(filename="RRT_Cube_Light_map_128.dds")
 
+            # the other slots are exported below
+
         if basemtex:
             texprop.hasBaseTexture = True
             self.exportTexDesc(texdesc = texprop.baseTexture,
@@ -3451,28 +3453,46 @@ check that %s is selected during export.""" % targetobj)
                 self.exportFlipController(fliptxt, basemtex.tex, texprop, 0)
 
         if glowmtex:
-            texprop.hasGlowTexture = True
-            self.exportTexDesc(texdesc = texprop.glowTexture,
-                               uvlayers = uvlayers,
-                               mtex = glowmtex)
+            if self.EXPORT_VERSION != "Sid Meier's Railroads":
+                texprop.hasGlowTexture = True
+                self.exportTexDesc(texdesc = texprop.glowTexture,
+                                   uvlayers = uvlayers,
+                                   mtex = glowmtex)
+            else:
+                shadertexdesc = texprop.shaderTextures[3]
+                shadertexdesc.isUsed = True
+                shadertexdesc.textureData.source = \
+                    self.exportSourceTexture(texture=glowmtex.tex)
 
         if bumpmtex:
-            texprop.hasBumpMapTexture = True
-            self.exportTexDesc(texdesc = texprop.bumpMapTexture,
-                               uvlayers = uvlayers,
-                               mtex = bumpmtex)
-            texprop.bumpMapLumaScale = 1.0
-            texprop.bumpMapLumaOffset = 0.0
-            texprop.bumpMapMatrix.m11 = 1.0
-            texprop.bumpMapMatrix.m12 = 0.0
-            texprop.bumpMapMatrix.m21 = 0.0
-            texprop.bumpMapMatrix.m22 = 1.0
+            if self.EXPORT_VERSION != "Sid Meier's Railroads":
+                texprop.hasBumpMapTexture = True
+                self.exportTexDesc(texdesc = texprop.bumpMapTexture,
+                                   uvlayers = uvlayers,
+                                   mtex = bumpmtex)
+                texprop.bumpMapLumaScale = 1.0
+                texprop.bumpMapLumaOffset = 0.0
+                texprop.bumpMapMatrix.m11 = 1.0
+                texprop.bumpMapMatrix.m12 = 0.0
+                texprop.bumpMapMatrix.m21 = 0.0
+                texprop.bumpMapMatrix.m22 = 1.0
+            else:
+                shadertexdesc = texprop.shaderTextures[1]
+                shadertexdesc.isUsed = True
+                shadertexdesc.textureData.source = \
+                    self.exportSourceTexture(texture=bumpmtex.tex)
 
         if glossmtex:
-            texprop.hasGlossTexture = True
-            self.exportTexDesc(texdesc = texprop.glossTexture,
-                               uvlayers = uvlayers,
-                               mtex = glossmtex)
+            if self.EXPORT_VERSION != "Sid Meier's Railroads":
+                texprop.hasGlossTexture = True
+                self.exportTexDesc(texdesc = texprop.glossTexture,
+                                   uvlayers = uvlayers,
+                                   mtex = glossmtex)
+            else:
+                shadertexdesc = texprop.shaderTextures[2]
+                shadertexdesc.isUsed = True
+                shadertexdesc.textureData.source = \
+                    self.exportSourceTexture(texture=glossmtex.tex)
 
         if darkmtex:
             texprop.hasDarkTexture = True
