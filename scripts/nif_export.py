@@ -1847,6 +1847,9 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                         #darkmtex = mesh_dark_mtex,
                         #detailmtex = mesh_detail_mtex)) 
                 else:
+                    # sid meier's railroad: set shader slots in extra data
+                    if self.EXPORT_VERSION == "Sid Meier's Railroads":
+                        self.addSMRRTShaderIntegerExtraDatas(trishape)
                     trishape.addProperty(self.exportTexturingProperty(
                         flags = 0x0001, # standard
                         applymode = self.APPLYMODE[mesh_base_mtex.blendmode if mesh_base_mtex else Blender.Texture.BlendModes["MIX"]],
@@ -1875,7 +1878,10 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
 
             if mesh_mat:
                 # add NiTriShape's specular property
-                if mesh_hasspec:
+                # but NOT for sid meier's railroads (they use specularity even
+                # without this property)
+                if (mesh_hasspec
+                    and self.EXPORT_VERSION != "Sid Meier's Railroads"):
                     # refer to the specular property in the trishape block
                     trishape.addProperty(self.exportSpecularProperty(flags = 0x0001))
                 
@@ -3536,7 +3542,14 @@ check that %s is selected during export.""" % targetobj)
         bbox.dimensions.y = maxy - miny
         bbox.dimensions.z = maxz - minz
 
-
+    def addSMRRTShaderIntegerExtraDatas(self, trishape):
+        """Add extra data blocks for Sid Meier's Railroads shader indices."""
+        trishape.addIntegerExtraData("EnvironmentIntensityIndex", 3)
+        trishape.addIntegerExtraData("EnvironmentMapIndex", 0)
+        trishape.addIntegerExtraData("LightCubeMapIndex", 4)
+        trishape.addIntegerExtraData("NormalMapIndex", 1)
+        trishape.addIntegerExtraData("ShadowTextureIndex", 5)
+        trishape.addIntegerExtraData("SpecularIntensityIndex", 2)
 
 def config_callback(**config):
     """Called when config script is done. Starts and times import."""
