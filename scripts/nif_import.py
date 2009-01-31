@@ -304,15 +304,6 @@ class NifImport(NifImportExport):
             PyFFI.Spells.NIF.fix.SpellSendGeometriesToBindPosition(data=data).recurse()
         if self.IMPORT_SENDBONESTOBINDPOS:
             PyFFI.Spells.NIF.fix.SpellSendBonesToBindPosition(data=data).recurse()
-            ### old code:
-            #for niBlock in root_block.tree():
-            #    if not isinstance(niBlock, NifFormat.NiGeometry):
-            #        continue
-            #    if not niBlock.isSkin():
-            #        continue
-            #    self.logger.info('Sending bones of %s to bind position'
-            #                     % niBlock.name)
-            #    niBlock.sendBonesToBindPosition()
         if self.IMPORT_APPLYSKINDEFORM:
             for niBlock in root_block.tree():
                 if not isinstance(niBlock, NifFormat.NiGeometry):
@@ -1733,9 +1724,12 @@ Texture '%s' not found or not supported and no alternate available"""
             # no alpha property: force alpha 1.0 in Blender
             material.setAlpha(1.0)
         # check specularity
-        if not specProperty:
+        if (not specProperty) and (self.version != 0x14000004):
             # no specular property: specular color is ignored
+            # (for most games)
             # we do this by setting specularity zero
+            # however, for Sid Meier's Railroads the specular color is NOT
+            # ignored! hence the exception for version 0x14000004
             material.setSpec(0.0)
         # check wireframe property
         if wireProperty:
