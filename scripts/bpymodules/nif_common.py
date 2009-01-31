@@ -111,6 +111,16 @@ class NifImportExport:
     """Abstract base class for import and export. Contains utility functions
     that are commonly used in both import and export."""
 
+    # names (ordered by default index) of shader texture slots for
+    # Sid Meier's Railroads
+    SMRRT_SHADER_TEXTURES = [
+        "EnvironmentMapIndex",
+        "NormalMapIndex",
+        "SpecularIntensityIndex",
+        "EnvironmentIntensityIndex",
+        "LightCubeMapIndex",
+        "ShadowTextureIndex"]
+
     def getBoneNameForBlender(self, name):
         """Convert a bone name to a name that can be used by Blender: turns
         'Bip01 R xxx' into 'Bip01 xxx.R', and similar for L.

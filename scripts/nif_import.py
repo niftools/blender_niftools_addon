@@ -1459,8 +1459,8 @@ Texture '%s' not found or not supported and no alternate available"""
 
         # create a texture
         b_texture = Blender.Texture.New()
-        b_texture.setType( 'Image' )
-        b_texture.setImage( b_image )
+        b_texture.setType('Image')
+        b_texture.setImage(b_image)
         b_texture.imageFlags |= Blender.Texture.ImageFlags.INTERPOL
         b_texture.imageFlags |= Blender.Texture.ImageFlags.MIPMAP
 
@@ -1471,31 +1471,33 @@ Texture '%s' not found or not supported and no alternate available"""
     def getMaterialHash(self, matProperty, textProperty,
                         alphaProperty, specProperty,
                         textureEffect, wireProperty,
-                        bsShaderProperty):
+                        bsShaderProperty, extraDatas):
         """Helper function for importMaterial. Returns a key that
         uniquely identifies a material from its properties. The key
         ignores the material name as that does not affect the
         rendering.
         """
-        return ( matProperty.getHash(ignore_strings = True)
-                 if matProperty else None,
-                 textProperty.getHash()     if textProperty  else None,
-                 alphaProperty.getHash()    if alphaProperty else None,
-                 specProperty.getHash()     if specProperty  else None,
-                 textureEffect.getHash()    if textureEffect else None,
-                 wireProperty.getHash()     if wireProperty  else None,
-                 bsShaderProperty.getHash() if bsShaderProperty else None)
+        return (matProperty.getHash(ignore_strings = True)
+                if matProperty else None,
+                textProperty.getHash()     if textProperty  else None,
+                alphaProperty.getHash()    if alphaProperty else None,
+                specProperty.getHash()     if specProperty  else None,
+                textureEffect.getHash()    if textureEffect else None,
+                wireProperty.getHash()     if wireProperty  else None,
+                bsShaderProperty.getHash() if bsShaderProperty else None,
+                extraDatas.getHash()       if extraDatas else None)
 
     def importMaterial(self, matProperty, textProperty,
                        alphaProperty, specProperty,
                        textureEffect, wireProperty,
-                       bsShaderProperty):
+                       bsShaderProperty, extraDatas):
         """Creates and returns a material."""
         # First check if material has been created before.
         material_hash = self.getMaterialHash(matProperty, textProperty,
                                              alphaProperty, specProperty,
                                              textureEffect, wireProperty,
-                                             bsShaderProperty)
+                                             bsShaderProperty,
+                                             extraDatas)
         try:
             return self.materials[material_hash]                
         except KeyError:
@@ -1664,6 +1666,9 @@ Texture '%s' not found or not supported and no alternate available"""
                     material.setTexture(6, detailTexture, texco, mapto)
                     mdetailTexture = material.getTextures()[6]
                     mdetailTexture.uvlayer = self.getUVLayerName(detailTexDesc.uvSet)
+            # now import extra texture shader slots
+            # currently, only sid meier's railroads has these
+            # TODO
         # if not a texture property, but a bethesda shader property...
         elif bsShaderProperty:
             # also contains textures, used in fallout 3
@@ -1864,11 +1869,14 @@ Texture '%s' not found or not supported and no alternate available"""
                             textureEffect = effect
                             break
 
+            # extra datas (for sid meier's railroads)
+            # TODO
+
             # create material and assign it to the mesh
             material = self.importMaterial(matProperty, textProperty,
                                            alphaProperty, specProperty,
                                            textureEffect, wireProperty,
-                                           bsShaderProperty)
+                                           bsShaderProperty, extraDatas=None)
             b_mesh_materials = b_meshData.materials
             try:
                 materialIndex = b_mesh_materials.index(material)

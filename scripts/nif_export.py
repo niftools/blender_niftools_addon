@@ -3573,12 +3573,11 @@ check that %s is selected during export.""" % targetobj)
 
     def addSMRRTShaderIntegerExtraDatas(self, trishape):
         """Add extra data blocks for Sid Meier's Railroads shader indices."""
-        trishape.addIntegerExtraData("EnvironmentIntensityIndex", 3)
-        trishape.addIntegerExtraData("EnvironmentMapIndex", 0)
-        trishape.addIntegerExtraData("LightCubeMapIndex", 4)
-        trishape.addIntegerExtraData("NormalMapIndex", 1)
-        trishape.addIntegerExtraData("ShadowTextureIndex", 5)
-        trishape.addIntegerExtraData("SpecularIntensityIndex", 2)
+        # the default ordering of the extra data blocks is slightly weird...
+        assert(len(self.SMRRT_SHADER_TEXTURES) == 6) # debug
+        for shaderindex in (3, 0, 4, 1, 5, 2):
+            shadername = self.SMRRT_SHADER_TEXTURES[shaderindex]
+            trishape.addIntegerExtraData(shadername, shaderindex)
 
 def config_callback(**config):
     """Called when config script is done. Starts and times import."""
