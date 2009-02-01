@@ -1465,6 +1465,7 @@ Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
             mesh_dark_mtex = None
             mesh_detail_mtex = None
             mesh_texeff_mtex = None
+            mesh_ref_mtex = None
             mesh_uvlayers = []    # uv layers used by this material
             mesh_hasalpha = False # mesh has transparency
             mesh_haswire = False  # mesh rendered as wireframe
@@ -1607,6 +1608,13 @@ animation, or turn off MapTo.ALPHA, and try again."%mesh_mat.getName())
                             # extra COL channel is considered
                             # as detail texture
                             mesh_detail_mtex = mtex
+                        elif mtex.mapto & Blender.Texture.MapTo.REF:
+                            # got the reflection map
+                            if mesh_ref_mtex:
+                                raise NifExportError("Multiple reflection textures \
+in mesh '%s', material '%s'. Make sure there is only one texture with \
+MapTo.REF"%(mesh.name,mesh_mat.getName()))
+                            mesh_ref_mtex = mtex
                         else:
                             # unknown map
                             raise NifExportError("Do not know how to export \
@@ -1860,15 +1868,16 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                         # set shader slots in extra data
                         self.addSMRRTShaderIntegerExtraDatas(trishape)
                     trishape.addProperty(self.exportTexturingProperty(
-                        flags = 0x0001, # standard
-                        applymode = self.APPLYMODE[mesh_base_mtex.blendmode if mesh_base_mtex else Blender.Texture.BlendModes["MIX"]],
-                        uvlayers = mesh_uvlayers,
-                        basemtex = mesh_base_mtex,
-                        glowmtex = mesh_glow_mtex,
-                        bumpmtex = mesh_bump_mtex,
-                        glossmtex = mesh_gloss_mtex,
-                        darkmtex = mesh_dark_mtex,
-                        detailmtex = mesh_detail_mtex))
+                        flags=0x0001, # standard
+                        applymode=self.APPLYMODE[mesh_base_mtex.blendmode if mesh_base_mtex else Blender.Texture.BlendModes["MIX"]],
+                        uvlayers=mesh_uvlayers,
+                        basemtex=mesh_base_mtex,
+                        glowmtex=mesh_glow_mtex,
+                        bumpmtex=mesh_bump_mtex,
+                        glossmtex=mesh_gloss_mtex,
+                        darkmtex=mesh_dark_mtex,
+                        detailmtex=mesh_detail_mtex,
+                        refmtex=mesh_ref_mtex))
 
             if mesh_hasalpha:
                 # add NiTriShape's alpha propery
@@ -3405,7 +3414,7 @@ check that %s is selected during export.""" % targetobj)
     def exportTexturingProperty(
         self, flags=0x0001, applymode=None, uvlayers=None,
         basemtex=None, glowmtex=None, bumpmtex=None, glossmtex=None,
-        darkmtex=None, detailmtex=None):
+        darkmtex=None, detailmtex=None, refmtex=None):
         """Export texturing property. The parameters basemtex, glowmtex,
         bumpmtex, ... are the Blender material textures (MTex, not Texture)
         that correspond to the base, glow, bump map, ... textures. The uvlayers
@@ -3456,16 +3465,10 @@ check that %s is selected during export.""" % targetobj)
                 self.exportFlipController(fliptxt, basemtex.tex, texprop, 0)
 
         if glowmtex:
-            if self.EXPORT_VERSION != "Sid Meier's Railroads":
-                texprop.hasGlowTexture = True
-                self.exportTexDesc(texdesc = texprop.glowTexture,
-                                   uvlayers = uvlayers,
-                                   mtex = glowmtex)
-            else:
-                shadertexdesc = texprop.shaderTextures[3]
-                shadertexdesc.isUsed = True
-                shadertexdesc.textureData.source = \
-                    self.exportSourceTexture(texture=glowmtex.tex)
+            texprop.hasGlowTexture = True
+            self.exportTexDesc(texdesc = texprop.glowTexture,
+                               uvlayers = uvlayers,
+                               mtex = glowmtex)
 
         if bumpmtex:
             if self.EXPORT_VERSION != "Sid Meier's Railroads":
@@ -3508,6 +3511,20 @@ check that %s is selected during export.""" % targetobj)
             self.exportTexDesc(texdesc = texprop.detailTexture,
                                uvlayers = uvlayers,
                                mtex = detailmtex)
+
+        if refmtex:
+            if self.EXPORT_VERSION != "Sid Meier's Railroads":
+                self.logger.warn(
+                    "Cannot export reflection texture for this game.")
+                #texprop.hasRefTexture = True
+                #self.exportTexDesc(texdesc = texprop.refTexture,
+                #                   uvlayers = uvlayers,
+                #                   mtex = refmtex)
+            else:
+                shadertexdesc = texprop.shaderTextures[3]
+                shadertexdesc.isUsed = True
+                shadertexdesc.textureData.source = \
+                    self.exportSourceTexture(texture=refmtex.tex)
 
         # search for duplicate
         for block in self.blocks:

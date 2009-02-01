@@ -1587,6 +1587,7 @@ Texture '%s' not found or not supported and no alternate available"""
         bumpTexture = None
         darkTexture = None
         detailTexture = None
+        refTexture = None
         if textProperty:
             # standard texture slots
             baseTexDesc = textProperty.baseTexture
@@ -1595,6 +1596,7 @@ Texture '%s' not found or not supported and no alternate available"""
             glossTexDesc = textProperty.glossTexture
             darkTexDesc = textProperty.darkTexture
             detailTexDesc = textProperty.detailTexture
+            refTexDesc = None
             # extra texture shader slots
             for shaderTexDesc in textProperty.shaderTextures:
                 if not shaderTexDesc.isUsed:
@@ -1633,8 +1635,8 @@ Texture '%s' not found or not supported and no alternate available"""
                     # SpecularIntensityIndex
                     glossTexDesc = shaderTexDesc.textureData
                 elif smrrt_shader_index == 3:
-                    # EnvironmentIntensityIndex
-                    glowTexDesc = shaderTexDesc.textureData
+                    # EnvironmentIntensityIndex (this is reflection)
+                    refTexDesc = shaderTexDesc.textureData
                 elif smrrt_shader_index == 4:
                     # LightCubeMapIndex
                     self.logger.warn("Skipping light cube texture.")
@@ -1716,6 +1718,17 @@ Texture '%s' not found or not supported and no alternate available"""
                     material.setTexture(6, detailTexture, texco, mapto)
                     mdetailTexture = material.getTextures()[6]
                     mdetailTexture.uvlayer = self.getUVLayerName(detailTexDesc.uvSet)
+            if refTexDesc:
+                refTexture = self.importTexture(refTexDesc.source)
+                if refTexture:
+                    # set the texture to use face UV coordinates
+                    texco = Blender.Texture.TexCo.UV
+                    # map the texture to the base color and emit channel
+                    mapto = Blender.Texture.MapTo.REF
+                    # set the texture for the material
+                    material.setTexture(7, refTexture, texco, mapto)
+                    mrefTexture = material.getTextures()[7]
+                    mrefTexture.uvlayer = self.getUVLayerName(refTexDesc.uvSet)
         # if not a texture property, but a bethesda shader property...
         elif bsShaderProperty:
             # also contains textures, used in fallout 3
