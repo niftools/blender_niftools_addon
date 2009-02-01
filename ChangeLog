@@ -6,6 +6,7 @@ Version 2.4.1 (***)
 * Sid Meier's Railroads:
   - new regression test
   - fixed import and export of specular color
+  - fixed alpha flags export
   - automatic integer extra data export for shader texture indices
   - automatic export of RRT_Engine_Env_map.dds and RRT_Cube_Light_map_128.dds
   shader texture slots

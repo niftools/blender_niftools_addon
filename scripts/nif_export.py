@@ -1873,9 +1873,12 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
             if mesh_hasalpha:
                 # add NiTriShape's alpha propery
                 # refer to the alpha property in the trishape block
-                alphaflags = 0x12ED # do we need to customize this by game?
+                if self.EXPORT_VERSION == "Sid Meier's Railroads":
+                    alphaflags = 0x32ED
+                else:
+                    alphaflags = 0x12ED
                 trishape.addProperty(
-                    self.exportAlphaProperty(flags = alphaflags))
+                    self.exportAlphaProperty(flags=alphaflags))
 
             if mesh_haswire:
                 # add NiWireframeProperty
