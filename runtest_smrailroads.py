@@ -155,6 +155,10 @@ class SMRailroadsTestSuite(TestSuite):
         assert(abs(nifspec.g - nifspec_export.g) < 1e-5)
         assert(abs(nifspec.b - nifspec_export.b) < 1e-5)
 
+        self.logger.info("Checking alpha flags export.")
+        nifalpha_export = testgeom.find(block_type=NifFormat.NiAlphaProperty)
+        assert(nifalpha_export.flags == 13037)
+
         # check that the re-exported file still passes the check
         self.logger.info("Checking exported nif...")
         self.checkSMRailRoads(root_block)
