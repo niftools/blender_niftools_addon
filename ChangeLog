@@ -1,5 +1,6 @@
-Version 2.4.1 (***)
-* Fallout 3 BSShaderXXX blocks are no longer shared to avoid issues with the engine
+Version 2.4.1 (2 Feb 2009)
+* Fallout 3 BSShaderXXX blocks are no longer shared to avoid issues with the
+engine
 * NiSourceTexture improvements:
   - pixel layout exports as "6" (DEFAULT) for versions 10.0.1.0 and higher
   - use mipmaps exports as "1" (YES)
@@ -12,8 +13,8 @@ Version 2.4.1 (***)
   shader texture slots
   - import of extra shader textures, using extra integer data to find the right
   texture slot
-  - bump (i.e. normal), gloss (i.e. spec), and glow (i.e. emsk) are exported
-  into the extra shader slots instead of in the regular slots
+  - bump (i.e. normal), gloss (i.e. spec), and reflection (i.e. emsk) are
+  exported into the extra shader slots instead of in the regular slots
 * minor cleanups in the code
 
 Version 2.4.0 (25 Jan 2009)
