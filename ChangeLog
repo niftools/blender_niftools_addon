@@ -1,3 +1,8 @@
+Version 2.4.2 (***)
+* Materials whose name starts with "noname" (such as those that are imported
+without a name) will have no name in the nif; this fixes some issues with
+Fallout 3.
+
 Version 2.4.1 (2 Feb 2009)
 * Fallout 3 BSShaderXXX blocks are no longer shared to avoid issues with the
 engine

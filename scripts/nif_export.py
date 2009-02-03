@@ -3359,6 +3359,11 @@ check that %s is selected during export.""" % targetobj)
                                             % (name, specialname))
                     name = specialname
 
+        # clear noname materials
+        if name.lower().startswith("noname"):
+            self.logger.warning("Renaming material '%s' to ''" % name)
+            name = ""
+
         matprop.name = name
         matprop.flags = flags
         matprop.ambientColor.r = ambient[0]
