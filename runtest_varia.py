@@ -90,7 +90,7 @@ class StencilTestSuite(TestSuite):
         # name ends with null test
         self.test(
             filename = 'test/nif/name_ends_with_null.nif')
-        obj = Blender.Object.Get("endswithnull") # exists: null removed
+        obj = Blender.Object.Get("nullatend") # exists: null removed
 
 suite = StencilTestSuite("stencil_alpha")
 suite.run()
