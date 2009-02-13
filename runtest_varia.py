@@ -87,6 +87,11 @@ class StencilTestSuite(TestSuite):
         assert(nif_alpha_alpha.flags == 0x12ED)
         assert(nif_alpha_mat.alpha == alpha_obj_alpha)
 
+        # name ends with null test
+        self.test(
+            filename = 'test/nif/name_ends_with_null.nif')
+        obj = Blender.Object.Get("endswithnull") # exists: null removed
+
 suite = StencilTestSuite("stencil_alpha")
 suite.run()
 
