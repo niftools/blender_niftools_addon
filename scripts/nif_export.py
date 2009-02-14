@@ -1784,7 +1784,7 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                             # in the editor
                             raise ValueError(
                                 "Face %s of %s not assigned to any body part."
-                                % (f, b_mesh))
+                                % (f, ob))
 
             if len(trilist) > 65535:
                 raise NifExportError(
