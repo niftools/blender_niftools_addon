@@ -1439,6 +1439,14 @@ Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
         # get mesh from ob
         mesh = ob.getData(mesh=1) # get mesh data
         
+        # getVertsFromGroup fails if the mesh has no vertices
+        # (this happens when checking for fallout 3 body parts)
+        # so quickly catch this (rare!) case
+        if len(ob.data.verts) == 0:
+            # do not export anything
+            self.logger.warn("%s has no vertices, skipped." % ob)
+            return
+
         # get the mesh's materials, this updates the mesh material list
         if not isinstance(parent_block, NifFormat.RootCollisionNode):
             mesh_mats = mesh.materials

@@ -1,8 +1,13 @@
-Version 2.4.2 (***)
-* Materials whose name starts with "noname" (such as those that are imported
+Version 2.4.2 (15 Feb 2009)
+* materials whose name starts with "noname" (such as those that are imported
 without a name) will have no name in the nif; this fixes some issues with
-Fallout 3.
+Fallout 3 (reported by malo)
 * import fix for names that end with null character (reported by alphax)
+* if not all faces have a body part, they will be selected on export to make
+it easier to identify them; error message has been improved too (reported by
+malo)
+* meshes without vertices are skipped; so they no longer give mysterious error
+messages (reported by malo)
 
 Version 2.4.1 (2 Feb 2009)
 * Fallout 3 BSShaderXXX blocks are no longer shared to avoid issues with the
