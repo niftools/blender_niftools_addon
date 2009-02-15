@@ -1672,6 +1672,7 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
             trilist = []
             # for each face in trilist, a body part index
             bodypartfacemap = []
+            faces_without_bodypart = []
             for f in mesh.faces:
                 # does the face belong to this trishape?
                 if (mesh_mat != None): # we have a material
@@ -1780,11 +1781,28 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                                 bodypartfacemap.append(bodypartindex)
                                 break
                         else:
-                            # TODO: if this happens, select unassigned faces
-                            # in the editor
-                            raise ValueError(
-                                "Face %s of %s not assigned to any body part."
-                                % (f, ob))
+                            # this signals an error
+                            faces_without_bodypart.append(f)
+
+            # check that there are no missing body part faces
+            if faces_without_bodypart:
+                Blender.Window.EditMode(0)
+                # select mesh object
+                for bobj in self.scene.objects:
+                    bobj.sel = False
+                self.scene.objects.active = ob
+                ob.sel = 1
+                # select bad faces
+                for face in mesh.faces:
+                    face.sel = 0
+                for face in faces_without_bodypart:
+                    face.sel = 1
+                # switch to edit mode and raise exception
+                Blender.Window.EditMode(1)
+                raise ValueError(
+                    "Some faces of %s not assigned to any body part. \
+The unassigned faces have been selected in the mesh so \
+they can easily be identified." % ob)
 
             if len(trilist) > 65535:
                 raise NifExportError(
