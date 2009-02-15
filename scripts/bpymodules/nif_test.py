@@ -54,6 +54,7 @@ class TestSuite:
             for this test).
         @type name: C{str}
         """
+        self.logger = logging.getLogger("niftools.blender.test")
         self.scene = Blender.Scene.New(name) # new scene
         self.layer = 1 # current layer
 
@@ -91,7 +92,6 @@ class TestSuite:
 
         # set script configuration
         finalconfig = dict(**NifConfig.DEFAULTS)
-        logger = logging.getLogger("niftools.blender.test")
         logging.getLogger("niftools").setLevel(logging.DEBUG)
         logging.getLogger("pyffi").setLevel(logging.WARNING)
 
@@ -101,7 +101,7 @@ class TestSuite:
         # run test
         if 'EXPORT_VERSION' in config:
             # export the imported files
-            logger.info("Exporting %s" % filename)
+            self.logger.info("Exporting %s" % filename)
 
             finalconfig["EXPORT_FILE"] = filename
             result = NifExport(**finalconfig)
@@ -115,7 +115,7 @@ class TestSuite:
             # return test result
             return result
         else:
-            logger.info("Importing %s" % filename)
+            self.logger.info("Importing %s" % filename)
 
             # import file and return test result
             finalconfig["IMPORT_FILE"] =  filename

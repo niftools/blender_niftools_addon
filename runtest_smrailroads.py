@@ -42,10 +42,6 @@ from PyFFI.Formats.NIF import NifFormat
 # some tests to import and export nif files
 
 class SMRailroadsTestSuite(TestSuite):
-    def __init__(self, *args, **kwargs):
-        TestSuite.__init__(self, *args, **kwargs)
-        self.logger = logging.getLogger("niftools.blender.test")
-
     def hasNoSpecProp(self, block):
         self.logger.info("Has no specular property?")
         return all((not isinstance(prop, NifFormat.NiSpecularProperty))
