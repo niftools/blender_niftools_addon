@@ -63,7 +63,7 @@ class TestSuite:
         # set active layer
         self.scene.setLayers([self.layer])
 
-    def test(self, filename = None, config = None, selection = None):
+    def test(self, filename=None, config=None, selection=None, next_layer=None):
         """Run given test, and increase layer after export.
 
         @param filename: The name of the file to test.
@@ -75,6 +75,9 @@ class TestSuite:
         @param selection: List of names of objects to select before running
             the test. Optional.
         @type selection: C{list} of C{str}
+        @param next_layer: Whether or not to advance a layer after the test.
+            If C{None} (default) then a layer is advanced only after export.
+        @type next_layer: C{bool} or C{NoneType}
         @return: The import or export object.
         @rtype: L{NifImport} or L{NifExport}
         """
@@ -109,8 +112,9 @@ class TestSuite:
             # increment active layer for next import
             # different tests are put into different blender layers,
             # so the results can be easily visually inspected
-            self.layer += 1
-            self.scene.setLayers([self.layer])
+            if next_layer in (None, True):
+                self.layer += 1
+                self.scene.setLayers([self.layer])
 
             # return test result
             return result
@@ -119,7 +123,13 @@ class TestSuite:
 
             # import file and return test result
             finalconfig["IMPORT_FILE"] =  filename
-            return NifImport(**finalconfig)
+            result = NifImport(**finalconfig)
+
+            if next_layer is True:
+                self.layer += 1
+                self.scene.setLayers([self.layer])
+
+            return result
 
     def run(self):
         """Run the test suite. Override."""
