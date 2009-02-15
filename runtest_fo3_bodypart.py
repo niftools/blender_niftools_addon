@@ -69,13 +69,14 @@ class BodyPartTestSuite(TestSuite):
         mesh_data.addVertGroup("BP_HEAD")
         mesh_data.assignVertsToGroup("BP_HEAD", list(range(mesh_numverts)), 1,
                                      Blender.Mesh.AssignModes.REPLACE)
-        # export
+        # export (do not advance layer, we will export this again)
         nif_export = self.test(
-            filename = 'test/nif/fo3/_bodypart1.nif',
-            config = dict(
-                EXPORT_VERSION = 'Fallout 3', EXPORT_SMOOTHOBJECTSEAMS = True,
-                EXPORT_FLATTENSKIN = True),
-            selection = ['Scene Root'])
+            filename='test/nif/fo3/_bodypart1.nif',
+            config=dict(
+                EXPORT_VERSION='Fallout 3', EXPORT_SMOOTHOBJECTSEAMS=True,
+                EXPORT_FLATTENSKIN=True),
+            selection=['Scene Root'],
+            next_layer=False)
         # check body part
         self.logger.info("checking for body parts")
         skininst = nif_export.root_blocks[0].find(
@@ -84,9 +85,59 @@ class BodyPartTestSuite(TestSuite):
             raise ValueError("no body parts found")
         self.logger.info("checking number of body parts")
         if skininst.numPartitions != 1:
-            raise ValueError("bad number of skin partitions")
+            raise ValueError("bad number of body parts")
+        if skininst.skinPartition.numSkinPartitionBlocks != skininst.numPartitions:
+            raise ValueError("num skin partitions do not match num body parts")
         self.logger.info("checking body part indices")
         if skininst.partitions[0].bodyPart != NifFormat.BSDismemberBodyPartType.BP_HEAD:
+            raise ValueError("bad body part type in skin partition")
+
+        # remove a vertex from the body part vertex group
+        self.logger.info("removing vertex from vertex group")
+        mesh_data.removeVertsFromGroup("BP_HEAD", [0])
+        # try to export again, this must fail!
+        self.logger.info("check that export fails")
+        try:
+            nif_export = self.test(
+                filename='test/nif/fo3/_bodypart2.nif',
+                config=dict(
+                    EXPORT_VERSION='Fallout 3', EXPORT_SMOOTHOBJECTSEAMS=True,
+                    EXPORT_FLATTENSKIN=True),
+                selection=['Scene Root'])
+        except ValueError:
+            pass
+        else:
+            raise RuntimeError("expected ValueError")
+        # add selected vertices from mesh to another group
+        self.logger.info("export failed: adding selected vertices to new group")
+        mesh_data.addVertGroup("BP_HEAD2")
+        mesh_data.assignVertsToGroup("BP_HEAD2",
+                                     [vert.index for vert in mesh_data.verts
+                                      if vert.sel],
+                                     1, Blender.Mesh.AssignModes.REPLACE)
+        # now export must succeed
+        nif_export = self.test(
+            filename='test/nif/fo3/_bodypart3.nif',
+            config=dict(
+                EXPORT_VERSION='Fallout 3', EXPORT_SMOOTHOBJECTSEAMS=True,
+                EXPORT_FLATTENSKIN=True),
+            selection=['Scene Root'])
+
+        # check body part
+        self.logger.info("checking for body parts")
+        skininst = nif_export.root_blocks[0].find(
+            block_type = NifFormat.BSDismemberSkinInstance)
+        if not skininst:
+            raise ValueError("no body parts found")
+        self.logger.info("checking number of body parts")
+        if skininst.numPartitions != 2:
+            raise ValueError("bad number of body parts")
+        if skininst.skinPartition.numSkinPartitionBlocks != skininst.numPartitions:
+            raise ValueError("num skin partitions do not match num body parts")
+        self.logger.info("checking body part indices")
+        if skininst.partitions[0].bodyPart != NifFormat.BSDismemberBodyPartType.BP_HEAD:
+            raise ValueError("bad body part type in skin partition")
+        if skininst.partitions[1].bodyPart != NifFormat.BSDismemberBodyPartType.BP_HEAD2:
             raise ValueError("bad body part type in skin partition")
 
 suite = BodyPartTestSuite("bodypart")
