@@ -1,3 +1,6 @@
+Version 2.4.3 (***)
+* further fixes for fallout 3
+
 Version 2.4.2 (15 Feb 2009)
 * materials whose name starts with "noname" (such as those that are imported
 without a name) will have no name in the nif; this fixes some issues with
