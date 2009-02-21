@@ -589,8 +589,8 @@ Furniture marker has invalid number (%s). Name your file
 
             # delete original scene root if a scene root object was already
             # defined
-            if (root_block.numChildren == 1) \
-               and (root_block.children[0].name in ['Scene Root', 'Bip01']):
+            if ((root_block.numChildren == 1)
+                and (root_block.children[0].name in ['Scene Root', 'Bip01'])):
                 self.logger.info(
                     "Making '%s' the root block" % root_block.children[0].name)
                 # remove root_block from self.blocks
@@ -612,6 +612,15 @@ Furniture marker has invalid number (%s). Name your file
                     root_block.addEffect(b)
             else:
                 root_block.name = root_name
+
+            # making root block a fade node
+            if (self.EXPORT_VERSION == "Fallout 3"
+                and self.EXPORT_FO3_FADENODE):
+                self.logger.info(
+                    "Making root block a BSFadeNode")
+                fade_root_block = NifFormat.BSFadeNode().deepcopy(root_block)
+                fade_root_block.replaceGlobalNode(root_block, fade_root_block)
+                root_block = fade_root_block
 
             # create keyframe file:
             #----------------------
@@ -3575,11 +3584,16 @@ check that %s is selected during export.""" % targetobj)
         # create new block
         bsshader = NifFormat.BSShaderPPLightingProperty()
         # set non-default fields (TODO check which are really needed)
-        bsshader.shaderFlags.zbufferTest = 1
-        bsshader.shaderFlags.shadowMap = 1
-        bsshader.shaderFlags.shadowFrustum = 1
-        bsshader.shaderFlags.empty = 1
-        bsshader.shaderFlags.unknown31 = 1
+        if self.EXPORT_FO3_SF_ZBUF:
+            bsshader.shaderFlags.zbufferTest = 1
+        if self.EXPORT_FO3_SF_SMAP:
+            bsshader.shaderFlags.shadowMap = 1
+        if self.EXPORT_FO3_SF_SFRU:
+            bsshader.shaderFlags.shadowFrustum = 1
+        if self.EXPORT_FO3_SF_EMPT:
+            bsshader.shaderFlags.empty = 1
+        if self.EXPORT_FO3_SF_UN31:
+            bsshader.shaderFlags.unknown31 = 1
         # set textures
         texset = NifFormat.BSShaderTextureSet()
         bsshader.textureSet = texset

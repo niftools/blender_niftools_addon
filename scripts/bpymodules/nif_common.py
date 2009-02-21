@@ -215,6 +215,12 @@ class NifConfig:
         EXPORT_OB_MATERIAL = 9, # wood
         EXPORT_OB_MALLEABLECONSTRAINT = False, # use malleable constraint for ragdoll and hinge
         EXPORT_OB_PRN = "NONE", # determines bone where to attach weapon
+        EXPORT_FO3_SF_ZBUF = True, # use these shader flags?
+        EXPORT_FO3_SF_SMAP = True,
+        EXPORT_FO3_SF_SFRU = True,
+        EXPORT_FO3_SF_EMPT = True,
+        EXPORT_FO3_SF_UN31 = True,
+        EXPORT_FO3_FADENODE = False,
         PROFILE = '', # name of file where Python profiler dumps the profile; set to empty string to turn off profiling
         IMPORT_EXPORTEMBEDDEDTEXTURES = False,
         EXPORT_OPTIMIZE_MATERIALS = True)
@@ -837,8 +843,43 @@ class NifConfig:
                 val = self.config["EXPORT_OB_PRN"] == "RING",
                 event_name = "EXPORT_OB_PRN_RING",
                 num_items = 7, item = 6)
+            self.drawYSep()
 
-        Draw.Redraw(1)
+        # export-only options for fallout 3
+        if (self.target == self.TARGET_EXPORT
+            and self.config["EXPORT_VERSION"] == "Fallout 3"):
+            self.drawToggle(
+                text = "Use BSFadeNode Root",
+                event_name = "EXPORT_FO3_FADENODE")
+            self.drawYSep()
+
+            self.drawLabel(
+                text = "Shader Flags",
+                event_name = "LABEL_SHADER_FLAGS")
+            self.drawToggle(
+                text = "zBuffer",
+                event_name = "EXPORT_FO3_SF_ZBUF",
+                num_items = 5, item = 0)
+            self.drawToggle(
+                text = "Shadow Map",
+                event_name = "EXPORT_FO3_SF_SMAP",
+                num_items = 5, item = 1)
+            self.drawToggle(
+                text = "Shadow Frustum",
+                event_name = "EXPORT_FO3_SF_SFRU",
+                num_items = 5, item = 2)
+            self.drawToggle(
+                text = "Empty",
+                event_name = "EXPORT_FO3_SF_EMPT",
+                num_items = 5, item = 3)
+            self.drawToggle(
+                text = "Unknown 31",
+                event_name = "EXPORT_FO3_SF_UN31",
+                num_items = 5, item = 4)
+            self.drawYSep()
+
+        # is this needed?
+        #Draw.Redraw(1)
 
     def guiButtonEvent(self, evt):
         """Event handler for buttons."""
@@ -1054,6 +1095,10 @@ class NifConfig:
             self.updateLogLevel(evName, logging.INFO)
         elif evName == "LOG_LEVEL_DEBUG":
             self.updateLogLevel(evName, logging.DEBUG)
+        elif evName == "EXPORT_FO3_FADENODE":
+            self.config["EXPORT_FO3_FADENODE"] = not self.config["EXPORT_FO3_FADENODE"]
+        elif evName.startswith("EXPORT_FO3_SF_"):
+            self.config[evName] = not self.config[evName]
         Draw.Redraw(1)
 
     def guiEvent(self, evt, val):
