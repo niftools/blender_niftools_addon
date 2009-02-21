@@ -1330,6 +1330,7 @@ Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
                 if ( idx >= 0 ):
                     filename = filename[idx:]
                 else:
+                    self.logger.warn("%s does not reside in a 'Textures' folder; texture path will be stripped and textures may not display in-game" % filename)
                     filename = Blender.sys.basename(filename)
             # for linux export: fix path seperators
             return filename.replace('/', '\\')
