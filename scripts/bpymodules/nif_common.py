@@ -216,8 +216,8 @@ class NifConfig:
         EXPORT_OB_MALLEABLECONSTRAINT = False, # use malleable constraint for ragdoll and hinge
         EXPORT_OB_PRN = "NONE", # determines bone where to attach weapon
         EXPORT_FO3_SF_ZBUF = True, # use these shader flags?
-        EXPORT_FO3_SF_SMAP = True,
-        EXPORT_FO3_SF_SFRU = True,
+        EXPORT_FO3_SF_SMAP = False,
+        EXPORT_FO3_SF_SFRU = False,
         EXPORT_FO3_SF_WINDOW_ENVMAP = False,
         EXPORT_FO3_SF_EMPT = True,
         EXPORT_FO3_SF_UN31 = True,
