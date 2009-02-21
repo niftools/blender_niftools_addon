@@ -3583,7 +3583,8 @@ check that %s is selected during export.""" % targetobj)
 
         # create new block
         bsshader = NifFormat.BSShaderPPLightingProperty()
-        # set non-default fields
+        # set shader options
+        bsshader.shaderType = self.EXPORT_FO3_SHADER_TYPE
         bsshader.shaderFlags.zbufferTest = self.EXPORT_FO3_SF_ZBUF
         bsshader.shaderFlags.shadowMap = self.EXPORT_FO3_SF_SMAP
         bsshader.shaderFlags.shadowFrustum = self.EXPORT_FO3_SF_SFRU

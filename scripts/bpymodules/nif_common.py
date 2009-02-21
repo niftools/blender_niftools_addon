@@ -865,10 +865,6 @@ class NifConfig:
                 text = "Cloth",
                 event_name = "EXPORT_FO3_SHADER_OPTION_CLOTH",
                 num_items = 3, item = 2)
-            #self.drawPushButton(
-            #    text = "Creature",
-            #    event_name = "EXPORT_FO3_SHADER_DEFAULT",
-            #    num_items = 4, item = 3)
             self.drawToggle(
                 text = "Default Type",
                 val = self.config["EXPORT_FO3_SHADER_TYPE"] == 1,
@@ -1025,6 +1021,14 @@ class NifConfig:
                 self.config["EXPORT_OB_QUALITYTYPE"] = 1 # MO_QUAL_FIXED
                 self.config["EXPORT_OB_WIND"] = 0
                 self.config["EXPORT_OB_LAYER"] = 1 # static
+                # shader options
+                self.config["EXPORT_FO3_SHADER_TYPE"] = 1
+                self.config["EXPORT_FO3_SF_ZBUF"] = True
+                self.config["EXPORT_FO3_SF_SMAP"] = False
+                self.config["EXPORT_FO3_SF_SFRU"] = False
+                self.config["EXPORT_FO3_SF_WINDOW_ENVMAP"] = False
+                self.config["EXPORT_FO3_SF_EMPT"] = True
+                self.config["EXPORT_FO3_SF_UN31"] = True
         elif evName[:8] == "VERSION_":
             self.config["EXPORT_VERSION"] = evName[8:]
         elif evName == "EXPORT_FLATTENSKIN":
@@ -1137,28 +1141,28 @@ class NifConfig:
             self.config["EXPORT_FO3_SHADER_TYPE"] = 14
         elif evName == "EXPORT_FO3_SHADER_OPTION_DEFAULT":
             self.config["EXPORT_FO3_SHADER_TYPE"] = 1
-            self.config["EXPORT_FO3_SF_ZBUF"] = 1
-            self.config["EXPORT_FO3_SF_SMAP"] = 0
-            self.config["EXPORT_FO3_SF_SFRU"] = 0
-            self.config["EXPORT_FO3_SF_WINDOW_ENVMAP"] = 0
-            self.config["EXPORT_FO3_SF_EMPT"] = 1
-            self.config["EXPORT_FO3_SF_UN31"] = 1
+            self.config["EXPORT_FO3_SF_ZBUF"] = True
+            self.config["EXPORT_FO3_SF_SMAP"] = False
+            self.config["EXPORT_FO3_SF_SFRU"] = False
+            self.config["EXPORT_FO3_SF_WINDOW_ENVMAP"] = False
+            self.config["EXPORT_FO3_SF_EMPT"] = True
+            self.config["EXPORT_FO3_SF_UN31"] = True
         elif evName == "EXPORT_FO3_SHADER_OPTION_SKIN":
             self.config["EXPORT_FO3_SHADER_TYPE"] = 14
-            self.config["EXPORT_FO3_SF_ZBUF"] = 1
-            self.config["EXPORT_FO3_SF_SMAP"] = 1
-            self.config["EXPORT_FO3_SF_SFRU"] = 0
-            self.config["EXPORT_FO3_SF_WINDOW_ENVMAP"] = 1
-            self.config["EXPORT_FO3_SF_EMPT"] = 1
-            self.config["EXPORT_FO3_SF_UN31"] = 1
+            self.config["EXPORT_FO3_SF_ZBUF"] = True
+            self.config["EXPORT_FO3_SF_SMAP"] = True
+            self.config["EXPORT_FO3_SF_SFRU"] = False
+            self.config["EXPORT_FO3_SF_WINDOW_ENVMAP"] = True
+            self.config["EXPORT_FO3_SF_EMPT"] = True
+            self.config["EXPORT_FO3_SF_UN31"] = True
         elif evName == "EXPORT_FO3_SHADER_OPTION_CLOTH":
             self.config["EXPORT_FO3_SHADER_TYPE"] = 1
-            self.config["EXPORT_FO3_SF_ZBUF"] = 1
-            self.config["EXPORT_FO3_SF_SMAP"] = 1
-            self.config["EXPORT_FO3_SF_SFRU"] = 0
-            self.config["EXPORT_FO3_SF_WINDOW_ENVMAP"] = 0
-            self.config["EXPORT_FO3_SF_EMPT"] = 1
-            self.config["EXPORT_FO3_SF_UN31"] = 1
+            self.config["EXPORT_FO3_SF_ZBUF"] = True
+            self.config["EXPORT_FO3_SF_SMAP"] = True
+            self.config["EXPORT_FO3_SF_SFRU"] = False
+            self.config["EXPORT_FO3_SF_WINDOW_ENVMAP"] = False
+            self.config["EXPORT_FO3_SF_EMPT"] = True
+            self.config["EXPORT_FO3_SF_UN31"] = True
         Draw.Redraw(1)
 
     def guiEvent(self, evt, val):
