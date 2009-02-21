@@ -218,9 +218,11 @@ class NifConfig:
         EXPORT_FO3_SF_ZBUF = True, # use these shader flags?
         EXPORT_FO3_SF_SMAP = True,
         EXPORT_FO3_SF_SFRU = True,
+        EXPORT_FO3_SF_WINDOW_ENVMAP = False,
         EXPORT_FO3_SF_EMPT = True,
         EXPORT_FO3_SF_UN31 = True,
         EXPORT_FO3_FADENODE = False,
+        EXPORT_FO3_SHADER_TYPE = 1, # shader_default
         PROFILE = '', # name of file where Python profiler dumps the profile; set to empty string to turn off profiling
         IMPORT_EXPORTEMBEDDEDTEXTURES = False,
         EXPORT_OPTIMIZE_MATERIALS = True)
@@ -681,10 +683,8 @@ class NifConfig:
             self.drawNextColumn()
             
             self.drawLabel(
-                text = "(see http://niftools.sourceforge.net/wiki/Blender/Collision)",
+                text = "Collision Options",
                 event_name = "EXPORT_OB_COLLISIONHTML")
-            self.drawYSep()
-
             self.drawPushButton(
                 text = "Static",
                 event_name = "EXPORT_OB_RIGIDBODY_STATIC",
@@ -848,34 +848,66 @@ class NifConfig:
         # export-only options for fallout 3
         if (self.target == self.TARGET_EXPORT
             and self.config["EXPORT_VERSION"] == "Fallout 3"):
-            self.drawToggle(
-                text = "Use BSFadeNode Root",
-                event_name = "EXPORT_FO3_FADENODE")
-            self.drawYSep()
+            self.drawNextColumn()
 
             self.drawLabel(
-                text = "Shader Flags",
-                event_name = "LABEL_SHADER_FLAGS")
+                text = "Shader Options",
+                event_name = "LABEL_FO3_SHADER_OPTIONS")
+            self.drawPushButton(
+                text = "Default",
+                event_name = "EXPORT_FO3_SHADER_OPTION_DEFAULT",
+                num_items = 3, item = 0)
+            self.drawPushButton(
+                text = "Skin",
+                event_name = "EXPORT_FO3_SHADER_OPTION_SKIN",
+                num_items = 3, item = 1)
+            self.drawPushButton(
+                text = "Cloth",
+                event_name = "EXPORT_FO3_SHADER_OPTION_CLOTH",
+                num_items = 3, item = 2)
+            #self.drawPushButton(
+            #    text = "Creature",
+            #    event_name = "EXPORT_FO3_SHADER_DEFAULT",
+            #    num_items = 4, item = 3)
             self.drawToggle(
-                text = "zBuffer",
+                text = "Default Type",
+                val = self.config["EXPORT_FO3_SHADER_TYPE"] == 1,
+                event_name = "EXPORT_FO3_SHADER_TYPE_DEFAULT",
+                num_items = 2, item = 0)
+            self.drawToggle(
+                text = "Skin Type",
+                val = self.config["EXPORT_FO3_SHADER_TYPE"] == 14,
+                event_name = "EXPORT_FO3_SHADER_TYPE_SKIN",
+                num_items = 2, item = 1)
+            self.drawToggle(
+                text = "Z Buffer",
                 event_name = "EXPORT_FO3_SF_ZBUF",
-                num_items = 5, item = 0)
+                num_items = 3, item = 0)
             self.drawToggle(
                 text = "Shadow Map",
                 event_name = "EXPORT_FO3_SF_SMAP",
-                num_items = 5, item = 1)
+                num_items = 3, item = 1)
             self.drawToggle(
                 text = "Shadow Frustum",
                 event_name = "EXPORT_FO3_SF_SFRU",
-                num_items = 5, item = 2)
+                num_items = 3, item = 2)
+            self.drawToggle(
+                text = "Window Envmap",
+                event_name = "EXPORT_FO3_SF_WINDOW_ENVMAP",
+                num_items = 3, item = 0)
             self.drawToggle(
                 text = "Empty",
                 event_name = "EXPORT_FO3_SF_EMPT",
-                num_items = 5, item = 3)
+                num_items = 3, item = 1)
             self.drawToggle(
                 text = "Unknown 31",
                 event_name = "EXPORT_FO3_SF_UN31",
-                num_items = 5, item = 4)
+                num_items = 3, item = 2)
+            self.drawYSep()
+
+            self.drawToggle(
+                text = "Use BSFadeNode Root",
+                event_name = "EXPORT_FO3_FADENODE")
             self.drawYSep()
 
         # is this needed?
@@ -1099,6 +1131,34 @@ class NifConfig:
             self.config["EXPORT_FO3_FADENODE"] = not self.config["EXPORT_FO3_FADENODE"]
         elif evName.startswith("EXPORT_FO3_SF_"):
             self.config[evName] = not self.config[evName]
+        elif evName == "EXPORT_FO3_SHADER_TYPE_DEFAULT":
+            self.config["EXPORT_FO3_SHADER_TYPE"] = 1
+        elif evName == "EXPORT_FO3_SHADER_TYPE_SKIN":
+            self.config["EXPORT_FO3_SHADER_TYPE"] = 14
+        elif evName == "EXPORT_FO3_SHADER_OPTION_DEFAULT":
+            self.config["EXPORT_FO3_SHADER_TYPE"] = 1
+            self.config["EXPORT_FO3_SF_ZBUF"] = 1
+            self.config["EXPORT_FO3_SF_SMAP"] = 0
+            self.config["EXPORT_FO3_SF_SFRU"] = 0
+            self.config["EXPORT_FO3_SF_WINDOW_ENVMAP"] = 0
+            self.config["EXPORT_FO3_SF_EMPT"] = 1
+            self.config["EXPORT_FO3_SF_UN31"] = 1
+        elif evName == "EXPORT_FO3_SHADER_OPTION_SKIN":
+            self.config["EXPORT_FO3_SHADER_TYPE"] = 14
+            self.config["EXPORT_FO3_SF_ZBUF"] = 1
+            self.config["EXPORT_FO3_SF_SMAP"] = 1
+            self.config["EXPORT_FO3_SF_SFRU"] = 0
+            self.config["EXPORT_FO3_SF_WINDOW_ENVMAP"] = 1
+            self.config["EXPORT_FO3_SF_EMPT"] = 1
+            self.config["EXPORT_FO3_SF_UN31"] = 1
+        elif evName == "EXPORT_FO3_SHADER_OPTION_CLOTH":
+            self.config["EXPORT_FO3_SHADER_TYPE"] = 1
+            self.config["EXPORT_FO3_SF_ZBUF"] = 1
+            self.config["EXPORT_FO3_SF_SMAP"] = 1
+            self.config["EXPORT_FO3_SF_SFRU"] = 0
+            self.config["EXPORT_FO3_SF_WINDOW_ENVMAP"] = 0
+            self.config["EXPORT_FO3_SF_EMPT"] = 1
+            self.config["EXPORT_FO3_SF_UN31"] = 1
         Draw.Redraw(1)
 
     def guiEvent(self, evt, val):

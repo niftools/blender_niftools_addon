@@ -3583,17 +3583,13 @@ check that %s is selected during export.""" % targetobj)
 
         # create new block
         bsshader = NifFormat.BSShaderPPLightingProperty()
-        # set non-default fields (TODO check which are really needed)
-        if self.EXPORT_FO3_SF_ZBUF:
-            bsshader.shaderFlags.zbufferTest = 1
-        if self.EXPORT_FO3_SF_SMAP:
-            bsshader.shaderFlags.shadowMap = 1
-        if self.EXPORT_FO3_SF_SFRU:
-            bsshader.shaderFlags.shadowFrustum = 1
-        if self.EXPORT_FO3_SF_EMPT:
-            bsshader.shaderFlags.empty = 1
-        if self.EXPORT_FO3_SF_UN31:
-            bsshader.shaderFlags.unknown31 = 1
+        # set non-default fields
+        bsshader.shaderFlags.zbufferTest = self.EXPORT_FO3_SF_ZBUF
+        bsshader.shaderFlags.shadowMap = self.EXPORT_FO3_SF_SMAP
+        bsshader.shaderFlags.shadowFrustum = self.EXPORT_FO3_SF_SFRU
+        bsshader.shaderFlags.windowEnvironmentMapping = self.EXPORT_FO3_SF_WINDOW_ENVMAP
+        bsshader.shaderFlags.empty = self.EXPORT_FO3_SF_EMPT
+        bsshader.shaderFlags.unknown31 = self.EXPORT_FO3_SF_UN31
         # set textures
         texset = NifFormat.BSShaderTextureSet()
         bsshader.textureSet = texset
