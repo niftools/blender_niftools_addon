@@ -2247,7 +2247,7 @@ Texture '%s' not found or not supported and no alternate available"""
         if isinstance(niBlock, NifFormat.NiControllerSequence):
             txk = niBlock.textKeys
         else:
-            txk = self.find_extra(niBlock, NifFormat.NiTextKeyExtraData)
+            txk = niBlock.find(block_type=NifFormat.NiTextKeyExtraData)
         if txk:
             # get animation text buffer, and clear it if it already exists
             try:

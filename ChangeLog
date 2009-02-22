@@ -2,6 +2,8 @@ Version 2.4.3 (***)
 * further fixes for fallout 3
   - new options in export dialog for shader flags and shader type (thanks to
   malo and nezroy)
+* text keys imported also if they are not defined on the scene root (reported
+by figurework)
 
 Version 2.4.2 (15 Feb 2009)
 * materials whose name starts with "noname" (such as those that are imported
