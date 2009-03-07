@@ -223,6 +223,7 @@ class NifConfig:
         EXPORT_FO3_SF_UN31 = True,
         EXPORT_FO3_FADENODE = False,
         EXPORT_FO3_SHADER_TYPE = 1, # shader_default
+        EXPORT_FO3_BODYPARTS = True,
         PROFILE = '', # name of file where Python profiler dumps the profile; set to empty string to turn off profiling
         IMPORT_EXPORTEMBEDDEDTEXTURES = False,
         EXPORT_OPTIMIZE_MATERIALS = True)
@@ -906,6 +907,11 @@ class NifConfig:
                 event_name = "EXPORT_FO3_FADENODE")
             self.drawYSep()
 
+            self.drawToggle(
+                text = "Export Dismember Body Parts",
+                event_name = "EXPORT_FO3_BODYPARTS")
+            self.drawYSep()
+
         # is this needed?
         #Draw.Redraw(1)
 
@@ -1029,6 +1035,8 @@ class NifConfig:
                 self.config["EXPORT_FO3_SF_WINDOW_ENVMAP"] = False
                 self.config["EXPORT_FO3_SF_EMPT"] = True
                 self.config["EXPORT_FO3_SF_UN31"] = True
+                # body parts
+                self.config["EXPORT_FO3_BODYPARTS"] = True
         elif evName[:8] == "VERSION_":
             self.config["EXPORT_VERSION"] = evName[8:]
         elif evName == "EXPORT_FLATTENSKIN":
@@ -1163,6 +1171,8 @@ class NifConfig:
             self.config["EXPORT_FO3_SF_WINDOW_ENVMAP"] = False
             self.config["EXPORT_FO3_SF_EMPT"] = True
             self.config["EXPORT_FO3_SF_UN31"] = True
+        elif evName == "EXPORT_FO3_BODYPARTS":
+            self.config["EXPORT_FO3_BODYPARTS"] = not self.config["EXPORT_FO3_BODYPARTS"]
         Draw.Redraw(1)
 
     def guiEvent(self, evt, val):
