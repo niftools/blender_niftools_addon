@@ -1790,7 +1790,8 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                     trilist.append(f_indexed)
                     # add body part number
                     if (self.EXPORT_VERSION != "Fallout 3"
-                        or not bodypartgroups):
+                        or not bodypartgroups
+                        or not self.EXPORT_FO3_BODYPARTS):
                         bodypartfacemap.append(0)
                     else:
                         for bodypartname, bodypartindex, bodypartverts in bodypartgroups:
@@ -2093,7 +2094,8 @@ they can easily be identified." % ob)
                             boneinfluences.append(bone)
                     if boneinfluences: # yes we have skinning!
                         # create new skinning instance block and link it
-                        if self.EXPORT_VERSION == "Fallout 3":
+                        if (self.EXPORT_VERSION == "Fallout 3"
+                            and self.EXPORT_FO3_BODYPARTS):
                             skininst = self.createBlock("BSDismemberSkinInstance", ob)
                         else:
                             skininst = self.createBlock("NiSkinInstance", ob)

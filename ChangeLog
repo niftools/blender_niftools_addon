@@ -2,6 +2,7 @@ Version 2.4.3 (***)
 * further fixes for fallout 3
   - new options in export dialog for shader flags and shader type (thanks to
   malo and nezroy)
+  - new option to disable dismember body part export (sickleyield)
 * text keys imported also if they are not defined on the scene root (reported
 by figurework)
 
