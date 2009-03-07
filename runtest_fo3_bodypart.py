@@ -121,7 +121,8 @@ class BodyPartTestSuite(TestSuite):
             config=dict(
                 EXPORT_VERSION='Fallout 3', EXPORT_SMOOTHOBJECTSEAMS=True,
                 EXPORT_FLATTENSKIN=True),
-            selection=['Scene Root'])
+            selection=['Scene Root'],
+            next_layer=False)
 
         # check body part
         self.logger.info("checking for body parts")
@@ -140,6 +141,21 @@ class BodyPartTestSuite(TestSuite):
         if skininst.partitions[1].bodyPart != NifFormat.BSDismemberBodyPartType.BP_HEAD2:
             raise ValueError("bad body part type in skin partition")
 
+        # export without body parts
+        nif_export = self.test(
+            filename='test/nif/fo3/_bodypart4.nif',
+            config=dict(
+                EXPORT_VERSION='Fallout 3', EXPORT_SMOOTHOBJECTSEAMS=True,
+                EXPORT_FLATTENSKIN=True, EXPORT_FO3_BODYPARTS=False),
+            selection=['Scene Root'])
+        # check that skinning is exported without body parts
+        self.logger.info("checking that there are no body parts")
+        if nif_export.root_blocks[0].find(
+            block_type=NifFormat.BSDismemberSkinInstance):
+			raise ValueError("body part found even though they were disabled on export")
+        if not nif_export.root_blocks[0].find(
+            block_type=NifFormat.NiSkinInstance):
+			raise ValueError("no skinning exported")
+
 suite = BodyPartTestSuite("bodypart")
 suite.run()
-
