@@ -426,7 +426,9 @@ class NifImport(NifImportExport):
                             self.logger.info("Merging nif tree '%s' with armature '%s'"
                                              % (niBlock.name, b_obj.name))
                             if niBlock.name != b_obj.name:
-                                self.logger.warning("Taking nif block '%s' as armature '%s' but names do not match" % (niBlock.name, b_obj.name))
+                                self.logger.warning(
+                                    "Taking nif block '%s' as armature '%s' but names do not match"
+                                    % (niBlock.name, b_obj.name))
                         # now also do the meshes
                         self.importArmatureBranch(b_obj, niBlock, niBlock)
                     else:
@@ -440,7 +442,9 @@ class NifImport(NifImportExport):
                                     child, NifFormat.NiGeomMorpherController):
                                     geom_group.remove(child)
                         # import geometry/empty + remaining children
-                        if not geom_group or not self.IMPORT_COMBINESHAPES or len(geom_group) > 16:
+                        if (not geom_group
+                            or not self.IMPORT_COMBINESHAPES
+                            or len(geom_group) > 16):
                             # no grouping node, or too many materials to
                             # group the geometry into a single mesh
                             # so import it as an empty
@@ -590,7 +594,9 @@ class NifImport(NifImportExport):
                                if not child in geom_group ]
                 b_objects = [] # list of (nif block, blender object) pairs
                 # import grouped geometries
-                if geom_group and self.IMPORT_SKELETON != 1:
+                if (geom_group
+                    and self.IMPORT_COMBINESHAPES
+                    and self.IMPORT_SKELETON != 1):
                     self.logger.info(
                         "joining geometries %s to single object '%s'"
                         %([child.name for child in geom_group], node_name))
