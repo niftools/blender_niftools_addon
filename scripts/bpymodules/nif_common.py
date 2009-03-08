@@ -226,7 +226,8 @@ class NifConfig:
         EXPORT_FO3_BODYPARTS = True,
         PROFILE = '', # name of file where Python profiler dumps the profile; set to empty string to turn off profiling
         IMPORT_EXPORTEMBEDDEDTEXTURES = False,
-        EXPORT_OPTIMIZE_MATERIALS = True)
+        EXPORT_OPTIMIZE_MATERIALS = True,
+        IMPORT_COMBINESHAPES = True)
 
     def __init__(self):
         """Initialize and load configuration."""
@@ -563,6 +564,11 @@ class NifConfig:
             self.drawToggle(
                 text = "Save Embedded Textures As DDS",
                 event_name = "IMPORT_EXPORTEMBEDDEDTEXTURES")
+            self.drawYSep()
+
+            self.drawToggle(
+                text = "Combine Shapes",
+                event_name = "IMPORT_COMBINESHAPES")
             self.drawYSep()
 
             self.drawLabel(
@@ -986,6 +992,8 @@ class NifConfig:
             self.config["IMPORT_APPLYSKINDEFORM"] = not self.config["IMPORT_APPLYSKINDEFORM"]
         elif evName == "IMPORT_EXPORTEMBEDDEDTEXTURES":
             self.config["IMPORT_EXPORTEMBEDDEDTEXTURES"] = not self.config["IMPORT_EXPORTEMBEDDEDTEXTURES"]
+        elif evName == "IMPORT_COMBINESHAPES":
+            self.config["IMPORT_COMBINESHAPES"] = not self.config["IMPORT_COMBINESHAPES"]
         elif evName[:5] == "GAME_":
             self.config["EXPORT_VERSION"] = evName[5:]
             # settings that usually make sense, fail-safe

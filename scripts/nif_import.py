@@ -440,7 +440,7 @@ class NifImport(NifImportExport):
                                     child, NifFormat.NiGeomMorpherController):
                                     geom_group.remove(child)
                         # import geometry/empty + remaining children
-                        if not geom_group or len(geom_group) > 16:
+                        if not geom_group or not self.IMPORT_COMBINESHAPES or len(geom_group) > 16:
                             # no grouping node, or too many materials to
                             # group the geometry into a single mesh
                             # so import it as an empty
