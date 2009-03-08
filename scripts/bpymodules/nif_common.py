@@ -567,7 +567,7 @@ class NifConfig:
             self.drawYSep()
 
             self.drawToggle(
-                text = "Combine Shapes",
+                text = "Combine Multi-Material Shapes Into Single Mesh",
                 event_name = "IMPORT_COMBINESHAPES")
             self.drawYSep()
 
