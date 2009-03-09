@@ -364,8 +364,8 @@ class NifImport(NifImportExport):
         elif isinstance(root_block, NifFormat.NiPhysXProp):
             self.logger.warning('Skipped NiPhysXProp root')
         else:
-            raise NifImportError(
-                "Cannot import nif file with root block of type '%s'"
+            self.logger.warning(
+                "Skipped unsupported root block type '%s' (corrupted nif?)."
                 % root_block.__class__)
 
         # store bone matrix offsets for re-export
