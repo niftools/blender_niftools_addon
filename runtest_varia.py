@@ -92,6 +92,11 @@ class StencilTestSuite(TestSuite):
             filename = 'test/nif/name_ends_with_null.nif')
         obj = Blender.Object.Get("nullatend") # exists: null removed
 
+        # unsupported root block (just check that it does not raise an
+        # exception)
+        self.test(
+            filename = 'test/nif/unsupported_root.nif')
+
 suite = StencilTestSuite("stencil_alpha")
 suite.run()
 
