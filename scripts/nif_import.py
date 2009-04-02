@@ -2837,7 +2837,11 @@ Texture '%s' not found or not supported and no alternate available"""
             # create mesh for each sub shape
             hk_objects = []
             vertex_offset = 0
-            for subshape_num, subshape in enumerate(bhkshape.subShapes):
+            subshapes = bhkshape.subShapes
+            if not subshapes:
+                # fallout 3 stores them in the data
+                subshapes = bhkshape.data.subShapes
+            for subshape_num, subshape in enumerate(subshapes):
                 me = Blender.Mesh.New('poly%i' % subshape_num)
                 for vert_index in xrange(vertex_offset,
                                          vertex_offset + subshape.numVertices):

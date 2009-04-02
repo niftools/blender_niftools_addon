@@ -3,6 +3,7 @@ Version 2.4.4 (***)
 (suggested by Malo, and contributed by Alphax)
 * importing a nif with an unsupported root block now only gives error message
 instead of raising an exception (reported by TheDaywalker)
+* fixed fallout 3 import of packed shapes (such as mopps)
 
 Version 2.4.3 (7 Mar 2009)
 * further fixes for fallout 3
