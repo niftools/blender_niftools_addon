@@ -1,4 +1,4 @@
-Version 2.4.4 (***)
+Version 2.4.4 (2 Apr 2009)
 * import option to disable combining of shapes into multimaterial meshes 
 (suggested by Malo, and contributed by Alphax)
 * importing a nif with an unsupported root block now only gives error message
