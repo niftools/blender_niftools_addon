@@ -49,6 +49,13 @@ class StencilTestSuite(TestSuite):
                    for prop in nif_geom.properties)
 
     def run(self):
+        self.test_stencil()
+        self.test_alpha()
+        self.test_name_ends_with_null()
+        self.test_unsupported_root()
+        self.test_packed_textures()
+
+    def test_stencil(self):
         # stencil test
         self.test(
             filename = 'test/nif/stenciltest.nif')
@@ -65,6 +72,7 @@ class StencilTestSuite(TestSuite):
         assert(self.hasStencil(nif_stencil))
         assert(not self.hasStencil(nif_nostencil))
 
+    def test_alpha(self):
         # alpha property test
         self.test(
             filename = 'test/nif/alphatest.nif')
@@ -87,15 +95,46 @@ class StencilTestSuite(TestSuite):
         assert(nif_alpha_alpha.flags == 0x12ED)
         assert(nif_alpha_mat.alpha == alpha_obj_alpha)
 
+    def test_name_ends_with_null(self):
         # name ends with null test
         self.test(
             filename = 'test/nif/name_ends_with_null.nif')
         obj = Blender.Object.Get("nullatend") # exists: null removed
 
+    def test_unsupported_root(self):
         # unsupported root block (just check that it does not raise an
         # exception)
         self.test(
-            filename = 'test/nif/unsupported_root.nif')
+            filename='test/nif/unsupported_root.nif',
+            next_layer=True)
+
+    def test_packed_textures(self):
+        """Check that textures:
+
+        * raise an error if they have no filename
+        * if they are packed, the filename is used and they are not packed
+          in the nif.
+        """
+        # create a mesh
+        self.logger.info("creating mesh")
+        mesh_data = Blender.Mesh.Primitives.Monkey()
+        mesh_obj = self.scene.objects.new(mesh_data, "packed_tex_test")
+        # add a texture
+        self.logger.info("creating material and texture")
+        mat = Blender.Material.New("packed_tex_mat")
+        tex = Blender.Texture.New("packed_tex_tex")
+        tex.setType("Image")
+        image = Blender.Image.New("packed_tex_img", 1, 1, 24) # stub image
+        tex.setImage(image)
+        mat.setTexture(0, tex,
+                       Blender.Texture.TexCo.UV, Blender.Texture.MapTo.COL)
+        mesh_data.materials += [mat]
+        mesh_data.addUVLayer("packed_tex_uv")
+        nif_export = self.test(
+            filename='test/nif/_packedtexurestest.nif',
+            config=dict(EXPORT_VERSION = 'Fallout 3'),
+            selection=['packed_tex_test'],
+            next_layer=False)
 
 suite = StencilTestSuite("stencil_alpha")
 suite.run()
