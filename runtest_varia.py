@@ -117,24 +117,50 @@ class StencilTestSuite(TestSuite):
         """
         # create a mesh
         self.logger.info("creating mesh")
-        mesh_data = Blender.Mesh.Primitives.Monkey()
+        mesh_data = Blender.Mesh.Primitives.Cube()
         mesh_obj = self.scene.objects.new(mesh_data, "packed_tex_test")
         # add a texture
         self.logger.info("creating material and texture")
         mat = Blender.Material.New("packed_tex_mat")
         tex = Blender.Texture.New("packed_tex_tex")
         tex.setType("Image")
-        image = Blender.Image.New("packed_tex_img", 1, 1, 24) # stub image
-        tex.setImage(image)
+        # do not set an image for now... export must fail
         mat.setTexture(0, tex,
                        Blender.Texture.TexCo.UV, Blender.Texture.MapTo.COL)
         mesh_data.materials += [mat]
         mesh_data.addUVLayer("packed_tex_uv")
+        try:
+            nif_export = self.test(
+                filename='test/nif/_packedtexurestest1.nif',
+                config=dict(EXPORT_VERSION = 'Fallout 3'),
+                selection=['packed_tex_test'],
+                next_layer=False)
+        except NifExportError, e:
+            if str(e).startswith("image type texture has no file loaded"):
+                pass
+            else:
+                raise ValueError(
+                    "no texture loaded but wrong exception raised: "
+                    "%s" % e)
+            raise ValueError(
+                "no texture loaded but no exception raised")
+        # now set the image
+        image = Blender.Image.New("test/nif/stub.tga", 1, 1, 24) # stub image
+        tex.setImage(image)
+        # this should work
         nif_export = self.test(
-            filename='test/nif/_packedtexurestest.nif',
+            filename='test/nif/_packedtexurestest2.nif',
             config=dict(EXPORT_VERSION = 'Fallout 3'),
             selection=['packed_tex_test'],
             next_layer=False)
+        # now pack the image
+        image.pack()
+        # this should work too - although with a warning
+        nif_export = self.test(
+            filename='test/nif/_packedtexurestest3.nif',
+            config=dict(EXPORT_VERSION = 'Fallout 3'),
+            selection=['packed_tex_test'],
+            next_layer=True)
 
 suite = StencilTestSuite("stencil_alpha")
 suite.run()
