@@ -1314,14 +1314,15 @@ Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
                     "image type texture has no file loaded ('%s')"
                     % texture.getName())                    
 
-            # texture must not be packed
-            if texture.getImage().packed:
-                raise NifExportError(
-                    "export of packed textures is not supported ('%s')"
-                    % texture.getName())
-            
             filename = texture.image.getFilename()
 
+            # warn if packed flag is enabled
+            if texture.getImage().packed:
+                self.logger.warn(
+                    "Packed image in texture '%s' ignored, "
+                    "exporting as '%s' instead."
+                    % (texture.getName(), filename))
+            
             # try and find a DDS alternative, force it if required
             ddsfilename = "%s%s" % (filename[:-4], '.dds')
             if Blender.sys.exists(ddsfilename) or self.EXPORT_FORCEDDS:
