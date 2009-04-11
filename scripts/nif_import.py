@@ -746,7 +746,8 @@ class NifImport(NifImportExport):
         # find unique name for Blender to use
         uniqueInt = 0
         # strip null terminator from name
-        niName = niBlock.name.strip("\x00")
+        niBlock.name = niBlock.name.strip("\x00")
+        niName = niBlock.name
         # if name is empty, create something non-empty
         if not niName:
             if isinstance(niBlock, NifFormat.RootCollisionNode):
