@@ -199,7 +199,22 @@ class StencilTestSuite(TestSuite):
             raise ValueError("missing normal texture!")
         if not mtex_glow:
             raise ValueError("missing glow texture!")
-        # TODO test export too
+        # test export too
+        nif_export = self.test(
+            filename='test/nif/_fo3_textureslots.nif',
+            config=dict(EXPORT_VERSION = 'Fallout 3'),
+            selection=['FO3TextureSlots'],
+            next_layer=True)
+        # check presence of the slots
+        nif_textureset = nif_export.root_blocks[0].find(
+            block_type = NifFormat.BSShaderTextureSet)
+        assert(nif_textureset.numTextures == 6)
+        assert(nif_textureset.textures[0] == "stub.dds")
+        assert(nif_textureset.textures[1] == "stub_n.dds")
+        assert(nif_textureset.textures[2] == "stub_g.dds")
+        assert(nif_textureset.textures[3] == "")
+        assert(nif_textureset.textures[4] == "")
+        assert(nif_textureset.textures[5] == "")
 
 suite = StencilTestSuite("stencil_alpha")
 suite.run()
