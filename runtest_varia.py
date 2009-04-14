@@ -54,6 +54,7 @@ class StencilTestSuite(TestSuite):
         self.test_name_ends_with_null()
         self.test_unsupported_root()
         self.test_packed_textures()
+        self.test_fo3_texture_slots()
 
     def test_stencil(self):
         # stencil test
@@ -161,6 +162,42 @@ class StencilTestSuite(TestSuite):
             config=dict(EXPORT_VERSION = 'Fallout 3'),
             selection=['packed_tex_test'],
             next_layer=True)
+
+    def test_fo3_texture_slots(self):
+        self.test(
+            filename = 'test/nif/fo3_textureslots.nif')
+        # check textures (this example has all supported slots)
+        obj = Blender.Object.Get("FO3TextureSlots")
+        mat = obj.data.materials[0]
+        mtex_diff = None
+        mtex_norm = False
+        mtex_glow = False
+        for mtex in mat.textures:
+            # skip empty ones
+            if mtex is None:
+                continue
+            # check that mapping input is UV
+            assert(mtex.texco == Blender.Texture.TexCo.UV)
+            # check mapping output
+            if mtex.mapto == Blender.Texture.MapTo.COL:
+                if mtex_diff:
+                    raise ValueError("more than one diffuse texture!")
+                mtex_diff = mtex
+            if mtex.mapto == Blender.Texture.MapTo.NOR:
+                if mtex_norm:
+                    raise ValueError("more than one normal texture!")
+                mtex_norm = mtex
+            if mtex.mapto == Blender.Texture.MapTo.EMIT:
+                if mtex_glow:
+                    raise ValueError("more than one glow texture!")
+                mtex_glow = mtex
+        if not mtex_diff:
+            raise ValueError("missing diffuse texture!")
+        if not mtex_norm:
+            raise ValueError("missing normal texture!")
+        if not mtex_glow:
+            raise ValueError("missing glow texture!")
+        # TODO test export too
 
 suite = StencilTestSuite("stencil_alpha")
 suite.run()
