@@ -187,7 +187,9 @@ class StencilTestSuite(TestSuite):
                 if mtex_norm:
                     raise ValueError("more than one normal texture!")
                 mtex_norm = mtex
-            if mtex.mapto == Blender.Texture.MapTo.EMIT:
+            # be forgiving for glow: EMIT or COL + EMIT
+            if (mtex.mapto == Blender.Texture.MapTo.EMIT
+                or mtex.mapto == Blender.Texture.MapTo.COL | Blender.Texture.MapTo.EMIT):
                 if mtex_glow:
                     raise ValueError("more than one glow texture!")
                 mtex_glow = mtex

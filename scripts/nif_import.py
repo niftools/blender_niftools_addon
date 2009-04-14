@@ -1753,6 +1753,21 @@ Texture '%s' not found or not supported and no alternate available"""
                     mbaseTexture = material.getTextures()[0]
                     mbaseTexture.blendmode = blendmode
 
+            glowTexFile = bsShaderProperty.textureSet.textures[2]
+            if glowTexFile:
+                glowTexture = self.importTexture(glowTexFile)
+                if glowTexture:
+                    # glow maps use alpha from rgb intensity
+                    glowTexture.imageFlags |= Blender.Texture.ImageFlags.CALCALPHA
+                    # set the texture to use face UV coordinates
+                    texco = Blender.Texture.TexCo.UV
+                    # map the texture to the base color and emit channel
+                    mapto = Blender.Texture.MapTo.COL | Blender.Texture.MapTo.EMIT
+                    # set the texture for the material
+                    material.setTexture(1, glowTexture, texco, mapto)
+                    mglowTexture = material.getTextures()[1]
+                    mglowTexture.blendmode = blendmode
+
             bumpTexFile = bsShaderProperty.textureSet.textures[1]
             if bumpTexFile:
                 bumpTexture = self.importTexture(bumpTexFile)
@@ -1762,8 +1777,8 @@ Texture '%s' not found or not supported and no alternate available"""
                     # map the texture to the normal channel
                     mapto = Blender.Texture.MapTo.NOR
                     # set the texture for the material
-                    material.setTexture(1, bumpTexture, texco, mapto)
-                    mbumpTexture = material.getTextures()[1]
+                    material.setTexture(2, bumpTexture, texco, mapto)
+                    mbumpTexture = material.getTextures()[2]
                     mbumpTexture.blendmode = blendmode
 
         if textureEffect:
