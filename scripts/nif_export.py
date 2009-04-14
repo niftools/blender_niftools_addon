@@ -1551,7 +1551,7 @@ Material Buttons, set texture 'Map To' to \
 'COL'." % (ob.getName(),mesh_mat.getName()))
                         if mtex.blendmode != Blender.Texture.BlendModes["ADD"]:
                             # it should have "ADD" blending mode
-                            raise NifExportError("Reflection texture should \
+                            self.logger.warn("Reflection texture should \
 have blending mode 'Add' on texture in \
 mesh '%s', material '%s')."%(ob.getName(),mesh_mat.getName()))
                             # an envmap image should have an empty... don't care
@@ -1565,8 +1565,7 @@ mesh '%s', material '%s')."%(ob.getName(),mesh_mat.getName()))
                         if not uvlayer in mesh_uvlayers:
                             mesh_uvlayers.append(uvlayer)
                         # check which texture slot this mtex belongs to
-                        if mtex.mapto & Blender.Texture.MapTo.COL \
-                           and mtex.mapto & Blender.Texture.MapTo.EMIT:
+                        if mtex.mapto & Blender.Texture.MapTo.EMIT:
                             # got the glow tex
                             if mesh_glow_mtex:
                                 raise NifExportError("Multiple glow textures \
@@ -1576,7 +1575,7 @@ MapTo.EMIT"%(mesh.name,mesh_mat.getName()))
                             # for this texture
                             if (mtex.tex.imageFlags & Blender.Texture.ImageFlags.CALCALPHA != 0) \
                                and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
-                                raise NifExportError("In mesh '%s', material \
+                                self.logger.warn("In mesh '%s', material \
 '%s': glow texture must have CALCALPHA flag set, and must have MapTo.ALPHA \
 enabled."%(ob.getName(),mesh_mat.getName()))
                             mesh_glow_mtex = mtex
@@ -1895,7 +1894,7 @@ they can easily be identified." % ob)
                 if self.EXPORT_VERSION == "Fallout 3":
                     trishape.addProperty(self.exportBSShaderProperty(
                         basemtex = mesh_base_mtex,
-                        #glowmtex = mesh_glow_mtex,
+                        glowmtex = mesh_glow_mtex,
                         bumpmtex = mesh_bump_mtex))
                         #glossmtex = mesh_gloss_mtex,
                         #darkmtex = mesh_dark_mtex,
@@ -3581,7 +3580,7 @@ check that %s is selected during export.""" % targetobj)
         return self.registerBlock(texprop)
 
     def exportBSShaderProperty(
-        self, basemtex=None, bumpmtex=None):
+        self, basemtex=None, bumpmtex=None, glowmtex=None):
         """Export a Bethesda shader property block."""
 
         # create new block
@@ -3601,6 +3600,8 @@ check that %s is selected during export.""" % targetobj)
             texset.textures[0] = self.exportTextureFilename(basemtex.tex)
         if bumpmtex:
             texset.textures[1] = self.exportTextureFilename(bumpmtex.tex)
+        if glowmtex:
+            texset.textures[2] = self.exportTextureFilename(glowmtex.tex)
 
         # search for duplicates
         # DISABLED: the Fallout 3 engine cannot handle them
