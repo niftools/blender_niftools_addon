@@ -43,14 +43,14 @@ from PyFFI.Formats.NIF import NifFormat
 class TextKeyTestSuite(TestSuite):
     def run(self):
         nif_import = self.test(
-            filename = 'test/nif/mw/textkeytest.nif')
+            filename = 'test/nif/mw/dance.nif')
         textkeys_import = nif_import.root_blocks[0].find(
             block_type = NifFormat.NiTextKeyExtraData)
 
         nif_export = self.test(
             filename = 'test/nif/mw/_textkeytest.nif',
             config = dict(EXPORT_VERSION = 'Morrowind'),
-            selection = ['textkeytest.nif'])
+            selection = ['Dance'])
         textkeys_export = nif_export.root_blocks[0].find(
             block_type = NifFormat.NiTextKeyExtraData)
 

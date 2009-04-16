@@ -32,6 +32,8 @@
 #
 # ***** END LICENSE BLOCK *****
 
+from __future__ import with_statement
+from contextlib import closing
 from itertools import izip
 
 import Blender
@@ -40,7 +42,7 @@ from PyFFI.Formats.NIF import NifFormat
 
 # some tests to import and export nif files
 
-class StencilTestSuite(TestSuite):
+class VariaTestSuite(TestSuite):
     def isTwoSided(self, b_mesh):
         return b_mesh.data.mode & Blender.Mesh.Modes.TWOSIDED
 
@@ -55,6 +57,7 @@ class StencilTestSuite(TestSuite):
         self.test_unsupported_root()
         self.test_packed_textures()
         self.test_fo3_texture_slots()
+        self.test_mw_nifxnifkf()
 
     def test_stencil(self):
         # stencil test
@@ -202,7 +205,7 @@ class StencilTestSuite(TestSuite):
         # test export too
         nif_export = self.test(
             filename='test/nif/_fo3_textureslots.nif',
-            config=dict(EXPORT_VERSION = 'Fallout 3'),
+            config=dict(EXPORT_VERSION='Fallout 3'),
             selection=['FO3TextureSlots'],
             next_layer=True)
         # check presence of the slots
@@ -216,6 +219,41 @@ class StencilTestSuite(TestSuite):
         assert(nif_textureset.textures[4] == "")
         assert(nif_textureset.textures[5] == "")
 
-suite = StencilTestSuite("stencil_alpha")
-suite.run()
+    def test_mw_nifxnifkf(self):
+        """Test the nif xnif kf export option."""
+        # import a nif with animation
+        self.test(
+            filename = 'test/nif/mw/dance.nif')
+        # export as nif + xnif + kf
+        self.test(
+            filename='test/nif/mw/_testnifxnifkf.nif',
+            config=dict(EXPORT_VERSION='Morrowind',
+                        EXPORT_MW_NIFXNIFKF=True),
+            selection=['Dance'],
+            next_layer=True)
+        # check that these files are present, and check some of their properties
+        with closing(open('test/nif/mw/_testnifxnifkf.nif')) as stream:
+            nif = NifFormat.Data()
+            nif.read(stream)
+        with closing(open('test/nif/mw/x_testnifxnifkf.nif')) as stream:
+            xnif = NifFormat.Data()
+            xnif.read(stream)
+        with closing(open('test/nif/mw/x_testnifxnifkf.kf')) as stream:
+            xkf = NifFormat.Data()
+            xkf.read(stream)
+        # check root blocks
+        assert(len(nif.roots) == 1)
+        assert(len(xnif.roots) == 1)
+        assert(len(xkf.roots) == 1)
+        assert(isinstance(nif.roots[0], NifFormat.NiNode))
+        assert(isinstance(xnif.roots[0], NifFormat.NiNode))
+        assert(isinstance(xkf.roots[0], NifFormat.NiSequenceStreamHelper))
+        # compare text keys
+        nif_textkeys = nif.roots[0].extraData
+        xkf_textkeys = xkf.roots[0].extraData
+        assert(isinstance(nif_textkeys, NifFormat.NiTextKeyExtraData))
+        assert(isinstance(xkf_textkeys, NifFormat.NiTextKeyExtraData))
+        assert(nif_textkeys == xkf_textkeys)
 
+suite = VariaTestSuite("varia")
+suite.run()
