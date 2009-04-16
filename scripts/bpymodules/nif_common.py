@@ -224,6 +224,7 @@ class NifConfig:
         EXPORT_FO3_FADENODE = False,
         EXPORT_FO3_SHADER_TYPE = 1, # shader_default
         EXPORT_FO3_BODYPARTS = True,
+        EXPORT_MW_NIFXNIFKF = False,
         PROFILE = '', # name of file where Python profiler dumps the profile; set to empty string to turn off profiling
         IMPORT_EXPORTEMBEDDEDTEXTURES = False,
         EXPORT_OPTIMIZE_MATERIALS = True,
@@ -584,15 +585,18 @@ class NifConfig:
             self.drawToggle(
                 text = "Export Geometry + Animation (.nif)",
                 event_name = "EXPORT_ANIMATION_0",
-                val = (self.config["EXPORT_ANIMATION"] == 0))
+                val = ((self.config["EXPORT_ANIMATION"] == 0)
+                       or self.config["EXPORT_MW_NIFXNIFKF"]))
             self.drawToggle(
                 text = "Export Geometry Only (.nif)",
                 event_name = "EXPORT_ANIMATION_1",
-                val = (self.config["EXPORT_ANIMATION"] == 1))
+                val = ((self.config["EXPORT_ANIMATION"] == 1)
+                       or self.config["EXPORT_MW_NIFXNIFKF"]))
             self.drawToggle(
                 text = "Export Animation Only (.kf)",
                 event_name = "EXPORT_ANIMATION_2",
-                val = (self.config["EXPORT_ANIMATION"] == 2))
+                val = ((self.config["EXPORT_ANIMATION"] == 2)
+                       or self.config["EXPORT_MW_NIFXNIFKF"]))
             self.drawYSep()
 
             self.drawToggle(
@@ -852,6 +856,15 @@ class NifConfig:
                 num_items = 7, item = 6)
             self.drawYSep()
 
+        # export-only options for morrowind
+        if (self.target == self.TARGET_EXPORT
+            and self.config["EXPORT_VERSION"] == "Morrowind"):
+            self.drawNextColumn()
+
+            self.drawToggle(
+                text = "Export nif + xnif + kf",
+                event_name = "EXPORT_MW_NIFXNIFKF")
+
         # export-only options for fallout 3
         if (self.target == self.TARGET_EXPORT
             and self.config["EXPORT_VERSION"] == "Fallout 3"):
@@ -1007,6 +1020,7 @@ class NifConfig:
             self.config["EXPORT_BONESPERPARTITION"] = 4
             self.config["EXPORT_PADBONES"] = False
             self.config["EXPORT_OB_SOLID"] = True
+            self.config["EXPORT_MW_NIFXNIFKF"] = False
             # set default settings per game
             if self.config["EXPORT_VERSION"] == "Morrowind":
                 pass # fail-safe settings work
@@ -1181,6 +1195,8 @@ class NifConfig:
             self.config["EXPORT_FO3_SF_UN31"] = True
         elif evName == "EXPORT_FO3_BODYPARTS":
             self.config["EXPORT_FO3_BODYPARTS"] = not self.config["EXPORT_FO3_BODYPARTS"]
+        elif evName == "EXPORT_MW_NIFXNIFKF":
+            self.config["EXPORT_MW_NIFXNIFKF"] = not self.config["EXPORT_MW_NIFXNIFKF"]
         Draw.Redraw(1)
 
     def guiEvent(self, evt, val):
