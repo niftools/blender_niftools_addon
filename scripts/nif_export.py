@@ -188,6 +188,10 @@ class NifExport(NifImportExport):
         # store configuration in self
         for name, value in config.iteritems():
             setattr(self, name, value)
+        if self.EXPORT_MW_NIFXNIFKF and self.EXPORT_VERSION == 'Morrowind':
+            # if exporting in nif+xnif+kf mode, then first export
+            # the nif with geometry + animation, which is done by:
+            self.EXPORT_ANIMATION = 0
 
         # shortcut to export logger
         self.logger = logging.getLogger("niftools.blender.export")
@@ -622,16 +626,54 @@ Furniture marker has invalid number (%s). Name your file
                 fade_root_block.replaceGlobalNode(root_block, fade_root_block)
                 root_block = fade_root_block
 
-            # create keyframe file:
-            #----------------------
+            # figure out user version and user version 2
+            if self.EXPORT_VERSION == "Oblivion":
+                NIF_USER_VERSION = 11
+                NIF_USER_VERSION2 = 11
+            elif self.EXPORT_VERSION == "Fallout 3":
+                NIF_USER_VERSION = 11
+                NIF_USER_VERSION2 = 34
+            else:
+                NIF_USER_VERSION = 0
+                NIF_USER_VERSION2 = 0
+
+            # export nif file:
+            #-----------------
+
+            if self.EXPORT_ANIMATION != 2:
+                ext = ".nif"
+                self.logger.info("Writing %s file" % ext)
+                self.msgProgress("Writing %s file" % ext)
+
+                # make sure we have the right file extension
+                if (self.fileext.lower() != ext):
+                    self.logger.warning(
+                        "Changing extension from %s to %s on output file"
+                        % (self.fileext, ext))
+                    self.filename = Blender.sys.join(self.filepath,
+                                                     self.filebase + ext)
+                data = NifFormat.Data(version=self.version,
+                                      user_version=NIF_USER_VERSION,
+                                      user_version2=NIF_USER_VERSION2)
+                data.roots = [root_block]
+                stream = open(self.filename, "wb")
+                try:
+                    data.write(stream)
+                finally:
+                    stream.close()
+
+            # create and export keyframe file and xnif file:
+            #-----------------------------------------------
 
             # convert root_block tree into a keyframe tree
-            if self.EXPORT_ANIMATION == 2:
+            if self.EXPORT_ANIMATION == 2 or self.EXPORT_MW_NIFXNIFKF:
+                self.logger.info("Creating keyframe tree")
                 # find all nodes and keyframe controllers
                 node_kfctrls = {}
                 for node in root_block.tree():
                     if not isinstance(node, NifFormat.NiNode):
                         continue
+                    # get list of all controllers for this node
                     ctrls = node.getControllers()
                     for ctrl in ctrls:
                         if not isinstance(ctrl,
@@ -710,39 +752,65 @@ No priority set for bone %s, falling back on default value (%i)"""
 Keyframe export for '%s' is not supported. Only Morrowind, Oblivion, Fallout 3,
 and Civilization IV keyframes are supported.""" % self.EXPORT_VERSION)
 
-                # make keyframe root block the root block to be written
-                root_block = kf_root
+                # write kf (and xnif if asked)
+                prefix = "" if not self.EXPORT_MW_NIFXNIFKF else "x"
 
-            # write the file:
-            #----------------
-            ext = ".nif" if (self.EXPORT_ANIMATION != 2) else ".kf"
-            self.logger.info("Writing %s file"%ext)
-            self.msgProgress("Writing %s file"%ext)
+                ext = ".kf"
+                self.logger.info("Writing %s file" % (prefix + ext))
+                self.msgProgress("Writing %s file" % (prefix + ext))
 
-            # make sure we have the right file extension
-            if (self.fileext.lower() != ext):
-                self.logger.warning(
-                    "Changing extension from %s to %s on output file"
-                    % (self.fileext, ext))
-                self.filename = Blender.sys.join(self.filepath, self.filebase + ext)
-            if self.EXPORT_VERSION == "Oblivion":
-                NIF_USER_VERSION = 11
-                NIF_USER_VERSION2 = 11
-            elif self.EXPORT_VERSION == "Fallout 3":
-                NIF_USER_VERSION = 11
-                NIF_USER_VERSION2 = 34
-            else:
-                NIF_USER_VERSION = 0
-                NIF_USER_VERSION2 = 0
-            data = NifFormat.Data(version=self.version,
-                                  user_version=NIF_USER_VERSION,
-                                  user_version2=NIF_USER_VERSION2)
-            data.roots = [root_block]
-            stream = open(self.filename, "wb")
-            try:
-                data.write(stream)
-            finally:
-                stream.close()
+                self.filename = Blender.sys.join(self.filepath,
+                                                 prefix + self.filebase + ext)
+                data = NifFormat.Data(version=self.version,
+                                      user_version=NIF_USER_VERSION,
+                                      user_version2=NIF_USER_VERSION2)
+                data.roots = [kf_root]
+                stream = open(self.filename, "wb")
+                try:
+                    data.write(stream)
+                finally:
+                    stream.close()
+
+            if self.EXPORT_MW_NIFXNIFKF:
+                self.logger.info("Detaching keyframe controllers from nif")
+                # detach the keyframe controllers from the nif (for xnif)
+                for node in root_block.tree():
+                    if not isinstance(node, NifFormat.NiNode):
+                        continue
+                    # remove references to keyframe controllers from node
+                    # (for xnif)
+                    while isinstance(node.controller, NifFormat.NiKeyframeController):
+                        node.controller = node.controller.nextController
+                    ctrl = node.controller
+                    while ctrl:
+                        if isinstance(ctrl.nextController,
+                                      NifFormat.NiKeyframeController):
+                            ctrl.nextController = ctrl.nextController.nextController
+                        else:
+                            ctrl = ctrl.nextController
+
+                self.logger.info("Detaching animation text keys from nif")
+                # detach animation text keys
+                if root_block.extraData is not anim_textextra:
+                    raise RuntimeError("Oops, you found a bug! Animation extra data wasn't where expected...")
+                root_block.extraData = None
+
+                prefix = "x" # we are in morrowind 'nifxnifkf mode'
+                ext = ".nif"
+                self.logger.info("Writing %s file" % (prefix + ext))
+                self.msgProgress("Writing %s file" % (prefix + ext))
+
+                self.filename = Blender.sys.join(self.filepath,
+                                                 prefix + self.filebase + ext)
+                data = NifFormat.Data(version=self.version,
+                                      user_version=NIF_USER_VERSION,
+                                      user_version2=NIF_USER_VERSION2)
+                data.roots = [root_block]
+                stream = open(self.filename, "wb")
+                try:
+                    data.write(stream)
+                finally:
+                    stream.close()
 
         except NifExportError, e: # export error: raise a menu instead of an exception
             e = str(e).replace("\n", " ")
