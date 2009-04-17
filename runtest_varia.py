@@ -57,6 +57,7 @@ class VariaTestSuite(TestSuite):
         self.test_unsupported_root()
         self.test_packed_textures()
         self.test_fo3_texture_slots()
+        self.test_fo3_emit()
         self.test_mw_nifxnifkf()
 
     def test_stencil(self):
@@ -254,6 +255,37 @@ class VariaTestSuite(TestSuite):
         assert(isinstance(nif_textkeys, NifFormat.NiTextKeyExtraData))
         assert(isinstance(xkf_textkeys, NifFormat.NiTextKeyExtraData))
         #assert(nif_textkeys == xkf_textkeys) # ... up to extra data chain
+
+    def test_fo3_emit(self):
+
+        def check_emit(nif):
+            nif_mat = nif.root_blocks[0].find(
+                block_type = NifFormat.NiMaterialProperty)
+            assert(abs(nif_mat.emissiveColor.r - 0.123) < 0.000001)
+            assert(abs(nif_mat.emissiveColor.g - 0.456) < 0.000001)
+            assert(abs(nif_mat.emissiveColor.b - 0.789) < 0.000001)
+            assert(abs(nif_mat.emitMulti - 3.82) < 0.000001)
+        
+        # loading the test nif
+        # (this nif has emit color 1,0,1 and emitmulti 3)
+        # stencil test
+        nif = self.test(filename='test/nif/fo3/test_emit.nif')
+        # double check that the nif itself has the claimed values
+        check_emit(nif)
+        # check imported values
+        obj = Blender.Object.Get("TestEmit")
+        assert(obj.data.materials[0].rgbCol[0] == 1.0)
+        assert(obj.data.materials[0].rgbCol[1] == 0.0)
+        assert(obj.data.materials[0].rgbCol[2] == 1.0)
+        assert(obj.data.materials.emit == 0.3) # emitmulti divided by 10
+        # write the file
+        nif = self.test(
+            filename='test/nif/fo3/_test_emit.nif',
+            config=dict(EXPORT_VERSION = 'Fallout 3'),
+            selection=['TestEmit'],
+            next_layer=False)
+        # check that the correct values were exported
+        check_emit(nif)
 
 suite = VariaTestSuite("varia")
 suite.run()
