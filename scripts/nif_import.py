@@ -278,28 +278,13 @@ class NifImport(NifImportExport):
             raise NifImportError("direct .kf import not supported")
 
         # merge skeleton roots
-        for niBlock in root_block.tree():
-            if not isinstance(niBlock, NifFormat.NiGeometry):
-                continue
-            if not niBlock.isSkin():
-                continue
-            merged, failed = niBlock.mergeSkeletonRoots()
-            if merged:
-                self.logger.debug(
-                    'Reparented following blocks to skeleton root of %s:'
-                    % niBlock.name)
-                self.logger.debug(",".join([node.name for node in merged]))
-            if failed:
-                self.logger.warning('Failed to reparent following blocks %s:'
-                                     % niBlock.name, 2)
-                self.logger.warning(",".join([node.name for node in failed]))
-
-        # transform geometry into the rest pose
+        # and transform geometry into the rest pose
         # fake a data element with given root, for spells
         # TODO: use data element directly, i.e. upgrade this importRoot
         #       function to an importData function
         data = NifFormat.Data()
         data.roots = [root_block]
+        PyFFI.Spells.NIF.fix.SpellMergeSkeletonRoots(data=data).recurse()
         if self.IMPORT_SENDGEOMETRIESTOBINDPOS:
             PyFFI.Spells.NIF.fix.SpellSendGeometriesToBindPosition(data=data).recurse()
         if self.IMPORT_SENDBONESTOBINDPOS:
