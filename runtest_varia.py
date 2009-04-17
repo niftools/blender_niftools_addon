@@ -43,6 +43,14 @@ from PyFFI.Formats.NIF import NifFormat
 # some tests to import and export nif files
 
 class VariaTestSuite(TestSuite):
+    def assert_equal(self, val1, val2):
+        if isinstance(val1, float):
+            assert(isinstance(val2, float))
+            assert(abs(val1 - val2) < 0.000001)
+        else:
+            raise TypeError("don't know how to test equality of %s and %s"
+                            % (val1.__class__, val2.__class__))
+
     def isTwoSided(self, b_mesh):
         return b_mesh.data.mode & Blender.Mesh.Modes.TWOSIDED
 
@@ -261,10 +269,10 @@ class VariaTestSuite(TestSuite):
         def check_emit(nif):
             nif_mat = nif.root_blocks[0].find(
                 block_type = NifFormat.NiMaterialProperty)
-            assert(abs(nif_mat.emissiveColor.r - 0.123) < 0.000001)
-            assert(abs(nif_mat.emissiveColor.g - 0.456) < 0.000001)
-            assert(abs(nif_mat.emissiveColor.b - 0.789) < 0.000001)
-            assert(abs(nif_mat.emitMulti - 3.82) < 0.000001)
+            self.assert_equal(nif_mat.emissiveColor.r, 0.123)
+            self.assert_equal(nif_mat.emissiveColor.g, 0.456)
+            self.assert_equal(nif_mat.emissiveColor.b, 0.789)
+            self.assert_equal(nif_mat.emitMulti, 3.82)
         
         # loading the test nif
         # (this nif has emit color 1,0,1 and emitmulti 3)
@@ -274,10 +282,10 @@ class VariaTestSuite(TestSuite):
         check_emit(nif)
         # check imported values
         obj = Blender.Object.Get("TestEmit")
-        assert(obj.data.materials[0].rgbCol[0] == 1.0)
-        assert(obj.data.materials[0].rgbCol[1] == 0.0)
-        assert(obj.data.materials[0].rgbCol[2] == 1.0)
-        assert(obj.data.materials.emit == 0.3) # emitmulti divided by 10
+        self.assert_equal(obj.data.materials[0].rgbCol[0], 0.123)
+        self.assert_equal(obj.data.materials[0].rgbCol[1], 0.456)
+        self.assert_equal(obj.data.materials[0].rgbCol[2], 0.789)
+        self.assert_equal(obj.data.materials[0].emit, 0.382) # emitmulti divided by 10
         # write the file
         nif = self.test(
             filename='test/nif/fo3/_test_emit.nif',

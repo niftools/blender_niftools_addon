@@ -1592,9 +1592,13 @@ Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
                 mesh_mat_ambient_color[1] = mesh_mat_diffuse_color[1] * mesh_mat_ambient
                 mesh_mat_ambient_color[2] = mesh_mat_diffuse_color[2] * mesh_mat_ambient
                 mesh_mat_emissive_color = [0.0, 0.0, 0.0]
-                mesh_mat_emissive_color[0] = mesh_mat_diffuse_color[0] * mesh_mat_emissive
-                mesh_mat_emissive_color[1] = mesh_mat_diffuse_color[1] * mesh_mat_emissive
-                mesh_mat_emissive_color[2] = mesh_mat_diffuse_color[2] * mesh_mat_emissive
+                if self.EXPORT_VERSION != "Fallout 3":
+                    mesh_mat_emissive_color[0] = mesh_mat_diffuse_color[0] * mesh_mat_emissive
+                    mesh_mat_emissive_color[1] = mesh_mat_diffuse_color[1] * mesh_mat_emissive
+                    mesh_mat_emissive_color[2] = mesh_mat_diffuse_color[2] * mesh_mat_emissive
+                else:
+                    # special case for Fallout 3 (it does not store diffuse color)
+                    mesh_mat_emissive_color = mesh_mat_diffuse_color
                 # the base texture = first material texture
                 # note that most morrowind files only have a base texture, so let's for now only support single textured materials
                 for mtex in mesh_mat.getTextures():
@@ -2013,14 +2017,15 @@ they can easily be identified." % ob)
                 
                 # add NiTriShape's material property
                 trimatprop = self.exportMaterialProperty(
-                    name = self.getFullName(mesh_mat.getName()),
-                    flags = 0x0001, # ? standard
-                    ambient = mesh_mat_ambient_color,
-                    diffuse = mesh_mat_diffuse_color,
-                    specular = mesh_mat_specular_color,
-                    emissive = mesh_mat_emissive_color,
-                    glossiness = mesh_mat_glossiness,
-                    alpha = mesh_mat_transparency)
+                    name=self.getFullName(mesh_mat.getName()),
+                    flags=0x0001, # ? standard
+                    ambient=mesh_mat_ambient_color,
+                    diffuse=mesh_mat_diffuse_color,
+                    specular=mesh_mat_specular_color,
+                    emissive=mesh_mat_emissive_color,
+                    glossiness=mesh_mat_glossiness,
+                    alpha=mesh_mat_transparency,
+                    emitmulti=(mesh_mat.emit * 10.0))
                 
                 # refer to the material property in the trishape block
                 trishape.addProperty(trimatprop)
@@ -3435,13 +3440,14 @@ check that %s is selected during export.""" % targetobj)
         stencilprop = self.createBlock("NiStencilProperty")
         return stencilprop        
 
-    def exportMaterialProperty(self, name = '', flags = 0x0001,
-                               ambient = (1.0, 1.0, 1.0),
-                               diffuse = (1.0, 1.0, 1.0),
-                               specular = (0.0, 0.0, 0.0),
-                               emissive = (0.0, 0.0, 0.0),
-                               glossiness = 10.0,
-                               alpha = 1.0):
+    def exportMaterialProperty(self, name='', flags=0x0001,
+                               ambient=(1.0, 1.0, 1.0),
+                               diffuse=(1.0, 1.0, 1.0),
+                               specular=(0.0, 0.0, 0.0),
+                               emissive=(0.0, 0.0, 0.0),
+                               glossiness=10.0,
+                               alpha=1.0,
+                               emitmulti=1.0):
         """Return existing material property with given settings, or create
         a new one if a material property with these settings is not found."""
 
@@ -3486,6 +3492,7 @@ check that %s is selected during export.""" % targetobj)
         matprop.emissiveColor.b = emissive[2]
         matprop.glossiness = glossiness
         matprop.alpha = alpha
+        matprop.emitMulti = emitmulti
 
         # search for duplicate
         # (ignore the name string as sometimes import needs to create different

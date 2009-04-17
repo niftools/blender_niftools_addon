@@ -3,6 +3,9 @@ Version 2.4.5 (***)
 * warn on packed textures instead of raising error (reported by augbunny)
 * glow texture import and export for fallout 3 (reported and tested by mushin)
 * rebirth of the 'nif + xnif + xkf' option for Morrowind (reported by axel)
+* fallout 3 now imports and exports the emitMulti value in the shader emit
+slider (up to a factor 10 to accomodate the range) and stores the emissive
+color as Blender's diffuse color (reported by mushin)
 
 Version 2.4.4 (2 Apr 2009)
 * import option to disable combining of shapes into multimaterial meshes 

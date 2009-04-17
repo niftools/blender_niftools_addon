@@ -1540,40 +1540,43 @@ Texture '%s' not found or not supported and no alternate available"""
         material.setSpec(1.0)
         # Diffuse color
         diff = matProperty.diffuseColor
-        # fallout 3 hack: convert diffuse black to white
+        emit = matProperty.emissiveColor
+        # fallout 3 hack: convert diffuse black to emit
         if diff.r < self.EPSILON and diff.g < self.EPSILON and diff.b < self.EPSILON:
-            diff.r = 1.0
-            diff.g = 1.0
-            diff.b = 1.0
+            diff.r = emit.r
+            diff.g = emit.g
+            diff.b = emit.b
         material.setRGBCol(diff.r, diff.g, diff.b)
         # Ambient & emissive color
         # We assume that ambient & emissive are fractions of the diffuse color.
         # If it is not an exact fraction, we average out.
         amb = matProperty.ambientColor
-        # fallout 3 hack:convert ambient black to white
+        # fallout 3 hack:convert ambient black to white and set emit
         if amb.r < self.EPSILON and amb.g < self.EPSILON and amb.b < self.EPSILON:
             amb.r = 1.0
             amb.g = 1.0
             amb.b = 1.0
-        emit = matProperty.emissiveColor
-        b_amb = 0.0
-        b_emit = 0.0
-        b_n = 0
-        if diff.r > self.EPSILON:
-            b_amb += amb.r/diff.r
-            b_emit += emit.r/diff.r
-            b_n += 1
-        if diff.g > self.EPSILON:
-            b_amb += amb.g/diff.g
-            b_emit += emit.g/diff.g
-            b_n += 1
-        if diff.b > self.EPSILON:
-            b_amb += amb.b/diff.b
-            b_emit += emit.b/diff.b
-            b_n += 1
-        if b_n > 0:
-            b_amb /= b_n
-            b_emit /= b_n
+            b_amb = 1.0
+            b_emit = matProperty.emitMulti / 10.0
+        else:
+            b_amb = 0.0
+            b_emit = 0.0
+            b_n = 0
+            if diff.r > self.EPSILON:
+                b_amb += amb.r/diff.r
+                b_emit += emit.r/diff.r
+                b_n += 1
+            if diff.g > self.EPSILON:
+                b_amb += amb.g/diff.g
+                b_emit += emit.g/diff.g
+                b_n += 1
+            if diff.b > self.EPSILON:
+                b_amb += amb.b/diff.b
+                b_emit += emit.b/diff.b
+                b_n += 1
+            if b_n > 0:
+                b_amb /= b_n
+                b_emit /= b_n
         if b_amb > 1.0:
             b_amb = 1.0
         if b_emit > 1.0:
