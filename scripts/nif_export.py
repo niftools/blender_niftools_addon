@@ -1592,13 +1592,18 @@ Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
                 mesh_mat_ambient_color[1] = mesh_mat_diffuse_color[1] * mesh_mat_ambient
                 mesh_mat_ambient_color[2] = mesh_mat_diffuse_color[2] * mesh_mat_ambient
                 mesh_mat_emissive_color = [0.0, 0.0, 0.0]
+                mesh_mat_emitmulti = 1.0 # default
                 if self.EXPORT_VERSION != "Fallout 3":
                     mesh_mat_emissive_color[0] = mesh_mat_diffuse_color[0] * mesh_mat_emissive
                     mesh_mat_emissive_color[1] = mesh_mat_diffuse_color[1] * mesh_mat_emissive
                     mesh_mat_emissive_color[2] = mesh_mat_diffuse_color[2] * mesh_mat_emissive
                 else:
                     # special case for Fallout 3 (it does not store diffuse color)
-                    mesh_mat_emissive_color = mesh_mat_diffuse_color
+                    # if emit is non-zero, set emissive color to diffuse
+                    # (otherwise leave the color to zero)
+                    if mesh_mat.emit > NifFormat._EPSILON:
+                        mesh_mat_emissive_color = mesh_mat_diffuse_color
+                        mesh_mat_emitmulti = mesh_mat.emit * 10.0
                 # the base texture = first material texture
                 # note that most morrowind files only have a base texture, so let's for now only support single textured materials
                 for mtex in mesh_mat.getTextures():
@@ -2025,7 +2030,7 @@ they can easily be identified." % ob)
                     emissive=mesh_mat_emissive_color,
                     glossiness=mesh_mat_glossiness,
                     alpha=mesh_mat_transparency,
-                    emitmulti=(mesh_mat.emit * 10.0))
+                    emitmulti=mesh_mat_emitmulti)
                 
                 # refer to the material property in the trishape block
                 trishape.addProperty(trimatprop)

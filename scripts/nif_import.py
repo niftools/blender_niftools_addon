@@ -1529,11 +1529,17 @@ Texture '%s' not found or not supported and no alternate available"""
         # Diffuse color
         diff = matProperty.diffuseColor
         emit = matProperty.emissiveColor
-        # fallout 3 hack: convert diffuse black to emit
+        # fallout 3 hack: convert diffuse black to emit if emit is not black
         if diff.r < self.EPSILON and diff.g < self.EPSILON and diff.b < self.EPSILON:
-            diff.r = emit.r
-            diff.g = emit.g
-            diff.b = emit.b
+            if (emit.r + emit.g + emit.b) < self.EPSILON:
+                # emit is black... set diffuse color to white
+                diff.r = 1.0
+                diff.g = 1.0
+                diff.b = 1.0
+            else:
+                diff.r = emit.r
+                diff.g = emit.g
+                diff.b = emit.b
         material.setRGBCol(diff.r, diff.g, diff.b)
         # Ambient & emissive color
         # We assume that ambient & emissive are fractions of the diffuse color.
@@ -1545,7 +1551,10 @@ Texture '%s' not found or not supported and no alternate available"""
             amb.g = 1.0
             amb.b = 1.0
             b_amb = 1.0
-            b_emit = matProperty.emitMulti / 10.0
+            if (emit.r + emit.g + emit.b) < self.EPSILON:
+                b_emit = 0.0
+            else:
+                b_emit = matProperty.emitMulti / 10.0
         else:
             b_amb = 0.0
             b_emit = 0.0
