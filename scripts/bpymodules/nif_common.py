@@ -588,6 +588,19 @@ class NifConfig:
                 event_name_prefix = "IMPORT_KEYFRAMEFILE")
             self.drawYSep()
 
+            self.drawPushButton(
+                text = "Restore Default Settings",
+                event_name = "IMPORT_SETTINGS_DEFAULT")
+            self.drawYSep()
+
+            self.drawLabel(
+                text = "... and if skinning fails with default settings:",
+                event_name = "IMPORT_SETTINGS_SKINNING_TEXT")
+            self.drawPushButton(
+                text = "Use The Force Luke",
+                event_name = "IMPORT_SETTINGS_SKINNING")
+            self.drawYSep()
+
         # export-only options
         if self.target == self.TARGET_EXPORT:
             self.drawToggle(
@@ -1019,6 +1032,28 @@ class NifConfig:
             self.config["IMPORT_EXPORTEMBEDDEDTEXTURES"] = not self.config["IMPORT_EXPORTEMBEDDEDTEXTURES"]
         elif evName == "IMPORT_COMBINESHAPES":
             self.config["IMPORT_COMBINESHAPES"] = not self.config["IMPORT_COMBINESHAPES"]
+        elif evName == "IMPORT_SETTINGS_DEFAULT":
+            self.config["IMPORT_ANIMATION"] = True
+            self.config["IMPORT_SKELETON"] = 0
+            self.config["IMPORT_EXPORTEMBEDDEDTEXTURES"] = False
+            self.config["IMPORT_COMBINESHAPES"] = True
+            self.config["IMPORT_REALIGN_BONES"] = 2
+            self.config["IMPORT_MERGESKELETONROOTS"] = True
+            self.config["IMPORT_SENDGEOMETRIESTOBINDPOS"] = True
+            self.config["IMPORT_SENDDETACHEDGEOMETRIESTONODEPOS"] = True
+            self.config["IMPORT_SENDBONESTOBINDPOS"] = True
+            self.config["IMPORT_APPLYSKINDEFORM"] = False
+        elif evName == "IMPORT_SETTINGS_SKINNING":
+            self.config["IMPORT_ANIMATION"] = True
+            self.config["IMPORT_SKELETON"] = 0
+            self.config["IMPORT_EXPORTEMBEDDEDTEXTURES"] = False
+            self.config["IMPORT_COMBINESHAPES"] = True
+            self.config["IMPORT_REALIGN_BONES"] = 2
+            self.config["IMPORT_MERGESKELETONROOTS"] = True
+            self.config["IMPORT_SENDGEOMETRIESTOBINDPOS"] = False
+            self.config["IMPORT_SENDDETACHEDGEOMETRIESTONODEPOS"] = False
+            self.config["IMPORT_SENDBONESTOBINDPOS"] = False
+            self.config["IMPORT_APPLYSKINDEFORM"] = True
         elif evName[:5] == "GAME_":
             self.config["EXPORT_VERSION"] = evName[5:]
             # settings that usually make sense, fail-safe
