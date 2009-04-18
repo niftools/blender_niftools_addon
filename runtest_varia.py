@@ -66,6 +66,7 @@ class VariaTestSuite(TestSuite):
         self.test_packed_textures()
         self.test_fo3_texture_slots()
         self.test_fo3_emit()
+        self.test_fo3_emit2()
         self.test_mw_nifxnifkf()
 
     def test_stencil(self):
@@ -291,9 +292,42 @@ class VariaTestSuite(TestSuite):
             filename='test/nif/fo3/_test_emit.nif',
             config=dict(EXPORT_VERSION = 'Fallout 3'),
             selection=['TestEmit'],
-            next_layer=False)
+            next_layer=True)
         # check that the correct values were exported
         check_emit(nif)
+
+    def test_fo3_emit2(self):
+        """Check that emissive and multi are preserved also when they are
+        zero and one.
+        """
+        def check_emit2(nif):
+            nif_mat = nif.root_blocks[0].find(
+                block_type = NifFormat.NiMaterialProperty)
+            self.assert_equal(nif_mat.emissiveColor.r, 0.0)
+            self.assert_equal(nif_mat.emissiveColor.g, 0.0)
+            self.assert_equal(nif_mat.emissiveColor.b, 0.0)
+            self.assert_equal(nif_mat.emitMulti, 1.0)
+        
+        # loading the test nif
+        # (this nif has emit color 1,0,1 and emitmulti 3)
+        # stencil test
+        nif = self.test(filename='test/nif/fo3/test_emit2.nif')
+        # double check that the nif itself has the claimed values
+        check_emit2(nif)
+        # check imported values
+        obj = Blender.Object.Get("TestEmit2")
+        self.assert_equal(obj.data.materials[0].rgbCol[0], 1.0)
+        self.assert_equal(obj.data.materials[0].rgbCol[1], 1.0)
+        self.assert_equal(obj.data.materials[0].rgbCol[2], 1.0)
+        self.assert_equal(obj.data.materials[0].emit, 0.0)
+        # write the file
+        nif = self.test(
+            filename='test/nif/fo3/_test_emit2.nif',
+            config=dict(EXPORT_VERSION = 'Fallout 3'),
+            selection=['TestEmit2'],
+            next_layer=True)
+        # check that the correct values were exported
+        check_emit2(nif)
 
 suite = VariaTestSuite("varia")
 suite.run()
