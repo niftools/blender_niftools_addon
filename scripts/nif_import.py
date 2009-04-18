@@ -284,9 +284,12 @@ class NifImport(NifImportExport):
         #       function to an importData function
         data = NifFormat.Data()
         data.roots = [root_block]
-        PyFFI.Spells.NIF.fix.SpellMergeSkeletonRoots(data=data).recurse()
+        if self.IMPORT_MERGESKELETONROOTS:
+            PyFFI.Spells.NIF.fix.SpellMergeSkeletonRoots(data=data).recurse()
         if self.IMPORT_SENDGEOMETRIESTOBINDPOS:
             PyFFI.Spells.NIF.fix.SpellSendGeometriesToBindPosition(data=data).recurse()
+        if self.IMPORT_SENDDETACHEDGEOMETRIESTONODEPOS:
+            PyFFI.Spells.NIF.fix.SpellSendDetachedGeometriesToNodePosition(data=data).recurse()
         if self.IMPORT_SENDBONESTOBINDPOS:
             PyFFI.Spells.NIF.fix.SpellSendBonesToBindPosition(data=data).recurse()
         if self.IMPORT_APPLYSKINDEFORM:
