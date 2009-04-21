@@ -68,6 +68,7 @@ class VariaTestSuite(TestSuite):
         self.test_fo3_emit()
         self.test_fo3_emit2()
         self.test_mw_nifxnifkf()
+        self.test_uv_controller()
 
     def test_stencil(self):
         # stencil test
@@ -328,6 +329,10 @@ class VariaTestSuite(TestSuite):
             next_layer=True)
         # check that the correct values were exported
         check_emit2(nif)
+
+    def test_uv_controller(self):
+        """Test whether uv controllers are imported and exported correctly."""
+        # XXX import and export a nif with uv controllers
 
 suite = VariaTestSuite("varia")
 suite.run()
