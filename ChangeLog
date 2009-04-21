@@ -1,3 +1,5 @@
+Version 2.4.6 (in development)
+
 Version 2.4.5 (21 Apr 2009)
 * another import fix for names that end with null character
 * warn on packed textures instead of raising error (reported by augbunny)
