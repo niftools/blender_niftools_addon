@@ -1520,7 +1520,7 @@ Texture '%s' not found or not supported and no alternate available"""
         elif bsShaderProperty:
             # default blending mode for fallout 3
             blendmode = Blender.Texture.BlendModes["MIX"]
-        # Sets the material colors
+        # Sets the colors
         # Specular color
         spec = matProperty.specularColor
         material.setSpecCol([spec.r, spec.g, spec.b])
@@ -1827,6 +1827,13 @@ Texture '%s' not found or not supported and no alternate available"""
         self.materials[material_hash] = material
         return material
 
+    def importMaterialControllers(self, b_material, n_geom):
+        """Import material animation data for given geometry."""
+        if not self.IMPORT_ANIMATION:
+            return
+
+        # XXX todo
+
     def importMesh(self, niBlock,
                    group_mesh=None,
                    applytransform=False,
@@ -1961,10 +1968,13 @@ Texture '%s' not found or not supported and no alternate available"""
                         extraDatas.append(extra)
 
             # create material and assign it to the mesh
+            # XXX todo: delegate search for properties to importMaterial
             material = self.importMaterial(matProperty, textProperty,
                                            alphaProperty, specProperty,
                                            textureEffect, wireProperty,
                                            bsShaderProperty, extraDatas)
+            # XXX todo: merge this call into importMaterial
+            self.importMaterialControllers(material, niBlock)
             b_mesh_materials = b_meshData.materials
             try:
                 materialIndex = b_mesh_materials.index(material)
@@ -2354,6 +2364,9 @@ Texture '%s' not found or not supported and no alternate available"""
                     point * (kfi.stopTime - kfi.startTime)
                     / (kfi.basisData.numControlPoints - 2)
                     for point in xrange(kfi.basisData.numControlPoints - 2))
+            for uvdata in root.tree(block_type = NifFormat.NiUVData):
+                for uvgroup in uvdata.uvGroups:
+                    key_times.extend(key.time for key in uvgroup.keys)
         # not animated, return a reasonable default
         if not key_times:
             return 30
