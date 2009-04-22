@@ -324,7 +324,7 @@ class VariaTestSuite(TestSuite):
         # write the file
         nif = self.test(
             filename='test/nif/fo3/_test_emit2.nif',
-            config=dict(EXPORT_VERSION = 'Fallout 3'),
+            config=dict(EXPORT_VERSION='Fallout 3'),
             selection=['TestEmit2'],
             next_layer=True)
         # check that the correct values were exported
@@ -332,18 +332,37 @@ class VariaTestSuite(TestSuite):
 
     def test_uv_controller(self):
         """Test whether uv controllers are imported and exported correctly."""
+        def check_uv_controller(nif):
+            nif_animnode = nif.root_blocks[0].find(
+                block_type = NifFormat.NiBSAnimationNode)
+            assert(nif_animnode)
+            nif_uvctrl = nif_animnode.children[0].getControllers()[0]
+            assert(nif_uvctrl)
+            nif_uvdata = nif_uvctrl.data
+            assert(nif_uvdata)
+            nif_ofsu = nif_uvdata.uvGroups[0]
+            assert(nif_ofsu.numKeys == 2)
+
         # loading the test nif
         # (this nif has emit color 1,0,1 and emitmulti 3)
         # stencil test
         nif = self.test(filename='test/nif/mw/test_uvcontroller.nif')
+        # double check that nif has the claimed values
+        check_uv_controller(nif)
         # check that the controllers are present in blender
         obj = Blender.Object.Get("TestUVController")
         mat = obj.data.materials[0]
         # check that there is material offset animation data
         assert(mat.ipo)
         assert(mat.ipo[Blender.Ipo.MA_OFSX])
-
-        # XXX export
+        # export
+        nif = self.test(
+            filename='test/nif/mw/_test_uvcontroller.nif',
+            config=dict(EXPORT_VERSION='Morrowind'),
+            selection=['TestUVController'],
+            next_layer=True)
+        # check that nif was correctly exported
+        check_uv_controller(nif)
 
 suite = VariaTestSuite("varia")
 suite.run()
