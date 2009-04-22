@@ -342,7 +342,6 @@ class VariaTestSuite(TestSuite):
         # check that there is material offset animation data
         assert(mat.ipo)
         assert(mat.ipo[Blender.Ipo.MA_OFSX])
-        assert(mat.ipo[Blender.Ipo.MA_OFSY])
 
         # XXX export
 

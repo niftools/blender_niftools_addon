@@ -1832,7 +1832,35 @@ Texture '%s' not found or not supported and no alternate available"""
         if not self.IMPORT_ANIMATION:
             return
 
-        # XXX todo
+        self.importMaterialUVController(b_material, n_geom)
+
+    def importMaterialUVController(self, b_material, n_geom):
+        """Import UV controller data."""
+        # search for the block
+        for n_ctrl in n_geom.getControllers():
+            if isinstance(n_ctrl, NifFormat.NiUVController):
+                self.logger.info("importing UV controller")
+                b_channels = ("OfsX", "OfsY", "SizeX", "SizeY")
+                for b_channel, n_uvgroup in zip(b_channels,
+                                                   n_ctrl.data.uvGroups):
+                    if n_uvgroup.keys:
+                        # create curve in material ipo
+                        b_ipo = self.getMaterialIpo(b_material)
+                        b_curve = b_ipo.addCurve(b_channel)
+                        # XXX todo: get interpolation and extend from nif data
+                        # XXX these are reasonable defaults
+                        b_curve.interpolation = Blender.IpoCurve.InterpTypes.LINEAR
+                        b_curve.extend = Blender.IpoCurve.ExtendTypes.CYCLIC
+                        for n_key in n_uvgroup.keys:
+                            b_curve[1 + n_key.time * self.fps] = n_key.value
+
+    def getMaterialIpo(self, b_material):
+        """Return existing material ipo data, or if none exists, create one
+        and return that.
+        """
+        if not b_material.ipo:
+            b_material.ipo = Blender.Ipo.New("Material", "MatIpo")
+        return b_material.ipo
 
     def importMesh(self, niBlock,
                    group_mesh=None,
