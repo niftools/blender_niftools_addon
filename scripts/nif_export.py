@@ -2454,8 +2454,9 @@ they can easily be identified.")
             n_uvctrl = NifFormat.NiUVController()
             # XXX todo: set flags from blender cycle value
             n_uvctrl.flags = 8
+            n_uvctrl.frequency = 1.0
             n_uvctrl.startTime = min(n_times)
-            n_uvctrl.startTime = max(n_times)
+            n_uvctrl.stopTime = max(n_times)
             n_uvctrl.data = n_uvdata
             # attach block to geometry
             n_geom.addController(n_uvctrl)
