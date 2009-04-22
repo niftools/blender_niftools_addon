@@ -1,4 +1,5 @@
 Version 2.4.6 (in development)
+* import and export of NiUVController/NiUVData (i.e. moving textures)
 
 Version 2.4.5 (21 Apr 2009)
 * another import fix for names that end with null character

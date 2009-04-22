@@ -2092,6 +2092,9 @@ they can easily be identified." % ob)
                         key.forward = 0.0 # ?
                         key.backward = 0.0 # ?
 
+                self.exportMaterialControllers(
+                    b_material=mesh_mat, n_geom=trishape)
+
             # add NiTriShape's data
             # NIF flips the texture V-coordinate (OpenGL standard)
             if isinstance(trishape, NifFormat.NiTriShape):
@@ -2404,6 +2407,58 @@ they can easily be identified.")
                         morphctrl.stopTime = ctrlStop
 
 
+
+    def exportMaterialControllers(self, b_material, n_geom):
+        """Export material animation data for given geometry."""
+        if self.EXPORT_ANIMATION == 1:
+            # geometry only: don't write controllers
+            return
+
+        self.exportMaterialAlphaController(b_material, n_geom)
+        self.exportMaterialUVController(b_material, n_geom)
+
+    def exportMaterialAlphaController(self, b_material, n_geom):
+        """Export the material alpha controller data."""
+        # XXX todo: move alpha export here
+        return
+
+    def exportMaterialUVController(self, b_material, n_geom):
+        """Export the material UV controller data."""
+        # get the material ipo
+        b_ipo = b_material.ipo
+        if not b_ipo:
+            return
+        # get the uv curves and translate them into nif data
+        n_uvdata = NifFormat.NiUVData()
+        n_times = [] # track all times (used later in start time and end time)
+        b_channels = (Blender.Ipo.MA_OFSX, Blender.Ipo.MA_OFSY,
+                      Blender.Ipo.MA_SIZEX, Blender.Ipo.MA_SIZEY)
+        for b_channel, n_uvgroup in zip(b_channels, n_uvdata.uvGroups):
+            b_curve = b_ipo[b_channel]
+            if b_curve:
+                self.logger.info("Exporting %s as NiUVData" % b_curve)
+                n_uvgroup.numKeys = len(b_curve.bezierPoints)
+                # XXX todo: set interpolation from blender interpolation
+                n_uvgroup.interpolation = NifFormat.KeyType.LINEAR_KEY
+                n_uvgroup.keys.updateSize()
+                for b_point, n_key in zip(b_curve.bezierPoints, n_uvgroup.keys):
+                    # add each point of the curve
+                    b_time, b_value = b_point.pt
+                    n_key.time = (b_time - 1) * self.fspeed
+                    n_key.value = b_value
+                    # track time
+                    n_times.append(n_key.time)
+        # if uv data is present (we check this by checking if times were added)
+        # then add the controller so it is exported
+        if n_times:
+            n_uvctrl = NifFormat.NiUVController()
+            # XXX todo: set flags from blender cycle value
+            n_uvctrl.flags = 8
+            n_uvctrl.startTime = min(n_times)
+            n_uvctrl.startTime = max(n_times)
+            n_uvctrl.data = n_uvdata
+            # attach block to geometry
+            n_geom.addController(n_uvctrl)
 
     def exportBones(self, arm, parent_block):
         """Export the bones of an armature."""

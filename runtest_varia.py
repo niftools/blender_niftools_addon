@@ -333,10 +333,14 @@ class VariaTestSuite(TestSuite):
     def test_uv_controller(self):
         """Test whether uv controllers are imported and exported correctly."""
         def check_uv_controller(nif):
-            nif_animnode = nif.root_blocks[0].find(
-                block_type = NifFormat.NiBSAnimationNode)
-            assert(nif_animnode)
-            nif_uvctrl = nif_animnode.children[0].getControllers()[0]
+            # XXX some uv controlled geometries need such node...
+            #nif_animnode = nif.root_blocks[0].find(
+            #    block_type = NifFormat.NiBSAnimationNode)
+            #assert(nif_animnode)
+            nif_node = nif.root_blocks[0].find(
+                block_type=NifFormat.NiTriBasedGeom)
+            assert(nif_node.name.startswith("TestUVController"))
+            nif_uvctrl = nif_node.getControllers()[0]
             assert(nif_uvctrl)
             nif_uvdata = nif_uvctrl.data
             assert(nif_uvdata)
