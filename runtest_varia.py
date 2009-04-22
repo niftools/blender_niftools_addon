@@ -67,8 +67,8 @@ class VariaTestSuite(TestSuite):
         self.test_fo3_texture_slots()
         self.test_fo3_emit()
         self.test_fo3_emit2()
-        self.test_mw_nifxnifkf()
         self.test_uv_controller()
+        self.test_mw_nifxnifkf()
 
     def test_stencil(self):
         # stencil test
@@ -332,7 +332,19 @@ class VariaTestSuite(TestSuite):
 
     def test_uv_controller(self):
         """Test whether uv controllers are imported and exported correctly."""
-        # XXX import and export a nif with uv controllers
+        # loading the test nif
+        # (this nif has emit color 1,0,1 and emitmulti 3)
+        # stencil test
+        nif = self.test(filename='test/nif/mw/test_uvcontroller.nif')
+        # check that the controllers are present in blender
+        obj = Blender.Object.Get("TestUVController")
+        mat = obj.data.materials[0]
+        # check that there is material offset animation data
+        assert(mat.ipo)
+        assert(mat.ipo[Blender.Ipo.MA_OFSX])
+        assert(mat.ipo[Blender.Ipo.MA_OFSY])
+
+        # XXX export
 
 suite = VariaTestSuite("varia")
 suite.run()
