@@ -1,5 +1,6 @@
 Version 2.4.6 (23 Apr 2009)
-* import and export of Morrowind NiUVController/NiUVData (i.e. moving textures)
+* import and export of Morrowind NiUVController/NiUVData i.e. moving textures
+(with help from Axel, TheDaywalker, and Alphax)
 
 Version 2.4.5 (21 Apr 2009)
 * another import fix for names that end with null character
@@ -13,7 +14,7 @@ Version 2.4.5 (21 Apr 2009)
 * Fallout 3:
   - now imports and exports the emitMulti value in the shader emit
   slider (up to a factor 10 to accomodate the range) and stores the emissive
-  color as Blender's diffuse color (reported by mushin)
+  color as Blender's diffuse color (reported and tested by mushin)
   - glow texture import and export (reported and tested by mushin)
 
 Version 2.4.4 (2 Apr 2009)
