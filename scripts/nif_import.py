@@ -293,7 +293,7 @@ class NifImport(NifImportExport):
         if self.IMPORT_SENDBONESTOBINDPOS:
             PyFFI.Spells.NIF.fix.SpellSendBonesToBindPosition(data=data).recurse()
         if self.IMPORT_APPLYSKINDEFORM:
-            for niBlock in root_block.tree():
+            for niBlock in root_block.tree(unique=True):
                 if not isinstance(niBlock, NifFormat.NiGeometry):
                     continue
                 if not niBlock.isSkin():
