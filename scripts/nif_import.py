@@ -1045,7 +1045,14 @@ class NifImport(NifImportExport):
                                                      kfd.xyzRotations[1].keys,
                                                      kfd.xyzRotations[2].keys):
                             # time 0.0 is frame 1
-                            frame = 1 + int(key.time * self.fps + 0.5)
+                            # XXX it is assumed that all the keys have the
+                            # XXX same times!!!
+                            if (abs(xkey.time - ykey.time) > self.EPSILON
+                                or abs(xkey.time - zkey.time) > self.EPSILON):
+                                self.logger.warn(
+                                    "xyz key times do not correspond, "
+                                    "animation may not be correctly imported")
+                            frame = 1 + int(xkey.time * self.fps + 0.5)
                             euler = Blender.Mathutils.Euler(
                                 [xkey.value*180.0/math.pi,
                                  ykey.value*180.0/math.pi,

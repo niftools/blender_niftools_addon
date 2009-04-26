@@ -2,6 +2,7 @@ Version 2.4.7 (in development)
 * fixed bug where "apply skin deform" would apply it more than once on
 geometries that are linked to more than once in the nif
 * new option to import extra nodes which are not bone influences as bones
+* bugfix for Euler type animation import
 
 Version 2.4.6 (23 Apr 2009)
 * import and export of Morrowind NiUVController/NiUVData i.e. moving textures
