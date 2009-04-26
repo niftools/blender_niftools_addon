@@ -2499,16 +2499,20 @@ Texture '%s' not found or not supported and no alternate available"""
                     skelroot = niBlock
             else:
                 skelroot = niBlock
-            if not self.armatures.has_key(skelroot):
+            if skelroot not in self.armatures:
                 self.armatures[skelroot] = []
             self.logger.info("Selecting node '%s' as skeleton root"
                              % skelroot.name)
             # add bones
             for bone in skelroot.tree():
-                if bone == skelroot: continue
-                if not isinstance(bone, NifFormat.NiNode): continue
-                if self.is_grouping_node(bone): continue
-                self.armatures[skelroot].append(bone)
+                if bone is skelroot:
+                    continue
+                if not isinstance(bone, NifFormat.NiNode):
+                    continue
+                if self.is_grouping_node(bone):
+                    continue
+                if bone not in self.armatures[skelroot]:
+                    self.armatures[skelroot].append(bone)
             return # done!
 
         # attaching to selected armature -> first identify armature and bones
@@ -2525,7 +2529,9 @@ Texture '%s' not found or not supported and no alternate available"""
                 bone_block = skelroot.find(block_name = nif_bone_name)
                 # add it to the name list if there is a bone with that name
                 if bone_block:
-                    self.logger.info("Identified nif block '%s' with bone '%s' in selected armature" % (nif_bone_name, bone_name))
+                    self.logger.info(
+                        "Identified nif block '%s' with bone '%s' "
+                        "in selected armature" % (nif_bone_name, bone_name))
                     self.names[bone_block] = bone_name
                     self.armatures[skelroot].append(bone_block)
                     self.complete_bone_tree(bone_block, skelroot)
@@ -2549,13 +2555,31 @@ Texture '%s' not found or not supported and no alternate available"""
                         raise NifImportError("nif structure incompatible with '%s' as armature: \nnode '%s' has '%s' as armature"%(self.selectedObjects[0].name, niBlock.name, skelroot.name))
 
                 for i, boneBlock in enumerate(skininst.bones):
-                    if not boneBlock in self.armatures[skelroot]:
+                    if boneBlock not in self.armatures[skelroot]:
                         self.armatures[skelroot].append(boneBlock)
-                        self.logger.debug("'%s' is a bone of armature '%s'" % (boneBlock.name, skelroot.name))
+                        self.logger.debug(
+                            "'%s' is a bone of armature '%s'"
+                            % (boneBlock.name, skelroot.name))
                     # now we "attach" the bone to the armature:
                     # we make sure all NiNodes from this bone all the way
                     # down to the armature NiNode are marked as bones
                     self.complete_bone_tree(boneBlock, skelroot)
+
+                # mark all nodes as bones if asked
+                if self.IMPORT_EXTRANODESASBONES:
+                    # add bones
+                    for bone in skelroot.tree():
+                        if bone is skelroot:
+                            continue
+                        if not isinstance(bone, NifFormat.NiNode):
+                            continue
+                        if self.is_grouping_node(bone):
+                            continue
+                        if bone not in self.armatures[skelroot]:
+                            self.armatures[skelroot].append(bone)
+                            self.logger.debug(
+                                "'%s' marked as extra bone of armature '%s'"
+                                % (bone.name, skelroot.name))
 
         # continue down the tree
         for child in niBlock.getRefs():
@@ -2572,7 +2596,7 @@ Texture '%s' not found or not supported and no alternate available"""
         boneparent = bone._parent
         if boneparent != skelroot:
             # parent is not the skeleton root
-            if not boneparent in self.armatures[skelroot]:
+            if boneparent not in self.armatures[skelroot]:
                 # neither is it marked as a bone: so mark the parent as a bone
                 self.armatures[skelroot].append(boneparent)
                 # store the coordinates for realignement autodetection 
