@@ -576,7 +576,7 @@ Furniture marker has invalid number (%s). Name your file
                         skelroot.children[i] = child
 
             # apply scale
-            if abs(self.EXPORT_SCALE_CORRECTION - 1.0) > NifFormat._EPSILON:
+            if abs(self.EXPORT_SCALE_CORRECTION - 1.0) > self.EPSILON:
                 self.logger.info("Applying scale correction %f"
                                  % self.EXPORT_SCALE_CORRECTION)
                 root_block.applyScale(self.EXPORT_SCALE_CORRECTION)
@@ -1576,14 +1576,14 @@ Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
                 if mesh_mat_specular_color[0] > 1.0: mesh_mat_specular_color[0] = 1.0
                 if mesh_mat_specular_color[1] > 1.0: mesh_mat_specular_color[1] = 1.0
                 if mesh_mat_specular_color[2] > 1.0: mesh_mat_specular_color[2] = 1.0
-                if ( mesh_mat_specular_color[0] > NifFormat._EPSILON ) \
-                    or ( mesh_mat_specular_color[1] > NifFormat._EPSILON ) \
-                    or ( mesh_mat_specular_color[2] > NifFormat._EPSILON ):
+                if ( mesh_mat_specular_color[0] > self.EPSILON ) \
+                    or ( mesh_mat_specular_color[1] > self.EPSILON ) \
+                    or ( mesh_mat_specular_color[2] > self.EPSILON ):
                     mesh_hasspec = True
                 mesh_mat_emissive = mesh_mat.getEmit()              # 'Emit' scrollbar in Blender (MW -> 0.0 0.0 0.0)
                 mesh_mat_glossiness = mesh_mat.getHardness() / 4.0  # 'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
                 mesh_mat_transparency = mesh_mat.getAlpha()         # 'A(lpha)' scrollbar in Blender (MW -> 1.0)
-                mesh_hasalpha = (abs(mesh_mat_transparency - 1.0) > NifFormat._EPSILON) \
+                mesh_hasalpha = (abs(mesh_mat_transparency - 1.0) > self.EPSILON) \
                                 or (mesh_mat.getIpo() != None
                                     and mesh_mat.getIpo().getCurve('Alpha'))
                 mesh_haswire = mesh_mat.mode & Blender.Material.Modes.WIRE
@@ -1601,7 +1601,7 @@ Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
                     # special case for Fallout 3 (it does not store diffuse color)
                     # if emit is non-zero, set emissive color to diffuse
                     # (otherwise leave the color to zero)
-                    if mesh_mat.emit > NifFormat._EPSILON:
+                    if mesh_mat.emit > self.EPSILON:
                         mesh_mat_emissive_color = mesh_mat_diffuse_color
                         mesh_mat_emitmulti = mesh_mat.emit * 10.0
                 # the base texture = first material texture
@@ -1687,7 +1687,7 @@ MapTo.NOR"%(mesh.name,mesh_mat.getName()))
                                 # how can we emulate the NIF alpha system (simply multiplying material alpha with texture alpha) when MapTo.ALPHA is turned on?
                                 # require the Blender material alpha to be 0.0 (no material color can show up), and use the "Var" slider in the texture blending mode tab!
                                 # but...
-                                if mesh_mat_transparency > NifFormat._EPSILON:
+                                if mesh_mat_transparency > self.EPSILON:
                                     raise NifExportError("Cannot export this \
 type of transparency in material '%s': instead, try to set alpha to 0.0 and to \
 use the 'Var' slider in the 'Map To' tab under the material \
@@ -1823,23 +1823,23 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                                            - vertquad_list[j][1][uvlayer][0])
                                        for uvlayer
                                        in xrange(len(mesh_uvlayers))) \
-                                       > NifFormat._EPSILON:
+                                       > self.EPSILON:
                                      continue
                                 if max(abs(vertquad[1][uvlayer][1]
                                            - vertquad_list[j][1][uvlayer][1])
                                        for uvlayer
                                        in xrange(len(mesh_uvlayers))) \
-                                       > NifFormat._EPSILON:
+                                       > self.EPSILON:
                                     continue
                             if mesh_hasnormals:
-                                if abs(vertquad[2][0] - vertquad_list[j][2][0]) > NifFormat._EPSILON: continue
-                                if abs(vertquad[2][1] - vertquad_list[j][2][1]) > NifFormat._EPSILON: continue
-                                if abs(vertquad[2][2] - vertquad_list[j][2][2]) > NifFormat._EPSILON: continue
+                                if abs(vertquad[2][0] - vertquad_list[j][2][0]) > self.EPSILON: continue
+                                if abs(vertquad[2][1] - vertquad_list[j][2][1]) > self.EPSILON: continue
+                                if abs(vertquad[2][2] - vertquad_list[j][2][2]) > self.EPSILON: continue
                             if mesh_hasvcol:
-                                if abs(vertquad[3].r - vertquad_list[j][3].r) > NifFormat._EPSILON: continue
-                                if abs(vertquad[3].g - vertquad_list[j][3].g) > NifFormat._EPSILON: continue
-                                if abs(vertquad[3].b - vertquad_list[j][3].b) > NifFormat._EPSILON: continue
-                                if abs(vertquad[3].a - vertquad_list[j][3].a) > NifFormat._EPSILON: continue
+                                if abs(vertquad[3].r - vertquad_list[j][3].r) > self.EPSILON: continue
+                                if abs(vertquad[3].g - vertquad_list[j][3].g) > self.EPSILON: continue
+                                if abs(vertquad[3].b - vertquad_list[j][3].b) > self.EPSILON: continue
+                                if abs(vertquad[3].a - vertquad_list[j][3].a) > self.EPSILON: continue
                             # all tests passed: so yes, we already have it!
                             f_index[i] = j
                             break
@@ -2317,7 +2317,7 @@ they can easily be identified.")
                             if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
                                if self.EXPORT_BONESPERPARTITION < 18:
                                    self.logger.warning("Using less than 18 bones per partition on Oblivion/Fallout 3 export. Set it to 18 to get higher quality skin partitions")
-                            if lostweight > NifFormat._EPSILON:
+                            if lostweight > self.EPSILON:
                                 self.logger.warning("Lost %f in vertex weights while creating a skin partition for Blender object '%s' (nif block '%s')" % (lostweight, ob.name, trishape.name))
 
                         # clean up
