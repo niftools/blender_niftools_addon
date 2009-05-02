@@ -2,10 +2,13 @@ Version 2.4.7 (in development)
 * fixed bug where "apply skin deform" would apply it more than once on
 geometries that are linked to more than once in the nif
 * new option to import extra nodes which are not bone influences as bones
+(reported by mac1415)
 * bugfix for Euler type animation import
-* max bones per partition now defaults to 18 for civ4
+* max bones per partition now defaults to 18 for civ4 (reported by mac1415)
 * updated for pyffi 2.0.0
-* moved advanced import settings to new column
+* moved advanced import settings to new column (reported by Alphax)
+* inverted X and Y offset UV Ipo channels on import and export (reported by
+Alphax)
 
 Version 2.4.6 (23 Apr 2009)
 * import and export of Morrowind NiUVController/NiUVData i.e. moving textures

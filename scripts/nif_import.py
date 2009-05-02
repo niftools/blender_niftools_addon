@@ -1859,7 +1859,11 @@ Texture '%s' not found or not supported and no alternate available"""
                         b_curve.interpolation = Blender.IpoCurve.InterpTypes.LINEAR
                         b_curve.extend = Blender.IpoCurve.ExtendTypes.CYCLIC
                         for n_key in n_uvgroup.keys:
-                            b_curve[1 + n_key.time * self.fps] = n_key.value
+                            if b_channel.startswith("Ofs"):
+                                # offsets are negated
+                                b_curve[1 + n_key.time * self.fps] = -n_key.value
+                            else:
+                                b_curve[1 + n_key.time * self.fps] = n_key.value
 
     def getMaterialIpo(self, b_material):
         """Return existing material ipo data, or if none exists, create one

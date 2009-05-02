@@ -2444,6 +2444,9 @@ they can easily be identified.")
                 for b_point, n_key in zip(b_curve.bezierPoints, n_uvgroup.keys):
                     # add each point of the curve
                     b_time, b_value = b_point.pt
+                    if b_channel in (Blender.Ipo.MA_OFSX, Blender.Ipo.MA_OFSY):
+                        # offsets are negated in blender
+                        b_value = -b_value
                     n_key.time = (b_time - 1) * self.fspeed
                     n_key.value = b_value
                     # track time
