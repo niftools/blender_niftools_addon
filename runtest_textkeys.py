@@ -36,7 +36,7 @@ from itertools import izip
 
 import Blender
 from nif_test import TestSuite
-from PyFFI.Formats.NIF import NifFormat
+from pyffi.formats.nif import NifFormat
 
 # some tests to import and export nif files
 

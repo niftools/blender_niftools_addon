@@ -35,9 +35,9 @@
 from itertools import izip
 
 from nif_test import TestSuite
-from PyFFI.Formats.NIF import NifFormat
-from PyFFI.Spells.NIF.check import SpellCompareSkinData
-from PyFFI.Spells.NIF import NifToaster
+from pyffi.formats.nif import NifFormat
+from pyffi.spells.nif.check import SpellCompareSkinData
+from pyffi.spells.nif import NifToaster
 
 class SkinningTestSuite(TestSuite):
     def run(self):

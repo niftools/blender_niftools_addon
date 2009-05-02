@@ -6,7 +6,7 @@ from __future__ import with_statement
 from contextlib import closing
 import logging
 
-from PyFFI.Formats.NIF import NifFormat
+from pyffi.formats.nif import NifFormat
 
 # set up logger
 niftoolslogger = logging.getLogger("niftools")

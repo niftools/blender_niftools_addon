@@ -50,7 +50,7 @@ Tooltip: 'Hull Selected Objects'
 import Blender
 from Blender import Window, sys
 
-from PyFFI.Utils import QuickHull
+from pyffi.utils.quickhull
 
 def hull_box(ob, me, selected_only):
     """Hull mesh in a box."""
@@ -132,10 +132,9 @@ def hull_convex(ob, me, selected_only, precision = 0.1):
     """Hull mesh in a convex shape."""
 
     # find convex hull
-    vertices, triangles = QuickHull.qhull3d([ tuple(v.co)
-                                              for v in me.verts
-                                              if v.sel or not selected_only ],
-                                            precision = precision)
+    vertices, triangles = pyffi.utils.quickhull.qhull3d(
+        [tuple(v.co) for v in me.verts if v.sel or not selected_only],
+        precision = precision)
 
     # create convex mesh
     box = Blender.Mesh.New('convexpoly')

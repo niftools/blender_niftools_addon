@@ -27,8 +27,8 @@ import logging
 import math
 import operator
 
-from PyFFI.Utils import QuickHull
-import PyFFI.Spells.NIF.fix
+import pyffi.utils.quickhull
+import pyffi.spells.nif.fix
 
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
@@ -285,13 +285,13 @@ class NifImport(NifImportExport):
         data = NifFormat.Data()
         data.roots = [root_block]
         if self.IMPORT_MERGESKELETONROOTS:
-            PyFFI.Spells.NIF.fix.SpellMergeSkeletonRoots(data=data).recurse()
+            pyffi.spells.nif.fix.SpellMergeSkeletonRoots(data=data).recurse()
         if self.IMPORT_SENDGEOMETRIESTOBINDPOS:
-            PyFFI.Spells.NIF.fix.SpellSendGeometriesToBindPosition(data=data).recurse()
+            pyffi.spells.nif.fix.SpellSendGeometriesToBindPosition(data=data).recurse()
         if self.IMPORT_SENDDETACHEDGEOMETRIESTONODEPOS:
-            PyFFI.Spells.NIF.fix.SpellSendDetachedGeometriesToNodePosition(data=data).recurse()
+            pyffi.spells.nif.fix.SpellSendDetachedGeometriesToNodePosition(data=data).recurse()
         if self.IMPORT_SENDBONESTOBINDPOS:
-            PyFFI.Spells.NIF.fix.SpellSendBonesToBindPosition(data=data).recurse()
+            pyffi.spells.nif.fix.SpellSendBonesToBindPosition(data=data).recurse()
         if self.IMPORT_APPLYSKINDEFORM:
             for niBlock in root_block.tree(unique=True):
                 if not isinstance(niBlock, NifFormat.NiGeometry):
@@ -2745,7 +2745,7 @@ Texture '%s' not found or not supported and no alternate available"""
         """Import an oblivion collision shape as list of blender meshes."""
         if isinstance(bhkshape, NifFormat.bhkConvexVerticesShape):
             # find vertices (and fix scale)
-            vertices, triangles = QuickHull.qhull3d(
+            vertices, triangles = pyffi.utils.quickhull.qhull3d(
                 [ (7 * vert.x, 7 * vert.y, 7 * vert.z)
                   for vert in bhkshape.vertices ])
 

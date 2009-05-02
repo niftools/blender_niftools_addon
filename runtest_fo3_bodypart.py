@@ -35,7 +35,7 @@
 from itertools import izip
 
 from nif_test import TestSuite
-from PyFFI.Formats.NIF import NifFormat
+from pyffi.formats.nif import NifFormat
 import Blender
 import bpy
 

@@ -1,7 +1,7 @@
 """Common functions for the Blender nif import and export scripts."""
 
 __version__ = "2.4.7"
-__requiredpyffiversion__ = "1.2.4"
+__requiredpyffiversion__ = "2.0.0"
 __requiredblenderversion__ = "245"
 
 # ***** BEGIN LICENSE BLOCK *****
@@ -64,8 +64,8 @@ Get a newer version at http://www.blender.org/
 # check if PyFFI is installed and import NifFormat
 
 try:
-    from PyFFI import __version__ as __pyffiversion__
-    from PyFFI.Formats.NIF import NifFormat
+    from pyffi import __version__ as __pyffiversion__
+    from pyffi.formats.nif import NifFormat
 except ImportError:
     print("""--------------------------
 ERROR\nThis script requires the Python File Format Interface (PyFFI).
