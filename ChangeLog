@@ -4,6 +4,8 @@ geometries that are linked to more than once in the nif
 * new option to import extra nodes which are not bone influences as bones
 * bugfix for Euler type animation import
 * max bones per partition now defaults to 18 for civ4
+* updated for pyffi 2.0.0
+* moved advanced import settings to new column
 
 Version 2.4.6 (23 Apr 2009)
 * import and export of Morrowind NiUVController/NiUVData i.e. moving textures

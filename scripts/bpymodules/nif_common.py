@@ -536,33 +536,6 @@ class NifConfig:
             self.drawYSep()
 
             self.drawToggle(
-                text = "Realign Bone Tail Only",
-                event_name = "IMPORT_REALIGN_BONES_1",
-                val = (self.config["IMPORT_REALIGN_BONES"] == 1),
-                num_items = 2, item = 0)
-            self.drawToggle(
-                text = "Realign Bone Tail + Roll",
-                event_name = "IMPORT_REALIGN_BONES_2",
-                val = (self.config["IMPORT_REALIGN_BONES"] == 2),
-                num_items = 2, item = 1)
-            self.drawToggle(
-                text="Merge Skeleton Roots",
-                event_name="IMPORT_MERGESKELETONROOTS")
-            self.drawToggle(
-                text="Send Geometries To Bind Position",
-                event_name="IMPORT_SENDGEOMETRIESTOBINDPOS")
-            self.drawToggle(
-                text="Send Detached Geometries To Node Position",
-                event_name="IMPORT_SENDDETACHEDGEOMETRIESTONODEPOS")
-            self.drawToggle(
-                text="Send Bones To Bind Position",
-                event_name="IMPORT_SENDBONESTOBINDPOS")
-            self.drawToggle(
-                text = "Apply Skin Deformation",
-                event_name = "IMPORT_APPLYSKINDEFORM")
-            self.drawYSep()
-
-            self.drawToggle(
                 text = "Import Extra Skeleton Nodes As Bones",
                 event_name = "IMPORT_EXTRANODESASBONES")
             self.drawYSep()
@@ -716,7 +689,39 @@ class NifConfig:
             event_name = "CANCEL",
             num_items = 3, item = 2)
 
+        # advanced import settings
+        if self.target == self.TARGET_IMPORT:
+            self.drawNextColumn()
+
+            self.drawToggle(
+                text = "Realign Bone Tail Only",
+                event_name = "IMPORT_REALIGN_BONES_1",
+                val = (self.config["IMPORT_REALIGN_BONES"] == 1),
+                num_items = 2, item = 0)
+            self.drawToggle(
+                text = "Realign Bone Tail + Roll",
+                event_name = "IMPORT_REALIGN_BONES_2",
+                val = (self.config["IMPORT_REALIGN_BONES"] == 2),
+                num_items = 2, item = 1)
+            self.drawToggle(
+                text="Merge Skeleton Roots",
+                event_name="IMPORT_MERGESKELETONROOTS")
+            self.drawToggle(
+                text="Send Geometries To Bind Position",
+                event_name="IMPORT_SENDGEOMETRIESTOBINDPOS")
+            self.drawToggle(
+                text="Send Detached Geometries To Node Position",
+                event_name="IMPORT_SENDDETACHEDGEOMETRIESTONODEPOS")
+            self.drawToggle(
+                text="Send Bones To Bind Position",
+                event_name="IMPORT_SENDBONESTOBINDPOS")
+            self.drawToggle(
+                text = "Apply Skin Deformation",
+                event_name = "IMPORT_APPLYSKINDEFORM")
+            self.drawYSep()
+
         # export-only options for oblivion/fallout 3
+
         if (self.target == self.TARGET_EXPORT
             and self.config["EXPORT_VERSION"] in ("Oblivion", "Fallout 3")):
             self.drawNextColumn()
