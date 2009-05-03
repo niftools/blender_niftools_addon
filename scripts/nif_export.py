@@ -24,6 +24,9 @@ from nif_common import NifConfig
 from nif_common import NifFormat
 from nif_common import __version__
 
+import pyffi.spells.nif
+import pyffi.spells.nif.fix
+
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -579,7 +582,11 @@ Furniture marker has invalid number (%s). Name your file
             if abs(self.EXPORT_SCALE_CORRECTION - 1.0) > self.EPSILON:
                 self.logger.info("Applying scale correction %f"
                                  % self.EXPORT_SCALE_CORRECTION)
-                root_block.applyScale(self.EXPORT_SCALE_CORRECTION)
+                data = NifFormat.Data()
+                data.roots = [root_block]
+                toaster = pyffi.spells.nif.NifToaster()
+                toaster.scale = self.EXPORT_SCALE_CORRECTION
+                pyffi.spells.nif.fix.SpellScale(data=data, toaster=toaster).recurse()
 
             # generate mopps (must be done after applying scale!)
             if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):

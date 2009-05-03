@@ -28,6 +28,7 @@ import math
 import operator
 
 import pyffi.utils.quickhull
+import pyffi.spells.nif
 import pyffi.spells.nif.fix
 
 # --------------------------------------------------------------------------
@@ -315,7 +316,9 @@ class NifImport(NifImportExport):
         self.set_parents(root_block)
         
         # scale tree
-        root_block.applyScale(self.IMPORT_SCALE_CORRECTION)
+        toaster = pyffi.spells.nif.NifToaster()
+        toaster.scale = self.IMPORT_SCALE_CORRECTION
+        pyffi.spells.nif.fix.SpellScale(data=data, toaster=toaster).recurse()
         
         # mark armature nodes and bones
         self.markArmaturesBones(root_block)

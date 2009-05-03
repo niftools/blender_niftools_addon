@@ -13,6 +13,8 @@ Alphax)
 * new option to control export of extra shader textures for civ4 and sid
 meier's railroads
 * if extra shader textures are exported, then tangent space is generated
+* fixed scaling bug if scale was not 1.0 in certain cases (such as civ4
+leaderheads)
 
 Version 2.4.6 (23 Apr 2009)
 * import and export of Morrowind NiUVController/NiUVData i.e. moving textures
