@@ -185,7 +185,7 @@ class NifConfig:
             Blender.sys.dirname(Blender.sys.progname), "import.nif"),
         EXPORT_FILE = Blender.sys.join(
             Blender.sys.dirname(Blender.sys.progname), "export.nif"),
-        IMPORT_REALIGN_BONES = 2, # 0 = no, 1 = tail, 2 = tail+rotation
+        IMPORT_REALIGN_BONES = 1, # 0 = no, 1 = tail, 2 = tail+rotation
         IMPORT_ANIMATION = True,
         IMPORT_SCALE_CORRECTION = 0.1,
         EXPORT_SCALE_CORRECTION = 10.0, # 1/import scale correction
@@ -320,9 +320,9 @@ class NifConfig:
             pass
         try:
             if self.config["IMPORT_REALIGN_BONES"] == True:
-               self.config["IMPORT_REALIGN_BONES"] = 2
-            elif self.config["IMPORT_REALIGN_BONES"] == False:
                self.config["IMPORT_REALIGN_BONES"] = 1
+            elif self.config["IMPORT_REALIGN_BONES"] == False:
+               self.config["IMPORT_REALIGN_BONES"] = 0
         except:
             pass
         try:
@@ -1067,7 +1067,7 @@ class NifConfig:
             self.config["IMPORT_SKELETON"] = 0
             self.config["IMPORT_EXPORTEMBEDDEDTEXTURES"] = False
             self.config["IMPORT_COMBINESHAPES"] = True
-            self.config["IMPORT_REALIGN_BONES"] = 2
+            self.config["IMPORT_REALIGN_BONES"] = 1
             self.config["IMPORT_MERGESKELETONROOTS"] = True
             self.config["IMPORT_SENDGEOMETRIESTOBINDPOS"] = True
             self.config["IMPORT_SENDDETACHEDGEOMETRIESTONODEPOS"] = True
@@ -1079,7 +1079,7 @@ class NifConfig:
             self.config["IMPORT_SKELETON"] = 0
             self.config["IMPORT_EXPORTEMBEDDEDTEXTURES"] = False
             self.config["IMPORT_COMBINESHAPES"] = True
-            self.config["IMPORT_REALIGN_BONES"] = 2
+            self.config["IMPORT_REALIGN_BONES"] = 1
             self.config["IMPORT_MERGESKELETONROOTS"] = True
             self.config["IMPORT_SENDGEOMETRIESTOBINDPOS"] = False
             self.config["IMPORT_SENDDETACHEDGEOMETRIESTONODEPOS"] = False
