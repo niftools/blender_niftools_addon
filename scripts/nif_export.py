@@ -1977,10 +1977,11 @@ they can easily be identified." % ob)
                         #darkmtex = mesh_dark_mtex,
                         #detailmtex = mesh_detail_mtex)) 
                 else:
-                    if self.EXPORT_VERSION == "Sid Meier's Railroads":
-                        # sid meier's railroad:
+                    if (self.EXPORT_VERSION in self.USED_EXTRA_SHADER_TEXTURES
+                        and self.EXPORT_EXTRA_SHADER_TEXTURES):
+                        # sid meier's railroad and civ4:
                         # set shader slots in extra data
-                        self.addSMRRTShaderIntegerExtraDatas(trishape)
+                        self.addShaderIntegerExtraDatas(trishape)
                     trishape.addProperty(self.exportTexturingProperty(
                         flags=0x0001, # standard
                         applymode=self.APPLYMODE[mesh_base_mtex.blendmode if mesh_base_mtex else Blender.Texture.BlendModes["MIX"]],
@@ -2005,7 +2006,7 @@ they can easily be identified." % ob)
 
             if mesh_haswire:
                 # add NiWireframeProperty
-                trishape.addProperty(self.exportWireframeProperty(flags = 1))
+                trishape.addProperty(self.exportWireframeProperty(flags=1))
 
             if mesh_doublesided:
                 # add NiStencilProperty
@@ -2013,12 +2014,14 @@ they can easily be identified." % ob)
 
             if mesh_mat:
                 # add NiTriShape's specular property
-                # but NOT for sid meier's railroads (they use specularity even
-                # without this property)
+                # but NOT for sid meier's railroads and other extra shader
+                # games (they use specularity even without this property)
                 if (mesh_hasspec
-                    and self.EXPORT_VERSION != "Sid Meier's Railroads"):
+                    and (self.EXPORT_VERSION
+                         not in self.USED_EXTRA_SHADER_TEXTURES)):
                     # refer to the specular property in the trishape block
-                    trishape.addProperty(self.exportSpecularProperty(flags = 0x0001))
+                    trishape.addProperty(
+                        self.exportSpecularProperty(flags=0x0001))
                 
                 # add NiTriShape's material property
                 trimatprop = self.exportMaterialProperty(
@@ -2154,8 +2157,13 @@ they can easily be identified." % ob)
                                  stitchstrips=self.EXPORT_STITCHSTRIPS)
 
             # update tangent space (as binary extra data only for Oblivion)
+            # for extra shader texture games, only export it if those
+            # textures are actually exported (civ4 seems to be consistent with
+            # not using tangent space on non shadered nifs)
             if mesh_uvlayers and mesh_hasnormals:
-                if self.EXPORT_VERSION in ("Oblivion", "Fallout 3"):
+                if (self.EXPORT_VERSION in ("Oblivion", "Fallout 3")
+                    or (self.EXPORT_VERSION in self.USED_EXTRA_SHADER_TEXTURES
+                        and self.EXPORT_EXTRA_SHADER_TEXTURES)):
                     trishape.updateTangentSpace(
                         as_extra=(self.EXPORT_VERSION == "Oblivion"))
 
@@ -3608,29 +3616,40 @@ check that %s is selected during export.""" % targetobj)
         texprop.applyMode = applymode
         texprop.textureCount = 7
 
-        if self.EXPORT_VERSION == "Sid Meier's Railroads":
-            # sid meier's railroads:
-            # some textures end up in the shader texture list
-            # there are 5 slots available, so set them up
-            texprop.numShaderTextures = 5
-            texprop.shaderTextures.updateSize()
-            for mapindex, shadertexdesc in enumerate(texprop.shaderTextures):
-                # set default values
-                shadertexdesc.isUsed = False
-                shadertexdesc.mapIndex = mapindex
+        if self.EXPORT_EXTRA_SHADER_TEXTURES:
+            if self.EXPORT_VERSION == "Sid Meier's Railroads":
+                # sid meier's railroads:
+                # some textures end up in the shader texture list
+                # there are 5 slots available, so set them up
+                texprop.numShaderTextures = 5
+                texprop.shaderTextures.updateSize()
+                for mapindex, shadertexdesc in enumerate(texprop.shaderTextures):
+                    # set default values
+                    shadertexdesc.isUsed = False
+                    shadertexdesc.mapIndex = mapindex
 
-            # some texture slots required by the engine
-            shadertexdesc_envmap = texprop.shaderTextures[0]
-            shadertexdesc_envmap.isUsed = True
-            shadertexdesc_envmap.textureData.source = \
-                self.exportSourceTexture(filename="RRT_Engine_Env_map.dds")
+                # some texture slots required by the engine
+                shadertexdesc_envmap = texprop.shaderTextures[0]
+                shadertexdesc_envmap.isUsed = True
+                shadertexdesc_envmap.textureData.source = \
+                    self.exportSourceTexture(filename="RRT_Engine_Env_map.dds")
 
-            shadertexdesc_cubelightmap = texprop.shaderTextures[4]
-            shadertexdesc_cubelightmap.isUsed = True
-            shadertexdesc_cubelightmap.textureData.source = \
-                self.exportSourceTexture(filename="RRT_Cube_Light_map_128.dds")
+                shadertexdesc_cubelightmap = texprop.shaderTextures[4]
+                shadertexdesc_cubelightmap.isUsed = True
+                shadertexdesc_cubelightmap.textureData.source = \
+                    self.exportSourceTexture(filename="RRT_Cube_Light_map_128.dds")
 
-            # the other slots are exported below
+                # the other slots are exported below
+
+            elif self.EXPORT_VERSION == "Civilization IV":
+                # some textures end up in the shader texture list
+                # there are 4 slots available, so set them up
+                texprop.numShaderTextures = 4
+                texprop.shaderTextures.updateSize()
+                for mapindex, shadertexdesc in enumerate(texprop.shaderTextures):
+                    # set default values
+                    shadertexdesc.isUsed = False
+                    shadertexdesc.mapIndex = mapindex
 
         if basemtex:
             texprop.hasBaseTexture = True
@@ -3653,7 +3672,7 @@ check that %s is selected during export.""" % targetobj)
                                mtex = glowmtex)
 
         if bumpmtex:
-            if self.EXPORT_VERSION != "Sid Meier's Railroads":
+            if self.EXPORT_VERSION not in self.USED_EXTRA_SHADER_TEXTURES:
                 texprop.hasBumpMapTexture = True
                 self.exportTexDesc(texdesc = texprop.bumpMapTexture,
                                    uvlayers = uvlayers,
@@ -3664,19 +3683,19 @@ check that %s is selected during export.""" % targetobj)
                 texprop.bumpMapMatrix.m12 = 0.0
                 texprop.bumpMapMatrix.m21 = 0.0
                 texprop.bumpMapMatrix.m22 = 1.0
-            else:
+            elif self.EXPORT_EXTRA_SHADER_TEXTURES:
                 shadertexdesc = texprop.shaderTextures[1]
                 shadertexdesc.isUsed = True
                 shadertexdesc.textureData.source = \
                     self.exportSourceTexture(texture=bumpmtex.tex)
 
         if glossmtex:
-            if self.EXPORT_VERSION != "Sid Meier's Railroads":
+            if self.EXPORT_VERSION not in self.USED_EXTRA_SHADER_TEXTURES:
                 texprop.hasGlossTexture = True
                 self.exportTexDesc(texdesc = texprop.glossTexture,
                                    uvlayers = uvlayers,
                                    mtex = glossmtex)
-            else:
+            elif self.EXPORT_EXTRA_SHADER_TEXTURES:
                 shadertexdesc = texprop.shaderTextures[2]
                 shadertexdesc.isUsed = True
                 shadertexdesc.textureData.source = \
@@ -3695,7 +3714,7 @@ check that %s is selected during export.""" % targetobj)
                                mtex = detailmtex)
 
         if refmtex:
-            if self.EXPORT_VERSION != "Sid Meier's Railroads":
+            if self.EXPORT_VERSION not in self.USED_EXTRA_SHADER_TEXTURES:
                 self.logger.warn(
                     "Cannot export reflection texture for this game.")
                 #texprop.hasRefTexture = True
@@ -3797,12 +3816,10 @@ check that %s is selected during export.""" % targetobj)
         bbox.dimensions.y = maxy - miny
         bbox.dimensions.z = maxz - minz
 
-    def addSMRRTShaderIntegerExtraDatas(self, trishape):
-        """Add extra data blocks for Sid Meier's Railroads shader indices."""
-        # the default ordering of the extra data blocks is slightly weird...
-        assert(len(self.SMRRT_SHADER_TEXTURES) == 6) # debug
-        for shaderindex in (3, 0, 4, 1, 5, 2):
-            shadername = self.SMRRT_SHADER_TEXTURES[shaderindex]
+    def addShaderIntegerExtraDatas(self, trishape):
+        """Add extra data blocks for shader indices."""
+        for shaderindex in self.USED_EXTRA_SHADER_TEXTURES[self.EXPORT_VERSION]:
+            shadername = self.EXTRA_SHADER_TEXTURES[shaderindex]
             trishape.addIntegerExtraData(shadername, shaderindex)
 
 def config_callback(**config):
@@ -3821,7 +3838,7 @@ def fileselect_callback(filename):
     _CONFIG.run(NifConfig.TARGET_EXPORT, filename, config_callback)
 
 if __name__ == '__main__':
-    # use global config variableso gui elements don't go out of skope
+    # use global config variable so gui elements don't go out of skope
     _CONFIG = NifConfig()
     # open file selector window, and then call fileselect_callback
     Blender.Window.FileSelector(

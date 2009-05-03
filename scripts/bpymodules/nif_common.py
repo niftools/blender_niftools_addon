@@ -111,7 +111,7 @@ class NifImportExport:
     """Abstract base class for import and export. Contains utility functions
     that are commonly used in both import and export."""
 
-    SMRRT_SHADER_TEXTURES = [
+    EXTRA_SHADER_TEXTURES = [
         "EnvironmentMapIndex",
         "NormalMapIndex",
         "SpecularIntensityIndex",
@@ -119,8 +119,13 @@ class NifImportExport:
         "LightCubeMapIndex",
         "ShadowTextureIndex"]
     """Names (ordered by default index) of shader texture slots for
-    Sid Meier's Railroads.
+    Sid Meier's Railroads and similar games.
     """
+
+    USED_EXTRA_SHADER_TEXTURES = {
+        "Sid Meier's Railroads": (3, 0, 4, 1, 5, 2),
+        "Civilization IV": (3, 0, 1, 2)}
+    """The default ordering of the extra data blocks for different games."""
 
     def getBoneNameForBlender(self, name):
         """Convert a bone name to a name that can be used by Blender: turns
@@ -229,6 +234,7 @@ class NifConfig:
         EXPORT_FO3_SHADER_TYPE = 1, # shader_default
         EXPORT_FO3_BODYPARTS = True,
         EXPORT_MW_NIFXNIFKF = False,
+        EXPORT_EXTRA_SHADER_TEXTURES = True,
         PROFILE = '', # name of file where Python profiler dumps the profile; set to empty string to turn off profiling
         IMPORT_EXPORTEMBEDDEDTEXTURES = False,
         EXPORT_OPTIMIZE_MATERIALS = True,
@@ -898,6 +904,16 @@ class NifConfig:
                 text = "Export nif + xnif + kf",
                 event_name = "EXPORT_MW_NIFXNIFKF")
 
+        # export-only options for civ4 and rrt
+        if (self.target == self.TARGET_EXPORT
+            and (self.config["EXPORT_VERSION"]
+                 in NifImportExport.USED_EXTRA_SHADER_TEXTURES)):
+            self.drawNextColumn()
+
+            self.drawToggle(
+                text = "Export Extra Shader Textures",
+                event_name = "EXPORT_EXTRA_SHADER_TEXTURES")
+
         # export-only options for fallout 3
         if (self.target == self.TARGET_EXPORT
             and self.config["EXPORT_VERSION"] == "Fallout 3"):
@@ -1084,6 +1100,7 @@ class NifConfig:
             self.config["EXPORT_PADBONES"] = False
             self.config["EXPORT_OB_SOLID"] = True
             self.config["EXPORT_MW_NIFXNIFKF"] = False
+            self.config["EXPORT_EXTRA_SHADER_TEXTURES"] = True
             # set default settings per game
             if self.config["EXPORT_VERSION"] == "Morrowind":
                 pass # fail-safe settings work
@@ -1261,6 +1278,8 @@ class NifConfig:
             self.config["EXPORT_FO3_BODYPARTS"] = not self.config["EXPORT_FO3_BODYPARTS"]
         elif evName == "EXPORT_MW_NIFXNIFKF":
             self.config["EXPORT_MW_NIFXNIFKF"] = not self.config["EXPORT_MW_NIFXNIFKF"]
+        elif evName == "EXPORT_EXTRA_SHADER_TEXTURES":
+            self.config["EXPORT_EXTRA_SHADER_TEXTURES"] = not self.config["EXPORT_EXTRA_SHADER_TEXTURES"]
         Draw.Redraw(1)
 
     def guiEvent(self, evt, val):

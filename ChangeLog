@@ -9,6 +9,10 @@ geometries that are linked to more than once in the nif
 * moved advanced import settings to new column (reported by Alphax)
 * inverted X and Y offset UV Ipo channels on import and export (reported by
 Alphax)
+* added support for civ4 shader textures
+* new option to control export of extra shader textures for civ4 and sid
+meier's railroads
+* if extra shader textures are exported, then tangent space is generated
 
 Version 2.4.6 (23 Apr 2009)
 * import and export of Morrowind NiUVController/NiUVData i.e. moving textures
