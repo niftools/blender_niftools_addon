@@ -1,4 +1,4 @@
-Version 2.4.7 (in development)
+Version 2.4.7 (4 May 2009)
 * fixed bug where "apply skin deform" would apply it more than once on
 geometries that are linked to more than once in the nif
 * new option to import extra nodes which are not bone influences as bones
