@@ -9,12 +9,13 @@ geometries that are linked to more than once in the nif
 * moved advanced import settings to new column (reported by Alphax)
 * inverted X and Y offset UV Ipo channels on import and export (reported by
 Alphax)
-* added support for civ4 shader textures
+* added support for civ4 shader textures (reported by The_Coyote)
 * new option to control export of extra shader textures for civ4 and sid
-meier's railroads
+meier's railroads (reported by The_Coyote)
 * if extra shader textures are exported, then tangent space is generated
+(reported by The_Coyote)
 * fixed scaling bug if scale was not 1.0 in certain cases (such as civ4
-leaderheads)
+leaderheads, reported by The_Coyote)
 * realign bone tail only is now the import default (slightly better visual
 representation of bones in complex armatures such as civ4 leaderheads)
 
