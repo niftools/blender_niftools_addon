@@ -232,9 +232,18 @@ class VariaTestSuite(TestSuite):
 
     def test_mw_nifxnifkf(self):
         """Test the nif xnif kf export option."""
+        def check_ctrl_flags(root):
+            # test the kfctrl flags to be active + clamp
+            for ctrl in root.getGlobalIterator():
+                if not isinstance(ctrl, NifFormat.NiTimeController):
+                    continue
+                if ctrl.flags != 12:
+                    raise ValueError("bad value for controller flags")
+        
         # import a nif with animation
-        self.test(
+        dance = self.test(
             filename = 'test/nif/mw/dance.nif')
+        check_ctrl_flags(dance.root_blocks[0])
         # export as nif + xnif + kf
         self.test(
             filename='test/nif/mw/_testnifxnifkf.nif',
@@ -272,6 +281,8 @@ class VariaTestSuite(TestSuite):
                 raise ValueError(
                     "NiKeyframeController target should be None in xkf")
             ctrl = ctrl.nextController
+        # check controller flags
+        check_ctrl_flags(xkf.roots[0])
 
     def test_fo3_emit(self):
 
