@@ -709,6 +709,8 @@ Furniture marker has invalid number (%s). Name your file
                             # add node reference and controller
                             kf_root.addExtraData(nodename_extra)
                             kf_root.addController(ctrl)
+                            # wipe controller target
+                            ctrl.target = None
                 # oblivion
                 elif self.EXPORT_VERSION in ("Oblivion", "Fallout 3",
                                              "Civilization IV"):
