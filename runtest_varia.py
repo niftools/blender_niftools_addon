@@ -265,6 +265,13 @@ class VariaTestSuite(TestSuite):
         assert(isinstance(nif_textkeys, NifFormat.NiTextKeyExtraData))
         assert(isinstance(xkf_textkeys, NifFormat.NiTextKeyExtraData))
         #assert(nif_textkeys == xkf_textkeys) # ... up to extra data chain
+        # check that xkf has no target set in keyframe controller
+        ctrl = xkf.roots[0].controller
+        while ctrl:
+            if ctrl.target is not None:
+                raise ValueError(
+                    "NiKeyframeController target should be None in xkf")
+            ctrl = ctrl.nextController
 
     def test_fo3_emit(self):
 
