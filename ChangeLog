@@ -1,6 +1,6 @@
 Version 2.4.9 (in development)
-* fixed NiKeyframeController target in Morrowind xkf files (reported by
-arcimaestro, see issue #2792951)
+* test and fix for NiKeyframeController target in Morrowind xkf files (reported
+by arcimaestro, see issue #2792951)
 
 Version 2.4.8 (3 Jun 2009)
 * fixed bug in hull script (reported by Drag0ntamer, fixed by Alphax)
