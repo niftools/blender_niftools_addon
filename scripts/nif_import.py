@@ -1150,9 +1150,14 @@ class NifImport(NifImportExport):
                         del rot_keys_dict
                 # set extend mode for all ipo curves
                 if kfc:
-                    ipo = action.getChannelIpo(bone_name)
-                    for b_curve in ipo:
-                        b_curve.extend = self.get_extend_from_flags(kfc.flags)
+                    try:
+                        ipo = action.getChannelIpo(bone_name)
+                    except ValueError:
+                        # no channel for bone_name
+                        pass
+                    else:
+                        for b_curve in ipo:
+                            b_curve.extend = self.get_extend_from_flags(kfc.flags)
 
         # constraints (priority)
         # must be done oudside edit mode hence after calling
