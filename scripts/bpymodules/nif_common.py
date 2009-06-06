@@ -158,6 +158,26 @@ class NifImportExport:
                 return "Bip01 R " + name[6:-2]
         return name
 
+    def get_extend_from_flags(self, flags):
+        if flags & 6 == 4: # 0b100
+            return Blender.IpoCurve.ExtendTypes.CONST
+        elif flags & 6 == 0: # 0b000
+            return Blender.IpoCurve.ExtendTypes.CYCLIC
+
+        self.logger.warning(
+            "Unsupported cycle mode in nif, using clamped.")
+        return Blender.IpoCurve.ExtendTypes.CONST
+
+    def get_flags_from_extend(self, extend):
+        if extend == Blender.IpoCurve.ExtendTypes.CONST:
+            return 4 # 0b100
+        elif extend == Blender.IpoCurve.ExtendTypes.CYCLIC:
+            return 0
+
+        self.logger.warning(
+            "Unsupported extend type in blend, using clamped.")
+        return 4
+
 class NifConfig:
     """Class which handles configuration of nif import and export in Blender.
 

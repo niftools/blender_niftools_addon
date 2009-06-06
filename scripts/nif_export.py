@@ -1047,8 +1047,25 @@ and Civilization IV keyframes are supported.""" % self.EXPORT_VERSION)
 
         parent_block.addController(kfc)
 
+        # determine cycle mode for this controller
+        # this is stored in the blender ipo curves
+        extend = None
+        if ipo:
+            for curve in ipo:
+                if extend is None:
+                    extend = curve.extend
+                elif extend != curve.extend:
+                    self.logger.warn(
+                        "Inconsistent extend type in %s, will use %s."
+                        % (ipo, extend))
+        else:
+            # dummy ipo
+            extend = Blender.IpoCurve.ExtendTypes.CYCLIC
+
         # fill in the non-trivial values
-        kfc.flags = 0x0008
+        # 0x0008 = active + clamp mode
+        # 0x0012 = active + cycle mode
+        kfc.flags = 8 + self.get_flags_from_extend(extend)
         kfc.frequency = 1.0
         kfc.phase = 0.0
         kfc.startTime = (self.fstart - 1) * self.fspeed

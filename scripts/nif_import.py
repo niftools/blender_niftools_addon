@@ -1148,6 +1148,11 @@ class NifImport(NifImportExport):
                     if translations:
                         del scale_keys_dict
                         del rot_keys_dict
+                # set extend mode for all ipo curves
+                if kfc:
+                    ipo = action.getChannelIpo(bone_name)
+                    for b_curve in ipo:
+                        b_curve.extend = self.get_extend_from_flags(kfc.flags)
 
         # constraints (priority)
         # must be done oudside edit mode hence after calling
@@ -1864,10 +1869,10 @@ Texture '%s' not found or not supported and no alternate available"""
                         # create curve in material ipo
                         b_ipo = self.getMaterialIpo(b_material)
                         b_curve = b_ipo.addCurve(b_channel)
-                        # XXX todo: get interpolation and extend from nif data
+                        # XXX todo: get interpolation from nif data
                         # XXX these are reasonable defaults
                         b_curve.interpolation = Blender.IpoCurve.InterpTypes.LINEAR
-                        b_curve.extend = Blender.IpoCurve.ExtendTypes.CYCLIC
+                        b_curve.extend = self.get_extend_from_flags(n_ctrl.flags)
                         for n_key in n_uvgroup.keys:
                             if b_channel.startswith("Ofs"):
                                 # offsets are negated
@@ -2286,17 +2291,11 @@ Texture '%s' not found or not supported and no alternate available"""
                         b_meshData.insertKey(idxMorph, 'relative')
                         # set up the ipo key curve
                         b_curve = b_ipo.addCurve('Key %i' % idxMorph)
-                        # dunno how to set up the bezier triples -> switching
+                        # no idea how to set up the bezier triples -> switching
                         # to linear instead
-                        b_curve.setInterpolation('Linear')
+                        b_curve.interpolation = Blender.IpoCurve.InterpTypes.LINEAR
                         # select extrapolation
-                        if ( morphCtrl.flags == 0x000c ):
-                            b_curve.setExtrapolation( 'Constant' )
-                        elif ( morphCtrl.flags == 0x0008 ):
-                            b_curve.setExtrapolation( 'Cyclic' )
-                        else:
-                            self.logger.warning('No idea which extrapolation to use, using constant')
-                            b_curve.setExtrapolation( 'Constant' )
+                        b_curve.extend = self.get_extend_from_flags(morphCtrl.flags)
                         # set up the curve's control points
                         morphkeys = morphData.morphs[idxMorph].keys
                         for key in morphkeys:
