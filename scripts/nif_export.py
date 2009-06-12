@@ -1360,9 +1360,9 @@ missing curves in %s; insert %s key at frame 1 and try again"""
                 raise NifExportError("Syntax error in Anim buffer ('%s')" % s)
             f = int(t[0])
             if ((f < self.fstart) or (f > self.fend)):
-                raise NifExportError("""\
-Error in Anim buffer: frame out of range (%i not in [%i, %i])"""
-                                     % (f, self.fstart, self.fend))
+                self.logger.warn("frame in animation buffer out of range "
+                                 "(%i not in [%i, %i])"
+                                 % (f, self.fstart, self.fend))
             d = t[1].strip(' ')
             for i in range(2, len(t)):
                 d = d + '\r\n' + t[i].strip(' ')
