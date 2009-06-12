@@ -69,6 +69,7 @@ class VariaTestSuite(TestSuite):
         self.test_fo3_emit2()
         self.test_uv_controller()
         self.test_mw_nifxnifkf()
+        self.test_anim_buffer_out_of_range()
 
     def test_stencil(self):
         # stencil test
@@ -385,6 +386,25 @@ class VariaTestSuite(TestSuite):
             next_layer=True)
         # check that nif was correctly exported
         check_uv_controller(nif)
+
+    def test_anim_buffer_out_of_range(self):
+        # create animation keys
+        try:
+            animtxt = Blender.Text.Get("Anim")
+            animtxt.clear()
+        except NameError:
+            animtxt = Blender.Text.New("Anim")
+        animtxt.write("%i/Idle: Start/Idle: Loop Start\n"
+                      "%i/Idle: Loop Stop/Idle: Stop"
+                      % (-1000000, 1000000))
+        # export: should warn but not fail
+        nif = self.test(
+            filename='test/nif/mw/_test_anim_buffer_out_of_range.nif',
+            config=dict(EXPORT_VERSION='Morrowind'),
+            selection=[],
+            next_layer=False)
+        # remove the animation keys
+        Blender.Text.unlink(animtxt)
 
 suite = VariaTestSuite("varia")
 suite.run()
