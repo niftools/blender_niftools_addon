@@ -1,4 +1,4 @@
-Version 2.4.9 (in development)
+Version 2.4.9 (20 Jun 2009)
 * test and fix for NiKeyframeController target in Morrowind xkf files (reported
 by arcimaestro, see issue #2792951)
 * test and fix for NiKeyframeController flags import and export: the nif cycle
@@ -7,6 +7,9 @@ arcimaestro, see issue #2792951)
 * test and fix for anim buffer out of range exception - the exporter will now
 only warn about it but continue with export anyway (reported by arcimaestro,
 see issue #2792952)
+* fixed bug when importing extra bones which were parented on a grouping bone
+(for instance Morrowind atronach_frost.nif, where Bone01 is parented to
+Weapon, which groups the geometry Tri Weapon)
 
 Version 2.4.8 (3 Jun 2009)
 * fixed bug in hull script (reported by Drag0ntamer, fixed by Alphax)
