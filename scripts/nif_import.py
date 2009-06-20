@@ -609,7 +609,7 @@ class NifImport(NifImportExport):
                 for child, b_obj_branch_parent, b_obj in b_objects:
                     # note, b_obj is either a mesh or an armature
                     # check if it is parented to a bone or not
-                    if b_obj_branch_parent != niArmature:
+                    if b_obj_branch_parent is not niArmature:
                         # object was parented to a bone
 
                         # get parent bone and its name
@@ -2605,6 +2605,10 @@ Texture '%s' not found or not supported and no alternate available"""
                             self.logger.debug(
                                 "'%s' marked as extra bone of armature '%s'"
                                 % (bone.name, skelroot.name))
+                            # we make sure all NiNodes from this bone
+                            # all the way down to the armature NiNode
+                            # are marked as bones
+                            self.complete_bone_tree(bone, skelroot)
 
         # continue down the tree
         for child in niBlock.getRefs():
