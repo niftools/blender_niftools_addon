@@ -313,18 +313,18 @@ blender_scripts_notininstallfolder:
 
 blender_scripts_end:
 
-  ; check if Python 2.5 is installed
+  ; check if Python 2.6 is installed
   ClearErrors
-  ReadRegStr $PYTHONPATH HKLM SOFTWARE\Python\PythonCore\2.5\InstallPath ""
+  ReadRegStr $PYTHONPATH HKLM SOFTWARE\Python\PythonCore\2.6\InstallPath ""
   IfErrors 0 python_check_end
-  ReadRegStr $PYTHONPATH HKCU SOFTWARE\Python\PythonCore\2.5\InstallPath ""
+  ReadRegStr $PYTHONPATH HKCU SOFTWARE\Python\PythonCore\2.6\InstallPath ""
   IfErrors 0 python_check_end
 
-     ; no key, that means that Python 2.5 is not installed
-     MessageBox MB_OK "You will need to download Python 2.5 and PyFFI in order to run the Blender NIF Scripts. Pressing OK will take you to the Python and PyFFI download pages. Please download and run the Python windows installer, then download and run the PyFFI windows installer. When you are done, rerun the Blender NIF Scripts installer."
+     ; no key, that means that Python 2.6 is not installed
+     MessageBox MB_OK "You will need to download Python 2.6 and PyFFI in order to run the Blender NIF Scripts. Pressing OK will take you to the Python and PyFFI download pages. Please download and run the Python windows installer, then download and run the PyFFI windows installer. When you are done, rerun the Blender NIF Scripts installer."
      StrCpy $0 "http://sourceforge.net/project/platformdownload.php?group_id=199269&sel_platform=3089"
      Call openLinkNewWindow
-     StrCpy $0 "http://www.python.org/download/releases/2.5.2/"
+     StrCpy $0 "http://www.python.org/download/"
      Call openLinkNewWindow
      Abort ; causes installer to quit
 
@@ -332,9 +332,9 @@ python_check_end:
 
   ; check if PyFFI is installed (the bdist_wininst installer only creates an uninstaller registry key, so that's how we check)
   ClearErrors
-  ReadRegStr $PYFFI HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\PyFFI-py2.5 "DisplayName"
+  ReadRegStr $PYFFI HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\PyFFI-py2.6 "DisplayName"
   IfErrors 0 pyffi_check_end
-  ReadRegStr $PYFFI HKCU SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\PyFFI-py2.5 "DisplayName"
+  ReadRegStr $PYFFI HKCU SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\PyFFI-py2.6 "DisplayName"
   IfErrors 0 pyffi_check_end
 
     ; no key, that means that PyFFI is not installed
@@ -346,7 +346,7 @@ python_check_end:
 pyffi_check_end:
 
   ; check PyFFI version
-  StrCpy $R0 $PYFFI "" 17 ; strip "Python 2.5 PyFFI-"
+  StrCpy $R0 $PYFFI "" 17 ; strip "Python 2.6 PyFFI-"
   ${VersionCompare} "$R0" "${PYFFIVERSION}" $R1
   IntCmp $R1 0 pyffi_vercheck_end ; installed version is as indicated
   IntCmp $R1 1 pyffi_vercheck_end ; installed version is more recent than as indicated
