@@ -3811,9 +3811,9 @@ check that %s is selected during export.""" % targetobj)
         texeff.coordinateGenerationType = NifFormat.CoordGenType.CG_SPHERE_MAP
         if mtex:
             texeff.sourceTexture = self.exportSourceTexture(mtex.tex)
-		if self.EXPORT_VERSION == 'Morrowind':
-			texeff.numAffectedNodeListPointers += 1
-			texeff.affectedNodeListPointers.updateSize()
+            if self.EXPORT_VERSION == 'Morrowind':
+                texeff.numAffectedNodeListPointers += 1
+                texeff.affectedNodeListPointers.updateSize()
         texeff.unknownVector.x = 1.0
         return self.registerBlock(texeff)
 
