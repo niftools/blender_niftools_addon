@@ -1,5 +1,8 @@
 Version 2.4.10 (in development)
 * Windows installer updated for Python 2.6.
+* set affected node list pointer on Morrowind environment map (contributed by
+Alphax)
+* use Blender's texture dir on import (contributed by puf_the_majic_dragon)
 
 Version 2.4.9 (20 Jun 2009)
 * test and fix for NiKeyframeController target in Morrowind xkf files (reported
