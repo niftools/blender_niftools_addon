@@ -321,7 +321,7 @@ blender_scripts_end:
   IfErrors 0 python_check_end
 
      ; no key, that means that Python 2.6 is not installed
-     MessageBox MB_OK "You will need to download Python 2.6 and PyFFI in order to run the Blender NIF Scripts. Pressing OK will take you to the Python and PyFFI download pages. Please download and run the Python windows installer, then download and run the PyFFI windows installer. When you are done, rerun the Blender NIF Scripts installer."
+     MessageBox MB_OK "You will need to download Python 2.6 and PyFFI for Python 2.6 in order to run the Blender NIF Scripts. Pressing OK will take you to the Python and PyFFI download pages. Please download and run the Python windows installer, then download and run the PyFFI windows installer. When you are done, rerun the Blender NIF Scripts installer."
      StrCpy $0 "http://sourceforge.net/project/platformdownload.php?group_id=199269&sel_platform=3089"
      Call openLinkNewWindow
      StrCpy $0 "http://www.python.org/download/"
@@ -338,7 +338,7 @@ python_check_end:
   IfErrors 0 pyffi_check_end
 
     ; no key, that means that PyFFI is not installed
-     MessageBox MB_OK "You will need to download PyFFI in order to run the Blender NIF Scripts. Pressing OK will take you to the PyFFI download page. Please download and run the PyFFI windows installer. When you are done, rerun the Blender NIF Scripts installer."
+     MessageBox MB_OK "You will need to download PyFFI for Python 2.6 in order to run the Blender NIF Scripts. Pressing OK will take you to the PyFFI download page. Please download and run the PyFFI windows installer. When you are done, rerun the Blender NIF Scripts installer."
      StrCpy $0 "http://sourceforge.net/project/platformdownload.php?group_id=199269&sel_platform=3089"
      Call openLinkNewWindow
      Abort ; causes installer to quit
