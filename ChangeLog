@@ -1,5 +1,5 @@
-Version 2.4.10 (in development)
-* Windows installer updated for Python 2.6 and PyFFI 2.0.1.
+Version 2.4.10 (22 Jul 2009)
+* windows installer updated for Python 2.6 and PyFFI 2.0.1.
 * set affected node list pointer on Morrowind environment map (contributed by
 Alphax)
 * use Blender's texture dir on import (contributed by puf_the_majic_dragon)
