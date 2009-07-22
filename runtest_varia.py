@@ -254,12 +254,15 @@ class VariaTestSuite(TestSuite):
             next_layer=True)
         # check that these files are present, and check some of their properties
         with closing(open('test/nif/mw/_testnifxnifkf.nif')) as stream:
+            self.logger.info("Reading test/nif/mw/_testnifxnifkf.nif")
             nif = NifFormat.Data()
             nif.read(stream)
         with closing(open('test/nif/mw/x_testnifxnifkf.nif')) as stream:
+            self.logger.info("Reading test/nif/mw/x_testnifxnifkf.nif")
             xnif = NifFormat.Data()
             xnif.read(stream)
         with closing(open('test/nif/mw/x_testnifxnifkf.kf')) as stream:
+            self.logger.info("Reading test/nif/mw/x_testnifxnifkf.kf")
             xkf = NifFormat.Data()
             xkf.read(stream)
         # check root blocks
