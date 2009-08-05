@@ -403,6 +403,11 @@ Section
   ; clutter from svn 4797 revisions
   Delete "$BLENDERSCRIPTS\nif_export.py*"
   Delete "$BLENDERSCRIPTS\nif_import.py*"
+  Delete "$BLENDERSCRIPTS\mesh_weightsquash.py*"
+  Delete "$BLENDERSCRIPTS\mesh_hull.py*"
+  Delete "$BLENDERSCRIPTS\object_setbonepriority.py*"
+  Delete "$BLENDERSCRIPTS\object_savebonepose.py*"
+  Delete "$BLENDERSCRIPTS\object_loadbonepose.py*"
 
   ; Clean up registered script menu's, just to make sure they get updated
   Delete "$BLENDERSCRIPTS\..\Bpymenus"
@@ -411,11 +416,11 @@ Section
   SetOutPath $BLENDERSCRIPTS
   File ..\scripts\export_nif.py
   File ..\scripts\import_nif.py
-  File ..\scripts\mesh_weightsquash.py
-  File ..\scripts\mesh_hull.py
-  File ..\scripts\object_setbonepriority.py
-  File ..\scripts\object_savebonepose.py
-  File ..\scripts\object_loadbonepose.py
+  File ..\scripts\mesh_niftools_weightsquash.py
+  File ..\scripts\mesh_niftools_hull.py
+  File ..\scripts\object_niftools_set_bone_priority.py
+  File ..\scripts\object_niftools_save_bone_pose.py
+  File ..\scripts\object_niftools_load_bone_pose.py
   ; Install libraries
   SetOutPath $BLENDERSCRIPTS\bpymodules
   File ..\scripts\bpymodules\nif_common.py
@@ -469,11 +474,11 @@ Section "Uninstall"
   ; remove script files
   Delete "$BLENDERSCRIPTS\export_nif.py"
   Delete "$BLENDERSCRIPTS\import_nif.py"
-  Delete "$BLENDERSCRIPTS\mesh_weightsquash.py"
-  Delete "$BLENDERSCRIPTS\mesh_hull.py"
-  Delete "$BLENDERSCRIPTS\object_setbonepriority.py"
-  Delete "$BLENDERSCRIPTS\object_savebonepose.py"
-  Delete "$BLENDERSCRIPTS\object_loadbonepose.py"
+  Delete "$BLENDERSCRIPTS\mesh_niftools_weightsquash.py"
+  Delete "$BLENDERSCRIPTS\mesh_niftools_hull.py"
+  Delete "$BLENDERSCRIPTS\object_niftools_set_bone_priority.py"
+  Delete "$BLENDERSCRIPTS\object_niftools_save_bone_pose.py"
+  Delete "$BLENDERSCRIPTS\object_niftools_load_bone_pose.py"
   Delete "$BLENDERSCRIPTS\bpymodules\nif_common.py"
   Delete "$BLENDERSCRIPTS\bpymodules\nif_common.pyc"
   Delete "$BLENDERSCRIPTS\bpymodules\nif_test.py"
