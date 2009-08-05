@@ -35,8 +35,8 @@
 import logging
 
 import Blender
-from nif_import import NifImport
-from nif_export import NifExport
+from import_nif import NifImport
+from export_nif import NifExport
 from nif_common import NifConfig
 
 class TestSuite:

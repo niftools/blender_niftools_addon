@@ -1,4 +1,4 @@
 from pylint import lint
-lint.Run(['nif_import'])
-lint.Run(['nif_export'])
+lint.Run(['import_nif'])
+lint.Run(['export_nif'])
 

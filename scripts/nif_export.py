@@ -3397,7 +3397,7 @@ check that %s is selected during export.""" % targetobj)
                 constr_matrix = constr_matrix.toMatrix()
 
                 # transform pivot point and constraint matrix into bhkRigidBody
-                # coordinates (also see nif_import.py, the
+                # coordinates (also see import_nif.py, the
                 # NifImport.importHavokConstraints method)
                 
                 # the pivot point v' is in object coordinates
@@ -3428,7 +3428,7 @@ check that %s is selected during export.""" % targetobj)
                 hkdescriptor.pivotA.y = pivot[1] / 7.0
                 hkdescriptor.pivotA.z = pivot[2] / 7.0
                 # export hkdescriptor axes and other parameters
-                # (also see nif_import.py NifImport.importHavokConstraints)
+                # (also see import_nif.py NifImport.importHavokConstraints)
                 axis_x = Blender.Mathutils.Vector(1,0,0) * constr_matrix
                 axis_y = Blender.Mathutils.Vector(0,1,0) * constr_matrix
                 axis_z = Blender.Mathutils.Vector(0,0,1) * constr_matrix

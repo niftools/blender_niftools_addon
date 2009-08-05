@@ -3163,7 +3163,7 @@ Rigid body with no or multiple shapes, constraints skipped""")
                 hkdescriptor.pivotA.z * 7)
 
             # get z- and x-axes of the constraint
-            # (also see nif_export.py NifImport.exportConstraints)
+            # (also see export_nif.py NifImport.exportConstraints)
             if isinstance(hkdescriptor, NifFormat.RagdollDescriptor):
                 # for ragdoll, take z to be the twist axis (central axis of the
                 # cone, that is)
@@ -3247,7 +3247,7 @@ X axis flipped in %s to fix orientation""" % hkdescriptor.__class__.__name__)
 
             # transform pivot point and constraint matrix into object
             # coordinates
-            # (also see nif_export.py NifImport.exportConstraints)
+            # (also see export_nif.py NifImport.exportConstraints)
             
             # the pivot point v is in hkbody coordinates
             # however blender expects it in object coordinates, v'

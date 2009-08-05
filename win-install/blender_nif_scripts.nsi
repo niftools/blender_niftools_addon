@@ -400,14 +400,17 @@ Section
   ; clutter from svn 2905 revisions
   Delete "$BLENDERSCRIPTS\nif_common.py"
   Delete "$BLENDERSCRIPTS\nif_common.pyc"
+  ; clutter from svn 4797 revisions
+  Delete "$BLENDERSCRIPTS\nif_export.py*"
+  Delete "$BLENDERSCRIPTS\nif_import.py*"
 
   ; Clean up registered script menu's, just to make sure they get updated
   Delete "$BLENDERSCRIPTS\..\Bpymenus"
 
   ; Install scripts
   SetOutPath $BLENDERSCRIPTS
-  File ..\scripts\nif_export.py
-  File ..\scripts\nif_import.py
+  File ..\scripts\export_nif.py
+  File ..\scripts\import_nif.py
   File ..\scripts\mesh_weightsquash.py
   File ..\scripts\mesh_hull.py
   File ..\scripts\object_setbonepriority.py
@@ -464,8 +467,8 @@ Section "Uninstall"
   DeleteRegKey HKLM "SOFTWARE\BlenderNIFScripts"
 
   ; remove script files
-  Delete "$BLENDERSCRIPTS\nif_export.py"
-  Delete "$BLENDERSCRIPTS\nif_import.py"
+  Delete "$BLENDERSCRIPTS\export_nif.py"
+  Delete "$BLENDERSCRIPTS\import_nif.py"
   Delete "$BLENDERSCRIPTS\mesh_weightsquash.py"
   Delete "$BLENDERSCRIPTS\mesh_hull.py"
   Delete "$BLENDERSCRIPTS\object_setbonepriority.py"

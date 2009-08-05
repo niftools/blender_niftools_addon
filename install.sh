@@ -4,10 +4,11 @@
 
 # remove clutter
 
-rm -f ~/.blender/scripts/nif_import.pyc
-rm -f ~/.blender/scripts/nif_export.pyc
-rm -f ~/.blender/scripts/nif_common.py
-rm -f ~/.blender/scripts/nif_common.pyc
+rm -f ~/.blender/scripts/nif_import.py*
+rm -f ~/.blender/scripts/nif_export.py*
+rm -f ~/.blender/scripts/import_nif.py*
+rm -f ~/.blender/scripts/export_nif.py*
+rm -f ~/.blender/scripts/nif_common.py*
 rm -rf ~/.blender/scripts/bpymodules/nifImEx
 
 # make sure menu's get updated
@@ -16,7 +17,7 @@ rm -f ~/.blender/Bpymenus
 
 # install
 
-cp scripts/nif_import.py scripts/nif_export.py scripts/mesh_weightsquash.py scripts/mesh_hull.py scripts/object_setbonepriority.py scripts/object_savebonepose.py scripts/object_loadbonepose.py ~/.blender/scripts
+cp scripts/import_nif.py scripts/export_nif.py scripts/mesh_weightsquash.py scripts/mesh_hull.py scripts/object_setbonepriority.py scripts/object_savebonepose.py scripts/object_loadbonepose.py ~/.blender/scripts
 
 cp scripts/bpymodules/nif_common.py scripts/bpymodules/nif_test.py ~/.blender/scripts/bpymodules
 
