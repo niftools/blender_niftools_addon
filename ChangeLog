@@ -1,3 +1,6 @@
+Version 2.4.11 (in development)
+* added NeoSteam import and export support
+
 Version 2.4.10 (22 Jul 2009)
 * windows installer updated for Python 2.6 and PyFFI 2.0.1.
 * set affected node list pointer on Morrowind environment map (contributed by

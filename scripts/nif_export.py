@@ -663,6 +663,7 @@ Furniture marker has invalid number (%s). Name your file
                                       user_version=NIF_USER_VERSION,
                                       user_version2=NIF_USER_VERSION2)
                 data.roots = [root_block]
+                data.neosteam = (self.EXPORT_VERSION == "NeoSteam")
                 stream = open(self.filename, "wb")
                 try:
                     data.write(stream)
@@ -774,6 +775,7 @@ and Civilization IV keyframes are supported.""" % self.EXPORT_VERSION)
                                       user_version=NIF_USER_VERSION,
                                       user_version2=NIF_USER_VERSION2)
                 data.roots = [kf_root]
+                data.neosteam = (self.EXPORT_VERSION == "NeoSteam")
                 stream = open(self.filename, "wb")
                 try:
                     data.write(stream)
@@ -815,6 +817,7 @@ and Civilization IV keyframes are supported.""" % self.EXPORT_VERSION)
                                       user_version=NIF_USER_VERSION,
                                       user_version2=NIF_USER_VERSION2)
                 data.roots = [root_block]
+                data.neosteam = (self.EXPORT_VERSION == "NeoSteam")
                 stream = open(self.filename, "wb")
                 try:
                     data.write(stream)
