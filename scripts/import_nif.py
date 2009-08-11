@@ -802,8 +802,10 @@ class NifImport(NifImportExport):
         # and fix their sign
         if (b_scale_rot.determinant() < 0): b_scale.negate()
         # only uniform scaling
-        assert(abs(b_scale[0]-b_scale[1]) < self.EPSILON)
-        assert(abs(b_scale[1]-b_scale[2]) < self.EPSILON)
+        if (abs(b_scale[0]-b_scale[1]) >= self.EPSILON
+            or abs(b_scale[1]-b_scale[2]) >= self.EPSILON):
+            self.logger.warn(
+                "Corrupt rotation matrix in nif: geometry errors may result.")
         b_scale = b_scale[0]
         # get rotation matrix
         b_rot = b_scale_rot * (1.0/b_scale)
