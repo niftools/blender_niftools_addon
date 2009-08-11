@@ -247,7 +247,7 @@ class NifImport(NifImportExport):
                             for child in nonbip_children:
                                 root.removeChild(child)
                 # import this root block
-                self.logger.debug("Root block: %s" % root.name)
+                self.logger.debug("Root block: %s" % root.getGlobalDisplay())
                 # merge animation from kf tree into nif tree
                 if self.IMPORT_ANIMATION:
                     for kf_root in kf_root_blocks:
