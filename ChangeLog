@@ -1,5 +1,7 @@
 Version 2.4.11 (in development)
 * added NeoSteam import and export support
+* warn on corrupt rotation matrix, rather than raising an exception
+* bug fix in case (corrupt) root block has no name attribute
 
 Version 2.4.10 (22 Jul 2009)
 * windows installer updated for Python 2.6 and PyFFI 2.0.1.
