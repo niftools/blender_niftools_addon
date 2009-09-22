@@ -513,12 +513,17 @@ Furniture marker has invalid number (%s). Name your file
                         block.updateMassCenterInertia(
                             solid = self.EXPORT_OB_SOLID)
                         total_mass += block.mass
+                        if total_mass == 0:
+                            total_mass = 1
                 # now update the mass ensuring that total mass is
                 # self.EXPORT_OB_MASS
                 for block in self.blocks:
                     if isinstance(block, NifFormat.bhkRigidBody):
+                        mass = self.EXPORT_OB_MASS * block.mass / total_mass
+                        if mass < 0.0001:
+						    mass = 0.05
                         block.updateMassCenterInertia(
-                            mass = self.EXPORT_OB_MASS * block.mass / total_mass,
+                            mass = mass,
                             solid = self.EXPORT_OB_SOLID)
 
                 # many Oblivion nifs have a UPB, but export is disabled as
