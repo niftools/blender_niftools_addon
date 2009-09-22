@@ -514,14 +514,18 @@ Furniture marker has invalid number (%s). Name your file
                             solid = self.EXPORT_OB_SOLID)
                         total_mass += block.mass
                         if total_mass == 0:
+                            # to avoid zero division error later
+                            # (if mass is zero then this does not matter
+                            # anyway)
                             total_mass = 1
                 # now update the mass ensuring that total mass is
                 # self.EXPORT_OB_MASS
                 for block in self.blocks:
                     if isinstance(block, NifFormat.bhkRigidBody):
                         mass = self.EXPORT_OB_MASS * block.mass / total_mass
+                        # lower bound on mass
                         if mass < 0.0001:
-						    mass = 0.05
+                            mass = 0.05
                         block.updateMassCenterInertia(
                             mass = mass,
                             solid = self.EXPORT_OB_SOLID)
