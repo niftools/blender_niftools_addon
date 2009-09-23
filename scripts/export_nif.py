@@ -2371,7 +2371,7 @@ they can easily be identified.")
                         del vert_added
 
             
-            # shape key morphing
+            # shape key morphing - to be figured out ASAP
             key = mesh.key
             if key:
                 if len( key.getBlocks() ) > 1:
