@@ -1,4 +1,4 @@
-Version 2.4.11 (in development)
+Version 2.4.11 (28 Sep 2009)
 * added NeoSteam import and export support
 * warn on corrupt rotation matrix, rather than raising an exception
 * bug fix in case (corrupt) root block has no name attribute
