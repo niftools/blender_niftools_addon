@@ -462,6 +462,8 @@ Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
                 # export animation groups (not for skeleton.nif export!)
                 if animtxt:
                     anim_textextra = self.exportAnimGroups(animtxt, root_block)
+                else:
+                    anim_textextra = None
 
             # oblivion furniture markers
             if (self.EXPORT_VERSION in ('Oblivion', 'Fallout 3')
