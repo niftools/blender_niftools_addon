@@ -1,3 +1,6 @@
+Version 2.4.12 (in development)
+* added Zoo Tycoon 2 .kf export
+
 Version 2.4.11 (28 Sep 2009)
 * added NeoSteam import and export support
 * warn on corrupt rotation matrix, rather than raising an exception

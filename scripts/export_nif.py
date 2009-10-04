@@ -723,7 +723,7 @@ Furniture marker has invalid number (%s). Name your file
                             ctrl.target = None
                 # oblivion
                 elif self.EXPORT_VERSION in ("Oblivion", "Fallout 3",
-                                             "Civilization IV"):
+                                             "Civilization IV", "Zoo Tycoon 2"):
                     # create kf root header
                     kf_root = self.createBlock("NiControllerSequence")
                     kf_root.name = self.filebase
@@ -769,7 +769,8 @@ No priority set for bone %s, falling back on default value (%i)"""
                 else:
                     raise NifExportError("""\
 Keyframe export for '%s' is not supported. Only Morrowind, Oblivion, Fallout 3,
-and Civilization IV keyframes are supported.""" % self.EXPORT_VERSION)
+Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
+                                         % self.EXPORT_VERSION)
 
                 # write kf (and xnif if asked)
                 prefix = "" if not self.EXPORT_MW_NIFXNIFKF else "x"
