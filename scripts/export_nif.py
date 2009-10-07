@@ -753,7 +753,15 @@ Furniture marker has invalid number (%s). Name your file
                                 node_kfctrls.itervalues()):
                         # only export first keyframe controller
                         ctrl = ctrls[0]
-                        controlledblock.interpolator = ctrl.interpolator
+                        if self.version < 0x0A020000:
+                            # older versions need the actual controller blocks
+                            controlledblock.targetName = node.name
+                            controlledblock.controller = ctrl
+                            # erase reference to target node
+                            ctrl.target = None
+                        else:
+                            # newer versions need the interpolator blocks
+                            controlledblock.interpolator = ctrl.interpolator
                         # get bone animation priority (previously fetched from
                         # the constraints during exportBones)
                         if not node in self.bonePriorities:
