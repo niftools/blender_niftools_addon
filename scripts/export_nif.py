@@ -948,6 +948,13 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
         if ob_type == 'Mesh':
             ob_parent = ob.getParent()
             if ob_parent and ob_parent.getType() == 'Armature':
+                if ob_ipo:
+                    # mesh with armature parent should not have animation!
+                    self.logger.warn(
+                        "Mesh %s is skinned but also has object animation. "
+                        "The nif format does not support this: "
+                        "ignoring object animation." % ob.name)
+                    ob_ipo = None
                 trishape_space = space
                 space = 'none'
             else:
