@@ -7,8 +7,8 @@ Version 2.4.11 (28 Sep 2009)
 * added NeoSteam import and export support
 * warn on corrupt rotation matrix, rather than raising an exception
 * bug fix in case (corrupt) root block has no name attribute
-* fix for collision export with very small mass (contributed by pacmorrowind,
-see issue #2860536)
+* fix for collision export with very small mass (contributed by
+PacificMorrowind, see issue #2860536)
 
 Version 2.4.10 (22 Jul 2009)
 * windows installer updated for Python 2.6 and PyFFI 2.0.1.
