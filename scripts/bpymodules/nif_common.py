@@ -217,6 +217,7 @@ class NifConfig:
         IMPORT_SKELETON = 0, # 0 = normal import, 1 = import file as skeleton, 2 = import mesh and attach to skeleton
         IMPORT_KEYFRAMEFILE = '', # keyframe file for animations
         EXPORT_ANIMATION = 0, # export everything (1=geometry only, 2=animation only)
+        ANIMSEQUENCENAME = "None", #defaults later to Forward if not set.	
         EXPORT_FORCEDDS = True, # force dds extension on texture files
         EXPORT_SKINPARTITION = True, # generate skin partition
         EXPORT_BONESPERVERTEX = 4,
@@ -231,6 +232,7 @@ class NifConfig:
         IMPORT_SENDBONESTOBINDPOS = True,
         IMPORT_APPLYSKINDEFORM = False,
         IMPORT_EXTRANODESASBONES = False,
+        doOnce = 0,
         EXPORT_BHKLISTSHAPE = False,
         EXPORT_OB_BSXFLAGS = 2,
         EXPORT_OB_MASS = 10.0,
@@ -280,14 +282,17 @@ class NifConfig:
         self.callback = None  # function to call when config gui is done
         self.texpathIndex = 0
         self.texpathCurrent = ''
-
-        # reset GUI coordinates
+        
+		# reset GUI coordinates
         self.xPos = self.XORIGIN
         self.yPos = self.YORIGIN + Blender.Window.GetAreaSize()[1]
 
         # load configuration
         self.load()
-
+		
+        # reset Animation Sequence
+        self.config["ANIMSEQUENCENAME"] = "None"
+		
     def run(self, target, filename, callback):
         """Run the config gui."""
         self.target = target     # import or export
@@ -624,7 +629,11 @@ class NifConfig:
                 event_name = "EXPORT_ANIMATION_2",
                 val = ((self.config["EXPORT_ANIMATION"] == 2)
                        or self.config["EXPORT_MW_NIFXNIFKF"]))
-            self.drawYSep()
+            if self.config["EXPORT_ANIMATION"] == 2 :
+                if self.config["ANIMSEQUENCENAME"] == "None" :
+                    self.config["ANIMSEQUENCENAME"] = Blender.Draw.PupStrInput("Enter Animation Group Name:", "None", 20)
+            self.drawYSep()					
+
 
             self.drawToggle(
                 text = "Force DDS Extension",
@@ -874,7 +883,7 @@ class NifConfig:
                 event_name = "EXPORT_OB_MALLEABLECONSTRAINT",
                 num_items = 2, item = 1)
             self.drawYSep()
-
+			
             self.drawLabel(
                 text = "Weapon Body Location",
                 event_name = "LABEL_WEAPON_LOCATION")
@@ -1363,7 +1372,8 @@ class NifConfig:
         logging.getLogger("pyffi").setLevel(val)
 
     def updateScale(self, evt, val):
-        self.config["EXPORT_SCALE_CORRECTION"] = val
+        if self.config["EXPORT_SCALE_CORRECTION"] == 0 :
+            self.config["EXPORT_SCALE_CORRECTION"] = 1.0
         self.config["IMPORT_SCALE_CORRECTION"] = 1.0 / self.config["EXPORT_SCALE_CORRECTION"]
 
     def updateBonesPerPartition(self, evt, val):

@@ -514,21 +514,18 @@ Furniture marker has invalid number (%s). Name your file
                             solid = self.EXPORT_OB_SOLID)
                         total_mass += block.mass
                         if total_mass == 0:
-                            # to avoid zero division error later
-                            # (if mass is zero then this does not matter
-                            # anyway)
                             total_mass = 1
                 # now update the mass ensuring that total mass is
                 # self.EXPORT_OB_MASS
                 for block in self.blocks:
                     if isinstance(block, NifFormat.bhkRigidBody):
                         mass = self.EXPORT_OB_MASS * block.mass / total_mass
-                        # lower bound on mass
                         if mass < 0.0001:
-                            mass = 0.05
+						    mass = 0.05
                         block.updateMassCenterInertia(
                             mass = mass,
                             solid = self.EXPORT_OB_SOLID)
+
 
                 # many Oblivion nifs have a UPB, but export is disabled as
                 # they do not seem to affect anything in the game
@@ -726,7 +723,7 @@ Furniture marker has invalid number (%s). Name your file
                                              "Civilization IV"):
                     # create kf root header
                     kf_root = self.createBlock("NiControllerSequence")
-                    kf_root.name = self.filebase
+                    kf_root.name = self.ANIMSEQUENCENAME
                     kf_root.unknownInt1 = 1
                     kf_root.weight = 1.0
                     kf_root.textKeys = anim_textextra
@@ -2371,7 +2368,7 @@ they can easily be identified.")
                         del vert_added
 
             
-            # shape key morphing - to be figured out ASAP
+            # shape key morphing
             key = mesh.key
             if key:
                 if len( key.getBlocks() ) > 1:
