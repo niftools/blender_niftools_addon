@@ -462,6 +462,8 @@ Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
                 # export animation groups (not for skeleton.nif export!)
                 if animtxt:
                     anim_textextra = self.exportAnimGroups(animtxt, root_block)
+                else:
+                    anim_textextra = None
 
             # oblivion furniture markers
             if (self.EXPORT_VERSION in ('Oblivion', 'Fallout 3')
@@ -720,7 +722,7 @@ Furniture marker has invalid number (%s). Name your file
                             ctrl.target = None
                 # oblivion
                 elif self.EXPORT_VERSION in ("Oblivion", "Fallout 3",
-                                             "Civilization IV"):
+                                             "Civilization IV", "Zoo Tycoon 2"):
                     # create kf root header
                     kf_root = self.createBlock("NiControllerSequence")
                     kf_root.name = self.ANIMSEQUENCENAME
@@ -748,7 +750,15 @@ Furniture marker has invalid number (%s). Name your file
                                 node_kfctrls.itervalues()):
                         # only export first keyframe controller
                         ctrl = ctrls[0]
-                        controlledblock.interpolator = ctrl.interpolator
+                        if self.version < 0x0A020000:
+                            # older versions need the actual controller blocks
+                            controlledblock.targetName = node.name
+                            controlledblock.controller = ctrl
+                            # erase reference to target node
+                            ctrl.target = None
+                        else:
+                            # newer versions need the interpolator blocks
+                            controlledblock.interpolator = ctrl.interpolator
                         # get bone animation priority (previously fetched from
                         # the constraints during exportBones)
                         if not node in self.bonePriorities:
@@ -766,7 +776,8 @@ No priority set for bone %s, falling back on default value (%i)"""
                 else:
                     raise NifExportError("""\
 Keyframe export for '%s' is not supported. Only Morrowind, Oblivion, Fallout 3,
-and Civilization IV keyframes are supported.""" % self.EXPORT_VERSION)
+Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
+                                         % self.EXPORT_VERSION)
 
                 # write kf (and xnif if asked)
                 prefix = "" if not self.EXPORT_MW_NIFXNIFKF else "x"
@@ -934,6 +945,13 @@ and Civilization IV keyframes are supported.""" % self.EXPORT_VERSION)
         if ob_type == 'Mesh':
             ob_parent = ob.getParent()
             if ob_parent and ob_parent.getType() == 'Armature':
+                if ob_ipo:
+                    # mesh with armature parent should not have animation!
+                    self.logger.warn(
+                        "Mesh %s is skinned but also has object animation. "
+                        "The nif format does not support this: "
+                        "ignoring object animation." % ob.name)
+                    ob_ipo = None
                 trishape_space = space
                 space = 'none'
             else:
