@@ -217,7 +217,7 @@ class NifConfig:
         IMPORT_SKELETON = 0, # 0 = normal import, 1 = import file as skeleton, 2 = import mesh and attach to skeleton
         IMPORT_KEYFRAMEFILE = '', # keyframe file for animations
         EXPORT_ANIMATION = 0, # export everything (1=geometry only, 2=animation only)
-        ANIMSEQUENCENAME = "None", #defaults later to Forward if not set.	
+        ANIMSEQUENCENAME = "Forward", #defaults to Forward if not set.	
         EXPORT_FORCEDDS = True, # force dds extension on texture files
         EXPORT_SKINPARTITION = True, # generate skin partition
         EXPORT_BONESPERVERTEX = 4,
@@ -232,7 +232,7 @@ class NifConfig:
         IMPORT_SENDBONESTOBINDPOS = True,
         IMPORT_APPLYSKINDEFORM = False,
         IMPORT_EXTRANODESASBONES = False,
-        doOnce = 0,
+        DoOnce = 0,
         EXPORT_BHKLISTSHAPE = False,
         EXPORT_OB_BSXFLAGS = 2,
         EXPORT_OB_MASS = 10.0,
@@ -291,7 +291,7 @@ class NifConfig:
         self.load()
 		
         # reset Animation Sequence
-        self.config["ANIMSEQUENCENAME"] = "None"
+        self.config["DoOnce"] = 0
 		
     def run(self, target, filename, callback):
         """Run the config gui."""
@@ -630,8 +630,11 @@ class NifConfig:
                 val = ((self.config["EXPORT_ANIMATION"] == 2)
                        or self.config["EXPORT_MW_NIFXNIFKF"]))
             if self.config["EXPORT_ANIMATION"] == 2 :
-                if self.config["ANIMSEQUENCENAME"] == "None" :
-                    self.config["ANIMSEQUENCENAME"] = Blender.Draw.PupStrInput("Enter Animation Group Name:", "None", 20)
+                if self.config["DoOnce"] == 1 :
+                    self.config["ANIMSEQUENCENAME"] = Blender.Draw.PupStrInput("Enter Animation Group Name:", self.config["ANIMSEQUENCENAME"], 20)
+                    self.config["DoOnce"] = 2
+                if self.config["DoOnce"] == 0 :
+					self.config["DoOnce"] = 1
             self.drawYSep()					
 
 
