@@ -70,6 +70,7 @@ class VariaTestSuite(TestSuite):
         self.test_uv_controller()
         self.test_mw_nifxnifkf()
         self.test_anim_buffer_out_of_range()
+        self.test_ob_animsequencename()
 
     def test_stencil(self):
         # stencil test
@@ -408,6 +409,30 @@ class VariaTestSuite(TestSuite):
             next_layer=False)
         # remove the animation keys
         Blender.Text.unlink(animtxt)
+
+    def test_ob_animsequencename(self):
+        """Test Oblivion animation sequence name export option."""
+        # import a nif with animation
+        dance = self.test(
+            filename = 'test/nif/mw/dance.nif')
+        # export as kf
+        self.test(
+            filename='test/nif/ob/_testanimseqname.kf',
+            config=dict(EXPORT_VERSION='Oblivion',
+                        EXPORT_ANIMATION=2,
+                        EXPORT_ANIMSEQUENCENAME="TestAnimSeqName"),
+            selection=['Dance'],
+            next_layer=True)
+        # check that these files are present, and check some of their properties
+        with closing(open('test/nif/ob/_testanimseqname.kf')) as stream:
+            self.logger.info("Reading test/nif/ob/_testanimseqname.kf")
+            kf = NifFormat.Data()
+            kf.read(stream)
+        # check root block
+        assert(len(kf.roots) == 1)
+        assert(isinstance(kf.roots[0], NifFormat.NiControllerSequence))
+        # check animation sequence name
+        assert(kf.roots[0].name == "TestAnimSeqName")
 
 suite = VariaTestSuite("varia")
 suite.run()
