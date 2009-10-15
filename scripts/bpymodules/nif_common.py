@@ -505,6 +505,23 @@ class NifConfig:
             self.xPos+self.XCOLUMNSKIP-30, self.yPos, 30, self.YLINESKIP)
         self.yPos -= self.YLINESKIP
 
+    def drawString(self, text, event_name, max_length, callback, val = None,
+                   num_items = 1, item = 0):
+        """Create elements to input a string."""
+        if val is None:
+            val = self.config[event_name]
+        width = self.XCOLUMNSKIP//num_items
+        self.guiElements[event_name] = Draw.String(
+            text,
+            self.eventId(event_name),
+            self.xPos + item*width, self.yPos, width, self.YLINESKIP,
+            val,
+            max_length,
+            "", # tooltip
+            callback)
+        if item + 1 == num_items:
+            self.yPos -= self.YLINESKIP
+
     def guiDraw(self):
         """Draw config GUI."""
         # reset position
@@ -1308,9 +1325,10 @@ class NifConfig:
         if evt == Draw.ESCKEY:
             self.callback = None
             self.guiExit()
-        elif evt == Draw.RETKEY:
-            self.save()
-            self.guiExit()
+        ### disabled: string widget uses return key to confirm input
+        #elif evt == Draw.RETKEY:
+        #    self.save()
+        #    self.guiExit()
 
         Draw.Redraw(1)
 
