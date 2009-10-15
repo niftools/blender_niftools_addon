@@ -728,7 +728,10 @@ Furniture marker has invalid number (%s). Name your file
                                              "Civilization IV", "Zoo Tycoon 2"):
                     # create kf root header
                     kf_root = self.createBlock("NiControllerSequence")
-                    kf_root.name = self.filebase
+                    if self.EXPORT_ANIMSEQUENCENAME:
+                        kf_root.name = self.EXPORT_ANIMSEQUENCENAME
+                    else:
+                        kf_root.name = self.filebase
                     kf_root.unknownInt1 = 1
                     kf_root.weight = 1.0
                     kf_root.textKeys = anim_textextra
