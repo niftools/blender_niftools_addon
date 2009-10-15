@@ -2,6 +2,7 @@ Version 2.4.12 (in development)
 * warn and ignore object animation on skinned meshes, instead of
 raising a mysterious exception (reported by vfb)
 * added Zoo Tycoon 2 .kf export
+* added dialogue requesting animation sequence name for KF export
 
 Version 2.4.11 (28 Sep 2009)
 * added NeoSteam import and export support
