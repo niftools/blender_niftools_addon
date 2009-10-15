@@ -217,6 +217,7 @@ class NifConfig:
         IMPORT_SKELETON = 0, # 0 = normal import, 1 = import file as skeleton, 2 = import mesh and attach to skeleton
         IMPORT_KEYFRAMEFILE = '', # keyframe file for animations
         EXPORT_ANIMATION = 0, # export everything (1=geometry only, 2=animation only)
+        EXPORT_ANIMSEQUENCENAME = '', # sequence name of the kf file
         EXPORT_FORCEDDS = True, # force dds extension on texture files
         EXPORT_SKINPARTITION = True, # generate skin partition
         EXPORT_BONESPERVERTEX = 4,
@@ -641,6 +642,13 @@ class NifConfig:
                 event_name = "EXPORT_ANIMATION_2",
                 val = ((self.config["EXPORT_ANIMATION"] == 2)
                        or self.config["EXPORT_MW_NIFXNIFKF"]))
+            self.drawYSep()
+
+            self.drawString(
+                text = "Anim Seq Name: ",
+                event_name = "EXPORT_ANIMSEQUENCENAME",
+                max_length = 128,
+                callback = self.updateAnimSequenceName)
             self.drawYSep()
 
             self.drawToggle(
@@ -1414,3 +1422,6 @@ class NifConfig:
 
     def updateObWind(self, evt, val):
         self.config["EXPORT_OB_WIND"] = val
+
+    def updateAnimSequenceName(self, evt, val):
+        self.config["EXPORT_ANIMSEQUENCENAME"] = val
