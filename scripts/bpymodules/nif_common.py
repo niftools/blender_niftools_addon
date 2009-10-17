@@ -217,7 +217,7 @@ class NifConfig:
         IMPORT_SKELETON = 0, # 0 = normal import, 1 = import file as skeleton, 2 = import mesh and attach to skeleton
         IMPORT_KEYFRAMEFILE = '', # keyframe file for animations
         EXPORT_ANIMATION = 0, # export everything (1=geometry only, 2=animation only)
-        ANIMSEQUENCENAME = "Forward", #defaults to Forward if not set.	
+        EXPORT_ANIMSEQUENCENAME = '', # sequence name of the kf file
         EXPORT_FORCEDDS = True, # force dds extension on texture files
         EXPORT_SKINPARTITION = True, # generate skin partition
         EXPORT_BONESPERVERTEX = 4,
@@ -232,7 +232,6 @@ class NifConfig:
         IMPORT_SENDBONESTOBINDPOS = True,
         IMPORT_APPLYSKINDEFORM = False,
         IMPORT_EXTRANODESASBONES = False,
-        DoOnce = 0,
         EXPORT_BHKLISTSHAPE = False,
         EXPORT_OB_BSXFLAGS = 2,
         EXPORT_OB_MASS = 10.0,
@@ -282,17 +281,14 @@ class NifConfig:
         self.callback = None  # function to call when config gui is done
         self.texpathIndex = 0
         self.texpathCurrent = ''
-        
-		# reset GUI coordinates
+
+        # reset GUI coordinates
         self.xPos = self.XORIGIN
         self.yPos = self.YORIGIN + Blender.Window.GetAreaSize()[1]
 
         # load configuration
         self.load()
-		
-        # reset Animation Sequence
-        self.config["DoOnce"] = 0
-		
+
     def run(self, target, filename, callback):
         """Run the config gui."""
         self.target = target     # import or export
@@ -510,6 +506,23 @@ class NifConfig:
             self.xPos+self.XCOLUMNSKIP-30, self.yPos, 30, self.YLINESKIP)
         self.yPos -= self.YLINESKIP
 
+    def drawString(self, text, event_name, max_length, callback, val = None,
+                   num_items = 1, item = 0):
+        """Create elements to input a string."""
+        if val is None:
+            val = self.config[event_name]
+        width = self.XCOLUMNSKIP//num_items
+        self.guiElements[event_name] = Draw.String(
+            text,
+            self.eventId(event_name),
+            self.xPos + item*width, self.yPos, width, self.YLINESKIP,
+            val,
+            max_length,
+            "", # tooltip
+            callback)
+        if item + 1 == num_items:
+            self.yPos -= self.YLINESKIP
+
     def guiDraw(self):
         """Draw config GUI."""
         # reset position
@@ -629,14 +642,14 @@ class NifConfig:
                 event_name = "EXPORT_ANIMATION_2",
                 val = ((self.config["EXPORT_ANIMATION"] == 2)
                        or self.config["EXPORT_MW_NIFXNIFKF"]))
-            if self.config["EXPORT_ANIMATION"] == 2 :
-                if self.config["DoOnce"] == 1 :
-                    self.config["ANIMSEQUENCENAME"] = Blender.Draw.PupStrInput("Enter Animation Group Name:", self.config["ANIMSEQUENCENAME"], 20)
-                    self.config["DoOnce"] = 2
-                if self.config["DoOnce"] == 0 :
-					self.config["DoOnce"] = 1
-            self.drawYSep()					
+            self.drawYSep()
 
+            self.drawString(
+                text = "Anim Seq Name: ",
+                event_name = "EXPORT_ANIMSEQUENCENAME",
+                max_length = 128,
+                callback = self.updateAnimSequenceName)
+            self.drawYSep()
 
             self.drawToggle(
                 text = "Force DDS Extension",
@@ -886,7 +899,7 @@ class NifConfig:
                 event_name = "EXPORT_OB_MALLEABLECONSTRAINT",
                 num_items = 2, item = 1)
             self.drawYSep()
-			
+
             self.drawLabel(
                 text = "Weapon Body Location",
                 event_name = "LABEL_WEAPON_LOCATION")
@@ -1320,9 +1333,10 @@ class NifConfig:
         if evt == Draw.ESCKEY:
             self.callback = None
             self.guiExit()
-        elif evt == Draw.RETKEY:
-            self.save()
-            self.guiExit()
+        ### disabled: string widget uses return key to confirm input
+        #elif evt == Draw.RETKEY:
+        #    self.save()
+        #    self.guiExit()
 
         Draw.Redraw(1)
 
@@ -1375,8 +1389,7 @@ class NifConfig:
         logging.getLogger("pyffi").setLevel(val)
 
     def updateScale(self, evt, val):
-        if self.config["EXPORT_SCALE_CORRECTION"] == 0 :
-            self.config["EXPORT_SCALE_CORRECTION"] = 1.0
+        self.config["EXPORT_SCALE_CORRECTION"] = val
         self.config["IMPORT_SCALE_CORRECTION"] = 1.0 / self.config["EXPORT_SCALE_CORRECTION"]
 
     def updateBonesPerPartition(self, evt, val):
@@ -1409,3 +1422,6 @@ class NifConfig:
 
     def updateObWind(self, evt, val):
         self.config["EXPORT_OB_WIND"] = val
+
+    def updateAnimSequenceName(self, evt, val):
+        self.config["EXPORT_ANIMSEQUENCENAME"] = val
