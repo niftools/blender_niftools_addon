@@ -783,19 +783,23 @@ class NifConfig:
             self.drawPushButton(
                 text = "Static",
                 event_name = "EXPORT_OB_RIGIDBODY_STATIC",
-                num_items = 4, item = 0)
+                num_items = 5, item = 0)
+            self.drawPushButton(
+                text = "Anim Static",
+                event_name = "EXPORT_OB_RIGIDBODY_ANIMATED",
+                num_items = 5, item = 1)
             self.drawPushButton(
                 text = "Clutter",
                 event_name = "EXPORT_OB_RIGIDBODY_CLUTTER",
-                num_items = 4, item = 1)
+                num_items = 5, item = 2)
             self.drawPushButton(
                 text = "Weapon",
                 event_name = "EXPORT_OB_RIGIDBODY_WEAPON",
-                num_items = 4, item = 2)
+                num_items = 5, item = 3)
             self.drawPushButton(
                 text = "Creature",
                 event_name = "EXPORT_OB_RIGIDBODY_CREATURE",
-                num_items = 4, item = 3)
+                num_items = 5, item = 4)
             self.drawToggle(
                 text = "Stone",
                 event_name = "EXPORT_OB_MATERIAL_STONE",
@@ -1228,6 +1232,18 @@ class NifConfig:
             self.config["EXPORT_OB_QUALITYTYPE"] = 1 # MO_QUAL_FIXED
             self.config["EXPORT_OB_WIND"] = 0
             self.config["EXPORT_OB_LAYER"] = 1 # static
+            self.config["EXPORT_OB_SOLID"] = True
+            self.config["EXPORT_OB_PRN"] = "NONE"
+        elif evName == "EXPORT_OB_RIGIDBODY_ANIMATED": # see fencedoor01.nif
+            self.config["EXPORT_OB_MATERIAL"] = 0 # stone
+            self.config["EXPORT_OB_BSXFLAGS"] = 11 # havok + anim + unknown
+            self.config["EXPORT_OB_MASS"] = 10.0
+            self.config["EXPORT_OB_MOTIONSYSTEM"] = 6 # MO_SYS_KEYFRAMED
+            self.config["EXPORT_OB_UNKNOWNBYTE1"] = 2
+            self.config["EXPORT_OB_UNKNOWNBYTE2"] = 2
+            self.config["EXPORT_OB_QUALITYTYPE"] = 2 # MO_QUAL_KEYFRAMED
+            self.config["EXPORT_OB_WIND"] = 0
+            self.config["EXPORT_OB_LAYER"] = 2 # OL_ANIM_STATIC
             self.config["EXPORT_OB_SOLID"] = True
             self.config["EXPORT_OB_PRN"] = "NONE"
         elif evName == "EXPORT_OB_RIGIDBODY_CLUTTER":
