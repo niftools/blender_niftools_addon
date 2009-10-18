@@ -1333,10 +1333,6 @@ class NifConfig:
         if evt == Draw.ESCKEY:
             self.callback = None
             self.guiExit()
-        ### disabled: string widget uses return key to confirm input
-        #elif evt == Draw.RETKEY:
-        #    self.save()
-        #    self.guiExit()
 
         Draw.Redraw(1)
 
