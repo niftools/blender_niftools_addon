@@ -9,7 +9,7 @@ reported by apwsoft; fix discovered by PacificMorrowind)
 * export XYZ rotations for object animations instead of converting to
 quaternions (reported by ArTorP)
 * set bhkCollosionObject flag to 41 instead of the default 1 for
-animated (OL_ANIM_STATIC) objects (reported by ArTorP).
+animated (OL_ANIM_STATIC) objects (reported by ArTorP)
 
 Version 2.4.11 (28 Sep 2009)
 * added NeoSteam import and export support
