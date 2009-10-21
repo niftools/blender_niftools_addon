@@ -1263,6 +1263,10 @@ missing curves in %s; insert %s key at frame 1 and try again"""
                 kfi.translation.z = trans[2]
             if rot_curve:
                 rot = rot_curve.values()[0]
+                # XXX blender weirdness... Euler() is a function!!
+                EulerClass = Blender.Mathutils.Euler().__class__
+                if isinstance(rot, EulerClass):
+                    rot = rot.toQuat()
                 kfi.rotation.x = rot.x
                 kfi.rotation.y = rot.y
                 kfi.rotation.z = rot.z
