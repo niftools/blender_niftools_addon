@@ -1191,10 +1191,14 @@ missing curves in %s; insert %s key at frame 1 and try again"""
                         rot_curve[frame] = Blender.Mathutils.Euler(
                             [10 * ipo[Ipo.OB_ROTX][frame],
                              10 * ipo[Ipo.OB_ROTY][frame],
-                             10 * ipo[Ipo.OB_ROTZ][frame]]).toQuat()
-                        # beware, CrossQuats takes arguments in a counter-intuitive order:
-                        # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
-                        rot_curve[frame] = Blender.Mathutils.CrossQuats(Blender.Mathutils.CrossQuats(bind_quat, rot_curve[frame]), extra_quat_inv) # inverse(RX) * RC' * RB'
+                             10 * ipo[Ipo.OB_ROTZ][frame]])
+                        # use quat if we have bind matrix and/or extra matrix
+                        # XXX maybe we should just stick with eulers??
+                        if bind_mat or extra_mat_inv:
+                            rot_curve[frame] = rot_curve[frame].toQuat()
+                            # beware, CrossQuats takes arguments in a counter-intuitive order:
+                            # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
+                            rot_curve[frame] = Blender.Mathutils.CrossQuats(Blender.Mathutils.CrossQuats(bind_quat, rot_curve[frame]), extra_quat_inv) # inverse(RX) * RC' * RB'
                     # pose rotation
                     elif curve in (Ipo.PO_QUATX, Ipo.PO_QUATY,
                                    Ipo.PO_QUATZ, Ipo.PO_QUATW):
