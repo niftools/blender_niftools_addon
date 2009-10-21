@@ -6,6 +6,8 @@ raising a mysterious exception (reported by vfb)
 (contributed by PacificMorrowind)
 * added preset for Oblivion OL_ANIM_STATIC objects (see issue #2118370
 reported by apwsoft; fix discovered by PacificMorrowind)
+* export XYZ rotations for object animations instead of converting to
+quaternions (reported by ArTorP)
 
 Version 2.4.11 (28 Sep 2009)
 * added NeoSteam import and export support

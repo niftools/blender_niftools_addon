@@ -1264,8 +1264,7 @@ missing curves in %s; insert %s key at frame 1 and try again"""
             if rot_curve:
                 rot = rot_curve.values()[0]
                 # XXX blender weirdness... Euler() is a function!!
-                EulerClass = Blender.Mathutils.Euler().__class__
-                if isinstance(rot, EulerClass):
+                if isinstance(rot, Blender.Mathutils.Euler().__class__):
                     rot = rot.toQuat()
                 kfi.rotation.x = rot.x
                 kfi.rotation.y = rot.y
@@ -1287,16 +1286,47 @@ missing curves in %s; insert %s key at frame 1 and try again"""
 
         frames = rot_curve.keys()
         frames.sort()
-        kfd.rotationType = NifFormat.KeyType.LINEAR_KEY
-        kfd.numRotationKeys = len(frames)
-        kfd.quaternionKeys.updateSize()
-        for i, frame in enumerate(frames):
-            rot_frame = kfd.quaternionKeys[i]
-            rot_frame.time = (frame - 1) * self.fspeed
-            rot_frame.value.w = rot_curve[frame].w
-            rot_frame.value.x = rot_curve[frame].x
-            rot_frame.value.y = rot_curve[frame].y
-            rot_frame.value.z = rot_curve[frame].z
+        # XXX blender weirdness... Euler() is a function!!
+        if (frames
+            and isinstance(rot_curve.values()[0],
+                           Blender.Mathutils.Euler().__class__)):
+            # eulers
+            kfd.rotationType = NifFormat.KeyType.XYZ_ROTATION_KEY
+            kfd.numRotationKeys = len(frames)
+            kfd.xyzRotations[0].numKeys = len(frames)
+            kfd.xyzRotations[1].numKeys = len(frames)
+            kfd.xyzRotations[2].numKeys = len(frames)
+            # XXX todo: quadratic interpolation?
+            kfd.xyzRotations[0].interpolation = NifFormat.KeyType.LINEAR_KEY
+            kfd.xyzRotations[1].interpolation = NifFormat.KeyType.LINEAR_KEY
+            kfd.xyzRotations[2].interpolation = NifFormat.KeyType.LINEAR_KEY
+            kfd.xyzRotations[0].keys.updateSize()
+            kfd.xyzRotations[1].keys.updateSize()
+            kfd.xyzRotations[2].keys.updateSize()
+            for i, frame in enumerate(frames):
+                # XXX todo: speed up by not recalculating stuff
+                rot_frame_x = kfd.xyzRotations[0].keys[i]
+                rot_frame_y = kfd.xyzRotations[1].keys[i]
+                rot_frame_z = kfd.xyzRotations[2].keys[i]
+                rot_frame_x.time = (frame - 1) * self.fspeed
+                rot_frame_y.time = (frame - 1) * self.fspeed
+                rot_frame_z.time = (frame - 1) * self.fspeed
+                rot_frame_x.value = rot_curve[frame].x * 3.14159265358979323846 / 180.0
+                rot_frame_y.value = rot_curve[frame].y * 3.14159265358979323846 / 180.0
+                rot_frame_z.value = rot_curve[frame].z * 3.14159265358979323846 / 180.0
+        else:
+            # quaternions
+            # XXX todo: quadratic interpolation?
+            kfd.rotationType = NifFormat.KeyType.LINEAR_KEY
+            kfd.numRotationKeys = len(frames)
+            kfd.quaternionKeys.updateSize()
+            for i, frame in enumerate(frames):
+                rot_frame = kfd.quaternionKeys[i]
+                rot_frame.time = (frame - 1) * self.fspeed
+                rot_frame.value.w = rot_curve[frame].w
+                rot_frame.value.x = rot_curve[frame].x
+                rot_frame.value.y = rot_curve[frame].y
+                rot_frame.value.z = rot_curve[frame].z
 
         frames = trans_curve.keys()
         frames.sort()
