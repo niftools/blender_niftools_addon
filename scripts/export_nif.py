@@ -3025,7 +3025,12 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
             else:
                 # usual collision object
                 colobj = self.createBlock("bhkCollisionObject", obj)
-                colobj.flags = 1
+                if self.EXPORT_OB_LAYER == NifFormat.OblivionLayer.OL_ANIM_STATIC:
+                    # animated collision requires flags = 41
+                    colobj.flags = 41
+                else:
+                    # in all other cases this seems to be enough
+                    colobj.flags = 1
             parent_block.collisionObject = colobj
             colobj.target = parent_block
 
