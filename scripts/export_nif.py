@@ -1292,7 +1292,7 @@ missing curves in %s; insert %s key at frame 1 and try again"""
                            Blender.Mathutils.Euler().__class__)):
             # eulers
             kfd.rotationType = NifFormat.KeyType.XYZ_ROTATION_KEY
-            kfd.numRotationKeys = len(frames)
+            kfd.numRotationKeys = 1 # *NOT* len(frames) this crashes the engine!
             kfd.xyzRotations[0].numKeys = len(frames)
             kfd.xyzRotations[1].numKeys = len(frames)
             kfd.xyzRotations[2].numKeys = len(frames)
