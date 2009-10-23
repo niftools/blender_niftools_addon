@@ -4,7 +4,7 @@ NIF is a popular file format used by 3D games such as Morrowind, Oblivion, Fallo
 
 You can grab the latest version of the scripts here:
 
-https://sourceforge.net/project/showfiles.php?group_id=149157&package_id=166219
+https://sourceforge.net/projects/niftools/files/blender_nif_scripts/
 
 For more documentation and help with the scripts, visit the wiki or the forum:
 
