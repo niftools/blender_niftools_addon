@@ -2847,7 +2847,9 @@ they can easily be identified.")
         # only uniform scaling
         # allow rather large error to accomodate some nifs
         if abs(b_scale[0]-b_scale[1]) + abs(b_scale[1]-b_scale[2]) > 0.02:
-            raise NifExportError("""\
+            print "Matrix or other error, exporting but check for model errors." #Allow REALLY large error to accomodate some other nifs.
+            if abs(b_scale[0]-b_scale[1]) + abs(b_scale[1]-b_scale[2]) > 0.1:
+                raise NifExportError("""\
 Non-uniform scaling not supported.
 Workaround: apply size and rotation (CTRL-A).""")
         b_scale = b_scale[0]
