@@ -1,15 +1,16 @@
-Version 2.4.12 (in development)
+Version 2.4.12 (23 Oct 2009)
 * warn and ignore object animation on skinned meshes, instead of
 raising a mysterious exception (reported by vfb)
 * added Zoo Tycoon 2 .kf export
-* added dialogue requesting animation sequence name for KF export
+* added dialogue requesting animation sequence name for .kf export
 (contributed by PacificMorrowind)
 * added preset for Oblivion OL_ANIM_STATIC objects (see issue #2118370
 reported by apwsoft; fix discovered by PacificMorrowind)
 * export XYZ rotations for object animations instead of converting to
-quaternions (reported by ArTorP)
+quaternions (reported by Artorp)
 * set bhkCollosionObject flag to 41 instead of the default 1 for
-animated (OL_ANIM_STATIC) objects (reported by ArTorP)
+animated (OL_ANIM_STATIC) objects (reported by Artorp)
+* updated readme with detailed install instructions
 
 Version 2.4.11 (28 Sep 2009)
 * added NeoSteam import and export support

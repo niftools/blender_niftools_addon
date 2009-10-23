@@ -28,7 +28,13 @@ a:hover.nav { color: #FF0000; background: transparent; }
 Although bugs are exterminated as much as possible, it is unlikely that they have all been found.
 </p>
 <h2>Highlights of this Release</h2>
-<p>Added Zoo Tycoon 2 .kf export, and fixed some minor bugs (see changelog for details).</p>
+<ul>
+<li>added Zoo Tycoon 2 .kf export</li>
+<li>added dialogue requesting animation sequence name for .kf export (contributed by PacificMorrowind)</li>
+<li>added preset for Oblivion OL_ANIM_STATIC objects (reported by apwsoft, fix discovered by PacificMorrowind, further fix suggested by Artorp)</li>
+<li>export XYZ rotations for object animations instead of converting to quaternions (reported by Artorp)</li>
+<li>fixed some minor bugs (see changelog for details)</li>
+</ul>
 <h2>Using the Scripts</h2>
 <p>
 The <a href="http://niftools.sourceforge.net/wiki/Blender/Quick_Start">quick-start guide</a> describes how to prepare your textures and how you can use the scripts. The guide also lists the limitations of the scripts, known issues, and workarounds for some issues.
@@ -42,13 +48,23 @@ http://niftools.sourceforge.net/wiki/Blender</a></li>
 </ul>
 <h2>Installation</h2>
 <h3>Requirements</h3>
+<p>Note: on Windows, use 32-bit versions of Blender and Python. (The 64-bit version of Python lacks xml parsing which is essential for the scripts to work.)</p>
 <ul>
   <li><strong><a href="http://www.blender.org/download/get-blender/">Blender 2.49a</a> or
 higher</strong>.</li>
-  <li><strong><a href="http://www.python.org/download/">Python 2.6</a> or higher</strong>.</li>
+  <li><strong><a href="http://www.python.org/download/">Python 2.6</a> or higher</strong> (but not Python 3.0 or higher).</li>
   <li><strong><a href="http://sourceforge.net/project/platformdownload.php?group_id=199269">PyFFI 2.0.2</a> or higher</strong>.</li>
 </ul>
-<h3>Manual Install</h3>
+<h3>Using .exe Installers</h3>
+<p>This version of the scripts should keep working with newer versions of Blender 2.4x and Python 2.6.x (but <strong>not</strong> Python 3.x.x). At the moment of writing this readme, the following were used during development of the scripts:</p>
+<ul>
+<li>Be sure first to log in as administrator!</li>
+<li>Download and install <a href="http://download.blender.org/release/Blender2.49b/blender-2.49b-windows.exe">Blender 2.49b (32 bit)</a>, use default settings, except select &quot;Use Blender's installation directory&quot; when asked where to install Blender's user data.</li>
+<li>Download and install <a href="http://www.python.org/ftp/python/2.6.3/python-2.6.3.msi">Python 2.6.3 (32 bit)</a>, use default settings.</li>
+<li>Download and install <a href="http://sourceforge.net/projects/pyffi/files/pyffi/2.0.3/PyFFI-2.0.3.win32.exe/download">PyFFI 2.0.3</a>, use default settings.</li>
+<li>Download and install the <a href="http://sourceforge.net/projects/niftools/files/blender_nif_scripts/2.4.12/blender_nif_scripts-2.4.12-windows.exe/download">Blender NIF Scripts 2.4.12</a>, use default settings.</li>
+</ul>
+<h3>Using .zip Packages</h3>
 <p>
 First, <em>make sure you have Python and PyFFI installed!</em>
 Also, <strong>if you installed Blender using the .exe installer, 
