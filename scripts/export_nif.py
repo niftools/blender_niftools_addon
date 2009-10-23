@@ -2825,7 +2825,13 @@ they can easily be identified.")
             # bones, get the rest matrix
             mat = self.getBoneRestMatrix(obj, 'BONESPACE')
         
-        return self.decomposeSRT(mat)
+        try:
+            return self.decomposeSRT(mat)
+        except NifExportError: # non-uniform scaling
+            self.logger.debug(str(mat))
+            raise NifExportError("""\
+Non-uniform scaling on bone '%s' not supported.
+This could be a bug... No workaround. :-( Post your blend!""" % obj.name)
 
 
 
