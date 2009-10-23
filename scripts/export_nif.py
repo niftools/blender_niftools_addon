@@ -108,6 +108,21 @@ class NifExport(NifImportExport):
                           for row in m.split(';')])
                 except:
                     raise NifExportError('Syntax error in BoneExMat buffer.')
+                # Check if matrices are clean, and if necessary fix them.
+                quat = mat.rotationPart().toQuat()
+                if sum(sum(abs(x) for x in vec)
+                       for vec in mat.rotationPart() - quat.toMatrix()) > 0.01:
+                    self.logger.warn(
+                        "Bad bone extra matrix for bone %s. "
+                        "Attempting to fix... but bone transform "
+                        "may be incompatible with existing animations." % b)
+                    self.logger.warn("old invalid matrix:\n%s" % mat)
+                    trans = mat.translationPart()
+                    mat = quat.toMatrix().resize4x4()
+                    mat[3][0] = trans[0]
+                    mat[3][1] = trans[1]
+                    mat[3][2] = trans[2]
+                    self.logger.warn("new valid matrix:\n%s" % mat)
                 # Matrices are stored inverted for easier math later on.
                 mat.invert()
                 self.setBoneExtraMatrixInv(b, mat)
