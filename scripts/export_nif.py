@@ -113,8 +113,8 @@ class NifExport(NifImportExport):
                 if sum(sum(abs(x) for x in vec)
                        for vec in mat.rotationPart() - quat.toMatrix()) > 0.01:
                     self.logger.warn(
-                        "Bad bone extra matrix for bone %s. "
-                        "Attempting to fix... but bone transform "
+                        "Bad bone extra matrix for bone %s. \n"
+                        "Attempting to fix... but bone transform \n"
                         "may be incompatible with existing animations." % b)
                     self.logger.warn("old invalid matrix:\n%s" % mat)
                     trans = mat.translationPart()
