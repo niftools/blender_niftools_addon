@@ -298,7 +298,7 @@ Workaround: apply size and rotation (CTRL-A) on '%s'.""" % ob.name)
             self.fstart = context.startFrame()
             self.fend = context.endFrame()
             
-            # oblivion and civ4
+            # oblivion, Fallout 3 and civ4
             if (self.EXPORT_VERSION
                 in ('Civilization IV', 'Oblivion', 'Fallout 3')):
                 root_name = 'Scene Root'
@@ -480,10 +480,10 @@ Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
                 else:
                     anim_textextra = None
 
-            # oblivion furniture markers
+            # oblivion and Fallout 3 furniture markers
             if (self.EXPORT_VERSION in ('Oblivion', 'Fallout 3')
                 and self.filebase[:15].lower() == 'furnituremarker'):
-                # exporting a furniture marker for Oblivion
+                # exporting a furniture marker for Oblivion/FO3
                 try:
                     furniturenumber = int(self.filebase[15:])
                 except ValueError:
@@ -509,7 +509,7 @@ Furniture marker has invalid number (%s). Name your file
                 root_block.addExtraData(sgokeep)
 
             self.logger.info("Checking collision")
-            # activate oblivion collision and physics
+            # activate oblivion/Fallout 3 collision and physics
             if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
                 hascollision = False
                 for block in self.blocks:
@@ -578,8 +578,16 @@ Furniture marker has invalid number (%s). Name your file
                                        "Sid Meier's Railroads"]:
                 self.exportVertexColorProperty(root_block)
                 self.exportZBufferProperty(root_block)
-
-            if self.EXPORT_FLATTENSKIN:
+                
+            # If Oblivion/F03 should default to Flatten skin for skinned objects or crash.
+            if self.EXPORT_VERSION in ("Oblivion", "Fallout 3"):
+                # And to avoid mucking up if the object is potentially animated don't default to flatten skin.
+                if self.EXPORT_ANIMATION == 1 :
+                    self.EXPORT_FLATTENSKIN = True
+                    self.logger.warn("Automatically switching to flattening skin. \nIf this is an animated"
+                                     " object select 'Export Geometry and Animation' instead of \n'Geometry Only'.")
+                
+            if self.EXPORT_FLATTENSKIN :
                 # (warning: trouble if armatures parent other armatures or
                 # if bones parent geometries, or if object is animated)
                 # flatten skins
