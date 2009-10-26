@@ -582,7 +582,7 @@ Furniture marker has invalid number (%s). Name your file
             # If Oblivion/F03 should default to Flatten skin for skinned objects or crash.
             if self.EXPORT_VERSION in ("Oblivion", "Fallout 3"):
                 # And to avoid mucking up if the object is potentially animated don't default to flatten skin.
-                if self.EXPORT_ANIMATION == 1 :
+                if self.EXPORT_ANIMATION == 1 and self.EXPORT_FLATTENSKIN == False :
                     self.EXPORT_FLATTENSKIN = True
                     self.logger.warn("Automatically switching to flattening skin. \nIf this is an animated"
                                      " object select 'Export Geometry and Animation' instead of \n'Geometry Only'.")
