@@ -404,7 +404,7 @@ class NifImport(NifImportExport):
             elif isinstance(niBlock, NifFormat.NiNode):
                 children = niBlock.children
                 bbox = self.find_extra(niBlock, NifFormat.BSBound)
-                if children or niBlock.collisionObject or bbox:
+                if children or niBlock.collisionObject or bbox or self.IMPORT_EXTRANODES:
                     # it's a parent node
                     # import object + children
                     if self.is_armature_root(niBlock):
