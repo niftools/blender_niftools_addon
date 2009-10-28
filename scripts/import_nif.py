@@ -2278,10 +2278,10 @@ Texture '%s' not found or not supported and no alternate available"""
             if morphCtrl:
                 morphData = morphCtrl.data
                 if morphData.numMorphs:
-                    # insert base key at frame 1
-                    b_meshData.insertKey( 1, 'absolute' )
+                    # insert base key at frame 1, using relative keys
+                    b_meshData.insertKey(1, 'relative')
                     baseverts = morphData.morphs[0].vectors
-                    b_ipo = Blender.Ipo.New( 'Key' , 'KeyIpo' )
+                    b_ipo = Blender.Ipo.New('Key' , 'KeyIpo')
                     b_meshData.key.ipo = b_ipo
                     for idxMorph in xrange(1, morphData.numMorphs):
                         # get name for key
