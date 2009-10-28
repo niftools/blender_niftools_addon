@@ -404,7 +404,7 @@ class NifImport(NifImportExport):
             elif isinstance(niBlock, NifFormat.NiNode):
                 children = niBlock.children
                 bbox = self.find_extra(niBlock, NifFormat.BSBound)
-                if children or niBlock.collisionObject or bbox:
+                if children or niBlock.collisionObject or bbox or self.IMPORT_EXTRANODES:
                     # it's a parent node
                     # import object + children
                     if self.is_armature_root(niBlock):
@@ -2278,12 +2278,17 @@ Texture '%s' not found or not supported and no alternate available"""
             if morphCtrl:
                 morphData = morphCtrl.data
                 if morphData.numMorphs:
-                    # insert base key at frame 1
-                    b_meshData.insertKey( 1, 'absolute' )
+                    # insert base key at frame 1, using relative keys
+                    b_meshData.insertKey(1, 'relative')
                     baseverts = morphData.morphs[0].vectors
-                    b_ipo = Blender.Ipo.New( 'Key' , 'KeyIpo' )
+                    b_ipo = Blender.Ipo.New('Key' , 'KeyIpo')
                     b_meshData.key.ipo = b_ipo
                     for idxMorph in xrange(1, morphData.numMorphs):
+                        # get name for key
+                        keyname = morphData.morphs[idxMorph].frameName
+                        if not keyname:
+                            keyname = 'Key %i' % idxMorph
+                        # get vectors
                         morphverts = morphData.morphs[idxMorph].vectors
                         # for each vertex calculate the key position from base
                         # pos + delta offset
@@ -2299,15 +2304,22 @@ Texture '%s' not found or not supported and no alternate available"""
                             b_meshData.verts[b_v_index].co[2] = v.z
                         # update the mesh and insert key
                         b_meshData.insertKey(idxMorph, 'relative')
+                        # set name for key
+                        b_meshData.key.blocks[idxMorph].name = keyname
                         # set up the ipo key curve
-                        b_curve = b_ipo.addCurve('Key %i' % idxMorph)
+                        b_curve = b_ipo.addCurve(keyname)
                         # no idea how to set up the bezier triples -> switching
                         # to linear instead
                         b_curve.interpolation = Blender.IpoCurve.InterpTypes.LINEAR
                         # select extrapolation
                         b_curve.extend = self.get_extend_from_flags(morphCtrl.flags)
                         # set up the curve's control points
+                        # first find the keys
+                        # older versions store keys in the morphData
                         morphkeys = morphData.morphs[idxMorph].keys
+                        # newer versions store keys in the controller
+                        if (not morphkeys) and morphCtrl.interpolators:
+                            morphkeys = morphCtrl.interpolators[idxMorph].data.data.keys
                         for key in morphkeys:
                             x =  key.value
                             frame =  1+int(key.time * self.fps + 0.5)
@@ -2706,67 +2718,78 @@ Texture '%s' not found or not supported and no alternate available"""
     def set_animation(self, niBlock, b_obj):
         """Load basic animation info for this object."""
         kfc = self.find_controller(niBlock, NifFormat.NiKeyframeController)
-        if kfc and kfc.data:
-            # create an Ipo for this object
-            b_ipo = b_obj.getIpo()
-            if b_ipo is None:
-                b_ipo = Blender.Ipo.New('Object', b_obj.name)
-                b_obj.setIpo(b_ipo)
-            # denote progress
-            self.msgProgress("Animation")
-            # get keyframe data
+        if not kfc:
+            # no animation data: do nothing
+            return
+            
+        if kfc.interpolator:
+            kfd = kfc.interpolator.data
+        else:
             kfd = kfc.data
-            assert(isinstance(kfd, NifFormat.NiKeyframeData))
-            #get the animation keys
-            translations = kfd.translations
-            scales = kfd.scales
-            # add the keys
-            self.logger.debug('Scale keys...')
-            for key in scales.keys:
+
+        if not kfd:
+            # no animation data: do nothing
+            return
+
+        # denote progress
+        self.msgProgress("Animation")
+        self.logger.info("Importing animation data for %s" % b_obj.name)
+        assert(isinstance(kfd, NifFormat.NiKeyframeData))
+        # create an Ipo for this object
+        b_ipo = b_obj.getIpo()
+        if b_ipo is None:
+            b_ipo = Blender.Ipo.New('Object', b_obj.name)
+            b_obj.setIpo(b_ipo)
+        # get the animation keys
+        translations = kfd.translations
+        scales = kfd.scales
+        # add the keys
+        self.logger.debug('Scale keys...')
+        for key in scales.keys:
+            frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
+            Blender.Set('curframe', frame)
+            b_obj.SizeX = key.value
+            b_obj.SizeY = key.value
+            b_obj.SizeZ = key.value
+            b_obj.insertIpoKey(Blender.Object.SIZE)
+
+        # detect the type of rotation keys
+        rotationType = kfd.rotationType
+        if rotationType == 4:
+            # uses xyz rotation
+            xyzRotations = kfd.xyzRotations
+            self.logger.debug('Rotation keys...(euler)')
+            for key in xyzRotations:
                 frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                 Blender.Set('curframe', frame)
-                b_obj.SizeX = key.value
-                b_obj.SizeY = key.value
-                b_obj.SizeZ = key.value
-                b_obj.insertIpoKey(Blender.Object.SIZE)
-
-            # detect the type of rotation keys
-            rotationType = kfd.rotationType
-            if rotationType == 4:
-                # uses xyz rotation
-                xyzRotations = kfd.xyzRotations
-                self.logger.debug('Rotation keys...(euler)')
-                for key in xyzRotations:
-                    frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
-                    Blender.Set('curframe', frame)
-                    b_obj.RotX = key.value.x * self.R2D
-                    b_obj.RotY = key.value.y * self.R2D
-                    b_obj.RotZ = key.value.z * self.R2D
-                    b_obj.insertIpoKey(Blender.Object.ROT)           
-            else:
-                # uses quaternions
-                if kfd.quaternionKeys:
-                    self.logger.debug('Rotation keys...(quaternions)')
-                for key in kfd.quaternionKeys:
-                    frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
-                    Blender.Set('curframe', frame)
-                    rot = Blender.Mathutils.Quaternion(key.value.w, key.value.x, key.value.y, key.value.z).toEuler()
-                    b_obj.RotX = rot.x * self.R2D
-                    b_obj.RotY = rot.y * self.R2D
-                    b_obj.RotZ = rot.z * self.R2D
-                    b_obj.insertIpoKey(Blender.Object.ROT)
-
-            if translations.keys:
-                self.logger.debug('Translation keys...')
-            for key in translations.keys:
+                b_obj.RotX = key.value.x * self.R2D
+                b_obj.RotY = key.value.y * self.R2D
+                b_obj.RotZ = key.value.z * self.R2D
+                b_obj.insertIpoKey(Blender.Object.ROT)           
+        else:
+            # uses quaternions
+            if kfd.quaternionKeys:
+                self.logger.debug('Rotation keys...(quaternions)')
+            for key in kfd.quaternionKeys:
                 frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                 Blender.Set('curframe', frame)
-                b_obj.LocX = key.value.x
-                b_obj.LocY = key.value.y
-                b_obj.LocZ = key.value.z
-                b_obj.insertIpoKey(Blender.Object.LOC)
-                
-            Blender.Set('curframe', 1)
+                rot = Blender.Mathutils.Quaternion(key.value.w, key.value.x, key.value.y, key.value.z).toEuler()
+                b_obj.RotX = rot.x * self.R2D
+                b_obj.RotY = rot.y * self.R2D
+                b_obj.RotZ = rot.z * self.R2D
+                b_obj.insertIpoKey(Blender.Object.ROT)
+
+        if translations.keys:
+            self.logger.debug('Translation keys...')
+        for key in translations.keys:
+            frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
+            Blender.Set('curframe', frame)
+            b_obj.LocX = key.value.x
+            b_obj.LocY = key.value.y
+            b_obj.LocZ = key.value.z
+            b_obj.insertIpoKey(Blender.Object.LOC)
+            
+        Blender.Set('curframe', 1)
 
     def importBhkShape(self, bhkshape):
         """Import an oblivion collision shape as list of blender meshes."""

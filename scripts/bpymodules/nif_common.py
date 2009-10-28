@@ -231,7 +231,7 @@ class NifConfig:
         IMPORT_SENDDETACHEDGEOMETRIESTONODEPOS = True,
         IMPORT_SENDBONESTOBINDPOS = True,
         IMPORT_APPLYSKINDEFORM = False,
-        IMPORT_EXTRANODESASBONES = False,
+        IMPORT_EXTRANODES = False,
         EXPORT_BHKLISTSHAPE = False,
         EXPORT_OB_BSXFLAGS = 2,
         EXPORT_OB_MASS = 10.0,
@@ -580,8 +580,8 @@ class NifConfig:
             self.drawYSep()
 
             self.drawToggle(
-                text = "Import Extra Skeleton Nodes As Bones",
-                event_name = "IMPORT_EXTRANODESASBONES")
+                text = "Import Extra Nodes",
+                event_name = "IMPORT_EXTRANODES")
             self.drawYSep()
             
             self.drawToggle(
@@ -1105,8 +1105,8 @@ class NifConfig:
             self.config["IMPORT_SENDBONESTOBINDPOS"] = not self.config["IMPORT_SENDBONESTOBINDPOS"]
         elif evName == "IMPORT_APPLYSKINDEFORM":
             self.config["IMPORT_APPLYSKINDEFORM"] = not self.config["IMPORT_APPLYSKINDEFORM"]
-        elif evName == "IMPORT_EXTRANODESASBONES":
-            self.config["IMPORT_EXTRANODESASBONES"] = not self.config["IMPORT_EXTRANODESASBONES"]
+        elif evName == "IMPORT_EXTRANODES":
+            self.config["IMPORT_EXTRANODES"] = not self.config["IMPORT_EXTRANODES"]
         elif evName == "IMPORT_EXPORTEMBEDDEDTEXTURES":
             self.config["IMPORT_EXPORTEMBEDDEDTEXTURES"] = not self.config["IMPORT_EXPORTEMBEDDEDTEXTURES"]
         elif evName == "IMPORT_COMBINESHAPES":
@@ -1122,7 +1122,7 @@ class NifConfig:
             self.config["IMPORT_SENDDETACHEDGEOMETRIESTONODEPOS"] = True
             self.config["IMPORT_SENDBONESTOBINDPOS"] = True
             self.config["IMPORT_APPLYSKINDEFORM"] = False
-            self.config["IMPORT_EXTRANODESASBONES"] = False
+            self.config["IMPORT_EXTRANODES"] = False
         elif evName == "IMPORT_SETTINGS_SKINNING":
             self.config["IMPORT_ANIMATION"] = True
             self.config["IMPORT_SKELETON"] = 0
@@ -1134,7 +1134,7 @@ class NifConfig:
             self.config["IMPORT_SENDDETACHEDGEOMETRIESTONODEPOS"] = False
             self.config["IMPORT_SENDBONESTOBINDPOS"] = False
             self.config["IMPORT_APPLYSKINDEFORM"] = True
-            self.config["IMPORT_EXTRANODESASBONES"] = False
+            self.config["IMPORT_EXTRANODES"] = False
         elif evName[:5] == "GAME_":
             self.config["EXPORT_VERSION"] = evName[5:]
             # settings that usually make sense, fail-safe
@@ -1208,6 +1208,11 @@ class NifConfig:
              self.config["EXPORT_ANIMATION"] = value
              if value == 0 or value == 2: # if animation is exported
                  self.config["EXPORT_FLATTENSKIN"] = False # disable flattening skin
+             elif value == 1:
+                 # enable flattening skin for 'geometry only' exports
+                 # in oblivion and fallout 3
+                 if self.config["EXPORT_VERSION"] in ("Oblivion", "Fallout 3"):
+                     self.config["EXPORT_FLATTENSKIN"] = True
         elif evName == "EXPORT_SKINPARTITION":
             self.config["EXPORT_SKINPARTITION"] = not self.config["EXPORT_SKINPARTITION"]
         elif evName == "EXPORT_PADBONES":

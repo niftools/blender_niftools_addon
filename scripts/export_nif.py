@@ -2456,12 +2456,18 @@ they can easily be identified.")
             # shape key morphing
             key = mesh.key
             if key:
-                if len( key.getBlocks() ) > 1:
+                if len(key.blocks) > 1:
                     # yes, there is a key object attached
-                    # FIXME: check if key object contains relative shape keys
-                    keyipo = key.getIpo()
+                    keyipo = key.ipo
                     if keyipo:
                         # yes, there is a shape ipo too
+
+                        # check that they are relative shape keys
+                        if not key.relative:
+                            # XXX if we do "key.relative = True"
+                            # XXX would this automatically fix the keys?
+                            raise ValueError(
+                                "Can only export relative shape keys.")
                         
                         # create geometry morph controller
                         morphctrl = self.createBlock("NiGeomMorpherController",
@@ -2477,15 +2483,26 @@ they can easily be identified.")
                         # create geometry morph data
                         morphdata = self.createBlock("NiMorphData", keyipo)
                         morphctrl.data = morphdata
-                        morphdata.numMorphs = len(key.getBlocks())
+                        morphdata.numMorphs = len(key.blocks)
                         morphdata.numVertices = len(vertlist)
                         morphdata.morphs.updateSize()
                         
-                        for keyblocknum, keyblock in enumerate(key.getBlocks()):
+
+                        # create interpolators (for newer nif versions)
+                        morphctrl.numInterpolators = len(key.blocks)
+                        morphctrl.interpolators.updateSize()
+
+                        # XXX some unknowns, bethesda only
+                        # XXX just guessing here, data seems to be zero always
+                        morphctrl.numUnknownInts = len(key.blocks)
+                        morphctrl.unknownInts.updateSize()
+
+                        for keyblocknum, keyblock in enumerate(key.blocks):
                             # export morphed vertices
                             morph = morphdata.morphs[keyblocknum]
-                            self.logger.info("Exporting morph %i: vertices"
-                                             % keyblocknum)
+                            morph.frameName = keyblock.name
+                            self.logger.info("Exporting morph %s: vertices"
+                                             % keyblock.name)
                             morph.arg = morphdata.numVertices
                             morph.vectors.updateSize()
                             for b_v_index, (vert_indices, vert) \
@@ -2505,22 +2522,35 @@ they can easily be identified.")
                                     morph.vectors[vert_index].z = mv.z
                             
                             # export ipo shape key curve
-                            #curve = keyipo['Key %i' % keyblocknum] # FIXME
-                            # workaround
-                            curve = None
-                            if ( keyblocknum - 1 ) in range( len( keyipo.getCurves() ) ):
-                                curve = keyipo.getCurves()[keyblocknum-1]
-                            # base key has no curve all other keys should have one
+                            curve = keyipo[keyblock.name]
+
+                            # create interpolator for shape key
+                            # (needs to be there even if there is no curve)
+                            interpol = self.createBlock("NiFloatInterpolator")
+                            interpol.value = 0
+                            interpol.data = self.createBlock("NiFloatData", curve)
+                            morphctrl.interpolators[keyblocknum] = interpol
+                            floatdata = interpol.data.data
+
+                            # base key has no curve
+                            # but all other keys should have one
                             if curve:
-                                self.logger.info("Exporting morph %i: curve"
-                                                 % keyblocknum)
-                                if ( curve.getExtrapolation() == "Constant" ):
+                                # note: we set data on morph for older nifs
+                                # and on floatdata for newer nifs
+                                # of course only one of these will be actually
+                                # written to the file
+                                self.logger.info("Exporting morph %s: curve"
+                                                 % keyblock.name)
+                                if curve.getExtrapolation() == "Constant":
                                     ctrlFlags = 0x000c
-                                elif ( curve.getExtrapolation() == "Cyclic" ):
+                                elif curve.getExtrapolation() == "Cyclic":
                                     ctrlFlags = 0x0008
                                 morph.interpolation = NifFormat.KeyType.LINEAR_KEY
                                 morph.numKeys = len(curve.getPoints())
                                 morph.keys.updateSize()
+                                floatdata.interpolation = NifFormat.KeyType.LINEAR_KEY
+                                floatdata.numKeys = len(curve.getPoints())
+                                floatdata.keys.updateSize()
                                 for i, btriple in enumerate(curve.getPoints()):
                                     knot = btriple.getPoints()
                                     morph.keys[i].arg = morph.interpolation
@@ -2528,6 +2558,11 @@ they can easily be identified.")
                                     morph.keys[i].value = curve.evaluate( knot[0] )
                                     #morph.keys[i].forwardTangent = 0.0 # ?
                                     #morph.keys[i].backwardTangent = 0.0 # ?
+                                    floatdata.keys[i].arg = morph.interpolation
+                                    floatdata.keys[i].time = (knot[0] - self.fstart) * self.fspeed
+                                    floatdata.keys[i].value = curve.evaluate( knot[0] )
+                                    #floatdata.keys[i].forwardTangent = 0.0 # ?
+                                    #floatdata.keys[i].backwardTangent = 0.0 # ?
                                     ctrlStart = min(ctrlStart, morph.keys[i].time)
                                     ctrlStop  = max(ctrlStop,  morph.keys[i].time)
                         morphctrl.flags = ctrlFlags
