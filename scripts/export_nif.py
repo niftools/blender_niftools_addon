@@ -2448,12 +2448,18 @@ they can easily be identified.")
             # shape key morphing
             key = mesh.key
             if key:
-                if len( key.getBlocks() ) > 1:
+                if len(key.blocks) > 1:
                     # yes, there is a key object attached
-                    # FIXME: check if key object contains relative shape keys
-                    keyipo = key.getIpo()
+                    keyipo = key.ipo
                     if keyipo:
                         # yes, there is a shape ipo too
+
+                        # check that they are relative shape keys
+                        if not key.relative:
+                            # XXX if we do "key.relative = True"
+                            # XXX would this automatically fix the keys?
+                            raise ValueError(
+                                "Can only export relative shape keys.")
                         
                         # create geometry morph controller
                         morphctrl = self.createBlock("NiGeomMorpherController",
@@ -2469,15 +2475,25 @@ they can easily be identified.")
                         # create geometry morph data
                         morphdata = self.createBlock("NiMorphData", keyipo)
                         morphctrl.data = morphdata
-                        morphdata.numMorphs = len(key.getBlocks())
+                        morphdata.numMorphs = len(key.blocks)
                         morphdata.numVertices = len(vertlist)
                         morphdata.morphs.updateSize()
                         
-                        for keyblocknum, keyblock in enumerate(key.getBlocks()):
+
+                        # create interpolators (for newer nif versions)
+                        morphctrl.numInterpolators = len(key.blocks)
+                        morphctrl.interpolators.updateSize()
+
+                        # XXX some unknowns, bethesda only
+                        # XXX just guessing here, data seems to be zero always
+                        morphctrl.numUnknownInts = len(key.blocks)
+                        morphctrl.unknownInts.updateSize()
+
+                        for keyblocknum, keyblock in enumerate(key.blocks):
                             # export morphed vertices
                             morph = morphdata.morphs[keyblocknum]
-                            self.logger.info("Exporting morph %i: vertices"
-                                             % keyblocknum)
+                            self.logger.info("Exporting morph %s: vertices"
+                                             % keyblock.name)
                             morph.arg = morphdata.numVertices
                             morph.vectors.updateSize()
                             for b_v_index, (vert_indices, vert) \
@@ -2497,11 +2513,7 @@ they can easily be identified.")
                                     morph.vectors[vert_index].z = mv.z
                             
                             # export ipo shape key curve
-                            #curve = keyipo['Key %i' % keyblocknum] # FIXME
-                            # workaround
-                            curve = None
-                            if ( keyblocknum - 1 ) in range( len( keyipo.getCurves() ) ):
-                                curve = keyipo.getCurves()[keyblocknum-1]
+                            curve = keyipo[keyblock.name]
                             # base key has no curve all other keys should have one
                             if curve:
                                 self.logger.info("Exporting morph %i: curve"
