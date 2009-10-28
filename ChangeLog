@@ -1,7 +1,8 @@
 Version 2.4.13 (in development)
 * attempt to fix invalid matrices in bone extra text buffer rather than
 raising a mysterious exception (reported by PacificMorrowind)
-* import Oblivion morph controller animation data (reported by LHammonds)
+* import and export Oblivion morph controller animation data (reported by
+LHammonds)
 
 Version 2.4.12 (23 Oct 2009)
 * warn and ignore object animation on skinned meshes, instead of

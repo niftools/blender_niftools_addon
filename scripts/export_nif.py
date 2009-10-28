@@ -2492,6 +2492,7 @@ they can easily be identified.")
                         for keyblocknum, keyblock in enumerate(key.blocks):
                             # export morphed vertices
                             morph = morphdata.morphs[keyblocknum]
+                            morph.frameName = keyblock.name
                             self.logger.info("Exporting morph %s: vertices"
                                              % keyblock.name)
                             morph.arg = morphdata.numVertices
@@ -2514,17 +2515,34 @@ they can easily be identified.")
                             
                             # export ipo shape key curve
                             curve = keyipo[keyblock.name]
-                            # base key has no curve all other keys should have one
+
+                            # create interpolator for shape key
+                            # (needs to be there even if there is no curve)
+                            interpol = self.createBlock("NiFloatInterpolator")
+                            interpol.value = 0
+                            interpol.data = self.createBlock("NiFloatData", curve)
+                            morphctrl.interpolators[keyblocknum] = interpol
+                            floatdata = interpol.data.data
+
+                            # base key has no curve
+                            # but all other keys should have one
                             if curve:
-                                self.logger.info("Exporting morph %i: curve"
-                                                 % keyblocknum)
-                                if ( curve.getExtrapolation() == "Constant" ):
+                                # note: we set data on morph for older nifs
+                                # and on floatdata for newer nifs
+                                # of course only one of these will be actually
+                                # written to the file
+                                self.logger.info("Exporting morph %s: curve"
+                                                 % keyblock.name)
+                                if curve.getExtrapolation() == "Constant":
                                     ctrlFlags = 0x000c
-                                elif ( curve.getExtrapolation() == "Cyclic" ):
+                                elif curve.getExtrapolation() == "Cyclic":
                                     ctrlFlags = 0x0008
                                 morph.interpolation = NifFormat.KeyType.LINEAR_KEY
                                 morph.numKeys = len(curve.getPoints())
                                 morph.keys.updateSize()
+                                floatdata.interpolation = NifFormat.KeyType.LINEAR_KEY
+                                floatdata.numKeys = len(curve.getPoints())
+                                floatdata.keys.updateSize()
                                 for i, btriple in enumerate(curve.getPoints()):
                                     knot = btriple.getPoints()
                                     morph.keys[i].arg = morph.interpolation
@@ -2532,6 +2550,11 @@ they can easily be identified.")
                                     morph.keys[i].value = curve.evaluate( knot[0] )
                                     #morph.keys[i].forwardTangent = 0.0 # ?
                                     #morph.keys[i].backwardTangent = 0.0 # ?
+                                    floatdata.keys[i].arg = morph.interpolation
+                                    floatdata.keys[i].time = (knot[0] - self.fstart) * self.fspeed
+                                    floatdata.keys[i].value = curve.evaluate( knot[0] )
+                                    #floatdata.keys[i].forwardTangent = 0.0 # ?
+                                    #floatdata.keys[i].backwardTangent = 0.0 # ?
                                     ctrlStart = min(ctrlStart, morph.keys[i].time)
                                     ctrlStop  = max(ctrlStop,  morph.keys[i].time)
                         morphctrl.flags = ctrlFlags
