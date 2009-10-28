@@ -5,6 +5,8 @@ raising a mysterious exception (reported by PacificMorrowind)
 LHammonds)
 * import extra nodes as empties
 * fixed Oblivion object animation import
+* enable flattening skin in the export gui when 'geometry only' is selected,
+for Oblivion and Fallout 3 (contributed by PacificMorrowind)
 
 Version 2.4.12 (23 Oct 2009)
 * warn and ignore object animation on skinned meshes, instead of

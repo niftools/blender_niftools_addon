@@ -1208,6 +1208,11 @@ class NifConfig:
              self.config["EXPORT_ANIMATION"] = value
              if value == 0 or value == 2: # if animation is exported
                  self.config["EXPORT_FLATTENSKIN"] = False # disable flattening skin
+             elif value == 1:
+                 # enable flattening skin for 'geometry only' exports
+                 # in oblivion and fallout 3
+                 if self.config["EXPORT_VERSION"] in ("Oblivion", "Fallout 3"):
+                     self.config["EXPORT_FLATTENSKIN"] = True
         elif evName == "EXPORT_SKINPARTITION":
             self.config["EXPORT_SKINPARTITION"] = not self.config["EXPORT_SKINPARTITION"]
         elif evName == "EXPORT_PADBONES":
