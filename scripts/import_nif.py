@@ -2718,67 +2718,78 @@ Texture '%s' not found or not supported and no alternate available"""
     def set_animation(self, niBlock, b_obj):
         """Load basic animation info for this object."""
         kfc = self.find_controller(niBlock, NifFormat.NiKeyframeController)
-        if kfc and kfc.data:
-            # create an Ipo for this object
-            b_ipo = b_obj.getIpo()
-            if b_ipo is None:
-                b_ipo = Blender.Ipo.New('Object', b_obj.name)
-                b_obj.setIpo(b_ipo)
-            # denote progress
-            self.msgProgress("Animation")
-            # get keyframe data
+        if not kfc:
+            # no animation data: do nothing
+            return
+            
+        if kfc.interpolator:
+            kfd = kfc.interpolator.data
+        else:
             kfd = kfc.data
-            assert(isinstance(kfd, NifFormat.NiKeyframeData))
-            #get the animation keys
-            translations = kfd.translations
-            scales = kfd.scales
-            # add the keys
-            self.logger.debug('Scale keys...')
-            for key in scales.keys:
+
+        if not kfd:
+            # no animation data: do nothing
+            return
+
+        # denote progress
+        self.msgProgress("Animation")
+        self.logger.info("Importing animation data for %s" % b_obj.name)
+        assert(isinstance(kfd, NifFormat.NiKeyframeData))
+        # create an Ipo for this object
+        b_ipo = b_obj.getIpo()
+        if b_ipo is None:
+            b_ipo = Blender.Ipo.New('Object', b_obj.name)
+            b_obj.setIpo(b_ipo)
+        # get the animation keys
+        translations = kfd.translations
+        scales = kfd.scales
+        # add the keys
+        self.logger.debug('Scale keys...')
+        for key in scales.keys:
+            frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
+            Blender.Set('curframe', frame)
+            b_obj.SizeX = key.value
+            b_obj.SizeY = key.value
+            b_obj.SizeZ = key.value
+            b_obj.insertIpoKey(Blender.Object.SIZE)
+
+        # detect the type of rotation keys
+        rotationType = kfd.rotationType
+        if rotationType == 4:
+            # uses xyz rotation
+            xyzRotations = kfd.xyzRotations
+            self.logger.debug('Rotation keys...(euler)')
+            for key in xyzRotations:
                 frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                 Blender.Set('curframe', frame)
-                b_obj.SizeX = key.value
-                b_obj.SizeY = key.value
-                b_obj.SizeZ = key.value
-                b_obj.insertIpoKey(Blender.Object.SIZE)
-
-            # detect the type of rotation keys
-            rotationType = kfd.rotationType
-            if rotationType == 4:
-                # uses xyz rotation
-                xyzRotations = kfd.xyzRotations
-                self.logger.debug('Rotation keys...(euler)')
-                for key in xyzRotations:
-                    frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
-                    Blender.Set('curframe', frame)
-                    b_obj.RotX = key.value.x * self.R2D
-                    b_obj.RotY = key.value.y * self.R2D
-                    b_obj.RotZ = key.value.z * self.R2D
-                    b_obj.insertIpoKey(Blender.Object.ROT)           
-            else:
-                # uses quaternions
-                if kfd.quaternionKeys:
-                    self.logger.debug('Rotation keys...(quaternions)')
-                for key in kfd.quaternionKeys:
-                    frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
-                    Blender.Set('curframe', frame)
-                    rot = Blender.Mathutils.Quaternion(key.value.w, key.value.x, key.value.y, key.value.z).toEuler()
-                    b_obj.RotX = rot.x * self.R2D
-                    b_obj.RotY = rot.y * self.R2D
-                    b_obj.RotZ = rot.z * self.R2D
-                    b_obj.insertIpoKey(Blender.Object.ROT)
-
-            if translations.keys:
-                self.logger.debug('Translation keys...')
-            for key in translations.keys:
+                b_obj.RotX = key.value.x * self.R2D
+                b_obj.RotY = key.value.y * self.R2D
+                b_obj.RotZ = key.value.z * self.R2D
+                b_obj.insertIpoKey(Blender.Object.ROT)           
+        else:
+            # uses quaternions
+            if kfd.quaternionKeys:
+                self.logger.debug('Rotation keys...(quaternions)')
+            for key in kfd.quaternionKeys:
                 frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                 Blender.Set('curframe', frame)
-                b_obj.LocX = key.value.x
-                b_obj.LocY = key.value.y
-                b_obj.LocZ = key.value.z
-                b_obj.insertIpoKey(Blender.Object.LOC)
-                
-            Blender.Set('curframe', 1)
+                rot = Blender.Mathutils.Quaternion(key.value.w, key.value.x, key.value.y, key.value.z).toEuler()
+                b_obj.RotX = rot.x * self.R2D
+                b_obj.RotY = rot.y * self.R2D
+                b_obj.RotZ = rot.z * self.R2D
+                b_obj.insertIpoKey(Blender.Object.ROT)
+
+        if translations.keys:
+            self.logger.debug('Translation keys...')
+        for key in translations.keys:
+            frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
+            Blender.Set('curframe', frame)
+            b_obj.LocX = key.value.x
+            b_obj.LocY = key.value.y
+            b_obj.LocZ = key.value.z
+            b_obj.insertIpoKey(Blender.Object.LOC)
+            
+        Blender.Set('curframe', 1)
 
     def importBhkShape(self, bhkshape):
         """Import an oblivion collision shape as list of blender meshes."""
