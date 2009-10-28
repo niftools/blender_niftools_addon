@@ -578,15 +578,7 @@ Furniture marker has invalid number (%s). Name your file
                                        "Sid Meier's Railroads"]:
                 self.exportVertexColorProperty(root_block)
                 self.exportZBufferProperty(root_block)
-                
-            # If Oblivion/F03 should default to Flatten skin for skinned objects or crash.
-            if self.EXPORT_VERSION in ("Oblivion", "Fallout 3"):
-                # And to avoid mucking up if the object is potentially animated don't default to flatten skin.
-                if self.EXPORT_ANIMATION == 1 and self.EXPORT_FLATTENSKIN == False :
-                    self.EXPORT_FLATTENSKIN = True
-                    self.logger.warn("Automatically switching to flattening skin. \nIf this is an animated"
-                                     " object select 'Export Geometry and Animation' instead of \n'Geometry Only'.")
-                
+                              
             if self.EXPORT_FLATTENSKIN :
                 # (warning: trouble if armatures parent other armatures or
                 # if bones parent geometries, or if object is animated)
