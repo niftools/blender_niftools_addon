@@ -2284,6 +2284,11 @@ Texture '%s' not found or not supported and no alternate available"""
                     b_ipo = Blender.Ipo.New( 'Key' , 'KeyIpo' )
                     b_meshData.key.ipo = b_ipo
                     for idxMorph in xrange(1, morphData.numMorphs):
+                        # get name for key
+                        keyname = morphData.morphs[idxMorph].frameName
+                        if not keyname:
+                            keyname = 'Key %i' % idxMorph
+                        # get vectors
                         morphverts = morphData.morphs[idxMorph].vectors
                         # for each vertex calculate the key position from base
                         # pos + delta offset
@@ -2299,15 +2304,22 @@ Texture '%s' not found or not supported and no alternate available"""
                             b_meshData.verts[b_v_index].co[2] = v.z
                         # update the mesh and insert key
                         b_meshData.insertKey(idxMorph, 'relative')
+                        # set name for key
+                        b_meshData.key.blocks[idxMorph].name = keyname
                         # set up the ipo key curve
-                        b_curve = b_ipo.addCurve('Key %i' % idxMorph)
+                        b_curve = b_ipo.addCurve(keyname)
                         # no idea how to set up the bezier triples -> switching
                         # to linear instead
                         b_curve.interpolation = Blender.IpoCurve.InterpTypes.LINEAR
                         # select extrapolation
                         b_curve.extend = self.get_extend_from_flags(morphCtrl.flags)
                         # set up the curve's control points
+                        # first find the keys
+                        # older versions store keys in the morphData
                         morphkeys = morphData.morphs[idxMorph].keys
+                        # newer versions store keys in the controller
+                        if (not morphkeys) and morphCtrl.interpolators:
+                            morphkeys = morphCtrl.interpolators[idxMorph].data.data.keys
                         for key in morphkeys:
                             x =  key.value
                             frame =  1+int(key.time * self.fps + 0.5)
