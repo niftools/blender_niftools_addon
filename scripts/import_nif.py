@@ -2768,9 +2768,10 @@ Texture '%s' not found or not supported and no alternate available"""
                 frame = 1+int(xkey.time * self.fps + 0.5) # time 0.0 is frame 1
                 # XXX we assume xkey.time == ykey.time == zkey.time
                 Blender.Set('curframe', frame)
-                b_obj.RotX = xkey.value * self.R2D
-                b_obj.RotY = ykey.value * self.R2D
-                b_obj.RotZ = zkey.value * self.R2D
+                # both in radians, no conversion needed
+                b_obj.RotX = xkey.value
+                b_obj.RotY = ykey.value
+                b_obj.RotZ = zkey.value
                 b_obj.insertIpoKey(Blender.Object.ROT)           
         else:
             # uses quaternions
@@ -2780,9 +2781,10 @@ Texture '%s' not found or not supported and no alternate available"""
                 frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                 Blender.Set('curframe', frame)
                 rot = Blender.Mathutils.Quaternion(key.value.w, key.value.x, key.value.y, key.value.z).toEuler()
-                b_obj.RotX = rot.x * self.R2D
-                b_obj.RotY = rot.y * self.R2D
-                b_obj.RotZ = rot.z * self.R2D
+                # Blender euler is in degrees, object RotXYZ is in radians
+                b_obj.RotX = rot.x / self.R2D
+                b_obj.RotY = rot.y / self.R2D
+                b_obj.RotZ = rot.z / self.R2D
                 b_obj.insertIpoKey(Blender.Object.ROT)
 
         if translations.keys:
