@@ -4,7 +4,8 @@ raising a mysterious exception (reported by PacificMorrowind)
 * import and export Oblivion morph controller animation data (reported by
 LHammonds)
 * import extra nodes as empties
-* fixed Oblivion object animation import
+* various object animation import and export fixes (reported by LHammonds and
+Tijer)
 * enable flattening skin in the export gui when 'geometry only' is selected,
 for Oblivion and Fallout 3 (contributed by PacificMorrowind)
 * civ4 and Sid Meier's Railroads NiNode and NiTriShape flags are now set to
