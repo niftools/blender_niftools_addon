@@ -2608,7 +2608,7 @@ Texture '%s' not found or not supported and no alternate available"""
                     self.complete_bone_tree(boneBlock, skelroot)
 
                 # mark all nodes as bones if asked
-                if self.IMPORT_EXTRANODESASBONES:
+                if self.IMPORT_EXTRANODES:
                     # add bones
                     for bone in skelroot.tree():
                         if bone is skelroot:
