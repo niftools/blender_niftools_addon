@@ -2082,6 +2082,12 @@ they can easily be identified." % ob)
                 else:
                     trishape.flags = 0x0005 # use triangles as bounding box + hide
 
+            # extra shader for Sid Meier's Railroads
+            if self.EXPORT_VERSION == "Sid Meier's Railroads":
+                trishape.hasShader = True
+                trishape.shaderName = "RRT_NormalMap_Spec_Env_CubeLight"
+                trishape.unknownInteger = -1 # default
+
             self.exportMatrix(ob, space, trishape)
             
             if mesh_base_mtex or mesh_glow_mtex:
