@@ -155,7 +155,7 @@ class SMRailroadsTestSuite(TestSuite):
         assert(abs(nifspec.g - nifspec_export.g) < 1e-5)
         assert(abs(nifspec.b - nifspec_export.b) < 1e-5)
 
-        self.logger.info("Checking alpha flags export.")
+        self.logger.info("Checking alpha flags and threshold export.")
         nifalpha_export = testgeom_export.find(block_type=NifFormat.NiAlphaProperty)
         assert(nifalpha_export.flags == 13037)
         assert(nifalpha_export.threshold == 150)
