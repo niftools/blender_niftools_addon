@@ -2117,10 +2117,13 @@ they can easily be identified." % ob)
                 # refer to the alpha property in the trishape block
                 if self.EXPORT_VERSION == "Sid Meier's Railroads":
                     alphaflags = 0x32ED
+                    alphathreshold = 150
                 else:
                     alphaflags = 0x12ED
+                    alphathreshold = 0
                 trishape.addProperty(
-                    self.exportAlphaProperty(flags=alphaflags))
+                    self.exportAlphaProperty(flags=alphaflags,
+                                             threshold=alphathreshold))
 
             if mesh_haswire:
                 # add NiWireframeProperty
@@ -3624,18 +3627,19 @@ check that %s is selected during export.""" % targetobj)
                 hkconstraint.updateAB(root_block)
 
 
-    def exportAlphaProperty(self, flags = 0x00ED):
+    def exportAlphaProperty(self, flags=0x00ED, threshold=0):
         """Return existing alpha property with given flags, or create new one
         if an alpha property with required flags is not found."""
         # search for duplicate
         for block in self.blocks:
             if isinstance(block, NifFormat.NiAlphaProperty) \
-               and block.flags == flags:
+               and block.flags == flags and block.threshold == threshold:
                 return block
         # no alpha property with given flag found, so create new one
         alphaprop = self.createBlock("NiAlphaProperty")
         alphaprop.flags = flags
-        return alphaprop        
+        alphaprop.threshold = threshold
+        return alphaprop
 
     def exportSpecularProperty(self, flags = 0x0001):
         """Return existing specular property with given flags, or create new one
