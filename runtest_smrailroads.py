@@ -160,6 +160,10 @@ class SMRailroadsTestSuite(TestSuite):
         assert(nifalpha_export.flags == 13037)
         assert(nifalpha_export.threshold == 150)
 
+        self.logger.info("Checking extra shader export.")
+        assert(testgeom_export.hasShader)
+        assert(testgeom_export.shaderName == "RRT_NormalMap_Spec_Env_CubeLight")
+
         # check that the re-exported file still passes the check
         self.logger.info("Checking exported nif...")
         self.checkSMRailRoads(root_block)
