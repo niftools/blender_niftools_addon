@@ -2760,14 +2760,17 @@ Texture '%s' not found or not supported and no alternate available"""
         rotationType = kfd.rotationType
         if rotationType == 4:
             # uses xyz rotation
-            xyzRotations = kfd.xyzRotations
+            xkeys = kfd.xyzRotations[0].keys
+            ykeys = kfd.xyzRotations[1].keys
+            zkeys = kfd.xyzRotations[2].keys
             self.logger.debug('Rotation keys...(euler)')
-            for key in xyzRotations:
-                frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
+            for (xkey, ykey, zkey) in izip(xkeys, ykeys, zkeys):
+                frame = 1+int(xkey.time * self.fps + 0.5) # time 0.0 is frame 1
+                # XXX we assume xkey.time == ykey.time == zkey.time
                 Blender.Set('curframe', frame)
-                b_obj.RotX = key.value.x * self.R2D
-                b_obj.RotY = key.value.y * self.R2D
-                b_obj.RotZ = key.value.z * self.R2D
+                b_obj.RotX = xkey.value * self.R2D
+                b_obj.RotY = ykey.value * self.R2D
+                b_obj.RotZ = zkey.value * self.R2D
                 b_obj.insertIpoKey(Blender.Object.ROT)           
         else:
             # uses quaternions
