@@ -112,6 +112,10 @@ class SMRailroadsTestSuite(TestSuite):
         assert(self.hasShaderTexture(texprop, "RRT_Cube_Light_map_128.dds", 4))
         # note: 5 is apparently never used, although it has an extra index
 
+        # check ninode flag
+        assert(root_block.flags == 16)
+        assert(geom.flags == 16)
+
     def run(self):
         nif_import = self.test(
             filename = 'test/nif/smrailroads1.nif')

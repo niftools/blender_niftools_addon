@@ -988,6 +988,9 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
         # default node flags
         if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
             node.flags = 0x000E
+        elif self.EXPORT_VERSION in ("Sid Meier's Railroads",
+                                     "Civilization IV"):
+            node.flags = 0x0010
         else:
             # morrowind
             node.flags = 0x000C
@@ -2069,6 +2072,9 @@ they can easily be identified." % ob)
             trishape.name = self.getFullName(trishape.name)
             if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
                 trishape.flags = 0x000E
+            elif self.EXPORT_VERSION in ("Sid Meier's Railroads",
+                                         "Civilization IV"):
+                trishape.flags = 0x0010
             else:
                 # morrowind
                 if ob.getDrawType() != 2: # not wire

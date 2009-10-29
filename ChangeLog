@@ -7,6 +7,8 @@ LHammonds)
 * fixed Oblivion object animation import
 * enable flattening skin in the export gui when 'geometry only' is selected,
 for Oblivion and Fallout 3 (contributed by PacificMorrowind)
+* civ4 and Sid Meier's Railroads NiNode and NiTriShape flags are now set to
+16 (reported by Tijer)
 
 Version 2.4.12 (23 Oct 2009)
 * warn and ignore object animation on skinned meshes, instead of
