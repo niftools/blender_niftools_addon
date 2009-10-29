@@ -9,6 +9,9 @@ LHammonds)
 for Oblivion and Fallout 3 (contributed by PacificMorrowind)
 * civ4 and Sid Meier's Railroads NiNode and NiTriShape flags are now set to
 16 (reported by Tijer)
+* on import, set alpha to 0.0 if NiAlphaProperty is present (so it gets
+re-exported) even if no textures with alpha channel are found; this fixes an
+issue with Sid Meier's Railroads (reported by Tijer)
 
 Version 2.4.12 (23 Oct 2009)
 * warn and ignore object animation on skinned meshes, instead of

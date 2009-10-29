@@ -1829,7 +1829,10 @@ Texture '%s' not found or not supported and no alternate available"""
             material.mode |= Blender.Material.Modes.ZTRANSP # enable z-buffered transparency
             # if the image has an alpha channel => then this overrides the material alpha value
             if baseTexture:
-                if baseTexture.image.depth == 32 or baseTexture.image.size == [1,1]: # check for alpha channel in texture; if it's a stub then assume alpha channel
+                # old method:
+                #if baseTexture.image.depth == 32 or baseTexture.image.size == [1,1]: # check for alpha channel in texture; if it's a stub then assume alpha channel
+                # new method: let's just assume there is alpha
+                if True:
                     baseTexture.imageFlags |= Blender.Texture.ImageFlags.USEALPHA # use the alpha channel
                     mbaseTexture.mapto |=  Blender.Texture.MapTo.ALPHA # and map the alpha channel to transparency
                     # for proper display in Blender, we must set the alpha value
