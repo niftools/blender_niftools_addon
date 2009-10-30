@@ -578,8 +578,8 @@ Furniture marker has invalid number (%s). Name your file
                                        "Sid Meier's Railroads"]:
                 self.exportVertexColorProperty(root_block)
                 self.exportZBufferProperty(root_block)
-                              
-            if self.EXPORT_FLATTENSKIN :
+
+            if self.EXPORT_FLATTENSKIN:
                 # (warning: trouble if armatures parent other armatures or
                 # if bones parent geometries, or if object is animated)
                 # flatten skins
