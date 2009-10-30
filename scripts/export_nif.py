@@ -988,6 +988,9 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
         # default node flags
         if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
             node.flags = 0x000E
+        elif self.EXPORT_VERSION in ("Sid Meier's Railroads",
+                                     "Civilization IV"):
+            node.flags = 0x0010
         else:
             # morrowind
             node.flags = 0x000C
@@ -2069,12 +2072,21 @@ they can easily be identified." % ob)
             trishape.name = self.getFullName(trishape.name)
             if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
                 trishape.flags = 0x000E
+            elif self.EXPORT_VERSION in ("Sid Meier's Railroads",
+                                         "Civilization IV"):
+                trishape.flags = 0x0010
             else:
                 # morrowind
                 if ob.getDrawType() != 2: # not wire
                     trishape.flags = 0x0004 # use triangles as bounding box
                 else:
                     trishape.flags = 0x0005 # use triangles as bounding box + hide
+
+            # extra shader for Sid Meier's Railroads
+            if self.EXPORT_VERSION == "Sid Meier's Railroads":
+                trishape.hasShader = True
+                trishape.shaderName = "RRT_NormalMap_Spec_Env_CubeLight"
+                trishape.unknownInteger = -1 # default
 
             self.exportMatrix(ob, space, trishape)
             
@@ -2111,10 +2123,13 @@ they can easily be identified." % ob)
                 # refer to the alpha property in the trishape block
                 if self.EXPORT_VERSION == "Sid Meier's Railroads":
                     alphaflags = 0x32ED
+                    alphathreshold = 150
                 else:
                     alphaflags = 0x12ED
+                    alphathreshold = 0
                 trishape.addProperty(
-                    self.exportAlphaProperty(flags=alphaflags))
+                    self.exportAlphaProperty(flags=alphaflags,
+                                             threshold=alphathreshold))
 
             if mesh_haswire:
                 # add NiWireframeProperty
@@ -2278,6 +2293,10 @@ they can easily be identified." % ob)
                         and self.EXPORT_EXTRA_SHADER_TEXTURES)):
                     trishape.updateTangentSpace(
                         as_extra=(self.EXPORT_VERSION == "Oblivion"))
+                    if self.EXPORT_VERSION == "Sid Meier's Railroads":
+                        # force TSpace flag 16
+                        trishape.data.numUvSets &= (4096 | 255)
+                        trishape.data.bsNumUvSets &= (4096 | 255)
 
             # now export the vertex weights, if there are any
             vertgroups = ob.data.getVertGroupNames()
@@ -3618,18 +3637,19 @@ check that %s is selected during export.""" % targetobj)
                 hkconstraint.updateAB(root_block)
 
 
-    def exportAlphaProperty(self, flags = 0x00ED):
+    def exportAlphaProperty(self, flags=0x00ED, threshold=0):
         """Return existing alpha property with given flags, or create new one
         if an alpha property with required flags is not found."""
         # search for duplicate
         for block in self.blocks:
             if isinstance(block, NifFormat.NiAlphaProperty) \
-               and block.flags == flags:
+               and block.flags == flags and block.threshold == threshold:
                 return block
         # no alpha property with given flag found, so create new one
         alphaprop = self.createBlock("NiAlphaProperty")
         alphaprop.flags = flags
-        return alphaprop        
+        alphaprop.threshold = threshold
+        return alphaprop
 
     def exportSpecularProperty(self, flags = 0x0001):
         """Return existing specular property with given flags, or create new one

@@ -112,6 +112,10 @@ class SMRailroadsTestSuite(TestSuite):
         assert(self.hasShaderTexture(texprop, "RRT_Cube_Light_map_128.dds", 4))
         # note: 5 is apparently never used, although it has an extra index
 
+        # check ninode flag
+        assert(root_block.flags == 16)
+        assert(geom.flags == 16)
+
     def run(self):
         nif_import = self.test(
             filename = 'test/nif/smrailroads1.nif')
@@ -151,9 +155,14 @@ class SMRailroadsTestSuite(TestSuite):
         assert(abs(nifspec.g - nifspec_export.g) < 1e-5)
         assert(abs(nifspec.b - nifspec_export.b) < 1e-5)
 
-        self.logger.info("Checking alpha flags export.")
-        nifalpha_export = testgeom.find(block_type=NifFormat.NiAlphaProperty)
+        self.logger.info("Checking alpha flags and threshold export.")
+        nifalpha_export = testgeom_export.find(block_type=NifFormat.NiAlphaProperty)
         assert(nifalpha_export.flags == 13037)
+        assert(nifalpha_export.threshold == 150)
+
+        self.logger.info("Checking extra shader export.")
+        assert(testgeom_export.hasShader)
+        assert(testgeom_export.shaderName == "RRT_NormalMap_Spec_Env_CubeLight")
 
         # check that the re-exported file still passes the check
         self.logger.info("Checking exported nif...")

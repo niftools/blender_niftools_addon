@@ -1829,7 +1829,10 @@ Texture '%s' not found or not supported and no alternate available"""
             material.mode |= Blender.Material.Modes.ZTRANSP # enable z-buffered transparency
             # if the image has an alpha channel => then this overrides the material alpha value
             if baseTexture:
-                if baseTexture.image.depth == 32 or baseTexture.image.size == [1,1]: # check for alpha channel in texture; if it's a stub then assume alpha channel
+                # old method:
+                #if baseTexture.image.depth == 32 or baseTexture.image.size == [1,1]: # check for alpha channel in texture; if it's a stub then assume alpha channel
+                # new method: let's just assume there is alpha
+                if True:
                     baseTexture.imageFlags |= Blender.Texture.ImageFlags.USEALPHA # use the alpha channel
                     mbaseTexture.mapto |=  Blender.Texture.MapTo.ALPHA # and map the alpha channel to transparency
                     # for proper display in Blender, we must set the alpha value
@@ -2608,7 +2611,7 @@ Texture '%s' not found or not supported and no alternate available"""
                     self.complete_bone_tree(boneBlock, skelroot)
 
                 # mark all nodes as bones if asked
-                if self.IMPORT_EXTRANODESASBONES:
+                if self.IMPORT_EXTRANODES:
                     # add bones
                     for bone in skelroot.tree():
                         if bone is skelroot:
@@ -2757,14 +2760,18 @@ Texture '%s' not found or not supported and no alternate available"""
         rotationType = kfd.rotationType
         if rotationType == 4:
             # uses xyz rotation
-            xyzRotations = kfd.xyzRotations
+            xkeys = kfd.xyzRotations[0].keys
+            ykeys = kfd.xyzRotations[1].keys
+            zkeys = kfd.xyzRotations[2].keys
             self.logger.debug('Rotation keys...(euler)')
-            for key in xyzRotations:
-                frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
+            for (xkey, ykey, zkey) in izip(xkeys, ykeys, zkeys):
+                frame = 1+int(xkey.time * self.fps + 0.5) # time 0.0 is frame 1
+                # XXX we assume xkey.time == ykey.time == zkey.time
                 Blender.Set('curframe', frame)
-                b_obj.RotX = key.value.x * self.R2D
-                b_obj.RotY = key.value.y * self.R2D
-                b_obj.RotZ = key.value.z * self.R2D
+                # both in radians, no conversion needed
+                b_obj.RotX = xkey.value
+                b_obj.RotY = ykey.value
+                b_obj.RotZ = zkey.value
                 b_obj.insertIpoKey(Blender.Object.ROT)           
         else:
             # uses quaternions
@@ -2774,9 +2781,10 @@ Texture '%s' not found or not supported and no alternate available"""
                 frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                 Blender.Set('curframe', frame)
                 rot = Blender.Mathutils.Quaternion(key.value.w, key.value.x, key.value.y, key.value.z).toEuler()
-                b_obj.RotX = rot.x * self.R2D
-                b_obj.RotY = rot.y * self.R2D
-                b_obj.RotZ = rot.z * self.R2D
+                # Blender euler is in degrees, object RotXYZ is in radians
+                b_obj.RotX = rot.x / self.R2D
+                b_obj.RotY = rot.y / self.R2D
+                b_obj.RotZ = rot.z / self.R2D
                 b_obj.insertIpoKey(Blender.Object.ROT)
 
         if translations.keys:
