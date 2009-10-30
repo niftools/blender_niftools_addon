@@ -18,6 +18,8 @@ Tijer)
 * export RRT_NormalMap_Spec_Env_CubeLight shader for Sid Meier's Railroads
 (reported by Tijer)
 * force TSpace flag to be 16 for Sid Meier's Railroads (reported by Tijer)
+* fixed windows installer & installer scripts to install to the dirs currently
+expected by blender (contribute by PacificMorrowind)
 
 Version 2.4.12 (23 Oct 2009)
 * warn and ignore object animation on skinned meshes, instead of

@@ -46,6 +46,13 @@ echo Removing clutter
 
 for %%A in (%BLENDERSCRIPTS%\nif_common.py) do if exist %%A del %%A
 for %%A in (%BLENDERSCRIPTS%\nif_common.pyc) do if exist %%A del %%A
+for %%A in (%BLENDERSCRIPTS%\export_nif.py) do if exist %%A del %%A
+for %%A in (%BLENDERSCRIPTS%\import_nif.py) do if exist %%A del %%A
+for %%A in (%BLENDERSCRIPTS%\mesh_niftools_weightsquash.py) do if exist %%A del %%A
+for %%A in (%BLENDERSCRIPTS%\mesh_niftools_hull.py) do if exist %%A del %%A
+for %%A in (%BLENDERSCRIPTS%\object_niftools_set_bone_priority.py) do if exist %%A del %%A
+for %%A in (%BLENDERSCRIPTS%\object_niftools_save_bone_pose.py) do if exist %%A del %%A
+for %%A in (%BLENDERSCRIPTS%\object_niftools_load_bone_pose.py) do if exist %%A del %%A
 for %%A in (%BLENDERSCRIPTS%\bpymodules\nifImEx) do if exist %%A del /s %%A
 
 rem make sure menu's get updated
@@ -60,7 +67,13 @@ echo Installing files
 
 @echo on
 
-@for %%A in (scripts\import_nif.py, scripts\export_nif.py, scripts\mesh_niftools_weightsquash.py, scripts\mesh_niftools_hull.py, scripts\object_niftools_set_bone_priority.py, scripts\object_niftools_save_bone_pose.py, scripts\object_niftools_load_bone_pose.py) do copy "%%A" %BLENDERSCRIPTS%
+@for %%A in (scripts\mesh_niftools_weightsquash.py, scripts\mesh_niftools_hull.py) do copy "%%A" %BLENDERSCRIPTS%\mesh
+
+@for %%A in (scripts\object_niftools_set_bone_priority.py, scripts\object_niftools_save_bone_pose.py, scripts\object_niftools_load_bone_pose.py) do copy "%%A" %BLENDERSCRIPTS%\Object
+
+@for %%A in (scripts\import_nif.py, ) do copy "%%A" %BLENDERSCRIPTS%\import
+
+@for %%A in (scripts\export_nif.py, ) do copy "%%A" %BLENDERSCRIPTS%\export
 
 @for %%A in (scripts\bpymodules\nif_common.py, scripts\bpymodules\nif_test.py) do copy "%%A" %BLENDERSCRIPTS%\bpymodules
 

@@ -408,16 +408,27 @@ Section
   Delete "$BLENDERSCRIPTS\object_setbonepriority.py*"
   Delete "$BLENDERSCRIPTS\object_savebonepose.py*"
   Delete "$BLENDERSCRIPTS\object_loadbonepose.py*"
+  ; clutter from version 2.4.12 and under
+  Delete "$BLENDERSCRIPTS\export_nif.py"
+  Delete "$BLENDERSCRIPTS\import_nif.py"
+  Delete "$BLENDERSCRIPTS\mesh_niftools_weightsquash.py"
+  Delete "$BLENDERSCRIPTS\mesh_niftools_hull.py"
+  Delete "$BLENDERSCRIPTS\object_niftools_set_bone_priority.py"
+  Delete "$BLENDERSCRIPTS\object_niftools_save_bone_pose.py"
+  Delete "$BLENDERSCRIPTS\object_niftools_load_bone_pose.py"
 
   ; Clean up registered script menu's, just to make sure they get updated
   Delete "$BLENDERSCRIPTS\..\Bpymenus"
 
   ; Install scripts
-  SetOutPath $BLENDERSCRIPTS
+  SetOutPath $BLENDERSCRIPTS\export
   File ..\scripts\export_nif.py
+  SetOutPath $BLENDERSCRIPTS\import
   File ..\scripts\import_nif.py
+  SetOutPath $BLENDERSCRIPTS\mesh
   File ..\scripts\mesh_niftools_weightsquash.py
   File ..\scripts\mesh_niftools_hull.py
+  SetOutPath $BLENDERSCRIPTS\object
   File ..\scripts\object_niftools_set_bone_priority.py
   File ..\scripts\object_niftools_save_bone_pose.py
   File ..\scripts\object_niftools_load_bone_pose.py
@@ -472,13 +483,13 @@ Section "Uninstall"
   DeleteRegKey HKLM "SOFTWARE\BlenderNIFScripts"
 
   ; remove script files
-  Delete "$BLENDERSCRIPTS\export_nif.py"
-  Delete "$BLENDERSCRIPTS\import_nif.py"
-  Delete "$BLENDERSCRIPTS\mesh_niftools_weightsquash.py"
-  Delete "$BLENDERSCRIPTS\mesh_niftools_hull.py"
-  Delete "$BLENDERSCRIPTS\object_niftools_set_bone_priority.py"
-  Delete "$BLENDERSCRIPTS\object_niftools_save_bone_pose.py"
-  Delete "$BLENDERSCRIPTS\object_niftools_load_bone_pose.py"
+  Delete "$BLENDERSCRIPTS\export\export_nif.py"
+  Delete "$BLENDERSCRIPTS\import\import_nif.py"
+  Delete "$BLENDERSCRIPTS\mesh\mesh_niftools_weightsquash.py"
+  Delete "$BLENDERSCRIPTS\mesh\mesh_niftools_hull.py"
+  Delete "$BLENDERSCRIPTS\object\object_niftools_set_bone_priority.py"
+  Delete "$BLENDERSCRIPTS\object\object_niftools_save_bone_pose.py"
+  Delete "$BLENDERSCRIPTS\object\object_niftools_load_bone_pose.py"
   Delete "$BLENDERSCRIPTS\bpymodules\nif_common.py"
   Delete "$BLENDERSCRIPTS\bpymodules\nif_common.pyc"
   Delete "$BLENDERSCRIPTS\bpymodules\nif_test.py"
