@@ -23,13 +23,15 @@ rm -f ~/.blender/Bpymenus
 
 # install
 
-cp scripts/mesh_niftools_weightsquash.py scripts/mesh_niftools_hull.py ~/.blender/scripts/mesh
+mkdir -p ~/.blender/scripts/import ~/.blender/scripts/export ~/.blender/scripts/mesh ~/.blender/scripts/object/ ~/.blender/scripts/bpymodules
 
-cp scripts/import_nif.py ~/.blender/scripts/import
+cp scripts/mesh_niftools_weightsquash.py scripts/mesh_niftools_hull.py ~/.blender/scripts/mesh/
 
-cp scripts/export_nif.py ~/.blender/scripts/export
+cp scripts/import_nif.py ~/.blender/scripts/import/
 
-cp scripts/object_niftools_set_bone_priority.py scripts/object_niftools_save_bone_pose.py scripts/object_niftools_load_bone_pose.py ~/.blender/scripts/object
+cp scripts/export_nif.py ~/.blender/scripts/export/
 
-cp scripts/bpymodules/nif_common.py scripts/bpymodules/nif_test.py ~/.blender/scripts/bpymodules
+cp scripts/object_niftools_set_bone_priority.py scripts/object_niftools_save_bone_pose.py scripts/object_niftools_load_bone_pose.py ~/.blender/scripts/object/
+
+cp scripts/bpymodules/nif_common.py scripts/bpymodules/nif_test.py ~/.blender/scripts/bpymodules/
 
