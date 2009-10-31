@@ -231,7 +231,7 @@ class NifConfig:
         IMPORT_SENDDETACHEDGEOMETRIESTONODEPOS = True,
         IMPORT_SENDBONESTOBINDPOS = True,
         IMPORT_APPLYSKINDEFORM = False,
-        IMPORT_EXTRANODES = False,
+        IMPORT_EXTRANODES = True,
         EXPORT_BHKLISTSHAPE = False,
         EXPORT_OB_BSXFLAGS = 2,
         EXPORT_OB_MASS = 10.0,
@@ -1122,7 +1122,7 @@ class NifConfig:
             self.config["IMPORT_SENDDETACHEDGEOMETRIESTONODEPOS"] = True
             self.config["IMPORT_SENDBONESTOBINDPOS"] = True
             self.config["IMPORT_APPLYSKINDEFORM"] = False
-            self.config["IMPORT_EXTRANODES"] = False
+            self.config["IMPORT_EXTRANODES"] = True
         elif evName == "IMPORT_SETTINGS_SKINNING":
             self.config["IMPORT_ANIMATION"] = True
             self.config["IMPORT_SKELETON"] = 0
@@ -1134,7 +1134,7 @@ class NifConfig:
             self.config["IMPORT_SENDDETACHEDGEOMETRIESTONODEPOS"] = False
             self.config["IMPORT_SENDBONESTOBINDPOS"] = False
             self.config["IMPORT_APPLYSKINDEFORM"] = True
-            self.config["IMPORT_EXTRANODES"] = False
+            self.config["IMPORT_EXTRANODES"] = True
         elif evName[:5] == "GAME_":
             self.config["EXPORT_VERSION"] = evName[5:]
             # settings that usually make sense, fail-safe
