@@ -20,6 +20,7 @@ from Blender.Mathutils import *
 from nif_common import NifImportExport
 from nif_common import NifConfig
 from nif_common import NifFormat
+from nif_common import EgmFormat
 from nif_common import __version__
 
 from itertools import izip
@@ -216,6 +217,30 @@ class NifImport(NifImportExport):
                     kffile.close()
             else:
                 kf_root_blocks = []
+
+            if self.IMPORT_EGMFILE:
+                # open facegen egm file for binary reading
+                self.logger.info("Importing %s" % self.IMPORT_EGMFILE)
+                egmfile = open(self.IMPORT_EGMFILE, "rb")
+                self.egmdata = EgmFormat.Data()
+                try:
+                    # check if kf file is valid
+                    self.egmdata.inspect(egmfile)
+                    if self.egmdata.version >= 0:
+                        # it is valid, so read the file
+                        self.logger.info("EGM file version: %03i"
+                                         % self.egmdata.version)
+                        self.msgProgress("Reading FaceGen egm file")
+                        self.egmdata.read(egmfile)
+                    elif self.egmdata.version == -1:
+                        raise NifImportError("Unsupported EGM version.")
+                    else:
+                        raise NifImportError("Not an EGM file.")
+                finally:
+                    # the file has been read or an error occurred: close file
+                    egmfile.close()
+            else:
+                self.egmdata = None
 
             self.msgProgress("Importing data")
             # calculate and set frames per second
@@ -1966,6 +1991,10 @@ Texture '%s' not found or not supported and no alternate available"""
 
         # vertex normals
         norms = niData.normals
+
+        # FaceGen EGM morphs
+        # XXX if there is an egm, the assumption is that there is only one
+        # XXX egm file...
 
         # Stencil (for double sided meshes)
         stencilProperty = self.find_property(niBlock,
