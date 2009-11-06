@@ -216,6 +216,7 @@ class NifConfig:
         LOG_LEVEL = logging.WARNING, # log level
         IMPORT_SKELETON = 0, # 0 = normal import, 1 = import file as skeleton, 2 = import mesh and attach to skeleton
         IMPORT_KEYFRAMEFILE = '', # keyframe file for animations
+        IMPORT_EGMFILE = '', # FaceGen EGM file for morphs
         EXPORT_ANIMATION = 0, # export everything (1=geometry only, 2=animation only)
         EXPORT_ANIMSEQUENCENAME = '', # sequence name of the kf file
         EXPORT_FORCEDDS = True, # force dds extension on texture files
@@ -610,6 +611,14 @@ class NifConfig:
             self.drawFileBrowse(
                 text = "",
                 event_name_prefix = "IMPORT_KEYFRAMEFILE")
+            self.drawYSep()
+
+            self.drawLabel(
+                text = "FaceGen EGM File:",
+                event_name = "IMPORT_EGMFILE_TEXT")
+            self.drawFileBrowse(
+                text = "",
+                event_name_prefix = "IMPORT_EGMFILE")
             self.drawYSep()
 
             self.drawPushButton(
@@ -1062,6 +1071,7 @@ class NifConfig:
             if self.texpathIndex > 0:
                 self.texpathIndex -= 1
             self.updateTexpathCurrent()
+
         elif evName == "IMPORT_KEYFRAMEFILE_ADD":
             kffile = self.config["IMPORT_KEYFRAMEFILE"]
             if not kffile:
@@ -1073,6 +1083,17 @@ class NifConfig:
         elif evName == "IMPORT_KEYFRAMEFILE_REMOVE":
             self.config["IMPORT_KEYFRAMEFILE"] = ''
             self.config["IMPORT_ANIMATION"] = False
+
+        elif evName == "IMPORT_EGMFILE_ADD":
+            egmfile = self.config["IMPORT_EGMFILE"]
+            if not egmfile:
+                egmfile = self.config["IMPORT_FILE"][:-3] + "egm"
+            # browse and add egm file
+            Blender.Window.FileSelector(
+                self.selectEgmFile, "Select FaceGen EGM File", egmfile)
+        elif evName == "IMPORT_EGMFILE_REMOVE":
+            self.config["IMPORT_EGMFILE"] = ''
+
         elif evName == "IMPORT_REALIGN_BONES_1":
             if self.config["IMPORT_REALIGN_BONES"] == 1:
                 self.config["IMPORT_REALIGN_BONES"] = 0
@@ -1399,6 +1420,12 @@ class NifConfig:
             Draw.PupMenu('No file selected or file does not exist%t|Ok')
         else:
             self.config["IMPORT_KEYFRAMEFILE"] = keyframefile
+
+    def selectEgmFile(self, egmfile):
+        if egmfile == '' or not Blender.sys.exists(egmfile):
+            Draw.PupMenu('No file selected or file does not exist%t|Ok')
+        else:
+            self.config["IMPORT_EGMFILE"] = egmfile
 
     def updateLogLevel(self, evt, val):
         self.config["LOG_LEVEL"] = val
