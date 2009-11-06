@@ -1992,10 +1992,6 @@ Texture '%s' not found or not supported and no alternate available"""
         # vertex normals
         norms = niData.normals
 
-        # FaceGen EGM morphs
-        # XXX if there is an egm, the assumption is that there is only one
-        # XXX egm file...
-
         # Stencil (for double sided meshes)
         stencilProperty = self.find_property(niBlock,
                                              NifFormat.NiStencilProperty)
@@ -2364,6 +2360,53 @@ Texture '%s' not found or not supported and no alternate available"""
                             b_meshData.verts[b_v_index].co[0] = base.x
                             b_meshData.verts[b_v_index].co[1] = base.y
                             b_meshData.verts[b_v_index].co[2] = base.z
+
+        # import facegen morphs
+        if self.egmdata:
+            # XXX if there is an egm, the assumption is that there is only one
+            # XXX mesh in the nif
+            sym_morphs = [list(morph.get_relative_vertices())
+                          for morph in self.egmdata.sym_morphs]
+            asym_morphs = [list(morph.get_relative_vertices())
+                          for morph in self.egmdata.asym_morphs]
+
+            # insert base key at frame 1, using relative keys
+            b_meshData.insertKey(1, 'relative')
+
+            for morphverts in sym_morphs + asym_morphs:
+                # length check disabled
+                # as sometimes, oddly, the morph has more vertices...
+                #assert(len(verts) == len(morphverts) == len(v_map))
+
+                # get name for key
+                keyname = None # TODO figure out sensible names
+                if not keyname:
+                    keyname = 'EGM %i' % len(b_meshData.key.blocks)
+
+                # for each vertex calculate the key position from base
+                # pos + delta offset
+                for bv, mv, b_v_index in izip(verts, morphverts, v_map):
+                    base = Blender.Mathutils.Vector(bv.x, bv.y, bv.z)
+                    delta = Blender.Mathutils.Vector(mv[0], mv[1], mv[2])
+                    v = base + delta
+                    if applytransform:
+                        v *= transform
+                    b_meshData.verts[b_v_index].co[0] = v.x
+                    b_meshData.verts[b_v_index].co[1] = v.y
+                    b_meshData.verts[b_v_index].co[2] = v.z
+                # update the mesh and insert key
+                b_meshData.insertKey(1, 'relative')
+                # set name for key
+                b_meshData.key.blocks[-1].name = keyname
+
+            # finally: return to base position
+            for bv, b_v_index in izip(verts, v_map):
+                base = Blender.Mathutils.Vector(bv.x, bv.y, bv.z)
+                if applytransform:
+                    base *= transform
+                b_meshData.verts[b_v_index].co[0] = base.x
+                b_meshData.verts[b_v_index].co[1] = base.y
+                b_meshData.verts[b_v_index].co[2] = base.z
      
         # recalculate normals
         b_meshData.calcNormals()
