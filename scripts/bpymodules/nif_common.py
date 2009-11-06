@@ -133,6 +133,23 @@ class NifImportExport:
         "Civilization IV": (3, 0, 1, 2)}
     """The default ordering of the extra data blocks for different games."""
 
+    progress_bar = 0
+    """Level of the progress bar."""
+
+    def msg_progress(self, message, progbar=None):
+        """Message wrapper for the Blender progress bar."""
+        # update progress bar level
+        if progbar is None:
+            if self.progress_bar > 0.89:
+                # reset progress bar
+                self.progress_bar = 0
+                Blender.Window.DrawProgressBar(0, message)
+            self.progress_bar += 0.1
+        else:
+            self.progress_bar = progbar
+        # draw the progress bar
+        Blender.Window.DrawProgressBar(self.progress_bar, message)
+
     def getBoneNameForBlender(self, name):
         """Convert a bone name to a name that can be used by Blender: turns
         'Bip01 R xxx' into 'Bip01 xxx.R', and similar for L.

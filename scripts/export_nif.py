@@ -77,20 +77,6 @@ class NifExport(NifImportExport):
     FLOAT_MIN = -3.4028234663852886e+38
     FLOAT_MAX = +3.4028234663852886e+38
 
-    def msg_progress(self, message, progbar=None):
-        """Message wrapper for the Blender progress bar."""
-        # update progress bar level
-        if progbar is None:
-            if self.progressBar > 0.89:
-                # reset progress bar
-                self.progressBar = 0
-                Blender.Window.DrawProgressBar(0, message)
-            self.progressBar += 0.1
-        else:
-            self.progressBar = progbar
-        # draw the progress bar
-        Blender.Window.DrawProgressBar(self.progressBar, message)
-
     def rebuildBonesExtraMatrices(self):
         """Recover bone extra matrices."""
         try:
@@ -221,7 +207,6 @@ class NifExport(NifImportExport):
             Blender.sys.basename(self.filename))
 
         # variables
-        self.progressBar = 0
         # dictionary mapping exported blocks to either None or to an
         # associated Blender object
         self.blocks = {}

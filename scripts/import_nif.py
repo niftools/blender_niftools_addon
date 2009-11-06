@@ -90,20 +90,6 @@ class NifImport(NifImportExport):
     # radians to degrees conversion constant
     R2D = 3.14159265358979/180.0
     
-    def msg_progress(self, message, progbar = None):
-        """Message wrapper for the Blender progress bar."""
-        # update progress bar level
-        if progbar is None:
-            if self.progressBar > 0.89:
-                # reset progress bar
-                self.progressBar = 0
-                Blender.Window.DrawProgressBar(0, message)
-            self.progressBar += 0.1
-        else:
-            self.progressBar = progbar
-        # draw the progress bar
-        Blender.Window.DrawProgressBar(self.progressBar, message)
-
     def __init__(self, **config):
         """Main import function: open file and import all trees."""
 
