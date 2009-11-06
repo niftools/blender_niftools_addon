@@ -1,7 +1,7 @@
 """Common functions for the Blender nif import and export scripts."""
 
 __version__ = "2.4.13"
-__requiredpyffiversion__ = "2.0.2"
+__requiredpyffiversion__ = "2.0.4"
 __requiredblenderversion__ = "245"
 
 # ***** BEGIN LICENSE BLOCK *****
@@ -65,7 +65,6 @@ Get a newer version at http://www.blender.org/
 
 try:
     from pyffi import __version__ as __pyffiversion__
-    from pyffi.formats.nif import NifFormat
 except ImportError:
     print("""--------------------------
 ERROR\nThis script requires the Python File Format Interface (PyFFI).
@@ -85,6 +84,13 @@ Get a newer version at http://pyffi.sourceforge.net/
 --------------------------"""%(__requiredpyffiversion__, __pyffiversion__))
     Blender.Draw.PupMenu("ERROR%t|PyFFI outdated, check console for details")
     raise ImportError
+
+# import PyFFI format classes
+
+from pyffi.formats.nif import NifFormat
+from pyffi.formats.egm import EgmFormat
+
+# other imports
 
 from Blender import Draw, Registry
 import logging
