@@ -77,7 +77,7 @@ class NifExport(NifImportExport):
     FLOAT_MIN = -3.4028234663852886e+38
     FLOAT_MAX = +3.4028234663852886e+38
 
-    def msgProgress(self, message, progbar=None):
+    def msg_progress(self, message, progbar=None):
         """Message wrapper for the Blender progress bar."""
         # update progress bar level
         if progbar is None:
@@ -201,7 +201,7 @@ class NifExport(NifImportExport):
 
         # preparation:
         #--------------
-        self.msgProgress("Initializing", progbar=0)
+        self.msg_progress("Initializing", progbar=0)
 
         # store configuration in self
         for name, value in config.iteritems():
@@ -388,7 +388,7 @@ Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
             
             # export nif:
             #------------
-            self.msgProgress("Exporting")
+            self.msg_progress("Exporting")
             
             # create a nif object
             
@@ -676,7 +676,7 @@ Furniture marker has invalid number (%s). Name your file
             if self.EXPORT_ANIMATION != 2:
                 ext = ".nif"
                 self.logger.info("Writing %s file" % ext)
-                self.msgProgress("Writing %s file" % ext)
+                self.msg_progress("Writing %s file" % ext)
 
                 # make sure we have the right file extension
                 if (self.fileext.lower() != ext):
@@ -805,7 +805,7 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
 
                 ext = ".kf"
                 self.logger.info("Writing %s file" % (prefix + ext))
-                self.msgProgress("Writing %s file" % (prefix + ext))
+                self.msg_progress("Writing %s file" % (prefix + ext))
 
                 self.filename = Blender.sys.join(self.filepath,
                                                  prefix + self.filebase + ext)
@@ -847,7 +847,7 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
                 prefix = "x" # we are in morrowind 'nifxnifkf mode'
                 ext = ".nif"
                 self.logger.info("Writing %s file" % (prefix + ext))
-                self.msgProgress("Writing %s file" % (prefix + ext))
+                self.msg_progress("Writing %s file" % (prefix + ext))
 
                 self.filename = Blender.sys.join(self.filepath,
                                                  prefix + self.filebase + ext)
@@ -881,7 +881,7 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
 
         finally:
             # clear progress bar
-            self.msgProgress("Finished", progbar = 1)
+            self.msg_progress("Finished", progbar = 1)
 
         # save exported file (this is used by the test suite)
         self.root_blocks = [root_block]
@@ -1627,7 +1627,7 @@ missing curves in %s; insert %s key at frame 1 and try again"""
     # 
     def exportTriShapes(self, ob, space, parent_block, trishape_name = None):
         self.logger.info("Exporting %s" % ob)
-        self.msgProgress("Exporting %s" % ob.name)
+        self.msg_progress("Exporting %s" % ob.name)
         assert(ob.getType() == 'Mesh')
 
         # get mesh from ob

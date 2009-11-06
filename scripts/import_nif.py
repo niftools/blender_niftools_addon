@@ -90,7 +90,7 @@ class NifImport(NifImportExport):
     # radians to degrees conversion constant
     R2D = 3.14159265358979/180.0
     
-    def msgProgress(self, message, progbar = None):
+    def msg_progress(self, message, progbar = None):
         """Message wrapper for the Blender progress bar."""
         # update progress bar level
         if progbar is None:
@@ -108,7 +108,7 @@ class NifImport(NifImportExport):
         """Main import function: open file and import all trees."""
 
         # initialize progress bar
-        self.msgProgress("Initializing", progbar = 0)
+        self.msg_progress("Initializing", progbar = 0)
 
         # store config settings
         for name, value in config.iteritems():
@@ -182,7 +182,7 @@ class NifImport(NifImportExport):
                 if self.version >= 0:
                     # it is valid, so read the file
                     self.logger.info("NIF file version: 0x%08X" % self.version)
-                    self.msgProgress("Reading file")
+                    self.msg_progress("Reading file")
                     data.read(niffile)
                     root_blocks = data.roots
                 elif self.version == -1:
@@ -205,7 +205,7 @@ class NifImport(NifImportExport):
                     if self.kfversion >= 0:
                         # it is valid, so read the file
                         self.logger.info("KF file version: 0x%08X" % self.kfversion)
-                        self.msgProgress("Reading keyframe file")
+                        self.msg_progress("Reading keyframe file")
                         kfdata.read(kffile)
                         kf_root_blocks = kfdata.roots
                     elif self.kfversion == -1:
@@ -230,7 +230,7 @@ class NifImport(NifImportExport):
                         # it is valid, so read the file
                         self.logger.info("EGM file version: %03i"
                                          % self.egmdata.version)
-                        self.msgProgress("Reading FaceGen egm file")
+                        self.msg_progress("Reading FaceGen egm file")
                         self.egmdata.read(egmfile)
                     elif self.egmdata.version == -1:
                         raise NifImportError("Unsupported EGM version.")
@@ -242,7 +242,7 @@ class NifImport(NifImportExport):
             else:
                 self.egmdata = None
 
-            self.msgProgress("Importing data")
+            self.msg_progress("Importing data")
             # calculate and set frames per second
             if self.IMPORT_ANIMATION:
                 self.fps = self.getFramesPerSecond(root_blocks + kf_root_blocks)
@@ -285,7 +285,7 @@ class NifImport(NifImportExport):
             raise
         finally:
             # clear progress bar
-            self.msgProgress("Finished", progbar = 1)
+            self.msg_progress("Finished", progbar = 1)
             # do a full scene update to ensure that transformations are applied
             self.scene.update(1)
 
@@ -417,7 +417,7 @@ class NifImport(NifImportExport):
     def importBranch(self, niBlock):
         """Read the content of the current NIF tree branch to Blender
         recursively."""
-        self.msgProgress("Importing data")
+        self.msg_progress("Importing data")
         if niBlock:
             if isinstance(niBlock, NifFormat.NiTriBasedGeom) \
                and self.IMPORT_SKELETON == 0:
@@ -877,10 +877,10 @@ class NifImport(NifImportExport):
             action.setActive(b_armature)
             # go through all armature pose bones
             # see http://www.elysiun.com/forum/viewtopic.php?t=58693
-            self.msgProgress('Importing Animations')
+            self.msg_progress('Importing Animations')
             for bone_name, b_posebone in b_armature.getPose().bones.items():
                 # denote progress
-                self.msgProgress('Animation: %s' % bone_name)
+                self.msg_progress('Animation: %s' % bone_name)
                 self.logger.debug('Importing animation for bone %s' % bone_name)
                 niBone = self.blocks[bone_name]
 
@@ -2807,7 +2807,7 @@ Texture '%s' not found or not supported and no alternate available"""
             return
 
         # denote progress
-        self.msgProgress("Animation")
+        self.msg_progress("Animation")
         self.logger.info("Importing animation data for %s" % b_obj.name)
         assert(isinstance(kfd, NifFormat.NiKeyframeData))
         # create an Ipo for this object
