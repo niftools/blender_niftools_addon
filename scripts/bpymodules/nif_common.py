@@ -150,7 +150,7 @@ class NifImportExport:
         # draw the progress bar
         Blender.Window.DrawProgressBar(self.progress_bar, message)
 
-    def getBoneNameForBlender(self, name):
+    def get_bone_name_for_blender(self, name):
         """Convert a bone name to a name that can be used by Blender: turns
         'Bip01 R xxx' into 'Bip01 xxx.R', and similar for L.
 
@@ -165,7 +165,7 @@ class NifImportExport:
             return "Bip01 " + name[8:] + ".R"
         return name
 
-    def getBoneNameForNif(self, name):
+    def get_bone_name_for_nif(self, name):
         """Convert a bone name to a name that can be used by the nif file:
         turns 'Bip01 xxx.R' into 'Bip01 R xxx', and similar for L.
 

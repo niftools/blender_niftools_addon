@@ -117,13 +117,13 @@ class NifExport(NifImportExport):
         """Set bone extra matrix, inverted. The bonename is first converted
         to blender style (to ensure compatibility with older imports).
         """
-        self.bonesExtraMatrixInv[self.getBoneNameForBlender(bonename)] = mat
+        self.bonesExtraMatrixInv[self.get_bone_name_for_blender(bonename)] = mat
 
     def getBoneExtraMatrixInv(self, bonename):
         """Get bone extra matrix, inverted. The bonename is first converted
         to blender style (to ensure compatibility with older imports).
         """
-        return self.bonesExtraMatrixInv[self.getBoneNameForBlender(bonename)]
+        return self.bonesExtraMatrixInv[self.get_bone_name_for_blender(bonename)]
 
     def rebuildFullNames(self):
         """Recovers the full object names from the text buffer and rebuilds
@@ -145,7 +145,7 @@ class NifExport(NifImportExport):
         if blender_name != None:
             unique_name = blender_name
         # blender bone naming -> nif bone naming
-        unique_name = self.getBoneNameForNif(unique_name)
+        unique_name = self.get_bone_name_for_nif(unique_name)
         # ensure uniqueness
         if unique_name in self.blockNames or unique_name in self.names.values():
             unique_int = 0

@@ -390,7 +390,7 @@ class NifImport(NifImportExport):
             for b_child_obj in self.selectedObjects:
                 if b_child_obj.getType() == "Mesh":
                     for oldgroupname in b_child_obj.data.getVertGroupNames():
-                        newgroupname = self.getBoneNameForBlender(oldgroupname)
+                        newgroupname = self.get_bone_name_for_blender(oldgroupname)
                         if oldgroupname != newgroupname:
                             self.logger.info(
                                 "%s: renaming vertex group %s to %s"
@@ -770,7 +770,7 @@ class NifImport(NifImportExport):
                                 uniqueInt,
                                 postfix))
             # bone naming convention for blender
-            shortName = self.getBoneNameForBlender(shortName)
+            shortName = self.get_bone_name_for_blender(shortName)
             # make sure it is unique
             try:
                 Blender.Object.Get(shortName)
@@ -2627,7 +2627,7 @@ Texture '%s' not found or not supported and no alternate available"""
             self.armatures[skelroot] = []
             for bone_name in self.selectedObjects[0].data.bones.keys():
                 # blender bone naming -> nif bone naming
-                nif_bone_name = self.getBoneNameForNif(bone_name)
+                nif_bone_name = self.get_bone_name_for_nif(bone_name)
                 # find a block with bone name
                 bone_block = skelroot.find(block_name = nif_bone_name)
                 # add it to the name list if there is a bone with that name
