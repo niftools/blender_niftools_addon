@@ -1144,6 +1144,7 @@ class NifConfig:
             self.config["IMPORT_SENDBONESTOBINDPOS"] = True
             self.config["IMPORT_APPLYSKINDEFORM"] = False
             self.config["IMPORT_EXTRANODES"] = True
+            self.config["IMPORT_EGMFILE"] = ''
         elif evName == "IMPORT_SETTINGS_SKINNING":
             self.config["IMPORT_ANIMATION"] = True
             self.config["IMPORT_SKELETON"] = 0
