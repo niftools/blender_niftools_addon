@@ -2,7 +2,7 @@ Version 2.4.13 (in development)
 * attempt to fix invalid matrices in bone extra text buffer rather than
 raising a mysterious exception (reported by PacificMorrowind)
 * import and export Oblivion morph controller animation data (reported by
-LHammonds)
+LHammonds, addition testing and bug reports by PacificMorrowind)
 * import extra nodes as empties
 * extra nodes are now imported by default (suggested by PacificMorrowind)
 * various object animation import and export fixes (reported by LHammonds and
