@@ -161,9 +161,11 @@ def copy_morphs(_from, _to, PREF_SEL_ONLY, PREF_NO_XCROSS):
                     for idx, co in world_verts_to]
 
     # create keys
-    for i, from_key_block in enumerate(me_from.key.blocks):
+    for i, from_key_block in enumerate(me_from.key.blocks[1:]):
 
-        Window.DrawProgressBar(0.01 + 0.98 * (i/float(len(me_from.key.blocks))),
+        # report progress
+        Window.DrawProgressBar(0.01
+                               + 0.98 * (i/float(len(me_from.key.blocks) - 1)),
                                'Copy "%s" -> "%s" '
                                % (ob_from.name, ob_to.name))
 
@@ -187,6 +189,10 @@ def copy_morphs(_from, _to, PREF_SEL_ONLY, PREF_NO_XCROSS):
         me_to_vert.co[0] = me_to_vert_base[0]
         me_to_vert.co[1] = me_to_vert_base[1]
         me_to_vert.co[2] = me_to_vert_base[2]
+
+    # copy ipo if there is one
+    if me_from.key.ipo:
+        me_to.key.ipo = me_from.key.ipo
 
     me_to.update()
 
