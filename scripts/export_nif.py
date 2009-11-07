@@ -687,17 +687,19 @@ Furniture marker has invalid number (%s). Name your file
             # convert root_block tree into a keyframe tree
             if self.EXPORT_ANIMATION == 2 or self.EXPORT_MW_NIFXNIFKF:
                 self.logger.info("Creating keyframe tree")
-                # find all nodes and keyframe controllers
+                # find all nodes and relevant controllers
                 node_kfctrls = {}
                 for node in root_block.tree():
-                    if not isinstance(node, NifFormat.NiNode):
+                    if not isinstance(node, NifFormat.NiAVObject):
                         continue
                     # get list of all controllers for this node
                     ctrls = node.getControllers()
                     for ctrl in ctrls:
-                        if not isinstance(ctrl,
-                                          NifFormat.NiKeyframeController):
-                            continue
+                        if self.EXPORT_VERSION == "Morrowind":
+                            # morrowind: only keyframe controllers
+                            if not isinstance(ctrl,
+                                              NifFormat.NiKeyframeController):
+                                continue
                         if not node in node_kfctrls:
                             node_kfctrls[node] = []
                         node_kfctrls[node].append(ctrl)
@@ -747,38 +749,58 @@ Furniture marker has invalid number (%s). Name your file
                         targetname = root_block.name
                     kf_root.targetName = targetname
                     kf_root.stringPalette = NifFormat.NiStringPalette()
-                    # create ControlledLink for each controlled block
-                    kf_root.numControlledBlocks = len(node_kfctrls)
-                    kf_root.controlledBlocks.updateSize()
-                    for controlledblock, node, ctrls \
-                        in izip(kf_root.controlledBlocks,
-                                node_kfctrls.iterkeys(),
+                    for node, ctrls \
+                        in izip(node_kfctrls.iterkeys(),
                                 node_kfctrls.itervalues()):
-                        # only export first keyframe controller
-                        ctrl = ctrls[0]
-                        if self.version < 0x0A020000:
-                            # older versions need the actual controller blocks
-                            controlledblock.targetName = node.name
-                            controlledblock.controller = ctrl
-                            # erase reference to target node
-                            ctrl.target = None
-                        else:
-                            # newer versions need the interpolator blocks
-                            controlledblock.interpolator = ctrl.interpolator
-                        # get bone animation priority (previously fetched from
-                        # the constraints during exportBones)
-                        if not node in self.bonePriorities:
-                            priority = 26
-                            self.logger.warning("""\
-No priority set for bone %s, falling back on default value (%i)"""
-                                     % (node.name, priority))
-                        else:
-                            priority = self.bonePriorities[node]
-                        controlledblock.priority = priority
-                        # set palette, and node and controller type names
-                        controlledblock.stringPalette = kf_root.stringPalette
-                        controlledblock.setNodeName(node.name)
-                        controlledblock.setControllerType(ctrl.__class__.__name__)
+                        # export a block for every interpolator in every
+                        # controller
+                        for ctrl in ctrls:
+                            if isinstance(ctrl,
+                                          NifFormat.NiSingleInterpController):
+                                interpolators = [ctrl.interpolator]
+                            else:
+                                interpolators = ctrl.interpolators
+                            if isinstance(ctrl,
+                                          NifFormat.NiGeomMorpherController):
+                                variable2s = [morph.frameName
+                                              for morph in ctrl.data.morphs]
+                            else:
+                                variable2s = [None
+                                              for interpolator in interpolators]
+                            for interpolator, variable2 in izip(interpolators,
+                                                                variable2s):
+                                # create ControlledLink for each
+                                # interpolator
+                                controlledblock = kf_root.addControlledBlock()
+                                if self.version < 0x0A020000:
+                                    # older versions need the actual controller
+                                    # blocks
+                                    controlledblock.targetName = node.name
+                                    controlledblock.controller = ctrl
+                                    # erase reference to target node
+                                    ctrl.target = None
+                                else:
+                                    # newer versions need the interpolator
+                                    # blocks
+                                    controlledblock.interpolator = interpolator
+                                # get bone animation priority (previously
+                                # fetched from the constraints during
+                                # exportBones)
+                                if not node in self.bonePriorities:
+                                    priority = 26
+                                    self.logger.warning("""\
+        No priority set for bone %s, falling back on default value (%i)"""
+                                             % (node.name, priority))
+                                else:
+                                    priority = self.bonePriorities[node]
+                                controlledblock.priority = priority
+                                # set palette, and node and controller type
+                                # names, and variables
+                                controlledblock.stringPalette = kf_root.stringPalette
+                                controlledblock.setNodeName(node.name)
+                                controlledblock.setControllerType(ctrl.__class__.__name__)
+                                if variable2:
+                                    controlledblock.setVariable2(variable2)
                 else:
                     raise NifExportError("""\
 Keyframe export for '%s' is not supported. Only Morrowind, Oblivion, Fallout 3,
