@@ -28,8 +28,10 @@ mkdir -p ~/.blender/scripts/import ~/.blender/scripts/export ~/.blender/scripts/
 cp scripts/mesh_niftools_weightsquash.py scripts/mesh_niftools_hull.py ~/.blender/scripts/mesh/
 
 cp scripts/import_nif.py ~/.blender/scripts/import/
+cp scripts/import_nif.py ~/.blender/scripts/ # workaround for nif_test import
 
 cp scripts/export_nif.py ~/.blender/scripts/export/
+cp scripts/export_nif.py ~/.blender/scripts/ # workaround for nif_test import
 
 cp scripts/object_niftools_set_bone_priority.py scripts/object_niftools_save_bone_pose.py scripts/object_niftools_load_bone_pose.py ~/.blender/scripts/object/
 
