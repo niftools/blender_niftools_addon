@@ -19,6 +19,7 @@ rm -f ~/.blender/scripts/object_savebonepose.py*
 rm -f ~/.blender/scripts/object_loadbonepose.py*
 rm -f ~/.blender/scripts/mesh/mesh_weightsquash.py*
 rm -f ~/.blender/scripts/mesh/mesh_hull.py*
+rm -f ~/.blender/scripts/mesh/mesh_morphcopy.py*
 rm -f ~/.blender/scripts/object/object_setbonepriority.py*
 rm -f ~/.blender/scripts/object/object_savebonepose.py*
 rm -f ~/.blender/scripts/object/object_loadbonepose.py*
@@ -32,7 +33,7 @@ rm -f ~/.blender/Bpymenus
 
 mkdir -p ~/.blender/scripts/import/ ~/.blender/scripts/export/ ~/.blender/scripts/mesh/ ~/.blender/scripts/object/ ~/.blender/scripts/bpymodules/
 
-cp scripts/mesh/mesh_niftools_weightsquash.py scripts/mesh/mesh_niftools_hull.py ~/.blender/scripts/mesh/
+cp scripts/mesh/mesh_niftools_weightsquash.py scripts/mesh/mesh_niftools_hull.py scripts/mesh/mesh_niftools_morphcopy.py ~/.blender/scripts/mesh/
 
 cp scripts/import/import_nif.py ~/.blender/scripts/import/
 cp scripts/import/import_nif.py ~/.blender/scripts/ # workaround for nif_test import
