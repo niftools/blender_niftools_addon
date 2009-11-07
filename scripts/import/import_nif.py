@@ -2361,6 +2361,11 @@ Texture '%s' not found or not supported and no alternate available"""
             # insert base key at frame 1, using relative keys
             b_meshData.insertKey(1, 'relative')
 
+            if self.IMPORT_EGMANIM:
+                # if morphs are animated: create key ipo for mesh
+                b_ipo = Blender.Ipo.New('Key' , 'KeyIpo')
+                b_meshData.key.ipo = b_ipo
+
             for morphverts in sym_morphs + asym_morphs:
                 # length check disabled
                 # as sometimes, oddly, the morph has more vertices...
@@ -2386,6 +2391,26 @@ Texture '%s' not found or not supported and no alternate available"""
                 b_meshData.insertKey(1, 'relative')
                 # set name for key
                 b_meshData.key.blocks[-1].name = keyname
+
+                if self.IMPORT_EGMANIM:
+                    # set up the ipo key curve
+                    b_curve = b_ipo.addCurve(keyname)
+                    # linear interpolation
+                    b_curve.interpolation = Blender.IpoCurve.InterpTypes.LINEAR
+                    # constant extrapolation
+                    b_curve.extend = Blender.IpoCurve.ExtendTypes.CONST
+                    # set up the curve's control points
+                    framestart = 1 + len(b_meshData.key.blocks) * 10
+                    for frame, value in ((framestart, 0),
+                                         (framestart + 5, self.IMPORT_EGMANIMSCALE),
+                                         (framestart + 10, 0)):
+                        b_curve.addBezier( ( frame, value ) )
+
+            if self.IMPORT_EGMANIM:
+                # set begin and end frame
+                self.scene.getRenderingContext().startFrame(1)
+                self.scene.getRenderingContext().endFrame(
+                    11 + len(b_meshData.key.blocks) * 10)
 
             # finally: return to base position
             for bv, b_v_index in izip(verts, v_map):
