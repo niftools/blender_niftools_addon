@@ -97,7 +97,7 @@ import logging
 import sys
 import os
 
-def initLoggers():
+def init_loggers():
     """Set up loggers."""
     niftoolslogger = logging.getLogger("niftools")
     niftoolslogger.setLevel(logging.WARNING)
@@ -111,7 +111,7 @@ def initLoggers():
     pyffilogger.addHandler(loghandler)
 
 # set up the loggers: call it as a function to avoid polluting namespace
-initLoggers()
+init_loggers()
 
 class NifImportExport:
     """Abstract base class for import and export. Contains utility functions
