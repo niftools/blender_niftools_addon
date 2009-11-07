@@ -240,6 +240,8 @@ class NifConfig:
         IMPORT_SKELETON = 0, # 0 = normal import, 1 = import file as skeleton, 2 = import mesh and attach to skeleton
         IMPORT_KEYFRAMEFILE = '', # keyframe file for animations
         IMPORT_EGMFILE = '', # FaceGen EGM file for morphs
+        IMPORT_EGMANIM = True, # create FaceGen EGM animation curves
+        IMPORT_EGMANIMSCALE = 1.0, # scale of FaceGen EGM animation curves
         EXPORT_ANIMATION = 0, # export everything (1=geometry only, 2=animation only)
         EXPORT_ANIMSEQUENCENAME = '', # sequence name of the kf file
         EXPORT_FORCEDDS = True, # force dds extension on texture files
@@ -642,6 +644,17 @@ class NifConfig:
             self.drawFileBrowse(
                 text = "",
                 event_name_prefix = "IMPORT_EGMFILE")
+            self.drawToggle(
+                text="Animate",
+                event_name="IMPORT_EGMANIM",
+                num_items=2, item=0)
+            self.drawSlider(
+                text="Scale:  ",
+                event_name="IMPORT_EGMANIMSCALE",
+                val=self.config["IMPORT_EGMANIMSCALE"],
+                min_val=0.01, max_val=100.0,
+                callback=self.updateEgmAnimScale,
+                num_items=2, item=1)
             self.drawYSep()
 
             self.drawPushButton(
@@ -1155,6 +1168,8 @@ class NifConfig:
             self.config["IMPORT_EXPORTEMBEDDEDTEXTURES"] = not self.config["IMPORT_EXPORTEMBEDDEDTEXTURES"]
         elif evName == "IMPORT_COMBINESHAPES":
             self.config["IMPORT_COMBINESHAPES"] = not self.config["IMPORT_COMBINESHAPES"]
+        elif evName == "IMPORT_EGMANIM":
+            self.config["IMPORT_EGMANIM"] = not self.config["IMPORT_EGMANIM"]
         elif evName == "IMPORT_SETTINGS_DEFAULT":
             self.config["IMPORT_ANIMATION"] = True
             self.config["IMPORT_SKELETON"] = 0
@@ -1168,6 +1183,8 @@ class NifConfig:
             self.config["IMPORT_APPLYSKINDEFORM"] = False
             self.config["IMPORT_EXTRANODES"] = True
             self.config["IMPORT_EGMFILE"] = ''
+            self.config["IMPORT_EGMANIM"] = True
+            self.config["IMPORT_EGMANIMSCALE"] = 1.0
         elif evName == "IMPORT_SETTINGS_SKINNING":
             self.config["IMPORT_ANIMATION"] = True
             self.config["IMPORT_SKELETON"] = 0
@@ -1493,3 +1510,6 @@ class NifConfig:
 
     def updateAnimSequenceName(self, evt, val):
         self.config["EXPORT_ANIMSEQUENCENAME"] = val
+
+    def updateEgmAnimScale(self, evt, val):
+        self.config["IMPORT_EGMANIMSCALE"] = val
