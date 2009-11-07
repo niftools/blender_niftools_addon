@@ -2550,6 +2550,11 @@ they can easily be identified.")
                             morphctrl.interpolators[keyblocknum] = interpol
                             floatdata = interpol.data.data
 
+                            # geometry only export has no float data
+                            # to do this conveniently, we just wipe the link...
+                            if self.EXPORT_ANIMATION == 1:
+                                interpol.data = None
+
                             # base key has no curve
                             # but all other keys should have one
                             if curve:
