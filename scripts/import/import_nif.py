@@ -218,6 +218,8 @@ class NifImport(NifImportExport):
                                          % self.egmdata.version)
                         self.msg_progress("Reading FaceGen egm file")
                         self.egmdata.read(egmfile)
+                        # scale the data
+                        self.egmdata.apply_scale(self.IMPORT_SCALE_CORRECTION)
                     elif self.egmdata.version == -1:
                         raise NifImportError("Unsupported EGM version.")
                     else:
