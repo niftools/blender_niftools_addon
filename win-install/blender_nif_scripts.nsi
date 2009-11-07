@@ -422,16 +422,16 @@ Section
 
   ; Install scripts
   SetOutPath $BLENDERSCRIPTS\export
-  File ..\scripts\export_nif.py
+  File ..\scripts\export\export_nif.py
   SetOutPath $BLENDERSCRIPTS\import
-  File ..\scripts\import_nif.py
+  File ..\scripts\import\import_nif.py
   SetOutPath $BLENDERSCRIPTS\mesh
-  File ..\scripts\mesh_niftools_weightsquash.py
-  File ..\scripts\mesh_niftools_hull.py
+  File ..\scripts\mesh\mesh_niftools_weightsquash.py
+  File ..\scripts\mesh\mesh_niftools_hull.py
   SetOutPath $BLENDERSCRIPTS\object
-  File ..\scripts\object_niftools_set_bone_priority.py
-  File ..\scripts\object_niftools_save_bone_pose.py
-  File ..\scripts\object_niftools_load_bone_pose.py
+  File ..\scripts\object\object_niftools_set_bone_priority.py
+  File ..\scripts\object\object_niftools_save_bone_pose.py
+  File ..\scripts\object\object_niftools_load_bone_pose.py
   ; Install libraries
   SetOutPath $BLENDERSCRIPTS\bpymodules
   File ..\scripts\bpymodules\nif_common.py
