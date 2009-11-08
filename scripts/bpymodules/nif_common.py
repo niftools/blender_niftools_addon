@@ -1225,6 +1225,7 @@ class NifConfig:
                 self.config["EXPORT_SKINPARTITION"] = True
             elif self.config["EXPORT_VERSION"] in ("Oblivion", "Fallout 3"):
                 self.config["EXPORT_STRIPIFY"] = True
+                self.config["EXPORT_STITCHSTRIPS"] = True
                 self.config["EXPORT_FLATTENSKIN"] = True
                 self.config["EXPORT_BONESPERPARTITION"] = 18
                 self.config["EXPORT_SKINPARTITION"] = True

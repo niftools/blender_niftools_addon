@@ -2300,10 +2300,6 @@ they can easily be identified." % ob)
                         and self.EXPORT_EXTRA_SHADER_TEXTURES)):
                     trishape.updateTangentSpace(
                         as_extra=(self.EXPORT_VERSION == "Oblivion"))
-                    if self.EXPORT_VERSION == "Sid Meier's Railroads":
-                        # force TSpace flag 16
-                        trishape.data.numUvSets &= (4096 | 255)
-                        trishape.data.bsNumUvSets &= (4096 | 255)
 
             # now export the vertex weights, if there are any
             vertgroups = ob.data.getVertGroupNames()
