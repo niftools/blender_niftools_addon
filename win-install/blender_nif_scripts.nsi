@@ -413,6 +413,7 @@ Section
   Delete "$BLENDERSCRIPTS\import_nif.py"
   Delete "$BLENDERSCRIPTS\mesh_niftools_weightsquash.py"
   Delete "$BLENDERSCRIPTS\mesh_niftools_hull.py"
+  Delete "$BLENDERSCRIPTS\mesh_niftools_morphcopy.py"
   Delete "$BLENDERSCRIPTS\object_niftools_set_bone_priority.py"
   Delete "$BLENDERSCRIPTS\object_niftools_save_bone_pose.py"
   Delete "$BLENDERSCRIPTS\object_niftools_load_bone_pose.py"
@@ -428,6 +429,7 @@ Section
   SetOutPath $BLENDERSCRIPTS\mesh
   File ..\scripts\mesh\mesh_niftools_weightsquash.py
   File ..\scripts\mesh\mesh_niftools_hull.py
+  File ..\scripts\mesh\mesh_niftools_morphcopy.py
   SetOutPath $BLENDERSCRIPTS\object
   File ..\scripts\object\object_niftools_set_bone_priority.py
   File ..\scripts\object\object_niftools_save_bone_pose.py
@@ -487,6 +489,7 @@ Section "Uninstall"
   Delete "$BLENDERSCRIPTS\import\import_nif.py"
   Delete "$BLENDERSCRIPTS\mesh\mesh_niftools_weightsquash.py"
   Delete "$BLENDERSCRIPTS\mesh\mesh_niftools_hull.py"
+  Delete "$BLENDERSCRIPTS\mesh\mesh_niftools_morphcopy.py"
   Delete "$BLENDERSCRIPTS\object\object_niftools_set_bone_priority.py"
   Delete "$BLENDERSCRIPTS\object\object_niftools_save_bone_pose.py"
   Delete "$BLENDERSCRIPTS\object\object_niftools_load_bone_pose.py"
