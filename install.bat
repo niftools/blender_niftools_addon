@@ -50,6 +50,7 @@ for %%A in (%BLENDERSCRIPTS%\export_nif.py) do if exist %%A del %%A
 for %%A in (%BLENDERSCRIPTS%\import_nif.py) do if exist %%A del %%A
 for %%A in (%BLENDERSCRIPTS%\mesh_niftools_weightsquash.py) do if exist %%A del %%A
 for %%A in (%BLENDERSCRIPTS%\mesh_niftools_hull.py) do if exist %%A del %%A
+for %%A in (%BLENDERSCRIPTS%\mesh_niftools_morphcopy.py) do if exist %%A del %%A
 for %%A in (%BLENDERSCRIPTS%\object_niftools_set_bone_priority.py) do if exist %%A del %%A
 for %%A in (%BLENDERSCRIPTS%\object_niftools_save_bone_pose.py) do if exist %%A del %%A
 for %%A in (%BLENDERSCRIPTS%\object_niftools_load_bone_pose.py) do if exist %%A del %%A
@@ -67,7 +68,7 @@ echo Installing files
 
 @echo on
 
-@for %%A in (scripts\mesh\mesh_niftools_weightsquash.py, scripts\mesh\mesh_niftools_hull.py) do copy "%%A" %BLENDERSCRIPTS%\mesh
+@for %%A in (scripts\mesh\mesh_niftools_weightsquash.py, scripts\mesh\mesh_niftools_hull.py, scripts\mesh\mesh_niftools_morphcopy.py) do copy "%%A" %BLENDERSCRIPTS%\mesh
 
 @for %%A in (scripts\object\object_niftools_set_bone_priority.py, scripts\object\object_niftools_save_bone_pose.py, scripts\object\object_niftools_load_bone_pose.py) do copy "%%A" %BLENDERSCRIPTS%\Object
 
