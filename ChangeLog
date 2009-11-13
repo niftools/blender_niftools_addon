@@ -25,6 +25,7 @@ expected by blender (contributed by PacificMorrowind)
 * import egm as morphs (with aid of Scanti and Carver13)
 * added new experimental "morph copy" script (under scripts->mesh)
 * stitch strips for Fallout 3 by default (reported by Miaximus)
+* fixed texture path bug (reported by elitewolverine)
 
 Version 2.4.12 (23 Oct 2009)
 * warn and ignore object animation on skinned meshes, instead of

@@ -1430,8 +1430,10 @@ class NifImport(NifImportExport):
             importpath = Blender.sys.dirname(self.IMPORT_FILE)
             searchPathList = (
                 [importpath]
-                + self.IMPORT_TEXTURE_PATH
-                + [Blender.sys.dirname(Blender.Get("texturesdir"))])
+                + self.IMPORT_TEXTURE_PATH)
+            if Blender.Get("texturesdir"):
+                searchPathList += [
+                    Blender.sys.dirname(Blender.Get("texturesdir"))]
             # if it looks like a Morrowind style path, use common sense to
             # guess texture path
             meshes_index = importpath.lower().find("meshes")
