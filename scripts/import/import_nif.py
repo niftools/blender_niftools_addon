@@ -2368,15 +2368,17 @@ Texture '%s' not found or not supported and no alternate available"""
                 b_ipo = Blender.Ipo.New('Key' , 'KeyIpo')
                 b_meshData.key.ipo = b_ipo
 
-            for morphverts in sym_morphs + asym_morphs:
+
+            morphs = ([(morph, "EGM SYM %i" % i)
+                       for i, morph in enumerate(sym_morphs)]
+                      +
+                      [(morph, "EGM ASYM %i" % i)
+                       for i, morph in enumerate(asym_morphs)])
+
+            for morphverts, keyname in morphs:
                 # length check disabled
                 # as sometimes, oddly, the morph has more vertices...
                 #assert(len(verts) == len(morphverts) == len(v_map))
-
-                # get name for key
-                keyname = None # TODO figure out sensible names
-                if not keyname:
-                    keyname = 'EGM %i' % len(b_meshData.key.blocks)
 
                 # for each vertex calculate the key position from base
                 # pos + delta offset
