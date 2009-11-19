@@ -602,6 +602,9 @@ Furniture marker has invalid number (%s). Name your file
                 toaster = pyffi.spells.nif.NifToaster()
                 toaster.scale = self.EXPORT_SCALE_CORRECTION
                 pyffi.spells.nif.fix.SpellScale(data=data, toaster=toaster).recurse()
+                # also scale egm
+                if self.egmdata:
+                    self.egmdata.apply_scale(self.EXPORT_SCALE_CORRECTION)
 
             # generate mopps (must be done after applying scale!)
             if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
