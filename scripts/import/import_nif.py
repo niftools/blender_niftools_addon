@@ -1,10 +1,10 @@
 #!BPY
 
 """ 
-Name: 'NetImmerse/Gamebryo (.nif)'
+Name: 'NetImmerse/Gamebryo (.nif & .kf & .egm)'
 Blender: 245
 Group: 'Import'
-Tip: 'Import NIF File Format (.nif)'
+Tip: 'Import NIF File Format (.nif & .kf & .egm)'
 """
 
 
