@@ -22,7 +22,7 @@ Tijer)
 by Tijer and Miaximus)
 * fixed windows installer & installer scripts to install to the dirs currently
 expected by blender (contributed by PacificMorrowind)
-* import egm as morphs (with aid of Scanti and Carver13)
+* import and export egm morphs (with aid of Scanti and Carver13)
 * added new experimental "morph copy" script (under scripts->mesh)
 * stitch strips for Fallout 3 by default (reported by Miaximus)
 * fixed texture path bug (reported by elitewolverine)

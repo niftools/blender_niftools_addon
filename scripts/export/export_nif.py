@@ -22,6 +22,7 @@ from Blender import Ipo # for all the Ipo curve constants
 from nif_common import NifImportExport
 from nif_common import NifConfig
 from nif_common import NifFormat
+from nif_common import EgmFormat
 from nif_common import __version__
 
 import pyffi.spells.nif
@@ -231,6 +232,9 @@ class NifExport(NifImportExport):
         # are parsed, so they are available when writing the kf file
         # maps bone NiNode to priority value
         self.bonePriorities = {}
+
+        # if an egm is exported, this will contain the data
+        self.egmdata = None
 
         try: # catch export errors
 
@@ -866,6 +870,22 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
                 stream = open(self.filename, "wb")
                 try:
                     data.write(stream)
+                finally:
+                    stream.close()
+
+            # export egm file:
+            #-----------------
+
+            if self.egmdata:
+                ext = ".egm"
+                self.logger.info("Writing %s file" % ext)
+                self.msg_progress("Writing %s file" % ext)
+
+                self.filename = Blender.sys.join(self.filepath,
+                                                 self.filebase + ext)
+                stream = open(self.filename, "wb")
+                try:
+                    self.egmdata.write(stream)
                 finally:
                     stream.close()
 
@@ -2472,10 +2492,14 @@ they can easily be identified.")
             if key:
                 if len(key.blocks) > 1:
                     # yes, there is a key object attached
-                    keyipo = key.ipo
-                    if keyipo:
-                        # yes, there is a shape ipo too
-
+                    # export as egm, or as morphdata?
+                    if key.blocks[1].name.startswith("EGM"):
+                        # egm export!
+                        self.exportEgm(key.blocks)
+                    elif key.ipo:
+                        # regular morphdata export
+                        # (there must be a shape ipo)
+                        keyipo = key.ipo
                         # check that they are relative shape keys
                         if not key.relative:
                             # XXX if we do "key.relative = True"
@@ -4010,6 +4034,22 @@ check that %s is selected during export.""" % targetobj)
         for shaderindex in self.USED_EXTRA_SHADER_TEXTURES[self.EXPORT_VERSION]:
             shadername = self.EXTRA_SHADER_TEXTURES[shaderindex]
             trishape.addIntegerExtraData(shadername, shaderindex)
+
+    def exportEgm(self, keyblocks):
+        self.egmdata = EgmFormat.Data(num_vertices=len(keyblocks[0].data))
+        for keyblock in keyblocks:
+            if keyblock.name.startswith("EGM SYM"):
+                morph = self.egmdata.add_sym_morph()
+            elif keyblock.name.startswith("EGM ASYM"):
+                morph = self.egmdata.add_asym_morph()
+            else:
+                continue
+            self.logger.info("Exporting morph %s to egm" % keyblock.name)
+            relative_vertices = []
+            # note: keyblocks[0] is base key
+            for vert, key_vert in izip(keyblocks[0].data, keyblock.data):
+                relative_vertices.append(key_vert - vert)
+            morph.set_relative_vertices(relative_vertices)
 
 def config_callback(**config):
     """Called when config script is done. Starts and times import."""
