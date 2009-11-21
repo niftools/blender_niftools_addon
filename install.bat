@@ -68,11 +68,11 @@ echo Installing files
 
 @echo on
 
-@for %%A in (mesh, Object, import, export) do mkdir %BLENDERSCRIPTS%\%%A
+@for %%A in (mesh, object, import, export) do mkdir %BLENDERSCRIPTS%\%%A
 
 @for %%A in (scripts\mesh\mesh_niftools_weightsquash.py, scripts\mesh\mesh_niftools_hull.py, scripts\mesh\mesh_niftools_morphcopy.py) do copy "%%A" %BLENDERSCRIPTS%\mesh
 
-@for %%A in (scripts\object\object_niftools_set_bone_priority.py, scripts\object\object_niftools_save_bone_pose.py, scripts\object\object_niftools_load_bone_pose.py) do copy "%%A" %BLENDERSCRIPTS%\Object
+@for %%A in (scripts\object\object_niftools_set_bone_priority.py, scripts\object\object_niftools_save_bone_pose.py, scripts\object\object_niftools_load_bone_pose.py) do copy "%%A" %BLENDERSCRIPTS%\object
 
 @for %%A in (scripts\import\import_nif.py, ) do copy "%%A" %BLENDERSCRIPTS%\import
 
