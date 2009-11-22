@@ -1,4 +1,4 @@
-Version 2.4.13 (in development)
+Version 2.5.0 (in development)
 * attempt to fix invalid matrices in bone extra text buffer rather than
 raising a mysterious exception (reported by PacificMorrowind)
 * import and export Oblivion morph controller animation data (reported by

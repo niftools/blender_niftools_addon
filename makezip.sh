@@ -1,4 +1,4 @@
-VERSION="2.4.13"
+VERSION="2.5.0"
 NAME="blender_nif_scripts"
 FILES="scripts/import/import_nif.py scripts/export/export_nif.py scripts/bpymodules/nif_common.py scripts/bpymodules/nif_test.py scripts/mesh/mesh_niftools_weightsquash.py scripts/mesh/mesh_niftools_hull.py scripts/object/object_niftools_set_bone_priority.py scripts/object/object_niftools_save_bone_pose.py scripts/object/object_niftools_load_bone_pose.py ChangeLog README.html install.sh install.bat docs/*.*"
 
