@@ -1873,7 +1873,7 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
 
             # list of body part (name, index, vertices) in this mesh
             bodypartgroups = []
-            for bodypartgroupname in NifFormat.BSDismemberBodyPartType().getEditorKeys():
+            for bodypartgroupname in NifFormat.BSDismemberBodyPartType().get_editor_keys():
                 if bodypartgroupname in ob.data.getVertGroupNames():
                     self.logger.debug("Found body part %s"
                                       % bodypartgroupname)
