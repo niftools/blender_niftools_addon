@@ -1396,7 +1396,7 @@ class NifImport(NifImportExport):
                 stream = open(tex, "wb")
                 try:
                     self.logger.info("Saving embedded texture as %s" % tex)
-                    source.pixelData.saveAsDDS(stream)
+                    source.pixelData.saveAsDds(stream)
                 except ValueError:
                     # value error means that the pixel format is not supported
                     b_image = None
