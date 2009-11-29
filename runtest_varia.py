@@ -236,7 +236,7 @@ class VariaTestSuite(TestSuite):
         """Test the nif xnif kf export option."""
         def check_ctrl_flags(root):
             # test the kfctrl flags to be active + clamp
-            for ctrl in root.getGlobalIterator():
+            for ctrl in root.get_global_iterator():
                 if not isinstance(ctrl, NifFormat.NiTimeController):
                     continue
                 if ctrl.flags != 12:

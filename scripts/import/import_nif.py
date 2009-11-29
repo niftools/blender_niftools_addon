@@ -260,7 +260,7 @@ class NifImport(NifImportExport):
                             for child in nonbip_children:
                                 root.removeChild(child)
                 # import this root block
-                self.logger.debug("Root block: %s" % root.getGlobalDisplay())
+                self.logger.debug("Root block: %s" % root.get_global_display())
                 # merge animation from kf tree into nif tree
                 if self.IMPORT_ANIMATION:
                     for kf_root in kf_root_blocks:
@@ -1351,7 +1351,7 @@ class NifImport(NifImportExport):
         if not source:
             return None
         elif isinstance(source, NifFormat.NiSourceTexture):
-            return source.getHash()
+            return source.get_hash()
         elif isinstance(source, basestring):
             return source.lower()
         else:
@@ -1513,15 +1513,15 @@ Texture '%s' not found or not supported and no alternate available"""
         ignores the material name as that does not affect the
         rendering.
         """
-        return (matProperty.getHash(ignore_strings=True)
+        return (matProperty.get_hash(ignore_strings=True)
                 if matProperty else None,
-                textProperty.getHash()     if textProperty  else None,
-                alphaProperty.getHash()    if alphaProperty else None,
-                specProperty.getHash()     if specProperty  else None,
-                textureEffect.getHash()    if textureEffect else None,
-                wireProperty.getHash()     if wireProperty  else None,
-                bsShaderProperty.getHash() if bsShaderProperty else None,
-                tuple(extra.getHash() for extra in extraDatas))
+                textProperty.get_hash()     if textProperty  else None,
+                alphaProperty.get_hash()    if alphaProperty else None,
+                specProperty.get_hash()     if specProperty  else None,
+                textureEffect.get_hash()    if textureEffect else None,
+                wireProperty.get_hash()     if wireProperty  else None,
+                bsShaderProperty.get_hash() if bsShaderProperty else None,
+                tuple(extra.get_hash() for extra in extraDatas))
 
     def importMaterial(self, matProperty, textProperty,
                        alphaProperty, specProperty,
@@ -2277,8 +2277,8 @@ Texture '%s' not found or not supported and no alternate available"""
             for bodypart, skinpartblock in izip(
                 skininst.partitions, skinpart.skinPartitionBlocks):
                 bodypart_wrap = NifFormat.BSDismemberBodyPartType()
-                bodypart_wrap.setValue(bodypart.bodyPart)
-                groupname = bodypart_wrap.getDetailDisplay()
+                bodypart_wrap.set_value(bodypart.bodyPart)
+                groupname = bodypart_wrap.get_detail_display()
                 # create vertex group if it did not exist yet
                 if not(groupname in b_meshData.getVertGroupNames()):
                     b_meshData.addVertGroup(groupname)
@@ -2720,7 +2720,7 @@ Texture '%s' not found or not supported and no alternate available"""
                             self.complete_bone_tree(bone, skelroot)
 
         # continue down the tree
-        for child in niBlock.getRefs():
+        for child in niBlock.get_refs():
             if not isinstance(child, NifFormat.NiAVObject): continue # skip blocks that don't have transforms
             self.markArmaturesBones(child)
 
@@ -3558,7 +3558,7 @@ X axis flipped in %s to fix orientation""" % hkdescriptor.__class__.__name__)
                 # copy rotation
                 kfd.numRotationKeys = 1
                 kfd.rotationType = NifFormat.KeyType.LINEAR_KEY
-                kfd.quaternionKeys.updateSize()
+                kfd.quaternionKeys.update_size()
                 kfd.quaternionKeys[0].time = 0.0
                 kfd.quaternionKeys[0].value.x = kfi.rotation.x
                 kfd.quaternionKeys[0].value.y = kfi.rotation.y
@@ -3566,7 +3566,7 @@ X axis flipped in %s to fix orientation""" % hkdescriptor.__class__.__name__)
                 kfd.quaternionKeys[0].value.w = kfi.rotation.w
                 # copy translation
                 kfd.translations.numKeys = 1
-                kfd.translations.keys.updateSize()
+                kfd.translations.keys.update_size()
                 kfd.translations.keys[0].time = 0.0
                 kfd.translations.keys[0].value.x = kfi.translation.x
                 kfd.translations.keys[0].value.y = kfi.translation.y

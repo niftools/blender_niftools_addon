@@ -486,7 +486,7 @@ Furniture marker has invalid number (%s). Name your file
                 furnmark = self.createBlock("BSFurnitureMarker")
                 furnmark.name = "FRN"
                 furnmark.numPositions = 1
-                furnmark.positions.updateSize()
+                furnmark.positions.update_size()
                 furnmark.positions[0].positionRef1 = furniturenumber
                 furnmark.positions[0].positionRef2 = furniturenumber
                 # create extra string data sgoKeep
@@ -589,7 +589,7 @@ Furniture marker has invalid number (%s). Name your file
                                                             NifFormat.NiNode))
                                             or (child in affectedbones))]
                     skelroot.numChildren = len(skelrootchildren)
-                    skelroot.children.updateSize()
+                    skelroot.children.update_size()
                     for i, child in enumerate(skelrootchildren):
                         skelroot.children[i] = child
 
@@ -648,7 +648,7 @@ Furniture marker has invalid number (%s). Name your file
                 self.logger.info(
                     "Making root block a BSFadeNode")
                 fade_root_block = NifFormat.BSFadeNode().deepcopy(root_block)
-                fade_root_block.replaceGlobalNode(root_block, fade_root_block)
+                fade_root_block.replace_global_node(root_block, fade_root_block)
                 root_block = fade_root_block
 
             # figure out user version and user version 2
@@ -1348,9 +1348,9 @@ missing curves in %s; insert %s key at frame 1 and try again"""
             kfd.xyzRotations[0].interpolation = NifFormat.KeyType.LINEAR_KEY
             kfd.xyzRotations[1].interpolation = NifFormat.KeyType.LINEAR_KEY
             kfd.xyzRotations[2].interpolation = NifFormat.KeyType.LINEAR_KEY
-            kfd.xyzRotations[0].keys.updateSize()
-            kfd.xyzRotations[1].keys.updateSize()
-            kfd.xyzRotations[2].keys.updateSize()
+            kfd.xyzRotations[0].keys.update_size()
+            kfd.xyzRotations[1].keys.update_size()
+            kfd.xyzRotations[2].keys.update_size()
             for i, frame in enumerate(frames):
                 # XXX todo: speed up by not recalculating stuff
                 rot_frame_x = kfd.xyzRotations[0].keys[i]
@@ -1367,7 +1367,7 @@ missing curves in %s; insert %s key at frame 1 and try again"""
             # XXX todo: quadratic interpolation?
             kfd.rotationType = NifFormat.KeyType.LINEAR_KEY
             kfd.numRotationKeys = len(frames)
-            kfd.quaternionKeys.updateSize()
+            kfd.quaternionKeys.update_size()
             for i, frame in enumerate(frames):
                 rot_frame = kfd.quaternionKeys[i]
                 rot_frame.time = (frame - 1) * self.fspeed
@@ -1380,7 +1380,7 @@ missing curves in %s; insert %s key at frame 1 and try again"""
         frames.sort()
         kfd.translations.interpolation = NifFormat.KeyType.LINEAR_KEY
         kfd.translations.numKeys = len(frames)
-        kfd.translations.keys.updateSize()
+        kfd.translations.keys.update_size()
         for i, frame in enumerate(frames):
             trans_frame = kfd.translations.keys[i]
             trans_frame.time = (frame - 1) * self.fspeed
@@ -1392,7 +1392,7 @@ missing curves in %s; insert %s key at frame 1 and try again"""
         frames.sort()
         kfd.scales.interpolation = NifFormat.KeyType.LINEAR_KEY
         kfd.scales.numKeys = len(frames)
-        kfd.scales.keys.updateSize()
+        kfd.scales.keys.update_size()
         for i, frame in enumerate(frames):
             scale_frame = kfd.scales.keys[i]
             scale_frame.time = (frame - 1) * self.fspeed
@@ -1498,7 +1498,7 @@ missing curves in %s; insert %s key at frame 1 and try again"""
         
         # create a text key for each frame descriptor
         textextra.numTextKeys = len(flist)
-        textextra.textKeys.updateSize()
+        textextra.textKeys.update_size()
         for i, key in enumerate(textextra.textKeys):
             key.time = self.fspeed * (flist[i]-1)
             key.value = dlist[i]
@@ -1597,7 +1597,7 @@ missing curves in %s; insert %s key at frame 1 and try again"""
 
         # search for duplicate
         for block in self.blocks:
-            if isinstance(block, NifFormat.NiSourceTexture) and block.getHash() == srctex.getHash():
+            if isinstance(block, NifFormat.NiSourceTexture) and block.get_hash() == srctex.get_hash():
                 return block
 
         # no identical source texture found, so use and register
@@ -1636,7 +1636,7 @@ missing curves in %s; insert %s key at frame 1 and try again"""
             # create a NiSourceTexture for each flip
             tex = self.exportSourceTexture(texture, t)
             flip.numSources += 1
-            flip.sources.updateSize()
+            flip.sources.update_size()
             flip.sources[flip.numSources-1] = tex
             count += 1
         if count < 2:
@@ -2245,7 +2245,7 @@ they can easily be identified." % ob)
                         raise NifExportError( 'interpolation %s for alpha curve not supported use linear or bezier instead'%a_curve.getInterpolation() )
 
                     alphad.data.numKeys = len(alpha)
-                    alphad.data.keys.updateSize()
+                    alphad.data.keys.update_size()
                     for ftime, key in zip(sorted(alpha), alphad.data.keys):
                         key.time = ftime
                         key.value = alpha[ftime]
@@ -2270,7 +2270,7 @@ they can easily be identified." % ob)
 
             tridata.numVertices = len(vertlist)
             tridata.hasVertices = True
-            tridata.vertices.updateSize()
+            tridata.vertices.update_size()
             for i, v in enumerate(tridata.vertices):
                 v.x = vertlist[i][0]
                 v.y = vertlist[i][1]
@@ -2279,7 +2279,7 @@ they can easily be identified." % ob)
             
             if mesh_hasnormals:
                 tridata.hasNormals = True
-                tridata.normals.updateSize()
+                tridata.normals.update_size()
                 for i, v in enumerate(tridata.normals):
                     v.x = normlist[i][0]
                     v.y = normlist[i][1]
@@ -2287,7 +2287,7 @@ they can easily be identified." % ob)
                 
             if mesh_hasvcol:
                 tridata.hasVertexColors = True
-                tridata.vertexColors.updateSize()
+                tridata.vertexColors.update_size()
                 for i, v in enumerate(tridata.vertexColors):
                     v.r = vcollist[i].r / 255.0
                     v.g = vcollist[i].g / 255.0
@@ -2302,7 +2302,7 @@ they can easily be identified." % ob)
                         raise NifExportError(
                             "Fallout 3 does not support multiple UV layers")
                 tridata.hasUv = True
-                tridata.uvSets.updateSize()
+                tridata.uvSets.update_size()
                 for j, uvlayer in enumerate(mesh_uvlayers):
                     for i, uv in enumerate(tridata.uvSets[j]):
                         uv.u = uvlist[i][j][0]
@@ -2526,17 +2526,17 @@ they can easily be identified.")
                         morphctrl.data = morphdata
                         morphdata.numMorphs = len(key.blocks)
                         morphdata.numVertices = len(vertlist)
-                        morphdata.morphs.updateSize()
+                        morphdata.morphs.update_size()
                         
 
                         # create interpolators (for newer nif versions)
                         morphctrl.numInterpolators = len(key.blocks)
-                        morphctrl.interpolators.updateSize()
+                        morphctrl.interpolators.update_size()
 
                         # XXX some unknowns, bethesda only
                         # XXX just guessing here, data seems to be zero always
                         morphctrl.numUnknownInts = len(key.blocks)
-                        morphctrl.unknownInts.updateSize()
+                        morphctrl.unknownInts.update_size()
 
                         for keyblocknum, keyblock in enumerate(key.blocks):
                             # export morphed vertices
@@ -2545,7 +2545,7 @@ they can easily be identified.")
                             self.logger.info("Exporting morph %s: vertices"
                                              % keyblock.name)
                             morph.arg = morphdata.numVertices
-                            morph.vectors.updateSize()
+                            morph.vectors.update_size()
                             for b_v_index, (vert_indices, vert) \
                                 in enumerate(zip(vertmap, keyblock.data)):
                                 # vertmap check
@@ -2593,10 +2593,10 @@ they can easily be identified.")
                                     ctrlFlags = 0x0008
                                 morph.interpolation = NifFormat.KeyType.LINEAR_KEY
                                 morph.numKeys = len(curve.getPoints())
-                                morph.keys.updateSize()
+                                morph.keys.update_size()
                                 floatdata.interpolation = NifFormat.KeyType.LINEAR_KEY
                                 floatdata.numKeys = len(curve.getPoints())
-                                floatdata.keys.updateSize()
+                                floatdata.keys.update_size()
                                 for i, btriple in enumerate(curve.getPoints()):
                                     knot = btriple.getPoints()
                                     morph.keys[i].arg = morph.interpolation
@@ -2649,7 +2649,7 @@ they can easily be identified.")
                 n_uvgroup.numKeys = len(b_curve.bezierPoints)
                 # XXX todo: set interpolation from blender interpolation
                 n_uvgroup.interpolation = NifFormat.KeyType.LINEAR_KEY
-                n_uvgroup.keys.updateSize()
+                n_uvgroup.keys.update_size()
                 for b_point, n_key in zip(b_curve.bezierPoints, n_uvgroup.keys):
                     # add each point of the curve
                     b_time, b_value = b_point.pt
@@ -3446,14 +3446,14 @@ ERROR%t|Too many faces/vertices. Decimate/split your mesh and try again.""")
             colhull.unknown6Floats[5] = -0.0 # enables arrow detection
             # note: unknown 6 floats are usually all 0
             colhull.numVertices = len(vertlist)
-            colhull.vertices.updateSize()
+            colhull.vertices.update_size()
             for vhull, vert in zip(colhull.vertices, vertlist):
                 vhull.x = vert[0] / 7.0
                 vhull.y = vert[1] / 7.0
                 vhull.z = vert[2] / 7.0
                 # w component is 0
             colhull.numNormals = len(fnormlist)
-            colhull.normals.updateSize()
+            colhull.normals.update_size()
             for nhull, norm, dist in zip(colhull.normals, fnormlist, fdistlist):
                 nhull.x = norm[0]
                 nhull.y = norm[1]
@@ -3531,12 +3531,12 @@ Unsupported rigid body joint type (%i), only ball and hinge are supported.""" \
 
                 # parent constraint to hkbody
                 hkbody.numConstraints += 1
-                hkbody.constraints.updateSize()
+                hkbody.constraints.update_size()
                 hkbody.constraints[-1] = hkconstraint
 
                 # export hkconstraint settings
                 hkconstraint.numEntities = 2
-                hkconstraint.entities.updateSize()
+                hkconstraint.entities.update_size()
                 hkconstraint.entities[0] = hkbody
                 # is there a target?
                 targetobj = b_constr[Blender.Constraint.Settings.TARGET]
@@ -3791,8 +3791,8 @@ check that %s is selected during export.""" % targetobj)
             else:
                 ignore_strings = False
             # check hash
-            if (block.getHash(ignore_strings=ignore_strings) ==
-                matprop.getHash(
+            if (block.get_hash(ignore_strings=ignore_strings) ==
+                matprop.get_hash(
                     ignore_strings=ignore_strings)):
                 self.logger.warning("Merging materials '%s' and '%s' \
 (they are identical in nif)"
@@ -3835,7 +3835,7 @@ check that %s is selected during export.""" % targetobj)
                 # some textures end up in the shader texture list
                 # there are 5 slots available, so set them up
                 texprop.numShaderTextures = 5
-                texprop.shaderTextures.updateSize()
+                texprop.shaderTextures.update_size()
                 for mapindex, shadertexdesc in enumerate(texprop.shaderTextures):
                     # set default values
                     shadertexdesc.isUsed = False
@@ -3858,7 +3858,7 @@ check that %s is selected during export.""" % targetobj)
                 # some textures end up in the shader texture list
                 # there are 4 slots available, so set them up
                 texprop.numShaderTextures = 4
-                texprop.shaderTextures.updateSize()
+                texprop.shaderTextures.update_size()
                 for mapindex, shadertexdesc in enumerate(texprop.shaderTextures):
                     # set default values
                     shadertexdesc.isUsed = False
@@ -3943,7 +3943,7 @@ check that %s is selected during export.""" % targetobj)
         # search for duplicate
         for block in self.blocks:
             if isinstance(block, NifFormat.NiTexturingProperty) \
-               and block.getHash() == texprop.getHash():
+               and block.get_hash() == texprop.get_hash():
                 return block
 
         # no texturing property with given settings found, so use and register
@@ -3978,7 +3978,7 @@ check that %s is selected during export.""" % targetobj)
         # DISABLED: the Fallout 3 engine cannot handle them
         #for block in self.blocks:
         #    if (isinstance(block, NifFormat.BSShaderPPLightingProperty)
-        #        and block.getHash() == bsshader.getHash()):
+        #        and block.get_hash() == bsshader.get_hash()):
         #        return block
 
         # no duplicate found, so use and register new one
@@ -4000,7 +4000,7 @@ check that %s is selected during export.""" % targetobj)
             texeff.sourceTexture = self.exportSourceTexture(mtex.tex)
             if self.EXPORT_VERSION == 'Morrowind':
                 texeff.numAffectedNodeListPointers += 1
-                texeff.affectedNodeListPointers.updateSize()
+                texeff.affectedNodeListPointers.update_size()
         texeff.unknownVector.x = 1.0
         return self.registerBlock(texeff)
 
@@ -4012,7 +4012,7 @@ check that %s is selected during export.""" % targetobj)
         #block_parent.addExtraData(bbox)
         # quick hack (better solution would be to make applyScale non-recursive)
         block_parent.numExtraDataList += 1
-        block_parent.extraDataList.updateSize()
+        block_parent.extraDataList.update_size()
         block_parent.extraDataList[-1] = bbox
         
         bbox.name = "BBX"
