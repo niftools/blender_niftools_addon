@@ -67,10 +67,10 @@ class SMRailroadsTestSuite(TestSuite):
         # extra block not found: failure
         return False
 
-    def has_shaderTexture(self, texprop, name, shaderindex):
+    def has_shader_texture(self, texprop, name, shaderindex):
         self.logger.info("Has shader texture %s at index %i?" % (name, shaderindex))
-        shaderTexDesc = texprop.shader_textures[shaderindex]
-        return shaderTexDesc.texture_data.source.file_name.lower() == name.lower()
+        shader_tex_desc = texprop.shader_textures[shaderindex]
+        return shader_tex_desc.texture_data.source.file_name.lower() == name.lower()
 
     def checkSMRailRoads(self, root_block):
         # sanity check
@@ -105,11 +105,11 @@ class SMRailroadsTestSuite(TestSuite):
         texbasename = texprop.base_texture.source.file_name[:-9]
 
         # geometry shader textures
-        assert(self.has_shaderTexture(texprop, "RRT_Engine_Env_map.dds", 0))
-        assert(self.has_shaderTexture(texprop, texbasename + "_NRML.dds", 1))
-        assert(self.has_shaderTexture(texprop, texbasename + "_SPEC.dds", 2))
-        assert(self.has_shaderTexture(texprop, texbasename + "_EMSK.dds", 3))
-        assert(self.has_shaderTexture(texprop, "RRT_Cube_Light_map_128.dds", 4))
+        assert(self.has_shader_texture(texprop, "RRT_Engine_Env_map.dds", 0))
+        assert(self.has_shader_texture(texprop, texbasename + "_NRML.dds", 1))
+        assert(self.has_shader_texture(texprop, texbasename + "_SPEC.dds", 2))
+        assert(self.has_shader_texture(texprop, texbasename + "_EMSK.dds", 3))
+        assert(self.has_shader_texture(texprop, "RRT_Cube_Light_map_128.dds", 4))
         # note: 5 is apparently never used, although it has an extra index
 
         # check ninode flag
