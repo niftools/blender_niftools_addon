@@ -243,22 +243,22 @@ class NifImport(NifImportExport):
                 # and remove geometry from better bodies on skeleton import
                 for b in (b for b in block.tree()
                           if isinstance(b, NifFormat.NiGeometry)
-                          and b.isSkin()):
+                          and b.is_skin()):
                     # check if root belongs to the children list of the
                     # skeleton root (can only happen for better bodies meshes)
-                    if root in [c for c in b.skinInstance.skeletonRoot.children]:
+                    if root in [c for c in b.skin_instance.skeleton_root.children]:
                         # fix parenting and update transform accordingly
-                        b.skinInstance.data.setTransform(
-                            root.getTransform()
-                            * b.skinInstance.data.getTransform())
-                        b.skinInstance.skeletonRoot = root
+                        b.skin_instance.data.set_transform(
+                            root.get_transform()
+                            * b.skin_instance.data.get_transform())
+                        b.skin_instance.skeleton_root = root
                         # delete non-skeleton nodes if we're importing
                         # skeleton only
                         if self.IMPORT_SKELETON == 1:
                             nonbip_children = (child for child in root.children
                                                if child.name[:6] != 'Bip01 ')
                             for child in nonbip_children:
-                                root.removeChild(child)
+                                root.remove_child(child)
                 # import this root block
                 self.logger.debug("Root block: %s" % root.get_global_display())
                 # merge animation from kf tree into nif tree
@@ -310,11 +310,11 @@ class NifImport(NifImportExport):
             for niBlock in root_block.tree(unique=True):
                 if not isinstance(niBlock, NifFormat.NiGeometry):
                     continue
-                if not niBlock.isSkin():
+                if not niBlock.is_skin():
                     continue
                 self.logger.info('Applying skin deformation on geometry %s'
                                  % niBlock.name)
-                vertices, normals = niBlock.getSkinDeformation()
+                vertices, normals = niBlock.get_skin_deformation()
                 for vold, vnew in izip(niBlock.data.vertices, vertices):
                     vold.x = vnew.x
                     vold.y = vnew.y
@@ -355,8 +355,8 @@ class NifImport(NifImportExport):
         elif isinstance(root_block, NifFormat.NiNode):
             # root node is dummy scene node
             # process collision
-            if root_block.collisionObject:
-                bhk_body = root_block.collisionObject.body
+            if root_block.collision_object:
+                bhk_body = root_block.collision_object.body
                 if not isinstance(bhk_body, NifFormat.bhkRigidBody):
                     self.logger.warning("Unsupported collision structure under node %s" % root_block.name)
                 self.importBhkShape(bhk_body)
@@ -417,7 +417,7 @@ class NifImport(NifImportExport):
             elif isinstance(niBlock, NifFormat.NiNode):
                 children = niBlock.children
                 bbox = self.find_extra(niBlock, NifFormat.BSBound)
-                if children or niBlock.collisionObject or bbox or self.IMPORT_EXTRANODES:
+                if children or niBlock.collision_object or bbox or self.IMPORT_EXTRANODES:
                     # it's a parent node
                     # import object + children
                     if self.is_armature_root(niBlock):
@@ -493,8 +493,8 @@ class NifImport(NifImportExport):
                     # if not importing skeleton only
                     if self.IMPORT_SKELETON != 1:
                         # import collision objects
-                        if niBlock.collisionObject:
-                            bhk_body = niBlock.collisionObject.body
+                        if niBlock.collision_object:
+                            bhk_body = niBlock.collision_object.body
                             if not isinstance(bhk_body, NifFormat.bhkRigidBody):
                                 self.logger.warning("Unsupported collision structure under node %s" % niBlock.name)
                             collision_objs = self.importBhkShape(bhk_body)
@@ -637,7 +637,7 @@ class NifImport(NifImportExport):
                             b_obj.getMatrix())
                         # fix transform
                         # the bone has in the nif file an armature space transform
-                        # given by niBlock.getTransform(relative_to = niArmature)
+                        # given by niBlock.get_transform(relative_to = niArmature)
                         #
                         # in detail:
                         # a vertex in the collision object has global
@@ -684,11 +684,11 @@ class NifImport(NifImportExport):
             # if not importing skeleton only
             if self.IMPORT_SKELETON != 1:
                 # import collisions (only bhkNiCollisionObjects for now)
-                if isinstance(niBlock.collisionObject,
+                if isinstance(niBlock.collision_object,
                               NifFormat.bhkNiCollisionObject):
                     # collision object parented to a bone
                     # first import collision object
-                    bhk_body = niBlock.collisionObject.body
+                    bhk_body = niBlock.collision_object.body
                     if not isinstance(bhk_body, NifFormat.bhkRigidBody):
                         self.logger.warning(
                             "Unsupported collision structure under node %s"
@@ -799,7 +799,7 @@ class NifImport(NifImportExport):
         
     def importMatrix(self, niBlock, relative_to = None):
         """Retrieves a niBlock's transform matrix as a Mathutil.Matrix."""
-        return Matrix(*niBlock.getTransform(relative_to).asList())
+        return Matrix(*niBlock.get_transform(relative_to).as_list())
 
     def decompose_srt(self, m):
         """Decompose Blender transform matrix as a scale, rotation matrix, and
@@ -938,10 +938,10 @@ class NifImport(NifImportExport):
 
                 # B-spline curve import
                 if isinstance(kfi, NifFormat.NiBSplineInterpolator):
-                    times = list(kfi.getTimes())
-                    translations = list(kfi.getTranslations())
-                    scales = list(kfi.getScales())
-                    rotations = list(kfi.getRotations())
+                    times = list(kfi.get_times())
+                    translations = list(kfi.get_translations())
+                    scales = list(kfi.get_scales())
+                    rotations = list(kfi.get_rotations())
 
                     # if we have translation keys, we make a dictionary of
                     # rot_keys and scale_keys, this makes the script work MUCH
@@ -1052,16 +1052,16 @@ class NifImport(NifImportExport):
                             scale_keys_dict[frame] = size
 
                     # detect the type of rotation keys
-                    rotationType = kfd.rotationType
+                    rotation_type = kfd.rotation_type
 
                     # Euler Rotations
-                    if rotationType == 4:
+                    if rotation_type == 4:
                         # uses xyz rotation
-                        if kfd.xyzRotations[0].keys:
+                        if kfd.xyz_rotations[0].keys:
                             self.logger.debug('Rotation keys...(euler)')
-                        for xkey, ykey, zkey in izip(kfd.xyzRotations[0].keys,
-                                                     kfd.xyzRotations[1].keys,
-                                                     kfd.xyzRotations[2].keys):
+                        for xkey, ykey, zkey in izip(kfd.xyz_rotations[0].keys,
+                                                     kfd.xyz_rotations[1].keys,
+                                                     kfd.xyz_rotations[2].keys):
                             # time 0.0 is frame 1
                             # XXX it is assumed that all the keys have the
                             # XXX same times!!!
@@ -1091,10 +1091,10 @@ class NifImport(NifImportExport):
                     # Quaternion Rotations
                     else:
                         # TODO take rotation type into account for interpolation
-                        if kfd.quaternionKeys:
+                        if kfd.quaternion_keys:
                             self.logger.debug('Rotation keys...(quaternions)')
-                        quaternionKeys = kfd.quaternionKeys
-                        for key in quaternionKeys:
+                        quaternion_keys = kfd.quaternion_keys
+                        for key in quaternion_keys:
                             frame = 1 + int(key.time * self.fps + 0.5)
                             keyVal = key.value
                             quat = Blender.Mathutils.Quaternion([keyVal.w, keyVal.x, keyVal.y,  keyVal.z])
@@ -1112,7 +1112,7 @@ class NifImport(NifImportExport):
 #                    else:
 #                        print("""Rotation keys...(unknown)
 #WARNING: rotation animation data of type %i found, but this type is not yet
-#         supported; data has been skipped""" % rotationType)                        
+#         supported; data has been skipped""" % rotation_type)                        
         
                     # Translations
                     if translations.keys:
@@ -1381,7 +1381,7 @@ class NifImport(NifImportExport):
         b_image = None
         
         if (isinstance(source, NifFormat.NiSourceTexture)
-            and not source.useExternal):
+            and not source.use_external):
             # find a file name (but avoid overwriting)
             n = 0
             while True:
@@ -1396,7 +1396,7 @@ class NifImport(NifImportExport):
                 stream = open(tex, "wb")
                 try:
                     self.logger.info("Saving embedded texture as %s" % tex)
-                    source.pixelData.saveAsDds(stream)
+                    source.pixel_data.save_as_dds(stream)
                 except ValueError:
                     # value error means that the pixel format is not supported
                     b_image = None
@@ -1418,7 +1418,7 @@ class NifImport(NifImportExport):
         else:
             # the texture uses an external image file
             if isinstance(source, NifFormat.NiSourceTexture):
-                fn = source.fileName
+                fn = source.file_name
             elif isinstance(source, basestring):
                 fn = source
             else:
@@ -1507,7 +1507,7 @@ Texture '%s' not found or not supported and no alternate available"""
     def getMaterialHash(self, matProperty, textProperty,
                         alphaProperty, specProperty,
                         textureEffect, wireProperty,
-                        bsShaderProperty, extraDatas):
+                        bsShaderProperty, extra_datas):
         """Helper function for importMaterial. Returns a key that
         uniquely identifies a material from its properties. The key
         ignores the material name as that does not affect the
@@ -1521,19 +1521,19 @@ Texture '%s' not found or not supported and no alternate available"""
                 textureEffect.get_hash()    if textureEffect else None,
                 wireProperty.get_hash()     if wireProperty  else None,
                 bsShaderProperty.get_hash() if bsShaderProperty else None,
-                tuple(extra.get_hash() for extra in extraDatas))
+                tuple(extra.get_hash() for extra in extra_datas))
 
     def importMaterial(self, matProperty, textProperty,
                        alphaProperty, specProperty,
                        textureEffect, wireProperty,
-                       bsShaderProperty, extraDatas):
+                       bsShaderProperty, extra_datas):
         """Creates and returns a material."""
         # First check if material has been created before.
         material_hash = self.getMaterialHash(matProperty, textProperty,
                                              alphaProperty, specProperty,
                                              textureEffect, wireProperty,
                                              bsShaderProperty,
-                                             extraDatas)
+                                             extra_datas)
         try:
             return self.materials[material_hash]                
         except KeyError:
@@ -1545,30 +1545,30 @@ Texture '%s' not found or not supported and no alternate available"""
         # get apply mode, and convert to blender "blending mode"
         blendmode = Blender.Texture.BlendModes["MIX"] # default
         if textProperty:
-            if textProperty.applyMode == NifFormat.ApplyMode.APPLY_MODULATE:
+            if textProperty.apply_mode == NifFormat.ApplyMode.APPLY_MODULATE:
                 blendmode = Blender.Texture.BlendModes["MIX"]
-            elif textProperty.applyMode == NifFormat.ApplyMode.APPLY_REPLACE:
+            elif textProperty.apply_mode == NifFormat.ApplyMode.APPLY_REPLACE:
                 blendmode = Blender.Texture.BlendModes["MIX"]
-            elif textProperty.applyMode == NifFormat.ApplyMode.APPLY_DECAL:
+            elif textProperty.apply_mode == NifFormat.ApplyMode.APPLY_DECAL:
                 blendmode = Blender.Texture.BlendModes["MIX"]
-            elif textProperty.applyMode == NifFormat.ApplyMode.APPLY_HILIGHT:
+            elif textProperty.apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT:
                 blendmode = Blender.Texture.BlendModes["LIGHTEN"]
-            elif textProperty.applyMode == NifFormat.ApplyMode.APPLY_HILIGHT2:
+            elif textProperty.apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT2:
                 blendmode = Blender.Texture.BlendModes["MULTIPLY"]
             else:
-                self.logger.warning("Unknown apply mode (%i) in material '%s', using blending mode 'MIX'"% (textProperty.applyMode, matProperty.name))
+                self.logger.warning("Unknown apply mode (%i) in material '%s', using blending mode 'MIX'"% (textProperty.apply_mode, matProperty.name))
         elif bsShaderProperty:
             # default blending mode for fallout 3
             blendmode = Blender.Texture.BlendModes["MIX"]
         # Sets the colors
         # Specular color
-        spec = matProperty.specularColor
+        spec = matProperty.specular_color
         material.setSpecCol([spec.r, spec.g, spec.b])
         # Blender multiplies specular color with this value
         material.setSpec(1.0)
         # Diffuse color
-        diff = matProperty.diffuseColor
-        emit = matProperty.emissiveColor
+        diff = matProperty.diffuse_color
+        emit = matProperty.emissive_color
         # fallout 3 hack: convert diffuse black to emit if emit is not black
         if diff.r < self.EPSILON and diff.g < self.EPSILON and diff.b < self.EPSILON:
             if (emit.r + emit.g + emit.b) < self.EPSILON:
@@ -1584,7 +1584,7 @@ Texture '%s' not found or not supported and no alternate available"""
         # Ambient & emissive color
         # We assume that ambient & emissive are fractions of the diffuse color.
         # If it is not an exact fraction, we average out.
-        amb = matProperty.ambientColor
+        amb = matProperty.ambient_color
         # fallout 3 hack:convert ambient black to white and set emit
         if amb.r < self.EPSILON and amb.g < self.EPSILON and amb.b < self.EPSILON:
             amb.r = 1.0
@@ -1594,7 +1594,7 @@ Texture '%s' not found or not supported and no alternate available"""
             if (emit.r + emit.g + emit.b) < self.EPSILON:
                 b_emit = 0.0
             else:
-                b_emit = matProperty.emitMulti / 10.0
+                b_emit = matProperty.emit_multi / 10.0
         else:
             b_amb = 0.0
             b_emit = 0.0
@@ -1629,29 +1629,29 @@ Texture '%s' not found or not supported and no alternate available"""
         # Alpha
         alpha = matProperty.alpha
         material.setAlpha(alpha)
-        baseTexture = None
-        glowTexture = None
+        base_texture = None
+        glow_texture = None
         envmapTexture = None # for NiTextureEffect
         bumpTexture = None
-        darkTexture = None
-        detailTexture = None
+        dark_texture = None
+        detail_texture = None
         refTexture = None
         if textProperty:
             # standard texture slots
-            baseTexDesc = textProperty.baseTexture
-            glowTexDesc = textProperty.glowTexture
-            bumpTexDesc = textProperty.bumpMapTexture
-            glossTexDesc = textProperty.glossTexture
-            darkTexDesc = textProperty.darkTexture
-            detailTexDesc = textProperty.detailTexture
+            baseTexDesc = textProperty.base_texture
+            glowTexDesc = textProperty.glow_texture
+            bumpTexDesc = textProperty.bump_map_texture
+            glossTexDesc = textProperty.gloss_texture
+            darkTexDesc = textProperty.dark_texture
+            detailTexDesc = textProperty.detail_texture
             refTexDesc = None
             # extra texture shader slots
-            for shaderTexDesc in textProperty.shaderTextures:
-                if not shaderTexDesc.isUsed:
+            for shaderTexDesc in textProperty.shader_textures:
+                if not shaderTexDesc.is_used:
                     continue
                 # it is used, figure out the slot it is used for
-                for extra in extraDatas:
-                    if extra.integerData == shaderTexDesc.mapIndex:
+                for extra in extra_datas:
+                    if extra.integer_data == shaderTexDesc.map_index:
                         # found!
                         shader_name = extra.name
                         break
@@ -1659,7 +1659,7 @@ Texture '%s' not found or not supported and no alternate available"""
                     # none found
                     self.logger.warn(
                         "No slot for shader texture %s."
-                        % shaderTexDesc.textureData.source.fileName)
+                        % shaderTexDesc.texture_data.source.file_name)
                     continue
                 try:
                     extra_shader_index = (
@@ -1668,11 +1668,11 @@ Texture '%s' not found or not supported and no alternate available"""
                     # shader_name not in self.EXTRA_SHADER_TEXTURES
                     self.logger.warn(
                         "No slot for shader texture %s."
-                        % shaderTexDesc.textureData.source.fileName)
+                        % shaderTexDesc.texture_data.source.file_name)
                     continue
                 if extra_shader_index == 0:
                     # EnvironmentMapIndex
-                    if shaderTexDesc.textureData.source.fileName.lower().startswith("rrt_engine_env_map"):
+                    if shaderTexDesc.texture_data.source.file_name.lower().startswith("rrt_engine_env_map"):
                         # sid meier's railroads: env map generated by engine
                         # we can skip this
                         continue
@@ -1681,16 +1681,16 @@ Texture '%s' not found or not supported and no alternate available"""
                     continue
                 elif extra_shader_index == 1:
                     # NormalMapIndex
-                    bumpTexDesc = shaderTexDesc.textureData
+                    bumpTexDesc = shaderTexDesc.texture_data
                 elif extra_shader_index == 2:
                     # SpecularIntensityIndex
-                    glossTexDesc = shaderTexDesc.textureData
+                    glossTexDesc = shaderTexDesc.texture_data
                 elif extra_shader_index == 3:
                     # EnvironmentIntensityIndex (this is reflection)
-                    refTexDesc = shaderTexDesc.textureData
+                    refTexDesc = shaderTexDesc.texture_data
                 elif extra_shader_index == 4:
                     # LightCubeMapIndex
-                    if shaderTexDesc.textureData.source.fileName.lower().startswith("rrt_cube_light_map"):
+                    if shaderTexDesc.texture_data.source.file_name.lower().startswith("rrt_cube_light_map"):
                         # sid meier's railroads: light map generated by engine
                         # we can skip this
                         continue
@@ -1702,30 +1702,30 @@ Texture '%s' not found or not supported and no alternate available"""
                     continue
                     
             if baseTexDesc:
-                baseTexture = self.importTexture(baseTexDesc.source)
-                if baseTexture:
+                base_texture = self.importTexture(baseTexDesc.source)
+                if base_texture:
                     # set the texture to use face UV coordinates
                     texco = Blender.Texture.TexCo.UV
                     # map the texture to the base color channel
                     mapto = Blender.Texture.MapTo.COL
                     # set the texture for the material
-                    material.setTexture(0, baseTexture, texco, mapto)
-                    mbaseTexture = material.getTextures()[0]
-                    mbaseTexture.blendmode = blendmode
-                    mbaseTexture.uvlayer = self.getUVLayerName(baseTexDesc.uvSet)
+                    material.setTexture(0, base_texture, texco, mapto)
+                    mbase_texture = material.getTextures()[0]
+                    mbase_texture.blendmode = blendmode
+                    mbase_texture.uvlayer = self.getUVLayerName(baseTexDesc.uv_set)
             if glowTexDesc:
-                glowTexture = self.importTexture(glowTexDesc.source)
-                if glowTexture:
+                glow_texture = self.importTexture(glowTexDesc.source)
+                if glow_texture:
                     # glow maps use alpha from rgb intensity
-                    glowTexture.imageFlags |= Blender.Texture.ImageFlags.CALCALPHA
+                    glow_texture.imageFlags |= Blender.Texture.ImageFlags.CALCALPHA
                     # set the texture to use face UV coordinates
                     texco = Blender.Texture.TexCo.UV
                     # map the texture to the base color and emit channel
                     mapto = Blender.Texture.MapTo.COL | Blender.Texture.MapTo.EMIT
                     # set the texture for the material
-                    material.setTexture(1, glowTexture, texco, mapto)
-                    mglowTexture = material.getTextures()[1]
-                    mglowTexture.uvlayer = self.getUVLayerName(glowTexDesc.uvSet)
+                    material.setTexture(1, glow_texture, texco, mapto)
+                    mglow_texture = material.getTextures()[1]
+                    mglow_texture.uvlayer = self.getUVLayerName(glowTexDesc.uv_set)
             if bumpTexDesc:
                 bumpTexture = self.importTexture(bumpTexDesc.source)
                 if bumpTexture:
@@ -1736,43 +1736,43 @@ Texture '%s' not found or not supported and no alternate available"""
                     # set the texture for the material
                     material.setTexture(2, bumpTexture, texco, mapto)
                     mbumpTexture = material.getTextures()[2]
-                    mbumpTexture.uvlayer = self.getUVLayerName(bumpTexDesc.uvSet)
+                    mbumpTexture.uvlayer = self.getUVLayerName(bumpTexDesc.uv_set)
             if glossTexDesc:
-                glossTexture = self.importTexture(glossTexDesc.source)
-                if glossTexture:
+                gloss_texture = self.importTexture(glossTexDesc.source)
+                if gloss_texture:
                     # set the texture to use face UV coordinates
                     texco = Blender.Texture.TexCo.UV
                     # map the texture to the specularity channel
                     mapto = Blender.Texture.MapTo.SPEC
                     # set the texture for the material
-                    material.setTexture(4, glossTexture, texco, mapto)
-                    mglossTexture = material.getTextures()[4]
-                    mglossTexture.uvlayer = self.getUVLayerName(glossTexDesc.uvSet)
+                    material.setTexture(4, gloss_texture, texco, mapto)
+                    mgloss_texture = material.getTextures()[4]
+                    mgloss_texture.uvlayer = self.getUVLayerName(glossTexDesc.uv_set)
             if darkTexDesc:
-                darkTexture = self.importTexture(darkTexDesc.source)
-                if darkTexture:
+                dark_texture = self.importTexture(darkTexDesc.source)
+                if dark_texture:
                     # set the texture to use face UV coordinates
                     texco = Blender.Texture.TexCo.UV
                     # map the texture to the COL channel
                     mapto = Blender.Texture.MapTo.COL
                     # set the texture for the material
-                    material.setTexture(5, darkTexture, texco, mapto)
-                    mdarkTexture = material.getTextures()[5]
-                    mdarkTexture.uvlayer = self.getUVLayerName(darkTexDesc.uvSet)
+                    material.setTexture(5, dark_texture, texco, mapto)
+                    mdark_texture = material.getTextures()[5]
+                    mdark_texture.uvlayer = self.getUVLayerName(darkTexDesc.uv_set)
                     # set blend mode to "DARKEN"
-                    mdarkTexture.blendmode = Blender.Texture.BlendModes["DARKEN"]
+                    mdark_texture.blendmode = Blender.Texture.BlendModes["DARKEN"]
             if detailTexDesc:
-                detailTexture = self.importTexture(detailTexDesc.source)
-                if detailTexture:
+                detail_texture = self.importTexture(detailTexDesc.source)
+                if detail_texture:
                     # import detail texture as extra base texture
                     # set the texture to use face UV coordinates
                     texco = Blender.Texture.TexCo.UV
                     # map the texture to the COL channel
                     mapto = Blender.Texture.MapTo.COL
                     # set the texture for the material
-                    material.setTexture(6, detailTexture, texco, mapto)
-                    mdetailTexture = material.getTextures()[6]
-                    mdetailTexture.uvlayer = self.getUVLayerName(detailTexDesc.uvSet)
+                    material.setTexture(6, detail_texture, texco, mapto)
+                    mdetail_texture = material.getTextures()[6]
+                    mdetail_texture.uvlayer = self.getUVLayerName(detailTexDesc.uv_set)
             if refTexDesc:
                 refTexture = self.importTexture(refTexDesc.source)
                 if refTexture:
@@ -1783,39 +1783,39 @@ Texture '%s' not found or not supported and no alternate available"""
                     # set the texture for the material
                     material.setTexture(7, refTexture, texco, mapto)
                     mrefTexture = material.getTextures()[7]
-                    mrefTexture.uvlayer = self.getUVLayerName(refTexDesc.uvSet)
+                    mrefTexture.uvlayer = self.getUVLayerName(refTexDesc.uv_set)
         # if not a texture property, but a bethesda shader property...
         elif bsShaderProperty:
             # also contains textures, used in fallout 3
-            baseTexFile = bsShaderProperty.textureSet.textures[0]
+            baseTexFile = bsShaderProperty.texture_set.textures[0]
             if baseTexFile:
-                baseTexture = self.importTexture(baseTexFile)
-                if baseTexture:
+                base_texture = self.importTexture(baseTexFile)
+                if base_texture:
                     # set the texture to use face UV coordinates
                     texco = Blender.Texture.TexCo.UV
                     # map the texture to the base color channel
                     mapto = Blender.Texture.MapTo.COL
                     # set the texture for the material
-                    material.setTexture(0, baseTexture, texco, mapto)
-                    mbaseTexture = material.getTextures()[0]
-                    mbaseTexture.blendmode = blendmode
+                    material.setTexture(0, base_texture, texco, mapto)
+                    mbase_texture = material.getTextures()[0]
+                    mbase_texture.blendmode = blendmode
 
-            glowTexFile = bsShaderProperty.textureSet.textures[2]
+            glowTexFile = bsShaderProperty.texture_set.textures[2]
             if glowTexFile:
-                glowTexture = self.importTexture(glowTexFile)
-                if glowTexture:
+                glow_texture = self.importTexture(glowTexFile)
+                if glow_texture:
                     # glow maps use alpha from rgb intensity
-                    glowTexture.imageFlags |= Blender.Texture.ImageFlags.CALCALPHA
+                    glow_texture.imageFlags |= Blender.Texture.ImageFlags.CALCALPHA
                     # set the texture to use face UV coordinates
                     texco = Blender.Texture.TexCo.UV
                     # map the texture to the base color and emit channel
                     mapto = Blender.Texture.MapTo.COL | Blender.Texture.MapTo.EMIT
                     # set the texture for the material
-                    material.setTexture(1, glowTexture, texco, mapto)
-                    mglowTexture = material.getTextures()[1]
-                    mglowTexture.blendmode = blendmode
+                    material.setTexture(1, glow_texture, texco, mapto)
+                    mglow_texture = material.getTextures()[1]
+                    mglow_texture.blendmode = blendmode
 
-            bumpTexFile = bsShaderProperty.textureSet.textures[1]
+            bumpTexFile = bsShaderProperty.texture_set.textures[1]
             if bumpTexFile:
                 bumpTexture = self.importTexture(bumpTexFile)
                 if bumpTexture:
@@ -1829,7 +1829,7 @@ Texture '%s' not found or not supported and no alternate available"""
                     mbumpTexture.blendmode = blendmode
 
         if textureEffect:
-            envmapTexture = self.importTexture(textureEffect.sourceTexture)
+            envmapTexture = self.importTexture(textureEffect.source_texture)
             if envmapTexture:
                 # set the texture to use face reflection coordinates
                 texco = Blender.Texture.TexCo.REFL
@@ -1843,18 +1843,18 @@ Texture '%s' not found or not supported and no alternate available"""
         if alphaProperty:
             material.mode |= Blender.Material.Modes.ZTRANSP # enable z-buffered transparency
             # if the image has an alpha channel => then this overrides the material alpha value
-            if baseTexture:
+            if base_texture:
                 # old method:
-                #if baseTexture.image.depth == 32 or baseTexture.image.size == [1,1]: # check for alpha channel in texture; if it's a stub then assume alpha channel
+                #if base_texture.image.depth == 32 or base_texture.image.size == [1,1]: # check for alpha channel in texture; if it's a stub then assume alpha channel
                 # new method: let's just assume there is alpha
                 if True:
-                    baseTexture.imageFlags |= Blender.Texture.ImageFlags.USEALPHA # use the alpha channel
-                    mbaseTexture.mapto |=  Blender.Texture.MapTo.ALPHA # and map the alpha channel to transparency
+                    base_texture.imageFlags |= Blender.Texture.ImageFlags.USEALPHA # use the alpha channel
+                    mbase_texture.mapto |=  Blender.Texture.MapTo.ALPHA # and map the alpha channel to transparency
                     # for proper display in Blender, we must set the alpha value
                     # to 0 and the "Var" slider in the texture Map To tab to the
                     # NIF material alpha value
                     material.setAlpha(0.0)
-                    mbaseTexture.varfac = alpha
+                    mbase_texture.varfac = alpha
             # non-transparent glow textures have their alpha calculated from RGB
             # not sure what to do with glow textures that have an alpha channel
             # for now we ignore those alpha channels
@@ -1887,12 +1887,12 @@ Texture '%s' not found or not supported and no alternate available"""
     def importMaterialUVController(self, b_material, n_geom):
         """Import UV controller data."""
         # search for the block
-        for n_ctrl in n_geom.getControllers():
+        for n_ctrl in n_geom.get_controllers():
             if isinstance(n_ctrl, NifFormat.NiUVController):
                 self.logger.info("importing UV controller")
                 b_channels = ("OfsX", "OfsY", "SizeX", "SizeY")
                 for b_channel, n_uvgroup in zip(b_channels,
-                                                   n_ctrl.data.uvGroups):
+                                                   n_ctrl.data.uv_groups):
                     if n_uvgroup.keys:
                         # create curve in material ipo
                         b_ipo = self.getMaterialIpo(b_material)
@@ -1974,10 +1974,10 @@ Texture '%s' not found or not supported and no alternate available"""
         verts = niData.vertices
 
         # faces
-        tris = [list(tri) for tri in niData.getTriangles()]
+        tris = [list(tri) for tri in niData.get_triangles()]
 
         # "sticky" UV coordinates: these are transformed in Blender UV's
-        uvco = niData.uvSets
+        uvco = niData.uv_sets
 
         # vertex normals
         norms = niData.normals
@@ -2042,19 +2042,19 @@ Texture '%s' not found or not supported and no alternate available"""
                             break
 
             # extra datas (for sid meier's railroads) that have material info
-            extraDatas = []
-            for extra in niBlock.getExtraDatas():
+            extra_datas = []
+            for extra in niBlock.get_extra_datas():
                 if isinstance(extra, NifFormat.NiIntegerExtraData):
                     if extra.name in self.EXTRA_SHADER_TEXTURES:
                         # yes, it describes the shader slot number
-                        extraDatas.append(extra)
+                        extra_datas.append(extra)
 
             # create material and assign it to the mesh
             # XXX todo: delegate search for properties to importMaterial
             material = self.importMaterial(matProperty, textProperty,
                                            alphaProperty, specProperty,
                                            textureEffect, wireProperty,
-                                           bsShaderProperty, extraDatas)
+                                           bsShaderProperty, extra_datas)
             # XXX todo: merge this call into importMaterial
             self.importMaterialControllers(material, niBlock)
             b_mesh_materials = b_meshData.materials
@@ -2179,10 +2179,10 @@ Texture '%s' not found or not supported and no alternate available"""
             f.mat = materialIndex
 
         # vertex colors
-        vcol = niData.vertexColors
+        vcol = niData.vertex_colors
         
         if vcol:
-            b_meshData.vertexColors = 1
+            b_meshData.vertex_colors = 1
             for f, b_f_index in izip(tris, f_map):
                 if b_f_index is None:
                     continue
@@ -2210,7 +2210,7 @@ Texture '%s' not found or not supported and no alternate available"""
         if b_meshData.faces:
             b_meshData.faceUV = 1
             b_meshData.vertexUV = 0
-            for i, uvSet in enumerate(uvco):
+            for i, uv_set in enumerate(uvco):
                 # Set the face UV's for the mesh. The NIF format only supports
                 # vertex UV's, but Blender only allows explicit editing of face
                 # UV's, so load vertex UV's as face UV's
@@ -2221,7 +2221,7 @@ Texture '%s' not found or not supported and no alternate available"""
                 for f, b_f_index in izip(tris, f_map):
                     if b_f_index is None:
                         continue
-                    uvlist = [ Vector(uvSet[vert_index].u, 1.0 - uvSet[vert_index].v) for vert_index in f ]
+                    uvlist = [ Vector(uv_set[vert_index].u, 1.0 - uv_set[vert_index].v) for vert_index in f ]
                     b_meshData.faces[b_f_index].uv = tuple(uvlist)
             b_meshData.activeUVLayer = self.getUVLayerName(0)
         
@@ -2230,7 +2230,7 @@ Texture '%s' not found or not supported and no alternate available"""
             # material
             mbasetex = material.getTextures()[0]
             mglowtex = material.getTextures()[1]
-            if b_meshData.vertexColors == 1:
+            if b_meshData.vertex_colors == 1:
                 if mbasetex or mglowtex:
                     # textured material: vertex colors influence lighting
                     material.mode |= Blender.Material.Modes.VCOL_LIGHT
@@ -2254,17 +2254,17 @@ Texture '%s' not found or not supported and no alternate available"""
                         f.image = imgobj
 
         # import skinning info, for meshes affected by bones
-        skininst = niBlock.skinInstance
+        skininst = niBlock.skin_instance
         if skininst:
             skindata = skininst.data
             bones = skininst.bones
-            boneWeights = skindata.boneList
+            boneWeights = skindata.bone_list
             for idx, bone in enumerate(bones):
-                vertexWeights = boneWeights[idx].vertexWeights
+                vertex_weights = boneWeights[idx].vertex_weights
                 groupname = self.names[bone]
                 if not groupname in b_meshData.getVertGroupNames():
                     b_meshData.addVertGroup(groupname)
-                for skinWeight in vertexWeights:
+                for skinWeight in vertex_weights:
                     vert = skinWeight.index
                     weight = skinWeight.weight
                     b_meshData.assignVertsToGroup(
@@ -2273,18 +2273,18 @@ Texture '%s' not found or not supported and no alternate available"""
 
         # import body parts as vertex groups
         if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
-            skinpart = niBlock.getSkinPartition()
+            skinpart = niBlock.get_skin_partition()
             for bodypart, skinpartblock in izip(
-                skininst.partitions, skinpart.skinPartitionBlocks):
+                skininst.partitions, skinpart.skin_partition_blocks):
                 bodypart_wrap = NifFormat.BSDismemberBodyPartType()
-                bodypart_wrap.set_value(bodypart.bodyPart)
+                bodypart_wrap.set_value(bodypart.body_part)
                 groupname = bodypart_wrap.get_detail_display()
                 # create vertex group if it did not exist yet
                 if not(groupname in b_meshData.getVertGroupNames()):
                     b_meshData.addVertGroup(groupname)
                 # find vertex indices of this group
                 groupverts = [v_map[v_index]
-                              for v_index in skinpartblock.vertexMap]
+                              for v_index in skinpartblock.vertex_map]
                 # create the group
                 b_meshData.assignVertsToGroup(
                     groupname, groupverts, 1,
@@ -2295,15 +2295,15 @@ Texture '%s' not found or not supported and no alternate available"""
             morphCtrl = self.find_controller(niBlock, NifFormat.NiGeomMorpherController)
             if morphCtrl:
                 morphData = morphCtrl.data
-                if morphData.numMorphs:
+                if morphData.num_morphs:
                     # insert base key at frame 1, using relative keys
                     b_meshData.insertKey(1, 'relative')
                     baseverts = morphData.morphs[0].vectors
                     b_ipo = Blender.Ipo.New('Key' , 'KeyIpo')
                     b_meshData.key.ipo = b_ipo
-                    for idxMorph in xrange(1, morphData.numMorphs):
+                    for idxMorph in xrange(1, morphData.num_morphs):
                         # get name for key
-                        keyname = morphData.morphs[idxMorph].frameName
+                        keyname = morphData.morphs[idxMorph].frame_name
                         if not keyname:
                             keyname = 'Key %i' % idxMorph
                         # get vectors
@@ -2439,7 +2439,7 @@ Texture '%s' not found or not supported and no alternate available"""
         cleared on each import only the last import will be exported
         correctly."""
         if isinstance(niBlock, NifFormat.NiControllerSequence):
-            txk = niBlock.textKeys
+            txk = niBlock.text_keys
         else:
             txk = niBlock.find(block_type=NifFormat.NiTextKeyExtraData)
         if txk:
@@ -2451,7 +2451,7 @@ Texture '%s' not found or not supported and no alternate available"""
                 animtxt = Blender.Text.New("Anim")
             
             frame = 1
-            for key in txk.textKeys:
+            for key in txk.text_keys:
                 newkey = str(key.value).replace('\r\n', '/').rstrip('/')
                 frame = 1 + int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                 animtxt.write('%i/%s\n'%(frame, newkey))
@@ -2513,21 +2513,21 @@ Texture '%s' not found or not supported and no alternate available"""
             for kfd in root.tree(block_type = NifFormat.NiKeyframeData):
                 key_times.extend(key.time for key in kfd.translations.keys)
                 key_times.extend(key.time for key in kfd.scales.keys)
-                key_times.extend(key.time for key in kfd.quaternionKeys)
-                key_times.extend(key.time for key in kfd.xyzRotations[0].keys)
-                key_times.extend(key.time for key in kfd.xyzRotations[1].keys)
-                key_times.extend(key.time for key in kfd.xyzRotations[2].keys)
+                key_times.extend(key.time for key in kfd.quaternion_keys)
+                key_times.extend(key.time for key in kfd.xyz_rotations[0].keys)
+                key_times.extend(key.time for key in kfd.xyz_rotations[1].keys)
+                key_times.extend(key.time for key in kfd.xyz_rotations[2].keys)
             for kfi in root.tree(block_type = NifFormat.NiBSplineInterpolator):
-                if not kfi.basisData:
+                if not kfi.basis_data:
                     # skip bsplines without basis data (eg bowidle.kf in
                     # Oblivion)
                     continue
                 key_times.extend(
-                    point * (kfi.stopTime - kfi.startTime)
-                    / (kfi.basisData.numControlPoints - 2)
-                    for point in xrange(kfi.basisData.numControlPoints - 2))
+                    point * (kfi.stop_time - kfi.start_time)
+                    / (kfi.basis_data.num_control_points - 2)
+                    for point in xrange(kfi.basis_data.num_control_points - 2))
             for uvdata in root.tree(block_type = NifFormat.NiUVData):
-                for uvgroup in uvdata.uvGroups:
+                for uvgroup in uvdata.uv_groups:
                     key_times.extend(key.time for key in uvgroup.keys)
         # not animated, return a reasonable default
         if not key_times:
@@ -2555,10 +2555,10 @@ Texture '%s' not found or not supported and no alternate available"""
             if not kfd: continue
             _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.translations.keys])
             _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.scales.keys])
-            if kfd.rotationType == 4:
-                _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.xyzRotations.keys])
+            if kfd.rotation_type == 4:
+                _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.xyz_rotations.keys])
             else:
-                _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.quaternionKeys])
+                _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.quaternion_keys])
         
         # set the frames in the _ANIMATION_DATA list
         for key in _ANIMATION_DATA:
@@ -2570,19 +2570,19 @@ Texture '%s' not found or not supported and no alternate available"""
         """
 
 
-    def find_controller(self, niBlock, controllerType):
+    def find_controller(self, niBlock, controller_type):
         """Find a controller."""
         ctrl = niBlock.controller
         while ctrl:
-            if isinstance(ctrl, controllerType):
+            if isinstance(ctrl, controller_type):
                 break
-            ctrl = ctrl.nextController
+            ctrl = ctrl.next_controller
         return ctrl
 
-    def find_property(self, niBlock, propertyType):
+    def find_property(self, niBlock, property_type):
         """Find a property."""
         for prop in niBlock.properties:
-            if isinstance(prop, propertyType):
+            if isinstance(prop, property_type):
                 return prop
         return None
 
@@ -2590,16 +2590,16 @@ Texture '%s' not found or not supported and no alternate available"""
     def find_extra(self, niBlock, extratype):
         """Find extra data."""
         # pre-10.x.x.x system: extra data chain
-        extra = niBlock.extraData
+        extra = niBlock.extra_data
         while extra:
             if isinstance(extra, extratype):
                 break
-            extra = extra.nextExtraData
+            extra = extra.next_extra_data
         if extra:
             return extra
 
         # post-10.x.x.x system: extra data list
-        for extra in niBlock.extraDataList:
+        for extra in niBlock.extra_data_list:
             if isinstance(extra, extratype):
                 return extra
         return None
@@ -2673,13 +2673,13 @@ Texture '%s' not found or not supported and no alternate available"""
         # search for all NiTriShape or NiTriStrips blocks...
         if isinstance(niBlock, NifFormat.NiTriBasedGeom):
             # yes, we found one, get its skin instance
-            if niBlock.isSkin():
+            if niBlock.is_skin():
                 self.logger.debug("Skin found on block '%s'" % niBlock.name)
                 # it has a skin instance, so get the skeleton root
                 # which is an armature only if it's not a skinning influence
                 # so mark the node to be imported as an armature
-                skininst = niBlock.skinInstance
-                skelroot = skininst.skeletonRoot
+                skininst = niBlock.skin_instance
+                skelroot = skininst.skeleton_root
                 if self.IMPORT_SKELETON == 0:
                     if not self.armatures.has_key(skelroot):
                         self.armatures[skelroot] = []
@@ -2846,12 +2846,12 @@ Texture '%s' not found or not supported and no alternate available"""
             b_obj.insertIpoKey(Blender.Object.SIZE)
 
         # detect the type of rotation keys
-        rotationType = kfd.rotationType
-        if rotationType == 4:
+        rotation_type = kfd.rotation_type
+        if rotation_type == 4:
             # uses xyz rotation
-            xkeys = kfd.xyzRotations[0].keys
-            ykeys = kfd.xyzRotations[1].keys
-            zkeys = kfd.xyzRotations[2].keys
+            xkeys = kfd.xyz_rotations[0].keys
+            ykeys = kfd.xyz_rotations[1].keys
+            zkeys = kfd.xyz_rotations[2].keys
             self.logger.debug('Rotation keys...(euler)')
             for (xkey, ykey, zkey) in izip(xkeys, ykeys, zkeys):
                 frame = 1+int(xkey.time * self.fps + 0.5) # time 0.0 is frame 1
@@ -2864,9 +2864,9 @@ Texture '%s' not found or not supported and no alternate available"""
                 b_obj.insertIpoKey(Blender.Object.ROT)           
         else:
             # uses quaternions
-            if kfd.quaternionKeys:
+            if kfd.quaternion_keys:
                 self.logger.debug('Rotation keys...(quaternions)')
-            for key in kfd.quaternionKeys:
+            for key in kfd.quaternion_keys:
                 frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                 Blender.Set('curframe', frame)
                 rot = Blender.Mathutils.Quaternion(key.value.w, key.value.x, key.value.y, key.value.z).toEuler()
@@ -2911,7 +2911,7 @@ Texture '%s' not found or not supported and no alternate available"""
             # convex hull shape not in blender Python API
             # Blender.Object.RBShapes['CONVEXHULL'] should be 5
             ob.rbShapeBoundType = 5
-            ob.drawMode = Blender.Object.DrawModes['WIRE']
+            ob.draw_mode = Blender.Object.DrawModes['WIRE']
             # radius: quick estimate
             ob.rbRadius = min(vert.co.length for vert in me.verts)
 
@@ -2929,7 +2929,7 @@ Texture '%s' not found or not supported and no alternate available"""
             # import shapes
             collision_objs = self.importBhkShape(bhkshape.shape)
             # find transformation matrix
-            transform = Blender.Mathutils.Matrix(*bhkshape.transform.asList())
+            transform = Blender.Mathutils.Matrix(*bhkshape.transform.as_list())
             transform.transpose()
             # fix scale
             transform[3][0] *= 7
@@ -3022,7 +3022,7 @@ Texture '%s' not found or not supported and no alternate available"""
 
         elif isinstance(bhkshape, NifFormat.bhkCapsuleShape):
             # create capsule mesh
-            length = (bhkshape.firstPoint - bhkshape.secondPoint).norm()
+            length = (bhkshape.first_point - bhkshape.second_point).norm()
             minx = miny = -bhkshape.radius * 7
             maxx = maxy = +bhkshape.radius * 7
             minz = -(length + 2*bhkshape.radius) * 3.5
@@ -3045,7 +3045,7 @@ Texture '%s' not found or not supported and no alternate available"""
             ob.rbRadius = maxx
 
             # find transform
-            normal = (bhkshape.firstPoint - bhkshape.secondPoint) / length
+            normal = (bhkshape.first_point - bhkshape.second_point) / length
             normal = Blender.Mathutils.Vector(normal.x, normal.y, normal.z)
             minindex = min((abs(x), i) for i, x in enumerate(normal))[1]
             orthvec = Blender.Mathutils.Vector([(1 if i == minindex else 0)
@@ -3057,12 +3057,12 @@ Texture '%s' not found or not supported and no alternate available"""
             # (0,0,1) maps to normal
             transform = Blender.Mathutils.Matrix(vec1, vec2, normal)
             transform.resize4x4()
-            transform[3][0] = 3.5 * (bhkshape.firstPoint.x
-                                     + bhkshape.secondPoint.x)
-            transform[3][1] = 3.5 * (bhkshape.firstPoint.y
-                                     + bhkshape.secondPoint.y)
-            transform[3][2] = 3.5 * (bhkshape.firstPoint.z
-                                     + bhkshape.secondPoint.z)
+            transform[3][0] = 3.5 * (bhkshape.first_point.x
+                                     + bhkshape.second_point.x)
+            transform[3][1] = 3.5 * (bhkshape.first_point.y
+                                     + bhkshape.second_point.y)
+            transform[3][2] = 3.5 * (bhkshape.first_point.z
+                                     + bhkshape.second_point.z)
             ob.setMatrix(transform)
 
             # return object
@@ -3072,23 +3072,23 @@ Texture '%s' not found or not supported and no alternate available"""
             # create mesh for each sub shape
             hk_objects = []
             vertex_offset = 0
-            subshapes = bhkshape.subShapes
+            subshapes = bhkshape.sub_shapes
             if not subshapes:
                 # fallout 3 stores them in the data
-                subshapes = bhkshape.data.subShapes
+                subshapes = bhkshape.data.sub_shapes
             for subshape_num, subshape in enumerate(subshapes):
                 me = Blender.Mesh.New('poly%i' % subshape_num)
                 for vert_index in xrange(vertex_offset,
-                                         vertex_offset + subshape.numVertices):
+                                         vertex_offset + subshape.num_vertices):
                     vert = bhkshape.data.vertices[vert_index]
                     me.verts.extend(vert.x * 7, vert.y * 7, vert.z * 7)
                 for hktriangle in bhkshape.data.triangles:
-                    if ((vertex_offset <= hktriangle.triangle.v1)
-                        and (hktriangle.triangle.v1
-                             < vertex_offset + subshape.numVertices)):
-                        me.faces.extend(hktriangle.triangle.v1 - vertex_offset,
-                                        hktriangle.triangle.v2 - vertex_offset,
-                                        hktriangle.triangle.v3 - vertex_offset)
+                    if ((vertex_offset <= hktriangle.triangle.v_1)
+                        and (hktriangle.triangle.v_1
+                             < vertex_offset + subshape.num_vertices)):
+                        me.faces.extend(hktriangle.triangle.v_1 - vertex_offset,
+                                        hktriangle.triangle.v_2 - vertex_offset,
+                                        hktriangle.triangle.v_3 - vertex_offset)
                     else:
                         continue
                     # check face normal
@@ -3118,11 +3118,11 @@ Texture '%s' not found or not supported and no alternate available"""
                 # set bounds type
                 ob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
                 ob.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
-                ob.drawMode = Blender.Object.DrawModes['WIRE']
+                ob.draw_mode = Blender.Object.DrawModes['WIRE']
                 # radius: quick estimate
                 ob.rbRadius = min(vert.co.length for vert in me.verts)
                 # set material
-                ob.addProperty("HavokMaterial", subshape.material, "INT")
+                ob.add_property("HavokMaterial", subshape.material, "INT")
 
                 # also remove duplicate vertices
                 numverts = len(me.verts)
@@ -3132,7 +3132,7 @@ Texture '%s' not found or not supported and no alternate available"""
                     self.logger.info('Removed %i duplicate vertices \
 (out of %i) from collision mesh' % (numdel, numverts))
 
-                vertex_offset += subshape.numVertices
+                vertex_offset += subshape.num_vertices
                 hk_objects.append(ob)
 
             return hk_objects
@@ -3140,14 +3140,14 @@ Texture '%s' not found or not supported and no alternate available"""
         elif isinstance(bhkshape, NifFormat.bhkNiTriStripsShape):
             return reduce(operator.add,
                           (self.importBhkShape(strips)
-                           for strips in bhkshape.stripsData))
+                           for strips in bhkshape.strips_data))
                 
         elif isinstance(bhkshape, NifFormat.NiTriStripsData):
             me = Blender.Mesh.New('poly')
             # no factor 7 correction!!!
             for vert in bhkshape.vertices:
                 me.verts.extend(vert.x, vert.y, vert.z)
-            me.faces.extend(list(bhkshape.getTriangles()))
+            me.faces.extend(list(bhkshape.get_triangles()))
 
             # link mesh to scene and set transform
             ob = self.scene.objects.new(me, 'poly')
@@ -3155,7 +3155,7 @@ Texture '%s' not found or not supported and no alternate available"""
             # set bounds type
             ob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
             ob.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
-            ob.drawMode = Blender.Object.DrawModes['WIRE']
+            ob.draw_mode = Blender.Object.DrawModes['WIRE']
             # radius: quick estimate
             ob.rbRadius = min(vert.co.length for vert in me.verts)
 
@@ -3174,7 +3174,7 @@ Texture '%s' not found or not supported and no alternate available"""
 
         elif isinstance(bhkshape, NifFormat.bhkListShape):
             return reduce(operator.add, ( self.importBhkShape(subshape)
-                                          for subshape in bhkshape.subShapes ))
+                                          for subshape in bhkshape.sub_shapes ))
 
         self.logger.warning("Unsupported bhk shape %s"
                             % bhkshape.__class__.__name__)
@@ -3204,7 +3204,7 @@ Rigid body with no or multiple shapes, constraints skipped""")
         for hkconstraint in hkbody.constraints:
 
             # check constraint entities
-            if not hkconstraint.numEntities == 2:
+            if not hkconstraint.num_entities == 2:
                 self.logger.warning("Constraint with more than 2 entities, skipped")
                 continue
             if not hkconstraint.entities[0] is hkbody:
@@ -3218,14 +3218,14 @@ Rigid body with no or multiple shapes, constraints skipped""")
             if isinstance(hkconstraint, NifFormat.bhkRagdollConstraint):
                 hkdescriptor = hkconstraint.ragdoll
             elif isinstance(hkconstraint, NifFormat.bhkLimitedHingeConstraint):
-                hkdescriptor = hkconstraint.limitedHinge
+                hkdescriptor = hkconstraint.limited_hinge
             elif isinstance(hkconstraint, NifFormat.bhkHingeConstraint):
                 hkdescriptor = hkconstraint.hinge
             elif isinstance(hkconstraint, NifFormat.bhkMalleableConstraint):
                 if hkconstraint.type == 7:
                     hkdescriptor = hkconstraint.ragdoll
                 elif hkconstraint.type == 2:
-                    hkdescriptor = hkconstraint.limitedHinge
+                    hkdescriptor = hkconstraint.limited_hinge
                 else:
                     self.logger.warning("Unknown malleable type (%i), skipped"
                                         % hkconstraint.type)
@@ -3280,9 +3280,9 @@ Rigid body with no or multiple shapes, constraints skipped""")
 
             # get pivot point
             pivot = Blender.Mathutils.Vector(
-                hkdescriptor.pivotA.x * 7,
-                hkdescriptor.pivotA.y * 7,
-                hkdescriptor.pivotA.z * 7)
+                hkdescriptor.pivot_a.x * 7,
+                hkdescriptor.pivot_a.y * 7,
+                hkdescriptor.pivot_a.z * 7)
 
             # get z- and x-axes of the constraint
             # (also see export_nif.py NifImport.exportConstraints)
@@ -3290,48 +3290,48 @@ Rigid body with no or multiple shapes, constraints skipped""")
                 # for ragdoll, take z to be the twist axis (central axis of the
                 # cone, that is)
                 axis_z = Blender.Mathutils.Vector(
-                    hkdescriptor.twistA.x,
-                    hkdescriptor.twistA.y,
-                    hkdescriptor.twistA.z)
+                    hkdescriptor.twist_a.x,
+                    hkdescriptor.twist_a.y,
+                    hkdescriptor.twist_a.z)
                 # for ragdoll, let x be the plane vector
                 axis_x = Blender.Mathutils.Vector(
-                    hkdescriptor.planeA.x,
-                    hkdescriptor.planeA.y,
-                    hkdescriptor.planeA.z)
+                    hkdescriptor.plane_a.x,
+                    hkdescriptor.plane_a.y,
+                    hkdescriptor.plane_a.z)
                 # set the angle limits
                 # (see http://niftools.sourceforge.net/wiki/Oblivion/Bhk_Objects/Ragdoll_Constraint
                 # for a nice picture explaining this)
                 b_constr[Blender.Constraint.Settings.CONSTR_RB_MINLIMIT5] = \
-                    hkdescriptor.twistMinAngle
+                    hkdescriptor.twist_min_angle
                 b_constr[Blender.Constraint.Settings.CONSTR_RB_MAXLIMIT5] = \
-                    hkdescriptor.twistMaxAngle
+                    hkdescriptor.twist_max_angle
                 b_constr[Blender.Constraint.Settings.CONSTR_RB_MINLIMIT3] = \
-                    -hkdescriptor.coneMaxAngle
+                    -hkdescriptor.cone_max_angle
                 b_constr[Blender.Constraint.Settings.CONSTR_RB_MAXLIMIT3] = \
-                    hkdescriptor.coneMaxAngle
+                    hkdescriptor.cone_max_angle
                 b_constr[Blender.Constraint.Settings.CONSTR_RB_MINLIMIT4] = \
-                    hkdescriptor.planeMinAngle
+                    hkdescriptor.plane_min_angle
                 b_constr[Blender.Constraint.Settings.CONSTR_RB_MAXLIMIT4] = \
-                    hkdescriptor.planeMaxAngle
+                    hkdescriptor.plane_max_angle
             elif isinstance(hkdescriptor, NifFormat.LimitedHingeDescriptor):
                 # for hinge, y is the vector on the plane of rotation defining
                 # the zero angle
                 axis_y = Blender.Mathutils.Vector(
-                    hkdescriptor.perp2AxleInA1.x,
-                    hkdescriptor.perp2AxleInA1.y,
-                    hkdescriptor.perp2AxleInA1.z)
+                    hkdescriptor.perp_2_axle_in_a_1.x,
+                    hkdescriptor.perp_2_axle_in_a_1.y,
+                    hkdescriptor.perp_2_axle_in_a_1.z)
                 # for hinge, take x to be the the axis of rotation
                 # (this corresponds with Blender's convention for hinges)
                 axis_x = Blender.Mathutils.Vector(
-                    hkdescriptor.axleA.x,
-                    hkdescriptor.axleA.y,
-                    hkdescriptor.axleA.z)
+                    hkdescriptor.axle_a.x,
+                    hkdescriptor.axle_a.y,
+                    hkdescriptor.axle_a.z)
                 # for hinge, z is the vector on the plane of rotation defining
                 # the positive direction of rotation
                 axis_z = Blender.Mathutils.Vector(
-                    hkdescriptor.perp2AxleInA2.x,
-                    hkdescriptor.perp2AxleInA2.y,
-                    hkdescriptor.perp2AxleInA2.z)
+                    hkdescriptor.perp_2_axle_in_a_2.x,
+                    hkdescriptor.perp_2_axle_in_a_2.y,
+                    hkdescriptor.perp_2_axle_in_a_2.z)
                 # they should form a orthogonal basis
                 if (Blender.Mathutils.CrossVecs(axis_x, axis_y)
                     - axis_z).length > 0.01:
@@ -3351,15 +3351,15 @@ X axis flipped in %s to fix orientation""" % hkdescriptor.__class__.__name__)
                 # for hinge, y is the vector on the plane of rotation defining
                 # the zero angle
                 axis_y = Blender.Mathutils.Vector(
-                    hkdescriptor.perp2AxleInA1.x,
-                    hkdescriptor.perp2AxleInA1.y,
-                    hkdescriptor.perp2AxleInA1.z)
+                    hkdescriptor.perp_2_axle_in_a_1.x,
+                    hkdescriptor.perp_2_axle_in_a_1.y,
+                    hkdescriptor.perp_2_axle_in_a_1.z)
                 # for hinge, z is the vector on the plane of rotation defining
                 # the positive direction of rotation
                 axis_z = Blender.Mathutils.Vector(
-                    hkdescriptor.perp2AxleInA2.x,
-                    hkdescriptor.perp2AxleInA2.y,
-                    hkdescriptor.perp2AxleInA2.z)
+                    hkdescriptor.perp_2_axle_in_a_2.x,
+                    hkdescriptor.perp_2_axle_in_a_2.y,
+                    hkdescriptor.perp_2_axle_in_a_2.z)
                 # take x to be the the axis of rotation
                 # (this corresponds with Blender's convention for hinges)
                 axis_x = Blender.Mathutils.CrossVecs(axis_y, axis_z)
@@ -3412,8 +3412,8 @@ X axis flipped in %s to fix orientation""" % hkdescriptor.__class__.__name__)
             # note that B' = X * B with X = self.bonesExtraMatrix[B]
             # so multiply with the inverse of X
             for niBone in self.bonesExtraMatrix:
-                if niBone.collisionObject \
-                   and niBone.collisionObject.body is hkbody:
+                if niBone.collision_object \
+                   and niBone.collision_object.body is hkbody:
                     transform = Blender.Mathutils.Matrix(
                         self.bonesExtraMatrix[niBone])
                     transform.invert()
@@ -3515,9 +3515,9 @@ X axis flipped in %s to fix orientation""" % hkdescriptor.__class__.__name__)
 
 
         # go over all controlled blocks
-        for controlledblock in kf_root.controlledBlocks:
+        for controlledblock in kf_root.controlled_blocks:
             # get the name
-            nodename = controlledblock.getNodeName()
+            nodename = controlledblock.get_node_name()
             # match from nif tree?
             node = root.find(block_name = nodename)
             if not node:
@@ -3526,7 +3526,7 @@ X axis flipped in %s to fix orientation""" % hkdescriptor.__class__.__name__)
                     % nodename)
                 continue
             # node found, now find the controller
-            controllertype = controlledblock.getControllerType()
+            controllertype = controlledblock.get_controller_type()
             if not controllertype:
                 self.logger.info(
                     "Animation for %s without controller type, so skipping"
@@ -3538,7 +3538,7 @@ X axis flipped in %s to fix orientation""" % hkdescriptor.__class__.__name__)
                                  % (nodename, controllertype))
                 controller = getattr(NifFormat, controllertype)()
                 # TODO set all the fields of this controller
-                node.addController(controller)
+                node.add_controller(controller)
             # yes! attach interpolator
             controller.interpolator = controlledblock.interpolator
             # in case of a NiTransformInterpolator without a data block
@@ -3556,16 +3556,16 @@ X axis flipped in %s to fix orientation""" % hkdescriptor.__class__.__name__)
                 # fill with info from interpolator
                 kfd = controller.interpolator.data
                 # copy rotation
-                kfd.numRotationKeys = 1
-                kfd.rotationType = NifFormat.KeyType.LINEAR_KEY
-                kfd.quaternionKeys.update_size()
-                kfd.quaternionKeys[0].time = 0.0
-                kfd.quaternionKeys[0].value.x = kfi.rotation.x
-                kfd.quaternionKeys[0].value.y = kfi.rotation.y
-                kfd.quaternionKeys[0].value.z = kfi.rotation.z
-                kfd.quaternionKeys[0].value.w = kfi.rotation.w
+                kfd.num_rotation_keys = 1
+                kfd.rotation_type = NifFormat.KeyType.LINEAR_KEY
+                kfd.quaternion_keys.update_size()
+                kfd.quaternion_keys[0].time = 0.0
+                kfd.quaternion_keys[0].value.x = kfi.rotation.x
+                kfd.quaternion_keys[0].value.y = kfi.rotation.y
+                kfd.quaternion_keys[0].value.z = kfi.rotation.z
+                kfd.quaternion_keys[0].value.w = kfi.rotation.w
                 # copy translation
-                kfd.translations.numKeys = 1
+                kfd.translations.num_keys = 1
                 kfd.translations.keys.update_size()
                 kfd.translations.keys[0].time = 0.0
                 kfd.translations.keys[0].value.x = kfi.translation.x

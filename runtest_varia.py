@@ -224,7 +224,7 @@ class VariaTestSuite(TestSuite):
         # check presence of the slots
         nif_textureset = nif_export.root_blocks[0].find(
             block_type = NifFormat.BSShaderTextureSet)
-        assert(nif_textureset.numTextures == 6)
+        assert(nif_textureset.num_textures == 6)
         assert(nif_textureset.textures[0] == "stub.dds")
         assert(nif_textureset.textures[1] == "stub_n.dds")
         assert(nif_textureset.textures[2] == "stub_g.dds")
@@ -274,8 +274,8 @@ class VariaTestSuite(TestSuite):
         assert(isinstance(xnif.roots[0], NifFormat.NiNode))
         assert(isinstance(xkf.roots[0], NifFormat.NiSequenceStreamHelper))
         # compare text keys
-        nif_textkeys = nif.roots[0].extraData
-        xkf_textkeys = xkf.roots[0].extraData
+        nif_textkeys = nif.roots[0].extra_data
+        xkf_textkeys = xkf.roots[0].extra_data
         assert(isinstance(nif_textkeys, NifFormat.NiTextKeyExtraData))
         assert(isinstance(xkf_textkeys, NifFormat.NiTextKeyExtraData))
         #assert(nif_textkeys == xkf_textkeys) # ... up to extra data chain
@@ -285,7 +285,7 @@ class VariaTestSuite(TestSuite):
             if ctrl.target is not None:
                 raise ValueError(
                     "NiKeyframeController target should be None in xkf")
-            ctrl = ctrl.nextController
+            ctrl = ctrl.next_controller
         # check controller flags
         check_ctrl_flags(xkf.roots[0])
 
@@ -294,10 +294,10 @@ class VariaTestSuite(TestSuite):
         def check_emit(nif):
             nif_mat = nif.root_blocks[0].find(
                 block_type = NifFormat.NiMaterialProperty)
-            self.assert_equal(nif_mat.emissiveColor.r, 0.123)
-            self.assert_equal(nif_mat.emissiveColor.g, 0.456)
-            self.assert_equal(nif_mat.emissiveColor.b, 0.789)
-            self.assert_equal(nif_mat.emitMulti, 3.82)
+            self.assert_equal(nif_mat.emissive_color.r, 0.123)
+            self.assert_equal(nif_mat.emissive_color.g, 0.456)
+            self.assert_equal(nif_mat.emissive_color.b, 0.789)
+            self.assert_equal(nif_mat.emit_multi, 3.82)
         
         # loading the test nif
         # (this nif has emit color 1,0,1 and emitmulti 3)
@@ -327,10 +327,10 @@ class VariaTestSuite(TestSuite):
         def check_emit2(nif):
             nif_mat = nif.root_blocks[0].find(
                 block_type = NifFormat.NiMaterialProperty)
-            self.assert_equal(nif_mat.emissiveColor.r, 0.0)
-            self.assert_equal(nif_mat.emissiveColor.g, 0.0)
-            self.assert_equal(nif_mat.emissiveColor.b, 0.0)
-            self.assert_equal(nif_mat.emitMulti, 1.0)
+            self.assert_equal(nif_mat.emissive_color.r, 0.0)
+            self.assert_equal(nif_mat.emissive_color.g, 0.0)
+            self.assert_equal(nif_mat.emissive_color.b, 0.0)
+            self.assert_equal(nif_mat.emit_multi, 1.0)
         
         # loading the test nif
         # (this nif has emit color 1,0,1 and emitmulti 3)
@@ -363,12 +363,12 @@ class VariaTestSuite(TestSuite):
             nif_node = nif.root_blocks[0].find(
                 block_type=NifFormat.NiTriBasedGeom)
             assert(nif_node.name.startswith("TestUVController"))
-            nif_uvctrl = nif_node.getControllers()[0]
+            nif_uvctrl = nif_node.get_controllers()[0]
             assert(nif_uvctrl)
             nif_uvdata = nif_uvctrl.data
             assert(nif_uvdata)
-            nif_ofsu = nif_uvdata.uvGroups[0]
-            assert(nif_ofsu.numKeys == 2)
+            nif_ofsu = nif_uvdata.uv_groups[0]
+            assert(nif_ofsu.num_keys == 2)
 
         # loading the test nif
         # (this nif has emit color 1,0,1 and emitmulti 3)

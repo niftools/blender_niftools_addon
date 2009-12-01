@@ -54,9 +54,9 @@ class TextKeyTestSuite(TestSuite):
         textkeys_export = nif_export.root_blocks[0].find(
             block_type = NifFormat.NiTextKeyExtraData)
 
-        if textkeys_import.numTextKeys != textkeys_export.numTextKeys:
+        if textkeys_import.num_text_keys != textkeys_export.num_text_keys:
             raise ValueError("number of text keys does not match")
-        for textkey_import, textkey_export in zip(textkeys_import.textKeys, textkeys_export.textKeys):
+        for textkey_import, textkey_export in zip(textkeys_import.text_keys, textkeys_export.text_keys):
             if abs(textkey_import.time - textkey_export.time) > 0.0001:
                 raise ValueError("key times do not match (%f != %f)"
                                  % (textkey_import.time, textkey_export.time))

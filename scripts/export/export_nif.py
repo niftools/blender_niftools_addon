@@ -68,7 +68,7 @@ class NifExportError(StandardError):
 # main export class
 class NifExport(NifImportExport):
     IDENTITY44 = NifFormat.Matrix44()
-    IDENTITY44.setIdentity()
+    IDENTITY44.set_identity()
     # map blending modes to apply modes
     APPLYMODE = {
         Blender.Texture.BlendModes["MIX"] : NifFormat.ApplyMode.APPLY_MODULATE,
@@ -444,17 +444,17 @@ Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
                             interp = self.createBlock("NiTransformInterpolator")
 
                             ctrl.interpolator = interp
-                            bone.addController(ctrl)
+                            bone.add_controller(ctrl)
 
                             ctrl.flags = 12
                             ctrl.frequency = 1.0
                             ctrl.phase = 0.0
-                            ctrl.startTime = self.FLOAT_MAX
-                            ctrl.stopTime = self.FLOAT_MIN
+                            ctrl.start_time = self.FLOAT_MAX
+                            ctrl.stop_time = self.FLOAT_MIN
                             interp.translation.x = bone.translation.x
                             interp.translation.y = bone.translation.y
                             interp.translation.z = bone.translation.z
-                            scale, quat = bone.rotation.getScaleQuat()
+                            scale, quat = bone.rotation.get_scale_quat()
                             interp.rotation.x = quat.x
                             interp.rotation.y = quat.y
                             interp.rotation.z = quat.z
@@ -485,17 +485,17 @@ Furniture marker has invalid number (%s). Name your file
                 # create furniture marker block
                 furnmark = self.createBlock("BSFurnitureMarker")
                 furnmark.name = "FRN"
-                furnmark.numPositions = 1
+                furnmark.num_positions = 1
                 furnmark.positions.update_size()
-                furnmark.positions[0].positionRef1 = furniturenumber
-                furnmark.positions[0].positionRef2 = furniturenumber
+                furnmark.positions[0].position_ref_1 = furniturenumber
+                furnmark.positions[0].position_ref_2 = furniturenumber
                 # create extra string data sgoKeep
                 sgokeep = self.createBlock("NiStringExtraData")
                 sgokeep.name = "UBP"
-                sgokeep.stringData = "sgoKeep"
+                sgokeep.string_data = "sgoKeep"
                 # add extra blocks
-                root_block.addExtraData(furnmark)
-                root_block.addExtraData(sgokeep)
+                root_block.add_extra_data(furnmark)
+                root_block.add_extra_data(sgokeep)
 
             self.logger.info("Checking collision")
             # activate oblivion/Fallout 3 collision and physics
@@ -509,14 +509,14 @@ Furniture marker has invalid number (%s). Name your file
                     # enable collision
                     bsx = self.createBlock("BSXFlags")
                     bsx.name = 'BSX'
-                    bsx.integerData = self.EXPORT_OB_BSXFLAGS
-                    root_block.addExtraData(bsx)
+                    bsx.integer_data = self.EXPORT_OB_BSXFLAGS
+                    root_block.add_extra_data(bsx)
                 # update rigid body center of gravity and mass
                 # first calculate distribution of mass
                 total_mass = 0
                 for block in self.blocks:
                     if isinstance(block, NifFormat.bhkRigidBody):
-                        block.updateMassCenterInertia(
+                        block.update_mass_center_inertia(
                             solid = self.EXPORT_OB_SOLID)
                         total_mass += block.mass
                         if total_mass == 0:
@@ -532,7 +532,7 @@ Furniture marker has invalid number (%s). Name your file
                         # lower bound on mass
                         if mass < 0.0001:
                             mass = 0.05
-                        block.updateMassCenterInertia(
+                        block.update_mass_center_inertia(
                             mass = mass,
                             solid = self.EXPORT_OB_SOLID)
 
@@ -540,8 +540,8 @@ Furniture marker has invalid number (%s). Name your file
                 # they do not seem to affect anything in the game
                 #upb = self.createBlock("NiStringExtraData")
                 #upb.name = 'UPB'
-                #upb.stringData = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
-                #root_block.addExtraData(upb)
+                #upb.string_data = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
+                #root_block.add_extra_data(upb)
 
             # export constraints
             for b_obj in self.getExportedObjects():
@@ -553,14 +553,14 @@ Furniture marker has invalid number (%s). Name your file
                     # add string extra data
                     prn = self.createBlock("NiStringExtraData")
                     prn.name = 'Prn'
-                    prn.stringData = {
+                    prn.string_data = {
                         "BACK": "BackWeapon",
                         "SIDE": "SideWeapon",
                         "QUIVER": "Quiver",
                         "SHIELD": "Bip01 L ForearmTwist",
                         "HELM": "Bip01 Head",
                         "RING": "Bip01 R Finger1"}[self.EXPORT_OB_PRN]
-                    root_block.addExtraData(prn)
+                    root_block.add_extra_data(prn)
 
             # add vertex color and zbuffer properties for civ4 and railroads
             if self.EXPORT_VERSION in ["Civilization IV",
@@ -575,11 +575,11 @@ Furniture marker has invalid number (%s). Name your file
                 skelroots = set()
                 affectedbones = []
                 for block in self.blocks:
-                    if isinstance(block, NifFormat.NiGeometry) and block.isSkin():
+                    if isinstance(block, NifFormat.NiGeometry) and block.is_skin():
                         self.logger.info("Flattening skin on geometry %s"
                                          % block.name)
-                        affectedbones.extend(block.flattenSkin())
-                        skelroots.add(block.skinInstance.skeletonRoot)
+                        affectedbones.extend(block.flatten_skin())
+                        skelroots.add(block.skin_instance.skeleton_root)
                 # remove NiNodes that do not affect skin
                 for skelroot in skelroots:
                     self.logger.info("Removing unused NiNodes in '%s'"
@@ -588,7 +588,7 @@ Furniture marker has invalid number (%s). Name your file
                                         if ((not isinstance(child,
                                                             NifFormat.NiNode))
                                             or (child in affectedbones))]
-                    skelroot.numChildren = len(skelrootchildren)
+                    skelroot.num_children = len(skelrootchildren)
                     skelroot.children.update_size()
                     for i, child in enumerate(skelrootchildren):
                         skelroot.children[i] = child
@@ -611,14 +611,14 @@ Furniture marker has invalid number (%s). Name your file
                 for block in self.blocks:
                     if isinstance(block, NifFormat.bhkMoppBvTreeShape):
                        self.logger.info("Generating mopp...")
-                       block.updateMopp()
+                       block.update_mopp()
                        #print "=== DEBUG: MOPP TREE ==="
-                       #block.parseMopp(verbose = True)
+                       #block.parse_mopp(verbose = True)
                        #print "=== END OF MOPP TREE ==="
 
             # delete original scene root if a scene root object was already
             # defined
-            if ((root_block.numChildren == 1)
+            if ((root_block.num_children == 1)
                 and (root_block.children[0].name in ['Scene Root', 'Bip01'])):
                 self.logger.info(
                     "Making '%s' the root block" % root_block.children[0].name)
@@ -628,17 +628,17 @@ Furniture marker has invalid number (%s). Name your file
                 old_root_block = root_block
                 root_block = old_root_block.children[0]
                 # copy extra data and properties
-                for extra in old_root_block.getExtraDatas():
+                for extra in old_root_block.get_extra_datas():
                     # delete links in extras to avoid parentship problems
-                    extra.nextExtraData = None
+                    extra.next_extra_data = None
                     # now add it
-                    root_block.addExtraData(extra)
-                for b in old_root_block.getControllers():
-                    root_block.addController(b)
+                    root_block.add_extra_data(extra)
+                for b in old_root_block.get_controllers():
+                    root_block.add_controller(b)
                 for b in old_root_block.properties:
-                    root_block.addProperty(b)
+                    root_block.add_property(b)
                 for b in old_root_block.effects:
-                    root_block.addEffect(b)
+                    root_block.add_effect(b)
             else:
                 root_block.name = root_name
 
@@ -700,7 +700,7 @@ Furniture marker has invalid number (%s). Name your file
                     if not isinstance(node, NifFormat.NiAVObject):
                         continue
                     # get list of all controllers for this node
-                    ctrls = node.getControllers()
+                    ctrls = node.get_controllers()
                     for ctrl in ctrls:
                         if self.EXPORT_VERSION == "Morrowind":
                             # morrowind: only keyframe controllers
@@ -714,22 +714,22 @@ Furniture marker has invalid number (%s). Name your file
                 if self.EXPORT_VERSION == "Morrowind":
                     # create kf root header
                     kf_root = self.createBlock("NiSequenceStreamHelper")
-                    kf_root.addExtraData(anim_textextra)
+                    kf_root.add_extra_data(anim_textextra)
                     # reparent controller tree
                     for node, ctrls in node_kfctrls.iteritems():
                         for ctrl in ctrls:
                             # create node reference by name
                             nodename_extra = self.createBlock(
                                 "NiStringExtraData")
-                            nodename_extra.bytesRemaining = len(node.name) + 4
-                            nodename_extra.stringData = node.name
+                            nodename_extra.bytes_remaining = len(node.name) + 4
+                            nodename_extra.string_data = node.name
 
                             # break the controller chain
-                            ctrl.nextController = None
+                            ctrl.next_controller = None
 
                             # add node reference and controller
-                            kf_root.addExtraData(nodename_extra)
-                            kf_root.addController(ctrl)
+                            kf_root.add_extra_data(nodename_extra)
+                            kf_root.add_controller(ctrl)
                             # wipe controller target
                             ctrl.target = None
                 # oblivion
@@ -741,21 +741,21 @@ Furniture marker has invalid number (%s). Name your file
                         kf_root.name = self.EXPORT_ANIMSEQUENCENAME
                     else:
                         kf_root.name = self.filebase
-                    kf_root.unknownInt1 = 1
+                    kf_root.unknown_int_1 = 1
                     kf_root.weight = 1.0
-                    kf_root.textKeys = anim_textextra
-                    kf_root.cycleType = NifFormat.CycleType.CYCLE_CLAMP
+                    kf_root.text_keys = anim_textextra
+                    kf_root.cycle_type = NifFormat.CycleType.CYCLE_CLAMP
                     kf_root.frequency = 1.0
-                    kf_root.startTime =(self.fstart - 1) * self.fspeed
-                    kf_root.stopTime = (self.fend - self.fstart) * self.fspeed
+                    kf_root.start_time =(self.fstart - 1) * self.fspeed
+                    kf_root.stop_time = (self.fend - self.fstart) * self.fspeed
                     # quick hack to set correct target name
                     if "Bip01" in [node.name for
                                    node in node_kfctrls.iterkeys()]:
                         targetname = "Bip01"
                     else:
                         targetname = root_block.name
-                    kf_root.targetName = targetname
-                    kf_root.stringPalette = NifFormat.NiStringPalette()
+                    kf_root.target_name = targetname
+                    kf_root.string_palette = NifFormat.NiStringPalette()
                     for node, ctrls \
                         in izip(node_kfctrls.iterkeys(),
                                 node_kfctrls.itervalues()):
@@ -769,20 +769,20 @@ Furniture marker has invalid number (%s). Name your file
                                 interpolators = ctrl.interpolators
                             if isinstance(ctrl,
                                           NifFormat.NiGeomMorpherController):
-                                variable2s = [morph.frameName
+                                variable_2s = [morph.frame_name
                                               for morph in ctrl.data.morphs]
                             else:
-                                variable2s = [None
+                                variable_2s = [None
                                               for interpolator in interpolators]
-                            for interpolator, variable2 in izip(interpolators,
-                                                                variable2s):
+                            for interpolator, variable_2 in izip(interpolators,
+                                                                variable_2s):
                                 # create ControlledLink for each
                                 # interpolator
-                                controlledblock = kf_root.addControlledBlock()
+                                controlledblock = kf_root.add_controlled_block()
                                 if self.version < 0x0A020000:
                                     # older versions need the actual controller
                                     # blocks
-                                    controlledblock.targetName = node.name
+                                    controlledblock.target_name = node.name
                                     controlledblock.controller = ctrl
                                     # erase reference to target node
                                     ctrl.target = None
@@ -803,11 +803,11 @@ Furniture marker has invalid number (%s). Name your file
                                 controlledblock.priority = priority
                                 # set palette, and node and controller type
                                 # names, and variables
-                                controlledblock.stringPalette = kf_root.stringPalette
-                                controlledblock.setNodeName(node.name)
-                                controlledblock.setControllerType(ctrl.__class__.__name__)
-                                if variable2:
-                                    controlledblock.setVariable2(variable2)
+                                controlledblock.string_palette = kf_root.string_palette
+                                controlledblock.set_node_name(node.name)
+                                controlledblock.set_controller_type(ctrl.__class__.__name__)
+                                if variable_2:
+                                    controlledblock.set_variable_2(variable_2)
                 else:
                     raise NifExportError("""\
 Keyframe export for '%s' is not supported. Only Morrowind, Oblivion, Fallout 3,
@@ -843,20 +843,20 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
                     # remove references to keyframe controllers from node
                     # (for xnif)
                     while isinstance(node.controller, NifFormat.NiKeyframeController):
-                        node.controller = node.controller.nextController
+                        node.controller = node.controller.next_controller
                     ctrl = node.controller
                     while ctrl:
-                        if isinstance(ctrl.nextController,
+                        if isinstance(ctrl.next_controller,
                                       NifFormat.NiKeyframeController):
-                            ctrl.nextController = ctrl.nextController.nextController
+                            ctrl.next_controller = ctrl.next_controller.next_controller
                         else:
-                            ctrl = ctrl.nextController
+                            ctrl = ctrl.next_controller
 
                 self.logger.info("Detaching animation text keys from nif")
                 # detach animation text keys
-                if root_block.extraData is not anim_textextra:
+                if root_block.extra_data is not anim_textextra:
                     raise RuntimeError("Oops, you found a bug! Animation extra data wasn't where expected...")
-                root_block.extraData = None
+                root_block.extra_data = None
 
                 prefix = "x" # we are in morrowind 'nifxnifkf mode'
                 ext = ".nif"
@@ -951,7 +951,7 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
                 # -> root collision node (can be mesh or empty)
                 ob.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
                 ob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
-                ob.drawMode = Blender.Object.DrawModes['WIRE']
+                ob.draw_mode = Blender.Object.DrawModes['WIRE']
                 self.exportCollision(ob, parent_block)
                 return None # done; stop here
             elif ob_type == 'Mesh' and ob.name.lower()[:7] == 'bsbound':
@@ -1010,7 +1010,7 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
 
         # make it child of its parent in the nif, if it has one
         if parent_block:
-            parent_block.addChild(node)
+            parent_block.add_child(node)
 
         # and fill in this node's non-trivial values
         node.name = self.getFullName(node_name)
@@ -1116,7 +1116,7 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
             kfc.interpolator = kfi
             # set interpolator default data
             scale, quat, trans = \
-                parent_block.getTransform().getScaleQuatTranslation()
+                parent_block.get_transform().get_scale_quat_translation()
             kfi.translation.x = trans.x
             kfi.translation.y = trans.y
             kfi.translation.z = trans.z
@@ -1126,7 +1126,7 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
             kfi.rotation.w = quat.w
             kfi.scale = scale
 
-        parent_block.addController(kfc)
+        parent_block.add_controller(kfc)
 
         # determine cycle mode for this controller
         # this is stored in the blender ipo curves
@@ -1149,8 +1149,8 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
         kfc.flags = 8 + self.get_flags_from_extend(extend)
         kfc.frequency = 1.0
         kfc.phase = 0.0
-        kfc.startTime = (self.fstart - 1) * self.fspeed
-        kfc.stopTime = (self.fend - self.fstart) * self.fspeed
+        kfc.start_time = (self.fstart - 1) * self.fspeed
+        kfc.stop_time = (self.fend - self.fstart) * self.fspeed
 
         if self.EXPORT_ANIMATION == 1:
             # keyframe data is not present in geometry files
@@ -1339,23 +1339,23 @@ missing curves in %s; insert %s key at frame 1 and try again"""
             and isinstance(rot_curve.values()[0],
                            Blender.Mathutils.Euler().__class__)):
             # eulers
-            kfd.rotationType = NifFormat.KeyType.XYZ_ROTATION_KEY
-            kfd.numRotationKeys = 1 # *NOT* len(frames) this crashes the engine!
-            kfd.xyzRotations[0].numKeys = len(frames)
-            kfd.xyzRotations[1].numKeys = len(frames)
-            kfd.xyzRotations[2].numKeys = len(frames)
+            kfd.rotation_type = NifFormat.KeyType.XYZ_ROTATION_KEY
+            kfd.num_rotation_keys = 1 # *NOT* len(frames) this crashes the engine!
+            kfd.xyz_rotations[0].num_keys = len(frames)
+            kfd.xyz_rotations[1].num_keys = len(frames)
+            kfd.xyz_rotations[2].num_keys = len(frames)
             # XXX todo: quadratic interpolation?
-            kfd.xyzRotations[0].interpolation = NifFormat.KeyType.LINEAR_KEY
-            kfd.xyzRotations[1].interpolation = NifFormat.KeyType.LINEAR_KEY
-            kfd.xyzRotations[2].interpolation = NifFormat.KeyType.LINEAR_KEY
-            kfd.xyzRotations[0].keys.update_size()
-            kfd.xyzRotations[1].keys.update_size()
-            kfd.xyzRotations[2].keys.update_size()
+            kfd.xyz_rotations[0].interpolation = NifFormat.KeyType.LINEAR_KEY
+            kfd.xyz_rotations[1].interpolation = NifFormat.KeyType.LINEAR_KEY
+            kfd.xyz_rotations[2].interpolation = NifFormat.KeyType.LINEAR_KEY
+            kfd.xyz_rotations[0].keys.update_size()
+            kfd.xyz_rotations[1].keys.update_size()
+            kfd.xyz_rotations[2].keys.update_size()
             for i, frame in enumerate(frames):
                 # XXX todo: speed up by not recalculating stuff
-                rot_frame_x = kfd.xyzRotations[0].keys[i]
-                rot_frame_y = kfd.xyzRotations[1].keys[i]
-                rot_frame_z = kfd.xyzRotations[2].keys[i]
+                rot_frame_x = kfd.xyz_rotations[0].keys[i]
+                rot_frame_y = kfd.xyz_rotations[1].keys[i]
+                rot_frame_z = kfd.xyz_rotations[2].keys[i]
                 rot_frame_x.time = (frame - 1) * self.fspeed
                 rot_frame_y.time = (frame - 1) * self.fspeed
                 rot_frame_z.time = (frame - 1) * self.fspeed
@@ -1365,11 +1365,11 @@ missing curves in %s; insert %s key at frame 1 and try again"""
         else:
             # quaternions
             # XXX todo: quadratic interpolation?
-            kfd.rotationType = NifFormat.KeyType.LINEAR_KEY
-            kfd.numRotationKeys = len(frames)
-            kfd.quaternionKeys.update_size()
+            kfd.rotation_type = NifFormat.KeyType.LINEAR_KEY
+            kfd.num_rotation_keys = len(frames)
+            kfd.quaternion_keys.update_size()
             for i, frame in enumerate(frames):
-                rot_frame = kfd.quaternionKeys[i]
+                rot_frame = kfd.quaternion_keys[i]
                 rot_frame.time = (frame - 1) * self.fspeed
                 rot_frame.value.w = rot_curve[frame].w
                 rot_frame.value.x = rot_curve[frame].x
@@ -1379,7 +1379,7 @@ missing curves in %s; insert %s key at frame 1 and try again"""
         frames = trans_curve.keys()
         frames.sort()
         kfd.translations.interpolation = NifFormat.KeyType.LINEAR_KEY
-        kfd.translations.numKeys = len(frames)
+        kfd.translations.num_keys = len(frames)
         kfd.translations.keys.update_size()
         for i, frame in enumerate(frames):
             trans_frame = kfd.translations.keys[i]
@@ -1391,7 +1391,7 @@ missing curves in %s; insert %s key at frame 1 and try again"""
         frames = scale_curve.keys()
         frames.sort()
         kfd.scales.interpolation = NifFormat.KeyType.LINEAR_KEY
-        kfd.scales.numKeys = len(frames)
+        kfd.scales.num_keys = len(frames)
         kfd.scales.keys.update_size()
         for i, frame in enumerate(frames):
             scale_frame = kfd.scales.keys[i]
@@ -1406,20 +1406,20 @@ missing curves in %s; insert %s key at frame 1 and try again"""
 
         @param block_parent: The block to which to attach the new property.
         @param flags: The C{flags} of the new property.
-        @param vertex_mode: The C{vertexMode} of the new property.
-        @param lighting_mode: The C{lightingMode} of the new property.
+        @param vertex_mode: The C{vertex_mode} of the new property.
+        @param lighting_mode: The C{lighting_mode} of the new property.
         @return: The new property block.
         """
         # create new vertex color property block
         vcolprop = self.createBlock("NiVertexColorProperty")
         
         # make it a property of the parent
-        block_parent.addProperty(vcolprop)
+        block_parent.add_property(vcolprop)
 
         # and now export the parameters
         vcolprop.flags = flags
-        vcolprop.vertexMode = vertex_mode
-        vcolprop.lightingMode = lighting_mode
+        vcolprop.vertex_mode = vertex_mode
+        vcolprop.lighting_mode = lighting_mode
 
         return vcolprop
 
@@ -1437,7 +1437,7 @@ missing curves in %s; insert %s key at frame 1 and try again"""
         zbuf = self.createBlock("NiZBufferProperty")
 
         # make it a property of the parent
-        block_parent.addProperty(zbuf)
+        block_parent.add_property(zbuf)
 
         # and now export the parameters
         zbuf.flags = 15
@@ -1494,12 +1494,12 @@ missing curves in %s; insert %s key at frame 1 and try again"""
         # add a NiTextKeyExtraData block, and refer to this block in the
         # parent node (we choose the root block)
         textextra = self.createBlock("NiTextKeyExtraData", animtxt)
-        block_parent.addExtraData(textextra)
+        block_parent.add_extra_data(textextra)
         
         # create a text key for each frame descriptor
-        textextra.numTextKeys = len(flist)
-        textextra.textKeys.update_size()
-        for i, key in enumerate(textextra.textKeys):
+        textextra.num_text_keys = len(flist)
+        textextra.text_keys.update_size()
+        for i, key in enumerate(textextra.text_keys):
             key.time = self.fspeed * (flist[i]-1)
             key.value = dlist[i]
 
@@ -1575,12 +1575,12 @@ missing curves in %s; insert %s key at frame 1 and try again"""
         
         # create NiSourceTexture
         srctex = NifFormat.NiSourceTexture()
-        srctex.useExternal = True
+        srctex.use_external = True
         if not filename is None:
             # preset filename
-            srctex.fileName = filename
+            srctex.file_name = filename
         elif not texture is None:
-            srctex.fileName = self.exportTextureFilename(texture)
+            srctex.file_name = self.exportTextureFilename(texture)
         else:
             # this probably should not happen
             logger.warning(
@@ -1588,12 +1588,12 @@ missing curves in %s; insert %s key at frame 1 and try again"""
 
         # fill in default values (TODO: can we use 6 for everything?)
         if self.version >= 0x0a000100:
-            srctex.pixelLayout = 6
+            srctex.pixel_layout = 6
         else:
-            srctex.pixelLayout = 5
-        srctex.useMipmaps = 1
-        srctex.alphaFormat = 3
-        srctex.unknownByte = 1
+            srctex.pixel_layout = 5
+        srctex.use_mipmaps = 1
+        srctex.alpha_format = 3
+        srctex.unknown_byte = 1
 
         # search for duplicate
         for block in self.blocks:
@@ -1622,26 +1622,26 @@ missing curves in %s; insert %s key at frame 1 and try again"""
 
         # create a NiFlipController
         flip = self.createBlock("NiFlipController", fliptxt)
-        target.addController(flip)
+        target.add_controller(flip)
 
         # fill in NiFlipController's values
         flip.flags = 0x0008
         flip.frequency = 1.0
-        flip.startTime = (self.fstart - 1) * self.fspeed
-        flip.stopTime = ( self.fend - self.fstart ) * self.fspeed
-        flip.textureSlot = target_tex
+        flip.start_time = (self.fstart - 1) * self.fspeed
+        flip.stop_time = ( self.fend - self.fstart ) * self.fspeed
+        flip.texture_slot = target_tex
         count = 0
         for t in tlist:
             if len( t ) == 0: continue  # skip empty lines
             # create a NiSourceTexture for each flip
             tex = self.exportSourceTexture(texture, t)
-            flip.numSources += 1
+            flip.num_sources += 1
             flip.sources.update_size()
-            flip.sources[flip.numSources-1] = tex
+            flip.sources[flip.num_sources-1] = tex
             count += 1
         if count < 2:
             raise NifExportError("Error in Texture Flip buffer '%s': Must define at least two textures"%fliptxt.getName())
-        flip.delta = (flip.stopTime - flip.startTime) / count
+        flip.delta = (flip.stop_time - flip.start_time) / count
 
 
 
@@ -1709,7 +1709,7 @@ missing curves in %s; insert %s key at frame 1 and try again"""
                 # for non-textured materials, vertex colors are used to color
                 # the mesh
                 # for textured materials, they represent lighting details
-                mesh_hasvcol = mesh.vertexColors
+                mesh_hasvcol = mesh.vertex_colors
                 # read the Blender Python API documentation to understand this hack
                 mesh_mat_ambient = mesh_mat.getAmb()            # 'Amb' scrollbar in blender (MW -> 1.0 1.0 1.0)
                 mesh_mat_diffuse_color = mesh_mat.getRGBCol()   # 'Col' colour in Blender (MW -> 1.0 1.0 1.0)
@@ -1956,7 +1956,7 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                         
                     vertquad = ( fv, fuv, fn, fcol )
 
-                    # do we already have this quad? (optimized by m4444x)
+                    # do we already have this quad? (optimized by m_4444x)
                     f_index[i] = len(vertquad_list)
                     v_index = f.v[i].index
                     if vertmap[v_index]:
@@ -2049,7 +2049,7 @@ they can easily be identified." % ob)
                 raise NifExportError(
                     'ERROR%t|Too many faces. Decimate your mesh and try again.')
             if len(vertlist) == 0:
-                continue # m4444x: skip 'empty' material indices
+                continue # m_4444x: skip 'empty' material indices
             
             # note: we can be in any of the following five situations
             # material + base texture        -> normal object
@@ -2069,21 +2069,21 @@ they can easily be identified." % ob)
             if self.EXPORT_VERSION == "Morrowind" and mesh_texeff_mtex:
                 # create a new parent block for this shape
                 extra_node = self.createBlock("NiNode", mesh_texeff_mtex)
-                parent_block.addChild(extra_node)
+                parent_block.add_child(extra_node)
                 # set default values for this ninode
-                extra_node.rotation.setIdentity()
+                extra_node.rotation.set_identity()
                 extra_node.scale = 1.0
                 extra_node.flags = 0x000C # morrowind
                 # create texture effect block and parent the
                 # texture effect and trishape to it
                 texeff = self.exportTextureEffect(mesh_texeff_mtex)
-                extra_node.addChild(texeff)
-                extra_node.addChild(trishape)
-                extra_node.addEffect(texeff)
+                extra_node.add_child(texeff)
+                extra_node.add_child(trishape)
+                extra_node.add_effect(texeff)
             else:
                 # refer to this block in the parent's
                 # children list
-                parent_block.addChild(trishape)
+                parent_block.add_child(trishape)
             
             # fill in the NiTriShape's non-trivial values
             if isinstance(parent_block, NifFormat.RootCollisionNode):
@@ -2114,16 +2114,16 @@ they can easily be identified." % ob)
 
             # extra shader for Sid Meier's Railroads
             if self.EXPORT_VERSION == "Sid Meier's Railroads":
-                trishape.hasShader = True
-                trishape.shaderName = "RRT_NormalMap_Spec_Env_CubeLight"
-                trishape.unknownInteger = -1 # default
+                trishape.has_shader = True
+                trishape.shader_name = "RRT_NormalMap_Spec_Env_CubeLight"
+                trishape.unknown_integer = -1 # default
 
             self.exportMatrix(ob, space, trishape)
             
             if mesh_base_mtex or mesh_glow_mtex:
                 # add NiTriShape's texturing property
                 if self.EXPORT_VERSION == "Fallout 3":
-                    trishape.addProperty(self.exportBSShaderProperty(
+                    trishape.add_property(self.exportBSShaderProperty(
                         basemtex = mesh_base_mtex,
                         glowmtex = mesh_glow_mtex,
                         bumpmtex = mesh_bump_mtex))
@@ -2136,7 +2136,7 @@ they can easily be identified." % ob)
                         # sid meier's railroad and civ4:
                         # set shader slots in extra data
                         self.addShaderIntegerExtraDatas(trishape)
-                    trishape.addProperty(self.exportTexturingProperty(
+                    trishape.add_property(self.exportTexturingProperty(
                         flags=0x0001, # standard
                         applymode=self.APPLYMODE[mesh_base_mtex.blendmode if mesh_base_mtex else Blender.Texture.BlendModes["MIX"]],
                         uvlayers=mesh_uvlayers,
@@ -2157,17 +2157,17 @@ they can easily be identified." % ob)
                 else:
                     alphaflags = 0x12ED
                     alphathreshold = 0
-                trishape.addProperty(
+                trishape.add_property(
                     self.exportAlphaProperty(flags=alphaflags,
                                              threshold=alphathreshold))
 
             if mesh_haswire:
                 # add NiWireframeProperty
-                trishape.addProperty(self.exportWireframeProperty(flags=1))
+                trishape.add_property(self.exportWireframeProperty(flags=1))
 
             if mesh_doublesided:
                 # add NiStencilProperty
-                trishape.addProperty(self.exportStencilProperty())
+                trishape.add_property(self.exportStencilProperty())
 
             if mesh_mat:
                 # add NiTriShape's specular property
@@ -2177,7 +2177,7 @@ they can easily be identified." % ob)
                     and (self.EXPORT_VERSION
                          not in self.USED_EXTRA_SHADER_TEXTURES)):
                     # refer to the specular property in the trishape block
-                    trishape.addProperty(
+                    trishape.add_property(
                         self.exportSpecularProperty(flags=0x0001))
                 
                 # add NiTriShape's material property
@@ -2193,7 +2193,7 @@ they can easily be identified." % ob)
                     emitmulti=mesh_mat_emitmulti)
                 
                 # refer to the material property in the trishape block
-                trishape.addProperty(trimatprop)
+                trishape.add_property(trimatprop)
 
 
                 # material animation
@@ -2216,7 +2216,7 @@ they can easily be identified." % ob)
                     alphad = self.createBlock("NiFloatData", ipo)
                     alphai = self.createBlock("NiFloatInterpolator", ipo)
 
-                    trimatprop.addController(alphac)
+                    trimatprop.add_controller(alphac)
                     alphac.interpolator = alphai
                     alphac.data = alphad
                     alphai.data = alphad
@@ -2233,8 +2233,8 @@ they can easily be identified." % ob)
                     # fill in timing values
                     alphac.frequency = 1.0
                     alphac.phase = 0.0
-                    alphac.startTime = (self.fstart - 1) * self.fspeed
-                    alphac.stopTime = (self.fend - self.fstart) * self.fspeed
+                    alphac.start_time = (self.fstart - 1) * self.fspeed
+                    alphac.stop_time = (self.fend - self.fstart) * self.fspeed
 
                     # select interpolation mode and export the alpha curve data
                     if ( a_curve.getInterpolation() == "Linear" ):
@@ -2244,7 +2244,7 @@ they can easily be identified." % ob)
                     else:
                         raise NifExportError( 'interpolation %s for alpha curve not supported use linear or bezier instead'%a_curve.getInterpolation() )
 
-                    alphad.data.numKeys = len(alpha)
+                    alphad.data.num_keys = len(alpha)
                     alphad.data.keys.update_size()
                     for ftime, key in zip(sorted(alpha), alphad.data.keys):
                         key.time = ftime
@@ -2264,21 +2264,21 @@ they can easily be identified." % ob)
             trishape.data = tridata
 
             # flags
-            tridata.consistencyFlags = NifFormat.ConsistencyType.CT_STATIC
+            tridata.consistency_flags = NifFormat.ConsistencyType.CT_STATIC
 
             # data
 
-            tridata.numVertices = len(vertlist)
-            tridata.hasVertices = True
+            tridata.num_vertices = len(vertlist)
+            tridata.has_vertices = True
             tridata.vertices.update_size()
             for i, v in enumerate(tridata.vertices):
                 v.x = vertlist[i][0]
                 v.y = vertlist[i][1]
                 v.z = vertlist[i][2]
-            tridata.updateCenterRadius()
+            tridata.update_center_radius()
             
             if mesh_hasnormals:
-                tridata.hasNormals = True
+                tridata.has_normals = True
                 tridata.normals.update_size()
                 for i, v in enumerate(tridata.normals):
                     v.x = normlist[i][0]
@@ -2286,31 +2286,31 @@ they can easily be identified." % ob)
                     v.z = normlist[i][2]
                 
             if mesh_hasvcol:
-                tridata.hasVertexColors = True
-                tridata.vertexColors.update_size()
-                for i, v in enumerate(tridata.vertexColors):
+                tridata.has_vertex_colors = True
+                tridata.vertex_colors.update_size()
+                for i, v in enumerate(tridata.vertex_colors):
                     v.r = vcollist[i].r / 255.0
                     v.g = vcollist[i].g / 255.0
                     v.b = vcollist[i].b / 255.0
                     v.a = vcollist[i].a / 255.0
 
             if mesh_uvlayers:
-                tridata.numUvSets = len(mesh_uvlayers)
-                tridata.bsNumUvSets = len(mesh_uvlayers)
+                tridata.num_uv_sets = len(mesh_uvlayers)
+                tridata.bs_num_uv_sets = len(mesh_uvlayers)
                 if self.EXPORT_VERSION == "Fallout 3":
                     if len(mesh_uvlayers) > 1:
                         raise NifExportError(
                             "Fallout 3 does not support multiple UV layers")
-                tridata.hasUv = True
-                tridata.uvSets.update_size()
+                tridata.has_uv = True
+                tridata.uv_sets.update_size()
                 for j, uvlayer in enumerate(mesh_uvlayers):
-                    for i, uv in enumerate(tridata.uvSets[j]):
+                    for i, uv in enumerate(tridata.uv_sets[j]):
                         uv.u = uvlist[i][j][0]
                         uv.v = 1.0 - uvlist[i][j][1] # opengl standard
 
             # set triangles
             # stitch strips for civ4
-            tridata.setTriangles(trilist,
+            tridata.set_triangles(trilist,
                                  stitchstrips=self.EXPORT_STITCHSTRIPS)
 
             # update tangent space (as binary extra data only for Oblivion)
@@ -2321,7 +2321,7 @@ they can easily be identified." % ob)
                 if (self.EXPORT_VERSION in ("Oblivion", "Fallout 3")
                     or (self.EXPORT_VERSION in self.USED_EXTRA_SHADER_TEXTURES
                         and self.EXPORT_EXTRA_SHADER_TEXTURES)):
-                    trishape.updateTangentSpace(
+                    trishape.update_tangent_space(
                         as_extra=(self.EXPORT_VERSION == "Oblivion"))
 
             # now export the vertex weights, if there are any
@@ -2345,11 +2345,11 @@ they can easily be identified." % ob)
                             skininst = self.createBlock("BSDismemberSkinInstance", ob)
                         else:
                             skininst = self.createBlock("NiSkinInstance", ob)
-                        trishape.skinInstance = skininst
+                        trishape.skin_instance = skininst
                         for block in self.blocks:
                             if isinstance(block, NifFormat.NiNode):
                                 if block.name == self.getFullName(armaturename):
-                                    skininst.skeletonRoot = block
+                                    skininst.skeleton_root = block
                                     break
                         else:
                             raise NifExportError(
@@ -2359,11 +2359,11 @@ they can easily be identified." % ob)
                         skindata = self.createBlock("NiSkinData", ob)
                         skininst.data = skindata
             
-                        skindata.hasVertexWeights = True
+                        skindata.has_vertex_weights = True
                         # fix geometry rest pose: transform relative to
                         # skeleton root
-                        skindata.setTransform(
-                            self.getObjectMatrix(ob, 'localspace').getInverse())
+                        skindata.set_transform(
+                            self.getObjectMatrix(ob, 'localspace').get_inverse())
             
                         # add vertex weights
                         # first find weights and normalization factors
@@ -2425,7 +2425,7 @@ parent all meshes to a single armature and try again""" % bone)
                             # add bone as influence, but only if there were
                             # actually any vertices influenced by the bone
                             if vert_weights:
-                                trishape.addBone(bone_block, vert_weights)
+                                trishape.add_bone(bone_block, vert_weights)
             
                         # each vertex must have been assigned to at least one
                         # vertex group
@@ -2456,16 +2456,16 @@ unweighted vertices. The unweighted vertices have been selected in the mesh so \
 they can easily be identified.")
 
                         # update bind position skinning data
-                        trishape.updateBindPosition()
+                        trishape.update_bind_position()
 
                         # calculate center and radius for each skin bone data
                         # block
-                        trishape.updateSkinCenterRadius()
+                        trishape.update_skin_center_radius()
 
                         if (self.version >= 0x04020100
                             and self.EXPORT_SKINPARTITION):
                             self.logger.info("Creating skin partition")
-                            lostweight = trishape.updateSkinPartition(
+                            lostweight = trishape.update_skin_partition(
                                 maxbonesperpartition=self.EXPORT_BONESPERPARTITION,
                                 maxbonespervertex=self.EXPORT_BONESPERVERTEX,
                                 stripify=self.EXPORT_STRIPIFY,
@@ -2513,7 +2513,7 @@ they can easily be identified.")
                         # create geometry morph controller
                         morphctrl = self.createBlock("NiGeomMorpherController",
                                                      keyipo)
-                        trishape.addController(morphctrl)
+                        trishape.add_controller(morphctrl)
                         morphctrl.target = trishape
                         morphctrl.frequency = 1.0
                         morphctrl.phase = 0.0
@@ -2524,27 +2524,27 @@ they can easily be identified.")
                         # create geometry morph data
                         morphdata = self.createBlock("NiMorphData", keyipo)
                         morphctrl.data = morphdata
-                        morphdata.numMorphs = len(key.blocks)
-                        morphdata.numVertices = len(vertlist)
+                        morphdata.num_morphs = len(key.blocks)
+                        morphdata.num_vertices = len(vertlist)
                         morphdata.morphs.update_size()
                         
 
                         # create interpolators (for newer nif versions)
-                        morphctrl.numInterpolators = len(key.blocks)
+                        morphctrl.num_interpolators = len(key.blocks)
                         morphctrl.interpolators.update_size()
 
                         # XXX some unknowns, bethesda only
                         # XXX just guessing here, data seems to be zero always
-                        morphctrl.numUnknownInts = len(key.blocks)
-                        morphctrl.unknownInts.update_size()
+                        morphctrl.num_unknown_ints = len(key.blocks)
+                        morphctrl.unknown_ints.update_size()
 
                         for keyblocknum, keyblock in enumerate(key.blocks):
                             # export morphed vertices
                             morph = morphdata.morphs[keyblocknum]
-                            morph.frameName = keyblock.name
+                            morph.frame_name = keyblock.name
                             self.logger.info("Exporting morph %s: vertices"
                                              % keyblock.name)
-                            morph.arg = morphdata.numVertices
+                            morph.arg = morphdata.num_vertices
                             morph.vectors.update_size()
                             for b_v_index, (vert_indices, vert) \
                                 in enumerate(zip(vertmap, keyblock.data)):
@@ -2592,10 +2592,10 @@ they can easily be identified.")
                                 elif curve.getExtrapolation() == "Cyclic":
                                     ctrlFlags = 0x0008
                                 morph.interpolation = NifFormat.KeyType.LINEAR_KEY
-                                morph.numKeys = len(curve.getPoints())
+                                morph.num_keys = len(curve.getPoints())
                                 morph.keys.update_size()
                                 floatdata.interpolation = NifFormat.KeyType.LINEAR_KEY
-                                floatdata.numKeys = len(curve.getPoints())
+                                floatdata.num_keys = len(curve.getPoints())
                                 floatdata.keys.update_size()
                                 for i, btriple in enumerate(curve.getPoints()):
                                     knot = btriple.getPoints()
@@ -2612,8 +2612,8 @@ they can easily be identified.")
                                     ctrlStart = min(ctrlStart, morph.keys[i].time)
                                     ctrlStop  = max(ctrlStop,  morph.keys[i].time)
                         morphctrl.flags = ctrlFlags
-                        morphctrl.startTime = ctrlStart
-                        morphctrl.stopTime = ctrlStop
+                        morphctrl.start_time = ctrlStart
+                        morphctrl.stop_time = ctrlStop
 
 
 
@@ -2642,11 +2642,11 @@ they can easily be identified.")
         n_times = [] # track all times (used later in start time and end time)
         b_channels = (Blender.Ipo.MA_OFSX, Blender.Ipo.MA_OFSY,
                       Blender.Ipo.MA_SIZEX, Blender.Ipo.MA_SIZEY)
-        for b_channel, n_uvgroup in zip(b_channels, n_uvdata.uvGroups):
+        for b_channel, n_uvgroup in zip(b_channels, n_uvdata.uv_groups):
             b_curve = b_ipo[b_channel]
             if b_curve:
                 self.logger.info("Exporting %s as NiUVData" % b_curve)
-                n_uvgroup.numKeys = len(b_curve.bezierPoints)
+                n_uvgroup.num_keys = len(b_curve.bezierPoints)
                 # XXX todo: set interpolation from blender interpolation
                 n_uvgroup.interpolation = NifFormat.KeyType.LINEAR_KEY
                 n_uvgroup.keys.update_size()
@@ -2667,11 +2667,11 @@ they can easily be identified.")
             # XXX todo: set flags from blender cycle value
             n_uvctrl.flags = 8
             n_uvctrl.frequency = 1.0
-            n_uvctrl.startTime = min(n_times)
-            n_uvctrl.stopTime = max(n_times)
+            n_uvctrl.start_time = min(n_times)
+            n_uvctrl.stop_time = max(n_times)
             n_uvctrl.data = n_uvdata
             # attach block to geometry
-            n_geom.addController(n_uvctrl)
+            n_geom.add_controller(n_uvctrl)
 
     def exportBones(self, arm, parent_block):
         """Export the bones of an armature."""
@@ -2755,10 +2755,10 @@ they can easily be identified.")
                     # bone.children returns also grandchildren etc.
                     # we only want immediate children, so do a parent check
                     if child.parent.name == bone.name:
-                        bones_node[bone.name].addChild(bones_node[child.name])
+                        bones_node[bone.name].add_child(bones_node[child.name])
             # if it is a root bone, link it to the armature
             if not bone.parent:
-                parent_block.addChild(bones_node[bone.name])
+                parent_block.add_child(bones_node[bone.name])
 
 
 
@@ -2818,15 +2818,15 @@ they can easily be identified.")
         block.translation.x = btrans[0]
         block.translation.y = btrans[1]
         block.translation.z = btrans[2]
-        block.rotation.m11 = brot[0][0]
-        block.rotation.m12 = brot[0][1]
-        block.rotation.m13 = brot[0][2]
-        block.rotation.m21 = brot[1][0]
-        block.rotation.m22 = brot[1][1]
-        block.rotation.m23 = brot[1][2]
-        block.rotation.m31 = brot[2][0]
-        block.rotation.m32 = brot[2][1]
-        block.rotation.m33 = brot[2][2]
+        block.rotation.m_11 = brot[0][0]
+        block.rotation.m_12 = brot[0][1]
+        block.rotation.m_13 = brot[0][2]
+        block.rotation.m_21 = brot[1][0]
+        block.rotation.m_22 = brot[1][1]
+        block.rotation.m_23 = brot[1][2]
+        block.rotation.m_31 = brot[2][0]
+        block.rotation.m_32 = brot[2][1]
+        block.rotation.m_33 = brot[2][2]
         block.velocity.x = 0.0
         block.velocity.y = 0.0
         block.velocity.z = 0.0
@@ -2844,24 +2844,24 @@ they can easily be identified.")
         bscale, brot, btrans = self.getObjectSRT(obj, space)
         mat = NifFormat.Matrix44()
         
-        mat.m41 = btrans[0]
-        mat.m42 = btrans[1]
-        mat.m43 = btrans[2]
+        mat.m_41 = btrans[0]
+        mat.m_42 = btrans[1]
+        mat.m_43 = btrans[2]
 
-        mat.m11 = brot[0][0] * bscale
-        mat.m12 = brot[0][1] * bscale
-        mat.m13 = brot[0][2] * bscale
-        mat.m21 = brot[1][0] * bscale
-        mat.m22 = brot[1][1] * bscale
-        mat.m23 = brot[1][2] * bscale
-        mat.m31 = brot[2][0] * bscale
-        mat.m32 = brot[2][1] * bscale
-        mat.m33 = brot[2][2] * bscale
+        mat.m_11 = brot[0][0] * bscale
+        mat.m_12 = brot[0][1] * bscale
+        mat.m_13 = brot[0][2] * bscale
+        mat.m_21 = brot[1][0] * bscale
+        mat.m_22 = brot[1][1] * bscale
+        mat.m_23 = brot[1][2] * bscale
+        mat.m_31 = brot[2][0] * bscale
+        mat.m_32 = brot[2][1] * bscale
+        mat.m_33 = brot[2][2] * bscale
 
-        mat.m14 = 0.0
-        mat.m24 = 0.0
-        mat.m34 = 0.0
-        mat.m44 = 1.0
+        mat.m_14 = 0.0
+        mat.m_24 = 0.0
+        mat.m_34 = 0.0
+        mat.m_44 = 1.0
         
         return mat
 
@@ -3057,7 +3057,7 @@ Workaround: apply size and rotation (CTRL-A).""")
                  raise NifExportError("""\
 Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
              node = self.createBlock("RootCollisionNode", obj)
-             parent_block.addChild(node)
+             parent_block.add_child(node)
              node.flags = 0x0003 # default
              self.exportMatrix(obj, 'localspace', node)
              self.exportTriShapes(obj, 'none', node)
@@ -3075,10 +3075,10 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
                     continue
             else: # all nodes failed so add new one
                 node = self.createBlock("NiNode", obj)
-                node.setTransform(self.IDENTITY44)
-                node.name = 'collisiondummy%i' % parent_block.numChildren
+                node.set_transform(self.IDENTITY44)
+                node.name = 'collisiondummy%i' % parent_block.num_children
                 node.flags = 0x000E # default
-                parent_block.addChild(node)
+                parent_block.add_child(node)
                 self.exportCollisionHelper(obj, node)
 
         else:
@@ -3116,22 +3116,22 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
         # if no collisions have been exported yet to this parent_block
         # then create new collision tree on parent_block
         # bhkCollisionObject -> bhkRigidBody
-        if not parent_block.collisionObject:
+        if not parent_block.collision_object:
             # note: collision settings are taken from lowerclasschair01.nif
             if self.EXPORT_OB_LAYER == NifFormat.OblivionLayer.OL_BIPED:
                 # special collision object for creatures
                 colobj = self.createBlock("bhkBlendCollisionObject", obj)
                 colobj.flags = 9
-                colobj.unknownFloat1 = 1.0
-                colobj.unknownFloat2 = 1.0
+                colobj.unknown_float_1 = 1.0
+                colobj.unknown_float_2 = 1.0
                 # also add a controller for it
                 blendctrl = self.createBlock("bhkBlendController", obj)
                 blendctrl.flags = 12
                 blendctrl.frequency = 1.0
                 blendctrl.phase = 0.0
-                blendctrl.startTime = self.FLOAT_MAX
-                blendctrl.stopTime = self.FLOAT_MIN
-                parent_block.addController(blendctrl)
+                blendctrl.start_time = self.FLOAT_MAX
+                blendctrl.stop_time = self.FLOAT_MIN
+                parent_block.add_controller(blendctrl)
             else:
                 # usual collision object
                 colobj = self.createBlock("bhkCollisionObject", obj)
@@ -3141,23 +3141,23 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
                 else:
                     # in all other cases this seems to be enough
                     colobj.flags = 1
-            parent_block.collisionObject = colobj
+            parent_block.collision_object = colobj
             colobj.target = parent_block
 
             colbody = self.createBlock("bhkRigidBody", obj)
             colobj.body = colbody
             colbody.layer = layer
-            colbody.unknown5Floats[1] = 3.8139e+36
-            colbody.unknown4Shorts[0] = 1
-            colbody.unknown4Shorts[1] = 65535
-            colbody.unknown4Shorts[2] = 35899
-            colbody.unknown4Shorts[3] = 16336
-            colbody.layerCopy = layer
-            colbody.unknown7Shorts[1] = 21280
-            colbody.unknown7Shorts[2] = 4581
-            colbody.unknown7Shorts[3] = 62977
-            colbody.unknown7Shorts[4] = 65535
-            colbody.unknown7Shorts[5] = 44
+            colbody.unknown_5_floats[1] = 3.8139e+36
+            colbody.unknown_4_shorts[0] = 1
+            colbody.unknown_4_shorts[1] = 65535
+            colbody.unknown_4_shorts[2] = 35899
+            colbody.unknown_4_shorts[3] = 16336
+            colbody.layer_copy = layer
+            colbody.unknown_7_shorts[1] = 21280
+            colbody.unknown_7_shorts[2] = 4581
+            colbody.unknown_7_shorts[3] = 62977
+            colbody.unknown_7_shorts[4] = 65535
+            colbody.unknown_7_shorts[5] = 44
             colbody.translation.x = 0.0
             colbody.translation.y = 0.0
             colbody.translation.z = 0.0
@@ -3166,23 +3166,23 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
             colbody.rotation.y = 0.0
             colbody.rotation.z = 0.0
             colbody.mass = 1.0 # will be fixed later
-            colbody.linearDamping = 0.1
-            colbody.angularDamping = 0.05
+            colbody.linear_damping = 0.1
+            colbody.angular_damping = 0.05
             colbody.friction = 0.3
             colbody.restitution = 0.3
-            colbody.maxLinearVelocity = 250.0
-            colbody.maxAngularVelocity = 31.4159
-            colbody.penetrationDepth = 0.15
-            colbody.motionSystem = motionsys
-            colbody.unknownByte1 = self.EXPORT_OB_UNKNOWNBYTE1
-            colbody.unknownByte2 = self.EXPORT_OB_UNKNOWNBYTE2
-            colbody.qualityType = self.EXPORT_OB_QUALITYTYPE
-            colbody.unknownInt6 = 3216641024
-            colbody.unknownInt7 = 3249467941
-            colbody.unknownInt8 = 83276283
-            colbody.unknownInt9 = self.EXPORT_OB_WIND
+            colbody.max_linear_velocity = 250.0
+            colbody.max_angular_velocity = 31.4159
+            colbody.penetration_depth = 0.15
+            colbody.motion_system = motionsys
+            colbody.unknown_byte_1 = self.EXPORT_OB_UNKNOWNBYTE1
+            colbody.unknown_byte_2 = self.EXPORT_OB_UNKNOWNBYTE2
+            colbody.quality_type = self.EXPORT_OB_QUALITYTYPE
+            colbody.unknown_int_6 = 3216641024
+            colbody.unknown_int_7 = 3249467941
+            colbody.unknown_int_8 = 83276283
+            colbody.unknown_int_9 = self.EXPORT_OB_WIND
         else:
-            colbody = parent_block.collisionObject.body
+            colbody = parent_block.collision_object.body
 
         if coll_ispacked:
             self.exportCollisionPacked(obj, colbody, layer, material)
@@ -3204,26 +3204,26 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
             colmopp = self.createBlock("bhkMoppBvTreeShape", obj)
             colbody.shape = colmopp
             colmopp.material = material
-            colmopp.unknown8Bytes[0] = 160
-            colmopp.unknown8Bytes[1] = 13
-            colmopp.unknown8Bytes[2] = 75
-            colmopp.unknown8Bytes[3] = 1
-            colmopp.unknown8Bytes[4] = 192
-            colmopp.unknown8Bytes[5] = 207
-            colmopp.unknown8Bytes[6] = 144
-            colmopp.unknown8Bytes[7] = 11
-            colmopp.unknownFloat = 1.0
+            colmopp.unknown_8_bytes[0] = 160
+            colmopp.unknown_8_bytes[1] = 13
+            colmopp.unknown_8_bytes[2] = 75
+            colmopp.unknown_8_bytes[3] = 1
+            colmopp.unknown_8_bytes[4] = 192
+            colmopp.unknown_8_bytes[5] = 207
+            colmopp.unknown_8_bytes[6] = 144
+            colmopp.unknown_8_bytes[7] = 11
+            colmopp.unknown_float = 1.0
             # the mopp origin, scale, and data are written later
             colmopp.shape = colshape
 
-            colshape.unknownFloats[2] = 0.1
-            colshape.unknownFloats[4] = 1.0
-            colshape.unknownFloats[5] = 1.0
-            colshape.unknownFloats[6] = 1.0
-            colshape.unknownFloats[8] = 0.1
+            colshape.unknown_floats[2] = 0.1
+            colshape.unknown_floats[4] = 1.0
+            colshape.unknown_floats[5] = 1.0
+            colshape.unknown_floats[6] = 1.0
+            colshape.unknown_floats[8] = 0.1
             colshape.scale = 1.0
-            colshape.unknownFloats2[0] = 1.0
-            colshape.unknownFloats2[1] = 1.0
+            colshape.unknown_floats_2[0] = 1.0
+            colshape.unknown_floats_2[1] = 1.0
         else:
             colmopp = colbody.shape
             if not isinstance(colmopp, NifFormat.bhkMoppBvTreeShape):
@@ -3234,7 +3234,7 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
 
         mesh = obj.data
         transform = Blender.Mathutils.Matrix(
-            *self.getObjectMatrix(obj, 'localspace').asList())
+            *self.getObjectMatrix(obj, 'localspace').as_list())
         rotation = transform.rotationPart()
 
         vertices = [vert.co * transform for vert in mesh.verts]
@@ -3250,7 +3250,7 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
                 triangles.append([face.v[i].index for i in (0, 2, 3)])
                 normals.append(Blender.Mathutils.Vector(face.no) * rotation)
 
-        colshape.addShape(triangles, normals, vertices, layer, material)
+        colshape.add_shape(triangles, normals, vertices, layer, material)
 
 
 
@@ -3283,7 +3283,7 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
             if not isinstance(colshape, NifFormat.bhkListShape):
                 raise ValueError('not a list of collisions')
 
-        colshape.addShape(self.exportCollisionObject(obj, layer, material))
+        colshape.add_shape(self.exportCollisionObject(obj, layer, material))
 
 
 
@@ -3304,17 +3304,17 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
             # note: collision settings are taken from lowerclasschair01.nif
             coltf = self.createBlock("bhkConvexTransformShape", obj)
             coltf.material = material
-            coltf.unknownFloat1 = 0.1
-            coltf.unknown8Bytes[0] = 96
-            coltf.unknown8Bytes[1] = 120
-            coltf.unknown8Bytes[2] = 53
-            coltf.unknown8Bytes[3] = 19
-            coltf.unknown8Bytes[4] = 24
-            coltf.unknown8Bytes[5] = 9
-            coltf.unknown8Bytes[6] = 253
-            coltf.unknown8Bytes[7] = 4
+            coltf.unknown_float_1 = 0.1
+            coltf.unknown_8_bytes[0] = 96
+            coltf.unknown_8_bytes[1] = 120
+            coltf.unknown_8_bytes[2] = 53
+            coltf.unknown_8_bytes[3] = 19
+            coltf.unknown_8_bytes[4] = 24
+            coltf.unknown_8_bytes[5] = 9
+            coltf.unknown_8_bytes[6] = 253
+            coltf.unknown_8_bytes[7] = 4
             hktf = Blender.Mathutils.Matrix(
-                *self.getObjectMatrix(obj, 'localspace').asList())
+                *self.getObjectMatrix(obj, 'localspace').as_list())
             # the translation part must point to the center of the data
             # so calculate the center in local coordinates
             center = Blender.Mathutils.Vector((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0)
@@ -3325,30 +3325,30 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
             hktf[3][2] = center[2]
             # we need to store the transpose of the matrix
             hktf.transpose()
-            coltf.transform.setRows(*hktf)
+            coltf.transform.set_rows(*hktf)
             # fix matrix for havok coordinate system
-            coltf.transform.m14 /= 7.0
-            coltf.transform.m24 /= 7.0
-            coltf.transform.m34 /= 7.0
+            coltf.transform.m_14 /= 7.0
+            coltf.transform.m_24 /= 7.0
+            coltf.transform.m_34 /= 7.0
 
             if obj.rbShapeBoundType == Blender.Object.RBShapes['BOX']:
                 colbox = self.createBlock("bhkBoxShape", obj)
                 coltf.shape = colbox
                 colbox.material = material
                 colbox.radius = 0.1
-                colbox.unknown8Bytes[0] = 0x6b
-                colbox.unknown8Bytes[1] = 0xee
-                colbox.unknown8Bytes[2] = 0x43
-                colbox.unknown8Bytes[3] = 0x40
-                colbox.unknown8Bytes[4] = 0x3a
-                colbox.unknown8Bytes[5] = 0xef
-                colbox.unknown8Bytes[6] = 0x8e
-                colbox.unknown8Bytes[7] = 0x3e
+                colbox.unknown_8_bytes[0] = 0x6b
+                colbox.unknown_8_bytes[1] = 0xee
+                colbox.unknown_8_bytes[2] = 0x43
+                colbox.unknown_8_bytes[3] = 0x40
+                colbox.unknown_8_bytes[4] = 0x3a
+                colbox.unknown_8_bytes[5] = 0xef
+                colbox.unknown_8_bytes[6] = 0x8e
+                colbox.unknown_8_bytes[7] = 0x3e
                 # fix dimensions for havok coordinate system
                 colbox.dimensions.x = (maxx - minx) / 14.0
                 colbox.dimensions.y = (maxy - miny) / 14.0
                 colbox.dimensions.z = (maxz - minz) / 14.0
-                colbox.minimumSize = min(colbox.dimensions.x, colbox.dimensions.y, colbox.dimensions.z)
+                colbox.minimum_size = min(colbox.dimensions.x, colbox.dimensions.y, colbox.dimensions.z)
             elif obj.rbShapeBoundType == Blender.Object.RBShapes['SPHERE']:
                 colsphere = self.createBlock("bhkSphereShape", obj)
                 coltf.shape = colsphere
@@ -3365,7 +3365,7 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
             # take average radius
             localradius = (maxx + maxy - minx - miny) / 4.0
             transform = Blender.Mathutils.Matrix(
-                *self.getObjectMatrix(obj, 'localspace').asList())
+                *self.getObjectMatrix(obj, 'localspace').as_list())
             vert1 = Blender.Mathutils.Vector( [ (maxx + minx)/2.0,
                                                 (maxy + miny)/2.0,
                                                 minz + localradius ] )
@@ -3374,21 +3374,21 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
                                                 maxz - localradius ] )
             vert1 *= transform
             vert2 *= transform
-            colcaps.firstPoint.x = vert1[0] / 7.0
-            colcaps.firstPoint.y = vert1[1] / 7.0
-            colcaps.firstPoint.z = vert1[2] / 7.0
-            colcaps.secondPoint.x = vert2[0] / 7.0
-            colcaps.secondPoint.y = vert2[1] / 7.0
-            colcaps.secondPoint.z = vert2[2] / 7.0
+            colcaps.first_point.x = vert1[0] / 7.0
+            colcaps.first_point.y = vert1[1] / 7.0
+            colcaps.first_point.z = vert1[2] / 7.0
+            colcaps.second_point.x = vert2[0] / 7.0
+            colcaps.second_point.y = vert2[1] / 7.0
+            colcaps.second_point.z = vert2[2] / 7.0
             # set radius, with correct scale
-            sizex, sizey, sizez = obj.getSize()
+            sizex, sizey, sizez = obj.get_size()
             colcaps.radius = localradius * (sizex + sizey) * 0.5
-            colcaps.radius1 = colcaps.radius
-            colcaps.radius2 = colcaps.radius
+            colcaps.radius_1 = colcaps.radius
+            colcaps.radius_2 = colcaps.radius
             # fix havok coordinate system for radii
             colcaps.radius /= 7.0
-            colcaps.radius1 /= 7.0
-            colcaps.radius2 /= 7.0
+            colcaps.radius_1 /= 7.0
+            colcaps.radius_2 /= 7.0
 
             return colcaps
 
@@ -3397,7 +3397,7 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
             # bound type has value 5
             mesh = obj.data
             transform = Blender.Mathutils.Matrix(
-                *self.getObjectMatrix(obj, 'localspace').asList())
+                *self.getObjectMatrix(obj, 'localspace').as_list())
             rotation = transform.rotationPart()
             scale = rotation.determinant()
             if scale < 0:
@@ -3442,17 +3442,17 @@ ERROR%t|Too many faces/vertices. Decimate/split your mesh and try again.""")
             colhull = self.createBlock("bhkConvexVerticesShape", obj)
             colhull.material = material
             colhull.radius = 0.1
-            colhull.unknown6Floats[2] = -0.0 # enables arrow detection
-            colhull.unknown6Floats[5] = -0.0 # enables arrow detection
+            colhull.unknown_6_floats[2] = -0.0 # enables arrow detection
+            colhull.unknown_6_floats[5] = -0.0 # enables arrow detection
             # note: unknown 6 floats are usually all 0
-            colhull.numVertices = len(vertlist)
+            colhull.num_vertices = len(vertlist)
             colhull.vertices.update_size()
             for vhull, vert in zip(colhull.vertices, vertlist):
                 vhull.x = vert[0] / 7.0
                 vhull.y = vert[1] / 7.0
                 vhull.z = vert[2] / 7.0
                 # w component is 0
-            colhull.numNormals = len(fnormlist)
+            colhull.num_normals = len(fnormlist)
             colhull.normals.update_size()
             for nhull, norm, dist in zip(colhull.normals, fnormlist, fdistlist):
                 nhull.x = norm[0]
@@ -3471,7 +3471,7 @@ ERROR%t|Too many faces/vertices. Decimate/split your mesh and try again.""")
         """Export the constraints of an object.
 
         @param b_obj: The object whose constraints to export.
-        @param root_block: The root of the nif tree (required for updateAB)."""
+        @param root_block: The root of the nif tree (required for update_a_b)."""
         if isinstance(b_obj, Blender.Armature.Bone):
             # bone object has its constraints stored in the posebone
             # so now we should get the posebone, but no constraints for
@@ -3523,19 +3523,19 @@ but is not exported as collision object""")
                         hkconstraint = self.createBlock(
                             "bhkMalleableConstraint", b_constr)
                         hkconstraint.type = 2
-                    hkdescriptor = hkconstraint.limitedHinge
+                    hkdescriptor = hkconstraint.limited_hinge
                 else:
                     raise NifExportError("""\
 Unsupported rigid body joint type (%i), only ball and hinge are supported.""" \
 % b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE])
 
                 # parent constraint to hkbody
-                hkbody.numConstraints += 1
+                hkbody.num_constraints += 1
                 hkbody.constraints.update_size()
                 hkbody.constraints[-1] = hkconstraint
 
                 # export hkconstraint settings
-                hkconstraint.numEntities = 2
+                hkconstraint.num_entities = 2
                 hkconstraint.entities.update_size()
                 hkconstraint.entities[0] = hkbody
                 # is there a target?
@@ -3559,8 +3559,8 @@ check that %s is selected during export.""" % targetobj)
                 # extra malleable constraint settings
                 if isinstance(hkconstraint, NifFormat.bhkMalleableConstraint):
                     # unknowns
-                    hkconstraint.unknownInt2 = 2
-                    hkconstraint.unknownInt3 = 1
+                    hkconstraint.unknown_int_2 = 2
+                    hkconstraint.unknown_int_3 = 1
                     # force required to keep bodies together
                     # 0.5 seems a good standard value for creatures
                     hkconstraint.tau = 0.5
@@ -3602,14 +3602,14 @@ check that %s is selected during export.""" % targetobj)
                 # apply object transform relative to the bone head
                 # (this is O * T * B' * B^{-1} at once)
                 transform = Blender.Mathutils.Matrix(
-                    *self.getObjectMatrix(b_obj, 'localspace').asList())
+                    *self.getObjectMatrix(b_obj, 'localspace').as_list())
                 pivot = pivot * transform
                 constr_matrix = constr_matrix * transform.rotationPart()
 
                 # export hkdescriptor pivot point
-                hkdescriptor.pivotA.x = pivot[0] / 7.0
-                hkdescriptor.pivotA.y = pivot[1] / 7.0
-                hkdescriptor.pivotA.z = pivot[2] / 7.0
+                hkdescriptor.pivot_a.x = pivot[0] / 7.0
+                hkdescriptor.pivot_a.y = pivot[1] / 7.0
+                hkdescriptor.pivot_a.z = pivot[2] / 7.0
                 # export hkdescriptor axes and other parameters
                 # (also see import_nif.py NifImport.importHavokConstraints)
                 axis_x = Blender.Mathutils.Vector(1,0,0) * constr_matrix
@@ -3617,42 +3617,42 @@ check that %s is selected during export.""" % targetobj)
                 axis_z = Blender.Mathutils.Vector(0,0,1) * constr_matrix
                 if isinstance(hkdescriptor, NifFormat.RagdollDescriptor):
                     # z axis is the twist vector
-                    hkdescriptor.twistA.x = axis_z[0]
-                    hkdescriptor.twistA.y = axis_z[1]
-                    hkdescriptor.twistA.z = axis_z[2]
+                    hkdescriptor.twist_a.x = axis_z[0]
+                    hkdescriptor.twist_a.y = axis_z[1]
+                    hkdescriptor.twist_a.z = axis_z[2]
                     # x axis is the plane vector
-                    hkdescriptor.planeA.x = axis_x[0]
-                    hkdescriptor.planeA.y = axis_x[1]
-                    hkdescriptor.planeA.z = axis_x[2]
+                    hkdescriptor.plane_a.x = axis_x[0]
+                    hkdescriptor.plane_a.y = axis_x[1]
+                    hkdescriptor.plane_a.z = axis_x[2]
                     # angle limits
                     # take them twist and plane to be 45 deg (3.14 / 4 = 0.8)
-                    hkdescriptor.twistMinAngle = -0.8
-                    hkdescriptor.twistMaxAngle = +0.8
-                    hkdescriptor.planeMinAngle = -0.8
-                    hkdescriptor.planeMaxAngle = +0.8
+                    hkdescriptor.twist_min_angle = -0.8
+                    hkdescriptor.twist_max_angle = +0.8
+                    hkdescriptor.plane_min_angle = -0.8
+                    hkdescriptor.plane_max_angle = +0.8
                     # same for maximum cone angle
-                    hkdescriptor.coneMaxAngle  = +0.8
+                    hkdescriptor.cone_max_angle  = +0.8
                 elif isinstance(hkdescriptor, NifFormat.LimitedHingeDescriptor):
                     # y axis is the zero angle vector on the plane of rotation
-                    hkdescriptor.perp2AxleInA1.x = axis_y[0]
-                    hkdescriptor.perp2AxleInA1.y = axis_y[1]
-                    hkdescriptor.perp2AxleInA1.z = axis_y[2]
+                    hkdescriptor.perp_2_axle_in_a_1.x = axis_y[0]
+                    hkdescriptor.perp_2_axle_in_a_1.y = axis_y[1]
+                    hkdescriptor.perp_2_axle_in_a_1.z = axis_y[2]
                     # x axis is the axis of rotation
-                    hkdescriptor.axleA.x = axis_x[0]
-                    hkdescriptor.axleA.y = axis_x[1]
-                    hkdescriptor.axleA.z = axis_x[2]
+                    hkdescriptor.axle_a.x = axis_x[0]
+                    hkdescriptor.axle_a.y = axis_x[1]
+                    hkdescriptor.axle_a.z = axis_x[2]
                     # z is the remaining axis determining the positive
                     # direction of rotation
-                    hkdescriptor.perp2AxleInA2.x = axis_z[0]
-                    hkdescriptor.perp2AxleInA2.y = axis_z[1]
-                    hkdescriptor.perp2AxleInA2.z = axis_z[2]
+                    hkdescriptor.perp_2_axle_in_a_2.x = axis_z[0]
+                    hkdescriptor.perp_2_axle_in_a_2.y = axis_z[1]
+                    hkdescriptor.perp_2_axle_in_a_2.z = axis_z[2]
                     # angle limits
                     # typically, the constraint on one side is defined
                     # by the z axis
-                    hkdescriptor.minAngle = 0.0
+                    hkdescriptor.min_angle = 0.0
                     # the maximum axis is typically about 90 degrees
                     # 3.14 / 2 = 1.5
-                    hkdescriptor.maxAngle = 1.5
+                    hkdescriptor.max_angle = 1.5
                     
                 else:
                     raise ValueError("unknown descriptor %s"
@@ -3663,13 +3663,13 @@ check that %s is selected during export.""" % targetobj)
                               NifFormat.bhkMalleableConstraint):
                     # malleable typically have 0
                     # (perhaps because they have a damping parameter)
-                    hkdescriptor.maxFriction = 0.0
+                    hkdescriptor.max_friction = 0.0
                 else:
                     # non-malleable typically have 10
-                    hkdescriptor.maxFriction = 10.0
+                    hkdescriptor.max_friction = 10.0
 
                 # do AB
-                hkconstraint.updateAB(root_block)
+                hkconstraint.update_a_b(root_block)
 
 
     def exportAlphaProperty(self, flags=0x00ED, threshold=0):
@@ -3763,21 +3763,21 @@ check that %s is selected during export.""" % targetobj)
 
         matprop.name = name
         matprop.flags = flags
-        matprop.ambientColor.r = ambient[0]
-        matprop.ambientColor.g = ambient[1]
-        matprop.ambientColor.b = ambient[2]
-        matprop.diffuseColor.r = diffuse[0]
-        matprop.diffuseColor.g = diffuse[1]
-        matprop.diffuseColor.b = diffuse[2]
-        matprop.specularColor.r = specular[0]
-        matprop.specularColor.g = specular[1]
-        matprop.specularColor.b = specular[2]
-        matprop.emissiveColor.r = emissive[0]
-        matprop.emissiveColor.g = emissive[1]
-        matprop.emissiveColor.b = emissive[2]
+        matprop.ambient_color.r = ambient[0]
+        matprop.ambient_color.g = ambient[1]
+        matprop.ambient_color.b = ambient[2]
+        matprop.diffuse_color.r = diffuse[0]
+        matprop.diffuse_color.g = diffuse[1]
+        matprop.diffuse_color.b = diffuse[2]
+        matprop.specular_color.r = specular[0]
+        matprop.specular_color.g = specular[1]
+        matprop.specular_color.b = specular[2]
+        matprop.emissive_color.r = emissive[0]
+        matprop.emissive_color.g = emissive[1]
+        matprop.emissive_color.b = emissive[2]
         matprop.glossiness = glossiness
         matprop.alpha = alpha
-        matprop.emitMulti = emitmulti
+        matprop.emit_multi = emitmulti
 
         # search for duplicate
         # (ignore the name string as sometimes import needs to create different
@@ -3807,10 +3807,10 @@ check that %s is selected during export.""" % targetobj)
         """Helper function for exportTexturingProperty to export each texture
         slot."""
         try:
-            texdesc.uvSet = uvlayers.index(mtex.uvlayer) if mtex.uvlayer else 0
+            texdesc.uv_set = uvlayers.index(mtex.uvlayer) if mtex.uvlayer else 0
         except ValueError: # mtex.uvlayer not in uvlayers list
             self.logger.warning("""Bad uv layer name '%s' in texture '%s'. Falling back on first uv layer""" % (mtex.uvlayer, mtex.tex.getName()))
-            texdesc.uvSet = 0 # assume 0 is active layer
+            texdesc.uv_set = 0 # assume 0 is active layer
 
         texdesc.source = self.exportSourceTexture(mtex.tex)
 
@@ -3826,30 +3826,30 @@ check that %s is selected during export.""" % targetobj)
         texprop = NifFormat.NiTexturingProperty()
 
         texprop.flags = flags
-        texprop.applyMode = applymode
-        texprop.textureCount = 7
+        texprop.apply_mode = applymode
+        texprop.texture_count = 7
 
         if self.EXPORT_EXTRA_SHADER_TEXTURES:
             if self.EXPORT_VERSION == "Sid Meier's Railroads":
                 # sid meier's railroads:
                 # some textures end up in the shader texture list
                 # there are 5 slots available, so set them up
-                texprop.numShaderTextures = 5
-                texprop.shaderTextures.update_size()
-                for mapindex, shadertexdesc in enumerate(texprop.shaderTextures):
+                texprop.num_shader_textures = 5
+                texprop.shader_textures.update_size()
+                for mapindex, shadertexdesc in enumerate(texprop.shader_textures):
                     # set default values
-                    shadertexdesc.isUsed = False
-                    shadertexdesc.mapIndex = mapindex
+                    shadertexdesc.is_used = False
+                    shadertexdesc.map_index = mapindex
 
                 # some texture slots required by the engine
-                shadertexdesc_envmap = texprop.shaderTextures[0]
-                shadertexdesc_envmap.isUsed = True
-                shadertexdesc_envmap.textureData.source = \
+                shadertexdesc_envmap = texprop.shader_textures[0]
+                shadertexdesc_envmap.is_used = True
+                shadertexdesc_envmap.texture_data.source = \
                     self.exportSourceTexture(filename="RRT_Engine_Env_map.dds")
 
-                shadertexdesc_cubelightmap = texprop.shaderTextures[4]
-                shadertexdesc_cubelightmap.isUsed = True
-                shadertexdesc_cubelightmap.textureData.source = \
+                shadertexdesc_cubelightmap = texprop.shader_textures[4]
+                shadertexdesc_cubelightmap.is_used = True
+                shadertexdesc_cubelightmap.texture_data.source = \
                     self.exportSourceTexture(filename="RRT_Cube_Light_map_128.dds")
 
                 # the other slots are exported below
@@ -3857,16 +3857,16 @@ check that %s is selected during export.""" % targetobj)
             elif self.EXPORT_VERSION == "Civilization IV":
                 # some textures end up in the shader texture list
                 # there are 4 slots available, so set them up
-                texprop.numShaderTextures = 4
-                texprop.shaderTextures.update_size()
-                for mapindex, shadertexdesc in enumerate(texprop.shaderTextures):
+                texprop.num_shader_textures = 4
+                texprop.shader_textures.update_size()
+                for mapindex, shadertexdesc in enumerate(texprop.shader_textures):
                     # set default values
-                    shadertexdesc.isUsed = False
-                    shadertexdesc.mapIndex = mapindex
+                    shadertexdesc.is_used = False
+                    shadertexdesc.map_index = mapindex
 
         if basemtex:
-            texprop.hasBaseTexture = True
-            self.exportTexDesc(texdesc = texprop.baseTexture,
+            texprop.has_base_texture = True
+            self.exportTexDesc(texdesc = texprop.base_texture,
                                uvlayers = uvlayers,
                                mtex = basemtex)
             # check for texture flip definition
@@ -3879,50 +3879,50 @@ check that %s is selected during export.""" % targetobj)
                 self.exportFlipController(fliptxt, basemtex.tex, texprop, 0)
 
         if glowmtex:
-            texprop.hasGlowTexture = True
-            self.exportTexDesc(texdesc = texprop.glowTexture,
+            texprop.has_glow_texture = True
+            self.exportTexDesc(texdesc = texprop.glow_texture,
                                uvlayers = uvlayers,
                                mtex = glowmtex)
 
         if bumpmtex:
             if self.EXPORT_VERSION not in self.USED_EXTRA_SHADER_TEXTURES:
-                texprop.hasBumpMapTexture = True
-                self.exportTexDesc(texdesc = texprop.bumpMapTexture,
+                texprop.has_bump_map_texture = True
+                self.exportTexDesc(texdesc = texprop.bump_map_texture,
                                    uvlayers = uvlayers,
                                    mtex = bumpmtex)
-                texprop.bumpMapLumaScale = 1.0
-                texprop.bumpMapLumaOffset = 0.0
-                texprop.bumpMapMatrix.m11 = 1.0
-                texprop.bumpMapMatrix.m12 = 0.0
-                texprop.bumpMapMatrix.m21 = 0.0
-                texprop.bumpMapMatrix.m22 = 1.0
+                texprop.bump_map_luma_scale = 1.0
+                texprop.bump_map_luma_offset = 0.0
+                texprop.bump_map_matrix.m_11 = 1.0
+                texprop.bump_map_matrix.m_12 = 0.0
+                texprop.bump_map_matrix.m_21 = 0.0
+                texprop.bump_map_matrix.m_22 = 1.0
             elif self.EXPORT_EXTRA_SHADER_TEXTURES:
-                shadertexdesc = texprop.shaderTextures[1]
-                shadertexdesc.isUsed = True
-                shadertexdesc.textureData.source = \
+                shadertexdesc = texprop.shader_textures[1]
+                shadertexdesc.is_used = True
+                shadertexdesc.texture_data.source = \
                     self.exportSourceTexture(texture=bumpmtex.tex)
 
         if glossmtex:
             if self.EXPORT_VERSION not in self.USED_EXTRA_SHADER_TEXTURES:
-                texprop.hasGlossTexture = True
-                self.exportTexDesc(texdesc = texprop.glossTexture,
+                texprop.has_gloss_texture = True
+                self.exportTexDesc(texdesc = texprop.gloss_texture,
                                    uvlayers = uvlayers,
                                    mtex = glossmtex)
             elif self.EXPORT_EXTRA_SHADER_TEXTURES:
-                shadertexdesc = texprop.shaderTextures[2]
-                shadertexdesc.isUsed = True
-                shadertexdesc.textureData.source = \
+                shadertexdesc = texprop.shader_textures[2]
+                shadertexdesc.is_used = True
+                shadertexdesc.texture_data.source = \
                     self.exportSourceTexture(texture=glossmtex.tex)
 
         if darkmtex:
-            texprop.hasDarkTexture = True
-            self.exportTexDesc(texdesc = texprop.darkTexture,
+            texprop.has_dark_texture = True
+            self.exportTexDesc(texdesc = texprop.dark_texture,
                                uvlayers = uvlayers,
                                mtex = darkmtex)
 
         if detailmtex:
-            texprop.hasDetailTexture = True
-            self.exportTexDesc(texdesc = texprop.detailTexture,
+            texprop.has_detail_texture = True
+            self.exportTexDesc(texdesc = texprop.detail_texture,
                                uvlayers = uvlayers,
                                mtex = detailmtex)
 
@@ -3935,9 +3935,9 @@ check that %s is selected during export.""" % targetobj)
                 #                   uvlayers = uvlayers,
                 #                   mtex = refmtex)
             else:
-                shadertexdesc = texprop.shaderTextures[3]
-                shadertexdesc.isUsed = True
-                shadertexdesc.textureData.source = \
+                shadertexdesc = texprop.shader_textures[3]
+                shadertexdesc.is_used = True
+                shadertexdesc.texture_data.source = \
                     self.exportSourceTexture(texture=refmtex.tex)
 
         # search for duplicate
@@ -3957,16 +3957,16 @@ check that %s is selected during export.""" % targetobj)
         # create new block
         bsshader = NifFormat.BSShaderPPLightingProperty()
         # set shader options
-        bsshader.shaderType = self.EXPORT_FO3_SHADER_TYPE
-        bsshader.shaderFlags.zbufferTest = self.EXPORT_FO3_SF_ZBUF
-        bsshader.shaderFlags.shadowMap = self.EXPORT_FO3_SF_SMAP
-        bsshader.shaderFlags.shadowFrustum = self.EXPORT_FO3_SF_SFRU
-        bsshader.shaderFlags.windowEnvironmentMapping = self.EXPORT_FO3_SF_WINDOW_ENVMAP
-        bsshader.shaderFlags.empty = self.EXPORT_FO3_SF_EMPT
-        bsshader.shaderFlags.unknown31 = self.EXPORT_FO3_SF_UN31
+        bsshader.shader_type = self.EXPORT_FO3_SHADER_TYPE
+        bsshader.shader_flags.zbuffer_test = self.EXPORT_FO3_SF_ZBUF
+        bsshader.shader_flags.shadow_map = self.EXPORT_FO3_SF_SMAP
+        bsshader.shader_flags.shadow_frustum = self.EXPORT_FO3_SF_SFRU
+        bsshader.shader_flags.window_environment_mapping = self.EXPORT_FO3_SF_WINDOW_ENVMAP
+        bsshader.shader_flags.empty = self.EXPORT_FO3_SF_EMPT
+        bsshader.shader_flags.unknown_31 = self.EXPORT_FO3_SF_UN31
         # set textures
         texset = NifFormat.BSShaderTextureSet()
-        bsshader.textureSet = texset
+        bsshader.texture_set = texset
         if basemtex:
             texset.textures[0] = self.exportTextureFilename(basemtex.tex)
         if bumpmtex:
@@ -3989,19 +3989,19 @@ check that %s is selected during export.""" % targetobj)
         Texture)."""
         texeff = NifFormat.NiTextureEffect()
         texeff.flags = 4
-        texeff.rotation.setIdentity()
+        texeff.rotation.set_identity()
         texeff.scale = 1.0
-        texeff.modelProjectionMatrix.setIdentity()
-        texeff.textureFiltering = NifFormat.TexFilterMode.FILTER_TRILERP
-        texeff.textureClamping  = NifFormat.TexClampMode.WRAP_S_WRAP_T
-        texeff.textureType = NifFormat.EffectType.EFFECT_ENVIRONMENT_MAP
-        texeff.coordinateGenerationType = NifFormat.CoordGenType.CG_SPHERE_MAP
+        texeff.model_projection_matrix.set_identity()
+        texeff.texture_filtering = NifFormat.TexFilterMode.FILTER_TRILERP
+        texeff.texture_clamping  = NifFormat.TexClampMode.WRAP_S_WRAP_T
+        texeff.texture_type = NifFormat.EffectType.EFFECT_ENVIRONMENT_MAP
+        texeff.coordinate_generation_type = NifFormat.CoordGenType.CG_SPHERE_MAP
         if mtex:
-            texeff.sourceTexture = self.exportSourceTexture(mtex.tex)
+            texeff.source_texture = self.exportSourceTexture(mtex.tex)
             if self.EXPORT_VERSION == 'Morrowind':
-                texeff.numAffectedNodeListPointers += 1
-                texeff.affectedNodeListPointers.update_size()
-        texeff.unknownVector.x = 1.0
+                texeff.num_affected_node_list_pointers += 1
+                texeff.affected_node_list_pointers.update_size()
+        texeff.unknown_vector.x = 1.0
         return self.registerBlock(texeff)
 
     def exportBSBound(self, obj, block_parent):
@@ -4009,11 +4009,11 @@ check that %s is selected during export.""" % targetobj)
         bbox = self.createBlock("BSBound")
         # ... the following incurs double scaling because it will be added in
         # both the extra data list and in the old extra data sequence!!!
-        #block_parent.addExtraData(bbox)
-        # quick hack (better solution would be to make applyScale non-recursive)
-        block_parent.numExtraDataList += 1
-        block_parent.extraDataList.update_size()
-        block_parent.extraDataList[-1] = bbox
+        #block_parent.add_extra_data(bbox)
+        # quick hack (better solution would be to make apply_scale non-recursive)
+        block_parent.num_extra_data_list += 1
+        block_parent.extra_data_list.update_size()
+        block_parent.extra_data_list[-1] = bbox
         
         bbox.name = "BBX"
         # calculate bounding box extents
@@ -4036,7 +4036,7 @@ check that %s is selected during export.""" % targetobj)
         """Add extra data blocks for shader indices."""
         for shaderindex in self.USED_EXTRA_SHADER_TEXTURES[self.EXPORT_VERSION]:
             shadername = self.EXTRA_SHADER_TEXTURES[shaderindex]
-            trishape.addIntegerExtraData(shadername, shaderindex)
+            trishape.add_integer_extra_data(shadername, shaderindex)
 
     def exportEgm(self, keyblocks):
         self.egmdata = EgmFormat.Data(num_vertices=len(keyblocks[0].data))

@@ -59,18 +59,18 @@ class SMRailroadsTestSuite(TestSuite):
 
     def hasIntegerExtra(self, trishape, name, value):
         self.logger.info("Has %s with value %i?" % (name, value))
-        for extra in trishape.getExtraDatas():
+        for extra in trishape.get_extra_datas():
             if (isinstance(extra, NifFormat.NiIntegerExtraData)
                 and extra.name == name):
                 # success if value matches
-                return (extra.integerData == value)
+                return (extra.integer_data == value)
         # extra block not found: failure
         return False
 
-    def hasShaderTexture(self, texprop, name, shaderindex):
+    def has_shaderTexture(self, texprop, name, shaderindex):
         self.logger.info("Has shader texture %s at index %i?" % (name, shaderindex))
-        shaderTexDesc = texprop.shaderTextures[shaderindex]
-        return shaderTexDesc.textureData.source.fileName.lower() == name.lower()
+        shaderTexDesc = texprop.shader_textures[shaderindex]
+        return shaderTexDesc.texture_data.source.file_name.lower() == name.lower()
 
     def checkSMRailRoads(self, root_block):
         # sanity check
@@ -100,16 +100,16 @@ class SMRailroadsTestSuite(TestSuite):
 
         # geometry diffuse texture test
         self.logger.info("Checking base texture.")
-        assert(texprop.hasBaseTexture)
-        assert(texprop.baseTexture.source.fileName[-9:].lower() == "_diff.dds")
-        texbasename = texprop.baseTexture.source.fileName[:-9]
+        assert(texprop.has_base_texture)
+        assert(texprop.base_texture.source.file_name[-9:].lower() == "_diff.dds")
+        texbasename = texprop.base_texture.source.file_name[:-9]
 
         # geometry shader textures
-        assert(self.hasShaderTexture(texprop, "RRT_Engine_Env_map.dds", 0))
-        assert(self.hasShaderTexture(texprop, texbasename + "_NRML.dds", 1))
-        assert(self.hasShaderTexture(texprop, texbasename + "_SPEC.dds", 2))
-        assert(self.hasShaderTexture(texprop, texbasename + "_EMSK.dds", 3))
-        assert(self.hasShaderTexture(texprop, "RRT_Cube_Light_map_128.dds", 4))
+        assert(self.has_shaderTexture(texprop, "RRT_Engine_Env_map.dds", 0))
+        assert(self.has_shaderTexture(texprop, texbasename + "_NRML.dds", 1))
+        assert(self.has_shaderTexture(texprop, texbasename + "_SPEC.dds", 2))
+        assert(self.has_shaderTexture(texprop, texbasename + "_EMSK.dds", 3))
+        assert(self.has_shaderTexture(texprop, "RRT_Cube_Light_map_128.dds", 4))
         # note: 5 is apparently never used, although it has an extra index
 
         # check ninode flag
@@ -132,7 +132,7 @@ class SMRailroadsTestSuite(TestSuite):
         self.logger.info("Checking specular color import.")
         testgeom = root_block.find(block_type=NifFormat.NiGeometry,
                                    block_name="Test")
-        nifspec = testgeom.find(block_type=NifFormat.NiMaterialProperty).specularColor
+        nifspec = testgeom.find(block_type=NifFormat.NiMaterialProperty).specular_color
         blendermat = Blender.Object.Get("Test").data.materials[0]
         assert(abs(blendermat.getSpec() - 1.0) < 1e-5)
         blenderspec = blendermat.getSpecCol()
@@ -150,7 +150,7 @@ class SMRailroadsTestSuite(TestSuite):
         self.logger.info("Checking specular color export.")
         testgeom_export = root_block.find(block_type=NifFormat.NiGeometry,
                                    block_name="Test")
-        nifspec_export = testgeom.find(block_type=NifFormat.NiMaterialProperty).specularColor
+        nifspec_export = testgeom.find(block_type=NifFormat.NiMaterialProperty).specular_color
         assert(abs(nifspec.r - nifspec_export.r) < 1e-5)
         assert(abs(nifspec.g - nifspec_export.g) < 1e-5)
         assert(abs(nifspec.b - nifspec_export.b) < 1e-5)
@@ -161,8 +161,8 @@ class SMRailroadsTestSuite(TestSuite):
         assert(nifalpha_export.threshold == 150)
 
         self.logger.info("Checking extra shader export.")
-        assert(testgeom_export.hasShader)
-        assert(testgeom_export.shaderName == "RRT_NormalMap_Spec_Env_CubeLight")
+        assert(testgeom_export.has_shader)
+        assert(testgeom_export.shader_name == "RRT_NormalMap_Spec_Env_CubeLight")
 
         # check that the re-exported file still passes the check
         self.logger.info("Checking exported nif...")

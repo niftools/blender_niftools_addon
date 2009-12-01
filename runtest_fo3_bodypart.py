@@ -84,12 +84,12 @@ class BodyPartTestSuite(TestSuite):
         if not skininst:
             raise ValueError("no body parts found")
         self.logger.info("checking number of body parts")
-        if skininst.numPartitions != 1:
+        if skininst.num_partitions != 1:
             raise ValueError("bad number of body parts")
-        if skininst.skinPartition.numSkinPartitionBlocks != skininst.numPartitions:
+        if skininst.skin_partition.num_skin_partition_blocks != skininst.num_partitions:
             raise ValueError("num skin partitions do not match num body parts")
         self.logger.info("checking body part indices")
-        if skininst.partitions[0].bodyPart != NifFormat.BSDismemberBodyPartType.BP_HEAD:
+        if skininst.partitions[0].body_part != NifFormat.BSDismemberBodyPartType.BP_HEAD:
             raise ValueError("bad body part type in skin partition")
 
         # remove a vertex from the body part vertex group
@@ -131,14 +131,14 @@ class BodyPartTestSuite(TestSuite):
         if not skininst:
             raise ValueError("no body parts found")
         self.logger.info("checking number of body parts")
-        if skininst.numPartitions != 2:
+        if skininst.num_partitions != 2:
             raise ValueError("bad number of body parts")
-        if skininst.skinPartition.numSkinPartitionBlocks != skininst.numPartitions:
+        if skininst.skin_partition.num_skin_partition_blocks != skininst.num_partitions:
             raise ValueError("num skin partitions do not match num body parts")
         self.logger.info("checking body part indices")
-        if skininst.partitions[0].bodyPart != NifFormat.BSDismemberBodyPartType.BP_HEAD:
+        if skininst.partitions[0].body_part != NifFormat.BSDismemberBodyPartType.BP_HEAD:
             raise ValueError("bad body part type in skin partition")
-        if skininst.partitions[1].bodyPart != NifFormat.BSDismemberBodyPartType.BP_HEAD2:
+        if skininst.partitions[1].body_part != NifFormat.BSDismemberBodyPartType.BP_HEAD2:
             raise ValueError("bad body part type in skin partition")
 
         # export without body parts
