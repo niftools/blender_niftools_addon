@@ -951,7 +951,7 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
                 # -> root collision node (can be mesh or empty)
                 ob.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
                 ob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
-                ob.draw_mode = Blender.Object.DrawModes['WIRE']
+                ob.drawMode = Blender.Object.DrawModes['WIRE']
                 self.exportCollision(ob, parent_block)
                 return None # done; stop here
             elif ob_type == 'Mesh' and ob.name.lower()[:7] == 'bsbound':

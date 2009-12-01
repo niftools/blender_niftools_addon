@@ -2911,7 +2911,7 @@ Texture '%s' not found or not supported and no alternate available"""
             # convex hull shape not in blender Python API
             # Blender.Object.RBShapes['CONVEXHULL'] should be 5
             ob.rbShapeBoundType = 5
-            ob.draw_mode = Blender.Object.DrawModes['WIRE']
+            ob.drawMode = Blender.Object.DrawModes['WIRE']
             # radius: quick estimate
             ob.rbRadius = min(vert.co.length for vert in me.verts)
 
@@ -3118,7 +3118,7 @@ Texture '%s' not found or not supported and no alternate available"""
                 # set bounds type
                 ob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
                 ob.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
-                ob.draw_mode = Blender.Object.DrawModes['WIRE']
+                ob.drawMode = Blender.Object.DrawModes['WIRE']
                 # radius: quick estimate
                 ob.rbRadius = min(vert.co.length for vert in me.verts)
                 # set material
@@ -3155,7 +3155,7 @@ Texture '%s' not found or not supported and no alternate available"""
             # set bounds type
             ob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
             ob.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
-            ob.draw_mode = Blender.Object.DrawModes['WIRE']
+            ob.drawMode = Blender.Object.DrawModes['WIRE']
             # radius: quick estimate
             ob.rbRadius = min(vert.co.length for vert in me.verts)
 
