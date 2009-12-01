@@ -1,4 +1,5 @@
 Version 2.5.1 (in development)
+* updated for pyffi 2.0.6
 
 Version 2.5.0 (22 Nov 2009)
 * attempt to fix invalid matrices in bone extra text buffer rather than
