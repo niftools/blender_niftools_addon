@@ -3381,7 +3381,7 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
             colcaps.second_point.y = vert2[1] / 7.0
             colcaps.second_point.z = vert2[2] / 7.0
             # set radius, with correct scale
-            sizex, sizey, sizez = obj.get_size()
+            sizex, sizey, sizez = obj.getSize()
             colcaps.radius = localradius * (sizex + sizey) * 0.5
             colcaps.radius_1 = colcaps.radius
             colcaps.radius_2 = colcaps.radius
