@@ -2182,7 +2182,7 @@ Texture '%s' not found or not supported and no alternate available"""
         vcol = niData.vertex_colors
         
         if vcol:
-            b_meshData.vertex_colors = 1
+            b_meshData.vertexColors = 1
             for f, b_f_index in izip(tris, f_map):
                 if b_f_index is None:
                     continue
@@ -2230,7 +2230,7 @@ Texture '%s' not found or not supported and no alternate available"""
             # material
             mbasetex = material.getTextures()[0]
             mglowtex = material.getTextures()[1]
-            if b_meshData.vertex_colors == 1:
+            if b_meshData.vertexColors == 1:
                 if mbasetex or mglowtex:
                     # textured material: vertex colors influence lighting
                     material.mode |= Blender.Material.Modes.VCOL_LIGHT
