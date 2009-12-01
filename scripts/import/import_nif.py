@@ -3122,7 +3122,7 @@ Texture '%s' not found or not supported and no alternate available"""
                 # radius: quick estimate
                 ob.rbRadius = min(vert.co.length for vert in me.verts)
                 # set material
-                ob.add_property("HavokMaterial", subshape.material, "INT")
+                ob.addProperty("HavokMaterial", subshape.material, "INT")
 
                 # also remove duplicate vertices
                 numverts = len(me.verts)
