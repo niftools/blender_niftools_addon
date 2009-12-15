@@ -3723,6 +3723,8 @@ check that %s is selected during export.""" % targetobj)
                 return block
         # no stencil property found, so create new one
         stencilprop = self.createBlock("NiStencilProperty")
+        if self.EXPORT_VERSION == "Fallout 3":
+            stencilprop.flags = 19840
         return stencilprop        
 
     def exportMaterialProperty(self, name='', flags=0x0001,
