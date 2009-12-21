@@ -264,10 +264,13 @@ class NifExport(NifImportExport):
                     # and not in rest position!
                     ob.data.restPosition = False
                     if (ob.data.envelopes):
-                        self.logger.critical("'%s': Cannot export envelope skinning. If you have vertex groups, turn off envelopes. If you don't have vertex groups, select the bones one by one press W to convert their envelopes to vertex weights, and turn off envelopes." % ob.getName())
-                        raise NifExportError("""\
-'%s': Cannot export envelope skinning. Check console for instructions."""
-                                             % ob.getName())
+                        self.logger.critical("'%s': Cannot export envelope skinning. If you have vertex groups,"
+                            " turn off envelopes. If you don't have vertex groups, select the bones one by one press W"
+                            " to convert their envelopes to vertex weights, and turn off envelopes."
+                            % ob.getName())
+                        raise NifExportError(
+                            "'%s': Cannot export envelope skinning. Check console for instructions."
+                            % ob.getName())
 
                 # check for non-uniform transforms
                 # (lattices are not exported so ignore them as they often tend
@@ -276,9 +279,9 @@ class NifExport(NifImportExport):
                     try:
                         self.decomposeSRT(ob.getMatrix('localspace'))
                     except NifExportError: # non-uniform scaling
-                        raise NifExportError("""\
-Non-uniform scaling not supported.
-Workaround: apply size and rotation (CTRL-A) on '%s'.""" % ob.name)
+                        raise NifExportError(
+                            "Non-uniform scaling not supported. Workaround: apply size and rotation (CTRL-A) on '%s'."
+                            % ob.name)
 
             # extract some useful scene info
             self.scene = Blender.Scene.GetCurrent()
@@ -298,8 +301,8 @@ Workaround: apply size and rotation (CTRL-A) on '%s'.""" % ob.name)
             # get the root object from selected object
             # only export empties, meshes, and armatures
             if (Blender.Object.GetSelected() == None):
-                raise NifExportError("""\
-Please select the object(s) to export, and run this script again.""")
+                raise NifExportError(
+                    "Please select the object(s) to export, and run this script again.")
             root_objects = set()
             export_types = ('Empty', 'Mesh', 'Armature')
             for root_object in [ob for ob in Blender.Object.GetSelected()
@@ -307,9 +310,9 @@ Please select the object(s) to export, and run this script again.""")
                 while (root_object.getParent() != None):
                     root_object = root_object.getParent()
                 if root_object.getType() not in export_types:
-                    raise NifExportError("""\
-Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
-                                         % root_object.getName())
+                    raise NifExportError(
+                        "Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."
+                        % root_object.getName())
                 root_objects.add(root_object)
 
             # smoothen seams of objects
@@ -476,10 +479,10 @@ Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
                 try:
                     furniturenumber = int(self.filebase[15:])
                 except ValueError:
-                    raise NifExportError("""\
-Furniture marker has invalid number (%s). Name your file 
-'furnituremarkerxx.nif' where xx is a number between 00 and 19."""
-                                         % self.filebase[15:])
+                    raise NifExportError(
+                        "Furniture marker has invalid number (%s). Name your file 'furnituremarkerxx.nif'"
+                        "where xx is a number between 00 and 19."
+                        % self.filebase[15:])
                 # name scene root name the file base name
                 root_name = self.filebase
                 # create furniture marker block
@@ -809,10 +812,10 @@ Furniture marker has invalid number (%s). Name your file
                                 if variable_2:
                                     controlledblock.set_variable_2(variable_2)
                 else:
-                    raise NifExportError("""\
-Keyframe export for '%s' is not supported. Only Morrowind, Oblivion, Fallout 3,
-Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
-                                         % self.EXPORT_VERSION)
+                    raise NifExportError(
+                        """Keyframe export for '%s' is not supported. """
+                        """Only Morrowind, Oblivion, Fallout 3, Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
+                        % self.EXPORT_VERSION)
 
                 # write kf (and xnif if asked)
                 prefix = "" if not self.EXPORT_MW_NIFXNIFKF else "x"
@@ -1210,9 +1213,9 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
                                Ipo.PO_LOCX: "LOC",
                                Ipo.PO_QUATX: "ROT",
                                Ipo.OB_ROTX: "ROT"}
-                    raise NifExportError("""\
-missing curves in %s; insert %s key at frame 1 and try again"""
-                                         % (ipo, keytype[curvecollection[0]]))
+                    raise NifExportError(
+                        "missing curves in %s; insert %s key at frame 1 and try again"
+                        % (ipo, keytype[curvecollection[0]]))
             # go over all curves
             ipo_curves = ipo.curveConsts.values()
             for curve in ipo_curves:
@@ -1515,8 +1518,8 @@ missing curves in %s; insert %s key at frame 1 and try again"""
             # this works for morrowind only
             if self.EXPORT_VERSION != "Morrowind":
                 raise NifExportError(
-                    "cannot export environment maps for nif version '%s'"%
-                    self.EXPORT_VERSION)
+                    "cannot export environment maps for nif version '%s'"
+                    %self.EXPORT_VERSION)
             return "enviro 01.TGA"
         elif texture.type == Blender.Texture.Types.IMAGE:
             # get filename from image
@@ -1640,7 +1643,9 @@ missing curves in %s; insert %s key at frame 1 and try again"""
             flip.sources[flip.num_sources-1] = tex
             count += 1
         if count < 2:
-            raise NifExportError("Error in Texture Flip buffer '%s': Must define at least two textures"%fliptxt.getName())
+            raise NifExportError(
+                "Error in Texture Flip buffer '%s': Must define at least two textures"
+                %fliptxt.getName())
         flip.delta = (flip.stop_time - flip.start_time) / count
 
 
@@ -1766,16 +1771,17 @@ missing curves in %s; insert %s key at frame 1 and try again"""
                         # only do some simple checks
                         if (mtex.mapto & Blender.Texture.MapTo.COL) == 0:
                             # it should map to colour
-                            raise NifExportError("Non-COL-mapped reflection \
-texture in mesh '%s', material '%s', these cannot be exported to NIF. Either \
-delete all non-COL-mapped reflection textures, or in the Shading Panel, under \
-Material Buttons, set texture 'Map To' to \
-'COL'." % (ob.getName(),mesh_mat.getName()))
+                            raise NifExportError(
+                                "Non-COL-mapped reflection texture in mesh '%s', material '%s',"
+                                " these cannot be exported to NIF. Either delete all non-COL-mapped"
+                                " reflection textures, or in the Shading Panel, under Material Buttons,"
+                                " set texture 'Map To' to 'COL'."
+                                % (ob.getName(),mesh_mat.getName()))
                         if mtex.blendmode != Blender.Texture.BlendModes["ADD"]:
                             # it should have "ADD" blending mode
-                            self.logger.warn("Reflection texture should \
-have blending mode 'Add' on texture in \
-mesh '%s', material '%s')."%(ob.getName(),mesh_mat.getName()))
+                            self.logger.warn(
+                               "Reflection texture should have blending mode 'Add' on texture"
+                               " in mesh '%s', material '%s')." %(ob.getName(),mesh_mat.getName()))
                             # an envmap image should have an empty... don't care
                         mesh_texeff_mtex = mtex
 
@@ -1790,30 +1796,34 @@ mesh '%s', material '%s')."%(ob.getName(),mesh_mat.getName()))
                         if mtex.mapto & Blender.Texture.MapTo.EMIT:
                             # got the glow tex
                             if mesh_glow_mtex:
-                                raise NifExportError("Multiple glow textures \
-in mesh '%s', material '%s'. Make sure there is only one texture with \
-MapTo.EMIT"%(mesh.name,mesh_mat.getName()))
+                                raise NifExportError(
+                                    "Multiple glow textures in mesh '%s', material '%s'."
+                                    " Make sure there is only one texture with MapTo.EMIT"
+                                    %(mesh.name,mesh_mat.getName()))
                             # check if calculation of alpha channel is enabled
                             # for this texture
                             if (mtex.tex.imageFlags & Blender.Texture.ImageFlags.CALCALPHA != 0) \
                                and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
-                                self.logger.warn("In mesh '%s', material \
-'%s': glow texture must have CALCALPHA flag set, and must have MapTo.ALPHA \
-enabled."%(ob.getName(),mesh_mat.getName()))
+                                self.logger.warn(
+                                    "In mesh '%s', material '%s': glow texture must have"
+                                    " CALCALPHA flag set, and must have MapTo.ALPHA enabled."
+                                    %(ob.getName(),mesh_mat.getName()))
                             mesh_glow_mtex = mtex
                         elif mtex.mapto & Blender.Texture.MapTo.SPEC:
                             # got the gloss map
                             if mesh_gloss_mtex:
-                                raise NifExportError("Multiple gloss textures \
-in mesh '%s', material '%s'. Make sure there is only one texture with \
-MapTo.SPEC"%(mesh.name,mesh_mat.getName()))
+                                raise NifExportError(
+                                    "Multiple gloss textures in mesh '%s', material '%s'."
+                                    " Make sure there is only one texture with MapTo.SPEC"
+                                    %(mesh.name,mesh_mat.getName()))
                             mesh_gloss_mtex = mtex
                         elif mtex.mapto & Blender.Texture.MapTo.NOR:
                             # got the normal map
                             if mesh_bump_mtex:
-                                raise NifExportError("Multiple bump/normal textures \
-in mesh '%s', material '%s'. Make sure there is only one texture with \
-MapTo.NOR"%(mesh.name,mesh_mat.getName()))
+                                raise NifExportError(
+                                    "Multiple bump/normal textures in mesh '%s', material '%s'."
+                                    " Make sure there is only one texture with MapTo.NOR"
+                                    %(mesh.name,mesh_mat.getName()))
                             mesh_bump_mtex = mtex
                         elif mtex.mapto & Blender.Texture.MapTo.COL and \
                              mtex.blendmode == Blender.Texture.BlendModes["DARKEN"] and \
@@ -1833,14 +1843,16 @@ MapTo.NOR"%(mesh.name,mesh_mat.getName()))
                                 # require the Blender material alpha to be 0.0 (no material color can show up), and use the "Var" slider in the texture blending mode tab!
                                 # but...
                                 if mesh_mat_transparency > self.EPSILON:
-                                    raise NifExportError("Cannot export this \
-type of transparency in material '%s': instead, try to set alpha to 0.0 and to \
-use the 'Var' slider in the 'Map To' tab under the material \
-buttons."%mesh_mat.getName())
+                                    raise NifExportError(
+                                        "Cannot export this type of transparency in material '%s': "
+                                        " instead, try to set alpha to 0.0 and to use the 'Var' slider"
+                                        " in the 'Map To' tab under the material buttons."
+                                        %mesh_mat.getName())
                                 if (mesh_mat.getIpo() and mesh_mat.getIpo().getCurve('Alpha')):
-                                    raise NifExportError("Cannot export \
-animation for this type of transparency in material '%s': remove alpha \
-animation, or turn off MapTo.ALPHA, and try again."%mesh_mat.getName())
+                                    raise NifExportError(
+                                        "Cannot export animation for this type of transparency in material '%s':"
+                                        " remove alpha animation, or turn off MapTo.ALPHA, and try again."
+                                        %mesh_mat.getName())
                                 mesh_mat_transparency = mtex.varfac # we must use the "Var" value
                                 mesh_hasalpha = True
                         elif mtex.mapto & Blender.Texture.MapTo.COL and \
@@ -1851,25 +1863,25 @@ animation, or turn off MapTo.ALPHA, and try again."%mesh_mat.getName())
                         elif mtex.mapto & Blender.Texture.MapTo.REF:
                             # got the reflection map
                             if mesh_ref_mtex:
-                                raise NifExportError("Multiple reflection textures \
-in mesh '%s', material '%s'. Make sure there is only one texture with \
-MapTo.REF"%(mesh.name,mesh_mat.getName()))
+                                raise NifExportError(
+                                    "Multiple reflection textures in mesh '%s', material '%s'."
+                                    " Make sure there is only one texture with MapTo.REF"
+                                    %(mesh.name,mesh_mat.getName()))
                             mesh_ref_mtex = mtex
                         else:
                             # unknown map
-                            raise NifExportError("Do not know how to export \
-texture '%s', in mesh '%s', material '%s'. Either delete it, or if this \
-texture is to be your base texture, go to the Shading Panel, Material Buttons, \
-and set texture 'Map To' to 'COL'." % (mtex.tex.getName(),
-                                       ob.getName(),
-                                       mesh_mat.getName()))
+                            raise NifExportError(
+                                "Do not know how to export texture '%s', in mesh '%s', material '%s'."
+                                " Either delete it, or if this texture is to be your base texture,"
+                                " go to the Shading Panel, Material Buttons, and set texture 'Map To' to 'COL'."
+                                % (mtex.tex.getName(),ob.getName(),mesh_mat.getName()))
                     else:
                         # nif only support UV-mapped textures
-                        raise NifExportError("Non-UV texture in mesh '%s', \
-material '%s'. Either delete all non-UV textures, or in the Shading Panel, \
-under Material Buttons, set texture 'Map Input' to 'UV'."%
-                                             (ob.getName(),mesh_mat.getName()))
-
+                        raise NifExportError(
+                            "Non-UV texture in mesh '%s', material '%s'."
+                            " Either delete all non-UV textures, or in the Shading Panel,"
+                            " under Material Buttons, set texture 'Map Input' to 'UV'."
+                            %(ob.getName(),mesh_mat.getName()))
 
             # list of body part (name, index, vertices) in this mesh
             bodypartgroups = []
@@ -2041,9 +2053,9 @@ under Material Buttons, set texture 'Map Input' to 'UV'."%
                 # switch to edit mode and raise exception
                 Blender.Window.EditMode(1)
                 raise ValueError(
-                    "Some faces of %s not assigned to any body part. \
-The unassigned faces have been selected in the mesh so \
-they can easily be identified." % ob)
+                    "Some faces of %s not assigned to any body part. The unassigned faces"
+                    " have been selected in the mesh so they can easily be identified."
+                    % ob)
 
             if len(trilist) > 65535:
                 raise NifExportError(
@@ -2242,7 +2254,9 @@ they can easily be identified." % ob)
                     elif ( a_curve.getInterpolation() == "Bezier" ):
                         alphad.data.interpolation = NifFormat.KeyType.QUADRATIC_KEY
                     else:
-                        raise NifExportError( 'interpolation %s for alpha curve not supported use linear or bezier instead'%a_curve.getInterpolation() )
+                        raise NifExportError(
+                            "Interpolation %s for alpha curve not supported use linear or bezier instead"
+                            %a_curve.getInterpolation() )
 
                     alphad.data.num_keys = len(alpha)
                     alphad.data.keys.update_size()
@@ -2353,7 +2367,8 @@ they can easily be identified." % ob)
                                     break
                         else:
                             raise NifExportError(
-                                "Skeleton root '%s' not found."%armaturename)
+                                "Skeleton root '%s' not found."
+                                %armaturename)
             
                         # create skinning data and link it
                         skindata = self.createBlock("NiSkinData", ob)
@@ -2375,10 +2390,11 @@ they can easily be identified." % ob)
                             except AttributeError:
                                 # this happens when the vertex group has been
                                 # added, but the weights have not been painted
-                                raise NifExportError("""\
-Mesh %s has vertex group for bone %s, but no weights.
-Please select the mesh, and either delete the vertex group, or
-go to weight paint mode, and paint weights.""" % (ob.name, bone))
+                                raise NifExportError(
+                                    "Mesh %s has vertex group for bone %s, but no weights."
+                                    " Please select the mesh, and either delete the vertex group,"
+                                    " or go to weight paint mode, and paint weights."
+                                    % (ob.name, bone))
                             for v in vert_list[bone]:
                                 if vert_norm.has_key(v[0]):
                                     vert_norm[v[0]] += v[1]
@@ -2399,9 +2415,10 @@ go to weight paint mode, and paint weights.""" % (ob.name, bone))
                                         if not bone_block:
                                             bone_block = block
                                         else:
-                                            raise NifExportError("""\
-multiple bones with name '%s': probably you have multiple armatures, please
-parent all meshes to a single armature and try again""" % bone)
+                                            raise NifExportError(
+                                                "multiple bones with name '%s': probably you have multiple armatures,"
+                                                " please parent all meshes to a single armature and try again"
+                                                % bone)
                             if not bone_block:
                                 raise NifExportError(
                                     "Bone '%s' not found." % bone)
@@ -2451,9 +2468,9 @@ parent all meshes to a single armature and try again""" % bone)
                                     mesh.verts[idx].sel = 1
                             # switch to edit mode and raise exception
                             Blender.Window.EditMode(1)
-                            raise NifExportError("Cannot export mesh with \
-unweighted vertices. The unweighted vertices have been selected in the mesh so \
-they can easily be identified.")
+                            raise NifExportError(
+                                "Cannot export mesh with unweighted vertices."
+                                " The unweighted vertices have been selected in the mesh so they can easily be identified.")
 
                         # update bind position skinning data
                         trishape.update_bind_position()
@@ -2478,12 +2495,15 @@ they can easily be identified.")
                             # warn on bad config settings
                             if self.EXPORT_VERSION == 'Oblivion':
                                if self.EXPORT_PADBONES:
-                                   self.logger.warning("Using padbones on Oblivion export, but you probably do not want to do this. Disable the pad bones option to get higher quality skin partitions.")
+                                   self.logger.warning("Using padbones on Oblivion export, but you probably do not want to do this."
+                                       "Disable the pad bones option to get higher quality skin partitions.")
                             if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
                                if self.EXPORT_BONESPERPARTITION < 18:
-                                   self.logger.warning("Using less than 18 bones per partition on Oblivion/Fallout 3 export. Set it to 18 to get higher quality skin partitions")
+                                   self.logger.warning("Using less than 18 bones per partition on Oblivion/Fallout 3 export."
+                                       "Set it to 18 to get higher quality skin partitions")
                             if lostweight > self.EPSILON:
-                                self.logger.warning("Lost %f in vertex weights while creating a skin partition for Blender object '%s' (nif block '%s')" % (lostweight, ob.name, trishape.name))
+                                self.logger.warning("Lost %f in vertex weights while creating a skin partition for Blender object '%s' (nif block '%s')"
+                                    % (lostweight, ob.name, trishape.name))
 
                         # clean up
                         del vert_weights
@@ -2933,9 +2953,10 @@ they can easily be identified.")
             return self.decomposeSRT(mat)
         except NifExportError: # non-uniform scaling
             self.logger.debug(str(mat))
-            raise NifExportError("""\
-Non-uniform scaling on bone '%s' not supported.
-This could be a bug... No workaround. :-( Post your blend!""" % obj.name)
+            raise NifExportError(
+                "Non-uniform scaling on bone '%s' not supported."
+                "This could be a bug... No workaround. :-( Post your blend!"
+                % obj.name)
 
 
 
@@ -2957,9 +2978,8 @@ This could be a bug... No workaround. :-( Post your blend!""" % obj.name)
         # only uniform scaling
         # allow rather large error to accomodate some nifs
         if abs(b_scale[0]-b_scale[1]) + abs(b_scale[1]-b_scale[2]) > 0.02:
-            raise NifExportError("""\
-Non-uniform scaling not supported.
-Workaround: apply size and rotation (CTRL-A).""")
+            raise NifExportError(
+                "Non-uniform scaling not supported. Workaround: apply size and rotation (CTRL-A).")
         b_scale = b_scale[0]
         # get rotation matrix
         b_rot = b_scale_rot * (1.0 / b_scale)
@@ -3024,8 +3044,8 @@ Workaround: apply size and rotation (CTRL-A).""")
         try:
             block = getattr(NifFormat, blocktype)()
         except AttributeError:
-            raise NifExportError("""\
-'%s': Unknown block type (this is probably a bug).""" % blocktype)
+            raise NifExportError(
+                "'%s': Unknown block type (this is probably a bug)." % blocktype)
         return self.registerBlock(block, b_obj)
 
     def registerBlock(self, block, b_obj = None):
@@ -3054,8 +3074,8 @@ Workaround: apply size and rotation (CTRL-A).""")
         """Main function for adding collision object obj to a node.""" 
         if self.EXPORT_VERSION == 'Morrowind':
              if obj.rbShapeBoundType != Blender.Object.RBShapes['POLYHEDERON']:
-                 raise NifExportError("""\
-Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
+                 raise NifExportError(
+                     "Morrowind only supports Polyhedron/Static TriangleMesh collisions.")
              node = self.createBlock("RootCollisionNode", obj)
              parent_block.add_child(node)
              node.flags = 0x0003 # default
@@ -3437,7 +3457,7 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
 
             if len(fnormlist) > 65535 or len(vertlist) > 65535:
                 raise NifExportError("""
-ERROR%t|Too many faces/vertices. Decimate/split your mesh and try again.""")
+                    ERROR%t|Too many faces/vertices. Decimate/split your mesh and try again.""")
             
             colhull = self.createBlock("bhkConvexVerticesShape", obj)
             colhull.material = material
@@ -3487,9 +3507,9 @@ ERROR%t|Too many faces/vertices. Decimate/split your mesh and try again.""")
             # rigid body joints
             if b_constr.type == Blender.Constraint.Type.RIGIDBODYJOINT:
                 if self.EXPORT_VERSION not in ("Oblivion", "Fallout 3"):
-                    self.logger.warning("""\
-Only Oblivion/Fallout 3 rigid body constraints can be exported
-skipped %s""" % b_constr)
+                    self.logger.warning(
+                        """Only Oblivion/Fallout 3 rigid body constraints can be exported
+                        skipped %s""" % b_constr)
                     continue
                 # check that the object is a rigid body
                 for otherbody, otherobj in self.blocks.iteritems():
@@ -3500,8 +3520,8 @@ skipped %s""" % b_constr)
                 else:
                     # no collision body for this object
                     raise NifExportError("""\
-Object %s has a rigid body constraint, 
-but is not exported as collision object""")
+                        Object %s has a rigid body constraint, 
+                        but is not exported as collision object""")
                 # yes there is a rigid body constraint
                 # is it of a type that is supported?
                 if b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE] == 1:
@@ -3525,9 +3545,9 @@ but is not exported as collision object""")
                         hkconstraint.type = 2
                     hkdescriptor = hkconstraint.limited_hinge
                 else:
-                    raise NifExportError("""\
-Unsupported rigid body joint type (%i), only ball and hinge are supported.""" \
-% b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE])
+                    raise NifExportError(
+                        """Unsupported rigid body joint type (%i), only ball and hinge are supported."""
+                        % b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE])
 
                 # parent constraint to hkbody
                 hkbody.num_constraints += 1
@@ -3551,9 +3571,9 @@ Unsupported rigid body joint type (%i), only ball and hinge are supported.""" \
                         break
                 else:
                     # not found
-                    raise NifExportError("""\
-Rigid body target not exported in nif tree, 
-check that %s is selected during export.""" % targetobj)
+                    raise NifExportError(
+                        "Rigid body target not exported in nif tree" 
+                        " check that %s is selected during export." % targetobj)
                 # priority
                 hkconstraint.priority = 1
                 # extra malleable constraint settings
@@ -3796,8 +3816,7 @@ check that %s is selected during export.""" % targetobj)
             if (block.get_hash(ignore_strings=ignore_strings) ==
                 matprop.get_hash(
                     ignore_strings=ignore_strings)):
-                self.logger.warning("Merging materials '%s' and '%s' \
-(they are identical in nif)"
+                self.logger.warning("Merging materials '%s' and '%s' they are identical in nif)"
                                     % (matprop.name, block.name))
                 return block
 
