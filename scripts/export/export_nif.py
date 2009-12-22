@@ -3191,10 +3191,11 @@ class NifExport(NifImportExport):
             colbody.unknown_7_shorts[3] = 62977
             colbody.unknown_7_shorts[4] = 65535
             colbody.unknown_7_shorts[5] = 44
-            if self.EXPORT_OB_RIGIDBODYT == True: #to fix: get translations/rotations and set.
-                colbody.translation.x = 0.0
-                colbody.translation.y = 0.0
-                colbody.translation.z = 0.0
+            if self.EXPORT_OB_RIGIDBODYT == True: # XXX todo: set rotations
+                bscale, brot, btrans = self.getObjectSRT(obj)
+                colbody.translation.x = btrans[0] / 7
+                colbody.translation.y = btrans[1] / 7
+                colbody.translation.z = btrans[2] / 7
                 colbody.rotation.w = 1.0
                 colbody.rotation.x = 0.0
                 colbody.rotation.y = 0.0
