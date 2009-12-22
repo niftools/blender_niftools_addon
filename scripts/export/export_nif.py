@@ -3129,7 +3129,18 @@ class NifExport(NifImportExport):
                     # given as a string, not as an integer
                     material = getattr(NifFormat.HavokMaterial, material)
             elif prop.getName() == 'OblivionLayer':
-                layer = getattr(NifFormat.OblivionLayer, prop.getData())
+                if prop.getType() == "STRING":
+                    # for Anglicized names
+                    if prop.getData() in self.OB_LAYER:
+                        layer = self.OB_LAYER.index(prop.getData())
+                    # for the real Nif Format layer names
+                    else:
+                        layer = getattr(NifFormat.OblivionLayer, prop.getData())
+                # or if someone wants to set the layer by the number
+                elif prop.getType() == "INT":
+                    layer = prop.getData()
+                else:
+                    layer = 1 #static
             #elif prop.getName() == 'MotionSystem':
             #    ob_mosys = getattr(NifFormat.MotionSystem, prop.getData())
 
