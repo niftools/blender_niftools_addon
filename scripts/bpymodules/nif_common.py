@@ -286,7 +286,8 @@ class NifConfig:
         PROFILE = '', # name of file where Python profiler dumps the profile; set to empty string to turn off profiling
         IMPORT_EXPORTEMBEDDEDTEXTURES = False,
         EXPORT_OPTIMIZE_MATERIALS = True,
-        IMPORT_COMBINESHAPES = True)
+        IMPORT_COMBINESHAPES = True,
+        OB_LAYER = ["Unidentified", "Static", "AnimStatic", "Transparent", "Clutter", "Weapon", "Projectile", "Spell", "Biped", "Props", "Water", "Trigger", "Terrain", "Trap", "NonCollidable", "CloudTrap", "Ground", "Portal", "Stairs", "CharController", "AvoidBox", "?", "?", "CameraPick", "ItemPick", "LineOfSight", "PathPick", "CustomPick1", "CustomPick2", "SpellExplosion", "DroppingPick", "Other", "Head", "Body", "Spine1", "Spine2", "LUpperArm", "LForeArm", "LHand", "LThigh", "LCalf", "LFoot",  "RUpperArm", "RForeArm", "RHand", "RThigh", "RCalf", "RFoot", "Tail", "SideWeapon", "Shield", "Quiver", "BackWeapon", "BackWeapon?", "PonyTail", "Wing", "Null"])
 
     def __init__(self):
         """Initialize and load configuration."""

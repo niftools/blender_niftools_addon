@@ -2967,6 +2967,8 @@ Texture '%s' not found or not supported and no alternate available"""
                     Blender.Object.RBFlags["BOUNDS"]
                 if bhkshape.mass > 0.0001:
                     ob.rbMass = bhkshape.mass
+                ob.addProperty("OblivionLayer", self.OB_LAYER[bhkshape.layer], "STRING")
+
             # import constraints
             # this is done once all objects are imported
             # for now, store all imported havok shapes with object lists
