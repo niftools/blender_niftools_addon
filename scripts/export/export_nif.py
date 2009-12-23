@@ -954,9 +954,14 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
                 ob.drawMode = Blender.Object.DrawModes['WIRE']
                 self.exportCollision(ob, parent_block)
                 return None # done; stop here
-            elif ob_type == 'Mesh' and ob.name.lower()[:7] == 'bsbound':
+            elif ob_type == 'Mesh' and ob.name.lower().startswith('bsbound'):
                 # add a bounding box
-                self.exportBSBound(ob, parent_block)
+                self.export_bounding_box(ob, parent_block, bsbound=True)
+                return None # done; stop here
+            elif (ob_type == 'Mesh'
+                  and ob.name.lower().startswith("bounding box")):
+                # Morrowind bounding box
+                self.export_bounding_box(ob, parent_block, bsbound=False)
                 return None # done; stop here
             elif ob_type == 'Mesh':
                 # -> mesh data.
@@ -4006,18 +4011,8 @@ check that %s is selected during export.""" % targetobj)
         texeff.unknown_vector.x = 1.0
         return self.registerBlock(texeff)
 
-    def exportBSBound(self, obj, block_parent):
-        """Export an Oblivion bounding box."""
-        bbox = self.createBlock("BSBound")
-        # ... the following incurs double scaling because it will be added in
-        # both the extra data list and in the old extra data sequence!!!
-        #block_parent.add_extra_data(bbox)
-        # quick hack (better solution would be to make apply_scale non-recursive)
-        block_parent.num_extra_data_list += 1
-        block_parent.extra_data_list.update_size()
-        block_parent.extra_data_list[-1] = bbox
-        
-        bbox.name = "BBX"
+    def export_bounding_box(self, obj, block_parent, bsbound=False):
+        """Export a Morrowind or Oblivion bounding box."""
         # calculate bounding box extents
         objbbox = obj.getBoundBox()
         minx = min(vert[0] for vert in objbbox)
@@ -4026,13 +4021,41 @@ check that %s is selected during export.""" % targetobj)
         maxx = max(vert[0] for vert in objbbox)
         maxy = max(vert[1] for vert in objbbox)
         maxz = max(vert[2] for vert in objbbox)
-        # set the center and dimensions
-        bbox.center.x = (minx + maxx) * 0.5
-        bbox.center.y = (miny + maxy) * 0.5
-        bbox.center.z = (minz + maxz) * 0.5
-        bbox.dimensions.x = maxx - minx
-        bbox.dimensions.y = maxy - miny
-        bbox.dimensions.z = maxz - minz
+
+        if bsbound:
+            bbox = self.createBlock("BSBound")
+            # ... the following incurs double scaling because it will be added in
+            # both the extra data list and in the old extra data sequence!!!
+            #block_parent.add_extra_data(bbox)
+            # quick hack (better solution would be to make apply_scale non-recursive)
+            block_parent.num_extra_data_list += 1
+            block_parent.extra_data_list.update_size()
+            block_parent.extra_data_list[-1] = bbox
+            
+            # set name, center, and dimensions
+            bbox.name = "BBX"
+            bbox.center.x = (minx + maxx) * 0.5
+            bbox.center.y = (miny + maxy) * 0.5
+            bbox.center.z = (minz + maxz) * 0.5
+            bbox.dimensions.x = maxx - minx
+            bbox.dimensions.y = maxy - miny
+            bbox.dimensions.z = maxz - minz
+        else:
+            bbox = self.createBlock("NiNode")
+            block_parent.add_child(bbox)
+            # set name, flags, translation, and radius
+            bbox.name = "Bounding Box"
+            bbox.flags = 4
+            bbox.translation.x = (minx + maxx) * 0.5 + obj.LocX
+            bbox.translation.y = (minx + maxx) * 0.5 + obj.LocY
+            bbox.translation.z = (minx + maxx) * 0.5 + obj.LocZ
+            bbox.rotation.set_identity()
+            bbox.has_bounding_box = True
+            bbox.bounding_box.translation.deepcopy(bbox.translation)
+            bbox.bounding_box.rotation.set_identity()
+            bbox.bounding_box.radius.x = (maxx - minx) * 0.5
+            bbox.bounding_box.radius.y = (maxy - miny) * 0.5
+            bbox.bounding_box.radius.z = (maxz - minz) * 0.5
 
     def addShaderIntegerExtraDatas(self, trishape):
         """Add extra data blocks for shader indices."""

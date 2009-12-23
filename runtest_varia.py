@@ -83,7 +83,7 @@ class VariaTestSuite(TestSuite):
         assert(b_bbox.rbShapeBoundType == Blender.Object.RBShapes['BOX'])
         # export
         nif_export = self.test(
-            filename='test/nif/_stenciltest.nif',
+            filename='test/nif/_bounding_box.nif',
             config=dict(EXPORT_VERSION = 'Morrowind'),
             selection = ['Bounding Box'])
         # test stuff...
