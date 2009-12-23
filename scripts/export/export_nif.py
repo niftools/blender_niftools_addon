@@ -118,13 +118,13 @@ class NifExport(NifImportExport):
         """Set bone extra matrix, inverted. The bonename is first converted
         to blender style (to ensure compatibility with older imports).
         """
-        self.bonesExtraMatrixInv[self.get_bone_name_for_blender(bonename)] = mat
+        self.bones_extra_matrix_inv[self.get_bone_name_for_blender(bonename)] = mat
 
     def get_bone_extra_matrix_inv(self, bonename):
         """Get bone extra matrix, inverted. The bonename is first converted
         to blender style (to ensure compatibility with older imports).
         """
-        return self.bonesExtraMatrixInv[self.get_bone_name_for_blender(bonename)]
+        return self.bones_extra_matrix_inv[self.get_bone_name_for_blender(bonename)]
 
     def rebuildFullNames(self):
         """Recovers the full object names from the text buffer and rebuilds
@@ -226,7 +226,7 @@ class NifExport(NifImportExport):
         #   B = X^{-1} * B'
         # Hence, we will restore the X's, invert them, and store those inverses in the
         # following dictionary.
-        self.bonesExtraMatrixInv = {}
+        self.bones_extra_matrix_inv = {}
 
         # store bone priorities (from NULL constraints) as the armature bones
         # are parsed, so they are available when writing the kf file
