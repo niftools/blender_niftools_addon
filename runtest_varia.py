@@ -59,6 +59,7 @@ class VariaTestSuite(TestSuite):
                    for prop in nif_geom.properties)
 
     def run(self):
+        self.test_bounding_box()
         self.test_stencil()
         self.test_alpha()
         self.test_name_ends_with_null()
@@ -71,6 +72,23 @@ class VariaTestSuite(TestSuite):
         self.test_mw_nifxnifkf()
         self.test_anim_buffer_out_of_range()
         self.test_ob_animsequencename()
+
+    def test_bounding_box(self):
+        """Bounding box test."""
+        # import
+        nif_import = self.test(
+            filename='test/nif/bounding_box.nif')
+        b_bbox = Blender.Object.Get("Bounding Box")
+        # test stuff
+        assert(b_bbox.rbShapeBoundType == Blender.Object.RBShapes['BOX'])
+        # export
+        nif_export = self.test(
+            filename='test/nif/_stenciltest.nif',
+            config=dict(EXPORT_VERSION = 'Morrowind'),
+            selection = ['Bounding Box'])
+        # test stuff...
+        bbox = nif_export.root_blocks[0].children[0]
+        assert(bbox.has_bounding_box)
 
     def test_stencil(self):
         # stencil test
