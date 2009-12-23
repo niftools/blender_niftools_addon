@@ -3049,13 +3049,6 @@ Workaround: apply size and rotation (CTRL-A).""")
         self.blocks[block] = b_obj
         return block
 
-    def registerBlenderObject(self, block, b_obj):
-        """Helper function to associate a nif block with a Blender object.
-
-        @param block: The nif block.
-        @param b_obj: The Blender object.
-        @return: C{block}"""
-
     def exportCollision(self, obj, parent_block):
         """Main function for adding collision object obj to a node.""" 
         if self.EXPORT_VERSION == 'Morrowind':
