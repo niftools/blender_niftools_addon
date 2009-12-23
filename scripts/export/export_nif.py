@@ -383,7 +383,7 @@ Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
             
             # export the root node (the name is fixed later to avoid confusing the
             # exporter with duplicate names)
-            root_block = self.exportNode(None, 'none', None, '')
+            root_block = self.export_node(None, 'none', None, '')
             
             # export objects
             self.logger.info("Exporting objects")
@@ -392,8 +392,8 @@ Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
                 # exported as well
                 # note that localspace = worldspace, because root objects have
                 # no parents
-                self.exportNode(root_object, 'localspace',
-                                root_block, root_object.getName())
+                self.export_node(root_object, 'localspace',
+                                 root_block, root_object.getName())
 
             # post-processing:
             #-----------------
@@ -919,7 +919,7 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
 
 
 
-    def exportNode(self, ob, space, parent_block, node_name):
+    def export_node(self, ob, space, parent_block, node_name):
         """
         Export a mesh/armature/empty object ob as child of parent_block.
         Export also all children of ob.
@@ -2778,8 +2778,8 @@ they can easily be identified.")
             if ob_child.getType() in ['Mesh', 'Empty', 'Armature']:
                 if (obj.getType() != 'Armature'):
                     # not parented to an armature
-                    self.exportNode(ob_child, 'localspace',
-                                    parent_block, ob_child.getName())
+                    self.export_node(ob_child, 'localspace',
+                                     parent_block, ob_child.getName())
                 else:
                     # this object is parented to an armature
                     # we should check whether it is really parented to the
@@ -2787,8 +2787,8 @@ they can easily be identified.")
                     # or whether it is parented to some bone of the armature
                     parent_bone_name = ob_child.getParentBoneName()
                     if parent_bone_name is None:
-                        self.exportNode(ob_child, 'localspace',
-                                        parent_block, ob_child.getName())
+                        self.export_node(ob_child, 'localspace',
+                                         parent_block, ob_child.getName())
                     else:
                         # we should parent the object to the bone instead of
                         # to the armature
@@ -2806,8 +2806,8 @@ they can easily be identified.")
                                 #     extra translation along the Y axis
                                 #     with length of the bone ("tail")
                                 # this is handled in the getObjectSRT function
-                                self.exportNode(ob_child, 'localspace',
-                                                bone_block, ob_child.getName())
+                                self.export_node(ob_child, 'localspace',
+                                                 bone_block, ob_child.getName())
                                 break
                         else:
                             assert(False) # BUG!
