@@ -416,8 +416,12 @@ class NifImport(NifImportExport):
                 return self.importMesh(niBlock)
             elif isinstance(niBlock, NifFormat.NiNode):
                 children = niBlock.children
-                bbox = self.find_extra(niBlock, NifFormat.BSBound)
-                if children or niBlock.collision_object or bbox or self.IMPORT_EXTRANODES:
+                # bounding box child?
+                bsbound = self.find_extra(niBlock, NifFormat.BSBound)
+                if (children
+                    or niBlock.collision_object
+                    or bsbound or niBlock.has_bounding_box
+                    or self.IMPORT_EXTRANODES):
                     # it's a parent node
                     # import object + children
                     if self.is_armature_root(niBlock):
@@ -452,7 +456,10 @@ class NifImport(NifImportExport):
                             # no grouping node, or too many materials to
                             # group the geometry into a single mesh
                             # so import it as an empty
-                            b_obj = self.importEmpty(niBlock)
+                            if not niBlock.has_bounding_box:
+                                b_obj = self.importEmpty(niBlock)
+                            else:
+                                b_obj = self.import_bounding_box(niBlock)
                             geom_group = []
                         else:
                             # node groups geometries, so import it as a mesh
@@ -502,8 +509,9 @@ class NifImport(NifImportExport):
                             b_obj.makeParent(collision_objs)
                         
                         # import bounding box
-                        if bbox:
-                            b_obj.makeParent([self.importBSBound(bbox)])
+                        if bsbound:
+                            b_obj.makeParent(
+                                [self.import_bounding_box(bsbound)])
 
                     # track camera for billboard nodes
                     if isinstance(niBlock, NifFormat.NiBillboardNode):
@@ -3468,15 +3476,32 @@ X axis flipped in %s to fix orientation""" % hkdescriptor.__class__.__name__)
                 raise ValueError("unknown descriptor %s"
                                  % hkdescriptor.__class__.__name__)
 
-    def importBSBound(self, bbox):
-        """Import a bounding box."""
-        me = Blender.Mesh.New('BSBound')
-        minx = bbox.center.x - bbox.dimensions.x * 0.5
-        miny = bbox.center.y - bbox.dimensions.y * 0.5
-        minz = bbox.center.z - bbox.dimensions.z * 0.5
-        maxx = bbox.center.x + bbox.dimensions.x * 0.5
-        maxy = bbox.center.y + bbox.dimensions.y * 0.5
-        maxz = bbox.center.z + bbox.dimensions.z * 0.5
+    def import_bounding_box(self, bbox):
+        """Import a bounding box (BSBound, or NiNode with bounding box)."""
+        # calculate bounds
+        if isinstance(bbox, NifFormat.BSBound):
+            me = Blender.Mesh.New('BSBound')
+            minx = bbox.center.x - bbox.dimensions.x * 0.5
+            miny = bbox.center.y - bbox.dimensions.y * 0.5
+            minz = bbox.center.z - bbox.dimensions.z * 0.5
+            maxx = bbox.center.x + bbox.dimensions.x * 0.5
+            maxy = bbox.center.y + bbox.dimensions.y * 0.5
+            maxz = bbox.center.z + bbox.dimensions.z * 0.5
+        elif isinstance(bbox, NifFormat.NiNode):
+            if not bbox.has_bounding_box:
+                raise ValueError("Expected NiNode with bounding box.")
+            me = Blender.Mesh.New('Bounding Box')
+            minx = -bbox.bounding_box.radius.x
+            miny = -bbox.bounding_box.radius.y
+            minz = -bbox.bounding_box.radius.z
+            maxx = bbox.bounding_box.radius.x
+            maxy = bbox.bounding_box.radius.y
+            maxz = bbox.bounding_box.radius.z
+        else:
+            raise TypeError("Expected BSBound or NiNode but got %s."
+                            % bbox.__class__.__name__)
+
+        # create mesh
         for x in [minx, maxx]:
             for y in [miny, maxy]:
                 for z in [minz, maxz]:
@@ -3485,7 +3510,15 @@ X axis flipped in %s to fix orientation""" % hkdescriptor.__class__.__name__)
             [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
 
         # link box to scene and set transform
-        ob = self.scene.objects.new(me, 'BSBound')
+        if isinstance(bbox, NifFormat.BSBound):
+            ob = self.scene.objects.new(me, 'BSBound')
+        else:
+            ob = self.scene.objects.new(me, 'Bounding Box')
+            # XXX this is set in the importBranch method
+            #ob.setMatrix(Blender.Mathutils.Matrix(
+            #    *bbox.bounding_box.rotation.as_list()))
+            #ob.setLocation(
+            #    *bbox.bounding_box.translation.as_list())
 
         # set bounds type
         ob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
