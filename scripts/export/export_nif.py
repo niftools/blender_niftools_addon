@@ -139,7 +139,7 @@ class NifExport(NifImportExport):
                 self.names[name] = fullname
 
 
-    def getUniqueName(self, blender_name):
+    def get_unique_name(self, blender_name):
         """Returns an unique name for use in the NIF file, from the name of a
         Blender object."""
         unique_name = "default_name"
@@ -164,7 +164,7 @@ class NifExport(NifImportExport):
         try:
             return self.names[blender_name]
         except KeyError:
-            return self.getUniqueName(blender_name)
+            return self.get_unique_name(blender_name)
 
     def getExportedObjects(self):
         """Return a list of exported objects."""
