@@ -3120,7 +3120,7 @@ class NifExport(NifImportExport):
         # find physics properties
         material = self.EXPORT_OB_MATERIAL
         layer = self.EXPORT_OB_LAYER
-        motionsys = self.EXPORT_OB_MOTIONSYSTEM
+        motion_system = self.EXPORT_OB_MOTIONSYSTEM
         quality_type = self.EXPORT_OB_QUALITYTYPE
         # copy physics properties from Blender properties, if they exist, unless forcing override
         if self.EXPORT_OVERRIDE_COLLISION_DATA == False:
@@ -3129,13 +3129,13 @@ class NifExport(NifImportExport):
                     if prop.getType() == "STRING":
                         # for Anglicized names
                         if prop.getData() in self.HAVOK_MATERIAL:
-                            layer = self.HAVOK_MATERIAL.index(prop.getData())
-                        # for the real Nif Format layer names
+                            material = self.HAVOK_MATERIAL.index(prop.getData())
+                        # for the real Nif Format material names
                         else:
-                            layer = getattr(NifFormat.HavokMaterial, prop.getData())
-                    # or if someone wants to set the layer by the number
+                            material = getattr(NifFormat.HavokMaterial, prop.getData())
+                    # or if someone wants to set the material by the number
                     elif prop.getType() == "INT":
-                        layer = prop.getData()
+                        material = prop.getData()
                 elif prop.getName() == 'OblivionLayer':
                     if prop.getType() == "STRING":
                         # for Anglicized names
