@@ -112,9 +112,9 @@ class NifExport(NifImportExport):
                     self.logger.warn("new valid matrix:\n%s" % mat)
                 # Matrices are stored inverted for easier math later on.
                 mat.invert()
-                self.setBoneExtraMatrixInv(b, mat)
+                self.set_bone_extra_matrix_inv(b, mat)
 
-    def setBoneExtraMatrixInv(self, bonename, mat):
+    def set_bone_extra_matrix_inv(self, bonename, mat):
         """Set bone extra matrix, inverted. The bonename is first converted
         to blender style (to ensure compatibility with older imports).
         """
