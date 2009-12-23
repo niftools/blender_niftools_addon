@@ -2914,7 +2914,8 @@ class NifImport(NifImportExport):
             ob.drawMode = Blender.Object.DrawModes['WIRE']
             # radius: quick estimate
             ob.rbRadius = min(vert.co.length for vert in me.verts)
-
+            ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
+            
             # also remove duplicate vertices
             numverts = len(me.verts)
             # 0.005 = 1/200
@@ -2938,6 +2939,7 @@ class NifImport(NifImportExport):
             # apply transform
             for ob in collision_objs:
                 ob.setMatrix(ob.getMatrix('localspace') * transform)
+                ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
             # and return a list of transformed collision shapes
             return collision_objs
 
@@ -3002,6 +3004,7 @@ class NifImport(NifImportExport):
             ob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
             ob.rbShapeBoundType = Blender.Object.RBShapes['BOX']
             ob.rbRadius = min(maxx, maxy, maxz)
+            ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
             return [ ob ]
 
         elif isinstance(bhkshape, NifFormat.bhkSphereShape):
@@ -3022,6 +3025,7 @@ class NifImport(NifImportExport):
             ob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
             ob.rbShapeBoundType = Blender.Object.RBShapes['SPHERE']
             ob.rbRadius = maxx
+            ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
             return [ ob ]
 
         elif isinstance(bhkshape, NifFormat.bhkCapsuleShape):
@@ -3047,6 +3051,7 @@ class NifImport(NifImportExport):
             ob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
             ob.rbShapeBoundType = Blender.Object.RBShapes['CYLINDER']
             ob.rbRadius = maxx
+            ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
 
             # find transform
             normal = (bhkshape.first_point - bhkshape.second_point) / length
@@ -3126,7 +3131,7 @@ class NifImport(NifImportExport):
                 # radius: quick estimate
                 ob.rbRadius = min(vert.co.length for vert in me.verts)
                 # set material
-                ob.addProperty("HavokMaterial", subshape.material, "INT")
+                ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[subshape.material], "STRING")
 
                 # also remove duplicate vertices
                 numverts = len(me.verts)
@@ -3162,6 +3167,7 @@ class NifImport(NifImportExport):
             ob.drawMode = Blender.Object.DrawModes['WIRE']
             # radius: quick estimate
             ob.rbRadius = min(vert.co.length for vert in me.verts)
+            ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
 
             # also remove duplicate vertices
             numverts = len(me.verts)
