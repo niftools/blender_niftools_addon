@@ -465,7 +465,7 @@ Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
                 # for Oblivion skeleton exports
                 # export animation groups (not for skeleton.nif export!)
                 if animtxt:
-                    anim_textextra = self.exportAnimGroups(animtxt, root_block)
+                    anim_textextra = self.export_anim_groups(animtxt, root_block)
                 else:
                     anim_textextra = None
 
@@ -1451,7 +1451,7 @@ missing curves in %s; insert %s key at frame 1 and try again"""
 
         return zbuf
 
-    def exportAnimGroups(self, animtxt, block_parent):
+    def export_anim_groups(self, animtxt, block_parent):
         """Parse the animation groups buffer and write an extra string
         data block, and attach it to an existing block (typically, the root
         of the nif tree)."""
