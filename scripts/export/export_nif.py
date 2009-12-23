@@ -427,7 +427,7 @@ Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
                 if not has_keyframecontrollers:
                     self.logger.info("Defining dummy keyframe controller")
                     # add a trivial keyframe controller on the scene root
-                    self.exportKeyframes(None, 'localspace', root_block)
+                    self.export_keyframes(None, 'localspace', root_block)
 
             # oblivion skeleton export: check that all bones have a
             # transform controller and transform interpolator
@@ -1036,7 +1036,7 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
         if (ob != None):
             # export animation
             if (ob_ipo != None):
-                self.exportKeyframes(ob_ipo, space, node)
+                self.export_keyframes(ob_ipo, space, node)
         
             # if it is a mesh, export the mesh as trishape children of this ninode
             if (ob.getType() == 'Mesh'):
@@ -1097,7 +1097,7 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
     # inverse(RX) = rotation part of inverse(X)
     # 1 / SX = scale part of inverse(X)
     # so having inverse(X) around saves on calculations
-    def exportKeyframes(self, ipo, space, parent_block, bind_mat = None,
+    def export_keyframes(self, ipo, space, parent_block, bind_mat = None,
                         extra_mat_inv = None):
         if self.EXPORT_ANIMATION == 1 and self.version < 0x0A020000:
             # keyframe controllers are not present in geometry only files
@@ -2742,7 +2742,7 @@ they can easily be identified.")
                 bonexmat_inv = Blender.Mathutils.Matrix()
                 bonexmat_inv.identity()
             if bones_ipo.has_key(bone.name):
-                self.exportKeyframes(
+                self.export_keyframes(
                     bones_ipo[bone.name], 'localspace', node,
                     bind_mat = bonerestmat, extra_mat_inv = bonexmat_inv)
 
