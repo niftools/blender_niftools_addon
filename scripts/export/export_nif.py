@@ -1511,7 +1511,7 @@ missing curves in %s; insert %s key at frame 1 and try again"""
 
         return textextra
 
-    def exportTextureFilename(self, texture):
+    def export_texture_filename(self, texture):
         """Returns file name from texture.
 
         @param texture: The texture object in blender.
@@ -1586,7 +1586,7 @@ missing curves in %s; insert %s key at frame 1 and try again"""
             # preset filename
             srctex.file_name = filename
         elif not texture is None:
-            srctex.file_name = self.exportTextureFilename(texture)
+            srctex.file_name = self.export_texture_filename(texture)
         else:
             # this probably should not happen
             logger.warning(
@@ -3976,11 +3976,11 @@ check that %s is selected during export.""" % targetobj)
         texset = NifFormat.BSShaderTextureSet()
         bsshader.texture_set = texset
         if basemtex:
-            texset.textures[0] = self.exportTextureFilename(basemtex.tex)
+            texset.textures[0] = self.export_texture_filename(basemtex.tex)
         if bumpmtex:
-            texset.textures[1] = self.exportTextureFilename(bumpmtex.tex)
+            texset.textures[1] = self.export_texture_filename(bumpmtex.tex)
         if glowmtex:
-            texset.textures[2] = self.exportTextureFilename(glowmtex.tex)
+            texset.textures[2] = self.export_texture_filename(glowmtex.tex)
 
         # search for duplicates
         # DISABLED: the Fallout 3 engine cannot handle them
