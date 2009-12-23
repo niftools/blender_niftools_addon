@@ -1569,7 +1569,7 @@ missing curves in %s; insert %s key at frame 1 and try again"""
                 "Error: Texture '%s' must be of type IMAGE or ENVMAP"
                 % texture.getName())
 
-    def exportSourceTexture(self, texture=None, filename=None):
+    def export_source_texture(self, texture=None, filename=None):
         """Export a NiSourceTexture.
 
         @param texture: The texture object in blender to be exported.
@@ -1640,7 +1640,7 @@ missing curves in %s; insert %s key at frame 1 and try again"""
         for t in tlist:
             if len( t ) == 0: continue  # skip empty lines
             # create a NiSourceTexture for each flip
-            tex = self.exportSourceTexture(texture, t)
+            tex = self.export_source_texture(texture, t)
             flip.num_sources += 1
             flip.sources.update_size()
             flip.sources[flip.num_sources-1] = tex
@@ -3820,7 +3820,7 @@ check that %s is selected during export.""" % targetobj)
             self.logger.warning("""Bad uv layer name '%s' in texture '%s'. Falling back on first uv layer""" % (mtex.uvlayer, mtex.tex.getName()))
             texdesc.uv_set = 0 # assume 0 is active layer
 
-        texdesc.source = self.exportSourceTexture(mtex.tex)
+        texdesc.source = self.export_source_texture(mtex.tex)
 
     def exportTexturingProperty(
         self, flags=0x0001, applymode=None, uvlayers=None,
@@ -3853,12 +3853,12 @@ check that %s is selected during export.""" % targetobj)
                 shadertexdesc_envmap = texprop.shader_textures[0]
                 shadertexdesc_envmap.is_used = True
                 shadertexdesc_envmap.texture_data.source = \
-                    self.exportSourceTexture(filename="RRT_Engine_Env_map.dds")
+                    self.export_source_texture(filename="RRT_Engine_Env_map.dds")
 
                 shadertexdesc_cubelightmap = texprop.shader_textures[4]
                 shadertexdesc_cubelightmap.is_used = True
                 shadertexdesc_cubelightmap.texture_data.source = \
-                    self.exportSourceTexture(filename="RRT_Cube_Light_map_128.dds")
+                    self.export_source_texture(filename="RRT_Cube_Light_map_128.dds")
 
                 # the other slots are exported below
 
@@ -3908,7 +3908,7 @@ check that %s is selected during export.""" % targetobj)
                 shadertexdesc = texprop.shader_textures[1]
                 shadertexdesc.is_used = True
                 shadertexdesc.texture_data.source = \
-                    self.exportSourceTexture(texture=bumpmtex.tex)
+                    self.export_source_texture(texture=bumpmtex.tex)
 
         if glossmtex:
             if self.EXPORT_VERSION not in self.USED_EXTRA_SHADER_TEXTURES:
@@ -3920,7 +3920,7 @@ check that %s is selected during export.""" % targetobj)
                 shadertexdesc = texprop.shader_textures[2]
                 shadertexdesc.is_used = True
                 shadertexdesc.texture_data.source = \
-                    self.exportSourceTexture(texture=glossmtex.tex)
+                    self.export_source_texture(texture=glossmtex.tex)
 
         if darkmtex:
             texprop.has_dark_texture = True
@@ -3946,7 +3946,7 @@ check that %s is selected during export.""" % targetobj)
                 shadertexdesc = texprop.shader_textures[3]
                 shadertexdesc.is_used = True
                 shadertexdesc.texture_data.source = \
-                    self.exportSourceTexture(texture=refmtex.tex)
+                    self.export_source_texture(texture=refmtex.tex)
 
         # search for duplicate
         for block in self.blocks:
@@ -4005,7 +4005,7 @@ check that %s is selected during export.""" % targetobj)
         texeff.texture_type = NifFormat.EffectType.EFFECT_ENVIRONMENT_MAP
         texeff.coordinate_generation_type = NifFormat.CoordGenType.CG_SPHERE_MAP
         if mtex:
-            texeff.source_texture = self.exportSourceTexture(mtex.tex)
+            texeff.source_texture = self.export_source_texture(mtex.tex)
             if self.EXPORT_VERSION == 'Morrowind':
                 texeff.num_affected_node_list_pointers += 1
                 texeff.affected_node_list_pointers.update_size()
