@@ -3126,10 +3126,16 @@ class NifExport(NifImportExport):
         if self.EXPORT_OVERRIDE_COLLISION_DATA == False:
             for prop in obj.getAllProperties():
                 if prop.getName() == 'HavokMaterial':
-                    material = prop.getData()
-                    if isinstance(material, basestring):
-                        # given as a string, not as an integer
-                        material = getattr(NifFormat.HavokMaterial, material)
+                    if prop.getType() == "STRING":
+                        # for Anglicized names
+                        if prop.getData() in self.HAVOK_MATERIAL:
+                            layer = self.HAVOK_MATERIAL.index(prop.getData())
+                        # for the real Nif Format layer names
+                        else:
+                            layer = getattr(NifFormat.HavokMaterial, prop.getData())
+                    # or if someone wants to set the layer by the number
+                    elif prop.getType() == "INT":
+                        layer = prop.getData()
                 elif prop.getName() == 'OblivionLayer':
                     if prop.getType() == "STRING":
                         # for Anglicized names
