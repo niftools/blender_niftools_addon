@@ -2369,7 +2369,7 @@ they can easily be identified." % ob)
                         # fix geometry rest pose: transform relative to
                         # skeleton root
                         skindata.set_transform(
-                            self.getObjectMatrix(ob, 'localspace').get_inverse())
+                            self.get_object_matrix(ob, 'localspace').get_inverse())
             
                         # add vertex weights
                         # first find weights and normalization factors
@@ -2840,7 +2840,7 @@ they can easily be identified.")
 
         return bscale, brot, btrans
 
-    def getObjectMatrix(self, obj, space):
+    def get_object_matrix(self, obj, space):
         """Get an object's matrix as NifFormat.Matrix44
 
         Note: for objects parented to bones, this will return the transform
@@ -3240,7 +3240,7 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
 
         mesh = obj.data
         transform = Blender.Mathutils.Matrix(
-            *self.getObjectMatrix(obj, 'localspace').as_list())
+            *self.get_object_matrix(obj, 'localspace').as_list())
         rotation = transform.rotationPart()
 
         vertices = [vert.co * transform for vert in mesh.verts]
@@ -3320,7 +3320,7 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
             coltf.unknown_8_bytes[6] = 253
             coltf.unknown_8_bytes[7] = 4
             hktf = Blender.Mathutils.Matrix(
-                *self.getObjectMatrix(obj, 'localspace').as_list())
+                *self.get_object_matrix(obj, 'localspace').as_list())
             # the translation part must point to the center of the data
             # so calculate the center in local coordinates
             center = Blender.Mathutils.Vector((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0)
@@ -3371,7 +3371,7 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
             # take average radius
             localradius = (maxx + maxy - minx - miny) / 4.0
             transform = Blender.Mathutils.Matrix(
-                *self.getObjectMatrix(obj, 'localspace').as_list())
+                *self.get_object_matrix(obj, 'localspace').as_list())
             vert1 = Blender.Mathutils.Vector( [ (maxx + minx)/2.0,
                                                 (maxy + miny)/2.0,
                                                 minz + localradius ] )
@@ -3403,7 +3403,7 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
             # bound type has value 5
             mesh = obj.data
             transform = Blender.Mathutils.Matrix(
-                *self.getObjectMatrix(obj, 'localspace').as_list())
+                *self.get_object_matrix(obj, 'localspace').as_list())
             rotation = transform.rotationPart()
             scale = rotation.determinant()
             if scale < 0:
@@ -3608,7 +3608,7 @@ check that %s is selected during export.""" % targetobj)
                 # apply object transform relative to the bone head
                 # (this is O * T * B' * B^{-1} at once)
                 transform = Blender.Mathutils.Matrix(
-                    *self.getObjectMatrix(b_obj, 'localspace').as_list())
+                    *self.get_object_matrix(b_obj, 'localspace').as_list())
                 pivot = pivot * transform
                 constr_matrix = constr_matrix * transform.rotationPart()
 
