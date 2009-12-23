@@ -2805,7 +2805,7 @@ they can easily be identified.")
                                 #   - blender objects parented to bone have
                                 #     extra translation along the Y axis
                                 #     with length of the bone ("tail")
-                                # this is handled in the getObjectSRT function
+                                # this is handled in the get_object_srt function
                                 self.export_node(ob_child, 'localspace',
                                                  bone_block, ob_child.getName())
                                 break
@@ -2818,7 +2818,7 @@ they can easily be identified.")
         """Set a block's transform matrix to an object's
         transformation matrix in rest pose."""
         # decompose
-        bscale, brot, btrans = self.getObjectSRT(obj, space)
+        bscale, brot, btrans = self.get_object_srt(obj, space)
         
         # and fill in the values
         block.translation.x = btrans[0]
@@ -2847,7 +2847,7 @@ they can easily be identified.")
         relative to the bone parent head in nif coordinates (that is, including
         the bone correction); this differs from getMatrix which
         returns the transform relative to the armature."""
-        bscale, brot, btrans = self.getObjectSRT(obj, space)
+        bscale, brot, btrans = self.get_object_srt(obj, space)
         mat = NifFormat.Matrix44()
         
         mat.m_41 = btrans[0]
@@ -2871,7 +2871,7 @@ they can easily be identified.")
         
         return mat
 
-    def getObjectSRT(self, obj, space = 'localspace'):
+    def get_object_srt(self, obj, space = 'localspace'):
         """Find scale, rotation, and translation components of an object in
         the rest pose. Returns a triple (bs, br, bt), where bs
         is a scale float, br is a 3x3 rotation matrix, and bt is a
