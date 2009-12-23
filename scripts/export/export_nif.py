@@ -158,7 +158,7 @@ class NifExport(NifImportExport):
         self.names[blender_name] = unique_name
         return unique_name
 
-    def getFullName(self, blender_name):
+    def get_full_name(self, blender_name):
         """Returns the original imported name if present, or the name by which
         the object was exported already."""
         try:
@@ -1018,7 +1018,7 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
             parent_block.add_child(node)
 
         # and fill in this node's non-trivial values
-        node.name = self.getFullName(node_name)
+        node.name = self.get_full_name(node_name)
 
         # default node flags
         if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
@@ -2104,7 +2104,7 @@ they can easily be identified." % ob)
                 # multimaterial meshes: add material index
                 # (Morrowind's child naming convention)
                 trishape.name += " %i"%materialIndex
-            trishape.name = self.getFullName(trishape.name)
+            trishape.name = self.get_full_name(trishape.name)
             if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
                 trishape.flags = 0x000E
             elif self.EXPORT_VERSION in ("Sid Meier's Railroads",
@@ -2187,7 +2187,7 @@ they can easily be identified." % ob)
                 
                 # add NiTriShape's material property
                 trimatprop = self.exportMaterialProperty(
-                    name=self.getFullName(mesh_mat.getName()),
+                    name=self.get_full_name(mesh_mat.getName()),
                     flags=0x0001, # ? standard
                     ambient=mesh_mat_ambient_color,
                     diffuse=mesh_mat_diffuse_color,
@@ -2353,7 +2353,7 @@ they can easily be identified." % ob)
                         trishape.skin_instance = skininst
                         for block in self.blocks:
                             if isinstance(block, NifFormat.NiNode):
-                                if block.name == self.getFullName(armaturename):
+                                if block.name == self.get_full_name(armaturename):
                                     skininst.skeleton_root = block
                                     break
                         else:
@@ -2400,7 +2400,7 @@ go to weight paint mode, and paint weights.""" % (ob.name, bone))
                             bone_block = None
                             for block in self.blocks:
                                 if isinstance(block, NifFormat.NiNode):
-                                    if block.name == self.getFullName(bone):
+                                    if block.name == self.get_full_name(bone):
                                         if not bone_block:
                                             bone_block = block
                                         else:
@@ -2713,7 +2713,7 @@ they can easily be identified.")
             bones_node[bone.name] = node
 
             # add the node and the keyframe for this bone
-            node.name = self.getFullName(bone.name)
+            node.name = self.get_full_name(bone.name)
             if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
                 # default for Oblivion bones
                 # note: bodies have 0x000E, clothing has 0x000F
@@ -2792,7 +2792,7 @@ they can easily be identified.")
                         # we should parent the object to the bone instead of
                         # to the armature
                         # so let's find that bone!
-                        nif_bone_name = self.getFullName(parent_bone_name)
+                        nif_bone_name = self.get_full_name(parent_bone_name)
                         for bone_block in self.blocks:
                             if isinstance(bone_block, NifFormat.NiNode) and \
                                 bone_block.name == nif_bone_name:
