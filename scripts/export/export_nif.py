@@ -3242,7 +3242,7 @@ class NifExport(NifImportExport):
             colbody.max_linear_velocity = 250.0
             colbody.max_angular_velocity = 31.4159
             colbody.penetration_depth = 0.15
-            colbody.motion_system = motionsys
+            colbody.motion_system = motion_system
             colbody.unknown_byte_1 = self.EXPORT_OB_UNKNOWNBYTE1
             colbody.unknown_byte_2 = self.EXPORT_OB_UNKNOWNBYTE2
             colbody.quality_type = quality_type
