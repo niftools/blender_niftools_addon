@@ -2630,14 +2630,14 @@ they can easily be identified.")
             return
 
         self.export_material_alpha_controller(b_material, n_geom)
-        self.exportMaterialUVController(b_material, n_geom)
+        self.export_material_uv_controller(b_material, n_geom)
 
     def export_material_alpha_controller(self, b_material, n_geom):
         """Export the material alpha controller data."""
         # XXX todo: move alpha export here
         return
 
-    def exportMaterialUVController(self, b_material, n_geom):
+    def export_material_uv_controller(self, b_material, n_geom):
         """Export the material UV controller data."""
         # get the material ipo
         b_ipo = b_material.ipo
