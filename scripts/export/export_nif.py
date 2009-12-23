@@ -1047,7 +1047,7 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
                 self.export_bones(ob, node)
 
             # export all children of this empty/mesh/armature/bone object as children of this NiNode
-            self.exportChildren(ob, node)
+            self.export_children(ob, node)
 
         return node
 
@@ -2768,7 +2768,7 @@ they can easily be identified.")
 
 
 
-    def exportChildren(self, obj, parent_block):
+    def export_children(self, obj, parent_block):
         """Export all children of blender object ob as children of
         parent_block."""
         # loop over all obj's children
