@@ -3141,8 +3141,6 @@ class NifExport(NifImportExport):
                     # or if someone wants to set the layer by the number
                     elif prop.getType() == "INT":
                         layer = prop.getData()
-                    else:
-                        layer = 1 #static
                 elif prop.getName() == 'QualityType':
                     if prop.getType() == "STRING":
                         # for Anglicized names
@@ -3154,8 +3152,17 @@ class NifExport(NifImportExport):
                     # or if someone wants to set the Motion Quality by the number
                     elif prop.getType() == "INT":
                         quality_type = prop.getData()
-            #elif prop.getName() == 'MotionSystem':
-            #    ob_mosys = getattr(NifFormat.MotionSystem, prop.getData())
+                elif prop.getName() == 'MotionSystem':
+                    if prop.getType() == "STRING":
+                        # for Anglicized names
+                        if prop.getData() in self.MOTION_SYS:
+                            motion_system = self.MOTION_SYS.index(prop.getData())
+                        # for the real Nif Format Motion System names
+                        else:
+                            motion_system = getattr(NifFormat.MotionSystem, prop.getData())
+                    # or if someone wants to set the Motion System  by the number
+                    elif prop.getType() == "INT":
+                        motion_system = prop.getData()
 
         # if no collisions have been exported yet to this parent_block
         # then create new collision tree on parent_block
