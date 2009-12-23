@@ -126,7 +126,7 @@ class NifExport(NifImportExport):
         """
         return self.bones_extra_matrix_inv[self.get_bone_name_for_blender(bonename)]
 
-    def rebuildFullNames(self):
+    def rebuild_full_names(self):
         """Recovers the full object names from the text buffer and rebuilds
         the names dictionary."""
         try:
@@ -212,7 +212,7 @@ class NifExport(NifImportExport):
         # associated Blender object
         self.blocks = {}
         # maps Blender names to previously imported names from the FullNames
-        # buffer (see self.rebuildFullNames())
+        # buffer (see self.rebuild_full_names())
         self.names = {}
         # keeps track of names of exported blocks, to make sure they are unique
         self.blockNames = []
@@ -373,7 +373,7 @@ Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
             self.rebuild_bones_extra_matrices()
             
             # rebuild the full name dictionary from the 'FullNames' text buffer 
-            self.rebuildFullNames()
+            self.rebuild_full_names()
             
             # export nif:
             #------------
