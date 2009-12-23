@@ -990,7 +990,7 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
                         node = self.create_block('NiBillboardNode', ob)
                 else:
                     # don't create intermediate ninode for this guy
-                    self.exportTriShapes(ob, space, parent_block, node_name)
+                    self.export_tri_shapes(ob, space, parent_block, node_name)
                     # we didn't create a ninode, return nothing
                     return None
             else:
@@ -1040,7 +1040,7 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
         
             # if it is a mesh, export the mesh as trishape children of this ninode
             if (ob.getType() == 'Mesh'):
-                self.exportTriShapes(ob, trishape_space, node) # see definition of trishape_space above
+                self.export_tri_shapes(ob, trishape_space, node) # see definition of trishape_space above
                 
             # if it is an armature, export the bones as ninode children of this ninode
             elif (ob.getType() == 'Armature'):
@@ -1661,7 +1661,7 @@ missing curves in %s; insert %s key at frame 1 and try again"""
     # The parameter trishape_name passes on the name for meshes that
     # should be exported as a single mesh.
     # 
-    def exportTriShapes(self, ob, space, parent_block, trishape_name = None):
+    def export_tri_shapes(self, ob, space, parent_block, trishape_name = None):
         self.logger.info("Exporting %s" % ob)
         self.msg_progress("Exporting %s" % ob.name)
         assert(ob.getType() == 'Mesh')
@@ -3066,7 +3066,7 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
              parent_block.add_child(node)
              node.flags = 0x0003 # default
              self.exportMatrix(obj, 'localspace', node)
-             self.exportTriShapes(obj, 'none', node)
+             self.export_tri_shapes(obj, 'none', node)
 
         elif self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
 
