@@ -3218,7 +3218,7 @@ class NifExport(NifImportExport):
             colbody.unknown_7_shorts[4] = 65535
             colbody.unknown_7_shorts[5] = 44
             if self.EXPORT_OB_RIGIDBODYT == True: # XXX todo: set rotations
-                bscale, brot, btrans = self.getObjectSRT(obj)
+                bscale, brot, btrans = self.get_object_srt(obj)
                 colbody.translation.x = btrans[0] / 7
                 colbody.translation.y = btrans[1] / 7
                 colbody.translation.z = btrans[2] / 7
