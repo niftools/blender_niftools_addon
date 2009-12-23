@@ -565,7 +565,7 @@ Furniture marker has invalid number (%s). Name your file
             # add vertex color and zbuffer properties for civ4 and railroads
             if self.EXPORT_VERSION in ["Civilization IV",
                                        "Sid Meier's Railroads"]:
-                self.exportVertexColorProperty(root_block)
+                self.export_vertex_color_property(root_block)
                 self.exportZBufferProperty(root_block)
 
             if self.EXPORT_FLATTENSKIN:
@@ -1098,7 +1098,7 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
     # 1 / SX = scale part of inverse(X)
     # so having inverse(X) around saves on calculations
     def export_keyframes(self, ipo, space, parent_block, bind_mat = None,
-                        extra_mat_inv = None):
+                         extra_mat_inv = None):
         if self.EXPORT_ANIMATION == 1 and self.version < 0x0A020000:
             # keyframe controllers are not present in geometry only files
             # for more recent versions, the controller and interpolators are
@@ -1404,9 +1404,9 @@ missing curves in %s; insert %s key at frame 1 and try again"""
             scale_frame.time = (frame - 1) * self.fspeed
             scale_frame.value = scale_curve[frame]
 
-    def exportVertexColorProperty(self, block_parent,
-                                  flags = 1,
-                                  vertex_mode = 0, lighting_mode = 1):
+    def export_vertex_color_property(self, block_parent,
+                                     flags=1,
+                                     vertex_mode=0, lighting_mode=1):
         """Create a vertex color property, and attach it to an existing block
         (typically, the root of the nif tree).
 
