@@ -1487,9 +1487,9 @@ class NifImport(NifImportExport):
 
         # create a stub image if the image could not be loaded
         if not b_image:
-            self.logger.warning("""\
-Texture '%s' not found or not supported and no alternate available"""
-% fn)
+            self.logger.warning(
+                "Texture '%s' not found or not supported and no alternate available"
+                % fn)
             b_image = Blender.Image.New(fn, 1, 1, 24) # create a stub
             b_image.filename = tex
 
@@ -2920,8 +2920,8 @@ Texture '%s' not found or not supported and no alternate available"""
             # 0.005 = 1/200
             numdel = me.remDoubles(0.005)
             if numdel:
-                self.logger.info('Removed %i duplicate vertices \
-(out of %i) from collision mesh' % (numdel, numverts))
+                self.logger.info("Removed %i duplicate vertices"
+                    "(out of %i) from collision mesh" % (numdel, numverts))
 
             return [ ob ]
 
@@ -3133,8 +3133,8 @@ Texture '%s' not found or not supported and no alternate available"""
                 # 0.005 = 1/200
                 numdel = me.remDoubles(0.005)
                 if numdel:
-                    self.logger.info('Removed %i duplicate vertices \
-(out of %i) from collision mesh' % (numdel, numverts))
+                    self.logger.info("Removed %i duplicate vertices"
+                        "(out of %i) from collision mesh" % (numdel, numverts))
 
                 vertex_offset += subshape.num_vertices
                 hk_objects.append(ob)
@@ -3168,8 +3168,8 @@ Texture '%s' not found or not supported and no alternate available"""
             # 0.005 = 1/200
             numdel = me.remDoubles(0.005)
             if numdel:
-                self.logger.info('Removed %i duplicate vertices \
-(out of %i) from collision mesh' % (numdel, numverts))
+                self.logger.info("Removed %i duplicate vertices"
+                    "(out of %i) from collision mesh" % (numdel, numverts))
 
             return [ ob ]
 
@@ -3196,8 +3196,7 @@ Texture '%s' not found or not supported and no alternate available"""
 
         # find objects
         if len(self.havokObjects[hkbody]) != 1:
-            self.logger.warning("""\
-Rigid body with no or multiple shapes, constraints skipped""")
+            self.logger.warning("Rigid body with no or multiple shapes, constraints skipped")
             return
 
         b_hkobj = self.havokObjects[hkbody][0]
@@ -3342,14 +3341,15 @@ Rigid body with no or multiple shapes, constraints skipped""")
                     # either not orthogonal, or negative orientation
                     if (Blender.Mathutils.CrossVecs(-axis_x, axis_y)
                         - axis_z).length > 0.01:
-                        self.logger.warning("""\
-Axes are not orthogonal in %s; arbitrary orientation has been chosen"""
-                                         % hkdescriptor.__class__.__name__)
+                        self.logger.warning(
+                            "Axes are not orthogonal in %s; arbitrary orientation has been chosen"
+                            % hkdescriptor.__class__.__name__)
                         axis_z = Blender.Mathutils.CrossVecs(axis_x, axis_y)
                     else:
                         # fix orientation
-                        self.logger.warning("""\
-X axis flipped in %s to fix orientation""" % hkdescriptor.__class__.__name__)
+                        self.logger.warning(
+                            "X axis flipped in %s to fix orientation"
+                            % hkdescriptor.__class__.__name__)
                         axis_x = -axis_x
             elif isinstance(hkdescriptor, NifFormat.HingeDescriptor):
                 # for hinge, y is the vector on the plane of rotation defining
