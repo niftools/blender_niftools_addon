@@ -1608,7 +1608,7 @@ missing curves in %s; insert %s key at frame 1 and try again"""
 
         # no identical source texture found, so use and register
         # the new one
-        return self.registerBlock(srctex, texture)
+        return self.register_block(srctex, texture)
 
 
 
@@ -3032,9 +3032,9 @@ Workaround: apply size and rotation (CTRL-A).""")
         except AttributeError:
             raise NifExportError("""\
 '%s': Unknown block type (this is probably a bug).""" % blocktype)
-        return self.registerBlock(block, b_obj)
+        return self.register_block(block, b_obj)
 
-    def registerBlock(self, block, b_obj = None):
+    def register_block(self, block, b_obj = None):
         """Helper function to register a newly created block in the list of
         exported blocks and to associate it with a Blender object.
 
@@ -3809,7 +3809,7 @@ check that %s is selected during export.""" % targetobj)
 
         # no material property with given settings found, so use and register
         # the new one
-        return self.registerBlock(matprop)
+        return self.register_block(matprop)
 
     def exportTexDesc(self, texdesc=None, uvlayers=None, mtex=None):
         """Helper function for exportTexturingProperty to export each texture
@@ -3956,7 +3956,7 @@ check that %s is selected during export.""" % targetobj)
 
         # no texturing property with given settings found, so use and register
         # the new one
-        return self.registerBlock(texprop)
+        return self.register_block(texprop)
 
     def exportBSShaderProperty(
         self, basemtex=None, bumpmtex=None, glowmtex=None):
@@ -3990,7 +3990,7 @@ check that %s is selected during export.""" % targetobj)
         #        return block
 
         # no duplicate found, so use and register new one
-        return self.registerBlock(bsshader)
+        return self.register_block(bsshader)
 
     def exportTextureEffect(self, mtex = None):
         """Export a texture effect block from material texture mtex (MTex, not
@@ -4010,7 +4010,7 @@ check that %s is selected during export.""" % targetobj)
                 texeff.num_affected_node_list_pointers += 1
                 texeff.affected_node_list_pointers.update_size()
         texeff.unknown_vector.x = 1.0
-        return self.registerBlock(texeff)
+        return self.register_block(texeff)
 
     def export_bounding_box(self, obj, block_parent, bsbound=False):
         """Export a Morrowind or Oblivion bounding box."""
