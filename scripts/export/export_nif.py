@@ -274,7 +274,7 @@ class NifExport(NifImportExport):
                 # to have non-uniform scaling)
                 if ob.getType() != 'Lattice':
                     try:
-                        self.decomposeSRT(ob.getMatrix('localspace'))
+                        self.decompose_srt(ob.getMatrix('localspace'))
                     except NifExportError: # non-uniform scaling
                         raise NifExportError("""\
 Non-uniform scaling not supported.
@@ -1165,7 +1165,7 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
         
         # some calculations
         if bind_mat:
-            bind_scale, bind_rot, bind_trans = self.decomposeSRT(bind_mat)
+            bind_scale, bind_rot, bind_trans = self.decompose_srt(bind_mat)
             bind_quat = bind_rot.toQuat()
         else:
             bind_scale = 1.0
@@ -1174,7 +1174,7 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
             bind_trans = Blender.Mathutils.Vector(0,0,0)
         if extra_mat_inv:
             extra_scale_inv, extra_rot_inv, extra_trans_inv = \
-                self.decomposeSRT(extra_mat_inv)
+                self.decompose_srt(extra_mat_inv)
             extra_quat_inv = extra_rot_inv.toQuat()
         else:
             extra_scale_inv = 1.0
@@ -2935,7 +2935,7 @@ they can easily be identified.")
             mat = self.getBoneRestMatrix(obj, 'BONESPACE')
         
         try:
-            return self.decomposeSRT(mat)
+            return self.decompose_srt(mat)
         except NifExportError: # non-uniform scaling
             self.logger.debug(str(mat))
             raise NifExportError("""\
@@ -2944,7 +2944,7 @@ This could be a bug... No workaround. :-( Post your blend!""" % obj.name)
 
 
 
-    def decomposeSRT(self, mat):
+    def decompose_srt(self, mat):
         """Decompose Blender transform matrix as a scale, rotation matrix, and
         translation vector."""
         # get scale components
