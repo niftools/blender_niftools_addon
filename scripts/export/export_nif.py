@@ -1031,7 +1031,7 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
             # morrowind
             node.flags = 0x000C
 
-        self.exportMatrix(ob, space, node)
+        self.export_matrix(ob, space, node)
 
         if (ob != None):
             # export animation
@@ -2124,7 +2124,7 @@ they can easily be identified." % ob)
                 trishape.shader_name = "RRT_NormalMap_Spec_Env_CubeLight"
                 trishape.unknown_integer = -1 # default
 
-            self.exportMatrix(ob, space, trishape)
+            self.export_matrix(ob, space, trishape)
             
             if mesh_base_mtex or mesh_glow_mtex:
                 # add NiTriShape's texturing property
@@ -2728,7 +2728,7 @@ they can easily be identified.")
                     node.flags = 0x0016
             else:
                 node.flags = 0x0002 # default for Morrowind bones
-            self.exportMatrix(bone, 'localspace', node) # rest pose
+            self.export_matrix(bone, 'localspace', node) # rest pose
             
             # bone rotations are stored in the IPO relative to the rest position
             # so we must take the rest position into account
@@ -2814,7 +2814,7 @@ they can easily be identified.")
 
 
 
-    def exportMatrix(self, obj, space, block):
+    def export_matrix(self, obj, space, block):
         """Set a block's transform matrix to an object's
         transformation matrix in rest pose."""
         # decompose
@@ -3065,7 +3065,7 @@ Morrowind only supports Polyhedron/Static TriangleMesh collisions.""")
              node = self.create_block("RootCollisionNode", obj)
              parent_block.add_child(node)
              node.flags = 0x0003 # default
-             self.exportMatrix(obj, 'localspace', node)
+             self.export_matrix(obj, 'localspace', node)
              self.export_tri_shapes(obj, 'none', node)
 
         elif self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
