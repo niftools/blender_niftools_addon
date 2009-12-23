@@ -287,7 +287,9 @@ class NifConfig:
         IMPORT_EXPORTEMBEDDEDTEXTURES = False,
         EXPORT_OPTIMIZE_MATERIALS = True,
         IMPORT_COMBINESHAPES = True,
-        OB_LAYER = ["Unidentified", "Static", "AnimStatic", "Transparent", "Clutter", "Weapon", "Projectile", "Spell", "Biped", "Props", "Water", "Trigger", "Terrain", "Trap", "NonCollidable", "CloudTrap", "Ground", "Portal", "Stairs", "CharController", "AvoidBox", "?", "?", "CameraPick", "ItemPick", "LineOfSight", "PathPick", "CustomPick1", "CustomPick2", "SpellExplosion", "DroppingPick", "Other", "Head", "Body", "Spine1", "Spine2", "LUpperArm", "LForeArm", "LHand", "LThigh", "LCalf", "LFoot",  "RUpperArm", "RForeArm", "RHand", "RThigh", "RCalf", "RFoot", "Tail", "SideWeapon", "Shield", "Quiver", "BackWeapon", "BackWeapon?", "PonyTail", "Wing", "Null"])
+        EXPORT_OVERRIDE_COLLISION_DATA = False,
+        #Oblivion(and FO3) collision settings dicts for Anglicized names on Object Properties for havok items.
+        OB_LAYER = ["Unidentified", "Static", "AnimStatic", "Transparent", "Clutter", "Weapon", "Projectile", "Spell", "Biped", "Props", "Water", "Trigger", "Terrain", "Trap", "NonCollidable", "CloudTrap", "Ground", "Portal", "Stairs", "CharController", "AvoidBox", "?", "?", "CameraPick", "ItemPick", "LineOfSight", "PathPick", "CustomPick1", "CustomPick2", "SpellExplosion", "DroppingPick", "Other", "Head", "Body", "Spine1", "Spine2", "LUpperArm", "LForeArm", "LHand", "LThigh", "LCalf", "LFoot",  "RUpperArm", "RForeArm", "RHand", "RThigh", "RCalf", "RFoot", "Tail", "SideWeapon", "Shield", "Quiver", "BackWeapon", "BackWeapon?", "PonyTail", "Wing", "Null"],
 
     def __init__(self):
         """Initialize and load configuration."""
@@ -952,7 +954,11 @@ class NifConfig:
             self.drawToggle(
                 text = "Use RigidBodyT",
                 event_name = "EXPORT_OB_RIGIDBODYT",
-                num_items = 2, item = 1)
+                num_items = 2, item = 0)
+            self.drawToggle(
+                text = "Override Collision Settings",
+                event_name = "EXPORT_OVERRIDE_COLLISION_DATA",
+                num_items = 2, item = 1)   
             self.drawYSep()
 
             self.drawLabel(
@@ -1294,6 +1300,8 @@ class NifConfig:
             self.config["EXPORT_OB_MALLEABLECONSTRAINT"] = not self.config["EXPORT_OB_MALLEABLECONSTRAINT"]
         elif evName == "EXPORT_OB_RIGIDBODYT":
             self.config["EXPORT_OB_RIGIDBODYT"] = not self.config["EXPORT_OB_RIGIDBODYT"]
+        elif evName == "EXPORT_OVERRIDE_COLLISION_DATA":
+            self.config["EXPORT_OVERRIDE_COLLISION_DATA"] = not self.config["EXPORT_OVERRIDE_COLLISION_DATA"]
         elif evName == "EXPORT_OB_SOLID":
             self.config["EXPORT_OB_SOLID"] = True
         elif evName == "EXPORT_OB_HOLLOW":
