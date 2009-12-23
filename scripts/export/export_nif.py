@@ -166,7 +166,7 @@ class NifExport(NifImportExport):
         except KeyError:
             return self.get_unique_name(blender_name)
 
-    def getExportedObjects(self):
+    def get_exported_objects(self):
         """Return a list of exported objects."""
         exported_objects = []
         # iterating over self.blocks.itervalues() will count some objects
@@ -544,7 +544,7 @@ Furniture marker has invalid number (%s). Name your file
                 #root_block.add_extra_data(upb)
 
             # export constraints
-            for b_obj in self.getExportedObjects():
+            for b_obj in self.get_exported_objects():
                 self.exportConstraints(b_obj, root_block)
 
             # export weapon location
