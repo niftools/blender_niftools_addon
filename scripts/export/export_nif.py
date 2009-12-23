@@ -231,7 +231,7 @@ class NifExport(NifImportExport):
         # store bone priorities (from NULL constraints) as the armature bones
         # are parsed, so they are available when writing the kf file
         # maps bone NiNode to priority value
-        self.bonePriorities = {}
+        self.bone_priorities = {}
 
         # if an egm is exported, this will contain the data
         self.egmdata = None
@@ -793,13 +793,13 @@ Furniture marker has invalid number (%s). Name your file
                                 # get bone animation priority (previously
                                 # fetched from the constraints during
                                 # exportBones)
-                                if not node in self.bonePriorities:
+                                if not node in self.bone_priorities:
                                     priority = 26
                                     self.logger.warning("""\
         No priority set for bone %s, falling back on default value (%i)"""
                                              % (node.name, priority))
                                 else:
-                                    priority = self.bonePriorities[node]
+                                    priority = self.bone_priorities[node]
                                 controlledblock.priority = priority
                                 # set palette, and node and controller type
                                 # names, and variables
@@ -2749,7 +2749,7 @@ they can easily be identified.")
             for constr in arm.getPose().bones[bone.name].constraints:
                 # yes! store it for reference when creating the kf file
                 if constr.name[:9].lower() == "priority:":
-                    self.bonePriorities[node] = int(constr.name[9:])
+                    self.bone_priorities[node] = int(constr.name[9:])
 
         # now fix the linkage between the blocks
         for bone in bones.values():

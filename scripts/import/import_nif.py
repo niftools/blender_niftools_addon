@@ -134,7 +134,7 @@ class NifImport(NifImportExport):
         # priorities are set in importKfRoot and are stored into the name
         # of a NULL constraint (for lack of something better) in
         # importArmature
-        self.bonePriorities = {}
+        self.bone_priorities = {}
 
         # dictionary mapping bhkRigidBody objects to list of objects imported
         # in Blender; after we've imported the tree, we use this dictionary
@@ -1188,10 +1188,10 @@ class NifImport(NifImportExport):
             # find bone nif block
             niBone = self.blocks[bone_name]
             # store bone priority, if applicable
-            if niBone in self.bonePriorities:
+            if niBone in self.bone_priorities:
                 constr = b_posebone.constraints.append(
                     Blender.Constraint.Type.NULL)
-                constr.name = "priority:%i" % self.bonePriorities[niBone]                
+                constr.name = "priority:%i" % self.bone_priorities[niBone]                
 
         return b_armature
 
@@ -3609,7 +3609,7 @@ X axis flipped in %s to fix orientation""" % hkdescriptor.__class__.__name__)
             # save priority for future reference
             # (priorities will be stored into the name of a NULL constraint on
             # bones, see importArmature function)
-            self.bonePriorities[node] = controlledblock.priority
+            self.bone_priorities[node] = controlledblock.priority
 
         # DEBUG: save the file for manual inspection
         #niffile = open("C:\\test.nif", "wb")
