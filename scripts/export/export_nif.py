@@ -566,7 +566,7 @@ Furniture marker has invalid number (%s). Name your file
             if self.EXPORT_VERSION in ["Civilization IV",
                                        "Sid Meier's Railroads"]:
                 self.export_vertex_color_property(root_block)
-                self.exportZBufferProperty(root_block)
+                self.export_z_buffer_property(root_block)
 
             if self.EXPORT_FLATTENSKIN:
                 # (warning: trouble if armatures parent other armatures or
@@ -1429,8 +1429,8 @@ missing curves in %s; insert %s key at frame 1 and try again"""
 
         return vcolprop
 
-    def exportZBufferProperty(self, block_parent,
-                              flags = 15, function = 3):
+    def export_z_buffer_property(self, block_parent,
+                                 flags=15, function=3):
         """Create a z-buffer property, and attach it to an existing block
         (typically, the root of the nif tree).
 
