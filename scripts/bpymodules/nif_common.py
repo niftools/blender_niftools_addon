@@ -53,11 +53,11 @@ import Blender
 __blenderversion__ = Blender.Get('version')
 
 if cmp_versions(__blenderversion__, __requiredblenderversion__) == -1:
-    print("""--------------------------
-ERROR\nThis script requires Blender %s or higher.
-It seems that you have an older version installed (%s).
-Get a newer version at http://www.blender.org/
---------------------------"""%(__requiredblenderversion__, __blenderversion__))
+    print("--------------------------"
+        "ERROR\nThis script requires Blender %s or higher."
+        "It seems that you have an older version installed (%s)."
+        "Get a newer version at http://www.blender.org/"
+        "--------------------------"%(__requiredblenderversion__, __blenderversion__))
     Blender.Draw.PupMenu("ERROR%t|Blender outdated, check console for details")
     raise ImportError
 
@@ -66,22 +66,23 @@ Get a newer version at http://www.blender.org/
 try:
     from pyffi import __version__ as __pyffiversion__
 except ImportError:
-    print("""--------------------------
-ERROR\nThis script requires the Python File Format Interface (PyFFI).
-Make sure that PyFFI resides in your Python path or in your Blender scripts folder.
-If you do not have it: http://pyffi.sourceforge.net/
---------------------------""")
+    print("--------------------------"
+        "ERROR\nThis script requires the Python File Format Interface (PyFFI)."
+        "Make sure that PyFFI resides in your Python path or in your Blender scripts folder."
+        "If you do not have it: http://pyffi.sourceforge.net/"
+        "--------------------------")
     Blender.Draw.PupMenu("ERROR%t|PyFFI not found, check console for details")
     raise
 
 # check PyFFI version
 
 if cmp_versions(__pyffiversion__, __requiredpyffiversion__) == -1:
-    print("""--------------------------
-ERROR\nThis script requires Python File Format Interface %s or higher.
-It seems that you have an older version installed (%s).
-Get a newer version at http://pyffi.sourceforge.net/
---------------------------"""%(__requiredpyffiversion__, __pyffiversion__))
+    print("--------------------------"
+        "ERROR\nThis script requires Python File Format Interface %s or higher."
+        "It seems that you have an older version installed (%s)."
+        "Get a newer version at http://pyffi.sourceforge.net/"
+        "--------------------------"""
+        %(__requiredpyffiversion__, __pyffiversion__))
     Blender.Draw.PupMenu("ERROR%t|PyFFI outdated, check console for details")
     raise ImportError
 
