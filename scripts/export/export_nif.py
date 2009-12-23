@@ -1623,7 +1623,7 @@ missing curves in %s; insert %s key at frame 1 and try again"""
     #
     # returns exported NiFlipController
     # 
-    def exportFlipController(self, fliptxt, texture, target, target_tex):
+    def export_flip_controller(self, fliptxt, texture, target, target_tex):
         tlist = fliptxt.asLines()
 
         # create a NiFlipController
@@ -3884,7 +3884,7 @@ check that %s is selected during export.""" % targetobj)
                 pass
             else:
                 # texture slot 0 = base
-                self.exportFlipController(fliptxt, basemtex.tex, texprop, 0)
+                self.export_flip_controller(fliptxt, basemtex.tex, texprop, 0)
 
         if glowmtex:
             texprop.has_glow_texture = True
