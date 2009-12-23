@@ -120,7 +120,7 @@ class NifExport(NifImportExport):
         """
         self.bonesExtraMatrixInv[self.get_bone_name_for_blender(bonename)] = mat
 
-    def getBoneExtraMatrixInv(self, bonename):
+    def get_bone_extra_matrix_inv(self, bonename):
         """Get bone extra matrix, inverted. The bonename is first converted
         to blender style (to ensure compatibility with older imports).
         """
@@ -2736,7 +2736,7 @@ they can easily be identified.")
                                                  extra = False)
             try:
                 bonexmat_inv = Blender.Mathutils.Matrix(
-                    self.getBoneExtraMatrixInv(bone.name))
+                    self.get_bone_extra_matrix_inv(bone.name))
             except KeyError:
                 bonexmat_inv = Blender.Mathutils.Matrix()
                 bonexmat_inv.identity()
@@ -2924,7 +2924,7 @@ they can easily be identified.")
                 # now multiply with the bone correction matrix X
                 try:
                     extra = Blender.Mathutils.Matrix(
-                        self.getBoneExtraMatrixInv(bone_parent_name))
+                        self.get_bone_extra_matrix_inv(bone_parent_name))
                     extra.invert()
                     mat = mat * extra
                 except KeyError:
@@ -2985,7 +2985,7 @@ Workaround: apply size and rotation (CTRL-A).""")
         if extra:
             try:
                 corrmat = Blender.Mathutils.Matrix(
-                    self.getBoneExtraMatrixInv(bone.name))
+                    self.get_bone_extra_matrix_inv(bone.name))
             except KeyError:
                 corrmat.identity()
         else:
