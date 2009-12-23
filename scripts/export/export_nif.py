@@ -78,7 +78,7 @@ class NifExport(NifImportExport):
     FLOAT_MIN = -3.4028234663852886e+38
     FLOAT_MAX = +3.4028234663852886e+38
 
-    def rebuildBonesExtraMatrices(self):
+    def rebuild_bones_extra_matrices(self):
         """Recover bone extra matrices."""
         try:
             bonetxt = Blender.Text.Get('BoneExMat')
@@ -370,7 +370,7 @@ Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."""
                 animtxt = None
                     
             # rebuild the bone extra matrix dictionary from the 'BoneExMat' text buffer
-            self.rebuildBonesExtraMatrices()
+            self.rebuild_bones_extra_matrices()
             
             # rebuild the full name dictionary from the 'FullNames' text buffer 
             self.rebuildFullNames()
