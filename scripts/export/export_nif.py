@@ -2258,7 +2258,7 @@ they can easily be identified." % ob)
                         key.forward = 0.0 # ?
                         key.backward = 0.0 # ?
 
-                self.exportMaterialControllers(
+                self.export_material_controllers(
                     b_material=mesh_mat, n_geom=trishape)
 
             # add NiTriShape's data
@@ -2623,7 +2623,7 @@ they can easily be identified.")
 
 
 
-    def exportMaterialControllers(self, b_material, n_geom):
+    def export_material_controllers(self, b_material, n_geom):
         """Export material animation data for given geometry."""
         if self.EXPORT_ANIMATION == 1:
             # geometry only: don't write controllers
