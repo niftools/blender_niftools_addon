@@ -148,13 +148,13 @@ class NifExport(NifImportExport):
         # blender bone naming -> nif bone naming
         unique_name = self.get_bone_name_for_nif(unique_name)
         # ensure uniqueness
-        if unique_name in self.blockNames or unique_name in self.names.values():
+        if unique_name in self.block_names or unique_name in self.names.values():
             unique_int = 0
             old_name = unique_name
-            while unique_name in self.blockNames or unique_name in self.names.values():
+            while unique_name in self.block_names or unique_name in self.names.values():
                 unique_name = '%s.%02d' % (old_name, unique_int)
                 unique_int += 1
-        self.blockNames.append(unique_name)
+        self.block_names.append(unique_name)
         self.names[blender_name] = unique_name
         return unique_name
 
@@ -215,7 +215,7 @@ class NifExport(NifImportExport):
         # buffer (see self.rebuild_full_names())
         self.names = {}
         # keeps track of names of exported blocks, to make sure they are unique
-        self.blockNames = []
+        self.block_names = []
 
         # dictionary of bones, maps Blender bone name to matrix that maps the
         # NIF bone matrix on the Blender bone matrix
