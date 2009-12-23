@@ -2968,6 +2968,7 @@ Texture '%s' not found or not supported and no alternate available"""
                 if bhkshape.mass > 0.0001:
                     ob.rbMass = bhkshape.mass
                 ob.addProperty("OblivionLayer", self.OB_LAYER[bhkshape.layer], "STRING")
+                ob.addProperty("QualityType", self.QUALITY_TYPE[bhkshape.quality_type], "STRING")
 
             # import constraints
             # this is done once all objects are imported

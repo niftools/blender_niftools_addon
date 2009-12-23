@@ -3121,6 +3121,7 @@ class NifExport(NifImportExport):
         material = self.EXPORT_OB_MATERIAL
         layer = self.EXPORT_OB_LAYER
         motionsys = self.EXPORT_OB_MOTIONSYSTEM
+        quality_type = self.EXPORT_OB_QUALITYTYPE
         # copy physics properties from Blender properties, if they exist, unless forcing override
         if self.EXPORT_OVERRIDE_COLLISION_DATA == False:
             for prop in obj.getAllProperties():
@@ -3142,6 +3143,17 @@ class NifExport(NifImportExport):
                         layer = prop.getData()
                     else:
                         layer = 1 #static
+                elif prop.getName() == 'QualityType':
+                    if prop.getType() == "STRING":
+                        # for Anglicized names
+                        if prop.getData() in self.QUALITY_TYPE:
+                            quality_type = self.QUALITY_TYPE.index(prop.getData())
+                        # for the real Nif Format MoQual names
+                        else:
+                            quality_type = getattr(NifFormat.MotionQuality, prop.getData())
+                    # or if someone wants to set the Motion Quality by the number
+                    elif prop.getType() == "INT":
+                        quality_type = prop.getData()
             #elif prop.getName() == 'MotionSystem':
             #    ob_mosys = getattr(NifFormat.MotionSystem, prop.getData())
 
@@ -3220,7 +3232,7 @@ class NifExport(NifImportExport):
             colbody.motion_system = motionsys
             colbody.unknown_byte_1 = self.EXPORT_OB_UNKNOWNBYTE1
             colbody.unknown_byte_2 = self.EXPORT_OB_UNKNOWNBYTE2
-            colbody.quality_type = self.EXPORT_OB_QUALITYTYPE
+            colbody.quality_type = quality_type
             colbody.unknown_int_6 = 3216641024
             colbody.unknown_int_7 = 3249467941
             colbody.unknown_int_8 = 83276283
