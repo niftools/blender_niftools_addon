@@ -2629,10 +2629,10 @@ they can easily be identified.")
             # geometry only: don't write controllers
             return
 
-        self.exportMaterialAlphaController(b_material, n_geom)
+        self.export_material_alpha_controller(b_material, n_geom)
         self.exportMaterialUVController(b_material, n_geom)
 
-    def exportMaterialAlphaController(self, b_material, n_geom):
+    def export_material_alpha_controller(self, b_material, n_geom):
         """Export the material alpha controller data."""
         # XXX todo: move alpha export here
         return
