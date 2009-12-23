@@ -792,7 +792,7 @@ Furniture marker has invalid number (%s). Name your file
                                     controlledblock.interpolator = interpolator
                                 # get bone animation priority (previously
                                 # fetched from the constraints during
-                                # exportBones)
+                                # export_bones)
                                 if not node in self.bone_priorities:
                                     priority = 26
                                     self.logger.warning(
@@ -1044,7 +1044,7 @@ Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
                 
             # if it is an armature, export the bones as ninode children of this ninode
             elif (ob.getType() == 'Armature'):
-                self.exportBones(ob, node)
+                self.export_bones(ob, node)
 
             # export all children of this empty/mesh/armature/bone object as children of this NiNode
             self.exportChildren(ob, node)
@@ -2679,7 +2679,7 @@ they can easily be identified.")
             # attach block to geometry
             n_geom.add_controller(n_uvctrl)
 
-    def exportBones(self, arm, parent_block):
+    def export_bones(self, arm, parent_block):
         """Export the bones of an armature."""
         # the armature was already exported as a NiNode
         # now we must export the armature's bones
