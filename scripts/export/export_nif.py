@@ -2733,8 +2733,8 @@ they can easily be identified.")
             # bone rotations are stored in the IPO relative to the rest position
             # so we must take the rest position into account
             # (need original one, without extra transforms, so extra = False)
-            bonerestmat = self.getBoneRestMatrix(bone, 'BONESPACE',
-                                                 extra = False)
+            bonerestmat = self.get_bone_rest_matrix(bone, 'BONESPACE',
+                                                    extra = False)
             try:
                 bonexmat_inv = Blender.Mathutils.Matrix(
                     self.get_bone_extra_matrix_inv(bone.name))
@@ -2933,7 +2933,7 @@ they can easily be identified.")
                     pass
         else:
             # bones, get the rest matrix
-            mat = self.getBoneRestMatrix(obj, 'BONESPACE')
+            mat = self.get_bone_rest_matrix(obj, 'BONESPACE')
         
         try:
             return self.decompose_srt(mat)
@@ -2976,7 +2976,7 @@ Workaround: apply size and rotation (CTRL-A).""")
 
 
 
-    def getBoneRestMatrix(self, bone, space, extra = True, tail = False):
+    def get_bone_rest_matrix(self, bone, space, extra = True, tail = False):
         """Get bone matrix in rest position ("bind pose"). Space can be
         ARMATURESPACE or BONESPACE. This returns also a 4x4 matrix if space
         is BONESPACE (translation is bone head plus tail from parent bone).
@@ -3004,16 +3004,16 @@ Workaround: apply size and rotation (CTRL-A).""")
                 # not sure why extra = True is required here
                 # but if extra = extra then transforms are messed up, so keep
                 # for now
-                parinv = self.getBoneRestMatrix(bone.parent, 'ARMATURESPACE',
-                                                extra = True, tail = False)
+                parinv = self.get_bone_rest_matrix(bone.parent, 'ARMATURESPACE',
+                                                   extra = True, tail = False)
                 parinv.invert()
-                return self.getBoneRestMatrix(bone,
-                                              'ARMATURESPACE',
-                                              extra = extra,
-                                              tail = tail) * parinv
+                return self.get_bone_rest_matrix(bone,
+                                                 'ARMATURESPACE',
+                                                 extra = extra,
+                                                 tail = tail) * parinv
             else:
-                return self.getBoneRestMatrix(bone, 'ARMATURESPACE',
-                                              extra = extra, tail = tail)
+                return self.get_bone_rest_matrix(bone, 'ARMATURESPACE',
+                                                 extra = extra, tail = tail)
         else:
             assert(False) # bug!
 
