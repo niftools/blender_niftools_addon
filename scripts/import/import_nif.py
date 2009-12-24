@@ -2981,6 +2981,7 @@ class NifImport(NifImportExport):
                 ob.addProperty("QualityType", self.QUALITY_TYPE[bhkshape.quality_type], "STRING")
                 ob.addProperty("MotionSystem", self.MOTION_SYS[bhkshape.motion_system], "STRING")
                 ob.addProperty("Mass", bhkshape.mass, "FLOAT")
+                ob.addProperty("ColFilter", bhkshape.col_filter, "INT")
 
             # import constraints
             # this is done once all objects are imported
