@@ -3235,14 +3235,6 @@ class NifExport(NifImportExport):
                 colbody.rotation.x = 0.0
                 colbody.rotation.y = 0.0
                 colbody.rotation.z = 0.0
-            else: #check about removing this and just using default for bhkRigidBody
-                colbody.translation.x = 0.0
-                colbody.translation.y = 0.0
-                colbody.translation.z = 0.0
-                colbody.rotation.w = 1.0
-                colbody.rotation.x = 0.0
-                colbody.rotation.y = 0.0
-                colbody.rotation.z = 0.0
             colbody.mass = mass
             colbody.linear_damping = 0.1
             colbody.angular_damping = 0.05
