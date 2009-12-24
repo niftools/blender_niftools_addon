@@ -466,7 +466,7 @@ class NifImport(NifImportExport):
                             # group the geometry into a single mesh
                             # so import it as an empty
                             if not niBlock.has_bounding_box:
-                                b_obj = self.importEmpty(niBlock)
+                                b_obj = self.import_empty(niBlock)
                             else:
                                 b_obj = self.import_bounding_box(niBlock)
                             geom_group = []
@@ -860,7 +860,7 @@ class NifImport(NifImportExport):
         # done!
         return b_scale, b_rot, b_trans
 
-    def importEmpty(self, niBlock):
+    def import_empty(self, niBlock):
         """Creates and returns a grouping empty."""
         shortName = self.import_name(niBlock, 22)
         b_empty = self.scene.objects.new("Empty", shortName)
