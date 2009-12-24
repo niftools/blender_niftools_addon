@@ -1916,7 +1916,7 @@ class NifImport(NifImportExport):
         self.materials[material_hash] = material
         return material
 
-    def importMaterialControllers(self, b_material, n_geom):
+    def import_material_controllers(self, b_material, n_geom):
         """Import material animation data for given geometry."""
         if not self.IMPORT_ANIMATION:
             return
@@ -2098,7 +2098,7 @@ class NifImport(NifImportExport):
                                            textureEffect, wireProperty,
                                            bsShaderProperty, extra_datas)
             # XXX todo: merge this call into importMaterial
-            self.importMaterialControllers(material, niBlock)
+            self.import_material_controllers(material, niBlock)
             b_mesh_materials = b_meshData.materials
             try:
                 materialIndex = b_mesh_materials.index(material)
