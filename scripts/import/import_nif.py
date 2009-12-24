@@ -1540,7 +1540,7 @@ class NifImport(NifImportExport):
         self.textures[texture_hash] = b_texture
         return b_texture
 
-    def getMaterialHash(self, matProperty, textProperty,
+    def get_material_hash(self, matProperty, textProperty,
                         alphaProperty, specProperty,
                         textureEffect, wireProperty,
                         bsShaderProperty, extra_datas):
@@ -1565,7 +1565,7 @@ class NifImport(NifImportExport):
                        bsShaderProperty, extra_datas):
         """Creates and returns a material."""
         # First check if material has been created before.
-        material_hash = self.getMaterialHash(matProperty, textProperty,
+        material_hash = self.get_material_hash(matProperty, textProperty,
                                              alphaProperty, specProperty,
                                              textureEffect, wireProperty,
                                              bsShaderProperty,
