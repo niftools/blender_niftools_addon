@@ -481,7 +481,7 @@ class NifImport(NifImportExport):
                                 b_obj = self.importMesh(child,
                                                         group_mesh = b_obj,
                                                         applytransform = True)
-                            b_obj.name = self.importName(niBlock, 22)
+                            b_obj.name = self.import_name(niBlock, 22)
                             # settings for collision node
                             if isinstance(niBlock, NifFormat.RootCollisionNode):
                                 b_obj.setDrawType(
@@ -638,7 +638,7 @@ class NifImport(NifImportExport):
                             b_armature, niArmature, child, group_mesh = b_mesh)
                         assert(b_mesh_branch_parent == branch_parent) # DEBUG
                     if b_mesh:
-                        b_mesh.name = self.importName(niBlock)
+                        b_mesh.name = self.import_name(niBlock)
                         b_objects.append((niBlock, branch_parent, b_mesh))
                 # import other objects
                 for child in geom_other:
@@ -755,7 +755,7 @@ class NifImport(NifImportExport):
         # anything else: throw away
         return None, None
 
-    def importName(self, niBlock, max_length=22, postfix=""):
+    def import_name(self, niBlock, max_length=22, postfix=""):
         """Get unique name for an object, preserving existing names.
         The maximum name length defaults to 22, since this is the
         maximum for Blender objects. Bone names can reach length 32.
@@ -862,7 +862,7 @@ class NifImport(NifImportExport):
 
     def importEmpty(self, niBlock):
         """Creates and returns a grouping empty."""
-        shortName = self.importName(niBlock, 22)
+        shortName = self.import_name(niBlock, 22)
         b_empty = self.scene.objects.new("Empty", shortName)
         b_empty.properties['longName'] = niBlock.name
         return b_empty
@@ -871,7 +871,7 @@ class NifImport(NifImportExport):
         """Scans an armature hierarchy, and returns a whole armature.
         This is done outside the normal node tree scan to allow for positioning
         of the bones before skins are attached."""
-        armature_name = self.importName(niArmature,22)
+        armature_name = self.import_name(niArmature,22)
 
         b_armatureData = Blender.Armature.Armature()
         b_armatureData.name = armature_name
@@ -1232,7 +1232,7 @@ class NifImport(NifImportExport):
         nub_length = 5.0
         scale = self.IMPORT_SCALE_CORRECTION
         # bone name
-        bone_name = self.importName(niBlock, 32)
+        bone_name = self.import_name(niBlock, 32)
         niChildBones = [ child for child in niBlock.children
                          if self.is_bone(child) ]
         # create a new bone
@@ -1576,7 +1576,7 @@ class NifImport(NifImportExport):
             pass
         # use the material property for the name, other properties usually have
         # no name
-        name = self.importName(matProperty)
+        name = self.import_name(matProperty)
         material = Blender.Material.New(name)
         # get apply mode, and convert to blender "blending mode"
         blendmode = Blender.Texture.BlendModes["MIX"] # default
@@ -1982,7 +1982,7 @@ class NifImport(NifImportExport):
             b_meshData = group_mesh.getData(mesh=True)
         else:
             # Mesh name -> must be unique, so tag it if needed
-            b_name = self.importName(niBlock, 22)
+            b_name = self.import_name(niBlock, 22)
             # create mesh data
             b_meshData = Blender.Mesh.New(b_name)
             b_meshData.properties['longName'] = niBlock.name
