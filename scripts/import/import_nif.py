@@ -381,7 +381,7 @@ class NifImport(NifImportExport):
 
         # store bone matrix offsets for re-export
         if self.bones_extra_matrix:
-            self.storeBonesExtraMatrix()
+            self.store_bones_extra_matrix()
 
         # store original names for re-export
         if self.names:
@@ -2502,7 +2502,7 @@ class NifImport(NifImportExport):
             self.scene.getRenderingContext().startFrame(1)
             self.scene.getRenderingContext().endFrame(frame)
         
-    def storeBonesExtraMatrix(self):
+    def store_bones_extra_matrix(self):
         """Stores correction matrices in a text buffer so that the original
         alignment can be re-exported. In order for this to work it is necessary
         to mantain the imported names unaltered. Since the text buffer is
