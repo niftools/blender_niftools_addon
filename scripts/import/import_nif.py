@@ -124,7 +124,7 @@ class NifImport(NifImportExport):
         # dictionary of bones, maps Blender bone name to matrix that maps the
         # NIF bone matrix on the Blender bone matrix
         # B' = X * B, where B' is the Blender bone matrix, and B is the NIF bone matrix
-        self.bonesExtraMatrix = {}
+        self.bones_extra_matrix = {}
 
         # dictionary of bones that belong to a certain armature
         # maps NIF armature name to list of NIF bone name
@@ -380,7 +380,7 @@ class NifImport(NifImportExport):
                 % root_block.__class__)
 
         # store bone matrix offsets for re-export
-        if self.bonesExtraMatrix:
+        if self.bones_extra_matrix:
             self.storeBonesExtraMatrix()
 
         # store original names for re-export
@@ -684,11 +684,11 @@ class NifImport(NifImportExport):
                         #     = Z * X^{-1} * T^{-1}
                         # since
                         #   B' = X * B
-                        # with X = self.bonesExtraMatrix[B]
+                        # with X = self.bones_extra_matrix[B]
 
                         # post multiply Z with X^{-1}
                         extra = Blender.Mathutils.Matrix(
-                            self.bonesExtraMatrix[branch_parent])
+                            self.bones_extra_matrix[branch_parent])
                         extra.invert()
                         b_obj_matrix = b_obj_matrix * extra
                         # cancel out the tail translation T
@@ -739,7 +739,7 @@ class NifImport(NifImportExport):
                         # fix transform, see explanation above
                         #   O = Z * X^{-1} * T^{-1}
                         extra = Blender.Mathutils.Matrix(
-                            self.bonesExtraMatrix[branch_parent])
+                            self.bones_extra_matrix[branch_parent])
                         extra.invert()
                         b_obj_matrix = b_obj_matrix * extra
                         b_obj_matrix[3][1] -= b_par_bone.length
@@ -945,7 +945,7 @@ class NifImport(NifImportExport):
                 # SC' = SX * SC / SX = SC
                 # RC' = RX * RC * inverse(RX)
                 # TC' = (TX * SC * RC + TC - TX) * inverse(RX) / SX
-                extra_matrix_scale, extra_matrix_rot, extra_matrix_trans = self.decompose_srt(self.bonesExtraMatrix[niBone])
+                extra_matrix_scale, extra_matrix_rot, extra_matrix_trans = self.decompose_srt(self.bones_extra_matrix[niBone])
                 extra_matrix_quat = extra_matrix_rot.toQuat()
                 extra_matrix_rot_inv = Matrix(extra_matrix_rot)
                 extra_matrix_rot_inv.invert()
@@ -1335,7 +1335,7 @@ class NifImport(NifImportExport):
         new_bone_matrix[3][2] = b_bone_head_z
         # stores any correction or alteration applied to the bone matrix
         # new * inverse(old)
-        self.bonesExtraMatrix[niBlock] = new_bone_matrix * old_bone_matrix_inv
+        self.bones_extra_matrix[niBlock] = new_bone_matrix * old_bone_matrix_inv
         # set bone children
         for niBone in niChildBones:
             b_child_bone =  self.importBone(
@@ -2515,7 +2515,7 @@ class NifImport(NifImportExport):
             bonetxt = Blender.Text.New("BoneExMat")
         bonetxt.clear()
         # write correction matrices to text buffer
-        for niBone, correction_matrix in self.bonesExtraMatrix.iteritems():
+        for niBone, correction_matrix in self.bones_extra_matrix.iteritems():
             # skip identity transforms
             if sum(sum(abs(x) for x in row)
                    for row in (correction_matrix - self.IDENTITY44)) \
@@ -3488,13 +3488,13 @@ class NifImport(NifImportExport):
                 axis_x = axis_x * transform
 
             # next, cancel out bone matrix correction
-            # note that B' = X * B with X = self.bonesExtraMatrix[B]
+            # note that B' = X * B with X = self.bones_extra_matrix[B]
             # so multiply with the inverse of X
-            for niBone in self.bonesExtraMatrix:
+            for niBone in self.bones_extra_matrix:
                 if niBone.collision_object \
                    and niBone.collision_object.body is hkbody:
                     transform = Blender.Mathutils.Matrix(
-                        self.bonesExtraMatrix[niBone])
+                        self.bones_extra_matrix[niBone])
                     transform.invert()
                     pivot = pivot * transform
                     transform = transform.rotationPart()
