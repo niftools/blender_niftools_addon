@@ -3296,10 +3296,7 @@ class NifExport(NifImportExport):
                     colobj.flags = 1
             parent_block.collision_object = colobj
             colobj.target = parent_block
-            if self.EXPORT_OB_RIGIDBODYT == False:
-                colbody = self.create_block("bhkRigidBody", obj)
-            else:
-                colbody = self.create_block("bhkRigidBodyT", obj)
+            colbody = self.create_block("bhkRigidBody", obj)
             colobj.body = colbody
             colbody.layer = layer
             colbody.col_filter = col_filter
@@ -3314,16 +3311,14 @@ class NifExport(NifImportExport):
             colbody.unknown_7_shorts[3] = 62977
             colbody.unknown_7_shorts[4] = 65535
             colbody.unknown_7_shorts[5] = 44
-            if self.EXPORT_OB_RIGIDBODYT == True: # XXX todo: set rotations
-                bscale, brot, btrans = self.get_object_srt(obj)
-                colbody.translation.x = btrans[0] / 7
-                colbody.translation.y = btrans[1] / 7
-                colbody.translation.z = btrans[2] / 7
-                colbody.rotation.w = 1.0
-                colbody.rotation.x = 0.0
-                colbody.rotation.y = 0.0
-                colbody.rotation.z = 0.0
-            colbody.mass = mass
+            colbody.translation.x = 0.0
+            colbody.translation.y = 0.0
+            colbody.translation.z = 0.0
+            colbody.rotation.w = 1.0
+            colbody.rotation.x = 0.0
+            colbody.rotation.y = 0.0
+            colbody.rotation.z = 0.0
+            colbody.mass = mass # is -1 at the moment, will be fixed later
             colbody.linear_damping = 0.1
             colbody.angular_damping = 0.05
             colbody.friction = 0.3
@@ -3461,41 +3456,39 @@ class NifExport(NifImportExport):
 
         if obj.rbShapeBoundType in ( Blender.Object.RBShapes['BOX'],
                                     Blender.Object.RBShapes['SPHERE'] ):
-            if self.EXPORT_OB_RIGIDBODYT == False:
-                # note: collision settings are taken from lowerclasschair01.nif
-                coltf = self.create_block("bhkConvexTransformShape", obj)
-                coltf.material = material
-                coltf.unknown_float_1 = 0.1
-                coltf.unknown_8_bytes[0] = 96
-                coltf.unknown_8_bytes[1] = 120
-                coltf.unknown_8_bytes[2] = 53
-                coltf.unknown_8_bytes[3] = 19
-                coltf.unknown_8_bytes[4] = 24
-                coltf.unknown_8_bytes[5] = 9
-                coltf.unknown_8_bytes[6] = 253
-                coltf.unknown_8_bytes[7] = 4
-                hktf = Blender.Mathutils.Matrix(
-                    *self.get_object_matrix(obj, 'localspace').as_list())
-                # the translation part must point to the center of the data
-                # so calculate the center in local coordinates
-                center = Blender.Mathutils.Vector((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0)
-                # and transform it to global coordinates
-                center *= hktf
-                hktf[3][0] = center[0]
-                hktf[3][1] = center[1]
-                hktf[3][2] = center[2]
-                # we need to store the transpose of the matrix
-                hktf.transpose()
-                coltf.transform.set_rows(*hktf)
-                # fix matrix for havok coordinate system
-                coltf.transform.m_14 /= 7.0
-                coltf.transform.m_24 /= 7.0
-                coltf.transform.m_34 /= 7.0
+            # note: collision settings are taken from lowerclasschair01.nif
+            coltf = self.create_block("bhkConvexTransformShape", obj)
+            coltf.material = material
+            coltf.unknown_float_1 = 0.1
+            coltf.unknown_8_bytes[0] = 96
+            coltf.unknown_8_bytes[1] = 120
+            coltf.unknown_8_bytes[2] = 53
+            coltf.unknown_8_bytes[3] = 19
+            coltf.unknown_8_bytes[4] = 24
+            coltf.unknown_8_bytes[5] = 9
+            coltf.unknown_8_bytes[6] = 253
+            coltf.unknown_8_bytes[7] = 4
+            hktf = Blender.Mathutils.Matrix(
+                *self.get_object_matrix(obj, 'localspace').as_list())
+            # the translation part must point to the center of the data
+            # so calculate the center in local coordinates
+            center = Blender.Mathutils.Vector((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0)
+            # and transform it to global coordinates
+            center *= hktf
+            hktf[3][0] = center[0]
+            hktf[3][1] = center[1]
+            hktf[3][2] = center[2]
+            # we need to store the transpose of the matrix
+            hktf.transpose()
+            coltf.transform.set_rows(*hktf)
+            # fix matrix for havok coordinate system
+            coltf.transform.m_14 /= 7.0
+            coltf.transform.m_24 /= 7.0
+            coltf.transform.m_34 /= 7.0
 
             if obj.rbShapeBoundType == Blender.Object.RBShapes['BOX']:
                 colbox = self.create_block("bhkBoxShape", obj)
-                if self.EXPORT_OB_RIGIDBODYT == False:
-                    coltf.shape = colbox
+                coltf.shape = colbox
                 colbox.material = material
                 colbox.radius = 0.1
                 colbox.unknown_8_bytes[0] = 0x6b
@@ -3513,20 +3506,13 @@ class NifExport(NifImportExport):
                 colbox.minimum_size = min(colbox.dimensions.x, colbox.dimensions.y, colbox.dimensions.z)
             elif obj.rbShapeBoundType == Blender.Object.RBShapes['SPHERE']:
                 colsphere = self.create_block("bhkSphereShape", obj)
-                if self.EXPORT_OB_RIGIDBODYT == False:
-                    coltf.shape = colsphere
+                coltf.shape = colsphere
                 colsphere.material = material
                 # take average radius and
                 # fix for havok coordinate system (6 * 7 = 42)
                 colsphere.radius = (maxx + maxy + maxz - minx - miny -minz) / 42.0
-            
-            if self.EXPORT_OB_RIGIDBODYT == False:
-                return coltf
-            else: # self.EXPORT_OB_RIGIDBODYT == True:
-                if obj.rbShapeBoundType == Blender.Object.RBShapes['BOX']:
-                    return colbox
-                else:# obj.rbShapeBoundType == Blender.Object.RBShapes['SPHERE']:
-                    return colsphere
+
+            return coltf
 
         elif obj.rbShapeBoundType == Blender.Object.RBShapes['CYLINDER']:
             colcaps = self.create_block("bhkCapsuleShape", obj)

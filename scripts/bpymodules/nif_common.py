@@ -271,7 +271,6 @@ class NifConfig:
         EXPORT_OB_LAYER = 1, # static
         EXPORT_OB_MATERIAL = 9, # wood
         EXPORT_OB_MALLEABLECONSTRAINT = False, # use malleable constraint for ragdoll and hinge
-        EXPORT_OB_RIGIDBODYT = False, # if true use RigidBodyT instead of RigidBody for collision
         EXPORT_OB_PRN = "NONE", # determines bone where to attach weapon
         EXPORT_FO3_SF_ZBUF = True, # use these shader flags?
         EXPORT_FO3_SF_SMAP = False,
@@ -956,13 +955,8 @@ class NifConfig:
                 event_name = "EXPORT_OB_MALLEABLECONSTRAINT",
                 num_items = 2, item = 1)
             self.drawToggle(
-                text = "Use RigidBodyT",
-                event_name = "EXPORT_OB_RIGIDBODYT",
-                num_items = 2, item = 0)
-            self.drawToggle(
                 text = "Override Collision Settings",
-                event_name = "EXPORT_OVERRIDE_COLLISION_DATA",
-                num_items = 2, item = 1)   
+                event_name = "EXPORT_OVERRIDE_COLLISION_DATA")   
             self.drawYSep()
 
             self.drawLabel(
@@ -1302,8 +1296,6 @@ class NifConfig:
             self.config["EXPORT_BHKLISTSHAPE"] = not self.config["EXPORT_BHKLISTSHAPE"]
         elif evName == "EXPORT_OB_MALLEABLECONSTRAINT":
             self.config["EXPORT_OB_MALLEABLECONSTRAINT"] = not self.config["EXPORT_OB_MALLEABLECONSTRAINT"]
-        elif evName == "EXPORT_OB_RIGIDBODYT":
-            self.config["EXPORT_OB_RIGIDBODYT"] = not self.config["EXPORT_OB_RIGIDBODYT"]
         elif evName == "EXPORT_OVERRIDE_COLLISION_DATA":
             self.config["EXPORT_OVERRIDE_COLLISION_DATA"] = not self.config["EXPORT_OVERRIDE_COLLISION_DATA"]
         elif evName == "EXPORT_OB_SOLID":
