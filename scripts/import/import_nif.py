@@ -886,7 +886,7 @@ class NifImport(NifImportExport):
         niChildBones = [child for child in niArmature.children
                         if self.is_bone(child)]
         for niBone in niChildBones:
-            self.importBone(
+            self.import_bone(
                 niBone, b_armature, b_armatureData, niArmature)
         b_armatureData.update()
 
@@ -1222,7 +1222,7 @@ class NifImport(NifImportExport):
 
         return b_armature
 
-    def importBone(self, niBlock, b_armature, b_armatureData, niArmature):
+    def import_bone(self, niBlock, b_armature, b_armatureData, niArmature):
         """Adds a bone to the armature in edit mode."""
         # check that niBlock is indeed a bone
         if not self.is_bone(niBlock):
@@ -1338,7 +1338,7 @@ class NifImport(NifImportExport):
         self.bones_extra_matrix[niBlock] = new_bone_matrix * old_bone_matrix_inv
         # set bone children
         for niBone in niChildBones:
-            b_child_bone =  self.importBone(
+            b_child_bone =  self.import_bone(
                 niBone, b_armature, b_armatureData, niArmature)
             b_child_bone.parent = b_bone
 
