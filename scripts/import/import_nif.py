@@ -447,7 +447,7 @@ class NifImport(NifImportExport):
                                     " but names do not match"
                                     % (niBlock.name, b_obj.name))
                         # now also do the meshes
-                        self.importArmatureBranch(b_obj, niBlock, niBlock)
+                        self.import_armature_branch(b_obj, niBlock, niBlock)
                     else:
                         # is it a grouping node?
                         geom_group = self.is_grouping_node(niBlock)
@@ -567,7 +567,7 @@ class NifImport(NifImportExport):
             # all else is currently discarded
             return None
 
-    def importArmatureBranch(
+    def import_armature_branch(
         self, b_armature, niArmature, niBlock, group_mesh = None):
         """Reads the content of the current NIF tree branch to Blender
         recursively, as meshes parented to a given armature or parented
@@ -600,7 +600,7 @@ class NifImport(NifImportExport):
         if isinstance(niBlock, NifFormat.NiTriBasedGeom) \
            and self.IMPORT_SKELETON != 1:
 
-            self.logger.debug("Building mesh %s in importArmatureBranch" %
+            self.logger.debug("Building mesh %s in import_armature_branch" %
                               niBlock.name)
             # apply transform relative to the branch parent
             return branch_parent, self.importMesh(niBlock,
@@ -612,7 +612,7 @@ class NifImport(NifImportExport):
             # an armature parented to this armature
             fb_arm = self.importArmature(niBlock)
             # import the armature branch
-            self.importArmatureBranch(fb_arm, niBlock, niBlock)
+            self.import_armature_branch(fb_arm, niBlock, niBlock)
             return branch_parent, fb_arm # the matrix will be set by the caller
         # is it a NiNode in the niArmature tree (possibly niArmature itself,
         # on first call)?
@@ -634,7 +634,7 @@ class NifImport(NifImportExport):
                         %([child.name for child in geom_group], node_name))
                     b_mesh = None
                     for child in geom_group:
-                        b_mesh_branch_parent, b_mesh = self.importArmatureBranch(
+                        b_mesh_branch_parent, b_mesh = self.import_armature_branch(
                             b_armature, niArmature, child, group_mesh = b_mesh)
                         assert(b_mesh_branch_parent == branch_parent) # DEBUG
                     if b_mesh:
@@ -642,7 +642,7 @@ class NifImport(NifImportExport):
                         b_objects.append((niBlock, branch_parent, b_mesh))
                 # import other objects
                 for child in geom_other:
-                    b_obj_branch_parent, b_obj = self.importArmatureBranch(
+                    b_obj_branch_parent, b_obj = self.import_armature_branch(
                         b_armature, niArmature, child, group_mesh = None)
                     if b_obj:
                         b_objects.append((child, b_obj_branch_parent, b_obj))
