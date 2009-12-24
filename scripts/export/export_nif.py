@@ -264,12 +264,17 @@ class NifExport(NifImportExport):
                     # and not in rest position!
                     ob.data.restPosition = False
                     if (ob.data.envelopes):
-                        self.logger.critical("'%s': Cannot export envelope skinning. If you have vertex groups,"
-                            " turn off envelopes. If you don't have vertex groups, select the bones one by one press W"
-                            " to convert their envelopes to vertex weights, and turn off envelopes."
+                        self.logger.critical(
+                            "'%s': Cannot export envelope skinning."
+                            " If you have vertex groups,"
+                            " turn off envelopes. If you don't have vertex"
+                            " groups, select the bones one by one press W"
+                            " to convert their envelopes to vertex weights,"
+                            " and turn off envelopes."
                             % ob.getName())
                         raise NifExportError(
-                            "'%s': Cannot export envelope skinning. Check console for instructions."
+                            "'%s': Cannot export envelope skinning."
+                            " Check console for instructions."
                             % ob.getName())
 
                 # check for non-uniform transforms
@@ -280,8 +285,9 @@ class NifExport(NifImportExport):
                         self.decompose_srt(ob.getMatrix('localspace'))
                     except NifExportError: # non-uniform scaling
                         raise NifExportError(
-                            "Non-uniform scaling not supported. Workaround: apply size and rotation (CTRL-A) on '%s'."
-                            % ob.name)
+                            "Non-uniform scaling not supported."
+                            " Workaround: apply size and rotation (CTRL-A)"
+                            " on '%s'." % ob.name)
 
             # extract some useful scene info
             self.scene = Blender.Scene.GetCurrent()
@@ -302,7 +308,8 @@ class NifExport(NifImportExport):
             # only export empties, meshes, and armatures
             if (Blender.Object.GetSelected() == None):
                 raise NifExportError(
-                    "Please select the object(s) to export, and run this script again.")
+                    "Please select the object(s) to export,"
+                    " and run this script again.")
             root_objects = set()
             export_types = ('Empty', 'Mesh', 'Armature')
             for root_object in [ob for ob in Blender.Object.GetSelected()
@@ -311,7 +318,8 @@ class NifExport(NifImportExport):
                     root_object = root_object.getParent()
                 if root_object.getType() not in export_types:
                     raise NifExportError(
-                        "Root object (%s) must be an 'Empty', 'Mesh', or 'Armature' object."
+                        "Root object (%s) must be an 'Empty', 'Mesh',"
+                        " or 'Armature' object."
                         % root_object.getName())
                 root_objects.add(root_object)
 
@@ -438,7 +446,8 @@ class NifExport(NifImportExport):
                 and self.filebase.lower() in ('skeleton', 'skeletonbeast'):
                 # here comes everything that is Oblivion skeleton export
                 # specific
-                self.logger.info("Adding controllers and interpolators for skeleton")
+                self.logger.info(
+                    "Adding controllers and interpolators for skeleton")
                 for block in self.blocks.keys():
                     if isinstance(block, NifFormat.NiNode) \
                         and block.name == "Bip01":
@@ -480,8 +489,9 @@ class NifExport(NifImportExport):
                     furniturenumber = int(self.filebase[15:])
                 except ValueError:
                     raise NifExportError(
-                        "Furniture marker has invalid number (%s). Name your file 'furnituremarkerxx.nif'"
-                        "where xx is a number between 00 and 19."
+                        "Furniture marker has invalid number (%s)."
+                        " Name your file 'furnituremarkerxx.nif'"
+                        " where xx is a number between 00 and 19."
                         % self.filebase[15:])
                 # name scene root name the file base name
                 root_name = self.filebase
@@ -515,35 +525,43 @@ class NifExport(NifImportExport):
                     bsx.integer_data = self.EXPORT_OB_BSXFLAGS
                     root_block.add_extra_data(bsx)
                 # update rigid body center of gravity and mass
-                # first calculate distribution of mass
-                total_mass = 0
-                for block in self.blocks:
-                    if isinstance(block, NifFormat.bhkRigidBody):
-                        if block.layer == 1:
-                            block.mass = 0
-                        total_mass += block.mass
-                if total_mass == 0:
-                    # to avoid zero division error later
-                    # (if mass is zero then this does not matter anyway)
-                    total_mass = 1
-                # now update the mass ensuring that total mass is
-                # self.EXPORT_OB_MASS if overriding the collision 
-                for block in self.blocks:
-                    if isinstance(block, NifFormat.bhkRigidBody):
-                        block_mass = 0
-                        if block.mass != -1 and self.EXPORT_OVERRIDE_COLLISION_DATA == False:
-                            block_mass = block.mass
-                        mass = self.EXPORT_OB_MASS * block.mass / total_mass
-                        # lower bound on mass
-                        if mass < 0.0001:
-                            mass = 0.05
-                        block.update_mass_center_inertia(
-                            mass = mass,
-                            solid = self.EXPORT_OB_SOLID)
-                        if block_mass != 0:
-                            block.mass = block_mass
-                        if block.layer == 1:
-                            block.mass = 0
+                if self.EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES:
+                    # we are not using blender properties to set the mass
+                    # so calculate mass automatically
+                    # first calculate distribution of mass
+                    total_mass = 0
+                    for block in self.blocks:
+                        if isinstance(block, NifFormat.bhkRigidBody):
+                            block.update_mass_center_inertia(
+                                solid = self.EXPORT_OB_SOLID)
+                            total_mass += block.mass
+                    if total_mass == 0:
+                        # to avoid zero division error later
+                        # (if mass is zero then this does not matter
+                        # anyway)
+                        total_mass = 1
+                    # now update the mass ensuring that total mass is
+                    # self.EXPORT_OB_MASS
+                    for block in self.blocks:
+                        if isinstance(block, NifFormat.bhkRigidBody):
+                            mass = self.EXPORT_OB_MASS * block.mass / total_mass
+                            # lower bound on mass
+                            if mass < 0.0001:
+                                mass = 0.05
+                            block.update_mass_center_inertia(
+                                mass = mass,
+                                solid = self.EXPORT_OB_SOLID)
+                else:
+                    # using blender properties, so block.mass *should* have
+                    # been set properly
+                    for block in self.blocks:
+                        if isinstance(block, NifFormat.bhkRigidBody):
+                            # lower bound on mass
+                            if block.mass < 0.0001:
+                                block.mass = 0.05
+                            block.update_mass_center_inertia(
+                                mass=block.mass,
+                                solid=self.EXPORT_OB_SOLID)
 
                 # many Oblivion nifs have a UPB, but export is disabled as
                 # they do not seem to affect anything in the game
@@ -820,8 +838,9 @@ class NifExport(NifImportExport):
                                     controlledblock.set_variable_2(variable_2)
                 else:
                     raise NifExportError(
-                        """Keyframe export for '%s' is not supported. """
-                        """Only Morrowind, Oblivion, Fallout 3, Civilization IV, and Zoo Tycoon 2 keyframes are supported."""
+                        "Keyframe export for '%s' is not supported. "
+                        " Only Morrowind, Oblivion, Fallout 3, Civilization IV,"
+                        " and Zoo Tycoon 2 keyframes are supported."
                         % self.EXPORT_VERSION)
 
                 # write kf (and xnif if asked)
@@ -865,7 +884,9 @@ class NifExport(NifImportExport):
                 self.logger.info("Detaching animation text keys from nif")
                 # detach animation text keys
                 if root_block.extra_data is not anim_textextra:
-                    raise RuntimeError("Oops, you found a bug! Animation extra data wasn't where expected...")
+                    raise RuntimeError(
+                        "Oops, you found a bug! Animation extra data"
+                        " wasn't where expected...")
                 root_block.extra_data = None
 
                 prefix = "x" # we are in morrowind 'nifxnifkf mode'
@@ -902,19 +923,22 @@ class NifExport(NifImportExport):
                 finally:
                     stream.close()
 
-        except NifExportError, e: # export error: raise a menu instead of an exception
+        # export error: raise a menu instead of an exception
+        except NifExportError, e:
             e = str(e).replace("\n", " ")
             Blender.Draw.PupMenu('EXPORT ERROR%t|' + str(e))
             print 'NifExportError: ' + str(e)
             return
 
-        except IOError, e: # IO error: raise a menu instead of an exception
+        # IO error: raise a menu instead of an exception
+        except IOError, e: 
             e = str(e).replace("\n", " ")
             Blender.Draw.PupMenu('I/O ERROR%t|' + str(e))
             print 'IOError: ' + str(e)
             return
 
-        except StandardError, e: # other error: raise a menu and an exception
+        # other error: raise a menu and an exception
+        except StandardError, e:
             e = str(e).replace("\n", " ")
             Blender.Draw.PupMenu('ERROR%t|' + str(e) + '    Check console for possibly more details.')
             raise
@@ -1226,7 +1250,8 @@ class NifExport(NifImportExport):
                                Ipo.PO_QUATX: "ROT",
                                Ipo.OB_ROTX: "ROT"}
                     raise NifExportError(
-                        "missing curves in %s; insert %s key at frame 1 and try again"
+                        "missing curves in %s; insert %s key at frame 1"
+                        " and try again"
                         % (ipo, keytype[curvecollection[0]]))
             # go over all curves
             ipo_curves = ipo.curveConsts.values()
@@ -1316,7 +1341,7 @@ class NifExport(NifImportExport):
         if (max(len(rot_curve), len(trans_curve), len(scale_curve)) <= 1
             and self.version >= 0x0A020000):
             # only add data if number of keys is > 1
-            # (see importer comments with importKfRoot: a single frame
+            # (see importer comments with import_kf_root: a single frame
             # keyframe denotes an interpolator without further data)
             # insufficient keys, so set the data and we're done!
             if trans_curve:
@@ -1568,7 +1593,10 @@ class NifExport(NifImportExport):
                 if ( idx >= 0 ):
                     filename = filename[idx:]
                 else:
-                    self.logger.warn("%s does not reside in a 'Textures' folder; texture path will be stripped and textures may not display in-game" % filename)
+                    self.logger.warn(
+                        "%s does not reside in a 'Textures' folder;"
+                        " texture path will be stripped"
+                        " and textures may not display in-game" % filename)
                     filename = Blender.sys.basename(filename)
             # for linux export: fix path seperators
             return filename.replace('/', '\\')
@@ -1656,7 +1684,8 @@ class NifExport(NifImportExport):
             count += 1
         if count < 2:
             raise NifExportError(
-                "Error in Texture Flip buffer '%s': Must define at least two textures"
+                "Error in Texture Flip buffer '%s':"
+                " must define at least two textures"
                 %fliptxt.getName())
         flip.delta = (flip.stop_time - flip.start_time) / count
 
@@ -1784,16 +1813,22 @@ class NifExport(NifImportExport):
                         if (mtex.mapto & Blender.Texture.MapTo.COL) == 0:
                             # it should map to colour
                             raise NifExportError(
-                                "Non-COL-mapped reflection texture in mesh '%s', material '%s',"
-                                " these cannot be exported to NIF. Either delete all non-COL-mapped"
-                                " reflection textures, or in the Shading Panel, under Material Buttons,"
+                                "Non-COL-mapped reflection texture in"
+                                " mesh '%s', material '%s',"
+                                " these cannot be exported to NIF."
+                                " Either delete all non-COL-mapped"
+                                " reflection textures,"
+                                " or in the Shading Panel,"
+                                " under Material Buttons,"
                                 " set texture 'Map To' to 'COL'."
                                 % (ob.getName(),mesh_mat.getName()))
                         if mtex.blendmode != Blender.Texture.BlendModes["ADD"]:
                             # it should have "ADD" blending mode
                             self.logger.warn(
-                               "Reflection texture should have blending mode 'Add' on texture"
-                               " in mesh '%s', material '%s')." %(ob.getName(),mesh_mat.getName()))
+                               "Reflection texture should have blending"
+                               " mode 'Add' on texture"
+                               " in mesh '%s', material '%s')."
+                               % (ob.getName(),mesh_mat.getName()))
                             # an envmap image should have an empty... don't care
                         mesh_texeff_mtex = mtex
 
@@ -1809,32 +1844,40 @@ class NifExport(NifImportExport):
                             # got the glow tex
                             if mesh_glow_mtex:
                                 raise NifExportError(
-                                    "Multiple glow textures in mesh '%s', material '%s'."
-                                    " Make sure there is only one texture with MapTo.EMIT"
+                                    "Multiple glow textures in"
+                                    " mesh '%s', material '%s'."
+                                    " Make sure there is only one texture"
+                                    " with MapTo.EMIT"
                                     %(mesh.name,mesh_mat.getName()))
                             # check if calculation of alpha channel is enabled
                             # for this texture
                             if (mtex.tex.imageFlags & Blender.Texture.ImageFlags.CALCALPHA != 0) \
                                and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
                                 self.logger.warn(
-                                    "In mesh '%s', material '%s': glow texture must have"
-                                    " CALCALPHA flag set, and must have MapTo.ALPHA enabled."
+                                    "In mesh '%s', material '%s':"
+                                    " glow texture must have"
+                                    " CALCALPHA flag set, and must have"
+                                    " MapTo.ALPHA enabled."
                                     %(ob.getName(),mesh_mat.getName()))
                             mesh_glow_mtex = mtex
                         elif mtex.mapto & Blender.Texture.MapTo.SPEC:
                             # got the gloss map
                             if mesh_gloss_mtex:
                                 raise NifExportError(
-                                    "Multiple gloss textures in mesh '%s', material '%s'."
-                                    " Make sure there is only one texture with MapTo.SPEC"
+                                    "Multiple gloss textures in"
+                                    " mesh '%s', material '%s'."
+                                    " Make sure there is only one texture"
+                                    " with MapTo.SPEC"
                                     %(mesh.name,mesh_mat.getName()))
                             mesh_gloss_mtex = mtex
                         elif mtex.mapto & Blender.Texture.MapTo.NOR:
                             # got the normal map
                             if mesh_bump_mtex:
                                 raise NifExportError(
-                                    "Multiple bump/normal textures in mesh '%s', material '%s'."
-                                    " Make sure there is only one texture with MapTo.NOR"
+                                    "Multiple bump/normal textures"
+                                    " in mesh '%s', material '%s'."
+                                    " Make sure there is only one texture"
+                                    " with MapTo.NOR"
                                     %(mesh.name,mesh_mat.getName()))
                             mesh_bump_mtex = mtex
                         elif mtex.mapto & Blender.Texture.MapTo.COL and \
@@ -1856,14 +1899,21 @@ class NifExport(NifImportExport):
                                 # but...
                                 if mesh_mat_transparency > self.EPSILON:
                                     raise NifExportError(
-                                        "Cannot export this type of transparency in material '%s': "
-                                        " instead, try to set alpha to 0.0 and to use the 'Var' slider"
-                                        " in the 'Map To' tab under the material buttons."
+                                        "Cannot export this type of"
+                                        " transparency in material '%s': "
+                                        " instead, try to set alpha to 0.0"
+                                        " and to use the 'Var' slider"
+                                        " in the 'Map To' tab under the"
+                                        " material buttons."
                                         %mesh_mat.getName())
                                 if (mesh_mat.getIpo() and mesh_mat.getIpo().getCurve('Alpha')):
                                     raise NifExportError(
-                                        "Cannot export animation for this type of transparency in material '%s':"
-                                        " remove alpha animation, or turn off MapTo.ALPHA, and try again."
+                                        "Cannot export animation for"
+                                        " this type of transparency"
+                                        " in material '%s':"
+                                        " remove alpha animation,"
+                                        " or turn off MapTo.ALPHA,"
+                                        " and try again."
                                         %mesh_mat.getName())
                                 mesh_mat_transparency = mtex.varfac # we must use the "Var" value
                                 mesh_hasalpha = True
@@ -1876,23 +1926,31 @@ class NifExport(NifImportExport):
                             # got the reflection map
                             if mesh_ref_mtex:
                                 raise NifExportError(
-                                    "Multiple reflection textures in mesh '%s', material '%s'."
-                                    " Make sure there is only one texture with MapTo.REF"
+                                    "Multiple reflection textures"
+                                    " in mesh '%s', material '%s'."
+                                    " Make sure there is only one texture"
+                                    " with MapTo.REF"
                                     %(mesh.name,mesh_mat.getName()))
                             mesh_ref_mtex = mtex
                         else:
                             # unknown map
                             raise NifExportError(
-                                "Do not know how to export texture '%s', in mesh '%s', material '%s'."
-                                " Either delete it, or if this texture is to be your base texture,"
-                                " go to the Shading Panel, Material Buttons, and set texture 'Map To' to 'COL'."
+                                "Do not know how to export texture '%s',"
+                                " in mesh '%s', material '%s'."
+                                " Either delete it, or if this texture"
+                                " is to be your base texture,"
+                                " go to the Shading Panel,"
+                                " Material Buttons, and set texture"
+                                " 'Map To' to 'COL'."
                                 % (mtex.tex.getName(),ob.getName(),mesh_mat.getName()))
                     else:
                         # nif only support UV-mapped textures
                         raise NifExportError(
                             "Non-UV texture in mesh '%s', material '%s'."
-                            " Either delete all non-UV textures, or in the Shading Panel,"
-                            " under Material Buttons, set texture 'Map Input' to 'UV'."
+                            " Either delete all non-UV textures,"
+                            " or in the Shading Panel,"
+                            " under Material Buttons,"
+                            " set texture 'Map Input' to 'UV'."
                             %(ob.getName(),mesh_mat.getName()))
 
             # list of body part (name, index, vertices) in this mesh
@@ -1917,11 +1975,6 @@ class NifExport(NifImportExport):
             # (vert, uv-vert, normal, vcol) quads, and uses this list to
             # produce the list of vertices, uv-vertices, normals, vertex
             # colors, and face indices.
-
-            # Blender only supports one set of uv coordinates per mesh;
-            # therefore, we shall have trouble when importing
-            # multi-textured trishapes in blender. For this export script,
-            # no problem: we must simply duplicate the uv vertex list.
 
             # NIF uses the normal table for lighting. So, smooth faces
             # should use Blender's vertex normals, and solid faces should
@@ -1950,7 +2003,8 @@ class NifExport(NifImportExport):
                     # double check that we have uv data
                     if not mesh.faceUV or len(f.uv) != len(f.v):
                         raise NifExportError(
-                            'ERROR%t|Create a UV map for every texture, and run the script again.')
+                            "ERROR%t|Create a UV map for every texture,"
+                            " and run the script again.")
                 # find (vert, uv-vert, normal, vcol) quad, and if not found, create it
                 f_index = [ -1 ] * f_numverts
                 for i in range(f_numverts):
@@ -1969,7 +2023,10 @@ class NifExport(NifImportExport):
                         fuv.append(f.uv[i])
                     if mesh_hasvcol:
                         if (len(f.col) == 0):
-                            self.logger.warning('Vertex color painting/lighting enabled, but mesh has no vertex color data; vertex colors will not be written.')
+                            self.logger.warning(
+                                "Vertex color painting/lighting enabled,"
+                                " but mesh has no vertex color data;"
+                                " vertex colors will not be written.")
                             fcol = None
                             mesh_hasvcol = False
                         else:
@@ -2014,7 +2071,9 @@ class NifExport(NifImportExport):
                             break
 
                     if f_index[i] > 65535:
-                        raise NifExportError('ERROR%t|Too many vertices. Decimate your mesh and try again.')
+                        raise NifExportError(
+                            "ERROR%t|Too many vertices. Decimate your mesh"
+                            " and try again.")
                     if (f_index[i] == len(vertquad_list)):
                         # first: add it to the vertex map
                         if not vertmap[v_index]:
@@ -2065,13 +2124,15 @@ class NifExport(NifImportExport):
                 # switch to edit mode and raise exception
                 Blender.Window.EditMode(1)
                 raise ValueError(
-                    "Some faces of %s not assigned to any body part. The unassigned faces"
-                    " have been selected in the mesh so they can easily be identified."
+                    "Some faces of %s not assigned to any body part."
+                    " The unassigned faces"
+                    " have been selected in the mesh so they can easily"
+                    " be identified."
                     % ob)
 
             if len(trilist) > 65535:
                 raise NifExportError(
-                    'ERROR%t|Too many faces. Decimate your mesh and try again.')
+                    "ERROR%t|Too many faces. Decimate your mesh and try again.")
             if len(vertlist) == 0:
                 continue # m_4444x: skip 'empty' material indices
             
@@ -2251,7 +2312,10 @@ class NifExport(NifImportExport):
                     elif ( a_curve.getExtrapolation() == "Constant" ):
                         alphac.flags = 0x000c
                     else:
-                        self.logger.warning("Extrapolation \"%s\" for alpha curve not supported using \"cycle reverse\" instead" % a_curve.getExtrapolation())
+                        self.logger.warning(
+                            "Extrapolation \"%s\" for alpha curve"
+                            " not supported using \"cycle reverse\" instead"
+                            % a_curve.getExtrapolation())
                         alphac.flags = 0x000a
 
                     # fill in timing values
@@ -2267,8 +2331,9 @@ class NifExport(NifImportExport):
                         alphad.data.interpolation = NifFormat.KeyType.QUADRATIC_KEY
                     else:
                         raise NifExportError(
-                            "Interpolation %s for alpha curve not supported use linear or bezier instead"
-                            %a_curve.getInterpolation() )
+                            "Interpolation %s for alpha curve not supported:"
+                            " use linear or bezier instead"
+                            % a_curve.getInterpolation())
 
                     alphad.data.num_keys = len(alpha)
                     alphad.data.keys.update_size()
@@ -2380,7 +2445,7 @@ class NifExport(NifImportExport):
                         else:
                             raise NifExportError(
                                 "Skeleton root '%s' not found."
-                                %armaturename)
+                                % armaturename)
             
                         # create skinning data and link it
                         skindata = self.create_block("NiSkinData", ob)
@@ -2403,9 +2468,12 @@ class NifExport(NifImportExport):
                                 # this happens when the vertex group has been
                                 # added, but the weights have not been painted
                                 raise NifExportError(
-                                    "Mesh %s has vertex group for bone %s, but no weights."
-                                    " Please select the mesh, and either delete the vertex group,"
-                                    " or go to weight paint mode, and paint weights."
+                                    "Mesh %s has vertex group for bone %s,"
+                                    " but no weights."
+                                    " Please select the mesh, and either"
+                                    " delete the vertex group,"
+                                    " or go to weight paint mode,"
+                                    " and paint weights."
                                     % (ob.name, bone))
                             for v in vert_list[bone]:
                                 if vert_norm.has_key(v[0]):
@@ -2428,8 +2496,12 @@ class NifExport(NifImportExport):
                                             bone_block = block
                                         else:
                                             raise NifExportError(
-                                                "multiple bones with name '%s': probably you have multiple armatures,"
-                                                " please parent all meshes to a single armature and try again"
+                                                "multiple bones"
+                                                " with name '%s': probably"
+                                                " you have multiple armatures,"
+                                                " please parent all meshes"
+                                                " to a single armature"
+                                                " and try again"
                                                 % bone)
                             if not bone_block:
                                 raise NifExportError(
@@ -2482,7 +2554,9 @@ class NifExport(NifImportExport):
                             Blender.Window.EditMode(1)
                             raise NifExportError(
                                 "Cannot export mesh with unweighted vertices."
-                                " The unweighted vertices have been selected in the mesh so they can easily be identified.")
+                                " The unweighted vertices have been selected"
+                                " in the mesh so they can easily be"
+                                " identified.")
 
                         # update bind position skinning data
                         trishape.update_bind_position()
@@ -2507,14 +2581,25 @@ class NifExport(NifImportExport):
                             # warn on bad config settings
                             if self.EXPORT_VERSION == 'Oblivion':
                                if self.EXPORT_PADBONES:
-                                   self.logger.warning("Using padbones on Oblivion export, but you probably do not want to do this."
-                                       "Disable the pad bones option to get higher quality skin partitions.")
+                                   self.logger.warning(
+                                       "Using padbones on Oblivion export,"
+                                       " but you probably do not want to do"
+                                       " this."
+                                       " Disable the pad bones option to get"
+                                       " higher quality skin partitions.")
                             if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
                                if self.EXPORT_BONESPERPARTITION < 18:
-                                   self.logger.warning("Using less than 18 bones per partition on Oblivion/Fallout 3 export."
-                                       "Set it to 18 to get higher quality skin partitions")
+                                   self.logger.warning(
+                                       "Using less than 18 bones"
+                                       " per partition on Oblivion/Fallout 3"
+                                       " export."
+                                       " Set it to 18 to get higher quality"
+                                       " skin partitions.")
                             if lostweight > self.EPSILON:
-                                self.logger.warning("Lost %f in vertex weights while creating a skin partition for Blender object '%s' (nif block '%s')"
+                                self.logger.warning(
+                                    "Lost %f in vertex weights"
+                                    " while creating a skin partition"
+                                    " for Blender object '%s' (nif block '%s')"
                                     % (lostweight, ob.name, trishape.name))
 
                         # clean up
@@ -2967,7 +3052,7 @@ class NifExport(NifImportExport):
             self.logger.debug(str(mat))
             raise NifExportError(
                 "Non-uniform scaling on bone '%s' not supported."
-                "This could be a bug... No workaround. :-( Post your blend!"
+                " This could be a bug... No workaround. :-( Post your blend!"
                 % obj.name)
 
 
@@ -2991,7 +3076,8 @@ class NifExport(NifImportExport):
         # allow rather large error to accomodate some nifs
         if abs(b_scale[0]-b_scale[1]) + abs(b_scale[1]-b_scale[2]) > 0.02:
             raise NifExportError(
-                "Non-uniform scaling not supported. Workaround: apply size and rotation (CTRL-A).")
+                "Non-uniform scaling not supported."
+                " Workaround: apply size and rotation (CTRL-A).")
         b_scale = b_scale[0]
         # get rotation matrix
         b_rot = b_scale_rot * (1.0 / b_scale)
@@ -3057,7 +3143,8 @@ class NifExport(NifImportExport):
             block = getattr(NifFormat, blocktype)()
         except AttributeError:
             raise NifExportError(
-                "'%s': Unknown block type (this is probably a bug)." % blocktype)
+                "'%s': Unknown block type (this is probably a bug)."
+                % blocktype)
         return self.register_block(block, b_obj)
 
 
@@ -3081,7 +3168,8 @@ class NifExport(NifImportExport):
         if self.EXPORT_VERSION == 'Morrowind':
              if obj.rbShapeBoundType != Blender.Object.RBShapes['POLYHEDERON']:
                  raise NifExportError(
-                     "Morrowind only supports Polyhedron/Static TriangleMesh collisions.")
+                     "Morrowind only supports Polyhedron/Static"
+                     " TriangleMesh collisions.")
              node = self.create_block("RootCollisionNode", obj)
              parent_block.add_child(node)
              node.flags = 0x0003 # default
@@ -3108,7 +3196,10 @@ class NifExport(NifImportExport):
                 self.exportCollisionHelper(obj, node)
 
         else:
-            self.logger.warning("Only Morrowind, Oblivion, and Fallout 3 collisions are supported, skipped collision object '%s'" % obj.name)
+            self.logger.warning(
+                "Only Morrowind, Oblivion, and Fallout 3"
+                " collisions are supported, skipped collision object '%s'"
+                % obj.name)
 
     def exportCollisionHelper(self, obj, parent_block):
         """Helper function to add collision objects to a node. This function
@@ -3128,10 +3219,11 @@ class NifExport(NifImportExport):
         layer = self.EXPORT_OB_LAYER
         motion_system = self.EXPORT_OB_MOTIONSYSTEM
         quality_type = self.EXPORT_OB_QUALITYTYPE
-        mass = -1 # will be fixed later
+        mass = 1.0 # will be fixed later
         col_filter = 0
-        # copy physics properties from Blender properties, if they exist, unless forcing override
-        if self.EXPORT_OVERRIDE_COLLISION_DATA == False:
+        # copy physics properties from Blender properties, if they exist,
+        # unless forcing override
+        if not self.EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES:
             for prop in obj.getAllProperties():
                 if prop.getName() == 'HavokMaterial':
                     if prop.getType() == "STRING":
@@ -3213,10 +3305,7 @@ class NifExport(NifImportExport):
                     colobj.flags = 1
             parent_block.collision_object = colobj
             colobj.target = parent_block
-            if self.EXPORT_OB_RIGIDBODYT == False:
-                colbody = self.create_block("bhkRigidBody", obj)
-            else:
-                colbody = self.create_block("bhkRigidBodyT", obj)
+            colbody = self.create_block("bhkRigidBody", obj)
             colobj.body = colbody
             colbody.layer = layer
             colbody.col_filter = col_filter
@@ -3231,15 +3320,15 @@ class NifExport(NifImportExport):
             colbody.unknown_7_shorts[3] = 62977
             colbody.unknown_7_shorts[4] = 65535
             colbody.unknown_7_shorts[5] = 44
-            if self.EXPORT_OB_RIGIDBODYT == True: # XXX todo: set rotations
-                bscale, brot, btrans = self.get_object_srt(obj)
-                colbody.translation.x = btrans[0] / 7
-                colbody.translation.y = btrans[1] / 7
-                colbody.translation.z = btrans[2] / 7
-                colbody.rotation.w = 1.0
-                colbody.rotation.x = 0.0
-                colbody.rotation.y = 0.0
-                colbody.rotation.z = 0.0
+            colbody.translation.x = 0.0
+            colbody.translation.y = 0.0
+            colbody.translation.z = 0.0
+            colbody.rotation.w = 1.0
+            colbody.rotation.x = 0.0
+            colbody.rotation.y = 0.0
+            colbody.rotation.z = 0.0
+            # mass is 1.0 at the moment (unless property was set)
+            # will be fixed later
             colbody.mass = mass
             colbody.linear_damping = 0.1
             colbody.angular_damping = 0.05
@@ -3258,6 +3347,8 @@ class NifExport(NifImportExport):
             colbody.unknown_int_9 = self.EXPORT_OB_WIND
         else:
             colbody = parent_block.collision_object.body
+            # fix total mass
+            colbody.mass += mass
 
         if coll_ispacked:
             self.exportCollisionPacked(obj, colbody, layer, material)
@@ -3268,10 +3359,12 @@ class NifExport(NifImportExport):
                 self.exportCollisionSingle(obj, colbody, layer, material)
 
     def exportCollisionPacked(self, obj, colbody, layer, material):
-        """Add object ob as packed collision object to collision body colbody.
-        If parent_block hasn't any collisions yet, a new packed list is created.
-        If the current collision system is not a packed list of collisions
-        (bhkPackedNiTriStripsShape), then a ValueError is raised."""
+        """Add object ob as packed collision object to collision body
+        colbody. If parent_block hasn't any collisions yet, a new
+        packed list is created. If the current collision system is not
+        a packed list of collisions (bhkPackedNiTriStripsShape), then
+        a ValueError is raised.
+        """
 
         if not colbody.shape:
             colshape = self.create_block("bhkPackedNiTriStripsShape", obj)
@@ -3376,41 +3469,39 @@ class NifExport(NifImportExport):
 
         if obj.rbShapeBoundType in ( Blender.Object.RBShapes['BOX'],
                                     Blender.Object.RBShapes['SPHERE'] ):
-            if self.EXPORT_OB_RIGIDBODYT == False:
-                # note: collision settings are taken from lowerclasschair01.nif
-                coltf = self.create_block("bhkConvexTransformShape", obj)
-                coltf.material = material
-                coltf.unknown_float_1 = 0.1
-                coltf.unknown_8_bytes[0] = 96
-                coltf.unknown_8_bytes[1] = 120
-                coltf.unknown_8_bytes[2] = 53
-                coltf.unknown_8_bytes[3] = 19
-                coltf.unknown_8_bytes[4] = 24
-                coltf.unknown_8_bytes[5] = 9
-                coltf.unknown_8_bytes[6] = 253
-                coltf.unknown_8_bytes[7] = 4
-                hktf = Blender.Mathutils.Matrix(
-                    *self.get_object_matrix(obj, 'localspace').as_list())
-                # the translation part must point to the center of the data
-                # so calculate the center in local coordinates
-                center = Blender.Mathutils.Vector((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0)
-                # and transform it to global coordinates
-                center *= hktf
-                hktf[3][0] = center[0]
-                hktf[3][1] = center[1]
-                hktf[3][2] = center[2]
-                # we need to store the transpose of the matrix
-                hktf.transpose()
-                coltf.transform.set_rows(*hktf)
-                # fix matrix for havok coordinate system
-                coltf.transform.m_14 /= 7.0
-                coltf.transform.m_24 /= 7.0
-                coltf.transform.m_34 /= 7.0
+            # note: collision settings are taken from lowerclasschair01.nif
+            coltf = self.create_block("bhkConvexTransformShape", obj)
+            coltf.material = material
+            coltf.unknown_float_1 = 0.1
+            coltf.unknown_8_bytes[0] = 96
+            coltf.unknown_8_bytes[1] = 120
+            coltf.unknown_8_bytes[2] = 53
+            coltf.unknown_8_bytes[3] = 19
+            coltf.unknown_8_bytes[4] = 24
+            coltf.unknown_8_bytes[5] = 9
+            coltf.unknown_8_bytes[6] = 253
+            coltf.unknown_8_bytes[7] = 4
+            hktf = Blender.Mathutils.Matrix(
+                *self.get_object_matrix(obj, 'localspace').as_list())
+            # the translation part must point to the center of the data
+            # so calculate the center in local coordinates
+            center = Blender.Mathutils.Vector((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0)
+            # and transform it to global coordinates
+            center *= hktf
+            hktf[3][0] = center[0]
+            hktf[3][1] = center[1]
+            hktf[3][2] = center[2]
+            # we need to store the transpose of the matrix
+            hktf.transpose()
+            coltf.transform.set_rows(*hktf)
+            # fix matrix for havok coordinate system
+            coltf.transform.m_14 /= 7.0
+            coltf.transform.m_24 /= 7.0
+            coltf.transform.m_34 /= 7.0
 
             if obj.rbShapeBoundType == Blender.Object.RBShapes['BOX']:
                 colbox = self.create_block("bhkBoxShape", obj)
-                if self.EXPORT_OB_RIGIDBODYT == False:
-                    coltf.shape = colbox
+                coltf.shape = colbox
                 colbox.material = material
                 colbox.radius = 0.1
                 colbox.unknown_8_bytes[0] = 0x6b
@@ -3428,20 +3519,13 @@ class NifExport(NifImportExport):
                 colbox.minimum_size = min(colbox.dimensions.x, colbox.dimensions.y, colbox.dimensions.z)
             elif obj.rbShapeBoundType == Blender.Object.RBShapes['SPHERE']:
                 colsphere = self.create_block("bhkSphereShape", obj)
-                if self.EXPORT_OB_RIGIDBODYT == False:
-                    coltf.shape = colsphere
+                coltf.shape = colsphere
                 colsphere.material = material
                 # take average radius and
                 # fix for havok coordinate system (6 * 7 = 42)
                 colsphere.radius = (maxx + maxy + maxz - minx - miny -minz) / 42.0
-            
-            if self.EXPORT_OB_RIGIDBODYT == False:
-                return coltf
-            else: # self.EXPORT_OB_RIGIDBODYT == True:
-                if obj.rbShapeBoundType == Blender.Object.RBShapes['BOX']:
-                    return colbox
-                else:# obj.rbShapeBoundType == Blender.Object.RBShapes['SPHERE']:
-                    return colsphere
+
+            return coltf
 
         elif obj.rbShapeBoundType == Blender.Object.RBShapes['CYLINDER']:
             colcaps = self.create_block("bhkCapsuleShape", obj)
@@ -3520,8 +3604,9 @@ class NifExport(NifImportExport):
             fdistlist = [ fdistlist[fdict[hsh]] for hsh in fkeys ]
 
             if len(fnormlist) > 65535 or len(vertlist) > 65535:
-                raise NifExportError("""
-                    ERROR%t|Too many faces/vertices. Decimate/split your mesh and try again.""")
+                raise NifExportError(
+                    "ERROR%t|Too many faces/vertices."
+                    " Decimate/split your mesh and try again.")
             
             colhull = self.create_block("bhkConvexVerticesShape", obj)
             colhull.material = material
@@ -3583,8 +3668,8 @@ class NifExport(NifImportExport):
             if b_constr.type == Blender.Constraint.Type.RIGIDBODYJOINT:
                 if self.EXPORT_VERSION not in ("Oblivion", "Fallout 3"):
                     self.logger.warning(
-                        """Only Oblivion/Fallout 3 rigid body constraints can be exported
-                        skipped %s""" % b_constr)
+                        "Only Oblivion/Fallout 3 rigid body constraints"
+                        " can be exported: skipped %s." % b_constr)
                     continue
                 # check that the object is a rigid body
                 for otherbody, otherobj in self.blocks.iteritems():
@@ -3594,9 +3679,10 @@ class NifExport(NifImportExport):
                         break
                 else:
                     # no collision body for this object
-                    raise NifExportError("""\
-                        Object %s has a rigid body constraint, 
-                        but is not exported as collision object""")
+                    raise NifExportError(
+                        "Object %s has a rigid body constraint,"
+                        " but is not exported as collision object"
+                        % b_obj.name)
                 # yes there is a rigid body constraint
                 # is it of a type that is supported?
                 if b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE] == 1:
@@ -3621,7 +3707,8 @@ class NifExport(NifImportExport):
                     hkdescriptor = hkconstraint.limited_hinge
                 else:
                     raise NifExportError(
-                        """Unsupported rigid body joint type (%i), only ball and hinge are supported."""
+                        "Unsupported rigid body joint type (%i),"
+                        " only ball and hinge are supported."
                         % b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE])
 
                 # parent constraint to hkbody
@@ -3647,7 +3734,7 @@ class NifExport(NifImportExport):
                 else:
                     # not found
                     raise NifExportError(
-                        "Rigid body target not exported in nif tree" 
+                        "Rigid body target not exported in nif tree"
                         " check that %s is selected during export." % targetobj)
                 # priority
                 hkconstraint.priority = 1
@@ -3676,7 +3763,7 @@ class NifExport(NifImportExport):
 
                 # transform pivot point and constraint matrix into bhkRigidBody
                 # coordinates (also see import_nif.py, the
-                # NifImport.importHavokConstraints method)
+                # NifImport.import_bhk_constraints method)
                 
                 # the pivot point v' is in object coordinates
                 # however nif expects it in hkbody coordinates, v
@@ -3706,7 +3793,7 @@ class NifExport(NifImportExport):
                 hkdescriptor.pivot_a.y = pivot[1] / 7.0
                 hkdescriptor.pivot_a.z = pivot[2] / 7.0
                 # export hkdescriptor axes and other parameters
-                # (also see import_nif.py NifImport.importHavokConstraints)
+                # (also see import_nif.py NifImport.import_bhk_constraints)
                 axis_x = Blender.Mathutils.Vector(1,0,0) * constr_matrix
                 axis_y = Blender.Mathutils.Vector(0,1,0) * constr_matrix
                 axis_z = Blender.Mathutils.Vector(0,0,1) * constr_matrix
@@ -3902,8 +3989,10 @@ class NifExport(NifImportExport):
             if (block.get_hash(ignore_strings=ignore_strings) ==
                 matprop.get_hash(
                     ignore_strings=ignore_strings)):
-                self.logger.warning("Merging materials '%s' and '%s' they are identical in nif)"
-                                    % (matprop.name, block.name))
+                self.logger.warning(
+                    "Merging materials '%s' and '%s'"
+                    " (they are identical in nif)"
+                    % (matprop.name, block.name))
                 return block
 
         # no material property with given settings found, so use and register
@@ -3916,7 +4005,10 @@ class NifExport(NifImportExport):
         try:
             texdesc.uv_set = uvlayers.index(mtex.uvlayer) if mtex.uvlayer else 0
         except ValueError: # mtex.uvlayer not in uvlayers list
-            self.logger.warning("""Bad uv layer name '%s' in texture '%s'. Falling back on first uv layer""" % (mtex.uvlayer, mtex.tex.getName()))
+            self.logger.warning(
+                "Bad uv layer name '%s' in texture '%s'."
+                " Falling back on first uv layer"
+                % (mtex.uvlayer, mtex.tex.getName()))
             texdesc.uv_set = 0 # assume 0 is active layer
 
         texdesc.source = self.export_source_texture(mtex.tex)
@@ -3925,10 +4017,12 @@ class NifExport(NifImportExport):
         self, flags=0x0001, applymode=None, uvlayers=None,
         basemtex=None, glowmtex=None, bumpmtex=None, glossmtex=None,
         darkmtex=None, detailmtex=None, refmtex=None):
-        """Export texturing property. The parameters basemtex, glowmtex,
-        bumpmtex, ... are the Blender material textures (MTex, not Texture)
-        that correspond to the base, glow, bump map, ... textures. The uvlayers
-        parameter is a list of uvlayer strings, that is, mesh.getUVLayers()."""
+        """Export texturing property. The parameters basemtex,
+        glowmtex, bumpmtex, ... are the Blender material textures
+        (MTex, not Texture) that correspond to the base, glow, bump
+        map, ... textures. The uvlayers parameter is a list of uvlayer
+        strings, that is, mesh.getUVLayers().
+        """
 
         texprop = NifFormat.NiTexturingProperty()
 

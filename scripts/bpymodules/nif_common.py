@@ -134,6 +134,38 @@ class NifImportExport:
         "Civilization IV": (3, 0, 1, 2)}
     """The default ordering of the extra data blocks for different games."""
 
+    # Oblivion(and FO3) collision settings dicts for Anglicized names
+    # on Object Properties for havok items
+    OB_LAYER = [
+        "Unidentified", "Static", "AnimStatic", "Transparent", "Clutter",
+        "Weapon", "Projectile", "Spell", "Biped", "Props",
+        "Water", "Trigger", "Terrain", "Trap", "NonCollidable",
+        "CloudTrap", "Ground", "Portal", "Stairs", "CharController",
+        "AvoidBox", "?", "?", "CameraPick", "ItemPick",
+        "LineOfSight", "PathPick", "CustomPick1", "CustomPick2", "SpellExplosion",
+        "DroppingPick", "Other", "Head", "Body", "Spine1",
+        "Spine2", "LUpperArm", "LForeArm", "LHand", "LThigh",
+        "LCalf", "LFoot",  "RUpperArm", "RForeArm", "RHand",
+        "RThigh", "RCalf", "RFoot", "Tail", "SideWeapon",
+        "Shield", "Quiver", "BackWeapon", "BackWeapon?", "PonyTail",
+        "Wing", "Null"]
+
+    MOTION_SYS = [
+        "Invalid", "Dynamic", "Sphere", "Sphere Inertia", "Box",
+        "Box Stabilized", "Keyframed", "Fixed", "Thin BOx", "Character"]
+
+    HAVOK_MATERIAL = [
+        "Stone", "Cloth", "Dirt", "Glass", "Grass",
+        "Metal", "Organic", "Skin", "Water", "Wood",
+        "Heavy Stone", "Heavy Metal", "Heavy Wood", "Chain", "Snow",
+        "Stone Stairs", "Cloth Stairs", "Dirt Stairs", "Glass Stairs", "Metal Stairs",
+        "Organic Stairs", "Skin Stairs", "Water Stairs", "Wood Stairs", "Heavy Stone Stairs",
+        "Heavy Metal Stairs" "Heavy Wood Stairs", "Chain Stairs", "Snow Stairs", "Elevator"]
+
+    QUALITY_TYPE = [
+        "Invalid", "Fixed", "Keyframed", "Debris", "Moving",
+        "Critical", "Bullet", "User", "Character", "Keyframed Report"]
+
     progress_bar = 0
     """Level of the progress bar."""
 
@@ -271,7 +303,6 @@ class NifConfig:
         EXPORT_OB_LAYER = 1, # static
         EXPORT_OB_MATERIAL = 9, # wood
         EXPORT_OB_MALLEABLECONSTRAINT = False, # use malleable constraint for ragdoll and hinge
-        EXPORT_OB_RIGIDBODYT = False, # if true use RigidBodyT instead of RigidBody for collision
         EXPORT_OB_PRN = "NONE", # determines bone where to attach weapon
         EXPORT_FO3_SF_ZBUF = True, # use these shader flags?
         EXPORT_FO3_SF_SMAP = False,
@@ -288,12 +319,8 @@ class NifConfig:
         IMPORT_EXPORTEMBEDDEDTEXTURES = False,
         EXPORT_OPTIMIZE_MATERIALS = True,
         IMPORT_COMBINESHAPES = True,
-        EXPORT_OVERRIDE_COLLISION_DATA = False,
-        #Oblivion(and FO3) collision settings dicts for Anglicized names on Object Properties for havok items.
-        OB_LAYER = ["Unidentified", "Static", "AnimStatic", "Transparent", "Clutter", "Weapon", "Projectile", "Spell", "Biped", "Props", "Water", "Trigger", "Terrain", "Trap", "NonCollidable", "CloudTrap", "Ground", "Portal", "Stairs", "CharController", "AvoidBox", "?", "?", "CameraPick", "ItemPick", "LineOfSight", "PathPick", "CustomPick1", "CustomPick2", "SpellExplosion", "DroppingPick", "Other", "Head", "Body", "Spine1", "Spine2", "LUpperArm", "LForeArm", "LHand", "LThigh", "LCalf", "LFoot",  "RUpperArm", "RForeArm", "RHand", "RThigh", "RCalf", "RFoot", "Tail", "SideWeapon", "Shield", "Quiver", "BackWeapon", "BackWeapon?", "PonyTail", "Wing", "Null"],
-        MOTION_SYS = ["Invalid", "Dynamic", "Sphere", "Sphere Inertia", "Box", "Box Stabilized", "Keyframed", "Fixed", "Thin BOx", "Character"],
-        HAVOK_MATERIAL = ["Stone", "Cloth", "Dirt", "Glass", "Grass", "Metal", "Organic", "Skin", "Water", "Wood", "Heavy Stone", "Heavy Metal", "Heavy Wood", "Chain", "Snow", "Stone Stairs", "Cloth Stairs", "Dirt Stairs", "Glass Stairs", "Metal Stairs", "Organic Stairs", "Skin Stairs", "Water Stairs", "Wood Stairs", "Heavy Stone Stairs", "Heavy Metal Stairs" "Heavy Wood Stairs", "Chain Stairs", "Snow Stairs", "Elevator"],
-        QUALITY_TYPE = ["Invalid", "Fixed", "Keyframed", "Debris", "Moving", "Critical", "Bullet", "User", "Character", "Keyframed Report"])
+        EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES = False,
+        )
 
     def __init__(self):
         """Initialize and load configuration."""
@@ -956,13 +983,8 @@ class NifConfig:
                 event_name = "EXPORT_OB_MALLEABLECONSTRAINT",
                 num_items = 2, item = 1)
             self.drawToggle(
-                text = "Use RigidBodyT",
-                event_name = "EXPORT_OB_RIGIDBODYT",
-                num_items = 2, item = 0)
-            self.drawToggle(
-                text = "Override Collision Settings",
-                event_name = "EXPORT_OVERRIDE_COLLISION_DATA",
-                num_items = 2, item = 1)   
+                text = "Do Not Use Blender Properties",
+                event_name = "EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES")   
             self.drawYSep()
 
             self.drawLabel(
@@ -1302,10 +1324,8 @@ class NifConfig:
             self.config["EXPORT_BHKLISTSHAPE"] = not self.config["EXPORT_BHKLISTSHAPE"]
         elif evName == "EXPORT_OB_MALLEABLECONSTRAINT":
             self.config["EXPORT_OB_MALLEABLECONSTRAINT"] = not self.config["EXPORT_OB_MALLEABLECONSTRAINT"]
-        elif evName == "EXPORT_OB_RIGIDBODYT":
-            self.config["EXPORT_OB_RIGIDBODYT"] = not self.config["EXPORT_OB_RIGIDBODYT"]
-        elif evName == "EXPORT_OVERRIDE_COLLISION_DATA":
-            self.config["EXPORT_OVERRIDE_COLLISION_DATA"] = not self.config["EXPORT_OVERRIDE_COLLISION_DATA"]
+        elif evName == "EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES":
+            self.config["EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES"] = not self.config["EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES"]
         elif evName == "EXPORT_OB_SOLID":
             self.config["EXPORT_OB_SOLID"] = True
         elif evName == "EXPORT_OB_HOLLOW":
