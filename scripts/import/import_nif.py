@@ -133,7 +133,7 @@ class NifImport(NifImportExport):
         # bone animation priorities (maps bone NiNode to priority number);
         # priorities are set in importKfRoot and are stored into the name
         # of a NULL constraint (for lack of something better) in
-        # importArmature
+        # import_armature
         self.bone_priorities = {}
 
         # dictionary mapping bhkRigidBody objects to list of objects imported
@@ -433,9 +433,9 @@ class NifImport(NifImportExport):
                     # import object + children
                     if self.is_armature_root(niBlock):
                         # all bones in the tree are also imported by
-                        # importArmature
+                        # import_armature
                         if self.IMPORT_SKELETON != 2:
-                            b_obj = self.importArmature(niBlock)
+                            b_obj = self.import_armature(niBlock)
                         else:
                             b_obj = self.selected_objects[0]
                             self.logger.info(
@@ -610,7 +610,7 @@ class NifImport(NifImportExport):
         # is it another armature?
         elif self.is_armature_root(niBlock) and niBlock != niArmature:
             # an armature parented to this armature
-            fb_arm = self.importArmature(niBlock)
+            fb_arm = self.import_armature(niBlock)
             # import the armature branch
             self.import_armature_branch(fb_arm, niBlock, niBlock)
             return branch_parent, fb_arm # the matrix will be set by the caller
@@ -867,7 +867,7 @@ class NifImport(NifImportExport):
         b_empty.properties['longName'] = niBlock.name
         return b_empty
 
-    def importArmature(self, niArmature):
+    def import_armature(self, niArmature):
         """Scans an armature hierarchy, and returns a whole armature.
         This is done outside the normal node tree scan to allow for positioning
         of the bones before skins are attached."""
@@ -3682,7 +3682,7 @@ class NifImport(NifImportExport):
 
             # save priority for future reference
             # (priorities will be stored into the name of a NULL constraint on
-            # bones, see importArmature function)
+            # bones, see import_armature function)
             self.bone_priorities[node] = controlledblock.priority
 
         # DEBUG: save the file for manual inspection
