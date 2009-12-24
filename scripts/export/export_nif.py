@@ -3320,13 +3320,6 @@ class NifExport(NifImportExport):
             colbody.unknown_7_shorts[3] = 62977
             colbody.unknown_7_shorts[4] = 65535
             colbody.unknown_7_shorts[5] = 44
-            colbody.translation.x = 0.0
-            colbody.translation.y = 0.0
-            colbody.translation.z = 0.0
-            colbody.rotation.w = 1.0
-            colbody.rotation.x = 0.0
-            colbody.rotation.y = 0.0
-            colbody.rotation.z = 0.0
             # mass is 1.0 at the moment (unless property was set)
             # will be fixed later
             colbody.mass = mass
