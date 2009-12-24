@@ -3384,7 +3384,7 @@ class NifExport(NifImportExport):
                 coltf.unknown_8_bytes[6] = 253
                 coltf.unknown_8_bytes[7] = 4
                 hktf = Blender.Mathutils.Matrix(
-                    *self.getObjectMatrix(obj, 'localspace').as_list())
+                    *self.get_object_matrix(obj, 'localspace').as_list())
                 # the translation part must point to the center of the data
                 # so calculate the center in local coordinates
                 center = Blender.Mathutils.Vector((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0)
