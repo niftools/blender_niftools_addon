@@ -525,29 +525,43 @@ class NifExport(NifImportExport):
                     bsx.integer_data = self.EXPORT_OB_BSXFLAGS
                     root_block.add_extra_data(bsx)
                 # update rigid body center of gravity and mass
-                # first calculate distribution of mass
-                total_mass = 0
-                for block in self.blocks:
-                    if isinstance(block, NifFormat.bhkRigidBody):
-                        block.update_mass_center_inertia(
-                            solid = self.EXPORT_OB_SOLID)
-                        total_mass += block.mass
-                        if total_mass == 0:
-                            # to avoid zero division error later
-                            # (if mass is zero then this does not matter
-                            # anyway)
-                            total_mass = 1
-                # now update the mass ensuring that total mass is
-                # self.EXPORT_OB_MASS
-                for block in self.blocks:
-                    if isinstance(block, NifFormat.bhkRigidBody):
-                        mass = self.EXPORT_OB_MASS * block.mass / total_mass
-                        # lower bound on mass
-                        if mass < 0.0001:
-                            mass = 0.05
-                        block.update_mass_center_inertia(
-                            mass = mass,
-                            solid = self.EXPORT_OB_SOLID)
+                if self.EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES:
+                    # we are not using blender properties to set the mass
+                    # so calculate mass automatically
+                    # first calculate distribution of mass
+                    total_mass = 0
+                    for block in self.blocks:
+                        if isinstance(block, NifFormat.bhkRigidBody):
+                            block.update_mass_center_inertia(
+                                solid = self.EXPORT_OB_SOLID)
+                            total_mass += block.mass
+                    if total_mass == 0:
+                        # to avoid zero division error later
+                        # (if mass is zero then this does not matter
+                        # anyway)
+                        total_mass = 1
+                    # now update the mass ensuring that total mass is
+                    # self.EXPORT_OB_MASS
+                    for block in self.blocks:
+                        if isinstance(block, NifFormat.bhkRigidBody):
+                            mass = self.EXPORT_OB_MASS * block.mass / total_mass
+                            # lower bound on mass
+                            if mass < 0.0001:
+                                mass = 0.05
+                            block.update_mass_center_inertia(
+                                mass = mass,
+                                solid = self.EXPORT_OB_SOLID)
+                else:
+                    # using blender properties, so block.mass *should* have
+                    # been set properly
+                    for block in self.blocks:
+                        if isinstance(block, NifFormat.bhkRigidBody):
+                            # lower bound on mass
+                            if block.mass < 0.0001:
+                                block.mass = 0.05
+                            block.update_mass_center_inertia(
+                                mass=block.mass,
+                                solid=self.EXPORT_OB_SOLID)
 
                 # many Oblivion nifs have a UPB, but export is disabled as
                 # they do not seem to affect anything in the game
@@ -3207,8 +3221,9 @@ class NifExport(NifImportExport):
         quality_type = self.EXPORT_OB_QUALITYTYPE
         mass = 1.0 # will be fixed later
         col_filter = 0
-        # copy physics properties from Blender properties, if they exist, unless forcing override
-        if not self.EXPORT_OVERRIDE_COLLISION_DATA:
+        # copy physics properties from Blender properties, if they exist,
+        # unless forcing override
+        if not self.EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES:
             for prop in obj.getAllProperties():
                 if prop.getName() == 'HavokMaterial':
                     if prop.getType() == "STRING":
@@ -3332,6 +3347,8 @@ class NifExport(NifImportExport):
             colbody.unknown_int_9 = self.EXPORT_OB_WIND
         else:
             colbody = parent_block.collision_object.body
+            # fix total mass
+            colbody.mass += mass
 
         if coll_ispacked:
             self.exportCollisionPacked(obj, colbody, layer, material)
