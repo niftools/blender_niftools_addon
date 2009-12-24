@@ -1378,7 +1378,7 @@ class NifImport(NifImportExport):
         return m_correction
 
 
-    def getTextureHash(self, source):
+    def get_texture_hash(self, source):
         """Helper function for importTexture. Returns a key that uniquely
         identifies a texture from its source (which is either a
         NiSourceTexture block, or simply a path string).
@@ -1404,7 +1404,7 @@ class NifImport(NifImportExport):
             return None
 
         # calculate the texture hash key
-        texture_hash = self.getTextureHash(source)
+        texture_hash = self.get_texture_hash(source)
 
         try:
             # look up the texture in the dictionary of imported textures
