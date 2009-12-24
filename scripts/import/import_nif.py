@@ -238,7 +238,7 @@ class NifImport(NifImportExport):
             self.msg_progress("Importing data")
             # calculate and set frames per second
             if self.IMPORT_ANIMATION:
-                self.fps = self.getFramesPerSecond(root_blocks + kf_root_blocks)
+                self.fps = self.get_frames_per_second(root_blocks + kf_root_blocks)
                 self.scene.getRenderingContext().fps = self.fps
 
             # import all root blocks
@@ -2547,7 +2547,7 @@ class NifImport(NifImportExport):
             if block.name and shortname != block.name:
                 namestxt.write('%s;%s\n'% (shortname, block.name))
 
-    def getFramesPerSecond(self, roots):
+    def get_frames_per_second(self, roots):
         """Scan all blocks and return a reasonable number for FPS."""
         # find all key times
         key_times = []
