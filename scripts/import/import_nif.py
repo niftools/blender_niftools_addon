@@ -420,7 +420,7 @@ class NifImport(NifImportExport):
                 # (IMPORT_SKELETON == 1) and not importing skinned geometries
                 # only (IMPORT_SKELETON == 2)
                 self.logger.debug("Building mesh in import_branch")
-                return self.importMesh(niBlock)
+                return self.import_mesh(niBlock)
             elif isinstance(niBlock, NifFormat.NiNode):
                 children = niBlock.children
                 # bounding box child?
@@ -478,9 +478,9 @@ class NifImport(NifImportExport):
                                   niBlock.name))
                             b_obj = None
                             for child in geom_group:
-                                b_obj = self.importMesh(child,
-                                                        group_mesh = b_obj,
-                                                        applytransform = True)
+                                b_obj = self.import_mesh(child,
+                                                         group_mesh=b_obj,
+                                                         applytransform=True)
                             b_obj.name = self.import_name(niBlock, 22)
                             # settings for collision node
                             if isinstance(niBlock, NifFormat.RootCollisionNode):
@@ -603,10 +603,10 @@ class NifImport(NifImportExport):
             self.logger.debug("Building mesh %s in import_armature_branch" %
                               niBlock.name)
             # apply transform relative to the branch parent
-            return branch_parent, self.importMesh(niBlock,
-                                                  group_mesh = group_mesh,
-                                                  applytransform = True,
-                                                  relative_to = branch_parent)
+            return branch_parent, self.import_mesh(niBlock,
+                                                   group_mesh=group_mesh,
+                                                   applytransform=True,
+                                                   relative_to=branch_parent)
         # is it another armature?
         elif self.is_armature_root(niBlock) and niBlock != niArmature:
             # an armature parented to this armature
@@ -659,7 +659,7 @@ class NifImport(NifImportExport):
 
                         # get transform matrix of collision object;
                         # note that this matrix is already relative to
-                        # branch_parent because the call to importMesh has
+                        # branch_parent because the call to import_mesh has
                         # relative_to = branch_parent
                         b_obj_matrix = Blender.Mathutils.Matrix(
                             b_obj.getMatrix())
@@ -1955,10 +1955,10 @@ class NifImport(NifImportExport):
             b_material.ipo = Blender.Ipo.New("Material", "MatIpo")
         return b_material.ipo
 
-    def importMesh(self, niBlock,
-                   group_mesh=None,
-                   applytransform=False,
-                   relative_to=None):
+    def import_mesh(self, niBlock,
+                    group_mesh=None,
+                    applytransform=False,
+                    relative_to=None):
         """Creates and returns a raw mesh, or appends geometry data to
         group_mesh.
 
