@@ -1921,9 +1921,9 @@ class NifImport(NifImportExport):
         if not self.IMPORT_ANIMATION:
             return
 
-        self.importMaterialUVController(b_material, n_geom)
+        self.import_material_uv_controller(b_material, n_geom)
 
-    def importMaterialUVController(self, b_material, n_geom):
+    def import_material_uv_controller(self, b_material, n_geom):
         """Import UV controller data."""
         # search for the block
         for n_ctrl in n_geom.get_controllers():
