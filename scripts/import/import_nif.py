@@ -555,7 +555,7 @@ class NifImport(NifImportExport):
                     # set object transform
                     # this must be done after all children objects have been
                     # parented to b_obj
-                    b_obj.setMatrix(self.importMatrix(niBlock))
+                    b_obj.setMatrix(self.import_matrix(niBlock))
 
                     # import the animations
                     if self.IMPORT_ANIMATION:
@@ -830,7 +830,7 @@ class NifImport(NifImportExport):
         self.logger.debug("Selected unique name %s" % shortName)
         return shortName
         
-    def importMatrix(self, niBlock, relative_to = None):
+    def import_matrix(self, niBlock, relative_to=None):
         """Retrieves a niBlock's transform matrix as a Mathutil.Matrix."""
         return Matrix(*niBlock.get_transform(relative_to).as_list())
 
@@ -919,7 +919,7 @@ class NifImport(NifImportExport):
                 # Schannel = Stotal / Sbind
                 # Rchannel = Rtotal * inverse(Rbind)
                 # Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
-                bone_bm = self.importMatrix(niBone) # base pose
+                bone_bm = self.import_matrix(niBone) # base pose
                 niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = self.decompose_srt(bone_bm)
                 niBone_bind_rot_inv = Matrix(niBone_bind_rot)
                 niBone_bind_rot_inv.invert()
@@ -1238,8 +1238,8 @@ class NifImport(NifImportExport):
         # create a new bone
         b_bone = Blender.Armature.Editbone()
         # head: get position from niBlock
-        armature_space_matrix = self.importMatrix(niBlock,
-                                                  relative_to = niArmature)
+        armature_space_matrix = self.import_matrix(niBlock,
+                                                   relative_to=niArmature)
 
         b_bone_head_x = armature_space_matrix[3][0]
         b_bone_head_y = armature_space_matrix[3][1]
@@ -1252,8 +1252,8 @@ class NifImport(NifImportExport):
         # tail: average of children location
         if len(niChildBones) > 0:
             m_correction = self.find_correction_matrix(niBlock, niArmature)
-            child_matrices = [ self.importMatrix(child,
-                                                 relative_to = niArmature)
+            child_matrices = [ self.import_matrix(child,
+                                                  relative_to=niArmature)
                                for child in niChildBones ]
             b_bone_tail_x = sum(child_matrix[3][0]
                                 for child_matrix
@@ -1348,14 +1348,14 @@ class NifImport(NifImportExport):
         """Returns the correction matrix for a bone."""
         m_correction = self.IDENTITY44.rotationPart()
         if (self.IMPORT_REALIGN_BONES == 2) and self.is_bone(niBlock):
-            armature_space_matrix = self.importMatrix(niBlock,
-                                                      relative_to = niArmature)
+            armature_space_matrix = self.import_matrix(niBlock,
+                                                       relative_to=niArmature)
 
             niChildBones = [ child for child in niBlock.children
                              if self.is_bone(child) ]
             (sum_x, sum_y, sum_z, dummy) = armature_space_matrix[3]
             if len(niChildBones) > 0:
-                child_local_matrices = [ self.importMatrix(child)
+                child_local_matrices = [ self.import_matrix(child)
                                          for child in niChildBones ]
                 sum_x = sum(cm[3][0] for cm in child_local_matrices)
                 sum_y = sum(cm[3][1] for cm in child_local_matrices)
@@ -2001,11 +2001,11 @@ class NifImport(NifImportExport):
                 raise NifImportError(
                     "BUG: cannot set matrix when importing meshes in groups;"
                     " use applytransform = True")
-            b_mesh.setMatrix(self.importMatrix(niBlock,
-                                               relative_to = relative_to))
+            b_mesh.setMatrix(self.import_matrix(niBlock,
+                                                relative_to=relative_to))
         else:
             # used later on
-            transform = self.importMatrix(niBlock, relative_to = relative_to)
+            transform = self.import_matrix(niBlock, relative_to=relative_to)
 
         # shortcut for mesh geometry data
         niData = niBlock.data
