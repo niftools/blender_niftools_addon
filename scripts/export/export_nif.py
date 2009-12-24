@@ -3123,12 +3123,13 @@ class NifExport(NifImportExport):
         coll_ispacked = (obj.rbShapeBoundType
                          == Blender.Object.RBShapes['POLYHEDERON'])
 
-        # find physics properties
+        # find physics properties/defaults
         material = self.EXPORT_OB_MATERIAL
         layer = self.EXPORT_OB_LAYER
         motion_system = self.EXPORT_OB_MOTIONSYSTEM
         quality_type = self.EXPORT_OB_QUALITYTYPE
         mass = -1 # will be fixed later
+        col_filter = 0
         # copy physics properties from Blender properties, if they exist, unless forcing override
         if self.EXPORT_OVERRIDE_COLLISION_DATA == False:
             for prop in obj.getAllProperties():
@@ -3178,6 +3179,8 @@ class NifExport(NifImportExport):
                         motion_system = prop.getData()
                 elif prop.getName() == 'Mass' and prop.getType() == "FLOAT":
                     mass = prop.getData()
+                elif prop.getName() == 'ColFilter' and prop.getType() == "INT":
+                    col_filter = prop.getData()
 
         # if no collisions have been exported yet to this parent_block
         # then create new collision tree on parent_block
@@ -3201,8 +3204,9 @@ class NifExport(NifImportExport):
             else:
                 # usual collision object
                 colobj = self.create_block("bhkCollisionObject", obj)
-                if self.EXPORT_OB_LAYER == NifFormat.OblivionLayer.OL_ANIM_STATIC:
+                if layer == NifFormat.OblivionLayer.OL_ANIM_STATIC and col_filter != 128:
                     # animated collision requires flags = 41
+                    # unless it is a constrainted but not keyframed object
                     colobj.flags = 41
                 else:
                     # in all other cases this seems to be enough
@@ -3215,6 +3219,7 @@ class NifExport(NifImportExport):
                 colbody = self.create_block("bhkRigidBodyT", obj)
             colobj.body = colbody
             colbody.layer = layer
+            colbody.col_filter = col_filter
             colbody.unknown_5_floats[1] = 3.8139e+36
             colbody.unknown_4_shorts[0] = 1
             colbody.unknown_4_shorts[1] = 65535
