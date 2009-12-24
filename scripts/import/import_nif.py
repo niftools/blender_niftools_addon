@@ -154,8 +154,12 @@ class NifImport(NifImportExport):
             # check that one armature is selected in 'import geometry + parent
             # to armature' mode
             if self.IMPORT_SKELETON == 2:
-                if len(self.selectedObjects) != 1 or self.selectedObjects[0].getType() != 'Armature':
-                    raise NifImportError("You must select exactly one armature in 'Import Geometry Only + Parent To Selected Armature' mode.")
+                if (len(self.selectedObjects) != 1
+                    or self.selectedObjects[0].getType() != 'Armature'):
+                    raise NifImportError(
+                        "You must select exactly one armature in"
+                        " 'Import Geometry Only + Parent To Selected Armature'"
+                        " mode.")
 
             # open file for binary reading
             self.logger.info("Importing %s" % self.filename)
@@ -190,7 +194,8 @@ class NifImport(NifImportExport):
                     self.kfversion = kfdata.version
                     if self.kfversion >= 0:
                         # it is valid, so read the file
-                        self.logger.info("KF file version: 0x%08X" % self.kfversion)
+                        self.logger.info(
+                            "KF file version: 0x%08X" % self.kfversion)
                         self.msg_progress("Reading keyframe file")
                         kfdata.read(kffile)
                         kf_root_blocks = kfdata.roots
@@ -358,7 +363,9 @@ class NifImport(NifImportExport):
             if root_block.collision_object:
                 bhk_body = root_block.collision_object.body
                 if not isinstance(bhk_body, NifFormat.bhkRigidBody):
-                    self.logger.warning("Unsupported collision structure under node %s" % root_block.name)
+                    self.logger.warning(
+                        "Unsupported collision structure under node %s"
+                        % root_block.name)
                 self.importBhkShape(bhk_body)
             # process all its children
             for child in root_block.children:
@@ -431,11 +438,13 @@ class NifImport(NifImportExport):
                             b_obj = self.importArmature(niBlock)
                         else:
                             b_obj = self.selectedObjects[0]
-                            self.logger.info("Merging nif tree '%s' with armature '%s'"
-                                             % (niBlock.name, b_obj.name))
+                            self.logger.info(
+                                "Merging nif tree '%s' with armature '%s'"
+                                % (niBlock.name, b_obj.name))
                             if niBlock.name != b_obj.name:
                                 self.logger.warning(
-                                    "Taking nif block '%s' as armature '%s' but names do not match"
+                                    "Taking nif block '%s' as armature '%s'"
+                                    " but names do not match"
                                     % (niBlock.name, b_obj.name))
                         # now also do the meshes
                         self.importArmatureBranch(b_obj, niBlock, niBlock)
@@ -464,7 +473,7 @@ class NifImport(NifImportExport):
                         else:
                             # node groups geometries, so import it as a mesh
                             self.logger.info(
-                                "joining geometries %s to single object '%s'"
+                                "Joining geometries %s to single object '%s'"
                                 %([child.name for child in geom_group],
                                   niBlock.name))
                             b_obj = None
@@ -486,7 +495,10 @@ class NifImport(NifImportExport):
                                 # 0.005 = 1/200
                                 numdel = b_mesh.remDoubles(0.005)
                                 if numdel:
-                                    self.logger.info('Removed %i duplicate vertices (out of %i) from collision mesh' % (numdel, numverts))
+                                    self.logger.info(
+                                        "Removed %i duplicate vertices"
+                                        " (out of %i) from collision mesh"
+                                        % (numdel, numverts))
                         # import children that aren't part of the geometry group
                         b_children_list = []
                         children = [ child for child in niBlock.children
@@ -503,7 +515,9 @@ class NifImport(NifImportExport):
                         if niBlock.collision_object:
                             bhk_body = niBlock.collision_object.body
                             if not isinstance(bhk_body, NifFormat.bhkRigidBody):
-                                self.logger.warning("Unsupported collision structure under node %s" % niBlock.name)
+                                self.logger.warning(
+                                    "Unsupported collision structure"
+                                    " under node %s" % niBlock.name)
                             collision_objs = self.importBhkShape(bhk_body)
                             # make parent
                             b_obj.makeParent(collision_objs)
@@ -520,12 +534,18 @@ class NifImport(NifImportExport):
                             if obj.getType() == "Camera":
                                 break
                         else:
-                            raise NifImportError("""Scene needs camera for billboard node (add a camera and try again)""")
+                            raise NifImportError(
+                                "Scene needs camera for billboard node"
+                                " (add a camera and try again)")
                         # make b_obj track camera object
                         #b_obj.setEuler(0,0,0)
                         b_obj.constraints.append(
                             Blender.Constraint.Type.TRACKTO)
-                        self.logger.warning("""Constraint for billboard node on %s added but target not set due to transform bug in Blender. Set target to Camera manually.""" % b_obj)
+                        self.logger.warning(
+                            "Constraint for billboard node on %s added"
+                            " but target not set due to transform bug"
+                            " in Blender. Set target to Camera manually."
+                            % b_obj)
                         constr = b_obj.constraints[-1]
                         constr[Blender.Constraint.Settings.TRACK] = Blender.Constraint.Settings.TRACKZ
                         constr[Blender.Constraint.Settings.UP] = Blender.Constraint.Settings.UPY
@@ -610,7 +630,7 @@ class NifImport(NifImportExport):
                     and self.IMPORT_COMBINESHAPES
                     and self.IMPORT_SKELETON != 1):
                     self.logger.info(
-                        "joining geometries %s to single object '%s'"
+                        "Joining geometries %s to single object '%s'"
                         %([child.name for child in geom_group], node_name))
                     b_mesh = None
                     for child in geom_group:
@@ -705,7 +725,10 @@ class NifImport(NifImportExport):
                     # get blender bone and its name
                     # (TODO also cover case where niBlock != branch_parent)
                     if niBlock != branch_parent:
-                        self.logger.warning("Collision object has non-bone parent, this is not supported and transform errors may result")
+                        self.logger.warning(
+                            "Collision object has non-bone parent,"
+                            " this is not supported and transform errors"
+                            " may result")
                     b_par_bone_name = self.names[branch_parent]
                     b_par_bone = b_armature.data.bones[b_par_bone_name]
                     for b_obj in collision_objs:
@@ -753,7 +776,9 @@ class NifImport(NifImportExport):
                 if self.names[niBlock].endswith(postfix):
                     return self.names[niBlock]
 
-        self.logger.debug("Importing name for %s block from %s%s" % (niBlock.__class__.__name__, niBlock.name, postfix))
+        self.logger.debug(
+            "Importing name for %s block from %s%s"
+            % (niBlock.__class__.__name__, niBlock.name, postfix))
 
         # find unique name for Blender to use
         uniqueInt = 0
@@ -877,7 +902,8 @@ class NifImport(NifImportExport):
             for bone_name, b_posebone in b_armature.getPose().bones.items():
                 # denote progress
                 self.msg_progress('Animation: %s' % bone_name)
-                self.logger.debug('Importing animation for bone %s' % bone_name)
+                self.logger.debug(
+                    'Importing animation for bone %s' % bone_name)
                 niBone = self.blocks[bone_name]
 
                 # get bind matrix (NIF format stores full transformations in keyframes,
@@ -964,7 +990,8 @@ class NifImport(NifImportExport):
 
                     # rotations
                     if rotations:
-                        self.logger.debug('Rotation keys...(bspline quaternions)')
+                        self.logger.debug(
+                            'Rotation keys...(bspline quaternions)')
                         for time, quat in izip(times, rotations):
                             frame = 1 + int(time * self.fps + 0.5)
                             quat = Blender.Mathutils.Quaternion(
@@ -1496,7 +1523,8 @@ class NifImport(NifImportExport):
         # create a stub image if the image could not be loaded
         if not b_image:
             self.logger.warning(
-                "Texture '%s' not found or not supported and no alternate available"
+                "Texture '%s' not found or not supported"
+                " and no alternate available"
                 % fn)
             b_image = Blender.Image.New(fn, 1, 1, 24) # create a stub
             b_image.filename = tex
@@ -1564,7 +1592,10 @@ class NifImport(NifImportExport):
             elif textProperty.apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT2:
                 blendmode = Blender.Texture.BlendModes["MULTIPLY"]
             else:
-                self.logger.warning("Unknown apply mode (%i) in material '%s', using blending mode 'MIX'"% (textProperty.apply_mode, matProperty.name))
+                self.logger.warning(
+                    "Unknown apply mode (%i) in material '%s',"
+                    " using blending mode 'MIX'"
+                    % (textProperty.apply_mode, matProperty.name))
         elif bsShaderProperty:
             # default blending mode for fallout 3
             blendmode = Blender.Texture.BlendModes["MIX"]
@@ -1966,7 +1997,10 @@ class NifImport(NifImportExport):
 
         # set transform matrix for the mesh
         if not applytransform:
-            if group_mesh: raise NifImportError('BUG: cannot set matrix when importing meshes in groups; use applytransform = True')
+            if group_mesh:
+                raise NifImportError(
+                    "BUG: cannot set matrix when importing meshes in groups;"
+                    " use applytransform = True")
             b_mesh.setMatrix(self.importMatrix(niBlock,
                                                relative_to = relative_to))
         else:
@@ -1976,7 +2010,7 @@ class NifImport(NifImportExport):
         # shortcut for mesh geometry data
         niData = niBlock.data
         if not niData:
-            raise NifImportError("no ShapeData returned. Node name: %s " % b_name)
+            raise NifImportError("no shape data in %s" % b_name)
 
         # vertices
         verts = niData.vertices
@@ -2632,7 +2666,8 @@ class NifImport(NifImportExport):
             self.filebase.lower() in ('skeleton', 'skeletonbeast')):
             
             if not isinstance(niBlock, NifFormat.NiNode):
-                raise NifImportError('cannot import skeleton: root is not a NiNode')
+                raise NifImportError(
+                    "cannot import skeleton: root is not a NiNode")
             # for morrowind, take the Bip01 node to be the skeleton root
             if self.version == 0x04000002:
                 skelroot = niBlock.find(block_name = 'Bip01',
@@ -2661,7 +2696,8 @@ class NifImport(NifImportExport):
         elif self.IMPORT_SKELETON == 2 and not self.armatures:
             skelroot = niBlock.find(block_name = self.selectedObjects[0].name)
             if not skelroot:
-                raise NifImportError("nif has no armature '%s'"%self.selectedObjects[0].name)
+                raise NifImportError(
+                    "nif has no armature '%s'" % self.selectedObjects[0].name)
             self.logger.debug("Identified '%s' as armature" % skelroot.name)
             self.armatures[skelroot] = []
             for bone_name in self.selectedObjects[0].data.bones.keys():
@@ -2691,10 +2727,15 @@ class NifImport(NifImportExport):
                 if self.IMPORT_SKELETON == 0:
                     if not self.armatures.has_key(skelroot):
                         self.armatures[skelroot] = []
-                        self.logger.debug("'%s' is an armature" % skelroot.name)
+                        self.logger.debug("'%s' is an armature"
+                                          % skelroot.name)
                 elif self.IMPORT_SKELETON == 2:
                     if not self.armatures.has_key(skelroot):
-                        raise NifImportError("nif structure incompatible with '%s' as armature: \nnode '%s' has '%s' as armature"%(self.selectedObjects[0].name, niBlock.name, skelroot.name))
+                        raise NifImportError(
+                            "nif structure incompatible with '%s' as armature:"
+                            " node '%s' has '%s' as armature"
+                            % (self.selectedObjects[0].name, niBlock.name,
+                               skelroot.name))
 
                 for i, boneBlock in enumerate(skininst.bones):
                     if boneBlock not in self.armatures[skelroot]:
@@ -2733,8 +2774,10 @@ class NifImport(NifImportExport):
             self.markArmaturesBones(child)
 
     def complete_bone_tree(self, bone, skelroot):
-        """Make sure that the bones actually form a tree all the way down to
-        the armature node. Call this function on all bones of a skin instance."""
+        """Make sure that the bones actually form a tree all the way
+        down to the armature node. Call this function on all bones of
+        a skin instance.
+        """
         # we must already have marked this one as a bone
         assert self.armatures.has_key(skelroot) # debug
         assert bone in self.armatures[skelroot] # debug
@@ -2746,7 +2789,8 @@ class NifImport(NifImportExport):
                 # neither is it marked as a bone: so mark the parent as a bone
                 self.armatures[skelroot].append(boneparent)
                 # store the coordinates for realignement autodetection 
-                self.logger.debug("'%s' is a bone of armature '%s'" % (boneparent.name, skelroot.name))
+                self.logger.debug("'%s' is a bone of armature '%s'"
+                                  % (boneparent.name, skelroot.name))
             # now the parent is marked as a bone
             # recursion: complete the bone tree,
             # this time starting from the parent bone
@@ -2787,7 +2831,7 @@ class NifImport(NifImportExport):
                     armatureName = self.names[armatureBlock]
                     break
             else:
-                raise NifImportError("cannot find bone '%s'"%boneName)
+                raise NifImportError("cannot find bone '%s'" % boneName)
             armatureObject = Blender.Object.Get(armatureName)
             return armatureObject.data.bones[boneName]
         else:
@@ -2929,8 +2973,9 @@ class NifImport(NifImportExport):
             # 0.005 = 1/200
             numdel = me.remDoubles(0.005)
             if numdel:
-                self.logger.info("Removed %i duplicate vertices"
-                    "(out of %i) from collision mesh" % (numdel, numverts))
+                self.logger.info(
+                    "Removed %i duplicate vertices"
+                    " (out of %i) from collision mesh" % (numdel, numverts))
 
             return [ ob ]
 
@@ -3153,8 +3198,10 @@ class NifImport(NifImportExport):
                 # 0.005 = 1/200
                 numdel = me.remDoubles(0.005)
                 if numdel:
-                    self.logger.info("Removed %i duplicate vertices"
-                        "(out of %i) from collision mesh" % (numdel, numverts))
+                    self.logger.info(
+                        "Removed %i duplicate vertices"
+                        " (out of %i) from collision mesh"
+                        % (numdel, numverts))
 
                 vertex_offset += subshape.num_vertices
                 hk_objects.append(ob)
@@ -3189,8 +3236,10 @@ class NifImport(NifImportExport):
             # 0.005 = 1/200
             numdel = me.remDoubles(0.005)
             if numdel:
-                self.logger.info("Removed %i duplicate vertices"
-                    "(out of %i) from collision mesh" % (numdel, numverts))
+                self.logger.info(
+                    "Removed %i duplicate vertices"
+                    " (out of %i) from collision mesh"
+                    % (numdel, numverts))
 
             return [ ob ]
 
@@ -3217,7 +3266,8 @@ class NifImport(NifImportExport):
 
         # find objects
         if len(self.havokObjects[hkbody]) != 1:
-            self.logger.warning("Rigid body with no or multiple shapes, constraints skipped")
+            self.logger.warning(
+                "Rigid body with no or multiple shapes, constraints skipped")
             return
 
         b_hkobj = self.havokObjects[hkbody][0]
@@ -3229,13 +3279,16 @@ class NifImport(NifImportExport):
 
             # check constraint entities
             if not hkconstraint.num_entities == 2:
-                self.logger.warning("Constraint with more than 2 entities, skipped")
+                self.logger.warning(
+                    "Constraint with more than 2 entities, skipped")
                 continue
             if not hkconstraint.entities[0] is hkbody:
-                self.logger.warning("First constraint entity not self, skipped")
+                self.logger.warning(
+                    "First constraint entity not self, skipped")
                 continue
             if not hkconstraint.entities[1] in self.havokObjects:
-                self.logger.warning("Second constraint entity not imported, skipped")
+                self.logger.warning(
+                    "Second constraint entity not imported, skipped")
                 continue
 
             # get constraint descriptor
@@ -3363,7 +3416,8 @@ class NifImport(NifImportExport):
                     if (Blender.Mathutils.CrossVecs(-axis_x, axis_y)
                         - axis_z).length > 0.01:
                         self.logger.warning(
-                            "Axes are not orthogonal in %s; arbitrary orientation has been chosen"
+                            "Axes are not orthogonal in %s;"
+                            " arbitrary orientation has been chosen"
                             % hkdescriptor.__class__.__name__)
                         axis_z = Blender.Mathutils.CrossVecs(axis_x, axis_y)
                     else:
@@ -3584,8 +3638,11 @@ class NifImport(NifImportExport):
                 continue
             controller = self.find_controller(node, getattr(NifFormat, controllertype))
             if not controller:
-                self.logger.info("Animation for %s with %s controller, but no such controller type found in corresponding node, so creating one"
-                                 % (nodename, controllertype))
+                self.logger.info(
+                    "Animation for %s with %s controller,"
+                    " but no such controller type found"
+                    " in corresponding node, so creating one"
+                    % (nodename, controllertype))
                 controller = getattr(NifFormat, controllertype)()
                 # TODO set all the fields of this controller
                 node.add_controller(controller)
