@@ -139,7 +139,7 @@ class NifImport(NifImportExport):
         # dictionary mapping bhkRigidBody objects to list of objects imported
         # in Blender; after we've imported the tree, we use this dictionary
         # to set the physics constraints (ragdoll etc)
-        self.havokObjects = {}
+        self.havok_objects = {}
 
         # Blender scene
         self.scene = Blender.Scene.GetCurrent()
@@ -389,7 +389,7 @@ class NifImport(NifImportExport):
         
         # now all havok objects are imported, so we are
         # ready to import the havok constraints
-        for hkbody in self.havokObjects:
+        for hkbody in self.havok_objects:
             self.importHavokConstraints(hkbody)
 
         # parent selected meshes to imported skeleton
@@ -3036,7 +3036,7 @@ class NifImport(NifImportExport):
             # import constraints
             # this is done once all objects are imported
             # for now, store all imported havok shapes with object lists
-            self.havokObjects[bhkshape] = collision_objs
+            self.havok_objects[bhkshape] = collision_objs
             # and return a list of transformed collision shapes
             return collision_objs
         
@@ -3265,12 +3265,12 @@ class NifImport(NifImportExport):
             return
 
         # find objects
-        if len(self.havokObjects[hkbody]) != 1:
+        if len(self.havok_objects[hkbody]) != 1:
             self.logger.warning(
                 "Rigid body with no or multiple shapes, constraints skipped")
             return
 
-        b_hkobj = self.havokObjects[hkbody][0]
+        b_hkobj = self.havok_objects[hkbody][0]
         
         self.logger.info("Importing constraints for %s" % b_hkobj.name)
 
@@ -3286,7 +3286,7 @@ class NifImport(NifImportExport):
                 self.logger.warning(
                     "First constraint entity not self, skipped")
                 continue
-            if not hkconstraint.entities[1] in self.havokObjects:
+            if not hkconstraint.entities[1] in self.havok_objects:
                 self.logger.warning(
                     "Second constraint entity not imported, skipped")
                 continue
@@ -3349,7 +3349,7 @@ class NifImport(NifImportExport):
 
             # set constraint target
             b_constr[Blender.Constraint.Settings.TARGET] = \
-                self.havokObjects[hkconstraint.entities[1]][0]
+                self.havok_objects[hkconstraint.entities[1]][0]
             # set rigid body type (generic)
             b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE] = 12
             # limiting parameters (limit everything)
