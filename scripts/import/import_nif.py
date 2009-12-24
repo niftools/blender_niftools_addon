@@ -3023,14 +3023,14 @@ class NifImport(NifImportExport):
                 if bhkshape.mass > 0.0001:
                     # for physics emulation
                     # (mass 0 results in issues with simulation)
-                    ob.rbMass = bhkshape.mass
+                    ob.rbMass = bhkshape.mass / len(collision_objs)
                 ob.addProperty("OblivionLayer", self.OB_LAYER[bhkshape.layer], "STRING")
                 ob.addProperty("QualityType", self.QUALITY_TYPE[bhkshape.quality_type], "STRING")
                 ob.addProperty("MotionSystem", self.MOTION_SYS[bhkshape.motion_system], "STRING")
                 # note: also imported as rbMass, but hard to find by users
                 # so we import it as a property, and this is also what will
                 # be re-exported
-                ob.addProperty("Mass", bhkshape.mass, "FLOAT")
+                ob.addProperty("Mass", bhkshape.mass / len(collision_objs), "FLOAT")
                 ob.addProperty("ColFilter", bhkshape.col_filter, "INT")
 
             # import constraints
