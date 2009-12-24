@@ -271,7 +271,7 @@ class NifImport(NifImportExport):
                     for kf_root in kf_root_blocks:
                         self.importKfRoot(kf_root, root)
                 # import the nif tree
-                self.importRoot(root)
+                self.import_root(root)
         except NifImportError, e: # in that case, we raise a menu too
             self.logger.exception('NifImportError: %s' % e)
             Blender.Draw.PupMenu('ERROR%t|' + str(e))
@@ -286,7 +286,7 @@ class NifImport(NifImportExport):
         self.root_blocks = root_blocks
 
 
-    def importRoot(self, root_block):
+    def import_root(self, root_block):
         """Main import function."""
         # preprocessing:
 
@@ -299,7 +299,7 @@ class NifImport(NifImportExport):
         # merge skeleton roots
         # and transform geometry into the rest pose
         # fake a data element with given root, for spells
-        # TODO: use data element directly, i.e. upgrade this importRoot
+        # TODO: use data element directly, i.e. upgrade this import_root
         #       function to an importData function
         data = NifFormat.Data()
         data.roots = [root_block]
