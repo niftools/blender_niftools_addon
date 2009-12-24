@@ -2980,6 +2980,7 @@ class NifImport(NifImportExport):
                 ob.addProperty("OblivionLayer", self.OB_LAYER[bhkshape.layer], "STRING")
                 ob.addProperty("QualityType", self.QUALITY_TYPE[bhkshape.quality_type], "STRING")
                 ob.addProperty("MotionSystem", self.MOTION_SYS[bhkshape.motion_system], "STRING")
+                ob.addProperty("Mass", bhkshape.mass, "FLOAT")
 
             # import constraints
             # this is done once all objects are imported
