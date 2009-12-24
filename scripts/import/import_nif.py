@@ -343,7 +343,7 @@ class NifImport(NifImportExport):
         
         # import the keyframe notes
         if self.IMPORT_ANIMATION:
-            self.importTextkey(root_block)
+            self.import_text_keys(root_block)
 
         # read the NIF tree
         if self.is_armature_root(root_block):
@@ -561,7 +561,7 @@ class NifImport(NifImportExport):
                     if self.IMPORT_ANIMATION:
                         self.set_animation(niBlock, b_obj)
                         # import the extras
-                        self.importTextkey(niBlock)
+                        self.import_text_keys(niBlock)
 
                     return b_obj
             # all else is currently discarded
@@ -2475,7 +2475,7 @@ class NifImport(NifImportExport):
 
 
     # import animation groups
-    def importTextkey(self, niBlock):
+    def import_text_keys(self, niBlock):
         """Stores the text keys that define animation start and end in a text
         buffer, so that they can be re-exported. Since the text buffer is
         cleared on each import only the last import will be exported
@@ -3615,7 +3615,7 @@ class NifImport(NifImportExport):
             raise NifImportError("non-Oblivion .kf import not supported")
 
         # import text keys
-        self.importTextkey(kf_root)
+        self.import_text_keys(kf_root)
 
 
         # go over all controlled blocks
