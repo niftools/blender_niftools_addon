@@ -529,20 +529,18 @@ class NifExport(NifImportExport):
                 total_mass = 0
                 for block in self.blocks:
                     if isinstance(block, NifFormat.bhkRigidBody):
-                        if block.layer == 1:
-                            block.mass = 0
+                        block.update_mass_center_inertia(
+                            solid = self.EXPORT_OB_SOLID)
                         total_mass += block.mass
-                if total_mass == 0:
-                    # to avoid zero division error later
-                    # (if mass is zero then this does not matter anyway)
-                    total_mass = 1
+                        if total_mass == 0:
+                            # to avoid zero division error later
+                            # (if mass is zero then this does not matter
+                            # anyway)
+                            total_mass = 1
                 # now update the mass ensuring that total mass is
-                # self.EXPORT_OB_MASS if overriding the collision 
+                # self.EXPORT_OB_MASS
                 for block in self.blocks:
                     if isinstance(block, NifFormat.bhkRigidBody):
-                        block_mass = 0
-                        if block.mass != -1 and self.EXPORT_OVERRIDE_COLLISION_DATA == False:
-                            block_mass = block.mass
                         mass = self.EXPORT_OB_MASS * block.mass / total_mass
                         # lower bound on mass
                         if mass < 0.0001:
@@ -550,10 +548,6 @@ class NifExport(NifImportExport):
                         block.update_mass_center_inertia(
                             mass = mass,
                             solid = self.EXPORT_OB_SOLID)
-                        if block_mass != 0:
-                            block.mass = block_mass
-                        if block.layer == 1:
-                            block.mass = 0
 
                 # many Oblivion nifs have a UPB, but export is disabled as
                 # they do not seem to affect anything in the game
@@ -3211,7 +3205,7 @@ class NifExport(NifImportExport):
         layer = self.EXPORT_OB_LAYER
         motion_system = self.EXPORT_OB_MOTIONSYSTEM
         quality_type = self.EXPORT_OB_QUALITYTYPE
-        mass = -1 # will be fixed later
+        mass = 1.0 # will be fixed later
         col_filter = 0
         # copy physics properties from Blender properties, if they exist, unless forcing override
         if not self.EXPORT_OVERRIDE_COLLISION_DATA:
@@ -3318,7 +3312,9 @@ class NifExport(NifImportExport):
             colbody.rotation.x = 0.0
             colbody.rotation.y = 0.0
             colbody.rotation.z = 0.0
-            colbody.mass = mass # is -1 at the moment, will be fixed later
+            # mass is 1.0 at the moment (unless property was set)
+            # will be fixed later
+            colbody.mass = mass
             colbody.linear_damping = 0.1
             colbody.angular_damping = 0.05
             colbody.friction = 0.3
