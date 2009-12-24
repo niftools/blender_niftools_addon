@@ -1379,7 +1379,7 @@ class NifImport(NifImportExport):
 
 
     def get_texture_hash(self, source):
-        """Helper function for importTexture. Returns a key that uniquely
+        """Helper function for import_texture. Returns a key that uniquely
         identifies a texture from its source (which is either a
         NiSourceTexture block, or simply a path string).
         """
@@ -1392,7 +1392,7 @@ class NifImport(NifImportExport):
         else:
             raise TypeError("source must be NiSourceTexture block or string")
 
-    def importTexture(self, source):
+    def import_texture(self, source):
         """Convert a NiSourceTexture block, or simply a path string,
         to a Blender Texture object, return the Texture object and
         stores it in the self.textures dictionary to avoid future
@@ -1741,7 +1741,7 @@ class NifImport(NifImportExport):
                     continue
                     
             if baseTexDesc:
-                base_texture = self.importTexture(baseTexDesc.source)
+                base_texture = self.import_texture(baseTexDesc.source)
                 if base_texture:
                     # set the texture to use face UV coordinates
                     texco = Blender.Texture.TexCo.UV
@@ -1753,7 +1753,7 @@ class NifImport(NifImportExport):
                     mbase_texture.blendmode = blendmode
                     mbase_texture.uvlayer = self.getUVLayerName(baseTexDesc.uv_set)
             if glowTexDesc:
-                glow_texture = self.importTexture(glowTexDesc.source)
+                glow_texture = self.import_texture(glowTexDesc.source)
                 if glow_texture:
                     # glow maps use alpha from rgb intensity
                     glow_texture.imageFlags |= Blender.Texture.ImageFlags.CALCALPHA
@@ -1766,7 +1766,7 @@ class NifImport(NifImportExport):
                     mglow_texture = material.getTextures()[1]
                     mglow_texture.uvlayer = self.getUVLayerName(glowTexDesc.uv_set)
             if bumpTexDesc:
-                bumpTexture = self.importTexture(bumpTexDesc.source)
+                bumpTexture = self.import_texture(bumpTexDesc.source)
                 if bumpTexture:
                     # set the texture to use face UV coordinates
                     texco = Blender.Texture.TexCo.UV
@@ -1777,7 +1777,7 @@ class NifImport(NifImportExport):
                     mbumpTexture = material.getTextures()[2]
                     mbumpTexture.uvlayer = self.getUVLayerName(bumpTexDesc.uv_set)
             if glossTexDesc:
-                gloss_texture = self.importTexture(glossTexDesc.source)
+                gloss_texture = self.import_texture(glossTexDesc.source)
                 if gloss_texture:
                     # set the texture to use face UV coordinates
                     texco = Blender.Texture.TexCo.UV
@@ -1788,7 +1788,7 @@ class NifImport(NifImportExport):
                     mgloss_texture = material.getTextures()[4]
                     mgloss_texture.uvlayer = self.getUVLayerName(glossTexDesc.uv_set)
             if darkTexDesc:
-                dark_texture = self.importTexture(darkTexDesc.source)
+                dark_texture = self.import_texture(darkTexDesc.source)
                 if dark_texture:
                     # set the texture to use face UV coordinates
                     texco = Blender.Texture.TexCo.UV
@@ -1801,7 +1801,7 @@ class NifImport(NifImportExport):
                     # set blend mode to "DARKEN"
                     mdark_texture.blendmode = Blender.Texture.BlendModes["DARKEN"]
             if detailTexDesc:
-                detail_texture = self.importTexture(detailTexDesc.source)
+                detail_texture = self.import_texture(detailTexDesc.source)
                 if detail_texture:
                     # import detail texture as extra base texture
                     # set the texture to use face UV coordinates
@@ -1813,7 +1813,7 @@ class NifImport(NifImportExport):
                     mdetail_texture = material.getTextures()[6]
                     mdetail_texture.uvlayer = self.getUVLayerName(detailTexDesc.uv_set)
             if refTexDesc:
-                refTexture = self.importTexture(refTexDesc.source)
+                refTexture = self.import_texture(refTexDesc.source)
                 if refTexture:
                     # set the texture to use face UV coordinates
                     texco = Blender.Texture.TexCo.UV
@@ -1828,7 +1828,7 @@ class NifImport(NifImportExport):
             # also contains textures, used in fallout 3
             baseTexFile = bsShaderProperty.texture_set.textures[0]
             if baseTexFile:
-                base_texture = self.importTexture(baseTexFile)
+                base_texture = self.import_texture(baseTexFile)
                 if base_texture:
                     # set the texture to use face UV coordinates
                     texco = Blender.Texture.TexCo.UV
@@ -1841,7 +1841,7 @@ class NifImport(NifImportExport):
 
             glowTexFile = bsShaderProperty.texture_set.textures[2]
             if glowTexFile:
-                glow_texture = self.importTexture(glowTexFile)
+                glow_texture = self.import_texture(glowTexFile)
                 if glow_texture:
                     # glow maps use alpha from rgb intensity
                     glow_texture.imageFlags |= Blender.Texture.ImageFlags.CALCALPHA
@@ -1856,7 +1856,7 @@ class NifImport(NifImportExport):
 
             bumpTexFile = bsShaderProperty.texture_set.textures[1]
             if bumpTexFile:
-                bumpTexture = self.importTexture(bumpTexFile)
+                bumpTexture = self.import_texture(bumpTexFile)
                 if bumpTexture:
                     # set the texture to use face UV coordinates
                     texco = Blender.Texture.TexCo.UV
@@ -1868,7 +1868,7 @@ class NifImport(NifImportExport):
                     mbumpTexture.blendmode = blendmode
 
         if textureEffect:
-            envmapTexture = self.importTexture(textureEffect.source_texture)
+            envmapTexture = self.import_texture(textureEffect.source_texture)
             if envmapTexture:
                 # set the texture to use face reflection coordinates
                 texco = Blender.Texture.TexCo.REFL
