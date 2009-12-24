@@ -1934,7 +1934,7 @@ class NifImport(NifImportExport):
                                                    n_ctrl.data.uv_groups):
                     if n_uvgroup.keys:
                         # create curve in material ipo
-                        b_ipo = self.getMaterialIpo(b_material)
+                        b_ipo = self.get_material_ipo(b_material)
                         b_curve = b_ipo.addCurve(b_channel)
                         # XXX todo: get interpolation from nif data
                         # XXX these are reasonable defaults
@@ -1947,7 +1947,7 @@ class NifImport(NifImportExport):
                             else:
                                 b_curve[1 + n_key.time * self.fps] = n_key.value
 
-    def getMaterialIpo(self, b_material):
+    def get_material_ipo(self, b_material):
         """Return existing material ipo data, or if none exists, create one
         and return that.
         """
