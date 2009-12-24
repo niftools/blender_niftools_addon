@@ -1751,7 +1751,7 @@ class NifImport(NifImportExport):
                     material.setTexture(0, base_texture, texco, mapto)
                     mbase_texture = material.getTextures()[0]
                     mbase_texture.blendmode = blendmode
-                    mbase_texture.uvlayer = self.getUVLayerName(baseTexDesc.uv_set)
+                    mbase_texture.uvlayer = self.get_uv_layer_name(baseTexDesc.uv_set)
             if glowTexDesc:
                 glow_texture = self.import_texture(glowTexDesc.source)
                 if glow_texture:
@@ -1764,7 +1764,7 @@ class NifImport(NifImportExport):
                     # set the texture for the material
                     material.setTexture(1, glow_texture, texco, mapto)
                     mglow_texture = material.getTextures()[1]
-                    mglow_texture.uvlayer = self.getUVLayerName(glowTexDesc.uv_set)
+                    mglow_texture.uvlayer = self.get_uv_layer_name(glowTexDesc.uv_set)
             if bumpTexDesc:
                 bumpTexture = self.import_texture(bumpTexDesc.source)
                 if bumpTexture:
@@ -1775,7 +1775,7 @@ class NifImport(NifImportExport):
                     # set the texture for the material
                     material.setTexture(2, bumpTexture, texco, mapto)
                     mbumpTexture = material.getTextures()[2]
-                    mbumpTexture.uvlayer = self.getUVLayerName(bumpTexDesc.uv_set)
+                    mbumpTexture.uvlayer = self.get_uv_layer_name(bumpTexDesc.uv_set)
             if glossTexDesc:
                 gloss_texture = self.import_texture(glossTexDesc.source)
                 if gloss_texture:
@@ -1786,7 +1786,7 @@ class NifImport(NifImportExport):
                     # set the texture for the material
                     material.setTexture(4, gloss_texture, texco, mapto)
                     mgloss_texture = material.getTextures()[4]
-                    mgloss_texture.uvlayer = self.getUVLayerName(glossTexDesc.uv_set)
+                    mgloss_texture.uvlayer = self.get_uv_layer_name(glossTexDesc.uv_set)
             if darkTexDesc:
                 dark_texture = self.import_texture(darkTexDesc.source)
                 if dark_texture:
@@ -1797,7 +1797,7 @@ class NifImport(NifImportExport):
                     # set the texture for the material
                     material.setTexture(5, dark_texture, texco, mapto)
                     mdark_texture = material.getTextures()[5]
-                    mdark_texture.uvlayer = self.getUVLayerName(darkTexDesc.uv_set)
+                    mdark_texture.uvlayer = self.get_uv_layer_name(darkTexDesc.uv_set)
                     # set blend mode to "DARKEN"
                     mdark_texture.blendmode = Blender.Texture.BlendModes["DARKEN"]
             if detailTexDesc:
@@ -1811,7 +1811,7 @@ class NifImport(NifImportExport):
                     # set the texture for the material
                     material.setTexture(6, detail_texture, texco, mapto)
                     mdetail_texture = material.getTextures()[6]
-                    mdetail_texture.uvlayer = self.getUVLayerName(detailTexDesc.uv_set)
+                    mdetail_texture.uvlayer = self.get_uv_layer_name(detailTexDesc.uv_set)
             if refTexDesc:
                 refTexture = self.import_texture(refTexDesc.source)
                 if refTexture:
@@ -1822,7 +1822,7 @@ class NifImport(NifImportExport):
                     # set the texture for the material
                     material.setTexture(7, refTexture, texco, mapto)
                     mrefTexture = material.getTextures()[7]
-                    mrefTexture.uvlayer = self.getUVLayerName(refTexDesc.uv_set)
+                    mrefTexture.uvlayer = self.get_uv_layer_name(refTexDesc.uv_set)
         # if not a texture property, but a bethesda shader property...
         elif bsShaderProperty:
             # also contains textures, used in fallout 3
@@ -2256,7 +2256,7 @@ class NifImport(NifImportExport):
                 # Set the face UV's for the mesh. The NIF format only supports
                 # vertex UV's, but Blender only allows explicit editing of face
                 # UV's, so load vertex UV's as face UV's
-                uvlayer = self.getUVLayerName(i)
+                uvlayer = self.get_uv_layer_name(i)
                 if not uvlayer in b_meshData.getUVLayerNames():
                     b_meshData.addUVLayer(uvlayer)
                 b_meshData.activeUVLayer = uvlayer
@@ -2265,7 +2265,7 @@ class NifImport(NifImportExport):
                         continue
                     uvlist = [ Vector(uv_set[vert_index].u, 1.0 - uv_set[vert_index].v) for vert_index in f ]
                     b_meshData.faces[b_f_index].uv = tuple(uvlist)
-            b_meshData.activeUVLayer = self.getUVLayerName(0)
+            b_meshData.activeUVLayer = self.get_uv_layer_name(0)
         
         if material:
             # fix up vertex colors depending on whether we had textures in the
@@ -3597,7 +3597,7 @@ class NifImport(NifImportExport):
         ob.rbRadius = min(maxx, maxy, maxz)
         return ob
 
-    def getUVLayerName(self, uvset):
+    def get_uv_layer_name(self, uvset):
         return "UVTex.%03i" % uvset if uvset != 0 else "UVTex"
 
 
