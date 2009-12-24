@@ -3568,6 +3568,17 @@ class NifExport(NifImportExport):
             return
 
         for b_constr in b_obj.constraints:
+            # defaults and getting object properties for user settings
+            max_angle = 0
+            min_angle = 1.5
+            max_friction = - 10
+            for prop in b_obj.getAllProperties():
+                if prop.getName() == 'LimitedHinge_MaxAngle' and prop.getType() == "FLOAT":
+                        max_angle = prop.getData()
+                if prop.getName() == 'LimitedHinge_MinAngle' and prop.getType() == "FLOAT":
+                        min_angle = prop.getData()
+                if prop.getName() == 'LimitedHinge_MaxFriction' and prop.getType() == "FLOAT":
+                        max_friction = prop.getData() 
             # rigid body joints
             if b_constr.type == Blender.Constraint.Type.RIGIDBODYJOINT:
                 if self.EXPORT_VERSION not in ("Oblivion", "Fallout 3"):
@@ -3733,24 +3744,35 @@ class NifExport(NifImportExport):
                     # angle limits
                     # typically, the constraint on one side is defined
                     # by the z axis
-                    hkdescriptor.min_angle = 0.0
+                    hkdescriptor.min_angle = min_angle
                     # the maximum axis is typically about 90 degrees
                     # 3.14 / 2 = 1.5
-                    hkdescriptor.max_angle = 1.5
+                    hkdescriptor.max_angle = max_angle                                  
+                    
+                    
                     
                 else:
                     raise ValueError("unknown descriptor %s"
                                      % hkdescriptor.__class__.__name__)
 
-                # friction: again, just picking a reasonable value
+                # friction: again, just picking a reasonable value if no real value given
                 if isinstance(hkconstraint,
                               NifFormat.bhkMalleableConstraint):
                     # malleable typically have 0
                     # (perhaps because they have a damping parameter)
-                    hkdescriptor.max_friction = 0.0
+                    if max_friction == - 10:
+                        hkdescriptor.max_friction = 0
+                    else:
+                        hkdescriptor.max_friction = max_friction
                 else:
                     # non-malleable typically have 10
-                    hkdescriptor.max_friction = 10.0
+                    if max_friction == - 10:
+                        if self.EXPORT_VERSION in ("Oblivion"):
+                            hkdescriptor.max_friction = 10
+                        if self.EXPORT_VERSION in ("Fallout 3"):
+                            hkdescriptor.max_friction = 100
+                    else:
+                        hkdescriptor.max_friction = max_friction
 
                 # do AB
                 hkconstraint.update_a_b(root_block)
