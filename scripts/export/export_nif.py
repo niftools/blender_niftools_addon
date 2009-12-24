@@ -1341,7 +1341,7 @@ class NifExport(NifImportExport):
         if (max(len(rot_curve), len(trans_curve), len(scale_curve)) <= 1
             and self.version >= 0x0A020000):
             # only add data if number of keys is > 1
-            # (see importer comments with importKfRoot: a single frame
+            # (see importer comments with import_kf_root: a single frame
             # keyframe denotes an interpolator without further data)
             # insufficient keys, so set the data and we're done!
             if trans_curve:

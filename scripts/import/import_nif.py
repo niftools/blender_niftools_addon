@@ -131,7 +131,7 @@ class NifImport(NifImportExport):
         self.armatures = {}
 
         # bone animation priorities (maps bone NiNode to priority number);
-        # priorities are set in importKfRoot and are stored into the name
+        # priorities are set in import_kf_root and are stored into the name
         # of a NULL constraint (for lack of something better) in
         # import_armature
         self.bone_priorities = {}
@@ -269,7 +269,7 @@ class NifImport(NifImportExport):
                 # merge animation from kf tree into nif tree
                 if self.IMPORT_ANIMATION:
                     for kf_root in kf_root_blocks:
-                        self.importKfRoot(kf_root, root)
+                        self.import_kf_root(kf_root, root)
                 # import the nif tree
                 self.import_root(root)
         except NifImportError, e: # in that case, we raise a menu too
@@ -3602,7 +3602,7 @@ class NifImport(NifImportExport):
 
 
 
-    def importKfRoot(self, kf_root, root):
+    def import_kf_root(self, kf_root, root):
         """Merge kf into nif.
 
         *** Note: this function will eventually move to PyFFI. ***
