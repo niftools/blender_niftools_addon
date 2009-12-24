@@ -1544,7 +1544,7 @@ class NifImport(NifImportExport):
                         alphaProperty, specProperty,
                         textureEffect, wireProperty,
                         bsShaderProperty, extra_datas):
-        """Helper function for importMaterial. Returns a key that
+        """Helper function for import_material. Returns a key that
         uniquely identifies a material from its properties. The key
         ignores the material name as that does not affect the
         rendering.
@@ -1559,10 +1559,10 @@ class NifImport(NifImportExport):
                 bsShaderProperty.get_hash() if bsShaderProperty else None,
                 tuple(extra.get_hash() for extra in extra_datas))
 
-    def importMaterial(self, matProperty, textProperty,
-                       alphaProperty, specProperty,
-                       textureEffect, wireProperty,
-                       bsShaderProperty, extra_datas):
+    def import_material(self, matProperty, textProperty,
+                        alphaProperty, specProperty,
+                        textureEffect, wireProperty,
+                        bsShaderProperty, extra_datas):
         """Creates and returns a material."""
         # First check if material has been created before.
         material_hash = self.get_material_hash(matProperty, textProperty,
@@ -2092,12 +2092,12 @@ class NifImport(NifImportExport):
                         extra_datas.append(extra)
 
             # create material and assign it to the mesh
-            # XXX todo: delegate search for properties to importMaterial
-            material = self.importMaterial(matProperty, textProperty,
-                                           alphaProperty, specProperty,
-                                           textureEffect, wireProperty,
-                                           bsShaderProperty, extra_datas)
-            # XXX todo: merge this call into importMaterial
+            # XXX todo: delegate search for properties to import_material
+            material = self.import_material(matProperty, textProperty,
+                                            alphaProperty, specProperty,
+                                            textureEffect, wireProperty,
+                                            bsShaderProperty, extra_datas)
+            # XXX todo: merge this call into import_material
             self.import_material_controllers(material, niBlock)
             b_mesh_materials = b_meshData.materials
             try:
