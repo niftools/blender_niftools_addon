@@ -349,14 +349,14 @@ class NifImport(NifImportExport):
         if self.is_armature_root(root_block):
             # special case 1: root node is skeleton root
             self.logger.debug("%s is an armature root" % root_block.name)
-            b_obj = self.importBranch(root_block)
+            b_obj = self.import_branch(root_block)
         elif self.is_grouping_node(root_block):
             # special case 2: root node is grouping node
             self.logger.debug("%s is a grouping node" % root_block.name)
-            b_obj = self.importBranch(root_block)
+            b_obj = self.import_branch(root_block)
         elif isinstance(root_block, NifFormat.NiTriBasedGeom):
             # trishape/tristrips root
-            b_obj = self.importBranch(root_block)
+            b_obj = self.import_branch(root_block)
         elif isinstance(root_block, NifFormat.NiNode):
             # root node is dummy scene node
             # process collision
@@ -369,7 +369,7 @@ class NifImport(NifImportExport):
                 self.importBhkShape(bhk_body)
             # process all its children
             for child in root_block.children:
-                b_obj = self.importBranch(child)
+                b_obj = self.import_branch(child)
         elif isinstance(root_block, NifFormat.NiCamera):
             self.logger.warning('Skipped NiCamera root')
         elif isinstance(root_block, NifFormat.NiPhysXProp):
@@ -409,7 +409,7 @@ class NifImport(NifImportExport):
             # set parenting
             b_obj.makeParentDeform(self.selected_objects)
 
-    def importBranch(self, niBlock):
+    def import_branch(self, niBlock):
         """Read the content of the current NIF tree branch to Blender
         recursively."""
         self.msg_progress("Importing data")
@@ -419,7 +419,7 @@ class NifImport(NifImportExport):
                 # it's a shape node and we're not importing skeleton only
                 # (IMPORT_SKELETON == 1) and not importing skinned geometries
                 # only (IMPORT_SKELETON == 2)
-                self.logger.debug("Building mesh in importBranch")
+                self.logger.debug("Building mesh in import_branch")
                 return self.importMesh(niBlock)
             elif isinstance(niBlock, NifFormat.NiNode):
                 children = niBlock.children
@@ -504,7 +504,7 @@ class NifImport(NifImportExport):
                         children = [ child for child in niBlock.children
                                      if child not in geom_group ]
                         for child in children:
-                            b_child_obj = self.importBranch(child)
+                            b_child_obj = self.import_branch(child)
                             if b_child_obj:
                                 b_children_list.append(b_child_obj)
                         b_obj.makeParent(b_children_list)
@@ -3585,7 +3585,7 @@ class NifImport(NifImportExport):
             ob = self.scene.objects.new(me, 'BSBound')
         else:
             ob = self.scene.objects.new(me, 'Bounding Box')
-            # XXX this is set in the importBranch method
+            # XXX this is set in the import_branch method
             #ob.setMatrix(Blender.Mathutils.Matrix(
             #    *bbox.bounding_box.rotation.as_list()))
             #ob.setLocation(
