@@ -385,7 +385,7 @@ class NifImport(NifImportExport):
 
         # store original names for re-export
         if self.names:
-            self.storeNames()
+            self.store_names()
         
         # now all havok objects are imported, so we are
         # ready to import the havok constraints
@@ -2531,7 +2531,7 @@ class NifImport(NifImportExport):
             bonetxt.write('%s/%s\n' % (blender_bone_name, line[1:]))
         
 
-    def storeNames(self):
+    def store_names(self):
         """Stores the original, long object names so that they can be
         re-exported. In order for this to work it is necessary to mantain the
         imported names unaltered. Since the text buffer is cleared on each
