@@ -366,7 +366,7 @@ class NifImport(NifImportExport):
                     self.logger.warning(
                         "Unsupported collision structure under node %s"
                         % root_block.name)
-                self.importBhkShape(bhk_body)
+                self.import_bhk_shape(bhk_body)
             # process all its children
             for child in root_block.children:
                 b_obj = self.import_branch(child)
@@ -518,7 +518,7 @@ class NifImport(NifImportExport):
                                 self.logger.warning(
                                     "Unsupported collision structure"
                                     " under node %s" % niBlock.name)
-                            collision_objs = self.importBhkShape(bhk_body)
+                            collision_objs = self.import_bhk_shape(bhk_body)
                             # make parent
                             b_obj.makeParent(collision_objs)
                         
@@ -721,7 +721,7 @@ class NifImport(NifImportExport):
                         self.logger.warning(
                             "Unsupported collision structure under node %s"
                             % niBlock.name)
-                    collision_objs = self.importBhkShape(bhk_body)
+                    collision_objs = self.import_bhk_shape(bhk_body)
                     # get blender bone and its name
                     # (TODO also cover case where niBlock != branch_parent)
                     if niBlock != branch_parent:
@@ -2940,7 +2940,7 @@ class NifImport(NifImportExport):
             
         Blender.Set('curframe', 1)
 
-    def importBhkShape(self, bhkshape):
+    def import_bhk_shape(self, bhkshape):
         """Import an oblivion collision shape as list of blender meshes."""
         if isinstance(bhkshape, NifFormat.bhkConvexVerticesShape):
             # find vertices (and fix scale)
@@ -2981,7 +2981,7 @@ class NifImport(NifImportExport):
 
         elif isinstance(bhkshape, NifFormat.bhkTransformShape):
             # import shapes
-            collision_objs = self.importBhkShape(bhkshape.shape)
+            collision_objs = self.import_bhk_shape(bhkshape.shape)
             # find transformation matrix
             transform = Blender.Mathutils.Matrix(*bhkshape.transform.as_list())
             transform.transpose()
@@ -2998,7 +2998,7 @@ class NifImport(NifImportExport):
 
         elif isinstance(bhkshape, NifFormat.bhkRigidBody):
             # import shapes
-            collision_objs = self.importBhkShape(bhkshape.shape)
+            collision_objs = self.import_bhk_shape(bhkshape.shape)
             # find transformation matrix in case of the T version
             if isinstance(bhkshape, NifFormat.bhkRigidBodyT):
                 # set rotation
@@ -3210,7 +3210,7 @@ class NifImport(NifImportExport):
 
         elif isinstance(bhkshape, NifFormat.bhkNiTriStripsShape):
             return reduce(operator.add,
-                          (self.importBhkShape(strips)
+                          (self.import_bhk_shape(strips)
                            for strips in bhkshape.strips_data))
                 
         elif isinstance(bhkshape, NifFormat.NiTriStripsData):
@@ -3244,10 +3244,10 @@ class NifImport(NifImportExport):
             return [ ob ]
 
         elif isinstance(bhkshape, NifFormat.bhkMoppBvTreeShape):
-            return self.importBhkShape(bhkshape.shape)
+            return self.import_bhk_shape(bhkshape.shape)
 
         elif isinstance(bhkshape, NifFormat.bhkListShape):
-            return reduce(operator.add, ( self.importBhkShape(subshape)
+            return reduce(operator.add, ( self.import_bhk_shape(subshape)
                                           for subshape in bhkshape.sub_shapes ))
 
         self.logger.warning("Unsupported bhk shape %s"
