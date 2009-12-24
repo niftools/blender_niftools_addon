@@ -2970,16 +2970,21 @@ class NifImport(NifImportExport):
                     ob.setMatrix(ob.getMatrix('localspace') * transform)
             # set physics flags and mass
             for ob in collision_objs:
-                ob.rbFlags = \
-                    Blender.Object.RBFlags["ACTOR"] + \
-                    Blender.Object.RBFlags["DYNAMIC"] + \
-                    Blender.Object.RBFlags["RIGIDBODY"] + \
-                    Blender.Object.RBFlags["BOUNDS"]
+                ob.rbFlags = (
+                    Blender.Object.RBFlags.ACTOR |
+                    Blender.Object.RBFlags.DYNAMIC |
+                    Blender.Object.RBFlags.RIGIDBODY |
+                    Blender.Object.RBFlags.BOUNDS)
                 if bhkshape.mass > 0.0001:
+                    # for physics emulation
+                    # (mass 0 results in issues with simulation)
                     ob.rbMass = bhkshape.mass
                 ob.addProperty("OblivionLayer", self.OB_LAYER[bhkshape.layer], "STRING")
                 ob.addProperty("QualityType", self.QUALITY_TYPE[bhkshape.quality_type], "STRING")
                 ob.addProperty("MotionSystem", self.MOTION_SYS[bhkshape.motion_system], "STRING")
+                # note: also imported as rbMass, but hard to find by users
+                # so we import it as a property, and this is also what will
+                # be re-exported
                 ob.addProperty("Mass", bhkshape.mass, "FLOAT")
                 ob.addProperty("ColFilter", bhkshape.col_filter, "INT")
 

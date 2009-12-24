@@ -3131,7 +3131,7 @@ class NifExport(NifImportExport):
         mass = -1 # will be fixed later
         col_filter = 0
         # copy physics properties from Blender properties, if they exist, unless forcing override
-        if self.EXPORT_OVERRIDE_COLLISION_DATA == False:
+        if not self.EXPORT_OVERRIDE_COLLISION_DATA:
             for prop in obj.getAllProperties():
                 if prop.getName() == 'HavokMaterial':
                     if prop.getType() == "STRING":
