@@ -147,15 +147,15 @@ class NifImport(NifImportExport):
         # selected objects
         # find and store this list now, as creating new objects adds them
         # to the selection list
-        self.selectedObjects = [ob for ob in self.scene.objects.selected]
+        self.selected_objects = [ob for ob in self.scene.objects.selected]
         
         # catch NifImportError
         try:
             # check that one armature is selected in 'import geometry + parent
             # to armature' mode
             if self.IMPORT_SKELETON == 2:
-                if (len(self.selectedObjects) != 1
-                    or self.selectedObjects[0].getType() != 'Armature'):
+                if (len(self.selected_objects) != 1
+                    or self.selected_objects[0].getType() != 'Armature'):
                     raise NifImportError(
                         "You must select exactly one armature in"
                         " 'Import Geometry Only + Parent To Selected Armature'"
@@ -396,7 +396,7 @@ class NifImport(NifImportExport):
         if self.IMPORT_SKELETON == 1:
             # rename vertex groups to reflect bone names
             # (for blends imported with older versions of the scripts!)
-            for b_child_obj in self.selectedObjects:
+            for b_child_obj in self.selected_objects:
                 if b_child_obj.getType() == "Mesh":
                     for oldgroupname in b_child_obj.data.getVertGroupNames():
                         newgroupname = self.get_bone_name_for_blender(oldgroupname)
@@ -407,7 +407,7 @@ class NifImport(NifImportExport):
                             b_child_obj.data.renameVertGroup(
                                 oldgroupname, newgroupname)
             # set parenting
-            b_obj.makeParentDeform(self.selectedObjects)
+            b_obj.makeParentDeform(self.selected_objects)
 
     def importBranch(self, niBlock):
         """Read the content of the current NIF tree branch to Blender
@@ -437,7 +437,7 @@ class NifImport(NifImportExport):
                         if self.IMPORT_SKELETON != 2:
                             b_obj = self.importArmature(niBlock)
                         else:
-                            b_obj = self.selectedObjects[0]
+                            b_obj = self.selected_objects[0]
                             self.logger.info(
                                 "Merging nif tree '%s' with armature '%s'"
                                 % (niBlock.name, b_obj.name))
@@ -2694,13 +2694,13 @@ class NifImport(NifImportExport):
 
         # attaching to selected armature -> first identify armature and bones
         elif self.IMPORT_SKELETON == 2 and not self.armatures:
-            skelroot = niBlock.find(block_name = self.selectedObjects[0].name)
+            skelroot = niBlock.find(block_name = self.selected_objects[0].name)
             if not skelroot:
                 raise NifImportError(
-                    "nif has no armature '%s'" % self.selectedObjects[0].name)
+                    "nif has no armature '%s'" % self.selected_objects[0].name)
             self.logger.debug("Identified '%s' as armature" % skelroot.name)
             self.armatures[skelroot] = []
-            for bone_name in self.selectedObjects[0].data.bones.keys():
+            for bone_name in self.selected_objects[0].data.bones.keys():
                 # blender bone naming -> nif bone naming
                 nif_bone_name = self.get_bone_name_for_nif(bone_name)
                 # find a block with bone name
@@ -2734,7 +2734,7 @@ class NifImport(NifImportExport):
                         raise NifImportError(
                             "nif structure incompatible with '%s' as armature:"
                             " node '%s' has '%s' as armature"
-                            % (self.selectedObjects[0].name, niBlock.name,
+                            % (self.selected_objects[0].name, niBlock.name,
                                skelroot.name))
 
                 for i, boneBlock in enumerate(skininst.bones):
