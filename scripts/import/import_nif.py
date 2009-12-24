@@ -390,7 +390,7 @@ class NifImport(NifImportExport):
         # now all havok objects are imported, so we are
         # ready to import the havok constraints
         for hkbody in self.havok_objects:
-            self.importHavokConstraints(hkbody)
+            self.import_bhk_constraints(hkbody)
 
         # parent selected meshes to imported skeleton
         if self.IMPORT_SKELETON == 1:
@@ -3256,7 +3256,7 @@ class NifImport(NifImportExport):
 
 
 
-    def importHavokConstraints(self, hkbody):
+    def import_bhk_constraints(self, hkbody):
         """Imports a bone havok constraint as Blender object constraint."""
         assert(isinstance(hkbody, NifFormat.bhkRigidBody))
 

@@ -3752,7 +3752,7 @@ class NifExport(NifImportExport):
 
                 # transform pivot point and constraint matrix into bhkRigidBody
                 # coordinates (also see import_nif.py, the
-                # NifImport.importHavokConstraints method)
+                # NifImport.import_bhk_constraints method)
                 
                 # the pivot point v' is in object coordinates
                 # however nif expects it in hkbody coordinates, v
@@ -3782,7 +3782,7 @@ class NifExport(NifImportExport):
                 hkdescriptor.pivot_a.y = pivot[1] / 7.0
                 hkdescriptor.pivot_a.z = pivot[2] / 7.0
                 # export hkdescriptor axes and other parameters
-                # (also see import_nif.py NifImport.importHavokConstraints)
+                # (also see import_nif.py NifImport.import_bhk_constraints)
                 axis_x = Blender.Mathutils.Vector(1,0,0) * constr_matrix
                 axis_y = Blender.Mathutils.Vector(0,1,0) * constr_matrix
                 axis_z = Blender.Mathutils.Vector(0,0,1) * constr_matrix
