@@ -339,7 +339,7 @@ class NifImport(NifImportExport):
         pyffi.spells.nif.fix.SpellScale(data=data, toaster=toaster).recurse()
         
         # mark armature nodes and bones
-        self.markArmaturesBones(root_block)
+        self.mark_armatures_bones(root_block)
         
         # import the keyframe notes
         if self.IMPORT_ANIMATION:
@@ -2656,7 +2656,7 @@ class NifImport(NifImportExport):
                 child._parent = niBlock
                 self.set_parents(child)
 
-    def markArmaturesBones(self, niBlock):
+    def mark_armatures_bones(self, niBlock):
         """Mark armatures and bones by peeking into NiSkinInstance blocks."""
         # case where we import skeleton only,
         # or importing an Oblivion skeleton:
@@ -2771,7 +2771,7 @@ class NifImport(NifImportExport):
         # continue down the tree
         for child in niBlock.get_refs():
             if not isinstance(child, NifFormat.NiAVObject): continue # skip blocks that don't have transforms
-            self.markArmaturesBones(child)
+            self.mark_armatures_bones(child)
 
     def complete_bone_tree(self, bone, skelroot):
         """Make sure that the bones actually form a tree all the way
