@@ -429,7 +429,7 @@ class NifConfig:
         # special case: set log level here
         self.updateLogLevel("LOG_LEVEL", self.config["LOG_LEVEL"])
 
-    def eventId(self, event_name):
+    def event_id(self, event_name):
         """Return event id from event name, and register event if it is new."""
         try:
             event_id = self.guiEventIds[event_name]
@@ -459,7 +459,7 @@ class NifConfig:
         width = self.XCOLUMNSKIP//num_items
         self.guiElements[event_name] = Draw.Slider(
             text,
-            self.eventId(event_name),
+            self.event_id(event_name),
             self.xPos + item*width, self.yPos, width, self.YLINESKIP,
             val, min_val, max_val,
             0, # realtime
@@ -484,24 +484,24 @@ class NifConfig:
         and PREFIX_ADD."""
         self.guiElements["%s_ITEM"%event_name_prefix]   = Draw.String(
             text,
-            self.eventId("%s_ITEM"%event_name_prefix),
+            self.event_id("%s_ITEM"%event_name_prefix),
             self.xPos, self.yPos, self.XCOLUMNSKIP-90, self.YLINESKIP,
             val, 255)
         self.guiElements["%s_PREV"%event_name_prefix]   = Draw.PushButton(
             '<',
-            self.eventId("%s_PREV"%event_name_prefix),
+            self.event_id("%s_PREV"%event_name_prefix),
             self.xPos+self.XCOLUMNSKIP-90, self.yPos, 20, self.YLINESKIP)
         self.guiElements["%s_NEXT"%event_name_prefix]   = Draw.PushButton(
             '>',
-            self.eventId("%s_NEXT"%event_name_prefix),
+            self.event_id("%s_NEXT"%event_name_prefix),
             self.xPos+self.XCOLUMNSKIP-70, self.yPos, 20, self.YLINESKIP)
         self.guiElements["%s_REMOVE"%event_name_prefix] = Draw.PushButton(
             'X',
-            self.eventId("%s_REMOVE"%event_name_prefix),
+            self.event_id("%s_REMOVE"%event_name_prefix),
             self.xPos+self.XCOLUMNSKIP-50, self.yPos, 20, self.YLINESKIP)
         self.guiElements["%s_ADD"%event_name_prefix]    = Draw.PushButton(
             '...',
-            self.eventId("%s_ADD"%event_name_prefix),
+            self.event_id("%s_ADD"%event_name_prefix),
             self.xPos+self.XCOLUMNSKIP-30, self.yPos, 30, self.YLINESKIP)
         self.yPos -= self.YLINESKIP
 
@@ -512,7 +512,7 @@ class NifConfig:
         width = self.XCOLUMNSKIP//num_items
         self.guiElements[event_name] = Draw.Toggle(
             text,
-            self.eventId(event_name),
+            self.event_id(event_name),
             self.xPos + item*width, self.yPos, width, self.YLINESKIP,
             val)
         if item + 1 == num_items:
@@ -523,7 +523,7 @@ class NifConfig:
         width = self.XCOLUMNSKIP//num_items
         self.guiElements[event_name] = Draw.PushButton(
             text,
-            self.eventId(event_name),
+            self.event_id(event_name),
             self.xPos + item*width, self.yPos, width, self.YLINESKIP)
         if item + 1 == num_items:
             self.yPos -= self.YLINESKIP
@@ -537,7 +537,7 @@ class NifConfig:
         width = self.XCOLUMNSKIP//num_items
         self.guiElements[event_name] = Draw.Number(
             text,
-            self.eventId(event_name),
+            self.event_id(event_name),
             self.xPos + item*width, self.yPos, width, self.YLINESKIP,
             val,
             min_val, max_val,
@@ -554,16 +554,16 @@ class NifConfig:
             val = self.config[event_name_prefix]
         self.guiElements["%s_ITEM"%event_name_prefix]   = Draw.String(
             text,
-            self.eventId("%s_ITEM"%event_name_prefix),
+            self.event_id("%s_ITEM"%event_name_prefix),
             self.xPos, self.yPos, self.XCOLUMNSKIP-50, self.YLINESKIP,
             val, 255)
         self.guiElements["%s_REMOVE"%event_name_prefix] = Draw.PushButton(
             'X',
-            self.eventId("%s_REMOVE"%event_name_prefix),
+            self.event_id("%s_REMOVE"%event_name_prefix),
             self.xPos+self.XCOLUMNSKIP-50, self.yPos, 20, self.YLINESKIP)
         self.guiElements["%s_ADD"%event_name_prefix]    = Draw.PushButton(
             '...',
-            self.eventId("%s_ADD"%event_name_prefix),
+            self.event_id("%s_ADD"%event_name_prefix),
             self.xPos+self.XCOLUMNSKIP-30, self.yPos, 30, self.YLINESKIP)
         self.yPos -= self.YLINESKIP
 
@@ -575,7 +575,7 @@ class NifConfig:
         width = self.XCOLUMNSKIP//num_items
         self.guiElements[event_name] = Draw.String(
             text,
-            self.eventId(event_name),
+            self.event_id(event_name),
             self.xPos + item*width, self.yPos, width, self.YLINESKIP,
             val,
             max_length,
@@ -787,7 +787,7 @@ class NifConfig:
                     j = 0
                     V += 150
                 state = (self.config["EXPORT_VERSION"] == game)
-                self.guiElements["GAME_%s"%game.upper()] = Draw.Toggle(game, self.eventId("GAME_%s"%game), V, H-j*20, 150, 20, state)
+                self.guiElements["GAME_%s"%game.upper()] = Draw.Toggle(game, self.event_id("GAME_%s"%game), V, H-j*20, 150, 20, state)
                 j += 1
             j = 0
             V += 160
@@ -797,7 +797,7 @@ class NifConfig:
                     j = 0
                     V += 70
                 state = (self.config["EXPORT_VERSION"] == version)
-                self.guiElements["VERSION_%s"%version] = Draw.Toggle(version, self.eventId("VERSION_%s"%version), V, H-j*20, 70, 20, state)
+                self.guiElements["VERSION_%s"%version] = Draw.Toggle(version, self.event_id("VERSION_%s"%version), V, H-j*20, 70, 20, state)
                 j += 1
             self.yPos -= 20*min(MAXJ, max(len(NifFormat.versions), len(NifFormat.games)))
             self.drawYSep()
@@ -805,7 +805,7 @@ class NifConfig:
             if self.config["EXPORT_VERSION"] in games_list:
                 self.guiElements["EXPORT_RESET"] = Draw.PushButton(
                     "Restore Default Settings For Selected Game",
-                    self.eventId("GAME_%s"%self.config["EXPORT_VERSION"]),
+                    self.event_id("GAME_%s"%self.config["EXPORT_VERSION"]),
                     self.xPos, self.yPos, self.XCOLUMNSKIP, self.YLINESKIP)
                 self.yPos -= self.YLINESKIP
                 self.drawYSep()
