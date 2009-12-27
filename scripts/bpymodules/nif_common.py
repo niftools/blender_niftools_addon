@@ -518,7 +518,7 @@ class NifConfig:
         if item + 1 == num_items:
             self.yPos -= self.YLINESKIP
 
-    def drawPushButton(self, text, event_name, num_items = 1, item = 0):
+    def draw_push_button(self, text, event_name, num_items = 1, item = 0):
         """Draw a push button."""
         width = self.XCOLUMNSKIP//num_items
         self.guiElements[event_name] = Draw.PushButton(
@@ -602,15 +602,15 @@ class NifConfig:
             min_val = 0, max_val = 99,
             callback = self.updateLogLevel,
             num_items = 4, item = 0)
-        self.drawPushButton(
+        self.draw_push_button(
             text = "Warn",
             event_name = "LOG_LEVEL_WARN",
             num_items = 4, item = 1)
-        self.drawPushButton(
+        self.draw_push_button(
             text = "Info",
             event_name = "LOG_LEVEL_INFO",
             num_items = 4, item = 2)
-        self.drawPushButton(
+        self.draw_push_button(
             text = "Debug",
             event_name = "LOG_LEVEL_DEBUG",
             num_items = 4, item = 3)
@@ -692,7 +692,7 @@ class NifConfig:
                 num_items=2, item=1)
             self.draw_y_sep()
 
-            self.drawPushButton(
+            self.draw_push_button(
                 text = "Restore Default Settings",
                 event_name = "IMPORT_SETTINGS_DEFAULT")
             self.draw_y_sep()
@@ -700,7 +700,7 @@ class NifConfig:
             self.draw_label(
                 text = "... and if skinning fails with default settings:",
                 event_name = "IMPORT_SETTINGS_SKINNING_TEXT")
-            self.drawPushButton(
+            self.draw_push_button(
                 text = "Use The Force Luke",
                 event_name = "IMPORT_SETTINGS_SKINNING")
             self.draw_y_sep()
@@ -810,12 +810,12 @@ class NifConfig:
                 self.yPos -= self.YLINESKIP
                 self.draw_y_sep()
             
-        self.drawPushButton(
+        self.draw_push_button(
             text = "Ok",
             event_name = "OK",
             num_items = 3, item = 0)
         # (item 1 is whitespace)
-        self.drawPushButton(
+        self.draw_push_button(
             text = "Cancel",
             event_name = "CANCEL",
             num_items = 3, item = 2)
@@ -860,23 +860,23 @@ class NifConfig:
             self.draw_label(
                 text = "Collision Options",
                 event_name = "EXPORT_OB_COLLISIONHTML")
-            self.drawPushButton(
+            self.draw_push_button(
                 text = "Static",
                 event_name = "EXPORT_OB_RIGIDBODY_STATIC",
                 num_items = 5, item = 0)
-            self.drawPushButton(
+            self.draw_push_button(
                 text = "Anim Static",
                 event_name = "EXPORT_OB_RIGIDBODY_ANIMATED",
                 num_items = 5, item = 1)
-            self.drawPushButton(
+            self.draw_push_button(
                 text = "Clutter",
                 event_name = "EXPORT_OB_RIGIDBODY_CLUTTER",
                 num_items = 5, item = 2)
-            self.drawPushButton(
+            self.draw_push_button(
                 text = "Weapon",
                 event_name = "EXPORT_OB_RIGIDBODY_WEAPON",
                 num_items = 5, item = 3)
-            self.drawPushButton(
+            self.draw_push_button(
                 text = "Creature",
                 event_name = "EXPORT_OB_RIGIDBODY_CREATURE",
                 num_items = 5, item = 4)
@@ -1054,15 +1054,15 @@ class NifConfig:
             self.draw_label(
                 text = "Shader Options",
                 event_name = "LABEL_FO3_SHADER_OPTIONS")
-            self.drawPushButton(
+            self.draw_push_button(
                 text = "Default",
                 event_name = "EXPORT_FO3_SHADER_OPTION_DEFAULT",
                 num_items = 3, item = 0)
-            self.drawPushButton(
+            self.draw_push_button(
                 text = "Skin",
                 event_name = "EXPORT_FO3_SHADER_OPTION_SKIN",
                 num_items = 3, item = 1)
-            self.drawPushButton(
+            self.draw_push_button(
                 text = "Cloth",
                 event_name = "EXPORT_FO3_SHADER_OPTION_CLOTH",
                 num_items = 3, item = 2)
