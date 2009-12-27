@@ -145,11 +145,22 @@ class MetaNifImportExport(type(bpy.types.Operator)):
             default="")
 
         # TODO: preset buttons for log levels
-        cls.log_level = bpy.props.IntProperty(
+        cls.log_level = bpy.props.EnumProperty(
+            items=(
+                ("DEBUG", "Debug",
+                 "Show all messages (only useful for debugging)."),
+                ("INFO", "Info",
+                 "Show some informative messages, warnings, and errors."),
+                ("WARNING", "Warning",
+                 "Only show warnings and errors."),
+                ("ERROR", "Error",
+                 "Only show errors."),
+                ("CRITICAL", "Critical",
+                 "Only show extremely critical errors."),
+                ),
             name="Log Level",
-            description="Level of verbosity.",
-            min=0, max=99,
-            default=logging.WARNING)
+            description="Level of verbosity on the console.",
+            default="WARNING")
 
         cls.profile_path = bpy.props.StringProperty(
             name="Profile Path",
@@ -288,8 +299,9 @@ class NifImportExport(bpy.types.Operator, metaclass=MetaNifImportExport):
         self.msg_progress("Initializing", progbar=0)
 
         # set logging level
-        logging.getLogger("niftools").setLevel(self.properties.log_level)
-        logging.getLogger("pyffi").setLevel(self.properties.log_level)
+        log_level_num = getattr(logging, self.properties.log_level)
+        logging.getLogger("niftools").setLevel(log_level_num)
+        logging.getLogger("pyffi").setLevel(log_level_num)
 
         # save context (so it can be used in other methods without argument
         # passing)
