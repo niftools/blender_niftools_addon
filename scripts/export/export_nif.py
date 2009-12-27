@@ -2266,7 +2266,7 @@ class NifExport(NifImportExport):
                         self.export_specular_property(flags=0x0001))
                 
                 # add NiTriShape's material property
-                trimatprop = self.exportMaterialProperty(
+                trimatprop = self.export_material_property(
                     name=self.get_full_name(mesh_mat.getName()),
                     flags=0x0001, # ? standard
                     ambient=mesh_mat_ambient_color,
@@ -3911,7 +3911,7 @@ class NifExport(NifImportExport):
             stencilprop.flags = 19840
         return stencilprop        
 
-    def exportMaterialProperty(self, name='', flags=0x0001,
+    def export_material_property(self, name='', flags=0x0001,
                                ambient=(1.0, 1.0, 1.0),
                                diffuse=(1.0, 1.0, 1.0),
                                specular=(0.0, 0.0, 0.0),
