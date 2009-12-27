@@ -468,7 +468,7 @@ class NifConfig:
         if item + 1 == num_items:
             self.yPos -= self.YLINESKIP
 
-    def drawLabel(self, text, event_name, num_items = 1, item = 0):
+    def draw_label(self, text, event_name, num_items = 1, item = 0):
         """Draw a line of text."""
         width = self.XCOLUMNSKIP//num_items
         self.guiElements[event_name] = Draw.Label(
@@ -591,7 +591,7 @@ class NifConfig:
         self.yPos = self.YORIGIN + Blender.Window.GetAreaSize()[1]
 
         # common options
-        self.drawLabel(
+        self.draw_label(
             text = self.WELCOME_MESSAGE,
             event_name = "LABEL_WELCOME_MESSAGE")
         self.draw_y_sep()
@@ -626,7 +626,7 @@ class NifConfig:
 
         # import-only options
         if self.target == self.TARGET_IMPORT:
-            self.drawLabel(
+            self.draw_label(
                 text = "Texture Search Paths:",
                 event_name = "TEXPATH_TEXT")
             self.drawList(
@@ -665,7 +665,7 @@ class NifConfig:
                 event_name = "IMPORT_COMBINESHAPES")
             self.draw_y_sep()
 
-            self.drawLabel(
+            self.draw_label(
                 text = "Keyframe File:",
                 event_name = "IMPORT_KEYFRAMEFILE_TEXT")
             self.drawFileBrowse(
@@ -673,7 +673,7 @@ class NifConfig:
                 event_name_prefix = "IMPORT_KEYFRAMEFILE")
             self.draw_y_sep()
 
-            self.drawLabel(
+            self.draw_label(
                 text = "FaceGen EGM File:",
                 event_name = "IMPORT_EGMFILE_TEXT")
             self.drawFileBrowse(
@@ -697,7 +697,7 @@ class NifConfig:
                 event_name = "IMPORT_SETTINGS_DEFAULT")
             self.draw_y_sep()
 
-            self.drawLabel(
+            self.draw_label(
                 text = "... and if skinning fails with default settings:",
                 event_name = "IMPORT_SETTINGS_SKINNING_TEXT")
             self.drawPushButton(
@@ -857,7 +857,7 @@ class NifConfig:
             and self.config["EXPORT_VERSION"] in ("Oblivion", "Fallout 3")):
             self.draw_next_column()
             
-            self.drawLabel(
+            self.draw_label(
                 text = "Collision Options",
                 event_name = "EXPORT_OB_COLLISIONHTML")
             self.drawPushButton(
@@ -987,7 +987,7 @@ class NifConfig:
                 event_name = "EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES")   
             self.draw_y_sep()
 
-            self.drawLabel(
+            self.draw_label(
                 text = "Weapon Body Location",
                 event_name = "LABEL_WEAPON_LOCATION")
             self.drawToggle(
@@ -1051,7 +1051,7 @@ class NifConfig:
             and self.config["EXPORT_VERSION"] == "Fallout 3"):
             self.draw_next_column()
 
-            self.drawLabel(
+            self.draw_label(
                 text = "Shader Options",
                 event_name = "LABEL_FO3_SHADER_OPTIONS")
             self.drawPushButton(
