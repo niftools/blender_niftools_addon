@@ -477,7 +477,7 @@ class NifConfig:
         if item + 1 == num_items:
             self.yPos -= self.YLINESKIP
 
-    def drawList(self, text, event_name_prefix, val):
+    def draw_list(self, text, event_name_prefix, val):
         """Create elements to select a list of things.
 
         Registers events PREFIX_ITEM, PREFIX_PREV, PREFIX_NEXT, PREFIX_REMOVE
@@ -629,7 +629,7 @@ class NifConfig:
             self.draw_label(
                 text = "Texture Search Paths:",
                 event_name = "TEXPATH_TEXT")
-            self.drawList(
+            self.draw_list(
                 text = "",
                 event_name_prefix = "TEXPATH",
                 val = self.texpathCurrent)
