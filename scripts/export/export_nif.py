@@ -3344,14 +3344,14 @@ class NifExport(NifImportExport):
             colbody.mass += mass
 
         if coll_ispacked:
-            self.exportCollisionPacked(obj, colbody, layer, material)
+            self.export_collision_packed(obj, colbody, layer, material)
         else:
             if self.EXPORT_BHKLISTSHAPE:
                 self.exportCollisionList(obj, colbody, layer, material)
             else:
                 self.exportCollisionSingle(obj, colbody, layer, material)
 
-    def exportCollisionPacked(self, obj, colbody, layer, material):
+    def export_collision_packed(self, obj, colbody, layer, material):
         """Add object ob as packed collision object to collision body
         colbody. If parent_block hasn't any collisions yet, a new
         packed list is created. If the current collision system is not
@@ -3450,7 +3450,7 @@ class NifExport(NifImportExport):
 
     def exportCollisionObject(self, obj, layer, material):
         """Export object obj as box, sphere, capsule, or convex hull.
-        Note: polyheder is handled by exportCollisionPacked."""
+        Note: polyheder is handled by export_collision_packed."""
 
         # find bounding box data
         minx = min([vert[0] for vert in obj.data.verts])
