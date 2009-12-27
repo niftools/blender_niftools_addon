@@ -2220,7 +2220,7 @@ class NifExport(NifImportExport):
                         and self.EXPORT_EXTRA_SHADER_TEXTURES):
                         # sid meier's railroad and civ4:
                         # set shader slots in extra data
-                        self.addShaderIntegerExtraDatas(trishape)
+                        self.add_shader_integer_extra_datas(trishape)
                     trishape.add_property(self.export_texturing_property(
                         flags=0x0001, # standard
                         applymode=self.APPLYMODE[mesh_base_mtex.blendmode if mesh_base_mtex else Blender.Texture.BlendModes["MIX"]],
@@ -4244,7 +4244,7 @@ class NifExport(NifImportExport):
             bbox.bounding_box.radius.y = (maxy - miny) * 0.5
             bbox.bounding_box.radius.z = (maxz - minz) * 0.5
 
-    def addShaderIntegerExtraDatas(self, trishape):
+    def add_shader_integer_extra_datas(self, trishape):
         """Add extra data blocks for shader indices."""
         for shaderindex in self.USED_EXTRA_SHADER_TEXTURES[self.EXPORT_VERSION]:
             shadername = self.EXTRA_SHADER_TEXTURES[shaderindex]
