@@ -546,7 +546,7 @@ class NifConfig:
         if item + 1 == num_items:
             self.yPos -= self.YLINESKIP
 
-    def drawFileBrowse(self, text, event_name_prefix, val = None):
+    def draw_file_browse(self, text, event_name_prefix, val = None):
         """Create elements to select a file.
 
         Registers events PREFIX_ITEM, PREFIX_REMOVE, PREFIX_ADD."""
@@ -668,7 +668,7 @@ class NifConfig:
             self.draw_label(
                 text = "Keyframe File:",
                 event_name = "IMPORT_KEYFRAMEFILE_TEXT")
-            self.drawFileBrowse(
+            self.draw_file_browse(
                 text = "",
                 event_name_prefix = "IMPORT_KEYFRAMEFILE")
             self.draw_y_sep()
@@ -676,7 +676,7 @@ class NifConfig:
             self.draw_label(
                 text = "FaceGen EGM File:",
                 event_name = "IMPORT_EGMFILE_TEXT")
-            self.drawFileBrowse(
+            self.draw_file_browse(
                 text = "",
                 event_name_prefix = "IMPORT_EGMFILE")
             self.draw_toggle(
