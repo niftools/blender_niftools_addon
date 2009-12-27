@@ -505,7 +505,7 @@ class NifConfig:
             self.xPos+self.XCOLUMNSKIP-30, self.yPos, 30, self.YLINESKIP)
         self.yPos -= self.YLINESKIP
 
-    def drawToggle(self, text, event_name, val = None, num_items = 1, item = 0):
+    def draw_toggle(self, text, event_name, val = None, num_items = 1, item = 0):
         """Draw a toggle button."""
         if val == None:
             val = self.config[event_name]
@@ -635,32 +635,32 @@ class NifConfig:
                 val = self.texpathCurrent)
             self.draw_y_sep()
 
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Import Animation",
                 event_name = "IMPORT_ANIMATION")
             self.draw_y_sep()
 
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Import Extra Nodes",
                 event_name = "IMPORT_EXTRANODES")
             self.draw_y_sep()
             
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Import Skeleton Only + Parent Selected",
                 event_name = "IMPORT_SKELETON_1",
                 val = (self.config["IMPORT_SKELETON"] == 1))
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Import Geometry Only + Parent To Selected Armature",
                 event_name = "IMPORT_SKELETON_2",
                 val = (self.config["IMPORT_SKELETON"] == 2))
             self.draw_y_sep()
 
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Save Embedded Textures As DDS",
                 event_name = "IMPORT_EXPORTEMBEDDEDTEXTURES")
             self.draw_y_sep()
 
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Combine Multi-Material Shapes Into Single Mesh",
                 event_name = "IMPORT_COMBINESHAPES")
             self.draw_y_sep()
@@ -679,7 +679,7 @@ class NifConfig:
             self.drawFileBrowse(
                 text = "",
                 event_name_prefix = "IMPORT_EGMFILE")
-            self.drawToggle(
+            self.draw_toggle(
                 text="Animate",
                 event_name="IMPORT_EGMANIM",
                 num_items=2, item=0)
@@ -707,17 +707,17 @@ class NifConfig:
 
         # export-only options
         if self.target == self.TARGET_EXPORT:
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Export Geometry + Animation (.nif)",
                 event_name = "EXPORT_ANIMATION_0",
                 val = ((self.config["EXPORT_ANIMATION"] == 0)
                        or self.config["EXPORT_MW_NIFXNIFKF"]))
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Export Geometry Only (.nif)",
                 event_name = "EXPORT_ANIMATION_1",
                 val = ((self.config["EXPORT_ANIMATION"] == 1)
                        or self.config["EXPORT_MW_NIFXNIFKF"]))
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Export Animation Only (.kf)",
                 event_name = "EXPORT_ANIMATION_2",
                 val = ((self.config["EXPORT_ANIMATION"] == 2)
@@ -731,34 +731,34 @@ class NifConfig:
                 callback = self.updateAnimSequenceName)
             self.draw_y_sep()
 
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Force DDS Extension",
                 event_name = "EXPORT_FORCEDDS")
             self.draw_y_sep()
 
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Stripify Geometries",
                 event_name = "EXPORT_STRIPIFY",
                 num_items = 2, item = 0)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Stitch Strips",
                 event_name = "EXPORT_STITCHSTRIPS",
                 num_items = 2, item = 1)
             self.draw_y_sep()
 
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Smoothen Inter-Object Seams",
                 event_name = "EXPORT_SMOOTHOBJECTSEAMS")
             self.draw_y_sep()
 
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Flatten Skin",
                 event_name = "EXPORT_FLATTENSKIN")
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Export Skin Partition",
                 event_name = "EXPORT_SKINPARTITION",
                 num_items = 3, item = 0)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Pad & Sort Bones",
                 event_name = "EXPORT_PADBONES",
                 num_items = 3, item = 1)
@@ -770,7 +770,7 @@ class NifConfig:
                 num_items = 3, item = 2)
             self.draw_y_sep()
 
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Combine Materials to Increase Performance",
                 event_name = "EXPORT_OPTIMIZE_MATERIALS")
             self.draw_y_sep()
@@ -824,29 +824,29 @@ class NifConfig:
         if self.target == self.TARGET_IMPORT:
             self.draw_next_column()
 
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Realign Bone Tail Only",
                 event_name = "IMPORT_REALIGN_BONES_1",
                 val = (self.config["IMPORT_REALIGN_BONES"] == 1),
                 num_items = 2, item = 0)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Realign Bone Tail + Roll",
                 event_name = "IMPORT_REALIGN_BONES_2",
                 val = (self.config["IMPORT_REALIGN_BONES"] == 2),
                 num_items = 2, item = 1)
-            self.drawToggle(
+            self.draw_toggle(
                 text="Merge Skeleton Roots",
                 event_name="IMPORT_MERGESKELETONROOTS")
-            self.drawToggle(
+            self.draw_toggle(
                 text="Send Geometries To Bind Position",
                 event_name="IMPORT_SENDGEOMETRIESTOBINDPOS")
-            self.drawToggle(
+            self.draw_toggle(
                 text="Send Detached Geometries To Node Position",
                 event_name="IMPORT_SENDDETACHEDGEOMETRIESTONODEPOS")
-            self.drawToggle(
+            self.draw_toggle(
                 text="Send Bones To Bind Position",
                 event_name="IMPORT_SENDBONESTOBINDPOS")
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Apply Skin Deformation",
                 event_name = "IMPORT_APPLYSKINDEFORM")
             self.draw_y_sep()
@@ -880,32 +880,32 @@ class NifConfig:
                 text = "Creature",
                 event_name = "EXPORT_OB_RIGIDBODY_CREATURE",
                 num_items = 5, item = 4)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Stone",
                 event_name = "EXPORT_OB_MATERIAL_STONE",
                 val = self.config["EXPORT_OB_MATERIAL"] == 0,
                 num_items = 6, item = 0)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Cloth",
                 event_name = "EXPORT_OB_MATERIAL_CLOTH",
                 val = self.config["EXPORT_OB_MATERIAL"] == 1,
                 num_items = 6, item = 1)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Glass",
                 event_name = "EXPORT_OB_MATERIAL_GLASS",
                 val = self.config["EXPORT_OB_MATERIAL"] == 3,
                 num_items = 6, item = 2)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Metal",
                 event_name = "EXPORT_OB_MATERIAL_METAL",
                 val = self.config["EXPORT_OB_MATERIAL"] == 5,
                 num_items = 6, item = 3)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Skin",
                 event_name = "EXPORT_OB_MATERIAL_SKIN",
                 val = self.config["EXPORT_OB_MATERIAL"] == 7,
                 num_items = 6, item = 4)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Wood",
                 event_name = "EXPORT_OB_MATERIAL_WOOD",
                 val = self.config["EXPORT_OB_MATERIAL"] == 9,
@@ -963,26 +963,26 @@ class NifConfig:
                 min_val = 0, max_val = 1,
                 callback = self.updateObWind,
                 num_items = 3, item = 2)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Solid",
                 event_name = "EXPORT_OB_SOLID",
                 num_items = 2, item = 0)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Hollow",
                 event_name = "EXPORT_OB_HOLLOW",
                 val = not self.config["EXPORT_OB_SOLID"],
                 num_items = 2, item = 1)
             self.draw_y_sep()
 
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Use bhkListShape",
                 event_name = "EXPORT_BHKLISTSHAPE",
                 num_items = 2, item = 0)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Use bhkMalleableConstraint",
                 event_name = "EXPORT_OB_MALLEABLECONSTRAINT",
                 num_items = 2, item = 1)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Do Not Use Blender Properties",
                 event_name = "EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES")   
             self.draw_y_sep()
@@ -990,37 +990,37 @@ class NifConfig:
             self.draw_label(
                 text = "Weapon Body Location",
                 event_name = "LABEL_WEAPON_LOCATION")
-            self.drawToggle(
+            self.draw_toggle(
                 text = "None",
                 val = self.config["EXPORT_OB_PRN"] == "NONE",
                 event_name = "EXPORT_OB_PRN_NONE",
                 num_items = 7, item = 0)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Back",
                 val = self.config["EXPORT_OB_PRN"] == "BACK",
                 event_name = "EXPORT_OB_PRN_BACK",
                 num_items = 7, item = 1)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Side",
                 val = self.config["EXPORT_OB_PRN"] == "SIDE",
                 event_name = "EXPORT_OB_PRN_SIDE",
                 num_items = 7, item = 2)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Quiver",
                 val = self.config["EXPORT_OB_PRN"] == "QUIVER",
                 event_name = "EXPORT_OB_PRN_QUIVER",
                 num_items = 7, item = 3)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Shield",
                 val = self.config["EXPORT_OB_PRN"] == "SHIELD",
                 event_name = "EXPORT_OB_PRN_SHIELD",
                 num_items = 7, item = 4)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Helm",
                 val = self.config["EXPORT_OB_PRN"] == "HELM",
                 event_name = "EXPORT_OB_PRN_HELM",
                 num_items = 7, item = 5)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Ring",
                 val = self.config["EXPORT_OB_PRN"] == "RING",
                 event_name = "EXPORT_OB_PRN_RING",
@@ -1032,7 +1032,7 @@ class NifConfig:
             and self.config["EXPORT_VERSION"] == "Morrowind"):
             self.draw_next_column()
 
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Export nif + xnif + kf",
                 event_name = "EXPORT_MW_NIFXNIFKF")
 
@@ -1042,7 +1042,7 @@ class NifConfig:
                  in NifImportExport.USED_EXTRA_SHADER_TEXTURES)):
             self.draw_next_column()
 
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Export Extra Shader Textures",
                 event_name = "EXPORT_EXTRA_SHADER_TEXTURES")
 
@@ -1066,48 +1066,48 @@ class NifConfig:
                 text = "Cloth",
                 event_name = "EXPORT_FO3_SHADER_OPTION_CLOTH",
                 num_items = 3, item = 2)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Default Type",
                 val = self.config["EXPORT_FO3_SHADER_TYPE"] == 1,
                 event_name = "EXPORT_FO3_SHADER_TYPE_DEFAULT",
                 num_items = 2, item = 0)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Skin Type",
                 val = self.config["EXPORT_FO3_SHADER_TYPE"] == 14,
                 event_name = "EXPORT_FO3_SHADER_TYPE_SKIN",
                 num_items = 2, item = 1)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Z Buffer",
                 event_name = "EXPORT_FO3_SF_ZBUF",
                 num_items = 3, item = 0)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Shadow Map",
                 event_name = "EXPORT_FO3_SF_SMAP",
                 num_items = 3, item = 1)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Shadow Frustum",
                 event_name = "EXPORT_FO3_SF_SFRU",
                 num_items = 3, item = 2)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Window Envmap",
                 event_name = "EXPORT_FO3_SF_WINDOW_ENVMAP",
                 num_items = 3, item = 0)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Empty",
                 event_name = "EXPORT_FO3_SF_EMPT",
                 num_items = 3, item = 1)
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Unknown 31",
                 event_name = "EXPORT_FO3_SF_UN31",
                 num_items = 3, item = 2)
             self.draw_y_sep()
 
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Use BSFadeNode Root",
                 event_name = "EXPORT_FO3_FADENODE")
             self.draw_y_sep()
 
-            self.drawToggle(
+            self.draw_toggle(
                 text = "Export Dismember Body Parts",
                 event_name = "EXPORT_FO3_BODYPARTS")
             self.draw_y_sep()
