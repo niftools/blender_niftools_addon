@@ -3362,7 +3362,7 @@ class NifImport(NifImportExport):
                 hkdescriptor.pivot_a.z * 7)
 
             # get z- and x-axes of the constraint
-            # (also see export_nif.py NifImport.exportConstraints)
+            # (also see export_nif.py NifImport.export_constraints)
             if isinstance(hkdescriptor, NifFormat.RagdollDescriptor):
                 # for ragdoll, take z to be the twist axis (central axis of the
                 # cone, that is)
@@ -3457,7 +3457,7 @@ class NifImport(NifImportExport):
 
             # transform pivot point and constraint matrix into object
             # coordinates
-            # (also see export_nif.py NifImport.exportConstraints)
+            # (also see export_nif.py NifImport.export_constraints)
             
             # the pivot point v is in hkbody coordinates
             # however blender expects it in object coordinates, v'

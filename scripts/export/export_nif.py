@@ -572,7 +572,7 @@ class NifExport(NifImportExport):
 
             # export constraints
             for b_obj in self.get_exported_objects():
-                self.exportConstraints(b_obj, root_block)
+                self.export_constraints(b_obj, root_block)
 
             # export weapon location
             if self.EXPORT_VERSION in ("Oblivion", "Fallout 3"):
@@ -3629,7 +3629,7 @@ class NifExport(NifImportExport):
                 'cannot export collision type %s to collision shape list'
                 % obj.rbShapeBoundType)
 
-    def exportConstraints(self, b_obj, root_block):
+    def export_constraints(self, b_obj, root_block):
         """Export the constraints of an object.
 
         @param b_obj: The object whose constraints to export.
