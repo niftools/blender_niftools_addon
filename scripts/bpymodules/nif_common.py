@@ -450,7 +450,7 @@ class NifConfig:
         self.xPos += self.XCOLUMNSKIP + self.XCOLUMNSEP
         self.yPos = self.YORIGIN + Blender.Window.GetAreaSize()[1]
 
-    def drawSlider(
+    def draw_slider(
         self, text, event_name, min_val, max_val, callback, val = None,
         num_items = 1, item = 0):
         """Draw a slider."""
@@ -616,7 +616,7 @@ class NifConfig:
             num_items = 4, item = 3)
         self.draw_y_sep()
 
-        self.drawSlider(
+        self.draw_slider(
             text = "Scale Correction:  ",
             event_name = "SCALE_CORRECTION",
             val = self.config["EXPORT_SCALE_CORRECTION"],
@@ -683,7 +683,7 @@ class NifConfig:
                 text="Animate",
                 event_name="IMPORT_EGMANIM",
                 num_items=2, item=0)
-            self.drawSlider(
+            self.draw_slider(
                 text="Scale:  ",
                 event_name="IMPORT_EGMANIMSCALE",
                 val=self.config["IMPORT_EGMANIMSCALE"],
@@ -921,7 +921,7 @@ class NifConfig:
                 min_val = 0, max_val = 63,
                 callback = self.updateObBSXFlags,
                 num_items = 2, item = 0)
-            self.drawSlider(
+            self.draw_slider(
                 text = "Mass:  ",
                 event_name = "EXPORT_OB_MASS",
                 min_val = 0.1, max_val = 1500.0,
