@@ -728,7 +728,7 @@ class NifConfig:
                 text = "Anim Seq Name: ",
                 event_name = "EXPORT_ANIMSEQUENCENAME",
                 max_length = 128,
-                callback = self.updateAnimSequenceName)
+                callback = self.update_anim_sequence_name)
             self.draw_y_sep()
 
             self.draw_toggle(
@@ -1549,7 +1549,7 @@ class NifConfig:
     def update_ob_wind(self, evt, val):
         self.config["EXPORT_OB_WIND"] = val
 
-    def updateAnimSequenceName(self, evt, val):
+    def update_anim_sequence_name(self, evt, val):
         self.config["EXPORT_ANIMSEQUENCENAME"] = val
 
     def updateEgmAnimScale(self, evt, val):
