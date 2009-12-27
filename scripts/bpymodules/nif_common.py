@@ -961,7 +961,7 @@ class NifConfig:
                 text = "Wind:  ",
                 event_name = "EXPORT_OB_WIND",
                 min_val = 0, max_val = 1,
-                callback = self.updateObWind,
+                callback = self.update_ob_wind,
                 num_items = 3, item = 2)
             self.draw_toggle(
                 text = "Solid",
@@ -1546,7 +1546,7 @@ class NifConfig:
     def update_ob_unknown_byte_2(self, evt, val):
         self.config["EXPORT_OB_UNKNOWNBYTE2"] = val
 
-    def updateObWind(self, evt, val):
+    def update_ob_wind(self, evt, val):
         self.config["EXPORT_OB_WIND"] = val
 
     def updateAnimSequenceName(self, evt, val):
