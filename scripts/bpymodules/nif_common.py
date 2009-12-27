@@ -427,7 +427,7 @@ class NifConfig:
         # store configuration
         Blender.Registry.SetKey(self.CONFIG_NAME, self.config, True)
         # special case: set log level here
-        self.updateLogLevel("LOG_LEVEL", self.config["LOG_LEVEL"])
+        self.update_log_level("LOG_LEVEL", self.config["LOG_LEVEL"])
 
     def event_id(self, event_name):
         """Return event id from event name, and register event if it is new."""
@@ -600,7 +600,7 @@ class NifConfig:
             text = "Log Level",
             event_name = "LOG_LEVEL",
             min_val = 0, max_val = 99,
-            callback = self.updateLogLevel,
+            callback = self.update_log_level,
             num_items = 4, item = 0)
         self.draw_push_button(
             text = "Warn",
@@ -1406,11 +1406,11 @@ class NifConfig:
         elif evName == "EXPORT_OPTIMIZE_MATERIALS":
             self.config["EXPORT_OPTIMIZE_MATERIALS"] = not self.config["EXPORT_OPTIMIZE_MATERIALS"]
         elif evName == "LOG_LEVEL_WARN":
-            self.updateLogLevel(evName, logging.WARNING)
+            self.update_log_level(evName, logging.WARNING)
         elif evName == "LOG_LEVEL_INFO":
-            self.updateLogLevel(evName, logging.INFO)
+            self.update_log_level(evName, logging.INFO)
         elif evName == "LOG_LEVEL_DEBUG":
-            self.updateLogLevel(evName, logging.DEBUG)
+            self.update_log_level(evName, logging.DEBUG)
         elif evName == "EXPORT_FO3_FADENODE":
             self.config["EXPORT_FO3_FADENODE"] = not self.config["EXPORT_FO3_FADENODE"]
         elif evName.startswith("EXPORT_FO3_SF_"):
@@ -1509,7 +1509,7 @@ class NifConfig:
         else:
             self.config["IMPORT_EGMFILE"] = egmfile
 
-    def updateLogLevel(self, evt, val):
+    def update_log_level(self, evt, val):
         self.config["LOG_LEVEL"] = val
         logging.getLogger("niftools").setLevel(val)
         logging.getLogger("pyffi").setLevel(val)
