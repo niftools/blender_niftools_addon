@@ -3990,7 +3990,7 @@ class NifExport(NifImportExport):
         # the new one
         return self.register_block(matprop)
 
-    def exportTexDesc(self, texdesc=None, uvlayers=None, mtex=None):
+    def export_tex_desc(self, texdesc=None, uvlayers=None, mtex=None):
         """Helper function for exportTexturingProperty to export each texture
         slot."""
         try:
@@ -4058,7 +4058,7 @@ class NifExport(NifImportExport):
 
         if basemtex:
             texprop.has_base_texture = True
-            self.exportTexDesc(texdesc = texprop.base_texture,
+            self.export_tex_desc(texdesc = texprop.base_texture,
                                uvlayers = uvlayers,
                                mtex = basemtex)
             # check for texture flip definition
@@ -4072,14 +4072,14 @@ class NifExport(NifImportExport):
 
         if glowmtex:
             texprop.has_glow_texture = True
-            self.exportTexDesc(texdesc = texprop.glow_texture,
+            self.export_tex_desc(texdesc = texprop.glow_texture,
                                uvlayers = uvlayers,
                                mtex = glowmtex)
 
         if bumpmtex:
             if self.EXPORT_VERSION not in self.USED_EXTRA_SHADER_TEXTURES:
                 texprop.has_bump_map_texture = True
-                self.exportTexDesc(texdesc = texprop.bump_map_texture,
+                self.export_tex_desc(texdesc = texprop.bump_map_texture,
                                    uvlayers = uvlayers,
                                    mtex = bumpmtex)
                 texprop.bump_map_luma_scale = 1.0
@@ -4097,7 +4097,7 @@ class NifExport(NifImportExport):
         if glossmtex:
             if self.EXPORT_VERSION not in self.USED_EXTRA_SHADER_TEXTURES:
                 texprop.has_gloss_texture = True
-                self.exportTexDesc(texdesc = texprop.gloss_texture,
+                self.export_tex_desc(texdesc = texprop.gloss_texture,
                                    uvlayers = uvlayers,
                                    mtex = glossmtex)
             elif self.EXPORT_EXTRA_SHADER_TEXTURES:
@@ -4108,13 +4108,13 @@ class NifExport(NifImportExport):
 
         if darkmtex:
             texprop.has_dark_texture = True
-            self.exportTexDesc(texdesc = texprop.dark_texture,
+            self.export_tex_desc(texdesc = texprop.dark_texture,
                                uvlayers = uvlayers,
                                mtex = darkmtex)
 
         if detailmtex:
             texprop.has_detail_texture = True
-            self.exportTexDesc(texdesc = texprop.detail_texture,
+            self.export_tex_desc(texdesc = texprop.detail_texture,
                                uvlayers = uvlayers,
                                mtex = detailmtex)
 
@@ -4123,7 +4123,7 @@ class NifExport(NifImportExport):
                 self.logger.warn(
                     "Cannot export reflection texture for this game.")
                 #texprop.hasRefTexture = True
-                #self.exportTexDesc(texdesc = texprop.refTexture,
+                #self.export_tex_desc(texdesc = texprop.refTexture,
                 #                   uvlayers = uvlayers,
                 #                   mtex = refmtex)
             else:
