@@ -621,7 +621,7 @@ class NifConfig:
             event_name = "SCALE_CORRECTION",
             val = self.config["EXPORT_SCALE_CORRECTION"],
             min_val = 0.01, max_val = 100.0,
-            callback = self.updateScale)
+            callback = self.update_scale)
         self.draw_y_sep()
 
         # import-only options
@@ -1514,7 +1514,7 @@ class NifConfig:
         logging.getLogger("niftools").setLevel(val)
         logging.getLogger("pyffi").setLevel(val)
 
-    def updateScale(self, evt, val):
+    def update_scale(self, evt, val):
         self.config["EXPORT_SCALE_CORRECTION"] = val
         self.config["IMPORT_SCALE_CORRECTION"] = 1.0 / self.config["EXPORT_SCALE_CORRECTION"]
 
