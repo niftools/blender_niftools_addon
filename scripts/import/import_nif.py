@@ -149,6 +149,9 @@ class NifImport(NifImportExport):
         if self.context.selected_objects:
             self.selected_objects = self.context.selected_objects[:]
         else:
+            # if there are no selected objects,
+            # then context.selected_objects is None
+            # but an empty list makes more sense (for iterating)
             self.selected_objects = []
         
         # catch NifImportError
