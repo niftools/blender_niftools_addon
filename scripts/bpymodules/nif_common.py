@@ -125,6 +125,25 @@ class MetaNifImportExport(type(bpy.types.Operator)):
         level, and ignores those properties defined higher up in the
         class hierarchy.
         """
+
+        cls.path = bpy.props.StringProperty(
+            name="File Path",
+            description="File path used for importing or exporting the NIF file",
+            maxlen=1024,
+            default="")
+
+        cls.directory = bpy.props.StringProperty(
+            name="Directory",
+            description="",
+            maxlen=1024,
+            default="")
+
+        cls.filename = bpy.props.StringProperty(
+            name="File Name",
+            description="",
+            maxlen=1024,
+            default="")
+
         # TODO: preset buttons for log levels
         cls.log_level = bpy.props.IntProperty(
             name="Log Level",
@@ -263,12 +282,13 @@ class NifImportExport(bpy.types.Operator, metaclass=MetaNifImportExport):
             if self.progress_bar > 0.89:
                 # reset progress bar
                 self.progress_bar = 0
-                Blender.Window.DrawProgressBar(0, message)
+                # TODO draw the progress bar
+                #Blender.Window.DrawProgressBar(0, message)
             self.progress_bar += 0.1
         else:
             self.progress_bar = progbar
-        # draw the progress bar
-        Blender.Window.DrawProgressBar(self.progress_bar, message)
+        # TODO draw the progress bar
+        #Blender.Window.DrawProgressBar(self.progress_bar, message)
 
     def get_bone_name_for_blender(self, name):
         """Convert a bone name to a name that can be used by Blender: turns

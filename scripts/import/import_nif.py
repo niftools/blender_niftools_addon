@@ -77,11 +77,7 @@ class NifImport(NifImportExport):
     bl_label = "Import NIF"
 
     # properties
-    path = bpy.props.StringProperty(
-        name="File Path",
-        description="File path used for importing or exporting the NIF file",
-        maxlen=1024,
-        default="")
+    # (nothing yet, all the IMPORT_XXX options will come here as properties)
 
     # correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z
     BONE_CORRECTION_MATRICES = (
@@ -107,26 +103,12 @@ class NifImport(NifImportExport):
 
     def execute(self, context):
         """Main import function: open file and import all trees."""
-        return {'FINISHED'}
-
-        # TODO
-
         # initialize progress bar
-        self.msg_progress("Initializing", progbar = 0)
-
-        # store config settings
-        for name, value in config.iteritems():
-            setattr(self, name, value)
+        self.msg_progress("Initializing", progbar=0)
 
         # shortcut to import logger
         self.logger = logging.getLogger("niftools.blender.import")
 
-        # save file name
-        self.filename = self.IMPORT_FILE[:]
-        self.filepath = Blender.sys.dirname(self.filename)
-        self.filebase, self.fileext = Blender.sys.splitext(
-            Blender.sys.basename(self.filename))
-        
         # dictionary of texture files, to reuse textures
         self.textures = {}
 
@@ -159,6 +141,10 @@ class NifImport(NifImportExport):
         # to set the physics constraints (ragdoll etc)
         self.havok_objects = {}
 
+        return {'FINISHED'}
+
+        # TODO
+
         # Blender scene
         self.scene = Blender.Scene.GetCurrent()
 
@@ -180,8 +166,8 @@ class NifImport(NifImportExport):
                         " mode.")
 
             # open file for binary reading
-            self.logger.info("Importing %s" % self.filename)
-            niffile = open(self.filename, "rb")
+            self.logger.info("Importing %s" % self.properties.path)
+            niffile = open(self.properties.path, "rb")
             data = NifFormat.Data()
             try:
                 # check if nif file is valid
@@ -2685,7 +2671,8 @@ class NifImport(NifImportExport):
         # do all NiNode's as bones
         if self.IMPORT_SKELETON == 1 or (
             self.version == 0x14000005 and
-            self.filebase.lower() in ('skeleton', 'skeletonbeast')):
+            self.properties.filename.lower() in ('skeleton.nif',
+                                                 'skeletonbeast.nif')):
             
             if not isinstance(niBlock, NifFormat.NiNode):
                 raise NifImportError(
@@ -3723,14 +3710,18 @@ class NifImport(NifImportExport):
         #NifFormat.write(niffile,
         #                version = 0x14000005, user_version = 11, roots = [root])
 
+# register nif import operator
 bpy.types.register(NifImport)
 
+# register operator in import menu
 def menu_func(self, context):
-    default_path = bpy.data.filename.replace(".blend", ".nif")
+    # TODO get default path from config registry
+    #default_path = bpy.data.filename.replace(".blend", ".nif")
+    default_path = "import.nif"
     self.layout.operator(
         NifImport.bl_idname,
         text="NetImmerse/Gamebryo (.nif & .kf & .egm)..."
-        ).path=default_path
+        ).path = default_path
 
 menu_item = bpy.types.INFO_MT_file_import.append(menu_func)
 
