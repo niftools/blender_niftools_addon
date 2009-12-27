@@ -3426,10 +3426,14 @@ class NifImport(NifImportExport):
                             "X axis flipped in %s to fix orientation"
                             % hkdescriptor.__class__.__name__)
                         axis_x = -axis_x
-                #getting properties with no blender constraint equivalent and setting as obj properties
-                b_hkobj.addProperty("LimitedHinge_MaxAngle", hkdescriptor.max_angle)
-                b_hkobj.addProperty("LimitedHinge_MinAngle", hkdescriptor.min_angle)
-                b_hkobj.addProperty("LimitedHinge_MaxFriction", hkdescriptor.max_friction)                  
+                # getting properties with no blender constraint
+                # equivalent and setting as obj properties
+                b_hkobj.addProperty("LimitedHinge_MaxAngle",
+                                    hkdescriptor.max_angle)
+                b_hkobj.addProperty("LimitedHinge_MinAngle",
+                                    hkdescriptor.min_angle)
+                b_hkobj.addProperty("LimitedHinge_MaxFriction",
+                                    hkdescriptor.max_friction)                  
                 
             elif isinstance(hkdescriptor, NifFormat.HingeDescriptor):
                 # for hinge, y is the vector on the plane of rotation defining
