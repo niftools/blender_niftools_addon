@@ -949,7 +949,7 @@ class NifConfig:
                 text = "Unk Byte 1:  ",
                 event_name = "EXPORT_OB_UNKNOWNBYTE1",
                 min_val = 1, max_val = 2,
-                callback = self.updateObUnknownByte1,
+                callback = self.update_ob_unknown_byte_1,
                 num_items = 3, item = 0)
             self.draw_number(
                 text = "Unk Byte 2:  ",
@@ -1540,7 +1540,7 @@ class NifConfig:
     def update_ob_quality_type(self, evt, val):
         self.config["EXPORT_OB_QUALITYTYPE"] = val
 
-    def updateObUnknownByte1(self, evt, val):
+    def update_ob_unknown_byte_1(self, evt, val):
         self.config["EXPORT_OB_UNKNOWNBYTE1"] = val
 
     def updateObUnknownByte2(self, evt, val):
