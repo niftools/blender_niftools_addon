@@ -3646,17 +3646,6 @@ class NifExport(NifImportExport):
             return
 
         for b_constr in b_obj.constraints:
-            # defaults and getting object properties for user settings
-            max_angle = 1.5
-            min_angle = 0.0
-            max_friction = - 10
-            for prop in b_obj.getAllProperties():
-                if prop.getName() == 'LimitedHinge_MaxAngle' and prop.getType() == "FLOAT":
-                        max_angle = prop.getData()
-                if prop.getName() == 'LimitedHinge_MinAngle' and prop.getType() == "FLOAT":
-                        min_angle = prop.getData()
-                if prop.getName() == 'LimitedHinge_MaxFriction' and prop.getType() == "FLOAT":
-                        max_friction = prop.getData() 
             # rigid body joints
             if b_constr.type == Blender.Constraint.Type.RIGIDBODYJOINT:
                 if self.EXPORT_VERSION not in ("Oblivion", "Fallout 3"):
@@ -3703,6 +3692,20 @@ class NifExport(NifImportExport):
                         "Unsupported rigid body joint type (%i),"
                         " only ball and hinge are supported."
                         % b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE])
+
+                # defaults and getting object properties for user settings
+                # (should use constraint properties, but blender does not
+                # have those...)
+                max_angle = 1.5
+                min_angle = 0.0
+                max_friction = - 10
+                for prop in b_obj.getAllProperties():
+                    if prop.getName() == 'LimitedHinge_MaxAngle' and prop.getType() == "FLOAT":
+                            max_angle = prop.getData()
+                    if prop.getName() == 'LimitedHinge_MinAngle' and prop.getType() == "FLOAT":
+                            min_angle = prop.getData()
+                    if prop.getName() == 'LimitedHinge_MaxFriction' and prop.getType() == "FLOAT":
+                            max_friction = prop.getData() 
 
                 # parent constraint to hkbody
                 hkbody.num_constraints += 1
