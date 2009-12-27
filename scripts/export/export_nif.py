@@ -3183,7 +3183,7 @@ class NifExport(NifImportExport):
                            if block.name[:14] == 'collisiondummy' ])
             for node in nodes:
                 try:
-                    self.exportCollisionHelper(obj, node)
+                    self.export_collision_helper(obj, node)
                     break
                 except ValueError: # adding collision failed
                     continue
@@ -3193,7 +3193,7 @@ class NifExport(NifImportExport):
                 node.name = 'collisiondummy%i' % parent_block.num_children
                 node.flags = 0x000E # default
                 parent_block.add_child(node)
-                self.exportCollisionHelper(obj, node)
+                self.export_collision_helper(obj, node)
 
         else:
             self.logger.warning(
@@ -3201,7 +3201,7 @@ class NifExport(NifImportExport):
                 " collisions are supported, skipped collision object '%s'"
                 % obj.name)
 
-    def exportCollisionHelper(self, obj, parent_block):
+    def export_collision_helper(self, obj, parent_block):
         """Helper function to add collision objects to a node. This function
         exports the rigid body, and calls the appropriate function to export
         the collision geometry in the desired format.
