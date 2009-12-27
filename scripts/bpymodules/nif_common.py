@@ -38,21 +38,21 @@ __requiredblenderversion__ = "250"
 
 # utility functions
     
-def cmp_versions(version1, version2):
-    """Compare version strings."""
-    def version_intlist(version):
-        """Convert version string to list of integers."""
-        return [int(x) for x in version.__str__().split(".")]
-    return cmp(version_intlist(version1), version_intlist(version2))
+def version_int_tuple(version):
+    """Convert version string to tuple of integers."""
+    return tuple(int(x) for x in version.__str__().split("."))
 
 # things to do on import and export
 
 # check Blender version
 
-import Blender
-__blenderversion__ = Blender.Get('version')
+import bpy
 
-if cmp_versions(__blenderversion__, __requiredblenderversion__) == -1:
+# TODO find a way to get the blender version
+__blenderversion__ = 250 #Blender.Get('version')
+
+if (version_int_tuple(__blenderversion__)
+    < version_int_tuple(__requiredblenderversion__)):
     print("--------------------------"
         "ERROR\nThis script requires Blender %s or higher."
         "It seems that you have an older version installed (%s)."
@@ -76,7 +76,8 @@ except ImportError:
 
 # check PyFFI version
 
-if cmp_versions(__pyffiversion__, __requiredpyffiversion__) == -1:
+if (version_int_tuple(__pyffiversion__)
+    < version_int_tuple(__requiredpyffiversion__)):
     print("--------------------------"
         "ERROR\nThis script requires Python File Format Interface %s or higher."
         "It seems that you have an older version installed (%s)."
@@ -86,17 +87,20 @@ if cmp_versions(__pyffiversion__, __requiredpyffiversion__) == -1:
     Blender.Draw.PupMenu("ERROR%t|PyFFI outdated, check console for details")
     raise ImportError
 
+# system imports
+
+import logging
+import sys
+import os
+
+# blender imports
+
+import bpy.props
+
 # import PyFFI format classes
 
 from pyffi.formats.nif import NifFormat
 from pyffi.formats.egm import EgmFormat
-
-# other imports
-
-import bpy
-import logging
-import sys
-import os
 
 def init_loggers():
     """Set up loggers."""
@@ -114,9 +118,24 @@ def init_loggers():
 # set up the loggers: call it as a function to avoid polluting namespace
 init_loggers()
 
-class NifImportExport(bpy.types.Operator):
+class MetaNifImportExport(type(bpy.types.Operator)):
+    def __init__(cls, name, dct, bases):
+        """Add common properties. This must be done in a metaclass
+        because Blender only uses properties defined on the top class
+        level, and ignores those properties defined higher up in the
+        class hierarchy.
+        """
+        log_level = bpy.props.IntProperty(
+            name="Log Level",
+            description="Level of verbosity",
+            min=0, max=99,
+            default=logging.WARNING)
+
+
+class NifImportExport(bpy.types.Operator, metaclass=MetaNifImportExport):
     """Abstract base class for import and export. Contains utility functions
-    that are commonly used in both import and export."""
+    that are commonly used in both import and export.
+    """
 
     EXTRA_SHADER_TEXTURES = [
         "EnvironmentMapIndex",
@@ -169,13 +188,7 @@ class NifImportExport(bpy.types.Operator):
     progress_bar = 0
     """Level of the progress bar."""
 
-    filename = StringProperty(
-        name="File Path",
-        description="File path used for importing or exporting the NIF file",
-        maxlen=1024,
-        default="")
-
-    # TODO: convert to properties
+    # TODO: convert to properties in NifImport and NifExport
     """
     IMPORT_REALIGN_BONES = 1 # 0 = no, 1 = tail, 2 = tail+rotation
     IMPORT_ANIMATION = True
@@ -326,10 +339,8 @@ class NifConfig:
     # IMPORTANT: don't start dictionary keys with an underscore
     # the Registry module doesn't like that, apparently
     DEFAULTS = dict(
-        IMPORT_FILE = Blender.sys.join(
-            Blender.sys.dirname(Blender.sys.progname), "import.nif"),
-        EXPORT_FILE = Blender.sys.join(
-            Blender.sys.dirname(Blender.sys.progname), "export.nif"),
+        IMPORT_FILE = "import.nif", # TODO path for default
+        EXPORT_FILE = "export.nif", # TODO path for default
         IMPORT_REALIGN_BONES = 1, # 0 = no, 1 = tail, 2 = tail+rotation
         IMPORT_ANIMATION = True,
         IMPORT_SCALE_CORRECTION = 0.1,

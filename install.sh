@@ -43,7 +43,8 @@ cp scripts/import/import_nif.py $BLENDERHOME/.blender/scripts/io/
 # not sure if needed, commented out for now
 #cp scripts/import/import_nif.py $BLENDERHOME/.blender/scripts/ # workaround for nif_test import
 
-cp scripts/export/export_nif.py $BLENDERHOME/.blender/scripts/io/
+# not yet ready
+#cp scripts/export/export_nif.py $BLENDERHOME/.blender/scripts/io/
 # not sure if needed, commented out for now
 #cp scripts/export/export_nif.py $BLENDERHOME/.blender/scripts/ # workaround for nif_test import
 
