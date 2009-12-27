@@ -1152,7 +1152,7 @@ class NifConfig:
                 kffile = Blender.sys.dirname(self.config["IMPORT_FILE"])
             # browse and add keyframe file
             Blender.Window.FileSelector(
-                self.selectKeyframeFile, "Select Keyframe File", kffile)
+                self.select_keyframe_file, "Select Keyframe File", kffile)
             self.config["IMPORT_ANIMATION"] = True
         elif evName == "IMPORT_KEYFRAMEFILE_REMOVE":
             self.config["IMPORT_KEYFRAMEFILE"] = ''
@@ -1497,7 +1497,7 @@ class NifConfig:
         else:
             self.texpathCurrent = ''
 
-    def selectKeyframeFile(self, keyframefile):
+    def select_keyframe_file(self, keyframefile):
         if keyframefile == '' or not Blender.sys.exists(keyframefile):
             Draw.PupMenu('No file selected or file does not exist%t|Ok')
         else:
