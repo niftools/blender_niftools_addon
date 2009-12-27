@@ -925,7 +925,7 @@ class NifConfig:
                 text = "Mass:  ",
                 event_name = "EXPORT_OB_MASS",
                 min_val = 0.1, max_val = 1500.0,
-                callback = self.updateObMass,
+                callback = self.update_ob_mass,
                 num_items = 2, item = 1)
             self.draw_number(
                 text = "Layer:  ",
@@ -1531,7 +1531,7 @@ class NifConfig:
     def update_ob_layer(self, evt, val):
         self.config["EXPORT_OB_LAYER"] = val
 
-    def updateObMass(self, evt, val):
+    def update_ob_mass(self, evt, val):
         self.config["EXPORT_OB_MASS"] = val
 
     def updateObMotionSystem(self, evt, val):
