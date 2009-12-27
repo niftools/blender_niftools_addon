@@ -2161,7 +2161,7 @@ class NifExport(NifImportExport):
                 extra_node.flags = 0x000C # morrowind
                 # create texture effect block and parent the
                 # texture effect and trishape to it
-                texeff = self.exportTextureEffect(mesh_texeff_mtex)
+                texeff = self.export_texture_effect(mesh_texeff_mtex)
                 extra_node.add_child(texeff)
                 extra_node.add_child(trishape)
                 extra_node.add_effect(texeff)
@@ -4176,7 +4176,7 @@ class NifExport(NifImportExport):
         # no duplicate found, so use and register new one
         return self.register_block(bsshader)
 
-    def exportTextureEffect(self, mtex = None):
+    def export_texture_effect(self, mtex = None):
         """Export a texture effect block from material texture mtex (MTex, not
         Texture)."""
         texeff = NifFormat.NiTextureEffect()
