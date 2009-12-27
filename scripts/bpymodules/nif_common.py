@@ -367,7 +367,7 @@ class NifConfig:
         # prepare and run gui
         self.texpathIndex = 0
         self.updateTexpathCurrent()
-        Draw.Register(self.gui_draw, self.guiEvent, self.guiButtonEvent)
+        Draw.Register(self.gui_draw, self.guiEvent, self.gui_button_event)
 
     def save(self):
         """Save and validate configuration to Blender registry."""
@@ -1115,7 +1115,7 @@ class NifConfig:
         # is this needed?
         #Draw.Redraw(1)
 
-    def guiButtonEvent(self, evt):
+    def gui_button_event(self, evt):
         """Event handler for buttons."""
         try:
             evName = self.guiEvents[evt]
