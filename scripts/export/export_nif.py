@@ -2208,7 +2208,7 @@ class NifExport(NifImportExport):
             if mesh_base_mtex or mesh_glow_mtex:
                 # add NiTriShape's texturing property
                 if self.EXPORT_VERSION == "Fallout 3":
-                    trishape.add_property(self.exportBSShaderProperty(
+                    trishape.add_property(self.export_bs_shader_property(
                         basemtex = mesh_base_mtex,
                         glowmtex = mesh_glow_mtex,
                         bumpmtex = mesh_bump_mtex))
@@ -4142,7 +4142,7 @@ class NifExport(NifImportExport):
         # the new one
         return self.register_block(texprop)
 
-    def exportBSShaderProperty(
+    def export_bs_shader_property(
         self, basemtex=None, bumpmtex=None, glowmtex=None):
         """Export a Bethesda shader property block."""
 
