@@ -103,10 +103,8 @@ class NifImport(NifImportExport):
 
     def execute(self, context):
         """Main import function: open file and import all trees."""
-        self.context = context
-
-        # initialize progress bar
-        self.msg_progress("Initializing", progbar=0)
+        # call base class method
+        NifImportExport.execute(self, context)
 
         # shortcut to import logger
         self.logger = logging.getLogger("niftools.blender.import")
@@ -142,17 +140,6 @@ class NifImport(NifImportExport):
         # in Blender; after we've imported the tree, we use this dictionary
         # to set the physics constraints (ragdoll etc)
         self.havok_objects = {}
-
-        # selected objects
-        # find and store this list now, as creating new objects adds them
-        # to the selection list
-        if self.context.selected_objects:
-            self.selected_objects = self.context.selected_objects[:]
-        else:
-            # if there are no selected objects,
-            # then context.selected_objects is None
-            # but an empty list makes more sense (for iterating)
-            self.selected_objects = []
         
         # catch NifImportError
         try:

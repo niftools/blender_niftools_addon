@@ -275,6 +275,37 @@ class NifImportExport(bpy.types.Operator, metaclass=MetaNifImportExport):
     EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES = False,
     """
 
+    def execute(self, context):
+        """Common initialization functions for executing the import/export
+        operators:
+
+        - initialize progress bar
+        - set logging level
+        - set self.context
+        - set self.selected_objects
+        """
+        # initialize progress bar
+        self.msg_progress("Initializing", progbar=0)
+
+        # set logging level
+        logging.getLogger("niftools").setLevel(self.properties.log_level)
+        logging.getLogger("pyffi").setLevel(self.properties.log_level)
+
+        # save context (so it can be used in other methods without argument
+        # passing)
+        self.context = context
+
+        # get list of selected objects
+        # (find and store this list now, as creating new objects adds them
+        # to the selection list)
+        if self.context.selected_objects:
+            self.selected_objects = self.context.selected_objects[:]
+        else:
+            # if there are no selected objects,
+            # then context.selected_objects is None
+            # but an empty list makes more sense (for iterating)
+            self.selected_objects = []
+
     def msg_progress(self, message, progbar=None):
         """Message wrapper for the Blender progress bar."""
         # update progress bar level
@@ -1614,11 +1645,6 @@ class NifConfig:
             Draw.PupMenu('No file selected or file does not exist%t|Ok')
         else:
             self.config["IMPORT_EGMFILE"] = egmfile
-
-    def update_log_level(self, evt, val):
-        self.config["LOG_LEVEL"] = val
-        logging.getLogger("niftools").setLevel(val)
-        logging.getLogger("pyffi").setLevel(val)
 
     def update_scale(self, evt, val):
         self.config["EXPORT_SCALE_CORRECTION"] = val
