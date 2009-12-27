@@ -367,7 +367,7 @@ class NifConfig:
         # prepare and run gui
         self.texpathIndex = 0
         self.updateTexpathCurrent()
-        Draw.Register(self.guiDraw, self.guiEvent, self.guiButtonEvent)
+        Draw.Register(self.gui_draw, self.guiEvent, self.guiButtonEvent)
 
     def save(self):
         """Save and validate configuration to Blender registry."""
@@ -584,7 +584,7 @@ class NifConfig:
         if item + 1 == num_items:
             self.yPos -= self.YLINESKIP
 
-    def guiDraw(self):
+    def gui_draw(self):
         """Draw config GUI."""
         # reset position
         self.xPos = self.XORIGIN
