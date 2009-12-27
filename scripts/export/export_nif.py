@@ -986,7 +986,7 @@ class NifExport(NifImportExport):
                 ob.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
                 ob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
                 ob.drawMode = Blender.Object.DrawModes['WIRE']
-                self.exportCollision(ob, parent_block)
+                self.export_collision(ob, parent_block)
                 return None # done; stop here
             elif ob_type == 'Mesh' and ob.name.lower().startswith('bsbound'):
                 # add a bounding box
@@ -1013,7 +1013,7 @@ class NifExport(NifImportExport):
                         has_track = True
                         break
                 if is_collision:
-                    self.exportCollision(ob, parent_block)
+                    self.export_collision(ob, parent_block)
                     return None # done; stop here
                 elif has_ipo or has_children or is_multimaterial or has_track:
                     # -> mesh ninode for the hierarchy to work out
@@ -3163,7 +3163,7 @@ class NifExport(NifImportExport):
         self.blocks[block] = b_obj
         return block
 
-    def exportCollision(self, obj, parent_block):
+    def export_collision(self, obj, parent_block):
         """Main function for adding collision object obj to a node.""" 
         if self.EXPORT_VERSION == 'Morrowind':
              if obj.rbShapeBoundType != Blender.Object.RBShapes['POLYHEDERON']:
