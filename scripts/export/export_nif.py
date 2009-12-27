@@ -2252,7 +2252,7 @@ class NifExport(NifImportExport):
 
             if mesh_doublesided:
                 # add NiStencilProperty
-                trishape.add_property(self.exportStencilProperty())
+                trishape.add_property(self.export_stencil_property())
 
             if mesh_mat:
                 # add NiTriShape's specular property
@@ -3896,7 +3896,7 @@ class NifExport(NifImportExport):
         wireprop.flags = flags
         return wireprop        
 
-    def exportStencilProperty(self):
+    def export_stencil_property(self):
         """Return existing stencil property with given flags, or create new one
         if an identical stencil property."""
         # search for duplicate
