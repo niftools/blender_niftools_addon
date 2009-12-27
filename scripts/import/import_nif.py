@@ -103,6 +103,8 @@ class NifImport(NifImportExport):
 
     def execute(self, context):
         """Main import function: open file and import all trees."""
+        self.context = context
+
         # initialize progress bar
         self.msg_progress("Initializing", progbar=0)
 
@@ -145,13 +147,10 @@ class NifImport(NifImportExport):
 
         # TODO
 
-        # Blender scene
-        self.scene = Blender.Scene.GetCurrent()
-
         # selected objects
         # find and store this list now, as creating new objects adds them
         # to the selection list
-        self.selected_objects = [ob for ob in self.scene.objects.selected]
+        self.selected_objects = [ob for ob in self.context.scene.objects.selected]
         
         # catch NifImportError
         try:
@@ -243,7 +242,7 @@ class NifImport(NifImportExport):
             # calculate and set frames per second
             if self.IMPORT_ANIMATION:
                 self.fps = self.get_frames_per_second(root_blocks + kf_root_blocks)
-                self.scene.getRenderingContext().fps = self.fps
+                self.context.scene.getRenderingContext().fps = self.fps
 
             # import all root blocks
             for block in root_blocks:
@@ -284,7 +283,7 @@ class NifImport(NifImportExport):
             # clear progress bar
             self.msg_progress("Finished", progbar = 1)
             # do a full scene update to ensure that transformations are applied
-            self.scene.update(1)
+            self.context.scene.update(1)
 
         # save nif root blocks (used by test suites)
         self.root_blocks = root_blocks
@@ -538,7 +537,7 @@ class NifImport(NifImportExport):
                     # track camera for billboard nodes
                     if isinstance(niBlock, NifFormat.NiBillboardNode):
                         # find camera object
-                        for obj in self.scene.objects:
+                        for obj in self.context.scene.objects:
                             if obj.getType() == "Camera":
                                 break
                         else:
@@ -871,7 +870,7 @@ class NifImport(NifImportExport):
     def import_empty(self, niBlock):
         """Creates and returns a grouping empty."""
         shortName = self.import_name(niBlock, 22)
-        b_empty = self.scene.objects.new("Empty", shortName)
+        b_empty = self.context.scene.objects.new("Empty", shortName)
         b_empty.properties['longName'] = niBlock.name
         return b_empty
 
@@ -887,7 +886,7 @@ class NifImport(NifImportExport):
         b_armatureData.envelopes = False
         b_armatureData.vertexGroups = True
         b_armatureData.drawType = Blender.Armature.STICK
-        b_armature = self.scene.objects.new(b_armatureData, armature_name)
+        b_armature = self.context.scene.objects.new(b_armatureData, armature_name)
 
         # make armature editable and create bones
         b_armatureData.makeEditable()
@@ -1995,7 +1994,7 @@ class NifImport(NifImportExport):
             b_meshData = Blender.Mesh.New(b_name)
             b_meshData.properties['longName'] = niBlock.name
             # create mesh object and link to data
-            b_mesh = self.scene.objects.new(b_meshData, b_name)
+            b_mesh = self.context.scene.objects.new(b_meshData, b_name)
 
             # Mesh hidden flag
             if niBlock.flags & 1 == 1:
@@ -2462,8 +2461,8 @@ class NifImport(NifImportExport):
 
             if self.IMPORT_EGMANIM:
                 # set begin and end frame
-                self.scene.getRenderingContext().startFrame(1)
-                self.scene.getRenderingContext().endFrame(
+                self.context.scene.getRenderingContext().startFrame(1)
+                self.context.scene.getRenderingContext().endFrame(
                     11 + len(b_meshData.key.blocks) * 10)
 
             # finally: return to base position
@@ -2507,8 +2506,8 @@ class NifImport(NifImportExport):
                 animtxt.write('%i/%s\n'%(frame, newkey))
             
             # set start and end frames
-            self.scene.getRenderingContext().startFrame(1)
-            self.scene.getRenderingContext().endFrame(frame)
+            self.context.scene.getRenderingContext().startFrame(1)
+            self.context.scene.getRenderingContext().endFrame(frame)
         
     def store_bones_extra_matrix(self):
         """Stores correction matrices in a text buffer so that the original
@@ -2965,7 +2964,7 @@ class NifImport(NifImportExport):
                 me.faces.extend(triangle)
 
             # link mesh to scene and set transform
-            ob = self.scene.objects.new(me, 'convexpoly')
+            ob = self.context.scene.objects.new(me, 'convexpoly')
 
             # set bounds type
             ob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
@@ -3067,7 +3066,7 @@ class NifImport(NifImportExport):
                 [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
 
             # link box to scene and set transform
-            ob = self.scene.objects.new(me, 'box')
+            ob = self.context.scene.objects.new(me, 'box')
 
             # set bounds type
             ob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
@@ -3088,7 +3087,7 @@ class NifImport(NifImportExport):
                 [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
 
             # link box to scene and set transform
-            ob = self.scene.objects.new(me, 'sphere')
+            ob = self.context.scene.objects.new(me, 'sphere')
 
             # set bounds type
             ob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
@@ -3114,7 +3113,7 @@ class NifImport(NifImportExport):
                 [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
 
             # link box to scene and set transform
-            ob = self.scene.objects.new(me, 'capsule')
+            ob = self.context.scene.objects.new(me, 'capsule')
 
             # set bounds type
             ob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
@@ -3191,7 +3190,7 @@ class NifImport(NifImportExport):
                                                me.faces[-1].verts[2] )
 
                 # link mesh to scene and set transform
-                ob = self.scene.objects.new(me, 'poly%i' % subshape_num)
+                ob = self.context.scene.objects.new(me, 'poly%i' % subshape_num)
 
                 # set bounds type
                 ob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
@@ -3230,7 +3229,7 @@ class NifImport(NifImportExport):
             me.faces.extend(list(bhkshape.get_triangles()))
 
             # link mesh to scene and set transform
-            ob = self.scene.objects.new(me, 'poly')
+            ob = self.context.scene.objects.new(me, 'poly')
 
             # set bounds type
             ob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
@@ -3602,9 +3601,9 @@ class NifImport(NifImportExport):
 
         # link box to scene and set transform
         if isinstance(bbox, NifFormat.BSBound):
-            ob = self.scene.objects.new(me, 'BSBound')
+            ob = self.context.scene.objects.new(me, 'BSBound')
         else:
-            ob = self.scene.objects.new(me, 'Bounding Box')
+            ob = self.context.scene.objects.new(me, 'Bounding Box')
             # XXX this is set in the import_branch method
             #ob.setMatrix(Mathutils.Matrix(
             #    *bbox.bounding_box.rotation.as_list()))
