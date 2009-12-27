@@ -3647,8 +3647,8 @@ class NifExport(NifImportExport):
 
         for b_constr in b_obj.constraints:
             # defaults and getting object properties for user settings
-            max_angle = 0
-            min_angle = 1.5
+            max_angle = 1.5
+            min_angle = 0.0
             max_friction = - 10
             for prop in b_obj.getAllProperties():
                 if prop.getName() == 'LimitedHinge_MaxAngle' and prop.getType() == "FLOAT":
