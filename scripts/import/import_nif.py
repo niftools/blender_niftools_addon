@@ -150,7 +150,10 @@ class NifImport(NifImportExport):
         # selected objects
         # find and store this list now, as creating new objects adds them
         # to the selection list
-        self.selected_objects = [ob for ob in self.context.scene.objects.selected]
+        if self.context.selected_objects:
+            self.selected_objects = self.context.selected_objects[:]
+        else:
+            self.selected_objects = []
         
         # catch NifImportError
         try:
