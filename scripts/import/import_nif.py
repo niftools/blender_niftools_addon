@@ -143,10 +143,6 @@ class NifImport(NifImportExport):
         # to set the physics constraints (ragdoll etc)
         self.havok_objects = {}
 
-        return {'FINISHED'}
-
-        # TODO
-
         # selected objects
         # find and store this list now, as creating new objects adds them
         # to the selection list
@@ -159,7 +155,7 @@ class NifImport(NifImportExport):
         try:
             # check that one armature is selected in 'import geometry + parent
             # to armature' mode
-            if self.IMPORT_SKELETON == 2:
+            if False: #TODO self.IMPORT_SKELETON == 2:
                 if (len(self.selected_objects) != 1
                     or self.selected_objects[0].getType() != 'Armature'):
                     raise NifImportError(
@@ -188,6 +184,10 @@ class NifImport(NifImportExport):
             finally:
                 # the file has been read or an error occurred: close file
                 niffile.close()
+
+            return {'FINISHED'}
+
+            # TODO
 
             if self.IMPORT_KEYFRAMEFILE:
                 # open keyframe file for binary reading
@@ -285,8 +285,9 @@ class NifImport(NifImportExport):
         finally:
             # clear progress bar
             self.msg_progress("Finished", progbar = 1)
+            # XXX no longer needed?
             # do a full scene update to ensure that transformations are applied
-            self.context.scene.update(1)
+            #self.context.scene.update(1)
 
         # save nif root blocks (used by test suites)
         self.root_blocks = root_blocks
