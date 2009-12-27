@@ -441,7 +441,7 @@ class NifConfig:
             raise RuntimeError("Maximum number of events exceeded")
         return event_id
 
-    def drawYSep(self):
+    def draw_y_sep(self):
         """Vertical skip."""
         self.yPos -= self.YLINESEP
 
@@ -594,7 +594,7 @@ class NifConfig:
         self.drawLabel(
             text = self.WELCOME_MESSAGE,
             event_name = "LABEL_WELCOME_MESSAGE")
-        self.drawYSep()
+        self.draw_y_sep()
 
         self.drawNumber(
             text = "Log Level",
@@ -614,7 +614,7 @@ class NifConfig:
             text = "Debug",
             event_name = "LOG_LEVEL_DEBUG",
             num_items = 4, item = 3)
-        self.drawYSep()
+        self.draw_y_sep()
 
         self.drawSlider(
             text = "Scale Correction:  ",
@@ -622,7 +622,7 @@ class NifConfig:
             val = self.config["EXPORT_SCALE_CORRECTION"],
             min_val = 0.01, max_val = 100.0,
             callback = self.updateScale)
-        self.drawYSep()
+        self.draw_y_sep()
 
         # import-only options
         if self.target == self.TARGET_IMPORT:
@@ -633,17 +633,17 @@ class NifConfig:
                 text = "",
                 event_name_prefix = "TEXPATH",
                 val = self.texpathCurrent)
-            self.drawYSep()
+            self.draw_y_sep()
 
             self.drawToggle(
                 text = "Import Animation",
                 event_name = "IMPORT_ANIMATION")
-            self.drawYSep()
+            self.draw_y_sep()
 
             self.drawToggle(
                 text = "Import Extra Nodes",
                 event_name = "IMPORT_EXTRANODES")
-            self.drawYSep()
+            self.draw_y_sep()
             
             self.drawToggle(
                 text = "Import Skeleton Only + Parent Selected",
@@ -653,17 +653,17 @@ class NifConfig:
                 text = "Import Geometry Only + Parent To Selected Armature",
                 event_name = "IMPORT_SKELETON_2",
                 val = (self.config["IMPORT_SKELETON"] == 2))
-            self.drawYSep()
+            self.draw_y_sep()
 
             self.drawToggle(
                 text = "Save Embedded Textures As DDS",
                 event_name = "IMPORT_EXPORTEMBEDDEDTEXTURES")
-            self.drawYSep()
+            self.draw_y_sep()
 
             self.drawToggle(
                 text = "Combine Multi-Material Shapes Into Single Mesh",
                 event_name = "IMPORT_COMBINESHAPES")
-            self.drawYSep()
+            self.draw_y_sep()
 
             self.drawLabel(
                 text = "Keyframe File:",
@@ -671,7 +671,7 @@ class NifConfig:
             self.drawFileBrowse(
                 text = "",
                 event_name_prefix = "IMPORT_KEYFRAMEFILE")
-            self.drawYSep()
+            self.draw_y_sep()
 
             self.drawLabel(
                 text = "FaceGen EGM File:",
@@ -690,12 +690,12 @@ class NifConfig:
                 min_val=0.01, max_val=100.0,
                 callback=self.updateEgmAnimScale,
                 num_items=2, item=1)
-            self.drawYSep()
+            self.draw_y_sep()
 
             self.drawPushButton(
                 text = "Restore Default Settings",
                 event_name = "IMPORT_SETTINGS_DEFAULT")
-            self.drawYSep()
+            self.draw_y_sep()
 
             self.drawLabel(
                 text = "... and if skinning fails with default settings:",
@@ -703,7 +703,7 @@ class NifConfig:
             self.drawPushButton(
                 text = "Use The Force Luke",
                 event_name = "IMPORT_SETTINGS_SKINNING")
-            self.drawYSep()
+            self.draw_y_sep()
 
         # export-only options
         if self.target == self.TARGET_EXPORT:
@@ -722,19 +722,19 @@ class NifConfig:
                 event_name = "EXPORT_ANIMATION_2",
                 val = ((self.config["EXPORT_ANIMATION"] == 2)
                        or self.config["EXPORT_MW_NIFXNIFKF"]))
-            self.drawYSep()
+            self.draw_y_sep()
 
             self.drawString(
                 text = "Anim Seq Name: ",
                 event_name = "EXPORT_ANIMSEQUENCENAME",
                 max_length = 128,
                 callback = self.updateAnimSequenceName)
-            self.drawYSep()
+            self.draw_y_sep()
 
             self.drawToggle(
                 text = "Force DDS Extension",
                 event_name = "EXPORT_FORCEDDS")
-            self.drawYSep()
+            self.draw_y_sep()
 
             self.drawToggle(
                 text = "Stripify Geometries",
@@ -744,12 +744,12 @@ class NifConfig:
                 text = "Stitch Strips",
                 event_name = "EXPORT_STITCHSTRIPS",
                 num_items = 2, item = 1)
-            self.drawYSep()
+            self.draw_y_sep()
 
             self.drawToggle(
                 text = "Smoothen Inter-Object Seams",
                 event_name = "EXPORT_SMOOTHOBJECTSEAMS")
-            self.drawYSep()
+            self.draw_y_sep()
 
             self.drawToggle(
                 text = "Flatten Skin",
@@ -768,12 +768,12 @@ class NifConfig:
                 min_val = 4, max_val = 18,
                 callback = self.updateBonesPerPartition,
                 num_items = 3, item = 2)
-            self.drawYSep()
+            self.draw_y_sep()
 
             self.drawToggle(
                 text = "Combine Materials to Increase Performance",
                 event_name = "EXPORT_OPTIMIZE_MATERIALS")
-            self.drawYSep()
+            self.draw_y_sep()
 
             games_list = sorted(filter(lambda x: x != '?', NifFormat.games.keys()))
             versions_list = sorted(NifFormat.versions.keys(), key=lambda x: NifFormat.versions[x])
@@ -800,7 +800,7 @@ class NifConfig:
                 self.guiElements["VERSION_%s"%version] = Draw.Toggle(version, self.event_id("VERSION_%s"%version), V, H-j*20, 70, 20, state)
                 j += 1
             self.yPos -= 20*min(MAXJ, max(len(NifFormat.versions), len(NifFormat.games)))
-            self.drawYSep()
+            self.draw_y_sep()
             
             if self.config["EXPORT_VERSION"] in games_list:
                 self.guiElements["EXPORT_RESET"] = Draw.PushButton(
@@ -808,7 +808,7 @@ class NifConfig:
                     self.event_id("GAME_%s"%self.config["EXPORT_VERSION"]),
                     self.xPos, self.yPos, self.XCOLUMNSKIP, self.YLINESKIP)
                 self.yPos -= self.YLINESKIP
-                self.drawYSep()
+                self.draw_y_sep()
             
         self.drawPushButton(
             text = "Ok",
@@ -849,7 +849,7 @@ class NifConfig:
             self.drawToggle(
                 text = "Apply Skin Deformation",
                 event_name = "IMPORT_APPLYSKINDEFORM")
-            self.drawYSep()
+            self.draw_y_sep()
 
         # export-only options for oblivion/fallout 3
 
@@ -972,7 +972,7 @@ class NifConfig:
                 event_name = "EXPORT_OB_HOLLOW",
                 val = not self.config["EXPORT_OB_SOLID"],
                 num_items = 2, item = 1)
-            self.drawYSep()
+            self.draw_y_sep()
 
             self.drawToggle(
                 text = "Use bhkListShape",
@@ -985,7 +985,7 @@ class NifConfig:
             self.drawToggle(
                 text = "Do Not Use Blender Properties",
                 event_name = "EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES")   
-            self.drawYSep()
+            self.draw_y_sep()
 
             self.drawLabel(
                 text = "Weapon Body Location",
@@ -1025,7 +1025,7 @@ class NifConfig:
                 val = self.config["EXPORT_OB_PRN"] == "RING",
                 event_name = "EXPORT_OB_PRN_RING",
                 num_items = 7, item = 6)
-            self.drawYSep()
+            self.draw_y_sep()
 
         # export-only options for morrowind
         if (self.target == self.TARGET_EXPORT
@@ -1100,17 +1100,17 @@ class NifConfig:
                 text = "Unknown 31",
                 event_name = "EXPORT_FO3_SF_UN31",
                 num_items = 3, item = 2)
-            self.drawYSep()
+            self.draw_y_sep()
 
             self.drawToggle(
                 text = "Use BSFadeNode Root",
                 event_name = "EXPORT_FO3_FADENODE")
-            self.drawYSep()
+            self.draw_y_sep()
 
             self.drawToggle(
                 text = "Export Dismember Body Parts",
                 event_name = "EXPORT_FO3_BODYPARTS")
-            self.drawYSep()
+            self.draw_y_sep()
 
         # is this needed?
         #Draw.Redraw(1)
