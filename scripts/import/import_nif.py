@@ -95,12 +95,6 @@ class NifImport(NifImportExport):
     # degrees to radians conversion constant
     D2R = 3.14159265358979/180.0
     
-    #path = bpy.props.StringProperty(
-    #    name="File Path",
-    #    description="File path used for importing or exporting the NIF file",
-    #    maxlen=1024,
-    #    default="")
-
     def execute(self, context):
         """Main import function: open file and import all trees."""
         # call base class method
