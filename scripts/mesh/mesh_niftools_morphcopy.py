@@ -72,7 +72,7 @@ active meshes will be updated.
 # - ideasman42 for his bone weight copy script, which is quite similar
 #   to this script
 
-from itertools import izip
+
 
 import Blender
 from Blender import Window, sys
@@ -171,11 +171,11 @@ def copy_morphs(_from, _to, PREF_SEL_ONLY, PREF_NO_XCROSS):
 
         # get deformation
         morph = [vec_new - vec_old
-                 for (vec_new, vec_old) in izip(from_key_block.data,
+                 for (vec_new, vec_old) in zip(from_key_block.data,
                                                 me_from.key.blocks[0].data)]
         
         # deform me_to
-        for me_to_vert, me_to_vert_base, snap_idx in izip(me_to.verts, me_to.key.blocks[0].data, snap_indices):
+        for me_to_vert, me_to_vert_base, snap_idx in zip(me_to.verts, me_to.key.blocks[0].data, snap_indices):
             me_to_vert.co[0] = me_to_vert_base[0] + morph[snap_idx][0]
             me_to_vert.co[1] = me_to_vert_base[1] + morph[snap_idx][1]
             me_to_vert.co[2] = me_to_vert_base[2] + morph[snap_idx][2]
@@ -185,7 +185,7 @@ def copy_morphs(_from, _to, PREF_SEL_ONLY, PREF_NO_XCROSS):
         me_to.key.blocks[-1].name = from_key_block.name
 
     # reset mesh to base morph
-    for me_to_vert, me_to_vert_base in izip(me_to.verts, me_to.key.blocks[0].data):
+    for me_to_vert, me_to_vert_base in zip(me_to.verts, me_to.key.blocks[0].data):
         me_to_vert.co[0] = me_to_vert_base[0]
         me_to_vert.co[1] = me_to_vert_base[1]
         me_to_vert.co[2] = me_to_vert_base[2]
@@ -220,7 +220,7 @@ def subdiv_mesh(me, subdivs):
     oldmode = Mesh.Mode()
     Mesh.Mode(Mesh.SelectModes['FACE'])
     me.sel = 1
-    for i in xrange(subdivs):
+    for i in range(subdivs):
         me.subdivide(0)
     Mesh.Mode(oldmode)
 
@@ -306,8 +306,8 @@ def main(arg):
                     ob = scn.objects.active
                     me = ob.getData(mesh=1)
                     # morphs will be the same
-                    print('\tGenerating higher %ix quality weights.'
-                          % PREF_QUALITY)
+                    print(('\tGenerating higher %ix quality weights.'
+                          % PREF_QUALITY))
                     subdivMesh(me, PREF_QUALITY)
                     scn.unlink(ob)
                 from_data= (ob, me, worldspace_verts_zsort(me, ob), morph_key)
@@ -328,8 +328,8 @@ def main(arg):
         return
     
     # Now do the copy.
-    print('\tCopying from "%s" to %i other mesh(es).'
-          % (from_data[0].name, len(sel)))
+    print(('\tCopying from "%s" to %i other mesh(es).'
+          % (from_data[0].name, len(sel))))
     for data in sel:
         copy_morphs(from_data, data, PREF_SEL_ONLY, PREF_NO_XCROSS)
     
@@ -337,7 +337,7 @@ def main(arg):
     if PREF_QUALITY:
         from_data[1].verts= None
     
-    print('Morph copy finished in %.2f seconds' % (sys.time()-t))
+    print(('Morph copy finished in %.2f seconds' % (sys.time()-t)))
     Window.DrawProgressBar(1.0, '')
     Window.WaitCursor(0)
     if is_editmode:

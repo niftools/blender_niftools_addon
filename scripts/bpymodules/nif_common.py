@@ -2,7 +2,7 @@
 
 __version__ = "2.5.1"
 __requiredpyffiversion__ = "2.0.6"
-__requiredblenderversion__ = "245"
+__requiredblenderversion__ = "250"
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -93,7 +93,7 @@ from pyffi.formats.egm import EgmFormat
 
 # other imports
 
-from Blender import Draw, Registry
+import bpy
 import logging
 import sys
 import os
@@ -114,7 +114,7 @@ def init_loggers():
 # set up the loggers: call it as a function to avoid polluting namespace
 init_loggers()
 
-class NifImportExport:
+class NifImportExport(bpy.types.Operator):
     """Abstract base class for import and export. Contains utility functions
     that are commonly used in both import and export."""
 
@@ -168,6 +168,74 @@ class NifImportExport:
 
     progress_bar = 0
     """Level of the progress bar."""
+
+    filename = StringProperty(
+        name="File Path",
+        description="File path used for importing or exporting the NIF file",
+        maxlen=1024,
+        default="")
+
+    # TODO: convert to properties
+    """
+    IMPORT_REALIGN_BONES = 1 # 0 = no, 1 = tail, 2 = tail+rotation
+    IMPORT_ANIMATION = True
+    IMPORT_SCALE_CORRECTION = 0.1
+    EXPORT_SCALE_CORRECTION = 10.0 # 1/import scale correction
+    IMPORT_TEXTURE_PATH = []
+    EXPORT_FLATTENSKIN = False
+    EXPORT_VERSION = 'Oblivion'
+    LOG_LEVEL = logging.WARNING # log level
+    IMPORT_SKELETON = 0 # 0 = normal import, 1 = import file as skeleton, 2 = import mesh and attach to skeleton
+    IMPORT_KEYFRAMEFILE = '', # keyframe file for animations
+    IMPORT_EGMFILE = '', # FaceGen EGM file for morphs
+    IMPORT_EGMANIM = True, # create FaceGen EGM animation curves
+    IMPORT_EGMANIMSCALE = 1.0, # scale of FaceGen EGM animation curves
+    EXPORT_ANIMATION = 0, # export everything (1=geometry only, 2=animation only)
+    EXPORT_ANIMSEQUENCENAME = '', # sequence name of the kf file
+    EXPORT_FORCEDDS = True, # force dds extension on texture files
+    EXPORT_SKINPARTITION = True, # generate skin partition
+    EXPORT_BONESPERVERTEX = 4,
+    EXPORT_BONESPERPARTITION = 18,
+    EXPORT_PADBONES = False,
+    EXPORT_STRIPIFY = True,
+    EXPORT_STITCHSTRIPS = False,
+    EXPORT_SMOOTHOBJECTSEAMS = True,
+    IMPORT_MERGESKELETONROOTS = True,
+    IMPORT_SENDGEOMETRIESTOBINDPOS = True,
+    IMPORT_SENDDETACHEDGEOMETRIESTONODEPOS = True,
+    IMPORT_SENDBONESTOBINDPOS = True,
+    IMPORT_APPLYSKINDEFORM = False,
+    IMPORT_EXTRANODES = True,
+    EXPORT_BHKLISTSHAPE = False,
+    EXPORT_OB_BSXFLAGS = 2,
+    EXPORT_OB_MASS = 10.0,
+    EXPORT_OB_SOLID = True,
+    EXPORT_OB_MOTIONSYSTEM = 7, # MO_SYS_FIXED
+    EXPORT_OB_UNKNOWNBYTE1 = 1,
+    EXPORT_OB_UNKNOWNBYTE2 = 1,
+    EXPORT_OB_QUALITYTYPE = 1, # MO_QUAL_FIXED
+    EXPORT_OB_WIND = 0,
+    EXPORT_OB_LAYER = 1, # static
+    EXPORT_OB_MATERIAL = 9, # wood
+    EXPORT_OB_MALLEABLECONSTRAINT = False, # use malleable constraint for ragdoll and hinge
+    EXPORT_OB_PRN = "NONE", # determines bone where to attach weapon
+    EXPORT_FO3_SF_ZBUF = True, # use these shader flags?
+    EXPORT_FO3_SF_SMAP = False,
+    EXPORT_FO3_SF_SFRU = False,
+    EXPORT_FO3_SF_WINDOW_ENVMAP = False,
+    EXPORT_FO3_SF_EMPT = True,
+    EXPORT_FO3_SF_UN31 = True,
+    EXPORT_FO3_FADENODE = False,
+    EXPORT_FO3_SHADER_TYPE = 1, # shader_default
+    EXPORT_FO3_BODYPARTS = True,
+    EXPORT_MW_NIFXNIFKF = False,
+    EXPORT_EXTRA_SHADER_TEXTURES = True,
+    PROFILE = '', # name of file where Python profiler dumps the profile; set to empty string to turn off profiling
+    IMPORT_EXPORTEMBEDDEDTEXTURES = False,
+    EXPORT_OPTIMIZE_MATERIALS = True,
+    IMPORT_COMBINESHAPES = True,
+    EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES = False,
+    """
 
     def msg_progress(self, message, progbar=None):
         """Message wrapper for the Blender progress bar."""
@@ -234,6 +302,7 @@ class NifImportExport:
             "Unsupported extend type in blend, using clamped.")
         return 4
 
+# TODO: integrate with NifImportExport class
 class NifConfig:
     """Class which handles configuration of nif import and export in Blender.
 
@@ -331,7 +400,7 @@ class NifConfig:
             os.system("cls")
 
         # print scripts info
-        print self.WELCOME_MESSAGE
+        print(self.WELCOME_MESSAGE)
 
         # initialize all instance variables
         self.guiElements = {} # dictionary of gui elements (buttons, strings, sliders, ...)
@@ -416,7 +485,7 @@ class NifConfig:
             pass
         # merge configuration with defaults
         if savedconfig:
-            for key, val in self.DEFAULTS.iteritems():
+            for key, val in self.DEFAULTS.items():
                 try:
                     savedval = savedconfig[key]
                 except KeyError:
@@ -775,8 +844,8 @@ class NifConfig:
                 event_name = "EXPORT_OPTIMIZE_MATERIALS")
             self.draw_y_sep()
 
-            games_list = sorted(filter(lambda x: x != '?', NifFormat.games.keys()))
-            versions_list = sorted(NifFormat.versions.keys(), key=lambda x: NifFormat.versions[x])
+            games_list = sorted([x for x in list(NifFormat.games.keys()) if x != '?'])
+            versions_list = sorted(list(NifFormat.versions.keys()), key=lambda x: NifFormat.versions[x])
             V = self.xPos
             H = HH = self.yPos
             j = 0

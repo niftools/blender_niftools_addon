@@ -98,7 +98,7 @@ class TestSuite:
         logging.getLogger("niftools").setLevel(logging.DEBUG)
         logging.getLogger("pyffi").setLevel(logging.WARNING)
 
-        for key, value in config.items():
+        for key, value in list(config.items()):
             finalconfig[key] = value
 
         # run test
@@ -156,7 +156,7 @@ def runtest(directory, files):
 
         # set script configuration
         config = dict(**NifConfig.DEFAULTS)
-        for key, value in filecfg.items():
+        for key, value in list(filecfg.items()):
             config[key] = value
         logger = logging.getLogger("niftools.blender.test")
         logging.getLogger("niftools").setLevel(logging.DEBUG)

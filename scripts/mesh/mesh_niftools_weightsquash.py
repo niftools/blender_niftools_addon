@@ -60,7 +60,7 @@ def weight_squash(me, cutoff = 0.02, nbones = 3):
 
     # remove weights
     for group in me.getVertGroupNames():
-        print "=== %s ==="%group
+        print("=== %s ==="%group)
         
         vert_list = me.getVertsFromGroup(group, 1) # second argument = 1 means also return vertex weights
         remove_list = [v[0] for v in vert_list if v[1] < cutoff]
@@ -70,8 +70,8 @@ def weight_squash(me, cutoff = 0.02, nbones = 3):
 
         # inform user
         if remove_list:
-            print "removed"
-            print remove_list
+            print("removed")
+            print(remove_list)
 
         # select affected vertices
         for i in remove_list:
@@ -108,8 +108,8 @@ def main():
         me = ob.getData(mesh=1) # get Mesh, not NMesh
         num_affected += weight_squash(me, cutoff = PREF_CUTOFF.val, nbones = PREF_NBONES.val)
 
-    print 'Weight Squash finished in %.2f seconds' % (sys.time()-t)
-    print '%i vertices removed from groups'%num_affected
+    print('Weight Squash finished in %.2f seconds' % (sys.time()-t))
+    print('%i vertices removed from groups'%num_affected)
     Window.WaitCursor(0)
     if is_editmode: Window.EditMode(1)
     

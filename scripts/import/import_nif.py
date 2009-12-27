@@ -2,7 +2,7 @@
 
 """ 
 Name: 'NetImmerse/Gamebryo (.nif & .kf & .egm)'
-Blender: 245
+Blender: 250
 Group: 'Import'
 Tip: 'Import NIF File Format (.nif & .kf & .egm)'
 """
@@ -14,16 +14,13 @@ __bpydoc__ = """\
 This script imports Netimmerse and Gamebryo .NIF files to Blender.
 """
 
-import Blender
-from Blender.Mathutils import *
+import bpy
 
 from nif_common import NifImportExport
-from nif_common import NifConfig
 from nif_common import NifFormat
 from nif_common import EgmFormat
 from nif_common import __version__
 
-from itertools import izip
 import logging
 import math
 import operator
@@ -72,8 +69,12 @@ class NifImportError(StandardError):
 
 class NifImport(NifImportExport):
     """A class which bundles the main import function along with all helper
-    functions and data shared between these functions."""
+    functions and data shared between these functions.
+    """
     # class constants:
+    bl_idname = "import.nif"
+    bl_label = "Import NIF"
+
     # correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z
     BONE_CORRECTION_MATRICES = (
         Matrix([ 0.0,-1.0, 0.0],[ 1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0]),
@@ -90,8 +91,11 @@ class NifImport(NifImportExport):
     # degrees to radians conversion constant
     D2R = 3.14159265358979/180.0
     
-    def __init__(self, **config):
+    def execute(self, **config):
         """Main import function: open file and import all trees."""
+        return
+
+        # TODO
 
         # initialize progress bar
         self.msg_progress("Initializing", progbar = 0)
@@ -272,7 +276,7 @@ class NifImport(NifImportExport):
                         self.import_kf_root(kf_root, root)
                 # import the nif tree
                 self.import_root(root)
-        except NifImportError, e: # in that case, we raise a menu too
+        except NifImportError as e: # in that case, we raise a menu too
             self.logger.exception('NifImportError: %s' % e)
             Blender.Draw.PupMenu('ERROR%t|' + str(e))
             raise
@@ -320,7 +324,7 @@ class NifImport(NifImportExport):
                 self.logger.info('Applying skin deformation on geometry %s'
                                  % niBlock.name)
                 vertices, normals = niBlock.get_skin_deformation()
-                for vold, vnew in izip(niBlock.data.vertices, vertices):
+                for vold, vnew in zip(niBlock.data.vertices, vertices):
                     vold.x = vnew.x
                     vold.y = vnew.y
                     vold.z = vnew.z
@@ -992,7 +996,7 @@ class NifImport(NifImportExport):
                     if rotations:
                         self.logger.debug(
                             'Rotation keys...(bspline quaternions)')
-                        for time, quat in izip(times, rotations):
+                        for time, quat in zip(times, rotations):
                             frame = 1 + int(time * self.fps + 0.5)
                             quat = Blender.Mathutils.Quaternion(
                                 [quat[0], quat[1], quat[2],  quat[3]])
@@ -1011,7 +1015,7 @@ class NifImport(NifImportExport):
                     # translations
                     if translations:
                         self.logger.debug('Translation keys...(bspline)')
-                        for time, translation in izip(times, translations):
+                        for time, translation in zip(times, translations):
                             # time 0.0 is frame 1
                             frame = 1 + int(time * self.fps + 0.5)
                             trans = Blender.Mathutils.Vector(*translation)
@@ -1094,7 +1098,7 @@ class NifImport(NifImportExport):
                         # uses xyz rotation
                         if kfd.xyz_rotations[0].keys:
                             self.logger.debug('Rotation keys...(euler)')
-                        for xkey, ykey, zkey in izip(kfd.xyz_rotations[0].keys,
+                        for xkey, ykey, zkey in zip(kfd.xyz_rotations[0].keys,
                                                      kfd.xyz_rotations[1].keys,
                                                      kfd.xyz_rotations[2].keys):
                             # time 0.0 is frame 1
@@ -2225,7 +2229,7 @@ class NifImport(NifImportExport):
         
         if vcol:
             b_meshData.vertexColors = 1
-            for f, b_f_index in izip(tris, f_map):
+            for f, b_f_index in zip(tris, f_map):
                 if b_f_index is None:
                     continue
                 b_face = b_meshData.faces[b_f_index]
@@ -2260,7 +2264,7 @@ class NifImport(NifImportExport):
                 if not uvlayer in b_meshData.getUVLayerNames():
                     b_meshData.addUVLayer(uvlayer)
                 b_meshData.activeUVLayer = uvlayer
-                for f, b_f_index in izip(tris, f_map):
+                for f, b_f_index in zip(tris, f_map):
                     if b_f_index is None:
                         continue
                     uvlist = [ Vector(uv_set[vert_index].u, 1.0 - uv_set[vert_index].v) for vert_index in f ]
@@ -2316,7 +2320,7 @@ class NifImport(NifImportExport):
         # import body parts as vertex groups
         if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
             skinpart = niBlock.get_skin_partition()
-            for bodypart, skinpartblock in izip(
+            for bodypart, skinpartblock in zip(
                 skininst.partitions, skinpart.skin_partition_blocks):
                 bodypart_wrap = NifFormat.BSDismemberBodyPartType()
                 bodypart_wrap.set_value(bodypart.body_part)
@@ -2353,7 +2357,7 @@ class NifImport(NifImportExport):
                         # for each vertex calculate the key position from base
                         # pos + delta offset
                         assert(len(baseverts) == len(morphverts) == len(v_map))
-                        for bv, mv, b_v_index in izip(baseverts, morphverts, v_map):
+                        for bv, mv, b_v_index in zip(baseverts, morphverts, v_map):
                             base = Blender.Mathutils.Vector(bv.x, bv.y, bv.z)
                             delta = Blender.Mathutils.Vector(mv.x, mv.y, mv.z)
                             v = base + delta
@@ -2385,7 +2389,7 @@ class NifImport(NifImportExport):
                             frame =  1+int(key.time * self.fps + 0.5)
                             b_curve.addBezier( ( frame, x ) )
                         # finally: return to base position
-                        for bv, b_v_index in izip(baseverts, v_map):
+                        for bv, b_v_index in zip(baseverts, v_map):
                             base = Blender.Mathutils.Vector(bv.x, bv.y, bv.z)
                             if applytransform:
                                 base *= transform
@@ -2424,7 +2428,7 @@ class NifImport(NifImportExport):
 
                 # for each vertex calculate the key position from base
                 # pos + delta offset
-                for bv, mv, b_v_index in izip(verts, morphverts, v_map):
+                for bv, mv, b_v_index in zip(verts, morphverts, v_map):
                     base = Blender.Mathutils.Vector(bv.x, bv.y, bv.z)
                     delta = Blender.Mathutils.Vector(mv[0], mv[1], mv[2])
                     v = base + delta
@@ -2459,7 +2463,7 @@ class NifImport(NifImportExport):
                     11 + len(b_meshData.key.blocks) * 10)
 
             # finally: return to base position
-            for bv, b_v_index in izip(verts, v_map):
+            for bv, b_v_index in zip(verts, v_map):
                 base = Blender.Mathutils.Vector(bv.x, bv.y, bv.z)
                 if applytransform:
                     base *= transform
@@ -2905,7 +2909,7 @@ class NifImport(NifImportExport):
             ykeys = kfd.xyz_rotations[1].keys
             zkeys = kfd.xyz_rotations[2].keys
             self.logger.debug('Rotation keys...(euler)')
-            for (xkey, ykey, zkey) in izip(xkeys, ykeys, zkeys):
+            for (xkey, ykey, zkey) in zip(xkeys, ykeys, zkeys):
                 frame = 1+int(xkey.time * self.fps + 0.5) # time 0.0 is frame 1
                 # XXX we assume xkey.time == ykey.time == zkey.time
                 Blender.Set('curframe', frame)
@@ -3701,30 +3705,17 @@ class NifImport(NifImportExport):
         #NifFormat.write(niffile,
         #                version = 0x14000005, user_version = 11, roots = [root])
 
-def config_callback(**config):
-    """Called when config script is done. Starts and times import."""
-    # saves editmode state and exit editmode if it is enabled
-    # (cannot make changes mesh data in editmode)
-    is_editmode = Blender.Window.EditMode()
-    Blender.Window.EditMode(0)
-    Blender.Window.WaitCursor(1)
-    t = Blender.sys.time()
+bpy.types.register(ExportOBJ)
 
-    try:
-        # run importer
-        importer = NifImport(**config)
-        importer.logger.info(
-            'Finished in %.2f seconds' % (Blender.sys.time()-t))
-    finally:
-        Blender.Window.WaitCursor(0)
-        if is_editmode:
-            Blender.Window.EditMode(1)
+def menu_func(self, context):
+    default_filename = bpy.data.filename.replace(".blend", ".nif")
+    self.layout.operator(
+        ImportOBJ.bl_idname,
+        text="NetImmerse/Gamebryo (.nif & .kf & .egm)..."
+        ).filename=default_filename
 
-def fileselect_callback(filename):
-    """Called once file is selected. Starts config GUI."""
-    global _CONFIG
-    _CONFIG.run(NifConfig.TARGET_IMPORT, filename, config_callback)
+menu_item = bpy.types.INFO_MT_file_export.append(menu_func)
 
 if __name__ == '__main__':
-    _CONFIG = NifConfig() # use global so gui elements don't go out of skope
-    Blender.Window.FileSelector(fileselect_callback, "Import NIF", _CONFIG.config["IMPORT_FILE"])
+    # TODO run test
+    pass
