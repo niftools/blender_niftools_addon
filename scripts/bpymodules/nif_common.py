@@ -919,7 +919,7 @@ class NifConfig:
                 text = "BSX Flags:  ",
                 event_name = "EXPORT_OB_BSXFLAGS",
                 min_val = 0, max_val = 63,
-                callback = self.updateObBSXFlags,
+                callback = self.update_ob_bsx_flags,
                 num_items = 2, item = 0)
             self.draw_slider(
                 text = "Mass:  ",
@@ -1522,7 +1522,7 @@ class NifConfig:
         self.config["EXPORT_BONESPERPARTITION"] = val
         self.config["EXPORT_PADBONES"] = False
 
-    def updateObBSXFlags(self, evt, val):
+    def update_ob_bsx_flags(self, evt, val):
         self.config["EXPORT_OB_BSXFLAGS"] = val
 
     def updateObMaterial(self, evt, val):
