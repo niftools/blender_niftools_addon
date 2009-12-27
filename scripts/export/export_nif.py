@@ -3714,13 +3714,13 @@ class NifExport(NifImportExport):
                 for prop in b_obj.getAllProperties():
                     if (prop.getName() == 'LimitedHinge_MaxAngle'
                         and prop.getType() == "FLOAT"):
-                            max_angle = prop.getData()
+                        max_angle = prop.getData()
                     if (prop.getName() == 'LimitedHinge_MinAngle'
                         and prop.getType() == "FLOAT"):
-                            min_angle = prop.getData()
+                        min_angle = prop.getData()
                     if (prop.getName() == 'LimitedHinge_MaxFriction'
                         and prop.getType() == "FLOAT"):
-                            max_friction = prop.getData() 
+                        max_friction = prop.getData() 
 
                 # parent constraint to hkbody
                 hkbody.num_constraints += 1
