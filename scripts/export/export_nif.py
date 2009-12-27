@@ -2221,7 +2221,7 @@ class NifExport(NifImportExport):
                         # sid meier's railroad and civ4:
                         # set shader slots in extra data
                         self.addShaderIntegerExtraDatas(trishape)
-                    trishape.add_property(self.exportTexturingProperty(
+                    trishape.add_property(self.export_texturing_property(
                         flags=0x0001, # standard
                         applymode=self.APPLYMODE[mesh_base_mtex.blendmode if mesh_base_mtex else Blender.Texture.BlendModes["MIX"]],
                         uvlayers=mesh_uvlayers,
@@ -3991,7 +3991,7 @@ class NifExport(NifImportExport):
         return self.register_block(matprop)
 
     def export_tex_desc(self, texdesc=None, uvlayers=None, mtex=None):
-        """Helper function for exportTexturingProperty to export each texture
+        """Helper function for export_texturing_property to export each texture
         slot."""
         try:
             texdesc.uv_set = uvlayers.index(mtex.uvlayer) if mtex.uvlayer else 0
@@ -4004,7 +4004,7 @@ class NifExport(NifImportExport):
 
         texdesc.source = self.export_source_texture(mtex.tex)
 
-    def exportTexturingProperty(
+    def export_texturing_property(
         self, flags=0x0001, applymode=None, uvlayers=None,
         basemtex=None, glowmtex=None, bumpmtex=None, glossmtex=None,
         darkmtex=None, detailmtex=None, refmtex=None):
