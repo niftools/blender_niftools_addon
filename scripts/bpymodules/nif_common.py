@@ -1164,7 +1164,7 @@ class NifConfig:
                 egmfile = self.config["IMPORT_FILE"][:-3] + "egm"
             # browse and add egm file
             Blender.Window.FileSelector(
-                self.selectEgmFile, "Select FaceGen EGM File", egmfile)
+                self.select_egm_file, "Select FaceGen EGM File", egmfile)
         elif evName == "IMPORT_EGMFILE_REMOVE":
             self.config["IMPORT_EGMFILE"] = ''
 
@@ -1503,7 +1503,7 @@ class NifConfig:
         else:
             self.config["IMPORT_KEYFRAMEFILE"] = keyframefile
 
-    def selectEgmFile(self, egmfile):
+    def select_egm_file(self, egmfile):
         if egmfile == '' or not Blender.sys.exists(egmfile):
             Draw.PupMenu('No file selected or file does not exist%t|Ok')
         else:
