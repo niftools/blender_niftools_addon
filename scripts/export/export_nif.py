@@ -2243,7 +2243,7 @@ class NifExport(NifImportExport):
                     alphaflags = 0x12ED
                     alphathreshold = 0
                 trishape.add_property(
-                    self.exportAlphaProperty(flags=alphaflags,
+                    self.export_alpha_property(flags=alphaflags,
                                              threshold=alphathreshold))
 
             if mesh_haswire:
@@ -3856,7 +3856,7 @@ class NifExport(NifImportExport):
                 hkconstraint.update_a_b(root_block)
 
 
-    def exportAlphaProperty(self, flags=0x00ED, threshold=0):
+    def export_alpha_property(self, flags=0x00ED, threshold=0):
         """Return existing alpha property with given flags, or create new one
         if an alpha property with required flags is not found."""
         # search for duplicate
