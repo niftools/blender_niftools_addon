@@ -87,8 +87,8 @@ class NifImport(NifImportExport):
                          [ 0.0, 1.0, 0.0, 0.0],
                          [ 0.0, 0.0, 1.0, 0.0],
                          [ 0.0, 0.0, 0.0, 1.0] )
-    # radians to degrees conversion constant
-    R2D = 3.14159265358979/180.0
+    # degrees to radians conversion constant
+    D2R = 3.14159265358979/180.0
     
     def __init__(self, **config):
         """Main import function: open file and import all trees."""
@@ -2923,9 +2923,9 @@ class NifImport(NifImportExport):
                 Blender.Set('curframe', frame)
                 rot = Blender.Mathutils.Quaternion(key.value.w, key.value.x, key.value.y, key.value.z).toEuler()
                 # Blender euler is in degrees, object RotXYZ is in radians
-                b_obj.RotX = rot.x / self.R2D
-                b_obj.RotY = rot.y / self.R2D
-                b_obj.RotZ = rot.z / self.R2D
+                b_obj.RotX = rot.x * self.D2R
+                b_obj.RotY = rot.y * self.D2R
+                b_obj.RotZ = rot.z * self.D2R
                 b_obj.insertIpoKey(Blender.Object.ROT)
 
         if translations.keys:
