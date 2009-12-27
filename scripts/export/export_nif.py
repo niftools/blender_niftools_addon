@@ -2248,7 +2248,7 @@ class NifExport(NifImportExport):
 
             if mesh_haswire:
                 # add NiWireframeProperty
-                trishape.add_property(self.exportWireframeProperty(flags=1))
+                trishape.add_property(self.export_wireframe_property(flags=1))
 
             if mesh_doublesided:
                 # add NiStencilProperty
@@ -3883,7 +3883,7 @@ class NifExport(NifImportExport):
         specprop.flags = flags
         return specprop        
 
-    def exportWireframeProperty(self, flags = 0x0001):
+    def export_wireframe_property(self, flags = 0x0001):
         """Return existing wire property with given flags, or create new one
         if an wire property with required flags is not found."""
         # search for duplicate
