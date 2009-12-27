@@ -336,7 +336,7 @@ class NifConfig:
         # initialize all instance variables
         self.guiElements = {} # dictionary of gui elements (buttons, strings, sliders, ...)
         self.gui_events = []   # list of events
-        self.gui_eventIds = {} # dictionary of event ids
+        self.gui_event_ids = {} # dictionary of event ids
         self.config = {}      # configuration dictionary
         self.target = None    # import or export
         self.callback = None  # function to call when config gui is done
@@ -432,10 +432,10 @@ class NifConfig:
     def event_id(self, event_name):
         """Return event id from event name, and register event if it is new."""
         try:
-            event_id = self.gui_eventIds[event_name]
+            event_id = self.gui_event_ids[event_name]
         except KeyError:
             event_id = len(self.gui_events)
-            self.gui_eventIds[event_name] = event_id
+            self.gui_event_ids[event_name] = event_id
             self.gui_events.append(event_name)
         if  event_id >= 16383:
             raise RuntimeError("Maximum number of events exceeded")
