@@ -688,7 +688,7 @@ class NifConfig:
                 event_name="IMPORT_EGMANIMSCALE",
                 val=self.config["IMPORT_EGMANIMSCALE"],
                 min_val=0.01, max_val=100.0,
-                callback=self.updateEgmAnimScale,
+                callback=self.update_egm_anim_scale,
                 num_items=2, item=1)
             self.draw_y_sep()
 
@@ -1552,5 +1552,5 @@ class NifConfig:
     def update_anim_sequence_name(self, evt, val):
         self.config["EXPORT_ANIMSEQUENCENAME"] = val
 
-    def updateEgmAnimScale(self, evt, val):
+    def update_egm_anim_scale(self, evt, val):
         self.config["IMPORT_EGMANIMSCALE"] = val
