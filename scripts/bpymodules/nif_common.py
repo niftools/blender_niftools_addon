@@ -567,7 +567,7 @@ class NifConfig:
             self.xPos+self.XCOLUMNSKIP-30, self.yPos, 30, self.YLINESKIP)
         self.yPos -= self.YLINESKIP
 
-    def drawString(self, text, event_name, max_length, callback, val = None,
+    def draw_string(self, text, event_name, max_length, callback, val = None,
                    num_items = 1, item = 0):
         """Create elements to input a string."""
         if val is None:
@@ -724,7 +724,7 @@ class NifConfig:
                        or self.config["EXPORT_MW_NIFXNIFKF"]))
             self.draw_y_sep()
 
-            self.drawString(
+            self.draw_string(
                 text = "Anim Seq Name: ",
                 event_name = "EXPORT_ANIMSEQUENCENAME",
                 max_length = 128,
