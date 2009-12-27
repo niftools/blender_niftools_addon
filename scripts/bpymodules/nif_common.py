@@ -125,12 +125,20 @@ class MetaNifImportExport(type(bpy.types.Operator)):
         level, and ignores those properties defined higher up in the
         class hierarchy.
         """
-        log_level = bpy.props.IntProperty(
+        # TODO: preset buttons for log levels
+        cls.log_level = bpy.props.IntProperty(
             name="Log Level",
-            description="Level of verbosity",
+            description="Level of verbosity.",
             min=0, max=99,
             default=logging.WARNING)
 
+        cls.profile_path = bpy.props.StringProperty(
+            name="Profile Path",
+            description=
+            "Name of file where Python profiler dumps the profile."
+            " Set to empty string to turn off profiling.",
+            maxlen=1024,
+            default="")
 
 class NifImportExport(bpy.types.Operator, metaclass=MetaNifImportExport):
     """Abstract base class for import and export. Contains utility functions
@@ -197,7 +205,6 @@ class NifImportExport(bpy.types.Operator, metaclass=MetaNifImportExport):
     IMPORT_TEXTURE_PATH = []
     EXPORT_FLATTENSKIN = False
     EXPORT_VERSION = 'Oblivion'
-    LOG_LEVEL = logging.WARNING # log level
     IMPORT_SKELETON = 0 # 0 = normal import, 1 = import file as skeleton, 2 = import mesh and attach to skeleton
     IMPORT_KEYFRAMEFILE = '', # keyframe file for animations
     IMPORT_EGMFILE = '', # FaceGen EGM file for morphs
@@ -243,7 +250,6 @@ class NifImportExport(bpy.types.Operator, metaclass=MetaNifImportExport):
     EXPORT_FO3_BODYPARTS = True,
     EXPORT_MW_NIFXNIFKF = False,
     EXPORT_EXTRA_SHADER_TEXTURES = True,
-    PROFILE = '', # name of file where Python profiler dumps the profile; set to empty string to turn off profiling
     IMPORT_EXPORTEMBEDDEDTEXTURES = False,
     EXPORT_OPTIMIZE_MATERIALS = True,
     IMPORT_COMBINESHAPES = True,
