@@ -943,7 +943,7 @@ class NifConfig:
                 text = "Quality Type:  ",
                 event_name = "EXPORT_OB_QUALITYTYPE",
                 min_val = 0, max_val = 8,
-                callback = self.updateObQualityType,
+                callback = self.update_ob_quality_type,
                 num_items = 3, item = 2)
             self.draw_number(
                 text = "Unk Byte 1:  ",
@@ -1537,7 +1537,7 @@ class NifConfig:
     def update_ob_motion_system(self, evt, val):
         self.config["EXPORT_OB_MOTIONSYSTEM"] = val
 
-    def updateObQualityType(self, evt, val):
+    def update_ob_quality_type(self, evt, val):
         self.config["EXPORT_OB_QUALITYTYPE"] = val
 
     def updateObUnknownByte1(self, evt, val):
