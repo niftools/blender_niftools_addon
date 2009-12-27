@@ -937,7 +937,7 @@ class NifConfig:
                 text = "Motion System:  ",
                 event_name = "EXPORT_OB_MOTIONSYSTEM",
                 min_val = 0, max_val = 9,
-                callback = self.updateObMotionSystem,
+                callback = self.update_ob_motion_system,
                 num_items = 3, item = 1)
             self.draw_number(
                 text = "Quality Type:  ",
@@ -1534,7 +1534,7 @@ class NifConfig:
     def update_ob_mass(self, evt, val):
         self.config["EXPORT_OB_MASS"] = val
 
-    def updateObMotionSystem(self, evt, val):
+    def update_ob_motion_system(self, evt, val):
         self.config["EXPORT_OB_MOTIONSYSTEM"] = val
 
     def updateObQualityType(self, evt, val):
