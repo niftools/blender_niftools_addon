@@ -3693,12 +3693,13 @@ class NifExport(NifImportExport):
                         " only ball and hinge are supported."
                         % b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE])
 
-                # defaults and getting object properties for user settings
-                # (should use constraint properties, but blender does not
-                # have those...)
+                # defaults and getting object properties for user
+                # settings (should use constraint properties, but
+                # blender does not have those...)
                 max_angle = 1.5
                 min_angle = 0.0
-                # friction: again, just picking a reasonable value if no real value given
+                # friction: again, just picking a reasonable value if
+                # no real value given
                 if isinstance(hkconstraint,
                               NifFormat.bhkMalleableConstraint):
                     # malleable typically have 0
@@ -3711,11 +3712,14 @@ class NifExport(NifImportExport):
                     else: # oblivion
                         max_friction = 10
                 for prop in b_obj.getAllProperties():
-                    if prop.getName() == 'LimitedHinge_MaxAngle' and prop.getType() == "FLOAT":
+                    if (prop.getName() == 'LimitedHinge_MaxAngle'
+                        and prop.getType() == "FLOAT"):
                             max_angle = prop.getData()
-                    if prop.getName() == 'LimitedHinge_MinAngle' and prop.getType() == "FLOAT":
+                    if (prop.getName() == 'LimitedHinge_MinAngle'
+                        and prop.getType() == "FLOAT"):
                             min_angle = prop.getData()
-                    if prop.getName() == 'LimitedHinge_MaxFriction' and prop.getType() == "FLOAT":
+                    if (prop.getName() == 'LimitedHinge_MaxFriction'
+                        and prop.getType() == "FLOAT"):
                             max_friction = prop.getData() 
 
                 # parent constraint to hkbody
