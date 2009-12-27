@@ -766,7 +766,7 @@ class NifConfig:
                 text = "Max Bones",
                 event_name = "EXPORT_BONESPERPARTITION",
                 min_val = 4, max_val = 18,
-                callback = self.updateBonesPerPartition,
+                callback = self.update_bones_per_partition,
                 num_items = 3, item = 2)
             self.draw_y_sep()
 
@@ -1518,7 +1518,7 @@ class NifConfig:
         self.config["EXPORT_SCALE_CORRECTION"] = val
         self.config["IMPORT_SCALE_CORRECTION"] = 1.0 / self.config["EXPORT_SCALE_CORRECTION"]
 
-    def updateBonesPerPartition(self, evt, val):
+    def update_bones_per_partition(self, evt, val):
         self.config["EXPORT_BONESPERPARTITION"] = val
         self.config["EXPORT_PADBONES"] = False
 
