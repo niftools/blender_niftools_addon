@@ -366,7 +366,7 @@ class NifConfig:
 
         # prepare and run gui
         self.texpathIndex = 0
-        self.updateTexpathCurrent()
+        self.update_texpath_current()
         Draw.Register(self.gui_draw, self.gui_event, self.gui_button_event)
 
     def save(self):
@@ -1134,17 +1134,17 @@ class NifConfig:
         elif evName == "TEXPATH_NEXT":
             if self.texpathIndex < (len(self.config["IMPORT_TEXTURE_PATH"])-1):
                 self.texpathIndex += 1
-            self.updateTexpathCurrent()
+            self.update_texpath_current()
         elif evName == "TEXPATH_PREV":
             if self.texpathIndex > 0:
                 self.texpathIndex -= 1
-            self.updateTexpathCurrent()
+            self.update_texpath_current()
         elif evName == "TEXPATH_REMOVE":
             if self.texpathIndex < len(self.config["IMPORT_TEXTURE_PATH"]):
                 del self.config["IMPORT_TEXTURE_PATH"][self.texpathIndex]
             if self.texpathIndex > 0:
                 self.texpathIndex -= 1
-            self.updateTexpathCurrent()
+            self.update_texpath_current()
 
         elif evName == "IMPORT_KEYFRAMEFILE_ADD":
             kffile = self.config["IMPORT_KEYFRAMEFILE"]
@@ -1488,9 +1488,9 @@ class NifConfig:
             if texture_path not in self.config["IMPORT_TEXTURE_PATH"]:
                 self.config["IMPORT_TEXTURE_PATH"].append(texture_path)
             self.texpathIndex = self.config["IMPORT_TEXTURE_PATH"].index(texture_path)
-        self.updateTexpathCurrent()
+        self.update_texpath_current()
 
-    def updateTexpathCurrent(self):
+    def update_texpath_current(self):
         """Update self.texpathCurrent string."""
         if self.config["IMPORT_TEXTURE_PATH"]:
             self.texpathCurrent = self.config["IMPORT_TEXTURE_PATH"][self.texpathIndex]
