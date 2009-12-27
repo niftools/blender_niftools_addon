@@ -3349,7 +3349,7 @@ class NifExport(NifImportExport):
             if self.EXPORT_BHKLISTSHAPE:
                 self.exportCollisionList(obj, colbody, layer, material)
             else:
-                self.exportCollisionSingle(obj, colbody, layer, material)
+                self.export_collision_single(obj, colbody, layer, material)
 
     def export_collision_packed(self, obj, colbody, layer, material):
         """Add object ob as packed collision object to collision body
@@ -3415,7 +3415,7 @@ class NifExport(NifImportExport):
 
 
 
-    def exportCollisionSingle(self, obj, colbody, layer, material):
+    def export_collision_single(self, obj, colbody, layer, material):
         """Add collision object to colbody.
         If colbody already has a collision shape, throw ValueError."""
         if colbody.shape:
