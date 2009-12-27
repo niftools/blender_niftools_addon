@@ -2263,7 +2263,7 @@ class NifExport(NifImportExport):
                          not in self.USED_EXTRA_SHADER_TEXTURES)):
                     # refer to the specular property in the trishape block
                     trishape.add_property(
-                        self.exportSpecularProperty(flags=0x0001))
+                        self.export_specular_property(flags=0x0001))
                 
                 # add NiTriShape's material property
                 trimatprop = self.exportMaterialProperty(
@@ -3870,7 +3870,7 @@ class NifExport(NifImportExport):
         alphaprop.threshold = threshold
         return alphaprop
 
-    def exportSpecularProperty(self, flags = 0x0001):
+    def export_specular_property(self, flags = 0x0001):
         """Return existing specular property with given flags, or create new one
         if a specular property with required flags is not found."""
         # search for duplicate
