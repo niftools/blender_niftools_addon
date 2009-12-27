@@ -1124,10 +1124,10 @@ class NifConfig:
 
         if evName == "OK":
             self.save()
-            self.guiExit()
+            self.gui_exit()
         elif evName == "CANCEL":
             self.callback = None
-            self.guiExit()
+            self.gui_exit()
         elif evName == "TEXPATH_ADD":
             # browse and add texture search path
             Blender.Window.FileSelector(self.addTexturePath, "Add Texture Search Path")
@@ -1456,11 +1456,11 @@ class NifConfig:
 
         if evt == Draw.ESCKEY:
             self.callback = None
-            self.guiExit()
+            self.gui_exit()
 
         Draw.Redraw(1)
 
-    def guiExit(self):
+    def gui_exit(self):
         """Close config GUI and call callback function."""
         Draw.Exit()
         if not self.callback: return # no callback
