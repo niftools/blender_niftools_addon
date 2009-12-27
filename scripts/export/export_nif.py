@@ -3698,7 +3698,18 @@ class NifExport(NifImportExport):
                 # have those...)
                 max_angle = 1.5
                 min_angle = 0.0
-                max_friction = - 10
+                # friction: again, just picking a reasonable value if no real value given
+                if isinstance(hkconstraint,
+                              NifFormat.bhkMalleableConstraint):
+                    # malleable typically have 0
+                    # (perhaps because they have a damping parameter)
+                    max_friction = 0
+                else:
+                    # non-malleable typically have 10
+                    if self.EXPORT_VERSION == "Fallout 3":
+                        max_friction = 100
+                    else: # oblivion
+                        max_friction = 10
                 for prop in b_obj.getAllProperties():
                     if prop.getName() == 'LimitedHinge_MaxAngle' and prop.getType() == "FLOAT":
                             max_angle = prop.getData()
@@ -3830,32 +3841,12 @@ class NifExport(NifImportExport):
                     hkdescriptor.min_angle = min_angle
                     # the maximum axis is typically about 90 degrees
                     # 3.14 / 2 = 1.5
-                    hkdescriptor.max_angle = max_angle                                  
-                    
-                    
-                    
+                    hkdescriptor.max_angle = max_angle
+                    # friction
+                    hkdescriptor.max_friction = max_friction
                 else:
                     raise ValueError("unknown descriptor %s"
                                      % hkdescriptor.__class__.__name__)
-
-                # friction: again, just picking a reasonable value if no real value given
-                if isinstance(hkconstraint,
-                              NifFormat.bhkMalleableConstraint):
-                    # malleable typically have 0
-                    # (perhaps because they have a damping parameter)
-                    if max_friction == - 10:
-                        hkdescriptor.max_friction = 0
-                    else:
-                        hkdescriptor.max_friction = max_friction
-                else:
-                    # non-malleable typically have 10
-                    if max_friction == - 10:
-                        if self.EXPORT_VERSION in ("Oblivion"):
-                            hkdescriptor.max_friction = 10
-                        if self.EXPORT_VERSION in ("Fallout 3"):
-                            hkdescriptor.max_friction = 100
-                    else:
-                        hkdescriptor.max_friction = max_friction
 
                 # do AB
                 hkconstraint.update_a_b(root_block)
