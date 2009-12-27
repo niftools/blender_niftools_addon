@@ -528,7 +528,7 @@ class NifConfig:
         if item + 1 == num_items:
             self.yPos -= self.YLINESKIP
 
-    def drawNumber(
+    def draw_number(
         self, text, event_name, min_val, max_val, callback, val = None,
         num_items = 1, item = 0):
         """Draw an input widget for numbers."""
@@ -596,7 +596,7 @@ class NifConfig:
             event_name = "LABEL_WELCOME_MESSAGE")
         self.draw_y_sep()
 
-        self.drawNumber(
+        self.draw_number(
             text = "Log Level",
             event_name = "LOG_LEVEL",
             min_val = 0, max_val = 99,
@@ -762,7 +762,7 @@ class NifConfig:
                 text = "Pad & Sort Bones",
                 event_name = "EXPORT_PADBONES",
                 num_items = 3, item = 1)
-            self.drawNumber(
+            self.draw_number(
                 text = "Max Bones",
                 event_name = "EXPORT_BONESPERPARTITION",
                 min_val = 4, max_val = 18,
@@ -910,12 +910,12 @@ class NifConfig:
                 event_name = "EXPORT_OB_MATERIAL_WOOD",
                 val = self.config["EXPORT_OB_MATERIAL"] == 9,
                 num_items = 6, item = 5)
-            self.drawNumber(
+            self.draw_number(
                 text = "Material:  ",
                 event_name = "EXPORT_OB_MATERIAL",
                 min_val = 0, max_val = 30,
                 callback = self.updateObMaterial)
-            self.drawNumber(
+            self.draw_number(
                 text = "BSX Flags:  ",
                 event_name = "EXPORT_OB_BSXFLAGS",
                 min_val = 0, max_val = 63,
@@ -927,37 +927,37 @@ class NifConfig:
                 min_val = 0.1, max_val = 1500.0,
                 callback = self.updateObMass,
                 num_items = 2, item = 1)
-            self.drawNumber(
+            self.draw_number(
                 text = "Layer:  ",
                 event_name = "EXPORT_OB_LAYER",
                 min_val = 0, max_val = 57,
                 callback = self.updateObLayer,
                 num_items = 3, item = 0)
-            self.drawNumber(
+            self.draw_number(
                 text = "Motion System:  ",
                 event_name = "EXPORT_OB_MOTIONSYSTEM",
                 min_val = 0, max_val = 9,
                 callback = self.updateObMotionSystem,
                 num_items = 3, item = 1)
-            self.drawNumber(
+            self.draw_number(
                 text = "Quality Type:  ",
                 event_name = "EXPORT_OB_QUALITYTYPE",
                 min_val = 0, max_val = 8,
                 callback = self.updateObQualityType,
                 num_items = 3, item = 2)
-            self.drawNumber(
+            self.draw_number(
                 text = "Unk Byte 1:  ",
                 event_name = "EXPORT_OB_UNKNOWNBYTE1",
                 min_val = 1, max_val = 2,
                 callback = self.updateObUnknownByte1,
                 num_items = 3, item = 0)
-            self.drawNumber(
+            self.draw_number(
                 text = "Unk Byte 2:  ",
                 event_name = "EXPORT_OB_UNKNOWNBYTE2",
                 min_val = 1, max_val = 2,
                 callback = self.updateObUnknownByte2,
                 num_items = 3, item = 1)
-            self.drawNumber(
+            self.draw_number(
                 text = "Wind:  ",
                 event_name = "EXPORT_OB_WIND",
                 min_val = 0, max_val = 1,
