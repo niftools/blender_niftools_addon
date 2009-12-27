@@ -3420,7 +3420,7 @@ class NifExport(NifImportExport):
         If colbody already has a collision shape, throw ValueError."""
         if colbody.shape:
             raise ValueError('collision body already has a shape')
-        colbody.shape = self.exportCollisionObject(obj, layer, material)
+        colbody.shape = self.export_collision_object(obj, layer, material)
 
 
 
@@ -3444,11 +3444,11 @@ class NifExport(NifImportExport):
             if not isinstance(colshape, NifFormat.bhkListShape):
                 raise ValueError('not a list of collisions')
 
-        colshape.add_shape(self.exportCollisionObject(obj, layer, material))
+        colshape.add_shape(self.export_collision_object(obj, layer, material))
 
 
 
-    def exportCollisionObject(self, obj, layer, material):
+    def export_collision_object(self, obj, layer, material):
         """Export object obj as box, sphere, capsule, or convex hull.
         Note: polyheder is handled by export_collision_packed."""
 
