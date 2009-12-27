@@ -1130,7 +1130,7 @@ class NifConfig:
             self.gui_exit()
         elif evName == "TEXPATH_ADD":
             # browse and add texture search path
-            Blender.Window.FileSelector(self.addTexturePath, "Add Texture Search Path")
+            Blender.Window.FileSelector(self.add_texture_path, "Add Texture Search Path")
         elif evName == "TEXPATH_NEXT":
             if self.texpathIndex < (len(self.config["IMPORT_TEXTURE_PATH"])-1):
                 self.texpathIndex += 1
@@ -1480,7 +1480,7 @@ class NifConfig:
             stats.sort_stats('cumulative')
             stats.print_stats()
 
-    def addTexturePath(self, texture_path):
+    def add_texture_path(self, texture_path):
         texture_path = Blender.sys.dirname(texture_path)
         if texture_path == '' or not Blender.sys.exists(texture_path):
             Draw.PupMenu('No path selected or path does not exist%t|Ok')
