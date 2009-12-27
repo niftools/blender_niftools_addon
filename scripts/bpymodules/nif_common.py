@@ -955,7 +955,7 @@ class NifConfig:
                 text = "Unk Byte 2:  ",
                 event_name = "EXPORT_OB_UNKNOWNBYTE2",
                 min_val = 1, max_val = 2,
-                callback = self.updateObUnknownByte2,
+                callback = self.update_ob_unknown_byte_2,
                 num_items = 3, item = 1)
             self.draw_number(
                 text = "Wind:  ",
@@ -1543,7 +1543,7 @@ class NifConfig:
     def update_ob_unknown_byte_1(self, evt, val):
         self.config["EXPORT_OB_UNKNOWNBYTE1"] = val
 
-    def updateObUnknownByte2(self, evt, val):
+    def update_ob_unknown_byte_2(self, evt, val):
         self.config["EXPORT_OB_UNKNOWNBYTE2"] = val
 
     def updateObWind(self, evt, val):
