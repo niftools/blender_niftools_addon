@@ -445,7 +445,7 @@ class NifConfig:
         """Vertical skip."""
         self.yPos -= self.YLINESEP
 
-    def drawNextColumn(self):
+    def draw_next_column(self):
         """Start a new column."""
         self.xPos += self.XCOLUMNSKIP + self.XCOLUMNSEP
         self.yPos = self.YORIGIN + Blender.Window.GetAreaSize()[1]
@@ -822,7 +822,7 @@ class NifConfig:
 
         # advanced import settings
         if self.target == self.TARGET_IMPORT:
-            self.drawNextColumn()
+            self.draw_next_column()
 
             self.drawToggle(
                 text = "Realign Bone Tail Only",
@@ -855,7 +855,7 @@ class NifConfig:
 
         if (self.target == self.TARGET_EXPORT
             and self.config["EXPORT_VERSION"] in ("Oblivion", "Fallout 3")):
-            self.drawNextColumn()
+            self.draw_next_column()
             
             self.drawLabel(
                 text = "Collision Options",
@@ -1030,7 +1030,7 @@ class NifConfig:
         # export-only options for morrowind
         if (self.target == self.TARGET_EXPORT
             and self.config["EXPORT_VERSION"] == "Morrowind"):
-            self.drawNextColumn()
+            self.draw_next_column()
 
             self.drawToggle(
                 text = "Export nif + xnif + kf",
@@ -1040,7 +1040,7 @@ class NifConfig:
         if (self.target == self.TARGET_EXPORT
             and (self.config["EXPORT_VERSION"]
                  in NifImportExport.USED_EXTRA_SHADER_TEXTURES)):
-            self.drawNextColumn()
+            self.draw_next_column()
 
             self.drawToggle(
                 text = "Export Extra Shader Textures",
@@ -1049,7 +1049,7 @@ class NifConfig:
         # export-only options for fallout 3
         if (self.target == self.TARGET_EXPORT
             and self.config["EXPORT_VERSION"] == "Fallout 3"):
-            self.drawNextColumn()
+            self.draw_next_column()
 
             self.drawLabel(
                 text = "Shader Options",
