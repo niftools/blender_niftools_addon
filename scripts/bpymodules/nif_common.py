@@ -914,7 +914,7 @@ class NifConfig:
                 text = "Material:  ",
                 event_name = "EXPORT_OB_MATERIAL",
                 min_val = 0, max_val = 30,
-                callback = self.updateObMaterial)
+                callback = self.update_ob_material)
             self.draw_number(
                 text = "BSX Flags:  ",
                 event_name = "EXPORT_OB_BSXFLAGS",
@@ -1525,7 +1525,7 @@ class NifConfig:
     def update_ob_bsx_flags(self, evt, val):
         self.config["EXPORT_OB_BSXFLAGS"] = val
 
-    def updateObMaterial(self, evt, val):
+    def update_ob_material(self, evt, val):
         self.config["EXPORT_OB_MATERIAL"] = val
 
     def updateObLayer(self, evt, val):
