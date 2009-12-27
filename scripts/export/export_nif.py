@@ -4236,6 +4236,8 @@ class NifExport(NifImportExport):
             bbox.translation.z = (minx + maxx) * 0.5 + obj.LocZ
             bbox.rotation.set_identity()
             bbox.has_bounding_box = True
+            # weirdly, bounding box center (bbox.bounding_box.translation)
+            # is specified relative to the *parent* (not relative to bbox!)
             bbox.bounding_box.translation.deepcopy(bbox.translation)
             bbox.bounding_box.rotation.set_identity()
             bbox.bounding_box.radius.x = (maxx - minx) * 0.5

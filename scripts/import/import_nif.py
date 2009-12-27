@@ -3571,12 +3571,14 @@ class NifImport(NifImportExport):
             if not bbox.has_bounding_box:
                 raise ValueError("Expected NiNode with bounding box.")
             me = Blender.Mesh.New('Bounding Box')
-            minx = -bbox.bounding_box.radius.x
-            miny = -bbox.bounding_box.radius.y
-            minz = -bbox.bounding_box.radius.z
-            maxx = bbox.bounding_box.radius.x
-            maxy = bbox.bounding_box.radius.y
-            maxz = bbox.bounding_box.radius.z
+            # weirdly, bounding box center (bbox.bounding_box.translation)
+            # is specified relative to the *parent* (not relative to bbox!)
+            minx = bbox.bounding_box.translation.x - bbox.translation.x - bbox.bounding_box.radius.x
+            miny = bbox.bounding_box.translation.y - bbox.translation.y - bbox.bounding_box.radius.y
+            minz = bbox.bounding_box.translation.z - bbox.translation.z - bbox.bounding_box.radius.z
+            maxx = bbox.bounding_box.translation.x - bbox.translation.x + bbox.bounding_box.radius.x
+            maxy = bbox.bounding_box.translation.y - bbox.translation.y + bbox.bounding_box.radius.y
+            maxz = bbox.bounding_box.translation.z - bbox.translation.z + bbox.bounding_box.radius.z
         else:
             raise TypeError("Expected BSBound or NiNode but got %s."
                             % bbox.__class__.__name__)
