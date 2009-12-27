@@ -335,8 +335,8 @@ class NifConfig:
 
         # initialize all instance variables
         self.guiElements = {} # dictionary of gui elements (buttons, strings, sliders, ...)
-        self.guiEvents = []   # list of events
-        self.guiEventIds = {} # dictionary of event ids
+        self.gui_events = []   # list of events
+        self.gui_eventIds = {} # dictionary of event ids
         self.config = {}      # configuration dictionary
         self.target = None    # import or export
         self.callback = None  # function to call when config gui is done
@@ -367,7 +367,7 @@ class NifConfig:
         # prepare and run gui
         self.texpathIndex = 0
         self.updateTexpathCurrent()
-        Draw.Register(self.gui_draw, self.guiEvent, self.gui_button_event)
+        Draw.Register(self.gui_draw, self.gui_event, self.gui_button_event)
 
     def save(self):
         """Save and validate configuration to Blender registry."""
@@ -432,11 +432,11 @@ class NifConfig:
     def event_id(self, event_name):
         """Return event id from event name, and register event if it is new."""
         try:
-            event_id = self.guiEventIds[event_name]
+            event_id = self.gui_eventIds[event_name]
         except KeyError:
-            event_id = len(self.guiEvents)
-            self.guiEventIds[event_name] = event_id
-            self.guiEvents.append(event_name)
+            event_id = len(self.gui_events)
+            self.gui_eventIds[event_name] = event_id
+            self.gui_events.append(event_name)
         if  event_id >= 16383:
             raise RuntimeError("Maximum number of events exceeded")
         return event_id
@@ -1118,7 +1118,7 @@ class NifConfig:
     def gui_button_event(self, evt):
         """Event handler for buttons."""
         try:
-            evName = self.guiEvents[evt]
+            evName = self.gui_events[evt]
         except IndexError:
             evName = None
 
@@ -1451,7 +1451,7 @@ class NifConfig:
             self.config["EXPORT_EXTRA_SHADER_TEXTURES"] = not self.config["EXPORT_EXTRA_SHADER_TEXTURES"]
         Draw.Redraw(1)
 
-    def guiEvent(self, evt, val):
+    def gui_event(self, evt, val):
         """Event handler for GUI elements."""
 
         if evt == Draw.ESCKEY:
