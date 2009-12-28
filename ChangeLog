@@ -14,7 +14,9 @@ Version 2.5.1 (in development)
   - max angle
   - friction
 * object rotation animation import bugfix (reported by Arcimaestro Anteres,
-  fixes for instance Morrowind animated creature imports)
+fixes for instance Morrowind animated creature imports)
+* fix for Fallout 3 NiGeomMorpherController (shape key) export (reported by
+Bleolakri)
 * pep8 fixes
 
 Version 2.5.0 (22 Nov 2009)

@@ -2650,6 +2650,9 @@ class NifExport(NifImportExport):
                         morphctrl.num_interpolators = len(key.blocks)
                         morphctrl.interpolators.update_size()
 
+                        # interpolator weights (for Fallout 3)
+                        morphctrl.interpolator_weights.update_size()
+
                         # XXX some unknowns, bethesda only
                         # XXX just guessing here, data seems to be zero always
                         morphctrl.num_unknown_ints = len(key.blocks)
@@ -2688,6 +2691,9 @@ class NifExport(NifImportExport):
                             interpol.value = 0
                             interpol.data = self.create_block("NiFloatData", curve)
                             morphctrl.interpolators[keyblocknum] = interpol
+                            # fallout 3 stores interpolators inside the
+                            # interpolator_weights block
+                            morphctrl.interpolator_weights[keyblocknum].interpolator = interpol
                             floatdata = interpol.data.data
 
                             # geometry only export has no float data
