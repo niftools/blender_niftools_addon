@@ -18,6 +18,7 @@ fixes for instance Morrowind animated creature imports)
 * fix for Fallout 3 NiGeomMorpherController (shape key) export (reported by
 Bleolakri)
 * pep8 fixes
+* installer detects Python 64 bit, and complains about it
 
 Version 2.5.0 (22 Nov 2009)
 * attempt to fix invalid matrices in bone extra text buffer rather than
