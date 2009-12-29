@@ -256,7 +256,7 @@ Function .onInit
    
 
   ; check if Blender is installed
-
+  SetRegView 32
   ClearErrors
   ReadRegStr $BLENDERHOME HKLM SOFTWARE\BlenderFoundation "Install_Dir"
   IfErrors 0 blender_check_end
@@ -314,14 +314,32 @@ blender_scripts_notininstallfolder:
 blender_scripts_end:
 
   ; check if Python 2.6 is installed
+  SetRegView 32
   ClearErrors
   ReadRegStr $PYTHONPATH HKLM SOFTWARE\Python\PythonCore\2.6\InstallPath ""
   IfErrors 0 python_check_end
   ReadRegStr $PYTHONPATH HKCU SOFTWARE\Python\PythonCore\2.6\InstallPath ""
   IfErrors 0 python_check_end
 
-     ; no key, that means that Python 2.6 is not installed
-     MessageBox MB_OK "You will need to download Python 2.6 and PyFFI for Python 2.6 in order to run the Blender NIF Scripts. Pressing OK will take you to the Python and PyFFI download pages. Please download and run the Python windows installer, then download and run the PyFFI windows installer. When you are done, rerun the Blender NIF Scripts installer."
+  ; no key, that means that Python 2.6 (32 bit) is not installed
+  SetRegView 64
+  ClearErrors
+  ReadRegStr $PYTHONPATH HKLM SOFTWARE\Python\PythonCore\2.6\InstallPath ""
+  IfErrors 0 python64_check_end
+  ReadRegStr $PYTHONPATH HKCU SOFTWARE\Python\PythonCore\2.6\InstallPath ""
+  IfErrors 0 python64_check_end
+
+    ; neither Python 2.6 (32 bit or 64 bit) are installed
+     MessageBox MB_OK "You will need to download Python 2.6 (32 bit) and PyFFI for Python 2.6 in order to run the Blender NIF Scripts. Pressing OK will take you to the Python and PyFFI download pages. Please download and run the Python windows installer, then download and run the PyFFI windows installer. When you are done, rerun the Blender NIF Scripts installer."
+     StrCpy $0 "http://sourceforge.net/project/platformdownload.php?group_id=199269&sel_platform=3089"
+     Call openLinkNewWindow
+     StrCpy $0 "http://www.python.org/download/"
+     Call openLinkNewWindow
+     Abort ; causes installer to quit
+
+python64_check_end:
+	 ; 32 bit not installed, but 64 bit found
+     MessageBox MB_OK "Python 2.6 (64 bit) found. You will need to uninstall it, and download Python 2.6 (32 bit) and PyFFI for Python 2.6 in order to run the Blender NIF Scripts. Pressing OK will take you to the Python and PyFFI download pages. Please download and run the Python 2.6 32 bit windows installer, then download and run the PyFFI windows installer. When you are done, rerun the Blender NIF Scripts installer."
      StrCpy $0 "http://sourceforge.net/project/platformdownload.php?group_id=199269&sel_platform=3089"
      Call openLinkNewWindow
      StrCpy $0 "http://www.python.org/download/"
@@ -331,6 +349,7 @@ blender_scripts_end:
 python_check_end:
 
   ; check if PyFFI is installed (the bdist_wininst installer only creates an uninstaller registry key, so that's how we check)
+  SetRegView 32
   ClearErrors
   ReadRegStr $PYFFI HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\PyFFI-py2.6 "DisplayName"
   IfErrors 0 pyffi_check_end
