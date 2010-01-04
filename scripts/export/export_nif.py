@@ -332,9 +332,9 @@ class NifExport(NifImportExport):
                     #    v.sel = False
                     for f in mesh.faces:
                         for v in f.verts:
-                            vkey = (int(v.co[0]*200),
-                                    int(v.co[1]*200),
-                                    int(v.co[2]*200))
+                            vkey = (int(v.co[0]*self.VERTEX_RESOLUTION),
+                                    int(v.co[1]*self.VERTEX_RESOLUTION),
+                                    int(v.co[2]*self.VERTEX_RESOLUTION))
                             try:
                                 vdict[vkey].append((v, f, mesh))
                             except KeyError:
@@ -705,7 +705,12 @@ class NifExport(NifImportExport):
                                       user_version=NIF_USER_VERSION,
                                       user_version2=NIF_USER_VERSION2)
                 data.roots = [root_block]
-                data.neosteam = (self.EXPORT_VERSION == "NeoSteam")
+                if self.EXPORT_VERSION == "NeoSteam":
+                    data.modification = "neosteam"
+                elif self.EXPORT_VERSION == "Atlantica":
+                    data.modification = "ndoors"
+                elif self.EXPORT_VERSION == "Howling Sword":
+                    data.modification = "jmihs1"
                 stream = open(self.filename, "wb")
                 try:
                     data.write(stream)
@@ -2647,6 +2652,9 @@ class NifExport(NifImportExport):
                         morphctrl.num_interpolators = len(key.blocks)
                         morphctrl.interpolators.update_size()
 
+                        # interpolator weights (for Fallout 3)
+                        morphctrl.interpolator_weights.update_size()
+
                         # XXX some unknowns, bethesda only
                         # XXX just guessing here, data seems to be zero always
                         morphctrl.num_unknown_ints = len(key.blocks)
@@ -2685,6 +2693,9 @@ class NifExport(NifImportExport):
                             interpol.value = 0
                             interpol.data = self.create_block("NiFloatData", curve)
                             morphctrl.interpolators[keyblocknum] = interpol
+                            # fallout 3 stores interpolators inside the
+                            # interpolator_weights block
+                            morphctrl.interpolator_weights[keyblocknum].interpolator = interpol
                             floatdata = interpol.data.data
 
                             # geometry only export has no float data
@@ -3577,15 +3588,15 @@ class NifExport(NifImportExport):
             # remove duplicates through dictionary
             vertdict = {}
             for i, vert in enumerate(vertlist):
-                vertdict[(int(vert[0]*200),
-                          int(vert[1]*200),
-                          int(vert[2]*200))] = i
+                vertdict[(int(vert[0]*self.VERTEX_RESOLUTION),
+                          int(vert[1]*self.VERTEX_RESOLUTION),
+                          int(vert[2]*self.VERTEX_RESOLUTION))] = i
             fdict = {}
-            for i, (norm, dist) in enumerate(list(zip(fnormlist, fdistlist))):
-                fdict[(int(norm[0]*200),
-                       int(norm[1]*200),
-                       int(norm[2]*200),
-                       int(dist*200))] = i
+            for i, (norm, dist) in enumerate(zip(fnormlist, fdistlist)):
+                fdict[(int(norm[0]*self.NORMAL_RESOLUTION),
+                       int(norm[1]*self.NORMAL_RESOLUTION),
+                       int(norm[2]*self.NORMAL_RESOLUTION),
+                       int(dist*self.VERTEX_RESOLUTION))] = i
             # sort vertices and normals
             vertkeys = sorted(vertdict.keys())
             fkeys = sorted(fdict.keys())

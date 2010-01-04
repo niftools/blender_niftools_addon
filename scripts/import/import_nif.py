@@ -2131,10 +2131,16 @@ class NifImport(NifImportExport):
             # tuple of floats.
             if norms:
                 n = norms[i]
-                k = ( int(v.x*200), int(v.y*200), int(v.z*200),
-                      int(n.x*200), int(n.y*200), int(n.z*200) )
+                k = (int(v.x*self.VERTEX_RESOLUTION),
+                     int(v.y*self.VERTEX_RESOLUTION),
+                     int(v.z*self.VERTEX_RESOLUTION),
+                     int(n.x*self.NORMAL_RESOLUTION),
+                     int(n.y*self.NORMAL_RESOLUTION),
+                     int(n.z*self.NORMAL_RESOLUTION))
             else:
-                k = ( int(v.x*200), int(v.y*200), int(v.z*200) )
+                k = (int(v.x*self.VERTEX_RESOLUTION),
+                     int(v.y*self.VERTEX_RESOLUTION),
+                     int(v.z*self.VERTEX_RESOLUTION))
             # check if vertex was already added, and if so, what index
             try:
                 # this is the bottle neck...
