@@ -19,6 +19,8 @@ fixes for instance Morrowind animated creature imports)
 Bleolakri)
 * pep8 fixes
 * installer detects Python 64 bit, and complains about it
+* increased resolution of vertex coordinates to 1/1000 (from 1/200) on import
+and export (fixes issue #2925044 reported by EuGENIUS).
 
 Version 2.5.0 (22 Nov 2009)
 * attempt to fix invalid matrices in bone extra text buffer rather than

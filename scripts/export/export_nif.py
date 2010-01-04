@@ -335,9 +335,9 @@ class NifExport(NifImportExport):
                     #    v.sel = False
                     for f in mesh.faces:
                         for v in f.verts:
-                            vkey = (int(v.co[0]*200),
-                                    int(v.co[1]*200),
-                                    int(v.co[2]*200))
+                            vkey = (int(v.co[0]*self.VERTEX_RESOLUTION),
+                                    int(v.co[1]*self.VERTEX_RESOLUTION),
+                                    int(v.co[2]*self.VERTEX_RESOLUTION))
                             try:
                                 vdict[vkey].append((v, f, mesh))
                             except KeyError:
@@ -3586,15 +3586,15 @@ class NifExport(NifImportExport):
             # remove duplicates through dictionary
             vertdict = {}
             for i, vert in enumerate(vertlist):
-                vertdict[(int(vert[0]*200),
-                          int(vert[1]*200),
-                          int(vert[2]*200))] = i
+                vertdict[(int(vert[0]*self.VERTEX_RESOLUTION),
+                          int(vert[1]*self.VERTEX_RESOLUTION),
+                          int(vert[2]*self.VERTEX_RESOLUTION))] = i
             fdict = {}
             for i, (norm, dist) in enumerate(zip(fnormlist, fdistlist)):
-                fdict[(int(norm[0]*200),
-                       int(norm[1]*200),
-                       int(norm[2]*200),
-                       int(dist*200))] = i
+                fdict[(int(norm[0]*self.NORMAL_RESOLUTION),
+                       int(norm[1]*self.NORMAL_RESOLUTION),
+                       int(norm[2]*self.NORMAL_RESOLUTION),
+                       int(dist*self.VERTEX_RESOLUTION))] = i
             # sort vertices and normals
             vertkeys = sorted(vertdict.keys())
             fkeys = sorted(fdict.keys())

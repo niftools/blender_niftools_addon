@@ -118,6 +118,11 @@ class NifImportExport:
     """Abstract base class for import and export. Contains utility functions
     that are commonly used in both import and export."""
 
+    VERTEX_RESOLUTION = 1000
+    NORMAL_RESOLUTION = 100
+    UV_RESOLUTION = 10000
+    VCOL_RESOLUTION = 100
+
     EXTRA_SHADER_TEXTURES = [
         "EnvironmentMapIndex",
         "NormalMapIndex",
