@@ -708,7 +708,12 @@ class NifExport(NifImportExport):
                                       user_version=NIF_USER_VERSION,
                                       user_version2=NIF_USER_VERSION2)
                 data.roots = [root_block]
-                data.neosteam = (self.EXPORT_VERSION == "NeoSteam")
+                if self.EXPORT_VERSION == "NeoSteam":
+                    data.modification = "neosteam"
+                elif self.EXPORT_VERSION == "Atlantica":
+                    data.modification = "ndoors"
+                elif self.EXPORT_VERSION == "Howling Sword":
+                    data.modification = "jmihs1"
                 stream = open(self.filename, "wb")
                 try:
                     data.write(stream)
