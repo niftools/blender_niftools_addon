@@ -264,7 +264,7 @@ Function .onInit
   IfErrors 0 blender_check_end
 
      ; no key, that means that Blender is not installed
-     MessageBox MB_OK "You will need to download Blender in order to run the Blender NIF Scripts. Pressing OK will take you to the Blender download page. Please download and run the Blender windows installer. On Windows Vista, it is strongly recommended that you select 'Use the installation directory' when the Blender installer asks you to specify where to install Blender's user data files. When you are done, rerun the Blender NIF Scripts installer."
+     MessageBox MB_OK "You will need to download Blender in order to run the Blender NIF Scripts. Pressing OK will take you to the Blender download page. Please download and run the Blender windows installer. It is strongly recommended that you select 'Use the installation directory' when the Blender installer asks you to specify where to install Blender's user data files. When you are done, rerun the Blender NIF Scripts installer."
      StrCpy $0 "http://www.blender.org/download/get-blender/"
      Call openLinkNewWindow
      Abort ; causes installer to quit
