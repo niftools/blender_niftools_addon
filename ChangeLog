@@ -1,5 +1,5 @@
 Version 2.5.1 (in development)
-* updated for pyffi 2.0.6
+* updated for pyffi 2.1.0
 * fixed stencil property export for Fallout 3
 * Morrowind bounding box import and export
 * import and export, via object properties per object, of havok object
@@ -571,7 +571,7 @@ Version 2.0.7 (Aug 8, 2007)
 * Export: fixed problem with meshes sharing the same vcol lighting enabled material but not all having vertex weights (such as the Oblivion steel cuirass); the exporter now issues a warning rather than throwing an exception
 * Export: fixed skin bounds calculation
 
-Version 2.0.6 (Aug 6, 2007)
+Version 2.1.0 (Aug 6, 2007)
 * Import/Export: fixed various transform errors
 * Import: frames/sec detection
 * Import: new and more reliable skinning import method
