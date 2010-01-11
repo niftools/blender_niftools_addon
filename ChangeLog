@@ -1,5 +1,6 @@
 Version 2.5.2 (in development)
-* fixed display of alpha channel in textured faces
+* fixed display of alpha channel in textured faces (reported by vurt2, fixed
+by Alphax)
 
 Version 2.5.1 (10 Jan 2010)
 * updated for pyffi 2.1.0
