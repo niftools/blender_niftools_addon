@@ -2292,6 +2292,8 @@ class NifImport(NifImportExport):
             if mbasetex and uvco:
                 # face mode bitfield value
                 TEX = Blender.Mesh.FaceModes['TEX']
+                # face transparency enum
+                ALPHA = Blender.Mesh.FaceTranspModes['ALPHA']
                 imgobj = mbasetex.tex.getImage()
                 if imgobj:
                     for b_f_index in f_map:
@@ -2299,6 +2301,7 @@ class NifImport(NifImportExport):
                             continue
                         f = b_meshData.faces[b_f_index]
                         f.mode = TEX
+                        f.transp = ALPHA
                         f.image = imgobj
 
         # import skinning info, for meshes affected by bones
