@@ -3,6 +3,8 @@ Version 2.5.2 (in development)
 by Alphax)
 * new export option to export a NiNode for every mesh (required by Morrowind
 xbase_anim type nifs, reported by Arcimaestro Anteres)
+* weight squash script can now limit the number of bone influences per
+vertex (requested by Growlf)
 
 Version 2.5.1 (10 Jan 2010)
 * updated for pyffi 2.1.0

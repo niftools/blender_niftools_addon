@@ -14,6 +14,8 @@ rm -f ~/.blender/scripts/nif_common.py*
 rm -f ~/.blender/scripts/bpymodules/nif_common.py*
 rm -f ~/.blender/scripts/mesh_weightsquash.py*
 rm -f ~/.blender/scripts/mesh_hull.py*
+rm -f ~/.blender/scripts/mesh_niftools_weightsquash.py*
+rm -f ~/.blender/scripts/mesh_niftools_hull.py*
 rm -f ~/.blender/scripts/object_setbonepriority.py*
 rm -f ~/.blender/scripts/object_savebonepose.py*
 rm -f ~/.blender/scripts/object_loadbonepose.py*

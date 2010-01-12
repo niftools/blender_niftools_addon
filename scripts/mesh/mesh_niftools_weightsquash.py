@@ -1,13 +1,13 @@
 #!BPY
 """
 Name: 'Weight Squash'
-Blender: 244
+Blender: 245
 Group: 'Mesh'
 Tooltip: 'Squash Vertex Weights'
 """
 
 # -------------------------------------------------------------------------- 
-# Squash Weights 1.0 by Amorilia 
+# Squash Weights 1.1 by Amorilia 
 # -------------------------------------------------------------------------- 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -45,7 +45,7 @@ Tooltip: 'Squash Vertex Weights'
 import Blender
 from Blender import Window, sys
 
-def weight_squash(me, cutoff = 0.02, nbones = 3):
+def weight_squash(me, cutoff = 0.02, nbones = 4):
     """Remove vertices from vertex group if their weight is less than cutoff.
     The affected vertices are selected in editmode for further inspection if
     required.
@@ -60,22 +60,39 @@ def weight_squash(me, cutoff = 0.02, nbones = 3):
 
     # remove weights
     for group in me.getVertGroupNames():
+        # skip body parts
+        if group.startswith("BP_"):
+            continue
         print "=== %s ==="%group
         
         vert_list = me.getVertsFromGroup(group, 1) # second argument = 1 means also return vertex weights
         remove_list = [v[0] for v in vert_list if v[1] < cutoff]
-        remove_list = [i for i in remove_list if len(me.getVertexInfluences(i)) > nbones]
         me.removeVertsFromGroup(group, remove_list)
         num_affected += len(remove_list)
 
         # inform user
         if remove_list:
-            print "removed"
+            print "removed due to low weight"
             print remove_list
 
         # select affected vertices
         for i in remove_list:
             me.verts[i].sel = 1
+
+    for vert in me.verts:
+        influences = me.getVertexInfluences(vert.index)
+        # skip body parts
+        influences = [infl for infl in influences
+                      if not infl[0].startswith("BP_")]
+        if len(influences) > nbones:
+            # sort by weight
+            influences.sort(key=lambda infl: infl[1], reverse=True)
+            # remove the ones with lowest weight
+            for group, weight in influences[nbones:]:
+                me.removeVertsFromGroup(group, [vert.index])
+                vert.sel = 1
+                num_affected += 1
+                print "removed %i (%.3f) from %s" % (vert.index, weight, group)
 
     return num_affected
 
@@ -85,11 +102,11 @@ def main():
     
     # ask for weights to delete
     PREF_CUTOFF = Blender.Draw.Create(0.02)
-    PREF_NBONES = Blender.Draw.Create(3)
+    PREF_NBONES = Blender.Draw.Create(4)
     
     pup_block = [\
     ('Weight Cutoff', PREF_CUTOFF, 0.001, 0.499, 'Vertices with weight less than this number will be deleted from the vertex group.'),\
-    ('Min Bones', PREF_NBONES, 1, 4, 'Only delete from vertex group if number of bone influences is larger than this number.'),\
+    ('Max Bones', PREF_NBONES, 1, 10, 'Also remove weakest influences so total number of bone influences is never larger than this number.'),\
     ]
     
     if not Blender.Draw.PupBlock('Vertex Squash', pup_block):
