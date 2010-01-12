@@ -1,6 +1,8 @@
 Version 2.5.2 (in development)
 * fixed display of alpha channel in textured faces (reported by vurt2, fixed
 by Alphax)
+* new export option to export a NiNode for every mesh (required by Morrowind
+xbase_anim type nifs, reported by Arcimaestro Anteres)
 
 Version 2.5.1 (10 Jan 2010)
 * updated for pyffi 2.1.0
