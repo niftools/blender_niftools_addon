@@ -667,7 +667,7 @@ class NifConfig:
             self.draw_y_sep()
 
             self.draw_toggle(
-                text = "Combine Multi-Material Shapes Into Single Mesh",
+                text = "Combine NiNode + Shapes Into Single Mesh",
                 event_name = "IMPORT_COMBINESHAPES")
             self.draw_y_sep()
 

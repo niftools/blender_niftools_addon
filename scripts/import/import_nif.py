@@ -2849,7 +2849,11 @@ class NifImport(NifImportExport):
     def is_grouping_node(self, niBlock):
         """Determine whether node is grouping node.
         Returns the children which are grouped, or empty list if it is not a
-        grouping node."""
+        grouping node.
+        """
+        # combining shapes: disable grouping
+        if not self.IMPORT_COMBINESHAPES:
+            return []
         # check that it is a ninode
         if not isinstance(niBlock, NifFormat.NiNode): return []
         # root collision node: join everything
