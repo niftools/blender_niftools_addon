@@ -1020,8 +1020,7 @@ class NifExport(NifImportExport):
                 if is_collision:
                     self.export_collision(ob, parent_block)
                     return None # done; stop here
-                elif (has_ipo or has_children or is_multimaterial or has_track
-                      or self.EXPORT_NINODE_FOR_EVERY_MESH):
+                elif has_ipo or has_children or is_multimaterial or has_track:
                     # -> mesh ninode for the hierarchy to work out
                     if not has_track:
                         node = self.create_block('NiNode', ob)
