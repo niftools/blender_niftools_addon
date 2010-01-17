@@ -44,26 +44,25 @@ from pyffi.spells.nif import NifToaster
 
 class SkinningTestSuite(TestSuite):
     def run(self):
+        ob_male = os.path.join(
+            self.config.get("path", "oblivion"),
+            "meshes", "characters", "_male")
+        ob_skeleton = os.path.join(ob_male, "skeleton.nif")
+        ob_bodyparts = [
+            os.path.join(ob_male, bodypart + ".nif")
+            for bodypart in ["upperbody", "lowerbody", "hand", "foot"]]
+        
         # oblivion full body
+        # import skeleton and body parts
         self.test(
-            filename = 'test/nif/skeleton.nif',
+            filename = ob_skeleton,
             config = dict(IMPORT_SKELETON = 1))
-        self.test(
-            filename = 'test/nif/upperbody.nif',
-            config = dict(IMPORT_SKELETON = 2),
-            selection = ['Scene Root'])
-        self.test(
-            filename = 'test/nif/lowerbody.nif',
-            config = dict(IMPORT_SKELETON = 2),
-            selection = ['Scene Root'])
-        self.test(
-            filename = 'test/nif/hand.nif',
-            config = dict(IMPORT_SKELETON = 2),
-            selection = ['Scene Root'])
-        self.test(
-            filename = 'test/nif/foot.nif',
-            config = dict(IMPORT_SKELETON = 2),
-            selection = ['Scene Root'])
+        for ob_bodypart in ob_bodyparts:
+            self.test(
+                filename = ob_bodypart,
+                config = dict(IMPORT_SKELETON = 2),
+                selection = ['Scene Root'])
+        # export it
         self.test(
             filename = 'test/nif/_fulloblivionbody.nif',
             config = dict(
@@ -74,12 +73,14 @@ class SkinningTestSuite(TestSuite):
         toaster = NifToaster(spellclass=SpellCompareSkinData,
                              options=dict(arg="test/nif/_fulloblivionbody.nif",
                                           verbose=99))
-        toaster.toast(top="test/nif/upperbody.nif")
-        toaster.toast(top="test/nif/lowerbody.nif")
-        toaster.toast(top="test/nif/hand.nif")
-        toaster.toast(top="test/nif/foot.nif")
+        for ob_bodypart in ob_bodyparts:
+            toaster.toast(top=ob_bodypart)
+
         # morrowind creature
-        self.test(filename = 'test/nif/babelfish.nif')
+        mw_babelfish = os.path.join(
+            self.config.get("path", "morrowind"),
+            "meshes", "r", "babelfish.nif")
+        self.test(filename = mw_babelfish)
         self.test(
             filename = 'test/nif/_babelfish.nif',
             config = dict(
@@ -101,4 +102,3 @@ class SkinningTestSuite(TestSuite):
 
 suite = SkinningTestSuite("skinning")
 suite.run()
-
