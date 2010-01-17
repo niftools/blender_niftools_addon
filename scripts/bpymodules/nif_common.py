@@ -325,7 +325,6 @@ class NifConfig:
         EXPORT_OPTIMIZE_MATERIALS = True,
         IMPORT_COMBINESHAPES = True,
         EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES = False,
-        EXPORT_NINODE_FOR_EVERY_MESH = False,
         )
 
     def __init__(self):
@@ -755,11 +754,6 @@ class NifConfig:
             self.draw_toggle(
                 text = "Smoothen Inter-Object Seams",
                 event_name = "EXPORT_SMOOTHOBJECTSEAMS")
-            self.draw_y_sep()
-
-            self.draw_toggle(
-                text = "NiNode For Every Mesh",
-                event_name = "EXPORT_NINODE_FOR_EVERY_MESH")
             self.draw_y_sep()
 
             self.draw_toggle(
@@ -1251,7 +1245,6 @@ class NifConfig:
             # settings that usually make sense, fail-safe
             self.config["EXPORT_FORCEDDS"] = True
             self.config["EXPORT_SMOOTHOBJECTSEAMS"] = True
-            self.config["EXPORT_NINODE_FOR_EVERY_MESH"] = False
             self.config["EXPORT_STRIPIFY"] = False
             self.config["EXPORT_STITCHSTRIPS"] = False
             self.config["EXPORT_ANIMATION"] = 1
@@ -1316,8 +1309,6 @@ class NifConfig:
             self.config["EXPORT_STITCHSTRIPS"] = not self.config["EXPORT_STITCHSTRIPS"]
         elif evName == "EXPORT_SMOOTHOBJECTSEAMS":
             self.config["EXPORT_SMOOTHOBJECTSEAMS"] = not self.config["EXPORT_SMOOTHOBJECTSEAMS"]
-        elif evName == "EXPORT_NINODE_FOR_EVERY_MESH":
-            self.config["EXPORT_NINODE_FOR_EVERY_MESH"] = not self.config["EXPORT_NINODE_FOR_EVERY_MESH"]
         elif evName[:17] == "EXPORT_ANIMATION_":
              value = int(evName[17:])
              self.config["EXPORT_ANIMATION"] = value
