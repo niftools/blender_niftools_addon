@@ -2357,6 +2357,7 @@ class NifImport(NifImportExport):
                         keyname = morphData.morphs[idxMorph].frame_name
                         if not keyname:
                             keyname = 'Key %i' % idxMorph
+                        self.logger.info("inserting key '%s'" % keyname)
                         # get vectors
                         morphverts = morphData.morphs[idxMorph].vectors
                         # for each vertex calculate the key position from base
@@ -2376,7 +2377,14 @@ class NifImport(NifImportExport):
                         # set name for key
                         b_meshData.key.blocks[idxMorph].name = keyname
                         # set up the ipo key curve
-                        b_curve = b_ipo.addCurve(keyname)
+                        try:
+                            b_curve = b_ipo.addCurve(keyname)
+                        except ValueError:
+                            # this happens when two keys have the same name
+                            # an instance of this is in fallout 3
+                            # meshes/characters/_male/skeleton.nif HeadAnims:0
+                            self.logger.warn(
+                                "skipped duplicate of key '%s'" % keyname)
                         # no idea how to set up the bezier triples -> switching
                         # to linear instead
                         b_curve.interpolation = Blender.IpoCurve.InterpTypes.LINEAR

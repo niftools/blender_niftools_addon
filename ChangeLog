@@ -6,9 +6,11 @@ by Alphax)
 xbase_anim type nifs, reported by Arcimaestro Anteres)
 * weight squash script can now limit the number of bone influences per
 vertex (requested by Growlf)
-* the combine shapes import option results in xbase_anim type nifs to import
-clothing slots as bones (fixes transform issue reported by Arcimaestro
+* disabling combine shapes import option results in xbase_anim type nifs to
+import clothing slots as bones (fixes transform issue reported by Arcimaestro
 Antares)
+* added workaround for duplicate shape keys during import: only the first is
+read, and duplicates are ignored (e.g. Fallout 3 skeleton.nif HeadAnims:0)
 
 Version 2.5.1 (10 Jan 2010)
 * updated for pyffi 2.1.0
