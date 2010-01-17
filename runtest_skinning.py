@@ -42,24 +42,6 @@ from pyffi.spells.nif import NifToaster
 
 # some tests to import and export nif files
 
-class TestSuiteChampionArmor(TestSuite):
-    def run(self):
-        # champion armor
-        cuirass_filename = os.path.join(
-            self.config.get("path", "oblivion"),
-            'meshes/armor/champion/m/cuirass.nif')
-        self.test(filename=cuirass_filename)
-        self.test(
-            filename = 'test/nif/_cuirass.nif',
-            config = dict(
-                EXPORT_VERSION = 'Oblivion', EXPORT_SMOOTHOBJECTSEAMS = True,
-                EXPORT_FLATTENSKIN = True),
-            selection = ['Scene Root'])
-        toaster = NifToaster(spellclass=SpellCompareSkinData,
-                             options=dict(arg="test/nif/_cuirass.nif",
-                                          verbose=99))
-        toaster.toast(top=cuirass_filename)
-
 class SkinningTestSuite(TestSuite):
     def run(self):
         # oblivion full body
@@ -117,10 +99,6 @@ class SkinningTestSuite(TestSuite):
                                           verbose=99))
         toaster.toast(top="test/nif/bb_skinf_br.nif")
 
-### "Scene Root" of champion armor conflicts with "Scene Root" of full body
-### test below, so for now this test is disabled until a solution is found
-suite = TestSuiteChampionArmor("champion_armor")
+suite = SkinningTestSuite("skinning")
 suite.run()
-#suite = SkinningTestSuite("skinning")
-#suite.run()
 

@@ -60,67 +60,6 @@ class TestSuiteChampionArmor(TestSuite):
                                           verbose=99))
         toaster.toast(top=cuirass_filename)
 
-class SkinningTestSuite(TestSuite):
-    def run(self):
-        # oblivion full body
-        self.test(
-            filename = 'test/nif/skeleton.nif',
-            config = dict(IMPORT_SKELETON = 1))
-        self.test(
-            filename = 'test/nif/upperbody.nif',
-            config = dict(IMPORT_SKELETON = 2),
-            selection = ['Scene Root'])
-        self.test(
-            filename = 'test/nif/lowerbody.nif',
-            config = dict(IMPORT_SKELETON = 2),
-            selection = ['Scene Root'])
-        self.test(
-            filename = 'test/nif/hand.nif',
-            config = dict(IMPORT_SKELETON = 2),
-            selection = ['Scene Root'])
-        self.test(
-            filename = 'test/nif/foot.nif',
-            config = dict(IMPORT_SKELETON = 2),
-            selection = ['Scene Root'])
-        self.test(
-            filename = 'test/nif/_fulloblivionbody.nif',
-            config = dict(
-                EXPORT_VERSION = 'Oblivion', EXPORT_SMOOTHOBJECTSEAMS = True,
-                EXPORT_FLATTENSKIN = True),
-            selection = ['Scene Root'])
-        # compare skindata
-        toaster = NifToaster(spellclass=SpellCompareSkinData,
-                             options=dict(arg="test/nif/_fulloblivionbody.nif",
-                                          verbose=99))
-        toaster.toast(top="test/nif/upperbody.nif")
-        toaster.toast(top="test/nif/lowerbody.nif")
-        toaster.toast(top="test/nif/hand.nif")
-        toaster.toast(top="test/nif/foot.nif")
-        # morrowind creature
-        self.test(filename = 'test/nif/babelfish.nif')
-        self.test(
-            filename = 'test/nif/_babelfish.nif',
-            config = dict(
-                EXPORT_VERSION = 'Morrowind',
-                EXPORT_STRIPIFY = False, EXPORT_SKINPARTITION = False),
-            selection = ['Root Bone'])
-        # morrowind better bodies mesh
-        bbskin_import = self.test(filename = 'test/nif/bb_skinf_br.nif')
-        bbskin_export = self.test(
-            filename = 'test/nif/_bb_skinf_br.nif',
-            config = dict(
-                EXPORT_VERSION = 'Morrowind', EXPORT_SMOOTHOBJECTSEAMS = True,
-                EXPORT_STRIPIFY = False, EXPORT_SKINPARTITION = False),
-            selection = ['Bip01'])
-        toaster = NifToaster(spellclass=SpellCompareSkinData,
-                             options=dict(arg="test/nif/_bb_skinf_br.nif",
-                                          verbose=99))
-        toaster.toast(top="test/nif/bb_skinf_br.nif")
-
-### "Scene Root" of champion armor conflicts with "Scene Root" of full body
-### test below, so for now this test is disabled until a solution is found
 suite = TestSuiteChampionArmor("champion_armor")
 suite.run()
-#suite = SkinningTestSuite("skinning")
-#suite.run()
 
