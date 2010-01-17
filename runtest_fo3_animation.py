@@ -15,6 +15,11 @@ class AnimationTestSuite(TestSuite):
             filename="test/nif/fo3/_fullbody.nif",
             config=dict(
                 IMPORT_TEXTURE_PATH=[self.config.get("path", "fallout3")]))
+        # just checking that export works
+        self.test(
+            filename="test/nif/fo3/__fullbody.nif",
+            config=dict(EXPORT_VERSION='Fallout 3'),
+            selection=['Scene Root'])
 
     def make_fo3_fullbody(self):
         if os.path.exists("test/nif/fo3/_fullbody.nif"):
