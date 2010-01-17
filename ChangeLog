@@ -1,4 +1,5 @@
 Version 2.5.2 (in development)
+* configurable game paths for test suite
 * fixed display of alpha channel in textured faces (reported by vurt2, fixed
 by Alphax)
 * new export option to export a NiNode for every mesh (required by Morrowind
@@ -8,7 +9,6 @@ vertex (requested by Growlf)
 * the combine shapes import option results in xbase_anim type nifs to import
 clothing slots as bones (fixes transform issue reported by Arcimaestro
 Antares)
-
 
 Version 2.5.1 (10 Jan 2010)
 * updated for pyffi 2.1.0
