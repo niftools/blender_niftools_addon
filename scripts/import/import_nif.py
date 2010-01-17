@@ -3704,12 +3704,16 @@ class NifImport(NifImportExport):
                 kfd.quaternion_keys[0].value.z = kfi.rotation.z
                 kfd.quaternion_keys[0].value.w = kfi.rotation.w
                 # copy translation
-                kfd.translations.num_keys = 1
-                kfd.translations.keys.update_size()
-                kfd.translations.keys[0].time = 0.0
-                kfd.translations.keys[0].value.x = kfi.translation.x
-                kfd.translations.keys[0].value.y = kfi.translation.y
-                kfd.translations.keys[0].value.z = kfi.translation.z
+                if kfi.translation.x < -1000000:
+                    # invalid, happens in fallout 3, e.g. h2haim.kf
+                    self.logger.warn("ignored NaN in interpolator translation")
+                else:
+                    kfd.translations.num_keys = 1
+                    kfd.translations.keys.update_size()
+                    kfd.translations.keys[0].time = 0.0
+                    kfd.translations.keys[0].value.x = kfi.translation.x
+                    kfd.translations.keys[0].value.y = kfi.translation.y
+                    kfd.translations.keys[0].value.z = kfi.translation.z
                 # ignore scale, usually contains invalid data in interpolator
 
             # save priority for future reference

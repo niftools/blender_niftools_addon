@@ -9,8 +9,11 @@ vertex (requested by Growlf)
 * disabling combine shapes import option results in xbase_anim type nifs to
 import clothing slots as bones (fixes transform issue reported by Arcimaestro
 Antares)
-* added workaround for duplicate shape keys during import: only the first is
-read, and duplicates are ignored (e.g. Fallout 3 skeleton.nif HeadAnims:0)
+* added regression test and workaround for duplicate shape keys during import:
+only the first is read, and duplicates are ignored (e.g. Fallout 3
+skeleton.nif HeadAnims:0)
+* added regression test and workaround for corrupt translation keys in
+Fallout 3 interpolators (e.g. Fallout 3 h2haim.kf, reported by Malo)
 
 Version 2.5.1 (10 Jan 2010)
 * updated for pyffi 2.1.0
