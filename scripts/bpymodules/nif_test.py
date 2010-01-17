@@ -32,6 +32,7 @@
 #
 # ***** END LICENCE BLOCK *****
 
+import ConfigParser
 import logging
 
 import Blender
@@ -47,7 +48,7 @@ class TestSuite:
     @ivar layer: The current Blender layer in the scene.
     @type layer: C{int}
     """
-    def __init__(self, name):
+    def __init__(self, name, ini_filename="test/nif/test.ini"):
         """Initialize a new test suite with given name.
 
         @param name: The name of the test (will be used as name of the scene
@@ -62,6 +63,10 @@ class TestSuite:
         self.scene.makeCurrent()
         # set active layer
         self.scene.setLayers([self.layer])
+
+        # get configuration
+        self.config = ConfigParser.ConfigParser()
+        self.config.readfp(open(ini_filename))
 
     def test(self, filename=None, config=None, selection=None, next_layer=None):
         """Run given test, and increase layer after export.
