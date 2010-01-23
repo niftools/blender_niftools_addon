@@ -39,8 +39,8 @@ SetCompressor /SOLID lzma
 !include "WordFunc.nsh"
 !insertmacro VersionCompare
 
-!define VERSION "2.5.1"
-!define PYFFIVERSION "2.0.6"
+!define VERSION "2.5.2"
+!define PYFFIVERSION "2.1.0"
 
 Name "Blender NIF Scripts ${VERSION}"
 Var BLENDERHOME    ; blender settings location
@@ -313,7 +313,7 @@ blender_scripts_notininstallfolder:
 
 blender_scripts_end:
 
-  ; check if Python 2.6 is installed
+  ; check if Python 2.6 (32 bit) is installed
   SetRegView 32
   ClearErrors
   ReadRegStr $PYTHONPATH HKLM SOFTWARE\Python\PythonCore\2.6\InstallPath ""
@@ -357,7 +357,7 @@ python_check_end:
   IfErrors 0 pyffi_check_end
 
     ; no key, that means that PyFFI is not installed
-     MessageBox MB_OK "You will need to download PyFFI for Python 2.6 in order to run the Blender NIF Scripts. Pressing OK will take you to the PyFFI download page. Please download and run the PyFFI windows installer. When you are done, rerun the Blender NIF Scripts installer."
+     MessageBox MB_OK "You will need to download PyFFI for Python 2.6 (32 bit) in order to run the Blender NIF Scripts. Pressing OK will take you to the PyFFI download page. Please download and run the PyFFI windows installer. When you are done, rerun the Blender NIF Scripts installer."
      StrCpy $0 "http://sourceforge.net/project/platformdownload.php?group_id=199269&sel_platform=3089"
      Call openLinkNewWindow
      Abort ; causes installer to quit

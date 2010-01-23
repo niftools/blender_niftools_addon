@@ -1,5 +1,22 @@
-Version 2.5.1 (in development)
-* updated for pyffi 2.0.6
+Version 2.5.2 (in development)
+* configurable game paths for test suite
+* fixed display of alpha channel in textured faces (reported by vurt2, fixed
+by Alphax)
+* weight squash script can now limit the number of bone influences per
+vertex (requested by Growlf)
+* disabling combine shapes import option results in xbase_anim type nifs to
+import clothing slots as bones (fixes transform issue reported by Arcimaestro
+Anteres)
+* added regression test and workaround for duplicate shape keys during import:
+only the first is read, and duplicates are ignored (e.g. Fallout 3
+skeleton.nif HeadAnims:0)
+* added regression test and workaround for corrupt translation keys in
+Fallout 3 interpolators (e.g. Fallout 3 h2haim.kf, reported by Malo)
+* added experimental .kf export for Freedom Force and Freedom Force vs. the
+3rd Reich
+
+Version 2.5.1 (10 Jan 2010)
+* updated for pyffi 2.1.0
 * fixed stencil property export for Fallout 3
 * Morrowind bounding box import and export
 * import and export, via object properties per object, of havok object
@@ -571,7 +588,7 @@ Version 2.0.7 (Aug 8, 2007)
 * Export: fixed problem with meshes sharing the same vcol lighting enabled material but not all having vertex weights (such as the Oblivion steel cuirass); the exporter now issues a warning rather than throwing an exception
 * Export: fixed skin bounds calculation
 
-Version 2.0.6 (Aug 6, 2007)
+Version 2.1.0 (Aug 6, 2007)
 * Import/Export: fixed various transform errors
 * Import: frames/sec detection
 * Import: new and more reliable skinning import method

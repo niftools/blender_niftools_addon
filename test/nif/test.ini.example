@@ -1,0 +1,7 @@
+; set the data file paths of the games below (everything up to and
+; excluding "meshes")
+; then rename this file to test.ini
+[path]
+morrowind=C:\Program Files\Bethesda Softworks\Morrowind\Data Files
+oblivion=C:\Program Files\Bethesda Softworks\Oblivion\Data
+fallout3=C:\Program Files\Bethesda Softworks\Fallout 3\Data

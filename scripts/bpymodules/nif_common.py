@@ -1,7 +1,7 @@
 """Common functions for the Blender nif import and export scripts."""
 
-__version__ = "2.5.1"
-__requiredpyffiversion__ = "2.0.6"
+__version__ = "2.5.2"
+__requiredpyffiversion__ = "2.1.0"
 __requiredblenderversion__ = "250"
 
 # ***** BEGIN LICENSE BLOCK *****
@@ -815,7 +815,7 @@ class NifConfig:
             self.draw_y_sep()
 
             self.draw_toggle(
-                text = "Combine Multi-Material Shapes Into Single Mesh",
+                text = "Combine NiNode + Shapes Into Single Mesh",
                 event_name = "IMPORT_COMBINESHAPES")
             self.draw_y_sep()
 

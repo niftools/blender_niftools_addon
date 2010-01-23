@@ -32,12 +32,15 @@
 #
 # ***** END LICENCE BLOCK *****
 
+import ConfigParser
 import logging
+import os.path
 
 import Blender
 from import_nif import NifImport
 from export_nif import NifExport
 from nif_common import NifConfig
+from nif_common import NifFormat
 
 class TestSuite:
     """A test suite class.
@@ -47,7 +50,7 @@ class TestSuite:
     @ivar layer: The current Blender layer in the scene.
     @type layer: C{int}
     """
-    def __init__(self, name):
+    def __init__(self, name, ini_filename="test/nif/test.ini"):
         """Initialize a new test suite with given name.
 
         @param name: The name of the test (will be used as name of the scene
@@ -62,6 +65,10 @@ class TestSuite:
         self.scene.makeCurrent()
         # set active layer
         self.scene.setLayers([self.layer])
+
+        # get configuration
+        self.config = ConfigParser.ConfigParser()
+        self.config.readfp(open(ini_filename))
 
     def test(self, filename=None, config=None, selection=None, next_layer=None):
         """Run given test, and increase layer after export.
@@ -131,59 +138,56 @@ class TestSuite:
 
             return result
 
+    def make_fo3_fullbody(self):
+        if os.path.exists("test/nif/fo3/_fullbody.nif"):
+            # to save time, only create the full body nif if it does
+            # not yet exist
+            return
+        # fo3 body path
+        fo3_male = os.path.join(
+            self.config.get("path", "fallout3"),
+            "meshes", "characters", "_male")
+        # read skeleton
+        self.logger.info("Reading skeleton.nif")
+        skeleton = NifFormat.Data()
+        with open(os.path.join(fo3_male, "skeleton.nif"), "rb") as stream:
+            skeleton.read(stream)
+
+        # merge all body parts
+        for bodypartnif in ("femaleupperbody.nif",
+                            "femalerighthand.nif",
+                            "femalelefthand.nif",
+                            "../head/headfemale.nif"):
+            self.logger.info("Merging body part %s" % bodypartnif)
+            bodypart = NifFormat.Data()
+            with open(os.path.join(fo3_male, bodypartnif), "rb") as stream:
+                bodypart.read(stream)
+                skeleton.roots[0].merge_external_skeleton_root(bodypart.roots[0])
+        # send geometries to their bind position
+        self.logger.info("Sending geometries to bind position")
+        skeleton.roots[0].send_geometries_to_bind_position()
+        # send all bones to their bind position
+        self.logger.info("Sending bones to bind position")
+        skeleton.roots[0].send_bones_to_bind_position()
+        #for block in skeleton.roots[0].tree():
+        #    if isinstance(block, NifFormat.NiGeometry):
+        #        block.send_bones_to_bind_position()
+        # remove non-ninode children
+        #logger.info("Removing non-NiNode children")
+        #for block in skeleton.roots[0].tree():
+        #    block.set_children([child
+        #                       for child in block.get_children()
+        #                       if isinstance(child, NifFormat.NiNode)])
+        #    block.set_extra_datas([])
+        #    block.set_properties([])
+        #    block.controller = None
+        #    block.collision_object = None
+
+        # write result
+        self.logger.info("Writing fullbody.nif")
+        with open("test/nif/fo3/_fullbody.nif", "wb") as stream:
+            skeleton.write(stream)
+
     def run(self):
         """Run the test suite. Override."""
         raise NotImplementedError
-
-def runtest(directory, files):
-    """Test the specified files.
-
-    @deprecated: Derive your tests from the L{TestSuite} class instead!
-    @param directory: Folder where the test nif files reside.
-
-    @param files: A list of all files to test. Each entry in the list
-        is a tuple containing the filename, a dictionary of config options
-        , and a list of names of
-        objects to select before running the import.
-    """
-    scene = Blender.Scene.GetCurrent() # current scene
-    layer = 1
-
-    for filename, filecfg, selection in files:
-        # select objects
-        scene.objects.selected = [
-            ob for ob in scene.objects if ob.name in selection]
-
-        # set script configuration
-        config = dict(**NifConfig.DEFAULTS)
-        for key, value in list(filecfg.items()):
-            config[key] = value
-        logger = logging.getLogger("niftools.blender.test")
-        logging.getLogger("niftools").setLevel(logging.DEBUG)
-        logging.getLogger("pyffi").setLevel(logging.WARNING)
-
-        # run test
-        if 'EXPORT_VERSION' in filecfg:
-            # export the imported files
-            logger.info("Exporting %s" % filename)
-
-            config["EXPORT_FILE"] = "%s/%s" % (directory, filename)
-            NifExport(**config)
-
-            # increment active layer for next import
-            # different tests are put into different blender layers,
-            # so the results can be easily visually inspected
-            layer += 1
-            scene.setLayers([layer])
-        else:
-            logger.info("Importing %s" % filename)
-
-            config["IMPORT_FILE"] = "%s/%s" % (directory, filename)
-
-            # import <filename>
-            NifImport(**config)
-
-    # deselect everything
-    scene.objects.selected = []
-    # reset active layer
-    scene.setLayers([1])

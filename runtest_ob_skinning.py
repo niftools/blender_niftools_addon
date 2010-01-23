@@ -42,63 +42,24 @@ from pyffi.spells.nif import NifToaster
 
 # some tests to import and export nif files
 
-class SkinningTestSuite(TestSuite):
+class TestSuiteChampionArmor(TestSuite):
     def run(self):
-        ob_male = os.path.join(
+        # champion armor
+        cuirass_filename = os.path.join(
             self.config.get("path", "oblivion"),
-            "meshes", "characters", "_male")
-        ob_skeleton = os.path.join(ob_male, "skeleton.nif")
-        ob_bodyparts = [
-            os.path.join(ob_male, bodypart + ".nif")
-            for bodypart in ["upperbody", "lowerbody", "hand", "foot"]]
-        
-        # oblivion full body
-        # import skeleton and body parts
+            'meshes/armor/champion/m/cuirass.nif')
+        self.test(filename=cuirass_filename)
         self.test(
-            filename = ob_skeleton,
-            config = dict(IMPORT_SKELETON = 1))
-        for ob_bodypart in ob_bodyparts:
-            self.test(
-                filename = ob_bodypart,
-                config = dict(IMPORT_SKELETON = 2),
-                selection = ['Scene Root'])
-        # export it
-        self.test(
-            filename = 'test/nif/_fulloblivionbody.nif',
+            filename = 'test/nif/_cuirass.nif',
             config = dict(
                 EXPORT_VERSION = 'Oblivion', EXPORT_SMOOTHOBJECTSEAMS = True,
                 EXPORT_FLATTENSKIN = True),
             selection = ['Scene Root'])
-        # compare skindata
         toaster = NifToaster(spellclass=SpellCompareSkinData,
-                             options=dict(arg="test/nif/_fulloblivionbody.nif",
+                             options=dict(arg="test/nif/_cuirass.nif",
                                           verbose=99))
-        for ob_bodypart in ob_bodyparts:
-            toaster.toast(top=ob_bodypart)
+        toaster.toast(top=cuirass_filename)
 
-        # morrowind creature
-        mw_babelfish = os.path.join(
-            self.config.get("path", "morrowind"),
-            "meshes", "r", "babelfish.nif")
-        self.test(filename = mw_babelfish)
-        self.test(
-            filename = 'test/nif/_babelfish.nif',
-            config = dict(
-                EXPORT_VERSION = 'Morrowind',
-                EXPORT_STRIPIFY = False, EXPORT_SKINPARTITION = False),
-            selection = ['Root Bone'])
-        # morrowind better bodies mesh
-        bbskin_import = self.test(filename = 'test/nif/bb_skinf_br.nif')
-        bbskin_export = self.test(
-            filename = 'test/nif/_bb_skinf_br.nif',
-            config = dict(
-                EXPORT_VERSION = 'Morrowind', EXPORT_SMOOTHOBJECTSEAMS = True,
-                EXPORT_STRIPIFY = False, EXPORT_SKINPARTITION = False),
-            selection = ['Bip01'])
-        toaster = NifToaster(spellclass=SpellCompareSkinData,
-                             options=dict(arg="test/nif/_bb_skinf_br.nif",
-                                          verbose=99))
-        toaster.toast(top="test/nif/bb_skinf_br.nif")
-
-suite = SkinningTestSuite("skinning")
+suite = TestSuiteChampionArmor("champion_armor")
 suite.run()
+

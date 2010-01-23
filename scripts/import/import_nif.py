@@ -2287,6 +2287,8 @@ class NifImport(NifImportExport):
             if mbasetex and uvco:
                 # face mode bitfield value
                 TEX = Blender.Mesh.FaceModes['TEX']
+                # face transparency enum
+                ALPHA = Blender.Mesh.FaceTranspModes['ALPHA']
                 imgobj = mbasetex.tex.getImage()
                 if imgobj:
                     for b_f_index in f_map:
@@ -2294,6 +2296,7 @@ class NifImport(NifImportExport):
                             continue
                         f = b_meshData.faces[b_f_index]
                         f.mode = TEX
+                        f.transp = ALPHA
                         f.image = imgobj
 
         # import skinning info, for meshes affected by bones
@@ -2349,6 +2352,7 @@ class NifImport(NifImportExport):
                         keyname = morphData.morphs[idxMorph].frame_name
                         if not keyname:
                             keyname = 'Key %i' % idxMorph
+                        self.logger.info("inserting key '%s'" % keyname)
                         # get vectors
                         morphverts = morphData.morphs[idxMorph].vectors
                         # for each vertex calculate the key position from base
@@ -2368,7 +2372,14 @@ class NifImport(NifImportExport):
                         # set name for key
                         b_meshData.key.blocks[idxMorph].name = keyname
                         # set up the ipo key curve
-                        b_curve = b_ipo.addCurve(keyname)
+                        try:
+                            b_curve = b_ipo.addCurve(keyname)
+                        except ValueError:
+                            # this happens when two keys have the same name
+                            # an instance of this is in fallout 3
+                            # meshes/characters/_male/skeleton.nif HeadAnims:0
+                            self.logger.warn(
+                                "skipped duplicate of key '%s'" % keyname)
                         # no idea how to set up the bezier triples -> switching
                         # to linear instead
                         b_curve.interpolation = Blender.IpoCurve.InterpTypes.LINEAR
@@ -2842,7 +2853,11 @@ class NifImport(NifImportExport):
     def is_grouping_node(self, niBlock):
         """Determine whether node is grouping node.
         Returns the children which are grouped, or empty list if it is not a
-        grouping node."""
+        grouping node.
+        """
+        # combining shapes: disable grouping
+        if not self.IMPORT_COMBINESHAPES:
+            return []
         # check that it is a ninode
         if not isinstance(niBlock, NifFormat.NiNode): return []
         # root collision node: join everything
@@ -3685,12 +3700,16 @@ class NifImport(NifImportExport):
                 kfd.quaternion_keys[0].value.z = kfi.rotation.z
                 kfd.quaternion_keys[0].value.w = kfi.rotation.w
                 # copy translation
-                kfd.translations.num_keys = 1
-                kfd.translations.keys.update_size()
-                kfd.translations.keys[0].time = 0.0
-                kfd.translations.keys[0].value.x = kfi.translation.x
-                kfd.translations.keys[0].value.y = kfi.translation.y
-                kfd.translations.keys[0].value.z = kfi.translation.z
+                if kfi.translation.x < -1000000:
+                    # invalid, happens in fallout 3, e.g. h2haim.kf
+                    self.logger.warn("ignored NaN in interpolator translation")
+                else:
+                    kfd.translations.num_keys = 1
+                    kfd.translations.keys.update_size()
+                    kfd.translations.keys[0].time = 0.0
+                    kfd.translations.keys[0].value.x = kfi.translation.x
+                    kfd.translations.keys[0].value.y = kfi.translation.y
+                    kfd.translations.keys[0].value.z = kfi.translation.z
                 # ignore scale, usually contains invalid data in interpolator
 
             # save priority for future reference

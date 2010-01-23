@@ -740,7 +740,7 @@ class NifExport(NifImportExport):
                             node_kfctrls[node] = []
                         node_kfctrls[node].append(ctrl)
                 # morrowind
-                if self.EXPORT_VERSION == "Morrowind":
+                if self.EXPORT_VERSION in ("Morrowind", "Freedom Force"):
                     # create kf root header
                     kf_root = self.create_block("NiSequenceStreamHelper")
                     kf_root.add_extra_data(anim_textextra)
@@ -763,7 +763,8 @@ class NifExport(NifImportExport):
                             ctrl.target = None
                 # oblivion
                 elif self.EXPORT_VERSION in ("Oblivion", "Fallout 3",
-                                             "Civilization IV", "Zoo Tycoon 2"):
+                                             "Civilization IV", "Zoo Tycoon 2",
+                                             "Freedom Force vs. the 3rd Reich"):
                     # create kf root header
                     kf_root = self.create_block("NiControllerSequence")
                     if self.EXPORT_ANIMSEQUENCENAME:
@@ -799,10 +800,10 @@ class NifExport(NifImportExport):
                             if isinstance(ctrl,
                                           NifFormat.NiGeomMorpherController):
                                 variable_2s = [morph.frame_name
-                                              for morph in ctrl.data.morphs]
+                                               for morph in ctrl.data.morphs]
                             else:
                                 variable_2s = [None
-                                              for interpolator in interpolators]
+                                               for interpolator in interpolators]
                             for interpolator, variable_2 in zip(interpolators,
                                                                 variable_2s):
                                 # create ControlledLink for each
@@ -842,7 +843,9 @@ class NifExport(NifImportExport):
                     raise NifExportError(
                         "Keyframe export for '%s' is not supported. "
                         " Only Morrowind, Oblivion, Fallout 3, Civilization IV,"
-                        " and Zoo Tycoon 2 keyframes are supported."
+                        " Zoo Tycoon 2, Freedom Force, and"
+                        " Freedom Force vs. the 3rd Reich"
+                        " keyframes are supported."
                         % self.EXPORT_VERSION)
 
                 # write kf (and xnif if asked)
