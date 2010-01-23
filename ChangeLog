@@ -12,6 +12,8 @@ only the first is read, and duplicates are ignored (e.g. Fallout 3
 skeleton.nif HeadAnims:0)
 * added regression test and workaround for corrupt translation keys in
 Fallout 3 interpolators (e.g. Fallout 3 h2haim.kf, reported by Malo)
+* added experimental .kf export for Freedom Force and Freedom Force vs. the
+3rd Reich
 
 Version 2.5.1 (10 Jan 2010)
 * updated for pyffi 2.1.0
