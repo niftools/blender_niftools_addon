@@ -833,11 +833,14 @@ class NifExport(NifImportExport):
                                 # fetched from the constraints during
                                 # export_bones)
                                 if not node in self.bone_priorities:
-                                    priority = 26
-                                    self.logger.warning(
-                                        "No priority set for bone %s, "
-                                        "falling back on default value (%i)"
-                                        % (node.name, priority))
+                                    if self.EXPORT_ANIMPRIORITY != 0:
+                                        priority = self.EXPORT_ANIMPRIORITY
+                                    else:
+                                        priority = 26
+                                        self.logger.warning(
+                                            "No priority set for bone %s, "
+                                            "falling back on default value (%i)"
+                                            % (node.name, priority))
                                 else:
                                     priority = self.bone_priorities[node]
                                 controlledblock.priority = priority
