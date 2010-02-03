@@ -832,7 +832,7 @@ class NifExport(NifImportExport):
                                 # get bone animation priority (previously
                                 # fetched from the constraints during
                                 # export_bones)
-                                if not node in self.bone_priorities:
+                                if not node in self.bone_priorities or self.EXPORT_ANIMATION_DO_NOT_USE_BLENDER_PROPERTIES:
                                     if self.EXPORT_ANIMPRIORITY != 0:
                                         priority = self.EXPORT_ANIMPRIORITY
                                     else:

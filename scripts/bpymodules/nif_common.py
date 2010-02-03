@@ -322,6 +322,7 @@ class NifConfig:
         EXPORT_EXTRA_SHADER_TEXTURES = True,
         EXPORT_ANIMTARGETNAME = '',
         EXPORT_ANIMPRIORITY = 0,
+        EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES = False,
         PROFILE = '', # name of file where Python profiler dumps the profile; set to empty string to turn off profiling
         IMPORT_EXPORTEMBEDDEDTEXTURES = False,
         EXPORT_OPTIMIZE_MATERIALS = True,
@@ -747,6 +748,10 @@ class NifConfig:
                 min_val = 0, max_val = 100,
                 callback = self.update_anim_priority,
                 num_items = 2, item = 0)
+            self.draw_toggle(
+                text = "Do Not Use Blender Anim Properties",
+                event_name = "EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES",
+                num_items = 2, item = 1)  
             self.draw_y_sep()
 
             self.draw_toggle(
@@ -1001,7 +1006,7 @@ class NifConfig:
                 event_name = "EXPORT_OB_MALLEABLECONSTRAINT",
                 num_items = 2, item = 1)
             self.draw_toggle(
-                text = "Do Not Use Blender Properties",
+                text = "Do Not Use Blender Collision Properties",
                 event_name = "EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES")   
             self.draw_y_sep()
 
@@ -1467,6 +1472,8 @@ class NifConfig:
             self.config["EXPORT_MW_NIFXNIFKF"] = not self.config["EXPORT_MW_NIFXNIFKF"]
         elif evName == "EXPORT_EXTRA_SHADER_TEXTURES":
             self.config["EXPORT_EXTRA_SHADER_TEXTURES"] = not self.config["EXPORT_EXTRA_SHADER_TEXTURES"]
+        elif evName == "EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES":
+            self.config["EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES"] = not self.config["EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES"]
         Draw.Redraw(1)
 
     def gui_event(self, evt, val):
