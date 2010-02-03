@@ -2490,10 +2490,13 @@ class NifImport(NifImportExport):
      
         # recalculate normals
         b_meshData.calcNormals()
-     
+        # import priority if existing
+        if niBlock.name in self.bone_priorities:
+            constr = b_mesh.constraints.append(
+                Blender.Constraint.Type.NULL)
+            constr.name = "priority:%i" % self.bone_priorities[niBlock.name]
+
         return b_mesh
-
-
 
     # import animation groups
     def import_text_keys(self, niBlock):
