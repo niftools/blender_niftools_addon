@@ -865,6 +865,10 @@ class NifImport(NifImportExport):
         shortName = self.import_name(niBlock, 22)
         b_empty = self.scene.objects.new("Empty", shortName)
         b_empty.properties['longName'] = niBlock.name
+        if niBlock.name in self.bone_priorities:
+            constr = b_empty.constraints.append(
+                Blender.Constraint.Type.NULL)
+            constr.name = "priority:%i" % self.bone_priorities[niBlock.name]  
         return b_empty
 
     def import_armature(self, niArmature):
@@ -1215,10 +1219,10 @@ class NifImport(NifImportExport):
             # find bone nif block
             niBone = self.blocks[bone_name]
             # store bone priority, if applicable
-            if niBone in self.bone_priorities:
+            if bone_name in self.bone_priorities:
                 constr = b_posebone.constraints.append(
                     Blender.Constraint.Type.NULL)
-                constr.name = "priority:%i" % self.bone_priorities[niBone]                
+                constr.name = "priority:%i" % self.bone_priorities[bone_name]                
 
         return b_armature
 
@@ -3723,7 +3727,7 @@ class NifImport(NifImportExport):
             # save priority for future reference
             # (priorities will be stored into the name of a NULL constraint on
             # bones, see import_armature function)
-            self.bone_priorities[node] = controlledblock.priority
+            self.bone_priorities[nodename] = controlledblock.priority
 
         # DEBUG: save the file for manual inspection
         #niffile = open("C:\\test.nif", "wb")
