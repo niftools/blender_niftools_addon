@@ -3233,6 +3233,7 @@ class NifImport(NifImportExport):
             return hk_objects
 
         elif isinstance(bhkshape, NifFormat.bhkNiTriStripsShape):
+            self.havok_mat = bhkshape.material
             return reduce(operator.add,
                           (self.import_bhk_shape(strips)
                            for strips in bhkshape.strips_data))
@@ -3253,7 +3254,7 @@ class NifImport(NifImportExport):
             ob.drawMode = Blender.Object.DrawModes['WIRE']
             # radius: quick estimate
             ob.rbRadius = min(vert.co.length for vert in me.verts)
-            ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
+            ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[self.havok_mat], "STRING")
 
             # also remove duplicate vertices
             numverts = len(me.verts)
