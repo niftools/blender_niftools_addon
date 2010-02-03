@@ -14,6 +14,14 @@ skeleton.nif HeadAnims:0)
 Fallout 3 interpolators (e.g. Fallout 3 h2haim.kf, reported by Malo)
 * added experimental .kf export for Freedom Force and Freedom Force vs. the
 3rd Reich
+* fixes/improves to animation import export
+  - full support for import/export of animation priority
+  - autoset target name to bip02 if the armature has such a bone
+  - new option to manually set the target name on export
+  - new option to bulk set the animation priority
+  - skip NiBSplineInterpolators on import; not fully supported and
+    if not skipping was causing a fatal error
+* fix for bhkNiTriStripsShape import
 
 Version 2.5.1 (10 Jan 2010)
 * updated for pyffi 2.1.0
