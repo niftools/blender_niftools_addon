@@ -2888,7 +2888,10 @@ class NifImport(NifImportExport):
             return
             
         if kfc.interpolator:
-            kfd = kfc.interpolator.data
+            if isinstance(kfc.interpolator, NifFormat.NiBSplineInterpolator):
+                kfd = None #not supported yet so avoids fatal error - should be kfc.interpolator.spline_data when spline data is figured out.
+            else:
+                kfd = kfc.interpolator.data
         else:
             kfd = kfc.data
 
