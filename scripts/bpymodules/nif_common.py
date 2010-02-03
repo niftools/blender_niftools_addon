@@ -320,6 +320,7 @@ class NifConfig:
         EXPORT_FO3_BODYPARTS = True,
         EXPORT_MW_NIFXNIFKF = False,
         EXPORT_EXTRA_SHADER_TEXTURES = True,
+        EXPORT_ANIMTARGETNAME = '',
         PROFILE = '', # name of file where Python profiler dumps the profile; set to empty string to turn off profiling
         IMPORT_EXPORTEMBEDDEDTEXTURES = False,
         EXPORT_OPTIMIZE_MATERIALS = True,
@@ -734,6 +735,11 @@ class NifConfig:
                 event_name = "EXPORT_ANIMSEQUENCENAME",
                 max_length = 128,
                 callback = self.update_anim_sequence_name)
+            self.draw_string(
+                text = "Anim Target Name: ",
+                event_name = "EXPORT_ANIMTARGETNAME",
+                max_length = 128,
+                callback = self.update_anim_target_name)
             self.draw_y_sep()
 
             self.draw_toggle(
@@ -1557,5 +1563,8 @@ class NifConfig:
     def update_anim_sequence_name(self, evt, val):
         self.config["EXPORT_ANIMSEQUENCENAME"] = val
 
+    def update_anim_target_name(self, evt, val):
+        self.config["EXPORT_ANIMTARGETNAME"] = val
+        
     def update_egm_anim_scale(self, evt, val):
         self.config["IMPORT_EGMANIMSCALE"] = val

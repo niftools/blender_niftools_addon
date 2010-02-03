@@ -782,11 +782,17 @@ class NifExport(NifImportExport):
                     kf_root.start_time =(self.fstart - 1) * self.fspeed
                     kf_root.stop_time = (self.fend - self.fstart) * self.fspeed
                     # quick hack to set correct target name
-                    if "Bip01" in [node.name for
-                                   node in node_kfctrls.iterkeys()]:
-                        targetname = "Bip01"
+                    if not self.EXPORT_ANIMTARGETNAME:
+                        if "Bip01" in [node.name for
+                                       node in node_kfctrls.iterkeys()]:
+                            targetname = "Bip01"
+                        elif "Bip02" in [node.name for
+                                        node in node_kfctrls.iterkeys()]:
+                            targetname = "Bip02"
+                        else:
+                            targetname = root_block.name
                     else:
-                        targetname = root_block.name
+                        targetname = self.EXPORT_ANIMTARGETNAME
                     kf_root.target_name = targetname
                     kf_root.string_palette = NifFormat.NiStringPalette()
                     for node, ctrls \
