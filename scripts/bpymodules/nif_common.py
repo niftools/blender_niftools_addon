@@ -809,7 +809,7 @@ class NifConfig:
                 callback = self.update_anim_priority,
                 num_items = 2, item = 0)
             self.draw_toggle(
-                text = "Do Not Use Blender Anim Properties",
+                text = "Ignore Blender Anim Props",
                 event_name = "EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES",
                 num_items = 2, item = 1)  
             self.draw_y_sep()
