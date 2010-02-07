@@ -91,6 +91,12 @@ class ControllerTestSuite(TestSuite):
         nif_import = self.test(
             filename='test/nif/mw/alphactrl.nif')
         b_alphactrl = Blender.Object.Get("AlphaCtrlTest")
+        # check that material has alpha curve
+        self.logger.info("checking blender material alpha curve...")
+        b_curve = b_alphactrl.getData(mesh=1).materials[0].ipo[
+            Blender.Ipo.MA_ALPHA]
+        assert(b_curve)
+        assert(len(b_curve.bezierPoints) == 11)
         # test stuff
         check_alpha_controller(nif_import.root_blocks[0])
         # export

@@ -1668,6 +1668,7 @@ class NifImport(NifImportExport):
         # Alpha
         alpha = matProperty.alpha
         material.setAlpha(alpha)
+        # textures
         base_texture = None
         glow_texture = None
         envmapTexture = None # for NiTextureEffect
@@ -1922,6 +1923,7 @@ class NifImport(NifImportExport):
             return
 
         self.import_material_uv_controller(b_material, n_geom)
+        self.import_material_alpha_controller(b_material, n_geom)
 
     def import_material_uv_controller(self, b_material, n_geom):
         """Import UV controller data."""
@@ -1931,7 +1933,7 @@ class NifImport(NifImportExport):
                 self.logger.info("importing UV controller")
                 b_channels = ("OfsX", "OfsY", "SizeX", "SizeY")
                 for b_channel, n_uvgroup in zip(b_channels,
-                                                   n_ctrl.data.uv_groups):
+                                                n_ctrl.data.uv_groups):
                     if n_uvgroup.keys:
                         # create curve in material ipo
                         b_ipo = self.get_material_ipo(b_material)
@@ -1946,6 +1948,26 @@ class NifImport(NifImportExport):
                                 b_curve[1 + n_key.time * self.fps] = -n_key.value
                             else:
                                 b_curve[1 + n_key.time * self.fps] = n_key.value
+
+    def import_material_alpha_controller(self, b_material, n_geom):
+        # find alpha controller
+        n_matprop = self.find_property(n_geom, NifFormat.NiMaterialProperty)
+        if not n_matprop:
+            return
+        n_alphactrl = self.find_controller(n_matprop,
+                                           NifFormat.NiAlphaController)
+        if not n_alphactrl:
+            return
+        self.logger.info("importing alpha controller")
+        b_channel = "Alpha"
+        b_ipo = self.get_material_ipo(b_material)
+        b_curve = b_ipo.addCurve(b_channel)
+        # XXX todo: get interpolation from nif data
+        # XXX these are reasonable defaults
+        b_curve.interpolation = Blender.IpoCurve.InterpTypes.LINEAR
+        b_curve.extend = self.get_extend_from_flags(n_alphactrl.flags)
+        for n_key in n_alphactrl.data.data.keys:
+            b_curve[1 + n_key.time * self.fps] = n_key.value
 
     def get_material_ipo(self, b_material):
         """Return existing material ipo data, or if none exists, create one
