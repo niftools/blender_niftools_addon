@@ -33,6 +33,7 @@
 # ***** END LICENSE BLOCK *****
 
 from itertools import izip
+import os.path
 
 from nif_test import TestSuite
 from pyffi.formats.nif import NifFormat
@@ -42,13 +43,20 @@ from pyffi.spells.nif import NifToaster
 class SkinningTestSuite(TestSuite):
     def run(self):
         # fallout 3 body
+        self.make_fo3_fullbody()
         self.test(
-            filename = 'test/nif/fo3/fo3_bodybindpose.nif',
+            filename = 'test/nif/fo3/_fullbody.nif',
             config = dict(IMPORT_SKELETON=1,
                           IMPORT_ANIMATION=False))
+        # fo3 body path
+        fo3_male = os.path.join(
+            self.config.get("path", "fallout3"),
+            "meshes", "characters", "_male")
         self.test(
-            filename = 'test/nif/fo3/femaleupperbody.nif',
-            config = dict(IMPORT_SKELETON=2),
+            filename = os.path.join(fo3_male, "femaleupperbody.nif"),
+            config = dict(
+                IMPORT_SKELETON=2,
+                IMPORT_TEXTURE_PATH=[self.config.get("path", "fallout3")]),
             selection = ['Scene Root'])
         self.test(
             filename = 'test/nif/fo3/_femaleupperbody.nif',
@@ -60,7 +68,7 @@ class SkinningTestSuite(TestSuite):
         toaster = NifToaster(spellclass=SpellCompareSkinData,
                              options=dict(arg="test/nif/fo3/_femaleupperbody.nif",
                                           verbose=99))
-        toaster.toast(top="test/nif/fo3/femaleupperbody.nif")
+        toaster.toast(top=os.path.join(fo3_male, "femaleupperbody.nif"))
 
 suite = SkinningTestSuite("skinning")
 suite.run()
