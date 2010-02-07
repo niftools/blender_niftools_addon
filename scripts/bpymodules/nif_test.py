@@ -188,6 +188,17 @@ class TestSuite:
         with open("test/nif/fo3/_fullbody.nif", "wb") as stream:
             skeleton.write(stream)
 
+    def assert_equal(self, val1, val2):
+        if isinstance(val1, int):
+            assert(isinstance(val2, int))
+            assert(val1 == val2)
+        elif isinstance(val1, float):
+            assert(isinstance(val2, float))
+            assert(abs(val1 - val2) < 0.000001)
+        else:
+            raise TypeError("don't know how to test equality of %s and %s"
+                            % (val1.__class__, val2.__class__))
+
     def run(self):
         """Run the test suite. Override."""
         raise NotImplementedError

@@ -43,13 +43,6 @@ from pyffi.formats.nif import NifFormat
 # some tests to import and export nif files
 
 class NonAccumTestSuite(TestSuite):
-    def assert_equal(self, val1, val2):
-        if isinstance(val1, float):
-            assert(isinstance(val2, float))
-            assert(abs(val1 - val2) < 0.000001)
-        else:
-            raise TypeError("don't know how to test equality of %s and %s"
-                            % (val1.__class__, val2.__class__))
 
     def run(self):
         self.test_nonaccum_export()
