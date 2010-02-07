@@ -47,18 +47,59 @@ class ControllerTestSuite(TestSuite):
 
     def test_alpha_controller(self):
         """Alpha controller test."""
+        def check_alpha_controller(root):
+            for prop in root.children[0].get_properties():
+                if isinstance(prop, NifFormat.NiMaterialProperty):
+                    for ctrl in prop.get_controllers():
+                        if isinstance(ctrl, NifFormat.NiAlphaController):
+                            self.logger.info(
+                                "found alpha controller, checking data...")
+                            # do we have data?
+                            assert(ctrl.data)
+                            # correct target?
+                            assert(ctrl.target == prop)
+                            # check the keys
+                            ctrldata = ctrl.data.data
+                            assert(ctrldata.num_keys == 11)
+                            assert(ctrldata.keys[0].time == 0.0)
+                            assert(ctrldata.keys[0].value == 1.0)
+                            assert(ctrldata.keys[1].time == 1.0)
+                            assert(ctrldata.keys[1].value == 0.5)
+                            assert(ctrldata.keys[2].time == 2.0)
+                            assert(ctrldata.keys[2].value == 1.0)
+                            assert(ctrldata.keys[3].time == 3.0)
+                            assert(ctrldata.keys[3].value == 0.5)
+                            assert(ctrldata.keys[4].time == 4.0)
+                            assert(ctrldata.keys[4].value == 1.0)
+                            assert(ctrldata.keys[5].time == 5.0)
+                            assert(ctrldata.keys[5].value == 0.5)
+                            assert(ctrldata.keys[6].time == 6.0)
+                            assert(ctrldata.keys[6].value == 1.0)
+                            assert(ctrldata.keys[7].time == 7.0)
+                            assert(ctrldata.keys[7].value == 0.5)
+                            assert(ctrldata.keys[8].time == 8.0)
+                            assert(ctrldata.keys[8].value == 1.0)
+                            assert(ctrldata.keys[9].time == 9.0)
+                            assert(ctrldata.keys[9].value == 0.5)
+                            assert(ctrldata.keys[10].time == 10.0)
+                            assert(ctrldata.keys[10].value == 1.0)
+                            # done!
+                            return
+            # catch error when property is not found
+            raise ValueError("alpha controller not found")
         # import
         nif_import = self.test(
             filename='test/nif/mw/alphactrl.nif')
         b_alphactrl = Blender.Object.Get("AlphaCtrlTest")
         # test stuff
+        check_alpha_controller(nif_import.root_blocks[0])
         # export
         nif_export = self.test(
             filename='test/nif/mw/_alphactrl.nif',
             config=dict(EXPORT_VERSION = 'Morrowind'),
             selection = ['AlphaCtrlTest'])
         # test stuff
-        alphactrl = nif_export.root_blocks[0].children[0]
+        check_alpha_controller(nif_export.root_blocks[0])
 
     def test_matcolor_controller(self):
         """Material color controller test."""
