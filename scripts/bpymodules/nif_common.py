@@ -239,6 +239,40 @@ class NifImportExport:
             "Unsupported extend type in blend, using clamped.")
         return 4
 
+    def find_controller(self, niBlock, controller_type):
+        """Find a controller."""
+        ctrl = niBlock.controller
+        while ctrl:
+            if isinstance(ctrl, controller_type):
+                break
+            ctrl = ctrl.next_controller
+        return ctrl
+
+    def find_property(self, niBlock, property_type):
+        """Find a property."""
+        for prop in niBlock.properties:
+            if isinstance(prop, property_type):
+                return prop
+        return None
+
+
+    def find_extra(self, niBlock, extratype):
+        """Find extra data."""
+        # pre-10.x.x.x system: extra data chain
+        extra = niBlock.extra_data
+        while extra:
+            if isinstance(extra, extratype):
+                break
+            extra = extra.next_extra_data
+        if extra:
+            return extra
+
+        # post-10.x.x.x system: extra data list
+        for extra in niBlock.extra_data_list:
+            if isinstance(extra, extratype):
+                return extra
+        return None
+
 class NifConfig:
     """Class which handles configuration of nif import and export in Blender.
 
