@@ -14,6 +14,8 @@ skeleton.nif HeadAnims:0)
 Fallout 3 interpolators (e.g. Fallout 3 h2haim.kf, reported by Malo)
 * added experimental .kf export for Freedom Force and Freedom Force vs. the
 3rd Reich
+* fixed interpolator bug with bhkBlendControllers when exporting kf files for
+creatures with bones that have havok blocks attached (reported by Spiderpig)
 
 Version 2.5.1 (10 Jan 2010)
 * updated for pyffi 2.1.0

@@ -3,6 +3,7 @@
 import os.path
 
 from nif_test import TestSuite
+from nif_common import NifFormat
 
 # some tests to import and export nif files
 # as list of (filename, config dictionary, list of objects to be selected)
@@ -17,13 +18,16 @@ class TestSuiteAnimation(TestSuite):
         self.test(
             filename=os.path.join(ob_male, 'skeleton.nif'),
             config=dict(
-                IMPORT_SKELETON=1,
+                # we also import havok, for regression testing
+                # uncomment next line for testing without havok
+                #IMPORT_SKELETON=1,
                 IMPORT_KEYFRAMEFILE=os.path.join(ob_male, 'castself.kf')))
         self.test(
             filename='test/nif/_castself.kf',
             config=dict(
                 EXPORT_VERSION = 'Oblivion',
-                EXPORT_ANIMATION = 2), # animation only
+                EXPORT_ANIMATION = 2, # animation only
+                EXPORT_OB_LAYER = NifFormat.OblivionLayer.OL_BIPED),
              selection=['Scene Root'])
 
 suite = TestSuiteAnimation("animation")

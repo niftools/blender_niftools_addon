@@ -795,10 +795,13 @@ class NifExport(NifImportExport):
                         # export a block for every interpolator in every
                         # controller
                         for ctrl in ctrls:
+                            # XXX add get_interpolators to pyffi interface
                             if isinstance(ctrl,
                                           NifFormat.NiSingleInterpController):
                                 interpolators = [ctrl.interpolator]
-                            else:
+                            elif isinstance(
+                                ctrl, (NifFormat.NiGeomMorpherController,
+                                       NifFormat.NiMorphWeightsController)):
                                 interpolators = ctrl.interpolators
                             if isinstance(ctrl,
                                           NifFormat.NiGeomMorpherController):
