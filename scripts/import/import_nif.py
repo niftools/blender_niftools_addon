@@ -1541,9 +1541,9 @@ class NifImport(NifImportExport):
         return b_texture
 
     def get_material_hash(self, matProperty, textProperty,
-                        alphaProperty, specProperty,
-                        textureEffect, wireProperty,
-                        bsShaderProperty, extra_datas):
+                          alphaProperty, specProperty,
+                          textureEffect, wireProperty,
+                          bsShaderProperty, extra_datas):
         """Helper function for import_material. Returns a key that
         uniquely identifies a material from its properties. The key
         ignores the material name as that does not affect the
@@ -1566,10 +1566,10 @@ class NifImport(NifImportExport):
         """Creates and returns a material."""
         # First check if material has been created before.
         material_hash = self.get_material_hash(matProperty, textProperty,
-                                             alphaProperty, specProperty,
-                                             textureEffect, wireProperty,
-                                             bsShaderProperty,
-                                             extra_datas)
+                                               alphaProperty, specProperty,
+                                               textureEffect, wireProperty,
+                                               bsShaderProperty,
+                                               extra_datas)
         try:
             return self.materials[material_hash]                
         except KeyError:
