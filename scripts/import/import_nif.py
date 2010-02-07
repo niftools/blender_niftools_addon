@@ -865,6 +865,10 @@ class NifImport(NifImportExport):
         shortName = self.import_name(niBlock, 22)
         b_empty = self.scene.objects.new("Empty", shortName)
         b_empty.properties['longName'] = niBlock.name
+        if niBlock.name in self.bone_priorities:
+            constr = b_empty.constraints.append(
+                Blender.Constraint.Type.NULL)
+            constr.name = "priority:%i" % self.bone_priorities[niBlock.name]  
         return b_empty
 
     def import_armature(self, niArmature):
@@ -1215,10 +1219,10 @@ class NifImport(NifImportExport):
             # find bone nif block
             niBone = self.blocks[bone_name]
             # store bone priority, if applicable
-            if niBone in self.bone_priorities:
+            if bone_name in self.bone_priorities:
                 constr = b_posebone.constraints.append(
                     Blender.Constraint.Type.NULL)
-                constr.name = "priority:%i" % self.bone_priorities[niBone]                
+                constr.name = "priority:%i" % self.bone_priorities[bone_name]                
 
         return b_armature
 
@@ -2506,10 +2510,13 @@ class NifImport(NifImportExport):
      
         # recalculate normals
         b_meshData.calcNormals()
-     
+        # import priority if existing
+        if niBlock.name in self.bone_priorities:
+            constr = b_mesh.constraints.append(
+                Blender.Constraint.Type.NULL)
+            constr.name = "priority:%i" % self.bone_priorities[niBlock.name]
+
         return b_mesh
-
-
 
     # import animation groups
     def import_text_keys(self, niBlock):
@@ -2873,7 +2880,10 @@ class NifImport(NifImportExport):
             return
             
         if kfc.interpolator:
-            kfd = kfc.interpolator.data
+            if isinstance(kfc.interpolator, NifFormat.NiBSplineInterpolator):
+                kfd = None #not supported yet so avoids fatal error - should be kfc.interpolator.spline_data when spline data is figured out.
+            else:
+                kfd = kfc.interpolator.data
         else:
             kfd = kfc.data
 
@@ -3215,6 +3225,7 @@ class NifImport(NifImportExport):
             return hk_objects
 
         elif isinstance(bhkshape, NifFormat.bhkNiTriStripsShape):
+            self.havok_mat = bhkshape.material
             return reduce(operator.add,
                           (self.import_bhk_shape(strips)
                            for strips in bhkshape.strips_data))
@@ -3235,7 +3246,7 @@ class NifImport(NifImportExport):
             ob.drawMode = Blender.Object.DrawModes['WIRE']
             # radius: quick estimate
             ob.rbRadius = min(vert.co.length for vert in me.verts)
-            ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
+            ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[self.havok_mat], "STRING")
 
             # also remove duplicate vertices
             numverts = len(me.verts)
@@ -3704,7 +3715,7 @@ class NifImport(NifImportExport):
             # save priority for future reference
             # (priorities will be stored into the name of a NULL constraint on
             # bones, see import_armature function)
-            self.bone_priorities[node] = controlledblock.priority
+            self.bone_priorities[nodename] = controlledblock.priority
 
         # DEBUG: save the file for manual inspection
         #niffile = open("C:\\test.nif", "wb")

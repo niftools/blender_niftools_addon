@@ -782,11 +782,17 @@ class NifExport(NifImportExport):
                     kf_root.start_time =(self.fstart - 1) * self.fspeed
                     kf_root.stop_time = (self.fend - self.fstart) * self.fspeed
                     # quick hack to set correct target name
-                    if "Bip01" in [node.name for
-                                   node in node_kfctrls.iterkeys()]:
-                        targetname = "Bip01"
+                    if not self.EXPORT_ANIMTARGETNAME:
+                        if "Bip01" in [node.name for
+                                       node in node_kfctrls.iterkeys()]:
+                            targetname = "Bip01"
+                        elif "Bip02" in [node.name for
+                                        node in node_kfctrls.iterkeys()]:
+                            targetname = "Bip02"
+                        else:
+                            targetname = root_block.name
                     else:
-                        targetname = root_block.name
+                        targetname = self.EXPORT_ANIMTARGETNAME
                     kf_root.target_name = targetname
                     kf_root.string_palette = NifFormat.NiStringPalette()
                     for node, ctrls \
@@ -829,14 +835,17 @@ class NifExport(NifImportExport):
                                 # get bone animation priority (previously
                                 # fetched from the constraints during
                                 # export_bones)
-                                if not node in self.bone_priorities:
-                                    priority = 26
-                                    self.logger.warning(
-                                        "No priority set for bone %s, "
-                                        "falling back on default value (%i)"
-                                        % (node.name, priority))
+                                if not node.name in self.bone_priorities or self.EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES:
+                                    if self.EXPORT_ANIMPRIORITY != 0:
+                                        priority = self.EXPORT_ANIMPRIORITY
+                                    else:
+                                        priority = 26
+                                        self.logger.warning(
+                                            "No priority set for bone %s, "
+                                            "falling back on default value (%i)"
+                                            % (node.name, priority))
                                 else:
-                                    priority = self.bone_priorities[node]
+                                    priority = self.bone_priorities[node.name]
                                 controlledblock.priority = priority
                                 # set palette, and node and controller type
                                 # names, and variables
@@ -1023,6 +1032,9 @@ class NifExport(NifImportExport):
                     if constr.type == Blender.Constraint.Type.TRACKTO:
                         has_track = True
                         break
+                    # does geom have priority value in NULL constraint?
+                    elif constr.name[:9].lower() == "priority:":
+                        self.bone_priorities[ob.name] = int(constr.name[9:])
                 if is_collision:
                     self.export_collision(ob, parent_block)
                     return None # done; stop here
@@ -1040,6 +1052,10 @@ class NifExport(NifImportExport):
             else:
                 # -> everything else (empty/armature) is a regular node
                 node = self.create_block("NiNode", ob)
+                # does node have priority value in NULL constraint?
+                for constr in ob.constraints:
+                    if constr.name[:9].lower() == "priority:":
+                        self.bone_priorities[ob.name] = int(constr.name[9:])
 
         # set transform on trishapes rather than on NiNode for skinned meshes
         # this fixes an issue with clothing slots
@@ -2857,7 +2873,7 @@ class NifExport(NifImportExport):
             for constr in arm.getPose().bones[bone.name].constraints:
                 # yes! store it for reference when creating the kf file
                 if constr.name[:9].lower() == "priority:":
-                    self.bone_priorities[node] = int(constr.name[9:])
+                    self.bone_priorities[bone.name] = int(constr.name[9:])
 
         # now fix the linkage between the blocks
         for bone in bones.values():
