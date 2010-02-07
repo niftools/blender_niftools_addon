@@ -2710,8 +2710,8 @@ class NifExport(NifImportExport):
         n_floatdata = self.create_block("NiFloatData", b_curve)
         n_times = [] # track all times (used later in start time and end time)
         n_floatdata.data.num_keys = len(b_curve.bezierPoints)
-        # XXX todo: set interpolation from blender interpolation
-        n_floatdata.data.interpolation = NifFormat.KeyType.LINEAR_KEY
+        n_floatdata.data.interpolation = self.get_n_ipol_from_b_ipol(
+            b_curve.interpolation)
         n_floatdata.data.keys.update_size()
         for b_point, n_key in zip(b_curve.bezierPoints, n_floatdata.data.keys):
             # add each point of the curve
@@ -2758,8 +2758,8 @@ class NifExport(NifImportExport):
             if b_curve:
                 self.logger.info("Exporting %s as NiUVData" % b_curve)
                 n_uvgroup.num_keys = len(b_curve.bezierPoints)
-                # XXX todo: set interpolation from blender interpolation
-                n_uvgroup.interpolation = NifFormat.KeyType.LINEAR_KEY
+                n_uvgroup.interpolation = self.get_n_ipol_from_b_ipol(
+                    b_curve.interpolation)
                 n_uvgroup.keys.update_size()
                 for b_point, n_key in zip(b_curve.bezierPoints, n_uvgroup.keys):
                     # add each point of the curve
@@ -2771,12 +2771,14 @@ class NifExport(NifImportExport):
                     n_key.value = b_value
                     # track time
                     n_times.append(n_key.time)
+                # save extend mode to export later
+                b_curve_extend = b_curve.extend
         # if uv data is present (we check this by checking if times were added)
         # then add the controller so it is exported
         if n_times:
             n_uvctrl = NifFormat.NiUVController()
             n_uvctrl.flags = 8 # active
-            n_uvctrl.flags |= self.get_flags_from_extend(b_curve.extend)
+            n_uvctrl.flags |= self.get_flags_from_extend(b_curve_extend)
             n_uvctrl.frequency = 1.0
             n_uvctrl.start_time = min(n_times)
             n_uvctrl.stop_time = max(n_times)

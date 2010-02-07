@@ -1922,8 +1922,8 @@ class NifImport(NifImportExport):
         if not self.IMPORT_ANIMATION:
             return
 
-        self.import_material_uv_controller(b_material, n_geom)
         self.import_material_alpha_controller(b_material, n_geom)
+        self.import_material_uv_controller(b_material, n_geom)
 
     def import_material_uv_controller(self, b_material, n_geom):
         """Import UV controller data."""
@@ -1938,9 +1938,8 @@ class NifImport(NifImportExport):
                         # create curve in material ipo
                         b_ipo = self.get_material_ipo(b_material)
                         b_curve = b_ipo.addCurve(b_channel)
-                        # XXX todo: get interpolation from nif data
-                        # XXX these are reasonable defaults
-                        b_curve.interpolation = Blender.IpoCurve.InterpTypes.LINEAR
+                        b_curve.interpolation = self.get_b_ipol_from_n_ipol(
+                            n_uvgroup.interpolation)
                         b_curve.extend = self.get_extend_from_flags(n_ctrl.flags)
                         for n_key in n_uvgroup.keys:
                             if b_channel.startswith("Ofs"):
@@ -1962,9 +1961,8 @@ class NifImport(NifImportExport):
         b_channel = "Alpha"
         b_ipo = self.get_material_ipo(b_material)
         b_curve = b_ipo.addCurve(b_channel)
-        # XXX todo: get interpolation from nif data
-        # XXX these are reasonable defaults
-        b_curve.interpolation = Blender.IpoCurve.InterpTypes.LINEAR
+        b_curve.interpolation = self.get_b_ipol_from_n_ipol(
+            n_alphactrl.data.data.interpolation)
         b_curve.extend = self.get_extend_from_flags(n_alphactrl.flags)
         for n_key in n_alphactrl.data.data.keys:
             b_curve[1 + n_key.time * self.fps] = n_key.value

@@ -239,6 +239,32 @@ class NifImportExport:
             "Unsupported extend type in blend, using clamped.")
         return 4
 
+    def get_b_ipol_from_n_ipol(self, n_ipol):
+        if n_ipol == NifFormat.KeyType.LINEAR_KEY:
+            return Blender.IpoCurve.InterpTypes.LINEAR
+        elif n_ipol == NifFormat.KeyType.QUADRATIC_KEY:
+            return Blender.IpoCurve.InterpTypes.BEZIER
+        elif n_ipol == 0:
+            # guessing, not documented in nif.xml
+            return Blender.IpoCurve.InterpTypes.CONST
+
+        self.logger.warning(
+            "Unsupported interpolation mode in nif, using quadratic/bezier.")
+        return Blender.IpoCurve.InterpTypes.BEZIER
+
+    def get_n_ipol_from_b_ipol(self, b_ipol):
+        if b_ipol == Blender.IpoCurve.InterpTypes.LINEAR:
+            return NifFormat.KeyType.LINEAR_KEY
+        elif b_ipol == Blender.IpoCurve.InterpTypes.BEZIER:
+            return NifFormat.KeyType.QUADRATIC_KEY
+        elif b_ipol == Blender.IpoCurve.InterpTypes.CONST:
+            # guessing, not documented in nif.xml
+            return 0
+
+        self.logger.warning(
+            "Unsupported interpolation mode in blend, using quadratic/bezier.")
+        return NifFormat.KeyType.QUADRATIC_KEY
+
     def find_controller(self, niBlock, controller_type):
         """Find a controller."""
         ctrl = niBlock.controller
