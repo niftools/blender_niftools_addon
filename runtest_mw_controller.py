@@ -54,7 +54,7 @@ class ControllerTestSuite(TestSuite):
         # test stuff
         # export
         nif_export = self.test(
-            filename='test/nif/_alphactrl.nif',
+            filename='test/nif/mw/_alphactrl.nif',
             config=dict(EXPORT_VERSION = 'Morrowind'),
             selection = ['AlphaCtrlTest'])
         # test stuff
@@ -69,7 +69,7 @@ class ControllerTestSuite(TestSuite):
         # test stuff
         # export
         nif_export = self.test(
-            filename='test/nif/_matcolorctrl.nif',
+            filename='test/nif/mw/_matcolorctrl.nif',
             config=dict(EXPORT_VERSION = 'Morrowind'),
             selection = ['MatColorCtrlTest'])
         # test stuff
@@ -85,7 +85,7 @@ class ControllerTestSuite(TestSuite):
         # test stuff
         # export
         nif_export = self.test(
-            filename='test/nif/_visctrl.nif',
+            filename='test/nif/mw/_visctrl.nif',
             config=dict(EXPORT_VERSION = 'Morrowind'),
             selection = ['VisCtrlCube1', 'VisCtrlCube2'])
         # test stuff
