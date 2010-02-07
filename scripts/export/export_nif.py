@@ -30,7 +30,7 @@ import pyffi.spells.nif.fix
 # 
 # BSD License
 # 
-# Copyright (c) 2005-2009, NIF File Format Library and Tools
+# Copyright (c) 2005-2010, NIF File Format Library and Tools
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -779,11 +779,17 @@ class NifExport(NifImportExport):
                     kf_root.start_time =(self.fstart - 1) * self.fspeed
                     kf_root.stop_time = (self.fend - self.fstart) * self.fspeed
                     # quick hack to set correct target name
-                    if "Bip01" in [node.name for
-                                   node in node_kfctrls.keys()]:
-                        targetname = "Bip01"
+                    if not self.EXPORT_ANIMTARGETNAME:
+                        if "Bip01" in [node.name for
+                                       node in node_kfctrls.iterkeys()]:
+                            targetname = "Bip01"
+                        elif "Bip02" in [node.name for
+                                        node in node_kfctrls.iterkeys()]:
+                            targetname = "Bip02"
+                        else:
+                            targetname = root_block.name
                     else:
-                        targetname = root_block.name
+                        targetname = self.EXPORT_ANIMTARGETNAME
                     kf_root.target_name = targetname
                     kf_root.string_palette = NifFormat.NiStringPalette()
                     for node, ctrls \
@@ -792,10 +798,13 @@ class NifExport(NifImportExport):
                         # export a block for every interpolator in every
                         # controller
                         for ctrl in ctrls:
+                            # XXX add get_interpolators to pyffi interface
                             if isinstance(ctrl,
                                           NifFormat.NiSingleInterpController):
                                 interpolators = [ctrl.interpolator]
-                            else:
+                            elif isinstance(
+                                ctrl, (NifFormat.NiGeomMorpherController,
+                                       NifFormat.NiMorphWeightsController)):
                                 interpolators = ctrl.interpolators
                             if isinstance(ctrl,
                                           NifFormat.NiGeomMorpherController):
@@ -823,14 +832,17 @@ class NifExport(NifImportExport):
                                 # get bone animation priority (previously
                                 # fetched from the constraints during
                                 # export_bones)
-                                if not node in self.bone_priorities:
-                                    priority = 26
-                                    self.logger.warning(
-                                        "No priority set for bone %s, "
-                                        "falling back on default value (%i)"
-                                        % (node.name, priority))
+                                if not node.name in self.bone_priorities or self.EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES:
+                                    if self.EXPORT_ANIMPRIORITY != 0:
+                                        priority = self.EXPORT_ANIMPRIORITY
+                                    else:
+                                        priority = 26
+                                        self.logger.warning(
+                                            "No priority set for bone %s, "
+                                            "falling back on default value (%i)"
+                                            % (node.name, priority))
                                 else:
-                                    priority = self.bone_priorities[node]
+                                    priority = self.bone_priorities[node.name]
                                 controlledblock.priority = priority
                                 # set palette, and node and controller type
                                 # names, and variables
@@ -1017,6 +1029,9 @@ class NifExport(NifImportExport):
                     if constr.type == Blender.Constraint.Type.TRACKTO:
                         has_track = True
                         break
+                    # does geom have priority value in NULL constraint?
+                    elif constr.name[:9].lower() == "priority:":
+                        self.bone_priorities[ob.name] = int(constr.name[9:])
                 if is_collision:
                     self.export_collision(ob, parent_block)
                     return None # done; stop here
@@ -1034,6 +1049,10 @@ class NifExport(NifImportExport):
             else:
                 # -> everything else (empty/armature) is a regular node
                 node = self.create_block("NiNode", ob)
+                # does node have priority value in NULL constraint?
+                for constr in ob.constraints:
+                    if constr.name[:9].lower() == "priority:":
+                        self.bone_priorities[ob.name] = int(constr.name[9:])
 
         # set transform on trishapes rather than on NiNode for skinned meshes
         # this fixes an issue with clothing slots
@@ -1188,9 +1207,8 @@ class NifExport(NifImportExport):
             extend = Blender.IpoCurve.ExtendTypes.CYCLIC
 
         # fill in the non-trivial values
-        # 0x0008 = active + clamp mode
-        # 0x0012 = active + cycle mode
-        kfc.flags = 8 + self.get_flags_from_extend(extend)
+        kfc.flags = 8 # active
+        kfc.flags |= self.get_flags_from_extend(extend)
         kfc.frequency = 1.0
         kfc.phase = 0.0
         kfc.start_time = (self.fstart - 1) * self.fspeed
@@ -1673,7 +1691,7 @@ class NifExport(NifImportExport):
         target.add_controller(flip)
 
         # fill in NiFlipController's values
-        flip.flags = 0x0008
+        flip.flags = 8 # active
         flip.frequency = 1.0
         flip.start_time = (self.fstart - 1) * self.fspeed
         flip.stop_time = ( self.fend - self.fstart ) * self.fspeed
@@ -2287,67 +2305,6 @@ class NifExport(NifImportExport):
 
 
                 # material animation
-                ipo = mesh_mat.getIpo()
-                a_curve = None
-                if not(ipo is None):
-                    a_curve = ipo[Ipo.MA_ALPHA]
-                
-                if not(a_curve is None):
-                    # get the alpha keyframes from blender's ipo curve
-                    alpha = {}
-                    for btriple in a_curve.getPoints():
-                        knot = btriple.getPoints()
-                        frame = knot[0]
-                        ftime = (frame - self.fstart) * self.fspeed
-                        alpha[ftime] = ipo[Ipo.MA_ALPHA][frame]
-
-                    # add and link alpha controller, data and interpolator blocks
-                    alphac = self.create_block("NiAlphaController", ipo)
-                    alphad = self.create_block("NiFloatData", ipo)
-                    alphai = self.create_block("NiFloatInterpolator", ipo)
-
-                    trimatprop.add_controller(alphac)
-                    alphac.interpolator = alphai
-                    alphac.data = alphad
-                    alphai.data = alphad
-
-                    # select extrapolation mode
-                    if ( a_curve.getExtrapolation() == "Cyclic" ):
-                        alphac.flags = 0x0008
-                    elif ( a_curve.getExtrapolation() == "Constant" ):
-                        alphac.flags = 0x000c
-                    else:
-                        self.logger.warning(
-                            "Extrapolation \"%s\" for alpha curve"
-                            " not supported using \"cycle reverse\" instead"
-                            % a_curve.getExtrapolation())
-                        alphac.flags = 0x000a
-
-                    # fill in timing values
-                    alphac.frequency = 1.0
-                    alphac.phase = 0.0
-                    alphac.start_time = (self.fstart - 1) * self.fspeed
-                    alphac.stop_time = (self.fend - self.fstart) * self.fspeed
-
-                    # select interpolation mode and export the alpha curve data
-                    if ( a_curve.getInterpolation() == "Linear" ):
-                        alphad.data.interpolation = NifFormat.KeyType.LINEAR_KEY
-                    elif ( a_curve.getInterpolation() == "Bezier" ):
-                        alphad.data.interpolation = NifFormat.KeyType.QUADRATIC_KEY
-                    else:
-                        raise NifExportError(
-                            "Interpolation %s for alpha curve not supported:"
-                            " use linear or bezier instead"
-                            % a_curve.getInterpolation())
-
-                    alphad.data.num_keys = len(alpha)
-                    alphad.data.keys.update_size()
-                    for ftime, key in zip(sorted(alpha), alphad.data.keys):
-                        key.time = ftime
-                        key.value = alpha[ftime]
-                        key.forward = 0.0 # ?
-                        key.backward = 0.0 # ?
-
                 self.export_material_controllers(
                     b_material=mesh_mat, n_geom=trishape)
 
@@ -2756,8 +2713,47 @@ class NifExport(NifImportExport):
 
     def export_material_alpha_controller(self, b_material, n_geom):
         """Export the material alpha controller data."""
-        # XXX todo: move alpha export here
-        return
+        b_ipo = b_material.getIpo()
+        if not b_ipo:
+            return
+        # get the alpha curve and translate it into nif data
+        b_curve = b_ipo[Blender.Ipo.MA_ALPHA]
+        if not b_curve:
+            return
+        n_floatdata = self.create_block("NiFloatData", b_curve)
+        n_times = [] # track all times (used later in start time and end time)
+        n_floatdata.data.num_keys = len(b_curve.bezierPoints)
+        n_floatdata.data.interpolation = self.get_n_ipol_from_b_ipol(
+            b_curve.interpolation)
+        n_floatdata.data.keys.update_size()
+        for b_point, n_key in zip(b_curve.bezierPoints, n_floatdata.data.keys):
+            # add each point of the curve
+            b_time, b_value = b_point.pt
+            n_key.time = (b_time - 1) * self.fspeed
+            n_key.value = b_value
+            # track time
+            n_times.append(n_key.time)
+        # if alpha data is present (check this by checking if times were added)
+        # then add the controller so it is exported
+        if n_times:
+            n_alphactrl = self.create_block("NiAlphaController", b_ipo)
+            n_alphaipol = self.create_block("NiFloatInterpolator", b_ipo)
+            n_alphactrl.interpolator = n_alphaipol
+            n_alphactrl.flags = 8 # active
+            n_alphactrl.flags |= self.get_flags_from_extend(b_curve.extend)
+            n_alphactrl.frequency = 1.0
+            n_alphactrl.start_time = min(n_times)
+            n_alphactrl.stop_time = max(n_times)
+            n_alphactrl.data = n_floatdata
+            n_alphaipol.data = n_floatdata
+            # attach block to geometry
+            n_matprop = self.find_property(n_geom,
+                                           NifFormat.NiMaterialProperty)
+            if not n_matprop:
+                raise ValueError(
+                    "bug!! must add material property"
+                    " before exporting alpha controller")
+            n_matprop.add_controller(n_alphactrl)
 
     def export_material_uv_controller(self, b_material, n_geom):
         """Export the material UV controller data."""
@@ -2775,8 +2771,8 @@ class NifExport(NifImportExport):
             if b_curve:
                 self.logger.info("Exporting %s as NiUVData" % b_curve)
                 n_uvgroup.num_keys = len(b_curve.bezierPoints)
-                # XXX todo: set interpolation from blender interpolation
-                n_uvgroup.interpolation = NifFormat.KeyType.LINEAR_KEY
+                n_uvgroup.interpolation = self.get_n_ipol_from_b_ipol(
+                    b_curve.interpolation)
                 n_uvgroup.keys.update_size()
                 for b_point, n_key in zip(b_curve.bezierPoints, n_uvgroup.keys):
                     # add each point of the curve
@@ -2788,12 +2784,14 @@ class NifExport(NifImportExport):
                     n_key.value = b_value
                     # track time
                     n_times.append(n_key.time)
+                # save extend mode to export later
+                b_curve_extend = b_curve.extend
         # if uv data is present (we check this by checking if times were added)
         # then add the controller so it is exported
         if n_times:
             n_uvctrl = NifFormat.NiUVController()
-            # XXX todo: set flags from blender cycle value
-            n_uvctrl.flags = 8
+            n_uvctrl.flags = 8 # active
+            n_uvctrl.flags |= self.get_flags_from_extend(b_curve_extend)
             n_uvctrl.frequency = 1.0
             n_uvctrl.start_time = min(n_times)
             n_uvctrl.stop_time = max(n_times)
@@ -2872,7 +2870,7 @@ class NifExport(NifImportExport):
             for constr in arm.getPose().bones[bone.name].constraints:
                 # yes! store it for reference when creating the kf file
                 if constr.name[:9].lower() == "priority:":
-                    self.bone_priorities[node] = int(constr.name[9:])
+                    self.bone_priorities[bone.name] = int(constr.name[9:])
 
         # now fix the linkage between the blocks
         for bone in list(bones.values()):

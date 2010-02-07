@@ -35,7 +35,7 @@ import pyffi.spells.nif.fix
 # 
 # BSD License
 # 
-# Copyright (c) 2005-2009, NIF File Format Library and Tools
+# Copyright (c) 2005-2010, NIF File Format Library and Tools
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -860,6 +860,10 @@ class NifImport(NifImportExport):
         shortName = self.import_name(niBlock, 22)
         b_empty = self.context.scene.objects.new("Empty", shortName)
         b_empty.properties['longName'] = niBlock.name
+        if niBlock.name in self.bone_priorities:
+            constr = b_empty.constraints.append(
+                Blender.Constraint.Type.NULL)
+            constr.name = "priority:%i" % self.bone_priorities[niBlock.name]  
         return b_empty
 
     def import_armature(self, niArmature):
@@ -1210,10 +1214,10 @@ class NifImport(NifImportExport):
             # find bone nif block
             niBone = self.blocks[bone_name]
             # store bone priority, if applicable
-            if niBone in self.bone_priorities:
+            if bone_name in self.bone_priorities:
                 constr = b_posebone.constraints.append(
                     Blender.Constraint.Type.NULL)
-                constr.name = "priority:%i" % self.bone_priorities[niBone]                
+                constr.name = "priority:%i" % self.bone_priorities[bone_name]                
 
         return b_armature
 
@@ -1536,9 +1540,9 @@ class NifImport(NifImportExport):
         return b_texture
 
     def get_material_hash(self, matProperty, textProperty,
-                        alphaProperty, specProperty,
-                        textureEffect, wireProperty,
-                        bsShaderProperty, extra_datas):
+                          alphaProperty, specProperty,
+                          textureEffect, wireProperty,
+                          bsShaderProperty, extra_datas):
         """Helper function for import_material. Returns a key that
         uniquely identifies a material from its properties. The key
         ignores the material name as that does not affect the
@@ -1561,10 +1565,10 @@ class NifImport(NifImportExport):
         """Creates and returns a material."""
         # First check if material has been created before.
         material_hash = self.get_material_hash(matProperty, textProperty,
-                                             alphaProperty, specProperty,
-                                             textureEffect, wireProperty,
-                                             bsShaderProperty,
-                                             extra_datas)
+                                               alphaProperty, specProperty,
+                                               textureEffect, wireProperty,
+                                               bsShaderProperty,
+                                               extra_datas)
         try:
             return self.materials[material_hash]                
         except KeyError:
@@ -1663,6 +1667,7 @@ class NifImport(NifImportExport):
         # Alpha
         alpha = matProperty.alpha
         material.setAlpha(alpha)
+        # textures
         base_texture = None
         glow_texture = None
         envmapTexture = None # for NiTextureEffect
@@ -1916,6 +1921,7 @@ class NifImport(NifImportExport):
         if not self.IMPORT_ANIMATION:
             return
 
+        self.import_material_alpha_controller(b_material, n_geom)
         self.import_material_uv_controller(b_material, n_geom)
 
     def import_material_uv_controller(self, b_material, n_geom):
@@ -1926,14 +1932,13 @@ class NifImport(NifImportExport):
                 self.logger.info("importing UV controller")
                 b_channels = ("OfsX", "OfsY", "SizeX", "SizeY")
                 for b_channel, n_uvgroup in zip(b_channels,
-                                                   n_ctrl.data.uv_groups):
+                                                n_ctrl.data.uv_groups):
                     if n_uvgroup.keys:
                         # create curve in material ipo
                         b_ipo = self.get_material_ipo(b_material)
                         b_curve = b_ipo.addCurve(b_channel)
-                        # XXX todo: get interpolation from nif data
-                        # XXX these are reasonable defaults
-                        b_curve.interpolation = Blender.IpoCurve.InterpTypes.LINEAR
+                        b_curve.interpolation = self.get_b_ipol_from_n_ipol(
+                            n_uvgroup.interpolation)
                         b_curve.extend = self.get_extend_from_flags(n_ctrl.flags)
                         for n_key in n_uvgroup.keys:
                             if b_channel.startswith("Ofs"):
@@ -1941,6 +1946,25 @@ class NifImport(NifImportExport):
                                 b_curve[1 + n_key.time * self.fps] = -n_key.value
                             else:
                                 b_curve[1 + n_key.time * self.fps] = n_key.value
+
+    def import_material_alpha_controller(self, b_material, n_geom):
+        # find alpha controller
+        n_matprop = self.find_property(n_geom, NifFormat.NiMaterialProperty)
+        if not n_matprop:
+            return
+        n_alphactrl = self.find_controller(n_matprop,
+                                           NifFormat.NiAlphaController)
+        if not n_alphactrl:
+            return
+        self.logger.info("importing alpha controller")
+        b_channel = "Alpha"
+        b_ipo = self.get_material_ipo(b_material)
+        b_curve = b_ipo.addCurve(b_channel)
+        b_curve.interpolation = self.get_b_ipol_from_n_ipol(
+            n_alphactrl.data.data.interpolation)
+        b_curve.extend = self.get_extend_from_flags(n_alphactrl.flags)
+        for n_key in n_alphactrl.data.data.keys:
+            b_curve[1 + n_key.time * self.fps] = n_key.value
 
     def get_material_ipo(self, b_material):
         """Return existing material ipo data, or if none exists, create one
@@ -2481,10 +2505,13 @@ class NifImport(NifImportExport):
      
         # recalculate normals
         b_meshData.calcNormals()
-     
+        # import priority if existing
+        if niBlock.name in self.bone_priorities:
+            constr = b_mesh.constraints.append(
+                Blender.Constraint.Type.NULL)
+            constr.name = "priority:%i" % self.bone_priorities[niBlock.name]
+
         return b_mesh
-
-
 
     # import animation groups
     def import_text_keys(self, niBlock):
@@ -2622,41 +2649,6 @@ class NifImport(NifImportExport):
         # sort by frame, I need this later
         _ANIMATION_DATA.sort(lambda key1, key2: cmp(key1['frame'], key2['frame']))
         """
-
-
-    def find_controller(self, niBlock, controller_type):
-        """Find a controller."""
-        ctrl = niBlock.controller
-        while ctrl:
-            if isinstance(ctrl, controller_type):
-                break
-            ctrl = ctrl.next_controller
-        return ctrl
-
-    def find_property(self, niBlock, property_type):
-        """Find a property."""
-        for prop in niBlock.properties:
-            if isinstance(prop, property_type):
-                return prop
-        return None
-
-
-    def find_extra(self, niBlock, extratype):
-        """Find extra data."""
-        # pre-10.x.x.x system: extra data chain
-        extra = niBlock.extra_data
-        while extra:
-            if isinstance(extra, extratype):
-                break
-            extra = extra.next_extra_data
-        if extra:
-            return extra
-
-        # post-10.x.x.x system: extra data list
-        for extra in niBlock.extra_data_list:
-            if isinstance(extra, extratype):
-                return extra
-        return None
 
     def set_parents(self, niBlock):
         """Set the parent block recursively through the tree, to allow
@@ -2884,7 +2876,10 @@ class NifImport(NifImportExport):
             return
             
         if kfc.interpolator:
-            kfd = kfc.interpolator.data
+            if isinstance(kfc.interpolator, NifFormat.NiBSplineInterpolator):
+                kfd = None #not supported yet so avoids fatal error - should be kfc.interpolator.spline_data when spline data is figured out.
+            else:
+                kfd = kfc.interpolator.data
         else:
             kfd = kfc.data
 
@@ -3226,6 +3221,7 @@ class NifImport(NifImportExport):
             return hk_objects
 
         elif isinstance(bhkshape, NifFormat.bhkNiTriStripsShape):
+            self.havok_mat = bhkshape.material
             return reduce(operator.add,
                           (self.import_bhk_shape(strips)
                            for strips in bhkshape.strips_data))
@@ -3246,7 +3242,7 @@ class NifImport(NifImportExport):
             ob.drawMode = Blender.Object.DrawModes['WIRE']
             # radius: quick estimate
             ob.rbRadius = min(vert.co.length for vert in me.verts)
-            ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
+            ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[self.havok_mat], "STRING")
 
             # also remove duplicate vertices
             numverts = len(me.verts)
@@ -3715,7 +3711,7 @@ class NifImport(NifImportExport):
             # save priority for future reference
             # (priorities will be stored into the name of a NULL constraint on
             # bones, see import_armature function)
-            self.bone_priorities[node] = controlledblock.priority
+            self.bone_priorities[nodename] = controlledblock.priority
 
         # DEBUG: save the file for manual inspection
         #niffile = open("C:\\test.nif", "wb")

@@ -8,7 +8,7 @@ __requiredblenderversion__ = "250"
 # 
 # BSD License
 # 
-# Copyright (c) 2005-2009, NIF File Format Library and Tools
+# Copyright (c) 2005-2010, NIF File Format Library and Tools
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -389,6 +389,66 @@ class NifImportExport(bpy.types.Operator, metaclass=MetaNifImportExport):
             "Unsupported extend type in blend, using clamped.")
         return 4
 
+    def get_b_ipol_from_n_ipol(self, n_ipol):
+        if n_ipol == NifFormat.KeyType.LINEAR_KEY:
+            return Blender.IpoCurve.InterpTypes.LINEAR
+        elif n_ipol == NifFormat.KeyType.QUADRATIC_KEY:
+            return Blender.IpoCurve.InterpTypes.BEZIER
+        elif n_ipol == 0:
+            # guessing, not documented in nif.xml
+            return Blender.IpoCurve.InterpTypes.CONST
+
+        self.logger.warning(
+            "Unsupported interpolation mode in nif, using quadratic/bezier.")
+        return Blender.IpoCurve.InterpTypes.BEZIER
+
+    def get_n_ipol_from_b_ipol(self, b_ipol):
+        if b_ipol == Blender.IpoCurve.InterpTypes.LINEAR:
+            return NifFormat.KeyType.LINEAR_KEY
+        elif b_ipol == Blender.IpoCurve.InterpTypes.BEZIER:
+            return NifFormat.KeyType.QUADRATIC_KEY
+        elif b_ipol == Blender.IpoCurve.InterpTypes.CONST:
+            # guessing, not documented in nif.xml
+            return 0
+
+        self.logger.warning(
+            "Unsupported interpolation mode in blend, using quadratic/bezier.")
+        return NifFormat.KeyType.QUADRATIC_KEY
+
+    def find_controller(self, niBlock, controller_type):
+        """Find a controller."""
+        ctrl = niBlock.controller
+        while ctrl:
+            if isinstance(ctrl, controller_type):
+                break
+            ctrl = ctrl.next_controller
+        return ctrl
+
+    def find_property(self, niBlock, property_type):
+        """Find a property."""
+        for prop in niBlock.properties:
+            if isinstance(prop, property_type):
+                return prop
+        return None
+
+
+    def find_extra(self, niBlock, extratype):
+        """Find extra data."""
+        # pre-10.x.x.x system: extra data chain
+        extra = niBlock.extra_data
+        while extra:
+            if isinstance(extra, extratype):
+                break
+            extra = extra.next_extra_data
+        if extra:
+            return extra
+
+        # post-10.x.x.x system: extra data list
+        for extra in niBlock.extra_data_list:
+            if isinstance(extra, extratype):
+                return extra
+        return None
+
 # TODO: integrate with NifImportExport class
 class NifConfig:
     """Class which handles configuration of nif import and export in Blender.
@@ -469,6 +529,9 @@ class NifConfig:
         EXPORT_FO3_BODYPARTS = True,
         EXPORT_MW_NIFXNIFKF = False,
         EXPORT_EXTRA_SHADER_TEXTURES = True,
+        EXPORT_ANIMTARGETNAME = '',
+        EXPORT_ANIMPRIORITY = 0,
+        EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES = False,
         PROFILE = '', # name of file where Python profiler dumps the profile; set to empty string to turn off profiling
         IMPORT_EXPORTEMBEDDEDTEXTURES = False,
         EXPORT_OPTIMIZE_MATERIALS = True,
@@ -883,6 +946,21 @@ class NifConfig:
                 event_name = "EXPORT_ANIMSEQUENCENAME",
                 max_length = 128,
                 callback = self.update_anim_sequence_name)
+            self.draw_string(
+                text = "Anim Target Name: ",
+                event_name = "EXPORT_ANIMTARGETNAME",
+                max_length = 128,
+                callback = self.update_anim_target_name)
+            self.draw_number(
+                text = "Bone Priority: ",
+                event_name = "EXPORT_ANIMPRIORITY",
+                min_val = 0, max_val = 100,
+                callback = self.update_anim_priority,
+                num_items = 2, item = 0)
+            self.draw_toggle(
+                text = "Ignore Blender Anim Props",
+                event_name = "EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES",
+                num_items = 2, item = 1)  
             self.draw_y_sep()
 
             self.draw_toggle(
@@ -1137,7 +1215,7 @@ class NifConfig:
                 event_name = "EXPORT_OB_MALLEABLECONSTRAINT",
                 num_items = 2, item = 1)
             self.draw_toggle(
-                text = "Do Not Use Blender Properties",
+                text = "Do Not Use Blender Collision Properties",
                 event_name = "EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES")   
             self.draw_y_sep()
 
@@ -1603,6 +1681,8 @@ class NifConfig:
             self.config["EXPORT_MW_NIFXNIFKF"] = not self.config["EXPORT_MW_NIFXNIFKF"]
         elif evName == "EXPORT_EXTRA_SHADER_TEXTURES":
             self.config["EXPORT_EXTRA_SHADER_TEXTURES"] = not self.config["EXPORT_EXTRA_SHADER_TEXTURES"]
+        elif evName == "EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES":
+            self.config["EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES"] = not self.config["EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES"]
         Draw.Redraw(1)
 
     def gui_event(self, evt, val):
@@ -1701,5 +1781,11 @@ class NifConfig:
     def update_anim_sequence_name(self, evt, val):
         self.config["EXPORT_ANIMSEQUENCENAME"] = val
 
+    def update_anim_target_name(self, evt, val):
+        self.config["EXPORT_ANIMTARGETNAME"] = val
+        
+    def update_anim_priority(self, evt, val):
+        self.config["EXPORT_ANIMPRIORITY"] = val
+        
     def update_egm_anim_scale(self, evt, val):
         self.config["IMPORT_EGMANIMSCALE"] = val
