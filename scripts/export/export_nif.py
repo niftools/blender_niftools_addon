@@ -685,6 +685,9 @@ class NifExport(NifImportExport):
             elif self.EXPORT_VERSION == "Fallout 3":
                 NIF_USER_VERSION = 11
                 NIF_USER_VERSION2 = 34
+            elif self.EXPORT_VERSION == "Divinity 2":
+                NIF_USER_VERSION = 131072
+                NIF_USER_VERSION = 0
             else:
                 NIF_USER_VERSION = 0
                 NIF_USER_VERSION2 = 0
