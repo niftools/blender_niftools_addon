@@ -281,7 +281,6 @@ class NifImportExport:
                 return prop
         return None
 
-
     def find_extra(self, niBlock, extratype):
         """Find extra data."""
         # pre-10.x.x.x system: extra data chain
