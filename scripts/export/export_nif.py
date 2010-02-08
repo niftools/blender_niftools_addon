@@ -696,7 +696,10 @@ class NifExport(NifImportExport):
             #-----------------
 
             if self.EXPORT_ANIMATION != 2:
-                ext = ".nif"
+                if self.EXPORT_VERSION == "Empire Earth II":
+                    ext = ".nifcache"
+                else:
+                    ext = ".nif"
                 self.logger.info("Writing %s file" % ext)
                 self.msg_progress("Writing %s file" % ext)
 
