@@ -1093,6 +1093,13 @@ class NifExport(NifImportExport):
         elif self.EXPORT_VERSION in ("Sid Meier's Railroads",
                                      "Civilization IV"):
             node.flags = 0x0010
+        elif self.EXPORT_VERSION in ("Empire Earth II"):
+            if node.name.lower()[-9:] == 'footsteps':
+                node.flags = 0x0016
+            elif node.name.lower()[:3] == 'bip':
+                node.flags = 0x0006
+            else:
+                node.flags = 0x0002
         else:
             # morrowind
             node.flags = 0x000C
