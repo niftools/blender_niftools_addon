@@ -1099,12 +1099,7 @@ class NifExport(NifImportExport):
                                      "Civilization IV"):
             node.flags = 0x0010
         elif self.EXPORT_VERSION in ("Empire Earth II"):
-            if node.name.lower()[-9:] == 'footsteps':
-                node.flags = 0x0016
-            elif node.name.lower()[:3] == 'bip':
-                node.flags = 0x0006
-            else:
-                node.flags = 0x0002
+            node.flags = 0x0002
         else:
             # morrowind
             node.flags = 0x000C
@@ -2860,12 +2855,12 @@ class NifExport(NifImportExport):
                 # default for Oblivion bones
                 # note: bodies have 0x000E, clothing has 0x000F
                 node.flags = 0x000E
-            elif self.EXPORT_VERSION == 'Civilization IV':
+            elif self.EXPORT_VERSION in ('Civilization IV', 'Empire Earth II'):
                 if bone.children:
-                    # default for Civ IV bones with children
+                    # default for Civ IV/EE II bones with children
                     node.flags = 0x0006
                 else:
-                    # default for Civ IV final bones
+                    # default for Civ IV/EE II final bones
                     node.flags = 0x0016
             else:
                 node.flags = 0x0002 # default for Morrowind bones
