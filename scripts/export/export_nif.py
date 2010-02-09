@@ -2933,6 +2933,7 @@ class NifExport(NifImportExport):
             # create a new block for this bone
             if islod:
                 node = self.create_block("NiLODNode", bone)
+                node.flags = 0x0010 #at least thats what is seen in Empire Earth II NiLODNodes
                 self.LODNodes.append(node)
             else:
                 node = self.create_block("NiNode", bone)
