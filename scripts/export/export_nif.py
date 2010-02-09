@@ -649,7 +649,9 @@ class NifExport(NifImportExport):
             # delete original scene root if a scene root object was already
             # defined
             if ((root_block.num_children == 1)
-                and (root_block.children[0].name in ['Scene Root', 'Bip01'])):
+                and ((root_block.children[0].name in ['Scene Root', 'Bip01']) or root_block.children[0].name[-3:] == 'nif')):
+                if root_block.children[0].name[-3:] == 'nif':
+                    root_block.children[0].name = self.filebase
                 self.logger.info(
                     "Making '%s' the root block" % root_block.children[0].name)
                 # remove root_block from self.blocks
