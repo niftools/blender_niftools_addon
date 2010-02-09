@@ -1542,6 +1542,10 @@ class NifExport(NifImportExport):
         @return: The new data block or the old data block with the filled in range data.
         """
         levels = 0
+        for child in block.children:
+            if isinstance(child, NifFormat.NiGeometry):
+                levels += 1
+                
         if self.version >= 0x0A010000:
             # create new NiRangeLODData block
             LODData = self.create_block("NiRangeLODData")
@@ -1550,9 +1554,6 @@ class NifExport(NifImportExport):
             block.lod_level_data = LODData
 
             # and now export the parameters
-            for child in block.children:
-                if isinstance(child, NifFormat.NiGeometry):
-                    levels += 1
             LODData.num_lod_levels = levels
             LODData.lod_levels.update_size()
             if levels == 2:
@@ -1572,7 +1573,22 @@ class NifExport(NifImportExport):
 
             return LODData
         else:
-            #TODO: implement this
+            block.num_lod_levels = levels
+            block.lod_levels.update_size()
+            if levels == 2:
+                block.lod_levels[0].near_extent = 0
+                block.lod_levels[0].far_extent = 3
+                block.lod_levels[1].near_extent = 3
+                block.lod_levels[1].far_extent = 100000
+            elif levels == 4:
+                block.lod_levels[0].near_extent = 0
+                block.lod_levels[0].far_extent = 1
+                block.lod_levels[1].near_extent = 1
+                block.lod_levels[1].far_extent = 2
+                block.lod_levels[2].near_extent = 2
+                block.lod_levels[2].far_extent = 3
+                block.lod_levels[3].near_extent = 3
+                block.lod_levels[3].far_extent = 100000
             return block
         
     def export_anim_groups(self, animtxt, block_parent):
