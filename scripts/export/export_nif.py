@@ -594,6 +594,9 @@ class NifExport(NifImportExport):
                                        "Sid Meier's Railroads"]:
                 self.export_vertex_color_property(root_block)
                 self.export_z_buffer_property(root_block)
+            elif self.EXPORT_VERSION in ["Empire Earth II"]:
+                self.export_vertex_color_property(root_block)
+                self.export_z_buffer_property(root_block, flags=15, function=1)
 
             if self.EXPORT_FLATTENSKIN:
                 # (warning: trouble if armatures parent other armatures or
