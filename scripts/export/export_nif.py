@@ -2229,6 +2229,8 @@ class NifExport(NifImportExport):
             elif self.EXPORT_VERSION in ("Sid Meier's Railroads",
                                          "Civilization IV"):
                 trishape.flags = 0x0010
+            elif self.EXPORT_VERSION in ("Empire Earth II"):
+                trishape.flags = 0x0016
             else:
                 # morrowind
                 if ob.getDrawType() != 2: # not wire
