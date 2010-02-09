@@ -232,6 +232,9 @@ class NifExport(NifImportExport):
         # are parsed, so they are available when writing the kf file
         # maps bone NiNode to priority value
         self.bone_priorities = {}
+        
+        # stores nodes that should be NiLODNodes - ie for Empire Earth II export
+        self.LODNodes = []
 
         # if an egm is exported, this will contain the data
         self.egmdata = None
@@ -2856,8 +2859,19 @@ class NifExport(NifImportExport):
 
         # ok, let's create the bone NiNode blocks
         for bone in bones.values():
+            # does bone have priority or is LODNode value in NULL constraint?
+            for constr in arm.getPose().bones[bone.name].constraints:
+                # yes! store it for reference when creating the kf file
+                if constr.name[:9].lower() == "priority:":
+                    self.bone_priorities[bone.name] = int(constr.name[9:])
+                elif constr.name[-9:].lower() == "nilodnode":
+                    self.LODNodes.append(bone.name)
+                    
             # create a new block for this bone
-            node = self.create_block("NiNode", bone)
+            if bone.name in self.LODNodes:
+                node = self.create_block("NiLODNode", bone)
+            else:
+                node = self.create_block("NiNode", bone)
             # doing bone map now makes linkage very easy in second run
             bones_node[bone.name] = node
 
@@ -2902,12 +2916,6 @@ class NifExport(NifImportExport):
                 self.export_keyframes(
                     bones_ipo[bone.name], 'localspace', node,
                     bind_mat = bonerestmat, extra_mat_inv = bonexmat_inv)
-
-            # does bone have priority value in NULL constraint?
-            for constr in arm.getPose().bones[bone.name].constraints:
-                # yes! store it for reference when creating the kf file
-                if constr.name[:9].lower() == "priority:":
-                    self.bone_priorities[bone.name] = int(constr.name[9:])
 
         # now fix the linkage between the blocks
         for bone in bones.values():
