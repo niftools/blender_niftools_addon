@@ -649,6 +649,11 @@ class NifExport(NifImportExport):
                        #block.parse_mopp(verbose = True)
                        #print "=== END OF MOPP TREE ==="
 
+            # for Empire Earth II - and may work out of the box for other NiLODNode using games
+            for node in self.LODNodes:
+                self.logger.info("NiLODNode found, generating data")
+                self.export_lod_level_data(node)
+                    
             # delete original scene root if a scene root object was already
             # defined
             if ((root_block.num_children == 1)
@@ -1529,6 +1534,47 @@ class NifExport(NifImportExport):
 
         return zbuf
 
+    def export_lod_level_data(self, block):
+        """Create a NiRangeLODData if version >= 10.1.0.0 and attach it to an existing block
+        (typically, the a NiLODNode of the nif tree) otherwise fill in the range data in the NiLODNode.
+
+        @param block: The block to which to attach the new data.
+        @return: The new data block or the old data block with the filled in range data.
+        """
+        levels = 0
+        if self.version >= 0x0A010000:
+            # create new NiRangeLODData block
+            LODData = self.create_block("NiRangeLODData")
+
+            # attach it to the parent block
+            block.lod_level_data = LODData
+
+            # and now export the parameters
+            for child in block.children:
+                if isinstance(child, NifFormat.NiGeometry):
+                    levels += 1
+            LODData.num_lod_levels = levels
+            LODData.lod_levels.update_size()
+            if levels == 2:
+                LODData.lod_levels[0].near_extent = 0
+                LODData.lod_levels[0].far_extent = 3
+                LODData.lod_levels[1].near_extent = 3
+                LODData.lod_levels[1].far_extent = 100000
+            elif levels == 4:
+                LODData.lod_levels[0].near_extent = 0
+                LODData.lod_levels[0].far_extent = 1
+                LODData.lod_levels[1].near_extent = 1
+                LODData.lod_levels[1].far_extent = 2
+                LODData.lod_levels[2].near_extent = 2
+                LODData.lod_levels[2].far_extent = 3
+                LODData.lod_levels[3].near_extent = 3
+                LODData.lod_levels[3].far_extent = 100000
+
+            return LODData
+        else:
+            #TODO: implement this
+            return block
+        
     def export_anim_groups(self, animtxt, block_parent):
         """Parse the animation groups buffer and write an extra string
         data block, and attach it to an existing block (typically, the root
@@ -2859,17 +2905,19 @@ class NifExport(NifImportExport):
 
         # ok, let's create the bone NiNode blocks
         for bone in bones.values():
+            islod = False
             # does bone have priority or is LODNode value in NULL constraint?
             for constr in arm.getPose().bones[bone.name].constraints:
                 # yes! store it for reference when creating the kf file
                 if constr.name[:9].lower() == "priority:":
                     self.bone_priorities[bone.name] = int(constr.name[9:])
                 elif constr.name[-9:].lower() == "nilodnode":
-                    self.LODNodes.append(bone.name)
+                    islod = True
                     
             # create a new block for this bone
-            if bone.name in self.LODNodes:
+            if islod:
                 node = self.create_block("NiLODNode", bone)
+                self.LODNodes.append(node)
             else:
                 node = self.create_block("NiNode", bone)
             # doing bone map now makes linkage very easy in second run
