@@ -1213,7 +1213,7 @@ class NifImport(NifImportExport):
                         for b_curve in ipo:
                             b_curve.extend = self.get_extend_from_flags(kfc.flags)
 
-        # constraints (priority)
+        # constraints (priority), other node types (eg NiLODNode)
         # must be done oudside edit mode hence after calling
         for bone_name, b_posebone in b_armature.getPose().bones.items():
             # find bone nif block
@@ -1222,8 +1222,11 @@ class NifImport(NifImportExport):
             if bone_name in self.bone_priorities:
                 constr = b_posebone.constraints.append(
                     Blender.Constraint.Type.NULL)
-                constr.name = "priority:%i" % self.bone_priorities[bone_name]                
-
+                constr.name = "priority:%i" % self.bone_priorities[bone_name]
+            if isinstance(niBone, NifFormat.NiLODNode):
+                constr = b_posebone.constraints.append(
+                    Blender.Constraint.Type.NULL)
+                constr.name = "NodeType:NiLODNode"
         return b_armature
 
     def import_bone(self, niBlock, b_armature, b_armatureData, niArmature):
