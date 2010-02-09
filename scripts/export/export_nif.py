@@ -1519,8 +1519,8 @@ class NifExport(NifImportExport):
         block_parent.add_property(zbuf)
 
         # and now export the parameters
-        zbuf.flags = 15
-        zbuf.function = 3
+        zbuf.flags = flags
+        zbuf.function = function
 
         return zbuf
 
