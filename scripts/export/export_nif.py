@@ -2231,6 +2231,11 @@ class NifExport(NifImportExport):
                 trishape.flags = 0x0010
             elif self.EXPORT_VERSION in ("Empire Earth II"):
                 trishape.flags = 0x0016
+            elif self.EXPORT_VERSION in ("Divinity 2"):
+                if trishape.name.lower[-3:] in ("med", "low"):
+                    trishape.flags = 0x0014
+                else:
+                    trishape.flags = 0x0016
             else:
                 # morrowind
                 if ob.getDrawType() != 2: # not wire
