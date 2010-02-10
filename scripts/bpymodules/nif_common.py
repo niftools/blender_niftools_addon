@@ -1372,6 +1372,9 @@ class NifConfig:
                 self.config["EXPORT_FO3_SF_UN31"] = True
                 # body parts
                 self.config["EXPORT_FO3_BODYPARTS"] = True
+            elif self.config["EXPORT_VERSION"] == "Empire Earth II":
+                self.config["EXPORT_FORCEDDS"] = False
+                self.config["EXPORT_SKINPARTITION"] = False
         elif evName[:8] == "VERSION_":
             self.config["EXPORT_VERSION"] = evName[8:]
         elif evName == "EXPORT_FLATTENSKIN":
