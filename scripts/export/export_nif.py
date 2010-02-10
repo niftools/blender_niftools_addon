@@ -2946,7 +2946,7 @@ class NifExport(NifImportExport):
                 # default for Oblivion bones
                 # note: bodies have 0x000E, clothing has 0x000F
                 node.flags = 0x000E
-            elif self.EXPORT_VERSION in ('Civilization IV', 'Empire Earth II'):
+            elif self.EXPORT_VERSION in ('Civilization IV', 'Empire Earth II') and not islod:
                 if bone.children:
                     # default for Civ IV/EE II bones with children
                     node.flags = 0x0006
