@@ -2867,6 +2867,15 @@ class NifExport(NifImportExport):
                 else:
                     # default for Civ IV/EE II final bones
                     node.flags = 0x0016
+            elif self.EXPORT_VERSION in ('Divinity 2'):
+                if bone.children:
+                    # default for Div 2 bones with children
+                    node.flags = 0x0186
+                elif bone.name.lower()[-9:] == 'footsteps':
+                    node.flags = 0x0116
+                else:
+                    # default for Div 2 final bones
+                    node.flags = 0x0196
             else:
                 node.flags = 0x0002 # default for Morrowind bones
             self.export_matrix(bone, 'localspace', node) # rest pose
