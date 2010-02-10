@@ -2280,6 +2280,9 @@ class NifExport(NifImportExport):
                 if self.EXPORT_VERSION == "Sid Meier's Railroads":
                     alphaflags = 0x32ED
                     alphathreshold = 150
+                elif self.EXPORT_VERSION == "Empire Earth II":
+                    alphaflags = 0x00ED
+                    alphathreshold = 0
                 else:
                     alphaflags = 0x12ED
                     alphathreshold = 0
