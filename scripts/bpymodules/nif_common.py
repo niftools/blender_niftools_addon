@@ -1334,6 +1334,7 @@ class NifConfig:
             self.config["EXPORT_EXTRA_SHADER_TEXTURES"] = True
             # set default settings per game
             if self.config["EXPORT_VERSION"] == "Morrowind":
+                self.config["EXPORT_FORCEDDS"] = False
                 pass # fail-safe settings work
             if self.config["EXPORT_VERSION"] == "Freedom Force vs. the 3rd Reich":
                 self.config["EXPORT_SKINPARTITION"] = True
