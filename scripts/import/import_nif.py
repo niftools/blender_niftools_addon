@@ -2855,7 +2855,13 @@ class NifImport(NifImportExport):
         if not self.IMPORT_COMBINESHAPES:
             return []
         # check that it is a ninode
-        if not isinstance(niBlock, NifFormat.NiNode): return []
+        if not isinstance(niBlock, NifFormat.NiNode):
+            return []
+        # NiLODNodes are never grouping nodes
+        # (this ensures that they are imported as empties, with LODs
+        # as child meshes)
+        if isinstance(niBlock, NifFormat.NiLODNode):
+            return []
         # root collision node: join everything
         if isinstance(niBlock, NifFormat.RootCollisionNode):
             return [ child for child in niBlock.children if
