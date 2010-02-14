@@ -1100,7 +1100,7 @@ class NifExport(NifImportExport):
             node.flags = 0x0010
         elif self.EXPORT_VERSION in ("Empire Earth II"):
             node.flags = 0x0002
-        elif self.EXPORT_VERSON in ("Divinity 2"):
+        elif self.EXPORT_VERSION in ("Divinity 2"):
             node.flags = 0x0310
         else:
             # morrowind
