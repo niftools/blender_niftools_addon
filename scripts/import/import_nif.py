@@ -563,6 +563,11 @@ class NifImport(NifImportExport):
                         # import the extras
                         self.import_text_keys(niBlock)
 
+                    # import extra node data, such as node type
+                    # (other types should be added here too)
+                    if isinstance(niBlock, NifFormat.NiLODNode):
+                        b_obj.addProperty("Type", "NiLODNode", "STRING")
+
                     return b_obj
             # all else is currently discarded
             return None
