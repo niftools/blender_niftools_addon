@@ -1001,7 +1001,7 @@ class NifExport(NifImportExport):
         if (ob == None):
             # -> root node
             assert(parent_block == None) # debug
-            node = self.create_block("NiNode")
+            node = self.create_ninode()
             ob_type = None
             ob_ipo = None
         else:
@@ -1062,7 +1062,7 @@ class NifExport(NifImportExport):
                     return None
             else:
                 # -> everything else (empty/armature) is a regular node
-                node = self.create_block("NiNode", ob)
+                node = self.create_ninode(ob)
                 # does node have priority value in NULL constraint?
                 for constr in ob.constraints:
                     if constr.name[:9].lower() == "priority:":
@@ -2857,7 +2857,7 @@ class NifExport(NifImportExport):
         # ok, let's create the bone NiNode blocks
         for bone in bones.values():
             # create a new block for this bone
-            node = self.create_block("NiNode", bone)
+            node = self.create_ninode(bone)
             # doing bone map now makes linkage very easy in second run
             bones_node[bone.name] = node
 
@@ -3234,7 +3234,7 @@ class NifExport(NifImportExport):
                 except ValueError: # adding collision failed
                     continue
             else: # all nodes failed so add new one
-                node = self.create_block("NiNode", obj)
+                node = self.create_ninode(obj)
                 node.set_transform(self.IDENTITY44)
                 node.name = 'collisiondummy%i' % parent_block.num_children
                 node.flags = 0x000E # default
@@ -4273,7 +4273,7 @@ class NifExport(NifImportExport):
             bbox.dimensions.y = maxy - miny
             bbox.dimensions.z = maxz - minz
         else:
-            bbox = self.create_block("NiNode")
+            bbox = self.create_ninode()
             block_parent.add_child(bbox)
             # set name, flags, translation, and radius
             bbox.name = "Bounding Box"
@@ -4296,6 +4296,13 @@ class NifExport(NifImportExport):
         for shaderindex in self.USED_EXTRA_SHADER_TEXTURES[self.EXPORT_VERSION]:
             shadername = self.EXTRA_SHADER_TEXTURES[shaderindex]
             trishape.add_integer_extra_data(shadername, shaderindex)
+
+    def create_ninode(self, b_obj=None):
+        try:
+            node_type = b_obj.getProperty("Type").data if b_obj else "NiNode"
+        except NameError:
+            node_type = "NiNode"
+        return self.create_block(node_type, b_obj)
 
     def exportEgm(self, keyblocks):
         self.egmdata = EgmFormat.Data(num_vertices=len(keyblocks[0].data))
