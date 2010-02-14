@@ -567,6 +567,14 @@ class NifImport(NifImportExport):
                     # (other types should be added here too)
                     if isinstance(niBlock, NifFormat.NiLODNode):
                         b_obj.addProperty("Type", "NiLODNode", "STRING")
+                        # import lod data
+                        range_data = niBlock.lod_level_data
+                        for lod_level, b_child in zip(
+                            range_data.lod_levels, b_children_list):
+                            b_child.addProperty(
+                                "Near Extent", lod_level.near_extent, "FLOAT")
+                            b_child.addProperty(
+                                "Far Extent", lod_level.far_extent, "FLOAT")
 
                     return b_obj
             # all else is currently discarded
