@@ -188,6 +188,11 @@ class NifImportExport:
         # draw the progress bar
         Blender.Window.DrawProgressBar(self.progress_bar, message)
 
+    def get_b_children(self, b_obj):
+        """Return children of a blender object."""
+        return [child for child in Blender.Object.Get()
+                if child.parent == b_obj]
+
     def get_bone_name_for_blender(self, name):
         """Convert a bone name to a name that can be used by Blender: turns
         'Bip01 R xxx' into 'Bip01 xxx.R', and similar for L.
