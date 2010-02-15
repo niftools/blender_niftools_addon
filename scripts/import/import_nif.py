@@ -563,6 +563,19 @@ class NifImport(NifImportExport):
                         # import the extras
                         self.import_text_keys(niBlock)
 
+                    # import extra node data, such as node type
+                    # (other types should be added here too)
+                    if isinstance(niBlock, NifFormat.NiLODNode):
+                        b_obj.addProperty("Type", "NiLODNode", "STRING")
+                        # import lod data
+                        range_data = niBlock.lod_level_data
+                        for lod_level, b_child in zip(
+                            range_data.lod_levels, b_children_list):
+                            b_child.addProperty(
+                                "Near Extent", lod_level.near_extent, "FLOAT")
+                            b_child.addProperty(
+                                "Far Extent", lod_level.far_extent, "FLOAT")
+
                     return b_obj
             # all else is currently discarded
             return None
@@ -2855,7 +2868,13 @@ class NifImport(NifImportExport):
         if not self.IMPORT_COMBINESHAPES:
             return []
         # check that it is a ninode
-        if not isinstance(niBlock, NifFormat.NiNode): return []
+        if not isinstance(niBlock, NifFormat.NiNode):
+            return []
+        # NiLODNodes are never grouping nodes
+        # (this ensures that they are imported as empties, with LODs
+        # as child meshes)
+        if isinstance(niBlock, NifFormat.NiLODNode):
+            return []
         # root collision node: join everything
         if isinstance(niBlock, NifFormat.RootCollisionNode):
             return [ child for child in niBlock.children if

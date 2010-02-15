@@ -1001,7 +1001,7 @@ class NifExport(NifImportExport):
         if (ob == None):
             # -> root node
             assert(parent_block == None) # debug
-            node = self.create_block("NiNode")
+            node = self.create_ninode()
             ob_type = None
             ob_ipo = None
         else:
@@ -1010,7 +1010,7 @@ class NifExport(NifImportExport):
             assert(ob_type in ['Empty', 'Mesh', 'Armature']) # debug
             assert(parent_block) # debug
             ob_ipo = ob.getIpo() # get animation data
-            ob_children = [child for child in Blender.Object.Get() if child.parent == ob]
+            ob_children = self.get_b_children(ob)
             
             if (node_name == 'RootCollisionNode'):
                 # -> root collision node (can be mesh or empty)
@@ -1062,7 +1062,7 @@ class NifExport(NifImportExport):
                     return None
             else:
                 # -> everything else (empty/armature) is a regular node
-                node = self.create_block("NiNode", ob)
+                node = self.create_ninode(ob)
                 # does node have priority value in NULL constraint?
                 for constr in ob.constraints:
                     if constr.name[:9].lower() == "priority:":
@@ -2857,7 +2857,7 @@ class NifExport(NifImportExport):
         # ok, let's create the bone NiNode blocks
         for bone in bones.values():
             # create a new block for this bone
-            node = self.create_block("NiNode", bone)
+            node = self.create_ninode(bone)
             # doing bone map now makes linkage very easy in second run
             bones_node[bone.name] = node
 
@@ -2929,8 +2929,7 @@ class NifExport(NifImportExport):
         """Export all children of blender object ob as children of
         parent_block."""
         # loop over all obj's children
-        for ob_child in [ cld  for cld in Blender.Object.Get()
-                          if cld.getParent() == obj ]:
+        for ob_child in self.get_b_children(obj):
             # is it a regular node?
             if ob_child.getType() in ['Mesh', 'Empty', 'Armature']:
                 if (obj.getType() != 'Armature'):
@@ -3234,7 +3233,7 @@ class NifExport(NifImportExport):
                 except ValueError: # adding collision failed
                     continue
             else: # all nodes failed so add new one
-                node = self.create_block("NiNode", obj)
+                node = self.create_ninode(obj)
                 node.set_transform(self.IDENTITY44)
                 node.name = 'collisiondummy%i' % parent_block.num_children
                 node.flags = 0x000E # default
@@ -4273,7 +4272,7 @@ class NifExport(NifImportExport):
             bbox.dimensions.y = maxy - miny
             bbox.dimensions.z = maxz - minz
         else:
-            bbox = self.create_block("NiNode")
+            bbox = self.create_ninode()
             block_parent.add_child(bbox)
             # set name, flags, translation, and radius
             bbox.name = "Bounding Box"
@@ -4296,6 +4295,44 @@ class NifExport(NifImportExport):
         for shaderindex in self.USED_EXTRA_SHADER_TEXTURES[self.EXPORT_VERSION]:
             shadername = self.EXTRA_SHADER_TEXTURES[shaderindex]
             trishape.add_integer_extra_data(shadername, shaderindex)
+
+    def create_ninode(self, b_obj=None):
+        # trivial case first
+        if not b_obj:
+            return self.create_block("NiNode")
+        # exporting an object, so first create node of correct type
+        try:
+            n_node_type = b_obj.getProperty("Type").data
+        except NameError:
+            n_node_type = "NiNode"
+        n_node = self.create_block(n_node_type, b_obj)
+        # customize the node data, depending on type
+        if n_node_type == "NiLODNode":
+            self.export_range_lod_data(n_node, b_obj)
+            
+        # return the node
+        return n_node
+
+    def export_range_lod_data(self, n_node, b_obj):
+        """Export range lod data for for the children of b_obj, as a
+        NiRangeLODData block on n_node.
+        """
+        # create range lod data object
+        n_range_data = self.create_block("NiRangeLODData", b_obj)
+        n_node.lod_level_data = n_range_data
+        # get the children
+        b_children = self.get_b_children(b_obj)
+        # set the data
+        n_node.num_lod_levels = len(b_children)
+        n_range_data.num_lod_levels = len(b_children)
+        n_node.lod_levels.update_size()
+        n_range_data.lod_levels.update_size()
+        for b_child, n_lod_level, n_rd_lod_level in zip(
+            b_children, n_node.lod_levels, n_range_data.lod_levels):
+            n_lod_level.near_extent = b_child.getProperty("Near Extent").data
+            n_lod_level.far_extent = b_child.getProperty("Far Extent").data
+            n_rd_lod_level.near_extent = n_lod_level.near_extent
+            n_rd_lod_level.far_extent = n_lod_level.far_extent
 
     def exportEgm(self, keyblocks):
         self.egmdata = EgmFormat.Data(num_vertices=len(keyblocks[0].data))
