@@ -3130,8 +3130,14 @@ class NifImport(NifImportExport):
             ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
 
             # find transform
-            normal = (bhkshape.first_point - bhkshape.second_point) / length
-            normal = Blender.Mathutils.Vector(normal.x, normal.y, normal.z)
+            if length > self.EPSILON:
+                normal = (bhkshape.first_point - bhkshape.second_point) / length
+                normal = Blender.Mathutils.Vector(normal.x, normal.y, normal.z)
+            else:
+                self.logger.warn(
+                    "bhkCapsuleShape with identical points:"
+                    " using arbitrary axis")
+                normal = Blender.Mathutils.Vector(0, 0, 1)
             minindex = min((abs(x), i) for i, x in enumerate(normal))[1]
             orthvec = Blender.Mathutils.Vector([(1 if i == minindex else 0)
                                                 for i in (0,1,2)])

@@ -27,6 +27,8 @@ and test files provided by Alphax)
   if not skipping was causing a fatal error
 * fix for bhkNiTriStripsShape import
 * added experimental import and export of Empire Earth II meshes
+* fixed bhkCapsuleShape import with identical points (reported by
+ghostwalker71)
 
 Version 2.5.1 (10 Jan 2010)
 * updated for pyffi 2.1.0
