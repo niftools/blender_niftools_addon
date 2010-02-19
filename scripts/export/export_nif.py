@@ -4303,11 +4303,7 @@ class NifExport(NifImportExport):
         # exporting an object, so first create node of correct type
         try:
             n_node_type = b_obj.getProperty("Type").data
-        except RuntimeError:
-            n_node_type = "NiNode"
-        except AttributeError:
-            n_node_type = "NiNode"
-        except NameError:
+        except (RuntimeError, AttributeError, NameError):
             n_node_type = "NiNode"
         n_node = self.create_block(n_node_type, b_obj)
         # customize the node data, depending on type
