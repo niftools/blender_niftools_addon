@@ -1,4 +1,6 @@
 Version 2.5.3 (in development)
+* import and export NiLODNodes as empty with LODs as children and properties
+to set extents
 
 Version 2.5.2 (20 Feb 2010)
 * configurable game paths for test suite
@@ -29,8 +31,6 @@ and test files provided by Alphax)
   if not skipping was causing a fatal error
 * fix for bhkNiTriStripsShape import
 * added experimental import and export of Empire Earth II meshes
-* import and export NiLODNodes as empty with LODs as children and properties
-to set extents
 * fixed bhkCapsuleShape import with identical points (reported by
 ghostwalker71)
 
