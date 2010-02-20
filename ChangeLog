@@ -29,6 +29,8 @@ and test files provided by Alphax)
 * added experimental import and export of Empire Earth II meshes
 * import and export NiLODNodes as empty with LODs as children and properties
 to set extents
+* fixed bhkCapsuleShape import with identical points (reported by
+ghostwalker71)
 
 Version 2.5.1 (10 Jan 2010)
 * updated for pyffi 2.1.0
