@@ -418,12 +418,14 @@ class NifImport(NifImportExport):
         b_mod[Blender.Modifier.Settings.ENVELOPES] = False
         b_mod[Blender.Modifier.Settings.VGROUPS] = True
 
-    def import_branch(self, niBlock, b_armature=None):
+    def import_branch(self, niBlock, b_armature=None, n_armature=None):
         """Read the content of the current NIF tree branch to Blender
         recursively.
 
         @param niBlock: The nif block to import.
         @param b_armature: The blender armature for the current branch.
+        @param n_armature: The corresponding nif block for the armature for
+            the current branch.
         """
         self.msg_progress("Importing data")
         if not niBlock:
@@ -434,6 +436,7 @@ class NifImport(NifImportExport):
             # (IMPORT_SKELETON == 1) and not importing skinned geometries
             # only (IMPORT_SKELETON == 2)
             self.logger.debug("Building mesh in import_branch")
+            # note: transform matrix is set during import
             b_obj = self.import_mesh(niBlock)
             # skinning? add armature modifier
             if niBlock.skin_instance:
@@ -456,9 +459,11 @@ class NifImport(NifImportExport):
                 if self.IMPORT_SKELETON != 2:
                     b_obj = self.import_armature(niBlock)
                     b_armature = b_obj
+                    n_armature = niBlock
                 else:
                     b_obj = self.selected_objects[0]
                     b_armature = b_obj
+                    n_armature = niBlock
                     self.logger.info(
                         "Merging nif tree '%s' with armature '%s'"
                         % (niBlock.name, b_obj.name))
@@ -535,7 +540,8 @@ class NifImport(NifImportExport):
             children = [child for child in niBlock.children
                         if child not in geom_group]
             for n_child in children:
-                b_child = self.import_branch(n_child, b_armature=b_armature)
+                b_child = self.import_branch(
+                    n_child, b_armature=b_armature, n_armature=n_armature)
                 if b_child:
                     b_children_list.append((n_child, b_child))
 
@@ -546,7 +552,7 @@ class NifImport(NifImportExport):
             if self.isinstance_blender_object(b_obj):
                 # simple object parentship
                 b_obj.makeParent(
-                    [b_child for (n_child, b_child) in b_object_children])
+                    [b_child for (n_child, b_child) in object_children])
             elif isinstance(b_obj, Blender.Armature.Bone):
                 # bone parentship, is a bit more complicated
                 # first cancel out the tail translation T
