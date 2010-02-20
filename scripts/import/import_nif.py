@@ -582,13 +582,38 @@ class NifImport(NifImportExport):
                     # save transform
                     matrix = Blender.Mathutils.Matrix(
                         b_child.getMatrix('localspace'))
-                    # set child matrix relative to armature
-                    # (this is needed to get correct parenting)
+                    # fix transform
+                    # the bone has in the nif file an armature space transform
+                    # given by niBlock.get_transform(relative_to=n_armature)
+                    #
+                    # in detail:
+                    # a vertex in the collision object has global
+                    # coordinates
+                    #   v * Z * B
+                    # with v the vertex, Z the object transform
+                    # (currently b_obj_matrix)
+                    # and B the nif bone matrix
+
+                    # in Blender however a vertex has coordinates
+                    #   v * O * T * B'
+                    # with B' the Blender bone matrix
+                    # so we need that
+                    #   Z * B = O * T * B' or equivalently
+                    #   O = Z * B * B'^{-1} * T^{-1}
+                    #     = Z * X^{-1} * T^{-1}
+                    # since
+                    #   B' = X * B
+                    # with X = self.bones_extra_matrix[B]
+
+                    # post multiply Z with X^{-1}
                     extra = Blender.Mathutils.Matrix(
                         self.bones_extra_matrix[niBlock])
                     extra.invert()
                     matrix = matrix * extra
-                    matrix[3][1] = matrix[3][1] - b_obj.length
+                    # cancel out the tail translation T
+                    # (the tail causes a translation along
+                    # the local Y axis)
+                    matrix[3][1] -= b_obj.length
                     b_child.setMatrix(matrix)
                     # parent child to the bone
                     b_armature.makeParentBone(
@@ -652,195 +677,6 @@ class NifImport(NifImportExport):
             return b_obj
         # all else is currently discarded
         return None
-
-    def import_armature_branch(
-        self, b_armature, niArmature, niBlock, group_mesh = None):
-        """Reads the content of the current NIF tree branch to Blender
-        recursively, as meshes parented to a given armature or parented
-        to the closest bone in the armature. Note that
-        niArmature must have been imported previously as an armature, along
-        with all its bones. This function only imports meshes and armature
-        ninodes.
-
-        If this imports a mesh, then it returns the a nif block and a mesh
-        object. The nif block is the one relative to which the mesh transform
-        is calculated (so the mesh should be parented to the blender object
-        corresponding to this block by the caller). It corresponds either to
-        a Blender bone or to a Blender armature.
-        """
-        # check if the block is non-null
-        if not niBlock:
-            return None, None
-        # get the block that is considered as parent of this block within this
-        # branch; this is a block corresponding to a bone in Blender
-        # if niBlock is a bone, then this is the branch parent
-        if self.is_bone(niBlock):
-            branch_parent = niBlock
-        # otherwise, find closest bone in this armature
-        else:
-            branch_parent = self.get_closest_bone(niBlock, skelroot = niArmature)
-        # no bone parent, so then simply take nif block of armature object as
-        # parent
-        if not branch_parent:
-            branch_parent = niArmature
-        # is it a mesh?
-        if isinstance(niBlock, NifFormat.NiTriBasedGeom) \
-           and self.IMPORT_SKELETON != 1:
-
-            self.logger.debug("Building mesh %s in import_armature_branch" %
-                              niBlock.name)
-            # apply transform relative to the branch parent
-            return branch_parent, self.import_mesh(niBlock,
-                                                   group_mesh=group_mesh,
-                                                   applytransform=True,
-                                                   relative_to=branch_parent)
-        # is it another armature?
-        elif self.is_armature_root(niBlock) and niBlock != niArmature:
-            # an armature parented to this armature
-            fb_arm = self.import_armature(niBlock)
-            # import the armature branch
-            self.import_armature_branch(fb_arm, niBlock, niBlock)
-            return branch_parent, fb_arm # the matrix will be set by the caller
-        # is it a NiNode in the niArmature tree (possibly niArmature itself,
-        # on first call)?
-        elif isinstance(niBlock, NifFormat.NiNode):
-            # import children
-            if niBlock.children:
-                # check if geometries should be merged on import
-                node_name = niBlock.name
-                geom_group = self.is_grouping_node(niBlock)
-                geom_other = [ child for child in niBlock.children
-                               if not child in geom_group ]
-                b_objects = [] # list of (nif block, blender object) pairs
-                # import grouped geometries
-                if (geom_group
-                    and self.IMPORT_COMBINESHAPES
-                    and self.IMPORT_SKELETON != 1):
-                    self.logger.info(
-                        "Joining geometries %s to single object '%s'"
-                        %([child.name for child in geom_group], node_name))
-                    b_mesh = None
-                    for child in geom_group:
-                        b_mesh_branch_parent, b_mesh = self.import_armature_branch(
-                            b_armature, niArmature, child, group_mesh = b_mesh)
-                        assert(b_mesh_branch_parent == branch_parent) # DEBUG
-                    if b_mesh:
-                        b_mesh.name = self.import_name(niBlock)
-                        b_objects.append((niBlock, branch_parent, b_mesh))
-                # import other objects
-                for child in geom_other:
-                    b_obj_branch_parent, b_obj = self.import_armature_branch(
-                        b_armature, niArmature, child, group_mesh = None)
-                    if b_obj:
-                        b_objects.append((child, b_obj_branch_parent, b_obj))
-                # fix transform and parentship
-                for child, b_obj_branch_parent, b_obj in b_objects:
-                    # note, b_obj is either a mesh or an armature
-                    # check if it is parented to a bone or not
-                    if b_obj_branch_parent is not niArmature:
-                        # object was parented to a bone
-
-                        # get parent bone and its name
-                        b_par_bone_name = self.names[branch_parent]
-                        b_par_bone = b_armature.data.bones[b_par_bone_name]
-
-                        # get transform matrix of collision object;
-                        # note that this matrix is already relative to
-                        # branch_parent because the call to import_mesh has
-                        # relative_to = branch_parent
-                        b_obj_matrix = Blender.Mathutils.Matrix(
-                            b_obj.getMatrix())
-                        # fix transform
-                        # the bone has in the nif file an armature space transform
-                        # given by niBlock.get_transform(relative_to = niArmature)
-                        #
-                        # in detail:
-                        # a vertex in the collision object has global
-                        # coordinates
-                        #   v * Z * B
-                        # with v the vertex, Z the object transform
-                        # (currently b_obj_matrix)
-                        # and B the nif bone matrix
-
-                        # in Blender however a vertex has coordinates
-                        #   v * O * T * B'
-                        # with B' the Blender bone matrix
-                        # so we need that
-                        #   Z * B = O * T * B' or equivalently
-                        #   O = Z * B * B'^{-1} * T^{-1}
-                        #     = Z * X^{-1} * T^{-1}
-                        # since
-                        #   B' = X * B
-                        # with X = self.bones_extra_matrix[B]
-
-                        # post multiply Z with X^{-1}
-                        extra = Blender.Mathutils.Matrix(
-                            self.bones_extra_matrix[branch_parent])
-                        extra.invert()
-                        b_obj_matrix = b_obj_matrix * extra
-                        # cancel out the tail translation T
-                        # (the tail causes a translation along
-                        # the local Y axis)
-                        b_obj_matrix[3][1] -= b_par_bone.length
-                        # set the matrix
-                        b_obj.setMatrix(b_obj_matrix)
-
-                        # make it parent of the bone
-                        b_armature.makeParentBone(
-                            [b_obj], self.names[b_obj_branch_parent])
-                    else:
-                        # mesh is parented to the armature
-                        # the transform has already been applied
-                        # still need to make it parent of the armature
-                        # (if b_obj is an armature then this falls back to the
-                        # usual parenting)
-                        b_armature.makeParentDeform([b_obj])
-
-            # if not importing skeleton only
-            if self.IMPORT_SKELETON != 1:
-                # import collisions (only bhkNiCollisionObjects for now)
-                if isinstance(niBlock.collision_object,
-                              NifFormat.bhkNiCollisionObject):
-                    # collision object parented to a bone
-                    # first import collision object
-                    bhk_body = niBlock.collision_object.body
-                    if not isinstance(bhk_body, NifFormat.bhkRigidBody):
-                        self.logger.warning(
-                            "Unsupported collision structure under node %s"
-                            % niBlock.name)
-                    collision_objs = self.import_bhk_shape(bhk_body)
-                    # get blender bone and its name
-                    # (TODO also cover case where niBlock != branch_parent)
-                    if niBlock != branch_parent:
-                        self.logger.warning(
-                            "Collision object has non-bone parent,"
-                            " this is not supported and transform errors"
-                            " may result")
-                    b_par_bone_name = self.names[branch_parent]
-                    b_par_bone = b_armature.data.bones[b_par_bone_name]
-                    for b_obj in collision_objs:
-                        # get transform matrix of collision object
-                        # this is relative to niBlock
-                        # (TODO fix so it's relative to branch_parent!)
-                        b_obj_matrix = b_obj.getMatrix()
-                        # fix transform, see explanation above
-                        #   O = Z * X^{-1} * T^{-1}
-                        extra = Blender.Mathutils.Matrix(
-                            self.bones_extra_matrix[branch_parent])
-                        extra.invert()
-                        b_obj_matrix = b_obj_matrix * extra
-                        b_obj_matrix[3][1] -= b_par_bone.length
-                        # set the matrix
-                        b_obj.setMatrix(b_obj_matrix)
-                        # make it parent of the bone
-                        b_armature.makeParentBone(
-                            [b_obj], self.names[niBlock])
-
-                ### import bounding box?
-                ### not supported within armature branch (no need so far)
-
-        # anything else: throw away
-        return None, None
 
     def import_name(self, niBlock, max_length=22, postfix=""):
         """Get unique name for an object, preserving existing names.
