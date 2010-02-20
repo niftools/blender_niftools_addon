@@ -436,7 +436,8 @@ class NifImport(NifImportExport):
             self.logger.debug("Building mesh in import_branch")
             b_obj = self.import_mesh(niBlock)
             # skinning? add armature modifier
-            self.append_armature_modifier(b_obj, b_armature)
+            if niBlock.skin_instance:
+                self.append_armature_modifier(b_obj, b_armature)
             return b_obj
         elif isinstance(niBlock, NifFormat.NiNode):
             children = niBlock.children
@@ -508,7 +509,9 @@ class NifImport(NifImportExport):
                                                  applytransform=True)
                     b_obj.name = self.import_name(niBlock)
                     # skinning? add armature modifier
-                    self.append_armature_modifier(b_obj, b_armature)
+                    if any(child.skin_instance
+                           for child in geom_group):
+                        self.append_armature_modifier(b_obj, b_armature)
                     # settings for collision node
                     if isinstance(niBlock, NifFormat.RootCollisionNode):
                         b_obj.setDrawType(
