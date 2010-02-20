@@ -544,27 +544,9 @@ class NifImport(NifImportExport):
                     n_child, b_armature=b_armature, n_armature=n_armature)
                 if b_child:
                     b_children_list.append((n_child, b_child))
-
-            # fix parentship
             object_children = [
                 (n_child, b_child) for (n_child, b_child) in b_children_list
                 if self.isinstance_blender_object(b_child)]
-            if self.isinstance_blender_object(b_obj):
-                # simple object parentship
-                b_obj.makeParent(
-                    [b_child for (n_child, b_child) in object_children])
-            elif isinstance(b_obj, Blender.Armature.Bone):
-                # bone parentship, is a bit more complicated
-                # first cancel out the tail translation T
-                # (the tail causes a translation along
-                # the local Y axis)
-                for n_child, b_child in object_children:
-                    # set child matrix relative to armature
-                    # (this is needed to get correct parenting)
-                    matrix = n_child.get_matrix(relative_to=n_armature)
-                    b_child.setMatrix(matrix.to_list())
-                # now we can parent it to the bone
-                b_armature.makeParentBone(b_object_children, b_obj.name)
 
             # if not importing skeleton only
             if self.IMPORT_SKELETON != 1:
@@ -576,13 +558,45 @@ class NifImport(NifImportExport):
                             "Unsupported collision structure"
                             " under node %s" % niBlock.name)
                     collision_objs = self.import_bhk_shape(bhk_body)
-                    # make parent
-                    b_obj.makeParent(collision_objs)
+                    # register children for parentship
+                    object_children += [
+                        (bhk_body, b_child) for b_child in collision_objs]
                 
                 # import bounding box
                 if bsbound:
-                    b_obj.makeParent(
-                        [self.import_bounding_box(bsbound)])
+                    object_children += [
+                        (bsbound, self.import_bounding_box(bsbound))]
+
+
+            # fix parentship
+            if self.isinstance_blender_object(b_obj):
+                # simple object parentship
+                b_obj.makeParent(
+                    [b_child for (n_child, b_child) in object_children])
+            elif isinstance(b_obj, Blender.Armature.Bone):
+                # bone parentship, is a bit more complicated
+                # go to rest position
+                b_armature.data.restPosition = True
+                # set up transforms
+                for n_child, b_child in object_children:
+                    # save transform
+                    matrix = Blender.Mathutils.Matrix(
+                        b_child.getMatrix('localspace'))
+                    # set child matrix relative to armature
+                    # (this is needed to get correct parenting)
+                    extra = Blender.Mathutils.Matrix(
+                        self.bones_extra_matrix[niBlock])
+                    extra.invert()
+                    matrix = matrix * extra
+                    matrix[3][1] = matrix[3][1] - b_obj.length
+                    b_child.setMatrix(matrix)
+                    # parent child to the bone
+                    b_armature.makeParentBone(
+                        [b_child], b_obj.name)
+                b_armature.data.restPosition = False
+            else:
+                raise RuntimeError(
+                    "Unexpected object type %s" % b_obj.__class__)
 
             # track camera for billboard nodes
             if isinstance(niBlock, NifFormat.NiBillboardNode):
@@ -628,7 +642,7 @@ class NifImport(NifImportExport):
                 b_obj.addProperty("Type", "NiLODNode", "STRING")
                 # import lod data
                 range_data = niBlock.lod_level_data
-                for lod_level, b_child in zip(
+                for lod_level, (n_child, b_child) in zip(
                     range_data.lod_levels, b_children_list):
                     b_child.addProperty(
                         "Near Extent", lod_level.near_extent, "FLOAT")
