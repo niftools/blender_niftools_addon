@@ -1,4 +1,4 @@
-Version 2.5.2 (in development)
+Version 2.5.2 (20 Feb 2010)
 * configurable game paths for test suite
 * fixed display of alpha channel in textured faces (reported by vurt2, fixed
 by Alphax)
@@ -18,7 +18,7 @@ Fallout 3 interpolators (e.g. Fallout 3 h2haim.kf, reported by Malo)
 creatures with bones that have havok blocks attached (reported by Spiderpig)
 * added alpha controller import; export was already implemented (requested
 and test files provided by Alphax)
-* fixes/improvements to animation import export
+* fixes/improvements to animation import and export
   - full support for import/export of animation priority
   - autoset target name to bip02 if the armature has such a bone
   - new option to manually set the target name on export
