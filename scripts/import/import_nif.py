@@ -481,7 +481,7 @@ class NifImport(NifImportExport):
                                 b_obj = self.import_mesh(child,
                                                          group_mesh=b_obj,
                                                          applytransform=True)
-                            b_obj.name = self.import_name(niBlock, 22)
+                            b_obj.name = self.import_name(niBlock)
                             # settings for collision node
                             if isinstance(niBlock, NifFormat.RootCollisionNode):
                                 b_obj.setDrawType(
@@ -862,7 +862,7 @@ class NifImport(NifImportExport):
 
     def import_empty(self, niBlock):
         """Creates and returns a grouping empty."""
-        shortName = self.import_name(niBlock, 22)
+        shortName = self.import_name(niBlock)
         b_empty = self.scene.objects.new("Empty", shortName)
         b_empty.properties['longName'] = niBlock.name
         if niBlock.name in self.bone_priorities:
@@ -875,7 +875,7 @@ class NifImport(NifImportExport):
         """Scans an armature hierarchy, and returns a whole armature.
         This is done outside the normal node tree scan to allow for positioning
         of the bones before skins are attached."""
-        armature_name = self.import_name(niArmature,22)
+        armature_name = self.import_name(niArmature)
 
         b_armatureData = Blender.Armature.Armature()
         b_armatureData.name = armature_name
@@ -2009,7 +2009,7 @@ class NifImport(NifImportExport):
             b_meshData = group_mesh.getData(mesh=True)
         else:
             # Mesh name -> must be unique, so tag it if needed
-            b_name = self.import_name(niBlock, 22)
+            b_name = self.import_name(niBlock)
             # create mesh data
             b_meshData = Blender.Mesh.New(b_name)
             b_meshData.properties['longName'] = niBlock.name
@@ -3133,8 +3133,14 @@ class NifImport(NifImportExport):
             ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
 
             # find transform
-            normal = (bhkshape.first_point - bhkshape.second_point) / length
-            normal = Blender.Mathutils.Vector(normal.x, normal.y, normal.z)
+            if length > self.EPSILON:
+                normal = (bhkshape.first_point - bhkshape.second_point) / length
+                normal = Blender.Mathutils.Vector(normal.x, normal.y, normal.z)
+            else:
+                self.logger.warn(
+                    "bhkCapsuleShape with identical points:"
+                    " using arbitrary axis")
+                normal = Blender.Mathutils.Vector(0, 0, 1)
             minindex = min((abs(x), i) for i, x in enumerate(normal))[1]
             orthvec = Blender.Mathutils.Vector([(1 if i == minindex else 0)
                                                 for i in (0,1,2)])

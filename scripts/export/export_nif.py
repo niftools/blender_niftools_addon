@@ -593,11 +593,11 @@ class NifExport(NifImportExport):
                     root_block.add_extra_data(prn)
 
             # add vertex color and zbuffer properties for civ4 and railroads
-            if self.EXPORT_VERSION in ["Civilization IV",
-                                       "Sid Meier's Railroads"]:
+            if self.EXPORT_VERSION in ("Civilization IV",
+                                       "Sid Meier's Railroads"):
                 self.export_vertex_color_property(root_block)
                 self.export_z_buffer_property(root_block)
-            elif self.EXPORT_VERSION in ["Empire Earth II"]:
+            elif self.EXPORT_VERSION in ("Empire Earth II",):
                 self.export_vertex_color_property(root_block)
                 self.export_z_buffer_property(root_block, flags=15, function=1)
 
@@ -1106,9 +1106,9 @@ class NifExport(NifImportExport):
         elif self.EXPORT_VERSION in ("Sid Meier's Railroads",
                                      "Civilization IV"):
             node.flags = 0x0010
-        elif self.EXPORT_VERSION in ("Empire Earth II"):
+        elif self.EXPORT_VERSION in ("Empire Earth II",):
             node.flags = 0x0002
-        elif self.EXPORT_VERSON in ("Divinity 2"):
+        elif self.EXPORT_VERSION in ("Divinity 2",):
             node.flags = 0x0310
         else:
             # morrowind
@@ -2296,9 +2296,9 @@ class NifExport(NifImportExport):
             elif self.EXPORT_VERSION in ("Sid Meier's Railroads",
                                          "Civilization IV"):
                 trishape.flags = 0x0010
-            elif self.EXPORT_VERSION in ("Empire Earth II"):
+            elif self.EXPORT_VERSION in ("Empire Earth II",):
                 trishape.flags = 0x0016
-            elif self.EXPORT_VERSION in ("Divinity 2"):
+            elif self.EXPORT_VERSION in ("Divinity 2",):
                 if trishape.name.lower[-3:] in ("med", "low"):
                     trishape.flags = 0x0014
                 else:
@@ -2953,7 +2953,7 @@ class NifExport(NifImportExport):
                 else:
                     # default for Civ IV/EE II final bones
                     node.flags = 0x0016
-            elif self.EXPORT_VERSION in ('Divinity 2'):
+            elif self.EXPORT_VERSION in ('Divinity 2',):
                 if bone.children:
                     # default for Div 2 bones with children
                     node.flags = 0x0186
