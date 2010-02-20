@@ -409,9 +409,13 @@ class NifImport(NifImportExport):
             # set parenting
             b_obj.makeParentDeform(self.selected_objects)
 
-    def import_branch(self, niBlock):
+    def import_branch(self, niBlock, b_armature=None):
         """Read the content of the current NIF tree branch to Blender
-        recursively."""
+        recursively.
+
+        @param niBlock: The nif block to import.
+        @param b_armature: The blender armature for the current branch.
+        """
         self.msg_progress("Importing data")
         if not niBlock:
             return None
@@ -421,7 +425,12 @@ class NifImport(NifImportExport):
             # (IMPORT_SKELETON == 1) and not importing skinned geometries
             # only (IMPORT_SKELETON == 2)
             self.logger.debug("Building mesh in import_branch")
-            return self.import_mesh(niBlock)
+            b_obj = self.import_mesh(niBlock)
+            # skinning? add armature modifier
+            b_mod = b_obj.modifiers.append(
+                Blender.Modifier.Types.ARMATURE)
+            b_mod.name = b_armature.name
+            return b_obj
         elif isinstance(niBlock, NifFormat.NiNode):
             children = niBlock.children
             # bounding box child?
@@ -432,14 +441,16 @@ class NifImport(NifImportExport):
                     or self.IMPORT_EXTRANODES):
                 # do not import unless the node is "interesting"
                 return None
-            # import object + children
+            # import object
             if self.is_armature_root(niBlock):
                 # all bones in the tree are also imported by
                 # import_armature
                 if self.IMPORT_SKELETON != 2:
                     b_obj = self.import_armature(niBlock)
+                    b_armature = b_obj
                 else:
                     b_obj = self.selected_objects[0]
+                    b_armature = b_obj
                     self.logger.info(
                         "Merging nif tree '%s' with armature '%s'"
                         % (niBlock.name, b_obj.name))
@@ -448,8 +459,13 @@ class NifImport(NifImportExport):
                             "Taking nif block '%s' as armature '%s'"
                             " but names do not match"
                             % (niBlock.name, b_obj.name))
-                # now also do the meshes
-                self.import_armature_branch(b_obj, niBlock, niBlock)
+                # armatures cannot group geometries into a single mesh
+                geom_group = []
+            elif self.is_bone(niBlock):
+                # bones have already been imported during import_armature
+                b_obj = b_armature.data.bones[self.names[niBlock]]
+                # bones cannot group geometries into a single mesh
+                geom_group = []
             else:
                 # is it a grouping node?
                 geom_group = self.is_grouping_node(niBlock)
@@ -460,7 +476,7 @@ class NifImport(NifImportExport):
                         if self.find_controller(
                             child, NifFormat.NiGeomMorpherController):
                             geom_group.remove(child)
-                # import geometry/empty + remaining children
+                # import geometry/empty
                 if (not geom_group
                     or not self.IMPORT_COMBINESHAPES
                     or len(geom_group) > 16):
@@ -484,6 +500,10 @@ class NifImport(NifImportExport):
                                                  group_mesh=b_obj,
                                                  applytransform=True)
                     b_obj.name = self.import_name(niBlock)
+                    # skinning? add armature modifier
+                    b_mod = b_obj.modifiers.append(
+                        Blender.Modifier.Types.ARMATURE)
+                    b_mod.name = b_armature.name
                     # settings for collision node
                     if isinstance(niBlock, NifFormat.RootCollisionNode):
                         b_obj.setDrawType(
@@ -501,15 +521,29 @@ class NifImport(NifImportExport):
                                 "Removed %i duplicate vertices"
                                 " (out of %i) from collision mesh"
                                 % (numdel, numverts))
-                # import children that aren't part of the geometry group
-                b_children_list = []
-                children = [child for child in niBlock.children
-                            if child not in geom_group]
-                for child in children:
-                    b_child_obj = self.import_branch(child)
-                    if b_child_obj:
-                        b_children_list.append(b_child_obj)
+
+            # find children that aren't part of the geometry group
+            b_children_list = []
+            children = [child for child in niBlock.children
+                        if child not in geom_group]
+            for child in children:
+                b_child_obj = self.import_branch(child, b_armature=b_armature)
+                if b_child_obj:
+                    b_children_list.append(b_child_obj)
+
+            # fix parentship
+            if self.isinstance_blender_object(b_obj):
+                # simple object parentship
                 b_obj.makeParent(b_children_list)
+            elif isinstance(b_obj, Blender.Armature.Bone):
+                # bone parentship, is a bit more complicated
+                # first cancel out the tail translation T
+                # (the tail causes a translation along
+                # the local Y axis)
+                for b_child in b_children_list:
+                    b_child.matrix[3][1] -= b_obj.length
+                # now we can parent it to the bone
+                b_armature.makeParentBone(b_children_list, b_obj.name)
 
             # if not importing skeleton only
             if self.IMPORT_SKELETON != 1:
@@ -557,13 +591,15 @@ class NifImport(NifImportExport):
             # set object transform
             # this must be done after all children objects have been
             # parented to b_obj
-            b_obj.setMatrix(self.import_matrix(niBlock))
+            if self.isinstance_blender_object(b_obj):
+                # note: bones already have their matrix set
+                b_obj.setMatrix(self.import_matrix(niBlock))
 
-            # import the animations
-            if self.IMPORT_ANIMATION:
-                self.set_animation(niBlock, b_obj)
-                # import the extras
-                self.import_text_keys(niBlock)
+                # import the animations
+                if self.IMPORT_ANIMATION:
+                    self.set_animation(niBlock, b_obj)
+                    # import the extras
+                    self.import_text_keys(niBlock)
 
             # import extra node data, such as node type
             # (other types should be added here too)

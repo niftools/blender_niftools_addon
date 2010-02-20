@@ -303,6 +303,14 @@ class NifImportExport:
                 return extra
         return None
 
+    def isinstance_blender_object(self, b_obj):
+        """Unfortunately, isinstance(b_obj, Blender.Object.Object) does not
+        work because the Object class is not exposed in the API.
+        This method provides an alternative check.
+        """
+        # lame and slow, but functional
+        return b_obj in Blender.Object.Get()
+
 class NifConfig:
     """Class which handles configuration of nif import and export in Blender.
 
