@@ -2817,6 +2817,9 @@ class NifImport(NifImportExport):
                             continue
                         if not isinstance(bone, NifFormat.NiNode):
                             continue
+                        if isinstance(bone, NifFormat.NiLODNode):
+                            # LOD nodes are never bones
+                            continue
                         if self.is_grouping_node(bone):
                             continue
                         if bone not in self.armatures[skelroot]:
@@ -2859,7 +2862,8 @@ class NifImport(NifImportExport):
 
     def is_bone(self, niBlock):
         """Tests a NiNode to see if it's a bone."""
-        if not niBlock : return False
+        if not niBlock :
+            return False
         for bones in self.armatures.values():
             if niBlock in bones:
                 return True
