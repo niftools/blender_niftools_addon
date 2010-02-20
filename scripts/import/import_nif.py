@@ -537,18 +537,21 @@ class NifImport(NifImportExport):
                     b_children_list.append(b_child_obj)
 
             # fix parentship
+            b_object_children = [
+                b_child for b_child in b_children_list
+                if self.isinstance_blender_object(b_child)]
             if self.isinstance_blender_object(b_obj):
                 # simple object parentship
-                b_obj.makeParent(b_children_list)
+                b_obj.makeParent(b_object_children)
             elif isinstance(b_obj, Blender.Armature.Bone):
                 # bone parentship, is a bit more complicated
                 # first cancel out the tail translation T
                 # (the tail causes a translation along
                 # the local Y axis)
-                for b_child in b_children_list:
+                for b_child in b_object_children:
                     b_child.matrix[3][1] -= b_obj.length
                 # now we can parent it to the bone
-                b_armature.makeParentBone(b_children_list, b_obj.name)
+                b_armature.makeParentBone(b_object_children, b_obj.name)
 
             # if not importing skeleton only
             if self.IMPORT_SKELETON != 1:
