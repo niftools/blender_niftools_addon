@@ -431,10 +431,9 @@ class NifImport(NifImportExport):
         if not niBlock:
             return None
         elif (isinstance(niBlock, NifFormat.NiTriBasedGeom)
-              and self.IMPORT_SKELETON == 0):
+              and self.IMPORT_SKELETON != 1):
             # it's a shape node and we're not importing skeleton only
-            # (IMPORT_SKELETON == 1) and not importing skinned geometries
-            # only (IMPORT_SKELETON == 2)
+            # (IMPORT_SKELETON == 1)
             self.logger.debug("Building mesh in import_branch")
             # note: transform matrix is set during import
             b_obj = self.import_mesh(niBlock)
