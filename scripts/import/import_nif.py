@@ -531,25 +531,29 @@ class NifImport(NifImportExport):
             b_children_list = []
             children = [child for child in niBlock.children
                         if child not in geom_group]
-            for child in children:
-                b_child_obj = self.import_branch(child, b_armature=b_armature)
-                if b_child_obj:
-                    b_children_list.append(b_child_obj)
+            for n_child in children:
+                b_child = self.import_branch(n_child, b_armature=b_armature)
+                if b_child:
+                    b_children_list.append((n_child, b_child))
 
             # fix parentship
-            b_object_children = [
-                b_child for b_child in b_children_list
+            object_children = [
+                (n_child, b_child) for (n_child, b_child) in b_children_list
                 if self.isinstance_blender_object(b_child)]
             if self.isinstance_blender_object(b_obj):
                 # simple object parentship
-                b_obj.makeParent(b_object_children)
+                b_obj.makeParent(
+                    [b_child for (n_child, b_child) in b_object_children])
             elif isinstance(b_obj, Blender.Armature.Bone):
                 # bone parentship, is a bit more complicated
                 # first cancel out the tail translation T
                 # (the tail causes a translation along
                 # the local Y axis)
-                for b_child in b_object_children:
-                    b_child.matrix[3][1] -= b_obj.length
+                for n_child, b_child in object_children:
+                    # set child matrix relative to armature
+                    # (this is needed to get correct parenting)
+                    matrix = n_child.get_matrix(relative_to=n_armature)
+                    b_child.setMatrix(matrix.to_list())
                 # now we can parent it to the bone
                 b_armature.makeParentBone(b_object_children, b_obj.name)
 
