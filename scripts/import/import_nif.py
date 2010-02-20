@@ -409,6 +409,15 @@ class NifImport(NifImportExport):
             # set parenting
             b_obj.makeParentDeform(self.selected_objects)
 
+
+    def append_armature_modifier(self, b_obj, b_armature):
+        """Append an armature modifier for the object."""
+        b_mod = b_obj.modifiers.append(
+            Blender.Modifier.Types.ARMATURE)
+        b_mod[Blender.Modifier.Settings.OBJECT] = b_armature
+        b_mod[Blender.Modifier.Settings.ENVELOPES] = False
+        b_mod[Blender.Modifier.Settings.VGROUPS] = True
+
     def import_branch(self, niBlock, b_armature=None):
         """Read the content of the current NIF tree branch to Blender
         recursively.
@@ -427,9 +436,7 @@ class NifImport(NifImportExport):
             self.logger.debug("Building mesh in import_branch")
             b_obj = self.import_mesh(niBlock)
             # skinning? add armature modifier
-            b_mod = b_obj.modifiers.append(
-                Blender.Modifier.Types.ARMATURE)
-            b_mod.name = b_armature.name
+            self.append_armature_modifier(b_obj, b_armature)
             return b_obj
         elif isinstance(niBlock, NifFormat.NiNode):
             children = niBlock.children
@@ -501,9 +508,7 @@ class NifImport(NifImportExport):
                                                  applytransform=True)
                     b_obj.name = self.import_name(niBlock)
                     # skinning? add armature modifier
-                    b_mod = b_obj.modifiers.append(
-                        Blender.Modifier.Types.ARMATURE)
-                    b_mod.name = b_armature.name
+                    self.append_armature_modifier(b_obj, b_armature)
                     # settings for collision node
                     if isinstance(niBlock, NifFormat.RootCollisionNode):
                         b_obj.setDrawType(
