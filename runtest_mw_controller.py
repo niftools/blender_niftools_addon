@@ -179,6 +179,24 @@ class ControllerTestSuite(TestSuite):
         nif_import = self.test(
             filename='test/nif/mw/matcolorctrl.nif')
         b_matcolorctrl = Blender.Object.Get("MatColorCtrlTest")
+        # check that material has color curves
+        self.logger.info("checking blender material color curves...")
+        b_ipo = b_matcolorctrl.getData(mesh=1).materials[0].ipo
+        for b_channel in (
+            Blender.Ipo.MA_R, Blender.Ipo.MA_G, Blender.Ipo.MA_B):
+            b_curve = b_ipo[b_channel]
+            assert(b_curve)
+            assert(len(b_curve.bezierPoints) == 2)
+        for b_channel in (
+            Blender.Ipo.MA_SPECR, Blender.Ipo.MA_SPECG, Blender.Ipo.MA_SPECB):
+            b_curve = b_ipo[b_channel]
+            assert(b_curve)
+            assert(len(b_curve.bezierPoints) == 2)
+        for b_channel in (
+            Blender.Ipo.MA_MIRR, Blender.Ipo.MA_MIRG, Blender.Ipo.MA_MIRB):
+            b_curve = b_ipo[b_channel]
+            assert(b_curve)
+            assert(len(b_curve.bezierPoints) == 5)
         # test stuff
         check_matcolor_controller(nif_import.root_blocks[0])
         # export

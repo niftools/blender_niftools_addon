@@ -1927,6 +1927,21 @@ class NifImport(NifImportExport):
             return
 
         self.import_material_alpha_controller(b_material, n_geom)
+        self.import_material_color_controller(
+            b_material=b_material,
+            b_channels=("MirR", "MirG", "MirB"),
+            n_geom=n_geom,
+            n_target_color=NifFormat.TargetColor.TC_AMBIENT)
+        self.import_material_color_controller(
+            b_material=b_material,
+            b_channels=("R", "G", "B"),
+            n_geom=n_geom,
+            n_target_color=NifFormat.TargetColor.TC_DIFFUSE)
+        self.import_material_color_controller(
+            b_material=b_material,
+            b_channels=("SpecR", "SpecG", "SpecB"),
+            n_geom=n_geom,
+            n_target_color=NifFormat.TargetColor.TC_SPECULAR)
         self.import_material_uv_controller(b_material, n_geom)
 
     def import_material_uv_controller(self, b_material, n_geom):
@@ -1970,6 +1985,33 @@ class NifImport(NifImportExport):
         b_curve.extend = self.get_extend_from_flags(n_alphactrl.flags)
         for n_key in n_alphactrl.data.data.keys:
             b_curve[1 + n_key.time * self.fps] = n_key.value
+
+    def import_material_color_controller(
+        self, b_material, b_channels, n_geom, n_target_color):
+        # find material color controller with matching target color
+        n_matprop = self.find_property(n_geom, NifFormat.NiMaterialProperty)
+        if not n_matprop:
+            return
+        for ctrl in n_matprop.get_controllers():
+            if isinstance(ctrl, NifFormat.NiMaterialColorController):
+                if ctrl.get_target_color() == n_target_color:
+                    n_matcolor_ctrl = ctrl
+                    break
+        else:
+            return
+        self.logger.info(
+            "importing material color controller for target color %s"
+            " into blender channels %s"
+            % (n_target_color, b_channels))
+        # import data as curves
+        b_ipo = self.get_material_ipo(b_material)
+        for i, b_channel in enumerate(b_channels):
+            b_curve = b_ipo.addCurve(b_channel)
+            b_curve.interpolation = self.get_b_ipol_from_n_ipol(
+                n_matcolor_ctrl.data.data.interpolation)
+            b_curve.extend = self.get_extend_from_flags(n_matcolor_ctrl.flags)
+            for n_key in n_matcolor_ctrl.data.data.keys:
+                b_curve[1 + n_key.time * self.fps] = n_key.value.as_list()[i]
 
     def get_material_ipo(self, b_material):
         """Return existing material ipo data, or if none exists, create one
