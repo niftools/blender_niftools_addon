@@ -109,18 +109,85 @@ class ControllerTestSuite(TestSuite):
 
     def test_matcolor_controller(self):
         """Material color controller test."""
+
+        def check_matcolor_controller(root):
+            matcolor_ctrl = []
+            for prop in root.children[0].get_properties():
+                if isinstance(prop, NifFormat.NiMaterialProperty):
+                    matcolor_ctrl = [
+                        ctrl for ctrl in prop.get_controllers()
+                        if isinstance(
+                            ctrl, NifFormat.NiMaterialColorController)]
+            if not len(matcolor_ctrl) == 3:
+                raise ValueError("material color controllers not found")
+            self.logger.info(
+                "found material controllers, checking data...")
+            # do we have data?
+            assert(all(ctrl.data for ctrl in matcolor_ctrl))
+            # correct target?
+            assert(all(ctrl.target == prop for ctrl in matcolor_ctrl))
+            # correct color target?
+            spec_ctrl, diff_ctrl, amb_ctrl = matcolor_ctrl
+            assert(spec_ctrl.get_target_color()
+                   == NifFormat.TargetColor.TC_SPECULAR)
+            assert(diff_ctrl.get_target_color()
+                   == NifFormat.TargetColor.TC_DIFFUSE)
+            assert(amb_ctrl.get_target_color()
+                   == NifFormat.TargetColor.TC_AMBIENT)
+            # check the keys
+            assert(spec_ctrl.data.data.num_keys == 2)
+            assert(spec_ctrl.data.data.keys[0].time == 0)
+            assert(spec_ctrl.data.data.keys[0].value.x == 1)
+            assert(spec_ctrl.data.data.keys[0].value.y == 1)
+            assert(spec_ctrl.data.data.keys[0].value.z == 1)
+            assert(spec_ctrl.data.data.keys[1].time == 4)
+            assert(spec_ctrl.data.data.keys[1].value.x == 1)
+            assert(spec_ctrl.data.data.keys[1].value.y == 1)
+            assert(spec_ctrl.data.data.keys[1].value.z == 1)
+            assert(diff_ctrl.data.data.num_keys == 2)
+            assert(diff_ctrl.data.data.keys[0].time == 0)
+            assert(diff_ctrl.data.data.keys[0].value.x == 1)
+            assert(diff_ctrl.data.data.keys[0].value.y == 1)
+            assert(diff_ctrl.data.data.keys[0].value.z == 1)
+            assert(diff_ctrl.data.data.keys[1].time == 4)
+            assert(diff_ctrl.data.data.keys[1].value.x == 1)
+            assert(diff_ctrl.data.data.keys[1].value.y == 1)
+            assert(diff_ctrl.data.data.keys[1].value.z == 1)
+            assert(amb_ctrl.data.data.num_keys == 5)
+            assert(amb_ctrl.data.data.keys[0].time == 0)
+            assert(amb_ctrl.data.data.keys[0].value.x == 0)
+            assert(amb_ctrl.data.data.keys[0].value.y == 0)
+            assert(amb_ctrl.data.data.keys[0].value.z == 0)
+            assert(amb_ctrl.data.data.keys[1].time == 1)
+            assert(amb_ctrl.data.data.keys[1].value.x == 1)
+            assert(amb_ctrl.data.data.keys[1].value.y == 0)
+            assert(amb_ctrl.data.data.keys[1].value.z == 0)
+            assert(amb_ctrl.data.data.keys[2].time == 2)
+            assert(amb_ctrl.data.data.keys[2].value.x == 0)
+            assert(amb_ctrl.data.data.keys[2].value.y == 1)
+            assert(amb_ctrl.data.data.keys[2].value.z == 0)
+            assert(amb_ctrl.data.data.keys[3].time == 3)
+            assert(amb_ctrl.data.data.keys[3].value.x == 0)
+            assert(amb_ctrl.data.data.keys[3].value.y == 0)
+            assert(amb_ctrl.data.data.keys[3].value.z == 1)
+            assert(amb_ctrl.data.data.keys[4].time == 4)
+            assert(amb_ctrl.data.data.keys[4].value.x == 1)
+            assert(amb_ctrl.data.data.keys[4].value.y == 1)
+            assert(amb_ctrl.data.data.keys[4].value.z == 1)
+
         # import
         nif_import = self.test(
             filename='test/nif/mw/matcolorctrl.nif')
         b_matcolorctrl = Blender.Object.Get("MatColorCtrlTest")
         # test stuff
+        check_matcolor_controller(nif_import.root_blocks[0])
         # export
         nif_export = self.test(
             filename='test/nif/mw/_matcolorctrl.nif',
             config=dict(EXPORT_VERSION = 'Morrowind'),
             selection = ['MatColorCtrlTest'])
         # test stuff
-        matcolorctrl = nif_export.root_blocks[0].children[0]
+        check_matcolor_controller(nif_export.root_blocks[0])
 
     def test_vis_controller(self):
         """Vis controller test."""
