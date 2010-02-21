@@ -127,7 +127,9 @@ class ControllerTestSuite(TestSuite):
             # correct target?
             assert(all(ctrl.target == prop for ctrl in matcolor_ctrl))
             # correct color target?
-            spec_ctrl, diff_ctrl, amb_ctrl = matcolor_ctrl
+            amb_ctrl, diff_ctrl, spec_ctrl = sorted(
+                matcolor_ctrl,
+                key=lambda ctrl: ctrl.get_target_color())
             assert(spec_ctrl.get_target_color()
                    == NifFormat.TargetColor.TC_SPECULAR)
             assert(diff_ctrl.get_target_color()
