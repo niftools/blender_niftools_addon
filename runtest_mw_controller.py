@@ -211,19 +211,38 @@ class ControllerTestSuite(TestSuite):
 
     def test_vis_controller(self):
         """Vis controller test."""
+
+        def check_vis_controller(root):
+            all_values = [[0, 1, 0], [1, 0, 1]]
+            for child, values in zip(root.children, all_values):
+                for ctrl in child.get_controllers():
+                    if isinstance(ctrl, NifFormat.NiVisController):
+                        break
+                else:
+                    raise ValueError("vis controller not found")
+                self.logger.info(
+                    "found vis controller, checking data...")
+                assert(ctrl.target == child)
+                assert(ctrl.data)
+                assert(ctrl.data.num_keys == 3)
+                for time, (key, value) in enumerate(zip(ctrl.data.keys, values)):
+                    assert(key.value == value)
+                    assert(key.time == time)
+
         # import
         nif_import = self.test(
             filename='test/nif/mw/visctrl.nif')
         b_cube1 = Blender.Object.Get("VisCtrlCube1")
         b_cube2 = Blender.Object.Get("VisCtrlCube2")
         # test stuff
+        check_vis_controller(nif_import.root_blocks[0])
         # export
         nif_export = self.test(
             filename='test/nif/mw/_visctrl.nif',
             config=dict(EXPORT_VERSION = 'Morrowind'),
             selection = ['VisCtrlCube1', 'VisCtrlCube2'])
         # test stuff
-        visctrl = nif_export.root_blocks[0].children[0]
+        check_vis_controller(nif_export.root_blocks[0])
 
 suite = ControllerTestSuite("controller")
 suite.run()
