@@ -236,6 +236,13 @@ class ControllerTestSuite(TestSuite):
         b_cube2 = Blender.Object.Get("VisCtrlCube2")
         # test stuff
         check_vis_controller(nif_import.root_blocks[0])
+        # check that object has layer curve
+        self.logger.info("checking blender object layer curve...")
+        for b_object in (b_cube1, b_cube2):
+            assert(b_object.ipo)
+            b_curve = b_object.ipo[Blender.Ipo.OB_LAYER]
+            assert(b_curve)
+            assert(len(b_curve.bezierPoints) == 3)
         # export
         nif_export = self.test(
             filename='test/nif/mw/_visctrl.nif',
