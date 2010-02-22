@@ -562,6 +562,9 @@ class NifImport(NifImportExport):
                         self.set_animation(niBlock, b_obj)
                         # import the extras
                         self.import_text_keys(niBlock)
+                        # import vis controller
+                        self.import_vis_controller(
+                            b_object=b_obj, n_node=niBlock)
 
                     return b_obj
             # all else is currently discarded
@@ -2021,6 +2024,29 @@ class NifImport(NifImportExport):
             b_material.ipo = Blender.Ipo.New("Material", "MatIpo")
         return b_material.ipo
 
+    def import_vis_controller(self, b_object, n_node):
+        """Import vis controller for blender object."""
+        n_vis_ctrl = self.find_controller(n_node, NifFormat.NiVisController)
+        if not n_vis_ctrl:
+            return
+        self.logger.info("importing vis controller")
+        b_channel = "Layer"
+        b_ipo = self.get_object_ipo(b_object)
+        b_curve = b_ipo.addCurve(b_channel)
+        b_curve.interpolation = Blender.IpoCurve.InterpTypes.CONST
+        b_curve.extend = self.get_extend_from_flags(n_vis_ctrl.flags)
+        for n_key in n_vis_ctrl.data.keys:
+            b_curve[1 + n_key.time * self.fps] = (
+                2 ** (n_key.value + max([1] + self.scene.getLayers()) - 1))
+
+    def get_object_ipo(self, b_object):
+        """Return existing object ipo data, or if none exists, create one
+        and return that.
+        """
+        if not b_object.ipo:
+            b_object.ipo = Blender.Ipo.New("Object", "Ipo")
+        return b_object.ipo
+
     def import_mesh(self, niBlock,
                     group_mesh=None,
                     applytransform=False,
@@ -2408,6 +2434,7 @@ class NifImport(NifImportExport):
                     Blender.Mesh.AssignModes.ADD)
 
         # import morph controller
+        # XXX todo: move this to import_mesh_controllers
         if self.IMPORT_ANIMATION:
             morphCtrl = self.find_controller(niBlock, NifFormat.NiGeomMorpherController)
             if morphCtrl:
