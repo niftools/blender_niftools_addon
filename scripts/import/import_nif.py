@@ -2965,10 +2965,7 @@ class NifImport(NifImportExport):
         self.logger.info("Importing animation data for %s" % b_obj.name)
         assert(isinstance(kfd, NifFormat.NiKeyframeData))
         # create an Ipo for this object
-        b_ipo = b_obj.getIpo()
-        if b_ipo is None:
-            b_ipo = Blender.Ipo.New('Object', b_obj.name)
-            b_obj.setIpo(b_ipo)
+        b_ipo = self.get_object_ipo(b_obj)
         # get the animation keys
         translations = kfd.translations
         scales = kfd.scales
