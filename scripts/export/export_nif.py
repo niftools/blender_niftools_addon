@@ -1108,20 +1108,27 @@ class NifExport(NifImportExport):
 
         self.export_matrix(ob, space, node)
 
-        if (ob != None):
+        if ob:
             # export animation
-            if (ob_ipo != None):
-                self.export_keyframes(ob_ipo, space, node)
-        
-            # if it is a mesh, export the mesh as trishape children of this ninode
+            if ob_ipo:
+                if any(
+                    ob_ipo[b_channel]
+                    for b_channel in (Ipo.OB_LOCX, Ipo.OB_ROTX, Ipo.OB_SCALEX)):
+                    self.export_keyframes(ob_ipo, space, node)
+                self.export_object_vis_controller(b_object=ob, n_node=node)
+            # if it is a mesh, export the mesh as trishape children of
+            # this ninode
             if (ob.getType() == 'Mesh'):
-                self.export_tri_shapes(ob, trishape_space, node) # see definition of trishape_space above
+                # see definition of trishape_space above
+                self.export_tri_shapes(ob, trishape_space, node)
                 
-            # if it is an armature, export the bones as ninode children of this ninode
+            # if it is an armature, export the bones as ninode
+            # children of this ninode
             elif (ob.getType() == 'Armature'):
                 self.export_bones(ob, node)
 
-            # export all children of this empty/mesh/armature/bone object as children of this NiNode
+            # export all children of this empty/mesh/armature/bone
+            # object as children of this NiNode
             self.export_children(ob, node)
 
         return node
@@ -2737,6 +2744,24 @@ class NifExport(NifImportExport):
             return
 
         self.export_material_alpha_controller(b_material, n_geom)
+        self.export_material_color_controller(
+            b_material=b_material,
+            b_channels=(
+                Blender.Ipo.MA_MIRR, Blender.Ipo.MA_MIRG, Blender.Ipo.MA_MIRB),
+            n_geom=n_geom,
+            n_target_color=NifFormat.TargetColor.TC_AMBIENT)
+        self.export_material_color_controller(
+            b_material=b_material,
+            b_channels=(
+                Blender.Ipo.MA_R, Blender.Ipo.MA_G, Blender.Ipo.MA_B),
+            n_geom=n_geom,
+            n_target_color=NifFormat.TargetColor.TC_DIFFUSE)
+        self.export_material_color_controller(
+            b_material=b_material,
+            b_channels=(
+                Blender.Ipo.MA_SPECR, Blender.Ipo.MA_SPECG, Blender.Ipo.MA_SPECB),
+            n_geom=n_geom,
+            n_target_color=NifFormat.TargetColor.TC_SPECULAR)
         self.export_material_uv_controller(b_material, n_geom)
 
     def export_material_alpha_controller(self, b_material, n_geom):
@@ -2783,6 +2808,60 @@ class NifExport(NifImportExport):
                     " before exporting alpha controller")
             n_matprop.add_controller(n_alphactrl)
 
+    def export_material_color_controller(
+        self, b_material, b_channels, n_geom, n_target_color):
+        """Export the material color controller data."""
+        b_ipo = b_material.getIpo()
+        if not b_ipo:
+            return
+        # get the material color curves and translate it into nif data
+        b_curves = [b_ipo[b_channel] for b_channel in b_channels]
+        if not all(b_curves):
+            return
+        n_posdata = self.create_block("NiPosData", b_curves)
+        # and also to have common reference times for all curves
+        b_times = set()
+        for b_curve in b_curves:
+            b_times |= set(b_point.pt[0] for b_point in b_curve.bezierPoints)
+        # track all nif times: used later in start time and end time
+        n_times = []
+        n_posdata.data.num_keys = len(b_times)
+        n_posdata.data.interpolation = self.get_n_ipol_from_b_ipol(
+            b_curves[0].interpolation)
+        n_posdata.data.keys.update_size()
+        for b_time, n_key in zip(sorted(b_times), n_posdata.data.keys):
+            # add each point of the curves
+            n_key.time = (b_time - 1) * self.fspeed
+            n_key.value.x = b_curves[0][b_time]
+            n_key.value.y = b_curves[1][b_time]
+            n_key.value.z = b_curves[2][b_time]
+            # track time
+            n_times.append(n_key.time)
+        # if alpha data is present (check this by checking if times were added)
+        # then add the controller so it is exported
+        if n_times:
+            n_matcolor_ctrl = self.create_block(
+                "NiMaterialColorController", b_ipo)
+            n_matcolor_ipol = self.create_block(
+                "NiPoint3Interpolator", b_ipo)
+            n_matcolor_ctrl.interpolator = n_matcolor_ipol
+            n_matcolor_ctrl.flags = 8 # active
+            n_matcolor_ctrl.flags |= self.get_flags_from_extend(b_curve.extend)
+            n_matcolor_ctrl.set_target_color(n_target_color)
+            n_matcolor_ctrl.frequency = 1.0
+            n_matcolor_ctrl.start_time = min(n_times)
+            n_matcolor_ctrl.stop_time = max(n_times)
+            n_matcolor_ctrl.data = n_posdata
+            n_matcolor_ipol.data = n_posdata
+            # attach block to geometry
+            n_matprop = self.find_property(n_geom,
+                                           NifFormat.NiMaterialProperty)
+            if not n_matprop:
+                raise ValueError(
+                    "bug!! must add material property"
+                    " before exporting material color controller")
+            n_matprop.add_controller(n_matcolor_ctrl)
+
     def export_material_uv_controller(self, b_material, n_geom):
         """Export the material UV controller data."""
         # get the material ipo
@@ -2826,6 +2905,53 @@ class NifExport(NifImportExport):
             n_uvctrl.data = n_uvdata
             # attach block to geometry
             n_geom.add_controller(n_uvctrl)
+
+    def export_object_vis_controller(self, b_object, n_node):
+        """Export the material alpha controller data."""
+        b_ipo = b_object.ipo
+        if not b_ipo:
+            return
+        # get the alpha curve and translate it into nif data
+        b_curve = b_ipo[Blender.Ipo.OB_LAYER]
+        if not b_curve:
+            return
+        # NiVisData = old style, NiBoolData = new style
+        n_vis_data = self.create_block("NiVisData", b_curve)
+        n_bool_data = self.create_block("NiBoolData", b_curve)
+        n_times = [] # track all times (used later in start time and end time)
+        # we just leave interpolation at zero
+        #n_bool_data.data.interpolation = self.get_n_ipol_from_b_ipol(
+        #    b_curve.interpolation)
+        n_vis_data.num_keys = len(b_curve.bezierPoints)
+        n_bool_data.data.num_keys = len(b_curve.bezierPoints)
+        n_vis_data.keys.update_size()
+        n_bool_data.data.keys.update_size()
+        visible_layer = 2 ** (min(self.scene.getLayers()) - 1)
+        for b_point, n_vis_key, n_bool_key in zip(
+            b_curve.bezierPoints, n_vis_data.keys, n_bool_data.data.keys):
+            # add each point of the curve
+            b_time, b_value = b_point.pt
+            n_vis_key.time = (b_time - 1) * self.fspeed
+            n_vis_key.value = 1 if (int(b_value + 0.01) & visible_layer) else 0
+            n_bool_key.time = n_vis_key.time
+            n_bool_key.value = n_vis_key.value
+            # track time
+            n_times.append(n_vis_key.time)
+        # if alpha data is present (check this by checking if times were added)
+        # then add the controller so it is exported
+        if n_times:
+            n_vis_ctrl = self.create_block("NiVisController", b_ipo)
+            n_vis_ipol = self.create_block("NiBoolInterpolator", b_ipo)
+            n_vis_ctrl.interpolator = n_vis_ipol
+            n_vis_ctrl.flags = 8 # active
+            n_vis_ctrl.flags |= self.get_flags_from_extend(b_curve.extend)
+            n_vis_ctrl.frequency = 1.0
+            n_vis_ctrl.start_time = min(n_times)
+            n_vis_ctrl.stop_time = max(n_times)
+            n_vis_ctrl.data = n_vis_data
+            n_vis_ipol.data = n_bool_data
+            # attach block to node
+            n_node.add_controller(n_vis_ctrl)
 
     def export_bones(self, arm, parent_block):
         """Export the bones of an armature."""

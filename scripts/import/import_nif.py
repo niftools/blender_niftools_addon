@@ -659,6 +659,9 @@ class NifImport(NifImportExport):
                     self.set_animation(niBlock, b_obj)
                     # import the extras
                     self.import_text_keys(niBlock)
+                    # import vis controller
+                    self.import_object_vis_controller(
+                        b_object=b_obj, n_node=niBlock)
 
             # import extra node data, such as node type
             # (other types should be added here too)
@@ -1849,6 +1852,21 @@ class NifImport(NifImportExport):
             return
 
         self.import_material_alpha_controller(b_material, n_geom)
+        self.import_material_color_controller(
+            b_material=b_material,
+            b_channels=("MirR", "MirG", "MirB"),
+            n_geom=n_geom,
+            n_target_color=NifFormat.TargetColor.TC_AMBIENT)
+        self.import_material_color_controller(
+            b_material=b_material,
+            b_channels=("R", "G", "B"),
+            n_geom=n_geom,
+            n_target_color=NifFormat.TargetColor.TC_DIFFUSE)
+        self.import_material_color_controller(
+            b_material=b_material,
+            b_channels=("SpecR", "SpecG", "SpecB"),
+            n_geom=n_geom,
+            n_target_color=NifFormat.TargetColor.TC_SPECULAR)
         self.import_material_uv_controller(b_material, n_geom)
 
     def import_material_uv_controller(self, b_material, n_geom):
@@ -1893,6 +1911,33 @@ class NifImport(NifImportExport):
         for n_key in n_alphactrl.data.data.keys:
             b_curve[1 + n_key.time * self.fps] = n_key.value
 
+    def import_material_color_controller(
+        self, b_material, b_channels, n_geom, n_target_color):
+        # find material color controller with matching target color
+        n_matprop = self.find_property(n_geom, NifFormat.NiMaterialProperty)
+        if not n_matprop:
+            return
+        for ctrl in n_matprop.get_controllers():
+            if isinstance(ctrl, NifFormat.NiMaterialColorController):
+                if ctrl.get_target_color() == n_target_color:
+                    n_matcolor_ctrl = ctrl
+                    break
+        else:
+            return
+        self.logger.info(
+            "importing material color controller for target color %s"
+            " into blender channels %s"
+            % (n_target_color, b_channels))
+        # import data as curves
+        b_ipo = self.get_material_ipo(b_material)
+        for i, b_channel in enumerate(b_channels):
+            b_curve = b_ipo.addCurve(b_channel)
+            b_curve.interpolation = self.get_b_ipol_from_n_ipol(
+                n_matcolor_ctrl.data.data.interpolation)
+            b_curve.extend = self.get_extend_from_flags(n_matcolor_ctrl.flags)
+            for n_key in n_matcolor_ctrl.data.data.keys:
+                b_curve[1 + n_key.time * self.fps] = n_key.value.as_list()[i]
+
     def get_material_ipo(self, b_material):
         """Return existing material ipo data, or if none exists, create one
         and return that.
@@ -1900,6 +1945,29 @@ class NifImport(NifImportExport):
         if not b_material.ipo:
             b_material.ipo = Blender.Ipo.New("Material", "MatIpo")
         return b_material.ipo
+
+    def import_object_vis_controller(self, b_object, n_node):
+        """Import vis controller for blender object."""
+        n_vis_ctrl = self.find_controller(n_node, NifFormat.NiVisController)
+        if not n_vis_ctrl:
+            return
+        self.logger.info("importing vis controller")
+        b_channel = "Layer"
+        b_ipo = self.get_object_ipo(b_object)
+        b_curve = b_ipo.addCurve(b_channel)
+        b_curve.interpolation = Blender.IpoCurve.InterpTypes.CONST
+        b_curve.extend = self.get_extend_from_flags(n_vis_ctrl.flags)
+        for n_key in n_vis_ctrl.data.keys:
+            b_curve[1 + n_key.time * self.fps] = (
+                2 ** (n_key.value + max([1] + self.scene.getLayers()) - 1))
+
+    def get_object_ipo(self, b_object):
+        """Return existing object ipo data, or if none exists, create one
+        and return that.
+        """
+        if not b_object.ipo:
+            b_object.ipo = Blender.Ipo.New("Object", "Ipo")
+        return b_object.ipo
 
     def import_mesh(self, niBlock,
                     group_mesh=None,
@@ -2288,6 +2356,7 @@ class NifImport(NifImportExport):
                     Blender.Mesh.AssignModes.ADD)
 
         # import morph controller
+        # XXX todo: move this to import_mesh_controllers
         if self.IMPORT_ANIMATION:
             morphCtrl = self.find_controller(niBlock, NifFormat.NiGeomMorpherController)
             if morphCtrl:
@@ -2828,10 +2897,7 @@ class NifImport(NifImportExport):
         self.logger.info("Importing animation data for %s" % b_obj.name)
         assert(isinstance(kfd, NifFormat.NiKeyframeData))
         # create an Ipo for this object
-        b_ipo = b_obj.getIpo()
-        if b_ipo is None:
-            b_ipo = Blender.Ipo.New('Object', b_obj.name)
-            b_obj.setIpo(b_ipo)
+        b_ipo = self.get_object_ipo(b_obj)
         # get the animation keys
         translations = kfd.translations
         scales = kfd.scales
