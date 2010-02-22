@@ -2926,14 +2926,15 @@ class NifExport(NifImportExport):
         n_bool_data.data.num_keys = len(b_curve.bezierPoints)
         n_vis_data.keys.update_size()
         n_bool_data.data.keys.update_size()
+        visible_layer = 2 ** (min(self.scene.getLayers()) - 1)
         for b_point, n_vis_key, n_bool_key in zip(
             b_curve.bezierPoints, n_vis_data.keys, n_bool_data.data.keys):
             # add each point of the curve
             b_time, b_value = b_point.pt
             n_vis_key.time = (b_time - 1) * self.fspeed
-            n_vis_key.value = b_value
-            n_bool_key.time = (b_time - 1) * self.fspeed
-            n_bool_key.value = b_value
+            n_vis_key.value = 1 if (int(b_value + 0.01) & visible_layer) else 0
+            n_bool_key.time = n_vis_key.time
+            n_bool_key.value = n_vis_key.value
             # track time
             n_times.append(n_vis_key.time)
         # if alpha data is present (check this by checking if times were added)
