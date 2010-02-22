@@ -563,7 +563,7 @@ class NifImport(NifImportExport):
                         # import the extras
                         self.import_text_keys(niBlock)
                         # import vis controller
-                        self.import_vis_controller(
+                        self.import_object_vis_controller(
                             b_object=b_obj, n_node=niBlock)
 
                     return b_obj
@@ -2024,7 +2024,7 @@ class NifImport(NifImportExport):
             b_material.ipo = Blender.Ipo.New("Material", "MatIpo")
         return b_material.ipo
 
-    def import_vis_controller(self, b_object, n_node):
+    def import_object_vis_controller(self, b_object, n_node):
         """Import vis controller for blender object."""
         n_vis_ctrl = self.find_controller(n_node, NifFormat.NiVisController)
         if not n_vis_ctrl:
