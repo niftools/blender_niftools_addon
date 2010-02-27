@@ -1,4 +1,17 @@
-Version 2.5.2 (in development)
+Version 2.5.3 (in development)
+* import and export NiLODNodes as empty with LODs as children and properties
+to set extents
+* added material color controller import and export (request and test files by
+Alphax)
+* added vis controller import and export (request and test files by Alphax)
+* fixed some controller imports in case controller block had no data
+* improved Fallout 3 skeleton.nif import
+* fixed bhkCapsuleShape export with identical points by converting it to a
+bhkSphereShape (reported by ghostwalker71)
+* warn if mopp is exported for non-static objects, as these may not function
+properly in-game (reported by mc.crab)
+
+Version 2.5.2 (20 Feb 2010)
 * configurable game paths for test suite
 * fixed display of alpha channel in textured faces (reported by vurt2, fixed
 by Alphax)
@@ -18,14 +31,17 @@ Fallout 3 interpolators (e.g. Fallout 3 h2haim.kf, reported by Malo)
 creatures with bones that have havok blocks attached (reported by Spiderpig)
 * added alpha controller import; export was already implemented (requested
 and test files provided by Alphax)
-* fixes/improves to animation import export
+* fixes/improvements to animation import and export
   - full support for import/export of animation priority
   - autoset target name to bip02 if the armature has such a bone
   - new option to manually set the target name on export
   - new option to bulk set the animation priority
   - skip NiBSplineInterpolators on import; not fully supported and
-    if not skipping was causing a fatal error
+  if not skipping was causing a fatal error
 * fix for bhkNiTriStripsShape import
+* added experimental import and export of Empire Earth II meshes
+* fixed bhkCapsuleShape import with identical points (reported by
+ghostwalker71)
 
 Version 2.5.1 (10 Jan 2010)
 * updated for pyffi 2.1.0

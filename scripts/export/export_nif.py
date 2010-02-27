@@ -587,10 +587,13 @@ class NifExport(NifImportExport):
                     root_block.add_extra_data(prn)
 
             # add vertex color and zbuffer properties for civ4 and railroads
-            if self.EXPORT_VERSION in ["Civilization IV",
-                                       "Sid Meier's Railroads"]:
+            if self.EXPORT_VERSION in ("Civilization IV",
+                                       "Sid Meier's Railroads"):
                 self.export_vertex_color_property(root_block)
                 self.export_z_buffer_property(root_block)
+            elif self.EXPORT_VERSION in ("Empire Earth II",):
+                self.export_vertex_color_property(root_block)
+                self.export_z_buffer_property(root_block, flags=15, function=1)
 
             if self.EXPORT_FLATTENSKIN:
                 # (warning: trouble if armatures parent other armatures or
@@ -639,11 +642,20 @@ class NifExport(NifImportExport):
                        #print "=== DEBUG: MOPP TREE ==="
                        #block.parse_mopp(verbose = True)
                        #print "=== END OF MOPP TREE ==="
+                       # warn about mopps on non-static objects
+                       if any(sub_shape.layer != 1
+                              for sub_shape in block.shape.sub_shapes):
+                           self.logger.warn(
+                               "Mopps for non-static objects may not function"
+                               " correctly in-game. You may wish to use"
+                               " simple primitives for collision.")
 
             # delete original scene root if a scene root object was already
             # defined
             if ((root_block.num_children == 1)
-                and (root_block.children[0].name in ['Scene Root', 'Bip01'])):
+                and ((root_block.children[0].name in ['Scene Root', 'Bip01']) or root_block.children[0].name[-3:] == 'nif')):
+                if root_block.children[0].name[-3:] == 'nif':
+                    root_block.children[0].name = self.filebase
                 self.logger.info(
                     "Making '%s' the root block" % root_block.children[0].name)
                 # remove root_block from self.blocks
@@ -682,6 +694,9 @@ class NifExport(NifImportExport):
             elif self.EXPORT_VERSION == "Fallout 3":
                 NIF_USER_VERSION = 11
                 NIF_USER_VERSION2 = 34
+            elif self.EXPORT_VERSION == "Divinity 2":
+                NIF_USER_VERSION = 131072
+                NIF_USER_VERSION = 0
             else:
                 NIF_USER_VERSION = 0
                 NIF_USER_VERSION2 = 0
@@ -690,7 +705,10 @@ class NifExport(NifImportExport):
             #-----------------
 
             if self.EXPORT_ANIMATION != 2:
-                ext = ".nif"
+                if self.EXPORT_VERSION == "Empire Earth II":
+                    ext = ".nifcache"
+                else:
+                    ext = ".nif"
                 self.logger.info("Writing %s file" % ext)
                 self.msg_progress("Writing %s file" % ext)
 
@@ -987,7 +1005,7 @@ class NifExport(NifImportExport):
         if (ob == None):
             # -> root node
             assert(parent_block == None) # debug
-            node = self.create_block("NiNode")
+            node = self.create_ninode()
             ob_type = None
             ob_ipo = None
         else:
@@ -996,7 +1014,7 @@ class NifExport(NifImportExport):
             assert(ob_type in ['Empty', 'Mesh', 'Armature']) # debug
             assert(parent_block) # debug
             ob_ipo = ob.getIpo() # get animation data
-            ob_children = [child for child in Blender.Object.Get() if child.parent == ob]
+            ob_children = self.get_b_children(ob)
             
             if (node_name == 'RootCollisionNode'):
                 # -> root collision node (can be mesh or empty)
@@ -1048,7 +1066,7 @@ class NifExport(NifImportExport):
                     return None
             else:
                 # -> everything else (empty/armature) is a regular node
-                node = self.create_block("NiNode", ob)
+                node = self.create_ninode(ob)
                 # does node have priority value in NULL constraint?
                 for constr in ob.constraints:
                     if constr.name[:9].lower() == "priority:":
@@ -1084,26 +1102,37 @@ class NifExport(NifImportExport):
         elif self.EXPORT_VERSION in ("Sid Meier's Railroads",
                                      "Civilization IV"):
             node.flags = 0x0010
+        elif self.EXPORT_VERSION in ("Empire Earth II",):
+            node.flags = 0x0002
+        elif self.EXPORT_VERSION in ("Divinity 2",):
+            node.flags = 0x0310
         else:
             # morrowind
             node.flags = 0x000C
 
         self.export_matrix(ob, space, node)
 
-        if (ob != None):
+        if ob:
             # export animation
-            if (ob_ipo != None):
-                self.export_keyframes(ob_ipo, space, node)
-        
-            # if it is a mesh, export the mesh as trishape children of this ninode
+            if ob_ipo:
+                if any(
+                    ob_ipo[b_channel]
+                    for b_channel in (Ipo.OB_LOCX, Ipo.OB_ROTX, Ipo.OB_SCALEX)):
+                    self.export_keyframes(ob_ipo, space, node)
+                self.export_object_vis_controller(b_object=ob, n_node=node)
+            # if it is a mesh, export the mesh as trishape children of
+            # this ninode
             if (ob.getType() == 'Mesh'):
-                self.export_tri_shapes(ob, trishape_space, node) # see definition of trishape_space above
+                # see definition of trishape_space above
+                self.export_tri_shapes(ob, trishape_space, node)
                 
-            # if it is an armature, export the bones as ninode children of this ninode
+            # if it is an armature, export the bones as ninode
+            # children of this ninode
             elif (ob.getType() == 'Armature'):
                 self.export_bones(ob, node)
 
-            # export all children of this empty/mesh/armature/bone object as children of this NiNode
+            # export all children of this empty/mesh/armature/bone
+            # object as children of this NiNode
             self.export_children(ob, node)
 
         return node
@@ -1503,8 +1532,8 @@ class NifExport(NifImportExport):
         block_parent.add_property(zbuf)
 
         # and now export the parameters
-        zbuf.flags = 15
-        zbuf.function = 3
+        zbuf.flags = flags
+        zbuf.function = function
 
         return zbuf
 
@@ -2213,6 +2242,13 @@ class NifExport(NifImportExport):
             elif self.EXPORT_VERSION in ("Sid Meier's Railroads",
                                          "Civilization IV"):
                 trishape.flags = 0x0010
+            elif self.EXPORT_VERSION in ("Empire Earth II",):
+                trishape.flags = 0x0016
+            elif self.EXPORT_VERSION in ("Divinity 2",):
+                if trishape.name.lower[-3:] in ("med", "low"):
+                    trishape.flags = 0x0014
+                else:
+                    trishape.flags = 0x0016
             else:
                 # morrowind
                 if ob.getDrawType() != 2: # not wire
@@ -2262,6 +2298,9 @@ class NifExport(NifImportExport):
                 if self.EXPORT_VERSION == "Sid Meier's Railroads":
                     alphaflags = 0x32ED
                     alphathreshold = 150
+                elif self.EXPORT_VERSION == "Empire Earth II":
+                    alphaflags = 0x00ED
+                    alphathreshold = 0
                 else:
                     alphaflags = 0x12ED
                     alphathreshold = 0
@@ -2709,6 +2748,24 @@ class NifExport(NifImportExport):
             return
 
         self.export_material_alpha_controller(b_material, n_geom)
+        self.export_material_color_controller(
+            b_material=b_material,
+            b_channels=(
+                Blender.Ipo.MA_MIRR, Blender.Ipo.MA_MIRG, Blender.Ipo.MA_MIRB),
+            n_geom=n_geom,
+            n_target_color=NifFormat.TargetColor.TC_AMBIENT)
+        self.export_material_color_controller(
+            b_material=b_material,
+            b_channels=(
+                Blender.Ipo.MA_R, Blender.Ipo.MA_G, Blender.Ipo.MA_B),
+            n_geom=n_geom,
+            n_target_color=NifFormat.TargetColor.TC_DIFFUSE)
+        self.export_material_color_controller(
+            b_material=b_material,
+            b_channels=(
+                Blender.Ipo.MA_SPECR, Blender.Ipo.MA_SPECG, Blender.Ipo.MA_SPECB),
+            n_geom=n_geom,
+            n_target_color=NifFormat.TargetColor.TC_SPECULAR)
         self.export_material_uv_controller(b_material, n_geom)
 
     def export_material_alpha_controller(self, b_material, n_geom):
@@ -2755,6 +2812,60 @@ class NifExport(NifImportExport):
                     " before exporting alpha controller")
             n_matprop.add_controller(n_alphactrl)
 
+    def export_material_color_controller(
+        self, b_material, b_channels, n_geom, n_target_color):
+        """Export the material color controller data."""
+        b_ipo = b_material.getIpo()
+        if not b_ipo:
+            return
+        # get the material color curves and translate it into nif data
+        b_curves = [b_ipo[b_channel] for b_channel in b_channels]
+        if not all(b_curves):
+            return
+        n_posdata = self.create_block("NiPosData", b_curves)
+        # and also to have common reference times for all curves
+        b_times = set()
+        for b_curve in b_curves:
+            b_times |= set(b_point.pt[0] for b_point in b_curve.bezierPoints)
+        # track all nif times: used later in start time and end time
+        n_times = []
+        n_posdata.data.num_keys = len(b_times)
+        n_posdata.data.interpolation = self.get_n_ipol_from_b_ipol(
+            b_curves[0].interpolation)
+        n_posdata.data.keys.update_size()
+        for b_time, n_key in zip(sorted(b_times), n_posdata.data.keys):
+            # add each point of the curves
+            n_key.time = (b_time - 1) * self.fspeed
+            n_key.value.x = b_curves[0][b_time]
+            n_key.value.y = b_curves[1][b_time]
+            n_key.value.z = b_curves[2][b_time]
+            # track time
+            n_times.append(n_key.time)
+        # if alpha data is present (check this by checking if times were added)
+        # then add the controller so it is exported
+        if n_times:
+            n_matcolor_ctrl = self.create_block(
+                "NiMaterialColorController", b_ipo)
+            n_matcolor_ipol = self.create_block(
+                "NiPoint3Interpolator", b_ipo)
+            n_matcolor_ctrl.interpolator = n_matcolor_ipol
+            n_matcolor_ctrl.flags = 8 # active
+            n_matcolor_ctrl.flags |= self.get_flags_from_extend(b_curve.extend)
+            n_matcolor_ctrl.set_target_color(n_target_color)
+            n_matcolor_ctrl.frequency = 1.0
+            n_matcolor_ctrl.start_time = min(n_times)
+            n_matcolor_ctrl.stop_time = max(n_times)
+            n_matcolor_ctrl.data = n_posdata
+            n_matcolor_ipol.data = n_posdata
+            # attach block to geometry
+            n_matprop = self.find_property(n_geom,
+                                           NifFormat.NiMaterialProperty)
+            if not n_matprop:
+                raise ValueError(
+                    "bug!! must add material property"
+                    " before exporting material color controller")
+            n_matprop.add_controller(n_matcolor_ctrl)
+
     def export_material_uv_controller(self, b_material, n_geom):
         """Export the material UV controller data."""
         # get the material ipo
@@ -2799,6 +2910,53 @@ class NifExport(NifImportExport):
             # attach block to geometry
             n_geom.add_controller(n_uvctrl)
 
+    def export_object_vis_controller(self, b_object, n_node):
+        """Export the material alpha controller data."""
+        b_ipo = b_object.ipo
+        if not b_ipo:
+            return
+        # get the alpha curve and translate it into nif data
+        b_curve = b_ipo[Blender.Ipo.OB_LAYER]
+        if not b_curve:
+            return
+        # NiVisData = old style, NiBoolData = new style
+        n_vis_data = self.create_block("NiVisData", b_curve)
+        n_bool_data = self.create_block("NiBoolData", b_curve)
+        n_times = [] # track all times (used later in start time and end time)
+        # we just leave interpolation at zero
+        #n_bool_data.data.interpolation = self.get_n_ipol_from_b_ipol(
+        #    b_curve.interpolation)
+        n_vis_data.num_keys = len(b_curve.bezierPoints)
+        n_bool_data.data.num_keys = len(b_curve.bezierPoints)
+        n_vis_data.keys.update_size()
+        n_bool_data.data.keys.update_size()
+        visible_layer = 2 ** (min(self.scene.getLayers()) - 1)
+        for b_point, n_vis_key, n_bool_key in zip(
+            b_curve.bezierPoints, n_vis_data.keys, n_bool_data.data.keys):
+            # add each point of the curve
+            b_time, b_value = b_point.pt
+            n_vis_key.time = (b_time - 1) * self.fspeed
+            n_vis_key.value = 1 if (int(b_value + 0.01) & visible_layer) else 0
+            n_bool_key.time = n_vis_key.time
+            n_bool_key.value = n_vis_key.value
+            # track time
+            n_times.append(n_vis_key.time)
+        # if alpha data is present (check this by checking if times were added)
+        # then add the controller so it is exported
+        if n_times:
+            n_vis_ctrl = self.create_block("NiVisController", b_ipo)
+            n_vis_ipol = self.create_block("NiBoolInterpolator", b_ipo)
+            n_vis_ctrl.interpolator = n_vis_ipol
+            n_vis_ctrl.flags = 8 # active
+            n_vis_ctrl.flags |= self.get_flags_from_extend(b_curve.extend)
+            n_vis_ctrl.frequency = 1.0
+            n_vis_ctrl.start_time = min(n_times)
+            n_vis_ctrl.stop_time = max(n_times)
+            n_vis_ctrl.data = n_vis_data
+            n_vis_ipol.data = n_bool_data
+            # attach block to node
+            n_node.add_controller(n_vis_ctrl)
+
     def export_bones(self, arm, parent_block):
         """Export the bones of an armature."""
         # the armature was already exported as a NiNode
@@ -2829,7 +2987,7 @@ class NifExport(NifImportExport):
         # ok, let's create the bone NiNode blocks
         for bone in list(bones.values()):
             # create a new block for this bone
-            node = self.create_block("NiNode", bone)
+            node = self.create_ninode(bone)
             # doing bone map now makes linkage very easy in second run
             bones_node[bone.name] = node
 
@@ -2839,13 +2997,22 @@ class NifExport(NifImportExport):
                 # default for Oblivion bones
                 # note: bodies have 0x000E, clothing has 0x000F
                 node.flags = 0x000E
-            elif self.EXPORT_VERSION == 'Civilization IV':
+            elif self.EXPORT_VERSION in ('Civilization IV', 'Empire Earth II'):
                 if bone.children:
-                    # default for Civ IV bones with children
+                    # default for Civ IV/EE II bones with children
                     node.flags = 0x0006
                 else:
-                    # default for Civ IV final bones
+                    # default for Civ IV/EE II final bones
                     node.flags = 0x0016
+            elif self.EXPORT_VERSION in ('Divinity 2',):
+                if bone.children:
+                    # default for Div 2 bones with children
+                    node.flags = 0x0186
+                elif bone.name.lower()[-9:] == 'footsteps':
+                    node.flags = 0x0116
+                else:
+                    # default for Div 2 final bones
+                    node.flags = 0x0196
             else:
                 node.flags = 0x0002 # default for Morrowind bones
             self.export_matrix(bone, 'localspace', node) # rest pose
@@ -2892,8 +3059,7 @@ class NifExport(NifImportExport):
         """Export all children of blender object ob as children of
         parent_block."""
         # loop over all obj's children
-        for ob_child in [ cld  for cld in Blender.Object.Get()
-                          if cld.getParent() == obj ]:
+        for ob_child in self.get_b_children(obj):
             # is it a regular node?
             if ob_child.getType() in ['Mesh', 'Empty', 'Armature']:
                 if (obj.getType() != 'Armature'):
@@ -3197,7 +3363,7 @@ class NifExport(NifImportExport):
                 except ValueError: # adding collision failed
                     continue
             else: # all nodes failed so add new one
-                node = self.create_block("NiNode", obj)
+                node = self.create_ninode(obj)
                 node.set_transform(self.IDENTITY44)
                 node.name = 'collisiondummy%i' % parent_block.num_children
                 node.flags = 0x000E # default
@@ -3469,8 +3635,8 @@ class NifExport(NifImportExport):
         maxy = max([vert[1] for vert in obj.data.verts])
         maxz = max([vert[2] for vert in obj.data.verts])
 
-        if obj.rbShapeBoundType in ( Blender.Object.RBShapes['BOX'],
-                                    Blender.Object.RBShapes['SPHERE'] ):
+        if obj.rbShapeBoundType in (Blender.Object.RBShapes['BOX'],
+                                    Blender.Object.RBShapes['SPHERE']):
             # note: collision settings are taken from lowerclasschair01.nif
             coltf = self.create_block("bhkConvexTransformShape", obj)
             coltf.material = material
@@ -3530,9 +3696,7 @@ class NifExport(NifImportExport):
             return coltf
 
         elif obj.rbShapeBoundType == Blender.Object.RBShapes['CYLINDER']:
-            colcaps = self.create_block("bhkCapsuleShape", obj)
-            colcaps.material = material
-            # take average radius
+            # take average radius and calculate end points
             localradius = (maxx + maxy - minx - miny) / 4.0
             transform = Blender.Mathutils.Matrix(
                 *self.get_object_matrix(obj, 'localspace').as_list())
@@ -3544,6 +3708,18 @@ class NifExport(NifImportExport):
                                                 maxz - localradius ] )
             vert1 *= transform
             vert2 *= transform
+            # check if end points are far enough from each other
+            if (vert1 - vert2).length < self.EPSILON:
+                self.logger.warn(
+                    "End points of cylinder %s too close,"
+                    " converting to sphere." % obj)
+                # change type
+                obj.rbShapeBoundType = Blender.Object.RBShapes['SPHERE']
+                # instead of duplicating code, just run the function again
+                return self.export_collision_object(obj, layer, material)
+            # end points are ok, so export as capsule
+            colcaps = self.create_block("bhkCapsuleShape", obj)
+            colcaps.material = material
             colcaps.first_point.x = vert1[0] / 7.0
             colcaps.first_point.y = vert1[1] / 7.0
             colcaps.first_point.z = vert1[2] / 7.0
@@ -3559,7 +3735,6 @@ class NifExport(NifImportExport):
             colcaps.radius /= 7.0
             colcaps.radius_1 /= 7.0
             colcaps.radius_2 /= 7.0
-
             return colcaps
 
         elif obj.rbShapeBoundType == 5:
@@ -4236,7 +4411,7 @@ class NifExport(NifImportExport):
             bbox.dimensions.y = maxy - miny
             bbox.dimensions.z = maxz - minz
         else:
-            bbox = self.create_block("NiNode")
+            bbox = self.create_ninode()
             block_parent.add_child(bbox)
             # set name, flags, translation, and radius
             bbox.name = "Bounding Box"
@@ -4259,6 +4434,44 @@ class NifExport(NifImportExport):
         for shaderindex in self.USED_EXTRA_SHADER_TEXTURES[self.EXPORT_VERSION]:
             shadername = self.EXTRA_SHADER_TEXTURES[shaderindex]
             trishape.add_integer_extra_data(shadername, shaderindex)
+
+    def create_ninode(self, b_obj=None):
+        # trivial case first
+        if not b_obj:
+            return self.create_block("NiNode")
+        # exporting an object, so first create node of correct type
+        try:
+            n_node_type = b_obj.getProperty("Type").data
+        except (RuntimeError, AttributeError, NameError):
+            n_node_type = "NiNode"
+        n_node = self.create_block(n_node_type, b_obj)
+        # customize the node data, depending on type
+        if n_node_type == "NiLODNode":
+            self.export_range_lod_data(n_node, b_obj)
+            
+        # return the node
+        return n_node
+
+    def export_range_lod_data(self, n_node, b_obj):
+        """Export range lod data for for the children of b_obj, as a
+        NiRangeLODData block on n_node.
+        """
+        # create range lod data object
+        n_range_data = self.create_block("NiRangeLODData", b_obj)
+        n_node.lod_level_data = n_range_data
+        # get the children
+        b_children = self.get_b_children(b_obj)
+        # set the data
+        n_node.num_lod_levels = len(b_children)
+        n_range_data.num_lod_levels = len(b_children)
+        n_node.lod_levels.update_size()
+        n_range_data.lod_levels.update_size()
+        for b_child, n_lod_level, n_rd_lod_level in zip(
+            b_children, n_node.lod_levels, n_range_data.lod_levels):
+            n_lod_level.near_extent = b_child.getProperty("Near Extent").data
+            n_lod_level.far_extent = b_child.getProperty("Far Extent").data
+            n_rd_lod_level.near_extent = n_lod_level.near_extent
+            n_rd_lod_level.far_extent = n_lod_level.far_extent
 
     def exportEgm(self, keyblocks):
         self.egmdata = EgmFormat.Data(num_vertices=len(keyblocks[0].data))

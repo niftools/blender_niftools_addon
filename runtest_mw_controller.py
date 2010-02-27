@@ -109,34 +109,149 @@ class ControllerTestSuite(TestSuite):
 
     def test_matcolor_controller(self):
         """Material color controller test."""
+
+        def check_matcolor_controller(root):
+            matcolor_ctrl = []
+            for prop in root.children[0].get_properties():
+                if isinstance(prop, NifFormat.NiMaterialProperty):
+                    matcolor_ctrl = [
+                        ctrl for ctrl in prop.get_controllers()
+                        if isinstance(
+                            ctrl, NifFormat.NiMaterialColorController)]
+            if not len(matcolor_ctrl) == 3:
+                raise ValueError("material color controllers not found")
+            self.logger.info(
+                "found material controllers, checking data...")
+            # do we have data?
+            assert(all(ctrl.data for ctrl in matcolor_ctrl))
+            # correct target?
+            assert(all(ctrl.target == prop for ctrl in matcolor_ctrl))
+            # correct color target?
+            amb_ctrl, diff_ctrl, spec_ctrl = sorted(
+                matcolor_ctrl,
+                key=lambda ctrl: ctrl.get_target_color())
+            assert(spec_ctrl.get_target_color()
+                   == NifFormat.TargetColor.TC_SPECULAR)
+            assert(diff_ctrl.get_target_color()
+                   == NifFormat.TargetColor.TC_DIFFUSE)
+            assert(amb_ctrl.get_target_color()
+                   == NifFormat.TargetColor.TC_AMBIENT)
+            # check the keys
+            assert(spec_ctrl.data.data.num_keys == 2)
+            assert(spec_ctrl.data.data.keys[0].time == 0)
+            assert(spec_ctrl.data.data.keys[0].value.x == 1)
+            assert(spec_ctrl.data.data.keys[0].value.y == 1)
+            assert(spec_ctrl.data.data.keys[0].value.z == 1)
+            assert(spec_ctrl.data.data.keys[1].time == 4)
+            assert(spec_ctrl.data.data.keys[1].value.x == 1)
+            assert(spec_ctrl.data.data.keys[1].value.y == 1)
+            assert(spec_ctrl.data.data.keys[1].value.z == 1)
+            assert(diff_ctrl.data.data.num_keys == 2)
+            assert(diff_ctrl.data.data.keys[0].time == 0)
+            assert(diff_ctrl.data.data.keys[0].value.x == 1)
+            assert(diff_ctrl.data.data.keys[0].value.y == 1)
+            assert(diff_ctrl.data.data.keys[0].value.z == 1)
+            assert(diff_ctrl.data.data.keys[1].time == 4)
+            assert(diff_ctrl.data.data.keys[1].value.x == 1)
+            assert(diff_ctrl.data.data.keys[1].value.y == 1)
+            assert(diff_ctrl.data.data.keys[1].value.z == 1)
+            assert(amb_ctrl.data.data.num_keys == 5)
+            assert(amb_ctrl.data.data.keys[0].time == 0)
+            assert(amb_ctrl.data.data.keys[0].value.x == 0)
+            assert(amb_ctrl.data.data.keys[0].value.y == 0)
+            assert(amb_ctrl.data.data.keys[0].value.z == 0)
+            assert(amb_ctrl.data.data.keys[1].time == 1)
+            assert(amb_ctrl.data.data.keys[1].value.x == 1)
+            assert(amb_ctrl.data.data.keys[1].value.y == 0)
+            assert(amb_ctrl.data.data.keys[1].value.z == 0)
+            assert(amb_ctrl.data.data.keys[2].time == 2)
+            assert(amb_ctrl.data.data.keys[2].value.x == 0)
+            assert(amb_ctrl.data.data.keys[2].value.y == 1)
+            assert(amb_ctrl.data.data.keys[2].value.z == 0)
+            assert(amb_ctrl.data.data.keys[3].time == 3)
+            assert(amb_ctrl.data.data.keys[3].value.x == 0)
+            assert(amb_ctrl.data.data.keys[3].value.y == 0)
+            assert(amb_ctrl.data.data.keys[3].value.z == 1)
+            assert(amb_ctrl.data.data.keys[4].time == 4)
+            assert(amb_ctrl.data.data.keys[4].value.x == 1)
+            assert(amb_ctrl.data.data.keys[4].value.y == 1)
+            assert(amb_ctrl.data.data.keys[4].value.z == 1)
+
         # import
         nif_import = self.test(
             filename='test/nif/mw/matcolorctrl.nif')
         b_matcolorctrl = Blender.Object.Get("MatColorCtrlTest")
+        # check that material has color curves
+        self.logger.info("checking blender material color curves...")
+        b_ipo = b_matcolorctrl.getData(mesh=1).materials[0].ipo
+        for b_channel in (
+            Blender.Ipo.MA_R, Blender.Ipo.MA_G, Blender.Ipo.MA_B):
+            b_curve = b_ipo[b_channel]
+            assert(b_curve)
+            assert(len(b_curve.bezierPoints) == 2)
+        for b_channel in (
+            Blender.Ipo.MA_SPECR, Blender.Ipo.MA_SPECG, Blender.Ipo.MA_SPECB):
+            b_curve = b_ipo[b_channel]
+            assert(b_curve)
+            assert(len(b_curve.bezierPoints) == 2)
+        for b_channel in (
+            Blender.Ipo.MA_MIRR, Blender.Ipo.MA_MIRG, Blender.Ipo.MA_MIRB):
+            b_curve = b_ipo[b_channel]
+            assert(b_curve)
+            assert(len(b_curve.bezierPoints) == 5)
         # test stuff
+        check_matcolor_controller(nif_import.root_blocks[0])
         # export
         nif_export = self.test(
             filename='test/nif/mw/_matcolorctrl.nif',
             config=dict(EXPORT_VERSION = 'Morrowind'),
             selection = ['MatColorCtrlTest'])
         # test stuff
-        matcolorctrl = nif_export.root_blocks[0].children[0]
+        check_matcolor_controller(nif_export.root_blocks[0])
 
     def test_vis_controller(self):
         """Vis controller test."""
+
+        def check_vis_controller(root):
+            all_values = [[0, 1, 0], [1, 0, 1]]
+            for child, values in zip(root.children, all_values):
+                for ctrl in child.get_controllers():
+                    if isinstance(ctrl, NifFormat.NiVisController):
+                        break
+                else:
+                    raise ValueError("vis controller not found")
+                self.logger.info(
+                    "found vis controller, checking data...")
+                assert(ctrl.target == child)
+                assert(ctrl.data)
+                assert(ctrl.data.num_keys == 3)
+                for time, (key, value) in enumerate(zip(ctrl.data.keys, values)):
+                    assert(key.value == value)
+                    assert(key.time == time)
+
         # import
         nif_import = self.test(
             filename='test/nif/mw/visctrl.nif')
         b_cube1 = Blender.Object.Get("VisCtrlCube1")
         b_cube2 = Blender.Object.Get("VisCtrlCube2")
         # test stuff
+        check_vis_controller(nif_import.root_blocks[0])
+        # check that object has layer curve
+        self.logger.info("checking blender object layer curve...")
+        for b_object in (b_cube1, b_cube2):
+            assert(b_object.ipo)
+            b_curve = b_object.ipo[Blender.Ipo.OB_LAYER]
+            assert(b_curve)
+            assert(len(b_curve.bezierPoints) == 3)
         # export
+        self.scene.setLayers([3, 4]) # make sure both are exported
         nif_export = self.test(
             filename='test/nif/mw/_visctrl.nif',
             config=dict(EXPORT_VERSION = 'Morrowind'),
             selection = ['VisCtrlCube1', 'VisCtrlCube2'])
         # test stuff
-        visctrl = nif_export.root_blocks[0].children[0]
+        check_vis_controller(nif_export.root_blocks[0])
+        self.layer += 1
 
 suite = ControllerTestSuite("controller")
 suite.run()

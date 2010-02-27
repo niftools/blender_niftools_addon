@@ -1,6 +1,6 @@
 """Common functions for the Blender nif import and export scripts."""
 
-__version__ = "2.5.2"
+__version__ = "2.5.3"
 __requiredpyffiversion__ = "2.1.0"
 __requiredblenderversion__ = "250"
 
@@ -338,6 +338,11 @@ class NifImportExport(bpy.types.Operator, metaclass=MetaNifImportExport):
         # TODO draw the progress bar
         #Blender.Window.DrawProgressBar(self.progress_bar, message)
 
+    def get_b_children(self, b_obj):
+        """Return children of a blender object."""
+        return [child for child in Blender.Object.Get()
+                if child.parent == b_obj]
+
     def get_bone_name_for_blender(self, name):
         """Convert a bone name to a name that can be used by Blender: turns
         'Bip01 R xxx' into 'Bip01 xxx.R', and similar for L.
@@ -431,7 +436,6 @@ class NifImportExport(bpy.types.Operator, metaclass=MetaNifImportExport):
                 return prop
         return None
 
-
     def find_extra(self, niBlock, extratype):
         """Find extra data."""
         # pre-10.x.x.x system: extra data chain
@@ -448,6 +452,14 @@ class NifImportExport(bpy.types.Operator, metaclass=MetaNifImportExport):
             if isinstance(extra, extratype):
                 return extra
         return None
+
+    def isinstance_blender_object(self, b_obj):
+        """Unfortunately, isinstance(b_obj, Blender.Object.Object) does not
+        work because the Object class is not exposed in the API.
+        This method provides an alternative check.
+        """
+        # lame and slow, but functional
+        return b_obj in Blender.Object.Get()
 
 # TODO: integrate with NifImportExport class
 class NifConfig:
@@ -1484,6 +1496,7 @@ class NifConfig:
             self.config["EXPORT_EXTRA_SHADER_TEXTURES"] = True
             # set default settings per game
             if self.config["EXPORT_VERSION"] == "Morrowind":
+                self.config["EXPORT_FORCEDDS"] = False
                 pass # fail-safe settings work
             if self.config["EXPORT_VERSION"] == "Freedom Force vs. the 3rd Reich":
                 self.config["EXPORT_SKINPARTITION"] = True
@@ -1522,6 +1535,9 @@ class NifConfig:
                 self.config["EXPORT_FO3_SF_UN31"] = True
                 # body parts
                 self.config["EXPORT_FO3_BODYPARTS"] = True
+            elif self.config["EXPORT_VERSION"] == "Empire Earth II":
+                self.config["EXPORT_FORCEDDS"] = False
+                self.config["EXPORT_SKINPARTITION"] = False
         elif evName[:8] == "VERSION_":
             self.config["EXPORT_VERSION"] = evName[8:]
         elif evName == "EXPORT_FLATTENSKIN":
