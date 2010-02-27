@@ -1950,25 +1950,27 @@ class NifImport(NifImportExport):
     def import_material_uv_controller(self, b_material, n_geom):
         """Import UV controller data."""
         # search for the block
-        for n_ctrl in n_geom.get_controllers():
-            if isinstance(n_ctrl, NifFormat.NiUVController):
-                self.logger.info("importing UV controller")
-                b_channels = ("OfsX", "OfsY", "SizeX", "SizeY")
-                for b_channel, n_uvgroup in zip(b_channels,
-                                                n_ctrl.data.uv_groups):
-                    if n_uvgroup.keys:
-                        # create curve in material ipo
-                        b_ipo = self.get_material_ipo(b_material)
-                        b_curve = b_ipo.addCurve(b_channel)
-                        b_curve.interpolation = self.get_b_ipol_from_n_ipol(
-                            n_uvgroup.interpolation)
-                        b_curve.extend = self.get_extend_from_flags(n_ctrl.flags)
-                        for n_key in n_uvgroup.keys:
-                            if b_channel.startswith("Ofs"):
-                                # offsets are negated
-                                b_curve[1 + n_key.time * self.fps] = -n_key.value
-                            else:
-                                b_curve[1 + n_key.time * self.fps] = n_key.value
+        n_ctrl = self.find_controller(n_geom,
+                                      NifFormat.NiUVController)
+        if not(n_ctrl and n_ctrl.data):
+            return
+        self.logger.info("importing UV controller")
+        b_channels = ("OfsX", "OfsY", "SizeX", "SizeY")
+        for b_channel, n_uvgroup in zip(b_channels,
+                                        n_ctrl.data.uv_groups):
+            if n_uvgroup.keys:
+                # create curve in material ipo
+                b_ipo = self.get_material_ipo(b_material)
+                b_curve = b_ipo.addCurve(b_channel)
+                b_curve.interpolation = self.get_b_ipol_from_n_ipol(
+                    n_uvgroup.interpolation)
+                b_curve.extend = self.get_extend_from_flags(n_ctrl.flags)
+                for n_key in n_uvgroup.keys:
+                    if b_channel.startswith("Ofs"):
+                        # offsets are negated
+                        b_curve[1 + n_key.time * self.fps] = -n_key.value
+                    else:
+                        b_curve[1 + n_key.time * self.fps] = n_key.value
 
     def import_material_alpha_controller(self, b_material, n_geom):
         # find alpha controller
