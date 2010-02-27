@@ -3631,8 +3631,8 @@ class NifExport(NifImportExport):
         maxy = max([vert[1] for vert in obj.data.verts])
         maxz = max([vert[2] for vert in obj.data.verts])
 
-        if obj.rbShapeBoundType in ( Blender.Object.RBShapes['BOX'],
-                                    Blender.Object.RBShapes['SPHERE'] ):
+        if obj.rbShapeBoundType in (Blender.Object.RBShapes['BOX'],
+                                    Blender.Object.RBShapes['SPHERE']):
             # note: collision settings are taken from lowerclasschair01.nif
             coltf = self.create_block("bhkConvexTransformShape", obj)
             coltf.material = material
@@ -3692,9 +3692,7 @@ class NifExport(NifImportExport):
             return coltf
 
         elif obj.rbShapeBoundType == Blender.Object.RBShapes['CYLINDER']:
-            colcaps = self.create_block("bhkCapsuleShape", obj)
-            colcaps.material = material
-            # take average radius
+            # take average radius and calculate end points
             localradius = (maxx + maxy - minx - miny) / 4.0
             transform = Blender.Mathutils.Matrix(
                 *self.get_object_matrix(obj, 'localspace').as_list())
@@ -3706,6 +3704,18 @@ class NifExport(NifImportExport):
                                                 maxz - localradius ] )
             vert1 *= transform
             vert2 *= transform
+            # check if end points are far enough from each other
+            if (vert1 - vert2).length < self.EPSILON:
+                self.logger.warn(
+                    "End points of cylinder %s too close,"
+                    " converting to sphere." % obj)
+                # change type
+                obj.rbShapeBoundType = Blender.Object.RBShapes['SPHERE']
+                # instead of duplicating code, just run the function again
+                return self.export_collision_object(obj, layer, material)
+            # end points are ok, so export as capsule
+            colcaps = self.create_block("bhkCapsuleShape", obj)
+            colcaps.material = material
             colcaps.first_point.x = vert1[0] / 7.0
             colcaps.first_point.y = vert1[1] / 7.0
             colcaps.first_point.z = vert1[2] / 7.0
@@ -3721,7 +3731,6 @@ class NifExport(NifImportExport):
             colcaps.radius /= 7.0
             colcaps.radius_1 /= 7.0
             colcaps.radius_2 /= 7.0
-
             return colcaps
 
         elif obj.rbShapeBoundType == 5:
