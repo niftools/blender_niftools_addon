@@ -2027,7 +2027,7 @@ class NifImport(NifImportExport):
     def import_object_vis_controller(self, b_object, n_node):
         """Import vis controller for blender object."""
         n_vis_ctrl = self.find_controller(n_node, NifFormat.NiVisController)
-        if not n_vis_ctrl:
+        if not(n_vis_ctrl and n_vis_ctrl.data):
             return
         self.logger.info("importing vis controller")
         b_channel = "Layer"
