@@ -1977,7 +1977,7 @@ class NifImport(NifImportExport):
             return
         n_alphactrl = self.find_controller(n_matprop,
                                            NifFormat.NiAlphaController)
-        if not n_alphactrl:
+        if not(n_alphactrl and n_alphactrl.data):
             return
         self.logger.info("importing alpha controller")
         b_channel = "Alpha"
