@@ -1,4 +1,6 @@
 Version 2.5.3 (in development)
+* import and export NiLODNodes as empty with LODs as children and properties
+to set extents
 * added material color controller import and export (request and test files by
 Alphax)
 * added vis controller import and export (request and test files by Alphax)

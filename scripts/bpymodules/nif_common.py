@@ -188,6 +188,11 @@ class NifImportExport:
         # draw the progress bar
         Blender.Window.DrawProgressBar(self.progress_bar, message)
 
+    def get_b_children(self, b_obj):
+        """Return children of a blender object."""
+        return [child for child in Blender.Object.Get()
+                if child.parent == b_obj]
+
     def get_bone_name_for_blender(self, name):
         """Convert a bone name to a name that can be used by Blender: turns
         'Bip01 R xxx' into 'Bip01 xxx.R', and similar for L.
@@ -297,6 +302,14 @@ class NifImportExport:
             if isinstance(extra, extratype):
                 return extra
         return None
+
+    def isinstance_blender_object(self, b_obj):
+        """Unfortunately, isinstance(b_obj, Blender.Object.Object) does not
+        work because the Object class is not exposed in the API.
+        This method provides an alternative check.
+        """
+        # lame and slow, but functional
+        return b_obj in Blender.Object.Get()
 
 class NifConfig:
     """Class which handles configuration of nif import and export in Blender.

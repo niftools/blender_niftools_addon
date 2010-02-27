@@ -409,354 +409,276 @@ class NifImport(NifImportExport):
             # set parenting
             b_obj.makeParentDeform(self.selected_objects)
 
-    def import_branch(self, niBlock):
+
+    def append_armature_modifier(self, b_obj, b_armature):
+        """Append an armature modifier for the object."""
+        b_mod = b_obj.modifiers.append(
+            Blender.Modifier.Types.ARMATURE)
+        b_mod[Blender.Modifier.Settings.OBJECT] = b_armature
+        b_mod[Blender.Modifier.Settings.ENVELOPES] = False
+        b_mod[Blender.Modifier.Settings.VGROUPS] = True
+
+    def import_branch(self, niBlock, b_armature=None, n_armature=None):
         """Read the content of the current NIF tree branch to Blender
-        recursively."""
+        recursively.
+
+        @param niBlock: The nif block to import.
+        @param b_armature: The blender armature for the current branch.
+        @param n_armature: The corresponding nif block for the armature for
+            the current branch.
+        """
         self.msg_progress("Importing data")
-        if niBlock:
-            if isinstance(niBlock, NifFormat.NiTriBasedGeom) \
-               and self.IMPORT_SKELETON == 0:
-                # it's a shape node and we're not importing skeleton only
-                # (IMPORT_SKELETON == 1) and not importing skinned geometries
-                # only (IMPORT_SKELETON == 2)
-                self.logger.debug("Building mesh in import_branch")
-                return self.import_mesh(niBlock)
-            elif isinstance(niBlock, NifFormat.NiNode):
-                children = niBlock.children
-                # bounding box child?
-                bsbound = self.find_extra(niBlock, NifFormat.BSBound)
-                if (children
+        if not niBlock:
+            return None
+        elif (isinstance(niBlock, NifFormat.NiTriBasedGeom)
+              and self.IMPORT_SKELETON != 1):
+            # it's a shape node and we're not importing skeleton only
+            # (IMPORT_SKELETON == 1)
+            self.logger.debug("Building mesh in import_branch")
+            # note: transform matrix is set during import
+            b_obj = self.import_mesh(niBlock)
+            # skinning? add armature modifier
+            if niBlock.skin_instance:
+                self.append_armature_modifier(b_obj, b_armature)
+            return b_obj
+        elif isinstance(niBlock, NifFormat.NiNode):
+            children = niBlock.children
+            # bounding box child?
+            bsbound = self.find_extra(niBlock, NifFormat.BSBound)
+            if not (children
                     or niBlock.collision_object
                     or bsbound or niBlock.has_bounding_box
                     or self.IMPORT_EXTRANODES):
-                    # it's a parent node
-                    # import object + children
-                    if self.is_armature_root(niBlock):
-                        # all bones in the tree are also imported by
-                        # import_armature
-                        if self.IMPORT_SKELETON != 2:
-                            b_obj = self.import_armature(niBlock)
-                        else:
-                            b_obj = self.selected_objects[0]
-                            self.logger.info(
-                                "Merging nif tree '%s' with armature '%s'"
-                                % (niBlock.name, b_obj.name))
-                            if niBlock.name != b_obj.name:
-                                self.logger.warning(
-                                    "Taking nif block '%s' as armature '%s'"
-                                    " but names do not match"
-                                    % (niBlock.name, b_obj.name))
-                        # now also do the meshes
-                        self.import_armature_branch(b_obj, niBlock, niBlock)
-                    else:
-                        # is it a grouping node?
-                        geom_group = self.is_grouping_node(niBlock)
-                        # if importing animation, remove children that have
-                        # morph controllers from geometry group
-                        if self.IMPORT_ANIMATION:
-                            for child in geom_group:
-                                if self.find_controller(
-                                    child, NifFormat.NiGeomMorpherController):
-                                    geom_group.remove(child)
-                        # import geometry/empty + remaining children
-                        if (not geom_group
-                            or not self.IMPORT_COMBINESHAPES
-                            or len(geom_group) > 16):
-                            # no grouping node, or too many materials to
-                            # group the geometry into a single mesh
-                            # so import it as an empty
-                            if not niBlock.has_bounding_box:
-                                b_obj = self.import_empty(niBlock)
-                            else:
-                                b_obj = self.import_bounding_box(niBlock)
-                            geom_group = []
-                        else:
-                            # node groups geometries, so import it as a mesh
-                            self.logger.info(
-                                "Joining geometries %s to single object '%s'"
-                                %([child.name for child in geom_group],
-                                  niBlock.name))
-                            b_obj = None
-                            for child in geom_group:
-                                b_obj = self.import_mesh(child,
-                                                         group_mesh=b_obj,
-                                                         applytransform=True)
-                            b_obj.name = self.import_name(niBlock)
-                            # settings for collision node
-                            if isinstance(niBlock, NifFormat.RootCollisionNode):
-                                b_obj.setDrawType(
-                                    Blender.Object.DrawTypes['BOUNDBOX'])
-                                b_obj.setDrawMode(32) # wire
-                                b_obj.rbShapeBoundType = \
-                                    Blender.Object.RBShapes['POLYHEDERON']
-                                # also remove duplicate vertices
-                                b_mesh = b_obj.getData(mesh=True)
-                                numverts = len(b_mesh.verts)
-                                # 0.005 = 1/200
-                                numdel = b_mesh.remDoubles(0.005)
-                                if numdel:
-                                    self.logger.info(
-                                        "Removed %i duplicate vertices"
-                                        " (out of %i) from collision mesh"
-                                        % (numdel, numverts))
-                        # import children that aren't part of the geometry group
-                        b_children_list = []
-                        children = [ child for child in niBlock.children
-                                     if child not in geom_group ]
-                        for child in children:
-                            b_child_obj = self.import_branch(child)
-                            if b_child_obj:
-                                b_children_list.append(b_child_obj)
-                        b_obj.makeParent(b_children_list)
-
-                    # if not importing skeleton only
-                    if self.IMPORT_SKELETON != 1:
-                        # import collision objects
-                        if niBlock.collision_object:
-                            bhk_body = niBlock.collision_object.body
-                            if not isinstance(bhk_body, NifFormat.bhkRigidBody):
-                                self.logger.warning(
-                                    "Unsupported collision structure"
-                                    " under node %s" % niBlock.name)
-                            collision_objs = self.import_bhk_shape(bhk_body)
-                            # make parent
-                            b_obj.makeParent(collision_objs)
-                        
-                        # import bounding box
-                        if bsbound:
-                            b_obj.makeParent(
-                                [self.import_bounding_box(bsbound)])
-
-                    # track camera for billboard nodes
-                    if isinstance(niBlock, NifFormat.NiBillboardNode):
-                        # find camera object
-                        for obj in self.scene.objects:
-                            if obj.getType() == "Camera":
-                                break
-                        else:
-                            raise NifImportError(
-                                "Scene needs camera for billboard node"
-                                " (add a camera and try again)")
-                        # make b_obj track camera object
-                        #b_obj.setEuler(0,0,0)
-                        b_obj.constraints.append(
-                            Blender.Constraint.Type.TRACKTO)
+                # do not import unless the node is "interesting"
+                return None
+            # import object
+            if self.is_armature_root(niBlock):
+                # all bones in the tree are also imported by
+                # import_armature
+                if self.IMPORT_SKELETON != 2:
+                    b_obj = self.import_armature(niBlock)
+                    b_armature = b_obj
+                    n_armature = niBlock
+                else:
+                    b_obj = self.selected_objects[0]
+                    b_armature = b_obj
+                    n_armature = niBlock
+                    self.logger.info(
+                        "Merging nif tree '%s' with armature '%s'"
+                        % (niBlock.name, b_obj.name))
+                    if niBlock.name != b_obj.name:
                         self.logger.warning(
-                            "Constraint for billboard node on %s added"
-                            " but target not set due to transform bug"
-                            " in Blender. Set target to Camera manually."
-                            % b_obj)
-                        constr = b_obj.constraints[-1]
-                        constr[Blender.Constraint.Settings.TRACK] = Blender.Constraint.Settings.TRACKZ
-                        constr[Blender.Constraint.Settings.UP] = Blender.Constraint.Settings.UPY
-                        # yields transform bug!
-                        #constr[Blender.Constraint.Settings.TARGET] = obj
-
-                    # set object transform
-                    # this must be done after all children objects have been
-                    # parented to b_obj
-                    b_obj.setMatrix(self.import_matrix(niBlock))
-
-                    # import the animations
-                    if self.IMPORT_ANIMATION:
-                        self.set_animation(niBlock, b_obj)
-                        # import the extras
-                        self.import_text_keys(niBlock)
-                        # import vis controller
-                        self.import_object_vis_controller(
-                            b_object=b_obj, n_node=niBlock)
-
-                    return b_obj
-            # all else is currently discarded
-            return None
-
-    def import_armature_branch(
-        self, b_armature, niArmature, niBlock, group_mesh = None):
-        """Reads the content of the current NIF tree branch to Blender
-        recursively, as meshes parented to a given armature or parented
-        to the closest bone in the armature. Note that
-        niArmature must have been imported previously as an armature, along
-        with all its bones. This function only imports meshes and armature
-        ninodes.
-
-        If this imports a mesh, then it returns the a nif block and a mesh
-        object. The nif block is the one relative to which the mesh transform
-        is calculated (so the mesh should be parented to the blender object
-        corresponding to this block by the caller). It corresponds either to
-        a Blender bone or to a Blender armature."""
-        # check if the block is non-null
-        if not niBlock:
-            return None, None
-        # get the block that is considered as parent of this block within this
-        # branch; this is a block corresponding to a bone in Blender
-        # if niBlock is a bone, then this is the branch parent
-        if self.is_bone(niBlock):
-            branch_parent = niBlock
-        # otherwise, find closest bone in this armature
-        else:
-            branch_parent = self.get_closest_bone(niBlock, skelroot = niArmature)
-        # no bone parent, so then simply take nif block of armature object as
-        # parent
-        if not branch_parent:
-            branch_parent = niArmature
-        # is it a mesh?
-        if isinstance(niBlock, NifFormat.NiTriBasedGeom) \
-           and self.IMPORT_SKELETON != 1:
-
-            self.logger.debug("Building mesh %s in import_armature_branch" %
-                              niBlock.name)
-            # apply transform relative to the branch parent
-            return branch_parent, self.import_mesh(niBlock,
-                                                   group_mesh=group_mesh,
-                                                   applytransform=True,
-                                                   relative_to=branch_parent)
-        # is it another armature?
-        elif self.is_armature_root(niBlock) and niBlock != niArmature:
-            # an armature parented to this armature
-            fb_arm = self.import_armature(niBlock)
-            # import the armature branch
-            self.import_armature_branch(fb_arm, niBlock, niBlock)
-            return branch_parent, fb_arm # the matrix will be set by the caller
-        # is it a NiNode in the niArmature tree (possibly niArmature itself,
-        # on first call)?
-        elif isinstance(niBlock, NifFormat.NiNode):
-            # import children
-            if niBlock.children:
-                # check if geometries should be merged on import
-                node_name = niBlock.name
+                            "Taking nif block '%s' as armature '%s'"
+                            " but names do not match"
+                            % (niBlock.name, b_obj.name))
+                # armatures cannot group geometries into a single mesh
+                geom_group = []
+            elif self.is_bone(niBlock):
+                # bones have already been imported during import_armature
+                b_obj = b_armature.data.bones[self.names[niBlock]]
+                # bones cannot group geometries into a single mesh
+                geom_group = []
+            else:
+                # is it a grouping node?
                 geom_group = self.is_grouping_node(niBlock)
-                geom_other = [ child for child in niBlock.children
-                               if not child in geom_group ]
-                b_objects = [] # list of (nif block, blender object) pairs
-                # import grouped geometries
-                if (geom_group
-                    and self.IMPORT_COMBINESHAPES
-                    and self.IMPORT_SKELETON != 1):
+                # if importing animation, remove children that have
+                # morph controllers from geometry group
+                if self.IMPORT_ANIMATION:
+                    for child in geom_group:
+                        if self.find_controller(
+                            child, NifFormat.NiGeomMorpherController):
+                            geom_group.remove(child)
+                # import geometry/empty
+                if (not geom_group
+                    or not self.IMPORT_COMBINESHAPES
+                    or len(geom_group) > 16):
+                    # no grouping node, or too many materials to
+                    # group the geometry into a single mesh
+                    # so import it as an empty
+                    if not niBlock.has_bounding_box:
+                        b_obj = self.import_empty(niBlock)
+                    else:
+                        b_obj = self.import_bounding_box(niBlock)
+                    geom_group = []
+                else:
+                    # node groups geometries, so import it as a mesh
                     self.logger.info(
                         "Joining geometries %s to single object '%s'"
-                        %([child.name for child in geom_group], node_name))
-                    b_mesh = None
+                        %([child.name for child in geom_group],
+                          niBlock.name))
+                    b_obj = None
                     for child in geom_group:
-                        b_mesh_branch_parent, b_mesh = self.import_armature_branch(
-                            b_armature, niArmature, child, group_mesh = b_mesh)
-                        assert(b_mesh_branch_parent == branch_parent) # DEBUG
-                    if b_mesh:
-                        b_mesh.name = self.import_name(niBlock)
-                        b_objects.append((niBlock, branch_parent, b_mesh))
-                # import other objects
-                for child in geom_other:
-                    b_obj_branch_parent, b_obj = self.import_armature_branch(
-                        b_armature, niArmature, child, group_mesh = None)
-                    if b_obj:
-                        b_objects.append((child, b_obj_branch_parent, b_obj))
-                # fix transform and parentship
-                for child, b_obj_branch_parent, b_obj in b_objects:
-                    # note, b_obj is either a mesh or an armature
-                    # check if it is parented to a bone or not
-                    if b_obj_branch_parent is not niArmature:
-                        # object was parented to a bone
+                        b_obj = self.import_mesh(child,
+                                                 group_mesh=b_obj,
+                                                 applytransform=True)
+                    b_obj.name = self.import_name(niBlock)
+                    # skinning? add armature modifier
+                    if any(child.skin_instance
+                           for child in geom_group):
+                        self.append_armature_modifier(b_obj, b_armature)
+                    # settings for collision node
+                    if isinstance(niBlock, NifFormat.RootCollisionNode):
+                        b_obj.setDrawType(
+                            Blender.Object.DrawTypes['BOUNDBOX'])
+                        b_obj.setDrawMode(32) # wire
+                        b_obj.rbShapeBoundType = \
+                            Blender.Object.RBShapes['POLYHEDERON']
+                        # also remove duplicate vertices
+                        b_mesh = b_obj.getData(mesh=True)
+                        numverts = len(b_mesh.verts)
+                        # 0.005 = 1/200
+                        numdel = b_mesh.remDoubles(0.005)
+                        if numdel:
+                            self.logger.info(
+                                "Removed %i duplicate vertices"
+                                " (out of %i) from collision mesh"
+                                % (numdel, numverts))
 
-                        # get parent bone and its name
-                        b_par_bone_name = self.names[branch_parent]
-                        b_par_bone = b_armature.data.bones[b_par_bone_name]
-
-                        # get transform matrix of collision object;
-                        # note that this matrix is already relative to
-                        # branch_parent because the call to import_mesh has
-                        # relative_to = branch_parent
-                        b_obj_matrix = Blender.Mathutils.Matrix(
-                            b_obj.getMatrix())
-                        # fix transform
-                        # the bone has in the nif file an armature space transform
-                        # given by niBlock.get_transform(relative_to = niArmature)
-                        #
-                        # in detail:
-                        # a vertex in the collision object has global
-                        # coordinates
-                        #   v * Z * B
-                        # with v the vertex, Z the object transform
-                        # (currently b_obj_matrix)
-                        # and B the nif bone matrix
-
-                        # in Blender however a vertex has coordinates
-                        #   v * O * T * B'
-                        # with B' the Blender bone matrix
-                        # so we need that
-                        #   Z * B = O * T * B' or equivalently
-                        #   O = Z * B * B'^{-1} * T^{-1}
-                        #     = Z * X^{-1} * T^{-1}
-                        # since
-                        #   B' = X * B
-                        # with X = self.bones_extra_matrix[B]
-
-                        # post multiply Z with X^{-1}
-                        extra = Blender.Mathutils.Matrix(
-                            self.bones_extra_matrix[branch_parent])
-                        extra.invert()
-                        b_obj_matrix = b_obj_matrix * extra
-                        # cancel out the tail translation T
-                        # (the tail causes a translation along
-                        # the local Y axis)
-                        b_obj_matrix[3][1] -= b_par_bone.length
-                        # set the matrix
-                        b_obj.setMatrix(b_obj_matrix)
-
-                        # make it parent of the bone
-                        b_armature.makeParentBone(
-                            [b_obj], self.names[b_obj_branch_parent])
-                    else:
-                        # mesh is parented to the armature
-                        # the transform has already been applied
-                        # still need to make it parent of the armature
-                        # (if b_obj is an armature then this falls back to the
-                        # usual parenting)
-                        b_armature.makeParentDeform([b_obj])
+            # find children that aren't part of the geometry group
+            b_children_list = []
+            children = [child for child in niBlock.children
+                        if child not in geom_group]
+            for n_child in children:
+                b_child = self.import_branch(
+                    n_child, b_armature=b_armature, n_armature=n_armature)
+                if b_child:
+                    b_children_list.append((n_child, b_child))
+            object_children = [
+                (n_child, b_child) for (n_child, b_child) in b_children_list
+                if self.isinstance_blender_object(b_child)]
 
             # if not importing skeleton only
             if self.IMPORT_SKELETON != 1:
-                # import collisions (only bhkNiCollisionObjects for now)
-                if isinstance(niBlock.collision_object,
-                              NifFormat.bhkNiCollisionObject):
-                    # collision object parented to a bone
-                    # first import collision object
+                # import collision objects
+                if niBlock.collision_object:
                     bhk_body = niBlock.collision_object.body
                     if not isinstance(bhk_body, NifFormat.bhkRigidBody):
                         self.logger.warning(
-                            "Unsupported collision structure under node %s"
-                            % niBlock.name)
+                            "Unsupported collision structure"
+                            " under node %s" % niBlock.name)
                     collision_objs = self.import_bhk_shape(bhk_body)
-                    # get blender bone and its name
-                    # (TODO also cover case where niBlock != branch_parent)
-                    if niBlock != branch_parent:
-                        self.logger.warning(
-                            "Collision object has non-bone parent,"
-                            " this is not supported and transform errors"
-                            " may result")
-                    b_par_bone_name = self.names[branch_parent]
-                    b_par_bone = b_armature.data.bones[b_par_bone_name]
-                    for b_obj in collision_objs:
-                        # get transform matrix of collision object
-                        # this is relative to niBlock
-                        # (TODO fix so it's relative to branch_parent!)
-                        b_obj_matrix = b_obj.getMatrix()
-                        # fix transform, see explanation above
-                        #   O = Z * X^{-1} * T^{-1}
-                        extra = Blender.Mathutils.Matrix(
-                            self.bones_extra_matrix[branch_parent])
-                        extra.invert()
-                        b_obj_matrix = b_obj_matrix * extra
-                        b_obj_matrix[3][1] -= b_par_bone.length
-                        # set the matrix
-                        b_obj.setMatrix(b_obj_matrix)
-                        # make it parent of the bone
-                        b_armature.makeParentBone(
-                            [b_obj], self.names[niBlock])
+                    # register children for parentship
+                    object_children += [
+                        (bhk_body, b_child) for b_child in collision_objs]
+                
+                # import bounding box
+                if bsbound:
+                    object_children += [
+                        (bsbound, self.import_bounding_box(bsbound))]
 
-                ### import bounding box?
-                ### not supported within armature branch (no need so far)
 
-        # anything else: throw away
-        return None, None
+            # fix parentship
+            if self.isinstance_blender_object(b_obj):
+                # simple object parentship
+                b_obj.makeParent(
+                    [b_child for (n_child, b_child) in object_children])
+            elif isinstance(b_obj, Blender.Armature.Bone):
+                # bone parentship, is a bit more complicated
+                # go to rest position
+                b_armature.data.restPosition = True
+                # set up transforms
+                for n_child, b_child in object_children:
+                    # save transform
+                    matrix = Blender.Mathutils.Matrix(
+                        b_child.getMatrix('localspace'))
+                    # fix transform
+                    # the bone has in the nif file an armature space transform
+                    # given by niBlock.get_transform(relative_to=n_armature)
+                    #
+                    # in detail:
+                    # a vertex in the collision object has global
+                    # coordinates
+                    #   v * Z * B
+                    # with v the vertex, Z the object transform
+                    # (currently b_obj_matrix)
+                    # and B the nif bone matrix
+
+                    # in Blender however a vertex has coordinates
+                    #   v * O * T * B'
+                    # with B' the Blender bone matrix
+                    # so we need that
+                    #   Z * B = O * T * B' or equivalently
+                    #   O = Z * B * B'^{-1} * T^{-1}
+                    #     = Z * X^{-1} * T^{-1}
+                    # since
+                    #   B' = X * B
+                    # with X = self.bones_extra_matrix[B]
+
+                    # post multiply Z with X^{-1}
+                    extra = Blender.Mathutils.Matrix(
+                        self.bones_extra_matrix[niBlock])
+                    extra.invert()
+                    matrix = matrix * extra
+                    # cancel out the tail translation T
+                    # (the tail causes a translation along
+                    # the local Y axis)
+                    matrix[3][1] -= b_obj.length
+                    b_child.setMatrix(matrix)
+                    # parent child to the bone
+                    b_armature.makeParentBone(
+                        [b_child], b_obj.name)
+                b_armature.data.restPosition = False
+            else:
+                raise RuntimeError(
+                    "Unexpected object type %s" % b_obj.__class__)
+
+            # track camera for billboard nodes
+            if isinstance(niBlock, NifFormat.NiBillboardNode):
+                # find camera object
+                for obj in self.scene.objects:
+                    if obj.getType() == "Camera":
+                        break
+                else:
+                    raise NifImportError(
+                        "Scene needs camera for billboard node"
+                        " (add a camera and try again)")
+                # make b_obj track camera object
+                #b_obj.setEuler(0,0,0)
+                b_obj.constraints.append(
+                    Blender.Constraint.Type.TRACKTO)
+                self.logger.warning(
+                    "Constraint for billboard node on %s added"
+                    " but target not set due to transform bug"
+                    " in Blender. Set target to Camera manually."
+                    % b_obj)
+                constr = b_obj.constraints[-1]
+                constr[Blender.Constraint.Settings.TRACK] = Blender.Constraint.Settings.TRACKZ
+                constr[Blender.Constraint.Settings.UP] = Blender.Constraint.Settings.UPY
+                # yields transform bug!
+                #constr[Blender.Constraint.Settings.TARGET] = obj
+
+            # set object transform
+            # this must be done after all children objects have been
+            # parented to b_obj
+            if self.isinstance_blender_object(b_obj):
+                # note: bones already have their matrix set
+                b_obj.setMatrix(self.import_matrix(niBlock))
+
+                # import the animations
+                if self.IMPORT_ANIMATION:
+                    self.set_animation(niBlock, b_obj)
+                    # import the extras
+                    self.import_text_keys(niBlock)
+                    # import vis controller
+                    self.import_object_vis_controller(
+                        b_object=b_obj, n_node=niBlock)
+
+            # import extra node data, such as node type
+            # (other types should be added here too)
+            if isinstance(niBlock, NifFormat.NiLODNode):
+                b_obj.addProperty("Type", "NiLODNode", "STRING")
+                # import lod data
+                range_data = niBlock.lod_level_data
+                for lod_level, (n_child, b_child) in zip(
+                    range_data.lod_levels, b_children_list):
+                    b_child.addProperty(
+                        "Near Extent", lod_level.near_extent, "FLOAT")
+                    b_child.addProperty(
+                        "Far Extent", lod_level.far_extent, "FLOAT")
+
+            return b_obj
+        # all else is currently discarded
+        return None
 
     def import_name(self, niBlock, max_length=22, postfix=""):
         """Get unique name for an object, preserving existing names.
@@ -2836,6 +2758,9 @@ class NifImport(NifImportExport):
                             continue
                         if not isinstance(bone, NifFormat.NiNode):
                             continue
+                        if isinstance(bone, NifFormat.NiLODNode):
+                            # LOD nodes are never bones
+                            continue
                         if self.is_grouping_node(bone):
                             continue
                         if bone not in self.armatures[skelroot]:
@@ -2878,7 +2803,8 @@ class NifImport(NifImportExport):
 
     def is_bone(self, niBlock):
         """Tests a NiNode to see if it's a bone."""
-        if not niBlock : return False
+        if not niBlock :
+            return False
         for bones in self.armatures.values():
             if niBlock in bones:
                 return True
@@ -2926,7 +2852,13 @@ class NifImport(NifImportExport):
         if not self.IMPORT_COMBINESHAPES:
             return []
         # check that it is a ninode
-        if not isinstance(niBlock, NifFormat.NiNode): return []
+        if not isinstance(niBlock, NifFormat.NiNode):
+            return []
+        # NiLODNodes are never grouping nodes
+        # (this ensures that they are imported as empties, with LODs
+        # as child meshes)
+        if isinstance(niBlock, NifFormat.NiLODNode):
+            return []
         # root collision node: join everything
         if isinstance(niBlock, NifFormat.RootCollisionNode):
             return [ child for child in niBlock.children if
