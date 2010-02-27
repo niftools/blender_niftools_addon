@@ -8,6 +8,8 @@ Alphax)
 * improved Fallout 3 skeleton.nif import
 * fixed bhkCapsuleShape export with identical points by converting it to a
 bhkSphereShape (reported by ghostwalker71)
+* warn if mopp is exported for non-static objects, as these may not function
+properly in-game (reported by mc.crab)
 
 Version 2.5.2 (20 Feb 2010)
 * configurable game paths for test suite

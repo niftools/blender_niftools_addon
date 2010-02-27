@@ -645,6 +645,13 @@ class NifExport(NifImportExport):
                        #print "=== DEBUG: MOPP TREE ==="
                        #block.parse_mopp(verbose = True)
                        #print "=== END OF MOPP TREE ==="
+                       # warn about mopps on non-static objects
+                       if any(sub_shape.layer != 1
+                              for sub_shape in block.shape.sub_shapes):
+                           self.logger.warn(
+                               "Mopps for non-static objects may not function"
+                               " correctly in-game. You may wish to use"
+                               " simple primitives for collision.")
 
             # delete original scene root if a scene root object was already
             # defined
