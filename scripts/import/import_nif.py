@@ -2661,10 +2661,10 @@ class NifImport(NifImportExport):
     def mark_armatures_bones(self, niBlock):
         """Mark armatures and bones by peeking into NiSkinInstance blocks."""
         # case where we import skeleton only,
-        # or importing an Oblivion skeleton:
+        # or importing an Oblivion or Fallout 3 skeleton:
         # do all NiNode's as bones
         if self.IMPORT_SKELETON == 1 or (
-            self.version == 0x14000005 and
+            self.version in (0x14000005, 0x14020007) and
             self.filebase.lower() in ('skeleton', 'skeletonbeast')):
             
             if not isinstance(niBlock, NifFormat.NiNode):
