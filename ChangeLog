@@ -2,6 +2,7 @@ Version 2.5.3 (in development)
 * added material color controller import and export (request and test files by
 Alphax)
 * added vis controller import and export (request and test files by Alphax)
+* fixed some controller imports in case controller block had no data
 
 Version 2.5.2 (20 Feb 2010)
 * configurable game paths for test suite
