@@ -139,7 +139,8 @@ class TestSuite:
             return result
 
     def make_fo3_fullbody(self):
-        if os.path.exists("test/nif/fo3/_fullbody.nif"):
+        if (os.path.exists("test/nif/fo3/_fullbody.nif")
+            and os.path.exists("test/nif/fo3/skeleton.nif")):
             # to save time, only create the full body nif if it does
             # not yet exist
             return
@@ -169,23 +170,26 @@ class TestSuite:
         # send all bones to their bind position
         self.logger.info("Sending bones to bind position")
         skeleton.roots[0].send_bones_to_bind_position()
-        #for block in skeleton.roots[0].tree():
-        #    if isinstance(block, NifFormat.NiGeometry):
-        #        block.send_bones_to_bind_position()
-        # remove non-ninode children
-        #logger.info("Removing non-NiNode children")
-        #for block in skeleton.roots[0].tree():
-        #    block.set_children([child
-        #                       for child in block.get_children()
-        #                       if isinstance(child, NifFormat.NiNode)])
-        #    block.set_extra_datas([])
-        #    block.set_properties([])
-        #    block.controller = None
-        #    block.collision_object = None
-
         # write result
         self.logger.info("Writing fullbody.nif")
         with open("test/nif/fo3/_fullbody.nif", "wb") as stream:
+            skeleton.write(stream)
+        # create fixed skeleton.nif
+        for block in skeleton.roots[0].tree():
+            if isinstance(block, NifFormat.NiGeometry):
+                block.send_bones_to_bind_position()
+        # remove non-ninode children
+        self.logger.info("Removing non-NiNode children")
+        for block in skeleton.roots[0].tree():
+            block.set_children([child
+                               for child in block.get_children()
+                               if isinstance(child, NifFormat.NiNode)])
+            block.set_extra_datas([])
+            block.set_properties([])
+            block.controller = None
+            block.collision_object = None
+        self.logger.info("Writing skeleton.nif")
+        with open("test/nif/fo3/skeleton.nif", "wb") as stream:
             skeleton.write(stream)
 
     def assert_equal(self, val1, val2):

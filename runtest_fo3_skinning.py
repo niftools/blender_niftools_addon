@@ -42,16 +42,24 @@ from pyffi.spells.nif import NifToaster
 
 class SkinningTestSuite(TestSuite):
     def run(self):
-        # fallout 3 body
-        self.make_fo3_fullbody()
-        self.test(
-            filename = 'test/nif/fo3/_fullbody.nif',
-            config = dict(IMPORT_SKELETON=1,
-                          IMPORT_ANIMATION=False))
         # fo3 body path
         fo3_male = os.path.join(
             self.config.get("path", "fallout3"),
             "meshes", "characters", "_male")
+        # get skeleton
+        # the skeleton.nif won't work because the bones
+        # are not in bind position!!!
+        #self.test(
+        #    filename = os.path.join(fo3_male, "skeleton.nif"),
+        #    config = dict(IMPORT_SKELETON=1,
+        #                  IMPORT_ANIMATION=False))
+        # instead, create a full body nif and import that as skeleton
+        self.make_fo3_fullbody()
+        self.test(
+            filename = 'test/nif/fo3/skeleton.nif',
+            config = dict(IMPORT_SKELETON=1,
+                          IMPORT_ANIMATION=False))
+        # fallout 3 body
         self.test(
             filename = os.path.join(fo3_male, "femaleupperbody.nif"),
             config = dict(
