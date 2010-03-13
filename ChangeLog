@@ -10,6 +10,8 @@ Alphax)
 bhkSphereShape (reported by ghostwalker71)
 * warn if mopp is exported for non-static objects, as these may not function
 properly in-game (reported by mc.crab)
+* added option to use NiBSAnimationNode when exporting animated branches for
+Morrowind (suggested by TheDaywalker)
 
 Version 2.5.2 (20 Feb 2010)
 * configurable game paths for test suite

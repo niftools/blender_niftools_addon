@@ -435,10 +435,27 @@ class NifExport(NifImportExport):
                     if isinstance(block, NifFormat.NiKeyframeController):
                         has_keyframecontrollers = True
                         break
-                if not has_keyframecontrollers:
+                if ((not has_keyframecontrollers)
+                    and (not self.EXPORT_MW_BS_ANIMATION_NODE)):
                     self.logger.info("Defining dummy keyframe controller")
                     # add a trivial keyframe controller on the scene root
                     self.export_keyframes(None, 'localspace', root_block)
+            if (self.EXPORT_MW_BS_ANIMATION_NODE
+                and self.EXPORT_VERSION == "Morrowind"):
+                for block in self.blocks:
+                    if isinstance(block, NifFormat.NiNode):
+                        # if any of the shape children has a controller
+                        # or if the ninode has a controller
+                        # convert its type
+                        if block.controller or any(
+                            child.controller
+                            for child in block.children
+                            if isinstance(child, NifFormat.NiGeometry)):
+                            new_block = NifFormat.NiBSAnimationNode().deepcopy(
+                                block)
+                            root_block.replace_global_node(block, new_block)
+                            if root_block is block:
+                                root_block = new_block
 
             # oblivion skeleton export: check that all bones have a
             # transform controller and transform interpolator
