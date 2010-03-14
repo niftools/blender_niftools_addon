@@ -453,6 +453,8 @@ class NifExport(NifImportExport):
                             if isinstance(child, NifFormat.NiGeometry)):
                             new_block = NifFormat.NiBSAnimationNode().deepcopy(
                                 block)
+                            # have to change flags to 42 to make it work
+                            new_block.flags = 42
                             root_block.replace_global_node(block, new_block)
                             if root_block is block:
                                 root_block = new_block
