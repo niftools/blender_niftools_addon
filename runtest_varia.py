@@ -411,6 +411,7 @@ class VariaTestSuite(TestSuite):
         # check that nif was correctly exported
         check_uv_controller(nif)
         assert(isinstance(nif.root_blocks[0], NifFormat.NiBSAnimationNode))
+        assert(nif.root_blocks[0].flags == 42)
 
     def test_anim_buffer_out_of_range(self):
         # create animation keys
