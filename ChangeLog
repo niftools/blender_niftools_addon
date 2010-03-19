@@ -1,4 +1,4 @@
-Version 2.5.3 (in development)
+Version 2.5.3 (19 Mar 2010)
 * import and export NiLODNodes as empty with LODs as children and properties
 to set extents
 * added material color controller import and export (request and test files by
