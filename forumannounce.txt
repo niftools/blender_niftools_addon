@@ -24,7 +24,7 @@ This version of the scripts should keep working with newer versions of [url=http
 
 On Windows, use 32-bit versions of Blender and Python. (The 64-bit version of Python lacks xml parsing which is essential for the scripts to work.)
 
-Found a bug? Post it on the [url=https://sourceforge.net/tracker/?atid=776343&group_id=149157]tracker[/url]. Fixed a bug? Fork the [url="http://github.com/amorilia/blender_nif_scripts"]repository[/url].
+Found a bug? Post it on the [url=https://sourceforge.net/tracker/?atid=776343&group_id=149157]tracker[/url]. Fixed a bug? Fork the [url=http://github.com/amorilia/blender_nif_scripts]repository[/url].
 
 Enjoy!
 Amorilia
