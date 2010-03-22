@@ -1071,7 +1071,9 @@ class NifExport(NifImportExport):
                         break
                     # does geom have priority value in NULL constraint?
                     elif constr.name[:9].lower() == "priority:":
-                        self.bone_priorities[ob.name] = int(constr.name[9:])
+                        self.bone_priorities[
+                            self.get_bone_name_for_nif(ob.name)
+                            ] = int(constr.name[9:])
                 if is_collision:
                     self.export_collision(ob, parent_block)
                     return None # done; stop here
@@ -1092,7 +1094,9 @@ class NifExport(NifImportExport):
                 # does node have priority value in NULL constraint?
                 for constr in ob.constraints:
                     if constr.name[:9].lower() == "priority:":
-                        self.bone_priorities[ob.name] = int(constr.name[9:])
+                        self.bone_priorities[
+                            self.get_bone_name_for_nif(ob.name)
+                            ] = int(constr.name[9:])
 
         # set transform on trishapes rather than on NiNode for skinned meshes
         # this fixes an issue with clothing slots
@@ -3059,7 +3063,9 @@ class NifExport(NifImportExport):
             for constr in arm.getPose().bones[bone.name].constraints:
                 # yes! store it for reference when creating the kf file
                 if constr.name[:9].lower() == "priority:":
-                    self.bone_priorities[bone.name] = int(constr.name[9:])
+                    self.bone_priorities[
+                        self.get_bone_name_for_nif(bone.name)
+                        ] = int(constr.name[9:])
 
         # now fix the linkage between the blocks
         for bone in bones.values():

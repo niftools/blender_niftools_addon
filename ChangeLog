@@ -1,4 +1,5 @@
 Version 2.5.4 (in development)
+* fixed bone priority export for L and R bones (reported by Kilza)
 
 Version 2.5.3 (19 Mar 2010)
 * import and export NiLODNodes as empty with LODs as children and properties
