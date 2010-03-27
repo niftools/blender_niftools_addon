@@ -1248,26 +1248,41 @@ class NifExport(NifImportExport):
 
         # determine cycle mode for this controller
         # this is stored in the blender ipo curves
+        # while we're at it, we also determine the
+        # start and stop frames
         extend = None
         if ipo:
+            start_frame = +1000000
+            stop_frame = -1000000
             for curve in ipo:
+                # get cycle mode
                 if extend is None:
                     extend = curve.extend
                 elif extend != curve.extend:
                     self.logger.warn(
                         "Inconsistent extend type in %s, will use %s."
                         % (ipo, extend))
+                # get start and stop frames
+                start_frame = min(
+                    start_frame,
+                    min(btriple.pt[0] for btriple in curve.bezierPoints))
+                stop_frame = max(
+                    stop_frame,
+                    max(btriple.pt[0] for btriple in curve.bezierPoints))
         else:
             # dummy ipo
+            # default extend, start, and end
             extend = Blender.IpoCurve.ExtendTypes.CYCLIC
+            start_frame = self.fstart
+            stop_frame = self.fend
 
         # fill in the non-trivial values
         kfc.flags = 8 # active
         kfc.flags |= self.get_flags_from_extend(extend)
         kfc.frequency = 1.0
         kfc.phase = 0.0
-        kfc.start_time = (self.fstart - 1) * self.fspeed
-        kfc.stop_time = (self.fend - self.fstart) * self.fspeed
+        kfc.start_time = (start_frame - 1) * self.fspeed
+        kfc.stop_time = (stop_frame - 1) * self.fspeed
 
         if self.EXPORT_ANIMATION == 1:
             # keyframe data is not present in geometry files
