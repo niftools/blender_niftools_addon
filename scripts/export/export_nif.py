@@ -2716,51 +2716,48 @@ class NifExport(NifImportExport):
                             # (needs to be there even if there is no curve)
                             interpol = self.create_block("NiFloatInterpolator")
                             interpol.value = 0
-                            interpol.data = self.create_block("NiFloatData", curve)
                             morphctrl.interpolators[keyblocknum] = interpol
                             # fallout 3 stores interpolators inside the
                             # interpolator_weights block
                             morphctrl.interpolator_weights[keyblocknum].interpolator = interpol
-                            floatdata = interpol.data.data
 
                             # geometry only export has no float data
-                            # to do this conveniently, we just wipe the link...
-                            if self.EXPORT_ANIMATION == 1:
-                                interpol.data = None
+                            # also skip keys that have no curve (such as base key)
+                            if self.EXPORT_ANIMATION == 1 or not curve:
+                                continue
 
-                            # base key has no curve
-                            # but all other keys should have one
-                            if curve:
-                                # note: we set data on morph for older nifs
-                                # and on floatdata for newer nifs
-                                # of course only one of these will be actually
-                                # written to the file
-                                self.logger.info("Exporting morph %s: curve"
-                                                 % keyblock.name)
-                                if curve.getExtrapolation() == "Constant":
-                                    ctrlFlags = 0x000c
-                                elif curve.getExtrapolation() == "Cyclic":
-                                    ctrlFlags = 0x0008
-                                morph.interpolation = NifFormat.KeyType.LINEAR_KEY
-                                morph.num_keys = len(curve.getPoints())
-                                morph.keys.update_size()
-                                floatdata.interpolation = NifFormat.KeyType.LINEAR_KEY
-                                floatdata.num_keys = len(curve.getPoints())
-                                floatdata.keys.update_size()
-                                for i, btriple in enumerate(curve.getPoints()):
-                                    knot = btriple.getPoints()
-                                    morph.keys[i].arg = morph.interpolation
-                                    morph.keys[i].time = (knot[0] - self.fstart) * self.fspeed
-                                    morph.keys[i].value = curve.evaluate( knot[0] )
-                                    #morph.keys[i].forwardTangent = 0.0 # ?
-                                    #morph.keys[i].backwardTangent = 0.0 # ?
-                                    floatdata.keys[i].arg = morph.interpolation
-                                    floatdata.keys[i].time = (knot[0] - self.fstart) * self.fspeed
-                                    floatdata.keys[i].value = curve.evaluate( knot[0] )
-                                    #floatdata.keys[i].forwardTangent = 0.0 # ?
-                                    #floatdata.keys[i].backwardTangent = 0.0 # ?
-                                    ctrlStart = min(ctrlStart, morph.keys[i].time)
-                                    ctrlStop  = max(ctrlStop,  morph.keys[i].time)
+                            # note: we set data on morph for older nifs
+                            # and on floatdata for newer nifs
+                            # of course only one of these will be actually
+                            # written to the file
+                            self.logger.info("Exporting morph %s: curve"
+                                             % keyblock.name)
+                            interpol.data = self.create_block("NiFloatData", curve)
+                            floatdata = interpol.data.data
+                            if curve.getExtrapolation() == "Constant":
+                                ctrlFlags = 0x000c
+                            elif curve.getExtrapolation() == "Cyclic":
+                                ctrlFlags = 0x0008
+                            morph.interpolation = NifFormat.KeyType.LINEAR_KEY
+                            morph.num_keys = len(curve.getPoints())
+                            morph.keys.update_size()
+                            floatdata.interpolation = NifFormat.KeyType.LINEAR_KEY
+                            floatdata.num_keys = len(curve.getPoints())
+                            floatdata.keys.update_size()
+                            for i, btriple in enumerate(curve.getPoints()):
+                                knot = btriple.getPoints()
+                                morph.keys[i].arg = morph.interpolation
+                                morph.keys[i].time = (knot[0] - self.fstart) * self.fspeed
+                                morph.keys[i].value = curve.evaluate( knot[0] )
+                                #morph.keys[i].forwardTangent = 0.0 # ?
+                                #morph.keys[i].backwardTangent = 0.0 # ?
+                                floatdata.keys[i].arg = floatdata.interpolation
+                                floatdata.keys[i].time = (knot[0] - self.fstart) * self.fspeed
+                                floatdata.keys[i].value = curve.evaluate( knot[0] )
+                                #floatdata.keys[i].forwardTangent = 0.0 # ?
+                                #floatdata.keys[i].backwardTangent = 0.0 # ?
+                                ctrlStart = min(ctrlStart, morph.keys[i].time)
+                                ctrlStop  = max(ctrlStop,  morph.keys[i].time)
                         morphctrl.flags = ctrlFlags
                         morphctrl.start_time = ctrlStart
                         morphctrl.stop_time = ctrlStop

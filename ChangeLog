@@ -1,6 +1,7 @@
 Version 2.5.4 (in development)
 * fixed bone priority export for L and R bones (reported by Kilza)
 * fixed morph base key name import (reported by LHammonds)
+* fixed morph base key to have no float data (reported by LHammonds)
 
 Version 2.5.3 (19 Mar 2010)
 * import and export NiLODNodes as empty with LODs as children and properties
