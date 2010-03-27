@@ -2776,6 +2776,8 @@ class NifExport(NifImportExport):
                         morphctrl.flags = ctrlFlags
                         morphctrl.start_time = ctrlStart
                         morphctrl.stop_time = ctrlStop
+                        # fix data consistency type
+                        tridata.consistency_flags = NifFormat.ConsistencyType.CT_VOLATILE
 
 
 
