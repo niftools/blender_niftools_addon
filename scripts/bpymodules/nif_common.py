@@ -1,7 +1,7 @@
 """Common functions for the Blender nif import and export scripts."""
 
-__version__ = "2.5.3"
-__requiredpyffiversion__ = "2.1.0"
+__version__ = "2.5.4"
+__requiredpyffiversion__ = "2.1.4"
 __requiredblenderversion__ = "250"
 
 # ***** BEGIN LICENSE BLOCK *****
@@ -549,6 +549,7 @@ class NifConfig:
         EXPORT_OPTIMIZE_MATERIALS = True,
         IMPORT_COMBINESHAPES = True,
         EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES = False,
+        EXPORT_MW_BS_ANIMATION_NODE = False,
         )
 
     def __init__(self):
@@ -1280,6 +1281,10 @@ class NifConfig:
                 text = "Export nif + xnif + kf",
                 event_name = "EXPORT_MW_NIFXNIFKF")
 
+            self.draw_toggle(
+                text = "Use BSAnimationNode",
+                event_name = "EXPORT_MW_BS_ANIMATION_NODE")
+
         # export-only options for civ4 and rrt
         if (self.target == self.TARGET_EXPORT
             and (self.config["EXPORT_VERSION"]
@@ -1493,6 +1498,7 @@ class NifConfig:
             self.config["EXPORT_PADBONES"] = False
             self.config["EXPORT_OB_SOLID"] = True
             self.config["EXPORT_MW_NIFXNIFKF"] = False
+            self.config["EXPORT_MW_BS_ANIMATION_NODE"] = False
             self.config["EXPORT_EXTRA_SHADER_TEXTURES"] = True
             # set default settings per game
             if self.config["EXPORT_VERSION"] == "Morrowind":
@@ -1695,6 +1701,8 @@ class NifConfig:
             self.config["EXPORT_FO3_BODYPARTS"] = not self.config["EXPORT_FO3_BODYPARTS"]
         elif evName == "EXPORT_MW_NIFXNIFKF":
             self.config["EXPORT_MW_NIFXNIFKF"] = not self.config["EXPORT_MW_NIFXNIFKF"]
+        elif evName == "EXPORT_MW_BS_ANIMATION_NODE":
+            self.config["EXPORT_MW_BS_ANIMATION_NODE"] = not self.config["EXPORT_MW_BS_ANIMATION_NODE"]
         elif evName == "EXPORT_EXTRA_SHADER_TEXTURES":
             self.config["EXPORT_EXTRA_SHADER_TEXTURES"] = not self.config["EXPORT_EXTRA_SHADER_TEXTURES"]
         elif evName == "EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES":

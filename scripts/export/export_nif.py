@@ -432,10 +432,29 @@ class NifExport(NifImportExport):
                     if isinstance(block, NifFormat.NiKeyframeController):
                         has_keyframecontrollers = True
                         break
-                if not has_keyframecontrollers:
+                if ((not has_keyframecontrollers)
+                    and (not self.EXPORT_MW_BS_ANIMATION_NODE)):
                     self.logger.info("Defining dummy keyframe controller")
                     # add a trivial keyframe controller on the scene root
                     self.export_keyframes(None, 'localspace', root_block)
+            if (self.EXPORT_MW_BS_ANIMATION_NODE
+                and self.EXPORT_VERSION == "Morrowind"):
+                for block in self.blocks:
+                    if isinstance(block, NifFormat.NiNode):
+                        # if any of the shape children has a controller
+                        # or if the ninode has a controller
+                        # convert its type
+                        if block.controller or any(
+                            child.controller
+                            for child in block.children
+                            if isinstance(child, NifFormat.NiGeometry)):
+                            new_block = NifFormat.NiBSAnimationNode().deepcopy(
+                                block)
+                            # have to change flags to 42 to make it work
+                            new_block.flags = 42
+                            root_block.replace_global_node(block, new_block)
+                            if root_block is block:
+                                root_block = new_block
 
             # oblivion skeleton export: check that all bones have a
             # transform controller and transform interpolator
@@ -1049,7 +1068,9 @@ class NifExport(NifImportExport):
                         break
                     # does geom have priority value in NULL constraint?
                     elif constr.name[:9].lower() == "priority:":
-                        self.bone_priorities[ob.name] = int(constr.name[9:])
+                        self.bone_priorities[
+                            self.get_bone_name_for_nif(ob.name)
+                            ] = int(constr.name[9:])
                 if is_collision:
                     self.export_collision(ob, parent_block)
                     return None # done; stop here
@@ -1070,7 +1091,9 @@ class NifExport(NifImportExport):
                 # does node have priority value in NULL constraint?
                 for constr in ob.constraints:
                     if constr.name[:9].lower() == "priority:":
-                        self.bone_priorities[ob.name] = int(constr.name[9:])
+                        self.bone_priorities[
+                            self.get_bone_name_for_nif(ob.name)
+                            ] = int(constr.name[9:])
 
         # set transform on trishapes rather than on NiNode for skinned meshes
         # this fixes an issue with clothing slots
@@ -1222,26 +1245,41 @@ class NifExport(NifImportExport):
 
         # determine cycle mode for this controller
         # this is stored in the blender ipo curves
+        # while we're at it, we also determine the
+        # start and stop frames
         extend = None
         if ipo:
+            start_frame = +1000000
+            stop_frame = -1000000
             for curve in ipo:
+                # get cycle mode
                 if extend is None:
                     extend = curve.extend
                 elif extend != curve.extend:
                     self.logger.warn(
                         "Inconsistent extend type in %s, will use %s."
                         % (ipo, extend))
+                # get start and stop frames
+                start_frame = min(
+                    start_frame,
+                    min(btriple.pt[0] for btriple in curve.bezierPoints))
+                stop_frame = max(
+                    stop_frame,
+                    max(btriple.pt[0] for btriple in curve.bezierPoints))
         else:
             # dummy ipo
+            # default extend, start, and end
             extend = Blender.IpoCurve.ExtendTypes.CYCLIC
+            start_frame = self.fstart
+            stop_frame = self.fend
 
         # fill in the non-trivial values
         kfc.flags = 8 # active
         kfc.flags |= self.get_flags_from_extend(extend)
         kfc.frequency = 1.0
         kfc.phase = 0.0
-        kfc.start_time = (self.fstart - 1) * self.fspeed
-        kfc.stop_time = (self.fend - self.fstart) * self.fspeed
+        kfc.start_time = (start_frame - 1) * self.fspeed
+        kfc.stop_time = (stop_frame - 1) * self.fspeed
 
         if self.EXPORT_ANIMATION == 1:
             # keyframe data is not present in geometry files
@@ -2690,54 +2728,53 @@ class NifExport(NifImportExport):
                             # (needs to be there even if there is no curve)
                             interpol = self.create_block("NiFloatInterpolator")
                             interpol.value = 0
-                            interpol.data = self.create_block("NiFloatData", curve)
                             morphctrl.interpolators[keyblocknum] = interpol
                             # fallout 3 stores interpolators inside the
                             # interpolator_weights block
                             morphctrl.interpolator_weights[keyblocknum].interpolator = interpol
-                            floatdata = interpol.data.data
 
                             # geometry only export has no float data
-                            # to do this conveniently, we just wipe the link...
-                            if self.EXPORT_ANIMATION == 1:
-                                interpol.data = None
+                            # also skip keys that have no curve (such as base key)
+                            if self.EXPORT_ANIMATION == 1 or not curve:
+                                continue
 
-                            # base key has no curve
-                            # but all other keys should have one
-                            if curve:
-                                # note: we set data on morph for older nifs
-                                # and on floatdata for newer nifs
-                                # of course only one of these will be actually
-                                # written to the file
-                                self.logger.info("Exporting morph %s: curve"
-                                                 % keyblock.name)
-                                if curve.getExtrapolation() == "Constant":
-                                    ctrlFlags = 0x000c
-                                elif curve.getExtrapolation() == "Cyclic":
-                                    ctrlFlags = 0x0008
-                                morph.interpolation = NifFormat.KeyType.LINEAR_KEY
-                                morph.num_keys = len(curve.getPoints())
-                                morph.keys.update_size()
-                                floatdata.interpolation = NifFormat.KeyType.LINEAR_KEY
-                                floatdata.num_keys = len(curve.getPoints())
-                                floatdata.keys.update_size()
-                                for i, btriple in enumerate(curve.getPoints()):
-                                    knot = btriple.getPoints()
-                                    morph.keys[i].arg = morph.interpolation
-                                    morph.keys[i].time = (knot[0] - self.fstart) * self.fspeed
-                                    morph.keys[i].value = curve.evaluate( knot[0] )
-                                    #morph.keys[i].forwardTangent = 0.0 # ?
-                                    #morph.keys[i].backwardTangent = 0.0 # ?
-                                    floatdata.keys[i].arg = morph.interpolation
-                                    floatdata.keys[i].time = (knot[0] - self.fstart) * self.fspeed
-                                    floatdata.keys[i].value = curve.evaluate( knot[0] )
-                                    #floatdata.keys[i].forwardTangent = 0.0 # ?
-                                    #floatdata.keys[i].backwardTangent = 0.0 # ?
-                                    ctrlStart = min(ctrlStart, morph.keys[i].time)
-                                    ctrlStop  = max(ctrlStop,  morph.keys[i].time)
+                            # note: we set data on morph for older nifs
+                            # and on floatdata for newer nifs
+                            # of course only one of these will be actually
+                            # written to the file
+                            self.logger.info("Exporting morph %s: curve"
+                                             % keyblock.name)
+                            interpol.data = self.create_block("NiFloatData", curve)
+                            floatdata = interpol.data.data
+                            if curve.getExtrapolation() == "Constant":
+                                ctrlFlags = 0x000c
+                            elif curve.getExtrapolation() == "Cyclic":
+                                ctrlFlags = 0x0008
+                            morph.interpolation = NifFormat.KeyType.LINEAR_KEY
+                            morph.num_keys = len(curve.getPoints())
+                            morph.keys.update_size()
+                            floatdata.interpolation = NifFormat.KeyType.LINEAR_KEY
+                            floatdata.num_keys = len(curve.getPoints())
+                            floatdata.keys.update_size()
+                            for i, btriple in enumerate(curve.getPoints()):
+                                knot = btriple.getPoints()
+                                morph.keys[i].arg = morph.interpolation
+                                morph.keys[i].time = (knot[0] - self.fstart) * self.fspeed
+                                morph.keys[i].value = curve.evaluate( knot[0] )
+                                #morph.keys[i].forwardTangent = 0.0 # ?
+                                #morph.keys[i].backwardTangent = 0.0 # ?
+                                floatdata.keys[i].arg = floatdata.interpolation
+                                floatdata.keys[i].time = (knot[0] - self.fstart) * self.fspeed
+                                floatdata.keys[i].value = curve.evaluate( knot[0] )
+                                #floatdata.keys[i].forwardTangent = 0.0 # ?
+                                #floatdata.keys[i].backwardTangent = 0.0 # ?
+                                ctrlStart = min(ctrlStart, morph.keys[i].time)
+                                ctrlStop  = max(ctrlStop,  morph.keys[i].time)
                         morphctrl.flags = ctrlFlags
                         morphctrl.start_time = ctrlStart
                         morphctrl.stop_time = ctrlStop
+                        # fix data consistency type
+                        tridata.consistency_flags = NifFormat.ConsistencyType.CT_VOLATILE
 
 
 
@@ -3037,7 +3074,9 @@ class NifExport(NifImportExport):
             for constr in arm.getPose().bones[bone.name].constraints:
                 # yes! store it for reference when creating the kf file
                 if constr.name[:9].lower() == "priority:":
-                    self.bone_priorities[bone.name] = int(constr.name[9:])
+                    self.bone_priorities[
+                        self.get_bone_name_for_nif(bone.name)
+                        ] = int(constr.name[9:])
 
         # now fix the linkage between the blocks
         for bone in list(bones.values()):

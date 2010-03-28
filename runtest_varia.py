@@ -397,9 +397,21 @@ class VariaTestSuite(TestSuite):
             filename='test/nif/mw/_test_uvcontroller.nif',
             config=dict(EXPORT_VERSION='Morrowind'),
             selection=['TestUVController'],
+            next_layer=False)
+        # check that nif was correctly exported
+        check_uv_controller(nif)
+        # export again, with BSAnimationNode
+        nif = self.test(
+            filename='test/nif/mw/_test_bsanimation_uvcontroller.nif',
+            config=dict(
+                EXPORT_VERSION='Morrowind',
+                EXPORT_MW_BS_ANIMATION_NODE=True),
+            selection=['TestUVController'],
             next_layer=True)
         # check that nif was correctly exported
         check_uv_controller(nif)
+        assert(isinstance(nif.root_blocks[0], NifFormat.NiBSAnimationNode))
+        assert(nif.root_blocks[0].flags == 42)
 
     def test_anim_buffer_out_of_range(self):
         # create animation keys

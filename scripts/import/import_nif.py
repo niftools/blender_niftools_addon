@@ -2361,6 +2361,13 @@ class NifImport(NifImportExport):
                 if morphData.num_morphs:
                     # insert base key at frame 1, using relative keys
                     b_meshData.insertKey(1, 'relative')
+                    # get name for base key
+                    keyname = morphData.morphs[0].frame_name
+                    if not keyname:
+                        keyname = 'Base'
+                    # set name for base key
+                    b_meshData.key.blocks[0].name = keyname
+                    # get base vectors and import all morphs
                     baseverts = morphData.morphs[0].vectors
                     b_ipo = Blender.Ipo.New('Key' , 'KeyIpo')
                     b_meshData.key.ipo = b_ipo
