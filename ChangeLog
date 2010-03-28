@@ -1,10 +1,11 @@
-Version 2.5.4 (in development)
+Version 2.5.4 (28 Mar 2010)
 * fixed bone priority export for L and R bones (reported by Kilza)
 * fixed morph base key name import (reported by LHammonds)
 * fixed morph base key to have no float data (reported by LHammonds)
 * improved export of controller start and stop times (reported  by LHammonds)
 * fixed consistency type on NiGeometryData to be CT_VOLATILE when exporting
-morphs; this fixes for instance bow exports (reported by LHammonds)
+morphs; this fixes for instance bow exports (reported and fix suggested by
+LHammonds, based on Nicoroshi and Windy's bow tutorials)
 
 Version 2.5.3 (19 Mar 2010)
 * import and export NiLODNodes as empty with LODs as children and properties
