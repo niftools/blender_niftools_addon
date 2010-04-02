@@ -1,3 +1,6 @@
+Version 2.5.5 (in development)
+* fixed bone priority import for L and R bones (reported by Da Mage)
+
 Version 2.5.4 (28 Mar 2010)
 * fixed bone priority export for L and R bones (reported by Kilza)
 * fixed morph base key name import (reported by LHammonds)

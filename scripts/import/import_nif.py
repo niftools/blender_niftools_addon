@@ -130,7 +130,7 @@ class NifImport(NifImportExport):
         # maps NIF armature name to list of NIF bone name
         self.armatures = {}
 
-        # bone animation priorities (maps bone NiNode to priority number);
+        # bone animation priorities (maps NiNode name to priority number);
         # priorities are set in import_kf_root and are stored into the name
         # of a NULL constraint (for lack of something better) in
         # import_armature
@@ -1139,15 +1139,15 @@ class NifImport(NifImportExport):
                             b_curve.extend = self.get_extend_from_flags(kfc.flags)
 
         # constraints (priority)
-        # must be done oudside edit mode hence after calling
+        # must be done outside edit mode hence after calling
         for bone_name, b_posebone in b_armature.getPose().bones.items():
             # find bone nif block
             niBone = self.blocks[bone_name]
             # store bone priority, if applicable
-            if bone_name in self.bone_priorities:
+            if niBone.name in self.bone_priorities:
                 constr = b_posebone.constraints.append(
                     Blender.Constraint.Type.NULL)
-                constr.name = "priority:%i" % self.bone_priorities[bone_name]                
+                constr.name = "priority:%i" % self.bone_priorities[niBone.name]
 
         return b_armature
 
