@@ -66,7 +66,7 @@ def main(arg):
     obs = [ob for ob in Blender.Object.GetSelected() if ob.type == 'Armature']
     if obs:
         boneitems = [(bonename, bone)
-                     for (bonename, bone) in obs[0].getPose().bones.items()]
+                     for (bonename, bone) in list(obs[0].getPose().bones.items())]
     else:
         boneitems = []
 
@@ -108,8 +108,8 @@ def main(arg):
             continue
         # reconstruct matrix from text
         bonename, matrixstr = matrixtxt.split('/')
-        print("loading pose of bone %s from %s"
-              % (bonename, PREF_BUFFER.val))
+        print(("loading pose of bone %s from %s"
+              % (bonename, PREF_BUFFER.val)))
         try:
             matrix = Blender.Mathutils.Matrix(
                 *[[float(f) for f in row.split(',')]
@@ -124,12 +124,12 @@ def main(arg):
                 bone.loc = matrix.translationPart()
                 break
         else:
-            print("WARNING: bone %s not found in armature" % bonename)
+            print(("WARNING: bone %s not found in armature" % bonename))
     # display the result
     obs[0].getPose().update()
 
     # report finish and timing
-    print 'Load bone pose finished in %.2f seconds' % (sys.time()-t)
+    print('Load bone pose finished in %.2f seconds' % (sys.time()-t))
     Window.WaitCursor(0)
     if is_editmode:
         Window.EditMode(1)

@@ -2,7 +2,7 @@
 
 __version__ = "2.5.5"
 __requiredpyffiversion__ = "2.1.4"
-__requiredblenderversion__ = "245"
+__requiredblenderversion__ = "250"
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -38,21 +38,21 @@ __requiredblenderversion__ = "245"
 
 # utility functions
     
-def cmp_versions(version1, version2):
-    """Compare version strings."""
-    def version_intlist(version):
-        """Convert version string to list of integers."""
-        return [int(x) for x in version.__str__().split(".")]
-    return cmp(version_intlist(version1), version_intlist(version2))
+def version_int_tuple(version):
+    """Convert version string to tuple of integers."""
+    return tuple(int(x) for x in version.__str__().split("."))
 
 # things to do on import and export
 
 # check Blender version
 
-import Blender
-__blenderversion__ = Blender.Get('version')
+import bpy
 
-if cmp_versions(__blenderversion__, __requiredblenderversion__) == -1:
+# TODO find a way to get the blender version
+__blenderversion__ = 250 #Blender.Get('version')
+
+if (version_int_tuple(__blenderversion__)
+    < version_int_tuple(__requiredblenderversion__)):
     print("--------------------------"
         "ERROR\nThis script requires Blender %s or higher."
         "It seems that you have an older version installed (%s)."
@@ -76,7 +76,8 @@ except ImportError:
 
 # check PyFFI version
 
-if cmp_versions(__pyffiversion__, __requiredpyffiversion__) == -1:
+if (version_int_tuple(__pyffiversion__)
+    < version_int_tuple(__requiredpyffiversion__)):
     print("--------------------------"
         "ERROR\nThis script requires Python File Format Interface %s or higher."
         "It seems that you have an older version installed (%s)."
@@ -86,17 +87,20 @@ if cmp_versions(__pyffiversion__, __requiredpyffiversion__) == -1:
     Blender.Draw.PupMenu("ERROR%t|PyFFI outdated, check console for details")
     raise ImportError
 
+# system imports
+
+import logging
+import sys
+import os
+
+# blender imports
+
+import bpy.props
+
 # import PyFFI format classes
 
 from pyffi.formats.nif import NifFormat
 from pyffi.formats.egm import EgmFormat
-
-# other imports
-
-from Blender import Draw, Registry
-import logging
-import sys
-import os
 
 def init_loggers():
     """Set up loggers."""
@@ -114,9 +118,62 @@ def init_loggers():
 # set up the loggers: call it as a function to avoid polluting namespace
 init_loggers()
 
-class NifImportExport:
+class MetaNifImportExport(type(bpy.types.Operator)):
+    def __init__(cls, name, dct, bases):
+        """Add common properties. This must be done in a metaclass
+        because Blender only uses properties defined on the top class
+        level, and ignores those properties defined higher up in the
+        class hierarchy.
+        """
+
+        cls.path = bpy.props.StringProperty(
+            name="File Path",
+            description="File path used for importing or exporting the NIF file",
+            maxlen=1024,
+            default="")
+
+        cls.directory = bpy.props.StringProperty(
+            name="Directory",
+            description="",
+            maxlen=1024,
+            default="")
+
+        cls.filename = bpy.props.StringProperty(
+            name="File Name",
+            description="",
+            maxlen=1024,
+            default="")
+
+        # TODO: preset buttons for log levels
+        cls.log_level = bpy.props.EnumProperty(
+            items=(
+                ("DEBUG", "Debug",
+                 "Show all messages (only useful for debugging)."),
+                ("INFO", "Info",
+                 "Show some informative messages, warnings, and errors."),
+                ("WARNING", "Warning",
+                 "Only show warnings and errors."),
+                ("ERROR", "Error",
+                 "Only show errors."),
+                ("CRITICAL", "Critical",
+                 "Only show extremely critical errors."),
+                ),
+            name="Log Level",
+            description="Level of verbosity on the console.",
+            default="WARNING")
+
+        cls.profile_path = bpy.props.StringProperty(
+            name="Profile Path",
+            description=
+            "Name of file where Python profiler dumps the profile."
+            " Set to empty string to turn off profiling.",
+            maxlen=1024,
+            default="")
+
+class NifImportExport(bpy.types.Operator, metaclass=MetaNifImportExport):
     """Abstract base class for import and export. Contains utility functions
-    that are commonly used in both import and export."""
+    that are commonly used in both import and export.
+    """
 
     VERTEX_RESOLUTION = 1000
     NORMAL_RESOLUTION = 100
@@ -174,6 +231,98 @@ class NifImportExport:
     progress_bar = 0
     """Level of the progress bar."""
 
+    # TODO: convert to properties in NifImport and NifExport
+    """
+    IMPORT_REALIGN_BONES = 1 # 0 = no, 1 = tail, 2 = tail+rotation
+    IMPORT_ANIMATION = True
+    IMPORT_SCALE_CORRECTION = 0.1
+    EXPORT_SCALE_CORRECTION = 10.0 # 1/import scale correction
+    IMPORT_TEXTURE_PATH = []
+    EXPORT_FLATTENSKIN = False
+    EXPORT_VERSION = 'Oblivion'
+    IMPORT_SKELETON = 0 # 0 = normal import, 1 = import file as skeleton, 2 = import mesh and attach to skeleton
+    IMPORT_KEYFRAMEFILE = '', # keyframe file for animations
+    IMPORT_EGMFILE = '', # FaceGen EGM file for morphs
+    IMPORT_EGMANIM = True, # create FaceGen EGM animation curves
+    IMPORT_EGMANIMSCALE = 1.0, # scale of FaceGen EGM animation curves
+    EXPORT_ANIMATION = 0, # export everything (1=geometry only, 2=animation only)
+    EXPORT_ANIMSEQUENCENAME = '', # sequence name of the kf file
+    EXPORT_FORCEDDS = True, # force dds extension on texture files
+    EXPORT_SKINPARTITION = True, # generate skin partition
+    EXPORT_BONESPERVERTEX = 4,
+    EXPORT_BONESPERPARTITION = 18,
+    EXPORT_PADBONES = False,
+    EXPORT_STRIPIFY = True,
+    EXPORT_STITCHSTRIPS = False,
+    EXPORT_SMOOTHOBJECTSEAMS = True,
+    IMPORT_MERGESKELETONROOTS = True,
+    IMPORT_SENDGEOMETRIESTOBINDPOS = True,
+    IMPORT_SENDDETACHEDGEOMETRIESTONODEPOS = True,
+    IMPORT_SENDBONESTOBINDPOS = True,
+    IMPORT_APPLYSKINDEFORM = False,
+    IMPORT_EXTRANODES = True,
+    EXPORT_BHKLISTSHAPE = False,
+    EXPORT_OB_BSXFLAGS = 2,
+    EXPORT_OB_MASS = 10.0,
+    EXPORT_OB_SOLID = True,
+    EXPORT_OB_MOTIONSYSTEM = 7, # MO_SYS_FIXED
+    EXPORT_OB_UNKNOWNBYTE1 = 1,
+    EXPORT_OB_UNKNOWNBYTE2 = 1,
+    EXPORT_OB_QUALITYTYPE = 1, # MO_QUAL_FIXED
+    EXPORT_OB_WIND = 0,
+    EXPORT_OB_LAYER = 1, # static
+    EXPORT_OB_MATERIAL = 9, # wood
+    EXPORT_OB_MALLEABLECONSTRAINT = False, # use malleable constraint for ragdoll and hinge
+    EXPORT_OB_PRN = "NONE", # determines bone where to attach weapon
+    EXPORT_FO3_SF_ZBUF = True, # use these shader flags?
+    EXPORT_FO3_SF_SMAP = False,
+    EXPORT_FO3_SF_SFRU = False,
+    EXPORT_FO3_SF_WINDOW_ENVMAP = False,
+    EXPORT_FO3_SF_EMPT = True,
+    EXPORT_FO3_SF_UN31 = True,
+    EXPORT_FO3_FADENODE = False,
+    EXPORT_FO3_SHADER_TYPE = 1, # shader_default
+    EXPORT_FO3_BODYPARTS = True,
+    EXPORT_MW_NIFXNIFKF = False,
+    EXPORT_EXTRA_SHADER_TEXTURES = True,
+    IMPORT_EXPORTEMBEDDEDTEXTURES = False,
+    EXPORT_OPTIMIZE_MATERIALS = True,
+    IMPORT_COMBINESHAPES = True,
+    EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES = False,
+    """
+
+    def execute(self, context):
+        """Common initialization functions for executing the import/export
+        operators:
+
+        - initialize progress bar
+        - set logging level
+        - set self.context
+        - set self.selected_objects
+        """
+        # initialize progress bar
+        self.msg_progress("Initializing", progbar=0)
+
+        # set logging level
+        log_level_num = getattr(logging, self.properties.log_level)
+        logging.getLogger("niftools").setLevel(log_level_num)
+        logging.getLogger("pyffi").setLevel(log_level_num)
+
+        # save context (so it can be used in other methods without argument
+        # passing)
+        self.context = context
+
+        # get list of selected objects
+        # (find and store this list now, as creating new objects adds them
+        # to the selection list)
+        if self.context.selected_objects:
+            self.selected_objects = self.context.selected_objects[:]
+        else:
+            # if there are no selected objects,
+            # then context.selected_objects is None
+            # but an empty list makes more sense (for iterating)
+            self.selected_objects = []
+
     def msg_progress(self, message, progbar=None):
         """Message wrapper for the Blender progress bar."""
         # update progress bar level
@@ -181,12 +330,13 @@ class NifImportExport:
             if self.progress_bar > 0.89:
                 # reset progress bar
                 self.progress_bar = 0
-                Blender.Window.DrawProgressBar(0, message)
+                # TODO draw the progress bar
+                #Blender.Window.DrawProgressBar(0, message)
             self.progress_bar += 0.1
         else:
             self.progress_bar = progbar
-        # draw the progress bar
-        Blender.Window.DrawProgressBar(self.progress_bar, message)
+        # TODO draw the progress bar
+        #Blender.Window.DrawProgressBar(self.progress_bar, message)
 
     def get_b_children(self, b_obj):
         """Return children of a blender object."""
@@ -311,6 +461,7 @@ class NifImportExport:
         # lame and slow, but functional
         return b_obj in Blender.Object.Get()
 
+# TODO: integrate with NifImportExport class
 class NifConfig:
     """Class which handles configuration of nif import and export in Blender.
 
@@ -334,10 +485,8 @@ class NifConfig:
     # IMPORTANT: don't start dictionary keys with an underscore
     # the Registry module doesn't like that, apparently
     DEFAULTS = dict(
-        IMPORT_FILE = Blender.sys.join(
-            Blender.sys.dirname(Blender.sys.progname), "import.nif"),
-        EXPORT_FILE = Blender.sys.join(
-            Blender.sys.dirname(Blender.sys.progname), "export.nif"),
+        IMPORT_FILE = "import.nif", # TODO path for default
+        EXPORT_FILE = "export.nif", # TODO path for default
         IMPORT_REALIGN_BONES = 1, # 0 = no, 1 = tail, 2 = tail+rotation
         IMPORT_ANIMATION = True,
         IMPORT_SCALE_CORRECTION = 0.1,
@@ -412,7 +561,7 @@ class NifConfig:
             os.system("cls")
 
         # print scripts info
-        print self.WELCOME_MESSAGE
+        print(self.WELCOME_MESSAGE)
 
         # initialize all instance variables
         self.guiElements = {} # dictionary of gui elements (buttons, strings, sliders, ...)
@@ -497,7 +646,7 @@ class NifConfig:
             pass
         # merge configuration with defaults
         if savedconfig:
-            for key, val in self.DEFAULTS.iteritems():
+            for key, val in self.DEFAULTS.items():
                 try:
                     savedval = savedconfig[key]
                 except KeyError:
@@ -871,8 +1020,8 @@ class NifConfig:
                 event_name = "EXPORT_OPTIMIZE_MATERIALS")
             self.draw_y_sep()
 
-            games_list = sorted(filter(lambda x: x != '?', NifFormat.games.keys()))
-            versions_list = sorted(NifFormat.versions.keys(), key=lambda x: NifFormat.versions[x])
+            games_list = sorted([x for x in list(NifFormat.games.keys()) if x != '?'])
+            versions_list = sorted(list(NifFormat.versions.keys()), key=lambda x: NifFormat.versions[x])
             V = self.xPos
             H = HH = self.yPos
             j = 0
@@ -1617,11 +1766,6 @@ class NifConfig:
             Draw.PupMenu('No file selected or file does not exist%t|Ok')
         else:
             self.config["IMPORT_EGMFILE"] = egmfile
-
-    def update_log_level(self, evt, val):
-        self.config["LOG_LEVEL"] = val
-        logging.getLogger("niftools").setLevel(val)
-        logging.getLogger("pyffi").setLevel(val)
 
     def update_scale(self, evt, val):
         self.config["EXPORT_SCALE_CORRECTION"] = val

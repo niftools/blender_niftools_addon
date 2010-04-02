@@ -50,7 +50,7 @@ def main(arg):
     obs = [ob for ob in Blender.Object.GetSelected() if ob.type == 'Armature']
     if obs:
         boneitems = [(bonename, bone)
-                     for (bonename, bone) in obs[0].getPose().bones.items()
+                     for (bonename, bone) in list(obs[0].getPose().bones.items())
                      if bone.sel]
     else:
         boneitems = []
@@ -81,7 +81,7 @@ def main(arg):
     # run script
     for bonename, bone in boneitems:
         # get priorty null constraint
-        print("setting priority %i on %s" % (PREF_PRIORITY.val, bonename))
+        print(("setting priority %i on %s" % (PREF_PRIORITY.val, bonename)))
         priorityconstr = None
         for constr in bone.constraints:
             if constr.type == Blender.Constraint.Type.NULL \
@@ -93,7 +93,7 @@ def main(arg):
                 Blender.Constraint.Type.NULL)
         priorityconstr.name = "priority:%i" % PREF_PRIORITY.val
 
-    print 'Set bone priority finished in %.2f seconds' % (sys.time()-t)
+    print('Set bone priority finished in %.2f seconds' % (sys.time()-t))
     Window.WaitCursor(0)
     if is_editmode: Window.EditMode(1)
     

@@ -13,14 +13,11 @@ __bpydoc__ = """\
 This script exports Netimmerse and Gamebryo .nif files from Blender.
 """
 
-from itertools import izip
 import logging
 
-import Blender
-from Blender import Ipo # for all the Ipo curve constants
+import bpy
 
 from nif_common import NifImportExport
-from nif_common import NifConfig
 from nif_common import NifFormat
 from nif_common import EgmFormat
 from nif_common import __version__
@@ -62,7 +59,7 @@ import pyffi.spells.nif.fix
 # ***** END LICENSE BLOCK *****
 # --------------------------------------------------------------------------
 
-class NifExportError(StandardError):
+class NifExportError(Exception):
     pass
 
 # main export class
@@ -148,10 +145,10 @@ class NifExport(NifImportExport):
         # blender bone naming -> nif bone naming
         unique_name = self.get_bone_name_for_nif(unique_name)
         # ensure uniqueness
-        if unique_name in self.block_names or unique_name in self.names.values():
+        if unique_name in self.block_names or unique_name in list(self.names.values()):
             unique_int = 0
             old_name = unique_name
-            while unique_name in self.block_names or unique_name in self.names.values():
+            while unique_name in self.block_names or unique_name in list(self.names.values()):
                 unique_name = '%s.%02d' % (old_name, unique_int)
                 unique_int += 1
         self.block_names.append(unique_name)
@@ -171,7 +168,7 @@ class NifExport(NifImportExport):
         exported_objects = []
         # iterating over self.blocks.itervalues() will count some objects
         # twice
-        for obj in self.blocks.itervalues():
+        for obj in self.blocks.values():
             # skip empty objects
             if obj is None:
                 continue
@@ -191,7 +188,7 @@ class NifExport(NifImportExport):
         self.msg_progress("Initializing", progbar=0)
 
         # store configuration in self
-        for name, value in config.iteritems():
+        for name, value in config.items():
             setattr(self, name, value)
         if self.EXPORT_MW_NIFXNIFKF and self.EXPORT_VERSION == 'Morrowind':
             # if exporting in nif+xnif+kf mode, then first export
@@ -344,7 +341,7 @@ class NifExport(NifImportExport):
                                 vdict[vkey] = [(v, f, mesh)]
                 # set normals on shared vertices
                 nv = 0
-                for vlist in vdict.itervalues():
+                for vlist in vdict.values():
                     if len(vlist) <= 1: continue # not shared
                     meshes = set([mesh for v, f, mesh in vlist])
                     if len(meshes) <= 1: continue # not shared
@@ -467,7 +464,7 @@ class NifExport(NifImportExport):
                 # specific
                 self.logger.info(
                     "Adding controllers and interpolators for skeleton")
-                for block in self.blocks.keys():
+                for block in list(self.blocks.keys()):
                     if isinstance(block, NifFormat.NiNode) \
                         and block.name == "Bip01":
                         for bone in block.tree(block_type = NifFormat.NiNode):
@@ -785,7 +782,7 @@ class NifExport(NifImportExport):
                     kf_root = self.create_block("NiSequenceStreamHelper")
                     kf_root.add_extra_data(anim_textextra)
                     # reparent controller tree
-                    for node, ctrls in node_kfctrls.iteritems():
+                    for node, ctrls in node_kfctrls.items():
                         for ctrl in ctrls:
                             # create node reference by name
                             nodename_extra = self.create_block(
@@ -833,8 +830,8 @@ class NifExport(NifImportExport):
                     kf_root.target_name = targetname
                     kf_root.string_palette = NifFormat.NiStringPalette()
                     for node, ctrls \
-                        in izip(node_kfctrls.iterkeys(),
-                                node_kfctrls.itervalues()):
+                        in zip(iter(node_kfctrls.keys()),
+                                iter(node_kfctrls.values())):
                         # export a block for every interpolator in every
                         # controller
                         for ctrl in ctrls:
@@ -853,7 +850,7 @@ class NifExport(NifImportExport):
                             else:
                                 variable_2s = [None
                                                for interpolator in interpolators]
-                            for interpolator, variable_2 in izip(interpolators,
+                            for interpolator, variable_2 in zip(interpolators,
                                                                 variable_2s):
                                 # create ControlledLink for each
                                 # interpolator
@@ -981,21 +978,21 @@ class NifExport(NifImportExport):
                     stream.close()
 
         # export error: raise a menu instead of an exception
-        except NifExportError, e:
+        except NifExportError as e:
             e = str(e).replace("\n", " ")
             Blender.Draw.PupMenu('EXPORT ERROR%t|' + str(e))
-            print 'NifExportError: ' + str(e)
+            print('NifExportError: ' + str(e))
             return
 
         # IO error: raise a menu instead of an exception
-        except IOError, e: 
+        except IOError as e: 
             e = str(e).replace("\n", " ")
             Blender.Draw.PupMenu('I/O ERROR%t|' + str(e))
-            print 'IOError: ' + str(e)
+            print('IOError: ' + str(e))
             return
 
         # other error: raise a menu and an exception
-        except StandardError, e:
+        except Exception as e:
             e = str(e).replace("\n", " ")
             Blender.Draw.PupMenu('ERROR%t|' + str(e) + '    Check console for possibly more details.')
             raise
@@ -1347,7 +1344,7 @@ class NifExport(NifImportExport):
                         " and try again"
                         % (ipo, keytype[curvecollection[0]]))
             # go over all curves
-            ipo_curves = ipo.curveConsts.values()
+            ipo_curves = list(ipo.curveConsts.values())
             for curve in ipo_curves:
                 # skip empty curves
                 if ipo[curve] is None:
@@ -1438,12 +1435,12 @@ class NifExport(NifImportExport):
             # keyframe denotes an interpolator without further data)
             # insufficient keys, so set the data and we're done!
             if trans_curve:
-                trans = trans_curve.values()[0]
+                trans = list(trans_curve.values())[0]
                 kfi.translation.x = trans[0]
                 kfi.translation.y = trans[1]
                 kfi.translation.z = trans[2]
             if rot_curve:
-                rot = rot_curve.values()[0]
+                rot = list(rot_curve.values())[0]
                 # XXX blender weirdness... Euler() is a function!!
                 if isinstance(rot, Blender.Mathutils.Euler().__class__):
                     rot = rot.toQuat()
@@ -1465,11 +1462,11 @@ class NifExport(NifImportExport):
             kfd = self.create_block("NiTransformData", ipo)
             kfi.data = kfd
 
-        frames = rot_curve.keys()
+        frames = list(rot_curve.keys())
         frames.sort()
         # XXX blender weirdness... Euler() is a function!!
         if (frames
-            and isinstance(rot_curve.values()[0],
+            and isinstance(list(rot_curve.values())[0],
                            Blender.Mathutils.Euler().__class__)):
             # eulers
             kfd.rotation_type = NifFormat.KeyType.XYZ_ROTATION_KEY
@@ -1509,7 +1506,7 @@ class NifExport(NifImportExport):
                 rot_frame.value.y = rot_curve[frame].y
                 rot_frame.value.z = rot_curve[frame].z
 
-        frames = trans_curve.keys()
+        frames = list(trans_curve.keys())
         frames.sort()
         kfd.translations.interpolation = NifFormat.KeyType.LINEAR_KEY
         kfd.translations.num_keys = len(frames)
@@ -1521,7 +1518,7 @@ class NifExport(NifImportExport):
             trans_frame.value.y = trans_curve[frame][1]
             trans_frame.value.z = trans_curve[frame][2]
 
-        frames = scale_curve.keys()
+        frames = list(scale_curve.keys())
         frames.sort()
         kfd.scales.interpolation = NifFormat.KeyType.LINEAR_KEY
         kfd.scales.num_keys = len(frames)
@@ -2074,7 +2071,7 @@ class NifExport(NifImportExport):
             # use Blender's face normals.
             
             vertquad_list = [] # (vertex, uv coordinate, normal, vertex color) list
-            vertmap = [None for i in xrange(len(mesh.verts))] # blender vertex -> nif vertices
+            vertmap = [None for i in range(len(mesh.verts))] # blender vertex -> nif vertices
             vertlist = []
             normlist = []
             vcollist = []
@@ -2141,13 +2138,13 @@ class NifExport(NifImportExport):
                                 if max(abs(vertquad[1][uvlayer][0]
                                            - vertquad_list[j][1][uvlayer][0])
                                        for uvlayer
-                                       in xrange(len(mesh_uvlayers))) \
+                                       in range(len(mesh_uvlayers))) \
                                        > self.EPSILON:
                                      continue
                                 if max(abs(vertquad[1][uvlayer][1]
                                            - vertquad_list[j][1][uvlayer][1])
                                        for uvlayer
-                                       in xrange(len(mesh_uvlayers))) \
+                                       in range(len(mesh_uvlayers))) \
                                        > self.EPSILON:
                                     continue
                             if mesh_hasnormals:
@@ -2464,7 +2461,7 @@ class NifExport(NifImportExport):
                 if ob.getParent().getType() == 'Armature':
                     ob_armature = ob.getParent()
                     armaturename = ob_armature.getName()
-                    bonenames = ob_armature.getData().bones.keys()
+                    bonenames = list(ob_armature.getData().bones.keys())
                     # the vertgroups that correspond to bonenames are bones
                     # that influence the mesh
                     boneinfluences = []
@@ -2518,7 +2515,7 @@ class NifExport(NifImportExport):
                                     " and paint weights."
                                     % (ob.name, bone))
                             for v in vert_list[bone]:
-                                if vert_norm.has_key(v[0]):
+                                if v[0] in vert_norm:
                                     vert_norm[v[0]] += v[1]
                                 else:
                                     vert_norm[v[0]] = v[1]
@@ -2527,7 +2524,7 @@ class NifExport(NifImportExport):
                         # then we get the vertex weights
                         # and then we add it to the NiSkinData
                         # note: allocate memory for faster performance
-                        vert_added = [False for i in xrange(len(vertlist))]
+                        vert_added = [False for i in range(len(vertlist))]
                         for bone_index, bone in enumerate(boneinfluences):
                             # find bone in exported blocks
                             bone_block = None
@@ -2709,7 +2706,7 @@ class NifExport(NifImportExport):
                             morph.arg = morphdata.num_vertices
                             morph.vectors.update_size()
                             for b_v_index, (vert_indices, vert) \
-                                in enumerate(zip(vertmap, keyblock.data)):
+                                in enumerate(list(zip(vertmap, keyblock.data))):
                                 # vertmap check
                                 if not vert_indices:
                                     continue
@@ -3005,10 +3002,10 @@ class NifExport(NifImportExport):
 
         # find the root bones
         # dictionary of bones (name -> bone)
-        bones = dict(arm.getData().bones.items())
+        bones = dict(list(arm.getData().bones.items()))
         root_bones = []
-        for root_bone in bones.values():
-            while root_bone.parent in bones.values():
+        for root_bone in list(bones.values()):
+            while root_bone.parent in list(bones.values()):
                 root_bone = root_bone.parent
             if root_bones.count(root_bone) == 0:
                 root_bones.append(root_bone)
@@ -3025,7 +3022,7 @@ class NifExport(NifImportExport):
         # and then fix the links in a second run
 
         # ok, let's create the bone NiNode blocks
-        for bone in bones.values():
+        for bone in list(bones.values()):
             # create a new block for this bone
             node = self.create_ninode(bone)
             # doing bone map now makes linkage very easy in second run
@@ -3068,7 +3065,7 @@ class NifExport(NifImportExport):
             except KeyError:
                 bonexmat_inv = Blender.Mathutils.Matrix()
                 bonexmat_inv.identity()
-            if bones_ipo.has_key(bone.name):
+            if bone.name in bones_ipo:
                 self.export_keyframes(
                     bones_ipo[bone.name], 'localspace', node,
                     bind_mat = bonerestmat, extra_mat_inv = bonexmat_inv)
@@ -3082,7 +3079,7 @@ class NifExport(NifImportExport):
                         ] = int(constr.name[9:])
 
         # now fix the linkage between the blocks
-        for bone in bones.values():
+        for bone in list(bones.values()):
             # link the bone's children to the bone
             if bone.children:
                 self.logger.debug("Linking children of bone %s" % bone.name)
@@ -3880,7 +3877,7 @@ class NifExport(NifImportExport):
                         " can be exported: skipped %s." % b_constr)
                     continue
                 # check that the object is a rigid body
-                for otherbody, otherobj in self.blocks.iteritems():
+                for otherbody, otherobj in self.blocks.items():
                     if isinstance(otherbody, NifFormat.bhkRigidBody) \
                         and otherobj is b_obj:
                         hkbody = otherbody
@@ -3963,7 +3960,7 @@ class NifExport(NifImportExport):
                     self.logger.warning("Constraint %s has no target, skipped")
                     continue
                 # find target's bhkRigidBody
-                for otherbody, otherobj in self.blocks.iteritems():
+                for otherbody, otherobj in self.blocks.items():
                     if isinstance(otherbody, NifFormat.bhkRigidBody) \
                         and otherobj == targetobj:
                         hkconstraint.entities[1] = otherbody
@@ -4527,7 +4524,7 @@ class NifExport(NifImportExport):
             self.logger.info("Exporting morph %s to egm" % keyblock.name)
             relative_vertices = []
             # note: keyblocks[0] is base key
-            for vert, key_vert in izip(keyblocks[0].data, keyblock.data):
+            for vert, key_vert in zip(keyblocks[0].data, keyblock.data):
                 relative_vertices.append(key_vert - vert)
             morph.set_relative_vertices(relative_vertices)
 

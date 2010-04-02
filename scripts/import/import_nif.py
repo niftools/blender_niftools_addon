@@ -2,7 +2,7 @@
 
 """ 
 Name: 'NetImmerse/Gamebryo (.nif & .kf & .egm)'
-Blender: 245
+Blender: 250
 Group: 'Import'
 Tip: 'Import NIF File Format (.nif & .kf & .egm)'
 """
@@ -14,16 +14,14 @@ __bpydoc__ = """\
 This script imports Netimmerse and Gamebryo .NIF files to Blender.
 """
 
-import Blender
-from Blender.Mathutils import *
+import Mathutils
+import bpy
 
 from nif_common import NifImportExport
-from nif_common import NifConfig
 from nif_common import NifFormat
 from nif_common import EgmFormat
 from nif_common import __version__
 
-from itertools import izip
 import logging
 import math
 import operator
@@ -66,49 +64,45 @@ import pyffi.spells.nif.fix
 # ***** END LICENSE BLOCK *****
 # --------------------------------------------------------------------------
 
-class NifImportError(StandardError):
+class NifImportError(Exception):
     """A simple custom exception class for import errors."""
     pass
 
 class NifImport(NifImportExport):
     """A class which bundles the main import function along with all helper
-    functions and data shared between these functions."""
-    # class constants:
+    functions and data shared between these functions.
+    """
+    # class constants
+    bl_idname = "import.nif"
+    bl_label = "Import NIF"
+
+    # properties
+    # (nothing yet, all the IMPORT_XXX options will come here as properties)
+
     # correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z
     BONE_CORRECTION_MATRICES = (
-        Matrix([ 0.0,-1.0, 0.0],[ 1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0]),
-        Matrix([ 1.0, 0.0, 0.0],[ 0.0, 1.0, 0.0],[ 0.0, 0.0, 1.0]),
-        Matrix([ 1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0],[ 0.0,-1.0, 0.0]),
-        Matrix([ 0.0, 1.0, 0.0],[-1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0]),
-        Matrix([-1.0, 0.0, 0.0],[ 0.0,-1.0, 0.0],[ 0.0, 0.0, 1.0]),
-        Matrix([ 1.0, 0.0, 0.0],[ 0.0, 0.0,-1.0],[ 0.0, 1.0, 0.0]) )
+        Mathutils.Matrix([ 0.0,-1.0, 0.0],[ 1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0]),
+        Mathutils.Matrix([ 1.0, 0.0, 0.0],[ 0.0, 1.0, 0.0],[ 0.0, 0.0, 1.0]),
+        Mathutils.Matrix([ 1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0],[ 0.0,-1.0, 0.0]),
+        Mathutils.Matrix([ 0.0, 1.0, 0.0],[-1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0]),
+        Mathutils.Matrix([-1.0, 0.0, 0.0],[ 0.0,-1.0, 0.0],[ 0.0, 0.0, 1.0]),
+        Mathutils.Matrix([ 1.0, 0.0, 0.0],[ 0.0, 0.0,-1.0],[ 0.0, 1.0, 0.0]) )
     # identity matrix, for comparisons
-    IDENTITY44 = Matrix( [ 1.0, 0.0, 0.0, 0.0],
-                         [ 0.0, 1.0, 0.0, 0.0],
-                         [ 0.0, 0.0, 1.0, 0.0],
-                         [ 0.0, 0.0, 0.0, 1.0] )
+    IDENTITY44 = Mathutils.Matrix( [ 1.0, 0.0, 0.0, 0.0],
+                                   [ 0.0, 1.0, 0.0, 0.0],
+                                   [ 0.0, 0.0, 1.0, 0.0],
+                                   [ 0.0, 0.0, 0.0, 1.0] )
     # degrees to radians conversion constant
     D2R = 3.14159265358979/180.0
     
-    def __init__(self, **config):
+    def execute(self, context):
         """Main import function: open file and import all trees."""
-
-        # initialize progress bar
-        self.msg_progress("Initializing", progbar = 0)
-
-        # store config settings
-        for name, value in config.iteritems():
-            setattr(self, name, value)
+        # call base class method
+        NifImportExport.execute(self, context)
 
         # shortcut to import logger
         self.logger = logging.getLogger("niftools.blender.import")
 
-        # save file name
-        self.filename = self.IMPORT_FILE[:]
-        self.filepath = Blender.sys.dirname(self.filename)
-        self.filebase, self.fileext = Blender.sys.splitext(
-            Blender.sys.basename(self.filename))
-        
         # dictionary of texture files, to reuse textures
         self.textures = {}
 
@@ -140,20 +134,12 @@ class NifImport(NifImportExport):
         # in Blender; after we've imported the tree, we use this dictionary
         # to set the physics constraints (ragdoll etc)
         self.havok_objects = {}
-
-        # Blender scene
-        self.scene = Blender.Scene.GetCurrent()
-
-        # selected objects
-        # find and store this list now, as creating new objects adds them
-        # to the selection list
-        self.selected_objects = [ob for ob in self.scene.objects.selected]
         
         # catch NifImportError
         try:
             # check that one armature is selected in 'import geometry + parent
             # to armature' mode
-            if self.IMPORT_SKELETON == 2:
+            if False: #TODO self.IMPORT_SKELETON == 2:
                 if (len(self.selected_objects) != 1
                     or self.selected_objects[0].getType() != 'Armature'):
                     raise NifImportError(
@@ -162,8 +148,8 @@ class NifImport(NifImportExport):
                         " mode.")
 
             # open file for binary reading
-            self.logger.info("Importing %s" % self.filename)
-            niffile = open(self.filename, "rb")
+            self.logger.info("Importing %s" % self.properties.path)
+            niffile = open(self.properties.path, "rb")
             data = NifFormat.Data()
             try:
                 # check if nif file is valid
@@ -182,6 +168,10 @@ class NifImport(NifImportExport):
             finally:
                 # the file has been read or an error occurred: close file
                 niffile.close()
+
+            return {'FINISHED'}
+
+            # TODO
 
             if self.IMPORT_KEYFRAMEFILE:
                 # open keyframe file for binary reading
@@ -239,7 +229,7 @@ class NifImport(NifImportExport):
             # calculate and set frames per second
             if self.IMPORT_ANIMATION:
                 self.fps = self.get_frames_per_second(root_blocks + kf_root_blocks)
-                self.scene.getRenderingContext().fps = self.fps
+                self.context.scene.getRenderingContext().fps = self.fps
 
             # import all root blocks
             for block in root_blocks:
@@ -272,19 +262,24 @@ class NifImport(NifImportExport):
                         self.import_kf_root(kf_root, root)
                 # import the nif tree
                 self.import_root(root)
-        except NifImportError, e: # in that case, we raise a menu too
+        except NifImportError as e: # in that case, we raise a menu too
             self.logger.exception('NifImportError: %s' % e)
             Blender.Draw.PupMenu('ERROR%t|' + str(e))
             raise
         finally:
             # clear progress bar
             self.msg_progress("Finished", progbar = 1)
+            # XXX no longer needed?
             # do a full scene update to ensure that transformations are applied
-            self.scene.update(1)
+            #self.context.scene.update(1)
 
         # save nif root blocks (used by test suites)
         self.root_blocks = root_blocks
 
+    def invoke(self, context, event):
+        wm = context.manager
+        wm.add_fileselect(self)
+        return {'RUNNING_MODAL'}
 
     def import_root(self, root_block):
         """Main import function."""
@@ -320,7 +315,7 @@ class NifImport(NifImportExport):
                 self.logger.info('Applying skin deformation on geometry %s'
                                  % niBlock.name)
                 vertices, normals = niBlock.get_skin_deformation()
-                for vold, vnew in izip(niBlock.data.vertices, vertices):
+                for vold, vnew in zip(niBlock.data.vertices, vertices):
                     vold.x = vnew.x
                     vold.y = vnew.y
                     vold.z = vnew.z
@@ -788,7 +783,7 @@ class NifImport(NifImportExport):
     def import_empty(self, niBlock):
         """Creates and returns a grouping empty."""
         shortName = self.import_name(niBlock)
-        b_empty = self.scene.objects.new("Empty", shortName)
+        b_empty = self.context.scene.objects.new("Empty", shortName)
         b_empty.properties['longName'] = niBlock.name
         if niBlock.name in self.bone_priorities:
             constr = b_empty.constraints.append(
@@ -808,7 +803,7 @@ class NifImport(NifImportExport):
         b_armatureData.envelopes = False
         b_armatureData.vertexGroups = True
         b_armatureData.drawType = Blender.Armature.STICK
-        b_armature = self.scene.objects.new(b_armatureData, armature_name)
+        b_armature = self.context.scene.objects.new(b_armatureData, armature_name)
 
         # make armature editable and create bones
         b_armatureData.makeEditable()
@@ -921,9 +916,9 @@ class NifImport(NifImportExport):
                     if rotations:
                         self.logger.debug(
                             'Rotation keys...(bspline quaternions)')
-                        for time, quat in izip(times, rotations):
+                        for time, quat in zip(times, rotations):
                             frame = 1 + int(time * self.fps + 0.5)
-                            quat = Blender.Mathutils.Quaternion(
+                            quat = Mathutils.Quaternion(
                                 [quat[0], quat[1], quat[2],  quat[3]])
                             # beware, CrossQuats takes arguments in a
                             # counter-intuitive order:
@@ -935,15 +930,15 @@ class NifImport(NifImportExport):
                                                  [Blender.Object.Pose.ROT])
                             # fill optimizer dictionary
                             if translations:
-                                rot_keys_dict[frame] = Blender.Mathutils.Quaternion(rot)
+                                rot_keys_dict[frame] = Mathutils.Quaternion(rot)
 
                     # translations
                     if translations:
                         self.logger.debug('Translation keys...(bspline)')
-                        for time, translation in izip(times, translations):
+                        for time, translation in zip(times, translations):
                             # time 0.0 is frame 1
                             frame = 1 + int(time * self.fps + 0.5)
-                            trans = Blender.Mathutils.Vector(*translation)
+                            trans = Mathutils.Vector(*translation)
                             locVal = (trans - niBone_bind_trans) * niBone_bind_rot_inv * (1.0/niBone_bind_scale)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
                             # the rotation matrix is needed at this frame (that's
                             # why the other keys are inserted first)
@@ -953,14 +948,14 @@ class NifImport(NifImportExport):
                                 except KeyError:
                                     # fall back on slow method
                                     ipo = action.getChannelIpo(bone_name)
-                                    quat = Blender.Mathutils.Quaternion()
+                                    quat = Mathutils.Quaternion()
                                     quat.x = ipo.getCurve('QuatX').evaluate(frame)
                                     quat.y = ipo.getCurve('QuatY').evaluate(frame)
                                     quat.z = ipo.getCurve('QuatZ').evaluate(frame)
                                     quat.w = ipo.getCurve('QuatW').evaluate(frame)
                                     rot = quat.toMatrix()
                             else:
-                                rot = Blender.Mathutils.Matrix([1.0,0.0,0.0],
+                                rot = Mathutils.Matrix([1.0,0.0,0.0],
                                                                [0.0,1.0,0.0],
                                                                [0.0,0.0,1.0])
                             # we also need the scale at this frame
@@ -975,7 +970,7 @@ class NifImport(NifImportExport):
                                         sizeVal = 1.0
                             else:
                                 sizeVal = 1.0
-                            size = Blender.Mathutils.Matrix([sizeVal, 0.0, 0.0],
+                            size = Mathutils.Matrix([sizeVal, 0.0, 0.0],
                                                             [0.0, sizeVal, 0.0],
                                                             [0.0, 0.0, sizeVal])
                             # now we can do the final calculation
@@ -1009,7 +1004,7 @@ class NifImport(NifImportExport):
                         frame = 1 + int(scaleKey.time * self.fps + 0.5)
                         sizeVal = scaleKey.value
                         size = sizeVal / niBone_bind_scale # Schannel = Stotal / Sbind
-                        b_posebone.size = Blender.Mathutils.Vector(size, size, size)
+                        b_posebone.size = Mathutils.Vector(size, size, size)
                         b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.SIZE]) # this is very slow... :(
                         # fill optimizer dictionary
                         if translations:
@@ -1023,7 +1018,7 @@ class NifImport(NifImportExport):
                         # uses xyz rotation
                         if kfd.xyz_rotations[0].keys:
                             self.logger.debug('Rotation keys...(euler)')
-                        for xkey, ykey, zkey in izip(kfd.xyz_rotations[0].keys,
+                        for xkey, ykey, zkey in zip(kfd.xyz_rotations[0].keys,
                                                      kfd.xyz_rotations[1].keys,
                                                      kfd.xyz_rotations[2].keys):
                             # time 0.0 is frame 1
@@ -1035,7 +1030,7 @@ class NifImport(NifImportExport):
                                     "xyz key times do not correspond, "
                                     "animation may not be correctly imported")
                             frame = 1 + int(xkey.time * self.fps + 0.5)
-                            euler = Blender.Mathutils.Euler(
+                            euler = Mathutils.Euler(
                                 [xkey.value*180.0/math.pi,
                                  ykey.value*180.0/math.pi,
                                  zkey.value*180.0/math.pi])
@@ -1050,7 +1045,7 @@ class NifImport(NifImportExport):
                             b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.ROT]) # this is very slow... :(
                             # fill optimizer dictionary
                             if translations:
-                                rot_keys_dict[frame] = Blender.Mathutils.Quaternion(rot) 
+                                rot_keys_dict[frame] = Mathutils.Quaternion(rot) 
 
                     # Quaternion Rotations
                     else:
@@ -1061,7 +1056,7 @@ class NifImport(NifImportExport):
                         for key in quaternion_keys:
                             frame = 1 + int(key.time * self.fps + 0.5)
                             keyVal = key.value
-                            quat = Blender.Mathutils.Quaternion([keyVal.w, keyVal.x, keyVal.y,  keyVal.z])
+                            quat = Mathutils.Quaternion([keyVal.w, keyVal.x, keyVal.y,  keyVal.z])
                             # beware, CrossQuats takes arguments in a
                             # counter-intuitive order:
                             # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
@@ -1072,7 +1067,7 @@ class NifImport(NifImportExport):
                                                  [Blender.Object.Pose.ROT])
                             # fill optimizer dictionary
                             if translations:
-                                rot_keys_dict[frame] = Blender.Mathutils.Quaternion(rot)
+                                rot_keys_dict[frame] = Mathutils.Quaternion(rot)
 #                    else:
 #                        print("""Rotation keys...(unknown)
 #WARNING: rotation animation data of type %i found, but this type is not yet
@@ -1085,7 +1080,7 @@ class NifImport(NifImportExport):
                         # time 0.0 is frame 1
                         frame = 1 + int(key.time * self.fps + 0.5)
                         keyVal = key.value
-                        trans = Blender.Mathutils.Vector(keyVal.x, keyVal.y, keyVal.z)
+                        trans = Mathutils.Vector(keyVal.x, keyVal.y, keyVal.z)
                         locVal = (trans - niBone_bind_trans) * niBone_bind_rot_inv * (1.0/niBone_bind_scale)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
                         # the rotation matrix is needed at this frame (that's
                         # why the other keys are inserted first)
@@ -1095,14 +1090,14 @@ class NifImport(NifImportExport):
                             except KeyError:
                                 # fall back on slow method
                                 ipo = action.getChannelIpo(bone_name)
-                                quat = Blender.Mathutils.Quaternion()
+                                quat = Mathutils.Quaternion()
                                 quat.x = ipo.getCurve('QuatX').evaluate(frame)
                                 quat.y = ipo.getCurve('QuatY').evaluate(frame)
                                 quat.z = ipo.getCurve('QuatZ').evaluate(frame)
                                 quat.w = ipo.getCurve('QuatW').evaluate(frame)
                                 rot = quat.toMatrix()
                         else:
-                            rot = Blender.Mathutils.Matrix([1.0,0.0,0.0],
+                            rot = Mathutils.Matrix([1.0,0.0,0.0],
                                                            [0.0,1.0,0.0],
                                                            [0.0,0.0,1.0])
                         # we also need the scale at this frame
@@ -1117,7 +1112,7 @@ class NifImport(NifImportExport):
                                     sizeVal = 1.0
                         else:
                             sizeVal = 1.0
-                        size = Blender.Mathutils.Matrix([sizeVal, 0.0, 0.0],
+                        size = Mathutils.Matrix([sizeVal, 0.0, 0.0],
                                                         [0.0, sizeVal, 0.0],
                                                         [0.0, 0.0, sizeVal])
                         # now we can do the final calculation
@@ -1255,9 +1250,9 @@ class NifImport(NifImportExport):
         b_armatureData.bones[bone_name] = b_bone
         # calculate bone difference matrix; we will need this when
         # importing animation
-        old_bone_matrix_inv = Blender.Mathutils.Matrix(armature_space_matrix)
+        old_bone_matrix_inv = Mathutils.Matrix(armature_space_matrix)
         old_bone_matrix_inv.invert()
-        new_bone_matrix = Blender.Mathutils.Matrix(b_bone.matrix)
+        new_bone_matrix = Mathutils.Matrix(b_bone.matrix)
         new_bone_matrix.resize4x4()
         new_bone_matrix[3][0] = b_bone_head_x
         new_bone_matrix[3][1] = b_bone_head_y
@@ -2003,7 +1998,7 @@ class NifImport(NifImportExport):
             b_meshData = Blender.Mesh.New(b_name)
             b_meshData.properties['longName'] = niBlock.name
             # create mesh object and link to data
-            b_mesh = self.scene.objects.new(b_meshData, b_name)
+            b_mesh = self.context.scene.objects.new(b_meshData, b_name)
 
             # Mesh hidden flag
             if niBlock.flags & 1 == 1:
@@ -2175,7 +2170,7 @@ class NifImport(NifImportExport):
                 v_map[i] = b_v_index # NIF vertex i maps to blender vertex b_v_index
                 # add the vertex
                 if applytransform:
-                    v = Blender.Mathutils.Vector(v.x, v.y, v.z)
+                    v = Mathutils.Vector(v.x, v.y, v.z)
                     v *= transform
                     b_meshData.verts.extend(v)
                 else:
@@ -2185,7 +2180,7 @@ class NifImport(NifImportExport):
                 #if norms:
                 #    mv = b_meshData.verts[b_v_index]
                 #    n = norms[i]
-                #    mv.no = Blender.Mathutils.Vector(n.x, n.y, n.z)
+                #    mv.no = Mathutils.Vector(n.x, n.y, n.z)
                 b_v_index += 1
             else:
                 # already added
@@ -2247,7 +2242,7 @@ class NifImport(NifImportExport):
         
         if vcol:
             b_meshData.vertexColors = 1
-            for f, b_f_index in izip(tris, f_map):
+            for f, b_f_index in zip(tris, f_map):
                 if b_f_index is None:
                     continue
                 b_face = b_meshData.faces[b_f_index]
@@ -2282,7 +2277,7 @@ class NifImport(NifImportExport):
                 if not uvlayer in b_meshData.getUVLayerNames():
                     b_meshData.addUVLayer(uvlayer)
                 b_meshData.activeUVLayer = uvlayer
-                for f, b_f_index in izip(tris, f_map):
+                for f, b_f_index in zip(tris, f_map):
                     if b_f_index is None:
                         continue
                     uvlist = [ Vector(uv_set[vert_index].u, 1.0 - uv_set[vert_index].v) for vert_index in f ]
@@ -2341,7 +2336,7 @@ class NifImport(NifImportExport):
         # import body parts as vertex groups
         if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
             skinpart = niBlock.get_skin_partition()
-            for bodypart, skinpartblock in izip(
+            for bodypart, skinpartblock in zip(
                 skininst.partitions, skinpart.skin_partition_blocks):
                 bodypart_wrap = NifFormat.BSDismemberBodyPartType()
                 bodypart_wrap.set_value(bodypart.body_part)
@@ -2387,9 +2382,9 @@ class NifImport(NifImportExport):
                         # for each vertex calculate the key position from base
                         # pos + delta offset
                         assert(len(baseverts) == len(morphverts) == len(v_map))
-                        for bv, mv, b_v_index in izip(baseverts, morphverts, v_map):
-                            base = Blender.Mathutils.Vector(bv.x, bv.y, bv.z)
-                            delta = Blender.Mathutils.Vector(mv.x, mv.y, mv.z)
+                        for bv, mv, b_v_index in zip(baseverts, morphverts, v_map):
+                            base = Mathutils.Vector(bv.x, bv.y, bv.z)
+                            delta = Mathutils.Vector(mv.x, mv.y, mv.z)
                             v = base + delta
                             if applytransform:
                                 v *= transform
@@ -2426,8 +2421,8 @@ class NifImport(NifImportExport):
                             frame =  1+int(key.time * self.fps + 0.5)
                             b_curve.addBezier( ( frame, x ) )
                         # finally: return to base position
-                        for bv, b_v_index in izip(baseverts, v_map):
-                            base = Blender.Mathutils.Vector(bv.x, bv.y, bv.z)
+                        for bv, b_v_index in zip(baseverts, v_map):
+                            base = Mathutils.Vector(bv.x, bv.y, bv.z)
                             if applytransform:
                                 base *= transform
                             b_meshData.verts[b_v_index].co[0] = base.x
@@ -2465,9 +2460,9 @@ class NifImport(NifImportExport):
 
                 # for each vertex calculate the key position from base
                 # pos + delta offset
-                for bv, mv, b_v_index in izip(verts, morphverts, v_map):
-                    base = Blender.Mathutils.Vector(bv.x, bv.y, bv.z)
-                    delta = Blender.Mathutils.Vector(mv[0], mv[1], mv[2])
+                for bv, mv, b_v_index in zip(verts, morphverts, v_map):
+                    base = Mathutils.Vector(bv.x, bv.y, bv.z)
+                    delta = Mathutils.Vector(mv[0], mv[1], mv[2])
                     v = base + delta
                     if applytransform:
                         v *= transform
@@ -2495,13 +2490,13 @@ class NifImport(NifImportExport):
 
             if self.IMPORT_EGMANIM:
                 # set begin and end frame
-                self.scene.getRenderingContext().startFrame(1)
-                self.scene.getRenderingContext().endFrame(
+                self.context.scene.getRenderingContext().startFrame(1)
+                self.context.scene.getRenderingContext().endFrame(
                     11 + len(b_meshData.key.blocks) * 10)
 
             # finally: return to base position
-            for bv, b_v_index in izip(verts, v_map):
-                base = Blender.Mathutils.Vector(bv.x, bv.y, bv.z)
+            for bv, b_v_index in zip(verts, v_map):
+                base = Mathutils.Vector(bv.x, bv.y, bv.z)
                 if applytransform:
                     base *= transform
                 b_meshData.verts[b_v_index].co[0] = base.x
@@ -2543,8 +2538,8 @@ class NifImport(NifImportExport):
                 animtxt.write('%i/%s\n'%(frame, newkey))
             
             # set start and end frames
-            self.scene.getRenderingContext().startFrame(1)
-            self.scene.getRenderingContext().endFrame(frame)
+            self.context.scene.getRenderingContext().startFrame(1)
+            self.context.scene.getRenderingContext().endFrame(frame)
         
     def store_bones_extra_matrix(self):
         """Stores correction matrices in a text buffer so that the original
@@ -2672,7 +2667,7 @@ class NifImport(NifImportExport):
         # do all NiNode's as bones
         if self.IMPORT_SKELETON == 1 or (
             self.version in (0x14000005, 0x14020007) and
-            self.filebase.lower() in ('skeleton', 'skeletonbeast')):
+            self.properties.filebase.lower() in ('skeleton', 'skeletonbeast')):
             
             if not isinstance(niBlock, NifFormat.NiNode):
                 raise NifImportError(
@@ -2928,7 +2923,7 @@ class NifImport(NifImportExport):
             ykeys = kfd.xyz_rotations[1].keys
             zkeys = kfd.xyz_rotations[2].keys
             self.logger.debug('Rotation keys...(euler)')
-            for (xkey, ykey, zkey) in izip(xkeys, ykeys, zkeys):
+            for (xkey, ykey, zkey) in zip(xkeys, ykeys, zkeys):
                 frame = 1+int(xkey.time * self.fps + 0.5) # time 0.0 is frame 1
                 # XXX we assume xkey.time == ykey.time == zkey.time
                 Blender.Set('curframe', frame)
@@ -2944,7 +2939,7 @@ class NifImport(NifImportExport):
             for key in kfd.quaternion_keys:
                 frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                 Blender.Set('curframe', frame)
-                rot = Blender.Mathutils.Quaternion(key.value.w, key.value.x, key.value.y, key.value.z).toEuler()
+                rot = Mathutils.Quaternion(key.value.w, key.value.x, key.value.y, key.value.z).toEuler()
                 # Blender euler is in degrees, object RotXYZ is in radians
                 b_obj.RotX = rot.x * self.D2R
                 b_obj.RotY = rot.y * self.D2R
@@ -2979,7 +2974,7 @@ class NifImport(NifImportExport):
                 me.faces.extend(triangle)
 
             # link mesh to scene and set transform
-            ob = self.scene.objects.new(me, 'convexpoly')
+            ob = self.context.scene.objects.new(me, 'convexpoly')
 
             # set bounds type
             ob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
@@ -3006,7 +3001,7 @@ class NifImport(NifImportExport):
             # import shapes
             collision_objs = self.import_bhk_shape(bhkshape.shape)
             # find transformation matrix
-            transform = Blender.Mathutils.Matrix(*bhkshape.transform.as_list())
+            transform = Mathutils.Matrix(*bhkshape.transform.as_list())
             transform.transpose()
             # fix scale
             transform[3][0] *= 7
@@ -3025,7 +3020,7 @@ class NifImport(NifImportExport):
             # find transformation matrix in case of the T version
             if isinstance(bhkshape, NifFormat.bhkRigidBodyT):
                 # set rotation
-                transform = Blender.Mathutils.Quaternion(
+                transform = Mathutils.Quaternion(
                     bhkshape.rotation.w, bhkshape.rotation.x,
                     bhkshape.rotation.y, bhkshape.rotation.z).toMatrix()
                 transform.resize4x4()
@@ -3081,7 +3076,7 @@ class NifImport(NifImportExport):
                 [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
 
             # link box to scene and set transform
-            ob = self.scene.objects.new(me, 'box')
+            ob = self.context.scene.objects.new(me, 'box')
 
             # set bounds type
             ob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
@@ -3102,7 +3097,7 @@ class NifImport(NifImportExport):
                 [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
 
             # link box to scene and set transform
-            ob = self.scene.objects.new(me, 'sphere')
+            ob = self.context.scene.objects.new(me, 'sphere')
 
             # set bounds type
             ob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
@@ -3128,7 +3123,7 @@ class NifImport(NifImportExport):
                 [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
 
             # link box to scene and set transform
-            ob = self.scene.objects.new(me, 'capsule')
+            ob = self.context.scene.objects.new(me, 'capsule')
 
             # set bounds type
             ob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
@@ -3139,21 +3134,21 @@ class NifImport(NifImportExport):
             # find transform
             if length > self.EPSILON:
                 normal = (bhkshape.first_point - bhkshape.second_point) / length
-                normal = Blender.Mathutils.Vector(normal.x, normal.y, normal.z)
+                normal = Mathutils.Vector(normal.x, normal.y, normal.z)
             else:
                 self.logger.warn(
                     "bhkCapsuleShape with identical points:"
                     " using arbitrary axis")
-                normal = Blender.Mathutils.Vector(0, 0, 1)
+                normal = Mathutils.Vector(0, 0, 1)
             minindex = min((abs(x), i) for i, x in enumerate(normal))[1]
-            orthvec = Blender.Mathutils.Vector([(1 if i == minindex else 0)
+            orthvec = Mathutils.Vector([(1 if i == minindex else 0)
                                                 for i in (0,1,2)])
-            vec1 = Blender.Mathutils.CrossVecs(normal, orthvec)
+            vec1 = Mathutils.CrossVecs(normal, orthvec)
             vec1.normalize()
-            vec2 = Blender.Mathutils.CrossVecs(normal, vec1)
+            vec2 = Mathutils.CrossVecs(normal, vec1)
             # the rotation matrix should be such that
             # (0,0,1) maps to normal
-            transform = Blender.Mathutils.Matrix(vec1, vec2, normal)
+            transform = Mathutils.Matrix(vec1, vec2, normal)
             transform.resize4x4()
             transform[3][0] = 3.5 * (bhkshape.first_point.x
                                      + bhkshape.second_point.x)
@@ -3211,7 +3206,7 @@ class NifImport(NifImportExport):
                                                me.faces[-1].verts[2] )
 
                 # link mesh to scene and set transform
-                ob = self.scene.objects.new(me, 'poly%i' % subshape_num)
+                ob = self.context.scene.objects.new(me, 'poly%i' % subshape_num)
 
                 # set bounds type
                 ob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
@@ -3251,7 +3246,7 @@ class NifImport(NifImportExport):
             me.faces.extend(list(bhkshape.get_triangles()))
 
             # link mesh to scene and set transform
-            ob = self.scene.objects.new(me, 'poly')
+            ob = self.context.scene.objects.new(me, 'poly')
 
             # set bounds type
             ob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
@@ -3386,7 +3381,7 @@ class NifImport(NifImportExport):
             b_constr[Blender.Constraint.Settings.LIMIT] = 63
 
             # get pivot point
-            pivot = Blender.Mathutils.Vector(
+            pivot = Mathutils.Vector(
                 hkdescriptor.pivot_a.x * 7,
                 hkdescriptor.pivot_a.y * 7,
                 hkdescriptor.pivot_a.z * 7)
@@ -3396,12 +3391,12 @@ class NifImport(NifImportExport):
             if isinstance(hkdescriptor, NifFormat.RagdollDescriptor):
                 # for ragdoll, take z to be the twist axis (central axis of the
                 # cone, that is)
-                axis_z = Blender.Mathutils.Vector(
+                axis_z = Mathutils.Vector(
                     hkdescriptor.twist_a.x,
                     hkdescriptor.twist_a.y,
                     hkdescriptor.twist_a.z)
                 # for ragdoll, let x be the plane vector
-                axis_x = Blender.Mathutils.Vector(
+                axis_x = Mathutils.Vector(
                     hkdescriptor.plane_a.x,
                     hkdescriptor.plane_a.y,
                     hkdescriptor.plane_a.z)
@@ -3423,33 +3418,33 @@ class NifImport(NifImportExport):
             elif isinstance(hkdescriptor, NifFormat.LimitedHingeDescriptor):
                 # for hinge, y is the vector on the plane of rotation defining
                 # the zero angle
-                axis_y = Blender.Mathutils.Vector(
+                axis_y = Mathutils.Vector(
                     hkdescriptor.perp_2_axle_in_a_1.x,
                     hkdescriptor.perp_2_axle_in_a_1.y,
                     hkdescriptor.perp_2_axle_in_a_1.z)
                 # for hinge, take x to be the the axis of rotation
                 # (this corresponds with Blender's convention for hinges)
-                axis_x = Blender.Mathutils.Vector(
+                axis_x = Mathutils.Vector(
                     hkdescriptor.axle_a.x,
                     hkdescriptor.axle_a.y,
                     hkdescriptor.axle_a.z)
                 # for hinge, z is the vector on the plane of rotation defining
                 # the positive direction of rotation
-                axis_z = Blender.Mathutils.Vector(
+                axis_z = Mathutils.Vector(
                     hkdescriptor.perp_2_axle_in_a_2.x,
                     hkdescriptor.perp_2_axle_in_a_2.y,
                     hkdescriptor.perp_2_axle_in_a_2.z)
                 # they should form a orthogonal basis
-                if (Blender.Mathutils.CrossVecs(axis_x, axis_y)
+                if (Mathutils.CrossVecs(axis_x, axis_y)
                     - axis_z).length > 0.01:
                     # either not orthogonal, or negative orientation
-                    if (Blender.Mathutils.CrossVecs(-axis_x, axis_y)
+                    if (Mathutils.CrossVecs(-axis_x, axis_y)
                         - axis_z).length > 0.01:
                         self.logger.warning(
                             "Axes are not orthogonal in %s;"
                             " arbitrary orientation has been chosen"
                             % hkdescriptor.__class__.__name__)
-                        axis_z = Blender.Mathutils.CrossVecs(axis_x, axis_y)
+                        axis_z = Mathutils.CrossVecs(axis_x, axis_y)
                     else:
                         # fix orientation
                         self.logger.warning(
@@ -3468,19 +3463,19 @@ class NifImport(NifImportExport):
             elif isinstance(hkdescriptor, NifFormat.HingeDescriptor):
                 # for hinge, y is the vector on the plane of rotation defining
                 # the zero angle
-                axis_y = Blender.Mathutils.Vector(
+                axis_y = Mathutils.Vector(
                     hkdescriptor.perp_2_axle_in_a_1.x,
                     hkdescriptor.perp_2_axle_in_a_1.y,
                     hkdescriptor.perp_2_axle_in_a_1.z)
                 # for hinge, z is the vector on the plane of rotation defining
                 # the positive direction of rotation
-                axis_z = Blender.Mathutils.Vector(
+                axis_z = Mathutils.Vector(
                     hkdescriptor.perp_2_axle_in_a_2.x,
                     hkdescriptor.perp_2_axle_in_a_2.y,
                     hkdescriptor.perp_2_axle_in_a_2.z)
                 # take x to be the the axis of rotation
                 # (this corresponds with Blender's convention for hinges)
-                axis_x = Blender.Mathutils.CrossVecs(axis_y, axis_z)
+                axis_x = Mathutils.CrossVecs(axis_y, axis_z)
             else:
                 raise ValueError("unknown descriptor %s"
                                  % hkdescriptor.__class__.__name__)
@@ -3512,7 +3507,7 @@ class NifImport(NifImportExport):
             # multiply with rigid body transform
             if isinstance(hkbody, NifFormat.bhkRigidBodyT):
                 # set rotation
-                transform = Blender.Mathutils.Quaternion(
+                transform = Mathutils.Quaternion(
                     hkbody.rotation.w, hkbody.rotation.x,
                     hkbody.rotation.y, hkbody.rotation.z).toMatrix()
                 transform.resize4x4()
@@ -3532,7 +3527,7 @@ class NifImport(NifImportExport):
             for niBone in self.bones_extra_matrix:
                 if niBone.collision_object \
                    and niBone.collision_object.body is hkbody:
-                    transform = Blender.Mathutils.Matrix(
+                    transform = Mathutils.Matrix(
                         self.bones_extra_matrix[niBone])
                     transform.invert()
                     pivot = pivot * transform
@@ -3547,7 +3542,7 @@ class NifImport(NifImportExport):
                     b_hkobj.parentbonename].length
 
             # cancel out object transform
-            transform = Blender.Mathutils.Matrix(
+            transform = Mathutils.Matrix(
                 b_hkobj.getMatrix('localspace'))
             transform.invert()
             pivot = pivot * transform
@@ -3561,17 +3556,17 @@ class NifImport(NifImportExport):
             b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVZ] = pivot[2]
 
             # set euler angles
-            constr_matrix = Blender.Mathutils.Matrix(
+            constr_matrix = Mathutils.Matrix(
                 axis_x,
-                Blender.Mathutils.CrossVecs(axis_z, axis_x),
+                Mathutils.CrossVecs(axis_z, axis_x),
                 axis_z)
             constr_euler = constr_matrix.toEuler()
             b_constr[Blender.Constraint.Settings.CONSTR_RB_AXX] = constr_euler.x
             b_constr[Blender.Constraint.Settings.CONSTR_RB_AXY] = constr_euler.y
             b_constr[Blender.Constraint.Settings.CONSTR_RB_AXZ] = constr_euler.z
             # DEBUG
-            assert((axis_x - Blender.Mathutils.Vector(1,0,0) * constr_matrix).length < 0.0001)
-            assert((axis_z - Blender.Mathutils.Vector(0,0,1) * constr_matrix).length < 0.0001)
+            assert((axis_x - Mathutils.Vector(1,0,0) * constr_matrix).length < 0.0001)
+            assert((axis_z - Mathutils.Vector(0,0,1) * constr_matrix).length < 0.0001)
 
             # the generic rigid body type is very buggy... so for simulation
             # purposes let's transform it into ball and hinge
@@ -3623,11 +3618,11 @@ class NifImport(NifImportExport):
 
         # link box to scene and set transform
         if isinstance(bbox, NifFormat.BSBound):
-            ob = self.scene.objects.new(me, 'BSBound')
+            ob = self.context.scene.objects.new(me, 'BSBound')
         else:
-            ob = self.scene.objects.new(me, 'Bounding Box')
+            ob = self.context.scene.objects.new(me, 'Bounding Box')
             # XXX this is set in the import_branch method
-            #ob.setMatrix(Blender.Mathutils.Matrix(
+            #ob.setMatrix(Mathutils.Matrix(
             #    *bbox.bounding_box.rotation.as_list()))
             #ob.setLocation(
             #    *bbox.bounding_box.translation.as_list())
@@ -3735,30 +3730,21 @@ class NifImport(NifImportExport):
         #NifFormat.write(niffile,
         #                version = 0x14000005, user_version = 11, roots = [root])
 
-def config_callback(**config):
-    """Called when config script is done. Starts and times import."""
-    # saves editmode state and exit editmode if it is enabled
-    # (cannot make changes mesh data in editmode)
-    is_editmode = Blender.Window.EditMode()
-    Blender.Window.EditMode(0)
-    Blender.Window.WaitCursor(1)
-    t = Blender.sys.time()
+# register nif import operator
+bpy.types.register(NifImport)
 
-    try:
-        # run importer
-        importer = NifImport(**config)
-        importer.logger.info(
-            'Finished in %.2f seconds' % (Blender.sys.time()-t))
-    finally:
-        Blender.Window.WaitCursor(0)
-        if is_editmode:
-            Blender.Window.EditMode(1)
+# register operator in import menu
+def menu_func(self, context):
+    # TODO get default path from config registry
+    #default_path = bpy.data.filename.replace(".blend", ".nif")
+    default_path = "import.nif"
+    self.layout.operator(
+        NifImport.bl_idname,
+        text="NetImmerse/Gamebryo (.nif & .kf & .egm)..."
+        ).path = default_path
 
-def fileselect_callback(filename):
-    """Called once file is selected. Starts config GUI."""
-    global _CONFIG
-    _CONFIG.run(NifConfig.TARGET_IMPORT, filename, config_callback)
+menu_item = bpy.types.INFO_MT_file_import.append(menu_func)
 
 if __name__ == '__main__':
-    _CONFIG = NifConfig() # use global so gui elements don't go out of skope
-    Blender.Window.FileSelector(fileselect_callback, "Import NIF", _CONFIG.config["IMPORT_FILE"])
+    # TODO run test
+    pass

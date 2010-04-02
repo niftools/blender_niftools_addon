@@ -105,7 +105,7 @@ class TestSuite:
         logging.getLogger("niftools").setLevel(logging.DEBUG)
         logging.getLogger("pyffi").setLevel(logging.WARNING)
 
-        for key, value in config.items():
+        for key, value in list(config.items()):
             finalconfig[key] = value
 
         # run test
