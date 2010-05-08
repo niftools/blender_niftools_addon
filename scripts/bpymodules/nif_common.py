@@ -293,6 +293,12 @@ class NifImportExport(bpy.types.Operator, metaclass=MetaNifImportExport):
         - set self.context
         - set self.selected_objects
         """
+        # print scripts info
+        print(
+            "Blender NIF Scripts %s"
+            " (running on Blender %s, PyFFI %s)"
+            % (__version__, bpy.app.version_string, __pyffiversion__))
+
         # initialize progress bar
         self.msg_progress("Initializing", progbar=0)
 
@@ -462,10 +468,6 @@ class NifConfig:
     (otherwise gui elements might go out of skope which will crash
     Blender)."""
     # class global constants
-    WELCOME_MESSAGE = (
-        "Blender NIF Scripts %s"
-        " (running on Blender %s, PyFFI %s)"
-        % (__version__, bpy.app.version_string, __pyffiversion__))
     CONFIG_NAME = "nifscripts" # name of the config file
     TARGET_IMPORT = 0          # config target value when importing
     TARGET_EXPORT = 1          # config target value when exporting
@@ -550,15 +552,6 @@ class NifConfig:
 
     def __init__(self):
         """Initialize and load configuration."""
-        # clears the console window
-        if sys.platform in ('linux-i386','linux2'):
-            os.system("clear")
-        elif sys.platform in ('win32','dos','ms-dos'):
-            os.system("cls")
-
-        # print scripts info
-        print(self.WELCOME_MESSAGE)
-
         # initialize all instance variables
         self.guiElements = {} # dictionary of gui elements (buttons, strings, sliders, ...)
         self.gui_events = []   # list of events
