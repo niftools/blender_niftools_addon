@@ -328,7 +328,8 @@ class NifImport(NifImportExport):
                 self.import_root(root)
         except NifImportError as e: # in that case, we raise a menu too
             self.logger.exception('NifImportError: %s' % e)
-            Blender.Draw.PupMenu('ERROR%t|' + str(e))
+            # XXX how to do this in Blender 2.5?
+            #Blender.Draw.PupMenu('ERROR%t|' + str(e))
             raise
         finally:
             # clear progress bar
