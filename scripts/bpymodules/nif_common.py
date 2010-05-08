@@ -242,7 +242,6 @@ class NifImportExport(bpy.types.Operator, metaclass=MetaNifImportExport):
     EXPORT_FLATTENSKIN = False
     EXPORT_VERSION = 'Oblivion'
     IMPORT_SKELETON = 0 # 0 = normal import, 1 = import file as skeleton, 2 = import mesh and attach to skeleton
-    IMPORT_KEYFRAMEFILE = '', # keyframe file for animations
     IMPORT_EGMFILE = '', # FaceGen EGM file for morphs
     IMPORT_EGMANIM = True, # create FaceGen EGM animation curves
     IMPORT_EGMANIMSCALE = 1.0, # scale of FaceGen EGM animation curves

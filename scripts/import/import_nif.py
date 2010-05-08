@@ -77,7 +77,12 @@ class NifImport(NifImportExport):
     bl_label = "Import NIF"
 
     # properties
-    # (nothing yet, all the IMPORT_XXX options will come here as properties)
+    keyframe_file = bpy.props.StringProperty(
+        name="Keyframe File",
+        description="Keyframe file for animations.",
+        maxlen=1024,
+        default="",
+        subtype="FILE_PATH")
 
     # correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z
     BONE_CORRECTION_MATRICES = (
@@ -169,14 +174,10 @@ class NifImport(NifImportExport):
                 # the file has been read or an error occurred: close file
                 niffile.close()
 
-            return {'FINISHED'}
-
-            # TODO
-
-            if self.IMPORT_KEYFRAMEFILE:
+            if self.properties.keyframe_file:
                 # open keyframe file for binary reading
-                self.logger.info("Importing %s" % self.IMPORT_KEYFRAMEFILE)
-                kffile = open(self.IMPORT_KEYFRAMEFILE, "rb")
+                self.logger.info("Importing %s" % self.properties.keyframe_file)
+                kffile = open(self.properties.keyframe_file, "rb")
                 kfdata = NifFormat.Data()
                 try:
                     # check if kf file is valid
@@ -198,6 +199,10 @@ class NifImport(NifImportExport):
                     kffile.close()
             else:
                 kf_root_blocks = []
+
+            return {'FINISHED'}
+
+            # TODO
 
             if self.IMPORT_EGMFILE:
                 # open facegen egm file for binary reading
