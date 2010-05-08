@@ -91,6 +91,11 @@ class NifImport(NifImportExport):
         default="",
         subtype="FILE_PATH")
 
+    animation = bpy.props.BoolProperty(
+        name="Animation",
+        description="Import Animation",
+        default=True)
+
     # correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z
     BONE_CORRECTION_MATRICES = (
         mathutils.Matrix([ 0.0,-1.0, 0.0],[ 1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0]),
@@ -235,7 +240,7 @@ class NifImport(NifImportExport):
 
             self.msg_progress("Importing data")
             # calculate and set frames per second
-            if self.IMPORT_ANIMATION:
+            if self.properties.animation:
                 self.fps = self.get_frames_per_second(
                     self.data.roots
                     + self.kfdata.roots if self.kfdata else [])
@@ -267,7 +272,7 @@ class NifImport(NifImportExport):
                 # import this root block
                 self.logger.debug("Root block: %s" % root.get_global_display())
                 # merge animation from kf tree into nif tree
-                if self.IMPORT_ANIMATION:
+                if self.properties.animation:
                     for kf_root in self.kfdata.roots:
                         self.import_kf_root(kf_root, root)
                 # import the nif tree
@@ -344,7 +349,7 @@ class NifImport(NifImportExport):
         self.mark_armatures_bones(root_block)
         
         # import the keyframe notes
-        if self.IMPORT_ANIMATION:
+        if self.properties.animation:
             self.import_text_keys(root_block)
 
         # read the NIF tree
@@ -485,7 +490,7 @@ class NifImport(NifImportExport):
                 geom_group = self.is_grouping_node(niBlock)
                 # if importing animation, remove children that have
                 # morph controllers from geometry group
-                if self.IMPORT_ANIMATION:
+                if self.properties.animation:
                     for child in geom_group:
                         if self.find_controller(
                             child, NifFormat.NiGeomMorpherController):
@@ -657,7 +662,7 @@ class NifImport(NifImportExport):
                 b_obj.setMatrix(self.import_matrix(niBlock))
 
                 # import the animations
-                if self.IMPORT_ANIMATION:
+                if self.properties.animation:
                     self.set_animation(niBlock, b_obj)
                     # import the extras
                     self.import_text_keys(niBlock)
@@ -823,7 +828,7 @@ class NifImport(NifImportExport):
 
         # The armature has been created in editmode,
         # now we are ready to set the bone keyframes.
-        if self.IMPORT_ANIMATION:
+        if self.properties.animation:
             # create an action
             action = Blender.Armature.NLA.NewAction()
             action.setActive(b_armature)
@@ -1850,7 +1855,7 @@ class NifImport(NifImportExport):
 
     def import_material_controllers(self, b_material, n_geom):
         """Import material animation data for given geometry."""
-        if not self.IMPORT_ANIMATION:
+        if not self.properties.animation:
             return
 
         self.import_material_alpha_controller(b_material, n_geom)
@@ -2361,7 +2366,7 @@ class NifImport(NifImportExport):
 
         # import morph controller
         # XXX todo: move this to import_mesh_controllers
-        if self.IMPORT_ANIMATION:
+        if self.properties.animation:
             morphCtrl = self.find_controller(niBlock, NifFormat.NiGeomMorpherController)
             if morphCtrl:
                 morphData = morphCtrl.data

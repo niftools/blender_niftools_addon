@@ -231,7 +231,6 @@ class NifImportExport(bpy.types.Operator, metaclass=MetaNifImportExport):
     # TODO: convert to properties in NifImport and NifExport
     """
     IMPORT_REALIGN_BONES = 1 # 0 = no, 1 = tail, 2 = tail+rotation
-    IMPORT_ANIMATION = True
     IMPORT_TEXTURE_PATH = []
     EXPORT_FLATTENSKIN = False
     EXPORT_VERSION = 'Oblivion'
