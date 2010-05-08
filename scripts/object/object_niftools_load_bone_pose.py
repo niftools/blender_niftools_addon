@@ -111,7 +111,7 @@ def main(arg):
         print(("loading pose of bone %s from %s"
               % (bonename, PREF_BUFFER.val)))
         try:
-            matrix = Blender.Mathutils.Matrix(
+            matrix = mathutils.Matrix(
                 *[[float(f) for f in row.split(',')]
                   for row in matrixstr.split(';')])
         except:

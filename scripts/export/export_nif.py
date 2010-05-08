@@ -16,6 +16,7 @@ This script exports Netimmerse and Gamebryo .nif files from Blender.
 import logging
 
 import bpy
+import mathutils
 
 from nif_common import NifImportExport
 from nif_common import NifFormat
@@ -87,7 +88,7 @@ class NifExport(NifImportExport):
                 # reconstruct matrix from text
                 b, m = ln.split('/')
                 try:
-                    mat = Blender.Mathutils.Matrix(
+                    mat = mathutils.Matrix(
                         *[[float(f) for f in row.split(',')]
                           for row in m.split(';')])
                 except:
@@ -347,18 +348,18 @@ class NifExport(NifImportExport):
                     if len(meshes) <= 1: continue # not shared
                     # take average of all face normals of faces that have this
                     # vertex
-                    norm = Blender.Mathutils.Vector(0,0,0)
+                    norm = mathutils.Vector(0,0,0)
                     for v, f, mesh in vlist:
                         norm += f.no
                     norm.normalize()
                     # remove outliers (fixes better bodies issue)
                     # first calculate fitness of each face
-                    fitlist = [Blender.Mathutils.DotVecs(f.no, norm)
+                    fitlist = [mathutils.DotVecs(f.no, norm)
                                for v, f, mesh in vlist]
                     bestfit = max(fitlist)
                     # recalculate normals only taking into account
                     # well-fitting faces
-                    norm = Blender.Mathutils.Vector(0,0,0)
+                    norm = mathutils.Vector(0,0,0)
                     for (v, f, mesh), fit in zip(vlist, fitlist):
                         if fit >= bestfit - 0.2:
                             norm += f.no
@@ -1293,18 +1294,18 @@ class NifExport(NifImportExport):
             bind_quat = bind_rot.toQuat()
         else:
             bind_scale = 1.0
-            bind_rot = Blender.Mathutils.Matrix([1,0,0],[0,1,0],[0,0,1])
-            bind_quat = Blender.Mathutils.Quaternion(1,0,0,0)
-            bind_trans = Blender.Mathutils.Vector(0,0,0)
+            bind_rot = mathutils.Matrix([1,0,0],[0,1,0],[0,0,1])
+            bind_quat = mathutils.Quaternion(1,0,0,0)
+            bind_trans = mathutils.Vector(0,0,0)
         if extra_mat_inv:
             extra_scale_inv, extra_rot_inv, extra_trans_inv = \
                 self.decompose_srt(extra_mat_inv)
             extra_quat_inv = extra_rot_inv.toQuat()
         else:
             extra_scale_inv = 1.0
-            extra_rot_inv = Blender.Mathutils.Matrix([1,0,0],[0,1,0],[0,0,1])
-            extra_quat_inv = Blender.Mathutils.Quaternion(1,0,0,0)
-            extra_trans_inv = Blender.Mathutils.Vector(0,0,0)
+            extra_rot_inv = mathutils.Matrix([1,0,0],[0,1,0],[0,0,1])
+            extra_quat_inv = mathutils.Quaternion(1,0,0,0)
+            extra_trans_inv = mathutils.Vector(0,0,0)
 
         # sometimes we need to export an empty keyframe... this will take care of that
         if (ipo == None):
@@ -1366,7 +1367,7 @@ class NifExport(NifImportExport):
                             scale_curve[frame] * bind_scale * extra_scale_inv
                     # object rotation
                     elif curve in (Ipo.OB_ROTX, Ipo.OB_ROTY, Ipo.OB_ROTZ):
-                        rot_curve[frame] = Blender.Mathutils.Euler(
+                        rot_curve[frame] = mathutils.Euler(
                             [10 * ipo[Ipo.OB_ROTX][frame],
                              10 * ipo[Ipo.OB_ROTY][frame],
                              10 * ipo[Ipo.OB_ROTZ][frame]])
@@ -1376,22 +1377,22 @@ class NifExport(NifImportExport):
                             rot_curve[frame] = rot_curve[frame].toQuat()
                             # beware, CrossQuats takes arguments in a counter-intuitive order:
                             # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
-                            rot_curve[frame] = Blender.Mathutils.CrossQuats(Blender.Mathutils.CrossQuats(bind_quat, rot_curve[frame]), extra_quat_inv) # inverse(RX) * RC' * RB'
+                            rot_curve[frame] = mathutils.CrossQuats(mathutils.CrossQuats(bind_quat, rot_curve[frame]), extra_quat_inv) # inverse(RX) * RC' * RB'
                     # pose rotation
                     elif curve in (Ipo.PO_QUATX, Ipo.PO_QUATY,
                                    Ipo.PO_QUATZ, Ipo.PO_QUATW):
-                        rot_curve[frame] = Blender.Mathutils.Quaternion()
+                        rot_curve[frame] = mathutils.Quaternion()
                         rot_curve[frame].x = ipo[Ipo.PO_QUATX][frame]
                         rot_curve[frame].y = ipo[Ipo.PO_QUATY][frame]
                         rot_curve[frame].z = ipo[Ipo.PO_QUATZ][frame]
                         rot_curve[frame].w = ipo[Ipo.PO_QUATW][frame]
                         # beware, CrossQuats takes arguments in a counter-intuitive order:
                         # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
-                        rot_curve[frame] = Blender.Mathutils.CrossQuats(Blender.Mathutils.CrossQuats(bind_quat, rot_curve[frame]), extra_quat_inv) # inverse(RX) * RC' * RB'
+                        rot_curve[frame] = mathutils.CrossQuats(mathutils.CrossQuats(bind_quat, rot_curve[frame]), extra_quat_inv) # inverse(RX) * RC' * RB'
                     # PO_LOCX == OB_LOCX, so this does both pose and object
                     # location
                     elif curve in (Ipo.PO_LOCX, Ipo.PO_LOCY, Ipo.PO_LOCZ):
-                        trans_curve[frame] = Blender.Mathutils.Vector(
+                        trans_curve[frame] = mathutils.Vector(
                             [ipo[Ipo.PO_LOCX][frame],
                              ipo[Ipo.PO_LOCY][frame],
                              ipo[Ipo.PO_LOCZ][frame]])
@@ -1401,19 +1402,19 @@ class NifExport(NifImportExport):
                         trans_curve[frame] += bind_trans
                         # we need RC' and SC'
                         if Ipo.OB_ROTX in ipo_curves and ipo[Ipo.OB_ROTX]:
-                            rot_c = Blender.Mathutils.Euler(
+                            rot_c = mathutils.Euler(
                                 [10 * ipo[Ipo.OB_ROTX][frame],
                                  10 * ipo[Ipo.OB_ROTY][frame],
                                  10 * ipo[Ipo.OB_ROTZ][frame]]).toMatrix()
                         elif Ipo.PO_QUATX in ipo_curves and ipo[Ipo.PO_QUATX]:
-                            rot_c = Blender.Mathutils.Quaternion()
+                            rot_c = mathutils.Quaternion()
                             rot_c.x = ipo[Ipo.PO_QUATX][frame]
                             rot_c.y = ipo[Ipo.PO_QUATY][frame]
                             rot_c.z = ipo[Ipo.PO_QUATZ][frame]
                             rot_c.w = ipo[Ipo.PO_QUATW][frame]
                             rot_c = rot_c.toMatrix()
                         else:
-                            rot_c = Blender.Mathutils.Matrix([1,0,0],[0,1,0],[0,0,1])
+                            rot_c = mathutils.Matrix([1,0,0],[0,1,0],[0,0,1])
                         # note, PO_SCALEX == OB_SCALEX, so this does both
                         if ipo[Ipo.PO_SCALEX]:
                             # support only uniform scaling... take the mean
@@ -1442,7 +1443,7 @@ class NifExport(NifImportExport):
             if rot_curve:
                 rot = list(rot_curve.values())[0]
                 # XXX blender weirdness... Euler() is a function!!
-                if isinstance(rot, Blender.Mathutils.Euler().__class__):
+                if isinstance(rot, mathutils.Euler().__class__):
                     rot = rot.toQuat()
                 kfi.rotation.x = rot.x
                 kfi.rotation.y = rot.y
@@ -1467,7 +1468,7 @@ class NifExport(NifImportExport):
         # XXX blender weirdness... Euler() is a function!!
         if (frames
             and isinstance(list(rot_curve.values())[0],
-                           Blender.Mathutils.Euler().__class__)):
+                           mathutils.Euler().__class__)):
             # eulers
             kfd.rotation_type = NifFormat.KeyType.XYZ_ROTATION_KEY
             kfd.num_rotation_keys = 1 # *NOT* len(frames) this crashes the engine!
@@ -3060,10 +3061,10 @@ class NifExport(NifImportExport):
             bonerestmat = self.get_bone_rest_matrix(bone, 'BONESPACE',
                                                     extra = False)
             try:
-                bonexmat_inv = Blender.Mathutils.Matrix(
+                bonexmat_inv = mathutils.Matrix(
                     self.get_bone_extra_matrix_inv(bone.name))
             except KeyError:
-                bonexmat_inv = Blender.Mathutils.Matrix()
+                bonexmat_inv = mathutils.Matrix()
                 bonexmat_inv.identity()
             if bone.name in bones_ipo:
                 self.export_keyframes(
@@ -3212,14 +3213,14 @@ class NifExport(NifImportExport):
         # handle the trivial case first
         if (space == 'none'):
             return ( 1.0,
-                     Blender.Mathutils.Matrix([1,0,0],[0,1,0],[0,0,1]),
-                     Blender.Mathutils.Vector([0, 0, 0]) )
+                     mathutils.Matrix([1,0,0],[0,1,0],[0,0,1]),
+                     mathutils.Vector([0, 0, 0]) )
         
         assert(space == 'localspace')
 
         # now write out spaces
         if (not type(obj) is Blender.Armature.Bone):
-            mat = Blender.Mathutils.Matrix(obj.getMatrix('localspace'))
+            mat = mathutils.Matrix(obj.getMatrix('localspace'))
             bone_parent_name = obj.getParentBoneName()
             # if there is a bone parent then the object is parented
             # then get the matrix relative to the bone parent head
@@ -3243,13 +3244,13 @@ class NifExport(NifImportExport):
                 # first multiply with inverse of the Blender bone matrix
                 bone_parent = obj.getParent().getData().bones[
                     bone_parent_name]
-                boneinv = Blender.Mathutils.Matrix(
+                boneinv = mathutils.Matrix(
                     bone_parent.matrix['ARMATURESPACE'])
                 boneinv.invert()
                 mat = mat * boneinv
                 # now multiply with the bone correction matrix X
                 try:
-                    extra = Blender.Mathutils.Matrix(
+                    extra = mathutils.Matrix(
                         self.get_bone_extra_matrix_inv(bone_parent_name))
                     extra.invert()
                     mat = mat * extra
@@ -3276,10 +3277,10 @@ class NifExport(NifImportExport):
         translation vector."""
         # get scale components
         b_scale_rot = mat.rotationPart()
-        b_scale_rot_t = Blender.Mathutils.Matrix(b_scale_rot)
+        b_scale_rot_t = mathutils.Matrix(b_scale_rot)
         b_scale_rot_t.transpose()
         b_scale_rot_2 = b_scale_rot * b_scale_rot_t
-        b_scale = Blender.Mathutils.Vector(\
+        b_scale = mathutils.Vector(\
             b_scale_rot_2[0][0] ** 0.5,\
             b_scale_rot_2[1][1] ** 0.5,\
             b_scale_rot_2[2][2] ** 0.5)
@@ -3308,17 +3309,17 @@ class NifExport(NifImportExport):
         is BONESPACE (translation is bone head plus tail from parent bone).
         If tail is True then the matrix translation includes the bone tail."""
         # Retrieves the offset from the original NIF matrix, if existing
-        corrmat = Blender.Mathutils.Matrix()
+        corrmat = mathutils.Matrix()
         if extra:
             try:
-                corrmat = Blender.Mathutils.Matrix(
+                corrmat = mathutils.Matrix(
                     self.get_bone_extra_matrix_inv(bone.name))
             except KeyError:
                 corrmat.identity()
         else:
             corrmat.identity()
         if (space == 'ARMATURESPACE'):
-            mat = Blender.Mathutils.Matrix(bone.matrix['ARMATURESPACE'])
+            mat = mathutils.Matrix(bone.matrix['ARMATURESPACE'])
             if tail:
                 tail_pos = bone.tail['ARMATURESPACE']
                 mat[3][0] = tail_pos[0]
@@ -3608,7 +3609,7 @@ class NifExport(NifImportExport):
                 raise ValueError('not a packed list of collisions')
 
         mesh = obj.data
-        transform = Blender.Mathutils.Matrix(
+        transform = mathutils.Matrix(
             *self.get_object_matrix(obj, 'localspace').as_list())
         rotation = transform.rotationPart()
 
@@ -3620,10 +3621,10 @@ class NifExport(NifImportExport):
                 continue # ignore degenerate faces
             triangles.append([face.v[i].index for i in (0, 1, 2)])
             # note: face.no is a Python list, not a vector
-            normals.append(Blender.Mathutils.Vector(face.no) * rotation)
+            normals.append(mathutils.Vector(face.no) * rotation)
             if len(face.v) == 4:
                 triangles.append([face.v[i].index for i in (0, 2, 3)])
-                normals.append(Blender.Mathutils.Vector(face.no) * rotation)
+                normals.append(mathutils.Vector(face.no) * rotation)
 
         colshape.add_shape(triangles, normals, vertices, layer, material)
 
@@ -3688,11 +3689,11 @@ class NifExport(NifImportExport):
             coltf.unknown_8_bytes[5] = 9
             coltf.unknown_8_bytes[6] = 253
             coltf.unknown_8_bytes[7] = 4
-            hktf = Blender.Mathutils.Matrix(
+            hktf = mathutils.Matrix(
                 *self.get_object_matrix(obj, 'localspace').as_list())
             # the translation part must point to the center of the data
             # so calculate the center in local coordinates
-            center = Blender.Mathutils.Vector((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0)
+            center = mathutils.Vector((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0)
             # and transform it to global coordinates
             center *= hktf
             hktf[3][0] = center[0]
@@ -3737,12 +3738,12 @@ class NifExport(NifImportExport):
         elif obj.rbShapeBoundType == Blender.Object.RBShapes['CYLINDER']:
             # take average radius and calculate end points
             localradius = (maxx + maxy - minx - miny) / 4.0
-            transform = Blender.Mathutils.Matrix(
+            transform = mathutils.Matrix(
                 *self.get_object_matrix(obj, 'localspace').as_list())
-            vert1 = Blender.Mathutils.Vector( [ (maxx + minx)/2.0,
+            vert1 = mathutils.Vector( [ (maxx + minx)/2.0,
                                                 (maxy + miny)/2.0,
                                                 minz + localradius ] )
-            vert2 = Blender.Mathutils.Vector( [ (maxx + minx) / 2.0,
+            vert2 = mathutils.Vector( [ (maxx + minx) / 2.0,
                                                 (maxy + miny) / 2.0,
                                                 maxz - localradius ] )
             vert1 *= transform
@@ -3780,7 +3781,7 @@ class NifExport(NifImportExport):
             # convex hull polytope; not in Python API
             # bound type has value 5
             mesh = obj.data
-            transform = Blender.Mathutils.Matrix(
+            transform = mathutils.Matrix(
                 *self.get_object_matrix(obj, 'localspace').as_list())
             rotation = transform.rotationPart()
             scale = rotation.determinant()
@@ -3792,12 +3793,12 @@ class NifExport(NifImportExport):
 
             # calculate vertices, normals, and distances
             vertlist = [ vert.co * transform for vert in mesh.verts ]
-            fnormlist = [ Blender.Mathutils.Vector(face.no) * rotation
+            fnormlist = [ mathutils.Vector(face.no) * rotation
                           for face in mesh.faces]
             fdistlist = [
-                Blender.Mathutils.DotVecs(
+                mathutils.DotVecs(
                     -face.v[0].co * transform,
-                    Blender.Mathutils.Vector(face.no) * rotation)
+                    mathutils.Vector(face.no) * rotation)
                 for face in mesh.faces ]
 
             # remove duplicates through dictionary
@@ -3985,11 +3986,11 @@ class NifExport(NifImportExport):
                     hkconstraint.damping = 0.5
 
                 # calculate pivot point and constraint matrix
-                pivot = Blender.Mathutils.Vector(
+                pivot = mathutils.Vector(
                     b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVX],
                     b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVY],
                     b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVZ])
-                constr_matrix = Blender.Mathutils.Euler(
+                constr_matrix = mathutils.Euler(
                     b_constr[Blender.Constraint.Settings.CONSTR_RB_AXX],
                     b_constr[Blender.Constraint.Settings.CONSTR_RB_AXY],
                     b_constr[Blender.Constraint.Settings.CONSTR_RB_AXZ])
@@ -4017,7 +4018,7 @@ class NifExport(NifImportExport):
 
                 # apply object transform relative to the bone head
                 # (this is O * T * B' * B^{-1} at once)
-                transform = Blender.Mathutils.Matrix(
+                transform = mathutils.Matrix(
                     *self.get_object_matrix(b_obj, 'localspace').as_list())
                 pivot = pivot * transform
                 constr_matrix = constr_matrix * transform.rotationPart()
@@ -4028,9 +4029,9 @@ class NifExport(NifImportExport):
                 hkdescriptor.pivot_a.z = pivot[2] / 7.0
                 # export hkdescriptor axes and other parameters
                 # (also see import_nif.py NifImport.import_bhk_constraints)
-                axis_x = Blender.Mathutils.Vector(1,0,0) * constr_matrix
-                axis_y = Blender.Mathutils.Vector(0,1,0) * constr_matrix
-                axis_z = Blender.Mathutils.Vector(0,0,1) * constr_matrix
+                axis_x = mathutils.Vector(1,0,0) * constr_matrix
+                axis_y = mathutils.Vector(0,1,0) * constr_matrix
+                axis_z = mathutils.Vector(0,0,1) * constr_matrix
                 if isinstance(hkdescriptor, NifFormat.RagdollDescriptor):
                     # z axis is the twist vector
                     hkdescriptor.twist_a.x = axis_z[0]
