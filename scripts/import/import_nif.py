@@ -84,6 +84,13 @@ class NifImport(NifImportExport):
         default="",
         subtype="FILE_PATH")
 
+    egm_file = bpy.props.StringProperty(
+        name="FaceGen EGM File",
+        description="FaceGen EGM file for morphs.",
+        maxlen=1024,
+        default="",
+        subtype="FILE_PATH")
+
     # correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z
     BONE_CORRECTION_MATRICES = (
         mathutils.Matrix([ 0.0,-1.0, 0.0],[ 1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0]),
@@ -200,14 +207,10 @@ class NifImport(NifImportExport):
             else:
                 kf_root_blocks = []
 
-            return {'FINISHED'}
-
-            # TODO
-
-            if self.IMPORT_EGMFILE:
+            if self.properties.egm_file:
                 # open facegen egm file for binary reading
-                self.logger.info("Importing %s" % self.IMPORT_EGMFILE)
-                egmfile = open(self.IMPORT_EGMFILE, "rb")
+                self.logger.info("Importing %s" % self.properties.egm_file)
+                egmfile = open(self.properties.egm_file, "rb")
                 self.egmdata = EgmFormat.Data()
                 try:
                     # check if kf file is valid
@@ -229,6 +232,10 @@ class NifImport(NifImportExport):
                     egmfile.close()
             else:
                 self.egmdata = None
+
+            return {'FINISHED'}
+
+            # TODO
 
             self.msg_progress("Importing data")
             # calculate and set frames per second
