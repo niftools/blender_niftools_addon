@@ -3730,11 +3730,8 @@ class NifImport(NifImportExport):
         #NifFormat.write(niffile,
         #                version = 0x14000005, user_version = 11, roots = [root])
 
-# register nif import operator
-bpy.types.register(NifImport)
-
-# register operator in import menu
 def menu_func(self, context):
+    """Import operator for the menu."""
     # TODO get default path from config registry
     #default_path = bpy.data.filename.replace(".blend", ".nif")
     default_path = "import.nif"
@@ -3743,7 +3740,17 @@ def menu_func(self, context):
         text="NetImmerse/Gamebryo (.nif & .kf & .egm)..."
         ).path = default_path
 
-menu_item = bpy.types.INFO_MT_file_import.append(menu_func)
+def register():
+    """Register nif import operator."""
+    bpy.types.register(NifImport)
+    bpy.types.INFO_MT_file_import.append(menu_func)
+
+def unregister():
+    """Unregister nif import operator."""
+    bpy.types.unregister(NifImport)
+    bpy.types.INFO_MT_file_import.remove(menu_func)
+
+register()
 
 if __name__ == '__main__':
     # TODO run test
