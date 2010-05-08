@@ -3750,8 +3750,6 @@ def unregister():
     bpy.types.unregister(NifImport)
     bpy.types.INFO_MT_file_import.remove(menu_func)
 
-register()
-
 if __name__ == '__main__':
-    # TODO test
-    pass
+    """Register nif import, when starting Blender."""
+    register()
