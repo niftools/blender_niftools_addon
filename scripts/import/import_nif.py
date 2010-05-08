@@ -234,17 +234,17 @@ class NifImport(NifImportExport):
             else:
                 self.egmdata = None
 
-            return {'FINISHED'}
-
-            # TODO
-
             self.msg_progress("Importing data")
             # calculate and set frames per second
             if self.properties.animation:
                 self.fps = self.get_frames_per_second(
                     self.data.roots
-                    + self.kfdata.roots if self.kfdata else [])
-                self.context.scene.getRenderingContext().fps = self.fps
+                    + (self.kfdata.roots if self.kfdata else []))
+                bpy.context.scene.render.fps= self.fps
+
+            return {'FINISHED'}
+
+            # TODO
 
             # import all root blocks
             for block in self.data.roots:
@@ -2603,14 +2603,14 @@ class NifImport(NifImportExport):
         # find all key times
         key_times = []
         for root in roots:
-            for kfd in root.tree(block_type = NifFormat.NiKeyframeData):
+            for kfd in root.tree(block_type=NifFormat.NiKeyframeData):
                 key_times.extend(key.time for key in kfd.translations.keys)
                 key_times.extend(key.time for key in kfd.scales.keys)
                 key_times.extend(key.time for key in kfd.quaternion_keys)
                 key_times.extend(key.time for key in kfd.xyz_rotations[0].keys)
                 key_times.extend(key.time for key in kfd.xyz_rotations[1].keys)
                 key_times.extend(key.time for key in kfd.xyz_rotations[2].keys)
-            for kfi in root.tree(block_type = NifFormat.NiBSplineInterpolator):
+            for kfi in root.tree(block_type=NifFormat.NiBSplineInterpolator):
                 if not kfi.basis_data:
                     # skip bsplines without basis data (eg bowidle.kf in
                     # Oblivion)
@@ -2619,7 +2619,7 @@ class NifImport(NifImportExport):
                     point * (kfi.stop_time - kfi.start_time)
                     / (kfi.basis_data.num_control_points - 2)
                     for point in xrange(kfi.basis_data.num_control_points - 2))
-            for uvdata in root.tree(block_type = NifFormat.NiUVData):
+            for uvdata in root.tree(block_type=NifFormat.NiUVData):
                 for uvgroup in uvdata.uv_groups:
                     key_times.extend(key.time for key in uvgroup.keys)
         # not animated, return a reasonable default
@@ -2627,13 +2627,16 @@ class NifImport(NifImportExport):
             return 30
         # calculate FPS
         fps = 30
-        lowestDiff = sum(abs(int(time*fps+0.5)-(time*fps)) for time in key_times)
+        lowest_diff = sum(abs(int(time * fps + 0.5) - (time * fps))
+                          for time in key_times)
         # for fps in xrange(1,120): #disabled, used for testing
-        for testFps in [20, 25, 35]:
-            diff = sum(abs(int(time*testFps+0.5)-(time*testFps)) for time in key_times)
-            if diff < lowestDiff:
-                lowestDiff = diff
-                fps = testFps
+        for test_fps in [20, 25, 35]:
+            diff = sum(abs(int(time * test_fps + 0.5)-(time * test_fps))
+                       for time in key_times)
+            if diff < lowest_diff:
+                lowest_diff = diff
+                fps = test_fps
+        self.logger.info("Animation estimated at %i frames per second." % fps)
         return fps
 
     def store_animation_data(self, rootBlock):
