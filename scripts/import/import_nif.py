@@ -162,18 +162,17 @@ class NifImport(NifImportExport):
             # open file for binary reading
             self.logger.info("Importing %s" % self.properties.path)
             niffile = open(self.properties.path, "rb")
-            data = NifFormat.Data()
+            self.data = NifFormat.Data()
             try:
                 # check if nif file is valid
-                data.inspect(niffile)
-                self.version = data.version
-                if self.version >= 0:
+                self.data.inspect(niffile)
+                if self.data.version >= 0:
                     # it is valid, so read the file
-                    self.logger.info("NIF file version: 0x%08X" % self.version)
+                    self.logger.info("NIF file version: 0x%08X" % self.data.version)
                     self.msg_progress("Reading file")
-                    data.read(niffile)
-                    root_blocks = data.roots
-                elif self.version == -1:
+                    self.data.read(niffile)
+                    root_blocks = self.data.roots
+                elif self.data.version == -1:
                     raise NifImportError("Unsupported NIF version.")
                 else:
                     raise NifImportError("Not a NIF file.")
@@ -185,19 +184,18 @@ class NifImport(NifImportExport):
                 # open keyframe file for binary reading
                 self.logger.info("Importing %s" % self.properties.keyframe_file)
                 kffile = open(self.properties.keyframe_file, "rb")
-                kfdata = NifFormat.Data()
+                self.kfdata = NifFormat.Data()
                 try:
                     # check if kf file is valid
-                    kfdata.inspect(kffile)
-                    self.kfversion = kfdata.version
-                    if self.kfversion >= 0:
+                    self.kfdata.inspect(kffile)
+                    if self.kfdata.version >= 0:
                         # it is valid, so read the file
                         self.logger.info(
-                            "KF file version: 0x%08X" % self.kfversion)
+                            "KF file version: 0x%08X" % self.kfdata.version)
                         self.msg_progress("Reading keyframe file")
-                        kfdata.read(kffile)
+                        self.kfdata.read(kffile)
                         kf_root_blocks = kfdata.roots
-                    elif self.kfversion == -1:
+                    elif self.kfdata.version == -1:
                         raise NifImportError("Unsupported KF version.")
                     else:
                         raise NifImportError("Not a KF file.")
@@ -1838,7 +1836,7 @@ class NifImport(NifImportExport):
             # no alpha property: force alpha 1.0 in Blender
             material.setAlpha(1.0)
         # check specularity
-        if (not specProperty) and (self.version != 0x14000004):
+        if (not specProperty) and (self.data.version != 0x14000004):
             # no specular property: specular color is ignored
             # (for most games)
             # we do this by setting specularity zero
@@ -2678,14 +2676,14 @@ class NifImport(NifImportExport):
         # or importing an Oblivion or Fallout 3 skeleton:
         # do all NiNode's as bones
         if self.IMPORT_SKELETON == 1 or (
-            self.version in (0x14000005, 0x14020007) and
+            self.data.version in (0x14000005, 0x14020007) and
             self.properties.filebase.lower() in ('skeleton', 'skeletonbeast')):
             
             if not isinstance(niBlock, NifFormat.NiNode):
                 raise NifImportError(
                     "cannot import skeleton: root is not a NiNode")
             # for morrowind, take the Bip01 node to be the skeleton root
-            if self.version == 0x04000002:
+            if self.data.version == 0x04000002:
                 skelroot = niBlock.find(block_name = 'Bip01',
                                         block_type = NifFormat.NiNode)
                 if not skelroot:
