@@ -168,7 +168,8 @@ class MetaNifImportExport(type(bpy.types.Operator)):
             "Name of file where Python profiler dumps the profile."
             " Set to empty string to turn off profiling.",
             maxlen=1024,
-            default="")
+            default="",
+            subtype="FILE_PATH")
 
 class NifImportExport(bpy.types.Operator, metaclass=MetaNifImportExport):
     """Abstract base class for import and export. Contains utility functions
