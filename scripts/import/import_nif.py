@@ -291,9 +291,10 @@ class NifImport(NifImportExport):
                         vold.y = vnew.y
                         vold.z = vnew.z
 
-            return {'FINISHED'}
-
-            # TODO
+            # scale tree
+            toaster = pyffi.spells.nif.NifToaster()
+            toaster.scale = 1 / self.properties.scale_correction
+            pyffi.spells.nif.fix.SpellScale(data=self.data, toaster=toaster).recurse()
 
             # import all root blocks
             for block in self.data.roots:
@@ -333,10 +334,12 @@ class NifImport(NifImportExport):
             raise
         finally:
             # clear progress bar
-            self.msg_progress("Finished", progbar = 1)
+            self.msg_progress("Finished", progbar=1)
             # XXX no longer needed?
             # do a full scene update to ensure that transformations are applied
             #self.context.scene.update(1)
+
+        return {'FINISHED'}
 
     def invoke(self, context, event):
         wm = context.manager
@@ -345,8 +348,6 @@ class NifImport(NifImportExport):
 
     def import_root(self, root_block):
         """Main import function."""
-        # preprocessing:
-
         # check that this is not a kf file
         if isinstance(root_block,
                       (NifFormat.NiSequence,
@@ -360,11 +361,6 @@ class NifImport(NifImportExport):
         # set the block parent through the tree, to ensure I can always move
         # backward
         self.set_parents(root_block)
-        
-        # scale tree
-        toaster = pyffi.spells.nif.NifToaster()
-        toaster.scale = 1 / self.properties.scale_correction
-        pyffi.spells.nif.fix.SpellScale(data=data, toaster=toaster).recurse()
         
         # mark armature nodes and bones
         self.mark_armatures_bones(root_block)
