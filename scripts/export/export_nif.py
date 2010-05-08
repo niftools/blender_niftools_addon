@@ -641,17 +641,17 @@ class NifExport(NifImportExport):
                         skelroot.children[i] = child
 
             # apply scale
-            if abs(self.EXPORT_SCALE_CORRECTION - 1.0) > self.EPSILON:
+            if abs(self.properties.scale_correction - 1.0) > self.EPSILON:
                 self.logger.info("Applying scale correction %f"
-                                 % self.EXPORT_SCALE_CORRECTION)
+                                 % self.properties.scale_correction)
                 data = NifFormat.Data()
                 data.roots = [root_block]
                 toaster = pyffi.spells.nif.NifToaster()
-                toaster.scale = self.EXPORT_SCALE_CORRECTION
+                toaster.scale = self.properties.scale_correction
                 pyffi.spells.nif.fix.SpellScale(data=data, toaster=toaster).recurse()
                 # also scale egm
                 if self.egmdata:
-                    self.egmdata.apply_scale(self.EXPORT_SCALE_CORRECTION)
+                    self.egmdata.apply_scale(self.properties.scale_correction)
 
             # generate mopps (must be done after applying scale!)
             if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):

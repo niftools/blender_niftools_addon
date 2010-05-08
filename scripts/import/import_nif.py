@@ -222,7 +222,7 @@ class NifImport(NifImportExport):
                         self.msg_progress("Reading FaceGen egm file")
                         self.egmdata.read(egmfile)
                         # scale the data
-                        self.egmdata.apply_scale(self.IMPORT_SCALE_CORRECTION)
+                        self.egmdata.apply_scale(1 / self.properties.scale_correction)
                     elif self.egmdata.version == -1:
                         raise NifImportError("Unsupported EGM version.")
                     else:
@@ -342,7 +342,7 @@ class NifImport(NifImportExport):
         
         # scale tree
         toaster = pyffi.spells.nif.NifToaster()
-        toaster.scale = self.IMPORT_SCALE_CORRECTION
+        toaster.scale = 1 / self.properties.scale_correction
         pyffi.spells.nif.fix.SpellScale(data=data, toaster=toaster).recurse()
         
         # mark armature nodes and bones
@@ -1166,7 +1166,7 @@ class NifImport(NifImportExport):
 
         # bone length for nubs and zero length bones
         nub_length = 5.0
-        scale = self.IMPORT_SCALE_CORRECTION
+        scale = 1 / self.properties.scale_correction
         # bone name
         bone_name = self.import_name(niBlock, 32)
         niChildBones = [ child for child in niBlock.children

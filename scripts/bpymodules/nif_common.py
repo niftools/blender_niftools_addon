@@ -171,6 +171,12 @@ class MetaNifImportExport(type(bpy.types.Operator)):
             default="",
             subtype="FILE_PATH")
 
+        cls.scale_correction = bpy.props.FloatProperty(
+            name="Scale Correction",
+            description="Number of nif units per blender unit.",
+            default=10.0,
+            min=0.01, max=100.0, precision=2)
+
 class NifImportExport(bpy.types.Operator, metaclass=MetaNifImportExport):
     """Abstract base class for import and export. Contains utility functions
     that are commonly used in both import and export.
@@ -236,8 +242,6 @@ class NifImportExport(bpy.types.Operator, metaclass=MetaNifImportExport):
     """
     IMPORT_REALIGN_BONES = 1 # 0 = no, 1 = tail, 2 = tail+rotation
     IMPORT_ANIMATION = True
-    IMPORT_SCALE_CORRECTION = 0.1
-    EXPORT_SCALE_CORRECTION = 10.0 # 1/import scale correction
     IMPORT_TEXTURE_PATH = []
     EXPORT_FLATTENSKIN = False
     EXPORT_VERSION = 'Oblivion'
