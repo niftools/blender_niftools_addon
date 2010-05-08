@@ -171,7 +171,6 @@ class NifImport(NifImportExport):
                     self.logger.info("NIF file version: 0x%08X" % self.data.version)
                     self.msg_progress("Reading file")
                     self.data.read(niffile)
-                    root_blocks = self.data.roots
                 elif self.data.version == -1:
                     raise NifImportError("Unsupported NIF version.")
                 else:
@@ -194,7 +193,6 @@ class NifImport(NifImportExport):
                             "KF file version: 0x%08X" % self.kfdata.version)
                         self.msg_progress("Reading keyframe file")
                         self.kfdata.read(kffile)
-                        kf_root_blocks = kfdata.roots
                     elif self.kfdata.version == -1:
                         raise NifImportError("Unsupported KF version.")
                     else:
@@ -203,7 +201,7 @@ class NifImport(NifImportExport):
                     # the file has been read or an error occurred: close file
                     kffile.close()
             else:
-                kf_root_blocks = []
+                self.kfdata = None
 
             if self.properties.egm_file:
                 # open facegen egm file for binary reading
@@ -238,11 +236,13 @@ class NifImport(NifImportExport):
             self.msg_progress("Importing data")
             # calculate and set frames per second
             if self.IMPORT_ANIMATION:
-                self.fps = self.get_frames_per_second(root_blocks + kf_root_blocks)
+                self.fps = self.get_frames_per_second(
+                    self.data.roots
+                    + self.kfdata.roots if self.kfdata else [])
                 self.context.scene.getRenderingContext().fps = self.fps
 
             # import all root blocks
-            for block in root_blocks:
+            for block in self.data.roots:
                 root = block
                 # root hack for corrupt better bodies meshes
                 # and remove geometry from better bodies on skeleton import
@@ -268,7 +268,7 @@ class NifImport(NifImportExport):
                 self.logger.debug("Root block: %s" % root.get_global_display())
                 # merge animation from kf tree into nif tree
                 if self.IMPORT_ANIMATION:
-                    for kf_root in kf_root_blocks:
+                    for kf_root in self.kfdata.roots:
                         self.import_kf_root(kf_root, root)
                 # import the nif tree
                 self.import_root(root)
@@ -282,9 +282,6 @@ class NifImport(NifImportExport):
             # XXX no longer needed?
             # do a full scene update to ensure that transformations are applied
             #self.context.scene.update(1)
-
-        # save nif root blocks (used by test suites)
-        self.root_blocks = root_blocks
 
     def invoke(self, context, event):
         wm = context.manager
