@@ -2,7 +2,7 @@
 
 __version__ = "2.5.5"
 __requiredpyffiversion__ = "2.1.4"
-__requiredblenderversion__ = "250"
+__requiredblenderversion__ = (2, 52, 5)
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -48,44 +48,35 @@ def version_int_tuple(version):
 
 import bpy
 
-# TODO find a way to get the blender version
-__blenderversion__ = 250 #Blender.Get('version')
-
-if (version_int_tuple(__blenderversion__)
-    < version_int_tuple(__requiredblenderversion__)):
-    print("--------------------------"
-        "ERROR\nThis script requires Blender %s or higher."
-        "It seems that you have an older version installed (%s)."
-        "Get a newer version at http://www.blender.org/"
-        "--------------------------"%(__requiredblenderversion__, __blenderversion__))
-    Blender.Draw.PupMenu("ERROR%t|Blender outdated, check console for details")
-    raise ImportError
+if bpy.app.version < __requiredblenderversion__:
+    raise ImportError(
+        "ERROR: The Blender NIF scripts require Blender %s or higher."
+        " It seems that you are running an older version %s."
+        " Get a newer version at http://www.blender.org/"
+        % (__requiredblenderversion__, bpy.app.version))
 
 # check if PyFFI is installed and import NifFormat
 
 try:
     from pyffi import __version__ as __pyffiversion__
 except ImportError:
-    print("--------------------------"
-        "ERROR\nThis script requires the Python File Format Interface (PyFFI)."
-        "Make sure that PyFFI resides in your Python path or in your Blender scripts folder."
-        "If you do not have it: http://pyffi.sourceforge.net/"
-        "--------------------------")
-    Blender.Draw.PupMenu("ERROR%t|PyFFI not found, check console for details")
-    raise
+    raise ImportError(
+        "The Blender NIF scripts require"
+        " the Python File Format Interface (PyFFI)."
+        " Make sure that PyFFI resides in your Python path"
+        " or in your Blender scripts folder."
+        " If you do not have it: http://pyffi.sourceforge.net/")
 
 # check PyFFI version
 
 if (version_int_tuple(__pyffiversion__)
     < version_int_tuple(__requiredpyffiversion__)):
-    print("--------------------------"
-        "ERROR\nThis script requires Python File Format Interface %s or higher."
-        "It seems that you have an older version installed (%s)."
-        "Get a newer version at http://pyffi.sourceforge.net/"
-        "--------------------------"""
+    raise ImportError(
+        "The Blender NIF scripts require"
+        " Python File Format Interface %s or higher."
+        " It seems that you are running an older version (%s)."
+        " Get a newer version at http://pyffi.sourceforge.net/"
         %(__requiredpyffiversion__, __pyffiversion__))
-    Blender.Draw.PupMenu("ERROR%t|PyFFI outdated, check console for details")
-    raise ImportError
 
 # system imports
 
@@ -144,7 +135,6 @@ class MetaNifImportExport(type(bpy.types.Operator)):
             maxlen=1024,
             default="")
 
-        # TODO: preset buttons for log levels
         cls.log_level = bpy.props.EnumProperty(
             items=(
                 ("DEBUG", "Debug",
@@ -472,7 +462,10 @@ class NifConfig:
     (otherwise gui elements might go out of skope which will crash
     Blender)."""
     # class global constants
-    WELCOME_MESSAGE = 'Blender NIF Scripts %s (running on Blender %s, PyFFI %s)'%(__version__, __blenderversion__, __pyffiversion__)
+    WELCOME_MESSAGE = (
+        "Blender NIF Scripts %s"
+        " (running on Blender %s, PyFFI %s)"
+        % (__version__, bpy.app.version_string, __pyffiversion__))
     CONFIG_NAME = "nifscripts" # name of the config file
     TARGET_IMPORT = 0          # config target value when importing
     TARGET_EXPORT = 1          # config target value when exporting
