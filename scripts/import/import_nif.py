@@ -1478,7 +1478,7 @@ class NifImport(NifImportExport):
         ignores the material name as that does not affect the
         rendering.
         """
-        return (matProperty.get_hash(ignore_strings=True)
+        return (matProperty.get_hash()[1:] # skip first element, which is name
                 if matProperty else None,
                 textProperty.get_hash()     if textProperty  else None,
                 alphaProperty.get_hash()    if alphaProperty else None,

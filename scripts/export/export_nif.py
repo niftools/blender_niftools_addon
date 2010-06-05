@@ -4204,9 +4204,9 @@ class NifExport(NifImportExport):
             else:
                 ignore_strings = False
             # check hash
-            if (block.get_hash(ignore_strings=ignore_strings) ==
-                matprop.get_hash(
-                    ignore_strings=ignore_strings)):
+            first_index = 1 if ignore_strings else 0
+            if (block.get_hash()[first_index:] ==
+                matprop.get_hash()[first_index:]):
                 self.logger.warning(
                     "Merging materials '%s' and '%s'"
                     " (they are identical in nif)"
