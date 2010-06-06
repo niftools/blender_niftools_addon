@@ -2034,10 +2034,14 @@ class NifImport(NifImportExport):
             # Mesh name -> must be unique, so tag it if needed
             b_name = self.import_name(niBlock)
             # create mesh data
-            b_meshData = Blender.Mesh.New(b_name)
-            b_meshData.properties['longName'] = niBlock.name
+            b_meshData = bpy.data.meshes.new(b_name)
             # create mesh object and link to data
-            b_mesh = self.context.scene.objects.new(b_meshData, b_name)
+            b_mesh = bpy.data.objects.new(b_name, b_meshData)
+            # link mesh object to the scene
+            self.context.scene.objects.link(b_mesh)
+            # save original name as object property, for export
+            if b_name != niBlock.name.decode():
+                b_mesh['Nif Name'] = niBlock.name.decode()
 
             # Mesh hidden flag
             if niBlock.flags & 1 == 1:
