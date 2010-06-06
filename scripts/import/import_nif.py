@@ -69,9 +69,7 @@ class NifImportError(Exception):
     pass
 
 class NifImport(NifImportExport):
-    """A class which bundles the main import function along with all helper
-    functions and data shared between these functions.
-    """
+    """Load a NIF File"""
     # class constants
     bl_idname = "import.nif"
     bl_label = "Import NIF"
