@@ -122,6 +122,19 @@ class NifImport(NifImportExport):
         description="Apply skin deformation to all skinned geometries.",
         default=False)
 
+    skeleton = bpy.props.EnumProperty(
+        items=(
+            ("EVERYTHING", "Everything",
+             "Import everything."),
+            ("SKELETON_ONLY", "Skeleton Only",
+             "Import skeleton only and make it parent of selected geometry."),
+            ("GEOMETRY_ONLY", "Geometry Only",
+             "Import geometry only and parent them to selected skeleton."),
+            ),
+        name="What",
+        description="What should be imported?",
+        default="EVERYTHING")
+
     # correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z
     BONE_CORRECTION_MATRICES = (
         mathutils.Matrix([ 0.0,-1.0, 0.0],[ 1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0]),
@@ -182,7 +195,7 @@ class NifImport(NifImportExport):
         try:
             # check that one armature is selected in 'import geometry + parent
             # to armature' mode
-            if False: #TODO self.IMPORT_SKELETON == 2:
+            if False: #TODO self.properties.skeleton ==  "GEOMETRY_ONLY":
                 if (len(self.selected_objects) != 1
                     or self.selected_objects[0].getType() != 'Armature'):
                     raise NifImportError(
@@ -314,7 +327,7 @@ class NifImport(NifImportExport):
                         b.skin_instance.skeleton_root = root
                         # delete non-skeleton nodes if we're importing
                         # skeleton only
-                        if self.IMPORT_SKELETON == 1:
+                        if self.properties.skeleton ==  "SKELETON_ONLY":
                             nonbip_children = (child for child in root.children
                                                if child.name[:6] != 'Bip01 ')
                             for child in nonbip_children:
@@ -417,7 +430,7 @@ class NifImport(NifImportExport):
             self.import_bhk_constraints(hkbody)
 
         # parent selected meshes to imported skeleton
-        if self.IMPORT_SKELETON == 1:
+        if self.properties.skeleton ==  "SKELETON_ONLY":
             # rename vertex groups to reflect bone names
             # (for blends imported with older versions of the scripts!)
             for b_child_obj in self.selected_objects:
@@ -455,9 +468,9 @@ class NifImport(NifImportExport):
         if not niBlock:
             return None
         elif (isinstance(niBlock, NifFormat.NiTriBasedGeom)
-              and self.IMPORT_SKELETON != 1):
+              and self.properties.skeleton !=  "SKELETON_ONLY"):
             # it's a shape node and we're not importing skeleton only
-            # (IMPORT_SKELETON == 1)
+            # (self.properties.skeleton ==  "SKELETON_ONLY")
             self.logger.debug("Building mesh in import_branch")
             # note: transform matrix is set during import
             b_obj = self.import_mesh(niBlock)
@@ -479,7 +492,7 @@ class NifImport(NifImportExport):
             if self.is_armature_root(niBlock):
                 # all bones in the tree are also imported by
                 # import_armature
-                if self.IMPORT_SKELETON != 2:
+                if self.properties.skeleton !=  "GEOMETRY_ONLY":
                     b_obj = self.import_armature(niBlock)
                     b_armature = b_obj
                     n_armature = niBlock
@@ -572,7 +585,7 @@ class NifImport(NifImportExport):
                 if self.isinstance_blender_object(b_child)]
 
             # if not importing skeleton only
-            if self.IMPORT_SKELETON != 1:
+            if self.properties.skeleton !=  "SKELETON_ONLY":
                 # import collision objects
                 if niBlock.collision_object:
                     bhk_body = niBlock.collision_object.body
@@ -2697,7 +2710,7 @@ class NifImport(NifImportExport):
         # case where we import skeleton only,
         # or importing an Oblivion or Fallout 3 skeleton:
         # do all NiNode's as bones
-        if self.IMPORT_SKELETON == 1 or (
+        if self.properties.skeleton ==  "SKELETON_ONLY" or (
             self.data.version in (0x14000005, 0x14020007) and
             self.properties.filebase.lower() in ('skeleton', 'skeletonbeast')):
             
@@ -2729,7 +2742,7 @@ class NifImport(NifImportExport):
             return # done!
 
         # attaching to selected armature -> first identify armature and bones
-        elif self.IMPORT_SKELETON == 2 and not self.armatures:
+        elif self.properties.skeleton ==  "GEOMETRY_ONLY" and not self.armatures:
             skelroot = niBlock.find(block_name = self.selected_objects[0].name)
             if not skelroot:
                 raise NifImportError(
@@ -2760,12 +2773,12 @@ class NifImport(NifImportExport):
                 # so mark the node to be imported as an armature
                 skininst = niBlock.skin_instance
                 skelroot = skininst.skeleton_root
-                if self.IMPORT_SKELETON == 0:
+                if self.properties.skeleton ==  "EVERYTHING":
                     if not self.armatures.has_key(skelroot):
                         self.armatures[skelroot] = []
                         self.logger.debug("'%s' is an armature"
                                           % skelroot.name)
-                elif self.IMPORT_SKELETON == 2:
+                elif self.properties.skeleton ==  "GEOMETRY_ONLY":
                     if not self.armatures.has_key(skelroot):
                         raise NifImportError(
                             "nif structure incompatible with '%s' as armature:"
