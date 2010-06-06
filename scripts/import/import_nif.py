@@ -758,7 +758,7 @@ class NifImport(NifImportExport):
                 niName = "collision"
             else:
                 niName = "noname"
-        for uniqueInt in xrange(-1, 100):
+        for uniqueInt in range(-1, 100):
             # limit name length
             if uniqueInt == -1:
                 if max_length - len(postfix) - 1 <= 0:
@@ -2180,7 +2180,7 @@ class NifImport(NifImportExport):
 
         # v_map will store the vertex index mapping
         # nif vertex i maps to blender vertex v_map[i]
-        v_map = [0 for i in xrange(len(verts))] # pre-allocate memory, for faster performance
+        v_map = [0 for i in range(len(verts))] # pre-allocate memory, for faster performance
         
         # Following code avoids introducing unwanted cracks in UV seams:
         # Construct vertex map to get unique vertex / normal pair list.
@@ -2418,7 +2418,7 @@ class NifImport(NifImportExport):
                     baseverts = morphData.morphs[0].vectors
                     b_ipo = Blender.Ipo.New('Key' , 'KeyIpo')
                     b_meshData.key.ipo = b_ipo
-                    for idxMorph in xrange(1, morphData.num_morphs):
+                    for idxMorph in range(1, morphData.num_morphs):
                         # get name for key
                         keyname = morphData.morphs[idxMorph].frame_name
                         if not keyname:
@@ -2653,7 +2653,7 @@ class NifImport(NifImportExport):
                 key_times.extend(
                     point * (kfi.stop_time - kfi.start_time)
                     / (kfi.basis_data.num_control_points - 2)
-                    for point in xrange(kfi.basis_data.num_control_points - 2))
+                    for point in range(kfi.basis_data.num_control_points - 2))
             for uvdata in root.tree(block_type=NifFormat.NiUVData):
                 for uvgroup in uvdata.uv_groups:
                     key_times.extend(key.time for key in uvgroup.keys)
@@ -2664,7 +2664,7 @@ class NifImport(NifImportExport):
         fps = 30
         lowest_diff = sum(abs(int(time * fps + 0.5) - (time * fps))
                           for time in key_times)
-        # for fps in xrange(1,120): #disabled, used for testing
+        # for fps in range(1,120): #disabled, used for testing
         for test_fps in [20, 25, 35]:
             diff = sum(abs(int(time * test_fps + 0.5)-(time * test_fps))
                        for time in key_times)
@@ -3222,8 +3222,8 @@ class NifImport(NifImportExport):
                 subshapes = bhkshape.data.sub_shapes
             for subshape_num, subshape in enumerate(subshapes):
                 me = Blender.Mesh.New('poly%i' % subshape_num)
-                for vert_index in xrange(vertex_offset,
-                                         vertex_offset + subshape.num_vertices):
+                for vert_index in range(vertex_offset,
+                                        vertex_offset + subshape.num_vertices):
                     vert = bhkshape.data.vertices[vert_index]
                     me.verts.extend(vert.x * 7, vert.y * 7, vert.z * 7)
                 for hktriangle in bhkshape.data.triangles:
