@@ -288,8 +288,8 @@ class NifExport(NifImportExport):
                             " on '%s'." % ob.name)
 
             # extract some useful scene info
-            self.scene = Blender.Scene.GetCurrent()
-            context = self.scene.getRenderingContext()
+            self.context.scene = Blender.Scene.GetCurrent()
+            context = self.context.scene.getRenderingContext()
             self.fspeed = 1.0 / context.framesPerSec()
             self.fstart = context.startFrame()
             self.fend = context.endFrame()
@@ -326,7 +326,7 @@ class NifExport(NifImportExport):
                 # get shared vertices
                 self.logger.info("Smoothing seams between objects...")
                 vdict = {}
-                for ob in [ob for ob in self.scene.objects
+                for ob in [ob for ob in self.context.scene.objects
                            if ob.getType() == 'Mesh']:
                     mesh = ob.getData(mesh=1)
                     #for v in mesh.verts:
@@ -2203,9 +2203,9 @@ class NifExport(NifImportExport):
             if faces_without_bodypart:
                 Blender.Window.EditMode(0)
                 # select mesh object
-                for bobj in self.scene.objects:
+                for bobj in self.context.scene.objects:
                     bobj.sel = False
-                self.scene.objects.active = ob
+                self.context.scene.objects.active = ob
                 ob.sel = 1
                 # select bad faces
                 for face in mesh.faces:
@@ -2574,9 +2574,9 @@ class NifExport(NifImportExport):
                         vert_weights = {}
                         if False in vert_added:
                             # select mesh object
-                            for bobj in self.scene.objects:
+                            for bobj in self.context.scene.objects:
                                 bobj.sel = False
-                            self.scene.objects.active = ob
+                            self.context.scene.objects.active = ob
                             ob.sel = 1
                             # select bad vertices
                             for v in mesh.verts:
@@ -2968,7 +2968,7 @@ class NifExport(NifImportExport):
         n_bool_data.data.num_keys = len(b_curve.bezierPoints)
         n_vis_data.keys.update_size()
         n_bool_data.data.keys.update_size()
-        visible_layer = 2 ** (min(self.scene.getLayers()) - 1)
+        visible_layer = 2 ** (min(self.context.scene.getLayers()) - 1)
         for b_point, n_vis_key, n_bool_key in zip(
             b_curve.bezierPoints, n_vis_data.keys, n_bool_data.data.keys):
             # add each point of the curve

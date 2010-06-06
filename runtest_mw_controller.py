@@ -244,7 +244,7 @@ class ControllerTestSuite(TestSuite):
             assert(b_curve)
             assert(len(b_curve.bezierPoints) == 3)
         # export
-        self.scene.setLayers([3, 4]) # make sure both are exported
+        self.context.scene.setLayers([3, 4]) # make sure both are exported
         nif_export = self.test(
             filename='test/nif/mw/_visctrl.nif',
             config=dict(EXPORT_VERSION = 'Morrowind'),

@@ -45,7 +45,7 @@ class BodyPartTestSuite(TestSuite):
         self.logger.info("creating mesh")
         mesh_data = Blender.Mesh.Primitives.Monkey()
         mesh_numverts = len(mesh_data.verts)
-        mesh_obj = self.scene.objects.new(mesh_data, "Monkey")
+        mesh_obj = self.context.scene.objects.new(mesh_data, "Monkey")
         # create an armature
         self.logger.info("creating armature")
         arm_data = Blender.Armature.Armature("Scene Root")
@@ -53,7 +53,7 @@ class BodyPartTestSuite(TestSuite):
         arm_data.envelopes = False
         arm_data.vertexGroups = True
         arm_data.drawType = Blender.Armature.STICK
-        arm_obj = self.scene.objects.new(arm_data, "Scene Root")
+        arm_obj = self.context.scene.objects.new(arm_data, "Scene Root")
         arm_data.makeEditable()
         bone = Blender.Armature.Editbone()
         arm_data.bones["Bone"] = bone

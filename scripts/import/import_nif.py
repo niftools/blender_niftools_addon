@@ -284,7 +284,7 @@ class NifImport(NifImportExport):
                 self.fps = self.get_frames_per_second(
                     self.data.roots
                     + (self.kfdata.roots if self.kfdata else []))
-                bpy.context.scene.render.fps= self.fps
+                self.context.scene.render.fps = self.fps
 
             # merge skeleton roots and transform geometry into the rest pose
             if self.properties.merge_skeleton_roots:
@@ -667,7 +667,7 @@ class NifImport(NifImportExport):
             # track camera for billboard nodes
             if isinstance(niBlock, NifFormat.NiBillboardNode):
                 # find camera object
-                for obj in self.scene.objects:
+                for obj in self.context.scene.objects:
                     if obj.getType() == "Camera":
                         break
                 else:
@@ -2003,7 +2003,7 @@ class NifImport(NifImportExport):
         b_curve.extend = self.get_extend_from_flags(n_vis_ctrl.flags)
         for n_key in n_vis_ctrl.data.keys:
             b_curve[1 + n_key.time * self.fps] = (
-                2 ** (n_key.value + max([1] + self.scene.getLayers()) - 1))
+                2 ** (n_key.value + max([1] + self.context.scene.getLayers()) - 1))
 
     def get_object_ipo(self, b_object):
         """Return existing object ipo data, or if none exists, create one

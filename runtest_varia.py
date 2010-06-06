@@ -145,7 +145,7 @@ class VariaTestSuite(TestSuite):
         # create a mesh
         self.logger.info("creating mesh")
         mesh_data = Blender.Mesh.Primitives.Cube()
-        mesh_obj = self.scene.objects.new(mesh_data, "packed_tex_test")
+        mesh_obj = self.context.scene.objects.new(mesh_data, "packed_tex_test")
         # add a texture
         self.logger.info("creating material and texture")
         mat = Blender.Material.New("packed_tex_mat")

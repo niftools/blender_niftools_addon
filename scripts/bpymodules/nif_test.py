@@ -58,13 +58,13 @@ class TestSuite:
         @type name: C{str}
         """
         self.logger = logging.getLogger("niftools.blender.test")
-        self.scene = Blender.Scene.New(name) # new scene
+        self.context.scene = Blender.Scene.New(name) # new scene
         self.layer = 1 # current layer
 
         # set active scene
-        self.scene.makeCurrent()
+        self.context.scene.makeCurrent()
         # set active layer
-        self.scene.setLayers([self.layer])
+        self.context.scene.setLayers([self.layer])
 
         # get configuration
         self.config = ConfigParser.ConfigParser()
@@ -97,8 +97,8 @@ class TestSuite:
             selection = []
 
         # select objects
-        self.scene.objects.selected = [
-            ob for ob in self.scene.objects if ob.name in selection]
+        self.context.scene.objects.selected = [
+            ob for ob in self.context.scene.objects if ob.name in selection]
 
         # set script configuration
         finalconfig = dict(**NifConfig.DEFAULTS)
@@ -121,7 +121,7 @@ class TestSuite:
             # so the results can be easily visually inspected
             if next_layer in (None, True):
                 self.layer += 1
-                self.scene.setLayers([self.layer])
+                self.context.scene.setLayers([self.layer])
 
             # return test result
             return result
@@ -134,7 +134,7 @@ class TestSuite:
 
             if next_layer is True:
                 self.layer += 1
-                self.scene.setLayers([self.layer])
+                self.context.scene.setLayers([self.layer])
 
             return result
 
