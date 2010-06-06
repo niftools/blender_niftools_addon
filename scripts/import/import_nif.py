@@ -774,18 +774,10 @@ class NifImport(NifImportExport):
             # bone naming convention for blender
             shortName = self.get_bone_name_for_blender(shortName)
             # make sure it is unique
-            try:
-                Blender.Object.Get(shortName)
-            except ValueError:
-                # short name not found in object list
-                pass
-            else:
-                # try another integer
-                continue
-            try:
-                Blender.Material.Get(shortName)
-            except NameError:
-                # short name not found in material list
+            if (shortName not in bpy.data.objects
+                and shortName not in bpy.data.materials
+                and shortName not in bpy.data.meshes):
+                # shortName not in use anywhere
                 break
         else:
             raise RuntimeError("Ran out of names.")
