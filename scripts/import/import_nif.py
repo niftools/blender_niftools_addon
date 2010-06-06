@@ -2712,8 +2712,9 @@ class NifImport(NifImportExport):
         # do all NiNode's as bones
         if self.properties.skeleton ==  "SKELETON_ONLY" or (
             self.data.version in (0x14000005, 0x14020007) and
-            self.properties.filebase.lower() in ('skeleton', 'skeletonbeast')):
-            
+            self.properties.filename.lower() in ('skeleton.nif',
+                                                 'skeletonbeast.nif')):
+
             if not isinstance(niBlock, NifFormat.NiNode):
                 raise NifImportError(
                     "cannot import skeleton: root is not a NiNode")
