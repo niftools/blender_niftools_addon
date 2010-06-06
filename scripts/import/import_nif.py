@@ -322,7 +322,7 @@ class NifImport(NifImportExport):
                 # import this root block
                 self.logger.debug("Root block: %s" % root.get_global_display())
                 # merge animation from kf tree into nif tree
-                if self.properties.animation:
+                if self.properties.animation and self.kfdata:
                     for kf_root in self.kfdata.roots:
                         self.import_kf_root(kf_root, root)
                 # import the nif tree
