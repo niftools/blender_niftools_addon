@@ -234,7 +234,6 @@ class NifImportExport(bpy.types.Operator, metaclass=MetaNifImportExport):
     IMPORT_TEXTURE_PATH = []
     EXPORT_FLATTENSKIN = False
     EXPORT_VERSION = 'Oblivion'
-    IMPORT_SKELETON = 0 # 0 = normal import, 1 = import file as skeleton, 2 = import mesh and attach to skeleton
     IMPORT_EGMANIM = True, # create FaceGen EGM animation curves
     IMPORT_EGMANIMSCALE = 1.0, # scale of FaceGen EGM animation curves
     EXPORT_ANIMATION = 0, # export everything (1=geometry only, 2=animation only)
@@ -274,7 +273,6 @@ class NifImportExport(bpy.types.Operator, metaclass=MetaNifImportExport):
     EXPORT_EXTRA_SHADER_TEXTURES = True,
     IMPORT_EXPORTEMBEDDEDTEXTURES = False,
     EXPORT_OPTIMIZE_MATERIALS = True,
-    IMPORT_COMBINESHAPES = True,
     EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES = False,
     """
 

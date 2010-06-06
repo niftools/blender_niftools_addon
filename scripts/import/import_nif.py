@@ -135,6 +135,11 @@ class NifImport(NifImportExport):
         description="What should be imported?",
         default="EVERYTHING")
 
+    combine_shapes = bpy.props.BoolProperty(
+        name="Combine Shapes",
+        description="Import multi-material shapes as a single mesh.",
+        default=True)
+
     # correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z
     BONE_CORRECTION_MATRICES = (
         mathutils.Matrix([ 0.0,-1.0, 0.0],[ 1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0]),
@@ -527,7 +532,7 @@ class NifImport(NifImportExport):
                             geom_group.remove(child)
                 # import geometry/empty
                 if (not geom_group
-                    or not self.IMPORT_COMBINESHAPES
+                    or not self.properties.combine_shapes
                     or len(geom_group) > 16):
                     # no grouping node, or too many materials to
                     # group the geometry into a single mesh
@@ -2897,7 +2902,7 @@ class NifImport(NifImportExport):
         grouping node.
         """
         # combining shapes: disable grouping
-        if not self.IMPORT_COMBINESHAPES:
+        if not self.properties.combine_shapes:
             return []
         # check that it is a ninode
         if not isinstance(niBlock, NifFormat.NiNode):
