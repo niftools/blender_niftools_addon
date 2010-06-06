@@ -2774,12 +2774,12 @@ class NifImport(NifImportExport):
                 skininst = niBlock.skin_instance
                 skelroot = skininst.skeleton_root
                 if self.properties.skeleton ==  "EVERYTHING":
-                    if not self.armatures.has_key(skelroot):
+                    if skelroot not in self.armatures:
                         self.armatures[skelroot] = []
                         self.logger.debug("'%s' is an armature"
                                           % skelroot.name)
                 elif self.properties.skeleton ==  "GEOMETRY_ONLY":
-                    if not self.armatures.has_key(skelroot):
+                    if skelroot not in self.armatures:
                         raise NifImportError(
                             "nif structure incompatible with '%s' as armature:"
                             " node '%s' has '%s' as armature"
@@ -2831,7 +2831,7 @@ class NifImport(NifImportExport):
         a skin instance.
         """
         # we must already have marked this one as a bone
-        assert self.armatures.has_key(skelroot) # debug
+        assert skelroot in self.armatures # debug
         assert bone in self.armatures[skelroot] # debug
         # get the node parent, this should be marked as an armature or as a bone
         boneparent = bone._parent
@@ -2860,7 +2860,7 @@ class NifImport(NifImportExport):
     def is_armature_root(self, niBlock):
         """Tests a block to see if it's an armature."""
         if isinstance(niBlock, NifFormat.NiNode):
-            return  self.armatures.has_key(niBlock)
+            return  niBlock in self.armatures
         return False
         
     def get_closest_bone(self, niBlock, skelroot):
