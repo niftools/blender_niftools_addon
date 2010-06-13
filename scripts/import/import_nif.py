@@ -1537,7 +1537,7 @@ class NifImport(NifImportExport):
         # use the material property for the name, other properties usually have
         # no name
         name = self.import_name(matProperty)
-        material = Blender.Material.New(name)
+        material = bpy.data.materials.new(name)
         # get apply mode, and convert to blender "blending mode"
         blendmode = Blender.Texture.BlendModes["MIX"] # default
         if textProperty:

@@ -148,7 +148,7 @@ class VariaTestSuite(TestSuite):
         mesh_obj = self.context.scene.objects.new(mesh_data, "packed_tex_test")
         # add a texture
         self.logger.info("creating material and texture")
-        mat = Blender.Material.New("packed_tex_mat")
+        mat = bpy.data.materials.new("packed_tex_mat")
         tex = Blender.Texture.New("packed_tex_tex")
         tex.setType("Image")
         # do not set an image for now... export must fail
