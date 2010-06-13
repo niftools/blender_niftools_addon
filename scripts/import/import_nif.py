@@ -788,14 +788,14 @@ class NifImport(NifImportExport):
         
     def import_matrix(self, niBlock, relative_to=None):
         """Retrieves a niBlock's transform matrix as a Mathutil.Matrix."""
-        return Matrix(*niBlock.get_transform(relative_to).as_list())
+        return mathutils.Matrix(*niBlock.get_transform(relative_to).as_list())
 
     def decompose_srt(self, m):
         """Decompose Blender transform matrix as a scale, rotation matrix, and
         translation vector."""
         # get scale components
         b_scale_rot = m.rotationPart()
-        b_scale_rot_T = Matrix(b_scale_rot)
+        b_scale_rot_T = mathutils.Matrix(b_scale_rot)
         b_scale_rot_T.transpose()
         b_scale_rot_2 = b_scale_rot * b_scale_rot_T
         b_scale = Vector(b_scale_rot_2[0][0] ** 0.5,\
@@ -881,7 +881,7 @@ class NifImport(NifImportExport):
                 # Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
                 bone_bm = self.import_matrix(niBone) # base pose
                 niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = self.decompose_srt(bone_bm)
-                niBone_bind_rot_inv = Matrix(niBone_bind_rot)
+                niBone_bind_rot_inv = mathutils.Matrix(niBone_bind_rot)
                 niBone_bind_rot_inv.invert()
                 niBone_bind_quat_inv = niBone_bind_rot_inv.toQuat()
                 # we also need the conversion of the original matrix to the
@@ -907,7 +907,7 @@ class NifImport(NifImportExport):
                 # TC' = (TX * SC * RC + TC - TX) * inverse(RX) / SX
                 extra_matrix_scale, extra_matrix_rot, extra_matrix_trans = self.decompose_srt(self.bones_extra_matrix[niBone])
                 extra_matrix_quat = extra_matrix_rot.toQuat()
-                extra_matrix_rot_inv = Matrix(extra_matrix_rot)
+                extra_matrix_rot_inv = mathutils.Matrix(extra_matrix_rot)
                 extra_matrix_rot_inv.invert()
                 extra_matrix_quat_inv = extra_matrix_rot_inv.toQuat()
                 # now import everything
