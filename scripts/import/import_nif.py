@@ -2080,9 +2080,9 @@ class NifImport(NifImportExport):
                                              NifFormat.NiStencilProperty)
         # we don't check flags for now, nothing fancy
         if stencilProperty:
-            b_meshData.mode |= Blender.Mesh.Modes.TWOSIDED
+            b_meshData.double_sided = True
         else:
-            b_meshData.mode &= ~Blender.Mesh.Modes.TWOSIDED
+            b_meshData.double_sided = False
 
         # Material
         # note that NIF files only support one material for each trishape

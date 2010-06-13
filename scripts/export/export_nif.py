@@ -1819,7 +1819,7 @@ class NifExport(NifImportExport):
             mesh_mats = [None]
 
         # is mesh double sided?
-        mesh_doublesided = (mesh.mode & Blender.Mesh.Modes.TWOSIDED)
+        mesh_doublesided = mesh.double_sided
 
         # let's now export one trishape for every mesh material
         ### TODO: needs refactoring - move material, texture, etc.
