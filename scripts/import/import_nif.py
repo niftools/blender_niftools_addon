@@ -558,8 +558,7 @@ class NifImport(NifImportExport):
                         self.append_armature_modifier(b_obj, b_armature)
                     # settings for collision node
                     if isinstance(niBlock, NifFormat.RootCollisionNode):
-                        b_obj.setDrawType(
-                            Blender.Object.DrawTypes['BOUNDBOX'])
+                        b_obj.max_draw_type = 'BOUNDS'
                         b_obj.setDrawMode(32) # wire
                         b_obj.rbShapeBoundType = \
                             Blender.Object.RBShapes['POLYHEDERON']
@@ -2043,9 +2042,9 @@ class NifImport(NifImportExport):
 
             # Mesh hidden flag
             if niBlock.flags & 1 == 1:
-                b_mesh.setDrawType(2) # hidden: wire
+                b_mesh.max_draw_type = 'WIRE' # hidden: wire
             else:
-                b_mesh.setDrawType(4) # not hidden: shaded
+                b_mesh.max_draw_type = 'TEXTURED' # not hidden: shaded
 
         # set transform matrix for the mesh
         if not applytransform:
@@ -3124,7 +3123,7 @@ class NifImport(NifImportExport):
             ob = self.context.scene.objects.new(me, 'box')
 
             # set bounds type
-            ob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
+            ob.max_draw_type = 'BOUNDS'
             ob.rbShapeBoundType = Blender.Object.RBShapes['BOX']
             ob.rbRadius = min(maxx, maxy, maxz)
             ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
@@ -3145,7 +3144,7 @@ class NifImport(NifImportExport):
             ob = self.context.scene.objects.new(me, 'sphere')
 
             # set bounds type
-            ob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
+            ob.max_draw_type = 'BOUNDS'
             ob.rbShapeBoundType = Blender.Object.RBShapes['SPHERE']
             ob.rbRadius = maxx
             ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
@@ -3171,7 +3170,7 @@ class NifImport(NifImportExport):
             ob = self.context.scene.objects.new(me, 'capsule')
 
             # set bounds type
-            ob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
+            ob.max_draw_type = 'BOUNDS'
             ob.rbShapeBoundType = Blender.Object.RBShapes['CYLINDER']
             ob.rbRadius = maxx
             ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
@@ -3673,7 +3672,7 @@ class NifImport(NifImportExport):
             #    *bbox.bounding_box.translation.as_list())
 
         # set bounds type
-        ob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
+        ob.max_draw_type = 'BOUNDS'
         ob.rbShapeBoundType = Blender.Object.RBShapes['BOX']
         ob.rbRadius = min(maxx, maxy, maxz)
         return ob
