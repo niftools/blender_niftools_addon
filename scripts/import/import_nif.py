@@ -207,8 +207,8 @@ class NifImport(NifImportExport):
                         " mode.")
 
             # open file for binary reading
-            self.logger.info("Importing %s" % self.properties.path)
-            niffile = open(self.properties.path, "rb")
+            self.logger.info("Importing %s" % self.properties.filepath)
+            niffile = open(self.properties.filepath, "rb")
             self.data = NifFormat.Data()
             try:
                 # check if nif file is valid
@@ -3782,7 +3782,7 @@ def menu_func(self, context):
     self.layout.operator(
         NifImport.bl_idname,
         text="NetImmerse/Gamebryo (.nif & .kf & .egm)"
-        ).path = default_path
+        ).filepath = default_path
 
 def register():
     """Register nif import operator."""

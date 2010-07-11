@@ -117,7 +117,7 @@ class MetaNifImportExport(type(bpy.types.Operator)):
         class hierarchy.
         """
 
-        cls.path = bpy.props.StringProperty(
+        cls.filepath = bpy.props.StringProperty(
             name="File Path",
             description="File path used for importing or exporting the NIF file",
             maxlen=1024,
