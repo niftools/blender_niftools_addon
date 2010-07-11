@@ -3781,7 +3781,7 @@ def menu_func(self, context):
     default_path = "import.nif"
     self.layout.operator(
         NifImport.bl_idname,
-        text="NetImmerse/Gamebryo (.nif & .kf & .egm)..."
+        text="NetImmerse/Gamebryo (.nif & .kf & .egm)"
         ).path = default_path
 
 def register():
