@@ -589,7 +589,8 @@ class NifImport(NifImportExport):
             # if not importing skeleton only
             if self.properties.skeleton !=  "SKELETON_ONLY":
                 # import collision objects
-                if niBlock.collision_object:
+                if isinstance(niBlock.collision_object,
+                              NifFormat.bhkNiCollisionObject):
                     bhk_body = niBlock.collision_object.body
                     if not isinstance(bhk_body, NifFormat.bhkRigidBody):
                         self.logger.warning(

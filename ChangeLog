@@ -1,6 +1,7 @@
 Version 2.5.5 (in development)
 * fixed bone priority import for L and R bones (reported by Da Mage)
 * updated for PyFFI 2.1.5
+* fixed NiCollisionData import (reported by LordOfDragons)
 
 Version 2.5.4 (28 Mar 2010)
 * fixed bone priority export for L and R bones (reported by Kilza)
