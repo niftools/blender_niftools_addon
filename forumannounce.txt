@@ -18,7 +18,7 @@ This version of the scripts should keep working with newer versions of [url=http
 [*]Download and install [url=http://download.blender.org/release/Blender2.49b/blender-2.49b-windows.exe]Blender 2.49b (32 bit)[/url], use default settings, except select "Use Blender's installation directory" when asked where to install Blender's user data.
 [*]Download and install [url=http://www.python.org/ftp/python/2.6.5/python-2.6.5.msi]Python 2.6.5 (32 bit)[/url], use default settings.
 [*]Download and install [url=http://sourceforge.net/projects/pyffi/files/pyffi/2.1.5/PyFFI-2.1.5.win32.exe/download]PyFFI 2.1.5[/url], use default settings.
-[*]Download and install the [url=http://sourceforge.net/projects/niftools/files/blender_nif_scripts/2.5.x/2.5.05/blender_nif_scripts-2.5.5-windows.exe/download]Blender NIF Scripts 2.5.5[/url], use default settings.[/list]
+[*]Download and install the [url=http://sourceforge.net/projects/niftools/files/blender_nif_scripts/2.5.x/2.5.06/blender_nif_scripts-2.5.6-windows.exe/download]Blender NIF Scripts 2.5.6[/url], use default settings.[/list]
 
 [b]Notes[/b]
 
