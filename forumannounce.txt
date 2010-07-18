@@ -6,7 +6,7 @@ http://sourceforge.net/projects/niftools/files/blender_nif_scripts/
 
 *** changes ***
 
-Check the [url=http://github.com/amorilia/blender_nif_scripts/blob/blender24x/ChangeLog]changelog[/url] for full details.
+Check the [url=http://github.com/amorilia/blender_nif_scripts/blob/master/ChangeLog]changelog[/url] for full details.
 
 Special thanks go to *** for their help with this release.
 
