@@ -2328,6 +2328,9 @@ class NifImport(NifImportExport):
             bones = skininst.bones
             boneWeights = skindata.bone_list
             for idx, bone in enumerate(bones):
+                # skip empty bones (see pyffi issue #3114079)
+                if not bone:
+                    continue
                 vertex_weights = boneWeights[idx].vertex_weights
                 groupname = self.names[bone]
                 if not groupname in b_meshData.getVertGroupNames():
@@ -2748,6 +2751,9 @@ class NifImport(NifImportExport):
                                skelroot.name))
 
                 for i, boneBlock in enumerate(skininst.bones):
+                    # boneBlock can be None; see pyffi issue #3114079
+                    if not boneBlock:
+                        continue
                     if boneBlock not in self.armatures[skelroot]:
                         self.armatures[skelroot].append(boneBlock)
                         self.logger.debug(

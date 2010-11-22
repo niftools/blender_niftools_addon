@@ -1,4 +1,6 @@
 Version 2.5.6 (in development)
+* Fix import in case skin instance has empty bone references (fixes pyffi
+issue #3114079, reported by drakonnen).
 
 Version 2.5.5 (18 July 2010)
 * fixed bone priority import for L and R bones (reported by Da Mage)
