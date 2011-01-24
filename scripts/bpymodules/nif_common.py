@@ -263,8 +263,7 @@ class NifImportExport:
         elif b_ipol == Blender.IpoCurve.InterpTypes.BEZIER:
             return NifFormat.KeyType.QUADRATIC_KEY
         elif b_ipol == Blender.IpoCurve.InterpTypes.CONST:
-            # guessing, not documented in nif.xml
-            return 0
+            return NifFormat.KeyType.CONST_KEY
 
         self.logger.warning(
             "Unsupported interpolation mode in blend, using quadratic/bezier.")

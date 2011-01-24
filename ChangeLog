@@ -1,7 +1,8 @@
 Version 2.5.6 (in development)
-* Fix import in case skin instance has empty bone references (fixes pyffi
-issue #3114079, reported by drakonnen).
+* fix import in case skin instance has empty bone references (fixes pyffi
+issue #3114079, reported by drakonnen)
 * updated for PyFFI 2.1.7
+* fix export of bezier curve animation (reported by arcimaestro)
 
 Version 2.5.5 (18 July 2010)
 * fixed bone priority import for L and R bones (reported by Da Mage)
