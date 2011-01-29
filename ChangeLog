@@ -3,6 +3,9 @@ Version 2.5.6 (in development)
 issue #3114079, reported by drakonnen)
 * updated for PyFFI 2.1.8
 * fix export of bezier curve animation (reported by arcimaestro)
+* split multimaterial mopps into different NiNodes so we only have single
+material mopps; this works around the usual mopp issues (reported by
+neomonkeus)
 
 Version 2.5.5 (18 July 2010)
 * fixed bone priority import for L and R bones (reported by Da Mage)

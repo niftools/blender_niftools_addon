@@ -3609,6 +3609,12 @@ class NifExport(NifImportExport):
             colshape.unknown_floats_2[0] = 1.0
             colshape.unknown_floats_2[1] = 1.0
         else:
+            # XXX at the moment, we disable multimaterial mopps
+            # XXX do this by raising an exception when trying
+            # XXX to add a collision here; code will try to readd it with
+            # XXX a fresh NiNode
+            raise ValueError('multimaterial mopps not supported for now')
+            # XXX this code will do the trick once multimaterial mopps work
             colmopp = colbody.shape
             if not isinstance(colmopp, NifFormat.bhkMoppBvTreeShape):
                 raise ValueError('not a packed list of collisions')
