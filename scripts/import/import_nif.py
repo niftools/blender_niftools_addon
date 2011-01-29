@@ -670,7 +670,12 @@ class NifImport(NifImportExport):
 
             # import extra node data, such as node type
             # (other types should be added here too)
-            if isinstance(niBlock, NifFormat.NiLODNode):
+            if (isinstance(niBlock, NifFormat.NiLODNode)
+                # XXX additional self.isinstance_blender_object(b_obj)
+                # XXX is a 'workaround' to the limitation that bones
+                # XXX cannot have properties in Blender 2.4x
+                # XXX (remove this check with Blender 2.5)
+                and self.isinstance_blender_object(b_obj)):
                 b_obj.addProperty("Type", "NiLODNode", "STRING")
                 # import lod data
                 range_data = niBlock.lod_level_data
