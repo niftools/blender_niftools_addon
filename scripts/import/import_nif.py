@@ -296,6 +296,10 @@ class NifImport(NifImportExport):
                        NifFormat.NiSequenceStreamHelper)):
             raise NifImportError("direct .kf import not supported")
 
+        # divinity 2: handle CStreamableAssetData
+        if isinstance(root_block, NifFormat.CStreamableAssetData):
+            root_block = root_block.root
+
         # merge skeleton roots
         # and transform geometry into the rest pose
         # fake a data element with given root, for spells

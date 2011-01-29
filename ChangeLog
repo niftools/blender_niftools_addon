@@ -6,6 +6,8 @@ issue #3114079, reported by drakonnen)
 * split multimaterial mopps into different NiNodes so we only have single
 material mopps; this works around the usual mopp issues (reported by
 neomonkeus)
+* new export option for Bully SE
+* improved support for Divinity 2 nifs
 
 Version 2.5.5 (18 July 2010)
 * fixed bone priority import for L and R bones (reported by Da Mage)
