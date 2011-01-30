@@ -1394,6 +1394,14 @@ class NifConfig:
             elif self.config["EXPORT_VERSION"] == "Empire Earth II":
                 self.config["EXPORT_FORCEDDS"] = False
                 self.config["EXPORT_SKINPARTITION"] = False
+            elif self.config["EXPORT_VERSION"] == "Bully SE":
+                self.config["EXPORT_FORCEDDS"] = False
+                self.config["EXPORT_STRIPIFY"] = False
+                self.config["EXPORT_STITCHSTRIPS"] = False
+                self.config["EXPORT_FLATTENSKIN"] = False
+                self.config["EXPORT_SKINPARTITION"] = True
+                self.config["EXPORT_PADBONES"] = True
+                self.config["EXPORT_BONESPERPARTITION"] = 4
         elif evName[:8] == "VERSION_":
             self.config["EXPORT_VERSION"] = evName[8:]
         elif evName == "EXPORT_FLATTENSKIN":

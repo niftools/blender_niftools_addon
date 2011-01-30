@@ -6,7 +6,7 @@ issue #3114079, reported by drakonnen)
 * split multimaterial mopps into different NiNodes so we only have single
 material mopps; this works around the usual mopp issues (reported by
 neomonkeus)
-* new export option for Bully SE
+* new export option for Bully SE; sane settings are automatically selected
 * improved support for Divinity 2 nifs (reported by pertinen)
 
 Version 2.5.5 (18 July 2010)
