@@ -1,7 +1,7 @@
 git clean -x -f -d
 ./install.sh
 
-VERSION="2.5.6"
+VERSION="2.5.7"
 wcrev=`git log -1 --pretty=format:%h`
 if [ "$1" == "" ]
 then
