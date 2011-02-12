@@ -1471,9 +1471,9 @@ class NifImport(NifImportExport):
         # Sets the colors
         # Specular color
         spec = matProperty.specular_color
-        material.setSpecCol([spec.r, spec.g, spec.b])
+        material.specular_color = (spec.r, spec.g, spec.b)
         # Blender multiplies specular color with this value
-        material.setSpec(1.0)
+        material.specular_intensity = 1.0
         # Diffuse color
         diff = matProperty.diffuse_color
         emit = matProperty.emissive_color
@@ -1488,7 +1488,8 @@ class NifImport(NifImportExport):
                 diff.r = emit.r
                 diff.g = emit.g
                 diff.b = emit.b
-        material.setRGBCol(diff.r, diff.g, diff.b)
+        material.diffuse_color = (diff.r, diff.g, diff.b)
+        material.diffuse_intensity = 1.0
         # Ambient & emissive color
         # We assume that ambient & emissive are fractions of the diffuse color.
         # If it is not an exact fraction, we average out.
@@ -1526,17 +1527,17 @@ class NifImport(NifImportExport):
             b_amb = 1.0
         if b_emit > 1.0:
             b_emit = 1.0
-        material.setAmb(b_amb)
-        material.setEmit(b_emit)
+        material.ambient = (b_amb)
+        material.emit = (b_emit)
         # glossiness
         glossiness = matProperty.glossiness
         hardness = int(glossiness * 4) # just guessing really
         if hardness < 1: hardness = 1
         if hardness > 511: hardness = 511
-        material.setHardness(hardness)
+        material.specular_hardness = hardness
         # Alpha
         alpha = matProperty.alpha
-        material.setAlpha(alpha)
+        material.alpha = alpha
         # textures
         base_texture = None
         glow_texture = None
@@ -1762,14 +1763,14 @@ class NifImport(NifImportExport):
                     # for proper display in Blender, we must set the alpha value
                     # to 0 and the "Var" slider in the texture Map To tab to the
                     # NIF material alpha value
-                    material.setAlpha(0.0)
+                    material.alpha = 0.0
                     mbase_texture.varfac = alpha
             # non-transparent glow textures have their alpha calculated from RGB
             # not sure what to do with glow textures that have an alpha channel
             # for now we ignore those alpha channels
         else:
             # no alpha property: force alpha 1.0 in Blender
-            material.setAlpha(1.0)
+            material.alpha = 1.0
         # check specularity
         if (not specProperty) and (self.data.version != 0x14000004):
             # no specular property: specular color is ignored
@@ -1777,7 +1778,7 @@ class NifImport(NifImportExport):
             # we do this by setting specularity zero
             # however, for Sid Meier's Railroads the specular color is NOT
             # ignored! hence the exception for version 0x14000004
-            material.setSpec(0.0)
+            material.specular_intensity = 0.0
         # check wireframe property
         if wireProperty:
             # enable wireframe rendering
