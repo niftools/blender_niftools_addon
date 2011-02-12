@@ -1,34 +1,4 @@
-#!BPY
-
-""" 
-Name: 'NetImmerse/Gamebryo (.nif & .kf & .egm)'
-Blender: 250
-Group: 'Import'
-Tip: 'Import NIF File Format (.nif & .kf & .egm)'
-"""
-
-
-__author__ = "The NifTools team, http://niftools.sourceforge.net/"
-__url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
-__bpydoc__ = """\
-This script imports Netimmerse and Gamebryo .NIF files to Blender.
-"""
-
-import mathutils
-import bpy
-
-from nif_common import NifImportExport
-from nif_common import NifFormat
-from nif_common import EgmFormat
-from nif_common import __version__
-
-import logging
-import math
-import operator
-
-import pyffi.utils.quickhull
-import pyffi.spells.nif
-import pyffi.spells.nif.fix
+"""This script imports Netimmerse/Gamebryo nif files to Blender."""
 
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
@@ -64,79 +34,26 @@ import pyffi.spells.nif.fix
 # ***** END LICENSE BLOCK *****
 # --------------------------------------------------------------------------
 
+import logging
+import math
+import operator
+
+import mathutils
+import bpy
+
+import pyffi.utils.quickhull
+import pyffi.spells.nif
+import pyffi.spells.nif.fix
+from pyffi.formats.nif import NifFormat
+from pyffi.formats.egm import EgmFormat
+
+from .import_export_nif import NifImportExport
+
 class NifImportError(Exception):
     """A simple custom exception class for import errors."""
     pass
 
 class NifImport(NifImportExport):
-    """Load a NIF File"""
-    # class constants
-    bl_idname = "import.nif"
-    bl_label = "Import NIF"
-
-    # properties
-    keyframe_file = bpy.props.StringProperty(
-        name="Keyframe File",
-        description="Keyframe file for animations.",
-        maxlen=1024,
-        default="",
-        subtype="FILE_PATH")
-
-    egm_file = bpy.props.StringProperty(
-        name="FaceGen EGM File",
-        description="FaceGen EGM file for morphs.",
-        maxlen=1024,
-        default="",
-        subtype="FILE_PATH")
-
-    animation = bpy.props.BoolProperty(
-        name="Animation",
-        description="Import animation.",
-        default=True)
-
-    merge_skeleton_roots = bpy.props.BoolProperty(
-        name="Merge Skeleton Roots",
-        description="Merge skeleton roots.",
-        default=True)
-
-    send_geometries_to_bind_position = bpy.props.BoolProperty(
-        name="Send Geometries To Bind Position",
-        description="Send all geometries to their bind position.",
-        default=True)
-
-    send_detached_geometries_to_node_position = bpy.props.BoolProperty(
-        name="Send Detached Geometries To Node Position",
-        description=
-        "Send all detached geometries to the position of their parent node.",
-        default=True)
-
-    send_bones_to_bind_position = bpy.props.BoolProperty(
-        name="Send Bones To Bind Position",
-        description="Send all bones to their bind position.",
-        default=True)
-
-    apply_skin_deformation =  bpy.props.BoolProperty(
-        name="Apply Skin Deformation",
-        description="Apply skin deformation to all skinned geometries.",
-        default=False)
-
-    skeleton = bpy.props.EnumProperty(
-        items=(
-            ("EVERYTHING", "Everything",
-             "Import everything."),
-            ("SKELETON_ONLY", "Skeleton Only",
-             "Import skeleton only and make it parent of selected geometry."),
-            ("GEOMETRY_ONLY", "Geometry Only",
-             "Import geometry only and parent them to selected skeleton."),
-            ),
-        name="What",
-        description="What should be imported?",
-        default="EVERYTHING")
-
-    combine_shapes = bpy.props.BoolProperty(
-        name="Combine Shapes",
-        description="Import multi-material shapes as a single mesh.",
-        default=True)
 
     # correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z
     BONE_CORRECTION_MATRICES = (
@@ -146,6 +63,7 @@ class NifImport(NifImportExport):
         mathutils.Matrix([[ 0.0, 1.0, 0.0],[-1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0]]),
         mathutils.Matrix([[-1.0, 0.0, 0.0],[ 0.0,-1.0, 0.0],[ 0.0, 0.0, 1.0]]),
         mathutils.Matrix([[ 1.0, 0.0, 0.0],[ 0.0, 0.0,-1.0],[ 0.0, 1.0, 0.0]]))
+
     # identity matrix, for comparisons
     IDENTITY44 = mathutils.Matrix([[ 1.0, 0.0, 0.0, 0.0],
                                    [ 0.0, 1.0, 0.0, 0.0],
@@ -154,10 +72,9 @@ class NifImport(NifImportExport):
     # degrees to radians conversion constant
     D2R = 3.14159265358979/180.0
     
-    def execute(self, context):
-        """Main import function: open file and import all trees."""
-        # call base class method
-        NifImportExport.execute(self, context)
+    def __init__(self, operator, context):
+        # call base class constructor
+        NifImportExport.__init__(self, operator, context)
 
         # shortcut to import logger
         self.logger = logging.getLogger("niftools.blender.import")
@@ -356,11 +273,6 @@ class NifImport(NifImportExport):
             #self.context.scene.update(1)
 
         return {'FINISHED'}
-
-    def invoke(self, context, event):
-        wm = context.manager
-        wm.add_fileselect(self)
-        return {'RUNNING_MODAL'}
 
     def import_root(self, root_block):
         """Main import function."""

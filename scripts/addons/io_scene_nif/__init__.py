@@ -1,8 +1,4 @@
-"""Common functions for the Blender nif import and export scripts."""
-
-__version__ = "2.5.5"
-__requiredpyffiversion__ = "2.2.0"
-__requiredblenderversion__ = (2, 52, 5)
+"""Nif import and export scripts."""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -36,60 +32,33 @@ __requiredblenderversion__ = (2, 52, 5)
 #
 # ***** END LICENCE BLOCK *****
 
-# utility functions
-    
-def version_int_tuple(version):
-    """Convert version string to tuple of integers."""
-    return tuple(int(x) for x in version.__str__().split("."))
-
-# things to do on import and export
-
-# check Blender version
-
-import bpy
-
-if bpy.app.version < __requiredblenderversion__:
-    raise ImportError(
-        "ERROR: The Blender NIF scripts require Blender %s or higher."
-        " It seems that you are running an older version %s."
-        " Get a newer version at http://www.blender.org/"
-        % (__requiredblenderversion__, bpy.app.version))
-
-# check if PyFFI is installed and import NifFormat
-
-try:
-    from pyffi import __version__ as __pyffiversion__
-except ImportError:
-    raise ImportError(
-        "The Blender NIF scripts require"
-        " the Python File Format Interface (PyFFI)."
-        " Make sure that PyFFI resides in your Python path"
-        " or in your Blender scripts folder."
-        " If you do not have it: http://pyffi.sourceforge.net/")
-
-# check PyFFI version
-
-if (version_int_tuple(__pyffiversion__)
-    < version_int_tuple(__requiredpyffiversion__)):
-    raise ImportError(
-        "The Blender NIF scripts require"
-        " Python File Format Interface %s or higher."
-        " It seems that you are running an older version (%s)."
-        " Get a newer version at http://pyffi.sourceforge.net/"
-        %(__requiredpyffiversion__, __pyffiversion__))
-
-# system imports
+bl_info = {
+    "name": "NetImmerse/Gamebryo nif format",
+    "description":
+    "Import and export files in the NetImmerse/Gamebryo nif format (.nif)",
+    "author": "Amorilia",
+    "version": (2, 5, 7),
+    "blender:": (2, 6, 1),
+    "api": 34802,
+    "location": "File > Import-Export",
+    "warning": "not functional, port from 2.49 series still in progress",
+    "wiki_url": (
+        "http://wiki.blender.org/index.php/Extensions:2.5/Py/Scripts/"\
+        "Import-Export/Nif"),
+    "tracker_url": (
+        "http://sourceforge.net/tracker/?group_id=149157&atid=776343"),
+    "support": "COMMUNITY",
+    "category": "Import-Export"}
 
 import logging
 import sys
 import os
 
-# blender imports
-
+import bpy
 import bpy.props
+from io_utils import ImportHelper, ExportHelper
 
-# import PyFFI format classes
-
+import pyffi
 from pyffi.formats.nif import NifFormat
 from pyffi.formats.egm import EgmFormat
 
@@ -109,347 +78,132 @@ def init_loggers():
 # set up the loggers: call it as a function to avoid polluting namespace
 init_loggers()
 
-class MetaNifImportExport(type(bpy.types.Operator)):
-    def __init__(cls, name, dct, bases):
-        """Add common properties. This must be done in a metaclass
-        because Blender only uses properties defined on the top class
-        level, and ignores those properties defined higher up in the
-        class hierarchy.
-        """
+class NifImportExportUI:
+    """Abstract base class for import and export user interface."""
 
-        cls.filepath = bpy.props.StringProperty(
-            name="File Path",
-            description="File path used for importing or exporting the NIF file",
-            maxlen=1024,
-            default="")
+    # filepath is created by ImportHelper/ExportHelper
 
-        cls.directory = bpy.props.StringProperty(
-            name="Directory",
-            description="",
-            maxlen=1024,
-            default="")
+    filename_ext = ".nif"
+    filter_glob = bpy.props.StringProperty(default="*.nif;*.item;*.nifcache;*.jmi", options={'HIDDEN'})
 
-        cls.filename = bpy.props.StringProperty(
-            name="File Name",
-            description="",
-            maxlen=1024,
-            default="")
+    directory = bpy.props.StringProperty(
+        name="Directory",
+        description="",
+        maxlen=1024,
+        default="")
 
-        cls.log_level = bpy.props.EnumProperty(
-            items=(
-                ("DEBUG", "Debug",
-                 "Show all messages (only useful for debugging)."),
-                ("INFO", "Info",
-                 "Show some informative messages, warnings, and errors."),
-                ("WARNING", "Warning",
-                 "Only show warnings and errors."),
-                ("ERROR", "Error",
-                 "Only show errors."),
-                ("CRITICAL", "Critical",
-                 "Only show extremely critical errors."),
-                ),
-            name="Log Level",
-            description="Level of verbosity on the console.",
-            default="WARNING")
+    filename = bpy.props.StringProperty(
+        name="File Name",
+        description="",
+        maxlen=1024,
+        default="")
 
-        cls.profile_path = bpy.props.StringProperty(
-            name="Profile Path",
-            description=
-            "Name of file where Python profiler dumps the profile."
-            " Set to empty string to turn off profiling.",
-            maxlen=1024,
-            default="",
-            subtype="FILE_PATH")
+    log_level = bpy.props.EnumProperty(
+        items=(
+            ("DEBUG", "Debug",
+             "Show all messages (only useful for debugging)."),
+            ("INFO", "Info",
+             "Show some informative messages, warnings, and errors."),
+            ("WARNING", "Warning",
+             "Only show warnings and errors."),
+            ("ERROR", "Error",
+             "Only show errors."),
+            ("CRITICAL", "Critical",
+             "Only show extremely critical errors."),
+            ),
+        name="Log Level",
+        description="Level of verbosity on the console.",
+        default="WARNING")
 
-        cls.scale_correction = bpy.props.FloatProperty(
-            name="Scale Correction",
-            description="Number of nif units per blender unit.",
-            default=10.0,
-            min=0.01, max=100.0, precision=2)
+    profile_path = bpy.props.StringProperty(
+        name="Profile Path",
+        description=
+        "Name of file where Python profiler dumps the profile."
+        " Set to empty string to turn off profiling.",
+        maxlen=1024,
+        default="",
+        subtype="FILE_PATH")
 
-class NifImportExport(bpy.types.Operator, metaclass=MetaNifImportExport):
-    """Abstract base class for import and export. Contains utility functions
-    that are commonly used in both import and export.
-    """
+    scale_correction = bpy.props.FloatProperty(
+        name="Scale Correction",
+        description="Number of nif units per blender unit.",
+        default=10.0,
+        min=0.01, max=100.0, precision=2)
 
-    VERTEX_RESOLUTION = 1000
-    NORMAL_RESOLUTION = 100
-    UV_RESOLUTION = 10000
-    VCOL_RESOLUTION = 100
+class NifImportUI(bpy.types.Operator, ImportHelper, NifImportExportUI):
+    """Load a NIF File"""
+    # class constants
+    bl_idname = "import.nif"
+    bl_label = "Import NIF"
 
-    EXTRA_SHADER_TEXTURES = [
-        "EnvironmentMapIndex",
-        "NormalMapIndex",
-        "SpecularIntensityIndex",
-        "EnvironmentIntensityIndex",
-        "LightCubeMapIndex",
-        "ShadowTextureIndex"]
-    """Names (ordered by default index) of shader texture slots for
-    Sid Meier's Railroads and similar games.
-    """
+    # properties
+    keyframe_file = bpy.props.StringProperty(
+        name="Keyframe File",
+        description="Keyframe file for animations.",
+        maxlen=1024,
+        default="",
+        subtype="FILE_PATH")
 
-    USED_EXTRA_SHADER_TEXTURES = {
-        "Sid Meier's Railroads": (3, 0, 4, 1, 5, 2),
-        "Civilization IV": (3, 0, 1, 2)}
-    """The default ordering of the extra data blocks for different games."""
+    egm_file = bpy.props.StringProperty(
+        name="FaceGen EGM File",
+        description="FaceGen EGM file for morphs.",
+        maxlen=1024,
+        default="",
+        subtype="FILE_PATH")
 
-    # Oblivion(and FO3) collision settings dicts for Anglicized names
-    # on Object Properties for havok items
-    OB_LAYER = [
-        "Unidentified", "Static", "AnimStatic", "Transparent", "Clutter",
-        "Weapon", "Projectile", "Spell", "Biped", "Props",
-        "Water", "Trigger", "Terrain", "Trap", "NonCollidable",
-        "CloudTrap", "Ground", "Portal", "Stairs", "CharController",
-        "AvoidBox", "?", "?", "CameraPick", "ItemPick",
-        "LineOfSight", "PathPick", "CustomPick1", "CustomPick2", "SpellExplosion",
-        "DroppingPick", "Other", "Head", "Body", "Spine1",
-        "Spine2", "LUpperArm", "LForeArm", "LHand", "LThigh",
-        "LCalf", "LFoot",  "RUpperArm", "RForeArm", "RHand",
-        "RThigh", "RCalf", "RFoot", "Tail", "SideWeapon",
-        "Shield", "Quiver", "BackWeapon", "BackWeapon?", "PonyTail",
-        "Wing", "Null"]
+    animation = bpy.props.BoolProperty(
+        name="Animation",
+        description="Import animation.",
+        default=True)
 
-    MOTION_SYS = [
-        "Invalid", "Dynamic", "Sphere", "Sphere Inertia", "Box",
-        "Box Stabilized", "Keyframed", "Fixed", "Thin BOx", "Character"]
+    merge_skeleton_roots = bpy.props.BoolProperty(
+        name="Merge Skeleton Roots",
+        description="Merge skeleton roots.",
+        default=True)
 
-    HAVOK_MATERIAL = [
-        "Stone", "Cloth", "Dirt", "Glass", "Grass",
-        "Metal", "Organic", "Skin", "Water", "Wood",
-        "Heavy Stone", "Heavy Metal", "Heavy Wood", "Chain", "Snow",
-        "Stone Stairs", "Cloth Stairs", "Dirt Stairs", "Glass Stairs", "Metal Stairs",
-        "Organic Stairs", "Skin Stairs", "Water Stairs", "Wood Stairs", "Heavy Stone Stairs",
-        "Heavy Metal Stairs" "Heavy Wood Stairs", "Chain Stairs", "Snow Stairs", "Elevator"]
+    send_geometries_to_bind_position = bpy.props.BoolProperty(
+        name="Send Geometries To Bind Position",
+        description="Send all geometries to their bind position.",
+        default=True)
 
-    QUALITY_TYPE = [
-        "Invalid", "Fixed", "Keyframed", "Debris", "Moving",
-        "Critical", "Bullet", "User", "Character", "Keyframed Report"]
+    send_detached_geometries_to_node_position = bpy.props.BoolProperty(
+        name="Send Detached Geometries To Node Position",
+        description=
+        "Send all detached geometries to the position of their parent node.",
+        default=True)
 
-    progress_bar = 0
-    """Level of the progress bar."""
+    send_bones_to_bind_position = bpy.props.BoolProperty(
+        name="Send Bones To Bind Position",
+        description="Send all bones to their bind position.",
+        default=True)
 
-    # TODO: convert to properties in NifImport and NifExport
-    """
-    IMPORT_REALIGN_BONES = 1 # 0 = no, 1 = tail, 2 = tail+rotation
-    IMPORT_TEXTURE_PATH = []
-    EXPORT_FLATTENSKIN = False
-    EXPORT_VERSION = 'Oblivion'
-    IMPORT_EGMANIM = True, # create FaceGen EGM animation curves
-    IMPORT_EGMANIMSCALE = 1.0, # scale of FaceGen EGM animation curves
-    EXPORT_ANIMATION = 0, # export everything (1=geometry only, 2=animation only)
-    EXPORT_ANIMSEQUENCENAME = '', # sequence name of the kf file
-    EXPORT_FORCEDDS = True, # force dds extension on texture files
-    EXPORT_SKINPARTITION = True, # generate skin partition
-    EXPORT_BONESPERVERTEX = 4,
-    EXPORT_BONESPERPARTITION = 18,
-    EXPORT_PADBONES = False,
-    EXPORT_STRIPIFY = True,
-    EXPORT_STITCHSTRIPS = False,
-    EXPORT_SMOOTHOBJECTSEAMS = True,
-    IMPORT_EXTRANODES = True,
-    EXPORT_BHKLISTSHAPE = False,
-    EXPORT_OB_BSXFLAGS = 2,
-    EXPORT_OB_MASS = 10.0,
-    EXPORT_OB_SOLID = True,
-    EXPORT_OB_MOTIONSYSTEM = 7, # MO_SYS_FIXED
-    EXPORT_OB_UNKNOWNBYTE1 = 1,
-    EXPORT_OB_UNKNOWNBYTE2 = 1,
-    EXPORT_OB_QUALITYTYPE = 1, # MO_QUAL_FIXED
-    EXPORT_OB_WIND = 0,
-    EXPORT_OB_LAYER = 1, # static
-    EXPORT_OB_MATERIAL = 9, # wood
-    EXPORT_OB_MALLEABLECONSTRAINT = False, # use malleable constraint for ragdoll and hinge
-    EXPORT_OB_PRN = "NONE", # determines bone where to attach weapon
-    EXPORT_FO3_SF_ZBUF = True, # use these shader flags?
-    EXPORT_FO3_SF_SMAP = False,
-    EXPORT_FO3_SF_SFRU = False,
-    EXPORT_FO3_SF_WINDOW_ENVMAP = False,
-    EXPORT_FO3_SF_EMPT = True,
-    EXPORT_FO3_SF_UN31 = True,
-    EXPORT_FO3_FADENODE = False,
-    EXPORT_FO3_SHADER_TYPE = 1, # shader_default
-    EXPORT_FO3_BODYPARTS = True,
-    EXPORT_MW_NIFXNIFKF = False,
-    EXPORT_EXTRA_SHADER_TEXTURES = True,
-    IMPORT_EXPORTEMBEDDEDTEXTURES = False,
-    EXPORT_OPTIMIZE_MATERIALS = True,
-    EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES = False,
-    """
+    apply_skin_deformation =  bpy.props.BoolProperty(
+        name="Apply Skin Deformation",
+        description="Apply skin deformation to all skinned geometries.",
+        default=False)
+
+    skeleton = bpy.props.EnumProperty(
+        items=(
+            ("EVERYTHING", "Everything",
+             "Import everything."),
+            ("SKELETON_ONLY", "Skeleton Only",
+             "Import skeleton only and make it parent of selected geometry."),
+            ("GEOMETRY_ONLY", "Geometry Only",
+             "Import geometry only and parent them to selected skeleton."),
+            ),
+        name="What",
+        description="What should be imported?",
+        default="EVERYTHING")
+
+    combine_shapes = bpy.props.BoolProperty(
+        name="Combine Shapes",
+        description="Import multi-material shapes as a single mesh.",
+        default=True)
 
     def execute(self, context):
-        """Common initialization functions for executing the import/export
-        operators:
-
-        - initialize progress bar
-        - set logging level
-        - set self.context
-        - set self.selected_objects
-        """
-        # print scripts info
-        print(
-            "Blender NIF Scripts %s"
-            " (running on Blender %s, PyFFI %s)"
-            % (__version__, bpy.app.version_string, __pyffiversion__))
-
-        # initialize progress bar
-        self.msg_progress("Initializing", progbar=0)
-
-        # set logging level
-        log_level_num = getattr(logging, self.properties.log_level)
-        logging.getLogger("niftools").setLevel(log_level_num)
-        logging.getLogger("pyffi").setLevel(log_level_num)
-
-        # save context (so it can be used in other methods without argument
-        # passing)
-        self.context = context
-
-        # get list of selected objects
-        # (find and store this list now, as creating new objects adds them
-        # to the selection list)
-        if self.context.selected_objects:
-            self.selected_objects = self.context.selected_objects[:]
-        else:
-            # if there are no selected objects,
-            # then context.selected_objects is None
-            # but an empty list makes more sense (for iterating)
-            self.selected_objects = []
-
-    def msg_progress(self, message, progbar=None):
-        """Message wrapper for the Blender progress bar."""
-        # update progress bar level
-        if progbar is None:
-            if self.progress_bar > 0.89:
-                # reset progress bar
-                self.progress_bar = 0
-                # TODO draw the progress bar
-                #Blender.Window.DrawProgressBar(0, message)
-            self.progress_bar += 0.1
-        else:
-            self.progress_bar = progbar
-        # TODO draw the progress bar
-        #Blender.Window.DrawProgressBar(self.progress_bar, message)
-
-    def get_b_children(self, b_obj):
-        """Return children of a blender object."""
-        return [child for child in Blender.Object.Get()
-                if child.parent == b_obj]
-
-    def get_bone_name_for_blender(self, name):
-        """Convert a bone name to a name that can be used by Blender: turns
-        'Bip01 R xxx' into 'Bip01 xxx.R', and similar for L.
-
-        @param name: The bone name as in the nif file.
-        @type name: C{str}
-        @return: Bone name in Blender convention.
-        @rtype: C{str}
-        """
-        if name.startswith("Bip01 L "):
-            return "Bip01 " + name[8:] + ".L"
-        elif name.startswith("Bip01 R "):
-            return "Bip01 " + name[8:] + ".R"
-        return name
-
-    def get_bone_name_for_nif(self, name):
-        """Convert a bone name to a name that can be used by the nif file:
-        turns 'Bip01 xxx.R' into 'Bip01 R xxx', and similar for L.
-
-        @param name: The bone name as in Blender.
-        @type name: C{str}
-        @return: Bone name in nif convention.
-        @rtype: C{str}
-        """
-        if name.startswith("Bip01 "):
-            if name.endswith(".L"):
-                return "Bip01 L " + name[6:-2]
-            elif name.endswith(".R"):
-                return "Bip01 R " + name[6:-2]
-        return name
-
-    def get_extend_from_flags(self, flags):
-        if flags & 6 == 4: # 0b100
-            return Blender.IpoCurve.ExtendTypes.CONST
-        elif flags & 6 == 0: # 0b000
-            return Blender.IpoCurve.ExtendTypes.CYCLIC
-
-        self.logger.warning(
-            "Unsupported cycle mode in nif, using clamped.")
-        return Blender.IpoCurve.ExtendTypes.CONST
-
-    def get_flags_from_extend(self, extend):
-        if extend == Blender.IpoCurve.ExtendTypes.CONST:
-            return 4 # 0b100
-        elif extend == Blender.IpoCurve.ExtendTypes.CYCLIC:
-            return 0
-
-        self.logger.warning(
-            "Unsupported extend type in blend, using clamped.")
-        return 4
-
-    def get_b_ipol_from_n_ipol(self, n_ipol):
-        if n_ipol == NifFormat.KeyType.LINEAR_KEY:
-            return Blender.IpoCurve.InterpTypes.LINEAR
-        elif n_ipol == NifFormat.KeyType.QUADRATIC_KEY:
-            return Blender.IpoCurve.InterpTypes.BEZIER
-        elif n_ipol == 0:
-            # guessing, not documented in nif.xml
-            return Blender.IpoCurve.InterpTypes.CONST
-
-        self.logger.warning(
-            "Unsupported interpolation mode in nif, using quadratic/bezier.")
-        return Blender.IpoCurve.InterpTypes.BEZIER
-
-    def get_n_ipol_from_b_ipol(self, b_ipol):
-        if b_ipol == Blender.IpoCurve.InterpTypes.LINEAR:
-            return NifFormat.KeyType.LINEAR_KEY
-        elif b_ipol == Blender.IpoCurve.InterpTypes.BEZIER:
-            return NifFormat.KeyType.QUADRATIC_KEY
-        elif b_ipol == Blender.IpoCurve.InterpTypes.CONST:
-            return NifFormat.KeyType.CONST_KEY
-
-        self.logger.warning(
-            "Unsupported interpolation mode in blend, using quadratic/bezier.")
-        return NifFormat.KeyType.QUADRATIC_KEY
-
-    def find_controller(self, niBlock, controller_type):
-        """Find a controller."""
-        ctrl = niBlock.controller
-        while ctrl:
-            if isinstance(ctrl, controller_type):
-                break
-            ctrl = ctrl.next_controller
-        return ctrl
-
-    def find_property(self, niBlock, property_type):
-        """Find a property."""
-        for prop in niBlock.properties:
-            if isinstance(prop, property_type):
-                return prop
-        return None
-
-    def find_extra(self, niBlock, extratype):
-        """Find extra data."""
-        # pre-10.x.x.x system: extra data chain
-        extra = niBlock.extra_data
-        while extra:
-            if isinstance(extra, extratype):
-                break
-            extra = extra.next_extra_data
-        if extra:
-            return extra
-
-        # post-10.x.x.x system: extra data list
-        for extra in niBlock.extra_data_list:
-            if isinstance(extra, extratype):
-                return extra
-        return None
-
-    def isinstance_blender_object(self, b_obj):
-        """Unfortunately, isinstance(b_obj, Blender.Object.Object) does not
-        work because the Object class is not exposed in the API.
-        This method provides an alternative check.
-        """
-        # lame and slow, but functional
-        return b_obj in Blender.Object.Get()
+        """Main import function: open file and import all trees."""
+        from . import import_nif
+        return import_nif.NifImport(self, context)
 
 # TODO: integrate with NifImportExport class
 class NifConfig:
@@ -1801,3 +1555,26 @@ class NifConfig:
         
     def update_egm_anim_scale(self, evt, val):
         self.config["IMPORT_EGMANIMSCALE"] = val
+
+def menu_func_import(self, context):
+    self.layout.operator(
+        NifImportUI.bl_idname, text="NetImmerse/Gamebryo (.nif)")
+
+def menu_func_export(self, context):
+    self.layout.operator(
+        NifExportUI.bl_idname, text="NetImmerse/Gamebryo (.nif)")
+
+def register():
+    bpy.utils.register_module(__name__)
+    bpy.types.INFO_MT_file_import.append(menu_func_import)
+    # TODO
+    #bpy.types.INFO_MT_file_export.append(menu_func_export)
+
+def unregister():
+    bpy.utils.unregister_module(__name__)
+    bpy.types.INFO_MT_file_import.remove(menu_func_import)
+    # TODO
+    #bpy.types.INFO_MT_file_export.remove(menu_func_export)
+
+if __name__ == "__main__":
+    register()

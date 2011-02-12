@@ -19,6 +19,7 @@ rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/
 mkdir -p $BLENDERHOME/$BLENDERVERSION/scripts/addons/io_scene_nif/
 
 cp scripts/addons/io_scene_nif/__init__.py $BLENDERHOME/$BLENDERVERSION/scripts/addons/io_scene_nif/
+cp scripts/addons/io_scene_nif/import_export_nif.py $BLENDERHOME/$BLENDERVERSION/scripts/addons/io_scene_nif/
 cp scripts/addons/io_scene_nif/export_nif.py $BLENDERHOME/$BLENDERVERSION/scripts/addons/io_scene_nif/
 cp scripts/addons/io_scene_nif/import_nif.py $BLENDERHOME/$BLENDERVERSION/scripts/addons/io_scene_nif/
 

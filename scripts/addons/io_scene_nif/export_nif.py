@@ -1,17 +1,6 @@
-#!BPY
+"""This script exports Netimmerse and Gamebryo .nif files from Blender."""
 
-"""
-Name: 'NetImmerse/Gamebryo (.nif & .kf & .egm)'
-Blender: 245
-Group: 'Export'
-Tooltip: 'Export NIF File Format (.nif & .kf & egm)'
-"""
-
-__author__ = "The NifTools team, http://niftools.sourceforge.net/"
-__url__ = ("blender", "elysiun", "http://niftools.sourceforge.net/")
-__bpydoc__ = """\
-This script exports Netimmerse and Gamebryo .nif files from Blender.
-"""
+return
 
 import logging
 
