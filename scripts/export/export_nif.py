@@ -89,8 +89,8 @@ class NifExport(NifImportExport):
                 b, m = ln.split('/')
                 try:
                     mat = mathutils.Matrix(
-                        *[[float(f) for f in row.split(',')]
-                          for row in m.split(';')])
+                        [[float(f) for f in row.split(',')]
+                         for row in m.split(';')])
                 except:
                     raise NifExportError('Syntax error in BoneExMat buffer.')
                 # Check if matrices are clean, and if necessary fix them.
@@ -1294,7 +1294,7 @@ class NifExport(NifImportExport):
             bind_quat = bind_rot.toQuat()
         else:
             bind_scale = 1.0
-            bind_rot = mathutils.Matrix([1,0,0],[0,1,0],[0,0,1])
+            bind_rot = mathutils.Matrix([[1,0,0],[0,1,0],[0,0,1]])
             bind_quat = mathutils.Quaternion(1,0,0,0)
             bind_trans = mathutils.Vector(0,0,0)
         if extra_mat_inv:
@@ -1303,7 +1303,7 @@ class NifExport(NifImportExport):
             extra_quat_inv = extra_rot_inv.toQuat()
         else:
             extra_scale_inv = 1.0
-            extra_rot_inv = mathutils.Matrix([1,0,0],[0,1,0],[0,0,1])
+            extra_rot_inv = mathutils.Matrix([[1,0,0],[0,1,0],[0,0,1]])
             extra_quat_inv = mathutils.Quaternion(1,0,0,0)
             extra_trans_inv = mathutils.Vector(0,0,0)
 
@@ -1414,7 +1414,7 @@ class NifExport(NifImportExport):
                             rot_c.w = ipo[Ipo.PO_QUATW][frame]
                             rot_c = rot_c.toMatrix()
                         else:
-                            rot_c = mathutils.Matrix([1,0,0],[0,1,0],[0,0,1])
+                            rot_c = mathutils.Matrix([[1,0,0],[0,1,0],[0,0,1]])
                         # note, PO_SCALEX == OB_SCALEX, so this does both
                         if ipo[Ipo.PO_SCALEX]:
                             # support only uniform scaling... take the mean
@@ -3219,7 +3219,7 @@ class NifExport(NifImportExport):
         # handle the trivial case first
         if (space == 'none'):
             return ( 1.0,
-                     mathutils.Matrix([1,0,0],[0,1,0],[0,0,1]),
+                     mathutils.Matrix([[1,0,0],[0,1,0],[0,0,1]]),
                      mathutils.Vector([0, 0, 0]) )
         
         assert(space == 'localspace')
@@ -3622,7 +3622,7 @@ class NifExport(NifImportExport):
 
         mesh = obj.data
         transform = mathutils.Matrix(
-            *self.get_object_matrix(obj, 'localspace').as_list())
+            self.get_object_matrix(obj, 'localspace').as_list())
         rotation = transform.rotationPart()
 
         vertices = [vert.co * transform for vert in mesh.verts]
@@ -3702,7 +3702,7 @@ class NifExport(NifImportExport):
             coltf.unknown_8_bytes[6] = 253
             coltf.unknown_8_bytes[7] = 4
             hktf = mathutils.Matrix(
-                *self.get_object_matrix(obj, 'localspace').as_list())
+                self.get_object_matrix(obj, 'localspace').as_list())
             # the translation part must point to the center of the data
             # so calculate the center in local coordinates
             center = mathutils.Vector((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0)
@@ -3751,7 +3751,7 @@ class NifExport(NifImportExport):
             # take average radius and calculate end points
             localradius = (maxx + maxy - minx - miny) / 4.0
             transform = mathutils.Matrix(
-                *self.get_object_matrix(obj, 'localspace').as_list())
+                self.get_object_matrix(obj, 'localspace').as_list())
             vert1 = mathutils.Vector( [ (maxx + minx)/2.0,
                                                 (maxy + miny)/2.0,
                                                 minz + localradius ] )
@@ -3794,7 +3794,7 @@ class NifExport(NifImportExport):
             # bound type has value 5
             mesh = obj.data
             transform = mathutils.Matrix(
-                *self.get_object_matrix(obj, 'localspace').as_list())
+                self.get_object_matrix(obj, 'localspace').as_list())
             rotation = transform.rotationPart()
             scale = rotation.determinant()
             if scale < 0:
@@ -4031,7 +4031,7 @@ class NifExport(NifImportExport):
                 # apply object transform relative to the bone head
                 # (this is O * T * B' * B^{-1} at once)
                 transform = mathutils.Matrix(
-                    *self.get_object_matrix(b_obj, 'localspace').as_list())
+                    self.get_object_matrix(b_obj, 'localspace').as_list())
                 pivot = pivot * transform
                 constr_matrix = constr_matrix * transform.rotationPart()
 

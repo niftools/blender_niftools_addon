@@ -140,17 +140,17 @@ class NifImport(NifImportExport):
 
     # correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z
     BONE_CORRECTION_MATRICES = (
-        mathutils.Matrix([ 0.0,-1.0, 0.0],[ 1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0]),
-        mathutils.Matrix([ 1.0, 0.0, 0.0],[ 0.0, 1.0, 0.0],[ 0.0, 0.0, 1.0]),
-        mathutils.Matrix([ 1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0],[ 0.0,-1.0, 0.0]),
-        mathutils.Matrix([ 0.0, 1.0, 0.0],[-1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0]),
-        mathutils.Matrix([-1.0, 0.0, 0.0],[ 0.0,-1.0, 0.0],[ 0.0, 0.0, 1.0]),
-        mathutils.Matrix([ 1.0, 0.0, 0.0],[ 0.0, 0.0,-1.0],[ 0.0, 1.0, 0.0]) )
+        mathutils.Matrix([[ 0.0,-1.0, 0.0],[ 1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0]]),
+        mathutils.Matrix([[ 1.0, 0.0, 0.0],[ 0.0, 1.0, 0.0],[ 0.0, 0.0, 1.0]]),
+        mathutils.Matrix([[ 1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0],[ 0.0,-1.0, 0.0]]),
+        mathutils.Matrix([[ 0.0, 1.0, 0.0],[-1.0, 0.0, 0.0],[ 0.0, 0.0, 1.0]]),
+        mathutils.Matrix([[-1.0, 0.0, 0.0],[ 0.0,-1.0, 0.0],[ 0.0, 0.0, 1.0]]),
+        mathutils.Matrix([[ 1.0, 0.0, 0.0],[ 0.0, 0.0,-1.0],[ 0.0, 1.0, 0.0]]))
     # identity matrix, for comparisons
-    IDENTITY44 = mathutils.Matrix( [ 1.0, 0.0, 0.0, 0.0],
+    IDENTITY44 = mathutils.Matrix([[ 1.0, 0.0, 0.0, 0.0],
                                    [ 0.0, 1.0, 0.0, 0.0],
                                    [ 0.0, 0.0, 1.0, 0.0],
-                                   [ 0.0, 0.0, 0.0, 1.0] )
+                                   [ 0.0, 0.0, 0.0, 1.0]])
     # degrees to radians conversion constant
     D2R = 3.14159265358979/180.0
     
@@ -798,7 +798,7 @@ class NifImport(NifImportExport):
         
     def import_matrix(self, niBlock, relative_to=None):
         """Retrieves a niBlock's transform matrix as a Mathutil.Matrix."""
-        return mathutils.Matrix(*niBlock.get_transform(relative_to).as_list())
+        return mathutils.Matrix(niBlock.get_transform(relative_to).as_list())
 
     def decompose_srt(self, m):
         """Decompose Blender transform matrix as a scale, rotation matrix, and
@@ -1001,9 +1001,9 @@ class NifImport(NifImportExport):
                                     quat.w = ipo.getCurve('QuatW').evaluate(frame)
                                     rot = quat.toMatrix()
                             else:
-                                rot = mathutils.Matrix([1.0,0.0,0.0],
-                                                               [0.0,1.0,0.0],
-                                                               [0.0,0.0,1.0])
+                                rot = mathutils.Matrix([[1.0,0.0,0.0],
+                                                        [0.0,1.0,0.0],
+                                                        [0.0,0.0,1.0]])
                             # we also need the scale at this frame
                             if scale_keys_dict:
                                 try:
@@ -1016,9 +1016,9 @@ class NifImport(NifImportExport):
                                         sizeVal = 1.0
                             else:
                                 sizeVal = 1.0
-                            size = mathutils.Matrix([sizeVal, 0.0, 0.0],
-                                                            [0.0, sizeVal, 0.0],
-                                                            [0.0, 0.0, sizeVal])
+                            size = mathutils.Matrix([[sizeVal, 0.0, 0.0],
+                                                     [0.0, sizeVal, 0.0],
+                                                     [0.0, 0.0, sizeVal]])
                             # now we can do the final calculation
                             loc = (extra_matrix_trans * size * rot + locVal - extra_matrix_trans) * extra_matrix_rot_inv * (1.0/extra_matrix_scale) # C' = X * C * inverse(X)
                             b_posebone.loc = loc
@@ -1143,9 +1143,9 @@ class NifImport(NifImportExport):
                                 quat.w = ipo.getCurve('QuatW').evaluate(frame)
                                 rot = quat.toMatrix()
                         else:
-                            rot = mathutils.Matrix([1.0,0.0,0.0],
-                                                           [0.0,1.0,0.0],
-                                                           [0.0,0.0,1.0])
+                            rot = mathutils.Matrix([[1.0,0.0,0.0],
+                                                    [0.0,1.0,0.0],
+                                                    [0.0,0.0,1.0]])
                         # we also need the scale at this frame
                         if scale_keys_dict:
                             try:
@@ -1158,9 +1158,9 @@ class NifImport(NifImportExport):
                                     sizeVal = 1.0
                         else:
                             sizeVal = 1.0
-                        size = mathutils.Matrix([sizeVal, 0.0, 0.0],
-                                                        [0.0, sizeVal, 0.0],
-                                                        [0.0, 0.0, sizeVal])
+                        size = mathutils.Matrix([[sizeVal, 0.0, 0.0],
+                                                 [0.0, sizeVal, 0.0],
+                                                 [0.0, 0.0, sizeVal]])
                         # now we can do the final calculation
                         loc = (extra_matrix_trans * size * rot + locVal - extra_matrix_trans) * extra_matrix_rot_inv * (1.0/extra_matrix_scale) # C' = X * C * inverse(X)
                         b_posebone.loc = loc
@@ -3061,7 +3061,7 @@ class NifImport(NifImportExport):
             # import shapes
             collision_objs = self.import_bhk_shape(bhkshape.shape)
             # find transformation matrix
-            transform = mathutils.Matrix(*bhkshape.transform.as_list())
+            transform = mathutils.Matrix(bhkshape.transform.as_list())
             transform.transpose()
             # fix scale
             transform[3][0] *= 7
@@ -3208,7 +3208,7 @@ class NifImport(NifImportExport):
             vec2 = mathutils.CrossVecs(normal, vec1)
             # the rotation matrix should be such that
             # (0,0,1) maps to normal
-            transform = mathutils.Matrix(vec1, vec2, normal)
+            transform = mathutils.Matrix([vec1, vec2, normal])
             transform.resize4x4()
             transform[3][0] = 3.5 * (bhkshape.first_point.x
                                      + bhkshape.second_point.x)
