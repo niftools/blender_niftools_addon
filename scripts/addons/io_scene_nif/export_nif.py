@@ -56,12 +56,6 @@ class NifExportError(Exception):
 class NifExport(NifImportExport):
     IDENTITY44 = NifFormat.Matrix44()
     IDENTITY44.set_identity()
-    # map blending modes to apply modes
-    APPLYMODE = {
-        Blender.Texture.BlendModes["MIX"] : NifFormat.ApplyMode.APPLY_MODULATE,
-        Blender.Texture.BlendModes["LIGHTEN"] : NifFormat.ApplyMode.APPLY_HILIGHT,
-        Blender.Texture.BlendModes["MULTIPLY"] : NifFormat.ApplyMode.APPLY_HILIGHT2
-    }
     FLOAT_MIN = -3.4028234663852886e+38
     FLOAT_MAX = +3.4028234663852886e+38
 
@@ -2310,7 +2304,9 @@ class NifExport(NifImportExport):
                         self.add_shader_integer_extra_datas(trishape)
                     trishape.add_property(self.export_texturing_property(
                         flags=0x0001, # standard
-                        applymode=self.APPLYMODE[mesh_base_mtex.blendmode if mesh_base_mtex else Blender.Texture.BlendModes["MIX"]],
+                        applymode=self.get_n_apply_mode_from_b_blend_type(
+                            mesh_base_mtex.blend_type
+                            if mesh_base_mtex else "MIX"),
                         uvlayers=mesh_uvlayers,
                         basemtex=mesh_base_mtex,
                         glowmtex=mesh_glow_mtex,

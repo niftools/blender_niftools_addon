@@ -270,7 +270,6 @@ class NifImportExport:
         elif n_ipol == 0:
             # guessing, not documented in nif.xml
             return Blender.IpoCurve.InterpTypes.CONST
-
         self.logger.warning(
             "Unsupported interpolation mode in nif, using quadratic/bezier.")
         return Blender.IpoCurve.InterpTypes.BEZIER
@@ -282,10 +281,37 @@ class NifImportExport:
             return NifFormat.KeyType.QUADRATIC_KEY
         elif b_ipol == Blender.IpoCurve.InterpTypes.CONST:
             return NifFormat.KeyType.CONST_KEY
-
         self.logger.warning(
             "Unsupported interpolation mode in blend, using quadratic/bezier.")
         return NifFormat.KeyType.QUADRATIC_KEY
+
+    def get_b_blend_type_from_n_apply_mode(self, n_apply_mode):
+        if n_apply_mode == NifFormat.ApplyMode.APPLY_MODULATE:
+            return "MIX"
+        elif textProperty.apply_mode == NifFormat.ApplyMode.APPLY_REPLACE:
+            return "MIX"
+        elif textProperty.apply_mode == NifFormat.ApplyMode.APPLY_DECAL:
+            return "MIX"
+        elif textProperty.apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT:
+            return "LIGHTEN"
+        elif textProperty.apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT2:
+            return "MULTIPLY"
+        self.logger.warning(
+            "Unknown apply mode (%i) in material,"
+            " using blend type 'MIX'" % n_apply_mode)
+        return "MIX"
+
+    def get_n_apply_mode_from_b_blend_type(self, b_blend_type):
+        if b_blend_type == "LIGHTEN":
+            return NifFormat.ApplyMode.APPLY_HILIGHT
+        elif b_blend_type == "MULTIPLY":
+            return NifFormat.ApplyMode.APPLY_HILIGHT2
+        elif b_blend_type == "MIX":
+            return NifFormat.ApplyMode.APPLY_MODULATE
+        self.logger.warning(
+            "Unsupported blend type (%s) in material,"
+            " using apply mode APPLY_MODULATE" % b_blend_type)
+        return NifFormat.ApplyMode.APPLY_MODULATE
 
     def find_controller(self, niBlock, controller_type):
         """Find a controller."""

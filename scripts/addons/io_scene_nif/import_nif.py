@@ -1461,26 +1461,13 @@ class NifImport(NifImportExport):
         name = self.import_name(matProperty)
         material = bpy.data.materials.new(name)
         # get apply mode, and convert to blender "blending mode"
-        blendmode = Blender.Texture.BlendModes["MIX"] # default
+        blendmode = "MIX" # default
         if textProperty:
-            if textProperty.apply_mode == NifFormat.ApplyMode.APPLY_MODULATE:
-                blendmode = Blender.Texture.BlendModes["MIX"]
-            elif textProperty.apply_mode == NifFormat.ApplyMode.APPLY_REPLACE:
-                blendmode = Blender.Texture.BlendModes["MIX"]
-            elif textProperty.apply_mode == NifFormat.ApplyMode.APPLY_DECAL:
-                blendmode = Blender.Texture.BlendModes["MIX"]
-            elif textProperty.apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT:
-                blendmode = Blender.Texture.BlendModes["LIGHTEN"]
-            elif textProperty.apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT2:
-                blendmode = Blender.Texture.BlendModes["MULTIPLY"]
-            else:
-                self.logger.warning(
-                    "Unknown apply mode (%i) in material '%s',"
-                    " using blending mode 'MIX'"
-                    % (textProperty.apply_mode, matProperty.name))
+            blendmode = self.get_b_blend_type_from_n_apply_mode(
+                textProperty.apply_mode)
         elif bsShaderProperty:
             # default blending mode for fallout 3
-            blendmode = Blender.Texture.BlendModes["MIX"]
+            blendmode = "MIX"
         # Sets the colors
         # Specular color
         spec = matProperty.specular_color
