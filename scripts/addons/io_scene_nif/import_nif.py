@@ -2002,9 +2002,9 @@ class NifImport(NifImportExport):
                                              NifFormat.NiStencilProperty)
         # we don't check flags for now, nothing fancy
         if stencilProperty:
-            b_meshData.double_sided = True
+            b_meshData.show_double_sided = True
         else:
-            b_meshData.double_sided = False
+            b_meshData.show_double_sided = False
 
         # Material
         # note that NIF files only support one material for each trishape

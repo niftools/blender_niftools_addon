@@ -44,7 +44,7 @@ from pyffi.formats.nif import NifFormat
 
 class VariaTestSuite(TestSuite):
     def isTwoSided(self, b_mesh):
-        return b_mesh.data.double_sided
+        return b_mesh.data.show_double_sided
 
     def hasStencil(self, nif_geom):
         return any(isinstance(prop, NifFormat.NiStencilProperty)
