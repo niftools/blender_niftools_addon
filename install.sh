@@ -5,46 +5,44 @@
 
 # blender25 directory
 
+PYFFIHOME=../pyffi
 BLENDERHOME=../blender25
 BLENDERVERSION=2.56
 
-# remove clutter
+# uninstall old files
 
-rm -f $BLENDERHOME/$BLENDERVERSION/scripts/io/import_nif.py*
-rm -f $BLENDERHOME/$BLENDERVERSION/scripts/io/export_nif.py*
-rm -f $BLENDERHOME/$BLENDERVERSION/scripts/import/import_nif.py*
-rm -f $BLENDERHOME/$BLENDERVERSION/scripts/export/export_nif.py*
-rm -f $BLENDERHOME/$BLENDERVERSION/scripts/nif_common.py*
-rm -f $BLENDERHOME/$BLENDERVERSION/scripts/bpymodules/nif_common.py*
-rm -f $BLENDERHOME/$BLENDERVERSION/scripts/mesh_weightsquash.py*
-rm -f $BLENDERHOME/$BLENDERVERSION/scripts/mesh_hull.py*
-rm -f $BLENDERHOME/$BLENDERVERSION/scripts/object_setbonepriority.py*
-rm -f $BLENDERHOME/$BLENDERVERSION/scripts/object_savebonepose.py*
-rm -f $BLENDERHOME/$BLENDERVERSION/scripts/object_loadbonepose.py*
-rm -f $BLENDERHOME/$BLENDERVERSION/scripts/mesh/mesh_weightsquash.py*
-rm -f $BLENDERHOME/$BLENDERVERSION/scripts/mesh/mesh_hull.py*
-rm -f $BLENDERHOME/$BLENDERVERSION/scripts/mesh/mesh_morphcopy.py*
-rm -f $BLENDERHOME/$BLENDERVERSION/scripts/object/object_setbonepriority.py*
-rm -f $BLENDERHOME/$BLENDERVERSION/scripts/object/object_savebonepose.py*
-rm -f $BLENDERHOME/$BLENDERVERSION/scripts/object/object_loadbonepose.py*
+rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/io_scene_nif/
+rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/
 
-# install
+# install scripts
 
-mkdir -p $BLENDERHOME/$BLENDERVERSION/scripts/io/ $BLENDERHOME/$BLENDERVERSION/scripts/op/ $BLENDERHOME/$BLENDERVERSION/scripts/modules/
+mkdir -p $BLENDERHOME/$BLENDERVERSION/scripts/addons/io_scene_nif/
 
-# not yet ready
-#cp scripts/mesh/mesh_niftools_weightsquash.py scripts/mesh/mesh_niftools_hull.py scripts/mesh/mesh_niftools_morphcopy.py $BLENDERHOME/$BLENDERVERSION/scripts/op/
+cp scripts/addons/io_scene_nif/__init__.py $BLENDERHOME/$BLENDERVERSION/scripts/addons/io_scene_nif/
+cp scripts/addons/io_scene_nif/export_nif.py $BLENDERHOME/$BLENDERVERSION/scripts/addons/io_scene_nif/
+cp scripts/addons/io_scene_nif/import_nif.py $BLENDERHOME/$BLENDERVERSION/scripts/addons/io_scene_nif/
 
-cp scripts/import/import_nif.py $BLENDERHOME/$BLENDERVERSION/scripts/io/
-# not sure if needed, commented out for now
-#cp scripts/import/import_nif.py $BLENDERHOME/$BLENDERVERSION/scripts/ # workaround for nif_test import
+# install pyffi
 
-# not yet ready
-#cp scripts/export/export_nif.py $BLENDERHOME/$BLENDERVERSION/scripts/io/
-# not sure if needed, commented out for now
-#cp scripts/export/export_nif.py $BLENDERHOME/$BLENDERVERSION/scripts/ # workaround for nif_test import
-
-# not yet ready
-#cp scripts/object/object_niftools_set_bone_priority.py scripts/object/object_niftools_save_bone_pose.py scripts/object/object_niftools_load_bone_pose.py $BLENDERHOME/$BLENDERVERSION/scripts/op/
-
-cp scripts/bpymodules/nif_common.py scripts/bpymodules/nif_test.py $BLENDERHOME/$BLENDERVERSION/scripts/modules/
+pushd $PYFFIHOME
+git checkout master
+git clean -xfd
+popd
+mkdir -p $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/
+cp -r $PYFFIHOME/pyffi/ $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/
+# remove closed source parts of pyffi
+rm $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/utils/mopper.exe
+# remove unused parts of pyffi
+rm -f $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/fileformat.dtd
+rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/qskope/
+rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/formats/cgf/
+rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/formats/psk/
+rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/formats/esp/
+rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/formats/rockstar/
+rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/formats/tga/
+rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/formats/dae/
+rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/object_models/xsd/
+rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/object_models/mex/
+# remove .git folders from submodules
+rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/formats/nif/nifxml/.git
+rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/formats/kfm/kfmxml/.git
