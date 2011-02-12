@@ -79,7 +79,7 @@ def hull_box(ob, me, selected_only):
     boxob.setMatrix(ob.getMatrix('worldspace'))
 
     # set bounds type
-    boxob.max_draw_type = 'BOUNDS'
+    boxob.draw_type = 'BOUNDS'
     boxob.rbShapeBoundType = Blender.Object.RBShapes['BOX']
 
 def hull_sphere(ob, me, selected_only):
@@ -125,7 +125,7 @@ def hull_sphere(ob, me, selected_only):
     boxob.setMatrix(ob.getMatrix('worldspace'))
 
     # set bounds type
-    boxob.max_draw_type = 'BOUNDS'
+    boxob.draw_type = 'BOUNDS'
     boxob.rbShapeBoundType = Blender.Object.RBShapes['SPHERE']
 
 def hull_convex(ob, me, selected_only, precision = 0.1):
