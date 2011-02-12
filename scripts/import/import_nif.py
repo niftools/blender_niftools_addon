@@ -35,7 +35,7 @@ import pyffi.spells.nif.fix
 # 
 # BSD License
 # 
-# Copyright (c) 2005-2010, NIF File Format Library and Tools
+# Copyright (c) 2005-2011, NIF File Format Library and Tools
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -370,6 +370,10 @@ class NifImport(NifImportExport):
                        NifFormat.NiSequenceStreamHelper)):
             raise NifImportError("direct .kf import not supported")
 
+        # divinity 2: handle CStreamableAssetData
+        if isinstance(root_block, NifFormat.CStreamableAssetData):
+            root_block = root_block.root
+        
         # sets the root block parent to None, so that when crawling back the
         # script won't barf
         root_block._parent = None
@@ -705,7 +709,12 @@ class NifImport(NifImportExport):
 
             # import extra node data, such as node type
             # (other types should be added here too)
-            if isinstance(niBlock, NifFormat.NiLODNode):
+            if (isinstance(niBlock, NifFormat.NiLODNode)
+                # XXX additional self.isinstance_blender_object(b_obj)
+                # XXX is a 'workaround' to the limitation that bones
+                # XXX cannot have properties in Blender 2.4x
+                # XXX (remove this check with Blender 2.5)
+                and self.isinstance_blender_object(b_obj)):
                 b_obj.addProperty("Type", "NiLODNode", "STRING")
                 # import lod data
                 range_data = niBlock.lod_level_data
@@ -2363,6 +2372,9 @@ class NifImport(NifImportExport):
             bones = skininst.bones
             boneWeights = skindata.bone_list
             for idx, bone in enumerate(bones):
+                # skip empty bones (see pyffi issue #3114079)
+                if not bone:
+                    continue
                 vertex_weights = boneWeights[idx].vertex_weights
                 groupname = self.names[bone]
                 if not groupname in b_meshData.getVertGroupNames():
@@ -2787,6 +2799,9 @@ class NifImport(NifImportExport):
                                skelroot.name))
 
                 for i, boneBlock in enumerate(skininst.bones):
+                    # boneBlock can be None; see pyffi issue #3114079
+                    if not boneBlock:
+                        continue
                     if boneBlock not in self.armatures[skelroot]:
                         self.armatures[skelroot].append(boneBlock)
                         self.logger.debug(

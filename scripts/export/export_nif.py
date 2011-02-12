@@ -31,7 +31,7 @@ import pyffi.spells.nif.fix
 # 
 # BSD License
 # 
-# Copyright (c) 2005-2010, NIF File Format Library and Tools
+# Copyright (c) 2005-2011, NIF File Format Library and Tools
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -2824,6 +2824,7 @@ class NifExport(NifImportExport):
         for b_point, n_key in zip(b_curve.bezierPoints, n_floatdata.data.keys):
             # add each point of the curve
             b_time, b_value = b_point.pt
+            n_key.arg = n_floatdata.data.interpolation
             n_key.time = (b_time - 1) * self.fspeed
             n_key.value = b_value
             # track time
@@ -2873,6 +2874,7 @@ class NifExport(NifImportExport):
         n_posdata.data.keys.update_size()
         for b_time, n_key in zip(sorted(b_times), n_posdata.data.keys):
             # add each point of the curves
+            n_key.arg = n_posdata.data.interpolation
             n_key.time = (b_time - 1) * self.fspeed
             n_key.value.x = b_curves[0][b_time]
             n_key.value.y = b_curves[1][b_time]
@@ -2929,6 +2931,7 @@ class NifExport(NifImportExport):
                     if b_channel in (Blender.Ipo.MA_OFSX, Blender.Ipo.MA_OFSY):
                         # offsets are negated in blender
                         b_value = -b_value
+                    n_key.arg = n_uvgroup.interpolation
                     n_key.time = (b_time - 1) * self.fspeed
                     n_key.value = b_value
                     # track time
@@ -2961,7 +2964,8 @@ class NifExport(NifImportExport):
         n_vis_data = self.create_block("NiVisData", b_curve)
         n_bool_data = self.create_block("NiBoolData", b_curve)
         n_times = [] # track all times (used later in start time and end time)
-        # we just leave interpolation at zero
+        # we just leave interpolation at constant
+        n_bool_data.data.interpolation = NifFormat.KeyType.CONST_KEY
         #n_bool_data.data.interpolation = self.get_n_ipol_from_b_ipol(
         #    b_curve.interpolation)
         n_vis_data.num_keys = len(b_curve.bezierPoints)
@@ -2973,8 +2977,10 @@ class NifExport(NifImportExport):
             b_curve.bezierPoints, n_vis_data.keys, n_bool_data.data.keys):
             # add each point of the curve
             b_time, b_value = b_point.pt
+            n_vis_key.arg = n_bool_data.data.interpolation # n_vis_data has no interpolation stored
             n_vis_key.time = (b_time - 1) * self.fspeed
             n_vis_key.value = 1 if (int(b_value + 0.01) & visible_layer) else 0
+            n_bool_key.arg = n_bool_data.data.interpolation
             n_bool_key.time = n_vis_key.time
             n_bool_key.value = n_vis_key.value
             # track time
@@ -3601,6 +3607,12 @@ class NifExport(NifImportExport):
             colshape.unknown_floats_2[0] = 1.0
             colshape.unknown_floats_2[1] = 1.0
         else:
+            # XXX at the moment, we disable multimaterial mopps
+            # XXX do this by raising an exception when trying
+            # XXX to add a collision here; code will try to readd it with
+            # XXX a fresh NiNode
+            raise ValueError('multimaterial mopps not supported for now')
+            # XXX this code will do the trick once multimaterial mopps work
             colmopp = colbody.shape
             if not isinstance(colmopp, NifFormat.bhkMoppBvTreeShape):
                 raise ValueError('not a packed list of collisions')

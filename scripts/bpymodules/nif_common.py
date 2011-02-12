@@ -8,7 +8,7 @@ __requiredblenderversion__ = (2, 52, 5)
 # 
 # BSD License
 # 
-# Copyright (c) 2005-2010, NIF File Format Library and Tools
+# Copyright (c) 2005-2011, NIF File Format Library and Tools
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -404,8 +404,7 @@ class NifImportExport(bpy.types.Operator, metaclass=MetaNifImportExport):
         elif b_ipol == Blender.IpoCurve.InterpTypes.BEZIER:
             return NifFormat.KeyType.QUADRATIC_KEY
         elif b_ipol == Blender.IpoCurve.InterpTypes.CONST:
-            # guessing, not documented in nif.xml
-            return 0
+            return NifFormat.KeyType.CONST_KEY
 
         self.logger.warning(
             "Unsupported interpolation mode in blend, using quadratic/bezier.")
@@ -1525,6 +1524,14 @@ class NifConfig:
             elif self.config["EXPORT_VERSION"] == "Empire Earth II":
                 self.config["EXPORT_FORCEDDS"] = False
                 self.config["EXPORT_SKINPARTITION"] = False
+            elif self.config["EXPORT_VERSION"] == "Bully SE":
+                self.config["EXPORT_FORCEDDS"] = False
+                self.config["EXPORT_STRIPIFY"] = False
+                self.config["EXPORT_STITCHSTRIPS"] = False
+                self.config["EXPORT_FLATTENSKIN"] = False
+                self.config["EXPORT_SKINPARTITION"] = True
+                self.config["EXPORT_PADBONES"] = True
+                self.config["EXPORT_BONESPERPARTITION"] = 4
         elif evName[:8] == "VERSION_":
             self.config["EXPORT_VERSION"] = evName[8:]
         elif evName == "EXPORT_FLATTENSKIN":
