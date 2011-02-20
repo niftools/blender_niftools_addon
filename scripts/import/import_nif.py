@@ -3124,8 +3124,6 @@ class NifImport(NifImportExport):
             ob.setDrawType(Blender.Object.DrawTypes['BOUNDBOX'])
             ob.rbShapeBoundType = Blender.Object.RBShapes['SPHERE']
             ob.rbRadius = maxx
-            print list(enumerate(self.HAVOK_MATERIAL))
-            print bhkshape.material
             ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
             return [ ob ]
 
