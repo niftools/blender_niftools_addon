@@ -165,7 +165,8 @@ class NifImportExport:
         "Heavy Stone", "Heavy Metal", "Heavy Wood", "Chain", "Snow",
         "Stone Stairs", "Cloth Stairs", "Dirt Stairs", "Glass Stairs", "Metal Stairs",
         "Organic Stairs", "Skin Stairs", "Water Stairs", "Wood Stairs", "Heavy Stone Stairs",
-        "Heavy Metal Stairs" "Heavy Wood Stairs", "Chain Stairs", "Snow Stairs", "Elevator"]
+        "Heavy Metal Stairs" "Heavy Wood Stairs", "Chain Stairs", "Snow Stairs", "Elevator",
+        "Rubber"]
 
     QUALITY_TYPE = [
         "Invalid", "Fixed", "Keyframed", "Debris", "Moving",
