@@ -3560,13 +3560,10 @@ class NifExport(NifImportExport):
             if layer == NifFormat.OblivionLayer.OL_ANIM_STATIC:
                 # to make havok constraints work (fixes issue reported
                 # by Koniption)
-                colbody.unknown_int_6 = 321664102
-                colbody.unknown_int_7 = 324946794
-                colbody.unknown_int_8 = 83276283
                 # here are the ropebucket01.nif values (don't work?)
-                #colbody.unknown_int_6 = 512
-                #colbody.unknown_int_7 = 160
-                #colbody.unknown_int_8 = 161
+                colbody.unknown_int_6 = 512
+                colbody.unknown_int_7 = 160
+                colbody.unknown_int_8 = 161
             else:
                 colbody.unknown_int_6 = 3216641024
                 colbody.unknown_int_7 = 3249467941
