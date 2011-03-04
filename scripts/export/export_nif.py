@@ -3557,7 +3557,9 @@ class NifExport(NifImportExport):
             colbody.unknown_byte_1 = self.EXPORT_OB_UNKNOWNBYTE1
             colbody.unknown_byte_2 = self.EXPORT_OB_UNKNOWNBYTE2
             colbody.quality_type = quality_type
-            if layer == NifFormat.OblivionLayer.OL_ANIM_STATIC:
+            if layer in (NifFormat.OblivionLayer.OL_ANIM_STATIC,
+                         NifFormat.OblivionLayer.OL_CLUTTER,
+                         NifFormat.OblivionLayer.OL_BIPED):
                 # to make havok constraints work (fixes issue reported
                 # by Koniption)
                 # here are the ropebucket01.nif values (don't work?)
