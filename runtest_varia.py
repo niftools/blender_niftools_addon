@@ -52,6 +52,7 @@ class VariaTestSuite(TestSuite):
 
     def run(self):
         self.test_bounding_box()
+        self.test_bounding_box_bsbound()
         self.test_stencil()
         self.test_alpha()
         self.test_name_ends_with_null()
@@ -78,6 +79,23 @@ class VariaTestSuite(TestSuite):
             filename='test/nif/_bounding_box.nif',
             config=dict(EXPORT_VERSION = 'Morrowind'),
             selection = ['Bounding Box'])
+        # test stuff...
+        bbox = nif_export.root_blocks[0].children[0]
+        assert(bbox.has_bounding_box)
+
+    def test_bounding_box_bsbound(self):
+        """Oblivion bounding box (BSBound) test."""
+        # import
+        nif_import = self.test(
+            filename='test/nif/bounding_box_bsbound.nif')
+        b_bbox = Blender.Object.Get("BSBound")
+        # test stuff
+        assert(b_bbox.rbShapeBoundType == Blender.Object.RBShapes['BOX'])
+        # export
+        nif_export = self.test(
+            filename='test/nif/_bounding_box_bsbound.nif',
+            config=dict(EXPORT_VERSION = 'Oblivion'),
+            selection = ['BSBound'])
         # test stuff...
         bbox = nif_export.root_blocks[0].children[0]
         assert(bbox.has_bounding_box)
