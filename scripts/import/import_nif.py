@@ -371,6 +371,10 @@ class NifImport(NifImportExport):
                         "Unsupported collision structure under node %s"
                         % root_block.name)
                 self.import_bhk_shape(bhk_body)
+            # process bounding box
+            for n_extra in root_block.get_extra_datas():
+                if isinstance(n_extra, NifFormat.BSBound):
+                    self.import_bounding_box(n_extra)
             # process all its children
             for child in root_block.children:
                 b_obj = self.import_branch(child)

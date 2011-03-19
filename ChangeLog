@@ -3,6 +3,7 @@ Version 2.5.7 (in development)
 * havok material name bugfix
 * fixed issue with disfunctional havok constraints in ANIM_STATIC, CLUTTER,
 and BIPED layers (reported and fix contributed by Koniption)
+* also import BSBound bounding box on dummy scene node
 
 Version 2.5.6 (4 February 2011)
 * fix import in case skin instance has empty bone references (fixes pyffi
