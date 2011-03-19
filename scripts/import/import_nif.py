@@ -3611,12 +3611,12 @@ class NifImport(NifImportExport):
         # calculate bounds
         if isinstance(bbox, NifFormat.BSBound):
             me = Blender.Mesh.New('BSBound')
-            minx = bbox.center.x - bbox.dimensions.x * 0.5
-            miny = bbox.center.y - bbox.dimensions.y * 0.5
-            minz = bbox.center.z - bbox.dimensions.z * 0.5
-            maxx = bbox.center.x + bbox.dimensions.x * 0.5
-            maxy = bbox.center.y + bbox.dimensions.y * 0.5
-            maxz = bbox.center.z + bbox.dimensions.z * 0.5
+            minx = bbox.center.x - bbox.dimensions.x
+            miny = bbox.center.y - bbox.dimensions.y
+            minz = bbox.center.z - bbox.dimensions.z
+            maxx = bbox.center.x + bbox.dimensions.x
+            maxy = bbox.center.y + bbox.dimensions.y
+            maxz = bbox.center.z + bbox.dimensions.z
         elif isinstance(bbox, NifFormat.NiNode):
             if not bbox.has_bounding_box:
                 raise ValueError("Expected NiNode with bounding box.")

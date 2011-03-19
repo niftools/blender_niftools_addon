@@ -4,6 +4,8 @@ Version 2.5.7 (in development)
 * fixed issue with disfunctional havok constraints in ANIM_STATIC, CLUTTER,
 and BIPED layers (reported and fix contributed by Koniption)
 * also import BSBound bounding box on dummy scene node
+* fixed BSBound import and export scale (see issue #3208935, reported and
+fix contributed by neomonkeus)
 
 Version 2.5.6 (4 February 2011)
 * fix import in case skin instance has empty bone references (fixes pyffi

@@ -4471,9 +4471,9 @@ class NifExport(NifImportExport):
             bbox.center.x = (minx + maxx) * 0.5
             bbox.center.y = (miny + maxy) * 0.5
             bbox.center.z = (minz + maxz) * 0.5
-            bbox.dimensions.x = maxx - minx
-            bbox.dimensions.y = maxy - miny
-            bbox.dimensions.z = maxz - minz
+            bbox.dimensions.x = (maxx - minx) * 0.5
+            bbox.dimensions.y = (maxy - miny) * 0.5
+            bbox.dimensions.z = (maxz - minz) * 0.5
         else:
             bbox = self.create_ninode()
             block_parent.add_child(bbox)
