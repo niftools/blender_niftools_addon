@@ -85,7 +85,24 @@ class VariaTestSuite(TestSuite):
 
     def test_bounding_box_bsbound(self):
         """Oblivion bounding box (BSBound) test."""
+        def check_bsbound(root_blocks):
+            bsbound = root_blocks[0].extra_data_list[0]
+            assert(isinstance(bsbound, NifFormat.BSBound))
+            assert(bsbound.name == "BBX")
+            assert(bsbound.next_extra_data is None)
+            # using assert_equal because we compare floats
+            self.assert_equal(bsbound.center.x, 0.0)
+            self.assert_equal(bsbound.center.y, 0.0)
+            self.assert_equal(bsbound.center.z, 66.2201843262)
+            self.assert_equal(bsbound.dimensions.x, 23.0976696014)
+            self.assert_equal(bsbound.dimensions.y, 17.6446208954)
+            self.assert_equal(bsbound.dimensions.z, 66.2201843262)
         # import
+        with closing(open('test/nif/bounding_box_bsbound.nif')) as stream:
+            self.logger.info("Reading test/nif/bounding_box_bsbound.nif")
+            nif = NifFormat.Data()
+            nif.read(stream)
+            check_bsbound(nif.roots)
         nif_import = self.test(
             filename='test/nif/bounding_box_bsbound.nif')
         b_bbox = Blender.Object.Get("BSBound")
@@ -97,8 +114,11 @@ class VariaTestSuite(TestSuite):
             config=dict(EXPORT_VERSION = 'Oblivion'),
             selection = ['BSBound'])
         # test stuff...
-        bbox = nif_export.root_blocks[0].children[0]
-        assert(bbox.has_bounding_box)
+        with closing(open('test/nif/_bounding_box_bsbound.nif')) as stream:
+            self.logger.info("Reading test/nif/_bounding_box_bsbound.nif")
+            nif = NifFormat.Data()
+            nif.read(stream)
+            check_bsbound(nif.roots)
 
     def test_stencil(self):
         # stencil test
