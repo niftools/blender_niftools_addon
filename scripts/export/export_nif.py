@@ -3557,19 +3557,6 @@ class NifExport(NifImportExport):
             colbody.unknown_byte_1 = self.EXPORT_OB_UNKNOWNBYTE1
             colbody.unknown_byte_2 = self.EXPORT_OB_UNKNOWNBYTE2
             colbody.quality_type = quality_type
-            if layer in (NifFormat.OblivionLayer.OL_ANIM_STATIC,
-                         NifFormat.OblivionLayer.OL_CLUTTER,
-                         NifFormat.OblivionLayer.OL_BIPED):
-                # to make havok constraints work (fixes issue reported
-                # by Koniption)
-                # here are the ropebucket01.nif values (don't work?)
-                colbody.unknown_int_6 = 512
-                colbody.unknown_int_7 = 160
-                colbody.unknown_int_8 = 161
-            else:
-                colbody.unknown_int_6 = 3216641024
-                colbody.unknown_int_7 = 3249467941
-                colbody.unknown_int_8 = 83276283
             colbody.unknown_int_9 = self.EXPORT_OB_WIND
         else:
             colbody = parent_block.collision_object.body
