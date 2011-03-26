@@ -1,4 +1,4 @@
-Version 2.5.7 (in development)
+Version 2.5.7 (26 March 2011)
 * added rubber material (reported by Ghostwalker71)
 * havok material name bugfix
 * fixed issue with disfunctional havok constraints in ANIM_STATIC, CLUTTER,
