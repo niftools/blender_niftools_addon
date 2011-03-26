@@ -42,26 +42,26 @@ from pyffi.spells.nif import NifToaster
 
 class EgmTestSuite(TestSuite):
     def run(self):
-        # oblivion imperial head
-        ob_head = os.path.join(
-            self.config.get("path", "oblivion"),
-            "meshes", "characters", "imperial", "headhuman.nif")
-        ob_head_egm = os.path.join(
-            self.config.get("path", "oblivion"),
-            "meshes", "characters", "imperial", "headhuman.egm")
+        # fallout 3 hockey mask
+        nifname = os.path.join(
+            self.config.get("path", "fallout3"),
+            "meshes", "armor", "headgear", "hockeymask", "m", "hockeymask.nif")
+        egmname = os.path.join(
+            self.config.get("path", "fallout3"),
+            "meshes", "armor", "headgear", "hockeymask", "m", "hockeymask.egm")
         self.test(
-            filename=ob_head,
+            filename=nifname,
             config=dict(
-                IMPORT_EGMFILE=ob_head_egm,
+                IMPORT_EGMFILE=egmname,
                 IMPORT_EGMANIM=True,
                 IMPORT_EGMANIMSCALE=10)
             )
         # note: not all of the egm will be exported back
         # as part of geometry info is stored in tri file
         self.test(
-            filename = 'test/nif/ob/_headhuman.nif',
-            config = dict(EXPORT_VERSION='Oblivion'),
-            selection = ['Scene Root', '_MedNeutral']
+            filename = 'test/nif/fo3/_hockeymask.nif',
+            config = dict(EXPORT_VERSION='Fallout 3'),
+            selection = ['HockeyMask']
             )
 
 suite = EgmTestSuite("egm")
