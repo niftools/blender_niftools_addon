@@ -721,7 +721,7 @@ class NifExport(NifImportExport):
                     self.logger.warning(
                         "Changing extension from %s to %s on output file"
                         % (self.fileext, ext))
-                    self.filename = Blender.sys.join(self.filepath,
+                    self.filename = os.path.join(self.filepath,
                                                      self.filebase + ext)
                 data = NifFormat.Data(version=self.version,
                                       user_version=NIF_USER_VERSION,
@@ -889,7 +889,7 @@ class NifExport(NifImportExport):
                 self.logger.info("Writing %s file" % (prefix + ext))
                 self.msg_progress("Writing %s file" % (prefix + ext))
 
-                self.filename = Blender.sys.join(self.filepath,
+                self.filename = os.path.join(self.filepath,
                                                  prefix + self.filebase + ext)
                 data = NifFormat.Data(version=self.version,
                                       user_version=NIF_USER_VERSION,
@@ -933,7 +933,7 @@ class NifExport(NifImportExport):
                 self.logger.info("Writing %s file" % (prefix + ext))
                 self.msg_progress("Writing %s file" % (prefix + ext))
 
-                self.filename = Blender.sys.join(self.filepath,
+                self.filename = os.path.join(self.filepath,
                                                  prefix + self.filebase + ext)
                 data = NifFormat.Data(version=self.version,
                                       user_version=NIF_USER_VERSION,
@@ -954,7 +954,7 @@ class NifExport(NifImportExport):
                 self.logger.info("Writing %s file" % ext)
                 self.msg_progress("Writing %s file" % ext)
 
-                self.filename = Blender.sys.join(self.filepath,
+                self.filename = os.path.join(self.filepath,
                                                  self.filebase + ext)
                 stream = open(self.filename, "wb")
                 try:

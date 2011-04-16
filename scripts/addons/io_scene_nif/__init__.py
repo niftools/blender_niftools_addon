@@ -53,6 +53,7 @@ bl_info = {
 import logging
 import sys
 import os
+import os.path
 
 import bpy
 import bpy.props
@@ -357,7 +358,7 @@ class NifConfig:
         except:
             pass
         try:
-            self.config["IMPORT_FILE"] = Blender.sys.join(
+            self.config["IMPORT_FILE"] = os.path.join(
                 savedconfig["NIF_IMPORT_PATH"], savedconfig["NIF_IMPORT_FILE"])
         except:
             pass

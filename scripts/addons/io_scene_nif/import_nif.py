@@ -1309,7 +1309,7 @@ class NifImport(NifImportExport):
             n = 0
             while True:
                 fn = "image%03i.dds" % n
-                tex = Blender.sys.join(os.path.dirname(self.IMPORT_FILE),
+                tex = os.path.join(os.path.dirname(self.IMPORT_FILE),
                                        fn)
                 if not Blender.sys.exists(tex):
                     break
@@ -1384,9 +1384,9 @@ class NifImport(NifImportExport):
                     if (texfn[:9].lower() == 'textures' + os.sep) \
                        and (texdir[-9:].lower() == os.sep + 'textures'):
                         # strip one of the two 'textures' from the path
-                        tex = Blender.sys.join( texdir[:-9], texfn )
+                        tex = os.path.join( texdir[:-9], texfn )
                     else:
-                        tex = Blender.sys.join( texdir, texfn )
+                        tex = os.path.join( texdir, texfn )
                     self.logger.debug("Searching %s" % tex)
                     if Blender.sys.exists(tex) == 1:
                         # tries to load the file
@@ -1406,7 +1406,7 @@ class NifImport(NifImportExport):
                 if b_image:
                     break
             else:
-                tex = Blender.sys.join(searchPathList[0], fn)
+                tex = os.path.join(searchPathList[0], fn)
 
         # create a stub image if the image could not be loaded
         if not b_image:
