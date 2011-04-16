@@ -624,7 +624,7 @@ class NifExport(NifImportExport):
                         skelroot.children[i] = child
 
             # apply scale
-            if abs(self.properties.scale_correction - 1.0) > self.EPSILON:
+            if abs(self.properties.scale_correction - 1.0) > self.properties.epsilon:
                 self.logger.info("Applying scale correction %f"
                                  % self.properties.scale_correction)
                 data = NifFormat.Data()
@@ -1841,14 +1841,14 @@ class NifExport(NifImportExport):
                 if mesh_mat_specular_color[0] > 1.0: mesh_mat_specular_color[0] = 1.0
                 if mesh_mat_specular_color[1] > 1.0: mesh_mat_specular_color[1] = 1.0
                 if mesh_mat_specular_color[2] > 1.0: mesh_mat_specular_color[2] = 1.0
-                if ( mesh_mat_specular_color[0] > self.EPSILON ) \
-                    or ( mesh_mat_specular_color[1] > self.EPSILON ) \
-                    or ( mesh_mat_specular_color[2] > self.EPSILON ):
+                if ( mesh_mat_specular_color[0] > self.properties.epsilon ) \
+                    or ( mesh_mat_specular_color[1] > self.properties.epsilon ) \
+                    or ( mesh_mat_specular_color[2] > self.properties.epsilon ):
                     mesh_hasspec = True
                 mesh_mat_emissive = mesh_mat.getEmit()              # 'Emit' scrollbar in Blender (MW -> 0.0 0.0 0.0)
                 mesh_mat_glossiness = mesh_mat.getHardness() / 4.0  # 'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
                 mesh_mat_transparency = mesh_mat.getAlpha()         # 'A(lpha)' scrollbar in Blender (MW -> 1.0)
-                mesh_hasalpha = (abs(mesh_mat_transparency - 1.0) > self.EPSILON) \
+                mesh_hasalpha = (abs(mesh_mat_transparency - 1.0) > self.properties.epsilon) \
                                 or (mesh_mat.getIpo() != None
                                     and mesh_mat.getIpo().getCurve('Alpha'))
                 mesh_haswire = mesh_mat.mode & Blender.Material.Modes.WIRE
@@ -1866,7 +1866,7 @@ class NifExport(NifImportExport):
                     # special case for Fallout 3 (it does not store diffuse color)
                     # if emit is non-zero, set emissive color to diffuse
                     # (otherwise leave the color to zero)
-                    if mesh_mat.emit > self.EPSILON:
+                    if mesh_mat.emit > self.properties.epsilon:
                         mesh_mat_emissive_color = mesh_mat_diffuse_color
                         mesh_mat_emitmulti = mesh_mat.emit * 10.0
                 # the base texture = first material texture
@@ -1971,7 +1971,7 @@ class NifExport(NifImportExport):
                                 # how can we emulate the NIF alpha system (simply multiplying material alpha with texture alpha) when MapTo.ALPHA is turned on?
                                 # require the Blender material alpha to be 0.0 (no material color can show up), and use the "Var" slider in the texture blending mode tab!
                                 # but...
-                                if mesh_mat_transparency > self.EPSILON:
+                                if mesh_mat_transparency > self.properties.epsilon:
                                     raise NifExportError(
                                         "Cannot export this type of"
                                         " transparency in material '%s': "
@@ -2123,23 +2123,23 @@ class NifExport(NifImportExport):
                                            - vertquad_list[j][1][uvlayer][0])
                                        for uvlayer
                                        in range(len(mesh_uvlayers))) \
-                                       > self.EPSILON:
+                                       > self.properties.epsilon:
                                      continue
                                 if max(abs(vertquad[1][uvlayer][1]
                                            - vertquad_list[j][1][uvlayer][1])
                                        for uvlayer
                                        in range(len(mesh_uvlayers))) \
-                                       > self.EPSILON:
+                                       > self.properties.epsilon:
                                     continue
                             if mesh_hasnormals:
-                                if abs(vertquad[2][0] - vertquad_list[j][2][0]) > self.EPSILON: continue
-                                if abs(vertquad[2][1] - vertquad_list[j][2][1]) > self.EPSILON: continue
-                                if abs(vertquad[2][2] - vertquad_list[j][2][2]) > self.EPSILON: continue
+                                if abs(vertquad[2][0] - vertquad_list[j][2][0]) > self.properties.epsilon: continue
+                                if abs(vertquad[2][1] - vertquad_list[j][2][1]) > self.properties.epsilon: continue
+                                if abs(vertquad[2][2] - vertquad_list[j][2][2]) > self.properties.epsilon: continue
                             if mesh_hasvcol:
-                                if abs(vertquad[3].r - vertquad_list[j][3].r) > self.EPSILON: continue
-                                if abs(vertquad[3].g - vertquad_list[j][3].g) > self.EPSILON: continue
-                                if abs(vertquad[3].b - vertquad_list[j][3].b) > self.EPSILON: continue
-                                if abs(vertquad[3].a - vertquad_list[j][3].a) > self.EPSILON: continue
+                                if abs(vertquad[3].r - vertquad_list[j][3].r) > self.properties.epsilon: continue
+                                if abs(vertquad[3].g - vertquad_list[j][3].g) > self.properties.epsilon: continue
+                                if abs(vertquad[3].b - vertquad_list[j][3].b) > self.properties.epsilon: continue
+                                if abs(vertquad[3].a - vertquad_list[j][3].a) > self.properties.epsilon: continue
                             # all tests passed: so yes, we already have it!
                             f_index[i] = j
                             break
@@ -2620,7 +2620,7 @@ class NifExport(NifImportExport):
                                        " export."
                                        " Set it to 18 to get higher quality"
                                        " skin partitions.")
-                            if lostweight > self.EPSILON:
+                            if lostweight > self.properties.epsilon:
                                 self.logger.warning(
                                     "Lost %f in vertex weights"
                                     " while creating a skin partition"
@@ -3747,7 +3747,7 @@ class NifExport(NifImportExport):
             vert1 *= transform
             vert2 *= transform
             # check if end points are far enough from each other
-            if (vert1 - vert2).length < self.EPSILON:
+            if (vert1 - vert2).length < self.properties.epsilon:
                 self.logger.warn(
                     "End points of cylinder %s too close,"
                     " converting to sphere." % obj)

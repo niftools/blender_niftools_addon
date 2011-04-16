@@ -730,8 +730,8 @@ class NifImport(NifImportExport):
         # and fix their sign
         if (b_scale_rot.determinant() < 0): b_scale.negate()
         # only uniform scaling
-        if (abs(b_scale[0]-b_scale[1]) >= self.EPSILON
-            or abs(b_scale[1]-b_scale[2]) >= self.EPSILON):
+        if (abs(b_scale[0]-b_scale[1]) >= self.properties.epsilon
+            or abs(b_scale[1]-b_scale[2]) >= self.properties.epsilon):
             self.logger.warn(
                 "Corrupt rotation matrix in nif: geometry errors may result.")
         b_scale = b_scale[0]
@@ -986,8 +986,8 @@ class NifImport(NifImportExport):
                             # time 0.0 is frame 1
                             # XXX it is assumed that all the keys have the
                             # XXX same times!!!
-                            if (abs(xkey.time - ykey.time) > self.EPSILON
-                                or abs(xkey.time - zkey.time) > self.EPSILON):
+                            if (abs(xkey.time - ykey.time) > self.properties.epsilon
+                                or abs(xkey.time - zkey.time) > self.properties.epsilon):
                                 self.logger.warn(
                                     "xyz key times do not correspond, "
                                     "animation may not be correctly imported")
@@ -1154,7 +1154,7 @@ class NifImport(NifImportExport):
             dx = b_bone_head_x - b_bone_tail_x
             dy = b_bone_head_y - b_bone_tail_y
             dz = b_bone_head_z - b_bone_tail_z
-            is_zero_length = abs(dx + dy + dz) * 200 < self.EPSILON
+            is_zero_length = abs(dx + dy + dz) * 200 < self.properties.epsilon
         elif self.IMPORT_REALIGN_BONES == 2:
             # The correction matrix value is based on the childrens' head
             # positions.
@@ -1180,7 +1180,7 @@ class NifImport(NifImportExport):
                 dx = b_bone_head_x - parent_tail[0]
                 dy = b_bone_head_y - parent_tail[1]
                 dz = b_bone_head_z - parent_tail[2]
-                if abs(dx + dy + dz) * 200 < self.EPSILON:
+                if abs(dx + dy + dz) * 200 < self.properties.epsilon:
                     # no offset from the parent: follow the parent's
                     # orientation
                     parent_head = b_armatureData.bones[
@@ -1482,8 +1482,8 @@ class NifImport(NifImportExport):
         diff = matProperty.diffuse_color
         emit = matProperty.emissive_color
         # fallout 3 hack: convert diffuse black to emit if emit is not black
-        if diff.r < self.EPSILON and diff.g < self.EPSILON and diff.b < self.EPSILON:
-            if (emit.r + emit.g + emit.b) < self.EPSILON:
+        if diff.r < self.properties.epsilon and diff.g < self.properties.epsilon and diff.b < self.properties.epsilon:
+            if (emit.r + emit.g + emit.b) < self.properties.epsilon:
                 # emit is black... set diffuse color to white
                 diff.r = 1.0
                 diff.g = 1.0
@@ -1499,12 +1499,12 @@ class NifImport(NifImportExport):
         # If it is not an exact fraction, we average out.
         amb = matProperty.ambient_color
         # fallout 3 hack:convert ambient black to white and set emit
-        if amb.r < self.EPSILON and amb.g < self.EPSILON and amb.b < self.EPSILON:
+        if amb.r < self.properties.epsilon and amb.g < self.properties.epsilon and amb.b < self.properties.epsilon:
             amb.r = 1.0
             amb.g = 1.0
             amb.b = 1.0
             b_amb = 1.0
-            if (emit.r + emit.g + emit.b) < self.EPSILON:
+            if (emit.r + emit.g + emit.b) < self.properties.epsilon:
                 b_emit = 0.0
             else:
                 b_emit = matProperty.emit_multi / 10.0
@@ -1512,15 +1512,15 @@ class NifImport(NifImportExport):
             b_amb = 0.0
             b_emit = 0.0
             b_n = 0
-            if diff.r > self.EPSILON:
+            if diff.r > self.properties.epsilon:
                 b_amb += amb.r/diff.r
                 b_emit += emit.r/diff.r
                 b_n += 1
-            if diff.g > self.EPSILON:
+            if diff.g > self.properties.epsilon:
                 b_amb += amb.g/diff.g
                 b_emit += emit.g/diff.g
                 b_n += 1
-            if diff.b > self.EPSILON:
+            if diff.b > self.properties.epsilon:
                 b_amb += amb.b/diff.b
                 b_emit += emit.b/diff.b
                 b_n += 1
@@ -2515,7 +2515,7 @@ class NifImport(NifImportExport):
             # skip identity transforms
             if sum(sum(abs(x) for x in row)
                    for row in (correction_matrix - self.IDENTITY44)) \
-                < self.EPSILON:
+                < self.properties.epsilon:
                 continue
             # 'pickle' the correction matrix
             line = ''
@@ -3096,7 +3096,7 @@ class NifImport(NifImportExport):
             ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
 
             # find transform
-            if length > self.EPSILON:
+            if length > self.properties.epsilon:
                 normal = (bhkshape.first_point - bhkshape.second_point) / length
                 normal = mathutils.Vector(normal.x, normal.y, normal.z)
             else:
