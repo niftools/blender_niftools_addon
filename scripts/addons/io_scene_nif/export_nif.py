@@ -186,7 +186,7 @@ class NifExport(NifImportExport):
         # save file name
         self.filename = self.EXPORT_FILE[:]
         self.filepath = os.path.dirname(self.filename)
-        self.filebase, self.fileext = Blender.sys.splitext(
+        self.filebase, self.fileext = os.path.splitext(
             Blender.sys.basename(self.filename))
 
         # variables
