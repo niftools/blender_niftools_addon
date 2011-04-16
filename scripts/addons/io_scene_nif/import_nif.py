@@ -1309,8 +1309,8 @@ class NifImport(NifImportExport):
             n = 0
             while True:
                 fn = "image%03i.dds" % n
-                tex = os.path.join(os.path.dirname(self.IMPORT_FILE),
-                                       fn)
+                tex = os.path.join(
+                    os.path.dirname(self.properties.filepath), fn)
                 if not Blender.sys.exists(tex):
                     break
                 n += 1
@@ -1350,7 +1350,7 @@ class NifImport(NifImportExport):
             fn = fn.replace( '\\', os.sep )
             fn = fn.replace( '/', os.sep )
             # go searching for it
-            importpath = os.path.dirname(self.IMPORT_FILE)
+            importpath = os.path.dirname(self.properties.filepath)
             searchPathList = (
                 [importpath]
                 + self.IMPORT_TEXTURE_PATH)
