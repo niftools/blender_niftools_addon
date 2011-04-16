@@ -37,6 +37,7 @@
 import logging
 import math
 import operator
+import os
 
 import mathutils
 import bpy
@@ -1345,8 +1346,8 @@ class NifImport(NifImportExport):
             else:
                 raise TypeError(
                     "source must be NiSourceTexture block or string")
-            fn = fn.replace( '\\', Blender.sys.sep )
-            fn = fn.replace( '/', Blender.sys.sep )
+            fn = fn.replace( '\\', os.sep )
+            fn = fn.replace( '/', os.sep )
             # go searching for it
             importpath = Blender.sys.dirname(self.IMPORT_FILE)
             searchPathList = (
@@ -1367,8 +1368,8 @@ class NifImport(NifImportExport):
                 searchPathList.append(importpath[:art_index] + 'shared')
             # go through all texture search paths
             for texdir in searchPathList:
-                texdir = texdir.replace( '\\', Blender.sys.sep )
-                texdir = texdir.replace( '/', Blender.sys.sep )
+                texdir = texdir.replace( '\\', os.sep )
+                texdir = texdir.replace( '/', os.sep )
                 # go through all possible file names, try alternate extensions
                 # too; for linux, also try lower case versions of filenames
                 texfns = reduce(operator.add,
@@ -1379,8 +1380,8 @@ class NifImport(NifImportExport):
                 texfns = [fn, fn.lower()] + list(set(texfns))
                 for texfn in texfns:
                      # now a little trick, to satisfy many Morrowind mods
-                    if (texfn[:9].lower() == 'textures' + Blender.sys.sep) \
-                       and (texdir[-9:].lower() == Blender.sys.sep + 'textures'):
+                    if (texfn[:9].lower() == 'textures' + os.sep) \
+                       and (texdir[-9:].lower() == os.sep + 'textures'):
                         # strip one of the two 'textures' from the path
                         tex = Blender.sys.join( texdir[:-9], texfn )
                     else:
