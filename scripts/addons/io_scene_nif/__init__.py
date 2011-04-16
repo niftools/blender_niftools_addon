@@ -130,6 +130,12 @@ class NifImportExportUI:
         default=10.0,
         min=0.01, max=100.0, precision=2)
 
+    epsilon = bpy.props.FloatProperty(
+        name="Epsilon",
+        description="Used for checking equality between floats.",
+        default=0.005,
+        min=0.0, max=1.0, precision=5)
+
 class NifImportUI(bpy.types.Operator, ImportHelper, NifImportExportUI):
     """Load a NIF File"""
     # class constants
@@ -237,7 +243,6 @@ class NifConfig:
         IMPORT_TEXTURE_PATH = [],
         EXPORT_FLATTENSKIN = False,
         EXPORT_VERSION = 'Oblivion',
-        EPSILON = 0.005, # used for checking equality with floats
         LOG_LEVEL = logging.WARNING, # log level
         IMPORT_SKELETON = 0, # 0 = normal import, 1 = import file as skeleton, 2 = import mesh and attach to skeleton
         IMPORT_KEYFRAMEFILE = '', # keyframe file for animations
