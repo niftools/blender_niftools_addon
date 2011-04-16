@@ -1340,12 +1340,12 @@ class NifImport(NifImportExport):
         else:
             # the texture uses an external image file
             if isinstance(source, NifFormat.NiSourceTexture):
-                fn = source.file_name
-            elif isinstance(source, basestring):
+                fn = source.file_name.decode()
+            elif isinstance(source, str):
                 fn = source
             else:
                 raise TypeError(
-                    "source must be NiSourceTexture block or string")
+                    "source must be NiSourceTexture or str")
             fn = fn.replace( '\\', os.sep )
             fn = fn.replace( '/', os.sep )
             # go searching for it
