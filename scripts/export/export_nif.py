@@ -3679,6 +3679,10 @@ class NifExport(NifImportExport):
         Note: polyheder is handled by export_collision_packed."""
 
         # find bounding box data
+        if not obj.data.verts:
+            self.logger.warn(
+                "Skipping collision object %s without vertices." % obj)
+            return None
         minx = min([vert[0] for vert in obj.data.verts])
         miny = min([vert[1] for vert in obj.data.verts])
         minz = min([vert[2] for vert in obj.data.verts])

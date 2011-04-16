@@ -1,6 +1,9 @@
 Version 2.5.8 (in development)
 ==============================
 
+* Fix for collision objects that have no vertices (see issue #3248754,
+  reported by rlibiez).
+
 Version 2.5.7 (26 March 2011)
 =============================
 
