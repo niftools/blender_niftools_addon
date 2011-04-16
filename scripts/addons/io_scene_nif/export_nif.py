@@ -187,7 +187,7 @@ class NifExport(NifImportExport):
         self.filename = self.EXPORT_FILE[:]
         self.filepath = os.path.dirname(self.filename)
         self.filebase, self.fileext = os.path.splitext(
-            Blender.sys.basename(self.filename))
+            os.path.basename(self.filename))
 
         # variables
         # dictionary mapping exported blocks to either None or to an
@@ -1660,7 +1660,7 @@ class NifExport(NifImportExport):
             if not self.EXPORT_VERSION in ('Morrowind', 'Oblivion',
                                            'Fallout 3'):
                 # strip texture file path
-                filename = Blender.sys.basename(filename)
+                filename = os.path.basename(filename)
             else:
                 # strip the data files prefix from the texture's file name
                 filename = filename.lower()
@@ -1672,7 +1672,7 @@ class NifExport(NifImportExport):
                         "%s does not reside in a 'Textures' folder;"
                         " texture path will be stripped"
                         " and textures may not display in-game" % filename)
-                    filename = Blender.sys.basename(filename)
+                    filename = os.path.basename(filename)
             # for linux export: fix path seperators
             return filename.replace('/', '\\')
         else:
