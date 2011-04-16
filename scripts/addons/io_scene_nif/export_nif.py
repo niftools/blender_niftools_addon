@@ -3,6 +3,7 @@
 return
 
 import logging
+import os.path
 
 import bpy
 import mathutils
@@ -184,7 +185,7 @@ class NifExport(NifImportExport):
 
         # save file name
         self.filename = self.EXPORT_FILE[:]
-        self.filepath = Blender.sys.dirname(self.filename)
+        self.filepath = os.path.dirname(self.filename)
         self.filebase, self.fileext = Blender.sys.splitext(
             Blender.sys.basename(self.filename))
 

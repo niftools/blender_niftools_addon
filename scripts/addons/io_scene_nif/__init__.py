@@ -1137,7 +1137,7 @@ class NifConfig:
         elif evName == "IMPORT_KEYFRAMEFILE_ADD":
             kffile = self.config["IMPORT_KEYFRAMEFILE"]
             if not kffile:
-                kffile = Blender.sys.dirname(self.config["IMPORT_FILE"])
+                kffile = os.path.dirname(self.config["IMPORT_FILE"])
             # browse and add keyframe file
             Blender.Window.FileSelector(
                 self.select_keyframe_file, "Select Keyframe File", kffile)
@@ -1486,7 +1486,7 @@ class NifConfig:
             stats.print_stats()
 
     def add_texture_path(self, texture_path):
-        texture_path = Blender.sys.dirname(texture_path)
+        texture_path = os.path.dirname(texture_path)
         if texture_path == '' or not Blender.sys.exists(texture_path):
             Draw.PupMenu('No path selected or path does not exist%t|Ok')
         else:

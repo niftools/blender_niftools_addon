@@ -38,6 +38,7 @@ import logging
 import math
 import operator
 import os
+import os.path
 
 import mathutils
 import bpy
@@ -1308,7 +1309,7 @@ class NifImport(NifImportExport):
             n = 0
             while True:
                 fn = "image%03i.dds" % n
-                tex = Blender.sys.join(Blender.sys.dirname(self.IMPORT_FILE),
+                tex = Blender.sys.join(os.path.dirname(self.IMPORT_FILE),
                                        fn)
                 if not Blender.sys.exists(tex):
                     break
@@ -1349,13 +1350,13 @@ class NifImport(NifImportExport):
             fn = fn.replace( '\\', os.sep )
             fn = fn.replace( '/', os.sep )
             # go searching for it
-            importpath = Blender.sys.dirname(self.IMPORT_FILE)
+            importpath = os.path.dirname(self.IMPORT_FILE)
             searchPathList = (
                 [importpath]
                 + self.IMPORT_TEXTURE_PATH)
             if Blender.Get("texturesdir"):
                 searchPathList += [
-                    Blender.sys.dirname(Blender.Get("texturesdir"))]
+                    os.path.dirname(Blender.Get("texturesdir"))]
             # if it looks like a Morrowind style path, use common sense to
             # guess texture path
             meshes_index = importpath.lower().find("meshes")
