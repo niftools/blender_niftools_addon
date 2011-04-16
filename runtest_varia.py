@@ -187,7 +187,8 @@ class VariaTestSuite(TestSuite):
         # add a texture
         self.logger.info("creating material and texture")
         mat = bpy.data.materials.new("packed_tex_mat")
-        tex = Blender.Texture.New("packed_tex_tex")
+        tex = bpy.ops.texture.new()
+        tex.name = "packed_tex_tex"
         tex.setType("Image")
         # do not set an image for now... export must fail
         mat.setTexture(0, tex,

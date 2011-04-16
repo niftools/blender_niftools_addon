@@ -1421,7 +1421,7 @@ class NifImport(NifImportExport):
             #b_image.filepath = tex
 
         # create a texture
-        b_texture = Blender.Texture.New()
+        b_texture = bpy.ops.texture.new()
         b_texture.setType('Image')
         b_texture.setImage(b_image)
         b_texture.imageFlags |= Blender.Texture.ImageFlags.INTERPOL
