@@ -161,7 +161,7 @@ class NifImportUI(bpy.types.Operator, ImportHelper, NifImportExportUI):
         description="Merge skeleton roots.",
         default=True)
 
-    send_geometries_to_bind_position = bpy.props.BoolProperty(
+    send_geoms_to_bind_pos = bpy.props.BoolProperty(
         name="Send Geometries To Bind Position",
         description="Send all geometries to their bind position.",
         default=True)

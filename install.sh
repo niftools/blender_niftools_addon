@@ -7,7 +7,7 @@
 
 PYFFIHOME=../pyffi
 BLENDERHOME=../blender25
-BLENDERVERSION=2.56
+BLENDERVERSION=2.57
 
 # uninstall old files
 
