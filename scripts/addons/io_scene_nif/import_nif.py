@@ -1326,7 +1326,7 @@ class NifImport(NifImportExport):
                     b_image = None
                 else:
                     # saving dds succeeded so load the file
-                    b_image = Blender.Image.Load(tex)
+                    b_image = bpy.ops.image.open(tex)
                     # Blender will return an image object even if the
                     # file format is not supported,
                     # so to check if the image is actually loaded an error
@@ -1391,7 +1391,7 @@ class NifImport(NifImportExport):
                     self.logger.debug("Searching %s" % tex)
                     if os.path.exists(tex):
                         # tries to load the file
-                        b_image = Blender.Image.Load(tex)
+                        b_image = bpy.ops.image.open(tex)
                         # Blender will return an image object even if the
                         # file format is not supported,
                         # so to check if the image is actually loaded an error
@@ -1415,8 +1415,10 @@ class NifImport(NifImportExport):
                 "Texture '%s' not found or not supported"
                 " and no alternate available"
                 % fn)
-            b_image = Blender.Image.New(fn, 1, 1, 24) # create a stub
-            b_image.filename = tex
+            b_image = bpy.ops.image.new(
+                name=fn, width=1, height=1, alpha=False)
+            # TODO is this still needed? commented out for now
+            #b_image.filepath = tex
 
         # create a texture
         b_texture = Blender.Texture.New()
