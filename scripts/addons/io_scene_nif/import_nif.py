@@ -323,6 +323,10 @@ class NifImport(NifImportExport):
                         "Unsupported collision structure under node %s"
                         % root_block.name)
                 self.import_bhk_shape(bhk_body)
+            # process bounding box
+            for n_extra in root_block.get_extra_datas():
+                if isinstance(n_extra, NifFormat.BSBound):
+                    self.import_bounding_box(n_extra)
             # process all its children
             for child in root_block.children:
                 b_obj = self.import_branch(child)
@@ -3546,12 +3550,12 @@ class NifImport(NifImportExport):
         # calculate bounds
         if isinstance(bbox, NifFormat.BSBound):
             me = Blender.Mesh.New('BSBound')
-            minx = bbox.center.x - bbox.dimensions.x * 0.5
-            miny = bbox.center.y - bbox.dimensions.y * 0.5
-            minz = bbox.center.z - bbox.dimensions.z * 0.5
-            maxx = bbox.center.x + bbox.dimensions.x * 0.5
-            maxy = bbox.center.y + bbox.dimensions.y * 0.5
-            maxz = bbox.center.z + bbox.dimensions.z * 0.5
+            minx = bbox.center.x - bbox.dimensions.x
+            miny = bbox.center.y - bbox.dimensions.y
+            minz = bbox.center.z - bbox.dimensions.z
+            maxx = bbox.center.x + bbox.dimensions.x
+            maxy = bbox.center.y + bbox.dimensions.y
+            maxz = bbox.center.z + bbox.dimensions.z
         elif isinstance(bbox, NifFormat.NiNode):
             if not bbox.has_bounding_box:
                 raise ValueError("Expected NiNode with bounding box.")

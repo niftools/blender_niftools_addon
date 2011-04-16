@@ -3540,9 +3540,6 @@ class NifExport(NifImportExport):
             colbody.unknown_byte_1 = self.EXPORT_OB_UNKNOWNBYTE1
             colbody.unknown_byte_2 = self.EXPORT_OB_UNKNOWNBYTE2
             colbody.quality_type = quality_type
-            colbody.unknown_int_6 = 3216641024
-            colbody.unknown_int_7 = 3249467941
-            colbody.unknown_int_8 = 83276283
             colbody.unknown_int_9 = self.EXPORT_OB_WIND
         else:
             colbody = parent_block.collision_object.body
@@ -3665,6 +3662,10 @@ class NifExport(NifImportExport):
         Note: polyheder is handled by export_collision_packed."""
 
         # find bounding box data
+        if not obj.data.verts:
+            self.logger.warn(
+                "Skipping collision object %s without vertices." % obj)
+            return None
         minx = min([vert[0] for vert in obj.data.verts])
         miny = min([vert[1] for vert in obj.data.verts])
         minz = min([vert[2] for vert in obj.data.verts])
@@ -4444,9 +4445,9 @@ class NifExport(NifImportExport):
             bbox.center.x = (minx + maxx) * 0.5
             bbox.center.y = (miny + maxy) * 0.5
             bbox.center.z = (minz + maxz) * 0.5
-            bbox.dimensions.x = maxx - minx
-            bbox.dimensions.y = maxy - miny
-            bbox.dimensions.z = maxz - minz
+            bbox.dimensions.x = (maxx - minx) * 0.5
+            bbox.dimensions.y = (maxy - miny) * 0.5
+            bbox.dimensions.z = (maxz - minz) * 0.5
         else:
             bbox = self.create_ninode()
             block_parent.add_child(bbox)
