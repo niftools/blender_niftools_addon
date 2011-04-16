@@ -206,7 +206,7 @@ class NifImport(NifImportExport):
                 pyffi.spells.nif.fix.SpellMergeSkeletonRoots(data=self.data).recurse()
             if self.properties.send_geoms_to_bind_pos:
                 pyffi.spells.nif.fix.SpellSendGeometriesToBindPosition(data=self.data).recurse()
-            if self.properties.send_detached_geometries_to_node_position:
+            if self.properties.send_detached_geoms_to_node_pos:
                 pyffi.spells.nif.fix.SpellSendDetachedGeometriesToNodePosition(data=self.data).recurse()
             if self.properties.send_bones_to_bind_position:
                 pyffi.spells.nif.fix.SpellSendBonesToBindPosition(data=self.data).recurse()

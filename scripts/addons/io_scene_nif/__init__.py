@@ -166,7 +166,7 @@ class NifImportUI(bpy.types.Operator, ImportHelper, NifImportExportUI):
         description="Send all geometries to their bind position.",
         default=True)
 
-    send_detached_geometries_to_node_position = bpy.props.BoolProperty(
+    send_detached_geoms_to_node_pos = bpy.props.BoolProperty(
         name="Send Detached Geometries To Node Position",
         description=
         "Send all detached geometries to the position of their parent node.",
