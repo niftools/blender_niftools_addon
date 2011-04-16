@@ -241,7 +241,6 @@ class NifConfig:
         IMPORT_ANIMATION = True,
         IMPORT_SCALE_CORRECTION = 0.1,
         EXPORT_SCALE_CORRECTION = 10.0, # 1/import scale correction
-        IMPORT_TEXTURE_PATH = [],
         EXPORT_FLATTENSKIN = False,
         EXPORT_VERSION = 'Oblivion',
         LOG_LEVEL = logging.WARNING, # log level
@@ -1488,7 +1487,7 @@ class NifConfig:
 
     def add_texture_path(self, texture_path):
         texture_path = os.path.dirname(texture_path)
-        if texture_path == '' or not Blender.sys.exists(texture_path):
+        if texture_path == '' or not os.path.exists(texture_path):
             Draw.PupMenu('No path selected or path does not exist%t|Ok')
         else:
             if texture_path not in self.config["IMPORT_TEXTURE_PATH"]:
@@ -1504,13 +1503,13 @@ class NifConfig:
             self.texpathCurrent = ''
 
     def select_keyframe_file(self, keyframefile):
-        if keyframefile == '' or not Blender.sys.exists(keyframefile):
+        if keyframefile == '' or not os.path.exists(keyframefile):
             Draw.PupMenu('No file selected or file does not exist%t|Ok')
         else:
             self.config["IMPORT_KEYFRAMEFILE"] = keyframefile
 
     def select_egm_file(self, egmfile):
-        if egmfile == '' or not Blender.sys.exists(egmfile):
+        if egmfile == '' or not os.path.exists(egmfile):
             Draw.PupMenu('No file selected or file does not exist%t|Ok')
         else:
             self.config["IMPORT_EGMFILE"] = egmfile

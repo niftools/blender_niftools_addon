@@ -34,6 +34,7 @@
 # ***** END LICENSE BLOCK *****
 # --------------------------------------------------------------------------
 
+import functools # reduce
 import logging
 import math
 import operator
@@ -1311,7 +1312,7 @@ class NifImport(NifImportExport):
                 fn = "image%03i.dds" % n
                 tex = os.path.join(
                     os.path.dirname(self.properties.filepath), fn)
-                if not Blender.sys.exists(tex):
+                if not os.path.exists(tex):
                     break
                 n += 1
             if self.IMPORT_EXPORTEMBEDDEDTEXTURES:
@@ -1351,12 +1352,10 @@ class NifImport(NifImportExport):
             fn = fn.replace( '/', os.sep )
             # go searching for it
             importpath = os.path.dirname(self.properties.filepath)
-            searchPathList = (
-                [importpath]
-                + self.IMPORT_TEXTURE_PATH)
-            if Blender.Get("texturesdir"):
-                searchPathList += [
-                    os.path.dirname(Blender.Get("texturesdir"))]
+            searchPathList = [importpath]
+            if self.context.user_preferences.filepaths.texture_directory:
+                searchPathList.append(
+                    self.context.user_preferences.filepaths.texture_directory)
             # if it looks like a Morrowind style path, use common sense to
             # guess texture path
             meshes_index = importpath.lower().find("meshes")
@@ -1373,7 +1372,7 @@ class NifImport(NifImportExport):
                 texdir = texdir.replace( '/', os.sep )
                 # go through all possible file names, try alternate extensions
                 # too; for linux, also try lower case versions of filenames
-                texfns = reduce(operator.add,
+                texfns = functools.reduce(operator.add,
                                 [ [ fn[:-4]+ext, fn[:-4].lower()+ext ]
                                   for ext in ('.DDS','.dds','.PNG','.png',
                                              '.TGA','.tga','.BMP','.bmp',
@@ -1387,8 +1386,10 @@ class NifImport(NifImportExport):
                         tex = os.path.join( texdir[:-9], texfn )
                     else:
                         tex = os.path.join( texdir, texfn )
+                    # "ignore case" on linux
+                    tex = bpy.path.resolve_ncase(tex)
                     self.logger.debug("Searching %s" % tex)
-                    if Blender.sys.exists(tex) == 1:
+                    if os.path.exists(tex):
                         # tries to load the file
                         b_image = Blender.Image.Load(tex)
                         # Blender will return an image object even if the
