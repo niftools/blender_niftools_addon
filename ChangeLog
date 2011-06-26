@@ -4,6 +4,9 @@ Version 2.5.8 (in development)
 * Fix for collision objects that have no vertices (see issue #3248754,
   reported by rlibiez).
 
+* Fix for export of convex collision shapes bundled together in a list
+  (see issue #3308638, reported by Koniption).
+
 Version 2.5.7 (26 March 2011)
 =============================
 
