@@ -503,8 +503,8 @@ class NifExport(NifImportExport):
                 hascollision = False
                 for block in self.blocks:
                     if isinstance(block, NifFormat.bhkCollisionObject):
-                       hascollision = True
-                       break
+                        hascollision = True
+                        break
                 if hascollision:
                     # enable collision
                     bsx = self.create_block("BSXFlags")
@@ -2117,7 +2117,7 @@ class NifExport(NifImportExport):
                                        for uvlayer
                                        in range(len(mesh_uvlayers))) \
                                        > self.properties.epsilon:
-                                     continue
+                                    continue
                                 if max(abs(vertquad[1][uvlayer][1]
                                            - vertquad_list[j][1][uvlayer][1])
                                        for uvlayer

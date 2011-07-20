@@ -471,9 +471,9 @@ class NifConfig:
             pass
         try:
             if self.config["IMPORT_REALIGN_BONES"] == True:
-               self.config["IMPORT_REALIGN_BONES"] = 1
+                self.config["IMPORT_REALIGN_BONES"] = 1
             elif self.config["IMPORT_REALIGN_BONES"] == False:
-               self.config["IMPORT_REALIGN_BONES"] = 0
+                self.config["IMPORT_REALIGN_BONES"] = 0
         except:
             pass
         try:
@@ -1308,15 +1308,15 @@ class NifConfig:
         elif evName == "EXPORT_SMOOTHOBJECTSEAMS":
             self.config["EXPORT_SMOOTHOBJECTSEAMS"] = not self.config["EXPORT_SMOOTHOBJECTSEAMS"]
         elif evName[:17] == "EXPORT_ANIMATION_":
-             value = int(evName[17:])
-             self.config["EXPORT_ANIMATION"] = value
-             if value == 0 or value == 2: # if animation is exported
-                 self.config["EXPORT_FLATTENSKIN"] = False # disable flattening skin
-             elif value == 1:
-                 # enable flattening skin for 'geometry only' exports
-                 # in oblivion and fallout 3
-                 if self.config["game"] in ('OBLIVION', 'FALLOUT_3'):
-                     self.config["EXPORT_FLATTENSKIN"] = True
+            value = int(evName[17:])
+            self.config["EXPORT_ANIMATION"] = value
+            if value == 0 or value == 2: # if animation is exported
+                self.config["EXPORT_FLATTENSKIN"] = False # disable flattening skin
+            elif value == 1:
+                # enable flattening skin for 'geometry only' exports
+                # in oblivion and fallout 3
+                if self.config["game"] in ('OBLIVION', 'FALLOUT_3'):
+                    self.config["EXPORT_FLATTENSKIN"] = True
         elif evName == "EXPORT_SKINPARTITION":
             self.config["EXPORT_SKINPARTITION"] = not self.config["EXPORT_SKINPARTITION"]
         elif evName == "EXPORT_PADBONES":
