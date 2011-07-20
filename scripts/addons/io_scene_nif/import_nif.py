@@ -1361,7 +1361,7 @@ class NifImport(NifImportExport):
                                              '.JPG','.jpg') ] )
                 texfns = [fn, fn.lower()] + list(set(texfns))
                 for texfn in texfns:
-                     # now a little trick, to satisfy many Morrowind mods
+                    # now a little trick, to satisfy many Morrowind mods
                     if (texfn[:9].lower() == 'textures' + os.sep) \
                        and (texdir[-9:].lower() == os.sep + 'textures'):
                         # strip one of the two 'textures' from the path
