@@ -6,8 +6,8 @@
 # blender25 directory
 
 PYFFIHOME=../pyffi
-BLENDERHOME=../blender25
-BLENDERVERSION=2.57
+BLENDERHOME=~/.blender/
+BLENDERVERSION=2.58
 
 # uninstall old files
 
