@@ -66,6 +66,11 @@ import bpy
 import bpy.props
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 
+# blender doesn't look in site-packages; easiest solution for this
+# seems to be toimport site.py manually, so we find pyffi if it is
+# installed there
+import site
+
 import pyffi
 from pyffi.formats.nif import NifFormat
 from pyffi.formats.egm import EgmFormat
