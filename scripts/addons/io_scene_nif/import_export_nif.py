@@ -103,54 +103,6 @@ class NifImportExport:
     progress_bar = 0
     """Level of the progress bar."""
 
-    # TODO: convert to properties in NifImport and NifExport
-    """
-    IMPORT_REALIGN_BONES = 1 # 0 = no, 1 = tail, 2 = tail+rotation
-    IMPORT_TEXTURE_PATH = []
-    EXPORT_FLATTENSKIN = False
-    EXPORT_VERSION = 'Oblivion'
-    IMPORT_EGMANIM = True, # create FaceGen EGM animation curves
-    IMPORT_EGMANIMSCALE = 1.0, # scale of FaceGen EGM animation curves
-    EXPORT_ANIMATION = 0, # export everything (1=geometry only, 2=animation only)
-    EXPORT_ANIMSEQUENCENAME = '', # sequence name of the kf file
-    EXPORT_FORCEDDS = True, # force dds extension on texture files
-    EXPORT_SKINPARTITION = True, # generate skin partition
-    EXPORT_BONESPERVERTEX = 4,
-    EXPORT_BONESPERPARTITION = 18,
-    EXPORT_PADBONES = False,
-    EXPORT_STRIPIFY = True,
-    EXPORT_STITCHSTRIPS = False,
-    EXPORT_SMOOTHOBJECTSEAMS = True,
-    IMPORT_EXTRANODES = True,
-    EXPORT_BHKLISTSHAPE = False,
-    EXPORT_OB_BSXFLAGS = 2,
-    EXPORT_OB_MASS = 10.0,
-    EXPORT_OB_SOLID = True,
-    EXPORT_OB_MOTIONSYSTEM = 7, # MO_SYS_FIXED
-    EXPORT_OB_UNKNOWNBYTE1 = 1,
-    EXPORT_OB_UNKNOWNBYTE2 = 1,
-    EXPORT_OB_QUALITYTYPE = 1, # MO_QUAL_FIXED
-    EXPORT_OB_WIND = 0,
-    EXPORT_OB_LAYER = 1, # static
-    EXPORT_OB_MATERIAL = 9, # wood
-    EXPORT_OB_MALLEABLECONSTRAINT = False, # use malleable constraint for ragdoll and hinge
-    EXPORT_OB_PRN = "NONE", # determines bone where to attach weapon
-    EXPORT_FO3_SF_ZBUF = True, # use these shader flags?
-    EXPORT_FO3_SF_SMAP = False,
-    EXPORT_FO3_SF_SFRU = False,
-    EXPORT_FO3_SF_WINDOW_ENVMAP = False,
-    EXPORT_FO3_SF_EMPT = True,
-    EXPORT_FO3_SF_UN31 = True,
-    EXPORT_FO3_FADENODE = False,
-    EXPORT_FO3_SHADER_TYPE = 1, # shader_default
-    EXPORT_FO3_BODYPARTS = True,
-    EXPORT_MW_NIFXNIFKF = False,
-    EXPORT_EXTRA_SHADER_TEXTURES = True,
-    IMPORT_EXPORTEMBEDDEDTEXTURES = False,
-    EXPORT_OPTIMIZE_MATERIALS = True,
-    EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES = False,
-    """
-
     def __init__(self, operator, context):
         """Common initialization functions for executing the import/export
         operators:
