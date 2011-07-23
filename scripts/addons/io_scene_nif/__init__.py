@@ -1,4 +1,11 @@
-"""Nif import and export scripts."""
+"""Nif import and export scripts.
+
+Code flow
+=========
+
+The user first activates the addon via the File -> User Preferences -> Addons.
+This triggers the :func:`register` function.
+"""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -37,7 +44,7 @@ bl_info = {
     "description":
     "Import and export files in the NetImmerse/Gamebryo nif format (.nif)",
     "author": "Amorilia",
-    "version": (2, 5, 8),
+    "version": (3, 0, 0),
     "blender:": (2, 7, 0),
     "api": 34802,
     "location": "File > Import-Export",
