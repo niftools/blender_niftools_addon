@@ -11,6 +11,11 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   user/index
+   api/index
+   development/index
+   additional/index
+
 Indices and tables
 ==================
 
