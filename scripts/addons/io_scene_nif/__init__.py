@@ -64,7 +64,7 @@ import os.path
 
 import bpy
 import bpy.props
-from io_utils import ImportHelper, ExportHelper
+from bpy_extras.io_utils import ImportHelper, ExportHelper
 
 import pyffi
 from pyffi.formats.nif import NifFormat
