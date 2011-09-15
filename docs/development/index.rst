@@ -177,7 +177,6 @@ Python 3.2:
 Git Bash:
 	This is used to setup local code repositories and pull remote versions. 
 	Download the latest `version <http://code.google.com/p/msysgit/downloads/list>`_ and follow the installer 
-	- 
 	
 	Although you only need to pull the repos, if you want to push patches
 	it is advised to create a github account. Even if you do not wish to you 
@@ -228,7 +227,8 @@ Project->Properties->Pydev - PYTHONPATH->external libraries->../Blender/docs/pyt
 
 Auto-completion should now work for the majority of the API. 
 Hovering over a variable will hot-link to the generated documentation.
-There are still some limitations, object type must be declared before auto-completion works 
+There are still some limitations, types must be declared using the fully qualified type 
+before auto-completion will function fully. 
 	E.g obj = bpy.types.object, edge = bpy.types.MeshEdge
 
 Debugging:
