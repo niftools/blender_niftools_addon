@@ -203,36 +203,42 @@ PYFFI:
 ::TODO::
 	Amorilia, suggestions for best way to install on win platform.
 	Installer or copy scripts to Blender directory.	
+	
+	git clone --recursive git://github.com/amorilia/pyffi.git
 
-Downloading Blender Scripts:
-	Git bash
-	::cd /Desktop/coding/Niftools/
+Blender Scripts:
+	cd /Desktop/coding/Niftools/
+	git clone --recursive git://github.com/neomonkeus/blender_nif_scripts.git
 	
-	remote location if you have forked the repo
-	::git clone --recursive git@github.com:yourusername/blender_nif_scripts.git
-	Main Blender nifscripts repo
-	::git clone --recursive git://github.com/amorilia/blender_nif_scripts.git
-	or
-	::git clone --recursive git://github.com/neomonkeus/blender_nif_scripts.git
+	Once you have cloned this Repo to your local, copy the following to the Blender directory
+	./docs/python_api/
+	./docs/refresh_python_api.bat
+	run.py
+	pydev_debug.py
 	
+	Run docs/refresh_python_api.bat to generate an updated API 
+	pydev_debug.py & run.py will be used to hook Eclipse's Pydev Debug to Blender's debugger.	
 	
 Development
 +++++
 
-Once you have cloned this Repo to your local, copy all files in debug files to ../Blender Foundation/Blender
-Run docs/refresh_python_api.bat to generate the current the current API 
-pydev_debug.py & run.py will hook up Eclipse's Pydev Debug to Blender's debugger.
-
 Import local repo into Eclipse using Team->Git as an existing project.
-Link the external Api to the project:
-Project->Properties->Pydev - PYTHONPATH->external libraries->
-../Blender/docs/python_api/pypredef/
+Link the external Blender Python_Api to the project:
+Project->Properties->Pydev - PYTHONPATH->external libraries->../Blender/docs/python_api/pypredef/
 
-Start the Pydev debug server and switch to debug mode.
-Open the .blend file, then open the run.py in the text editor.
-Replace the strings:
-1: python debugger location.
-2: main execution file location.
+Auto-completion should now work for the majority of the API. 
+Hovering over a variable will hot-link to the generated documentation.
+There are still some limitations, object type must be declared before auto-completion works 
+	E.g obj = bpy.types.object, edge = bpy.types.MeshEdge
 
-Start the Pydev debug server and switch to debug mode.
-Open the .blend file, then open the run.py in the text editor.
+Debugging:
+	Add the Pydev Debug: Customise Perspective -> Pydev Debug. 
+	Always start the Pydev debug server first or else blender will crash later.	
+	Open  /test/blend/debug.blend file, then open the run.py in the text editor.
+	Replace the strings:
+		1: python debugger location.
+		2: main execution file location.
+
+	Run the script; blender will appear to hang but this is as the Debugger has hit the trace call
+	In Eclipse switch to debug mode and begin scripting.	
+	
