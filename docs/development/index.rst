@@ -225,11 +225,10 @@ Import local repo into Eclipse using Team->Git as an existing project.
 Link the external Blender Python_Api to the project:
 Project->Properties->Pydev - PYTHONPATH->external libraries->../Blender/docs/python_api/pypredef/
 
-Auto-completion should now work for the majority of the API. 
+Limitations: Types declarations should be fully qualified type before auto-completion kicks in
+e.g obj = bpy.types.object, obj = bpy.context.active_object
+Auto-completion should now work for the majority of the API.
 Hovering over a variable will hot-link to the generated documentation.
-There are still some limitations, types must be declared using the fully qualified type 
-before auto-completion will function fully. 
-	E.g obj = bpy.types.object, edge = bpy.types.MeshEdge
 
 Debugging:
 	Add the Pydev Debug: Customise Perspective -> Pydev Debug. 
