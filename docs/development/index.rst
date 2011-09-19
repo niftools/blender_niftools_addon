@@ -207,18 +207,16 @@ PYFFI:
 	cd /setup	
 
 Downloading Blender Scripts:
-	cd /Desktop/coding/Niftools/
+	Git bash
+::	cd /Desktop/coding/Niftools/
+	
+	git clone --recursive git@github.com:yourusername/blender_nif_scripts.git
+	or
+	git clone --recursive git://github.com/amorilia/blender_nif_scripts.git
+	or
 	git clone --recursive git://github.com/neomonkeus/blender_nif_scripts.git
 	
-	Once you have cloned this Repo to your local, copy the following to the Blender directory:
-::	./docs/python_api/
-	./docs/refresh_python_api.bat
-	run.py
-	pydev_debug.py
 	
-	Run docs/refresh_python_api.bat to generate an updated API 
-	pydev_debug.py & run.py will be used to hook Eclipse's Pydev Debug to Blender's debugger.
-
 Development
 +++++
 
