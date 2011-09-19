@@ -159,6 +159,67 @@ Import Project
 Windows
 +++++++
 
-.. todo::
+Installation:
+Create a directory to be used as your coding directory. E.g ../Desktop/coding/Niftools
 
-   Write some instructions here.
+Blender:
+	Download the latest supported `version <http://www.blender.org/download/get-blender/>`_
+	
+	Follow the installer instructions, 
+	If you wish to install concurrently with a version of 2.49 install to 
+	- C:\Program Files\Blender Foundation\Blender2.x
+
+Python 3.2:
+	Download the latest supported production `version <http://www.python.org/download/releases/`_
+	
+	Install python as per the installers instructions to the default location.
+
+Git Bash:
+	This is used to setup local code repositories and pull remote versions. 
+	Download the latest `version <http://code.google.com/p/msysgit/downloads/list>`_ and follow the installer 
+	- 
+	
+	Although you only need to pull the repos, if you want to push patches
+	it is advised to create a github account. Even if you do not wish to you 
+	should read through the ` setup guide <http://help.github.com/win-set-up-git/>`_
+
+Eclipse:
+	Eclipse is was chosen as the IDE due to its flexible plug-ins for repo management, 
+	python scripting and hooks into Blenders debugging console. 
+	Install `Eclipse Indigo <http://www.eclipse.org/downloads/packages/eclipse-classic-37/indigor>`_ for windows platform.
+
+Eclipse Plug-ins:
+	Under Help->Install New Software install:
+
+	EGit Subversion:
+	Egit is an Eclipse module to perform git action from within Eclipse.
+	Location - http://download.eclipse.org/egit/updates/
+	
+	Pydev:
+	Pydev is an Eclipse module targeted at Python development, including sytax highlighting and debugging
+	Location - http://pydev.org/updates/
+
+PYFFI:
+::TODO::
+	Amorilia, suggestions if different from Linux install.
+	
+	git clone --recursive git://github.com/amorilia/pyffi.git
+	cd /setup	
+
+Downloading Blender Scripts:
+	cd /Desktop/coding/Niftools/
+	git clone --recursive git://github.com/neomonkeus/blender_nif_scripts.git
+	
+	Once you have cloned this Repo to your local, copy the following to the Blender directory:
+::	./docs/python_api/
+	./docs/refresh_python_api.bat
+	run.py
+	pydev_debug.py
+	
+	Run docs/refresh_python_api.bat to generate an updated API 
+	pydev_debug.py & run.py will be used to hook Eclipse's Pydev Debug to Blender's debugger.
+
+Development
++++++
+
+Import local repo into Eclipse using Team->Git as an existing project.
