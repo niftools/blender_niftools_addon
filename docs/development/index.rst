@@ -201,20 +201,19 @@ Eclipse Plug-ins:
 
 PYFFI:
 ::TODO::
-	Amorilia, suggestions if different from Linux install.
-	
-	git clone --recursive git://github.com/amorilia/pyffi.git
-	cd /setup	
+	Amorilia, suggestions for best way to install on win platform.
+	Installer or copy scripts to Blender directory.	
 
 Downloading Blender Scripts:
 	Git bash
-::	cd /Desktop/coding/Niftools/
+	::cd /Desktop/coding/Niftools/
 	
-	git clone --recursive git@github.com:yourusername/blender_nif_scripts.git
+	remote location if you have forked the repo
+	::git clone --recursive git@github.com:yourusername/blender_nif_scripts.git
+	Main Blender nifscripts repo
+	::git clone --recursive git://github.com/amorilia/blender_nif_scripts.git
 	or
-	git clone --recursive git://github.com/amorilia/blender_nif_scripts.git
-	or
-	git clone --recursive git://github.com/neomonkeus/blender_nif_scripts.git
+	::git clone --recursive git://github.com/neomonkeus/blender_nif_scripts.git
 	
 	
 Development
