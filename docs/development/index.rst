@@ -171,7 +171,6 @@ Blender:
 
 Python 3.2:
 	Download the latest supported production `version <http://www.python.org/download/releases/`_
-	
 	Install python as per the installers instructions to the default location.
 
 Git Bash:
@@ -180,7 +179,7 @@ Git Bash:
 	
 	Although you only need to pull the repos, if you want to push patches
 	it is advised to create a github account. Even if you do not wish to you 
-	should read through the ` setup guide <http://help.github.com/win-set-up-git/>`_
+	should read through the `setup guide <http://help.github.com/win-set-up-git/>`_
 
 Eclipse:
 	Eclipse is was chosen as the IDE due to its flexible plug-ins for repo management, 
@@ -206,9 +205,20 @@ PYFFI:
 	git clone --recursive git://github.com/amorilia/pyffi.git
 
 Blender Scripts:
-	cd /Desktop/coding/Niftools/
-	git clone --recursive git://github.com/neomonkeus/blender_nif_scripts.git
 	
+	Downloading Blender Scripts:
+	Git bash
+	::cd /Desktop/coding/Niftools/
+	
+	remote location if you have forked the repo
+	::git clone --recursive git@github.com:yourusername/blender_nif_scripts.git
+	Main Blender nifscripts repo
+	::git clone --recursive git://github.com/amorilia/blender_nif_scripts.git
+	or
+	Experimental branch
+	::git clone --recursive git://github.com/neomonkeus/blender_nif_scripts.git
+	
+	If using the experimental branch:
 	Once you have cloned this Repo to your local, copy the following to the Blender directory
 	./docs/python_api/
 	./docs/refresh_python_api.bat
@@ -222,8 +232,10 @@ Development
 +++++
 
 Import local repo into Eclipse using Team->Git as an existing project.
+
+If using Experimental branch:
 Link the external Blender Python_Api to the project:
-Project->Properties->Pydev - PYTHONPATH->external libraries->../Blender/docs/python_api/pypredef/
+**Project->Properties->Pydev - PYTHONPATH->external libraries->../Blender/docs/python_api/pypredef/**
 
 Limitations: Types declarations should be fully qualified type before auto-completion kicks in
 e.g obj = bpy.types.object, obj = bpy.context.active_object
@@ -232,12 +244,14 @@ Hovering over a variable will hot-link to the generated documentation.
 
 Debugging:
 	Add the Pydev Debug: Customise Perspective -> Pydev Debug. 
-	Always start the Pydev debug server first or else blender will crash later.	
-	Open  /test/blend/debug.blend file, then open the run.py in the text editor.
+	Always start the Pydev debug server first otherwise blender will crash later.	
+	Open 
+	::/test/blend/debug.blend file 
+	Open the run.py in the scripting text editor.
 	Replace the strings:
 		1: python debugger location.
 		2: main execution file location.
 
-	Run the script; blender will appear to hang but this is as the Debugger has hit the trace call
+	Run the script; blender will appear to hang but this is as the Debugger has hit the trace() call
 	In Eclipse switch to debug mode and begin scripting.	
 	
