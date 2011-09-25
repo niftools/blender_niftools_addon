@@ -4,6 +4,8 @@ Development
 The code is maintained with git. If you are not yet familiar with git,
 read `progit <http://progit.org/book/>`_.
 
+.. _create-github-account:
+
 If you intend to work on the Blender nif scripts, first, you should
 clone the code on github.
 
@@ -159,98 +161,133 @@ Import Project
 Windows
 +++++++
 
-Installation:
-Create a directory to be used as your coding directory. E.g ../Desktop/coding/Niftools
+.. warning::
 
-Blender:
-	Download the latest supported `version <http://www.blender.org/download/get-blender/>`_
+    The following instructions are work in progress.
+
+First, create a directory to be used as your coding directory, such as
+``/Desktop/coding/niftools``.
+
+Get Blender
+-----------
+
+`Download <http://www.blender.org/download/get-blender/>`_
+the latest supported version, and
+follow the installer instructions, 
+
+If you wish to install concurrently with a version of 2.49 install to
+another folder, such as
+``C:\Program Files\Blender Foundation\Blender2.x``.
+
+Get Python 3.2
+--------------
+
+This is only needed if you wish to use Eclipse as IDE.
+
+`Download <http://www.python.org/download/releases/3.2.2/>`_ the
+installer appropriate for your platform, and
+follow the instructions. The default location should work fine.
+
+Get Git Bash
+------------
+
+This is used to setup local code repositories and pull remote versions. 
+Download `msysgit <http://code.google.com/p/msysgit/downloads/list>`_ and follow the installer instructions.
+
+Although you only need to pull the repos, if you want to push patches
+it is advised to :ref:`create a github account <create-github-account>`.
+
+Eclipse
+-------
+
+Eclipse is chosen as the IDE due to its flexible plug-ins for repo management, 
+python scripting and hooks into Blenders debugging console. 
+Install `Eclipse Indigo <http://www.eclipse.org/downloads/packages/eclipse-classic-37/indigor>`_ for windows platform.
+
+You should also install a few plugins. Under **Help > Install New Software**,
+install:
+
+EGit
+~~~~
+
+Egit is an Eclipse module to perform git action from within Eclipse.
+http://download.eclipse.org/egit/updates/
 	
-	Follow the installer instructions, 
-	If you wish to install concurrently with a version of 2.49 install to 
-	- C:\Program Files\Blender Foundation\Blender2.x
+Pydev
+~~~~~
 
-Python 3.2:
-	Download the latest supported production `version <http://www.python.org/download/releases/`_
-	Install python as per the installers instructions to the default location.
+Pydev is an Eclipse module targeted at Python development, including sytax highlighting and debugging
+http://pydev.org/updates/
 
-Git Bash:
-	This is used to setup local code repositories and pull remote versions. 
-	Download the latest `version <http://code.google.com/p/msysgit/downloads/list>`_ and follow the installer 
+Get PyFFI
+---------
+
+.. todo::
+
+    Suggestions for best way to install on win platform.
+    Installer or copy scripts to Blender directory::
+
+        git clone --recursive git://github.com/amorilia/pyffi.git
+
+Get the code
+------------
 	
-	Although you only need to pull the repos, if you want to push patches
-	it is advised to create a github account. Even if you do not wish to you 
-	should read through the `setup guide <http://help.github.com/win-set-up-git/>`_
+Downloading Blender Scripts:
+Under the Git bash, do::
 
-Eclipse:
-	Eclipse is was chosen as the IDE due to its flexible plug-ins for repo management, 
-	python scripting and hooks into Blenders debugging console. 
-	Install `Eclipse Indigo <http://www.eclipse.org/downloads/packages/eclipse-classic-37/indigor>`_ for windows platform.
+    cd /Desktop/coding/Niftools/
+    git clone --recursive git@github.com:yourusername/blender_nif_scripts.git
+    cd blender_nif_scripts
+    git remote add amorilia git://github.com/amorilia/blender_nif_scripts.git
+    git remote add neomonkeus git://github.com/neomonkeus/blender_nif_scripts.git
+	
+.. todo::
 
-Eclipse Plug-ins:
-	Under Help->Install New Software install:
+   Move these to the Eclipse section, and update for actual location
+   of command line completion code.
 
-	EGit Subversion:
-	Egit is an Eclipse module to perform git action from within Eclipse.
-	Location - http://download.eclipse.org/egit/updates/
-	
-	Pydev:
-	Pydev is an Eclipse module targeted at Python development, including sytax highlighting and debugging
-	Location - http://pydev.org/updates/
+Eclipse: Command line completion
+--------------------------------
 
-PYFFI:
-::TODO::
-	Amorilia, suggestions for best way to install on win platform.
-	Installer or copy scripts to Blender directory.	
-	
-	git clone --recursive git://github.com/amorilia/pyffi.git
+Once you have cloned this Repo to your local, copy the following to the Blender directory::
 
-Blender Scripts:
-	
-	Downloading Blender Scripts:
-	Git bash
-	::cd /Desktop/coding/Niftools/
-	
-	remote location if you have forked the repo
-	::git clone --recursive git@github.com:yourusername/blender_nif_scripts.git
-	Main Blender nifscripts repo
-	::git clone --recursive git://github.com/amorilia/blender_nif_scripts.git
-	or
-	Experimental branch
-	::git clone --recursive git://github.com/neomonkeus/blender_nif_scripts.git
-	
-	If using the experimental branch:
-	Once you have cloned this Repo to your local, copy the following to the Blender directory
-	./docs/python_api/
-	./docs/refresh_python_api.bat
-	run.py
-	pydev_debug.py
-	
-	Run docs/refresh_python_api.bat to generate an updated API 
-	pydev_debug.py & run.py will be used to hook Eclipse's Pydev Debug to Blender's debugger.	
-	
-Development
-+++++
+    ./docs/python_api/
+    ./docs/refresh_python_api.bat
+    run.py
+    pydev_debug.py
 
-Import local repo into Eclipse using Team->Git as an existing project.
+Run docs/refresh_python_api.bat to generate an updated API 
+pydev_debug.py & run.py will be used to hook Eclipse's Pydev Debug to Blender's debugger.	
+	
+Eclipse: Import Project
+-----------------------
 
-If using Experimental branch:
+Import local repo into Eclipse using **Team > Git** as an existing project.
+
 Link the external Blender Python_Api to the project:
-**Project->Properties->Pydev - PYTHONPATH->external libraries->../Blender/docs/python_api/pypredef/**
+**Project > Properties > Pydev - PYTHONPATH > external libraries > ../Blender/docs/python_api/pypredef/**
 
 Limitations: Types declarations should be fully qualified type before auto-completion kicks in
 e.g obj = bpy.types.object, obj = bpy.context.active_object
 Auto-completion should now work for the majority of the API.
 Hovering over a variable will hot-link to the generated documentation.
 
-Debugging:
-	Add the Pydev Debug: Customise Perspective -> Pydev Debug. 
-	Always start the Pydev debug server first otherwise blender will crash later.	
-	Open 
-	::/test/blend/debug.blend file 
-	Open the run.py in the scripting text editor.
-	Replace the strings:
-		1: python debugger location.
-		2: main execution file location.
+Eclipse: Debugging
+------------------
 
-	Run the script; blender will appear to hang but this is as the Debugger has hit the trace() call
-	In Eclipse switch to debug mode and begin scripting.
+Add the Pydev Debug: Customise Perspective -> Pydev Debug. 
+Always start the Pydev debug server first otherwise blender will crash later.	
+
+Open the ``test/blend/debug.blend`` file 
+
+Open ``run.py`` in the scripting text editor.
+
+Replace the strings:
+
+1. python debugger location.
+
+2. main execution file location.
+
+Run the script; blender will appear to hang but this is as the Debugger has hit the trace() call
+
+In Eclipse switch to debug mode and begin scripting.
