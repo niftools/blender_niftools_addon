@@ -47,9 +47,7 @@ Tooltip: 'Hull Selected Objects'
 # ***** END LICENCE BLOCK *****
 # -------------------------------------------------------------------------- 
 
-import Blender
-from Blender import Window, sys
-
+import bpy
 import pyffi.utils.quickhull
 
 def hull_box(ob, me, selected_only):

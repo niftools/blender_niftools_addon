@@ -253,5 +253,4 @@ Debugging:
 		2: main execution file location.
 
 	Run the script; blender will appear to hang but this is as the Debugger has hit the trace() call
-	In Eclipse switch to debug mode and begin scripting.	
-	
+	In Eclipse switch to debug mode and begin scripting.
