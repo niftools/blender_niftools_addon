@@ -333,7 +333,7 @@ blender_scripts_end:
      MessageBox MB_OK|MB_ICONEXCLAMATION "You will need to download Python 2.6 (32 bit) and PyFFI in order to run the Blender NIF Scripts. Pressing OK will take you to the Python and PyFFI download pages. Please download and run the Python 2.6 (32 bit) windows installer, then download and run the PyFFI windows installer. When you are done, rerun the Blender NIF Scripts installer."
      StrCpy $0 "http://sourceforge.net/projects/pyffi/files/pyffi/"
      Call openLinkNewWindow
-     StrCpy $0 "http://www.python.org/download/"
+     StrCpy $0 "http://www.python.org/ftp/python/2.6.6/python-2.6.6.msi"
      Call openLinkNewWindow
      Abort ; causes installer to quit
 
@@ -342,7 +342,7 @@ python64_check_end:
      MessageBox MB_OK "Python 2.6 (64 bit) found, but Blender currently requires Python 2.6 (32 bit). You will need to download Python 2.6 (32 bit) and PyFFI in order to run the Blender NIF Scripts. Pressing OK will take you to the Python and PyFFI download pages. Please download and run the Python 2.6 (32 bit) windows installer, then download and run the PyFFI windows installer. When you are done, rerun the Blender NIF Scripts installer."
      StrCpy $0 "http://sourceforge.net/projects/pyffi/files/pyffi/"
      Call openLinkNewWindow
-     StrCpy $0 "http://www.python.org/download/"
+     StrCpy $0 "http://www.python.org/ftp/python/2.6.6/python-2.6.6.msi"
      Call openLinkNewWindow
      Abort ; causes installer to quit
 
