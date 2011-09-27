@@ -571,6 +571,30 @@ class NifExport(NifImportExport):
                 #upb.string_data = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
                 #root_block.add_extra_data(upb)
 
+            # bhkConvexVerticesShape of children of bhkListShapes
+            # need an extra bhkConvexTransformShape
+            # (see issue #3308638, reported by Koniption)
+            # note: self.blocks changes during iteration, so need list copy
+            for block in list(self.blocks):
+                if isinstance(block, NifFormat.bhkListShape):
+                    for i, sub_shape in enumerate(block.sub_shapes):
+                        if isinstance(sub_shape,
+                                      NifFormat.bhkConvexVerticesShape):
+                            coltf = self.create_block("bhkConvexTransformShape")
+                            coltf.material = sub_shape.material
+                            coltf.unknown_float_1 = 0.1
+                            coltf.unknown_8_bytes[0] = 96
+                            coltf.unknown_8_bytes[1] = 120
+                            coltf.unknown_8_bytes[2] = 53
+                            coltf.unknown_8_bytes[3] = 19
+                            coltf.unknown_8_bytes[4] = 24
+                            coltf.unknown_8_bytes[5] = 9
+                            coltf.unknown_8_bytes[6] = 253
+                            coltf.unknown_8_bytes[7] = 4
+                            coltf.transform.set_identity()
+                            coltf.shape = sub_shape
+                            block.sub_shapes[i] = coltf
+
             # export constraints
             for b_obj in self.get_exported_objects():
                 self.export_constraints(b_obj, root_block)
