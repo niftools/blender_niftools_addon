@@ -40,7 +40,7 @@ SetCompressor /SOLID lzma
 !insertmacro VersionCompare
 
 !define VERSION "2.5.8"
-!define PYFFIVERSION "2.1.9"
+!define PYFFIVERSION "2.2.0"
 
 Name "Blender NIF Scripts ${VERSION}"
 Var BLENDERHOME    ; blender settings location
@@ -272,93 +272,19 @@ Function .onInit
 blender_check_end:
   StrCpy $BLENDERINST $BLENDERHOME
 
-  ; get Blender scripts dir
-
-  ; first try Blender's global install dir
-  StrCpy $BLENDERSCRIPTS "$BLENDERHOME\.blender\scripts"
-  IfFileExists "$BLENDERSCRIPTS\*.*" blender_scripts_end 0
-
-  ; check if we are running vista, if so, complain to user because scripts are not in the "safe" location
-  Call GetWindowsVersion
-  Pop $0
-  StrCmp $0 "Vista" 0 blender_scripts_notininstallfolder
-  
-    MessageBox MB_YESNO|MB_ICONQUESTION "You are running Windows Vista, but Blender's user data files (such as scripts) do not reside in Blender's installation directory. On Vista, Blender will sometimes only find its scripts if Blender's user data files reside in Blender's installation directory. Do you wish to abort installation, and first reinstall Blender, selecting 'Use the installation directory' when the Blender installer asks you to specify where to install Blender's user data files?" IDNO blender_scripts_notininstallfolder
-    MessageBox MB_OK "Pressing OK will take you to the Blender download page. Please download and run the Blender windows installer. Select 'Use the installation directory' when the Blender installer asks you to specify where to install Blender's user data files. When you are done, rerun the Blender NIF Scripts installer."
-    StrCpy $0 "http://www.blender.org/download/get-blender/"
-    Call openLinkNewWindow
-    Abort ; causes installer to quit
-
-blender_scripts_notininstallfolder:
-  ; now try Blender's application data directory (current user)
-  SetShellVarContext current
-  StrCpy $BLENDERHOME "$APPDATA\Blender Foundation\Blender"
-  StrCpy $BLENDERSCRIPTS "$BLENDERHOME\.blender\scripts"
-  IfFileExists "$BLENDERSCRIPTS\*.*" blender_scripts_end 0
-  
-  ; now try Blender's application data directory (everyone)
-  SetShellVarContext all
-  StrCpy $BLENDERHOME "$APPDATA\Blender Foundation\Blender"
-  StrCpy $BLENDERSCRIPTS "$BLENDERHOME\.blender\scripts"
-  IfFileExists "$BLENDERSCRIPTS\*.*" blender_scripts_end 0
-  
-  ; finally, try the %HOME% variable
-  ReadEnvStr $BLENDERHOME "HOME"
-  StrCpy $BLENDERSCRIPTS "$BLENDERHOME\.blender\scripts"
-  IfFileExists "$BLENDERSCRIPTS\*.*" blender_scripts_end 0
-  
-    ; all failed!
-    MessageBox MB_OK|MB_ICONEXCLAMATION "Blender scripts directory not found. Reinstall Blender, and rerun the Blender NIF Scripts installer. If that does not solve the problem, then this is probably a bug. In that case, please report to http://niftools.sourceforge.net/forum/"
-    Abort ; causes installer to quit
-
 blender_scripts_end:
-
-  ; check if Python 2.6 (32 bit) is installed
-  SetRegView 32
-  ClearErrors
-  ReadRegStr $PYTHONPATH HKLM SOFTWARE\Python\PythonCore\2.6\InstallPath ""
-  IfErrors 0 python_check_end
-  ReadRegStr $PYTHONPATH HKCU SOFTWARE\Python\PythonCore\2.6\InstallPath ""
-  IfErrors 0 python_check_end
-
-  ; no key, that means that Python 2.6 (32 bit) is not installed
-  SetRegView 64
-  ClearErrors
-  ReadRegStr $PYTHONPATH HKLM SOFTWARE\Python\PythonCore\2.6\InstallPath ""
-  IfErrors 0 python64_check_end
-  ReadRegStr $PYTHONPATH HKCU SOFTWARE\Python\PythonCore\2.6\InstallPath ""
-  IfErrors 0 python64_check_end
-
-    ; neither Python 2.6 (32 bit or 64 bit) are installed
-     MessageBox MB_OK|MB_ICONEXCLAMATION "You will need to download Python 2.6 (32 bit) and PyFFI in order to run the Blender NIF Scripts. Pressing OK will take you to the Python and PyFFI download pages. Please download and run the Python 2.6 (32 bit) windows installer, then download and run the PyFFI windows installer. When you are done, rerun the Blender NIF Scripts installer."
-     StrCpy $0 "http://sourceforge.net/projects/pyffi/files/pyffi/"
-     Call openLinkNewWindow
-     StrCpy $0 "http://www.python.org/download/"
-     Call openLinkNewWindow
-     Abort ; causes installer to quit
-
-python64_check_end:
-	 ; 32 bit not installed, but 64 bit found
-     MessageBox MB_OK "Python 2.6 (64 bit) found, but Blender currently requires Python 2.6 (32 bit). You will need to download Python 2.6 (32 bit) and PyFFI in order to run the Blender NIF Scripts. Pressing OK will take you to the Python and PyFFI download pages. Please download and run the Python 2.6 (32 bit) windows installer, then download and run the PyFFI windows installer. When you are done, rerun the Blender NIF Scripts installer."
-     StrCpy $0 "http://sourceforge.net/projects/pyffi/files/pyffi/"
-     Call openLinkNewWindow
-     StrCpy $0 "http://www.python.org/download/"
-     Call openLinkNewWindow
-     Abort ; causes installer to quit
-
-python_check_end:
 
   ; check if PyFFI is installed (the bdist_wininst installer only creates an uninstaller registry key, so that's how we check)
   SetRegView 32
   ClearErrors
-  ReadRegStr $PYFFI HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\PyFFI "DisplayVersion"
+  ReadRegStr $PYFFI HKLM SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\PyFFI-py3k "DisplayVersion"
   IfErrors 0 pyffi_check_end
-  ReadRegStr $PYFFI HKCU SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\PyFFI "DisplayVersion"
+  ReadRegStr $PYFFI HKCU SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\PyFFI-py3k "DisplayVersion"
   IfErrors 0 pyffi_check_end
 
     ; no key, that means that PyFFI is not installed
-     MessageBox MB_OK "You will need to download PyFFI for Python 2.6 (32 bit) in order to run the Blender NIF Scripts. Pressing OK will take you to the PyFFI download page. Please download and run the PyFFI windows installer. When you are done, rerun the Blender NIF Scripts installer."
-     StrCpy $0 "http://sourceforge.net/projects/pyffi/files/pyffi/"
+     MessageBox MB_OK "You will need to download PyFFI for Python 3.2 in order to run the Blender NIF Scripts. Pressing OK will take you to the PyFFI download page. Please download and run the PyFFI windows installer. When you are done, rerun the Blender NIF Scripts installer."
+     StrCpy $0 "http://sourceforge.net/projects/pyffi/files/pyffi-py3k/"
      Call openLinkNewWindow
      Abort ; causes installer to quit
 
@@ -370,7 +296,7 @@ pyffi_check_end:
   IntCmp $R1 1 pyffi_vercheck_end ; installed version is more recent than as indicated
 
      MessageBox MB_OK|MB_ICONEXCLAMATION "You will need a more recent version of PyFFI in order to run the Blender NIF Scripts. Pressing OK will take you to the PyFFI download page. Please download and run the PyFFI windows installer. When you are done, rerun the Blender NIF Scripts installer."
-     StrCpy $0 "http://sourceforge.net/projects/pyffi/files/pyffi/"
+     StrCpy $0 "http://sourceforge.net/projects/pyffi/files/pyffi-py3k/"
      Call openLinkNewWindow
      Abort ; causes installer to quit
 
