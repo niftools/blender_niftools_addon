@@ -265,7 +265,7 @@ Function .onInit
 
      ; no key, that means that Blender is not installed
      MessageBox MB_OK "You will need to download Blender in order to run the Blender NIF Scripts. Pressing OK will take you to the Blender download page. Please download and run the Blender windows installer. It is strongly recommended that you select 'Use the installation directory' when the Blender installer asks you to specify where to install Blender's user data files. When you are done, rerun the Blender NIF Scripts installer."
-     StrCpy $0 "http://download.blender.org/release/Blender2.49b/blender-2.49b-windows.exe"
+     StrCpy $0 "http://www.blender.org/download/get-blender/"
      Call openLinkNewWindow
      Abort ; causes installer to quit
 
@@ -285,7 +285,7 @@ blender_check_end:
   
     MessageBox MB_YESNO|MB_ICONQUESTION "You are running Windows Vista, but Blender's user data files (such as scripts) do not reside in Blender's installation directory. On Vista, Blender will sometimes only find its scripts if Blender's user data files reside in Blender's installation directory. Do you wish to abort installation, and first reinstall Blender, selecting 'Use the installation directory' when the Blender installer asks you to specify where to install Blender's user data files?" IDNO blender_scripts_notininstallfolder
     MessageBox MB_OK "Pressing OK will take you to the Blender download page. Please download and run the Blender windows installer. Select 'Use the installation directory' when the Blender installer asks you to specify where to install Blender's user data files. When you are done, rerun the Blender NIF Scripts installer."
-    StrCpy $0 "http://download.blender.org/release/Blender2.49b/blender-2.49b-windows.exe"
+    StrCpy $0 "http://www.blender.org/download/get-blender/"
     Call openLinkNewWindow
     Abort ; causes installer to quit
 
