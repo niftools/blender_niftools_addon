@@ -171,9 +171,8 @@ First, create a directory to be used as your coding directory, such as
 Get Blender
 -----------
 
-`Download <http://www.blender.org/download/get-blender/>`_
-the latest supported version, and
-follow the installer instructions, 
+Download `Blender <http://www.blender.org/download/get-blender/>`_
+and follow the installer instructions, 
 
 If you wish to install concurrently with a version of 2.49 install to
 another folder, such as
@@ -197,8 +196,8 @@ This is only needed if you wish to
 
 * generate the documentation.
 
-`Download <http://www.python.org/download/releases/3.2.2/>`_ the
-installer appropriate for your platform, and
+Download `Python 3.2 <http://www.python.org/download/releases/3.2.2/>`_ (pick the
+installer appropriate for your platform), and
 follow the instructions. The default location should work fine.
 
 Copy and paste `buildenv-python.bat <https://gist.github.com/1254859>`_
@@ -296,7 +295,7 @@ EGit
 `EGit <http://eclipse.org/egit/>`_
 is an Eclipse plugin to perform git actions from within Eclipse.
 
-1. Go to: **Help > Install New Software > Add... **
+1. Go to: **Help > Install New Software > Add...**
 
 2. Under **Work with**, select **Indigo**.
 
