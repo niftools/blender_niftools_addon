@@ -293,14 +293,54 @@ install:
 EGit
 ~~~~
 
-Egit is an Eclipse module to perform git action from within Eclipse.
-http://download.eclipse.org/egit/updates/
+`EGit <http://eclipse.org/egit/>`_
+is an Eclipse plugin to perform git actions from within Eclipse.
+
+1. Go to: **Help > Install New Software > Add... **
+
+2. Under **Work with**, select **Indigo**.
+
+3. A large number of plugins will be listed. Select
+   **Collaboration > Eclipse EGit**
 	
-Pydev
+PyDev
 ~~~~~
 
-Pydev is an Eclipse module targeted at Python development, including sytax highlighting and debugging
-http://pydev.org/updates/
+`PyDev <http://pydev.org/>`_
+is an Eclipse plugin targeted at Python development,
+including sytax highlighting and debugging.
+
+1. Go to: **Help > Install New Software > Add...**
+
+2. Enter the project update site:
+   ``http://pydev.org/updates/``
+
+3. Select **PyDev**.
+
+4. Click **Next**, and follow the instructions.
+
+5. Once installed, you will be asked to configure the
+   Python interpreter. Select your Python 3.2 executable
+   when presented with a choice, and use **Auto Config**.
+
+ReST Editor
+~~~~~~~~~~~
+
+The documentation is written in `reStructuredText
+<http://docutils.sourceforge.net/docs/user/rst/quickref.html>`_.
+If you want syntax highlighting for reST, you must
+install the `ReST Editor plugin <http://resteditor.sourceforge.net/>`_:
+
+1. Go to: **Help > Install New Software > Add...**
+
+2. Enter the project update site:
+   ``http://resteditor.sourceforge.net/eclipse``
+
+3. Under the ReST Editor plugin tree,
+   select the ReST Editor plugin,
+   and unselect the Eclipse Color Theme mapper plugin.
+
+4. Click **Next**, and follow the instructions.
 
 Eclipse: Command line completion
 --------------------------------
