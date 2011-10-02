@@ -5,7 +5,7 @@ import sys
 # run sphinx builder
 # this assumes that the builder is called as
 # "blender --background --factory-startup --python blender-sphinx-build.py -- ..."
-# sys.argv[5:] passes the correct arguments onto the builder by
-# dropping the arguments prior to --
+# pass the correct arguments by dropping the arguments prior to --
 import sphinx
-sphinx.main(argv=sys.argv[5:])
+sys.argv = ['blender-sphinx-build'] + sys.argv[6:]
+sphinx.main()
