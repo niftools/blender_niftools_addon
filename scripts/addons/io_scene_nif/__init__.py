@@ -152,7 +152,7 @@ class NifImportExportUI:
 class NifImportUI(bpy.types.Operator, ImportHelper, NifImportExportUI):
     """Load a NIF File"""
     # class constants
-    bl_idname = "import.nif"
+    bl_idname = "import_scene.nif"
     bl_label = "Import NIF"
 
     # properties
@@ -227,7 +227,7 @@ class NifImportUI(bpy.types.Operator, ImportHelper, NifImportExportUI):
 class NifExportUI(bpy.types.Operator, ExportHelper, NifImportExportUI):
     """Save a NIF File"""
     # class constants
-    bl_idname = "export.nif"
+    bl_idname = "export_scene.nif"
     bl_label = "Export NIF"
 
     # properties
