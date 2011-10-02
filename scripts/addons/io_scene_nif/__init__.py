@@ -224,44 +224,36 @@ class NifImportUI(bpy.types.Operator, ImportHelper, NifImportExportUI):
         from . import import_nif
         return import_nif.NifImport(self, context)
 
+class NifExportUI(bpy.types.Operator, ExportHelper, NifImportExportUI):
+    """Save a NIF File"""
+    # class constants
+    bl_idname = "export.nif"
+    bl_label = "Export NIF"
+
+    # properties
+    # TODO
+
+    def execute(self, context):
+        """Main import function: open file and import all trees."""
+        from . import export_nif
+        return export_nif.NifExport(self, context)
+
 # TODO: integrate with NifImportExport class
+# we're removing stuff from this class as we integrate
 class NifConfig:
     """Class which handles configuration of nif import and export in Blender.
-
-    Important: keep every instance of this class in a global variable
-    (otherwise gui elements might go out of skope which will crash
-    Blender)."""
-    # class global constants
-    CONFIG_NAME = "nifscripts" # name of the config file
-    TARGET_IMPORT = 0          # config target value when importing
-    TARGET_EXPORT = 1          # config target value when exporting
-    # GUI stuff
-    XORIGIN     = 50  # x coordinate of origin
-    XCOLUMNSKIP = 390 # width of a column
-    XCOLUMNSEP  = 10  # width of the column separator
-    YORIGIN     = -40 # y coordinate of origin relative to Blender.Window.GetAreaSize()[1]
-    YLINESKIP   = 20  # height of a line
-    YLINESEP    = 10  # height of a line separator
+    """
     # the DEFAULTS dict defines the valid config variables, default values,
     # and their type
     # IMPORTANT: don't start dictionary keys with an underscore
     # the Registry module doesn't like that, apparently
     DEFAULTS = dict(
-        IMPORT_FILE = "import.nif", # TODO path for default
-        EXPORT_FILE = "export.nif", # TODO path for default
         IMPORT_REALIGN_BONES = 1, # 0 = no, 1 = tail, 2 = tail+rotation
         IMPORT_ANIMATION = True,
-        IMPORT_SCALE_CORRECTION = 0.1,
-        EXPORT_SCALE_CORRECTION = 10.0, # 1/import scale correction
         EXPORT_FLATTENSKIN = False,
         EXPORT_VERSION = 'Oblivion',
-        LOG_LEVEL = logging.WARNING, # log level
-        IMPORT_SKELETON = 0, # 0 = normal import, 1 = import file as skeleton, 2 = import mesh and attach to skeleton
-        IMPORT_KEYFRAMEFILE = '', # keyframe file for animations
-        IMPORT_EGMFILE = '', # FaceGen EGM file for morphs
         IMPORT_EGMANIM = True, # create FaceGen EGM animation curves
         IMPORT_EGMANIMSCALE = 1.0, # scale of FaceGen EGM animation curves
-        EXPORT_ANIMATION = 0, # export everything (1=geometry only, 2=animation only)
         EXPORT_ANIMSEQUENCENAME = '', # sequence name of the kf file
         EXPORT_FORCEDDS = True, # force dds extension on texture files
         EXPORT_SKINPARTITION = True, # generate skin partition
@@ -271,11 +263,6 @@ class NifConfig:
         EXPORT_STRIPIFY = True,
         EXPORT_STITCHSTRIPS = False,
         EXPORT_SMOOTHOBJECTSEAMS = True,
-        IMPORT_MERGESKELETONROOTS = True,
-        IMPORT_SENDGEOMETRIESTOBINDPOS = True,
-        IMPORT_SENDDETACHEDGEOMETRIESTONODEPOS = True,
-        IMPORT_SENDBONESTOBINDPOS = True,
-        IMPORT_APPLYSKINDEFORM = False,
         IMPORT_EXTRANODES = True,
         EXPORT_BHKLISTSHAPE = False,
         EXPORT_OB_BSXFLAGS = 2,
@@ -307,7 +294,6 @@ class NifConfig:
         PROFILE = '', # name of file where Python profiler dumps the profile; set to empty string to turn off profiling
         IMPORT_EXPORTEMBEDDEDTEXTURES = False,
         EXPORT_OPTIMIZE_MATERIALS = True,
-        IMPORT_COMBINESHAPES = True,
         EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES = False,
         EXPORT_MW_BS_ANIMATION_NODE = False,
         )
@@ -1584,14 +1570,12 @@ def menu_func_export(self, context):
 def register():
     bpy.utils.register_module(__name__)
     bpy.types.INFO_MT_file_import.append(menu_func_import)
-    # TODO
-    #bpy.types.INFO_MT_file_export.append(menu_func_export)
+    bpy.types.INFO_MT_file_export.append(menu_func_export)
 
 def unregister():
     bpy.utils.unregister_module(__name__)
     bpy.types.INFO_MT_file_import.remove(menu_func_import)
-    # TODO
-    #bpy.types.INFO_MT_file_export.remove(menu_func_export)
+    bpy.types.INFO_MT_file_export.remove(menu_func_export)
 
 if __name__ == "__main__":
     register()
