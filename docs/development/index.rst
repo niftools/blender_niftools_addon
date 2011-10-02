@@ -166,27 +166,17 @@ Windows
     The following instructions are work in progress.
 
 First, create a directory to be used as your coding directory, such as
-``/Desktop/coding/niftools``.
+``C:\Users\<username>\workspace``.
 
 Get Blender
 -----------
 
-`Download <http://www.blender.org/download/get-blender/>`_
-the latest supported version, and
-follow the installer instructions, 
+Download `Blender <http://www.blender.org/download/get-blender/>`_
+and follow the installer instructions, 
 
 If you wish to install concurrently with a version of 2.49 install to
 another folder, such as
 ``C:\Program Files\Blender Foundation\Blender2.x``.
-
-Get Python 3.2
---------------
-
-This is only needed if you wish to use Eclipse as IDE.
-
-`Download <http://www.python.org/download/releases/3.2.2/>`_ the
-installer appropriate for your platform, and
-follow the instructions. The default location should work fine.
 
 Get Git Bash
 ------------
@@ -197,12 +187,104 @@ Download `msysgit <http://code.google.com/p/msysgit/downloads/list>`_ and follow
 Although you only need to pull the repos, if you want to push patches
 it is advised to :ref:`create a github account <create-github-account>`.
 
+Get Python 3.2
+--------------
+
+This is only needed if you wish to
+
+* use Eclipse as IDE, or
+
+* generate the documentation.
+
+Download `Python 3.2 <http://www.python.org/download/releases/3.2.2/>`_ (pick the
+installer appropriate for your platform), and
+follow the instructions. The default location should work fine.
+
+Copy and paste `buildenv-python.bat <https://gist.github.com/1254859>`_
+into a new text file called ``buildenv-python.bat`` in your ``workspace`` folder.
+right-click on the file, and select **Send to > Desktop (create shortcut)**.
+
+Now right-click this newly created shortcut, and change **Target** into::
+
+  %comspec% /k C:\Users\<username>\workspace\buildenv-python.bat C:\Python32 msvc2008 64 workspace
+
+(on 32 bit systems, type ``32`` instead of ``64``).
+
+For ease of installing various developer dependencies,
+save `distribute_setup.py
+<http://python-distribute.org/distribute_setup.py>`_ 
+in your ``workspace`` folder, and execute it:
+double click on the Python build environment shortcut you just created,
+and type::
+
+  python distribute_setup.py
+
+Next, we install pip::
+
+  easy_install pip
+
+Then, we install Sphinx and all of its dependencies::
+
+  pip install Sphinx==dev
+
+Now, copy everything from ``C:\Python32\Lib\site-packages`` to 
+
+Start the git bash, and type::
+
+  cd workspace
+  git clone --recursive git://github.com/amorilia/pyffi.git
+  git clone --recursive git@github.com:<username>/blender_nif_scripts.git
+  cd blender_nif_scripts
+  git remote add amorilia git://github.com/amorilia/blender_nif_scripts.git
+  git remote add neomonkeus git://github.com/neomonkeus/blender_nif_scripts.git
+
+Back in your Python build environment, type::
+
+  cd pyffi
+  python setup.py install
+
+Finally, copy your entire ``C:\Python32\Lib\site-packages`` folder to
+``C:\Program Files\Blender Foundation\Blender\2.59\python\lib\site-packages``.
+To check that everything is installed correctly, start Blender, open a Python console,
+and type::
+
+  import site
+  import pyffi
+  import sphinx
+
+You should not get any import errors.
+
+Generating Documentation
+------------------------
+
+Start your Python build environment, and simply do::
+
+  cd blender_nif_scripts
+  cd docs
+  make html
+
+The sphinx builder
+runs from within blender---the blender window will show briefly while
+the documentation is generated.
+
+.. todo::
+
+   At the moment, we are still using Python. Script needs updating to eventually recognize Blender.
+
 Eclipse
 -------
 
 Eclipse is chosen as the IDE due to its flexible plug-ins for repo management, 
 python scripting and hooks into Blenders debugging console. 
-Install `Eclipse Indigo <http://www.eclipse.org/downloads/packages/eclipse-classic-37/indigor>`_ for windows platform.
+
+First, install the `Java Runtime Environment <http://java.com/download>`_.
+Make sure you have the right version---on 64 bit platforms, it is safest
+to pick right file via `manual download <http://java.com/en/download/manual.jsp>`_.
+
+Next, install `Eclipse Classic <http://www.eclipse.org/downloads/>`_ for the windows platform.
+Just unzip the file, and put it somewhere convenient, such as under ``C:\eclipse``.
+If you want to create a shortcut from your desktop, right-click ``C:\eclipse\eclipse.exe``
+and select **Send to > Desktop (create shortcut)**.
 
 You should also install a few plugins. Under **Help > Install New Software**,
 install:
@@ -210,44 +292,62 @@ install:
 EGit
 ~~~~
 
-Egit is an Eclipse module to perform git action from within Eclipse.
-http://download.eclipse.org/egit/updates/
+`EGit <http://eclipse.org/egit/>`_
+is an Eclipse plugin to perform git actions from within Eclipse.
+
+1. Go to: **Help > Install New Software > Add...**
+
+2. Under **Work with**, select **Indigo**.
+
+3. A large number of plugins will be listed. Select
+   **Collaboration > Eclipse EGit**
 	
-Pydev
+PyDev
 ~~~~~
 
-Pydev is an Eclipse module targeted at Python development, including sytax highlighting and debugging
-http://pydev.org/updates/
+`PyDev <http://pydev.org/>`_
+is an Eclipse plugin targeted at Python development,
+including sytax highlighting and debugging.
 
-Get PyFFI
----------
+1. Go to: **Help > Install New Software > Add...**
 
-.. todo::
+2. Enter the project update site:
+   ``http://pydev.org/updates/``
 
-    Suggestions for best way to install on win platform.
-    Installer or copy scripts to Blender directory::
+3. Select **PyDev**.
 
-        git clone --recursive git://github.com/amorilia/pyffi.git
+4. Click **Next**, and follow the instructions.
 
-Get the code
-------------
-	
-Downloading Blender Scripts:
-Under the Git bash, do::
+5. Once installed, you will be asked to configure the
+   Python interpreter. Select your Python 3.2 executable
+   when presented with a choice, and use **Auto Config**.
 
-    cd /Desktop/coding/Niftools/
-    git clone --recursive git@github.com:yourusername/blender_nif_scripts.git
-    cd blender_nif_scripts
-    git remote add amorilia git://github.com/amorilia/blender_nif_scripts.git
-    git remote add neomonkeus git://github.com/neomonkeus/blender_nif_scripts.git
-	
-.. todo::
+ReST Editor
+~~~~~~~~~~~
 
-   Move these to the Eclipse section, and update for actual location
-   of command line completion code.
+The documentation is written in `reStructuredText
+<http://docutils.sourceforge.net/docs/user/rst/quickref.html>`_.
+If you want syntax highlighting for reST, you must
+install the `ReST Editor plugin <http://resteditor.sourceforge.net/>`_:
+
+1. Go to: **Help > Install New Software > Add...**
+
+2. Enter the project update site:
+   ``http://resteditor.sourceforge.net/eclipse``
+
+3. Under the ReST Editor plugin tree,
+   select the ReST Editor plugin,
+   and unselect the Eclipse Color Theme mapper plugin.
+
+4. Click **Next**, and follow the instructions.
 
 Eclipse: Command line completion
 --------------------------------
+
+.. todo::
+
+   Update for actual location
+   of command line completion code.
 
 Once you have cloned this Repo to your local, copy the following to the Blender directory::
 
