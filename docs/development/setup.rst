@@ -124,16 +124,18 @@ and type::
 
   python distribute_setup.py
 
-Install Sphinx
---------------
+Install Sphinx and Nose
+-----------------------
 
 On Windows, run in buildenv::
 
   easy_install install Sphinx==dev
+  easy_install install nose
 
 On Fedora, run in a terminal::
 
-  easy_install-3.2 --user sphinx==dev
+  easy_install-3.2 --user Sphinx==dev
+  sudo yum install python3-nose
 
 Install PyFFI
 -------------
