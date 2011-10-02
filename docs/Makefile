@@ -3,7 +3,7 @@
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
-SPHINXBUILD   = blender --background --python blender-sphinx-build.py --
+SPHINXBUILD   = blender --background --factory-startup --python blender-sphinx-build.py --
 PAPER         =
 BUILDDIR      = _build
 

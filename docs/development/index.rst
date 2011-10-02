@@ -110,9 +110,9 @@ Then simply do::
   cd docs
   make html
 
-from within your blender nif scripts git checkout. The sphinx builder
-runs from within blender---the blender window will show briefly while
-the documentation is generated.
+from within your blender nif scripts git checkout. View the docs with::
+
+  firefox _build/html/index.html &
 
 Get Eclipse
 -----------
