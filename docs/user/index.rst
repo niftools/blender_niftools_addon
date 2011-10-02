@@ -3,20 +3,7 @@ User Documentation
 
 .. warning::
 
-   User documentation is incomplete.
-
-.. todo::
-
-   We need to split this into different documents:
-
-   * installation (more or less done, see below),
-   * basic tutorial,
-   * list of all features
-     (it would be a good habit to document every feature we have!)
-     and quick instructions for how to use each of them.
-   * license,
-   * changelog,
-   * anything else?
+   User documentation is still rather incomplete.
 
 Contents:
 
@@ -25,4 +12,5 @@ Contents:
 
    install
    tutorials
+   features
    support
