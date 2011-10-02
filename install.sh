@@ -1,49 +1,29 @@
 #!/bin/sh
+# quick and dirty script to install the blender nif scripts
 
-# quick and dirty linux shell script to install the scripts in a
-# user's local blender dir
+for BLENDERVERSION in 2.59 2.58 2.57 2.56 2.55 2.54 2.53 2.52 2.51 2.50
+do
+  BLENDERADDONS=~/.blender/$BLENDERVERSION/scripts/addons
+  if [ -e $BLENDERADDONS ]
+  then
+    break
+  fi
+done
+if [ ! -e $BLENDERADDONS ]
+then
+  echo Blender addons folder not found.
+  echo Start blender at least once, and try again.
+  exit 1
+fi
 
-# blender25 directory
+echo Installing in
+echo $BLENDERADDONS/io_scene_nif
+# remove old files
+rm -rf $BLENDERADDONS/io_scene_nif/
+# copy files from repository to blender addons folder
+mkdir -p $BLENDERADDONS/io_scene_nif/
+for FILE in __init__.py import_export_nif.py export_nif.py import_nif.py
+do
+  cp scripts/addons/io_scene_nif/$FILE $BLENDERADDONS/io_scene_nif/
+done
 
-PYFFIHOME=../pyffi
-BLENDERHOME=~/.blender/
-BLENDERVERSION=2.58
-
-# uninstall old files
-
-rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/io_scene_nif/
-rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/
-
-# install scripts
-
-mkdir -p $BLENDERHOME/$BLENDERVERSION/scripts/addons/io_scene_nif/
-
-cp scripts/addons/io_scene_nif/__init__.py $BLENDERHOME/$BLENDERVERSION/scripts/addons/io_scene_nif/
-cp scripts/addons/io_scene_nif/import_export_nif.py $BLENDERHOME/$BLENDERVERSION/scripts/addons/io_scene_nif/
-cp scripts/addons/io_scene_nif/export_nif.py $BLENDERHOME/$BLENDERVERSION/scripts/addons/io_scene_nif/
-cp scripts/addons/io_scene_nif/import_nif.py $BLENDERHOME/$BLENDERVERSION/scripts/addons/io_scene_nif/
-
-# install pyffi
-
-pushd $PYFFIHOME
-git checkout master
-git clean -xfd
-popd
-mkdir -p $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/
-cp -r $PYFFIHOME/pyffi/ $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/
-# remove closed source parts of pyffi
-rm $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/utils/mopper.exe
-# remove unused parts of pyffi
-rm -f $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/fileformat.dtd
-rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/qskope/
-rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/formats/cgf/
-rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/formats/psk/
-rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/formats/esp/
-rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/formats/rockstar/
-rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/formats/tga/
-rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/formats/dae/
-rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/object_models/xsd/
-rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/object_models/mex/
-# remove .git folders from submodules
-rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/formats/nif/nifxml/.git
-rm -rf $BLENDERHOME/$BLENDERVERSION/scripts/addons/modules/pyffi/formats/kfm/kfmxml/.git
