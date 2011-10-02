@@ -1,21 +1,5 @@
 """This script exports Netimmerse and Gamebryo .nif files from Blender."""
 
-return
-
-import logging
-import os.path
-
-import bpy
-import mathutils
-
-from nif_common import NifImportExport
-from nif_common import NifFormat
-from nif_common import EgmFormat
-from nif_common import __version__
-
-import pyffi.spells.nif
-import pyffi.spells.nif.fix
-
 # --------------------------------------------------------------------------
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -50,7 +34,21 @@ import pyffi.spells.nif.fix
 # ***** END LICENSE BLOCK *****
 # --------------------------------------------------------------------------
 
+import logging
+import os.path
+
+import mathutils
+import bpy
+
+import pyffi.spells.nif
+import pyffi.spells.nif.fix
+from pyffi.formats.nif import NifFormat
+from pyffi.formats.egm import EgmFormat
+
+from .import_export_nif import NifImportExport
+
 class NifExportError(Exception):
+    """A simple custom exception class for export errors."""
     pass
 
 # main export class
@@ -165,8 +163,10 @@ class NifExport(NifImportExport):
         # return the list of unique exported objects
         return exported_objects
 
-    def __init__(self, **config):
+    def __init__(self, operator, context):
         """Main export function."""
+        # call base class constructor
+        NifImportExport.__init__(self, operator, context)
 
         # preparation:
         #--------------
@@ -4552,24 +4552,26 @@ class NifExport(NifImportExport):
                 relative_vertices.append(key_vert - vert)
             morph.set_relative_vertices(relative_vertices)
 
-def config_callback(**config):
-    """Called when config script is done. Starts and times import."""
-    starttime = Blender.sys.time()
-    # run exporter
-    exporter = NifExport(**config)
-    # finish export
-    exporter.logger.info('Finished in %.2f seconds'
-                         % (Blender.sys.time() - starttime))
-    Blender.Window.WaitCursor(0)
+def menu_func(self, context):
+    """Export operator for the menu."""
+    # TODO get default path from config registry
+    #default_path = bpy.data.filename.replace(".blend", ".nif")
+    default_path = "export.nif"
+    self.layout.operator(
+        NifExport.bl_idname,
+        text="NetImmerse/Gamebryo (.nif & .kf & .egm)"
+        ).filepath = default_path
 
-def fileselect_callback(filename):
-    """Called once file is selected. Starts config GUI."""
-    global _CONFIG
-    _CONFIG.run(NifConfig.TARGET_EXPORT, filename, config_callback)
+def register():
+    """Register nif export operator."""
+    bpy.types.register(NifExport)
+    bpy.types.INFO_MT_file_export.append(menu_func)
+
+def unregister():
+    """Unregister nif export operator."""
+    bpy.types.unregister(NifExport)
+    bpy.types.INFO_MT_file_export.remove(menu_func)
 
 if __name__ == '__main__':
-    # use global config variable so gui elements don't go out of skope
-    _CONFIG = NifConfig()
-    # open file selector window, and then call fileselect_callback
-    Blender.Window.FileSelector(
-        fileselect_callback, "Export NIF/KF", _CONFIG.config["EXPORT_FILE"])
+    """Register nif import, when starting Blender."""
+    register()
