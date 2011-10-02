@@ -1,9 +1,11 @@
 Version 3.0.0 (planned)
 =======================
 
-* Now using sphinx to generate documentation.
+* Initial port to Blender 2.59.
 
-* Initial port to Blender 2.58.
+* Upgraded to sphinx to generate documentation.
+
+* Upgraded to nose for testing.
 
 Version 2.5.8 (in development)
 ==============================
