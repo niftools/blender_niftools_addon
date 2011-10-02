@@ -1,6 +1,4 @@
 License
 =======
 
-.. todo::
-
-   Include license here.
+.. include:: /../LICENSE.rst
