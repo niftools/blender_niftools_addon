@@ -96,6 +96,18 @@ install the rpm::
 
    to get your old Blender 2.49b back.
 
+Install PyFFI
+-------------
+
+.. warning::
+
+   This section is a stub, pyffi for py3k isn't released yet.
+
+1. Download the `pyffi .exe release
+   <http://sourceforge.net/projects/pyffi/files/pyffi-py3k/>`_.
+
+2. Run the installer and follow the instructions.
+
 Install Blender Nif Scripts
 ---------------------------
 
@@ -136,3 +148,25 @@ Register the Addon
 
 6. The nif importer and exporter should now show under
    **File > Import** and **File > Export**.
+
+Using the Scripts
+-----------------
+
+The
+`quick-start guide<http://niftools.sourceforge.net/wiki/Blender/Quick_Start>`_
+describes how to prepare your textures and how you can use the scripts.
+The guide also lists the limitations of the scripts, known issues, and workarounds for some issues.
+
+.. todo::
+
+   Port the quick start guide to the documentation, and give a pointer
+   to the generated Sphinx docs.
+
+Support
+-------
+
+* `wiki <http://niftools.sourceforge.net/wiki/Blender>`_
+* `forum <http://niftools.sourceforge.net/forum>`_
+* `report a bug <http://sourceforge.net/tracker/?group_id=149157>`_
+  (please include the .blend or .nif that caused the error and a brief description
+  of how to reproduce the error)
