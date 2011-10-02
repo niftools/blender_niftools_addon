@@ -12,8 +12,8 @@ Contents:
    :maxdepth: 2
 
    user/index
-   api/index
    development/index
+   api/index
    additional/index
 
 Indices and tables
