@@ -20,8 +20,8 @@ User Documentation
 
 .. _user-getblender:
 
-Get Blender
------------
+Install Blender
+---------------
 
 Windows
 ~~~~~~~
@@ -96,7 +96,7 @@ install the rpm::
 
    to get your old Blender 2.49b back.
 
-Get the Blender Nif Scripts
+Install Blender Nif Scripts
 ---------------------------
 
 .. warning::
