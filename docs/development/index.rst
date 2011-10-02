@@ -4,7 +4,7 @@ Development
 The code is maintained with git. If you are not yet familiar with git,
 read `progit <http://progit.org/book/>`_.
 
-.. _create-github-account:
+.. _dev-create-github-account:
 
 If you intend to work on the Blender nif scripts, first, you should
 clone the code on github.
@@ -50,42 +50,7 @@ Get Python 3
 Get Blender
 -----------
 
-For Fedora 16 and up, Blender 2.5x is available via yum::
-
-  sudo yum install blender
-
-For Fedora 15, first `setup a development environment
-<http://fedoraproject.org/wiki/How_to_create_an_RPM_package>`_::
-
-  sudo yum groupinstall "Development Tools" -y
-  sudo yum install rpmdevtools -y
-  rpmdev-setuptree
-
-Then, clone the spec file, install the sources, install the build
-dependencies, and kick off an rpm build::
-
-  git clone git://pkgs.fedoraproject.org/blender
-  cd blender
-  cp * ~/rpmbuild/SOURCES/
-  wget http://download.blender.org/source/blender-2.59.tar.gz
-  mv blender-2.59.tar.gz ~/rpmbuild/SOURCES/
-  cat blender.spec | grep ^BuildRequires | gawk '{ print $2 }' | xargs sudo yum install -y
-  rpmbuild -ba blender.spec
-
-Building blender takes a long time. When the build is finished,
-install the rpm::
-
-  sudo yum localinstall ~/rpmbuild/RPMS/x86_64/blender-2.59-1.fc15.x86_64.rpm
-
-.. warning::
-
-   The package upgrades Blender 2.49b, so if you had it installed
-   previously, it will no longer be available. Do::
-
-     sudo yum erase blender
-     sudo yum install blender
-
-   to get your old Blender 2.49b back.
+See :ref:`user docs <user-getblender-fedora>`.
 
 Getting PyFFI
 -------------
@@ -171,12 +136,7 @@ First, create a directory to be used as your coding directory, such as
 Get Blender
 -----------
 
-Download `Blender <http://www.blender.org/download/get-blender/>`_
-and follow the installer instructions, 
-
-If you wish to install concurrently with a version of 2.49 install to
-another folder, such as
-``C:\Program Files\Blender Foundation\Blender2.x``.
+See :ref:`user docs <user-getblender-windows>`.
 
 Get Git Bash
 ------------
@@ -185,7 +145,7 @@ This is used to setup local code repositories and pull remote versions.
 Download `msysgit <http://code.google.com/p/msysgit/downloads/list>`_ and follow the installer instructions.
 
 Although you only need to pull the repos, if you want to push patches
-it is advised to :ref:`create a github account <create-github-account>`.
+it is advised to :ref:`create a github account <dev-create-github-account>`.
 
 Get Python 3.2
 --------------
@@ -213,7 +173,7 @@ Now right-click this newly created shortcut, and change **Target** into::
 For ease of installing various developer dependencies,
 save `distribute_setup.py
 <http://python-distribute.org/distribute_setup.py>`_ 
-in your ``workspace`` folder, and execute it:
+in your ``workspace`` folder,
 double click on the Python build environment shortcut you just created,
 and type::
 
@@ -226,8 +186,6 @@ Next, we install pip::
 Then, we install Sphinx and all of its dependencies::
 
   pip install Sphinx==dev
-
-Now, copy everything from ``C:\Python32\Lib\site-packages`` to 
 
 Start the git bash, and type::
 
