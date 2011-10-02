@@ -16,7 +16,7 @@ for %%A in (__init__.py, import_export_nif.py, export_nif.py, import_nif.py) do 
 goto end
 
 :pleasesetblenderaddons
-echo.Please set BLENDERADDONS to the folder where blender.exe resides, such as:
+echo.Please set BLENDERADDONS to the folder where the blender addons reside, such as:
 echo.
 echo.  set BLENDERADDONS=C:\Program Files\Blender Foundation\Blender\2.59\scripts\addons
 echo.
