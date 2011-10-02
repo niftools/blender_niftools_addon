@@ -3,7 +3,20 @@ User Documentation
 
 .. warning::
 
-    User documentation is incomplete.
+   User documentation is incomplete.
+
+.. todo::
+
+   We need to split this into different documents:
+
+   * installation (more or less done, see below),
+   * basic tutorial,
+   * list of all features
+     (it would be a good habit to document every feature we have!)
+     and quick instructions for how to use each of them.
+   * license,
+   * changelog,
+   * anything else?
 
 Get Blender
 -----------
@@ -85,3 +98,43 @@ install the rpm::
 
    to get your old Blender 2.49b back.
 
+Get the Blender Nif Scripts
+---------------------------
+
+.. warning::
+
+   This section is a stub, the scripts aren't released yet.
+
+Windows
+~~~~~~~
+
+1. Download the `blender nif scripts .exe release
+   <http://sourceforge.net/projects/niftools/files/blender_nif_scripts/>`_.
+
+2. Run the installer and follow the instructions.
+
+Fedora
+~~~~~~
+
+1. Download the `blender nif scripts .zip release
+   <http://sourceforge.net/projects/niftools/files/blender_nif_scripts/>`_
+   and unzip it somewhere.
+
+2. Run the ``install.sh`` script.
+
+Register the Addon
+------------------
+
+1. Start blender.
+
+2. Go to: **File > User Preferences > Add-Ons**.
+
+3. Under **Categories** (left), select **Import-Export**.
+
+4. Tick the empty box next to **Import-Export: NetImmerse/Gambryo nif format**.
+   You may have to scroll down a bit first.
+
+5. Close the **Blender User Preferences** window.
+
+6. The nif importer and exporter should now show under
+   **File > Import** and **File > Export**.
