@@ -247,39 +247,50 @@ and the ReST Editor plugin.
 
   4. Click **Next**, and follow the instructions.
 
-Eclipse: Command line completion
---------------------------------
+Eclipse: Blender Extras
+-----------------------
 
 .. todo::
 
    Update for actual location
    of command line completion code.
 
-Once you have cloned this Repo to your local, copy the following to the Blender directory::
+Once you have cloned this Repo to your local,
+copy the following to the Blender directory::
 
     ./docs/python_api/
     ./docs/refresh_python_api.bat
     run.py
     pydev_debug.py
 
-Run docs/refresh_python_api.bat to generate an updated API 
-pydev_debug.py & run.py will be used to hook Eclipse's Pydev Debug to Blender's debugger.	
-	
-Eclipse: Import Project
------------------------
+Command Line Completion
+~~~~~~~~~~~~~~~~~~~~~~~
 
-Import local repo into Eclipse using **Team > Git** as an existing project.
+Run ``docs/refresh_python_api.bat`` to generate an updated API
+and link the generated API
+to the ``blender_nif_scripts`` project:
+**Project > Properties > Pydev - PYTHONPATH > external libraries > .../Blender/docs/python_api/pypredef/**
 
-Link the external Blender Python_Api to the project:
-**Project > Properties > Pydev - PYTHONPATH > external libraries > ../Blender/docs/python_api/pypredef/**
+.. note::
 
-Limitations: Types declarations should be fully qualified type before auto-completion kicks in
-e.g obj = bpy.types.object, obj = bpy.context.active_object
-Auto-completion should now work for the majority of the API.
-Hovering over a variable will hot-link to the generated documentation.
+   Type declarations must be fully qualified
+   (bpy.types.object, bpy.context.active_object, etc.)
+   before auto-completion kicks in
 
-Eclipse: Debugging
-------------------
+.. note::
+
+   Hovering over a variable will hot-link to the generated documentation.
+
+.. warning::
+
+   Auto-completion works for the majority of the API, but some bits
+   are missing.
+
+Debugging
+~~~~~~~~~
+
+``pydev_debug.py`` and ``run.py``
+hook Eclipse's Pydev Debug to Blender's debugger.
 
 Add the Pydev Debug: Customise Perspective -> Pydev Debug. 
 Always start the Pydev debug server first otherwise blender will crash later.	
