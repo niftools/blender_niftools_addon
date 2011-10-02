@@ -14,7 +14,8 @@ Contents:
    user/index
    development/index
    api/index
-   additional/index
+   additional/license
+   additional/changes
 
 Indices and tables
 ==================

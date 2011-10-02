@@ -2,3 +2,4 @@ License
 =======
 
 .. include:: /../LICENSE.rst
+
