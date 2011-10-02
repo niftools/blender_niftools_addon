@@ -308,32 +308,3 @@ Replace the strings:
 Run the script; blender will appear to hang but this is as the Debugger has hit the trace() call
 
 In Eclipse switch to debug mode and begin scripting.
-
-Workflow
---------
-
-.. todo::
-
-   Separate document for this.
-
-Import Project
-~~~~~~~~~~~~~~
-
-1. Go to: **File > Import > General > Existing Projects into Workspace > Next > Browse**.
-
-2. Choose the ``blender_nif_scripts`` folder and select **Ok > Finish**.
-
-3. If you want to use git from within eclipse, right click the project
-   in the Project Explorer, and choose **Team > Share Project > Git**.
-   Enable **Use or create Repository in parent folder of project**,
-   and click **Finish**.
-
-Generating Documentation
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-Simply do in buildenv (Windows) or terminal (Fedora)::
-
-  cd blender_nif_scripts/docs
-  make html
-
-To view the docs, open ``docs/_build/html/index.html``.
