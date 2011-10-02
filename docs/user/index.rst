@@ -149,6 +149,9 @@ Register the Addon
 6. The nif importer and exporter should now show under
    **File > Import** and **File > Export**.
 
+7. Do: **File > Save User Settings** (unless you enjoy enabling the
+   addon every time when blender starts :-) ).
+
 Using the Scripts
 -----------------
 
