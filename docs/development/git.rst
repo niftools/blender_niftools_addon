@@ -6,6 +6,9 @@ read `progit <http://progit.org/book/>`_.
 
 .. _dev-create-github-account:
 
+Create a Github Fork
+--------------------
+
 If you intend to work on the Blender nif scripts, first, you should
 clone the code on github.
 
@@ -22,6 +25,19 @@ clone the code on github.
 
 5. Click **Fork** (top right corner).
 
-As preparation for what follows next, read the remaining `github help
+Be sure to read the remaining `github help
 pages <http://help.github.com/>`_, particularly the beginner's
 guides.
+
+.. _dev-get-git:
+
+Get Git
+-------
+
+On Fedora, simply do::
+
+  sudo yum install git
+
+On Windows, download
+`msysgit <http://code.google.com/p/msysgit/downloads/list>`_
+and follow the installer instructions.

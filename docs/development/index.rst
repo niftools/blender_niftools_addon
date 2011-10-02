@@ -7,5 +7,4 @@ Contents:
    :maxdepth: 2
 
    git
-   fedora
-   windows
+   setup

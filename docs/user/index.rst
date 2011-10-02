@@ -18,10 +18,10 @@ User Documentation
    * changelog,
    * anything else?
 
+.. _user-getblender:
+
 Get Blender
 -----------
-
-.. _user-getblender-windows:
 
 Windows
 ~~~~~~~
@@ -55,8 +55,6 @@ Download the
 `blender .exe installer <http://www.blender.org/download/get-blender/>`_
 for your platform (32-bit or 64-bit; if unsure, pick the 32-bit version)
 and follow the instructions.
-
-.. _user-getblender-fedora:
 
 Fedora
 ~~~~~~
