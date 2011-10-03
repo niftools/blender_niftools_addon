@@ -2,9 +2,11 @@
 
 REM Command file for Sphinx documentation
 
-if "%SPHINXBUILD%" == "" (
-	set SPHINXBUILD=sphinx-build
+if "%BLENDERHOME%" == "" (
+	echo.Please set BLENDERHOME to the blender.exe folder
+	goto end
 )
+set SPHINXBUILD="%BLENDERHOME%/blender.exe" --background --factory-startup --python blender-sphinx-build.py --
 set BUILDDIR=_build
 set ALLSPHINXOPTS=-d %BUILDDIR%/doctrees %SPHINXOPTS% .
 set I18NSPHINXOPTS=%SPHINXOPTS% .
