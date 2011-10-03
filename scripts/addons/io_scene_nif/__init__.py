@@ -102,19 +102,8 @@ class NifImportExportUI:
     # filepath is created by ImportHelper/ExportHelper
 
     filename_ext = ".nif"
-    filter_glob = bpy.props.StringProperty(default="*.nif;*.item;*.nifcache;*.jmi", options={'HIDDEN'})
-
-    directory = bpy.props.StringProperty(
-        name="Directory",
-        description="",
-        maxlen=1024,
-        default="")
-
-    filename = bpy.props.StringProperty(
-        name="File Name",
-        description="",
-        maxlen=1024,
-        default="")
+    filter_glob = bpy.props.StringProperty(
+        default="*.nif;*.item;*.nifcache;*.jmi", options={'HIDDEN'})
 
     log_level = bpy.props.EnumProperty(
         items=(

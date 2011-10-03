@@ -173,6 +173,7 @@ class NifExport(NifImportExport):
 
         # shortcut to export logger
         self.logger = logging.getLogger("niftools.blender.export")
+        self.logger.info("exporting {0}".format(self.properties.filepath))
 
         # TODO
         #if self.EXPORT_MW_NIFXNIFKF and self.EXPORT_VERSION == 'Morrowind':
@@ -180,13 +181,10 @@ class NifExport(NifImportExport):
         #    # the nif with geometry + animation, which is done by:
         #    self.EXPORT_ANIMATION = 0
 
-        # save file name
-        # remember:
-        # self.properties.filename = xxx.nif
-        # self.properties.filepath = yyy/zzz/xxx.nif
-        # self.properties.directory = yyy/zzz/
+        # extract directory, base name, extension
+        directory = os.path.dirname(self.properties.filepath)
         filebase, fileext = os.path.splitext(
-            self.properties.filename)
+            os.path.basename(self.properties.filepath))
 
         # variables
         # dictionary mapping exported blocks to either None or to an
@@ -744,8 +742,7 @@ class NifExport(NifImportExport):
                     self.logger.warning(
                         "Changing extension from %s to %s on output file"
                         % (fileext, ext))
-                    niffile = os.path.join(self.properties.directory,
-                                                     filebase + ext)
+                    niffile = os.path.join(directory, filebase + ext)
                 data = NifFormat.Data(version=self.version,
                                       user_version=NIF_USER_VERSION,
                                       user_version2=NIF_USER_VERSION2)
@@ -912,8 +909,7 @@ class NifExport(NifImportExport):
                 self.logger.info("Writing %s file" % (prefix + ext))
                 self.msg_progress("Writing %s file" % (prefix + ext))
 
-                kffile = os.path.join(self.properties.directory,
-                                                 prefix + filebase + ext)
+                kffile = os.path.join(directory, prefix + filebase + ext)
                 data = NifFormat.Data(version=self.version,
                                       user_version=NIF_USER_VERSION,
                                       user_version2=NIF_USER_VERSION2)
@@ -956,8 +952,7 @@ class NifExport(NifImportExport):
                 self.logger.info("Writing %s file" % (prefix + ext))
                 self.msg_progress("Writing %s file" % (prefix + ext))
 
-                xniffile = os.path.join(self.properties.directory,
-                                                 prefix + filebase + ext)
+                xniffile = os.path.join(directory, prefix + filebase + ext)
                 data = NifFormat.Data(version=self.version,
                                       user_version=NIF_USER_VERSION,
                                       user_version2=NIF_USER_VERSION2)
@@ -977,8 +972,7 @@ class NifExport(NifImportExport):
                 self.logger.info("Writing %s file" % ext)
                 self.msg_progress("Writing %s file" % ext)
 
-                egmfile = os.path.join(self.properties.directory,
-                                                 filebase + ext)
+                egmfile = os.path.join(directory, filebase + ext)
                 stream = open(egmfile, "wb")
                 try:
                     self.egmdata.write(stream)
