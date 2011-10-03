@@ -225,7 +225,17 @@ class NifExportUI(bpy.types.Operator, ExportHelper, NifImportExportUI):
     bl_label = "Export NIF"
 
     # properties
-    # TODO
+    game = bpy.props.EnumProperty(
+        items=[
+            (game.upper().replace(" ", "_"), game, "Export for " + game)
+            # implementation note: reversed makes it show alphabetically
+            # (at least with the current blender)
+            for game in reversed(sorted(
+                [x for x in list(NifFormat.games.keys()) if x != '?']))
+            ],
+        name="Game",
+        description="For which game to export?",
+        default='OBLIVION')
 
     def execute(self, context):
         """Main import function: open file and import all trees."""
@@ -245,7 +255,6 @@ class NifConfig:
         IMPORT_REALIGN_BONES = 1, # 0 = no, 1 = tail, 2 = tail+rotation
         IMPORT_ANIMATION = True,
         EXPORT_FLATTENSKIN = False,
-        EXPORT_VERSION = 'Oblivion',
         IMPORT_EGMANIM = True, # create FaceGen EGM animation curves
         IMPORT_EGMANIMSCALE = 1.0, # scale of FaceGen EGM animation curves
         EXPORT_ANIMSEQUENCENAME = '', # sequence name of the kf file
@@ -751,41 +760,6 @@ class NifConfig:
                 event_name = "EXPORT_OPTIMIZE_MATERIALS")
             self.draw_y_sep()
 
-            games_list = sorted([x for x in list(NifFormat.games.keys()) if x != '?'])
-            versions_list = sorted(list(NifFormat.versions.keys()), key=lambda x: NifFormat.versions[x])
-            V = self.xPos
-            H = HH = self.yPos
-            j = 0
-            MAXJ = 7
-            for i, game in enumerate(games_list):
-                if j >= MAXJ:
-                    H = HH
-                    j = 0
-                    V += 150
-                state = (self.config["EXPORT_VERSION"] == game)
-                self.guiElements["GAME_%s"%game.upper()] = Draw.Toggle(game, self.event_id("GAME_%s"%game), V, H-j*20, 150, 20, state)
-                j += 1
-            j = 0
-            V += 160
-            for i, version in enumerate(versions_list):
-                if j >= MAXJ:
-                    H = HH
-                    j = 0
-                    V += 70
-                state = (self.config["EXPORT_VERSION"] == version)
-                self.guiElements["VERSION_%s"%version] = Draw.Toggle(version, self.event_id("VERSION_%s"%version), V, H-j*20, 70, 20, state)
-                j += 1
-            self.yPos -= 20*min(MAXJ, max(len(NifFormat.versions), len(NifFormat.games)))
-            self.draw_y_sep()
-            
-            if self.config["EXPORT_VERSION"] in games_list:
-                self.guiElements["EXPORT_RESET"] = Draw.PushButton(
-                    "Restore Default Settings For Selected Game",
-                    self.event_id("GAME_%s"%self.config["EXPORT_VERSION"]),
-                    self.xPos, self.yPos, self.XCOLUMNSKIP, self.YLINESKIP)
-                self.yPos -= self.YLINESKIP
-                self.draw_y_sep()
-            
         self.draw_push_button(
             text = "Ok",
             event_name = "OK",
