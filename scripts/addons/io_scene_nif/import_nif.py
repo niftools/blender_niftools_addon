@@ -79,6 +79,7 @@ class NifImport(NifImportExport):
     D2R = 3.14159265358979/180.0
     
     def __init__(self, operator, context):
+        """Main import function."""
         # call base class constructor
         NifImportExport.__init__(self, operator, context)
 
@@ -266,11 +267,6 @@ class NifImport(NifImportExport):
                         self.import_kf_root(kf_root, root)
                 # import the nif tree
                 self.import_root(root)
-        except NifImportError as e: # in that case, we raise a menu too
-            self.logger.exception('NifImportError: %s' % e)
-            # XXX how to do this in Blender 2.5?
-            #Blender.Draw.PupMenu('ERROR%t|' + str(e))
-            raise
         finally:
             # clear progress bar
             self.msg_progress("Finished", progbar=1)
