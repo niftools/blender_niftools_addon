@@ -181,10 +181,12 @@ class NifExport(NifImportExport):
         #    self.EXPORT_ANIMATION = 0
 
         # save file name
-        self.filename = self.EXPORT_FILE[:]
-        self.filepath = os.path.dirname(self.filename)
-        self.filebase, self.fileext = os.path.splitext(
-            os.path.basename(self.filename))
+        # remember:
+        # self.properties.filename = xxx.nif
+        # self.properties.filepath = yyy/zzz/xxx.nif
+        # self.properties.directory = yyy/zzz/
+        filebase, fileext = os.path.splitext(
+            self.properties.filename)
 
         # variables
         # dictionary mapping exported blocks to either None or to an
@@ -281,7 +283,7 @@ class NifExport(NifImportExport):
                 root_name = 'Scene Root'
             # other games
             else:
-                root_name = self.filebase
+                root_name = filebase
      
             # get the root object from selected object
             # only export empties, meshes, and armatures
@@ -441,7 +443,7 @@ class NifExport(NifImportExport):
             # oblivion skeleton export: check that all bones have a
             # transform controller and transform interpolator
             if self.EXPORT_VERSION in ("Oblivion", "Fallout 3") \
-                and self.filebase.lower() in ('skeleton', 'skeletonbeast'):
+                and filebase.lower() in ('skeleton', 'skeletonbeast'):
                 # here comes everything that is Oblivion skeleton export
                 # specific
                 self.logger.info(
@@ -481,18 +483,18 @@ class NifExport(NifImportExport):
 
             # oblivion and Fallout 3 furniture markers
             if (self.EXPORT_VERSION in ('Oblivion', 'Fallout 3')
-                and self.filebase[:15].lower() == 'furnituremarker'):
+                and filebase[:15].lower() == 'furnituremarker'):
                 # exporting a furniture marker for Oblivion/FO3
                 try:
-                    furniturenumber = int(self.filebase[15:])
+                    furniturenumber = int(filebase[15:])
                 except ValueError:
                     raise NifExportError(
                         "Furniture marker has invalid number (%s)."
                         " Name your file 'furnituremarkerxx.nif'"
                         " where xx is a number between 00 and 19."
-                        % self.filebase[15:])
+                        % filebase[15:])
                 # name scene root name the file base name
-                root_name = self.filebase
+                root_name = filebase
                 # create furniture marker block
                 furnmark = self.create_block("BSFurnitureMarker")
                 furnmark.name = "FRN"
@@ -680,7 +682,7 @@ class NifExport(NifImportExport):
             if ((root_block.num_children == 1)
                 and ((root_block.children[0].name in ['Scene Root', 'Bip01']) or root_block.children[0].name[-3:] == 'nif')):
                 if root_block.children[0].name[-3:] == 'nif':
-                    root_block.children[0].name = self.filebase
+                    root_block.children[0].name = filebase
                 self.logger.info(
                     "Making '%s' the root block" % root_block.children[0].name)
                 # remove root_block from self.blocks
@@ -738,12 +740,12 @@ class NifExport(NifImportExport):
                 self.msg_progress("Writing %s file" % ext)
 
                 # make sure we have the right file extension
-                if (self.fileext.lower() != ext):
+                if (fileext.lower() != ext):
                     self.logger.warning(
                         "Changing extension from %s to %s on output file"
-                        % (self.fileext, ext))
-                    self.filename = os.path.join(self.filepath,
-                                                     self.filebase + ext)
+                        % (fileext, ext))
+                    niffile = os.path.join(self.properties.directory,
+                                                     filebase + ext)
                 data = NifFormat.Data(version=self.version,
                                       user_version=NIF_USER_VERSION,
                                       user_version2=NIF_USER_VERSION2)
@@ -754,7 +756,7 @@ class NifExport(NifImportExport):
                     data.modification = "ndoors"
                 elif self.EXPORT_VERSION == "Howling Sword":
                     data.modification = "jmihs1"
-                stream = open(self.filename, "wb")
+                stream = open(niffile, "wb")
                 try:
                     data.write(stream)
                 finally:
@@ -813,7 +815,7 @@ class NifExport(NifImportExport):
                     if self.EXPORT_ANIMSEQUENCENAME:
                         kf_root.name = self.EXPORT_ANIMSEQUENCENAME
                     else:
-                        kf_root.name = self.filebase
+                        kf_root.name = filebase
                     kf_root.unknown_int_1 = 1
                     kf_root.weight = 1.0
                     kf_root.text_keys = anim_textextra
@@ -910,14 +912,14 @@ class NifExport(NifImportExport):
                 self.logger.info("Writing %s file" % (prefix + ext))
                 self.msg_progress("Writing %s file" % (prefix + ext))
 
-                self.filename = os.path.join(self.filepath,
-                                                 prefix + self.filebase + ext)
+                kffile = os.path.join(self.properties.directory,
+                                                 prefix + filebase + ext)
                 data = NifFormat.Data(version=self.version,
                                       user_version=NIF_USER_VERSION,
                                       user_version2=NIF_USER_VERSION2)
                 data.roots = [kf_root]
                 data.neosteam = (self.EXPORT_VERSION == "NeoSteam")
-                stream = open(self.filename, "wb")
+                stream = open(kffile, "wb")
                 try:
                     data.write(stream)
                 finally:
@@ -954,14 +956,14 @@ class NifExport(NifImportExport):
                 self.logger.info("Writing %s file" % (prefix + ext))
                 self.msg_progress("Writing %s file" % (prefix + ext))
 
-                self.filename = os.path.join(self.filepath,
-                                                 prefix + self.filebase + ext)
+                xniffile = os.path.join(self.properties.directory,
+                                                 prefix + filebase + ext)
                 data = NifFormat.Data(version=self.version,
                                       user_version=NIF_USER_VERSION,
                                       user_version2=NIF_USER_VERSION2)
                 data.roots = [root_block]
                 data.neosteam = (self.EXPORT_VERSION == "NeoSteam")
-                stream = open(self.filename, "wb")
+                stream = open(xniffile, "wb")
                 try:
                     data.write(stream)
                 finally:
@@ -975,9 +977,9 @@ class NifExport(NifImportExport):
                 self.logger.info("Writing %s file" % ext)
                 self.msg_progress("Writing %s file" % ext)
 
-                self.filename = os.path.join(self.filepath,
-                                                 self.filebase + ext)
-                stream = open(self.filename, "wb")
+                egmfile = os.path.join(self.properties.directory,
+                                                 filebase + ext)
+                stream = open(egmfile, "wb")
                 try:
                     self.egmdata.write(stream)
                 finally:
