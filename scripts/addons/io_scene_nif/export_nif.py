@@ -171,20 +171,14 @@ class NifExport(NifImportExport):
         # call base class constructor
         NifImportExport.__init__(self, operator, context)
 
-        # preparation:
-        #--------------
-        self.msg_progress("Initializing", progbar=0)
-
-        # store configuration in self
-        for name, value in config.items():
-            setattr(self, name, value)
-        if self.EXPORT_MW_NIFXNIFKF and self.EXPORT_VERSION == 'Morrowind':
-            # if exporting in nif+xnif+kf mode, then first export
-            # the nif with geometry + animation, which is done by:
-            self.EXPORT_ANIMATION = 0
-
         # shortcut to export logger
         self.logger = logging.getLogger("niftools.blender.export")
+
+        # TODO
+        #if self.EXPORT_MW_NIFXNIFKF and self.EXPORT_VERSION == 'Morrowind':
+        #    # if exporting in nif+xnif+kf mode, then first export
+        #    # the nif with geometry + animation, which is done by:
+        #    self.EXPORT_ANIMATION = 0
 
         # save file name
         self.filename = self.EXPORT_FILE[:]
@@ -988,34 +982,14 @@ class NifExport(NifImportExport):
                     self.egmdata.write(stream)
                 finally:
                     stream.close()
-
-        # export error: raise a menu instead of an exception
-        except NifExportError as e:
-            e = str(e).replace("\n", " ")
-            Blender.Draw.PupMenu('EXPORT ERROR%t|' + str(e))
-            print('NifExportError: ' + str(e))
-            return
-
-        # IO error: raise a menu instead of an exception
-        except IOError as e: 
-            e = str(e).replace("\n", " ")
-            Blender.Draw.PupMenu('I/O ERROR%t|' + str(e))
-            print('IOError: ' + str(e))
-            return
-
-        # other error: raise a menu and an exception
-        except Exception as e:
-            e = str(e).replace("\n", " ")
-            Blender.Draw.PupMenu('ERROR%t|' + str(e) + '    Check console for possibly more details.')
-            raise
-
         finally:
             # clear progress bar
-            self.msg_progress("Finished", progbar = 1)
+            self.msg_progress("Finished", progbar=1)
 
         # save exported file (this is used by the test suite)
         self.root_blocks = [root_block]
 
+        return {'FINISHED'}
 
 
     def export_node(self, ob, space, parent_block, node_name):
