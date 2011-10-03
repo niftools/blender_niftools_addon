@@ -14,7 +14,10 @@ class TestCubeExport:
         self.mesh = self.obj.data
 
     def test_export(self):
-        bpy.ops.export_scene.nif()
+        bpy.ops.export_scene.nif(
+            filepath="test/tmp/test_cube_export.nif",
+            log_level='DEBUG',
+            )
 
     def teardown(self):
         # destroy cube
