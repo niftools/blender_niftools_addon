@@ -9,10 +9,11 @@ Create a Workspace
 ------------------
 
 First, create a directory to be used as your coding directory.
-If you plan to use eclipse, use
-``C:\Users\<username>\workspace`` (on Windows)
-or
-``/home/<username>/workspace`` (on Linux).
+If you plan to use eclipse, use:
+
+* ``C:\Users\<username>\workspace`` (Vista/Win 7),
+* ``C:\Documents and Settings\<username>\workspace`` (XP), or
+* ``/home/<username>/workspace`` (Linux).
 
 Install Blender
 ---------------
@@ -102,9 +103,13 @@ and select **Send to > Desktop (create shortcut)**.
 Now right-click this newly created shortcut,
 and change **Target** into::
 
-  %comspec% /k C:\Users\<username>\workspace\buildenv-python.bat C:\Python32 msvc2008 64 workspace
+  %comspec% /k C:\Users\<username>\workspace\buildenv.bat C:\Python32 msvc2008 64 workspace
 
-(on 32 bit systems, type ``32`` instead of ``64``).
+on Vista/Win 7, or::
+
+  %comspec% /k "C:\Documents and Settings\<username>\workspace\buildenv.bat" C:\Python32 msvc2008 64 workspace
+
+on XP. On 32 bit systems, type ``32`` instead of ``64``.
 
 Install Setuptools
 ------------------
