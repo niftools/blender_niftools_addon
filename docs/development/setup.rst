@@ -234,7 +234,7 @@ and the ReST Editor plugin.
   5. Once installed, you will be asked to configure the
      Python interpreter. Select your Python 3.2 executable
      when presented with a choice
-     (``C:\Python32\python.exe`` on Winodws
+     (``C:\Python32\python.exe`` on Windows
      and ``/usr/bin/python3`` on Fedora),
      and use **Auto Config**.
 
