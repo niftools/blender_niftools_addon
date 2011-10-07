@@ -49,9 +49,9 @@ bl_info = {
     "description":
     "Import and export files in the NetImmerse/Gamebryo nif format (.nif)",
     "author": "Amorilia",
-    "version": (3, 0, 0),
-    "blender:": (2, 7, 0),
-    "api": 34802,
+    "version": (2, 6, 0),
+    "blender:": (2, 5, 9),
+    "api": 39257,
     "location": "File > Import-Export",
     "warning": "not functional, port from 2.49 series still in progress",
     "wiki_url": (
