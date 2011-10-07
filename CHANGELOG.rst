@@ -1,4 +1,4 @@
-Version 3.0.0 (planned)
+Version 2.6.0 (planned)
 =======================
 
 * Initial port to Blender 2.59.
