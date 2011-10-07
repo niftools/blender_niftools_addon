@@ -6,6 +6,10 @@
 Welcome to Blender NIF Scripts's documentation!
 ===============================================
 
+.. warning::
+
+   Documentation is incomplete, and is still a work in progress.
+
 Contents:
 
 .. toctree::
