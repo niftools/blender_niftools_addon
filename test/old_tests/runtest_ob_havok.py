@@ -6,7 +6,7 @@ from nif_test import TestSuite
 
 # some tests to import and export nif files
 # as list of (filename, config dictionary, list of objects to be selected)
-# if the config has a EXPORT_VERSION key then the test is an export test
+# if the config has a game key then the test is an export test
 # otherwise it's an import test
 
 class TestSuiteHavok(TestSuite):
@@ -20,7 +20,7 @@ class TestSuiteHavok(TestSuite):
         self.test(
             filename="test/nif/_skeleton.nif",
             config=dict(
-                EXPORT_VERSION='Oblivion',
+                game='OBLIVION',
                 EXPORT_OB_MATERIAL=7, # skin
                 EXPORT_OB_BSXFLAGS=7, # anim + havok + skel
                 EXPORT_OB_MASS=605.0, # total mass, divided over all blocks
@@ -34,7 +34,7 @@ class TestSuiteHavok(TestSuite):
                 ob_meshes, "weapons", "blackaxe", "battleaxe.nif"))
         self.test(
             filename="test/nif/_battleaxe.nif",
-            config=dict(EXPORT_VERSION='Oblivion',
+            config=dict(game='OBLIVION',
                 EXPORT_OB_LAYER=5, # weapon
                 EXPORT_BHKLISTSHAPE=True,
                 EXPORT_OB_MASS=23.0),
@@ -46,7 +46,7 @@ class TestSuiteHavok(TestSuite):
         self.test(
             filename="test/nif/_crystalball02.nif",
             config=dict(
-                EXPORT_VERSION='Oblivion',
+                game='OBLIVION',
                 EXPORT_BHKLISTSHAPE=True,
                 EXPORT_OB_LAYER=4, # clutter
                 EXPORT_OB_MASS=9.5),
@@ -57,7 +57,7 @@ class TestSuiteHavok(TestSuite):
                 ob_meshes, "architecture", "anvil", "anvilcirclebench01.nif"))
         self.test(
             filename="test/nif/_anvilcirclebench01.nif",
-            config=dict(EXPORT_VERSION='Oblivion'),
+            config=dict(game='OBLIVION'),
             selection=['AnvilCircleBench01'])
 
         self.test(
@@ -65,7 +65,7 @@ class TestSuiteHavok(TestSuite):
                 ob_meshes, "architecture", "magestower", "frostatron.nif"))
         self.test(
             filename="test/nif/_frostatron.nif",
-            config=dict(EXPORT_VERSION='Oblivion'),
+            config=dict(game='OBLIVION'),
             selection=['FrostAtron'])
 
 suite = TestSuiteHavok("havok")

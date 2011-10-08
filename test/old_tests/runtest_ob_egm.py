@@ -60,7 +60,7 @@ class EgmTestSuite(TestSuite):
         # as part of geometry info is stored in tri file
         self.test(
             filename = 'test/nif/ob/_headhuman.nif',
-            config = dict(EXPORT_VERSION='Oblivion'),
+            config = dict(game='OBLIVION'),
             selection = ['Scene Root', '_MedNeutral']
             )
 

@@ -52,7 +52,7 @@ class SkinningTestSuite(TestSuite):
         self.test(
             filename = 'test/nif/_babelfish.nif',
             config = dict(
-                EXPORT_VERSION = 'Morrowind',
+                game = 'MORROWIND',
                 EXPORT_STRIPIFY = False, EXPORT_SKINPARTITION = False),
             selection = ['Root Bone'])
 
@@ -77,7 +77,7 @@ class SkinningTestSuite(TestSuite):
         self.test(
             filename = 'test/nif/_fulloblivionbody.nif',
             config = dict(
-                EXPORT_VERSION = 'Oblivion', EXPORT_SMOOTHOBJECTSEAMS = True,
+                game = 'OBLIVION', EXPORT_SMOOTHOBJECTSEAMS = True,
                 EXPORT_FLATTENSKIN = True),
             selection = ['Scene Root'])
         # compare skindata
@@ -92,7 +92,7 @@ class SkinningTestSuite(TestSuite):
         bbskin_export = self.test(
             filename = 'test/nif/_bb_skinf_br.nif',
             config = dict(
-                EXPORT_VERSION = 'Morrowind', EXPORT_SMOOTHOBJECTSEAMS = True,
+                game = 'MORROWIND', EXPORT_SMOOTHOBJECTSEAMS = True,
                 EXPORT_STRIPIFY = False, EXPORT_SKINPARTITION = False),
             selection = ['Bip01'])
         toaster = NifToaster(spellclass=SpellCompareSkinData,

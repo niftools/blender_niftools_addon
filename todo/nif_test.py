@@ -76,7 +76,7 @@ class TestSuite:
         @param filename: The name of the file to test.
         @type filename: C{str}
         @param config: Configuration options that differ from their default
-            values. If the dictionary has the key EXPORT_VERSION then the
+            values. If the dictionary has the key game then the
             selection is exported, otherwise a file is imported. Optional.
         @type config: C{dict}
         @param selection: List of names of objects to select before running
@@ -109,7 +109,7 @@ class TestSuite:
             finalconfig[key] = value
 
         # run test
-        if 'EXPORT_VERSION' in config:
+        if 'game' in config:
             # export the imported files
             self.logger.info("Exporting %s" % filename)
 

@@ -52,7 +52,7 @@ class TestSuiteChampionArmor(TestSuite):
         self.test(
             filename = 'test/nif/_cuirass.nif',
             config = dict(
-                EXPORT_VERSION = 'Oblivion', EXPORT_SMOOTHOBJECTSEAMS = True,
+                game = 'OBLIVION', EXPORT_SMOOTHOBJECTSEAMS = True,
                 EXPORT_FLATTENSKIN = True),
             selection = ['Scene Root'])
         toaster = NifToaster(spellclass=SpellCompareSkinData,

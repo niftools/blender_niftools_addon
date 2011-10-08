@@ -66,8 +66,8 @@ class NifImportExport:
     """
 
     USED_EXTRA_SHADER_TEXTURES = {
-        "Sid Meier's Railroads": (3, 0, 4, 1, 5, 2),
-        "Civilization IV": (3, 0, 1, 2)}
+        'SID_MEIER_S_RAILROADS': (3, 0, 4, 1, 5, 2),
+        'CIVILIZATION_IV': (3, 0, 1, 2)}
     """The default ordering of the extra data blocks for different games."""
 
     # Oblivion(and FO3) collision settings dicts for Anglicized names

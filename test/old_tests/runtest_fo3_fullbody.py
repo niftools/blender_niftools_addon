@@ -18,7 +18,7 @@ class Fallout3FullBodyTestSuite(TestSuite):
         # just checking that export works
         self.test(
             filename="test/nif/fo3/__fullbody.nif",
-            config=dict(EXPORT_VERSION='Fallout 3'),
+            config=dict(game='FALLOUT_3'),
             selection=['Scene Root'])
 
 suite = Fallout3FullBodyTestSuite("fo3_animation")

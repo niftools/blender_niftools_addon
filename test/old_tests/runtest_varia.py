@@ -77,7 +77,7 @@ class VariaTestSuite(TestSuite):
         # export
         nif_export = self.test(
             filename='test/nif/_bounding_box.nif',
-            config=dict(EXPORT_VERSION = 'Morrowind'),
+            config=dict(game = 'MORROWIND'),
             selection = ['Bounding Box'])
         # test stuff...
         bbox = nif_export.root_blocks[0].children[0]
@@ -111,7 +111,7 @@ class VariaTestSuite(TestSuite):
         # export
         nif_export = self.test(
             filename='test/nif/_bounding_box_bsbound.nif',
-            config=dict(EXPORT_VERSION = 'Oblivion'),
+            config=dict(game = 'OBLIVION'),
             selection = ['BSBound'])
         # test stuff...
         with closing(open('test/nif/_bounding_box_bsbound.nif')) as stream:
@@ -128,7 +128,7 @@ class VariaTestSuite(TestSuite):
         assert(not self.isTwoSided(Blender.Object.Get("NoStencil")))
         nif_export = self.test(
             filename = 'test/nif/_stenciltest.nif',
-            config = dict(EXPORT_VERSION = 'Oblivion'),
+            config = dict(game = 'OBLIVION'),
             selection = ['NoStencil', 'Stencil'])
         nif_stencil = nif_export.root_blocks[0].find(
             block_type = NifFormat.NiGeometry, block_name = "Stencil")
@@ -149,7 +149,7 @@ class VariaTestSuite(TestSuite):
         assert(alpha_obj_alpha < 0.99)
         nif_export = self.test(
             filename = 'test/nif/_alphatest.nif',
-            config = dict(EXPORT_VERSION = 'Oblivion'),
+            config = dict(game = 'OBLIVION'),
             selection = ['Alpha'])
         nif_alpha = nif_export.root_blocks[0].find(
             block_type = NifFormat.NiGeometry, block_name = "Alpha")
@@ -198,7 +198,7 @@ class VariaTestSuite(TestSuite):
         try:
             nif_export = self.test(
                 filename='test/nif/_packedtexurestest1.nif',
-                config=dict(EXPORT_VERSION = 'Fallout 3'),
+                config=dict(game = 'FALLOUT_3'),
                 selection=['packed_tex_test'],
                 next_layer=False)
         except NifExportError, e:
@@ -216,7 +216,7 @@ class VariaTestSuite(TestSuite):
         # this should work
         nif_export = self.test(
             filename='test/nif/_packedtexurestest2.nif',
-            config=dict(EXPORT_VERSION = 'Fallout 3'),
+            config=dict(game = 'FALLOUT_3'),
             selection=['packed_tex_test'],
             next_layer=False)
         # now pack the image
@@ -224,7 +224,7 @@ class VariaTestSuite(TestSuite):
         # this should work too - although with a warning
         nif_export = self.test(
             filename='test/nif/_packedtexurestest3.nif',
-            config=dict(EXPORT_VERSION = 'Fallout 3'),
+            config=dict(game = 'FALLOUT_3'),
             selection=['packed_tex_test'],
             next_layer=True)
 
@@ -267,7 +267,7 @@ class VariaTestSuite(TestSuite):
         # test export too
         nif_export = self.test(
             filename='test/nif/_fo3_textureslots.nif',
-            config=dict(EXPORT_VERSION='Fallout 3'),
+            config=dict(game='FALLOUT_3'),
             selection=['FO3TextureSlots'],
             next_layer=True)
         # check presence of the slots
@@ -298,7 +298,7 @@ class VariaTestSuite(TestSuite):
         # export as nif + xnif + kf
         self.test(
             filename='test/nif/mw/_testnifxnifkf.nif',
-            config=dict(EXPORT_VERSION='Morrowind',
+            config=dict(game='MORROWIND',
                         EXPORT_MW_NIFXNIFKF=True),
             selection=['Dance'],
             next_layer=True)
@@ -363,7 +363,7 @@ class VariaTestSuite(TestSuite):
         # write the file
         nif = self.test(
             filename='test/nif/fo3/_test_emit.nif',
-            config=dict(EXPORT_VERSION = 'Fallout 3'),
+            config=dict(game = 'FALLOUT_3'),
             selection=['TestEmit'],
             next_layer=True)
         # check that the correct values were exported
@@ -396,7 +396,7 @@ class VariaTestSuite(TestSuite):
         # write the file
         nif = self.test(
             filename='test/nif/fo3/_test_emit2.nif',
-            config=dict(EXPORT_VERSION='Fallout 3'),
+            config=dict(game='FALLOUT_3'),
             selection=['TestEmit2'],
             next_layer=True)
         # check that the correct values were exported
@@ -434,7 +434,7 @@ class VariaTestSuite(TestSuite):
         # export
         nif = self.test(
             filename='test/nif/mw/_test_uvcontroller.nif',
-            config=dict(EXPORT_VERSION='Morrowind'),
+            config=dict(game='MORROWIND'),
             selection=['TestUVController'],
             next_layer=False)
         # check that nif was correctly exported
@@ -443,7 +443,7 @@ class VariaTestSuite(TestSuite):
         nif = self.test(
             filename='test/nif/mw/_test_bsanimation_uvcontroller.nif',
             config=dict(
-                EXPORT_VERSION='Morrowind',
+                game='MORROWIND',
                 EXPORT_MW_BS_ANIMATION_NODE=True),
             selection=['TestUVController'],
             next_layer=True)
@@ -465,7 +465,7 @@ class VariaTestSuite(TestSuite):
         # export: should warn but not fail
         nif = self.test(
             filename='test/nif/mw/_test_anim_buffer_out_of_range.nif',
-            config=dict(EXPORT_VERSION='Morrowind'),
+            config=dict(game='MORROWIND'),
             selection=[],
             next_layer=False)
         # remove the animation keys
@@ -479,7 +479,7 @@ class VariaTestSuite(TestSuite):
         # export as kf
         self.test(
             filename='test/nif/ob/_testanimseqname.kf',
-            config=dict(EXPORT_VERSION='Oblivion',
+            config=dict(game='OBLIVION',
                         EXPORT_ANIMATION=2,
                         EXPORT_ANIMSEQUENCENAME="TestAnimSeqName"),
             selection=['Dance'],

@@ -142,7 +142,7 @@ class SMRailroadsTestSuite(TestSuite):
 
         nif_export = self.test(
             filename = 'test/nif/_smrailroads1.nif',
-            config = dict(EXPORT_VERSION = "Sid Meier's Railroads"),
+            config = dict(game = 'SID_MEIER_S_RAILROADS'),
             selection = ['Test'])
         root_block = nif_export.root_blocks[0]
 

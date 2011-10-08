@@ -18,7 +18,7 @@ class Fallout3AnimationTestSuite(TestSuite):
         self.test(
             filename="test/nif/fo3/_h2haim.kf",
             config=dict(
-                EXPORT_VERSION='Fallout 3',
+                game='FALLOUT_3',
                 EXPORT_ANIMATION = 2), # animation only
             selection=['Scene Root'])
 
