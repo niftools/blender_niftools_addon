@@ -232,7 +232,7 @@ class NifExport(NifImportExport):
 
             for ob in bpy.data.objects:
                 # armatures should not be in rest position
-                if ob.getType() == 'Armature':
+                if ob.type == 'ARMATURE':
                     # ensure we get the mesh vertices in animation mode,
                     # and not in rest position!
                     ob.data.restPosition = False
@@ -253,7 +253,7 @@ class NifExport(NifImportExport):
                 # check for non-uniform transforms
                 # (lattices are not exported so ignore them as they often tend
                 # to have non-uniform scaling)
-                if ob.getType() != 'Lattice':
+                if ob.type != 'LATTICE':
                     try:
                         self.decompose_srt(ob.getMatrix('localspace'))
                     except NifExportError: # non-uniform scaling
@@ -1075,7 +1075,7 @@ class NifExport(NifImportExport):
         # this fixes an issue with clothing slots
         if ob_type == 'Mesh':
             ob_parent = ob.getParent()
-            if ob_parent and ob_parent.getType() == 'Armature':
+            if ob_parent and ob_parent.type == 'ARMATURE':
                 if ob_ipo:
                     # mesh with armature parent should not have animation!
                     self.logger.warn(
@@ -1127,7 +1127,7 @@ class NifExport(NifImportExport):
                 
             # if it is an armature, export the bones as ninode
             # children of this ninode
-            elif (ob.getType() == 'Armature'):
+            elif (ob.type == 'ARMATURE'):
                 self.export_bones(ob, node)
 
             # export all children of this empty/mesh/armature/bone
@@ -2436,7 +2436,7 @@ class NifExport(NifImportExport):
             vertgroups = ob.data.getVertGroupNames()
             bonenames = []
             if ob.getParent():
-                if ob.getParent().getType() == 'Armature':
+                if ob.getParent().type == 'ARMATURE':
                     ob_armature = ob.getParent()
                     armaturename = ob_armature.getName()
                     bonenames = list(ob_armature.getData().bones.keys())
@@ -2982,7 +2982,7 @@ class NifExport(NifImportExport):
         """Export the bones of an armature."""
         # the armature was already exported as a NiNode
         # now we must export the armature's bones
-        assert( arm.getType() == 'Armature' )
+        assert( arm.type == 'ARMATURE' )
 
         # find the root bones
         # dictionary of bones (name -> bone)
