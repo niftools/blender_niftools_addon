@@ -8,3 +8,4 @@ Contents:
 
    setup
    workflow
+   design

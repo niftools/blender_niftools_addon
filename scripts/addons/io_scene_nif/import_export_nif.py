@@ -119,7 +119,8 @@ class NifImportExport:
         """
         # print scripts info
         from . import bl_info
-        print(
+        operator.report(
+            {'INFO'},
             "Blender NIF Scripts %s"
             " (running on Blender %s, PyFFI %s)"
             % (".".join(str(i) for i in bl_info["version"]),
@@ -127,6 +128,7 @@ class NifImportExport:
                pyffi.__version__))
 
         # copy properties from operator (contains import/export settings)
+        self.operator = operator
         self.properties = operator.properties
 
         # initialize progress bar
@@ -151,6 +153,23 @@ class NifImportExport:
             # then context.selected_objects is None
             # but an empty list makes more sense (for iterating)
             self.selected_objects = []
+
+    def execute(self):
+        """Import/export entry point. Default implementation does nothing."""
+        return {'FINISHED'}
+
+    def error(self, message):
+        """Report an error and return operator finish enum. To be called by
+        the :meth:`execute` method, as::
+
+            return error('Something went wrong.')
+
+        .. seealso::
+
+            The :ref:`error reporting <dev-design-error-reporting>` design.
+        """
+        self.operator.report({'ERROR'}, message)
+        return {'FINISHED'}
 
     def msg_progress(self, message, progbar=None):
         """Message wrapper for the Blender progress bar."""

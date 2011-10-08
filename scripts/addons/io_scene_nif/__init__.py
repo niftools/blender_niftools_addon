@@ -216,7 +216,7 @@ class NifImportUI(bpy.types.Operator, ImportHelper, NifImportExportUI):
     def execute(self, context):
         """Main import function: open file and import all trees."""
         from . import import_nif
-        return import_nif.NifImport(self, context)
+        return import_nif.NifImport(self, context).execute()
 
 def _game_to_enum(game):
     symbols = ":,'\" +-*!?;./="
@@ -265,9 +265,9 @@ class NifExportUI(bpy.types.Operator, ExportHelper, NifImportExportUI):
         }
 
     def execute(self, context):
-        """Main import function: open file and import all trees."""
+        """Main export function: open file and export all trees."""
         from . import export_nif
-        return export_nif.NifExport(self, context)
+        return export_nif.NifExport(self, context).execute()
 
 # TODO: integrate with NifImportExport class
 # we're removing stuff from this class as we integrate
