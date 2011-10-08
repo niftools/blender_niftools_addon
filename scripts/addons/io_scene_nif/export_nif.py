@@ -166,10 +166,8 @@ class NifExport(NifImportExport):
         # return the list of unique exported objects
         return exported_objects
 
-    def __init__(self, operator, context):
+    def execute(self):
         """Main export function."""
-        # call base class constructor
-        NifImportExport.__init__(self, operator, context)
 
         # shortcut to export logger
         self.logger = logging.getLogger("niftools.blender.export")
@@ -218,7 +216,7 @@ class NifExport(NifImportExport):
         try: # catch export errors
 
             # find nif version to write
-            self.version = operator.version[self.properties.game]
+            self.version = self.operator.version[self.properties.game]
             self.logger.info("Writing NIF version 0x%08X" % self.version)
 
             if self.properties.animation == 'ALL_NIF':
@@ -258,10 +256,12 @@ class NifExport(NifImportExport):
                     if (abs(scale.x - scale.y) > self.properties.epsilon
                         or abs(scale.y - scale.z) > self.properties.epsilon):
 
-                        raise NifExportError(
+                        self.operator.report(
+                            {'ERROR'},
                             "Non-uniform scaling not supported."
                             " Workaround: apply size and rotation (CTRL-A)"
                             " on '%s'." % ob.name)
+                        return {'FINISHED'}
 
             # extract some useful scene info
             self.context.scene = Blender.Scene.GetCurrent()

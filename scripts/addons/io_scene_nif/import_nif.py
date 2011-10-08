@@ -78,11 +78,8 @@ class NifImport(NifImportExport):
     # degrees to radians conversion constant
     D2R = 3.14159265358979/180.0
     
-    def __init__(self, operator, context):
+    def execute(self):
         """Main import function."""
-        # call base class constructor
-        NifImportExport.__init__(self, operator, context)
-
         # shortcut to import logger
         self.logger = logging.getLogger("niftools.blender.import")
 
