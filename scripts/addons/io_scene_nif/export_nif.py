@@ -1009,7 +1009,7 @@ class NifExport(NifImportExport):
             assert(ob_type in ['Empty', 'Mesh', 'Armature']) # debug
             assert(parent_block) # debug
             ob_ipo = ob.getIpo() # get animation data
-            ob_children = self.get_b_children(ob)
+            ob_children = ob.children
             
             if (node_name == 'RootCollisionNode'):
                 # -> root collision node (can be mesh or empty)
@@ -3082,7 +3082,7 @@ class NifExport(NifImportExport):
         """Export all children of blender object ob as children of
         parent_block."""
         # loop over all obj's children
-        for ob_child in self.get_b_children(obj):
+        for ob_child in obj.children:
             # is it a regular node?
             if ob_child.getType() in ['Mesh', 'Empty', 'Armature']:
                 if (obj.getType() != 'Armature'):
@@ -4490,7 +4490,7 @@ class NifExport(NifImportExport):
         n_range_data = self.create_block("NiRangeLODData", b_obj)
         n_node.lod_level_data = n_range_data
         # get the children
-        b_children = self.get_b_children(b_obj)
+        b_children = b_obj.children
         # set the data
         n_node.num_lod_levels = len(b_children)
         n_range_data.num_lod_levels = len(b_children)
