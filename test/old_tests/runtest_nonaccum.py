@@ -75,15 +75,15 @@ class NonAccumTestSuite(TestSuite):
             next_layer=False)
         # check that these files are present, and check some of their properties
         with closing(open('test/nif/ob/_testnonaccum_default.nif')) as stream:
-            self.logger.info("Reading test/nif/ob/_testnonaccum_default.nif")
+            self.info("Reading test/nif/ob/_testnonaccum_default.nif")
             nif_default = NifFormat.Data()
             nif_default.read(stream)
         with closing(open('test/nif/ob/_testnonaccum_accumxy.nif')) as stream:
-            self.logger.info("Reading test/nif/ob/_testnonaccum_accumxy.nif")
+            self.info("Reading test/nif/ob/_testnonaccum_accumxy.nif")
             nif_xy = NifFormat.Data()
             nif_xy.read(stream)
         with closing(open('test/nif/ob/_testnonaccum_accumnone.nif')) as stream:
-            self.logger.info("Reading test/nif/ob/_testnonaccum_accumnone.nif")
+            self.info("Reading test/nif/ob/_testnonaccum_accumnone.nif")
             nif_none = NifFormat.Data()
             nif_none.read(stream)
         # check root blocks

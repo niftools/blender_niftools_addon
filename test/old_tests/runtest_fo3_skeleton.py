@@ -69,7 +69,7 @@ class SkeletonTestSuite(TestSuite):
                 if n_imp_node.name != n_exp_node.name:
                     continue
                 # check that transforms are equal
-                self.logger.info("checking transform of %s" % n_imp_node.name)
+                self.info("checking transform of %s" % n_imp_node.name)
                 if (n_imp_node.get_transform() != n_exp_node.get_transform()):
                     raise ValueError(
                         "transforms are different\n%s\n%s\n"
