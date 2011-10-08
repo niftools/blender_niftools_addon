@@ -254,9 +254,10 @@ class NifExport(NifImportExport):
                 # (lattices are not exported so ignore them as they often tend
                 # to have non-uniform scaling)
                 if ob.type != 'LATTICE':
-                    try:
-                        self.decompose_srt(ob.getMatrix('localspace'))
-                    except NifExportError: # non-uniform scaling
+                    scale = ob.matrix_local.to_scale()
+                    if (abs(scale.x - scale.y) > self.properties.epsilon
+                        or abs(scale.y - scale.z) > self.properties.epsilon):
+
                         raise NifExportError(
                             "Non-uniform scaling not supported."
                             " Workaround: apply size and rotation (CTRL-A)"
