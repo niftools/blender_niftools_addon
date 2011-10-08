@@ -240,8 +240,23 @@ class NifExportUI(bpy.types.Operator, ExportHelper, NifImportExportUI):
                 [x for x in NifFormat.games.keys() if x != '?']))
             ],
         name="Game",
-        description="For which game to export?",
+        description="For which game to export.",
         default='OBLIVION')
+
+    # EXPORT_ANIMATION == 0 is ALL_NIF
+    # EXPORT_ANIMATION == 1 is GEOM_NIF
+    # EXPORT_ANIMATION == 2 is ANIM_KF
+    # EXPORT_MW_NIFXNIFKF == True is ALL_NIF_XNIF_XKF
+    animation = bpy.props.EnumProperty(
+        items=[
+            ('ALL_NIF', "All (nif)", "Geometry and animation to a single nif."),
+            ('ALL_NIF_XNIF_XKF', "All (nif, xnif, xkf)", "Geometry and animation to a nif, xnif, and xkf (for Morrowind)."),
+            ('GEOM_NIF', "Geometry only (nif)", "Only geometry to a single nif."),
+            ('ANIM_KF', "Animation only (kf)", "Only animation to a single kf."),
+            ],
+        name="Animation",
+        description="How to export animation.",
+        default='ALL_NIF')
 
     # map game enum to nif version
     version = {
@@ -301,7 +316,6 @@ class NifConfig:
         EXPORT_FO3_FADENODE = False,
         EXPORT_FO3_SHADER_TYPE = 1, # shader_default
         EXPORT_FO3_BODYPARTS = True,
-        EXPORT_MW_NIFXNIFKF = False,
         EXPORT_EXTRA_SHADER_TEXTURES = True,
         EXPORT_ANIMTARGETNAME = '',
         EXPORT_ANIMPRIORITY = 0,
@@ -689,22 +703,6 @@ class NifConfig:
 
         # export-only options
         if self.target == self.TARGET_EXPORT:
-            self.draw_toggle(
-                text = "Export Geometry + Animation (.nif)",
-                event_name = "EXPORT_ANIMATION_0",
-                val = ((self.config["EXPORT_ANIMATION"] == 0)
-                       or self.config["EXPORT_MW_NIFXNIFKF"]))
-            self.draw_toggle(
-                text = "Export Geometry Only (.nif)",
-                event_name = "EXPORT_ANIMATION_1",
-                val = ((self.config["EXPORT_ANIMATION"] == 1)
-                       or self.config["EXPORT_MW_NIFXNIFKF"]))
-            self.draw_toggle(
-                text = "Export Animation Only (.kf)",
-                event_name = "EXPORT_ANIMATION_2",
-                val = ((self.config["EXPORT_ANIMATION"] == 2)
-                       or self.config["EXPORT_MW_NIFXNIFKF"]))
-            self.draw_y_sep()
 
             self.draw_string(
                 text = "Anim Seq Name: ",

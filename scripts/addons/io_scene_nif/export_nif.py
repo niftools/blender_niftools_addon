@@ -176,10 +176,10 @@ class NifExport(NifImportExport):
         self.logger.info("exporting {0}".format(self.properties.filepath))
 
         # TODO
-        #if self.EXPORT_MW_NIFXNIFKF and self.properties.game == 'MORROWIND':
+        #if self.properties.animation == 'ALL_NIF_XNIF_XKF' and self.properties.game == 'MORROWIND':
         #    # if exporting in nif+xnif+kf mode, then first export
         #    # the nif with geometry + animation, which is done by:
-        #    self.EXPORT_ANIMATION = 0
+        #    self.properties.animation = 'ALL_NIF'
 
         # extract directory, base name, extension
         directory = os.path.dirname(self.properties.filepath)
@@ -221,12 +221,12 @@ class NifExport(NifImportExport):
             self.version = operator.version[self.properties.game]
             self.logger.info("Writing NIF version 0x%08X" % self.version)
 
-            if self.EXPORT_ANIMATION == 0:
+            if self.properties.animation == 'ALL_NIF':
                 self.logger.info("Exporting geometry and animation")
-            elif self.EXPORT_ANIMATION == 1:
+            elif self.properties.animation == 'GEOM_NIF':
                 # for morrowind: everything except keyframe controllers
                 self.logger.info("Exporting geometry only")
-            elif self.EXPORT_ANIMATION == 2:
+            elif self.properties.animation == 'ANIM_KF':
                 # for morrowind: only keyframe controllers
                 self.logger.info("Exporting animation only (as .kf file)")
 
@@ -723,7 +723,7 @@ class NifExport(NifImportExport):
             # export nif file:
             #-----------------
 
-            if self.EXPORT_ANIMATION != 2:
+            if self.properties.animation != 'ANIM_KF':
                 if self.properties.game == 'EMPIRE_EARTH_II':
                     ext = ".nifcache"
                 else:
@@ -757,7 +757,7 @@ class NifExport(NifImportExport):
             #-----------------------------------------------
 
             # convert root_block tree into a keyframe tree
-            if self.EXPORT_ANIMATION == 2 or self.EXPORT_MW_NIFXNIFKF:
+            if self.properties.animation == 'ANIM_KF' or self.properties.animation == 'ALL_NIF_XNIF_XKF':
                 self.logger.info("Creating keyframe tree")
                 # find all nodes and relevant controllers
                 node_kfctrls = {}
@@ -897,7 +897,7 @@ class NifExport(NifImportExport):
                         % self.properties.game)
 
                 # write kf (and xnif if asked)
-                prefix = "" if not self.EXPORT_MW_NIFXNIFKF else "x"
+                prefix = "" if (self.properties.animation != 'ALL_NIF_XNIF_XKF') else "x"
 
                 ext = ".kf"
                 self.logger.info("Writing %s file" % (prefix + ext))
@@ -915,7 +915,7 @@ class NifExport(NifImportExport):
                 finally:
                     stream.close()
 
-            if self.EXPORT_MW_NIFXNIFKF:
+            if self.properties.animation == 'ALL_NIF_XNIF_XKF':
                 self.logger.info("Detaching keyframe controllers from nif")
                 # detach the keyframe controllers from the nif (for xnif)
                 for node in root_block.tree():
@@ -1184,7 +1184,7 @@ class NifExport(NifImportExport):
     # so having inverse(X) around saves on calculations
     def export_keyframes(self, ipo, space, parent_block, bind_mat = None,
                          extra_mat_inv = None):
-        if self.EXPORT_ANIMATION == 1 and self.version < 0x0A020000:
+        if self.properties.animation == 'GEOM_NIF' and self.version < 0x0A020000:
             # keyframe controllers are not present in geometry only files
             # for more recent versions, the controller and interpolators are
             # present, only the data is not present (see further on)
@@ -1257,7 +1257,7 @@ class NifExport(NifImportExport):
         kfc.start_time = (start_frame - 1) * self.fspeed
         kfc.stop_time = (stop_frame - 1) * self.fspeed
 
-        if self.EXPORT_ANIMATION == 1:
+        if self.properties.animation == 'GEOM_NIF':
             # keyframe data is not present in geometry files
             return
 
@@ -1555,7 +1555,7 @@ class NifExport(NifImportExport):
         """Parse the animation groups buffer and write an extra string
         data block, and attach it to an existing block (typically, the root
         of the nif tree)."""
-        if self.EXPORT_ANIMATION == 1:
+        if self.properties.animation == 'GEOM_NIF':
             # animation group extra data is not present in geometry only files
             return
 
@@ -2713,7 +2713,7 @@ class NifExport(NifImportExport):
 
                             # geometry only export has no float data
                             # also skip keys that have no curve (such as base key)
-                            if self.EXPORT_ANIMATION == 1 or not curve:
+                            if self.properties.animation == 'GEOM_NIF' or not curve:
                                 continue
 
                             # note: we set data on morph for older nifs
@@ -2758,7 +2758,7 @@ class NifExport(NifImportExport):
 
     def export_material_controllers(self, b_material, n_geom):
         """Export material animation data for given geometry."""
-        if self.EXPORT_ANIMATION == 1:
+        if self.properties.animation == 'GEOM_NIF':
             # geometry only: don't write controllers
             return
 

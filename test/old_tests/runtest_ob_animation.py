@@ -26,7 +26,7 @@ class TestSuiteAnimation(TestSuite):
             filename='test/nif/_castself.kf',
             config=dict(
                 game = 'OBLIVION',
-                EXPORT_ANIMATION = 2, # animation only
+                animation='ANIM_KF', # animation only
                 EXPORT_OB_LAYER = NifFormat.OblivionLayer.OL_BIPED),
              selection=['Scene Root'])
 
