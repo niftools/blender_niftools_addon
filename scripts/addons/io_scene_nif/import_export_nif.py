@@ -171,10 +171,12 @@ class NifImportExport:
         self.operator.report({'WARNING'}, message)
 
     def error(self, message):
-        """Report an error and return operator finish enum. To be called by
+        """Report an error and return ``{'FINISHED'}``. To be called by
         the :meth:`execute` method, as::
 
             return error('Something went wrong.')
+
+        Blender will raise an exception that is passed to the caller.
 
         .. seealso::
 
