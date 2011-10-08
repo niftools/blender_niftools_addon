@@ -218,14 +218,8 @@ class NifExport(NifImportExport):
         try: # catch export errors
 
             # find nif version to write
-            try:
-                self.version = NifFormat.versions[self.properties.game]
-                self.logger.info("Writing NIF version 0x%08X" % self.version)
-            except KeyError:
-                # select highest nif version that the game supports
-                self.version = NifFormat.games[self.properties.game][-1]
-                self.logger.info("Writing %s NIF (version 0x%08X)"
-                                 % (self.properties.game, self.version))
+            self.version = operator.version[self.properties.game]
+            self.logger.info("Writing NIF version 0x%08X" % self.version)
 
             if self.EXPORT_ANIMATION == 0:
                 self.logger.info("Exporting geometry and animation")

@@ -237,11 +237,17 @@ class NifExportUI(bpy.types.Operator, ExportHelper, NifImportExportUI):
             # implementation note: reversed makes it show alphabetically
             # (at least with the current blender)
             for game in reversed(sorted(
-                [x for x in list(NifFormat.games.keys()) if x != '?']))
+                [x for x in NifFormat.games.keys() if x != '?']))
             ],
         name="Game",
         description="For which game to export?",
         default='OBLIVION')
+
+    # map game enum to nif version
+    version = {
+        _game_to_enum(game): versions[-1]
+        for game, versions in NifFormat.games.items() if game != '?'
+        }
 
     def execute(self, context):
         """Main import function: open file and import all trees."""
