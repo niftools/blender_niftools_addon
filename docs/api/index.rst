@@ -10,4 +10,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   ui
    import_export_nif
+   import_nif
+   export_nif
