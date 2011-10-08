@@ -255,13 +255,6 @@ class NifExport(NifImportExport):
                             " Workaround: apply size and rotation (CTRL-A)"
                             " on '%s'." % ob.name)
 
-            # extract some useful scene info
-            self.context.scene = Blender.Scene.GetCurrent()
-            context = self.context.scene.getRenderingContext()
-            self.fspeed = 1.0 / context.framesPerSec()
-            self.fstart = context.startFrame()
-            self.fend = context.endFrame()
-            
             # oblivion, Fallout 3 and civ4
             if (self.properties.game
                 in ('CIVILIZATION_IV', 'OBLIVION', 'FALLOUT_3')):
@@ -390,7 +383,7 @@ class NifExport(NifImportExport):
                     self.info("Defining default animation group.")
                     # write the animation group text buffer
                     animtxt = Blender.Text.New("Anim")
-                    animtxt.write("%i/Idle: Start/Idle: Loop Start\n%i/Idle: Loop Stop/Idle: Stop" % (self.fstart, self.fend))
+                    animtxt.write("%i/Idle: Start/Idle: Loop Start\n%i/Idle: Loop Stop/Idle: Stop" % (self.context.scene.frame_start, self.context.scene.frame_end))
 
             # animations without keyframe animations crash the TESCS
             # if we are in that situation, add a trivial keyframe animation
@@ -805,8 +798,8 @@ class NifExport(NifImportExport):
                     kf_root.text_keys = anim_textextra
                     kf_root.cycle_type = NifFormat.CycleType.CYCLE_CLAMP
                     kf_root.frequency = 1.0
-                    kf_root.start_time =(self.fstart - 1) * self.fspeed
-                    kf_root.stop_time = (self.fend - self.fstart) * self.fspeed
+                    kf_root.start_time =(self.context.scene.frame_start - 1) * self.context.scene.render.fps
+                    kf_root.stop_time = (self.context.scene.frame_end - self.context.scene.frame_start) * self.context.scene.render.fps
                     # quick hack to set correct target name
                     if not self.EXPORT_ANIMTARGETNAME:
                         if "Bip01" in [node.name for
@@ -1239,16 +1232,16 @@ class NifExport(NifImportExport):
             # dummy ipo
             # default extend, start, and end
             extend = Blender.IpoCurve.ExtendTypes.CYCLIC
-            start_frame = self.fstart
-            stop_frame = self.fend
+            start_frame = self.context.scene.frame_start
+            stop_frame = self.context.scene.frame_end
 
         # fill in the non-trivial values
         kfc.flags = 8 # active
         kfc.flags |= self.get_flags_from_extend(extend)
         kfc.frequency = 1.0
         kfc.phase = 0.0
-        kfc.start_time = (start_frame - 1) * self.fspeed
-        kfc.stop_time = (stop_frame - 1) * self.fspeed
+        kfc.start_time = (start_frame - 1) * self.context.scene.render.fps
+        kfc.stop_time = (stop_frame - 1) * self.context.scene.render.fps
 
         if self.properties.animation == 'GEOM_NIF':
             # keyframe data is not present in geometry files
@@ -1321,7 +1314,7 @@ class NifExport(NifImportExport):
                 # non-empty curve: go over all frames of the curve
                 for btriple in ipo[curve].bezierPoints:
                     frame = btriple.pt[0]
-                    if (frame < self.fstart) or (frame > self.fend):
+                    if (frame < self.context.scene.frame_start) or (frame > self.context.scene.frame_end):
                         continue
                     # PO_SCALEX == OB_SCALEX, so this does both pose and object
                     # scale
@@ -1455,9 +1448,9 @@ class NifExport(NifImportExport):
                 rot_frame_x = kfd.xyz_rotations[0].keys[i]
                 rot_frame_y = kfd.xyz_rotations[1].keys[i]
                 rot_frame_z = kfd.xyz_rotations[2].keys[i]
-                rot_frame_x.time = (frame - 1) * self.fspeed
-                rot_frame_y.time = (frame - 1) * self.fspeed
-                rot_frame_z.time = (frame - 1) * self.fspeed
+                rot_frame_x.time = (frame - 1) * self.context.scene.render.fps
+                rot_frame_y.time = (frame - 1) * self.context.scene.render.fps
+                rot_frame_z.time = (frame - 1) * self.context.scene.render.fps
                 rot_frame_x.value = rot_curve[frame].x * 3.14159265358979323846 / 180.0
                 rot_frame_y.value = rot_curve[frame].y * 3.14159265358979323846 / 180.0
                 rot_frame_z.value = rot_curve[frame].z * 3.14159265358979323846 / 180.0
@@ -1469,7 +1462,7 @@ class NifExport(NifImportExport):
             kfd.quaternion_keys.update_size()
             for i, frame in enumerate(frames):
                 rot_frame = kfd.quaternion_keys[i]
-                rot_frame.time = (frame - 1) * self.fspeed
+                rot_frame.time = (frame - 1) * self.context.scene.render.fps
                 rot_frame.value.w = rot_curve[frame].w
                 rot_frame.value.x = rot_curve[frame].x
                 rot_frame.value.y = rot_curve[frame].y
@@ -1482,7 +1475,7 @@ class NifExport(NifImportExport):
         kfd.translations.keys.update_size()
         for i, frame in enumerate(frames):
             trans_frame = kfd.translations.keys[i]
-            trans_frame.time = (frame - 1) * self.fspeed
+            trans_frame.time = (frame - 1) * self.context.scene.render.fps
             trans_frame.value.x = trans_curve[frame][0]
             trans_frame.value.y = trans_curve[frame][1]
             trans_frame.value.z = trans_curve[frame][2]
@@ -1494,7 +1487,7 @@ class NifExport(NifImportExport):
         kfd.scales.keys.update_size()
         for i, frame in enumerate(frames):
             scale_frame = kfd.scales.keys[i]
-            scale_frame.time = (frame - 1) * self.fspeed
+            scale_frame.time = (frame - 1) * self.context.scene.render.fps
             scale_frame.value = scale_curve[frame]
 
     def export_vertex_color_property(self, block_parent,
@@ -1577,10 +1570,10 @@ class NifExport(NifImportExport):
             if (len(t) < 2):
                 raise NifExportError("Syntax error in Anim buffer ('%s')" % s)
             f = int(t[0])
-            if ((f < self.fstart) or (f > self.fend)):
+            if ((f < self.context.scene.frame_start) or (f > self.context.scene.frame_end)):
                 self.warning("frame in animation buffer out of range "
                                  "(%i not in [%i, %i])"
-                                 % (f, self.fstart, self.fend))
+                                 % (f, self.context.scene.frame_start, self.context.scene.frame_end))
             d = t[1].strip(' ')
             for i in range(2, len(t)):
                 d = d + '\r\n' + t[i].strip(' ')
@@ -1599,7 +1592,7 @@ class NifExport(NifImportExport):
         textextra.num_text_keys = len(flist)
         textextra.text_keys.update_size()
         for i, key in enumerate(textextra.text_keys):
-            key.time = self.fspeed * (flist[i]-1)
+            key.time = self.context.scene.render.fps * (flist[i]-1)
             key.value = dlist[i]
 
         return textextra
@@ -1729,8 +1722,8 @@ class NifExport(NifImportExport):
         # fill in NiFlipController's values
         flip.flags = 8 # active
         flip.frequency = 1.0
-        flip.start_time = (self.fstart - 1) * self.fspeed
-        flip.stop_time = ( self.fend - self.fstart ) * self.fspeed
+        flip.start_time = (self.context.scene.frame_start - 1) * self.context.scene.render.fps
+        flip.stop_time = ( self.context.scene.frame_end - self.context.scene.frame_start ) * self.context.scene.render.fps
         flip.texture_slot = target_tex
         count = 0
         for t in tlist:
@@ -2730,12 +2723,12 @@ class NifExport(NifImportExport):
                             for i, btriple in enumerate(curve.getPoints()):
                                 knot = btriple.getPoints()
                                 morph.keys[i].arg = morph.interpolation
-                                morph.keys[i].time = (knot[0] - self.fstart) * self.fspeed
+                                morph.keys[i].time = (knot[0] - self.context.scene.frame_start) * self.context.scene.render.fps
                                 morph.keys[i].value = curve.evaluate( knot[0] )
                                 #morph.keys[i].forwardTangent = 0.0 # ?
                                 #morph.keys[i].backwardTangent = 0.0 # ?
                                 floatdata.keys[i].arg = floatdata.interpolation
-                                floatdata.keys[i].time = (knot[0] - self.fstart) * self.fspeed
+                                floatdata.keys[i].time = (knot[0] - self.context.scene.frame_start) * self.context.scene.render.fps
                                 floatdata.keys[i].value = curve.evaluate( knot[0] )
                                 #floatdata.keys[i].forwardTangent = 0.0 # ?
                                 #floatdata.keys[i].backwardTangent = 0.0 # ?
@@ -2795,7 +2788,7 @@ class NifExport(NifImportExport):
             # add each point of the curve
             b_time, b_value = b_point.pt
             n_key.arg = n_floatdata.data.interpolation
-            n_key.time = (b_time - 1) * self.fspeed
+            n_key.time = (b_time - 1) * self.context.scene.render.fps
             n_key.value = b_value
             # track time
             n_times.append(n_key.time)
@@ -2845,7 +2838,7 @@ class NifExport(NifImportExport):
         for b_time, n_key in zip(sorted(b_times), n_posdata.data.keys):
             # add each point of the curves
             n_key.arg = n_posdata.data.interpolation
-            n_key.time = (b_time - 1) * self.fspeed
+            n_key.time = (b_time - 1) * self.context.scene.render.fps
             n_key.value.x = b_curves[0][b_time]
             n_key.value.y = b_curves[1][b_time]
             n_key.value.z = b_curves[2][b_time]
@@ -2902,7 +2895,7 @@ class NifExport(NifImportExport):
                         # offsets are negated in blender
                         b_value = -b_value
                     n_key.arg = n_uvgroup.interpolation
-                    n_key.time = (b_time - 1) * self.fspeed
+                    n_key.time = (b_time - 1) * self.context.scene.render.fps
                     n_key.value = b_value
                     # track time
                     n_times.append(n_key.time)
@@ -2948,7 +2941,7 @@ class NifExport(NifImportExport):
             # add each point of the curve
             b_time, b_value = b_point.pt
             n_vis_key.arg = n_bool_data.data.interpolation # n_vis_data has no interpolation stored
-            n_vis_key.time = (b_time - 1) * self.fspeed
+            n_vis_key.time = (b_time - 1) * self.context.scene.render.fps
             n_vis_key.value = 1 if (int(b_value + 0.01) & visible_layer) else 0
             n_bool_key.arg = n_bool_data.data.interpolation
             n_bool_key.time = n_vis_key.time
