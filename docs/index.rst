@@ -18,6 +18,7 @@ Contents:
    user/index
    development/index
    api/index
+   additional/authors
    additional/license
    additional/changes
 
