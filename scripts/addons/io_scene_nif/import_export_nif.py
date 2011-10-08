@@ -158,6 +158,18 @@ class NifImportExport:
         """Import/export entry point. Default implementation does nothing."""
         return {'FINISHED'}
 
+    def debug(self, message):
+        """Report a debug message."""
+        self.operator.report({'DEBUG'}, message)
+
+    def info(self, message):
+        """Report an informative message."""
+        self.operator.report({'INFO'}, message)
+
+    def warning(self, message):
+        """Report a warning message."""
+        self.operator.report({'WARNING'}, message)
+
     def error(self, message):
         """Report an error and return operator finish enum. To be called by
         the :meth:`execute` method, as::
@@ -172,7 +184,12 @@ class NifImportExport:
         return {'FINISHED'}
 
     def msg_progress(self, message, progbar=None):
-        """Message wrapper for the Blender progress bar."""
+        """Message wrapper for the Blender progress bar.
+
+        .. deprecated:: 2.6.0
+
+            Use :meth:`info` instead.
+        """
         # update progress bar level
         if progbar is None:
             if self.progress_bar > 0.89:
@@ -223,7 +240,7 @@ class NifImportExport:
         elif flags & 6 == 0: # 0b000
             return Blender.IpoCurve.ExtendTypes.CYCLIC
 
-        self.logger.warning(
+        self.warning(
             "Unsupported cycle mode in nif, using clamped.")
         return Blender.IpoCurve.ExtendTypes.CONST
 
@@ -233,7 +250,7 @@ class NifImportExport:
         elif extend == Blender.IpoCurve.ExtendTypes.CYCLIC:
             return 0
 
-        self.logger.warning(
+        self.warning(
             "Unsupported extend type in blend, using clamped.")
         return 4
 
@@ -245,7 +262,7 @@ class NifImportExport:
         elif n_ipol == 0:
             # guessing, not documented in nif.xml
             return Blender.IpoCurve.InterpTypes.CONST
-        self.logger.warning(
+        self.warning(
             "Unsupported interpolation mode in nif, using quadratic/bezier.")
         return Blender.IpoCurve.InterpTypes.BEZIER
 
@@ -256,7 +273,7 @@ class NifImportExport:
             return NifFormat.KeyType.QUADRATIC_KEY
         elif b_ipol == Blender.IpoCurve.InterpTypes.CONST:
             return NifFormat.KeyType.CONST_KEY
-        self.logger.warning(
+        self.warning(
             "Unsupported interpolation mode in blend, using quadratic/bezier.")
         return NifFormat.KeyType.QUADRATIC_KEY
 
@@ -271,7 +288,7 @@ class NifImportExport:
             return "LIGHTEN"
         elif textProperty.apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT2:
             return "MULTIPLY"
-        self.logger.warning(
+        self.warning(
             "Unknown apply mode (%i) in material,"
             " using blend type 'MIX'" % n_apply_mode)
         return "MIX"
@@ -283,7 +300,7 @@ class NifImportExport:
             return NifFormat.ApplyMode.APPLY_HILIGHT2
         elif b_blend_type == "MIX":
             return NifFormat.ApplyMode.APPLY_MODULATE
-        self.logger.warning(
+        self.warning(
             "Unsupported blend type (%s) in material,"
             " using apply mode APPLY_MODULATE" % b_blend_type)
         return NifFormat.ApplyMode.APPLY_MODULATE

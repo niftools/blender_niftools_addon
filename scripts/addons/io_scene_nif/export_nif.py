@@ -82,17 +82,17 @@ class NifExport(NifImportExport):
                 quat = mat.rotationPart().toQuat()
                 if sum(sum(abs(x) for x in vec)
                        for vec in mat.rotationPart() - quat.toMatrix()) > 0.01:
-                    self.logger.warn(
+                    self.warning(
                         "Bad bone extra matrix for bone %s. \n"
                         "Attempting to fix... but bone transform \n"
                         "may be incompatible with existing animations." % b)
-                    self.logger.warn("old invalid matrix:\n%s" % mat)
+                    self.warning("old invalid matrix:\n%s" % mat)
                     trans = mat.translationPart()
                     mat = quat.toMatrix().resize4x4()
                     mat[3][0] = trans[0]
                     mat[3][1] = trans[1]
                     mat[3][2] = trans[2]
-                    self.logger.warn("new valid matrix:\n%s" % mat)
+                    self.warning("new valid matrix:\n%s" % mat)
                 # Matrices are stored inverted for easier math later on.
                 mat.invert()
                 self.set_bone_extra_matrix_inv(b, mat)
@@ -169,9 +169,7 @@ class NifExport(NifImportExport):
     def execute(self):
         """Main export function."""
 
-        # shortcut to export logger
-        self.logger = logging.getLogger("niftools.blender.export")
-        self.logger.info("exporting {0}".format(self.properties.filepath))
+        self.info("exporting {0}".format(self.properties.filepath))
 
         # TODO
         #if self.properties.animation == 'ALL_NIF_XNIF_XKF' and self.properties.game == 'MORROWIND':
@@ -217,16 +215,16 @@ class NifExport(NifImportExport):
 
             # find nif version to write
             self.version = self.operator.version[self.properties.game]
-            self.logger.info("Writing NIF version 0x%08X" % self.version)
+            self.info("Writing NIF version 0x%08X" % self.version)
 
             if self.properties.animation == 'ALL_NIF':
-                self.logger.info("Exporting geometry and animation")
+                self.info("Exporting geometry and animation")
             elif self.properties.animation == 'GEOM_NIF':
                 # for morrowind: everything except keyframe controllers
-                self.logger.info("Exporting geometry only")
+                self.info("Exporting geometry only")
             elif self.properties.animation == 'ANIM_KF':
                 # for morrowind: only keyframe controllers
-                self.logger.info("Exporting animation only (as .kf file)")
+                self.info("Exporting animation only (as .kf file)")
 
             for ob in bpy.data.objects:
                 # armatures should not be in rest position
@@ -235,17 +233,13 @@ class NifExport(NifImportExport):
                     # and not in rest position!
                     ob.data.restPosition = False
                     if (ob.data.envelopes):
-                        self.logger.critical(
+                        return self.error(
                             "'%s': Cannot export envelope skinning."
                             " If you have vertex groups,"
                             " turn off envelopes. If you don't have vertex"
                             " groups, select the bones one by one press W"
                             " to convert their envelopes to vertex weights,"
                             " and turn off envelopes."
-                            % ob.getName())
-                        raise NifExportError(
-                            "'%s': Cannot export envelope skinning."
-                            " Check console for instructions."
                             % ob.getName())
 
                 # check for non-uniform transforms
@@ -256,12 +250,10 @@ class NifExport(NifImportExport):
                     if (abs(scale.x - scale.y) > self.properties.epsilon
                         or abs(scale.y - scale.z) > self.properties.epsilon):
 
-                        self.operator.report(
-                            {'ERROR'},
+                        return self.error(
                             "Non-uniform scaling not supported."
                             " Workaround: apply size and rotation (CTRL-A)"
                             " on '%s'." % ob.name)
-                        return {'FINISHED'}
 
             # extract some useful scene info
             self.context.scene = Blender.Scene.GetCurrent()
@@ -300,7 +292,7 @@ class NifExport(NifImportExport):
             # smoothen seams of objects
             if self.EXPORT_SMOOTHOBJECTSEAMS:
                 # get shared vertices
-                self.logger.info("Smoothing seams between objects...")
+                self.info("Smoothing seams between objects...")
                 vdict = {}
                 for ob in [ob for ob in self.context.scene.objects
                            if ob.getType() == 'Mesh']:
@@ -345,7 +337,7 @@ class NifExport(NifImportExport):
                         v.no = norm
                         #v.sel = True
                     nv += 1
-                self.logger.info("Fixed normals on %i vertices." % nv)
+                self.info("Fixed normals on %i vertices." % nv)
 
             ## TODO use Blender actions for animation groups
             # check for animation groups definition in a text buffer 'Anim'
@@ -371,7 +363,7 @@ class NifExport(NifImportExport):
             root_block = self.export_node(None, 'none', None, '')
             
             # export objects
-            self.logger.info("Exporting objects")
+            self.info("Exporting objects")
             for root_object in root_objects:
                 # export the root objects as a NiNodes; their children are
                 # exported as well
@@ -385,7 +377,7 @@ class NifExport(NifImportExport):
 
             # if we exported animations, but no animation groups are defined,
             # define a default animation group
-            self.logger.info("Checking animation groups")
+            self.info("Checking animation groups")
             if not animtxt:
                 has_controllers = False
                 for block in self.blocks:
@@ -395,14 +387,14 @@ class NifExport(NifImportExport):
                             has_controllers = True
                             break
                 if has_controllers:
-                    self.logger.info("Defining default animation group.")
+                    self.info("Defining default animation group.")
                     # write the animation group text buffer
                     animtxt = Blender.Text.New("Anim")
                     animtxt.write("%i/Idle: Start/Idle: Loop Start\n%i/Idle: Loop Stop/Idle: Stop" % (self.fstart, self.fend))
 
             # animations without keyframe animations crash the TESCS
             # if we are in that situation, add a trivial keyframe animation
-            self.logger.info("Checking controllers")
+            self.info("Checking controllers")
             if animtxt and self.properties.game == 'MORROWIND':
                 has_keyframecontrollers = False
                 for block in self.blocks:
@@ -411,7 +403,7 @@ class NifExport(NifImportExport):
                         break
                 if ((not has_keyframecontrollers)
                     and (not self.EXPORT_MW_BS_ANIMATION_NODE)):
-                    self.logger.info("Defining dummy keyframe controller")
+                    self.info("Defining dummy keyframe controller")
                     # add a trivial keyframe controller on the scene root
                     self.export_keyframes(None, 'localspace', root_block)
             if (self.EXPORT_MW_BS_ANIMATION_NODE
@@ -439,7 +431,7 @@ class NifExport(NifImportExport):
                 and filebase.lower() in ('skeleton', 'skeletonbeast'):
                 # here comes everything that is Oblivion skeleton export
                 # specific
-                self.logger.info(
+                self.info(
                     "Adding controllers and interpolators for skeleton")
                 for block in list(self.blocks.keys()):
                     if isinstance(block, NifFormat.NiNode) \
@@ -503,7 +495,7 @@ class NifExport(NifImportExport):
                 root_block.add_extra_data(furnmark)
                 root_block.add_extra_data(sgokeep)
 
-            self.logger.info("Checking collision")
+            self.info("Checking collision")
             # activate oblivion/Fallout 3 collision and physics
             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
                 hascollision = False
@@ -623,13 +615,13 @@ class NifExport(NifImportExport):
                 affectedbones = []
                 for block in self.blocks:
                     if isinstance(block, NifFormat.NiGeometry) and block.is_skin():
-                        self.logger.info("Flattening skin on geometry %s"
+                        self.info("Flattening skin on geometry %s"
                                          % block.name)
                         affectedbones.extend(block.flatten_skin())
                         skelroots.add(block.skin_instance.skeleton_root)
                 # remove NiNodes that do not affect skin
                 for skelroot in skelroots:
-                    self.logger.info("Removing unused NiNodes in '%s'"
+                    self.info("Removing unused NiNodes in '%s'"
                                      % skelroot.name)
                     skelrootchildren = [child for child in skelroot.children
                                         if ((not isinstance(child,
@@ -642,7 +634,7 @@ class NifExport(NifImportExport):
 
             # apply scale
             if abs(self.properties.scale_correction - 1.0) > self.properties.epsilon:
-                self.logger.info("Applying scale correction %f"
+                self.info("Applying scale correction %f"
                                  % self.properties.scale_correction)
                 data = NifFormat.Data()
                 data.roots = [root_block]
@@ -657,7 +649,7 @@ class NifExport(NifImportExport):
             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
                 for block in self.blocks:
                     if isinstance(block, NifFormat.bhkMoppBvTreeShape):
-                       self.logger.info("Generating mopp...")
+                       self.info("Generating mopp...")
                        block.update_mopp()
                        #print "=== DEBUG: MOPP TREE ==="
                        #block.parse_mopp(verbose = True)
@@ -665,7 +657,7 @@ class NifExport(NifImportExport):
                        # warn about mopps on non-static objects
                        if any(sub_shape.layer != 1
                               for sub_shape in block.shape.sub_shapes):
-                           self.logger.warn(
+                           self.warning(
                                "Mopps for non-static objects may not function"
                                " correctly in-game. You may wish to use"
                                " simple primitives for collision.")
@@ -676,7 +668,7 @@ class NifExport(NifImportExport):
                 and ((root_block.children[0].name in ['Scene Root', 'Bip01']) or root_block.children[0].name[-3:] == 'nif')):
                 if root_block.children[0].name[-3:] == 'nif':
                     root_block.children[0].name = filebase
-                self.logger.info(
+                self.info(
                     "Making '%s' the root block" % root_block.children[0].name)
                 # remove root_block from self.blocks
                 self.blocks.pop(root_block)
@@ -701,7 +693,7 @@ class NifExport(NifImportExport):
             # making root block a fade node
             if (self.properties.game == 'FALLOUT_3'
                 and self.EXPORT_FO3_FADENODE):
-                self.logger.info(
+                self.info(
                     "Making root block a BSFadeNode")
                 fade_root_block = NifFormat.BSFadeNode().deepcopy(root_block)
                 fade_root_block.replace_global_node(root_block, fade_root_block)
@@ -729,12 +721,12 @@ class NifExport(NifImportExport):
                     ext = ".nifcache"
                 else:
                     ext = ".nif"
-                self.logger.info("Writing %s file" % ext)
+                self.info("Writing %s file" % ext)
                 self.msg_progress("Writing %s file" % ext)
 
                 # make sure we have the right file extension
                 if (fileext.lower() != ext):
-                    self.logger.warning(
+                    self.warning(
                         "Changing extension from %s to %s on output file"
                         % (fileext, ext))
                     niffile = os.path.join(directory, filebase + ext)
@@ -759,7 +751,7 @@ class NifExport(NifImportExport):
 
             # convert root_block tree into a keyframe tree
             if self.properties.animation == 'ANIM_KF' or self.properties.animation == 'ALL_NIF_XNIF_XKF':
-                self.logger.info("Creating keyframe tree")
+                self.info("Creating keyframe tree")
                 # find all nodes and relevant controllers
                 node_kfctrls = {}
                 for node in root_block.tree():
@@ -874,7 +866,7 @@ class NifExport(NifImportExport):
                                         priority = self.EXPORT_ANIMPRIORITY
                                     else:
                                         priority = 26
-                                        self.logger.warning(
+                                        self.warning(
                                             "No priority set for bone %s, "
                                             "falling back on default value (%i)"
                                             % (node.name, priority))
@@ -901,7 +893,7 @@ class NifExport(NifImportExport):
                 prefix = "" if (self.properties.animation != 'ALL_NIF_XNIF_XKF') else "x"
 
                 ext = ".kf"
-                self.logger.info("Writing %s file" % (prefix + ext))
+                self.info("Writing %s file" % (prefix + ext))
                 self.msg_progress("Writing %s file" % (prefix + ext))
 
                 kffile = os.path.join(directory, prefix + filebase + ext)
@@ -917,7 +909,7 @@ class NifExport(NifImportExport):
                     stream.close()
 
             if self.properties.animation == 'ALL_NIF_XNIF_XKF':
-                self.logger.info("Detaching keyframe controllers from nif")
+                self.info("Detaching keyframe controllers from nif")
                 # detach the keyframe controllers from the nif (for xnif)
                 for node in root_block.tree():
                     if not isinstance(node, NifFormat.NiNode):
@@ -934,7 +926,7 @@ class NifExport(NifImportExport):
                         else:
                             ctrl = ctrl.next_controller
 
-                self.logger.info("Detaching animation text keys from nif")
+                self.info("Detaching animation text keys from nif")
                 # detach animation text keys
                 if root_block.extra_data is not anim_textextra:
                     raise RuntimeError(
@@ -944,7 +936,7 @@ class NifExport(NifImportExport):
 
                 prefix = "x" # we are in morrowind 'nifxnifkf mode'
                 ext = ".nif"
-                self.logger.info("Writing %s file" % (prefix + ext))
+                self.info("Writing %s file" % (prefix + ext))
                 self.msg_progress("Writing %s file" % (prefix + ext))
 
                 xniffile = os.path.join(directory, prefix + filebase + ext)
@@ -964,7 +956,7 @@ class NifExport(NifImportExport):
 
             if self.egmdata:
                 ext = ".egm"
-                self.logger.info("Writing %s file" % ext)
+                self.info("Writing %s file" % ext)
                 self.msg_progress("Writing %s file" % ext)
 
                 egmfile = os.path.join(directory, filebase + ext)
@@ -1079,7 +1071,7 @@ class NifExport(NifImportExport):
             if ob_parent and ob_parent.type == 'ARMATURE':
                 if ob_ipo:
                     # mesh with armature parent should not have animation!
-                    self.logger.warn(
+                    self.warning(
                         "Mesh %s is skinned but also has object animation. "
                         "The nif format does not support this: "
                         "ignoring object animation." % ob.name)
@@ -1233,7 +1225,7 @@ class NifExport(NifImportExport):
                 if extend is None:
                     extend = curve.extend
                 elif extend != curve.extend:
-                    self.logger.warn(
+                    self.warning(
                         "Inconsistent extend type in %s, will use %s."
                         % (ipo, extend))
                 # get start and stop frames
@@ -1560,7 +1552,7 @@ class NifExport(NifImportExport):
             # animation group extra data is not present in geometry only files
             return
 
-        self.logger.info("Exporting animation groups")
+        self.info("Exporting animation groups")
         # -> get animation groups information
 
         # parse the anim text descriptor
@@ -1586,7 +1578,7 @@ class NifExport(NifImportExport):
                 raise NifExportError("Syntax error in Anim buffer ('%s')" % s)
             f = int(t[0])
             if ((f < self.fstart) or (f > self.fend)):
-                self.logger.warn("frame in animation buffer out of range "
+                self.warning("frame in animation buffer out of range "
                                  "(%i not in [%i, %i])"
                                  % (f, self.fstart, self.fend))
             d = t[1].strip(' ')
@@ -1638,7 +1630,7 @@ class NifExport(NifImportExport):
 
             # warn if packed flag is enabled
             if texture.getImage().packed:
-                self.logger.warn(
+                self.warning(
                     "Packed image in texture '%s' ignored, "
                     "exporting as '%s' instead."
                     % (texture.getName(), filename))
@@ -1660,7 +1652,7 @@ class NifExport(NifImportExport):
                 if ( idx >= 0 ):
                     filename = filename[idx:]
                 else:
-                    self.logger.warn(
+                    self.warning(
                         "%s does not reside in a 'Textures' folder;"
                         " texture path will be stripped"
                         " and textures may not display in-game" % filename)
@@ -1769,7 +1761,7 @@ class NifExport(NifImportExport):
     # should be exported as a single mesh.
     # 
     def export_tri_shapes(self, ob, space, parent_block, trishape_name = None):
-        self.logger.info("Exporting %s" % ob)
+        self.info("Exporting %s" % ob)
         self.msg_progress("Exporting %s" % ob.name)
         assert(ob.getType() == 'Mesh')
 
@@ -1781,7 +1773,7 @@ class NifExport(NifImportExport):
         # so quickly catch this (rare!) case
         if len(ob.data.verts) == 0:
             # do not export anything
-            self.logger.warn("%s has no vertices, skipped." % ob)
+            self.warning("%s has no vertices, skipped." % ob)
             return
 
         # get the mesh's materials, this updates the mesh material list
@@ -1891,7 +1883,7 @@ class NifExport(NifImportExport):
                                 % (ob.getName(),mesh_mat.getName()))
                         if mtex.blendmode != Blender.Texture.BlendModes["ADD"]:
                             # it should have "ADD" blending mode
-                            self.logger.warn(
+                            self.warning(
                                "Reflection texture should have blending"
                                " mode 'Add' on texture"
                                " in mesh '%s', material '%s')."
@@ -1920,7 +1912,7 @@ class NifExport(NifImportExport):
                             # for this texture
                             if (mtex.tex.imageFlags & Blender.Texture.ImageFlags.CALCALPHA != 0) \
                                and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
-                                self.logger.warn(
+                                self.warning(
                                     "In mesh '%s', material '%s':"
                                     " glow texture must have"
                                     " CALCALPHA flag set, and must have"
@@ -2024,7 +2016,7 @@ class NifExport(NifImportExport):
             bodypartgroups = []
             for bodypartgroupname in NifFormat.BSDismemberBodyPartType().get_editor_keys():
                 if bodypartgroupname in ob.data.getVertGroupNames():
-                    self.logger.debug("Found body part %s"
+                    self.debug("Found body part %s"
                                       % bodypartgroupname)
                     bodypartgroups.append(
                         [bodypartgroupname,
@@ -2090,7 +2082,7 @@ class NifExport(NifImportExport):
                         fuv.append(f.uv[i])
                     if mesh_hasvcol:
                         if (len(f.col) == 0):
-                            self.logger.warning(
+                            self.warning(
                                 "Vertex color painting/lighting enabled,"
                                 " but mesh has no vertex color data;"
                                 " vertex colors will not be written.")
@@ -2585,7 +2577,7 @@ class NifExport(NifImportExport):
 
                         if (self.version >= 0x04020100
                             and self.EXPORT_SKINPARTITION):
-                            self.logger.info("Creating skin partition")
+                            self.info("Creating skin partition")
                             lostweight = trishape.update_skin_partition(
                                 maxbonesperpartition=self.EXPORT_BONESPERPARTITION,
                                 maxbonespervertex=self.EXPORT_BONESPERVERTEX,
@@ -2599,7 +2591,7 @@ class NifExport(NifImportExport):
                             # warn on bad config settings
                             if self.properties.game == 'OBLIVION':
                                if self.EXPORT_PADBONES:
-                                   self.logger.warning(
+                                   self.warning(
                                        "Using padbones on Oblivion export,"
                                        " but you probably do not want to do"
                                        " this."
@@ -2607,14 +2599,14 @@ class NifExport(NifImportExport):
                                        " higher quality skin partitions.")
                             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
                                if self.EXPORT_BONESPERPARTITION < 18:
-                                   self.logger.warning(
+                                   self.warning(
                                        "Using less than 18 bones"
                                        " per partition on Oblivion/Fallout 3"
                                        " export."
                                        " Set it to 18 to get higher quality"
                                        " skin partitions.")
                             if lostweight > self.properties.epsilon:
-                                self.logger.warning(
+                                self.warning(
                                     "Lost %f in vertex weights"
                                     " while creating a skin partition"
                                     " for Blender object '%s' (nif block '%s')"
@@ -2680,7 +2672,7 @@ class NifExport(NifImportExport):
                             # export morphed vertices
                             morph = morphdata.morphs[keyblocknum]
                             morph.frame_name = keyblock.name
-                            self.logger.info("Exporting morph %s: vertices"
+                            self.info("Exporting morph %s: vertices"
                                              % keyblock.name)
                             morph.arg = morphdata.num_vertices
                             morph.vectors.update_size()
@@ -2721,7 +2713,7 @@ class NifExport(NifImportExport):
                             # and on floatdata for newer nifs
                             # of course only one of these will be actually
                             # written to the file
-                            self.logger.info("Exporting morph %s: curve"
+                            self.info("Exporting morph %s: curve"
                                              % keyblock.name)
                             interpol.data = self.create_block("NiFloatData", curve)
                             floatdata = interpol.data.data
@@ -2898,7 +2890,7 @@ class NifExport(NifImportExport):
         for b_channel, n_uvgroup in zip(b_channels, n_uvdata.uv_groups):
             b_curve = b_ipo[b_channel]
             if b_curve:
-                self.logger.info("Exporting %s as NiUVData" % b_curve)
+                self.info("Exporting %s as NiUVData" % b_curve)
                 n_uvgroup.num_keys = len(b_curve.bezierPoints)
                 n_uvgroup.interpolation = self.get_n_ipol_from_b_ipol(
                     b_curve.interpolation)
@@ -3067,7 +3059,7 @@ class NifExport(NifImportExport):
         for bone in list(bones.values()):
             # link the bone's children to the bone
             if bone.children:
-                self.logger.debug("Linking children of bone %s" % bone.name)
+                self.debug("Linking children of bone %s" % bone.name)
                 for child in bone.children:
                     # bone.children returns also grandchildren etc.
                     # we only want immediate children, so do a parent check
@@ -3248,7 +3240,7 @@ class NifExport(NifImportExport):
         try:
             return self.decompose_srt(mat)
         except NifExportError: # non-uniform scaling
-            self.logger.debug(str(mat))
+            self.debug(str(mat))
             raise NifExportError(
                 "Non-uniform scaling on bone '%s' not supported."
                 " This could be a bug... No workaround. :-( Post your blend!"
@@ -3355,9 +3347,9 @@ class NifExport(NifImportExport):
         @param b_obj: The Blender object.
         @return: C{block}"""
         if b_obj is None:
-            self.logger.info("Exporting %s block"%block.__class__.__name__)
+            self.info("Exporting %s block"%block.__class__.__name__)
         else:
-            self.logger.info("Exporting %s as %s block"
+            self.info("Exporting %s as %s block"
                      % (b_obj, block.__class__.__name__))
         self.blocks[block] = b_obj
         return block
@@ -3395,7 +3387,7 @@ class NifExport(NifImportExport):
                 self.export_collision_helper(obj, node)
 
         else:
-            self.logger.warning(
+            self.warning(
                 "Only Morrowind, Oblivion, and Fallout 3"
                 " collisions are supported, skipped collision object '%s'"
                 % obj.name)
@@ -3656,7 +3648,7 @@ class NifExport(NifImportExport):
 
         # find bounding box data
         if not obj.data.verts:
-            self.logger.warn(
+            self.warning(
                 "Skipping collision object %s without vertices." % obj)
             return None
         minx = min([vert[0] for vert in obj.data.verts])
@@ -3741,7 +3733,7 @@ class NifExport(NifImportExport):
             vert2 *= transform
             # check if end points are far enough from each other
             if (vert1 - vert2).length < self.properties.epsilon:
-                self.logger.warn(
+                self.warning(
                     "End points of cylinder %s too close,"
                     " converting to sphere." % obj)
                 # change type
@@ -3864,7 +3856,7 @@ class NifExport(NifImportExport):
             # rigid body joints
             if b_constr.type == Blender.Constraint.Type.RIGIDBODYJOINT:
                 if self.properties.game not in ('OBLIVION', 'FALLOUT_3'):
-                    self.logger.warning(
+                    self.warning(
                         "Only Oblivion/Fallout 3 rigid body constraints"
                         " can be exported: skipped %s." % b_constr)
                     continue
@@ -3949,7 +3941,7 @@ class NifExport(NifImportExport):
                 # is there a target?
                 targetobj = b_constr[Blender.Constraint.Settings.TARGET]
                 if not targetobj:
-                    self.logger.warning("Constraint %s has no target, skipped")
+                    self.warning("Constraint %s has no target, skipped")
                     continue
                 # find target's bhkRigidBody
                 for otherbody, otherobj in self.blocks.items():
@@ -4154,13 +4146,13 @@ class NifExport(NifImportExport):
                 if (name.lower() == specialname.lower()
                     or name.lower().startswith(specialname.lower() + ".")):
                     if name != specialname:
-                        self.logger.warning("Renaming material '%s' to '%s'"
+                        self.warning("Renaming material '%s' to '%s'"
                                             % (name, specialname))
                     name = specialname
 
         # clear noname materials
         if name.lower().startswith("noname"):
-            self.logger.warning("Renaming material '%s' to ''" % name)
+            self.warning("Renaming material '%s' to ''" % name)
             name = ""
 
         matprop.name = name
@@ -4196,7 +4188,7 @@ class NifExport(NifImportExport):
             first_index = 1 if ignore_strings else 0
             if (block.get_hash()[first_index:] ==
                 matprop.get_hash()[first_index:]):
-                self.logger.warning(
+                self.warning(
                     "Merging materials '%s' and '%s'"
                     " (they are identical in nif)"
                     % (matprop.name, block.name))
@@ -4212,7 +4204,7 @@ class NifExport(NifImportExport):
         try:
             texdesc.uv_set = uvlayers.index(mtex.uvlayer) if mtex.uvlayer else 0
         except ValueError: # mtex.uvlayer not in uvlayers list
-            self.logger.warning(
+            self.warning(
                 "Bad uv layer name '%s' in texture '%s'."
                 " Falling back on first uv layer"
                 % (mtex.uvlayer, mtex.tex.getName()))
@@ -4336,7 +4328,7 @@ class NifExport(NifImportExport):
 
         if refmtex:
             if self.properties.game not in self.USED_EXTRA_SHADER_TEXTURES:
-                self.logger.warn(
+                self.warning(
                     "Cannot export reflection texture for this game.")
                 #texprop.hasRefTexture = True
                 #self.export_tex_desc(texdesc = texprop.refTexture,
@@ -4513,7 +4505,7 @@ class NifExport(NifImportExport):
                 morph = self.egmdata.add_asym_morph()
             else:
                 continue
-            self.logger.info("Exporting morph %s to egm" % keyblock.name)
+            self.info("Exporting morph %s to egm" % keyblock.name)
             relative_vertices = []
             # note: keyblocks[0] is base key
             for vert, key_vert in zip(keyblocks[0].data, keyblock.data):

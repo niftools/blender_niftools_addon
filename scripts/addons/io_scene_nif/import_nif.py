@@ -80,9 +80,6 @@ class NifImport(NifImportExport):
     
     def execute(self):
         """Main import function."""
-        # shortcut to import logger
-        self.logger = logging.getLogger("niftools.blender.import")
-
         # dictionary of texture files, to reuse textures
         self.textures = {}
 
@@ -128,7 +125,7 @@ class NifImport(NifImportExport):
                         " mode.")
 
             # open file for binary reading
-            self.logger.info("Importing %s" % self.properties.filepath)
+            self.info("Importing %s" % self.properties.filepath)
             niffile = open(self.properties.filepath, "rb")
             self.data = NifFormat.Data()
             try:
@@ -136,7 +133,7 @@ class NifImport(NifImportExport):
                 self.data.inspect(niffile)
                 if self.data.version >= 0:
                     # it is valid, so read the file
-                    self.logger.info("NIF file version: 0x%08X" % self.data.version)
+                    self.info("NIF file version: 0x%08X" % self.data.version)
                     self.msg_progress("Reading file")
                     self.data.read(niffile)
                 elif self.data.version == -1:
@@ -149,7 +146,7 @@ class NifImport(NifImportExport):
 
             if self.properties.keyframe_file:
                 # open keyframe file for binary reading
-                self.logger.info("Importing %s" % self.properties.keyframe_file)
+                self.info("Importing %s" % self.properties.keyframe_file)
                 kffile = open(self.properties.keyframe_file, "rb")
                 self.kfdata = NifFormat.Data()
                 try:
@@ -157,7 +154,7 @@ class NifImport(NifImportExport):
                     self.kfdata.inspect(kffile)
                     if self.kfdata.version >= 0:
                         # it is valid, so read the file
-                        self.logger.info(
+                        self.info(
                             "KF file version: 0x%08X" % self.kfdata.version)
                         self.msg_progress("Reading keyframe file")
                         self.kfdata.read(kffile)
@@ -173,7 +170,7 @@ class NifImport(NifImportExport):
 
             if self.properties.egm_file:
                 # open facegen egm file for binary reading
-                self.logger.info("Importing %s" % self.properties.egm_file)
+                self.info("Importing %s" % self.properties.egm_file)
                 egmfile = open(self.properties.egm_file, "rb")
                 self.egmdata = EgmFormat.Data()
                 try:
@@ -181,7 +178,7 @@ class NifImport(NifImportExport):
                     self.egmdata.inspect(egmfile)
                     if self.egmdata.version >= 0:
                         # it is valid, so read the file
-                        self.logger.info("EGM file version: %03i"
+                        self.info("EGM file version: %03i"
                                          % self.egmdata.version)
                         self.msg_progress("Reading FaceGen egm file")
                         self.egmdata.read(egmfile)
@@ -220,7 +217,7 @@ class NifImport(NifImportExport):
                         continue
                     if not n_geom.is_skin():
                         continue
-                    self.logger.info('Applying skin deformation on geometry %s'
+                    self.info('Applying skin deformation on geometry %s'
                                      % n_geom.name)
                     vertices, normals = n_geom.get_skin_deformation()
                     for vold, vnew in zip(n_geom.data.vertices, vertices):
@@ -257,7 +254,7 @@ class NifImport(NifImportExport):
                             for child in nonbip_children:
                                 root.remove_child(child)
                 # import this root block
-                self.logger.debug("Root block: %s" % root.get_global_display())
+                self.debug("Root block: %s" % root.get_global_display())
                 # merge animation from kf tree into nif tree
                 if self.properties.animation and self.kfdata:
                     for kf_root in self.kfdata.roots:
@@ -303,11 +300,11 @@ class NifImport(NifImportExport):
         # read the NIF tree
         if self.is_armature_root(root_block):
             # special case 1: root node is skeleton root
-            self.logger.debug("%s is an armature root" % root_block.name)
+            self.debug("%s is an armature root" % root_block.name)
             b_obj = self.import_branch(root_block)
         elif self.is_grouping_node(root_block):
             # special case 2: root node is grouping node
-            self.logger.debug("%s is a grouping node" % root_block.name)
+            self.debug("%s is a grouping node" % root_block.name)
             b_obj = self.import_branch(root_block)
         elif isinstance(root_block, NifFormat.NiTriBasedGeom):
             # trishape/tristrips root
@@ -318,7 +315,7 @@ class NifImport(NifImportExport):
             if root_block.collision_object:
                 bhk_body = root_block.collision_object.body
                 if not isinstance(bhk_body, NifFormat.bhkRigidBody):
-                    self.logger.warning(
+                    self.warning(
                         "Unsupported collision structure under node %s"
                         % root_block.name)
                 self.import_bhk_shape(bhk_body)
@@ -330,11 +327,11 @@ class NifImport(NifImportExport):
             for child in root_block.children:
                 b_obj = self.import_branch(child)
         elif isinstance(root_block, NifFormat.NiCamera):
-            self.logger.warning('Skipped NiCamera root')
+            self.warning('Skipped NiCamera root')
         elif isinstance(root_block, NifFormat.NiPhysXProp):
-            self.logger.warning('Skipped NiPhysXProp root')
+            self.warning('Skipped NiPhysXProp root')
         else:
-            self.logger.warning(
+            self.warning(
                 "Skipped unsupported root block type '%s' (corrupted nif?)."
                 % root_block.__class__)
 
@@ -360,7 +357,7 @@ class NifImport(NifImportExport):
                     for oldgroupname in b_child_obj.data.getVertGroupNames():
                         newgroupname = self.get_bone_name_for_blender(oldgroupname)
                         if oldgroupname != newgroupname:
-                            self.logger.info(
+                            self.info(
                                 "%s: renaming vertex group %s to %s"
                                 % (b_child_obj, oldgroupname, newgroupname))
                             b_child_obj.data.renameVertGroup(
@@ -393,7 +390,7 @@ class NifImport(NifImportExport):
               and self.properties.skeleton !=  "SKELETON_ONLY"):
             # it's a shape node and we're not importing skeleton only
             # (self.properties.skeleton ==  "SKELETON_ONLY")
-            self.logger.debug("Building mesh in import_branch")
+            self.debug("Building mesh in import_branch")
             # note: transform matrix is set during import
             b_obj = self.import_mesh(niBlock)
             # skinning? add armature modifier
@@ -422,11 +419,11 @@ class NifImport(NifImportExport):
                     b_obj = self.selected_objects[0]
                     b_armature = b_obj
                     n_armature = niBlock
-                    self.logger.info(
+                    self.info(
                         "Merging nif tree '%s' with armature '%s'"
                         % (niBlock.name, b_obj.name))
                     if niBlock.name != b_obj.name:
-                        self.logger.warning(
+                        self.warning(
                             "Taking nif block '%s' as armature '%s'"
                             " but names do not match"
                             % (niBlock.name, b_obj.name))
@@ -461,7 +458,7 @@ class NifImport(NifImportExport):
                     geom_group = []
                 else:
                     # node groups geometries, so import it as a mesh
-                    self.logger.info(
+                    self.info(
                         "Joining geometries %s to single object '%s'"
                         %([child.name for child in geom_group],
                           niBlock.name))
@@ -487,7 +484,7 @@ class NifImport(NifImportExport):
                         # 0.005 = 1/200
                         numdel = b_mesh.remDoubles(0.005)
                         if numdel:
-                            self.logger.info(
+                            self.info(
                                 "Removed %i duplicate vertices"
                                 " (out of %i) from collision mesh"
                                 % (numdel, numverts))
@@ -512,7 +509,7 @@ class NifImport(NifImportExport):
                               NifFormat.bhkNiCollisionObject):
                     bhk_body = niBlock.collision_object.body
                     if not isinstance(bhk_body, NifFormat.bhkRigidBody):
-                        self.logger.warning(
+                        self.warning(
                             "Unsupported collision structure"
                             " under node %s" % niBlock.name)
                     collision_objs = self.import_bhk_shape(bhk_body)
@@ -595,7 +592,7 @@ class NifImport(NifImportExport):
                 #b_obj.setEuler(0,0,0)
                 b_obj.constraints.append(
                     Blender.Constraint.Type.TRACKTO)
-                self.logger.warning(
+                self.warning(
                     "Constraint for billboard node on %s added"
                     " but target not set due to transform bug"
                     " in Blender. Set target to Camera manually."
@@ -665,7 +662,7 @@ class NifImport(NifImportExport):
                 if self.names[niBlock].endswith(postfix):
                     return self.names[niBlock]
 
-        self.logger.debug(
+        self.debug(
             "Importing name for %s block from %s%s"
             % (niBlock.__class__.__name__, niBlock.name, postfix))
 
@@ -708,7 +705,7 @@ class NifImport(NifImportExport):
         self.names[niBlock] = shortName
         # Blender name shortName corresponds to niBlock
         self.blocks[shortName] = niBlock
-        self.logger.debug("Selected unique name %s" % shortName)
+        self.debug("Selected unique name %s" % shortName)
         return shortName
         
     def import_matrix(self, niBlock, relative_to=None):
@@ -731,7 +728,7 @@ class NifImport(NifImportExport):
         # only uniform scaling
         if (abs(b_scale[0]-b_scale[1]) >= self.properties.epsilon
             or abs(b_scale[1]-b_scale[2]) >= self.properties.epsilon):
-            self.logger.warn(
+            self.warning(
                 "Corrupt rotation matrix in nif: geometry errors may result.")
         b_scale = b_scale[0]
         # get rotation matrix
@@ -787,7 +784,7 @@ class NifImport(NifImportExport):
             for bone_name, b_posebone in b_armature.getPose().bones.items():
                 # denote progress
                 self.msg_progress('Animation: %s' % bone_name)
-                self.logger.debug(
+                self.debug(
                     'Importing animation for bone %s' % bone_name)
                 niBone = self.blocks[bone_name]
 
@@ -875,7 +872,7 @@ class NifImport(NifImportExport):
 
                     # rotations
                     if rotations:
-                        self.logger.debug(
+                        self.debug(
                             'Rotation keys...(bspline quaternions)')
                         for time, quat in zip(times, rotations):
                             frame = 1 + int(time * self.fps + 0.5)
@@ -895,7 +892,7 @@ class NifImport(NifImportExport):
 
                     # translations
                     if translations:
-                        self.logger.debug('Translation keys...(bspline)')
+                        self.debug('Translation keys...(bspline)')
                         for time, translation in zip(times, translations):
                             # time 0.0 is frame 1
                             frame = 1 + int(time * self.fps + 0.5)
@@ -959,7 +956,7 @@ class NifImport(NifImportExport):
 
                     # Scaling
                     if scales.keys:
-                        self.logger.debug('Scale keys...')
+                        self.debug('Scale keys...')
                     for scaleKey in scales.keys:
                         # time 0.0 is frame 1
                         frame = 1 + int(scaleKey.time * self.fps + 0.5)
@@ -978,7 +975,7 @@ class NifImport(NifImportExport):
                     if rotation_type == 4:
                         # uses xyz rotation
                         if kfd.xyz_rotations[0].keys:
-                            self.logger.debug('Rotation keys...(euler)')
+                            self.debug('Rotation keys...(euler)')
                         for xkey, ykey, zkey in zip(kfd.xyz_rotations[0].keys,
                                                      kfd.xyz_rotations[1].keys,
                                                      kfd.xyz_rotations[2].keys):
@@ -987,7 +984,7 @@ class NifImport(NifImportExport):
                             # XXX same times!!!
                             if (abs(xkey.time - ykey.time) > self.properties.epsilon
                                 or abs(xkey.time - zkey.time) > self.properties.epsilon):
-                                self.logger.warn(
+                                self.warning(
                                     "xyz key times do not correspond, "
                                     "animation may not be correctly imported")
                             frame = 1 + int(xkey.time * self.fps + 0.5)
@@ -1012,7 +1009,7 @@ class NifImport(NifImportExport):
                     else:
                         # TODO take rotation type into account for interpolation
                         if kfd.quaternion_keys:
-                            self.logger.debug('Rotation keys...(quaternions)')
+                            self.debug('Rotation keys...(quaternions)')
                         quaternion_keys = kfd.quaternion_keys
                         for key in quaternion_keys:
                             frame = 1 + int(key.time * self.fps + 0.5)
@@ -1036,7 +1033,7 @@ class NifImport(NifImportExport):
         
                     # Translations
                     if translations.keys:
-                        self.logger.debug('Translation keys...')
+                        self.debug('Translation keys...')
                     for key in translations.keys:
                         # time 0.0 is frame 1
                         frame = 1 + int(key.time * self.fps + 0.5)
@@ -1315,7 +1312,7 @@ class NifImport(NifImportExport):
                 # save embedded texture as dds file
                 stream = open(tex, "wb")
                 try:
-                    self.logger.info("Saving embedded texture as %s" % tex)
+                    self.info("Saving embedded texture as %s" % tex)
                     source.pixel_data.save_as_dds(stream)
                 except ValueError:
                     # value error means that the pixel format is not supported
@@ -1384,7 +1381,7 @@ class NifImport(NifImportExport):
                         tex = os.path.join( texdir, texfn )
                     # "ignore case" on linux
                     tex = bpy.path.resolve_ncase(tex)
-                    self.logger.debug("Searching %s" % tex)
+                    self.debug("Searching %s" % tex)
                     if os.path.exists(tex):
                         # tries to load the file
                         b_image = bpy.ops.image.open(tex)
@@ -1398,7 +1395,7 @@ class NifImport(NifImportExport):
                             b_image = None # not supported, delete image object
                         else:
                             # file format is supported
-                            self.logger.debug("Found '%s' at %s" % (fn, tex))
+                            self.debug("Found '%s' at %s" % (fn, tex))
                             break
                 if b_image:
                     break
@@ -1407,7 +1404,7 @@ class NifImport(NifImportExport):
 
         # create a stub image if the image could not be loaded
         if not b_image:
-            self.logger.warning(
+            self.warning(
                 "Texture '%s' not found or not supported"
                 " and no alternate available"
                 % fn)
@@ -1572,7 +1569,7 @@ class NifImport(NifImportExport):
                         break
                 else:
                     # none found
-                    self.logger.warn(
+                    self.warning(
                         "No slot for shader texture %s."
                         % shader_tex_desc.texture_data.source.file_name)
                     continue
@@ -1581,7 +1578,7 @@ class NifImport(NifImportExport):
                         self.EXTRA_SHADER_TEXTURES.index(shader_name))
                 except ValueError:
                     # shader_name not in self.EXTRA_SHADER_TEXTURES
-                    self.logger.warn(
+                    self.warning(
                         "No slot for shader texture %s."
                         % shader_tex_desc.texture_data.source.file_name)
                     continue
@@ -1592,7 +1589,7 @@ class NifImport(NifImportExport):
                         # we can skip this
                         continue
                     # XXX todo, civ4 uses this
-                    self.logger.warn("Skipping environment map texture.")
+                    self.warning("Skipping environment map texture.")
                     continue
                 elif extra_shader_index == 1:
                     # NormalMapIndex
@@ -1609,11 +1606,11 @@ class NifImport(NifImportExport):
                         # sid meier's railroads: light map generated by engine
                         # we can skip this
                         continue
-                    self.logger.warn("Skipping light cube texture.")
+                    self.warning("Skipping light cube texture.")
                     continue
                 elif extra_shader_index == 5:
                     # ShadowTextureIndex
-                    self.logger.warn("Skipping shadow texture.")
+                    self.warning("Skipping shadow texture.")
                     continue
                     
             if baseTexDesc:
@@ -1822,7 +1819,7 @@ class NifImport(NifImportExport):
                                       NifFormat.NiUVController)
         if not(n_ctrl and n_ctrl.data):
             return
-        self.logger.info("importing UV controller")
+        self.info("importing UV controller")
         b_channels = ("OfsX", "OfsY", "SizeX", "SizeY")
         for b_channel, n_uvgroup in zip(b_channels,
                                         n_ctrl.data.uv_groups):
@@ -1849,7 +1846,7 @@ class NifImport(NifImportExport):
                                            NifFormat.NiAlphaController)
         if not(n_alphactrl and n_alphactrl.data):
             return
-        self.logger.info("importing alpha controller")
+        self.info("importing alpha controller")
         b_channel = "Alpha"
         b_ipo = self.get_material_ipo(b_material)
         b_curve = b_ipo.addCurve(b_channel)
@@ -1872,7 +1869,7 @@ class NifImport(NifImportExport):
                     break
         else:
             return
-        self.logger.info(
+        self.info(
             "importing material color controller for target color %s"
             " into blender channels %s"
             % (n_target_color, b_channels))
@@ -1899,7 +1896,7 @@ class NifImport(NifImportExport):
         n_vis_ctrl = self.find_controller(n_node, NifFormat.NiVisController)
         if not(n_vis_ctrl and n_vis_ctrl.data):
             return
-        self.logger.info("importing vis controller")
+        self.info("importing vis controller")
         b_channel = "Layer"
         b_ipo = self.get_object_ipo(b_object)
         b_curve = b_ipo.addCurve(b_channel)
@@ -2334,7 +2331,7 @@ class NifImport(NifImportExport):
                         keyname = morphData.morphs[idxMorph].frame_name
                         if not keyname:
                             keyname = 'Key %i' % idxMorph
-                        self.logger.info("inserting key '%s'" % keyname)
+                        self.info("inserting key '%s'" % keyname)
                         # get vectors
                         morphverts = morphData.morphs[idxMorph].vectors
                         # for each vertex calculate the key position from base
@@ -2360,7 +2357,7 @@ class NifImport(NifImportExport):
                             # this happens when two keys have the same name
                             # an instance of this is in fallout 3
                             # meshes/characters/_male/skeleton.nif HeadAnims:0
-                            self.logger.warn(
+                            self.warning(
                                 "skipped duplicate of key '%s'" % keyname)
                         # no idea how to set up the bezier triples -> switching
                         # to linear instead
@@ -2582,7 +2579,7 @@ class NifImport(NifImportExport):
             if diff < lowest_diff:
                 lowest_diff = diff
                 fps = test_fps
-        self.logger.info("Animation estimated at %i frames per second." % fps)
+        self.info("Animation estimated at %i frames per second." % fps)
         return fps
 
     def store_animation_data(self, rootBlock):
@@ -2644,7 +2641,7 @@ class NifImport(NifImportExport):
                 skelroot = niBlock
             if skelroot not in self.armatures:
                 self.armatures[skelroot] = []
-            self.logger.info("Selecting node '%s' as skeleton root"
+            self.info("Selecting node '%s' as skeleton root"
                              % skelroot.name)
             # add bones
             for bone in skelroot.tree():
@@ -2664,7 +2661,7 @@ class NifImport(NifImportExport):
             if not skelroot:
                 raise NifImportError(
                     "nif has no armature '%s'" % self.selected_objects[0].name)
-            self.logger.debug("Identified '%s' as armature" % skelroot.name)
+            self.debug("Identified '%s' as armature" % skelroot.name)
             self.armatures[skelroot] = []
             for bone_name in self.selected_objects[0].data.bones.keys():
                 # blender bone naming -> nif bone naming
@@ -2673,7 +2670,7 @@ class NifImport(NifImportExport):
                 bone_block = skelroot.find(block_name = nif_bone_name)
                 # add it to the name list if there is a bone with that name
                 if bone_block:
-                    self.logger.info(
+                    self.info(
                         "Identified nif block '%s' with bone '%s' "
                         "in selected armature" % (nif_bone_name, bone_name))
                     self.names[bone_block] = bone_name
@@ -2684,7 +2681,7 @@ class NifImport(NifImportExport):
         if isinstance(niBlock, NifFormat.NiTriBasedGeom):
             # yes, we found one, get its skin instance
             if niBlock.is_skin():
-                self.logger.debug("Skin found on block '%s'" % niBlock.name)
+                self.debug("Skin found on block '%s'" % niBlock.name)
                 # it has a skin instance, so get the skeleton root
                 # which is an armature only if it's not a skinning influence
                 # so mark the node to be imported as an armature
@@ -2693,7 +2690,7 @@ class NifImport(NifImportExport):
                 if self.properties.skeleton ==  "EVERYTHING":
                     if skelroot not in self.armatures:
                         self.armatures[skelroot] = []
-                        self.logger.debug("'%s' is an armature"
+                        self.debug("'%s' is an armature"
                                           % skelroot.name)
                 elif self.properties.skeleton ==  "GEOMETRY_ONLY":
                     if skelroot not in self.armatures:
@@ -2709,7 +2706,7 @@ class NifImport(NifImportExport):
                         continue
                     if boneBlock not in self.armatures[skelroot]:
                         self.armatures[skelroot].append(boneBlock)
-                        self.logger.debug(
+                        self.debug(
                             "'%s' is a bone of armature '%s'"
                             % (boneBlock.name, skelroot.name))
                     # now we "attach" the bone to the armature:
@@ -2732,7 +2729,7 @@ class NifImport(NifImportExport):
                             continue
                         if bone not in self.armatures[skelroot]:
                             self.armatures[skelroot].append(bone)
-                            self.logger.debug(
+                            self.debug(
                                 "'%s' marked as extra bone of armature '%s'"
                                 % (bone.name, skelroot.name))
                             # we make sure all NiNodes from this bone
@@ -2761,7 +2758,7 @@ class NifImport(NifImportExport):
                 # neither is it marked as a bone: so mark the parent as a bone
                 self.armatures[skelroot].append(boneparent)
                 # store the coordinates for realignement autodetection 
-                self.logger.debug("'%s' is a bone of armature '%s'"
+                self.debug("'%s' is a bone of armature '%s'"
                                   % (boneparent.name, skelroot.name))
             # now the parent is marked as a bone
             # recursion: complete the bone tree,
@@ -2863,7 +2860,7 @@ class NifImport(NifImportExport):
 
         # denote progress
         self.msg_progress("Animation")
-        self.logger.info("Importing animation data for %s" % b_obj.name)
+        self.info("Importing animation data for %s" % b_obj.name)
         assert(isinstance(kfd, NifFormat.NiKeyframeData))
         # create an Ipo for this object
         b_ipo = self.get_object_ipo(b_obj)
@@ -2871,7 +2868,7 @@ class NifImport(NifImportExport):
         translations = kfd.translations
         scales = kfd.scales
         # add the keys
-        self.logger.debug('Scale keys...')
+        self.debug('Scale keys...')
         for key in scales.keys:
             frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
             Blender.Set('curframe', frame)
@@ -2887,7 +2884,7 @@ class NifImport(NifImportExport):
             xkeys = kfd.xyz_rotations[0].keys
             ykeys = kfd.xyz_rotations[1].keys
             zkeys = kfd.xyz_rotations[2].keys
-            self.logger.debug('Rotation keys...(euler)')
+            self.debug('Rotation keys...(euler)')
             for (xkey, ykey, zkey) in zip(xkeys, ykeys, zkeys):
                 frame = 1+int(xkey.time * self.fps + 0.5) # time 0.0 is frame 1
                 # XXX we assume xkey.time == ykey.time == zkey.time
@@ -2900,7 +2897,7 @@ class NifImport(NifImportExport):
         else:
             # uses quaternions
             if kfd.quaternion_keys:
-                self.logger.debug('Rotation keys...(quaternions)')
+                self.debug('Rotation keys...(quaternions)')
             for key in kfd.quaternion_keys:
                 frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                 Blender.Set('curframe', frame)
@@ -2912,7 +2909,7 @@ class NifImport(NifImportExport):
                 b_obj.insertIpoKey(Blender.Object.ROT)
 
         if translations.keys:
-            self.logger.debug('Translation keys...')
+            self.debug('Translation keys...')
         for key in translations.keys:
             frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
             Blender.Set('curframe', frame)
@@ -2956,7 +2953,7 @@ class NifImport(NifImportExport):
             # 0.005 = 1/200
             numdel = me.remDoubles(0.005)
             if numdel:
-                self.logger.info(
+                self.info(
                     "Removed %i duplicate vertices"
                     " (out of %i) from collision mesh" % (numdel, numverts))
 
@@ -3101,7 +3098,7 @@ class NifImport(NifImportExport):
                 normal = (bhkshape.first_point - bhkshape.second_point) / length
                 normal = mathutils.Vector(normal.x, normal.y, normal.z)
             else:
-                self.logger.warn(
+                self.warning(
                     "bhkCapsuleShape with identical points:"
                     " using arbitrary axis")
                 normal = mathutils.Vector(0, 0, 1)
@@ -3187,7 +3184,7 @@ class NifImport(NifImportExport):
                 # 0.005 = 1/200
                 numdel = me.remDoubles(0.005)
                 if numdel:
-                    self.logger.info(
+                    self.info(
                         "Removed %i duplicate vertices"
                         " (out of %i) from collision mesh"
                         % (numdel, numverts))
@@ -3226,7 +3223,7 @@ class NifImport(NifImportExport):
             # 0.005 = 1/200
             numdel = me.remDoubles(0.005)
             if numdel:
-                self.logger.info(
+                self.info(
                     "Removed %i duplicate vertices"
                     " (out of %i) from collision mesh"
                     % (numdel, numverts))
@@ -3240,7 +3237,7 @@ class NifImport(NifImportExport):
             return reduce(operator.add, ( self.import_bhk_shape(subshape)
                                           for subshape in bhkshape.sub_shapes ))
 
-        self.logger.warning("Unsupported bhk shape %s"
+        self.warning("Unsupported bhk shape %s"
                             % bhkshape.__class__.__name__)
         return []
 
@@ -3256,28 +3253,28 @@ class NifImport(NifImportExport):
 
         # find objects
         if len(self.havok_objects[hkbody]) != 1:
-            self.logger.warning(
+            self.warning(
                 "Rigid body with no or multiple shapes, constraints skipped")
             return
 
         b_hkobj = self.havok_objects[hkbody][0]
         
-        self.logger.info("Importing constraints for %s" % b_hkobj.name)
+        self.info("Importing constraints for %s" % b_hkobj.name)
 
         # now import all constraints
         for hkconstraint in hkbody.constraints:
 
             # check constraint entities
             if not hkconstraint.num_entities == 2:
-                self.logger.warning(
+                self.warning(
                     "Constraint with more than 2 entities, skipped")
                 continue
             if not hkconstraint.entities[0] is hkbody:
-                self.logger.warning(
+                self.warning(
                     "First constraint entity not self, skipped")
                 continue
             if not hkconstraint.entities[1] in self.havok_objects:
-                self.logger.warning(
+                self.warning(
                     "Second constraint entity not imported, skipped")
                 continue
 
@@ -3294,13 +3291,13 @@ class NifImport(NifImportExport):
                 elif hkconstraint.type == 2:
                     hkdescriptor = hkconstraint.limited_hinge
                 else:
-                    self.logger.warning("Unknown malleable type (%i), skipped"
+                    self.warning("Unknown malleable type (%i), skipped"
                                         % hkconstraint.type)
                 # extra malleable constraint settings
                 ### damping parameters not yet in Blender Python API
                 ### tau (force between bodies) not supported by Blender
             else:
-                self.logger.warning("Unknown constraint type (%s), skipped"
+                self.warning("Unknown constraint type (%s), skipped"
                                     % hkconstraint.__class__.__name__)
                 continue
 
@@ -3405,14 +3402,14 @@ class NifImport(NifImportExport):
                     # either not orthogonal, or negative orientation
                     if (mathutils.CrossVecs(-axis_x, axis_y)
                         - axis_z).length > 0.01:
-                        self.logger.warning(
+                        self.warning(
                             "Axes are not orthogonal in %s;"
                             " arbitrary orientation has been chosen"
                             % hkdescriptor.__class__.__name__)
                         axis_z = mathutils.CrossVecs(axis_x, axis_y)
                     else:
                         # fix orientation
-                        self.logger.warning(
+                        self.warning(
                             "X axis flipped in %s to fix orientation"
                             % hkdescriptor.__class__.__name__)
                         axis_x = -axis_x
@@ -3609,7 +3606,7 @@ class NifImport(NifImportExport):
         *** Note: this function will eventually move to PyFFI. ***
         """
 
-        self.logger.info("Merging kf tree into nif tree")
+        self.info("Merging kf tree into nif tree")
 
         # check that this is an Oblivion style kf file
         if not isinstance(kf_root, NifFormat.NiControllerSequence):
@@ -3626,20 +3623,20 @@ class NifImport(NifImportExport):
             # match from nif tree?
             node = root.find(block_name = nodename)
             if not node:
-                self.logger.info(
+                self.info(
                     "Animation for %s but no such node found in nif tree"
                     % nodename)
                 continue
             # node found, now find the controller
             controllertype = controlledblock.get_controller_type()
             if not controllertype:
-                self.logger.info(
+                self.info(
                     "Animation for %s without controller type, so skipping"
                     % nodename)
                 continue
             controller = self.find_controller(node, getattr(NifFormat, controllertype))
             if not controller:
-                self.logger.info(
+                self.info(
                     "Animation for %s with %s controller,"
                     " but no such controller type found"
                     " in corresponding node, so creating one"
@@ -3675,7 +3672,7 @@ class NifImport(NifImportExport):
                 # copy translation
                 if kfi.translation.x < -1000000:
                     # invalid, happens in fallout 3, e.g. h2haim.kf
-                    self.logger.warn("ignored NaN in interpolator translation")
+                    self.warning("ignored NaN in interpolator translation")
                 else:
                     kfd.translations.num_keys = 1
                     kfd.translations.keys.update_size()

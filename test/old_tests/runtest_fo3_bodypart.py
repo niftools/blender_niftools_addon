@@ -42,12 +42,12 @@ import bpy
 class BodyPartTestSuite(TestSuite):
     def run(self):
         # create a mesh
-        self.logger.info("creating mesh")
+        self.info("creating mesh")
         mesh_data = Blender.Mesh.Primitives.Monkey()
         mesh_numverts = len(mesh_data.verts)
         mesh_obj = self.context.scene.objects.new(mesh_data, "Monkey")
         # create an armature
-        self.logger.info("creating armature")
+        self.info("creating armature")
         arm_data = Blender.Armature.Armature("Scene Root")
         arm_data.drawAxes = True
         arm_data.envelopes = False
@@ -59,13 +59,13 @@ class BodyPartTestSuite(TestSuite):
         arm_data.bones["Bone"] = bone
         arm_data.update()
         # skin the mesh
-        self.logger.info("attaching mesh to armature")
+        self.info("attaching mesh to armature")
         mesh_data.addVertGroup("Bone")
         mesh_data.assignVertsToGroup("Bone", list(range(mesh_numverts)), 1,
                                      Blender.Mesh.AssignModes.REPLACE)
         arm_obj.makeParentDeform([mesh_obj])
         # set body part
-        self.logger.info("creating body part vertex group")
+        self.info("creating body part vertex group")
         mesh_data.addVertGroup("BP_HEAD")
         mesh_data.assignVertsToGroup("BP_HEAD", list(range(mesh_numverts)), 1,
                                      Blender.Mesh.AssignModes.REPLACE)
@@ -78,25 +78,25 @@ class BodyPartTestSuite(TestSuite):
             selection=['Scene Root'],
             next_layer=False)
         # check body part
-        self.logger.info("checking for body parts")
+        self.info("checking for body parts")
         skininst = nif_export.root_blocks[0].find(
             block_type = NifFormat.BSDismemberSkinInstance)
         if not skininst:
             raise ValueError("no body parts found")
-        self.logger.info("checking number of body parts")
+        self.info("checking number of body parts")
         if skininst.num_partitions != 1:
             raise ValueError("bad number of body parts")
         if skininst.skin_partition.num_skin_partition_blocks != skininst.num_partitions:
             raise ValueError("num skin partitions do not match num body parts")
-        self.logger.info("checking body part indices")
+        self.info("checking body part indices")
         if skininst.partitions[0].body_part != NifFormat.BSDismemberBodyPartType.BP_HEAD:
             raise ValueError("bad body part type in skin partition")
 
         # remove a vertex from the body part vertex group
-        self.logger.info("removing vertex from vertex group")
+        self.info("removing vertex from vertex group")
         mesh_data.removeVertsFromGroup("BP_HEAD", [0])
         # try to export again, this must fail!
-        self.logger.info("check that export fails")
+        self.info("check that export fails")
         try:
             nif_export = self.test(
                 filename='test/nif/fo3/_bodypart2.nif',
@@ -109,7 +109,7 @@ class BodyPartTestSuite(TestSuite):
         else:
             raise RuntimeError("expected ValueError")
         # add selected vertices from mesh to another group
-        self.logger.info("export failed: adding selected vertices to new group")
+        self.info("export failed: adding selected vertices to new group")
         mesh_data.addVertGroup("BP_HEAD2")
         mesh_data.assignVertsToGroup("BP_HEAD2",
                                      [vert.index for vert in mesh_data.verts
@@ -125,17 +125,17 @@ class BodyPartTestSuite(TestSuite):
             next_layer=False)
 
         # check body part
-        self.logger.info("checking for body parts")
+        self.info("checking for body parts")
         skininst = nif_export.root_blocks[0].find(
             block_type = NifFormat.BSDismemberSkinInstance)
         if not skininst:
             raise ValueError("no body parts found")
-        self.logger.info("checking number of body parts")
+        self.info("checking number of body parts")
         if skininst.num_partitions != 2:
             raise ValueError("bad number of body parts")
         if skininst.skin_partition.num_skin_partition_blocks != skininst.num_partitions:
             raise ValueError("num skin partitions do not match num body parts")
-        self.logger.info("checking body part indices")
+        self.info("checking body part indices")
         if skininst.partitions[0].body_part != NifFormat.BSDismemberBodyPartType.BP_HEAD:
             raise ValueError("bad body part type in skin partition")
         if skininst.partitions[1].body_part != NifFormat.BSDismemberBodyPartType.BP_HEAD2:
@@ -149,7 +149,7 @@ class BodyPartTestSuite(TestSuite):
                 EXPORT_FLATTENSKIN=True, EXPORT_FO3_BODYPARTS=False),
             selection=['Scene Root'])
         # check that skinning is exported without body parts
-        self.logger.info("checking that there are no body parts")
+        self.info("checking that there are no body parts")
         if nif_export.root_blocks[0].find(
             block_type=NifFormat.BSDismemberSkinInstance):
 			raise ValueError("body part found even though they were disabled on export")

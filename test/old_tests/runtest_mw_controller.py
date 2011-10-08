@@ -52,7 +52,7 @@ class ControllerTestSuite(TestSuite):
                 if isinstance(prop, NifFormat.NiMaterialProperty):
                     for ctrl in prop.get_controllers():
                         if isinstance(ctrl, NifFormat.NiAlphaController):
-                            self.logger.info(
+                            self.info(
                                 "found alpha controller, checking data...")
                             # do we have data?
                             assert(ctrl.data)
@@ -92,7 +92,7 @@ class ControllerTestSuite(TestSuite):
             filename='test/nif/mw/alphactrl.nif')
         b_alphactrl = Blender.Object.Get("AlphaCtrlTest")
         # check that material has alpha curve
-        self.logger.info("checking blender material alpha curve...")
+        self.info("checking blender material alpha curve...")
         b_curve = b_alphactrl.getData(mesh=1).materials[0].ipo[
             Blender.Ipo.MA_ALPHA]
         assert(b_curve)
@@ -120,7 +120,7 @@ class ControllerTestSuite(TestSuite):
                             ctrl, NifFormat.NiMaterialColorController)]
             if not len(matcolor_ctrl) == 3:
                 raise ValueError("material color controllers not found")
-            self.logger.info(
+            self.info(
                 "found material controllers, checking data...")
             # do we have data?
             assert(all(ctrl.data for ctrl in matcolor_ctrl))
@@ -182,7 +182,7 @@ class ControllerTestSuite(TestSuite):
             filename='test/nif/mw/matcolorctrl.nif')
         b_matcolorctrl = Blender.Object.Get("MatColorCtrlTest")
         # check that material has color curves
-        self.logger.info("checking blender material color curves...")
+        self.info("checking blender material color curves...")
         b_ipo = b_matcolorctrl.getData(mesh=1).materials[0].ipo
         for b_channel in (
             Blender.Ipo.MA_R, Blender.Ipo.MA_G, Blender.Ipo.MA_B):
@@ -220,7 +220,7 @@ class ControllerTestSuite(TestSuite):
                         break
                 else:
                     raise ValueError("vis controller not found")
-                self.logger.info(
+                self.info(
                     "found vis controller, checking data...")
                 assert(ctrl.target == child)
                 assert(ctrl.data)
@@ -237,7 +237,7 @@ class ControllerTestSuite(TestSuite):
         # test stuff
         check_vis_controller(nif_import.root_blocks[0])
         # check that object has layer curve
-        self.logger.info("checking blender object layer curve...")
+        self.info("checking blender object layer curve...")
         for b_object in (b_cube1, b_cube2):
             assert(b_object.ipo)
             b_curve = b_object.ipo[Blender.Ipo.OB_LAYER]

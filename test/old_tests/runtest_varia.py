@@ -99,7 +99,7 @@ class VariaTestSuite(TestSuite):
             self.assert_equal(bsbound.dimensions.z, 66.2201843262)
         # import
         with closing(open('test/nif/bounding_box_bsbound.nif')) as stream:
-            self.logger.info("Reading test/nif/bounding_box_bsbound.nif")
+            self.info("Reading test/nif/bounding_box_bsbound.nif")
             nif = NifFormat.Data()
             nif.read(stream)
             check_bsbound(nif.roots)
@@ -115,7 +115,7 @@ class VariaTestSuite(TestSuite):
             selection = ['BSBound'])
         # test stuff...
         with closing(open('test/nif/_bounding_box_bsbound.nif')) as stream:
-            self.logger.info("Reading test/nif/_bounding_box_bsbound.nif")
+            self.info("Reading test/nif/_bounding_box_bsbound.nif")
             nif = NifFormat.Data()
             nif.read(stream)
             check_bsbound(nif.roots)
@@ -181,11 +181,11 @@ class VariaTestSuite(TestSuite):
           in the nif.
         """
         # create a mesh
-        self.logger.info("creating mesh")
+        self.info("creating mesh")
         mesh_data = Blender.Mesh.Primitives.Cube()
         mesh_obj = self.context.scene.objects.new(mesh_data, "packed_tex_test")
         # add a texture
-        self.logger.info("creating material and texture")
+        self.info("creating material and texture")
         mat = bpy.data.materials.new("packed_tex_mat")
         tex = bpy.ops.texture.new()
         tex.name = "packed_tex_tex"
@@ -304,15 +304,15 @@ class VariaTestSuite(TestSuite):
             next_layer=True)
         # check that these files are present, and check some of their properties
         with closing(open('test/nif/mw/_testnifxnifkf.nif')) as stream:
-            self.logger.info("Reading test/nif/mw/_testnifxnifkf.nif")
+            self.info("Reading test/nif/mw/_testnifxnifkf.nif")
             nif = NifFormat.Data()
             nif.read(stream)
         with closing(open('test/nif/mw/x_testnifxnifkf.nif')) as stream:
-            self.logger.info("Reading test/nif/mw/x_testnifxnifkf.nif")
+            self.info("Reading test/nif/mw/x_testnifxnifkf.nif")
             xnif = NifFormat.Data()
             xnif.read(stream)
         with closing(open('test/nif/mw/x_testnifxnifkf.kf')) as stream:
-            self.logger.info("Reading test/nif/mw/x_testnifxnifkf.kf")
+            self.info("Reading test/nif/mw/x_testnifxnifkf.kf")
             xkf = NifFormat.Data()
             xkf.read(stream)
         # check root blocks
@@ -486,7 +486,7 @@ class VariaTestSuite(TestSuite):
             next_layer=True)
         # check that these files are present, and check some of their properties
         with closing(open('test/nif/ob/_testanimseqname.kf')) as stream:
-            self.logger.info("Reading test/nif/ob/_testanimseqname.kf")
+            self.info("Reading test/nif/ob/_testanimseqname.kf")
             kf = NifFormat.Data()
             kf.read(stream)
         # check root block

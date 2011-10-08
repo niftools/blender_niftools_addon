@@ -57,7 +57,6 @@ class TestSuite:
             for this test).
         @type name: C{str}
         """
-        self.logger = logging.getLogger("niftools.blender.test")
         self.context.scene = Blender.Scene.New(name) # new scene
         self.layer = 1 # current layer
 
@@ -111,7 +110,7 @@ class TestSuite:
         # run test
         if 'game' in config:
             # export the imported files
-            self.logger.info("Exporting %s" % filename)
+            self.info("Exporting %s" % filename)
 
             finalconfig["EXPORT_FILE"] = filename
             result = NifExport(**finalconfig)
@@ -126,7 +125,7 @@ class TestSuite:
             # return test result
             return result
         else:
-            self.logger.info("Importing %s" % filename)
+            self.info("Importing %s" % filename)
 
             # import file and return test result
             finalconfig["IMPORT_FILE"] =  filename
@@ -149,7 +148,7 @@ class TestSuite:
             self.config.get("path", "fallout3"),
             "meshes", "characters", "_male")
         # read skeleton
-        self.logger.info("Reading skeleton.nif")
+        self.info("Reading skeleton.nif")
         skeleton = NifFormat.Data()
         with open(os.path.join(fo3_male, "skeleton.nif"), "rb") as stream:
             skeleton.read(stream)
@@ -159,19 +158,19 @@ class TestSuite:
                             "femalerighthand.nif",
                             "femalelefthand.nif",
                             "../head/headfemale.nif"):
-            self.logger.info("Merging body part %s" % bodypartnif)
+            self.info("Merging body part %s" % bodypartnif)
             bodypart = NifFormat.Data()
             with open(os.path.join(fo3_male, bodypartnif), "rb") as stream:
                 bodypart.read(stream)
                 skeleton.roots[0].merge_external_skeleton_root(bodypart.roots[0])
         # send geometries to their bind position
-        self.logger.info("Sending geometries to bind position")
+        self.info("Sending geometries to bind position")
         skeleton.roots[0].send_geometries_to_bind_position()
         # send all bones to their bind position
-        self.logger.info("Sending bones to bind position")
+        self.info("Sending bones to bind position")
         skeleton.roots[0].send_bones_to_bind_position()
         # write result
-        self.logger.info("Writing fullbody.nif")
+        self.info("Writing fullbody.nif")
         with open("test/nif/fo3/_fullbody.nif", "wb") as stream:
             skeleton.write(stream)
         # create fixed skeleton.nif
@@ -179,7 +178,7 @@ class TestSuite:
             if isinstance(block, NifFormat.NiGeometry):
                 block.send_bones_to_bind_position()
         # remove non-ninode children
-        self.logger.info("Removing non-NiNode children")
+        self.info("Removing non-NiNode children")
         for block in skeleton.roots[0].tree():
             block.set_children([child
                                for child in block.get_children()
@@ -188,7 +187,7 @@ class TestSuite:
             block.set_properties([])
             block.controller = None
             block.collision_object = None
-        self.logger.info("Writing skeleton.nif")
+        self.info("Writing skeleton.nif")
         with open("test/nif/fo3/skeleton.nif", "wb") as stream:
             skeleton.write(stream)
 
