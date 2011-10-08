@@ -299,7 +299,7 @@ class VariaTestSuite(TestSuite):
         self.test(
             filename='test/nif/mw/_testnifxnifkf.nif',
             config=dict(game='MORROWIND',
-                        EXPORT_MW_NIFXNIFKF=True),
+                        animation='ALL_NIF_XNIF_XKF'),
             selection=['Dance'],
             next_layer=True)
         # check that these files are present, and check some of their properties
@@ -480,7 +480,7 @@ class VariaTestSuite(TestSuite):
         self.test(
             filename='test/nif/ob/_testanimseqname.kf',
             config=dict(game='OBLIVION',
-                        EXPORT_ANIMATION=2,
+                        animation='ANIM_KF',
                         EXPORT_ANIMSEQUENCENAME="TestAnimSeqName"),
             selection=['Dance'],
             next_layer=True)
