@@ -176,7 +176,7 @@ class NifExport(NifImportExport):
         self.logger.info("exporting {0}".format(self.properties.filepath))
 
         # TODO
-        #if self.EXPORT_MW_NIFXNIFKF and self.EXPORT_VERSION == 'Morrowind':
+        #if self.EXPORT_MW_NIFXNIFKF and self.properties.game == 'MORROWIND':
         #    # if exporting in nif+xnif+kf mode, then first export
         #    # the nif with geometry + animation, which is done by:
         #    self.EXPORT_ANIMATION = 0
@@ -219,13 +219,13 @@ class NifExport(NifImportExport):
 
             # find nif version to write
             try:
-                self.version = NifFormat.versions[self.EXPORT_VERSION]
+                self.version = NifFormat.versions[self.properties.game]
                 self.logger.info("Writing NIF version 0x%08X" % self.version)
             except KeyError:
                 # select highest nif version that the game supports
-                self.version = NifFormat.games[self.EXPORT_VERSION][-1]
+                self.version = NifFormat.games[self.properties.game][-1]
                 self.logger.info("Writing %s NIF (version 0x%08X)"
-                                 % (self.EXPORT_VERSION, self.version))
+                                 % (self.properties.game, self.version))
 
             if self.EXPORT_ANIMATION == 0:
                 self.logger.info("Exporting geometry and animation")
@@ -276,8 +276,8 @@ class NifExport(NifImportExport):
             self.fend = context.endFrame()
             
             # oblivion, Fallout 3 and civ4
-            if (self.EXPORT_VERSION
-                in ('Civilization IV', 'Oblivion', 'Fallout 3')):
+            if (self.properties.game
+                in ('CIVILIZATION_IV', 'OBLIVION', 'FALLOUT_3')):
                 root_name = 'Scene Root'
             # other games
             else:
@@ -408,7 +408,7 @@ class NifExport(NifImportExport):
             # animations without keyframe animations crash the TESCS
             # if we are in that situation, add a trivial keyframe animation
             self.logger.info("Checking controllers")
-            if animtxt and self.EXPORT_VERSION == "Morrowind":
+            if animtxt and self.properties.game == 'MORROWIND':
                 has_keyframecontrollers = False
                 for block in self.blocks:
                     if isinstance(block, NifFormat.NiKeyframeController):
@@ -420,7 +420,7 @@ class NifExport(NifImportExport):
                     # add a trivial keyframe controller on the scene root
                     self.export_keyframes(None, 'localspace', root_block)
             if (self.EXPORT_MW_BS_ANIMATION_NODE
-                and self.EXPORT_VERSION == "Morrowind"):
+                and self.properties.game == 'MORROWIND'):
                 for block in self.blocks:
                     if isinstance(block, NifFormat.NiNode):
                         # if any of the shape children has a controller
@@ -440,7 +440,7 @@ class NifExport(NifImportExport):
 
             # oblivion skeleton export: check that all bones have a
             # transform controller and transform interpolator
-            if self.EXPORT_VERSION in ("Oblivion", "Fallout 3") \
+            if self.properties.game in ('OBLIVION', 'FALLOUT_3') \
                 and filebase.lower() in ('skeleton', 'skeletonbeast'):
                 # here comes everything that is Oblivion skeleton export
                 # specific
@@ -480,7 +480,7 @@ class NifExport(NifImportExport):
                     anim_textextra = None
 
             # oblivion and Fallout 3 furniture markers
-            if (self.EXPORT_VERSION in ('Oblivion', 'Fallout 3')
+            if (self.properties.game in ('OBLIVION', 'FALLOUT_3')
                 and filebase[:15].lower() == 'furnituremarker'):
                 # exporting a furniture marker for Oblivion/FO3
                 try:
@@ -510,7 +510,7 @@ class NifExport(NifImportExport):
 
             self.logger.info("Checking collision")
             # activate oblivion/Fallout 3 collision and physics
-            if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
+            if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
                 hascollision = False
                 for block in self.blocks:
                     if isinstance(block, NifFormat.bhkCollisionObject):
@@ -597,7 +597,7 @@ class NifExport(NifImportExport):
                 self.export_constraints(b_obj, root_block)
 
             # export weapon location
-            if self.EXPORT_VERSION in ("Oblivion", "Fallout 3"):
+            if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
                 if self.EXPORT_OB_PRN != "NONE":
                     # add string extra data
                     prn = self.create_block("NiStringExtraData")
@@ -612,11 +612,11 @@ class NifExport(NifImportExport):
                     root_block.add_extra_data(prn)
 
             # add vertex color and zbuffer properties for civ4 and railroads
-            if self.EXPORT_VERSION in ("Civilization IV",
-                                       "Sid Meier's Railroads"):
+            if self.properties.game in ('CIVILIZATION_IV',
+                                       'SID_MEIER_S_RAILROADS'):
                 self.export_vertex_color_property(root_block)
                 self.export_z_buffer_property(root_block)
-            elif self.EXPORT_VERSION in ("Empire Earth II",):
+            elif self.properties.game in ('EMPIRE_EARTH_II',):
                 self.export_vertex_color_property(root_block)
                 self.export_z_buffer_property(root_block, flags=15, function=1)
 
@@ -659,7 +659,7 @@ class NifExport(NifImportExport):
                     self.egmdata.apply_scale(self.properties.scale_correction)
 
             # generate mopps (must be done after applying scale!)
-            if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
+            if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
                 for block in self.blocks:
                     if isinstance(block, NifFormat.bhkMoppBvTreeShape):
                        self.logger.info("Generating mopp...")
@@ -704,7 +704,7 @@ class NifExport(NifImportExport):
                 root_block.name = root_name
 
             # making root block a fade node
-            if (self.EXPORT_VERSION == "Fallout 3"
+            if (self.properties.game == 'FALLOUT_3'
                 and self.EXPORT_FO3_FADENODE):
                 self.logger.info(
                     "Making root block a BSFadeNode")
@@ -713,13 +713,13 @@ class NifExport(NifImportExport):
                 root_block = fade_root_block
 
             # figure out user version and user version 2
-            if self.EXPORT_VERSION == "Oblivion":
+            if self.properties.game == 'OBLIVION':
                 NIF_USER_VERSION = 11
                 NIF_USER_VERSION2 = 11
-            elif self.EXPORT_VERSION == "Fallout 3":
+            elif self.properties.game == 'FALLOUT_3':
                 NIF_USER_VERSION = 11
                 NIF_USER_VERSION2 = 34
-            elif self.EXPORT_VERSION == "Divinity 2":
+            elif self.properties.game == 'DIVINITY_2':
                 NIF_USER_VERSION = 131072
                 NIF_USER_VERSION = 0
             else:
@@ -730,7 +730,7 @@ class NifExport(NifImportExport):
             #-----------------
 
             if self.EXPORT_ANIMATION != 2:
-                if self.EXPORT_VERSION == "Empire Earth II":
+                if self.properties.game == 'EMPIRE_EARTH_II':
                     ext = ".nifcache"
                 else:
                     ext = ".nif"
@@ -747,11 +747,11 @@ class NifExport(NifImportExport):
                                       user_version=NIF_USER_VERSION,
                                       user_version2=NIF_USER_VERSION2)
                 data.roots = [root_block]
-                if self.EXPORT_VERSION == "NeoSteam":
+                if self.properties.game == 'NEOSTEAM':
                     data.modification = "neosteam"
-                elif self.EXPORT_VERSION == "Atlantica":
+                elif self.properties.game == 'ATLANTICA':
                     data.modification = "ndoors"
-                elif self.EXPORT_VERSION == "Howling Sword":
+                elif self.properties.game == 'HOWLING_SWORD':
                     data.modification = "jmihs1"
                 stream = open(niffile, "wb")
                 try:
@@ -773,7 +773,7 @@ class NifExport(NifImportExport):
                     # get list of all controllers for this node
                     ctrls = node.get_controllers()
                     for ctrl in ctrls:
-                        if self.EXPORT_VERSION == "Morrowind":
+                        if self.properties.game == 'MORROWIND':
                             # morrowind: only keyframe controllers
                             if not isinstance(ctrl,
                                               NifFormat.NiKeyframeController):
@@ -782,7 +782,7 @@ class NifExport(NifImportExport):
                             node_kfctrls[node] = []
                         node_kfctrls[node].append(ctrl)
                 # morrowind
-                if self.EXPORT_VERSION in ("Morrowind", "Freedom Force"):
+                if self.properties.game in ('MORROWIND', 'FREEDOM_FORCE'):
                     # create kf root header
                     kf_root = self.create_block("NiSequenceStreamHelper")
                     kf_root.add_extra_data(anim_textextra)
@@ -804,9 +804,9 @@ class NifExport(NifImportExport):
                             # wipe controller target
                             ctrl.target = None
                 # oblivion
-                elif self.EXPORT_VERSION in ("Oblivion", "Fallout 3",
-                                             "Civilization IV", "Zoo Tycoon 2",
-                                             "Freedom Force vs. the 3rd Reich"):
+                elif self.properties.game in ('OBLIVION', 'FALLOUT_3',
+                                             'CIVILIZATION_IV', 'ZOO_TYCOON_2',
+                                             'FREEDOM_FORCE_VS_THE_3RD_REICH'):
                     # create kf root header
                     kf_root = self.create_block("NiControllerSequence")
                     if self.EXPORT_ANIMSEQUENCENAME:
@@ -900,7 +900,7 @@ class NifExport(NifImportExport):
                         " Zoo Tycoon 2, Freedom Force, and"
                         " Freedom Force vs. the 3rd Reich"
                         " keyframes are supported."
-                        % self.EXPORT_VERSION)
+                        % self.properties.game)
 
                 # write kf (and xnif if asked)
                 prefix = "" if not self.EXPORT_MW_NIFXNIFKF else "x"
@@ -914,7 +914,7 @@ class NifExport(NifImportExport):
                                       user_version=NIF_USER_VERSION,
                                       user_version2=NIF_USER_VERSION2)
                 data.roots = [kf_root]
-                data.neosteam = (self.EXPORT_VERSION == "NeoSteam")
+                data.neosteam = (self.properties.game == 'NEOSTEAM')
                 stream = open(kffile, "wb")
                 try:
                     data.write(stream)
@@ -957,7 +957,7 @@ class NifExport(NifImportExport):
                                       user_version=NIF_USER_VERSION,
                                       user_version2=NIF_USER_VERSION2)
                 data.roots = [root_block]
-                data.neosteam = (self.EXPORT_VERSION == "NeoSteam")
+                data.neosteam = (self.properties.game == 'NEOSTEAM')
                 stream = open(xniffile, "wb")
                 try:
                     data.write(stream)
@@ -1102,14 +1102,14 @@ class NifExport(NifImportExport):
         node.name = self.get_full_name(node_name)
 
         # default node flags
-        if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
+        if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
             node.flags = 0x000E
-        elif self.EXPORT_VERSION in ("Sid Meier's Railroads",
-                                     "Civilization IV"):
+        elif self.properties.game in ('SID_MEIER_S_RAILROADS',
+                                     'CIVILIZATION_IV'):
             node.flags = 0x0010
-        elif self.EXPORT_VERSION in ("Empire Earth II",):
+        elif self.properties.game in ('EMPIRE_EARTH_II',):
             node.flags = 0x0002
-        elif self.EXPORT_VERSION in ("Divinity 2",):
+        elif self.properties.game in ('DIVINITY_2',):
             node.flags = 0x0310
         else:
             # morrowind
@@ -1625,10 +1625,10 @@ class NifExport(NifImportExport):
         """
         if texture.type == Blender.Texture.Types.ENVMAP:
             # this works for morrowind only
-            if self.EXPORT_VERSION != "Morrowind":
+            if self.properties.game != 'MORROWIND':
                 raise NifExportError(
                     "cannot export environment maps for nif version '%s'"
-                    %self.EXPORT_VERSION)
+                    %self.properties.game)
             return "enviro 01.TGA"
         elif texture.type == Blender.Texture.Types.IMAGE:
             # get filename from image
@@ -1654,8 +1654,8 @@ class NifExport(NifImportExport):
                 filename = ddsfilename
 
             # sanitize file path
-            if not self.EXPORT_VERSION in ('Morrowind', 'Oblivion',
-                                           'Fallout 3'):
+            if not self.properties.game in ('MORROWIND', 'OBLIVION',
+                                           'FALLOUT_3'):
                 # strip texture file path
                 filename = os.path.basename(filename)
             else:
@@ -1856,7 +1856,7 @@ class NifExport(NifImportExport):
                 mesh_mat_ambient_color[2] = mesh_mat_diffuse_color[2] * mesh_mat_ambient
                 mesh_mat_emissive_color = [0.0, 0.0, 0.0]
                 mesh_mat_emitmulti = 1.0 # default
-                if self.EXPORT_VERSION != "Fallout 3":
+                if self.properties.game != 'FALLOUT_3':
                     mesh_mat_emissive_color[0] = mesh_mat_diffuse_color[0] * mesh_mat_emissive
                     mesh_mat_emissive_color[1] = mesh_mat_diffuse_color[1] * mesh_mat_emissive
                     mesh_mat_emissive_color[2] = mesh_mat_diffuse_color[2] * mesh_mat_emissive
@@ -2166,7 +2166,7 @@ class NifExport(NifImportExport):
                         f_indexed = (f_index[0], f_index[2+i], f_index[1+i])
                     trilist.append(f_indexed)
                     # add body part number
-                    if (self.EXPORT_VERSION != "Fallout 3"
+                    if (self.properties.game != 'FALLOUT_3'
                         or not bodypartgroups
                         or not self.EXPORT_FO3_BODYPARTS):
                         bodypartfacemap.append(0)
@@ -2223,7 +2223,7 @@ class NifExport(NifImportExport):
 
             # add texture effect block (must be added as preceeding child of
             # the trishape)
-            if self.EXPORT_VERSION == "Morrowind" and mesh_texeff_mtex:
+            if self.properties.game == 'MORROWIND' and mesh_texeff_mtex:
                 # create a new parent block for this shape
                 extra_node = self.create_block("NiNode", mesh_texeff_mtex)
                 parent_block.add_child(extra_node)
@@ -2257,14 +2257,14 @@ class NifExport(NifImportExport):
                 # (Morrowind's child naming convention)
                 trishape.name += " %i"%materialIndex
             trishape.name = self.get_full_name(trishape.name)
-            if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
+            if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
                 trishape.flags = 0x000E
-            elif self.EXPORT_VERSION in ("Sid Meier's Railroads",
-                                         "Civilization IV"):
+            elif self.properties.game in ('SID_MEIER_S_RAILROADS',
+                                         'CIVILIZATION_IV'):
                 trishape.flags = 0x0010
-            elif self.EXPORT_VERSION in ("Empire Earth II",):
+            elif self.properties.game in ('EMPIRE_EARTH_II',):
                 trishape.flags = 0x0016
-            elif self.EXPORT_VERSION in ("Divinity 2",):
+            elif self.properties.game in ('DIVINITY_2',):
                 if trishape.name.lower[-3:] in ("med", "low"):
                     trishape.flags = 0x0014
                 else:
@@ -2277,7 +2277,7 @@ class NifExport(NifImportExport):
                     trishape.flags = 0x0005 # use triangles as bounding box + hide
 
             # extra shader for Sid Meier's Railroads
-            if self.EXPORT_VERSION == "Sid Meier's Railroads":
+            if self.properties.game == 'SID_MEIER_S_RAILROADS':
                 trishape.has_shader = True
                 trishape.shader_name = "RRT_NormalMap_Spec_Env_CubeLight"
                 trishape.unknown_integer = -1 # default
@@ -2286,7 +2286,7 @@ class NifExport(NifImportExport):
             
             if mesh_base_mtex or mesh_glow_mtex:
                 # add NiTriShape's texturing property
-                if self.EXPORT_VERSION == "Fallout 3":
+                if self.properties.game == 'FALLOUT_3':
                     trishape.add_property(self.export_bs_shader_property(
                         basemtex = mesh_base_mtex,
                         glowmtex = mesh_glow_mtex,
@@ -2295,7 +2295,7 @@ class NifExport(NifImportExport):
                         #darkmtex = mesh_dark_mtex,
                         #detailmtex = mesh_detail_mtex)) 
                 else:
-                    if (self.EXPORT_VERSION in self.USED_EXTRA_SHADER_TEXTURES
+                    if (self.properties.game in self.USED_EXTRA_SHADER_TEXTURES
                         and self.EXPORT_EXTRA_SHADER_TEXTURES):
                         # sid meier's railroad and civ4:
                         # set shader slots in extra data
@@ -2317,10 +2317,10 @@ class NifExport(NifImportExport):
             if mesh_hasalpha:
                 # add NiTriShape's alpha propery
                 # refer to the alpha property in the trishape block
-                if self.EXPORT_VERSION == "Sid Meier's Railroads":
+                if self.properties.game == 'SID_MEIER_S_RAILROADS':
                     alphaflags = 0x32ED
                     alphathreshold = 150
-                elif self.EXPORT_VERSION == "Empire Earth II":
+                elif self.properties.game == 'EMPIRE_EARTH_II':
                     alphaflags = 0x00ED
                     alphathreshold = 0
                 else:
@@ -2343,7 +2343,7 @@ class NifExport(NifImportExport):
                 # but NOT for sid meier's railroads and other extra shader
                 # games (they use specularity even without this property)
                 if (mesh_hasspec
-                    and (self.EXPORT_VERSION
+                    and (self.properties.game
                          not in self.USED_EXTRA_SHADER_TEXTURES)):
                     # refer to the specular property in the trishape block
                     trishape.add_property(
@@ -2411,7 +2411,7 @@ class NifExport(NifImportExport):
             if mesh_uvlayers:
                 tridata.num_uv_sets = len(mesh_uvlayers)
                 tridata.bs_num_uv_sets = len(mesh_uvlayers)
-                if self.EXPORT_VERSION == "Fallout 3":
+                if self.properties.game == 'FALLOUT_3':
                     if len(mesh_uvlayers) > 1:
                         raise NifExportError(
                             "Fallout 3 does not support multiple UV layers")
@@ -2432,11 +2432,11 @@ class NifExport(NifImportExport):
             # textures are actually exported (civ4 seems to be consistent with
             # not using tangent space on non shadered nifs)
             if mesh_uvlayers and mesh_hasnormals:
-                if (self.EXPORT_VERSION in ("Oblivion", "Fallout 3")
-                    or (self.EXPORT_VERSION in self.USED_EXTRA_SHADER_TEXTURES
+                if (self.properties.game in ('OBLIVION', 'FALLOUT_3')
+                    or (self.properties.game in self.USED_EXTRA_SHADER_TEXTURES
                         and self.EXPORT_EXTRA_SHADER_TEXTURES)):
                     trishape.update_tangent_space(
-                        as_extra=(self.EXPORT_VERSION == "Oblivion"))
+                        as_extra=(self.properties.game == 'OBLIVION'))
 
             # now export the vertex weights, if there are any
             vertgroups = ob.data.getVertGroupNames()
@@ -2454,7 +2454,7 @@ class NifExport(NifImportExport):
                             boneinfluences.append(bone)
                     if boneinfluences: # yes we have skinning!
                         # create new skinning instance block and link it
-                        if (self.EXPORT_VERSION == "Fallout 3"
+                        if (self.properties.game == 'FALLOUT_3'
                             and self.EXPORT_FO3_BODYPARTS):
                             skininst = self.create_block("BSDismemberSkinInstance", ob)
                         else:
@@ -2600,9 +2600,9 @@ class NifExport(NifImportExport):
                                 triangles=trilist,
                                 trianglepartmap=bodypartfacemap,
                                 maximize_bone_sharing=(
-                                    self.EXPORT_VERSION == 'Fallout 3'))
+                                    self.properties.game == 'FALLOUT_3'))
                             # warn on bad config settings
-                            if self.EXPORT_VERSION == 'Oblivion':
+                            if self.properties.game == 'OBLIVION':
                                if self.EXPORT_PADBONES:
                                    self.logger.warning(
                                        "Using padbones on Oblivion export,"
@@ -2610,7 +2610,7 @@ class NifExport(NifImportExport):
                                        " this."
                                        " Disable the pad bones option to get"
                                        " higher quality skin partitions.")
-                            if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
+                            if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
                                if self.EXPORT_BONESPERPARTITION < 18:
                                    self.logger.warning(
                                        "Using less than 18 bones"
@@ -3020,18 +3020,18 @@ class NifExport(NifImportExport):
 
             # add the node and the keyframe for this bone
             node.name = self.get_full_name(bone.name)
-            if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
+            if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
                 # default for Oblivion bones
                 # note: bodies have 0x000E, clothing has 0x000F
                 node.flags = 0x000E
-            elif self.EXPORT_VERSION in ('Civilization IV', 'Empire Earth II'):
+            elif self.properties.game in ('CIVILIZATION_IV', 'EMPIRE_EARTH_II'):
                 if bone.children:
                     # default for Civ IV/EE II bones with children
                     node.flags = 0x0006
                 else:
                     # default for Civ IV/EE II final bones
                     node.flags = 0x0016
-            elif self.EXPORT_VERSION in ('Divinity 2',):
+            elif self.properties.game in ('DIVINITY_2',):
                 if bone.children:
                     # default for Div 2 bones with children
                     node.flags = 0x0186
@@ -3369,7 +3369,7 @@ class NifExport(NifImportExport):
 
     def export_collision(self, obj, parent_block):
         """Main function for adding collision object obj to a node.""" 
-        if self.EXPORT_VERSION == 'Morrowind':
+        if self.properties.game == 'MORROWIND':
              if obj.rbShapeBoundType != Blender.Object.RBShapes['POLYHEDERON']:
                  raise NifExportError(
                      "Morrowind only supports Polyhedron/Static"
@@ -3380,7 +3380,7 @@ class NifExport(NifImportExport):
              self.export_matrix(obj, 'localspace', node)
              self.export_tri_shapes(obj, 'none', node)
 
-        elif self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
+        elif self.properties.game in ('OBLIVION', 'FALLOUT_3'):
 
             nodes = [ parent_block ]
             nodes.extend([ block for block in parent_block.children
@@ -3868,7 +3868,7 @@ class NifExport(NifImportExport):
         for b_constr in b_obj.constraints:
             # rigid body joints
             if b_constr.type == Blender.Constraint.Type.RIGIDBODYJOINT:
-                if self.EXPORT_VERSION not in ("Oblivion", "Fallout 3"):
+                if self.properties.game not in ('OBLIVION', 'FALLOUT_3'):
                     self.logger.warning(
                         "Only Oblivion/Fallout 3 rigid body constraints"
                         " can be exported: skipped %s." % b_constr)
@@ -3927,7 +3927,7 @@ class NifExport(NifImportExport):
                     max_friction = 0
                 else:
                     # non-malleable typically have 10
-                    if self.EXPORT_VERSION == "Fallout 3":
+                    if self.properties.game == 'FALLOUT_3':
                         max_friction = 100
                     else: # oblivion
                         max_friction = 10
@@ -4127,7 +4127,7 @@ class NifExport(NifImportExport):
                 return block
         # no stencil property found, so create new one
         stencilprop = self.create_block("NiStencilProperty")
-        if self.EXPORT_VERSION == "Fallout 3":
+        if self.properties.game == 'FALLOUT_3':
             stencilprop.flags = 19840
         return stencilprop        
 
@@ -4154,7 +4154,7 @@ class NifExport(NifImportExport):
 
         # hack to preserve EnvMap2, skinm, ... named blocks (even if they got
         # renamed to EnvMap2.xxx or skin.xxx on import)
-        if self.EXPORT_VERSION in ('Oblivion', 'Fallout 3'):
+        if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
             for specialname in specialnames:
                 if (name.lower() == specialname.lower()
                     or name.lower().startswith(specialname.lower() + ".")):
@@ -4243,7 +4243,7 @@ class NifExport(NifImportExport):
         texprop.texture_count = 7
 
         if self.EXPORT_EXTRA_SHADER_TEXTURES:
-            if self.EXPORT_VERSION == "Sid Meier's Railroads":
+            if self.properties.game == 'SID_MEIER_S_RAILROADS':
                 # sid meier's railroads:
                 # some textures end up in the shader texture list
                 # there are 5 slots available, so set them up
@@ -4267,7 +4267,7 @@ class NifExport(NifImportExport):
 
                 # the other slots are exported below
 
-            elif self.EXPORT_VERSION == "Civilization IV":
+            elif self.properties.game == 'CIVILIZATION_IV':
                 # some textures end up in the shader texture list
                 # there are 4 slots available, so set them up
                 texprop.num_shader_textures = 4
@@ -4298,7 +4298,7 @@ class NifExport(NifImportExport):
                                  mtex = glowmtex)
 
         if bumpmtex:
-            if self.EXPORT_VERSION not in self.USED_EXTRA_SHADER_TEXTURES:
+            if self.properties.game not in self.USED_EXTRA_SHADER_TEXTURES:
                 texprop.has_bump_map_texture = True
                 self.export_tex_desc(texdesc = texprop.bump_map_texture,
                                      uvlayers = uvlayers,
@@ -4316,7 +4316,7 @@ class NifExport(NifImportExport):
                     self.export_source_texture(texture=bumpmtex.tex)
 
         if glossmtex:
-            if self.EXPORT_VERSION not in self.USED_EXTRA_SHADER_TEXTURES:
+            if self.properties.game not in self.USED_EXTRA_SHADER_TEXTURES:
                 texprop.has_gloss_texture = True
                 self.export_tex_desc(texdesc = texprop.gloss_texture,
                                      uvlayers = uvlayers,
@@ -4340,7 +4340,7 @@ class NifExport(NifImportExport):
                                  mtex = detailmtex)
 
         if refmtex:
-            if self.EXPORT_VERSION not in self.USED_EXTRA_SHADER_TEXTURES:
+            if self.properties.game not in self.USED_EXTRA_SHADER_TEXTURES:
                 self.logger.warn(
                     "Cannot export reflection texture for this game.")
                 #texprop.hasRefTexture = True
@@ -4411,7 +4411,7 @@ class NifExport(NifImportExport):
         texeff.coordinate_generation_type = NifFormat.CoordGenType.CG_SPHERE_MAP
         if mtex:
             texeff.source_texture = self.export_source_texture(mtex.tex)
-            if self.EXPORT_VERSION == 'Morrowind':
+            if self.properties.game == 'MORROWIND':
                 texeff.num_affected_node_list_pointers += 1
                 texeff.affected_node_list_pointers.update_size()
         texeff.unknown_vector.x = 1.0
@@ -4467,7 +4467,7 @@ class NifExport(NifImportExport):
 
     def add_shader_integer_extra_datas(self, trishape):
         """Add extra data blocks for shader indices."""
-        for shaderindex in self.USED_EXTRA_SHADER_TEXTURES[self.EXPORT_VERSION]:
+        for shaderindex in self.USED_EXTRA_SHADER_TEXTURES[self.properties.game]:
             shadername = self.EXTRA_SHADER_TEXTURES[shaderindex]
             trishape.add_integer_extra_data(shadername, shaderindex)
 

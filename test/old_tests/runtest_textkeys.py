@@ -49,7 +49,7 @@ class TextKeyTestSuite(TestSuite):
 
         nif_export = self.test(
             filename = 'test/nif/mw/_textkeytest.nif',
-            config = dict(EXPORT_VERSION = 'Morrowind'),
+            config = dict(game = 'MORROWIND'),
             selection = ['Dance'])
         textkeys_export = nif_export.root_blocks[0].find(
             block_type = NifFormat.NiTextKeyExtraData)

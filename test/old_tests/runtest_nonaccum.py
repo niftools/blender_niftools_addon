@@ -55,21 +55,21 @@ class NonAccumTestSuite(TestSuite):
         # export as nif with animation, default
         self.test(
             filename='test/nif/ob/_testnonaccum_default.nif',
-            config=dict(EXPORT_VERSION='Oblivion',
+            config=dict(game='OBLIVION',
                         EXPORT_NONACCUM=0),
             selection=['Dance'],
             next_layer=False)
         # export as nif with animation, accum xy
         self.test(
             filename='test/nif/ob/_testnonaccum_accumxy.nif',
-            config=dict(EXPORT_VERSION='Oblivion',
+            config=dict(game='OBLIVION',
                         EXPORT_NONACCUM=1),
             selection=['Dance'],
             next_layer=False)
         # export as nif with animation, no accum
         self.test(
             filename='test/nif/ob/_testnonaccum_accumnone.nif',
-            config=dict(EXPORT_VERSION='Oblivion',
+            config=dict(game='OBLIVION',
                         EXPORT_NONACCUM=2),
             selection=['Dance'],
             next_layer=False)

@@ -69,7 +69,7 @@ class SkinningTestSuite(TestSuite):
         self.test(
             filename = 'test/nif/fo3/_femaleupperbody.nif',
             config = dict(
-                EXPORT_VERSION = 'Fallout 3', EXPORT_SMOOTHOBJECTSEAMS = True,
+                game = 'FALLOUT_3', EXPORT_SMOOTHOBJECTSEAMS = True,
                 EXPORT_FLATTENSKIN = True),
             selection = ['Scene Root'])
         # compare skindata

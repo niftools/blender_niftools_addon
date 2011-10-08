@@ -51,7 +51,7 @@ class SkeletonTestSuite(TestSuite):
         nif_export = self.test(
             filename = 'test/nif/fo3/_skeleton.nif',
             config = dict(
-                EXPORT_VERSION='Fallout 3', EXPORT_SMOOTHOBJECTSEAMS=True,
+                game='FALLOUT_3', EXPORT_SMOOTHOBJECTSEAMS=True,
                 EXPORT_FLATTENSKIN=True),
             selection = ['Scene Root'])
         # open original nif to get rid of possible issues with scale

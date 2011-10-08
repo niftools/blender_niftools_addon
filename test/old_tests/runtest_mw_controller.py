@@ -102,7 +102,7 @@ class ControllerTestSuite(TestSuite):
         # export
         nif_export = self.test(
             filename='test/nif/mw/_alphactrl.nif',
-            config=dict(EXPORT_VERSION = 'Morrowind'),
+            config=dict(game = 'MORROWIND'),
             selection = ['AlphaCtrlTest'])
         # test stuff
         check_alpha_controller(nif_export.root_blocks[0])
@@ -204,7 +204,7 @@ class ControllerTestSuite(TestSuite):
         # export
         nif_export = self.test(
             filename='test/nif/mw/_matcolorctrl.nif',
-            config=dict(EXPORT_VERSION = 'Morrowind'),
+            config=dict(game = 'MORROWIND'),
             selection = ['MatColorCtrlTest'])
         # test stuff
         check_matcolor_controller(nif_export.root_blocks[0])
@@ -247,7 +247,7 @@ class ControllerTestSuite(TestSuite):
         self.context.scene.setLayers([3, 4]) # make sure both are exported
         nif_export = self.test(
             filename='test/nif/mw/_visctrl.nif',
-            config=dict(EXPORT_VERSION = 'Morrowind'),
+            config=dict(game = 'MORROWIND'),
             selection = ['VisCtrlCube1', 'VisCtrlCube2'])
         # test stuff
         check_vis_controller(nif_export.root_blocks[0])

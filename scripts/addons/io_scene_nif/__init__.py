@@ -218,6 +218,12 @@ class NifImportUI(bpy.types.Operator, ImportHelper, NifImportExportUI):
         from . import import_nif
         return import_nif.NifImport(self, context)
 
+def _game_to_enum(game):
+    symbols = ":,'\" +-*!?;./="
+    table = str.maketrans(symbols, "_" * len(symbols))
+    enum = game.upper().translate(table).replace("__", "_")
+    return enum
+
 class NifExportUI(bpy.types.Operator, ExportHelper, NifImportExportUI):
     """Save a NIF File"""
     # class constants
@@ -227,7 +233,7 @@ class NifExportUI(bpy.types.Operator, ExportHelper, NifImportExportUI):
     # properties
     game = bpy.props.EnumProperty(
         items=[
-            (game.upper().replace(" ", "_"), game, "Export for " + game)
+            (_game_to_enum(game), game, "Export for " + game)
             # implementation note: reversed makes it show alphabetically
             # (at least with the current blender)
             for game in reversed(sorted(
@@ -804,7 +810,7 @@ class NifConfig:
         # export-only options for oblivion/fallout 3
 
         if (self.target == self.TARGET_EXPORT
-            and self.config["EXPORT_VERSION"] in ("Oblivion", "Fallout 3")):
+            and self.config["game"] in ('OBLIVION', 'FALLOUT_3')):
             self.draw_next_column()
             
             self.draw_label(
@@ -979,7 +985,7 @@ class NifConfig:
 
         # export-only options for morrowind
         if (self.target == self.TARGET_EXPORT
-            and self.config["EXPORT_VERSION"] == "Morrowind"):
+            and self.config["game"] == 'MORROWIND'):
             self.draw_next_column()
 
             self.draw_toggle(
@@ -992,7 +998,7 @@ class NifConfig:
 
         # export-only options for civ4 and rrt
         if (self.target == self.TARGET_EXPORT
-            and (self.config["EXPORT_VERSION"]
+            and (self.config["game"]
                  in NifImportExport.USED_EXTRA_SHADER_TEXTURES)):
             self.draw_next_column()
 
@@ -1002,7 +1008,7 @@ class NifConfig:
 
         # export-only options for fallout 3
         if (self.target == self.TARGET_EXPORT
-            and self.config["EXPORT_VERSION"] == "Fallout 3"):
+            and self.config["game"] == 'FALLOUT_3'):
             self.draw_next_column()
 
             self.draw_label(
@@ -1190,7 +1196,7 @@ class NifConfig:
             self.config["IMPORT_APPLYSKINDEFORM"] = True
             self.config["IMPORT_EXTRANODES"] = True
         elif evName[:5] == "GAME_":
-            self.config["EXPORT_VERSION"] = evName[5:]
+            self.config["game"] = evName[5:]
             # settings that usually make sense, fail-safe
             self.config["EXPORT_FORCEDDS"] = True
             self.config["EXPORT_SMOOTHOBJECTSEAMS"] = True
@@ -1206,18 +1212,18 @@ class NifConfig:
             self.config["EXPORT_MW_BS_ANIMATION_NODE"] = False
             self.config["EXPORT_EXTRA_SHADER_TEXTURES"] = True
             # set default settings per game
-            if self.config["EXPORT_VERSION"] == "Morrowind":
+            if self.config["game"] == 'MORROWIND':
                 self.config["EXPORT_FORCEDDS"] = False
                 pass # fail-safe settings work
-            if self.config["EXPORT_VERSION"] == "Freedom Force vs. the 3rd Reich":
+            if self.config["game"] == 'FREEDOM_FORCE_VS_THE_3RD_REICH':
                 self.config["EXPORT_SKINPARTITION"] = True
                 self.config["EXPORT_PADBONES"] = True
-            elif self.config["EXPORT_VERSION"] == "Civilization IV":
+            elif self.config["game"] == "Civilization IV":
                 self.config["EXPORT_STRIPIFY"] = True
                 self.config["EXPORT_STITCHSTRIPS"] = True
                 self.config["EXPORT_BONESPERPARTITION"] = 18
                 self.config["EXPORT_SKINPARTITION"] = True
-            elif self.config["EXPORT_VERSION"] in ("Oblivion", "Fallout 3"):
+            elif self.config["game"] in ('OBLIVION', 'FALLOUT_3'):
                 self.config["EXPORT_STRIPIFY"] = True
                 self.config["EXPORT_STITCHSTRIPS"] = True
                 self.config["EXPORT_FLATTENSKIN"] = True
@@ -1246,10 +1252,10 @@ class NifConfig:
                 self.config["EXPORT_FO3_SF_UN31"] = True
                 # body parts
                 self.config["EXPORT_FO3_BODYPARTS"] = True
-            elif self.config["EXPORT_VERSION"] == "Empire Earth II":
+            elif self.config["game"] == "Empire Earth II":
                 self.config["EXPORT_FORCEDDS"] = False
                 self.config["EXPORT_SKINPARTITION"] = False
-            elif self.config["EXPORT_VERSION"] == "Bully SE":
+            elif self.config["game"] == "Bully SE":
                 self.config["EXPORT_FORCEDDS"] = False
                 self.config["EXPORT_STRIPIFY"] = False
                 self.config["EXPORT_STITCHSTRIPS"] = False
@@ -1258,7 +1264,7 @@ class NifConfig:
                 self.config["EXPORT_PADBONES"] = True
                 self.config["EXPORT_BONESPERPARTITION"] = 4
         elif evName[:8] == "VERSION_":
-            self.config["EXPORT_VERSION"] = evName[8:]
+            self.config["game"] = evName[8:]
         elif evName == "EXPORT_FLATTENSKIN":
             self.config["EXPORT_FLATTENSKIN"] = not self.config["EXPORT_FLATTENSKIN"]
             if self.config["EXPORT_FLATTENSKIN"]: # if skin is flattened
@@ -1279,7 +1285,7 @@ class NifConfig:
              elif value == 1:
                  # enable flattening skin for 'geometry only' exports
                  # in oblivion and fallout 3
-                 if self.config["EXPORT_VERSION"] in ("Oblivion", "Fallout 3"):
+                 if self.config["game"] in ('OBLIVION', 'FALLOUT_3'):
                      self.config["EXPORT_FLATTENSKIN"] = True
         elif evName == "EXPORT_SKINPARTITION":
             self.config["EXPORT_SKINPARTITION"] = not self.config["EXPORT_SKINPARTITION"]

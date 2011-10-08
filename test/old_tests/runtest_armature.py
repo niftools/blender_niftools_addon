@@ -72,7 +72,7 @@ class ArmatureTestSuite(TestSuite):
         # export
         nif_export = self.test(
             filename='test/nif/ee2/_lodtest-skinned.nif',
-            config=dict(EXPORT_VERSION = 'Empire Earth II'),
+            config=dict(game = 'EMPIRE_EARTH_II'),
             selection = ['LodTestSkinned'])
         # test stuff
         check_armature(nif_export.root_blocks[0])

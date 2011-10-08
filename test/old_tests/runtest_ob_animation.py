@@ -7,7 +7,7 @@ from nif_common import NifFormat
 
 # some tests to import and export nif files
 # as list of (filename, config dictionary, list of objects to be selected)
-# if the config has a EXPORT_VERSION key then the test is an export test
+# if the config has a game key then the test is an export test
 # otherwise it's an import test
 
 class TestSuiteAnimation(TestSuite):
@@ -25,7 +25,7 @@ class TestSuiteAnimation(TestSuite):
         self.test(
             filename='test/nif/_castself.kf',
             config=dict(
-                EXPORT_VERSION = 'Oblivion',
+                game = 'OBLIVION',
                 EXPORT_ANIMATION = 2, # animation only
                 EXPORT_OB_LAYER = NifFormat.OblivionLayer.OL_BIPED),
              selection=['Scene Root'])

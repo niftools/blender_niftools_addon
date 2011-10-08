@@ -60,7 +60,7 @@ class EgmTestSuite(TestSuite):
         # as part of geometry info is stored in tri file
         self.test(
             filename = 'test/nif/fo3/_hockeymask.nif',
-            config = dict(EXPORT_VERSION='Fallout 3'),
+            config = dict(game='FALLOUT_3'),
             selection = ['HockeyMask']
             )
 

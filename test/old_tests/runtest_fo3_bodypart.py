@@ -73,7 +73,7 @@ class BodyPartTestSuite(TestSuite):
         nif_export = self.test(
             filename='test/nif/fo3/_bodypart1.nif',
             config=dict(
-                EXPORT_VERSION='Fallout 3', EXPORT_SMOOTHOBJECTSEAMS=True,
+                game='FALLOUT_3', EXPORT_SMOOTHOBJECTSEAMS=True,
                 EXPORT_FLATTENSKIN=True),
             selection=['Scene Root'],
             next_layer=False)
@@ -101,7 +101,7 @@ class BodyPartTestSuite(TestSuite):
             nif_export = self.test(
                 filename='test/nif/fo3/_bodypart2.nif',
                 config=dict(
-                    EXPORT_VERSION='Fallout 3', EXPORT_SMOOTHOBJECTSEAMS=True,
+                    game='FALLOUT_3', EXPORT_SMOOTHOBJECTSEAMS=True,
                     EXPORT_FLATTENSKIN=True),
                 selection=['Scene Root'])
         except ValueError:
@@ -119,7 +119,7 @@ class BodyPartTestSuite(TestSuite):
         nif_export = self.test(
             filename='test/nif/fo3/_bodypart3.nif',
             config=dict(
-                EXPORT_VERSION='Fallout 3', EXPORT_SMOOTHOBJECTSEAMS=True,
+                game='FALLOUT_3', EXPORT_SMOOTHOBJECTSEAMS=True,
                 EXPORT_FLATTENSKIN=True),
             selection=['Scene Root'],
             next_layer=False)
@@ -145,7 +145,7 @@ class BodyPartTestSuite(TestSuite):
         nif_export = self.test(
             filename='test/nif/fo3/_bodypart4.nif',
             config=dict(
-                EXPORT_VERSION='Fallout 3', EXPORT_SMOOTHOBJECTSEAMS=True,
+                game='FALLOUT_3', EXPORT_SMOOTHOBJECTSEAMS=True,
                 EXPORT_FLATTENSKIN=True, EXPORT_FO3_BODYPARTS=False),
             selection=['Scene Root'])
         # check that skinning is exported without body parts
