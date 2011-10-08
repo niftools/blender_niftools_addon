@@ -169,7 +169,7 @@ class NifImportExport:
 
     def get_b_children(self, b_obj):
         """Return children of a blender object."""
-        return [child for child in Blender.Object.Get()
+        return [child for child in bpy.data.objects
                 if child.parent == b_obj]
 
     def get_bone_name_for_blender(self, name):
@@ -313,5 +313,5 @@ class NifImportExport:
         This method provides an alternative check.
         """
         # lame and slow, but functional
-        return b_obj in Blender.Object.Get()
+        return b_obj in bpy.data.objects
 

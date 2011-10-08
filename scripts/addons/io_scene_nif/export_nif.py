@@ -230,7 +230,7 @@ class NifExport(NifImportExport):
                 # for morrowind: only keyframe controllers
                 self.logger.info("Exporting animation only (as .kf file)")
 
-            for ob in Blender.Object.Get():
+            for ob in bpy.data.objects:
                 # armatures should not be in rest position
                 if ob.getType() == 'Armature':
                     # ensure we get the mesh vertices in animation mode,
