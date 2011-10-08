@@ -1,11 +1,4 @@
-"""Nif import and export scripts.
-
-Code flow
-=========
-
-The user first activates the addon via the File -> User Preferences -> Addons.
-This triggers the :func:`register` function.
-"""
+"""Nif import and export scripts."""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -44,6 +37,7 @@ This triggers the :func:`register` function.
 #
 # ***** END LICENSE BLOCK *****
 
+#: Blender addon info.
 bl_info = {
     "name": "NetImmerse/Gamebryo nif format",
     "description":
@@ -80,7 +74,7 @@ import pyffi
 from pyffi.formats.nif import NifFormat
 from pyffi.formats.egm import EgmFormat
 
-def init_loggers():
+def _init_loggers():
     """Set up loggers."""
     niftoolslogger = logging.getLogger("niftools")
     niftoolslogger.setLevel(logging.WARNING)
@@ -94,17 +88,21 @@ def init_loggers():
     pyffilogger.addHandler(loghandler)
 
 # set up the loggers: call it as a function to avoid polluting namespace
-init_loggers()
+_init_loggers()
 
 class NifImportExportUI:
     """Abstract base class for import and export user interface."""
 
     # filepath is created by ImportHelper/ExportHelper
 
+    #: Default file name extension.
     filename_ext = ".nif"
+
+    #: File name filter for file select dialog.
     filter_glob = bpy.props.StringProperty(
         default="*.nif;*.item;*.nifcache;*.jmi", options={'HIDDEN'})
 
+    #: Level of verbosity on the console.
     log_level = bpy.props.EnumProperty(
         items=(
             ("DEBUG", "Debug",
@@ -122,6 +120,7 @@ class NifImportExportUI:
         description="Level of verbosity on the console.",
         default="WARNING")
 
+    #: Name of file where Python profiler dumps the profile.
     profile_path = bpy.props.StringProperty(
         name="Profile Path",
         description=
@@ -131,12 +130,14 @@ class NifImportExportUI:
         default="",
         subtype="FILE_PATH")
 
+    #: Number of nif units per blender unit.
     scale_correction = bpy.props.FloatProperty(
         name="Scale Correction",
         description="Number of nif units per blender unit.",
         default=10.0,
         min=0.01, max=100.0, precision=2)
 
+    #: Used for checking equality between floats.
     epsilon = bpy.props.FloatProperty(
         name="Epsilon",
         description="Used for checking equality between floats.",
@@ -144,12 +145,15 @@ class NifImportExportUI:
         min=0.0, max=1.0, precision=5)
 
 class NifImportUI(bpy.types.Operator, ImportHelper, NifImportExportUI):
-    """Load a NIF File"""
-    # class constants
+    """Operator for loading a nif file."""
+
+    #: Name of function for calling the nif export operator.
     bl_idname = "import_scene.nif"
+
+    #: How the nif import operator is labelled in the user interface.
     bl_label = "Import NIF"
 
-    # properties
+    #: Keyframe file for animations.
     keyframe_file = bpy.props.StringProperty(
         name="Keyframe File",
         description="Keyframe file for animations.",
@@ -157,6 +161,7 @@ class NifImportUI(bpy.types.Operator, ImportHelper, NifImportExportUI):
         default="",
         subtype="FILE_PATH")
 
+    #: FaceGen EGM file for morphs.
     egm_file = bpy.props.StringProperty(
         name="FaceGen EGM File",
         description="FaceGen EGM file for morphs.",
@@ -164,37 +169,44 @@ class NifImportUI(bpy.types.Operator, ImportHelper, NifImportExportUI):
         default="",
         subtype="FILE_PATH")
 
+    #: Import animation.
     animation = bpy.props.BoolProperty(
         name="Animation",
         description="Import animation.",
         default=True)
 
+    #: Merge skeleton roots.
     merge_skeleton_roots = bpy.props.BoolProperty(
         name="Merge Skeleton Roots",
         description="Merge skeleton roots.",
         default=True)
 
+    #: Send all geometries to their bind position.
     send_geoms_to_bind_pos = bpy.props.BoolProperty(
         name="Send Geometries To Bind Position",
         description="Send all geometries to their bind position.",
         default=True)
 
+    #: Send all detached geometries to the position of their parent node.
     send_detached_geoms_to_node_pos = bpy.props.BoolProperty(
         name="Send Detached Geometries To Node Position",
         description=
         "Send all detached geometries to the position of their parent node.",
         default=True)
 
+    #: Send all bones to their bind position.
     send_bones_to_bind_position = bpy.props.BoolProperty(
         name="Send Bones To Bind Position",
         description="Send all bones to their bind position.",
         default=True)
 
+    #: Apply skin deformation to all skinned geometries.
     apply_skin_deformation =  bpy.props.BoolProperty(
         name="Apply Skin Deformation",
         description="Apply skin deformation to all skinned geometries.",
         default=False)
 
+    #: What should be imported.
     skeleton = bpy.props.EnumProperty(
         items=(
             ("EVERYTHING", "Everything",
@@ -205,16 +217,21 @@ class NifImportUI(bpy.types.Operator, ImportHelper, NifImportExportUI):
              "Import geometry only and parent them to selected skeleton."),
             ),
         name="What",
-        description="What should be imported?",
+        description="What should be imported.",
         default="EVERYTHING")
 
+    #: Import multi-material shapes as a single mesh.
     combine_shapes = bpy.props.BoolProperty(
         name="Combine Shapes",
         description="Import multi-material shapes as a single mesh.",
         default=True)
 
     def execute(self, context):
-        """Main import function: open file and import all trees."""
+        """Execute the import operator: first constructs a
+        :class:`~io_scene_nif.import_nif.NifImport` instance and then
+        calls its :meth:`~io_scene_nif.import_nif.NifImport.execute`
+        method.
+        """
         from . import import_nif
         return import_nif.NifImport(self, context).execute()
 
@@ -225,12 +242,15 @@ def _game_to_enum(game):
     return enum
 
 class NifExportUI(bpy.types.Operator, ExportHelper, NifImportExportUI):
-    """Save a NIF File"""
-    # class constants
+    """Operator for saving a nif file."""
+
+    #: Name of function for calling the nif export operator.
     bl_idname = "export_scene.nif"
+
+    #: How the nif export operator is labelled in the user interface.
     bl_label = "Export NIF"
 
-    # properties
+    #: For which game to export.
     game = bpy.props.EnumProperty(
         items=[
             (_game_to_enum(game), game, "Export for " + game)
@@ -243,10 +263,7 @@ class NifExportUI(bpy.types.Operator, ExportHelper, NifImportExportUI):
         description="For which game to export.",
         default='OBLIVION')
 
-    # EXPORT_ANIMATION == 0 is ALL_NIF
-    # EXPORT_ANIMATION == 1 is GEOM_NIF
-    # EXPORT_ANIMATION == 2 is ANIM_KF
-    # EXPORT_MW_NIFXNIFKF == True is ALL_NIF_XNIF_XKF
+    #: How to export animation.
     animation = bpy.props.EnumProperty(
         items=[
             ('ALL_NIF', "All (nif)", "Geometry and animation to a single nif."),
@@ -258,14 +275,18 @@ class NifExportUI(bpy.types.Operator, ExportHelper, NifImportExportUI):
         description="How to export animation.",
         default='ALL_NIF')
 
-    # map game enum to nif version
+    #: Map game enum to nif version.
     version = {
         _game_to_enum(game): versions[-1]
         for game, versions in NifFormat.games.items() if game != '?'
         }
 
     def execute(self, context):
-        """Main export function: open file and export all trees."""
+        """Execute the export operator: first constructs a
+        :class:`~io_scene_nif.export_nif.NifExport` instance and then
+        calls its :meth:`~io_scene_nif.export_nif.NifExport.execute`
+        method.
+        """
         from . import export_nif
         return export_nif.NifExport(self, context).execute()
 
