@@ -36,7 +36,7 @@ Naming Conventions
 
   * ``b_mesh`` for a blender :class:`bpy.types.Mesh`
   * ``b_face`` for a blender :class:`bpy.types.MeshFace`
-  * ``b_vert`` for a blender :class:`bpy.types.MeshVertex`
+  * ``b_vertex`` for a blender :class:`bpy.types.MeshVertex`
   * ``b_vector`` for a blender :class:`mathutils.Vector`
   * ``b_obj`` for a blender :class:`bpy.types.Object`
   * ``n_obj`` for a generic
@@ -56,7 +56,7 @@ Beware that, unlike in blender 2.4x, :class:`MeshFace.vertices` is
 *not* a list of the type :class:`MeshVertex`, but are :class:`int`\ s
 mapping into :class:`Mesh.vertices`, so you need for instance::
 
-    (b_mesh.vertices[b_vert_index].co for b_vert_index in b_face)
+    (b_mesh.vertices[b_vertex_index].co for b_vertex_index in b_face.vertices)
 
 when requiring the actual vertex coordinates of a
 :class:`bpy.types.MeshFace`.
