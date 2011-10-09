@@ -283,7 +283,7 @@ class NifExport(NifImportExport):
                 root_objects.add(root_object)
 
             # smoothen seams of objects
-            if self.EXPORT_SMOOTHOBJECTSEAMS:
+            if self.properties.smooth_object_seams:
                 # get shared vertices
                 self.info("Smoothing seams between objects...")
                 vdict = {}
