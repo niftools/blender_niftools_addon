@@ -2625,14 +2625,14 @@ class NifExport(NifImportExport):
 
             
             # shape key morphing
-            key = mesh.key
+            key = mesh.shape_keys
             if key:
-                if len(key.blocks) > 1:
+                if len(key.key_blocks) > 1:
                     # yes, there is a key object attached
                     # export as egm, or as morphdata?
-                    if key.blocks[1].name.startswith("EGM"):
+                    if key.key_blocks[1].name.startswith("EGM"):
                         # egm export!
-                        self.exportEgm(key.blocks)
+                        self.exportEgm(key.key_blocks)
                     elif key.ipo:
                         # regular morphdata export
                         # (there must be a shape ipo)
@@ -2658,13 +2658,13 @@ class NifExport(NifImportExport):
                         # create geometry morph data
                         morphdata = self.create_block("NiMorphData", keyipo)
                         morphctrl.data = morphdata
-                        morphdata.num_morphs = len(key.blocks)
+                        morphdata.num_morphs = len(key.key_blocks)
                         morphdata.num_vertices = len(vertlist)
                         morphdata.morphs.update_size()
                         
 
                         # create interpolators (for newer nif versions)
-                        morphctrl.num_interpolators = len(key.blocks)
+                        morphctrl.num_interpolators = len(key.key_blocks)
                         morphctrl.interpolators.update_size()
 
                         # interpolator weights (for Fallout 3)
@@ -2672,10 +2672,10 @@ class NifExport(NifImportExport):
 
                         # XXX some unknowns, bethesda only
                         # XXX just guessing here, data seems to be zero always
-                        morphctrl.num_unknown_ints = len(key.blocks)
+                        morphctrl.num_unknown_ints = len(key.key_blocks)
                         morphctrl.unknown_ints.update_size()
 
-                        for keyblocknum, keyblock in enumerate(key.blocks):
+                        for keyblocknum, keyblock in enumerate(key.key_blocks):
                             # export morphed vertices
                             morph = morphdata.morphs[keyblocknum]
                             morph.frame_name = keyblock.name
