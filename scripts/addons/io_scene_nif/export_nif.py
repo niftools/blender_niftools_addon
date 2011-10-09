@@ -2051,7 +2051,7 @@ class NifExport(NifImportExport):
                 if (mesh_mat != None): # we have a material
                     if (f.material_index != materialIndex): # but this face has another material
                         continue # so skip this face
-                f_numverts = len(f.v)
+                f_numverts = len(f.vertices)
                 if (f_numverts < 3): continue # ignore degenerate faces
                 assert((f_numverts == 3) or (f_numverts == 4)) # debug
                 if mesh_uvlayers:
@@ -2063,20 +2063,23 @@ class NifExport(NifImportExport):
                             " and run the script again.")
                 # find (vert, uv-vert, normal, vcol) quad, and if not found, create it
                 f_index = [ -1 ] * f_numverts
-                for i in range(f_numverts):
-                    fv = f.v[i].co
+                for i, fv_index in enumerate(f.vertices):
+                    fv = mesh.vertices[fv_index].co
                     # get vertex normal for lighting (smooth = Blender vertex normal, non-smooth = Blender face normal)
                     if mesh_hasnormals:
                         if f.smooth:
-                            fn = f.v[i].normal
+                            fn = fv.normal
                         else:
                             fn = f.normal
                     else:
                         fn = None
                     fuv = []
                     for uvlayer in mesh_uvlayers:
-                        mesh.activeUVLayer = uvlayer
-                        fuv.append(f.uv[i])
+                        fuv.append(
+                            getattr(mesh.uv_textures[uvlayer].data, "uv%i" % i))
+                    # FIXME figure out the new vertex color layer system
+                    fcol = None
+                    """
                     if mesh_hasvcol:
                         if (len(f.col) == 0):
                             self.warning(
@@ -2090,16 +2093,16 @@ class NifExport(NifImportExport):
                             fcol = f.col[i]
                     else:
                         fcol = None
+                    """
                         
                     vertquad = ( fv, fuv, fn, fcol )
 
                     # do we already have this quad? (optimized by m_4444x)
                     f_index[i] = len(vertquad_list)
-                    v_index = f.v[i].index
-                    if vertmap[v_index]:
+                    if vertmap[fv_index]:
                         # iterate only over vertices with the same vertex index
                         # and check if they have the same uvs, normals and colors (wow is that fast!)
-                        for j in vertmap[v_index]:
+                        for j in vertmap[fv_index]:
                             if mesh_uvlayers:
                                 if max(abs(vertquad[1][uvlayer][0]
                                            - vertquad_list[j][1][uvlayer][0])
@@ -2132,9 +2135,9 @@ class NifExport(NifImportExport):
                             " and try again.")
                     if (f_index[i] == len(vertquad_list)):
                         # first: add it to the vertex map
-                        if not vertmap[v_index]:
-                            vertmap[v_index] = []
-                        vertmap[v_index].append(len(vertquad_list))
+                        if not vertmap[fv_index]:
+                            vertmap[fv_index] = []
+                        vertmap[fv_index].append(len(vertquad_list))
                         # new (vert, uv-vert, normal, vcol) quad: add it
                         vertquad_list.append(vertquad)
                         # add the vertex
