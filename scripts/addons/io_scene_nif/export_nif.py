@@ -310,7 +310,7 @@ class NifExport(NifImportExport):
                     if len(meshes) <= 1: continue # not shared
                     # take average of all face normals of faces that have this
                     # vertex
-                    norm = mathutils.Vector(0,0,0)
+                    norm = mathutils.Vector()
                     for v, f, mesh in vlist:
                         norm += f.no
                     norm.normalize()
@@ -321,7 +321,7 @@ class NifExport(NifImportExport):
                     bestfit = max(fitlist)
                     # recalculate normals only taking into account
                     # well-fitting faces
-                    norm = mathutils.Vector(0,0,0)
+                    norm = mathutils.Vector()
                     for (v, f, mesh), fit in zip(vlist, fitlist):
                         if fit >= bestfit - 0.2:
                             norm += f.no
@@ -1257,7 +1257,7 @@ class NifExport(NifImportExport):
             bind_scale = 1.0
             bind_rot = mathutils.Matrix([[1,0,0],[0,1,0],[0,0,1]])
             bind_quat = mathutils.Quaternion(1,0,0,0)
-            bind_trans = mathutils.Vector(0,0,0)
+            bind_trans = mathutils.Vector()
         if extra_mat_inv:
             extra_scale_inv, extra_rot_inv, extra_trans_inv = \
                 self.decompose_srt(extra_mat_inv)
@@ -1266,7 +1266,7 @@ class NifExport(NifImportExport):
             extra_scale_inv = 1.0
             extra_rot_inv = mathutils.Matrix([[1,0,0],[0,1,0],[0,0,1]])
             extra_quat_inv = mathutils.Quaternion(1,0,0,0)
-            extra_trans_inv = mathutils.Vector(0,0,0)
+            extra_trans_inv = mathutils.Vector()
 
         # sometimes we need to export an empty keyframe... this will take care of that
         if (ipo == None):
@@ -3249,10 +3249,11 @@ class NifExport(NifImportExport):
         b_scale_rot_t = mathutils.Matrix(b_scale_rot)
         b_scale_rot_t.transpose()
         b_scale_rot_2 = b_scale_rot * b_scale_rot_t
-        b_scale = mathutils.Vector(\
-            b_scale_rot_2[0][0] ** 0.5,\
-            b_scale_rot_2[1][1] ** 0.5,\
-            b_scale_rot_2[2][2] ** 0.5)
+        b_scale = mathutils.Vector([
+            b_scale_rot_2[0][0] ** 0.5,
+            b_scale_rot_2[1][1] ** 0.5,
+            b_scale_rot_2[2][2] ** 0.5,
+            ])
         # and fix their sign
         if (b_scale_rot.determinant() < 0):
             b_scale.negate()
@@ -3962,10 +3963,11 @@ class NifExport(NifImportExport):
                     hkconstraint.damping = 0.5
 
                 # calculate pivot point and constraint matrix
-                pivot = mathutils.Vector(
+                pivot = mathutils.Vector([
                     b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVX],
                     b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVY],
-                    b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVZ])
+                    b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVZ],
+                    ])
                 constr_matrix = mathutils.Euler(
                     b_constr[Blender.Constraint.Settings.CONSTR_RB_AXX],
                     b_constr[Blender.Constraint.Settings.CONSTR_RB_AXY],
@@ -4005,9 +4007,9 @@ class NifExport(NifImportExport):
                 hkdescriptor.pivot_a.z = pivot[2] / 7.0
                 # export hkdescriptor axes and other parameters
                 # (also see import_nif.py NifImport.import_bhk_constraints)
-                axis_x = mathutils.Vector(1,0,0) * constr_matrix
-                axis_y = mathutils.Vector(0,1,0) * constr_matrix
-                axis_z = mathutils.Vector(0,0,1) * constr_matrix
+                axis_x = mathutils.Vector([1,0,0]) * constr_matrix
+                axis_y = mathutils.Vector([0,1,0]) * constr_matrix
+                axis_z = mathutils.Vector([0,0,1]) * constr_matrix
                 if isinstance(hkdescriptor, NifFormat.RagdollDescriptor):
                     # z axis is the twist vector
                     hkdescriptor.twist_a.x = axis_z[0]
