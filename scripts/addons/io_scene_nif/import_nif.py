@@ -3500,7 +3500,7 @@ class NifImport(NifImportExport):
 
             # cancel out bone tail translation
             if b_hkobj.parentbonename:
-                pivot[1] -= b_hkobj.getParent().data.bones[
+                pivot[1] -= b_hkobj.parent.data.bones[
                     b_hkobj.parentbonename].length
 
             # cancel out object transform

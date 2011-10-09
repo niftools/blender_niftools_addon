@@ -66,8 +66,8 @@ class LODTestSuite(TestSuite):
                 IMPORT_SCALE_CORRECTION=1))
         # check that we have two lod children
         b_lod = Blender.Object.Get("Cube")
-        assert(Blender.Object.Get("Cube_LOD0").getParent() == b_lod)
-        assert(Blender.Object.Get("Cube_LOD1").getParent() == b_lod)
+        assert(Blender.Object.Get("Cube_LOD0").parent == b_lod)
+        assert(Blender.Object.Get("Cube_LOD1").parent == b_lod)
         # test stuff
         check_lodnode(nif_import.root_blocks[0])
         # export
