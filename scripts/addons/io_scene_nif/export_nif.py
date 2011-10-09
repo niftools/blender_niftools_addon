@@ -124,9 +124,12 @@ class NifExport(NifImportExport):
 
     def get_unique_name(self, blender_name):
         """Returns an unique name for use in the NIF file, from the name of a
-        Blender object."""
-        unique_name = "default_name"
-        if blender_name != None:
+        Blender object.
+
+        .. todo:: Refactor and simplify this code.
+        """
+        unique_name = b"unnamed"
+        if blender_name:
             unique_name = blender_name
         # blender bone naming -> nif bone naming
         unique_name = self.get_bone_name_for_nif(unique_name)
@@ -135,7 +138,7 @@ class NifExport(NifImportExport):
             unique_int = 0
             old_name = unique_name
             while unique_name in self.block_names or unique_name in list(self.names.values()):
-                unique_name = '%s.%02d' % (old_name, unique_int)
+                unique_name = b"%s.%02d" % (old_name, unique_int)
                 unique_int += 1
         self.block_names.append(unique_name)
         self.names[blender_name] = unique_name
@@ -143,7 +146,10 @@ class NifExport(NifImportExport):
 
     def get_full_name(self, blender_name):
         """Returns the original imported name if present, or the name by which
-        the object was exported already."""
+        the object was exported already.
+
+        .. todo:: Refactor and simplify this code.
+        """
         try:
             return self.names[blender_name]
         except KeyError:
