@@ -1778,7 +1778,7 @@ class NifExport(NifImportExport):
             # ignore materials on collision trishapes
             mesh_mats = []
         # if the mesh has no materials, all face material indices should be 0, so it's ok to fake one material in the material list
-        if (mesh_mats == []):
+        if not mesh_mats:
             mesh_mats = [None]
 
         # is mesh double sided?
