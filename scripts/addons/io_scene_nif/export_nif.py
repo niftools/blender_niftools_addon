@@ -316,7 +316,7 @@ class NifExport(NifImportExport):
                     norm.normalize()
                     # remove outliers (fixes better bodies issue)
                     # first calculate fitness of each face
-                    fitlist = [mathutils.DotVecs(f.normal, norm)
+                    fitlist = [f.normal.dot(norm)
                                for v, f, mesh in vlist]
                     bestfit = max(fitlist)
                     # recalculate normals only taking into account
@@ -3772,9 +3772,7 @@ class NifExport(NifImportExport):
             fnormlist = [ face.normal * rotation
                           for face in mesh.faces]
             fdistlist = [
-                mathutils.DotVecs(
-                    -face.v[0].co * transform,
-                    face.normal * rotation)
+                (-face.v[0].co * transform).dot(face.normal * rotation)
                 for face in mesh.faces ]
 
             # remove duplicates through dictionary
