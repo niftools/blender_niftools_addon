@@ -265,13 +265,13 @@ class NifExport(NifImportExport):
      
             # get the root object from selected object
             # only export empties, meshes, and armatures
-            if (Blender.Object.GetSelected() == None):
+            if not self.context.selected_objects:
                 raise NifExportError(
                     "Please select the object(s) to export,"
                     " and run this script again.")
             root_objects = set()
             export_types = ('Empty', 'Mesh', 'Armature')
-            for root_object in [ob for ob in Blender.Object.GetSelected()
+            for root_object in [ob for ob in self.context.selected_objects
                                 if ob.getType() in export_types]:
                 while (root_object.getParent() != None):
                     root_object = root_object.getParent()

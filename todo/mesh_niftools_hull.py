@@ -153,7 +153,7 @@ def hull_convex(ob, me, selected_only, precision = 0.1):
 
 def main(arg):
     # get selected meshes
-    obs = [ob for ob in Blender.Object.GetSelected() if ob.type == 'Mesh']
+    obs = [ob for ob in self.context.selected_objects if ob.type == 'Mesh']
     
     # saves editmode state and exit editmode if it is enabled
     # (cannot make changes mesh data in editmode)

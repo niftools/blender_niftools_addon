@@ -229,7 +229,7 @@ def main(arg):
 
     # get selected meshes
     scn = Blender.Scene.GetCurrent()
-    obs = [ob for ob in Blender.Object.GetSelected() if ob.type == 'Mesh']
+    obs = [ob for ob in self.context.selected_objects if ob.type == 'Mesh']
     if not obs:
         Blender.Draw.PupMenu('Error%t|2 or more mesh objects need to be selected.|aborting.')
         return
