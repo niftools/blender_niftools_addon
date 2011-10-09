@@ -244,7 +244,10 @@ texinfo_documents = [
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'http://docs.python.org/': None}
+intersphinx_mapping = {
+    'http://docs.python.org/': None,
+    'http://www.blender.org/documentation/blender_python_api_2_59_0': None,
+    }
 
 # Include all todos
 todo_include_todos = True
