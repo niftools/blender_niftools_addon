@@ -3202,8 +3202,8 @@ class NifExport(NifImportExport):
         assert(space == 'localspace')
 
         # now write out spaces
-        if (not type(obj) is Blender.Armature.Bone):
-            mat = mathutils.Matrix(obj.getMatrix('localspace'))
+        if not isinstance(obj, bpy.types.Bone):
+            mat = obj.matrix_local.copy()
             bone_parent_name = obj.getParentBoneName()
             # if there is a bone parent then the object is parented
             # then get the matrix relative to the bone parent head
