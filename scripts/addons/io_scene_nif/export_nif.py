@@ -396,11 +396,11 @@ class NifExport(NifImportExport):
                         has_keyframecontrollers = True
                         break
                 if ((not has_keyframecontrollers)
-                    and (not self.EXPORT_MW_BS_ANIMATION_NODE)):
+                    and (not self.properties.bs_animation_node)):
                     self.info("Defining dummy keyframe controller")
                     # add a trivial keyframe controller on the scene root
                     self.export_keyframes(None, 'localspace', root_block)
-            if (self.EXPORT_MW_BS_ANIMATION_NODE
+            if (self.properties.bs_animation_node
                 and self.properties.game == 'MORROWIND'):
                 for block in self.blocks:
                     if isinstance(block, NifFormat.NiNode):
