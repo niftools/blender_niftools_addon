@@ -128,7 +128,8 @@ class NifImportExportUI:
         " Set to empty string to turn off profiling.",
         maxlen=1024,
         default="",
-        subtype="FILE_PATH")
+        subtype="FILE_PATH",
+        options={'HIDDEN'})
 
     #: Number of nif units per blender unit.
     scale_correction = bpy.props.FloatProperty(
@@ -142,7 +143,8 @@ class NifImportExportUI:
         name="Epsilon",
         description="Used for checking equality between floats.",
         default=0.005,
-        min=0.0, max=1.0, precision=5)
+        min=0.0, max=1.0, precision=5,
+        options={'HIDDEN'})
 
 class NifImportUI(bpy.types.Operator, ImportHelper, NifImportExportUI):
     """Operator for loading a nif file."""
@@ -287,6 +289,51 @@ class NifExportUI(bpy.types.Operator, ExportHelper, NifImportExportUI):
         description="Use NiBSAnimationNode (for Morrowind).",
         default=False)
 
+    #: Stripify geometries. Deprecate? (Strips are slower than triangle shapes.)
+    stripify = bpy.props.BoolProperty(
+        name="Stripify Geometries",
+        description="Stripify geometries.",
+        default=False,
+        options={'HIDDEN'})
+
+    #: Stitch strips. Deprecate? (Strips are slower than triangle shapes.)
+    stitch_strips = bpy.props.BoolProperty(
+        name="Stitch Strips",
+        description="Stitch strips.",
+        default=True,
+        options={'HIDDEN'})
+
+    #: Flatten skin.
+    flatten_skin = bpy.props.BoolProperty(
+        name="Flatten Skin",
+        description="Flatten skin.",
+        default=False)
+
+    #: Export skin partition.
+    skin_partition = bpy.props.BoolProperty(
+        name="Skin Partition",
+        description="Export skin partition.",
+        default=True)
+
+    #: Pad and sort bones.
+    pad_bones = bpy.props.BoolProperty(
+        name="Pad & Sort Bones",
+        description="Pad and sort bones.",
+        default=False)
+
+    #: Maximum number of bones per skin partition.
+    max_bones_per_partition = bpy.props.IntProperty(
+        name = "Max Bones Per Partition",
+        description="Maximum number of bones per skin partition.",
+        default=18, min=4, max=18)
+
+    #: Maximum number of bones per vertex in skin partitions.
+    max_bones_per_vertex = bpy.props.IntProperty(
+        name = "Max Bones Per Vertex",
+        description="Maximum number of bones per vertex in skin partitions.",
+        default=4, min=1,
+        options={'HIDDEN'})
+
     #: Map game enum to nif version.
     version = {
         _game_to_enum(game): versions[-1]
@@ -319,12 +366,6 @@ class NifConfig:
         IMPORT_EGMANIMSCALE = 1.0, # scale of FaceGen EGM animation curves
         EXPORT_ANIMSEQUENCENAME = '', # sequence name of the kf file
         EXPORT_FORCEDDS = True, # force dds extension on texture files
-        EXPORT_SKINPARTITION = True, # generate skin partition
-        EXPORT_BONESPERVERTEX = 4,
-        EXPORT_BONESPERPARTITION = 18,
-        EXPORT_PADBONES = False,
-        EXPORT_STRIPIFY = True,
-        EXPORT_STITCHSTRIPS = False,
         IMPORT_EXTRANODES = True,
         EXPORT_BHKLISTSHAPE = False,
         EXPORT_OB_BSXFLAGS = 2,
@@ -761,35 +802,6 @@ class NifConfig:
             self.draw_toggle(
                 text = "Force DDS Extension",
                 event_name = "EXPORT_FORCEDDS")
-            self.draw_y_sep()
-
-            self.draw_toggle(
-                text = "Stripify Geometries",
-                event_name = "EXPORT_STRIPIFY",
-                num_items = 2, item = 0)
-            self.draw_toggle(
-                text = "Stitch Strips",
-                event_name = "EXPORT_STITCHSTRIPS",
-                num_items = 2, item = 1)
-            self.draw_y_sep()
-
-            self.draw_toggle(
-                text = "Flatten Skin",
-                event_name = "EXPORT_FLATTENSKIN")
-            self.draw_toggle(
-                text = "Export Skin Partition",
-                event_name = "EXPORT_SKINPARTITION",
-                num_items = 3, item = 0)
-            self.draw_toggle(
-                text = "Pad & Sort Bones",
-                event_name = "EXPORT_PADBONES",
-                num_items = 3, item = 1)
-            self.draw_number(
-                text = "Max Bones",
-                event_name = "EXPORT_BONESPERPARTITION",
-                min_val = 4, max_val = 18,
-                callback = self.update_bones_per_partition,
-                num_items = 3, item = 2)
             self.draw_y_sep()
 
             self.draw_toggle(

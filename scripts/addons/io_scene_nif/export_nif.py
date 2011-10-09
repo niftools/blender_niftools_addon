@@ -2203,7 +2203,7 @@ class NifExport(NifImportExport):
             # no material                    -> typically, collision mesh
 
             # create a trishape block
-            if not self.EXPORT_STRIPIFY:
+            if not self.properties.stripify:
                 trishape = self.create_block("NiTriShape", ob)
             else:
                 trishape = self.create_block("NiTriStrips", ob)
@@ -2412,7 +2412,7 @@ class NifExport(NifImportExport):
             # set triangles
             # stitch strips for civ4
             tridata.set_triangles(trilist,
-                                 stitchstrips=self.EXPORT_STITCHSTRIPS)
+                                 stitchstrips=self.properties.stitch_strips)
 
             # update tangent space (as binary extra data only for Oblivion)
             # for extra shader texture games, only export it if those
@@ -2577,21 +2577,21 @@ class NifExport(NifImportExport):
                         trishape.update_skin_center_radius()
 
                         if (self.version >= 0x04020100
-                            and self.EXPORT_SKINPARTITION):
+                            and self.properties.skin_partition):
                             self.info("Creating skin partition")
                             lostweight = trishape.update_skin_partition(
-                                maxbonesperpartition=self.EXPORT_BONESPERPARTITION,
-                                maxbonespervertex=self.EXPORT_BONESPERVERTEX,
-                                stripify=self.EXPORT_STRIPIFY,
-                                stitchstrips=self.EXPORT_STITCHSTRIPS,
-                                padbones=self.EXPORT_PADBONES,
+                                maxbonesperpartition=self.properties.bones_per_partition,
+                                maxbonespervertex=self.properties.bones_per_vertex,
+                                stripify=self.properties.stripify,
+                                stitchstrips=self.properties.stitch_strips,
+                                padbones=self.properties.pad_bones,
                                 triangles=trilist,
                                 trianglepartmap=bodypartfacemap,
                                 maximize_bone_sharing=(
                                     self.properties.game == 'FALLOUT_3'))
                             # warn on bad config settings
                             if self.properties.game == 'OBLIVION':
-                               if self.EXPORT_PADBONES:
+                               if self.properties.pad_bones:
                                    self.warning(
                                        "Using padbones on Oblivion export,"
                                        " but you probably do not want to do"
@@ -2599,7 +2599,7 @@ class NifExport(NifImportExport):
                                        " Disable the pad bones option to get"
                                        " higher quality skin partitions.")
                             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
-                               if self.EXPORT_BONESPERPARTITION < 18:
+                               if self.properties.bones_per_partition < 18:
                                    self.warning(
                                        "Using less than 18 bones"
                                        " per partition on Oblivion/Fallout 3"
