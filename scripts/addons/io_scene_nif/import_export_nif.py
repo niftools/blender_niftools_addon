@@ -146,13 +146,7 @@ class NifImportExport:
         # get list of selected objects
         # (find and store this list now, as creating new objects adds them
         # to the selection list)
-        if self.context.selected_objects:
-            self.selected_objects = self.context.selected_objects[:]
-        else:
-            # if there are no selected objects,
-            # then context.selected_objects is None
-            # but an empty list makes more sense (for iterating)
-            self.selected_objects = []
+        self.selected_objects = self.context.selected_objects[:]
 
     def execute(self):
         """Import/export entry point. Default implementation does nothing."""
