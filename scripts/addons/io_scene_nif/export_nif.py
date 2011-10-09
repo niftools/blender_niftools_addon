@@ -1021,7 +1021,7 @@ class NifExport(NifImportExport):
                 is_collision = (ob.draw_type == 'BOUNDS')
                 has_ipo = ob_ipo and len(ob_ipo.getCurves()) > 0
                 has_children = len(ob_children) > 0
-                is_multimaterial = len(set([f.mat for f in ob.data.faces])) > 1
+                is_multimaterial = len(set([f.material_index for f in ob.data.faces])) > 1
                 # determine if object tracks camera
                 has_track = False
                 for constr in ob.constraints:
@@ -2044,7 +2044,7 @@ class NifExport(NifImportExport):
             for f in mesh.faces:
                 # does the face belong to this trishape?
                 if (mesh_mat != None): # we have a material
-                    if (f.mat != materialIndex): # but this face has another material
+                    if (f.material_index != materialIndex): # but this face has another material
                         continue # so skip this face
                 f_numverts = len(f.v)
                 if (f_numverts < 3): continue # ignore degenerate faces
