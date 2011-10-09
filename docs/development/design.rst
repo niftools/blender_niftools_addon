@@ -49,17 +49,24 @@ Naming Conventions
    code. Stick to it for new code, but we are holding off a rename for
    the planned 3.x.x refactor.
 
-Face Vertices
--------------
+Differences Between Blender 2.4x and 2.5x
+-----------------------------------------
 
-Beware that, unlike in blender 2.4x, :class:`MeshFace.vertices` is
-*not* a list of the type :class:`MeshVertex`, but are :class:`int`\ s
-mapping into :class:`Mesh.vertices`, so you need for instance::
+* Beware that, unlike in blender 2.4x, :attr:`bpy.types.MeshFace.vertices` is
+  *not* a list of the type :class:`bpy.types.MeshVertex`, but are :class:`int`\ s
+  mapping into :attr:`bpy.types.Mesh.vertices`, so you need for instance::
 
-    (b_mesh.vertices[b_vertex_index].co for b_vertex_index in b_face.vertices)
+      (b_mesh.vertices[b_vertex_index].co for b_vertex_index in b_face.vertices)
 
-when requiring the actual vertex coordinates of a
-:class:`bpy.types.MeshFace`.
+  when requiring the actual vertex coordinates of a
+  :class:`bpy.types.MeshFace`.
+
+* Ipo's are gone. They are replaced by
+  :attr:`bpy.types.Object.animation_data` (see :class:`bpy.types.AnimData`).
+
+* Vertex groups are accessible via
+  :attr:`bpy.types.Object.vertex_groups`\ s, instead of via
+  :class:`bpy.types.Mesh`.
 
 .. _dev-design-error-reporting:
 
