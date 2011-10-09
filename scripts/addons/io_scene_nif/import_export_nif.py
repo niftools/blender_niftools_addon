@@ -208,10 +208,10 @@ class NifImportExport:
         @return: Bone name in Blender convention.
         @rtype: C{str}
         """
-        if name.startswith("Bip01 L "):
-            return "Bip01 " + name[8:] + ".L"
-        elif name.startswith("Bip01 R "):
-            return "Bip01 " + name[8:] + ".R"
+        if name.startswith(b"Bip01 L "):
+            return b"Bip01 " + name[8:] + b".L"
+        elif name.startswith(b"Bip01 R "):
+            return b"Bip01 " + name[8:] + b".R"
         return name
 
     def get_bone_name_for_nif(self, name):
@@ -223,11 +223,11 @@ class NifImportExport:
         @return: Bone name in nif convention.
         @rtype: C{str}
         """
-        if name.startswith("Bip01 "):
-            if name.endswith(".L"):
-                return "Bip01 L " + name[6:-2]
-            elif name.endswith(".R"):
-                return "Bip01 R " + name[6:-2]
+        if name.startswith(b"Bip01 "):
+            if name.endswith(b".L"):
+                return b"Bip01 L " + name[6:-2]
+            elif name.endswith(b".R"):
+                return b"Bip01 R " + name[6:-2]
         return name
 
     def get_extend_from_flags(self, flags):
