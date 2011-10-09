@@ -2010,14 +2010,16 @@ class NifExport(NifImportExport):
             # list of body part (name, index, vertices) in this mesh
             bodypartgroups = []
             for bodypartgroupname in NifFormat.BSDismemberBodyPartType().get_editor_keys():
-                if bodypartgroupname in ob.data.getVertGroupNames():
-                    self.debug("Found body part %s"
-                                      % bodypartgroupname)
+                vertex_group = ob.vertex_groups.get(bodypartgroupname)
+                if vertex_group:
+                    self.debug("Found body part %s" % bodypartgroupname)
                     bodypartgroups.append(
                         [bodypartgroupname,
                          getattr(NifFormat.BSDismemberBodyPartType,
                                  bodypartgroupname),
-                         set(ob.data.getVertsFromGroup(bodypartgroupname))])
+                         # FIXME how do you get the vertices in the group???
+                         #set(vertex_group.vertices)])
+                         {}])
 
             # -> now comes the real export
             
@@ -2421,7 +2423,8 @@ class NifExport(NifImportExport):
                         as_extra=(self.properties.game == 'OBLIVION'))
 
             # now export the vertex weights, if there are any
-            vertgroups = ob.data.getVertGroupNames()
+            vertgroups = {vertex_group.name
+                          for vertex_group in ob.vertex_groups}
             bonenames = []
             if ob.parent:
                 if ob.parent.type == 'ARMATURE':

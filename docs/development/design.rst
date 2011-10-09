@@ -124,3 +124,5 @@ Blender API Mysteries
   :attr:`bpy.types.Object.draw_bounds_type`\ s? We are using
   ``'CYLINDER'`` at the moment because ``'CAPSULE'`` is lacking
   visualisation.
+
+* How do you get the set of all vertices in a :class:`bpy.types.VertexGroup`?
