@@ -312,11 +312,11 @@ class NifExport(NifImportExport):
                     # vertex
                     norm = mathutils.Vector()
                     for v, f, mesh in vlist:
-                        norm += f.no
+                        norm += f.normal
                     norm.normalize()
                     # remove outliers (fixes better bodies issue)
                     # first calculate fitness of each face
-                    fitlist = [mathutils.DotVecs(f.no, norm)
+                    fitlist = [mathutils.DotVecs(f.normal, norm)
                                for v, f, mesh in vlist]
                     bestfit = max(fitlist)
                     # recalculate normals only taking into account
@@ -324,11 +324,11 @@ class NifExport(NifImportExport):
                     norm = mathutils.Vector()
                     for (v, f, mesh), fit in zip(vlist, fitlist):
                         if fit >= bestfit - 0.2:
-                            norm += f.no
+                            norm += f.normal
                     norm.normalize()
                     # save normal of this vertex
                     for v, f, mesh in vlist:
-                        v.no = norm
+                        v.normal = norm
                         #v.sel = True
                     nv += 1
                 self.info("Fixed normals on %i vertices." % nv)
@@ -2064,9 +2064,9 @@ class NifExport(NifImportExport):
                     # get vertex normal for lighting (smooth = Blender vertex normal, non-smooth = Blender face normal)
                     if mesh_hasnormals:
                         if f.smooth:
-                            fn = f.v[i].no
+                            fn = f.v[i].normal
                         else:
-                            fn = f.no
+                            fn = f.normal
                     else:
                         fn = None
                     fuv = []
@@ -3593,11 +3593,10 @@ class NifExport(NifImportExport):
             if len(face.v) < 3:
                 continue # ignore degenerate faces
             triangles.append([face.v[i].index for i in (0, 1, 2)])
-            # note: face.no is a Python list, not a vector
-            normals.append(mathutils.Vector(face.no) * rotation)
+            normals.append(face.normal * rotation)
             if len(face.v) == 4:
                 triangles.append([face.v[i].index for i in (0, 2, 3)])
-                normals.append(mathutils.Vector(face.no) * rotation)
+                normals.append(face.normal * rotation)
 
         colshape.add_shape(triangles, normals, vertices, layer, material)
 
@@ -3770,12 +3769,12 @@ class NifExport(NifImportExport):
 
             # calculate vertices, normals, and distances
             vertlist = [ vert.co * transform for vert in mesh.vertices ]
-            fnormlist = [ mathutils.Vector(face.no) * rotation
+            fnormlist = [ face.normal * rotation
                           for face in mesh.faces]
             fdistlist = [
                 mathutils.DotVecs(
                     -face.v[0].co * transform,
-                    mathutils.Vector(face.no) * rotation)
+                    face.normal * rotation)
                 for face in mesh.faces ]
 
             # remove duplicates through dictionary

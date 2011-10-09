@@ -2132,7 +2132,7 @@ class NifImport(NifImportExport):
                 #if norms:
                 #    mv = b_meshData.vertices[b_v_index]
                 #    n = norms[i]
-                #    mv.no = mathutils.Vector(n.x, n.y, n.z)
+                #    mv.normal = mathutils.Vector(n.x, n.y, n.z)
                 b_v_index += 1
             else:
                 # already added
@@ -3148,18 +3148,18 @@ class NifImport(NifImportExport):
                         continue
                     # check face normal
                     align_plus = sum(abs(x)
-                                     for x in ( me.faces[-1].no[0]
+                                     for x in ( me.faces[-1].normal[0]
                                                 + hktriangle.normal.x,
-                                                me.faces[-1].no[1]
+                                                me.faces[-1].normal[1]
                                                 + hktriangle.normal.y,
-                                                me.faces[-1].no[2]
+                                                me.faces[-1].normal[2]
                                                 + hktriangle.normal.z ))
                     align_minus = sum(abs(x)
-                                      for x in ( me.faces[-1].no[0]
+                                      for x in ( me.faces[-1].normal[0]
                                                  - hktriangle.normal.x,
-                                                 me.faces[-1].no[1]
+                                                 me.faces[-1].normal[1]
                                                  - hktriangle.normal.y,
-                                                 me.faces[-1].no[2]
+                                                 me.faces[-1].normal[2]
                                                  - hktriangle.normal.z ))
                     # fix face orientation
                     if align_plus < align_minus:
