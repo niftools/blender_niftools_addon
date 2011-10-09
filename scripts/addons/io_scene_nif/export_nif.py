@@ -3265,7 +3265,7 @@ class NifExport(NifImportExport):
             return self.error(
                 "Non-uniform scaling not supported."
                 " Workaround: apply size and rotation (CTRL-A).")
-        return b_scale[0], b_rot, b_trans
+        return b_scale[0], b_rot.to_matrix(), b_trans
 
 
 
