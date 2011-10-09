@@ -175,7 +175,7 @@ def copy_morphs(_from, _to, PREF_SEL_ONLY, PREF_NO_XCROSS):
                                                 me_from.key.blocks[0].data)]
         
         # deform me_to
-        for me_to_vert, me_to_vert_base, snap_idx in zip(me_to.verts, me_to.key.blocks[0].data, snap_indices):
+        for me_to_vert, me_to_vert_base, snap_idx in zip(me_to.vertices, me_to.key.blocks[0].data, snap_indices):
             me_to_vert.co[0] = me_to_vert_base[0] + morph[snap_idx][0]
             me_to_vert.co[1] = me_to_vert_base[1] + morph[snap_idx][1]
             me_to_vert.co[2] = me_to_vert_base[2] + morph[snap_idx][2]
@@ -185,7 +185,7 @@ def copy_morphs(_from, _to, PREF_SEL_ONLY, PREF_NO_XCROSS):
         me_to.key.blocks[-1].name = from_key_block.name
 
     # reset mesh to base morph
-    for me_to_vert, me_to_vert_base in zip(me_to.verts, me_to.key.blocks[0].data):
+    for me_to_vert, me_to_vert_base in zip(me_to.vertices, me_to.key.blocks[0].data):
         me_to_vert.co[0] = me_to_vert_base[0]
         me_to_vert.co[1] = me_to_vert_base[1]
         me_to_vert.co[2] = me_to_vert_base[2]
@@ -199,7 +199,7 @@ def copy_morphs(_from, _to, PREF_SEL_ONLY, PREF_NO_XCROSS):
 def worldspace_verts(me, ob):
     """Return vertices in world space."""
     mat = ob.matrixWorld
-    return [(i, vert.co * mat) for i, vert in enumerate(me.verts)]
+    return [(i, vert.co * mat) for i, vert in enumerate(me.vertices)]
 
 def worldspace_verts_zsort(me, ob):
     """Return vertices in world space, sorted along the Z axis so we
@@ -324,7 +324,7 @@ def main(arg):
         Blender.Draw.PupMenu('Error%t|Select 2 or more mesh objects, aborting.')
         # We can't unlink the mesh, but at least remove its data.
         if PREF_QUALITY:
-            from_data[1].verts = None
+            from_data[1].vertices = None
         return
     
     # Now do the copy.
@@ -335,7 +335,7 @@ def main(arg):
     
     # We can't unlink the mesh, but at least remove its data.
     if PREF_QUALITY:
-        from_data[1].verts= None
+        from_data[1].vertices= None
     
     print(('Morph copy finished in %.2f seconds' % (sys.time()-t)))
     Window.DrawProgressBar(1.0, '')

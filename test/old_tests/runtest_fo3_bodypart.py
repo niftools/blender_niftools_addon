@@ -44,7 +44,7 @@ class BodyPartTestSuite(TestSuite):
         # create a mesh
         self.info("creating mesh")
         mesh_data = Blender.Mesh.Primitives.Monkey()
-        mesh_numverts = len(mesh_data.verts)
+        mesh_numverts = len(mesh_data.vertices)
         mesh_obj = self.context.scene.objects.new(mesh_data, "Monkey")
         # create an armature
         self.info("creating armature")
@@ -112,7 +112,7 @@ class BodyPartTestSuite(TestSuite):
         self.info("export failed: adding selected vertices to new group")
         mesh_data.addVertGroup("BP_HEAD2")
         mesh_data.assignVertsToGroup("BP_HEAD2",
-                                     [vert.index for vert in mesh_data.verts
+                                     [vert.index for vert in mesh_data.vertices
                                       if vert.sel],
                                      1, Blender.Mesh.AssignModes.REPLACE)
         # now export must succeed

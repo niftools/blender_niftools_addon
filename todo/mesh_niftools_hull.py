@@ -55,19 +55,19 @@ def hull_box(ob, me, selected_only):
 
     # find box hull
     # todo: improve algorithm
-    minx = min(v.co[0] for v in me.verts if v.sel or not selected_only)
-    miny = min(v.co[1] for v in me.verts if v.sel or not selected_only)
-    minz = min(v.co[2] for v in me.verts if v.sel or not selected_only)
-    maxx = max(v.co[0] for v in me.verts if v.sel or not selected_only)
-    maxy = max(v.co[1] for v in me.verts if v.sel or not selected_only)
-    maxz = max(v.co[2] for v in me.verts if v.sel or not selected_only)
+    minx = min(v.co[0] for v in me.vertices if v.sel or not selected_only)
+    miny = min(v.co[1] for v in me.vertices if v.sel or not selected_only)
+    minz = min(v.co[2] for v in me.vertices if v.sel or not selected_only)
+    maxx = max(v.co[0] for v in me.vertices if v.sel or not selected_only)
+    maxy = max(v.co[1] for v in me.vertices if v.sel or not selected_only)
+    maxz = max(v.co[2] for v in me.vertices if v.sel or not selected_only)
 
     # create box
     box = Blender.Mesh.New('box')
     for x in [minx, maxx]:
         for y in [miny, maxy]:
             for z in [minz, maxz]:
-                box.verts.extend(x,y,z)
+                box.vertices.extend(x,y,z)
     box.faces.extend(
         [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
 
@@ -84,12 +84,12 @@ def hull_sphere(ob, me, selected_only):
     """Hull mesh in a sphere."""
 
     # find square box hull
-    minx = min(v.co[0] for v in me.verts if v.sel or not selected_only)
-    miny = min(v.co[1] for v in me.verts if v.sel or not selected_only)
-    minz = min(v.co[2] for v in me.verts if v.sel or not selected_only)
-    maxx = max(v.co[0] for v in me.verts if v.sel or not selected_only)
-    maxy = max(v.co[1] for v in me.verts if v.sel or not selected_only)
-    maxz = max(v.co[2] for v in me.verts if v.sel or not selected_only)
+    minx = min(v.co[0] for v in me.vertices if v.sel or not selected_only)
+    miny = min(v.co[1] for v in me.vertices if v.sel or not selected_only)
+    minz = min(v.co[2] for v in me.vertices if v.sel or not selected_only)
+    maxx = max(v.co[0] for v in me.vertices if v.sel or not selected_only)
+    maxy = max(v.co[1] for v in me.vertices if v.sel or not selected_only)
+    maxz = max(v.co[2] for v in me.vertices if v.sel or not selected_only)
 
     cx = (minx+maxx)*0.5
     cy = (miny+maxy)*0.5
@@ -113,7 +113,7 @@ def hull_sphere(ob, me, selected_only):
     for x in [minx, maxx]:
         for y in [miny, maxy]:
             for z in [minz, maxz]:
-                box.verts.extend(x,y,z)
+                box.vertices.extend(x,y,z)
     box.faces.extend(
         [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
 
@@ -131,13 +131,13 @@ def hull_convex(ob, me, selected_only, precision = 0.1):
 
     # find convex hull
     vertices, triangles = pyffi.utils.quickhull.qhull3d(
-        [tuple(v.co) for v in me.verts if v.sel or not selected_only],
+        [tuple(v.co) for v in me.vertices if v.sel or not selected_only],
         precision = precision)
 
     # create convex mesh
     box = Blender.Mesh.New('convexpoly')
     for vert in vertices:
-        box.verts.extend(*vert)
+        box.vertices.extend(*vert)
     for triangle in triangles:
         box.faces.extend(triangle)
 
@@ -167,7 +167,7 @@ def main(arg):
     for ob in obs:
         me = ob.getData(mesh=1) # get Mesh, not NMesh
         # are any vertices selected?
-        selected_only = is_editmode and (1 in ( vert.sel for vert in me.verts ))
+        selected_only = is_editmode and (1 in ( vert.sel for vert in me.vertices ))
         # create mesh by requested type
         if arg == 'box': hull_box(ob, me, selected_only)
         elif arg == 'sphere': hull_sphere(ob, me, selected_only)

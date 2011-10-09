@@ -55,7 +55,7 @@ def weight_squash(me, cutoff = 0.02, nbones = 4):
     num_affected = 0
 
     # deselect all vertices
-    for v in me.verts:
+    for v in me.vertices:
         v.sel = 0
 
     # remove weights
@@ -77,9 +77,9 @@ def weight_squash(me, cutoff = 0.02, nbones = 4):
 
         # select affected vertices
         for i in remove_list:
-            me.verts[i].sel = 1
+            me.vertices[i].sel = 1
 
-    for vert in me.verts:
+    for vert in me.vertices:
         influences = me.getVertexInfluences(vert.index)
         # skip body parts
         influences = [infl for infl in influences

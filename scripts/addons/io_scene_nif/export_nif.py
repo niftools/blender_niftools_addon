@@ -290,10 +290,11 @@ class NifExport(NifImportExport):
                 for ob in [ob for ob in self.context.scene.objects
                            if ob.type == 'MESH']:
                     mesh = ob.data
-                    #for v in mesh.verts:
+                    #for v in mesh.vertices:
                     #    v.sel = False
                     for f in mesh.faces:
-                        for v in f.verts:
+                        for v_index in f.vertices:
+                            v = mesh.vertices[v_index]
                             vkey = (int(v.co[0]*self.VERTEX_RESOLUTION),
                                     int(v.co[1]*self.VERTEX_RESOLUTION),
                                     int(v.co[2]*self.VERTEX_RESOLUTION))
@@ -1763,7 +1764,7 @@ class NifExport(NifImportExport):
         # getVertsFromGroup fails if the mesh has no vertices
         # (this happens when checking for fallout 3 body parts)
         # so quickly catch this (rare!) case
-        if len(ob.data.verts) == 0:
+        if not ob.data.vertices:
             # do not export anything
             self.warning("%s has no vertices, skipped." % ob)
             return
@@ -2032,7 +2033,7 @@ class NifExport(NifImportExport):
             # use Blender's face normals.
             
             vertquad_list = [] # (vertex, uv coordinate, normal, vertex color) list
-            vertmap = [None for i in range(len(mesh.verts))] # blender vertex -> nif vertices
+            vertmap = [None for i in range(len(mesh.vertices))] # blender vertex -> nif vertices
             vertlist = []
             normlist = []
             vcollist = []
@@ -2151,7 +2152,7 @@ class NifExport(NifImportExport):
                         bodypartfacemap.append(0)
                     else:
                         for bodypartname, bodypartindex, bodypartverts in bodypartgroups:
-                            if (set(b_vert.index for b_vert in f.verts)
+                            if (set(b_vert_index for b_vert_index in f.vertices)
                                 <= bodypartverts):
                                 bodypartfacemap.append(bodypartindex)
                                 break
@@ -2541,7 +2542,7 @@ class NifExport(NifImportExport):
                             self.context.scene.objects.active = ob
                             ob.sel = 1
                             # select bad vertices
-                            for v in mesh.verts:
+                            for v in mesh.vertices:
                                 v.sel = 0
                             for i, added in enumerate(vert_added):
                                 if not added:
@@ -2551,7 +2552,7 @@ class NifExport(NifImportExport):
                                             break
                                     else:
                                         raise RuntimeError("vertmap bug")
-                                    mesh.verts[idx].sel = 1
+                                    mesh.vertices[idx].sel = 1
                             # switch to edit mode and raise exception
                             Blender.Window.EditMode(1)
                             raise NifExportError(
@@ -2676,9 +2677,9 @@ class NifExport(NifImportExport):
                                 # copy vertex and assign morph vertex
                                 mv = vert.copy()
                                 if keyblocknum > 0:
-                                    mv.x -= mesh.verts[b_v_index].co.x
-                                    mv.y -= mesh.verts[b_v_index].co.y
-                                    mv.z -= mesh.verts[b_v_index].co.z
+                                    mv.x -= mesh.vertices[b_v_index].co.x
+                                    mv.y -= mesh.vertices[b_v_index].co.y
+                                    mv.z -= mesh.vertices[b_v_index].co.z
                                 for vert_index in vert_indices:
                                     morph.vectors[vert_index].x = mv.x
                                     morph.vectors[vert_index].y = mv.y
@@ -3584,7 +3585,7 @@ class NifExport(NifImportExport):
             self.get_object_matrix(obj, 'localspace').as_list())
         rotation = transform.rotationPart()
 
-        vertices = [vert.co * transform for vert in mesh.verts]
+        vertices = [vert.co * transform for vert in mesh.vertices]
         triangles = []
         normals = []
         for face in mesh.faces:
@@ -3639,16 +3640,16 @@ class NifExport(NifImportExport):
         Note: polyheder is handled by export_collision_packed."""
 
         # find bounding box data
-        if not obj.data.verts:
+        if not obj.data.vertices:
             self.warning(
                 "Skipping collision object %s without vertices." % obj)
             return None
-        minx = min([vert[0] for vert in obj.data.verts])
-        miny = min([vert[1] for vert in obj.data.verts])
-        minz = min([vert[2] for vert in obj.data.verts])
-        maxx = max([vert[0] for vert in obj.data.verts])
-        maxy = max([vert[1] for vert in obj.data.verts])
-        maxz = max([vert[2] for vert in obj.data.verts])
+        minx = min([vert[0] for vert in obj.data.vertices])
+        miny = min([vert[1] for vert in obj.data.vertices])
+        minz = min([vert[2] for vert in obj.data.vertices])
+        maxx = max([vert[0] for vert in obj.data.vertices])
+        maxy = max([vert[1] for vert in obj.data.vertices])
+        maxz = max([vert[2] for vert in obj.data.vertices])
 
         if obj.rbShapeBoundType in (Blender.Object.RBShapes['BOX'],
                                     Blender.Object.RBShapes['SPHERE']):
@@ -3767,7 +3768,7 @@ class NifExport(NifImportExport):
             rotation *= 1.0 / scale # /= not supported in Python API
 
             # calculate vertices, normals, and distances
-            vertlist = [ vert.co * transform for vert in mesh.verts ]
+            vertlist = [ vert.co * transform for vert in mesh.vertices ]
             fnormlist = [ mathutils.Vector(face.no) * rotation
                           for face in mesh.faces]
             fdistlist = [
