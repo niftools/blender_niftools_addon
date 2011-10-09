@@ -3258,32 +3258,14 @@ class NifExport(NifImportExport):
     def decompose_srt(self, mat):
         """Decompose Blender transform matrix as a scale, rotation matrix, and
         translation vector."""
-        # get scale components
-        b_scale_rot = mat.rotationPart()
-        b_scale_rot_t = mathutils.Matrix(b_scale_rot)
-        b_scale_rot_t.transpose()
-        b_scale_rot_2 = b_scale_rot * b_scale_rot_t
-        b_scale = mathutils.Vector([
-            b_scale_rot_2[0][0] ** 0.5,
-            b_scale_rot_2[1][1] ** 0.5,
-            b_scale_rot_2[2][2] ** 0.5,
-            ])
-        # and fix their sign
-        if (b_scale_rot.determinant() < 0):
-            b_scale.negate()
+        b_trans, b_rot, b_scale = mat.decompose()
         # only uniform scaling
         # allow rather large error to accomodate some nifs
         if abs(b_scale[0]-b_scale[1]) + abs(b_scale[1]-b_scale[2]) > 0.02:
-            raise NifExportError(
+            return self.error(
                 "Non-uniform scaling not supported."
                 " Workaround: apply size and rotation (CTRL-A).")
-        b_scale = b_scale[0]
-        # get rotation matrix
-        b_rot = b_scale_rot * (1.0 / b_scale)
-        # get translation
-        b_trans = mat.translationPart()
-        # done!
-        return b_scale, b_rot, b_trans
+        return b_scale[0], b_rot, b_trans
 
 
 
