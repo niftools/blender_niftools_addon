@@ -240,7 +240,7 @@ class NifExport(NifImportExport):
                             " groups, select the bones one by one press W"
                             " to convert their envelopes to vertex weights,"
                             " and turn off envelopes."
-                            % ob.getName())
+                            % ob.name)
 
                 # check for non-uniform transforms
                 # (lattices are not exported so ignore them as they often tend
@@ -279,7 +279,7 @@ class NifExport(NifImportExport):
                     raise NifExportError(
                         "Root object (%s) must be an 'EMPTY', 'MESH',"
                         " or 'ARMATURE' object."
-                        % root_object.getName())
+                        % root_object.name)
                 root_objects.add(root_object)
 
             # smoothen seams of objects
@@ -364,7 +364,7 @@ class NifExport(NifImportExport):
                 # note that localspace = worldspace, because root objects have
                 # no parents
                 self.export_node(root_object, 'localspace',
-                                 root_block, root_object.getName())
+                                 root_block, root_object.name)
 
             # post-processing:
             #-----------------
@@ -1617,7 +1617,7 @@ class NifExport(NifImportExport):
             if texture.getImage() is None:
                 raise NifExportError(
                     "image type texture has no file loaded ('%s')"
-                    % texture.getName())                    
+                    % texture.name)                    
 
             filename = texture.image.getFilename()
 
@@ -1626,7 +1626,7 @@ class NifExport(NifImportExport):
                 self.warning(
                     "Packed image in texture '%s' ignored, "
                     "exporting as '%s' instead."
-                    % (texture.getName(), filename))
+                    % (texture.name, filename))
             
             # try and find a DDS alternative, force it if required
             ddsfilename = "%s%s" % (filename[:-4], '.dds')
@@ -1656,7 +1656,7 @@ class NifExport(NifImportExport):
             # texture must be of type IMAGE or ENVMAP
             raise NifExportError(
                 "Error: Texture '%s' must be of type IMAGE or ENVMAP"
-                % texture.getName())
+                % texture.name)
 
     def export_source_texture(self, texture=None, filename=None):
         """Export a NiSourceTexture.
@@ -1738,7 +1738,7 @@ class NifExport(NifImportExport):
             raise NifExportError(
                 "Error in Texture Flip buffer '%s':"
                 " must define at least two textures"
-                %fliptxt.getName())
+                %fliptxt.name)
         flip.delta = (flip.stop_time - flip.start_time) / count
 
 
@@ -1873,14 +1873,14 @@ class NifExport(NifImportExport):
                                 " or in the Shading Panel,"
                                 " under Material Buttons,"
                                 " set texture 'Map To' to 'COL'."
-                                % (ob.getName(),mesh_mat.getName()))
+                                % (ob.name,mesh_mat.name))
                         if mtex.blendmode != Blender.Texture.BlendModes["ADD"]:
                             # it should have "ADD" blending mode
                             self.warning(
                                "Reflection texture should have blending"
                                " mode 'Add' on texture"
                                " in mesh '%s', material '%s')."
-                               % (ob.getName(),mesh_mat.getName()))
+                               % (ob.name,mesh_mat.name))
                             # an envmap image should have an empty... don't care
                         mesh_texeff_mtex = mtex
 
@@ -1900,7 +1900,7 @@ class NifExport(NifImportExport):
                                     " mesh '%s', material '%s'."
                                     " Make sure there is only one texture"
                                     " with MapTo.EMIT"
-                                    %(mesh.name,mesh_mat.getName()))
+                                    %(mesh.name,mesh_mat.name))
                             # check if calculation of alpha channel is enabled
                             # for this texture
                             if (mtex.tex.imageFlags & Blender.Texture.ImageFlags.CALCALPHA != 0) \
@@ -1910,7 +1910,7 @@ class NifExport(NifImportExport):
                                     " glow texture must have"
                                     " CALCALPHA flag set, and must have"
                                     " MapTo.ALPHA enabled."
-                                    %(ob.getName(),mesh_mat.getName()))
+                                    %(ob.name,mesh_mat.name))
                             mesh_glow_mtex = mtex
                         elif mtex.mapto & Blender.Texture.MapTo.SPEC:
                             # got the gloss map
@@ -1920,7 +1920,7 @@ class NifExport(NifImportExport):
                                     " mesh '%s', material '%s'."
                                     " Make sure there is only one texture"
                                     " with MapTo.SPEC"
-                                    %(mesh.name,mesh_mat.getName()))
+                                    %(mesh.name,mesh_mat.name))
                             mesh_gloss_mtex = mtex
                         elif mtex.mapto & Blender.Texture.MapTo.NOR:
                             # got the normal map
@@ -1930,7 +1930,7 @@ class NifExport(NifImportExport):
                                     " in mesh '%s', material '%s'."
                                     " Make sure there is only one texture"
                                     " with MapTo.NOR"
-                                    %(mesh.name,mesh_mat.getName()))
+                                    %(mesh.name,mesh_mat.name))
                             mesh_bump_mtex = mtex
                         elif mtex.mapto & Blender.Texture.MapTo.COL and \
                              mtex.blendmode == Blender.Texture.BlendModes["DARKEN"] and \
@@ -1957,7 +1957,7 @@ class NifExport(NifImportExport):
                                         " and to use the 'Var' slider"
                                         " in the 'Map To' tab under the"
                                         " material buttons."
-                                        %mesh_mat.getName())
+                                        %mesh_mat.name)
                                 if (mesh_mat.getIpo() and mesh_mat.getIpo().getCurve('Alpha')):
                                     raise NifExportError(
                                         "Cannot export animation for"
@@ -1966,7 +1966,7 @@ class NifExport(NifImportExport):
                                         " remove alpha animation,"
                                         " or turn off MapTo.ALPHA,"
                                         " and try again."
-                                        %mesh_mat.getName())
+                                        %mesh_mat.name)
                                 mesh_mat_transparency = mtex.varfac # we must use the "Var" value
                                 mesh_hasalpha = True
                         elif mtex.mapto & Blender.Texture.MapTo.COL and \
@@ -1982,7 +1982,7 @@ class NifExport(NifImportExport):
                                     " in mesh '%s', material '%s'."
                                     " Make sure there is only one texture"
                                     " with MapTo.REF"
-                                    %(mesh.name,mesh_mat.getName()))
+                                    %(mesh.name,mesh_mat.name))
                             mesh_ref_mtex = mtex
                         else:
                             # unknown map
@@ -1994,7 +1994,7 @@ class NifExport(NifImportExport):
                                 " go to the Shading Panel,"
                                 " Material Buttons, and set texture"
                                 " 'Map To' to 'COL'."
-                                % (mtex.tex.getName(),ob.getName(),mesh_mat.getName()))
+                                % (mtex.tex.name,ob.name,mesh_mat.name))
                     else:
                         # nif only support UV-mapped textures
                         raise NifExportError(
@@ -2003,7 +2003,7 @@ class NifExport(NifImportExport):
                             " or in the Shading Panel,"
                             " under Material Buttons,"
                             " set texture 'Map Input' to 'UV'."
-                            %(ob.getName(),mesh_mat.getName()))
+                            %(ob.name,mesh_mat.name))
 
             # list of body part (name, index, vertices) in this mesh
             bodypartgroups = []
@@ -2229,7 +2229,7 @@ class NifExport(NifImportExport):
                 if parent_block.name:
                     trishape.name = "Tri " + parent_block.name
                 else:
-                    trishape.name = "Tri " + ob.getName()
+                    trishape.name = "Tri " + ob.name
             else:
                 trishape.name = trishape_name
             if len(mesh_mats) > 1:
@@ -2331,7 +2331,7 @@ class NifExport(NifImportExport):
                 
                 # add NiTriShape's material property
                 trimatprop = self.export_material_property(
-                    name=self.get_full_name(mesh_mat.getName()),
+                    name=self.get_full_name(mesh_mat.name),
                     flags=0x0001, # ? standard
                     ambient=mesh_mat_ambient_color,
                     diffuse=mesh_mat_diffuse_color,
@@ -2424,7 +2424,7 @@ class NifExport(NifImportExport):
             if ob.parent:
                 if ob.parent.type == 'ARMATURE':
                     ob_armature = ob.parent
-                    armaturename = ob_armature.getName()
+                    armaturename = ob_armature.name
                     bonenames = list(ob_armature.data.bones.keys())
                     # the vertgroups that correspond to bonenames are bones
                     # that influence the mesh
@@ -3074,7 +3074,7 @@ class NifExport(NifImportExport):
                 if (obj.type != 'ARMATURE'):
                     # not parented to an armature
                     self.export_node(ob_child, 'localspace',
-                                     parent_block, ob_child.getName())
+                                     parent_block, ob_child.name)
                 else:
                     # this object is parented to an armature
                     # we should check whether it is really parented to the
@@ -3083,7 +3083,7 @@ class NifExport(NifImportExport):
                     parent_bone_name = ob_child.getParentBoneName()
                     if parent_bone_name is None:
                         self.export_node(ob_child, 'localspace',
-                                         parent_block, ob_child.getName())
+                                         parent_block, ob_child.name)
                     else:
                         # we should parent the object to the bone instead of
                         # to the armature
@@ -3102,7 +3102,7 @@ class NifExport(NifImportExport):
                                 #     with length of the bone ("tail")
                                 # this is handled in the get_object_srt function
                                 self.export_node(ob_child, 'localspace',
-                                                 bone_block, ob_child.getName())
+                                                 bone_block, ob_child.name)
                                 break
                         else:
                             assert(False) # BUG!
@@ -3410,7 +3410,7 @@ class NifExport(NifImportExport):
         # unless forcing override
         if not self.EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES:
             for prop in obj.getAllProperties():
-                if prop.getName() == 'HavokMaterial':
+                if prop.name == 'HavokMaterial':
                     if prop.type == "STRING":
                         # for Anglicized names
                         if prop.data in self.HAVOK_MATERIAL:
@@ -3421,7 +3421,7 @@ class NifExport(NifImportExport):
                     # or if someone wants to set the material by the number
                     elif prop.type == "INT":
                         material = prop.data
-                elif prop.getName() == 'OblivionLayer':
+                elif prop.name == 'OblivionLayer':
                     if prop.type == "STRING":
                         # for Anglicized names
                         if prop.data in self.OB_LAYER:
@@ -3432,7 +3432,7 @@ class NifExport(NifImportExport):
                     # or if someone wants to set the layer by the number
                     elif prop.type == "INT":
                         layer = prop.data
-                elif prop.getName() == 'QualityType':
+                elif prop.name == 'QualityType':
                     if prop.type == "STRING":
                         # for Anglicized names
                         if prop.data in self.QUALITY_TYPE:
@@ -3443,7 +3443,7 @@ class NifExport(NifImportExport):
                     # or if someone wants to set the Motion Quality by the number
                     elif prop.type == "INT":
                         quality_type = prop.data
-                elif prop.getName() == 'MotionSystem':
+                elif prop.name == 'MotionSystem':
                     if prop.type == "STRING":
                         # for Anglicized names
                         if prop.data in self.MOTION_SYS:
@@ -3454,9 +3454,9 @@ class NifExport(NifImportExport):
                     # or if someone wants to set the Motion System  by the number
                     elif prop.type == "INT":
                         motion_system = prop.data
-                elif prop.getName() == 'Mass' and prop.type == "FLOAT":
+                elif prop.name == 'Mass' and prop.type == "FLOAT":
                     mass = prop.data
-                elif prop.getName() == 'ColFilter' and prop.type == "INT":
+                elif prop.name == 'ColFilter' and prop.type == "INT":
                     col_filter = prop.data
 
         # if no collisions have been exported yet to this parent_block
@@ -3910,13 +3910,13 @@ class NifExport(NifImportExport):
                     else: # oblivion
                         max_friction = 10
                 for prop in b_obj.getAllProperties():
-                    if (prop.getName() == 'LimitedHinge_MaxAngle'
+                    if (prop.name == 'LimitedHinge_MaxAngle'
                         and prop.type == "FLOAT"):
                         max_angle = prop.data
-                    if (prop.getName() == 'LimitedHinge_MinAngle'
+                    if (prop.name == 'LimitedHinge_MinAngle'
                         and prop.type == "FLOAT"):
                         min_angle = prop.data
-                    if (prop.getName() == 'LimitedHinge_MaxFriction'
+                    if (prop.name == 'LimitedHinge_MaxFriction'
                         and prop.type == "FLOAT"):
                         max_friction = prop.data 
 
@@ -4199,7 +4199,7 @@ class NifExport(NifImportExport):
             self.warning(
                 "Bad uv layer name '%s' in texture '%s'."
                 " Falling back on first uv layer"
-                % (mtex.uvlayer, mtex.tex.getName()))
+                % (mtex.uvlayer, mtex.tex.name))
             texdesc.uv_set = 0 # assume 0 is active layer
 
         texdesc.source = self.export_source_texture(mtex.tex)
@@ -4263,7 +4263,7 @@ class NifExport(NifImportExport):
                                  mtex = basemtex)
             # check for texture flip definition
             try:
-                fliptxt = Blender.Text.Get(basemtex.tex.getName())
+                fliptxt = Blender.Text.Get(basemtex.tex.name)
             except NameError:
                 pass
             else:

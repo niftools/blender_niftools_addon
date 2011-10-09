@@ -2481,7 +2481,7 @@ class NifImport(NifImportExport):
         if txk:
             # get animation text buffer, and clear it if it already exists
             try:
-                animtxt = [txt for txt in Blender.Text.Get() if txt.getName() == "Anim"][0]
+                animtxt = [txt for txt in Blender.Text.Get() if txt.name == "Anim"][0]
                 animtxt.clear()
             except:
                 animtxt = Blender.Text.New("Anim")
