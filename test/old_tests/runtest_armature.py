@@ -61,9 +61,9 @@ class ArmatureTestSuite(TestSuite):
         b_lod = Blender.Object.Get("Cube")
         b_lod0 = Blender.Object.Get("Cube_LOD0")
         b_lod1 = Blender.Object.Get("Cube_LOD0")
-        assert(b_lod0.getParent() == b_lod)
-        assert(b_lod1.getParent() == b_lod)
-        assert(b_lod.getParent() == b_arm)
+        assert(b_lod0.parent == b_lod)
+        assert(b_lod1.parent == b_lod)
+        assert(b_lod.parent == b_arm)
         # check that the two lod children have an armature modifier
         assert(b_lod0.modifiers[0].type == Blender.Modifier.Types.ARMATURE)
         assert(b_lod1.modifiers[0].type == Blender.Modifier.Types.ARMATURE)

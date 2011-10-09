@@ -273,8 +273,8 @@ class NifExport(NifImportExport):
             export_types = ('EMPTY', 'MESH', 'ARMATURE')
             for root_object in [ob for ob in self.context.selected_objects
                                 if ob.type in export_types]:
-                while (root_object.getParent() != None):
-                    root_object = root_object.getParent()
+                while root_object.parent:
+                    root_object = root_object.parent
                 if root_object.type not in export_types:
                     raise NifExportError(
                         "Root object (%s) must be an 'EMPTY', 'MESH',"
@@ -1060,8 +1060,7 @@ class NifExport(NifImportExport):
         # set transform on trishapes rather than on NiNode for skinned meshes
         # this fixes an issue with clothing slots
         if ob_type == 'MESH':
-            ob_parent = ob.getParent()
-            if ob_parent and ob_parent.type == 'ARMATURE':
+            if ob.parent and ob.parent.type == 'ARMATURE':
                 if ob_ipo:
                     # mesh with armature parent should not have animation!
                     self.warning(
@@ -2421,9 +2420,9 @@ class NifExport(NifImportExport):
             # now export the vertex weights, if there are any
             vertgroups = ob.data.getVertGroupNames()
             bonenames = []
-            if ob.getParent():
-                if ob.getParent().type == 'ARMATURE':
-                    ob_armature = ob.getParent()
+            if ob.parent:
+                if ob.parent.type == 'ARMATURE':
+                    ob_armature = ob.parent
                     armaturename = ob_armature.getName()
                     bonenames = list(ob_armature.getData().bones.keys())
                     # the vertgroups that correspond to bonenames are bones
@@ -3211,7 +3210,7 @@ class NifExport(NifImportExport):
                 # hence Z = mat * B'^{-1} * X
 
                 # first multiply with inverse of the Blender bone matrix
-                bone_parent = obj.getParent().getData().bones[
+                bone_parent = obj.parent.getData().bones[
                     bone_parent_name]
                 boneinv = mathutils.Matrix(
                     bone_parent.matrix['ARMATURESPACE'])
