@@ -281,6 +281,12 @@ class NifExportUI(bpy.types.Operator, ExportHelper, NifImportExportUI):
         description="Smoothen inter-object seams.",
         default=True)
 
+    #: Use BSAnimationNode (for Morrowind).
+    bs_animation_node = bpy.props.BoolProperty(
+        name="Use NiBSAnimationNode",
+        description="Use NiBSAnimationNode (for Morrowind).",
+        default=False)
+
     #: Map game enum to nif version.
     version = {
         _game_to_enum(game): versions[-1]
@@ -1007,19 +1013,6 @@ class NifConfig:
                 event_name = "EXPORT_OB_PRN_RING",
                 num_items = 7, item = 6)
             self.draw_y_sep()
-
-        # export-only options for morrowind
-        if (self.target == self.TARGET_EXPORT
-            and self.config["game"] == 'MORROWIND'):
-            self.draw_next_column()
-
-            self.draw_toggle(
-                text = "Export nif + xnif + kf",
-                event_name = "EXPORT_MW_NIFXNIFKF")
-
-            self.draw_toggle(
-                text = "Use BSAnimationNode",
-                event_name = "EXPORT_MW_BS_ANIMATION_NODE")
 
         # export-only options for civ4 and rrt
         if (self.target == self.TARGET_EXPORT
