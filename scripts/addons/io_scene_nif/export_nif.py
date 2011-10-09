@@ -995,7 +995,7 @@ class NifExport(NifImportExport):
             ob_type = ob.type
             assert(ob_type in ['EMPTY', 'MESH', 'ARMATURE']) # debug
             assert(parent_block) # debug
-            ob_ipo = ob.getIpo() # get animation data
+            ob_ipo = ob.animation_data # get animation data
             ob_children = ob.children
             
             if (node_name == 'RootCollisionNode'):
@@ -1827,8 +1827,8 @@ class NifExport(NifImportExport):
                 mesh_mat_glossiness = mesh_mat.getHardness() / 4.0  # 'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
                 mesh_mat_transparency = mesh_mat.getAlpha()         # 'A(lpha)' scrollbar in Blender (MW -> 1.0)
                 mesh_hasalpha = (abs(mesh_mat_transparency - 1.0) > self.properties.epsilon) \
-                                or (mesh_mat.getIpo() != None
-                                    and mesh_mat.getIpo().getCurve('Alpha'))
+                                or (mesh_mat.animation_data
+                                    and mesh_mat.animation_data.action.fcurves['Alpha'])
                 mesh_haswire = mesh_mat.mode & Blender.Material.Modes.WIRE
                 mesh_mat_ambient_color = [0.0, 0.0, 0.0]
                 mesh_mat_ambient_color[0] = mesh_mat_diffuse_color[0] * mesh_mat_ambient
@@ -1958,7 +1958,7 @@ class NifExport(NifImportExport):
                                         " in the 'Map To' tab under the"
                                         " material buttons."
                                         %mesh_mat.name)
-                                if (mesh_mat.getIpo() and mesh_mat.getIpo().getCurve('Alpha')):
+                                if (mesh_mat.animation_data and mesh_mat.animation_data.action.fcurves['Alpha']):
                                     raise NifExportError(
                                         "Cannot export animation for"
                                         " this type of transparency"
@@ -2771,7 +2771,7 @@ class NifExport(NifImportExport):
 
     def export_material_alpha_controller(self, b_material, n_geom):
         """Export the material alpha controller data."""
-        b_ipo = b_material.getIpo()
+        b_ipo = b_material.animation_data
         if not b_ipo:
             return
         # get the alpha curve and translate it into nif data
@@ -2817,7 +2817,7 @@ class NifExport(NifImportExport):
     def export_material_color_controller(
         self, b_material, b_channels, n_geom, n_target_color):
         """Export the material color controller data."""
-        b_ipo = b_material.getIpo()
+        b_ipo = b_material.animation_data
         if not b_ipo:
             return
         # get the material color curves and translate it into nif data
