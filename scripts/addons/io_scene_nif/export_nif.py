@@ -1002,7 +1002,7 @@ class NifExport(NifImportExport):
                 # -> root collision node (can be mesh or empty)
                 ob.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
                 ob.draw_type = 'BOUNDS'
-                ob.drawMode = Blender.Object.DrawModes['WIRE']
+                ob.show_wire = True
                 self.export_collision(ob, parent_block)
                 return None # done; stop here
             elif ob_type == 'MESH' and ob.name.lower().startswith('bsbound'):

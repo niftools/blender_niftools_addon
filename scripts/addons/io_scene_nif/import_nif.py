@@ -475,7 +475,7 @@ class NifImport(NifImportExport):
                     # settings for collision node
                     if isinstance(niBlock, NifFormat.RootCollisionNode):
                         b_obj.draw_type = 'BOUNDS'
-                        b_obj.setDrawMode(32) # wire
+                        b_obj.show_wire = True
                         b_obj.rbShapeBoundType = \
                             Blender.Object.RBShapes['POLYHEDERON']
                         # also remove duplicate vertices
@@ -2943,7 +2943,7 @@ class NifImport(NifImportExport):
             # convex hull shape not in blender Python API
             # Blender.Object.RBShapes['CONVEXHULL'] should be 5
             ob.rbShapeBoundType = 5
-            ob.drawMode = Blender.Object.DrawModes['WIRE']
+            ob.show_wire = True
             # radius: quick estimate
             ob.rbRadius = min(vert.co.length for vert in me.vertices)
             ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
@@ -3173,7 +3173,7 @@ class NifImport(NifImportExport):
                 # set bounds type
                 ob.draw_type = 'BOUNDS'
                 ob.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
-                ob.drawMode = Blender.Object.DrawModes['WIRE']
+                ob.show_wire = True
                 # radius: quick estimate
                 ob.rbRadius = min(vert.co.length for vert in me.vertices)
                 # set material
@@ -3213,7 +3213,7 @@ class NifImport(NifImportExport):
             # set bounds type
             ob.draw_type = 'BOUNDS'
             ob.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
-            ob.drawMode = Blender.Object.DrawModes['WIRE']
+            ob.show_wire = True
             # radius: quick estimate
             ob.rbRadius = min(vert.co.length for vert in me.vertices)
             ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[self.havok_mat], "STRING")
