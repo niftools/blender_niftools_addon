@@ -98,7 +98,7 @@ def weight_squash(me, cutoff = 0.02, nbones = 4):
 
 def main():
     # get selected meshes
-    obs = [ob for ob in Blender.Object.GetSelected() if ob.type == 'Mesh']
+    obs = [ob for ob in self.context.selected_objects if ob.type == 'Mesh']
     
     # ask for weights to delete
     PREF_CUTOFF = Blender.Draw.Create(0.02)

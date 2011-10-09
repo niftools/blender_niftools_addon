@@ -47,7 +47,7 @@ from Blender import Window, sys
 
 def main(arg):
     # get selected bones
-    obs = [ob for ob in Blender.Object.GetSelected() if ob.type == 'Armature']
+    obs = [ob for ob in self.context.selected_objects if ob.type == 'Armature']
     if obs:
         boneitems = [(bonename, bone)
                      for (bonename, bone) in list(obs[0].getPose().bones.items())
