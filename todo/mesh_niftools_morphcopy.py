@@ -3,7 +3,7 @@
 """
 Name: 'Morph Copy'
 Blender: 245
-Group: 'Mesh'
+Group: 'MESH'
 Tooltip: 'Copy morph vectors from 1 mesh, to all other selected meshes.'
 """
 
@@ -229,7 +229,7 @@ def main(arg):
 
     # get selected meshes
     scn = Blender.Scene.GetCurrent()
-    obs = [ob for ob in self.context.selected_objects if ob.type == 'Mesh']
+    obs = [ob for ob in self.context.selected_objects if ob.type == 'MESH']
     if not obs:
         Blender.Draw.PupMenu('Error%t|2 or more mesh objects need to be selected.|aborting.')
         return
