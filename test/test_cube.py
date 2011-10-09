@@ -16,7 +16,7 @@ class TestCubeExport:
 
     def test_export(self):
         bpy.ops.export_scene.nif(
-            filepath="test/tmp/test_cube_export.nif",
+            filepath="test/export/cube.nif",
             log_level='DEBUG',
             )
 
@@ -27,7 +27,18 @@ class TestCubeExport:
         bpy.data.meshes.remove(self.mesh)
 
 class TestCubeImport:
-    pass
+    def test_export(self):
+        bpy.ops.import_scene.nif(
+            filepath="test/import/cube.nif",
+            log_level='DEBUG',
+            )
+
+    def teardown(self):
+        pass
+        # FIXME destroy cube, but how to we get the object and the mesh?
+        #bpy.context.scene.objects.unlink(self.obj)
+        #bpy.data.objects.remove(self.obj)
+        #bpy.data.meshes.remove(self.mesh)
 
 class TestNonUniformlyScaledCube:
     def setup(self):
@@ -40,7 +51,7 @@ class TestNonUniformlyScaledCube:
     @nose.tools.raises(Exception)
     def test_export(self):
         bpy.ops.export_scene.nif(
-            filepath="test/tmp/test_non_uniformly_scaled_cube_export.nif",
+            filepath="test/export/non_uniformly_scaled_cube.nif",
             log_level='DEBUG',
             )
 
