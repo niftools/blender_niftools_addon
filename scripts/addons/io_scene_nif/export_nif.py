@@ -1001,7 +1001,7 @@ class NifExport(NifImportExport):
             if (node_name == 'RootCollisionNode'):
                 # -> root collision node (can be mesh or empty)
                 ob.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
-                ob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
+                ob.draw_type = 'BOUNDS'
                 ob.drawMode = Blender.Object.DrawModes['WIRE']
                 self.export_collision(ob, parent_block)
                 return None # done; stop here
