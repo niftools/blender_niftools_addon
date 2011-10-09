@@ -3094,7 +3094,7 @@ class NifExport(NifImportExport):
                     # we should check whether it is really parented to the
                     # armature using vertex weights
                     # or whether it is parented to some bone of the armature
-                    parent_bone_name = ob_child.getParentBoneName()
+                    parent_bone_name = ob_child.parent_bone
                     if parent_bone_name is None:
                         self.export_node(ob_child, 'localspace',
                                          parent_block, ob_child.name)
@@ -3204,7 +3204,7 @@ class NifExport(NifImportExport):
         # now write out spaces
         if not isinstance(obj, bpy.types.Bone):
             mat = obj.matrix_local.copy()
-            bone_parent_name = obj.getParentBoneName()
+            bone_parent_name = obj.parent_bone
             # if there is a bone parent then the object is parented
             # then get the matrix relative to the bone parent head
             if bone_parent_name:
