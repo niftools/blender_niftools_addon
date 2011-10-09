@@ -12,7 +12,7 @@ We are following the following strategy for porting the scripts:
 
 1. Write regression test for desired feature.
 2. Run the test.
-3. Fix the first exception that occurs.
+3. Fix the first exception that occurs, and commit the fix.
 4. Go back to step 2 until no more exceptions are raised.
 5. Do the next 2.6.x release.
 6. Listen to feedback from users, and go back to step 1.
@@ -69,7 +69,7 @@ Error Reporting
 With the older blender 2.4x series, scripts could report fatal errors
 simply by raising an exception. The current blender series has the
 problem that *exceptions are not passed down to the caller of the
-operator*. Apparently, this is because the way the user interface is
+operator*. Apparently, this is because of the way the user interface is
 implemented. From a user perspective, this makes no difference,
 however, for testing code, this means that **any exceptions raised
 cannot be caught by the testing framework**.
