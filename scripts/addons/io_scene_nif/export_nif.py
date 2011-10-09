@@ -270,15 +270,15 @@ class NifExport(NifImportExport):
                     "Please select the object(s) to export,"
                     " and run this script again.")
             root_objects = set()
-            export_types = ('Empty', 'Mesh', 'Armature')
+            export_types = ('EMPTY', 'MESH', 'ARMATURE')
             for root_object in [ob for ob in self.context.selected_objects
-                                if ob.getType() in export_types]:
+                                if ob.type in export_types]:
                 while (root_object.getParent() != None):
                     root_object = root_object.getParent()
-                if root_object.getType() not in export_types:
+                if root_object.type not in export_types:
                     raise NifExportError(
-                        "Root object (%s) must be an 'Empty', 'Mesh',"
-                        " or 'Armature' object."
+                        "Root object (%s) must be an 'EMPTY', 'MESH',"
+                        " or 'ARMATURE' object."
                         % root_object.getName())
                 root_objects.add(root_object)
 
@@ -288,7 +288,7 @@ class NifExport(NifImportExport):
                 self.info("Smoothing seams between objects...")
                 vdict = {}
                 for ob in [ob for ob in self.context.scene.objects
-                           if ob.getType() == 'Mesh']:
+                           if ob.type == 'MESH']:
                     mesh = ob.getData(mesh=1)
                     #for v in mesh.verts:
                     #    v.sel = False
@@ -980,7 +980,7 @@ class NifExport(NifImportExport):
             filename (either with or without extension)
         """
         # ob_type: determine the block type
-        #          (None, 'Mesh', 'Empty' or 'Armature')
+        #          (None, 'MESH', 'EMPTY' or 'ARMATURE')
         # ob_ipo:  object animation ipo
         # node:    contains new NifFormat.NiNode instance
         if (ob == None):
@@ -991,8 +991,8 @@ class NifExport(NifImportExport):
             ob_ipo = None
         else:
             # -> empty, mesh, or armature
-            ob_type = ob.getType()
-            assert(ob_type in ['Empty', 'Mesh', 'Armature']) # debug
+            ob_type = ob.type
+            assert(ob_type in ['EMPTY', 'MESH', 'ARMATURE']) # debug
             assert(parent_block) # debug
             ob_ipo = ob.getIpo() # get animation data
             ob_children = ob.children
@@ -1004,16 +1004,16 @@ class NifExport(NifImportExport):
                 ob.drawMode = Blender.Object.DrawModes['WIRE']
                 self.export_collision(ob, parent_block)
                 return None # done; stop here
-            elif ob_type == 'Mesh' and ob.name.lower().startswith('bsbound'):
+            elif ob_type == 'MESH' and ob.name.lower().startswith('bsbound'):
                 # add a bounding box
                 self.export_bounding_box(ob, parent_block, bsbound=True)
                 return None # done; stop here
-            elif (ob_type == 'Mesh'
+            elif (ob_type == 'MESH'
                   and ob.name.lower().startswith("bounding box")):
                 # Morrowind bounding box
                 self.export_bounding_box(ob, parent_block, bsbound=False)
                 return None # done; stop here
-            elif ob_type == 'Mesh':
+            elif ob_type == 'MESH':
                 # -> mesh data.
                 # If this has children or animations or more than one material
                 # it gets wrapped in a purpose made NiNode.
@@ -1059,7 +1059,7 @@ class NifExport(NifImportExport):
 
         # set transform on trishapes rather than on NiNode for skinned meshes
         # this fixes an issue with clothing slots
-        if ob_type == 'Mesh':
+        if ob_type == 'MESH':
             ob_parent = ob.getParent()
             if ob_parent and ob_parent.type == 'ARMATURE':
                 if ob_ipo:
@@ -1107,7 +1107,7 @@ class NifExport(NifImportExport):
                 self.export_object_vis_controller(b_object=ob, n_node=node)
             # if it is a mesh, export the mesh as trishape children of
             # this ninode
-            if (ob.getType() == 'Mesh'):
+            if (ob.type == 'MESH'):
                 # see definition of trishape_space above
                 self.export_tri_shapes(ob, trishape_space, node)
                 
@@ -1756,7 +1756,7 @@ class NifExport(NifImportExport):
     def export_tri_shapes(self, ob, space, parent_block, trishape_name = None):
         self.info("Exporting %s" % ob)
         self.msg_progress("Exporting %s" % ob.name)
-        assert(ob.getType() == 'Mesh')
+        assert(ob.type == 'MESH')
 
         # get mesh from ob
         mesh = ob.getData(mesh=1) # get mesh data
@@ -3070,8 +3070,8 @@ class NifExport(NifImportExport):
         # loop over all obj's children
         for ob_child in obj.children:
             # is it a regular node?
-            if ob_child.getType() in ['Mesh', 'Empty', 'Armature']:
-                if (obj.getType() != 'Armature'):
+            if ob_child.type in ['MESH', 'EMPTY', 'ARMATURE']:
+                if (obj.type != 'ARMATURE'):
                     # not parented to an armature
                     self.export_node(ob_child, 'localspace',
                                      parent_block, ob_child.getName())
@@ -3410,7 +3410,7 @@ class NifExport(NifImportExport):
         if not self.EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES:
             for prop in obj.getAllProperties():
                 if prop.getName() == 'HavokMaterial':
-                    if prop.getType() == "STRING":
+                    if prop.type == "STRING":
                         # for Anglicized names
                         if prop.getData() in self.HAVOK_MATERIAL:
                             material = self.HAVOK_MATERIAL.index(prop.getData())
@@ -3418,10 +3418,10 @@ class NifExport(NifImportExport):
                         else:
                             material = getattr(NifFormat.HavokMaterial, prop.getData())
                     # or if someone wants to set the material by the number
-                    elif prop.getType() == "INT":
+                    elif prop.type == "INT":
                         material = prop.getData()
                 elif prop.getName() == 'OblivionLayer':
-                    if prop.getType() == "STRING":
+                    if prop.type == "STRING":
                         # for Anglicized names
                         if prop.getData() in self.OB_LAYER:
                             layer = self.OB_LAYER.index(prop.getData())
@@ -3429,10 +3429,10 @@ class NifExport(NifImportExport):
                         else:
                             layer = getattr(NifFormat.OblivionLayer, prop.getData())
                     # or if someone wants to set the layer by the number
-                    elif prop.getType() == "INT":
+                    elif prop.type == "INT":
                         layer = prop.getData()
                 elif prop.getName() == 'QualityType':
-                    if prop.getType() == "STRING":
+                    if prop.type == "STRING":
                         # for Anglicized names
                         if prop.getData() in self.QUALITY_TYPE:
                             quality_type = self.QUALITY_TYPE.index(prop.getData())
@@ -3440,10 +3440,10 @@ class NifExport(NifImportExport):
                         else:
                             quality_type = getattr(NifFormat.MotionQuality, prop.getData())
                     # or if someone wants to set the Motion Quality by the number
-                    elif prop.getType() == "INT":
+                    elif prop.type == "INT":
                         quality_type = prop.getData()
                 elif prop.getName() == 'MotionSystem':
-                    if prop.getType() == "STRING":
+                    if prop.type == "STRING":
                         # for Anglicized names
                         if prop.getData() in self.MOTION_SYS:
                             motion_system = self.MOTION_SYS.index(prop.getData())
@@ -3451,11 +3451,11 @@ class NifExport(NifImportExport):
                         else:
                             motion_system = getattr(NifFormat.MotionSystem, prop.getData())
                     # or if someone wants to set the Motion System  by the number
-                    elif prop.getType() == "INT":
+                    elif prop.type == "INT":
                         motion_system = prop.getData()
-                elif prop.getName() == 'Mass' and prop.getType() == "FLOAT":
+                elif prop.getName() == 'Mass' and prop.type == "FLOAT":
                     mass = prop.getData()
-                elif prop.getName() == 'ColFilter' and prop.getType() == "INT":
+                elif prop.getName() == 'ColFilter' and prop.type == "INT":
                     col_filter = prop.getData()
 
         # if no collisions have been exported yet to this parent_block
@@ -3913,13 +3913,13 @@ class NifExport(NifImportExport):
                         max_friction = 10
                 for prop in b_obj.getAllProperties():
                     if (prop.getName() == 'LimitedHinge_MaxAngle'
-                        and prop.getType() == "FLOAT"):
+                        and prop.type == "FLOAT"):
                         max_angle = prop.getData()
                     if (prop.getName() == 'LimitedHinge_MinAngle'
-                        and prop.getType() == "FLOAT"):
+                        and prop.type == "FLOAT"):
                         min_angle = prop.getData()
                     if (prop.getName() == 'LimitedHinge_MaxFriction'
-                        and prop.getType() == "FLOAT"):
+                        and prop.type == "FLOAT"):
                         max_friction = prop.getData() 
 
                 # parent constraint to hkbody

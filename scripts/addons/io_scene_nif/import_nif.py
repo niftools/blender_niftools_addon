@@ -118,7 +118,7 @@ class NifImport(NifImportExport):
             # to armature' mode
             if False: #TODO self.properties.skeleton ==  "GEOMETRY_ONLY":
                 if (len(self.selected_objects) != 1
-                    or self.selected_objects[0].getType() != 'Armature'):
+                    or self.selected_objects[0].type != 'ARMATURE'):
                     raise NifImportError(
                         "You must select exactly one armature in"
                         " 'Import Geometry Only + Parent To Selected Armature'"
@@ -353,7 +353,7 @@ class NifImport(NifImportExport):
             # rename vertex groups to reflect bone names
             # (for blends imported with older versions of the scripts!)
             for b_child_obj in self.selected_objects:
-                if b_child_obj.getType() == "Mesh":
+                if b_child_obj.type == 'MESH':
                     for oldgroupname in b_child_obj.data.getVertGroupNames():
                         newgroupname = self.get_bone_name_for_blender(oldgroupname)
                         if oldgroupname != newgroupname:
@@ -582,7 +582,7 @@ class NifImport(NifImportExport):
             if isinstance(niBlock, NifFormat.NiBillboardNode):
                 # find camera object
                 for obj in self.context.scene.objects:
-                    if obj.getType() == "Camera":
+                    if obj.type == 'CAMERA':
                         break
                 else:
                     raise NifImportError(
