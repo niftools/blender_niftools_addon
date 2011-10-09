@@ -1018,8 +1018,7 @@ class NifExport(NifImportExport):
                 # -> mesh data.
                 # If this has children or animations or more than one material
                 # it gets wrapped in a purpose made NiNode.
-                is_collision = (ob.getDrawType()
-                                == Blender.Object.DrawTypes['BOUNDBOX'])
+                is_collision = (ob.draw_type == 'BOUNDS')
                 has_ipo = ob_ipo and len(ob_ipo.getCurves()) > 0
                 has_children = len(ob_children) > 0
                 is_multimaterial = len(set([f.mat for f in ob.data.faces])) > 1
@@ -2251,7 +2250,7 @@ class NifExport(NifImportExport):
                     trishape.flags = 0x0016
             else:
                 # morrowind
-                if ob.getDrawType() != 2: # not wire
+                if ob.draw_type != 'WIRE': # not wire
                     trishape.flags = 0x0004 # use triangles as bounding box
                 else:
                     trishape.flags = 0x0005 # use triangles as bounding box + hide
