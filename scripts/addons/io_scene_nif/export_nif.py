@@ -289,7 +289,7 @@ class NifExport(NifImportExport):
                 vdict = {}
                 for ob in [ob for ob in self.context.scene.objects
                            if ob.type == 'MESH']:
-                    mesh = ob.getData(mesh=1)
+                    mesh = ob.data
                     #for v in mesh.verts:
                     #    v.sel = False
                     for f in mesh.faces:
@@ -1758,7 +1758,7 @@ class NifExport(NifImportExport):
         assert(ob.type == 'MESH')
 
         # get mesh from ob
-        mesh = ob.getData(mesh=1) # get mesh data
+        mesh = ob.data # get mesh data
         
         # getVertsFromGroup fails if the mesh has no vertices
         # (this happens when checking for fallout 3 body parts)
@@ -2424,7 +2424,7 @@ class NifExport(NifImportExport):
                 if ob.parent.type == 'ARMATURE':
                     ob_armature = ob.parent
                     armaturename = ob_armature.getName()
-                    bonenames = list(ob_armature.getData().bones.keys())
+                    bonenames = list(ob_armature.data.bones.keys())
                     # the vertgroups that correspond to bonenames are bones
                     # that influence the mesh
                     boneinfluences = []
@@ -2971,7 +2971,7 @@ class NifExport(NifImportExport):
 
         # find the root bones
         # dictionary of bones (name -> bone)
-        bones = dict(list(arm.getData().bones.items()))
+        bones = dict(list(arm.data.bones.items()))
         root_bones = []
         for root_bone in list(bones.values()):
             while root_bone.parent in list(bones.values()):
@@ -3210,7 +3210,7 @@ class NifExport(NifImportExport):
                 # hence Z = mat * B'^{-1} * X
 
                 # first multiply with inverse of the Blender bone matrix
-                bone_parent = obj.parent.getData().bones[
+                bone_parent = obj.parent.data.bones[
                     bone_parent_name]
                 boneinv = mathutils.Matrix(
                     bone_parent.matrix['ARMATURESPACE'])
@@ -3411,51 +3411,51 @@ class NifExport(NifImportExport):
                 if prop.getName() == 'HavokMaterial':
                     if prop.type == "STRING":
                         # for Anglicized names
-                        if prop.getData() in self.HAVOK_MATERIAL:
-                            material = self.HAVOK_MATERIAL.index(prop.getData())
+                        if prop.data in self.HAVOK_MATERIAL:
+                            material = self.HAVOK_MATERIAL.index(prop.data)
                         # for the real Nif Format material names
                         else:
-                            material = getattr(NifFormat.HavokMaterial, prop.getData())
+                            material = getattr(NifFormat.HavokMaterial, prop.data)
                     # or if someone wants to set the material by the number
                     elif prop.type == "INT":
-                        material = prop.getData()
+                        material = prop.data
                 elif prop.getName() == 'OblivionLayer':
                     if prop.type == "STRING":
                         # for Anglicized names
-                        if prop.getData() in self.OB_LAYER:
-                            layer = self.OB_LAYER.index(prop.getData())
+                        if prop.data in self.OB_LAYER:
+                            layer = self.OB_LAYER.index(prop.data)
                         # for the real Nif Format layer names
                         else:
-                            layer = getattr(NifFormat.OblivionLayer, prop.getData())
+                            layer = getattr(NifFormat.OblivionLayer, prop.data)
                     # or if someone wants to set the layer by the number
                     elif prop.type == "INT":
-                        layer = prop.getData()
+                        layer = prop.data
                 elif prop.getName() == 'QualityType':
                     if prop.type == "STRING":
                         # for Anglicized names
-                        if prop.getData() in self.QUALITY_TYPE:
-                            quality_type = self.QUALITY_TYPE.index(prop.getData())
+                        if prop.data in self.QUALITY_TYPE:
+                            quality_type = self.QUALITY_TYPE.index(prop.data)
                         # for the real Nif Format MoQual names
                         else:
-                            quality_type = getattr(NifFormat.MotionQuality, prop.getData())
+                            quality_type = getattr(NifFormat.MotionQuality, prop.data)
                     # or if someone wants to set the Motion Quality by the number
                     elif prop.type == "INT":
-                        quality_type = prop.getData()
+                        quality_type = prop.data
                 elif prop.getName() == 'MotionSystem':
                     if prop.type == "STRING":
                         # for Anglicized names
-                        if prop.getData() in self.MOTION_SYS:
-                            motion_system = self.MOTION_SYS.index(prop.getData())
+                        if prop.data in self.MOTION_SYS:
+                            motion_system = self.MOTION_SYS.index(prop.data)
                         # for the real Nif Format Motion System names
                         else:
-                            motion_system = getattr(NifFormat.MotionSystem, prop.getData())
+                            motion_system = getattr(NifFormat.MotionSystem, prop.data)
                     # or if someone wants to set the Motion System  by the number
                     elif prop.type == "INT":
-                        motion_system = prop.getData()
+                        motion_system = prop.data
                 elif prop.getName() == 'Mass' and prop.type == "FLOAT":
-                    mass = prop.getData()
+                    mass = prop.data
                 elif prop.getName() == 'ColFilter' and prop.type == "INT":
-                    col_filter = prop.getData()
+                    col_filter = prop.data
 
         # if no collisions have been exported yet to this parent_block
         # then create new collision tree on parent_block
@@ -3913,13 +3913,13 @@ class NifExport(NifImportExport):
                 for prop in b_obj.getAllProperties():
                     if (prop.getName() == 'LimitedHinge_MaxAngle'
                         and prop.type == "FLOAT"):
-                        max_angle = prop.getData()
+                        max_angle = prop.data
                     if (prop.getName() == 'LimitedHinge_MinAngle'
                         and prop.type == "FLOAT"):
-                        min_angle = prop.getData()
+                        min_angle = prop.data
                     if (prop.getName() == 'LimitedHinge_MaxFriction'
                         and prop.type == "FLOAT"):
-                        max_friction = prop.getData() 
+                        max_friction = prop.data 
 
                 # parent constraint to hkbody
                 hkbody.num_constraints += 1
