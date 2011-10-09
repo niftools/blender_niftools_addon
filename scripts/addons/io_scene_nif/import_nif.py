@@ -480,7 +480,7 @@ class NifImport(NifImportExport):
                             Blender.Object.RBShapes['POLYHEDERON']
                         # also remove duplicate vertices
                         b_mesh = b_obj.getData(mesh=True)
-                        numverts = len(b_mesh.verts)
+                        numverts = len(b_mesh.vertices)
                         # 0.005 = 1/200
                         numdel = b_mesh.remDoubles(0.005)
                         if numdel:
@@ -2078,7 +2078,7 @@ class NifImport(NifImportExport):
 
         # if there are no vertices then enable face index shifts
         # (this fixes an issue with indexing)
-        if len(b_meshData.verts) == 0:
+        if len(b_meshData.vertices) == 0:
             check_shift = True
         else:
             check_shift = False
@@ -2092,7 +2092,7 @@ class NifImport(NifImportExport):
         # We use a Python dictionary to remove doubles and to keep track of indices.
         # While we are at it, we also add vertices while constructing the map.
         n_map = {}
-        b_v_index = len(b_meshData.verts)
+        b_v_index = len(b_meshData.vertices)
         for i, v in enumerate(verts):
             # The key k identifies unique vertex /normal pairs.
             # We use a tuple of ints for key, this works MUCH faster than a
@@ -2124,13 +2124,13 @@ class NifImport(NifImportExport):
                 if applytransform:
                     v = mathutils.Vector(v.x, v.y, v.z)
                     v *= transform
-                    b_meshData.verts.extend(v)
+                    b_meshData.vertices.extend(v)
                 else:
-                    b_meshData.verts.extend(v.x, v.y, v.z)
+                    b_meshData.vertices.extend(v.x, v.y, v.z)
                 # adds normal info if present (Blender recalculates these when
                 # switching between edit mode and object mode, handled further)
                 #if norms:
-                #    mv = b_meshData.verts[b_v_index]
+                #    mv = b_meshData.vertices[b_v_index]
                 #    n = norms[i]
                 #    mv.no = mathutils.Vector(n.x, n.y, n.z)
                 b_v_index += 1
@@ -2149,7 +2149,7 @@ class NifImport(NifImportExport):
         num_new_faces = 0 # counter for debugging
         for i, f in enumerate(tris):
             # get face index
-            f_verts = [b_meshData.verts[v_map[vert_index]] for vert_index in f]
+            f_verts = [b_meshData.vertices[v_map[vert_index]] for vert_index in f]
             # skip degenerate faces
             # we get a ValueError on faces.extend otherwise
             if (f_verts[0] == f_verts[1]) or (f_verts[1] == f_verts[2]) or (f_verts[2] == f_verts[0]): continue
@@ -2163,11 +2163,11 @@ class NifImport(NifImportExport):
             # so we must fix the face index order
             if check_shift:
                 added_face = b_meshData.faces[-1]
-                if added_face.verts[0] == f_verts[0]: # most common case, checking it first will speed up the script
+                if added_face.vertices[0] == f_verts[0]: # most common case, checking it first will speed up the script
                     pass # f[0] comes first, everything ok
-                elif added_face.verts[2] == f_verts[0]: # second most common case
+                elif added_face.vertices[2] == f_verts[0]: # second most common case
                     f[0], f[1], f[2] = f[1], f[2], f[0] # f[0] comes last
-                elif added_face.verts[1] == f_verts[0]: # this never seems to occur, leave it just in case
+                elif added_face.vertices[1] == f_verts[0]: # this never seems to occur, leave it just in case
                     f[0], f[1], f[2] = f[2], f[0], f[1] # f[0] comes second
                 else:
                     raise RuntimeError("face extend index bug")
@@ -2343,9 +2343,9 @@ class NifImport(NifImportExport):
                             v = base + delta
                             if applytransform:
                                 v *= transform
-                            b_meshData.verts[b_v_index].co[0] = v.x
-                            b_meshData.verts[b_v_index].co[1] = v.y
-                            b_meshData.verts[b_v_index].co[2] = v.z
+                            b_meshData.vertices[b_v_index].co[0] = v.x
+                            b_meshData.vertices[b_v_index].co[1] = v.y
+                            b_meshData.vertices[b_v_index].co[2] = v.z
                         # update the mesh and insert key
                         b_meshData.insertKey(idxMorph, 'relative')
                         # set name for key
@@ -2380,9 +2380,9 @@ class NifImport(NifImportExport):
                             base = mathutils.Vector(bv.x, bv.y, bv.z)
                             if applytransform:
                                 base *= transform
-                            b_meshData.verts[b_v_index].co[0] = base.x
-                            b_meshData.verts[b_v_index].co[1] = base.y
-                            b_meshData.verts[b_v_index].co[2] = base.z
+                            b_meshData.vertices[b_v_index].co[0] = base.x
+                            b_meshData.vertices[b_v_index].co[1] = base.y
+                            b_meshData.vertices[b_v_index].co[2] = base.z
 
         # import facegen morphs
         if self.egmdata:
@@ -2421,9 +2421,9 @@ class NifImport(NifImportExport):
                     v = base + delta
                     if applytransform:
                         v *= transform
-                    b_meshData.verts[b_v_index].co[0] = v.x
-                    b_meshData.verts[b_v_index].co[1] = v.y
-                    b_meshData.verts[b_v_index].co[2] = v.z
+                    b_meshData.vertices[b_v_index].co[0] = v.x
+                    b_meshData.vertices[b_v_index].co[1] = v.y
+                    b_meshData.vertices[b_v_index].co[2] = v.z
                 # update the mesh and insert key
                 b_meshData.insertKey(1, 'relative')
                 # set name for key
@@ -2454,9 +2454,9 @@ class NifImport(NifImportExport):
                 base = mathutils.Vector(bv.x, bv.y, bv.z)
                 if applytransform:
                     base *= transform
-                b_meshData.verts[b_v_index].co[0] = base.x
-                b_meshData.verts[b_v_index].co[1] = base.y
-                b_meshData.verts[b_v_index].co[2] = base.z
+                b_meshData.vertices[b_v_index].co[0] = base.x
+                b_meshData.vertices[b_v_index].co[1] = base.y
+                b_meshData.vertices[b_v_index].co[2] = base.z
      
         # recalculate normals
         b_meshData.calcNormals()
@@ -2931,7 +2931,7 @@ class NifImport(NifImportExport):
             # create convex mesh
             me = Blender.Mesh.New('convexpoly')
             for vert in vertices:
-                me.verts.extend(*vert)
+                me.vertices.extend(*vert)
             for triangle in triangles:
                 me.faces.extend(triangle)
 
@@ -2945,11 +2945,11 @@ class NifImport(NifImportExport):
             ob.rbShapeBoundType = 5
             ob.drawMode = Blender.Object.DrawModes['WIRE']
             # radius: quick estimate
-            ob.rbRadius = min(vert.co.length for vert in me.verts)
+            ob.rbRadius = min(vert.co.length for vert in me.vertices)
             ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
             
             # also remove duplicate vertices
-            numverts = len(me.verts)
+            numverts = len(me.vertices)
             # 0.005 = 1/200
             numdel = me.remDoubles(0.005)
             if numdel:
@@ -3033,7 +3033,7 @@ class NifImport(NifImportExport):
             for x in [minx, maxx]:
                 for y in [miny, maxy]:
                     for z in [minz, maxz]:
-                        me.verts.extend(x,y,z)
+                        me.vertices.extend(x,y,z)
             me.faces.extend(
                 [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
 
@@ -3054,7 +3054,7 @@ class NifImport(NifImportExport):
             for x in [minx, maxx]:
                 for y in [miny, maxy]:
                     for z in [minz, maxz]:
-                        me.verts.extend(x,y,z)
+                        me.vertices.extend(x,y,z)
             me.faces.extend(
                 [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
 
@@ -3080,7 +3080,7 @@ class NifImport(NifImportExport):
             for x in [minx, maxx]:
                 for y in [miny, maxy]:
                     for z in [minz, maxz]:
-                        me.verts.extend(x,y,z)
+                        me.vertices.extend(x,y,z)
             me.faces.extend(
                 [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
 
@@ -3136,7 +3136,7 @@ class NifImport(NifImportExport):
                 for vert_index in range(vertex_offset,
                                         vertex_offset + subshape.num_vertices):
                     vert = bhkshape.data.vertices[vert_index]
-                    me.verts.extend(vert.x * 7, vert.y * 7, vert.z * 7)
+                    me.vertices.extend(vert.x * 7, vert.y * 7, vert.z * 7)
                 for hktriangle in bhkshape.data.triangles:
                     if ((vertex_offset <= hktriangle.triangle.v_1)
                         and (hktriangle.triangle.v_1
@@ -3163,9 +3163,9 @@ class NifImport(NifImportExport):
                                                  - hktriangle.normal.z ))
                     # fix face orientation
                     if align_plus < align_minus:
-                        me.faces[-1].verts = ( me.faces[-1].verts[1],
-                                               me.faces[-1].verts[0],
-                                               me.faces[-1].verts[2] )
+                        me.faces[-1].vertices = ( me.faces[-1].vertices[1],
+                                               me.faces[-1].vertices[0],
+                                               me.faces[-1].vertices[2] )
 
                 # link mesh to scene and set transform
                 ob = self.context.scene.objects.new(me, 'poly%i' % subshape_num)
@@ -3175,12 +3175,12 @@ class NifImport(NifImportExport):
                 ob.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
                 ob.drawMode = Blender.Object.DrawModes['WIRE']
                 # radius: quick estimate
-                ob.rbRadius = min(vert.co.length for vert in me.verts)
+                ob.rbRadius = min(vert.co.length for vert in me.vertices)
                 # set material
                 ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[subshape.material], "STRING")
 
                 # also remove duplicate vertices
-                numverts = len(me.verts)
+                numverts = len(me.vertices)
                 # 0.005 = 1/200
                 numdel = me.remDoubles(0.005)
                 if numdel:
@@ -3204,7 +3204,7 @@ class NifImport(NifImportExport):
             me = Blender.Mesh.New('poly')
             # no factor 7 correction!!!
             for vert in bhkshape.vertices:
-                me.verts.extend(vert.x, vert.y, vert.z)
+                me.vertices.extend(vert.x, vert.y, vert.z)
             me.faces.extend(list(bhkshape.get_triangles()))
 
             # link mesh to scene and set transform
@@ -3215,11 +3215,11 @@ class NifImport(NifImportExport):
             ob.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
             ob.drawMode = Blender.Object.DrawModes['WIRE']
             # radius: quick estimate
-            ob.rbRadius = min(vert.co.length for vert in me.verts)
+            ob.rbRadius = min(vert.co.length for vert in me.vertices)
             ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[self.havok_mat], "STRING")
 
             # also remove duplicate vertices
-            numverts = len(me.verts)
+            numverts = len(me.vertices)
             # 0.005 = 1/200
             numdel = me.remDoubles(0.005)
             if numdel:
@@ -3574,7 +3574,7 @@ class NifImport(NifImportExport):
         for x in [minx, maxx]:
             for y in [miny, maxy]:
                 for z in [minz, maxz]:
-                    me.verts.extend(x,y,z)
+                    me.vertices.extend(x,y,z)
         me.faces.extend(
             [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
 
