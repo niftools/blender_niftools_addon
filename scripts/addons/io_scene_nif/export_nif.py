@@ -489,6 +489,8 @@ class NifExport(NifImportExport):
                 root_block.add_extra_data(furnmark)
                 root_block.add_extra_data(sgokeep)
 
+            # FIXME
+            """
             self.info("Checking collision")
             # activate oblivion/Fallout 3 collision and physics
             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
@@ -591,6 +593,7 @@ class NifExport(NifImportExport):
                         "HELM": "Bip01 Head",
                         "RING": "Bip01 R Finger1"}[self.EXPORT_OB_PRN]
                     root_block.add_extra_data(prn)
+            """
 
             # add vertex color and zbuffer properties for civ4 and railroads
             if self.properties.game in ('CIVILIZATION_IV',
@@ -601,6 +604,8 @@ class NifExport(NifImportExport):
                 self.export_vertex_color_property(root_block)
                 self.export_z_buffer_property(root_block, flags=15, function=1)
 
+            # FIXME
+            """
             if self.EXPORT_FLATTENSKIN:
                 # (warning: trouble if armatures parent other armatures or
                 # if bones parent geometries, or if object is animated)
@@ -625,6 +630,7 @@ class NifExport(NifImportExport):
                     skelroot.children.update_size()
                     for i, child in enumerate(skelrootchildren):
                         skelroot.children[i] = child
+            """
 
             # apply scale
             if abs(self.properties.scale_correction - 1.0) > self.properties.epsilon:
@@ -723,7 +729,7 @@ class NifExport(NifImportExport):
                     self.warning(
                         "Changing extension from %s to %s on output file"
                         % (fileext, ext))
-                    niffile = os.path.join(directory, filebase + ext)
+                niffile = os.path.join(directory, filebase + ext)
                 data = NifFormat.Data(version=self.version,
                                       user_version=NIF_USER_VERSION,
                                       user_version2=NIF_USER_VERSION2)
