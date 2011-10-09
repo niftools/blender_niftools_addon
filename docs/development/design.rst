@@ -109,3 +109,11 @@ Blender API Mysteries
 
 * What is the difference between :attr:`bpy.types.MeshFace.vertices`
   and :attr:`bpy.types.MeshFace.vertices_raw`?
+
+* What happened to the ``'CONVEX'``
+  :attr:`bpy.types.Object.draw_bounds_type`?
+
+* What is the difference between ``'CAPSULE'`` and ``'CYLINDER'``
+  :attr:`bpy.types.Object.draw_bounds_type`\ s? We are using
+  ``'CYLINDER'`` at the moment because ``'CAPSULE'`` is lacking
+  visualisation.

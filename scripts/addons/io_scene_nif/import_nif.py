@@ -476,8 +476,7 @@ class NifImport(NifImportExport):
                     if isinstance(niBlock, NifFormat.RootCollisionNode):
                         b_obj.draw_type = 'BOUNDS'
                         b_obj.show_wire = True
-                        b_obj.rbShapeBoundType = \
-                            Blender.Object.RBShapes['POLYHEDERON']
+                        b_obj.draw_bounds_type = 'POLYHEDERON'
                         # also remove duplicate vertices
                         b_mesh = b_obj.getData(mesh=True)
                         numverts = len(b_mesh.vertices)
@@ -2940,9 +2939,8 @@ class NifImport(NifImportExport):
 
             # set bounds type
             ob.draw_type = 'BOUNDS'
-            # convex hull shape not in blender Python API
-            # Blender.Object.RBShapes['CONVEXHULL'] should be 5
-            ob.rbShapeBoundType = 5
+            # FIXME convex hull shape not in blender Python API
+            ob.draw_bounds_type = 'POLYHEDRON' # should be 'CONVEX'
             ob.show_wire = True
             # radius: quick estimate
             ob.rbRadius = min(vert.co.length for vert in me.vertices)
@@ -3042,7 +3040,7 @@ class NifImport(NifImportExport):
 
             # set bounds type
             ob.draw_type = 'BOUNDS'
-            ob.rbShapeBoundType = Blender.Object.RBShapes['BOX']
+            ob.draw_bounds_type = 'BOX'
             ob.rbRadius = min(maxx, maxy, maxz)
             ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
             return [ ob ]
@@ -3063,7 +3061,7 @@ class NifImport(NifImportExport):
 
             # set bounds type
             ob.draw_type = 'BOUNDS'
-            ob.rbShapeBoundType = Blender.Object.RBShapes['SPHERE']
+            ob.draw_bounds_type = 'SPHERE'
             ob.rbRadius = maxx
             ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
             return [ ob ]
@@ -3089,7 +3087,7 @@ class NifImport(NifImportExport):
 
             # set bounds type
             ob.draw_type = 'BOUNDS'
-            ob.rbShapeBoundType = Blender.Object.RBShapes['CYLINDER']
+            ob.draw_bounds_type = 'CYLINDER'
             ob.rbRadius = maxx
             ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
 
@@ -3172,7 +3170,7 @@ class NifImport(NifImportExport):
 
                 # set bounds type
                 ob.draw_type = 'BOUNDS'
-                ob.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
+                ob.draw_bounds_type = 'POLYHEDERON'
                 ob.show_wire = True
                 # radius: quick estimate
                 ob.rbRadius = min(vert.co.length for vert in me.vertices)
@@ -3212,7 +3210,7 @@ class NifImport(NifImportExport):
 
             # set bounds type
             ob.draw_type = 'BOUNDS'
-            ob.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
+            ob.draw_bounds_type = 'POLYHEDERON'
             ob.show_wire = True
             # radius: quick estimate
             ob.rbRadius = min(vert.co.length for vert in me.vertices)
@@ -3591,7 +3589,7 @@ class NifImport(NifImportExport):
 
         # set bounds type
         ob.draw_type = 'BOUNDS'
-        ob.rbShapeBoundType = Blender.Object.RBShapes['BOX']
+        ob.draw_bounds_type = 'BOX'
         ob.rbRadius = min(maxx, maxy, maxz)
         return ob
 
