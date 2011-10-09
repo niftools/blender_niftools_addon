@@ -149,7 +149,7 @@ def hull_convex(ob, me, selected_only, precision = 0.1):
     # set bounds type
     boxob.draw_type = 'BOUNDS'
     boxob.rbShapeBoundType = 5 # convex hull shape not in blender Python API; Blender.Object.RBShapes['CONVEXHULL']?
-    boxob.drawMode = Blender.Object.DrawModes['WIRE']
+    boxob.show_wire = True
 
 def main(arg):
     # get selected meshes
