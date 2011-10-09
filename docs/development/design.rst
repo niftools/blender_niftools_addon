@@ -65,7 +65,7 @@ Differences Between Blender 2.4x and 2.5x
   :attr:`bpy.types.Object.animation_data` (see :class:`bpy.types.AnimData`).
 
 * Vertex groups are accessible via
-  :attr:`bpy.types.Object.vertex_groups`\ s, instead of via
+  :attr:`bpy.types.Object.vertex_groups`, instead of via
   :class:`bpy.types.Mesh`.
 
 .. _dev-design-error-reporting:
