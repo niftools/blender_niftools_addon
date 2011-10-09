@@ -147,7 +147,7 @@ def hull_convex(ob, me, selected_only, precision = 0.1):
     boxob.setMatrix(ob.getMatrix('worldspace'))
 
     # set bounds type
-    boxob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
+    boxob.draw_type = 'BOUNDS'
     boxob.rbShapeBoundType = 5 # convex hull shape not in blender Python API; Blender.Object.RBShapes['CONVEXHULL']?
     boxob.drawMode = Blender.Object.DrawModes['WIRE']
 

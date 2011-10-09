@@ -760,7 +760,7 @@ class NifImport(NifImportExport):
         b_armatureData.drawAxes = True
         b_armatureData.envelopes = False
         b_armatureData.vertexGroups = True
-        b_armatureData.drawType = Blender.Armature.STICK
+        b_armatureData.draw_type = 'STICK'
         b_armature = self.context.scene.objects.new(b_armatureData, armature_name)
 
         # make armature editable and create bones
@@ -2071,7 +2071,7 @@ class NifImport(NifImportExport):
             # if mesh has one material with wireproperty, then make the mesh
             # wire in 3D view
             if wireProperty:
-                b_mesh.drawType = Blender.Object.DrawTypes["WIRE"]
+                b_mesh.draw_type = 'WIRE'
         else:
             material = None
             materialIndex = 0
@@ -2939,7 +2939,7 @@ class NifImport(NifImportExport):
             ob = self.context.scene.objects.new(me, 'convexpoly')
 
             # set bounds type
-            ob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
+            ob.draw_type = 'BOUNDS'
             # convex hull shape not in blender Python API
             # Blender.Object.RBShapes['CONVEXHULL'] should be 5
             ob.rbShapeBoundType = 5
@@ -3171,7 +3171,7 @@ class NifImport(NifImportExport):
                 ob = self.context.scene.objects.new(me, 'poly%i' % subshape_num)
 
                 # set bounds type
-                ob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
+                ob.draw_type = 'BOUNDS'
                 ob.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
                 ob.drawMode = Blender.Object.DrawModes['WIRE']
                 # radius: quick estimate
@@ -3211,7 +3211,7 @@ class NifImport(NifImportExport):
             ob = self.context.scene.objects.new(me, 'poly')
 
             # set bounds type
-            ob.drawType = Blender.Object.DrawTypes['BOUNDBOX']
+            ob.draw_type = 'BOUNDS'
             ob.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
             ob.drawMode = Blender.Object.DrawModes['WIRE']
             # radius: quick estimate
