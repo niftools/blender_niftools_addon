@@ -78,7 +78,7 @@ def hull_box(ob, me, selected_only):
 
     # set bounds type
     boxob.draw_type = 'BOUNDS'
-    boxob.rbShapeBoundType = Blender.Object.RBShapes['BOX']
+    boxob.draw_bounds_type = 'BOX'
 
 def hull_sphere(ob, me, selected_only):
     """Hull mesh in a sphere."""
@@ -124,7 +124,7 @@ def hull_sphere(ob, me, selected_only):
 
     # set bounds type
     boxob.draw_type = 'BOUNDS'
-    boxob.rbShapeBoundType = Blender.Object.RBShapes['SPHERE']
+    boxob.draw_bounds_type = 'SPHERE'
 
 def hull_convex(ob, me, selected_only, precision = 0.1):
     """Hull mesh in a convex shape."""
@@ -148,7 +148,7 @@ def hull_convex(ob, me, selected_only, precision = 0.1):
 
     # set bounds type
     boxob.draw_type = 'BOUNDS'
-    boxob.rbShapeBoundType = 5 # convex hull shape not in blender Python API; Blender.Object.RBShapes['CONVEXHULL']?
+    boxob.draw_bounds_type = 'POLYHEDRON' # FIXME 'CONVEX' not in blender Python API
     boxob.show_wire = True
 
 def main(arg):

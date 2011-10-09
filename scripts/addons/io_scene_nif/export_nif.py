@@ -1000,7 +1000,7 @@ class NifExport(NifImportExport):
             
             if (node_name == 'RootCollisionNode'):
                 # -> root collision node (can be mesh or empty)
-                ob.rbShapeBoundType = Blender.Object.RBShapes['POLYHEDERON']
+                ob.draw_bounds_type = 'POLYHEDERON'
                 ob.draw_type = 'BOUNDS'
                 ob.show_wire = True
                 self.export_collision(ob, parent_block)
@@ -3350,7 +3350,7 @@ class NifExport(NifImportExport):
     def export_collision(self, obj, parent_block):
         """Main function for adding collision object obj to a node.""" 
         if self.properties.game == 'MORROWIND':
-             if obj.rbShapeBoundType != Blender.Object.RBShapes['POLYHEDERON']:
+             if obj.draw_bounds_type != 'POLYHEDERON':
                  raise NifExportError(
                      "Morrowind only supports Polyhedron/Static"
                      " TriangleMesh collisions.")
@@ -3395,8 +3395,7 @@ class NifExport(NifImportExport):
         """
 
         # is it packed
-        coll_ispacked = (obj.rbShapeBoundType
-                         == Blender.Object.RBShapes['POLYHEDERON'])
+        coll_ispacked = (obj.draw_bounds_type == 'POLYHEDERON')
 
         # find physics properties/defaults
         material = self.EXPORT_OB_MATERIAL
@@ -3650,8 +3649,7 @@ class NifExport(NifImportExport):
         maxy = max([vert[1] for vert in obj.data.vertices])
         maxz = max([vert[2] for vert in obj.data.vertices])
 
-        if obj.rbShapeBoundType in (Blender.Object.RBShapes['BOX'],
-                                    Blender.Object.RBShapes['SPHERE']):
+        if obj.draw_bounds_type in {'BOX', 'SPHERE'}:
             # note: collision settings are taken from lowerclasschair01.nif
             coltf = self.create_block("bhkConvexTransformShape", obj)
             coltf.material = material
@@ -3682,7 +3680,7 @@ class NifExport(NifImportExport):
             coltf.transform.m_24 /= 7.0
             coltf.transform.m_34 /= 7.0
 
-            if obj.rbShapeBoundType == Blender.Object.RBShapes['BOX']:
+            if obj.draw_bounds_type == 'BOX':
                 colbox = self.create_block("bhkBoxShape", obj)
                 coltf.shape = colbox
                 colbox.material = material
@@ -3700,7 +3698,7 @@ class NifExport(NifImportExport):
                 colbox.dimensions.y = (maxy - miny) / 14.0
                 colbox.dimensions.z = (maxz - minz) / 14.0
                 colbox.minimum_size = min(colbox.dimensions.x, colbox.dimensions.y, colbox.dimensions.z)
-            elif obj.rbShapeBoundType == Blender.Object.RBShapes['SPHERE']:
+            elif obj.draw_bounds_type == 'SPHERE':
                 colsphere = self.create_block("bhkSphereShape", obj)
                 coltf.shape = colsphere
                 colsphere.material = material
@@ -3710,7 +3708,7 @@ class NifExport(NifImportExport):
 
             return coltf
 
-        elif obj.rbShapeBoundType == Blender.Object.RBShapes['CYLINDER']:
+        elif obj.draw_bounds_type == 'CYLINDER':
             # take average radius and calculate end points
             localradius = (maxx + maxy - minx - miny) / 4.0
             transform = mathutils.Matrix(
@@ -3729,7 +3727,7 @@ class NifExport(NifImportExport):
                     "End points of cylinder %s too close,"
                     " converting to sphere." % obj)
                 # change type
-                obj.rbShapeBoundType = Blender.Object.RBShapes['SPHERE']
+                obj.draw_bounds_type = 'SPHERE'
                 # instead of duplicating code, just run the function again
                 return self.export_collision_object(obj, layer, material)
             # end points are ok, so export as capsule
@@ -3752,9 +3750,8 @@ class NifExport(NifImportExport):
             colcaps.radius_2 /= 7.0
             return colcaps
 
-        elif obj.rbShapeBoundType == 5:
-            # convex hull polytope; not in Python API
-            # bound type has value 5
+        elif obj.draw_bounds_type == 'CONVEX':
+            # FIXME this type has vanished from blender?
             mesh = obj.data
             transform = mathutils.Matrix(
                 self.get_object_matrix(obj, 'localspace').as_list())
@@ -3824,7 +3821,7 @@ class NifExport(NifImportExport):
         else:
             raise NifExportError(
                 'cannot export collision type %s to collision shape list'
-                % obj.rbShapeBoundType)
+                % obj.draw_bounds_type)
 
     def export_constraints(self, b_obj, root_block):
         """Export the constraints of an object.
