@@ -275,6 +275,12 @@ class NifExportUI(bpy.types.Operator, ExportHelper, NifImportExportUI):
         description="How to export animation.",
         default='ALL_NIF')
 
+    #: Smoothen inter-object seams.
+    smooth_object_seams = bpy.props.BoolProperty(
+        name="Smoothen Inter-Object Seams",
+        description="Smoothen inter-object seams.",
+        default=True)
+
     #: Map game enum to nif version.
     version = {
         _game_to_enum(game): versions[-1]
@@ -313,7 +319,6 @@ class NifConfig:
         EXPORT_PADBONES = False,
         EXPORT_STRIPIFY = True,
         EXPORT_STITCHSTRIPS = False,
-        EXPORT_SMOOTHOBJECTSEAMS = True,
         IMPORT_EXTRANODES = True,
         EXPORT_BHKLISTSHAPE = False,
         EXPORT_OB_BSXFLAGS = 2,
@@ -760,11 +765,6 @@ class NifConfig:
                 text = "Stitch Strips",
                 event_name = "EXPORT_STITCHSTRIPS",
                 num_items = 2, item = 1)
-            self.draw_y_sep()
-
-            self.draw_toggle(
-                text = "Smoothen Inter-Object Seams",
-                event_name = "EXPORT_SMOOTHOBJECTSEAMS")
             self.draw_y_sep()
 
             self.draw_toggle(
