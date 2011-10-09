@@ -740,11 +740,8 @@ class NifExport(NifImportExport):
                     data.modification = "ndoors"
                 elif self.properties.game == 'HOWLING_SWORD':
                     data.modification = "jmihs1"
-                stream = open(niffile, "wb")
-                try:
+                with open(niffile, "wb") as stream:
                     data.write(stream)
-                finally:
-                    stream.close()
 
             # create and export keyframe file and xnif file:
             #-----------------------------------------------
