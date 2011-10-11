@@ -108,11 +108,11 @@ a dedicated
 :meth:`~io_scene_nif.import_export_nif.NifImportExport.error` method
 for precisely this purpose.
 
+The list of reports of the last operator execution can be inspected
+using :func:`bpy.ops.ui.reports_to_textblock`.
+
 Blender API Mysteries
 ---------------------
-
-* How to get the list of reports of the last operator execution?
-  Having this would improve our regression testing.
 
 * What is the difference between :attr:`bpy.types.MeshFace.vertices`
   and :attr:`bpy.types.MeshFace.vertices_raw`?
