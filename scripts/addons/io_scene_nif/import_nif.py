@@ -642,30 +642,22 @@ class NifImport(NifImportExport):
         # all else is currently discarded
         return None
 
-    def import_name(self, niBlock, max_length=22, postfix=""):
+    def import_name(self, niBlock, max_length=22):
         """Get unique name for an object, preserving existing names.
         The maximum name length defaults to 22, since this is the
         maximum for Blender objects. Bone names can reach length 32.
 
-        @param niBlock: A named nif block.
-        @type niBlock: C{NiObjectNET}
-        @param max_length: The maximum length of the name.
-        @type max_length: C{int}
-        @param postfix: Extra string to append to the name.
-        @type postfix: C{str}
+        :param niBlock: A named nif block.
+        :type niBlock: :class:`~pyffi.formats.nif.NifFormat.NiObjectNET`
+        :param max_length: The maximum length of the name.
+        :type max_length: :class:`int`
         """
         if niBlock in self.names:
-            if not postfix:
-                return self.names[niBlock]
-            else:
-                # force postfix!
-                # the same block may be imported with different postfixes
-                if self.names[niBlock].endswith(postfix):
-                    return self.names[niBlock]
+            return self.names[niBlock]
 
         self.debug(
-            "Importing name for %s block from %s%s"
-            % (niBlock.__class__.__name__, niBlock.name, postfix))
+            "Importing name for %s block from %s"
+            % (niBlock.__class__.__name__, niBlock.name))
 
         # find unique name for Blender to use
         uniqueInt = 0
@@ -681,16 +673,11 @@ class NifImport(NifImportExport):
         for uniqueInt in range(-1, 100):
             # limit name length
             if uniqueInt == -1:
-                if max_length - len(postfix) - 1 <= 0:
-                    raise ValueError("Name postfix '%s' too long." % postfix)
-                shortName = niName[:max_length-len(postfix)-1] + postfix
+                shortName = niName[:max_length-1]
             else:
-                if max_length - len(postfix) - 4 <= 0:
-                    raise ValueError("Name postfix '%s' too long." % postfix)
-                shortName = ('%s.%02d%s' 
-                             % (niName[:max_length-len(postfix)-4],
-                                uniqueInt,
-                                postfix))
+                shortName = ('%s.%02d' 
+                             % (niName[:max_length-4],
+                                uniqueInt))
             # bone naming convention for blender
             shortName = self.get_bone_name_for_blender(shortName)
             # make sure it is unique
