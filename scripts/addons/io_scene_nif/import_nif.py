@@ -570,7 +570,7 @@ class NifImport(NifImportExport):
                     # (the tail causes a translation along
                     # the local Y axis)
                     matrix[3][1] -= b_obj.length
-                    b_child.setMatrix(matrix)
+                    b_child.matrix_local = matrix
                     # parent child to the bone
                     b_armature.makeParentBone(
                         [b_child], b_obj.name)
@@ -609,7 +609,7 @@ class NifImport(NifImportExport):
             # parented to b_obj
             if self.isinstance_blender_object(b_obj):
                 # note: bones already have their matrix set
-                b_obj.setMatrix(self.import_matrix(niBlock))
+                b_obj.matrix_local = self.import_matrix(niBlock)
 
                 # import the animations
                 if self.properties.animation:
@@ -1952,8 +1952,8 @@ class NifImport(NifImportExport):
                 raise NifImportError(
                     "BUG: cannot set matrix when importing meshes in groups;"
                     " use applytransform = True")
-            b_mesh.setMatrix(self.import_matrix(niBlock,
-                                                relative_to=relative_to))
+            b_mesh.matrix_local = self.import_matrix(niBlock,
+                                                relative_to=relative_to)
         else:
             # used later on
             transform = self.import_matrix(niBlock, relative_to=relative_to)
@@ -2959,7 +2959,7 @@ class NifImport(NifImportExport):
             transform[3][2] *= 7
             # apply transform
             for ob in collision_objs:
-                ob.setMatrix(ob.getMatrix('localspace') * transform)
+                ob.matrix_local = ob.matrix_local * transform
                 ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
             # and return a list of transformed collision shapes
             return collision_objs
@@ -2980,7 +2980,7 @@ class NifImport(NifImportExport):
                 transform[3][2] = bhkshape.translation.z * 7
                 # apply transform
                 for ob in collision_objs:
-                    ob.setMatrix(ob.getMatrix('localspace') * transform)
+                    ob.matrix_local = ob.matrix_local * transform
             # set physics flags and mass
             for ob in collision_objs:
                 ob.rbFlags = (
@@ -3112,7 +3112,7 @@ class NifImport(NifImportExport):
                                      + bhkshape.second_point.y)
             transform[3][2] = 3.5 * (bhkshape.first_point.z
                                      + bhkshape.second_point.z)
-            ob.setMatrix(transform)
+            ob.matrix_local = transform
 
             # return object
             return [ ob ]
@@ -3582,8 +3582,8 @@ class NifImport(NifImportExport):
         else:
             ob = self.context.scene.objects.new(me, 'Bounding Box')
             # XXX this is set in the import_branch method
-            #ob.setMatrix(mathutils.Matrix(
-            #    *bbox.bounding_box.rotation.as_list()))
+            #ob.matrix_local = mathutils.Matrix(
+            #    *bbox.bounding_box.rotation.as_list())
             #ob.setLocation(
             #    *bbox.bounding_box.translation.as_list())
 
