@@ -477,6 +477,8 @@ class NifImport(NifImportExport):
                         b_obj.draw_type = 'BOUNDS'
                         b_obj.show_wire = True
                         b_obj.draw_bounds_type = 'POLYHEDERON'
+                        b_obj.game.use_collision_bounds = True
+                        b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
                         # also remove duplicate vertices
                         b_mesh = b_obj.getData(mesh=True)
                         numverts = len(b_mesh.vertices)
@@ -2939,11 +2941,12 @@ class NifImport(NifImportExport):
 
             # set bounds type
             ob.draw_type = 'BOUNDS'
-            # FIXME convex hull shape not in blender Python API
-            ob.draw_bounds_type = 'POLYHEDRON' # should be 'CONVEX'
+            ob.draw_bounds_type = 'POLYHEDRON'
             ob.show_wire = True
+            ob.game.use_collision_bounds = True
+            ob.game.collision_bounds_type = 'CONVEX_HULL'
             # radius: quick estimate
-            ob.rbRadius = min(vert.co.length for vert in me.vertices)
+            ob.game.radius = min(vert.co.length for vert in me.vertices)
             ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
             
             # also remove duplicate vertices
@@ -3041,7 +3044,9 @@ class NifImport(NifImportExport):
             # set bounds type
             ob.draw_type = 'BOUNDS'
             ob.draw_bounds_type = 'BOX'
-            ob.rbRadius = min(maxx, maxy, maxz)
+            ob.game.use_collision_bounds = True
+            ob.game.collision_bounds_type = 'BOX'
+            ob.game.radius = min(maxx, maxy, maxz)
             ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
             return [ ob ]
 
@@ -3062,7 +3067,9 @@ class NifImport(NifImportExport):
             # set bounds type
             ob.draw_type = 'BOUNDS'
             ob.draw_bounds_type = 'SPHERE'
-            ob.rbRadius = maxx
+            ob.game.use_collision_bounds = True
+            ob.game.collision_bounds_type = 'SPHERE'
+            ob.game.radius = maxx
             ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
             return [ ob ]
 
@@ -3088,7 +3095,9 @@ class NifImport(NifImportExport):
             # set bounds type
             ob.draw_type = 'BOUNDS'
             ob.draw_bounds_type = 'CYLINDER'
-            ob.rbRadius = maxx
+            ob.game.use_collision_bounds = True
+            ob.game.collision_bounds_type = 'CYLINDER'
+            ob.game.radius = maxx
             ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
 
             # find transform
@@ -3172,8 +3181,10 @@ class NifImport(NifImportExport):
                 ob.draw_type = 'BOUNDS'
                 ob.draw_bounds_type = 'POLYHEDERON'
                 ob.show_wire = True
+                ob.game.use_collision_bounds = True
+                ob.game.collision_bounds_type = 'TRIANGLE_MESH'
                 # radius: quick estimate
-                ob.rbRadius = min(vert.co.length for vert in me.vertices)
+                ob.game.radius = min(vert.co.length for vert in me.vertices)
                 # set material
                 ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[subshape.material], "STRING")
 
@@ -3212,8 +3223,10 @@ class NifImport(NifImportExport):
             ob.draw_type = 'BOUNDS'
             ob.draw_bounds_type = 'POLYHEDERON'
             ob.show_wire = True
+            ob.game.use_collision_bounds = True
+            ob.game.collision_bounds_type = 'TRIANGLE_MESH'
             # radius: quick estimate
-            ob.rbRadius = min(vert.co.length for vert in me.vertices)
+            ob.game.radius = min(vert.co.length for vert in me.vertices)
             ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[self.havok_mat], "STRING")
 
             # also remove duplicate vertices
@@ -3590,7 +3603,8 @@ class NifImport(NifImportExport):
         # set bounds type
         ob.draw_type = 'BOUNDS'
         ob.draw_bounds_type = 'BOX'
-        ob.rbRadius = min(maxx, maxy, maxz)
+        # TODO do we need this?
+        #ob.game.radius = min(maxx, maxy, maxz)
         return ob
 
     def get_uv_layer_name(self, uvset):
