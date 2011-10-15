@@ -238,6 +238,13 @@ and the ReST Editor plugin.
      and ``/usr/bin/python3`` on Fedora),
      and use **Auto Config**.
 
+  6. Finally, you may wish to configure the eclipse editor for
+     UTF-8 encoding, which is the default encoding used
+     for Python code. Go to
+     **Window > Preferences > General > Workspace**.
+     Under **Text file encoding**, choose **Other**,
+     and select **UTF-8** from the list.
+
 * The documentation is written in `reStructuredText
   <http://docutils.sourceforge.net/docs/user/rst/quickref.html>`_.
   If you want syntax highlighting for reST, you must
