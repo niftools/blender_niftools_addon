@@ -979,15 +979,15 @@ class NifExport(NifImportExport):
 
 
     def export_node(self, ob, space, parent_block, node_name):
-        """
-        Export a mesh/armature/empty object ob as child of parent_block.
+        """Export a mesh/armature/empty object ob as child of parent_block.
         Export also all children of ob.
-          - space is 'none', 'worldspace', or 'localspace', and determines
-            relative to what object the transformation should be stored.
-          - parent_block is the parent nif block of the object (None for the
-            root node)
-          - for the root node, ob is None, and node_name is usually the base
-            filename (either with or without extension)
+
+        - space is 'none', 'worldspace', or 'localspace', and determines
+          relative to what object the transformation should be stored.
+        - parent_block is the parent nif block of the object (None for the
+          root node)
+        - for the root node, ob is None, and node_name is usually the base
+          filename (either with or without extension)
         """
         # ob_type: determine the block type
         #          (None, 'MESH', 'EMPTY' or 'ARMATURE')
@@ -1670,12 +1670,13 @@ class NifExport(NifImportExport):
     def export_source_texture(self, texture=None, filename=None):
         """Export a NiSourceTexture.
 
-        @param texture: The texture object in blender to be exported.
-        @param filename: The full or relative path to the texture file
+        :param texture: The texture object in blender to be exported.
+        :param filename: The full or relative path to the texture file
             (this argument is used when exporting NiFlipControllers
             and when exporting default shader slots that have no use in
             being imported into Blender).
-        @return: The exported NiSourceTexture block."""
+        :return: The exported NiSourceTexture block.
+        """
         
         # create NiSourceTexture
         srctex = NifFormat.NiSourceTexture()
