@@ -11,7 +11,7 @@ Collision
 
 To indicate that a mesh is to be exported as a collision object,
 rather than say a :class:`~pyffi.formats.nif.NifFormat.NiTriShape`,
-select the blender game engine renderer, select the object's physics
+select the blender **Game Engine** renderer, select the object's physics
 tab, enable the **Collision Bounds** option, and select the desired
 **Bounds**. For Oblivion, Fallout 3, and Fallout NV, blender's
 collision types map to the following nif types:
