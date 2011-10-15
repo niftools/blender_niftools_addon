@@ -378,9 +378,9 @@ class NifImport(NifImportExport):
         """Read the content of the current NIF tree branch to Blender
         recursively.
 
-        @param niBlock: The nif block to import.
-        @param b_armature: The blender armature for the current branch.
-        @param n_armature: The corresponding nif block for the armature for
+        :param niBlock: The nif block to import.
+        :param b_armature: The blender armature for the current branch.
+        :param n_armature: The corresponding nif block for the armature for
             the current branch.
         """
         self.msg_progress("Importing data")
@@ -1909,15 +1909,15 @@ class NifImport(NifImportExport):
         """Creates and returns a raw mesh, or appends geometry data to
         group_mesh.
 
-        @param niBlock: The nif block whose mesh data to import.
-        @type niBlock: C{NiTriBasedGeom}
-        @param group_mesh: The mesh to which to append the geometry
+        :param niBlock: The nif block whose mesh data to import.
+        :type niBlock: C{NiTriBasedGeom}
+        :param group_mesh: The mesh to which to append the geometry
             data. If C{None}, a new mesh is created.
-        @type group_mesh: A Blender object that has mesh data.
-        @param applytransform: Whether to apply the niBlock's
+        :type group_mesh: A Blender object that has mesh data.
+        :param applytransform: Whether to apply the niBlock's
             transformation to the mesh. If group_mesh is not C{None},
             then applytransform must be C{True}.
-        @type applytransform: C{bool}
+        :type applytransform: C{bool}
         """
         assert(isinstance(niBlock, NifFormat.NiTriBasedGeom))
 
