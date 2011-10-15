@@ -247,6 +247,7 @@ texinfo_documents = [
 intersphinx_mapping = {
     'http://docs.python.org/': None,
     'http://www.blender.org/documentation/blender_python_api_2_59_0': None,
+    'http://pyffi.sourceforge.net/': None,
     }
 
 # Include all todos
