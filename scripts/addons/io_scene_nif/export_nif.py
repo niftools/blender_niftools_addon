@@ -1009,9 +1009,10 @@ class NifExport(NifImportExport):
             
             if (node_name == 'RootCollisionNode'):
                 # -> root collision node (can be mesh or empty)
-                ob.draw_bounds_type = 'POLYHEDERON'
-                ob.draw_type = 'BOUNDS'
-                ob.show_wire = True
+                # TODO do we need to fix this stuff on export?
+                #ob.draw_bounds_type = 'POLYHEDERON'
+                #ob.draw_type = 'BOUNDS'
+                #ob.show_wire = True
                 self.export_collision(ob, parent_block)
                 return None # done; stop here
             elif ob_type == 'MESH' and ob.name.lower().startswith('bsbound'):
@@ -1027,7 +1028,7 @@ class NifExport(NifImportExport):
                 # -> mesh data.
                 # If this has children or animations or more than one material
                 # it gets wrapped in a purpose made NiNode.
-                is_collision = (ob.draw_type == 'BOUNDS')
+                is_collision = ob.game.use_collision_bounds
                 has_ipo = ob_ipo and len(ob_ipo.getCurves()) > 0
                 has_children = len(ob_children) > 0
                 is_multimaterial = len(set([f.material_index for f in ob.data.faces])) > 1
@@ -3347,10 +3348,10 @@ class NifExport(NifImportExport):
     def export_collision(self, obj, parent_block):
         """Main function for adding collision object obj to a node.""" 
         if self.properties.game == 'MORROWIND':
-             if obj.draw_bounds_type != 'POLYHEDERON':
+             if obj.game.collision_bounds_type != 'TRIANGLE_MESH':
                  raise NifExportError(
-                     "Morrowind only supports Polyhedron/Static"
-                     " TriangleMesh collisions.")
+                     "Morrowind only supports"
+                     " Triangle Mesh collisions.")
              node = self.create_block("RootCollisionNode", obj)
              parent_block.add_child(node)
              node.flags = 0x0003 # default
@@ -3392,7 +3393,7 @@ class NifExport(NifImportExport):
         """
 
         # is it packed
-        coll_ispacked = (obj.draw_bounds_type == 'POLYHEDERON')
+        coll_ispacked = (obj.game.collision_bounds_type == 'TRIANGLE_MESH')
 
         # find physics properties/defaults
         material = self.EXPORT_OB_MATERIAL
@@ -3646,7 +3647,7 @@ class NifExport(NifImportExport):
         maxy = max([vert[1] for vert in obj.data.vertices])
         maxz = max([vert[2] for vert in obj.data.vertices])
 
-        if obj.draw_bounds_type in {'BOX', 'SPHERE'}:
+        if obj.game.collision_bounds_type in {'BOX', 'SPHERE'}:
             # note: collision settings are taken from lowerclasschair01.nif
             coltf = self.create_block("bhkConvexTransformShape", obj)
             coltf.material = material
@@ -3677,7 +3678,7 @@ class NifExport(NifImportExport):
             coltf.transform.m_24 /= 7.0
             coltf.transform.m_34 /= 7.0
 
-            if obj.draw_bounds_type == 'BOX':
+            if obj.game.collision_bounds_type == 'BOX':
                 colbox = self.create_block("bhkBoxShape", obj)
                 coltf.shape = colbox
                 colbox.material = material
@@ -3695,7 +3696,7 @@ class NifExport(NifImportExport):
                 colbox.dimensions.y = (maxy - miny) / 14.0
                 colbox.dimensions.z = (maxz - minz) / 14.0
                 colbox.minimum_size = min(colbox.dimensions.x, colbox.dimensions.y, colbox.dimensions.z)
-            elif obj.draw_bounds_type == 'SPHERE':
+            elif obj.game.collision_bounds_type == 'SPHERE':
                 colsphere = self.create_block("bhkSphereShape", obj)
                 coltf.shape = colsphere
                 colsphere.material = material
@@ -3705,7 +3706,7 @@ class NifExport(NifImportExport):
 
             return coltf
 
-        elif obj.draw_bounds_type == 'CYLINDER':
+        elif obj.game.collision_bounds_type in {'CYLINDER', 'CAPSULE'}:
             # take average radius and calculate end points
             localradius = (maxx + maxy - minx - miny) / 4.0
             transform = mathutils.Matrix(
@@ -3724,7 +3725,7 @@ class NifExport(NifImportExport):
                     "End points of cylinder %s too close,"
                     " converting to sphere." % obj)
                 # change type
-                obj.draw_bounds_type = 'SPHERE'
+                obj.game.collision_bounds_type = 'SPHERE'
                 # instead of duplicating code, just run the function again
                 return self.export_collision_object(obj, layer, material)
             # end points are ok, so export as capsule
@@ -3747,8 +3748,7 @@ class NifExport(NifImportExport):
             colcaps.radius_2 /= 7.0
             return colcaps
 
-        elif obj.draw_bounds_type == 'CONVEX':
-            # FIXME this type has vanished from blender?
+        elif obj.game.collision_bounds_type == 'CONVEX_HULL':
             mesh = obj.data
             transform = mathutils.Matrix(
                 self.get_object_matrix(obj, 'localspace').as_list())
@@ -3818,7 +3818,7 @@ class NifExport(NifImportExport):
         else:
             raise NifExportError(
                 'cannot export collision type %s to collision shape list'
-                % obj.draw_bounds_type)
+                % obj.game.collision_bounds_type)
 
     def export_constraints(self, b_obj, root_block):
         """Export the constraints of an object.
