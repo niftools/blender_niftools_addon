@@ -203,25 +203,25 @@ class NifImportExport:
         """Convert a bone name to a name that can be used by Blender: turns
         'Bip01 R xxx' into 'Bip01 xxx.R', and similar for L.
 
-        @param name: The bone name as in the nif file.
-        @type name: C{str}
-        @return: Bone name in Blender convention.
-        @rtype: C{str}
+        :param name: The bone name as in the nif file.
+        :type name: :class:`str`
+        :return: Bone name in Blender convention.
+        :rtype: :class:`str`
         """
-        if name.startswith(b"Bip01 L "):
-            return b"Bip01 " + name[8:] + b".L"
-        elif name.startswith(b"Bip01 R "):
-            return b"Bip01 " + name[8:] + b".R"
+        if name.startswith("Bip01 L "):
+            return "Bip01 " + name[8:] + ".L"
+        elif name.startswith("Bip01 R "):
+            return "Bip01 " + name[8:] + ".R"
         return name
 
     def get_bone_name_for_nif(self, name):
         """Convert a bone name to a name that can be used by the nif file:
         turns 'Bip01 xxx.R' into 'Bip01 R xxx', and similar for L.
 
-        @param name: The bone name as in Blender.
-        @type name: C{str}
-        @return: Bone name in nif convention.
-        @rtype: C{str}
+        :param name: The bone name as in Blender.
+        :type name: :class:`bytes`
+        :return: Bone name in nif convention.
+        :rtype: :class:`bytes`
         """
         if name.startswith(b"Bip01 "):
             if name.endswith(b".L"):
