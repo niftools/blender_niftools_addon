@@ -2465,11 +2465,12 @@ class NifImport(NifImportExport):
             txk = niBlock.find(block_type=NifFormat.NiTextKeyExtraData)
         if txk:
             # get animation text buffer, and clear it if it already exists
+            # TODO git rid of try-except block here
             try:
-                animtxt = [txt for txt in Blender.Text.Get() if txt.name == "Anim"][0]
+                animtxt = [txt for txt in bpy.data.texts if txt.name == "Anim"][0]
                 animtxt.clear()
             except:
-                animtxt = Blender.Text.New("Anim")
+                animtxt = bpy.data.texts.new("Anim")
             
             frame = 1
             for key in txk.text_keys:
@@ -2489,9 +2490,9 @@ class NifImport(NifImportExport):
         correctly."""
         # clear the text buffer, or create new buffer
         try:
-            bonetxt = Blender.Text.Get("BoneExMat")
-        except NameError:
-            bonetxt = Blender.Text.New("BoneExMat")
+            bonetxt = bpy.data.texts["BoneExMat"]
+        except KeyError:
+            bonetxt = bpy.data.texts.new("BoneExMat")
         bonetxt.clear()
         # write correction matrices to text buffer
         for niBone, correction_matrix in self.bones_extra_matrix.iteritems():
@@ -2517,9 +2518,9 @@ class NifImport(NifImportExport):
         import only the last import will be exported correctly."""
         # clear the text buffer, or create new buffer
         try:
-            namestxt = Blender.Text.Get("FullNames")
-        except NameError:
-            namestxt = Blender.Text.New("FullNames")
+            namestxt = bpy.data.texts["FullNames"]
+        except KeyError:
+            namestxt = bpy.data.texts.new("FullNames")
         namestxt.clear()
         # write the names to the text buffer
         for block, shortname in self.names.iteritems():
