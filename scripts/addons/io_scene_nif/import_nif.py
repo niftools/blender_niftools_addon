@@ -2444,7 +2444,7 @@ class NifImport(NifImportExport):
                 b_meshData.vertices[b_v_index].co[2] = base.z
      
         # recalculate normals
-        b_meshData.calcNormals()
+        b_meshData.calc_normals()
         # import priority if existing
         if niBlock.name in self.bone_priorities:
             constr = b_mesh.constraints.append(
