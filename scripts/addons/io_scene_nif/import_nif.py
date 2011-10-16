@@ -2495,7 +2495,7 @@ class NifImport(NifImportExport):
             bonetxt = bpy.data.texts.new("BoneExMat")
         bonetxt.clear()
         # write correction matrices to text buffer
-        for niBone, correction_matrix in self.bones_extra_matrix.iteritems():
+        for niBone, correction_matrix in self.bones_extra_matrix.items():
             # skip identity transforms
             if sum(sum(abs(x) for x in row)
                    for row in (correction_matrix - self.IDENTITY44)) \
@@ -2523,7 +2523,7 @@ class NifImport(NifImportExport):
             namestxt = bpy.data.texts.new("FullNames")
         namestxt.clear()
         # write the names to the text buffer
-        for block, shortname in self.names.iteritems():
+        for block, shortname in self.names.items():
             if block.name and shortname != block.name:
                 namestxt.write('%s;%s\n'% (shortname, block.name))
 
@@ -2782,7 +2782,7 @@ class NifImport(NifImportExport):
         if self.is_bone(niBlock):
             boneName = self.names[niBlock]
             armatureName = None
-            for armatureBlock, boneBlocks in self.armatures.iteritems():
+            for armatureBlock, boneBlocks in self.armatures.items():
                 if niBlock in boneBlocks:
                     armatureName = self.names[armatureBlock]
                     break
