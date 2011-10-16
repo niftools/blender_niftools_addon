@@ -1688,7 +1688,7 @@ class NifExport(NifImportExport):
             srctex.file_name = self.export_texture_filename(texture)
         else:
             # this probably should not happen
-            logger.warning(
+            self.warning(
                 "Exporting source texture without texture or filename (bug?).")
 
         # fill in default values (TODO: can we use 6 for everything?)
