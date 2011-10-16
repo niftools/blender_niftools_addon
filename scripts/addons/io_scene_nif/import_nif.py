@@ -2202,22 +2202,24 @@ class NifImport(NifImportExport):
         # (some corner cases have only one vertex, and no faces,
         # and b_meshData.faceUV = 1 on such mesh raises a runtime error)
         if b_meshData.faces:
-            b_meshData.faceUV = 1
-            b_meshData.vertexUV = 0
+            # blender 2.5+ aloways uses uv's per face?
+            #b_meshData.faceUV = 1
+            #b_meshData.vertexUV = 0
             for i, uv_set in enumerate(uvco):
                 # Set the face UV's for the mesh. The NIF format only supports
                 # vertex UV's, but Blender only allows explicit editing of face
                 # UV's, so load vertex UV's as face UV's
                 uvlayer = self.get_uv_layer_name(i)
-                if not uvlayer in b_meshData.getUVLayerNames():
-                    b_meshData.addUVLayer(uvlayer)
-                b_meshData.activeUVLayer = uvlayer
+                if not uvlayer in b_meshData.uv_textures:
+                    b_meshData.uv_textures.new(uvlayer)
                 for f, b_f_index in zip(tris, f_map):
                     if b_f_index is None:
                         continue
-                    uvlist = [ Vector(uv_set[vert_index].u, 1.0 - uv_set[vert_index].v) for vert_index in f ]
-                    b_meshData.faces[b_f_index].uv = tuple(uvlist)
-            b_meshData.activeUVLayer = self.get_uv_layer_name(0)
+                    uvlist = [(uv_set[vert_index].u, 1.0 - uv_set[vert_index].v) for vert_index in f]
+                    b_meshData.uv_textures[uvlayer].data[b_f_index].uv1 = uvlist[0]
+                    b_meshData.uv_textures[uvlayer].data[b_f_index].uv2 = uvlist[1]
+                    b_meshData.uv_textures[uvlayer].data[b_f_index].uv3 = uvlist[2]
+            b_meshData.uv_textures.active_index = 0
         
         if material:
             # fix up vertex colors depending on whether we had textures in the
