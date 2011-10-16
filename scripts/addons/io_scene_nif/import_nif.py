@@ -2169,7 +2169,7 @@ class NifImport(NifImportExport):
             if b_f_index is None:
                 continue
             f = b_meshData.faces[b_f_index]
-            f.smooth = 1 if norms else 0
+            f.use_smooth = True if norms else False
             f.material_index = materialIndex
 
         # vertex colors
