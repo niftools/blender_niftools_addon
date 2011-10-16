@@ -2112,9 +2112,11 @@ class NifImport(NifImportExport):
                 if applytransform:
                     v = mathutils.Vector(v.x, v.y, v.z)
                     v *= transform
-                    b_meshData.vertices.extend(v)
+                    b_meshData.vertices.add(1)
+                    b_meshData.vertices[-1].co = (v.x, v.y, v.z)
                 else:
-                    b_meshData.vertices.extend(v.x, v.y, v.z)
+                    b_meshData.vertices.add(1)
+                    b_meshData.vertices[-1].co = (v.x, v.y, v.z)
                 # adds normal info if present (Blender recalculates these when
                 # switching between edit mode and object mode, handled further)
                 #if norms:
@@ -2135,30 +2137,23 @@ class NifImport(NifImportExport):
         f_map = [None]*len(tris)
         b_f_index = len(b_meshData.faces)
         num_new_faces = 0 # counter for debugging
+        unique_faces = set() # to avoid duplicate faces
         for i, f in enumerate(tris):
             # get face index
-            f_verts = [b_meshData.vertices[v_map[vert_index]] for vert_index in f]
+            f_verts = [v_map[vert_index] for vert_index in f]
             # skip degenerate faces
             # we get a ValueError on faces.extend otherwise
-            if (f_verts[0] == f_verts[1]) or (f_verts[1] == f_verts[2]) or (f_verts[2] == f_verts[0]): continue
-            tmp1 = len(b_meshData.faces)
-            # extend checks for duplicate faces
-            # see http://www.blender3d.org/documentation/240PythonDoc/Mesh.MFaceSeq-class.html
-            b_meshData.faces.extend(*f_verts)
-            if tmp1 == len(b_meshData.faces): continue # duplicate face!
-            # faces.extend does not necessarily add vertices in the order
-            # they were given in the argument list
-            # so we must fix the face index order
-            if check_shift:
-                added_face = b_meshData.faces[-1]
-                if added_face.vertices[0] == f_verts[0]: # most common case, checking it first will speed up the script
-                    pass # f[0] comes first, everything ok
-                elif added_face.vertices[2] == f_verts[0]: # second most common case
-                    f[0], f[1], f[2] = f[1], f[2], f[0] # f[0] comes last
-                elif added_face.vertices[1] == f_verts[0]: # this never seems to occur, leave it just in case
-                    f[0], f[1], f[2] = f[2], f[0], f[1] # f[0] comes second
-                else:
-                    raise RuntimeError("face extend index bug")
+            if (f_verts[0] == f_verts[1]) or (f_verts[1] == f_verts[2]) or (f_verts[2] == f_verts[0]):
+                continue
+            if tuple(f_verts) in unique_faces:
+                continue
+            unique_faces.add(tuple(f_verts))
+            b_meshData.faces.add(1)
+            if f_verts[2] == 0:
+                # eeekadoodle fix
+                f_verts[0], f_verts[1], f_verts[2] = f_verts[2], f_verts[0], f_verts[1]
+                f[0], f[1], f[2] = f[2], f[0], f[1] # f[0] comes second
+            b_meshData.faces[-1].vertices_raw = f_verts + [0]
             # keep track of added faces, mapping NIF face index to
             # Blender face index
             f_map[i] = b_f_index
