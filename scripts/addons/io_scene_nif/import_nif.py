@@ -1921,8 +1921,7 @@ class NifImport(NifImportExport):
         """
         assert(isinstance(niBlock, NifFormat.NiTriBasedGeom))
 
-        logger = logging.getLogger("niftools.blender.import.mesh")
-        logger.info("Importing mesh data for geometry %s" % niBlock.name)
+        self.info("Importing mesh data for geometry %s" % niBlock.name)
 
         if group_mesh:
             b_mesh = group_mesh
@@ -2129,7 +2128,7 @@ class NifImport(NifImportExport):
                 # NIF vertex i maps to Blender vertex v_map[n_map_k]
                 v_map[i] = v_map[n_map_k]
         # report
-        logger.debug("%i unique vertex-normal pairs" % len(n_map))
+        self.debug("%i unique vertex-normal pairs" % len(n_map))
         # release memory
         del n_map
 
@@ -2162,7 +2161,7 @@ class NifImport(NifImportExport):
         # at this point, deleted faces (degenerate or duplicate)
         # satisfy f_map[i] = None
 
-        logger.debug("%i unique faces" % num_new_faces)
+        self.debug("%i unique faces" % num_new_faces)
 
         # set face smoothing and material
         for b_f_index in f_map:
