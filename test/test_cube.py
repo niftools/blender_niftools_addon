@@ -6,8 +6,9 @@ import bpy
 import nose.tools
 
 import io_scene_nif.export_nif
+from test import Test
 
-class TestCubeExport:
+class TestCubeExport(Test):
     def setup(self):
         # create a cube
         bpy.ops.mesh.primitive_cube_add()
@@ -20,27 +21,14 @@ class TestCubeExport:
             log_level='DEBUG',
             )
 
-    def teardown(self):
-        # destroy cube
-        bpy.context.scene.objects.unlink(self.obj)
-        bpy.data.objects.remove(self.obj)
-        bpy.data.meshes.remove(self.mesh)
-
-class TestCubeImport:
+class TestCubeImport(Test):
     def test_export(self):
         bpy.ops.import_scene.nif(
             filepath="test/import/cube.nif",
             log_level='DEBUG',
             )
 
-    def teardown(self):
-        pass
-        # FIXME destroy cube, but how to we get the object and the mesh?
-        #bpy.context.scene.objects.unlink(self.obj)
-        #bpy.data.objects.remove(self.obj)
-        #bpy.data.meshes.remove(self.mesh)
-
-class TestNonUniformlyScaledCube:
+class TestNonUniformlyScaledCube(Test):
     def setup(self):
         # create a non-uniformly scaled cube
         bpy.ops.mesh.primitive_cube_add()
@@ -54,9 +42,3 @@ class TestNonUniformlyScaledCube:
             filepath="test/export/non_uniformly_scaled_cube.nif",
             log_level='DEBUG',
             )
-
-    def teardown(self):
-        # destroy cube
-        bpy.context.scene.objects.unlink(self.obj)
-        bpy.data.objects.remove(self.obj)
-        bpy.data.meshes.remove(self.mesh)
