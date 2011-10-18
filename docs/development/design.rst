@@ -79,6 +79,41 @@ Differences Between Blender 2.4x and 2.5x
     This also ensures that collision settings imported from nifs
     will work with blender's game engine.
 
+* Beware of the **eeekadoodle dance**: if face indices end with a zero
+  index, then you have to move that zero index to the front. For
+  example (assuming every face is a triangle)::
+
+    faces = [face if face[2] else (face[2], face[0], face[1])
+             for face in faces]
+
+  before feeding faces to blender.
+
+* It appears that we have to use
+  :meth:`bpy.types.bpy_prop_collection.add` (undocumented) and
+  :meth:`bpy.types.bpy_prop_collection.foreach_set` on
+  :attr:`bpy.types.Mesh.vertices` and :attr:`bpy.types.Mesh.faces` to
+  import vertices and faces::
+
+    from bpy_extras.io_utils import unpack_list, unpack_face_list
+    b_mesh.vertices.add(len(verts))
+    b_mesh.faces.add(len(faces))
+    b_mesh.vertices.foreach_set("co", unpack_list(verts))
+    b_mesh.faces.foreach_set("vertices_raw", unpack_face_list(faces))
+
+  After this has been done, uv and vertex
+  color layers can be added and imported::
+
+    b_mesh.uv_textures.new()
+    for face, b_tface in zip(faces, b_mesh.uv_textures[0].data):
+        b_tface.uv1 = uvs[face[0]]
+        b_tface.uv2 = uvs[face[1]]
+        b_tface.uv3 = uvs[face[2]]
+
+  To import say vertices one by one, use::
+
+     b_mesh.vertices.add(1)
+     b_mesh.vertices[-1].co = ...
+
 .. _dev-design-error-reporting:
 
 Error Reporting
