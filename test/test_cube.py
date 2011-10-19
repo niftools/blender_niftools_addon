@@ -22,7 +22,7 @@ class TestCubeExport(Test):
             )
 
 class TestCubeImport(Test):
-    def test_export(self):
+    def test_import(self):
         bpy.ops.import_scene.nif(
             filepath="test/import/cube.nif",
             log_level='DEBUG',

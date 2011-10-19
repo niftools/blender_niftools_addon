@@ -7,7 +7,7 @@ import io_scene_nif.export_nif
 from test import Test
 
 class TestBaseUVTextureImport(Test):
-    def test_export(self):
+    def test_import(self):
         bpy.ops.import_scene.nif(
             filepath="test/import/base_uv_texture.nif",
             log_level='DEBUG',
