@@ -46,6 +46,7 @@ import os.path
 
 import mathutils
 import bpy
+from bpy_extras.io_utils import unpack_list, unpack_face_list
 
 import pyffi.utils.quickhull
 import pyffi.spells.nif
