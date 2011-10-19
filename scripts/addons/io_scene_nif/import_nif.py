@@ -525,11 +525,11 @@ class NifImport(NifImportExport):
 
 
             # fix parentship
-            if self.isinstance_blender_object(b_obj):
+            if isinstance(b_obj, bpy.types.Object):
                 # simple object parentship
-                b_obj.makeParent(
-                    [b_child for (n_child, b_child) in object_children])
-            elif isinstance(b_obj, Blender.Armature.Bone):
+                for (n_child, b_child) in object_children:
+                    b_child.parent = b_obj
+            elif isinstance(b_obj, bpy.types.Bone):
                 # bone parentship, is a bit more complicated
                 # go to rest position
                 b_armature.data.restPosition = True
@@ -3542,7 +3542,7 @@ class NifImport(NifImportExport):
         """Import a bounding box (BSBound, or NiNode with bounding box)."""
         # calculate bounds
         if isinstance(bbox, NifFormat.BSBound):
-            me = Blender.Mesh.New('BSBound')
+            b_mesh = bpy.data.meshes.new('BSBound')
             minx = bbox.center.x - bbox.dimensions.x
             miny = bbox.center.y - bbox.dimensions.y
             minz = bbox.center.z - bbox.dimensions.z
@@ -3552,7 +3552,7 @@ class NifImport(NifImportExport):
         elif isinstance(bbox, NifFormat.NiNode):
             if not bbox.has_bounding_box:
                 raise ValueError("Expected NiNode with bounding box.")
-            me = Blender.Mesh.New('Bounding Box')
+            b_mesh = bpy.data.meshes.new('Bounding Box')
             # weirdly, bounding box center (bbox.bounding_box.translation)
             # is specified relative to the *parent* (not relative to bbox!)
             minx = bbox.bounding_box.translation.x - bbox.translation.x - bbox.bounding_box.radius.x
