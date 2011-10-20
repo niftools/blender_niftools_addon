@@ -4393,7 +4393,7 @@ class NifExport(NifImportExport):
     def export_bounding_box(self, obj, block_parent, bsbound=False):
         """Export a Morrowind or Oblivion bounding box."""
         # calculate bounding box extents
-        objbbox = obj.getBoundBox()
+        objbbox = obj.bound_box
         minx = min(vert[0] for vert in objbbox)
         miny = min(vert[1] for vert in objbbox)
         minz = min(vert[2] for vert in objbbox)
@@ -4425,9 +4425,9 @@ class NifExport(NifImportExport):
             # set name, flags, translation, and radius
             bbox.name = "Bounding Box"
             bbox.flags = 4
-            bbox.translation.x = (minx + maxx) * 0.5 + obj.LocX
-            bbox.translation.y = (minx + maxx) * 0.5 + obj.LocY
-            bbox.translation.z = (minx + maxx) * 0.5 + obj.LocZ
+            bbox.translation.x = (minx + maxx) * 0.5 + obj.location[0]
+            bbox.translation.y = (minx + maxx) * 0.5 + obj.location[1]
+            bbox.translation.z = (minx + maxx) * 0.5 + obj.location[2]
             bbox.rotation.set_identity()
             bbox.has_bounding_box = True
             # weirdly, bounding box center (bbox.bounding_box.translation)

@@ -3569,15 +3569,18 @@ class NifImport(NifImportExport):
         for x in [minx, maxx]:
             for y in [miny, maxy]:
                 for z in [minz, maxz]:
-                    me.vertices.extend(x,y,z)
-        me.faces.extend(
-            [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
+                    b_mesh.vertices.add(1)
+                    b_mesh.vertices[-1].co = (x,y,z)
+
+        faces = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]]
+        b_mesh.faces.add(len(faces))
+        b_mesh.faces.foreach_set("vertices_raw", unpack_face_list(faces))
 
         # link box to scene and set transform
         if isinstance(bbox, NifFormat.BSBound):
-            ob = self.context.scene.objects.new(me, 'BSBound')
+            b_obj = bpy.data.objects.new('BSBound', b_mesh)
         else:
-            ob = self.context.scene.objects.new(me, 'Bounding Box')
+            b_obj = bpy.data.objects.new('Bounding Box', b_mesh)
             # XXX this is set in the import_branch method
             #ob.matrix_local = mathutils.Matrix(
             #    *bbox.bounding_box.rotation.as_list())
@@ -3585,11 +3588,12 @@ class NifImport(NifImportExport):
             #    *bbox.bounding_box.translation.as_list())
 
         # set bounds type
-        ob.draw_type = 'BOUNDS'
-        ob.draw_bounds_type = 'BOX'
+        b_obj.draw_type = 'BOUNDS'
+        b_obj.draw_bounds_type = 'BOX'
         # TODO do we need this?
-        #ob.game.radius = min(maxx, maxy, maxz)
-        return ob
+        #b_obj.game.radius = min(maxx, maxy, maxz)
+        bpy.context.scene.objects.link(b_obj)
+        return b_obj
 
     def get_uv_layer_name(self, uvset):
         return "UVTex.%03i" % uvset if uvset != 0 else "UVTex"
