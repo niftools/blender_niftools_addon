@@ -59,15 +59,15 @@ dependencies, and kick off an rpm build::
   git clone git://pkgs.fedoraproject.org/blender
   cd blender
   cp * ~/rpmbuild/SOURCES/
-  wget http://download.blender.org/source/blender-2.59.tar.gz
-  mv blender-2.59.tar.gz ~/rpmbuild/SOURCES/
+  wget http://download.blender.org/source/blender-2.60.tar.gz
+  mv blender-2.60.tar.gz ~/rpmbuild/SOURCES/
   cat blender.spec | grep ^BuildRequires | gawk '{ print $2 }' | xargs sudo yum install -y
   rpmbuild -ba blender.spec
 
 Building blender takes a long time. When the build is finished,
 install the rpm::
 
-  sudo yum localinstall ~/rpmbuild/RPMS/x86_64/blender-2.59-1.fc15.x86_64.rpm
+  sudo yum localinstall ~/rpmbuild/RPMS/x86_64/blender-2.60-1.fc15.x86_64.rpm
 
 .. warning::
 
