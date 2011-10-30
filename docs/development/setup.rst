@@ -160,7 +160,11 @@ Update Blender Python and Check Installation
 
 On Windows, you'll first need to
 copy your entire ``C:\Python32\Lib\site-packages`` folder to
-``C:\Program Files\Blender Foundation\Blender\2.59\python\lib\site-packages``.
+``C:\Program Files\Blender Foundation\Blender\2.60\python\lib\site-packages``.
+There is a script that does this for you in buildenv::
+
+  cd blender_nif_scripts
+  copy-site-packages-to-blender.bat
 
 Now, to check that everything is installed correctly, start blender, open a Python console,
 and type::
