@@ -501,7 +501,7 @@ class NifImport(NifImportExport):
                     b_children_list.append((n_child, b_child))
             object_children = [
                 (n_child, b_child) for (n_child, b_child) in b_children_list
-                if self.isinstance_blender_object(b_child)]
+                if isinstance(b_child, bpy.types.Object)]
 
             # if not importing skeleton only
             if self.properties.skeleton !=  "SKELETON_ONLY":
@@ -607,7 +607,7 @@ class NifImport(NifImportExport):
             # set object transform
             # this must be done after all children objects have been
             # parented to b_obj
-            if self.isinstance_blender_object(b_obj):
+            if isinstance(b_obj, bpy.types.Object):
                 # note: bones already have their matrix set
                 b_obj.matrix_local = self.import_matrix(niBlock)
 
@@ -623,11 +623,11 @@ class NifImport(NifImportExport):
             # import extra node data, such as node type
             # (other types should be added here too)
             if (isinstance(niBlock, NifFormat.NiLODNode)
-                # XXX additional self.isinstance_blender_object(b_obj)
+                # XXX additional isinstance(b_obj, bpy.types.Object)
                 # XXX is a 'workaround' to the limitation that bones
                 # XXX cannot have properties in Blender 2.4x
                 # XXX (remove this check with Blender 2.5)
-                and self.isinstance_blender_object(b_obj)):
+                and isinstance(b_obj, bpy.types.Object)):
                 b_obj.addProperty("Type", "NiLODNode", "STRING")
                 # import lod data
                 range_data = niBlock.lod_level_data

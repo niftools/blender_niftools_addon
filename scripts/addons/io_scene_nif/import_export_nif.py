@@ -333,12 +333,3 @@ class NifImportExport:
             if isinstance(extra, extratype):
                 return extra
         return None
-
-    def isinstance_blender_object(self, b_obj):
-        """Unfortunately, isinstance(b_obj, Blender.Object.Object) does not
-        work because the Object class is not exposed in the API.
-        This method provides an alternative check.
-        """
-        # lame and slow, but functional
-        return b_obj in bpy.data.objects
-
