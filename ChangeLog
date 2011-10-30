@@ -1,5 +1,5 @@
-Version 2.5.8 (in development)
-==============================
+Version 2.5.8 (30 Oct 2011)
+===========================
 
 * Fix for collision objects that have no vertices (see issue #3248754,
   reported by rlibiez).
@@ -8,7 +8,7 @@ Version 2.5.8 (in development)
   (see issue #3308638, reported by Koniption).
 
 * Updated installer to get the Blender 2.49b installer if Blender is not
-  yet installed (this avoids confusion with Blender 2.5x being the default
+  yet installed (this avoids confusion with Blender 2.5x+ being the default
   on the official download page).
 
 Version 2.5.7 (26 March 2011)
