@@ -1621,7 +1621,7 @@ class NifImport(NifImportExport):
                     # set the texture to use face UV coordinates
                     texco = 'UV'
                     # map the texture to the base color and emit channel
-                    mapto = FIXME.use_map_color_diffuse | FIXME.use_map_color_emit
+                    mapto = FIXME.use_map_color_diffuse | FIXME.use_map_emit
                     # set the texture for the material
                     material.setTexture(1, glow_texture, texco, mapto)
                     mglow_texture = material.getTextures()[1]
@@ -1709,7 +1709,7 @@ class NifImport(NifImportExport):
                     # set the texture to use face UV coordinates
                     texco = 'UV'
                     # map the texture to the base color and emit channel
-                    mapto = FIXME.use_map_color_diffuse | FIXME.use_map_color_emit
+                    mapto = FIXME.use_map_color_diffuse | FIXME.use_map_emit
                     # set the texture for the material
                     material.setTexture(1, glow_texture, texco, mapto)
                     mglow_texture = material.getTextures()[1]
