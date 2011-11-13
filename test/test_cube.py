@@ -13,9 +13,12 @@ class TestCube(test.SingleNif):
     b_name = "Cube"
 
     def b_create(self):
-        # note: created cube has name "Cube"
+        # note: primitive_cube_add creates object named "Cube"
         bpy.ops.mesh.primitive_cube_add()
-        return bpy.data.objects["Cube"]
+        b_obj = bpy.data.objects["Cube"]
+        # primitive_cube_add creates a double sided mesh; fix this
+        b_obj.data.show_double_sided = False
+        return b_obj
 
     def b_check(self, b_obj):
         b_mesh = b_obj.data
