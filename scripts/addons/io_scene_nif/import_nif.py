@@ -2187,7 +2187,8 @@ class NifImport(NifImportExport):
                     b_face.col[f_vert_index].b = int(vcol[vert_index].b * 255)
                     b_face.col[f_vert_index].a = int(vcol[vert_index].a * 255)
             # vertex colors influence lighting...
-            # so now we have to set the VCOL_LIGHT flag on the material
+            # so now we have to set the use_vertex_color_light flag
+            # on the material
             # see below
             
         # UV coordinates
@@ -2228,10 +2229,10 @@ class NifImport(NifImportExport):
             if b_meshData.vertex_colors:
                 if mbasetex or mglowtex:
                     # textured material: vertex colors influence lighting
-                    material.mode |= Blender.Material.Modes.VCOL_LIGHT
+                    material.use_vertex_color_light = True
                 else:
                     # non-textured material: vertex colors incluence color
-                    material.mode |= Blender.Material.Modes.VCOL_PAINT
+                    material.use_vertex_color_paint = True
 
             # if there's a base texture assigned to this material sets it
             # to be displayed in Blender's 3D view
