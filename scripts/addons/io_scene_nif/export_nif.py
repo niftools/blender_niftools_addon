@@ -1862,7 +1862,7 @@ class NifExport(NifImportExport):
 
                     # check REFL-mapped textures
                     # (used for "NiTextureEffect" materials)
-                    if mtex.texture_coords == Blender.Texture.TexCo.REFL:
+                    if mtex.texture_coords == 'REFLECTION':
                         # of course the user should set all kinds of other
                         # settings to make the environment mapping come out
                         # (MapTo "COL", blending mode "Add")
