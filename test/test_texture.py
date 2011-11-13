@@ -11,7 +11,14 @@ class TestBaseUVTexture(TestCube):
 
     def b_create_object(self):
         b_obj = TestCube.b_create_object(self)
-        # TODO add a texture to it
+        b_mat = bpy.data.materials.new(name='Material')
+        b_mtex = b_mat.texture_slots.create(0)
+        b_mtex.texture_coords = 'UV'
+        b_mtex.use_map_color_diffuse = True
+        b_mtex.texture = bpy.data.textures.new(name='Tex', type='IMAGE')
+        b_mtex.texture.image = bpy.data.images.new('textures/image.dds', 1, 1)
+        b_obj.data.materials.append(b_mat)
+        # TODO set up uv layer, and unwrap uv for cube
         return b_obj
 
     def b_check_object(self, b_obj):
