@@ -1819,7 +1819,6 @@ class NifExport(NifImportExport):
                 # for textured materials, they represent lighting details
                 mesh_hasvcol = bool(mesh.vertex_colors)
                 # read the Blender Python API documentation to understand this hack
-                mesh_mat_ambient = mesh_mat.getAmb()            # 'Amb' scrollbar in blender (MW -> 1.0 1.0 1.0)
                 mesh_mat_diffuse_color = mesh_mat.getRGBCol()   # 'Col' colour in Blender (MW -> 1.0 1.0 1.0)
                 mesh_mat_specular_color = mesh_mat.getSpecCol() # 'Spe' colour in Blender (MW -> 0.0 0.0 0.0)
                 specval = mesh_mat.getSpec()                    # 'Spec' slider in Blender
@@ -1841,9 +1840,9 @@ class NifExport(NifImportExport):
                                     and mesh_mat.animation_data.action.fcurves['Alpha'])
                 mesh_haswire = mesh_mat.mode & Blender.Material.Modes.WIRE
                 mesh_mat_ambient_color = [0.0, 0.0, 0.0]
-                mesh_mat_ambient_color[0] = mesh_mat_diffuse_color[0] * mesh_mat_ambient
-                mesh_mat_ambient_color[1] = mesh_mat_diffuse_color[1] * mesh_mat_ambient
-                mesh_mat_ambient_color[2] = mesh_mat_diffuse_color[2] * mesh_mat_ambient
+                mesh_mat_ambient_color[0] = mesh_mat_diffuse_color[0] * mesh_mat.ambient
+                mesh_mat_ambient_color[1] = mesh_mat_diffuse_color[1] * mesh_mat.ambient
+                mesh_mat_ambient_color[2] = mesh_mat_diffuse_color[2] * mesh_mat.ambient
                 mesh_mat_emissive_color = [0.0, 0.0, 0.0]
                 mesh_mat_emitmulti = 1.0 # default
                 if self.properties.game != 'FALLOUT_3':
