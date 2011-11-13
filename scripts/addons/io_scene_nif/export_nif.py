@@ -1938,12 +1938,12 @@ class NifExport(NifImportExport):
                                     " with MapTo.NOR"
                                     %(mesh.name,mesh_mat.name))
                             mesh_bump_mtex = mtex
-                        elif mtex.mapto & Blender.Texture.MapTo.COL and \
+                        elif mtex.use_map_color_diffuse and \
                              mtex.blend_type == Blender.Texture.BlendModes["DARKEN"] and \
                              not mesh_dark_mtex:
                             # got the dark map
                             mesh_dark_mtex = mtex
-                        elif mtex.mapto & Blender.Texture.MapTo.COL and \
+                        elif mtex.use_map_color_diffuse and \
                              not mesh_base_mtex:
                             # anything else that maps to COL is considered
                             # as base texture
@@ -1975,7 +1975,7 @@ class NifExport(NifImportExport):
                                         %mesh_mat.name)
                                 mesh_mat_transparency = mtex.varfac # we must use the "Var" value
                                 mesh_hasalpha = True
-                        elif mtex.mapto & Blender.Texture.MapTo.COL and \
+                        elif mtex.use_map_color_diffuse and \
                              not mesh_detail_mtex:
                             # extra COL channel is considered
                             # as detail texture

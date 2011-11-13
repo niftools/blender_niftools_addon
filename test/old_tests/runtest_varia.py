@@ -192,7 +192,7 @@ class VariaTestSuite(TestSuite):
         tex.setType("Image")
         # do not set an image for now... export must fail
         mat.setTexture(0, tex,
-                       'UV', Blender.Texture.MapTo.COL)
+                       'UV', FIXME.use_map_color_diffuse)
         mesh_data.materials += [mat]
         mesh_data.addUVLayer("packed_tex_uv")
         try:
@@ -244,7 +244,7 @@ class VariaTestSuite(TestSuite):
             # check that mapping input is UV
             assert(mtex.texture_coords == 'UV')
             # check mapping output
-            if mtex.mapto == Blender.Texture.MapTo.COL:
+            if mtex.use_map_color_diffuse:
                 if mtex_diff:
                     raise ValueError("more than one diffuse texture!")
                 mtex_diff = mtex
@@ -254,7 +254,7 @@ class VariaTestSuite(TestSuite):
                 mtex_norm = mtex
             # be forgiving for glow: EMIT or COL + EMIT
             if (mtex.mapto == Blender.Texture.MapTo.EMIT
-                or mtex.mapto == Blender.Texture.MapTo.COL | Blender.Texture.MapTo.EMIT):
+                or mtex.use_map_color_diffuse | Blender.Texture.MapTo.EMIT):
                 if mtex_glow:
                     raise ValueError("more than one glow texture!")
                 mtex_glow = mtex

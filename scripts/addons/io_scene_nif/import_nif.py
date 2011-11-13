@@ -1621,7 +1621,7 @@ class NifImport(NifImportExport):
                     # set the texture to use face UV coordinates
                     texco = 'UV'
                     # map the texture to the base color and emit channel
-                    mapto = Blender.Texture.MapTo.COL | Blender.Texture.MapTo.EMIT
+                    mapto = FIXME.use_map_color_diffuse | Blender.Texture.MapTo.EMIT
                     # set the texture for the material
                     material.setTexture(1, glow_texture, texco, mapto)
                     mglow_texture = material.getTextures()[1]
@@ -1654,7 +1654,7 @@ class NifImport(NifImportExport):
                     # set the texture to use face UV coordinates
                     texco = 'UV'
                     # map the texture to the COL channel
-                    mapto = Blender.Texture.MapTo.COL
+                    mapto = FIXME.use_map_color_diffuse
                     # set the texture for the material
                     material.setTexture(5, dark_texture, texco, mapto)
                     mdark_texture = material.getTextures()[5]
@@ -1668,7 +1668,7 @@ class NifImport(NifImportExport):
                     # set the texture to use face UV coordinates
                     texco = 'UV'
                     # map the texture to the COL channel
-                    mapto = Blender.Texture.MapTo.COL
+                    mapto = FIXME.use_map_color_diffuse
                     # set the texture for the material
                     material.setTexture(6, detail_texture, texco, mapto)
                     mdetail_texture = material.getTextures()[6]
@@ -1694,7 +1694,7 @@ class NifImport(NifImportExport):
                     # set the texture to use face UV coordinates
                     texco = 'UV'
                     # map the texture to the base color channel
-                    mapto = Blender.Texture.MapTo.COL
+                    mapto = FIXME.use_map_color_diffuse
                     # set the texture for the material
                     material.setTexture(0, base_texture, texco, mapto)
                     mbase_texture = material.getTextures()[0]
@@ -1709,7 +1709,7 @@ class NifImport(NifImportExport):
                     # set the texture to use face UV coordinates
                     texco = 'UV'
                     # map the texture to the base color and emit channel
-                    mapto = Blender.Texture.MapTo.COL | Blender.Texture.MapTo.EMIT
+                    mapto = FIXME.use_map_color_diffuse | Blender.Texture.MapTo.EMIT
                     # set the texture for the material
                     material.setTexture(1, glow_texture, texco, mapto)
                     mglow_texture = material.getTextures()[1]
@@ -1734,7 +1734,7 @@ class NifImport(NifImportExport):
                 # set the texture to use face reflection coordinates
                 texco = 'REFLECTION'
                 # map the texture to the base color channel
-                mapto = Blender.Texture.MapTo.COL
+                mapto = FIXME.use_map_color_diffuse
                 # set the texture for the material
                 material.setTexture(3, envmapTexture, texco, mapto)
                 menvmapTexture = material.getTextures()[3]
