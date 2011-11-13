@@ -1772,7 +1772,7 @@ class NifImport(NifImportExport):
         # check wireframe property
         if wireProperty:
             # enable wireframe rendering
-            material.mode |= Blender.Material.Modes.WIRE
+            material.type = 'WIRE'
 
         self.materials[material_hash] = material
         return material
