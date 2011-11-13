@@ -1819,7 +1819,6 @@ class NifExport(NifImportExport):
                 # for textured materials, they represent lighting details
                 mesh_hasvcol = bool(mesh.vertex_colors)
                 # read the Blender Python API documentation to understand this hack
-                mesh_mat_diffuse_color = mesh_mat.getRGBCol()   # 'Col' colour in Blender (MW -> 1.0 1.0 1.0)
                 mesh_mat_specular_color = mesh_mat.getSpecCol() # 'Spe' colour in Blender (MW -> 0.0 0.0 0.0)
                 specval = mesh_mat.getSpec()                    # 'Spec' slider in Blender
                 mesh_mat_specular_color[0] *= specval
@@ -1840,21 +1839,21 @@ class NifExport(NifImportExport):
                                     and mesh_mat.animation_data.action.fcurves['Alpha'])
                 mesh_haswire = mesh_mat.mode & Blender.Material.Modes.WIRE
                 mesh_mat_ambient_color = [0.0, 0.0, 0.0]
-                mesh_mat_ambient_color[0] = mesh_mat_diffuse_color[0] * mesh_mat.ambient
-                mesh_mat_ambient_color[1] = mesh_mat_diffuse_color[1] * mesh_mat.ambient
-                mesh_mat_ambient_color[2] = mesh_mat_diffuse_color[2] * mesh_mat.ambient
+                mesh_mat_ambient_color[0] = mesh_mat.diffuse_color[0] * mesh_mat.ambient
+                mesh_mat_ambient_color[1] = mesh_mat.diffuse_color[1] * mesh_mat.ambient
+                mesh_mat_ambient_color[2] = mesh_mat.diffuse_color[2] * mesh_mat.ambient
                 mesh_mat_emissive_color = [0.0, 0.0, 0.0]
                 mesh_mat_emitmulti = 1.0 # default
                 if self.properties.game != 'FALLOUT_3':
-                    mesh_mat_emissive_color[0] = mesh_mat_diffuse_color[0] * mesh_mat_emissive
-                    mesh_mat_emissive_color[1] = mesh_mat_diffuse_color[1] * mesh_mat_emissive
-                    mesh_mat_emissive_color[2] = mesh_mat_diffuse_color[2] * mesh_mat_emissive
+                    mesh_mat_emissive_color[0] = mesh_mat.diffuse_color[0] * mesh_mat_emissive
+                    mesh_mat_emissive_color[1] = mesh_mat.diffuse_color[1] * mesh_mat_emissive
+                    mesh_mat_emissive_color[2] = mesh_mat.diffuse_color[2] * mesh_mat_emissive
                 else:
                     # special case for Fallout 3 (it does not store diffuse color)
                     # if emit is non-zero, set emissive color to diffuse
                     # (otherwise leave the color to zero)
                     if mesh_mat.emit > self.properties.epsilon:
-                        mesh_mat_emissive_color = mesh_mat_diffuse_color
+                        mesh_mat_emissive_color = mesh_mat.diffuse_color[:]
                         mesh_mat_emitmulti = mesh_mat.emit * 10.0
                 # the base texture = first material texture
                 # note that most morrowind files only have a base texture, so let's for now only support single textured materials
@@ -2348,7 +2347,7 @@ class NifExport(NifImportExport):
                     name=self.get_full_name(mesh_mat.name),
                     flags=0x0001, # ? standard
                     ambient=mesh_mat_ambient_color,
-                    diffuse=mesh_mat_diffuse_color,
+                    diffuse=mesh_mat.diffuse_color,
                     specular=mesh_mat_specular_color,
                     emissive=mesh_mat_emissive_color,
                     glossiness=mesh_mat_glossiness,
