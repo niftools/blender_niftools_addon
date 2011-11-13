@@ -252,9 +252,7 @@ class VariaTestSuite(TestSuite):
                 if mtex_norm:
                     raise ValueError("more than one normal texture!")
                 mtex_norm = mtex
-            # be forgiving for glow: EMIT or COL + EMIT
-            if (mtex.mapto == Blender.Texture.MapTo.EMIT
-                or mtex.use_map_color_diffuse | Blender.Texture.MapTo.EMIT):
+            if mtex.use_map_color_emit:
                 if mtex_glow:
                     raise ValueError("more than one glow texture!")
                 mtex_glow = mtex
