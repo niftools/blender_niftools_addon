@@ -1632,7 +1632,7 @@ class NifImport(NifImportExport):
                     # set the texture to use face UV coordinates
                     texco = 'UV'
                     # map the texture to the normal channel
-                    mapto = Blender.Texture.MapTo.NOR
+                    mapto = FIXME.use_map_normal
                     # set the texture for the material
                     material.setTexture(2, bumpTexture, texco, mapto)
                     mbumpTexture = material.getTextures()[2]
@@ -1722,7 +1722,7 @@ class NifImport(NifImportExport):
                     # set the texture to use face UV coordinates
                     texco = 'UV'
                     # map the texture to the normal channel
-                    mapto = Blender.Texture.MapTo.NOR
+                    mapto = FIXME.use_map_normal
                     # set the texture for the material
                     material.setTexture(2, bumpTexture, texco, mapto)
                     mbumpTexture = material.getTextures()[2]
