@@ -49,6 +49,73 @@ Naming Conventions
    code. Stick to it for new code, but we are holding off a rename for
    the planned 3.x.x refactor.
 
+Regression Tests
+----------------
+
+Ideally, for every feature, first, a regression test should be
+written. Ideally, the following process is followed:
+
+1. Create a new python file to contain the feature regression test
+   code. For example, if the feature concerns *blabla*, the test case
+   would be stored in ``test/test_blabla.py``. Use the template
+   available in ``test/template.py``.
+
+2. Create a new text file ``docs/features/blabla.rst`` to contain the
+   feature user documentation. If there are particular issues with the
+   feature's implementation, make a note of it in
+   ``docs/development/design.rst``.
+
+3. Write feature data and code on nif level:
+
+   - Create a nif (say in nifskope, or with the old blender nif
+     scripts) and save it as ``test/nif/blabla.nif``. Take care to
+     make the file as small as possible. Stick to minimal geometry.
+
+   - Write Python code which test the nif against the desired feature.
+     This code goes in the *n_check* method of the test class.
+
+4. Write feature code on blender level:
+
+   - Write Python code which create the corresponding blender scene.
+     Where possible make the test case as simple as possible. For
+     instance, use primitives readily available in blender. This code
+     goes in the *b_create* method of the test class.
+
+   - Document the feature in ``docs/features/blabla.rst`` as you write
+     *b_create*: explain what the user has to do in blender in order
+     to export the desired data, and where in blender the data ends up
+     on import.
+
+   - Write Python code which test the blender scene against the
+     desired feature: *b_check* method of the test class.
+
+That's it!
+
+The tests will check that user can use the feature as documented. They
+actually do the following:
+
+1. Test that the feature  import-export works as expected:
+
+   - Call *n_check* on test nif.
+
+   - Import the nif ``test/import/blabla.nif`` and call *b_check* on
+     imported scene.
+
+   - Export the nif to ``test/export/blabla1.nif`` call *n_check* on
+     exported data.
+
+2. Test that user can use the feature as documented:
+
+   - Call *b_create* to create the scene, and *b_check* to check it.
+
+   - Export the nif to ``test/export/blabla2.nif`` and call
+     *n_check* on exported nif.
+
+   - Clear blender scene, import the exported nif, and call
+     *b_check* on imported scene.
+
+This ensures data integrity both at Blender level and at nif level.
+
 Differences Between Blender 2.4x and 2.5x
 -----------------------------------------
 
