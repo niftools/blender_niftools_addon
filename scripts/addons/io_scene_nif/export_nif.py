@@ -1817,7 +1817,7 @@ class NifExport(NifImportExport):
                 # for non-textured materials, vertex colors are used to color
                 # the mesh
                 # for textured materials, they represent lighting details
-                mesh_hasvcol = mesh.vertexColors
+                mesh_hasvcol = bool(mesh.vertex_colors)
                 # read the Blender Python API documentation to understand this hack
                 mesh_mat_ambient = mesh_mat.getAmb()            # 'Amb' scrollbar in blender (MW -> 1.0 1.0 1.0)
                 mesh_mat_diffuse_color = mesh_mat.getRGBCol()   # 'Col' colour in Blender (MW -> 1.0 1.0 1.0)
