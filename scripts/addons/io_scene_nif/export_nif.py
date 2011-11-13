@@ -1862,7 +1862,7 @@ class NifExport(NifImportExport):
 
                     # check REFL-mapped textures
                     # (used for "NiTextureEffect" materials)
-                    if mtex.texco == Blender.Texture.TexCo.REFL:
+                    if mtex.texture_coords == Blender.Texture.TexCo.REFL:
                         # of course the user should set all kinds of other
                         # settings to make the environment mapping come out
                         # (MapTo "COL", blending mode "Add")
@@ -1891,7 +1891,7 @@ class NifExport(NifImportExport):
                         mesh_texeff_mtex = mtex
 
                     # check UV-mapped textures
-                    elif mtex.texco == Blender.Texture.TexCo.UV:
+                    elif mtex.texture_coords == Blender.Texture.TexCo.UV:
                         # update set of uv layers that must be exported
                         uvlayer = ( mtex.uv_layer if mtex.uv_layer
                                     else mesh.activeUVLayer )

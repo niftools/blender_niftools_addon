@@ -242,7 +242,7 @@ class VariaTestSuite(TestSuite):
             if mtex is None:
                 continue
             # check that mapping input is UV
-            assert(mtex.texco == Blender.Texture.TexCo.UV)
+            assert(mtex.texture_coords == Blender.Texture.TexCo.UV)
             # check mapping output
             if mtex.mapto == Blender.Texture.MapTo.COL:
                 if mtex_diff:
