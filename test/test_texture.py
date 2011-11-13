@@ -15,8 +15,16 @@ class TestBaseUVTexture(TestCube):
         return b_obj
 
     def b_check_object(self, b_obj):
-        # TODO check for presence of a texture
-        pass
+        b_mesh = b_obj.data
+        nose.tools.assert_equal(len(b_mesh.materials), 1)
+        b_mat = b_mesh.materials[0]
+        b_mtex = b_mat.texture_slots[0]
+        nose.tools.assert_equal(b_mtex.use, True)
+        nose.tools.assert_equal(b_mtex.texture_coords, 'UV')
+        nose.tools.assert_equal(b_mtex.use_map_color_diffuse, True)
+        nose.tools.assert_is_instance(b_mtex.texture, bpy.types.ImageTexture)
+        nose.tools.assert_equal(
+            b_mtex.texture.image.filepath, 'textures/image.dds')
 
     def n_check_data(self, n_data):
         n_geom = n_data.roots[0].children[0]
