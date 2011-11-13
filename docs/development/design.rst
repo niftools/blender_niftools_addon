@@ -58,64 +58,67 @@ written. Ideally, the following process is followed:
 1. Create a new python file to contain the feature regression test
    code. For example, if the feature concerns *blabla*, the test case
    would be stored in ``test/test_blabla.py``. Use the template
-   available in ``test/template.py``.
+   available in ``test/template.py``. Derive the test class from
+   :class:`test.SingleNif`, and name it :class:`TestBlabla`.
 
 2. Create a new text file ``docs/features/blabla.rst`` to contain the
-   feature user documentation. If there are particular issues with the
+   feature user documentation,
+   and add it to the table of contents in ``docs/features/index.rst``.
+   If there are particular issues with the
    feature's implementation, make a note of it in
    ``docs/development/design.rst``.
 
 3. Write feature test data and test code on nif level:
 
    - Create a nif (say in nifskope, or with the old blender nif
-     scripts) and save it as ``test/nif/blabla.nif``. Take care to
+     scripts) and save it as ``test/nif/blabla0.nif``. Take care to
      make the file as small as possible. Stick to minimal geometry.
 
    - Write Python code which test the nif against the desired feature.
-     This code goes in the *n_check* method of the test class.
+     This code goes in the :meth:`n_check` method of the test class.
 
 4. Write feature test code on blender level:
 
    - Write Python code which create the corresponding blender scene.
      Where possible make the test case as simple as possible. For
      instance, use primitives readily available in blender. This code
-     goes in the *b_create* method of the test class.
+     goes in the :meth:`b_create` method of the test class.
 
    - Document the feature in ``docs/features/blabla.rst`` as you write
-     *b_create*: explain what the user has to do in blender in order
+     :meth:`b_create`: explain what the user has to do in blender in order
      to export the desired data, and where in blender the data ends up
      on import.
 
    - Write Python code which test the blender scene against the
-     desired feature: *b_check* method of the test class.
+     desired feature: :meth:`b_check` method of the test class.
 
 5. Now implement the feature in the import and export scripts, until
    the regression test passes.
 
 That's it!
 
-The tests will check that user can use the feature as documented. They
-actually do the following:
+The tests will actually do the following:
 
-1. Test that the feature  import-export works as expected:
+1. Test that import-export works as expected:
 
-   - Call *n_check* on test nif.
+   - Call :meth:`n_check` on test nif.
 
-   - Import the nif ``test/import/blabla.nif`` and call *b_check* on
+   - Import the nif ``test/nif/blabla0.nif`` and call :meth:`b_check` on
      imported scene.
 
-   - Export the nif to ``test/export/blabla1.nif`` call *n_check* on
+   - Export the nif to ``test/nif/blabla1.nif`` call :meth:`n_check` on
      exported data.
 
-2. Test that user can use the feature as documented:
+2. Test that export-import works as expected:
 
-   - Call *b_create* to create the scene, and *b_check* to check it.
+   - Call :meth:`b_create` to create the scene,
+     and :meth:`b_check` to check it.
 
-   - Export the nif to ``test/export/blabla2.nif`` and call
-     *n_check* on exported nif.
+   - Export the nif to ``test/nif/blabla2.nif`` and call
+     :meth:`n_check` on exported nif.
 
    - Clear blender scene, import the exported nif, and call
-     *b_check* on imported scene.
+     :meth:`b_check` on imported scene.
 
 This ensures data integrity both at Blender level and at nif level.
 
