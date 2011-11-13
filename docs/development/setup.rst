@@ -134,12 +134,12 @@ Install Sphinx and Nose
 
 On Windows, run in buildenv::
 
-  easy_install install Sphinx==dev
+  easy_install install Sphinx
   easy_install install nose
 
 On Fedora, run in a terminal::
 
-  easy_install-3.2 --user Sphinx==dev
+  easy_install-3.2 --user Sphinx
   sudo yum install python3-nose
 
 Install PyFFI
