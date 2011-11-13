@@ -192,7 +192,7 @@ class VariaTestSuite(TestSuite):
         tex.setType("Image")
         # do not set an image for now... export must fail
         mat.setTexture(0, tex,
-                       Blender.Texture.TexCo.UV, Blender.Texture.MapTo.COL)
+                       'UV', Blender.Texture.MapTo.COL)
         mesh_data.materials += [mat]
         mesh_data.addUVLayer("packed_tex_uv")
         try:
@@ -242,7 +242,7 @@ class VariaTestSuite(TestSuite):
             if mtex is None:
                 continue
             # check that mapping input is UV
-            assert(mtex.texture_coords == Blender.Texture.TexCo.UV)
+            assert(mtex.texture_coords == 'UV')
             # check mapping output
             if mtex.mapto == Blender.Texture.MapTo.COL:
                 if mtex_diff:

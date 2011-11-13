@@ -1619,7 +1619,7 @@ class NifImport(NifImportExport):
                     # glow maps use alpha from rgb intensity
                     glow_texture.imageFlags |= Blender.Texture.ImageFlags.CALCALPHA
                     # set the texture to use face UV coordinates
-                    texco = Blender.Texture.TexCo.UV
+                    texco = 'UV'
                     # map the texture to the base color and emit channel
                     mapto = Blender.Texture.MapTo.COL | Blender.Texture.MapTo.EMIT
                     # set the texture for the material
@@ -1630,7 +1630,7 @@ class NifImport(NifImportExport):
                 bumpTexture = self.import_texture(bumpTexDesc.source)
                 if bumpTexture:
                     # set the texture to use face UV coordinates
-                    texco = Blender.Texture.TexCo.UV
+                    texco = 'UV'
                     # map the texture to the normal channel
                     mapto = Blender.Texture.MapTo.NOR
                     # set the texture for the material
@@ -1641,7 +1641,7 @@ class NifImport(NifImportExport):
                 gloss_texture = self.import_texture(glossTexDesc.source)
                 if gloss_texture:
                     # set the texture to use face UV coordinates
-                    texco = Blender.Texture.TexCo.UV
+                    texco = 'UV'
                     # map the texture to the specularity channel
                     mapto = Blender.Texture.MapTo.SPEC
                     # set the texture for the material
@@ -1652,7 +1652,7 @@ class NifImport(NifImportExport):
                 dark_texture = self.import_texture(darkTexDesc.source)
                 if dark_texture:
                     # set the texture to use face UV coordinates
-                    texco = Blender.Texture.TexCo.UV
+                    texco = 'UV'
                     # map the texture to the COL channel
                     mapto = Blender.Texture.MapTo.COL
                     # set the texture for the material
@@ -1666,7 +1666,7 @@ class NifImport(NifImportExport):
                 if detail_texture:
                     # import detail texture as extra base texture
                     # set the texture to use face UV coordinates
-                    texco = Blender.Texture.TexCo.UV
+                    texco = 'UV'
                     # map the texture to the COL channel
                     mapto = Blender.Texture.MapTo.COL
                     # set the texture for the material
@@ -1677,7 +1677,7 @@ class NifImport(NifImportExport):
                 refTexture = self.import_texture(refTexDesc.source)
                 if refTexture:
                     # set the texture to use face UV coordinates
-                    texco = Blender.Texture.TexCo.UV
+                    texco = 'UV'
                     # map the texture to the base color and emit channel
                     mapto = Blender.Texture.MapTo.REF
                     # set the texture for the material
@@ -1692,7 +1692,7 @@ class NifImport(NifImportExport):
                 base_texture = self.import_texture(baseTexFile)
                 if base_texture:
                     # set the texture to use face UV coordinates
-                    texco = Blender.Texture.TexCo.UV
+                    texco = 'UV'
                     # map the texture to the base color channel
                     mapto = Blender.Texture.MapTo.COL
                     # set the texture for the material
@@ -1707,7 +1707,7 @@ class NifImport(NifImportExport):
                     # glow maps use alpha from rgb intensity
                     glow_texture.imageFlags |= Blender.Texture.ImageFlags.CALCALPHA
                     # set the texture to use face UV coordinates
-                    texco = Blender.Texture.TexCo.UV
+                    texco = 'UV'
                     # map the texture to the base color and emit channel
                     mapto = Blender.Texture.MapTo.COL | Blender.Texture.MapTo.EMIT
                     # set the texture for the material
@@ -1720,7 +1720,7 @@ class NifImport(NifImportExport):
                 bumpTexture = self.import_texture(bumpTexFile)
                 if bumpTexture:
                     # set the texture to use face UV coordinates
-                    texco = Blender.Texture.TexCo.UV
+                    texco = 'UV'
                     # map the texture to the normal channel
                     mapto = Blender.Texture.MapTo.NOR
                     # set the texture for the material
