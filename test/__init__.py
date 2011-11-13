@@ -14,13 +14,17 @@ def clear_bpy_data():
             collection.remove(elem)
 
     # unlink objects
-    for obj in bpy.data.objects[:]:
-        bpy.context.scene.objects.unlink(obj)
+    for b_obj in bpy.data.objects[:]:
+        bpy.context.scene.objects.unlink(b_obj)
     # remove all data
     for collection in (
-        "objects", "meshes", "armatures", "images", "lamps", "lattices",
-        "materials", "particles", "metaballs", "shape_keys", "texts",
-        "textures",
+        "actions", "objects", "meshes", "armatures", "lamps", "lattices",
+        "particles", "metaballs", "shape_keys", "texts", "curves",
+        "cameras", "grease_pencil", "groups", "libraries",
+        "node_groups",
+        "materials",
+        # can't be removed for reasons not understood so far
+        #"brushes", "textures", "images",
         ):
         clear_bpy_prop_collection(getattr(bpy.data, collection))
 
