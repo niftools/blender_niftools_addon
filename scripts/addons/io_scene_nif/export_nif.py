@@ -1884,7 +1884,7 @@ class NifExport(NifImportExport):
                                 " under Material Buttons,"
                                 " set texture 'Map To' to 'COL'."
                                 % (ob.name,mesh_mat.name))
-                        if mtex.blendmode != Blender.Texture.BlendModes["ADD"]:
+                        if mtex.blend_type != Blender.Texture.BlendModes["ADD"]:
                             # it should have "ADD" blending mode
                             self.warning(
                                "Reflection texture should have blending"
@@ -1943,7 +1943,7 @@ class NifExport(NifImportExport):
                                     %(mesh.name,mesh_mat.name))
                             mesh_bump_mtex = mtex
                         elif mtex.mapto & Blender.Texture.MapTo.COL and \
-                             mtex.blendmode == Blender.Texture.BlendModes["DARKEN"] and \
+                             mtex.blend_type == Blender.Texture.BlendModes["DARKEN"] and \
                              not mesh_dark_mtex:
                             # got the dark map
                             mesh_dark_mtex = mtex
