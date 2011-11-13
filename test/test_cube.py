@@ -29,6 +29,7 @@ class TestCube(test.SingleNif):
     def n_check_data(self, n_data):
         n_geom = n_data.roots[0].children[0]
         nose.tools.assert_is_instance(n_geom, NifFormat.NiTriShape)
+        nose.tools.assert_equal(n_geom.num_properties, 0)
         nose.tools.assert_equal(n_geom.data.num_vertices, 8)
         nose.tools.assert_equal(n_geom.data.num_triangles, 12)
 
