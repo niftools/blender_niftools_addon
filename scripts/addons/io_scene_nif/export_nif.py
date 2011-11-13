@@ -1819,7 +1819,7 @@ class NifExport(NifImportExport):
                 # for textured materials, they represent lighting details
                 mesh_hasvcol = bool(mesh.vertex_colors)
                 # read the Blender Python API documentation to understand this hack
-                mesh_mat_specular_color = mesh_mat.specular_color[:]
+                mesh_mat_specular_color = list(mesh_mat.specular_color)
                 mesh_mat_specular_color[0] *= mesh_mat.specular_intensity
                 mesh_mat_specular_color[1] *= mesh_mat.specular_intensity
                 mesh_mat_specular_color[2] *= mesh_mat.specular_intensity
@@ -1852,7 +1852,7 @@ class NifExport(NifImportExport):
                     # if emit is non-zero, set emissive color to diffuse
                     # (otherwise leave the color to zero)
                     if mesh_mat.emit > self.properties.epsilon:
-                        mesh_mat_emissive_color = mesh_mat.diffuse_color[:]
+                        mesh_mat_emissive_color = list(mesh_mat.diffuse_color)
                         mesh_mat_emitmulti = mesh_mat.emit * 10.0
                 # the base texture = first material texture
                 # note that most morrowind files only have a base texture, so let's for now only support single textured materials
