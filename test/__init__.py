@@ -40,7 +40,7 @@ class Base:
         clear_bpy_data()
 
     def teardown(self):
-        clear_bpy_data()
+        self.b_clear()
 
 class SingleNif(Base):
     """Base class for testing a feature concerning single nif files."""
@@ -56,6 +56,17 @@ class SingleNif(Base):
         self.n_filepath_0 = "test/nif/" + self.n_name + "0.nif"
         self.n_filepath_1 = "test/nif/" + self.n_name + "1.nif"
         self.n_filepath_2 = "test/nif/" + self.n_name + "2.nif"
+
+    def b_clear(self):
+        Base.b_clear(self)
+        # extra check, just to make really sure
+        try:
+            b_obj = bpy.data.objects[self.b_name]
+        except KeyError:
+            pass
+        else:
+            raise RuntimeError(
+                "failed to clear {0} from scene".format(b_obj))
 
     def b_create_object(self):
         """Create and return blender object for feature."""
@@ -74,24 +85,28 @@ class SingleNif(Base):
         self.n_check_data(self.n_read(n_filepath))
 
     def n_read(self, n_filepath):
+        """Read nif file and return the data."""
         n_data = NifFormat.Data()
         with open(n_filepath, "rb") as stream:
             n_data.read(stream)
         return n_data
 
     def n_import(self, n_filepath):
+        """Import nif file."""
         bpy.ops.import_scene.nif(
             filepath=n_filepath,
             log_level='DEBUG',
             )
 
     def n_export(self, n_filepath):
+        """Export selected blender object to nif file."""
         bpy.ops.export_scene.nif(
             filepath=n_filepath,
             log_level='DEBUG',
             )
 
     def test_import_export(self):
+        """Test import followed by export."""
         self.b_clear()
         self.n_check(self.n_filepath_0)
         self.n_import(self.n_filepath_0)
@@ -102,6 +117,7 @@ class SingleNif(Base):
         self.n_check(self.n_filepath_1)
 
     def test_export_import(self):
+        """Test export followed by import."""
         b_obj = self.b_create_object()
         self.b_check_object(b_obj)
         b_obj.select = True
