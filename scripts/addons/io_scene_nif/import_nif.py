@@ -1451,13 +1451,13 @@ class NifImport(NifImportExport):
         name = self.import_name(matProperty)
         material = bpy.data.materials.new(name)
         # get apply mode, and convert to blender "blending mode"
-        blendmode = "MIX" # default
+        blend_type = "MIX" # default
         if textProperty:
-            blendmode = self.get_b_blend_type_from_n_apply_mode(
+            blend_type = self.get_b_blend_type_from_n_apply_mode(
                 textProperty.apply_mode)
         elif bsShaderProperty:
             # default blending mode for fallout 3
-            blendmode = "MIX"
+            blend_type = "MIX"
         # Sets the colors
         # Specular color
         spec = matProperty.specular_color
@@ -1604,14 +1604,13 @@ class NifImport(NifImportExport):
             if baseTexDesc:
                 base_texture = self.import_texture(baseTexDesc.source)
                 if base_texture:
+                    mbase_texture = material.texture_slots.add()
                     # set the texture to use face UV coordinates
-                    texco = Blender.Texture.TexCo.UV
+                    mbase_texture.texture_coords = 'UV'
                     # map the texture to the base color channel
-                    mapto = Blender.Texture.MapTo.COL
+                    mbase_texture.use_map_color_diffuse = True
                     # set the texture for the material
-                    material.setTexture(0, base_texture, texco, mapto)
-                    mbase_texture = material.getTextures()[0]
-                    mbase_texture.blendmode = blendmode
+                    mbase_texture.blend_type = blend_type
                     mbase_texture.uvlayer = self.get_uv_layer_name(baseTexDesc.uv_set)
             if glowTexDesc:
                 glow_texture = self.import_texture(glowTexDesc.source)
@@ -1660,7 +1659,7 @@ class NifImport(NifImportExport):
                     mdark_texture = material.getTextures()[5]
                     mdark_texture.uvlayer = self.get_uv_layer_name(darkTexDesc.uv_set)
                     # set blend mode to "DARKEN"
-                    mdark_texture.blendmode = Blender.Texture.BlendModes["DARKEN"]
+                    mdark_texture.blend_type = Blender.Texture.BlendModes["DARKEN"]
             if detailTexDesc:
                 detail_texture = self.import_texture(detailTexDesc.source)
                 if detail_texture:
@@ -1698,7 +1697,7 @@ class NifImport(NifImportExport):
                     # set the texture for the material
                     material.setTexture(0, base_texture, texco, mapto)
                     mbase_texture = material.getTextures()[0]
-                    mbase_texture.blendmode = blendmode
+                    mbase_texture.blend_type = blend_type
 
             glowTexFile = bsShaderProperty.texture_set.textures[2]
             if glowTexFile:
@@ -1713,7 +1712,7 @@ class NifImport(NifImportExport):
                     # set the texture for the material
                     material.setTexture(1, glow_texture, texco, mapto)
                     mglow_texture = material.getTextures()[1]
-                    mglow_texture.blendmode = blendmode
+                    mglow_texture.blend_type = blend_type
 
             bumpTexFile = bsShaderProperty.texture_set.textures[1]
             if bumpTexFile:
@@ -1726,7 +1725,7 @@ class NifImport(NifImportExport):
                     # set the texture for the material
                     material.setTexture(2, bumpTexture, texco, mapto)
                     mbumpTexture = material.getTextures()[2]
-                    mbumpTexture.blendmode = blendmode
+                    mbumpTexture.blend_type = blend_type
 
         if textureEffect:
             envmapTexture = self.import_texture(textureEffect.source_texture)
@@ -1738,7 +1737,7 @@ class NifImport(NifImportExport):
                 # set the texture for the material
                 material.setTexture(3, envmapTexture, texco, mapto)
                 menvmapTexture = material.getTextures()[3]
-                menvmapTexture.blendmode = Blender.Texture.BlendModes["ADD"]
+                menvmapTexture.blend_type = Blender.Texture.BlendModes["ADD"]
         # check transparency
         if alphaProperty:
             material.mode |= Blender.Material.Modes.ZTRANSP # enable z-buffered transparency
