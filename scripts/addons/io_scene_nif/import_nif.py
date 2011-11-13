@@ -1604,7 +1604,7 @@ class NifImport(NifImportExport):
             if baseTexDesc:
                 base_texture = self.import_texture(baseTexDesc.source)
                 if base_texture:
-                    mbase_texture = material.texture_slots.add()
+                    mbase_texture = material.texture_slots.create(0)
                     # set the texture to use face UV coordinates
                     mbase_texture.texture_coords = 'UV'
                     # map the texture to the base color channel
@@ -2048,12 +2048,12 @@ class NifImport(NifImportExport):
                                             bsShaderProperty, extra_datas)
             # XXX todo: merge this call into import_material
             self.import_material_controllers(material, niBlock)
-            b_mesh_materials = b_meshData.materials
+            b_mesh_materials = list(b_meshData.materials)
             try:
                 materialIndex = b_mesh_materials.index(material)
             except ValueError:
                 materialIndex = len(b_mesh_materials)
-                b_meshData.materials += [material]
+                b_meshData.materials.append(material)
             # if mesh has one material with wireproperty, then make the mesh
             # wire in 3D view
             if wireProperty:
@@ -2174,7 +2174,8 @@ class NifImport(NifImportExport):
         vcol = niData.vertex_colors
         
         if vcol:
-            b_meshData.vertexColors = 1
+            b_vcol = b_meshData.vertex_colors.new()
+            # TODO set up b_vcol, next is old data
             for f, b_f_index in zip(tris, f_map):
                 if b_f_index is None:
                     continue
@@ -2222,9 +2223,9 @@ class NifImport(NifImportExport):
         if material:
             # fix up vertex colors depending on whether we had textures in the
             # material
-            mbasetex = material.getTextures()[0]
-            mglowtex = material.getTextures()[1]
-            if b_meshData.vertexColors == 1:
+            mbasetex = material.texture_slots[0]
+            mglowtex = material.texture_slots[1]
+            if b_meshData.vertex_colors:
                 if mbasetex or mglowtex:
                     # textured material: vertex colors influence lighting
                     material.mode |= Blender.Material.Modes.VCOL_LIGHT
