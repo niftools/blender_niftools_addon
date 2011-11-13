@@ -1891,7 +1891,7 @@ class NifExport(NifImportExport):
                         mesh_texeff_mtex = mtex
 
                     # check UV-mapped textures
-                    elif mtex.texture_coords == Blender.Texture.TexCo.UV:
+                    elif mtex.texture_coords == 'UV':
                         # update set of uv layers that must be exported
                         uvlayer = ( mtex.uv_layer if mtex.uv_layer
                                     else mesh.activeUVLayer )
