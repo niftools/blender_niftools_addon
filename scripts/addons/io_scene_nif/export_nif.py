@@ -1812,7 +1812,7 @@ class NifExport(NifImportExport):
             mesh_hasspec = False  # mesh has specular properties
             mesh_hasvcol = False
             mesh_hasnormals = False
-            if (mesh_mat != None):
+            if mesh_mat is not None:
                 mesh_hasnormals = True # for proper lighting
                 # for non-textured materials, vertex colors are used to color
                 # the mesh
