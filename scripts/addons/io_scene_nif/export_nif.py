@@ -1918,7 +1918,7 @@ class NifExport(NifImportExport):
                                     " MapTo.ALPHA enabled."
                                     %(ob.name,mesh_mat.name))
                             mesh_glow_mtex = mtex
-                        elif mtex.mapto & Blender.Texture.MapTo.SPEC:
+                        elif mtex.use_map_specular:
                             # got the gloss map
                             if mesh_gloss_mtex:
                                 raise NifExportError(
