@@ -4,6 +4,8 @@ import bpy
 import io_scene_nif.import_nif
 import io_scene_nif.export_nif
 
+from pyffi.formats.nif import NifFormat
+
 def clear_bpy_data():
     """Remove all objects from blender."""
 
@@ -50,10 +52,10 @@ class SingleNif(Base):
     def __init__(self):
         if self.name is None:
             return
-        Test.__init__(self)
-        n_filepath_0 = "test/nif/" + self.name + "0.nif"
-        n_filepath_1 = "test/nif/" + self.name + "1.nif"
-        n_filepath_2 = "test/nif/" + self.name + "2.nif"
+        Base.__init__(self)
+        self.n_filepath_0 = "test/nif/" + self.name + "0.nif"
+        self.n_filepath_1 = "test/nif/" + self.name + "1.nif"
+        self.n_filepath_2 = "test/nif/" + self.name + "2.nif"
 
     def b_create(self):
         """Create blender objects in current blender scene for feature."""
@@ -63,18 +65,31 @@ class SingleNif(Base):
         """Check current blender scene against feature."""
         raise NotImplementedError
 
+    def b_select(self):
+        """Select objects to be exported."""
+        raise NotImplementedError
+
     def n_check(self, n_filepath):
+        self.n_check_data(self.n_read(n_filepath))
+
+    def n_check_data(self, n_data):
         """Check nif file against feature."""
         raise NotImplementedError
 
+    def n_read(self, n_filepath):
+        n_data = NifFormat.Data()
+        with open(n_filepath, "rb") as stream:
+            n_data.read(stream)
+        return n_data
+
     def n_import(self, n_filepath):
-        io_scene_nif.import_scene.nif(
+        bpy.ops.import_scene.nif(
             filepath=n_filepath,
             log_level='DEBUG',
             )
 
     def n_export(self, n_filepath):
-        io_scene_nif.export_scene.nif(
+        bpy.ops.export_scene.nif(
             filepath=n_filepath,
             log_level='DEBUG',
             )
@@ -84,12 +99,14 @@ class SingleNif(Base):
         self.n_check(self.n_filepath_0)
         self.n_import(self.n_filepath_0)
         self.b_check()
+        self.b_select()
         self.n_export(self.n_filepath_1)
         self.n_check(self.n_filepath_1)
 
     def test_export_import(self):
         self.b_create()
         self.b_check()
+        self.b_select()
         self.n_export(self.n_filepath_2)
         self.n_check(self.n_filepath_2)
         self.b_clear()
