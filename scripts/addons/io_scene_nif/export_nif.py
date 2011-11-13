@@ -1897,7 +1897,7 @@ class NifExport(NifImportExport):
                     # check UV-mapped textures
                     elif mtex.texco == Blender.Texture.TexCo.UV:
                         # update set of uv layers that must be exported
-                        uvlayer = ( mtex.uvlayer if mtex.uvlayer
+                        uvlayer = ( mtex.uv_layer if mtex.uv_layer
                                     else mesh.activeUVLayer )
                         if not uvlayer in mesh_uvlayers:
                             mesh_uvlayers.append(uvlayer)
@@ -4188,12 +4188,12 @@ class NifExport(NifImportExport):
         """Helper function for export_texturing_property to export each texture
         slot."""
         try:
-            texdesc.uv_set = uvlayers.index(mtex.uvlayer) if mtex.uvlayer else 0
-        except ValueError: # mtex.uvlayer not in uvlayers list
+            texdesc.uv_set = uvlayers.index(mtex.uv_layer) if mtex.uv_layer else 0
+        except ValueError: # mtex.uv_layer not in uvlayers list
             self.warning(
                 "Bad uv layer name '%s' in texture '%s'."
                 " Falling back on first uv layer"
-                % (mtex.uvlayer, mtex.tex.name))
+                % (mtex.uv_layer, mtex.tex.name))
             texdesc.uv_set = 0 # assume 0 is active layer
 
         texdesc.source = self.export_source_texture(mtex.tex)

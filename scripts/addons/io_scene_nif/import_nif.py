@@ -1611,7 +1611,7 @@ class NifImport(NifImportExport):
                     mbase_texture.use_map_color_diffuse = True
                     # set the texture for the material
                     mbase_texture.blend_type = blend_type
-                    mbase_texture.uvlayer = self.get_uv_layer_name(baseTexDesc.uv_set)
+                    mbase_texture.uv_layer = self.get_uv_layer_name(baseTexDesc.uv_set)
             if glowTexDesc:
                 glow_texture = self.import_texture(glowTexDesc.source)
                 if glow_texture:
@@ -1624,7 +1624,7 @@ class NifImport(NifImportExport):
                     # set the texture for the material
                     material.setTexture(1, glow_texture, texco, mapto)
                     mglow_texture = material.getTextures()[1]
-                    mglow_texture.uvlayer = self.get_uv_layer_name(glowTexDesc.uv_set)
+                    mglow_texture.uv_layer = self.get_uv_layer_name(glowTexDesc.uv_set)
             if bumpTexDesc:
                 bumpTexture = self.import_texture(bumpTexDesc.source)
                 if bumpTexture:
@@ -1635,7 +1635,7 @@ class NifImport(NifImportExport):
                     # set the texture for the material
                     material.setTexture(2, bumpTexture, texco, mapto)
                     mbumpTexture = material.getTextures()[2]
-                    mbumpTexture.uvlayer = self.get_uv_layer_name(bumpTexDesc.uv_set)
+                    mbumpTexture.uv_layer = self.get_uv_layer_name(bumpTexDesc.uv_set)
             if glossTexDesc:
                 gloss_texture = self.import_texture(glossTexDesc.source)
                 if gloss_texture:
@@ -1646,7 +1646,7 @@ class NifImport(NifImportExport):
                     # set the texture for the material
                     material.setTexture(4, gloss_texture, texco, mapto)
                     mgloss_texture = material.getTextures()[4]
-                    mgloss_texture.uvlayer = self.get_uv_layer_name(glossTexDesc.uv_set)
+                    mgloss_texture.uv_layer = self.get_uv_layer_name(glossTexDesc.uv_set)
             if darkTexDesc:
                 dark_texture = self.import_texture(darkTexDesc.source)
                 if dark_texture:
@@ -1657,7 +1657,7 @@ class NifImport(NifImportExport):
                     # set the texture for the material
                     material.setTexture(5, dark_texture, texco, mapto)
                     mdark_texture = material.getTextures()[5]
-                    mdark_texture.uvlayer = self.get_uv_layer_name(darkTexDesc.uv_set)
+                    mdark_texture.uv_layer = self.get_uv_layer_name(darkTexDesc.uv_set)
                     # set blend mode to "DARKEN"
                     mdark_texture.blend_type = Blender.Texture.BlendModes["DARKEN"]
             if detailTexDesc:
@@ -1671,7 +1671,7 @@ class NifImport(NifImportExport):
                     # set the texture for the material
                     material.setTexture(6, detail_texture, texco, mapto)
                     mdetail_texture = material.getTextures()[6]
-                    mdetail_texture.uvlayer = self.get_uv_layer_name(detailTexDesc.uv_set)
+                    mdetail_texture.uv_layer = self.get_uv_layer_name(detailTexDesc.uv_set)
             if refTexDesc:
                 refTexture = self.import_texture(refTexDesc.source)
                 if refTexture:
@@ -1682,7 +1682,7 @@ class NifImport(NifImportExport):
                     # set the texture for the material
                     material.setTexture(7, refTexture, texco, mapto)
                     mrefTexture = material.getTextures()[7]
-                    mrefTexture.uvlayer = self.get_uv_layer_name(refTexDesc.uv_set)
+                    mrefTexture.uv_layer = self.get_uv_layer_name(refTexDesc.uv_set)
         # if not a texture property, but a bethesda shader property...
         elif bsShaderProperty:
             # also contains textures, used in fallout 3
