@@ -1819,11 +1819,10 @@ class NifExport(NifImportExport):
                 # for textured materials, they represent lighting details
                 mesh_hasvcol = bool(mesh.vertex_colors)
                 # read the Blender Python API documentation to understand this hack
-                mesh_mat_specular_color = mesh_mat.getSpecCol() # 'Spe' colour in Blender (MW -> 0.0 0.0 0.0)
-                specval = mesh_mat.getSpec()                    # 'Spec' slider in Blender
-                mesh_mat_specular_color[0] *= specval
-                mesh_mat_specular_color[1] *= specval
-                mesh_mat_specular_color[2] *= specval
+                mesh_mat_specular_color = mesh_mat.specular_color[:]
+                mesh_mat_specular_color[0] *= mesh_mat.specular_intensity
+                mesh_mat_specular_color[1] *= mesh_mat.specular_intensity
+                mesh_mat_specular_color[2] *= mesh_mat.specular_intensity
                 if mesh_mat_specular_color[0] > 1.0: mesh_mat_specular_color[0] = 1.0
                 if mesh_mat_specular_color[1] > 1.0: mesh_mat_specular_color[1] = 1.0
                 if mesh_mat_specular_color[2] > 1.0: mesh_mat_specular_color[2] = 1.0
