@@ -1898,7 +1898,7 @@ class NifExport(NifImportExport):
                         if not uvlayer in mesh_uvlayers:
                             mesh_uvlayers.append(uvlayer)
                         # check which texture slot this mtex belongs to
-                        if mtex.mapto & Blender.Texture.MapTo.EMIT:
+                        if mtex.use_map_color_emit:
                             # got the glow tex
                             if mesh_glow_mtex:
                                 raise NifExportError(
