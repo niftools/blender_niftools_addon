@@ -248,7 +248,7 @@ class VariaTestSuite(TestSuite):
                 if mtex_diff:
                     raise ValueError("more than one diffuse texture!")
                 mtex_diff = mtex
-            if mtex.mapto == Blender.Texture.MapTo.NOR:
+            if mtex.use_map_normal:
                 if mtex_norm:
                     raise ValueError("more than one normal texture!")
                 mtex_norm = mtex

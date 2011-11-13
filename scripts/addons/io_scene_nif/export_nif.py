@@ -1928,7 +1928,7 @@ class NifExport(NifImportExport):
                                     " with MapTo.SPEC"
                                     %(mesh.name,mesh_mat.name))
                             mesh_gloss_mtex = mtex
-                        elif mtex.mapto & Blender.Texture.MapTo.NOR:
+                        elif mtex.use_map_normal:
                             # got the normal map
                             if mesh_bump_mtex:
                                 raise NifExportError(
