@@ -1732,7 +1732,7 @@ class NifImport(NifImportExport):
             envmapTexture = self.import_texture(textureEffect.source_texture)
             if envmapTexture:
                 # set the texture to use face reflection coordinates
-                texco = Blender.Texture.TexCo.REFL
+                texco = 'REFLECTION'
                 # map the texture to the base color channel
                 mapto = Blender.Texture.MapTo.COL
                 # set the texture for the material
