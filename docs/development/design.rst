@@ -75,7 +75,7 @@ written. Ideally, the following process is followed:
      make the file as small as possible. Stick to minimal geometry.
 
    - Write Python code which test the nif against the desired feature.
-     This code goes in the :meth:`n_check` method of the test class.
+     This code goes in the :meth:`n_check_data` method of the test class.
 
 4. Write feature test code on blender level:
 
@@ -83,6 +83,9 @@ written. Ideally, the following process is followed:
      Where possible make the test case as simple as possible. For
      instance, use primitives readily available in blender. This code
      goes in the :meth:`b_create` method of the test class.
+
+   - Implement :meth:`b_select` which selects the created or imported
+     blender object for exporting.
 
    - Document the feature in ``docs/features/blabla.rst`` as you write
      :meth:`b_create`: explain what the user has to do in blender in order
@@ -101,12 +104,12 @@ The tests will actually do the following:
 
 1. Test that import-export works as expected:
 
-   - Call :meth:`n_check` on test nif.
+   - Call :meth:`n_check_data` on test nif.
 
    - Import the nif ``test/nif/blabla0.nif`` and call :meth:`b_check` on
      imported scene.
 
-   - Export the nif to ``test/nif/blabla1.nif`` call :meth:`n_check` on
+   - Export the nif to ``test/nif/blabla1.nif`` call :meth:`n_check_data` on
      exported data.
 
 2. Test that export-import works as expected:
@@ -115,7 +118,7 @@ The tests will actually do the following:
      and :meth:`b_check` to check it.
 
    - Export the nif to ``test/nif/blabla2.nif`` and call
-     :meth:`n_check` on exported nif.
+     :meth:`n_check_data` on exported nif.
 
    - Clear blender scene, import the exported nif, and call
      :meth:`b_check` on imported scene.
