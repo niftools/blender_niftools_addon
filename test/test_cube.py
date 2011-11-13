@@ -12,7 +12,7 @@ class TestCube(test.SingleNif):
     n_name = "cube"
     b_name = "Cube"
 
-    def b_create(self):
+    def b_create_object(self):
         # note: primitive_cube_add creates object named "Cube"
         bpy.ops.mesh.primitive_cube_add()
         b_obj = bpy.data.objects["Cube"]
@@ -20,7 +20,7 @@ class TestCube(test.SingleNif):
         b_obj.data.show_double_sided = False
         return b_obj
 
-    def b_check(self, b_obj):
+    def b_check_object(self, b_obj):
         b_mesh = b_obj.data
         nose.tools.assert_equal(len(b_mesh.vertices), 8)
         num_triangles = len(
