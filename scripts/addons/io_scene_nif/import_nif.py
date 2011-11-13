@@ -1643,7 +1643,7 @@ class NifImport(NifImportExport):
                     # set the texture to use face UV coordinates
                     texco = 'UV'
                     # map the texture to the specularity channel
-                    mapto = Blender.Texture.MapTo.SPEC
+                    mapto = FIXME.use_map_specular
                     # set the texture for the material
                     material.setTexture(4, gloss_texture, texco, mapto)
                     mgloss_texture = material.getTextures()[4]
