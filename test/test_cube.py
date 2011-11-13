@@ -9,14 +9,15 @@ import test
 from pyffi.formats.nif import NifFormat
 
 class TestCube(test.SingleNif):
-    name = "cube"
+    n_name = "cube"
+    b_name = "Cube"
 
     def b_create(self):
+        # note: created cube has name "Cube"
         bpy.ops.mesh.primitive_cube_add()
-        b_obj = bpy.data.objects["Cube"]
+        return bpy.data.objects["Cube"]
 
-    def b_check(self):
-        b_obj = bpy.data.objects["Cube"]
+    def b_check(self, b_obj):
         b_mesh = b_obj.data
         nose.tools.assert_equal(len(b_mesh.vertices), 8)
         num_triangles = len(
@@ -24,9 +25,6 @@ class TestCube(test.SingleNif):
         num_triangles += 2 * len(
             [face for face in b_mesh.faces if len(face.vertices) == 4])
         nose.tools.assert_equal(num_triangles, 12)
-
-    def b_select(self):
-        bpy.data.objects["Cube"].select = True
 
     def n_check_data(self, n_data):
         n_geom = n_data.roots[0].children[0]

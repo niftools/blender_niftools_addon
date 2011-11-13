@@ -44,37 +44,34 @@ class Base:
 
 class SingleNif(Base):
     """Base class for testing a feature concerning single nif files."""
-    name = None
-    """Feature name (serves as part of filepath, string, no spaces or
-    special characters).
-    """
+
+    n_name = None
+    """Name of nif file (without ``0.nif`` at the end)."""
+
+    b_name = None
+    """Name of imported blender object."""
 
     def __init__(self):
-        if self.name is None:
-            return
         Base.__init__(self)
-        self.n_filepath_0 = "test/nif/" + self.name + "0.nif"
-        self.n_filepath_1 = "test/nif/" + self.name + "1.nif"
-        self.n_filepath_2 = "test/nif/" + self.name + "2.nif"
+        self.n_filepath_0 = "test/nif/" + self.n_name + "0.nif"
+        self.n_filepath_1 = "test/nif/" + self.n_name + "1.nif"
+        self.n_filepath_2 = "test/nif/" + self.n_name + "2.nif"
 
     def b_create(self):
-        """Create blender objects in current blender scene for feature."""
+        """Create and return blender object for feature."""
         raise NotImplementedError
 
-    def b_check(self):
-        """Check current blender scene against feature."""
+    def b_check(self, b_obj):
+        """Check blender object against feature."""
         raise NotImplementedError
 
-    def b_select(self):
-        """Select objects to be exported."""
+    def n_check_data(self, n_data):
+        """Check nif data against feature."""
         raise NotImplementedError
 
     def n_check(self, n_filepath):
-        self.n_check_data(self.n_read(n_filepath))
-
-    def n_check_data(self, n_data):
         """Check nif file against feature."""
-        raise NotImplementedError
+        self.n_check_data(self.n_read(n_filepath))
 
     def n_read(self, n_filepath):
         n_data = NifFormat.Data()
@@ -98,17 +95,19 @@ class SingleNif(Base):
         self.b_clear()
         self.n_check(self.n_filepath_0)
         self.n_import(self.n_filepath_0)
-        self.b_check()
-        self.b_select()
+        b_obj = bpy.data.objects[self.b_name]
+        self.b_check(b_obj)
+        b_obj.select = True
         self.n_export(self.n_filepath_1)
         self.n_check(self.n_filepath_1)
 
     def test_export_import(self):
-        self.b_create()
-        self.b_check()
-        self.b_select()
+        b_obj = self.b_create()
+        self.b_check(b_obj)
+        b_obj.select = True
         self.n_export(self.n_filepath_2)
         self.n_check(self.n_filepath_2)
         self.b_clear()
         self.n_import(self.n_filepath_2)
-        self.b_check()
+        b_obj = bpy.data.objects[self.b_name]
+        self.b_check(b_obj)

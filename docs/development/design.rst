@@ -84,9 +84,6 @@ written. Ideally, the following process is followed:
      instance, use primitives readily available in blender. This code
      goes in the :meth:`b_create` method of the test class.
 
-   - Implement :meth:`b_select` which selects the created or imported
-     blender object for exporting.
-
    - Document the feature in ``docs/features/blabla.rst`` as you write
      :meth:`b_create`: explain what the user has to do in blender in order
      to export the desired data, and where in blender the data ends up
