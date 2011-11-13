@@ -1868,7 +1868,7 @@ class NifExport(NifImportExport):
                         # (MapTo "COL", blending mode "Add")
                         # but let's not care too much about that
                         # only do some simple checks
-                        if (mtex.mapto & Blender.Texture.MapTo.COL) == 0:
+                        if not mtex.use_map_color_diffuse:
                             # it should map to colour
                             raise NifExportError(
                                 "Non-COL-mapped reflection texture in"
