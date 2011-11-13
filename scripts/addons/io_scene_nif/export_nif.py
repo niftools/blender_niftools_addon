@@ -1880,7 +1880,7 @@ class NifExport(NifImportExport):
                                 " under Material Buttons,"
                                 " set texture 'Map To' to 'COL'."
                                 % (ob.name,mesh_mat.name))
-                        if mtex.blend_type != Blender.Texture.BlendModes["ADD"]:
+                        if mtex.blend_type != 'ADD':
                             # it should have "ADD" blending mode
                             self.warning(
                                "Reflection texture should have blending"
