@@ -1835,7 +1835,7 @@ class NifExport(NifImportExport):
                 mesh_hasalpha = (abs(mesh_mat_transparency - 1.0) > self.properties.epsilon) \
                                 or (mesh_mat.animation_data
                                     and mesh_mat.animation_data.action.fcurves['Alpha'])
-                mesh_haswire = mesh_mat.mode & Blender.Material.Modes.WIRE
+                mesh_haswire = (mesh_mat.type == 'WIRE')
                 mesh_mat_ambient_color = [0.0, 0.0, 0.0]
                 mesh_mat_ambient_color[0] = mesh_mat.diffuse_color[0] * mesh_mat.ambient
                 mesh_mat_ambient_color[1] = mesh_mat.diffuse_color[1] * mesh_mat.ambient
