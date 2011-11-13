@@ -1830,7 +1830,7 @@ class NifExport(NifImportExport):
                     or ( mesh_mat_specular_color[1] > self.properties.epsilon ) \
                     or ( mesh_mat_specular_color[2] > self.properties.epsilon ):
                     mesh_hasspec = True
-                mesh_mat_glossiness = mesh_mat.getHardness() / 4.0  # 'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
+                mesh_mat_glossiness = mesh_mat.specular_hardness / 4.0  # 'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
                 mesh_mat_transparency = mesh_mat.getAlpha()         # 'A(lpha)' scrollbar in Blender (MW -> 1.0)
                 mesh_hasalpha = (abs(mesh_mat_transparency - 1.0) > self.properties.epsilon) \
                                 or (mesh_mat.animation_data
