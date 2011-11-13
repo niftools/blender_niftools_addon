@@ -1830,7 +1830,6 @@ class NifExport(NifImportExport):
                     or ( mesh_mat_specular_color[1] > self.properties.epsilon ) \
                     or ( mesh_mat_specular_color[2] > self.properties.epsilon ):
                     mesh_hasspec = True
-                mesh_mat_emissive = mesh_mat.getEmit()              # 'Emit' scrollbar in Blender (MW -> 0.0 0.0 0.0)
                 mesh_mat_glossiness = mesh_mat.getHardness() / 4.0  # 'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
                 mesh_mat_transparency = mesh_mat.getAlpha()         # 'A(lpha)' scrollbar in Blender (MW -> 1.0)
                 mesh_hasalpha = (abs(mesh_mat_transparency - 1.0) > self.properties.epsilon) \
@@ -1844,9 +1843,9 @@ class NifExport(NifImportExport):
                 mesh_mat_emissive_color = [0.0, 0.0, 0.0]
                 mesh_mat_emitmulti = 1.0 # default
                 if self.properties.game != 'FALLOUT_3':
-                    mesh_mat_emissive_color[0] = mesh_mat.diffuse_color[0] * mesh_mat_emissive
-                    mesh_mat_emissive_color[1] = mesh_mat.diffuse_color[1] * mesh_mat_emissive
-                    mesh_mat_emissive_color[2] = mesh_mat.diffuse_color[2] * mesh_mat_emissive
+                    mesh_mat_emissive_color[0] = mesh_mat.diffuse_color[0] * mesh_mat.emit
+                    mesh_mat_emissive_color[1] = mesh_mat.diffuse_color[1] * mesh_mat.emit
+                    mesh_mat_emissive_color[2] = mesh_mat.diffuse_color[2] * mesh_mat.emit
                 else:
                     # special case for Fallout 3 (it does not store diffuse color)
                     # if emit is non-zero, set emissive color to diffuse
