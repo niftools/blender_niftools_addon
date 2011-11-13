@@ -65,7 +65,7 @@ written. Ideally, the following process is followed:
    feature's implementation, make a note of it in
    ``docs/development/design.rst``.
 
-3. Write feature data and code on nif level:
+3. Write feature test data and test code on nif level:
 
    - Create a nif (say in nifskope, or with the old blender nif
      scripts) and save it as ``test/nif/blabla.nif``. Take care to
@@ -74,7 +74,7 @@ written. Ideally, the following process is followed:
    - Write Python code which test the nif against the desired feature.
      This code goes in the *n_check* method of the test class.
 
-4. Write feature code on blender level:
+4. Write feature test code on blender level:
 
    - Write Python code which create the corresponding blender scene.
      Where possible make the test case as simple as possible. For
@@ -88,6 +88,9 @@ written. Ideally, the following process is followed:
 
    - Write Python code which test the blender scene against the
      desired feature: *b_check* method of the test class.
+
+5. Now implement the feature in the import and export scripts, until
+   the regression test passes.
 
 That's it!
 
