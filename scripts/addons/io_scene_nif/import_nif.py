@@ -2237,20 +2237,17 @@ class NifImport(NifImportExport):
             # if there's a base texture assigned to this material sets it
             # to be displayed in Blender's 3D view
             # but only if there are UV coordinates
-            if mbasetex and uvco:
-                # face mode bitfield value
-                TEX = Blender.Mesh.FaceModes['TEX']
-                # face transparency enum
-                ALPHA = Blender.Mesh.FaceTranspModes['ALPHA']
-                imgobj = mbasetex.tex.getImage()
+            if mbasetex and mbasetex.texture and uvco:
+                imgobj = mbasetex.texture.image
                 if imgobj:
                     for b_f_index in f_map:
                         if b_f_index is None:
                             continue
-                        f = b_meshData.faces[b_f_index]
-                        f.mode = TEX
-                        f.transp = ALPHA
-                        f.image = imgobj
+                        tface = b_meshData.uv_textures.active.data[b_f_index]
+                        # gone in blender 2.5x+?
+                        #f.mode = Blender.Mesh.FaceModes['TEX']
+                        #f.transp = Blender.Mesh.FaceTranspModes['ALPHA']
+                        tface.image = imgobj
 
         # import skinning info, for meshes affected by bones
         skininst = niBlock.skin_instance
