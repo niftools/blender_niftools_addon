@@ -10,7 +10,7 @@ class TestBaseUVTexture(TestCube):
     n_name = "base_uv_texture"
 
     def b_create_object(self):
-        b_obj = TestCube.b_create_object()
+        b_obj = TestCube.b_create_object(self)
         # TODO add a texture to it
         return b_obj
 
@@ -20,7 +20,7 @@ class TestBaseUVTexture(TestCube):
 
     def n_check_data(self, n_data):
         n_geom = n_data.roots[0].children[0]
-        nose.tools.assert_equal(n_geom.num_properties, 1)
+        nose.tools.assert_equal(n_geom.num_properties, 2)
         nose.tools.assert_equal(len(n_geom.data.uv_sets), 1)
         nose.tools.assert_equal(len(n_geom.data.uv_sets[0]), 8) # 8 vertices
         with n_geom.properties[0] as n_tex_prop:
