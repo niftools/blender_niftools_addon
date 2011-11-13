@@ -4,9 +4,9 @@ import bpy
 import nose.tools
 
 import io_scene_nif.export_nif
-from test import Test
+import test
 
-class TestBoundImport(Test):
+class TestBoundImport(test.Base):
 
     def test_import(self):
         bpy.ops.import_scene.nif(
@@ -20,7 +20,7 @@ class TestBoundImport(Test):
         assert(b_bbox.draw_bounds_type == 'BOX')
         assert(b_bbox.draw_type == 'BOUNDS')
         
-class TestBoundExport(Test):
+class TestBoundExport(test.Base):
     def setup(self):
         
         '''      
@@ -60,7 +60,7 @@ class TestBoundExport(Test):
         '''
     
         
-class TestBSBoundImport(Test):
+class TestBSBoundImport(test.Base):
     def test_import(self):
         bpy.ops.import_scene.nif(
             filepath="test/import/bounding_box_bsbound.nif",

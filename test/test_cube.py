@@ -6,9 +6,9 @@ import bpy
 import nose.tools
 
 import io_scene_nif.export_nif
-from test import Test
+import test
 
-class TestCubeExport(Test):
+class TestCubeExport(test.Base):
     def setup(self):
         # create a cube
         bpy.ops.mesh.primitive_cube_add()
@@ -21,14 +21,14 @@ class TestCubeExport(Test):
             log_level='DEBUG',
             )
 
-class TestCubeImport(Test):
+class TestCubeImport(test.Base):
     def test_import(self):
         bpy.ops.import_scene.nif(
             filepath="test/import/cube.nif",
             log_level='DEBUG',
             )
 
-class TestNonUniformlyScaledCube(Test):
+class TestNonUniformlyScaledCube(test.Base):
     def setup(self):
         # create a non-uniformly scaled cube
         bpy.ops.mesh.primitive_cube_add()
