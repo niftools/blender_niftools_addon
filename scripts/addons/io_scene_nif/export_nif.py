@@ -1855,9 +1855,9 @@ class NifExport(NifImportExport):
                         mesh_mat_emitmulti = mesh_mat.emit * 10.0
                 # the base texture = first material texture
                 # note that most morrowind files only have a base texture, so let's for now only support single textured materials
-                for mtex in mesh_mat.getTextures():
-                    if not mtex:
-                        # skip empty texture slots
+                for mtex in mesh_mat.texture_slots:
+                    if not mtex.use:
+                        # skip unused texture slots
                         continue
 
                     # check REFL-mapped textures
