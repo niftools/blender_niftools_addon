@@ -1373,7 +1373,7 @@ class NifImport(NifImportExport):
                     self.debug("Searching %s" % tex)
                     if os.path.exists(tex):
                         # tries to load the file
-                        b_image = bpy.ops.image.open(tex)
+                        b_image = bpy.data.images.load(tex)
                         # Blender will return an image object even if the
                         # file format is not supported,
                         # so to check if the image is actually loaded an error
@@ -1397,17 +1397,16 @@ class NifImport(NifImportExport):
                 "Texture '%s' not found or not supported"
                 " and no alternate available"
                 % fn)
-            b_image = bpy.ops.image.new(
+            b_image = bpy.data.images.new(
                 name=fn, width=1, height=1, alpha=False)
             # TODO is this still needed? commented out for now
             #b_image.filepath = tex
 
         # create a texture
-        b_texture = bpy.ops.texture.new()
-        b_texture.setType('Image')
-        b_texture.setImage(b_image)
-        b_texture.imageFlags |= Blender.Texture.ImageFlags.INTERPOL
-        b_texture.imageFlags |= Blender.Texture.ImageFlags.MIPMAP
+        b_texture = bpy.data.textures.new(name="Tex", type='IMAGE')
+        b_texture.image = b_image
+        b_texture.use_interpolation = True
+        b_texture.use_mipmap = True
 
         # save texture to avoid duplicate imports, and return it
         self.textures[texture_hash] = b_texture
