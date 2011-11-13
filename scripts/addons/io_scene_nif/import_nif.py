@@ -1605,6 +1605,7 @@ class NifImport(NifImportExport):
                 base_texture = self.import_texture(baseTexDesc.source)
                 if base_texture:
                     mbase_texture = material.texture_slots.create(0)
+                    mbase_texture.texture = base_texture
                     # set the texture to use face UV coordinates
                     mbase_texture.texture_coords = 'UV'
                     # map the texture to the base color channel
