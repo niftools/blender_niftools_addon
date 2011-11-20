@@ -2764,6 +2764,10 @@ class NifExport(NifImportExport):
 
     def export_material_controllers(self, b_material, n_geom):
         """Export material animation data for given geometry."""
+        # XXX todo: port to blender 2.5x+ interface
+        # XXX Blender.Ipo channel constants are replaced by FCurve.data_path?
+        return
+
         if self.properties.animation == 'GEOM_NIF':
             # geometry only: don't write controllers
             return
