@@ -2058,7 +2058,9 @@ class NifExport(NifImportExport):
                 if mesh_uvlayers:
                     # if we have uv coordinates
                     # double check that we have uv data
-                    if not mesh.faceUV or len(f.uv) != len(f.v):
+                    # XXX should we check that every uvlayer in mesh_uvlayers
+                    # XXX is in uv_textures?
+                    if not mesh.uv_textures:
                         raise NifExportError(
                             "ERROR%t|Create a UV map for every texture,"
                             " and run the script again.")
