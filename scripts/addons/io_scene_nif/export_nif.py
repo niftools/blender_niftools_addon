@@ -1622,8 +1622,9 @@ class NifExport(NifImportExport):
         elif texture.type == 'IMAGE':
             # get filename from image
 
+            # XXX still needed? can texture.image be None in current blender?
             # check that image is loaded
-            if texture.getImage() is None:
+            if texture.image is None:
                 raise NifExportError(
                     "image type texture has no file loaded ('%s')"
                     % texture.name)                    
@@ -1631,7 +1632,7 @@ class NifExport(NifImportExport):
             filename = texture.image.getFilename()
 
             # warn if packed flag is enabled
-            if texture.getImage().packed:
+            if texture.image.packed:
                 self.warning(
                     "Packed image in texture '%s' ignored, "
                     "exporting as '%s' instead."
