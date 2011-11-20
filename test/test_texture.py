@@ -20,7 +20,9 @@ class TestBaseUVTexture(TestCube):
         b_mtex.texture = bpy.data.textures.new(name='Tex', type='IMAGE')
         b_mtex.texture.image = bpy.data.images.new('textures' + os.sep + 'image.dds', 1, 1)
         b_obj.data.materials.append(b_mat)
-        # TODO set up uv layer, and unwrap uv for cube
+        bpy.ops.object.editmode_toggle()
+        bpy.ops.uv.cube_project()
+        bpy.ops.object.editmode_toggle()
         return b_obj
 
     def b_check_object(self, b_obj):
