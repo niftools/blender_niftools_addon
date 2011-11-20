@@ -2286,8 +2286,7 @@ class NifExport(NifImportExport):
                         #darkmtex = mesh_dark_mtex,
                         #detailmtex = mesh_detail_mtex)) 
                 else:
-                    if (self.properties.game in self.USED_EXTRA_SHADER_TEXTURES
-                        and self.EXPORT_EXTRA_SHADER_TEXTURES):
+                    if self.properties.game in self.USED_EXTRA_SHADER_TEXTURES:
                         # sid meier's railroad and civ4:
                         # set shader slots in extra data
                         self.add_shader_integer_extra_datas(trishape)
@@ -2424,8 +2423,7 @@ class NifExport(NifImportExport):
             # not using tangent space on non shadered nifs)
             if mesh_uvlayers and mesh_hasnormals:
                 if (self.properties.game in ('OBLIVION', 'FALLOUT_3')
-                    or (self.properties.game in self.USED_EXTRA_SHADER_TEXTURES
-                        and self.EXPORT_EXTRA_SHADER_TEXTURES)):
+                    or (self.properties.game in self.USED_EXTRA_SHADER_TEXTURES)):
                     trishape.update_tangent_space(
                         as_extra=(self.properties.game == 'OBLIVION'))
 
@@ -4211,40 +4209,40 @@ class NifExport(NifImportExport):
         texprop.apply_mode = applymode
         texprop.texture_count = 7
 
-        if self.EXPORT_EXTRA_SHADER_TEXTURES:
-            if self.properties.game == 'SID_MEIER_S_RAILROADS':
-                # sid meier's railroads:
-                # some textures end up in the shader texture list
-                # there are 5 slots available, so set them up
-                texprop.num_shader_textures = 5
-                texprop.shader_textures.update_size()
-                for mapindex, shadertexdesc in enumerate(texprop.shader_textures):
-                    # set default values
-                    shadertexdesc.is_used = False
-                    shadertexdesc.map_index = mapindex
+        # export extra shader textures
+        if self.properties.game == 'SID_MEIER_S_RAILROADS':
+            # sid meier's railroads:
+            # some textures end up in the shader texture list
+            # there are 5 slots available, so set them up
+            texprop.num_shader_textures = 5
+            texprop.shader_textures.update_size()
+            for mapindex, shadertexdesc in enumerate(texprop.shader_textures):
+                # set default values
+                shadertexdesc.is_used = False
+                shadertexdesc.map_index = mapindex
 
-                # some texture slots required by the engine
-                shadertexdesc_envmap = texprop.shader_textures[0]
-                shadertexdesc_envmap.is_used = True
-                shadertexdesc_envmap.texture_data.source = \
-                    self.export_source_texture(filename="RRT_Engine_Env_map.dds")
+            # some texture slots required by the engine
+            shadertexdesc_envmap = texprop.shader_textures[0]
+            shadertexdesc_envmap.is_used = True
+            shadertexdesc_envmap.texture_data.source = \
+                self.export_source_texture(filename="RRT_Engine_Env_map.dds")
 
-                shadertexdesc_cubelightmap = texprop.shader_textures[4]
-                shadertexdesc_cubelightmap.is_used = True
-                shadertexdesc_cubelightmap.texture_data.source = \
-                    self.export_source_texture(filename="RRT_Cube_Light_map_128.dds")
+            shadertexdesc_cubelightmap = texprop.shader_textures[4]
+            shadertexdesc_cubelightmap.is_used = True
+            shadertexdesc_cubelightmap.texture_data.source = \
+                self.export_source_texture(filename="RRT_Cube_Light_map_128.dds")
 
-                # the other slots are exported below
+            # the other slots are exported below
 
-            elif self.properties.game == 'CIVILIZATION_IV':
-                # some textures end up in the shader texture list
-                # there are 4 slots available, so set them up
-                texprop.num_shader_textures = 4
-                texprop.shader_textures.update_size()
-                for mapindex, shadertexdesc in enumerate(texprop.shader_textures):
-                    # set default values
-                    shadertexdesc.is_used = False
-                    shadertexdesc.map_index = mapindex
+        elif self.properties.game == 'CIVILIZATION_IV':
+            # some textures end up in the shader texture list
+            # there are 4 slots available, so set them up
+            texprop.num_shader_textures = 4
+            texprop.shader_textures.update_size()
+            for mapindex, shadertexdesc in enumerate(texprop.shader_textures):
+                # set default values
+                shadertexdesc.is_used = False
+                shadertexdesc.map_index = mapindex
 
         if basemtex:
             texprop.has_base_texture = True
@@ -4278,7 +4276,7 @@ class NifExport(NifImportExport):
                 texprop.bump_map_matrix.m_12 = 0.0
                 texprop.bump_map_matrix.m_21 = 0.0
                 texprop.bump_map_matrix.m_22 = 1.0
-            elif self.EXPORT_EXTRA_SHADER_TEXTURES:
+            else:
                 shadertexdesc = texprop.shader_textures[1]
                 shadertexdesc.is_used = True
                 shadertexdesc.texture_data.source = \
@@ -4290,7 +4288,7 @@ class NifExport(NifImportExport):
                 self.export_tex_desc(texdesc = texprop.gloss_texture,
                                      uvlayers = uvlayers,
                                      mtex = glossmtex)
-            elif self.EXPORT_EXTRA_SHADER_TEXTURES:
+            else:
                 shadertexdesc = texprop.shader_textures[2]
                 shadertexdesc.is_used = True
                 shadertexdesc.texture_data.source = \
