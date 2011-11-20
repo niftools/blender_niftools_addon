@@ -1856,7 +1856,7 @@ class NifExport(NifImportExport):
                 # the base texture = first material texture
                 # note that most morrowind files only have a base texture, so let's for now only support single textured materials
                 for mtex in mesh_mat.texture_slots:
-                    if not mtex.use:
+                    if not mtex or not mtex.use:
                         # skip unused texture slots
                         continue
 
