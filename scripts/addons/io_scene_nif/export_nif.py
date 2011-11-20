@@ -1893,10 +1893,8 @@ class NifExport(NifImportExport):
                     # check UV-mapped textures
                     elif mtex.texture_coords == 'UV':
                         # update set of uv layers that must be exported
-                        uvlayer = ( mtex.uv_layer if mtex.uv_layer
-                                    else mesh.activeUVLayer )
-                        if not uvlayer in mesh_uvlayers:
-                            mesh_uvlayers.append(uvlayer)
+                        if not mtex.uv_layer in mesh_uvlayers:
+                            mesh_uvlayers.append(mtex.uv_layer)
                         # check which texture slot this mtex belongs to
                         if mtex.use_map_emit:
                             # got the glow tex
