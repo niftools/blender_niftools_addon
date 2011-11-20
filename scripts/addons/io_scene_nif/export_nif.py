@@ -1632,7 +1632,7 @@ class NifExport(NifImportExport):
             filename = texture.image.filepath
 
             # warn if packed flag is enabled
-            if texture.image.packed:
+            if texture.image.packed_file:
                 self.warning(
                     "Packed image in texture '%s' ignored, "
                     "exporting as '%s' instead."
