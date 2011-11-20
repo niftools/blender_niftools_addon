@@ -1907,7 +1907,7 @@ class NifExport(NifImportExport):
                                     %(mesh.name,mesh_mat.name))
                             # check if calculation of alpha channel is enabled
                             # for this texture
-                            if (mtex.tex.imageFlags & Blender.Texture.ImageFlags.CALCALPHA != 0) \
+                            if (mtex.texture.imageFlags & Blender.Texture.ImageFlags.CALCALPHA != 0) \
                                and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
                                 self.warning(
                                     "In mesh '%s', material '%s':"
@@ -1947,7 +1947,7 @@ class NifExport(NifImportExport):
                             # as base texture
                             mesh_base_mtex = mtex
                             # check if alpha channel is enabled for this texture
-                            if (mesh_base_mtex.tex.imageFlags & Blender.Texture.ImageFlags.USEALPHA != 0) and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
+                            if (mesh_base_mtex.texure.imageFlags & Blender.Texture.ImageFlags.USEALPHA != 0) and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
                                 # in this case, Blender replaces the texture transparant parts with the underlying material color...
                                 # in NIF, material alpha is multiplied with texture alpha channel...
                                 # how can we emulate the NIF alpha system (simply multiplying material alpha with texture alpha) when MapTo.ALPHA is turned on?
@@ -1998,7 +1998,7 @@ class NifExport(NifImportExport):
                                 " go to the Shading Panel,"
                                 " Material Buttons, and set texture"
                                 " 'Map To' to 'COL'."
-                                % (mtex.tex.name,ob.name,mesh_mat.name))
+                                % (mtex.texure.name,ob.name,mesh_mat.name))
                     else:
                         # nif only support UV-mapped textures
                         raise NifExportError(
@@ -4187,10 +4187,10 @@ class NifExport(NifImportExport):
             self.warning(
                 "Bad uv layer name '%s' in texture '%s'."
                 " Falling back on first uv layer"
-                % (mtex.uv_layer, mtex.tex.name))
+                % (mtex.uv_layer, mtex.texture.name))
             texdesc.uv_set = 0 # assume 0 is active layer
 
-        texdesc.source = self.export_source_texture(mtex.tex)
+        texdesc.source = self.export_source_texture(mtex.texture)
 
     def export_texturing_property(
         self, flags=0x0001, applymode=None, uvlayers=None,
@@ -4251,12 +4251,12 @@ class NifExport(NifImportExport):
                                  mtex = basemtex)
             # check for texture flip definition
             try:
-                fliptxt = Blender.Text.Get(basemtex.tex.name)
+                fliptxt = Blender.Text.Get(basemtex.texture.name)
             except NameError:
                 pass
             else:
                 # texture slot 0 = base
-                self.export_flip_controller(fliptxt, basemtex.tex, texprop, 0)
+                self.export_flip_controller(fliptxt, basemtex.texture, texprop, 0)
 
         if glowmtex:
             texprop.has_glow_texture = True
@@ -4280,7 +4280,7 @@ class NifExport(NifImportExport):
                 shadertexdesc = texprop.shader_textures[1]
                 shadertexdesc.is_used = True
                 shadertexdesc.texture_data.source = \
-                    self.export_source_texture(texture=bumpmtex.tex)
+                    self.export_source_texture(texture=bumpmtex.texture)
 
         if glossmtex:
             if self.properties.game not in self.USED_EXTRA_SHADER_TEXTURES:
@@ -4292,7 +4292,7 @@ class NifExport(NifImportExport):
                 shadertexdesc = texprop.shader_textures[2]
                 shadertexdesc.is_used = True
                 shadertexdesc.texture_data.source = \
-                    self.export_source_texture(texture=glossmtex.tex)
+                    self.export_source_texture(texture=glossmtex.texture)
 
         if darkmtex:
             texprop.has_dark_texture = True
@@ -4318,7 +4318,7 @@ class NifExport(NifImportExport):
                 shadertexdesc = texprop.shader_textures[3]
                 shadertexdesc.is_used = True
                 shadertexdesc.texture_data.source = \
-                    self.export_source_texture(texture=refmtex.tex)
+                    self.export_source_texture(texture=refmtex.texture)
 
         # search for duplicate
         for block in self.blocks:
@@ -4348,11 +4348,11 @@ class NifExport(NifImportExport):
         texset = NifFormat.BSShaderTextureSet()
         bsshader.texture_set = texset
         if basemtex:
-            texset.textures[0] = self.export_texture_filename(basemtex.tex)
+            texset.textures[0] = self.export_texture_filename(basemtex.texture)
         if bumpmtex:
-            texset.textures[1] = self.export_texture_filename(bumpmtex.tex)
+            texset.textures[1] = self.export_texture_filename(bumpmtex.texture)
         if glowmtex:
-            texset.textures[2] = self.export_texture_filename(glowmtex.tex)
+            texset.textures[2] = self.export_texture_filename(glowmtex.texture)
 
         # search for duplicates
         # DISABLED: the Fallout 3 engine cannot handle them
@@ -4377,7 +4377,7 @@ class NifExport(NifImportExport):
         texeff.texture_type = NifFormat.EffectType.EFFECT_ENVIRONMENT_MAP
         texeff.coordinate_generation_type = NifFormat.CoordGenType.CG_SPHERE_MAP
         if mtex:
-            texeff.source_texture = self.export_source_texture(mtex.tex)
+            texeff.source_texture = self.export_source_texture(mtex.texture)
             if self.properties.game == 'MORROWIND':
                 texeff.num_affected_node_list_pointers += 1
                 texeff.affected_node_list_pointers.update_size()
