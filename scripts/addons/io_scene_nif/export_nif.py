@@ -2079,7 +2079,8 @@ class NifExport(NifImportExport):
                     fuv = []
                     for uvlayer in mesh_uvlayers:
                         fuv.append(
-                            getattr(mesh.uv_textures[uvlayer].data, "uv%i" % i))
+                            getattr(mesh.uv_textures[uvlayer].data[fv_index],
+                                    "uv%i" % (i + 1)))
                     # FIXME figure out the new vertex color layer system
                     fcol = None
                     """
