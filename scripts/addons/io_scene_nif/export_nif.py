@@ -1640,7 +1640,7 @@ class NifExport(NifImportExport):
             
             # try and find a DDS alternative, force it if required
             ddsfilename = "%s%s" % (filename[:-4], '.dds')
-            if os.path.exists(ddsfilename) or self.EXPORT_FORCEDDS:
+            if os.path.exists(ddsfilename) or self.properties.force_dds:
                 filename = ddsfilename
 
             # sanitize file path
