@@ -1,9 +1,14 @@
+set VERSION=2.6.0
 set NAME=blender_nif_scripts
-set VERSION=2.5.8
-set FILES=scripts\import\import_nif.py scripts\export\export_nif.py scripts\mesh\mesh_niftools_weightsquash.py scripts\mesh\mesh_niftools_hull.py scripts\object\object_niftools_set_bone_priority.py scripts\object\object_niftools_save_bone_pose.py scripts\object\object_niftools_load_bone_pose.py scripts\bpymodules\nif_common.py scripts\bpymodules\nif_test.py scripts\mesh\mesh_niftools_morphcopy.py ChangeLog README.html install.sh install.bat
+set FILES=AUTHORS.rst CHANGELOG.rst LICENSE.rst README.rst install.sh install.bat scripts/ docs/_build/html/
+
+# update documentation
+pushd docs
+make clean
+make html
+popd
 
 del %NAME%-%VERSION%.*
-
 "%PROGRAMFILES%\7-Zip\7z.exe" a -tzip %NAME%-%VERSION%.zip %FILES%
 "%PROGRAMFILES%\7-Zip\7z.exe" a -ttar %NAME%-%VERSION%.tar %FILES%
 "%PROGRAMFILES%\7-Zip\7z.exe" a -tbzip2 %NAME%-%VERSION%.tar.bz2 %NAME%-%VERSION%.tar
