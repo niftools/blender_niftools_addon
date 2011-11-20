@@ -1936,7 +1936,7 @@ class NifExport(NifImportExport):
                                     %(mesh.name,mesh_mat.name))
                             mesh_bump_mtex = mtex
                         elif mtex.use_map_color_diffuse and \
-                             mtex.blend_type == "DARKEN" and \
+                             mtex.blend_type == 'DARKEN' and \
                              not mesh_dark_mtex:
                             # got the dark map
                             mesh_dark_mtex = mtex
@@ -2292,7 +2292,7 @@ class NifExport(NifImportExport):
                         flags=0x0001, # standard
                         applymode=self.get_n_apply_mode_from_b_blend_type(
                             mesh_base_mtex.blend_type
-                            if mesh_base_mtex else "MIX"),
+                            if mesh_base_mtex else 'MIX'),
                         uvlayers=mesh_uvlayers,
                         basemtex=mesh_base_mtex,
                         glowmtex=mesh_glow_mtex,

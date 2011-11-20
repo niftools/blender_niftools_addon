@@ -1451,13 +1451,13 @@ class NifImport(NifImportExport):
         name = self.import_name(matProperty)
         material = bpy.data.materials.new(name)
         # get apply mode, and convert to blender "blending mode"
-        blend_type = "MIX" # default
+        blend_type = 'MIX' # default
         if textProperty:
             blend_type = self.get_b_blend_type_from_n_apply_mode(
                 textProperty.apply_mode)
         elif bsShaderProperty:
             # default blending mode for fallout 3
-            blend_type = "MIX"
+            blend_type = 'MIX'
         # Sets the colors
         # Specular color
         spec = matProperty.specular_color
@@ -1660,7 +1660,7 @@ class NifImport(NifImportExport):
                     mdark_texture = material.getTextures()[5]
                     mdark_texture.uv_layer = self.get_uv_layer_name(darkTexDesc.uv_set)
                     # set blend mode to "DARKEN"
-                    mdark_texture.blend_type = "DARKEN"
+                    mdark_texture.blend_type = 'DARKEN'
             if detailTexDesc:
                 detail_texture = self.import_texture(detailTexDesc.source)
                 if detail_texture:
@@ -1738,7 +1738,7 @@ class NifImport(NifImportExport):
                 # set the texture for the material
                 material.setTexture(3, envmapTexture, texco, mapto)
                 menvmapTexture = material.getTextures()[3]
-                menvmapTexture.blend_type = Blender.Texture.BlendModes["ADD"]
+                menvmapTexture.blend_type = 'ADD'
         # check transparency
         if alphaProperty:
             material.mode |= Blender.Material.Modes.ZTRANSP # enable z-buffered transparency
