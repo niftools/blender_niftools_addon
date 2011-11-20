@@ -1617,7 +1617,7 @@ class NifImport(NifImportExport):
                 glow_texture = self.import_texture(glowTexDesc.source)
                 if glow_texture:
                     # glow maps use alpha from rgb intensity
-                    glow_texture.imageFlags |= Blender.Texture.ImageFlags.CALCALPHA
+                    glow_texture.use_calculate_alpha = True
                     # set the texture to use face UV coordinates
                     texco = 'UV'
                     # map the texture to the base color and emit channel
@@ -1705,7 +1705,7 @@ class NifImport(NifImportExport):
                 glow_texture = self.import_texture(glowTexFile)
                 if glow_texture:
                     # glow maps use alpha from rgb intensity
-                    glow_texture.imageFlags |= Blender.Texture.ImageFlags.CALCALPHA
+                    glow_texture.use_calculate_alpha = True
                     # set the texture to use face UV coordinates
                     texco = 'UV'
                     # map the texture to the base color and emit channel
@@ -1748,7 +1748,7 @@ class NifImport(NifImportExport):
                 #if base_texture.image.depth == 32 or base_texture.image.size == [1,1]: # check for alpha channel in texture; if it's a stub then assume alpha channel
                 # new method: let's just assume there is alpha
                 if True:
-                    base_texture.imageFlags |= Blender.Texture.ImageFlags.USEALPHA # use the alpha channel
+                    base_texture.use_alpha = True # use the alpha channel
                     mbase_texture.mapto |=  Blender.Texture.MapTo.ALPHA # and map the alpha channel to transparency
                     # for proper display in Blender, we must set the alpha value
                     # to 0 and the "Var" slider in the texture Map To tab to the
