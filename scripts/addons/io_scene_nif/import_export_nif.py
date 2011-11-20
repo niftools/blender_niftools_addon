@@ -219,15 +219,15 @@ class NifImportExport:
         turns 'Bip01 xxx.R' into 'Bip01 R xxx', and similar for L.
 
         :param name: The bone name as in Blender.
-        :type name: :class:`bytes`
+        :type name: :class:`str`
         :return: Bone name in nif convention.
-        :rtype: :class:`bytes`
+        :rtype: :class:`str`
         """
-        if name.startswith(b"Bip01 "):
-            if name.endswith(b".L"):
-                return b"Bip01 L " + name[6:-2]
-            elif name.endswith(b".R"):
-                return b"Bip01 R " + name[6:-2]
+        if name.startswith("Bip01 "):
+            if name.endswith(".L"):
+                return "Bip01 L " + name[6:-2]
+            elif name.endswith(".R"):
+                return "Bip01 R " + name[6:-2]
         return name
 
     def get_extend_from_flags(self, flags):

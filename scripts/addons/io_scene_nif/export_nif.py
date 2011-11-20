@@ -126,9 +126,12 @@ class NifExport(NifImportExport):
         """Returns an unique name for use in the NIF file, from the name of a
         Blender object.
 
+        :param blender_name: Name of object as in blender.
+        :type blender_name: :class:`str`
+
         .. todo:: Refactor and simplify this code.
         """
-        unique_name = b"unnamed"
+        unique_name = "unnamed"
         if blender_name:
             unique_name = blender_name
         # blender bone naming -> nif bone naming
@@ -138,7 +141,7 @@ class NifExport(NifImportExport):
             unique_int = 0
             old_name = unique_name
             while unique_name in self.block_names or unique_name in list(self.names.values()):
-                unique_name = b"%s.%02d" % (old_name, unique_int)
+                unique_name = "%s.%02d" % (old_name, unique_int)
                 unique_int += 1
         self.block_names.append(unique_name)
         self.names[blender_name] = unique_name
@@ -147,6 +150,9 @@ class NifExport(NifImportExport):
     def get_full_name(self, blender_name):
         """Returns the original imported name if present, or the name by which
         the object was exported already.
+
+        :param blender_name: Name of object as in blender.
+        :type blender_name: :class:`str`
 
         .. todo:: Refactor and simplify this code.
         """
@@ -988,6 +994,9 @@ class NifExport(NifImportExport):
           root node)
         - for the root node, ob is None, and node_name is usually the base
           filename (either with or without extension)
+
+        :param node_name: The name of the node to be exported.
+        :type node_name: :class:`str`
         """
         # ob_type: determine the block type
         #          (None, 'MESH', 'EMPTY' or 'ARMATURE')
@@ -1088,7 +1097,7 @@ class NifExport(NifImportExport):
             parent_block.add_child(node)
 
         # and fill in this node's non-trivial values
-        node.name = self.get_full_name(node_name)
+        node.name = self.get_full_name(node_name).encode()
 
         # default node flags
         if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
@@ -2236,19 +2245,19 @@ class NifExport(NifImportExport):
             
             # fill in the NiTriShape's non-trivial values
             if isinstance(parent_block, NifFormat.RootCollisionNode):
-                trishape.name = ""
+                trishape.name = b""
             elif not trishape_name:
                 if parent_block.name:
-                    trishape.name = "Tri " + parent_block.name
+                    trishape.name = b"Tri " + parent_block.name
                 else:
-                    trishape.name = "Tri " + ob.name
+                    trishape.name = b"Tri " + ob.name.encode()
             else:
-                trishape.name = trishape_name
+                trishape.name = trishape_name.encode()
             if len(mesh_mats) > 1:
                 # multimaterial meshes: add material index
                 # (Morrowind's child naming convention)
                 trishape.name += " %i"%materialIndex
-            trishape.name = self.get_full_name(trishape.name)
+            trishape.name = self.get_full_name(trishape.name.decode()).encode()
             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
                 trishape.flags = 0x000E
             elif self.properties.game in ('SID_MEIER_S_RAILROADS',
@@ -2453,7 +2462,7 @@ class NifExport(NifImportExport):
                         trishape.skin_instance = skininst
                         for block in self.blocks:
                             if isinstance(block, NifFormat.NiNode):
-                                if block.name == self.get_full_name(armaturename):
+                                if block.name == self.get_full_name(armaturename).encode():
                                     skininst.skeleton_root = block
                                     break
                         else:
@@ -2505,7 +2514,7 @@ class NifExport(NifImportExport):
                             bone_block = None
                             for block in self.blocks:
                                 if isinstance(block, NifFormat.NiNode):
-                                    if block.name == self.get_full_name(bone):
+                                    if block.name == self.get_full_name(bone).encode():
                                         if not bone_block:
                                             bone_block = block
                                         else:
@@ -3010,7 +3019,7 @@ class NifExport(NifImportExport):
             bones_node[bone.name] = node
 
             # add the node and the keyframe for this bone
-            node.name = self.get_full_name(bone.name)
+            node.name = self.get_full_name(bone.name).encode()
             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
                 # default for Oblivion bones
                 # note: bodies have 0x000E, clothing has 0x000F
@@ -3102,7 +3111,7 @@ class NifExport(NifImportExport):
                         nif_bone_name = self.get_full_name(parent_bone_name)
                         for bone_block in self.blocks:
                             if isinstance(bone_block, NifFormat.NiNode) and \
-                                bone_block.name == nif_bone_name:
+                                bone_block.name.decode() == nif_bone_name:
                                 # ok, we should parent to block
                                 # instead of to parent_block
                                 # two problems to resolve:
