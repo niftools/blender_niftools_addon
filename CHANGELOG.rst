@@ -1,7 +1,11 @@
 Version 2.6.0 (planned)
 =======================
 
-* Initial port to Blender 2.59.
+* Initial port to Blender 2.60a:
+
+  - geometry (NiTriShape)
+  - materials NiMaterialProperty)
+  - uv textures (NiTexturingProperty)
 
 * Upgraded to sphinx to generate documentation.
 
