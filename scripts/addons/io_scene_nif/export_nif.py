@@ -1629,7 +1629,7 @@ class NifExport(NifImportExport):
                     "image type texture has no file loaded ('%s')"
                     % texture.name)                    
 
-            filename = texture.image.getFilename()
+            filename = texture.image.filepath
 
             # warn if packed flag is enabled
             if texture.image.packed:
