@@ -389,7 +389,6 @@ class NifConfig:
         EXPORT_FO3_FADENODE = False,
         EXPORT_FO3_SHADER_TYPE = 1, # shader_default
         EXPORT_FO3_BODYPARTS = True,
-        EXPORT_EXTRA_SHADER_TEXTURES = True,
         EXPORT_ANIMTARGETNAME = '',
         EXPORT_ANIMPRIORITY = 0,
         EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES = False,
@@ -1026,16 +1025,6 @@ class NifConfig:
                 num_items = 7, item = 6)
             self.draw_y_sep()
 
-        # export-only options for civ4 and rrt
-        if (self.target == self.TARGET_EXPORT
-            and (self.config["game"]
-                 in NifImportExport.USED_EXTRA_SHADER_TEXTURES)):
-            self.draw_next_column()
-
-            self.draw_toggle(
-                text = "Export Extra Shader Textures",
-                event_name = "EXPORT_EXTRA_SHADER_TEXTURES")
-
         # export-only options for fallout 3
         if (self.target == self.TARGET_EXPORT
             and self.config["game"] == 'FALLOUT_3'):
@@ -1240,7 +1229,6 @@ class NifConfig:
             self.config["EXPORT_OB_SOLID"] = True
             self.config["EXPORT_MW_NIFXNIFKF"] = False
             self.config["EXPORT_MW_BS_ANIMATION_NODE"] = False
-            self.config["EXPORT_EXTRA_SHADER_TEXTURES"] = True
             # set default settings per game
             if self.config["game"] == 'MORROWIND':
                 self.config["EXPORT_FORCEDDS"] = False
@@ -1452,8 +1440,6 @@ class NifConfig:
             self.config["EXPORT_MW_NIFXNIFKF"] = not self.config["EXPORT_MW_NIFXNIFKF"]
         elif evName == "EXPORT_MW_BS_ANIMATION_NODE":
             self.config["EXPORT_MW_BS_ANIMATION_NODE"] = not self.config["EXPORT_MW_BS_ANIMATION_NODE"]
-        elif evName == "EXPORT_EXTRA_SHADER_TEXTURES":
-            self.config["EXPORT_EXTRA_SHADER_TEXTURES"] = not self.config["EXPORT_EXTRA_SHADER_TEXTURES"]
         elif evName == "EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES":
             self.config["EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES"] = not self.config["EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES"]
         Draw.Redraw(1)
