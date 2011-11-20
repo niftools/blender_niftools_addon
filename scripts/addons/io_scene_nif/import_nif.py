@@ -1660,7 +1660,7 @@ class NifImport(NifImportExport):
                     mdark_texture = material.getTextures()[5]
                     mdark_texture.uv_layer = self.get_uv_layer_name(darkTexDesc.uv_set)
                     # set blend mode to "DARKEN"
-                    mdark_texture.blend_type = Blender.Texture.BlendModes["DARKEN"]
+                    mdark_texture.blend_type = "DARKEN"
             if detailTexDesc:
                 detail_texture = self.import_texture(detailTexDesc.source)
                 if detail_texture:
