@@ -1907,8 +1907,7 @@ class NifExport(NifImportExport):
                                     %(mesh.name,mesh_mat.name))
                             # check if calculation of alpha channel is enabled
                             # for this texture
-                            if mtex.texture.use_calculate_alpha \
-                               and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
+                            if mtex.texture.use_calculate_alpha and mtex.use_map_alpha:
                                 self.warning(
                                     "In mesh '%s', material '%s':"
                                     " glow texture must have"
@@ -1947,7 +1946,7 @@ class NifExport(NifImportExport):
                             # as base texture
                             mesh_base_mtex = mtex
                             # check if alpha channel is enabled for this texture
-                            if mesh_base_mtex.texture.use_alpha and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
+                            if mesh_base_mtex.texture.use_alpha and mtex.use_map_alpha:
                                 # in this case, Blender replaces the texture transparant parts with the underlying material color...
                                 # in NIF, material alpha is multiplied with texture alpha channel...
                                 # how can we emulate the NIF alpha system (simply multiplying material alpha with texture alpha) when MapTo.ALPHA is turned on?

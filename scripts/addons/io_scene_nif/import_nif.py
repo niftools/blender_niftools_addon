@@ -1749,7 +1749,7 @@ class NifImport(NifImportExport):
                 # new method: let's just assume there is alpha
                 if True:
                     base_texture.use_alpha = True # use the alpha channel
-                    mbase_texture.mapto |=  Blender.Texture.MapTo.ALPHA # and map the alpha channel to transparency
+                    mbase_texture.use_map_alpha = True # and map the alpha channel to transparency
                     # for proper display in Blender, we must set the alpha value
                     # to 0 and the "Var" slider in the texture Map To tab to the
                     # NIF material alpha value
