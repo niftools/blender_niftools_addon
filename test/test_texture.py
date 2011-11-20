@@ -14,6 +14,7 @@ class TestBaseUVTexture(TestCube):
     def b_create_object(self):
         b_obj = TestCube.b_create_object(self)
         b_mat = bpy.data.materials.new(name='Material')
+        b_mat.specular_intensity = 0 # disable NiSpecularProperty
         b_mtex = b_mat.texture_slots.create(0)
         b_mtex.texture_coords = 'UV'
         b_mtex.use_map_color_diffuse = True
