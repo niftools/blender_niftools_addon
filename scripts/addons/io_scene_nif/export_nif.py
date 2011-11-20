@@ -1612,7 +1612,7 @@ class NifExport(NifImportExport):
         @param texture: The texture object in blender.
         @return: The file name of the image used in the texture.
         """
-        if texture.type == Blender.Texture.Types.ENVMAP:
+        if texture.type == 'ENVIRONMENT_MAP':
             # this works for morrowind only
             if self.properties.game != 'MORROWIND':
                 raise NifExportError(
