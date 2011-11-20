@@ -2071,7 +2071,7 @@ class NifExport(NifImportExport):
                     # get vertex normal for lighting (smooth = Blender vertex normal, non-smooth = Blender face normal)
                     if mesh_hasnormals:
                         if f.use_smooth:
-                            fn = fv.normal
+                            fn = mesh.vertices[fv_index].normal
                         else:
                             fn = f.normal
                     else:
