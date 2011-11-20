@@ -334,6 +334,12 @@ class NifExportUI(bpy.types.Operator, ExportHelper, NifImportExportUI):
         default=4, min=1,
         options={'HIDDEN'})
 
+    #: Pad and sort bones.
+    force_dds = bpy.props.BoolProperty(
+        name="Force DDS",
+        description="Force texture .dds extension.",
+        default=True)
+
     #: Map game enum to nif version.
     version = {
         _game_to_enum(game): versions[-1]
@@ -365,7 +371,6 @@ class NifConfig:
         IMPORT_EGMANIM = True, # create FaceGen EGM animation curves
         IMPORT_EGMANIMSCALE = 1.0, # scale of FaceGen EGM animation curves
         EXPORT_ANIMSEQUENCENAME = '', # sequence name of the kf file
-        EXPORT_FORCEDDS = True, # force dds extension on texture files
         IMPORT_EXTRANODES = True,
         EXPORT_BHKLISTSHAPE = False,
         EXPORT_OB_BSXFLAGS = 2,
@@ -799,11 +804,6 @@ class NifConfig:
             self.draw_y_sep()
 
             self.draw_toggle(
-                text = "Force DDS Extension",
-                event_name = "EXPORT_FORCEDDS")
-            self.draw_y_sep()
-
-            self.draw_toggle(
                 text = "Combine Materials to Increase Performance",
                 event_name = "EXPORT_OPTIMIZE_MATERIALS")
             self.draw_y_sep()
@@ -1217,7 +1217,6 @@ class NifConfig:
         elif evName[:5] == "GAME_":
             self.config["game"] = evName[5:]
             # settings that usually make sense, fail-safe
-            self.config["EXPORT_FORCEDDS"] = True
             self.config["EXPORT_SMOOTHOBJECTSEAMS"] = True
             self.config["EXPORT_STRIPIFY"] = False
             self.config["EXPORT_STITCHSTRIPS"] = False
@@ -1230,9 +1229,6 @@ class NifConfig:
             self.config["EXPORT_MW_NIFXNIFKF"] = False
             self.config["EXPORT_MW_BS_ANIMATION_NODE"] = False
             # set default settings per game
-            if self.config["game"] == 'MORROWIND':
-                self.config["EXPORT_FORCEDDS"] = False
-                pass # fail-safe settings work
             if self.config["game"] == 'FREEDOM_FORCE_VS_THE_3RD_REICH':
                 self.config["EXPORT_SKINPARTITION"] = True
                 self.config["EXPORT_PADBONES"] = True
@@ -1271,10 +1267,8 @@ class NifConfig:
                 # body parts
                 self.config["EXPORT_FO3_BODYPARTS"] = True
             elif self.config["game"] == "Empire Earth II":
-                self.config["EXPORT_FORCEDDS"] = False
                 self.config["EXPORT_SKINPARTITION"] = False
             elif self.config["game"] == "Bully SE":
-                self.config["EXPORT_FORCEDDS"] = False
                 self.config["EXPORT_STRIPIFY"] = False
                 self.config["EXPORT_STITCHSTRIPS"] = False
                 self.config["EXPORT_FLATTENSKIN"] = False
@@ -1287,8 +1281,6 @@ class NifConfig:
             self.config["EXPORT_FLATTENSKIN"] = not self.config["EXPORT_FLATTENSKIN"]
             if self.config["EXPORT_FLATTENSKIN"]: # if skin is flattened
                 self.config["EXPORT_ANIMATION"] = 1 # force geometry only
-        elif evName == "EXPORT_FORCEDDS":
-            self.config["EXPORT_FORCEDDS"] = not self.config["EXPORT_FORCEDDS"]
         elif evName == "EXPORT_STRIPIFY":
             self.config["EXPORT_STRIPIFY"] = not self.config["EXPORT_STRIPIFY"]
         elif evName == "EXPORT_STITCHSTRIPS":
