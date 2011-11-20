@@ -1939,7 +1939,7 @@ class NifExport(NifImportExport):
                                     %(mesh.name,mesh_mat.name))
                             mesh_bump_mtex = mtex
                         elif mtex.use_map_color_diffuse and \
-                             mtex.blend_type == Blender.Texture.BlendModes["DARKEN"] and \
+                             mtex.blend_type == "DARKEN" and \
                              not mesh_dark_mtex:
                             # got the dark map
                             mesh_dark_mtex = mtex
