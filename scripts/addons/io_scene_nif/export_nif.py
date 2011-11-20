@@ -1619,7 +1619,7 @@ class NifExport(NifImportExport):
                     "cannot export environment maps for nif version '%s'"
                     %self.properties.game)
             return "enviro 01.TGA"
-        elif texture.type == Blender.Texture.Types.IMAGE:
+        elif texture.type == 'IMAGE':
             # get filename from image
 
             # check that image is loaded
