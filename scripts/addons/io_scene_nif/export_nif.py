@@ -1947,7 +1947,7 @@ class NifExport(NifImportExport):
                             # as base texture
                             mesh_base_mtex = mtex
                             # check if alpha channel is enabled for this texture
-                            if (mesh_base_mtex.texure.imageFlags & Blender.Texture.ImageFlags.USEALPHA != 0) and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
+                            if (mesh_base_mtex.texture.imageFlags & Blender.Texture.ImageFlags.USEALPHA != 0) and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
                                 # in this case, Blender replaces the texture transparant parts with the underlying material color...
                                 # in NIF, material alpha is multiplied with texture alpha channel...
                                 # how can we emulate the NIF alpha system (simply multiplying material alpha with texture alpha) when MapTo.ALPHA is turned on?
@@ -1998,7 +1998,7 @@ class NifExport(NifImportExport):
                                 " go to the Shading Panel,"
                                 " Material Buttons, and set texture"
                                 " 'Map To' to 'COL'."
-                                % (mtex.texure.name,ob.name,mesh_mat.name))
+                                % (mtex.texture.name,ob.name,mesh_mat.name))
                     else:
                         # nif only support UV-mapped textures
                         raise NifExportError(

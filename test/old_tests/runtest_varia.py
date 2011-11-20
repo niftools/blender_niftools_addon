@@ -197,7 +197,7 @@ class VariaTestSuite(TestSuite):
         mesh_data.addUVLayer("packed_tex_uv")
         try:
             nif_export = self.test(
-                filename='test/nif/_packedtexurestest1.nif',
+                filename='test/nif/_packedtexturestest1.nif',
                 config=dict(game = 'FALLOUT_3'),
                 selection=['packed_tex_test'],
                 next_layer=False)
@@ -215,7 +215,7 @@ class VariaTestSuite(TestSuite):
         tex.setImage(image)
         # this should work
         nif_export = self.test(
-            filename='test/nif/_packedtexurestest2.nif',
+            filename='test/nif/_packedtexturestest2.nif',
             config=dict(game = 'FALLOUT_3'),
             selection=['packed_tex_test'],
             next_layer=False)
@@ -223,7 +223,7 @@ class VariaTestSuite(TestSuite):
         image.pack()
         # this should work too - although with a warning
         nif_export = self.test(
-            filename='test/nif/_packedtexurestest3.nif',
+            filename='test/nif/_packedtexturestest3.nif',
             config=dict(game = 'FALLOUT_3'),
             selection=['packed_tex_test'],
             next_layer=True)
