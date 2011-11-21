@@ -13,10 +13,23 @@ Import Project Into Eclipse
    Enable **Use or create Repository in parent folder of project**,
    and click **Finish**.
 
+Run Regression Tests
+--------------------
+
+Run the following in a buildenv (Windows)::
+
+  blender-nosetests.bat
+
+or terminal (Fedora)::
+
+  ./blender-nosetests.sh
+
+from within the ``blender_nif_scripts`` folder.
+
 Generate Documentation
 ----------------------
 
-Simply run the following in a buildenv (Windows) or terminal (Fedora)::
+Run the following in a buildenv (Windows) or terminal (Fedora)::
 
   cd blender_nif_scripts/docs
   make html
