@@ -33,9 +33,13 @@ To run a particular test only, specify the file as an argument; for instance::
 
   blender-nosetests.bat test/test_cube.py
 
-Actually, all command line arguments of ``nosetests`` apply. For more details, run::
+Actually, all command line arguments of ``nosetests`` apply.
+For more details, run::
 
   blender-nosetests.bat --help
+
+Also see the
+`nose manual <http://readthedocs.org/docs/nose/en/latest/usage.html#options>`_.
 
 Generate Documentation
 ----------------------
