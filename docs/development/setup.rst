@@ -9,10 +9,9 @@ Create a Workspace
 ------------------
 
 First, create a directory to be used as your coding directory.
-If you plan to use eclipse, use:
 
 * ``C:\Users\<username>\workspace`` (Vista/Win 7),
-* ``C:\Documents and Settings\<username>\workspace`` (XP), or
+* ``C:\Documents and Settings\<username>\workspace`` (XP),
 * ``/home/<username>/workspace`` (Linux).
 
 Install Blender
@@ -23,14 +22,18 @@ See :ref:`user docs <user-getblender>`.
 Install Python 3.2
 ------------------
 
-On Windows,
-download `Python 3.2 <http://www.python.org/download/releases/3.2.2/>`_ (pick the
-installer appropriate for your platform), and
-follow the instructions. Use the default install location.
+Windows
+Download `Python 3.2 <http://www.python.org/download/releases/3.2.2/>`_ - 32-bit 
+Pick the installer appropriate for your platform, and follow the instructions. 
+Use the default install location.
 
-On Fedora, simply run::
-
-  sudo yum install python3
+Fedora::
+   
+   sudo yum install python3
+  
+Ubuntu::
+   
+   sudo apt-get install python3.2
 
 Install Git
 -----------
@@ -38,13 +41,28 @@ Install Git
 The code is maintained with git. If you are not yet familiar with git,
 read `progit <http://progit.org/book/>`_.
 
-On Windows, we use git bash. Download
-`msysgit <http://code.google.com/p/msysgit/downloads/list>`_
-and follow the installer instructions.
+On Windows, we use git bash. 
+Download `msysgit <http://code.google.com/p/msysgit/downloads/list>`_ and follow the installer instructions.
 
-On Fedora, simply run::
+Fedora::
+   
+   sudo yum install git
+ 
+Ubuntu::
+   
+   sudo apt-get install git
 
-  sudo yum install git
+When installed we enable AutoCLRF, this avoid unnecessary commits due to differences in End of File marker types: LF & CLRF.
+We also enable the input flag, this autochecks eternal source file that gets introduced into the repo.
+
+Window::
+
+   git config --global core.autocrlf true
+   git config --global core.autocrlf input
+
+Linux/Mac::
+
+   git config --global core.autocrlf input
 
 Create a Github Fork
 --------------------
@@ -74,28 +92,27 @@ Get the Source Code
 
 To get the code, run in a terminal (linux) or in git bash (windows)::
 
-  cd ~
-  mkdir -p workspace
-  cd workspace
-  git clone git@github.com:<username>/blender_nif_scripts.git
-  cd blender_nif_scripts
-  git remote add amorilia git://github.com/amorilia/blender_nif_scripts.git
-  git remote add neomonkeus git://github.com/neomonkeus/blender_nif_scripts.git
-  cd ..
+   cd ~
+   mkdir -p workspace
+   cd workspace
+   git clone git@github.com:<username>/blender_nif_scripts.git
+   cd blender_nif_scripts
+   git remote add amorilia git://github.com/amorilia/blender_nif_scripts.git
+   git remote add neomonkeus git://github.com/neomonkeus/blender_nif_scripts.git
+   cd ../
 
 The blender nif scripts require pyffi. You will need to get a
 version of pyffi that works with blender::
 
-  git clone --recursive git://niftools.git.sourceforge.net/gitroot/pyffi/pyffi
-
-On Windows, also get the build environment batch script::
-
-  git clone git://github.com/amorilia/buildenv
+   git clone --recursive git://niftools.git.sourceforge.net/gitroot/pyffi/pyffi
 
 Install Build Environment Batch Script
 --------------------------------------
-
 This is only necessary on Windows.
+
+On Windows, get the build environment batch script::
+
+   git clone git://github.com/amorilia/buildenv
 
 Right-click on the ``buildenv.bat`` file,
 and select **Send to > Desktop (create shortcut)**.
@@ -103,11 +120,11 @@ and select **Send to > Desktop (create shortcut)**.
 Now right-click this newly created shortcut,
 and change **Target** into::
 
-  %comspec% /k C:\Users\<username>\workspace\buildenv.bat C:\Python32 msvc2008 64 workspace
+   %comspec% /k C:\Users\<username>\workspace\buildenv\buildenv.bat C:\Python32 msvc2008 64 workspace
 
 on Vista/Win 7, or::
 
-  %comspec% /k "C:\Documents and Settings\<username>\workspace\buildenv.bat" C:\Python32 msvc2008 64 workspace
+   %comspec% /k "C:\Documents and Settings\<username>\workspace\buildenv\buildenv.bat" C:\Python32 msvc2008 64 workspace
 
 on XP. On 32 bit systems, type ``32`` instead of ``64``.
 
@@ -116,44 +133,59 @@ Install Setuptools
 
 Setuptools makes it easy to install various Python modules.
 
-On Fedora, simply run::
+Fedora::
 
-  sudo yum install python3-tools
+   sudo yum install python3-tools
 
-On Windows,
-save `distribute_setup.py
-<http://python-distribute.org/distribute_setup.py>`_ 
-in your ``workspace`` folder,
-double click on the Python build environment shortcut you just created,
-and type::
+Ubuntu/Windows
 
-  python distribute_setup.py
+Save `distribute_setup.py <http://python-distribute.org/distribute_setup.py>`_ in your ``workspace`` folder.
 
+Windows 
+Use the Python build environment shortcut you just created to open the command prompt::
+
+   python distribute_setup.py
+
+Ubuntu::
+
+   cd ~/workfolder
+   python distribute_setup.py
+   
 Install Sphinx and Nose
 -----------------------
 
-On Windows, run in buildenv::
+Windows, run in buildenv::
 
-  easy_install install Sphinx
-  easy_install install nose
+   easy_install install Sphinx
+   easy_install install nose
 
-On Fedora, run in a terminal::
+Ubuntu, run in a terminal::
 
-  easy_install-3.2 --user Sphinx
-  sudo yum install python3-nose
+   easy_install install Sphinx
+   easy_install install nose
+   
+Fedora, run in a terminal::
 
+   easy_install-3.2 --user Sphinx
+   sudo yum install python3-nose
 Install PyFFI
+
 -------------
 
 On Windows, run in buildenv::
 
-  cd pyffi
-  python setup.py install
+   cd pyffi
+   python setup.py install
+  
+Ubuntu, run in a terminal::
+   
+   cd ~/workspace/pyffi
+   python3 setup.py install --user
 
-On Fedora, run in a terminal::
+Fedora, run in a terminal::
 
-  cd ~/workspace/pyffi
-  python3 setup.py install --user
+   cd ~/workspace/pyffi
+   python3 setup.py install --user
 
 Update Blender Python and Check Installation
 --------------------------------------------
@@ -169,9 +201,9 @@ There is a script that does this for you in buildenv::
 Now, to check that everything is installed correctly, start blender, open a Python console,
 and type::
 
-  import site
-  import pyffi
-  import sphinx
+   import site
+   import pyffi
+   import sphinx
 
 You should not get any import errors.
 
@@ -184,7 +216,7 @@ repo management,
 python scripting,
 and hooks into Blender's debugging console. 
 
-On Windows,
+Windows,
 first install the `Java Runtime Environment <http://java.com/download>`_.
 Make sure you have the right version---on 64 bit platforms, it is safest
 to pick right file via `manual download <http://java.com/en/download/manual.jsp>`_.
@@ -193,9 +225,13 @@ Just unzip the file, and put it somewhere convenient, such as under ``C:\eclipse
 If you want to create a shortcut from your desktop, right-click ``C:\eclipse\eclipse.exe``
 and select **Send to > Desktop (create shortcut)**.
 
-On Fedora, simply run::
+Fedora, simply run::
 
-  sudo yum install eclipse-pydev eclipse-egit
+   sudo yum install eclipse
+
+Ubuntu, simply run::
+
+   sudo apt-get install eclipse
 
 When starting eclipse,
 you are asked for your workspace folder---if you followed the
@@ -206,11 +242,7 @@ folder in which the ``blender_nif_scripts`` clone resides.
 
 At the Welcome window, click **Workbench** on the top right.
 
-You should also install a few plugins. On Fedora,
-you already have EGit and PyDev if you followed
-the instructions above, so you only need
-to configure your PyDev Python interpreter,
-and the ReST Editor plugin.
+You should also install a few plugins.
 
 * `EGit <http://eclipse.org/egit/>`_
   is an Eclipse plugin to perform git actions from within Eclipse.
@@ -221,7 +253,7 @@ and the ReST Editor plugin.
 
   3. A large number of plugins will be listed. Select
      **Collaboration > Eclipse EGit**
-	
+   
 * `PyDev <http://pydev.org/>`_
   is an Eclipse plugin targeted at Python development,
   including sytax highlighting and debugging.
@@ -265,21 +297,19 @@ and the ReST Editor plugin.
 
   4. Click **Next**, and follow the instructions.
 
-Eclipse: Blender Extras
------------------------
+Eclipse: Optional Extras
+------------------------
+ 
+The following is a stub repo used for Blender plugin development.::
 
-.. todo::
-
-   Update for actual location
-   of command line completion code.
-
-Once you have cloned this Repo to your local,
+   git:// clone --recursive https://github.com/neomonkeus/blender_eclipse_debug
+   
 copy the following to the Blender directory::
 
-    ./docs/python_api/
-    ./docs/refresh_python_api.bat
-    run.py
-    pydev_debug.py
+   ./docs/python_api/
+   ./docs/refresh_python_api.bat
+   run.py
+   pydev_debug.py
 
 Command Line Completion
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -302,7 +332,7 @@ to the ``blender_nif_scripts`` project:
 .. warning::
 
    Auto-completion works for the majority of the API, but some bits
-   are missing.
+   are missing, eg. Blender Game Engine.
 
 Debugging
 ~~~~~~~~~
@@ -311,18 +341,20 @@ Debugging
 hook Eclipse's Pydev Debug to Blender's debugger.
 
 Add the Pydev Debug: Customise Perspective -> Pydev Debug. 
-Always start the Pydev debug server first otherwise blender will crash later.	
-
-Open the ``test/blend/debug.blend`` file 
+Always start the Pydev debug server first otherwise blender will crash later. 
 
 Open ``run.py`` in the scripting text editor.
 
 Replace the strings:
 
-1. python debugger location.
+* 1. python debugger location.
+* 2. main file location. 
 
-2. main execution file location.
+.. note::   
+   If your entry file is __init__.py file, this should be renamed to your package name while you are developing. 
+   The debugger script will crash due to underscores.
 
-Run the script; blender will appear to hang but this is as the Debugger has hit the trace() call
+Run the script; blender will appear to hang, this is as the Debugger has hit the trace() call
+Switch to Eclipses Debug Mode, the hit the continue button. 
 
-In Eclipse switch to debug mode and begin scripting.
+Happy coding & debugging.
