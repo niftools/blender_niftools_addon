@@ -49,6 +49,16 @@ Naming Conventions
    code. Stick to it for new code, but we are holding off a rename for
    the planned 3.x.x refactor.
 
+Strings and Bytes
+-----------------
+
+Generally, we use :class:`str` everywhere, and convert :class:`bytes`
+to :class:`str` whenever interfacing directly with the nif data.
+
+.. todo::
+
+   Add an encoding import/export option.
+
 Regression Tests
 ----------------
 

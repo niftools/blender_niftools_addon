@@ -41,12 +41,11 @@ SetCompressor /SOLID lzma
 
 !define VERSION "2.6.0"
 !define PYFFIVERSION "2.2.0"
+!define BLENDERVERSION "2.60"
 
 Name "Blender NIF Scripts ${VERSION}"
-Var BLENDERHOME    ; blender settings location
-Var BLENDERSCRIPTS ; blender scripts location ($BLENDERHOME/.blender/scripts)
 Var BLENDERINST    ; blender.exe location
-Var PYTHONPATH
+Var BLENDERADDONS ; blender scripts location ($BLENDERINST/$BLENDERVERSION/scripts/addons)
 Var PYFFI
 
 ; define installer pages
@@ -56,11 +55,11 @@ Var PYFFI
 !define MUI_WELCOMEPAGE_TEXT  "This wizard will guide you through the installation of the Blender NIF Scripts ${VERSION}.\r\n\r\nIt is recommended that you close all other applications, especially Blender.\r\n\r\nNote to Win2k/XP users: you require administrator privileges to install the Blender NIF Scripts successfully."
 !insertmacro MUI_PAGE_WELCOME
 
-!insertmacro MUI_PAGE_LICENSE Copyright.txt
+!insertmacro MUI_PAGE_LICENSE ..\LICENSE.rst
 
-!define MUI_DIRECTORYPAGE_TEXT_TOP "The field below specifies the folder where the Blender scripts files will be copied to. This directory has been detected by analyzing your Blender installation.$\r$\n$\r$\nFor your convenience, the installer will also remove any old versions of the Blender NIF Scripts from this folder (no other files will be deleted).$\r$\n$\r$\nUnless you really know what you are doing, you should leave the field below as it is."
-!define MUI_DIRECTORYPAGE_TEXT_DESTINATION "Blender Scripts Folder"
-!define MUI_DIRECTORYPAGE_VARIABLE $BLENDERSCRIPTS
+!define MUI_DIRECTORYPAGE_TEXT_TOP "The field below specifies the folder where the Blender addon files will be copied to. This directory has been detected by analyzing your Blender installation.$\r$\n$\r$\nFor your convenience, the installer will also remove any old versions of the Blender NIF Scripts from this folder (no other files will be deleted).$\r$\n$\r$\nUnless you really know what you are doing, you should leave the field below as it is."
+!define MUI_DIRECTORYPAGE_TEXT_DESTINATION "Blender Addons Folder"
+!define MUI_DIRECTORYPAGE_VARIABLE $BLENDERADDONS
 !insertmacro MUI_PAGE_DIRECTORY
 
 !define MUI_DIRECTORYPAGE_TEXT_TOP "Use the field below to specify the folder where you want the documentation files to be copied to. To specify a different folder, type a new name or use the Browse button to select an existing folder."
@@ -145,100 +144,6 @@ Function openLinkNewWindow
   Pop $3
 FunctionEnd
 
-; see http://nsis.sourceforge.net/Get_Windows_version
-; GetWindowsVersion
-;
-; Based on Yazno's function, http://yazno.tripod.com/powerpimpit/
-; Updated by Joost Verburg
-;
-; Returns on top of stack
-;
-; Windows Version (95, 98, ME, NT x.x, 2000, XP, 2003, Vista)
-; or
-; '' (Unknown Windows Version)
-;
-; Usage:
-;   Call GetWindowsVersion
-;   Pop $R0
-;   ; at this point $R0 is "NT 4.0" or whatnot
-Function GetWindowsVersion
- 
-  Push $R0
-  Push $R1
- 
-  ClearErrors
- 
-  ReadRegStr $R0 HKLM \
-  "SOFTWARE\Microsoft\Windows NT\CurrentVersion" CurrentVersion
- 
-  IfErrors 0 lbl_winnt
- 
-  ; we are not NT
-  ReadRegStr $R0 HKLM \
-  "SOFTWARE\Microsoft\Windows\CurrentVersion" VersionNumber
- 
-  StrCpy $R1 $R0 1
-  StrCmp $R1 '4' 0 lbl_error
- 
-  StrCpy $R1 $R0 3
- 
-  StrCmp $R1 '4.0' lbl_win32_95
-  StrCmp $R1 '4.9' lbl_win32_ME lbl_win32_98
- 
-  lbl_win32_95:
-    StrCpy $R0 '95'
-  Goto lbl_done
- 
-  lbl_win32_98:
-    StrCpy $R0 '98'
-  Goto lbl_done
- 
-  lbl_win32_ME:
-    StrCpy $R0 'ME'
-  Goto lbl_done
- 
-  lbl_winnt:
- 
-  StrCpy $R1 $R0 1
- 
-  StrCmp $R1 '3' lbl_winnt_x
-  StrCmp $R1 '4' lbl_winnt_x
- 
-  StrCpy $R1 $R0 3
- 
-  StrCmp $R1 '5.0' lbl_winnt_2000
-  StrCmp $R1 '5.1' lbl_winnt_XP
-  StrCmp $R1 '5.2' lbl_winnt_2003
-  StrCmp $R1 '6.0' lbl_winnt_vista lbl_error
- 
-  lbl_winnt_x:
-    StrCpy $R0 "NT $R0" 6
-  Goto lbl_done
- 
-  lbl_winnt_2000:
-    Strcpy $R0 '2000'
-  Goto lbl_done
- 
-  lbl_winnt_XP:
-    Strcpy $R0 'XP'
-  Goto lbl_done
- 
-  lbl_winnt_2003:
-    Strcpy $R0 '2003'
-  Goto lbl_done
- 
-  lbl_winnt_vista:
-    Strcpy $R0 'Vista'
-  Goto lbl_done
- 
-  lbl_error:
-    Strcpy $R0 ''
-  lbl_done:
- 
-  Pop $R1
-  Exch $R0
-FunctionEnd
-
 Function .onInit
   ; check if user is admin
   ; call userInfo plugin to get user info.  The plugin puts the result in the stack
@@ -256,11 +161,16 @@ Function .onInit
    
 
   ; check if Blender is installed
-  SetRegView 32
   ClearErrors
-  ReadRegStr $BLENDERHOME HKLM SOFTWARE\BlenderFoundation "Install_Dir"
+  SetRegView 32
+  ReadRegStr $BLENDERINST HKLM SOFTWARE\BlenderFoundation "Install_Dir"
   IfErrors 0 blender_check_end
-  ReadRegStr $BLENDERHOME HKCU SOFTWARE\BlenderFoundation "Install_Dir"
+  ReadRegStr $BLENDERINST HKCU SOFTWARE\BlenderFoundation "Install_Dir"
+  IfErrors 0 blender_check_end
+  SetRegView 64
+  ReadRegStr $BLENDERINST HKLM SOFTWARE\BlenderFoundation "Install_Dir"
+  IfErrors 0 blender_check_end
+  ReadRegStr $BLENDERINST HKCU SOFTWARE\BlenderFoundation "Install_Dir"
   IfErrors 0 blender_check_end
 
      ; no key, that means that Blender is not installed
@@ -270,7 +180,12 @@ Function .onInit
      Abort ; causes installer to quit
 
 blender_check_end:
-  StrCpy $BLENDERINST $BLENDERHOME
+  StrCpy $BLENDERADDONS "$BLENDERINST\${BLENDERVERSION}\scripts\addons"
+  IfFileExists "$BLENDERADDONS\*.*" blender_scripts_end 0
+
+    ; all failed!
+    MessageBox MB_OK|MB_ICONEXCLAMATION "Blender scripts directory not found. Reinstall Blender ${BLENDERVERSION}, and rerun the Blender NIF Scripts installer. If that does not solve the problem, then this is probably a bug. In that case, please report to http://niftools.sourceforge.net/forum/"
+    Abort ; causes installer to quit
 
 blender_scripts_end:
 
@@ -315,93 +230,42 @@ Section
   SetShellVarContext all
 
   ; Cleanup: remove old versions of the scripts
-  ; NIFLA versions
-  Delete "$BLENDERSCRIPTS\nif-export.py*"
-  Delete "$BLENDERSCRIPTS\nif_import_237.py*"
-  ; SourceForge versions
-  Delete "$BLENDERSCRIPTS\nif4_export.py*"
-  Delete "$BLENDERSCRIPTS\nif4_import_237.py*"
-  Delete "$BLENDERSCRIPTS\nif4_import_240.py*"
-  Delete "$BLENDERSCRIPTS\nif4.py*"
-  ; old config files
-  Delete "$BLENDERSCRIPTS\bpydata\nif4.ini"
-  Delete "$BLENDERSCRIPTS\bpydata\config\nif_import.cfg"
-  Delete "$BLENDERSCRIPTS\bpydata\config\nif_export.cfg"
-  ; old nifImEx lib
-  Delete "$BLENDERSCRIPTS\bpymodules\nifImEx\__init__.py*"
-  Delete "$BLENDERSCRIPTS\bpymodules\nifImEx\Config.py*"
-  Delete "$BLENDERSCRIPTS\bpymodules\nifImEx\Defaults.py*"
-  Delete "$BLENDERSCRIPTS\bpymodules\nifImEx\Read.py*"
-  Delete "$BLENDERSCRIPTS\bpymodules\nifImEx\Write.py*"
-  Delete "$BLENDERSCRIPTS\bpymodules\nifImEx\niftools_logo.png"
-  RMDir "$BLENDERSCRIPTS\bpymodules\nifImEx"
-  ; clutter from svn 2905 revisions
-  Delete "$BLENDERSCRIPTS\nif_common.py*"
-  ; clutter from svn 4797 revisions
-  Delete "$BLENDERSCRIPTS\nif_export.py*"
-  Delete "$BLENDERSCRIPTS\nif_import.py*"
-  Delete "$BLENDERSCRIPTS\mesh_weightsquash.py*"
-  Delete "$BLENDERSCRIPTS\mesh_hull.py*"
-  Delete "$BLENDERSCRIPTS\object_setbonepriority.py*"
-  Delete "$BLENDERSCRIPTS\object_savebonepose.py*"
-  Delete "$BLENDERSCRIPTS\object_loadbonepose.py*"
-  ; clutter from version 2.4.12 and under
-  Delete "$BLENDERSCRIPTS\export_nif.py*"
-  Delete "$BLENDERSCRIPTS\import_nif.py*"
-  Delete "$BLENDERSCRIPTS\mesh_niftools_weightsquash.py*"
-  Delete "$BLENDERSCRIPTS\mesh_niftools_hull.py*"
-  Delete "$BLENDERSCRIPTS\mesh_niftools_morphcopy.py*"
-  Delete "$BLENDERSCRIPTS\object_niftools_set_bone_priority.py*"
-  Delete "$BLENDERSCRIPTS\object_niftools_save_bone_pose.py*"
-  Delete "$BLENDERSCRIPTS\object_niftools_load_bone_pose.py*"
-
-  ; Clean up registered script menu's, just to make sure they get updated
-  Delete "$BLENDERSCRIPTS\..\Bpymenus"
+  RMDir /r "$BLENDERADDONS\io_scene_nif\"
 
   ; Install scripts
-  SetOutPath $BLENDERSCRIPTS\export
-  File ..\scripts\export\export_nif.py
-  SetOutPath $BLENDERSCRIPTS\import
-  File ..\scripts\import\import_nif.py
-  SetOutPath $BLENDERSCRIPTS\mesh
-  File ..\scripts\mesh\mesh_niftools_weightsquash.py
-  File ..\scripts\mesh\mesh_niftools_hull.py
-  File ..\scripts\mesh\mesh_niftools_morphcopy.py
-  SetOutPath $BLENDERSCRIPTS\object
-  File ..\scripts\object\object_niftools_set_bone_priority.py
-  File ..\scripts\object\object_niftools_save_bone_pose.py
-  File ..\scripts\object\object_niftools_load_bone_pose.py
-  ; Install libraries
-  SetOutPath $BLENDERSCRIPTS\bpymodules
-  File ..\scripts\bpymodules\nif_common.py
-  File ..\scripts\bpymodules\nif_test.py
+  SetOutPath "$BLENDERADDONS\io_scene_nif\"
+  File ..\scripts\addons\io_scene_nif\export_nif.py
+  File ..\scripts\addons\io_scene_nif\import_nif.py
+  File ..\scripts\addons\io_scene_nif\import_export_nif.py
+  File ..\scripts\addons\io_scene_nif\__init__.py
 
   ; Install documentation files
   SetOutPath $INSTDIR
-  File ..\README.html
-  File /oname=ChangeLog.txt ..\ChangeLog
-  File Copyright.txt
+  File /oname=README.txt ..\README.rst
+  File /oname=CHANGELOG.txt ..\CHANGELOG.rst
+  File /oname=LICENSE.txt ..\LICENSE.rst
+  File /oname=AUTHORS.txt ..\AUTHORS.rst
   SetOutPath $INSTDIR\docs
-  File ..\docs\*.*
+  File /r ..\docs\_build\html
 
   ; Remove old shortcuts
   Delete "$SMPROGRAMS\NifTools\Blender NIF Scripts\*.lnk"
 
   ; Install shortcuts
   CreateDirectory "$SMPROGRAMS\NifTools\Blender NIF Scripts\"
-  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Readme.lnk" "$INSTDIR\README.html"
-  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\ChangeLog.lnk" "$INSTDIR\ChangeLog.txt"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Readme.lnk" "$INSTDIR\README.txt"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\ChangeLog.lnk" "$INSTDIR\CHANGELOG.txt"
   CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\User Documentation.lnk" "http://niftools.sourceforge.net/wiki/Blender"
   CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Developer Documentation.lnk" "$INSTDIR\docs\index.html"
   CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Bug Reports.lnk" "http://sourceforge.net/tracker/?group_id=149157&atid=776343"
   CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Feature Requests.lnk" "http://sourceforge.net/tracker/?group_id=149157&atid=776346"
   CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Forum.lnk" "http://niftools.sourceforge.net/forum/"
-  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Copyright.lnk" "$INSTDIR\Copyright.txt"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Copyright.lnk" "$INSTDIR\LICENSE.txt"
   CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Uninstall.lnk" "$INSTDIR\uninstall.exe"
 
   ; Write the installation path into the registry
   WriteRegStr HKLM SOFTWARE\BlenderNIFScripts "Install_Dir" "$INSTDIR"
-  WriteRegStr HKLM SOFTWARE\BlenderNIFScripts "Data_Dir" "$BLENDERSCRIPTS"
+  WriteRegStr HKLM SOFTWARE\BlenderNIFScripts "Data_Dir" "$BLENDERADDONS"
 
   ; Write the uninstall keys & uninstaller for Windows
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BlenderNIFScripts" "DisplayName" "Blender NIF Scripts (remove only)"
@@ -415,24 +279,14 @@ Section "Uninstall"
   SetAutoClose false
 
   ; recover Blender data dir, where scripts are installed
-  ReadRegStr $BLENDERSCRIPTS HKLM SOFTWARE\BlenderNIFScripts "Data_Dir"
+  ReadRegStr $BLENDERADDONS HKLM SOFTWARE\BlenderNIFScripts "Data_Dir"
 
   ; remove registry keys
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BlenderNIFScripts"
   DeleteRegKey HKLM "SOFTWARE\BlenderNIFScripts"
 
   ; remove script files
-  Delete "$BLENDERSCRIPTS\export\export_nif.py*"
-  Delete "$BLENDERSCRIPTS\import\import_nif.py*"
-  Delete "$BLENDERSCRIPTS\mesh\mesh_niftools_weightsquash.py*"
-  Delete "$BLENDERSCRIPTS\mesh\mesh_niftools_hull.py*"
-  Delete "$BLENDERSCRIPTS\mesh\mesh_niftools_morphcopy.py*"
-  Delete "$BLENDERSCRIPTS\object\object_niftools_set_bone_priority.py*"
-  Delete "$BLENDERSCRIPTS\object\object_niftools_save_bone_pose.py*"
-  Delete "$BLENDERSCRIPTS\object\object_niftools_load_bone_pose.py*"
-  Delete "$BLENDERSCRIPTS\bpymodules\nif_common.py*"
-  Delete "$BLENDERSCRIPTS\bpymodules\nif_test.py*"
-  Delete "$BLENDERSCRIPTS\bpydata\config\nifscripts.cfg"
+  RMDir /r "$BLENDERADDONS\io_scene_nif\"
 
   ; remove program files and program directory
   Delete "$INSTDIR\docs\*.*"

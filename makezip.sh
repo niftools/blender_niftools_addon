@@ -1,7 +1,7 @@
-git clean -x -f -d
+git clean -xfd
 ./install.sh
 
-VERSION="2.5.8"
+VERSION="2.6.0"
 wcrev=`git log -1 --pretty=format:%h`
 if [ "$1" == "" ]
 then
@@ -10,15 +10,17 @@ else
     extversion=${VERSION}-$1.${wcrev}
 fi
 NAME="blender_nif_scripts"
-FILES="scripts/import/import_nif.py scripts/export/export_nif.py scripts/bpymodules/nif_common.py scripts/bpymodules/nif_test.py scripts/mesh/mesh_niftools_weightsquash.py scripts/mesh/mesh_niftools_hull.py scripts/object/object_niftools_set_bone_priority.py scripts/object/object_niftools_save_bone_pose.py scripts/object/object_niftools_load_bone_pose.py scripts/mesh/mesh_niftools_morphcopy.py ChangeLog README.html install.sh install.bat docs/*.*"
+FILES="AUTHORS.rst CHANGELOG.rst LICENSE.rst README.rst install.sh install.bat scripts/ docs/_build/html/"
 
 # update documentation
-rm -rf docs
-blender -P runepydoc.py
+pushd docs
+make clean
+make html
+popd
 
 rm -f "${NAME}-${VERSION}"*
-zip -9 "${NAME}-${extversion}.zip" ${FILES}
-tar cfvj "${NAME}-${extversion}.tar.bz2" ${FILES}
+zip -9r "${NAME}-${extversion}.zip" ${FILES} -x \*/__pycache__/\*
+tar cfvj "${NAME}-${extversion}.tar.bz2" ${FILES} --exclude=*__pycache__*
 
 # create windows installer
 rm -f "win-install/${NAME}-${VERSION}-windows.exe"
