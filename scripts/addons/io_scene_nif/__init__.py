@@ -334,6 +334,12 @@ class NifExportUI(bpy.types.Operator, ExportHelper, NifImportExportUI):
         default=4, min=1,
         options={'HIDDEN'})
 
+    #: Pad and sort bones.
+    force_dds = bpy.props.BoolProperty(
+        name="Force DDS",
+        description="Force texture .dds extension.",
+        default=True)
+
     #: Map game enum to nif version.
     version = {
         _game_to_enum(game): versions[-1]
@@ -365,7 +371,6 @@ class NifConfig:
         IMPORT_EGMANIM = True, # create FaceGen EGM animation curves
         IMPORT_EGMANIMSCALE = 1.0, # scale of FaceGen EGM animation curves
         EXPORT_ANIMSEQUENCENAME = '', # sequence name of the kf file
-        EXPORT_FORCEDDS = True, # force dds extension on texture files
         IMPORT_EXTRANODES = True,
         EXPORT_BHKLISTSHAPE = False,
         EXPORT_OB_BSXFLAGS = 2,
@@ -389,7 +394,6 @@ class NifConfig:
         EXPORT_FO3_FADENODE = False,
         EXPORT_FO3_SHADER_TYPE = 1, # shader_default
         EXPORT_FO3_BODYPARTS = True,
-        EXPORT_EXTRA_SHADER_TEXTURES = True,
         EXPORT_ANIMTARGETNAME = '',
         EXPORT_ANIMPRIORITY = 0,
         EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES = False,
@@ -800,11 +804,6 @@ class NifConfig:
             self.draw_y_sep()
 
             self.draw_toggle(
-                text = "Force DDS Extension",
-                event_name = "EXPORT_FORCEDDS")
-            self.draw_y_sep()
-
-            self.draw_toggle(
                 text = "Combine Materials to Increase Performance",
                 event_name = "EXPORT_OPTIMIZE_MATERIALS")
             self.draw_y_sep()
@@ -1026,16 +1025,6 @@ class NifConfig:
                 num_items = 7, item = 6)
             self.draw_y_sep()
 
-        # export-only options for civ4 and rrt
-        if (self.target == self.TARGET_EXPORT
-            and (self.config["game"]
-                 in NifImportExport.USED_EXTRA_SHADER_TEXTURES)):
-            self.draw_next_column()
-
-            self.draw_toggle(
-                text = "Export Extra Shader Textures",
-                event_name = "EXPORT_EXTRA_SHADER_TEXTURES")
-
         # export-only options for fallout 3
         if (self.target == self.TARGET_EXPORT
             and self.config["game"] == 'FALLOUT_3'):
@@ -1228,7 +1217,6 @@ class NifConfig:
         elif evName[:5] == "GAME_":
             self.config["game"] = evName[5:]
             # settings that usually make sense, fail-safe
-            self.config["EXPORT_FORCEDDS"] = True
             self.config["EXPORT_SMOOTHOBJECTSEAMS"] = True
             self.config["EXPORT_STRIPIFY"] = False
             self.config["EXPORT_STITCHSTRIPS"] = False
@@ -1240,11 +1228,7 @@ class NifConfig:
             self.config["EXPORT_OB_SOLID"] = True
             self.config["EXPORT_MW_NIFXNIFKF"] = False
             self.config["EXPORT_MW_BS_ANIMATION_NODE"] = False
-            self.config["EXPORT_EXTRA_SHADER_TEXTURES"] = True
             # set default settings per game
-            if self.config["game"] == 'MORROWIND':
-                self.config["EXPORT_FORCEDDS"] = False
-                pass # fail-safe settings work
             if self.config["game"] == 'FREEDOM_FORCE_VS_THE_3RD_REICH':
                 self.config["EXPORT_SKINPARTITION"] = True
                 self.config["EXPORT_PADBONES"] = True
@@ -1283,10 +1267,8 @@ class NifConfig:
                 # body parts
                 self.config["EXPORT_FO3_BODYPARTS"] = True
             elif self.config["game"] == "Empire Earth II":
-                self.config["EXPORT_FORCEDDS"] = False
                 self.config["EXPORT_SKINPARTITION"] = False
             elif self.config["game"] == "Bully SE":
-                self.config["EXPORT_FORCEDDS"] = False
                 self.config["EXPORT_STRIPIFY"] = False
                 self.config["EXPORT_STITCHSTRIPS"] = False
                 self.config["EXPORT_FLATTENSKIN"] = False
@@ -1299,8 +1281,6 @@ class NifConfig:
             self.config["EXPORT_FLATTENSKIN"] = not self.config["EXPORT_FLATTENSKIN"]
             if self.config["EXPORT_FLATTENSKIN"]: # if skin is flattened
                 self.config["EXPORT_ANIMATION"] = 1 # force geometry only
-        elif evName == "EXPORT_FORCEDDS":
-            self.config["EXPORT_FORCEDDS"] = not self.config["EXPORT_FORCEDDS"]
         elif evName == "EXPORT_STRIPIFY":
             self.config["EXPORT_STRIPIFY"] = not self.config["EXPORT_STRIPIFY"]
         elif evName == "EXPORT_STITCHSTRIPS":
@@ -1452,8 +1432,6 @@ class NifConfig:
             self.config["EXPORT_MW_NIFXNIFKF"] = not self.config["EXPORT_MW_NIFXNIFKF"]
         elif evName == "EXPORT_MW_BS_ANIMATION_NODE":
             self.config["EXPORT_MW_BS_ANIMATION_NODE"] = not self.config["EXPORT_MW_BS_ANIMATION_NODE"]
-        elif evName == "EXPORT_EXTRA_SHADER_TEXTURES":
-            self.config["EXPORT_EXTRA_SHADER_TEXTURES"] = not self.config["EXPORT_EXTRA_SHADER_TEXTURES"]
         elif evName == "EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES":
             self.config["EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES"] = not self.config["EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES"]
         Draw.Redraw(1)

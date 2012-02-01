@@ -1451,13 +1451,13 @@ class NifImport(NifImportExport):
         name = self.import_name(matProperty)
         material = bpy.data.materials.new(name)
         # get apply mode, and convert to blender "blending mode"
-        blend_type = "MIX" # default
+        blend_type = 'MIX' # default
         if textProperty:
             blend_type = self.get_b_blend_type_from_n_apply_mode(
                 textProperty.apply_mode)
         elif bsShaderProperty:
             # default blending mode for fallout 3
-            blend_type = "MIX"
+            blend_type = 'MIX'
         # Sets the colors
         # Specular color
         spec = matProperty.specular_color
@@ -1617,7 +1617,7 @@ class NifImport(NifImportExport):
                 glow_texture = self.import_texture(glowTexDesc.source)
                 if glow_texture:
                     # glow maps use alpha from rgb intensity
-                    glow_texture.imageFlags |= Blender.Texture.ImageFlags.CALCALPHA
+                    glow_texture.use_calculate_alpha = True
                     # set the texture to use face UV coordinates
                     texco = 'UV'
                     # map the texture to the base color and emit channel
@@ -1660,7 +1660,7 @@ class NifImport(NifImportExport):
                     mdark_texture = material.getTextures()[5]
                     mdark_texture.uv_layer = self.get_uv_layer_name(darkTexDesc.uv_set)
                     # set blend mode to "DARKEN"
-                    mdark_texture.blend_type = Blender.Texture.BlendModes["DARKEN"]
+                    mdark_texture.blend_type = 'DARKEN'
             if detailTexDesc:
                 detail_texture = self.import_texture(detailTexDesc.source)
                 if detail_texture:
@@ -1705,7 +1705,7 @@ class NifImport(NifImportExport):
                 glow_texture = self.import_texture(glowTexFile)
                 if glow_texture:
                     # glow maps use alpha from rgb intensity
-                    glow_texture.imageFlags |= Blender.Texture.ImageFlags.CALCALPHA
+                    glow_texture.use_calculate_alpha = True
                     # set the texture to use face UV coordinates
                     texco = 'UV'
                     # map the texture to the base color and emit channel
@@ -1738,7 +1738,7 @@ class NifImport(NifImportExport):
                 # set the texture for the material
                 material.setTexture(3, envmapTexture, texco, mapto)
                 menvmapTexture = material.getTextures()[3]
-                menvmapTexture.blend_type = Blender.Texture.BlendModes["ADD"]
+                menvmapTexture.blend_type = 'ADD'
         # check transparency
         if alphaProperty:
             material.mode |= Blender.Material.Modes.ZTRANSP # enable z-buffered transparency
@@ -1748,8 +1748,8 @@ class NifImport(NifImportExport):
                 #if base_texture.image.depth == 32 or base_texture.image.size == [1,1]: # check for alpha channel in texture; if it's a stub then assume alpha channel
                 # new method: let's just assume there is alpha
                 if True:
-                    base_texture.imageFlags |= Blender.Texture.ImageFlags.USEALPHA # use the alpha channel
-                    mbase_texture.mapto |=  Blender.Texture.MapTo.ALPHA # and map the alpha channel to transparency
+                    base_texture.use_alpha = True # use the alpha channel
+                    mbase_texture.use_map_alpha = True # and map the alpha channel to transparency
                     # for proper display in Blender, we must set the alpha value
                     # to 0 and the "Var" slider in the texture Map To tab to the
                     # NIF material alpha value

@@ -126,9 +126,12 @@ class NifExport(NifImportExport):
         """Returns an unique name for use in the NIF file, from the name of a
         Blender object.
 
+        :param blender_name: Name of object as in blender.
+        :type blender_name: :class:`str`
+
         .. todo:: Refactor and simplify this code.
         """
-        unique_name = b"unnamed"
+        unique_name = "unnamed"
         if blender_name:
             unique_name = blender_name
         # blender bone naming -> nif bone naming
@@ -138,7 +141,7 @@ class NifExport(NifImportExport):
             unique_int = 0
             old_name = unique_name
             while unique_name in self.block_names or unique_name in list(self.names.values()):
-                unique_name = b"%s.%02d" % (old_name, unique_int)
+                unique_name = "%s.%02d" % (old_name, unique_int)
                 unique_int += 1
         self.block_names.append(unique_name)
         self.names[blender_name] = unique_name
@@ -147,6 +150,9 @@ class NifExport(NifImportExport):
     def get_full_name(self, blender_name):
         """Returns the original imported name if present, or the name by which
         the object was exported already.
+
+        :param blender_name: Name of object as in blender.
+        :type blender_name: :class:`str`
 
         .. todo:: Refactor and simplify this code.
         """
@@ -988,6 +994,9 @@ class NifExport(NifImportExport):
           root node)
         - for the root node, ob is None, and node_name is usually the base
           filename (either with or without extension)
+
+        :param node_name: The name of the node to be exported.
+        :type node_name: :class:`str`
         """
         # ob_type: determine the block type
         #          (None, 'MESH', 'EMPTY' or 'ARMATURE')
@@ -1088,7 +1097,7 @@ class NifExport(NifImportExport):
             parent_block.add_child(node)
 
         # and fill in this node's non-trivial values
-        node.name = self.get_full_name(node_name)
+        node.name = self.get_full_name(node_name).encode()
 
         # default node flags
         if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
@@ -1612,26 +1621,27 @@ class NifExport(NifImportExport):
         @param texture: The texture object in blender.
         @return: The file name of the image used in the texture.
         """
-        if texture.type == Blender.Texture.Types.ENVMAP:
+        if texture.type == 'ENVIRONMENT_MAP':
             # this works for morrowind only
             if self.properties.game != 'MORROWIND':
                 raise NifExportError(
                     "cannot export environment maps for nif version '%s'"
                     %self.properties.game)
             return "enviro 01.TGA"
-        elif texture.type == Blender.Texture.Types.IMAGE:
+        elif texture.type == 'IMAGE':
             # get filename from image
 
+            # XXX still needed? can texture.image be None in current blender?
             # check that image is loaded
-            if texture.getImage() is None:
+            if texture.image is None:
                 raise NifExportError(
                     "image type texture has no file loaded ('%s')"
                     % texture.name)                    
 
-            filename = texture.image.getFilename()
+            filename = texture.image.filepath
 
             # warn if packed flag is enabled
-            if texture.getImage().packed:
+            if texture.image.packed_file:
                 self.warning(
                     "Packed image in texture '%s' ignored, "
                     "exporting as '%s' instead."
@@ -1639,7 +1649,7 @@ class NifExport(NifImportExport):
             
             # try and find a DDS alternative, force it if required
             ddsfilename = "%s%s" % (filename[:-4], '.dds')
-            if os.path.exists(ddsfilename) or self.EXPORT_FORCEDDS:
+            if os.path.exists(ddsfilename) or self.properties.force_dds:
                 filename = ddsfilename
 
             # sanitize file path
@@ -1856,7 +1866,7 @@ class NifExport(NifImportExport):
                 # the base texture = first material texture
                 # note that most morrowind files only have a base texture, so let's for now only support single textured materials
                 for mtex in mesh_mat.texture_slots:
-                    if not mtex.use:
+                    if not mtex or not mtex.use:
                         # skip unused texture slots
                         continue
 
@@ -1893,10 +1903,8 @@ class NifExport(NifImportExport):
                     # check UV-mapped textures
                     elif mtex.texture_coords == 'UV':
                         # update set of uv layers that must be exported
-                        uvlayer = ( mtex.uv_layer if mtex.uv_layer
-                                    else mesh.activeUVLayer )
-                        if not uvlayer in mesh_uvlayers:
-                            mesh_uvlayers.append(uvlayer)
+                        if not mtex.uv_layer in mesh_uvlayers:
+                            mesh_uvlayers.append(mtex.uv_layer)
                         # check which texture slot this mtex belongs to
                         if mtex.use_map_emit:
                             # got the glow tex
@@ -1909,8 +1917,7 @@ class NifExport(NifImportExport):
                                     %(mesh.name,mesh_mat.name))
                             # check if calculation of alpha channel is enabled
                             # for this texture
-                            if (mtex.tex.imageFlags & Blender.Texture.ImageFlags.CALCALPHA != 0) \
-                               and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
+                            if mtex.texture.use_calculate_alpha and mtex.use_map_alpha:
                                 self.warning(
                                     "In mesh '%s', material '%s':"
                                     " glow texture must have"
@@ -1939,7 +1946,7 @@ class NifExport(NifImportExport):
                                     %(mesh.name,mesh_mat.name))
                             mesh_bump_mtex = mtex
                         elif mtex.use_map_color_diffuse and \
-                             mtex.blend_type == Blender.Texture.BlendModes["DARKEN"] and \
+                             mtex.blend_type == 'DARKEN' and \
                              not mesh_dark_mtex:
                             # got the dark map
                             mesh_dark_mtex = mtex
@@ -1949,7 +1956,7 @@ class NifExport(NifImportExport):
                             # as base texture
                             mesh_base_mtex = mtex
                             # check if alpha channel is enabled for this texture
-                            if (mesh_base_mtex.tex.imageFlags & Blender.Texture.ImageFlags.USEALPHA != 0) and (mtex.mapto & Blender.Texture.MapTo.ALPHA != 0):
+                            if mesh_base_mtex.texture.use_alpha and mtex.use_map_alpha:
                                 # in this case, Blender replaces the texture transparant parts with the underlying material color...
                                 # in NIF, material alpha is multiplied with texture alpha channel...
                                 # how can we emulate the NIF alpha system (simply multiplying material alpha with texture alpha) when MapTo.ALPHA is turned on?
@@ -2000,7 +2007,7 @@ class NifExport(NifImportExport):
                                 " go to the Shading Panel,"
                                 " Material Buttons, and set texture"
                                 " 'Map To' to 'COL'."
-                                % (mtex.tex.name,ob.name,mesh_mat.name))
+                                % (mtex.texture.name,ob.name,mesh_mat.name))
                     else:
                         # nif only support UV-mapped textures
                         raise NifExportError(
@@ -2061,7 +2068,9 @@ class NifExport(NifImportExport):
                 if mesh_uvlayers:
                     # if we have uv coordinates
                     # double check that we have uv data
-                    if not mesh.faceUV or len(f.uv) != len(f.v):
+                    # XXX should we check that every uvlayer in mesh_uvlayers
+                    # XXX is in uv_textures?
+                    if not mesh.uv_textures:
                         raise NifExportError(
                             "ERROR%t|Create a UV map for every texture,"
                             " and run the script again.")
@@ -2072,7 +2081,7 @@ class NifExport(NifImportExport):
                     # get vertex normal for lighting (smooth = Blender vertex normal, non-smooth = Blender face normal)
                     if mesh_hasnormals:
                         if f.use_smooth:
-                            fn = fv.normal
+                            fn = mesh.vertices[fv_index].normal
                         else:
                             fn = f.normal
                     else:
@@ -2080,7 +2089,8 @@ class NifExport(NifImportExport):
                     fuv = []
                     for uvlayer in mesh_uvlayers:
                         fuv.append(
-                            getattr(mesh.uv_textures[uvlayer].data, "uv%i" % i))
+                            getattr(mesh.uv_textures[uvlayer].data[f.index],
+                                    "uv%i" % (i + 1)))
                     # FIXME figure out the new vertex color layer system
                     fcol = None
                     """
@@ -2235,19 +2245,19 @@ class NifExport(NifImportExport):
             
             # fill in the NiTriShape's non-trivial values
             if isinstance(parent_block, NifFormat.RootCollisionNode):
-                trishape.name = ""
+                trishape.name = b""
             elif not trishape_name:
                 if parent_block.name:
-                    trishape.name = "Tri " + parent_block.name
+                    trishape.name = b"Tri " + parent_block.name
                 else:
-                    trishape.name = "Tri " + ob.name
+                    trishape.name = b"Tri " + ob.name.encode()
             else:
-                trishape.name = trishape_name
+                trishape.name = trishape_name.encode()
             if len(mesh_mats) > 1:
                 # multimaterial meshes: add material index
                 # (Morrowind's child naming convention)
                 trishape.name += " %i"%materialIndex
-            trishape.name = self.get_full_name(trishape.name)
+            trishape.name = self.get_full_name(trishape.name.decode()).encode()
             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
                 trishape.flags = 0x000E
             elif self.properties.game in ('SID_MEIER_S_RAILROADS',
@@ -2286,8 +2296,7 @@ class NifExport(NifImportExport):
                         #darkmtex = mesh_dark_mtex,
                         #detailmtex = mesh_detail_mtex)) 
                 else:
-                    if (self.properties.game in self.USED_EXTRA_SHADER_TEXTURES
-                        and self.EXPORT_EXTRA_SHADER_TEXTURES):
+                    if self.properties.game in self.USED_EXTRA_SHADER_TEXTURES:
                         # sid meier's railroad and civ4:
                         # set shader slots in extra data
                         self.add_shader_integer_extra_datas(trishape)
@@ -2295,7 +2304,7 @@ class NifExport(NifImportExport):
                         flags=0x0001, # standard
                         applymode=self.get_n_apply_mode_from_b_blend_type(
                             mesh_base_mtex.blend_type
-                            if mesh_base_mtex else "MIX"),
+                            if mesh_base_mtex else 'MIX'),
                         uvlayers=mesh_uvlayers,
                         basemtex=mesh_base_mtex,
                         glowmtex=mesh_glow_mtex,
@@ -2424,8 +2433,7 @@ class NifExport(NifImportExport):
             # not using tangent space on non shadered nifs)
             if mesh_uvlayers and mesh_hasnormals:
                 if (self.properties.game in ('OBLIVION', 'FALLOUT_3')
-                    or (self.properties.game in self.USED_EXTRA_SHADER_TEXTURES
-                        and self.EXPORT_EXTRA_SHADER_TEXTURES)):
+                    or (self.properties.game in self.USED_EXTRA_SHADER_TEXTURES)):
                     trishape.update_tangent_space(
                         as_extra=(self.properties.game == 'OBLIVION'))
 
@@ -2454,7 +2462,7 @@ class NifExport(NifImportExport):
                         trishape.skin_instance = skininst
                         for block in self.blocks:
                             if isinstance(block, NifFormat.NiNode):
-                                if block.name == self.get_full_name(armaturename):
+                                if block.name == self.get_full_name(armaturename).encode():
                                     skininst.skeleton_root = block
                                     break
                         else:
@@ -2506,7 +2514,7 @@ class NifExport(NifImportExport):
                             bone_block = None
                             for block in self.blocks:
                                 if isinstance(block, NifFormat.NiNode):
-                                    if block.name == self.get_full_name(bone):
+                                    if block.name == self.get_full_name(bone).encode():
                                         if not bone_block:
                                             bone_block = block
                                         else:
@@ -2756,6 +2764,10 @@ class NifExport(NifImportExport):
 
     def export_material_controllers(self, b_material, n_geom):
         """Export material animation data for given geometry."""
+        # XXX todo: port to blender 2.5x+ interface
+        # XXX Blender.Ipo channel constants are replaced by FCurve.data_path?
+        return
+
         if self.properties.animation == 'GEOM_NIF':
             # geometry only: don't write controllers
             return
@@ -3011,7 +3023,7 @@ class NifExport(NifImportExport):
             bones_node[bone.name] = node
 
             # add the node and the keyframe for this bone
-            node.name = self.get_full_name(bone.name)
+            node.name = self.get_full_name(bone.name).encode()
             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
                 # default for Oblivion bones
                 # note: bodies have 0x000E, clothing has 0x000F
@@ -3103,7 +3115,7 @@ class NifExport(NifImportExport):
                         nif_bone_name = self.get_full_name(parent_bone_name)
                         for bone_block in self.blocks:
                             if isinstance(bone_block, NifFormat.NiNode) and \
-                                bone_block.name == nif_bone_name:
+                                bone_block.name.decode() == nif_bone_name:
                                 # ok, we should parent to block
                                 # instead of to parent_block
                                 # two problems to resolve:
@@ -4189,10 +4201,10 @@ class NifExport(NifImportExport):
             self.warning(
                 "Bad uv layer name '%s' in texture '%s'."
                 " Falling back on first uv layer"
-                % (mtex.uv_layer, mtex.tex.name))
+                % (mtex.uv_layer, mtex.texture.name))
             texdesc.uv_set = 0 # assume 0 is active layer
 
-        texdesc.source = self.export_source_texture(mtex.tex)
+        texdesc.source = self.export_source_texture(mtex.texture)
 
     def export_texturing_property(
         self, flags=0x0001, applymode=None, uvlayers=None,
@@ -4211,40 +4223,40 @@ class NifExport(NifImportExport):
         texprop.apply_mode = applymode
         texprop.texture_count = 7
 
-        if self.EXPORT_EXTRA_SHADER_TEXTURES:
-            if self.properties.game == 'SID_MEIER_S_RAILROADS':
-                # sid meier's railroads:
-                # some textures end up in the shader texture list
-                # there are 5 slots available, so set them up
-                texprop.num_shader_textures = 5
-                texprop.shader_textures.update_size()
-                for mapindex, shadertexdesc in enumerate(texprop.shader_textures):
-                    # set default values
-                    shadertexdesc.is_used = False
-                    shadertexdesc.map_index = mapindex
+        # export extra shader textures
+        if self.properties.game == 'SID_MEIER_S_RAILROADS':
+            # sid meier's railroads:
+            # some textures end up in the shader texture list
+            # there are 5 slots available, so set them up
+            texprop.num_shader_textures = 5
+            texprop.shader_textures.update_size()
+            for mapindex, shadertexdesc in enumerate(texprop.shader_textures):
+                # set default values
+                shadertexdesc.is_used = False
+                shadertexdesc.map_index = mapindex
 
-                # some texture slots required by the engine
-                shadertexdesc_envmap = texprop.shader_textures[0]
-                shadertexdesc_envmap.is_used = True
-                shadertexdesc_envmap.texture_data.source = \
-                    self.export_source_texture(filename="RRT_Engine_Env_map.dds")
+            # some texture slots required by the engine
+            shadertexdesc_envmap = texprop.shader_textures[0]
+            shadertexdesc_envmap.is_used = True
+            shadertexdesc_envmap.texture_data.source = \
+                self.export_source_texture(filename="RRT_Engine_Env_map.dds")
 
-                shadertexdesc_cubelightmap = texprop.shader_textures[4]
-                shadertexdesc_cubelightmap.is_used = True
-                shadertexdesc_cubelightmap.texture_data.source = \
-                    self.export_source_texture(filename="RRT_Cube_Light_map_128.dds")
+            shadertexdesc_cubelightmap = texprop.shader_textures[4]
+            shadertexdesc_cubelightmap.is_used = True
+            shadertexdesc_cubelightmap.texture_data.source = \
+                self.export_source_texture(filename="RRT_Cube_Light_map_128.dds")
 
-                # the other slots are exported below
+            # the other slots are exported below
 
-            elif self.properties.game == 'CIVILIZATION_IV':
-                # some textures end up in the shader texture list
-                # there are 4 slots available, so set them up
-                texprop.num_shader_textures = 4
-                texprop.shader_textures.update_size()
-                for mapindex, shadertexdesc in enumerate(texprop.shader_textures):
-                    # set default values
-                    shadertexdesc.is_used = False
-                    shadertexdesc.map_index = mapindex
+        elif self.properties.game == 'CIVILIZATION_IV':
+            # some textures end up in the shader texture list
+            # there are 4 slots available, so set them up
+            texprop.num_shader_textures = 4
+            texprop.shader_textures.update_size()
+            for mapindex, shadertexdesc in enumerate(texprop.shader_textures):
+                # set default values
+                shadertexdesc.is_used = False
+                shadertexdesc.map_index = mapindex
 
         if basemtex:
             texprop.has_base_texture = True
@@ -4253,12 +4265,12 @@ class NifExport(NifImportExport):
                                  mtex = basemtex)
             # check for texture flip definition
             try:
-                fliptxt = Blender.Text.Get(basemtex.tex.name)
+                fliptxt = Blender.Text.Get(basemtex.texture.name)
             except NameError:
                 pass
             else:
                 # texture slot 0 = base
-                self.export_flip_controller(fliptxt, basemtex.tex, texprop, 0)
+                self.export_flip_controller(fliptxt, basemtex.texture, texprop, 0)
 
         if glowmtex:
             texprop.has_glow_texture = True
@@ -4278,11 +4290,11 @@ class NifExport(NifImportExport):
                 texprop.bump_map_matrix.m_12 = 0.0
                 texprop.bump_map_matrix.m_21 = 0.0
                 texprop.bump_map_matrix.m_22 = 1.0
-            elif self.EXPORT_EXTRA_SHADER_TEXTURES:
+            else:
                 shadertexdesc = texprop.shader_textures[1]
                 shadertexdesc.is_used = True
                 shadertexdesc.texture_data.source = \
-                    self.export_source_texture(texture=bumpmtex.tex)
+                    self.export_source_texture(texture=bumpmtex.texture)
 
         if glossmtex:
             if self.properties.game not in self.USED_EXTRA_SHADER_TEXTURES:
@@ -4290,11 +4302,11 @@ class NifExport(NifImportExport):
                 self.export_tex_desc(texdesc = texprop.gloss_texture,
                                      uvlayers = uvlayers,
                                      mtex = glossmtex)
-            elif self.EXPORT_EXTRA_SHADER_TEXTURES:
+            else:
                 shadertexdesc = texprop.shader_textures[2]
                 shadertexdesc.is_used = True
                 shadertexdesc.texture_data.source = \
-                    self.export_source_texture(texture=glossmtex.tex)
+                    self.export_source_texture(texture=glossmtex.texture)
 
         if darkmtex:
             texprop.has_dark_texture = True
@@ -4320,7 +4332,7 @@ class NifExport(NifImportExport):
                 shadertexdesc = texprop.shader_textures[3]
                 shadertexdesc.is_used = True
                 shadertexdesc.texture_data.source = \
-                    self.export_source_texture(texture=refmtex.tex)
+                    self.export_source_texture(texture=refmtex.texture)
 
         # search for duplicate
         for block in self.blocks:
@@ -4350,11 +4362,11 @@ class NifExport(NifImportExport):
         texset = NifFormat.BSShaderTextureSet()
         bsshader.texture_set = texset
         if basemtex:
-            texset.textures[0] = self.export_texture_filename(basemtex.tex)
+            texset.textures[0] = self.export_texture_filename(basemtex.texture)
         if bumpmtex:
-            texset.textures[1] = self.export_texture_filename(bumpmtex.tex)
+            texset.textures[1] = self.export_texture_filename(bumpmtex.texture)
         if glowmtex:
-            texset.textures[2] = self.export_texture_filename(glowmtex.tex)
+            texset.textures[2] = self.export_texture_filename(glowmtex.texture)
 
         # search for duplicates
         # DISABLED: the Fallout 3 engine cannot handle them
@@ -4379,7 +4391,7 @@ class NifExport(NifImportExport):
         texeff.texture_type = NifFormat.EffectType.EFFECT_ENVIRONMENT_MAP
         texeff.coordinate_generation_type = NifFormat.CoordGenType.CG_SPHERE_MAP
         if mtex:
-            texeff.source_texture = self.export_source_texture(mtex.tex)
+            texeff.source_texture = self.export_source_texture(mtex.texture)
             if self.properties.game == 'MORROWIND':
                 texeff.num_affected_node_list_pointers += 1
                 texeff.affected_node_list_pointers.update_size()

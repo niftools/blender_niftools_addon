@@ -2,6 +2,8 @@
 
 import bpy
 import nose.tools
+import os
+
 import io_scene_nif.export_nif
 from pyffi.formats.nif import NifFormat
 from test.test_cube import TestCube
@@ -12,13 +14,17 @@ class TestBaseUVTexture(TestCube):
     def b_create_object(self):
         b_obj = TestCube.b_create_object(self)
         b_mat = bpy.data.materials.new(name='Material')
+        b_mat.specular_intensity = 0 # disable NiSpecularProperty
         b_mtex = b_mat.texture_slots.create(0)
         b_mtex.texture_coords = 'UV'
         b_mtex.use_map_color_diffuse = True
         b_mtex.texture = bpy.data.textures.new(name='Tex', type='IMAGE')
-        b_mtex.texture.image = bpy.data.images.new('textures/image.dds', 1, 1)
+        b_mtex.texture.image = bpy.data.images.new('textures' + os.sep + 'image.dds', 1, 1)
         b_obj.data.materials.append(b_mat)
-        # TODO set up uv layer, and unwrap uv for cube
+        bpy.ops.object.editmode_toggle()
+        bpy.ops.uv.cube_project() # named 'UVTex'
+        bpy.ops.object.editmode_toggle()
+        b_mtex.uv_layer = 'UVTex'
         return b_obj
 
     def b_check_object(self, b_obj):
@@ -31,7 +37,7 @@ class TestBaseUVTexture(TestCube):
         nose.tools.assert_equal(b_mtex.use_map_color_diffuse, True)
         nose.tools.assert_is_instance(b_mtex.texture, bpy.types.ImageTexture)
         nose.tools.assert_equal(
-            b_mtex.texture.image.filepath, 'textures/image.dds')
+            b_mtex.texture.image.filepath, 'textures' + os.sep + 'image.dds')
 
     def n_check_data(self, n_data):
         n_geom = n_data.roots[0].children[0]

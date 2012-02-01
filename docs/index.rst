@@ -13,7 +13,7 @@ Welcome to Blender NIF Scripts's documentation!
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    user/index
    development/index
