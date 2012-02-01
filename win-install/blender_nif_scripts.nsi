@@ -3,7 +3,7 @@
 ; (NifTools - http://niftools.sourceforge.net) 
 ; (NSIS - http://nsis.sourceforge.net)
 ;
-; Copyright (c) 2005-2011, NIF File Format Library and Tools
+; Copyright (c) 2005-2012, NIF File Format Library and Tools
 ; All rights reserved.
 ; 
 ; Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,7 @@ SetCompressor /SOLID lzma
 !include "WordFunc.nsh"
 !insertmacro VersionCompare
 
-!define VERSION "2.5.8"
+!define VERSION "2.6.0"
 !define PYFFIVERSION "2.2.0"
 
 Name "Blender NIF Scripts ${VERSION}"
