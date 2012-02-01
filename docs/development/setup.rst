@@ -23,7 +23,8 @@ Install Python 3.2
 ------------------
 
 Windows
-Download `Python 3.2 <http://www.python.org/download/releases/3.2.2/>`_ - 32-bit 
+
+Download `Python 3.2 <http://www.python.org/download/releases/3.2.2/>`_ - 32-bit. 
 Pick the installer appropriate for your platform, and follow the instructions. 
 Use the default install location.
 
@@ -38,8 +39,7 @@ Ubuntu::
 Install Git
 -----------
 
-The code is maintained with git. If you are not yet familiar with git,
-read `progit <http://progit.org/book/>`_.
+The code is maintained with git. If you are not yet familiar with git, read `progit <http://progit.org/book/>`_.
 
 On Windows, we use git bash. 
 Download `msysgit <http://code.google.com/p/msysgit/downloads/list>`_ and follow the installer instructions.
@@ -52,17 +52,16 @@ Ubuntu::
    
    sudo apt-get install git
 
-When installed we enable AutoCLRF, this avoid unnecessary commits due to differences in End of File marker types: LF & CLRF.
-We also enable the input flag, this autochecks eternal source file that gets introduced into the repo.
+Auto CLRF
+`````````
 
-Window::
+We need to ensure consistancy between end-of-file(EOF) markers. This avoid excess commits where the enviroment automatically adds the EOF.
+Read `EOF <http://en.wikipedia.org/wiki/Newline>`_.
+We also enable the input flag, this autochecks any external source file introduced into the repo::
 
    git config --global core.autocrlf true
    git config --global core.autocrlf input
 
-Linux/Mac::
-
-   git config --global core.autocrlf input
 
 Create a Github Fork
 --------------------
@@ -114,19 +113,17 @@ On Windows, get the build environment batch script::
 
    git clone git://github.com/amorilia/buildenv
 
-Right-click on the ``buildenv.bat`` file,
-and select **Send to > Desktop (create shortcut)**.
+Right-click on the ``buildenv.bat`` file, and select **Send to > Desktop (create shortcut)**.
 
-Now right-click this newly created shortcut,
-and change **Target** into::
+Now right-click this newly created shortcut, and change **Target** into
 
+Vista/Win 7::
    %comspec% /k C:\Users\<username>\workspace\buildenv\buildenv.bat C:\Python32 msvc2008 64 workspace
 
-on Vista/Win 7, or::
-
+XP::
    %comspec% /k "C:\Documents and Settings\<username>\workspace\buildenv\buildenv.bat" C:\Python32 msvc2008 64 workspace
 
-on XP. On 32 bit systems, type ``32`` instead of ``64``.
+On 32 bit systems, type ``32`` instead of ``64``.
 
 Install Setuptools
 ------------------
@@ -156,8 +153,8 @@ Install Sphinx and Nose
 
 Windows, run in buildenv::
 
-   easy_install install Sphinx
-   easy_install install nose
+   easy_install-3.2 Sphinx
+   easy_install-3.2 nose
 
 Ubuntu, run in a terminal::
 
@@ -168,8 +165,8 @@ Fedora, run in a terminal::
 
    easy_install-3.2 --user Sphinx
    sudo yum install python3-nose
-Install PyFFI
 
+Install PyFFI
 -------------
 
 On Windows, run in buildenv::
@@ -190,13 +187,12 @@ Fedora, run in a terminal::
 Update Blender Python and Check Installation
 --------------------------------------------
 
-On Windows, you'll first need to
-copy your entire ``C:\Python32\Lib\site-packages`` folder to
+On Windows, you'll first need to copy your entire ``C:\Python32\Lib\site-packages`` folder to
 ``C:\Program Files\Blender Foundation\Blender\2.60\python\lib\site-packages``.
 There is a script that does this for you in buildenv::
 
-  cd blender_nif_scripts
-  copy-site-packages-to-blender.bat
+   cd blender_nif_scripts
+   copy-site-packages-to-blender.bat
 
 Now, to check that everything is installed correctly, start blender, open a Python console,
 and type::
@@ -233,12 +229,10 @@ Ubuntu, simply run::
 
    sudo apt-get install eclipse
 
-When starting eclipse,
-you are asked for your workspace folder---if you followed the
-instructions above and cloned the code into
-``~/workspace/blender_nif_scripts``, then the default
-``/home/<username>/workspace`` will do the trick. If not, pick the
-folder in which the ``blender_nif_scripts`` clone resides.
+When starting eclipse, you are asked for your workspace folder---if you followed the
+instructions above and cloned the code into ``~/workspace/blender_nif_scripts``, 
+then the default ``/home/<username>/workspace`` will do the trick. 
+If not, pick the folder in which the ``blender_nif_scripts`` clone resides.
 
 At the Welcome window, click **Workbench** on the top right.
 
@@ -312,49 +306,44 @@ copy the following to the Blender directory::
    pydev_debug.py
 
 Command Line Completion
-~~~~~~~~~~~~~~~~~~~~~~~
+```````````````````````
 
-Run ``docs/refresh_python_api.bat`` to generate an updated API
-and link the generated API
-to the ``blender_nif_scripts`` project:
+Run ``docs/refresh_python_api.bat`` to generate an updated API.
+Link the generated API to the ``blender_nif_scripts`` project:
 **Project > Properties > Pydev - PYTHONPATH > external libraries > .../Blender/docs/python_api/pypredef/**
 
 .. note::
-
-   Type declarations must be fully qualified
-   (bpy.types.object, bpy.context.active_object, etc.)
-   before auto-completion kicks in
-
-.. note::
-
-   Hovering over a variable will hot-link to the generated documentation.
+   Variable declarations must have qualified type before auto-completion kicks in
+   (b_obj = bpy.types.object, context = bpy.context.active_object, etc.)
 
 .. warning::
-
    Auto-completion works for the majority of the API, but some bits
    are missing, eg. Blender Game Engine.
 
-Debugging
-~~~~~~~~~
+.. note::
+   Hovering over a variable will hot-link to the generated documentation.
 
-``pydev_debug.py`` and ``run.py``
-hook Eclipse's Pydev Debug to Blender's debugger.
-
+Eclipse Debugging
+`````````````````
 Add the Pydev Debug: Customise Perspective -> Pydev Debug. 
-Always start the Pydev debug server first otherwise blender will crash later. 
 
-Open ``run.py`` in the scripting text editor.
+.. note::
+   Always start the Pydev debug server first otherwise blender will crash later. 
+
+``pydev_debug.py`` and ``run.py`` are used to hook Eclipse's Pydev Debug to Blender's debugger.
+
+Open ``run.py`` in Blender's text editor, under the Python console section.
 
 Replace the strings:
 
-* 1. python debugger location.
-* 2. main file location. 
+* python debugger location.
+* file location. 
 
 .. note::   
    If your entry file is __init__.py file, this should be renamed to your package name while you are developing. 
    The debugger script will crash due to underscores.
 
-Run the script; blender will appear to hang, this is as the Debugger has hit the trace() call
-Switch to Eclipses Debug Mode, the hit the continue button. 
+Run the script; blender will appear to hang, this is as the Debugger hitting the trace() call.
+Switch to Eclipses, then to the Debug Perspective, hit the continue button. 
 
 Happy coding & debugging.
