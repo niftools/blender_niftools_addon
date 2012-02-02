@@ -12,7 +12,10 @@ def clear_bpy_data():
     def clear_bpy_prop_collection(collection):
         for elem in collection[:]:
             collection.remove(elem)
-
+    
+    #unlinking objects will throw error otherwise 
+    bpy.ops.object.mode_set(mode='OBJECT', toggle=False) #ensure in object mode
+    
     # unlink objects
     for b_obj in bpy.data.objects[:]:
         bpy.context.scene.objects.unlink(b_obj)
