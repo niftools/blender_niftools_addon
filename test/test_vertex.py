@@ -7,7 +7,7 @@ import os
 from pyffi.formats.nif import NifFormat
 
 class TestVertexColor(test.SingleNif):
-    n_name = "base_uv_texture"
+    n_name = "base_uv_vertex"
     b_name = "Cube"
         
     def b_create_object(self):
