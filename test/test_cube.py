@@ -1,6 +1,4 @@
-"""Exports and imports a simple cube, testing for various features
-along the way.
-"""
+"""Exports and imports mesh data"""
 
 import bpy
 import nose.tools
