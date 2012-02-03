@@ -1963,13 +1963,13 @@ class NifImport(NifCommon):
             raise NifImportError("no shape data in %s" % b_name)
 
         # vertices
-        verts = niData.vertices
+        n_verts = niData.vertices
 
         # faces
         n_tris = [list(tri) for tri in niData.get_triangles()]
 
         # "sticky" UV coordinates: these are transformed in Blender UV's
-        uvco = niData.uv_sets
+        n_uvco = niData.uv_sets
 
         # vertex normals
         norms = niData.normals
@@ -1990,7 +1990,7 @@ class NifImport(NifCommon):
         if matProperty:
             # Texture
             textProperty = None
-            if uvco:
+            if n_uvco:
                 textProperty = self.find_property(niBlock,
                                                   NifFormat.NiTexturingProperty)
             
@@ -2072,7 +2072,7 @@ class NifImport(NifCommon):
 
         # v_map will store the vertex index mapping
         # nif vertex i maps to blender vertex v_map[i]
-        v_map = [0 for i in range(len(verts))] # pre-allocate memory, for faster performance
+        v_map = [0 for i in range(len(n_verts))] # pre-allocate memory, for faster performance
         
         # Following code avoids introducing unwanted cracks in UV seams:
         # Construct vertex map to get unique vertex / normal pair list.
@@ -2080,7 +2080,7 @@ class NifImport(NifCommon):
         # While we are at it, we also add vertices while constructing the map.
         n_map = {}
         b_v_index = len(b_meshData.vertices)
-        for i, v in enumerate(verts):
+        for i, v in enumerate(n_verts):
             # The key k identifies unique vertex /normal pairs.
             # We use a tuple of ints for key, this works MUCH faster than a
             # tuple of floats.
@@ -2174,32 +2174,30 @@ class NifImport(NifCommon):
         
         # vertex colors
         self.debug("LOOK HERE")
-        vcol = niData.vertex_colors
+        n_vcol = niData.vertex_colors
         
-        if vcol:
+        if n_vcol:
             b_vertcolorlayer = b_meshData.vertex_colors.new(name="VertexColor")
             #b_vertcolorlayeralpha = b_meshData.vetex_colors.new(name="VertexAlpha")
                         
             # TODO set up b_vcol, next is old data
-            self.debug("THEN HERE")            
-            testval = 0
-            for f, b_f_index in zip(n_tris, f_map):
-                if(testval == 0):
-                    self.debug(str(f[0]))
-                    testval = 1
+
+            for n_face, b_f_index in zip(n_tris, f_map):
                 if b_f_index is None:
                     continue
                 
-                '''
+                
                 b_color_face = b_meshData.vertex_colors[b_f_index]
+                self.debug(b_color_face)
+                '''
                 # now set the vertex colors
-                for f_vert_index, vert_index in enumerate(f):
+                for f_vert_index, vert_index in enumerate(n_face):
                          
-                    b_color_face[f_vert_index].r = int(vcol[vert_index].r * 255)
-                    b_color_face[f_vert_index].g = int(vcol[vert_index].g * 255)
-                    b_color_face[f_vert_index].b = int(vcol[vert_index].b * 255)
+                    b_color_face[f_vert_index].r = int(n_vcol[vert_index].r * 255)
+                    b_color_face[f_vert_index].g = int(n_vcol[vert_index].g * 255)
+                    b_color_face[f_vert_index].b = int(n_vcol[vert_index].b * 255)
                     
-                    #b_face.col[f_vert_index].a = int(vcol[vert_index].a * 255)
+                    b_color_face[f_vert_index].a = int(n_vcol[vert_index].a * 255)
                 '''
                 
             # vertex colors influence lighting...
@@ -2221,7 +2219,7 @@ class NifImport(NifCommon):
             # blender 2.5+ aloways uses uv's per face?
             #b_meshData.faceUV = 1
             #b_meshData.vertexUV = 0
-            for i, uv_set in enumerate(uvco):
+            for i, uv_set in enumerate(n_uvco):
                 # Set the face UV's for the mesh. The NIF format only supports
                 # vertex UV's, but Blender only allows explicit editing of face
                 # UV's, so load vertex UV's as face UV's
@@ -2253,7 +2251,7 @@ class NifImport(NifCommon):
             # if there's a base texture assigned to this material sets it
             # to be displayed in Blender's 3D view
             # but only if there are UV coordinates
-            if mbasetex and mbasetex.texture and uvco:
+            if mbasetex and mbasetex.texture and n_uvco:
                 imgobj = mbasetex.texture.image
                 if imgobj:
                     for b_f_index in f_map:

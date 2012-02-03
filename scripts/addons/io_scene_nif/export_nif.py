@@ -48,7 +48,7 @@ import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 from pyffi.formats.egm import EgmFormat
 
-from .import_export_nif import NifImportExport
+from .nifcommon import NifCommon
 
 class NifExportError(Exception):
     """A simple custom exception class for export errors."""
