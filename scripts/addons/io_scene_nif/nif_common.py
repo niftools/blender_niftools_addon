@@ -44,7 +44,7 @@ import bpy
 import pyffi
 from pyffi.formats.nif import NifFormat
 
-class NifImportExport:
+class NifCommon:
     """Abstract base class for import and export. Contains utility functions
     that are commonly used in both import and export.
     """
