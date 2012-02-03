@@ -54,13 +54,13 @@ import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 from pyffi.formats.egm import EgmFormat
 
-from .import_export_nif import NifImportExport
+from .nif_common import NifCommon
 
 class NifImportError(Exception):
     """A simple custom exception class for import errors."""
     pass
 
-class NifImport(NifImportExport):
+class NifImport(NifCommon):
 
     # correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z
     BONE_CORRECTION_MATRICES = (
@@ -1966,7 +1966,7 @@ class NifImport(NifImportExport):
         verts = niData.vertices
 
         # faces
-        tris = [list(tri) for tri in niData.get_triangles()]
+        n_tris = [list(tri) for tri in niData.get_triangles()]
 
         # "sticky" UV coordinates: these are transformed in Blender UV's
         uvco = niData.uv_sets
@@ -2133,11 +2133,11 @@ class NifImport(NifImportExport):
         del n_map
 
         # Adds the faces to the mesh
-        f_map = [None]*len(tris)
+        f_map = [None]*len(n_tris)
         b_f_index = len(b_meshData.faces)
         num_new_faces = 0 # counter for debugging
         unique_faces = set() # to avoid duplicate faces
-        for i, f in enumerate(tris):
+        for i, f in enumerate(n_tris):
             # get face index
             f_verts = [v_map[vert_index] for vert_index in f]
             # skip degenerate faces
@@ -2171,22 +2171,37 @@ class NifImport(NifImportExport):
             f.use_smooth = True if norms else False
             f.material_index = materialIndex
 
+        
         # vertex colors
+        self.debug("LOOK HERE")
         vcol = niData.vertex_colors
         
         if vcol:
-            b_vcol = b_meshData.vertex_colors.new()
+            b_vertcolorlayer = b_meshData.vertex_colors.new(name="VertexColor")
+            #b_vertcolorlayeralpha = b_meshData.vetex_colors.new(name="VertexAlpha")
+                        
             # TODO set up b_vcol, next is old data
-            for f, b_f_index in zip(tris, f_map):
+            self.debug("THEN HERE")            
+            testval = 0
+            for f, b_f_index in zip(n_tris, f_map):
+                if(testval == 0):
+                    self.debug(str(f[0]))
+                    testval = 1
                 if b_f_index is None:
                     continue
-                b_face = b_meshData.faces[b_f_index]
+                
+                '''
+                b_color_face = b_meshData.vertex_colors[b_f_index]
                 # now set the vertex colors
                 for f_vert_index, vert_index in enumerate(f):
-                    b_face.col[f_vert_index].r = int(vcol[vert_index].r * 255)
-                    b_face.col[f_vert_index].g = int(vcol[vert_index].g * 255)
-                    b_face.col[f_vert_index].b = int(vcol[vert_index].b * 255)
-                    b_face.col[f_vert_index].a = int(vcol[vert_index].a * 255)
+                         
+                    b_color_face[f_vert_index].r = int(vcol[vert_index].r * 255)
+                    b_color_face[f_vert_index].g = int(vcol[vert_index].g * 255)
+                    b_color_face[f_vert_index].b = int(vcol[vert_index].b * 255)
+                    
+                    #b_face.col[f_vert_index].a = int(vcol[vert_index].a * 255)
+                '''
+                
             # vertex colors influence lighting...
             # so now we have to set the use_vertex_color_light flag
             # on the material
@@ -2213,7 +2228,7 @@ class NifImport(NifImportExport):
                 uvlayer = self.get_uv_layer_name(i)
                 if not uvlayer in b_meshData.uv_textures:
                     b_meshData.uv_textures.new(uvlayer)
-                for f, b_f_index in zip(tris, f_map):
+                for f, b_f_index in zip(n_tris, f_map):
                     if b_f_index is None:
                         continue
                     uvlist = [(uv_set[vert_index].u, 1.0 - uv_set[vert_index].v) for vert_index in f]
