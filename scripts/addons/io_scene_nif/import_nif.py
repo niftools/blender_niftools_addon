@@ -2189,31 +2189,32 @@ class NifImport(NifCommon):
                                                         
                 # Each MeshColor has 4 Color's, mapping to a vertex. 
                 b_meshcolor = b_meshcolorlayer.data[b_face_index]
-                for f_vert_index, vert_index in enumerate(n_face):
+                for n_face_index, n_vert_index in enumerate(n_face):
                     
-                    self.debug("f_vert_index % 3: " + str(f_vert_index % 3))
-                    self.debug("n_vcol[vert_index]:" + str(n_vcol[vert_index]))
-                    self.debug("vert_index:" + str(vert_index))
-                    
+                    self.debug("b_face_index: " + str(b_face_index))
+                    self.debug("n_face_index: " + str(n_face_index))
+                    self.debug("f_vert_index: " + str(face_index))
+                    self.debug("n_vert_index: " + str(n_vert_index))
+                                        
                     '''
                     TODO: Need to find better way of accessing color props
                     i.e - form of b_meshcolor.color[index] or b_meshcolor.data[index]
                     should avoid comparisons below....
                     '''
-                    if(f_vert_index % 3 == 0):                  
-                        b_meshcolor.color1.r = int(n_vcol[vert_index].r * 255)
-                        b_meshcolor.color1.g = int(n_vcol[vert_index].g * 255)
-                        b_meshcolor.color1.b = int(n_vcol[vert_index].b * 255)
+                    if(n_face_index % 3 == 0):                  
+                        b_meshcolor.color1.r = int(n_vcol[n_vert_index].r * 255)
+                        b_meshcolor.color1.g = int(n_vcol[n_vert_index].g * 255)
+                        b_meshcolor.color1.b = int(n_vcol[n_vert_index].b * 255)
                         continue
-                    elif(f_vert_index % 3 == 1):
-                        b_meshcolor.color2.r = int(n_vcol[vert_index].r * 255)
-                        b_meshcolor.color2.g = int(n_vcol[vert_index].g * 255)
-                        b_meshcolor.color2.b = int(n_vcol[vert_index].b * 255)
+                    elif(n_face_index % 3 == 1):
+                        b_meshcolor.color2.r = int(n_vcol[n_vert_index].r * 255)
+                        b_meshcolor.color2.g = int(n_vcol[n_vert_index].g * 255)
+                        b_meshcolor.color2.b = int(n_vcol[n_vert_index].b * 255)
                         continue
                     else:
-                        b_meshcolor.color3.r = int(n_vcol[vert_index].r * 255)
-                        b_meshcolor.color3.g = int(n_vcol[vert_index].g * 255)
-                        b_meshcolor.color3.b = int(n_vcol[vert_index].b * 255)
+                        b_meshcolor.color3.r = int(n_vcol[n_vert_index].r * 255)
+                        b_meshcolor.color3.g = int(n_vcol[n_vert_index].g * 255)
+                        b_meshcolor.color3.b = int(n_vcol[n_vert_index].b * 255)
                         
                     # b_meshcolor[f_vert_index].a = int(n_vcol[vert_index].a * 255)
                 
