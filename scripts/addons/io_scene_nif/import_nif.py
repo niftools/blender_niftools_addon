@@ -1972,7 +1972,7 @@ class NifImport(NifCommon):
         n_uvco = niData.uv_sets
 
         # vertex normals
-        norms = niData.normals
+        n_norms = niData.normals
 
         # Stencil (for double sided meshes)
         stencilProperty = self.find_property(niBlock,
@@ -2084,8 +2084,8 @@ class NifImport(NifCommon):
             # The key k identifies unique vertex /normal pairs.
             # We use a tuple of ints for key, this works MUCH faster than a
             # tuple of floats.
-            if norms:
-                n = norms[i]
+            if n_norms:
+                n = n_norms[i]
                 k = (int(v.x*self.VERTEX_RESOLUTION),
                      int(v.y*self.VERTEX_RESOLUTION),
                      int(v.z*self.VERTEX_RESOLUTION),
@@ -2118,9 +2118,9 @@ class NifImport(NifCommon):
                     b_meshData.vertices[-1].co = (v.x, v.y, v.z)
                 # adds normal info if present (Blender recalculates these when
                 # switching between edit mode and object mode, handled further)
-                #if norms:
+                #if n_norms:
                 #    mv = b_meshData.vertices[b_v_index]
-                #    n = norms[i]
+                #    n = n_norms[i]
                 #    mv.normal = mathutils.Vector(n.x, n.y, n.z)
                 b_v_index += 1
             else:
@@ -2168,7 +2168,7 @@ class NifImport(NifCommon):
             if b_f_index is None:
                 continue
             f = b_meshData.faces[b_f_index]
-            f.use_smooth = True if norms else False
+            f.use_smooth = True if n_norms else False
             f.material_index = materialIndex
 
         
@@ -2176,30 +2176,61 @@ class NifImport(NifCommon):
         self.debug("LOOK HERE")
         n_vcol = niData.vertex_colors
         
+        self.debug(str(n_vcol))
         if n_vcol:
-            b_vertcolorlayer = b_meshData.vertex_colors.new(name="VertexColor")
-            #b_vertcolorlayeralpha = b_meshData.vetex_colors.new(name="VertexAlpha")
+            # Map Faces->MeshFace to MeshColorLayer->MeshColor
+            b_meshcolorlayer = b_meshData.vertex_colors.new(name="VertexColor") #color layer
+            #b_meshcolorlayeralpha = b_meshData.vertex_colors.new(name="VertexAlpha") # greyscale        
+            
+            # Map Nif face -> Blender face
+            for n_face, b_face_index in zip(n_tris, f_map):
+                if b_face_index is None:
+                    continue
+                                                        
+                # Each MeshColor has 4 Color's, mapping to a vertex. 
+                b_meshcolor = b_meshcolorlayer.data[b_face_index]
+                for f_vert_index, vert_index in enumerate(n_face):
+                    
+                    self.debug("f_vert_index % 3: " + str(f_vert_index % 3))
+                    self.debug("n_vcol[vert_index]:" + str(n_vcol[vert_index]))
+                    self.debug("vert_index:" + str(vert_index))
+                    
+                    '''
+                    TODO: Need to find better way of accessing color props
+                    i.e - form of b_meshcolor.color[index] or b_meshcolor.data[index]
+                    should avoid comparisons below....
+                    '''
+                    if(f_vert_index % 3 == 0):                  
+                        b_meshcolor.color1.r = int(n_vcol[vert_index].r * 255)
+                        b_meshcolor.color1.g = int(n_vcol[vert_index].g * 255)
+                        b_meshcolor.color1.b = int(n_vcol[vert_index].b * 255)
+                        continue
+                    elif(f_vert_index % 3 == 1):
+                        b_meshcolor.color2.r = int(n_vcol[vert_index].r * 255)
+                        b_meshcolor.color2.g = int(n_vcol[vert_index].g * 255)
+                        b_meshcolor.color2.b = int(n_vcol[vert_index].b * 255)
+                        continue
+                    else:
+                        b_meshcolor.color3.r = int(n_vcol[vert_index].r * 255)
+                        b_meshcolor.color3.g = int(n_vcol[vert_index].g * 255)
+                        b_meshcolor.color3.b = int(n_vcol[vert_index].b * 255)
                         
-            # TODO set up b_vcol, next is old data
-
-            for n_face, b_f_index in zip(n_tris, f_map):
+                    # b_meshcolor[f_vert_index].a = int(n_vcol[vert_index].a * 255)
+                
+        '''
+        if vcol:
+            b_meshData.vertexColors = 1
+            for f, b_f_index in zip(tris, f_map):
                 if b_f_index is None:
                     continue
-                
-                
-                b_color_face = b_meshData.vertex_colors[b_f_index]
-                self.debug(b_color_face)
-                '''
+                b_face = b_meshData.faces[b_f_index]
                 # now set the vertex colors
-                for f_vert_index, vert_index in enumerate(n_face):
-                         
-                    b_color_face[f_vert_index].r = int(n_vcol[vert_index].r * 255)
-                    b_color_face[f_vert_index].g = int(n_vcol[vert_index].g * 255)
-                    b_color_face[f_vert_index].b = int(n_vcol[vert_index].b * 255)
-                    
-                    b_color_face[f_vert_index].a = int(n_vcol[vert_index].a * 255)
+                for f_vert_index, vert_index in enumerate(f):
+                    b_face.col[f_vert_index].r = int(vcol[vert_index].r * 255)
+                    b_face.col[f_vert_index].g = int(vcol[vert_index].g * 255)
+                    b_face.col[f_vert_index].b = int(vcol[vert_index].b * 255)
+                    b_face.col[f_vert_index].a = int(vcol[vert_index].a * 255)
                 '''
-                
             # vertex colors influence lighting...
             # so now we have to set the use_vertex_color_light flag
             # on the material
