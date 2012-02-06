@@ -2173,15 +2173,13 @@ class NifImport(NifCommon):
 
         
         # vertex colors
-        self.debug("LOOK HERE")
         n_vcol = niData.vertex_colors
 
         if n_vcol:
             # Map Faces->MeshFace to MeshColorLayer->MeshColor
             b_meshcolorlayer = b_meshData.vertex_colors.new(name="VertexColor") #color layer
             #b_meshcolorlayeralpha = b_meshData.vertex_colors.new(name="VertexAlpha") # greyscale        
-            
-            self.debug(str(v_map))
+
             for n_tri, b_face_index in zip(n_tris, f_map):
                 if b_face_index is None:
                     continue
