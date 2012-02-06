@@ -135,7 +135,7 @@ class NifImportExportUI:
     scale_correction = bpy.props.FloatProperty(
         name="Scale Correction",
         description="Number of nif units per blender unit.",
-        default=10.0,
+        default=1.0,
         min=0.01, max=100.0, precision=2)
 
     #: Used for checking equality between floats.
