@@ -6,21 +6,18 @@ import os
 
 import io_scene_nif.export_nif
 from pyffi.formats.nif import NifFormat
-from test.test_cube import TestCube
+from test.test_material import TestMaterial
 
-class TestBaseUVTexture(TestCube):
+class TestBaseUVTexture(TestMaterial):
     n_name = "base_uv_texture"
 
     def b_create_object(self):
         b_obj = TestCube.b_create_object(self)
-        b_mat = bpy.data.materials.new(name='Material')
-        b_mat.specular_intensity = 0 # disable NiSpecularProperty
         b_mtex = b_mat.texture_slots.create(0)
         b_mtex.texture_coords = 'UV'
         b_mtex.use_map_color_diffuse = True
         b_mtex.texture = bpy.data.textures.new(name='Tex', type='IMAGE')
         b_mtex.texture.image = bpy.data.images.new('textures' + os.sep + 'image.dds', 1, 1)
-        b_obj.data.materials.append(b_mat)
         bpy.ops.object.editmode_toggle()
         bpy.ops.uv.cube_project() # named 'UVTex'
         bpy.ops.object.editmode_toggle()
@@ -46,7 +43,6 @@ class TestBaseUVTexture(TestCube):
             len(n_geom.data.uv_sets[0]), len(n_geom.data.vertices))
         nose.tools.assert_equal(n_geom.num_properties, 2)
         self.n_check_texturing_property(n_geom.properties[0])
-        self.n_check_material_property(n_geom.properties[1])
 
     def n_check_texturing_property(self, n_tex_prop):
         nose.tools.assert_is_instance(n_tex_prop, NifFormat.NiTexturingProperty)
@@ -66,5 +62,3 @@ class TestBaseUVTexture(TestCube):
         nose.tools.assert_equal(n_source.use_external, 1)
         nose.tools.assert_equal(n_source.file_name, b"textures\\image.dds")
 
-    def n_check_material_property(self, n_mat_prop):
-        nose.tools.assert_is_instance(n_mat_prop, NifFormat.NiMaterialProperty)
