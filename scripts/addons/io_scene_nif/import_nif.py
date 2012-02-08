@@ -2183,15 +2183,13 @@ class NifImport(NifCommon):
             for n_tri, b_face_index in zip(n_tris, f_map):
                 if b_face_index is None:
                     continue
-                b_meshcolor = b_meshcolorlayer.data[b_face_index]             
+                b_meshcolor = b_meshcolorlayer.data[b_face_index]
                 
-                #for n_vert, b_vert_index in zip(n_tri, v_map):             
                 for n_vert_index, n_vert in enumerate(n_tri): 
+                #TODO: Need to find better way of accessing color props
+                #i.e - form of b_meshcolor.color[index] or b_meshcolor.data[index + offset]
                     
-                    #TODO: Need to find better way of accessing color props
-                    #i.e - form of b_meshcolor.color[index] or b_meshcolor.data[index + offset]
-                    
-                    # Each MeshColor has n Color's, mapping to a vertex.               
+                    # Each MeshColor has n Color's, mapping to a n_vertex.               
                     if(n_vert_index == 0):
                         b_meshcolor.color1.r = n_vcol[n_vert].r 
                         b_meshcolor.color1.g = n_vcol[n_vert].g 
