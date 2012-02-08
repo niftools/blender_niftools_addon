@@ -1824,8 +1824,7 @@ class NifExport(NifCommon):
             mesh_hasnormals = False
             if mesh_mat is not None:
                 mesh_hasnormals = True # for proper lighting
-                # for non-textured materials, vertex colors are used to color
-                # the mesh
+                # for non-textured materials, vertex colors are used to color the mesh
                 # for textured materials, they represent lighting details
                 mesh_hasvcol = bool(mesh.vertex_colors)
                 # read the Blender Python API documentation to understand this hack
@@ -4091,7 +4090,7 @@ class NifExport(NifCommon):
             if isinstance(block, NifFormat.NiWireframeProperty) \
                and block.flags == flags:
                 return block
-        # no alpha property with given flag found, so create new one
+        # no wire property with given flag found, so create new one
         wireprop = self.create_block("NiWireframeProperty")
         wireprop.flags = flags
         return wireprop        
