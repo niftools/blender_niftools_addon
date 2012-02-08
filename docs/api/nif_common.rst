@@ -1,7 +1,7 @@
 Importer and Exporter Base Class
 ================================
 
-.. module:: io_scene_nif.import_export_nif
+.. module:: io_scene_nif.nif_common
 
-.. autoclass:: NifImportExport
+.. autoclass:: NifCommon
    :members:

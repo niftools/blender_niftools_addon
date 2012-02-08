@@ -245,6 +245,9 @@ Blender API Mysteries
 
 * What is the difference between :attr:`bpy.types.MeshFace.vertices`
   and :attr:`bpy.types.MeshFace.vertices_raw`?
+  
+- vertices is a collection, accessible in the form vertices.co[0] -> 7
+- vertices_raw returns a list of values -> (7,2,0)
 
 * What is the difference between ``'CAPSULE'`` and ``'CYLINDER'``
   :attr:`bpy.types.Object.draw_bounds_type`\ s
