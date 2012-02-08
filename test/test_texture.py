@@ -6,21 +6,26 @@ import os
 
 import io_scene_nif.export_nif
 from pyffi.formats.nif import NifFormat
-from test.test_material import TestMaterial
+from test.test_material import TestBaseMaterial
 
-class TestBaseUVTexture(TestMaterial):
+class TestBaseUVTexture(TestBaseMaterial):
     n_name = "texture/base_uv_texture"
 
     def b_create_object(self):
-        b_obj = TestCube.b_create_object(self)
+        b_obj = TestBaseMaterial.b_create_object(self)
+        b_mat = b_obj.data.materials[0]
+        
+        #create texture slot
         b_mtex = b_mat.texture_slots.create(0)
         b_mtex.texture_coords = 'UV'
         b_mtex.use_map_color_diffuse = True
         b_mtex.texture = bpy.data.textures.new(name='Tex', type='IMAGE')
         b_mtex.texture.image = bpy.data.images.new('textures' + os.sep + 'image.dds', 1, 1)
-        bpy.ops.object.editmode_toggle()
+        
+        #project UV
+        bpy.ops.object.mode_set(mode='EDIT', toggle=False) #ensure we are in the mode.
         bpy.ops.uv.cube_project() # named 'UVTex'
-        bpy.ops.object.editmode_toggle()
+        bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
         b_mtex.uv_layer = 'UVTex'
         return b_obj
 
@@ -65,3 +70,4 @@ class TestBaseUVTexture(TestMaterial):
 
 '''
     TODO - alpha, glow, normal, dark, detail, specular,  
+'''

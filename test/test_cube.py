@@ -6,7 +6,7 @@ import test
 
 from pyffi.formats.nif import NifFormat
 
-class TestCube(test.SingleNif):
+class TestBaseCube(test.SingleNif):
     n_name = "cube/cube"
     b_name = "Cube"
 

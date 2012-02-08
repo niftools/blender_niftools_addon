@@ -6,25 +6,17 @@ import os
 
 import io_scene_nif.export_nif
 from pyffi.formats.nif import NifFormat
-from test.test_cube import TestCube
+from test.test_cube import TestBaseCube
 
-class TestBaseVertexColor(TestCube):
+class TestBaseVertexColor(TestBaseCube):
     n_name = "vertexcolor/base_vertex_color"
     b_name = "Cube"
         
     def b_create_object(self):
-        '''
-        # note: primitive_cube_add creates object named "Cube"
-        bpy.ops.mesh.primitive_cube_add()
-        b_obj = bpy.data.objects["Cube"]
-        # primitive_cube_add creates a double sided mesh; fix this
-        b_obj.data.show_double_sided = False
-        '''
-        #TODO Remove and use TestCube as base.
-        b_obj = TestCube.b_create_object(self)
+        b_obj = TestBaseCube.b_create_object(self)
         
+        #we like working with tris's, quad faces are silly, just like yours :P
         bpy.ops.object.editmode_toggle()
-        #we like working with tris's, faces are silly, just like yours :P
         bpy.ops.mesh.quads_convert_to_tris() 
         bpy.ops.object.editmode_toggle()
         
