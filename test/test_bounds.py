@@ -9,81 +9,51 @@ from pyffi.formats.nif import NifFormat
 from test.test_cube import TestBaseCube
 
 class TestBound(TestBaseCube):
+    n_name = "boundbox/bound_box"
+    b_name = "Bounding Box"
 
     def b_create_object(self):
-        b_obj = TestBaseCube.
-        self.obj.name = "Bounding Box"
-        self.obj.draw_bounds_type = 'BOX'
-        self.obj.draw_type = 'BOUNDS'
-        self.mesh = self.obj.data
-pass
+        b_obj = TestBaseCube.b_create_object(self)
+        b_obj.name = b_name
+        b_obj.draw_bounds_type = 'BOX'
+        b_obj.draw_type = 'BOUNDS'
+        return b_obj
+
 
     def b_check(self):
-        """Check current blender scene against feature."""
-        pass
-
+        '''
+        b_bbox = b_obj[b_name]
+        nose.tools.assert_equal(b_bbox.draw_bounds_type, 'BOX')
+        nose.tools.assert_equal(b_bbox.draw_type, 'BOUNDS')
+        '''
+        
     def n_check(self, n_filepath):
-        """Check nif file against feature."""
-        pass
-
-
-
-
-
-
-
-        def test_import(self):
-        bpy.ops.import_scene.nif(
-            filepath="test/import/bounding_box.nif",
-            log_level='DEBUG',
-            )
-        
-        b_bbox = bpy.data.objects.get("Bounding Box")
-        
-        # test stuff
-        assert(b_bbox.draw_bounds_type == 'BOX')
-        assert(b_bbox.draw_type == 'BOUNDS')
-        
-class TestBoundExport(test.Base):
-    def setup(self):
-        
-        '''      
-        # create a cube
-        bpy.ops.mesh.primitive_cube_add()
-        self.obj = bpy.data.objects["Cube"]
-
-        
-        bpy.ops.mesh.primitive_cube_add()
-        self.obj = bpy.data.objects["Cube"]
-        self.obj.name = "BBoxTest"
         '''
-        
-        bpy.ops.import_scene.nif(
-            filepath="test/import/bounding_box.nif",
-            log_level='INFO',
-            )
-        bpy.ops.object.select_name(name="Bounding Box")
-        
-    def test_export(self):
-        # export   
-        bpy.ops.export_scene.nif(
-            filepath="test/export/bounding_box.nif",
-            log_level='DEBUG',
-            )
-        
-        '''
-        self.obj = bpy.data.objects["Bounding Box"]
-        self.mesh = self.obj.data
-        
-        # test stuff...
-        bbox = nif_export.root_blocks[0].children[0]
-        assert(bbox.has_bounding_box) 
-        '''
-    
+        n_geom = n_data.roots[0].children[0]
+        nose.tools.assert_equal(bbox.has_bounding_box, True) 
+        '''    
         
 class TestBSBoundImport(test.Base):
-    def test_import(self):
-        bpy.ops.import_scene.nif(
-            filepath="test/import/bounding_box_bsbound.nif",
-            log_level='DEBUG',
-            )
+    n_name = "boundbox/bsbound"
+    b_name = "BSBound"
+
+    def b_create_object(self):
+        b_obj = TestBaseCube.b_create_object(self)
+        b_obj.name = b_name
+        b_obj.draw_bounds_type = 'BOX'
+        b_obj.draw_type = 'BOUNDS'
+        return b_obj
+
+
+    def b_check(self):
+        '''
+        b_bbox = b_obj[b_name]
+        nose.tools.assert_equal(b_bbox.draw_bounds_type, 'BOX')
+        nose.tools.assert_equal(b_bbox.draw_type, 'BOUNDS')
+        '''
+        
+    def n_check(self, n_filepath):
+        '''
+        n_geom = n_data.roots[0].children[0]
+        nose.tools.assert_equal(bbox.has_bounding_box, True)
+        '''
