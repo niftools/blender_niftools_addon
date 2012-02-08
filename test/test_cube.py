@@ -4,6 +4,7 @@ import bpy
 import nose.tools
 
 from test import SingleNif
+from test import Base
 from pyffi.formats.nif import NifFormat
 
 class TestBaseCube(SingleNif):
@@ -34,7 +35,7 @@ class TestBaseCube(SingleNif):
         nose.tools.assert_equal(n_geom.data.num_vertices, 8)
         nose.tools.assert_equal(n_geom.data.num_triangles, 12)
 
-class TestNonUniformlyScaledCube(test.Base):
+class TestNonUniformlyScaledCube(Base):
     def setup(self):
         # create a non-uniformly scaled cube
         bpy.ops.mesh.primitive_cube_add()
