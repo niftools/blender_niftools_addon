@@ -14,11 +14,11 @@ class TestBound(TestBaseCube):
 
     def b_create_object(self):
         b_obj = TestBaseCube.b_create_object(self)
-        b_obj.name = b_name
+        b_obj.name = self.b_name
         b_obj.draw_bounds_type = 'BOX'
         b_obj.draw_type = 'BOUNDS'
+        
         return b_obj
-
 
     def b_check(self):
         '''
@@ -33,13 +33,13 @@ class TestBound(TestBaseCube):
         nose.tools.assert_equal(bbox.has_bounding_box, True) 
         '''    
         
-class TestBSBoundImport(test.Base):
+class TestBSBound(TestBaseCube):
     n_name = "boundbox/bsbound"
     b_name = "BSBound"
 
     def b_create_object(self):
         b_obj = TestBaseCube.b_create_object(self)
-        b_obj.name = b_name
+        b_obj.name = self.b_name
         b_obj.draw_bounds_type = 'BOX'
         b_obj.draw_type = 'BOUNDS'
         return b_obj

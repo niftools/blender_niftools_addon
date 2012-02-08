@@ -2092,7 +2092,7 @@ class NifExport(NifCommon):
                                     "uv%i" % (i + 1)))
                     # FIXME figure out the new vertex color layer system
                     fcol = None
-                
+                    
                     if mesh_hasvcol:
                         if (len(f.col) == 0):
                             self.warning(

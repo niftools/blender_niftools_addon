@@ -2179,36 +2179,48 @@ class NifImport(NifCommon):
             b_meshcolorlayer = b_meshData.vertex_colors.new(name="VertexColor") #color layer
             #b_meshcolorlayeralpha = b_meshData.vertex_colors.new(name="VertexAlpha") # greyscale        
 
+            #Mesh Vertex Color -> Mesh Face
             for n_tri, b_face_index in zip(n_tris, f_map):
                 if b_face_index is None:
                     continue
                 
-                # Map Faces->MeshFace to MeshColorLayer->MeshColor
+                #MeshFace to MeshColor
                 b_meshcolor = b_meshcolorlayer.data[b_face_index]
+                #b_meshalpha = b_meshcolorlayeralpha.data[b_face_index]
                 
+                # Map 
                 for n_vert_index, n_vert in enumerate(n_tri): 
-                #TODO: Need to find better way of accessing color props
-                #i.e - form of b_meshcolor.color[index] or b_meshcolor.data[index + offset]
-                    
+                    '''
+                        TODO: Need to find better way of accessing color props
+                        i.e - form of b_meshcolor.color[n_vert_index] 
+                        or b_meshcolor.data[n_vert_index + offset]
+                    '''    
                     # Each MeshColor has n Color's, mapping to a n_vertex.               
                     if(n_vert_index == 0):
                         b_meshcolor.color1.r = n_vcol[n_vert].r 
                         b_meshcolor.color1.g = n_vcol[n_vert].g 
                         b_meshcolor.color1.b = n_vcol[n_vert].b 
+                        #b_meshalpha.color1 = (n_col[n_vert].a[0],
+                        #                      n_col[n_vert].a[1],
+                        #                      n_col[n_vert].a[2])
 
                     elif(n_vert_index == 1):
                         b_meshcolor.color2.r = n_vcol[n_vert].r 
                         b_meshcolor.color2.g = n_vcol[n_vert].g
                         b_meshcolor.color2.b = n_vcol[n_vert].b 
-                        
+                        #b_meshalpha.color2 = (n_col[n_vert].a[0],
+                        #                      n_col[n_vert].a[1],
+                        #                      n_col[n_vert].a[2])
                     else:
                         b_meshcolor.color3.r = n_vcol[n_vert].r
                         b_meshcolor.color3.g = n_vcol[n_vert].g 
                         b_meshcolor.color3.b = n_vcol[n_vert].b 
+                        #b_meshalpha.color3 = (n_col[n_vert].a[0],
+                        #                      n_col[n_vert].a[1],
+                        #                      n_col[n_vert].a[2])
                         
             # vertex colors influence lighting...
-            # so now we have to set the use_vertex_color_light flag
-            # on the material
+            # we have to set the use_vertex_color_light flag on the material 
             # see below
             
         # UV coordinates
