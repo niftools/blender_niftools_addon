@@ -65,7 +65,7 @@ Every :class:`~bpy.types.Material` is exported to a
 
 The nif format only supports a single material per
 :class:`~pyffi.formats.nif.NifFormat.NiTriShape`,
-whence for this purpose, a multimaterial mesh will
+hence for this purpose, a multimaterial mesh will
 be exported as multiple
 :class:`~pyffi.formats.nif.NifFormat.NiTriShape`\ s,
 one for each material.
@@ -120,6 +120,34 @@ Currently, only the base texture is exported.
 .. todo::
 
    Describe required settings for each texture slot.
+
+Vertex Color
+------------
+
+.. _features-example-vertexcolor
+
+#. :ref:`Create a single sided cube <features-example-geometry>`
+   as explained before.
+#. Switch to Vertex Paint mode, 
+   this automatically adds a base vertex color layer.
+#. Apply the desired vertex colors evenly to the vertex.
+#. Ensure you have added a material.
+#. Now export as usual.
+
+Notes
+~~~~~
+
+The nif format only supports a single color per vertex, whereas Blender vertex color per face vertex.
+Blender treats the vertex as if the faces had been split apart. 
+Even though they share that vertex, each of those face can have a different color for that vertex.
+Eg. A vertex in a cube is shared by four faces. 
+On export the scripts will take an average of colors. 
+
+.. warning::
+   alpha values currently are not written.
+
+.. todo::
+   Write up workflow for alpha layer once implemented.
 
 Collision
 ---------
