@@ -1,4 +1,4 @@
-"""Exports and imports bound boxes color"""
+"""Export and import bound meshes."""
 
 import bpy
 import nose.tools
@@ -8,7 +8,29 @@ import io_scene_nif.export_nif
 from pyffi.formats.nif import NifFormat
 from test.test_cube import TestBaseCube
 
-class TestBound(test.Base):
+class TestBound(TestBaseCube):
+
+    def b_create_object(self):
+        b_obj = TestBaseCube.
+        self.obj.name = "Bounding Box"
+        self.obj.draw_bounds_type = 'BOX'
+        self.obj.draw_type = 'BOUNDS'
+        self.mesh = self.obj.data
+pass
+
+    def b_check(self):
+        """Check current blender scene against feature."""
+        pass
+
+    def n_check(self, n_filepath):
+        """Check nif file against feature."""
+        pass
+
+
+
+
+
+
 
         def test_import(self):
         bpy.ops.import_scene.nif(
@@ -29,10 +51,7 @@ class TestBoundExport(test.Base):
         # create a cube
         bpy.ops.mesh.primitive_cube_add()
         self.obj = bpy.data.objects["Cube"]
-        self.obj.name = "Bounding Box"
-        self.obj.draw_bounds_type = 'BOX'
-        self.obj.draw_type = 'BOUNDS'
-        self.mesh = self.obj.data
+
         
         bpy.ops.mesh.primitive_cube_add()
         self.obj = bpy.data.objects["Cube"]

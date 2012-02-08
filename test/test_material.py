@@ -31,7 +31,6 @@ class TestBaseMaterial(TestBaseCube):
     def n_check_material_property(self, n_mat_prop):
         nose.tools.assert_is_instance(n_mat_prop, NifFormat.NiMaterialProperty)
 
-
     '''
         TODO - alpha, stencil, etc.
     '''
