@@ -80,16 +80,16 @@ class TestBaseVertexColor(TestBaseCube):
                     b_obj.data.vertex_colors["VertexColor"].data[face_index].color3.b = vertcol[n_vert][2]
         
         '''            
-        bpy.ops.wm.save_mainfile(filepath="test/userblend/" + self.n_name)
+        bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         '''
         return b_obj
         
     def b_check_object(self, b_obj):
         print("COMPARING BLENDER DATA")
-        '''
-        b_meshcolorlayer = b_obj.data.vertex_colors["VertexColor"]
-        nose.tools.assert_equal(b_meshcolorlayer.name, "VertexColor")
-        '''
+        
+        b_meshcolorlayer = b_obj.data.vertex_colors[0]
+        nose.tools.assert_equal(b_meshcolorlayer.name, 'VertexColor')
+        
         
     def n_check_data(self, n_data):
         print("COMPARING NIF DATA")
