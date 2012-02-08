@@ -8,7 +8,7 @@ import io_scene_nif.export_nif
 from pyffi.formats.nif import NifFormat
 from test.test_cube import TestCube
 
-class TestVertexColor(TestCube):
+class TestBaseVertexColor(TestCube):
     n_name = "vertexcolor/base_vertex_color"
     b_name = "Cube"
         
