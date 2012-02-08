@@ -9,7 +9,7 @@ from pyffi.formats.nif import NifFormat
 from test.test_material import TestMaterial
 
 class TestBaseUVTexture(TestMaterial):
-    n_name = "base_uv_texture"
+    n_name = "texture/base_uv_texture"
 
     def b_create_object(self):
         b_obj = TestCube.b_create_object(self)
@@ -62,3 +62,6 @@ class TestBaseUVTexture(TestMaterial):
         nose.tools.assert_equal(n_source.use_external, 1)
         nose.tools.assert_equal(n_source.file_name, b"textures\\image.dds")
 
+
+'''
+    TODO - alpha, glow, normal, dark, detail, specular,  

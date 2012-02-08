@@ -9,7 +9,7 @@ from pyffi.formats.nif import NifFormat
 from test.test_cube import TestCube
 
 class TestBaseMaterial(TestCube):
-    n_name = "base_material"
+    n_name = "material/base_material"
 
     def b_create_object(self):
         b_obj = TestCube.b_create_object(self)
@@ -23,10 +23,14 @@ class TestBaseMaterial(TestCube):
         b_mat = b_mesh.materials[0]
 
     def n_check_data(self, n_data):
-        n_geom = n_data.roots[0].children[0]
-        
+        n_geom = n_data.roots[0].children[0]    
         nose.tools.assert_equal(n_geom.num_properties, 1)
         self.n_check_material_property(n_geom.properties[0])
 
     def n_check_material_property(self, n_mat_prop):
         nose.tools.assert_is_instance(n_mat_prop, NifFormat.NiMaterialProperty)
+
+
+    '''
+        TODO - alpha, stencil, etc.
+    '''
