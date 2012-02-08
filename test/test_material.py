@@ -6,16 +6,17 @@ import os
 
 import io_scene_nif.export_nif
 from pyffi.formats.nif import NifFormat
-from test.test_cube import TestCube
+from test.test_cube import TestBaseCube
 
-class TestBaseMaterial(TestCube):
+class TestBaseMaterial(TestBaseCube):
     n_name = "material/base_material"
 
     def b_create_object(self):
-        b_obj = TestCube.b_create_object(self)
+        b_obj = TestBaseCube.b_create_object(self)
         b_mat = bpy.data.materials.new(name='Material')
         b_mat.specular_intensity = 0 # disable NiSpecularProperty
         b_obj.data.materials.append(b_mat)
+        return b_obj
         
     def b_check_object(self, b_obj):
         b_mesh = b_obj.data
