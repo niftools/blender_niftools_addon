@@ -2,11 +2,11 @@
 
 import bpy
 import nose.tools
-import test
 
+from test import SingleNif
 from pyffi.formats.nif import NifFormat
 
-class TestBaseCube(test.SingleNif):
+class TestBaseCube(SingleNif):
     n_name = "cube/base_cube"
     b_name = "Cube"
 

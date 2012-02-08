@@ -1,14 +1,16 @@
-"""Export and import bound boxes."""
+"""Exports and imports bound boxes color"""
 
 import bpy
 import nose.tools
+import os
 
 import io_scene_nif.export_nif
-import test
+from pyffi.formats.nif import NifFormat
+from test.test_cube import TestBaseCube
 
-class TestBoundImport(test.Base):
+class TestBound(test.Base):
 
-    def test_import(self):
+        def test_import(self):
         bpy.ops.import_scene.nif(
             filepath="test/import/bounding_box.nif",
             log_level='DEBUG',
