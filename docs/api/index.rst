@@ -11,6 +11,6 @@ Contents:
    :maxdepth: 2
 
    ui
-   import_export_nif
+   nif_common
    import_nif
    export_nif
