@@ -94,10 +94,10 @@ class TestVertexColor(TestCube):
         
     def b_check_object(self, b_obj):
         print("COMPARING BLENDER DATA")
-        b_mesh = b_obj.data
-        b_meshcolorlayer = b_obj.data.vertex_colors[0]
-        nose.tools.assert_equal(b_meshcolorlayer.name, "VertexColoR")
-        n_geom = n_data.roots[0].children[0]
+        '''
+        b_meshcolorlayer = b_obj.data.vertex_colors["VertexColor"]
+        nose.tools.assert_equal(b_meshcolorlayer.name, "VertexColor")
+        '''
         
     def n_check_data(self, n_data):
         print("COMPARING NIF DATA")

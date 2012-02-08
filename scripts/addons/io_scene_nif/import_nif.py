@@ -2171,18 +2171,19 @@ class NifImport(NifCommon):
             f.use_smooth = True if n_norms else False
             f.material_index = materialIndex
 
-        
         # vertex colors
         n_vcol = niData.vertex_colors
 
         if n_vcol:
-            # Map Faces->MeshFace to MeshColorLayer->MeshColor
+            #create base vertex_layers
             b_meshcolorlayer = b_meshData.vertex_colors.new(name="VertexColor") #color layer
             #b_meshcolorlayeralpha = b_meshData.vertex_colors.new(name="VertexAlpha") # greyscale        
 
             for n_tri, b_face_index in zip(n_tris, f_map):
                 if b_face_index is None:
                     continue
+                
+                # Map Faces->MeshFace to MeshColorLayer->MeshColor
                 b_meshcolor = b_meshcolorlayer.data[b_face_index]
                 
                 for n_vert_index, n_vert in enumerate(n_tri): 
