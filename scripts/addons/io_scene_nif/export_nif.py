@@ -1828,6 +1828,8 @@ class NifExport(NifCommon):
                 # for textured materials, they represent lighting details
                 mesh_hasvcol = bool(mesh.vertex_colors)
                 # read the Blender Python API documentation to understand this hack
+                
+                #specular mat
                 mesh_mat_specular_color = list(mesh_mat.specular_color)
                 mesh_mat_specular_color[0] *= mesh_mat.specular_intensity
                 mesh_mat_specular_color[1] *= mesh_mat.specular_intensity
@@ -1839,16 +1841,26 @@ class NifExport(NifCommon):
                     or ( mesh_mat_specular_color[1] > self.properties.epsilon ) \
                     or ( mesh_mat_specular_color[2] > self.properties.epsilon ):
                     mesh_hasspec = True
+                
+                #gloss mat
                 mesh_mat_glossiness = mesh_mat.specular_hardness / 4.0  # 'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
+                
+                #alpha mat
                 mesh_mat_transparency = mesh_mat.alpha
                 mesh_hasalpha = (abs(mesh_mat_transparency - 1.0) > self.properties.epsilon) \
                                 or (mesh_mat.animation_data
                                     and mesh_mat.animation_data.action.fcurves['Alpha'])
+                
+                #wire mat
                 mesh_haswire = (mesh_mat.type == 'WIRE')
+                
+                #ambient mat
                 mesh_mat_ambient_color = [0.0, 0.0, 0.0]
                 mesh_mat_ambient_color[0] = mesh_mat.diffuse_color[0] * mesh_mat.ambient
                 mesh_mat_ambient_color[1] = mesh_mat.diffuse_color[1] * mesh_mat.ambient
                 mesh_mat_ambient_color[2] = mesh_mat.diffuse_color[2] * mesh_mat.ambient
+                
+                #emissive mat
                 mesh_mat_emissive_color = [0.0, 0.0, 0.0]
                 mesh_mat_emitmulti = 1.0 # default
                 if self.properties.game != 'FALLOUT_3':
@@ -1862,6 +1874,8 @@ class NifExport(NifCommon):
                     if mesh_mat.emit > self.properties.epsilon:
                         mesh_mat_emissive_color = list(mesh_mat.diffuse_color)
                         mesh_mat_emitmulti = mesh_mat.emit * 10.0
+                
+                
                 # the base texture = first material texture
                 # note that most morrowind files only have a base texture, so let's for now only support single textured materials
                 for mtex in mesh_mat.texture_slots:
@@ -2092,17 +2106,16 @@ class NifExport(NifCommon):
                                     "uv%i" % (i + 1)))
                     # FIXME figure out the new vertex color layer system
                     fcol = None
-                    
+                    fcola = None
                     if mesh_hasvcol:
-                        if (len(f.col) == 0):
+                        if(len(mesh.vertex_colors) == 1):
                             self.warning(
-                                "Vertex color painting/lighting enabled,"
-                                " but mesh has no vertex color data;"
-                                " vertex colors will not be written.")
-                            fcol = None
-                            mesh_hasvcol = False
+                                "Mesh only has one Vertex Color layer"
+                                " default values for values will be written")
+                            fcola = None
+                            
                         else:
-                            # NIF stores the colour values as floats
+                            
                             fcol = f.col[i]
                     else:
                         fcol = None
