@@ -2191,34 +2191,20 @@ class NifImport(NifCommon):
                 # Map 
                 for n_vert_index, n_vert in enumerate(n_tri): 
                     '''
-                        TODO: Need to find better way of accessing color props
-                        i.e - form of b_meshcolor.color[n_vert_index] 
-                        or b_meshcolor.data[n_vert_index + offset]
-                    '''    
-                    # Each MeshColor has n Color's, mapping to a n_vertex.               
-                    if(n_vert_index == 0):
-                        b_meshcolor.color1.r = n_vcol[n_vert].r 
-                        b_meshcolor.color1.g = n_vcol[n_vert].g 
-                        b_meshcolor.color1.b = n_vcol[n_vert].b 
-                        #b_meshalpha.color1 = (n_col[n_vert].a[0],
-                        #                      n_col[n_vert].a[1],
-                        #                      n_col[n_vert].a[2])
-
-                    elif(n_vert_index == 1):
-                        b_meshcolor.color2.r = n_vcol[n_vert].r 
-                        b_meshcolor.color2.g = n_vcol[n_vert].g
-                        b_meshcolor.color2.b = n_vcol[n_vert].b 
-                        #b_meshalpha.color2 = (n_col[n_vert].a[0],
-                        #                      n_col[n_vert].a[1],
-                        #                      n_col[n_vert].a[2])
-                    else:
-                        b_meshcolor.color3.r = n_vcol[n_vert].r
-                        b_meshcolor.color3.g = n_vcol[n_vert].g 
-                        b_meshcolor.color3.b = n_vcol[n_vert].b 
-                        #b_meshalpha.color3 = (n_col[n_vert].a[0],
-                        #                      n_col[n_vert].a[1],
-                        #                      n_col[n_vert].a[2])
-                        
+                        TODO: Request index access in the Bpy API
+                        i.e - form of b_meshcolor.color[n_vert_index]
+                        or Meshcolor
+                    '''
+                    # Each MeshColor has n Color's, mapping to (n)_vertex.               
+                    
+                    setattr(b_meshcolor, "color%s" % (n_vert_index + 1),
+                            [n_vcol[n_vert].r, n_vcol[n_vert].g, n_vcol[n_vert].b])
+                    
+                    '''
+                    setattr(b_meshcoloralpha, "color%s" % (n_vert_index + 1),
+                            [n_col[n_vert].a[0], n_col[n_vert].a[1], n_col[n_vert].a[2])
+                    '''
+                    
             # vertex colors influence lighting...
             # we have to set the use_vertex_color_light flag on the material 
             # see below

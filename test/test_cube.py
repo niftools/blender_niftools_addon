@@ -34,7 +34,16 @@ class TestBaseCube(SingleNif):
         nose.tools.assert_equal(n_geom.num_properties, 0)
         nose.tools.assert_equal(n_geom.data.num_vertices, 8)
         nose.tools.assert_equal(n_geom.data.num_triangles, 12)
-
+        
+    '''
+    TODO: Additional checks needed.
+        Flags: 
+        #TriShape data, blender exports: Continue, 
+        #Maya: Triangles, Pyffi test.nif Bound - probably incorrect.
+        
+        TriData Consistancy 
+        radius
+    '''
 class TestNonUniformlyScaledCube(Base):
     def setup(self):
         # create a non-uniformly scaled cube
