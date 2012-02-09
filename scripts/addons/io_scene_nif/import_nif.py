@@ -2177,7 +2177,7 @@ class NifImport(NifCommon):
         if n_vcol:
             #create vertex_layers
             b_meshcolorlayer = b_meshData.vertex_colors.new(name="VertexColor") #color layer
-            #b_meshcolorlayeralpha = b_meshData.vertex_colors.new(name="VertexAlpha") # greyscale        
+            b_meshcolorlayeralpha = b_meshData.vertex_colors.new(name="VertexAlpha") # greyscale        
 
             #Mesh Vertex Color / Mesh Face
             for n_tri, b_face_index in zip(n_tris, f_map):
@@ -2186,7 +2186,7 @@ class NifImport(NifCommon):
                 
                 #MeshFace to MeshColor
                 b_meshcolor = b_meshcolorlayer.data[b_face_index]
-                #b_meshalpha = b_meshcolorlayeralpha.data[b_face_index]
+                b_meshalpha = b_meshcolorlayeralpha.data[b_face_index]
                 
                 for n_vert_index, n_vert in enumerate(n_tri): 
                     '''
@@ -2195,14 +2195,14 @@ class NifImport(NifCommon):
                         or Meshcolor
                     '''
                     # Each MeshColor has n Color's, mapping to (n)_vertex.               
-                    setattr(b_meshcolor, "color%s" % (n_vert_index + 1),
-                            [n_vcol[n_vert].r, n_vcol[n_vert].g, n_vcol[n_vert].b])
+                    b_color = getattr(b_meshcolor, "color%s" % (n_vert_index + 1))
+                    b_colora = getattr(b_meshalpha, "color%s" % (n_vert_index + 1))
                     
-                    '''
-                    setattr(b_meshcoloralpha, "color%s" % (n_vert_index + 1),
-                            [n_col[n_vert].a[0], n_col[n_vert].a[1], n_col[n_vert].a[2])
-                    '''
-                    
+                    b_color.r = n_vcol[n_vert].r
+                    b_color.g = n_vcol[n_vert].g 
+                    b_color.b = n_vcol[n_vert].b
+                    b_colora.v = n_vcol[n_vert].a
+                       
             # vertex colors influence lighting...
             # we have to set the use_vertex_color_light flag on the material 
             # see below
