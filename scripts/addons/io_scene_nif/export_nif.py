@@ -1824,8 +1824,9 @@ class NifExport(NifCommon):
             mesh_hasnormals = False
             if mesh_mat is not None:
                 mesh_hasnormals = True # for proper lighting
-                # for non-textured materials, vertex colors are used to color the mesh
-                # for textured materials, they represent lighting details
+                
+                # Non-textured materials, vertex colors are used to color the mesh
+                # Textured materials, they represent lighting details
                 mesh_hasvcol = bool(mesh.vertex_colors)
                 # read the Blender Python API documentation to understand this hack
                 
@@ -1874,7 +1875,6 @@ class NifExport(NifCommon):
                     if mesh_mat.emit > self.properties.epsilon:
                         mesh_mat_emissive_color = list(mesh_mat.diffuse_color)
                         mesh_mat_emitmulti = mesh_mat.emit * 10.0
-                
                 
                 # the base texture = first material texture
                 # note that most morrowind files only have a base texture, so let's for now only support single textured materials
@@ -2108,15 +2108,27 @@ class NifExport(NifCommon):
                     fcol = None
                     fcola = None
                     if mesh_hasvcol:
+                        vertcol = []
+                        #check for an alpha layer
                         if(len(mesh.vertex_colors) == 1):
                             self.warning(
                                 "Mesh only has one Vertex Color layer"
-                                " default values for values will be written")
-                            fcola = None
-                            
+                                " default alpha values will be written\n"
+                                " - For Alpha values add a second vertex layer, "
+                                " greyscale only"
+                                )
+                            b_meshcolor = mesh.vertex_colors[0].data[f.index]
+                            b_color = getattr(b_meshcolor, "color%s" % (i + 1))
+                            vertcol = [b_color.r, b_color.g, b_color.b, 1.0]
+                            fcol = vertcol
+                              
                         else:
-                            
-                            fcol = f.col[i]
+                            b_meshcolor = mesh.vertex_colors[0].data[f.index]
+                            b_meshcoloralpha = mesh.vertex_colors[1].data
+                            b_color = getattr(b_meshcolor, "color%s" % (i + 1))
+                            b_colora = getattr(b_meshcolor, "color%s" % (i + 1))
+                            vertcol = [b_color.r, b_color.g, b_color.b, b_colora.v]
+                            fcol = vertcol
                     else:
                         fcol = None
                         
@@ -2146,10 +2158,10 @@ class NifExport(NifCommon):
                                 if abs(vertquad[2][1] - vertquad_list[j][2][1]) > self.properties.epsilon: continue
                                 if abs(vertquad[2][2] - vertquad_list[j][2][2]) > self.properties.epsilon: continue
                             if mesh_hasvcol:
-                                if abs(vertquad[3].r - vertquad_list[j][3].r) > self.properties.epsilon: continue
-                                if abs(vertquad[3].g - vertquad_list[j][3].g) > self.properties.epsilon: continue
-                                if abs(vertquad[3].b - vertquad_list[j][3].b) > self.properties.epsilon: continue
-                                if abs(vertquad[3].a - vertquad_list[j][3].a) > self.properties.epsilon: continue
+                                if abs(vertquad[3][0] - vertquad_list[j][3][0]) > self.properties.epsilon: continue
+                                if abs(vertquad[3][1] - vertquad_list[j][3][1]) > self.properties.epsilon: continue
+                                if abs(vertquad[3][2] - vertquad_list[j][3][2]) > self.properties.epsilon: continue
+                                if abs(vertquad[3][3] - vertquad_list[j][3][3]) > self.properties.epsilon: continue
                             # all tests passed: so yes, we already have it!
                             f_index[i] = j
                             break
@@ -2414,10 +2426,10 @@ class NifExport(NifCommon):
                 tridata.has_vertex_colors = True
                 tridata.vertex_colors.update_size()
                 for i, v in enumerate(tridata.vertex_colors):
-                    v.r = vcollist[i].r / 255.0
-                    v.g = vcollist[i].g / 255.0
-                    v.b = vcollist[i].b / 255.0
-                    v.a = vcollist[i].a / 255.0
+                    v.r = vcollist[i][0]
+                    v.g = vcollist[i][1]
+                    v.b = vcollist[i][2]
+                    v.a = vcollist[i][3]
 
             if mesh_uvlayers:
                 tridata.num_uv_sets = len(mesh_uvlayers)

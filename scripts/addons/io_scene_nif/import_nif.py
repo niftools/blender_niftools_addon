@@ -2175,11 +2175,11 @@ class NifImport(NifCommon):
         n_vcol = niData.vertex_colors
 
         if n_vcol:
-            #create base vertex_layers
+            #create vertex_layers
             b_meshcolorlayer = b_meshData.vertex_colors.new(name="VertexColor") #color layer
             #b_meshcolorlayeralpha = b_meshData.vertex_colors.new(name="VertexAlpha") # greyscale        
 
-            #Mesh Vertex Color -> Mesh Face
+            #Mesh Vertex Color / Mesh Face
             for n_tri, b_face_index in zip(n_tris, f_map):
                 if b_face_index is None:
                     continue
@@ -2188,7 +2188,6 @@ class NifImport(NifCommon):
                 b_meshcolor = b_meshcolorlayer.data[b_face_index]
                 #b_meshalpha = b_meshcolorlayeralpha.data[b_face_index]
                 
-                # Map 
                 for n_vert_index, n_vert in enumerate(n_tri): 
                     '''
                         TODO: Request index access in the Bpy API
@@ -2196,7 +2195,6 @@ class NifImport(NifCommon):
                         or Meshcolor
                     '''
                     # Each MeshColor has n Color's, mapping to (n)_vertex.               
-                    
                     setattr(b_meshcolor, "color%s" % (n_vert_index + 1),
                             [n_vcol[n_vert].r, n_vcol[n_vert].g, n_vcol[n_vert].b])
                     
