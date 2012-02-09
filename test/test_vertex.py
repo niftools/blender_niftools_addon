@@ -76,7 +76,6 @@ class TestBaseVertexColor(TestBaseCube):
     def b_check_object(self, b_obj):
         print("COMPARING BLENDER DATA")
         '''
-        bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
         b_meshcolorlayer = b_obj.data.vertex_colors[0]
         nose.tools.assert_equal(b_meshcolorlayer.name, 'VertexColor')
         '''

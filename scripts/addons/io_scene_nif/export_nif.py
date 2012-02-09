@@ -2104,7 +2104,7 @@ class NifExport(NifCommon):
                         fuv.append(
                             getattr(mesh.uv_textures[uvlayer].data[f.index],
                                     "uv%i" % (i + 1)))
-                    # FIXME figure out the new vertex color layer system
+                    
                     fcol = None
                     fcola = None
                     if mesh_hasvcol:
