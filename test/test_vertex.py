@@ -63,37 +63,27 @@ class TestBaseVertexColor(TestBaseCube):
         #iterate over each face, then set the vert color through lookup, 
         for face_index, face in enumerate(b_faces): #nif_faces: 0-11 
             for vert_index, n_vert in enumerate(face): #nif_verts: 0-7
-
-                if(vert_index == 0):
-                    b_obj.data.vertex_colors["VertexColor"].data[face_index].color1.r = vertcol[n_vert][0]
-                    b_obj.data.vertex_colors["VertexColor"].data[face_index].color1.g = vertcol[n_vert][1]
-                    b_obj.data.vertex_colors["VertexColor"].data[face_index].color1.b = vertcol[n_vert][2]
-                    
-                elif(vert_index == 1):
-                    b_obj.data.vertex_colors["VertexColor"].data[face_index].color2.r = vertcol[n_vert][0]
-                    b_obj.data.vertex_colors["VertexColor"].data[face_index].color2.g = vertcol[n_vert][1]
-                    b_obj.data.vertex_colors["VertexColor"].data[face_index].color2.b = vertcol[n_vert][2]
-                    
-                else:
-                    b_obj.data.vertex_colors["VertexColor"].data[face_index].color3.r = vertcol[n_vert][0]
-                    b_obj.data.vertex_colors["VertexColor"].data[face_index].color3.g = vertcol[n_vert][1]
-                    b_obj.data.vertex_colors["VertexColor"].data[face_index].color3.b = vertcol[n_vert][2]
-        
-        '''            
+                b_meshcolor = b_obj.data.vertex_colors["VertexColor"].data[face_index]
+                b_color = getattr(b_meshcolor, "color%s" % (vert_index + 1))
+                b_color.r = vertcol[n_vert][0]
+                b_color.g = vertcol[n_vert][1]
+                b_color.b = vertcol[n_vert][2]
+                
         bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
-        '''
+        
         return b_obj
         
     def b_check_object(self, b_obj):
         print("COMPARING BLENDER DATA")
-        
+        '''
+        bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
         b_meshcolorlayer = b_obj.data.vertex_colors[0]
         nose.tools.assert_equal(b_meshcolorlayer.name, 'VertexColor')
-        
+        '''
         
     def n_check_data(self, n_data):
         print("COMPARING NIF DATA")
         
         
     def b_check_vert(self):
-        print("Sub Check: Vertex color comparison")
+        print("Sub Check: Per vertex color comparison")
