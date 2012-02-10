@@ -1821,6 +1821,7 @@ class NifExport(NifCommon):
             mesh_haswire = False  # mesh rendered as wireframe
             mesh_hasspec = False  # mesh has specular properties
             mesh_hasvcol = False
+            mesh_hasvcola = False 
             mesh_hasnormals = False
             if mesh_mat is not None:
                 mesh_hasnormals = True # for proper lighting
@@ -1828,6 +1829,20 @@ class NifExport(NifCommon):
                 # Non-textured materials, vertex colors are used to color the mesh
                 # Textured materials, they represent lighting details
                 mesh_hasvcol = bool(mesh.vertex_colors)
+                #vertex alpha
+                if(len(mesh.vertex_colors) == 1):
+                    self.warning(
+                                 "Mesh only has one Vertex Color layer"
+                                 " default alpha values will be written\n"
+                                 " - For Alpha values add a second vertex layer, "
+                                 " greyscale only"
+                                 )
+                    for i, b_meshcolor in enumerate(mesh.vertex_colors[1].data):
+                         b_color = getattr(b_meshcolor, "color%s" % (i + 1))
+                         if(b_color.v > self.properties.epsilon):
+                             mesh_hasvcola = True
+                             break  
+                         
                 # read the Blender Python API documentation to understand this hack
                 
                 #specular mat
@@ -1847,10 +1862,11 @@ class NifExport(NifCommon):
                 mesh_mat_glossiness = mesh_mat.specular_hardness / 4.0  # 'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
                 
                 #alpha mat
-                mesh_mat_transparency = mesh_mat.alpha
+                mesh_mat_transparency = mesh_mat.alpha                
                 mesh_hasalpha = (abs(mesh_mat_transparency - 1.0) > self.properties.epsilon) \
-                                or (mesh_mat.animation_data
-                                    and mesh_mat.animation_data.action.fcurves['Alpha'])
+                                or (mesh_mat.animation_data 
+                                    and mesh_mat.animation_data.action.fcurves['Alpha']) \
+                                or (mesh_hasvcola)
                 
                 #wire mat
                 mesh_haswire = (mesh_mat.type == 'WIRE')
@@ -2106,28 +2122,20 @@ class NifExport(NifCommon):
                                     "uv%i" % (i + 1)))
                     
                     fcol = None
-                    fcola = None
                     if mesh_hasvcol:
                         vertcol = []
                         #check for an alpha layer
-                        if(len(mesh.vertex_colors) == 1):
-                            self.warning(
-                                "Mesh only has one Vertex Color layer"
-                                " default alpha values will be written\n"
-                                " - For Alpha values add a second vertex layer, "
-                                " greyscale only"
-                                )
-                            b_meshcolor = mesh.vertex_colors[0].data[f.index]
-                            b_color = getattr(b_meshcolor, "color%s" % (i + 1))
-                            vertcol = [b_color.r, b_color.g, b_color.b, 1.0]
-                            fcol = vertcol
-                              
-                        else:
+                        if(mesh_hasvcola):
                             b_meshcolor = mesh.vertex_colors[0].data[f.index]
                             b_meshcoloralpha = mesh.vertex_colors[1].data
                             b_color = getattr(b_meshcolor, "color%s" % (i + 1))
                             b_colora = getattr(b_meshcolor, "color%s" % (i + 1))
                             vertcol = [b_color.r, b_color.g, b_color.b, b_colora.v]
+                            fcol = vertcol
+                        else:
+                            b_meshcolor = mesh.vertex_colors[0].data[f.index]
+                            b_color = getattr(b_meshcolor, "color%s" % (i + 1))
+                            vertcol = [b_color.r, b_color.g, b_color.b, 1.0]
                             fcol = vertcol
                     else:
                         fcol = None
