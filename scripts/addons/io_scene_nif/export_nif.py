@@ -1801,7 +1801,38 @@ class NifExport(NifCommon):
 
         # is mesh double sided?
         mesh_doublesided = mesh.show_double_sided
-
+        
+        
+        #vertex color check
+        mesh_hasvcol = False
+        mesh_hasvcola = False
+             
+        if(mesh.vertex_colors):
+            mesh_hasvcol = True
+            
+            #vertex alpha check
+            if(len(mesh.vertex_colors) == 1):
+                self.warning("Mesh only has one Vertex Color layer"
+                             " default alpha values will be written\n"
+                             " - For Alpha values add a second vertex layer, "
+                             " greyscale only"
+                             )
+                mesh_hasvcola = False
+            else:
+                #iterate over colorfaces
+                for b_meshcolor in mesh.vertex_colors[1].data:
+                    #iterate over verts
+                    for i in [0,1,2]:
+                        b_color = getattr(b_meshcolor, "color%s" % (i + 1))
+                        if(b_color.v > self.properties.epsilon):
+                            mesh_hasvcola = True
+                            break
+                    if(mesh_hasvcola):
+                        break 
+        
+        # Non-textured materials, vertex colors are used to color the mesh
+        # Textured materials, they represent lighting details
+        
         # let's now export one trishape for every mesh material
         ### TODO: needs refactoring - move material, texture, etc.
         ### to separate function
@@ -1820,29 +1851,11 @@ class NifExport(NifCommon):
             mesh_hasalpha = False # mesh has transparency
             mesh_haswire = False  # mesh rendered as wireframe
             mesh_hasspec = False  # mesh has specular properties
-            mesh_hasvcol = False
-            mesh_hasvcola = False 
+             
             mesh_hasnormals = False
             if mesh_mat is not None:
                 mesh_hasnormals = True # for proper lighting
                 
-                # Non-textured materials, vertex colors are used to color the mesh
-                # Textured materials, they represent lighting details
-                mesh_hasvcol = bool(mesh.vertex_colors)
-                #vertex alpha
-                if(len(mesh.vertex_colors) == 1):
-                    self.warning(
-                                 "Mesh only has one Vertex Color layer"
-                                 " default alpha values will be written\n"
-                                 " - For Alpha values add a second vertex layer, "
-                                 " greyscale only"
-                                 )
-                    for i, b_meshcolor in enumerate(mesh.vertex_colors[1].data):
-                         b_color = getattr(b_meshcolor, "color%s" % (i + 1))
-                         if(b_color.v > self.properties.epsilon):
-                             mesh_hasvcola = True
-                             break  
-                         
                 # read the Blender Python API documentation to understand this hack
                 
                 #specular mat
@@ -2122,6 +2135,8 @@ class NifExport(NifCommon):
                                     "uv%i" % (i + 1)))
                     
                     fcol = None
+                    
+                    '''TODO: Need to map b_verts -> n_verts'''
                     if mesh_hasvcol:
                         vertcol = []
                         #check for an alpha layer
