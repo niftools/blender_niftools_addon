@@ -2189,11 +2189,9 @@ class NifImport(NifCommon):
                 b_meshalpha = b_meshcolorlayeralpha.data[b_face_index]
                 
                 for n_vert_index, n_vert in enumerate(n_tri): 
-                    '''
-                        TODO: Request index access in the Bpy API
-                        i.e - form of b_meshcolor.color[n_vert_index]
-                        or Meshcolor
-                    '''
+                    '''TODO: Request index access in the Bpy API 
+                    b_meshcolor.color[n_vert_index]'''
+                    
                     # Each MeshColor has n Color's, mapping to (n)_vertex.               
                     b_color = getattr(b_meshcolor, "color%s" % (n_vert_index + 1))
                     b_colora = getattr(b_meshalpha, "color%s" % (n_vert_index + 1))
