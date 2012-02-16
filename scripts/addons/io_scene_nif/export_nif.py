@@ -2075,20 +2075,26 @@ class NifExport(NifCommon):
                          {}])
 
             # -> now comes the real export
+
+            '''
+                NIF has one uv vertex and one normal per vertex,
+                per vert, vertex coloring. 
+                
+                NIF uses the normal table for lighting. 
+                Smooth faces should use Blender's vertex normals, 
+                solid faces should use Blender's face normals.
+                
+                Blender's uv vertices and normals per face.
+                Blender supports per face vertex coloring, 
+            '''
+                    
+            # We now extract vertices, uv-vertices, normals, and 
+            # vertex colors from the mesh's face list. Some vertices must be duplicated.
             
-            # We now extract vertices, uv-vertices, normals, and vertex
-            # colors from the mesh's face list. NIF has one uv vertex and
-            # one normal per vertex, unlike blender's uv vertices and
-            # normals per face... therefore some vertices must be
-            # duplicated. The following algorithm extracts all unique
+            # The following algorithm extracts all unique
             # (vert, uv-vert, normal, vcol) quads, and uses this list to
             # produce the list of vertices, uv-vertices, normals, vertex
-            # colors, and face indices.
-
-            # NIF uses the normal table for lighting. So, smooth faces
-            # should use Blender's vertex normals, and solid faces should
-            # use Blender's face normals.
-            
+            # colors, and face indices.                   
             vertquad_list = [] # (vertex, uv coordinate, normal, vertex color) list
             vertmap = [None for i in range(len(mesh.vertices))] # blender vertex -> nif vertices
             vertlist = []
@@ -2427,7 +2433,6 @@ class NifExport(NifCommon):
             tridata.consistency_flags = NifFormat.ConsistencyType.CT_STATIC
 
             # data
-
             tridata.num_vertices = len(vertlist)
             tridata.has_vertices = True
             tridata.vertices.update_size()

@@ -11,6 +11,44 @@ from test.test_cube import TestBaseCube
 class TestBaseVertexColor(TestBaseCube):
     n_name = "vertexcolor/base_vertex_color"
     b_name = "Cube"
+    
+    #vertex color specific stuff
+    b_faces = [(4,0,3),#0
+               (4,3,7),#1
+               (2,6,7),#2
+               (2,7,3),#3
+               (1,5,2),#4
+               (5,6,2),#5
+               (0,4,1),#6
+               (4,5,1),#7
+               (4,7,5),#8
+               (7,6,5),#9
+               (0,1,2),#10
+               (0,2,3)]#11
+        
+    #nif mapping to base, might be useful
+    n_faces = [(0,1,2),
+               (0,2,3),
+               (4,5,6),
+               (4,6,7),
+               (0,4,7),
+               (0,7,1),
+               (1,7,6),
+               (1,6,2),
+               (2,6,5),
+               (2,5,3),
+               (4,0,3),
+               (4,3,5)]
+        
+    vertcol = [(1.0,0.0,0.0), #r
+               (0.0,1.0,0.0), #g
+               (0.0,0.0,1.0), #b
+               (0.0,0.0,0.0), #0
+               (1.0,0.0,0.0), #r
+               (0.0,1.0,0.0), #G
+               (0.0,0.0,1.0), #b
+               (0.0,0.0,0.0)] #0
+    
         
     def b_create_object(self):
         b_obj = TestBaseCube.b_create_object(self)
@@ -20,69 +58,46 @@ class TestBaseVertexColor(TestBaseCube):
         bpy.ops.mesh.quads_convert_to_tris() 
         bpy.ops.object.editmode_toggle()
         
-        #vertex color specific stuff
-        b_faces = [(4,0,3),#0
-                   (4,3,7),#1
-                   (2,6,7),#2
-                   (2,7,3),#3
-                   (1,5,2),#4
-                   (5,6,2),#5
-                   (0,4,1),#6
-                   (4,5,1),#7
-                   (4,7,5),#8
-                   (7,6,5),#9
-                   (0,1,2),#10
-                   (0,2,3)]#11
-        
-        #nif mapping to base, might be useful
-        n_faces = [(0,1,2),
-                   (0,2,3),
-                   (4,5,6),
-                   (4,6,7),
-                   (0,4,7),
-                   (0,7,1),
-                   (1,7,6),
-                   (1,6,2),
-                   (2,6,5),
-                   (2,5,3),
-                   (4,0,3),
-                   (4,3,5)]
-        
-        vertcol = [(1.0,0.0,0.0), #r
-                   (0.0,1.0,0.0), #g
-                   (0.0,0.0,1.0), #b
-                   (0.0,0.0,0.0), #0
-                   (1.0,0.0,0.0), #r
-                   (0.0,1.0,0.0), #G
-                   (0.0,0.0,1.0), #b
-                   (0.0,0.0,0.0)] #0
-                
+        #add base vertex col layer
         bpy.ops.mesh.vertex_color_add()
         b_obj.data.vertex_colors[0].name = "VertexColor"
         
         #iterate over each face, then set the vert color through lookup, 
-        for face_index, face in enumerate(b_faces): #nif_faces: 0-11 
+        for face_index, face in enumerate(self.b_faces): #nif_faces: 0-11 
             for vert_index, n_vert in enumerate(face): #nif_verts: 0-7
                 b_meshcolor = b_obj.data.vertex_colors["VertexColor"].data[face_index]
                 b_color = getattr(b_meshcolor, "color%s" % (vert_index + 1))
-                b_color.r = vertcol[n_vert][0]
-                b_color.g = vertcol[n_vert][1]
-                b_color.b = vertcol[n_vert][2]
+                b_color.r = self.vertcol[n_vert][0]
+                b_color.g = self.vertcol[n_vert][1]
+                b_color.b = self.vertcol[n_vert][2]
                 
         bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         
         return b_obj
         
     def b_check_object(self, b_obj):
-        print("COMPARING BLENDER DATA")
-        '''
-        b_meshcolorlayer = b_obj.data.vertex_colors[0]
-        nose.tools.assert_equal(b_meshcolorlayer.name, 'VertexColor')
-        '''
-        
+        print("COMPARING BLENDER DATA")       
+        b_mesh = b_obj.data
+        nose.tools.assert_equal(b_mesh.vertex_colors[0].name, 'VertexColor')
+    
+    def b_check_vert(self, index, vertexcolor):
+        print("Sub Check: Comparing to expected")
+
+    
     def n_check_data(self, n_data):
         print("COMPARING NIF DATA")
+        n_geom = n_data.roots[0].children[0]
+        nose.tools.assert_equal(n_geom.data.has_vertex_colors, True)
+        nose.tools.assert_equal(len(n_geom.data.vertex_colors), 8)
+        for i, vert in enumerate(n_geom.data.vertex_colors):
+            self.n_check_vert(i, vert)
+
+    def n_check_vert(self, index, vertexcolor):
+        print("Sub Check: Comparing vertex color")
+        print("n_vert:" + str(vertexcolor.r) + " base_vert:" + str(self.vertcol[index][0]))
+        nose.tools.assert_equal(abs(vertexcolor.r - self.vertcol[index][0]) < 0.01, True)
+        print("n_vert:" + str(vertexcolor.g) + " base_vert:" + str(self.vertcol[index][1]))      
+        nose.tools.assert_equal(abs(vertexcolor.g - self.vertcol[index][1]) < 0.01, True)
+        print("n_vert:" + str(vertexcolor.b) + " base_vert:" + str(self.vertcol[index][2]))
+        nose.tools.assert_equal(abs(vertexcolor.b - self.vertcol[index][2]) < 0.01, True)
         
-        
-    def b_check_vert(self):
-        print("Sub Check: Per vertex color comparison")
