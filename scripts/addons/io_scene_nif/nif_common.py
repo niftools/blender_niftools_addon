@@ -274,15 +274,17 @@ class NifCommon:
         return NifFormat.KeyType.QUADRATIC_KEY
 
     def get_b_blend_type_from_n_apply_mode(self, n_apply_mode):
+        #TODO - Check out n_apply_modes
         if n_apply_mode == NifFormat.ApplyMode.APPLY_MODULATE:
             return "MIX"
-        elif textProperty.apply_mode == NifFormat.ApplyMode.APPLY_REPLACE:
+        #TODO - These seem unsupported by Blender, check
+        elif n_apply_mode == NifFormat.ApplyMode.APPLY_REPLACE:
             return "MIX"
-        elif textProperty.apply_mode == NifFormat.ApplyMode.APPLY_DECAL:
+        elif n_apply_mode == NifFormat.ApplyMode.APPLY_DECAL:
             return "MIX"
-        elif textProperty.apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT:
+        elif n_apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT:
             return "LIGHTEN"
-        elif textProperty.apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT2:
+        elif n_apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT2:
             return "MULTIPLY"
         self.warning(
             "Unknown apply mode (%i) in material,"
