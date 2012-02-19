@@ -95,9 +95,9 @@ class TestBaseVertexColor(TestBaseCube):
     def n_check_vert(self, index, vertexcolor):
         print("Sub Check: Comparing vertex color")
         print("n_vert:" + str(vertexcolor.r) + " base_vert:" + str(self.vertcol[index][0]))
-        nose.tools.assert_equal(abs(vertexcolor.r - self.vertcol[index][0]) < 0.01, True)
+        nose.tools.assert_equal(abs(vertexcolor.r - self.vertcol[index][0]) > 0.01, False)
         print("n_vert:" + str(vertexcolor.g) + " base_vert:" + str(self.vertcol[index][1]))      
-        nose.tools.assert_equal(abs(vertexcolor.g - self.vertcol[index][1]) < 0.01, True)
+        nose.tools.assert_equal(abs(vertexcolor.g - self.vertcol[index][1]) > 0.01, False)
         print("n_vert:" + str(vertexcolor.b) + " base_vert:" + str(self.vertcol[index][2]))
-        nose.tools.assert_equal(abs(vertexcolor.b - self.vertcol[index][2]) < 0.01, True)
+        nose.tools.assert_equal(abs(vertexcolor.b - self.vertcol[index][2]) > 0.01, False)
         

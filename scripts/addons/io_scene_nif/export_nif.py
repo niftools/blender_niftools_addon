@@ -2209,8 +2209,8 @@ class NifExport(NifCommon):
                         # add the vertex
                         vertlist.append(vertquad[0])
                         if mesh_hasnormals: normlist.append(vertquad[2])
-                        if mesh_hasvcol:    vcollist.append(vertquad[3])
-                        if mesh_uvlayers:   uvlist.append(vertquad[1])
+                        if mesh_hasvcol: vcollist.append(vertquad[3])
+                        if mesh_uvlayers: uvlist.append(vertquad[1])
                 # now add the (hopefully, convex) face, in triangles
                 for i in range(f_numverts - 2):
                     if True: #TODO: #(ob_scale > 0):
