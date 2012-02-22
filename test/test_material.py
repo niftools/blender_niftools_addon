@@ -21,7 +21,6 @@ class TestBaseMaterial(TestBaseUV):
     def b_check_object(self, b_obj):
         b_mesh = b_obj.data
         nose.tools.assert_equal(len(b_mesh.materials), 1)
-        b_mat = b_mesh.materials[0]
 
     def n_check_data(self, n_data):
         n_geom = n_data.roots[0].children[0]    

@@ -44,6 +44,26 @@ class TestBaseGeom(SingleNif):
             radius:
     '''
         
+class TestBaseUV(TestBaseGeom):
+    n_name = "geom/base_uv"
+    
+    def b_create_object(self):
+        b_obj = TestBaseGeom.b_create_object(self)
+        
+        #project UV
+        bpy.ops.object.mode_set(mode='EDIT', toggle=False) #ensure we are in the mode.
+        bpy.ops.uv.cube_project() # named 'UVTex'
+        bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+        return b_obj
+    
+    def b_check_data(self, b_obj):
+        pass        
+    
+    def n_check_data(self, n_data):
+        n_geom = n_data.roots[0].children[0]
+        nose.tools.assert_equal(len(n_geom.data.uv_sets), 1)
+        nose.tools.assert_equal(
+            len(n_geom.data.uv_sets[0]), len(n_geom.data.vertices))
 
 class TestNonUniformlyScaled(Base):
     def setup(self):
