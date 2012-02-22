@@ -77,6 +77,7 @@ class TestBaseVertexColor(TestBaseGeom):
         
     def b_check_object(self, b_obj):    
         b_mesh = b_obj.data
+        nose.tools.assert_equal(len(b_mesh.vertex_colors), 1)
         nose.tools.assert_equal(b_mesh.vertex_colors[0].name, 'VertexColor')
         b_meshcolor = b_obj.data.vertex_colors["VertexColor"].data
         for b_col_index, b_meshcolor in enumerate(b_meshcolor): #b_faces: 0-11          
