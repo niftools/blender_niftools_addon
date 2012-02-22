@@ -9,7 +9,7 @@ from pyffi.formats.nif import NifFormat
 from test.test_material import TestBaseMaterial
 
 class TestBaseTexture(TestBaseMaterial):
-    n_name = "texture/base_texture"
+    n_name = "textures/base_texture"
 
     def b_create_object(self):
         b_obj = TestBaseMaterial.b_create_object(self)
@@ -22,6 +22,7 @@ class TestBaseTexture(TestBaseMaterial):
         b_mtex.texture = bpy.data.textures.new(name='Tex', type='IMAGE')
         b_mtex.texture.image = bpy.data.images.new('textures' + os.sep + 'image.dds', 1, 1)
         b_mtex.uv_layer = 'UVTex'
+        
         return b_obj
 
     def b_check_object(self, b_obj):

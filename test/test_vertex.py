@@ -71,21 +71,25 @@ class TestBaseVertexColor(TestBaseGeom):
                 b_color.g = self.vertcol[n_vert][1]
                 b_color.b = self.vertcol[n_vert][2]
                 
-        bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
+        #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         
         return b_obj
         
-    def b_check_object(self, b_obj):
-        print("COMPARING BLENDER DATA")       
+    def b_check_object(self, b_obj):    
         b_mesh = b_obj.data
         nose.tools.assert_equal(b_mesh.vertex_colors[0].name, 'VertexColor')
-    
-    def b_check_vert(self, index, vertexcolor):
-        print("Sub Check: Comparing to expected")
-
+        b_meshcolor = b_obj.data.vertex_colors["VertexColor"].data
+        for b_col_index, b_meshcolor in enumerate(b_meshcolor): #b_faces: 0-11          
+            self.b_check_vert(b_col_index, b_meshcolor)
+                
+    def b_check_vert(self, f_index, vertexcolor):
+        for vert_index in [0,1,2]:
+            b_color = getattr(vertexcolor, "color%s" % (vert_index + 1))
+            nose.tools.assert_equal(b_color.r == self.vertcol[f_index][0], True)
+            nose.tools.assert_equal(b_color.g == self.vertcol[f_index][1], True)
+            nose.tools.assert_equal(b_color.b == self.vertcol[f_index][2], True)
     
     def n_check_data(self, n_data):
-        print("COMPARING NIF DATA")
         n_geom = n_data.roots[0].children[0]
         nose.tools.assert_equal(n_geom.data.has_vertex_colors, True)
         nose.tools.assert_equal(len(n_geom.data.vertex_colors), 8)

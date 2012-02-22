@@ -42,6 +42,7 @@ class TestBSBound(TestBaseGeom):
         b_obj.name = self.b_name
         b_obj.draw_bounds_type = 'BOX'
         b_obj.draw_type = 'BOUNDS'
+        
         return b_obj
 
 

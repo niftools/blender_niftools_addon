@@ -54,6 +54,7 @@ class TestBaseUV(TestBaseGeom):
         bpy.ops.object.mode_set(mode='EDIT', toggle=False) #ensure we are in the mode.
         bpy.ops.uv.cube_project() # named 'UVTex'
         bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+        
         return b_obj
     
     def b_check_data(self, b_obj):
