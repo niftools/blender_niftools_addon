@@ -6,14 +6,14 @@ import os
 
 import io_scene_nif.export_nif
 from pyffi.formats.nif import NifFormat
-from test.test_cube import TestBaseCube
+from test.test_geom import TestBaseGeom
 
-class TestBound(TestBaseCube):
+class TestBound(TestBaseGeom):
     n_name = "boundbox/bound_box"
     b_name = "Bounding Box"
 
     def b_create_object(self):
-        b_obj = TestBaseCube.b_create_object(self)
+        b_obj = TestBaseGeom.b_create_object(self)
         b_obj.name = self.b_name
         b_obj.draw_bounds_type = 'BOX'
         b_obj.draw_type = 'BOUNDS'
@@ -33,12 +33,12 @@ class TestBound(TestBaseCube):
         nose.tools.assert_equal(bbox.has_bounding_box, True) 
         '''    
         
-class TestBSBound(TestBaseCube):
+class TestBSBound(TestBaseGeom):
     n_name = "boundbox/bsbound"
     b_name = "BSBound"
 
     def b_create_object(self):
-        b_obj = TestBaseCube.b_create_object(self)
+        b_obj = TestBaseGeom.b_create_object(self)
         b_obj.name = self.b_name
         b_obj.draw_bounds_type = 'BOX'
         b_obj.draw_type = 'BOUNDS'

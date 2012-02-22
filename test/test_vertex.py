@@ -6,9 +6,9 @@ import os
 
 import io_scene_nif.export_nif
 from pyffi.formats.nif import NifFormat
-from test.test_cube import TestBaseCube
+from test.test_geom import TestBaseGeom
 
-class TestBaseVertexColor(TestBaseCube):
+class TestBaseVertexColor(TestBaseGeom):
     n_name = "vertexcolor/base_vertex_color"
     b_name = "Cube"
     
@@ -51,7 +51,7 @@ class TestBaseVertexColor(TestBaseCube):
     
         
     def b_create_object(self):
-        b_obj = TestBaseCube.b_create_object(self)
+        b_obj = TestBaseGeom.b_create_object(self)
         
         #we like working with tris's, quad faces are silly, just like yours :P
         bpy.ops.object.editmode_toggle()

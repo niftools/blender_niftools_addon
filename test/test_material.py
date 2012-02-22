@@ -6,9 +6,9 @@ import os
 
 import io_scene_nif.export_nif
 from pyffi.formats.nif import NifFormat
-from test.test_cube import TestBaseCube
+from test.test_geom import TestBaseGeom
 
-class TestBaseMaterial(TestBaseCube):
+class TestBaseMaterial(TestBaseUV):
     n_name = "material/base_material"
 
     def b_create_object(self):
