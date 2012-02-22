@@ -21,11 +21,6 @@ class TestBaseTexture(TestBaseMaterial):
         b_mtex.use_map_color_diffuse = True
         b_mtex.texture = bpy.data.textures.new(name='Tex', type='IMAGE')
         b_mtex.texture.image = bpy.data.images.new('textures' + os.sep + 'image.dds', 1, 1)
-        
-        #project UV
-        bpy.ops.object.mode_set(mode='EDIT', toggle=False) #ensure we are in the mode.
-        bpy.ops.uv.cube_project() # named 'UVTex'
-        bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
         b_mtex.uv_layer = 'UVTex'
         return b_obj
 
@@ -43,9 +38,6 @@ class TestBaseTexture(TestBaseMaterial):
 
     def n_check_data(self, n_data):
         n_geom = n_data.roots[0].children[0]
-        nose.tools.assert_equal(len(n_geom.data.uv_sets), 1)
-        nose.tools.assert_equal(
-            len(n_geom.data.uv_sets[0]), len(n_geom.data.vertices))
         nose.tools.assert_equal(n_geom.num_properties, 2)
         self.n_check_texturing_property(n_geom.properties[0])
 
