@@ -9,7 +9,7 @@ from pyffi.formats.nif import NifFormat
 from test.test_geom import TestBaseGeom
 
 class TestBaseVertexColor(TestBaseGeom):
-    n_name = "vertexcolor/base_vertex_color"
+    n_name = "geom/vertexcolor/base_vertex_color"
     b_name = "Cube"
     
     #vertex color specific stuff
