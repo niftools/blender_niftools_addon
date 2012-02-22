@@ -2163,7 +2163,7 @@ class NifExport(NifCommon):
                         
                     vertquad = ( fv, fuv, fn, fcol )
 
-                    # do we already have this quad? (optimized by m_4444x)
+                    # do we already have this vertquad? (optimized by m_4444x)
                     f_index[i] = len(vertquad_list)
                     if vertmap[fv_index]:
                         # iterate only over vertices with the same vertex index
@@ -2454,6 +2454,8 @@ class NifExport(NifCommon):
                 tridata.has_vertex_colors = True
                 tridata.vertex_colors.update_size()
                 for i, v in enumerate(tridata.vertex_colors):
+                    
+                    
                     v.r = vcollist[i][0]
                     v.g = vcollist[i][1]
                     v.b = vcollist[i][2]

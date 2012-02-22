@@ -7,8 +7,8 @@ from test import SingleNif
 from test import Base
 from pyffi.formats.nif import NifFormat
 
-class TestBaseCube(SingleNif):
-    n_name = "cube/base_cube"
+class TestBaseGeom(SingleNif):
+    n_name = "geom/base_geom"
     b_name = "Cube"
 
     def b_create_object(self):
@@ -43,7 +43,9 @@ class TestBaseCube(SingleNif):
             Consistancy:
             radius:
     '''
-class TestNonUniformlyScaledCube(Base):
+        
+
+class TestNonUniformlyScaled(Base):
     def setup(self):
         # create a non-uniformly scaled cube
         bpy.ops.mesh.primitive_cube_add()
@@ -56,3 +58,4 @@ class TestNonUniformlyScaledCube(Base):
             filepath="test/export/non_uniformly_scaled_cube.nif",
             log_level='DEBUG',
             )
+

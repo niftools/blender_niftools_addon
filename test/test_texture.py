@@ -8,8 +8,8 @@ import io_scene_nif.export_nif
 from pyffi.formats.nif import NifFormat
 from test.test_material import TestBaseMaterial
 
-class TestBaseUVTexture(TestBaseMaterial):
-    n_name = "texture/base_uv_texture"
+class TestBaseTexture(TestBaseMaterial):
+    n_name = "texture/base_texture"
 
     def b_create_object(self):
         b_obj = TestBaseMaterial.b_create_object(self)
@@ -66,6 +66,8 @@ class TestBaseUVTexture(TestBaseMaterial):
         nose.tools.assert_is_instance(n_source, NifFormat.NiSourceTexture)
         nose.tools.assert_equal(n_source.use_external, 1)
         nose.tools.assert_equal(n_source.file_name, b"textures\\image.dds")
+
+
 
 
 '''
