@@ -58,7 +58,8 @@ class TestBaseUV(TestBaseGeom):
         return b_obj
     
     def b_check_data(self, b_obj):
-        pass        
+        b_mesh = b_obj.data        
+        nose.tools.assert_equal(len())
     
     def n_check_data(self, n_data):
         n_geom = n_data.roots[0].children[0]
