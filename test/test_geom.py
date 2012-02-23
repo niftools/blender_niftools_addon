@@ -59,13 +59,13 @@ class TestBaseUV(TestBaseGeom):
     
     def b_check_data(self, b_obj):
         b_mesh = b_obj.data        
-        nose.tools.assert_equal(len())
+        nose.tools.assert_equal(len(b_mesh.uv_textures), 1)
+        nose.tools.assert_equal()
     
     def n_check_data(self, n_data):
         n_geom = n_data.roots[0].children[0]
         nose.tools.assert_equal(len(n_geom.data.uv_sets), 1)
-        nose.tools.assert_equal(
-            len(n_geom.data.uv_sets[0]), len(n_geom.data.vertices))
+        nose.tools.assert_equal(len(n_geom.data.uv_sets[0]), len(n_geom.data.vertices))
 
 class TestNonUniformlyScaled(Base):
     def setup(self):

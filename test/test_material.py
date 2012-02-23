@@ -9,7 +9,7 @@ from pyffi.formats.nif import NifFormat
 from test.test_geom import TestBaseUV
 
 class TestBaseMaterial(TestBaseUV):
-    n_name = "properties/material/base_material"
+    n_name = "property/material/base_material"
 
     def b_create_object(self):
         b_obj = TestBaseUV.b_create_object(self)
