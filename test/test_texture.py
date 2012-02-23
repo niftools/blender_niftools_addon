@@ -19,7 +19,7 @@ class TestBaseTexture(TestBaseMaterial):
         b_mtex = b_mat.texture_slots.create(0)
         #create the texture
         #user has to manually selects Image/Movie for type
-        b_mtex.texture = bpy.data.textures.new(name='Tex', type='IMAGE')
+        b_mtex.texture = bpy.data.textures.new(name='Texture', type='IMAGE')
         b_mtex.texture.image = bpy.data.images.load('image.dds')
         
         b_mtex.texture_coords = 'UV'
