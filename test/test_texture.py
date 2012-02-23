@@ -10,35 +10,43 @@ from test.test_material import TestBaseMaterial
 
 class TestBaseTexture(TestBaseMaterial):
     n_name = "textures/base_texture"
+    texture_filepath = 'test' + os.sep + 'nif'+ os.sep + 'textures' + os.sep + 'base_texture.dds'
 
     def b_create_object(self):
         b_obj = TestBaseMaterial.b_create_object(self)
         b_mat = b_obj.data.materials[0]
+        #create texture slot 
+        b_mat_texslot = b_mat.texture_slots.create(0)
         
-        #create texture slot
-        b_mtex = b_mat.texture_slots.create(0)
-        #create the texture
-        #user has to manually selects Image/Movie for type
-        b_mtex.texture = bpy.data.textures.new(name='Texture', type='IMAGE')
-        b_mtex.texture.image = bpy.data.images.load('image.dds')
+        #user manually selects Image Type then loads image
+        b_mat_texslot.texture = bpy.data.textures.new(name='Texture', type='IMAGE')
+        b_mat_texslot.texture.image = bpy.data.images.load(self.texture_filepath)
+        b_mat_texslot.use = True
         
-        b_mtex.texture_coords = 'UV'
-        b_mtex.use_map_color_diffuse = True
+        #Image Sampling
+        b_mat_texslot.texture.use_alpha = False
         
-        b_mtex.uv_layer = 'UVMap'
+        #Mapping
+        b_mat_texslot.texture_coords = 'UV'
+        b_mat_texslot.uv_layer = 'UVMap'
         
+        #Influence
+        b_mat_texslot.use_map_color_diffuse = True
+                
         return b_obj
 
     def b_check_object(self, b_obj):
         b_mesh = b_obj.data
         nose.tools.assert_equal(len(b_mesh.materials), 1)
         b_mat = b_mesh.materials[0]
-        b_mtex = b_mat.texture_slots[0]
-        nose.tools.assert_equal(b_mtex.use, True)
-        nose.tools.assert_equal(b_mtex.texture_coords, 'UV')
-        nose.tools.assert_equal(b_mtex.use_map_color_diffuse, True)
-        nose.tools.assert_is_instance(b_mtex.texture, bpy.types.ImageTexture)
-        nose.tools.assert_equal(b_mtex.texture.image.filepath, os.sep + 'image.dds')
+        #nose.tools.assert_equal(len(b_mat.texture_slots), 1) blender auto-gen 18 slots ???
+        b_mat_texslot = b_mat.texture_slots[0]
+        nose.tools.assert_equal(b_mat_texslot.use, True)
+        nose.tools.assert_is_instance(b_mat_texslot.texture, bpy.types.ImageTexture)
+        nose.tools.assert_equal(b_mat_texslot.texture.image.filepath, self.texture_filepath)
+        nose.tools.assert_equal(b_mat_texslot.texture_coords, 'UV')
+        nose.tools.assert_equal(b_mat_texslot.use_map_color_diffuse, True)
+        
 
     def n_check_data(self, n_data):
         n_geom = n_data.roots[0].children[0]
@@ -61,7 +69,7 @@ class TestBaseTexture(TestBaseMaterial):
     def n_check_base_source_texture(self, n_source):
         nose.tools.assert_is_instance(n_source, NifFormat.NiSourceTexture)
         nose.tools.assert_equal(n_source.use_external, 1)
-        nose.tools.assert_equal(n_source.file_name, b"textures\\image.dds")
+        nose.tools.assert_equal(n_source.file_name, self.texture_filepath)
 
 
 
