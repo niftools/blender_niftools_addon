@@ -3608,7 +3608,7 @@ class NifImport(NifCommon):
         return b_obj
 
     def get_uv_layer_name(self, uvset):
-        return "UVTex.%03i" % uvset if uvset != 0 else "UVTex"
+        return "UVMap.%03i" % uvset if uvset != 0 else "UVMap"
 
 
 
