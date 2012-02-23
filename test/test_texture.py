@@ -17,11 +17,15 @@ class TestBaseTexture(TestBaseMaterial):
         
         #create texture slot
         b_mtex = b_mat.texture_slots.create(0)
+        #create the texture
+        #user has to manually selects Image/Movie for type
+        b_mtex.texture = bpy.data.textures.new(name='Tex', type='IMAGE')
+        b_mtex.texture.image = bpy.data.images.load('image.dds')
+        
         b_mtex.texture_coords = 'UV'
         b_mtex.use_map_color_diffuse = True
-        b_mtex.texture = bpy.data.textures.new(name='Tex', type='IMAGE')
-        b_mtex.texture.image = bpy.data.images.new('textures' + os.sep + 'image.dds', 1, 1)
-        b_mtex.uv_layer = 'UVTex'
+        
+        b_mtex.uv_layer = 'UVMap'
         
         return b_obj
 
@@ -34,8 +38,7 @@ class TestBaseTexture(TestBaseMaterial):
         nose.tools.assert_equal(b_mtex.texture_coords, 'UV')
         nose.tools.assert_equal(b_mtex.use_map_color_diffuse, True)
         nose.tools.assert_is_instance(b_mtex.texture, bpy.types.ImageTexture)
-        nose.tools.assert_equal(
-            b_mtex.texture.image.filepath, 'textures' + os.sep + 'image.dds')
+        nose.tools.assert_equal(b_mtex.texture.image.filepath, os.sep + 'image.dds')
 
     def n_check_data(self, n_data):
         n_geom = n_data.roots[0].children[0]
