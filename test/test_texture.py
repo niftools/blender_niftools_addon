@@ -94,7 +94,7 @@ class TestBumpTexture(TestBaseTexture):
         b_mat_texslot.use = True
         
         #Inflence mapping
-        b_mat_texslot.texture.use_normal_map = False
+        b_mat_texslot.texture.use_normal_map = False #causes artifacts otherwise.
         
         #Mapping
         b_mat_texslot.texture_coords = 'UV'
