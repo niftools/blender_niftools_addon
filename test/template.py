@@ -4,7 +4,7 @@ import bpy
 import nose.tools
 import test
 
-class TestFeature(test.SingleNif):
+class TestFeature(test.subfeatures):
     def b_create_object(self):
         """Create blender objects in current blender scene for feature."""
         raise NotImplementedError

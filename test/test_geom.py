@@ -38,8 +38,7 @@ class TestBaseGeom(SingleNif):
     '''
         TODO: Additional checks needed.
         TriData
-            Flags: blender exports| Continue, Maya| Triangles, 
-                    Pyffi| test.nif Bound - probably incorrect.
+            Flags: blender exports| Continue, Maya| Triangles, Pyffi| Bound.
             Consistancy:
             radius:
     '''
