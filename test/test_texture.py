@@ -90,8 +90,9 @@ class TestBumpTexture(TestBaseTexture):
         b_mat_texslot.use = True
         
         #Influence mapping
+        b_mat_texslot.use_map_color_diffuse = False #auto-set on creation
         b_mat_texslot.texture.use_normal_map = False #causes artifacts otherwise.
-        
+
         #Mapping
         b_mat_texslot.texture_coords = 'UV'
         b_mat_texslot.uv_layer = 'UVMap'
@@ -111,6 +112,7 @@ class TestBumpTexture(TestBaseTexture):
         
         nose.tools.assert_equal(b_mat_texslot.texture.use_normal_map, False)
         nose.tools.assert_equal(b_mat_texslot.texture_coords, 'UV')
+        nose.tools.assert_equal(b_mat_texslot.use_map_color_diffuse, False)
         nose.tools.assert_equal(b_mat_texslot.use_map_normal, True)
 
     def n_check_data(self, n_data):
@@ -126,9 +128,9 @@ class TestBumpTexture(TestBaseTexture):
         nose.tools.assert_equal(n_tex_prop.bump_map_matrix.m_12, 0.0)
         nose.tools.assert_equal(n_tex_prop.bump_map_matrix.m_21, 0.0)
         nose.tools.assert_equal(n_tex_prop.bump_map_matrix.m_22, 1.0)
-        self.n_check_bump_texture(n_tex_prop.bump_texture)
+        self.n_check_bump_texture(n_tex_prop.bump_map_texture)
 
-    def n_check_bump_texture(self, n_tex_prop):
+    def n_check_bump_texture(self, n_texture):
         nose.tools.assert_equal(n_texture.clamp_mode, 3)
         nose.tools.assert_equal(n_texture.filter_mode, 2)
         nose.tools.assert_equal(n_texture.uv_set, 0)
@@ -142,7 +144,6 @@ class TestBumpTexture(TestBaseTexture):
         
         
 class TestGlowTexture(TestBaseTexture):
-    n_name = "textures/glow_texture"
     texture_filepath = 'test' + os.sep + 'nif'+ os.sep + 'textures' + os.sep + 'base_glow.dds'
 
     def b_create_object(self):
@@ -156,10 +157,9 @@ class TestGlowTexture(TestBaseTexture):
         b_mat_texslot.texture.image = bpy.data.images.load(self.texture_filepath)
         b_mat_texslot.use = True
         
-        
         #Influence mapping
-        #disable by default: No alpha channel exists or all white -> fully emissive
-        b_mat_texslot.texture.use_alpha = False 
+        b_mat_texslot.use_map_color_diffuse = False
+        b_mat_texslot.texture.use_alpha = False #If no alpha channel or white causes display error
         
         #Mapping
         b_mat_texslot.texture_coords = 'UV'
@@ -178,11 +178,11 @@ class TestGlowTexture(TestBaseTexture):
         nose.tools.assert_is_instance(b_mat_texslot.texture, bpy.types.ImageTexture)
         #nose.tools.assert_equal(b_mat_texslot.texture.image.filepath, self.texture_filepath)
         nose.tools.assert_equal(b_mat_texslot.use, True)
-        
         nose.tools.assert_equal(b_mat_texslot.texture.use_alpha, False)
         nose.tools.assert_equal(b_mat_texslot.texture_coords, 'UV')
+        nose.tools.assert_equal(b_mat_texslot.use_map_color_diffuse, False)
         nose.tools.assert_equal(b_mat_texslot.use_map_emit, True)
-
+        
     def n_check_data(self, n_data):
         n_geom = n_data.roots[0].children[0]
         self.n_check_texturing_property(n_geom.properties[0])
@@ -192,7 +192,7 @@ class TestGlowTexture(TestBaseTexture):
         nose.tools.assert_equal(n_tex_prop.has_glow_texture, True)
         self.n_check_glow_texture(n_tex_prop.glow_texture) 
 
-    def n_check_glow_texture(self, n_tex_prop):
+    def n_check_glow_texture(self, n_texture):
         nose.tools.assert_equal(n_texture.clamp_mode, 3)
         nose.tools.assert_equal(n_texture.filter_mode, 2)
         nose.tools.assert_equal(n_texture.uv_set, 0)
