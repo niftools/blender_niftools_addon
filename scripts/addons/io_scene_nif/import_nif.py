@@ -1613,6 +1613,7 @@ class NifImport(NifCommon):
                     #Mapping
                     b_mat_texslot.texture_coords = 'UV'
                     b_mat_texslot.uv_layer = self.get_uv_layer_name(baseTexDesc.uv_set)
+                    
                     #Influence
                     b_mat_texslot.use_map_color_diffuse = True
                     b_mat_texslot.blend_type = blend_type
