@@ -1,4 +1,11 @@
 """Export and import textured meshes."""
+'''
+    #TODO - Set Material Render to GLSL
+    #TODO_3.0 - Unify pathing checks per game.
+    
+    Blender auto-gen 18 slots, need to use create slots?
+    Compare exporter for auto-gen data & nif format for additional checks
+'''
 
 import bpy
 import nose.tools
@@ -8,15 +15,8 @@ import io_scene_nif.export_nif
 from pyffi.formats.nif import NifFormat
 from test.test_material import TestBaseMaterial
 
-'''
-    #TODO - Set Material Render to GLSL
-    #TODO_3.0 - Unify pathing checks per game.
-    
-    Blender auto-gen 18 slots, need to use create slots?
-    Compare exporter for auto-gen data & nif format for additional checks
-'''
-
-class TestNiTextPropBaseTexture(TestBaseMaterial):
+#NiTexturingProperty
+class TestBaseTexture(TestBaseMaterial):
     n_name = "textures/base_texture"
     texture_filepath = 'test' + os.sep + 'nif'+ os.sep + 'textures' + os.sep + 'base_texture.dds'
 
@@ -37,7 +37,6 @@ class TestNiTextPropBaseTexture(TestBaseMaterial):
         
         #Influence
         b_mat_texslot.use_map_color_diffuse = True
-                
         return b_obj
 
     def b_check_object(self, b_obj):
@@ -53,7 +52,6 @@ class TestNiTextPropBaseTexture(TestBaseMaterial):
         nose.tools.assert_equal(b_mat_texslot.texture_coords, 'UV')
         nose.tools.assert_equal(b_mat_texslot.use_map_color_diffuse, True)
         
-
     def n_check_data(self, n_data):
         n_geom = n_data.roots[0].children[0]
         nose.tools.assert_equal(n_geom.num_properties, 2)
@@ -77,9 +75,7 @@ class TestNiTextPropBaseTexture(TestBaseMaterial):
         nose.tools.assert_equal(n_source.use_external, 1)
         #nose.tools.assert_equal(n_source.file_name, self.texture_filepath)
 
-
 class TestBumpTexture(TestBaseTexture):
-    n_name = "textures/bump_texture"
     texture_filepath = 'test' + os.sep + 'nif'+ os.sep + 'textures' + os.sep + 'base_normal.dds'
 
     def b_create_object(self):
@@ -93,7 +89,7 @@ class TestBumpTexture(TestBaseTexture):
         b_mat_texslot.texture.image = bpy.data.images.load(self.texture_filepath)
         b_mat_texslot.use = True
         
-        #Inflence mapping
+        #Influence mapping
         b_mat_texslot.texture.use_normal_map = False #causes artifacts otherwise.
         
         #Mapping
@@ -102,7 +98,7 @@ class TestBumpTexture(TestBaseTexture):
         
         #Influence
         b_mat_texslot.use_map_normal = True
-        
+        return b_obj
         
     def b_check_object(self, b_obj):
         b_mesh = b_obj.data
@@ -123,12 +119,28 @@ class TestBumpTexture(TestBaseTexture):
 
     def n_check_texturing_property(self, n_tex_prop):
         nose.tools.assert_is_instance(n_tex_prop, NifFormat.NiTexturingProperty)
-        nose.tools.assert_equal(n_tex_prop.has_bump_texture, True)
-        self.n_check_base_texture(n_tex_prop.bump_texture)
+        nose.tools.assert_equal(n_tex_prop.has_bump_map_texture, True)
+        nose.tools.assert_equal(n_tex_prop.bump_map_luma_scale, 1.0)
+        nose.tools.assert_equal(n_tex_prop.bump_map_luma_offset, 0.0)
+        nose.tools.assert_equal(n_tex_prop.bump_map_matrix.m_11, 1.0)
+        nose.tools.assert_equal(n_tex_prop.bump_map_matrix.m_12, 0.0)
+        nose.tools.assert_equal(n_tex_prop.bump_map_matrix.m_21, 0.0)
+        nose.tools.assert_equal(n_tex_prop.bump_map_matrix.m_22, 1.0)
+        self.n_check_bump_texture(n_tex_prop.bump_texture)
+
+    def n_check_bump_texture(self, n_tex_prop):
+        nose.tools.assert_equal(n_texture.clamp_mode, 3)
+        nose.tools.assert_equal(n_texture.filter_mode, 2)
+        nose.tools.assert_equal(n_texture.uv_set, 0)
+        nose.tools.assert_equal(n_texture.has_texture_transform, False)
+        self.n_check_base_source_texture(n_texture.source)
         
-        #check nif data.
-
-
+    def n_check_base_source_texture(self, n_source):
+        nose.tools.assert_is_instance(n_source, NifFormat.NiSourceTexture)
+        nose.tools.assert_equal(n_source.use_external, 1)
+        #nose.tools.assert_equal(n_source.file_name, self.texture_filepath)
+        
+        
 class TestGlowTexture(TestBaseTexture):
     n_name = "textures/glow_texture"
     texture_filepath = 'test' + os.sep + 'nif'+ os.sep + 'textures' + os.sep + 'base_glow.dds'
@@ -156,6 +168,7 @@ class TestGlowTexture(TestBaseTexture):
         #Influence
         b_mat_texslot.use_map_emit = True
         
+        return b_obj
         
     def b_check_object(self, b_obj):
         b_mesh = b_obj.data
@@ -177,11 +190,25 @@ class TestGlowTexture(TestBaseTexture):
     def n_check_texturing_property(self, n_tex_prop):
         nose.tools.assert_is_instance(n_tex_prop, NifFormat.NiTexturingProperty)
         nose.tools.assert_equal(n_tex_prop.has_glow_texture, True)
-        self.n_check_base_texture(n_tex_prop.glow_texture) 
+        self.n_check_glow_texture(n_tex_prop.glow_texture) 
 
+    def n_check_glow_texture(self, n_tex_prop):
+        nose.tools.assert_equal(n_texture.clamp_mode, 3)
+        nose.tools.assert_equal(n_texture.filter_mode, 2)
+        nose.tools.assert_equal(n_texture.uv_set, 0)
+        nose.tools.assert_equal(n_texture.has_texture_transform, False)
+        self.n_check_base_source_texture(n_texture.source)
+        
+    def n_check_base_source_texture(self, n_source):
+        nose.tools.assert_is_instance(n_source, NifFormat.NiSourceTexture)
+        nose.tools.assert_equal(n_source.use_external, 1)
+        #nose.tools.assert_equal(n_source.file_name, self.texture_filepath)
+        
 
 '''
 Normal map, technically special case....
+Handling if user supplies normal map instead of bump & vice-versa
+
     Extra_shader_data -> NormalMapIndex (Civ VI, Sid Miener)
     BSShaderPPLightingProperty (FO3 & NV)
     BSLightingShaderProperty(Skyrim)
