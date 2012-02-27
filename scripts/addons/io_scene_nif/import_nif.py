@@ -1626,6 +1626,7 @@ class NifImport(NifCommon):
                     
                     #Influence mapping
                     b_mat_texslot.texture.use_normal_map = False #causes artifacts otherwise.
+                    b_mat_texslot.use_map_color_diffuse = False
                     #Mapping
                     b_mat_texslot.texture_coords = 'UV'
                     b_mat_texslot.uv_layer = self.get_uv_layer_name(bumpTexDesc.uv_set)
@@ -1642,7 +1643,7 @@ class NifImport(NifCommon):
                     
                     #Influence mapping
                     b_mat_texslot.texture.use_alpha = False
-                    
+                    b_mat_texslot.use_map_color_diffuse = False
                     #Mapping
                     b_mat_texslot.texture_coords = 'UV'
                     b_mat_texslot.uv_layer = self.get_uv_layer_name(glowTexDesc.uv_set)
