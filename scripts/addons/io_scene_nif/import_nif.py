@@ -1604,39 +1604,52 @@ class NifImport(NifCommon):
             if baseTexDesc:
                 base_texture = self.import_texture(baseTexDesc.source)
                 if base_texture:
-                    mbase_texture = material.texture_slots.create(0)
-                    mbase_texture.texture = base_texture
-                    # set the texture to use face UV coordinates
-                    mbase_texture.texture_coords = 'UV'
-                    # map the texture to the base color channel
-                    mbase_texture.use_map_color_diffuse = True
-                    # set the texture for the material
-                    mbase_texture.blend_type = blend_type
-                    mbase_texture.uv_layer = self.get_uv_layer_name(baseTexDesc.uv_set)
+                    b_mat_texslot = material.texture_slots.create(0)
+                    b_mat_texslot.texture = base_texture
+                    b_mat_texslot.use = True
+                    
+                    #Influence mapping
+                    
+                    #Mapping
+                    b_mat_texslot.texture_coords = 'UV'
+                    b_mat_texslot.uv_layer = self.get_uv_layer_name(baseTexDesc.uv_set)
+                    #Influence
+                    b_mat_texslot.use_map_color_diffuse = True
+                    b_mat_texslot.blend_type = blend_type
+            if bumpTexDesc:
+                bump_texture = self.import_texture(bumpTexDesc.source)
+                if bump_texture:
+                    b_mat_texslot = material.texture_slots.create(1)
+                    b_mat_texslot.texture = bump_texture
+                    b_mat_texslot.use = True
+                    
+                    #Influence mapping
+                    b_mat_texslot.texture.use_normal_map = False #causes artifacts otherwise.
+                    #Mapping
+                    b_mat_texslot.texture_coords = 'UV'
+                    b_mat_texslot.uv_layer = self.get_uv_layer_name(bumpTexDesc.uv_set)
+                    #Influence
+                    b_mat_texslot.use_map_normal = True
+                    b_mat_texslot.blend_type = blend_type
+                    
             if glowTexDesc:
                 glow_texture = self.import_texture(glowTexDesc.source)
                 if glow_texture:
-                    # glow maps use alpha from rgb intensity
-                    glow_texture.use_calculate_alpha = True
-                    # set the texture to use face UV coordinates
-                    texco = 'UV'
-                    # map the texture to the base color and emit channel
-                    mapto = FIXME.use_map_color_diffuse | FIXME.use_map_emit
-                    # set the texture for the material
-                    material.setTexture(1, glow_texture, texco, mapto)
-                    mglow_texture = material.getTextures()[1]
-                    mglow_texture.uv_layer = self.get_uv_layer_name(glowTexDesc.uv_set)
-            if bumpTexDesc:
-                bumpTexture = self.import_texture(bumpTexDesc.source)
-                if bumpTexture:
-                    # set the texture to use face UV coordinates
-                    texco = 'UV'
-                    # map the texture to the normal channel
-                    mapto = FIXME.use_map_normal
-                    # set the texture for the material
-                    material.setTexture(2, bumpTexture, texco, mapto)
-                    mbumpTexture = material.getTextures()[2]
-                    mbumpTexture.uv_layer = self.get_uv_layer_name(bumpTexDesc.uv_set)
+                    b_mat_texslot = material.texture_slots.create(2)
+                    b_mat_texslot.texture = glow_texture
+                    b_mat_texslot.use = True
+                    
+                    #Influence mapping
+                    b_mat_texslot.texture.use_alpha = False
+                    
+                    #Mapping
+                    b_mat_texslot.texture_coords = 'UV'
+                    b_mat_texslot.uv_layer = self.get_uv_layer_name(glowTexDesc.uv_set)
+                    
+                    #Influence
+                    b_mat_texslot.use_map_emit = True
+                    b_mat_texslot.blend_type = blend_type
+                    
             if glossTexDesc:
                 gloss_texture = self.import_texture(glossTexDesc.source)
                 if gloss_texture:
