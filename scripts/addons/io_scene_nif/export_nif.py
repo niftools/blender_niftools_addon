@@ -1802,7 +1802,6 @@ class NifExport(NifCommon):
         # is mesh double sided?
         mesh_doublesided = mesh.show_double_sided
         
-        
         #vertex color check
         mesh_hasvcol = False
         mesh_hasvcola = False
@@ -1842,6 +1841,7 @@ class NifExport(NifCommon):
             mesh_base_mtex = None
             mesh_glow_mtex = None
             mesh_bump_mtex = None
+            mesh_normal_mtex = None
             mesh_gloss_mtex = None
             mesh_dark_mtex = None
             mesh_detail_mtex = None
@@ -1856,7 +1856,47 @@ class NifExport(NifCommon):
             if mesh_mat is not None:
                 mesh_hasnormals = True # for proper lighting
                 
-                # read the Blender Python API documentation to understand this hack
+                #ambient mat
+                mesh_mat_ambient_color = [1.0, 1.0, 1.0]
+                
+                #diffuse mat
+                mesh_mat_diffuse_color = [1.0, 1.0, 1.0]
+                '''
+                TODO_3.0 - If needed where ambient should not be defaulted
+                
+                #ambient mat
+                mesh_mat_ambient_color[0] = mesh_mat.niftools.ambient_color[0] * mesh_mat.niftools.ambient_factor
+                mesh_mat_ambient_color[1] = mesh_mat.niftools.ambient_color[1] * mesh_mat.niftools.ambient_factor
+                mesh_mat_ambient_color[2] = mesh_mat.niftools.ambient_color[2] * mesh_mat.niftools.ambient_factor
+                
+                #diffuse mat
+                mest_mat_diffuse_color[0] = mesh_mat.niftools.diffuse_color[0] * mesh_mat.niftools.diffuse_factor
+                mest_mat_diffuse_color[1] = mesh_mat.niftools.diffuse_color[1] * mesh_mat.niftools.diffuse_factor
+                mest_mat_diffuse_color[2] = mesh_mat.niftools.diffuse_color[2] * mesh_mat.niftools.diffuse_factor
+                '''
+                
+                #emissive mat
+                mesh_mat_emissive_color = [0.0, 0.0, 0.0]
+                mesh_mat_emitmulti = 1.0 # default
+                if self.properties.game != 'FALLOUT_3':
+                    '''
+                    TODO_3.0 - Emit UI colors, if diffuse should not be defaulted
+                    set update_func to diffuse?
+                    mesh_mat_emissive_color = mesh_mat.niftools.emit_color * mesh_mat.emit
+                    '''
+                    mesh_mat_emissive_color = mesh_mat.diffuse_color * mesh_mat.emit
+                else:
+                    # special case for Fallout 3 (it does not store diffuse color)
+                    # if emit is non-zero, set emissive color to diffuse
+                    # (otherwise leave the color to zero)
+                    if mesh_mat.emit > self.properties.epsilon:
+                        '''
+                        TODO_3.0 - non-default diffuse.
+                        mesh_mat_emissive_color = mesh_mat.niftools.emit_color
+                        mesh_mat_emitmulti = mesh_mat.emit * 10.0
+                        '''
+                        mesh_mat_emissive_color = mesh_mat.diffuse_color
+                        mesh_mat_emitmulti = mesh_mat.emit * 10.0
                 
                 #specular mat
                 mesh_mat_specular_color = list(mesh_mat.specular_color)
@@ -1872,8 +1912,9 @@ class NifExport(NifCommon):
                     mesh_hasspec = True
                 
                 #gloss mat
-                mesh_mat_glossiness = mesh_mat.specular_hardness / 4.0  # 'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
-                
+                #'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
+                mesh_mat_glossiness = mesh_mat.specular_hardness / 4.0  
+                                
                 #alpha mat
                 mesh_mat_transparency = mesh_mat.alpha                
                 mesh_hasalpha = (abs(mesh_mat_transparency - 1.0) > self.properties.epsilon) \
@@ -1883,56 +1924,32 @@ class NifExport(NifCommon):
                 
                 #wire mat
                 mesh_haswire = (mesh_mat.type == 'WIRE')
-                
-                #ambient mat
-                mesh_mat_ambient_color = [0.0, 0.0, 0.0]
-                mesh_mat_ambient_color[0] = mesh_mat.diffuse_color[0] * mesh_mat.ambient
-                mesh_mat_ambient_color[1] = mesh_mat.diffuse_color[1] * mesh_mat.ambient
-                mesh_mat_ambient_color[2] = mesh_mat.diffuse_color[2] * mesh_mat.ambient
-                
-                #emissive mat
-                mesh_mat_emissive_color = [0.0, 0.0, 0.0]
-                mesh_mat_emitmulti = 1.0 # default
-                if self.properties.game != 'FALLOUT_3':
-                    mesh_mat_emissive_color[0] = mesh_mat.diffuse_color[0] * mesh_mat.emit
-                    mesh_mat_emissive_color[1] = mesh_mat.diffuse_color[1] * mesh_mat.emit
-                    mesh_mat_emissive_color[2] = mesh_mat.diffuse_color[2] * mesh_mat.emit
-                else:
-                    # special case for Fallout 3 (it does not store diffuse color)
-                    # if emit is non-zero, set emissive color to diffuse
-                    # (otherwise leave the color to zero)
-                    if mesh_mat.emit > self.properties.epsilon:
-                        mesh_mat_emissive_color = list(mesh_mat.diffuse_color)
-                        mesh_mat_emitmulti = mesh_mat.emit * 10.0
-                
+
                 # the base texture = first material texture
                 # note that most morrowind files only have a base texture, so let's for now only support single textured materials
-                for mtex in mesh_mat.texture_slots:
-                    if not mtex or not mtex.use:
+                for b_mat_texslot in mesh_mat.texture_slots:
+                    if not b_mat_texslot or not b_mat_texslot.use:
                         # skip unused texture slots
                         continue
 
                     # check REFL-mapped textures
                     # (used for "NiTextureEffect" materials)
-                    if mtex.texture_coords == 'REFLECTION':
+                    if b_mat_texslot.texture_coords == 'REFLECTION':
                         # of course the user should set all kinds of other
                         # settings to make the environment mapping come out
                         # (MapTo "COL", blending mode "Add")
                         # but let's not care too much about that
                         # only do some simple checks
-                        if not mtex.use_map_color_diffuse:
+                        if not b_mat_texslot.use_map_color_diffuse:
                             # it should map to colour
                             raise NifExportError(
-                                "Non-COL-mapped reflection texture in"
-                                " mesh '%s', material '%s',"
-                                " these cannot be exported to NIF."
-                                " Either delete all non-COL-mapped"
-                                " reflection textures,"
-                                " or in the Shading Panel,"
-                                " under Material Buttons,"
+                                "Non-COL-mapped reflection texture in mesh '%s', material '%s',"
+                                " these cannot be exported to NIF.\n"
+                                "Either delete all non-COL-mapped reflection textures,"
+                                " or in the Shading Panel, under Material Buttons,"
                                 " set texture 'Map To' to 'COL'."
                                 % (ob.name,mesh_mat.name))
-                        if mtex.blend_type != 'ADD':
+                        if b_mat_texslot.blend_type != 'ADD':
                             # it should have "ADD" blending mode
                             self.warning(
                                "Reflection texture should have blending"
@@ -1940,35 +1957,38 @@ class NifExport(NifCommon):
                                " in mesh '%s', material '%s')."
                                % (ob.name,mesh_mat.name))
                             # an envmap image should have an empty... don't care
-                        mesh_texeff_mtex = mtex
+                        mesh_texeff_mtex = b_mat_texslot
 
                     # check UV-mapped textures
-                    elif mtex.texture_coords == 'UV':
+                    elif b_mat_texslot.texture_coords == 'UV':
                         # update set of uv layers that must be exported
-                        if not mtex.uv_layer in mesh_uvlayers:
-                            mesh_uvlayers.append(mtex.uv_layer)
-                        # check which texture slot this mtex belongs to
-                        if mtex.use_map_emit:
-                            # got the glow tex
+                        if not b_mat_texslot.uv_layer in mesh_uvlayers:
+                            mesh_uvlayers.append(b_mat_texslot.uv_layer)
+                        
+                        #glow tex
+                        if b_mat_texslot.use_map_emit:
+                            #multi-check
                             if mesh_glow_mtex:
                                 raise NifExportError(
-                                    "Multiple glow textures in"
-                                    " mesh '%s', material '%s'."
-                                    " Make sure there is only one texture"
-                                    " with MapTo.EMIT"
+                                    "Multiple glow textures in mesh '%s', material '%s'.\n"
+                                    "Make sure Texture -> Influence -> Shading -> Emit is disabled"
                                     %(mesh.name,mesh_mat.name))
+                            '''
+                            TODO_3.0 - Fallout3 + specific. 
+                            Check if these are still possible 
                             # check if calculation of alpha channel is enabled
                             # for this texture
-                            if mtex.texture.use_calculate_alpha and mtex.use_map_alpha:
+                            if b_mat_texslot.texture.use_calculate_alpha and b_mat_texslot.use_map_alpha:
                                 self.warning(
-                                    "In mesh '%s', material '%s':"
-                                    " glow texture must have"
-                                    " CALCALPHA flag set, and must have"
-                                    " MapTo.ALPHA enabled."
+                                    "In mesh '%s', material '%s': glow texture must have"
+                                    " CALCALPHA flag set, and must have MapTo.ALPHA enabled."
                                     %(ob.name,mesh_mat.name))
-                            mesh_glow_mtex = mtex
-                        elif mtex.use_map_specular:
-                            # got the gloss map
+                            '''
+                            mesh_glow_mtex = b_mat_texslot
+                        
+                        #specular
+                        elif b_mat_texslot.use_map_specular:
+                            #multi-check
                             if mesh_gloss_mtex:
                                 raise NifExportError(
                                     "Multiple gloss textures in"
@@ -1976,9 +1996,12 @@ class NifExport(NifCommon):
                                     " Make sure there is only one texture"
                                     " with MapTo.SPEC"
                                     %(mesh.name,mesh_mat.name))
-                            mesh_gloss_mtex = mtex
-                        elif mtex.use_map_normal:
-                            # got the normal map
+                            # got the gloss map
+                            mesh_gloss_mtex = b_mat_texslot            
+                        
+                        #bump map
+                        elif b_mat_texslot.use_map_normal:
+                            #multi-check
                             if mesh_bump_mtex:
                                 raise NifExportError(
                                     "Multiple bump/normal textures"
@@ -1986,19 +2009,23 @@ class NifExport(NifCommon):
                                     " Make sure there is only one texture"
                                     " with MapTo.NOR"
                                     %(mesh.name,mesh_mat.name))
-                            mesh_bump_mtex = mtex
-                        elif mtex.use_map_color_diffuse and \
-                             mtex.blend_type == 'DARKEN' and \
+                            mesh_bump_mtex = b_mat_texslot
+                        
+                        #darken
+                        elif b_mat_texslot.use_map_color_diffuse and \
+                             b_mat_texslot.blend_type == 'DARKEN' and \
                              not mesh_dark_mtex:
                             # got the dark map
-                            mesh_dark_mtex = mtex
-                        elif mtex.use_map_color_diffuse and \
+                            mesh_dark_mtex = b_mat_texslot
+                        
+                        #diffuse
+                        elif b_mat_texslot.use_map_color_diffuse and \
                              not mesh_base_mtex:
                             # anything else that maps to COL is considered
                             # as base texture
-                            mesh_base_mtex = mtex
+                            mesh_base_mtex = b_mat_texslot
                             # check if alpha channel is enabled for this texture
-                            if mesh_base_mtex.texture.use_alpha and mtex.use_map_alpha:
+                            if mesh_base_mtex.texture.use_alpha and b_mat_texslot.use_map_alpha:
                                 # in this case, Blender replaces the texture transparant parts with the underlying material color...
                                 # in NIF, material alpha is multiplied with texture alpha channel...
                                 # how can we emulate the NIF alpha system (simply multiplying material alpha with texture alpha) when MapTo.ALPHA is turned on?
@@ -2022,14 +2049,29 @@ class NifExport(NifCommon):
                                         " or turn off MapTo.ALPHA,"
                                         " and try again."
                                         %mesh_mat.name)
-                                mesh_mat_transparency = mtex.varfac # we must use the "Var" value
+                                mesh_mat_transparency = b_mat_texslot.varfac # we must use the "Var" value
                                 mesh_hasalpha = True
-                        elif mtex.use_map_color_diffuse and \
+                        
+                        #normal map
+                        elif b_mat_texslot.use_map_normal and b_mat_texslot.texture.use_normal_map:
+                            if mesh_bump_mtex:
+                                raise NifExportError(
+                                    "Multiple bump/normal textures"
+                                    " in mesh '%s', material '%s'."
+                                    " Make sure there is only one texture"
+                                    " with MapTo.NOR"
+                                    %(mesh.name,mesh_mat.name))
+                            mesh_normal_mtex = b_mat_texslot
+                        
+                        #detail
+                        elif b_mat_texslot.use_map_color_diffuse and \
                              not mesh_detail_mtex:
                             # extra COL channel is considered
                             # as detail texture
-                            mesh_detail_mtex = mtex
-                        elif mtex.mapto & Blender.Texture.MapTo.REF:
+                            mesh_detail_mtex = b_mat_texslot
+                        
+                        #reflection
+                        elif b_mat_texslot.mapto & Blender.Texture.MapTo.REF:
                             # got the reflection map
                             if mesh_ref_mtex:
                                 raise NifExportError(
@@ -2038,7 +2080,7 @@ class NifExport(NifCommon):
                                     " Make sure there is only one texture"
                                     " with MapTo.REF"
                                     %(mesh.name,mesh_mat.name))
-                            mesh_ref_mtex = mtex
+                            mesh_ref_mtex = b_mat_texslot
                         else:
                             # unknown map
                             raise NifExportError(
@@ -2049,7 +2091,7 @@ class NifExport(NifCommon):
                                 " go to the Shading Panel,"
                                 " Material Buttons, and set texture"
                                 " 'Map To' to 'COL'."
-                                % (mtex.texture.name,ob.name,mesh_mat.name))
+                                % (b_mat_texslot.texture.name,ob.name,mesh_mat.name))
                     else:
                         # nif only support UV-mapped textures
                         raise NifExportError(
@@ -2343,7 +2385,7 @@ class NifExport(NifCommon):
                     trishape.add_property(self.export_bs_shader_property(
                         basemtex = mesh_base_mtex,
                         glowmtex = mesh_glow_mtex,
-                        bumpmtex = mesh_bump_mtex))
+                        normalmtex = mesh_normal_mtex))
                         #glossmtex = mesh_gloss_mtex,
                         #darkmtex = mesh_dark_mtex,
                         #detailmtex = mesh_detail_mtex)) 
@@ -2361,6 +2403,7 @@ class NifExport(NifCommon):
                         basemtex=mesh_base_mtex,
                         glowmtex=mesh_glow_mtex,
                         bumpmtex=mesh_bump_mtex,
+                        normalmtex=mesh_normal_mtex,
                         glossmtex=mesh_gloss_mtex,
                         darkmtex=mesh_dark_mtex,
                         detailmtex=mesh_detail_mtex,
@@ -2404,9 +2447,9 @@ class NifExport(NifCommon):
                 # add NiTriShape's material property
                 trimatprop = self.export_material_property(
                     name=self.get_full_name(mesh_mat.name),
-                    flags=0x0001, # ? standard
+                    flags=0x0001, # TODO - standard flag, check?
                     ambient=mesh_mat_ambient_color,
-                    diffuse=mesh_mat.diffuse_color,
+                    diffuse=mesh_mat_diffuse_color,
                     specular=mesh_mat_specular_color,
                     emissive=mesh_mat_emissive_color,
                     glossiness=mesh_mat_glossiness,
@@ -4245,23 +4288,23 @@ class NifExport(NifCommon):
         # the new one
         return self.register_block(matprop)
 
-    def export_tex_desc(self, texdesc=None, uvlayers=None, mtex=None):
+    def export_tex_desc(self, texdesc=None, uvlayers=None, b_mat_texslot=None):
         """Helper function for export_texturing_property to export each texture
         slot."""
         try:
-            texdesc.uv_set = uvlayers.index(mtex.uv_layer) if mtex.uv_layer else 0
+            texdesc.uv_set = uvlayers.index(b_mat_texslot.uv_layer) if b_mat_texslot.uv_layer else 0
         except ValueError: # mtex.uv_layer not in uvlayers list
             self.warning(
                 "Bad uv layer name '%s' in texture '%s'."
                 " Falling back on first uv layer"
-                % (mtex.uv_layer, mtex.texture.name))
+                % (b_mat_texslot.uv_layer, b_mat_texslot.texture.name))
             texdesc.uv_set = 0 # assume 0 is active layer
 
-        texdesc.source = self.export_source_texture(mtex.texture)
+        texdesc.source = self.export_source_texture(b_mat_texslot.texture)
 
     def export_texturing_property(
         self, flags=0x0001, applymode=None, uvlayers=None,
-        basemtex=None, glowmtex=None, bumpmtex=None, glossmtex=None,
+        basemtex=None, glowmtex=None, bumpmtex=None, normalmtex=None, glossmtex=None,
         darkmtex=None, detailmtex=None, refmtex=None):
         """Export texturing property. The parameters basemtex,
         glowmtex, bumpmtex, ... are the Blender material textures
@@ -4315,7 +4358,7 @@ class NifExport(NifCommon):
             texprop.has_base_texture = True
             self.export_tex_desc(texdesc = texprop.base_texture,
                                  uvlayers = uvlayers,
-                                 mtex = basemtex)
+                                 b_mat_texslot = basemtex)
             # check for texture flip definition
             try:
                 fliptxt = Blender.Text.Get(basemtex.texture.name)
@@ -4329,32 +4372,33 @@ class NifExport(NifCommon):
             texprop.has_glow_texture = True
             self.export_tex_desc(texdesc = texprop.glow_texture,
                                  uvlayers = uvlayers,
-                                 mtex = glowmtex)
+                                 b_mat_texslot = glowmtex)
 
         if bumpmtex:
             if self.properties.game not in self.USED_EXTRA_SHADER_TEXTURES:
                 texprop.has_bump_map_texture = True
                 self.export_tex_desc(texdesc = texprop.bump_map_texture,
                                      uvlayers = uvlayers,
-                                     mtex = bumpmtex)
+                                     b_mat_texslot = bumpmtex)
                 texprop.bump_map_luma_scale = 1.0
                 texprop.bump_map_luma_offset = 0.0
                 texprop.bump_map_matrix.m_11 = 1.0
                 texprop.bump_map_matrix.m_12 = 0.0
                 texprop.bump_map_matrix.m_21 = 0.0
                 texprop.bump_map_matrix.m_22 = 1.0
-            else:
+                
+        if normalmtex:
                 shadertexdesc = texprop.shader_textures[1]
                 shadertexdesc.is_used = True
                 shadertexdesc.texture_data.source = \
-                    self.export_source_texture(texture=bumpmtex.texture)
+                    self.export_source_texture(texture=normalmtex.texture)
 
         if glossmtex:
             if self.properties.game not in self.USED_EXTRA_SHADER_TEXTURES:
                 texprop.has_gloss_texture = True
                 self.export_tex_desc(texdesc = texprop.gloss_texture,
                                      uvlayers = uvlayers,
-                                     mtex = glossmtex)
+                                     b_mat_texslot = glossmtex)
             else:
                 shadertexdesc = texprop.shader_textures[2]
                 shadertexdesc.is_used = True
@@ -4365,13 +4409,13 @@ class NifExport(NifCommon):
             texprop.has_dark_texture = True
             self.export_tex_desc(texdesc = texprop.dark_texture,
                                  uvlayers = uvlayers,
-                                 mtex = darkmtex)
+                                 b_mat_texslot = darkmtex)
 
         if detailmtex:
             texprop.has_detail_texture = True
             self.export_tex_desc(texdesc = texprop.detail_texture,
                                  uvlayers = uvlayers,
-                                 mtex = detailmtex)
+                                 b_mat_texslot = detailmtex)
 
         if refmtex:
             if self.properties.game not in self.USED_EXTRA_SHADER_TEXTURES:
@@ -4398,7 +4442,7 @@ class NifExport(NifCommon):
         return self.register_block(texprop)
 
     def export_bs_shader_property(
-        self, basemtex=None, bumpmtex=None, glowmtex=None):
+        self, basemtex=None, normalmtex=None, glowmtex=None):
         """Export a Bethesda shader property block."""
 
         # create new block
@@ -4416,8 +4460,8 @@ class NifExport(NifCommon):
         bsshader.texture_set = texset
         if basemtex:
             texset.textures[0] = self.export_texture_filename(basemtex.texture)
-        if bumpmtex:
-            texset.textures[1] = self.export_texture_filename(bumpmtex.texture)
+        if normalmtex:
+            texset.textures[1] = self.export_texture_filename(normalmtex.texture)
         if glowmtex:
             texset.textures[2] = self.export_texture_filename(glowmtex.texture)
 
@@ -4431,7 +4475,7 @@ class NifExport(NifCommon):
         # no duplicate found, so use and register new one
         return self.register_block(bsshader)
 
-    def export_texture_effect(self, mtex = None):
+    def export_texture_effect(self, b_mat_texslot = None):
         """Export a texture effect block from material texture mtex (MTex, not
         Texture)."""
         texeff = NifFormat.NiTextureEffect()
@@ -4443,8 +4487,8 @@ class NifExport(NifCommon):
         texeff.texture_clamping  = NifFormat.TexClampMode.WRAP_S_WRAP_T
         texeff.texture_type = NifFormat.EffectType.EFFECT_ENVIRONMENT_MAP
         texeff.coordinate_generation_type = NifFormat.CoordGenType.CG_SPHERE_MAP
-        if mtex:
-            texeff.source_texture = self.export_source_texture(mtex.texture)
+        if b_mat_texslot:
+            texeff.source_texture = self.export_source_texture(b_mat_texslot.texture)
             if self.properties.game == 'MORROWIND':
                 texeff.num_affected_node_list_pointers += 1
                 texeff.affected_node_list_pointers.update_size()

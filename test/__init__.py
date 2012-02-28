@@ -79,7 +79,7 @@ class SingleNif(Base):
         """Create and return blender object for feature."""
         raise NotImplementedError
 
-    def b_check_object(self, b_obj):
+    def b_check_data(self, b_obj):
         """Check blender object against feature."""
         raise NotImplementedError
 
@@ -118,19 +118,21 @@ class SingleNif(Base):
         self.n_check(self.n_filepath_0)
         self.n_import(self.n_filepath_0)
         b_obj = bpy.data.objects[self.b_name]
-        self.b_check_object(b_obj)
+        self.b_check_data(b_obj)
         b_obj.select = True
         self.n_export(self.n_filepath_1)
         self.n_check(self.n_filepath_1)
+        self.b_clear()
 
     def test_export_import(self):
         """Test export followed by import."""
         b_obj = self.b_create_object()
-        self.b_check_object(b_obj)
+        self.b_check_data(b_obj)
         b_obj.select = True
         self.n_export(self.n_filepath_2)
         self.n_check(self.n_filepath_2)
         self.b_clear()
         self.n_import(self.n_filepath_2)
         b_obj = bpy.data.objects[self.b_name]
-        self.b_check_object(b_obj)
+        self.b_check_data(b_obj)
+        self.b_clear()

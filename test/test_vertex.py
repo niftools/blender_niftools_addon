@@ -75,7 +75,8 @@ class TestBaseVertexColor(TestBaseGeom):
         
         return b_obj
         
-    def b_check_object(self, b_obj):    
+    def b_check_object(self, b_obj):
+        TestBaseGeom.b_check_object(self, b_obj)
         b_mesh = b_obj.data
         nose.tools.assert_equal(len(b_mesh.vertex_colors), 1)
         nose.tools.assert_equal(b_mesh.vertex_colors[0].name, 'VertexColor')
@@ -91,6 +92,7 @@ class TestBaseVertexColor(TestBaseGeom):
             nose.tools.assert_equal(b_color.b == self.vertcol[f_index][2], True)
     
     def n_check_data(self, n_data):
+        TestBaseGeom.n_check_data(self, n_data)
         n_geom = n_data.roots[0].children[0]
         nose.tools.assert_equal(n_geom.data.has_vertex_colors, True)
         nose.tools.assert_equal(len(n_geom.data.vertex_colors), 8)
