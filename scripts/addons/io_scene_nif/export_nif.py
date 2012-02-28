@@ -1849,6 +1849,7 @@ class NifExport(NifCommon):
             mesh_ref_mtex = None
             mesh_uvlayers = []    # uv layers used by this material
             mesh_hasalpha = False # mesh has transparency
+            mesh_texture_alpha = False #texture has transparency
             mesh_haswire = False  # mesh rendered as wireframe
             mesh_hasspec = False  # mesh has specular properties
              
@@ -1880,7 +1881,7 @@ class NifExport(NifCommon):
                 mesh_mat_emitmulti = 1.0 # default
                 if self.properties.game != 'FALLOUT_3':
                     '''
-                    TODO_3.0 - Emit UI colors, if diffuse should not be defaulted
+                    TODO_3.0 - UI colors, niftools.emitif diffuse should not be defaulted
                     set update_func to diffuse?
                     mesh_mat_emissive_color = mesh_mat.niftools.emit_color * mesh_mat.emit
                     '''
@@ -1899,13 +1900,12 @@ class NifExport(NifCommon):
                         mesh_mat_emitmulti = mesh_mat.emit * 10.0
                 
                 #specular mat
-                mesh_mat_specular_color = list(mesh_mat.specular_color)
+                mesh_mat_specular_color = mesh_mat.specular_color
+                if mesh_mat.specular_intensity > 1.0:
+                    mesh_mat.specular_intensity = 1.0
                 mesh_mat_specular_color[0] *= mesh_mat.specular_intensity
                 mesh_mat_specular_color[1] *= mesh_mat.specular_intensity
                 mesh_mat_specular_color[2] *= mesh_mat.specular_intensity
-                if mesh_mat_specular_color[0] > 1.0: mesh_mat_specular_color[0] = 1.0
-                if mesh_mat_specular_color[1] > 1.0: mesh_mat_specular_color[1] = 1.0
-                if mesh_mat_specular_color[2] > 1.0: mesh_mat_specular_color[2] = 1.0
                 if ( mesh_mat_specular_color[0] > self.properties.epsilon ) \
                     or ( mesh_mat_specular_color[1] > self.properties.epsilon ) \
                     or ( mesh_mat_specular_color[2] > self.properties.epsilon ):
@@ -1916,11 +1916,14 @@ class NifExport(NifCommon):
                 mesh_mat_glossiness = mesh_mat.specular_hardness / 4.0  
                                 
                 #alpha mat
-                mesh_mat_transparency = mesh_mat.alpha                
-                mesh_hasalpha = (abs(mesh_mat_transparency - 1.0) > self.properties.epsilon) \
-                                or (mesh_mat.animation_data 
-                                    and mesh_mat.animation_data.action.fcurves['Alpha']) \
-                                or (mesh_hasvcola)
+                mesh_hasalpha = False
+                if(mesh_mat.use_transparency):
+                    if(abs(mesh_mat.alpha - 1.0)> self.properties.epsilon):
+                        mesh_hasalpha = True
+                elif(mesh_hasvcola):
+                    mesh_hasalpha = True
+                elif(mesh_mat.animation_data and mesh_mat.animation_data.action.fcurves['Alpha']):
+                    mesh_hasalpha = True
                 
                 #wire mat
                 mesh_haswire = (mesh_mat.type == 'WIRE')
@@ -2009,28 +2012,38 @@ class NifExport(NifCommon):
                                     " Make sure there is only one texture"
                                     " with MapTo.NOR"
                                     %(mesh.name,mesh_mat.name))
+                            # check if alpha channel is enabled for this texture
+                            if(b_mat_texslot.use_map_alpha):
+                                mesh_hasalpha = True
                             mesh_bump_mtex = b_mat_texslot
-                        
+                            
                         #darken
                         elif b_mat_texslot.use_map_color_diffuse and \
                              b_mat_texslot.blend_type == 'DARKEN' and \
                              not mesh_dark_mtex:
+                            # check if alpha channel is enabled for this texture
+                            if(b_mat_texslot.use_map_alpha):
+                                mesh_hasalpha = True
+                                
                             # got the dark map
                             mesh_dark_mtex = b_mat_texslot
                         
                         #diffuse
                         elif b_mat_texslot.use_map_color_diffuse and \
                              not mesh_base_mtex:
-                            # anything else that maps to COL is considered
-                            # as base texture
+
                             mesh_base_mtex = b_mat_texslot
+                            
                             # check if alpha channel is enabled for this texture
-                            if mesh_base_mtex.texture.use_alpha and b_mat_texslot.use_map_alpha:
+                            if(b_mat_texslot.use_map_alpha):
+                                mesh_hasalpha = True 
+                                
                                 # in this case, Blender replaces the texture transparant parts with the underlying material color...
                                 # in NIF, material alpha is multiplied with texture alpha channel...
                                 # how can we emulate the NIF alpha system (simply multiplying material alpha with texture alpha) when MapTo.ALPHA is turned on?
                                 # require the Blender material alpha to be 0.0 (no material color can show up), and use the "Var" slider in the texture blending mode tab!
                                 # but...
+                                '''
                                 if mesh_mat_transparency > self.properties.epsilon:
                                     raise NifExportError(
                                         "Cannot export this type of"
@@ -2049,8 +2062,10 @@ class NifExport(NifCommon):
                                         " or turn off MapTo.ALPHA,"
                                         " and try again."
                                         %mesh_mat.name)
+                                
                                 mesh_mat_transparency = b_mat_texslot.varfac # we must use the "Var" value
-                                mesh_hasalpha = True
+                                '''
+                                
                         
                         #normal map
                         elif b_mat_texslot.use_map_normal and b_mat_texslot.texture.use_normal_map:
@@ -2061,13 +2076,19 @@ class NifExport(NifCommon):
                                     " Make sure there is only one texture"
                                     " with MapTo.NOR"
                                     %(mesh.name,mesh_mat.name))
+                            # check if alpha channel is enabled for this texture
+                            if(b_mat_texslot.use_map_alpha):
+                                mesh_hasalpha = True
                             mesh_normal_mtex = b_mat_texslot
                         
                         #detail
                         elif b_mat_texslot.use_map_color_diffuse and \
                              not mesh_detail_mtex:
-                            # extra COL channel is considered
-                            # as detail texture
+                            # extra diffuse consider as detail texture
+                            
+                            # check if alpha channel is enabled for this texture
+                            if(b_mat_texslot.use_map_alpha):
+                                mesh_hasalpha = True
                             mesh_detail_mtex = b_mat_texslot
                         
                         #reflection
@@ -2080,9 +2101,13 @@ class NifExport(NifCommon):
                                     " Make sure there is only one texture"
                                     " with MapTo.REF"
                                     %(mesh.name,mesh_mat.name))
+                            # check if alpha channel is enabled for this texture
+                            if(b_mat_texslot.use_map_alpha):
+                                mesh_hasalpha = True
                             mesh_ref_mtex = b_mat_texslot
+                            
+                        # unknown map
                         else:
-                            # unknown map
                             raise NifExportError(
                                 "Do not know how to export texture '%s',"
                                 " in mesh '%s', material '%s'."
@@ -2092,8 +2117,9 @@ class NifExport(NifCommon):
                                 " Material Buttons, and set texture"
                                 " 'Map To' to 'COL'."
                                 % (b_mat_texslot.texture.name,ob.name,mesh_mat.name))
-                    else:
-                        # nif only support UV-mapped textures
+                    
+                    # nif only support UV-mapped textures
+                    else:  
                         raise NifExportError(
                             "Non-UV texture in mesh '%s', material '%s'."
                             " Either delete all non-UV textures,"
@@ -2251,8 +2277,8 @@ class NifExport(NifCommon):
                         # add the vertex
                         vertlist.append(vertquad[0])
                         if mesh_hasnormals: normlist.append(vertquad[2])
-                        if mesh_hasvcol: vcollist.append(vertquad[3])
-                        if mesh_uvlayers: uvlist.append(vertquad[1])
+                        if mesh_hasvcol:    vcollist.append(vertquad[3])
+                        if mesh_uvlayers:   uvlist.append(vertquad[1])
                 # now add the (hopefully, convex) face, in triangles
                 for i in range(f_numverts - 2):
                     if True: #TODO: #(ob_scale > 0):
@@ -2279,8 +2305,8 @@ class NifExport(NifCommon):
             if faces_without_bodypart:
                 Blender.Window.EditMode(0)
                 # select mesh object
-                for bobj in self.context.scene.objects:
-                    bobj.sel = False
+                for b_obj in self.context.scene.objects:
+                    b_obj.sel = False
                 self.context.scene.objects.active = ob
                 ob.sel = 1
                 # select bad faces

@@ -1449,7 +1449,7 @@ class NifImport(NifCommon):
         # use the material property for the name, other properties usually have
         # no name
         name = self.import_name(matProperty)
-        material = bpy.data.materials.new(name)
+        b_mat = bpy.data.materials.new(name)
         # get apply mode, and convert to blender "blending mode"
         blend_type = 'MIX' # default
         if textProperty:
@@ -1459,77 +1459,6 @@ class NifImport(NifCommon):
             # default blending mode for fallout 3
             blend_type = 'MIX'
         # Sets the colors
-        # Specular color
-        spec = matProperty.specular_color
-        material.specular_color = (spec.r, spec.g, spec.b)
-        # Blender multiplies specular color with this value
-        material.specular_intensity = 1.0
-        # Diffuse color
-        diff = matProperty.diffuse_color
-        emit = matProperty.emissive_color
-        # fallout 3 hack: convert diffuse black to emit if emit is not black
-        if diff.r < self.properties.epsilon and diff.g < self.properties.epsilon and diff.b < self.properties.epsilon:
-            if (emit.r + emit.g + emit.b) < self.properties.epsilon:
-                # emit is black... set diffuse color to white
-                diff.r = 1.0
-                diff.g = 1.0
-                diff.b = 1.0
-            else:
-                diff.r = emit.r
-                diff.g = emit.g
-                diff.b = emit.b
-        material.diffuse_color = (diff.r, diff.g, diff.b)
-        material.diffuse_intensity = 1.0
-        # Ambient & emissive color
-        # We assume that ambient & emissive are fractions of the diffuse color.
-        # If it is not an exact fraction, we average out.
-        amb = matProperty.ambient_color
-        # fallout 3 hack:convert ambient black to white and set emit
-        if amb.r < self.properties.epsilon and amb.g < self.properties.epsilon and amb.b < self.properties.epsilon:
-            amb.r = 1.0
-            amb.g = 1.0
-            amb.b = 1.0
-            b_amb = 1.0
-            if (emit.r + emit.g + emit.b) < self.properties.epsilon:
-                b_emit = 0.0
-            else:
-                b_emit = matProperty.emit_multi / 10.0
-        else:
-            b_amb = 0.0
-            b_emit = 0.0
-            b_n = 0
-            if diff.r > self.properties.epsilon:
-                b_amb += amb.r/diff.r
-                b_emit += emit.r/diff.r
-                b_n += 1
-            if diff.g > self.properties.epsilon:
-                b_amb += amb.g/diff.g
-                b_emit += emit.g/diff.g
-                b_n += 1
-            if diff.b > self.properties.epsilon:
-                b_amb += amb.b/diff.b
-                b_emit += emit.b/diff.b
-                b_n += 1
-            if b_n > 0:
-                b_amb /= b_n
-                b_emit /= b_n
-        if b_amb > 1.0:
-            b_amb = 1.0
-        if b_emit > 1.0:
-            b_emit = 1.0
-        material.ambient = b_amb
-        material.emit = b_emit
-        
-        # glossiness
-        glossiness = matProperty.glossiness
-        hardness = int(glossiness * 4) # just guessing really
-        if hardness < 1: hardness = 1
-        if hardness > 511: hardness = 511
-        material.specular_hardness = hardness
-        
-        # Alpha
-        alpha = matProperty.alpha
-        material.alpha = alpha
         
         # textures
         base_texture = None
@@ -1620,6 +1549,10 @@ class NifImport(NifCommon):
                     #Influence
                     b_mat_texslot.use_map_color_diffuse = True
                     b_mat_texslot.blend_type = blend_type
+                    
+                    #update: needed later
+                    base_texture = b_mat_texslot
+                    
             if bumpTexDesc:
                 bump_texture = self.import_texture(bumpTexDesc.source)
                 if bump_texture:
@@ -1637,6 +1570,9 @@ class NifImport(NifCommon):
                     b_mat_texslot.use_map_normal = True
                     b_mat_texslot.blend_type = blend_type
                     
+                    #update: needed later
+                    bump_texture = b_mat_texslot
+                    
             if glowTexDesc:
                 glow_texture = self.import_texture(glowTexDesc.source)
                 if glow_texture:
@@ -1650,10 +1586,12 @@ class NifImport(NifCommon):
                     #Mapping
                     b_mat_texslot.texture_coords = 'UV'
                     b_mat_texslot.uv_layer = self.get_uv_layer_name(glowTexDesc.uv_set)
-                    
                     #Influence
                     b_mat_texslot.use_map_emit = True
                     b_mat_texslot.blend_type = blend_type
+                    
+                    #update: needed later
+                    glow_texture = b_mat_texslot
                     
             if glossTexDesc:
                 gloss_texture = self.import_texture(glossTexDesc.source)
@@ -1666,6 +1604,7 @@ class NifImport(NifCommon):
                     material.setTexture(4, gloss_texture, texco, mapto)
                     mgloss_texture = material.getTextures()[4]
                     mgloss_texture.uv_layer = self.get_uv_layer_name(glossTexDesc.uv_set)
+            
             if darkTexDesc:
                 dark_texture = self.import_texture(darkTexDesc.source)
                 if dark_texture:
@@ -1679,6 +1618,7 @@ class NifImport(NifCommon):
                     mdark_texture.uv_layer = self.get_uv_layer_name(darkTexDesc.uv_set)
                     # set blend mode to "DARKEN"
                     mdark_texture.blend_type = 'DARKEN'
+            
             if detailTexDesc:
                 detail_texture = self.import_texture(detailTexDesc.source)
                 if detail_texture:
@@ -1691,6 +1631,7 @@ class NifImport(NifCommon):
                     material.setTexture(6, detail_texture, texco, mapto)
                     mdetail_texture = material.getTextures()[6]
                     mdetail_texture.uv_layer = self.get_uv_layer_name(detailTexDesc.uv_set)
+            
             if refTexDesc:
                 refTexture = self.import_texture(refTexDesc.source)
                 if refTexture:
@@ -1702,6 +1643,7 @@ class NifImport(NifCommon):
                     material.setTexture(7, refTexture, texco, mapto)
                     mrefTexture = material.getTextures()[7]
                     mrefTexture.uv_layer = self.get_uv_layer_name(refTexDesc.uv_set)
+        
         # if not a texture property, but a bethesda shader property...
         elif bsShaderProperty:
             # also contains textures, used in fallout 3
@@ -1757,43 +1699,105 @@ class NifImport(NifCommon):
                 material.setTexture(3, envmapTexture, texco, mapto)
                 menvmapTexture = material.getTextures()[3]
                 menvmapTexture.blend_type = 'ADD'
-        # check transparency
-        if alphaProperty:
-            material.mode |= Blender.Material.Modes.ZTRANSP # enable z-buffered transparency
-            # if the image has an alpha channel => then this overrides the material alpha value
-            if base_texture:
-                # old method:
-                #if base_texture.image.depth == 32 or base_texture.image.size == [1,1]: # check for alpha channel in texture; if it's a stub then assume alpha channel
-                # new method: let's just assume there is alpha
-                if True:
-                    base_texture.use_alpha = True # use the alpha channel
-                    mbase_texture.use_map_alpha = True # and map the alpha channel to transparency
-                    # for proper display in Blender, we must set the alpha value
-                    # to 0 and the "Var" slider in the texture Map To tab to the
-                    # NIF material alpha value
-                    material.alpha = 0.0
-                    mbase_texture.varfac = alpha
-            # non-transparent glow textures have their alpha calculated from RGB
-            # not sure what to do with glow textures that have an alpha channel
-            # for now we ignore those alpha channels
+        
+        # Diffuse color
+        diff = matProperty.diffuse_color
+        emit = matProperty.emissive_color
+        
+        # fallout 3 hack: convert diffuse black to emit if emit is not black
+        if diff.r < self.properties.epsilon and diff.g < self.properties.epsilon and diff.b < self.properties.epsilon:
+            if (emit.r + emit.g + emit.b) < self.properties.epsilon:
+                # emit is black... set diffuse color to white
+                diff.r = 1.0
+                diff.g = 1.0
+                diff.b = 1.0
+            else:
+                diff.r = emit.r
+                diff.g = emit.g
+                diff.b = emit.b
+        b_mat.diffuse_color = (diff.r, diff.g, diff.b)
+        b_mat.diffuse_intensity = 1.0
+        
+        # Ambient & emissive color
+        # We assume that ambient & emissive are fractions of the diffuse color.
+        # If it is not an exact fraction, we average out.
+        amb = matProperty.ambient_color
+        # fallout 3 hack:convert ambient black to white and set emit
+        if amb.r < self.properties.epsilon and amb.g < self.properties.epsilon and amb.b < self.properties.epsilon:
+            amb.r = 1.0
+            amb.g = 1.0
+            amb.b = 1.0
+            b_amb = 1.0
+            if (emit.r + emit.g + emit.b) < self.properties.epsilon:
+                b_emit = 0.0
+            else:
+                b_emit = matProperty.emit_multi / 10.0
         else:
-            # no alpha property: force alpha 1.0 in Blender
-            material.alpha = 1.0
-        # check specularity
-        if (not specProperty) and (self.data.version != 0x14000004):
-            # no specular property: specular color is ignored
-            # (for most games)
-            # we do this by setting specularity zero
-            # however, for Sid Meier's Railroads the specular color is NOT
-            # ignored! hence the exception for version 0x14000004
-            material.specular_intensity = 0.0
+            b_amb = 0.0
+            b_emit = 0.0
+            b_n = 0
+            if diff.r > self.properties.epsilon:
+                b_amb += amb.r/diff.r
+                b_emit += emit.r/diff.r
+                b_n += 1
+            if diff.g > self.properties.epsilon:
+                b_amb += amb.g/diff.g
+                b_emit += emit.g/diff.g
+                b_n += 1
+            if diff.b > self.properties.epsilon:
+                b_amb += amb.b/diff.b
+                b_emit += emit.b/diff.b
+                b_n += 1
+            if b_n > 0:
+                b_amb /= b_n
+                b_emit /= b_n
+        if b_amb > 1.0:
+            b_amb = 1.0
+        if b_emit > 1.0:
+            b_emit = 1.0
+        b_mat.ambient = b_amb
+        b_mat.emit = b_emit
+        
+        # glossiness
+        glossiness = matProperty.glossiness
+        hardness = int(glossiness * 4) # just guessing really
+        if hardness < 1: hardness = 1
+        if hardness > 511: hardness = 511
+        b_mat.specular_hardness = hardness
+        
+        # Alpha
+        if alphaProperty:
+            if(b_mat.alpha != 1.0):
+                b_mat.use_transparency = True 
+                b_mat.alpha = matProperty.alpha
+                b_mat.transparency_method = 'Z_TRANSPARENCY'  # enable z-buffered transparency
+            else:
+                # not material based:
+                b_mat.alpha = 1.0
+            
+
+            #check alpha prop is because we have a texture with alpha
+            ''' TODO - move back to texture domain'''
+            if base_texture:
+                base_texture.use_map_alpha = True
+
+        # Specular color
+        n_spec = matProperty.specular_color
+        b_mat.specular_color = (n_spec.r, n_spec.g, n_spec.b)
+        
+        if(specProperty) or (self.data.version != 0x14000004):
+            # Blender multiplies specular color with this value
+            b_mat.specular_intensity = 1.0
+        else:
+            b_mat.specular_intensity = 0.0
+        
         # check wireframe property
         if wireProperty:
             # enable wireframe rendering
-            material.type = 'WIRE'
+            b_mat.type = 'WIRE'
 
-        self.materials[material_hash] = material
-        return material
+        self.materials[material_hash] = b_mat
+        return b_mat
 
     def import_material_controllers(self, b_material, n_geom):
         """Import material animation data for given geometry."""
