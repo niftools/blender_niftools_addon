@@ -217,8 +217,6 @@ class TestSpecularProperty(TestMaterialProperty):
         nose.tools.assert_is_instance(n_mat_prop, NifFormat.NiSpecularProperty)
         #TODO Check Prop settings
         
-        
-        
 class TestAlphaProperty(TestMaterialProperty):
     n_name = "property/alpha/base_alpha"
     
