@@ -18,7 +18,7 @@ class TestBaseGeom(SingleNif):
         # primitive_cube_add creates a double sided mesh; fix this
         b_obj.data.show_double_sided = False
         
-        bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
+        #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         return b_obj
 
     def b_check_data(self, b_obj):
@@ -55,6 +55,7 @@ class TestBaseUV(TestBaseGeom):
         bpy.ops.uv.cube_project() # named 'UVTex'
         bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
         
+        #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         return b_obj
     
     def b_check_data(self, b_obj):

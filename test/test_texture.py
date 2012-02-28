@@ -1,9 +1,10 @@
 """Export and import textured meshes."""
-'''
+
     #TODO - Set Material Render to GLSL
+    #TODO - alpha, dark, detail, specular.
     #TODO_3.0 - Unify pathing checks per game.
-    TODO - alpha, dark, detail, specular.
-    
+
+'''    
     Notes
     Blender auto-gen 18 slots, need to use create slots?
     Compare exporter for auto-gen data & nif format for additional checks
@@ -39,7 +40,8 @@ class TestBaseTexture(TestMaterialProperty):
         
         #Influence
         b_mat_texslot.use_map_color_diffuse = True
-        bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
+
+        #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         return b_obj
 
     def b_check_object(self, b_obj):
@@ -104,7 +106,8 @@ class TestBumpTexture(TestBaseTexture):
         
         #Influence
         b_mat_texslot.use_map_normal = True
-        bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
+
+        #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         return b_obj
         
     def b_check_object(self, b_obj):
@@ -230,7 +233,8 @@ class TestGlowTexture(TestBaseTexture):
         
         #Influence
         b_mat_texslot.use_map_emit = True
-        bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
+
+        #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         return b_obj
         
     def b_check_object(self, b_obj):
