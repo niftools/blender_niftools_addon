@@ -183,7 +183,7 @@ class TestStencilProperty(TestBaseUV):
         '''
         
 class TestSpecularProperty(TestMaterialProperty):
-    n_name = "property/material/base_specular"
+    n_name = "property/specular/base_specular"
     
     def b_create_object(self):
         b_obj = TestMaterialProperty.b_create_object(self)
@@ -210,7 +210,8 @@ class TestSpecularProperty(TestMaterialProperty):
     def n_check_data(self, n_data):
         n_geom = n_data.roots[0].children[0]    
         nose.tools.assert_equal(n_geom.num_properties, 2)
-        self.n_check_specular_property(n_mat_prop)
+        self.n_check_specular_property(n_geom.properties[0])
+        self.n_check_material_property(n_geom.properties[1])
     
     def n_check_specular_property(self, n_mat_prop):
         nose.tools.assert_is_instance(n_mat_prop, NifFormat.NiSpecularProperty)
@@ -219,7 +220,7 @@ class TestSpecularProperty(TestMaterialProperty):
         
         
 class TestAlphaProperty(TestMaterialProperty):
-    n_name = "property/material/base_alpha"
+    n_name = "property/alpha/base_alpha"
     
     def b_create_object(self):
         b_obj = TestMaterialProperty.b_create_object(self)
@@ -237,13 +238,14 @@ class TestAlphaProperty(TestMaterialProperty):
     
     def b_check_alpha_property(self, b_mat):
          nose.tools.assert_equal(b_mat.use_transparency, True)
-         nose.tools.assert_equal(b_mat.alpha, True)
+         nose.tools.assert_equal(b_mat.alpha, 0.5)
         
     def n_check_data(self, n_data):
         n_geom = n_data.roots[0].children[0]    
         nose.tools.assert_equal(n_geom.num_properties, 2)
-        self.n_check_specular_property(n_geom.properties[1])
+        self.n_check_alpha_property(n_geom.properties[0])
+        self.n_check_material_property(n_geom.properties[1])
         
-    def n_check_specular_property(self, n_mat_prop):
+    def n_check_alpha_property(self, n_mat_prop):
         nose.tools.assert_is_instance(n_mat_prop, NifFormat.NiAlphaProperty)
         #TODO Check Prop Settings
