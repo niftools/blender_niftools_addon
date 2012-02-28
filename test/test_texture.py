@@ -2,7 +2,9 @@
 '''
     #TODO - Set Material Render to GLSL
     #TODO_3.0 - Unify pathing checks per game.
+    TODO - alpha, dark, detail, specular.
     
+    Notes
     Blender auto-gen 18 slots, need to use create slots?
     Compare exporter for auto-gen data & nif format for additional checks
 '''
@@ -13,16 +15,16 @@ import os
 
 import io_scene_nif.export_nif
 from pyffi.formats.nif import NifFormat
-from test.test_material import TestBaseMaterial
+from test.test_property import TestMaterialProperty
 
 #NiTexturingProperty
-class TestBaseTexture(TestBaseMaterial):
+class TestBaseTexture(TestMaterialProperty):
     n_name = "textures/base_texture"
     texture_filepath = 'test' + os.sep + 'nif'+ os.sep + 'textures' + os.sep + 'base_texture.dds'
 
     def b_create_object(self):
         #create material texture slot
-        b_obj = TestBaseMaterial.b_create_object(self)
+        b_obj = TestMaterialProperty.b_create_object(self)
         b_mat = b_obj.data.materials[0]
         b_mat_texslot = b_mat.texture_slots.create(0)
         
@@ -37,9 +39,11 @@ class TestBaseTexture(TestBaseMaterial):
         
         #Influence
         b_mat_texslot.use_map_color_diffuse = True
+        bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         return b_obj
 
     def b_check_object(self, b_obj):
+        TestMaterialProperty.b_check_data(b_obj)
         b_mesh = b_obj.data
         nose.tools.assert_equal(len(b_mesh.materials), 1)
         b_mat = b_mesh.materials[0]
@@ -53,6 +57,7 @@ class TestBaseTexture(TestBaseMaterial):
         nose.tools.assert_equal(b_mat_texslot.use_map_color_diffuse, True)
         
     def n_check_data(self, n_data):
+        TestMaterialProperty.n_check_data(self, n_data)
         n_geom = n_data.roots[0].children[0]
         nose.tools.assert_equal(n_geom.num_properties, 2)
         self.n_check_texturing_property(n_geom.properties[0])
@@ -76,7 +81,7 @@ class TestBaseTexture(TestBaseMaterial):
         #nose.tools.assert_equal(n_source.file_name, self.texture_filepath)
 
 class TestBumpTexture(TestBaseTexture):
-    texture_filepath = 'test' + os.sep + 'nif'+ os.sep + 'textures' + os.sep + 'base_normal.dds'
+    texture_filepath = 'test' + os.sep + 'nif'+ os.sep + 'textures' + os.sep + 'base_bump.dds'
 
     def b_create_object(self):
         #create material texture slot
@@ -99,9 +104,11 @@ class TestBumpTexture(TestBaseTexture):
         
         #Influence
         b_mat_texslot.use_map_normal = True
+        bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         return b_obj
         
     def b_check_object(self, b_obj):
+        TestBaseTexture.b_check_data(self, b_obj)
         b_mesh = b_obj.data
         b_mat = b_mesh.materials[0]
         b_mat_texslot = b_mat.texture_slots[1]
@@ -116,6 +123,7 @@ class TestBumpTexture(TestBaseTexture):
         nose.tools.assert_equal(b_mat_texslot.use_map_normal, True)
 
     def n_check_data(self, n_data):
+        TestBaseTexture.n_check_data(self, n_data)
         n_geom = n_data.roots[0].children[0]
         self.n_check_texturing_property(n_geom.properties[0])
 
@@ -141,69 +149,6 @@ class TestBumpTexture(TestBaseTexture):
         nose.tools.assert_is_instance(n_source, NifFormat.NiSourceTexture)
         nose.tools.assert_equal(n_source.use_external, 1)
         #nose.tools.assert_equal(n_source.file_name, self.texture_filepath)
-        
-        
-class TestGlowTexture(TestBaseTexture):
-    texture_filepath = 'test' + os.sep + 'nif'+ os.sep + 'textures' + os.sep + 'base_glow.dds'
-
-    def b_create_object(self):
-        #create material texture slot
-        b_obj = TestBaseTexture.b_create_object(self)
-        b_mat = b_obj.data.materials[0]         
-        b_mat_texslot = b_mat.texture_slots.create(2)
-
-        #user manually selects Image Type then loads image
-        b_mat_texslot.texture = bpy.data.textures.new(name='GlowTexture', type='IMAGE')
-        b_mat_texslot.texture.image = bpy.data.images.load(self.texture_filepath)
-        b_mat_texslot.use = True
-        
-        #Influence mapping
-        b_mat_texslot.use_map_color_diffuse = False
-        b_mat_texslot.texture.use_alpha = False #If no alpha channel or white causes display error
-        
-        #Mapping
-        b_mat_texslot.texture_coords = 'UV'
-        b_mat_texslot.uv_layer = 'UVMap'
-        
-        #Influence
-        b_mat_texslot.use_map_emit = True
-        
-        return b_obj
-        
-    def b_check_object(self, b_obj):
-        b_mesh = b_obj.data
-        b_mat = b_mesh.materials[0]
-        b_mat_texslot = b_mat.texture_slots[1]
-        
-        nose.tools.assert_is_instance(b_mat_texslot.texture, bpy.types.ImageTexture)
-        #nose.tools.assert_equal(b_mat_texslot.texture.image.filepath, self.texture_filepath)
-        nose.tools.assert_equal(b_mat_texslot.use, True)
-        nose.tools.assert_equal(b_mat_texslot.texture.use_alpha, False)
-        nose.tools.assert_equal(b_mat_texslot.texture_coords, 'UV')
-        nose.tools.assert_equal(b_mat_texslot.use_map_color_diffuse, False)
-        nose.tools.assert_equal(b_mat_texslot.use_map_emit, True)
-        
-    def n_check_data(self, n_data):
-        n_geom = n_data.roots[0].children[0]
-        self.n_check_texturing_property(n_geom.properties[0])
-
-    def n_check_texturing_property(self, n_tex_prop):
-        nose.tools.assert_is_instance(n_tex_prop, NifFormat.NiTexturingProperty)
-        nose.tools.assert_equal(n_tex_prop.has_glow_texture, True)
-        self.n_check_glow_texture(n_tex_prop.glow_texture) 
-
-    def n_check_glow_texture(self, n_texture):
-        nose.tools.assert_equal(n_texture.clamp_mode, 3)
-        nose.tools.assert_equal(n_texture.filter_mode, 2)
-        nose.tools.assert_equal(n_texture.uv_set, 0)
-        nose.tools.assert_equal(n_texture.has_texture_transform, False)
-        self.n_check_base_source_texture(n_texture.source)
-        
-    def n_check_base_source_texture(self, n_source):
-        nose.tools.assert_is_instance(n_source, NifFormat.NiSourceTexture)
-        nose.tools.assert_equal(n_source.use_external, 1)
-        #nose.tools.assert_equal(n_source.file_name, self.texture_filepath)
-        
 
 '''
 Normal map, technically special case....
@@ -259,6 +204,69 @@ class TestNormalTexture(TestBaseTexture):
         nose.tools.assert_is_instance(n_tex_prop, NifFormat.NiTexturingProperty)
         nose.tools.assert_equal(n_tex_prop.has_, True)
         self.n_check_base_texture(n_tex_prop.base_texture) 
-
-    TODO - alpha, glow, normal, dark, detail, specular.
 '''
+
+class TestGlowTexture(TestBaseTexture):
+    texture_filepath = 'test' + os.sep + 'nif'+ os.sep + 'textures' + os.sep + 'base_glow.dds'
+
+    def b_create_object(self):
+        #create material texture slot
+        b_obj = TestBaseTexture.b_create_object(self)
+        b_mat = b_obj.data.materials[0]         
+        b_mat_texslot = b_mat.texture_slots.create(2)
+
+        #user manually selects Image Type then loads image
+        b_mat_texslot.texture = bpy.data.textures.new(name='GlowTexture', type='IMAGE')
+        b_mat_texslot.texture.image = bpy.data.images.load(self.texture_filepath)
+        b_mat_texslot.use = True
+        
+        #Influence mapping
+        b_mat_texslot.use_map_color_diffuse = False
+        b_mat_texslot.texture.use_alpha = False #If no alpha channel or white causes display error
+        
+        #Mapping
+        b_mat_texslot.texture_coords = 'UV'
+        b_mat_texslot.uv_layer = 'UVMap'
+        
+        #Influence
+        b_mat_texslot.use_map_emit = True
+        bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
+        return b_obj
+        
+    def b_check_object(self, b_obj):
+        TestBaseTexture.b_check_data(self, b_obj)
+        b_mesh = b_obj.data
+        b_mat = b_mesh.materials[0]
+        b_mat_texslot = b_mat.texture_slots[2]
+        
+        nose.tools.assert_is_instance(b_mat_texslot.texture, bpy.types.ImageTexture)
+        #nose.tools.assert_equal(b_mat_texslot.texture.image.filepath, self.texture_filepath)
+        nose.tools.assert_equal(b_mat_texslot.use, True)
+        nose.tools.assert_equal(b_mat_texslot.texture.use_alpha, False)
+        nose.tools.assert_equal(b_mat_texslot.texture_coords, 'UV')
+        nose.tools.assert_equal(b_mat_texslot.use_map_color_diffuse, False)
+        nose.tools.assert_equal(b_mat_texslot.use_map_emit, True)
+        
+    def n_check_data(self, n_data):
+        TestBaseTexture.n_check_data(self, n_data)
+        n_geom = n_data.roots[0].children[0]
+        self.n_check_texturing_property(n_geom.properties[0])
+
+    def n_check_texturing_property(self, n_tex_prop):
+        nose.tools.assert_is_instance(n_tex_prop, NifFormat.NiTexturingProperty)
+        nose.tools.assert_equal(n_tex_prop.has_glow_texture, True)
+        self.n_check_glow_texture(n_tex_prop.glow_texture) 
+
+    def n_check_glow_texture(self, n_texture):
+        nose.tools.assert_equal(n_texture.clamp_mode, 3)
+        nose.tools.assert_equal(n_texture.filter_mode, 2)
+        nose.tools.assert_equal(n_texture.uv_set, 0)
+        nose.tools.assert_equal(n_texture.has_texture_transform, False)
+        self.n_check_base_source_texture(n_texture.source)
+        
+    def n_check_base_source_texture(self, n_source):
+        nose.tools.assert_is_instance(n_source, NifFormat.NiSourceTexture)
+        nose.tools.assert_equal(n_source.use_external, 1)
+        #nose.tools.assert_equal(n_source.file_name, self.texture_filepath)     
+
+        

@@ -1517,17 +1517,20 @@ class NifImport(NifCommon):
             b_amb = 1.0
         if b_emit > 1.0:
             b_emit = 1.0
-        material.ambient = (b_amb)
-        material.emit = (b_emit)
+        material.ambient = b_amb
+        material.emit = b_emit
+        
         # glossiness
         glossiness = matProperty.glossiness
         hardness = int(glossiness * 4) # just guessing really
         if hardness < 1: hardness = 1
         if hardness > 511: hardness = 511
         material.specular_hardness = hardness
+        
         # Alpha
         alpha = matProperty.alpha
         material.alpha = alpha
+        
         # textures
         base_texture = None
         glow_texture = None
@@ -1988,6 +1991,10 @@ class NifImport(NifCommon):
 
         # vertex normals
         n_norms = niData.normals
+        
+        '''
+        Properties
+        '''
 
         # Stencil (for double sided meshes)
         stencilProperty = self.find_property(niBlock,
