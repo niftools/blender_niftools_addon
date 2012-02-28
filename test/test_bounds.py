@@ -18,7 +18,8 @@ class TestBound(TestBaseGeom):
         b_obj.name = self.b_name
         b_obj.draw_bounds_type = 'BOX'
         b_obj.draw_type = 'BOUNDS'
-        
+
+        #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         return b_obj
 
     def b_check(self):
@@ -40,7 +41,8 @@ class TestBSBound(TestBaseGeom):
         b_obj.name = self.b_name
         b_obj.draw_bounds_type = 'BOX'
         b_obj.draw_type = 'BOUNDS'
-        
+
+        #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         return b_obj
 
 

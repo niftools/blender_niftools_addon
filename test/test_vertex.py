@@ -70,9 +70,8 @@ class TestBaseVertexColor(TestBaseGeom):
                 b_color.r = self.vertcol[n_vert][0]
                 b_color.g = self.vertcol[n_vert][1]
                 b_color.b = self.vertcol[n_vert][2]
-                
-        #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         
+        #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)        
         return b_obj
         
     def b_check_object(self, b_obj):

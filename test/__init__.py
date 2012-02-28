@@ -39,7 +39,9 @@ def teardown():
 
 class Base:
     """Base class for all tests."""
-
+    #Debug Settings
+    gen_blender_scene = False
+    
     def b_clear(self):
         #unlinking objects will throw error otherwise 
         if not (bpy.context.mode == 'OBJECT'):
