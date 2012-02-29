@@ -23,16 +23,23 @@ class TestBaseGeom(SingleNif):
 
     def b_check_data(self, b_obj):
         b_mesh = b_obj.data
-        nose.tools.assert_equal(len(b_mesh.vertices), 8)
+        
+        
+    def b_check_geom(self, b_obj):
         num_triangles = len(
             [face for face in b_mesh.faces if len(face.vertices) == 3])
         num_triangles += 2 * len(
             [face for face in b_mesh.faces if len(face.vertices) == 4])
+        nose.tools.assert_equal(len(b_mesh.vertices), 8)
+        
         nose.tools.assert_equal(num_triangles, 12)
 
     def n_check_data(self, n_data):
         n_geom = n_data.roots[0].children[0]
         nose.tools.assert_is_instance(n_geom, NifFormat.NiTriShape)
+    
+    def n_check_geom_data(self, n_geom):
+        
         nose.tools.assert_equal(n_geom.data.num_vertices, 8)
         nose.tools.assert_equal(n_geom.data.num_triangles, 12)
         
