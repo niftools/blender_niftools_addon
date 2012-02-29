@@ -44,10 +44,9 @@ class TestBaseTexture(TestMaterialProperty):
         #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         return b_obj
 
-    def b_check_object(self, b_obj):
-        TestMaterialProperty.b_check_data(b_obj)
+    def b_check_data(self, b_obj):
+        TestMaterialProperty.b_check_data(self, b_obj)
         b_mesh = b_obj.data
-        nose.tools.assert_equal(len(b_mesh.materials), 1)
         b_mat = b_mesh.materials[0]
         
         nose.tools.assert_equal(b_mat.texture_slots[0] != None, True) 
@@ -110,7 +109,7 @@ class TestBumpTexture(TestBaseTexture):
         #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         return b_obj
         
-    def b_check_object(self, b_obj):
+    def b_check_data(self, b_obj):
         TestBaseTexture.b_check_data(self, b_obj)
         b_mesh = b_obj.data
         b_mat = b_mesh.materials[0]
@@ -188,7 +187,7 @@ class TestNormalTexture(TestBaseTexture):
         b_mat_texslot.use_map_normal = True
         
         
-    def b_check_object(self, b_obj):
+    def b_check_data(self, b_obj):
         b_mesh = b_obj.data
         nose.tools.assert_equal(len(b_mesh.materials), 1)
         b_mat = b_mesh.materials[0]
@@ -237,7 +236,7 @@ class TestGlowTexture(TestBaseTexture):
         #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         return b_obj
         
-    def b_check_object(self, b_obj):
+    def b_check_data(self, b_obj):
         TestBaseTexture.b_check_data(self, b_obj)
         b_mesh = b_obj.data
         b_mat = b_mesh.materials[0]

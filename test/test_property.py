@@ -1,13 +1,9 @@
 """Export and import textured meshes."""
-"""
-    TODO - alpha, stencil, etc.
-    TODO_material - Find if there are nifs which non-default ambient, diffuse;
-        create nitools.prop.color, alter tests as needed.
-    TODO_3.0 - Create per material values: niftools.ambient, niftools.emissive.
-    
-    
-    
-"""
+
+#    Add Emissive Color to UI - Immediate Attention!
+
+#    TODO_material - Find any nifs with non-default ambient, diffuse;
+#    TODO_3.0 - Create per material values: niftools.ambient, niftools.emissive.  
 
 import bpy
 import nose.tools
@@ -37,8 +33,11 @@ class TestMaterialProperty(TestBaseUV):
     def b_check_object(self, b_obj):
         TestBaseUV.b_check_data(self, b_obj)
         b_mesh = b_obj.data
-        nose.tools.assert_equal(len(b_mesh.materials), 1)
         b_mat = b_mesh.materials[0]
+        nose.tools.assert_equal(len(b_mesh.materials), 1)
+        
+    def b_check_material_property(self, b_mat):
+               
         nose.tools.assert_equal(b_mat.ambient, 1.0)
         
     def n_check_data(self, n_data):
@@ -59,7 +58,7 @@ class TestMaterialProperty(TestBaseUV):
 
     def n_check_material_property(self, n_mat_prop):
         nose.tools.assert_is_instance(n_mat_prop, NifFormat.NiMaterialProperty)
-        #TODO - Refer to header - can be ignored for now, no use found.                  
+        #TODO - Refer to header - can be ignored for now, defaults.                  
         nose.tools.assert_equal((n_mat_prop.ambient_color.r,
                                  n_mat_prop.ambient_color.g,
                                  n_mat_prop.ambient_color.b), (1.0,1.0,1.0))
@@ -67,44 +66,6 @@ class TestMaterialProperty(TestBaseUV):
         nose.tools.assert_equal((n_mat_prop.diffuse_color.r,
                                  n_mat_prop.diffuse_color.g,
                                  n_mat_prop.diffuse_color.b), (1.0,1.0,1.0))
-
-
-class TestEmissiveMaterial(TestMaterialProperty):
-    n_name = "property/material/base_emissive"
-    
-    def b_create_object(self):
-        b_obj = TestMaterialProperty.b_create_object(self)
-        b_mat = b_obj.data.materials[0]
-        #TODO: Skyrim refactor
-        #b_mat.niftools.emissive_color = (1.0,1.0,1.0)
-        #map b_mat.material.emit update_func() -> b_mat.niftools.emissive_factor 
-        #b_mat.niftools.emissive_factor = 1.0 
-        b_mat.emit = 1.0
-        
-        #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
-        return b_obj
-        
-    def b_check_object(self, b_obj):
-        TestMaterialProperty.b_check_data(self, b_obj)
-        b_mesh = b_obj.data
-        b_mat = b_mesh.materials[0]
-        b_check_emmision_values(b_mat)
-        
-    def b_check_emmision_values(self, b_mat):
-        nose.tools.assert_equal(b_mat.emit, 1.0)
-        #TODO_3.0
-        #nose.tools.assert-equal(b_mat.niftools.emissive_factor, b_mat.emit)
-        
-    def n_check_data(self, n_data):
-        TestMaterialProperty.n_check_data(self, n_data)
-        n_geom = n_data.roots[0].children[0]
-        self.n_check_material_emissive_property(n_geom.properties[0])
-
-    def n_check_material_emissive_property(self, n_mat_prop):
-        #TODO - Refer to header
-        nose.tools.assert_equal((n_mat_prop.emissive_color.r,
-                                 n_mat_prop.emissive_color.g,
-                                 n_mat_prop.emissive_color.b), (1.0,1.0,1.0))
 
 '''
 class TestAmbientMaterial(TestBaseMaterial):
@@ -118,9 +79,12 @@ class TestAmbientMaterial(TestBaseMaterial):
         b_mat.niftools.ambient_color = (0.0,1.0,0.0)#TODO_3.0 - update func-> World ambient
         return b_obj
         
-    def b_check_object(self, b_obj):
+    def b_check_data(self, b_obj):
         b_mesh = b_obj.data
         b_mat = b_mesh.materials[0]
+        self.b_check_ambient_property(b_mat)
+        
+    def b_check_ambient_property(self, b_mat)
         nose.tools.assert_equal(b_mat.niftools.ambient_color, (0.0,1.0,0.0))
         
     def n_check_data(self, n_data):
@@ -142,10 +106,14 @@ class TestDiffuseMaterial(TestBaseMaterial):
         b_mat.niftools.diffuse_color = (0.0,1.0,0.0)#TODO_3.0 - update func-> World ambient 
         return b_obj
         
-    def b_check_object(self, b_obj):
+    def b_check_data(self, b_obj):
         b_mesh = b_obj.data
         b_mat = b_mesh.materials[0]
+        self.b_check_diffuse_property(b_mat)
+        
+    def b_check_diffuse_property(self, b_mat)
         nose.tools.assert_equal(b_mat.niftools.diffuse_color, (0.0,1.0,0.0))
+        nose.tools.assert_equal(b_mat.diffuse_intensity, 1.0)
         
     def n_check_data(self, n_data):
         n_geom = n_data.roots[0].children[0]
@@ -156,6 +124,72 @@ class TestDiffuseMaterial(TestBaseMaterial):
         nose.tools.assert_equal(n_mat_prop.diffuse_color, (0.0,1.0,0.0))
 '''
 
+class TestEmissiveMaterial(TestMaterialProperty):
+    n_name = "property/material/base_material"
+    
+    def b_create_object(self):
+        b_obj = TestMaterialProperty.b_create_object(self)
+        b_mat = b_obj.data.materials[0]
+        #TODO - Add emissive color
+        #b_mat.niftools.emissive_color = (1.0,1.0,1.0)
+        b_mat.emit = 1.0
+        
+        #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
+        return b_obj
+        
+    def b_check_data(self, b_obj):
+        TestMaterialProperty.b_check_data(self, b_obj)
+        b_mesh = b_obj.data
+        b_mat = b_mesh.materials[0]
+        self.b_check_emmision_property(b_mat)
+        
+    def b_check_emmision_property(self, b_mat):
+        nose.tools.assert_equal(b_mat.emit, 1.0)
+        #TODO - Add emissive color
+        '''nose.tools.assert-equal(b_mat.niftools.emissive_color.r,
+                                   b_mat.niftools.emissive_color.g,
+                                   b_mat.niftools.emissive_color.b),
+                                   (1.0,1.0,1.0))
+        '''
+    def n_check_data(self, n_data):
+        TestMaterialProperty.n_check_data(self, n_data)
+        n_geom = n_data.roots[0].children[0]
+        self.n_check_material_emissive_property(n_geom.properties[0])
+
+    def n_check_material_emissive_property(self, n_mat_prop):
+        #TODO - Refer to header
+        nose.tools.assert_equal((n_mat_prop.emissive_color.r,
+                                 n_mat_prop.emissive_color.g,
+                                 n_mat_prop.emissive_color.b), (1.0,0.0,0.0))
+
+class TestGlossProperty(TestMaterialProperty):
+    n_name = "property/material/base_material"
+    
+    def b_create_object(self):
+        b_obj = TestMaterialProperty.b_create_object(self)
+        b_mat = b_obj.data.materials[0]
+        
+        b_mat.specular_hardness = 100
+        return b_obj
+    
+    def b_check_data(self, b_obj):
+        TestMaterialProperty.b_check_data(self, b_obj)
+        b_mesh = b_obj.data
+        b_mat = b_mesh.materials[0]
+        self.b_check_gloss_property(b_mat)
+        
+    def b_check_gloss_property(self, b_mat):
+        nose.tools.assert_equal(b_mat.specular_hardness, 100)
+
+    def n_check_data(self, n_data):
+        TestMaterialProperty.n_check_data(self, n_data)
+        n_geom = n_data.roots[0].children[0]
+        self.n_check_material_gloss_property(n_geom.properties[0])
+
+    def n_check_material_gloss_property(self, n_mat_prop):
+        #n_gloss = 4/b_gloss
+        nose.tools.assert_equal(n_mat_prop.glossiness, 25)
+ 
 class TestStencilProperty(TestBaseUV):
     n_name = "property/stencil/stencil"
     
@@ -168,6 +202,9 @@ class TestStencilProperty(TestBaseUV):
         
     def b_check_data(self, b_obj):
         TestBaseUV.b_check_data(self, b_obj)
+        self.b_check_stencil_property(b_obj)
+        
+    def b_check_stencil_property(self, b_obj):
         nose.tools.assert_equal(b_obj.data.show_double_sided, True)
         
     def n_check_data(self, n_data):
@@ -188,8 +225,8 @@ class TestSpecularProperty(TestMaterialProperty):
     def b_create_object(self):
         b_obj = TestMaterialProperty.b_create_object(self)
         b_mat = b_obj.data.materials[0]
-        b_mat.specular_color = (1.0,1.0,1.0)
-        b_mat.specular_intensity = 0
+        b_mat.specular_color = (1.0,0.0,0.0)
+        b_mat.specular_intensity = 1.0
         
         #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         return b_obj
@@ -204,10 +241,11 @@ class TestSpecularProperty(TestMaterialProperty):
         nose.tools.assert_equal((b_mat.specular_color.r,
                                  b_mat.specular_color.g,
                                  b_mat.specular_color.b),
-                                 (1.0,1.0,1.0))
-        nose.tools.assert_equal(b_mat.specular_intensity, 0)
+                                 (1.0,0.0,0.0))
+        nose.tools.assert_equal(b_mat.specular_intensity, 1.0)
     
     def n_check_data(self, n_data):
+        TestMaterialProperty.n_check_data(self, n_data)
         n_geom = n_data.roots[0].children[0]    
         nose.tools.assert_equal(n_geom.num_properties, 2)
         self.n_check_specular_property(n_geom.properties[0])
@@ -225,11 +263,13 @@ class TestAlphaProperty(TestMaterialProperty):
         b_mat = b_obj.data.materials[0]
         b_mat.use_transparency = True
         b_mat.alpha = 0.5
+        b_mat.transparency_method = 'Z_TRANSPARENCY'
         
         #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         return b_obj
         
     def b_check_data(self, b_obj):
+        TestMaterialProperty.b_check_data(self, b_obj)
         b_mesh = b_obj.data
         b_mat = b_mesh.materials[0]
         self.b_check_alpha_property(b_mat)
@@ -237,6 +277,7 @@ class TestAlphaProperty(TestMaterialProperty):
     def b_check_alpha_property(self, b_mat):
          nose.tools.assert_equal(b_mat.use_transparency, True)
          nose.tools.assert_equal(b_mat.alpha, 0.5)
+         nose.tools.assert_equal(b_mat.transparency_method, 'Z_TRANSPARENCY')
         
     def n_check_data(self, n_data):
         n_geom = n_data.roots[0].children[0]    

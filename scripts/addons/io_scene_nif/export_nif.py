@@ -1913,12 +1913,13 @@ class NifExport(NifCommon):
                 
                 #gloss mat
                 #'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
-                mesh_mat_glossiness = mesh_mat.specular_hardness / 4.0  
+                mesh_mat_gloss = mesh_mat.specular_hardness / 4.0  
                                 
                 #alpha mat
                 mesh_hasalpha = False
+                mesh_mat_transparency = mesh_mat.alpha
                 if(mesh_mat.use_transparency):
-                    if(abs(mesh_mat.alpha - 1.0)> self.properties.epsilon):
+                    if(abs(mesh_mat_transparency - 1.0)> self.properties.epsilon):
                         mesh_hasalpha = True
                 elif(mesh_hasvcola):
                     mesh_hasalpha = True
@@ -1987,6 +1988,10 @@ class NifExport(NifCommon):
                                     " CALCALPHA flag set, and must have MapTo.ALPHA enabled."
                                     %(ob.name,mesh_mat.name))
                             '''
+                                
+                            # check if alpha channel is enabled for this texture
+                            if(b_mat_texslot.use_map_alpha):
+                                mesh_hasalpha = True
                             mesh_glow_mtex = b_mat_texslot
                         
                         #specular
@@ -1999,6 +2004,10 @@ class NifExport(NifCommon):
                                     " Make sure there is only one texture"
                                     " with MapTo.SPEC"
                                     %(mesh.name,mesh_mat.name))
+                            
+                            # check if alpha channel is enabled for this texture
+                            if(b_mat_texslot.use_map_alpha):
+                                mesh_hasalpha = True
                             # got the gloss map
                             mesh_gloss_mtex = b_mat_texslot            
                         
@@ -2012,19 +2021,21 @@ class NifExport(NifCommon):
                                     " Make sure there is only one texture"
                                     " with MapTo.NOR"
                                     %(mesh.name,mesh_mat.name))
+                            
                             # check if alpha channel is enabled for this texture
                             if(b_mat_texslot.use_map_alpha):
                                 mesh_hasalpha = True
+                            
                             mesh_bump_mtex = b_mat_texslot
                             
                         #darken
                         elif b_mat_texslot.use_map_color_diffuse and \
                              b_mat_texslot.blend_type == 'DARKEN' and \
                              not mesh_dark_mtex:
+                            
                             # check if alpha channel is enabled for this texture
                             if(b_mat_texslot.use_map_alpha):
-                                mesh_hasalpha = True
-                                
+                                mesh_hasalpha = True    
                             # got the dark map
                             mesh_dark_mtex = b_mat_texslot
                         
@@ -2038,12 +2049,13 @@ class NifExport(NifCommon):
                             if(b_mat_texslot.use_map_alpha):
                                 mesh_hasalpha = True 
                                 
+                                '''
                                 # in this case, Blender replaces the texture transparant parts with the underlying material color...
                                 # in NIF, material alpha is multiplied with texture alpha channel...
                                 # how can we emulate the NIF alpha system (simply multiplying material alpha with texture alpha) when MapTo.ALPHA is turned on?
                                 # require the Blender material alpha to be 0.0 (no material color can show up), and use the "Var" slider in the texture blending mode tab!
                                 # but...
-                                '''
+                                
                                 if mesh_mat_transparency > self.properties.epsilon:
                                     raise NifExportError(
                                         "Cannot export this type of"
@@ -2065,8 +2077,7 @@ class NifExport(NifCommon):
                                 
                                 mesh_mat_transparency = b_mat_texslot.varfac # we must use the "Var" value
                                 '''
-                                
-                        
+
                         #normal map
                         elif b_mat_texslot.use_map_normal and b_mat_texslot.texture.use_normal_map:
                             if mesh_bump_mtex:
@@ -2106,7 +2117,7 @@ class NifExport(NifCommon):
                                 mesh_hasalpha = True
                             mesh_ref_mtex = b_mat_texslot
                             
-                        # unknown map
+                        # unsupported map
                         else:
                             raise NifExportError(
                                 "Do not know how to export texture '%s',"
@@ -2159,10 +2170,9 @@ class NifExport(NifCommon):
             # We now extract vertices, uv-vertices, normals, and 
             # vertex colors from the mesh's face list. Some vertices must be duplicated.
             
-            # The following algorithm extracts all unique
-            # (vert, uv-vert, normal, vcol) quads, and uses this list to
-            # produce the list of vertices, uv-vertices, normals, vertex
-            # colors, and face indices.                   
+            # The following algorithm extracts all unique quads(vert, uv-vert, normal, vcol),
+            # produce lists of vertices, uv-vertices, normals, vertex colors, and face indices.
+                               
             vertquad_list = [] # (vertex, uv coordinate, normal, vertex color) list
             vertmap = [None for i in range(len(mesh.vertices))] # blender vertex -> nif vertices
             vertlist = []
@@ -2478,7 +2488,7 @@ class NifExport(NifCommon):
                     diffuse=mesh_mat_diffuse_color,
                     specular=mesh_mat_specular_color,
                     emissive=mesh_mat_emissive_color,
-                    glossiness=mesh_mat_glossiness,
+                    gloss=mesh_mat_gloss,
                     alpha=mesh_mat_transparency,
                     emitmulti=mesh_mat_emitmulti)
                 
@@ -4240,7 +4250,7 @@ class NifExport(NifCommon):
         diffuse=(1.0, 1.0, 1.0),
         specular=(0.0, 0.0, 0.0),
         emissive=(0.0, 0.0, 0.0),
-        glossiness=10.0,
+        gloss=10.0,
         alpha=1.0,
         emitmulti=1.0):
         """Return existing material property with given settings, or create
@@ -4285,7 +4295,7 @@ class NifExport(NifCommon):
         matprop.emissive_color.r = emissive[0]
         matprop.emissive_color.g = emissive[1]
         matprop.emissive_color.b = emissive[2]
-        matprop.glossiness = glossiness
+        matprop.gloss = gloss
         matprop.alpha = alpha
         matprop.emit_multi = emitmulti
 

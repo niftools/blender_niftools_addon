@@ -1549,7 +1549,8 @@ class NifImport(NifCommon):
                     #Influence
                     b_mat_texslot.use_map_color_diffuse = True
                     b_mat_texslot.blend_type = blend_type
-                    
+                    if(alphaProperty):
+                        b_mat_texslot.use_map_alpha
                     #update: needed later
                     base_texture = b_mat_texslot
                     
@@ -1569,7 +1570,9 @@ class NifImport(NifCommon):
                     #Influence
                     b_mat_texslot.use_map_normal = True
                     b_mat_texslot.blend_type = blend_type
-                    
+                    if(alphaProperty):
+                        b_mat_texslot.use_map_alpha
+                        
                     #update: needed later
                     bump_texture = b_mat_texslot
                     
@@ -1589,7 +1592,9 @@ class NifImport(NifCommon):
                     #Influence
                     b_mat_texslot.use_map_emit = True
                     b_mat_texslot.blend_type = blend_type
-                    
+                    if(alphaProperty):
+                        b_mat_texslot.use_map_alpha
+                        
                     #update: needed later
                     glow_texture = b_mat_texslot
                     
@@ -1758,28 +1763,28 @@ class NifImport(NifCommon):
         b_mat.ambient = b_amb
         b_mat.emit = b_emit
         
-        # glossiness
-        glossiness = matProperty.glossiness
-        hardness = int(glossiness * 4) # just guessing really
+        # gloss
+        gloss = matProperty.glossiness
+        hardness = int(gloss * 4) # just guessing really
         if hardness < 1: hardness = 1
         if hardness > 511: hardness = 511
         b_mat.specular_hardness = hardness
         
         # Alpha
         if alphaProperty:
-            if(b_mat.alpha != 1.0):
+            if(matProperty.alpha < 1.0):
+                self.debug("Alpha prop detected")
                 b_mat.use_transparency = True 
                 b_mat.alpha = matProperty.alpha
                 b_mat.transparency_method = 'Z_TRANSPARENCY'  # enable z-buffered transparency
-            else:
-                # not material based:
-                b_mat.alpha = 1.0
             
-
+            
+            ''' 
             #check alpha prop is because we have a texture with alpha
-            ''' TODO - move back to texture domain'''
+            TODO - move back to texture domain
             if base_texture:
-                base_texture.use_map_alpha = True
+                base_texture.texture.use_alpha = True
+            '''
 
         # Specular color
         n_spec = matProperty.specular_color
