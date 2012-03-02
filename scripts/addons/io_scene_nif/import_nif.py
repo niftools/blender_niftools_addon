@@ -60,7 +60,7 @@ class NifImportError(Exception):
     """A simple custom exception class for import errors."""
     pass
 
-class Nif_Import(NifCommon):
+class NifImport(NifCommon):
 
     # correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z
     BONE_CORRECTION_MATRICES = (
@@ -1536,7 +1536,7 @@ class Nif_Import(NifCommon):
             if baseTexDesc:
                 base_texture = self.import_texture(baseTexDesc.source)
                 if base_texture:
-                    b_mat_texslot = material.texture_slots.create(0)
+                    b_mat_texslot = b_mat.texture_slots.create(0)
                     b_mat_texslot.texture = base_texture
                     b_mat_texslot.use = True
                     
@@ -1557,7 +1557,7 @@ class Nif_Import(NifCommon):
             if bumpTexDesc:
                 bump_texture = self.import_texture(bumpTexDesc.source)
                 if bump_texture:
-                    b_mat_texslot = material.texture_slots.create(1)
+                    b_mat_texslot = b_mat.texture_slots.create(1)
                     b_mat_texslot.texture = bump_texture
                     b_mat_texslot.use = True
                     
@@ -1579,7 +1579,7 @@ class Nif_Import(NifCommon):
             if glowTexDesc:
                 glow_texture = self.import_texture(glowTexDesc.source)
                 if glow_texture:
-                    b_mat_texslot = material.texture_slots.create(2)
+                    b_mat_texslot = b_mat.texture_slots.create(2)
                     b_mat_texslot.texture = glow_texture
                     b_mat_texslot.use = True
                     

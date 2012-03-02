@@ -41,7 +41,7 @@ SetCompressor /SOLID lzma
 
 !define VERSION "2.6.0"
 !define PYFFIVERSION "2.2.0"
-!define BLENDERVERSION "2.60"
+!define BLENDERVERSION "2.62"
 
 Name "Blender NIF Scripts ${VERSION}"
 Var BLENDERINST    ; blender.exe location
@@ -236,7 +236,10 @@ Section
   SetOutPath "$BLENDERADDONS\io_scene_nif\"
   File ..\scripts\addons\io_scene_nif\export_nif.py
   File ..\scripts\addons\io_scene_nif\import_nif.py
-  File ..\scripts\addons\io_scene_nif\import_export_nif.py
+  File ..\scripts\addons\io_scene_nif\nif_common.py
+  File ..\scripts\addons\io_scene_nif\operators.py
+  File ..\scripts\addons\io_scene_nif\ui.py
+  File ..\scripts\addons\io_scene_nif\properties.py
   File ..\scripts\addons\io_scene_nif\__init__.py
 
   ; Install documentation files

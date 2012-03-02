@@ -130,8 +130,7 @@ class TestEmissiveMaterial(TestMaterialProperty):
     def b_create_object(self):
         b_obj = TestMaterialProperty.b_create_object(self)
         b_mat = b_obj.data.materials[0]
-        #TODO - Add emissive color
-        #b_mat.niftools.emissive_color = (1.0,1.0,1.0)
+        b_mat.niftools.emissive_color = (0.5,0.0,0.0)
         b_mat.emit = 1.0
         
         #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
@@ -145,12 +144,11 @@ class TestEmissiveMaterial(TestMaterialProperty):
         
     def b_check_emmision_property(self, b_mat):
         nose.tools.assert_equal(b_mat.emit, 1.0)
-        #TODO - Add emissive color
-        '''nose.tools.assert-equal(b_mat.niftools.emissive_color.r,
-                                   b_mat.niftools.emissive_color.g,
-                                   b_mat.niftools.emissive_color.b),
-                                   (1.0,1.0,1.0))
-        '''
+        nose.tools.assert_equal((b_mat.niftools.emissive_color.r,
+                                b_mat.niftools.emissive_color.g,
+                                b_mat.niftools.emissive_color.b),
+                                (0.5,0.0,0.0))
+        
     def n_check_data(self, n_data):
         TestMaterialProperty.n_check_data(self, n_data)
         n_geom = n_data.roots[0].children[0]
@@ -160,7 +158,7 @@ class TestEmissiveMaterial(TestMaterialProperty):
         #TODO - Refer to header
         nose.tools.assert_equal((n_mat_prop.emissive_color.r,
                                  n_mat_prop.emissive_color.g,
-                                 n_mat_prop.emissive_color.b), (1.0,0.0,0.0))
+                                 n_mat_prop.emissive_color.b), (0.5,0.0,0.0))
 
 class TestGlossProperty(TestMaterialProperty):
     n_name = "property/material/base_material"
