@@ -1,4 +1,4 @@
-Version 2.6.0.2 ( Mar 2012)
+Version 2.6.0.1 ( Mar 2012)
 ===========================
 
 * Additional material properties support
@@ -21,7 +21,7 @@ Version 2.6.0.2 ( Mar 2012)
   - Re-organised tests into per feature, generated test nifs.
   - Inheritance based checks now functioning
 
-Version 2.6.0.1 (20 Nov 2011)
+Version 2.6.0.0 (20 Nov 2011)
 =============================
 
 * Initial port to Blender 2.60a:

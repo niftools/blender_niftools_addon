@@ -124,7 +124,7 @@ Currently, only the base texture is exported.
 Vertex Color
 ------------
 
-.. _features-example-vertexcolor
+.. _features-example-vertexcolor:
 
 #. :ref:`Create a single sided cube <features-example-geometry>`
    as explained before.

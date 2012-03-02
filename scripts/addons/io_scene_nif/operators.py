@@ -153,7 +153,7 @@ class NifImportUI(bpy.types.Operator, ImportHelper, NifImportExportCommon):
         method.
         """
         from . import import_nif
-        return import_nif.Nif_Import(self, context).execute()
+        return import_nif.NifImport(self, context).execute()
 
 def _game_to_enum(game):
     symbols = ":,'\" +-*!?;./="
@@ -271,4 +271,4 @@ class NifExportUI(bpy.types.Operator, ExportHelper, NifImportExportCommon):
         method.
         """
         from . import export_nif
-        return export_nif.Nif_Export(self, context).execute()
+        return export_nif.NifExport(self, context).execute()

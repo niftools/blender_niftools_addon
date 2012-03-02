@@ -55,7 +55,7 @@ class NifExportError(Exception):
     pass
 
 # main export class
-class Nif_Export(NifCommon):
+class NifExport(NifCommon):
     IDENTITY44 = NifFormat.Matrix44()
     IDENTITY44.set_identity()
     FLOAT_MIN = -3.4028234663852886e+38
@@ -1909,7 +1909,7 @@ class Nif_Export(NifCommon):
                 
                 #gloss mat
                 #'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
-                mesh_mat_gloss = mesh_mat.specular_hardness / 4.0  
+                mesh_mat_gloss = mesh_mat.specular_hardness / 4.0   
                                 
                 #alpha mat
                 mesh_hasalpha = False
@@ -4291,7 +4291,7 @@ class Nif_Export(NifCommon):
         matprop.emissive_color.r = emissive[0]
         matprop.emissive_color.g = emissive[1]
         matprop.emissive_color.b = emissive[2]
-        matprop.gloss = gloss
+        matprop.glossiness = gloss
         matprop.alpha = alpha
         matprop.emit_multi = emitmulti
 

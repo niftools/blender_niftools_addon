@@ -230,7 +230,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'BlenderNIFScripts', 'Blender NIF Scripts Documentation', 'Amorilia, Neomonkeus',
-   'BlenderNIFScripts', 'One line description of project.', 'Miscellaneous'),
+   'BlenderNIFScripts', 'Blender Import/Export utility for the NetImmersion File Formant.', 'Miscellaneous'),
 ]
 
 # Documents to append as an appendix to all manuals.
@@ -246,7 +246,7 @@ texinfo_documents = [
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     'http://docs.python.org/': None,
-    'http://www.blender.org/documentation/blender_python_api_2_60a_release': None,
+    'http://www.blender.org/documentation/blender_python_api_2_62_release': None,
     'http://pyffi.sourceforge.net/': None,
     }
 
