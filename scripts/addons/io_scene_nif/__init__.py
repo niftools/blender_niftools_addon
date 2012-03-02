@@ -93,7 +93,7 @@ def _init_loggers():
 _init_loggers()
 
 
-# TODO: integrate with NifImportExport class
+# TODO: integrate with NifCommon class
 # we're removing stuff from this class as we integrate
 class NifConfig:
     """Class which handles configuration of nif import and export in Blender.
