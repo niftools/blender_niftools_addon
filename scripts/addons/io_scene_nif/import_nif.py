@@ -60,7 +60,7 @@ class NifImportError(Exception):
     """A simple custom exception class for import errors."""
     pass
 
-class NifImport(NifCommon):
+class Nif_Import(NifCommon):
 
     # correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z
     BONE_CORRECTION_MATRICES = (
@@ -1706,8 +1706,15 @@ class NifImport(NifCommon):
                 menvmapTexture.blend_type = 'ADD'
         
         # Diffuse color
+        b_mat.diffuse_color[0] = matProperty.diffuse_color.r
+        b_mat.diffuse_color[1] = matProperty.diffuse_color.g
+        b_mat.diffuse_color[2] = matProperty.diffuse_color.b
+        b_mat.diffuse_intensity = 1.0
+        
+        '''
         diff = matProperty.diffuse_color
         emit = matProperty.emissive_color
+        
         
         # fallout 3 hack: convert diffuse black to emit if emit is not black
         if diff.r < self.properties.epsilon and diff.g < self.properties.epsilon and diff.b < self.properties.epsilon:
@@ -1762,6 +1769,13 @@ class NifImport(NifCommon):
             b_emit = 1.0
         b_mat.ambient = b_amb
         b_mat.emit = b_emit
+        '''
+        
+        # Emissive
+        b_mat.niftools.emissive_color[0] = matProperty.emissive_color.r
+        b_mat.niftools.emissive_color[1] = matProperty.emissive_color.g
+        b_mat.niftools.emissive_color[2] = matProperty.emissive_color.b
+        b_mat.emit = 1.0
         
         # gloss
         gloss = matProperty.glossiness

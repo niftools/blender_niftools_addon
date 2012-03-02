@@ -55,7 +55,7 @@ class NifExportError(Exception):
     pass
 
 # main export class
-class NifExport(NifCommon):
+class Nif_Export(NifCommon):
     IDENTITY44 = NifFormat.Matrix44()
     IDENTITY44.set_identity()
     FLOAT_MIN = -3.4028234663852886e+38
@@ -1880,23 +1880,19 @@ class NifExport(NifCommon):
                 mesh_mat_emissive_color = [0.0, 0.0, 0.0]
                 mesh_mat_emitmulti = 1.0 # default
                 if self.properties.game != 'FALLOUT_3':
-                    '''
-                    TODO_3.0 - UI colors, niftools.emitif diffuse should not be defaulted
-                    set update_func to diffuse?
-                    mesh_mat_emissive_color = mesh_mat.niftools.emit_color * mesh_mat.emit
-                    '''
-                    mesh_mat_emissive_color = mesh_mat.diffuse_color * mesh_mat.emit
+                    #old code
+                    #mesh_mat_emissive_color = mesh_mat.diffuse_color * mesh_mat.emit
+                    mesh_mat_emissive_color = mesh_mat.niftools.emissive_color * mesh_mat.emit
+                    
                 else:
                     # special case for Fallout 3 (it does not store diffuse color)
                     # if emit is non-zero, set emissive color to diffuse
                     # (otherwise leave the color to zero)
                     if mesh_mat.emit > self.properties.epsilon:
-                        '''
-                        TODO_3.0 - non-default diffuse.
-                        mesh_mat_emissive_color = mesh_mat.niftools.emit_color
-                        mesh_mat_emitmulti = mesh_mat.emit * 10.0
-                        '''
-                        mesh_mat_emissive_color = mesh_mat.diffuse_color
+                        
+                        #old code
+                        #mesh_mat_emissive_color = mesh_mat.diffuse_color
+                        mesh_mat_emissive_color = mesh_mat.niftools.emissive_color
                         mesh_mat_emitmulti = mesh_mat.emit * 10.0
                 
                 #specular mat

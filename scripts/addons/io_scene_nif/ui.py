@@ -12,15 +12,17 @@ class NiftoolsMaterialPanel(Panel):
     
     def draw(self, context):
         layout = self.layout
-        
         material = context.material.niftools
         
-        #colors
+        #material color swatches
+        '''
         row = layout.row()
         row.prop(material, "diffuse_color")
         row = layout.row()
         row.prop(material, "ambient_color")
+        '''
+        
         row = layout.row()
         row.prop(material, "emissive_color")
         
-        
+
