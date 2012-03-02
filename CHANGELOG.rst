@@ -11,14 +11,15 @@ Version 2.6.0.2 ( Mar 2012)
   - Bump Map
   - Glow Map
 
+* Fixed issue with material texture blend type importing (reported and 
+  fix contributed by mgm101) 
+
 * Added experimental vertex color support
 
 * Extensive work on the testing framework.
-  - Re-organisating per feature testing
-  - created tests for new features
+  - Tests created based on new features
+  - Re-organised tests into per feature, generated test nifs.
   - Inheritance based checks now functioning
-
-
 
 Version 2.6.0.1 (20 Nov 2011)
 =============================
