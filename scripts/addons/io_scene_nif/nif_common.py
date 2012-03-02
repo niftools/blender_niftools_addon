@@ -320,7 +320,7 @@ class NifCommon:
         return None
 
     def find_extra(self, niBlock, extratype):
-        #TODO_3.0 - Optimiise
+        #TODO_3.0 - Optimise
         
         """Find extra data."""
         # pre-10.x.x.x system: extra data chain
