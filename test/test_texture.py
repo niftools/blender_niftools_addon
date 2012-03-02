@@ -58,10 +58,10 @@ class TestBaseTexture(TestMaterialProperty):
         nose.tools.assert_equal(b_mat_texslot.use_map_color_diffuse, True)
         
     def n_check_data(self, n_data):
-        TestMaterialProperty.n_check_data(self, n_data)
         n_geom = n_data.roots[0].children[0]
         nose.tools.assert_equal(n_geom.num_properties, 2)
         self.n_check_texturing_property(n_geom.properties[0])
+        TestMaterialProperty.n_check_material_property(self, n_geom.properties[1])
 
     def n_check_texturing_property(self, n_tex_prop):
         nose.tools.assert_is_instance(n_tex_prop, NifFormat.NiTexturingProperty)
@@ -127,7 +127,9 @@ class TestBumpTexture(TestBaseTexture):
     def n_check_data(self, n_data):
         TestBaseTexture.n_check_data(self, n_data)
         n_geom = n_data.roots[0].children[0]
+        nose.tools.assert_equal(n_geom.num_properties, 2)
         self.n_check_texturing_property(n_geom.properties[0])
+        TestMaterialProperty.n_check_material_property(self, n_geom.properties[1])
 
     def n_check_texturing_property(self, n_tex_prop):
         nose.tools.assert_is_instance(n_tex_prop, NifFormat.NiTexturingProperty)
@@ -253,7 +255,9 @@ class TestGlowTexture(TestBaseTexture):
     def n_check_data(self, n_data):
         TestBaseTexture.n_check_data(self, n_data)
         n_geom = n_data.roots[0].children[0]
+        nose.tools.assert_equal(n_geom.num_properties, 2)
         self.n_check_texturing_property(n_geom.properties[0])
+        TestMaterialProperty.n_check_material_property(self, n_geom.properties[1])
 
     def n_check_texturing_property(self, n_tex_prop):
         nose.tools.assert_is_instance(n_tex_prop, NifFormat.NiTexturingProperty)

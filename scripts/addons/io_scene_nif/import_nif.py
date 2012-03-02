@@ -1801,10 +1801,11 @@ class NifImport(NifCommon):
             '''
 
         # Specular color
-        n_spec = matProperty.specular_color
-        b_mat.specular_color = (n_spec.r, n_spec.g, n_spec.b)
+        b_mat.specular_color[0] = matProperty.specular_color.r
+        b_mat.specular_color[1] = matProperty.specular_color.g
+        b_mat.specular_color[2] = matProperty.specular_color.b
         
-        if(specProperty) or (self.data.version != 0x14000004):
+        if(specProperty or self.data.version != 0x14000004):
             # Blender multiplies specular color with this value
             b_mat.specular_intensity = 1.0
         else:
