@@ -1,10 +1,32 @@
-Version 2.6.0 (planned)
-=======================
+Version 2.6.0.2 ( Mar 2012)
+===========================
+
+* Additional material properties support
+  - (NiAlphaProperty)
+  - (NiSpecular) 
+  - (NiStencilProperty)
+
+* Added support for (NiTexturingProperty)
+  - Diffuse Map
+  - Bump Map
+  - Glow Map
+
+* Added experimental vertex color support
+
+* Extensive work on the testing framework.
+  - Re-organisating per feature testing
+  - created tests for new features
+  - Inheritance based checks now functioning
+
+
+
+Version 2.6.0.1 (20 Nov 2011)
+=============================
 
 * Initial port to Blender 2.60a:
 
   - geometry (NiTriShape)
-  - materials NiMaterialProperty)
+  - materials (NiMaterialProperty)
   - uv textures (NiTexturingProperty)
 
 * Upgraded to sphinx to generate documentation.
