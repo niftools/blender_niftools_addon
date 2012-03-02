@@ -1015,10 +1015,10 @@ class NifImport(NifCommon):
                             # fill optimizer dictionary
                             if translations:
                                 rot_keys_dict[frame] = mathutils.Quaternion(rot)
-#                    else:
-#                        print("""Rotation keys...(unknown)
-#WARNING: rotation animation data of type %i found, but this type is not yet
-#         supported; data has been skipped""" % rotation_type)                        
+                        #else:
+                        #    print("Rotation keys...(unknown)" + 
+                        #          "WARNING: rotation animation data of type" +
+                        #          " %i found, but this type is not yet supported; data has been skipped""" % rotation_type)                        
         
                     # Translations
                     if translations.keys:
@@ -2006,8 +2006,7 @@ class NifImport(NifCommon):
         '''
 
         # Stencil (for double sided meshes)
-        stencilProperty = self.find_property(niBlock,
-                                             NifFormat.NiStencilProperty)
+        stencilProperty = self.find_property(niBlock, NifFormat.NiStencilProperty)
         # we don't check flags for now, nothing fancy
         if stencilProperty:
             b_meshData.show_double_sided = True
@@ -2017,14 +2016,16 @@ class NifImport(NifCommon):
         # Material
         # note that NIF files only support one material for each trishape
         # find material property
-        matProperty = self.find_property(niBlock, NifFormat.NiMaterialProperty)
+        matProperty = self.find_property(niBlock, 
+                                         NifFormat.NiMaterialProperty)
+        
         if matProperty:
             # Texture
             textProperty = None
             if n_uvco:
-                textProperty = self.find_property(niBlock,
+                textProperty = self.find_property(niBlock, 
                                                   NifFormat.NiTexturingProperty)
-            
+                    
             # Alpha
             alphaProperty = self.find_property(niBlock,
                                                NifFormat.NiAlphaProperty)
