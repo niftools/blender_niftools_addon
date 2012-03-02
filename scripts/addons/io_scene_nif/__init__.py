@@ -63,11 +63,16 @@ import os.path
 
 import bpy
 import bpy.props
+
+from . import properties
+from . import ui
+
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 
-# blender doesn't look in site-packages; easiest solution for this
-# seems to be toimport site.py manually, so we find pyffi if it is
-# installed there
+# blender doesn't look in site-packages; 
+#easiest solution for this seems to be to import site.py manually, 
+#so we find pyffi if it is installed there
+
 import site
 
 import pyffi
@@ -1540,7 +1545,8 @@ class NifConfig:
         
     def update_egm_anim_scale(self, evt, val):
         self.config["IMPORT_EGMANIMSCALE"] = val
-
+    
+    
 def menu_func_import(self, context):
     self.layout.operator(
         NifImportUI.bl_idname, text="NetImmerse/Gamebryo (.nif)")
@@ -1550,14 +1556,16 @@ def menu_func_export(self, context):
         NifExportUI.bl_idname, text="NetImmerse/Gamebryo (.nif)")
 
 def register():
+    properties.register()
     bpy.utils.register_module(__name__)
     bpy.types.INFO_MT_file_import.append(menu_func_import)
     bpy.types.INFO_MT_file_export.append(menu_func_export)
 
 def unregister():
+    properties.unregister()
     bpy.utils.unregister_module(__name__)
     bpy.types.INFO_MT_file_import.remove(menu_func_import)
     bpy.types.INFO_MT_file_export.remove(menu_func_export)
-
+    
 if __name__ == "__main__":
     register()
