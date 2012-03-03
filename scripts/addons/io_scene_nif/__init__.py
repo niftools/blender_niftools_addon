@@ -1290,12 +1290,14 @@ def menu_func_export(self, context):
 
 def register():
     properties.register()
+    ui.register()
     bpy.utils.register_module(__name__)
     bpy.types.INFO_MT_file_import.append(menu_func_import)
     bpy.types.INFO_MT_file_export.append(menu_func_export)
 
 def unregister():
     properties.unregister()
+    ui.unregister()
     bpy.utils.unregister_module(__name__)
     bpy.types.INFO_MT_file_import.remove(menu_func_import)
     bpy.types.INFO_MT_file_export.remove(menu_func_export)
