@@ -12,13 +12,13 @@ class NiftoolsMaterialProps(bpy.types.PropertyGroup):
                         )
         
         cls.diffuse_color = FloatVectorProperty(
-                name='Diffuse', subtype='COLOR', default=[1.0,1.0,1.0],)
+                name='Diffuse', subtype='COLOR', default=[1.0,1.0,1.0],min=0.0, max=1.0)
         
         cls.ambient_color = FloatVectorProperty(
-                name='Ambient', subtype='COLOR', default=[1.0,1.0,1.0],)
+                name='Ambient', subtype='COLOR', default=[1.0,1.0,1.0],min=0.0, max=1.0)
         
         cls.emissive_color = FloatVectorProperty(
-                name='Emissive', subtype='COLOR', default=[0.0,0.0,0.0],)
+                name='Emissive', subtype='COLOR', default=[0.0,0.0,0.0],min=0.0, max=1.0)
     
     @classmethod
     def unregister(cls):

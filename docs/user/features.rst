@@ -16,7 +16,7 @@ Example
 
 #. Start blender with an empty scene.
 #. Add a cube primitive: **Add > Mesh > Cube**.
-#. Tell Blender that it is a single sided mesh:
+#. Select whether the mesh should be Double-sided:
    in the *Properties* panel, in the *Object Data* tab,
    untick **Double Sided**.
 #. Export the file: **File > Export > NetImmerse/Gamebryo**.
@@ -51,7 +51,6 @@ Example
 #. Under **Diffuse**, click on the color, and set it to completely white
    (**R**, **G**, and **B** should each say 1.000,
    whereas the default is 0.800).
-#. Under **Diffuse**, set **Intensity** to 1.000.
 #. Under **Specular**, set **Intensity** to 0.000, to disable specularity
    (this will prevent a NiSpecularProperty being exported,
    which is usually what you want).

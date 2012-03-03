@@ -152,6 +152,12 @@ class NifImportUI(bpy.types.Operator, ImportHelper, NifImportExportCommon):
         calls its :meth:`~io_scene_nif.import_nif.NifImport.execute`
         method.
         """
+        
+        #setup the viewport for preferred viewing settings
+        #print(bpy.types.SceneGameData.material_mode)
+        #bpy.types.SceneGameData.material_mode = 'GLSL'
+        #context.space_data.view.viewport_shade = 'TEXTURED'
+        
         from . import import_nif
         return import_nif.NifImport(self, context).execute()
 

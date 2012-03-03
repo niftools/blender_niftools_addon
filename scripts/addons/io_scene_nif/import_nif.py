@@ -366,7 +366,6 @@ class NifImport(NifCommon):
             # set parenting
             b_obj.makeParentDeform(self.selected_objects)
 
-
     def append_armature_modifier(self, b_obj, b_armature):
         """Append an armature modifier for the object."""
         b_mod = b_obj.modifiers.append(
@@ -1248,7 +1247,6 @@ class NifImport(NifCommon):
                 m_correction = self.BONE_CORRECTION_MATRICES[idx_correction]
         return m_correction
 
-
     def get_texture_hash(self, source):
         """Helper function for import_texture. Returns a key that uniquely
         identifies a texture from its source (which is either a
@@ -1775,8 +1773,13 @@ class NifImport(NifCommon):
         b_mat.niftools.emissive_color[0] = matProperty.emissive_color.r
         b_mat.niftools.emissive_color[1] = matProperty.emissive_color.g
         b_mat.niftools.emissive_color[2] = matProperty.emissive_color.b
-        b_mat.emit = 1.0
-        
+        if(b_mat.niftools.emissive_color[0] > self.properties.epsilon or 
+           b_mat.niftools.emissive_color[1] > self.properties.epsilon or 
+           b_mat.niftools.emissive_color[2] > self.properties.epsilon):
+            b_mat.emit = 1.0
+        else:
+            b_mat.emit = 0.0
+            
         # gloss
         gloss = matProperty.glossiness
         hardness = int(gloss * 4) # just guessing really
@@ -2512,6 +2515,7 @@ class NifImport(NifCommon):
         return b_mesh
 
     # import animation groups
+    
     def import_text_keys(self, niBlock):
         """Stores the text keys that define animation start and end in a text
         buffer, so that they can be re-exported. Since the text buffer is
@@ -2568,7 +2572,6 @@ class NifImport(NifCommon):
             # write it to the text buffer
             bonetxt.write('%s/%s\n' % (blender_bone_name, line[1:]))
         
-
     def store_names(self):
         """Stores the original, long object names so that they can be
         re-exported. In order for this to work it is necessary to mantain the
@@ -3295,8 +3298,6 @@ class NifImport(NifCommon):
                             % bhkshape.__class__.__name__)
         return []
 
-
-
     def import_bhk_constraints(self, hkbody):
         """Imports a bone havok constraint as Blender object constraint."""
         assert(isinstance(hkbody, NifFormat.bhkRigidBody))
@@ -3656,8 +3657,6 @@ class NifImport(NifCommon):
 
     def get_uv_layer_name(self, uvset):
         return "UVMap.%03i" % uvset if uvset != 0 else "UVMap"
-
-
 
     def import_kf_root(self, kf_root, root):
         """Merge kf into nif.
