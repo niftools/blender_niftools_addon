@@ -154,9 +154,10 @@ class NifImportUI(bpy.types.Operator, ImportHelper, NifImportExportCommon):
         """
         
         #setup the viewport for preferred viewing settings
-        #print(bpy.types.SceneGameData.material_mode)
-        #bpy.types.SceneGameData.material_mode = 'GLSL'
-        #context.space_data.view.viewport_shade = 'TEXTURED'
+        bpy.context.scene.game_settings.material_mode = 'GLSL'
+        for area in bpy.context.window.screen.areas:
+            if area.type =='VIEW_3D':
+                area.spaces[0].viewport_shade = 'TEXTURED'
         
         from . import import_nif
         return import_nif.NifImport(self, context).execute()

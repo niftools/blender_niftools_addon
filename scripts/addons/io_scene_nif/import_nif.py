@@ -1768,6 +1768,8 @@ class NifImport(NifCommon):
         b_mat.ambient = b_amb
         b_mat.emit = b_emit
         '''
+        #TODO - Detect fallout 3+, use emit multi as a degree of emission
+        #        test some values to find emission maximium. 0-1 -> 0-max_val
         
         # Emissive
         b_mat.niftools.emissive_color[0] = matProperty.emissive_color.r
