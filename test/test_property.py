@@ -292,3 +292,25 @@ class TestAlphaProperty(TestMaterialProperty):
     def n_check_alpha_property(self, n_mat_prop):
         nose.tools.assert_is_instance(n_mat_prop, NifFormat.NiAlphaProperty)
         #TODO Check Prop Settings
+        
+        
+class TestWireFrameProperty(TestBaseUV):
+    n_name = "property/wireframe/base_wire"
+    
+    def b_create_object(self):
+        pass
+        return b_obj
+    
+    def b_check_data(self, b_obj):
+        pass
+    
+    def b_check_wire_property(self, b_mat):
+        pass
+    
+    def n_check_data(self, n_data):
+        pass
+    
+    def n_check_wire_property(self, n_mat_prop):
+        pass
+        
+        
