@@ -1796,14 +1796,6 @@ class NifImport(NifCommon):
                 b_mat.use_transparency = True 
                 b_mat.alpha = matProperty.alpha
                 b_mat.transparency_method = 'Z_TRANSPARENCY'  # enable z-buffered transparency
-            
-            
-            ''' 
-            #check alpha prop is because we have a texture with alpha
-            TODO - move back to texture domain
-            if base_texture:
-                base_texture.texture.use_alpha = True
-            '''
 
         # Specular color
         b_mat.specular_color[0] = matProperty.specular_color.r
