@@ -1,7 +1,13 @@
+Version 2.6.0.2 ( April 2012)
+=============================
+
+* Material Support:
+  - (NiWireProperty)
+
 Version 2.6.0.1 ( Mar 2012)
 ===========================
 
-* Additional material properties support
+* Additional material properties support:
   - (NiAlphaProperty)
   - (NiSpecular) 
   - (NiStencilProperty)

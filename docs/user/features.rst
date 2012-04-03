@@ -177,7 +177,7 @@ Sphere        bhkSphereShape
 Cylinder      bhkCapsuleShape
 Capsule       bhkCapsuleShape
 Convex Hull   bhkConvexVerticesShape
-Triangle Mesh bhkMoppBvTreeShape
+Triangle Mesh bhkMoppByTreeShape
 ============= ======================
 
 For Morrowind, we have:
