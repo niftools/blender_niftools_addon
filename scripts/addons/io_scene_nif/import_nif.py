@@ -2,7 +2,7 @@
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
-# Copyright © 2005-2011, NIF File Format Library and Tools contributors.
+# Copyright © 2005-2012, NIF File Format Library and Tools contributors.
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -268,7 +268,7 @@ class NifImport(NifCommon):
             # XXX no longer needed?
             # do a full scene update to ensure that transformations are applied
             #self.context.scene.update(1)
-
+        
         return {'FINISHED'}
 
     def import_root(self, root_block):
@@ -1433,6 +1433,7 @@ class NifImport(NifCommon):
                         alphaProperty, specProperty,
                         textureEffect, wireProperty,
                         bsShaderProperty, extra_datas):
+        
         """Creates and returns a material."""
         # First check if material has been created before.
         material_hash = self.get_material_hash(matProperty, textProperty,
@@ -1444,10 +1445,11 @@ class NifImport(NifCommon):
             return self.materials[material_hash]                
         except KeyError:
             pass
-        # use the material property for the name, other properties usually have
-        # no name
+        
+        #name unique material
         name = self.import_name(matProperty)
         b_mat = bpy.data.materials.new(name)
+        
         # get apply mode, and convert to blender "blending mode"
         blend_type = 'MIX' # default
         if textProperty:
@@ -1802,11 +1804,10 @@ class NifImport(NifCommon):
         b_mat.specular_color[1] = matProperty.specular_color.g
         b_mat.specular_color[2] = matProperty.specular_color.b
         
-        if(specProperty or self.data.version != 0x14000004):
-            # Blender multiplies specular color with this value
-            b_mat.specular_intensity = 1.0
+        if (not specProperty) and (self.data.version != 0x14000004):
+            b_mat.specular_intensity = 0.0 #no specular prop 
         else:
-            b_mat.specular_intensity = 0.0
+            b_mat.specular_intensity = 1.0 #Blender multiplies specular color with this value
         
         # check wireframe property
         if wireProperty:

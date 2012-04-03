@@ -1024,15 +1024,18 @@ class NifExport(NifCommon):
                 #ob.show_wire = True
                 self.export_collision(ob, parent_block)
                 return None # done; stop here
+            
             elif ob_type == 'MESH' and ob.name.lower().startswith('bsbound'):
                 # add a bounding box
                 self.export_bounding_box(ob, parent_block, bsbound=True)
                 return None # done; stop here
+            
             elif (ob_type == 'MESH'
                   and ob.name.lower().startswith("bounding box")):
                 # Morrowind bounding box
                 self.export_bounding_box(ob, parent_block, bsbound=False)
                 return None # done; stop here
+            
             elif ob_type == 'MESH':
                 # -> mesh data.
                 # If this has children or animations or more than one material
@@ -1847,11 +1850,12 @@ class NifExport(NifCommon):
             mesh_detail_mtex = None
             mesh_texeff_mtex = None
             mesh_ref_mtex = None
+            mesh_texture_alpha = False #texture has transparency
+            
             mesh_uvlayers = []    # uv layers used by this material
             mesh_hasalpha = False # mesh has transparency
-            mesh_texture_alpha = False #texture has transparency
             mesh_haswire = False  # mesh rendered as wireframe
-            mesh_hasspec = False  # mesh has specular properties
+            mesh_hasspec = False  # mesh specular property
              
             mesh_hasnormals = False
             if mesh_mat is not None:
@@ -1899,9 +1903,11 @@ class NifExport(NifCommon):
                 mesh_mat_specular_color = mesh_mat.specular_color
                 if mesh_mat.specular_intensity > 1.0:
                     mesh_mat.specular_intensity = 1.0
+                
                 mesh_mat_specular_color[0] *= mesh_mat.specular_intensity
                 mesh_mat_specular_color[1] *= mesh_mat.specular_intensity
                 mesh_mat_specular_color[2] *= mesh_mat.specular_intensity
+                
                 if ( mesh_mat_specular_color[0] > self.properties.epsilon ) \
                     or ( mesh_mat_specular_color[1] > self.properties.epsilon ) \
                     or ( mesh_mat_specular_color[2] > self.properties.epsilon ):
@@ -2076,7 +2082,7 @@ class NifExport(NifCommon):
 
                         #normal map
                         elif b_mat_texslot.use_map_normal and b_mat_texslot.texture.use_normal_map:
-                            if mesh_bump_mtex:
+                            if mesh_normal_mtex:
                                 raise NifExportError(
                                     "Multiple bump/normal textures"
                                     " in mesh '%s', material '%s'."
@@ -2379,13 +2385,17 @@ class NifExport(NifCommon):
                     trishape.name = b"Tri " + ob.name.encode()
             else:
                 trishape.name = trishape_name.encode()
+            
             if len(mesh_mats) > 1:
                 # multimaterial meshes: add material index
                 # (Morrowind's child naming convention)
                 trishape.name += " %i"%materialIndex
             trishape.name = self.get_full_name(trishape.name.decode()).encode()
+            
+            #Trishape Flags...
             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
                 trishape.flags = 0x000E
+                
             elif self.properties.game in ('SID_MEIER_S_RAILROADS',
                                          'CIVILIZATION_IV'):
                 trishape.flags = 0x0010

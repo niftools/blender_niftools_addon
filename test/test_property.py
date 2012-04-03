@@ -289,28 +289,38 @@ class TestAlphaProperty(TestMaterialProperty):
         self.n_check_alpha_property(n_geom.properties[0])
         self.n_check_material_property(n_geom.properties[1])
         
-    def n_check_alpha_property(self, n_mat_prop):
-        nose.tools.assert_is_instance(n_mat_prop, NifFormat.NiAlphaProperty)
+    def n_check_alpha_property(self, n_alpha_prop):
+        nose.tools.assert_is_instance(n_alpha_prop, NifFormat.NiAlphaProperty)
         #TODO Check Prop Settings
         
         
-class TestWireFrameProperty(TestBaseUV):
+class TestWireFrameProperty(TestMaterialProperty):
     n_name = "property/wireframe/base_wire"
     
     def b_create_object(self):
-        pass
+        b_obj = TestMaterialProperty.b_create_object(self)
+        b_mat = b_obj.data.materials[0]
+        b_mat.type = 'WIRE';
+        
         return b_obj
     
     def b_check_data(self, b_obj):
-        pass
+        TestMaterialProperty.b_check_data(self, b_obj)
+        b_mesh = b_obj.data
+        b_mat = b_mesh.materials[0]
+        self.b_check_wire_property(b_mat)
     
     def b_check_wire_property(self, b_mat):
-        pass
+        nose.tools.assert_equal(b_mat.type, 'WIRE')
     
     def n_check_data(self, n_data):
-        pass
-    
-    def n_check_wire_property(self, n_mat_prop):
-        pass
+        n_geom = n_data.roots[0].children[0]    
+        nose.tools.assert_equal(n_geom.num_properties, 2)
+        self.n_check_wire_property(n_geom.properties[0])
+        self.n_check_material_property(n_geom.properties[1])
+        
+    def n_check_wire_property(self, n_wire_prop):
+        #nose.tools.assert_equal(n_wire_prop, NifFormat.NiWireframeProperty)
+        nose.tools.assert_equal(n_wire_prop.flags, 0x1)
         
         
