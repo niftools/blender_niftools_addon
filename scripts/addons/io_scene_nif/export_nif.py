@@ -4230,6 +4230,7 @@ class NifExport(NifCommon):
             if isinstance(block, NifFormat.NiWireframeProperty) \
                and block.flags == flags:
                 return block
+            
         # no wire property with given flag found, so create new one
         wireprop = self.create_block("NiWireframeProperty")
         wireprop.flags = flags
@@ -4577,8 +4578,9 @@ class NifExport(NifCommon):
             bbox.translation.z = (minx + maxx) * 0.5 + obj.location[2]
             bbox.rotation.set_identity()
             bbox.has_bounding_box = True
-            # weirdly, bounding box center (bbox.bounding_box.translation)
-            # is specified relative to the *parent* (not relative to bbox!)
+            
+            #Ninode's(bbox) internal bounding_box behaves like a seperate mesh.
+            #bounding_box center(bbox.bounding_box.translation) is relative to the bound_box
             bbox.bounding_box.translation.deepcopy(bbox.translation)
             bbox.bounding_box.rotation.set_identity()
             bbox.bounding_box.radius.x = (maxx - minx) * 0.5

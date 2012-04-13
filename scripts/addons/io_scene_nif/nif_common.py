@@ -105,6 +105,8 @@ class NifCommon:
         "Invalid", "Fixed", "Keyframed", "Debris", "Moving",
         "Critical", "Bullet", "User", "Character", "Keyframed Report"]
 
+    IMPORT_EXTRANODES = True
+
     progress_bar = 0
     """Level of the progress bar."""
 
@@ -284,7 +286,7 @@ class NifCommon:
             return "MIX"
         elif n_apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT:
             return "LIGHTEN"
-        elif n_apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT2:
+        elif n_apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT2: #used by Oblivion for parallax
             return "MULTIPLY"
         self.warning(
             "Unknown apply mode (%i) in material,"
