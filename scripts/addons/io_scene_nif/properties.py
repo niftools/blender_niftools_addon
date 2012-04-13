@@ -1,13 +1,14 @@
 import bpy
 from bpy.props import (PointerProperty, 
-                       FloatVectorProperty)
+                       FloatVectorProperty,
+                       StringProperty)
 
 class NiftoolsMaterialProps(bpy.types.PropertyGroup):
     @classmethod
     def register(cls):
         bpy.types.Material.niftools = PointerProperty(
                         name="Niftools Materials",
-                        description = "Additional setting for use with the nif format",
+                        description = "Additional material properties used by the Nif File Format",
                         type=cls,
                         )
         
@@ -24,8 +25,21 @@ class NiftoolsMaterialProps(bpy.types.PropertyGroup):
     def unregister(cls):
         del bpy.types.Material.niftools
 
+class NiftoolsObjectProps(bpy.types.PropertyGroup):
+    @classmethod
+    def register(cls):
+        bpy.types.Object.niftools = PointerProperty(
+                        name="Niftools Object Property",
+                        description = "Additional object properties used by the Nif File Format",
+                        type = cls,
+                        )
+        cls.longname = StringProperty(
+                name = 'Nif LongName')
+
 def register():
     bpy.utils.register_class(NiftoolsMaterialProps)
+    bpy.utils.register_class(NiftoolsObjectProps)
 
 def unregister():
     bpy.utils.unregister_class(NiftoolsMaterialProps)
+    bpy.utils.unregister_class(NiftoolsObjectProps)

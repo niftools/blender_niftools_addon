@@ -728,9 +728,15 @@ class NifImport(NifCommon):
 
     def import_empty(self, niBlock):
         """Creates and returns a grouping empty."""
-        shortName = self.import_name(niBlock)
-        b_empty = self.context.scene.objects.new("Empty", shortName)
-        b_empty.properties['longName'] = niBlock.name
+        shortname = self.import_name(niBlock)
+        b_empty = bpy.data.objects.new(shortname, None)
+        
+        #TODO - is longname needed???
+        longname = niBlock.name.decode()
+        b_empty.niftools.longname = longname
+        
+        self.context.scene.objects.link(b_empty)
+        
         if niBlock.name in self.bone_priorities:
             constr = b_empty.constraints.append(
                 Blender.Constraint.Type.NULL)
@@ -3604,12 +3610,14 @@ class NifImport(NifCommon):
             maxx = bbox.center.x + bbox.dimensions.x
             maxy = bbox.center.y + bbox.dimensions.y
             maxz = bbox.center.z + bbox.dimensions.z
+        
         elif isinstance(bbox, NifFormat.NiNode):
             if not bbox.has_bounding_box:
                 raise ValueError("Expected NiNode with bounding box.")
             b_mesh = bpy.data.meshes.new('Bounding Box')
-            # weirdly, bounding box center (bbox.bounding_box.translation)
-            # is specified relative to the *parent* (not relative to bbox!)
+            
+            #Ninode's(bbox) internal bounding_box behaves like a seperate mesh.
+            #bounding_box center(bbox.bounding_box.translation) is relative to the bound_box
             minx = bbox.bounding_box.translation.x - bbox.translation.x - bbox.bounding_box.radius.x
             miny = bbox.bounding_box.translation.y - bbox.translation.y - bbox.bounding_box.radius.y
             minz = bbox.bounding_box.translation.z - bbox.translation.z - bbox.bounding_box.radius.z

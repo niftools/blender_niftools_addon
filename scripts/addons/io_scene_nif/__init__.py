@@ -109,7 +109,6 @@ class NifConfig:
         IMPORT_EGMANIM = True, # create FaceGen EGM animation curves
         IMPORT_EGMANIMSCALE = 1.0, # scale of FaceGen EGM animation curves
         EXPORT_ANIMSEQUENCENAME = '', # sequence name of the kf file
-        IMPORT_EXTRANODES = True,
         EXPORT_BHKLISTSHAPE = False,
         EXPORT_OB_BSXFLAGS = 2,
         EXPORT_OB_MASS = 10.0,
