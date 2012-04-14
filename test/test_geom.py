@@ -23,9 +23,9 @@ class TestBaseGeom(SingleNif):
 
     def b_check_data(self, b_obj):
         b_mesh = b_obj.data
-        self.b_check_geom(b_obj)
+        self.b_check_geom(b_mesh)
         
-    def b_check_geom(self, b_obj):
+    def b_check_geom(self, b_mesh):
         num_triangles = len(
             [face for face in b_mesh.faces if len(face.vertices) == 3])
         num_triangles += 2 * len(
