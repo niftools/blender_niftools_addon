@@ -23,7 +23,7 @@ class TestBaseGeom(SingleNif):
 
     def b_check_data(self, b_obj):
         b_mesh = b_obj.data
-        
+        self.b_check_geom(b_obj)
         
     def b_check_geom(self, b_obj):
         num_triangles = len(
@@ -37,9 +37,9 @@ class TestBaseGeom(SingleNif):
     def n_check_data(self, n_data):
         n_geom = n_data.roots[0].children[0]
         nose.tools.assert_is_instance(n_geom, NifFormat.NiTriShape)
+        self.n_check_geom_data(n_geom)
     
     def n_check_geom_data(self, n_geom):
-        
         nose.tools.assert_equal(n_geom.data.num_vertices, 8)
         nose.tools.assert_equal(n_geom.data.num_triangles, 12)
         

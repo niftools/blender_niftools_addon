@@ -21,8 +21,7 @@ class TestBound(TestBaseGeom):
         b_obj.draw_type = 'BOUNDS'
         
         return b_obj
-    
-        
+
         #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         
 
