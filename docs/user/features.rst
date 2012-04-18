@@ -153,11 +153,46 @@ Collision
 
 .. warning::
 
-   Collisions have not actually been ported yet. This is just a stub
-   documenting how things might be implemented.
+   Collisions are in the process of being ported. This section is incomplete and will change.
 
 Example
 ~~~~~~~
+
+.. _features-example-physics:
+
+Physics Properties
+~~~~~~~~~~~~~~~~~~~~~~
+
+To indicate the physics properties for an object, switch to the **Blender Game** tab. (Default tab is **Blender Render**)
+
+#. With the collision object selected, switch to the **Physics** tab
+
+#. Click **Collision Bounds** and select **Box** as **Bounds**
+
+#. If you would like to define your own settings for havok physics, click **Use Blender Properties** and define the fields **Havok Material**, **Motion System**, **Oblivion Layer**, **Quality Type** and **Col Filter** accordingly.
+
+#. If you want the exporter to define the havok physics properties for you, make sure **Use Blender Properties** is not clicked.
+
+#. Now you can continue editing the mesh until you are ready to export. 
+
+Box Collision
+~~~~~~~~~~~~~
+
+#. :ref:`Create a single sided cube <features-example-geometry>`
+   as explained before.
+
+#. :ref:`Create another single sided cube <features-example-geometry>`
+   as explained before.
+
+#. Select the second newly created cube and rename it, like 'CollisionBox' via the Object panel
+
+#. In the Object panel, under Display, select Type and change it to **Wire**, this will make it easier to find.
+
+#. Scale the collision cube 'CollisionBox' to the size wanted.
+
+#. :ref:`Add physics to our collision cube 'CollisionBox' <features-example-physics>`.
+
+#. Now export as usual
 
 Notes
 ~~~~~
