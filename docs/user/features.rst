@@ -153,11 +153,24 @@ Collision
 
 .. warning::
 
-   Collisions have not actually been ported yet. This is just a stub
-   documenting how things might be implemented.
+   Collisions are in the process of being ported. This section is incomplete and will change.
 
 Example
 ~~~~~~~
+
+.. _features-example-collisions:
+
+#. To indicate the physics properties for an object, switch to the **Blender Game** tab. (Default tab is **Blender Render**)
+#. With the collision object selected, switch to the **Physics** tab
+#. Click **Collision Bounds** and select **Box** as **Bounds**
+#. If you would like to define your own settings for havok physics, click **Use Blender Properties**.    
+#. Define the fields **Havok Material**, **Motion System**, **Oblivion Layer**, **Quality Type** and **Col Filter** accordingly.
+#. If you want the exporter to define the havok physics properties for you, make sure **Use Blender Properties** is not clicked.
+#. Now you can continue editing the mesh until you are ready to export. 
+
+.. todo::
+   Should "Use Blender Properties" usage be reversed?
+   i.e "Use Blender Property" uses default values, else define your own. Also should that there are defined by user else user default.
 
 Notes
 ~~~~~
@@ -172,7 +185,7 @@ collision types map to the following nif types:
 ============= ======================
 blender       nif
 ============= ======================
-Box           bhkBoxShape
+:ref:`Box <feature-example-box-collison>`           bhkBoxShape
 Sphere        bhkSphereShape
 Cylinder      bhkCapsuleShape
 Capsule       bhkCapsuleShape
@@ -191,6 +204,26 @@ Triangle Mesh RootCollisionNode
 .. todo::
 
    Where do we store material, layer, quality type, motion system, etc.?
+   
+Box Collision
+~~~~~~~~~~~~~
+.. _feature-example-box-collison
+
+#. :ref:`Create a single sided cube <features-example-geometry>`
+   as explained before.
+
+#. :ref:`Create another single sided cube <features-example-geometry>`
+   as explained before.
+
+#. Select the second newly created cube and rename it, like 'CollisionBox' via the Object panel
+
+#. In the Object panel, under Display, select Type and change it to **Wire**, this will make it easier to find.
+
+#. Scale the collision cube 'CollisionBox' to the size wanted.
+
+#. :ref:`Add physics to our collision cube 'CollisionBox' <features-example-physics>`.
+
+#. Now export as usual
 
 Bounding Box
 ------------
