@@ -10,7 +10,7 @@ from test.test_geom import TestBaseGeom
 
 
 class TestBound(TestBaseGeom):
-    n_name = "boundbox/bound_box"
+    n_name = "collisions/boundbox/bound_box"
     b_name = "Bounding Box"
 
     def b_create_object(self):
@@ -41,7 +41,7 @@ class TestBound(TestBaseGeom):
 
 '''
 class TestBSBound(TestBaseGeom):
-    n_name = "boundbox/bsbound"
+    n_name = "collisions/boundbox/bsbound"
     b_name = "BSBound"
 
     def b_create_object(self):
