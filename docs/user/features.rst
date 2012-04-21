@@ -5,6 +5,8 @@ Features
 
    It would be a good habit to document every feature we have,
    and quick instructions for how to use them.
+   
+   Split this up into seperate files mimicing test framework structure.
 
 Geometry
 --------
@@ -24,17 +26,13 @@ Example
 Notes
 ~~~~~
 
-Each :class:`~bpy.types.Mesh` is exported to
-one or more :class:`~pyffi.formats.nif.NifFormat.NiTriShape`\ s.
+* Each :class:`~bpy.types.Mesh` is exported to one or more :class:`~pyffi.formats.nif.NifFormat.NiTriShape`\ s.
 
-The nif format only supports triangle based geometry,
-so beware that blender quads are exported as triangles,
-which may lead to small differences in how the geometry is rendered.
+* The nif format only supports triangle based geometry.
+* Blender quads are exported as triangles, which may lead to differences in geometry rendered.
 
-Strips (:class:`~pyffi.formats.nif.NifFormat.NiTriStrips`\ s)
-are not supported due to the fact that they are
-`unnecessary for current hardware
-<http://tomsdxfaq.blogspot.com/2005_12_01_archive.html>`_.
+* Strips (:class:`~pyffi.formats.nif.NifFormat.NiTriStrips`\ s) not supported due to the fact that they are
+`unnecessary for current hardware <http://tomsdxfaq.blogspot.com/2005_12_01_archive.html>`_.
 
 Materials
 ---------
@@ -136,11 +134,10 @@ Vertex Color
 Notes
 ~~~~~
 
-The nif format only supports a single color per vertex, whereas Blender vertex color per face vertex.
-Blender treats the vertex as if the faces had been split apart. 
-Even though they share that vertex, each of those face can have a different color for that vertex.
-Eg. A vertex in a cube is shared by four faces. 
-On export the scripts will take an average of colors. 
+* The nif format only supports a single color per vertex, whereas Blender vertex color per face vertex.
+* Blender treats the vertex as if the faces had been split apart. 
+* Eg. A vertex in a cube is shared by four faces. Even though they share that vertex, each of those face can have a different color for that vertex.
+* On export the scripts will take an average of colors. 
 
 .. warning::
    alpha values currently are not written.
@@ -182,16 +179,21 @@ tab, enable the **Collision Bounds** option, and select the desired
 **Bounds**. For Oblivion, Fallout 3, and Fallout NV, blender's
 collision types map to the following nif types:
 
-============= ======================
-blender       nif
-============= ======================
-:ref:`Box <feature-example-box-collison>`           bhkBoxShape
-Sphere        bhkSphereShape
-Cylinder      bhkCapsuleShape
-Capsule       bhkCapsuleShape
-Convex Hull   bhkConvexVerticesShape
-Triangle Mesh bhkMoppByTreeShape
-============= ======================
++--------------------------------------------+------------------------+
+| Blender                                    | Nif                    |
++============================================+========================+
+| :ref:`Box <features-example-box-collison>` | bhkBoxShape            |
++--------------------------------------------+------------------------+
+| Sphere                                     | bhkSphereShape         |
++--------------------------------------------+------------------------+
+| Cylinder                                   | bhkCapsuleShape        |
++--------------------------------------------+------------------------+
+| Capsule                                    | bhkCapsuleShape        |
++--------------------------------------------+------------------------+
+| Convex Hull                                | bhkConvexVerticesShape |
++--------------------------------------------+------------------------+
+| Triangle Mesh                              | bhkMoppByTreeShape     |
++--------------------------------------------+------------------------+
 
 For Morrowind, we have:
 
@@ -207,7 +209,7 @@ Triangle Mesh RootCollisionNode
    
 Box Collision
 ~~~~~~~~~~~~~
-.. _feature-example-box-collison
+.. _features-example-box-collison:
 
 #. :ref:`Create a single sided cube <features-example-geometry>`
    as explained before.
@@ -221,9 +223,122 @@ Box Collision
 
 #. Scale the collision cube 'CollisionBox' to the size wanted.
 
-#. :ref:`Add physics to our collision cube 'CollisionBox' <features-example-physics>`.
+#. :ref:`Add physics to our collision cube 'CollisionBox' <features-example-collisions>`.
 
-#. Now export as usual
+Box Collision Notes
++++++++++++++++++++
+
+Test
+
+Sphere Collisions
+~~~~~~~~~~~~~~~~~
+
+.. _features-examples-sphere-collision:
+
+#. :ref:`Create a single sided cube <features-example-geometry>`
+   as explained before.
+
+#. :ref:`Create another single sided cube <features-example-geometry>`
+   as explained before.
+
+#. Select the second newly created cube and rename it, like 'CollisionBox' via the Object panel
+
+#. In the Object panel, under Display, select Type and change it to **Wire**, this will make it easier to find.
+
+#. Scale the collision cube 'CollisionBox' to the size wanted.
+
+#. :ref:`Add physics to our collision cube 'CollisionBox' <features-example-collisions>`.
+
+Sphere Collision Notes
+++++++++++++++++++++++
+
+Cylinder Collisions
+~~~~~~~~~~~~~~~~~~~
+
+.. _features-examples-cylinder-collision:
+
+#. :ref:`Create a single sided cube <features-example-geometry>`
+   as explained before.
+
+#. :ref:`Create another single sided cube <features-example-geometry>`
+   as explained before.
+
+#. Select the second newly created cube and rename it, like 'CollisionBox' via the Object panel
+
+#. In the Object panel, under Display, select Type and change it to **Wire**, this will make it easier to find.
+
+#. Scale the collision cube 'CollisionBox' to the size wanted.
+
+#. :ref:`Add physics to our collision cube 'CollisionBox' <features-example-collisions>`.
+
+Cylinder Collision Notes
+++++++++++++++++++++++++
+
+Capsule Collisions
+~~~~~~~~~~~~~~~~~~
+
+.. _features-examples-capsule-collision:
+
+#. :ref:`Create a single sided cube <features-example-geometry>`
+   as explained before.
+
+#. :ref:`Create another single sided cube <features-example-geometry>`
+   as explained before.
+
+#. Select the second newly created cube and rename it, like 'CollisionBox' via the Object panel
+
+#. In the Object panel, under Display, select Type and change it to **Wire**, this will make it easier to find.
+
+#. Scale the collision cube 'CollisionBox' to the size wanted.
+
+#. :ref:`Add physics to our collision cube 'CollisionBox' <features-example-collisions>`.
+
+Capsule Collision Notes
++++++++++++++++++++++++
+
+Convex Hull Collisions
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. _features-examples-convex-hull-collision:
+
+#. :ref:`Create a single sided cube <features-example-geometry>`
+   as explained before.
+
+#. :ref:`Create another single sided cube <features-example-geometry>`
+   as explained before.
+
+#. Select the second newly created cube and rename it, like 'CollisionBox' via the Object panel
+
+#. In the Object panel, under Display, select Type and change it to **Wire**, this will make it easier to find.
+
+#. Scale the collision cube 'CollisionBox' to the size wanted.
+
+#. :ref:`Add physics to our collision cube 'CollisionBox' <features-example-collisions>`.
+
+Convex Hull Collision Notes
++++++++++++++++++++++++++++
+
+Triangle Mesh Collisions
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. _features-examples-triangle-mesh-collision:
+
+#. :ref:`Create a single sided cube <features-example-geometry>`
+   as explained before.
+
+#. :ref:`Create another single sided cube <features-example-geometry>`
+   as explained before.
+
+#. Select the second newly created cube and rename it, like 'CollisionBox' via the Object panel
+
+#. In the Object panel, under Display, select Type and change it to **Wire**, this will make it easier to find.
+
+#. Scale the collision cube 'CollisionBox' to the size wanted.
+
+#. :ref:`Add physics to our collision cube 'CollisionBox' <features-example-collisions>`.
+
+Triangle Mesh Collision Notes
++++++++++++++++++++++++++++++
 
 Bounding Box
 ------------

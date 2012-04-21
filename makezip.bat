@@ -2,7 +2,6 @@ set VERSION=2.6.2
 set NAME=blender_nif_scripts
 set FILES=AUTHORS.rst CHANGELOG.rst LICENSE.rst README.rst install.sh install.bat scripts/ docs/_build/html/
 
-# update documentation
 pushd docs
 make clean
 make html
