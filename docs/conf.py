@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Blender NIF Scripts documentation build configuration file, created by
+# Blender NIF Plugin documentation build configuration file, created by
 # sphinx-quickstart on Sat Jul 23 19:47:06 2011.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -41,8 +41,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'Blender NIF Scripts'
-copyright = '2011, Niftools'
+project = 'Blender NIF Plugin'
+copyright = '2012, Niftools'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -166,7 +166,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'BlenderNIFScriptsdoc'
+htmlhelp_basename = 'BlenderNIFPlugindoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -185,7 +185,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'BlenderNIFScripts.tex', 'Blender NIF Scripts Documentation',
+  ('index', 'BlenderNIFPlugin.tex', 'Blender NIF Plugin Documentation',
    'Amorilia, Neomonkeus', 'manual'),
 ]
 
@@ -215,7 +215,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'blendernifscripts', 'Blender NIF Scripts Documentation',
+    ('index', 'blendernifplugin', 'Blender NIF Plugin Documentation',
      ['Amorilia, Neomonkeus'], 1)
 ]
 
@@ -229,8 +229,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'BlenderNIFScripts', 'Blender NIF Scripts Documentation', 'Amorilia, Neomonkeus',
-   'BlenderNIFScripts', 'Blender Import/Export utility for the NetImmersion File Formant.', 'Miscellaneous'),
+  ('index', 'BlenderNIFPlugin', 'Blender NIF Plugin Documentation', 'Amorilia, Neomonkeus',
+   'BlenderNIFPlugin', 'Blender Import/Export utility for the NetImmersion File Formant.', 'Miscellaneous'),
 ]
 
 # Documents to append as an appendix to all manuals.

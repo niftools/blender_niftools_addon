@@ -12,5 +12,5 @@ Contents:
 
    install
    tutorials
-   features
+   features/index
    support
