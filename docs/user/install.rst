@@ -118,20 +118,20 @@ Fedora
 Register the Addon
 ------------------
 
-1. Start blender.
+# Start blender.
 
-2. Go to: **File > User Preferences > Add-Ons**.
+# Go to: **File > User Preferences > Add-Ons**.
 
-3. Under **Categories** (left), select **Import-Export**.
+# Under **Categories** (left), select **Import-Export**.
 
-4. Tick the empty box next to **Import-Export: NetImmerse/Gambryo nif format**.
+# Tick the empty box next to **Import-Export: NetImmerse/Gambryo nif format**.
    You may have to scroll down a bit first.
 
-5. Close the **Blender User Preferences** window.
+# Close the **Blender User Preferences** window.
 
 6. The nif importer and exporter should now show under
    **File > Import** and **File > Export**.
 
-7. Do: **File > Save User Settings** (unless you enjoy enabling the
+# Do: **File > Save User Settings** (unless you enjoy enabling the
    addon every time when blender starts :-) ).
 

@@ -94,7 +94,7 @@ To get the code, run in a terminal (linux) or in git bash (windows)::
    cd ~
    mkdir -p workspace
    cd workspace
-   git clone git@github.com:<username>/blender_nif_scripts.git
+   git clone --recursive git@github.com:<username>/blender_nif_scripts.git
    cd blender_nif_scripts
    git remote add amorilia git://github.com/amorilia/blender_nif_scripts.git
    git remote add neomonkeus git://github.com/neomonkeus/blender_nif_scripts.git
