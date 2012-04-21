@@ -11,7 +11,7 @@ import os
 
 import io_scene_nif.export_nif
 from pyffi.formats.nif import NifFormat
-from test.test_geom import TestBaseUV
+from test.test_geometry import TestBaseUV
 
 class TestMaterialProperty(TestBaseUV):
     n_name = "property/material/base_material"
