@@ -6,10 +6,10 @@ import os
 
 import io_scene_nif.export_nif
 from pyffi.formats.nif import NifFormat
-from test.test_geom import TestBaseGeom
+from test.test_geometry import TestBaseGeometry
 
-class TestBaseVertexColor(TestBaseGeom):
-    n_name = "geom/vertexcolor/base_vertex_color"
+class TestBaseVertexColor(TestBaseGeometry):
+    n_name = "geometry/vertexcolor/base_vertex_color"
     b_name = "Cube"
     
     #vertex color specific stuff
@@ -51,7 +51,7 @@ class TestBaseVertexColor(TestBaseGeom):
     
         
     def b_create_object(self):
-        b_obj = TestBaseGeom.b_create_object(self)
+        b_obj = TestBaseGeometry.b_create_object(self)
         
         #we like working with tris's, quad faces are silly, just like yours :P
         bpy.ops.object.editmode_toggle()
@@ -75,7 +75,7 @@ class TestBaseVertexColor(TestBaseGeom):
         return b_obj
         
     def b_check_object(self, b_obj):
-        TestBaseGeom.b_check_object(self, b_obj)
+        TestBaseGeometry.b_check_object(self, b_obj)
         b_mesh = b_obj.data
         nose.tools.assert_equal(len(b_mesh.vertex_colors), 1)
         nose.tools.assert_equal(b_mesh.vertex_colors[0].name, 'VertexColor')
@@ -91,7 +91,7 @@ class TestBaseVertexColor(TestBaseGeom):
             nose.tools.assert_equal(b_color.b == self.vertcol[f_index][2], True)
     
     def n_check_data(self, n_data):
-        TestBaseGeom.n_check_data(self, n_data)
+        TestBaseGeometry.n_check_data(self, n_data)
         n_geom = n_data.roots[0].children[0]
         nose.tools.assert_equal(n_geom.data.has_vertex_colors, True)
         nose.tools.assert_equal(len(n_geom.data.vertex_colors), 8)
