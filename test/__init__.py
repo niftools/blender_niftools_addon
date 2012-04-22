@@ -12,10 +12,16 @@ def clear_bpy_data():
     def clear_bpy_prop_collection(collection):
         for elem in collection[:]:
             collection.remove(elem)
-     
+    
+    def clear_users(collection):
+        for elem in collection[:]:
+            collection[elem.name].user_clear()
+            collection.remove(collection[elem.name])
+    
     # unlink objects
     for b_obj in bpy.data.objects[:]:
         bpy.context.scene.objects.unlink(b_obj)
+    
     # remove all data
     for collection in (
         "actions", "objects", "meshes", "armatures", "lamps", "lattices",
@@ -23,10 +29,14 @@ def clear_bpy_data():
         "cameras", "grease_pencil", "groups", "libraries",
         "node_groups",
         "materials",
-        # can't be removed for reasons not understood so far
-        #"brushes", "textures", "images",
         ):
         clear_bpy_prop_collection(getattr(bpy.data, collection))
+    
+    #need to remove any users first    
+    for collection in (
+        "brushes", "textures", "images",
+        ):
+        clear_users(getattr(bpy.data, collection))
 
 def setup():
     """Enables the nif scripts addon, so all tests can use it."""
