@@ -1,7 +1,5 @@
 """Export and import textured meshes."""
 
-#    Add Emissive Color to UI - Immediate Attention!
-
 #    TODO_material - Find any nifs with non-default ambient, diffuse;
 #    TODO_3.0 - Create per material values: niftools.ambient, niftools.emissive.  
 

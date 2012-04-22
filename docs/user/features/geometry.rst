@@ -1,5 +1,6 @@
-Geometry
---------
+
+Mesh Geometry
+-------------
 
 .. _features-example-geometry:
 
@@ -9,8 +10,11 @@ Example
 #. Start blender with an empty scene.
 #. Add a cube primitive: **Add -> Mesh -> Cube**.
 #. Select whether the mesh should be Double-sided:
-   in the *Properties* panel, in the *Object Data* tab,
-   untick **Double Sided**.
+   
+   * In the **Properties** panel, in the *Object Data* tab,
+   * untick **Double Sided**.
+   * This will add a :class:`~pyffi.formats.nif.NifFormat.NiStencilProperty`, see :ref:`Properties - Stencil Property <properties-material>` for more info.
+
 #. Export the file: **File -> Export -> NetImmerse/Gamebryo**.
 
 Notes
@@ -22,7 +26,7 @@ Notes
 * Strips (:class:`~pyffi.formats.nif.NifFormat.NiTriStrips`) are available but developer support will be limited as they are `unnecessary for current hardware <http://tomsdxfaq.blogspot.com/2005_12_01_archive.html>`_.
 
 Vertex Color
-------------
+++++++++++++
 
 .. _features-example-vertexcolor:
 
@@ -41,7 +45,7 @@ Notes
 * On export the scripts will take an average of colors. 
 
 .. warning::
-   alpha layer has been added but currently values are not written due to known issues.
+   alpha layer support has been added but enabled due to known issues with general vertex color exporting.
 
 .. todo::
    Write up workflow for alpha layer once implemented.

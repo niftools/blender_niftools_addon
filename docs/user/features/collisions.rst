@@ -35,29 +35,29 @@ We need to indicate that a mesh is to be exported as a collision object, rather 
 
 For Oblivion, Fallout 3, and Fallout NV; Blender's Collision types map to the following Nif types:
 
-+-----------------------------+------------------------+
-| Blender                     | Nif                    |
-+=============================+========================+
-| `Box Collision`_            | bhkBoxShape            |
-+-----------------------------+------------------------+
-| `Sphere Collisions`_        | bhkSphereShape         |
-+-----------------------------+------------------------+
-| `Cylinder Collisions`_      | bhkCylinderShape       |
-+-----------------------------+------------------------+
-| `Capsule Collisions`_       | bhkCapsuleShape        |
-+-----------------------------+------------------------+
-| `Convex Hull Collisions`_   | bhkConvexVerticesShape |
-+-----------------------------+------------------------+
-| `Triangle Mesh Collisions`_ | bhkMoppByTreeShape     |
-+-----------------------------+------------------------+
++----------------------------+------------------------+
+| Blender                    | Nif                    |
++============================+========================+
+| `Box Collision`_           | bhkBoxShape            |
++----------------------------+------------------------+
+| `Sphere Collision`_        | bhkSphereShape         |
++----------------------------+------------------------+
+| `Cylinder Collision`_      | bhkCylinderShape       |
++----------------------------+------------------------+
+| `Capsule Collision`_       | bhkCapsuleShape        |
++----------------------------+------------------------+
+| `Convex Hull Collision`_   | bhkConvexVerticesShape |
++----------------------------+------------------------+
+| `Triangle Mesh Collision`_ | bhkMoppByTreeShape     |
++----------------------------+------------------------+
 
 For Morrowind, we have:
 
-+-----------------------------+-------------------+ 
-| Blender                     | Nif               |
-+=============================+===================+
-| `Triangle Mesh Collisions`_ | RootCollisionNode |
-+-----------------------------+-------------------+
++----------------------------+-------------------+ 
+| Blender                    | Nif               |
++============================+===================+
+| `Triangle Mesh Collision`_ | RootCollisionNode |
++----------------------------+-------------------+
 
 .. todo::
 
@@ -86,8 +86,8 @@ Box Collision Notes
 
 Test
 
-Sphere Collisions
-~~~~~~~~~~~~~~~~~
+Sphere Collision
+~~~~~~~~~~~~~~~~
 
 .. _example-sphere-collision:
 
@@ -108,8 +108,8 @@ Sphere Collisions
 Sphere Collision Notes
 ++++++++++++++++++++++
 
-Cylinder Collisions
-~~~~~~~~~~~~~~~~~~~
+Cylinder Collision
+~~~~~~~~~~~~~~~~~~
 
 .. _example-cylinder-collision:
 
@@ -130,8 +130,8 @@ Cylinder Collisions
 Cylinder Collision Notes
 ++++++++++++++++++++++++
 
-Capsule Collisions
-~~~~~~~~~~~~~~~~~~
+Capsule Collision
+~~~~~~~~~~~~~~~~~
 
 .. _example-capsule-collision:
 
@@ -152,8 +152,10 @@ Capsule Collisions
 Capsule Collision Notes
 +++++++++++++++++++++++
 
-Convex Hull Collisions
-~~~~~~~~~~~~~~~~~~~~~~
+Currently there is no visualisation in Blender for Capsule Collisions.
+
+Convex Hull Collision
+~~~~~~~~~~~~~~~~~~~~~
 
 .. _example-convex-hull-collision:
 
@@ -174,8 +176,8 @@ Convex Hull Collisions
 Convex Hull Collision Notes
 +++++++++++++++++++++++++++
 
-Triangle Mesh Collisions
-~~~~~~~~~~~~~~~~~~~~~~~~
+Triangle Mesh Collision
+~~~~~~~~~~~~~~~~~~~~~~~
 
 .. _example-triangle-mesh-collision:
 
