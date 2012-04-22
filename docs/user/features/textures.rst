@@ -7,7 +7,7 @@ Example
 ~~~~~~~
 
 #. :ref:`Create a single sided cube <features-example-geometry>`.
-#. :ref:`Add a material <features-example-material>`.
+#. :ref:`Add a material <properties-material>`.
 #. In the *Properties* panel, in the *Texture* tab,
    click **New** to create a new material texture slot.
 #. Under **Type**, select **Image or Movie**.

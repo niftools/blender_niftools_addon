@@ -39,8 +39,7 @@ Naming Conventions
   * ``b_vertex`` for a blender :class:`bpy.types.MeshVertex`
   * ``b_vector`` for a blender :class:`mathutils.Vector`
   * ``b_obj`` for a blender :class:`bpy.types.Object`
-  * ``n_obj`` for a generic
-    :class:`pyffi.formats.nif.NifFormat.NiObject`
+  * ``n_obj`` for a generic :class:`pyffi.formats.nif.NifFormat.NiObject`
   * ``n_geom`` for a :class:`pyffi.formats.nif.NifFormat.NiGeometry`
 
 .. todo::
