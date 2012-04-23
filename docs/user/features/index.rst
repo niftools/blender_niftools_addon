@@ -9,7 +9,7 @@ Features
    Split this up into seperate files mimicing test framework structure.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    
    collisions
    geometry

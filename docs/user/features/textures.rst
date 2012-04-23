@@ -1,12 +1,12 @@
 Textures
 --------
 
-.. _features-example-texture:
+.. _textures:
 
 Example
 ~~~~~~~
 
-#. :ref:`Create a single sided cube <features-example-geometry>`.
+#. :ref:`Create a mesh-object <geometry-mesh>`.
 #. :ref:`Add a material <properties-material>`.
 #. In the *Properties* panel, in the *Texture* tab,
    click **New** to create a new material texture slot.
