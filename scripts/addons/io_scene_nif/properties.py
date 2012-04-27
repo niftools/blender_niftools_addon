@@ -3,7 +3,8 @@ from bpy.props import (PointerProperty,
                        FloatVectorProperty,
                        StringProperty,
                        IntProperty,
-                       BoolProperty
+                       BoolProperty,
+                       EnumProperty
                        )
 
 class NiftoolsMaterialProps(bpy.types.PropertyGroup):
@@ -87,7 +88,11 @@ class NiftoolsCollisionProps(bpy.types.PropertyGroup):
                                    description = "Controls animation and collision",
                                    default = 2 #2 = Bit 1, enable collision
                                    )
-        
+        cls.upb = StringProperty(
+                                 name = "UPB",
+                                 description = "Commands for an optimizer?",
+                                 default = "Mass = 0.000000 Ellasticity = 0.300000 Friction = 0.300000 Simulation_Geometry = 2 Proxy_Geometry = <None> Use_Display_Proxy = 0 Display_Children = 1 Disable_Collisions = 0 Inactive = 0 Display_Proxy = <None> Collision_Groups = 1 Unyielding = 1 "
+                                 )
         
 
 def register():

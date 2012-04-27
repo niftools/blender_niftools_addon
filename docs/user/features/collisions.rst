@@ -74,12 +74,9 @@ Sphere Collision
 #. :ref:`Create a mesh geometry <geometry-mesh>`
    as explained before.
 
-#. :ref:`Create another single sided cube <geometry-mesh>`
-   as explained before.
+#. Create another mesh-object to represent our collision shape, a primitive sphere(prim-sphere) is highly recommended.
 
-#. Select the second newly created cube and rename it, like 'CollisionBox' via the Object panel
-
-#. In the Object panel, under Display, select Type and change it to **Wire**, this will make it easier to find.
+#. Rename it to something more appropriate, like 'CollisionSphere' via the Object panel
 
 #. Scale the collision cube 'CollisionBox' to the size wanted.
 
@@ -164,14 +161,11 @@ Triangle Mesh Collision
 #. :ref:`Create a single sided cube <geometry-mesh>`
    as explained before.
 
-#. :ref:`Create another single sided cube <geometry-mesh>`
-   as explained before.
+#. Create another mesh-object to represent our collision shape, a primitive sphere(prim-sphere) is highly recommended.
 
-#. Select the second newly created cube and rename it, like 'CollisionBox' via the Object panel
+#. Select the newly created second polyheadron and rename it something collision related, like 'CollisionPoly' via the Object panel.
 
-#. In the Object panel, under Display, select Type and change it to **Wire**, this will make it easier to find.
-
-#. Scale the collision cube 'CollisionBox' to the size wanted.
+#. Scale the collision cube 'CollisionPoly' to the size wanted.
 
 #. :ref:`Add physics to our collision cube 'CollisionBox' <collison-settings>`.
 

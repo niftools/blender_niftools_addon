@@ -319,7 +319,16 @@ class NifImport(NifCommon):
                     self.warning(
                         "Unsupported collision structure under node %s"
                         % root_block.name)
-                self.import_bhk_shape(bhk_body)
+                for n_extra in root_block.get_extra_datas():
+                    if isinstance(n_extra, NifFormat.BSXFlags):
+                        #get bsx flags so we can attach it to collision object
+                        bsx_flags = self.import_bsx_flags(n_extra)
+                    elif isinstance(n_extra, NifFormat.NiStringExtraData):
+                        if n_extra.name == "UPB":
+                            upbflags = self.import_upb(n_extra)
+                        else:
+                            upbflags = "Mass = 0.000000 Ellasticity = 0.300000 Friction = 0.300000 Simulation_Geometry = 2 Proxy_Geometry = <None> Use_Display_Proxy = 0 Display_Children = 1 Disable_Collisions = 0 Inactive = 0 Display_Proxy = <None> Collision_Groups = 1 Unyielding = 1"
+                self.import_bhk_shape(bhk_body, upbflags, bsx_flags)
             # process bounding box
             for n_extra in root_block.get_extra_datas():
                 if isinstance(n_extra, NifFormat.BSBound):
@@ -1972,7 +1981,7 @@ class NifImport(NifCommon):
 
         if group_mesh:
             b_mesh = group_mesh
-            b_meshData = group_mesh.getData(mesh=True)
+            b_meshData = group_mesh.data
         else:
             # Mesh name -> must be unique, so tag it if needed
             b_name = self.import_name(niBlock)
@@ -2161,13 +2170,13 @@ class NifImport(NifCommon):
                 v_map[i] = b_v_index # NIF vertex i maps to blender vertex b_v_index
                 # add the vertex
                 if applytransform:
-                    v = mathutils.Vector(v.x, v.y, v.z)
-                    v *= transform
+                    v = mathutils.Vector([v.x, v.y, v.z])
+                    v  = v * transform
                     b_meshData.vertices.add(1)
-                    b_meshData.vertices[-1].co = (v.x, v.y, v.z)
+                    b_meshData.vertices[-1].co = [v.x, v.y, v.z]
                 else:
                     b_meshData.vertices.add(1)
-                    b_meshData.vertices[-1].co = (v.x, v.y, v.z)
+                    b_meshData.vertices[-1].co = [v.x, v.y, v.z]
                 # adds normal info if present (Blender recalculates these when
                 # switching between edit mode and object mode, handled further)
                 #if n_norms:
@@ -2969,7 +2978,17 @@ class NifImport(NifCommon):
             
         Blender.Set('curframe', 1)
 
-    def import_bhk_shape(self, bhkshape):
+    def import_bsx_flags(self, bsxflags):
+        """Import BSXFlags node"""
+        bsx = bsxflags.integer_data
+        return bsx
+
+    def import_upb(self, upb):
+        """Import UPB optimizer"""
+        upb_string = upb.string_data
+        return upb_string
+
+    def import_bhk_shape(self, bhkshape, upbflags="", bsxflags=2):
         """Import an oblivion collision shape as list of blender meshes."""
         if isinstance(bhkshape, NifFormat.bhkConvexVerticesShape):
             # find vertices (and fix scale)
@@ -3021,7 +3040,7 @@ class NifImport(NifCommon):
             # apply transform
             for ob in collision_objs:
                 ob.matrix_local = ob.matrix_local * transform
-                ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
+                ob.nifcollision.havok_material = self.HAVOK_MATERIAL[bhkshape.material]
             # and return a list of transformed collision shapes
             return collision_objs
 
@@ -3054,10 +3073,12 @@ class NifImport(NifCommon):
                 if bhkshape.mass > 0.0001:
                     # for physics emulation
                     # (mass 0 results in issues with simulation)
-                    ob.mass = bhkshape.mass / len(collision_objs)
+                    ob.game.mass = bhkshape.mass / len(collision_objs)
                 ob.nifcollision.oblivion_layer = self.OB_LAYER[bhkshape.layer]
                 ob.nifcollision.quality_type = self.QUALITY_TYPE[bhkshape.quality_type]
                 ob.nifcollision.motion_system = self.MOTION_SYS[bhkshape.motion_system]
+                ob.nifcollision.bsxFlags = bsxflags
+                ob.nifcollision.upb = upbflags
                 # note: also imported as rbMass, but hard to find by users
                 # so we import it as a property, and this is also what will
                 # be re-exported
@@ -3119,25 +3140,38 @@ class NifImport(NifCommon):
         elif isinstance(bhkshape, NifFormat.bhkSphereShape):
             minx = miny = minz = -bhkshape.radius * 7
             maxx = maxy = maxz = +bhkshape.radius * 7
-            me = Blender.Mesh.New('sphere')
-            for x in [minx, maxx]:
-                for y in [miny, maxy]:
-                    for z in [minz, maxz]:
-                        me.vertices.extend(x,y,z)
-            me.faces.extend(
-                [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
+            
+            me = bpy.data.meshes.new('sphere')
+            vert_list = {}
+            vert_index = 0
+    
+            for x in [minx,maxx]:
+                for y in [miny,maxy]:
+                    for z in [minz,maxz]:
+                        me.vertices.add(1)
+                        me.vertices[-1].co = (x,y,z)
+                        vert_list[vert_index] = [x,y,z]
+                        vert_index += 1
 
+            faces = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]]
+            face_index = 0
+
+            for x in range(len(faces)):
+                me.faces.add(1)
+                me.faces[-1].vertices
+            
             # link box to scene and set transform
-            ob = self.context.scene.objects.new(me, 'sphere')
+            obj = bpy.data.objects.new('sphere',me)
+            bpy.context.scene.objects.link(obj)
 
             # set bounds type
-            ob.draw_type = 'BOUNDS'
-            ob.draw_bounds_type = 'SPHERE'
-            ob.game.use_collision_bounds = True
-            ob.game.collision_bounds_type = 'SPHERE'
-            ob.game.radius = maxx
-            ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
-            return [ ob ]
+            obj.draw_type = 'BOUNDS'
+            obj.draw_bounds_type = 'SPHERE'
+            obj.game.use_collision_bounds = True
+            obj.game.collision_bounds_type = 'SPHERE'
+            obj.game.radius = bhkshape.radius * 14
+            obj.nifcollision.havok_material = self.HAVOK_MATERIAL[bhkshape.material]
+            return [ obj ]
 
         elif isinstance(bhkshape, NifFormat.bhkCapsuleShape):
             # create capsule mesh
@@ -3205,18 +3239,27 @@ class NifImport(NifCommon):
                 # fallout 3 stores them in the data
                 subshapes = bhkshape.data.sub_shapes
             for subshape_num, subshape in enumerate(subshapes):
-                me = Blender.Mesh.New('poly%i' % subshape_num)
+                me = bpy.data.meshes.new('poly%i' % subshape_num)
+                vert_list = {}
+                vert_index = 0
+
                 for vert_index in range(vertex_offset,
                                         vertex_offset + subshape.num_vertices):
                     vert = bhkshape.data.vertices[vert_index]
-                    me.vertices.extend(vert.x * 7, vert.y * 7, vert.z * 7)
+                    me.vertices.add(1)
+                    me.vertices[-1].co = (vert.x * 7, vert.y * 7, vert.z * 7)
+                    vert_list[vert_index] = [vert.x, vert.y, vert.z]
+                    vert_index += 1
+                    
                 for hktriangle in bhkshape.data.triangles:
                     if ((vertex_offset <= hktriangle.triangle.v_1)
                         and (hktriangle.triangle.v_1
                              < vertex_offset + subshape.num_vertices)):
-                        me.faces.extend(hktriangle.triangle.v_1 - vertex_offset,
-                                        hktriangle.triangle.v_2 - vertex_offset,
-                                        hktriangle.triangle.v_3 - vertex_offset)
+                        me.faces.add(1)
+                        me.faces[-1].vertices = [
+                                                 hktriangle.triangle.v_1 - vertex_offset,
+                                                 hktriangle.triangle.v_2 - vertex_offset,
+                                                 hktriangle.triangle.v_3 - vertex_offset]
                     else:
                         continue
                     # check face normal
@@ -3241,31 +3284,31 @@ class NifImport(NifCommon):
                                                me.faces[-1].vertices[2] )
 
                 # link mesh to scene and set transform
-                ob = self.context.scene.objects.new(me, 'poly%i' % subshape_num)
+                obj = bpy.data.objects.new('poly%i' % subshape_num, me)
+                bpy.context.scene.objects.link(obj)
 
                 # set bounds type
-                ob.draw_type = 'BOUNDS'
-                ob.draw_bounds_type = 'POLYHEDERON'
-                ob.show_wire = True
-                ob.game.use_collision_bounds = True
-                ob.game.collision_bounds_type = 'TRIANGLE_MESH'
+                obj.draw_type = 'WIRE'
+                obj.game.use_collision_bounds = True
+                obj.game.collision_bounds_type = 'TRIANGLE_MESH'
                 # radius: quick estimate
-                ob.game.radius = min(vert.co.length for vert in me.vertices)
+                obj.game.radius = min(vert.co.length for vert in me.vertices)
                 # set material
-                ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[subshape.material], "STRING")
+                obj.nifcollision.havok_material = self.HAVOK_MATERIAL[subshape.material]
 
                 # also remove duplicate vertices
                 numverts = len(me.vertices)
                 # 0.005 = 1/200
-                numdel = me.remDoubles(0.005)
-                if numdel:
+                #bpy.ops.object.editmode_toggle()
+                #bpy.ops.mesh.remove_doubles(limit=0.005)
+                """ if numdel:
                     self.info(
                         "Removed %i duplicate vertices"
                         " (out of %i) from collision mesh"
                         % (numdel, numverts))
-
+                """
                 vertex_offset += subshape.num_vertices
-                hk_objects.append(ob)
+                hk_objects.append(obj)
 
             return hk_objects
 
