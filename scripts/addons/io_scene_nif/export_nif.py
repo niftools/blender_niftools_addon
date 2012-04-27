@@ -3543,15 +3543,15 @@ class NifExport(NifCommon):
         coll_ispacked = (obj.game.collision_bounds_type == 'TRIANGLE_MESH')
 
         # find physics properties/defaults
-        material = self.EXPORT_OB_MATERIAL
-        layer = self.EXPORT_OB_LAYER
-        motion_system = self.EXPORT_OB_MOTIONSYSTEM
-        quality_type = self.EXPORT_OB_QUALITYTYPE
+        material = obj.nifcollision.havok_material
+        layer = obj.nifcollision.oblivion_layer
+        motion_system = obj.nifcollision.motion_system
+        quality_type = obj.nifcollision.quality_type
         mass = 1.0 # will be fixed later
-        col_filter = 0
+        col_filter = obj.nifcollision.col_filter
         # copy physics properties from Blender properties, if they exist,
         # unless forcing override
-        if not self.EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES:
+        if not obj.nifcollision.use_blender_properties:
             for prop in obj.getAllProperties():
                 if prop.name == 'HavokMaterial':
                     if prop.type == "STRING":
@@ -3607,7 +3607,7 @@ class NifExport(NifCommon):
         # bhkCollisionObject -> bhkRigidBody
         if not parent_block.collision_object:
             # note: collision settings are taken from lowerclasschair01.nif
-            if self.EXPORT_OB_LAYER == NifFormat.OblivionLayer.OL_BIPED:
+            if obj.nifcollision.oblivion_layer == NifFormat.OblivionLayer.OL_BIPED:
                 # special collision object for creatures
                 colobj = self.create_block("bhkBlendCollisionObject", obj)
                 colobj.flags = 9
@@ -3631,6 +3631,7 @@ class NifExport(NifCommon):
                 else:
                     # in all other cases this seems to be enough
                     colobj.flags = 1
+                    
             parent_block.collision_object = colobj
             colobj.target = parent_block
             colbody = self.create_block("bhkRigidBody", obj)
@@ -3671,7 +3672,7 @@ class NifExport(NifCommon):
         if coll_ispacked:
             self.export_collision_packed(obj, colbody, layer, material)
         else:
-            if self.EXPORT_BHKLISTSHAPE:
+            if obj.nifcollision.export_bhklist:
                 self.export_collision_list(obj, colbody, layer, material)
             else:
                 self.export_collision_single(obj, colbody, layer, material)
@@ -3787,12 +3788,14 @@ class NifExport(NifCommon):
             self.warning(
                 "Skipping collision object %s without vertices." % obj)
             return None
-        minx = min([vert[0] for vert in obj.data.vertices])
-        miny = min([vert[1] for vert in obj.data.vertices])
-        minz = min([vert[2] for vert in obj.data.vertices])
-        maxx = max([vert[0] for vert in obj.data.vertices])
-        maxy = max([vert[1] for vert in obj.data.vertices])
-        maxz = max([vert[2] for vert in obj.data.vertices])
+        b_vertlist = [vert.co for vert in obj.data.vertices]
+        
+        minx = min([b_vert[0] for b_vert in b_vertlist])
+        miny = min([b_vert[1] for b_vert in b_vertlist])
+        minz = min([b_vert[2] for b_vert in b_vertlist])
+        maxx = max([b_vert[0] for b_vert in b_vertlist])
+        maxy = max([b_vert[1] for b_vert in b_vertlist])
+        maxz = max([b_vert[2] for b_vert in b_vertlist])
 
         if obj.game.collision_bounds_type in {'BOX', 'SPHERE'}:
             # note: collision settings are taken from lowerclasschair01.nif
@@ -3811,7 +3814,7 @@ class NifExport(NifCommon):
                 self.get_object_matrix(obj, 'localspace').as_list())
             # the translation part must point to the center of the data
             # so calculate the center in local coordinates
-            center = mathutils.Vector((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0)
+            center = mathutils.Vector(((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0))
             # and transform it to global coordinates
             center *= hktf
             hktf[3][0] = center[0]
