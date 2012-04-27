@@ -2389,7 +2389,7 @@ class NifExport(NifCommon):
             if len(mesh_mats) > 1:
                 # multimaterial meshes: add material index
                 # (Morrowind's child naming convention)
-                trishape.name += " %i"%materialIndex
+                trishape.name += " %i" % materialIndex
             trishape.name = self.get_full_name(trishape.name.decode()).encode()
             
             #Trishape Flags...
@@ -3492,6 +3492,27 @@ class NifExport(NifCommon):
         self.blocks[block] = b_obj
         return block
 
+    def export_bsx_upb_flags(self, obj, parent_block):        
+        """Gets BSXFlags prop and creates BSXFlags node
+        
+        @param obj: The blender Object
+        @param parent_block: The nif parent block
+        """
+        
+        if not obj.nifcollision.bsxFlags or not obj.nifcollision.upb:
+            return
+        
+        bsxNode = self.create_block("BSXFlags", obj)
+        bsxNode.name = "BSX"
+        bsxNode.integer_data = obj.nifcollision.bsxFlags
+        parent_block.add_extra_data(bsxNode)
+
+        upbNode = self.create_block("NiStringExtraData", obj)
+        upbNode.name = "UPB"
+        upbNode.string_data = obj.nifcollision.upb
+        parent_block.add_extra_data(upbNode)
+
+
     def export_collision(self, obj, parent_block):
         """Main function for adding collision object obj to a node.""" 
         if self.properties.game == 'MORROWIND':
@@ -3549,6 +3570,10 @@ class NifExport(NifCommon):
         quality_type = obj.nifcollision.quality_type
         mass = 1.0 # will be fixed later
         col_filter = obj.nifcollision.col_filter
+        
+        #export bsxFlags
+        self.export_bsx_upb_flags(obj, parent_block)
+        
         # copy physics properties from Blender properties, if they exist,
         # unless forcing override
         if not obj.nifcollision.use_blender_properties:
@@ -3728,19 +3753,19 @@ class NifExport(NifCommon):
         mesh = obj.data
         transform = mathutils.Matrix(
             self.get_object_matrix(obj, 'localspace').as_list())
-        rotation = transform.rotationPart()
+        rotation = transform.decompose()[1]
 
         vertices = [vert.co * transform for vert in mesh.vertices]
         triangles = []
         normals = []
         for face in mesh.faces:
-            if len(face.v) < 3:
+            if len(face.vertices) < 3:
                 continue # ignore degenerate faces
-            triangles.append([face.v[i].index for i in (0, 1, 2)])
-            normals.append(face.normal * rotation)
-            if len(face.v) == 4:
-                triangles.append([face.v[i].index for i in (0, 2, 3)])
-                normals.append(face.normal * rotation)
+            triangles.append([face.vertices[i] for i in (0, 1, 2)])
+            normals.append(rotation * face.normal)
+            if len(face.vertices) == 4:
+                triangles.append([face.vertices[i] for i in (0, 2, 3)])
+                normals.append(rotation * face.normal)
 
         colshape.add_shape(triangles, normals, vertices, layer, material)
 
@@ -3852,7 +3877,7 @@ class NifExport(NifCommon):
                 colsphere.material = material
                 # take average radius and
                 # fix for havok coordinate system (6 * 7 = 42)
-                colsphere.radius = (maxx + maxy + maxz - minx - miny -minz) / 42.0
+                colsphere.radius = (maxx - minx + maxy - miny + maxz - minz) / 42.0
 
             return coltf
 
@@ -4316,10 +4341,10 @@ class NifExport(NifCommon):
             if not isinstance(block, NifFormat.NiMaterialProperty):
                 continue
             # when optimization is enabled, ignore material name
-            if self.EXPORT_OPTIMIZE_MATERIALS:
-                ignore_strings = not(block.name in specialnames)
-            else:
-                ignore_strings = False
+            #if self.EXPORT_OPTIMIZE_MATERIALS:
+            #    ignore_strings = not(block.name in specialnames)
+            #else:
+            ignore_strings = False
             # check hash
             first_index = 1 if ignore_strings else 0
             if (block.get_hash()[first_index:] ==
