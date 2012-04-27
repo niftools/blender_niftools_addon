@@ -45,12 +45,8 @@ class TestBhkCollisionBoxShape(TestBaseGeometry, TestBhkCollision):
     def b_create_object(self):
         b_obj = TestBaseGeom.b_create_object(self)
         
-        bpy.ops.mesh.primitive_cube_add()
-        
-        b_coll = bpy.data.objects["Cube.001"]
-        b_coll.data.show_double_sided = False
+        b_coll = TestBaseGeom.b_create_object(self)
         b_coll.name = "CollisionBox"
-        b_coll = bpy.data.objects["CollisionBox"]
         b_coll.draw_type = 'WIRE'
         
         #Physics
@@ -87,10 +83,9 @@ class TestBhkCollisionBoxShape(TestBaseGeometry, TestBhkCollision):
         self.n_check_bsxflags_property(n_ninode.extra_data_list[0])
         self.n_check_upb_property(n_ninode.extra_data_list[1])
         
-        #execute method bellow
+        #execute method below
         self.n_check_bhkboxshape_data(n_ninode.collision_object)
         pass
->>>>>>> 87dbc9f... Added basic box collision import/export
 
     def n_check_bhkboxshape_data(self, data):
         #Check specific block data
