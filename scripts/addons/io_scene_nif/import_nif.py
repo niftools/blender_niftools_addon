@@ -3031,10 +3031,10 @@ class NifImport(NifCommon):
             # find transformation matrix in case of the T version
             if isinstance(bhkshape, NifFormat.bhkRigidBodyT):
                 # set rotation
-                transform = mathutils.Quaternion(
+                transform = mathutils.Quaternion([
                     bhkshape.rotation.w, bhkshape.rotation.x,
-                    bhkshape.rotation.y, bhkshape.rotation.z).toMatrix()
-                transform.resize4x4()
+                    bhkshape.rotation.y, bhkshape.rotation.z]).to_matrix()
+                transform.resize_4x4()
                 # set translation
                 transform[3][0] = bhkshape.translation.x * 7
                 transform[3][1] = bhkshape.translation.y * 7
@@ -3044,23 +3044,25 @@ class NifImport(NifCommon):
                     ob.matrix_local = ob.matrix_local * transform
             # set physics flags and mass
             for ob in collision_objs:
+                ''' What are these used for
                 ob.rbFlags = (
                     Blender.Object.RBFlags.ACTOR |
                     Blender.Object.RBFlags.DYNAMIC |
                     Blender.Object.RBFlags.RIGIDBODY |
                     Blender.Object.RBFlags.BOUNDS)
+                '''
                 if bhkshape.mass > 0.0001:
                     # for physics emulation
                     # (mass 0 results in issues with simulation)
-                    ob.rbMass = bhkshape.mass / len(collision_objs)
-                ob.addProperty("OblivionLayer", self.OB_LAYER[bhkshape.layer], "STRING")
-                ob.addProperty("QualityType", self.QUALITY_TYPE[bhkshape.quality_type], "STRING")
-                ob.addProperty("MotionSystem", self.MOTION_SYS[bhkshape.motion_system], "STRING")
+                    ob.mass = bhkshape.mass / len(collision_objs)
+                ob.nifcollision.oblivion_layer = self.OB_LAYER[bhkshape.layer]
+                ob.nifcollision.quality_type = self.QUALITY_TYPE[bhkshape.quality_type]
+                ob.nifcollision.motion_system = self.MOTION_SYS[bhkshape.motion_system]
                 # note: also imported as rbMass, but hard to find by users
                 # so we import it as a property, and this is also what will
                 # be re-exported
-                ob.addProperty("Mass", bhkshape.mass / len(collision_objs), "FLOAT")
-                ob.addProperty("ColFilter", bhkshape.col_filter, "INT")
+                ob.game.mass = bhkshape.mass / len(collision_objs)
+                ob.nifcollision.col_filter = bhkshape.col_filter
 
             # import constraints
             # this is done once all objects are imported
@@ -3071,31 +3073,47 @@ class NifImport(NifCommon):
         
         elif isinstance(bhkshape, NifFormat.bhkBoxShape):
             # create box
-            minx = -bhkshape.dimensions.x * 7
-            maxx = +bhkshape.dimensions.x * 7
-            miny = -bhkshape.dimensions.y * 7
-            maxy = +bhkshape.dimensions.y * 7
-            minz = -bhkshape.dimensions.z * 7
-            maxz = +bhkshape.dimensions.z * 7
+            
+            radius = 7
+            
+            minx = -bhkshape.dimensions.x * radius
+            maxx = +bhkshape.dimensions.x * radius
+            miny = -bhkshape.dimensions.y * radius
+            maxy = +bhkshape.dimensions.y * radius
+            minz = -bhkshape.dimensions.z * radius
+            maxz = +bhkshape.dimensions.z * radius
 
-            me = Blender.Mesh.New('box')
-            for x in [minx, maxx]:
-                for y in [miny, maxy]:
-                    for z in [minz, maxz]:
-                        me.vertices.extend(x,y,z)
-            me.faces.extend(
-                [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
+            me = bpy.data.meshes.new('box')
+            vert_list = {}
+            vert_index = 0
+    
+            for x in [minx,maxx]:
+                for y in [miny,maxy]:
+                    for z in [minz,maxz]:
+                        me.vertices.add(1)
+                        me.vertices[-1].co = (x,y,z)
+                        vert_list[vert_index] = [x,y,z]
+                        vert_index += 1
+
+            faces = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,0,1,5],[7,6,2,3]]
+            face_index = 0
+
+            for x in range(len(faces)):
+                me.faces.add(1)
+                me.faces[-1].vertices_raw = faces[face_index]
+                face_index += 1
 
             # link box to scene and set transform
-            ob = self.context.scene.objects.new(me, 'box')
+            obj = bpy.data.objects.new('box',me)
+            bpy.context.scene.objects.link(obj)
 
             # set bounds type
+            ob = bpy.data.objects['box']
             ob.draw_type = 'BOUNDS'
             ob.draw_bounds_type = 'BOX'
-            ob.game.use_collision_bounds = True
+            ob.game.use_collision_bounds = True            
             ob.game.collision_bounds_type = 'BOX'
-            ob.game.radius = min(maxx, maxy, maxz)
-            ob.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
+            ob.game.radius = radius
             return [ ob ]
 
         elif isinstance(bhkshape, NifFormat.bhkSphereShape):
