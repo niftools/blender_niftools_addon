@@ -1,8 +1,8 @@
 Properties
 ==========
 .. warning::
-   The documentation are based on what features are mapped to blender.
    This will probably be rewritten with a general overview of the Blender Material settings and then relating back to property types.
+   This is due to different nif blocks sharing setting, NiMaterialProp, BSLightShaderProperty
 
 * Most Nif properties, :class:`~pyffi.formats.nif.NifFormat.NiProperty` are mapped to some part of Blender's Material System.
 * The following section goes through those Blender material settings and how they relate to those properties.
@@ -62,22 +62,26 @@ Emissive
 #. In the **Shading** panel is the Emissive color
 #. Set the **Intensity** value   
 
-.. todo::
-   add a preview button
-   
 Notes
 ~~~~~
 
-* A value of 0.0 will have no emit color
 * Blender uses the diffuse color for viewport emission property.  
+.. todo::
+   add a preview button
 
 Gloss
 ~~~~~
 
-We use the 
+* This value is used how intense the specular highlight should be.
+* This will diffuse the specular across the material.
+
+#. In the **Specular** panel
+#. Set the **Hardness**  
 
 Notes
 ~~~~~
+
+* 
 
 
 NiSpecularProperty
@@ -85,32 +89,33 @@ NiSpecularProperty
 
 .. _properties-specular:
 
-:class:`~pyffi.formats.nif.NifFormat.NiSpecularProperty`,
+* The Specular value create the bright highlights that one would see on a glossy surface.
 
-#. In the **Specular** panel, use the color widget 
+#. In the **Specular** panel, use the color widget to set the highlight color.
 #. Set **Intensity** to whatever value you prefer. 
 
 Notes
 ~~~~~
 
-Setting the **Intensity** will to **0** disable specularity and a :class:`~pyffi.formats.nif.NifFormat.NiSpecularProperty` will not be exported.
-
+* Setting the **Intensity** to **0** will disable specularity; a :class:`~pyffi.formats.nif.NifFormat.NiSpecularProperty` will not be exported.
 
 NiAlphaProperty
 ---------------
 
 .. _properties-alpha:
 
-#. In the **Transparency** panel, **Enable Transparency**
-#. Ensure **Z Transparency** is select, which is by default.
-#. Alter the **Alpha** setting. 
+* An :class:`~pyffi.formats.nif.NifFormat.NiAlphaProperty` is used if the Material has an Alpha value.
 
-An :class:`~pyffi.formats.nif.NifFormat.NiAlphaProperty` is used if the Material has an Alpha value.
+
+#. In the **Transparency** panel, **Enable Transparency**
+#. Ensure **Z Transparency** is selected, which is by default.
+#. Alter the **Alpha** setting. 
 
 Notes
 ~~~~~
 
-This is also used by textures that use alpha.
+* The alpha component of the material is how much you can see through the material.
+* This is property is also required when textures have alpha values.
    
    
 NiWireFrameProperty
@@ -123,7 +128,20 @@ NiStencilProperty
 -----------------
 .. _properties-stencil:
 
-:class:`~pyffi.formats.nif.NifFormat.NiStencilProperty`,
+* If supported by the nif version, enabling **Double-sided** on a mesh-object will export a :class:`~pyffi.formats.nif.NifFormat.NiStencilProperty`,
+* The NiStencilProperty ignores the face normal and renders both sides of the mesh.
+* See below for more details.
+
+Notes
+~~~~~
+
+* A triangle is composed of 3 vertices, edges and a face. This plane makes up the triangle.
+* To decide which way the face is pointing a vector(normal), perpendecular to the face is used.
+* The normal vector can be flipped to either side of the triangle and is a common source of triangles/meshes not rendering. 
+* In-game if the camera is facing the normal then the face will be rendered.
+* Conversely if you are on the otherside, you usually will be able to look through the face as it is not rendered.
+* Having the normal face the wrong direction is a common source 
+
 
 
 

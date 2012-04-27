@@ -18,29 +18,41 @@ Example
 #. Select whether the Mesh-object should be Double-sided:
    
    * In the **Properties** panel, in the *Object Data* tab,
-   * untick **Double Sided**.
-   * This will add a :class:`~pyffi.formats.nif.NifFormat.NiStencilProperty`, see :ref:`Properties - Stencil Property <properties-stencil>` for more info.
+   * Enable/Disable **Double Sided**, see notes for more detail.
 
 #. Give the Object an appropriate name.
 #. Export the file: **File -> Export -> NetImmerse/Gamebryo**.
 
 Notes
 ~~~~~
-
 * The nif format only supports triangle based geometry.
-* Blender quads are exported as triangles, which may lead to differences in geometry rendered.
-* Strips (:class:`~pyffi.formats.nif.NifFormat.NiTriStrips`) are available but developer support will be limited as they are `unnecessary for current hardware <http://tomsdxfaq.blogspot.com/2005_12_01_archive.html>`_.
+* Blender quads and n-gons are exported as triangles, which may lead to differences in geometry rendered.
+* Strips (:class:`~pyffi.formats.nif.NifFormat.NiTriStrips`) are available but not developer supported as they are `unnecessary for current hardware <http://tomsdxfaq.blogspot.com/2005_12_01_archive.html>`_.
 * Naming individual objects helps distingush objects, generic names are automatically generated. eg. Cube, plane.001, sphere etc.
+
+**Double Sided Mesh**
+* This will add a :class:`~pyffi.formats.nif.NifFormat.NiStencilProperty`, see :ref:`Properties - Stencil Property <properties-stencil>` for more info.
+
+UV Unwrapping
++++++++++++++
+
+
+Example
+~~~~~~~
+
+#. In Edit Mode, press ``U``, select **Unwrap > Smart UV Project**.
 
 Vertex Color
 ++++++++++++
 
 .. _geometry-vertexcolor:
 
-#. :ref:`Create a single sided cube <geometry-mesh>` as explained before.
+Example
+~~~~~~~
+#. :ref:`Create a mesh-object <geometry-mesh>` as explained before.
 #. Switch to Vertex Paint mode, this automatically adds a base vertex color layer.
 #. Apply the desired vertex colors evenly to the vertex.
-#. Ensure you have added a material.
+#. Ensure you have added a :ref:`material<properties-material>`.
 #. Now export as usual.
 
 Notes
@@ -48,11 +60,11 @@ Notes
 
 * The Nif format only supports a single color per vertex, whereas Blender vertex color per face vertex.
 * Blender treats the vertex as if the faces had been split apart, each face can have a different color for that vertex.
-* `Here is an example of per-face color <http://i211.photobucket.com/albums/bb189/NifTools/Blender/documentation/per_face_vertex_color.jpg>`_
+* `This image should clarify per-face vertes coloring <http://i211.photobucket.com/albums/bb189/NifTools/Blender/documentation/per_face_vertex_color.jpg>`_
 * On export the scripts will take an average of colors. 
 
 .. warning::
-   alpha layer support has been added but enabled due to known issues with general vertex color support.
+   alpha layer support has been added but disabled due to known issues with general vertex color support.
 
 .. todo::
    Write up workflow for alpha layer once implemented.

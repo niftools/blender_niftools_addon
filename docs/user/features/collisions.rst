@@ -61,8 +61,8 @@ Box Collision
 
 #. :ref:`Add physics to our collision cube 'CollisionBox' <collison-settings>`.
 
-Box Collision Notes
-+++++++++++++++++++
+Box Notes
++++++++++
 
 Test
 
@@ -85,8 +85,8 @@ Sphere Collision
 
 #. :ref:`Add physics to our collision cube 'CollisionBox' <collison-settings>`.
 
-Sphere Collision Notes
-++++++++++++++++++++++
+Sphere Notes
+++++++++++++
 
 Cylinder Collision
 ~~~~~~~~~~~~~~~~~~
@@ -107,8 +107,8 @@ Cylinder Collision
 
 #. :ref:`Add physics to our collision cube 'CollisionBox' <collison-settings>`.
 
-Cylinder Collision Notes
-++++++++++++++++++++++++
+Cylinder Notes
+++++++++++++++
 
 Capsule Collision
 ~~~~~~~~~~~~~~~~~
@@ -129,8 +129,8 @@ Capsule Collision
 
 #. :ref:`Add physics to our collision cube 'CollisionBox' <collison-settings>`.
 
-Capsule Collision Notes
-+++++++++++++++++++++++
+Capsule Notes
++++++++++++++
 
 Currently there is no visualisation in Blender for Capsule Collisions.
 
@@ -153,8 +153,8 @@ Convex Hull Collision
 
 #. :ref:`Add physics to our collision cube 'CollisionBox' <collison-settings>`.
 
-Convex Hull Collision Notes
-+++++++++++++++++++++++++++
+Convex Hull Notes
++++++++++++++++++
 
 Triangle Mesh Collision
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -175,8 +175,8 @@ Triangle Mesh Collision
 
 #. :ref:`Add physics to our collision cube 'CollisionBox' <collison-settings>`.
 
-Triangle Mesh Collision Notes
-+++++++++++++++++++++++++++++
+Triangle Mesh Notes
++++++++++++++++++++
 
 Collision Settings
 ~~~~~~~~~~~~~~~~~~
