@@ -165,9 +165,12 @@ Physics Properties
 
 To indicate the physics properties for an object, switch to the **Blender Game** tab. (Default tab is **Blender Render**)
 
+.. Warning::
+   Make sure that you have ticked **Collision Bounds** and selected a bounds type accordingly to the indicated collision object.
+
 #. With the collision object selected, switch to the **Physics** tab
 
-#. Click **Collision Bounds** and select **Box** as **Bounds**
+#. Click **Collision Bounds** and select a type that appropriately matches the collision object.
 
 #. If you would like to define your own settings for havok physics, click **Use Blender Properties** and define the fields **Havok Material**, **Motion System**, **Oblivion Layer**, **Quality Type** and **Col Filter** accordingly.
 
@@ -194,14 +197,48 @@ Box Collision
 
 #. Now export as usual
 
+Sphere Collision
+~~~~~~~~~~~~~~~~
+
+#. Create a single sided UV Sphere using the process above.
+
+#. Create a second single sided UV Sphere as above
+
+#. Select the newly created second UV Sphere and rename it something collision related, like 'CollisionSphere' via the Object panel.
+
+#. In the Object panel, under Display, select Type and change it tp **Wire**, this will make it easier for you to distinguish.
+
+#. Scale the collision sphere 'CollisionSphere' to the appropriate size.
+
+#. :ref:`Add Physics to our collision sphere 'CollisionSphere' <features-example-physics>`.
+
+#. Now export as usual.
+
+Triangle Mesh Collision
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Triangle Mesh collision would have to be an important collision type when creating game assets. The reason being,
+not all meshes can be square, sphere shaped or even capsule shaped. So we use triangle meshes to correctly create 
+the collision geometry for the asset.
+
+#. Create a single sided polyheadron mesh using the process above.
+
+#. Create a second single sided polyheadron as above. Make sure this mesh mimics the desired collision.
+
+#. Select the newly created second polyheadron and rename it something collision related, like 'CollisionPoly' via the Object panel.
+
+#. In the Object panel, under Display, select Type and change it tp **Wire**, this will make it easier for you to distinguish.
+
+#. Scale the collision polyheadron 'CollisionPoly' to the appropriate size.
+
+#. :ref:`Add Physics to our collision polyheadron 'CollisionPoly', remember to select 'Triangle Mesh' in bounds<features-example-physics>`.
+
+#. Now export as usual.
+
 Notes
 ~~~~~
 
-To indicate that a mesh is to be exported as a collision object,
-rather than say a :class:`~pyffi.formats.nif.NifFormat.NiTriShape`,
-select the blender **Game Engine** renderer, select the object's physics
-tab, enable the **Collision Bounds** option, and select the desired
-**Bounds**. For Oblivion, Fallout 3, and Fallout NV, blender's
+For Oblivion, Fallout 3, and Fallout NV, blender's
 collision types map to the following nif types:
 
 ============= ======================
@@ -217,11 +254,11 @@ Triangle Mesh bhkMoppByTreeShape
 
 For Morrowind, we have:
 
-============= =================
-blender       nif
-============= =================
-Triangle Mesh RootCollisionNode
-============= =================
+=============== =================
+blender         nif
+=============== =================
+Triangle Mesh   RootCollisionNode
+=============== =================
 
 .. todo::
 
