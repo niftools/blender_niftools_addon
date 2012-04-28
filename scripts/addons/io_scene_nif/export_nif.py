@@ -166,15 +166,15 @@ class NifExport(NifCommon):
         exported_objects = []
         # iterating over self.blocks.itervalues() will count some objects
         # twice
-        for obj in self.blocks.values():
+        for b_obj in self.blocks.values():
             # skip empty objects
-            if obj is None:
+            if b_obj is None:
                 continue
             # detect doubles
-            if obj in exported_objects:
+            if b_obj in exported_objects:
                 continue
             # append new object
-            exported_objects.append(obj)
+            exported_objects.append(b_obj)
         # return the list of unique exported objects
         return exported_objects
 
@@ -238,13 +238,13 @@ class NifExport(NifCommon):
                 # for morrowind: only keyframe controllers
                 self.info("Exporting animation only (as .kf file)")
 
-            for ob in bpy.data.objects:
+            for b_obj in bpy.data.objects:
                 # armatures should not be in rest position
-                if ob.type == 'ARMATURE':
+                if b_obj.type == 'ARMATURE':
                     # ensure we get the mesh vertices in animation mode,
                     # and not in rest position!
-                    ob.data.restPosition = False
-                    if (ob.data.envelopes):
+                    b_obj.data.restPosition = False
+                    if (b_obj.data.envelopes):
                         return self.error(
                             "'%s': Cannot export envelope skinning."
                             " If you have vertex groups,"
@@ -252,20 +252,20 @@ class NifExport(NifCommon):
                             " groups, select the bones one by one press W"
                             " to convert their envelopes to vertex weights,"
                             " and turn off envelopes."
-                            % ob.name)
+                            % b_obj.name)
 
                 # check for non-uniform transforms
                 # (lattices are not exported so ignore them as they often tend
                 # to have non-uniform scaling)
-                if ob.type != 'LATTICE':
-                    scale = ob.matrix_local.to_scale()
+                if b_obj.type != 'LATTICE':
+                    scale = b_obj.matrix_local.to_scale()
                     if (abs(scale.x - scale.y) > self.properties.epsilon
                         or abs(scale.y - scale.z) > self.properties.epsilon):
 
                         return self.error(
                             "Non-uniform scaling not supported."
                             " Workaround: apply size and rotation (CTRL-A)"
-                            " on '%s'." % ob.name)
+                            " on '%s'." % b_obj.name)
 
             # oblivion, Fallout 3 and civ4
             if (self.properties.game
@@ -283,8 +283,8 @@ class NifExport(NifCommon):
                     " and run this script again.")
             root_objects = set()
             export_types = ('EMPTY', 'MESH', 'ARMATURE')
-            for root_object in [ob for ob in self.context.selected_objects
-                                if ob.type in export_types]:
+            for root_object in [b_obj for b_obj in self.context.selected_objects
+                                if b_obj.type in export_types]:
                 while root_object.parent:
                     root_object = root_object.parent
                 if root_object.type not in export_types:
@@ -299,9 +299,9 @@ class NifExport(NifCommon):
                 # get shared vertices
                 self.info("Smoothing seams between objects...")
                 vdict = {}
-                for ob in [ob for ob in self.context.scene.objects
-                           if ob.type == 'MESH']:
-                    mesh = ob.data
+                for b_obj in [b_obj for b_obj in self.context.scene.objects
+                           if b_obj.type == 'MESH']:
+                    mesh = b_obj.data
                     #for v in mesh.vertices:
                     #    v.sel = False
                     for f in mesh.faces:
@@ -984,112 +984,112 @@ class NifExport(NifCommon):
         return {'FINISHED'}
 
 
-    def export_node(self, ob, space, parent_block, node_name):
-        """Export a mesh/armature/empty object ob as child of parent_block.
-        Export also all children of ob.
+    def export_node(self, b_obj, space, parent_block, node_name):
+        """Export a mesh/armature/empty object b_obj as child of parent_block.
+        Export also all children of b_obj.
 
         - space is 'none', 'worldspace', or 'localspace', and determines
           relative to what object the transformation should be stored.
         - parent_block is the parent nif block of the object (None for the
           root node)
-        - for the root node, ob is None, and node_name is usually the base
+        - for the root node, b_obj is None, and node_name is usually the base
           filename (either with or without extension)
 
         :param node_name: The name of the node to be exported.
         :type node_name: :class:`str`
         """
-        # ob_type: determine the block type
+        # b_obj_type: determine the block type
         #          (None, 'MESH', 'EMPTY' or 'ARMATURE')
-        # ob_ipo:  object animation ipo
+        # b_obj_ipo:  object animation ipo
         # node:    contains new NifFormat.NiNode instance
-        if (ob == None):
+        if (b_obj == None):
             # -> root node
             assert(parent_block == None) # debug
             node = self.create_ninode()
-            ob_type = None
-            ob_ipo = None
+            b_obj_type = None
+            b_obj_ipo = None
         else:
             # -> empty, mesh, or armature
-            ob_type = ob.type
-            assert(ob_type in ['EMPTY', 'MESH', 'ARMATURE']) # debug
+            b_obj_type = b_obj.type
+            assert(b_obj_type in ['EMPTY', 'MESH', 'ARMATURE']) # debug
             assert(parent_block) # debug
-            ob_ipo = ob.animation_data # get animation data
-            ob_children = ob.children
+            b_obj_ipo = b_obj.animation_data # get animation data
+            b_obj_children = b_obj.children
             
             if (node_name == 'RootCollisionNode'):
                 # -> root collision node (can be mesh or empty)
                 # TODO do we need to fix this stuff on export?
-                #ob.draw_bounds_type = 'POLYHEDERON'
-                #ob.draw_type = 'BOUNDS'
-                #ob.show_wire = True
-                self.export_collision(ob, parent_block)
+                #b_obj.draw_bounds_type = 'POLYHEDERON'
+                #b_obj.draw_type = 'BOUNDS'
+                #b_obj.show_wire = True
+                self.export_collision(b_obj, parent_block)
                 return None # done; stop here
             
-            elif ob_type == 'MESH' and ob.name.lower().startswith('bsbound'):
+            elif b_obj_type == 'MESH' and b_obj.name.lower().startswith('bsbound'):
                 # add a bounding box
-                self.export_bounding_box(ob, parent_block, bsbound=True)
+                self.export_bounding_box(b_obj, parent_block, bsbound=True)
                 return None # done; stop here
             
-            elif (ob_type == 'MESH'
-                  and ob.name.lower().startswith("bounding box")):
+            elif (b_obj_type == 'MESH'
+                  and b_obj.name.lower().startswith("bounding box")):
                 # Morrowind bounding box
-                self.export_bounding_box(ob, parent_block, bsbound=False)
+                self.export_bounding_box(b_obj, parent_block, bsbound=False)
                 return None # done; stop here
             
-            elif ob_type == 'MESH':
+            elif b_obj_type == 'MESH':
                 # -> mesh data.
                 # If this has children or animations or more than one material
                 # it gets wrapped in a purpose made NiNode.
-                is_collision = ob.game.use_collision_bounds
-                has_ipo = ob_ipo and len(ob_ipo.getCurves()) > 0
-                has_children = len(ob_children) > 0
-                is_multimaterial = len(set([f.material_index for f in ob.data.faces])) > 1
+                is_collision = b_obj.game.use_collision_bounds
+                has_ipo = b_obj_ipo and len(b_obj_ipo.getCurves()) > 0
+                has_children = len(b_obj_children) > 0
+                is_multimaterial = len(set([f.material_index for f in b_obj.data.faces])) > 1
                 # determine if object tracks camera
                 has_track = False
-                for constr in ob.constraints:
+                for constr in b_obj.constraints:
                     if constr.type == Blender.Constraint.Type.TRACKTO:
                         has_track = True
                         break
                     # does geom have priority value in NULL constraint?
                     elif constr.name[:9].lower() == "priority:":
                         self.bone_priorities[
-                            self.get_bone_name_for_nif(ob.name)
+                            self.get_bone_name_for_nif(b_obj.name)
                             ] = int(constr.name[9:])
                 if is_collision:
-                    self.export_collision(ob, parent_block)
+                    self.export_collision(b_obj, parent_block)
                     return None # done; stop here
                 elif has_ipo or has_children or is_multimaterial or has_track:
                     # -> mesh ninode for the hierarchy to work out
                     if not has_track:
-                        node = self.create_block('NiNode', ob)
+                        node = self.create_block('NiNode', b_obj)
                     else:
-                        node = self.create_block('NiBillboardNode', ob)
+                        node = self.create_block('NiBillboardNode', b_obj)
                 else:
                     # don't create intermediate ninode for this guy
-                    self.export_tri_shapes(ob, space, parent_block, node_name)
+                    self.export_tri_shapes(b_obj, space, parent_block, node_name)
                     # we didn't create a ninode, return nothing
                     return None
             else:
                 # -> everything else (empty/armature) is a regular node
-                node = self.create_ninode(ob)
+                node = self.create_ninode(b_obj)
                 # does node have priority value in NULL constraint?
-                for constr in ob.constraints:
+                for constr in b_obj.constraints:
                     if constr.name[:9].lower() == "priority:":
                         self.bone_priorities[
-                            self.get_bone_name_for_nif(ob.name)
+                            self.get_bone_name_for_nif(b_obj.name)
                             ] = int(constr.name[9:])
 
         # set transform on trishapes rather than on NiNode for skinned meshes
         # this fixes an issue with clothing slots
-        if ob_type == 'MESH':
-            if ob.parent and ob.parent.type == 'ARMATURE':
-                if ob_ipo:
+        if b_obj_type == 'MESH':
+            if b_obj.parent and b_obj.parent.type == 'ARMATURE':
+                if b_obj_ipo:
                     # mesh with armature parent should not have animation!
                     self.warning(
                         "Mesh %s is skinned but also has object animation. "
                         "The nif format does not support this: "
-                        "ignoring object animation." % ob.name)
-                    ob_ipo = None
+                        "ignoring object animation." % b_obj.name)
+                    b_obj_ipo = None
                 trishape_space = space
                 space = 'none'
             else:
@@ -1116,30 +1116,30 @@ class NifExport(NifCommon):
             # morrowind
             node.flags = 0x000C
 
-        self.export_matrix(ob, space, node)
+        self.export_matrix(b_obj, space, node)
 
-        if ob:
+        if b_obj:
             # export animation
-            if ob_ipo:
+            if b_obj_ipo:
                 if any(
-                    ob_ipo[b_channel]
+                    b_obj_ipo[b_channel]
                     for b_channel in (Ipo.OB_LOCX, Ipo.OB_ROTX, Ipo.OB_SCALEX)):
-                    self.export_keyframes(ob_ipo, space, node)
-                self.export_object_vis_controller(b_object=ob, n_node=node)
+                    self.export_keyframes(b_obj_ipo, space, node)
+                self.export_object_vis_controller(b_obj, node)
             # if it is a mesh, export the mesh as trishape children of
             # this ninode
-            if (ob.type == 'MESH'):
+            if (b_obj.type == 'MESH'):
                 # see definition of trishape_space above
-                self.export_tri_shapes(ob, trishape_space, node)
+                self.export_tri_shapes(b_obj, trishape_space, node)
                 
             # if it is an armature, export the bones as ninode
             # children of this ninode
-            elif (ob.type == 'ARMATURE'):
-                self.export_bones(ob, node)
+            elif (b_obj.type == 'ARMATURE'):
+                self.export_bones(b_obj, node)
 
             # export all children of this empty/mesh/armature/bone
             # object as children of this NiNode
-            self.export_children(ob, node)
+            self.export_children(b_obj, node)
 
         return node
 
@@ -1776,20 +1776,20 @@ class NifExport(NifCommon):
     # The parameter trishape_name passes on the name for meshes that
     # should be exported as a single mesh.
     # 
-    def export_tri_shapes(self, ob, space, parent_block, trishape_name = None):
-        self.info("Exporting %s" % ob)
-        self.msg_progress("Exporting %s" % ob.name)
-        assert(ob.type == 'MESH')
+    def export_tri_shapes(self, b_obj, space, parent_block, trishape_name = None):
+        self.info("Exporting %s" % b_obj)
+        self.msg_progress("Exporting %s" % b_obj.name)
+        assert(b_obj.type == 'MESH')
 
-        # get mesh from ob
-        mesh = ob.data # get mesh data
+        # get mesh from b_obj
+        mesh = b_obj.data # get mesh data
         
         # getVertsFromGroup fails if the mesh has no vertices
         # (this happens when checking for fallout 3 body parts)
         # so quickly catch this (rare!) case
-        if not ob.data.vertices:
+        if not b_obj.data.vertices:
             # do not export anything
-            self.warning("%s has no vertices, skipped." % ob)
+            self.warning("%s has no vertices, skipped." % b_obj)
             return
 
         # get the mesh's materials, this updates the mesh material list
@@ -1839,7 +1839,7 @@ class NifExport(NifCommon):
         ### TODO: needs refactoring - move material, texture, etc.
         ### to separate function
         for materialIndex, mesh_mat in enumerate(mesh_mats):
-            # -> first, extract valuable info from our ob
+            # -> first, extract valuable info from our b_obj
             
             mesh_base_mtex = None
             mesh_glow_mtex = None
@@ -1954,14 +1954,14 @@ class NifExport(NifCommon):
                                 "Either delete all non-COL-mapped reflection textures,"
                                 " or in the Shading Panel, under Material Buttons,"
                                 " set texture 'Map To' to 'COL'."
-                                % (ob.name,mesh_mat.name))
+                                % (b_obj.name,mesh_mat.name))
                         if b_mat_texslot.blend_type != 'ADD':
                             # it should have "ADD" blending mode
                             self.warning(
                                "Reflection texture should have blending"
                                " mode 'Add' on texture"
                                " in mesh '%s', material '%s')."
-                               % (ob.name,mesh_mat.name))
+                               % (b_obj.name,mesh_mat.name))
                             # an envmap image should have an empty... don't care
                         mesh_texeff_mtex = b_mat_texslot
 
@@ -1988,7 +1988,7 @@ class NifExport(NifCommon):
                                 self.warning(
                                     "In mesh '%s', material '%s': glow texture must have"
                                     " CALCALPHA flag set, and must have MapTo.ALPHA enabled."
-                                    %(ob.name,mesh_mat.name))
+                                    %(b_obj.name,mesh_mat.name))
                             '''
                                 
                             # check if alpha channel is enabled for this texture
@@ -2129,7 +2129,7 @@ class NifExport(NifCommon):
                                 " go to the Shading Panel,"
                                 " Material Buttons, and set texture"
                                 " 'Map To' to 'COL'."
-                                % (b_mat_texslot.texture.name,ob.name,mesh_mat.name))
+                                % (b_mat_texslot.texture.name,b_obj.name,mesh_mat.name))
                     
                     # nif only support UV-mapped textures
                     else:  
@@ -2139,12 +2139,12 @@ class NifExport(NifCommon):
                             " or in the Shading Panel,"
                             " under Material Buttons,"
                             " set texture 'Map Input' to 'UV'."
-                            %(ob.name,mesh_mat.name))
+                            %(b_obj.name,mesh_mat.name))
 
             # list of body part (name, index, vertices) in this mesh
             bodypartgroups = []
             for bodypartgroupname in NifFormat.BSDismemberBodyPartType().get_editor_keys():
-                vertex_group = ob.vertex_groups.get(bodypartgroupname)
+                vertex_group = b_obj.vertex_groups.get(bodypartgroupname)
                 if vertex_group:
                     self.debug("Found body part %s" % bodypartgroupname)
                     bodypartgroups.append(
@@ -2293,7 +2293,7 @@ class NifExport(NifCommon):
                         if mesh_uvlayers:   uvlist.append(vertquad[1])
                 # now add the (hopefully, convex) face, in triangles
                 for i in range(f_numverts - 2):
-                    if True: #TODO: #(ob_scale > 0):
+                    if True: #TODO: #(b_obj_scale > 0):
                         f_indexed = (f_index[0], f_index[1+i], f_index[2+i])
                     else:
                         f_indexed = (f_index[0], f_index[2+i], f_index[1+i])
@@ -2319,8 +2319,8 @@ class NifExport(NifCommon):
                 # select mesh object
                 for b_obj in self.context.scene.objects:
                     b_obj.sel = False
-                self.context.scene.objects.active = ob
-                ob.sel = 1
+                self.context.scene.objects.active = b_obj
+                b_obj.sel = 1
                 # select bad faces
                 for face in mesh.faces:
                     face.sel = 0
@@ -2333,7 +2333,7 @@ class NifExport(NifCommon):
                     " The unassigned faces"
                     " have been selected in the mesh so they can easily"
                     " be identified."
-                    % ob)
+                    % b_obj)
 
             if len(trilist) > 65535:
                 raise NifExportError(
@@ -2350,9 +2350,9 @@ class NifExport(NifCommon):
 
             # create a trishape block
             if not self.properties.stripify:
-                trishape = self.create_block("NiTriShape", ob)
+                trishape = self.create_block("NiTriShape", b_obj)
             else:
-                trishape = self.create_block("NiTriStrips", ob)
+                trishape = self.create_block("NiTriStrips", b_obj)
 
             # add texture effect block (must be added as preceeding child of
             # the trishape)
@@ -2382,7 +2382,7 @@ class NifExport(NifCommon):
                 if parent_block.name:
                     trishape.name = b"Tri " + parent_block.name
                 else:
-                    trishape.name = b"Tri " + ob.name.encode()
+                    trishape.name = b"Tri " + b_obj.name.encode()
             else:
                 trishape.name = trishape_name.encode()
             
@@ -2408,7 +2408,7 @@ class NifExport(NifCommon):
                     trishape.flags = 0x0016
             else:
                 # morrowind
-                if ob.draw_type != 'WIRE': # not wire
+                if b_obj.draw_type != 'WIRE': # not wire
                     trishape.flags = 0x0004 # use triangles as bounding box
                 else:
                     trishape.flags = 0x0005 # use triangles as bounding box + hide
@@ -2419,7 +2419,7 @@ class NifExport(NifCommon):
                 trishape.shader_name = "RRT_NormalMap_Spec_Env_CubeLight"
                 trishape.unknown_integer = -1 # default
 
-            self.export_matrix(ob, space, trishape)
+            self.export_matrix(b_obj, space, trishape)
             
             if mesh_base_mtex or mesh_glow_mtex:
                 # add NiTriShape's texturing property
@@ -2509,9 +2509,9 @@ class NifExport(NifCommon):
             # add NiTriShape's data
             # NIF flips the texture V-coordinate (OpenGL standard)
             if isinstance(trishape, NifFormat.NiTriShape):
-                tridata = self.create_block("NiTriShapeData", ob)
+                tridata = self.create_block("NiTriShapeData", b_obj)
             else:
-                tridata = self.create_block("NiTriStripsData", ob)
+                tridata = self.create_block("NiTriStripsData", b_obj)
             trishape.data = tridata
 
             # flags
@@ -2577,13 +2577,13 @@ class NifExport(NifCommon):
 
             # now export the vertex weights, if there are any
             vertgroups = {vertex_group.name
-                          for vertex_group in ob.vertex_groups}
+                          for vertex_group in b_obj.vertex_groups}
             bonenames = []
-            if ob.parent:
-                if ob.parent.type == 'ARMATURE':
-                    ob_armature = ob.parent
-                    armaturename = ob_armature.name
-                    bonenames = list(ob_armature.data.bones.keys())
+            if b_obj.parent:
+                if b_obj.parent.type == 'ARMATURE':
+                    b_obj_armature = b_obj.parent
+                    armaturename = b_obj_armature.name
+                    bonenames = list(b_obj_armature.data.bones.keys())
                     # the vertgroups that correspond to bonenames are bones
                     # that influence the mesh
                     boneinfluences = []
@@ -2594,9 +2594,9 @@ class NifExport(NifCommon):
                         # create new skinning instance block and link it
                         if (self.properties.game == 'FALLOUT_3'
                             and self.EXPORT_FO3_BODYPARTS):
-                            skininst = self.create_block("BSDismemberSkinInstance", ob)
+                            skininst = self.create_block("BSDismemberSkinInstance", b_obj)
                         else:
-                            skininst = self.create_block("NiSkinInstance", ob)
+                            skininst = self.create_block("NiSkinInstance", b_obj)
                         trishape.skin_instance = skininst
                         for block in self.blocks:
                             if isinstance(block, NifFormat.NiNode):
@@ -2609,14 +2609,14 @@ class NifExport(NifCommon):
                                 % armaturename)
             
                         # create skinning data and link it
-                        skindata = self.create_block("NiSkinData", ob)
+                        skindata = self.create_block("NiSkinData", b_obj)
                         skininst.data = skindata
             
                         skindata.has_vertex_weights = True
                         # fix geometry rest pose: transform relative to
                         # skeleton root
                         skindata.set_transform(
-                            self.get_object_matrix(ob, 'localspace').get_inverse())
+                            self.get_object_matrix(b_obj, 'localspace').get_inverse())
             
                         # add vertex weights
                         # first find weights and normalization factors
@@ -2624,7 +2624,7 @@ class NifExport(NifCommon):
                         vert_norm = {}
                         for bone in boneinfluences:
                             try:
-                                vert_list[bone] = ob.data.getVertsFromGroup(bone, 1)
+                                vert_list[bone] = b_obj.data.getVertsFromGroup(bone, 1)
                             except AttributeError:
                                 # this happens when the vertex group has been
                                 # added, but the weights have not been painted
@@ -2635,7 +2635,7 @@ class NifExport(NifCommon):
                                     " delete the vertex group,"
                                     " or go to weight paint mode,"
                                     " and paint weights."
-                                    % (ob.name, bone))
+                                    % (b_obj.name, bone))
                             for v in vert_list[bone]:
                                 if v[0] in vert_norm:
                                     vert_norm[v[0]] += v[1]
@@ -2695,10 +2695,10 @@ class NifExport(NifCommon):
                         vert_weights = {}
                         if False in vert_added:
                             # select mesh object
-                            for bobj in self.context.scene.objects:
-                                bobj.sel = False
-                            self.context.scene.objects.active = ob
-                            ob.sel = 1
+                            for b_scene_obj in self.context.scene.objects:
+                                b_scene_obj.sel = False
+                            self.context.scene.objects.active = b_obj
+                            b_obj.sel = 1
                             # select bad vertices
                             for v in mesh.vertices:
                                 v.sel = 0
@@ -2761,7 +2761,7 @@ class NifExport(NifCommon):
                                     "Lost %f in vertex weights"
                                     " while creating a skin partition"
                                     " for Blender object '%s' (nif block '%s')"
-                                    % (lostweight, ob.name, trishape.name))
+                                    % (lostweight, b_obj.name, trishape.name))
 
                         # clean up
                         del vert_weights
@@ -3076,9 +3076,9 @@ class NifExport(NifCommon):
             # attach block to geometry
             n_geom.add_controller(n_uvctrl)
 
-    def export_object_vis_controller(self, b_object, n_node):
+    def export_object_vis_controller(self, b_obj, n_node):
         """Export the material alpha controller data."""
-        b_ipo = b_object.ipo
+        b_ipo = b_obj.ipo
         if not b_ipo:
             return
         # get the alpha curve and translate it into nif data
@@ -3226,26 +3226,26 @@ class NifExport(NifCommon):
 
 
 
-    def export_children(self, obj, parent_block):
+    def export_children(self, b_obj, parent_block):
         """Export all children of blender object ob as children of
         parent_block."""
         # loop over all obj's children
-        for ob_child in obj.children:
+        for ob_child in b_obj.children:
             # is it a regular node?
             if ob_child.type in ['MESH', 'EMPTY', 'ARMATURE']:
-                if (obj.type != 'ARMATURE'):
+                if (b_obj.type != 'ARMATURE'):
                     # not parented to an armature
-                    self.export_node(ob_child, 'localspace',
-                                     parent_block, ob_child.name)
+                    self.export_node(b_obj_child, 'localspace',
+                                     parent_block, b_obj_child.name)
                 else:
                     # this object is parented to an armature
                     # we should check whether it is really parented to the
                     # armature using vertex weights
                     # or whether it is parented to some bone of the armature
-                    parent_bone_name = ob_child.parent_bone
+                    parent_bone_name = b_obj_child.parent_bone
                     if parent_bone_name is None:
-                        self.export_node(ob_child, 'localspace',
-                                         parent_block, ob_child.name)
+                        self.export_node(b_obj_child, 'localspace',
+                                         parent_block, b_obj_child.name)
                     else:
                         # we should parent the object to the bone instead of
                         # to the armature
@@ -3263,19 +3263,19 @@ class NifExport(NifCommon):
                                 #     extra translation along the Y axis
                                 #     with length of the bone ("tail")
                                 # this is handled in the get_object_srt function
-                                self.export_node(ob_child, 'localspace',
-                                                 bone_block, ob_child.name)
+                                self.export_node(b_obj_child, 'localspace',
+                                                 bone_block, b_obj_child.name)
                                 break
                         else:
                             assert(False) # BUG!
 
 
 
-    def export_matrix(self, obj, space, block):
+    def export_matrix(self, b_obj, space, block):
         """Set a block's transform matrix to an object's
         transformation matrix in rest pose."""
         # decompose
-        bscale, brot, btrans = self.get_object_srt(obj, space)
+        bscale, brot, btrans = self.get_object_srt(b_obj, space)
         
         # and fill in the values
         block.translation.x = btrans[0]
@@ -3297,14 +3297,14 @@ class NifExport(NifCommon):
 
         return bscale, brot, btrans
 
-    def get_object_matrix(self, obj, space):
+    def get_object_matrix(self, b_obj, space):
         """Get an object's matrix as NifFormat.Matrix44
 
         Note: for objects parented to bones, this will return the transform
         relative to the bone parent head in nif coordinates (that is, including
         the bone correction); this differs from getMatrix which
         returns the transform relative to the armature."""
-        bscale, brot, btrans = self.get_object_srt(obj, space)
+        bscale, brot, btrans = self.get_object_srt(b_obj, space)
         mat = NifFormat.Matrix44()
         
         mat.m_41 = btrans[0]
@@ -3328,7 +3328,7 @@ class NifExport(NifCommon):
         
         return mat
 
-    def get_object_srt(self, obj, space = 'localspace'):
+    def get_object_srt(self, b_obj, space = 'localspace'):
         """Find scale, rotation, and translation components of an object in
         the rest pose. Returns a triple (bs, br, bt), where bs
         is a scale float, br is a 3x3 rotation matrix, and bt is a
@@ -3350,9 +3350,9 @@ class NifExport(NifCommon):
         assert(space == 'localspace')
 
         # now write out spaces
-        if not isinstance(obj, bpy.types.Bone):
-            mat = obj.matrix_local.copy()
-            bone_parent_name = obj.parent_bone
+        if not isinstance(b_obj, bpy.types.Bone):
+            mat = b_obj.matrix_local.copy()
+            bone_parent_name = b_obj.parent_bone
             # if there is a bone parent then the object is parented
             # then get the matrix relative to the bone parent head
             if bone_parent_name:
@@ -3362,7 +3362,7 @@ class NifExport(NifCommon):
                 # matrix (relative to the head), and B is the nif bone matrix;
                 # we wish to find Z
 
-                # obj.getMatrix('localspace')
+                # b_obj.getMatrix('localspace')
                 # gets the object local transform matrix, relative
                 # to the armature!! (not relative to the bone)
                 # so at this point, mat = O * T * B'
@@ -3373,7 +3373,7 @@ class NifExport(NifCommon):
                 # hence Z = mat * B'^{-1} * X
 
                 # first multiply with inverse of the Blender bone matrix
-                bone_parent = obj.parent.data.bones[
+                bone_parent = b_obj.parent.data.bones[
                     bone_parent_name]
                 boneinv = mathutils.Matrix(
                     bone_parent.matrix['ARMATURESPACE'])
@@ -3390,7 +3390,7 @@ class NifExport(NifCommon):
                     pass
         else:
             # bones, get the rest matrix
-            mat = self.get_bone_rest_matrix(obj, 'BONESPACE')
+            mat = self.get_bone_rest_matrix(b_obj, 'BONESPACE')
         
         try:
             return self.decompose_srt(mat)
@@ -3399,7 +3399,7 @@ class NifExport(NifCommon):
             raise NifExportError(
                 "Non-uniform scaling on bone '%s' not supported."
                 " This could be a bug... No workaround. :-( Post your blend!"
-                % obj.name)
+                % b_obj.name)
 
 
 
@@ -3492,39 +3492,39 @@ class NifExport(NifCommon):
         self.blocks[block] = b_obj
         return block
 
-    def export_bsx_upb_flags(self, obj, parent_block):        
+    def export_bsx_upb_flags(self, b_obj, parent_block):        
         """Gets BSXFlags prop and creates BSXFlags node
         
-        @param obj: The blender Object
+        @param b_obj: The blender Object
         @param parent_block: The nif parent block
         """
         
-        if not obj.nifcollision.bsxFlags or not obj.nifcollision.upb:
+        if not b_obj.nifcollision.bsxFlags or not b_obj.nifcollision.upb:
             return
         
-        bsxNode = self.create_block("BSXFlags", obj)
+        bsxNode = self.create_block("BSXFlags", b_obj)
         bsxNode.name = "BSX"
-        bsxNode.integer_data = obj.nifcollision.bsxFlags
+        bsxNode.integer_data = b_obj.nifcollision.bsxFlags
         parent_block.add_extra_data(bsxNode)
 
-        upbNode = self.create_block("NiStringExtraData", obj)
+        upbNode = self.create_block("NiStringExtraData", b_obj)
         upbNode.name = "UPB"
         upbNode.string_data = obj.nifcollision.upb
         parent_block.add_extra_data(upbNode)
 
 
-    def export_collision(self, obj, parent_block):
-        """Main function for adding collision object obj to a node.""" 
+    def export_collision(self, b_obj, parent_block):
+        """Main function for adding collision object b_obj to a node.""" 
         if self.properties.game == 'MORROWIND':
-             if obj.game.collision_bounds_type != 'TRIANGLE_MESH':
+             if b_obj.game.collision_bounds_type != 'TRIANGLE_MESH':
                  raise NifExportError(
                      "Morrowind only supports"
                      " Triangle Mesh collisions.")
-             node = self.create_block("RootCollisionNode", obj)
+             node = self.create_block("RootCollisionNode", b_obj)
              parent_block.add_child(node)
              node.flags = 0x0003 # default
-             self.export_matrix(obj, 'localspace', node)
-             self.export_tri_shapes(obj, 'none', node)
+             self.export_matrix(b_obj, 'localspace', node)
+             self.export_tri_shapes(b_obj, 'none', node)
 
         elif self.properties.game in ('OBLIVION', 'FALLOUT_3'):
 
@@ -3533,7 +3533,7 @@ class NifExport(NifCommon):
                            if block.name[:14] == 'collisiondummy' ])
             for node in nodes:
                 try:
-                    self.export_collision_helper(obj, node)
+                    self.export_collision_helper(b_obj, node)
                     break
                 except ValueError: # adding collision failed
                     continue
@@ -3543,41 +3543,41 @@ class NifExport(NifCommon):
                 node.name = 'collisiondummy%i' % parent_block.num_children
                 node.flags = 0x000E # default
                 parent_block.add_child(node)
-                self.export_collision_helper(obj, node)
+                self.export_collision_helper(b_obj, node)
 
         else:
             self.warning(
                 "Only Morrowind, Oblivion, and Fallout 3"
                 " collisions are supported, skipped collision object '%s'"
-                % obj.name)
+                % b_obj.name)
 
-    def export_collision_helper(self, obj, parent_block):
+    def export_collision_helper(self, b_obj, parent_block):
         """Helper function to add collision objects to a node. This function
         exports the rigid body, and calls the appropriate function to export
         the collision geometry in the desired format.
 
-        @param obj: The object to export as collision.
+        @param b_obj: The object to export as collision.
         @param parent_block: The NiNode parent of the collision.
         """
 
         # is it packed
-        coll_ispacked = (obj.game.collision_bounds_type == 'TRIANGLE_MESH')
+        coll_ispacked = (b_obj.game.collision_bounds_type == 'TRIANGLE_MESH')
 
         # find physics properties/defaults
-        material = obj.nifcollision.havok_material
-        layer = obj.nifcollision.oblivion_layer
-        motion_system = obj.nifcollision.motion_system
-        quality_type = obj.nifcollision.quality_type
+        material = b_obj.nifcollision.havok_material
+        layer = b_obj.nifcollision.oblivion_layer
+        motion_system = b_obj.nifcollision.motion_system
+        quality_type = b_obj.nifcollision.quality_type
         mass = 1.0 # will be fixed later
-        col_filter = obj.nifcollision.col_filter
+        col_filter = b_obj.nifcollision.col_filter
         
         #export bsxFlags
-        self.export_bsx_upb_flags(obj, parent_block)
+        self.export_bsx_upb_flags(b_obj, parent_block)
         
         # copy physics properties from Blender properties, if they exist,
         # unless forcing override
-        if not obj.nifcollision.use_blender_properties:
-            for prop in obj.getAllProperties():
+        if not b_obj.nifcollision.use_blender_properties:
+            for prop in b_obj.getAllProperties():
                 if prop.name == 'HavokMaterial':
                     if prop.type == "STRING":
                         # for Anglicized names
@@ -3632,14 +3632,14 @@ class NifExport(NifCommon):
         # bhkCollisionObject -> bhkRigidBody
         if not parent_block.collision_object:
             # note: collision settings are taken from lowerclasschair01.nif
-            if obj.nifcollision.oblivion_layer == NifFormat.OblivionLayer.OL_BIPED:
+            if b_obj.nifcollision.oblivion_layer == NifFormat.OblivionLayer.OL_BIPED:
                 # special collision object for creatures
-                colobj = self.create_block("bhkBlendCollisionObject", obj)
+                colobj = self.create_block("bhkBlendCollisionb_object", b_obj)
                 colobj.flags = 9
                 colobj.unknown_float_1 = 1.0
                 colobj.unknown_float_2 = 1.0
                 # also add a controller for it
-                blendctrl = self.create_block("bhkBlendController", obj)
+                blendctrl = self.create_block("bhkBlendController", b_obj)
                 blendctrl.flags = 12
                 blendctrl.frequency = 1.0
                 blendctrl.phase = 0.0
@@ -3648,7 +3648,7 @@ class NifExport(NifCommon):
                 parent_block.add_controller(blendctrl)
             else:
                 # usual collision object
-                colobj = self.create_block("bhkCollisionObject", obj)
+                colobj = self.create_block("bhkCollisionObject", b_obj)
                 if layer == NifFormat.OblivionLayer.OL_ANIM_STATIC and col_filter != 128:
                     # animated collision requires flags = 41
                     # unless it is a constrainted but not keyframed object
@@ -3659,7 +3659,7 @@ class NifExport(NifCommon):
                     
             parent_block.collision_object = colobj
             colobj.target = parent_block
-            colbody = self.create_block("bhkRigidBody", obj)
+            colbody = self.create_block("bhkRigidBody", b_obj)
             colobj.body = colbody
             colbody.layer = layer
             colbody.col_filter = col_filter
@@ -3695,14 +3695,14 @@ class NifExport(NifCommon):
             colbody.mass += mass
 
         if coll_ispacked:
-            self.export_collision_packed(obj, colbody, layer, material)
+            self.export_collision_packed(b_obj, colbody, layer, material)
         else:
-            if obj.nifcollision.export_bhklist:
-                self.export_collision_list(obj, colbody, layer, material)
+            if b_obj.nifcollision.export_bhklist:
+                self.export_collision_list(b_obj, colbody, layer, material)
             else:
-                self.export_collision_single(obj, colbody, layer, material)
+                self.export_collision_single(b_obj, colbody, layer, material)
 
-    def export_collision_packed(self, obj, colbody, layer, material):
+    def export_collision_packed(self, b_obj, colbody, layer, material):
         """Add object ob as packed collision object to collision body
         colbody. If parent_block hasn't any collisions yet, a new
         packed list is created. If the current collision system is not
@@ -3711,9 +3711,9 @@ class NifExport(NifCommon):
         """
 
         if not colbody.shape:
-            colshape = self.create_block("bhkPackedNiTriStripsShape", obj)
+            colshape = self.create_block("bhkPackedNiTriStripsShape", b_obj)
 
-            colmopp = self.create_block("bhkMoppBvTreeShape", obj)
+            colmopp = self.create_block("bhkMoppBvTreeShape", b_obj)
             colbody.shape = colmopp
             colmopp.material = material
             colmopp.unknown_8_bytes[0] = 160
@@ -3750,9 +3750,9 @@ class NifExport(NifCommon):
             if not isinstance(colshape, NifFormat.bhkPackedNiTriStripsShape):
                 raise ValueError('not a packed list of collisions')
 
-        mesh = obj.data
+        mesh = b_obj.data
         transform = mathutils.Matrix(
-            self.get_object_matrix(obj, 'localspace').as_list())
+            self.get_object_matrix(b_obj, 'localspace').as_list())
         rotation = transform.decompose()[1]
 
         vertices = [vert.co * transform for vert in mesh.vertices]
@@ -3771,16 +3771,16 @@ class NifExport(NifCommon):
 
 
 
-    def export_collision_single(self, obj, colbody, layer, material):
+    def export_collision_single(self, b_obj, colbody, layer, material):
         """Add collision object to colbody.
         If colbody already has a collision shape, throw ValueError."""
         if colbody.shape:
             raise ValueError('collision body already has a shape')
-        colbody.shape = self.export_collision_object(obj, layer, material)
+        colbody.shape = self.export_collision_object(b_obj, layer, material)
 
 
 
-    def export_collision_list(self, obj, colbody, layer, material):
+    def export_collision_list(self, b_obj, colbody, layer, material):
         """Add collision object obj to the list of collision objects of colbody.
         If colbody has no collisions yet, a new list is created.
         If the current collision system is not a list of collisions
@@ -3800,20 +3800,20 @@ class NifExport(NifCommon):
             if not isinstance(colshape, NifFormat.bhkListShape):
                 raise ValueError('not a list of collisions')
 
-        colshape.add_shape(self.export_collision_object(obj, layer, material))
+        colshape.add_shape(self.export_collision_object(b_obj, layer, material))
 
 
 
-    def export_collision_object(self, obj, layer, material):
+    def export_collision_object(self, b_obj, layer, n_havok_material):
         """Export object obj as box, sphere, capsule, or convex hull.
         Note: polyheder is handled by export_collision_packed."""
 
         # find bounding box data
-        if not obj.data.vertices:
+        if not b_obj.data.vertices:
             self.warning(
-                "Skipping collision object %s without vertices." % obj)
+                "Skipping collision object %s without vertices." % b_obj)
             return None
-        b_vertlist = [vert.co for vert in obj.data.vertices]
+        b_vertlist = [vert.co for vert in b_obj.data.vertices]
         
         minx = min([b_vert[0] for b_vert in b_vertlist])
         miny = min([b_vert[1] for b_vert in b_vertlist])
@@ -3822,10 +3822,10 @@ class NifExport(NifCommon):
         maxy = max([b_vert[1] for b_vert in b_vertlist])
         maxz = max([b_vert[2] for b_vert in b_vertlist])
 
-        if obj.game.collision_bounds_type in {'BOX', 'SPHERE'}:
+        if b_obj.game.collision_bounds_type in {'BOX', 'SPHERE'}:
             # note: collision settings are taken from lowerclasschair01.nif
-            coltf = self.create_block("bhkConvexTransformShape", obj)
-            coltf.material = material
+            coltf = self.create_block("bhkConvexTransformShape", b_obj)
+            coltf.material = n_havok_material
             coltf.unknown_float_1 = 0.1
             coltf.unknown_8_bytes[0] = 96
             coltf.unknown_8_bytes[1] = 120
@@ -3836,7 +3836,7 @@ class NifExport(NifCommon):
             coltf.unknown_8_bytes[6] = 253
             coltf.unknown_8_bytes[7] = 4
             hktf = mathutils.Matrix(
-                self.get_object_matrix(obj, 'localspace').as_list())
+                self.get_object_matrix(b_obj, 'localspace').as_list())
             # the translation part must point to the center of the data
             # so calculate the center in local coordinates
             center = mathutils.Vector(((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0))
@@ -3853,10 +3853,10 @@ class NifExport(NifCommon):
             coltf.transform.m_24 /= 7.0
             coltf.transform.m_34 /= 7.0
 
-            if obj.game.collision_bounds_type == 'BOX':
-                colbox = self.create_block("bhkBoxShape", obj)
+            if b_obj.game.collision_bounds_type == 'BOX':
+                colbox = self.create_block("bhkBoxShape", b_obj)
                 coltf.shape = colbox
-                colbox.material = material
+                colbox.material = n_havok_material
                 colbox.radius = 0.1
                 colbox.unknown_8_bytes[0] = 0x6b
                 colbox.unknown_8_bytes[1] = 0xee
@@ -3871,21 +3871,21 @@ class NifExport(NifCommon):
                 colbox.dimensions.y = (maxy - miny) / 14.0
                 colbox.dimensions.z = (maxz - minz) / 14.0
                 colbox.minimum_size = min(colbox.dimensions.x, colbox.dimensions.y, colbox.dimensions.z)
-            elif obj.game.collision_bounds_type == 'SPHERE':
-                colsphere = self.create_block("bhkSphereShape", obj)
+            elif b_obj.game.collision_bounds_type == 'SPHERE':
+                colsphere = self.create_block("bhkSphereShape", b_obj)
                 coltf.shape = colsphere
-                colsphere.material = material
+                colsphere.material = n_havok_material
                 # take average radius and
                 # fix for havok coordinate system (6 * 7 = 42)
                 colsphere.radius = (maxx - minx + maxy - miny + maxz - minz) / 42.0
 
             return coltf
 
-        elif obj.game.collision_bounds_type in {'CYLINDER', 'CAPSULE'}:
+        elif b_obj.game.collision_bounds_type in {'CYLINDER', 'CAPSULE'}:
             # take average radius and calculate end points
             localradius = (maxx + maxy - minx - miny) / 4.0
             transform = mathutils.Matrix(
-                self.get_object_matrix(obj, 'localspace').as_list())
+                self.get_object_matrix(b_obj, 'localspace').as_list())
             vert1 = mathutils.Vector( [ (maxx + minx)/2.0,
                                                 (maxy + miny)/2.0,
                                                 minz + localradius ] )
@@ -3898,14 +3898,14 @@ class NifExport(NifCommon):
             if (vert1 - vert2).length < self.properties.epsilon:
                 self.warning(
                     "End points of cylinder %s too close,"
-                    " converting to sphere." % obj)
+                    " converting to sphere." % b_obj)
                 # change type
-                obj.game.collision_bounds_type = 'SPHERE'
+                b_obj.game.collision_bounds_type = 'SPHERE'
                 # instead of duplicating code, just run the function again
-                return self.export_collision_object(obj, layer, material)
+                return self.export_collision_object(b_obj, layer, n_havok_material)
             # end points are ok, so export as capsule
-            colcaps = self.create_block("bhkCapsuleShape", obj)
-            colcaps.material = material
+            colcaps = self.create_block("bhkCapsuleShape", b_obj)
+            colcaps.material = n_havok_material
             colcaps.first_point.x = vert1[0] / 7.0
             colcaps.first_point.y = vert1[1] / 7.0
             colcaps.first_point.z = vert1[2] / 7.0
@@ -3913,7 +3913,7 @@ class NifExport(NifCommon):
             colcaps.second_point.y = vert2[1] / 7.0
             colcaps.second_point.z = vert2[2] / 7.0
             # set radius, with correct scale
-            sizex, sizey, sizez = obj.getSize()
+            sizex, sizey, sizez = b_obj.getSize()
             colcaps.radius = localradius * (sizex + sizey) * 0.5
             colcaps.radius_1 = colcaps.radius
             colcaps.radius_2 = colcaps.radius
@@ -3923,10 +3923,10 @@ class NifExport(NifCommon):
             colcaps.radius_2 /= 7.0
             return colcaps
 
-        elif obj.game.collision_bounds_type == 'CONVEX_HULL':
-            mesh = obj.data
+        elif b_obj.game.collision_bounds_type == 'CONVEX_HULL':
+            mesh = b_obj.data
             transform = mathutils.Matrix(
-                self.get_object_matrix(obj, 'localspace').as_list())
+                self.get_object_matrix(b_obj, 'localspace').as_list())
             rotation = transform.rotationPart()
             scale = rotation.determinant()
             if scale < 0:
@@ -3967,8 +3967,8 @@ class NifExport(NifCommon):
                     "ERROR%t|Too many faces/vertices."
                     " Decimate/split your mesh and try again.")
             
-            colhull = self.create_block("bhkConvexVerticesShape", obj)
-            colhull.material = material
+            colhull = self.create_block("bhkConvexVerticesShape", b_obj)
+            colhull.material = n_havok_material
             colhull.radius = 0.1
             colhull.unknown_6_floats[2] = -0.0 # enables arrow detection
             colhull.unknown_6_floats[5] = -0.0 # enables arrow detection
@@ -3993,7 +3993,7 @@ class NifExport(NifCommon):
         else:
             raise NifExportError(
                 'cannot export collision type %s to collision shape list'
-                % obj.game.collision_bounds_type)
+                % b_obj.game.collision_bounds_type)
 
     def export_constraints(self, b_obj, root_block):
         """Export the constraints of an object.
@@ -4566,10 +4566,10 @@ class NifExport(NifCommon):
         texeff.unknown_vector.x = 1.0
         return self.register_block(texeff)
 
-    def export_bounding_box(self, obj, block_parent, bsbound=False):
+    def export_bounding_box(self, b_obj, block_parent, bsbound=False):
         """Export a Morrowind or Oblivion bounding box."""
         # calculate bounding box extents
-        objbbox = obj.bound_box
+        objbb_obj = b_obj.bound_box
         minx = min(vert[0] for vert in objbbox)
         miny = min(vert[1] for vert in objbbox)
         minz = min(vert[2] for vert in objbbox)
@@ -4601,9 +4601,9 @@ class NifExport(NifCommon):
             # set name, flags, translation, and radius
             bbox.name = "Bounding Box"
             bbox.flags = 4
-            bbox.translation.x = (minx + maxx) * 0.5 + obj.location[0]
-            bbox.translation.y = (minx + maxx) * 0.5 + obj.location[1]
-            bbox.translation.z = (minx + maxx) * 0.5 + obj.location[2]
+            bbox.translation.x = (minx + maxx) * 0.5 + b_obj.location[0]
+            bbox.translation.y = (minx + maxx) * 0.5 + b_obj.location[1]
+            bbox.translation.z = (minx + maxx) * 0.5 + b_obj.location[2]
             bbox.rotation.set_identity()
             bbox.has_bounding_box = True
             

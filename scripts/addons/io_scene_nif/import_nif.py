@@ -3077,9 +3077,10 @@ class NifImport(NifCommon):
                     # for physics emulation
                     # (mass 0 results in issues with simulation)
                     b_obj.game.mass = bhkshape.mass / len(collision_objs)
-                b_obj.nifcollision.oblivion_layer = self.OB_LAYER[bhkshape.layer]
-                b_obj.nifcollision.quality_type = self.QUALITY_TYPE[bhkshape.quality_type]
-                b_obj.nifcollision.motion_system = self.MOTION_SYS[bhkshape.motion_system]
+                
+                b_obj.nifcollision.oblivion_layer = NifFormat.OblivionLayer._enumkeys[bhkshape.layer]
+                b_obj.nifcollision.quality_type = NifFormat.MotionQuality._enumkeys[bhkshape.quality_type]
+                b_obj.nifcollision.motion_system = NifFormat.MotionSystem._enumkeys[bhkshape.motion_system]
                 b_obj.nifcollision.bsxFlags = bsxflags
                 b_obj.nifcollision.upb = upbflags
                 # note: also imported as rbMass, but hard to find by users
