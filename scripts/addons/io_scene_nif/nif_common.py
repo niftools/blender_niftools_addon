@@ -41,6 +41,7 @@ import logging
 
 import bpy
 
+import site
 import pyffi
 from pyffi.formats.nif import NifFormat
 
@@ -89,7 +90,7 @@ class NifCommon:
     MOTION_SYS = [
         "Invalid", "Dynamic", "Sphere", "Sphere Inertia", "Box",
         "Box Stabilized", "Keyframed", "Fixed", "Thin BOx", "Character"]
-
+    
     HAVOK_SCALE = 7
 
     HAVOK_MATERIAL = [
