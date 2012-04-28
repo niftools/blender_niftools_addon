@@ -38,63 +38,73 @@ class NiftoolsObjectProps(bpy.types.PropertyGroup):
                         type = cls,
                         )
         cls.longname = StringProperty(
-                name = 'Nif LongName')
+                        name = 'Nif LongName'
+                        )
 
-class NiftoolsCollisionProps(bpy.types.PropertyGroup):
-    @classmethod
-    def register(cls):
         bpy.types.Object.nifcollision = PointerProperty(
-                                                         name="Niftools Collision Property",
-                                                         description = "Additional collision properties used by the Nif File Format",
-                                                         type = cls,
-                                                         )
-        cls.motion_system = StringProperty(
-                                           name="Motion System",
-                                           description = "Havok Motion System settings for bhkRigidBody(t)",
-                                           default = "MO_SYS_FIXED"
-                                           )      
-        cls.oblivion_layer = StringProperty(
-                                            name = "Oblivion Layer",
-                                            description = "Mesh color when in Oblivion CS",
-                                            default = "OL_STATIC"
-                                            )  
-        cls.quality_type = StringProperty(
-                                          name = "Quality Type",
-                                          description = "Determines quality of motion",
-                                          default = "MO_QUAL_FIXED"
-                                          )
-        cls.col_filter = IntProperty(
-                                     name = "Col Filter",
-                                     description = "Flags for bhkRigidBody(t)",
-                                     default = 0
-                                    )
-        cls.havok_material = StringProperty(
-                                            name = "Havok Material",
-                                            description = "The Shapes material",
-                                            default = "HAV_MAT_WOOD"
-                                            )
-        cls.use_blender_properties = BoolProperty(
-                                                  name = "Use Blender Properties",
-                                                  description = "Whether or not to export collision settings via blender properties",
-                                                  default = True,
-                                                  )
-        cls.export_bhklist = BoolProperty(
-                                          name = "Export BHKList",
-                                          description = "None",
-                                          default = False
-                                          )
-        cls.bsxFlags = IntProperty(
-                                   name = "BSXFlags",
-                                   description = "Controls animation and collision",
-                                   default = 2 #2 = Bit 1, enable collision
-                                   )
-        cls.upb = StringProperty(
-                                 name = "UPB",
-                                 description = "Commands for an optimizer?",
-                                 default = "Mass = 0.000000 Ellasticity = 0.300000 Friction = 0.300000 Simulation_Geometry = 2 Proxy_Geometry = <None> Use_Display_Proxy = 0 Display_Children = 1 Disable_Collisions = 0 Inactive = 0 Display_Proxy = <None> Collision_Groups = 1 Unyielding = 1 "
-                                 )
+                        name="Niftools Collision Property",
+                        description = "Additional collision properties used by the Nif File Format",
+                        type = cls,
+                        )
         
-
+        cls.motion_system = StringProperty(
+                        name="Motion System",
+                        description = "Havok Motion System settings for bhkRigidBody(t)",
+                        default = "MO_SYS_FIXED"
+                        )
+              
+        cls.oblivion_layer = StringProperty(
+                        name = "Oblivion Layer",
+                        description = "Mesh color when in Oblivion CS",
+                        default = "OL_STATIC"
+                        )
+          
+        cls.quality_type = StringProperty(
+                        name = "Quality Type",
+                        description = "Determines quality of motion",
+                        default = "MO_QUAL_FIXED"
+                        )
+        
+        cls.col_filter = IntProperty(
+                        name = "Col Filter",
+                        description = "Flags for bhkRigidBody(t)",
+                        default = 0
+                        )
+        
+        cls.havok_material = StringProperty(
+                        name = "Havok Material",
+                        description = "The Shapes material",
+                        default = "HAV_MAT_WOOD"
+                        )
+        
+        cls.use_blender_properties = BoolProperty(
+                        name = "Use Blender Properties",
+                        description = "Whether or not to export collision settings via blender properties",
+                        default = True,
+                        )
+        
+        cls.export_bhklist = BoolProperty(
+                        name = "Export BHKList",
+                        description = "None",
+                        default = False
+                        )
+        
+        cls.bsxFlags = IntProperty(
+                        name = "BSXFlags",
+                        description = "Controls animation and collision",
+                        default = 2 #2 = Bit 1, enable collision
+                        )
+        
+        cls.upb = StringProperty(
+                        name = "UPB",
+                        description = "Commands for an optimizer?",
+                        default = "Mass = 0.000000 Ellasticity = 0.300000 Friction = 0.300000 Simulation_Geometry = 2 Proxy_Geometry = <None> Use_Display_Proxy = 0 Display_Children = 1 Disable_Collisions = 0 Inactive = 0 Display_Proxy = <None> Collision_Groups = 1 Unyielding = 1 "
+                        )
+        
+    @classmethod
+    def unregister(cls):
+        del bpy.types.Object.niftools
+        
 def register():
     bpy.utils.register_class(NiftoolsMaterialProps)
     bpy.utils.register_class(NiftoolsObjectProps)
