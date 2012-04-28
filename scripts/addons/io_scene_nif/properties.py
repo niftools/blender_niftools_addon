@@ -84,7 +84,7 @@ class NiftoolsObjectCollisionProps(bpy.types.PropertyGroup):
         cls.motion_system = EnumProperty(
                         name='Motion System',
                         description = 'Havok Motion System settings for bhkRigidBody(t)',
-                        items = [(item, underscore_to_camelcase(item),"", i) for i, item in enumerate(NifFormat.MotionSystem._enumkeys)],
+                        items = [(item, item,"", i) for i, item in enumerate(NifFormat.MotionSystem._enumkeys)],
                         #default = 'MO_SYS_FIXED',
                         
                         )
@@ -92,14 +92,14 @@ class NiftoolsObjectCollisionProps(bpy.types.PropertyGroup):
         cls.oblivion_layer = EnumProperty(
                         name = 'Oblivion Layer',
                         description = 'Mesh color, used in Editor',
-                        items = [(item, underscore_to_camelcase(item),"", i) for i, item in enumerate(NifFormat.OblivionLayer._enumkeys)],
+                        items = [(item, item,"", i) for i, item in enumerate(NifFormat.OblivionLayer._enumkeys)],
                         #default = 'OL_STATIC',
                         )
           
         cls.quality_type = EnumProperty(
                         name = 'Quality Type',
                         description = 'Determines quality of motion',
-                        items = [(item, underscore_to_camelcase(item),"", i) for i, item in enumerate(NifFormat.MotionQuality._enumkeys)],
+                        items = [(item, item,"", i) for i, item in enumerate(NifFormat.MotionQuality._enumkeys)],
                         #default = 'MO_QUAL_FIXED',
                         )
         
@@ -112,7 +112,7 @@ class NiftoolsObjectCollisionProps(bpy.types.PropertyGroup):
         cls.havok_material = EnumProperty(
                         name = 'Havok Material',
                         description = 'The Shapes material',
-                        items = [(item, underscore_to_camelcase(item),"", i) for i, item in enumerate(NifFormat.HavokMaterial._enumkeys)],
+                        items = [(item, item,"", i) for i, item in enumerate(NifFormat.HavokMaterial._enumkeys)],
                         #default = 'HAV_MAT_WOOD'
                         )
         
