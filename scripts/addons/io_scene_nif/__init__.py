@@ -56,6 +56,12 @@ bl_info = {
     "support": "COMMUNITY",
     "category": "Import-Export"}
 
+import imp
+if "bpy" in locals():
+    from imp import reload
+    if "io_scene_nif" in locals():
+        reload(io_scene_nif)
+    
 import logging
 import sys
 import os
