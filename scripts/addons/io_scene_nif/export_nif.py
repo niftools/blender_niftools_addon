@@ -3227,12 +3227,12 @@ class NifExport(NifCommon):
 
 
     def export_children(self, b_obj, parent_block):
-        """Export all children of blender object ob as children of
+        """Export all children of blender object b_obj as children of
         parent_block."""
         # loop over all obj's children
-        for ob_child in b_obj.children:
+        for b_obj_child in b_obj.children:
             # is it a regular node?
-            if ob_child.type in ['MESH', 'EMPTY', 'ARMATURE']:
+            if b_obj_child.type in ['MESH', 'EMPTY', 'ARMATURE']:
                 if (b_obj.type != 'ARMATURE'):
                     # not parented to an armature
                     self.export_node(b_obj_child, 'localspace',
@@ -3509,7 +3509,7 @@ class NifExport(NifCommon):
 
         upbNode = self.create_block("NiStringExtraData", b_obj)
         upbNode.name = "UPB"
-        upbNode.string_data = obj.nifcollision.upb
+        upbNode.string_data = b_obj.nifcollision.upb
         parent_block.add_extra_data(upbNode)
 
 
@@ -3538,7 +3538,7 @@ class NifExport(NifCommon):
                 except ValueError: # adding collision failed
                     continue
             else: # all nodes failed so add new one
-                node = self.create_ninode(obj)
+                node = self.create_ninode(b_obj)
                 node.set_transform(self.IDENTITY44)
                 node.name = 'collisiondummy%i' % parent_block.num_children
                 node.flags = 0x000E # default
@@ -3573,6 +3573,8 @@ class NifExport(NifCommon):
         
         #export bsxFlags
         self.export_bsx_upb_flags(b_obj, parent_block)
+
+        '''Customs User Properties'''
         
         # copy physics properties from Blender properties, if they exist,
         # unless forcing override
@@ -3841,7 +3843,7 @@ class NifExport(NifCommon):
             # so calculate the center in local coordinates
             center = mathutils.Vector(((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0))
             # and transform it to global coordinates
-            center *= hktf
+            center = center * hktf
             hktf[3][0] = center[0]
             hktf[3][1] = center[1]
             hktf[3][2] = center[2]
