@@ -502,7 +502,6 @@ class NifExport(NifCommon):
                 root_block.add_extra_data(sgokeep)
 
             # FIXME
-            """
             self.info("Checking collision")
             # activate oblivion/Fallout 3 collision and physics
             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
@@ -558,10 +557,10 @@ class NifExport(NifCommon):
 
                 # many Oblivion nifs have a UPB, but export is disabled as
                 # they do not seem to affect anything in the game
-                #upb = self.create_block("NiStringExtraData")
-                #upb.name = 'UPB'
-                #upb.string_data = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
-                #root_block.add_extra_data(upb)
+                upb = self.create_block("NiStringExtraData")
+                upb.name = 'UPB'
+                upb.string_data = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
+                root_block.add_extra_data(upb)
 
             # bhkConvexVerticesShape of children of bhkListShapes
             # need an extra bhkConvexTransformShape
@@ -570,8 +569,7 @@ class NifExport(NifCommon):
             for block in list(self.blocks):
                 if isinstance(block, NifFormat.bhkListShape):
                     for i, sub_shape in enumerate(block.sub_shapes):
-                        if isinstance(sub_shape,
-                                      NifFormat.bhkConvexVerticesShape):
+                        if isinstance(sub_shape, NifFormat.bhkConvexVerticesShape):
                             coltf = self.create_block("bhkConvexTransformShape")
                             coltf.material = sub_shape.material
                             coltf.unknown_float_1 = 0.1
@@ -605,11 +603,9 @@ class NifExport(NifCommon):
                         "HELM": "Bip01 Head",
                         "RING": "Bip01 R Finger1"}[self.EXPORT_OB_PRN]
                     root_block.add_extra_data(prn)
-            """
 
             # add vertex color and zbuffer properties for civ4 and railroads
-            if self.properties.game in ('CIVILIZATION_IV',
-                                       'SID_MEIER_S_RAILROADS'):
+            if self.properties.game in ('CIVILIZATION_IV', 'SID_MEIER_S_RAILROADS'):
                 self.export_vertex_color_property(root_block)
                 self.export_z_buffer_property(root_block)
             elif self.properties.game in ('EMPIRE_EARTH_II',):
@@ -674,8 +670,7 @@ class NifExport(NifCommon):
                                " correctly in-game. You may wish to use"
                                " simple primitives for collision.")
 
-            # delete original scene root if a scene root object was already
-            # defined
+            # delete original scene root if a scene root object was already defined
             if ((root_block.num_children == 1)
                 and ((root_block.children[0].name in ['Scene Root', 'Bip01']) or root_block.children[0].name[-3:] == 'nif')):
                 if root_block.children[0].name[-3:] == 'nif':
@@ -703,14 +698,12 @@ class NifExport(NifCommon):
                 root_block.name = root_name
 
             # making root block a fade node
-            if (self.properties.game == 'FALLOUT_3'
-                and self.EXPORT_FO3_FADENODE):
-                self.info(
-                    "Making root block a BSFadeNode")
+            if (self.properties.game == 'FALLOUT_3' and self.EXPORT_FO3_FADENODE):
+                self.info("Making root block a BSFadeNode")
                 fade_root_block = NifFormat.BSFadeNode().deepcopy(root_block)
                 fade_root_block.replace_global_node(root_block, fade_root_block)
                 root_block = fade_root_block
-
+            
             # figure out user version and user version 2
             if self.properties.game == 'OBLIVION':
                 NIF_USER_VERSION = 11
@@ -723,7 +716,7 @@ class NifExport(NifCommon):
                 NIF_USER_VERSION = 0
             else:
                 NIF_USER_VERSION = 0
-                NIF_USER_VERSION2 = 0
+                NIF_USER_VERSION2 = 0             
 
             # export nif file:
             #-----------------
@@ -3491,27 +3484,29 @@ class NifExport(NifCommon):
                      % (b_obj, block.__class__.__name__))
         self.blocks[block] = b_obj
         return block
-
-    def export_bsx_upb_flags(self, b_obj, parent_block):        
-        """Gets BSXFlags prop and creates BSXFlags node
+    
+        #Aaron1178 collision export stuff
+        ''' 
+            def export_bsx_upb_flags(self, b_obj, parent_block):        
+                """Gets BSXFlags prop and creates BSXFlags node
+                
+                @param b_obj: The blender Object
+                @param parent_block: The nif parent block
+                """
+                
+                if not b_obj.nifcollision.bsxFlags or not b_obj.nifcollision.upb:
+                    return
+                
+                bsxNode = self.create_block("BSXFlags", b_obj)
+                bsxNode.name = "BSX"
+                bsxNode.integer_data = b_obj.nifcollision.bsxFlags
+                parent_block.add_extra_data(bsxNode)
         
-        @param b_obj: The blender Object
-        @param parent_block: The nif parent block
-        """
-        
-        if not b_obj.nifcollision.bsxFlags or not b_obj.nifcollision.upb:
-            return
-        
-        bsxNode = self.create_block("BSXFlags", b_obj)
-        bsxNode.name = "BSX"
-        bsxNode.integer_data = b_obj.nifcollision.bsxFlags
-        parent_block.add_extra_data(bsxNode)
-
-        upbNode = self.create_block("NiStringExtraData", b_obj)
-        upbNode.name = "UPB"
-        upbNode.string_data = b_obj.nifcollision.upb
-        parent_block.add_extra_data(upbNode)
-
+                upbNode = self.create_block("NiStringExtraData", b_obj)
+                upbNode.name = "UPB"
+                upbNode.string_data = b_obj.nifcollision.upb
+                parent_block.add_extra_data(upbNode)
+        '''
 
     def export_collision(self, b_obj, parent_block):
         """Main function for adding collision object b_obj to a node.""" 
@@ -3571,9 +3566,12 @@ class NifExport(NifCommon):
         mass = 1.0 # will be fixed later
         col_filter = b_obj.nifcollision.col_filter
         
+        #Aaron1178 collison stuff
+        '''
         #export bsxFlags
         self.export_bsx_upb_flags(b_obj, parent_block)
-
+        '''
+        
         '''Customs User Properties'''
         
         # copy physics properties from Blender properties, if they exist,
@@ -4281,15 +4279,10 @@ class NifExport(NifCommon):
             stencilprop.flags = 19840
         return stencilprop        
 
-    def export_material_property(
-        self, name='', flags=0x0001,
-        ambient=(1.0, 1.0, 1.0),
-        diffuse=(1.0, 1.0, 1.0),
-        specular=(0.0, 0.0, 0.0),
-        emissive=(0.0, 0.0, 0.0),
-        gloss=10.0,
-        alpha=1.0,
-        emitmulti=1.0):
+    def export_material_property(self, name='', flags=0x0001,
+                                 ambient=(1.0, 1.0, 1.0), diffuse=(1.0, 1.0, 1.0),
+                                 specular=(0.0, 0.0, 0.0), emissive=(0.0, 0.0, 0.0),
+                                 gloss=10.0, alpha=1.0, emitmulti=1.0):
         """Return existing material property with given settings, or create
         a new one if a material property with these settings is not found."""
 
@@ -4342,11 +4335,13 @@ class NifExport(NifCommon):
         for block in self.blocks:
             if not isinstance(block, NifFormat.NiMaterialProperty):
                 continue
+            
             # when optimization is enabled, ignore material name
-            #if self.EXPORT_OPTIMIZE_MATERIALS:
-            #    ignore_strings = not(block.name in specialnames)
-            #else:
-            ignore_strings = False
+            if self.EXPORT_OPTIMIZE_MATERIALS:
+                ignore_strings = not(block.name in specialnames)
+            else:
+                ignore_strings = False
+            
             # check hash
             first_index = 1 if ignore_strings else 0
             if (block.get_hash()[first_index:] ==
