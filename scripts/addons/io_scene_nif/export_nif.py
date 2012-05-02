@@ -4566,51 +4566,51 @@ class NifExport(NifCommon):
     def export_bounding_box(self, b_obj, block_parent, bsbound=False):
         """Export a Morrowind or Oblivion bounding box."""
         # calculate bounding box extents
-        objbb_obj = b_obj.bound_box
-        minx = min(vert[0] for vert in objbbox)
-        miny = min(vert[1] for vert in objbbox)
-        minz = min(vert[2] for vert in objbbox)
-        maxx = max(vert[0] for vert in objbbox)
-        maxy = max(vert[1] for vert in objbbox)
-        maxz = max(vert[2] for vert in objbbox)
+        b_n_bbox = b_obj.bound_box
+        minx = min(vert[0] for vert in b_n_bbox)
+        miny = min(vert[1] for vert in b_n_bbox)
+        minz = min(vert[2] for vert in b_n_bbox)
+        maxx = max(vert[0] for vert in b_n_bbox)
+        maxy = max(vert[1] for vert in b_n_bbox)
+        maxz = max(vert[2] for vert in b_n_bbox)
 
         if bsbound:
-            bbox = self.create_block("BSBound")
+            n_n_bbox = self.create_block("BSBound")
             # ... the following incurs double scaling because it will be added in
             # both the extra data list and in the old extra data sequence!!!
-            #block_parent.add_extra_data(bbox)
+            #block_parent.add_extra_data(n_bbox)
             # quick hack (better solution would be to make apply_scale non-recursive)
             block_parent.num_extra_data_list += 1
             block_parent.extra_data_list.update_size()
-            block_parent.extra_data_list[-1] = bbox
+            block_parent.extra_data_list[-1] = n_n_bbox
             
             # set name, center, and dimensions
-            bbox.name = "BBX"
-            bbox.center.x = (minx + maxx) * 0.5
-            bbox.center.y = (miny + maxy) * 0.5
-            bbox.center.z = (minz + maxz) * 0.5
-            bbox.dimensions.x = (maxx - minx) * 0.5
-            bbox.dimensions.y = (maxy - miny) * 0.5
-            bbox.dimensions.z = (maxz - minz) * 0.5
+            n_bbox.name = "BBX"
+            n_bbox.center.x = (minx + maxx) * 0.5
+            n_bbox.center.y = (miny + maxy) * 0.5
+            n_bbox.center.z = (minz + maxz) * 0.5
+            n_bbox.dimensions.x = (maxx - minx) * 0.5
+            n_bbox.dimensions.y = (maxy - miny) * 0.5
+            n_bbox.dimensions.z = (maxz - minz) * 0.5
         else:
-            bbox = self.create_ninode()
-            block_parent.add_child(bbox)
+            n_bbox = self.create_ninode()
+            block_parent.add_child(n_bbox)
             # set name, flags, translation, and radius
-            bbox.name = "Bounding Box"
-            bbox.flags = 4
-            bbox.translation.x = (minx + maxx) * 0.5 + b_obj.location[0]
-            bbox.translation.y = (minx + maxx) * 0.5 + b_obj.location[1]
-            bbox.translation.z = (minx + maxx) * 0.5 + b_obj.location[2]
-            bbox.rotation.set_identity()
-            bbox.has_bounding_box = True
+            n_bbox.name = "Bounding Box"
+            n_bbox.flags = 4
+            n_bbox.translation.x = (minx + maxx) * 0.5 + b_obj.location[0]
+            n_bbox.translation.y = (minx + maxx) * 0.5 + b_obj.location[1]
+            n_bbox.translation.z = (minx + maxx) * 0.5 + b_obj.location[2]
+            n_bbox.rotation.set_identity()
+            n_bbox.has_bounding_box = True
             
-            #Ninode's(bbox) internal bounding_box behaves like a seperate mesh.
-            #bounding_box center(bbox.bounding_box.translation) is relative to the bound_box
-            bbox.bounding_box.translation.deepcopy(bbox.translation)
-            bbox.bounding_box.rotation.set_identity()
-            bbox.bounding_box.radius.x = (maxx - minx) * 0.5
-            bbox.bounding_box.radius.y = (maxy - miny) * 0.5
-            bbox.bounding_box.radius.z = (maxz - minz) * 0.5
+            #Ninode's(n_bbox) internal bounding_box behaves like a seperate mesh.
+            #bounding_box center(n_bbox.bounding_box.translation) is relative to the bound_box
+            n_bbox.bounding_box.translation.deepcopy(n_bbox.translation)
+            n_bbox.bounding_box.rotation.set_identity()
+            n_bbox.bounding_box.radius.x = (maxx - minx) * 0.5
+            n_bbox.bounding_box.radius.y = (maxy - miny) * 0.5
+            n_bbox.bounding_box.radius.z = (maxz - minz) * 0.5
 
     def add_shader_integer_extra_datas(self, trishape):
         """Add extra data blocks for shader indices."""
