@@ -135,7 +135,7 @@ class NifImport(NifCommon):
                 if self.data.version >= 0:
                     # it is valid, so read the file
                     self.info("NIF file version: 0x%08X" % self.data.version)
-                    self.msg_progress("Reading file")
+                    self.info("Reading file")
                     self.data.read(niffile)
                 elif self.data.version == -1:
                     raise NifImportError("Unsupported NIF version.")
@@ -157,7 +157,7 @@ class NifImport(NifCommon):
                         # it is valid, so read the file
                         self.info(
                             "KF file version: 0x%08X" % self.kfdata.version)
-                        self.msg_progress("Reading keyframe file")
+                        self.info("Reading keyframe file")
                         self.kfdata.read(kffile)
                     elif self.kfdata.version == -1:
                         raise NifImportError("Unsupported KF version.")
@@ -181,7 +181,7 @@ class NifImport(NifCommon):
                         # it is valid, so read the file
                         self.info("EGM file version: %03i"
                                          % self.egmdata.version)
-                        self.msg_progress("Reading FaceGen egm file")
+                        self.info("Reading FaceGen egm file")
                         self.egmdata.read(egmfile)
                         # scale the data
                         self.egmdata.apply_scale(1 / self.properties.scale_correction)
@@ -195,7 +195,7 @@ class NifImport(NifCommon):
             else:
                 self.egmdata = None
 
-            self.msg_progress("Importing data")
+            self.info("Importing data")
             # calculate and set frames per second
             if self.properties.animation:
                 self.fps = self.get_frames_per_second(
@@ -264,7 +264,7 @@ class NifImport(NifCommon):
                 self.import_root(root)
         finally:
             # clear progress bar
-            self.msg_progress("Finished", progbar=1)
+            self.info("Finished")
             # XXX no longer needed?
             # do a full scene update to ensure that transformations are applied
             #self.context.scene.update(1)
@@ -392,7 +392,7 @@ class NifImport(NifCommon):
         :param n_armature: The corresponding nif block for the armature for
             the current branch.
         """
-        self.msg_progress("Importing data")
+        self.info("Importing data")
         if not niBlock:
             return None
         elif (isinstance(niBlock, NifFormat.NiTriBasedGeom)
@@ -784,12 +784,10 @@ class NifImport(NifCommon):
             action.setActive(b_armature)
             # go through all armature pose bones
             # see http://www.elysiun.com/forum/viewtopic.php?t=58693
-            self.msg_progress('Importing Animations')
+            self.info('Importing Animations')
             for bone_name, b_posebone in b_armature.getPose().bones.items():
                 # denote progress
-                self.msg_progress('Animation: %s' % bone_name)
-                self.debug(
-                    'Importing animation for bone %s' % bone_name)
+                self.debug('Importing animation for bone %s' % bone_name)
                 niBone = self.blocks[bone_name]
 
                 # get bind matrix (NIF format stores full transformations in keyframes,
@@ -2918,7 +2916,7 @@ class NifImport(NifCommon):
             return
 
         # denote progress
-        self.msg_progress("Animation")
+        self.info("Animation")
         self.info("Importing animation data for %s" % b_obj.name)
         assert(isinstance(kfd, NifFormat.NiKeyframeData))
         # create an Ipo for this object

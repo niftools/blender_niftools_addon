@@ -126,10 +126,29 @@ class NifCommon:
     EXPORT_OB_LAYER = 1 # static
     EXPORT_OB_MATERIAL = 9 # wood
     
-    progress_bar = 0
-    """Level of the progress bar."""
-
-
+    IMPORT_REALIGN_BONES = 1 # 0 = no, 1 = tail, 2 = tail+rotation
+    IMPORT_ANIMATION = True
+    EXPORT_FLATTENSKIN = False
+    IMPORT_EGMANIM = True # create FaceGen EGM animation curves
+    IMPORT_EGMANIMSCALE = 1.0 # scale of FaceGen EGM animation curves
+    EXPORT_ANIMSEQUENCENAME = '' # sequence name of the kf file
+        
+    EXPORT_OB_MALLEABLECONSTRAINT = False # use malleable constraint for ragdoll and hinge
+    EXPORT_OB_PRN = "NONE" # determines bone where to attach weapon
+    EXPORT_FO3_SF_ZBUF = True # use these shader flags?
+    EXPORT_FO3_SF_SMAP = False
+    EXPORT_FO3_SF_SFRU = False
+    EXPORT_FO3_SF_WINDOW_ENVMAP = False
+    EXPORT_FO3_SF_EMPT = True
+    EXPORT_FO3_SF_UN31 = True
+    EXPORT_FO3_FADENODE = False
+    EXPORT_FO3_SHADER_TYPE = 1 # shader_default
+    EXPORT_FO3_BODYPARTS = True
+    EXPORT_ANIMTARGETNAME = ''
+    EXPORT_ANIMPRIORITY = 0
+    EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES = False
+    IMPORT_EXPORTEMBEDDEDTEXTURES = False   
+    EXPORT_MW_BS_ANIMATION_NODE = False
 
     def __init__(self, operator, context):
         """Common initialization functions for executing the import/export
@@ -153,9 +172,6 @@ class NifCommon:
         # copy properties from operator (contains import/export settings)
         self.operator = operator
         self.properties = operator.properties
-
-        # initialize progress bar
-        self.msg_progress("Initializing", progbar=0)
 
         # set logging level
         log_level_num = getattr(logging, self.properties.log_level)
@@ -201,26 +217,6 @@ class NifCommon:
         """
         self.operator.report({'ERROR'}, message)
         return {'FINISHED'}
-
-    def msg_progress(self, message, progbar=None):
-        """Message wrapper for the Blender progress bar.
-
-        .. deprecated:: 2.6.0
-
-            Use :meth:`info` instead.
-        """
-        # update progress bar level
-        if progbar is None:
-            if self.progress_bar > 0.89:
-                # reset progress bar
-                self.progress_bar = 0
-                # TODO draw the progress bar
-                #Blender.Window.DrawProgressBar(0, message)
-            self.progress_bar += 0.1
-        else:
-            self.progress_bar = progbar
-        # TODO draw the progress bar
-        #Blender.Window.DrawProgressBar(self.progress_bar, message)
 
     def get_bone_name_for_blender(self, name):
         """Convert a bone name to a name that can be used by Blender: turns
