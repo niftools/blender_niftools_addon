@@ -360,7 +360,7 @@ class NifExport(NifCommon):
             
             # export nif:
             #------------
-            self.msg_progress("Exporting")
+            self.info("Exporting")
             
             # create a nif object
             
@@ -727,7 +727,6 @@ class NifExport(NifCommon):
                 else:
                     ext = ".nif"
                 self.info("Writing %s file" % ext)
-                self.msg_progress("Writing %s file" % ext)
 
                 # make sure we have the right file extension
                 if (fileext.lower() != ext):
@@ -896,7 +895,6 @@ class NifExport(NifCommon):
 
                 ext = ".kf"
                 self.info("Writing %s file" % (prefix + ext))
-                self.msg_progress("Writing %s file" % (prefix + ext))
 
                 kffile = os.path.join(directory, prefix + filebase + ext)
                 data = NifFormat.Data(version=self.version,
@@ -939,7 +937,6 @@ class NifExport(NifCommon):
                 prefix = "x" # we are in morrowind 'nifxnifkf mode'
                 ext = ".nif"
                 self.info("Writing %s file" % (prefix + ext))
-                self.msg_progress("Writing %s file" % (prefix + ext))
 
                 xniffile = os.path.join(directory, prefix + filebase + ext)
                 data = NifFormat.Data(version=self.version,
@@ -959,7 +956,6 @@ class NifExport(NifCommon):
             if self.egmdata:
                 ext = ".egm"
                 self.info("Writing %s file" % ext)
-                self.msg_progress("Writing %s file" % ext)
 
                 egmfile = os.path.join(directory, filebase + ext)
                 stream = open(egmfile, "wb")
@@ -969,7 +965,7 @@ class NifExport(NifCommon):
                     stream.close()
         finally:
             # clear progress bar
-            self.msg_progress("Finished", progbar=1)
+            self.info("Finished")
 
         # save exported file (this is used by the test suite)
         self.root_blocks = [root_block]
@@ -1771,7 +1767,7 @@ class NifExport(NifCommon):
     # 
     def export_tri_shapes(self, b_obj, space, parent_block, trishape_name = None):
         self.info("Exporting %s" % b_obj)
-        self.msg_progress("Exporting %s" % b_obj.name)
+        
         assert(b_obj.type == 'MESH')
 
         # get mesh from b_obj
