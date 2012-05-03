@@ -4575,14 +4575,14 @@ class NifExport(NifCommon):
         maxz = max(vert[2] for vert in b_n_bbox)
 
         if bsbound:
-            n_n_bbox = self.create_block("BSBound")
+            n_bbox = self.create_block("BSBound")
             # ... the following incurs double scaling because it will be added in
             # both the extra data list and in the old extra data sequence!!!
             #block_parent.add_extra_data(n_bbox)
             # quick hack (better solution would be to make apply_scale non-recursive)
             block_parent.num_extra_data_list += 1
             block_parent.extra_data_list.update_size()
-            block_parent.extra_data_list[-1] = n_n_bbox
+            block_parent.extra_data_list[-1] = n_bbox
             
             # set name, center, and dimensions
             n_bbox.name = "BBX"

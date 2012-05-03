@@ -66,12 +66,19 @@ class TestBhkCollisionBoxShape(TestBaseGeometry, TestBhkCollision):
     def b_check_object(self, b_obj):
         TestBaseGeom.b_check_data(self, b_obj)# we double check the base mesh
         
+        b_coll = bpy.data.objects["CollisionBox"]
+        nose.tools.assert_equal(b_coll.game.use_collision_bounds, True)
+        nose.tools.assert_equal(b_coll.game.collision_bounds_type, 'BOX')
+        nose.tools.assert_equal(b_coll.nifcollision.use_blender_properties, True)
         
-        self.b_check_collision_data(b_obj)
+        self.b_check_collision_data(b_coll)
 
     def b_check_collision_data(self, b_obj):
-        #here we check our blender collision data
-        pass
+        nose.tools.assert_equal(b_obj.nifcollision.motion_system, "MO_SYS_FIXED")
+        nose.tools.assert_equal(b_obj.nifcollision.oblivion_layer, "OL_STATIC")
+        nose.tools.assert_equal(b_obj.nifcollision.quality_type, "MO_QUAL_FIXED")
+        nose.tools.assert_equal(b_obj.nifcollision.col_filer, 0)
+        nose.tools.assert_equal(b_obj.nifcollision.havok_material, "HAV_MAT_WOOD")
 
     def n_check_data(self, n_data):
         n_ninode = n_data.roots[0]
