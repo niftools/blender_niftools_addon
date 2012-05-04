@@ -2977,7 +2977,19 @@ class NifImport(NifCommon):
             
         Blender.Set('curframe', 1)
 
-    def import_bhk_shape(self, bhkshape):
+    def import_bsx_flags(self, bsxflags):
+        """Import BSXFlags node"""
+        
+        bsx = bsxflags.integer_data
+        return bsx
+
+    def import_upb(self, upb):
+      """Import UPB optimizer"""
+      
+      upb_string = upb.string_data         
+      return upb_string
+   
+    def import_bhk_shape(self, bhkshape, upbflags="", bsxflags=2):        
         """Import an oblivion collision shape as list of blender meshes."""
         if isinstance(bhkshape, NifFormat.bhkConvexVerticesShape):
             # find vertices (and fix scale)
