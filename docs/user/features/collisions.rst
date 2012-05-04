@@ -14,7 +14,7 @@ This is used by the havok system for collision detection
 .. warning::
 
    * Collisions are in the process of being ported. This section is incomplete and will change.
-   * We will eventually move the Physics collision panel from BGE to Blender Render.
+   * The Physics collision panel for an object currently resides in Blender Render and Blender Game. 
    * Some of the collision types lack viewport rendering, see workaround for visulisations below.
 
 For Oblivion, Fallout 3, and Fallout NV; Blender's Collision types map to the following Nif types:
@@ -199,7 +199,7 @@ Notes
 ~~~~~
 
 * Enable the **Collision Bounds** option, the mesh will be exported as a :class:`~pyffi.formats.nif.NifFormat.bhkShape, rather than a :class:`~pyffi.formats.nif.NifFormat.NiTriShape`,
-* Collision Bounds are represented by a dashed line, unlink Bounds which is a solid line. 
+* Collision Bounds are represented by a dashed line, unlike Bounds which is a solid line. 
 * Currently Capsule, Convex Hull and Triangle Mesh lack viewport preview.
    - In **Render** tab, under the **Display** section enable **Physics Visualisation**
    - **Game -> Start Game Engine** (p-key).
