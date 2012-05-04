@@ -56,6 +56,12 @@ bl_info = {
     "support": "COMMUNITY",
     "category": "Import-Export"}
 
+import imp
+if "bpy" in locals():
+    from imp import reload
+    if "io_scene_nif" in locals():
+        reload(io_scene_nif)
+    
 import logging
 import sys
 import os
@@ -109,17 +115,7 @@ class NifConfig:
         IMPORT_EGMANIM = True, # create FaceGen EGM animation curves
         IMPORT_EGMANIMSCALE = 1.0, # scale of FaceGen EGM animation curves
         EXPORT_ANIMSEQUENCENAME = '', # sequence name of the kf file
-        EXPORT_BHKLISTSHAPE = False,
-        EXPORT_OB_BSXFLAGS = 2,
-        EXPORT_OB_MASS = 10.0,
-        EXPORT_OB_SOLID = True,
-        EXPORT_OB_MOTIONSYSTEM = 7, # MO_SYS_FIXED
-        EXPORT_OB_UNKNOWNBYTE1 = 1,
-        EXPORT_OB_UNKNOWNBYTE2 = 1,
-        EXPORT_OB_QUALITYTYPE = 1, # MO_QUAL_FIXED
-        EXPORT_OB_WIND = 0,
-        EXPORT_OB_LAYER = 1, # static
-        EXPORT_OB_MATERIAL = 9, # wood
+        
         EXPORT_OB_MALLEABLECONSTRAINT = False, # use malleable constraint for ragdoll and hinge
         EXPORT_OB_PRN = "NONE", # determines bone where to attach weapon
         EXPORT_FO3_SF_ZBUF = True, # use these shader flags?
@@ -136,8 +132,7 @@ class NifConfig:
         EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES = False,
         PROFILE = '', # name of file where Python profiler dumps the profile; set to empty string to turn off profiling
         IMPORT_EXPORTEMBEDDEDTEXTURES = False,
-        EXPORT_OPTIMIZE_MATERIALS = True,
-        EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES = False,
+        
         EXPORT_MW_BS_ANIMATION_NODE = False,
         )
 

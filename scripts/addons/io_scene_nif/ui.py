@@ -1,93 +1,66 @@
+''' Nif User Interface '''
+''' Integrates the custom properties from properties.py into Blenders UI'''
+
 import bpy
 
-#TODO_3.0 - Improve placement of props, possibly add a preview button
-'''
 from bpy.types import Panel
 
-class NiftoolsMaterialPanel(Panel):
-    bl_label = "Niftools Material Panel"
-    bl_idname = "OBJECT_PT_niftools_utilities"
+class PhysicsButtonsPanel():
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "physics"
+
+class NifCollisionBoundsPanel(PhysicsButtonsPanel, Panel):
+    bl_label = "Collision Bounds"
     
-    bl_space_type = "PROPERTIES"
-    bl_region_type = "WINDOW"
-    bl_context = "material"
-    
+    '''
+    @classmethod
+    def poll(cls, context):
+    '''
+
+    def draw_header(self, context):
+        game = context.active_object.game
+        self.layout.prop(game, "use_collision_bounds", text="")
+
     def draw(self, context):
         layout = self.layout
-        material = context.material.niftools
+
+        game = context.active_object.game
+        col_setting = context.active_object.nifcollision
         
-        #material color swatches
-        row = layout.row()
-        row.prop(material, "diffuse_color")
-        row = layout.row()
-        row.prop(material, "ambient_color")
+        layout.active = game.use_collision_bounds
+        layout.prop(game, "collision_bounds_type", text="Bounds")
         
-        row = layout.row()
-        row.prop(material, "emissive_color")
+        #use blender props prop
+        layout.prop(col_setting, 'use_blender_properties', text='Use Blender Collisions')
+        
+        box = layout.box()
+        box.active = col_setting.use_blender_properties
+        
+        #col filter prop
+        box.prop(col_setting, "col_filter", text='Col Filter')
 
-def material(
-layout = (lambda self, context: self.layout)
-row = (lambda self, context: layout.row())
-split = (lambda self, context: row.split(percentage=0.5))
-colL = (lambda self, context: split.column())
-colL_prop = (lambda self, context: colL.prop(context.material.niftools, "emissive_color"))
-colR = split.column()
-'''
-
-
+        #quality type prop
+        box.prop(col_setting, "quality_type", text='Quality Type')
+        
+        #oblivion layer prop
+        box.prop(col_setting, "oblivion_layer", text='Oblivion Layer')
+    
+        #motion system prop
+        box.prop(col_setting, "motion_system", text='Motion System')
+    
+        #havok material prop
+        box.prop(col_setting, "havok_material", text='Havok Material')
+        
+        
 def register():
     mat_emissive_prop = (lambda self, context: self.layout.prop(context.material.niftools, "emissive_color"))
     bpy.types.MATERIAL_PT_shading.prepend(mat_emissive_prop)
-
-    #col filter prop
-    coll_cf_prop = (lambda self, context: self.layout.prop(context.object.nifcollision, "col_filter"))
-    bpy.types.PHYSICS_PT_game_physics.prepend(coll_cf_prop)
-
-    #quality type prop
-    coll_qt_prop = (lambda self, context: self.layout.prop(context.object.nifcollision, "quality_type"))
-    bpy.types.PHYSICS_PT_game_physics.prepend(coll_qt_prop)
-
-    #oblivion layer prop
-    coll_obl_prop = (lambda self, context: self.layout.prop(context.object.nifcollision, "oblivion_layer"))
-    bpy.types.PHYSICS_PT_game_physics.prepend(coll_obl_prop)
-
-    #motion system prop
-    coll_mosys_prop = (lambda self, context: self.layout.prop(context.object.nifcollision, "motion_system"))
-    bpy.types.PHYSICS_PT_game_physics.prepend(coll_mosys_prop)
-
-   #havok material prop
-    coll_hm_prop = (lambda self, context: self.layout.prop(context.object.nifcollision, "havok_material"))
-    bpy.types.PHYSICS_PT_game_physics.prepend(coll_hm_prop)
-
-   #use blende props prop
-    coll_bp_prop = (lambda self, context: self.layout.prop(context.object.nifcollision, "use_blender_properties"))
-    bpy.types.PHYSICS_PT_game_physics.prepend(coll_bp_prop)
+    bpy.utils.register_class(NifCollisionBoundsPanel)
 
 
 def unregister():
     mat_emissive_prop = (lambda self, context: self.layout.prop(context.material.niftools, "emissive_color"))
     bpy.types.MATERIAL_PT_shading.remove(mat_emissive_prop)
-
-    #col filter prop
-    coll_cf_prop = (lambda self, context: self.layout.prop(context.object.nifcollision, "col_filter"))
-    bpy.types.PHYSICS_PT_game_physics.remove(coll_cf_prop)
-
-    #quality type prop
-    coll_qt_prop = (lambda self, context: self.layout.prop(context.object.nifcollision, "quality_type"))
-    bpy.types.PHYSICS_PT_game_physics.remove(coll_qt_prop)
-
-    #oblivion layer prop
-    coll_obl_prop = (lambda self, context: self.layout.prop(context.object.nifcollision, "oblivion_layer"))
-    bpy.types.PHYSICS_PT_game_physics.remove(coll_obl_prop)
-
-    #motion system prop
-    coll_mosys_prop = (lambda self, context: self.layout.prop(context.object.nifcollision, "motion_system"))
-    bpy.types.PHYSICS_PT_game_physics.remove(coll_mosys_prop)
-
-    #havok material prop
-    coll_hm_prop = (lambda self, context: self.layout.prop(context.object.nifcollision, "havok_material"))
-    bpy.types.PHYSICS_PT_game_physics.remove(coll_hm_prop)
-
-    #use blender props prop
-    coll_bp_prop = (lambda self, context: self.layout.prop(context.object.nifcollision, "use_blender_properties"))
-    bpy.types.PHYSICS_PT_game_physics.remove(coll_bp_prop)
+    
+    bpy.utils.unregister_class(NifCollisionBoundsPanel)

@@ -7,8 +7,8 @@ from test import SingleNif
 from test import Base
 from pyffi.formats.nif import NifFormat
 
-class TestBaseGeom(SingleNif):
-    n_name = "geom/base_geom"
+class TestBaseGeometry(SingleNif):
+    n_name = "geometry/base_geometry"
     b_name = "Cube"
 
     def b_create_object(self):
@@ -51,11 +51,11 @@ class TestBaseGeom(SingleNif):
             radius:
     '''
         
-class TestBaseUV(TestBaseGeom):
-    n_name = "geom/base_uv"
+class TestBaseUV(TestBaseGeometry):
+    n_name = "geometry/base_uv"
     
     def b_create_object(self):
-        b_obj = TestBaseGeom.b_create_object(self)
+        b_obj = TestBaseGeometry.b_create_object(self)
         
         #project UV
         bpy.ops.object.mode_set(mode='EDIT', toggle=False) #ensure we are in the mode.
@@ -66,7 +66,7 @@ class TestBaseUV(TestBaseGeom):
         return b_obj
     
     def b_check_data(self, b_obj):
-        TestBaseGeom.b_check_data(self, b_obj)
+        TestBaseGeometry.b_check_data(self, b_obj)
         pass
         '''
         TODO_3.0 - Separate out the UV writing from requiring a texture. 
@@ -76,7 +76,7 @@ class TestBaseUV(TestBaseGeom):
         '''
     
     def n_check_data(self, n_data):
-        TestBaseGeom.n_check_data(self, n_data)
+        TestBaseGeometry.n_check_data(self, n_data)
         pass
         '''
         TODO_3.0 - See above

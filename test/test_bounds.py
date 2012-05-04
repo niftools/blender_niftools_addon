@@ -6,16 +6,16 @@ import os
 
 import io_scene_nif.export_nif
 from pyffi.formats.nif import NifFormat
-from test.test_geom import TestBaseGeom
+from test.test_geometry import TestBaseGeometry
 
 
-class TestBound(TestBaseGeom):
-    n_name = "boundbox/bound_box"
+class TestBound(TestBaseGeometry):
+    n_name = "collisions/boundbox/bound_box"
     b_name = "Bounding Box"
 
     def b_create_object(self):
         
-        b_obj = TestBaseGeom.b_create_object(self)
+        b_obj = TestBaseGeometry.b_create_object(self)
         b_obj.name = self.b_name
         b_obj.draw_bounds_type = 'BOX'
         b_obj.draw_type = 'BOUNDS'
@@ -40,12 +40,12 @@ class TestBound(TestBaseGeom):
         '''
 
 '''
-class TestBSBound(TestBaseGeom):
-    n_name = "boundbox/bsbound"
+class TestBSBound(TestBaseGeometry):
+    n_name = "collisions/boundbox/bsbound"
     b_name = "BSBound"
 
     def b_create_object(self):
-        b_obj = TestBaseGeom.b_create_object(self)
+        b_obj = TestBaseGeometry.b_create_object(self)
         b_obj.name = self.b_name
         
         b_obj.draw_bounds_type = 'BOX'

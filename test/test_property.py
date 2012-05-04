@@ -1,7 +1,5 @@
 """Export and import textured meshes."""
 
-#    Add Emissive Color to UI - Immediate Attention!
-
 #    TODO_material - Find any nifs with non-default ambient, diffuse;
 #    TODO_3.0 - Create per material values: niftools.ambient, niftools.emissive.  
 
@@ -11,7 +9,7 @@ import os
 
 import io_scene_nif.export_nif
 from pyffi.formats.nif import NifFormat
-from test.test_geom import TestBaseUV
+from test.test_geometry import TestBaseUV
 
 class TestMaterialProperty(TestBaseUV):
     n_name = "property/material/base_material"

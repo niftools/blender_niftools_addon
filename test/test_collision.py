@@ -3,7 +3,7 @@
 import bpy
 import nose.tools
 
-from test.test_geom import TestBaseGeom
+from test.test_geometry import TestBaseGeometry
 from pyffi.formats.nif import NifFormat
 
 class TestBhkCollision():
@@ -26,7 +26,9 @@ class TestBhkCollision():
     def n_check_bhkcollisionobject_data(self, n_data):
 
         #check if n_ninode.collision_object is bhkCollisionObject, not None or other
-        nose.assert_is_instance(n_data, NifFormat.bhkBoxShape)
+
+        nose.assert_is_instance(n_data, NifFormat.bhkCollisionObject)
+
         nose.assert_equal(n_data.flags, 1)# what do these mean?
         
         
@@ -38,19 +40,15 @@ class TestBhkCollision():
         #this is inherited from bhkrigidbody, but what is the difference?
         pass
 
-class TestBhkCollisionBoxShape(TestBaseGeom, TestBhkCollision):
+class TestBhkCollisionBoxShape(TestBaseGeometry, TestBhkCollision):
     n_name = "collisions/base_bhkcollision_box" #name of nif
     b_name = "Cube" #name of blender mesh object
     
     def b_create_object(self):
         b_obj = TestBaseGeom.b_create_object(self)
-        
-        bpy.ops.mesh.primitive_cube_add()
-        
-        b_coll = bpy.data.objects["Cube.001"]
-        b_coll.data.show_double_sided = False
+        b_coll = TestBaseGeom.b_create_object(self)
         b_coll.name = "CollisionBox"
-        b_coll = bpy.data.objects["CollisionBox"]
+
         b_coll.draw_type = 'WIRE'
         
         #Physics
@@ -83,11 +81,11 @@ class TestBhkCollisionBoxShape(TestBaseGeom, TestBhkCollision):
         #check that we have the other blocks
 
         #check to see that n_ninode.num_extra_data_list == 2, so we can execute the methods bellow
-        nose.tools.assert_equal(n_ninode.num_extra_data_list,2)
+        nose.tools.assert_equal(n_ninode.num_extra_data_list, 2)
         self.n_check_bsxflags_property(n_ninode.extra_data_list[0])
         self.n_check_upb_property(n_ninode.extra_data_list[1])
         
-        #execute method bellow
+        #execute method below
         self.n_check_bhkboxshape_data(n_ninode.collision_object)
         pass
 
@@ -216,7 +214,7 @@ class TestBhkCollisionTriangleShape(TestBaseGeom, TestBhkCollision):
 '''
 Use above as template for the rest.
 
-class TestBhkCollisionSphereShape(TestGeom, TestBhkCollision):
+class TestBhkCollisionSphereShape(TestBaseGeometry, TestBhkCollision):
 
-class TestBhkCollisionCapsule(TestGeom, TestBhkCollision):
+class TestBhkCollisionCapsule(TestBaseGeometry, TestBhkCollision):
 '''
