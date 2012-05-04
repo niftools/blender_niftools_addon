@@ -2382,11 +2382,7 @@ class NifExport(NifCommon):
             if len(mesh_mats) > 1:
                 # multimaterial meshes: add material index
                 # (Morrowind's child naming convention)
-<<<<<<< HEAD
-                trishape.name = " %i" % materialIndex
-=======
                 trishape.name += " %i" % materialIndex
->>>>>>> dev-neomonkeus
             trishape.name = self.get_full_name(trishape.name.decode()).encode()
             
             #Trishape Flags...
@@ -3488,32 +3484,6 @@ class NifExport(NifCommon):
                      % (b_obj, block.__class__.__name__))
         self.blocks[block] = b_obj
         return block
-<<<<<<< HEAD
-
-    def export_bsx_upb_flags(self, obj, parent_block):        
-        """Gets BSXFlags prop and creates BSXFlags node
-        
-        @param obj: The blender Object
-        @param parent_block: The nif parent block
-        """
-        
-        if not obj.nifcollision.bsxFlags or not obj.nifcollision.upb:
-            return
-        
-        bsxNode = self.create_block("BSXFlags", obj)
-        bsxNode.name = "BSX"
-        bsxNode.integer_data = obj.nifcollision.bsxFlags
-        parent_block.add_extra_data(bsxNode)
-
-        upbNode = self.create_block("NiStringExtraData", obj)
-        upbNode.name = "UPB"
-        upbNode.string_data = obj.nifcollision.upb
-        parent_block.add_extra_data(upbNode)
-
-
-    def export_collision(self, obj, parent_block):
-        """Main function for adding collision object obj to a node.""" 
-=======
     
         #Aaron1178 collision export stuff
         ''' 
@@ -3540,7 +3510,7 @@ class NifExport(NifCommon):
 
     def export_collision(self, b_obj, parent_block):
         """Main function for adding collision object b_obj to a node.""" 
->>>>>>> dev-neomonkeus
+
         if self.properties.game == 'MORROWIND':
              if b_obj.game.collision_bounds_type != 'TRIANGLE_MESH':
                  raise NifExportError(
@@ -3590,22 +3560,6 @@ class NifExport(NifCommon):
         coll_ispacked = (b_obj.game.collision_bounds_type == 'TRIANGLE_MESH')
 
         # find physics properties/defaults
-<<<<<<< HEAD
-        material = obj.nifcollision.havok_material
-        layer = obj.nifcollision.oblivion_layer
-        motion_system = obj.nifcollision.motion_system
-        quality_type = obj.nifcollision.quality_type
-        mass = 1.0 # will be fixed later
-        col_filter = obj.nifcollision.col_filter
-        
-        #export bsxFlags
-        self.export_bsx_upb_flags(obj, parent_block)
-        
-        # copy physics properties from Blender properties, if they exist,
-        # unless forcing override
-        if not obj.nifcollision.use_blender_properties:
-            for prop in obj.getAllProperties():
-=======
         material = b_obj.nifcollision.havok_material
         layer = b_obj.nifcollision.oblivion_layer
         motion_system = b_obj.nifcollision.motion_system
@@ -3625,7 +3579,6 @@ class NifExport(NifCommon):
         # unless forcing override
         if not b_obj.nifcollision.use_blender_properties:
             for prop in b_obj.getAllProperties():
->>>>>>> dev-neomonkeus
                 if prop.name == 'HavokMaterial':
                     if prop.type == "STRING":
                         # for Anglicized names
@@ -3680,11 +3633,7 @@ class NifExport(NifCommon):
         # bhkCollisionObject -> bhkRigidBody
         if not parent_block.collision_object:
             # note: collision settings are taken from lowerclasschair01.nif
-<<<<<<< HEAD
-            if obj.nifcollision.oblivion_layer == NifFormat.OblivionLayer.OL_BIPED:
-=======
             if b_obj.nifcollision.oblivion_layer == NifFormat.OblivionLayer.OL_BIPED:
->>>>>>> dev-neomonkeus
                 # special collision object for creatures
                 colobj = self.create_block("bhkBlendCollisionb_object", b_obj)
                 colobj.flags = 9
@@ -3708,11 +3657,6 @@ class NifExport(NifCommon):
                 else:
                     # in all other cases this seems to be enough
                     colobj.flags = 1
-<<<<<<< HEAD
-            
-            
-=======
->>>>>>> dev-neomonkeus
                     
             parent_block.collision_object = colobj
             colobj.target = parent_block
@@ -3754,13 +3698,8 @@ class NifExport(NifCommon):
         if coll_ispacked:
             self.export_collision_packed(b_obj, colbody, layer, material)
         else:
-<<<<<<< HEAD
-            if obj.nifcollision.export_bhklist:
-                self.export_collision_list(obj, colbody, layer, material)
-=======
             if b_obj.nifcollision.export_bhklist:
                 self.export_collision_list(b_obj, colbody, layer, material)
->>>>>>> dev-neomonkeus
             else:
                 self.export_collision_single(b_obj, colbody, layer, material)
 
@@ -3814,11 +3753,7 @@ class NifExport(NifCommon):
 
         mesh = b_obj.data
         transform = mathutils.Matrix(
-<<<<<<< HEAD
-            self.get_object_matrix(obj, 'localspace').as_list())
-=======
             self.get_object_matrix(b_obj, 'localspace').as_list())
->>>>>>> dev-neomonkeus
         rotation = transform.decompose()[1]
 
         vertices = [vert.co * transform for vert in mesh.vertices]
@@ -3879,18 +3814,6 @@ class NifExport(NifCommon):
             self.warning(
                 "Skipping collision object %s without vertices." % b_obj)
             return None
-<<<<<<< HEAD
-        vertList = [vert.co for vert in obj.data.vertices]
-        
-        minx = min([vert[0] for vert in vertList])
-        miny = min([vert[1] for vert in vertList])
-        minz = min([vert[2] for vert in vertList])
-        maxx = max([vert[0] for vert in vertList])
-        maxy = max([vert[1] for vert in vertList])
-        maxz = max([vert[2] for vert in vertList])
-
-        if obj.game.collision_bounds_type in {'BOX', 'SPHERE'}:
-=======
         b_vertlist = [vert.co for vert in b_obj.data.vertices]
         
         minx = min([b_vert[0] for b_vert in b_vertlist])
@@ -3901,7 +3824,6 @@ class NifExport(NifCommon):
         maxz = max([b_vert[2] for b_vert in b_vertlist])
 
         if b_obj.game.collision_bounds_type in {'BOX', 'SPHERE'}:
->>>>>>> dev-neomonkeus
             # note: collision settings are taken from lowerclasschair01.nif
             coltf = self.create_block("bhkConvexTransformShape", b_obj)
             coltf.material = n_havok_material
@@ -4416,18 +4338,11 @@ class NifExport(NifCommon):
                 continue
             
             # when optimization is enabled, ignore material name
-<<<<<<< HEAD
-            #if self.EXPORT_OPTIMIZE_MATERIALS:
-            #    ignore_strings = not(block.name in specialnames)
-            #else:
-            ignore_strings = False
-=======
             if self.EXPORT_OPTIMIZE_MATERIALS:
                 ignore_strings = not(block.name in specialnames)
             else:
                 ignore_strings = False
             
->>>>>>> dev-neomonkeus
             # check hash
             first_index = 1 if ignore_strings else 0
             if (block.get_hash()[first_index:] ==
