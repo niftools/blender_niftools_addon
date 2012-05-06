@@ -125,7 +125,7 @@ class NifCommon:
     EXPORT_OB_WIND = 0
     EXPORT_OB_LAYER = 1 # static
     EXPORT_OB_MATERIAL = 9 # wood
-    
+    EXPORT_OB_PRN = "NONE" #Todo with location on character. For weapons, rings, helmets, Sheilds ect
     progress_bar = 0
     """Level of the progress bar."""
 
