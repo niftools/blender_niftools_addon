@@ -486,6 +486,7 @@ class NifExport(NifCommon):
                         % filebase[15:])
                 # name scene root name the file base name
                 root_name = filebase
+                
                 # create furniture marker block
                 furnmark = self.create_block("BSFurnitureMarker")
                 furnmark.name = "FRN"
@@ -493,10 +494,12 @@ class NifExport(NifCommon):
                 furnmark.positions.update_size()
                 furnmark.positions[0].position_ref_1 = furniturenumber
                 furnmark.positions[0].position_ref_2 = furniturenumber
+                
                 # create extra string data sgoKeep
                 sgokeep = self.create_block("NiStringExtraData")
-                sgokeep.name = "UBP"
-                sgokeep.string_data = "sgoKeep"
+                sgokeep.name = "UPB" #user property buffer
+                sgokeep.string_data = "sgoKeep=1 ExportSel = Yes" #Eg. - Unyielding = 0, sgoKeep=1ExportSel = Yes
+                
                 # add extra blocks
                 root_block.add_extra_data(furnmark)
                 root_block.add_extra_data(sgokeep)
@@ -516,6 +519,7 @@ class NifExport(NifCommon):
                     bsx.name = 'BSX'
                     bsx.integer_data = self.EXPORT_OB_BSXFLAGS
                     root_block.add_extra_data(bsx)
+                    
                 # update rigid body center of gravity and mass
                 if self.EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES:
                     # we are not using blender properties to set the mass

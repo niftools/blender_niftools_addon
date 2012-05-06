@@ -129,10 +129,10 @@ class NiftoolsObjectCollisionProps(bpy.types.PropertyGroup):
                         )
                         
         cls.export_bhklist = BoolProperty(
-                                name = 'Export BHKList',
-                                description = 'None',
-                                default = False
-                                )
+                        name = 'Export BHKList',
+                        description = 'None',
+                        default = False
+                        )
         
         cls.use_blender_properties = BoolProperty(
                         name = 'Use Blender Properties',
