@@ -509,8 +509,8 @@ class NifExport(NifCommon):
             # activate oblivion/Fallout 3 collision and physics
             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
                 hascollision = False
-                for block in self.blocks:
-                    if isinstance(block, NifFormat.bhkCollisionObject):
+                for collSetting in bpy.data.objects:
+                    if collSetting.game.use_collision_bounds == True: 
                         hascollision = True
                         break
                 if hascollision:
@@ -591,7 +591,8 @@ class NifExport(NifCommon):
 
             # export constraints
             for b_obj in self.get_exported_objects():
-                self.export_constraints(b_obj, root_block)
+                if b_obj.constraints:
+                    self.export_constraints(b_obj, root_block)
 
             # export weapon location
             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
