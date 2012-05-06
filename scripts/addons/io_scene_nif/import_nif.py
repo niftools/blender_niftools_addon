@@ -3043,7 +3043,7 @@ class NifImport(NifCommon):
             # apply transform
             for ob in collision_objs:
                 ob.matrix_local = ob.matrix_local * transform
-                ob.nifcollision.havok_material = self.HAVOK_MATERIAL[bhkshape.material]
+                ob.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
             # and return a list of transformed collision shapes
             return collision_objs
 
@@ -3171,7 +3171,7 @@ class NifImport(NifCommon):
             b_obj.game.use_collision_bounds = True
             b_obj.game.collision_bounds_type = 'SPHERE'
             b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices)
-            b_obj.nifcollision.havok_material = self.HAVOK_MATERIAL[bhkshape.material]
+            b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
             return [ b_obj ]
 
         elif isinstance(bhkshape, NifFormat.bhkCapsuleShape):
@@ -3278,16 +3278,16 @@ class NifImport(NifCommon):
                 bpy.context.scene.objects.link(b_obj)
 
                 # set bounds type
-                b_mesh.draw_type = 'WIRE'
-                b_mesh.game.use_collision_bounds = True
-                b_mesh.game.collision_bounds_type = 'TRIANGLE_MESH'
+                b_obj.draw_type = 'WIRE'
+                b_obj.game.use_collision_bounds = True
+                b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
                 # radius: quick estimate
-                b_mesh.game.radius = max(vert.co.length for vert in b_mesh.vertices)
+                b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices)
                 # set material
-                b_mesh.nifcollision.havok_material = self.HAVOK_MATERIAL[subshape.material]
+                b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[subshape.material]                
 
                 # also remove duplicate vertices
-                numverts = len(me.vertices)
+                numverts = len(b_mesh.vertices)
                 # 0.005 = 1/200
                 #bpy.ops.object.editmode_toggle()
                 #bpy.ops.mesh.remove_doubles(limit=0.005)
@@ -3298,7 +3298,7 @@ class NifImport(NifCommon):
                         % (numdel, numverts))
                 """
                 vertex_offset += subshape.num_vertices
-                hk_objects.append(obj)
+                hk_objects.append(b_obj)
 
             return hk_objects
 
