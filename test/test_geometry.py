@@ -11,10 +11,10 @@ class TestBaseGeometry(SingleNif):
     n_name = "geometry/base_geometry"
     b_name = "Cube"
 
-    def b_create_object(self, name = "Cube"):
+    def b_create_object(self, name="Cube"):
         # note: primitive_cube_add creates object named "Cube"
         bpy.ops.mesh.primitive_cube_add()
-        #added bpy.context.active_object.name so we can get the last added object, avoids name confusion
+        #grab the last added object, avoids name confusion
         b_obj = bpy.data.objects[bpy.context.active_object.name]
         b_obj.name = name
         # primitive_cube_add creates a double sided mesh; fix this
