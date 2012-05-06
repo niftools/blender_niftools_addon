@@ -509,8 +509,8 @@ class NifExport(NifCommon):
             # activate oblivion/Fallout 3 collision and physics
             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
                 hascollision = False
-                for collSetting in bpy.data.objects:
-                    if collSetting.game.use_collision_bounds == True: 
+                for b_obj in bpy.data.objects:
+                    if b_obj.game.use_collision_bounds == True: 
                         hascollision = True
                         break
                 if hascollision:
