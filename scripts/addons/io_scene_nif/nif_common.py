@@ -125,30 +125,11 @@ class NifCommon:
     EXPORT_OB_WIND = 0
     EXPORT_OB_LAYER = 1 # static
     EXPORT_OB_MATERIAL = 9 # wood
-    
-    IMPORT_REALIGN_BONES = 1 # 0 = no, 1 = tail, 2 = tail+rotation
-    IMPORT_ANIMATION = True
-    EXPORT_FLATTENSKIN = False
-    IMPORT_EGMANIM = True # create FaceGen EGM animation curves
-    IMPORT_EGMANIMSCALE = 1.0 # scale of FaceGen EGM animation curves
-    EXPORT_ANIMSEQUENCENAME = '' # sequence name of the kf file
-        
-    EXPORT_OB_MALLEABLECONSTRAINT = False # use malleable constraint for ragdoll and hinge
-    EXPORT_OB_PRN = "NONE" # determines bone where to attach weapon
-    EXPORT_FO3_SF_ZBUF = True # use these shader flags?
-    EXPORT_FO3_SF_SMAP = False
-    EXPORT_FO3_SF_SFRU = False
-    EXPORT_FO3_SF_WINDOW_ENVMAP = False
-    EXPORT_FO3_SF_EMPT = True
-    EXPORT_FO3_SF_UN31 = True
-    EXPORT_FO3_FADENODE = False
-    EXPORT_FO3_SHADER_TYPE = 1 # shader_default
-    EXPORT_FO3_BODYPARTS = True
-    EXPORT_ANIMTARGETNAME = ''
-    EXPORT_ANIMPRIORITY = 0
-    EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES = False
-    IMPORT_EXPORTEMBEDDEDTEXTURES = False   
-    EXPORT_MW_BS_ANIMATION_NODE = False
+    EXPORT_OB_PRN = "NONE" #Todo with location on character. For weapons, rings, helmets, Sheilds ect
+    progress_bar = 0
+    """Level of the progress bar."""
+
+
 
     def __init__(self, operator, context):
         """Common initialization functions for executing the import/export
