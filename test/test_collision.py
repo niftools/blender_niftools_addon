@@ -45,10 +45,8 @@ class TestBhkCollisionBoxShape(TestBaseGeometry, TestBhkCollision):
     b_name = "Cube" #name of blender mesh object
     
     def b_create_object(self):
-        b_obj = TestBaseGeom.b_create_object(self)
-        b_coll = TestBaseGeom.b_create_object(self)
-        b_coll.name = "CollisionBox"
-
+        b_obj = TestBaseGeometry.b_create_object(self)
+        b_coll = TestBaseGeometry.b_create_object(self, "CollisionBox")
         b_coll.draw_type = 'WIRE'
         
         #Physics
@@ -59,21 +57,24 @@ class TestBhkCollisionBoxShape(TestBaseGeometry, TestBhkCollision):
         b_coll.nifcollision.motion_system = "MO_SYS_FIXED"
         b_coll.nifcollision.oblivion_layer = "OL_STATIC"
         b_coll.nifcollision.quality_type = "MO_QUAL_FIXED"
-        b_coll.nifcollision.col_filer = 0
+        b_coll.nifcollision.col_filter = 0
         b_coll.nifcollision.havok_material = "HAV_MAT_WOOD"
             
         #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         return b_obj 
 
     def b_check_object(self, b_obj):
-        TestBaseGeom.b_check_data(self, b_obj)# we double check the base mesh
-        
-        
+        TestBaseGeometry.b_check_data(self, b_obj)# we double check the base mesh
         self.b_check_collision_data(b_obj)
 
     def b_check_collision_data(self, b_obj):
-        #here we check our blender collision data
-        pass
+        #We check if the collision settings have been added
+        nose.tools.assert_equal(b_obj.game.use_collision_bounds, True)
+        nose.tools.assert_equal(b_obj.nifcollision.use_blender_properties, True)
+        nose.tools.assert_equal(b_obj.nifcollision.motion_system, "MO_SYS_FIXED")
+        nose.tools.assert_equal(b_obj.nifcollision.oblivion_layer, "OL_STATIC")
+        nose.tools.assert_equal(b_obj.nifcollision.col_filter, 0)
+        nose.tools.assert_equal(b_obj.nifcollision.havok_material, "HAV_MAT_WOOD")
 
     def n_check_data(self, n_data):
         n_ninode = n_data.roots[0]
@@ -90,15 +91,17 @@ class TestBhkCollisionBoxShape(TestBaseGeometry, TestBhkCollision):
         pass
 
     def n_check_bhkboxshape_data(self, data):
-        #Check specific block data
+        nose.tools.assert_is_instance(data.body, NifFormat.bhkRigidBody);
+        nose.tools.assert_is_instance(data.body.shape.shape, NifFormat.bhkBoxShape);
+        nose.tools.assert_equal(data.body.shape.material, 9);
         pass
 
-class TestBhkCollisionSphereShape(TestBaseGeom, TestBhkCollision):
+class TestBhkCollisionSphereShape(TestBaseGeometry, TestBhkCollision):
     n_name = "collisions/base_bhkcollision_sphere" #name of nif
     b_name = "Cube" #name of blender mesh object
     
     def b_create_object(self):
-        b_obj = TestBaseGeom.b_create_object(self)
+        b_obj = TestBaseGeometry.b_create_object(self)
         
         bpy.ops.mesh.primitive_uv_sphere_add()
         
@@ -150,26 +153,24 @@ class TestBhkCollisionSphereShape(TestBaseGeom, TestBhkCollision):
         #Check specific block data
         pass
 
-class TestBhkCollisionTriangleShape(TestBaseGeom, TestBhkCollision):
+class TestBhkCollisionTriangleShape(TestBaseGeometry, TestBhkCollision):
     n_name = "collisions/base_bhkcollision_triangle" #name of nif
-    b_name = "Cube" #name of blender mesh object
+    b_name = "CubeObject" #name of blender mesh object
     
     def b_create_object(self):
-        b_obj = TestBaseGeom.b_create_object(self)
+        b_obj = TestBaseGeometry.b_create_object(self, self.b_name)
         
         bpy.ops.mesh.primitive_cube_add()
         
-        b_coll = bpy.data.objects["Cube.001"]
+        b_coll = bpy.data.objects["Cube"]
         b_coll.data.show_double_sided = False
         b_coll.name = "CollisionTriangles"
         b_coll = bpy.data.objects["CollisionTriangles"]
         b_coll.draw_type = 'WIRE'
-
-
         
         #Physics
         b_coll.game.use_collision_bounds = True
-        b_coll.game.collision_bounds_type = 'BOX'
+        b_coll.game.collision_bounds_type = 'TRIANGLE_MESH'
         
         b_coll.nifcollision.use_blender_properties = True
         b_coll.nifcollision.motion_system = "MO_SYS_FIXED"
