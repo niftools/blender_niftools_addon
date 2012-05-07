@@ -13,5 +13,5 @@ Features
    
    collisions
    geometry
-   property
+   properties/index
    textures
