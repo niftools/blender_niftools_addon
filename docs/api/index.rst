@@ -14,3 +14,4 @@ Contents:
    nif_common
    import_nif
    export_nif
+   properties

@@ -31,11 +31,8 @@ class NifCollisionBoundsPanel(PhysicsButtonsPanel, Panel):
         layout.active = game.use_collision_bounds
         layout.prop(game, "collision_bounds_type", text="Bounds")
         
-        #use blender props prop
-        layout.prop(col_setting, 'use_blender_properties', text='Use Blender Collisions')
-        
         box = layout.box()
-        box.active = col_setting.use_blender_properties
+        box.active = game.use_collision_bounds
         
         #col filter prop
         box.prop(col_setting, "col_filter", text='Col Filter')
