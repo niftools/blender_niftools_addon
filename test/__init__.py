@@ -131,7 +131,7 @@ class SingleNif(Base):
         self.n_import(self.n_filepath_0)
         for b_obj in tuple(bpy.data.objects):
             self.b_check_data(b_obj)
-            b_obj.select = False
+            b_obj.select = True
         self.n_export(self.n_filepath_1)
         self.n_check(self.n_filepath_1)
         self.b_clear()
