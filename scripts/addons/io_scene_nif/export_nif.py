@@ -3578,55 +3578,58 @@ class NifExport(NifCommon):
         # copy physics properties from Blender properties, if they exist,
         # unless forcing override
         if not b_obj.nifcollision.use_blender_properties:
-            for prop in b_obj.getAllProperties():
-                if prop.name == 'HavokMaterial':
-                    if prop.type == "STRING":
-                        # for Anglicized names
-                        if prop.data in self.HAVOK_MATERIAL:
-                            material = self.HAVOK_MATERIAL.index(prop.data)
-                        # for the real Nif Format material names
-                        else:
-                            material = getattr(NifFormat.HavokMaterial, prop.data)
-                    # or if someone wants to set the material by the number
-                    elif prop.type == "INT":
-                        material = prop.data
-                elif prop.name == 'OblivionLayer':
-                    if prop.type == "STRING":
-                        # for Anglicized names
-                        if prop.data in self.OB_LAYER:
-                            layer = self.OB_LAYER.index(prop.data)
-                        # for the real Nif Format layer names
-                        else:
-                            layer = getattr(NifFormat.OblivionLayer, prop.data)
-                    # or if someone wants to set the layer by the number
-                    elif prop.type == "INT":
-                        layer = prop.data
-                elif prop.name == 'QualityType':
-                    if prop.type == "STRING":
-                        # for Anglicized names
-                        if prop.data in self.QUALITY_TYPE:
-                            quality_type = self.QUALITY_TYPE.index(prop.data)
-                        # for the real Nif Format MoQual names
-                        else:
-                            quality_type = getattr(NifFormat.MotionQuality, prop.data)
-                    # or if someone wants to set the Motion Quality by the number
-                    elif prop.type == "INT":
-                        quality_type = prop.data
-                elif prop.name == 'MotionSystem':
-                    if prop.type == "STRING":
-                        # for Anglicized names
-                        if prop.data in self.MOTION_SYS:
-                            motion_system = self.MOTION_SYS.index(prop.data)
-                        # for the real Nif Format Motion System names
-                        else:
-                            motion_system = getattr(NifFormat.MotionSystem, prop.data)
-                    # or if someone wants to set the Motion System  by the number
-                    elif prop.type == "INT":
-                        motion_system = prop.data
-                elif prop.name == 'Mass' and prop.type == "FLOAT":
-                    mass = prop.data
-                elif prop.name == 'ColFilter' and prop.type == "INT":
-                    col_filter = prop.data
+            if b_obj.get('HavokMaterial'):
+                prop = b_obj.get('HavokMaterial')
+                if prop.type == str(prop):
+                    # for Anglicized names
+                    if prop.data in self.HAVOK_MATERIAL:
+                        material = self.HAVOK_MATERIAL.index(prop)
+                    # for the real Nif Format material names
+                    else:
+                        material = getattr(NifFormat.HavokMaterial, prop)
+                # or if someone wants to set the material by the number
+                elif prop.type == int(prop):
+                    material = prop
+            elif b_obj.get('OblivionLayer'):
+                prop = b_obj.get('OblivionLayer')
+                if prop == str(prop):
+                    # for Anglicized names
+                    if prop in self.OB_LAYER:
+                        layer = self.OB_LAYER.index(prop)
+                    # for the real Nif Format layer names
+                    else:
+                        layer = getattr(NifFormat.OblivionLayer, prop)
+                # or if someone wants to set the layer by the number
+                elif prop == int(prop):
+                    layer = prop
+            elif b_obj.get('QualityType'):
+                prop = b_obj.get('QualityType')
+                if prop == str(prop):
+                    # for Anglicized names
+                    if prop in self.QUALITY_TYPE:
+                        quality_type = self.QUALITY_TYPE.index(prop)
+                    # for the real Nif Format MoQual names
+                    else:
+                        quality_type = getattr(NifFormat.MotionQuality, prop)
+                # or if someone wants to set the Motion Quality by the number
+                elif prop.type == int(prop):
+                    quality_type = prop
+            elif b_obj.get('MotionSystem'):
+                prop = b_obj.get('MotionSystem')
+                if prop == str(prop):
+                    # for Anglicized names
+                    if prop in self.MOTION_SYS:
+                        motion_system = self.MOTION_SYS.index(prop)
+                    # for the real Nif Format Motion System names
+                    else:
+                        motion_system = getattr(NifFormat.MotionSystem, prop)
+                # or if someone wants to set the Motion System  by the number
+                elif prop.type == int(prop):
+                    motion_system = prop
+            elif b_obj.get('Mass') and b_obj.get('Mass') == float(prop):
+                mass = b_obj.get('Mass')
+            elif b_obj.get('ColFilter') and b_obj.get('ColFilter') == int(prop):
+                col_filter = b_obj.get('ColFilter')
 
         # if no collisions have been exported yet to this parent_block
         # then create new collision tree on parent_block
