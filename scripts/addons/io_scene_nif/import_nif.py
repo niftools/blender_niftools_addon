@@ -35,7 +35,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-# ***** END LICENSE BLOCK *****
+# ***** END LICENSE BLOCK *****s
 
 import functools # reduce
 import logging
@@ -3244,7 +3244,8 @@ class NifImport(NifCommon):
                 for vert_index in range(vertex_offset, vertex_offset + subshape.num_vertices):
                     b_vert = bhkshape.data.vertices[vert_index]
                     b_mesh.vertices.add(1)
-                    vert_list[vert_index] = [b_vert.x, b_vert.y, b_vert.z]
+                    b_mesh.vertices[-1].co = (b_vert.x * self.HAVOK_SCALE, b_vert.y * self.HAVOK_SCALE, b_vert.z * self.HAVOK_SCALE) 
+                    vert_list[vert_index] = [b_vert.x * self.HAVOK_SCALE, b_vert.y * self.HAVOK_SCALE, b_vert.z * self.HAVOK_SCALE] 
                     vert_index += 1
                     
                 for hktriangle in bhkshape.data.triangles:
@@ -3277,12 +3278,15 @@ class NifImport(NifCommon):
                 b_obj = bpy.data.objects.new('poly%i' % subshape_num, b_mesh)
                 bpy.context.scene.objects.link(b_obj)
 
+                #Fix visual mode
+                b_obj.select = True
+                
                 # set bounds type
                 b_obj.draw_type = 'WIRE'
                 b_obj.game.use_collision_bounds = True
                 b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
                 # radius: quick estimate
-                b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices)
+                b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices) * self.HAVOK_SCALE
                 # set material
                 b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[subshape.material]                
 
