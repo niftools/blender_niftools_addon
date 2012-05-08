@@ -199,7 +199,7 @@ class TestBhkCollisionTriangleShape(TestBaseGeometry, TestBhkCollision):
     
     def b_check_geom(self, b_mesh):
         if b_mesh.name == "poly0":
-            nose.tools.assert_equal(len(b_mesh.vertices), 8)
+            nose.tools.assert_equal(len(b_mesh.vertices), 24)
 
     def b_check_collision_data(self, b_obj):
         pass
