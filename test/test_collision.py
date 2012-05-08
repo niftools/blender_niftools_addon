@@ -59,13 +59,20 @@ class TestBhkCollisionBoxShape(TestBaseGeometry, TestBhkCollision):
         b_coll.nifcollision.quality_type = "MO_QUAL_FIXED"
         b_coll.nifcollision.col_filter = 0
         b_coll.nifcollision.havok_material = "HAV_MAT_WOOD"
+        
+        b_coll.select = True
             
         #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         return b_obj 
 
     def b_check_object(self, b_obj):
-        TestBaseGeometry.b_check_data(self, b_obj)# we double check the base mesh
+        #TestBaseGeometry.b_check_data(self, b_obj)# we double check the base mesh
+        self.b_check_geom(b_obj.data)
         self.b_check_collision_data(b_obj)
+    
+    def b_check_geom(self, b_mesh):
+        #i
+        pass
 
     def b_check_collision_data(self, b_obj):
         #We check if the collision settings have been added
@@ -121,16 +128,19 @@ class TestBhkCollisionSphereShape(TestBaseGeometry, TestBhkCollision):
         b_coll.nifcollision.quality_type = "MO_QUAL_FIXED"
         b_coll.nifcollision.col_filer = 0
         b_coll.nifcollision.havok_material = "HAV_MAT_WOOD"
+
+        b_coll.select = True
             
         #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         return b_obj 
 
     def b_check_object(self, b_obj):
-        TestBaseGeom.b_check_data(self, b_obj)# we double check the base mesh
-        
-        
+        self.b_check_data(self, b_obj)# we double check the base mesh       
         self.b_check_collision_data(b_obj)
 
+    def b_check_data(self, b_mesh):
+        pass
+    
     def b_check_collision_data(self, b_obj):
         #here we check our blender collision data
         pass
@@ -180,18 +190,20 @@ class TestBhkCollisionTriangleShape(TestBaseGeometry, TestBhkCollision):
         b_coll.nifcollision.havok_material = "HAV_MAT_WOOD"
             
         #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
-        return b_obj 
-
-    def b_check_object(self, b_obj):
-        TestBaseGeom.b_check_data(self, b_obj)# we double check the base mesh
-        
-        
+        return b_obj      
+       
+    def b_check_data(self, b_obj):
+        #TestBaseGeometry.b_check_data(self, b_obj)# we double check the base mesh
+        self.b_check_geom(b_obj.data)
         self.b_check_collision_data(b_obj)
+    
+    def b_check_geom(self, b_mesh):
+        if b_mesh.name == "poly0":
+            nose.tools.assert_equal(len(b_mesh.vertices), 8)
 
     def b_check_collision_data(self, b_obj):
-        #here we check our blender collision data
         pass
-
+    
     def n_check_data(self, n_data):
         n_ninode = n_data.roots[0]
         nose.tools.assert_is_instance(n_ninode, NifFormat.NiNode)
