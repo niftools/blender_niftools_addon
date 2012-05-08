@@ -201,6 +201,15 @@ Notes
 * Enable the **Collision Bounds** option, the mesh will be exported as a :class:`~pyffi.formats.nif.NifFormat.bhkShape, rather than a :class:`~pyffi.formats.nif.NifFormat.NiTriShape`,
 * Collision Bounds are represented by a dashed line, unlink Bounds which is a solid line. 
 * Currently Capsule, Convex Hull and Triangle Mesh lack viewport preview.
+   - In the Outliner, Click PolyX (Where X is the number for the Poly object).
+   - Toggle Edit Mode (Tab).
+   - The object should be showing in its desired state.
+
+.. Warning::
+
+	Bellow does not seem to work!
+
+* Currently Capsule, Convex Hull and Triangle Mesh lack viewport preview.
    - In **Render** tab, under the **Display** section enable **Physics Visualisation**
    - **Game -> Start Game Engine** (p-key).
    - Set the **Viewport Shading** to **Wireframe or Bounding Box**.
