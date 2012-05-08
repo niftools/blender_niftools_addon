@@ -129,9 +129,9 @@ class SingleNif(Base):
         self.b_clear()
         self.n_check(self.n_filepath_0)
         self.n_import(self.n_filepath_0)
-        b_obj = bpy.data.objects[self.b_name]
-        self.b_check_data(b_obj)
-        b_obj.select = True
+        for b_obj in tuple(bpy.data.objects):
+            self.b_check_data(b_obj)
+            b_obj.select = True
         self.n_export(self.n_filepath_1)
         self.n_check(self.n_filepath_1)
         self.b_clear()
