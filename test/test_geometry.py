@@ -24,7 +24,7 @@ class TestBaseGeometry(SingleNif):
         return b_obj
 
     def b_check_data(self, b_obj):
-        b_mesh = b_obj.data
+        b_mesh = b_obj
         self.b_check_geom(b_mesh)
         
     def b_check_geom(self, b_mesh):
