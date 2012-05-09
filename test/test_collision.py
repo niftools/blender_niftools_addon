@@ -26,11 +26,9 @@ class TestBhkCollision():
     def n_check_bhkcollisionobject_data(self, n_data):
 
         #check if n_ninode.collision_object is bhkCollisionObject, not None or other
-
         nose.assert_is_instance(n_data, NifFormat.bhkCollisionObject)
-
-        nose.assert_equal(n_data.flags, 1)# what do these mean?
-        
+        #For bellow, most Objects collision data flags are 1
+        nose.assert_equal(n_data.flags, 1)
         
     def n_check_bhkrigidbody_data(self, n_data):
         #add code to test lots of lovely things
@@ -225,9 +223,5 @@ class TestBhkCollisionTriangleShape(TestBaseGeometry, TestBhkCollision):
 
 
 '''
-Use above as template for the rest.
-
-class TestBhkCollisionSphereShape(TestBaseGeometry, TestBhkCollision):
-
 class TestBhkCollisionCapsule(TestBaseGeometry, TestBhkCollision):
 '''
