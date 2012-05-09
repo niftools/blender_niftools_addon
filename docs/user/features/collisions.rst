@@ -13,7 +13,8 @@ This is used by the havok system for collision detection
 
 .. warning::
 
-   * Collisions are in the process of being ported. This section is incomplete and will change.
+   * Collisions are in the process of being ported. This section is subject to change.
+   * For Sphere and Cylender Export, we need to fix them to show how the user would create the objects. We are using a UV Sphere and a Meta Capsule
    * The Collision Bounds panel is located in the Physics tab of Blender Render and Blender Game.
    * Some of the collision types lack viewport rendering, see workaround for visulisations below.
 
@@ -87,6 +88,10 @@ Sphere Notes
 
 Cylinder Collision
 ~~~~~~~~~~~~~~~~~~
+
+.. Todo::
+
+	Capsule Import/Export needs to be completed
 
 .. _collision-cylinder:
 
