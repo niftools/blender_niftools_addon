@@ -1,8 +1,5 @@
-Geometry
---------
-
 Mesh Geometry
-+++++++++++++
+-------------
 
 .. _geometry-mesh:
 
@@ -34,8 +31,9 @@ Notes
 * This will add a :class:`~pyffi.formats.nif.NifFormat.NiStencilProperty`, see :ref:`Properties - Stencil Property <properties-stencil>` for more info.
 
 UV Unwrapping
-+++++++++++++
+-------------
 
+.. _geometry-uv:
 
 Example
 ~~~~~~~
@@ -43,7 +41,7 @@ Example
 #. In Edit Mode, press ``U``, select **Unwrap > Smart UV Project**.
 
 Vertex Color
-++++++++++++
+------------
 
 .. _geometry-vertexcolor:
 
