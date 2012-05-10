@@ -24,7 +24,7 @@ Install Python 3.2
 
 Windows
 
-Download `Python 3.2 <http://www.python.org/download/releases/3.2.2/>`_ - 32-bit. 
+Download `Python 3.2 <http://www.python.org/download/releases/3.2.2/>`_ - **32-bit only supported**. 
 Pick the installer appropriate for your platform, and follow the instructions. 
 Use the default install location.
 
@@ -92,7 +92,6 @@ Get the Source Code
 To get the code, run in a terminal (linux) or in git bash (windows)::
 
    cd ~
-   mkdir -p workspace
    cd workspace
    git clone --recursive git@github.com:<username>/blender_nif_scripts.git
    cd blender_nif_scripts
@@ -107,7 +106,9 @@ version of pyffi that works with blender::
 
 Install Build Environment Batch Script
 --------------------------------------
-This is only necessary on Windows.
+.. note::
+   The build enviroment is used to develop any Niftool application on Windows.
+   
 
 On Windows, get the build environment batch script::
 
@@ -188,7 +189,7 @@ Update Blender Python and Check Installation
 --------------------------------------------
 
 On Windows, you'll first need to copy your entire ``C:\Python32\Lib\site-packages`` folder to
-``C:\Program Files\Blender Foundation\Blender\2.60\python\lib\site-packages``.
+``C:\Program Files\Blender Foundation\Blender\<version>\python\lib\site-packages``.
 There is a script that does this for you in buildenv::
 
    cd blender_nif_scripts

@@ -11,7 +11,7 @@ Features
 .. toctree::
    :maxdepth: 1
    
-   collisions
-   geometry
+   collisions/index
+   geometry/index
    properties/index
-   textures
+   textures/index
