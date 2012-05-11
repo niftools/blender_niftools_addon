@@ -3000,11 +3000,17 @@ class NifImport(NifCommon):
                   for vert in bhkshape.vertices ])
 
             # create convex mesh
-            b_mesh = Blender.Mesh.New('convexpoly')
+            b_mesh = bpy.data.meshes.new('convexpoly')
             for vert in vertices:
-                b_mesh.vertices.extend(*vert)
-            for triangle in triangles:
-                b_mesh.faces.extend(triangle)
+                b_mesh.vertices.add(1)
+                b_mesh.vertices[-1].co = (x,y,z)
+                vert_list[vert_index] = [x,y,z]
+                vert_index += 1
+                
+            for triangle in triangles: 
+                b_mesh.faces.add(1)
+                b_mesh.faces[-1].vertices_raw = triangle
+                face_index += 1
 
             # link mesh to scene and set transform
             b_obj = self.context.scene.objects.new(b_mesh, 'convexpoly')

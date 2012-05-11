@@ -590,7 +590,7 @@ class NifExport(NifCommon):
                             block.sub_shapes[i] = coltf
 
             # export constraints
-            for b_obj in self.get_exported_objects():
+            for b_obj in bpy.data.objects:
                 if b_obj.constraints:
                     self.export_constraints(b_obj, root_block)
 
