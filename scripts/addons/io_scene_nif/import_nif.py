@@ -3187,7 +3187,8 @@ class NifImport(NifCommon):
             maxx = maxy = +bhkshape.radius * self.HAVOK_SCALE
             minz = -(length + 2*bhkshape.radius) * 3.5
             maxz = +(length + 2*bhkshape.radius) * 3.5
-            """
+           
+           
             b_mesh = bpy.data.meshes.new('Capsule')
             vert_list = {}
             vert_index = 0
@@ -3216,6 +3217,9 @@ class NifImport(NifCommon):
             
             bpy.ops.mesh.primitive_cylinder_add(vertices=vert_index, radius=bhkshape.radius*self.HAVOK_SCALE, depth=(length*14))
             b_obj = bpy.context.active_object
+            """  
+            b_obj = bpy.data.objects.new('Capsule', b_mesh)
+            bpy.context.scene.objects.link(b_obj)
             
             # set bounds type
             b_obj.draw_type = 'BOUNDS'
@@ -3225,7 +3229,7 @@ class NifImport(NifCommon):
             b_obj.game.radius = max(vert.co.length for vert in b_obj.data.vertices)
             b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
 
-            """
+            
             # find transform
             if length > self.properties.epsilon:
                 normal = (bhkshape.first_point - bhkshape.second_point) / length
@@ -3238,11 +3242,9 @@ class NifImport(NifCommon):
             minindex = min((abs(x), i) for i, x in enumerate(normal))[1]
             orthvec = mathutils.Vector([(1 if i == minindex else 0)
                                                 for i in (0,1,2)])
-            normal.cross(orthvec)
-            vec1 = normal
+            vec1 = mathutils.Vector.cross(normal,orthvec)
             vec1.normalize()
-            normal.cross(vec1)
-            vec2 = normal
+            vec2 = mathutils.Vector.cross(normal, vec1)
             # the rotation matrix should be such that
             # (0,0,1) maps to normal
             transform = mathutils.Matrix([vec1, vec2, normal])
@@ -3251,7 +3253,7 @@ class NifImport(NifCommon):
             transform[3][1] = 3.5 * (bhkshape.first_point.y + bhkshape.second_point.y)
             transform[3][2] = 3.5 * (bhkshape.first_point.z + bhkshape.second_point.z)
             b_obj.matrix_local = transform
-            """
+         
             # return object
             return [ b_obj ]
 
