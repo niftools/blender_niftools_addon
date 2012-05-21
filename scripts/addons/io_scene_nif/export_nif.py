@@ -3910,12 +3910,12 @@ class NifExport(NifCommon):
             # end points are ok, so export as capsule
             colcaps = self.create_block("bhkCapsuleShape", b_obj)
             colcaps.material = n_havok_material
-            colcaps.first_point.x = vert1[0] / 14.0
-            colcaps.first_point.y = vert1[1] / 14.0
-            colcaps.first_point.z = vert1[2] / 14.0
-            colcaps.second_point.x = vert2[0] / 14.0
-            colcaps.second_point.y = vert2[1] / 14.0
-            colcaps.second_point.z = vert2[2] / 14.0
+            colcaps.first_point.x = vert1[0] / 7.0
+            colcaps.first_point.y = vert1[1] / 7.0
+            colcaps.first_point.z = vert1[2] / 7.0
+            colcaps.second_point.x = vert2[0] / 7.0
+            colcaps.second_point.y = vert2[1] / 7.0
+            colcaps.second_point.z = vert2[2] / 7.0
             # set radius, with correct scale
             sizex = maxx - minx
             sizey = maxy - miny
