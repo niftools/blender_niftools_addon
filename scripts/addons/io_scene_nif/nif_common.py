@@ -91,7 +91,7 @@ class NifCommon:
         "Invalid", "Dynamic", "Sphere", "Sphere Inertia", "Box",
         "Box Stabilized", "Keyframed", "Fixed", "Thin BOx", "Character"]
     
-    HAVOK_SCALE = 7
+    HAVOK_SCALE = 7.0
 
     HAVOK_MATERIAL = [
         "Stone", "Cloth", "Dirt", "Glass", "Grass",
