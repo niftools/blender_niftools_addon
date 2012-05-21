@@ -3890,14 +3890,14 @@ class NifExport(NifCommon):
             localradius = (maxx + maxy - minx - miny) / 4.0
             transform = mathutils.Matrix(
                 self.get_object_matrix(b_obj, 'localspace').as_list())
-            vert1 = mathutils.Vector( [ (maxx + minx)/2.0,
-                                                (maxy + miny)/2.0,
-                                                minz + localradius ] )
-            vert2 = mathutils.Vector( [ (maxx + minx) / 2.0,
-                                                (maxy + miny) / 2.0,
+            vert1 = mathutils.Vector( ( (maxx + minx),
+                                                (maxy + miny),
+                                                minz + localradius ) )
+            vert2 = mathutils.Vector( [ (maxx + minx),
+                                                (maxy + miny),
                                                 maxz - localradius ] )
-            vert1 *= transform
-            vert2 *= transform
+            vert1 * transform
+            vert2 * transform
             # check if end points are far enough from each other
             if (vert1 - vert2).length < self.properties.epsilon:
                 self.warning(
@@ -3910,21 +3910,23 @@ class NifExport(NifCommon):
             # end points are ok, so export as capsule
             colcaps = self.create_block("bhkCapsuleShape", b_obj)
             colcaps.material = n_havok_material
-            colcaps.first_point.x = vert1[0] / 7.0
-            colcaps.first_point.y = vert1[1] / 7.0
-            colcaps.first_point.z = vert1[2] / 7.0
-            colcaps.second_point.x = vert2[0] / 7.0
-            colcaps.second_point.y = vert2[1] / 7.0
-            colcaps.second_point.z = vert2[2] / 7.0
+            colcaps.first_point.x = vert1[0] / 14.0
+            colcaps.first_point.y = vert1[1] / 14.0
+            colcaps.first_point.z = vert1[2] / 14.0
+            colcaps.second_point.x = vert2[0] / 14.0
+            colcaps.second_point.y = vert2[1] / 14.0
+            colcaps.second_point.z = vert2[2] / 14.0
             # set radius, with correct scale
-            sizex, sizey, sizez = b_obj.getSize()
+            sizex = maxx - minx
+            sizey = maxy - miny
+            sizez = maxz - minz
             colcaps.radius = localradius * (sizex + sizey) * 0.5
             colcaps.radius_1 = colcaps.radius
             colcaps.radius_2 = colcaps.radius
             # fix havok coordinate system for radii
-            colcaps.radius /= 7.0
-            colcaps.radius_1 /= 7.0
-            colcaps.radius_2 /= 7.0
+            colcaps.radius /= 14.0
+            colcaps.radius_1 /= 14.0
+            colcaps.radius_2 /= 14.0
             return colcaps
 
         elif b_obj.game.collision_bounds_type == 'CONVEX_HULL':
