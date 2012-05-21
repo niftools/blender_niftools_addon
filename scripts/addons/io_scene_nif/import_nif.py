@@ -3187,50 +3187,71 @@ class NifImport(NifCommon):
             maxx = maxy = +bhkshape.radius * self.HAVOK_SCALE
             minz = -(length + 2*bhkshape.radius) * 3.5
             maxz = +(length + 2*bhkshape.radius) * 3.5
+            """
+            b_mesh = bpy.data.meshes.new('Capsule')
+            vert_list = {}
+            vert_index = 0
+            for x in [minx,maxx]:
+                for y in [miny,maxy]:
+                    for z in [minz,maxz]:
+                        b_mesh.vertices.add(1)
+                        b_mesh.vertices[-1].co = (x,y,z)
+                        vert_list[vert_index] = [x,y,z]
+                        vert_index += 1
+                        
+            faces = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]]
+            face_index = 0                        
 
-            b_mesh = Blender.Mesh.New('capsule')
-            for x in [minx, maxx]:
-                for y in [miny, maxy]:
-                    for z in [minz, maxz]:
-                        b_mesh.vertices.extend(x,y,z)
-            b_mesh.faces.extend(
-                [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]])
+            for x in range(len(faces)):
+                b_mesh.faces.add(1)
+                b_mesh.faces[-1].vertices
 
-            # link box to scene and set transform
-            b_obj = self.context.scene.objects.new(me, 'capsule')
-
+            """
+            vert_index = 0
+            for x in [minx,maxx]:
+                for y in [miny,maxy]:
+                    for z in [minz,maxz]:
+                        vert_index += 1
+            
+            
+            bpy.ops.mesh.primitive_cylinder_add(vertices=vert_index, radius=bhkshape.radius*self.HAVOK_SCALE, depth=(length*14))
+            b_obj = bpy.context.active_object
+            
             # set bounds type
             b_obj.draw_type = 'BOUNDS'
             b_obj.draw_bounds_type = 'CYLINDER'
             b_obj.game.use_collision_bounds = True
             b_obj.game.collision_bounds_type = 'CYLINDER'
-            b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices)
-            b_obj.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
+            b_obj.game.radius = max(vert.co.length for vert in b_obj.data.vertices)
+            b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
 
+            """
             # find transform
             if length > self.properties.epsilon:
                 normal = (bhkshape.first_point - bhkshape.second_point) / length
-                normal = mathutils.Vector(normal.x, normal.y, normal.z)
+                normal = mathutils.Vector((normal.x, normal.y, normal.z))
             else:
                 self.warning(
                     "bhkCapsuleShape with identical points:"
                     " using arbitrary axis")
-                normal = mathutils.Vector(0, 0, 1)
+                normal = mathutils.Vector((0, 0, 1))
             minindex = min((abs(x), i) for i, x in enumerate(normal))[1]
             orthvec = mathutils.Vector([(1 if i == minindex else 0)
                                                 for i in (0,1,2)])
-            vec1 = mathutils.CrossVecs(normal, orthvec)
+            normal.cross(orthvec)
+            vec1 = normal
             vec1.normalize()
-            vec2 = mathutils.CrossVecs(normal, vec1)
+            normal.cross(vec1)
+            vec2 = normal
             # the rotation matrix should be such that
             # (0,0,1) maps to normal
             transform = mathutils.Matrix([vec1, vec2, normal])
-            transform.resize4x4()
+            transform.resize_4x4()
             transform[3][0] = 3.5 * (bhkshape.first_point.x + bhkshape.second_point.x)
             transform[3][1] = 3.5 * (bhkshape.first_point.y + bhkshape.second_point.y)
             transform[3][2] = 3.5 * (bhkshape.first_point.z + bhkshape.second_point.z)
             b_obj.matrix_local = transform
-
+            """
             # return object
             return [ b_obj ]
 
