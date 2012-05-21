@@ -3853,9 +3853,9 @@ class NifExport(NifCommon):
             hktf.transpose()
             coltf.transform.set_rows(*hktf)
             # fix matrix for havok coordinate system
-            coltf.transform.m_14 /= 7.0
-            coltf.transform.m_24 /= 7.0
-            coltf.transform.m_34 /= 7.0
+            coltf.transform.m_14 /= self.HAVOK_SCALE
+            coltf.transform.m_24 /= self.HAVOK_SCALE
+            coltf.transform.m_34 /= self.HAVOK_SCALE
 
             if b_obj.game.collision_bounds_type == 'BOX':
                 colbox = self.create_block("bhkBoxShape", b_obj)
@@ -3871,17 +3871,17 @@ class NifExport(NifCommon):
                 colbox.unknown_8_bytes[6] = 0x8e
                 colbox.unknown_8_bytes[7] = 0x3e
                 # fix dimensions for havok coordinate system
-                colbox.dimensions.x = (maxx - minx) / 14.0
-                colbox.dimensions.y = (maxy - miny) / 14.0
-                colbox.dimensions.z = (maxz - minz) / 14.0
+                colbox.dimensions.x = (maxx - minx) / (2.0 * self.HAVOK_SCALE)
+                colbox.dimensions.y = (maxy - miny) / (2.0 * self.HAVOK_SCALE)
+                colbox.dimensions.z = (maxz - minz) / (2.0 * self.HAVOK_SCALE)
                 colbox.minimum_size = min(colbox.dimensions.x, colbox.dimensions.y, colbox.dimensions.z)
             elif b_obj.game.collision_bounds_type == 'SPHERE':
                 colsphere = self.create_block("bhkSphereShape", b_obj)
                 coltf.shape = colsphere
                 colsphere.material = n_havok_material
                 # take average radius and
-                # fix for havok coordinate system (6 * 7 = 42)
-                colsphere.radius = (maxx - minx + maxy - miny + maxz - minz) / 42.0
+                # Todo find out what this is: fix for havok coordinate system (6 * 7 = 42)
+                colsphere.radius = (maxx - minx + maxy - miny + maxz - minz) / (6.0 * self.HAVOK_SCALE)
 
             return coltf
 
@@ -3890,14 +3890,15 @@ class NifExport(NifCommon):
             localradius = (maxx + maxy - minx - miny) / 4.0
             transform = mathutils.Matrix(
                 self.get_object_matrix(b_obj, 'localspace').as_list())
-            vert1 = mathutils.Vector( ( (maxx + minx),
-                                                (maxy + miny),
-                                                minz + localradius ) )
-            vert2 = mathutils.Vector( [ (maxx + minx),
-                                                (maxy + miny),
-                                                maxz - localradius ] )
-            vert1 * transform
-            vert2 * transform
+            vert1 = mathutils.Vector( [ (maxx + minx)/2.0,
+                                        (maxy + miny)/2.0,
+                                         minz + localradius ] )
+            vert2 = mathutils.Vector( [ (maxx + minx) / 2.0,
+                                        (maxy + miny) / 2.0,
+                                         maxz - localradius ] )
+            vert1 = vert1 * transform
+            vert2 = vert2 * transform
+            
             # check if end points are far enough from each other
             if (vert1 - vert2).length < self.properties.epsilon:
                 self.warning(
@@ -3907,15 +3908,17 @@ class NifExport(NifCommon):
                 b_obj.game.collision_bounds_type = 'SPHERE'
                 # instead of duplicating code, just run the function again
                 return self.export_collision_object(b_obj, layer, n_havok_material)
+            
             # end points are ok, so export as capsule
             colcaps = self.create_block("bhkCapsuleShape", b_obj)
             colcaps.material = n_havok_material
-            colcaps.first_point.x = vert1[0] / 7.0
-            colcaps.first_point.y = vert1[1] / 7.0
-            colcaps.first_point.z = vert1[2] / 7.0
-            colcaps.second_point.x = vert2[0] / 7.0
-            colcaps.second_point.y = vert2[1] / 7.0
-            colcaps.second_point.z = vert2[2] / 7.0
+            colcaps.first_point.x = vert1[0] / self.HAVOK_SCALE
+            colcaps.first_point.y = vert1[1] / self.HAVOK_SCALE
+            colcaps.first_point.z = vert1[2] / self.HAVOK_SCALE
+            colcaps.second_point.x = vert2[0] / self.HAVOK_SCALE
+            colcaps.second_point.y = vert2[1] / self.HAVOK_SCALE
+            colcaps.second_point.z = vert2[2] / self.HAVOK_SCALE
+            
             # set radius, with correct scale
             sizex = maxx - minx
             sizey = maxy - miny
@@ -3923,10 +3926,11 @@ class NifExport(NifCommon):
             colcaps.radius = localradius * (sizex + sizey) * 0.5
             colcaps.radius_1 = colcaps.radius
             colcaps.radius_2 = colcaps.radius
+            
             # fix havok coordinate system for radii
-            colcaps.radius /= 14.0
-            colcaps.radius_1 /= 14.0
-            colcaps.radius_2 /= 14.0
+            colcaps.radius /= self.HAVOK_SCALE
+            colcaps.radius_1 /= self.HAVOK_SCALE
+            colcaps.radius_2 /= self.HAVOK_SCALE
             return colcaps
 
         elif b_obj.game.collision_bounds_type == 'CONVEX_HULL':
@@ -3982,9 +3986,9 @@ class NifExport(NifCommon):
             colhull.num_vertices = len(vertlist)
             colhull.vertices.update_size()
             for vhull, vert in zip(colhull.vertices, vertlist):
-                vhull.x = vert[0] / 7.0
-                vhull.y = vert[1] / 7.0
-                vhull.z = vert[2] / 7.0
+                vhull.x = vert[0] / self.HAVOK_SCALE
+                vhull.y = vert[1] / self.HAVOK_SCALE
+                vhull.z = vert[2] / self.HAVOK_SCALE
                 # w component is 0
             colhull.num_normals = len(fnormlist)
             colhull.normals.update_size()
@@ -3992,7 +3996,7 @@ class NifExport(NifCommon):
                 nhull.x = norm[0]
                 nhull.y = norm[1]
                 nhull.z = norm[2]
-                nhull.w = dist / 7.0
+                nhull.w = dist / self.HAVOK_SCALE
 
             return colhull
 
@@ -4173,9 +4177,9 @@ class NifExport(NifCommon):
                 constr_matrix = constr_matrix * transform.rotationPart()
 
                 # export hkdescriptor pivot point
-                hkdescriptor.pivot_a.x = pivot[0] / 7.0
-                hkdescriptor.pivot_a.y = pivot[1] / 7.0
-                hkdescriptor.pivot_a.z = pivot[2] / 7.0
+                hkdescriptor.pivot_a.x = pivot[0] / self.HAVOK_SCALE
+                hkdescriptor.pivot_a.y = pivot[1] / self.HAVOK_SCALE
+                hkdescriptor.pivot_a.z = pivot[2] / self.HAVOK_SCALE
                 # export hkdescriptor axes and other parameters
                 # (also see import_nif.py NifImport.import_bhk_constraints)
                 axis_x = mathutils.Vector([1,0,0]) * constr_matrix
