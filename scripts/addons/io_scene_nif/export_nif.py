@@ -3890,11 +3890,11 @@ class NifExport(NifCommon):
             localradius = (maxx + maxy - minx - miny) / 4.0
             transform = mathutils.Matrix(
                 self.get_object_matrix(b_obj, 'localspace').as_list())
-            vert1 = mathutils.Vector( [ (maxx + minx)/2.0,
-                                        (maxy + miny)/2.0,
+            vert1 = mathutils.Vector( [ (maxx + minx),
+                                        (maxy + miny),
                                          minz + localradius ] )
-            vert2 = mathutils.Vector( [ (maxx + minx) / 2.0,
-                                        (maxy + miny) / 2.0,
+            vert2 = mathutils.Vector( [ (maxx + minx),
+                                        (maxy + miny),
                                          maxz - localradius ] )
             vert1 = vert1 * transform
             vert2 = vert2 * transform
@@ -3920,9 +3920,9 @@ class NifExport(NifCommon):
             colcaps.second_point.z = vert2[2] / self.HAVOK_SCALE
             
             # set radius, with correct scale
-            sizex = maxx - minx
-            sizey = maxy - miny
-            sizez = maxz - minz
+            sizex = b_obj.scale.x
+            sizey = b_obj.scale.y
+            sizez = b_obj.scale.z
             colcaps.radius = localradius * (sizex + sizey) * 0.5
             colcaps.radius_1 = colcaps.radius
             colcaps.radius_2 = colcaps.radius
