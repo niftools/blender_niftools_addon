@@ -50,16 +50,34 @@ class NifCollisionBoundsPanel(PhysicsButtonsPanel, Panel):
         box.prop(col_setting, "havok_material", text='Havok Material')
         
         
+class NifEmissivePanel(Panel):
+    bl_label = "Emission Panel"
+    
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "material"
+    
+    
+    def draw(self, context):
+        mat = context.material.niftools
+        
+        layout = self.layout
+        row = layout.row()
+        colL = row.column()
+        colR = row.column()
+        colL.prop(mat, "emissive_preview")
+        colR.prop(mat, "emissive_color", text="")
+        
 def register():
-    mat_emissive_prop = (lambda self, context: self.layout.prop(context.material.niftools, "emissive_color"))
-    bpy.types.MATERIAL_PT_shading.prepend(mat_emissive_prop)
-
+    
+    bpy.utils.register_class(NifEmissivePanel)
+    bpy.types.MATERIAL_PT_shading.prepend(NifEmissivePanel)
     bpy.utils.register_class(NifCollisionBoundsPanel)
 
 
 def unregister():
-    mat_emissive_prop = (lambda self, context: self.layout.prop(context.material.niftools, "emissive_color"))
-    bpy.types.MATERIAL_PT_shading.remove(mat_emissive_prop)
     
+    bpy.types.MATERIAL_PT_shading.remove(NifEmissivePanel)
+    bpy.utils.unregister_class(NifEmissivePanel)
     bpy.utils.unregister_class(NifCollisionBoundsPanel)
     

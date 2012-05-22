@@ -48,6 +48,9 @@ class NiftoolsMaterialProps(bpy.types.PropertyGroup):
         
         cls.emissive_color = FloatVectorProperty(
                 name='Emissive', subtype='COLOR', default=[0.0,0.0,0.0],min=0.0, max=1.0)
+        
+        cls.emissive_preview = BoolProperty(
+                name='Preview', description='Allows a viewport preview of the emissive property', default=False)
     
     @classmethod
     def unregister(cls):
