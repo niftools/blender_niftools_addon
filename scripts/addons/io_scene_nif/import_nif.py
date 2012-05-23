@@ -1979,26 +1979,26 @@ class NifImport(NifCommon):
         self.info("Importing mesh data for geometry %s" % niBlock.name)
 
         if group_mesh:
-            b_mesh = group_mesh
-            b_meshData = group_mesh.data
+            b_obj = group_mesh
+            b_mesh = group_mesh.data
         else:
             # Mesh name -> must be unique, so tag it if needed
             b_name = self.import_name(niBlock)
             # create mesh data
-            b_meshData = bpy.data.meshes.new(b_name)
+            b_mesh = bpy.data.meshes.new(b_name)
             # create mesh object and link to data
-            b_mesh = bpy.data.objects.new(b_name, b_meshData)
+            b_obj = bpy.data.objects.new(b_name, b_mesh)
             # link mesh object to the scene
-            self.context.scene.objects.link(b_mesh)
+            self.context.scene.objects.link(b_obj)
             # save original name as object property, for export
             if b_name != niBlock.name.decode():
-                b_mesh['Nif Name'] = niBlock.name.decode()
+                b_obj['Nif Name'] = niBlock.name.decode()
 
             # Mesh hidden flag
             if niBlock.flags & 1 == 1:
-                b_mesh.draw_type = 'WIRE' # hidden: wire
+                b_obj.draw_type = 'WIRE' # hidden: wire
             else:
-                b_mesh.draw_type = 'TEXTURED' # not hidden: shaded
+                b_obj.draw_type = 'TEXTURED' # not hidden: shaded
 
         # set transform matrix for the mesh
         if not applytransform:
@@ -2006,7 +2006,7 @@ class NifImport(NifCommon):
                 raise NifImportError(
                     "BUG: cannot set matrix when importing meshes in groups;"
                     " use applytransform = True")
-            b_mesh.matrix_local = self.import_matrix(niBlock,
+            b_obj.matrix_local = self.import_matrix(niBlock,
                                                 relative_to=relative_to)
         else:
             # used later on
@@ -2037,9 +2037,9 @@ class NifImport(NifCommon):
         stencilProperty = self.find_property(niBlock, NifFormat.NiStencilProperty)
         # we don't check flags for now, nothing fancy
         if stencilProperty:
-            b_meshData.show_double_sided = True
+            b_mesh.show_double_sided = True
         else:
-            b_meshData.show_double_sided = False
+            b_mesh.show_double_sided = False
 
         # Material
         # note that NIF files only support one material for each trishape
@@ -2109,12 +2109,12 @@ class NifImport(NifCommon):
                                             bsShaderProperty, extra_datas)
             # XXX todo: merge this call into import_material
             self.import_material_controllers(material, niBlock)
-            b_mesh_materials = list(b_meshData.materials)
+            b_mesh_materials = list(b_mesh.materials)
             try:
                 materialIndex = b_mesh_materials.index(material)
             except ValueError:
                 materialIndex = len(b_mesh_materials)
-                b_meshData.materials.append(material)
+                b_mesh.materials.append(material)
             # if mesh has one material with wireproperty, then make the mesh
             # wire in 3D view
             if wireProperty:
@@ -2125,7 +2125,7 @@ class NifImport(NifCommon):
 
         # if there are no vertices then enable face index shifts
         # (this fixes an issue with indexing)
-        if len(b_meshData.vertices) == 0:
+        if len(b_mesh.vertices) == 0:
             check_shift = True
         else:
             check_shift = False
@@ -2139,7 +2139,7 @@ class NifImport(NifCommon):
         # We use a Python dictionary to remove doubles and to keep track of indices.
         # While we are at it, we also add vertices while constructing the map.
         n_map = {}
-        b_v_index = len(b_meshData.vertices)
+        b_v_index = len(b_mesh.vertices)
         for i, v in enumerate(n_verts):
             # The key k identifies unique vertex /normal pairs.
             # We use a tuple of ints for key, this works MUCH faster than a
@@ -2171,15 +2171,15 @@ class NifImport(NifCommon):
                 if applytransform:
                     v = mathutils.Vector([v.x, v.y, v.z])
                     v  = v * transform
-                    b_meshData.vertices.add(1)
-                    b_meshData.vertices[-1].co = [v.x, v.y, v.z]
+                    b_mesh.vertices.add(1)
+                    b_mesh.vertices[-1].co = [v.x, v.y, v.z]
                 else:
-                    b_meshData.vertices.add(1)
-                    b_meshData.vertices[-1].co = [v.x, v.y, v.z]
+                    b_mesh.vertices.add(1)
+                    b_mesh.vertices[-1].co = [v.x, v.y, v.z]
                 # adds normal info if present (Blender recalculates these when
                 # switching between edit mode and object mode, handled further)
                 #if n_norms:
-                #    mv = b_meshData.vertices[b_v_index]
+                #    mv = b_mesh.vertices[b_v_index]
                 #    n = n_norms[i]
                 #    mv.normal = mathutils.Vector(n.x, n.y, n.z)
                 b_v_index += 1
@@ -2194,7 +2194,7 @@ class NifImport(NifCommon):
 
         # Adds the faces to the mesh
         f_map = [None]*len(n_tris)
-        b_f_index = len(b_meshData.faces)
+        b_f_index = len(b_mesh.faces)
         num_new_faces = 0 # counter for debugging
         unique_faces = set() # to avoid duplicate faces
         for i, f in enumerate(n_tris):
@@ -2207,12 +2207,12 @@ class NifImport(NifCommon):
             if tuple(f_verts) in unique_faces:
                 continue
             unique_faces.add(tuple(f_verts))
-            b_meshData.faces.add(1)
+            b_mesh.faces.add(1)
             if f_verts[2] == 0:
                 # eeekadoodle fix
                 f_verts[0], f_verts[1], f_verts[2] = f_verts[2], f_verts[0], f_verts[1]
                 f[0], f[1], f[2] = f[2], f[0], f[1] # f[0] comes second
-            b_meshData.faces[-1].vertices_raw = f_verts + [0]
+            b_mesh.faces[-1].vertices_raw = f_verts + [0]
             # keep track of added faces, mapping NIF face index to
             # Blender face index
             f_map[i] = b_f_index
@@ -2227,7 +2227,7 @@ class NifImport(NifCommon):
         for b_f_index in f_map:
             if b_f_index is None:
                 continue
-            f = b_meshData.faces[b_f_index]
+            f = b_mesh.faces[b_f_index]
             f.use_smooth = True if n_norms else False
             f.material_index = materialIndex
 
@@ -2236,8 +2236,8 @@ class NifImport(NifCommon):
 
         if n_vcol:
             #create vertex_layers
-            b_meshcolorlayer = b_meshData.vertex_colors.new(name="VertexColor") #color layer
-            b_meshcolorlayeralpha = b_meshData.vertex_colors.new(name="VertexAlpha") # greyscale        
+            b_meshcolorlayer = b_mesh.vertex_colors.new(name="VertexColor") #color layer
+            b_meshcolorlayeralpha = b_mesh.vertex_colors.new(name="VertexAlpha") # greyscale        
 
             #Mesh Vertex Color / Mesh Face
             for n_tri, b_face_index in zip(n_tris, f_map):
@@ -2274,33 +2274,33 @@ class NifImport(NifCommon):
 
         # only import UV if there are faces
         # (some corner cases have only one vertex, and no faces,
-        # and b_meshData.faceUV = 1 on such mesh raises a runtime error)
-        if b_meshData.faces:
+        # and b_mesh.faceUV = 1 on such mesh raises a runtime error)
+        if b_mesh.faces:
             # blender 2.5+ aloways uses uv's per face?
-            #b_meshData.faceUV = 1
-            #b_meshData.vertexUV = 0
+            #b_mesh.faceUV = 1
+            #b_mesh.vertexUV = 0
             for i, uv_set in enumerate(n_uvco):
                 # Set the face UV's for the mesh. The NIF format only supports
                 # vertex UV's, but Blender only allows explicit editing of face
                 # UV's, so load vertex UV's as face UV's
                 uvlayer = self.get_uv_layer_name(i)
-                if not uvlayer in b_meshData.uv_textures:
-                    b_meshData.uv_textures.new(uvlayer)
+                if not uvlayer in b_mesh.uv_textures:
+                    b_mesh.uv_textures.new(uvlayer)
                 for f, b_f_index in zip(n_tris, f_map):
                     if b_f_index is None:
                         continue
                     uvlist = [(uv_set[vert_index].u, 1.0 - uv_set[vert_index].v) for vert_index in f]
-                    b_meshData.uv_textures[uvlayer].data[b_f_index].uv1 = uvlist[0]
-                    b_meshData.uv_textures[uvlayer].data[b_f_index].uv2 = uvlist[1]
-                    b_meshData.uv_textures[uvlayer].data[b_f_index].uv3 = uvlist[2]
-            b_meshData.uv_textures.active_index = 0
+                    b_mesh.uv_textures[uvlayer].data[b_f_index].uv1 = uvlist[0]
+                    b_mesh.uv_textures[uvlayer].data[b_f_index].uv2 = uvlist[1]
+                    b_mesh.uv_textures[uvlayer].data[b_f_index].uv3 = uvlist[2]
+            b_mesh.uv_textures.active_index = 0
         
         if material:
             # fix up vertex colors depending on whether we had textures in the
             # material
             mbasetex = material.texture_slots[0]
             mglowtex = material.texture_slots[1]
-            if b_meshData.vertex_colors:
+            if b_mesh.vertex_colors:
                 if mbasetex or mglowtex:
                     # textured material: vertex colors influence lighting
                     material.use_vertex_color_light = True
@@ -2317,7 +2317,7 @@ class NifImport(NifCommon):
                     for b_f_index in f_map:
                         if b_f_index is None:
                             continue
-                        tface = b_meshData.uv_textures.active.data[b_f_index]
+                        tface = b_mesh.uv_textures.active.data[b_f_index]
                         # gone in blender 2.5x+?
                         #f.mode = Blender.Mesh.FaceModes['TEX']
                         #f.transp = Blender.Mesh.FaceTranspModes['ALPHA']
@@ -2335,12 +2335,12 @@ class NifImport(NifCommon):
                     continue
                 vertex_weights = boneWeights[idx].vertex_weights
                 groupname = self.names[bone]
-                if not groupname in b_meshData.getVertGroupNames():
-                    b_meshData.addVertGroup(groupname)
+                if not groupname in b_mesh.getVertGroupNames():
+                    b_mesh.addVertGroup(groupname)
                 for skinWeight in vertex_weights:
                     vert = skinWeight.index
                     weight = skinWeight.weight
-                    b_meshData.assignVertsToGroup(
+                    b_mesh.assignVertsToGroup(
                         groupname, [v_map[vert]], weight,
                         Blender.Mesh.AssignModes.REPLACE)
 
@@ -2353,13 +2353,13 @@ class NifImport(NifCommon):
                 bodypart_wrap.set_value(bodypart.body_part)
                 groupname = bodypart_wrap.get_detail_display()
                 # create vertex group if it did not exist yet
-                if not(groupname in b_meshData.getVertGroupNames()):
-                    b_meshData.addVertGroup(groupname)
+                if not(groupname in b_mesh.getVertGroupNames()):
+                    b_mesh.addVertGroup(groupname)
                 # find vertex indices of this group
                 groupverts = [v_map[v_index]
                               for v_index in skinpartblock.vertex_map]
                 # create the group
-                b_meshData.assignVertsToGroup(
+                b_mesh.assignVertsToGroup(
                     groupname, groupverts, 1,
                     Blender.Mesh.AssignModes.ADD)
 
@@ -2371,17 +2371,17 @@ class NifImport(NifCommon):
                 morphData = morphCtrl.data
                 if morphData.num_morphs:
                     # insert base key at frame 1, using relative keys
-                    b_meshData.insertKey(1, 'relative')
+                    b_mesh.insertKey(1, 'relative')
                     # get name for base key
                     keyname = morphData.morphs[0].frame_name
                     if not keyname:
                         keyname = 'Base'
                     # set name for base key
-                    b_meshData.key.blocks[0].name = keyname
+                    b_mesh.key.blocks[0].name = keyname
                     # get base vectors and import all morphs
                     baseverts = morphData.morphs[0].vectors
                     b_ipo = Blender.Ipo.New('Key' , 'KeyIpo')
-                    b_meshData.key.ipo = b_ipo
+                    b_mesh.key.ipo = b_ipo
                     for idxMorph in range(1, morphData.num_morphs):
                         # get name for key
                         keyname = morphData.morphs[idxMorph].frame_name
@@ -2399,13 +2399,13 @@ class NifImport(NifCommon):
                             v = base + delta
                             if applytransform:
                                 v *= transform
-                            b_meshData.vertices[b_v_index].co[0] = v.x
-                            b_meshData.vertices[b_v_index].co[1] = v.y
-                            b_meshData.vertices[b_v_index].co[2] = v.z
+                            b_mesh.vertices[b_v_index].co[0] = v.x
+                            b_mesh.vertices[b_v_index].co[1] = v.y
+                            b_mesh.vertices[b_v_index].co[2] = v.z
                         # update the mesh and insert key
-                        b_meshData.insertKey(idxMorph, 'relative')
+                        b_mesh.insertKey(idxMorph, 'relative')
                         # set name for key
-                        b_meshData.key.blocks[idxMorph].name = keyname
+                        b_mesh.key.blocks[idxMorph].name = keyname
                         # set up the ipo key curve
                         try:
                             b_curve = b_ipo.addCurve(keyname)
@@ -2436,9 +2436,9 @@ class NifImport(NifCommon):
                             base = mathutils.Vector(bv.x, bv.y, bv.z)
                             if applytransform:
                                 base *= transform
-                            b_meshData.vertices[b_v_index].co[0] = base.x
-                            b_meshData.vertices[b_v_index].co[1] = base.y
-                            b_meshData.vertices[b_v_index].co[2] = base.z
+                            b_mesh.vertices[b_v_index].co[0] = base.x
+                            b_mesh.vertices[b_v_index].co[1] = base.y
+                            b_mesh.vertices[b_v_index].co[2] = base.z
 
         # import facegen morphs
         if self.egmdata:
@@ -2450,12 +2450,12 @@ class NifImport(NifCommon):
                           for morph in self.egmdata.asym_morphs]
 
             # insert base key at frame 1, using relative keys
-            b_meshData.insertKey(1, 'relative')
+            b_mesh.insertKey(1, 'relative')
 
             if self.IMPORT_EGMANIM:
                 # if morphs are animated: create key ipo for mesh
                 b_ipo = Blender.Ipo.New('Key' , 'KeyIpo')
-                b_meshData.key.ipo = b_ipo
+                b_mesh.key.ipo = b_ipo
 
 
             morphs = ([(morph, "EGM SYM %i" % i)
@@ -2477,13 +2477,13 @@ class NifImport(NifCommon):
                     v = base + delta
                     if applytransform:
                         v *= transform
-                    b_meshData.vertices[b_v_index].co[0] = v.x
-                    b_meshData.vertices[b_v_index].co[1] = v.y
-                    b_meshData.vertices[b_v_index].co[2] = v.z
+                    b_mesh.vertices[b_v_index].co[0] = v.x
+                    b_mesh.vertices[b_v_index].co[1] = v.y
+                    b_mesh.vertices[b_v_index].co[2] = v.z
                 # update the mesh and insert key
-                b_meshData.insertKey(1, 'relative')
+                b_mesh.insertKey(1, 'relative')
                 # set name for key
-                b_meshData.key.blocks[-1].name = keyname
+                b_mesh.key.blocks[-1].name = keyname
 
                 if self.IMPORT_EGMANIM:
                     # set up the ipo key curve
@@ -2493,7 +2493,7 @@ class NifImport(NifCommon):
                     # constant extrapolation
                     b_curve.extend = Blender.IpoCurve.ExtendTypes.CONST
                     # set up the curve's control points
-                    framestart = 1 + len(b_meshData.key.blocks) * 10
+                    framestart = 1 + len(b_mesh.key.blocks) * 10
                     for frame, value in ((framestart, 0),
                                          (framestart + 5, self.IMPORT_EGMANIMSCALE),
                                          (framestart + 10, 0)):
@@ -2503,26 +2503,26 @@ class NifImport(NifCommon):
                 # set begin and end frame
                 self.context.scene.getRenderingContext().startFrame(1)
                 self.context.scene.getRenderingContext().endFrame(
-                    11 + len(b_meshData.key.blocks) * 10)
+                    11 + len(b_mesh.key.blocks) * 10)
 
             # finally: return to base position
             for bv, b_v_index in zip(verts, v_map):
                 base = mathutils.Vector(bv.x, bv.y, bv.z)
                 if applytransform:
                     base *= transform
-                b_meshData.vertices[b_v_index].co[0] = base.x
-                b_meshData.vertices[b_v_index].co[1] = base.y
-                b_meshData.vertices[b_v_index].co[2] = base.z
+                b_mesh.vertices[b_v_index].co[0] = base.x
+                b_mesh.vertices[b_v_index].co[1] = base.y
+                b_mesh.vertices[b_v_index].co[2] = base.z
      
         # recalculate normals
-        b_meshData.calc_normals()
+        b_mesh.calc_normals()
         # import priority if existing
         if niBlock.name in self.bone_priorities:
-            constr = b_mesh.constraints.append(
+            constr = b_obj.constraints.append(
                 Blender.Constraint.Type.NULL)
             constr.name = "priority:%i" % self.bone_priorities[niBlock.name]
 
-        return b_mesh
+        return b_obj
 
     # import animation groups
     
