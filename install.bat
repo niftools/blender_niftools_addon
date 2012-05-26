@@ -11,15 +11,16 @@ rmdir /s /q "%BLENDERADDONS%\io_scene_nif"
 rem copy files from repository to blender addons folder
 for %%A in ( io_scene_nif, ) do mkdir "%BLENDERADDONS%\%%A"
 for %%A in ( __init__.py, nif_common.py, export_nif.py, import_nif.py, ui.py, properties.py, operators.py, nifdebug.py ) do (
+  echo.	%%A
   copy "scripts\addons\io_scene_nif\%%A" "%BLENDERADDONS%\io_scene_nif"
-  print(%%A)
+  
 )
 goto end
 
 :pleasesetblenderaddons
 echo.Please set BLENDERADDONS to the folder where the blender addons reside, such as:
 echo.
-echo.  set BLENDERADDONS=C:\Program Files\Blender Foundation\Blender\2.60\scripts\addons
+echo.  set BLENDERADDONS=C:\Program Files\Blender Foundation\Blender\2.62\scripts\addons
 echo.
 pause
 goto end

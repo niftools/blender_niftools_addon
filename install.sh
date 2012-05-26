@@ -1,7 +1,7 @@
 #!/bin/sh
 # quick and dirty script to install the blender nif scripts
 
-for BLENDERVERSION in 2.61 2.60 2.59 2.58 2.57 2.56 2.55 2.54 2.53 2.52 2.51 2.50
+for BLENDERVERSION in 2.62 2.61 2.60 2.59 2.58 2.57 2.56 2.55 2.54 2.53 2.52 2.51 2.50
 do
   BLENDERADDONS=~/.blender/$BLENDERVERSION/scripts/addons
   if [ -e ~/.blender/$BLENDERVERSION/ ]

@@ -9,7 +9,5 @@
 <path>C:\Python32\Lib\site-packages\nose-1.1.2-py3.2.egg</path>
 <path>C:\Program Files\Blender Foundation\Blender2.59\doc\python_api\pypredef</path>
 </pydev_pathproperty>
-<pydev_pathproperty name="org.python.pydev.PROJECT_SOURCE_PATH">
-<path>/blender_nif_plugin</path>
-</pydev_pathproperty>
+
 </pydev_project>
