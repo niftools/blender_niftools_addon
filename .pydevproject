@@ -7,6 +7,13 @@
 <pydev_pathproperty name="org.python.pydev.PROJECT_EXTERNAL_SOURCE_PATH">
 <path>C:\Python32\Lib\site-packages\pyffi</path>
 <path>C:\Python32\Lib\site-packages\nose-1.1.2-py3.2.egg</path>
-<path>C:\Program Files\Blender Foundation\Blender\2.60\doc\python_api\pypredef</path>
+<path>C:\Blender Foundation\Blender2.62\2.62\scripts\addons</path>
+<path>C:\Blender Foundation\Blender2.62\2.62\scripts\addons\modules</path>
+<path>C:\Blender Foundation\Blender2.62\2.62\scripts\modules</path>
+<path>C:\Blender Foundation\Blender2.62\2.62\scripts\startup</path>
+<path>C:\DevTools\eclipse\plugins\org.python.pydev_2.5.0.2012040618\PySrc</path>
+</pydev_pathproperty>
+<pydev_pathproperty name="org.python.pydev.PROJECT_SOURCE_PATH">
+<path>/blender_nif_plugin</path>
 </pydev_pathproperty>
 </pydev_project>

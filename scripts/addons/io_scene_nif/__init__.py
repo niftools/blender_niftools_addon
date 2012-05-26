@@ -56,6 +56,9 @@ bl_info = {
     "support": "COMMUNITY",
     "category": "Import-Export"}
 
+from . import NifDebug
+NifDebug.startdebug()
+
 import imp
 if "bpy" in locals():
     from imp import reload
