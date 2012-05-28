@@ -3004,6 +3004,9 @@ class NifImport(NifCommon):
 
             # create convex mesh
             b_mesh = bpy.data.meshes.new('convexpoly')
+            vert_list = {}
+            vert_index = 0
+            
             for vert in vertices:
                 b_mesh.vertices.add(1)
                 b_mesh.vertices[-1].co = (x,y,z)
@@ -3016,28 +3019,29 @@ class NifImport(NifCommon):
                 face_index += 1
 
             # link mesh to scene and set transform
-            b_obj = self.context.scene.objects.new(b_mesh, 'convexpoly')
+            b_obj = bpy.data.objects.new('convexpoly', b_mesh)
+            bpy.context.scene.objects.link(b_obj)
 
             # set bounds type
             b_obj.draw_type = 'BOUNDS'
-            b_obj.draw_bounds_type = 'POLYHEDRON'
+            b_obj.draw_bounds_type = 'BOX'
             b_obj.show_wire = True
             b_obj.game.use_collision_bounds = True
             b_obj.game.collision_bounds_type = 'CONVEX_HULL'
             # radius: quick estimate
             b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices)
-            b_obj.addProperty("HavokMaterial", self.HAVOK_MATERIAL[bhkshape.material], "STRING")
+            b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
             
             # also remove duplicate vertices
-            numverts = len(me.vertices)
+            numverts = len(b_mesh.vertices)
             # 0.005 = 1/200
-            numdel = b_mesh.remDoubles(0.005)
+            numdel = b_mesh.rem_doubles(0.005)
             if numdel:
                 self.info(
                     "Removed %i duplicate vertices"
                     " (out of %i) from collision mesh" % (numdel, numverts))
 
-            return [ b_obj ]
+            return b_obj
 
         elif isinstance(bhkshape, NifFormat.bhkTransformShape):
             # import shapes
@@ -3050,9 +3054,9 @@ class NifImport(NifCommon):
             transform[3][1] *= self.HAVOK_SCALE
             transform[3][2] *= self.HAVOK_SCALE
             # apply transform
-            for ob in collision_objs:
-                ob.matrix_local = ob.matrix_local * transform
-                ob.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
+            for b_obj in collision_objs:
+                b_obj.matrix_local = b_obj.matrix_local * transform
+                b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
             # and return a list of transformed collision shapes
             return collision_objs
 
@@ -3228,7 +3232,7 @@ class NifImport(NifCommon):
             b_obj.draw_type = 'BOUNDS'
             b_obj.draw_bounds_type = 'CYLINDER'
             b_obj.game.use_collision_bounds = True
-            b_obj.game.collision_bounds_type = 'CYLINDER'
+            b_obj.game.collision_bounds_type = 'CAPSULE'
             b_obj.game.radius = max(vert.co.length for vert in b_obj.data.vertices)
             b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
 
