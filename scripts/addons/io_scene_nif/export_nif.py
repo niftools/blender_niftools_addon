@@ -3939,13 +3939,13 @@ class NifExport(NifCommon):
             mesh = b_obj.data
             transform = mathutils.Matrix(
                 self.get_object_matrix(b_obj, 'localspace').as_list())
-            rotation = transform.rotationPart()
+            rotation = transform.to_scale()
             scale = rotation.determinant()
             if scale < 0:
                 scale = - (-scale) ** (1.0 / 3)
             else:
                 scale = scale ** (1.0 / 3)
-            rotation *= 1.0 / scale # /= not supported in Python API
+            rotation /= scale
 
             # calculate vertices, normals, and distances
             vertlist = [ vert.co * transform for vert in mesh.vertices ]
