@@ -2986,14 +2986,18 @@ class NifImport(NifCommon):
         return bsx
 
     def import_upb(self, upb):
-      """Import UPB optimizer"""
-      
-      upb_string = upb.string_data         
-      return upb_string
+        """Import UPB optimizer"""
+        
+        upb_string = upb.string_data
+        return upb_string
    
     def import_bhk_shape(self, bhkshape, upbflags="", bsxflags=2):        
         """Import an oblivion collision shape as list of blender meshes."""
+<<<<<<< HEAD
         nifdebug.startdebug()
+=======
+        #nifdebug.startdebug()
+>>>>>>> 1c928fa... Convexpoly is importing(probably not correctly), though I have no idea
         if isinstance(bhkshape, NifFormat.bhkConvexVerticesShape):
             # find vertices (and fix scale)
             vertices, triangles = pyffi.utils.quickhull.qhull3d(
@@ -3001,22 +3005,20 @@ class NifImport(NifCommon):
                    self.HAVOK_SCALE * vert.y, 
                    self.HAVOK_SCALE * vert.z)
                   for vert in bhkshape.vertices ])
-
+           
             # create convex mesh
             b_mesh = bpy.data.meshes.new('convexpoly')
+
             vert_list = {}
             vert_index = 0
             
             for vert in vertices:
                 b_mesh.vertices.add(1)
-                b_mesh.vertices[-1].co = (x,y,z)
-                vert_list[vert_index] = [x,y,z]
-                vert_index += 1
+                b_mesh.vertices[-1].co = ((vert))
                 
-            for triangle in triangles: 
+            for vert in triangles:
                 b_mesh.faces.add(1)
-                b_mesh.faces[-1].vertices_raw = triangle
-                face_index += 1
+                b_mesh.faces[-1].vertices
 
             # link mesh to scene and set transform
             b_obj = bpy.data.objects.new('convexpoly', b_mesh)
@@ -3025,6 +3027,7 @@ class NifImport(NifCommon):
             # set bounds type
             b_obj.draw_type = 'BOUNDS'
             b_obj.draw_bounds_type = 'BOX'
+
             b_obj.show_wire = True
             b_obj.game.use_collision_bounds = True
             b_obj.game.collision_bounds_type = 'CONVEX_HULL'
@@ -3111,7 +3114,6 @@ class NifImport(NifCommon):
         
         elif isinstance(bhkshape, NifFormat.bhkBoxShape):
             # create box
-            
             minx = -bhkshape.dimensions.x * self.HAVOK_SCALE
             maxx = +bhkshape.dimensions.x * self.HAVOK_SCALE
             miny = -bhkshape.dimensions.y * self.HAVOK_SCALE
@@ -3194,25 +3196,29 @@ class NifImport(NifCommon):
             maxx = maxy = +bhkshape.radius * self.HAVOK_SCALE
             minz = -(length + 2*bhkshape.radius) * 3.5
             maxz = +(length + 2*bhkshape.radius) * 3.5
-           
-           
-            b_mesh = bpy.data.meshes.new('Capsule')
+
+            b_mesh = bpy.data.meshes.new('capsule')
             vert_list = {}
             vert_index = 0
-            for x in [minx,maxx]:
-                for y in [miny,maxy]:
-                    for z in [minz,maxz]:
+    
+            for x in [minx, maxx]:
+                for y in [miny, maxy]:
+                    for z in [minz, maxz]:
                         b_mesh.vertices.add(1)
                         b_mesh.vertices[-1].co = (x,y,z)
                         vert_list[vert_index] = [x,y,z]
                         vert_index += 1
-                        
+
             faces = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]]
-            face_index = 0                        
+            face_index = 0
 
             for x in range(len(faces)):
                 b_mesh.faces.add(1)
                 b_mesh.faces[-1].vertices
+            
+            # link box to scene and set transform
+            b_obj = bpy.data.objects.new('capsule', b_mesh)
+            bpy.context.scene.objects.link(b_obj)
 
             """
             vert_index = 0
@@ -3232,8 +3238,8 @@ class NifImport(NifCommon):
             b_obj.draw_type = 'BOUNDS'
             b_obj.draw_bounds_type = 'CYLINDER'
             b_obj.game.use_collision_bounds = True
-            b_obj.game.collision_bounds_type = 'CAPSULE'
-            b_obj.game.radius = max(vert.co.length for vert in b_obj.data.vertices)
+            b_obj.game.collision_bounds_type = 'CYLINDER'
+            b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices)
             b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
 
             
@@ -3249,7 +3255,7 @@ class NifImport(NifCommon):
             minindex = min((abs(x), i) for i, x in enumerate(normal))[1]
             orthvec = mathutils.Vector([(1 if i == minindex else 0)
                                                 for i in (0,1,2)])
-            vec1 = mathutils.Vector.cross(normal,orthvec)
+            vec1 = mathutils.Vector.cross(normal, orthvec)
             vec1.normalize()
             vec2 = mathutils.Vector.cross(normal, vec1)
             # the rotation matrix should be such that
@@ -3260,9 +3266,9 @@ class NifImport(NifCommon):
             transform[3][1] = 3.5 * (bhkshape.first_point.y + bhkshape.second_point.y)
             transform[3][2] = 3.5 * (bhkshape.first_point.z + bhkshape.second_point.z)
             b_obj.matrix_local = transform
-         
+
             # return object
-            return [ b_obj ]
+            return b_obj
 
         elif isinstance(bhkshape, NifFormat.bhkPackedNiTriStripsShape):
             # create mesh for each sub shape
@@ -3349,7 +3355,7 @@ class NifImport(NifCommon):
                            for strips in bhkshape.strips_data))
                 
         elif isinstance(bhkshape, NifFormat.NiTriStripsData):
-            b_mesh = Blender.Mesh.New('poly')
+            b_mesh = bpy.data.meshes.New('poly')
             # no factor 7 correction!!!
             for n_vert in bhkshape.vertices:
                 b_mesh.vertices.extend(n_vert.x, n_vert.y, n_vert.z)

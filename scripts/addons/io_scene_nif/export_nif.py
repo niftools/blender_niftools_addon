@@ -592,7 +592,7 @@ class NifExport(NifCommon):
                             block.sub_shapes[i] = coltf
 
             # export constraints
-            for b_obj in bpy.data.objects:
+            for b_obj in self.get_exported_objects():
                 if b_obj.constraints:
                     self.export_constraints(b_obj, root_block)
 
@@ -3892,15 +3892,15 @@ class NifExport(NifCommon):
             localradius = (maxx + maxy - minx - miny) / 4.0
             transform = mathutils.Matrix(
                 self.get_object_matrix(b_obj, 'localspace').as_list())
-            vert1 = mathutils.Vector( [ (maxx + minx),
-                                        (maxy + miny),
-                                         minz + localradius ] )
-            vert2 = mathutils.Vector( [ (maxx + minx),
-                                        (maxy + miny),
-                                         maxz - localradius ] )
+            vert1 = mathutils.Vector( [ (maxx + minx)/2.0,
+                                       (maxy + miny)/2.0,
+                                       minz + localradius ] )
+            vert2 = mathutils.Vector( [ (maxx + minx) / 2.0,
+                                       (maxy + miny) / 2.0,
+                                       maxz - localradius ] )
             vert1 = vert1 * transform
             vert2 = vert2 * transform
-            
+
             # check if end points are far enough from each other
             if (vert1 - vert2).length < self.properties.epsilon:
                 self.warning(
@@ -3920,12 +3920,13 @@ class NifExport(NifCommon):
             colcaps.second_point.x = vert2[0] / self.HAVOK_SCALE
             colcaps.second_point.y = vert2[1] / self.HAVOK_SCALE
             colcaps.second_point.z = vert2[2] / self.HAVOK_SCALE
-            
+
             # set radius, with correct scale
-            sizex = b_obj.scale.x
-            sizey = b_obj.scale.y
-            sizez = b_obj.scale.z
-            colcaps.radius = localradius * (sizex + sizey) * 0.5
+            size_x = b_obj.scale.x
+            size_y = b_obj.scale.y
+            size_z = b_obj.scale.z
+            #sizex, sizey, sizez = b_obj.getsize()
+            colcaps.radius = localradius * (size_x + size_y) * 0.5
             colcaps.radius_1 = colcaps.radius
             colcaps.radius_2 = colcaps.radius
             
