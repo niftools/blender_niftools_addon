@@ -85,7 +85,15 @@ class NifCollisionBoundsPanel(PhysicsButtonsPanel, Panel):
         #havok material prop
         box.prop(col_setting, "havok_material", text='Havok Material')
         
-        
+def check_material(mat):
+    if mat is not None:
+        if mat.use_nodes:
+            if mat.active_node_material is not None:
+                return True
+            return False
+        return True
+    return False
+   
 class NifEmissivePanel(Panel):
     bl_label = "Emission Panel"
     
@@ -93,6 +101,10 @@ class NifEmissivePanel(Panel):
     bl_region_type = 'WINDOW'
     bl_context = "material"
     
+    @classmethod
+    def poll(cls, context):
+        mat = context.material
+        return check_materal(mat)
     
     def draw(self, context):
         mat = context.material.niftools
