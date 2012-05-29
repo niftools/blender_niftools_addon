@@ -2993,11 +2993,8 @@ class NifImport(NifCommon):
    
     def import_bhk_shape(self, bhkshape, upbflags="", bsxflags=2):        
         """Import an oblivion collision shape as list of blender meshes."""
-<<<<<<< HEAD
         nifdebug.startdebug()
-=======
-        #nifdebug.startdebug()
->>>>>>> 1c928fa... Convexpoly is importing(probably not correctly), though I have no idea
+        
         if isinstance(bhkshape, NifFormat.bhkConvexVerticesShape):
             # find vertices (and fix scale)
             vertices, triangles = pyffi.utils.quickhull.qhull3d(
@@ -3372,19 +3369,20 @@ class NifImport(NifCommon):
             b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
             # radius: quick estimate
             b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices)
-            b_obj.addProperty("HavokMaterial", self.HAVOK_MATERIAL[self.havok_mat], "STRING")
+            b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[subshape.material]
 
             # also remove duplicate vertices
             numverts = len(b_mesh.vertices)
             # 0.005 = 1/200
+            '''TODO: FIXME
             numdel = b_mesh.remDoubles(0.005)
             if numdel:
                 self.info(
                     "Removed %i duplicate vertices"
                     " (out of %i) from collision mesh"
                     % (numdel, numverts))
-
-            return [ b_obj ]
+            '''
+            return b_obj
 
         elif isinstance(bhkshape, NifFormat.bhkMoppBvTreeShape):
             return self.import_bhk_shape(bhkshape.shape)
