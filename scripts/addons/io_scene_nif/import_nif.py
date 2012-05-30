@@ -2993,7 +2993,6 @@ class NifImport(NifCommon):
    
     def import_bhk_shape(self, bhkshape, upbflags="", bsxflags=2):        
         """Import an oblivion collision shape as list of blender meshes."""
-        nifdebug.startdebug()
         
         if isinstance(bhkshape, NifFormat.bhkConvexVerticesShape):
             # find vertices (and fix scale)
