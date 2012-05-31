@@ -2,7 +2,7 @@ import sys
 
 DEBUGGING = False
 # set the PYDEV_SOURCE_DIR correctly before using the debugger
-PYDEV_SOURCE_DIR = 'C:\eclipse\plugins\org.python.pydev_2.5.0.2012040618\PySrc'
+PYDEV_SOURCE_DIR = 'C:\Program Files\eclipse\plugins\org.python.pydev.debug_2.5.0.2012040618\pysrc'
 
 def startdebug():
     
