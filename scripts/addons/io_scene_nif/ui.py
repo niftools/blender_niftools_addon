@@ -38,17 +38,42 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-
 from bpy.types import Panel
+   
+class NifEmissivePanel(Panel):
+    bl_label = "Emission Panel"
+    
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "material"
+    
+    @classmethod
+    def poll(cls, context):
+        mat = context.material
+        if mat is not None:
+            if mat.use_nodes:
+                if mat.active_node_material is not None:
+                    return True
+                return False
+            return True
+        return False
+    
+    def draw(self, context):
+        mat = context.material.niftools
+        
+        layout = self.layout
+        row = layout.row()
+        colL = row.column()
+        colR = row.column()
+        colL.prop(mat, "emissive_preview")
+        colR.prop(mat, "emissive_color", text="")      
 
-class PhysicsButtonsPanel():
+class NifCollisionBoundsPanel(Panel):
+    bl_label = "Collision Bounds"
+    
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "physics"
-
-class NifCollisionBoundsPanel(PhysicsButtonsPanel, Panel):
-    bl_label = "Collision Bounds"
-    
     '''
     @classmethod
     def poll(cls, context):
@@ -84,47 +109,14 @@ class NifCollisionBoundsPanel(PhysicsButtonsPanel, Panel):
     
         #havok material prop
         box.prop(col_setting, "havok_material", text='Havok Material')
-        
-def check_material(mat):
-    if mat is not None:
-        if mat.use_nodes:
-            if mat.active_node_material is not None:
-                return True
-            return False
-        return True
-    return False
-   
-class NifEmissivePanel(Panel):
-    bl_label = "Emission Panel"
-    
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = "material"
-    
-    @classmethod
-    def poll(cls, context):
-        mat = context.material
-        return check_materal(mat)
-    
-    def draw(self, context):
-        mat = context.material.niftools
-        
-        layout = self.layout
-        row = layout.row()
-        colL = row.column()
-        colR = row.column()
-        colL.prop(mat, "emissive_preview")
-        colR.prop(mat, "emissive_color", text="")
-        
+
 def register():
-    
     bpy.utils.register_class(NifEmissivePanel)
     bpy.types.MATERIAL_PT_shading.prepend(NifEmissivePanel)
     bpy.utils.register_class(NifCollisionBoundsPanel)
 
 
 def unregister():
-    
     bpy.types.MATERIAL_PT_shading.remove(NifEmissivePanel)
     bpy.utils.unregister_class(NifEmissivePanel)
     bpy.utils.unregister_class(NifCollisionBoundsPanel)
