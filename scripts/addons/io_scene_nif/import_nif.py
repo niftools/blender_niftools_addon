@@ -2117,10 +2117,13 @@ class NifImport(NifCommon):
             except ValueError:
                 materialIndex = len(b_mesh_materials)
                 b_mesh.materials.append(material)
+            
+            '''
             # if mesh has one material with wireproperty, then make the mesh
             # wire in 3D view
             if wireProperty:
-                b_mesh.draw_type = 'WIRE'
+                b_obj.draw_type = 'WIRE'
+            '''
         else:
             material = None
             materialIndex = 0
