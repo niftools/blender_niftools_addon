@@ -47,7 +47,7 @@ from pyffi.formats.egm import EgmFormat
 
 from . import export_nif, import_nif
 
-class NifImportExportCommon:
+class NifOperatorCommon:
     """Abstract base class for import and export user interface."""
 
     # filepath is created by ImportHelper/ExportHelper
@@ -103,7 +103,7 @@ class NifImportExportCommon:
         min=0.0, max=1.0, precision=5,
         options={'HIDDEN'})
 
-class NifImportUI(bpy.types.Operator, ImportHelper, NifImportExportCommon):
+class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
     """Operator for loading a nif file."""
 
     #: Name of function for calling the nif export operator.
@@ -207,7 +207,7 @@ def _game_to_enum(game):
     enum = game.upper().translate(table).replace("__", "_")
     return enum
 
-class NifExportUI(bpy.types.Operator, ExportHelper, NifImportExportCommon):
+class NifExportOperator(bpy.types.Operator, ExportHelper, NifOperatorCommon):
     """Operator for saving a nif file."""
 
     #: Name of function for calling the nif export operator.
