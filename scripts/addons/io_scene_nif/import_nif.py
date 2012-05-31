@@ -3041,7 +3041,7 @@ class NifImport(NifCommon):
                     "Removed %i duplicate vertices"
                     " (out of %i) from collision mesh" % (numdel, numverts))
             '''
-            return b_obj
+            return [ b_obj ]
 
         elif isinstance(bhkshape, NifFormat.bhkTransformShape):
             # import shapes
@@ -3058,7 +3058,7 @@ class NifImport(NifCommon):
                 b_obj.matrix_local = b_obj.matrix_local * transform
                 b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
             # and return a list of transformed collision shapes
-            return collision_objs
+            return [ collision_objs ]
 
         elif isinstance(bhkshape, NifFormat.bhkRigidBody):
             # import shapes
@@ -3107,7 +3107,7 @@ class NifImport(NifCommon):
             # for now, store all imported havok shapes with object lists
             self.havok_objects[bhkshape] = collision_objs
             # and return a list of transformed collision shapes
-            return collision_objs
+            return [ collision_objs ]
         
         elif isinstance(bhkshape, NifFormat.bhkBoxShape):
             # create box
