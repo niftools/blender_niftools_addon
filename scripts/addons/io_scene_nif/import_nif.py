@@ -2999,11 +2999,11 @@ class NifImport(NifCommon):
         
         if isinstance(bhkshape, NifFormat.bhkConvexVerticesShape):
             # find vertices (and fix scale)
-            vertices, triangles = pyffi.utils.quickhull.qhull3d(
-                [ (self.HAVOK_SCALE * vert.x, 
-                   self.HAVOK_SCALE * vert.y, 
-                   self.HAVOK_SCALE * vert.z)
-                  for vert in bhkshape.vertices ])
+            n_vertices, n_triangles = pyffi.utils.quickhull.qhull3d(
+                [ (self.HAVOK_SCALE * n_vert.x, 
+                   self.HAVOK_SCALE * n_vert.y, 
+                   self.HAVOK_SCALE * n_vert.z)
+                  for n_vert in bhkshape.vertices ])
            
             # create convex mesh
             b_mesh = bpy.data.meshes.new('convexpoly')
@@ -3011,25 +3011,22 @@ class NifImport(NifCommon):
             vert_list = {}
             vert_index = 0
             
-            for vert in vertices:
+            for n_vert in n_vertices:
                 b_mesh.vertices.add(1)
-                b_mesh.vertices[-1].co = ((vert))
+                b_mesh.vertices[-1].co = n_vert
                 
-            for vert in triangles:
+            for n_triangle in n_triangles:
                 b_mesh.faces.add(1)
-                b_mesh.faces[-1].vertices
+                b_mesh.faces[-1].vertices = n_triangle
 
             # link mesh to scene and set transform
-            b_obj = bpy.data.objects.new('convexpoly', b_mesh)
+            b_obj = bpy.data.objects.new('Convexpoly', b_mesh)
             bpy.context.scene.objects.link(b_obj)
-
-            # set bounds type
-            b_obj.draw_type = 'BOUNDS'
-            b_obj.draw_bounds_type = 'BOX'
 
             b_obj.show_wire = True
             b_obj.game.use_collision_bounds = True
-            b_obj.game.collision_bounds_type = 'CONVEX_HULL'
+            b_obj.game.collision_bounds_type = 'CONVEX'
+            
             # radius: quick estimate
             b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices)
             b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
@@ -3222,8 +3219,6 @@ class NifImport(NifCommon):
                 b_mesh.faces[-1].vertices
             
             # link box to scene and set transform
-            b_obj = bpy.data.objects.new('capsule', b_mesh)
-            bpy.context.scene.objects.link(b_obj)
 
             """
             vert_index = 0
