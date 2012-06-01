@@ -3154,9 +3154,10 @@ class NifImport(NifCommon):
             return [ b_obj ]
 
         elif isinstance(bhkshape, NifFormat.bhkSphereShape):
-            minx = miny = minz = -bhkshape.radius * self.HAVOK_SCALE
-            maxx = maxy = maxz = +bhkshape.radius * self.HAVOK_SCALE
+            b_radius = bhkshape.radius * self.HAVOK_SCALE
             
+            b_obj = bpy.ops.mesh.primitive_uv_sphere_add(segments=8, ring_count=8, size=b_radius)
+            '''
             b_mesh = bpy.data.meshes.new('sphere')
             vert_list = {}
             vert_index = 0
@@ -3176,16 +3177,20 @@ class NifImport(NifCommon):
                 b_mesh.faces.add(1)
                 b_mesh.faces[-1].vertices
             
+            
             # link box to scene and set transform
             b_obj = bpy.data.objects.new('sphere', b_mesh)
             bpy.context.scene.objects.link(b_obj)
-
+            '''
+            
+            b_obj = bpy.context.scene.objects.active
+            
             # set bounds type
             b_obj.draw_type = 'BOUNDS'
             b_obj.draw_bounds_type = 'SPHERE'
             b_obj.game.use_collision_bounds = True
             b_obj.game.collision_bounds_type = 'SPHERE'
-            b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices)
+            b_obj.game.radius = bhkshape.radius
             b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
             return [ b_obj ]
 

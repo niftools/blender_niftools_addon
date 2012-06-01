@@ -59,31 +59,34 @@ bl_info = {
 from . import nifdebug
 nifdebug.startdebug()
 
-import imp
+
 if "bpy" in locals():
+    import imp
     from imp import reload
+    
     if "io_scene_nif" in locals():
         reload(io_scene_nif)
+
+else:
+    import logging
+    import sys
+    import os
+    import os.path
     
-import logging
-import sys
-import os
-import os.path
+    import bpy
+    import bpy.props
+    
+    from . import properties, ui, operators
 
-import bpy
-import bpy.props
-
-from . import properties, ui, operators
-
-# blender doesn't look in site-packages; 
-#easiest solution for this seems to be to import site.py manually, 
-#so we find pyffi if it is installed there
-
-import site
-
-import pyffi
-from pyffi.formats.nif import NifFormat
-from pyffi.formats.egm import EgmFormat
+    # blender doesn't look in site-packages; 
+    #easiest solution for this seems to be to import site.py manually, 
+    #so we find pyffi if it is installed there
+    
+    import site
+    
+    import pyffi
+    from pyffi.formats.nif import NifFormat
+    from pyffi.formats.egm import EgmFormat
 
 def _init_loggers():
     """Set up loggers."""
