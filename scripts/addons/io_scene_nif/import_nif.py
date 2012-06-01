@@ -3044,7 +3044,7 @@ class NifImport(NifCommon):
                     "Removed %i duplicate vertices"
                     " (out of %i) from collision mesh" % (numdel, numverts))
             '''
-            return b_obj 
+            return [ b_obj ] 
 
         elif isinstance(bhkshape, NifFormat.bhkTransformShape):
             # import shapes
