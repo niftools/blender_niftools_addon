@@ -138,26 +138,26 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
     merge_skeleton_roots = bpy.props.BoolProperty(
         name="Merge Skeleton Roots",
         description="Merge skeleton roots.",
-        default=True)
+        default=False)
 
     #: Send all geometries to their bind position.
     send_geoms_to_bind_pos = bpy.props.BoolProperty(
         name="Send Geometries To Bind Position",
         description="Send all geometries to their bind position.",
-        default=True)
+        default=False)
 
     #: Send all detached geometries to the position of their parent node.
     send_detached_geoms_to_node_pos = bpy.props.BoolProperty(
         name="Send Detached Geometries To Node Position",
         description=
         "Send all detached geometries to the position of their parent node.",
-        default=True)
+        default=False)
 
     #: Send all bones to their bind position.
     send_bones_to_bind_position = bpy.props.BoolProperty(
         name="Send Bones To Bind Position",
         description="Send all bones to their bind position.",
-        default=True)
+        default=False)
 
     #: Apply skin deformation to all skinned geometries.
     apply_skin_deformation =  bpy.props.BoolProperty(
@@ -183,7 +183,7 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
     combine_shapes = bpy.props.BoolProperty(
         name="Combine Shapes",
         description="Import multi-material shapes as a single mesh.",
-        default=True)
+        default=False)
 
     def execute(self, context):
         """Execute the import operator: first constructs a

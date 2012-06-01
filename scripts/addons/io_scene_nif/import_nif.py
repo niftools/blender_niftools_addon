@@ -3025,7 +3025,7 @@ class NifImport(NifCommon):
 
             b_obj.show_wire = True
             b_obj.game.use_collision_bounds = True
-            b_obj.game.collision_bounds_type = 'CONVEX'
+            b_obj.game.collision_bounds_type = 'CONVEX_HULL'
             
             # radius: quick estimate
             b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices)
