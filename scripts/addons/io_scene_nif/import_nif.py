@@ -604,7 +604,7 @@ class NifImport(NifCommon):
                 # make b_obj track camera object
                 #b_obj.setEuler(0,0,0)
                 b_obj.constraints.append(
-                    Blender.Constraint.Type.TRACKTO)
+                    bpy.types.Constraint.TRACKTO)
                 self.warning(
                     "Constraint for billboard node on %s added"
                     " but target not set due to transform bug"
@@ -716,13 +716,13 @@ class NifImport(NifCommon):
         """Decompose Blender transform matrix as a scale, rotation matrix, and
         translation vector."""
         # get scale components
-        b_scale_rot = m.rotationPart()
+        """b_scale_rot = m.rotationPart()
         b_scale_rot_T = mathutils.Matrix(b_scale_rot)
         b_scale_rot_T.transpose()
         b_scale_rot_2 = b_scale_rot * b_scale_rot_T
-        b_scale = Vector(b_scale_rot_2[0][0] ** 0.5,\
-                         b_scale_rot_2[1][1] ** 0.5,\
-                         b_scale_rot_2[2][2] ** 0.5)
+        b_scale = mathutils.Vector(b_scale_rot_2[0][0] ** 0.5,\
+                                   b_scale_rot_2[1][1] ** 0.5,\
+                                   b_scale_rot_2[2][2] ** 0.5)
         # and fix their sign
         if (b_scale_rot.determinant() < 0): b_scale.negate()
         # only uniform scaling
@@ -734,7 +734,8 @@ class NifImport(NifCommon):
         # get rotation matrix
         b_rot = b_scale_rot * (1.0/b_scale)
         # get translation
-        b_trans = m.translationPart()
+        b_trans = m.translationPart()"""
+        b_trans, b_rot, b_scale = m.decompose()
         # done!
         return b_scale, b_rot, b_trans
 
@@ -751,7 +752,7 @@ class NifImport(NifCommon):
         
         if niBlock.name in self.bone_priorities:
             constr = b_empty.constraints.append(
-                Blender.Constraint.Type.NULL)
+                bpy.types.Constraint.NULL)
             constr.name = "priority:%i" % self.bone_priorities[niBlock.name]  
         return b_empty
 
@@ -1103,7 +1104,7 @@ class NifImport(NifCommon):
             # store bone priority, if applicable
             if niBone.name in self.bone_priorities:
                 constr = b_posebone.constraints.append(
-                    Blender.Constraint.Type.NULL)
+                    bpy.types.Constraint.NULL)
                 constr.name = "priority:%i" % self.bone_priorities[niBone.name]
 
         return b_armature
@@ -2524,7 +2525,7 @@ class NifImport(NifCommon):
         # import priority if existing
         if niBlock.name in self.bone_priorities:
             constr = b_obj.constraints.append(
-                Blender.Constraint.Type.NULL)
+                bpy.types.Constraint.NULL)
             constr.name = "priority:%i" % self.bone_priorities[niBlock.name]
 
         return b_obj
@@ -3330,7 +3331,7 @@ class NifImport(NifCommon):
                 # radius: quick estimate
                 b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices) * self.HAVOK_SCALE
                 # set material
-                b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[subshape.material]                
+                b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[subshape.material]
 
                 # also remove duplicate vertices
                 numverts = len(b_mesh.vertices)
@@ -3350,7 +3351,7 @@ class NifImport(NifCommon):
 
         elif isinstance(bhkshape, NifFormat.bhkNiTriStripsShape):
             self.havok_mat = bhkshape.material
-            return reduce(operator.add,
+            return functools.reduce(operator.add,
                           (self.import_bhk_shape(strips)
                            for strips in bhkshape.strips_data))
                 
@@ -3362,17 +3363,18 @@ class NifImport(NifCommon):
             b_mesh.faces.extend(list(bhkshape.get_triangles()))
 
             # link mesh to scene and set transform
-            b_obj = self.context.scene.objects.new(b_mesh, 'poly')
+            b_obj = bpy.data.objects.new('poly', b_mesh)
+            bpy.context.scene.objects.link(b_obj)
 
             # set bounds type
             b_obj.draw_type = 'BOUNDS'
-            b_obj.draw_bounds_type = 'POLYHEDERON'
+            b_obj.draw_bounds_type = 'BOX'
             b_obj.show_wire = True
             b_obj.game.use_collision_bounds = True
             b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
             # radius: quick estimate
             b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices)
-            b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[subshape.material]
+            #b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
 
             # also remove duplicate vertices
             numverts = len(b_mesh.vertices)
@@ -3391,7 +3393,7 @@ class NifImport(NifCommon):
             return self.import_bhk_shape(bhkshape.shape)
 
         elif isinstance(bhkshape, NifFormat.bhkListShape):
-            return reduce(operator.add, ( self.import_bhk_shape(subshape)
+            return functools.reduce(operator.add, ( self.import_bhk_shape(subshape)
                                           for subshape in bhkshape.sub_shapes ))
 
         self.warning("Unsupported bhk shape %s"
@@ -3457,7 +3459,7 @@ class NifImport(NifCommon):
                 continue
 
             # add the constraint as a rigid body joint
-            b_constr = b_hkobj.constraints.append(Blender.Constraint.Type.RIGIDBODYJOINT)
+            b_constr = b_hkobj.constraints.append(bpy.types.Constraint.RIGIDBODYJOINT)
 
             # note: rigidbodyjoint parameters (from Constraint.c)
             # CONSTR_RB_AXX 0.0

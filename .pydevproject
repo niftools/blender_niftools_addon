@@ -7,7 +7,7 @@
 <pydev_pathproperty name="org.python.pydev.PROJECT_EXTERNAL_SOURCE_PATH">
 <path>C:\Python32\Lib\site-packages\pyffi</path>
 <path>C:\Python32\Lib\site-packages\nose-1.1.2-py3.2.egg</path>
-<path>C:\Program Files\Blender Foundation\Blender2.59\doc\python_api\pypredef</path>
 </pydev_pathproperty>
+
 
 </pydev_project>
