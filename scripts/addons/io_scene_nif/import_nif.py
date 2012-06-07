@@ -3184,7 +3184,7 @@ class NifImport(NifCommon):
         elif isinstance(bhkshape, NifFormat.bhkSphereShape):
             b_radius = bhkshape.radius * self.HAVOK_SCALE
             
-            bpy.ops.mesh.primitive_uv_sphere_add(segments=8, ring_count=8, size=b_radius)
+            b_obj = bpy.ops.mesh.primitive_uv_sphere_add(segments=8, ring_count=8, size=b_radius)
             b_obj = bpy.context.scene.objects.active
             
             # set bounds type
@@ -3363,6 +3363,7 @@ class NifImport(NifCommon):
                 b_mesh.vertices[-1].co = (n_vert.x, n_vert.y, n_vert.z)
             
             for n_triangle in list(bhkshape.get_triangles()):
+                print(n_triangle)
                 b_mesh.faces.add(1)
                 b_mesh.faces[-1].vertices = n_triangle
 
