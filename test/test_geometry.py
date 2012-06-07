@@ -38,19 +38,17 @@ class TestBaseGeometry(SingleNif):
     def b_check_data(self):
         b_obj = bpy.data.objects[self.b_cube]        
 
-        #transfroms
+        #check transforms
         b_loc, b_rot, b_scale = b_obj.matrix_local.decompose()
-        #compare location value
-        nose.tools.assert_equal(b_obj.location, mathutils.Vector((20.0, 20.0, 20.0))) 
-        #compare rotations, float comparison
+        
+        nose.tools.assert_equal(b_obj.location, mathutils.Vector((20.0, 20.0, 20.0))) #location
         nose.tools.assert_equal(
                 (b_rot.to_axis_angle()[1] - math.radians(45.0)) 
-                < self.EPSILON, True)
-        #compare scale: float comparison
+                < self.EPSILON, True)#rotations
         nose.tools.assert_equal(
                 (b_obj.scale - mathutils.Vector((0.75, 0.75, 0.75))) 
-                < mathutils.Vector((self.EPSILON,self.EPSILON,self.EPSILON)), True) 
-                                
+                < mathutils.Vector((self.EPSILON,self.EPSILON,self.EPSILON)), True) #scale
+        
         b_mesh = b_obj.data
         self.b_check_geom(b_mesh)
         
@@ -65,6 +63,16 @@ class TestBaseGeometry(SingleNif):
     def n_check_data(self, n_data):
         n_geom = n_data.roots[0].children[0]
         nose.tools.assert_is_instance(n_geom, NifFormat.NiTriShape)
+        
+        #check transforms
+        nose.tools.assert_equal(n_geom.translation.as_tuple(),(20.0, 20.0, 20.0))
+        nose.tools.assert_equal(
+                mathutils.Matrix(n_geom.rotation.as_tuple()).to_4x4(), 
+                mathutils.Matrix.Rotation(math.radians(45), 4, 'X'))
+        print(n_geom.scale)
+        nose.tools.assert_equal(
+                n_geom.scale, 0.75)
+        
         self.n_check_geom_data(n_geom)
     
     def n_check_geom_data(self, n_geom):
@@ -81,7 +89,7 @@ class TestBaseGeometry(SingleNif):
             Consistancy:
             radius:
     '''
-        
+'''     
 class TestBaseUV(TestBaseGeometry):
     n_name = "geometry/base_uv"
     b_cube = 'Cube'
@@ -116,9 +124,9 @@ class TestBaseUV(TestBaseGeometry):
         #TODO_3.0 - See above
         n_geom = n_data.roots[0].children[0]
         nose.tools.assert_equal(len(n_geom.data.uv_sets), 1)
-        nose.tools.assert_equal(len(n_geom.data.uv_sets[0]), len(n_geom.data.vertices))
-        
-
+        nose.tools.assert_equal(len(n_geom.data.uv_sets[0]), len(n_geom.data.vertices))    
+'''
+    
 class TestNonUniformlyScaled(Base):
     def setup(self):
         # create a non-uniformly scaled cube
