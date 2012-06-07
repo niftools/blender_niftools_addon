@@ -269,7 +269,7 @@ class NifImport(NifCommon):
             self.info("Finished")
             # XXX no longer needed?
             # do a full scene update to ensure that transformations are applied
-            #self.context.scene.update(1)
+            self.context.scene.update()
         
         return {'FINISHED'}
 
@@ -745,8 +745,7 @@ class NifImport(NifCommon):
         b_empty = bpy.data.objects.new(shortname, None)
         
         #TODO - is longname needed???
-        longname = niBlock.name.decode()
-        b_empty.niftools.longname = longname
+        b_empty.niftools.longname = niBlock.name.decode()
         
         self.context.scene.objects.link(b_empty)
         
@@ -1427,35 +1426,35 @@ class NifImport(NifCommon):
         self.textures[texture_hash] = b_texture
         return b_texture
 
-    def get_material_hash(self, matProperty, textProperty,
-                          alphaProperty, specProperty,
-                          textureEffect, wireProperty,
+    def get_material_hash(self, n_mat_prop, n_texture_prop,
+                          n_alpha_prop, n_specular_prop,
+                          textureEffect, n_wire_prop,
                           bsShaderProperty, extra_datas):
         """Helper function for import_material. Returns a key that
         uniquely identifies a material from its properties. The key
         ignores the material name as that does not affect the
         rendering.
         """
-        return (matProperty.get_hash()[1:] # skip first element, which is name
-                if matProperty else None,
-                textProperty.get_hash()     if textProperty  else None,
-                alphaProperty.get_hash()    if alphaProperty else None,
-                specProperty.get_hash()     if specProperty  else None,
+        return (n_mat_prop.get_hash()[1:] # skip first element, which is name
+                if n_mat_prop else None,
+                n_texture_prop.get_hash()     if n_texture_prop  else None,
+                n_alpha_prop.get_hash()    if n_alpha_prop else None,
+                n_specular_prop.get_hash()     if n_specular_prop  else None,
                 textureEffect.get_hash()    if textureEffect else None,
-                wireProperty.get_hash()     if wireProperty  else None,
+                n_wire_prop.get_hash()     if n_wire_prop  else None,
                 bsShaderProperty.get_hash() if bsShaderProperty else None,
                 tuple(extra.get_hash() for extra in extra_datas))
 
-    def import_material(self, matProperty, textProperty,
-                        alphaProperty, specProperty,
-                        textureEffect, wireProperty,
+    def import_material(self, n_mat_prop, n_texture_prop,
+                        n_alpha_prop, n_specular_prop,
+                        textureEffect, n_wire_prop,
                         bsShaderProperty, extra_datas):
         
         """Creates and returns a material."""
         # First check if material has been created before.
-        material_hash = self.get_material_hash(matProperty, textProperty,
-                                               alphaProperty, specProperty,
-                                               textureEffect, wireProperty,
+        material_hash = self.get_material_hash(n_mat_prop, n_texture_prop,
+                                               n_alpha_prop, n_specular_prop,
+                                               textureEffect, n_wire_prop,
                                                bsShaderProperty,
                                                extra_datas)
         try:
@@ -1464,14 +1463,14 @@ class NifImport(NifCommon):
             pass
         
         #name unique material
-        name = self.import_name(matProperty)
+        name = self.import_name(n_mat_prop)
         b_mat = bpy.data.materials.new(name)
         
         # get apply mode, and convert to blender "blending mode"
         blend_type = 'MIX' # default
-        if textProperty:
+        if n_texture_prop:
             blend_type = self.get_b_blend_type_from_n_apply_mode(
-                textProperty.apply_mode)
+                n_texture_prop.apply_mode)
         elif bsShaderProperty:
             # default blending mode for fallout 3
             blend_type = 'MIX'
@@ -1485,17 +1484,17 @@ class NifImport(NifCommon):
         dark_texture = None
         detail_texture = None
         refTexture = None
-        if textProperty:
+        if n_texture_prop:
             # standard texture slots
-            baseTexDesc = textProperty.base_texture
-            glowTexDesc = textProperty.glow_texture
-            bumpTexDesc = textProperty.bump_map_texture
-            glossTexDesc = textProperty.gloss_texture
-            darkTexDesc = textProperty.dark_texture
-            detailTexDesc = textProperty.detail_texture
+            baseTexDesc = n_texture_prop.base_texture
+            glowTexDesc = n_texture_prop.glow_texture
+            bumpTexDesc = n_texture_prop.bump_map_texture
+            glossTexDesc = n_texture_prop.gloss_texture
+            darkTexDesc = n_texture_prop.dark_texture
+            detailTexDesc = n_texture_prop.detail_texture
             refTexDesc = None
             # extra texture shader slots
-            for shader_tex_desc in textProperty.shader_textures:
+            for shader_tex_desc in n_texture_prop.shader_textures:
                 if not shader_tex_desc.is_used:
                     continue
                 # it is used, figure out the slot it is used for
@@ -1566,7 +1565,7 @@ class NifImport(NifCommon):
                     #Influence
                     b_mat_texslot.use_map_color_diffuse = True
                     b_mat_texslot.blend_type = blend_type
-                    if(alphaProperty):
+                    if(n_alpha_prop):
                         b_mat_texslot.use_map_alpha
                     #update: needed later
                     base_texture = b_mat_texslot
@@ -1587,7 +1586,7 @@ class NifImport(NifCommon):
                     #Influence
                     b_mat_texslot.use_map_normal = True
                     b_mat_texslot.blend_type = blend_type
-                    if(alphaProperty):
+                    if(n_alpha_prop):
                         b_mat_texslot.use_map_alpha
                         
                     #update: needed later
@@ -1609,7 +1608,7 @@ class NifImport(NifCommon):
                     #Influence
                     b_mat_texslot.use_map_emit = True
                     b_mat_texslot.blend_type = blend_type
-                    if(alphaProperty):
+                    if(n_alpha_prop):
                         b_mat_texslot.use_map_alpha
                         
                     #update: needed later
@@ -1723,14 +1722,14 @@ class NifImport(NifCommon):
                 menvmapTexture.blend_type = 'ADD'
         
         # Diffuse color
-        b_mat.diffuse_color[0] = matProperty.diffuse_color.r
-        b_mat.diffuse_color[1] = matProperty.diffuse_color.g
-        b_mat.diffuse_color[2] = matProperty.diffuse_color.b
+        b_mat.diffuse_color[0] = n_mat_prop.diffuse_color.r
+        b_mat.diffuse_color[1] = n_mat_prop.diffuse_color.g
+        b_mat.diffuse_color[2] = n_mat_prop.diffuse_color.b
         b_mat.diffuse_intensity = 1.0
         
         '''
-        diff = matProperty.diffuse_color
-        emit = matProperty.emissive_color
+        diff = n_mat_prop.diffuse_color
+        emit = n_mat_prop.emissive_color
         
         
         # fallout 3 hack: convert diffuse black to emit if emit is not black
@@ -1750,7 +1749,7 @@ class NifImport(NifCommon):
         # Ambient & emissive color
         # We assume that ambient & emissive are fractions of the diffuse color.
         # If it is not an exact fraction, we average out.
-        amb = matProperty.ambient_color
+        amb = n_mat_prop.ambient_color
         # fallout 3 hack:convert ambient black to white and set emit
         if amb.r < self.properties.epsilon and amb.g < self.properties.epsilon and amb.b < self.properties.epsilon:
             amb.r = 1.0
@@ -1760,7 +1759,7 @@ class NifImport(NifCommon):
             if (emit.r + emit.g + emit.b) < self.properties.epsilon:
                 b_emit = 0.0
             else:
-                b_emit = matProperty.emit_multi / 10.0
+                b_emit = n_mat_prop.emit_multi / 10.0
         else:
             b_amb = 0.0
             b_emit = 0.0
@@ -1792,9 +1791,9 @@ class NifImport(NifCommon):
         # Should we factor in blender bounds 0.0 - 2.0
         
         # Emissive
-        b_mat.niftools.emissive_color[0] = matProperty.emissive_color.r
-        b_mat.niftools.emissive_color[1] = matProperty.emissive_color.g
-        b_mat.niftools.emissive_color[2] = matProperty.emissive_color.b
+        b_mat.niftools.emissive_color[0] = n_mat_prop.emissive_color.r
+        b_mat.niftools.emissive_color[1] = n_mat_prop.emissive_color.g
+        b_mat.niftools.emissive_color[2] = n_mat_prop.emissive_color.b
         if(b_mat.niftools.emissive_color[0] > self.properties.epsilon or 
            b_mat.niftools.emissive_color[1] > self.properties.epsilon or 
            b_mat.niftools.emissive_color[2] > self.properties.epsilon):
@@ -1803,32 +1802,32 @@ class NifImport(NifCommon):
             b_mat.emit = 0.0
             
         # gloss
-        gloss = matProperty.glossiness
+        gloss = n_mat_prop.glossiness
         hardness = int(gloss * 4) # just guessing really
         if hardness < 1: hardness = 1
         if hardness > 511: hardness = 511
         b_mat.specular_hardness = hardness
         
         # Alpha
-        if alphaProperty:
-            if(matProperty.alpha < 1.0):
+        if n_alpha_prop:
+            if(n_mat_prop.alpha < 1.0):
                 self.debug("Alpha prop detected")
                 b_mat.use_transparency = True 
-                b_mat.alpha = matProperty.alpha
+                b_mat.alpha = n_mat_prop.alpha
                 b_mat.transparency_method = 'Z_TRANSPARENCY'  # enable z-buffered transparency
 
         # Specular color
-        b_mat.specular_color[0] = matProperty.specular_color.r
-        b_mat.specular_color[1] = matProperty.specular_color.g
-        b_mat.specular_color[2] = matProperty.specular_color.b
+        b_mat.specular_color[0] = n_mat_prop.specular_color.r
+        b_mat.specular_color[1] = n_mat_prop.specular_color.g
+        b_mat.specular_color[2] = n_mat_prop.specular_color.b
         
-        if (not specProperty) and (self.data.version != 0x14000004):
+        if (not n_specular_prop) and (self.data.version != 0x14000004):
             b_mat.specular_intensity = 0.0 #no specular prop 
         else:
             b_mat.specular_intensity = 1.0 #Blender multiplies specular color with this value
         
         # check wireframe property
-        if wireProperty:
+        if n_wire_prop:
             # enable wireframe rendering
             b_mat.type = 'WIRE'
 
@@ -2037,9 +2036,9 @@ class NifImport(NifCommon):
         '''
 
         # Stencil (for double sided meshes)
-        stencilProperty = self.find_property(niBlock, NifFormat.NiStencilProperty)
+        n_stencil_prop = self.find_property(niBlock, NifFormat.NiStencilProperty)
         # we don't check flags for now, nothing fancy
-        if stencilProperty:
+        if n_stencil_prop:
             b_mesh.show_double_sided = True
         else:
             b_mesh.show_double_sided = False
@@ -2047,26 +2046,26 @@ class NifImport(NifCommon):
         # Material
         # note that NIF files only support one material for each trishape
         # find material property
-        matProperty = self.find_property(niBlock, 
+        n_mat_prop = self.find_property(niBlock, 
                                          NifFormat.NiMaterialProperty)
         
-        if matProperty:
+        if n_mat_prop:
             # Texture
-            textProperty = None
+            n_texture_prop = None
             if n_uvco:
-                textProperty = self.find_property(niBlock, 
+                n_texture_prop = self.find_property(niBlock, 
                                                   NifFormat.NiTexturingProperty)
                     
             # Alpha
-            alphaProperty = self.find_property(niBlock,
+            n_alpha_prop = self.find_property(niBlock,
                                                NifFormat.NiAlphaProperty)
             
             # Specularity
-            specProperty = self.find_property(niBlock,
+            n_specular_prop = self.find_property(niBlock,
                                               NifFormat.NiSpecularProperty)
 
             # Wireframe
-            wireProperty = self.find_property(niBlock,
+            n_wire_prop = self.find_property(niBlock,
                                               NifFormat.NiWireframeProperty)
 
             # bethesda shader
@@ -2106,9 +2105,9 @@ class NifImport(NifCommon):
 
             # create material and assign it to the mesh
             # XXX todo: delegate search for properties to import_material
-            material = self.import_material(matProperty, textProperty,
-                                            alphaProperty, specProperty,
-                                            textureEffect, wireProperty,
+            material = self.import_material(n_mat_prop, n_texture_prop,
+                                            n_alpha_prop, n_specular_prop,
+                                            textureEffect, n_wire_prop,
                                             bsShaderProperty, extra_datas)
             # XXX todo: merge this call into import_material
             self.import_material_controllers(material, niBlock)
@@ -2120,9 +2119,9 @@ class NifImport(NifCommon):
                 b_mesh.materials.append(material)
             
             '''
-            # if mesh has one material with wireproperty, then make the mesh
+            # if mesh has one material with n_wire_prop, then make the mesh
             # wire in 3D view
-            if wireProperty:
+            if n_wire_prop:
                 b_obj.draw_type = 'WIRE'
             '''
         else:
@@ -3042,6 +3041,7 @@ class NifImport(NifCommon):
                     "Removed %i duplicate vertices"
                     " (out of %i) from collision mesh" % (numdel, numverts))
             '''
+                        
             return [ b_obj ] 
 
         elif isinstance(bhkshape, NifFormat.bhkTransformShape):
@@ -3149,38 +3149,13 @@ class NifImport(NifCommon):
             b_obj.game.use_collision_bounds = True            
             b_obj.game.collision_bounds_type = 'BOX'
             b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices) #todo - calc actual radius
+            
             return [ b_obj ]
 
         elif isinstance(bhkshape, NifFormat.bhkSphereShape):
             b_radius = bhkshape.radius * self.HAVOK_SCALE
             
             b_obj = bpy.ops.mesh.primitive_uv_sphere_add(segments=8, ring_count=8, size=b_radius)
-            '''
-            b_mesh = bpy.data.meshes.new('sphere')
-            vert_list = {}
-            vert_index = 0
-    
-            for x in [minx,maxx]:
-                for y in [miny,maxy]:
-                    for z in [minz,maxz]:
-                        b_mesh.vertices.add(1)
-                        b_mesh.vertices[-1].co = (x,y,z)
-                        vert_list[vert_index] = [x,y,z]
-                        vert_index += 1
-
-            faces = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]]
-            face_index = 0
-
-            for x in range(len(faces)):
-                b_mesh.faces.add(1)
-                b_mesh.faces[-1].vertices
-            
-            
-            # link box to scene and set transform
-            b_obj = bpy.data.objects.new('sphere', b_mesh)
-            bpy.context.scene.objects.link(b_obj)
-            '''
-            
             b_obj = bpy.context.scene.objects.active
             
             # set bounds type
@@ -3190,6 +3165,7 @@ class NifImport(NifCommon):
             b_obj.game.collision_bounds_type = 'SPHERE'
             b_obj.game.radius = bhkshape.radius
             b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
+            
             return [ b_obj ]
 
         elif isinstance(bhkshape, NifFormat.bhkCapsuleShape):
@@ -3276,20 +3252,18 @@ class NifImport(NifCommon):
             hk_objects = []
             vertex_offset = 0
             subshapes = bhkshape.sub_shapes
+            
             if not subshapes:
                 # fallout 3 stores them in the data
                 subshapes = bhkshape.data.sub_shapes
+                
             for subshape_num, subshape in enumerate(subshapes):
                 b_mesh = bpy.data.meshes.new('poly%i' % subshape_num)
-                vert_list = {}
-                vert_index = 0
 
                 for vert_index in range(vertex_offset, vertex_offset + subshape.num_vertices):
                     b_vert = bhkshape.data.vertices[vert_index]
                     b_mesh.vertices.add(1)
                     b_mesh.vertices[-1].co = (b_vert.x * self.HAVOK_SCALE, b_vert.y * self.HAVOK_SCALE, b_vert.z * self.HAVOK_SCALE) 
-                    vert_list[vert_index] = [b_vert.x * self.HAVOK_SCALE, b_vert.y * self.HAVOK_SCALE, b_vert.z * self.HAVOK_SCALE] 
-                    vert_index += 1
                     
                 for hktriangle in bhkshape.data.triangles:
                     if ((vertex_offset <= hktriangle.triangle.v_1)
@@ -3320,9 +3294,6 @@ class NifImport(NifCommon):
                 # link mesh to scene and set transform
                 b_obj = bpy.data.objects.new('poly%i' % subshape_num, b_mesh)
                 bpy.context.scene.objects.link(b_obj)
-
-                #Fix visual mode
-                b_obj.select = True
                 
                 # set bounds type
                 b_obj.draw_type = 'WIRE'
@@ -3359,8 +3330,12 @@ class NifImport(NifCommon):
             b_mesh = bpy.data.meshes.New('poly')
             # no factor 7 correction!!!
             for n_vert in bhkshape.vertices:
-                b_mesh.vertices.extend(n_vert.x, n_vert.y, n_vert.z)
-            b_mesh.faces.extend(list(bhkshape.get_triangles()))
+                b_mesh.vertices.add(1)
+                b_mesh.vertices[-1].co = (n_vert.x, n_vert.y, n_vert.z)
+            
+            for n_triangle in list(bhkshape.get_triangles()):
+                b_mesh.faces.add(1)
+                b_mesh.faces[-1] = n_triangle
 
             # link mesh to scene and set transform
             b_obj = bpy.data.objects.new('poly', b_mesh)
@@ -3374,7 +3349,10 @@ class NifImport(NifCommon):
             b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
             # radius: quick estimate
             b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices)
-            #b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
+            if bhkshape.material:
+                self.havok_mat = bhkshape.material
+            b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[self.havok_mat]
+            
 
             # also remove duplicate vertices
             numverts = len(b_mesh.vertices)
@@ -3387,6 +3365,7 @@ class NifImport(NifCommon):
                     " (out of %i) from collision mesh"
                     % (numdel, numverts))
             '''
+            
             return [ b_obj ]
 
         elif isinstance(bhkshape, NifFormat.bhkMoppBvTreeShape):
