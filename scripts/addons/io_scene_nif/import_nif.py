@@ -269,7 +269,7 @@ class NifImport(NifCommon):
             self.info("Finished")
             # XXX no longer needed?
             # do a full scene update to ensure that transformations are applied
-            self.context.scene.update()
+            #self.context.scene.update()
         
         return {'FINISHED'}
 
@@ -305,13 +305,16 @@ class NifImport(NifCommon):
             # special case 1: root node is skeleton root
             self.debug("%s is an armature root" % root_block.name)
             b_obj = self.import_branch(root_block)
+            
         elif self.is_grouping_node(root_block):
             # special case 2: root node is grouping node
             self.debug("%s is a grouping node" % root_block.name)
             b_obj = self.import_branch(root_block)
+            
         elif isinstance(root_block, NifFormat.NiTriBasedGeom):
             # trishape/tristrips root
             b_obj = self.import_branch(root_block)
+            
         elif isinstance(root_block, NifFormat.NiNode):
             # root node is dummy scene node
             # process collision
@@ -328,9 +331,8 @@ class NifImport(NifCommon):
                     elif isinstance(n_extra, NifFormat.NiStringExtraData):
                         if n_extra.name == "UPB":
                             upbflags = self.import_upb(n_extra)
-                        else:
-                            upbflags = "Mass = 0.000000 Ellasticity = 0.300000 Friction = 0.300000 Simulation_Geometry = 2 Proxy_Geometry = <None> Use_Display_Proxy = 0 Display_Children = 1 Disable_Collisions = 0 Inactive = 0 Display_Proxy = <None> Collision_Groups = 1 Unyielding = 1"
                 self.import_bhk_shape(bhk_body)
+                
             # process bounding box
             for n_extra in root_block.get_extra_datas():
                 if isinstance(n_extra, NifFormat.BSBound):
@@ -338,10 +340,13 @@ class NifImport(NifCommon):
             # process all its children
             for child in root_block.children:
                 b_obj = self.import_branch(child)
+                
         elif isinstance(root_block, NifFormat.NiCamera):
             self.warning('Skipped NiCamera root')
+            
         elif isinstance(root_block, NifFormat.NiPhysXProp):
             self.warning('Skipped NiPhysXProp root')
+            
         else:
             self.warning(
                 "Skipped unsupported root block type '%s' (corrupted nif?)."
@@ -510,6 +515,7 @@ class NifImport(NifCommon):
                     n_child, b_armature=b_armature, n_armature=n_armature)
                 if b_child:
                     b_children_list.append((n_child, b_child))
+            
             object_children = [
                 (n_child, b_child) for (n_child, b_child) in b_children_list
                 if isinstance(b_child, bpy.types.Object)]
@@ -682,7 +688,7 @@ class NifImport(NifCommon):
                 niName = "collision"
             else:
                 niName = "noname"
-        for uniqueInt in range(-1, 100):
+        for uniqueInt in range(-1, 1000):
             # limit name length
             if uniqueInt == -1:
                 shortName = niName[:max_length-1]
@@ -710,9 +716,30 @@ class NifImport(NifCommon):
         
     def import_matrix(self, niBlock, relative_to=None):
         """Retrieves a niBlock's transform matrix as a Mathutil.Matrix."""
-        return mathutils.Matrix(niBlock.get_transform(relative_to).as_list())
+        n_scale, n_rot_mat3, n_loc_vec3 = niBlock.get_transform(relative_to).get_scale_rotation_translation()
+        
+        # create a location matrix
+        n_loc_vec3 = n_loc_vec3.as_tuple()
+        b_loc_vec3 = mathutils.Vector(n_loc_vec3)
+        mat_loc = mathutils.Matrix.Translation(b_loc_vec3)
 
-    def decompose_srt(self, m):
+        # create an identitiy matrix
+        b_scale = n_scale
+        mat_sca = mathutils.Matrix.Scale(b_scale, 4)
+        
+        # create a rotation matrix
+        b_rot_mat = mathutils.Matrix()
+        b_rot_mat[0].xyz = n_rot_mat3.m_11, n_rot_mat3.m_12, n_rot_mat3.m_13
+        b_rot_mat[1].xyz = n_rot_mat3.m_21, n_rot_mat3.m_22, n_rot_mat3.m_23
+        b_rot_mat[2].xyz = n_rot_mat3.m_31, n_rot_mat3.m_32, n_rot_mat3.m_33
+        mat_rot =  b_rot_mat
+        
+        # combine transformations
+        mat_out = mat_loc * mat_rot * mat_sca
+
+        return mathutils.Matrix(mat_out)
+
+    def decompose_srt(self, matrix):
         """Decompose Blender transform matrix as a scale, rotation matrix, and
         translation vector."""
         # get scale components
@@ -735,9 +762,9 @@ class NifImport(NifCommon):
         b_rot = b_scale_rot * (1.0/b_scale)
         # get translation
         b_trans = m.translationPart()"""
-        b_trans, b_rot, b_scale = m.decompose()
+        b_trans_vec, b_rot_quat, b_scale_vec = matrix.decompose()
         # done!
-        return b_scale, b_rot, b_trans
+        return [b_trans_vec, b_rot_quat, b_scale_vec]
 
     def import_empty(self, niBlock):
         """Creates and returns a grouping empty."""
@@ -2008,8 +2035,9 @@ class NifImport(NifCommon):
                 raise NifImportError(
                     "BUG: cannot set matrix when importing meshes in groups;"
                     " use applytransform = True")
-            b_obj.matrix_local = self.import_matrix(niBlock,
-                                                relative_to=relative_to)
+            
+            b_obj.matrix_local = self.import_matrix(niBlock, relative_to=relative_to)
+    
         else:
             # used later on
             transform = self.import_matrix(niBlock, relative_to=relative_to)
@@ -3007,9 +3035,6 @@ class NifImport(NifCommon):
            
             # create convex mesh
             b_mesh = bpy.data.meshes.new('convexpoly')
-
-            vert_list = {}
-            vert_index = 0
             
             for n_vert in n_vertices:
                 b_mesh.vertices.add(1)
@@ -3051,13 +3076,15 @@ class NifImport(NifCommon):
             transform = mathutils.Matrix(bhkshape.transform.as_list())
             transform.transpose()
             # fix scale
-            transform[3][0] *= self.HAVOK_SCALE
-            transform[3][1] *= self.HAVOK_SCALE
+            
+            transform[3][0] *= self.HAVOK_SCALE 
+            transform[3][1] *= self.HAVOK_SCALE 
             transform[3][2] *= self.HAVOK_SCALE
+            
             # apply transform
-            for b_obj in collision_objs:
-                b_obj.matrix_local = b_obj.matrix_local * transform
-                b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
+            for b_col_obj in collision_objs:
+                b_col_obj.matrix_local = b_col_obj.matrix_local * transform
+                b_col_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
             # and return a list of transformed collision shapes
             return collision_objs
 
@@ -3071,15 +3098,17 @@ class NifImport(NifCommon):
                     bhkshape.rotation.w, bhkshape.rotation.x,
                     bhkshape.rotation.y, bhkshape.rotation.z]).to_matrix()
                 transform.resize_4x4()
+                
                 # set translation
                 transform[3][0] = bhkshape.translation.x * self.HAVOK_SCALE
                 transform[3][1] = bhkshape.translation.y * self.HAVOK_SCALE
                 transform[3][2] = bhkshape.translation.z * self.HAVOK_SCALE
+                
                 # apply transform
-                for ob in collision_objs:
-                    ob.matrix_local = ob.matrix_local * transform
+                for b_col_obj in collision_objs:
+                    b_col_obj.matrix_local = b_col_obj.matrix_local * transform
             # set physics flags and mass
-            for b_obj in collision_objs:
+            for b_col_obj in collision_objs:
                 ''' What are these used for
                 ob.rbFlags = (
                     Blender.Object.RBFlags.ACTOR |
@@ -3090,18 +3119,18 @@ class NifImport(NifCommon):
                 if bhkshape.mass > 0.0001:
                     # for physics emulation
                     # (mass 0 results in issues with simulation)
-                    b_obj.game.mass = bhkshape.mass / len(collision_objs)
+                    b_col_obj.game.mass = bhkshape.mass / len(collision_objs)
                 
-                b_obj.nifcollision.oblivion_layer = NifFormat.OblivionLayer._enumkeys[bhkshape.layer]
-                b_obj.nifcollision.quality_type = NifFormat.MotionQuality._enumkeys[bhkshape.quality_type]
-                b_obj.nifcollision.motion_system = NifFormat.MotionSystem._enumkeys[bhkshape.motion_system]
-                b_obj.nifcollision.bsxFlags = bsxflags
-                b_obj.nifcollision.upb = upbflags
+                b_col_obj.nifcollision.oblivion_layer = NifFormat.OblivionLayer._enumkeys[bhkshape.layer]
+                b_col_obj.nifcollision.quality_type = NifFormat.MotionQuality._enumkeys[bhkshape.quality_type]
+                b_col_obj.nifcollision.motion_system = NifFormat.MotionSystem._enumkeys[bhkshape.motion_system]
+                b_col_obj.nifcollision.bsxFlags = bsxflags
+                b_col_obj.nifcollision.upb = upbflags
                 # note: also imported as rbMass, but hard to find by users
                 # so we import it as a property, and this is also what will
                 # be re-exported
-                b_obj.game.mass = bhkshape.mass / len(collision_objs)
-                b_obj.nifcollision.col_filter = bhkshape.col_filter
+                b_col_obj.game.mass = bhkshape.mass / len(collision_objs)
+                b_col_obj.nifcollision.col_filter = bhkshape.col_filter
 
             # import constraints
             # this is done once all objects are imported
@@ -3155,7 +3184,7 @@ class NifImport(NifCommon):
         elif isinstance(bhkshape, NifFormat.bhkSphereShape):
             b_radius = bhkshape.radius * self.HAVOK_SCALE
             
-            b_obj = bpy.ops.mesh.primitive_uv_sphere_add(segments=8, ring_count=8, size=b_radius)
+            bpy.ops.mesh.primitive_uv_sphere_add(segments=8, ring_count=8, size=b_radius)
             b_obj = bpy.context.scene.objects.active
             
             # set bounds type
@@ -3327,7 +3356,7 @@ class NifImport(NifCommon):
                            for strips in bhkshape.strips_data))
                 
         elif isinstance(bhkshape, NifFormat.NiTriStripsData):
-            b_mesh = bpy.data.meshes.New('poly')
+            b_mesh = bpy.data.meshes.new('polyblah')
             # no factor 7 correction!!!
             for n_vert in bhkshape.vertices:
                 b_mesh.vertices.add(1)
@@ -3335,7 +3364,7 @@ class NifImport(NifCommon):
             
             for n_triangle in list(bhkshape.get_triangles()):
                 b_mesh.faces.add(1)
-                b_mesh.faces[-1] = n_triangle
+                b_mesh.faces[-1].vertices = n_triangle
 
             # link mesh to scene and set transform
             b_obj = bpy.data.objects.new('poly', b_mesh)
@@ -3349,8 +3378,6 @@ class NifImport(NifCommon):
             b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
             # radius: quick estimate
             b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices)
-            if bhkshape.material:
-                self.havok_mat = bhkshape.material
             b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[self.havok_mat]
             
 
@@ -3724,7 +3751,7 @@ class NifImport(NifCommon):
             b_obj = bpy.data.objects.new('BSBound', b_mesh)
         else:
             b_obj = bpy.data.objects.new('Bounding Box', b_mesh)
-            # XXX this is set in the import_branch method
+            # XXX this is set in the import_branch() method
             #ob.matrix_local = mathutils.Matrix(
             #    *bbox.bounding_box.rotation.as_list())
             #ob.setLocation(
