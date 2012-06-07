@@ -67,8 +67,8 @@ class SingleNif(Base):
     n_name = None
     """Name of nif file (without ``0.nif`` at the end)."""
 
-    b_name = None
-    """Name of imported blender object."""
+    b_name = []
+    """List of imported blender object."""
 
     def __init__(self):
         Base.__init__(self)
@@ -80,7 +80,8 @@ class SingleNif(Base):
         Base.b_clear(self)
         # extra check, just to make really sure
         try:
-            b_obj = bpy.data.objects[self.b_name]
+            for name in self.b_name:
+                b_obj = bpy.data.objects[name]
         except KeyError:
             pass
         else:
@@ -91,7 +92,7 @@ class SingleNif(Base):
         """Create and return blender object for feature."""
         raise NotImplementedError
 
-    def b_check_data(self, b_obj):
+    def b_check_data(self):
         """Check blender object against feature."""
         raise NotImplementedError
 
@@ -129,22 +130,24 @@ class SingleNif(Base):
         self.b_clear()
         self.n_check(self.n_filepath_0)
         self.n_import(self.n_filepath_0)
-        for b_obj in tuple(bpy.data.objects):
-            self.b_check_data(b_obj)
+        for b_obj in bpy.data.objects:
             b_obj.select = True
+        self.b_check_data()
         self.n_export(self.n_filepath_1)
         self.n_check(self.n_filepath_1)
         self.b_clear()
 
     def test_export_import(self):
         """Test export followed by import."""
-        b_obj = self.b_create_object()
-        self.b_check_data(b_obj)
-        b_obj.select = True
+        self.b_create_objects()
+        for b_obj in bpy.data.objects:
+            b_obj.select = True
+        self.b_check_data()
         self.n_export(self.n_filepath_2)
         self.n_check(self.n_filepath_2)
         self.b_clear()
         self.n_import(self.n_filepath_2)
-        b_obj = bpy.data.objects[self.b_name]
-        self.b_check_data(b_obj)
+        for b_obj in bpy.data.objects:
+            b_obj.select = True
+        self.b_check_data()
         self.b_clear()

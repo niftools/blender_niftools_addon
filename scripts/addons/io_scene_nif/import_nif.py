@@ -3184,7 +3184,7 @@ class NifImport(NifCommon):
         elif isinstance(bhkshape, NifFormat.bhkSphereShape):
             b_radius = bhkshape.radius * self.HAVOK_SCALE
             
-            b_obj = bpy.ops.mesh.primitive_uv_sphere_add(segments=8, ring_count=8, size=b_radius)
+            bpy.ops.mesh.primitive_uv_sphere_add(segments=8, ring_count=8, size=b_radius)
             b_obj = bpy.context.scene.objects.active
             
             # set bounds type
