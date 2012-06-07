@@ -2,6 +2,8 @@
 
 import bpy
 import nose.tools
+import math
+import mathutils
 
 from test import Base, SingleNif
 from pyffi.formats.nif import NifFormat
@@ -10,22 +12,45 @@ class TestBaseGeometry(SingleNif):
     n_name = "geometry/base_geometry"
     b_cube = "Cube"
     
+    def rotation_matrix(self):
+        b_trans_mat = mathutils.Matrix.Translation((20.0, 20.0, 20.0))
+        b_rot_mat = mathutils.Matrix.Rotation(math.radians(45.0), 4, 'X')
+        b_scale_mat = mathutils.Matrix.Scale(0.75, 4)
+        b_transform_mat = b_trans_mat * b_rot_mat * b_scale_mat
+        return b_transform_mat
+    
     def b_create_objects(self):
-        # note: primitive_cube_add creates object named "Cube"
-        bpy.ops.mesh.primitive_cube_add()
-        SingleNif.b_name.append(self.b_cube) #if we create a new object, add to list
         
         #grab the last added object, avoids name confusion
+        bpy.ops.mesh.primitive_cube_add()      
         b_obj = bpy.data.objects[bpy.context.active_object.name]
         b_obj.name = self.b_cube
+        SingleNif.b_name.append(self.b_cube) #add to new object list
         
-        # primitive_cube_add creates a double sided mesh; fix this
+        #add transformation
+        b_obj.matrix_local = self.rotation_matrix()
+        
+        # primitive_cube_add sets double sided; fix this
         b_obj.data.show_double_sided = False
         
         #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
-
+        
     def b_check_data(self):
-        b_obj = bpy.data.objects[self.b_cube]
+        b_obj = bpy.data.objects[self.b_cube]        
+
+        #transfroms
+        b_loc, b_rot, b_scale = b_obj.matrix_local.decompose()
+        #compare location value
+        nose.tools.assert_equal(b_obj.location, mathutils.Vector((20.0, 20.0, 20.0))) 
+        #compare rotations, float comparison
+        nose.tools.assert_equal(
+                (b_rot.to_axis_angle()[1] - math.radians(45.0)) 
+                < self.EPSILON, True)
+        #compare scale: float comparison
+        nose.tools.assert_equal(
+                (b_obj.scale - mathutils.Vector((0.75, 0.75, 0.75))) 
+                < mathutils.Vector((self.EPSILON,self.EPSILON,self.EPSILON)), True) 
+                                
         b_mesh = b_obj.data
         self.b_check_geom(b_mesh)
         

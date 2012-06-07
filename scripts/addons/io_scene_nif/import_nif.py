@@ -39,16 +39,17 @@
 
 from . import nifdebug
 
-import functools # reduce
+from functools import reduce 
 import logging
 import math
 import operator
 import os
 import os.path
 
-import mathutils
+
 import bpy
 from bpy_extras.io_utils import unpack_list, unpack_face_list
+import mathutils
 
 import pyffi.utils.quickhull
 import pyffi.spells.nif
@@ -3351,7 +3352,7 @@ class NifImport(NifCommon):
 
         elif isinstance(bhkshape, NifFormat.bhkNiTriStripsShape):
             self.havok_mat = bhkshape.material
-            return functools.reduce(operator.add,
+            return reduce(operator.add,
                           (self.import_bhk_shape(strips)
                            for strips in bhkshape.strips_data))
                 
@@ -3400,7 +3401,7 @@ class NifImport(NifCommon):
             return self.import_bhk_shape(bhkshape.shape)
 
         elif isinstance(bhkshape, NifFormat.bhkListShape):
-            return functools.reduce(operator.add, ( self.import_bhk_shape(subshape)
+            return reduce(operator.add, ( self.import_bhk_shape(subshape)
                                           for subshape in bhkshape.sub_shapes ))
 
         self.warning("Unsupported bhk shape %s"

@@ -69,6 +69,8 @@ class SingleNif(Base):
 
     b_name = []
     """List of imported blender object."""
+    
+    EPSILON = 0.005
 
     def __init__(self):
         Base.__init__(self)
