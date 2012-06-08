@@ -717,33 +717,22 @@ class NifImport(NifCommon):
         
     def import_matrix(self, niBlock, relative_to=None):
         """Retrieves a niBlock's transform matrix as a Mathutil.Matrix."""
-
-
         n_scale, n_rot_mat3, n_loc_vec3 = niBlock.get_transform(relative_to).get_scale_rotation_translation()
         
         # create a location matrix
-        n_loc_vec3 = n_loc_vec3.as_tuple()
-        b_loc_vec3 = mathutils.Vector(n_loc_vec3)
-        mat_loc = mathutils.Matrix.Translation(b_loc_vec3)
+        b_loc_vec = mathutils.Vector(n_loc_vec3.as_tuple())
+        b_loc_vec = mathutils.Matrix.Translation(b_loc_vec3)
 
-        # create an identitiy matrix
-        b_scale = n_scale
-        mat_sca = mathutils.Matrix.Scale(b_scale, 4)
+        # create an scale matrix
+        b_scale_mat = mathutils.Matrix.Scale(n_scale, 4)
         
         # create a rotation matrix
         b_rot_mat = mathutils.Matrix()
-        b_rot_mat[0].xyz = n_rot_mat3.m_11, n_rot_mat3.m_12, n_rot_mat3.m_13
-        b_rot_mat[1].xyz = n_rot_mat3.m_21, n_rot_mat3.m_22, n_rot_mat3.m_23
-        b_rot_mat[2].xyz = n_rot_mat3.m_31, n_rot_mat3.m_32, n_rot_mat3.m_33
-        b_rot_mat.invert()
+        b_rot_mat[0].xyz = n_rot_mat3.m_11, n_rot_mat3.m_21, n_rot_mat3.m_31
+        b_rot_mat[1].xyz = n_rot_mat3.m_12, n_rot_mat3.m_22, n_rot_mat3.m_32
+        b_rot_mat[2].xyz = n_rot_mat3.m_13, n_rot_mat3.m_23, n_rot_mat3.m_33
         
-        b_correction_mat = mathutils.Matrix.Rotation(math.radians(90), 4, 'X')
-        mat_rot =  b_correction_mat * b_rot_mat
-        
-        # combine transformations
-        mat_out = mat_loc * mat_rot * mat_sca
-        
-        return mathutils.Matrix(mat_out)
+        return b_loc_vec3 * b_rot_mat * b_scale_mat
         
     def decompose_srt(self, matrix):
         """Decompose Blender transform matrix as a scale, rotation matrix, and
