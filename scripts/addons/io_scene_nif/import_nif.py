@@ -717,6 +717,8 @@ class NifImport(NifCommon):
         
     def import_matrix(self, niBlock, relative_to=None):
         """Retrieves a niBlock's transform matrix as a Mathutil.Matrix."""
+
+
         n_scale, n_rot_mat3, n_loc_vec3 = niBlock.get_transform(relative_to).get_scale_rotation_translation()
         
         # create a location matrix
@@ -733,13 +735,16 @@ class NifImport(NifCommon):
         b_rot_mat[0].xyz = n_rot_mat3.m_11, n_rot_mat3.m_12, n_rot_mat3.m_13
         b_rot_mat[1].xyz = n_rot_mat3.m_21, n_rot_mat3.m_22, n_rot_mat3.m_23
         b_rot_mat[2].xyz = n_rot_mat3.m_31, n_rot_mat3.m_32, n_rot_mat3.m_33
-        mat_rot =  b_rot_mat
+        b_rot_mat.invert()
+        
+        b_correction_mat = mathutils.Matrix.Rotation(math.radians(90), 4, 'X')
+        mat_rot =  b_correction_mat * b_rot_mat
         
         # combine transformations
         mat_out = mat_loc * mat_rot * mat_sca
-
+        
         return mathutils.Matrix(mat_out)
-
+        
     def decompose_srt(self, matrix):
         """Decompose Blender transform matrix as a scale, rotation matrix, and
         translation vector."""
@@ -1396,7 +1401,7 @@ class NifImport(NifCommon):
                 texdir = texdir.replace( '/', os.sep )
                 # go through all possible file names, try alternate extensions
                 # too; for linux, also try lower case versions of filenames
-                texfns = functools.reduce(operator.add,
+                texfns = reduce(operator.add,
                                 [ [ fn[:-4]+ext, fn[:-4].lower()+ext ]
                                   for ext in ('.DDS','.dds','.PNG','.png',
                                              '.TGA','.tga','.BMP','.bmp',
