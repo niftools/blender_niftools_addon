@@ -721,7 +721,7 @@ class NifImport(NifCommon):
         
         # create a location matrix
         b_loc_vec = mathutils.Vector(n_loc_vec3.as_tuple())
-        b_loc_vec = mathutils.Matrix.Translation(b_loc_vec3)
+        b_loc_vec = mathutils.Matrix.Translation(b_loc_vec)
 
         # create an scale matrix
         b_scale_mat = mathutils.Matrix.Scale(n_scale, 4)
@@ -732,7 +732,7 @@ class NifImport(NifCommon):
         b_rot_mat[1].xyz = n_rot_mat3.m_12, n_rot_mat3.m_22, n_rot_mat3.m_32
         b_rot_mat[2].xyz = n_rot_mat3.m_13, n_rot_mat3.m_23, n_rot_mat3.m_33
         
-        return b_loc_vec3 * b_rot_mat * b_scale_mat
+        return b_loc_vec * b_rot_mat * b_scale_mat
         
     def decompose_srt(self, matrix):
         """Decompose Blender transform matrix as a scale, rotation matrix, and

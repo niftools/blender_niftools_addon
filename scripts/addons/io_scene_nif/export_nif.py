@@ -3271,27 +3271,27 @@ class NifExport(NifCommon):
         """Set a block's transform matrix to an object's
         transformation matrix in rest pose."""
         # decompose
-        bscale, brot, btrans = self.get_object_srt(b_obj, space)
+        n_scale, n_rot_mat33, n_trans_vec = self.get_object_srt(b_obj, space)
         
         # and fill in the values
-        block.translation.x = btrans[0]
-        block.translation.y = btrans[1]
-        block.translation.z = btrans[2]
-        block.rotation.m_11 = brot[0][0]
-        block.rotation.m_12 = brot[0][1]
-        block.rotation.m_13 = brot[0][2]
-        block.rotation.m_21 = brot[1][0]
-        block.rotation.m_22 = brot[1][1]
-        block.rotation.m_23 = brot[1][2]
-        block.rotation.m_31 = brot[2][0]
-        block.rotation.m_32 = brot[2][1]
-        block.rotation.m_33 = brot[2][2]
+        block.translation.x = n_trans_vec[0]
+        block.translation.y = n_trans_vec[1]
+        block.translation.z = n_trans_vec[2]
+        block.rotation.m_11 = n_rot_mat33[0][0]
+        block.rotation.m_12 = n_rot_mat33[0][1]
+        block.rotation.m_13 = n_rot_mat33[0][2]
+        block.rotation.m_21 = n_rot_mat33[1][0]
+        block.rotation.m_22 = n_rot_mat33[1][1]
+        block.rotation.m_23 = n_rot_mat33[1][2]
+        block.rotation.m_31 = n_rot_mat33[2][0]
+        block.rotation.m_32 = n_rot_mat33[2][1]
+        block.rotation.m_33 = n_rot_mat33[2][2]
         block.velocity.x = 0.0
         block.velocity.y = 0.0
         block.velocity.z = 0.0
-        block.scale = bscale
+        block.scale = n_scale
 
-        return bscale, brot, btrans
+        return n_scale, n_rot_mat33, n_trans_vec
 
     def get_object_matrix(self, b_obj, space):
         """Get an object's matrix as NifFormat.Matrix44
@@ -3300,22 +3300,26 @@ class NifExport(NifCommon):
         relative to the bone parent head in nif coordinates (that is, including
         the bone correction); this differs from getMatrix which
         returns the transform relative to the armature."""
-        bscale, brot, btrans = self.get_object_srt(b_obj, space)
+        b_scale, b_rot_mat, b_trans_vec = self.get_object_srt(b_obj, space)
         mat = NifFormat.Matrix44()
         
-        mat.m_41 = btrans[0]
-        mat.m_42 = btrans[1]
-        mat.m_43 = btrans[2]
+        b_transform_mat = b_scale * b_rot_mat * b_trans_vec
+        
+        mat.m_41 = b_trans_vec[0]
+        mat.m_42 = b_trans_vec[1]
+        mat.m_43 = b_trans_vec[2]
 
-        mat.m_11 = brot[0][0] * bscale
-        mat.m_12 = brot[0][1] * bscale
-        mat.m_13 = brot[0][2] * bscale
-        mat.m_21 = brot[1][0] * bscale
-        mat.m_22 = brot[1][1] * bscale
-        mat.m_23 = brot[1][2] * bscale
-        mat.m_31 = brot[2][0] * bscale
-        mat.m_32 = brot[2][1] * bscale
-        mat.m_33 = brot[2][2] * bscale
+        b_rot_mat = b_rot_mat * b_scale
+        
+        mat.m_11 = b_rot_mat[0][0]
+        mat.m_12 = b_rot_mat[0][1]
+        mat.m_13 = b_rot_mat[0][2]
+        mat.m_21 = b_rot_mat[1][0]
+        mat.m_22 = b_rot_mat[1][1]
+        mat.m_23 = b_rot_mat[1][2]
+        mat.m_31 = b_rot_mat[2][0]
+        mat.m_32 = b_rot_mat[2][1]
+        mat.m_33 = b_rot_mat[2][2]
 
         mat.m_14 = 0.0
         mat.m_24 = 0.0
@@ -3402,14 +3406,18 @@ class NifExport(NifCommon):
     def decompose_srt(self, mat):
         """Decompose Blender transform matrix as a scale, rotation matrix, and
         translation vector."""
-        b_trans, b_rot, b_scale = mat.decompose()
+        b_trans_vec, b_rot_quat, b_scale_vec = mat.decompose()
+        b_rot_mat = b_rot_quat.to_matrix()
+        b_rot_mat.invert()
+        
         # only uniform scaling
         # allow rather large error to accomodate some nifs
-        if abs(b_scale[0]-b_scale[1]) + abs(b_scale[1]-b_scale[2]) > 0.02:
+        if abs(b_scale_vec[0]-b_scale_vec[1]) + abs(b_scale_vec[1]-b_scale_vec[2]) > 0.02:
             return self.error(
                 "Non-uniform scaling not supported."
                 " Workaround: apply size and rotation (CTRL-A).")
-        return b_scale[0], b_rot.to_matrix(), b_trans
+        
+        return b_scale_vec[0], b_rot_mat, b_trans_vec
 
 
 

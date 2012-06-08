@@ -38,25 +38,25 @@ class TestBaseGeometry(SingleNif):
     def b_check_data(self):
         b_obj = bpy.data.objects[self.b_cube]        
 
-        #check transforms
-        b_loc, b_rot, b_scale = b_obj.matrix_local.decompose()
+        #transforms
+        b_loc_vec, b_rot_quat, b_scale_vec = b_obj.matrix_local.decompose()
         
         nose.tools.assert_equal(b_obj.location, mathutils.Vector((20.0, 20.0, 20.0))) #location
-        nose.tools.assert_equal(
-                (b_rot.to_axis_angle()[1] - math.radians(45.0)) 
-                < self.EPSILON, True)#rotations
-        nose.tools.assert_equal(
-                (b_obj.scale - mathutils.Vector((0.75, 0.75, 0.75))) 
-                < mathutils.Vector((self.EPSILON,self.EPSILON,self.EPSILON)), True) #scale
+        
+        b_rot_quat.to_euler()
+        b_rot_eul = b_rot_quat
+        nose.tools.assert_equal((b_rot_eul.x - math.radians(30.0)) < self.EPSILON, True)#x rotation
+        nose.tools.assert_equal((b_rot_eul.y - math.radians(60.0)) < self.EPSILON, True)#y rotation
+        nose.tools.assert_equal((b_rot_eul.z - math.radians(90.0)) < self.EPSILON, True)#z rotation
+        nose.tools.assert_equal((b_obj.scale - mathutils.Vector((0.75, 0.75, 0.75))) 
+                < mathutils.Vector((self.EPSILON,self.EPSILON,self.EPSILON)), True) #uniform scale
         
         b_mesh = b_obj.data
         self.b_check_geom(b_mesh)
         
     def b_check_geom(self, b_mesh):
-        num_triangles = len(
-            [face for face in b_mesh.faces if len(face.vertices) == 3]) #check for tri
-        num_triangles += 2 * len(
-            [face for face in b_mesh.faces if len(face.vertices) == 4]) #face = 2 tris
+        num_triangles = len( [face for face in b_mesh.faces if len(face.vertices) == 3]) #check for tri
+        num_triangles += 2 * len( [face for face in b_mesh.faces if len(face.vertices) == 4]) #face = 2 tris
         nose.tools.assert_equal(len(b_mesh.vertices), 8)
         nose.tools.assert_equal(num_triangles, 12)
 
@@ -65,13 +65,16 @@ class TestBaseGeometry(SingleNif):
         nose.tools.assert_is_instance(n_geom, NifFormat.NiTriShape)
         
         #check transforms
-        nose.tools.assert_equal(n_geom.translation.as_tuple(),(20.0, 20.0, 20.0))
-        nose.tools.assert_equal(
-                mathutils.Matrix(n_geom.rotation.as_tuple()).to_4x4(), 
-                mathutils.Matrix.Rotation(math.radians(45), 4, 'X'))
-        print(n_geom.scale)
-        nose.tools.assert_equal(
-                n_geom.scale, 0.75)
+        nose.tools.assert_equal(n_geom.translation.as_tuple(),(20.0, 20.0, 20.0))#location
+        
+        n_rot_eul = mathutils.Matrix(n_geom.rotation.as_tuple()).to_euler()
+        print(n_rot_eul.x)
+        print(math.radians(30.0))
+        nose.tools.assert_equal((n_rot_eul.x - math.radians(30.0)) < self.EPSILON, True)#x rotation
+        nose.tools.assert_equal((n_rot_eul.y - math.radians(60.0)) < self.EPSILON, True)#y rotation
+        nose.tools.assert_equal((n_rot_eul.z - math.radians(90.0)) < self.EPSILON, True)#z rotation
+        
+        nose.tools.assert_equal(n_geom.scale - 0.75 < self.EPSILON, True) #scale
         
         self.n_check_geom_data(n_geom)
     
@@ -81,8 +84,6 @@ class TestBaseGeometry(SingleNif):
         
     '''
         TODO: Additional checks needed.
-        TriShape
-            transforms
         
         TriData
             Flags: blender exports| Continue, Maya| Triangles, Pyffi| Bound.
