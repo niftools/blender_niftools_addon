@@ -68,8 +68,6 @@ class TestBaseGeometry(SingleNif):
         nose.tools.assert_equal(n_geom.translation.as_tuple(),(20.0, 20.0, 20.0))#location
         
         n_rot_eul = mathutils.Matrix(n_geom.rotation.as_tuple()).to_euler()
-        print(n_rot_eul.x)
-        print(math.radians(30.0))
         nose.tools.assert_equal((n_rot_eul.x - math.radians(30.0)) < self.EPSILON, True)#x rotation
         nose.tools.assert_equal((n_rot_eul.y - math.radians(60.0)) < self.EPSILON, True)#y rotation
         nose.tools.assert_equal((n_rot_eul.z - math.radians(90.0)) < self.EPSILON, True)#z rotation
@@ -90,7 +88,7 @@ class TestBaseGeometry(SingleNif):
             Consistancy:
             radius:
     '''
-'''     
+    
 class TestBaseUV(TestBaseGeometry):
     n_name = "geometry/base_uv"
     b_cube = 'Cube'
@@ -109,25 +107,24 @@ class TestBaseUV(TestBaseGeometry):
     def b_check_data(self):
         TestBaseGeometry.b_check_data(self)
         pass
-        
+        '''
         b_obj = bpy.data.objects[self.b_cube]
         b_mesh = b_obj.data        
         nose.tools.assert_equal(len(b_mesh.uv_textures), 1)
         nose.tools.assert_equal()
-        
+        '''
         #TODO_3.0 - Separate out the UV writing from requiring a texture. 
-            
-    
+        
     def n_check_data(self, n_data):
         TestBaseGeometry.n_check_data(self, n_data)
         pass
-        
+        '''
         #TODO_3.0 - See above
         n_geom = n_data.roots[0].children[0]
         nose.tools.assert_equal(len(n_geom.data.uv_sets), 1)
         nose.tools.assert_equal(len(n_geom.data.uv_sets[0]), len(n_geom.data.vertices))    
-'''
-    
+        '''
+        
 class TestNonUniformlyScaled(Base):
     def setup(self):
         # create a non-uniformly scaled cube
