@@ -314,7 +314,7 @@ Eclipse PyDev Debugger::
 Add the Pydev Debug: Customise Perspective -> Pydev Debug. 
 Start the Pydev server.
 
-Launching Blender from PyDev 
+Launching Blender from PyDev
 ''''''''''''''''''''''''''''
 
 * Go to Run->External Tools->External Tools Configuration.
@@ -331,7 +331,7 @@ If everything works, Blender's console should be visible in Pydev's console.
 
 * The only limitation is when want to put breakpoints in python files, you need to open the version in the Blender Foundation/Blender folder. 
 * You only need to this once as when you run the script, eclipse will automatically open the file once it encounters the breakpoint.
-.. Note:
+.. note::
 
    * When editing the repo version of the file, running install.bat will overwrite the addon version. Eclipse will as you if you want to reload the file. Ensure that you are editing the right version otherwise you might accidently overwrite you work.
 
@@ -340,9 +340,10 @@ Eclipse: Optional Extras
 
 Command Line Completion
 ```````````````````````
-..Note
+.. note::
    
    * Generation of the pypredef files used from command-line completion only works with certain versions of Blender. 
+   * Even still certain modules like BGE will not get generated.
    * Currently 2.59 is the latest version that generates without error, so refer to online documentation for the most up-to-date documentation.
 
 To add in command-line completion for Blender modules, use the following stub Blender plugin repo.::
@@ -361,10 +362,6 @@ Link the generated API to the ``blender_nif_plugin`` project:
 .. note::
    Variable declarations must have qualified type before auto-completion kicks in
    (b_obj = bpy.types.object, context = bpy.context.active_object, etc.)
-
-.. warning::
-   Auto-completion works for the majority of the API, but some bits
-   are missing, eg. Blender Game Engine.
 
 .. note::
    Hovering over a variable will hot-link to the generated documentation.
