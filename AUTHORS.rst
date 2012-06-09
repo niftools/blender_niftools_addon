@@ -1,31 +1,34 @@
 Current developers
 ------------------
 
-* amorilia (amorilia@users.sourceforge.net)
-* neomonkeus (neomonkeus@users.sourceforge.net)
+* Neomonkeus (neomonkeus@users.sourceforge.net)
+* Ghostwalker71 ()
+* Aaron1178(aaron1178@gmail.com)
 
 Former developers
 -----------------
 
-* brandano (brandano@users.sourceforge.net)
+* Amorilia (amorilia@users.sourceforge.net)
+* Brandano (brandano@users.sourceforge.net)
 * m4444x
 
 Contributors
 ------------
 
-* alphax (alphasigmax@users.sourceforge.net)
-* arcimaestro
-* arthmoor
-* artorp
-* entim
-* eugenius-v
-* fritz_fretz
-* kikaimegami
-* lhammonds
+* Alphax (alphasigmax@users.sourceforge.net)
+* Arcimaestro
+* Arthmoor
+* Artorp
+* Entim
+* Eugenius-v
+* Fritz_fretz
+* Kikaimegami
+* Lhammonds
 * malo
-* pacificmorrowind (pacmorrowind@users.sourceforge.net)
-* pentinen
+* mgm101
+* Pacificmorrowind (pacmorrowind@users.sourceforge.net)
+* Pentinen
 * shon
-* thedaywalker
-* tijer
+* Thedaywalker
+* Tijer
 * zin

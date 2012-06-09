@@ -3,7 +3,7 @@ Setting Up the Build Environment
 
 .. warning::
 
-    The following instructions are work in progress.
+    The following instructions are currently a work in progress.
 
 Create a Workspace
 ------------------
@@ -55,7 +55,9 @@ Ubuntu::
 Auto CLRF
 `````````
 
-We need to ensure consistancy between end-of-file(EOF) markers. This avoid excess commits where the enviroment automatically adds the EOF.
+We need to ensure consistancy between end-of-file(EOF) markers. 
+This avoids excess commits where the enviroment automatically adds the EOF.
+Git will think that the whole file has been edited.
 Read `EOF <http://en.wikipedia.org/wiki/Newline>`_.
 We also enable the input flag, this autochecks any external source file introduced into the repo::
 
@@ -78,7 +80,7 @@ clone the code on github.
 3. `Log in <https://github.com/login>`_ on github.
 
 4. Visit the `blender nif scripts mothership repository
-   <https://github.com/amorilia/blender_nif_scripts>`_.
+   <https://github.com/neomonkeus/blender_nif_plugin>`_.
 
 5. Click **Fork** (top right corner).
 
@@ -91,38 +93,38 @@ Get the Source Code
 
 To get the code, run in a terminal (linux) or in git bash (windows)::
 
-   cd ~
-   cd workspace
-   git clone --recursive git@github.com:<username>/blender_nif_scripts.git
-   cd blender_nif_scripts
-   git remote add amorilia git://github.com/amorilia/blender_nif_scripts.git
-   git remote add neomonkeus git://github.com/neomonkeus/blender_nif_scripts.git
-   cd ../
+   cd ~/workspace
+   git clone --recursive git@github.com:<username>/blender_nif_plugin.git
+   cd blender_nif_plugin
+   git remote add neomonkeus git://github.com/neomonkeus/blender_nif_plugin.git
 
-The blender nif scripts require pyffi. You will need to get a
-version of pyffi that works with blender::
-
-   git clone --recursive git://niftools.git.sourceforge.net/gitroot/pyffi/pyffi
+Optional remote tracking::
+   
+   git remote add aaron1178 git://github.com/aaron1178/blender_nif_plugin.git
+   git remote add ghost git://github.com/ghostwalker71/blender_nif_plugin.git
 
 Install Build Environment Batch Script
 --------------------------------------
 .. note::
-   The build enviroment is used to develop any Niftool application on Windows.
+   The build enviroment creates a command line window which detects requirements and sets the pathing information. It is used to develop any Niftool application on Windows.
+   The script will attempt to auto-detect paths but it is better to set them by setting parametres -flag@value.
+   For more information, read the ReadMe.rst file provided with the repository.
    
 
 On Windows, get the build environment batch script::
 
-   git clone git://github.com/amorilia/buildenv
+   cd workspace
+   git clone git://github.com/neomonkeus/buildenv
 
 Right-click on the ``buildenv.bat`` file, and select **Send to > Desktop (create shortcut)**.
 
 Now right-click this newly created shortcut, and change **Target** into
 
 Vista/Win 7::
-   %comspec% /k C:\Users\<username>\workspace\buildenv\buildenv.bat C:\Python32 msvc2008 64 workspace
+   %comspec% /k C:\Users\<username>\workspace\buildenv\buildenv.bat -pythonpath@C:\Python32 -workfolder@workspace -arch@64
 
 XP::
-   %comspec% /k "C:\Documents and Settings\<username>\workspace\buildenv\buildenv.bat" C:\Python32 msvc2008 64 workspace
+   %comspec% /k "C:\Documents and Settings\<username>\workspace\buildenv\buildenv.bat" -pythonpath@C:\Python32 -workfolder@workspace -arch@64
 
 On 32 bit systems, type ``32`` instead of ``64``.
 
@@ -170,9 +172,15 @@ Fedora, run in a terminal::
 Install PyFFI
 -------------
 
+The blender nif scripts require pyffi. You will need to get a
+version of pyffi that works with blender::
+
+   cd workspace
+   git clone --recursive git://niftools.git.sourceforge.net/gitroot/pyffi/pyffi
+
 On Windows, run in buildenv::
 
-   cd pyffi
+   cd /pyffi
    python setup.py install
   
 Ubuntu, run in a terminal::
@@ -192,7 +200,7 @@ On Windows, you'll first need to copy your entire ``C:\Python32\Lib\site-package
 ``C:\Program Files\Blender Foundation\Blender\<version>\python\lib\site-packages``.
 There is a script that does this for you in buildenv::
 
-   cd blender_nif_scripts
+   cd blender_nif_plugin
    copy-site-packages-to-blender.bat
 
 Now, to check that everything is installed correctly, start blender, open a Python console,
@@ -209,17 +217,17 @@ Install Eclipse
 
 `Eclipse <http://www.eclipse.org/>`_ provides a
 bloated yet convenient environment for editing the code,
-repo management, 
-python scripting,
-and hooks into Blender's debugging console. 
+repo management, python scripting, and hooks into Blender's debugging console. 
 
-Windows,
-first install the `Java Runtime Environment <http://java.com/download>`_.
+
+First install the `Java Runtime Environment <http://java.com/download>`_.
 Make sure you have the right version---on 64 bit platforms, it is safest
 to pick right file via `manual download <http://java.com/en/download/manual.jsp>`_.
-Next, install `Eclipse Classic <http://www.eclipse.org/downloads/>`_ for the windows platform.
-Just unzip the file, and put it somewhere convenient, such as under ``C:\eclipse``.
-If you want to create a shortcut from your desktop, right-click ``C:\eclipse\eclipse.exe``
+Next, install `Eclipse Classic <http://www.eclipse.org/downloads/>`_ 
+
+Windows::
+Just unzip the file, and put it somewhere convenient, such as under ``C:\Program Files\eclipse``.
+If you want to create a shortcut from your desktop, right-click ``C:\Program Files\eclipse\eclipse.exe``
 and select **Send to > Desktop (create shortcut)**.
 
 Fedora, simply run::
@@ -231,9 +239,9 @@ Ubuntu, simply run::
    sudo apt-get install eclipse
 
 When starting eclipse, you are asked for your workspace folder---if you followed the
-instructions above and cloned the code into ``~/workspace/blender_nif_scripts``, 
+instructions above and cloned the code into ``~/workspace/blender_nif_plugin``, 
 then the default ``/home/<username>/workspace`` will do the trick. 
-If not, pick the folder in which the ``blender_nif_scripts`` clone resides.
+If not, pick the folder in which the ``blender_nif_plugin`` clone resides.
 
 At the Welcome window, click **Workbench** on the top right.
 
@@ -276,9 +284,9 @@ You should also install a few plugins.
      Under **Text file encoding**, choose **Other**,
      and select **UTF-8** from the list.
 
-* The documentation is written in `reStructuredText
+* Documentation is written in `reStructuredText
   <http://docutils.sourceforge.net/docs/user/rst/quickref.html>`_.
-  If you want syntax highlighting for reST, you must
+  If you want syntax highlighting for reST, 
   install the `ReST Editor plugin <http://resteditor.sourceforge.net/>`_:
 
   1. Go to: **Help > Install New Software > Add...**
@@ -292,10 +300,52 @@ You should also install a few plugins.
 
   4. Click **Next**, and follow the instructions.
 
+Eclipse Debugging
+-----------------
+
+The Blender nif plugin repo comes with built-in code to link Blenders internal server with Eclipse's debug server.
+This allows run-time debugging; watching the script execute, variables, function call stack etc.
+
+Eclipse PyDev Debugger::
+   * In the blender_nif_plugin/scripts/addon/../nifdebug.py
+   * If Eclipse is installed in a different folder, or each time Pydev updated.
+   * Edit PYDEV_SOURCE_DIR
+
+Add the Pydev Debug: Customise Perspective -> Pydev Debug. 
+Start the Pydev server.
+
+Launching Blender from PyDev 
+''''''''''''''''''''''''''''
+
+* Go to Run->External Tools->External Tools Configuration.
+* Right click on Program and select New to add a new Launch configuration
+* Type in Blender for Name and select the path to blender executable under Location (f.e. Blender Foundation/Blender/blender.exe)
+* Set the Working Directory to Blender Foundation/Blender
+* click on Apply, then Close
+
+Test this launch configuration by click on the Run... Toolbar icon (the one with the red toolbox). 
+If you have done it correctly, blender should start up.
+
+Enable the blender plug-in and try to import one of the test nifs.
+If everything works, Blender's console should be visible in Pydev's console.
+
+* The only limitation is when want to put breakpoints in python files, you need to open the version in the Blender Foundation/Blender folder. 
+* You only need to this once as when you run the script, eclipse will automatically open the file once it encounters the breakpoint.
+.. Note:
+
+   * When editing the repo version of the file, running install.bat will overwrite the addon version. Eclipse will as you if you want to reload the file. Ensure that you are editing the right version otherwise you might accidently overwrite you work.
+
 Eclipse: Optional Extras
 ------------------------
- 
-The following is a stub repo used for Blender plugin development.::
+
+Command Line Completion
+```````````````````````
+..Note
+   
+   * Generation of the pypredef files used from command-line completion only works with certain versions of Blender. 
+   * Currently 2.59 is the latest version that generates without error, so refer to online documentation for the most up-to-date documentation.
+
+To add in command-line completion for Blender modules, use the following stub Blender plugin repo.::
 
    git:// clone --recursive https://github.com/neomonkeus/blender_eclipse_debug
    
@@ -303,14 +353,9 @@ copy the following to the Blender directory::
 
    ./docs/python_api/
    ./docs/refresh_python_api.bat
-   run.py
-   pydev_debug.py
-
-Command Line Completion
-```````````````````````
 
 Run ``docs/refresh_python_api.bat`` to generate an updated API.
-Link the generated API to the ``blender_nif_scripts`` project:
+Link the generated API to the ``blender_nif_plugin`` project:
 **Project > Properties > Pydev - PYTHONPATH > external libraries > .../Blender/docs/python_api/pypredef/**
 
 .. note::
@@ -324,27 +369,5 @@ Link the generated API to the ``blender_nif_scripts`` project:
 .. note::
    Hovering over a variable will hot-link to the generated documentation.
 
-Eclipse Debugging
-`````````````````
-Add the Pydev Debug: Customise Perspective -> Pydev Debug. 
-
-.. note::
-   Always start the Pydev debug server first otherwise blender will crash later. 
-
-``pydev_debug.py`` and ``run.py`` are used to hook Eclipse's Pydev Debug to Blender's debugger.
-
-Open ``run.py`` in Blender's text editor, under the Python console section.
-
-Replace the strings:
-
-* python debugger location.
-* file location. 
-
-.. note::   
-   If your entry file is __init__.py file, this should be renamed to your package name while you are developing. 
-   The debugger script will crash due to underscores.
-
-Run the script; blender will appear to hang, this is as the Debugger hitting the trace() call.
-Switch to Eclipses, then to the Debug Perspective, hit the continue button. 
 
 Happy coding & debugging.
