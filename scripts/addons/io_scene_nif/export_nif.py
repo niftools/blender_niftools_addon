@@ -3300,27 +3300,22 @@ class NifExport(NifCommon):
         relative to the bone parent head in nif coordinates (that is, including
         the bone correction); this differs from getMatrix which
         returns the transform relative to the armature."""
-        b_scale, b_rot_mat, b_trans_vec = self.get_object_srt(b_obj, space)
+        n_scale, n_rot_mat33, n_trans_vec = self.get_object_srt(b_obj, space)
         mat = NifFormat.Matrix44()
         
-        b_transform_mat = b_scale * b_rot_mat * b_trans_vec
+        mat.m_11 = n_rot_mat33[0][0] * n_scale
+        mat.m_12 = n_rot_mat33[0][1] * n_scale
+        mat.m_13 = n_rot_mat33[0][2] * n_scale
+        mat.m_21 = n_rot_mat33[1][0] * n_scale
+        mat.m_22 = n_rot_mat33[1][1] * n_scale
+        mat.m_23 = n_rot_mat33[1][2] * n_scale
+        mat.m_31 = n_rot_mat33[2][0] * n_scale
+        mat.m_32 = n_rot_mat33[2][1] * n_scale
+        mat.m_33 = n_rot_mat33[2][2] * n_scale
+        mat.m_41 = n_trans_vec[0]
+        mat.m_42 = n_trans_vec[1]
+        mat.m_43 = n_trans_vec[2]
         
-        mat.m_41 = b_trans_vec[0]
-        mat.m_42 = b_trans_vec[1]
-        mat.m_43 = b_trans_vec[2]
-
-        b_rot_mat = b_rot_mat * b_scale
-        
-        mat.m_11 = b_rot_mat[0][0]
-        mat.m_12 = b_rot_mat[0][1]
-        mat.m_13 = b_rot_mat[0][2]
-        mat.m_21 = b_rot_mat[1][0]
-        mat.m_22 = b_rot_mat[1][1]
-        mat.m_23 = b_rot_mat[1][2]
-        mat.m_31 = b_rot_mat[2][0]
-        mat.m_32 = b_rot_mat[2][1]
-        mat.m_33 = b_rot_mat[2][2]
-
         mat.m_14 = 0.0
         mat.m_24 = 0.0
         mat.m_34 = 0.0
