@@ -3069,13 +3069,10 @@ class NifImport(NifCommon):
             collision_objs = self.import_bhk_shape(bhkshape.shape)
             # find transformation matrix
             transform = mathutils.Matrix(bhkshape.transform.as_list())
-            transform.transpose()
+            
             # fix scale
-            
-            transform[3][0] *= self.HAVOK_SCALE 
-            transform[3][1] *= self.HAVOK_SCALE 
-            transform[3][2] *= self.HAVOK_SCALE
-            
+            transform.translation = transform.translation * self.HAVOK_SCALE
+
             # apply transform
             for b_col_obj in collision_objs:
                 b_col_obj.matrix_local = b_col_obj.matrix_local * transform
@@ -3092,16 +3089,18 @@ class NifImport(NifCommon):
                 transform = mathutils.Quaternion([
                     bhkshape.rotation.w, bhkshape.rotation.x,
                     bhkshape.rotation.y, bhkshape.rotation.z]).to_matrix()
-                transform.resize_4x4()
+                transform = transform.to_4x4()
                 
                 # set translation
-                transform[3][0] = bhkshape.translation.x * self.HAVOK_SCALE
-                transform[3][1] = bhkshape.translation.y * self.HAVOK_SCALE
-                transform[3][2] = bhkshape.translation.z * self.HAVOK_SCALE
+                transform.translation = mathutils.Vector(
+                        (bhkshape.translation.x * self.HAVOK_SCALE,
+                         bhkshape.translation.y * self.HAVOK_SCALE,
+                         bhkshape.translation.z * self.HAVOK_SCALE))
                 
                 # apply transform
                 for b_col_obj in collision_objs:
                     b_col_obj.matrix_local = b_col_obj.matrix_local * transform
+                    
             # set physics flags and mass
             for b_col_obj in collision_objs:
                 ''' What are these used for
