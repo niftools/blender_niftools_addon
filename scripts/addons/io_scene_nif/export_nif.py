@@ -3940,24 +3940,27 @@ class NifExport(NifCommon):
             return colcaps
 
         elif b_obj.game.collision_bounds_type == 'CONVEX_HULL':
-            mesh = b_obj.data
-            transform = mathutils.Matrix(
-                self.get_object_matrix(b_obj, 'localspace').as_list())
-            rotation = transform.to_scale()
-            scale = rotation.determinant()
+            b_mesh = b_obj.data
+            b_transform_mat = mathutils.Matrix(
+                self.get_object_matrix(b_obj, 'localspace').as_list())          
+            
+            b_rot_quat = b_transform_mat.decompose()[1]
+            b_scale_vec = b_transform_mat.decompose()[0]
+            '''
+            scale = math.avg(b_scale_vec.to_tuple())
             if scale < 0:
                 scale = - (-scale) ** (1.0 / 3)
             else:
                 scale = scale ** (1.0 / 3)
             rotation /= scale
-
+            '''
+            
             # calculate vertices, normals, and distances
-            vertlist = [ vert.co * transform for vert in mesh.vertices ]
-            fnormlist = [ face.normal * rotation
-                          for face in mesh.faces]
-            fdistlist = [
-                (-face.v[0].co * transform).dot(face.normal * rotation)
-                for face in mesh.faces ]
+            vertlist = [b_transform_mat * vert.co for vert in b_mesh.vertices]
+            fnormlist = [b_rot_quat * b_face.normal for b_face in b_mesh.faces]
+            fdistlist = [(b_transform_mat * (-1 * b_mesh.vertices[b_mesh.faces[b_face.index].vertices[0]].co)).dot(
+                            b_rot_quat.to_matrix() * b_face.normal)
+                         for b_face in b_mesh.faces ]
 
             # remove duplicates through dictionary
             vertdict = {}
@@ -3981,7 +3984,7 @@ class NifExport(NifCommon):
             if len(fnormlist) > 65535 or len(vertlist) > 65535:
                 raise NifExportError(
                     "ERROR%t|Too many faces/vertices."
-                    " Decimate/split your mesh and try again.")
+                    " Decimate/split your b_mesh and try again.")
             
             colhull = self.create_block("bhkConvexVerticesShape", b_obj)
             colhull.material = n_havok_material
