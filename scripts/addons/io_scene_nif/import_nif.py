@@ -2542,13 +2542,16 @@ class NifImport(NifCommon):
                 b_mesh.vertices[b_v_index].co[1] = base.y
                 b_mesh.vertices[b_v_index].co[2] = base.z
      
-        # recalculate normals
-        b_mesh.calc_normals()
+        
         # import priority if existing
         if niBlock.name in self.bone_priorities:
             constr = b_obj.constraints.append(
                 bpy.types.Constraint.NULL)
             constr.name = "priority:%i" % self.bone_priorities[niBlock.name]
+        
+        #recalculate to ensure mesh functions correctly
+        b_mesh.update()
+        b_mesh.calc_normals()
 
         return b_obj
 
@@ -3061,6 +3064,10 @@ class NifImport(NifCommon):
                     "Removed %i duplicate vertices"
                     " (out of %i) from collision mesh" % (numdel, numverts))
             '''
+            
+            #recalculate to ensure mesh functions correctly
+            b_mesh.update()
+            b_mesh.calc_normals()
                         
             return [ b_obj ] 
 
@@ -3173,6 +3180,10 @@ class NifImport(NifCommon):
             b_obj.game.collision_bounds_type = 'BOX'
             b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices) #todo - calc actual radius
             
+            #recalculate to ensure mesh functions correctly
+            b_mesh.update()
+            b_mesh.calc_normals()
+            
             return [ b_obj ]
 
         elif isinstance(bhkshape, NifFormat.bhkSphereShape):
@@ -3188,6 +3199,10 @@ class NifImport(NifCommon):
             b_obj.game.collision_bounds_type = 'SPHERE'
             b_obj.game.radius = bhkshape.radius
             b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
+            
+            #recalculate to ensure mesh functions correctly
+            b_mesh.update()
+            b_mesh.calc_normals()
             
             return [ b_obj ]
 
@@ -3266,7 +3281,11 @@ class NifImport(NifCommon):
             transform[3][1] = 3.5 * (bhkshape.first_point.y + bhkshape.second_point.y)
             transform[3][2] = 3.5 * (bhkshape.first_point.z + bhkshape.second_point.z)
             b_obj.matrix_local = transform
-
+            
+            #recalculate to ensure mesh functions correctly
+            b_mesh.update()
+            b_mesh.calc_normals()
+            
             # return object
             return [ b_obj ]
 
@@ -3338,6 +3357,11 @@ class NifImport(NifCommon):
                         " (out of %i) from collision mesh"
                         % (numdel, numverts))
                 """
+                
+                #recalculate to ensure mesh functions correctly
+                b_mesh.update()
+                b_mesh.calc_normals()
+                
                 vertex_offset += subshape.num_vertices
                 hk_objects.append(b_obj)
 
@@ -3387,6 +3411,10 @@ class NifImport(NifCommon):
                     " (out of %i) from collision mesh"
                     % (numdel, numverts))
             '''
+            
+            #recalculate to ensure mesh functions correctly
+            b_mesh.update()
+            b_mesh.calc_normals()
             
             return [ b_obj ]
 
