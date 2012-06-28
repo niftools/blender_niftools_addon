@@ -318,6 +318,7 @@ class NifImport(NifCommon):
             
         elif isinstance(root_block, NifFormat.NiNode):
             # root node is dummy scene node
+            
             # process collision
             if root_block.collision_object:
                 bhk_body = root_block.collision_object.body
@@ -338,6 +339,7 @@ class NifImport(NifCommon):
             for n_extra in root_block.get_extra_datas():
                 if isinstance(n_extra, NifFormat.BSBound):
                     self.import_bounding_box(n_extra)
+                    
             # process all its children
             for child in root_block.children:
                 b_obj = self.import_branch(child)
@@ -3381,7 +3383,6 @@ class NifImport(NifCommon):
                 b_mesh.vertices[-1].co = (n_vert.x, n_vert.y, n_vert.z)
             
             for n_triangle in list(bhkshape.get_triangles()):
-                print(n_triangle)
                 b_mesh.faces.add(1)
                 b_mesh.faces[-1].vertices = n_triangle
 
