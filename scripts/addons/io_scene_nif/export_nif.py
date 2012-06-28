@@ -2374,17 +2374,16 @@ class NifExport(NifCommon):
                 trishape.name = b""
             elif not trishape_name:
                 if parent_block.name:
-                    trishape.name = b"Tri " + parent_block.name.encode()
+                    trishape.name = b"Tri " + str(parent_block.name.decode()).encode()
                 else:
-                    trishape.name = b"Tri " + b_obj.name.encode()
+                    trishape.name = b"Tri " + str(b_obj.name).encode()
             else:
                 trishape.name = trishape_name.encode()
             
             if len(mesh_mats) > 1:
                 # multimaterial meshes: add material index
                 # (Morrowind's child naming convention)
-                b_name = trishape.name.decode()
-                b_name + " %i" % materialIndex
+                b_name = trishape.name.decode() + ":%i" % materialIndex
                 trishape.name = b_name.encode()
             trishape.name = self.get_full_name(trishape.name.decode()).encode()
             
