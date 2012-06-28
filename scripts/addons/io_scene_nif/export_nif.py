@@ -2222,18 +2222,16 @@ class NifExport(NifCommon):
                     if mesh_hasvcol:
                         vertcol = []
                         #check for an alpha layer
+                        b_meshcolor = mesh.vertex_colors[0].data[f.index]
+                        b_color = getattr(b_meshcolor, "color%s" % (i + 1))
                         if(mesh_hasvcola):
-                            b_meshcolor = mesh.vertex_colors[0].data[f.index]
-                            b_meshcoloralpha = mesh.vertex_colors[1].data
-                            b_color = getattr(b_meshcolor, "color%s" % (i + 1))
+                            b_meshcoloralpha = mesh.vertex_colors[1].data[f.index]
                             b_colora = getattr(b_meshcolor, "color%s" % (i + 1))
                             vertcol = [b_color.r, b_color.g, b_color.b, b_colora.v]
-                            fcol = vertcol
                         else:
-                            b_meshcolor = mesh.vertex_colors[0].data[f.index]
-                            b_color = getattr(b_meshcolor, "color%s" % (i + 1))
                             vertcol = [b_color.r, b_color.g, b_color.b, 1.0]
-                            fcol = vertcol
+                        fcol = vertcol
+
                     else:
                         fcol = None
                         
@@ -2376,7 +2374,7 @@ class NifExport(NifCommon):
                 trishape.name = b""
             elif not trishape_name:
                 if parent_block.name:
-                    trishape.name = b"Tri " + parent_block.name
+                    trishape.name = b"Tri " + parent_block.name.encode()
                 else:
                     trishape.name = b"Tri " + b_obj.name.encode()
             else:
@@ -2385,7 +2383,9 @@ class NifExport(NifCommon):
             if len(mesh_mats) > 1:
                 # multimaterial meshes: add material index
                 # (Morrowind's child naming convention)
-                trishape.name += " %i" % materialIndex
+                b_name = trishape.name.decode()
+                b_name + " %i" % materialIndex
+                trishape.name = b_name.encode()
             trishape.name = self.get_full_name(trishape.name.decode()).encode()
             
             #Trishape Flags...
