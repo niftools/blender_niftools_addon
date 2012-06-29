@@ -519,9 +519,19 @@ class NifExport(NifCommon):
                     # enable collision
                     bsx = self.create_block("BSXFlags")
                     bsx.name = 'BSX'
-                    bsx.integer_data = self.EXPORT_OB_BSXFLAGS
+                    bsx.integer_data = b_obj.niftools.bsxflags
                     root_block.add_extra_data(bsx)
                     
+                    # many Oblivion nifs have a UPB, but export is disabled as
+                    # they do not seem to affect anything in the game
+                    upb = self.create_block("NiStringExtraData")
+                    upb.name = 'UPB'
+                    if(b_obj.niftools.upb != ''):
+                        upb.string_data = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
+                    else:
+                        upb.string_data = b_obj.niftools.upb
+                    root_block.add_extra_data(upb)
+                
                 # update rigid body center of gravity and mass
                 if self.EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES:
                     # we are not using blender properties to set the mass
@@ -560,13 +570,6 @@ class NifExport(NifCommon):
                             block.update_mass_center_inertia(
                                 mass=block.mass,
                                 solid=self.EXPORT_OB_SOLID)
-
-                # many Oblivion nifs have a UPB, but export is disabled as
-                # they do not seem to affect anything in the game
-                upb = self.create_block("NiStringExtraData")
-                upb.name = 'UPB'
-                upb.string_data = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
-                root_block.add_extra_data(upb)
 
             # bhkConvexVerticesShape of children of bhkListShapes
             # need an extra bhkConvexTransformShape
