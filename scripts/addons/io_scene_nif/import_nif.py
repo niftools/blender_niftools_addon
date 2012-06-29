@@ -3784,6 +3784,7 @@ class NifImport(NifCommon):
         # set bounds type
         b_obj.draw_type = 'BOUNDS'
         b_obj.draw_bounds_type = 'BOX'
+        b_obj.show_bounds = True
         #quick radius estimate
         b_obj.game.radius = max(maxx, maxy, maxz)
         bpy.context.scene.objects.link(b_obj)
