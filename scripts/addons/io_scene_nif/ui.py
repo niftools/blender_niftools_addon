@@ -68,6 +68,24 @@ class NifEmissivePanel(Panel):
         colL.prop(mat, "emissive_preview")
         colR.prop(mat, "emissive_color", text="")      
 
+class NifObjectPanel(Panel):
+    bl_label = "Niftools Object Panel"
+    
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "object"
+    
+    @classmethod
+    def poll(cls, context):
+        return True
+        
+    def draw(self, context):
+        nif_obj_props = context.object.niftools
+        
+        layout = self.layout
+        row = layout.row()
+        row.prop(nif_obj_props, "upb")
+
 class NifCollisionBoundsPanel(Panel):
     bl_label = "Collision Bounds"
     

@@ -326,19 +326,19 @@ class NifImport(NifCommon):
                     self.warning(
                         "Unsupported collision structure under node %s"
                         % root_block.name)
-                for n_extra in root_block.get_extra_datas():
-                    if isinstance(n_extra, NifFormat.BSXFlags):
-                        #get bsx flags so we can attach it to collision object
-                        bsx_flags = self.import_bsx_flags(n_extra)
-                    elif isinstance(n_extra, NifFormat.NiStringExtraData):
-                        if n_extra.name == "UPB":
-                            upbflags = self.import_upb(n_extra)
                 self.import_bhk_shape(bhk_body)
-                
-            # process bounding box
+            
+            #process extra data
             for n_extra in root_block.get_extra_datas():
-                if isinstance(n_extra, NifFormat.BSBound):
+                if isinstance(n_extra, NifFormat.BSXFlags):
+                    #get bsx flags so we can attach it to collision object
+                    bsx_flags = self.import_bsx_flags(n_extra)
+                elif isinstance(n_extra, NifFormat.NiStringExtraData):
+                    if n_extra.name == "UPB":
+                        upbflags = self.import_upb(n_extra)
+                elif isinstance(n_extra, NifFormat.BSBound):
                     self.import_bounding_box(n_extra)
+                
                     
             # process all its children
             for child in root_block.children:
