@@ -1021,12 +1021,13 @@ class NifExport(NifCommon):
                 self.export_collision(b_obj, parent_block)
                 return None # done; stop here
             
-            elif b_obj_type == 'MESH' and b_obj.name.lower().startswith('bsbound'):
+            elif (b_obj_type == 'MESH' and b_obj.show_bounds == True 
+                  and b_obj.name.lower().startswith('bsbound')):
                 # add a bounding box
                 self.export_bounding_box(b_obj, parent_block, bsbound=True)
                 return None # done; stop here
             
-            elif (b_obj_type == 'MESH'
+            elif (b_obj_type == 'MESH' and b_obj.show_bounds == True
                   and b_obj.name.lower().startswith("bounding box")):
                 # Morrowind bounding box
                 self.export_bounding_box(b_obj, parent_block, bsbound=False)
@@ -4584,14 +4585,15 @@ class NifExport(NifCommon):
     def export_bounding_box(self, b_obj, block_parent, bsbound=False):
         """Export a Morrowind or Oblivion bounding box."""
         # calculate bounding box extents
-        b_n_bbox = b_obj.bound_box
-        minx = min(vert[0] for vert in b_n_bbox)
-        miny = min(vert[1] for vert in b_n_bbox)
-        minz = min(vert[2] for vert in b_n_bbox)
-        maxx = max(vert[0] for vert in b_n_bbox)
-        maxy = max(vert[1] for vert in b_n_bbox)
-        maxz = max(vert[2] for vert in b_n_bbox)
-
+        b_vertlist = [vert.co for vert in b_obj.data.vertices]
+        
+        minx = min([b_vert[0] for b_vert in b_vertlist])
+        miny = min([b_vert[1] for b_vert in b_vertlist])
+        minz = min([b_vert[2] for b_vert in b_vertlist])
+        maxx = max([b_vert[0] for b_vert in b_vertlist])
+        maxy = max([b_vert[1] for b_vert in b_vertlist])
+        maxz = max([b_vert[2] for b_vert in b_vertlist])
+        
         if bsbound:
             n_bbox = self.create_block("BSBound")
             # ... the following incurs double scaling because it will be added in
@@ -4604,12 +4606,13 @@ class NifExport(NifCommon):
             
             # set name, center, and dimensions
             n_bbox.name = "BBX"
-            n_bbox.center.x = (minx + maxx) * 0.5
-            n_bbox.center.y = (miny + maxy) * 0.5
-            n_bbox.center.z = (minz + maxz) * 0.5
-            n_bbox.dimensions.x = (maxx - minx) * 0.5
-            n_bbox.dimensions.y = (maxy - miny) * 0.5
-            n_bbox.dimensions.z = (maxz - minz) * 0.5
+            n_bbox.center.x = b_obj.location[0]
+            n_bbox.center.y = b_obj.location[1]
+            n_bbox.center.z = b_obj.location[2]
+            n_bbox.dimensions.x = (maxx - minx) * b_obj.scale[0] * 0.5
+            n_bbox.dimensions.y = (maxy - miny) * b_obj.scale[1] * 0.5
+            n_bbox.dimensions.z = (maxz - minz) * b_obj.scale[2] * 0.5
+            
         else:
             n_bbox = self.create_ninode()
             block_parent.add_child(n_bbox)
