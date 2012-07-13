@@ -106,7 +106,7 @@ class NiftoolsObjectProps(bpy.types.PropertyGroup):
                         name = 'Nif LongName'
                         )
         
-        cls.bsxFlags = IntProperty(
+        cls.bsxflags = IntProperty(
                         name = 'BSXFlags',
                         description = 'Controls animation and collision',
                         default = 2 #2 = Bit 1, enable collision

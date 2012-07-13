@@ -99,7 +99,7 @@ class NifOperatorCommon:
     epsilon = bpy.props.FloatProperty(
         name="Epsilon",
         description="Used for checking equality between floats.",
-        default=0.005,
+        default=0.0005,
         min=0.0, max=1.0, precision=5,
         options={'HIDDEN'})
 

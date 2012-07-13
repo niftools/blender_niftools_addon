@@ -1776,6 +1776,7 @@ class NifExport(NifCommon):
     # The parameter trishape_name passes on the name for meshes that
     # should be exported as a single mesh.
     # 
+    
     def export_tri_shapes(self, b_obj, space, parent_block, trishape_name = None):
         self.info("Exporting %s" % b_obj)
         
@@ -2248,16 +2249,12 @@ class NifExport(NifCommon):
                         # and check if they have the same uvs, normals and colors (wow is that fast!)
                         for j in vertmap[fv_index]:
                             if mesh_uvlayers:
-                                if max(abs(vertquad[1][uvlayer][0]
-                                           - vertquad_list[j][1][uvlayer][0])
-                                       for uvlayer
-                                       in range(len(mesh_uvlayers))) \
+                                if max(abs(vertquad[1][uvlayer][0] - vertquad_list[j][1][uvlayer][0])
+                                       for uvlayer in range(len(mesh_uvlayers))) \
                                        > self.properties.epsilon:
                                     continue
-                                if max(abs(vertquad[1][uvlayer][1]
-                                           - vertquad_list[j][1][uvlayer][1])
-                                       for uvlayer
-                                       in range(len(mesh_uvlayers))) \
+                                if max(abs(vertquad[1][uvlayer][1] - vertquad_list[j][1][uvlayer][1])
+                                       for uvlayer in range(len(mesh_uvlayers))) \
                                        > self.properties.epsilon:
                                     continue
                             if mesh_hasnormals:
@@ -2289,6 +2286,7 @@ class NifExport(NifCommon):
                         if mesh_hasnormals: normlist.append(vertquad[2])
                         if mesh_hasvcol:    vcollist.append(vertquad[3])
                         if mesh_uvlayers:   uvlist.append(vertquad[1])
+                
                 # now add the (hopefully, convex) face, in triangles
                 for i in range(f_numverts - 2):
                     if True: #TODO: #(b_obj_scale > 0):
