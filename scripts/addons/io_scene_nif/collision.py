@@ -40,7 +40,7 @@ class bhkcollisionhelper():
             bpy.context.scene.objects.link(b_obj)
 
             b_obj.show_wire = True
-            b_obj.draw_type = True
+            b_obj.draw_type = 'WIRE'
             b_obj.game.use_collision_bounds = True
             b_obj.game.collision_bounds_type = 'CONVEX_HULL'
             
@@ -51,6 +51,7 @@ class bhkcollisionhelper():
             # also remove duplicate vertices
             numverts = len(b_mesh.vertices)
             # 0.005 = 1/200
+            
             '''
             numdel = b_mesh.remove_doubles(0.005)
             if numdel:
@@ -58,6 +59,7 @@ class bhkcollisionhelper():
                     "Removed %i duplicate vertices"
                     " (out of %i) from collision mesh" % (numdel, numverts))
             '''
+            
             #recalculate to ensure mesh functions correctly
             b_mesh.update()
             b_mesh.calc_normals()
@@ -167,7 +169,7 @@ class bhkcollisionhelper():
             bpy.context.scene.objects.link(b_obj)
 
             # set bounds type
-            b_obj.draw_type = 'BOUNDS'
+            b_obj.draw_type = 'WIRE'
             b_obj.draw_bounds_type = 'BOX'
             b_obj.game.use_collision_bounds = True            
             b_obj.game.collision_bounds_type = 'BOX'
@@ -186,7 +188,7 @@ class bhkcollisionhelper():
             b_obj = bpy.context.scene.objects.active
             
             # set bounds type
-            b_obj.draw_type = 'BOUNDS'
+            b_obj.draw_type = 'WIRE'
             b_obj.draw_bounds_type = 'SPHERE'
             b_obj.game.use_collision_bounds = True
             b_obj.game.collision_bounds_type = 'SPHERE'
