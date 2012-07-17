@@ -56,9 +56,11 @@ bl_info = {
     "support": "COMMUNITY",
     "category": "Import-Export"}
 
-from . import nifdebug
-nifdebug.startdebug()
-
+try:
+    from . import nifdebug
+    nifdebug.startdebug()
+except:
+    pass
 
 if "bpy" in locals():
     import imp
