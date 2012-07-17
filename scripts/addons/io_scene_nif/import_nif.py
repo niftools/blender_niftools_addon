@@ -37,9 +37,8 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from . import nifdebug
 from .nif_common import NifCommon
-
+from .collision import bhkcollisionhelper
 
 from functools import reduce 
 import logging
