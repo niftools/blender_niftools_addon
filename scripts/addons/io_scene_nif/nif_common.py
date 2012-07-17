@@ -70,44 +70,8 @@ class NifCommon:
         'SID_MEIER_S_RAILROADS': (3, 0, 4, 1, 5, 2),
         'CIVILIZATION_IV': (3, 0, 1, 2)}
     """The default ordering of the extra data blocks for different games."""
-
-    # Oblivion(and FO3) collision settings dicts for Anglicized names
-    # on Object Properties for havok items
-    OB_LAYER = [
-        "Unidentified", "Static", "AnimStatic", "Transparent", "Clutter",
-        "Weapon", "Projectile", "Spell", "Biped", "Props",
-        "Water", "Trigger", "Terrain", "Trap", "NonCollidable",
-        "CloudTrap", "Ground", "Portal", "Stairs", "CharController",
-        "AvoidBox", "?", "?", "CameraPick", "ItemPick",
-        "LineOfSight", "PathPick", "CustomPick1", "CustomPick2", "SpellExplosion",
-        "DroppingPick", "Other", "Head", "Body", "Spine1",
-        "Spine2", "LUpperArm", "LForeArm", "LHand", "LThigh",
-        "LCalf", "LFoot",  "RUpperArm", "RForeArm", "RHand",
-        "RThigh", "RCalf", "RFoot", "Tail", "SideWeapon",
-        "Shield", "Quiver", "BackWeapon", "BackWeapon?", "PonyTail",
-        "Wing", "Null"]
-
-    MOTION_SYS = [
-        "Invalid", "Dynamic", "Sphere", "Sphere Inertia", "Box",
-        "Box Stabilized", "Keyframed", "Fixed", "Thin BOx", "Character"]
     
     HAVOK_SCALE = 7.0
-
-    HAVOK_MATERIAL = [
-        "Stone", "Cloth", "Dirt", "Glass", "Grass",
-        "Metal", "Organic", "Skin", "Water", "Wood",
-        "Heavy Stone", "Heavy Metal", "Heavy Wood", "Chain", "Snow",
-        "Stone Stairs", "Cloth Stairs", "Dirt Stairs", "Glass Stairs",
-        "Grass Stairs", "Metal Stairs",
-        "Organic Stairs", "Skin Stairs", "Water Stairs", "Wood Stairs",
-        "Heavy Stone Stairs",
-        "Heavy Metal Stairs", "Heavy Wood Stairs", "Chain Stairs",
-        "Snow Stairs", "Elevator", "Rubber"]
-
-    QUALITY_TYPE = [
-        "Invalid", "Fixed", "Keyframed", "Debris", "Moving",
-        "Critical", "Bullet", "User", "Character", "Keyframed Report"]
-
     IMPORT_EXTRANODES = True
 
     #TODO - Find a better way to expose these
