@@ -19,9 +19,9 @@ class bhkcollisionhelper():
         if isinstance(bhkshape, NifFormat.bhkConvexVerticesShape):
             # find vertices (and fix scale)
             n_vertices, n_triangles = qhull3d(
-                                      [ (self.nifcommon.HAVOK_SCALE * n_vert.x, 
-                                         self.nifcommon.HAVOK_SCALE * n_vert.y, 
-                                         self.nifcommon.HAVOK_SCALE * n_vert.z)
+                                      [ (self.nif_common.HAVOK_SCALE * n_vert.x, 
+                                         self.nif_common.HAVOK_SCALE * n_vert.y, 
+                                         self.nif_common.HAVOK_SCALE * n_vert.z)
                                          for n_vert in bhkshape.vertices ])
            
             # create convex mesh
@@ -71,7 +71,7 @@ class bhkcollisionhelper():
             transform = mathutils.Matrix(bhkshape.transform.as_list())
             
             # fix scale
-            transform.translation = transform.translation * self.nifcommon.HAVOK_SCALE
+            transform.translation = transform.translation * self.nif_common.HAVOK_SCALE
 
             # apply transform
             for b_col_obj in collision_objs:
@@ -93,9 +93,9 @@ class bhkcollisionhelper():
                 
                 # set translation
                 transform.translation = mathutils.Vector(
-                        (bhkshape.translation.x * self.nifcommon.HAVOK_SCALE,
-                         bhkshape.translation.y * self.nifcommon.HAVOK_SCALE,
-                         bhkshape.translation.z * self.nifcommon.HAVOK_SCALE))
+                        (bhkshape.translation.x * self.nif_common.HAVOK_SCALE,
+                         bhkshape.translation.y * self.nif_common.HAVOK_SCALE,
+                         bhkshape.translation.z * self.nif_common.HAVOK_SCALE))
                 
                 # apply transform
                 for b_col_obj in collision_objs:
@@ -129,18 +129,18 @@ class bhkcollisionhelper():
             # import constraints
             # this is done once all objects are imported
             # for now, store all imported havok shapes with object lists
-            self.nifcommon.havok_objects[bhkshape] = collision_objs
+            self.nif_common.havok_objects[bhkshape] = collision_objs
             # and return a list of transformed collision shapes
             return collision_objs
         
         elif isinstance(bhkshape, NifFormat.bhkBoxShape):
             # create box
-            minx = -bhkshape.dimensions.x * self.nifcommon.HAVOK_SCALE
-            maxx = +bhkshape.dimensions.x * self.nifcommon.HAVOK_SCALE
-            miny = -bhkshape.dimensions.y * self.nifcommon.HAVOK_SCALE
-            maxy = +bhkshape.dimensions.y * self.nifcommon.HAVOK_SCALE
-            minz = -bhkshape.dimensions.z * self.nifcommon.HAVOK_SCALE
-            maxz = +bhkshape.dimensions.z * self.nifcommon.HAVOK_SCALE
+            minx = -bhkshape.dimensions.x * self.nif_common.HAVOK_SCALE
+            maxx = +bhkshape.dimensions.x * self.nif_common.HAVOK_SCALE
+            miny = -bhkshape.dimensions.y * self.nif_common.HAVOK_SCALE
+            maxy = +bhkshape.dimensions.y * self.nif_common.HAVOK_SCALE
+            minz = -bhkshape.dimensions.z * self.nif_common.HAVOK_SCALE
+            maxz = +bhkshape.dimensions.z * self.nif_common.HAVOK_SCALE
 
             b_mesh = bpy.data.meshes.new('box')
             vert_list = {}
@@ -180,7 +180,7 @@ class bhkcollisionhelper():
             return [ b_obj ]
 
         elif isinstance(bhkshape, NifFormat.bhkSphereShape):
-            b_radius = bhkshape.radius * self.nifcommon.HAVOK_SCALE
+            b_radius = bhkshape.radius * self.nif_common.HAVOK_SCALE
             
             bpy.ops.mesh.primitive_uv_sphere_add(segments=8, ring_count=8, size=b_radius)
             b_obj = bpy.context.scene.objects.active
@@ -202,8 +202,8 @@ class bhkcollisionhelper():
         elif isinstance(bhkshape, NifFormat.bhkCapsuleShape):
             # create capsule mesh
             length = (bhkshape.first_point - bhkshape.second_point).norm()
-            minx = miny = -bhkshape.radius * self.nifcommon.HAVOK_SCALE
-            maxx = maxy = +bhkshape.radius * self.nifcommon.HAVOK_SCALE
+            minx = miny = -bhkshape.radius * self.nif_common.HAVOK_SCALE
+            maxx = maxy = +bhkshape.radius * self.nif_common.HAVOK_SCALE
             minz = -(length + 2*bhkshape.radius) * 3.5
             maxz = +(length + 2*bhkshape.radius) * 3.5
 
@@ -236,7 +236,7 @@ class bhkcollisionhelper():
                         vert_index += 1
             
             
-            bpy.ops.mesh.primitive_cylinder_add(vertices=vert_index, radius=bhkshape.radius*self.nifcommon.HAVOK_SCALE, depth=(length*14))
+            bpy.ops.mesh.primitive_cylinder_add(vertices=vert_index, radius=bhkshape.radius*self.nif_common.HAVOK_SCALE, depth=(length*14))
             b_obj = bpy.context.active_object
             """  
             b_obj = bpy.data.objects.new('Capsule', b_mesh)
@@ -298,9 +298,9 @@ class bhkcollisionhelper():
                 for vert_index in range(vertex_offset, vertex_offset + subshape.num_vertices):
                     b_vert = bhkshape.data.vertices[vert_index]
                     b_mesh.vertices.add(1)
-                    b_mesh.vertices[-1].co = (b_vert.x * self.nifcommon.HAVOK_SCALE,
-                                              b_vert.y * self.nifcommon.HAVOK_SCALE,
-                                              b_vert.z * self.nifcommon.HAVOK_SCALE) 
+                    b_mesh.vertices[-1].co = (b_vert.x * self.nif_common.HAVOK_SCALE,
+                                              b_vert.y * self.nif_common.HAVOK_SCALE,
+                                              b_vert.z * self.nif_common.HAVOK_SCALE) 
                     
                 for hktriangle in bhkshape.data.triangles:
                     if ((vertex_offset <= hktriangle.triangle.v_1)
@@ -337,7 +337,7 @@ class bhkcollisionhelper():
                 b_obj.game.use_collision_bounds = True
                 b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
                 # radius: quick estimate
-                b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices) * self.nifcommon.HAVOK_SCALE
+                b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices) * self.nif_common.HAVOK_SCALE
                 # set material
                 b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[subshape.material]
 
@@ -420,7 +420,7 @@ class bhkcollisionhelper():
             return reduce(operator.add, ( self.import_bhk_shape(subshape)
                                           for subshape in bhkshape.sub_shapes ))
 
-        self.nifcommon.warning("Unsupported bhk shape %s"
+        self.nif_common.warning("Unsupported bhk shape %s"
                             % bhkshape.__class__.__name__)
         return []
 
