@@ -50,6 +50,9 @@ from pyffi.utils.quickhull import qhull3d
 
 class collisionhelper():
     
+    FLOAT_MIN = -3.4028234663852886e+38
+    FLOAT_MAX = +3.4028234663852886e+38
+    
     def __init__(self, parent):
         self.nif_common = parent
 
@@ -555,6 +558,413 @@ class collisionhelper():
         return b_obj
 
 ##Export Section ##
+
+    def export_collision_helper(self, b_obj, parent_block):
+        """Helper function to add collision objects to a node. This function
+        exports the rigid body, and calls the appropriate function to export
+        the collision geometry in the desired format.
+
+        @param b_obj: The object to export as collision.
+        @param parent_block: The NiNode parent of the collision.
+        """
+
+        # is it packed
+        coll_ispacked = (b_obj.game.collision_bounds_type == 'TRIANGLE_MESH')
+
+        # find physics properties/defaults
+        material = b_obj.nifcollision.havok_material
+        layer = b_obj.nifcollision.oblivion_layer
+        motion_system = b_obj.nifcollision.motion_system
+        quality_type = b_obj.nifcollision.quality_type
+        mass = 1.0 # will be fixed later
+        col_filter = b_obj.nifcollision.col_filter
+        
+        #Aaron1178 collison stuff
+        '''
+        #export bsxFlags
+        self.export_bsx_upb_flags(b_obj, parent_block)
+        '''    
+
+        # if no collisions have been exported yet to this parent_block
+        # then create new collision tree on parent_block
+        # bhkCollisionObject -> bhkRigidBody
+        if not parent_block.collision_object:
+            # note: collision settings are taken from lowerclasschair01.nif
+            if b_obj.nifcollision.oblivion_layer == NifFormat.OblivionLayer.OL_BIPED:
+                # special collision object for creatures
+                colobj = self.nif_common.create_block("bhkBlendCollisionb_object", b_obj)
+                colobj.flags = 9
+                colobj.unknown_float_1 = 1.0
+                colobj.unknown_float_2 = 1.0
+                # also add a controller for it
+                blendctrl = self.nif_common.create_block("bhkBlendController", b_obj)
+                blendctrl.flags = 12
+                blendctrl.frequency = 1.0
+                blendctrl.phase = 0.0
+                blendctrl.start_time = self.FLOAT_MAX
+                blendctrl.stop_time = self.FLOAT_MIN
+                parent_block.add_controller(blendctrl)
+            else:
+                # usual collision object
+                colobj = self.nif_common.create_block("bhkCollisionObject", b_obj)
+                if layer == NifFormat.OblivionLayer.OL_ANIM_STATIC and col_filter != 128:
+                    # animated collision requires flags = 41
+                    # unless it is a constrainted but not keyframed object
+                    colobj.flags = 41
+                else:
+                    # in all other cases this seems to be enough
+                    colobj.flags = 1
+                    
+            parent_block.collision_object = colobj
+            colobj.target = parent_block
+            colbody = self.nif_common.create_block("bhkRigidBody", b_obj)
+            colobj.body = colbody
+            colbody.layer = layer
+            colbody.col_filter = col_filter
+            colbody.unknown_5_floats[1] = 3.8139e+36
+            colbody.unknown_4_shorts[0] = 1
+            colbody.unknown_4_shorts[1] = 65535
+            colbody.unknown_4_shorts[2] = 35899
+            colbody.unknown_4_shorts[3] = 16336
+            colbody.layer_copy = layer
+            colbody.unknown_7_shorts[1] = 21280
+            colbody.unknown_7_shorts[2] = 4581
+            colbody.unknown_7_shorts[3] = 62977
+            colbody.unknown_7_shorts[4] = 65535
+            colbody.unknown_7_shorts[5] = 44
+            # mass is 1.0 at the moment (unless property was set)
+            # will be fixed later
+            colbody.mass = mass
+            colbody.linear_damping = 0.1
+            colbody.angular_damping = 0.05
+            colbody.friction = 0.3
+            colbody.restitution = 0.3
+            colbody.max_linear_velocity = 250.0
+            colbody.max_angular_velocity = 31.4159
+            colbody.penetration_depth = 0.15
+            colbody.motion_system = motion_system
+            colbody.unknown_byte_1 = self.nif_common.EXPORT_OB_UNKNOWNBYTE1
+            colbody.unknown_byte_2 = self.nif_common.EXPORT_OB_UNKNOWNBYTE2
+            colbody.quality_type = quality_type
+            colbody.unknown_int_9 = self.nif_common.EXPORT_OB_WIND
+        else:
+            colbody = parent_block.collision_object.body
+            # fix total mass
+            colbody.mass += mass
+
+        if coll_ispacked:
+            self.export_collision_packed(b_obj, colbody, layer, material)
+        else:
+            if b_obj.nifcollision.export_bhklist:
+                self.export_collision_list(b_obj, colbody, layer, material)
+            else:
+                self.export_collision_single(b_obj, colbody, layer, material)
+
+    def export_collision_packed(self, b_obj, colbody, layer, material):
+        """Add object ob as packed collision object to collision body
+        colbody. If parent_block hasn't any collisions yet, a new
+        packed list is created. If the current collision system is not
+        a packed list of collisions (bhkPackedNiTriStripsShape), then
+        a ValueError is raised.
+        """
+
+        if not colbody.shape:
+            colshape = self.nif_common.create_block("bhkPackedNiTriStripsShape", b_obj)
+
+            colmopp = self.nif_common.create_block("bhkMoppBvTreeShape", b_obj)
+            colbody.shape = colmopp
+            colmopp.material = material
+            colmopp.unknown_8_bytes[0] = 160
+            colmopp.unknown_8_bytes[1] = 13
+            colmopp.unknown_8_bytes[2] = 75
+            colmopp.unknown_8_bytes[3] = 1
+            colmopp.unknown_8_bytes[4] = 192
+            colmopp.unknown_8_bytes[5] = 207
+            colmopp.unknown_8_bytes[6] = 144
+            colmopp.unknown_8_bytes[7] = 11
+            colmopp.unknown_float = 1.0
+            # the mopp origin, scale, and data are written later
+            colmopp.shape = colshape
+
+            colshape.unknown_floats[2] = 0.1
+            colshape.unknown_floats[4] = 1.0
+            colshape.unknown_floats[5] = 1.0
+            colshape.unknown_floats[6] = 1.0
+            colshape.unknown_floats[8] = 0.1
+            colshape.scale = 1.0
+            colshape.unknown_floats_2[0] = 1.0
+            colshape.unknown_floats_2[1] = 1.0
+        else:
+            # XXX at the moment, we disable multimaterial mopps
+            # XXX do this by raising an exception when trying
+            # XXX to add a collision here; code will try to readd it with
+            # XXX a fresh NiNode
+            raise ValueError('multimaterial mopps not supported for now')
+            # XXX this code will do the trick once multimaterial mopps work
+            colmopp = colbody.shape
+            if not isinstance(colmopp, NifFormat.bhkMoppBvTreeShape):
+                raise ValueError('not a packed list of collisions')
+            colshape = colmopp.shape
+            if not isinstance(colshape, NifFormat.bhkPackedNiTriStripsShape):
+                raise ValueError('not a packed list of collisions')
+
+        mesh = b_obj.data
+        transform = mathutils.Matrix(
+            self.nif_common.get_object_matrix(b_obj, 'localspace').as_list())
+        rotation = transform.decompose()[1]
+
+        vertices = [vert.co * transform for vert in mesh.vertices]
+        triangles = []
+        normals = []
+        for face in mesh.faces:
+            if len(face.vertices) < 3:
+                continue # ignore degenerate faces
+            triangles.append([face.vertices[i] for i in (0, 1, 2)])
+            normals.append(rotation * face.normal)
+            if len(face.vertices) == 4:
+                triangles.append([face.vertices[i] for i in (0, 2, 3)])
+                normals.append(rotation * face.normal)
+
+        colshape.add_shape(triangles, normals, vertices, layer, material)
+
+
+
+    def export_collision_single(self, b_obj, colbody, layer, material):
+        """Add collision object to colbody.
+        If colbody already has a collision shape, throw ValueError."""
+        if colbody.shape:
+            raise ValueError('collision body already has a shape')
+        colbody.shape = self.export_collision_object(b_obj, layer, material)
+
+
+
+    def export_collision_list(self, b_obj, colbody, layer, material):
+        """Add collision object obj to the list of collision objects of colbody.
+        If colbody has no collisions yet, a new list is created.
+        If the current collision system is not a list of collisions
+        (bhkListShape), then a ValueError is raised."""
+
+        # if no collisions have been exported yet to this parent_block
+        # then create new collision tree on parent_block
+        # bhkCollisionObject -> bhkRigidBody -> bhkListShape
+        # (this works in all cases, can be simplified just before
+        # the file is written)
+        if not colbody.shape:
+            colshape = self.nif_common.create_block("bhkListShape")
+            colbody.shape = colshape
+            colshape.material = material
+        else:
+            colshape = colbody.shape
+            if not isinstance(colshape, NifFormat.bhkListShape):
+                raise ValueError('not a list of collisions')
+
+        colshape.add_shape(self.export_collision_object(b_obj, layer, material))
+
+
+
+    def export_collision_object(self, b_obj, layer, n_havok_material):
+        """Export object obj as box, sphere, capsule, or convex hull.
+        Note: polyheder is handled by export_collision_packed."""
+
+        # find bounding box data
+        if not b_obj.data.vertices:
+            self.warning(
+                "Skipping collision object %s without vertices." % b_obj)
+            return None
+        b_vertlist = [vert.co for vert in b_obj.data.vertices]
+        
+        minx = min([b_vert[0] for b_vert in b_vertlist])
+        miny = min([b_vert[1] for b_vert in b_vertlist])
+        minz = min([b_vert[2] for b_vert in b_vertlist])
+        maxx = max([b_vert[0] for b_vert in b_vertlist])
+        maxy = max([b_vert[1] for b_vert in b_vertlist])
+        maxz = max([b_vert[2] for b_vert in b_vertlist])
+
+        if b_obj.game.collision_bounds_type in {'BOX', 'SPHERE'}:
+            # note: collision settings are taken from lowerclasschair01.nif
+            coltf = self.nif_common.create_block("bhkConvexTransformShape", b_obj)
+            coltf.material = n_havok_material
+            coltf.unknown_float_1 = 0.1
+            coltf.unknown_8_bytes[0] = 96
+            coltf.unknown_8_bytes[1] = 120
+            coltf.unknown_8_bytes[2] = 53
+            coltf.unknown_8_bytes[3] = 19
+            coltf.unknown_8_bytes[4] = 24
+            coltf.unknown_8_bytes[5] = 9
+            coltf.unknown_8_bytes[6] = 253
+            coltf.unknown_8_bytes[7] = 4
+            hktf = mathutils.Matrix(
+                self.nif_common.get_object_matrix(b_obj, 'localspace').as_list())
+            # the translation part must point to the center of the data
+            # so calculate the center in local coordinates
+            center = mathutils.Vector(((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0))
+            # and transform it to global coordinates
+            center = center * hktf
+            hktf[3][0] = center[0]
+            hktf[3][1] = center[1]
+            hktf[3][2] = center[2]
+            # we need to store the transpose of the matrix
+            hktf.transpose()
+            coltf.transform.set_rows(*hktf)
+            # fix matrix for havok coordinate system
+            coltf.transform.m_14 /= self.nif_common.HAVOK_SCALE
+            coltf.transform.m_24 /= self.nif_common.HAVOK_SCALE
+            coltf.transform.m_34 /= self.nif_common.HAVOK_SCALE
+
+            if b_obj.game.collision_bounds_type == 'BOX':
+                colbox = self.nif_common.create_block("bhkBoxShape", b_obj)
+                coltf.shape = colbox
+                colbox.material = n_havok_material
+                colbox.radius = 0.1
+                colbox.unknown_8_bytes[0] = 0x6b
+                colbox.unknown_8_bytes[1] = 0xee
+                colbox.unknown_8_bytes[2] = 0x43
+                colbox.unknown_8_bytes[3] = 0x40
+                colbox.unknown_8_bytes[4] = 0x3a
+                colbox.unknown_8_bytes[5] = 0xef
+                colbox.unknown_8_bytes[6] = 0x8e
+                colbox.unknown_8_bytes[7] = 0x3e
+                # fix dimensions for havok coordinate system
+                colbox.dimensions.x = (maxx - minx) / (2.0 * self.nif_common.HAVOK_SCALE)
+                colbox.dimensions.y = (maxy - miny) / (2.0 * self.nif_common.HAVOK_SCALE)
+                colbox.dimensions.z = (maxz - minz) / (2.0 * self.nif_common.HAVOK_SCALE)
+                colbox.minimum_size = min(colbox.dimensions.x, colbox.dimensions.y, colbox.dimensions.z)
+            elif b_obj.game.collision_bounds_type == 'SPHERE':
+                colsphere = self.nif_common.create_block("bhkSphereShape", b_obj)
+                coltf.shape = colsphere
+                colsphere.material = n_havok_material
+                # take average radius and
+                # Todo find out what this is: fix for havok coordinate system (6 * 7 = 42)
+                colsphere.radius = (maxx - minx + maxy - miny + maxz - minz) / (6.0 * self.nif_common.HAVOK_SCALE)
+
+            return coltf
+
+        elif b_obj.game.collision_bounds_type in {'CYLINDER', 'CAPSULE'}:
+            # take average radius and calculate end points
+            localradius = (maxx + maxy - minx - miny) / 4.0
+            transform = mathutils.Matrix(
+                self.nif_common.get_object_matrix(b_obj, 'localspace').as_list())
+            vert1 = mathutils.Vector( [ (maxx + minx)/2.0,
+                                       (maxy + miny)/2.0,
+                                       minz + localradius ] )
+            vert2 = mathutils.Vector( [ (maxx + minx) / 2.0,
+                                       (maxy + miny) / 2.0,
+                                       maxz - localradius ] )
+            vert1 = vert1 * transform
+            vert2 = vert2 * transform
+
+            # check if end points are far enough from each other
+            if (vert1 - vert2).length < self.properties.epsilon:
+                self.warning(
+                    "End points of cylinder %s too close,"
+                    " converting to sphere." % b_obj)
+                # change type
+                b_obj.game.collision_bounds_type = 'SPHERE'
+                # instead of duplicating code, just run the function again
+                return self.export_collision_object(b_obj, layer, n_havok_material)
+            
+            # end points are ok, so export as capsule
+            colcaps = self.nif_common.create_block("bhkCapsuleShape", b_obj)
+            colcaps.material = n_havok_material
+            colcaps.first_point.x = vert1[0] / self.nif_common.HAVOK_SCALE
+            colcaps.first_point.y = vert1[1] / self.nif_common.HAVOK_SCALE
+            colcaps.first_point.z = vert1[2] / self.nif_common.HAVOK_SCALE
+            colcaps.second_point.x = vert2[0] / self.nif_common.HAVOK_SCALE
+            colcaps.second_point.y = vert2[1] / self.nif_common.HAVOK_SCALE
+            colcaps.second_point.z = vert2[2] / self.nif_common.HAVOK_SCALE
+
+            # set radius, with correct scale
+            size_x = b_obj.scale.x
+            size_y = b_obj.scale.y
+            size_z = b_obj.scale.z
+            #sizex, sizey, sizez = b_obj.getsize()
+            colcaps.radius = localradius * (size_x + size_y) * 0.5
+            colcaps.radius_1 = colcaps.radius
+            colcaps.radius_2 = colcaps.radius
+            
+            # fix havok coordinate system for radii
+            colcaps.radius /= self.nif_common.HAVOK_SCALE
+            colcaps.radius_1 /= self.nif_common.HAVOK_SCALE
+            colcaps.radius_2 /= self.nif_common.HAVOK_SCALE
+            return colcaps
+
+        elif b_obj.game.collision_bounds_type == 'CONVEX_HULL':
+            b_mesh = b_obj.data
+            b_transform_mat = mathutils.Matrix(
+                self.nif_common.get_object_matrix(b_obj, 'localspace').as_list())          
+            
+            b_rot_quat = b_transform_mat.decompose()[1]
+            b_scale_vec = b_transform_mat.decompose()[0]
+            '''
+            scale = math.avg(b_scale_vec.to_tuple())
+            if scale < 0:
+                scale = - (-scale) ** (1.0 / 3)
+            else:
+                scale = scale ** (1.0 / 3)
+            rotation /= scale
+            '''
+            
+            # calculate vertices, normals, and distances
+            vertlist = [b_transform_mat * vert.co for vert in b_mesh.vertices]
+            fnormlist = [b_rot_quat * b_face.normal for b_face in b_mesh.faces]
+            fdistlist = [(b_transform_mat * (-1 * b_mesh.vertices[b_mesh.faces[b_face.index].vertices[0]].co)).dot(
+                            b_rot_quat.to_matrix() * b_face.normal)
+                         for b_face in b_mesh.faces ]
+
+            # remove duplicates through dictionary
+            vertdict = {}
+            for i, vert in enumerate(vertlist):
+                vertdict[(int(vert[0]*self.nif_common.VERTEX_RESOLUTION),
+                          int(vert[1]*self.nif_common.VERTEX_RESOLUTION),
+                          int(vert[2]*self.nif_common.VERTEX_RESOLUTION))] = i
+            fdict = {}
+            for i, (norm, dist) in enumerate(zip(fnormlist, fdistlist)):
+                fdict[(int(norm[0]*self.nif_common.NORMAL_RESOLUTION),
+                       int(norm[1]*self.nif_common.NORMAL_RESOLUTION),
+                       int(norm[2]*self.nif_common.NORMAL_RESOLUTION),
+                       int(dist*self.nif_common.VERTEX_RESOLUTION))] = i
+            # sort vertices and normals
+            vertkeys = sorted(vertdict.keys())
+            fkeys = sorted(fdict.keys())
+            vertlist = [ vertlist[vertdict[hsh]] for hsh in vertkeys ]
+            fnormlist = [ fnormlist[fdict[hsh]] for hsh in fkeys ]
+            fdistlist = [ fdistlist[fdict[hsh]] for hsh in fkeys ]
+
+            if len(fnormlist) > 65535 or len(vertlist) > 65535:
+                raise NifExportError(
+                    "ERROR%t|Too many faces/vertices."
+                    " Decimate/split your b_mesh and try again.")
+            
+            colhull = self.nif_common.create_block("bhkConvexVerticesShape", b_obj)
+            colhull.material = n_havok_material
+            colhull.radius = 0.1
+            colhull.unknown_6_floats[2] = -0.0 # enables arrow detection
+            colhull.unknown_6_floats[5] = -0.0 # enables arrow detection
+            # note: unknown 6 floats are usually all 0
+            colhull.num_vertices = len(vertlist)
+            colhull.vertices.update_size()
+            for vhull, vert in zip(colhull.vertices, vertlist):
+                vhull.x = vert[0] / self.nif_common.HAVOK_SCALE
+                vhull.y = vert[1] / self.nif_common.HAVOK_SCALE
+                vhull.z = vert[2] / self.nif_common.HAVOK_SCALE
+                # w component is 0
+            colhull.num_normals = len(fnormlist)
+            colhull.normals.update_size()
+            for nhull, norm, dist in zip(colhull.normals, fnormlist, fdistlist):
+                nhull.x = norm[0]
+                nhull.y = norm[1]
+                nhull.z = norm[2]
+                nhull.w = dist / self.nif_common.HAVOK_SCALE
+
+            return colhull
+
+        else:
+            raise NifExportError(
+                'cannot export collision type %s to collision shape list'
+                % b_obj.game.collision_bounds_type)
+
+
+
 
     def export_bounding_box(self, b_obj, block_parent, bsbound=False):
         """Export a Morrowind or Oblivion bounding box."""
