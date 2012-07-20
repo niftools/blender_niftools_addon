@@ -38,7 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 from .nif_common import NifCommon
-from .collision import bhkcollisionhelper
+from .collision import collisionhelper
 
 from functools import reduce 
 import logging
@@ -48,7 +48,6 @@ import os
 import os.path
 
 import bpy
-from bpy_extras.io_utils import unpack_list, unpack_face_list
 import mathutils
 
 import pyffi.spells.nif
@@ -115,7 +114,7 @@ class NifImport(NifCommon):
         
         #helper systems
         #Store references to subsystems as needed.
-        self.collisionhelper = bhkcollisionhelper(parent=self)
+        self.collisionhelper = collisionhelper(parent=self)
         
         # catch NifImportError
         try:
