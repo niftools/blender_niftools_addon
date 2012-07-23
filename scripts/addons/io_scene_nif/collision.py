@@ -81,7 +81,7 @@ class collisionhelper():
             return self.import_bhkpackednitristrips_shape(bhkshape, upbflags, bsxflags)
 
         elif isinstance(bhkshape, NifFormat.bhkNiTriStripsShape):
-            #self.havok_mat = bhkshape.material
+            self.havok_mat = bhkshape.material
             return reduce(operator.add,
                           (self.import_bhk_shape(strips)
                            for strips in bhkshape.strips_data))
@@ -321,54 +321,54 @@ class collisionhelper():
         return [ b_obj ]
 
     def import_bhkconvex_vertices_shape(self, bhkshape, upbflags="", bsxflags=2):
-            # find vertices (and fix scale)
-            n_vertices, n_triangles = qhull3d(
-                                      [ (self.nif_common.HAVOK_SCALE * n_vert.x, 
-                                         self.nif_common.HAVOK_SCALE * n_vert.y, 
-                                         self.nif_common.HAVOK_SCALE * n_vert.z)
-                                         for n_vert in bhkshape.vertices ])
-           
-            # create convex mesh
-            b_mesh = bpy.data.meshes.new('convexpoly')
+        # find vertices (and fix scale)
+        n_vertices, n_triangles = qhull3d(
+                                  [ (self.nif_common.HAVOK_SCALE * n_vert.x, 
+                                     self.nif_common.HAVOK_SCALE * n_vert.y, 
+                                     self.nif_common.HAVOK_SCALE * n_vert.z)
+                                     for n_vert in bhkshape.vertices ])
+       
+        # create convex mesh
+        b_mesh = bpy.data.meshes.new('convexpoly')
+        
+        for n_vert in n_vertices:
+            b_mesh.vertices.add(1)
+            b_mesh.vertices[-1].co = n_vert
             
-            for n_vert in n_vertices:
-                b_mesh.vertices.add(1)
-                b_mesh.vertices[-1].co = n_vert
-                
-            for n_triangle in n_triangles:
-                b_mesh.faces.add(1)
-                b_mesh.faces[-1].vertices = n_triangle
-    
-            # link mesh to scene and set transform
-            b_obj = bpy.data.objects.new('Convexpoly', b_mesh)
-            bpy.context.scene.objects.link(b_obj)
-    
-            b_obj.show_wire = True
-            b_obj.draw_type = 'WIRE'
-            b_obj.game.use_collision_bounds = True
-            b_obj.game.collision_bounds_type = 'CONVEX_HULL'
-            
-            # radius: quick estimate
-            b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices)
-            b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
-            
-            # also remove duplicate vertices
-            numverts = len(b_mesh.vertices)
-            # 0.005 = 1/200
-            
-            '''
-            numdel = b_mesh.remove_doubles(0.005)
-            if numdel:
-                self.info(
-                    "Removed %i duplicate vertices"
-                    " (out of %i) from collision mesh" % (numdel, numverts))
-            '''
-            
-            #recalculate to ensure mesh functions correctly
-            b_mesh.update()
-            b_mesh.calc_normals()
-                        
-            return [ b_obj ]
+        for n_triangle in n_triangles:
+            b_mesh.faces.add(1)
+            b_mesh.faces[-1].vertices = n_triangle
+
+        # link mesh to scene and set transform
+        b_obj = bpy.data.objects.new('Convexpoly', b_mesh)
+        bpy.context.scene.objects.link(b_obj)
+
+        b_obj.show_wire = True
+        b_obj.draw_type = 'WIRE'
+        b_obj.game.use_collision_bounds = True
+        b_obj.game.collision_bounds_type = 'CONVEX_HULL'
+        
+        # radius: quick estimate
+        b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices)
+        b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
+        
+        # also remove duplicate vertices
+        numverts = len(b_mesh.vertices)
+        # 0.005 = 1/200
+        
+        '''
+        numdel = b_mesh.remove_doubles(0.005)
+        if numdel:
+            self.info(
+                "Removed %i duplicate vertices"
+                " (out of %i) from collision mesh" % (numdel, numverts))
+        '''
+        
+        #recalculate to ensure mesh functions correctly
+        b_mesh.update()
+        b_mesh.calc_normals()
+                    
+        return [ b_obj ]
 
     def import_nitristrips(self, bhkshape, upbflags="", bsxflags=2):
         b_mesh = bpy.data.meshes.new('poly')
@@ -386,7 +386,7 @@ class collisionhelper():
         bpy.context.scene.objects.link(b_obj)
 
         # set bounds type
-        b_obj.draw_type = 'BOUNDS'
+        b_obj.draw_type = 'WIRE'
         b_obj.draw_bounds_type = 'BOX'
         b_obj.show_wire = True
         b_obj.game.use_collision_bounds = True
@@ -425,7 +425,7 @@ class collisionhelper():
             subshapes = bhkshape.data.sub_shapes
             
         for subshape_num, subshape in enumerate(subshapes):
-            b_mesh = bpy.data.meshes.new('poly%i' % subshape_num)
+            b_mesh = bpy.data.meshes.new('poly:%i' % subshape_num)
 
             for vert_index in range(vertex_offset, vertex_offset + subshape.num_vertices):
                 b_vert = bhkshape.data.vertices[vert_index]
