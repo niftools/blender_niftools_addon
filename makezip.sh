@@ -1,7 +1,7 @@
 git clean -xfd
 ./install.sh
 
-VERSION="2.6.0"
+VERSION="2.6.0.2"
 wcrev=`git log -1 --pretty=format:%h`
 if [ "$1" == "" ]
 then
@@ -9,7 +9,7 @@ then
 else
     extversion=${VERSION}-$1.${wcrev}
 fi
-NAME="blender_nif_scripts"
+NAME="blender_nif_plugin"
 FILES="AUTHORS.rst CHANGELOG.rst LICENSE.rst README.rst install.sh install.bat scripts/ docs/_build/html/"
 
 # update documentation

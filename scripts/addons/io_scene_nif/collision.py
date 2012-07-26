@@ -830,6 +830,7 @@ class collisionhelper():
                 colbox.dimensions.y = (maxy - miny) / (2.0 * self.nif_common.HAVOK_SCALE)
                 colbox.dimensions.z = (maxz - minz) / (2.0 * self.nif_common.HAVOK_SCALE)
                 colbox.minimum_size = min(colbox.dimensions.x, colbox.dimensions.y, colbox.dimensions.z)
+                
             elif b_obj.game.collision_bounds_type == 'SPHERE':
                 colsphere = self.nif_common.create_block("bhkSphereShape", b_obj)
                 coltf.shape = colsphere

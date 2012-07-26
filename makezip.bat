@@ -1,5 +1,5 @@
-set VERSION=2.6.2
-set NAME=blender_nif_scripts
+set VERSION=2.6.0.2
+set NAME=blender_nif_plugin
 set FILES=AUTHORS.rst CHANGELOG.rst LICENSE.rst README.rst install.sh install.bat scripts/ docs/_build/html/
 
 pushd docs
