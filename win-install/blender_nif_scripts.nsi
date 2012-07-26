@@ -1,5 +1,5 @@
 ;
-; Blender NIF Scripts Self-Installer for Windows
+; Blender NIF Plugin Self-Installer for Windows
 ; (NifTools - http://niftools.sourceforge.net) 
 ; (NSIS - http://nsis.sourceforge.net)
 ;

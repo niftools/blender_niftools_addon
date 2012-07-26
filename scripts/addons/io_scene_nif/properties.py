@@ -186,7 +186,6 @@ class NiftoolsObjectCollisionProps(bpy.types.PropertyGroup):
         del bpy.types.Object.nifcollision
         
 def register():
-    
     bpy.utils.register_class(NiftoolsMaterialProps)
     bpy.utils.register_class(NiftoolsObjectProps)
     bpy.utils.register_class(NiftoolsObjectCollisionProps)
