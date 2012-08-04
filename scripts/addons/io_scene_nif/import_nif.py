@@ -394,7 +394,7 @@ class NifImport(NifCommon):
             b_obj = self.import_mesh(niBlock)
             # skinning? add armature modifier
             if niBlock.skin_instance:
-                self.append_armature_modifier(b_obj, b_armature)
+                self.armaturehelper.append_armature_modifier(b_obj, b_armature)
             return b_obj
         elif isinstance(niBlock, NifFormat.NiNode):
             children = niBlock.children
@@ -407,11 +407,11 @@ class NifImport(NifCommon):
                 # do not import unless the node is "interesting"
                 return None
             # import object
-            if self.is_armature_root(niBlock):
+            if self.armaturehelper.is_armature_root(niBlock):
                 # all bones in the tree are also imported by
                 # import_armature
                 if self.properties.skeleton !=  "GEOMETRY_ONLY":
-                    b_obj = self.import_armature(niBlock)
+                    b_obj = self.armaturehelper.import_armature(niBlock)
                     b_armature = b_obj
                     n_armature = niBlock
                 else:
@@ -470,7 +470,7 @@ class NifImport(NifCommon):
                     # skinning? add armature modifier
                     if any(child.skin_instance
                            for child in geom_group):
-                        self.append_armature_modifier(b_obj, b_armature)
+                        self.armaturehelper.append_armature_modifier(b_obj, b_armature)
                     # settings for collision node
                     if isinstance(niBlock, NifFormat.RootCollisionNode):
                         b_obj.draw_type = 'BOUNDS'
