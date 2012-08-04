@@ -345,7 +345,7 @@ class NifImport(NifCommon):
 
         # store bone matrix offsets for re-export
         if self.bones_extra_matrix:
-            self.store_bones_extra_matrix()
+            self.armaturehelper.store_bones_extra_matrix()
 
         # store original names for re-export
         if self.names:
@@ -428,7 +428,7 @@ class NifImport(NifCommon):
                             % (niBlock.name, b_obj.name))
                 # armatures cannot group geometries into a single mesh
                 geom_group = []
-            elif self.is_bone(niBlock):
+            elif self.armaturehelper.is_bone(niBlock):
                 # bones have already been imported during import_armature
                 b_obj = b_armature.data.bones[self.names[niBlock]]
                 # bones cannot group geometries into a single mesh
