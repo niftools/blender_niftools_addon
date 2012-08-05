@@ -38,8 +38,8 @@
 # ***** END LICENSE BLOCK *****
 
 from .nif_common import NifCommon
-from .collision import collisionhelper
-from .skeletal import armaturehelper
+from .collisionsys.collision import shape_import
+from .armaturesys.skeletal import armature_import
 
 from functools import reduce 
 import logging
@@ -101,8 +101,8 @@ class NifImport(NifCommon):
         
         #helper systems
         #Store references to subsystems as needed.
-        self.collisionhelper = collisionhelper(parent=self)
-        self.armaturehelper = armaturehelper(parent=self)
+        self.collisionhelper = shape_import(parent=self)
+        self.armaturehelper = armature_import(parent=self)
         
         # catch NifImportError
         try:

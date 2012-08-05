@@ -48,10 +48,7 @@ import pyffi
 from pyffi.formats.nif import NifFormat
 from pyffi.utils.quickhull import qhull3d
 
-class collisionhelper():
-    
-    FLOAT_MIN = -3.4028234663852886e+38
-    FLOAT_MAX = +3.4028234663852886e+38
+class shape_import():
     
     def __init__(self, parent):
         self.nif_common = parent
@@ -172,49 +169,49 @@ class collisionhelper():
 
     def import_bhkbox_shape(self, bhkshape, upbflags="", bsxflags=2):
         # create box
-            minx = -bhkshape.dimensions.x * self.nif_common.HAVOK_SCALE
-            maxx = +bhkshape.dimensions.x * self.nif_common.HAVOK_SCALE
-            miny = -bhkshape.dimensions.y * self.nif_common.HAVOK_SCALE
-            maxy = +bhkshape.dimensions.y * self.nif_common.HAVOK_SCALE
-            minz = -bhkshape.dimensions.z * self.nif_common.HAVOK_SCALE
-            maxz = +bhkshape.dimensions.z * self.nif_common.HAVOK_SCALE
+        minx = -bhkshape.dimensions.x * self.nif_common.HAVOK_SCALE
+        maxx = +bhkshape.dimensions.x * self.nif_common.HAVOK_SCALE
+        miny = -bhkshape.dimensions.y * self.nif_common.HAVOK_SCALE
+        maxy = +bhkshape.dimensions.y * self.nif_common.HAVOK_SCALE
+        minz = -bhkshape.dimensions.z * self.nif_common.HAVOK_SCALE
+        maxz = +bhkshape.dimensions.z * self.nif_common.HAVOK_SCALE
 
-            b_mesh = bpy.data.meshes.new('box')
-            vert_list = {}
-            vert_index = 0
-    
-            for x in [minx, maxx]:
-                for y in [miny, maxy]:
-                    for z in [minz, maxz]:
-                        b_mesh.vertices.add(1)
-                        b_mesh.vertices[-1].co = (x,y,z)
-                        vert_list[vert_index] = [x,y,z]
-                        vert_index += 1
+        b_mesh = bpy.data.meshes.new('box')
+        vert_list = {}
+        vert_index = 0
 
-            faces = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,0,1,5],[7,6,2,3]]
-            face_index = 0
+        for x in [minx, maxx]:
+            for y in [miny, maxy]:
+                for z in [minz, maxz]:
+                    b_mesh.vertices.add(1)
+                    b_mesh.vertices[-1].co = (x,y,z)
+                    vert_list[vert_index] = [x,y,z]
+                    vert_index += 1
 
-            for x in range(len(faces)):
-                b_mesh.faces.add(1)
-                b_mesh.faces[-1].vertices_raw = faces[face_index]
-                face_index += 1
+        faces = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,0,1,5],[7,6,2,3]]
+        face_index = 0
 
-            # link box to scene and set transform
-            b_obj = bpy.data.objects.new('box', b_mesh)
-            bpy.context.scene.objects.link(b_obj)
+        for x in range(len(faces)):
+            b_mesh.faces.add(1)
+            b_mesh.faces[-1].vertices_raw = faces[face_index]
+            face_index += 1
 
-            # set bounds type
-            b_obj.draw_type = 'WIRE'
-            b_obj.draw_bounds_type = 'BOX'
-            b_obj.game.use_collision_bounds = True            
-            b_obj.game.collision_bounds_type = 'BOX'
-            b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices) #todo - calc actual radius
-            
-            #recalculate to ensure mesh functions correctly
-            b_mesh.update()
-            b_mesh.calc_normals()
-            
-            return [ b_obj ]
+        # link box to scene and set transform
+        b_obj = bpy.data.objects.new('box', b_mesh)
+        bpy.context.scene.objects.link(b_obj)
+
+        # set bounds type
+        b_obj.draw_type = 'WIRE'
+        b_obj.draw_bounds_type = 'BOX'
+        b_obj.game.use_collision_bounds = True            
+        b_obj.game.collision_bounds_type = 'BOX'
+        b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices) #todo - calc actual radius
+        
+        #recalculate to ensure mesh functions correctly
+        b_mesh.update()
+        b_mesh.calc_normals()
+        
+        return [ b_obj ]
 
     def import_bhksphere_shape(self, bhkshape, upbflags="", bsxflags=2):
         b_radius = bhkshape.radius * self.nif_common.HAVOK_SCALE
@@ -494,8 +491,6 @@ class collisionhelper():
             hk_objects.append(b_obj)
 
         return hk_objects
-    
-### Export Section ###
 
     def import_bounding_box(self, bbox):
         """Import a bounding box (BSBound, or NiNode with bounding box)."""
@@ -522,6 +517,7 @@ class collisionhelper():
             maxx = bbox.bounding_box.translation.x - bbox.translation.x + bbox.bounding_box.radius.x
             maxy = bbox.bounding_box.translation.y - bbox.translation.y + bbox.bounding_box.radius.y
             maxz = bbox.bounding_box.translation.z - bbox.translation.z + bbox.bounding_box.radius.z
+        
         else:
             raise TypeError("Expected BSBound or NiNode but got %s."
                             % bbox.__class__.__name__)
@@ -558,7 +554,14 @@ class collisionhelper():
         return b_obj
 
 ##Export Section ##
-
+class shape_export():
+    
+    FLOAT_MIN = -3.4028234663852886e+38
+    FLOAT_MAX = +3.4028234663852886e+38
+    
+    def __init__(self, parent):
+        self.nif_common = parent
+    
     def export_collision_helper(self, b_obj, parent_block):
         """Helper function to add collision objects to a node. This function
         exports the rigid body, and calls the appropriate function to export
