@@ -51,7 +51,7 @@ from pyffi.formats.nif import NifFormat
 from pyffi.formats.egm import EgmFormat
 
 from .nif_common import NifCommon
-from .collision import collisionhelper
+from .collisionsys import collision
 
 class NifExportError(Exception):
     """A simple custom exception class for export errors."""
@@ -189,7 +189,7 @@ class NifExport(NifCommon):
         
         #helper systems
         #Store references to subsystems as needed.
-        self.collisionhelper = collisionhelper(parent=self)
+        self.collisionhelper = collsion.shape_export(parent=self)
         
         self.info("exporting {0}".format(self.properties.filepath))
 
@@ -3551,6 +3551,7 @@ class NifExport(NifCommon):
                 "Only Morrowind, Oblivion, and Fallout 3"
                 " collisions are supported, skipped collision object '%s'"
                 % b_obj.name)
+            
     def export_constraints(self, b_obj, root_block):
         """Export the constraints of an object.
 
