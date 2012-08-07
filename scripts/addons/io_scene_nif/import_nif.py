@@ -40,6 +40,7 @@
 from .nif_common import NifCommon
 from .collisionsys.collision import shape_import
 from .armaturesys.skeletal import armature_import
+from .texturesys.texture import texture_import
 
 from functools import reduce 
 import logging
@@ -67,8 +68,7 @@ class NifImport(NifCommon):
     
     def execute(self):
         """Main import function."""
-        # dictionary of texture files, to reuse textures
-        self.textures = {}
+
 
         # dictionary of materials, to reuse materials
         self.materials = {}
@@ -103,6 +103,7 @@ class NifImport(NifCommon):
         #Store references to subsystems as needed.
         self.collisionhelper = shape_import(parent=self)
         self.armaturehelper = armature_import(parent=self)
+		self.texturehelper = texture_import(parent=self)
         
         # catch NifImportError
         try:
@@ -731,169 +732,6 @@ class NifImport(NifCommon):
             constr.name = "priority:%i" % self.bone_priorities[niBlock.name]  
         return b_empty
 
-    def get_texture_hash(self, source):
-        """Helper function for import_texture. Returns a key that uniquely
-        identifies a texture from its source (which is either a
-        NiSourceTexture block, or simply a path string).
-        """
-        if not source:
-            return None
-        elif isinstance(source, NifFormat.NiSourceTexture):
-            return source.get_hash()
-        elif isinstance(source, basestring):
-            return source.lower()
-        else:
-            raise TypeError("source must be NiSourceTexture block or string")
-
-    def import_texture(self, source):
-        """Convert a NiSourceTexture block, or simply a path string,
-        to a Blender Texture object, return the Texture object and
-        stores it in the self.textures dictionary to avoid future
-        duplicate imports.
-        """
-
-        # if the source block is not linked then return None
-        if not source:
-            return None
-
-        # calculate the texture hash key
-        texture_hash = self.get_texture_hash(source)
-
-        try:
-            # look up the texture in the dictionary of imported textures
-            # and return it if found
-            return self.textures[texture_hash]
-        except KeyError:
-            pass
-
-        b_image = None
-        
-        if (isinstance(source, NifFormat.NiSourceTexture)
-            and not source.use_external):
-            # find a file name (but avoid overwriting)
-            n = 0
-            while True:
-                fn = "image%03i.dds" % n
-                tex = os.path.join(
-                    os.path.dirname(self.properties.filepath), fn)
-                if not os.path.exists(tex):
-                    break
-                n += 1
-            if self.IMPORT_EXPORTEMBEDDEDTEXTURES:
-                # save embedded texture as dds file
-                stream = open(tex, "wb")
-                try:
-                    self.info("Saving embedded texture as %s" % tex)
-                    source.pixel_data.save_as_dds(stream)
-                except ValueError:
-                    # value error means that the pixel format is not supported
-                    b_image = None
-                else:
-                    # saving dds succeeded so load the file
-                    b_image = bpy.ops.image.open(tex)
-                    # Blender will return an image object even if the
-                    # file format is not supported,
-                    # so to check if the image is actually loaded an error
-                    # is forced via "b_image.size"
-                    try:
-                        b_image.size
-                    except: # RuntimeError: couldn't load image data in Blender
-                        b_image = None # not supported, delete image object
-                finally:
-                    stream.close()
-            else:
-                b_image = None
-        else:
-            # the texture uses an external image file
-            if isinstance(source, NifFormat.NiSourceTexture):
-                fn = source.file_name.decode()
-            elif isinstance(source, str):
-                fn = source
-            else:
-                raise TypeError(
-                    "source must be NiSourceTexture or str")
-            fn = fn.replace( '\\', os.sep )
-            fn = fn.replace( '/', os.sep )
-            # go searching for it
-            importpath = os.path.dirname(self.properties.filepath)
-            searchPathList = [importpath]
-            if self.context.user_preferences.filepaths.texture_directory:
-                searchPathList.append(
-                    self.context.user_preferences.filepaths.texture_directory)
-            # if it looks like a Morrowind style path, use common sense to
-            # guess texture path
-            meshes_index = importpath.lower().find("meshes")
-            if meshes_index != -1:
-                searchPathList.append(importpath[:meshes_index] + 'textures')
-            # if it looks like a Civilization IV style path, use common sense
-            # to guess texture path
-            art_index = importpath.lower().find("art")
-            if art_index != -1:
-                searchPathList.append(importpath[:art_index] + 'shared')
-            # go through all texture search paths
-            for texdir in searchPathList:
-                texdir = texdir.replace( '\\', os.sep )
-                texdir = texdir.replace( '/', os.sep )
-                # go through all possible file names, try alternate extensions
-                # too; for linux, also try lower case versions of filenames
-                texfns = reduce(operator.add,
-                                [ [ fn[:-4]+ext, fn[:-4].lower()+ext ]
-                                  for ext in ('.DDS','.dds','.PNG','.png',
-                                             '.TGA','.tga','.BMP','.bmp',
-                                             '.JPG','.jpg') ] )
-                texfns = [fn, fn.lower()] + list(set(texfns))
-                for texfn in texfns:
-                    # now a little trick, to satisfy many Morrowind mods
-                    if (texfn[:9].lower() == 'textures' + os.sep) \
-                       and (texdir[-9:].lower() == os.sep + 'textures'):
-                        # strip one of the two 'textures' from the path
-                        tex = os.path.join( texdir[:-9], texfn )
-                    else:
-                        tex = os.path.join( texdir, texfn )
-                    # "ignore case" on linux
-                    tex = bpy.path.resolve_ncase(tex)
-                    self.debug("Searching %s" % tex)
-                    if os.path.exists(tex):
-                        # tries to load the file
-                        b_image = bpy.data.images.load(tex)
-                        # Blender will return an image object even if the
-                        # file format is not supported,
-                        # so to check if the image is actually loaded an error
-                        # is forced via "b_image.size"
-                        try:
-                            b_image.size
-                        except: # RuntimeError: couldn't load image data in Blender
-                            b_image = None # not supported, delete image object
-                        else:
-                            # file format is supported
-                            self.debug("Found '%s' at %s" % (fn, tex))
-                            break
-                if b_image:
-                    break
-            else:
-                tex = os.path.join(searchPathList[0], fn)
-
-        # create a stub image if the image could not be loaded
-        if not b_image:
-            self.warning(
-                "Texture '%s' not found or not supported"
-                " and no alternate available"
-                % fn)
-            b_image = bpy.data.images.new(
-                name=fn, width=1, height=1, alpha=False)
-            # TODO is this still needed? commented out for now
-            #b_image.filepath = tex
-
-        # create a texture
-        b_texture = bpy.data.textures.new(name="Tex", type='IMAGE')
-        b_texture.image = b_image
-        b_texture.use_interpolation = True
-        b_texture.use_mipmap = True
-
-        # save texture to avoid duplicate imports, and return it
-        self.textures[texture_hash] = b_texture
-        return b_texture
-
     def get_material_hash(self, n_mat_prop, n_texture_prop,
                           n_alpha_prop, n_specular_prop,
                           textureEffect, n_wire_prop,
@@ -1018,7 +856,7 @@ class NifImport(NifCommon):
                     continue
                     
             if baseTexDesc:
-                base_texture = self.import_texture(baseTexDesc.source)
+                base_texture = self.texturehelper.import_texture(baseTexDesc.source)
                 if base_texture:
                     b_mat_texslot = b_mat.texture_slots.create(0)
                     b_mat_texslot.texture = base_texture
@@ -1039,7 +877,7 @@ class NifImport(NifCommon):
                     base_texture = b_mat_texslot
                     
             if bumpTexDesc:
-                bump_texture = self.import_texture(bumpTexDesc.source)
+                bump_texture = self.texturehelper.import_texture(bumpTexDesc.source)
                 if bump_texture:
                     b_mat_texslot = b_mat.texture_slots.create(1)
                     b_mat_texslot.texture = bump_texture
@@ -1061,7 +899,7 @@ class NifImport(NifCommon):
                     bump_texture = b_mat_texslot
                     
             if glowTexDesc:
-                glow_texture = self.import_texture(glowTexDesc.source)
+                glow_texture = self.texturehelper.import_texture(glowTexDesc.source)
                 if glow_texture:
                     b_mat_texslot = b_mat.texture_slots.create(2)
                     b_mat_texslot.texture = glow_texture
@@ -1083,7 +921,7 @@ class NifImport(NifCommon):
                     glow_texture = b_mat_texslot
                     
             if glossTexDesc:
-                gloss_texture = self.import_texture(glossTexDesc.source)
+                gloss_texture = self.texturehelper.import_texture(glossTexDesc.source)
                 if gloss_texture:
                     # set the texture to use face UV coordinates
                     texco = 'UV'
@@ -1095,7 +933,7 @@ class NifImport(NifCommon):
                     mgloss_texture.uv_layer = self.get_uv_layer_name(glossTexDesc.uv_set)
             
             if darkTexDesc:
-                dark_texture = self.import_texture(darkTexDesc.source)
+                dark_texture = self.texturehelper.import_texture(darkTexDesc.source)
                 if dark_texture:
                     # set the texture to use face UV coordinates
                     texco = 'UV'
@@ -1109,7 +947,7 @@ class NifImport(NifCommon):
                     mdark_texture.blend_type = 'DARKEN'
             
             if detailTexDesc:
-                detail_texture = self.import_texture(detailTexDesc.source)
+                detail_texture = self.texturehelper.import_texture(detailTexDesc.source)
                 if detail_texture:
                     # import detail texture as extra base texture
                     # set the texture to use face UV coordinates
@@ -1122,7 +960,7 @@ class NifImport(NifCommon):
                     mdetail_texture.uv_layer = self.get_uv_layer_name(detailTexDesc.uv_set)
             
             if refTexDesc:
-                refTexture = self.import_texture(refTexDesc.source)
+                refTexture = self.texturehelper.import_texture(refTexDesc.source)
                 if refTexture:
                     # set the texture to use face UV coordinates
                     texco = 'UV'
@@ -1138,7 +976,7 @@ class NifImport(NifCommon):
             # also contains textures, used in fallout 3
             baseTexFile = bsShaderProperty.texture_set.textures[0]
             if baseTexFile:
-                base_texture = self.import_texture(baseTexFile)
+                base_texture = self.texturehelper.import_texture(baseTexFile)
                 if base_texture:
                     # set the texture to use face UV coordinates
                     texco = 'UV'
@@ -1151,7 +989,7 @@ class NifImport(NifCommon):
 
             glowTexFile = bsShaderProperty.texture_set.textures[2]
             if glowTexFile:
-                glow_texture = self.import_texture(glowTexFile)
+                glow_texture = self.texturehelper.import_texture(glowTexFile)
                 if glow_texture:
                     # glow maps use alpha from rgb intensity
                     glow_texture.use_calculate_alpha = True
@@ -1166,7 +1004,7 @@ class NifImport(NifCommon):
 
             bumpTexFile = bsShaderProperty.texture_set.textures[1]
             if bumpTexFile:
-                bumpTexture = self.import_texture(bumpTexFile)
+                bumpTexture = self.texturehelper.import_texture(bumpTexFile)
                 if bumpTexture:
                     # set the texture to use face UV coordinates
                     texco = 'UV'
@@ -1178,7 +1016,7 @@ class NifImport(NifCommon):
                     mbumpTexture.blend_type = blend_type
 
         if textureEffect:
-            envmapTexture = self.import_texture(textureEffect.source_texture)
+            envmapTexture = self.texturehelper.import_texture(textureEffect.source_texture)
             if envmapTexture:
                 # set the texture to use face reflection coordinates
                 texco = 'REFLECTION'
