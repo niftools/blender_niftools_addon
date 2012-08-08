@@ -103,7 +103,7 @@ class NifImport(NifCommon):
         #Store references to subsystems as needed.
         self.collisionhelper = shape_import(parent=self)
         self.armaturehelper = armature_import(parent=self)
-		self.texturehelper = texture_import(parent=self)
+        self.texturehelper = texture_import(parent=self)
         
         # catch NifImportError
         try:
@@ -741,15 +741,14 @@ class NifImport(NifCommon):
         ignores the material name as that does not affect the
         rendering.
         """
-        return (n_mat_prop.get_hash()[1:] # skip first element, which is name
-                if n_mat_prop else None,
-                n_texture_prop.get_hash()     if n_texture_prop  else None,
-                n_alpha_prop.get_hash()    if n_alpha_prop else None,
-                n_specular_prop.get_hash()     if n_specular_prop  else None,
+        return (n_mat_prop.get_hash()[1:]   if n_mat_prop else None, # skip first element, which is name
+                n_texture_prop.get_hash()   if n_texture_prop  else None,
+                n_alpha_prop.get_hash()     if n_alpha_prop else None,
+                n_specular_prop.get_hash()  if n_specular_prop  else None,
                 textureEffect.get_hash()    if textureEffect else None,
-                n_wire_prop.get_hash()     if n_wire_prop  else None,
+                n_wire_prop.get_hash()      if n_wire_prop  else None,
                 bsShaderProperty.get_hash() if bsShaderProperty else None,
-                tuple(extra.get_hash() for extra in extra_datas))
+                tuple(extra.get_hash()      for extra in extra_datas))
 
     def import_material(self, n_mat_prop, n_texture_prop,
                         n_alpha_prop, n_specular_prop,

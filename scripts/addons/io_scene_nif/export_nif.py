@@ -37,8 +37,6 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from . import nifdebug
-
 import logging
 import os.path
 
