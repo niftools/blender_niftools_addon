@@ -37,6 +37,11 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import os
+import os.path
+from functools import reduce 
+import operator
+
 import bpy
 
 import pyffi
@@ -44,7 +49,7 @@ import pyffi
 class texture_import()
 	# dictionary of texture files, to reuse textures
 	self.textures = {}
-	
+
 	def __init__(self, parent)
 		self.nif_common = parent
 
@@ -57,7 +62,7 @@ class texture_import()
             return None
         elif isinstance(source, NifFormat.NiSourceTexture):
             return source.get_hash()
-        elif isinstance(source, basestring):
+        elif isinstance(source, str):
             return source.lower()
         else:
             raise TypeError("source must be NiSourceTexture block or string")
@@ -100,7 +105,7 @@ class texture_import()
                 # save embedded texture as dds file
                 stream = open(tex, "wb")
                 try:
-                    self.info("Saving embedded texture as %s" % tex)
+                    self.nif_common.info("Saving embedded texture as %s" % tex)
                     source.pixel_data.save_as_dds(stream)
                 except ValueError:
                     # value error means that the pixel format is not supported
@@ -132,11 +137,11 @@ class texture_import()
             fn = fn.replace( '\\', os.sep )
             fn = fn.replace( '/', os.sep )
             # go searching for it
-            importpath = os.path.dirname(self.properties.filepath)
+            importpath = os.path.dirname(self.nif_common.properties.filepath)
             searchPathList = [importpath]
-            if self.context.user_preferences.filepaths.texture_directory:
+            if self.nif_common.context.user_preferences.filepaths.texture_directory:
                 searchPathList.append(
-                    self.context.user_preferences.filepaths.texture_directory)
+                    self.nif_common.context.user_preferences.filepaths.texture_directory)
             # if it looks like a Morrowind style path, use common sense to
             # guess texture path
             meshes_index = importpath.lower().find("meshes")
@@ -169,7 +174,7 @@ class texture_import()
                         tex = os.path.join( texdir, texfn )
                     # "ignore case" on linux
                     tex = bpy.path.resolve_ncase(tex)
-                    self.debug("Searching %s" % tex)
+                    self.nif_common.debug("Searching %s" % tex)
                     if os.path.exists(tex):
                         # tries to load the file
                         b_image = bpy.data.images.load(tex)
@@ -183,7 +188,7 @@ class texture_import()
                             b_image = None # not supported, delete image object
                         else:
                             # file format is supported
-                            self.debug("Found '%s' at %s" % (fn, tex))
+                            self.nif_common.debug("Found '%s' at %s" % (fn, tex))
                             break
                 if b_image:
                     break
@@ -192,7 +197,7 @@ class texture_import()
 
         # create a stub image if the image could not be loaded
         if not b_image:
-            self.warning(
+            self.nif_common.warning(
                 "Texture '%s' not found or not supported"
                 " and no alternate available"
                 % fn)

@@ -1,4 +1,4 @@
-"""Nif import and export scripts."""
+"""Blender Plug-in for Nif import and export."""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -57,8 +57,8 @@ bl_info = {
     "category": "Import-Export"}
 
 try:
-    from . import nifdebug
-    nifdebug.startdebug()
+    from . import nif_debug
+    nif_debug.startdebug()
 except:
     pass
 
