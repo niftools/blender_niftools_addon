@@ -4,16 +4,25 @@
 
 if "%BLENDERADDONS%" == "" goto pleasesetblenderaddons
 
-echo.Installing in
+echo.Installing to:
 echo.%BLENDERADDONS%\io_scene_nif
+
 rem remove old files
 rmdir /s /q "%BLENDERADDONS%\io_scene_nif"
-rem copy files from repository to blender addons folder
-for %%A in ( io_scene_nif, io_scene_nif/collisionsys, io_scene_nif/armaturesys, ) do mkdir "%BLENDERADDONS%\%%A"
+
+rem create root folder
+mkdir "%BLENDERADDONS%\io_scene_nif"
+
+rem add sub-folders
 for %%A in ( 
-__init__.py, nif_common.py, nifdebug.py, export_nif.py, import_nif.py, 
+collisionsys, armaturesys, texturesys, materialsys, ) do mkdir "%BLENDERADDONS%\io_scene_nif\%%A"
+
+rem copy files from repository to blender addons folder
+for %%A in ( 
+__init__.py, 
+nif_common.py, export_nif.py, import_nif.py, nif_debug,
 ui.py, properties.py, operators.py, 
-collisionsys/, armaturesys/, ) do (
+collisionsys, armaturesys, texturesys, materialsys, ) do (
   echo.	%%A
   copy "scripts\addons\io_scene_nif\%%A" "%BLENDERADDONS%\io_scene_nif\%%A"
 )
