@@ -12,6 +12,6 @@ Contents:
 
    ui
    nif_common
-   import_nif
-   export_nif
+   nif_import
+   nif_export
    properties
