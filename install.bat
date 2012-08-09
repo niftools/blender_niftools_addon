@@ -20,7 +20,7 @@ collisionsys, armaturesys, texturesys, materialsys, ) do mkdir "%BLENDERADDONS%\
 rem copy files from repository to blender addons folder
 for %%A in ( 
 __init__.py, 
-nif_common.py, export_nif.py, import_nif.py, nif_debug,
+nif_common.py, nif_export.py, nif_import.py, nif_debug,
 ui.py, properties.py, operators.py, 
 collisionsys, armaturesys, texturesys, materialsys, ) do (
   echo.	%%A

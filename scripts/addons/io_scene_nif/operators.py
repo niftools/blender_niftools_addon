@@ -198,8 +198,8 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
             if area.type =='VIEW_3D':
                 area.spaces[0].viewport_shade = 'TEXTURED'
         
-        from . import import_nif
-        return import_nif.NifImport(self, context).execute()
+        from . import nif_import
+        return nif_import.NifImport(self, context).execute()
 
 def _game_to_enum(game):
     symbols = ":,'\" +-*!?;./="
@@ -316,5 +316,5 @@ class NifExportOperator(bpy.types.Operator, ExportHelper, NifOperatorCommon):
         calls its :meth:`~io_scene_nif.export_nif.NifExport.execute`
         method.
         """
-        from . import export_nif
-        return export_nif.NifExport(self, context).execute()
+        from . import nif_export
+        return nif_export.NifExport(self, context).execute()
