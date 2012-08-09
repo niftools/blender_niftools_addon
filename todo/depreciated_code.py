@@ -1171,7 +1171,68 @@
         #Blender.Window.DrawProgressBar(self.progress_bar, message)
     
 '''    
-    
+
+#nif_import
+        '''
+        diff = n_mat_prop.diffuse_color
+        emit = n_mat_prop.emissive_color
+        
+        
+        # fallout 3 hack: convert diffuse black to emit if emit is not black
+        if diff.r < self.properties.epsilon and diff.g < self.properties.epsilon and diff.b < self.properties.epsilon:
+            if (emit.r + emit.g + emit.b) < self.properties.epsilon:
+                # emit is black... set diffuse color to white
+                diff.r = 1.0
+                diff.g = 1.0
+                diff.b = 1.0
+            else:
+                diff.r = emit.r
+                diff.g = emit.g
+                diff.b = emit.b
+        b_mat.diffuse_color = (diff.r, diff.g, diff.b)
+        b_mat.diffuse_intensity = 1.0
+        
+        # Ambient & emissive color
+        # We assume that ambient & emissive are fractions of the diffuse color.
+        # If it is not an exact fraction, we average out.
+        amb = n_mat_prop.ambient_color
+        # fallout 3 hack:convert ambient black to white and set emit
+        if amb.r < self.properties.epsilon and amb.g < self.properties.epsilon and amb.b < self.properties.epsilon:
+            amb.r = 1.0
+            amb.g = 1.0
+            amb.b = 1.0
+            b_amb = 1.0
+            if (emit.r + emit.g + emit.b) < self.properties.epsilon:
+                b_emit = 0.0
+            else:
+                b_emit = n_mat_prop.emit_multi / 10.0
+        else:
+            b_amb = 0.0
+            b_emit = 0.0
+            b_n = 0
+            if diff.r > self.properties.epsilon:
+                b_amb += amb.r/diff.r
+                b_emit += emit.r/diff.r
+                b_n += 1
+            if diff.g > self.properties.epsilon:
+                b_amb += amb.g/diff.g
+                b_emit += emit.g/diff.g
+                b_n += 1
+            if diff.b > self.properties.epsilon:
+                b_amb += amb.b/diff.b
+                b_emit += emit.b/diff.b
+                b_n += 1
+            if b_n > 0:
+                b_amb /= b_n
+                b_emit /= b_n
+        if b_amb > 1.0:
+            b_amb = 1.0
+        if b_emit > 1.0:
+            b_emit = 1.0
+        b_mat.ambient = b_amb
+        b_mat.emit = b_emit
+        '''
+
 #export
 
 #nif_common
@@ -1214,7 +1275,7 @@
 
 #collisionhelper
 '''
-'''Customs User Properties'''
+#Customs User Properties
         
         # copy physics properties from Blender properties, if they exist,
         # unless forcing override

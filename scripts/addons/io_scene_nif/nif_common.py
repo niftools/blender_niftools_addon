@@ -237,24 +237,6 @@ class NifCommon:
             "Unsupported interpolation mode in blend, using quadratic/bezier.")
         return NifFormat.KeyType.QUADRATIC_KEY
 
-    def get_b_blend_type_from_n_apply_mode(self, n_apply_mode):
-        #TODO - Check out n_apply_modes
-        if n_apply_mode == NifFormat.ApplyMode.APPLY_MODULATE:
-            return "MIX"
-        #TODO - These seem unsupported by Blender, check
-        elif n_apply_mode == NifFormat.ApplyMode.APPLY_REPLACE:
-            return "MIX"
-        elif n_apply_mode == NifFormat.ApplyMode.APPLY_DECAL:
-            return "MIX"
-        elif n_apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT:
-            return "LIGHTEN"
-        elif n_apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT2: #used by Oblivion for parallax
-            return "MULTIPLY"
-        self.warning(
-            "Unknown apply mode (%i) in material,"
-            " using blend type 'MIX'" % n_apply_mode)
-        return "MIX"
-
     def get_n_apply_mode_from_b_blend_type(self, b_blend_type):
         if b_blend_type == "LIGHTEN":
             return NifFormat.ApplyMode.APPLY_HILIGHT
