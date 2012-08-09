@@ -45,7 +45,7 @@ import pyffi
 from pyffi.formats.nif import NifFormat
 from pyffi.formats.egm import EgmFormat
 
-from . import export_nif, import_nif
+from . import nif_export, nif_import
 
 class NifOperatorCommon:
     """Abstract base class for import and export user interface."""
@@ -187,8 +187,8 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
 
     def execute(self, context):
         """Execute the import operator: first constructs a
-        :class:`~io_scene_nif.import_nif.NifImport` instance and then
-        calls its :meth:`~io_scene_nif.import_nif.NifImport.execute`
+        :class:`~io_scene_nif.nif_import.NifImport` instance and then
+        calls its :meth:`~io_scene_nif.nif_import.NifImport.execute`
         method.
         """
         
@@ -312,8 +312,8 @@ class NifExportOperator(bpy.types.Operator, ExportHelper, NifOperatorCommon):
 
     def execute(self, context):
         """Execute the export operator: first constructs a
-        :class:`~io_scene_nif.export_nif.NifExport` instance and then
-        calls its :meth:`~io_scene_nif.export_nif.NifExport.execute`
+        :class:`~io_scene_nif.nif_export.NifExport` instance and then
+        calls its :meth:`~io_scene_nif.nif_export.NifExport.execute`
         method.
         """
         from . import nif_export
