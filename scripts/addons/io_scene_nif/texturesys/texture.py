@@ -37,7 +37,6 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import os
 import os.path
 from functools import reduce 
 import operator

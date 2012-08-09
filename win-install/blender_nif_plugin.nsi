@@ -234,13 +234,34 @@ Section
 
   ; Install scripts
   SetOutPath "$BLENDERADDONS\io_scene_nif\"
-  File ..\scripts\addons\io_scene_nif\export_nif.py
-  File ..\scripts\addons\io_scene_nif\import_nif.py
+  CreateDirectory "$BLENDERADDONS\io_scene_nif\armaturesys\"
+  CreateDirectory "$BLENDERADDONS\io_scene_nif\collisionsys\"
+  CreateDirectory "$BLENDERADDONS\io_scene_nif\materialsys\"
+  CreateDirectory "$BLENDERADDONS\io_scene_nif\texturesys\"
+  CreateDirectory "$BLENDERADDONS\io_scene_nif\nif_debug\"
+  
+  File ..\scripts\addons\io_scene_nif\armaturesys\__init__.py
+  File ..\scripts\addons\io_scene_nif\armaturesys\skeletal.py
+  
+  File ..\scripts\addons\io_scene_nif\collisionsys\__init__.py
+  File ..\scripts\addons\io_scene_nif\collisionsys\collision.py
+  
+  File ..\scripts\addons\io_scene_nif\materialsys\__init__.py
+  File ..\scripts\addons\io_scene_nif\materialsys\material.py
+  
+  File ..\scripts\addons\io_scene_nif\texturesys\__init__.py
+  File ..\scripts\addons\io_scene_nif\texturesys\texture.py
+  
+  File ..\scripts\addons\io_scene_nif\nif_debug\__init__.py
+  
+  File ..\scripts\addons\io_scene_nif\__init__.py
   File ..\scripts\addons\io_scene_nif\nif_common.py
+  File ..\scripts\addons\io_scene_nif\nif_export.py
+  File ..\scripts\addons\io_scene_nif\nif_import.py
   File ..\scripts\addons\io_scene_nif\operators.py
   File ..\scripts\addons\io_scene_nif\ui.py
   File ..\scripts\addons\io_scene_nif\properties.py
-  File ..\scripts\addons\io_scene_nif\__init__.py
+  
 
   ; Install documentation files
   SetOutPath $INSTDIR
@@ -252,27 +273,27 @@ Section
   File /r ..\docs\_build\html
 
   ; Remove old shortcuts
-  Delete "$SMPROGRAMS\NifTools\Blender NIF Scripts\*.lnk"
+  Delete "$SMPROGRAMS\NifTools\Blender NIF Plugin\*.lnk"
 
   ; Install shortcuts
-  CreateDirectory "$SMPROGRAMS\NifTools\Blender NIF Scripts\"
-  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Readme.lnk" "$INSTDIR\README.txt"
-  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\ChangeLog.lnk" "$INSTDIR\CHANGELOG.txt"
-  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\User Documentation.lnk" "http://niftools.sourceforge.net/wiki/Blender"
-  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Developer Documentation.lnk" "$INSTDIR\docs\index.html"
-  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Bug Reports.lnk" "http://sourceforge.net/tracker/?group_id=149157&atid=776343"
-  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Feature Requests.lnk" "http://sourceforge.net/tracker/?group_id=149157&atid=776346"
-  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Forum.lnk" "http://niftools.sourceforge.net/forum/"
-  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Copyright.lnk" "$INSTDIR\LICENSE.txt"
-  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Scripts\Uninstall.lnk" "$INSTDIR\uninstall.exe"
+  CreateDirectory "$SMPROGRAMS\NifTools\Blender NIF Plugin\"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Plugin\Readme.lnk" "$INSTDIR\README.txt"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Plugin\ChangeLog.lnk" "$INSTDIR\CHANGELOG.txt"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Plugin\User Documentation.lnk" "http://niftools.sourceforge.net/wiki/Blender"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Plugin\Developer Documentation.lnk" "$INSTDIR\docs\index.html"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Plugin\Bug Reports.lnk" "http://sourceforge.net/tracker/?group_id=149157&atid=776343"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Plugin\Feature Requests.lnk" "http://sourceforge.net/tracker/?group_id=149157&atid=776346"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Plugin\Forum.lnk" "http://niftools.sourceforge.net/forum/"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Plugin\Copyright.lnk" "$INSTDIR\LICENSE.txt"
+  CreateShortCut "$SMPROGRAMS\NifTools\Blender NIF Plugin\Uninstall.lnk" "$INSTDIR\uninstall.exe"
 
   ; Write the installation path into the registry
   WriteRegStr HKLM SOFTWARE\BlenderNIFScripts "Install_Dir" "$INSTDIR"
   WriteRegStr HKLM SOFTWARE\BlenderNIFScripts "Data_Dir" "$BLENDERADDONS"
 
   ; Write the uninstall keys & uninstaller for Windows
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BlenderNIFScripts" "DisplayName" "Blender NIF Scripts (remove only)"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BlenderNIFScripts" "UninstallString" "$INSTDIR\uninstall.exe"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BlenderNIFPlugin" "DisplayName" "Blender NIF Scripts (remove only)"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BlenderNIFPlugin" "UninstallString" "$INSTDIR\uninstall.exe"
   SetOutPath $INSTDIR
   WriteUninstaller "uninstall.exe"
 SectionEnd
@@ -285,8 +306,8 @@ Section "Uninstall"
   ReadRegStr $BLENDERADDONS HKLM SOFTWARE\BlenderNIFScripts "Data_Dir"
 
   ; remove registry keys
-  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BlenderNIFScripts"
-  DeleteRegKey HKLM "SOFTWARE\BlenderNIFScripts"
+  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\BlenderNIFPlugin"
+  DeleteRegKey HKLM "SOFTWARE\BlenderNIFPlugin"
 
   ; remove script files
   RMDir /r "$BLENDERADDONS\io_scene_nif\"

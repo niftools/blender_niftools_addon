@@ -1427,9 +1427,9 @@ class NifImport(NifCommon):
             constr.name = "priority:%i" % self.bone_priorities[niBlock.name]
         
         #recalculate to ensure mesh functions correctly
-        b_mesh.update()
         b_mesh.calc_normals()
-
+        b_mesh.update()
+        
         return b_obj
 
     # import animation groups
