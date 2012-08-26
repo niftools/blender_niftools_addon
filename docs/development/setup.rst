@@ -57,11 +57,19 @@ Auto CLRF
 
 We need to ensure consistancy between end-of-file(EOF) markers. This avoid excess commits where the enviroment automatically adds the EOF.
 Read `EOF <http://en.wikipedia.org/wiki/Newline>`_.
-We also enable the input flag, this autochecks any external source file introduced into the repo::
+For Windows-style line endings, use::
 
    git config --global core.autocrlf true
+
+For Unix-style line endings, use::
+
    git config --global core.autocrlf input
 
+Either option ensures that all commits in the git history
+will be stored using Unix-style endings,
+and that all checkouts (i.e. actual files)
+will have consistent line endings
+according to your operating system.
 
 Create a Github Fork
 --------------------
