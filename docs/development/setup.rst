@@ -145,7 +145,7 @@ Now right-click this newly created shortcut, and change **Target** into
 
    %comspec% /k "C:\Documents and Settings\<username>\workspace\buildenv\buildenv.bat" -pythonpath@C:\Python32 -workfolder@workspace -arch@64
 
-On 32 bit systems, type ``32`` instead of ``64``.
+On 32 bit systems, type ``-arch@32`` instead of ``-arch@64``.
 
 Install Setuptools
 ------------------
