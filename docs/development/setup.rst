@@ -161,6 +161,7 @@ Setuptools makes it easy to install various Python modules.
 Save `distribute_setup.py <http://python-distribute.org/distribute_setup.py>`_ in your ``workspace`` folder.
 
 **Windows** 
+
 Use the Build environment shortcut you just created to open the command prompt::
 
    python distribute_setup.py
