@@ -24,7 +24,7 @@ Install Python 3.2
 
 **Windows**
 
-#. Download `Python 3.2 <http://www.python.org/download/releases/3.2.2/>`_ - **32-bit only supported**.
+#. Download `Python 3.2 <http://www.python.org/download/releases/3.2.3/>`_ - **32-bit only supported**. 
 
 #. Pick the installer appropriate for your platform, and follow the instructions.
 
@@ -63,11 +63,19 @@ Auto CLRF
 * This avoids excess commits where the enviroment automatically adds the EOF.
 * Git will think that the whole file has been edited.
 * Read `EOF <http://en.wikipedia.org/wiki/Newline>`_.
-* We also enable the input flag, this autochecks any external source file introduced into the repo::
+* For Windows-style line endings, use::
 
-   git config --global core.autocrlf true
-   git config --global core.autocrlf input
+    git config --global core.autocrlf true
 
+  For Unix-style line endings, use::
+
+    git config --global core.autocrlf input
+
+  Either option ensures that all commits in the git history
+  will be stored using Unix-style endings,
+  and that all checkouts (i.e. actual files)
+  will have consistent line endings
+  according to your operating system.
 
 Create a Github Fork
 --------------------
@@ -104,23 +112,26 @@ To get the code, run in a terminal (linux) or in git bash (windows)::
 
 Optional remote tracking::
    
-   git remote add aaron1178 git://github.com/aaron1178/blender_nif_plugin.git
-   git remote add ghost git://github.com/ghostwalker71/blender_nif_plugin.git
+   git remote add aaron1178 git://github.com/Aaron1178/blender_nif_plugin.git
+   git remote add ghost git://github.com/Ghostwalker71/blender_nif_plugin.git
+   git remote add amorilia git://github.com/amorilia/blender_nif_plugin.git
 
 Install Build Environment Batch Script
 --------------------------------------
+
 .. note::
+
    * The build enviroment creates a command line window which detects requirements and sets the pathing information. 
-   * It is used to develop any Niftool application on Windows.
-   * The script will attempt to auto-detect paths but it is better to set them by setting parametres -flag@value.
-   * For more information, read the ReadMe.rst file provided with the repository.
+   * It is used to develop any NifTools application on Windows.
+   * The script will attempt to auto-detect paths but it is better to set them by setting parameters ``-flag@value``.
+   * For more information, read the :file:`README.rst` file provided with the repository.
    
 **Windows**
 
 Get the build environment batch script::
 
    cd workspace
-   git clone git://github.com/neomonkeus/buildenv
+   git clone git://github.com/neomonkeus/buildenv.git
 
 Right-click on the ``buildenv.bat`` file, and select **Send to > Desktop (create shortcut)**.
 
@@ -134,7 +145,7 @@ Now right-click this newly created shortcut, and change **Target** into
 
    %comspec% /k "C:\Documents and Settings\<username>\workspace\buildenv\buildenv.bat" -pythonpath@C:\Python32 -workfolder@workspace -arch@64
 
-On 32 bit systems, type ``32`` instead of ``64``.
+On 32 bit systems, type ``-arch@32`` instead of ``-arch@64``.
 
 Install Setuptools
 ------------------
@@ -150,6 +161,7 @@ Setuptools makes it easy to install various Python modules.
 Save `distribute_setup.py <http://python-distribute.org/distribute_setup.py>`_ in your ``workspace`` folder.
 
 **Windows** 
+
 Use the Build environment shortcut you just created to open the command prompt::
 
    python distribute_setup.py
