@@ -118,11 +118,13 @@ Optional remote tracking::
 
 Install Build Environment Batch Script
 --------------------------------------
+
 .. note::
+
    * The build enviroment creates a command line window which detects requirements and sets the pathing information. 
-   * It is used to develop any Niftool application on Windows.
-   * The script will attempt to auto-detect paths but it is better to set them by setting parametres -flag@value.
-   * For more information, read the ReadMe.rst file provided with the repository.
+   * It is used to develop any NifTools application on Windows.
+   * The script will attempt to auto-detect paths but it is better to set them by setting parameters ``-flag@value``.
+   * For more information, read the :file:`README.rst` file provided with the repository.
    
 **Windows**
 
