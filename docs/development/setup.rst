@@ -131,7 +131,7 @@ Install Build Environment Batch Script
 Get the build environment batch script::
 
    cd workspace
-   git clone git://github.com/neomonkeus/buildenv
+   git clone git://github.com/neomonkeus/buildenv.git
 
 Right-click on the ``buildenv.bat`` file, and select **Send to > Desktop (create shortcut)**.
 
