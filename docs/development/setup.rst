@@ -24,7 +24,7 @@ Install Python 3.2
 
 **Windows**
 
-#. Download `Python 3.2 <http://www.python.org/download/releases/3.2.2/>`_ - **32-bit only supported**.
+#. Download `Python 3.2 <http://www.python.org/download/releases/3.2.3/>`_ - **32-bit only supported**. 
 
 #. Pick the installer appropriate for your platform, and follow the instructions.
 
@@ -63,11 +63,19 @@ Auto CLRF
 * This avoids excess commits where the enviroment automatically adds the EOF.
 * Git will think that the whole file has been edited.
 * Read `EOF <http://en.wikipedia.org/wiki/Newline>`_.
-* We also enable the input flag, this autochecks any external source file introduced into the repo::
+* For Windows-style line endings, use::
 
-   git config --global core.autocrlf true
-   git config --global core.autocrlf input
+    git config --global core.autocrlf true
 
+  For Unix-style line endings, use::
+
+    git config --global core.autocrlf input
+
+  Either option ensures that all commits in the git history
+  will be stored using Unix-style endings,
+  and that all checkouts (i.e. actual files)
+  will have consistent line endings
+  according to your operating system.
 
 Create a Github Fork
 --------------------
