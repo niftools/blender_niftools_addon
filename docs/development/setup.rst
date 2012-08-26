@@ -114,6 +114,7 @@ Optional remote tracking::
    
    git remote add aaron1178 git://github.com/Aaron1178/blender_nif_plugin.git
    git remote add ghost git://github.com/Ghostwalker71/blender_nif_plugin.git
+   git remote add amorilia git://github.com/amorilia/blender_nif_plugin.git
 
 Install Build Environment Batch Script
 --------------------------------------
