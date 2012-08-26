@@ -80,7 +80,7 @@ Auto CLRF
 Create a Github Fork
 --------------------
 
-If you intend to work on the Blender nif scripts, first, you should
+If you intend to work on the Blender nif plugin, first, you should
 clone the code on github.
 
 #. If you do not have one yet, `create a github account
@@ -91,7 +91,7 @@ clone the code on github.
 
 #. `Log in <https://github.com/login>`_ on github.
 
-#. Visit the `blender nif scripts mothership repository
+#. Visit the `blender nif plugin mothership repository
    <https://github.com/neomonkeus/blender_nif_plugin>`_.
 
 #. Click **Fork** (top right corner).
@@ -192,7 +192,7 @@ Install Sphinx and Nose
 Install PyFFI
 -------------
 
-The blender nif scripts require pyffi. You will need to get a
+The blender nif plugin require pyffi. You will need to get a
 version of pyffi that works with blender::
 
    cd workspace
@@ -337,7 +337,7 @@ Start the Pydev server.
 * If Eclipse is installed in a different folder, or each time Pydev updated.
 * Edit PYDEV_SOURCE_DIR
 
-When the scripts load it will attempt to connect the internal server to the eclipses server.
+When the plugin loads it will attempt to connect the internal server to the eclipses server.
 
 Launching Blender from PyDev
 ````````````````````````````
