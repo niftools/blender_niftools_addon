@@ -1,8 +1,8 @@
 """Package for regression testing of the blender nif scripts."""
 
 import bpy
-import io_scene_nif.import_nif
-import io_scene_nif.export_nif
+import io_scene_nif.nif_import
+import io_scene_nif.nif_export
 
 from pyffi.formats.nif import NifFormat
 
