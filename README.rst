@@ -1,4 +1,4 @@
-The Blender NIF scripts enable Blender to import and export NIF files.
+The Blender NIF plugin enables Blender to import and export NIF files.
 
 Requirements
 ------------
@@ -9,8 +9,8 @@ Requirements
 Fork
 ----
 
-* git clone git://github.com/amorilia/blender_nif_scripts.git
-* http://github.com/amorilia/blender_nif_scripts
+* git clone git://github.com/neomonkeus/blender_nif_plugin.git
+* http://github.com/neomonkeus/blender_nif_plugin
 
 Download
 --------
@@ -24,7 +24,7 @@ Documentation
 
    Adds link to generated documentation.
 
-* `changelog <http://github.com/amorilia/blender_nif_scripts/raw/master/CHANGELOG.rst>`_
+* `changelog <http://github.com/neomonkeus/blender_nif_plugin/raw/master/CHANGELOG.rst>`_
 * `wiki <http://niftools.sourceforge.net/wiki/Blender>`_
 
 Support
