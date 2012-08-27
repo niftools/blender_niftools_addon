@@ -24,7 +24,7 @@ Install Python 3.2
 
 **Windows**
 
-#. Download `Python 3.2 <http://www.python.org/download/releases/3.2.3/>`_ - **32-bit only supported**. 
+#. Download `Python 3.2 <http://www.python.org/download/releases/3.2.3/>`_.
 
 #. Pick the installer appropriate for your platform, and follow the instructions.
 
@@ -80,7 +80,7 @@ Auto CLRF
 Create a Github Fork
 --------------------
 
-If you intend to work on the Blender nif scripts, first, you should
+If you intend to work on the Blender nif plugin, first, you should
 clone the code on github.
 
 #. If you do not have one yet, `create a github account
@@ -91,7 +91,7 @@ clone the code on github.
 
 #. `Log in <https://github.com/login>`_ on github.
 
-#. Visit the `blender nif scripts mothership repository
+#. Visit the `blender nif plugin mothership repository
    <https://github.com/neomonkeus/blender_nif_plugin>`_.
 
 #. Click **Fork** (top right corner).
@@ -147,52 +147,55 @@ Now right-click this newly created shortcut, and change **Target** into
 
 On 32 bit systems, type ``-arch@32`` instead of ``-arch@64``.
 
-Install Setuptools
-------------------
+Install Pip
+-----------
 
-Setuptools makes it easy to install various Python modules.
+Pip makes it easy to install various Python modules.
 
 **Fedora**::
 
-   sudo yum install python3-tools
+   sudo yum install python3-pip
 
 **Ubuntu/Windows**
 
-Save `distribute_setup.py <http://python-distribute.org/distribute_setup.py>`_ in your ``workspace`` folder.
+Save `distribute_setup.py <http://python-distribute.org/distribute_setup.py>`_
+and `get-pip.py <https://raw.github.com/pypa/pip/master/contrib/get-pip.py>`_
+in your ``workspace`` folder.
 
 **Windows** 
 
 Use the Build environment shortcut you just created to open the command prompt::
 
    python distribute_setup.py
+   python get-pip.py
 
 **Ubuntu**::
 
    cd ~/workfolder
    python3.2 distribute_setup.py
+   python3.2 get-pip.py
    
 Install Sphinx and Nose
 -----------------------
 
 **Windows** run in buildenv::
 
-   easy_install-3.2 Sphinx
-   easy_install-3.2 nose
+   pip-3.2 install Sphinx --target="%APPDATABLENDERADDONS%\modules"
+   pip-3.2 install nose --target="%APPDATABLENDERADDONS%\modules"
 
 **Ubuntu** run in a terminal::
 
-   easy_install install Sphinx
-   easy_install install nose
+   pip install Sphinx
+   pip install nose
    
 **Fedora** run in a terminal::
 
-   easy_install-3.2 --user Sphinx
-   sudo yum install python3-nose
+   sudo yum install python3-nose python3-sphinx
 
 Install PyFFI
 -------------
 
-The blender nif scripts require pyffi. You will need to get a
+The blender nif plugin require pyffi. You will need to get a
 version of pyffi that works with blender::
 
    cd workspace
@@ -201,7 +204,7 @@ version of pyffi that works with blender::
 **Windows** run in buildenv::
 
    cd /pyffi
-   python setup.py install
+   pip-3.2 install . --target="%APPDATABLENDERADDONS%\modules"
   
 **Ubuntu** run in a terminal::
    
@@ -213,24 +216,15 @@ version of pyffi that works with blender::
    cd ~/workspace/pyffi
    python3 setup.py install --user
 
-Update Blender Python and Check Installation
---------------------------------------------
-
-**Windows**
-
-* You need to copy your entire ``C:\Python32\Lib\site-packages`` folder to ``C:\Program Files\Blender Foundation\Blender\<version>\python\lib\site-packages``.
-
-There is a script that does this for you in buildenv::
-
-   cd blender_nif_plugin
-   copy-site-packages-to-blender.bat
+Check Installation
+------------------
 
 Now, to check that everything is installed correctly, start blender, open a Python console,
 and type::
 
-   import site
    import pyffi
    import sphinx
+   import nose
 
 You should not get any import errors.
 
@@ -337,7 +331,7 @@ Start the Pydev server.
 * If Eclipse is installed in a different folder, or each time Pydev updated.
 * Edit PYDEV_SOURCE_DIR
 
-When the scripts load it will attempt to connect the internal server to the eclipses server.
+When the plugin loads it will attempt to connect the internal server to the eclipses server.
 
 Launching Blender from PyDev
 ````````````````````````````
