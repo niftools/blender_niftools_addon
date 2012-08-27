@@ -24,7 +24,7 @@ Install Python 3.2
 
 **Windows**
 
-#. Download `Python 3.2 <http://www.python.org/download/releases/3.2.3/>`_ - **32-bit only supported**. 
+#. Download `Python 3.2 <http://www.python.org/download/releases/3.2.3/>`_.
 
 #. Pick the installer appropriate for your platform, and follow the instructions.
 
