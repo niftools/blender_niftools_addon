@@ -167,13 +167,13 @@ in your ``workspace`` folder.
 Use the Build environment shortcut you just created to open the command prompt::
 
    python distribute_setup.py
-   python get_pip.py
+   python get-pip.py
 
 **Ubuntu**::
 
    cd ~/workfolder
    python3.2 distribute_setup.py
-   python3.2 get_pip.py
+   python3.2 get-pip.py
    
 Install Sphinx and Nose
 -----------------------
@@ -204,7 +204,7 @@ version of pyffi that works with blender::
 **Windows** run in buildenv::
 
    cd /pyffi
-   pip install . --target="%APPDATABLENDERADDONS%\modules"
+   pip-3.2 install . --target="%APPDATABLENDERADDONS%\modules"
   
 **Ubuntu** run in a terminal::
    
