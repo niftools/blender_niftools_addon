@@ -112,7 +112,7 @@ To get the code, run in a terminal (linux) or in git bash (windows)::
 
 Optional remote tracking::
    
-   git remote add aaron1178 git://github.com/Aaron1178/blender_nif_plugin.git
+   git remote add aaron git://github.com/Aaron1178/blender_nif_plugin.git
    git remote add ghost git://github.com/Ghostwalker71/blender_nif_plugin.git
    git remote add amorilia git://github.com/amorilia/blender_nif_plugin.git
 
@@ -172,8 +172,8 @@ Use the Build environment shortcut you just created to open the command prompt::
 **Ubuntu**::
 
    cd ~/workfolder
-   python3.2 distribute_setup.py
-   python3.2 get-pip.py
+   sudo python3.2 distribute_setup.py
+   sudo python3.2 get-pip.py
    
 Install Sphinx and Nose
 -----------------------
@@ -185,8 +185,8 @@ Install Sphinx and Nose
 
 **Ubuntu** run in a terminal::
 
-   pip install Sphinx
-   pip install nose
+   pip-3.2 install Sphinx --user
+   pip-3.2 install nose --user
    
 **Fedora** run in a terminal::
 
@@ -209,12 +209,12 @@ version of pyffi that works with blender::
 **Ubuntu** run in a terminal::
    
    cd ~/workspace/pyffi
-   python3 setup.py install --user
+   pip-3.2 install . --user
 
 **Fedora** run in a terminal::
 
    cd ~/workspace/pyffi
-   python3 setup.py install --user
+   pip-python3 install . --user
 
 Check Installation
 ------------------
@@ -222,6 +222,7 @@ Check Installation
 Now, to check that everything is installed correctly, start blender, open a Python console,
 and type::
 
+   import site
    import pyffi
    import sphinx
    import nose
