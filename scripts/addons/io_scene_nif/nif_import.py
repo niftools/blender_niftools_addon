@@ -453,7 +453,7 @@ class NifImport(NifCommon):
                     if not niBlock.has_bounding_box:
                         b_obj = self.import_empty(niBlock)
                     else:
-                        b_obj = self.collisonhelper.import_bounding_box(niBlock)
+                        b_obj = self.collisionhelper.import_bounding_box(niBlock)
                     geom_group = []
                 else:
                     # node groups geometries, so import it as a mesh
