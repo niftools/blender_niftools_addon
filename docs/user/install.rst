@@ -91,26 +91,26 @@ Install PyFFI
 
 2. Run the installer and follow the instructions.
 
-Install Blender Nif Scripts
----------------------------
+Install Blender Nif Plugin
+--------------------------
 
 .. warning::
 
-   This section is a stub, the scripts aren't released yet.
+   This section is a stub, the plugin is not released yet.
 
 Windows
 ~~~~~~~
 
-1. Download the `blender nif scripts .exe release
-   <http://sourceforge.net/projects/niftools/files/blender_nif_scripts/>`_.
+1. Download the `blender nif plugin .exe release
+   <http://sourceforge.net/projects/niftools/files/blender_nif_plugin/>`_.
 
 2. Run the installer and follow the instructions.
 
 Fedora
 ~~~~~~
 
-1. Download the `blender nif scripts .zip release
-   <http://sourceforge.net/projects/niftools/files/blender_nif_scripts/>`_
+1. Download the `blender nif plugin .zip release
+   <http://sourceforge.net/projects/niftools/files/blender_nif_plugin/>`_
    and unzip it somewhere.
 
 2. Run the ``install.sh`` script.
