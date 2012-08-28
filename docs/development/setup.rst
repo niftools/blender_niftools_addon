@@ -183,6 +183,13 @@ Install Sphinx and Nose
    pip-3.2 install Sphinx --target="%APPDATABLENDERADDONS%\modules"
    pip-3.2 install nose --target="%APPDATABLENDERADDONS%\modules"
 
+.. note::
+
+   For Blender 2.62, omit the modules part of the install path::
+
+     pip-3.2 install Sphinx --target="%APPDATABLENDERADDONS%"
+     pip-3.2 install nose --target="%APPDATABLENDERADDONS%"
+
 **Ubuntu** run in a terminal::
 
    pip install Sphinx
@@ -206,6 +213,12 @@ version of pyffi that works with blender::
    cd /pyffi
    pip-3.2 install . --target="%APPDATABLENDERADDONS%\modules"
   
+.. note::
+
+   For Blender 2.62, omit the modules part of the install path::
+
+     pip-3.2 install . --target="%APPDATABLENDERADDONS%"
+
 **Ubuntu** run in a terminal::
    
    cd ~/workspace/pyffi
