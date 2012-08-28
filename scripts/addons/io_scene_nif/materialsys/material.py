@@ -378,7 +378,7 @@ class material_import():
         # Alpha
         if n_alpha_prop:
             if(n_mat_prop.alpha < 1.0):
-                self.nif.common.debug("Alpha prop detected")
+                self.nif_common.debug("Alpha prop detected")
                 b_mat.use_transparency = True 
                 b_mat.alpha = n_mat_prop.alpha
                 b_mat.transparency_method = 'Z_TRANSPARENCY'  # enable z-buffered transparency
