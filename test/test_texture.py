@@ -14,7 +14,7 @@ import bpy
 import nose.tools
 import os
 
-import io_scene_nif.export_nif
+import io_scene_nif.nif_export
 from pyffi.formats.nif import NifFormat
 from test.test_property import TestMaterialProperty
 
