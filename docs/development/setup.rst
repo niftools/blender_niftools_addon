@@ -112,7 +112,7 @@ To get the code, run in a terminal (linux) or in git bash (windows)::
 
 Optional remote tracking::
    
-   git remote add aaron1178 git://github.com/Aaron1178/blender_nif_plugin.git
+   git remote add aaron git://github.com/Aaron1178/blender_nif_plugin.git
    git remote add ghost git://github.com/Ghostwalker71/blender_nif_plugin.git
    git remote add amorilia git://github.com/amorilia/blender_nif_plugin.git
 
