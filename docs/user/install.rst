@@ -14,7 +14,7 @@ Windows
    The recommended procedure for installing concurrently with the
    old 2.49b version of blender is:
 
-   1. Uninstall all versions of blender that you have installed already
+   #. Uninstall all versions of blender that you have installed already
       (2.4x *and* 2.5x versions):
 
       * Uninstall them via the control panel.
@@ -23,16 +23,16 @@ Windows
         search your ``Program Files`` folder for any traces of Blender
         and wipe them out.
 
-   2. Download the 
+   #. Download the 
       `old blender 2.49b .exe installer
       <http://download.blender.org/release/Blender2.49b/blender-2.49b-windows.exe>`_
       and install it **in a non-default folder**, such as
       ``C:\Program Files\Blender Foundation\Blender 2.49b``.
 
-   3. Install the `old blender nif scripts
+   #. Install the `old blender nif scripts
       <http://sourceforge.net/projects/niftools/files/blender_nif_scripts/2.5.x/>`_.
 
-   4. Install the latest version of blender, as described below.
+   #. Install the latest version of blender, as described below.
 
 Download the
 `blender .exe installer <http://www.blender.org/download/get-blender/>`_
@@ -86,52 +86,52 @@ Install PyFFI
 
    This section is a stub, pyffi for py3k isn't released yet.
 
-1. Download the `pyffi .exe release
+#. Download the `pyffi .exe release
    <http://sourceforge.net/projects/pyffi/files/pyffi-py3k/>`_.
 
-2. Run the installer and follow the instructions.
+#. Run the installer and follow the instructions.
 
-Install Blender Nif Scripts
----------------------------
+Install Blender Nif Plugin
+--------------------------
 
 .. warning::
 
-   This section is a stub, the scripts aren't released yet.
+   This section is a stub, the plugin is not released yet.
 
 Windows
 ~~~~~~~
 
-1. Download the `blender nif scripts .exe release
-   <http://sourceforge.net/projects/niftools/files/blender_nif_scripts/>`_.
+#. Download the `blender nif plugin .exe release
+   <http://sourceforge.net/projects/niftools/files/blender_nif_plugin/>`_.
 
-2. Run the installer and follow the instructions.
+#. Run the installer and follow the instructions.
 
 Fedora
 ~~~~~~
 
-1. Download the `blender nif scripts .zip release
-   <http://sourceforge.net/projects/niftools/files/blender_nif_scripts/>`_
+#. Download the `blender nif plugin .zip release
+   <http://sourceforge.net/projects/niftools/files/blender_nif_plugin/>`_
    and unzip it somewhere.
 
-2. Run the ``install.sh`` script.
+#. Run the ``install.sh`` script.
 
 Register the Addon
 ------------------
 
-# Start blender.
+#. Start blender.
 
-# Go to: **File > User Preferences > Add-Ons**.
+#. Go to: **File > User Preferences > Add-Ons**.
 
-# Under **Categories** (left), select **Import-Export**.
+#. Under **Categories** (left), select **Import-Export**.
 
-# Tick the empty box next to **Import-Export: NetImmerse/Gambryo nif format**.
+#. Tick the empty box next to **Import-Export: NetImmerse/Gambryo nif format**.
    You may have to scroll down a bit first.
 
-# Close the **Blender User Preferences** window.
+#. Close the **Blender User Preferences** window.
 
-6. The nif importer and exporter should now show under
+#. The nif importer and exporter should now show under
    **File > Import** and **File > Export**.
 
-# Do: **File > Save User Settings** (unless you enjoy enabling the
+#. Do: **File > Save User Settings** (unless you enjoy enabling the
    addon every time when blender starts :-) ).
 
