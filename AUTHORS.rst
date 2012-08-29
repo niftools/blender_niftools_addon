@@ -1,6 +1,7 @@
 Current developers
 ------------------
 
+* Amorilia (amorilia@users.sourceforge.net)
 * Neomonkeus (neomonkeus@users.sourceforge.net)
 * Ghostwalker71 ()
 * Aaron1178(aaron1178@gmail.com)
@@ -8,7 +9,6 @@ Current developers
 Former developers
 -----------------
 
-* Amorilia (amorilia@users.sourceforge.net)
 * Brandano (brandano@users.sourceforge.net)
 * m4444x
 

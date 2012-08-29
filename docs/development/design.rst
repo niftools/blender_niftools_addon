@@ -2,13 +2,13 @@ Design Issues
 =============
 
 This document lists some conventions, along with a few non-trivial
-issues while porting the scripts from the Blender 2.4x API to the
-2.5x+ API.
+issues while porting the plugin from the Blender 2.4x API to the
+2.6x+ API.
 
 Porting Strategy
 ----------------
 
-We are following the following strategy for porting the scripts:
+We are following the following strategy for porting the plugin:
 
 1. Write regression test for desired feature.
 2. Run the test.
@@ -20,7 +20,7 @@ We are following the following strategy for porting the scripts:
 The 2.6.x series is designated as purely experimental.
 
 Once enough features have and pass their regression test---i.e. as
-soon as the new scripts can be considered en par with the old
+soon as the new plugin can be considered en par with the old
 scripts---the code will be refactored and cleaned up, possibly moving
 some bits out to seperate addons (hull script, morph copy, etc.). The
 refactor is reserved for the 3.x.x series.
@@ -101,7 +101,7 @@ written. Ideally, the following process is followed:
    - Write Python code which test the blender scene against the
      desired feature: :meth:`b_check` method of the test class.
 
-5. Now implement the feature in the import and export scripts, until
+5. Now implement the feature in the import and export plugin, until
    the regression test passes.
 
 That's it!
