@@ -6,7 +6,7 @@ Import Project Into Eclipse
 
 1. Go to: **File > Import > General > Existing Projects into Workspace > Next > Browse**.
 
-2. Choose the ``blender_nif_scripts`` folder and select **Ok > Finish**.
+2. Choose the ``blender_nif_plugin`` folder and select **Ok > Finish**.
 
 3. If you want to use git from within eclipse, right click the project
    in the Project Explorer, and choose **Team > Share Project > Git**.
@@ -24,11 +24,11 @@ or terminal (Fedora)::
 
   ./blender-nosetests.sh
 
-from within the ``blender_nif_scripts`` folder.
+from within the ``blender_nif_plugin`` folder.
 Beware that the output can be rather verbose,
 so you may have to scroll quite a bit to see the relevant backtrace.
 
-Each test resides as a python file in the ``blender_nif_scripts/test`` folder.
+Each test resides as a python file in the ``blender_nif_plugin/test`` folder.
 To run a particular test only, specify the file as an argument; for instance::
 
   blender-nosetests.bat test/test_cube.py
@@ -46,7 +46,7 @@ Generate Documentation
 
 Run the following in a buildenv (Windows) or terminal (Fedora)::
 
-  cd blender_nif_scripts/docs
+  cd blender_nif_plugin/docs
   make html
 
 To view the docs, open ``docs/_build/html/index.html``.
