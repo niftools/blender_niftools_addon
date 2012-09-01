@@ -1,3 +1,19 @@
+Version 2.6.0.3 ( Aug 2012 )
+============================
+
+* Collision Support:
+   - Basic BhkShapes Cube, Sphere, Cylinder
+   - Convex Vertex, NiPacked, NiTriStrips Shapes
+   - Bound Box support.
+   
+* Major Refacor: Subsystem separation
+   - Collision System
+   - Armature System
+   - Material System
+   - Texture System
+
+* Extended Test Framework to support new features
+
 Version 2.6.0.2 ( April 2012)
 =============================
 
