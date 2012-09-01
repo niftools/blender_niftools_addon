@@ -553,7 +553,6 @@ class shape_import():
         bpy.context.scene.objects.link(b_obj)
         return b_obj
 
-##Export Section ##
 class shape_export():
     
     FLOAT_MIN = -3.4028234663852886e+38
