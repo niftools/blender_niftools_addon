@@ -3,7 +3,7 @@ The Blender NIF plugin enables Blender to import and export NIF files.
 Requirements
 ------------
 
-* `blender 2.59 or newer <http://www.blender.org/download/get-blender/>`_
+* `blender 2.62 <http://www.blender.org/download/get-blender/>`_
 * `pyffi 2.2.0 or newer <http://sourceforge.net/projects/pyffi/files/pyffi-py3k/>`_
 
 Fork
@@ -20,12 +20,9 @@ Download
 Documentation
 -------------
 
-.. todo::
-
-   Adds link to generated documentation.
-
-* `changelog <http://github.com/neomonkeus/blender_nif_plugin/raw/master/CHANGELOG.rst>`_
+* `online documentation <http://niftools.sourceforge.net/docs/blender_nif_plugin>`_
 * `wiki <http://niftools.sourceforge.net/wiki/Blender>`_
+* `changelog <http://niftools.sourceforge.net/doc/blender_nif_plugin/additional/changes.html>`_
 
 Support
 -------
