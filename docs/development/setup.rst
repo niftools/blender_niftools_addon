@@ -263,7 +263,7 @@ and select **Send to > Desktop (create shortcut)**.
 
 **Fedora**, simply run::
 
-   sudo yum install eclipse
+   sudo yum install eclipse eclipse-egit eclipse-pydev
 
 **Ubuntu**, simply run::
 
