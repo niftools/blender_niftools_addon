@@ -333,14 +333,17 @@ You should also install a few plugins.
 Import Projects Into Eclipse
 ----------------------------
 
-Go to **File > Import **, select **General > Existing Projects into Workspace**.
-Next, select your workspace folder as root directory, and click **Finish**.
+1. Make sure that the plugin's source resides in the ``blender_nif_plugin``
+   folder under your workspace folder.
 
-For each project that you manage with Git,
-right-click on its name in the Project Explorer,
-and select **Team > Share Project**, then choose **Git**, and click **Next**.
-Leave *Use or create repository in parent folder of project* ticked,
-and click **Finish**.
+2. Go to: **File > Import > General > Existing Projects into Workspace**.
+   Select your workspace folder as root directory, and click **Finish**.
+
+3. For each project that you manage with Git,
+   right-click on its name in the Project Explorer,
+   select **Team > Share Project > Git**, and click **Next**.
+   Leave **Use or create repository in parent folder of project** enabled,
+   and click **Finish**.
 
 Eclipse Debugging
 -----------------
