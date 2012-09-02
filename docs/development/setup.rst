@@ -263,7 +263,7 @@ and select **Send to > Desktop (create shortcut)**.
 
 **Fedora**, simply run::
 
-   sudo yum install eclipse
+   sudo yum install eclipse eclipse-egit eclipse-pydev
 
 **Ubuntu**, simply run::
 
@@ -286,7 +286,7 @@ You should also install a few plugins.
 
   3. A large number of plugins will be listed. Select
      **Collaboration > Eclipse EGit**
-   
+
 * `PyDev <http://pydev.org/>`_
   is an Eclipse plugin targeted at Python development,
   including sytax highlighting and debugging.
@@ -329,6 +329,18 @@ You should also install a few plugins.
      and unselect the Eclipse Color Theme mapper plugin.
 
   4. Click **Next**, and follow the instructions.
+
+Import Projects Into Eclipse
+----------------------------
+
+Go to **File > Import **, select **General > Existing Projects into Workspace**.
+Next, select your workspace folder as root directory, and click **Finish**.
+
+For each project that you manage with Git,
+right-click on its name in the Project Explorer,
+and select **Team > Share Project**, then choose **Git**, and click **Next**.
+Leave *Use or create repository in parent folder of project* ticked,
+and click **Finish**.
 
 Eclipse Debugging
 -----------------
