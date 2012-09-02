@@ -1,5 +1,5 @@
-Collsion Systems
-----------------
+Collision Systems
+-----------------
 
 .. toctree::
    :maxdepth: 1
