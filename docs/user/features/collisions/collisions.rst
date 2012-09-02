@@ -2,14 +2,19 @@
 Bounding Box
 ============
 
-.. warning::
-   Currently unsupported
+This is used as the bound box.
+
+#. Create a Mesh-Object to represent the bound box, a Cube is recommended.
+
+#. Name the object BSBound or BoundingBox, depending on which version you wish to be exported.
+
+#. In the Object Tab, enable bounds in the display section.
 
 Collision
 =========
 .. _collisions:
 
-This is used by the havok system for collision detection
+This is used by the havok system for collision detection.
 
 .. warning::
 
