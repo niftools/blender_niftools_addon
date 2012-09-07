@@ -13,27 +13,33 @@ class TestBaseGeometry(SingleNif):
     b_cube = "Cube"
     
     def rotation_matrix(self):
-        b_trans_mat = mathutils.Matrix.Translation((20.0, 20.0, 20.0))
-        b_rot_mat = mathutils.Matrix.Rotation(math.radians(45.0), 4, 'X')
-        b_scale_mat = mathutils.Matrix.Scale(0.75, 4)
+        b_trans_mat = mathutils.Matrix.Translation((20.0, 20.0, 20.0)) 
+        
+        b_rot_mat_x = mathutils.Matrix.Rotation(math.radians(30.0), 4, 'X') 
+        b_rot_mat_y = mathutils.Matrix.Rotation(math.radians(60.0), 4, 'Y')
+        b_rot_mat_z = mathutils.Matrix.Rotation(math.radians(90.0), 4, 'Z')        
+        b_rot_mat = b_rot_mat_x * b_rot_mat_y * b_rot_mat_z
+        
+        b_scale_mat = mathutils.Matrix.Scale(2, 4)
         b_transform_mat = b_trans_mat * b_rot_mat * b_scale_mat
         return b_transform_mat
     
     def b_create_objects(self):
         
-        #grab the last added object, avoids name confusion
         bpy.ops.mesh.primitive_cube_add()      
-        b_obj = bpy.data.objects[bpy.context.active_object.name]
+        b_obj = bpy.data.objects[bpy.context.active_object.name]#grab the last added object, avoids name confusion
         b_obj.name = self.b_cube
-        SingleNif.b_name.append(self.b_cube) #add to new object list
         
-        #add transformation
+        #object transform
+        bpy.ops.transform.resize(value=(2,1,1), constraint_axis=(True,False,False), constraint_orientation='LOCAL')#scale
+        bpy.ops.object.transform_apply(scale=True)# apply scale
+        
+        #local transform
         b_obj.matrix_local = self.rotation_matrix()
         
-        # primitive_cube_add sets double sided; fix this
-        b_obj.data.show_double_sided = False
+        b_obj.data.show_double_sided = False # prim_cube_add sets double sided; fix this
         
-        #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
+        bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         
     def b_check_data(self):
         b_obj = bpy.data.objects[self.b_cube]        
