@@ -66,8 +66,8 @@ class SingleNif(Base):
 
     n_name = None
     """Name of nif file (without ``0.nif`` at the end)."""
-
-    b_name = []
+    
+    b_obj_list = []
     """List of imported blender object."""
     
     EPSILON = 0.005
@@ -82,7 +82,7 @@ class SingleNif(Base):
         Base.b_clear(self)
         # extra check, just to make really sure
         try:
-            for name in self.b_name:
+            for name in self.b_obj_list:
                 b_obj = bpy.data.objects[name]
         except KeyError:
             pass
