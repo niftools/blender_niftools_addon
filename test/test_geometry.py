@@ -77,8 +77,6 @@ class TestBaseGeometry(SingleNif):
         nose.tools.assert_equal((b_rot_eul.x - math.radians(30.0)) < self.EPSILON, True)#x rotation
         nose.tools.assert_equal((b_rot_eul.y - math.radians(60.0)) < self.EPSILON, True)#y rotation
         nose.tools.assert_equal((b_rot_eul.z - math.radians(90.0)) < self.EPSILON, True)#z rotation
-        print('LOOK HERE ----------------------------------')
-        print(b_obj.scale)
         nose.tools.assert_equal((b_obj.scale - mathutils.Vector((0.75, 0.75, 0.75))) 
                 < mathutils.Vector((self.EPSILON,self.EPSILON,self.EPSILON)), True) #uniform scale
         
