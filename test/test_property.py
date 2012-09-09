@@ -14,11 +14,15 @@ from test.test_geometry import TestBaseUV
 class TestMaterialProperty(TestBaseUV):
     n_name = "property/material/base_material"
 
-    def b_create_object(self):
-        b_obj = TestBaseUV.b_create_object(self)
+    def b_create_objects(self):
+        self.b_create_material_object()
+        
+    def b_create_material_object(self):
+        b_obj = TestBaseUV.b_create_objects(self)
         b_mat = bpy.data.materials.new(name='Material')
         b_mat.specular_intensity = 0 # disable NiSpecularProperty
         b_obj.data.materials.append(b_mat)
+        bpy.ops.object.shade_smooth()
         
         #TODO_3.0 - See above
         b_mat.ambient = 1.0
@@ -35,7 +39,6 @@ class TestMaterialProperty(TestBaseUV):
         nose.tools.assert_equal(len(b_mesh.materials), 1)
         
     def b_check_material_property(self, b_mat):
-               
         nose.tools.assert_equal(b_mat.ambient, 1.0)
         
     def n_check_data(self, n_data):
@@ -125,8 +128,8 @@ class TestDiffuseMaterial(TestBaseMaterial):
 class TestEmissiveMaterial(TestMaterialProperty):
     n_name = "property/material/base_material"
     
-    def b_create_object(self):
-        b_obj = TestMaterialProperty.b_create_object(self)
+    def b_create_objects(self):
+        b_obj = TestMaterialProperty.b_create_objects(self)
         b_mat = b_obj.data.materials[0]
         b_mat.niftools.emissive_color = (0.5,0.0,0.0)
         b_mat.emit = 1.0
@@ -161,8 +164,8 @@ class TestEmissiveMaterial(TestMaterialProperty):
 class TestGlossProperty(TestMaterialProperty):
     n_name = "property/material/base_material"
     
-    def b_create_object(self):
-        b_obj = TestMaterialProperty.b_create_object(self)
+    def b_create_objects(self):
+        b_obj = TestMaterialProperty.b_create_objects(self)
         b_mat = b_obj.data.materials[0]
         
         b_mat.specular_hardness = 100
@@ -189,8 +192,8 @@ class TestGlossProperty(TestMaterialProperty):
 class TestStencilProperty(TestBaseUV):
     n_name = "property/stencil/stencil"
     
-    def b_create_object(self):
-        b_obj = TestBaseUV.b_create_object(self)
+    def b_create_objects(self):
+        b_obj = TestBaseUV.b_create_objects(self)
         b_obj.data.show_double_sided = True
         
         #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
@@ -218,8 +221,8 @@ class TestStencilProperty(TestBaseUV):
 class TestSpecularProperty(TestMaterialProperty):
     n_name = "property/specular/base_specular"
     
-    def b_create_object(self):
-        b_obj = TestMaterialProperty.b_create_object(self)
+    def b_create_objects(self):
+        b_obj = TestMaterialProperty.b_create_objects(self)
         b_mat = b_obj.data.materials[0]
         b_mat.specular_color = (0.5,0.0,0.0)
         b_mat.specular_intensity = 1.0
@@ -260,8 +263,8 @@ class TestSpecularProperty(TestMaterialProperty):
 class TestAlphaProperty(TestMaterialProperty):
     n_name = "property/alpha/base_alpha"
     
-    def b_create_object(self):
-        b_obj = TestMaterialProperty.b_create_object(self)
+    def b_create_objects(self):
+        b_obj = TestMaterialProperty.b_create_objects(self)
         b_mat = b_obj.data.materials[0]
         b_mat.use_transparency = True
         b_mat.alpha = 0.5
@@ -295,8 +298,8 @@ class TestAlphaProperty(TestMaterialProperty):
 class TestWireFrameProperty(TestMaterialProperty):
     n_name = "property/wireframe/base_wire"
     
-    def b_create_object(self):
-        b_obj = TestMaterialProperty.b_create_object(self)
+    def b_create_objects(self):
+        b_obj = TestMaterialProperty.b_create_objects(self)
         b_mat = b_obj.data.materials[0]
         b_mat.type = 'WIRE';
         
