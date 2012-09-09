@@ -123,8 +123,8 @@ class TestBaseUV(TestBaseGeometry):
     def b_create_objects(self):
         self.b_create_uv_object(self.b_name)
         
-    def b_create_uv_object(self, b_name):
-        TestBaseGeometry.b_create_objects()
+    def b_create_uv_object(self, b_name='Cube'):
+        TestBaseGeometry.b_create_objects(self)
         b_obj = bpy.data.objects[b_name]
         
         #project UV
