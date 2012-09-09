@@ -10,7 +10,6 @@ from pyffi.formats.nif import NifFormat
 
 class TestBaseGeometry(SingleNif):
     n_name = "geometry/base_geometry"
-    b_obj_list = SingleNif.b_obj_list
     b_name = 'Cube'
     
     def b_create_objects(self):
@@ -28,7 +27,7 @@ class TestBaseGeometry(SingleNif):
         b_obj.matrix_local = self.transform_matrix() #rotate the object
         b_obj.data.show_double_sided = False # prim_cube_add sets double sided; fix this       
         
-        bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
+        #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         return b_obj
     
     def scale_object(self, b_obj):
@@ -121,9 +120,12 @@ class TestBaseGeometry(SingleNif):
 class TestBaseUV(TestBaseGeometry):
     n_name = "geometry/base_uv"
     
-    def b_create_object(self):
+    def b_create_objects(self):
+        self.b_create_uv_object(self.b_name)
+        
+    def b_create_uv_object(self, b_name):
         TestBaseGeometry.b_create_objects()
-        b_obj = bpy.data.objects[self.b_name]
+        b_obj = bpy.data.objects[b_name]
         
         #project UV
         bpy.ops.object.mode_set(mode='EDIT', toggle=False) #ensure we are in the mode.
