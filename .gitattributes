@@ -1,0 +1,4 @@
+*.bat   eol=crlf
+*.sh    eol=lf
+*.rst   eol=text
+*.py    eol=text
