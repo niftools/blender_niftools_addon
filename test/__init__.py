@@ -90,7 +90,7 @@ class SingleNif(Base):
             raise RuntimeError(
                 "failed to clear {0} from scene".format(b_obj))
 
-    def b_create_object(self):
+    def b_create_objects(self):
         """Create and return blender object for feature."""
         raise NotImplementedError
 
