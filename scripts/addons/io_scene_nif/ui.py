@@ -113,26 +113,16 @@ class NifCollisionBoundsPanel(Panel):
         box = layout.box()
         box.active = game.use_collision_bounds
         
-        #col filter prop
-        box.prop(col_setting, "col_filter", text='Col Filter')
-
-        #quality type prop
-        box.prop(col_setting, "quality_type", text='Quality Type')
-        
-        #oblivion layer prop
-        box.prop(col_setting, "oblivion_layer", text='Oblivion Layer')
-    
-        #motion system prop
-        box.prop(col_setting, "motion_system", text='Motion System')
-    
-        #havok material prop
-        box.prop(col_setting, "havok_material", text='Havok Material')
+        box.prop(col_setting, "col_filter", text='Col Filter') # col filter prop       
+        box.prop(col_setting, "quality_type", text='Quality Type') # quality type prop
+        box.prop(col_setting, "oblivion_layer", text='Oblivion Layer') # oblivion layer prop 
+        box.prop(col_setting, "motion_system", text='Motion System') # motion system prop
+        box.prop(col_setting, "havok_material", text='Havok Material') # havok material prop
 
 def register():
     bpy.utils.register_class(NifEmissivePanel)
     bpy.types.MATERIAL_PT_shading.prepend(NifEmissivePanel)
     bpy.utils.register_class(NifCollisionBoundsPanel)
-
 
 def unregister():
     bpy.types.MATERIAL_PT_shading.remove(NifEmissivePanel)

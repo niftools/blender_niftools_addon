@@ -204,7 +204,7 @@ class texture_import():
 			b_image = bpy.data.images.new(
 				name=fn, width=1, height=1, alpha=False)
 			# TODO is this still needed? commented out for now
-			#b_image.filepath = tex
+			# b_image.filepath = tex
 
 		# create a texture
 		b_texture = bpy.data.textures.new(name="Tex", type='IMAGE')

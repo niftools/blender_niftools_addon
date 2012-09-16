@@ -109,7 +109,7 @@ class shape_import():
         # apply transform
         for b_col_obj in collision_objs:
             b_col_obj.matrix_local = b_col_obj.matrix_local * transform
-            #b_col_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
+            # b_col_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
             # and return a list of transformed collision shapes
         return collision_objs
     
@@ -205,9 +205,9 @@ class shape_import():
         b_obj.draw_bounds_type = 'BOX'
         b_obj.game.use_collision_bounds = True            
         b_obj.game.collision_bounds_type = 'BOX'
-        b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices) #todo - calc actual radius
+        b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices) # TODO - calc actual radius
         
-        #recalculate to ensure mesh functions correctly
+        # Recalculate mesh to render correctly
         b_mesh.update()
         b_mesh.calc_normals()
         
@@ -227,7 +227,7 @@ class shape_import():
         b_obj.game.radius = bhkshape.radius
         b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
         
-        #recalculate to ensure mesh functions correctly
+        # Recalculate mesh to render correctly
         b_mesh = b_obj.data 
         b_mesh.update()
         b_mesh.calc_normals()
@@ -310,7 +310,7 @@ class shape_import():
         transform[3][2] = 3.5 * (bhkshape.first_point.z + bhkshape.second_point.z)
         b_obj.matrix_local = transform
         
-        #recalculate to ensure mesh functions correctly
+        # Recalculate mesh to render correctly
         b_mesh.update()
         b_mesh.calc_normals()
         
@@ -361,7 +361,7 @@ class shape_import():
                 " (out of %i) from collision mesh" % (numdel, numverts))
         '''
         
-        #recalculate to ensure mesh functions correctly
+        # Recalculate mesh to render correctly
         b_mesh.update()
         b_mesh.calc_normals()
                     
@@ -405,7 +405,7 @@ class shape_import():
                 % (numdel, numverts))
         '''
         
-        #recalculate to ensure mesh functions correctly
+        # Recalculate mesh to render correctly
         b_mesh.update()
         b_mesh.calc_normals()
         
@@ -473,7 +473,7 @@ class shape_import():
             # also remove duplicate vertices
             numverts = len(b_mesh.vertices)
             # 0.005 = 1/200
-            #bpy.ops.object.editmode_toggle()
+            # bpy.ops.object.editmode_toggle()
             '''
             b_mesh.remove_doubles(limit=0.005)
             if numdel:
@@ -483,7 +483,7 @@ class shape_import():
                     % (numdel, numverts))
             '''
 
-            #recalculate to ensure mesh functions correctly
+            # Recalculate mesh to render correctly
             b_mesh.update()
             b_mesh.calc_normals()
             
@@ -509,8 +509,8 @@ class shape_import():
                 raise ValueError("Expected NiNode with bounding box.")
             b_mesh = bpy.data.meshes.new('Bounding Box')
             
-            #Ninode's(bbox) internal bounding_box behaves like a seperate mesh.
-            #bounding_box center(bbox.bounding_box.translation) is relative to the bound_box
+            # Ninode's(bbox) behaves like a seperate mesh.
+            # bounding_box center(bbox.bounding_box.translation) is relative to the bound_box
             minx = bbox.bounding_box.translation.x - bbox.translation.x - bbox.bounding_box.radius.x
             miny = bbox.bounding_box.translation.y - bbox.translation.y - bbox.bounding_box.radius.y
             minz = bbox.bounding_box.translation.z - bbox.translation.z - bbox.bounding_box.radius.z
@@ -539,16 +539,16 @@ class shape_import():
         else:
             b_obj = bpy.data.objects.new('Bounding Box', b_mesh)
             # XXX this is set in the import_branch() method
-            #ob.matrix_local = mathutils.Matrix(
+            # ob.matrix_local = mathutils.Matrix(
             #    *bbox.bounding_box.rotation.as_list())
-            #ob.setLocation(
+            # ob.setLocation(
             #    *bbox.bounding_box.translation.as_list())
 
         # set bounds type
         b_obj.show_bounds = True
         b_obj.draw_type = 'BOUNDS'
         b_obj.draw_bounds_type = 'BOX'
-        #quick radius estimate
+        # quick radius estimate
         b_obj.game.radius = max(maxx, maxy, maxz)
         bpy.context.scene.objects.link(b_obj)
         return b_obj
@@ -581,7 +581,7 @@ class shape_export():
         mass = 1.0 # will be fixed later
         col_filter = b_obj.nifcollision.col_filter
         
-        #Aaron1178 collison stuff
+        # Aaron1178 collison stuff
         '''
         #export bsxFlags
         self.export_bsx_upb_flags(b_obj, parent_block)
@@ -881,7 +881,7 @@ class shape_export():
             size_x = b_obj.scale.x
             size_y = b_obj.scale.y
             size_z = b_obj.scale.z
-            #sizex, sizey, sizez = b_obj.getsize()
+            
             colcaps.radius = localradius * (size_x + size_y) * 0.5
             colcaps.radius_1 = colcaps.radius
             colcaps.radius_2 = colcaps.radius
@@ -986,7 +986,7 @@ class shape_export():
             n_bbox = self.nif_common.create_block("BSBound")
             # ... the following incurs double scaling because it will be added in
             # both the extra data list and in the old extra data sequence!!!
-            #block_parent.add_extra_data(n_bbox)
+            # block_parent.add_extra_data(n_bbox)
             # quick hack (better solution would be to make apply_scale non-recursive)
             block_parent.num_extra_data_list += 1
             block_parent.extra_data_list.update_size()
@@ -1013,8 +1013,8 @@ class shape_export():
             n_bbox.rotation.set_identity()
             n_bbox.has_bounding_box = True
             
-            #Ninode's(n_bbox) internal bounding_box behaves like a seperate mesh.
-            #bounding_box center(n_bbox.bounding_box.translation) is relative to the bound_box
+            # Ninode's(n_bbox) behaves like a seperate mesh.
+            # bounding_box center(n_bbox.bounding_box.translation) is relative to the bound_box
             n_bbox.bounding_box.translation.deepcopy(n_bbox.translation)
             n_bbox.bounding_box.rotation.set_identity()
             n_bbox.bounding_box.radius.x = (maxx - minx) * 0.5
