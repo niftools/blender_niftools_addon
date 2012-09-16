@@ -24,7 +24,7 @@ class TestMaterialProperty(TestBaseGeometry):
         b_mat.specular_intensity = 0 # disable NiSpecularProperty
         b_obj.data.materials.append(b_mat)
         bpy.ops.object.shade_smooth()
-        self.b_check_material_property(b_mat)
+        self.b_create_material_property(b_mat)
         
     def b_create_material_property(self, b_mat):
         # TODO_3.0 - See above
@@ -47,6 +47,9 @@ class TestMaterialProperty(TestBaseGeometry):
         
     def b_check_material_property(self, b_mat):
         nose.tools.assert_equal(b_mat.ambient, 1.0)
+        nose.tools.assert_equal(b_mat.diffuse_color[0], 1.0)
+        nose.tools.assert_equal(b_mat.diffuse_color[1], 1.0)
+        nose.tools.assert_equal(b_mat.diffuse_color[2], 1.0)
         
     def n_check_data(self, n_data):
         TestBaseGeometry.n_check_data(self, n_data)
