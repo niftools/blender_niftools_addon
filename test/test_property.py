@@ -370,7 +370,7 @@ class TestWireFrameProperty(TestMaterialProperty):
         self.n_check_material_property(n_geom.properties[1])
         
     def n_check_wire_property(self, n_wire_prop):
-        #nose.tools.assert_equal(n_wire_prop, NifFormat.NiWireframeProperty)
+        nose.tools.assert_is_instance(n_wire_prop, NifFormat.NiWireframeProperty)
         nose.tools.assert_equal(n_wire_prop.flags, 0x1)
 
         
