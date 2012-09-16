@@ -14,14 +14,14 @@ class TestBaseGeometry(SingleNif):
     
     def b_create_objects(self):
         self.b_obj_list.append(self.b_name) #add to cleanup list 
-        self.b_create_base_geometry(self.b_name)
+        self.b_create_base_geometry()
         
-    def b_create_base_geometry(self, b_name='Cube'):
-        '''Creates a 7.5x7.5x3.75 polyhedron'''
+    def b_create_base_geometry(self):
+        '''Creates a 7.5 x 7.5 x 3.75 polyhedron'''
         
         bpy.ops.mesh.primitive_cube_add() #create a base mesh
         b_obj = bpy.data.objects[bpy.context.active_object.name]#grab the last added object
-        b_obj.name = b_name #Set name
+        b_obj.name = self.b_name #Set name
         
         self.scale_object(b_obj) #scale the mesh
         b_obj.matrix_local = self.transform_matrix() #rotate the object
@@ -121,19 +121,19 @@ class TestBaseUV(TestBaseGeometry):
     n_name = "geometry/base_uv"
     
     def b_create_objects(self):
-        self.b_create_uv_object(self.b_name)
-        
-    def b_create_uv_object(self, b_name='Cube'):
         TestBaseGeometry.b_create_objects(self)
-        b_obj = bpy.data.objects[b_name]
+        b_obj = bpy.data.objects[self.b_name]
+        self.b_create_uv_object(b_obj)
         
+    def b_create_uv_object(self, b_obj):
         #project UV
         bpy.ops.object.mode_set(mode='EDIT', toggle=False) #ensure we are in the mode.
         bpy.ops.uv.cube_project() # named 'UVTex'
         bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
         
         #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
-    
+        return b_obj
+        
     def b_check_data(self):
         TestBaseGeometry.b_check_data(self)
         pass
