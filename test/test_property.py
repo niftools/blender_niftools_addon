@@ -9,13 +9,13 @@ import os
 
 import io_scene_nif.nif_export
 from pyffi.formats.nif import NifFormat
-from test.test_geometry import TestBaseUV
+from test.test_geometry import TestBaseGeometry
 
-class TestMaterialProperty(TestBaseUV):
+class TestMaterialProperty(TestBaseGeometry):
     n_name = "property/material/base_material"
 
     def b_create_objects(self):
-        TestBaseUV.b_create_objects(self)
+        TestBaseGeometry.b_create_objects(self)
         b_obj = bpy.data.objects[self.b_name]
         self.b_create_material_block(b_obj)
         
@@ -35,7 +35,7 @@ class TestMaterialProperty(TestBaseUV):
         # bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         
     def b_check_data(self):
-        TestBaseUV.b_check_data(self)
+        TestBaseGeometry.b_check_data(self)
         b_obj = bpy.data.objects[self.b_name]
         self.b_check_material_block(b_obj)
         
@@ -49,7 +49,7 @@ class TestMaterialProperty(TestBaseUV):
         nose.tools.assert_equal(b_mat.ambient, 1.0)
         
     def n_check_data(self, n_data):
-        TestBaseUV.n_check_data(self, n_data)
+        TestBaseGeometry.n_check_data(self, n_data)
         n_geom = n_data.roots[0].children[0]    
         nose.tools.assert_equal(n_geom.num_properties, 1)
         self.n_check_material_property(n_geom.properties[0])
@@ -80,7 +80,7 @@ class TestAmbientMaterial(TestBaseMaterial):
     n_name = "property/material/base_material"
 
     def b_create_object(self):
-        b_obj = TestBaseUV.b_create_object(self)
+        b_obj = TestBaseGeometry.b_create_object(self)
         b_mat = b_obj.data.materials[0]
                 
         #diffuse settings
@@ -107,7 +107,7 @@ class TestDiffuseMaterial(TestBaseMaterial):
     n_name = "property/material/base_material"
 
     def b_create_object(self):
-        b_obj = TestBaseUV.b_create_object(self)
+        b_obj = TestBaseGeometry.b_create_object(self)
         b_mat = b_obj.data.materials[0]
         
         #diffuse settings
@@ -210,11 +210,11 @@ class TestGlossProperty(TestMaterialProperty):
     def n_check_material_gloss_property(self, n_mat_prop):
         nose.tools.assert_equal(n_mat_prop.glossiness, 25) # n_gloss = 4/b_gloss
  
-class TestStencilProperty(TestBaseUV):
+class TestStencilProperty(TestBaseGeometry):
     n_name = "property/stencil/stencil"
     
     def b_create_objects(self):
-        TestBaseUV.b_create_objects(self)
+        TestBaseGeometry.b_create_objects(self)
         b_obj = bpy.data.objects[self.b_name]
         self.b_create_stensil_property(b_obj)
         
@@ -224,7 +224,7 @@ class TestStencilProperty(TestBaseUV):
         # bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
                 
     def b_check_data(self):
-        TestBaseUV.b_check_data(self)
+        TestBaseGeometry.b_check_data(self)
         b_obj = bpy.data.objects[self.b_name]
         self.b_check_stencil_property(b_obj)
         
@@ -232,7 +232,7 @@ class TestStencilProperty(TestBaseUV):
         nose.tools.assert_equal(b_obj.data.show_double_sided, True)
         
     def n_check_data(self, n_data):
-        TestBaseUV.n_check_data(self, n_data)
+        TestBaseGeometry.n_check_data(self, n_data)
         self.n_check_block(n_data)
         
     def n_check_block(self, n_data):
