@@ -17,20 +17,22 @@ class TestMaterialProperty(TestBaseUV):
     def b_create_objects(self):
         TestBaseUV.b_create_objects(self)
         b_obj = bpy.data.objects[self.b_name]
-        self.b_create_material_property(b_obj)
+        self.b_create_material_block(b_obj)
         
-    def b_create_material_property(self, b_obj):
+    def b_create_material_block(self, b_obj):
         b_mat = bpy.data.materials.new(name='Material')
         b_mat.specular_intensity = 0 # disable NiSpecularProperty
         b_obj.data.materials.append(b_mat)
         bpy.ops.object.shade_smooth()
+        self.b_check_material_property(b_mat)
         
-        #TODO_3.0 - See above
+    def b_create_material_property(self, b_mat):
+        # TODO_3.0 - See above
         b_mat.ambient = 1.0
         b_mat.diffuse_color = (1.0,1.0,1.0)
         b_mat.diffuse_intensity = 1.0
         
-        #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
+        # bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         
     def b_check_data(self):
         TestBaseUV.b_check_data(self)
@@ -64,7 +66,7 @@ class TestMaterialProperty(TestBaseUV):
 
     def n_check_material_property(self, n_mat_prop):
         nose.tools.assert_is_instance(n_mat_prop, NifFormat.NiMaterialProperty)
-        #TODO - Refer to header - can be ignored for now, defaults.                  
+        # TODO - Refer to header - can be ignored for now, defaults.                  
         nose.tools.assert_equal((n_mat_prop.ambient_color.r,
                                  n_mat_prop.ambient_color.g,
                                  n_mat_prop.ambient_color.b), (1.0,1.0,1.0))
@@ -144,7 +146,7 @@ class TestEmissiveMaterial(TestMaterialProperty):
         b_mat.niftools.emissive_color = (0.5,0.0,0.0)
         b_mat.emit = 1.0
 
-        #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
+        # bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         
     def b_check_data(self):
         TestMaterialProperty.b_check_data(self)
@@ -169,7 +171,7 @@ class TestEmissiveMaterial(TestMaterialProperty):
         self.n_check_material_property(n_geom.properties[0])
 
     def n_check_material_emissive_property(self, n_mat_prop):
-        #TODO - Refer to header
+        # TODO - Refer to header
         nose.tools.assert_equal((n_mat_prop.emissive_color.r,
                                  n_mat_prop.emissive_color.g,
                                  n_mat_prop.emissive_color.b), 
@@ -219,7 +221,7 @@ class TestStencilProperty(TestBaseUV):
     def b_create_stensil_property(self, b_obj):
         b_obj.data.show_double_sided = True
         
-        #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
+        # bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
                 
     def b_check_data(self):
         TestBaseUV.b_check_data(self)
@@ -241,7 +243,7 @@ class TestStencilProperty(TestBaseUV):
     def n_check_stencil_property(self, n_mat_prop):      
         nose.tools.assert_is_instance(n_mat_prop, NifFormat.NiStencilProperty)
         
-        #TODO - Expand test
+        # TODO - Expand test
         
 
 class TestSpecularProperty(TestMaterialProperty):
@@ -257,7 +259,7 @@ class TestSpecularProperty(TestMaterialProperty):
         b_mat.specular_color = (0.5,0.0,0.0)
         b_mat.specular_intensity = 1.0
         
-        #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
+        # bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         
     def b_check_data(self):
         TestMaterialProperty.b_check_data(self)
@@ -291,7 +293,7 @@ class TestSpecularProperty(TestMaterialProperty):
                                  n_mat_prop.specular_color.b),
                                  (0.5,0.0,0.0))
         
-        #TODO Check Prop settings
+        # TODO Check Prop settings
     
 class TestAlphaProperty(TestMaterialProperty):
     n_name = "property/alpha/base_alpha"
@@ -307,7 +309,7 @@ class TestAlphaProperty(TestMaterialProperty):
         b_mat.alpha = 0.5
         b_mat.transparency_method = 'Z_TRANSPARENCY'
         
-        #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
+        # bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
         
     def b_check_data(self):
         TestMaterialProperty.b_check_data(self)
@@ -332,7 +334,7 @@ class TestAlphaProperty(TestMaterialProperty):
         
     def n_check_alpha_property(self, n_alpha_prop):
         nose.tools.assert_is_instance(n_alpha_prop, NifFormat.NiAlphaProperty)
-        #TODO Check Prop Settings
+        # TODO Check Prop Settings
         
 class TestWireFrameProperty(TestMaterialProperty):
     n_name = "property/wireframe/base_wire"
@@ -346,7 +348,7 @@ class TestWireFrameProperty(TestMaterialProperty):
         b_mat = b_obj.data.materials[0]
         b_mat.type = 'WIRE';
         
-        #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
+        # bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
     
     def b_check_data(self):
         TestMaterialProperty.b_check_data(self)
