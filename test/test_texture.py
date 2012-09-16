@@ -16,16 +16,16 @@ import os
 
 import io_scene_nif.nif_export
 from pyffi.formats.nif import NifFormat
-from test.test_property import TestMaterialProperty
+from test.test_property import TestBaseUV
 
 #NiTexturingProperty
-class TestBaseTexture(TestMaterialProperty):
+class TestBaseTexture(TestBaseUV):
     n_name = "textures/base_texture"
     texture_filepath = 'test' + os.sep + 'nif'+ os.sep + 'textures' + os.sep + 'base_texture.dds'
 
     def b_create_object(self):
         #create material texture slot
-        b_obj = TestMaterialProperty.b_create_object(self)
+        b_obj = TestBaseUV.b_create_object(self)
         b_mat = b_obj.data.materials[0]
         b_mat_texslot = b_mat.texture_slots.create(0)
         
@@ -45,7 +45,7 @@ class TestBaseTexture(TestMaterialProperty):
         return b_obj
 
     def b_check_data(self, b_obj):
-        TestMaterialProperty.b_check_data(self, b_obj)
+        TestBaseUV.b_check_data(self, b_obj)
         b_mesh = b_obj.data
         b_mat = b_mesh.materials[0]
         
@@ -61,7 +61,7 @@ class TestBaseTexture(TestMaterialProperty):
         n_geom = n_data.roots[0].children[0]
         nose.tools.assert_equal(n_geom.num_properties, 2)
         self.n_check_texturing_property(n_geom.properties[0])
-        TestMaterialProperty.n_check_material_property(self, n_geom.properties[1])
+        TestBaseUV.n_check_material_property(self, n_geom.properties[1])
 
     def n_check_texturing_property(self, n_tex_prop):
         nose.tools.assert_is_instance(n_tex_prop, NifFormat.NiTexturingProperty)
@@ -129,7 +129,7 @@ class TestBumpTexture(TestBaseTexture):
         n_geom = n_data.roots[0].children[0]
         nose.tools.assert_equal(n_geom.num_properties, 2)
         self.n_check_texturing_property(n_geom.properties[0])
-        TestMaterialProperty.n_check_material_property(self, n_geom.properties[1])
+        TestBaseUV.n_check_material_property(self, n_geom.properties[1])
 
     def n_check_texturing_property(self, n_tex_prop):
         nose.tools.assert_is_instance(n_tex_prop, NifFormat.NiTexturingProperty)
@@ -257,7 +257,7 @@ class TestGlowTexture(TestBaseTexture):
         n_geom = n_data.roots[0].children[0]
         nose.tools.assert_equal(n_geom.num_properties, 2)
         self.n_check_texturing_property(n_geom.properties[0])
-        TestMaterialProperty.n_check_material_property(self, n_geom.properties[1])
+        TestBaseUV.n_check_material_property(self, n_geom.properties[1])
 
     def n_check_texturing_property(self, n_tex_prop):
         nose.tools.assert_is_instance(n_tex_prop, NifFormat.NiTexturingProperty)
