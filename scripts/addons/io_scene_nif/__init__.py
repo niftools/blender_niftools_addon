@@ -37,7 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
-#: Blender addon info.
+# :Blender addon info.
 bl_info = {
     "name": "NetImmerse/Gamebryo nif format",
     "description":
@@ -56,11 +56,8 @@ bl_info = {
     "support": "COMMUNITY",
     "category": "Import-Export"}
 
-try:
-    from . import nif_debug
-    nif_debug.startdebug()
-except:
-    pass
+from . import nif_debug
+nif_debug.startdebug()
 
 import logging
 import sys
@@ -73,8 +70,8 @@ import bpy.props
 from . import properties, ui, operators
 
 # blender doesn't look in site-packages; 
-#easiest solution for this seems to be to import site.py manually, 
-#so we find pyffi if it is installed there
+# easiest solution for this seems to be to import site.py manually, 
+# so we find pyffi if it is installed there
 
 import site
 

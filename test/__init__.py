@@ -32,7 +32,7 @@ def clear_bpy_data():
         ):
         clear_bpy_prop_collection(getattr(bpy.data, collection))
     
-    #need to remove any users first    
+    # need to remove any users first    
     for collection in (
         "brushes", "textures", "images",
         ):
@@ -49,13 +49,13 @@ def teardown():
 
 class Base:
     """Base class for all tests."""
-    #Debug Settings
+    # Debug Settings
     gen_blender_scene = False
     
     def b_clear(self):
-        #unlinking objects will throw error otherwise 
+        # unlinking objects will throw error otherwise 
         if not (bpy.context.mode == 'OBJECT'):
-            bpy.ops.object.mode_set(mode='OBJECT', toggle=False) #ensure in object mode
+            bpy.ops.object.mode_set(mode='OBJECT', toggle=False) # ensure in object mode
         clear_bpy_data()
 
     def teardown(self):

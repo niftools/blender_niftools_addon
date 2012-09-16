@@ -74,7 +74,7 @@ class NifCommon:
     HAVOK_SCALE = 7.0
     IMPORT_EXTRANODES = True
 
-    #TODO - Find a better way to expose these
+    # TODO - Find a better way to expose these
     EXPORT_OPTIMIZE_MATERIALS = True
     EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES = False
     
@@ -89,7 +89,7 @@ class NifCommon:
     EXPORT_OB_WIND = 0
     EXPORT_OB_LAYER = 1 # static
     EXPORT_OB_MATERIAL = 9 # wood
-    EXPORT_OB_PRN = "NONE" #Todo with location on character. For weapons, rings, helmets, Sheilds ect
+    EXPORT_OB_PRN = "NONE" # Todo with location on character. For weapons, rings, helmets, Sheilds ect
     progress_bar = 0
     """Level of the progress bar."""
 
@@ -266,7 +266,7 @@ class NifCommon:
         return None
 
     def find_extra(self, niBlock, extratype):
-        #TODO_3.0 - Optimise
+        # TODO_3.0 - Optimise
         
         """Find extra data."""
         # pre-10.x.x.x system: extra data chain
