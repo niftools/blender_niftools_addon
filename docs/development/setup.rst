@@ -36,7 +36,7 @@ Install Python 3.2
   
 **Ubuntu**::
    
-   sudo apt-get install python3.2
+   sudo apt-get install python3-minimal
 
 Install Git
 -----------
@@ -172,8 +172,8 @@ Use the Build environment shortcut you just created to open the command prompt::
 **Ubuntu**::
 
    cd ~/workfolder
-   sudo python3.2 distribute_setup.py
-   sudo python3.2 get-pip.py
+   sudo python3 distribute_setup.py
+   sudo python3 get-pip.py
    
 Install Sphinx and Nose
 -----------------------
@@ -194,6 +194,9 @@ Install Sphinx and Nose
 
    pip-3.2 install Sphinx --user
    pip-3.2 install nose --user
+
+   sudo apt-get install python3-nose python3-sphinx
+   
    
 **Fedora** run in a terminal::
 
