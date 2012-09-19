@@ -752,7 +752,7 @@ class NifExport(NifCommon):
                 niffile = os.path.join(directory, filebase + ext)
                 data = NifFormat.Data(version=self.version,
                                       user_version=NIF_USER_VERSION,
-                                      user_version2=NIF_USER_VERSION2)
+                                      user_version_2=NIF_USER_VERSION2)
                 data.roots = [root_block]
                 if self.properties.game == 'NEOSTEAM':
                     data.modification = "neosteam"
