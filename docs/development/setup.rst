@@ -192,9 +192,6 @@ Install Sphinx and Nose
 
 **Ubuntu** run in a terminal::
 
-   pip-3.2 install Sphinx --user
-   pip-3.2 install nose --user
-
    sudo apt-get install python3-nose python3-sphinx
    
    
