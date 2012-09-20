@@ -95,9 +95,6 @@ def _init_loggers():
     niftoolslogger.addHandler(loghandler)
     pyffilogger.addHandler(loghandler)
 
-# set up the loggers: call it as a function to avoid polluting namespace
-_init_loggers()
-
 def menu_func_import(self, context):
     self.layout.operator(
         operators.NifImportOperator.bl_idname, text="NetImmerse/Gamebryo (.nif)")
@@ -107,6 +104,7 @@ def menu_func_export(self, context):
         operators.NifExportOperator.bl_idname, text="NetImmerse/Gamebryo (.nif)")
 
 def register():
+    _init_loggers()
     properties.register()
     ui.register()
     bpy.utils.register_module(__name__)
@@ -114,6 +112,8 @@ def register():
     bpy.types.INFO_MT_file_export.append(menu_func_export)
 
 def unregister():
+    # no idea how to do this... oh well, let's not lose any sleep over it
+    #_uninit_loggers()
     properties.unregister()
     ui.unregister()
     bpy.utils.unregister_module(__name__)
