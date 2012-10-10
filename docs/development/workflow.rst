@@ -8,9 +8,14 @@ To run all tests, run the following in a buildenv (Windows)::
 
   blender-nosetests.bat
 
-or terminal (Fedora)::
+or 
+
+terminal (Fedora)::
 
   ./blender-nosetests.sh
+
+terminal (Ubuntu)::
+	sh blender-nosetests.sh
 
 from within the ``blender_nif_plugin`` folder.
 Beware that the output can be rather verbose,
