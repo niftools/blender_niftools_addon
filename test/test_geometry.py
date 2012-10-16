@@ -9,11 +9,20 @@ from test import Base, SingleNif
 from pyffi.formats.nif import NifFormat
 
 class TestBaseGeometry(SingleNif):
+    """Test base geometry, single blender object."""
+
+    # (documented in SingleNif)
     n_name = "geometry/base_geometry"
+
     b_name = 'Cube'
-    
+    """Name of the blender object.
+    This is automatically appended to :attr:`SingleNif.b_obj_list`
+    during :meth:`TestBaseGeometry.b_create_objects`.
+    """
+    # TODO maybe __init__ is the more logical place to set b_obj_list?
+
     def b_create_objects(self):
-        self.b_obj_list.append(self.b_name) # add to cleanup list 
+        self.b_obj_list.append(self.b_name)
         self.b_create_base_geometry()
         
     def b_create_base_geometry(self):
