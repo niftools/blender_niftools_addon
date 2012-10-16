@@ -96,8 +96,8 @@ class NifImport(NifCommon):
         # to set the physics constraints (ragdoll etc)
         self.havok_objects = {}
         
-        #helper systems
-        #Store references to subsystems as needed.
+        # Helper systems
+        # Store references to subsystems as needed.
         self.collisionhelper = shape_import(parent=self)
         self.armaturehelper = armature_import(parent=self)
         self.texturehelper = texture_import(parent=self)
@@ -258,7 +258,7 @@ class NifImport(NifCommon):
             self.info("Finished")
             # XXX no longer needed?
             # do a full scene update to ensure that transformations are applied
-            #self.context.scene.update()
+            # self.context.scene.update()
         
         return {'FINISHED'}
 
@@ -319,7 +319,7 @@ class NifImport(NifCommon):
             #process extra data
             for n_extra in root_block.get_extra_datas():
                 if isinstance(n_extra, NifFormat.BSXFlags):
-                    #get bsx flags so we can attach it to collision object
+                    # get bsx flags so we can attach it to collision object
                     bsx_flags = n_extra.integer_data
                 elif isinstance(n_extra, NifFormat.NiStringExtraData):
                     if n_extra.name == "UPB":
@@ -720,7 +720,7 @@ class NifImport(NifCommon):
         shortname = self.import_name(niBlock)
         b_empty = bpy.data.objects.new(shortname, None)
         
-        #TODO - is longname needed???
+        # TODO - is longname needed???
         b_empty.niftools.longname = niBlock.name.decode()
         
         self.context.scene.objects.link(b_empty)
@@ -1140,16 +1140,16 @@ class NifImport(NifCommon):
         n_vcol = niData.vertex_colors
 
         if n_vcol:
-            #create vertex_layers
-            b_meshcolorlayer = b_mesh.vertex_colors.new(name="VertexColor") #color layer
+            # create vertex_layers
+            b_meshcolorlayer = b_mesh.vertex_colors.new(name="VertexColor") # color layer
             b_meshcolorlayeralpha = b_mesh.vertex_colors.new(name="VertexAlpha") # greyscale        
 
-            #Mesh Vertex Color / Mesh Face
+            # Mesh Vertex Color / Mesh Face
             for n_tri, b_face_index in zip(n_tris, f_map):
                 if b_face_index is None:
                     continue
                 
-                #MeshFace to MeshColor
+                # MeshFace to MeshColor
                 b_meshcolor = b_meshcolorlayer.data[b_face_index]
                 b_meshalpha = b_meshcolorlayeralpha.data[b_face_index]
                 
@@ -1224,8 +1224,8 @@ class NifImport(NifCommon):
                             continue
                         tface = b_mesh.uv_textures.active.data[b_f_index]
                         # gone in blender 2.5x+?
-                        #f.mode = Blender.Mesh.FaceModes['TEX']
-                        #f.transp = Blender.Mesh.FaceTranspModes['ALPHA']
+                        # f.mode = Blender.Mesh.FaceModes['TEX']
+                        # f.transp = Blender.Mesh.FaceTranspModes['ALPHA']
                         tface.image = imgobj
 
         # import skinning info, for meshes affected by bones
@@ -1426,7 +1426,7 @@ class NifImport(NifCommon):
                 bpy.types.Constraint.NULL)
             constr.name = "priority:%i" % self.bone_priorities[niBlock.name]
         
-        #recalculate to ensure mesh functions correctly
+        # recalculate mesh to render correctly
         b_mesh.calc_normals()
         b_mesh.update()
         
@@ -1580,7 +1580,7 @@ class NifImport(NifCommon):
             
         if kfc.interpolator:
             if isinstance(kfc.interpolator, NifFormat.NiBSplineInterpolator):
-                kfd = None #not supported yet so avoids fatal error - should be kfc.interpolator.spline_data when spline data is figured out.
+                kfd = None # not supported yet so avoids fatal error - should be kfc.interpolator.spline_data when spline data is figured out.
             else:
                 kfd = kfc.interpolator.data
         else:
@@ -2049,7 +2049,7 @@ class NifImport(NifCommon):
 def menu_func(self, context):
     """Import operator for the menu."""
     # TODO get default path from config registry
-    #default_path = bpy.data.filename.replace(".blend", ".nif")
+    # default_path = bpy.data.filename.replace(".blend", ".nif")
     default_path = "import.nif"
     self.layout.operator(
         NifImport.bl_idname,
