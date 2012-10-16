@@ -37,7 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
-# :Blender addon info.
+#: Blender addon info.
 bl_info = {
     "name": "NetImmerse/Gamebryo nif format",
     "description":
