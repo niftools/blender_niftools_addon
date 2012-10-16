@@ -148,11 +148,11 @@ class SingleNif(Base):
                 "failed to clear {0} from scene".format(b_obj))
 
     def b_create_objects(self):
-        """Create and return blender object for feature."""
+        """Create blender objects for feature."""
         raise NotImplementedError
 
     def b_check_data(self):
-        """Check blender object against feature."""
+        """Check blender objects against feature."""
         raise NotImplementedError
 
     def n_check_data(self, n_data):
