@@ -53,26 +53,83 @@ class Base:
     gen_blender_scene = False
     
     def b_clear(self):
+        """Clear all objects from scene."""
+        # ensure in object mode
         # unlinking objects will throw error otherwise 
         if not (bpy.context.mode == 'OBJECT'):
-            bpy.ops.object.mode_set(mode='OBJECT', toggle=False) # ensure in object mode
+            bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
         clear_bpy_data()
 
     def teardown(self):
+        """Called when test finishes, should clean everything to
+        prepare for next test.
+        """
         self.b_clear()
 
 class SingleNif(Base):
-    """Base class for testing a feature concerning single nif files."""
+    """Base class for testing a feature concerning single nif files.
+
+    Every test consists of two pieces of data:
+
+    * a nif file (see :attr:`SingleNif.n_filepath_0`)
+    * one or more blender objects (produced by blender code,
+      see :meth:`SingleNif.b_create_objects`)
+
+    To construct a new test, you must create a new nif file,
+    and overload :meth:`SingleNif.b_create_objects` to match
+    the desired imported nif in blender.
+
+    Then, overload the following two methods for checking this data:
+
+    * :meth:`SingleNif.b_check_data`
+    * :meth:`SingleNif.n_check_data`
+
+    Two tests will be run
+    (see implementation of :meth:`SingleNif.test_import_export`
+    and :meth:`SingleNif.test_export_import`):
+
+    1. Check nif data to be imported,
+       import nif,
+       check imported blender data,
+       export it again,
+       check exported nif data.
+
+    2. Create blender objects,
+       check blender data to be exported,
+       export to nif,
+       check exported nif data,
+       import the nif just exported,
+       check imported blender data.
+
+    """
 
     n_name = None
-    """Name of nif file (without ``0.nif`` at the end)."""
+    """Base name of nif file (without ``0.nif`` at the end)."""
     
+    # TODO b_obj_names?
     b_obj_list = []
-    """List of imported blender object."""
+    """List of names of all blender objects involved with the test."""
     
     EPSILON = 0.005
+    """A small value used when comparing floats."""
+
+    n_filepath_0 = None
+    """The name of the nif file to import
+    (set automatically from :attr:`SingleNif.n_name`).
+    """
+
+    n_filepath_1 = None
+    """The name of the nif file to export from import.
+    (set automatically from :attr:`SingleNif.n_name`).
+    """
+
+    n_filepath_2 = None
+    """The name of the nif file to export from created blender scene.
+    (set automatically from :attr:`SingleNif.n_name`).
+    """
 
     def __init__(self):
+        """Initialize the test."""
         Base.__init__(self)
         self.n_filepath_0 = "test/nif/" + self.n_name + "0.nif"
         self.n_filepath_1 = "test/nif/" + self.n_name + "1.nif"
