@@ -15,7 +15,8 @@ terminal (Fedora)::
   ./blender-nosetests.sh
 
 terminal (Ubuntu)::
-	sh blender-nosetests.sh
+
+  sh blender-nosetests.sh
 
 from within the ``blender_nif_plugin`` folder.
 Beware that the output can be rather verbose,
