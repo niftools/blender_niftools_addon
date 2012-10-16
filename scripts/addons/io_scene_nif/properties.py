@@ -109,7 +109,7 @@ class NiftoolsObjectProps(bpy.types.PropertyGroup):
         cls.bsxflags = IntProperty(
                         name = 'BSXFlags',
                         description = 'Controls animation and collision',
-                        default = 2 #2 = Bit 1, enable collision
+                        default = 2 # 2 = Bit 1, enable collision
                         )
         
         cls.upb = StringProperty(
@@ -128,7 +128,7 @@ class NiftoolsObjectCollisionProps(bpy.types.PropertyGroup):
     @classmethod
     def register(cls):
 
-        #physics
+        # physics
         bpy.types.Object.nifcollision = PointerProperty(
                         name='Niftools Collision Property',
                         description = 'Additional collision properties used by the Nif File Format',
@@ -139,7 +139,7 @@ class NiftoolsObjectCollisionProps(bpy.types.PropertyGroup):
                         name='Motion System',
                         description = 'Havok Motion System settings for bhkRigidBody(t)',
                         items = [(item, item,"", i) for i, item in enumerate(NifFormat.MotionSystem._enumkeys)],
-                        #default = 'MO_SYS_FIXED',
+                        # default = 'MO_SYS_FIXED',
                         
                         )
            
@@ -147,14 +147,14 @@ class NiftoolsObjectCollisionProps(bpy.types.PropertyGroup):
                         name = 'Oblivion Layer',
                         description = 'Mesh color, used in Editor',
                         items = [(item, item,"", i) for i, item in enumerate(NifFormat.OblivionLayer._enumkeys)],
-                        #default = 'OL_STATIC',
+                        # default = 'OL_STATIC',
                         )
           
         cls.quality_type = EnumProperty(
                         name = 'Quality Type',
                         description = 'Determines quality of motion',
                         items = [(item, item,"", i) for i, item in enumerate(NifFormat.MotionQuality._enumkeys)],
-                        #default = 'MO_QUAL_FIXED',
+                        # default = 'MO_QUAL_FIXED',
                         )
         
         cls.col_filter = IntProperty(
@@ -167,7 +167,7 @@ class NiftoolsObjectCollisionProps(bpy.types.PropertyGroup):
                         name = 'Havok Material',
                         description = 'The Shapes material',
                         items = [(item, item,"", i) for i, item in enumerate(NifFormat.HavokMaterial._enumkeys)],
-                        #default = 'HAV_MAT_WOOD'
+                        # default = 'HAV_MAT_WOOD'
                         )
                         
         cls.export_bhklist = BoolProperty(

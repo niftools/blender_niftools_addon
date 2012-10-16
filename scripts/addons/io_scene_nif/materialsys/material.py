@@ -88,7 +88,7 @@ class material_import():
         except KeyError:
             pass
         
-        #name unique material
+        # name unique material
         name = self.nif_common.import_name(n_mat_prop)
         b_mat = bpy.data.materials.new(name)
         
@@ -182,18 +182,18 @@ class material_import():
                     b_mat_texslot.texture = base_texture
                     b_mat_texslot.use = True
                     
-                    #Influence mapping
+                    # Influence mapping
                     
-                    #Mapping
+                    # Mapping
                     b_mat_texslot.texture_coords = 'UV'
                     b_mat_texslot.uv_layer = self.get_uv_layer_name(baseTexDesc.uv_set)
                     
-                    #Influence
+                    # Influence
                     b_mat_texslot.use_map_color_diffuse = True
                     b_mat_texslot.blend_type = blend_type
                     if(n_alpha_prop):
                         b_mat_texslot.use_map_alpha
-                    #update: needed later
+                    # update: needed later
                     base_texture = b_mat_texslot
                     
             if bumpTexDesc:
@@ -203,19 +203,19 @@ class material_import():
                     b_mat_texslot.texture = bump_texture
                     b_mat_texslot.use = True
                     
-                    #Influence mapping
-                    b_mat_texslot.texture.use_normal_map = False #causes artifacts otherwise.
+                    # Influence mapping
+                    b_mat_texslot.texture.use_normal_map = False # causes artifacts otherwise.
                     b_mat_texslot.use_map_color_diffuse = False
-                    #Mapping
+                    # Mapping
                     b_mat_texslot.texture_coords = 'UV'
                     b_mat_texslot.uv_layer = self.get_uv_layer_name(bumpTexDesc.uv_set)
-                    #Influence
+                    # Influence
                     b_mat_texslot.use_map_normal = True
                     b_mat_texslot.blend_type = blend_type
                     if(n_alpha_prop):
                         b_mat_texslot.use_map_alpha
                         
-                    #update: needed later
+                    # update: needed later
                     bump_texture = b_mat_texslot
                     
             if glowTexDesc:
@@ -225,19 +225,19 @@ class material_import():
                     b_mat_texslot.texture = glow_texture
                     b_mat_texslot.use = True
                     
-                    #Influence mapping
+                    # Influence mapping
                     b_mat_texslot.texture.use_alpha = False
                     b_mat_texslot.use_map_color_diffuse = False
-                    #Mapping
+                    # Mapping
                     b_mat_texslot.texture_coords = 'UV'
                     b_mat_texslot.uv_layer = self.get_uv_layer_name(glowTexDesc.uv_set)
-                    #Influence
+                    # Influence
                     b_mat_texslot.use_map_emit = True
                     b_mat_texslot.blend_type = blend_type
                     if(n_alpha_prop):
                         b_mat_texslot.use_map_alpha
                         
-                    #update: needed later
+                    # update: needed later
                     glow_texture = b_mat_texslot
                     
             if glossTexDesc:
@@ -353,7 +353,7 @@ class material_import():
         b_mat.diffuse_color[2] = n_mat_prop.diffuse_color.b
         b_mat.diffuse_intensity = 1.0
         
-        #TODO - Detect fallout 3+, use emit multi as a degree of emission
+        # TODO - Detect fallout 3+, use emit multi as a degree of emission
         #        test some values to find emission maximium. 0-1 -> 0-max_val
         # Should we factor in blender bounds 0.0 - 2.0
         
@@ -389,9 +389,9 @@ class material_import():
         b_mat.specular_color[2] = n_mat_prop.specular_color.b
         
         if (not n_specular_prop) and (self.nif_common.data.version != 0x14000004):
-            b_mat.specular_intensity = 0.0 #no specular prop 
+            b_mat.specular_intensity = 0.0 # no specular prop 
         else:
-            b_mat.specular_intensity = 1.0 #Blender multiplies specular color with this value
+            b_mat.specular_intensity = 1.0 # Blender multiplies specular color with this value
         
         # check wireframe property
         if n_wire_prop:
@@ -402,23 +402,23 @@ class material_import():
         return b_mat
 
     def get_b_blend_type_from_n_apply_mode(self, n_apply_mode):
-        #TODO - Check out n_apply_modes
+        # TODO - Check out n_apply_modes
         if n_apply_mode == NifFormat.ApplyMode.APPLY_MODULATE:
             return "MIX"
-        #TODO - These seem unsupported by Blender, check
+        # TODO - These seem unsupported by Blender, check
         elif n_apply_mode == NifFormat.ApplyMode.APPLY_REPLACE:
             return "MIX"
         elif n_apply_mode == NifFormat.ApplyMode.APPLY_DECAL:
             return "MIX"
         elif n_apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT:
             return "LIGHTEN"
-        elif n_apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT2: #used by Oblivion for parallax
+        elif n_apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT2: # used by Oblivion for parallax
             return "MULTIPLY"
         self.nif_common.warning(
             "Unknown apply mode (%i) in material,"
             " using blend type 'MIX'" % n_apply_mode)
         return "MIX"
     
-    #TODO: Move to texture.py
+    # TODO: Move to texture.py
     def get_uv_layer_name(self, uvset):
         return "UVMap.%03i" % uvset if uvset != 0 else "UVMap"

@@ -16,52 +16,68 @@ import os
 
 import io_scene_nif.nif_export
 from pyffi.formats.nif import NifFormat
+from test.test_geometry import TestBaseUV
 from test.test_property import TestMaterialProperty
 
 #NiTexturingProperty
-class TestBaseTexture(TestMaterialProperty):
+class TestBaseTexture(TestBaseUV, TestMaterialProperty):
     n_name = "textures/base_texture"
-    texture_filepath = 'test' + os.sep + 'nif'+ os.sep + 'textures' + os.sep + 'base_texture.dds'
+    diffuse_texture_path = 'test' + os.sep + 'nif'+ os.sep + 'textures' + os.sep + 'base_texture.dds'
 
     def b_create_object(self):
-        #create material texture slot
-        b_obj = TestMaterialProperty.b_create_object(self)
+        TestBaseUV.b_create_object(self) # create uv-wrapped obj
+        b_obj = bpy.data.objects[self.b_name]
+        TestMaterialProperty.b_create_material_block(b_obj)
         b_mat = b_obj.data.materials[0]
-        b_mat_texslot = b_mat.texture_slots.create(0)
+        self.b_create_diffuse_texture(b_mat)
         
-        #user manually selects Image Type then loads image
-        b_mat_texslot.texture = bpy.data.textures.new(name='BaseTexture', type='IMAGE')
-        b_mat_texslot.texture.image = bpy.data.images.load(self.texture_filepath)
+    def b_create_diffuse_block(self, b_obj):
+        b_mat_texslot = b_mat.texture_slots.create(0) # create material texture slot                        
+        b_mat_texslot.texture = bpy.data.textures.new(name='DiffuseTexture', type='IMAGE') # create texture holder
+        b_mat_texslot.texture.image = bpy.data.images.load(self.diffuse_texture_path)
         b_mat_texslot.use = True
         
-        #Mapping
+        self.b_create_diffuse_property(b_obj)
+        
+    def b_create_diffuse_property(self, b_obj):
+        
+        # Mapping
         b_mat_texslot.texture_coords = 'UV'
         b_mat_texslot.uv_layer = 'UVMap'
         
-        #Influence
+        # Influence
         b_mat_texslot.use_map_color_diffuse = True
 
-        #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
-        return b_obj
-
-    def b_check_data(self, b_obj):
-        TestMaterialProperty.b_check_data(self, b_obj)
+        bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
+        print("LOL")
+    
+    def b_check_data(self):
+        TestBaseUV.b_check_data(self)
+        TestMaterialProperty.b_check_data(self) 
+        b_obj = bpy.data.objects[self.b_name]
+        self.b_check_texture_block(b_obj)
+        
+    def b_check_texture_block(self, b_obj):
         b_mesh = b_obj.data
         b_mat = b_mesh.materials[0]
         
-        nose.tools.assert_equal(b_mat.texture_slots[0] != None, True) 
+        nose.tools.assert_equal(b_mat.texture_slots[0] != None, True) # check slot exists
         b_mat_texslot = b_mat.texture_slots[0]
-        nose.tools.assert_equal(b_mat_texslot.use, True)
+        nose.tools.assert_equal(b_mat_texslot.use, True) # check slot enabled
+        self.b_check_texture_property(b_mat_texslot)
+    
+    def b_check_texture_property(self, b_mat_texslot):
         nose.tools.assert_is_instance(b_mat_texslot.texture, bpy.types.ImageTexture)
-        #nose.tools.assert_equal(b_mat_texslot.texture.image.filepath, self.texture_filepath)
+        #nose.tools.assert_equal(b_mat_texslot.texture.image.filepath, self.diffuse_texture_path)
         nose.tools.assert_equal(b_mat_texslot.texture_coords, 'UV')
+        
         nose.tools.assert_equal(b_mat_texslot.use_map_color_diffuse, True)
         
     def n_check_data(self, n_data):
         n_geom = n_data.roots[0].children[0]
         nose.tools.assert_equal(n_geom.num_properties, 2)
         self.n_check_texturing_property(n_geom.properties[0])
-        TestMaterialProperty.n_check_material_property(self, n_geom.properties[1])
+        TestBaseUV.n_check_material_property(self, n_geom.properties[1])
 
     def n_check_texturing_property(self, n_tex_prop):
         nose.tools.assert_is_instance(n_tex_prop, NifFormat.NiTexturingProperty)
@@ -79,7 +95,8 @@ class TestBaseTexture(TestMaterialProperty):
     def n_check_base_source_texture(self, n_source):
         nose.tools.assert_is_instance(n_source, NifFormat.NiSourceTexture)
         nose.tools.assert_equal(n_source.use_external, 1)
-        #nose.tools.assert_equal(n_source.file_name, self.texture_filepath)
+        #nose.tools.assert_equal(n_source.file_name, self.diffuse_texture_path)
+
 
 class TestBumpTexture(TestBaseTexture):
     texture_filepath = 'test' + os.sep + 'nif'+ os.sep + 'textures' + os.sep + 'base_bump.dds'
@@ -129,7 +146,7 @@ class TestBumpTexture(TestBaseTexture):
         n_geom = n_data.roots[0].children[0]
         nose.tools.assert_equal(n_geom.num_properties, 2)
         self.n_check_texturing_property(n_geom.properties[0])
-        TestMaterialProperty.n_check_material_property(self, n_geom.properties[1])
+        TestBaseUV.n_check_material_property(self, n_geom.properties[1])
 
     def n_check_texturing_property(self, n_tex_prop):
         nose.tools.assert_is_instance(n_tex_prop, NifFormat.NiTexturingProperty)
@@ -208,8 +225,8 @@ class TestNormalTexture(TestBaseTexture):
         nose.tools.assert_is_instance(n_tex_prop, NifFormat.NiTexturingProperty)
         nose.tools.assert_equal(n_tex_prop.has_, True)
         self.n_check_base_texture(n_tex_prop.base_texture) 
-'''
 
+'''
 class TestGlowTexture(TestBaseTexture):
     texture_filepath = 'test' + os.sep + 'nif'+ os.sep + 'textures' + os.sep + 'base_glow.dds'
 
@@ -257,7 +274,7 @@ class TestGlowTexture(TestBaseTexture):
         n_geom = n_data.roots[0].children[0]
         nose.tools.assert_equal(n_geom.num_properties, 2)
         self.n_check_texturing_property(n_geom.properties[0])
-        TestMaterialProperty.n_check_material_property(self, n_geom.properties[1])
+        TestBaseUV.n_check_material_property(self, n_geom.properties[1])
 
     def n_check_texturing_property(self, n_tex_prop):
         nose.tools.assert_is_instance(n_tex_prop, NifFormat.NiTexturingProperty)
@@ -275,5 +292,3 @@ class TestGlowTexture(TestBaseTexture):
         nose.tools.assert_is_instance(n_source, NifFormat.NiSourceTexture)
         nose.tools.assert_equal(n_source.use_external, 1)
         #nose.tools.assert_equal(n_source.file_name, self.texture_filepath)     
-
-        
