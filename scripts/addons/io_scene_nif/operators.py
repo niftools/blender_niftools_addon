@@ -52,14 +52,14 @@ class NifOperatorCommon:
 
     # filepath is created by ImportHelper/ExportHelper
 
-    # Default file name extension.
+    #: Default file name extension.
     filename_ext = ".nif"
 
-    # File name filter for file select dialog.
+    #: File name filter for file select dialog.
     filter_glob = bpy.props.StringProperty(
         default="*.nif;*.item;*.nifcache;*.jmi", options={'HIDDEN'})
 
-    # Level of verbosity on the console.
+    #: Level of verbosity on the console.
     log_level = bpy.props.EnumProperty(
         items=(
             ("DEBUG", "Debug",
@@ -77,7 +77,7 @@ class NifOperatorCommon:
         description="Level of verbosity on the console.",
         default="WARNING")
 
-    # Name of file where Python profiler dumps the profile.
+    #: Name of file where Python profiler dumps the profile.
     profile_path = bpy.props.StringProperty(
         name="Profile Path",
         description=
@@ -88,14 +88,14 @@ class NifOperatorCommon:
         subtype="FILE_PATH",
         options={'HIDDEN'})
 
-    # Number of nif units per blender unit.
+    #: Number of nif units per blender unit.
     scale_correction = bpy.props.FloatProperty(
         name="Scale Correction",
         description="Number of nif units per blender unit.",
         default=1.0,
         min=0.01, max=100.0, precision=2)
 
-    # Used for checking equality between floats.
+    #: Used for checking equality between floats.
     epsilon = bpy.props.FloatProperty(
         name="Epsilon",
         description="Used for checking equality between floats.",
@@ -106,13 +106,13 @@ class NifOperatorCommon:
 class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
     """Operator for loading a nif file."""
 
-    # Name of function for calling the nif export operator.
+    #: Name of function for calling the nif export operator.
     bl_idname = "import_scene.nif"
 
-    # How the nif import operator is labelled in the user interface.
+    #: How the nif import operator is labelled in the user interface.
     bl_label = "Import NIF"
 
-    # Keyframe file for animations.
+    #: Keyframe file for animations.
     keyframe_file = bpy.props.StringProperty(
         name="Keyframe File",
         description="Keyframe file for animations.",
@@ -120,7 +120,7 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
         default="",
         subtype="FILE_PATH")
 
-    # FaceGen EGM file for morphs.
+    #: FaceGen EGM file for morphs.
     egm_file = bpy.props.StringProperty(
         name="FaceGen EGM File",
         description="FaceGen EGM file for morphs.",
@@ -128,44 +128,44 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
         default="",
         subtype="FILE_PATH")
 
-    # Import animation.
+    #: Import animation.
     animation = bpy.props.BoolProperty(
         name="Animation",
         description="Import animation.",
         default=True)
 
-    # Merge skeleton roots.
+    #: Merge skeleton roots.
     merge_skeleton_roots = bpy.props.BoolProperty(
         name="Merge Skeleton Roots",
         description="Merge skeleton roots.",
         default=False)
 
-    # Send all geometries to their bind position.
+    #: Send all geometries to their bind position.
     send_geoms_to_bind_pos = bpy.props.BoolProperty(
         name="Send Geometries To Bind Position",
         description="Send all geometries to their bind position.",
         default=False)
 
-    # Send all detached geometries to the position of their parent node.
+    #: Send all detached geometries to the position of their parent node.
     send_detached_geoms_to_node_pos = bpy.props.BoolProperty(
         name="Send Detached Geometries To Node Position",
         description=
         "Send all detached geometries to the position of their parent node.",
         default=False)
 
-    # Send all bones to their bind position.
+    #: Send all bones to their bind position.
     send_bones_to_bind_position = bpy.props.BoolProperty(
         name="Send Bones To Bind Position",
         description="Send all bones to their bind position.",
         default=False)
 
-    # Apply skin deformation to all skinned geometries.
+    #: Apply skin deformation to all skinned geometries.
     apply_skin_deformation =  bpy.props.BoolProperty(
         name="Apply Skin Deformation",
         description="Apply skin deformation to all skinned geometries.",
         default=False)
 
-    # What should be imported.
+    #: What should be imported.
     skeleton = bpy.props.EnumProperty(
         items=(
             ("EVERYTHING", "Everything",
@@ -179,7 +179,7 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
         description="What should be imported.",
         default="EVERYTHING")
 
-    # Import multi-material shapes as a single mesh.
+    #: Import multi-material shapes as a single mesh.
     combine_shapes = bpy.props.BoolProperty(
         name="Combine Shapes",
         description="Import multi-material shapes as a single mesh.",
@@ -210,13 +210,13 @@ def _game_to_enum(game):
 class NifExportOperator(bpy.types.Operator, ExportHelper, NifOperatorCommon):
     """Operator for saving a nif file."""
 
-    # Name of function for calling the nif export operator.
+    #: Name of function for calling the nif export operator.
     bl_idname = "export_scene.nif"
 
-    # How the nif export operator is labelled in the user interface.
+    #: How the nif export operator is labelled in the user interface.
     bl_label = "Export NIF"
 
-    # For which game to export.
+    #: For which game to export.
     game = bpy.props.EnumProperty(
         items=[
             (_game_to_enum(game), game, "Export for " + game)
@@ -229,7 +229,7 @@ class NifExportOperator(bpy.types.Operator, ExportHelper, NifOperatorCommon):
         description="For which game to export.",
         default='OBLIVION')
 
-    # How to export animation.
+    #: How to export animation.
     animation = bpy.props.EnumProperty(
         items=[
             ('ALL_NIF', "All (nif)", "Geometry and animation to a single nif."),
@@ -241,70 +241,70 @@ class NifExportOperator(bpy.types.Operator, ExportHelper, NifOperatorCommon):
         description="How to export animation.",
         default='ALL_NIF')
 
-    # Smoothen inter-object seams.
+    #: Smoothen inter-object seams.
     smooth_object_seams = bpy.props.BoolProperty(
         name="Smoothen Inter-Object Seams",
         description="Smoothen inter-object seams.",
         default=True)
 
-    # Use BSAnimationNode (for Morrowind).
+    #: Use BSAnimationNode (for Morrowind).
     bs_animation_node = bpy.props.BoolProperty(
         name="Use NiBSAnimationNode",
         description="Use NiBSAnimationNode (for Morrowind).",
         default=False)
 
-    # Stripify geometries. Deprecate? (Strips are slower than triangle shapes.)
+    #: Stripify geometries. Deprecate? (Strips are slower than triangle shapes.)
     stripify = bpy.props.BoolProperty(
         name="Stripify Geometries",
         description="Stripify geometries.",
         default=False,
         options={'HIDDEN'})
 
-    # Stitch strips. Deprecate? (Strips are slower than triangle shapes.)
+    #: Stitch strips. Deprecate? (Strips are slower than triangle shapes.)
     stitch_strips = bpy.props.BoolProperty(
         name="Stitch Strips",
         description="Stitch strips.",
         default=True,
         options={'HIDDEN'})
 
-    # Flatten skin.
+    #: Flatten skin.
     flatten_skin = bpy.props.BoolProperty(
         name="Flatten Skin",
         description="Flatten skin.",
         default=False)
 
-    # Export skin partition.
+    #: Export skin partition.
     skin_partition = bpy.props.BoolProperty(
         name="Skin Partition",
         description="Export skin partition.",
         default=True)
 
-    # Pad and sort bones.
+    #: Pad and sort bones.
     pad_bones = bpy.props.BoolProperty(
         name="Pad & Sort Bones",
         description="Pad and sort bones.",
         default=False)
 
-    # Maximum number of bones per skin partition.
+    #: Maximum number of bones per skin partition.
     max_bones_per_partition = bpy.props.IntProperty(
         name = "Max Bones Per Partition",
         description="Maximum number of bones per skin partition.",
         default=18, min=4, max=18)
 
-    # Maximum number of bones per vertex in skin partitions.
+    #: Maximum number of bones per vertex in skin partitions.
     max_bones_per_vertex = bpy.props.IntProperty(
         name = "Max Bones Per Vertex",
         description="Maximum number of bones per vertex in skin partitions.",
         default=4, min=1,
         options={'HIDDEN'})
 
-    # Pad and sort bones.
+    #: Pad and sort bones.
     force_dds = bpy.props.BoolProperty(
         name="Force DDS",
         description="Force texture .dds extension.",
         default=True)
 
-    # Map game enum to nif version.
+    #: Map game enum to nif version.
     version = {
         _game_to_enum(game): versions[-1]
         for game, versions in NifFormat.games.items() if game != '?'
