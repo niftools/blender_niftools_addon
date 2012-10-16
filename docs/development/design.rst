@@ -91,15 +91,15 @@ written. Ideally, the following process is followed:
    - Write Python code which create the corresponding blender scene.
      Where possible make the test case as simple as possible. For
      instance, use primitives readily available in blender. This code
-     goes in the :meth:`b_create` method of the test class.
+     goes in the :meth:`b_create_objects` method of the test class.
 
    - Document the feature in ``docs/features/blabla.rst`` as you write
-     :meth:`b_create`: explain what the user has to do in blender in order
+     :meth:`b_create_objects`: explain what the user has to do in blender in order
      to export the desired data, and where in blender the data ends up
      on import.
 
    - Write Python code which test the blender scene against the
-     desired feature: :meth:`b_check` method of the test class.
+     desired feature: :meth:`b_check_data` method of the test class.
 
 5. Now implement the feature in the import and export plugin, until
    the regression test passes.
@@ -112,7 +112,7 @@ The tests will actually do the following:
 
    - Call :meth:`n_check_data` on test nif.
 
-   - Import the nif ``test/nif/blabla0.nif`` and call :meth:`b_check` on
+   - Import the nif ``test/nif/blabla0.nif`` and call :meth:`b_check_data` on
      imported scene.
 
    - Export the nif to ``test/nif/blabla1.nif`` call :meth:`n_check_data` on
@@ -120,16 +120,18 @@ The tests will actually do the following:
 
 2. Test that export-import works as expected:
 
-   - Call :meth:`b_create` to create the scene,
-     and :meth:`b_check` to check it.
+   - Call :meth:`b_create_objects` to create the scene,
+     and :meth:`b_check_data` to check it.
 
    - Export the nif to ``test/nif/blabla2.nif`` and call
      :meth:`n_check_data` on exported nif.
 
    - Clear blender scene, import the exported nif, and call
-     :meth:`b_check` on imported scene.
+     :meth:`b_check_data` on imported scene.
 
 This ensures data integrity both at Blender level and at nif level.
+
+.. generate, and link to, test API documentation?
 
 Differences Between Blender 2.4x and 2.5x
 -----------------------------------------
