@@ -87,7 +87,7 @@ class armature_import():
 				niBone, b_armature, b_armatureData, niArmature)
 		b_armatureData.update()
 
-		#TODO: Move to Animation.py
+		# TODO: Move to Animation.py
 
 		# The armature has been created in editmode,
 		# now we are ready to set the bone keyframes.

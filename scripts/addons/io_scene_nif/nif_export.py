@@ -185,18 +185,20 @@ class NifExport(NifCommon):
     def execute(self):
         """Main export function."""
         
-        #helper systems
-        #Store references to subsystems as needed.
+        # Helper systems
+        # Store references to subsystems as needed.
         self.collisionhelper = collision.shape_export(parent=self)
         
         self.info("exporting {0}".format(self.properties.filepath))
 
         # TODO
-        #if self.properties.animation == 'ALL_NIF_XNIF_XKF' and self.properties.game == 'MORROWIND':
-        #    # if exporting in nif+xnif+kf mode, then first export
-        #    # the nif with geometry + animation, which is done by:
-        #    self.properties.animation = 'ALL_NIF'
-
+        '''
+        if self.properties.animation == 'ALL_NIF_XNIF_XKF' and self.properties.game == 'MORROWIND':
+            # if exporting in nif+xnif+kf mode, then first export
+            # the nif with geometry + animation, which is done by:
+            self.properties.animation = 'ALL_NIF'
+        '''
+        
         # extract directory, base name, extension
         directory = os.path.dirname(self.properties.filepath)
         filebase, fileext = os.path.splitext(
@@ -310,7 +312,7 @@ class NifExport(NifCommon):
                 for b_obj in [b_obj for b_obj in self.context.scene.objects
                            if b_obj.type == 'MESH']:
                     mesh = b_obj.data
-                    #for v in mesh.vertices:
+                    # for v in mesh.vertices:
                     #    v.sel = False
                     for f in mesh.faces:
                         for v_index in f.vertices:
@@ -349,11 +351,11 @@ class NifExport(NifCommon):
                     # save normal of this vertex
                     for v, f, mesh in vlist:
                         v.normal = norm
-                        #v.sel = True
+                        # v.sel = True
                     nv += 1
                 self.info("Fixed normals on %i vertices." % nv)
 
-            ## TODO use Blender actions for animation groups
+            # TODO use Blender actions for animation groups
             # check for animation groups definition in a text buffer 'Anim'
             try:
                 animtxt = Blender.Text.Get("Anim")
@@ -367,7 +369,7 @@ class NifExport(NifCommon):
             self.rebuild_full_names()
             
             # export nif:
-            #------------
+            # -----------
             self.info("Exporting")
             
             # create a nif object
@@ -387,7 +389,7 @@ class NifExport(NifCommon):
                                  root_block, root_object.name)
 
             # post-processing:
-            #-----------------
+            # ----------------
 
             # if we exported animations, but no animation groups are defined,
             # define a default animation group
@@ -404,7 +406,8 @@ class NifExport(NifCommon):
                     self.info("Defining default animation group.")
                     # write the animation group text buffer
                     animtxt = Blender.Text.New("Anim")
-                    animtxt.write("%i/Idle: Start/Idle: Loop Start\n%i/Idle: Loop Stop/Idle: Stop" % (self.context.scene.frame_start, self.context.scene.frame_end))
+                    animtxt.write("%i/Idle: Start/Idle: Loop Start\n%i/Idle: Loop Stop/Idle: Stop" % 
+                                  (self.context.scene.frame_start, self.context.scene.frame_end))
 
             # animations without keyframe animations crash the TESCS
             # if we are in that situation, add a trivial keyframe animation
@@ -505,8 +508,8 @@ class NifExport(NifCommon):
                 
                 # create extra string data sgoKeep
                 sgokeep = self.create_block("NiStringExtraData")
-                sgokeep.name = "UPB" #user property buffer
-                sgokeep.string_data = "sgoKeep=1 ExportSel = Yes" #Eg. - Unyielding = 0, sgoKeep=1ExportSel = Yes
+                sgokeep.name = "UPB" # user property buffer
+                sgokeep.string_data = "sgoKeep=1 ExportSel = Yes" # Unyielding = 0, sgoKeep=1ExportSel = Yes
                 
                 # add extra blocks
                 root_block.add_extra_data(furnmark)
@@ -735,7 +738,7 @@ class NifExport(NifCommon):
                 NIF_USER_VERSION2 = 0             
 
             # export nif file:
-            #-----------------
+            # ----------------
 
             if self.properties.animation != 'ANIM_KF':
                 if self.properties.game == 'EMPIRE_EARTH_II':
@@ -764,7 +767,7 @@ class NifExport(NifCommon):
                     data.write(stream)
 
             # create and export keyframe file and xnif file:
-            #-----------------------------------------------
+            # ----------------------------------------------
 
             # convert root_block tree into a keyframe tree
             if self.properties.animation == 'ANIM_KF' or self.properties.animation == 'ALL_NIF_XNIF_XKF':
