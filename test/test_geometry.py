@@ -89,6 +89,7 @@ class TestBaseGeometry(SingleNif):
         b_mesh = b_obj.data
         self.b_check_geom(b_mesh)
 
+    # b_check_transform?
     def b_check_rotation(self, b_obj):
         
         b_loc_vec, b_rot_quat, b_scale_vec = b_obj.matrix_local.decompose() # transforms
