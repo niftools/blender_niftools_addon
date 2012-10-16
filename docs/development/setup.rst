@@ -107,11 +107,11 @@ To get the code, run in a terminal (linux) or in git bash (windows)::
 
    cd ~/workspace
    git clone --recursive git@github.com:<username>/blender_nif_plugin.git
-   cd blender_nif_plugin
-   git remote add neomonkeus git://github.com/neomonkeus/blender_nif_plugin.git
+   cd blender_nif_plugin   
 
 Optional remote tracking::
-   
+
+   git remote add neomonkeus git://github.com/neomonkeus/blender_nif_plugin.git
    git remote add aaron git://github.com/Aaron1178/blender_nif_plugin.git
    git remote add ghost git://github.com/Ghostwalker71/blender_nif_plugin.git
    git remote add amorilia git://github.com/amorilia/blender_nif_plugin.git
@@ -121,9 +121,9 @@ Install Build Environment Batch Script
 
 .. note::
 
-   * The build enviroment creates a command line window which detects requirements and sets the pathing information. 
-   * It is used to develop any NifTools application on Windows.
-   * The script will attempt to auto-detect paths but it is better to set them by setting parameters ``-flag@value``.
+   * The build enviroment is a tool to standardise development for all NifTools application on Windows
+   * Its purpose is to initialises a command line window with temporary enviromental setting, to avoid PATH variables. 
+   * It reads from a .ini file where non-standard locations path can be defined.
    * For more information, read the :file:`README.rst` file provided with the repository.
    
 **Windows**
@@ -133,19 +133,20 @@ Get the build environment batch script::
    cd workspace
    git clone git://github.com/neomonkeus/buildenv.git
 
-Right-click on the ``buildenv.bat`` file, and select **Send to > Desktop (create shortcut)**.
+Navigate to the BuildEnv directory and create a new .ini file or using msysgit::
+   
+   cd buildenv/ini
+   touch blender.ini
+   
+The following is a sample .ini file::
 
-Now right-click this newly created shortcut, and change **Target** into
+   arch=32
+   start=workspace
+   python=C:\Python32
+   blender=C:\ProgramFiles\BlenderFoundation\Blender
+   
+Running Create_shortcut.bat will now add shortcuts on the Desktop for each .ini file, which when run will open a buildenv command window.
 
-**Vista/Win 7**::
-
-   %comspec% /k C:\Users\<username>\workspace\buildenv\buildenv.bat -pythonpath@C:\Python32 -workfolder@workspace -arch@64
-
-**XP**::
-
-   %comspec% /k "C:\Documents and Settings\<username>\workspace\buildenv\buildenv.bat" -pythonpath@C:\Python32 -workfolder@workspace -arch@64
-
-On 32 bit systems, type ``-arch@32`` instead of ``-arch@64``.
 
 Install Pip
 -----------
