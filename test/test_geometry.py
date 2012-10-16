@@ -22,33 +22,42 @@ class TestBaseGeometry(SingleNif):
     # TODO maybe __init__ is the more logical place to set b_obj_list?
 
     def b_create_objects(self):
+        """Register :attr:`b_name`, and call :meth:`b_create_base_geometry`.
+        """
         self.b_obj_list.append(self.b_name)
         self.b_create_base_geometry()
         
     def b_create_base_geometry(self):
-        '''Creates a 7.5 x 7.5 x 3.75 polyhedron'''
-        
-        bpy.ops.mesh.primitive_cube_add() # create a base mesh
-        b_obj = bpy.data.objects[bpy.context.active_object.name]# grab the last added object
-        b_obj.name = self.b_name # Set name
-        
-        self.scale_object(b_obj) # scale the mesh
+        """Create a single polyhedron blender object."""
+
+        # create a base mesh, and set its name
+        bpy.ops.mesh.primitive_cube_add()
+        b_obj = bpy.data.objects[bpy.context.active_object.name]
+        b_obj.name = self.b_name
+
+        # transform it into something less trivial
+        self.scale_object(b_obj)
         self.scale_single_face(b_obj)
-        b_obj.matrix_local = self.transform_matrix() # rotate the object
-        b_obj.data.show_double_sided = False # prim_cube_add sets double sided; fix this       
+        b_obj.matrix_local = self.transform_matrix()
+
+        # primitive_cube_add sets double sided flag, fix this
+        b_obj.data.show_double_sided = False
         
         # bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
-    
+
+    # TODO b_scale_object
     def scale_object(self, b_obj):
-        '''Scales the object asymetrically'''
-        
-        # Scales the mesh-object 7.5 x 3.75 X 1.825        
-        bpy.ops.transform.resize(value=(7.5,1,1), constraint_axis=(True,False,False)) # global scale x
-        bpy.ops.transform.resize(value=(1,7.5,1), constraint_axis=(False,True,False)) # global scale y
-        bpy.ops.transform.resize(value=(1,1,3.5), constraint_axis=(False,False,True)) # global scale z
+        """Scale the object differently along each axis."""
+
+        bpy.ops.transform.resize(value=(7.5,1,1), constraint_axis=(True,False,False))
+        bpy.ops.transform.resize(value=(1,7.5,1), constraint_axis=(False,True,False))
+        bpy.ops.transform.resize(value=(1,1,3.5), constraint_axis=(False,False,True))
         bpy.ops.object.transform_apply(scale=True)
-        
+
+    # TODO b_scale_single_face
     def scale_single_face(self, b_obj):
+        """Scale a single face of the object."""
+
         # scale single face
         for faces in b_obj.data.faces:
             faces.select = False
@@ -58,8 +67,9 @@ class TestBaseGeometry(SingleNif):
             b_obj.data.vertices[b_vert_index].co[1] = b_obj.data.vertices[b_vert_index].co[1] * 0.5
             b_obj.data.vertices[b_vert_index].co[2] = b_obj.data.vertices[b_vert_index].co[2] * 0.5
                                  
+    # TODO b_get_transform_matrix
     def transform_matrix(self):
-        '''Returns a transform matrix, rot-XYZ(30,60,90), transl(20,20,20), scale(2)'''
+        """Return a non-trivial transform matrix."""
         
         b_trans_mat = mathutils.Matrix.Translation((20.0, 20.0, 20.0)) 
         
@@ -98,19 +108,18 @@ class TestBaseGeometry(SingleNif):
         num_triangles += 2 * len( [face for face in b_mesh.faces if len(face.vertices) == 4]) # face = 2 tris
         nose.tools.assert_equal(len(b_mesh.vertices), 8)
         nose.tools.assert_equal(num_triangles, 12)
+        # TODO also check location of vertices
 
     def n_check_data(self, n_data):
         n_trishape = n_data.roots[0].children[0]
         self.n_check_trishape(n_trishape)
         self.n_check_transform(n_trishape)
-        n_trishape_data = n_trishape.data
-        self.n_check_trishape_data(n_trishape_data)
+        self.n_check_trishape_data(n_trishape.data)
 
     def n_check_trishape(self, n_geom):
         nose.tools.assert_is_instance(n_geom, NifFormat.NiTriShape)
 
     def n_check_transform(self, n_geom):        
-		# check transforms
         nose.tools.assert_equal(n_geom.translation.as_tuple(),(20.0, 20.0, 20.0)) # location
         
         n_rot_eul = mathutils.Matrix(n_geom.rotation.as_tuple()).to_euler()
@@ -123,6 +132,7 @@ class TestBaseGeometry(SingleNif):
     def n_check_trishape_data(self, n_trishape_data):
         nose.tools.assert_equal(n_trishape_data.num_vertices, 8)
         nose.tools.assert_equal(n_trishape_data.num_triangles, 12)
+        # TODO also check location of vertices
         
     '''
         TODO: Additional checks needed.
