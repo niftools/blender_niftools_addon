@@ -3,6 +3,8 @@
 import bpy
 import io_scene_nif.nif_import
 import io_scene_nif.nif_export
+import os
+import os.path
 
 from pyffi.formats.nif import NifFormat
 
@@ -119,12 +121,27 @@ class SingleNif(Base):
     """
 
     n_filepath_1 = None
-    """The name of the nif file to export from import.
+    """The name of the nif file to export from import
     (set automatically from :attr:`SingleNif.n_name`).
     """
 
     n_filepath_2 = None
-    """The name of the nif file to export from created blender scene.
+    """The name of the nif file to export from created blender scene
+    (set automatically from :attr:`SingleNif.n_name`).
+    """
+
+    b_filepath_0 = None
+    """The name of the blend file after importing *n_filepath_0*
+    (set automatically from :attr:`SingleNif.n_name`).
+    """
+
+    b_filepath_1 = None
+    """The name of the blend file resulting from *b_create_objects*
+    (set automatically from :attr:`SingleNif.n_name`).
+    """
+
+    b_filepath_2 = None
+    """The name of the blend file after import of *n_filepath_2*
     (set automatically from :attr:`SingleNif.n_name`).
     """
 
@@ -134,6 +151,10 @@ class SingleNif(Base):
         self.n_filepath_0 = "test/nif/" + self.n_name + "0.nif"
         self.n_filepath_1 = "test/nif/" + self.n_name + "1.nif"
         self.n_filepath_2 = "test/nif/" + self.n_name + "2.nif"
+
+        self.b_filepath_0 = "test/autoblend/" + self.n_name + "0.blend"
+        self.b_filepath_1 = "test/autoblend/" + self.n_name + "1.blend"
+        self.b_filepath_2 = "test/autoblend/" + self.n_name + "2.blend"
 
     def b_clear(self):
         Base.b_clear(self)
@@ -150,6 +171,12 @@ class SingleNif(Base):
     def b_create_objects(self):
         """Create blender objects for feature."""
         raise NotImplementedError
+
+    def b_save(self, b_filepath):
+        """Save current scene to blend file."""
+        if not os.path.exists(os.path.dirname(b_filepath)):
+            os.makedirs(os.path.dirname(b_filepath))
+        bpy.ops.wm.save_mainfile(filepath=b_filepath)
 
     def b_check_data(self):
         """Check blender objects against feature."""
@@ -191,6 +218,7 @@ class SingleNif(Base):
         self.n_import(self.n_filepath_0)
         for b_obj in bpy.data.objects:
             b_obj.select = True
+        self.b_save(self.b_filepath_0)
         self.b_check_data()
         self.n_export(self.n_filepath_1)
         self.n_check(self.n_filepath_1)
@@ -201,6 +229,7 @@ class SingleNif(Base):
         self.b_create_objects()
         for b_obj in bpy.data.objects:
             b_obj.select = True
+        self.b_save(self.b_filepath_1)
         self.b_check_data()
         self.n_export(self.n_filepath_2)
         self.n_check(self.n_filepath_2)
@@ -208,5 +237,6 @@ class SingleNif(Base):
         self.n_import(self.n_filepath_2)
         for b_obj in bpy.data.objects:
             b_obj.select = True
+        self.b_save(self.b_filepath_2)
         self.b_check_data()
         self.b_clear()
