@@ -378,12 +378,17 @@ If you have done it correctly, blender should start up.
 Enable the blender plug-in and try to import one of the test nifs.
 If everything works, Blender's console should be visible in Pydev's console.
 
-* The only limitation is when want to put breakpoints in python files, you need to open the version in the Blender Foundation/Blender folder.
-* You only need to this once as when you run the script, eclipse will automatically open the file once it encounters the breakpoint.
+Debugging with PyDev
+''''''''''''''''''''
+
+Debugging is enabled via the ./scripts/addons/io_scene/nif_debug/__init__.py file, disabled by default.
+Set the DEBUGGING varibale to True and edit the path to the pydebugger.
+This works both from Blender run via Launch Config or via the nose test suite.
 
 .. note::
-
-   * When editing the repo version of the file, running install.bat will overwrite the addon version. Eclipse will as you if you want to reload the file. Ensure that you are editing the right version otherwise you might accidently overwrite you work.
+   * If running Blender GUI ensure that the breakpoints are placed is the file from the Blender Foundation/Blender folder.
+   * Executing the script, Eclipse will automatically open the file once it encounters the breakpoint.
+   * Remember install.bat overwrites the addon version, so ensure you are editing the repo correct version.
 
 Eclipse: Optional Extras
 ------------------------
