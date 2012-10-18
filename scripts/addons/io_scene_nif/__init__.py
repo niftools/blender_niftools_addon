@@ -1,27 +1,27 @@
 """Blender Plug-in for Nif import and export."""
 
 # ***** BEGIN LICENSE BLOCK *****
-# 
+#
 # Copyright © 2005-2011, NIF File Format Library and Tools contributors.
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 #    * Redistributions of source code must retain the above copyright
 #      notice, this list of conditions and the following disclaimer.
-# 
+#
 #    * Redistributions in binary form must reproduce the above
 #      copyright notice, this list of conditions and the following
 #      disclaimer in the documentation and/or other materials provided
 #      with the distribution.
-# 
+#
 #    * Neither the name of the NIF File Format Library and Tools
 #      project nor the names of its contributors may be used to endorse
 #      or promote products derived from this software without specific
 #      prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -56,8 +56,10 @@ bl_info = {
     "support": "COMMUNITY",
     "category": "Import-Export"}
 
-from . import nif_debug
-nif_debug.startdebug()
+DEBUGGING = False
+if(DEBUGGING):
+    from . import nif_debug
+    nif_debug.startdebug()
 
 import logging
 import sys
@@ -69,8 +71,8 @@ import bpy.props
 
 from . import properties, ui, operators
 
-# blender doesn't look in site-packages; 
-# easiest solution for this seems to be to import site.py manually, 
+# blender doesn't look in site-packages;
+# easiest solution for this seems to be to import site.py manually,
 # so we find pyffi if it is installed there
 
 import site
@@ -116,6 +118,6 @@ def unregister():
     bpy.utils.unregister_module(__name__)
     bpy.types.INFO_MT_file_import.remove(menu_func_import)
     bpy.types.INFO_MT_file_export.remove(menu_func_export)
-    
+
 if __name__ == "__main__":
     register()
