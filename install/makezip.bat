@@ -1,6 +1,6 @@
 set VERSION=2.6.0
 set NAME=blender_nif_plugin
-set FILES=AUTHORS.rst CHANGELOG.rst LICENSE.rst README.rst install.sh install.bat scripts/ docs/_build/html/
+set FILES= ../AUTHORS.rst ../CHANGELOG.rst ../LICENSE.rst ../README.rst install.sh install.bat ../scripts/ ../docs/_build/html/
 
 pushd docs
 make clean
@@ -16,14 +16,14 @@ del %NAME%-%VERSION%.tar
 
 pause
 
-del win-install\%NAME%-%VERSION%-windows.exe
+del %NAME%-%VERSION%-windows.exe
 
 if exist "%PROGRAMFILES%\NSIS\makensis.exe" (
-"%PROGRAMFILES%\NSIS\makensis.exe" /v3 win-install\%NAME%.nsi
+"%PROGRAMFILES%\NSIS\makensis.exe" /v3 %NAME%.nsi
 goto end
 )
 if exist "%PROGRAMFILES(x86)%\NSIS\makensis.exe" (
-"%PROGRAMFILES(x86)%\NSIS\makensis.exe" /v3 win-install\%NAME%.nsi
+"%PROGRAMFILES(x86)%\NSIS\makensis.exe" /v3 %NAME%.nsi
 )
 
 :end
