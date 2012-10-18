@@ -1,10 +1,10 @@
-import os
+import os.path
 import site # get site-packages into sys.path
 import sys
 
 # add local addons folder to sys.path so blender finds it
 sys.path = (
-    [os.path.join(os.path.dirname(__file__), 'scripts', 'addons')]
+    [path.join(path.dirname(__file__), 'scripts', 'addons')]
     + sys.path
     )
 
