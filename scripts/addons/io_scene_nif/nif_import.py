@@ -1,27 +1,27 @@
 """This script imports Netimmerse/Gamebryo nif files to Blender."""
 
 # ***** BEGIN LICENSE BLOCK *****
-# 
+#
 # Copyright © 2005-2012, NIF File Format Library and Tools contributors.
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 #    * Redistributions of source code must retain the above copyright
 #      notice, this list of conditions and the following disclaimer.
-# 
+#
 #    * Redistributions in binary form must reproduce the above
 #      copyright notice, this list of conditions and the following
 #      disclaimer in the documentation and/or other materials provided
 #      with the distribution.
-# 
+#
 #    * Neither the name of the NIF File Format Library and Tools
 #      project nor the names of its contributors may be used to endorse
 #      or promote products derived from this software without specific
 #      prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -38,12 +38,12 @@
 # ***** END LICENSE BLOCK *****
 
 from .nif_common import NifCommon
-from .collisionsys.collision import shape_import
+from .collisionsys.collision_import import bhkshape_import, bound_import
 from .armaturesys.skeletal import armature_import
 from .materialsys.material import material_import
 from .texturesys.texture import texture_import
 
-from functools import reduce 
+from functools import reduce
 import logging
 import math
 import operator
@@ -66,7 +66,7 @@ class NifImport(NifCommon):
 
     # degrees to radians conversion constant
     D2R = 3.14159265358979/180.0
-    
+
     def execute(self):
         """Main import function."""
 
@@ -95,15 +95,16 @@ class NifImport(NifCommon):
         # in Blender; after we've imported the tree, we use this dictionary
         # to set the physics constraints (ragdoll etc)
         self.havok_objects = {}
-        
+
         # Helper systems
         # Store references to subsystems as needed.
-        self.collisionhelper = shape_import(parent=self)
+        self.bhkhelper = bhkshape_import(parent=self)
+        self.boundhelper = bound_import(parent=self)
         self.armaturehelper = armature_import(parent=self)
         self.texturehelper = texture_import(parent=self)
         self.materialhelper = material_import(parent=self)
-        
-        
+
+
         # catch NifImportError
         try:
             # check that one armature is selected in 'import geometry + parent
@@ -259,7 +260,7 @@ class NifImport(NifCommon):
             # XXX no longer needed?
             # do a full scene update to ensure that transformations are applied
             # self.context.scene.update()
-        
+
         return {'FINISHED'}
 
     def import_root(self, root_block):
@@ -273,18 +274,18 @@ class NifImport(NifCommon):
         # divinity 2: handle CStreamableAssetData
         if isinstance(root_block, NifFormat.CStreamableAssetData):
             root_block = root_block.root
-        
+
         # sets the root block parent to None, so that when crawling back the
         # script won't barf
         root_block._parent = None
-        
+
         # set the block parent through the tree, to ensure I can always move
         # backward
         self.set_parents(root_block)
-        
+
         # mark armature nodes and bones
         self.armaturehelper.mark_armatures_bones(root_block)
-        
+
         # import the keyframe notes
         if self.properties.animation:
             self.import_text_keys(root_block)
@@ -294,19 +295,19 @@ class NifImport(NifCommon):
             # special case 1: root node is skeleton root
             self.debug("%s is an armature root" % root_block.name)
             b_obj = self.import_branch(root_block)
-            
+
         elif self.is_grouping_node(root_block):
             # special case 2: root node is grouping node
             self.debug("%s is a grouping node" % root_block.name)
             b_obj = self.import_branch(root_block)
-            
+
         elif isinstance(root_block, NifFormat.NiTriBasedGeom):
             # trishape/tristrips root
             b_obj = self.import_branch(root_block)
-            
+
         elif isinstance(root_block, NifFormat.NiNode):
             # root node is dummy scene node
-            
+
             # process collision
             if root_block.collision_object:
                 bhk_body = root_block.collision_object.body
@@ -314,8 +315,8 @@ class NifImport(NifCommon):
                     self.warning(
                         "Unsupported collision structure under node %s"
                         % root_block.name)
-                self.collisionhelper.import_bhk_shape(bhkshape=bhk_body)
-            
+                self.bhkhelper.import_bhk_shape(bhkshape=bhk_body)
+
             #process extra data
             for n_extra in root_block.get_extra_datas():
                 if isinstance(n_extra, NifFormat.BSXFlags):
@@ -325,19 +326,19 @@ class NifImport(NifCommon):
                     if n_extra.name == "UPB":
                         upbflags = n_extra.string_data
                 elif isinstance(n_extra, NifFormat.BSBound):
-                    self.collisionhelper.import_bounding_box(n_extra)
-                
-                    
+                    self.boundhelper.import_bounding_box(n_extra)
+
+
             # process all its children
             for child in root_block.children:
                 b_obj = self.import_branch(child)
-                
+
         elif isinstance(root_block, NifFormat.NiCamera):
             self.warning('Skipped NiCamera root')
-            
+
         elif isinstance(root_block, NifFormat.NiPhysXProp):
             self.warning('Skipped NiPhysXProp root')
-            
+
         else:
             self.warning(
                 "Skipped unsupported root block type '%s' (corrupted nif?)."
@@ -350,7 +351,7 @@ class NifImport(NifCommon):
         # store original names for re-export
         if self.names:
             self.armaturehelper.store_names()
-        
+
         # now all havok objects are imported, so we are
         # ready to import the havok constraints
         for hkbody in self.havok_objects:
@@ -453,7 +454,7 @@ class NifImport(NifCommon):
                     if not niBlock.has_bounding_box:
                         b_obj = self.import_empty(niBlock)
                     else:
-                        b_obj = self.collisionhelper.import_bounding_box(niBlock)
+                        b_obj = self.boundhelper.import_bounding_box(niBlock)
                     geom_group = []
                 else:
                     # node groups geometries, so import it as a mesh
@@ -498,7 +499,7 @@ class NifImport(NifCommon):
                     n_child, b_armature=b_armature, n_armature=n_armature)
                 if b_child:
                     b_children_list.append((n_child, b_child))
-            
+
             object_children = [
                 (n_child, b_child) for (n_child, b_child) in b_children_list
                 if isinstance(b_child, bpy.types.Object)]
@@ -512,23 +513,23 @@ class NifImport(NifCommon):
                         self.warning(
                             "Unsupported collision structure"
                             " under node %s" % niBlock.name)
- 
-                    collision_objs = self.collisionhelper.import_bhk_shape(bhkshape=bhk_body)
+
+                    collision_objs = self.bhkhelper.import_bhk_shape(bhkshape=bhk_body)
                     # register children for parentship
                     object_children += [
                         (bhk_body, b_child) for b_child in collision_objs]
-                
+
                 # import bounding box
                 if bsbound:
                     object_children += [
-                        (bsbound, self.collisionhelper.import_bounding_box(bsbound))]
+                        (bsbound, self.bhkhelper.import_bounding_box(bsbound))]
 
             # fix parentship
             if isinstance(b_obj, bpy.types.Object):
                 # simple object parentship
                 for (n_child, b_child) in object_children:
                     b_child.parent = b_obj
-                    
+
             elif isinstance(b_obj, bpy.types.Bone):
                 # bone parentship, is a bit more complicated
                 # go to rest position
@@ -675,7 +676,7 @@ class NifImport(NifCommon):
             if uniqueInt == -1:
                 shortName = niName[:max_length-1]
             else:
-                shortName = ('%s.%02d' 
+                shortName = ('%s.%02d'
                              % (niName[:max_length-4],
                                 uniqueInt))
             # bone naming convention for blender
@@ -695,40 +696,40 @@ class NifImport(NifCommon):
         self.blocks[shortName] = niBlock
         self.debug("Selected unique name %s" % shortName)
         return shortName
-        
+
     def import_matrix(self, niBlock, relative_to=None):
         """Retrieves a niBlock's transform matrix as a Mathutil.Matrix."""
         n_scale, n_rot_mat3, n_loc_vec3 = niBlock.get_transform(relative_to).get_scale_rotation_translation()
-        
+
         # create a location matrix
         b_loc_vec = mathutils.Vector(n_loc_vec3.as_tuple())
         b_loc_vec = mathutils.Matrix.Translation(b_loc_vec)
 
         # create a scale matrix
         b_scale_mat = mathutils.Matrix.Scale(n_scale, 4)
-        
+
         # create a rotation matrix
         b_rot_mat = mathutils.Matrix()
         b_rot_mat[0].xyz = n_rot_mat3.m_11, n_rot_mat3.m_21, n_rot_mat3.m_31
         b_rot_mat[1].xyz = n_rot_mat3.m_12, n_rot_mat3.m_22, n_rot_mat3.m_32
         b_rot_mat[2].xyz = n_rot_mat3.m_13, n_rot_mat3.m_23, n_rot_mat3.m_33
-        
+
         return b_loc_vec * b_rot_mat * b_scale_mat
 
     def import_empty(self, niBlock):
         """Creates and returns a grouping empty."""
         shortname = self.import_name(niBlock)
         b_empty = bpy.data.objects.new(shortname, None)
-        
+
         # TODO - is longname needed???
         b_empty.niftools.longname = niBlock.name.decode()
-        
+
         self.context.scene.objects.link(b_empty)
-        
+
         if niBlock.name in self.bone_priorities:
             constr = b_empty.constraints.append(
                 bpy.types.Constraint.NULL)
-            constr.name = "priority:%i" % self.bone_priorities[niBlock.name]  
+            constr.name = "priority:%i" % self.bone_priorities[niBlock.name]
         return b_empty
 
 
@@ -907,9 +908,9 @@ class NifImport(NifCommon):
                 raise NifImportError(
                     "BUG: cannot set matrix when importing meshes in groups;"
                     " use applytransform = True")
-            
+
             b_obj.matrix_local = self.import_matrix(niBlock, relative_to=relative_to)
-    
+
         else:
             # used later on
             transform = self.import_matrix(niBlock, relative_to=relative_to)
@@ -930,7 +931,7 @@ class NifImport(NifCommon):
 
         # vertex normals
         n_norms = niData.normals
-        
+
         '''
         Properties
         '''
@@ -946,20 +947,20 @@ class NifImport(NifCommon):
         # Material
         # note that NIF files only support one material for each trishape
         # find material property
-        n_mat_prop = self.find_property(niBlock, 
+        n_mat_prop = self.find_property(niBlock,
                                          NifFormat.NiMaterialProperty)
-        
+
         if n_mat_prop:
             # Texture
             n_texture_prop = None
             if n_uvco:
-                n_texture_prop = self.find_property(niBlock, 
+                n_texture_prop = self.find_property(niBlock,
                                                   NifFormat.NiTexturingProperty)
-                    
+
             # Alpha
             n_alpha_prop = self.find_property(niBlock,
                                                NifFormat.NiAlphaProperty)
-            
+
             # Specularity
             n_specular_prop = self.find_property(niBlock,
                                               NifFormat.NiSpecularProperty)
@@ -1017,7 +1018,7 @@ class NifImport(NifCommon):
             except ValueError:
                 materialIndex = len(b_mesh_materials)
                 b_mesh.materials.append(material)
-            
+
             '''
             # if mesh has one material with n_wire_prop, then make the mesh
             # wire in 3D view
@@ -1038,7 +1039,7 @@ class NifImport(NifCommon):
         # v_map will store the vertex index mapping
         # nif vertex i maps to blender vertex v_map[i]
         v_map = [0 for i in range(len(n_verts))] # pre-allocate memory, for faster performance
-        
+
         # Following code avoids introducing unwanted cracks in UV seams:
         # Construct vertex map to get unique vertex / normal pair list.
         # We use a Python dictionary to remove doubles and to keep track of indices.
@@ -1142,34 +1143,34 @@ class NifImport(NifCommon):
         if n_vcol:
             # create vertex_layers
             b_meshcolorlayer = b_mesh.vertex_colors.new(name="VertexColor") # color layer
-            b_meshcolorlayeralpha = b_mesh.vertex_colors.new(name="VertexAlpha") # greyscale        
+            b_meshcolorlayeralpha = b_mesh.vertex_colors.new(name="VertexAlpha") # greyscale
 
             # Mesh Vertex Color / Mesh Face
             for n_tri, b_face_index in zip(n_tris, f_map):
                 if b_face_index is None:
                     continue
-                
+
                 # MeshFace to MeshColor
                 b_meshcolor = b_meshcolorlayer.data[b_face_index]
                 b_meshalpha = b_meshcolorlayeralpha.data[b_face_index]
-                
-                for n_vert_index, n_vert in enumerate(n_tri): 
-                    '''TODO: Request index access in the Bpy API 
+
+                for n_vert_index, n_vert in enumerate(n_tri):
+                    '''TODO: Request index access in the Bpy API
                     b_meshcolor.color[n_vert_index]'''
-                    
-                    # Each MeshColor has n Color's, mapping to (n)_vertex.               
+
+                    # Each MeshColor has n Color's, mapping to (n)_vertex.
                     b_color = getattr(b_meshcolor, "color%s" % (n_vert_index + 1))
                     b_colora = getattr(b_meshalpha, "color%s" % (n_vert_index + 1))
-                    
+
                     b_color.r = n_vcol[n_vert].r
-                    b_color.g = n_vcol[n_vert].g 
+                    b_color.g = n_vcol[n_vert].g
                     b_color.b = n_vcol[n_vert].b
                     b_colora.v = n_vcol[n_vert].a
-                       
+
             # vertex colors influence lighting...
-            # we have to set the use_vertex_color_light flag on the material 
+            # we have to set the use_vertex_color_light flag on the material
             # see below
-            
+
         # UV coordinates
         # NIF files only support 'sticky' UV coordinates, and duplicates
         # vertices to emulate hard edges and UV seam. So whenever a hard edge
@@ -1199,7 +1200,7 @@ class NifImport(NifCommon):
                     b_mesh.uv_textures[uvlayer].data[b_f_index].uv2 = uvlist[1]
                     b_mesh.uv_textures[uvlayer].data[b_f_index].uv3 = uvlist[2]
             b_mesh.uv_textures.active_index = 0
-        
+
         if material:
             # fix up vertex colors depending on whether we had textures in the
             # material
@@ -1418,22 +1419,22 @@ class NifImport(NifCommon):
                 b_mesh.vertices[b_v_index].co[0] = base.x
                 b_mesh.vertices[b_v_index].co[1] = base.y
                 b_mesh.vertices[b_v_index].co[2] = base.z
-     
-        
+
+
         # import priority if existing
         if niBlock.name in self.bone_priorities:
             constr = b_obj.constraints.append(
                 bpy.types.Constraint.NULL)
             constr.name = "priority:%i" % self.bone_priorities[niBlock.name]
-        
+
         # recalculate mesh to render correctly
         b_mesh.calc_normals()
         b_mesh.update()
-        
+
         return b_obj
 
     # import animation groups
-    
+
     def import_text_keys(self, niBlock):
         """Stores the text keys that define animation start and end in a text
         buffer, so that they can be re-exported. Since the text buffer is
@@ -1451,17 +1452,17 @@ class NifImport(NifCommon):
                 animtxt.clear()
             except:
                 animtxt = bpy.data.texts.new("Anim")
-            
+
             frame = 1
             for key in txk.text_keys:
                 newkey = str(key.value).replace('\r\n', '/').rstrip('/')
                 frame = 1 + int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                 animtxt.write('%i/%s\n'%(frame, newkey))
-            
+
             # set start and end frames
             self.context.scene.getRenderingContext().startFrame(1)
             self.context.scene.getRenderingContext().endFrame(frame)
-    
+
     def get_frames_per_second(self, roots):
         """Scan all blocks and return a reasonable number for FPS."""
         # find all key times
@@ -1519,7 +1520,7 @@ class NifImport(NifCommon):
                 _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.xyz_rotations.keys])
             else:
                 _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.quaternion_keys])
-        
+
         # set the frames in the _ANIMATION_DATA list
         for key in _ANIMATION_DATA:
             # time 0 is frame 1
@@ -1577,7 +1578,7 @@ class NifImport(NifCommon):
         if not kfc:
             # no animation data: do nothing
             return
-            
+
         if kfc.interpolator:
             if isinstance(kfc.interpolator, NifFormat.NiBSplineInterpolator):
                 kfd = None # not supported yet so avoids fatal error - should be kfc.interpolator.spline_data when spline data is figured out.
@@ -1625,7 +1626,7 @@ class NifImport(NifCommon):
                 b_obj.RotX = xkey.value
                 b_obj.RotY = ykey.value
                 b_obj.RotZ = zkey.value
-                b_obj.insertIpoKey(Blender.Object.ROT)           
+                b_obj.insertIpoKey(Blender.Object.ROT)
         else:
             # uses quaternions
             if kfd.quaternion_keys:
@@ -1649,7 +1650,7 @@ class NifImport(NifCommon):
             b_obj.LocY = key.value.y
             b_obj.LocZ = key.value.z
             b_obj.insertIpoKey(Blender.Object.LOC)
-            
+
         Blender.Set('curframe', 1)
 
     def import_bhk_constraints(self, hkbody):
@@ -1667,7 +1668,7 @@ class NifImport(NifCommon):
             return
 
         b_hkobj = self.havok_objects[hkbody][0]
-        
+
         self.info("Importing constraints for %s" % b_hkobj.name)
 
         # now import all constraints
@@ -1829,8 +1830,8 @@ class NifImport(NifCommon):
                 b_hkobj.addProperty("LimitedHinge_MinAngle",
                                     hkdescriptor.min_angle)
                 b_hkobj.addProperty("LimitedHinge_MaxFriction",
-                                    hkdescriptor.max_friction)                  
-                
+                                    hkdescriptor.max_friction)
+
             elif isinstance(hkdescriptor, NifFormat.HingeDescriptor):
                 # for hinge, y is the vector on the plane of rotation defining
                 # the zero angle
@@ -1854,7 +1855,7 @@ class NifImport(NifCommon):
             # transform pivot point and constraint matrix into object
             # coordinates
             # (also see export_nif.py NifImport.export_constraints)
-            
+
             # the pivot point v is in hkbody coordinates
             # however blender expects it in object coordinates, v'
             # v * R * B = v' * O * T * B'
@@ -1921,7 +1922,7 @@ class NifImport(NifCommon):
             axis_z = axis_z * transform
             axis_x = axis_x * transform
 
-            # set pivot point           
+            # set pivot point
             b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVX] = pivot[0]
             b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVY] = pivot[1]
             b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVZ] = pivot[2]
