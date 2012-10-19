@@ -1,15 +1,15 @@
 ;
 ; Blender NIF Plugin Self-Installer for Windows
-; (NifTools - http://niftools.sourceforge.net) 
+; (NifTools - http://niftools.sourceforge.net)
 ; (NSIS - http://nsis.sourceforge.net)
 ;
 ; Copyright (c) 2005-2012, NIF File Format Library and Tools
 ; All rights reserved.
-; 
+;
 ; Redistribution and use in source and binary forms, with or without
 ; modification, are permitted provided that the following conditions are
 ; met:
-; 
+;
 ;     * Redistributions of source code must retain the above copyright
 ;       notice, this list of conditions and the following disclaimer.
 ;     * Redistributions in binary form must reproduce the above copyright
@@ -20,7 +20,7 @@
 ;       nor the names of its contributors may be used to endorse or promote
 ;       products derived from this software without specific prior written
 ;       permission.
-; 
+;
 ; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
 ; IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
 ; THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -31,7 +31,7 @@
 ; PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
 ; LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 ; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
+; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 SetCompressor /SOLID lzma
 
@@ -88,9 +88,9 @@ Var PYFFI
 
 ;--------------------------------
 ; Languages
- 
+
 !insertmacro MUI_LANGUAGE "English"
-    
+
 ;--------------------------------
 ;Language Strings
 
@@ -114,7 +114,7 @@ ShowUninstDetails show
 ; taken from http://nsis.sourceforge.net/Open_link_in_new_browser_window
 # uses $0
 Function openLinkNewWindow
-  Push $3 
+  Push $3
   Push $2
   Push $1
   Push $0
@@ -133,12 +133,12 @@ Function openLinkNewWindow
     StrCmp $1 "" found
     IntOp $3 $3 + 1
     Goto loop
- 
+
   found:
     StrCpy $1 $0 $3
     StrCmp $2 " " +2
       StrCpy $1 '$1"'
- 
+
   Pop $0
   Exec '$1 $0'
   Pop $1
@@ -156,11 +156,11 @@ Function .onInit
 
   ; compare the result with the string "Admin" to see if the user is admin. If match, jump 3 lines down.
   strCmp $0 "Admin" +3
-  
+
     ; if there is not a match, print message and return
     messageBox MB_OK "You require administrator privileges to install the Blender NIF Scripts successfully."
     Abort ; quit installer
-   
+
 
   ; check if Blender is installed
   ClearErrors
@@ -241,21 +241,22 @@ Section
   CreateDirectory "$BLENDERADDONS\io_scene_nif\materialsys\"
   CreateDirectory "$BLENDERADDONS\io_scene_nif\texturesys\"
   CreateDirectory "$BLENDERADDONS\io_scene_nif\nif_debug\"
-  
+
   File ..\scripts\addons\io_scene_nif\armaturesys\__init__.py
   File ..\scripts\addons\io_scene_nif\armaturesys\skeletal.py
-  
+
   File ..\scripts\addons\io_scene_nif\collisionsys\__init__.py
-  File ..\scripts\addons\io_scene_nif\collisionsys\collision.py
-  
+  File ..\scripts\addons\io_scene_nif\collisionsys\collision_import.py
+  File ..\scripts\addons\io_scene_nif\collisionsys\collision_export.py
+
   File ..\scripts\addons\io_scene_nif\materialsys\__init__.py
   File ..\scripts\addons\io_scene_nif\materialsys\material.py
-  
+
   File ..\scripts\addons\io_scene_nif\texturesys\__init__.py
   File ..\scripts\addons\io_scene_nif\texturesys\texture.py
-  
+
   File ..\scripts\addons\io_scene_nif\nif_debug\__init__.py
-  
+
   File ..\scripts\addons\io_scene_nif\__init__.py
   File ..\scripts\addons\io_scene_nif\nif_common.py
   File ..\scripts\addons\io_scene_nif\nif_export.py
@@ -263,7 +264,7 @@ Section
   File ..\scripts\addons\io_scene_nif\operators.py
   File ..\scripts\addons\io_scene_nif\ui.py
   File ..\scripts\addons\io_scene_nif\properties.py
-  
+
 
   ; Install documentation files
   SetOutPath $INSTDIR
