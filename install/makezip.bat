@@ -1,30 +1,26 @@
-set VERSION=2.6.0.2
-set NAME=blender_nif_plugin
-set FILES= ../AUTHORS.rst ../CHANGELOG.rst ../LICENSE.rst ../README.rst install.sh install.bat ../scripts/ ../docs/_build/html/
+git clean -xfd
+install.bat
 
+set /p VERSION=<../scripts/addons/io_scene_nif/VERSION
+set NAME=blender_nif_plugin
+set FILES=AUTHORS.rst CHANGELOG.rst LICENSE.rst README.rst install/install.sh install/install.bat scripts/  docs/_build/html/
+
+rem update documentation
 pushd ../docs
 make clean
 make html
 popd
 
+pushd ..
 del %NAME%-%VERSION%.*
-"%PROGRAMFILES%\7-Zip\7z.exe" a -tzip %NAME%-%VERSION%.zip %FILES%
-"%PROGRAMFILES%\7-Zip\7z.exe" a -ttar %NAME%-%VERSION%.tar %FILES%
+"%PROGRAMFILES%\7-Zip\7z.exe" a -tzip install/%NAME%-%VERSION%.zip %FILES%
+"%PROGRAMFILES%\7-Zip\7z.exe" a -ttar install/%NAME%-%VERSION%.tar %FILES%
+popd
 "%PROGRAMFILES%\7-Zip\7z.exe" a -tbzip2 %NAME%-%VERSION%.tar.bz2 %NAME%-%VERSION%.tar
-
 del %NAME%-%VERSION%.tar
 
-pause
-
+rem create windows installer
 del %NAME%-%VERSION%-windows.exe
+makensis.exe /v3 /DVERSION=%VERSION% %NAME%.nsi
 
-if exist "%PROGRAMFILES%\NSIS\makensis.exe" (
-"%PROGRAMFILES%\NSIS\makensis.exe" /v3 %NAME%.nsi
-goto end
-)
-if exist "%PROGRAMFILES(x86)%\NSIS\makensis.exe" (
-"%PROGRAMFILES(x86)%\NSIS\makensis.exe" /v3 %NAME%.nsi
-)
-
-:end
 pause

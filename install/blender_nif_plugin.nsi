@@ -39,7 +39,9 @@ SetCompressor /SOLID lzma
 !include "WordFunc.nsh"
 !insertmacro VersionCompare
 
-!define VERSION "2.6.0.2"
+!ifndef VERSION
+  !error "Pass version with /DVERSION=x.y.z"
+!endif
 !define PYFFIVERSION "2.2.0"
 !define BLENDERVERSION "2.62"
 
