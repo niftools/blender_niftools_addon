@@ -8,6 +8,8 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   collision
+
 Indices and tables
 ==================
 

@@ -48,13 +48,15 @@ import pyffi
 from pyffi.formats.nif import NifFormat
 from pyffi.utils.quickhull import qhull3d
 
+
 class bhkshape_import():
+    """Import basic and Havok Collision Shapes"""
 
     def __init__(self, parent):
         self.nif_common = parent
 
     def import_bhk_shape(self, bhkshape, upbflags="", bsxflags=2):
-        """Imports a collision shape as list of blender meshes."""
+        """Imports any supported collision shape as list of blender meshes."""
 
         if isinstance(bhkshape, NifFormat.bhkTransformShape):
             return self.import_bhktransform(bhkshape, upbflags, bsxflags)
@@ -97,7 +99,10 @@ class bhkshape_import():
                             % bhkshape.__class__.__name__)
         return []
 
+
     def import_bhktransform(self, bhkshape, upbflags="", bsxflags=2):
+        """Imports a BhkTransform block and applies the transform to the collision object"""
+
         # import shapes
         collision_objs = self.import_bhk_shape(bhkshape.shape)
         # find transformation matrix
@@ -113,7 +118,10 @@ class bhkshape_import():
             # and return a list of transformed collision shapes
         return collision_objs
 
+
     def import_bhkridgidbody(self, bhkshape, upbflags="", bsxflags=2):
+        """Imports a BhkRigidBody block and applies the transform to the collision objects"""
+
         # import shapes
         collision_objs = self.import_bhk_shape(bhkshape.shape)
 
@@ -164,10 +172,13 @@ class bhkshape_import():
         # this is done once all objects are imported
         # for now, store all imported havok shapes with object lists
         self.nif_common.havok_objects[bhkshape] = collision_objs
+
         # and return a list of transformed collision shapes
         return collision_objs
 
+
     def import_bhkbox_shape(self, bhkshape, upbflags="", bsxflags=2):
+        """Import a BhkBox block as a simple Box collision object"""
         # create box
         minx = -bhkshape.dimensions.x * self.nif_common.HAVOK_SCALE
         maxx = +bhkshape.dimensions.x * self.nif_common.HAVOK_SCALE
@@ -213,7 +224,10 @@ class bhkshape_import():
 
         return [ b_obj ]
 
+
     def import_bhksphere_shape(self, bhkshape, upbflags="", bsxflags=2):
+        """Import a BhkSphere block as a simple uv-sphere collision object"""
+
         b_radius = bhkshape.radius * self.nif_common.HAVOK_SCALE
 
         bpy.ops.mesh.primitive_uv_sphere_add(segments=8, ring_count=8, size=b_radius)
@@ -234,7 +248,10 @@ class bhkshape_import():
 
         return [ b_obj ]
 
+
     def import_bhkcapsule_shape(self, bhkshape, upbflags="", bsxflags=2):
+        """Import a BhkCapsule block as a simple cylinder collision object"""
+
         # create capsule mesh
         length = (bhkshape.first_point - bhkshape.second_point).norm()
         minx = miny = -bhkshape.radius * self.nif_common.HAVOK_SCALE
@@ -317,7 +334,10 @@ class bhkshape_import():
         # return object
         return [ b_obj ]
 
+
     def import_bhkconvex_vertices_shape(self, bhkshape, upbflags="", bsxflags=2):
+        """Import a BhkConvexVertex block as a convex hull collision object"""
+
         # find vertices (and fix scale)
         n_vertices, n_triangles = qhull3d(
                                   [ (self.nif_common.HAVOK_SCALE * n_vert.x,
@@ -367,7 +387,10 @@ class bhkshape_import():
 
         return [ b_obj ]
 
+
     def import_nitristrips(self, bhkshape, upbflags="", bsxflags=2):
+        """Import a NiTriStrips block as a Triangle-Mesh collision object"""
+
         b_mesh = bpy.data.meshes.new('poly')
         # no factor 7 correction!!!
         for n_vert in bhkshape.vertices:
@@ -412,6 +435,8 @@ class bhkshape_import():
         return [ b_obj ]
 
     def import_bhkpackednitristrips_shape(self, bhkshape, upbflags="", bsxflags=2):
+        """Import a BhkPackedNiTriStrips block as a Triangle-Mesh collision object"""
+
         # create mesh for each sub shape
         hk_objects = []
         vertex_offset = 0
@@ -493,12 +518,14 @@ class bhkshape_import():
         return hk_objects
 
 class bound_import():
+    """Import a bound box shape"""
 
     def __init__(self, parent):
         self.nif_common = parent
 
     def import_bounding_box(self, bbox):
         """Import a bounding box (BSBound, or NiNode with bounding box)."""
+
         # calculate bounds
         if isinstance(bbox, NifFormat.BSBound):
             b_mesh = bpy.data.meshes.new('BSBound')
