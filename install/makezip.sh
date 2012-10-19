@@ -13,8 +13,8 @@ popd
 
 pushd ..
 rm -f "${NAME}-${VERSION}".*
-zip -9r "${NAME}-${VERSION}.zip" ${FILES} -x \*/__pycache__/\*
-tar cfvj "${NAME}-${VERSION}.tar.bz2" ${FILES} --exclude=*__pycache__*
+zip -9r "install/${NAME}-${VERSION}.zip" ${FILES} -x \*/__pycache__/\*
+tar cfvj "install/${NAME}-${VERSION}.tar.bz2" ${FILES} --exclude=*__pycache__*
 popd
 
 # create windows installer

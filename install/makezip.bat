@@ -13,11 +13,11 @@ popd
 
 pushd ..
 del %NAME%-%VERSION%.*
-"%PROGRAMFILES%\7-Zip\7z.exe" a -tzip %NAME%-%VERSION%.zip %FILES%
-"%PROGRAMFILES%\7-Zip\7z.exe" a -ttar %NAME%-%VERSION%.tar %FILES%
+"%PROGRAMFILES%\7-Zip\7z.exe" a -tzip install/%NAME%-%VERSION%.zip %FILES%
+"%PROGRAMFILES%\7-Zip\7z.exe" a -ttar install/%NAME%-%VERSION%.tar %FILES%
+popd
 "%PROGRAMFILES%\7-Zip\7z.exe" a -tbzip2 %NAME%-%VERSION%.tar.bz2 %NAME%-%VERSION%.tar
 del %NAME%-%VERSION%.tar
-popd
 
 rem create windows installer
 del %NAME%-%VERSION%-windows.exe
