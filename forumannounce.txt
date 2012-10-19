@@ -6,24 +6,20 @@ http://sourceforge.net/projects/niftools/files/blender_nif_scripts/
 
 *** changes ***
 
-Check the [url=http://github.com/amorilia/blender_nif_scripts/blob/master/ChangeLog]changelog[/url] for full details.
+Check the [url=http://niftools.sourceforge.net/doc/blender_nif_plugin/additional/changes.html]changelog[/url] for full details.
 
 Special thanks go to *** for their help with this release.
 
 [b]Installation[/b]
 
-This version of the scripts should keep working with newer versions of [url=http://www.blender.org]Blender 2.6x[/url]. At the moment of writing this, the following were used during development of the scripts:
+For installation instruction visit read the [url=http://niftools.sourceforge.net/doc/blender_nif_plugin/user/index.html]User Documentation[/url]
 
-[list][*]Be sure first to log in as administrator!
-[*]Download and install [url=http://www.blender.org/download/get-blender/]Blender 2.60a (64 bit)[/url], use default settings.
-[*]Download and install [url=http://sourceforge.net/projects/pyffi/files/pyffi-py3k/2.2.0/]PyFFI 2.2.0[/url], use default settings.
-[*]Download and install the [url=http://sourceforge.net/projects/niftools/files/blender_nif_scripts/2.6.x/2.6.00]Blender NIF Scripts 2.6.0[/url], use default settings.[/list]
+Recommended Versions:
+For the latest recommended versions visit the [url=http://niftools.sourceforge.net/wiki/Blender]Blender Wiki Page[/url]
 
 [b]Notes[/b]
-
-On Windows, use 32-bit versions of Blender and Python. (The 64-bit version of Python lacks xml parsing which is essential for the scripts to work.)
 
 Found a bug? Post it on the [url=https://sourceforge.net/tracker/?atid=776343&group_id=149157]tracker[/url]. Fixed a bug? Fork the [url=http://github.com/amorilia/blender_nif_scripts]repository[/url].
 
 Enjoy!
-Amorilia
+Niftools Development Team
