@@ -1,8 +1,8 @@
-set VERSION=2.6.0
+set VERSION=2.6.0.2
 set NAME=blender_nif_plugin
 set FILES= ../AUTHORS.rst ../CHANGELOG.rst ../LICENSE.rst ../README.rst install.sh install.bat ../scripts/ ../docs/_build/html/
 
-pushd docs
+pushd ../docs
 make clean
 make html
 popd
