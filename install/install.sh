@@ -1,7 +1,7 @@
 #!/bin/sh
 # quick and dirty script to install the blender nif scripts
 
-for BLENDERVERSION in 2.62 2.61 2.60 2.59 2.58 2.57 2.56 2.55 2.54 2.53 2.52 2.51 2.50
+for BLENDERVERSION in 2.66 2.65 2.64 2.63 2.62
 do
   BLENDERADDONS=~/.blender/$BLENDERVERSION/scripts/addons
   if [ -e ~/.blender/$BLENDERVERSION/ ]
@@ -16,14 +16,11 @@ then
   exit 1
 fi
 
-echo Installing in
+echo Installing to:
 echo $BLENDERADDONS/io_scene_nif
+
 # remove old files
 rm -rf $BLENDERADDONS/io_scene_nif/
-# copy files from repository to blender addons folder
-mkdir -p $BLENDERADDONS/io_scene_nif/
-for FILE in __init__.py import_export_nif.py export_nif.py import_nif.py ui.py properties.py operators.py nifdebug.py collision.py skeletal.py
-do
-  cp scripts/addons/io_scene_nif/$FILE $BLENDERADDONS/io_scene_nif/
-done
 
+# copy files from repository to blender addons folder
+cp -r ../scripts/addons/io_scene_nif/ $BLENDERADDONS/
