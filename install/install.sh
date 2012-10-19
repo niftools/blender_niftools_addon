@@ -16,14 +16,11 @@ then
   exit 1
 fi
 
-echo Installing in
+echo Installing to:
 echo $BLENDERADDONS/io_scene_nif
+
 # remove old files
 rm -rf $BLENDERADDONS/io_scene_nif/
-# copy files from repository to blender addons folder
-mkdir -p $BLENDERADDONS/io_scene_nif/
-for FILE in __init__.py import_export_nif.py export_nif.py import_nif.py ui.py properties.py operators.py nifdebug.py collision.py skeletal.py
-do
-  cp scripts/addons/io_scene_nif/$FILE $BLENDERADDONS/io_scene_nif/
-done
 
+# copy files from repository to blender addons folder
+cp -r ../scripts/addons/io_scene_nif/ $BLENDERADDONS/
