@@ -11,7 +11,15 @@ Contents:
    :maxdepth: 2
 
    ui
+   properties
    nif_common
    nif_import
    nif_export
-   properties
+   submodules/index
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
