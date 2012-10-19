@@ -11,9 +11,11 @@ make clean
 make html
 popd
 
+pushd ..
 rm -f "${NAME}-${VERSION}".*
 zip -9r "${NAME}-${VERSION}.zip" ${FILES} -x \*/__pycache__/\*
 tar cfvj "${NAME}-${VERSION}.tar.bz2" ${FILES} --exclude=*__pycache__*
+popd
 
 # create windows installer
 rm -f "${NAME}-${VERSION}-windows.exe"
