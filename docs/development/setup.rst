@@ -31,11 +31,11 @@ Install Python 3.2
 #. Use the default install location.
 
 **Fedora**::
-   
+
    sudo yum install python3
-  
+
 **Ubuntu**::
-   
+
    sudo apt-get install python3-minimal
 
 Install Git
@@ -45,21 +45,21 @@ The code is maintained with git. If you are not yet familiar with git, read `pro
 
 **Windows**
 
-We use git bash. 
+We use git bash.
 Download `msysgit <http://code.google.com/p/msysgit/downloads/list>`_ and follow the installer instructions.
 
 **Fedora**::
-   
+
    sudo yum install git
- 
+
 **Ubuntu**::
-   
+
    sudo apt-get install git
 
 Auto CLRF
 `````````
 
-* We need to ensure consistancy between end-of-file(EOF) markers. 
+* We need to ensure consistancy between end-of-file(EOF) markers.
 * This avoids excess commits where the enviroment automatically adds the EOF.
 * Git will think that the whole file has been edited.
 * Read `EOF <http://en.wikipedia.org/wiki/Newline>`_.
@@ -107,7 +107,7 @@ To get the code, run in a terminal (linux) or in git bash (windows)::
 
    cd ~/workspace
    git clone --recursive git@github.com:<username>/blender_nif_plugin.git
-   cd blender_nif_plugin   
+   cd blender_nif_plugin
 
 Optional remote tracking::
 
@@ -122,10 +122,10 @@ Install Build Environment Batch Script
 .. note::
 
    * The build enviroment is a tool to standardise development for all NifTools application on Windows
-   * Its purpose is to initialises a command line window with temporary enviromental setting, to avoid PATH variables. 
+   * Its purpose is to initialises a command line window with temporary enviromental setting, to avoid PATH variables.
    * It reads from a .ini file where non-standard locations path can be defined.
    * For more information, read the :file:`README.rst` file provided with the repository.
-   
+
 **Windows**
 
 Get the build environment batch script::
@@ -134,17 +134,17 @@ Get the build environment batch script::
    git clone git://github.com/neomonkeus/buildenv.git
 
 Navigate to the BuildEnv directory and create a new .ini file or using msysgit::
-   
+
    cd buildenv/ini
    touch blender.ini
-   
+
 The following is a sample .ini file::
 
    arch=32
    start=workspace
    python=C:\Python32
-   blender=C:\ProgramFiles\BlenderFoundation\Blender
-   
+   blender=C:\Program Files\Blender Foundation\Blender
+
 Running Create_shortcut.bat will now add shortcuts on the Desktop for each .ini file, which when run will open a buildenv command window.
 
 
@@ -163,7 +163,7 @@ Save `distribute_setup.py <http://python-distribute.org/distribute_setup.py>`_
 and `get-pip.py <https://raw.github.com/pypa/pip/master/contrib/get-pip.py>`_
 in your ``workspace`` folder.
 
-**Windows** 
+**Windows**
 
 Use the Build environment shortcut you just created to open the command prompt::
 
@@ -175,7 +175,7 @@ Use the Build environment shortcut you just created to open the command prompt::
    cd ~/workfolder
    sudo python3 distribute_setup.py
    sudo python3 get-pip.py
-   
+
 Install Sphinx and Nose
 -----------------------
 
@@ -194,8 +194,8 @@ Install Sphinx and Nose
 **Ubuntu** run in a terminal::
 
    sudo apt-get install python3-nose python3-sphinx
-   
-   
+
+
 **Fedora** run in a terminal::
 
    sudo yum install python3-nose python3-sphinx
@@ -213,7 +213,7 @@ version of pyffi that works with blender::
 
    cd /pyffi
    pip-3.2 install . --target="%APPDATABLENDERADDONS%\modules"
-  
+
 .. note::
 
    For Blender 2.62, omit the modules part of the install path::
@@ -221,7 +221,7 @@ version of pyffi that works with blender::
      pip-3.2 install . --target="%APPDATABLENDERADDONS%"
 
 **Ubuntu** run in a terminal::
-   
+
    cd ~/workspace/pyffi
    pip-3.2 install . --user
 
@@ -247,7 +247,7 @@ Install Eclipse
 ---------------
 
 The `Eclipse <http://www.eclipse.org/>`_ IDE allows us maintain a unified workflow for general file manipulation,
-repo management, python scripting, and hooks into Blender's debugging server. 
+repo management, python scripting, and hooks into Blender's debugging server.
 
 
 #. First install the `Java Runtime Environment <http://java.com/download>`_.
@@ -256,7 +256,7 @@ repo management, python scripting, and hooks into Blender's debugging server.
 
 **Windows**
 
-#. Install `Eclipse Classic <http://www.eclipse.org/downloads/>`_ 
+#. Install `Eclipse Classic <http://www.eclipse.org/downloads/>`_
 
 #. Unzip the file under ``C:\Program Files\eclipse``.
 * If you want to create a shortcut from your desktop, right-click ``C:\Program Files\eclipse\eclipse.exe``
@@ -271,7 +271,7 @@ and select **Send to > Desktop (create shortcut)**.
    sudo apt-get install eclipse
 
 When starting eclipse, you are asked for your workspace folder. If you followed the
-instructions above and cloned the code into ``~/workspace/blender_nif_plugin``, 
+instructions above and cloned the code into ``~/workspace/blender_nif_plugin``,
 then the default ``/home/<username>/workspace`` will do the trick.
 
 At the Welcome window, click **Workbench** on the top right.
@@ -317,7 +317,7 @@ You should also install a few plugins.
 
 * Documentation is written in `reStructuredText
   <http://docutils.sourceforge.net/docs/user/rst/quickref.html>`_.
-  If you want syntax highlighting for reST, 
+  If you want syntax highlighting for reST,
   install the `ReST Editor plugin <http://resteditor.sourceforge.net/>`_:
 
   1. Go to: **Help > Install New Software > Add...**
@@ -354,7 +354,7 @@ This allows run-time debugging; watching the script execute, variables, function
 
 Setup Eclipse PyDev Debugger
 ````````````````````````````
-Add the Pydev Debug Perspective: **Customise Perspective -> Pydev Debug**. 
+Add the Pydev Debug Perspective: **Customise Perspective -> Pydev Debug**.
 Start the Pydev server.
 
 * In the blender_nif_plugin/scripts/addon/../nifdebug.py
@@ -372,18 +372,23 @@ Launching Blender from PyDev
 * Set the Working Directory to Blender Foundation/Blender
 * click on Apply, then Close
 
-Test this launch configuration by click on the Run... Toolbar icon (the one with the red toolbox). 
+Test this launch configuration by click on the Run... Toolbar icon (the one with the red toolbox).
 If you have done it correctly, blender should start up.
 
 Enable the blender plug-in and try to import one of the test nifs.
 If everything works, Blender's console should be visible in Pydev's console.
 
-* The only limitation is when want to put breakpoints in python files, you need to open the version in the Blender Foundation/Blender folder. 
-* You only need to this once as when you run the script, eclipse will automatically open the file once it encounters the breakpoint.
+Debugging with PyDev
+''''''''''''''''''''
+
+Debugging is enabled via the ./scripts/addons/io_scene/nif_debug/__init__.py file, disabled by default.
+Set the DEBUGGING varibale to True and edit the path to the pydebugger.
+This works both from Blender run via Launch Config or via the nose test suite.
 
 .. note::
-
-   * When editing the repo version of the file, running install.bat will overwrite the addon version. Eclipse will as you if you want to reload the file. Ensure that you are editing the right version otherwise you might accidently overwrite you work.
+   * If running Blender GUI ensure that the breakpoints are placed is the file from the Blender Foundation/Blender folder.
+   * Executing the script, Eclipse will automatically open the file once it encounters the breakpoint.
+   * Remember install.bat overwrites the addon version, so ensure you are editing the repo correct version.
 
 Eclipse: Optional Extras
 ------------------------
@@ -394,7 +399,7 @@ Command Line Completion
 To add in command-line completion for Blender modules, use the following stub Blender plugin repo.::
 
    git:// clone --recursive https://github.com/neomonkeus/blender_eclipse_debug
-   
+
 #. Copy the following to the Blender directory::
 
    ./docs/python_api/
@@ -408,8 +413,8 @@ To add in command-line completion for Blender modules, use the following stub Bl
    * Variable declarations must have qualified type before auto-completion kicks in.
    * (b_obj = bpy.types.object, context = bpy.context.active_object, etc.)
    * Hovering over a variable will hot-link to the generated documentation.
- 
-* Generation of the pypredef files used from command-line completion only works with certain versions of Blender. 
+
+* Generation of the pypredef files used from command-line completion only works with certain versions of Blender.
 * Even still certain modules like BGE will not get generated.
 * Currently 2.59 is the latest version that generates without error, so refer to online documentation for the most up-to-date documentation.
 
