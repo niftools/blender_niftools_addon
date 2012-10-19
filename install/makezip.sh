@@ -13,7 +13,7 @@ NAME="blender_nif_plugin"
 FILES="AUTHORS.rst CHANGELOG.rst LICENSE.rst README.rst install.sh install.bat scripts/ docs/_build/html/"
 
 # update documentation
-pushd docs
+pushd ../docs
 make clean
 make html
 popd
@@ -23,6 +23,6 @@ zip -9r "${NAME}-${extversion}.zip" ${FILES} -x \*/__pycache__/\*
 tar cfvj "${NAME}-${extversion}.tar.bz2" ${FILES} --exclude=*__pycache__*
 
 # create windows installer
-rm -f "win-install/${NAME}-${VERSION}-windows.exe"
-makensis -V3 win-install/${NAME}.nsi
-mv "win-install/${NAME}-${VERSION}-windows.exe" "win-install/${NAME}-${extversion}-windows.exe"
+rm -f "${NAME}-${VERSION}-windows.exe"
+makensis -V3 ${NAME}.nsi
+mv "${NAME}-${VERSION}-windows.exe" "${NAME}-${extversion}-windows.exe"
