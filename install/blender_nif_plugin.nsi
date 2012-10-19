@@ -39,7 +39,7 @@ SetCompressor /SOLID lzma
 !include "WordFunc.nsh"
 !insertmacro VersionCompare
 
-!define VERSION "2.6.0"
+!define VERSION "2.6.0.2"
 !define PYFFIVERSION "2.2.0"
 !define BLENDERVERSION "2.62"
 
@@ -98,7 +98,7 @@ LangString DESC_SecCopyUI ${LANG_ENGLISH} "Copy all required files to the applic
 ;--------------------------------
 ; Data
 
-OutFile "blender_nif_scripts-${VERSION}-windows.exe"
+OutFile "blender_nif_plugin-${VERSION}-windows.exe"
 InstallDir "$PROGRAMFILES\NifTools\Blender NIF Scripts"
 BrandingText "http://niftools.sourceforge.net/"
 Icon inst.ico
