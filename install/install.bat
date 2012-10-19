@@ -19,6 +19,7 @@ collisionsys, armaturesys, texturesys, materialsys, ) do mkdir "%APPDATABLENDERA
 
 rem copy files from repository to blender addons folder
 for %%A in (
+VERSION,
 __init__.py,
 nif_common.py, nif_export.py, nif_import.py, nif_debug,
 ui.py, properties.py, operators.py,
