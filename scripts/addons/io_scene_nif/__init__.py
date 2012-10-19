@@ -43,8 +43,8 @@ bl_info = {
     "description":
     "Import and export files in the NetImmerse/Gamebryo nif format (.nif)",
     "author": "Amorilia",
-    "version": (2, 6, 0),
-    "blender:": (2, 6, 2),
+    "version": (2, 6, 0), # can't read from VERSION, blender wants it hardcoded
+    "blender": (2, 6, 2),
     "api": 39257,
     "location": "File > Import-Export",
     "warning": "not functional, port from 2.49 series still in progress",
