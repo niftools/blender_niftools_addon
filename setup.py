@@ -34,7 +34,7 @@ setup(
     author="Amorilia",
     author_email="amorilia@users.sourceforge.net",
     license="BSD",
-    keywords="fileformat nif cgf binary interface stripify",
+    keywords="blender nif import export",
     platforms=["any"],
     description=readme_lines[0],
     classifiers=[_f for _f in classifiers.split("\n") if _f],
