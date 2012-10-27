@@ -24,7 +24,7 @@ readme_lines = open("README.rst").read().split("\n")
 version = open("scripts/addons/io_scene_nif/VERSION").read().strip()
 
 setup(
-    name='io_scene_nif',
+    name='blender_nif_plugin',
     version=version,
     packages=['io_scene_nif'],
     package_dir={'io_scene_nif': 'scripts/addons/io_scene_nif'},
