@@ -1,0 +1,7 @@
+include README.rst
+include AUTHORS.rst
+include LICENSE.rst
+include CHANGELOG.rst
+include blender-nosetests.bat
+include blender-nosetests.sh
+include blender-nosetests.py
