@@ -26,7 +26,12 @@ version = open("scripts/addons/io_scene_nif/VERSION").read().strip()
 setup(
     name='blender_nif_plugin',
     version=version,
-    packages=['io_scene_nif'],
+    packages=[
+        'io_scene_nif',
+        'io_scene_nif.armaturesys',
+        'io_scene_nif.collisionsys',
+        'io_scene_nif.texturesys',
+        ],
     package_dir={'io_scene_nif': 'scripts/addons/io_scene_nif'},
     package_data={
         'io_scene_nif': ['VERSION'],
