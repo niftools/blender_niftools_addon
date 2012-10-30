@@ -14,13 +14,5 @@ popd
 pushd ..
 del %NAME%-%VERSION%.*
 "%PROGRAMFILES%\7-Zip\7z.exe" a -tzip install/%NAME%-%VERSION%.zip %FILES%
-"%PROGRAMFILES%\7-Zip\7z.exe" a -ttar install/%NAME%-%VERSION%.tar %FILES%
-popd
-"%PROGRAMFILES%\7-Zip\7z.exe" a -tbzip2 %NAME%-%VERSION%.tar.bz2 %NAME%-%VERSION%.tar
-del %NAME%-%VERSION%.tar
-
-rem create windows installer
-del %NAME%-%VERSION%-windows.exe
-makensis.exe /v3 /DVERSION=%VERSION% %NAME%.nsi
 
 pause
