@@ -1,18 +1,14 @@
-git clean -xfd
-install.bat
-
 set /p VERSION=<../scripts/addons/io_scene_nif/VERSION
 set NAME=blender_nif_plugin
-set FILES=AUTHORS.rst CHANGELOG.rst LICENSE.rst README.rst install/install.sh install/install.bat scripts/  docs/_build/html/
+set EXTRAFILES=AUTHORS.rst CHANGELOG.rst LICENSE.rst README.rst
 
-rem update documentation
-pushd ../docs
-make clean
-make html
+pushd ..\scripts\addons
+del %NAME%-%VERSION%.*
+"%PROGRAMFILES%\7-Zip\7z.exe" a -tzip ..\..\install\%NAME%-%VERSION%.zip io_scene_nif -xr!__pycache__
 popd
 
 pushd ..
-del %NAME%-%VERSION%.*
-"%PROGRAMFILES%\7-Zip\7z.exe" a -tzip install/%NAME%-%VERSION%.zip %FILES%
+"%PROGRAMFILES%\7-Zip\7z.exe" a -tzip install\%NAME%-%VERSION%.zip %EXTRAFILES%
+popd
 
 pause
