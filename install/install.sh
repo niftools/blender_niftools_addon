@@ -23,4 +23,4 @@ echo $BLENDERADDONS/io_scene_nif
 rm -rf $BLENDERADDONS/io_scene_nif/
 
 # copy files from repository to blender addons folder
-cp -r ../scripts/addons/io_scene_nif/ $BLENDERADDONS/
+cp -r ../io_scene_nif/ $BLENDERADDONS/
