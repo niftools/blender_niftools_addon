@@ -25,7 +25,7 @@ nif_common.py, nif_export.py, nif_import.py, nif_debug,
 ui.py, properties.py, operators.py,
 collisionsys, armaturesys, texturesys, materialsys, ) do (
   echo.	%%A
-  copy "..\scripts\addons\io_scene_nif\%%A" "%APPDATABLENDERADDONS%\io_scene_nif\%%A"
+  copy "..\io_scene_nif\%%A" "%APPDATABLENDERADDONS%\io_scene_nif\%%A"
 )
 
 goto end
