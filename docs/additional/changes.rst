@@ -3,5 +3,5 @@
 Changes
 +++++++
 
-.. include:: /../CHANGELOG.rst
+.. include:: /../io_scene_nif/CHANGELOG.rst
 

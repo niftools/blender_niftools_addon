@@ -1,4 +1,4 @@
 Authors
 =======
 
-.. include:: /../AUTHORS.rst
+.. include:: /../io_scene_nif/AUTHORS.rst
