@@ -59,5 +59,9 @@ Run the following in a buildenv (Windows) or terminal (Fedora)::
   make html
 
 from within the ``blender_nif_plugin/docs`` folder.
+The generated API documentation
+will correspond to the currently installed plugin
+(*not* your checked out version!)
+so usually you would install it first.
 
 To view the docs, open ``docs/_build/html/index.html``.
