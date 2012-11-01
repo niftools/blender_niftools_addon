@@ -46,8 +46,7 @@ from bpy.props import (PointerProperty,
                        EnumProperty
                        )
 
-import site
-from pyffi.formats.nif import NifFormat
+from .pyffi.formats.nif import NifFormat
 
 def underscore_to_camelcase(s):
     """Take the underscore-separated string s and return a camelCase
