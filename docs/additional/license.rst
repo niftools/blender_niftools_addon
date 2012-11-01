@@ -1,5 +1,5 @@
 License
 =======
 
-.. include:: /../io_scene_nif/LICENSE.rst
+.. include:: /../LICENSE.rst
 

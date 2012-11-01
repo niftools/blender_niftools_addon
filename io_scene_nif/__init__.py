@@ -71,15 +71,9 @@ import bpy.props
 
 from . import properties, ui, operators
 
-# blender doesn't look in site-packages;
-# easiest solution for this seems to be to import site.py manually,
-# so we find pyffi if it is installed there
-
-import site
-
-import pyffi
-from pyffi.formats.nif import NifFormat
-from pyffi.formats.egm import EgmFormat
+from . import pyffi
+from .pyffi.formats.nif import NifFormat
+from .pyffi.formats.egm import EgmFormat
 
 def _init_loggers():
     """Set up loggers."""
