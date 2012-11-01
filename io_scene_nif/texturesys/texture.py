@@ -43,7 +43,7 @@ import operator
 
 import bpy
 
-from pyffi.formats.nif import NifFormat
+from ..pyffi.formats.nif import NifFormat
 
 class texture_import():
 	
