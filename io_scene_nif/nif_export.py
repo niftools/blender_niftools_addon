@@ -187,8 +187,8 @@ class NifExport(NifCommon):
 
         # Helper systems
         # Store references to subsystems as needed.
-        self.boundhelper = collision.bound_export(parent=self)
-        self.bhkhelper = collision.bhkshape_export(parent=self)
+        self.boundhelper = bound_export(parent=self)
+        self.bhkhelper = bhkshape_export(parent=self)
 
 
         self.info("exporting {0}".format(self.properties.filepath))
