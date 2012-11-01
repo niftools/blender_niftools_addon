@@ -10,23 +10,11 @@ echo.%APPDATABLENDERADDONS%\io_scene_nif
 rem remove old files
 if exist "%APPDATABLENDERADDONS%\io_scene_nif" rmdir /s /q "%APPDATABLENDERADDONS%\io_scene_nif"
 
-rem create root folder
-mkdir "%APPDATABLENDERADDONS%\io_scene_nif"
-
-rem add sub-folders
-for %%A in (
-collisionsys, armaturesys, texturesys, materialsys, ) do mkdir "%APPDATABLENDERADDONS%\io_scene_nif\%%A"
+rem create zip
+makezip.bat
 
 rem copy files from repository to blender addons folder
-for %%A in (
-VERSION,
-__init__.py,
-nif_common.py, nif_export.py, nif_import.py, nif_debug,
-ui.py, properties.py, operators.py,
-collisionsys, armaturesys, texturesys, materialsys, ) do (
-  echo.	%%A
-  copy "..\io_scene_nif\%%A" "%APPDATABLENDERADDONS%\io_scene_nif\%%A"
-)
+"%PROGRAMFILES%\7-Zip\7z.exe" x -o "%APPDATABLENDERADDONS%" "%NAME%-%VERSION%.zip"
 
 goto end
 
