@@ -7,7 +7,7 @@ del %NAME%-%VERSION%.*
 
 pushd ..
 git clean -xfd
-xcopy /s pyffi/pyffi io_scene_nif
+xcopy /s pyffi/pyffi io_scene_nif/pyffi
 xcopy pyffi/*.rst io_scene_nif/pyffi
 del /s /f /q io_scene_nif/pyffi/formats/cgf
 del /s /f /q  io_scene_nif/pyffi/formats/dae
