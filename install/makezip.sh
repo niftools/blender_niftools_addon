@@ -1,17 +1,11 @@
 git clean -xfd
 ./install.sh
 
-VERSION=`cat ../scripts/addons/io_scene_nif/VERSION`
+VERSION=`cat ../io_scene_nif/VERSION`
 NAME="blender_nif_plugin"
-FILES="AUTHORS.rst CHANGELOG.rst LICENSE.rst README.rst install/install.sh install/install.bat scripts/ docs/_build/html/"
 
-# update documentation
-pushd ../docs
-make clean
-make html
-popd
+rm -f "${NAME}-${VERSION}".*
 
 pushd ..
-rm -f "${NAME}-${VERSION}".*
-zip -9r "install/${NAME}-${VERSION}.zip" ${FILES} -x \*/__pycache__/\*
+zip -9r "install/${NAME}-${VERSION}.zip" io_scene_nif -x \*/__pycache__/\*
 popd
