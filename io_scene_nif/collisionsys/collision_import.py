@@ -44,9 +44,9 @@ import mathutils
 from functools import reduce
 import operator
 
-import pyffi
-from pyffi.formats.nif import NifFormat
-from pyffi.utils.quickhull import qhull3d
+from .. import pyffi
+from ..pyffi.formats.nif import NifFormat
+from ..pyffi.utils.quickhull import qhull3d
 
 
 class bhkshape_import():
