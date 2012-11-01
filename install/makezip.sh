@@ -1,17 +1,23 @@
-git clean -xfd
-./install.sh
+#!/bin/sh
 
-VERSION=`cat ../scripts/addons/io_scene_nif/VERSION`
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+VERSION=`cat ${DIR}/../io_scene_nif/VERSION`
 NAME="blender_nif_plugin"
-FILES="AUTHORS.rst CHANGELOG.rst LICENSE.rst README.rst install/install.sh install/install.bat scripts/ docs/_build/html/"
 
-# update documentation
-pushd ../docs
-make clean
-make html
-popd
-
-pushd ..
-rm -f "${NAME}-${VERSION}".*
-zip -9r "install/${NAME}-${VERSION}.zip" ${FILES} -x \*/__pycache__/\*
+pushd "${DIR}/.."
+git clean -xfd
+cp -r pyffi/pyffi io_scene_nif
+cp pyffi/*.rst io_scene_nif/pyffi
+rm -r io_scene_nif/pyffi/formats/cgf
+rm -r io_scene_nif/pyffi/formats/dae
+rm -r io_scene_nif/pyffi/formats/psk
+rm -r io_scene_nif/pyffi/formats/rockstar
+rm -r io_scene_nif/pyffi/formats/tga
+rm -r io_scene_nif/pyffi/qskope
+cp AUTHORS.rst io_scene_nif
+cp CHANGELOG.rst io_scene_nif
+cp LICENSE.rst io_scene_nif
+cp README.rst io_scene_nif
+zip -9r "${DIR}/${NAME}-${VERSION}.zip" io_scene_nif -x \*/__pycache__/\* -x \*/.git\* -x \*/.project -x \*/fileformat.dtd
+rm -r io_scene_nif/pyffi
 popd

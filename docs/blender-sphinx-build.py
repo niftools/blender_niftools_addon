@@ -1,12 +1,6 @@
 import os
-import site # get site-packages into sys.path
+import site # for fedora: get site-packages into sys.path so it finds sphinx
 import sys
-
-# add local addons folder to sys.path so blender finds it
-sys.path = (
-    [os.path.join(os.path.dirname(__file__), '..', 'scripts', 'addons')]
-    + sys.path
-    )
 
 # run sphinx builder
 # this assumes that the builder is called as

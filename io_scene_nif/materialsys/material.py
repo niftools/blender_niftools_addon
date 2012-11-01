@@ -41,7 +41,7 @@
 
 import bpy
 
-from pyffi.formats.nif import NifFormat
+from ..pyffi.formats.nif import NifFormat
 
 class material_import():
     
