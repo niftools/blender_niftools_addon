@@ -40,6 +40,10 @@ To run a particular test only, specify the file as an argument; for instance::
   blender-nosetests.bat test/test_cube.py
 
 Actually, all command line arguments of ``nosetests`` apply.
+For example, to abort on first failure::
+
+  blender-nosetests.bat -x
+
 For more details, run::
 
   blender-nosetests.bat --help
