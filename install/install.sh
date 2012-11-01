@@ -1,5 +1,7 @@
 #!/bin/sh
-# quick and dirty script to install the blender nif scripts
+
+VERSION=`cat ../io_scene_nif/VERSION`
+NAME="blender_nif_plugin"
 
 for BLENDERVERSION in 2.66 2.65 2.64 2.63 2.62
 do
@@ -18,10 +20,13 @@ fi
 
 echo Installing to:
 echo $BLENDERADDONS/io_scene_nif
+mkdir -p $BLENDERADDONS
 
 # remove old files
-mkdir -p $BLENDERADDONS
 rm -rf $BLENDERADDONS/io_scene_nif/
 
+# create zip
+./makezip.sh
+
 # copy files from repository to blender addons folder
-cp -r ../io_scene_nif/ $BLENDERADDONS/
+unzip "${NAME}-${VERSION}.zip" -d $BLENDERADDONS
