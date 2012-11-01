@@ -7,6 +7,7 @@ NAME="blender_nif_plugin"
 pushd "${DIR}/.."
 git clean -xfd
 cp -r pyffi/pyffi io_scene_nif
+cp pyffi/*.rst io_scene_nif/pyffi
 rm -r io_scene_nif/pyffi/formats/cgf
 rm -r io_scene_nif/pyffi/formats/dae
 rm -r io_scene_nif/pyffi/formats/psk
