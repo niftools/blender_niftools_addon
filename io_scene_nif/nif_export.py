@@ -43,10 +43,10 @@ import os.path
 import mathutils
 import bpy
 
-import pyffi.spells.nif
-import pyffi.spells.nif.fix
-from pyffi.formats.nif import NifFormat
-from pyffi.formats.egm import EgmFormat
+from .pyffi.spells.nif import NifToaster
+from .pyffi.spells.nif.fix import SpellScale
+from .pyffi.formats.nif import NifFormat
+from .pyffi.formats.egm import EgmFormat
 
 from .nif_common import NifCommon
 from .collisionsys.collision_export import bhkshape_export, bound_export
@@ -187,8 +187,8 @@ class NifExport(NifCommon):
 
         # Helper systems
         # Store references to subsystems as needed.
-        self.boundhelper = collision.bound_export(parent=self)
-        self.bhkhelper = collision.bhkshape_export(parent=self)
+        self.boundhelper = bound_export(parent=self)
+        self.bhkhelper = bhkshape_export(parent=self)
 
 
         self.info("exporting {0}".format(self.properties.filepath))
@@ -667,9 +667,9 @@ class NifExport(NifCommon):
                                  % self.properties.scale_correction)
                 data = NifFormat.Data()
                 data.roots = [root_block]
-                toaster = pyffi.spells.nif.NifToaster()
+                toaster = NifToaster()
                 toaster.scale = self.properties.scale_correction
-                pyffi.spells.nif.fix.SpellScale(data=data, toaster=toaster).recurse()
+                SpellScale(data=data, toaster=toaster).recurse()
                 # also scale egm
                 if self.egmdata:
                     self.egmdata.apply_scale(self.properties.scale_correction)
