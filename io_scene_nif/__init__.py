@@ -71,9 +71,9 @@ import bpy.props
 
 from . import properties, ui, operators
 
-from . import pyffi
-from .pyffi.formats.nif import NifFormat
-from .pyffi.formats.egm import EgmFormat
+import pyffi
+from pyffi.formats.nif import NifFormat
+from pyffi.formats.egm import EgmFormat
 
 def _init_loggers():
     """Set up loggers."""

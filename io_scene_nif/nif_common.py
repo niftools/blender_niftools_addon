@@ -41,8 +41,8 @@ import logging
 
 import bpy
 
-from . import pyffi
-from .pyffi.formats.nif import NifFormat
+import pyffi
+from pyffi.formats.nif import NifFormat
 
 class NifCommon:
     """Abstract base class for import and export. Contains utility functions

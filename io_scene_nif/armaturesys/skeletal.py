@@ -42,7 +42,7 @@ import os
 import bpy
 import mathutils
 
-from ..pyffi.formats.nif import NifFormat
+from pyffi.formats.nif import NifFormat
 
 class armature_import():
 	
