@@ -3,11 +3,11 @@
 set DIR=%~dp0
 :: remove trailing backslash
 if %DIR:~-1%==\ set DIR=%DIR:~0,-1%
-set /p VERSION=<..\io_scene_nif\VERSION
-set NAME=blender_nif_plugin
 set ROOT=%DIR%\..
+set /p VERSION=<%ROOT%\io_scene_nif\VERSION
+set NAME=blender_nif_plugin
 
-rmdir /s /q %DIR%\temp
+if exist "%DIR%\temp" rmdir /s /q "%DIR%\temp"
 pushd %ROOT%
 git clean -xfd
 git submodule foreach --recursive git clean -xfd
