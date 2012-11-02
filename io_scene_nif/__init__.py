@@ -69,6 +69,9 @@ import os.path
 import bpy
 import bpy.props
 
+# Python dependencies are bundled inside the io_scene_nif/modules folder
+sys.path += [os.path.join(os.path.dirname(__file__), "modules")]
+
 from . import properties, ui, operators
 
 import pyffi
