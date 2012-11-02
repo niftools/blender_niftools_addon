@@ -1,6 +1,14 @@
-@rem quick and dirty script to install the blender nif scripts
-@rem to detect APPDATABLENDERADDONS, you can use https://github.com/neomonkeus/buildenv
 @echo off
+
+:: quick and dirty script to install the blender nif scripts
+:: to detect APPDATABLENDERADDONS, you can use https://github.com/neomonkeus/buildenv
+
+set DIR=%~dp0
+:: remove trailing backslash
+if %DIR:~-1%==\ set DIR=%DIR:~0,-1%
+set ROOT=%DIR%\..
+set /p VERSION=<%ROOT%\io_scene_nif\VERSION
+set NAME=blender_nif_plugin
 
 if "%APPDATABLENDERADDONS%" == "" goto pleasesetblenderaddons
 
@@ -11,10 +19,12 @@ rem remove old files
 if exist "%APPDATABLENDERADDONS%\io_scene_nif" rmdir /s /q "%APPDATABLENDERADDONS%\io_scene_nif"
 
 rem create zip
-makezip.bat
+call "%DIR%\makezip.bat"
 
 rem copy files from repository to blender addons folder
-"%PROGRAMFILES%\7-Zip\7z.exe" x -o "%APPDATABLENDERADDONS%" "%NAME%-%VERSION%.zip"
+pushd "%APPDATABLENDERADDONS%"
+"%PROGRAMFILES%\7-Zip\7z.exe" x "%DIR%\%NAME%-%VERSION%.zip"
+popd
 
 goto end
 
