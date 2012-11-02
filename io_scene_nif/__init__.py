@@ -70,7 +70,10 @@ import bpy
 import bpy.props
 
 # Python dependencies are bundled inside the io_scene_nif/modules folder
-sys.path += [os.path.join(os.path.dirname(__file__), "modules")]
+_modules_path = os.path.join(os.path.dirname(__file__), "modules")
+if not _modules_path in sys.path:
+    sys.path.append(_modules_path)
+del _modules_path
 
 from . import properties, ui, operators
 
