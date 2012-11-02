@@ -1,49 +1,41 @@
-Version 2.6.0.3 ( Aug 2012 )
-============================
+Version 2.6.0a3 (in development)
+================================
 
 * Collision Support:
-   - Basic BhkShapes Cube, Sphere, Cylinder
-   - Convex Vertex, NiPacked, NiTriStrips Shapes
-   - Bound Box support.
-   
-* Major Refacor: Subsystem separation
-   - Collision System
-   - Armature System
-   - Material System
-   - Texture System
 
-* Extended Test Framework to support new features
+  - Basic BhkShapes Cube, Sphere, Cylinder.
+  - Convex Vertex, NiPacked, NiTriStrips Shapes.
+  - Bound Box support.
 
-Version 2.6.0.2 ( April 2012)
-=============================
+* Major Refacor: Subsystem separation (collision, armature, material,
+  texture).
 
-* Material Support:
-  - (NiWireProperty)
+* Extended test framework to support new features.
 
-Version 2.6.0.1 ( Mar 2012)
-===========================
+Version 2.6.0a2 (not released)
+==============================
 
-* Additional material properties support:
-  - (NiAlphaProperty)
-  - (NiSpecular) 
-  - (NiStencilProperty)
+* NiWireProperty material support.
 
-* Added support for (NiTexturingProperty)
-  - Diffuse Map
-  - Bump Map
-  - Glow Map
+Version 2.6.0a1 (not released)
+==============================
+
+* Additional material properties support (alpha, specular, stencil).
+
+* Added support for NiTexturingProperty (diffuse, bump, and glow).
 
 * Fixed issue with material texture blend type importing (reported and 
-  fix contributed by mgm101) 
+  fix contributed by mgm101).
 
-* Added experimental vertex color support
+* Added experimental vertex color support.
 
 * Extensive work on the testing framework.
-  - Tests created based on new features
-  - Re-organised tests into per feature, generated test nifs.
-  - Inheritance based checks now functioning
 
-Version 2.6.0.0 (20 Nov 2011)
+  - Tests created based on new features.
+  - Re-organised tests into per feature, generated test nifs.
+  - Inheritance based checks now functioning.
+
+Version 2.6.0a0 (20 Nov 2011)
 =============================
 
 * Initial port to Blender 2.60a:
