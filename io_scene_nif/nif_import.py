@@ -53,13 +53,10 @@ import os.path
 import bpy
 import mathutils
 
-from .pyffi.spells.nif import NifToaster
-from .pyffi.spells.nif.fix import (
-    SpellScale, SpellMergeSkeletonRoots, SpellSendGeometriesToBindPosition,
-    SpellSendDetachedGeometriesToNodePosition, SpellSendBonesToBindPosition,
-    )
-from .pyffi.formats.nif import NifFormat
-from .pyffi.formats.egm import EgmFormat
+import pyffi.spells.nif
+import pyffi.spells.nif.fix
+from pyffi.formats.nif import NifFormat
+from pyffi.formats.egm import EgmFormat
 
 class NifImportError(Exception):
     """A simple custom exception class for import errors."""
@@ -200,13 +197,13 @@ class NifImport(NifCommon):
 
             # merge skeleton roots and transform geometry into the rest pose
             if self.properties.merge_skeleton_roots:
-                SpellMergeSkeletonRoots(data=self.data).recurse()
+                pyffi.spells.nif.fix.SpellMergeSkeletonRoots(data=self.data).recurse()
             if self.properties.send_geoms_to_bind_pos:
-                SpellSendGeometriesToBindPosition(data=self.data).recurse()
+                pyffi.spells.nif.fix.SpellSendGeometriesToBindPosition(data=self.data).recurse()
             if self.properties.send_detached_geoms_to_node_pos:
-                SpellSendDetachedGeometriesToNodePosition(data=self.data).recurse()
+                pyffi.spells.nif.fix.SpellSendDetachedGeometriesToNodePosition(data=self.data).recurse()
             if self.properties.send_bones_to_bind_position:
-                SpellSendBonesToBindPosition(data=self.data).recurse()
+                pyffi.spells.nif.fix.SpellSendBonesToBindPosition(data=self.data).recurse()
             if self.properties.apply_skin_deformation:
                 for n_geom in self.data.get_global_iterator():
                     if not isinstance(n_geom, NifFormat.NiGeometry):
@@ -222,9 +219,9 @@ class NifImport(NifCommon):
                         vold.z = vnew.z
 
             # scale tree
-            toaster = NifToaster()
+            toaster = pyffi.spells.nif.NifToaster()
             toaster.scale = 1 / self.properties.scale_correction
-            SpellScale(data=self.data, toaster=toaster).recurse()
+            pyffi.spells.nif.fix.SpellScale(data=self.data, toaster=toaster).recurse()
 
             # import all root blocks
             for block in self.data.roots:
