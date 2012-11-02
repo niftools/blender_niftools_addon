@@ -14,14 +14,15 @@ mkdir ${DIR}/temp
 
 pushd ${DIR}/temp
 cp -r ${ROOT}/io_scene_nif/ .
-cp -r ${ROOT}/pyffi/pyffi/ io_scene_nif
-cp ${ROOT}/pyffi/*.rst io_scene_nif/pyffi
-rm -r io_scene_nif/pyffi/formats/cgf
-rm -r io_scene_nif/pyffi/formats/dae
-rm -r io_scene_nif/pyffi/formats/psk
-rm -r io_scene_nif/pyffi/formats/rockstar
-rm -r io_scene_nif/pyffi/formats/tga
-rm -r io_scene_nif/pyffi/qskope
+mkdir io_scene_nif/modules
+cp -r ${ROOT}/pyffi/pyffi/ io_scene_nif/modules
+cp ${ROOT}/pyffi/*.rst io_scene_nif/modules/pyffi
+rm -r io_scene_nif/modules/pyffi/formats/cgf
+rm -r io_scene_nif/modules/pyffi/formats/dae
+rm -r io_scene_nif/modules/pyffi/formats/psk
+rm -r io_scene_nif/modules/pyffi/formats/rockstar
+rm -r io_scene_nif/modules/pyffi/formats/tga
+rm -r io_scene_nif/modules/pyffi/qskope
 cp ${ROOT}/AUTHORS.rst io_scene_nif
 cp ${ROOT}/CHANGELOG.rst io_scene_nif
 cp ${ROOT}/LICENSE.rst io_scene_nif
