@@ -1,26 +1,38 @@
 @echo off
 
-set /p VERSION=<../io_scene_nif/VERSION
+set DIR=%~dp0
+:: remove trailing backslash
+if %DIR:~-1%==\ set DIR=%DIR:~0,-1%
+set ROOT=%DIR%\..
+set /p VERSION=<%ROOT%\io_scene_nif\VERSION
 set NAME=blender_nif_plugin
 
-del %NAME%-%VERSION%.*
-
-pushd ..
+if exist "%DIR%\temp" rmdir /s /q "%DIR%\temp"
+pushd %ROOT%
 git clean -xfd
-xcopy /s pyffi/pyffi io_scene_nif/pyffi
-xcopy pyffi/*.rst io_scene_nif/pyffi
-del /s /f /q io_scene_nif/pyffi/formats/cgf
-del /s /f /q  io_scene_nif/pyffi/formats/dae
-del /s /f /q  io_scene_nif/pyffi/formats/psk
-del /s /f /q  io_scene_nif/pyffi/formats/rockstar
-del /s /f /q  io_scene_nif/pyffi/formats/tga
-del /s /f /q  io_scene_nif/pyffi/qskope
-copy AUTHORS.rst io_scene_nif
-copy CHANGELOG.rst io_scene_nif
-copy LICENSE.rst io_scene_nif
-copy README.rst io_scene_nif
-"%PROGRAMFILES%\7-Zip\7z.exe" a -tzip install\%NAME%-%VERSION%.zip -xr!__pycache__ -xr!.git -xr!.project -xr!fileformat.dtd io_scene_nif
-del /s /f /q io_scene_nif/pyffi
+git submodule foreach --recursive git clean -xfd
 popd
 
-pause
+mkdir %DIR%\temp
+
+pushd %DIR%\temp
+mkdir io_scene_nif
+xcopy /s %ROOT%\io_scene_nif io_scene_nif
+mkdir io_scene_nif\modules
+mkdir io_scene_nif\modules\pyffi
+xcopy /s %ROOT%\pyffi\pyffi io_scene_nif\modules\pyffi
+xcopy %ROOT%\pyffi\*.rst io_scene_nif\modules\pyffi
+rmdir /s /q io_scene_nif\modules\pyffi\formats\cgf
+rmdir /s /q io_scene_nif\modules\pyffi\formats\dae
+rmdir /s /q io_scene_nif\modules\pyffi\formats\psk
+rmdir /s /q io_scene_nif\modules\pyffi\formats\rockstar
+rmdir /s /q io_scene_nif\modules\pyffi\formats\tga
+rmdir /s /q io_scene_nif\modules\pyffi\qskope
+xcopy %ROOT%\AUTHORS.rst io_scene_nif
+xcopy %ROOT%\CHANGELOG.rst io_scene_nif
+xcopy %ROOT%\LICENSE.rst io_scene_nif
+xcopy %ROOT%\README.rst io_scene_nif
+"%PROGRAMFILES%\7-Zip\7z.exe" a -tzip "%DIR%\%NAME%-%VERSION%.zip" -xr!__pycache__ -xr!.git -xr!.project -xr!fileformat.dtd io_scene_nif
+popd
+
+rmdir /s /q %DIR%\temp
