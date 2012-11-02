@@ -40,12 +40,11 @@
 import bpy
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 
-from . import pyffi
-from .pyffi.formats.nif import NifFormat
-from .pyffi.formats.egm import EgmFormat
+import pyffi
+from pyffi.formats.nif import NifFormat
+from pyffi.formats.egm import EgmFormat
 
-from . import nif_export
-from . import nif_import
+from . import nif_export, nif_import
 
 class NifOperatorCommon:
     """Abstract base class for import and export user interface."""
