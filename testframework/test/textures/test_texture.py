@@ -16,8 +16,8 @@ import os.path
 
 import io_scene_nif.nif_export
 from pyffi.formats.nif import NifFormat
-from ..geometry.test_geometry import TestBaseUV
-from ..property.test_property import TestMaterialProperty
+from test.geometry.test_geometry import TestBaseUV
+from test.property.test_property import TestMaterialProperty
 
 #NiTexturingProperty
 class TestBaseTexture(TestBaseUV, TestMaterialProperty):
