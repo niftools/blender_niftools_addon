@@ -1,15 +1,12 @@
 """Export and import material meshes."""
 
-#    TODO_material - Find any nifs with non-default ambient, diffuse;
-#    TODO_3.0 - Create per material values: niftools.ambient, niftools.emissive.
-
 import bpy
 import nose.tools
 import os
 
 import io_scene_nif.nif_export
 from pyffi.formats.nif import NifFormat
-from test.geometry.test_geometry import TestBaseGeometry
+from test.geometry.trishape.test_geometry import TestBaseGeometry
 
 class TestMaterialProperty(TestBaseGeometry):
     n_name = "property/material/base_material"
@@ -77,3 +74,61 @@ class TestMaterialProperty(TestBaseGeometry):
         nose.tools.assert_equal((n_mat_prop.diffuse_color.r,
                                  n_mat_prop.diffuse_color.g,
                                  n_mat_prop.diffuse_color.b), (1.0,1.0,1.0))
+        
+'''
+class TestAmbientMaterial(TestMaterialProperty):
+    n_name = "property/material/base_material"
+
+    def b_create_object(self):
+        b_obj = TestBaseGeometry.b_create_object(self)
+        b_mat = b_obj.data.materials[0]
+
+        #diffuse settings
+        b_mat.niftools.ambient_color = (0.0,1.0,0.0)#TODO_3.0 - update func-> World ambient
+        return b_obj
+
+    def b_check_data(self, b_obj):
+        b_mesh = b_obj.data
+        b_mat = b_mesh.materials[0]
+        self.b_check_ambient_property(b_mat)
+
+    def b_check_ambient_property(self, b_mat)
+        nose.tools.assert_equal(b_mat.niftools.ambient_color, (0.0,1.0,0.0))
+
+    def n_check_data(self, n_data):
+        n_geom = n_data.roots[0].children[0]
+        self.n_check_material_property(n_geom.properties[0])
+
+    def n_check_material_property(self, n_mat_prop):
+        nose.tools.assert_is_instance(n_mat_prop, NifFormat.NiMaterialProperty)
+        nose.tools.assert_equal(n_mat_prop.ambient_color, (0.0,1.0,0.0))
+
+class TestDiffuseMaterial(TestMaterialProperty):
+    n_name = "property/material/base_material"
+
+    def b_create_object(self):
+        b_obj = TestBaseGeometry.b_create_object(self)
+        b_mat = b_obj.data.materials[0]
+
+        #diffuse settings
+        b_mat.niftools.diffuse_color = (0.0,1.0,0.0)#TODO_3.0 - update func-> World ambient
+        return b_obj
+
+    def b_check_data(self, b_obj):
+        b_mesh = b_obj.data
+        b_mat = b_mesh.materials[0]
+        self.b_check_diffuse_property(b_mat)
+
+    def b_check_diffuse_property(self, b_mat)
+        nose.tools.assert_equal(b_mat.niftools.diffuse_color, (0.0,1.0,0.0))
+        nose.tools.assert_equal(b_mat.diffuse_intensity, 1.0)
+
+    def n_check_data(self, n_data):
+        n_geom = n_data.roots[0].children[0]
+        self.n_check_material_property(n_geom.properties[0])
+
+    def n_check_material_property(self, n_mat_prop):
+        nose.tools.assert_is_instance(n_mat_prop, NifFormat.NiMaterialProperty)
+        nose.tools.assert_equal(n_mat_prop.diffuse_color, (0.0,1.0,0.0))
+
+'''
