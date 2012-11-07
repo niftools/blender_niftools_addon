@@ -5,7 +5,7 @@ import nose.tools
 import math
 import mathutils
 
-from ..geometry.test_geometry import TestBaseGeometry
+from nif.geometry.test_geometry import TestBaseGeometry
 from pyffi.formats.nif import NifFormat
 
 class TestBaseUV(TestBaseGeometry):
