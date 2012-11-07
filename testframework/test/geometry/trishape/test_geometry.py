@@ -5,7 +5,8 @@ import nose.tools
 import math
 import mathutils
 
-from test import Base, SingleNif
+from test import Base
+from test import SingleNif
 from pyffi.formats.nif import NifFormat
 
 class TestBaseGeometry(SingleNif):

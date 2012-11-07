@@ -5,7 +5,7 @@ import nose.tools
 
 import io_scene_nif.nif_export
 from pyffi.formats.nif import NifFormat
-from test.geometry.test_geometry import TestBaseGeometry
+from test.geometry.trishape.test_geometry import TestBaseGeometry
 
 class TestBaseVertexColor(TestBaseGeometry):
     n_name = "geometry/vertexcolor/base_vertex_color"
