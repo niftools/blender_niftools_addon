@@ -6,7 +6,7 @@ import os
 
 import io_scene_nif.nif_export
 from pyffi.formats.nif import NifFormat
-from ..geometry.test_geometry import TestBaseGeometry
+from test.geometry.test_geometry import TestBaseGeometry
 
 
 class TestBound(TestBaseGeometry):
