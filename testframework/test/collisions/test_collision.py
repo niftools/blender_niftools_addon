@@ -3,7 +3,7 @@
 import bpy
 import nose.tools
 
-from ..geometry.test_geometry import TestBaseGeometry
+from test.geometry.test_geometry import TestBaseGeometry
 from pyffi.formats.nif import NifFormat
 
 class TestBhkCollision():

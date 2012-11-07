@@ -1,4 +1,4 @@
-"""Export and import textured meshes."""
+"""Export and import material meshes."""
 
 #    TODO_material - Find any nifs with non-default ambient, diffuse;
 #    TODO_3.0 - Create per material values: niftools.ambient, niftools.emissive.
@@ -9,7 +9,7 @@ import os
 
 import io_scene_nif.nif_export
 from pyffi.formats.nif import NifFormat
-from ..geometry.test_geometry import TestBaseGeometry
+from test.geometry.test_geometry import TestBaseGeometry
 
 class TestMaterialProperty(TestBaseGeometry):
     n_name = "property/material/base_material"
