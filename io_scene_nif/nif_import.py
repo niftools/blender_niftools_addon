@@ -1428,6 +1428,8 @@ class NifImport(NifCommon):
             constr.name = "priority:%i" % self.bone_priorities[niBlock.name]
 
         # recalculate mesh to render correctly
+        # TODO this causes a crash in blender 2.62
+        #      when combining shapes is enabled
         b_mesh.calc_normals()
         b_mesh.update()
 
