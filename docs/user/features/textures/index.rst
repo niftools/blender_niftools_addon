@@ -12,7 +12,7 @@ Notes
 
 * The nif format only supports UV mapped textures, so only those will be exported.
 * GLSL mode is enabled on import/export, but should be enabled manually otherwise to give correct viewport preview.
-* Relative paths for textures are often used, eg. \Texture\..\.. which should be adjusted so Blender can render in the viewport.
+* Relative paths for textures are often used, eg. /Texture/../.. which should be adjusted so Blender can render in the viewport.
 
 Requirements
 ~~~~~~~~~~~~
@@ -39,7 +39,7 @@ We load an image to use as our texture.
 
 * Next to **Image**, click **Open**, and select the desired texture image.
 
-We set the texture to use the UV coordinates.
+Set the texture to use the UV coordinates.
 
 * Under **Mapping > Coordinates**, select **UV**.
 

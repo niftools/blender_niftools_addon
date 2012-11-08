@@ -46,3 +46,4 @@ Normal Map
 
 #. Under **Type**, set the type to **Image or Movie**.
 #. Under **Influence**,  in the **Geometry Section**, enable **Normal**.
+#. Under **Image Sampling**, enable **Normal** 
