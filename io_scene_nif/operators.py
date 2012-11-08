@@ -182,7 +182,9 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
     combine_shapes = bpy.props.BoolProperty(
         name="Combine Shapes",
         description="Import multi-material shapes as a single mesh.",
-        default=False)
+        default=False,
+        # TODO hidden for now due to 2.62 crash; see nif_import.py TODO note
+        options={'HIDDEN'})
 
     def execute(self, context):
         """Execute the import operator: first constructs a
