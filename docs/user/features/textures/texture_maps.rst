@@ -1,6 +1,8 @@
 Texture Maps
 ------------
 
+.. _texture_maps:
+
 * Each Texture Map has a distinct function, which affectes how the object is rendered
 
 * The following sections describe the function of each Map
@@ -8,6 +10,7 @@ Texture Maps
 
 Diffuse Map
 -----------
+
 * The information in a diffuse map is used as the base color
 
 #. Under **Type**, set the type to **Image or Movie**.
