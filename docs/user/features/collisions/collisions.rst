@@ -190,7 +190,7 @@ Collision Settings
 ~~~~~~~~~~~~~~~~~~
 .. _collison-settings:
 
-* The Collision settings are used by the :class:`~pyffi.formats.nif.NifFormat.bhkShape` to control how the collision shape reacts in the Havok physics simulation.
+The Collision settings are used by the :class:`~pyffi.formats.nif.NifFormat.bhkShape` to control how the collision shape reacts in the Havok physics simulation.
 
 Example
 ~~~~~~~
@@ -205,6 +205,7 @@ Notes
 * Enable the **Collision Bounds** option, the mesh will be exported as a :class:`~pyffi.formats.nif.NifFormat.bhkShape, rather than a :class:`~pyffi.formats.nif.NifFormat.NiTriShape`,
 * Collision Bounds are represented by a dashed line, unlike Bounds which are by solid lines. 
 * Currently Capsule bounds lack viewport preview.
+
  - In **Render** tab, under the **Display** section enable **Physics Visualisation**
  - Set the **Viewport Shading** to **Wireframe or Bounding Box**.
  - **Game -> Start Game Engine** (p-key).

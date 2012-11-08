@@ -3,9 +3,9 @@ Textures
 
 .. _textures:
 
-* A texture refers to a generic image.
-* A maps refer to image which has specific properties which will influence the renderer.
-* Textures/Maps allow us to alter how the geometry is rendered, such as adding additional detail, affecting light, etc.
+| A texture refers to a generic image.
+| A map refer to an image which has specific properties which will influence the renderer.
+| Textures/Maps allow us to alter how the geometry is rendered, such as adding additional detail, affecting light, etc.
 
 Notes
 ~~~~~
