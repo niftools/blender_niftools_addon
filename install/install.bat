@@ -3,7 +3,7 @@
 :: quick and dirty script to install the blender nif scripts
 :: to detect APPDATABLENDERADDONS, you can use https://github.com/neomonkeus/buildenv
 
-set DIR=%~dp0
+set DIR=%~dps0
 :: remove trailing backslash
 if %DIR:~-1%==\ set DIR=%DIR:~0,-1%
 set ROOT=%DIR%\..
