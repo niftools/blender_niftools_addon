@@ -1,6 +1,6 @@
 @echo off
 
-set DIR=%~dp0
+set DIR=%~dps0
 :: remove trailing backslash
 if %DIR:~-1%==\ set DIR=%DIR:~0,-1%
 set ROOT=%DIR%\..
