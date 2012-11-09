@@ -3,25 +3,26 @@ NiMaterialProperty
 .. _properties-material:
 
 
-* The following section is for nifs which use :class:`~pyffi.formats.nif.NifFormat.NiMaterialProperty`.
+The following section is for nifs which use :class:`~pyffi.formats.nif.NifFormat.NiMaterialProperty`.
+
 * Material settings will alter how your Mesh will be rendered in-game.
 * Every :class:`~bpy.types.Material` is exported to a :class:`~pyffi.formats.nif.NifFormat.NiMaterialProperty`.
 * The nif format only supports a single material per :class:`~pyffi.formats.nif.NifFormat.NiTriShape`.
-* A Mesh that contains mult-materials will be exported as multiple :class:`~pyffi.formats.nif.NifFormat.NiTriShape`.
-* Giving the Material an appropriate name will help distingush materials and encourages reuse, eg. Metal, Glass, plastic etc.
+* A Mesh which contains mult-materials will be exported as multiple :class:`~pyffi.formats.nif.NifFormat.NiTriShape`.
+* Giving the Material an appropriate name helps distingush materials and encourages reuse, eg. Metal, Glass, plastic etc.
 
 Ambient
 ~~~~~~~
 
+This is a global scene value; even if you use several materials they all share the same value.
+
 #. In the **World Tab** -> **Ambient Color**.
 
-* This is a global scene value; even if you use several materials they all share the same value.
 * The diffuse color dynamically calculated, so the value is not actually used.
 * If you have found a nif that actually uses these values please contact the devs and we can enable per material ambient.
 
 Diffuse
 ~~~~~~~
-
 
 #. In the **Diffuse** panel, click on the color to bring up the color widget
 
@@ -30,7 +31,8 @@ Diffuse
 
 Emissive
 ~~~~~~~~
-* This value sets how much light the material emit.
+
+This value sets how much light the material emit.
 
 #. In the **Shading** panel is the Emissive color
 #. Set the **Intensity** value,
@@ -42,12 +44,13 @@ Emissive
 
 Gloss
 ~~~~~
-* This value sets how diffuse the specular highlight across the material.
+
+This value sets how diffuse the specular highlight across the material.
 
 #. In the **Specular** panel
 #. Set the **Hardness** 
 
-* This value is used how intense the specular highlight should be.
+* This value is used to set how intense the specular highlight should be.
 
 
 NiSpecularProperty
@@ -55,7 +58,7 @@ NiSpecularProperty
 
 .. _properties-specular:
 
-* The Specular value create the bright highlights that one would see on a glossy surface.
+The Specular value create the bright highlights that one would see on a glossy surface.
 
 #. In the **Specular** panel, use the color widget to set the highlight color.
 #. Set **Intensity** to whatever value you prefer. 
@@ -67,31 +70,30 @@ NiAlphaProperty
 
 .. _properties-alpha:
 
-* The alpha component of the material is how much you can see through the material.
+The alpha component of the material is how much you can see through the material.
 
 #. In the **Transparency** panel, **Enable Transparency**
 #. Ensure **Z Transparency** is selected, which is by default.
 #. Alter the **Alpha** setting. 
 
-* An :class:`~pyffi.formats.nif.NifFormat.NiAlphaProperty` is exported for materials with an Alpha value.
-* This is property is used by textures with alpha values.
+* An :class:`~pyffi.formats.nif.NifFormat.NiAlphaProperty` is exported for Materials or Texture have Alpha value.
    
    
 NiWireFrameProperty
 -------------------
 .. _properties-wireframe:
 
-:class:`~pyffi.formats.nif.NifFormat.NiWireframeProperty`,
+:class:`~pyffi.formats.nif.NifFormat.NiWireframeProperty`
 
 NiStencilProperty
 -----------------
 .. _properties-stencil:
 
-* The NiStencilProperty ignores the face normal and renders both sides of the mesh.
+The NiStencilProperty ignores the face normal and renders both sides of the mesh.
 
 #. In the **Object Tab -> Double-Sided**, enable/disable.
 
-* This will export a :class:`~pyffi.formats.nif.NifFormat.NiStencilProperty`,
+* This will export a :class:`~pyffi.formats.nif.NifFormat.NiStencilProperty`
 
 Notes
 ~~~~~
@@ -105,4 +107,5 @@ Notes
 .. todo::
    
    Document these bad boys once implemented
+   
    NiVertexColorProperty 
