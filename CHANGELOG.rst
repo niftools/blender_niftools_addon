@@ -24,6 +24,12 @@ Version 2.6.0a3 (in development)
 
 * Subsystem separation (collision, armature, material, texture).
 
+* Bundle pyffi with scripts.
+
+* Distribute zip that can be used with Blender's built-in installer.
+
+* Documentation vastly improved.
+
 Version 2.6.0a0 (20 Nov 2011)
 =============================
 
