@@ -20,10 +20,14 @@ This is used by the havok system for collision detection.
 
    * Collisions are in the process of being ported. This section is subject to change.
    * For Sphere and Cylender Export, we need to fix them to show how the user would create the objects. We are using a UV Sphere and a Meta Capsule
-   * The Collision Bounds panel is located in the Physics tab of Blender Render and Blender Game.
    * Some of the collision types lack viewport rendering, see workaround for visulisations below.
 
-For Oblivion, Fallout 3, and Fallout NV; Blender's Collision types map to the following Nif types:
+Collision Mapping
+~~~~~~~~~~~~~~~~~
+
+The following section describes how to make mesh-object to best represent the desired collision object type. 
+
+* Oblivion, Fallout 3, and Fallout NV; Blender's Collision types map to the following Nif types:
 
 +----------------------------+------------------------+
 | Blender                    | Nif                    |
@@ -41,7 +45,7 @@ For Oblivion, Fallout 3, and Fallout NV; Blender's Collision types map to the fo
 | `Triangle Mesh Collision`_ | bhkMoppBvTreeShape     |
 +----------------------------+------------------------+
 
-For Morrowind, we have:
+* Morrowind:
 
 +----------------------------+-------------------+ 
 | Blender                    | Nif               |
@@ -186,32 +190,23 @@ Collision Settings
 ~~~~~~~~~~~~~~~~~~
 .. _collison-settings:
 
-* The Collision settings are used by the :class:`~pyffi.formats.nif.NifFormat.bhkShape` to control how the collision shape reacts in the Havok physics simulation.
+The Collision settings are used by the :class:`~pyffi.formats.nif.NifFormat.bhkShape` to control how the collision shape reacts in the Havok physics simulation.
 
 Example
 ~~~~~~~
 
-#. Switch to the **Blender Game** tab. (Default tab is **Blender Render**)
 #. Select the collision object in the viewport
 #. In the the **Physics** tab, enable **Collision Bounds** 
-#. Enable the desired **Bounds** type, see below for more details 
-
-.. todo::
-   Should "Use Blender Properties" usage be reversed? i.e "Use Blender Property" uses default values
-   This should be enabled by default, else define your own. 
-   Should there be an additional check to see if not selected, that user has actually defined their own?
-   
-#. If you would like to define your own settings for havok physics, click **Use Blender Properties**.    
-#. Define the fields **Havok Material**, **Motion System**, **Oblivion Layer**, **Quality Type** and **Col Filter** accordingly.
-#. If you want the exporter to define the havok physics properties for you, make sure **Use Blender Properties** is not clicked.
+#. Enable the desired **Bounds** type, see below for more details
 
 Notes
 ~~~~~
 
 * Enable the **Collision Bounds** option, the mesh will be exported as a :class:`~pyffi.formats.nif.NifFormat.bhkShape, rather than a :class:`~pyffi.formats.nif.NifFormat.NiTriShape`,
-* Collision Bounds are represented by a dashed line, unlink Bounds which is a solid line. 
-* Currently Capsule, Convex Hull and Triangle Mesh lack viewport preview.
-   - In **Render** tab, under the **Display** section enable **Physics Visualisation**
-   - **Game -> Start Game Engine** (p-key).
-   - Set the **Viewport Shading** to **Wireframe or Bounding Box**.
-   - Collisions Bounds will be displayed by a green wireframe
+* Collision Bounds are represented by a dashed line, unlike Bounds which are by solid lines. 
+* Currently Capsule bounds lack viewport preview.
+
+ - In **Render** tab, under the **Display** section enable **Physics Visualisation**
+ - Set the **Viewport Shading** to **Wireframe or Bounding Box**.
+ - **Game -> Start Game Engine** (p-key).
+ - Collisions Bounds will be displayed by a green wireframe
