@@ -15,4 +15,5 @@ def startdebug():
         # set debugging enabled
         pydevd.settrace(None, True, True, 5678, False, False)
     except:
+        print("Unable to connect to Remote Debug Server.")
         pass
