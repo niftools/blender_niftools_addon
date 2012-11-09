@@ -79,48 +79,19 @@ install the rpm::
 
    to get your old Blender 2.49b back.
 
-Install PyFFI
--------------
-
-.. warning::
-
-   This section is a stub, pyffi for py3k isn't released yet.
-
-#. Download the `pyffi .exe release
-   <http://sourceforge.net/projects/pyffi/files/pyffi-py3k/>`_.
-
-#. Run the installer and follow the instructions.
-
-Install Blender Nif Plugin
---------------------------
-
-.. warning::
-
-   This section is a stub, the plugin is not released yet.
-
-Windows
-~~~~~~~
-
-#. Download the `blender nif plugin .exe release
-   <http://sourceforge.net/projects/niftools/files/blender_nif_plugin/>`_.
-
-#. Run the installer and follow the instructions.
-
-Fedora
-~~~~~~
+Install and Register the Addon
+------------------------------
 
 #. Download the `blender nif plugin .zip release
-   <http://sourceforge.net/projects/niftools/files/blender_nif_plugin/>`_
-   and unzip it somewhere.
-
-#. Run the ``install.sh`` script.
-
-Register the Addon
-------------------
+   <http://sourceforge.net/projects/niftools/files/blender_nif_plugin/>`_.
 
 #. Start blender.
 
 #. Go to: **File > User Preferences > Add-Ons**.
+
+#. Click **Install Addon...** (bottom).
+
+#. Select the blender nif plugin .zip file downloaded earlier.
 
 #. Under **Categories** (left), select **Import-Export**.
 
