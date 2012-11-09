@@ -1,39 +1,28 @@
 Version 2.6.0a3 (in development)
 ================================
 
-* Collision Support:
+* Additional material properties support (alpha, specular, stencil, wire).
+
+* Add support for NiTexturingProperty (diffuse, bump, and glow).
+
+* Fix issue with material texture blend type importing (reported and 
+  fix contributed by mgm101).
+
+* Added experimental vertex color support.
+
+* Extensive work on the testing framework:
+
+  - Tests created based on new features.
+  - Re-organised tests into per feature, generated test nifs.
+  - Inheritance based checks now functioning.
+
+* Collision support:
 
   - Basic BhkShapes Cube, Sphere, Cylinder.
   - Convex Vertex, NiPacked, NiTriStrips Shapes.
   - Bound Box support.
 
-* Major Refacor: Subsystem separation (collision, armature, material,
-  texture).
-
-* Extended test framework to support new features.
-
-Version 2.6.0a2 (not released)
-==============================
-
-* NiWireProperty material support.
-
-Version 2.6.0a1 (not released)
-==============================
-
-* Additional material properties support (alpha, specular, stencil).
-
-* Added support for NiTexturingProperty (diffuse, bump, and glow).
-
-* Fixed issue with material texture blend type importing (reported and 
-  fix contributed by mgm101).
-
-* Added experimental vertex color support.
-
-* Extensive work on the testing framework.
-
-  - Tests created based on new features.
-  - Re-organised tests into per feature, generated test nifs.
-  - Inheritance based checks now functioning.
+* Subsystem separation (collision, armature, material, texture).
 
 Version 2.6.0a0 (20 Nov 2011)
 =============================
