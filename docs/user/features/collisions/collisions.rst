@@ -12,36 +12,49 @@ This is used as the bound box.
 
 Collision
 =========
-.. _collisions:
+.. _collision:
 
 This is used by the havok system for collision detection.
 
 .. warning::
 
    * Collisions are in the process of being ported. This section is subject to change.
-   * For Sphere and Cylender Export, we need to fix them to show how the user would create the objects. We are using a UV Sphere and a Meta Capsule
-   * The Collision Bounds panel is located in the Physics tab of Blender Render and Blender Game.
+   * For Cylinder Export, we need to fix them to show how the user would create the objects. We are using a Meta Capsule
    * Some of the collision types lack viewport rendering, see workaround for visulisations below.
 
-For Oblivion, Fallout 3, and Fallout NV; Blender's Collision types map to the following Nif types:
+Notes
+~~~~~
+.. _collision-notes:
 
-+----------------------------+------------------------+
-| Blender                    | Nif                    |
-+============================+========================+
-| `Box Collision`_           | bhkBoxShape            |
-+----------------------------+------------------------+
-| `Sphere Collision`_        | bhkSphereShape         |
-+----------------------------+------------------------+
-| `Cylinder Collision`_      | bhkCylinderShape       |
-+----------------------------+------------------------+
-| `Capsule Collision`_       | bhkCapsuleShape        |
-+----------------------------+------------------------+
-| `Convex Hull Collision`_   | bhkConvexVerticesShape |
-+----------------------------+------------------------+
-| `Triangle Mesh Collision`_ | bhkMoppBvTreeShape     |
-+----------------------------+------------------------+
+* Collision Bounds are represented by a dashed line, unlike Bounds which are by solid lines. 
 
-For Morrowind, we have:
+Collision Mapping
+~~~~~~~~~~~~~~~~~
+.. _collision-mapping:
+
+* The following section describes the most appropriate primitive object to represent the desired collision object type.
+* The suggested shapes also correspond to shapes generated through import by the plugin.
+* On export the BhkShape is created from data pulled from the Collision object.
+
+Blender's Collision types map to the following Nif types:
+
+- Oblivion, Fallout 3, and Fallout NV; 
+
++----------------------------+--------------------------------------------------------------+
+| Blender                    | Nif                                                          |
++============================+==============================================================+
+| `Box Collision`_           | :class:`~pyffi.formats.nif.NifFormat.bhkBoxShape`            |
++----------------------------+--------------------------------------------------------------+
+| `Sphere Collision`_        | :class:`~pyffi.formats.nif.NifFormat.bhkSphereShape`         |
++----------------------------+--------------------------------------------------------------+
+| `Capsule Collision`_       | :class:`~pyffi.formats.nif.NifFormat.bhkCapsuleShape`        |
++----------------------------+--------------------------------------------------------------+
+| `Convex Hull Collision`_   | :class:`~pyffi.formats.nif.NifFormat.bhkConvexVerticesShape` |
++----------------------------+--------------------------------------------------------------+
+| `Triangle Mesh Collision`_ | :class:`~pyffi.formats.nif.NifFormat.bhkMoppBvTreeShape`     |
++----------------------------+--------------------------------------------------------------+
+
+- Morrowind:
 
 +----------------------------+-------------------+ 
 | Blender                    | Nif               |
@@ -49,169 +62,128 @@ For Morrowind, we have:
 | `Triangle Mesh Collision`_ | RootCollisionNode |
 +----------------------------+-------------------+
 
-.. todo::
-
-   Where do we store material, layer, quality type, motion system, etc.?
-   
 Box Collision
 ~~~~~~~~~~~~~
 .. _collison-box:
 
-#. :ref:`Create your mesh-object <geometry-mesh>` as explained before.
+#. :ref:`Create your mesh-object <geometry-mesh>`.
 
-#. Create another mesh-object to represent our collision shape, a primitive cube(prim-cube) is highly recommended.
+#. Create a second mesh-object to represent our collision object, a primitive cube(prim-cube) is recommended.
 
 #. Rename the prim-cube via the Object panel, eg. 'CollisionBox'
 
-#. Scale the collision cube 'CollisionBox' to the size wanted.
+#. Scale the 'CollisionBox' uniformly to the size wanted.
 
-#. :ref:`Add physics to our collision cube 'CollisionBox' <collison-settings>`.
-
-Box Notes
-+++++++++
-
-Test
+#. :ref:`Add physics to our 'CollisionBox' <collison-settings>`.
 
 Sphere Collision
 ~~~~~~~~~~~~~~~~
-
 .. _collision-sphere:
 
-#. :ref:`Create a mesh geometry <geometry-mesh>`
-   as explained before.
+#. :ref:`Create your mesh-object <geometry-mesh>`.
 
 #. Create another mesh-object to represent our collision shape, a primitive sphere(prim-sphere) is highly recommended.
 
-#. Rename it to something more appropriate, like 'CollisionSphere' via the Object panel
+#. Rename the prim-sphere, eg. 'CollisionSphere', via the Object panel
 
-#. Scale the collision cube 'CollisionBox' to the size wanted.
+#. Scale the 'CollisionSphere' object as needed, ensuring all vertices are enclosed by the sphere
 
-#. :ref:`Add physics to our collision cube 'CollisionBox' <collison-settings>`.
-
-Sphere Notes
-++++++++++++
-
-Cylinder Collision
-~~~~~~~~~~~~~~~~~~
-
-.. Todo::
-
-	Capsule Import/Export needs to be completed
-
-.. _collision-cylinder:
-
-#. :ref:`Create a single sided cube <geometry-mesh>`
-   as explained before.
-
-#. :ref:`Create another single sided cube <geometry-mesh>`
-   as explained before.
-
-#. Select the second newly created cube and rename it, like 'CollisionBox' via the Object panel
-
-#. In the Object panel, under Display, select Type and change it to **Wire**, this will make it easier to find.
-
-#. Scale the collision cube 'CollisionBox' to the size wanted.
-
-#. :ref:`Add physics to our collision cube 'CollisionBox' <collison-settings>`.
-
-Cylinder Notes
-++++++++++++++
+#. :ref:`Add physics to our 'CollisionSphere' <collison-settings>`.
 
 Capsule Collision
 ~~~~~~~~~~~~~~~~~
-
 .. _collision-capsule:
 
-#. :ref:`Create a single sided cube <geometry-mesh>`
-   as explained before.
+#. :ref:`Create your mesh-object <geometry-mesh>`.
 
-#. :ref:`Create another single sided cube <geometry-mesh>`
-   as explained before.
+#. Create a second mesh-object to represent our collision object, a primitive cylinder(prim-cylinder) is recommended.
 
-#. Select the second newly created cube and rename it, like 'CollisionBox' via the Object panel
-
-#. In the Object panel, under Display, select Type and change it to **Wire**, this will make it easier to find.
+#. Rename the prim-cylinder via the Object panel, eg. 'CollisionCapsule'.
 
 #. Scale the collision cube 'CollisionBox' to the size wanted.
 
-#. :ref:`Add physics to our collision cube 'CollisionBox' <collison-settings>`.
+#. :ref:`Add physics to our 'CollisionCapsule' <collison-settings>`.
 
-Capsule Notes
-+++++++++++++
+**Notes:**
 
-Currently there is no visualisation in Blender for Capsule Collisions.
+.. _collision-capsule-notes:
+
+* If the lenght is less than or equal to the radius, then a :class:`~pyffi.formats.nif.NifFormat.bhkSphereShape` is generated instead.
+
+* Currently Capsule bounds lack viewport preview, awaiting Bullet Physic integration
+
+* The following is a workaround; **Prone to user error, Ensure to reset setting after visualising!**.
+
+ - In the **Object Tab**, under the **Display** section enable **Bounds**
+ - Set the **Type** to **Cylinder**.
+ 
+* This shape best represents the capsule, but visually missing the end caps which are hemi-spheres. 
 
 Convex Hull Collision
 ~~~~~~~~~~~~~~~~~~~~~
-
 .. _collision-convex-hull:
 
-#. :ref:`Create a single sided cube <geometry-mesh>`
-   as explained before.
+#. :ref:`Create your mesh-object <geometry-mesh>`. 
 
-#. :ref:`Create another single sided cube <geometry-mesh>`
-   as explained before.
+#. Create a convex mesh. See :ref:`Notes <collision-convex-hull-notes>`
 
-#. Select the second newly created cube and rename it, like 'CollisionBox' via the Object panel
-
-#. In the Object panel, under Display, select Type and change it to **Wire**, this will make it easier to find.
+#. Rename the hulled-object, eg. 'CollisionHull' via the Object panel.
 
 #. Scale the collision cube 'CollisionBox' to the size wanted.
 
 #. :ref:`Add physics to our collision cube 'CollisionBox' <collison-settings>`.
 
-Convex Hull Notes
-+++++++++++++++++
+**Notes:**
+
+.. _collision-convex-hull-notes:
+
+* It is advisable to use a convex hull generator to create the collision-mesh.
 
 Triangle Mesh Collision
 ~~~~~~~~~~~~~~~~~~~~~~~
-
 .. _collision-triangle-mesh:
 
-#. :ref:`Create a single sided cube <geometry-mesh>`
-   as explained before.
+#. :ref:`Create your mesh-object <geometry-mesh>`.
 
-#. Create another mesh-object to represent our collision shape, a primitive sphere(prim-sphere) is highly recommended.
+#. Create a convex hulled mesh-object. See :ref:`Notes<collision-convex-hull-notes>`
 
-#. Select the newly created second polyheadron and rename it something collision related, like 'CollisionPoly' via the Object panel.
+#. Rename the polyhedron-mesh, eg. 'CollisionPolyhedron' via the Object panel.
 
 #. Scale the collision cube 'CollisionPoly' to the size wanted.
 
 #. :ref:`Add physics to our collision cube 'CollisionBox' <collison-settings>`.
 
-Triangle Mesh Notes
-+++++++++++++++++++
+**Notes:**
+
+.. _collision-triangle-mesh-notes:
+
+* Often a duplicate object can be used, simplified by decimating, then triangulated(**Ctrl + T**).
+* A :ref:`Convex Hulled Object<collision-convex-hull-notes>` can also be used.
 
 Collision Settings
 ~~~~~~~~~~~~~~~~~~
 .. _collison-settings:
 
-* The Collision settings are used by the :class:`~pyffi.formats.nif.NifFormat.bhkShape` to control how the collision shape reacts in the Havok physics simulation.
+* Meshes with Collision Bounds enabled will be exported as a :class:`~pyffi.formats.nif.NifFormat.bhkShape`, rather than a :class:`~pyffi.formats.nif.NifFormat.NiTriShape`.
+* The Collision settings are used by the :class:`~pyffi.formats.nif.NifFormat.bhkShape` to control it reacts in the Havok physics simulation.
 
-Example
-~~~~~~~
+**Example:**
 
-#. Switch to the **Blender Game** tab. (Default tab is **Blender Render**)
-#. Select the collision object in the viewport
-#. In the the **Physics** tab, enable **Collision Bounds** 
-#. Enable the desired **Bounds** type, see below for more details 
+First we enable Collision Setting for the selected Collision Object:
+
+* In the the **Physics** tab, enable **Collision Bounds** 
+
+The bounds type is used to select which BhkShape type to use.
+
+* Enable the desired **Bounds** type.
+
+The Havok Material decides how the material should behave for collisions, eg. sound, decals.
+
+* Select a Havok Material from the list.
 
 .. todo::
-   Should "Use Blender Properties" usage be reversed? i.e "Use Blender Property" uses default values
-   This should be enabled by default, else define your own. 
-   Should there be an additional check to see if not selected, that user has actually defined their own?
-   
-#. If you would like to define your own settings for havok physics, click **Use Blender Properties**.    
-#. Define the fields **Havok Material**, **Motion System**, **Oblivion Layer**, **Quality Type** and **Col Filter** accordingly.
-#. If you want the exporter to define the havok physics properties for you, make sure **Use Blender Properties** is not clicked.
 
-Notes
-~~~~~
+   write up layer, quality type, motion system, etc.
 
-* Enable the **Collision Bounds** option, the mesh will be exported as a :class:`~pyffi.formats.nif.NifFormat.bhkShape, rather than a :class:`~pyffi.formats.nif.NifFormat.NiTriShape`,
-* Collision Bounds are represented by a dashed line, unlink Bounds which is a solid line. 
-* Currently Capsule, Convex Hull and Triangle Mesh lack viewport preview.
-   - In **Render** tab, under the **Display** section enable **Physics Visualisation**
-   - **Game -> Start Game Engine** (p-key).
-   - Set the **Viewport Shading** to **Wireframe or Bounding Box**.
-   - Collisions Bounds will be displayed by a green wireframe
+
+
