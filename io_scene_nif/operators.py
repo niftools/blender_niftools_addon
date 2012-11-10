@@ -181,7 +181,7 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
     #: Import multi-material shapes as a single mesh.
     combine_shapes = bpy.props.BoolProperty(
         name="Combine Shapes",
-        description="Import mulsti-material shapes as a single mesh.",
+        description="Import multi-material shapes as a single mesh.",
         default=False)
 
     def execute(self, context):

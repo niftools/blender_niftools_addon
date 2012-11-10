@@ -1434,7 +1434,7 @@ class NifImport(NifCommon):
         #      when combining shapes is enabled
         b_mesh.calc_normals()
         """There seems to be a problem with b_mesh.update() causing 
-        render errsors. E.G. import Apple01 and tick combine shapes ->
+        render errors. E.G. import Apple01 and tick combine shapes ->
         toggle edit mode and blender CTD. Fix by removing b_mesh.update()"""
         #b_mesh.update()
 
