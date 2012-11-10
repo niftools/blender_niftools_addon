@@ -1,8 +1,9 @@
 from pyffi.utils.withref import ref
 from pyffi.formats.nif import NifFormat
 
-class TriShapeGeometry:
-    def n_create():
+class TriShapeGeometry():
+    
+    def n_create(self):
         n_ninode_1 = NifFormat.NiNode()
         n_nitrishape_1 = NifFormat.NiTriShape()
         n_nitrishapedata_1 = NifFormat.NiTriShapeData()
