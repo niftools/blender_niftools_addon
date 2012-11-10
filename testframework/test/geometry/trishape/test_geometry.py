@@ -35,7 +35,6 @@ class TestBaseGeometry(SingleNif):
     
     def b_create_objects(self):
         """Call :meth:`b_create_base_geometry`."""
-        
         self.b_create_base_geometry()
         
     def b_create_base_geometry(self):
@@ -47,16 +46,16 @@ class TestBaseGeometry(SingleNif):
         b_obj.name = self.b_name
 
         # transform it into something less trivial
-        self.scale_object(b_obj)
-        self.scale_single_face(b_obj)
-        b_obj.matrix_local = self.transform_matrix()
+        self.b_scale_object(b_obj)
+        self.b_scale_single_face(b_obj)
+        b_obj.matrix_local = self.b_get_transform_matrix()
 
         # primitive_cube_add sets double sided flag, fix this
         b_obj.data.show_double_sided = False
         
-        # bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
+        return b_obj
 
-    def scale_object(self, b_obj):
+    def b_scale_object(self, b_obj):
         """Scale the object differently along each axis."""
 
         bpy.ops.transform.resize(value=(7.5,1,1), constraint_axis=(True,False,False))
@@ -64,7 +63,7 @@ class TestBaseGeometry(SingleNif):
         bpy.ops.transform.resize(value=(1,1,3.5), constraint_axis=(False,False,True))
         bpy.ops.object.transform_apply(scale=True)
 
-    def scale_single_face(self, b_obj):
+    def b_scale_single_face(self, b_obj):
         """Scale a single face of the object."""
 
         # scale single face
@@ -76,8 +75,7 @@ class TestBaseGeometry(SingleNif):
             b_obj.data.vertices[b_vert_index].co[1] = b_obj.data.vertices[b_vert_index].co[1] * 0.5
             b_obj.data.vertices[b_vert_index].co[2] = b_obj.data.vertices[b_vert_index].co[2] * 0.5
                                  
-    # TODO b_get_transform_matrix
-    def transform_matrix(self):
+    def b_get_transform_matrix(self):
         """Return a non-trivial transform matrix."""
         
         b_trans_mat = mathutils.Matrix.Translation((20.0, 20.0, 20.0)) 
@@ -94,13 +92,14 @@ class TestBaseGeometry(SingleNif):
     
     def b_check_data(self):
         b_obj = bpy.data.objects[self.b_name]
-        self.b_check_rotation(b_obj)
+        self.b_check_geom_obj(b_obj)
+        
+    def b_check_geom_obj(self, b_obj):
         b_mesh = b_obj.data
         self.b_check_geom(b_mesh)
-
-    # b_check_transform?
+        self.b_check_transform(b_obj)
     
-    def b_check_rotation(self, b_obj):
+    def b_check_transform(self, b_obj):
         
         b_loc_vec, b_rot_quat, b_scale_vec = b_obj.matrix_local.decompose() # transforms
         
@@ -122,7 +121,7 @@ class TestBaseGeometry(SingleNif):
         # TODO also check location of vertices
 
     def n_create_nif(self):
-        data = TriShapeGeometry.n_create()
+        data = TriShapeGeometry().n_create()
         return data
 
     def n_check_data(self, n_data):

@@ -7,6 +7,7 @@ from pyffi.formats.nif import NifFormat
 
 from test import SingleNif
 from test.geometry.trishape.gen_geometry import TriShapeGeometry
+from test.geometry.trishape.test_geometry import TestBaseGeometry
 from test.property.material.gen_material import Material
 
 class TestMaterialProperty(SingleNif):
@@ -14,14 +15,16 @@ class TestMaterialProperty(SingleNif):
     def __init__(self):
         self.n_name = "property/material/base_material"
         
+        self.b_name = "Cube"
+        
         self.n_data = self.n_create_nif()
         """Read code to generate physical Nif"""
         
         SingleNif.__init__(self)
 
     def b_create_objects(self):
-        TestBaseGeometry.b_create_objects(self)
-        b_obj = bpy.data.objects[self.b_name]
+        b_obj = TestBaseGeometry().b_create_base_geometry()
+        b_obj.name = self.b_name
         self.b_create_material_block(b_obj)
 
     def b_create_material_block(self, b_obj):
@@ -30,6 +33,8 @@ class TestMaterialProperty(SingleNif):
         b_obj.data.materials.append(b_mat)
         bpy.ops.object.shade_smooth()
         self.b_create_material_property(b_mat)
+        
+        return b_obj
 
     def b_create_material_property(self, b_mat):
         # TODO_3.0 - See above
@@ -40,8 +45,8 @@ class TestMaterialProperty(SingleNif):
         # bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
 
     def b_check_data(self):
-        TestBaseGeometry.b_check_data(self)
         b_obj = bpy.data.objects[self.b_name]
+        TestBaseGeometry().b_check_geom_obj(b_obj)
         self.b_check_material_block(b_obj)
 
     def b_check_material_block(self, b_obj):
@@ -57,12 +62,15 @@ class TestMaterialProperty(SingleNif):
         nose.tools.assert_equal(b_mat.diffuse_color[2], 1.0)
 
     def n_create_nif(self):
-        data = TriShapeGeometry.n_create()
-        data = Material.n_create(data)
+        data = TriShapeGeometry().n_create()
+        data = Material().n_create(data)
         return data
 
     def n_check_data(self, n_data):
-        TestBaseGeometry.n_check_data(self, n_data)
+        TestBaseGeometry().n_check_data(n_data)
+        self.n_check_material_block(n_data)
+        
+    def n_check_material_block(self, n_data):
         n_geom = n_data.roots[0].children[0]
         nose.tools.assert_equal(n_geom.num_properties, 1)
         self.n_check_material_property(n_geom.properties[0])
