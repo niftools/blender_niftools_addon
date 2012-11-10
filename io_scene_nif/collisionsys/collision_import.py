@@ -429,7 +429,7 @@ class bhkshape_import():
         '''
 
         # Recalculate mesh to render correctly
-        b_mesh.update()
+        #b_mesh.update()
         b_mesh.calc_normals()
 
         return [ b_obj ]

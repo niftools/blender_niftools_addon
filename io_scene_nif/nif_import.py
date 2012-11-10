@@ -49,6 +49,7 @@ import math
 import operator
 import os
 import os.path
+import re
 
 import bpy
 import mathutils
@@ -259,7 +260,7 @@ class NifImport(NifCommon):
             self.info("Finished")
             # XXX no longer needed?
             # do a full scene update to ensure that transformations are applied
-            # self.context.scene.update()
+            self.context.scene.update()
 
         return {'FINISHED'}
 
@@ -665,6 +666,7 @@ class NifImport(NifCommon):
         # strip null terminator from name
         niBlock.name = niBlock.name.strip(b"\x00")
         niName = niBlock.name.decode()
+        
         # if name is empty, create something non-empty
         if not niName:
             if isinstance(niBlock, NifFormat.RootCollisionNode):
@@ -883,6 +885,7 @@ class NifImport(NifCommon):
         if group_mesh:
             b_obj = group_mesh
             b_mesh = group_mesh.data
+
         else:
             # Mesh name -> must be unique, so tag it if needed
             b_name = self.import_name(niBlock)
@@ -925,7 +928,6 @@ class NifImport(NifCommon):
 
         # faces
         n_tris = [list(tri) for tri in niData.get_triangles()]
-
         # "sticky" UV coordinates: these are transformed in Blender UV's
         n_uvco = niData.uv_sets
 
@@ -1103,40 +1105,37 @@ class NifImport(NifCommon):
         b_f_index = len(b_mesh.faces)
         num_new_faces = 0 # counter for debugging
         unique_faces = set() # to avoid duplicate faces
+
+
         for i, f in enumerate(n_tris):
             # get face index
             f_verts = [v_map[vert_index] for vert_index in f]
             # skip degenerate faces
             # we get a ValueError on faces.extend otherwise
-            if (f_verts[0] == f_verts[1]) or (f_verts[1] == f_verts[2]) or (f_verts[2] == f_verts[0]):
-                continue
-            if tuple(f_verts) in unique_faces:
-                continue
-            unique_faces.add(tuple(f_verts))
             b_mesh.faces.add(1)
-            if f_verts[2] == 0:
-                # eeekadoodle fix
-                f_verts[0], f_verts[1], f_verts[2] = f_verts[2], f_verts[0], f_verts[1]
-                f[0], f[1], f[2] = f[2], f[0], f[1] # f[0] comes second
-            b_mesh.faces[-1].vertices_raw = f_verts + [0]
+            b_mesh.faces[-1].vertices = f_verts
             # keep track of added faces, mapping NIF face index to
             # Blender face index
             f_map[i] = b_f_index
             b_f_index += 1
             num_new_faces += 1
+    
         # at this point, deleted faces (degenerate or duplicate)
         # satisfy f_map[i] = None
 
         self.debug("%i unique faces" % num_new_faces)
 
         # set face smoothing and material
+        
         for b_f_index in f_map:
             if b_f_index is None:
                 continue
             f = b_mesh.faces[b_f_index]
             f.use_smooth = True if n_norms else False
             f.material_index = materialIndex
-
+        
+        
+ 
         # vertex colors
         n_vcol = niData.vertex_colors
 
@@ -1426,10 +1425,13 @@ class NifImport(NifCommon):
             constr = b_obj.constraints.append(
                 bpy.types.Constraint.NULL)
             constr.name = "priority:%i" % self.bone_priorities[niBlock.name]
-
+        
         # recalculate mesh to render correctly
         b_mesh.calc_normals()
-        b_mesh.update()
+        """There seems to be a problem with b_mesh.update() causing 
+        render errors. E.G. import Apple01 and tick combine shapes ->
+        toggle edit mode and blender CTD. Fix by removing b_mesh.update()"""
+        #b_mesh.update()
 
         return b_obj
 
@@ -1952,8 +1954,6 @@ class NifImport(NifCommon):
             else:
                 raise ValueError("unknown descriptor %s"
                                  % hkdescriptor.__class__.__name__)
-
-
 
     def import_kf_root(self, kf_root, root):
         """Merge kf into nif.

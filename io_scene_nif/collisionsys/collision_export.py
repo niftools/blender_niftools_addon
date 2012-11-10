@@ -37,6 +37,16 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import bpy
+from bpy_extras.io_utils import unpack_list, unpack_face_list
+import mathutils
+
+from functools import reduce
+import operator
+
+import pyffi
+from pyffi.formats.nif import NifFormat
+from pyffi.utils.quickhull import qhull3d
 
 class bhkshape_export():
 
@@ -77,7 +87,7 @@ class bhkshape_export():
         # bhkCollisionObject -> bhkRigidBody
         if not parent_block.collision_object:
             # note: collision settings are taken from lowerclasschair01.nif
-            if b_obj.nifcollision.oblivion_layer == NifFormat.OblivionLayer.OL_BIPED:
+            if b_obj.nifcollision.oblivion_layer ==  NifFormat.OblivionLayer.OL_BIPED:
                 # special collision object for creatures
                 n_col_obj = self.nif_common.create_block("bhkBlendCollisionb_object", b_obj)
                 n_col_obj.flags = 9
