@@ -1,8 +1,8 @@
 from pyffi.utils.withref import ref
 from pyffi.formats.nif import NifFormat
 
-class TriShape_geometry:
-    def n_create(self):
+class TriShapeGeometry:
+    def n_create():
         n_ninode_1 = NifFormat.NiNode()
         n_nitrishape_1 = NifFormat.NiTriShape()
         n_nitrishapedata_1 = NifFormat.NiTriShapeData()
@@ -12,7 +12,7 @@ class TriShape_geometry:
         n_data.user_version = 11
         n_data.user_version_2 = 11
 
-        with ref(n_ninode) as n_ninode:
+        with ref(n_ninode_1) as n_ninode:
             n_ninode.name = b'Scene Root'
             n_ninode.flags = 14
             with ref(n_ninode.rotation) as rotation:
