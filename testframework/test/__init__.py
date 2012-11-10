@@ -53,6 +53,7 @@ class Base:
     """Base class for all tests."""
     # Debug Settings
     gen_blender_scene = False
+    gen_nifs = False
     
     def b_clear(self):
         """Clear all objects from scene."""
@@ -186,6 +187,10 @@ class SingleNif(Base):
 
     def b_check_data(self):
         """Check blender objects against feature."""
+        raise NotImplementedError
+
+    def n_create_nif():
+        """Create nif from python"""
         raise NotImplementedError
 
     def n_check_data(self, n_data):

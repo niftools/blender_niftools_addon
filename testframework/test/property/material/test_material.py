@@ -2,14 +2,22 @@
 
 import bpy
 import nose.tools
-import os
 
-import io_scene_nif.nif_export
 from pyffi.formats.nif import NifFormat
-from test.geometry.trishape.test_geometry import TestBaseGeometry
 
-class TestMaterialProperty(TestBaseGeometry):
-    n_name = "property/material/base_material"
+from test import SingleNif
+from test.geometry.trishape.gen_geometry import TriShapeGeometry
+from test.property.material.gen_material import Material
+
+class TestMaterialProperty(SingleNif):
+    
+    def __init__(self):
+        self.n_name = "property/material/base_material"
+        
+        self.n_data = self.n_create_nif()
+        """Read code to generate physical Nif"""
+        
+        SingleNif.__init__(self)
 
     def b_create_objects(self):
         TestBaseGeometry.b_create_objects(self)
@@ -47,6 +55,11 @@ class TestMaterialProperty(TestBaseGeometry):
         nose.tools.assert_equal(b_mat.diffuse_color[0], 1.0)
         nose.tools.assert_equal(b_mat.diffuse_color[1], 1.0)
         nose.tools.assert_equal(b_mat.diffuse_color[2], 1.0)
+
+    def n_create_nif(self):
+        data = TriShapeGeometry.n_create()
+        data = Material.n_create(data)
+        return data
 
     def n_check_data(self, n_data):
         TestBaseGeometry.n_check_data(self, n_data)
