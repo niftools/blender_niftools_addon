@@ -5,11 +5,11 @@ import nose.tools
 import math
 import mathutils
 
+from pyffi.formats.nif import NifFormat
+
 from test import Base
 from test import SingleNif
 from test.geometry.trishape.gen_geometry import TriShapeGeometry
-
-from pyffi.formats.nif import NifFormat
 
 class TestBaseGeometry(SingleNif):
     """Test base geometry, single blender object."""

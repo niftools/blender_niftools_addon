@@ -1,11 +1,16 @@
 from pyffi.utils.withref import ref
 from pyffi.formats.nif import NifFormat
-from ..geometry.base_geometry import TriShape_geometry
 
 class Material():
     '''Helper class for common building nifs with materials'''
 
-    def n_attach_material_prop(self, n_block):
+    def n_create(n_data):
+        """Attact a NiMaterial block to Trishape[0]"""
+                
+        n_trishape = n_data.roots[0].children[0]
+        n_data.roots[0].children[0] = self.n_attach_material_prop(n_trishape)
+
+    def n_attach_material_prop(n_block):
         '''Attach a NiMaterialProperty to a blocks properties array at pos[0]'''
 
         n_nimaterialprop = NifFormat.NiMaterialProperty()
