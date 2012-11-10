@@ -7,25 +7,35 @@ import mathutils
 
 from test import Base
 from test import SingleNif
+from test.geometry.trishape.gen_geometry import TriShapeGeometry
+
 from pyffi.formats.nif import NifFormat
 
 class TestBaseGeometry(SingleNif):
     """Test base geometry, single blender object."""
 
-    # (documented in SingleNif)
-    n_name = "geometry/base_geometry"
+    def __init__(self): 
+        """Register :attr:`b_name`, and """
+        
+        # (documented in SingleNif)
+        self.n_name = "geometry/base_geometry"
 
-    b_name = 'Cube'
-    """Name of the blender object.
-    This is automatically appended to :attr:`SingleNif.b_obj_list`
-    during :meth:`TestBaseGeometry.b_create_objects`.
-    """
-    # TODO maybe __init__ is the more logical place to set b_obj_list?
-
-    def b_create_objects(self):
-        """Register :attr:`b_name`, and call :meth:`b_create_base_geometry`.
-        """
+        self.b_name = 'Cube'
+        """Name of the blender object.
+        This is automatically appended to :attr:`SingleNif.b_obj_list`
+        during :meth:`TestBaseGeometry.__init__`.
+        """    
+        
+        self.n_data = self.n_create_nif()
+        """ Read code to generate physical nif"""
+        
         self.b_obj_list.append(self.b_name)
+        
+        SingleNif.__init__(self)
+    
+    def b_create_objects(self):
+        """Call :meth:`b_create_base_geometry`."""
+        
         self.b_create_base_geometry()
         
     def b_create_base_geometry(self):
@@ -46,7 +56,6 @@ class TestBaseGeometry(SingleNif):
         
         # bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
 
-    # TODO b_scale_object
     def scale_object(self, b_obj):
         """Scale the object differently along each axis."""
 
@@ -55,7 +64,6 @@ class TestBaseGeometry(SingleNif):
         bpy.ops.transform.resize(value=(1,1,3.5), constraint_axis=(False,False,True))
         bpy.ops.object.transform_apply(scale=True)
 
-    # TODO b_scale_single_face
     def scale_single_face(self, b_obj):
         """Scale a single face of the object."""
 
@@ -91,6 +99,7 @@ class TestBaseGeometry(SingleNif):
         self.b_check_geom(b_mesh)
 
     # b_check_transform?
+    
     def b_check_rotation(self, b_obj):
         
         b_loc_vec, b_rot_quat, b_scale_vec = b_obj.matrix_local.decompose() # transforms
@@ -111,6 +120,10 @@ class TestBaseGeometry(SingleNif):
         nose.tools.assert_equal(len(b_mesh.vertices), 8)
         nose.tools.assert_equal(num_triangles, 12)
         # TODO also check location of vertices
+
+    def n_create_nif(self):
+        data = TriShapeGeometry.n_create()
+        return data
 
     def n_check_data(self, n_data):
         n_trishape = n_data.roots[0].children[0]
@@ -136,14 +149,12 @@ class TestBaseGeometry(SingleNif):
         nose.tools.assert_equal(n_trishape_data.num_triangles, 12)
         # TODO also check location of vertices
         
-    '''
-        TODO: Additional checks needed.
+        #TODO: Additional checks needed.
         
-        TriData
-            Flags: blender exports| Continue, Maya| Triangles, Pyffi| Bound.
-            Consistancy:
-            radius:
-    '''
+        #TriData
+        #    Flags: blender exports| Continue, Maya| Triangles, Pyffi| Bound.
+        #  Consistancy:
+        #    radius:
 
 class TestNonUniformlyScaled(Base):
     def setup(self):

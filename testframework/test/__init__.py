@@ -115,6 +115,9 @@ class SingleNif(Base):
     EPSILON = 0.005
     """A small value used when comparing floats."""
 
+    n_data = None
+    """Data used to produce initial nif"""
+
     n_filepath_0 = None
     """The name of the nif file to import
     (set automatically from :attr:`SingleNif.n_name`).
@@ -148,13 +151,16 @@ class SingleNif(Base):
     def __init__(self):
         """Initialize the test."""
         Base.__init__(self)
-        self.n_filepath_0 = "test/" + self.n_name + "0.nif"
-        self.n_filepath_1 = "test/" + self.n_name + "1.nif"
-        self.n_filepath_2 = "test/" + self.n_name + "2.nif"
+                
+        self.n_filepath_0 = "test/nif/" + self.n_name + "0.nif"
+        self.n_filepath_1 = "test/nif/" + self.n_name + "1.nif"
+        self.n_filepath_2 = "test/nif/" + self.n_name + "2.nif"
 
         self.b_filepath_0 = "test/autoblend/" + self.n_name + "0.blend"
         self.b_filepath_1 = "test/autoblend/" + self.n_name + "1.blend"
         self.b_filepath_2 = "test/autoblend/" + self.n_name + "2.blend"
+        
+        
 
     def b_clear(self):
         Base.b_clear(self)
@@ -196,6 +202,11 @@ class SingleNif(Base):
         with open(n_filepath, "rb") as stream:
             n_data.read(stream)
         return n_data
+    
+    def n_write(self, n_data, n_filepath):
+        """Write a nif file from data."""
+        with open(n_filepath, "wb") as stream:
+            n_data.write(stream)
 
     def n_import(self, n_filepath):
         """Import nif file."""
@@ -213,27 +224,39 @@ class SingleNif(Base):
 
     def test_import_export(self):
         """Test import followed by export."""
-        self.b_clear()
+        #create intiial nif file
+        self.n_write(self.n_data, self.n_filepath_0)
         self.n_check(self.n_filepath_0)
+        
+        #import nif and check data
+        self.b_clear()
         self.n_import(self.n_filepath_0)
         for b_obj in bpy.data.objects:
             b_obj.select = True
         self.b_save(self.b_filepath_0)
         self.b_check_data()
+        
+        #export and check data
         self.n_export(self.n_filepath_1)
         self.n_check(self.n_filepath_1)
         self.b_clear()
 
     def test_export_import(self):
         """Test export followed by import."""
+        
+        #create scene
         self.b_create_objects()
         for b_obj in bpy.data.objects:
             b_obj.select = True
         self.b_save(self.b_filepath_1)
         self.b_check_data()
+        
+        #export and check data
         self.n_export(self.n_filepath_2)
         self.n_check(self.n_filepath_2)
         self.b_clear()
+        
+        #import and check data
         self.n_import(self.n_filepath_2)
         for b_obj in bpy.data.objects:
             b_obj.select = True
