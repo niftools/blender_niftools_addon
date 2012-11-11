@@ -108,11 +108,7 @@ class SingleNif(Base):
 
     n_name = None
     """Base name of nif file (without ``0.nif`` at the end)."""
-    
-    # TODO b_obj_names?
-    b_obj_list = []
-    """List of names of all blender objects involved with the test."""
-    
+
     EPSILON = 0.005
     """A small value used when comparing floats."""
 
@@ -158,11 +154,10 @@ class SingleNif(Base):
         self.b_filepath_1 = "test/autoblend/" + self.n_name + "1.blend"
         self.b_filepath_2 = "test/autoblend/" + self.n_name + "2.blend"
 
-    def b_clear(self):
-        Base.b_clear(self)
-        # extra check, just to make really sure
+    def _b_clear_check(self, b_obj_names):
+        """Check that *b_obj_names* are really cleared from the scene."""
         try:
-            for name in self.b_obj_list:
+            for name in b_obj_names:
                 b_obj = bpy.data.objects[name]
         except KeyError:
             pass
@@ -231,8 +226,10 @@ class SingleNif(Base):
         # import nif and check data
         self.b_clear()
         self.n_import(self.n_filepath_0)
+        b_obj_names = []
         for b_obj in bpy.data.objects:
             b_obj.select = True
+            b_obj_names.append(b_obj.name)
         self.b_save(self.b_filepath_0)
         self.b_check_data()
         
@@ -240,14 +237,17 @@ class SingleNif(Base):
         self.n_export(self.n_filepath_1)
         self.n_check(self.n_filepath_1)
         self.b_clear()
+        self._b_clear_check(b_obj_names)
 
     def test_export_import(self):
         """Test export followed by import."""
         
         # create scene
         self.b_create_objects()
+        b_obj_names = []
         for b_obj in bpy.data.objects:
             b_obj.select = True
+            b_obj_names.append(b_obj.name)
         self.b_save(self.b_filepath_1)
         self.b_check_data()
         
@@ -255,11 +255,15 @@ class SingleNif(Base):
         self.n_export(self.n_filepath_2)
         self.n_check(self.n_filepath_2)
         self.b_clear()
+        self._b_clear_check(b_obj_names)
         
         # import and check data
         self.n_import(self.n_filepath_2)
+        b_obj_names = []
         for b_obj in bpy.data.objects:
             b_obj.select = True
+            b_obj_names.append(b_obj.name)
         self.b_save(self.b_filepath_2)
         self.b_check_data()
         self.b_clear()
+        self._b_clear_check(b_obj_names)
