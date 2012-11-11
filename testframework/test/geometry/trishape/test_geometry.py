@@ -25,7 +25,7 @@ class TestBaseGeometry(SingleNif):
 
     def __init__(self): 
         SingleNif.__init__(self)
-        self.n_data = self.n_create_nif()        
+        self.n_data = self.n_create_data()        
         self.b_obj_list.append(self.b_name)
     
     def b_create_objects(self):
@@ -115,7 +115,7 @@ class TestBaseGeometry(SingleNif):
         nose.tools.assert_equal(num_triangles, 12)
         # TODO also check location of vertices
 
-    def n_create_nif(self):
+    def n_create_data(self):
         return TriShapeGeometry().n_create()
 
     def n_check_data(self, n_data):
