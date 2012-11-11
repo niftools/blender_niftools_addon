@@ -1,7 +1,7 @@
 from pyffi.utils.withref import ref
 from pyffi.formats.nif import NifFormat
 
-class Material():
+class Material:
     '''Helper class for common building nifs with materials'''
 
     def n_create(self, n_data):
