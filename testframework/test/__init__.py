@@ -229,7 +229,7 @@ class SingleNif(Base):
 
     def test_import_export(self):
         """Test import followed by export."""
-        #create intiial nif file
+        #create initial nif file
         self.n_write(self.n_data, self.n_filepath_0)
         self.n_check(self.n_filepath_0)
         
