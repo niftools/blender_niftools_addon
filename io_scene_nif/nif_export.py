@@ -3411,7 +3411,7 @@ class NifExport(NifCommon):
         # only uniform scaling
         # allow rather large error to accomodate some nifs
         if abs(b_scale_vec[0]-b_scale_vec[1]) + abs(b_scale_vec[1]-b_scale_vec[2]) > 0.02:
-            return self.error(
+            raise NifExportError(
                 "Non-uniform scaling not supported."
                 " Workaround: apply size and rotation (CTRL-A).")
 
