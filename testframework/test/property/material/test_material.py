@@ -11,17 +11,9 @@ from test.geometry.trishape.test_geometry import TestBaseGeometry
 from test.property.material.gen_material import Material
 
 class TestMaterialProperty(SingleNif):
+    n_name = 'property/material/base_material'
+    b_name = 'Cube'
     
-    def __init__(self):
-        self.n_name = "property/material/base_material"
-        
-        self.b_name = "Cube"
-        
-        self.n_data = self.n_create_nif()
-        """Read code to generate physical Nif"""
-        
-        SingleNif.__init__(self)
-
     def b_create_objects(self):
         b_obj = TestBaseGeometry().b_create_base_geometry()
         b_obj.name = self.b_name
@@ -33,7 +25,6 @@ class TestMaterialProperty(SingleNif):
         b_obj.data.materials.append(b_mat)
         bpy.ops.object.shade_smooth()
         self.b_create_material_property(b_mat)
-        
         return b_obj
 
     def b_create_material_property(self, b_mat):
@@ -41,8 +32,6 @@ class TestMaterialProperty(SingleNif):
         b_mat.ambient = 1.0
         b_mat.diffuse_color = (1.0,1.0,1.0)
         b_mat.diffuse_intensity = 1.0
-
-        # bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
 
     def b_check_data(self):
         b_obj = bpy.data.objects[self.b_name]
@@ -61,7 +50,7 @@ class TestMaterialProperty(SingleNif):
         nose.tools.assert_equal(b_mat.diffuse_color[1], 1.0)
         nose.tools.assert_equal(b_mat.diffuse_color[2], 1.0)
 
-    def n_create_nif(self):
+    def n_create_data(self):
         data = TriShapeGeometry().n_create()
         data = Material().n_create(data)
         return data
