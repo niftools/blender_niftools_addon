@@ -74,7 +74,7 @@ class SingleNif(Base):
 
     Every test consists of two pieces of data:
 
-    * a nif file (see :attr:`SingleNif.n_create_nif`)
+    * a nif file (see :attr:`SingleNif.n_create_data`)
     * one or more blender objects (produced by blender code,
       see :meth:`SingleNif.b_create_objects`)
 
@@ -184,7 +184,7 @@ class SingleNif(Base):
         """Check blender objects against feature."""
         raise NotImplementedError
 
-    def n_create_nif(self):
+    def n_create_data(self):
         """Create and return nif data used for initial nif file."""
         raise NotImplementedError
 
@@ -224,8 +224,8 @@ class SingleNif(Base):
 
     def test_import_export(self):
         """Test import followed by export."""
-        # create initial nif file
-        self.n_write(self.n_create_nif(), self.n_filepath_0)
+        # create initial nif file and check data
+        self.n_write(self.n_create_data(), self.n_filepath_0)
         self.n_check(self.n_filepath_0)
         
         # import nif and check data
