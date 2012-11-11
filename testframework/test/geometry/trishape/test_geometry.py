@@ -18,19 +18,12 @@ class TestBaseGeometry(SingleNif):
     # (documented in base class)
 
     b_name = 'Cube'
-    """Name of the blender object.
-    This is automatically appended to :attr:`SingleNif.b_obj_list`
-    during :meth:`TestBaseGeometry.__init__`.
-    """    
+    """Name of the blender object."""    
 
-    def __init__(self): 
-        SingleNif.__init__(self)
-        self.b_obj_list.append(self.b_name)
-    
     def b_create_objects(self):
         # (documented in base class)
         self.b_create_base_geometry()
-        
+
     def b_create_base_geometry(self):
         """Create and return a single polyhedron blender object."""
 
