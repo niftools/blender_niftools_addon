@@ -9,7 +9,7 @@ from pyffi.formats.nif import NifFormat
 
 from test import Base
 from test import SingleNif
-from test.geometry.trishape.gen_geometry import TriShapeGeometry
+from test.geometry.trishape import gen_geometry
 
 class TestBaseGeometry(SingleNif):
     """Test base geometry, single blender object."""
@@ -19,6 +19,18 @@ class TestBaseGeometry(SingleNif):
 
     b_name = 'Cube'
     """Name of the blender object."""    
+
+    b_verts = {
+        (-7.5, 7.5, 3.5),
+        (7.5, 3.75, 1.75),
+        (7.5, -3.75, -1.75),
+        (7.5, 3.75, -1.75),
+        (-7.5, 7.5, -3.5),
+        (-7.5, -7.5, 3.5),
+        (7.5, -3.75, 1.75),
+        (-7.5, -7.5, -3.5),
+        }
+    """Vertex locations, for testing."""
 
     def b_create_objects(self):
         # (documented in base class)
@@ -39,7 +51,7 @@ class TestBaseGeometry(SingleNif):
 
         # primitive_cube_add sets double sided flag, fix this
         b_obj.data.show_double_sided = False
-        
+
         return b_obj
 
     def b_scale_object(self, b_obj):
@@ -105,10 +117,14 @@ class TestBaseGeometry(SingleNif):
         num_triangles += 2 * len( [face for face in b_mesh.faces if len(face.vertices) == 4]) # face = 2 tris
         nose.tools.assert_equal(len(b_mesh.vertices), 8)
         nose.tools.assert_equal(num_triangles, 12)
-        # TODO also check location of vertices
+        verts = {
+            tuple(round(co, 4) for co in vert.co)
+            for vert in b_mesh.vertices
+            }
+        nose.tools.assert_set_equal(verts, self.b_verts)
 
     def n_create_data(self):
-        return TriShapeGeometry().n_create()
+        return gen_geometry.n_create_data()
 
     def n_check_data(self, n_data):
         n_trishape = n_data.roots[0].children[0]
@@ -132,7 +148,11 @@ class TestBaseGeometry(SingleNif):
     def n_check_trishape_data(self, n_trishape_data):
         nose.tools.assert_equal(n_trishape_data.num_vertices, 8)
         nose.tools.assert_equal(n_trishape_data.num_triangles, 12)
-        # TODO also check location of vertices
+        verts = {
+            tuple(round(co, 4) for co in vert.as_list())
+            for vert in n_trishape_data.vertices
+            }
+        nose.tools.assert_set_equal(verts, self.b_verts)
         
         #TODO: Additional checks needed.
         
