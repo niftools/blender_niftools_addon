@@ -6,7 +6,7 @@ import nose.tools
 from pyffi.formats.nif import NifFormat
 
 from test import SingleNif
-from test.geometry.trishape.gen_geometry import TriShapeGeometry
+from test.geometry.trishape import gen_geometry
 from test.geometry.trishape.test_geometry import TestBaseGeometry
 from test.property.material.gen_material import Material
 
@@ -51,7 +51,7 @@ class TestMaterialProperty(SingleNif):
         nose.tools.assert_equal(b_mat.diffuse_color[2], 1.0)
 
     def n_create_data(self):
-        data = TriShapeGeometry().n_create()
+        data = gen_geometry.n_create_data()
         data = Material().n_create(data)
         return data
 

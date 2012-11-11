@@ -9,7 +9,7 @@ from pyffi.formats.nif import NifFormat
 
 from test import Base
 from test import SingleNif
-from test.geometry.trishape.gen_geometry import TriShapeGeometry
+from test.geometry.trishape import gen_geometry
 
 class TestBaseGeometry(SingleNif):
     """Test base geometry, single blender object."""
@@ -108,7 +108,7 @@ class TestBaseGeometry(SingleNif):
         # TODO also check location of vertices
 
     def n_create_data(self):
-        return TriShapeGeometry().n_create()
+        return gen_geometry.n_create_data()
 
     def n_check_data(self, n_data):
         n_trishape = n_data.roots[0].children[0]
