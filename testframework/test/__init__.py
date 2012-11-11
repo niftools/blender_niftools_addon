@@ -74,7 +74,7 @@ class SingleNif(Base):
 
     Every test consists of two pieces of data:
 
-    * a nif file (see :attr:`SingleNif.n_filepath_0`)
+    * a nif file (see :attr:`SingleNif.n_create_nif`)
     * one or more blender objects (produced by blender code,
       see :meth:`SingleNif.b_create_objects`)
 
