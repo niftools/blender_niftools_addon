@@ -74,7 +74,7 @@ class SingleNif(Base):
 
     Every test consists of two pieces of data:
 
-    * a nif file (see :attr:`SingleNif.n_filepath_0`)
+    * a nif file (see :attr:`SingleNif.n_create_data`)
     * one or more blender objects (produced by blender code,
       see :meth:`SingleNif.b_create_objects`)
 
@@ -108,16 +108,9 @@ class SingleNif(Base):
 
     n_name = None
     """Base name of nif file (without ``0.nif`` at the end)."""
-    
-    # TODO b_obj_names?
-    b_obj_list = []
-    """List of names of all blender objects involved with the test."""
-    
+
     EPSILON = 0.005
     """A small value used when comparing floats."""
-
-    n_data = None
-    """Data used to produce initial nif"""
 
     n_filepath_0 = None
     """The name of the nif file to import
@@ -160,20 +153,25 @@ class SingleNif(Base):
         self.b_filepath_0 = "test/autoblend/" + self.n_name + "0.blend"
         self.b_filepath_1 = "test/autoblend/" + self.n_name + "1.blend"
         self.b_filepath_2 = "test/autoblend/" + self.n_name + "2.blend"
-        
-        
 
-    def b_clear(self):
-        Base.b_clear(self)
-        # extra check, just to make really sure
+    def _b_clear_check(self, b_obj_names):
+        """Check that *b_obj_names* are really cleared from the scene."""
         try:
-            for name in self.b_obj_list:
+            for name in b_obj_names:
                 b_obj = bpy.data.objects[name]
         except KeyError:
             pass
         else:
             raise RuntimeError(
                 "failed to clear {0} from scene".format(b_obj))
+
+    def _b_select_all(self):
+        """Select all objects, and return their names."""
+        b_obj_names = []
+        for b_obj in bpy.data.objects:
+            b_obj.select = True
+            b_obj_names.append(b_obj.name)
+        return b_obj_names
 
     def b_create_objects(self):
         """Create blender objects for feature."""
@@ -189,8 +187,8 @@ class SingleNif(Base):
         """Check blender objects against feature."""
         raise NotImplementedError
 
-    def n_create_nif():
-        """Create nif from python"""
+    def n_create_data(self):
+        """Create and return nif data used for initial nif file."""
         raise NotImplementedError
 
     def n_check_data(self, n_data):
@@ -229,42 +227,42 @@ class SingleNif(Base):
 
     def test_import_export(self):
         """Test import followed by export."""
-        #create intiial nif file
-        self.n_write(self.n_data, self.n_filepath_0)
+        # create initial nif file and check data
+        self.n_write(self.n_create_data(), self.n_filepath_0)
         self.n_check(self.n_filepath_0)
         
-        #import nif and check data
+        # import nif and check data
         self.b_clear()
         self.n_import(self.n_filepath_0)
-        for b_obj in bpy.data.objects:
-            b_obj.select = True
+        b_obj_names = self._b_select_all()
         self.b_save(self.b_filepath_0)
         self.b_check_data()
         
-        #export and check data
+        # export and check data
         self.n_export(self.n_filepath_1)
         self.n_check(self.n_filepath_1)
         self.b_clear()
+        self._b_clear_check(b_obj_names)
 
     def test_export_import(self):
         """Test export followed by import."""
         
-        #create scene
+        # create scene
         self.b_create_objects()
-        for b_obj in bpy.data.objects:
-            b_obj.select = True
+        b_obj_names = self._b_select_all()
         self.b_save(self.b_filepath_1)
         self.b_check_data()
         
-        #export and check data
+        # export and check data
         self.n_export(self.n_filepath_2)
         self.n_check(self.n_filepath_2)
         self.b_clear()
+        self._b_clear_check(b_obj_names)
         
-        #import and check data
+        # import and check data
         self.n_import(self.n_filepath_2)
-        for b_obj in bpy.data.objects:
-            b_obj.select = True
+        b_obj_names = self._b_select_all()
         self.b_save(self.b_filepath_2)
         self.b_check_data()
         self.b_clear()
+        self._b_clear_check(b_obj_names)

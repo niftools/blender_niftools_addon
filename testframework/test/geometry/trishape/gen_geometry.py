@@ -1,7 +1,7 @@
 from pyffi.utils.withref import ref
 from pyffi.formats.nif import NifFormat
 
-class TriShapeGeometry():
+class TriShapeGeometry:
     
     def n_create(self):
         n_ninode_1 = NifFormat.NiNode()
@@ -33,13 +33,13 @@ class TriShapeGeometry():
                 translation.y = 20.0
                 translation.z = 20.0
             with ref(n_nitrishape.rotation) as rotation:
-                rotation.m_11 = -2.1855692367012125e-08
-                rotation.m_21 = -0.4999999701976776
+                rotation.m_11 = 0
+                rotation.m_21 = -0.5
                 rotation.m_31 = 0.866025447845459
                 rotation.m_12 = 0.8660253882408142
                 rotation.m_22 = -0.4330127537250519
-                rotation.m_32 = -0.2499999850988388
-                rotation.m_13 = 0.5000000596046448
+                rotation.m_32 = -0.25
+                rotation.m_13 = 0.5
                 rotation.m_23 = 0.75
                 rotation.m_33 = 0.4330126643180847
             n_nitrishape.scale = 0.75
@@ -51,41 +51,38 @@ class TriShapeGeometry():
             n_nitrishapedata.vertices.update_size()
             with ref(n_nitrishapedata.vertices[0]) as vertex:
                 vertex.x = 7.5
-                vertex.y = 3.750000238418579
-                vertex.z = -1.8749998807907104
+                vertex.y = 3.75
+                vertex.z = -1.875
             with ref(n_nitrishapedata.vertices[1]) as vertex:
-                vertex.x = 7.499998569488525
-                vertex.y = -3.749999523162842
-                vertex.z = -1.8749998807907104
+                vertex.x = 7.5
+                vertex.y = -3.75
+                vertex.z = -1.875
             with ref(n_nitrishapedata.vertices[2]) as vertex:
                 vertex.x = -7.5
-                vertex.y = -7.499998092651367
-                vertex.z = -3.750000238418579
+                vertex.y = -7.5
+                vertex.z = -3.75
             with ref(n_nitrishapedata.vertices[3]) as vertex:
-                vertex.x = -7.499995708465576
-                vertex.y = 7.500002384185791
-                vertex.z = -3.750000238418579
+                vertex.x = -7.5
+                vertex.y = 7.5
+                vertex.z = -3.75
             with ref(n_nitrishapedata.vertices[4]) as vertex:
                 vertex.x = 7.5
-                vertex.y = 3.749999523162842
-                vertex.z = 1.875000238418579
+                vertex.y = 3.75
+                vertex.z = 1.875
             with ref(n_nitrishapedata.vertices[5]) as vertex:
-                vertex.x = -7.499998569488525
-                vertex.y = 7.499999046325684
-                vertex.z = 3.749999761581421
+                vertex.x = -7.5
+                vertex.y = 7.5
+                vertex.z = 3.75
             with ref(n_nitrishapedata.vertices[6]) as vertex:
                 vertex.x = -7.5
-                vertex.y = -7.500000953674316
-                vertex.z = 3.749999761581421
+                vertex.y = -7.5
+                vertex.z = 3.75
             with ref(n_nitrishapedata.vertices[7]) as vertex:
                 vertex.x = 7.5
-                vertex.y = -3.750000238418579
-                vertex.z = 1.875000238418579
+                vertex.y = -3.75
+                vertex.z = 1.875
 
-            with ref(n_nitrishapedata.center) as center:
-                center.y = 7.152557373046875e-07
-                center.z = -2.384185791015625e-07
-            n_nitrishapedata.radius = 11.250000953674316
+            n_nitrishapedata.radius = 11.25
             n_nitrishapedata.consistency_flags = 16384
 
             n_nitrishapedata.num_triangles = 12
