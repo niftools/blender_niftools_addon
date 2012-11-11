@@ -116,9 +116,6 @@ class SingleNif(Base):
     EPSILON = 0.005
     """A small value used when comparing floats."""
 
-    n_data = None
-    """Data used to produce initial nif"""
-
     n_filepath_0 = None
     """The name of the nif file to import
     (set automatically from :attr:`SingleNif.n_name`).
@@ -188,7 +185,7 @@ class SingleNif(Base):
         raise NotImplementedError
 
     def n_create_nif(self):
-        """Create nif from python"""
+        """Create and return nif data used for initial nif file."""
         raise NotImplementedError
 
     def n_check_data(self, n_data):
@@ -228,7 +225,7 @@ class SingleNif(Base):
     def test_import_export(self):
         """Test import followed by export."""
         # create initial nif file
-        self.n_write(self.n_data, self.n_filepath_0)
+        self.n_write(self.n_create_nif(), self.n_filepath_0)
         self.n_check(self.n_filepath_0)
         
         # import nif and check data
