@@ -35,7 +35,6 @@ def n_create_blocks(n_data):
             n_vector3.y = 20
             n_vector3.z = 20
         with ref(n_nitrishape.rotation) as n_matrix33:
-            n_matrix33.m_11 = -2.18557e-08
             n_matrix33.m_21 = -0.5
             n_matrix33.m_31 = 0.866025
             n_matrix33.m_12 = 0.866025
@@ -43,7 +42,7 @@ def n_create_blocks(n_data):
             n_matrix33.m_32 = -0.25
             n_matrix33.m_13 = 0.5
             n_matrix33.m_23 = 0.75
-            n_matrix33.m_33 = 0.433013
+            n_matrix33.m_33 = 0.433012
         n_nitrishape.scale = 0.75
         n_nitrishape.data = n_nitrishapedata_1
     with ref(n_nitrishapedata_1) as n_nitrishapedata:
@@ -53,39 +52,36 @@ def n_create_blocks(n_data):
         with ref(n_nitrishapedata.vertices[0]) as n_vector3:
             n_vector3.x = 7.5
             n_vector3.y = 3.75
-            n_vector3.z = -1.875
+            n_vector3.z = -1.75
         with ref(n_nitrishapedata.vertices[1]) as n_vector3:
             n_vector3.x = 7.5
             n_vector3.y = -3.75
-            n_vector3.z = -1.875
+            n_vector3.z = -1.75
         with ref(n_nitrishapedata.vertices[2]) as n_vector3:
             n_vector3.x = -7.5
             n_vector3.y = -7.5
-            n_vector3.z = -3.75
+            n_vector3.z = -3.5
         with ref(n_nitrishapedata.vertices[3]) as n_vector3:
             n_vector3.x = -7.5
             n_vector3.y = 7.5
-            n_vector3.z = -3.75
+            n_vector3.z = -3.5
         with ref(n_nitrishapedata.vertices[4]) as n_vector3:
             n_vector3.x = 7.5
             n_vector3.y = 3.75
-            n_vector3.z = 1.875
+            n_vector3.z = 1.75
         with ref(n_nitrishapedata.vertices[5]) as n_vector3:
             n_vector3.x = -7.5
             n_vector3.y = 7.5
-            n_vector3.z = 3.75
+            n_vector3.z = 3.5
         with ref(n_nitrishapedata.vertices[6]) as n_vector3:
             n_vector3.x = -7.5
             n_vector3.y = -7.5
-            n_vector3.z = 3.75
+            n_vector3.z = 3.5
         with ref(n_nitrishapedata.vertices[7]) as n_vector3:
             n_vector3.x = 7.5
             n_vector3.y = -3.75
-            n_vector3.z = 1.875
-        with ref(n_nitrishapedata.center) as n_vector3:
-            n_vector3.y = 7.15256e-07
-            n_vector3.z = -2.38419e-07
-        n_nitrishapedata.radius = 11.25
+            n_vector3.z = 1.75
+        n_nitrishapedata.radius = 11.1692
         n_nitrishapedata.consistency_flags = 16384
         n_nitrishapedata.num_triangles = 12
         n_nitrishapedata.num_triangle_points = 36
