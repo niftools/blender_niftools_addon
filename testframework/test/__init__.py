@@ -165,6 +165,14 @@ class SingleNif(Base):
             raise RuntimeError(
                 "failed to clear {0} from scene".format(b_obj))
 
+    def _b_select_all(self):
+        """Select all objects, and return their names."""
+        b_obj_names = []
+        for b_obj in bpy.data.objects:
+            b_obj.select = True
+            b_obj_names.append(b_obj.name)
+        return b_obj_names
+
     def b_create_objects(self):
         """Create blender objects for feature."""
         raise NotImplementedError
@@ -226,10 +234,7 @@ class SingleNif(Base):
         # import nif and check data
         self.b_clear()
         self.n_import(self.n_filepath_0)
-        b_obj_names = []
-        for b_obj in bpy.data.objects:
-            b_obj.select = True
-            b_obj_names.append(b_obj.name)
+        b_obj_names = self._b_select_all()
         self.b_save(self.b_filepath_0)
         self.b_check_data()
         
@@ -244,10 +249,7 @@ class SingleNif(Base):
         
         # create scene
         self.b_create_objects()
-        b_obj_names = []
-        for b_obj in bpy.data.objects:
-            b_obj.select = True
-            b_obj_names.append(b_obj.name)
+        b_obj_names = self._b_select_all()
         self.b_save(self.b_filepath_1)
         self.b_check_data()
         
@@ -259,10 +261,7 @@ class SingleNif(Base):
         
         # import and check data
         self.n_import(self.n_filepath_2)
-        b_obj_names = []
-        for b_obj in bpy.data.objects:
-            b_obj.select = True
-            b_obj_names.append(b_obj.name)
+        b_obj_names = self._b_select_all()
         self.b_save(self.b_filepath_2)
         self.b_check_data()
         self.b_clear()
