@@ -14,31 +14,26 @@ from test.geometry.trishape.gen_geometry import TriShapeGeometry
 class TestBaseGeometry(SingleNif):
     """Test base geometry, single blender object."""
 
-    def __init__(self): 
-        """Register :attr:`b_name`, and """
-        
-        # (documented in SingleNif)
-        self.n_name = "geometry/base_geometry"
+    n_name = 'geometry/base_geometry'
+    # (documented in base class)
 
-        self.b_name = 'Cube'
-        """Name of the blender object.
-        This is automatically appended to :attr:`SingleNif.b_obj_list`
-        during :meth:`TestBaseGeometry.__init__`.
-        """    
-        
-        self.n_data = self.n_create_nif()
-        """ Read code to generate physical nif"""
-        
-        self.b_obj_list.append(self.b_name)
-        
+    b_name = 'Cube'
+    """Name of the blender object.
+    This is automatically appended to :attr:`SingleNif.b_obj_list`
+    during :meth:`TestBaseGeometry.__init__`.
+    """    
+
+    def __init__(self): 
         SingleNif.__init__(self)
+        self.n_data = self.n_create_nif()        
+        self.b_obj_list.append(self.b_name)
     
     def b_create_objects(self):
-        """Call :meth:`b_create_base_geometry`."""
+        # (documented in base class)
         self.b_create_base_geometry()
         
     def b_create_base_geometry(self):
-        """Create a single polyhedron blender object."""
+        """Create and return a single polyhedron blender object."""
 
         # create a base mesh, and set its name
         bpy.ops.mesh.primitive_cube_add()
@@ -121,8 +116,7 @@ class TestBaseGeometry(SingleNif):
         # TODO also check location of vertices
 
     def n_create_nif(self):
-        data = TriShapeGeometry().n_create()
-        return data
+        return TriShapeGeometry().n_create()
 
     def n_check_data(self, n_data):
         n_trishape = n_data.roots[0].children[0]
