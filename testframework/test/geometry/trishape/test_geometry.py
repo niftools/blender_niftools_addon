@@ -51,10 +51,6 @@ class TestBaseGeometry(SingleNif):
 
         # primitive_cube_add sets double sided flag, fix this
         b_obj.data.show_double_sided = False
-        
-        #import sys
-        #verts = {tuple(vert.co) for vert in b_obj.data.vertices}
-        #print(verts, file=sys.stderr)
 
         return b_obj
 
