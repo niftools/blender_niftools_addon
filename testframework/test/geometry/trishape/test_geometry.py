@@ -25,7 +25,6 @@ class TestBaseGeometry(SingleNif):
 
     def __init__(self): 
         SingleNif.__init__(self)
-        self.n_data = self.n_create_data()        
         self.b_obj_list.append(self.b_name)
     
     def b_create_objects(self):
