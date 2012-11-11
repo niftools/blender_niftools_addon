@@ -189,7 +189,7 @@ class SingleNif(Base):
         """Check blender objects against feature."""
         raise NotImplementedError
 
-    def n_create_nif():
+    def n_create_nif(self):
         """Create nif from python"""
         raise NotImplementedError
 
