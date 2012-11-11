@@ -35,6 +35,7 @@ def n_create_blocks(n_data):
             n_vector3.y = 20
             n_vector3.z = 20
         with ref(n_nitrishape.rotation) as n_matrix33:
+            n_matrix33.m_11 = 0
             n_matrix33.m_21 = -0.5
             n_matrix33.m_31 = 0.866025
             n_matrix33.m_12 = 0.866025
@@ -43,6 +44,8 @@ def n_create_blocks(n_data):
             n_matrix33.m_13 = 0.5
             n_matrix33.m_23 = 0.75
             n_matrix33.m_33 = 0.433012
+            # just to make sure in case we change values:
+            assert(n_matrix33.is_rotation())
         n_nitrishape.scale = 0.75
         n_nitrishape.data = n_nitrishapedata_1
     with ref(n_nitrishapedata_1) as n_nitrishapedata:
