@@ -66,9 +66,13 @@ written. Ideally, the following process is followed:
 
 #. Create a new python file to contain the feature regression test
    code. For example, if the feature concerns *blabla*, the test case
-   would be stored in ``test/test_blabla.py``. Use the template
-   available in ``test/template.py``. Derive the test class from
+   would be stored in ``testframework/test/test_blabla.py``.
+   Derive the test class from
    :class:`test.SingleNif`, and name it :class:`TestBlabla`.
+
+   .. NOTE template is in flux, removed for the time being
+   .. Use the template available in ``testframework/test/template.py``.
+
 
 #. Create a new text file ``docs/features/blabla.rst`` to contain the
    feature user documentation,
@@ -80,8 +84,23 @@ written. Ideally, the following process is followed:
 #. Write feature test data and test code on nif level:
 
    - Create a nif (say in nifskope, or with the old blender nif
-     scripts) and save it as ``test/nif/blabla0.nif``. Take care to
-     make the file as small as possible. Stick to minimal geometry.
+     scripts).
+     Take care to make the file as small as possible.
+     Stick to minimal geometry.
+
+   - Use pyffi's ``dump_python`` spell to convert it to python code.
+     Store the relevant parts of the code
+     in ``testframework/test/gen_blablabla.py``.
+     The :meth:`n_create_data` method of the test class
+     then uses the :mod:`gen_blablabla` module
+     to construct the nif data.
+
+     .. note::
+
+        We split creation code from the rest of the test code
+        to keep the test class size manageable.
+        If the Python code for creating the nif is very small, it could
+        be directly included in :meth:`n_create_data`.
 
    - Write Python code which test the nif against the desired feature.
      This code goes in the :meth:`n_check_data` method of the test class.
