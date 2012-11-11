@@ -160,8 +160,6 @@ class SingleNif(Base):
         self.b_filepath_0 = "test/autoblend/" + self.n_name + "0.blend"
         self.b_filepath_1 = "test/autoblend/" + self.n_name + "1.blend"
         self.b_filepath_2 = "test/autoblend/" + self.n_name + "2.blend"
-        
-        
 
     def b_clear(self):
         Base.b_clear(self)
@@ -229,11 +227,11 @@ class SingleNif(Base):
 
     def test_import_export(self):
         """Test import followed by export."""
-        #create initial nif file
+        # create initial nif file
         self.n_write(self.n_data, self.n_filepath_0)
         self.n_check(self.n_filepath_0)
         
-        #import nif and check data
+        # import nif and check data
         self.b_clear()
         self.n_import(self.n_filepath_0)
         for b_obj in bpy.data.objects:
@@ -241,7 +239,7 @@ class SingleNif(Base):
         self.b_save(self.b_filepath_0)
         self.b_check_data()
         
-        #export and check data
+        # export and check data
         self.n_export(self.n_filepath_1)
         self.n_check(self.n_filepath_1)
         self.b_clear()
@@ -249,19 +247,19 @@ class SingleNif(Base):
     def test_export_import(self):
         """Test export followed by import."""
         
-        #create scene
+        # create scene
         self.b_create_objects()
         for b_obj in bpy.data.objects:
             b_obj.select = True
         self.b_save(self.b_filepath_1)
         self.b_check_data()
         
-        #export and check data
+        # export and check data
         self.n_export(self.n_filepath_2)
         self.n_check(self.n_filepath_2)
         self.b_clear()
         
-        #import and check data
+        # import and check data
         self.n_import(self.n_filepath_2)
         for b_obj in bpy.data.objects:
             b_obj.select = True
