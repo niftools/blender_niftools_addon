@@ -17,7 +17,7 @@ class TestMaterialProperty(SingleNif):
         
         self.b_name = "Cube"
         
-        self.n_data = self.n_create_nif()
+        self.n_data = self.n_create_data()
         """Read code to generate physical Nif"""
         
         SingleNif.__init__(self)
@@ -61,7 +61,7 @@ class TestMaterialProperty(SingleNif):
         nose.tools.assert_equal(b_mat.diffuse_color[1], 1.0)
         nose.tools.assert_equal(b_mat.diffuse_color[2], 1.0)
 
-    def n_create_nif(self):
+    def n_create_data(self):
         data = TriShapeGeometry().n_create()
         data = Material().n_create(data)
         return data

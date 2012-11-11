@@ -91,7 +91,7 @@ written. Ideally, the following process is followed:
    - Use pyffi's ``dump_python`` spell to convert it to python code.
      Store the relevant parts of the code
      in ``testframework/test/gen_blablabla.py``.
-     The :meth:`n_create_nif` method of the test class
+     The :meth:`n_create_data` method of the test class
      then uses the :mod:`gen_blablabla` module
      to construct the nif data.
 
@@ -100,7 +100,7 @@ written. Ideally, the following process is followed:
         We split creation code from the rest of the test code
         to keep the test class size manageable.
         If the Python code for creating the nif is very small, it could
-        be directly included in :meth:`n_create_nif`.
+        be directly included in :meth:`n_create_data`.
 
    - Write Python code which test the nif against the desired feature.
      This code goes in the :meth:`n_check_data` method of the test class.
