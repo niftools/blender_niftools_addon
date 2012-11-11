@@ -35,13 +35,14 @@ def n_create_blocks(n_data):
             n_vector3.y = 20
             n_vector3.z = 20
         with ref(n_nitrishape.rotation) as n_matrix33:
-            n_matrix33.m_21 = -0.5
+            n_matrix33.m_11 = 0.433013
+            n_matrix33.m_21 = -0.25
             n_matrix33.m_31 = 0.866025
-            n_matrix33.m_12 = 0.866025
-            n_matrix33.m_22 = -0.433013
+            n_matrix33.m_12 = 0.808013
+            n_matrix33.m_22 = 0.533494
             n_matrix33.m_32 = -0.25
-            n_matrix33.m_13 = 0.5
-            n_matrix33.m_23 = 0.75
+            n_matrix33.m_13 = -0.399519
+            n_matrix33.m_23 = 0.808013
             n_matrix33.m_33 = 0.433013
         n_nitrishape.scale = 0.75
         n_nitrishape.data = n_nitrishapedata_1
