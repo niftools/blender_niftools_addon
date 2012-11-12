@@ -19,7 +19,7 @@ This is used by the havok system for collision detection.
 .. warning::
 
    * Collisions are in the process of being ported. This section is subject to change.
-   * For Cylender Export, we need to fix them to show how the user would create the objects. We are using a Meta Capsule
+   * For Cylinder Export, we need to fix them to show how the user would create the objects. We are using a Meta Capsule
    * Some of the collision types lack viewport rendering, see workaround for visulisations below.
 
 Notes
@@ -33,7 +33,7 @@ Collision Mapping
 .. _collision-mapping:
 
 * The following section describes the most appropriate primitive object to represent the desired collision object type.
-* The suggested shapes also correspond to how the shapes will look as imported by the scripts.
+* The suggested shapes also correspond to shapes generated through import by the plugin.
 * On export the BhkShape is created from data pulled from the Collision object.
 
 Blender's Collision types map to the following Nif types:
