@@ -40,19 +40,19 @@ Blender's Collision types map to the following Nif types:
 
 - Oblivion, Fallout 3, and Fallout NV; 
 
-+----------------------------+------------------------+
-| Blender                    | Nif                    |
-+============================+========================+
-| `Box Collision`_           | bhkBoxShape            |
-+----------------------------+------------------------+
-| `Sphere Collision`_        | bhkSphereShape         |
-+----------------------------+------------------------+
-| `Capsule Collision`_       | bhkCapsuleShape        |
-+----------------------------+------------------------+
-| `Convex Hull Collision`_   | bhkConvexVerticesShape |
-+----------------------------+------------------------+
-| `Triangle Mesh Collision`_ | bhkMoppBvTreeShape     |
-+----------------------------+------------------------+
++----------------------------+--------------------------------------------------------------+
+| Blender                    | Nif                                                          |
++============================+==============================================================+
+| `Box Collision`_           | :class:`~pyffi.formats.nif.NifFormat.bhkBoxShape`            |
++----------------------------+--------------------------------------------------------------+
+| `Sphere Collision`_        | :class:`~pyffi.formats.nif.NifFormat.bhkSphereShape`         |
++----------------------------+--------------------------------------------------------------+
+| `Capsule Collision`_       | :class:`~pyffi.formats.nif.NifFormat.bhkCapsuleShape`        |
++----------------------------+--------------------------------------------------------------+
+| `Convex Hull Collision`_   | :class:`~pyffi.formats.nif.NifFormat.bhkConvexVerticesShape` |
++----------------------------+--------------------------------------------------------------+
+| `Triangle Mesh Collision`_ | :class:`~pyffi.formats.nif.NifFormat.bhkMoppBvTreeShape`     |
++----------------------------+--------------------------------------------------------------+
 
 - Morrowind:
 
@@ -84,7 +84,7 @@ Sphere Collision
 
 #. Create another mesh-object to represent our collision shape, a primitive sphere(prim-sphere) is highly recommended.
 
-#. Rename the prim-sphere via the Object panel, eg. 'CollisionSphere' 
+#. Rename the prim-sphere, eg. 'CollisionSphere', via the Object panel
 
 #. Scale the 'CollisionSphere' object as needed, ensuring all vertices are enclosed by the sphere
 
@@ -109,12 +109,15 @@ Capsule Collision
 .. _collision-capsule-notes:
 
 * If the lenght is less than or equal to the radius, then a :class:`~pyffi.formats.nif.NifFormat.bhkSphereShape` is generated instead.
+
 * Currently Capsule bounds lack viewport preview, awaiting Bullet Physic integration
+
 * The following is a workaround; **Prone to user error, Ensure to reset setting after visualising!**.
-- In the **Object Tab**, under the **Display** section enable **Bounds**
-- Set the **Type** to **Cylinder**.
+
+ - In the **Object Tab**, under the **Display** section enable **Bounds**
+ - Set the **Type** to **Cylinder**.
  
- This shape best represents the capsule, but is missing the end caps which are hemi-spheres. 
+* This shape best represents the capsule, but visually missing the end caps which are hemi-spheres. 
 
 Convex Hull Collision
 ~~~~~~~~~~~~~~~~~~~~~
@@ -124,7 +127,7 @@ Convex Hull Collision
 
 #. Create a convex mesh. See :ref:`Notes <collision-convex-hull-notes>`
 
-#. Select the newly created mesh-object and rename it, eg. 'CollisionHull' via the Object panel.
+#. Rename the hulled-object, eg. 'CollisionHull' via the Object panel.
 
 #. Scale the collision cube 'CollisionBox' to the size wanted.
 
@@ -144,7 +147,7 @@ Triangle Mesh Collision
 
 #. Create a convex hulled mesh-object. See :ref:`Notes<collision-convex-hull-notes>`
 
-#. Select the newly mesh and rename it, eg. 'CollisionPolyhedron' via the Object panel.
+#. Rename the polyhedron-mesh, eg. 'CollisionPolyhedron' via the Object panel.
 
 #. Scale the collision cube 'CollisionPoly' to the size wanted.
 
