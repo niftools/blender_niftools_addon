@@ -98,7 +98,7 @@ Capsule Collision
 
 #. Create a second mesh-object to represent our collision object, a primitive cylinder(prim-cylinder) is recommended.
 
-#. Select the second newly created prim-cylinder, rename it appropriately, eg. 'CollisionCapsule' via the Object panel.
+#. Rename the prim-cylinder via the Object panel, eg. 'CollisionCapsule'.
 
 #. Scale the collision cube 'CollisionBox' to the size wanted.
 
@@ -111,7 +111,9 @@ Capsule Notes
 * If the lenght is less than or equal to the radius, then a :class:`~pyffi.formats.nif.NifFormat.bhkSphereShape` is generated instead.
 * Currently Capsule bounds lack viewport preview, awaiting Bullet Physic integration
 * The following is a workaround; **Prone to user error, Ensure to reset setting after visualising!**.
+
 #.   In the **Object Tab**, under the **Display** section enable **Bounds**
+
 #.   Set the **Type** to **Cylinder**.
  
  This shape best represents the capsule, but is missing the end caps which are hemi-spheres. 
