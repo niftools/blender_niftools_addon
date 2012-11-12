@@ -104,17 +104,15 @@ Capsule Collision
 
 #. :ref:`Add physics to our 'CollisionCapsule' <collison-settings>`.
 
-Capsule Notes
-+++++++++++++
+**Notes:**
+
 .. _collision-capsule-notes:
 
 * If the lenght is less than or equal to the radius, then a :class:`~pyffi.formats.nif.NifFormat.bhkSphereShape` is generated instead.
 * Currently Capsule bounds lack viewport preview, awaiting Bullet Physic integration
 * The following is a workaround; **Prone to user error, Ensure to reset setting after visualising!**.
-
-#.   In the **Object Tab**, under the **Display** section enable **Bounds**
-
-#.   Set the **Type** to **Cylinder**.
+- In the **Object Tab**, under the **Display** section enable **Bounds**
+- Set the **Type** to **Cylinder**.
  
  This shape best represents the capsule, but is missing the end caps which are hemi-spheres. 
 
@@ -132,8 +130,8 @@ Convex Hull Collision
 
 #. :ref:`Add physics to our collision cube 'CollisionBox' <collison-settings>`.
 
-Convex Hull Notes
-+++++++++++++++++
+**Notes:**
+
 .. _collision-convex-hull-notes:
 
 * It is advisable to use a convex hull generator to create the collision-mesh.
@@ -152,8 +150,8 @@ Triangle Mesh Collision
 
 #. :ref:`Add physics to our collision cube 'CollisionBox' <collison-settings>`.
 
-Triangle Mesh Notes
-+++++++++++++++++++
+**Notes:**
+
 .. _collision-triangle-mesh-notes:
 
 * Often a duplicate object can be used, simplified by decimating, then triangulated(**Ctrl + T**).
@@ -166,20 +164,19 @@ Collision Settings
 * Meshes with Collision Bounds enabled will be exported as a :class:`~pyffi.formats.nif.NifFormat.bhkShape`, rather than a :class:`~pyffi.formats.nif.NifFormat.NiTriShape`.
 * The Collision settings are used by the :class:`~pyffi.formats.nif.NifFormat.bhkShape` to control it reacts in the Havok physics simulation.
 
-Example
-~~~~~~~
+**Example:**
 
 First we enable Collision Setting for the selected Collision Object:
 
-#. In the the **Physics** tab, enable **Collision Bounds** 
+* In the the **Physics** tab, enable **Collision Bounds** 
 
 The bounds type is used to select which BhkShape type to use.
 
-#. Enable the desired **Bounds** type.
+* Enable the desired **Bounds** type.
 
 The Havok Material decides how the material should behave for collisions, eg. sound, decals.
 
-#. Select a Havok Material from the list.
+* Select a Havok Material from the list.
 
 .. todo::
 
