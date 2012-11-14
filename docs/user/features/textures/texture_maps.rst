@@ -3,10 +3,9 @@ Texture Maps
 
 .. _texture_maps:
 
-| Each Texture Map has a distinct function, which affectes how the object is rendered
-
-| The following sections describe the function of each Map
-| Map properies are usually set via the **Influence** section of the **Texture Tab**.
+* Each Texture Map has a distinct function, which affectes how the object is rendered
+* The following sections describe the function of each Map
+* Map properies are usually set via the **Influence** section of the **Texture Tab**.
 
 Diffuse Map
 -----------
@@ -14,7 +13,6 @@ Diffuse Map
 The information in a diffuse map is used as the base color
 
 #. Under **Type**, set the type to **Image or Movie**.
-
 #. Under **Influence**,  in the **Diffuse Section**, enable **Color**.
 
 Bump Map
