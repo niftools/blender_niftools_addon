@@ -287,6 +287,10 @@ You should also install a few plugins.
 
   3. A large number of plugins will be listed. Select
      **Collaboration > Eclipse EGit**
+     
+  - **Note:** If you experience problems with CLFR/EOF even though you set ``git config --global user.autocrlf true``, 
+     
+  - Enable the following: Windows -> Preferences -> General -> Compare/Patch -> Ignore WhiteSpaces
 
 * `PyDev <http://pydev.org/>`_
   is an Eclipse plugin targeted at Python development,
