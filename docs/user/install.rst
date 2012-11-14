@@ -9,35 +9,15 @@ Install Blender
 Windows
 ~~~~~~~
 
-.. warning::
-
-   The recommended procedure for installing concurrently with the
-   old 2.49b version of blender is:
-
-   #. Uninstall all versions of blender that you have installed already
-      (2.4x *and* 2.5x versions):
-
-      * Uninstall them via the control panel.
-
-      * Just to make sure,
-        search your ``Program Files`` folder for any traces of Blender
-        and wipe them out.
-
-   #. Download the 
-      `old blender 2.49b .exe installer
-      <http://download.blender.org/release/Blender2.49b/blender-2.49b-windows.exe>`_
-      and install it **in a non-default folder**, such as
-      ``C:\Program Files\Blender Foundation\Blender 2.49b``.
-
-   #. Install the `old blender nif scripts
-      <http://sourceforge.net/projects/niftools/files/blender_nif_scripts/2.5.x/>`_.
-
-   #. Install the latest version of blender, as described below.
-
 Download the
 `blender .exe installer <http://www.blender.org/download/get-blender/>`_
 for your platform (32-bit or 64-bit; if unsure, pick the 32-bit version)
 and follow the instructions.
+
+Note:
+* If you are upgrading to a new version of Blender then it is advisable to uninstall previous versions.
+* Alternatively but less advisable is to rename the /Blender in the Program Files/Blender Foundation folder 
+thus allowing multiple installations of Blender.
 
 Fedora
 ~~~~~~
