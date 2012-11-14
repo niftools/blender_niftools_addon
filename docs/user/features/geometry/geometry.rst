@@ -6,8 +6,7 @@ Mesh Geometry
 * Each :class:`~bpy.types.Object` is exported as a combination of :class:`~pyffi.formats.nif.NifFormat.NiTriShape` and :class:`~pyffi.formats.nif.NifFormat.NiNode`.
 * The :class:`~bpy.types.Mesh` is exported to a :class:`~pyffi.formats.nif.NifFormat.NiTriShape`'s :class:`~pyffi.formats.nif.NifFormat.NiTriShapeData`.
 
-Example
-~~~~~~~
+**Example:**
 
 #. Start Blender and empty the scene.
 #. Create any Mesh-Object to the scene, eg. cube primitive: 
@@ -26,8 +25,8 @@ Example
 
 #. Export the file: **File -> Export -> NetImmerse/Gamebryo**.
 
-Notes
-~~~~~
+**Notes:**
+
 * The Nif format only supports triangle based geometry.
 * Blender quads and n-gons are exported as triangles, which may lead to differences in rendered geometry.
 * Strips (:class:`~pyffi.formats.nif.NifFormat.NiTriStrips`) are available but not developer supported 
@@ -39,27 +38,32 @@ UV Unwrapping
 -------------
 .. _geometry-uv:
 
+* This is the process of unwrapping all the faces onto a flat surface, creating a UV Map layer.
+* The UV Map layer is used to connect :class:`~bpy.types.Texture` to :class:`~bpy.types.Mesh`. 
 
+**Example:**
+#. :ref:`Create a mesh-object <geometry-mesh>`.
+#. In **Edit Mode**, select the faces you want to unwrap.
+#. Press U``, select **Unwrap > Smart UV Project**.
 
-Example
-~~~~~~~
+**Notes:**
 
-#. In Edit Mode, press ``U``, select **Unwrap > Smart UV Project**.
+* UV-unwrapping adds a :class:`~bpy.types.MeshTextureFaceLayer` to the Object.
+* Althought Blender allows multiple :class:`~bpy.types.MeshTextureFaceLayer`, the Nif format only support one UV layer
 
 Vertex Color
 ------------
 .. _geometry-vertexcolor:
 
-Example
-~~~~~~~
-#. :ref:`Create a mesh-object <geometry-mesh>` as explained before.
+**Example:**
+
+#. :ref:`Create a mesh-object <geometry-mesh>`.
 #. Switch to Vertex Paint mode, this automatically adds a base vertex color layer.
 #. Apply the desired vertex colors evenly to the vertex.
 #. Ensure you have added a :ref:`material<properties-material>`.
 #. Now export as usual.
 
-Notes
-~~~~~
+**Notes:**
 
 * The Nif format only supports a single color per vertex, whereas Blender vertex color per face vertex.
 * Blender treats the vertex as if the faces had been split apart, each face can have a different color for that vertex.
@@ -71,3 +75,4 @@ Notes
 
 .. todo::
    Write up workflow for alpha layer once implemented.
+   
