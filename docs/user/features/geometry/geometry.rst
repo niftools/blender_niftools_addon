@@ -1,39 +1,45 @@
 Mesh Geometry
 -------------
-
 .. _geometry-mesh:
 
-* Blender has a variety of Objects; the following section deals with object with Mesh Data(Mesh-Object)
-* Each :class:`~bpy.types.Object` is exported to one or more :class:`~pyffi.formats.nif.NifFormat.NiTriShape`.
-* The :class:`~bpy.types.Mesh` is exported to the Objects :class:`~pyffi.formats.nif.NifFormat.NiTriShapeData`.
+* The following section deals with :class:`~bpy.types.Object` which are of type 'MESH', containing Mesh Data(Mesh-Object)
+* Each :class:`~bpy.types.Object` is exported as a combination of :class:`~pyffi.formats.nif.NifFormat.NiTriShape` and :class:`~pyffi.formats.nif.NifFormat.NiNode`.
+* The :class:`~bpy.types.Mesh` is exported to a :class:`~pyffi.formats.nif.NifFormat.NiTriShape`'s :class:`~pyffi.formats.nif.NifFormat.NiTriShapeData`.
 
 Example
 ~~~~~~~
 
-#. Start blender with an empty scene.
-#. Add any Mesh-Object to the scene, eg. cube primitive: **Add -> Mesh -> Cube**.
-#. Select whether the Mesh-object should be Double-sided:
+#. Start Blender and empty the scene.
+#. Create any Mesh-Object to the scene, eg. cube primitive: 
+
+  - **Add(Shift + A) -> Mesh -> Cube**.
+
+#. Set whether the Mesh-object should be Double-sided:
    
-   * In the **Properties** panel, in the *Object Data* tab,
-   * Enable/Disable **Double Sided**, see notes for more detail.
+  - In the **Properties** Editor, in the **Object Data Tab**
+  - Enable/Disable **Double Sided**, see notes for more detail.
 
 #. Give the Object an appropriate name.
+
+  - In the **Object Tab** 
+  - Generic names are automatically generated, unique names helps distingush objects, 
+
 #. Export the file: **File -> Export -> NetImmerse/Gamebryo**.
 
 Notes
 ~~~~~
-* The nif format only supports triangle based geometry.
-* Blender quads and n-gons are exported as triangles, which may lead to differences in geometry rendered.
-* Strips (:class:`~pyffi.formats.nif.NifFormat.NiTriStrips`) are available but not developer supported as they are `unnecessary for current hardware <http://tomsdxfaq.blogspot.com/2005_12_01_archive.html>`_.
-* Naming individual objects helps distingush objects, generic names are automatically generated. eg. Cube, plane.001, sphere etc.
-
-**Double Sided Mesh**
-* This will add a :class:`~pyffi.formats.nif.NifFormat.NiStencilProperty`, see :ref:`Properties - Stencil Property <properties-stencil>` for more info.
+* The Nif format only supports triangle based geometry.
+* Blender quads and n-gons are exported as triangles, which may lead to differences in rendered geometry.
+* Strips (:class:`~pyffi.formats.nif.NifFormat.NiTriStrips`) are available but not developer supported 
+as they are `unnecessary for current hardware <http://tomsdxfaq.blogspot.com/2005_12_01_archive.html>`_.
+* Double Sided Mesh - Adds a :class:`~pyffi.formats.nif.NifFormat.NiStencilProperty` or similiar, 
+see :ref:`Properties - Stencil Property <properties-stencil>` for more info.
 
 UV Unwrapping
 -------------
-
 .. _geometry-uv:
+
+
 
 Example
 ~~~~~~~
@@ -42,7 +48,6 @@ Example
 
 Vertex Color
 ------------
-
 .. _geometry-vertexcolor:
 
 Example
