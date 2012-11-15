@@ -1119,8 +1119,8 @@ class NifImport(NifCommon):
                 # eeekadoodle fix
                 f_verts[0], f_verts[1], f_verts[2] = f_verts[2], f_verts[0], f_verts[1]
                 f[0], f[1], f[2] = f[2], f[0], f[1] # f[0] comes second
-                b_mesh.faces[-1].vertices = f_verts
-            b_mesh.faces[-1].vertices = f_verts
+                b_mesh.faces[-1].vertices_raw = f_verts + [0]
+            b_mesh.faces[-1].vertices_raw = f_verts + [0]
             # keep track of added faces, mapping NIF face index to
             # Blender face index
             f_map[i] = b_f_index
@@ -1433,10 +1433,8 @@ class NifImport(NifCommon):
         # TODO this causes a crash in blender 2.62
         #      when combining shapes is enabled
         b_mesh.calc_normals()
-        """There seems to be a problem with b_mesh.update() causing 
-        render errors. E.G. import Apple01 and tick combine shapes ->
-        toggle edit mode and blender CTD. Fix by removing b_mesh.update()"""
-        #b_mesh.update()
+        b_mesh.update()
+        b_mesh.validate()
 
         return b_obj
 
