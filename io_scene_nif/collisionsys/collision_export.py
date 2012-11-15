@@ -37,6 +37,16 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import bpy
+from bpy_extras.io_utils import unpack_list, unpack_face_list
+import mathutils
+
+from functools import reduce
+import operator
+
+import pyffi
+from pyffi.formats.nif import NifFormat
+from pyffi.utils.quickhull import qhull3d
 
 class bhkshape_export():
 
