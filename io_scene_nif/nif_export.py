@@ -1034,13 +1034,13 @@ class NifExport(NifCommon):
                 self.export_collision(b_obj, parent_block)
                 return None # done; stop here
 
-            elif (b_obj_type == 'MESH' and b_obj.show_bounds == True
+            elif (b_obj_type == 'MESH' and b_obj.show_bounds
                   and b_obj.name.lower().startswith('bsbound')):
                 # add a bounding box
                 self.boundhelper.export_bounding_box(b_obj, parent_block, bsbound=True)
                 return None # done; stop here
 
-            elif (b_obj_type == 'MESH' and b_obj.show_bounds == True
+            elif (b_obj_type == 'MESH' and b_obj.show_bounds
                   and b_obj.name.lower().startswith("bounding box")):
                 # Morrowind bounding box
                 self.boundhelper.export_bounding_box(b_obj, parent_block, bsbound=False)
