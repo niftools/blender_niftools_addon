@@ -27,7 +27,7 @@ mkdir -p $BLENDERADDONS
 rm -rf $BLENDERADDONS/io_scene_nif/
 
 # create zip
-$DIR/makezip.sh
+sh $DIR/makezip.sh
 
 # copy files from repository to blender addons folder
 unzip "$DIR/${NAME}-${VERSION}.zip" -d $BLENDERADDONS
