@@ -112,6 +112,9 @@ class SingleNif(Base):
     EPSILON = 0.005
     """A small value used when comparing floats."""
 
+    n_game = 'OBLIVION'
+    """Game for nif export."""
+
     n_filepath_0 = None
     """The name of the nif file to import
     (set automatically from :attr:`SingleNif.n_name`).
@@ -227,6 +230,7 @@ class SingleNif(Base):
         bpy.ops.export_scene.nif(
             filepath=n_filepath,
             log_level='DEBUG',
+            game=self.n_game,
             )
 
     def test_import_export(self):
