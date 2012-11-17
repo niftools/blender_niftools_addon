@@ -12,7 +12,8 @@ from test.collisions import gen_boundbox
 
 class TestBBox(SingleNif):
     n_name = "collisions/boundbox"
-    b_name = "BBoxTest"
+    b_name = "Bounding Box"
+    n_game = "MORROWIND"
 
     def b_create_objects(self):
         # TODO
@@ -20,6 +21,8 @@ class TestBBox(SingleNif):
         bpy.ops.mesh.primitive_cube_add()
         b_obj = bpy.data.objects[bpy.context.active_object.name]
         b_obj.name = self.b_name
+        b_obj.show_bounds = True
+        # the following are optional
         b_obj.draw_bounds_type = 'BOX'
         b_obj.draw_type = 'BOUNDS'
         b_obj.data.show_double_sided = False
@@ -29,6 +32,7 @@ class TestBBox(SingleNif):
 
     def b_check_data(self):
         b_bbox = bpy.data.objects[self.b_name]
+        nose.tools.assert_true(b_bbox.show_bounds)
         nose.tools.assert_equal(b_bbox.draw_bounds_type, 'BOX')
         nose.tools.assert_equal(b_bbox.draw_type, 'BOUNDS')
 
