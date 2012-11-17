@@ -15,6 +15,17 @@ class TestBBox(SingleNif):
     b_name = "Bounding Box"
     n_game = "MORROWIND"
 
+    b_verts = {
+        (1, 1, -1),
+        (-1, 1, 1),
+        (1, -1, -1),
+        (-1, -1, 1),
+        (-1, -1, -1),
+        (-1, 1, -1),
+        (1, 1, 1),
+        (1, -1, 1),
+        }
+
     def b_create_objects(self):
         # TODO
         # b_obj = self.b_create_base_geometry()
@@ -35,10 +46,15 @@ class TestBBox(SingleNif):
         nose.tools.assert_true(b_bbox.show_bounds)
         nose.tools.assert_equal(b_bbox.draw_bounds_type, 'BOX')
         nose.tools.assert_equal(b_bbox.draw_type, 'BOUNDS')
+        verts = {tuple(round(x, 4) for x in vert.co) for vert in b_bbox.data.vertices}
+        nose.tools.assert_set_equal(verts, self.b_verts)
 
     def n_check_data(self, n_data):
         n_bbox = n_data.roots[0].children[0]
         nose.tools.assert_equal(n_bbox.has_bounding_box, True)
+        nose.tools.assert_almost_equal(n_bbox.bounding_box.radius.x, 10)
+        nose.tools.assert_almost_equal(n_bbox.bounding_box.radius.y, 10)
+        nose.tools.assert_almost_equal(n_bbox.bounding_box.radius.z, 10)
 
 '''
 class TestBSBound(TestBaseGeometry):
