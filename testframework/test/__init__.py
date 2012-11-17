@@ -154,6 +154,12 @@ class SingleNif(Base):
         self.b_filepath_1 = "test/autoblend/" + self.n_name + "1.blend"
         self.b_filepath_2 = "test/autoblend/" + self.n_name + "2.blend"
 
+        if not os.path.exists(os.path.dirname(self.n_filepath_0)):
+            os.makedirs(os.path.dirname(self.n_filepath_0))
+
+        if not os.path.exists(os.path.dirname(self.b_filepath_0)):
+            os.makedirs(os.path.dirname(self.b_filepath_0))
+
     def _b_clear_check(self, b_obj_names):
         """Check that *b_obj_names* are really cleared from the scene."""
         try:
@@ -179,8 +185,6 @@ class SingleNif(Base):
 
     def b_save(self, b_filepath):
         """Save current scene to blend file."""
-        if not os.path.exists(os.path.dirname(b_filepath)):
-            os.makedirs(os.path.dirname(b_filepath))
         bpy.ops.wm.save_mainfile(filepath=b_filepath)
 
     def b_check_data(self):
