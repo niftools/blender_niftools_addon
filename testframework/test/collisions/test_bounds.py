@@ -14,24 +14,22 @@ class TestBound(TestBaseGeometry):
     b_name = "Bounding Box"
 
     def b_create_objects(self):
-
-        TestBaseGeometry.b_create_objects(self)
-        b_obj = bpy.data.objects[self.b_name]
+        b_obj = self.b_create_base_geometry()
         b_obj.draw_bounds_type = 'BOX'
         b_obj.draw_type = 'BOUNDS'
 
-        #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
-
+    def n_create_data(self):
+        n_data = TestBaseGeometry.n_create_data()
+        # TODO add bounding box
+        raise NotImplementedError
 
     def b_check_data(self):
-        pass
-        '''
-        b_bbox = b_obj[b_name]
+        b_bbox = bpy.data.objects[self.b_name]
         nose.tools.assert_equal(b_bbox.draw_bounds_type, 'BOX')
         nose.tools.assert_equal(b_bbox.draw_type, 'BOUNDS')
-        '''
+
     def n_check_data(self, n_data):
-        pass
+        raise NotImplementedError
         '''
         n_geom = n_data.roots[0].children[0]
         nose.tools.assert_equal(bbox.has_bounding_box, True)
@@ -42,15 +40,12 @@ class TestBSBound(TestBaseGeometry):
     n_name = "collisions/boundbox/bsbound"
     b_name = "BSBound"
 
-    def b_create_object(self):
+    def b_create_objects(self):
         b_obj = TestBaseGeometry.b_create_object(self)
         b_obj.name = self.b_name
 
         b_obj.draw_bounds_type = 'BOX'
         b_obj.draw_type = 'BOUNDS'
-
-        #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
-
 
         return b_obj
 
