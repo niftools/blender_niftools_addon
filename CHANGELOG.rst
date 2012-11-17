@@ -30,6 +30,8 @@ Version 2.6.0a3 (in development)
 
 * Documentation vastly improved.
 
+* Fix crash when combine shapes is enabled.
+
 Version 2.6.0a0 (20 Nov 2011)
 =============================
 
