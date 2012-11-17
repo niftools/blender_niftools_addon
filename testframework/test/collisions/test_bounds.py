@@ -6,22 +6,26 @@ import os
 
 import io_scene_nif.nif_export
 from pyffi.formats.nif import NifFormat
-from test.geometry.trishape.test_geometry import TestBaseGeometry
+from test import SingleNif
+from test.collisions import gen_boundbox
 
 
-class TestBound(TestBaseGeometry):
-    n_name = "collisions/boundbox/bound_box"
-    b_name = "Bounding Box"
+class TestBBox(SingleNif):
+    n_name = "collisions/boundbox"
+    b_name = "BBoxTest"
 
     def b_create_objects(self):
-        b_obj = self.b_create_base_geometry()
+        # TODO
+        # b_obj = self.b_create_base_geometry()
+        bpy.ops.mesh.primitive_cube_add()
+        b_obj = bpy.data.objects[bpy.context.active_object.name]
+        b_obj.name = self.b_name
         b_obj.draw_bounds_type = 'BOX'
         b_obj.draw_type = 'BOUNDS'
+        b_obj.data.show_double_sided = False
 
     def n_create_data(self):
-        n_data = TestBaseGeometry.n_create_data()
-        # TODO add bounding box
-        raise NotImplementedError
+        return gen_boundbox.n_create_data()
 
     def b_check_data(self):
         b_bbox = bpy.data.objects[self.b_name]
@@ -29,11 +33,8 @@ class TestBound(TestBaseGeometry):
         nose.tools.assert_equal(b_bbox.draw_type, 'BOUNDS')
 
     def n_check_data(self, n_data):
-        raise NotImplementedError
-        '''
-        n_geom = n_data.roots[0].children[0]
-        nose.tools.assert_equal(bbox.has_bounding_box, True)
-        '''
+        n_bbox = n_data.roots[0].children[0]
+        nose.tools.assert_equal(n_bbox.has_bounding_box, True)
 
 '''
 class TestBSBound(TestBaseGeometry):
