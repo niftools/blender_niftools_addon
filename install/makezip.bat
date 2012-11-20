@@ -39,6 +39,8 @@ popd
 
 rmdir /s /q %DIR%\temp
 
+goto end
+
 :sevenzipnotfounderror
 echo.Please set SEVENZIPHOME to the folder where 7-zip is installed to, such as:
 echo.
