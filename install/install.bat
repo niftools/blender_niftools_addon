@@ -10,7 +10,8 @@ set ROOT=%DIR%\..
 set /p VERSION=<%ROOT%\io_scene_nif\VERSION
 set NAME=blender_nif_plugin
 
-if "%APPDATABLENDERADDONS%" == "" goto pleasesetblenderaddons
+if "%APPDATABLENDERADDONS%" == "" goto :blenderaddonserrormsg
+if "%SEVENZIPHOME%" == "" goto sevenziperrormsg
 
 echo.Installing to:
 echo.%APPDATABLENDERADDONS%\io_scene_nif
@@ -23,17 +24,26 @@ call "%DIR%\makezip.bat"
 
 rem copy files from repository to blender addons folder
 pushd "%APPDATABLENDERADDONS%"
-"%PROGRAMFILES%\7-Zip\7z.exe" x "%DIR%\%NAME%-%VERSION%.zip"
+"%SEVENZIPHOME%\7z.exe" x "%DIR%\%NAME%-%VERSION%.zip"
 popd
 
 goto end
 
-:pleasesetblenderaddons
+:blenderaddonserrormsg
 echo.Please set APPDATABLENDERADDONS to the folder where the blender addons reside, such as:
 echo.
 echo.  set APPDATABLENDERADDONS=%APPDATA%\Blender Foundation\Blender\2.63\scripts\addons
 echo.
 pause
 goto end
+
+:sevenziperrormsg
+echo.Please set SEVENZIPHOME to the folder where 7-zip is installed to, such as:
+echo.
+echo. set SEVENZIPHOME=%PROGRAMFILES%\7-Zip\
+echo.
+pause
+goto end
+
 
 :end
