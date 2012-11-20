@@ -7,6 +7,8 @@ set ROOT=%DIR%\..
 set /p VERSION=<%ROOT%\io_scene_nif\VERSION
 set NAME=blender_nif_plugin
 
+if "%SEVENZIPHOME%" == "" goto sevenzipnotfounderror
+
 if exist "%DIR%\temp" rmdir /s /q "%DIR%\temp"
 pushd %ROOT%
 git clean -xfd
@@ -32,7 +34,16 @@ xcopy %ROOT%\AUTHORS.rst io_scene_nif
 xcopy %ROOT%\CHANGELOG.rst io_scene_nif
 xcopy %ROOT%\LICENSE.rst io_scene_nif
 xcopy %ROOT%\README.rst io_scene_nif
-"%PROGRAMFILES%\7-Zip\7z.exe" a -tzip "%DIR%\%NAME%-%VERSION%.zip" -xr!__pycache__ -xr!.git -xr!.project -xr!fileformat.dtd io_scene_nif
+"%SEVENZIPHOME%\7z.exe" a -tzip "%DIR%\%NAME%-%VERSION%.zip" -xr!__pycache__ -xr!.git -xr!.project -xr!fileformat.dtd io_scene_nif
 popd
 
 rmdir /s /q %DIR%\temp
+
+:sevenzipnotfounderror
+echo.Please set SEVENZIPHOME to the folder where 7-zip is installed to, such as:
+echo.
+echo. set SEVENZIPHOME=%PROGRAMFILES%\7-Zip\
+echo.
+pause
+
+:end
