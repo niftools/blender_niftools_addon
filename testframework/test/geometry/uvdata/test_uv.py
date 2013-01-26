@@ -9,7 +9,7 @@ from test.geometry.trishape.test_geometry import TestBaseGeometry
 from pyffi.formats.nif import NifFormat
 
 class TestBaseUV(TestBaseGeometry):
-    n_name = "geometry/base_uv"
+    n_name = "geometry/uvdata/base_uv"
 
     def b_create_objects(self):
         TestBaseGeometry.b_create_objects(self)
