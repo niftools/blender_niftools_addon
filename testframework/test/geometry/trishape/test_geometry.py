@@ -164,7 +164,7 @@ class TestBaseGeometry(SingleNif):
         
         #TriData
         #    Flags: blender exports| Continue, Maya| Triangles, Pyffi| Bound.
-        #  Consistancy:
+        #    Consistancy:
         #    radius:
 
 class TestNonUniformlyScaled(Base):
