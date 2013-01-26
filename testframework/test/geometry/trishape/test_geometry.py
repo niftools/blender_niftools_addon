@@ -9,7 +9,9 @@ from pyffi.formats.nif import NifFormat
 
 from test import Base
 from test import SingleNif
+from test.version import data 
 from test.geometry.trishape import gen_geometry
+
 
 class TestBaseGeometry(SingleNif):
     """Test base geometry, single blender object."""
@@ -89,6 +91,8 @@ class TestBaseGeometry(SingleNif):
         b_transform_mat = b_trans_mat * b_rot_mat * b_scale_mat
         return b_transform_mat
     
+#Check Blender Data
+    
     def b_check_data(self):
         b_obj = bpy.data.objects[self.b_name]
         self.b_check_geom_obj(b_obj)
@@ -124,7 +128,9 @@ class TestBaseGeometry(SingleNif):
         nose.tools.assert_set_equal(verts, self.b_verts)
 
     def n_create_data(self):
-        return gen_geometry.n_create_data()
+        self.n_data = data.n_create_data(self.n_data)
+        self.n_data = gen_geometry.n_create_blocks(self.n_data)
+        return self.n_data
 
     def n_check_data(self, n_data):
         n_trishape = n_data.roots[0].children[0]

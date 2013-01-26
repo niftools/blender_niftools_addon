@@ -109,6 +109,9 @@ class SingleNif(Base):
     n_name = None
     """Base name of nif file (without ``0.nif`` at the end)."""
 
+    n_data = NifFormat.Data()
+    """Store the nif as it generate, built in blocks. Useful to see generated nif in-memory"""
+    
     EPSILON = 0.005
     """A small value used when comparing floats."""
 
