@@ -16,7 +16,7 @@ from test.geometry.trishape import gen_geometry
 class TestBaseGeometry(SingleNif):
     """Test base geometry, single blender object."""
 
-    n_name = 'geometry/base_geometry'
+    n_name = 'geometry/trishape/base_geometry'
     # (documented in base class)
 
     b_name = 'Cube'
