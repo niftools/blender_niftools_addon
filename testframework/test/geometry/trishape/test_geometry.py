@@ -9,7 +9,7 @@ from pyffi.formats.nif import NifFormat
 
 from test import Base
 from test import SingleNif
-from test.version import data 
+from test.data import gen_data 
 from test.geometry.trishape import gen_geometry
 
 
@@ -37,7 +37,7 @@ class TestBaseGeometry(SingleNif):
     def b_create_objects(self):
         # (documented in base class)
         self.b_create_base_geometry()
-
+        
     def b_create_base_geometry(self):
         """Create and return a single polyhedron blender object."""
 
@@ -128,7 +128,7 @@ class TestBaseGeometry(SingleNif):
         nose.tools.assert_set_equal(verts, self.b_verts)
 
     def n_create_data(self):
-        self.n_data = data.n_create_data(self.n_data)
+        self.n_data = gen_data.n_create_data(self.n_data)
         self.n_data = gen_geometry.n_create_blocks(self.n_data)
         return self.n_data
 

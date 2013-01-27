@@ -3,12 +3,17 @@
 import bpy
 import nose.tools
 
-import io_scene_nif.nif_export
-from pyffi.formats.nif import NifFormat
+from test import SingleNif
+from test.data import gen_data 
+from test.geometry.trishape import gen_geometry
 from test.geometry.trishape.test_geometry import TestBaseGeometry
+from test.geometry.vertexcolor import gen_vertexcolor
 
-class TestBaseVertexColor(TestBaseGeometry):
+
+class TestBaseVertexColor(SingleNif):
     n_name = "geometry/vertexcolor/base_vertex_color"
+
+    b_name = "Cube"
 
     #: vertex color specific stuff
     b_faces = [(4,0,3),#0
@@ -49,8 +54,11 @@ class TestBaseVertexColor(TestBaseGeometry):
 
 
     def b_create_objects(self):
-        TestBaseGeometry.b_create_objects(self)
-        b_obj = bpy.data.objects[self.b_name]
+        b_obj = TestBaseGeometry().b_create_base_geometry()
+        self.b_create_vertexcolor(b_obj)
+        
+    def b_create_vertexcolor(self, b_obj):
+        """Create vertex colors"""
 
         bpy.ops.object.editmode_toggle()
         bpy.ops.mesh.quads_convert_to_tris()
@@ -73,27 +81,35 @@ class TestBaseVertexColor(TestBaseGeometry):
                 b_color.g = self.vertcol[n_vert][1]
                 b_color.b = self.vertcol[n_vert][2]
 
-        #bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
-
     def b_check_data(self):
         # TODO nif file has wrong transform and wrong geometry
         #TestBaseGeometry.b_check_data(self)
         b_obj = bpy.data.objects[self.b_name]
         b_mesh = b_obj.data
+        self.b_check_vertex_layers(b_mesh)
+    
+    def b_check_vertex_layers(self, b_mesh):
         # TODO fix, length is 2 during one of the checks
         #nose.tools.assert_equal(len(b_mesh.vertex_colors), 1)
         nose.tools.assert_equal(b_mesh.vertex_colors[0].name, 'VertexColor')
-        b_meshcolor = b_obj.data.vertex_colors["VertexColor"].data
+        b_meshcolor = b_mesh.vertex_colors["VertexColor"].data
         for b_col_index, b_meshcolor in enumerate(b_meshcolor):
-            self.b_check_vert(b_col_index, b_meshcolor)
+            self.b_check_vert_colors(b_col_index, b_meshcolor)
 
-    def b_check_vert(self, f_index, vertexcolor):
+    def b_check_vert_colors(self, f_index, vertexcolor):
         for vert_index in [0,1,2]:
             b_color = getattr(vertexcolor, "color%s" % (vert_index + 1))
             # TODO fix
             #nose.tools.assert_almost_equal(b_color.r, self.vertcol[f_index][0])
             #nose.tools.assert_almost_equal(b_color.g, self.vertcol[f_index][1])
             #nose.tools.assert_almost_equal(b_color.b, self.vertcol[f_index][2])
+
+    def n_create_data(self):
+        self.n_data = gen_data.n_create_data(self.n_data)
+        self.n_data.roots[0].children[0] = gen_geometry.n_create_blocks(self.n_data.roots[0].children[0])
+        
+        self.n_data = gen_vertexcolor.n_add_vertex_colors(self.n_data)
+        return self.n_data
 
     def n_check_data(self, n_data):
         # TODO nif file has wrong transform and wrong geometry
