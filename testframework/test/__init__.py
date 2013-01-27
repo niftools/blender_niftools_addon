@@ -152,13 +152,13 @@ class SingleNif(Base):
         """Initialize the test."""
         Base.__init__(self)
                 
-        self.n_filepath_0 = "test/nif/" + self.n_name + "0.nif"
-        self.n_filepath_1 = "test/nif/" + self.n_name + "1.nif"
-        self.n_filepath_2 = "test/nif/" + self.n_name + "2.nif"
+        self.n_filepath_0 = "nif/" + self.n_name + "0.nif"
+        self.n_filepath_1 = "nif/" + self.n_name + "1.nif"
+        self.n_filepath_2 = "nif/" + self.n_name + "2.nif"
 
-        self.b_filepath_0 = "test/autoblend/" + self.n_name + "0.blend"
-        self.b_filepath_1 = "test/autoblend/" + self.n_name + "1.blend"
-        self.b_filepath_2 = "test/autoblend/" + self.n_name + "2.blend"
+        self.b_filepath_0 = "autoblend/" + self.n_name + "0.blend"
+        self.b_filepath_1 = "autoblend/" + self.n_name + "1.blend"
+        self.b_filepath_2 = "autoblend/" + self.n_name + "2.blend"
 
         if not os.path.exists(os.path.dirname(self.n_filepath_0)):
             os.makedirs(os.path.dirname(self.n_filepath_0))
