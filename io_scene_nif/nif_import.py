@@ -1429,9 +1429,11 @@ class NifImport(NifCommon):
 
         # recalculate mesh to render correctly
         # implementation note: update() without validate() can cause crash
+        b_obj.show_smooth = True
         b_mesh.calc_normals()
         b_mesh.validate()
         b_mesh.update()
+        
 
         return b_obj
 
