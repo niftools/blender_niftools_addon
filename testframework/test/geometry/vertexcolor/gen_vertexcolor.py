@@ -28,4 +28,4 @@ def n_add_vertex_colors(n_nitrishapedata):
     with ref(n_nitrishapedata.vertex_colors[7]) as n_color4:
         n_color4.b = 1
         n_color4.a = 1
-    return n_trishapedata
+    return n_nitrishapedata
