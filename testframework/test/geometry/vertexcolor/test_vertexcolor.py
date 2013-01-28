@@ -108,7 +108,6 @@ class TestBaseVertexColor(SingleNif):
         self.n_data = gen_geometry.n_create_blocks(self.n_data)
         
         n_nitrishapedata = self.n_data.roots[0].children[0].data
-        print(n_nitrishapedata)
         self.n_data.roots[0].children[0].data  = gen_vertexcolor.n_add_vertex_colors(n_nitrishapedata)
         return self.n_data
 
