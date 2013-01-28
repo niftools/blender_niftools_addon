@@ -9,7 +9,6 @@ from test.geometry.trishape import gen_geometry
 from test.geometry.trishape.test_geometry import TestBaseGeometry
 from test.geometry.vertexcolor import gen_vertexcolor
 
-
 class TestBaseVertexColor(SingleNif):
     n_name = "geometry/vertexcolor/base_vertex_color"
 
@@ -106,9 +105,11 @@ class TestBaseVertexColor(SingleNif):
 
     def n_create_data(self):
         self.n_data = gen_data.n_create_data(self.n_data)
-        self.n_data.roots[0].children[0] = gen_geometry.n_create_blocks(self.n_data.roots[0].children[0])
+        self.n_data = gen_geometry.n_create_blocks(self.n_data)
         
-        self.n_data = gen_vertexcolor.n_add_vertex_colors(self.n_data)
+        n_nitrishapedata = self.n_data.roots[0].children[0].data
+        print(n_nitrishapedata)
+        self.n_data.roots[0].children[0].data  = gen_vertexcolor.n_add_vertex_colors(n_nitrishapedata)
         return self.n_data
 
     def n_check_data(self, n_data):
