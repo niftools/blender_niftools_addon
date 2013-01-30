@@ -75,6 +75,45 @@ def n_create_blocks(n_data):
             n_vector3.x = 7.5
             n_vector3.y = -3.75
             n_vector3.z = 1.75
+            
+        n_nitrishapedata.has_normals = True
+        n_nitrishapedata.normals.update_size()
+        with ref(n_nitrishapedata.normals[0]) as n_vector3:
+            n_vector3.x = 0.577349
+            n_vector3.y = 0.577349
+            n_vector3.z = -0.577349
+        with ref(n_nitrishapedata.normals[1]) as n_vector3:
+            n_vector3.x = 0.577349
+            n_vector3.y = -0.577349
+            n_vector3.z = -0.577349
+        with ref(n_nitrishapedata.normals[2]) as n_vector3:
+            n_vector3.x = -0.577349
+            n_vector3.y = -0.577349
+            n_vector3.z = -0.577349
+        with ref(n_nitrishapedata.normals[3]) as n_vector3:
+            n_vector3.x = -0.577349
+            n_vector3.y = 0.577349
+            n_vector3.z = -0.577349
+        with ref(n_nitrishapedata.normals[4]) as n_vector3:
+            n_vector3.x = 0.577349
+            n_vector3.y = 0.577349
+            n_vector3.z = 0.577349
+        with ref(n_nitrishapedata.normals[5]) as n_vector3:
+            n_vector3.x = -0.577349
+            n_vector3.y = 0.577349
+            n_vector3.z = 0.577349
+        with ref(n_nitrishapedata.normals[6]) as n_vector3:
+            n_vector3.x = -0.577349
+            n_vector3.y = -0.577349
+            n_vector3.z = 0.577349
+        with ref(n_nitrishapedata.normals[7]) as n_vector3:
+            n_vector3.x = 0.577349
+            n_vector3.y = -0.577349
+            n_vector3.z = 0.577349
+        with ref(n_nitrishapedata.center) as n_vector3:
+            n_vector3.x = 4.76837e-07
+            n_vector3.y = 2.14577e-06
+        
         n_nitrishapedata.radius = 11.1692
         n_nitrishapedata.consistency_flags = 16384
         n_nitrishapedata.num_triangles = 12
