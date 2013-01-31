@@ -99,8 +99,8 @@ class TestBaseGeometry(SingleNif):
         
     def b_check_geom_obj(self, b_obj):
         b_mesh = b_obj.data
-        self.b_check_geom(b_mesh)
         self.b_check_transform(b_obj)
+        self.b_check_geom(b_mesh)
     
     def b_check_transform(self, b_obj):
         
@@ -126,6 +126,9 @@ class TestBaseGeometry(SingleNif):
             for vert in b_mesh.vertices
             }
         nose.tools.assert_set_equal(verts, self.b_verts)
+        print("LOOK HERE")
+        for face in b_mesh.faces:
+            print(face.normal)
 
     def n_create_data(self):
         self.n_data = gen_data.n_create_data(self.n_data)
@@ -152,6 +155,7 @@ class TestBaseGeometry(SingleNif):
         nose.tools.assert_equal(n_geom.scale - 0.75 < self.EPSILON, True) # scale
     
     def n_check_trishape_data(self, n_trishape_data):
+        nose.tools.assert_true(n_trishape_data.has_vertices)
         nose.tools.assert_equal(n_trishape_data.num_vertices, 8)
         nose.tools.assert_equal(n_trishape_data.num_triangles, 12)
         verts = {
@@ -159,6 +163,10 @@ class TestBaseGeometry(SingleNif):
             for vert in n_trishape_data.vertices
             }
         nose.tools.assert_set_equal(verts, self.b_verts)
+        nose.tools.assert_true(n_trishape_data.has_normals)
+        
+        #nose.tools.assert_equal(n_trishape_data.num_normals, 8)
+
         
         #TODO: Additional checks needed.
         
