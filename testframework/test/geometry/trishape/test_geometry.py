@@ -37,34 +37,37 @@ class TestBaseGeometry(SingleNif):
     def b_create_objects(self):
         # (documented in base class)
         self.b_create_base_geometry()
-        
-    def b_create_base_geometry(self):
+    
+    @classmethod
+    def b_create_base_geometry(cls):
         """Create and return a single polyhedron blender object."""
 
         # create a base mesh, and set its name
         bpy.ops.mesh.primitive_cube_add()
         b_obj = bpy.data.objects[bpy.context.active_object.name]
-        b_obj.name = self.b_name
+        b_obj.name = cls.b_name
 
         # transform it into something less trivial
-        self.b_scale_object(b_obj)
-        self.b_scale_single_face(b_obj)
-        b_obj.matrix_local = self.b_get_transform_matrix()
+        cls.b_scale_object(b_obj)
+        cls.b_scale_single_face(b_obj)
+        b_obj.matrix_local = cls.b_get_transform_matrix()
 
         # primitive_cube_add sets double sided flag, fix this
         b_obj.data.show_double_sided = False
-
+                
         return b_obj
 
-    def b_scale_object(self, b_obj):
+    @classmethod
+    def b_scale_object(cls, b_obj):
         """Scale the object differently along each axis."""
-
+        
         bpy.ops.transform.resize(value=(7.5,1,1), constraint_axis=(True,False,False))
         bpy.ops.transform.resize(value=(1,7.5,1), constraint_axis=(False,True,False))
         bpy.ops.transform.resize(value=(1,1,3.5), constraint_axis=(False,False,True))
         bpy.ops.object.transform_apply(scale=True)
 
-    def b_scale_single_face(self, b_obj):
+    @classmethod
+    def b_scale_single_face(cls, b_obj):
         """Scale a single face of the object."""
 
         # scale single face
@@ -75,17 +78,21 @@ class TestBaseGeometry(SingleNif):
         for b_vert_index in b_obj.data.faces[2].vertices: 
             b_obj.data.vertices[b_vert_index].co[1] = b_obj.data.vertices[b_vert_index].co[1] * 0.5
             b_obj.data.vertices[b_vert_index].co[2] = b_obj.data.vertices[b_vert_index].co[2] * 0.5
-                                 
-    def b_get_transform_matrix(self):
+                        
+    @classmethod         
+    def b_get_transform_matrix(cls):
         """Return a non-trivial transform matrix."""
         
+        #translation
         b_trans_mat = mathutils.Matrix.Translation((20.0, 20.0, 20.0)) 
         
+        #rotation
         b_rot_mat_x = mathutils.Matrix.Rotation(math.radians(30.0), 4, 'X') 
         b_rot_mat_y = mathutils.Matrix.Rotation(math.radians(60.0), 4, 'Y')
         b_rot_mat_z = mathutils.Matrix.Rotation(math.radians(90.0), 4, 'Z')        
         b_rot_mat =  b_rot_mat_x * b_rot_mat_y * b_rot_mat_z
         
+        #scale
         b_scale_mat = mathutils.Matrix.Scale(0.75, 4)
         
         b_transform_mat = b_trans_mat * b_rot_mat * b_scale_mat
@@ -97,12 +104,14 @@ class TestBaseGeometry(SingleNif):
         b_obj = bpy.data.objects[self.b_name]
         self.b_check_geom_obj(b_obj)
         
-    def b_check_geom_obj(self, b_obj):
+    @classmethod
+    def b_check_geom_obj(cls, b_obj):
         b_mesh = b_obj.data
-        self.b_check_transform(b_obj)
-        self.b_check_geom(b_mesh)
+        cls.b_check_transform(b_obj)
+        cls.b_check_geom(b_mesh)
     
-    def b_check_transform(self, b_obj):
+    @classmethod
+    def b_check_transform(cls, b_obj):
         
         b_loc_vec, b_rot_quat, b_scale_vec = b_obj.matrix_local.decompose() # transforms
         
@@ -110,13 +119,15 @@ class TestBaseGeometry(SingleNif):
         
         b_rot_quat.to_euler()
         b_rot_eul = b_rot_quat
-        nose.tools.assert_equal((b_rot_eul.x - math.radians(30.0)) < self.EPSILON, True) # x rotation
-        nose.tools.assert_equal((b_rot_eul.y - math.radians(60.0)) < self.EPSILON, True) # y rotation
-        nose.tools.assert_equal((b_rot_eul.z - math.radians(90.0)) < self.EPSILON, True) # z rotation
-        nose.tools.assert_equal((b_obj.scale - mathutils.Vector((0.75, 0.75, 0.75))) 
-                < mathutils.Vector((self.EPSILON,self.EPSILON,self.EPSILON)), True) # uniform scale
+        nose.tools.assert_equal((b_rot_eul.x - math.radians(30.0)) < cls.EPSILON, True) # x rotation
+        nose.tools.assert_equal((b_rot_eul.y - math.radians(60.0)) < cls.EPSILON, True) # y rotation
+        nose.tools.assert_equal((b_rot_eul.z - math.radians(90.0)) < cls.EPSILON, True) # z rotation
         
-    def b_check_geom(self, b_mesh):
+        nose.tools.assert_equal((b_obj.scale - mathutils.Vector((0.75, 0.75, 0.75))) 
+                < mathutils.Vector((cls.EPSILON, cls.EPSILON, cls.EPSILON)), True) # uniform scale
+    
+    @classmethod
+    def b_check_geom(cls, b_mesh):
         num_triangles = len( [face for face in b_mesh.faces if len(face.vertices) == 3]) # check for tri
         num_triangles += 2 * len( [face for face in b_mesh.faces if len(face.vertices) == 4]) # face = 2 tris
         nose.tools.assert_equal(len(b_mesh.vertices), 8)
@@ -125,10 +136,7 @@ class TestBaseGeometry(SingleNif):
             tuple(round(co, 4) for co in vert.co)
             for vert in b_mesh.vertices
             }
-        nose.tools.assert_set_equal(verts, self.b_verts)
-        print("LOOK HERE")
-        for face in b_mesh.faces:
-            print(face.normal)
+        nose.tools.assert_set_equal(verts, cls.b_verts)
 
     def n_create_data(self):
         self.n_data = gen_data.n_create_data(self.n_data)
@@ -138,23 +146,26 @@ class TestBaseGeometry(SingleNif):
     def n_check_data(self, n_data):
         n_trishape = n_data.roots[0].children[0]
         self.n_check_trishape(n_trishape)
-        self.n_check_transform(n_trishape)
-        self.n_check_trishape_data(n_trishape.data)
 
-    def n_check_trishape(self, n_geom):
-        nose.tools.assert_is_instance(n_geom, NifFormat.NiTriShape)
+    @classmethod
+    def n_check_trishape(cls, n_trishape):
+        nose.tools.assert_is_instance(n_trishape, NifFormat.NiTriShape)
+        cls.n_check_transform(n_trishape)
+        cls.n_check_trishape_data(n_trishape.data)
 
-    def n_check_transform(self, n_geom):        
+    @classmethod
+    def n_check_transform(cls, n_geom):        
         nose.tools.assert_equal(n_geom.translation.as_tuple(),(20.0, 20.0, 20.0)) # location
         
         n_rot_eul = mathutils.Matrix(n_geom.rotation.as_tuple()).to_euler()
-        nose.tools.assert_equal((n_rot_eul.x - math.radians(30.0)) < self.EPSILON, True) # x rotation
-        nose.tools.assert_equal((n_rot_eul.y - math.radians(60.0)) < self.EPSILON, True) # y rotation
-        nose.tools.assert_equal((n_rot_eul.z - math.radians(90.0)) < self.EPSILON, True) # z rotation
+        nose.tools.assert_equal((n_rot_eul.x - math.radians(30.0)) < cls.EPSILON, True) # x rotation
+        nose.tools.assert_equal((n_rot_eul.y - math.radians(60.0)) < cls.EPSILON, True) # y rotation
+        nose.tools.assert_equal((n_rot_eul.z - math.radians(90.0)) < cls.EPSILON, True) # z rotation
         
-        nose.tools.assert_equal(n_geom.scale - 0.75 < self.EPSILON, True) # scale
+        nose.tools.assert_equal(n_geom.scale - 0.75 < cls.EPSILON, True) # scale
     
-    def n_check_trishape_data(self, n_trishape_data):
+    @classmethod
+    def n_check_trishape_data(cls, n_trishape_data):
         nose.tools.assert_true(n_trishape_data.has_vertices)
         nose.tools.assert_equal(n_trishape_data.num_vertices, 8)
         nose.tools.assert_equal(n_trishape_data.num_triangles, 12)
@@ -162,16 +173,17 @@ class TestBaseGeometry(SingleNif):
             tuple(round(co, 4) for co in vert.as_list())
             for vert in n_trishape_data.vertices
             }
-        nose.tools.assert_set_equal(verts, self.b_verts)
-        nose.tools.assert_true(n_trishape_data.has_normals)
+        nose.tools.assert_set_equal(verts, cls.b_verts)
         
+        #See Issue #26
+        #nose.tools.assert_true(n_trishape_data.has_normals)
         #nose.tools.assert_equal(n_trishape_data.num_normals, 8)
 
         
         #TODO: Additional checks needed.
         
         #TriData
-        #    Flags: blender exports| Continue, Maya| Triangles, Pyffi| Bound.
+        #    Flags: blender - Continue, Maya - Triangles, Pyffi - Bound.
         #    Consistancy:
         #    radius:
 
