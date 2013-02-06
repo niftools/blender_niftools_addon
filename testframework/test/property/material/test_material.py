@@ -1,4 +1,4 @@
-"""Export and import material meshes."""
+"""Export and import material."""
 
 import bpy
 import nose.tools
@@ -14,43 +14,47 @@ from test.property.material import gen_material
 class TestMaterialProperty(SingleNif):
     n_name = 'property/material/base_material'
     b_name = 'Cube'
-    
+
     def b_create_objects(self):
-        b_obj = TestBaseGeometry().b_create_base_geometry()
+        b_obj = TestBaseGeometry.b_create_base_geometry()
         b_obj.name = self.b_name
         self.b_create_material_block(b_obj)
 
-    def b_create_material_block(self, b_obj):
+    @classmethod
+    def b_create_material_block(cls, b_obj):
         b_mat = bpy.data.materials.new(name='Material')
-        b_mat.specular_intensity = 0 # disable NiSpecularProperty
+        b_mat = cls.b_create_material_property(b_mat)
         b_obj.data.materials.append(b_mat)
         bpy.ops.object.shade_smooth()
-        self.b_create_material_property(b_mat)
         return b_obj
-
-    def b_create_material_property(self, b_mat):
-        # TODO_3.0 - See above
-        b_mat.ambient = 1.0
-        b_mat.diffuse_color = (1.0,1.0,1.0)
-        b_mat.diffuse_intensity = 1.0
+    
+    @classmethod
+    def b_create_material_property(cls, b_mat):
+        b_mat.diffuse_color = (1.0, 1.0, 1.0) # default - (0.8, 0.8, 0.8)
+        b_mat.diffuse_intensity = 1.0 # default - 0.8
+        b_mat.specular_intensity = 0 # disable NiSpecularProperty
+        return b_mat
 
     def b_check_data(self):
         b_obj = bpy.data.objects[self.b_name]
-        TestBaseGeometry().b_check_geom_obj(b_obj)
+        TestBaseGeometry.b_check_geom_obj(b_obj)
         self.b_check_material_block(b_obj)
 
-    def b_check_material_block(self, b_obj):
+    @classmethod
+    def b_check_material_block(cls, b_obj):
         b_mesh = b_obj.data
         b_mat = b_mesh.materials[0]
         nose.tools.assert_equal(len(b_mesh.materials), 1)
-        self.b_check_material_property(b_mat)
+        cls.b_check_material_property(b_mat)
 
-    def b_check_material_property(self, b_mat):
+    @classmethod
+    def b_check_material_property(cls, b_mat):
         nose.tools.assert_equal(b_mat.ambient, 1.0)
         nose.tools.assert_equal(b_mat.diffuse_color[0], 1.0)
         nose.tools.assert_equal(b_mat.diffuse_color[1], 1.0)
         nose.tools.assert_equal(b_mat.diffuse_color[2], 1.0)
 
+    
     def n_create_data(self):
         self.n_data = gen_data.n_create_data(self.n_data)
         self.n_data = gen_geometry.n_create_blocks(self.n_data)
@@ -60,27 +64,18 @@ class TestMaterialProperty(SingleNif):
         return self.n_data
 
     def n_check_data(self, n_data):
-        TestBaseGeometry().n_check_data(n_data)
-        self.n_check_material_block(n_data)
+        n_nitrishape = n_data.roots[0].children[0]
+        TestBaseGeometry.n_check_trishape(n_nitrishape)      
+        self.n_check_material_block(n_nitrishape)
         
-    def n_check_material_block(self, n_data):
-        n_geom = n_data.roots[0].children[0]
-        nose.tools.assert_equal(n_geom.num_properties, 1)
-        self.n_check_material_property(n_geom.properties[0])
+    @classmethod
+    def n_check_material_block(cls, n_nitrishape):
+        nose.tools.assert_equal(n_nitrishape.num_properties, 1)
+        cls.n_check_material_property(n_nitrishape.properties[0])
 
-    '''
-    TODO_3.0 - per version checking????
-        self.n_check_flags(n_data.header())
-
-    def n_check_flags(self, n_header):
-        pass
-        if(self.n_header.version == 'MORROWIND'):
-            nose.tools.assert_equal(n_geom.properties[0].flags == 1)
-    '''
-
-    def n_check_material_property(self, n_mat_prop):
+    @classmethod
+    def n_check_material_property(cls, n_mat_prop):
         nose.tools.assert_is_instance(n_mat_prop, NifFormat.NiMaterialProperty)
-        # TODO - Refer to header - can be ignored for now, defaults.
         nose.tools.assert_equal((n_mat_prop.ambient_color.r,
                                  n_mat_prop.ambient_color.g,
                                  n_mat_prop.ambient_color.b), (1.0,1.0,1.0))
@@ -88,10 +83,67 @@ class TestMaterialProperty(SingleNif):
         nose.tools.assert_equal((n_mat_prop.diffuse_color.r,
                                  n_mat_prop.diffuse_color.g,
                                  n_mat_prop.diffuse_color.b), (1.0,1.0,1.0))
+
+        nose.tools.assert_equal(n_mat_prop.alpha, 1.0)
+
+
+class TestGlossProperty(SingleNif):
+    """Export and import material meshes with gloss."""
+
+    n_name = "property/material/base_material"
+    b_name = 'Cube'
+
+    def b_create_objects(self):
+        b_obj = TestBaseGeometry.b_create_base_geometry()
+        b_obj = TestMaterialProperty.b_create_material_block(b_obj)
+        b_obj.name = self.b_name
         
+        b_mat = b_obj.data.materials[0]
+        b_obj.data.materials[0] = self.b_create_gloss_property(b_mat)
+        
+    @classmethod
+    def b_create_gloss_property(cls, b_mat):
+        b_mat.specular_hardness = 100
+        return b_mat
+
+    def b_check_data(self):
+        b_obj = bpy.data.objects[self.b_name]
+        TestMaterialProperty.b_check_material_block(b_obj)
+        TestGlossProperty.b_check_gloss_block(b_obj)
+
+    @classmethod
+    def b_check_gloss_block(cls, b_obj):
+        b_mesh = b_obj.data
+        b_mat = b_mesh.materials[0]
+        cls.b_check_gloss_property(b_mat)
+
+    @classmethod
+    def b_check_gloss_property(cls, b_mat):
+        nose.tools.assert_equal(b_mat.specular_hardness, 100)
+
+    def n_create_data(self):
+        self.n_data = gen_data.n_create_data(self.n_data)
+        self.n_data = gen_geometry.n_create_blocks(self.n_data)
+        
+        n_trishape = self.n_data.roots[0].children[0]
+        self.n_data.roots[0].children[0] = gen_material.n_attach_material_prop(n_trishape)
+        self.n_data.roots[0].children[0].properties[0] = gen_material.n_alter_glossiness(n_trishape.properties[0])
+        
+        return self.n_data
+
+    def n_check_data(self, n_data):
+        n_geom = n_data.roots[0].children[0]
+        TestMaterialProperty.n_check_material_property(n_geom.properties[0])
+        self.n_check_material_gloss_property(n_geom.properties[0])
+
+    @classmethod
+    def n_check_material_gloss_property(cls, n_mat_prop):
+        nose.tools.assert_equal(n_mat_prop.glossiness, 25) # n_gloss = 4/b_gloss
+
+
 '''
 class TestAmbientMaterial(TestMaterialProperty):
-    n_name = "property/material/base_material"
+    n_name = "property/material/base_ambient"
 
     def b_create_object(self):
         b_obj = TestBaseGeometry.b_create_object(self)
@@ -118,7 +170,7 @@ class TestAmbientMaterial(TestMaterialProperty):
         nose.tools.assert_equal(n_mat_prop.ambient_color, (0.0,1.0,0.0))
 
 class TestDiffuseMaterial(TestMaterialProperty):
-    n_name = "property/material/base_material"
+    n_name = "property/material/base_diffuse"
 
     def b_create_object(self):
         b_obj = TestBaseGeometry.b_create_object(self)

@@ -39,6 +39,7 @@ def n_create_blocks(n_data):
             assert(n_matrix33.is_rotation())
         n_nitrishape.scale = 0.75
         n_nitrishape.data = n_nitrishapedata_1
+        
     with ref(n_nitrishapedata_1) as n_nitrishapedata:
         n_nitrishapedata.num_vertices = 8
         n_nitrishapedata.has_vertices = True
@@ -79,37 +80,38 @@ def n_create_blocks(n_data):
         n_nitrishapedata.has_normals = True
         n_nitrishapedata.normals.update_size()
         with ref(n_nitrishapedata.normals[0]) as n_vector3:
-            n_vector3.x = 0.577349
-            n_vector3.y = 0.577349
-            n_vector3.z = -0.577349
+            n_vector3.x = 0.669057
+            n_vector3.y = 0.4991
+            n_vector3.z = -0.550676
         with ref(n_nitrishapedata.normals[1]) as n_vector3:
-            n_vector3.x = 0.577349
-            n_vector3.y = -0.577349
-            n_vector3.z = -0.577349
+            n_vector3.x = 0.669057
+            n_vector3.y = -0.4991
+            n_vector3.z = -0.550676
         with ref(n_nitrishapedata.normals[2]) as n_vector3:
-            n_vector3.x = -0.577349
-            n_vector3.y = -0.577349
-            n_vector3.z = -0.577349
+            n_vector3.x = -0.481826
+            n_vector3.y = -0.64098
+            n_vector3.z = -0.59743
         with ref(n_nitrishapedata.normals[3]) as n_vector3:
-            n_vector3.x = -0.577349
-            n_vector3.y = 0.577349
-            n_vector3.z = -0.577349
+            n_vector3.x = -0.481826
+            n_vector3.y = 0.64098
+            n_vector3.z = -0.59743
         with ref(n_nitrishapedata.normals[4]) as n_vector3:
-            n_vector3.x = 0.577349
-            n_vector3.y = 0.577349
-            n_vector3.z = 0.577349
+            n_vector3.x = 0.669057
+            n_vector3.y = 0.4991
+            n_vector3.z = 0.550676
         with ref(n_nitrishapedata.normals[5]) as n_vector3:
-            n_vector3.x = -0.577349
-            n_vector3.y = 0.577349
-            n_vector3.z = 0.577349
+            n_vector3.x = -0.481826
+            n_vector3.y = 0.64098
+            n_vector3.z = 0.59743
         with ref(n_nitrishapedata.normals[6]) as n_vector3:
-            n_vector3.x = -0.577349
-            n_vector3.y = -0.577349
-            n_vector3.z = 0.577349
+            n_vector3.x = -0.481826
+            n_vector3.y = -0.64098
+            n_vector3.z = 0.59743
         with ref(n_nitrishapedata.normals[7]) as n_vector3:
-            n_vector3.x = 0.577349
-            n_vector3.y = -0.577349
-            n_vector3.z = 0.577349
+            n_vector3.x = 0.669027
+            n_vector3.y = -0.4991
+            n_vector3.z = 0.550676
+            
         with ref(n_nitrishapedata.center) as n_vector3:
             n_vector3.x = 4.76837e-07
             n_vector3.y = 2.14577e-06
