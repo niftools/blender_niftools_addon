@@ -67,17 +67,17 @@ class TestMaterialProperty(SingleNif):
 
     def n_check_data(self, n_data):
         n_nitrishape = n_data.roots[0].children[0]
-        TestBaseGeometry.n_check_trishape(n_nitrishape)      
+        TestBaseGeometry.n_check_trishape(n_nitrishape)
+        nose.tools.assert_equal(n_nitrishape.num_properties, 1)      
         self.n_check_material_block(n_nitrishape)
         
     @classmethod
     def n_check_material_block(cls, n_nitrishape):
-        nose.tools.assert_equal(n_nitrishape.num_properties, 1)
+        nose.tools.assert_is_instance(n_mat_prop, NifFormat.NiMaterialProperty)
         cls.n_check_material_property(n_nitrishape.properties[0])
 
     @classmethod
     def n_check_material_property(cls, n_mat_prop):
-        nose.tools.assert_is_instance(n_mat_prop, NifFormat.NiMaterialProperty)
         nose.tools.assert_equal((n_mat_prop.ambient_color.r,
                                  n_mat_prop.ambient_color.g,
                                  n_mat_prop.ambient_color.b), (1.0,1.0,1.0))
