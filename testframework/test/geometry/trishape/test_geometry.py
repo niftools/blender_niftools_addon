@@ -139,8 +139,8 @@ class TestBaseGeometry(SingleNif):
         nose.tools.assert_set_equal(verts, cls.b_verts)
 
     def n_create_data(self):
-        self.n_data = gen_data.n_create_data(self.n_data)
-        self.n_data = gen_geometry.n_create_blocks(self.n_data)
+        gen_data.n_create_data(self.n_data)
+        gen_geometry.n_create_blocks(self.n_data)
         return self.n_data
 
     def n_check_data(self, n_data):
