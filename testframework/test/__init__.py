@@ -3,6 +3,7 @@
 import bpy
 import io_scene_nif.nif_import
 import io_scene_nif.nif_export
+
 import os
 import os.path
 
@@ -51,9 +52,6 @@ def teardown():
 
 class Base:
     """Base class for all tests."""
-    # Debug Settings
-    gen_blender_scene = False
-    gen_nifs = False
     
     def b_clear(self):
         """Clear all objects from scene."""
@@ -109,7 +107,7 @@ class SingleNif(Base):
     n_name = None
     """Base name of nif file (without ``0.nif`` at the end)."""
 
-    n_data = NifFormat.Data()
+    n_data = None
     """Store the nif as it generate, built in blocks. Useful to see generated nif in-memory"""
     
     EPSILON = 0.005
@@ -147,11 +145,18 @@ class SingleNif(Base):
     """The name of the blend file after import of *n_filepath_2*
     (set automatically from :attr:`SingleNif.n_name`).
     """
+    
+    # Debug Settings
+    gen_blender_scene = False
+    
+    gen_nifs = False
 
     def __init__(self):
         """Initialize the test."""
         Base.__init__(self)
-                
+        
+        self.n_data = NifFormat.Data()
+        
         self.n_filepath_0 = "nif/" + self.n_name + "_py_code.nif"
         self.n_filepath_1 = "nif/" + self.n_name + "_export_py_code.nif"
         self.n_filepath_2 = "nif/" + self.n_name + "_export_user_ver.nif"
@@ -254,9 +259,6 @@ class SingleNif(Base):
         self.n_check(self.n_filepath_1)
         self.b_clear()
         self._b_clear_check(b_obj_names)
-
-    def test_export_import(self):
-        """Test export followed by import."""
         
         # create scene
         self.b_create_objects()
