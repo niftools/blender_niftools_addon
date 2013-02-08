@@ -16,32 +16,32 @@ def n_attach_material_prop(n_trishapedata):
     n_trishapedata.properties.reverse()
 
     n_nimaterialprop.name = b'Material'
-    with ref(n_nimaterialprop.ambient_color) as ambient_color:
-        ambient_color.r = 1.0
-        ambient_color.g = 1.0
-        ambient_color.b = 1.0
-    with ref(n_nimaterialprop.diffuse_color) as diffuse_color:
-        diffuse_color.r = 1.0
-        diffuse_color.g = 1.0
-        diffuse_color.b = 1.0
-    with ref(n_nimaterialprop.emissive_color) as emissive_color:
-        emissive_color.r = 0.0
-        emissive_color.g = 0.0
-        emissive_color.b = 0.0
-    with ref(n_nimaterialprop.specular_color) as specular_color:
-        specular_color.r = 0.0
-        specular_color.g = 0.0
-        specular_color.b = 0.0
+    
+    with ref(n_nimaterialprop.ambient_color) as n_color3:
+        n_color3.r = 1.0
+        n_color3.g = 1.0
+        n_color3.b = 1.0
+        
+    with ref(n_nimaterialprop.diffuse_color) as n_color3:
+        n_color3.r = 1.0
+        n_color3.g = 1.0
+        n_color3.b = 1.0
+        
+    with ref(n_nimaterialprop.emissive_color) as n_color3:
+        n_color3.r = 0.0
+        n_color3.g = 0.0
+        n_color3.b = 0.0
+        
+    with ref(n_nimaterialprop.specular_color) as n_color3:
+        n_color3.r = 0.0
+        n_color3.g = 0.0
+        n_color3.b = 0.0
     
     n_nimaterialprop.glossiness = 12.5 # default nif.xml - 0.0, blender - 12.5
     n_nimaterialprop.alpha = 1.0 # default nif.xml - 0.0
 
-    return n_trishapedata
-
 def n_alter_glossiness(n_nimaterialprop):
     n_nimaterialprop.glossiness = 25.0
-    return n_nimaterialprop
 
 def n_alter_emissive(n_nimaterialprop):
     n_nimaterialprop.emissive_color.r = 0.5
-    return n_nimaterialprop
