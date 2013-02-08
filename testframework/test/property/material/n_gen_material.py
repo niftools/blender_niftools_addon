@@ -76,3 +76,12 @@ def n_check_material_property(n_mat_prop):
     
     nose.tools.assert_equal(n_mat_prop.glossiness, 12.5)
     nose.tools.assert_equal(n_mat_prop.alpha, 1.0)
+
+def n_check_material_gloss_property(n_mat_prop):
+    nose.tools.assert_equal(n_mat_prop.glossiness, 25) # n_gloss = 4/b_gloss
+    
+def n_check_material_emissive_property(n_mat_prop):
+    nose.tools.assert_equal((n_mat_prop.emissive_color.r,
+                             n_mat_prop.emissive_color.g,
+                             n_mat_prop.emissive_color.b),
+                            (0.5,0.0,0.0))

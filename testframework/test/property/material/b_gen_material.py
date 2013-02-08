@@ -30,3 +30,22 @@ def b_check_material_property(b_mat):
     nose.tools.assert_equal(b_mat.diffuse_color[1], 1.0)
     nose.tools.assert_equal(b_mat.diffuse_color[2], 1.0)
     nose.tools.assert_equal(b_mat.specular_intensity, 0.0)
+
+def b_create_gloss_property(cls, b_mat):
+    b_mat.specular_hardness = 100
+    return b_mat
+        
+def b_check_gloss_property(b_mat):
+    nose.tools.assert_equal(b_mat.specular_hardness, 100)
+
+def b_create_emmisive_property(b_mat):
+    b_mat.niftools.emissive_color = (0.5,0.0,0.0)
+    b_mat.emit = 1.0
+    return b_mat
+    
+def b_check_emission_property(b_mat):
+    nose.tools.assert_equal(b_mat.emit, 1.0)
+    nose.tools.assert_equal((b_mat.niftools.emissive_color.r,
+                             b_mat.niftools.emissive_color.g,
+                             b_mat.niftools.emissive_color.b),
+                            (0.5,0.0,0.0))
