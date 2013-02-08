@@ -8,7 +8,6 @@ from pyffi.formats.nif import NifFormat
 from test import SingleNif
 from test.data import gen_data
 from test.geometry.trishape import gen_geometry
-from test.geometry.trishape.test_geometry import TestBaseGeometry
 from test.property.material import gen_material
 
 class TestMaterialProperty(SingleNif):
@@ -18,8 +17,7 @@ class TestMaterialProperty(SingleNif):
     b_name = 'Cube'
 
     def b_create_objects(self):
-        b_obj = TestBaseGeometry.b_create_base_geometry()
-        b_obj.name = self.b_name
+        b_obj = gen_geometry.b_create_base_geometry(self.b_name)
         b_obj = self.b_create_material_block(b_obj)
         self.b_create_set_material_property(b_obj.data.materials[0])
 
@@ -39,7 +37,7 @@ class TestMaterialProperty(SingleNif):
 
     def b_check_data(self):
         b_obj = bpy.data.objects[self.b_name]
-        TestBaseGeometry.b_check_geom_obj(b_obj)
+        gen_geometry.b_check_geom_obj(b_obj)
         
         b_mat =self.b_check_material_block(b_obj)
         self.b_check_material_property(b_mat)
@@ -75,7 +73,7 @@ class TestMaterialProperty(SingleNif):
 
     def n_check_data(self, n_data):
         n_nitrishape = n_data.roots[0].children[0]
-        TestBaseGeometry.n_check_trishape(n_nitrishape)
+        gen_geometry.n_check_trishape(n_nitrishape)
         
         nose.tools.assert_equal(n_nitrishape.num_properties, 1) 
         n_mat_prop = n_nitrishape.properties[0]    
