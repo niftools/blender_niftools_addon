@@ -90,6 +90,9 @@ class TestAlphaProperty(SingleNif):
     @classmethod
     def n_check_alpha_property(cls, n_alpha_prop):
          '''Check NiAlphaProperty values'''
-         nose.tools.assert_equal(n_alpha_prop.flags, 4845)
+         nose.tools.assert_equal(n_alpha_prop.flags, 4845) # Ref: gen_alpha for values
+         nose.tools.assert_equal(n_alpha_prop.threshold, 0)
+
+         
         
         
