@@ -1,3 +1,5 @@
+import nose
+
 from pyffi.utils.withref import ref
 from pyffi.formats.nif import NifFormat
 
@@ -45,3 +47,32 @@ def n_alter_glossiness(n_nimaterialprop):
 
 def n_alter_emissive(n_nimaterialprop):
     n_nimaterialprop.emissive_color.r = 0.5
+
+def n_check_material_block(n_mat_prop):
+    nose.tools.assert_is_instance(n_mat_prop, NifFormat.NiMaterialProperty)
+
+def n_check_material_property(n_mat_prop):
+    '''Checks default values'''
+    
+    nose.tools.assert_equal((n_mat_prop.ambient_color.r,
+                             n_mat_prop.ambient_color.g,
+                             n_mat_prop.ambient_color.b), 
+                            (1.0, 1.0, 1.0))
+
+    nose.tools.assert_equal((n_mat_prop.diffuse_color.r,
+                             n_mat_prop.diffuse_color.g,
+                             n_mat_prop.diffuse_color.b), 
+                            (1.0, 1.0, 1.0))
+    
+    nose.tools.assert_equal((n_mat_prop.specular_color.r,
+                             n_mat_prop.specular_color.g,
+                             n_mat_prop.specular_color.b), 
+                            (0.0, 0.0, 0.0))
+    
+    nose.tools.assert_equal((n_mat_prop.emissive_color.r,
+                             n_mat_prop.emissive_color.g,
+                             n_mat_prop.emissive_color.b), 
+                            (0.0, 0.0, 0.0))
+    
+    nose.tools.assert_equal(n_mat_prop.glossiness, 12.5)
+    nose.tools.assert_equal(n_mat_prop.alpha, 1.0)
