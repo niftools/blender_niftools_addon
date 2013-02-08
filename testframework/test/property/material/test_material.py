@@ -1,4 +1,4 @@
-"""Export and import material."""
+"""Export and import meshes with material."""
 
 import bpy
 import nose.tools
@@ -26,16 +26,14 @@ class TestMaterialProperty(SingleNif):
     def b_check_data(self):
         b_obj = bpy.data.objects[self.b_name]
         b_gen_geometry.b_check_geom_obj(b_obj)
-        
-        b_mat = b_gen_material.b_check_material_block(b_obj)
-        b_gen_material.b_check_material_property(b_mat)
+        b_mat = b_gen_material.b_check_material_block(b_obj) # check we have a material
+        b_gen_material.b_check_material_property(b_mat) # check its values
 
     def n_create_data(self):
         gen_data.n_create_header(self.n_data)
         n_gen_geometry.n_create_blocks(self.n_data)
-        
         n_trishape = self.n_data.roots[0].children[0]
-        n_gen_material.n_attach_material_prop(n_trishape)
+        n_gen_material.n_attach_material_prop(n_trishape) # add nimaterialprop
         return self.n_data
 
     def n_check_data(self, n_data):

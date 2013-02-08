@@ -1,3 +1,5 @@
+import nose
+
 from pyffi.utils.withref import ref
 from pyffi.formats.nif import NifFormat
 
@@ -52,3 +54,20 @@ def n_alter_material_alpha(n_nimaterialprop):
        110 GL_GEQUAL
        111 GL_NEVER
 '''
+    
+def n_check_material_alpha(n_mat_prop):
+    '''Check that material has correct alpha value'''
+    nose.tools.assert_equal(n_mat_prop.alpha, 0.5)
+
+def n_check_alpha_block(n_alpha_prop):
+    '''Check that block is actually NiAlphaProperty'''
+    nose.tools.assert_is_instance(n_alpha_prop, NifFormat.NiAlphaProperty)
+
+def n_check_alpha_property(n_alpha_prop):
+     '''Check NiAlphaProperty values'''
+     nose.tools.assert_equal(n_alpha_prop.flags, 4845) # Ref: gen_alpha for values
+     nose.tools.assert_equal(n_alpha_prop.threshold, 0)
+
+         
+        
+        
