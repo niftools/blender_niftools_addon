@@ -15,9 +15,9 @@ from test.property.specular import b_gen_specular
 from test.property.specular import n_gen_specular
 
 class TestSpecularProperty(SingleNif):
-    """Test import/export of meshes with material based alpha property."""
+    """Test import/export of meshes with material based specular property."""
     
-    n_name = "property/specular/base_specular"
+    n_name = "property/specular/test_specular"
     b_name = "Cube"
     
     def b_create_objects(self):
