@@ -15,7 +15,7 @@ from test.property.material import n_gen_material
 class TestMaterialProperty(SingleNif):
     """Test material property"""
     
-    n_name = 'property/material/base_material'
+    n_name = 'property/material/test_material'
     b_name = 'Cube'
 
     def b_create_objects(self):
