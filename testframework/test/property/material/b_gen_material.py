@@ -26,9 +26,9 @@ def b_check_material_property(b_mat):
     '''Check material has the correct properties'''
     
     nose.tools.assert_equal(b_mat.ambient, 1.0)
-    nose.tools.assert_equal(b_mat.diffuse_color[0], 1.0)
-    nose.tools.assert_equal(b_mat.diffuse_color[1], 1.0)
-    nose.tools.assert_equal(b_mat.diffuse_color[2], 1.0)
+    nose.tools.assert_equal(b_mat.diffuse_color.r, 1.0)
+    nose.tools.assert_equal(b_mat.diffuse_color.g, 1.0)
+    nose.tools.assert_equal(b_mat.diffuse_color.b, 1.0)
     nose.tools.assert_equal(b_mat.specular_intensity, 0.0)
 
 def b_create_gloss_property(cls, b_mat):
