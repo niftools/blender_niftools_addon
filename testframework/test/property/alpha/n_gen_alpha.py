@@ -19,9 +19,6 @@ def n_attach_alpha_prop(n_trishapedata):
 
     n_trishapedata.properties.reverse()
     
-def n_alter_material_alpha(n_nimaterialprop):
-    n_nimaterialprop.alpha = 0.5
-
 ''' Alpha flags bit values - 
 
     Bit 0 : alpha blending 
@@ -54,7 +51,10 @@ def n_alter_material_alpha(n_nimaterialprop):
        110 GL_GEQUAL
        111 GL_NEVER
 '''
-    
+
+def n_alter_material_alpha(n_nimaterialprop):
+    n_nimaterialprop.alpha = 0.5
+
 def n_check_material_alpha(n_mat_prop):
     '''Check that material has correct alpha value'''
     nose.tools.assert_equal(n_mat_prop.alpha, 0.5)
@@ -64,9 +64,9 @@ def n_check_alpha_block(n_alpha_prop):
     nose.tools.assert_is_instance(n_alpha_prop, NifFormat.NiAlphaProperty)
 
 def n_check_alpha_property(n_alpha_prop):
-     '''Check NiAlphaProperty values'''
-     nose.tools.assert_equal(n_alpha_prop.flags, 4845) # Ref: gen_alpha for values
-     nose.tools.assert_equal(n_alpha_prop.threshold, 0)
+    '''Check NiAlphaProperty values'''
+    nose.tools.assert_equal(n_alpha_prop.flags, 4845) # Ref: gen_alpha for values
+    nose.tools.assert_equal(n_alpha_prop.threshold, 0)
 
          
         
