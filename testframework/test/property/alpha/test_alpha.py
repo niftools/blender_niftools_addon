@@ -17,7 +17,7 @@ from test.property.alpha import n_gen_alpha
 class TestAlphaProperty(SingleNif):
     """Test import/export of meshes with material based alpha property."""
     
-    n_name = "property/alpha/base_alpha"
+    n_name = "property/alpha/test_alpha"
     b_name = "Cube"
     
     def b_create_objects(self):
@@ -47,7 +47,7 @@ class TestAlphaProperty(SingleNif):
         n_gen_geometry.n_check_trishape(n_nitrishape)
         
         nose.tools.assert_equal(n_nitrishape.num_properties, 2) 
-        n_mat_prop = n_nitrishape.properties[1]    
+        n_mat_prop = n_nitrishape.properties[1] 
         n_gen_material.n_check_material_block(n_mat_prop)
         n_gen_alpha.n_check_material_alpha(n_mat_prop)
         
