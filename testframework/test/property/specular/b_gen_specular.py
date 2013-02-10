@@ -1,7 +1,7 @@
 import nose
 import bpy
 
-def b_create_specular_property(b_mat):
+def b_create_alter_specular_property(b_mat):
     b_mat.specular_color = (0.5, 0.0, 0.0)
     b_mat.specular_intensity = 1.0
         
