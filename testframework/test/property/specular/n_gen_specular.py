@@ -7,7 +7,8 @@ def n_attach_specular_prop(n_trishapedata):
     '''Attaches a NiSpecularProperty to a trishapedata block property's array at pos[0]'''
     
     n_nispecularprop = NifFormat.NiSpecularProperty()
-
+    n_nispecularprop.flags = 0x1
+    
     # add property to top of list
     n_trishapedata.properties.reverse()
 
@@ -16,10 +17,7 @@ def n_attach_specular_prop(n_trishapedata):
     n_trishapedata.properties[-1] = n_nispecularprop
 
     n_trishapedata.properties.reverse()
-
-    with ref(n_nispecularprop) as n_nispecularproperty:
-        n_nispecularproperty.flags = 1
-
+    
 def n_alter_material_specular(n_nimaterialprop):
     with ref(n_nimaterialprop.specular_color) as n_color3:
         n_color3.r = 0.5
@@ -36,4 +34,4 @@ def n_check_specular_block(n_mat_prop):
     nose.tools.assert_is_instance(n_mat_prop, NifFormat.NiSpecularProperty)
 
 def n_check_specular_property(n_specular_prop):
-    nose.tools.assert_equal(n_specular_prop.flags, 1)
+    nose.tools.assert_equal(n_specular_prop.flags, 0x1)
