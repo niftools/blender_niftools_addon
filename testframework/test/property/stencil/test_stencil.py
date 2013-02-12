@@ -35,8 +35,8 @@ class TestStencilProperty(SingleNif):
         n_gen_stencil.n_create_stencil_prop(n_trishape)
         return self.n_data
         
-    def n_check_data(self, n_data):
-        n_nitrishape = n_data.roots[0].children[0]
+    def n_check_data(self):
+        n_nitrishape = self.n_data.roots[0].children[0]
         n_gen_geometry.n_check_trishape(n_nitrishape)
         
         nose.tools.assert_equal(n_nitrishape.num_properties, 1)

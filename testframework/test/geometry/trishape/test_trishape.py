@@ -16,15 +16,13 @@ from test.geometry.trishape import n_gen_geometry
 class TestBaseGeometry(SingleNif):
     """Test base geometry, single blender object."""
 
-    n_name = 'geometry/trishape/test_trishape'
-    # (documented in base class)
-
+    n_name = 'geometry/trishape/test_trishape' # (documented in base class)
     b_name = 'Cube'
-    """Name of the blender object."""
 
     def b_create_objects(self):
         # (documented in base class)
         b_obj = b_gen_geometry.b_create_cube(self.b_name)
+        
         # transform it into something less trivial
         b_gen_geometry.b_scale_object()
         b_gen_geometry.b_scale_single_face(b_obj)
@@ -39,8 +37,8 @@ class TestBaseGeometry(SingleNif):
         n_gen_geometry.n_create_blocks(self.n_data)
         return self.n_data
 
-    def n_check_data(self, n_data):
-        n_trishape = n_data.roots[0].children[0]
+    def n_check_data(self):
+        n_trishape = self.n_data.roots[0].children[0]
         n_gen_geometry.n_check_trishape(n_trishape)
 
 class TestNonUniformlyScaled(Base):

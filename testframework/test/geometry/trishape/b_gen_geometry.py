@@ -24,7 +24,6 @@ def b_create_base_geometry(b_name):
     b_scale_object()
     b_scale_single_face(b_obj)
     b_obj.matrix_local = b_get_transform_matrix()
-    
     return b_obj
 
 def b_create_cube(b_name):
@@ -34,10 +33,9 @@ def b_create_cube(b_name):
     bpy.ops.mesh.primitive_cube_add()
     b_obj = bpy.data.objects[bpy.context.active_object.name]
     b_obj.name = b_name
-
-    # primitive_cube_add sets double sided flag, fix this
-    b_obj.data.show_double_sided = False
-            
+    
+    bpy.ops.object.shade_smooth()
+    b_obj.data.show_double_sided = False # b_mesh default: double sided - true, fix this  
     return b_obj
 
 
@@ -84,6 +82,7 @@ def b_check_geom_obj(b_obj):
     b_mesh = b_obj.data
     b_check_transform(b_obj)
     b_check_geom(b_mesh)
+    b_check_vertex_count(b_mesh)
     
 def b_check_transform(b_obj):
     
@@ -103,8 +102,10 @@ def b_check_transform(b_obj):
 def b_check_geom(b_mesh):
     num_triangles = len( [face for face in b_mesh.faces if len(face.vertices) == 3]) # check for tri
     num_triangles += 2 * len( [face for face in b_mesh.faces if len(face.vertices) == 4]) # face = 2 tris
-    nose.tools.assert_equal(len(b_mesh.vertices), 8)
     nose.tools.assert_equal(num_triangles, 12)
+    
+def b_check_vertex_count(b_mesh):
+    nose.tools.assert_equal(len(b_mesh.vertices), 8)
     verts = {
         tuple(round(co, 4) for co in vert.co)
         for vert in b_mesh.vertices
