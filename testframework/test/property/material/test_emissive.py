@@ -40,8 +40,8 @@ class TestEmissiveMaterial(SingleNif):
         n_gen_material.n_alter_emissive(n_trishape.properties[0])
         return self.n_data
 
-    def n_check_data(self, n_data):
-        n_nitrishape = n_data.roots[0].children[0]
+    def n_check_data(self):
+        n_nitrishape = self.n_data.roots[0].children[0]
         n_gen_geometry.n_check_trishape(n_nitrishape)
 
         # check we have property and correct type
