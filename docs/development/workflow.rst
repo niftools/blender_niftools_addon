@@ -43,12 +43,8 @@ For more details, run::
 
   blender-nosetests.bat --help
 
-* The tests will run on the currently installed plugin
-(*not* your checked out version!)
-so usually ensure you re-install after making edits to add-on files.
-
-* Beware that the output can be rather verbose,
-so you may have to scroll quite a bit to see the relevant backtrace.
+* The tests will run on the currently installed plugin (*not* your checked out version!) so usually ensure you re-install after making edits to add-on files.
+* Beware that the output can be rather verbose, so you may have to scroll quite a bit to see the relevant backtrace.
 
 Also see the
 `nose manual <http://readthedocs.org/docs/nose/en/latest/usage.html#options>`_.
