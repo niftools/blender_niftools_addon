@@ -1,51 +1,58 @@
-"""Export and import material meshes."""
+"""Export and import meshes with material based alpha values."""
 
 import bpy
 import nose.tools
-import os
 
-import io_scene_nif.nif_export
 from pyffi.formats.nif import NifFormat
-from test.geometry.trishape.test_geometry import TestBaseGeometry
-from test.property.material.test_material import TestMaterialProperty
 
-class TestAlphaProperty(TestMaterialProperty):
-    n_name = "property/alpha/base_alpha"
+from test import SingleNif
+from test.data import gen_data
+from test.geometry.trishape import b_gen_geometry
+from test.geometry.trishape import n_gen_geometry
+from test.property.material import b_gen_material
+from test.property.material import n_gen_material
+from test.property.alpha import b_gen_alpha
+from test.property.alpha import n_gen_alpha
 
+class TestAlphaProperty(SingleNif):
+    """Test import/export of meshes with material based alpha property."""
+    
+    n_name = "property/alpha/test_alpha"
+    b_name = "Cube"
+    
     def b_create_objects(self):
-        TestMaterialProperty.b_create_objects(self)
-        b_obj = bpy.data.objects[self.b_name]
-        self.b_create_alpha_property(b_obj)
-
-    def b_create_alpha_property(self, b_obj):
-        b_mat = b_obj.data.materials[0]
-        b_mat.use_transparency = True
-        b_mat.alpha = 0.5
-        b_mat.transparency_method = 'Z_TRANSPARENCY'
-
-        # bpy.ops.wm.save_mainfile(filepath="test/autoblend/" + self.n_name)
+        b_obj = b_gen_geometry.b_create_base_geometry(self.b_name)
+        b_mat = b_gen_material.b_create_material_block(b_obj)
+        b_gen_material.b_create_set_material_property(b_mat)
+        b_gen_alpha.b_create_set_alpha_property(b_mat) # update alpha
 
     def b_check_data(self):
-        TestMaterialProperty.b_check_data(self)
         b_obj = bpy.data.objects[self.b_name]
-        self.b_check_alpha_block(b_obj)
+        b_gen_geometry.b_check_geom_obj(b_obj)
+        b_mat = b_gen_material.b_check_material_block(b_obj)
+        b_gen_material.b_check_material_property(b_mat)
+        b_gen_alpha.b_check_alpha_property(b_mat) # check alpha 
 
-    def b_check_alpha_block(self, b_obj):
-        b_mesh = b_obj.data
-        b_mat = b_mesh.materials[0]
-        self.b_check_alpha_property(b_mat)
+    def n_create_data(self):
+        gen_data.n_create_header(self.n_data)
+        n_gen_geometry.n_create_blocks(self.n_data)
+        n_trishape = self.n_data.roots[0].children[0]
+        n_gen_material.n_attach_material_prop(n_trishape)
+        n_gen_alpha.n_alter_material_alpha(n_trishape.properties[0]) # set material alpha
+        n_gen_alpha.n_attach_alpha_prop(n_trishape) # add nialphaprop
+        return self.n_data
 
-    def b_check_alpha_property(self, b_mat):
-        nose.tools.assert_equal(b_mat.use_transparency, True)
-        nose.tools.assert_equal(b_mat.alpha, 0.5)
-        nose.tools.assert_equal(b_mat.transparency_method, 'Z_TRANSPARENCY')
-
-    def n_check_data(self, n_data):
-        n_geom = n_data.roots[0].children[0]
-        nose.tools.assert_equal(n_geom.num_properties, 2)
-        self.n_check_alpha_property(n_geom.properties[0])
-        self.n_check_material_property(n_geom.properties[1])
-
-    def n_check_alpha_property(self, n_alpha_prop):
-        nose.tools.assert_is_instance(n_alpha_prop, NifFormat.NiAlphaProperty)
-        # TODO Check Prop Settings
+    def n_check_data(self):
+        n_nitrishape = self.n_data.roots[0].children[0]
+        n_gen_geometry.n_check_trishape(n_nitrishape)
+        
+        nose.tools.assert_equal(n_nitrishape.num_properties, 2) 
+        n_mat_prop = n_nitrishape.properties[1] 
+        n_gen_material.n_check_material_block(n_mat_prop)
+        n_gen_alpha.n_check_material_alpha(n_mat_prop)
+        
+        
+        n_alpha_prop = n_nitrishape.properties[0]
+        n_gen_alpha.n_check_alpha_block(n_alpha_prop)
+        n_gen_alpha.n_check_alpha_property(n_alpha_prop)
+    
