@@ -62,7 +62,7 @@ Regression Tests
 ----------------
 
 Ideally, for every feature, first, a regression test should be
-written. Ideally, the following process is followed:
+written. The following process is followed:
 
 #. Create a new python file to contain the feature regression test
    code. For example, if the feature concerns *blabla*, the test case
@@ -70,16 +70,7 @@ written. Ideally, the following process is followed:
    Derive the test class from
    :class:`test.SingleNif`, and name it :class:`TestBlabla`.
 
-   .. NOTE template is in flux, removed for the time being
    .. Use the template available in ``testframework/test/template.py``.
-
-
-#. Create a new text file ``docs/features/blabla.rst`` to contain the
-   feature user documentation,
-   and add it to the table of contents in ``docs/features/index.rst``.
-   If there are particular issues with the
-   feature's implementation, make a note of it in
-   ``docs/development/design.rst``.
 
 #. Write feature test data and test code on nif level:
 
@@ -124,6 +115,13 @@ written. Ideally, the following process is followed:
    the regression test passes.
 
 That's it!
+
+#. Create a new text file ``docs/features/blabla.rst`` to contain the
+   feature user documentation,
+   and add it to the table of contents in ``docs/features/index.rst``.
+   If there are particular issues with the
+   feature's implementation, make a note of it in
+   ``docs/development/design.rst``.
 
 The tests will actually do the following:
 

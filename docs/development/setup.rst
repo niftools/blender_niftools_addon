@@ -92,7 +92,7 @@ clone the code on github.
 #. `Log in <https://github.com/login>`_ on github.
 
 #. Visit the `blender nif plugin mothership repository
-   <https://github.com/neomonkeus/blender_nif_plugin>`_.
+   <https://github.com/niftools/blender_nif_plugin>`_.
 
 #. Click **Fork** (top right corner).
 
@@ -131,7 +131,7 @@ Install Build Environment Batch Script
 Get the build environment batch script::
 
    cd workspace
-   git clone git://github.com/neomonkeus/buildenv.git
+   git clone git://github.com/niftools/buildenv.git
 
 Navigate to the BuildEnv directory and create a new .ini file or using msysgit::
 
@@ -144,6 +144,7 @@ The following is a sample .ini file::
    start=workspace
    python=C:\Python32
    blender=C:\Program Files\Blender Foundation\Blender
+   seven_zip=C:\Program Files\7-Zip
 
 Running Create_shortcut.bat will now add shortcuts on the Desktop for each .ini file, which when run will open a buildenv command window.
 
@@ -212,23 +213,17 @@ version of pyffi that works with blender::
 **Windows** run in buildenv::
 
    cd /pyffi
-   pip-3.2 install . --target="%APPDATABLENDERADDONS%\modules"
-
-.. note::
-
-   For Blender 2.62, omit the modules part of the install path::
-
-     pip-3.2 install . --target="%APPDATABLENDERADDONS%"
-
+   python setup.py install
+   
 **Ubuntu** run in a terminal::
 
    cd ~/workspace/pyffi
-   pip-3.2 install . --user
+   python setup.py install
 
 **Fedora** run in a terminal::
 
    cd ~/workspace/pyffi
-   pip-python3 install . --user
+   python setup.py install
 
 Check Installation
 ------------------
@@ -356,17 +351,6 @@ Eclipse Debugging
 The Blender nif plugin repo comes with built-in code to link Blenders internal server with Eclipse's debug server.
 This allows run-time debugging; watching the script execute, variables, function call stack etc.
 
-Setup Eclipse PyDev Debugger
-````````````````````````````
-Add the Pydev Debug Perspective: **Customise Perspective -> Pydev Debug**.
-Start the Pydev server.
-
-* In the blender_nif_plugin/scripts/addon/../nifdebug.py
-* If Eclipse is installed in a different folder, or each time Pydev updated.
-* Edit PYDEV_SOURCE_DIR
-
-When the plugin loads it will attempt to connect the internal server to the eclipses server.
-
 Launching Blender from PyDev
 ````````````````````````````
 
@@ -382,17 +366,26 @@ If you have done it correctly, blender should start up.
 Enable the blender plug-in and try to import one of the test nifs.
 If everything works, Blender's console should be visible in Pydev's console.
 
+Setup Eclipse PyDev Debugger
+````````````````````````````
+Add the Pydev Debug Perspective: **Customise Perspective -> Pydev Debug**.
+Start the Pydev server.
+
+* Open blender_nif_plugin/scripts/addon/../nifdebug.py
+* Edit PYDEV_SOURCE_DIR to point to the correct folder which contain /pysrc.
+* This will need to be updated if Pydev is updated.
+
 Debugging with PyDev
 ''''''''''''''''''''
 
-Debugging is enabled via the ./scripts/addons/io_scene/nif_debug/__init__.py file, disabled by default.
-Set the DEBUGGING varibale to True and edit the path to the pydebugger.
-This works both from Blender run via Launch Config or via the nose test suite.
+* Debugging is enabled via the ./scripts/addons/io_scene/nif_debug/__init__.py file, disabled by default.
+* Set the DEBUGGING variable to True.
+* This works both from Blender run via Launch Config or via the nose test suite.
+* When the plugin loads it will attempt to connect the internal server to the eclipses server, it will prompt if failure.
 
 .. note::
-   * If running Blender GUI ensure that the breakpoints are placed is the file from the Blender Foundation/Blender folder.
    * Executing the script, Eclipse will automatically open the file once it encounters the breakpoint.
-   * Remember install.bat overwrites the addon version, so ensure you are editing the repo correct version.
+   * Remember to run install.bat to overwrite the old addon version.
 
 Eclipse: Optional Extras
 ------------------------
