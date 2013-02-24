@@ -9,55 +9,13 @@ Install Blender
 Windows
 ~~~~~~~
 
-Download the
-`blender .exe installer <http://www.blender.org/download/get-blender/>`_
+Download the recommended version of `Blender.exe installer <http://www.blender.org/download/get-blender/>`_
 for your platform (32-bit or 64-bit; if unsure, pick the 32-bit version)
 and follow the instructions.
 
-Note:
 * If you are upgrading to a new version of Blender then it is advisable to uninstall previous versions.
-* Alternatively but less advisable is to rename the /Blender in the Program Files/Blender Foundation folder 
-thus allowing multiple installations of Blender.
+* Alternatively but less advisable, rename /Blender in the Program Files/Blender Foundation folder thus allowing multiple installs.
 
-Fedora
-~~~~~~
-
-For Fedora 16 and up, Blender 2.5x is available via yum::
-
-  sudo yum install blender
-
-For Fedora 15, first `setup a development environment
-<http://fedoraproject.org/wiki/How_to_create_an_RPM_package>`_::
-
-  sudo yum groupinstall "Development Tools" -y
-  sudo yum install rpmdevtools -y
-  rpmdev-setuptree
-
-Then, clone the spec file, install the sources, install the build
-dependencies, and kick off an rpm build::
-
-  git clone git://pkgs.fedoraproject.org/blender
-  cd blender
-  cp * ~/rpmbuild/SOURCES/
-  wget http://download.blender.org/source/blender-2.60a.tar.gz
-  mv blender-2.60a.tar.gz ~/rpmbuild/SOURCES/
-  cat blender.spec | grep ^BuildRequires | gawk '{ print $2 }' | xargs sudo yum install -y
-  rpmbuild -ba blender.spec
-
-Building blender takes a long time. When the build is finished,
-install the rpm::
-
-  sudo yum localinstall ~/rpmbuild/RPMS/x86_64/blender-2.60a-3.fc15.x86_64.rpm
-
-.. warning::
-
-   The package upgrades Blender 2.49b, so if you had it installed
-   previously, it will no longer be available. Do::
-
-     sudo yum erase blender
-     sudo yum install blender
-
-   to get your old Blender 2.49b back.
 
 Install and Register the Addon
 ------------------------------
