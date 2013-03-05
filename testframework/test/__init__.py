@@ -206,13 +206,14 @@ class SingleNif(Base):
         """Create and return nif data used for initial nif file."""
         raise NotImplementedError
 
-    def n_check_data(self, n_data):
+    def n_check_data(self):
         """Check nif data against feature."""
         raise NotImplementedError
 
     def n_check(self, n_filepath):
         """Check nif file against feature."""
-        self.n_check_data(self.n_read(n_filepath))
+        self.n_data = self.n_read(n_filepath)
+        self.n_check_data()
 
     def n_read(self, n_filepath):
         """Read nif file and return the data."""
