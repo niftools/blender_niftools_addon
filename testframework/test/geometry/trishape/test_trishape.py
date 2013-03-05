@@ -24,9 +24,7 @@ class TestBaseGeometry(SingleNif):
         b_obj = b_gen_geometry.b_create_cube(self.b_name)
         
         # transform it into something less trivial
-        b_gen_geometry.b_scale_object()
-        b_gen_geometry.b_scale_single_face(b_obj)
-        b_obj.matrix_local = b_gen_geometry.b_get_transform_matrix()
+        b_gen_geometry.b_transform_cube(b_obj)
     
     def b_check_data(self):
         b_obj = bpy.data.objects[self.b_name]
