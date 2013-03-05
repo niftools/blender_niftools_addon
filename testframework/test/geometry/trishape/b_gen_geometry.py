@@ -21,9 +21,7 @@ b_verts = {
 def b_create_base_geometry(b_name):
     """Create and return a single polyhedron blender object."""
     b_obj = b_create_cube(b_name)
-    b_scale_object()
-    b_scale_single_face(b_obj)
-    b_obj.matrix_local = b_get_transform_matrix()
+    b_transform_cube(b_obj)
     return b_obj
 
 def b_create_cube(b_name):
@@ -38,6 +36,12 @@ def b_create_cube(b_name):
     b_obj.data.show_double_sided = False # b_mesh default: double sided - true, fix this  
     return b_obj
 
+def b_transform_cube(b_obj):
+    """ Alters the cube, scaling, transforming """
+    
+    b_scale_object()
+    b_scale_single_face(b_obj)
+    b_obj.matrix_local = b_get_transform_matrix()
 
 def b_scale_object():
     """Scale the currently selected object along each axis."""
