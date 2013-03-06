@@ -6,21 +6,6 @@ import nose
 from pyffi.utils.withref import ref
 from pyffi.formats.nif import NifFormat
 
-EPSILON = 0.005
-
-"""Vertex coordinates for testing."""
-b_verts = {
-        (-7.5, 7.5, 3.5),
-        (7.5, 3.75, 1.75),
-        (7.5, -3.75, -1.75),
-        (7.5, 3.75, -1.75),
-        (-7.5, 7.5, -3.5),
-        (-7.5, -7.5, 3.5),
-        (7.5, -3.75, 1.75),
-        (-7.5, -7.5, -3.5),
-        }
-
-
 def n_create_blocks(n_data):
     n_ninode_1 = NifFormat.NiNode()
     n_nitrishape_1 = NifFormat.NiTriShape()

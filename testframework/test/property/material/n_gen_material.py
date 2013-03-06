@@ -4,7 +4,7 @@ from pyffi.utils.withref import ref
 from pyffi.formats.nif import NifFormat
 
 def n_attach_material_prop(n_trishapedata):
-    '''Attaches a NiMaterialProperty to a trishapedata block property's array at pos[0]'''
+    '''Attaches a NiMaterialProperty to a NiTrishape block property's array at pos[0]'''
     
     n_nimaterialprop = NifFormat.NiMaterialProperty()
     n_nimaterialprop.name = b'Material'
