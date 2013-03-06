@@ -1,4 +1,5 @@
 import nose
+from os import path
 
 from pyffi.utils.withref import ref
 from pyffi.formats.nif import NifFormat
@@ -346,32 +347,33 @@ def n_create_store_normal_data(n_nitrishape):
         n_nibinaryextradata.name = b'Tangent space (binormal & tangent vectors)'
         n_nibinaryextradata.binary_data = b'\xfb\x05\xd1>\xdc\x05\xd1>\xec\x05Q?\xaf\xd2H?\xf6\x9d\x16?\xe2\xd2H>\xb7\xa4O?\x15,\xf9\xbeY\x1d\xa6\xbe\xec\x05Q?\xda\x05\xd1>\xfd\x05\xd1\xbe\x89\xfe\xa6>\xc6f\xf8>\xa8\xb2O\xbf\xf2YC?\x00"\x05>q\x11"?\xb3\xb3O?\x90\x0f\xa7\xbe\xd5W\xf8>\x98L\x0f?\xfcnK?\x90\x89p>\x89\xfe\xa6>\xc6f\xf8>\xa8\xb2O\xbf\x98L\x0f?\xfcnK?\x90\x89p>\xaf\xd2H?\xf6\x9d\x16?\xe2\xd2H>\xaf\xd2H?\xf6\x9d\x16?\xe2\xd2H>\x98L\x0f?\xfcnK?\x90\x89p>\xb7\xa4O?\x15,\xf9\xbeY\x1d\xa6\xbe\xb7\xa4O?\x15,\xf9\xbeY\x1d\xa6\xbe\xb3\xb3O?\x90\x0f\xa7\xbe\xd5W\xf8>\xf2YC?\x00"\x05>q\x11"?\xfb\x05\xd1>\xdc\x05\xd1>\xec\x05Q?\xec\x05Q?\xda\x05\xd1>\xfd\x05\xd1\xbe\xf2YC?\x00"\x05>q\x11"?\xef\x045?\xf8\x045\xbf\xeec\x11\xb5\xb7\xe3g>~\xee\x10\xbfl\xe7J?.\xd0\xbf\xbd\x0e\xd6\'\xbf\x13\xd0??\xbc+\x1d\xb5\xf8\x045\xbf\xee\x045\xbf+\x9f?\xbf\x1c\x1f(?x\x00\xbc=B\xb5\x94\xbe2[N\xbf\x91\x00\x04?\xa4\xb6\xbb\xbdu\x9b??\xa0$(?\xc5+\x18\xbf\x9e\x0f@>\xad/H?+\x9f?\xbf\x1c\x1f(?x\x00\xbc=\xc5+\x18\xbf\x9e\x0f@>\xad/H?\xb7\xe3g>~\xee\x10\xbfl\xe7J?\xb7\xe3g>~\xee\x10\xbfl\xe7J?\xc5+\x18\xbf\x9e\x0f@>\xad/H?.\xd0\xbf\xbd\x0e\xd6\'\xbf\x13\xd0??.\xd0\xbf\xbd\x0e\xd6\'\xbf\x13\xd0??\xa4\xb6\xbb\xbdu\x9b??\xa0$(?B\xb5\x94\xbe2[N\xbf\x91\x00\x04?\xef\x045?\xf8\x045\xbf\xeec\x11\xb5\xbc+\x1d\xb5\xf8\x045\xbf\xee\x045\xbfB\xb5\x94\xbe2[N\xbf\x91\x00\x04?'
     
-    
-def n_check_data(n_data):
-    n_geom = n_data.roots[0].children[0]
-    nose.tools.assert_equal(n_geom.num_properties, 2)
-    self.n_check_texturing_property(n_geom.properties[0])
-    self.n_check_material_property(n_geom.properties[1])
-
-
 def n_check_texturing_property(n_tex_prop):
+    nose.tools.assert_equal(n_tex_prop.apply_mode, NifFormat.ApplyMode.APPLY_MODULATE) # 2
+    # TODO check flags
+    # TODO texture count
+
+def n_check_texdesc(n_tex_desc):
+    nose.tools.assert_equal(n_tex_desc.clamp_mode, 3)
+    nose.tools.assert_equal(n_tex_desc.filter_mode, 2)
+    nose.tools.assert_equal(n_tex_desc.uv_set, 0)
+    nose.tools.assert_equal(n_tex_desc.has_texture_transform, False)
+    
+def n_check_diffuse_property(n_tex_prop):
     nose.tools.assert_is_instance(n_tex_prop, NifFormat.NiTexturingProperty)
-    nose.tools.assert_equal(n_tex_prop.apply_mode, 2)
     nose.tools.assert_equal(n_tex_prop.has_base_texture, True)
-    self.n_check_base_texture(n_tex_prop.base_texture)
+    
+def n_check_diffuse_source_texture(n_nisourcetexture, n_texture_path):
+    nose.tools.assert_is_instance(n_nisourcetexture, NifFormat.NiSourceTexture)
+    
+    n_split_path = n_texture_path.split(path.sep)
+    n_rel_path = n_split_path[len(n_split_path)-2:] #get a path relative to \\textures folder
+    
+    n_src_path = n_nisourcetexture.file_name.decode()
+    n_src_path = n_src_path.split(path.sep)
 
-
-def n_check_base_texture(n_texture):
-    nose.tools.assert_equal(n_texture.clamp_mode, 3)
-    nose.tools.assert_equal(n_texture.filter_mode, 2)
-    nose.tools.assert_equal(n_texture.uv_set, 0)
-    nose.tools.assert_equal(n_texture.has_texture_transform, False)
-    self.n_check_base_source_texture(n_texture.source)
-
-
-def n_check_base_source_texture(n_source):
-    nose.tools.assert_is_instance(n_source, NifFormat.NiSourceTexture)
-    nose.tools.assert_equal(n_source.use_external, 1)
-    #nose.tools.assert_equal(n_source.file_name, self.diffuse_texture_path)
-        
-            
+    nose.tools.assert_equal(n_src_path, n_rel_path)
+    nose.tools.assert_equal(n_nisourcetexture.pixel_layout, NifFormat.PixelLayout.PIX_LAY_DEFAULT) # 6
+    nose.tools.assert_equal(n_nisourcetexture.use_mipmaps, NifFormat.MipMapFormat.MIP_FMT_YES) # 1
+    nose.tools.assert_equal(n_nisourcetexture.use_external, 1)
+    
+    
