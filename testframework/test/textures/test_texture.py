@@ -51,10 +51,10 @@ class TestTexturePropertyDiffuse(SingleNif):
         n_gen_texture.n_create_blocks(self.n_data)
         
         n_nitrishape = self.n_data.roots[0].children[0]
-#        n_gen_material.n_attach_material_prop(n_trishape) # add nimaterialprop
-#        
-#        n_textureprop = n_gen_texture.n_create_texture_property(n_nitrishape) # add nitexturingprop
-#        n_gen_texture.n_create_diffuse_texture(n_textureprop) #add nitexturesource diffuse
+        n_gen_material.n_attach_material_prop(n_trishape) # add nimaterialprop
+        
+        n_textureprop = n_gen_texture.n_create_texture_property(n_nitrishape) # add nitexturingprop
+        n_gen_texture.n_create_diffuse_texture(n_textureprop) #add nitexturesource diffuse
         n_gen_texture.n_create_store_normal_data(n_nitrishape) #store normal data as NiBinaryExtraData
         
         return self.n_data
