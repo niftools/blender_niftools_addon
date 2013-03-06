@@ -22,7 +22,12 @@ class TestTexturePropertyDiffuse(SingleNif):
     
     n_name = "textures/base_texture"
     b_name = 'Cube'
-    diffuse_texture_path = os.path.join('diffuse.dds')
+
+    # Paths
+    root_dir = os.getcwd()
+    nif_dir = os.path.join(root_dir, 'nif')
+    
+    diffuse_texture_path = os.path.join(nif_dir, 'textures', 'diffuse.dds')
 
     def b_create_objects(self):
         b_obj = b_gen_geometry.b_create_cube(self.b_name)
@@ -38,11 +43,13 @@ class TestTexturePropertyDiffuse(SingleNif):
         
 
     def b_check_data(self):
-        pass
-        #b_obj = bpy.data.objects[self.b_name]
-        # probably should stick in some UV tests at some point.....
-        #b_mat = b_gen_material.b_check_material_block(b_obj)
-        #b_gen_geometry.b_check_texture_slot(b_mat)
+        b_obj = bpy.data.objects[self.b_name]
+        # TODO - probably should stick in some UV tests at some point.
+        
+        b_mat = b_gen_material.b_check_material_block(b_obj) # check we have a material
+        b_gen_material.b_check_material_property(b_mat) # check its values
+        pass  
+
         
         
     def n_create_data(self):
@@ -51,9 +58,10 @@ class TestTexturePropertyDiffuse(SingleNif):
         n_gen_texture.n_create_blocks(self.n_data)
         
         n_nitrishape = self.n_data.roots[0].children[0]
-        n_gen_material.n_attach_material_prop(n_trishape) # add nimaterialprop
+        n_gen_material.n_attach_material_prop(n_nitrishape) # add nimaterialprop
         
-        n_textureprop = n_gen_texture.n_create_texture_property(n_nitrishape) # add nitexturingprop
+        n_gen_texture.n_create_texture_property(n_nitrishape) # add nitexturingprop
+        n_textureprop = n_nitrishape.properties[0]
         n_gen_texture.n_create_diffuse_texture(n_textureprop) #add nitexturesource diffuse
         n_gen_texture.n_create_store_normal_data(n_nitrishape) #store normal data as NiBinaryExtraData
         
@@ -62,6 +70,10 @@ class TestTexturePropertyDiffuse(SingleNif):
     def n_check_data(self):
         pass
 #        n_geom = self.n_data.roots[0].children[0]
+#        
+#
+#        '''TODO - probably should stick in some UV tests at some point.'''
+#        
 #        nose.tools.assert_equal(n_geom.num_properties, 2)
 #        self.n_check_material_property(n_geom.properties[1])
 #        
