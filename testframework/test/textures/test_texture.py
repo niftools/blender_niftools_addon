@@ -48,9 +48,12 @@ class TestTexturePropertyDiffuse(SingleNif):
         
         b_mat = b_gen_material.b_check_material_block(b_obj) # check we have a material
         b_gen_material.b_check_material_property(b_mat) # check its values
-        pass  
-
         
+        nose.tools.assert_equal(b_mat.texture_slots[0] != None, True) # check slot exists
+        b_texslot_diffuse = b_mat.texture_slots[0]
+        b_gen_texture.b_check_texture_slot(b_texslot_diffuse)
+        b_gen_texture.b_check_image_texture_property(b_texslot_diffuse, self.diffuse_texture_path)  
+        b_gen_texture.b_check_diffuse_texture_settings(b_texslot_diffuse)
         
     def n_create_data(self):
         
