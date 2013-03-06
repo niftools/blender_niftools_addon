@@ -306,19 +306,18 @@ def n_create_blocks(n_data):
     return n_data
 
 
-def n_create_texture_property(n_trishapedata):
+def n_create_texture_property(n_trishape):
     """Adds a NiTexturing Property at the top of the property list"""
     
     n_nitexturingproperty = NifFormat.NiTexturingProperty()
     
     # add property to top of list
-    n_trishapedata.properties.reverse()
-    n_trishapedata.num_properties += 1
-    n_trishapedata.properties.update_size()
-    n_trishapedata.properties[-1] = n_nitexturingproperty
-    n_trishapedata.properties.reverse()
-    return n_nitexturingproperty
-    
+    n_trishape.properties.reverse()
+    n_trishape.num_properties += 1
+    n_trishape.properties.update_size()
+    n_trishape.properties[-1] = n_nitexturingproperty
+    n_trishape.properties.reverse()
+  
     
 def n_create_diffuse_texture(n_nitexturingproperty):
     """Adds a diffuse texture to a NiTexturingProperty"""
