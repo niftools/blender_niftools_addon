@@ -23,7 +23,7 @@ class TestSpecularProperty(SingleNif):
     def b_create_objects(self):
         b_obj = b_gen_geometry.b_create_base_geometry(self.b_name)
         b_mat = b_gen_material.b_create_material_block(b_obj)
-        b_gen_material.b_create_set_material_property(b_mat)
+        b_gen_material.b_create_set_default_material_property(b_mat)
         b_gen_specular.b_create_alter_specular_property(b_mat) # update specular
 
     def b_check_data(self):
