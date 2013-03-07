@@ -23,7 +23,7 @@ class TestAlphaProperty(SingleNif):
     def b_create_objects(self):
         b_obj = b_gen_geometry.b_create_base_geometry(self.b_name)
         b_mat = b_gen_material.b_create_material_block(b_obj)
-        b_gen_material.b_create_set_material_property(b_mat)
+        b_gen_material.b_create_set_default_material_property(b_mat)
         b_gen_alpha.b_create_set_alpha_property(b_mat) # update alpha
 
     def b_check_data(self):
