@@ -326,7 +326,8 @@ def n_create_diffuse_texture(n_nitexturingproperty):
     n_nitexturingproperty.has_base_texture = True
     
     n_nisourcetexture = NifFormat.NiSourceTexture()  
-    n_nisourcetexture.file_name = b'textures\\diffuse.dds'
+    file_path = 'textures' + path.sep + 'diffuse' + path.sep + 'diffuse.dds'
+    n_nisourcetexture.file_name = file_path.encode()
     n_nisourcetexture.pixel_layout = 6
     n_nisourcetexture.use_mipmaps = 1
     
@@ -366,7 +367,7 @@ def n_check_diffuse_source_texture(n_nisourcetexture, n_texture_path):
     nose.tools.assert_is_instance(n_nisourcetexture, NifFormat.NiSourceTexture)
     
     n_split_path = n_texture_path.split(path.sep)
-    n_rel_path = n_split_path[len(n_split_path)-2:] #get a path relative to \\textures folder
+    n_rel_path = n_split_path[len(n_split_path)-3:] #get a path relative to \\textures folder
     
     n_src_path = n_nisourcetexture.file_name.decode()
     n_src_path = n_src_path.split(path.sep)

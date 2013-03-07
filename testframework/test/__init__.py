@@ -147,10 +147,8 @@ class SingleNif(Base):
     """
     
     # Debug Settings
-    gen_blender_scene = False
+    gen_blender_scene = True
     
-    gen_nifs = False
-
     def __init__(self):
         """Initialize the test."""
         Base.__init__(self)
@@ -252,7 +250,8 @@ class SingleNif(Base):
         self.b_clear()
         self.n_import(self.n_filepath_0)
         b_obj_names = self._b_select_all()
-        self.b_save(self.b_filepath_0)
+        if(self.gen_blender_scene):
+            self.b_save(self.b_filepath_0)
         self.b_check_data()
         
         # export and check data
@@ -264,7 +263,8 @@ class SingleNif(Base):
         # create scene
         self.b_create_objects()
         b_obj_names = self._b_select_all()
-        self.b_save(self.b_filepath_1)
+        if(self.gen_blender_scene):
+            self.b_save(self.b_filepath_1)
         self.b_check_data()
         
         # export and check data
@@ -276,7 +276,8 @@ class SingleNif(Base):
         # import and check data
         self.n_import(self.n_filepath_2)
         b_obj_names = self._b_select_all()
-        self.b_save(self.b_filepath_2)
+        if(self.gen_blender_scene):
+            self.b_save(self.b_filepath_2)
         self.b_check_data()
         self.b_clear()
         self._b_clear_check(b_obj_names)
