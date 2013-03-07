@@ -16,8 +16,10 @@ from test.property.material import b_gen_material
 from test.property.material import n_gen_material
 from test.textures import b_gen_texture
 from test.textures import n_gen_texture
+from test.textures.diffuse import b_gen_diffusemap
+from test.textures.diffuse import n_gen_diffusemap
 
-class TestTexturePropertyDiffuse(SingleNif):
+class TestTexturePropertyDiffuseMap(SingleNif):
     """Test import/export of meshes with NiTexturingProperty based diffuse texture"""
     
     n_name = "textures/diffuse/test_diffuse"
@@ -35,11 +37,11 @@ class TestTexturePropertyDiffuse(SingleNif):
         b_gen_geometry.b_transform_cube(b_obj)
         
         b_mat = b_gen_material.b_create_material_block(b_obj)
-        b_gen_material.b_create_set_material_property(b_mat)
+        b_gen_material.b_create_set_default_material_property(b_mat)
         
-        b_mat_texslot = b_gen_texture.b_create_diffuse_textureslot(b_mat)
+        b_mat_texslot = b_gen_texture.b_create_textureslot(b_mat, 'Diffuse')
         b_gen_texture.b_create_load_texture(b_mat_texslot, self.diffuse_texture_path)
-        b_gen_texture.b_create_diffuse_texture_properties(b_mat_texslot)
+        b_gen_diffusemap.b_create_diffuse_texture_properties(b_mat_texslot)
         
 
     def b_check_data(self):
@@ -53,7 +55,7 @@ class TestTexturePropertyDiffuse(SingleNif):
         b_texslot_diffuse = b_mat.texture_slots[0]
         b_gen_texture.b_check_texture_slot(b_texslot_diffuse)
         b_gen_texture.b_check_image_texture_property(b_texslot_diffuse, self.diffuse_texture_path)  
-        b_gen_texture.b_check_diffuse_texture_settings(b_texslot_diffuse)
+        b_gen_diffusemap.b_check_diffuse_texture_settings(b_texslot_diffuse)
         
     def n_create_data(self):
         
@@ -63,10 +65,11 @@ class TestTexturePropertyDiffuse(SingleNif):
         n_nitrishape = self.n_data.roots[0].children[0]
         n_gen_material.n_attach_material_prop(n_nitrishape) # add nimaterialprop
         
-        n_gen_texture.n_create_texture_property(n_nitrishape) # add nitexturingprop
-        n_textureprop = n_nitrishape.properties[0]
-        n_gen_texture.n_create_diffuse_texture(n_textureprop) #add nitexturesource diffuse
         n_gen_texture.n_create_store_normal_data(n_nitrishape) #store normal data as NiBinaryExtraData
+        n_gen_texture.n_create_texture_property(n_nitrishape) # add nitexturingprop
+        
+        n_textureprop = n_nitrishape.properties[0]
+        n_gen_diffusemap.n_create_diffuse_texture(n_textureprop) #add nitexturesource diffuse
         
         return self.n_data
 
@@ -80,9 +83,9 @@ class TestTexturePropertyDiffuse(SingleNif):
              
         n_tex_prop = n_geom.properties[0]
         n_gen_texture.n_check_texturing_property(n_tex_prop) #check generic props
-        n_gen_texture.n_check_diffuse_property(n_tex_prop) #check diffuse settings
+        n_gen_diffusemap.n_check_diffuse_property(n_tex_prop) #check diffuse settings
         
         n_texdesc_diffuse = n_tex_prop.base_texture
         n_gen_texture.n_check_texdesc(n_texdesc_diffuse) # check generic props
-        n_gen_texture.n_check_diffuse_source_texture(n_texdesc_diffuse.source, self.diffuse_texture_path) #check diffuse image
+        n_gen_diffusemap.n_check_diffuse_source_texture(n_texdesc_diffuse.source, self.diffuse_texture_path) #check diffuse image
         
