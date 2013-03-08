@@ -27,8 +27,11 @@ def n_create_bump_map_property(n_nitexturingproperty):
     
     with ref(n_nitexturingproperty.bump_map_texture) as n_texdesc:
         n_texdesc.source = n_nisourcetexture
+    
         
 def n_check_bumpmap_property(n_tex_prop):
+    '''Checks the bump settings for the NiTextureProperty'''
+    
     nose.tools.assert_is_instance(n_tex_prop, NifFormat.NiTexturingProperty)
     nose.tools.assert_equal(n_tex_prop.has_bump_map_texture, True)
     nose.tools.assert_equal(n_tex_prop.bump_map_luma_scale, 1.0)
@@ -38,7 +41,10 @@ def n_check_bumpmap_property(n_tex_prop):
     nose.tools.assert_equal(n_tex_prop.bump_map_matrix.m_21, 0.0)
     nose.tools.assert_equal(n_tex_prop.bump_map_matrix.m_22, 1.0)
     
+    
 def n_check_bumpmap_source_texture(n_nisourcetexture, n_texture_path):
+    '''Checks the settings of the source bump texture'''
+    
     nose.tools.assert_is_instance(n_nisourcetexture, NifFormat.NiSourceTexture)
     
     n_split_path = n_texture_path.split(path.sep)
