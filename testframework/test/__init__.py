@@ -240,7 +240,7 @@ class SingleNif(Base):
             game=self.n_game,
             )
 
-    def test_import_export(self):
+    def test_pycode_nif(self):
         """Test import followed by export."""
         # create initial nif file and check data
         self.n_write(self.n_create_data(), self.n_filepath_0)
@@ -259,7 +259,8 @@ class SingleNif(Base):
         self.n_check(self.n_filepath_1)
         self.b_clear()
         self._b_clear_check(b_obj_names)
-        
+
+    def test_user_scene_nif(self):       
         # create scene
         self.b_create_objects()
         b_obj_names = self._b_select_all()
