@@ -7,7 +7,7 @@ import mathutils
 import nose
 
 def b_create_textureslot(b_mat, b_text_name):
-    b_mat_texslot = b_mat.texture_slots.create(0) # create material texture slot
+    b_mat_texslot = b_mat.texture_slots.add() # create material texture slot
     b_mat_texslot.texture = bpy.data.textures.new(name=b_text_name, type='IMAGE') # create texture holder
     return b_mat_texslot
 
