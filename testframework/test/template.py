@@ -18,7 +18,7 @@ class TestFeature(SingleNif):
         # call sub_methods for reusability
         raise NotImplementedError
 
-    def b_check_data(self, b_obj):
+    def b_check_data(self):
         """Check blender object against feature."""
         # call sub_methods for reusability
         raise NotImplementedError
