@@ -37,6 +37,11 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import bpy
+import mathutils
+
+import pyffi
+from pyffi.formats.nif import NifFormat
 
 class bhkshape_export():
 
