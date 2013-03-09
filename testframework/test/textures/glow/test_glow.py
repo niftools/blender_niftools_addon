@@ -21,7 +21,7 @@ from test.textures.diffuse import n_gen_diffusemap
 from test.textures.glow import b_gen_glowmap
 from test.textures.glow import n_gen_glowmap
 
-class TestTexturePropertyglowMap(SingleNif):
+class TestTexturePropertyGlowMap(SingleNif):
     """Test import/export of meshes with NiTexturingProperty based diffuse and glowmap texture"""
     
     n_name = "textures/glow/test_glow"
