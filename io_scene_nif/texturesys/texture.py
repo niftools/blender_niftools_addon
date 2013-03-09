@@ -142,6 +142,11 @@ class texture_import():
 			if self.nif_common.context.user_preferences.filepaths.texture_directory:
 				searchPathList.append(
 					self.nif_common.context.user_preferences.filepaths.texture_directory)
+			
+			# TODO_3 - Implement full texture path finding.
+			nif_dir = os.path.join(os.getcwd() , 'nif')
+			searchPathList.append(nif_dir)
+			
 			# if it looks like a Morrowind style path, use common sense to
 			# guess texture path
 			meshes_index = importpath.lower().find("meshes")
