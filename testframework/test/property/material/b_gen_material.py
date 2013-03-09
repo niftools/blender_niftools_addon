@@ -8,7 +8,7 @@ def b_create_material_block(b_obj):
     return b_mat
     
    
-def b_create_set_material_property(b_mat):
+def b_create_set_default_material_property(b_mat):
     b_mat.diffuse_color = (1.0, 1.0, 1.0) # default - (0.8, 0.8, 0.8)
     b_mat.diffuse_intensity = 1.0 # default - 0.8
     b_mat.specular_intensity = 0.0 # disable NiSpecularProperty
@@ -31,7 +31,7 @@ def b_check_material_property(b_mat):
     nose.tools.assert_equal(b_mat.diffuse_color.b, 1.0)
     nose.tools.assert_equal(b_mat.specular_intensity, 0.0)
 
-def b_create_gloss_property(cls, b_mat):
+def b_create_gloss_property(b_mat):
     b_mat.specular_hardness = 100
     return b_mat
         
