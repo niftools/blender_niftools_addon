@@ -84,7 +84,7 @@ class bhkshape_export():
             # note: collision settings are taken from lowerclasschair01.nif
             if b_obj.nifcollision.oblivion_layer == NifFormat.OblivionLayer.OL_BIPED:
                 # special collision object for creatures
-                n_col_obj = self.nif_common.create_block("bhkBlendCollisionb_object", b_obj)
+                n_col_obj = self.nif_common.create_block("bhkBlendCollisionObject", b_obj)
                 n_col_obj.flags = 9
                 n_col_obj.unknown_float_1 = 1.0
                 n_col_obj.unknown_float_2 = 1.0
