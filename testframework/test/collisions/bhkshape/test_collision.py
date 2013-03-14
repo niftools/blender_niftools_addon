@@ -13,7 +13,6 @@ class TestBhkCollisionSphereShape(TestBaseGeometry, TestBhkCollision):
         b_coll.data.show_double_sided = False
         b_coll.name = "CollisionSphere"
         b_coll = bpy.data.objects["CollisionSphere"]
-        b_coll.draw_type = 'WIRE'
 
 class TestBhkCollisionTriangleShape(TestBaseGeometry, TestBhkCollision):
     n_name = "collisions/base_bhkcollision_triangle" #name of nif
@@ -28,7 +27,6 @@ class TestBhkCollisionTriangleShape(TestBaseGeometry, TestBhkCollision):
         b_coll.data.show_double_sided = False
         b_coll.name = "CollisionTriangles"
         b_coll = bpy.data.objects["CollisionTriangles"]
-        b_coll.draw_type = 'WIRE'
 
     def b_check_geom(self, b_mesh):
         if b_mesh.name == "poly0":
