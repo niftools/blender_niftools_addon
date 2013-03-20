@@ -19,7 +19,7 @@ class TestCollisionBhkBoxShape(SingleNif):
     
     n_name = 'collision/bhkboxshape/test_boxshape'
     b_name = 'Cube'
-    b_col_name = 'Box Collision'
+    b_col_name = 'box'
 
     def b_create_objects(self):
         '''Create a cube and bhkboxshape collision object'''
