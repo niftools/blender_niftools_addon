@@ -150,6 +150,9 @@ class bhkshape_export():
             n_bhkrigidbody.quality_type = quality_type
             n_bhkrigidbody.unknown_int_9 = self.nif_common.EXPORT_OB_WIND
             
+            # we will use n_col_body to attach shapes to below
+            n_col_body = n_bhkrigidbody
+            
         else:
             n_col_body = parent_block.collision_object.body
             # fix total mass
