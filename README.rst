@@ -4,13 +4,12 @@ Requirements
 ------------
 
 * `blender 2.62 <http://www.blender.org/download/get-blender/>`_
-* `pyffi 2.2.0 or newer <http://sourceforge.net/projects/pyffi/files/pyffi-py3k/>`_
 
 Fork
 ----
 
-* git clone git://github.com/neomonkeus/blender_nif_plugin.git
-* http://github.com/neomonkeus/blender_nif_plugin
+* git clone git://github.com/niftools/blender_nif_plugin.git
+* http://github.com/niftools/blender_nif_plugin
 
 Download
 --------
