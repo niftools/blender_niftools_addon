@@ -192,14 +192,26 @@ class bhkshape_export():
             # the mopp origin, scale, and data are written later
             n_col_shape = self.nif_common.create_block("bhkPackedNiTriStripsShape", b_obj)
             n_col_mopp.shape = n_col_shape
-            n_col_shape.unknown_floats[2] = 0.1
-            n_col_shape.unknown_floats[4] = 1.0
-            n_col_shape.unknown_floats[5] = 1.0
-            n_col_shape.unknown_floats[6] = 1.0
-            n_col_shape.unknown_floats[8] = 0.1
-            n_col_shape.scale = 1.0
-            n_col_shape.unknown_floats_2[0] = 1.0
-            n_col_shape.unknown_floats_2[1] = 1.0
+            n_col_shape.scale.x = 1.0
+            n_col_shape.scale.y = 1.0
+            n_col_shape.scale.z = 1.0
+#             n_col_shape.unknown_float_1 = 0.1
+#             n_col_shape.unknown_int_1 = 82368508
+#             n_col_shape.unknown_int_2 = 1
+#             n_col_shape.unknown_ints_1[0] = 0
+#             n_col_shape.unknown_ints_1[1] = 0
+#             n_col_shape.unknown_ints_1[2] = 0
+#             n_col_shape.unknown_ints_1[3] = 0
+            
+            
+#             n_col_shape.unknown_floats[2] = 0.1
+#             n_col_shape.unknown_floats[4] = 1.0
+#             n_col_shape.unknown_floats[5] = 1.0
+#             n_col_shape.unknown_floats[6] = 1.0
+#             n_col_shape.unknown_floats[8] = 0.1
+            
+#             n_col_shape.unknown_floats_2[0] = 1.0
+#             n_col_shape.unknown_floats_2[1] = 1.0
 
         else:
             # XXX at the moment, we disable multimaterial mopps
