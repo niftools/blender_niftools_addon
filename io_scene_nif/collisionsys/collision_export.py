@@ -111,7 +111,7 @@ class bhkshape_export():
             n_col_obj.target = parent_block
             n_bhkrigidbody = self.nif_common.create_block("bhkRigidBody", b_obj)
             n_col_obj.body = n_bhkrigidbody
-#            n_bhkrigidbody.layer = layer.get_value()
+            n_bhkrigidbody.layer = getattr(NifFormat.OblivionLayer, layer)
             n_bhkrigidbody.col_filter = col_filter
             n_bhkrigidbody.unknown_short = 0
             n_bhkrigidbody.unknown_int_1 = 0
@@ -124,8 +124,8 @@ class bhkshape_export():
             n_bhkrigidbody.process_contact_callback_delay = 65535
             n_bhkrigidbody.unknown_2_shorts[0] = 35899
             n_bhkrigidbody.unknown_2_shorts[1] = 16336
-            n_bhkrigidbody.layer_copy = 1
-#            n_bhkrigidbody.col_filter_copy = layer
+            n_bhkrigidbody.layer_copy = n_bhkrigidbody.layer
+            n_bhkrigidbody.col_filter_copy = n_bhkrigidbody.col_filter
             n_bhkrigidbody.unknown_7_shorts[0] = 0
             n_bhkrigidbody.unknown_7_shorts[1] = 21280
             n_bhkrigidbody.unknown_7_shorts[2] = 4581
