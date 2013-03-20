@@ -109,36 +109,47 @@ class bhkshape_export():
 
             parent_block.collision_object = n_col_obj
             n_col_obj.target = parent_block
-            n_col_body = self.nif_common.create_block("bhkRigidBody", b_obj)
-            n_col_obj.body = n_col_body
-            n_col_body.layer = layer
-            n_col_body.col_filter = col_filter
-            n_col_body.unknown_5_floats[1] = 3.8139e+36
-            n_col_body.unknown_4_shorts[0] = 1
-            n_col_body.unknown_4_shorts[1] = 65535
-            n_col_body.unknown_4_shorts[2] = 35899
-            n_col_body.unknown_4_shorts[3] = 16336
-            n_col_body.layer_copy = layer
-            n_col_body.unknown_7_shorts[1] = 21280
-            n_col_body.unknown_7_shorts[2] = 4581
-            n_col_body.unknown_7_shorts[3] = 62977
-            n_col_body.unknown_7_shorts[4] = 65535
-            n_col_body.unknown_7_shorts[5] = 44
+            n_bhkrigidbody = self.nif_common.create_block("bhkRigidBody", b_obj)
+            n_col_obj.body = n_bhkrigidbody
+#            n_bhkrigidbody.layer = layer.get_value()
+            n_bhkrigidbody.col_filter = col_filter
+            n_bhkrigidbody.unknown_short = 0
+            n_bhkrigidbody.unknown_int_1 = 0
+            n_bhkrigidbody.unknown_int_2 = 2084020722
+            n_bhkrigidbody.unknown_3_ints[0] = 0
+            n_bhkrigidbody.unknown_3_ints[1] = 0
+            n_bhkrigidbody.unknown_3_ints[2] = 0
+            n_bhkrigidbody.collision_response = 1
+            n_bhkrigidbody.unknown_byte = 0
+            n_bhkrigidbody.process_contact_callback_delay = 65535
+            n_bhkrigidbody.unknown_2_shorts[0] = 35899
+            n_bhkrigidbody.unknown_2_shorts[1] = 16336
+            n_bhkrigidbody.layer_copy = 1
+#            n_bhkrigidbody.col_filter_copy = layer
+            n_bhkrigidbody.unknown_7_shorts[0] = 0
+            n_bhkrigidbody.unknown_7_shorts[1] = 21280
+            n_bhkrigidbody.unknown_7_shorts[2] = 4581
+            n_bhkrigidbody.unknown_7_shorts[3] = 62977
+            n_bhkrigidbody.unknown_7_shorts[4] = 65535
+            n_bhkrigidbody.unknown_7_shorts[5] = 44
+            n_bhkrigidbody.unknown_7_shorts[6] = 0
+
             # mass is 1.0 at the moment (unless property was set)
             # will be fixed later
-            n_col_body.mass = mass
-            n_col_body.linear_damping = 0.1
-            n_col_body.angular_damping = 0.05
-            n_col_body.friction = 0.3
-            n_col_body.restitution = 0.3
-            n_col_body.max_linear_velocity = 250.0
-            n_col_body.max_angular_velocity = 31.4159
-            n_col_body.penetration_depth = 0.15
-            n_col_body.motion_system = motion_system
-            n_col_body.unknown_byte_1 = self.nif_common.EXPORT_OB_UNKNOWNBYTE1
-            n_col_body.unknown_byte_2 = self.nif_common.EXPORT_OB_UNKNOWNBYTE2
-            n_col_body.quality_type = quality_type
-            n_col_body.unknown_int_9 = self.nif_common.EXPORT_OB_WIND
+            n_bhkrigidbody.mass = mass
+            n_bhkrigidbody.linear_damping = 0.1
+            n_bhkrigidbody.angular_damping = 0.05
+            n_bhkrigidbody.friction = 0.3
+            n_bhkrigidbody.restitution = 0.3
+            n_bhkrigidbody.max_linear_velocity = 250.0
+            n_bhkrigidbody.max_angular_velocity = 31.4159
+            n_bhkrigidbody.penetration_depth = 0.15
+            n_bhkrigidbody.motion_system = motion_system
+            n_bhkrigidbody.unknown_byte_1 = self.nif_common.EXPORT_OB_UNKNOWNBYTE1
+            n_bhkrigidbody.unknown_byte_2 = self.nif_common.EXPORT_OB_UNKNOWNBYTE2
+            n_bhkrigidbody.quality_type = quality_type
+            n_bhkrigidbody.unknown_int_9 = self.nif_common.EXPORT_OB_WIND
+            
         else:
             n_col_body = parent_block.collision_object.body
             # fix total mass
