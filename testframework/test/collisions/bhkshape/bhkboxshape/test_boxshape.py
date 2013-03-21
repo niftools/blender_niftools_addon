@@ -17,7 +17,7 @@ from test.collisions.bhkshape.bhkboxshape import n_gen_bhkboxshape
 class TestCollisionBhkBoxShape(SingleNif):
     """Test material property"""
     
-    n_name = 'collision/bhkboxshape/test_boxshape'
+    n_name = 'collisions/bhkboxshape/test_boxshape'
     b_name = 'Cube'
     b_col_name = 'box'
 
