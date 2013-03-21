@@ -61,6 +61,11 @@ class TestCollisionBhkBoxShape(SingleNif):
 
 
     def n_check_data(self):
+        n_trishape = self.n_data.roots[0].children[0]
+        n_gen_geometry.n_check_trishape(n_trishape)
+        
+        
+        
         pass
 #         n_nitrishape = self.n_data.roots[0].children[0]
 #         n_gen_geometry.n_check_trishape(n_nitrishape)
