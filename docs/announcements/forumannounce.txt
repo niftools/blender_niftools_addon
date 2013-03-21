@@ -19,7 +19,7 @@ For the latest recommended versions visit the [url=http://niftools.sourceforge.n
 
 [b]Notes[/b]
 
-Found a bug? Post it on the [url=https://sourceforge.net/tracker/?atid=776343&group_id=149157]tracker[/url]. Fixed a bug? Fork the [url=http://github.com/amorilia/blender_nif_scripts]repository[/url].
+Found a bug? Post it on the [url=https://sourceforge.net/tracker/?atid=776343&group_id=149157]tracker[/url]. Fixed a bug? Fork the [url=http://github.com/niftools/blender_nif_scripts]repository[/url].
 
 Enjoy!
 Niftools Development Team
