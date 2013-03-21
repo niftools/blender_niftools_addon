@@ -48,7 +48,7 @@ def n_attach_bhkconvextransform(n_bhkshape):
     
     with ref(n_bhkconvextransformshape) as n_bhktransform:
 
-        n_bhktransform.material = getattr(NifFormat.HavokMaterial, 'HAVOK_MAT_WOOD') # 9
+        n_bhktransform.material = getattr(NifFormat.HavokMaterial, 'HAV_MAT_WOOD') # 9
         n_bhktransform.unknown_float_1 = 0.1
         n_bhktransform.unknown_8_bytes.update_size()
         n_bhktransform.unknown_8_bytes[0] = 96
@@ -81,7 +81,7 @@ def n_attach_bhkboxshape(n_bhkshape):
     n_bhkboxshape = NifFormat.bhkBoxShape()
     n_bhkshape.shape = n_bhkboxshape
     
-    n_bhkboxshape.material = getattr(NifFormat.HavokMaterial, 'HAVOK_MAT_WOOD') # 9
+    n_bhkboxshape.material = getattr(NifFormat.HavokMaterial, 'HAV_MAT_WOOD') # 9
     n_bhkboxshape.radius = 0.1
     n_bhkboxshape.unknown_8_bytes.update_size()
     n_bhkboxshape.unknown_8_bytes[0] = 107
