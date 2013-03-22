@@ -45,7 +45,8 @@ from pyffi.formats.nif import NifFormat
 def n_attach_bsx_flag(n_ninode):
     '''Attach a BSXFlag with collision setting enabled'''
     n_bsxflags = NifFormat.BSXFlags()
-
+    n_bsxflags.integer_data = 2 # enable physics
+    
     # add flag to top of list
     n_ninode.num_extra_data_list += 1
     n_ninode.extra_data_list.update_size()
@@ -110,17 +111,29 @@ def n_attach_bhkrigidbody(n_bhkcollisionobject):
     
     return n_bhkrigidbody
 
+def n_check_bsx_flag(n_bsxflag):
 
-def n_check_bhkcollisionobject_data(n_data):
-    nose.assert_is_instance(n_data, NifFormat.bhkCollisionObject)
+    nose.tools.assert_is_instance(n_bsxflag, NifFormat.BSXFlags)
+    nose.tools.assert_equal(n_bsxflag.integer_data, 2) #2 = enable collision flag
 
+
+def n_check_bhkcollisionobject_data(n_ninode):
+    
+    nose.tools.assert_equal(n_ninode.collision_object != None, True)
+    n_bhkcollisionobject = n_ninode.collision_object
+    
+    nose.tools.assert_is_instance(n_bhkcollisionobject, NifFormat.bhkCollisionObject)
+    nose.tools.assert_equal(n_bhkcollisionobject.flags, 1)
+    nose.tools.assert_equal(n_bhkcollisionobject.target, n_ninode)
+    
+    return n_bhkcollisionobject
 
 def n_check_bhkrigidbody_data(n_data):
     #add code to test lots of lovely things
     pass
 
 
-def n_check_bhkrighidbodyt_data(self, n_data):
+def n_check_bhkrigidbodyt_data(self, n_data):
     #this is inherited from bhkrigidbody, but what is the difference?
     pass
 
@@ -136,18 +149,13 @@ def n_check_bhkrighidbodyt_data(self, n_data):
 #     self.n_check_upb_property(n_ninode.extra_data_list[1])
     
     
-def n_check_bsxflags_property(self, n_data):
-    #We check that there is a BSXFlags node. This is regarding collisions.
-    #Without a BSXFlags, collisions will not work
-    nose.tools.assert_is_instance(n_data, NifFormat.BSXFlags)
-    nose.tools.assert_equal(n_data.integer_data, 2) #2 = enable collision flag
+
 
 
 def n_check_upb_property(self, n_data, default = "Mass = 0.000000 Ellasticity = 0.300000 Friction = 0.300000 Unyielding = 0 Simulation_Geometry = 2 Proxy_Geometry = <None> Use_Display_Proxy = 0 Display_Children = 1 Disable_Collisions = 0 Inactive = 0 Display_Proxy = <None> "):
-    #We check that there is an NiStringExtraData node and that its name is 'UPB'
-    #'UPB' stands for 'User Property Buffer'
+    
     nose.tools.assert_is_instance(n_data, NifFormat.NiStringExtraData)
-    nose.tools.assert_equal(n_data.name, b'UPB')
+    nose.tools.assert_equal(n_data.name, b'UPB') # User property buffer
 
     valuestring = n_data.string_data
     valuestring = valuestring.decode()
