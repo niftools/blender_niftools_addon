@@ -68,37 +68,46 @@ class armature_import():
 		"""Scans an armature hierarchy, and returns a whole armature.
 		This is done outside the normal node tree scan to allow for positioning
 		of the bones before skins are attached."""
-		armature_name = self.import_name(niArmature)
+		armature_name = self.nif_common.import_name(niArmature)
 
-		b_armatureData = Blender.Armature.Armature()
-		b_armatureData.name = armature_name
-		b_armatureData.drawAxes = True
-		b_armatureData.envelopes = False
-		b_armatureData.vertexGroups = True
+		b_armatureData = bpy.data.armatures.new(armature_name)
+		b_armatureData.use_deform_vertex_groups = True
+		b_armatureData.use_deform_envelopes = False
+		b_armatureData.show_names = True
+		b_armatureData.show_axes = True
 		b_armatureData.draw_type = 'STICK'
-		b_armature = self.context.scene.objects.new(b_armatureData, armature_name)
-
+		b_armature = bpy.data.objects.new(armature_name, b_armatureData)
+		b_armature.show_x_ray = True
+		
+		#Link object to scene
+		scn = bpy.context.scene
+		scn.objects.link(b_armature)
+		scn.objects.active = b_armature
+		scn.update()
+		
 		# make armature editable and create bones
-		b_armatureData.makeEditable()
+		bpy.ops.object.editmode_toggle()
 		niChildBones = [child for child in niArmature.children
 						if self.is_bone(child)]
 		for niBone in niChildBones:
 			self.import_bone(
 				niBone, b_armature, b_armatureData, niArmature)
-		b_armatureData.update()
-
+		#b_armatureData.update()
+		scn.update()
+		
 		# TODO: Move to Animation.py
 
 		# The armature has been created in editmode,
 		# now we are ready to set the bone keyframes.
+		bpy.ops.object.mode_set(mode='POSE')
 		if self.nif_common.properties.animation:
 			# create an action
-			action = Blender.Armature.NLA.NewAction()
-			action.setActive(b_armature)
+			action = bpy.data.actions.new(armature_name)
+			bpy.types.NlaTrack.select = b_armature #action.setActive(b_armature)
 			# go through all armature pose bones
 			# see http://www.elysiun.com/forum/viewtopic.php?t=58693
 			self.nif_common.info('Importing Animations')
-			for bone_name, b_posebone in b_armature.getPose().bones.items():
+			for bone_name, b_posebone in b_armature.pose.bones.items():
 				# denote progress
 				self.nif_common.debug('Importing animation for bone %s' % bone_name)
 				niBone = self.nif_common.blocks[bone_name]
@@ -120,7 +129,7 @@ class armature_import():
 				niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = self.decompose_srt(bone_bm)
 				niBone_bind_rot_inv = mathutils.Matrix(niBone_bind_rot)
 				niBone_bind_rot_inv.invert()
-				niBone_bind_quat_inv = niBone_bind_rot_inv.toQuat()
+				niBone_bind_quat_inv = niBone_bind_rot_inv.to_quaternion()
 				# we also need the conversion of the original matrix to the
 				# new bone matrix, say X,
 				# B' = X * B
@@ -142,18 +151,18 @@ class armature_import():
 				# SC' = SX * SC / SX = SC
 				# RC' = RX * RC * inverse(RX)
 				# TC' = (TX * SC * RC + TC - TX) * inverse(RX) / SX
-				extra_matrix_scale, extra_matrix_rot, extra_matrix_trans = self.decompose_srt(self.bones_extra_matrix[niBone])
-				extra_matrix_quat = extra_matrix_rot.toQuat()
+				extra_matrix_scale, extra_matrix_rot, extra_matrix_trans = self.decompose_srt(self.nif_common.bones_extra_matrix[niBone])
+				extra_matrix_quat = extra_matrix_rot.to_quaternion()
 				extra_matrix_rot_inv = mathutils.Matrix(extra_matrix_rot)
 				extra_matrix_rot_inv.invert()
-				extra_matrix_quat_inv = extra_matrix_rot_inv.toQuat()
+				extra_matrix_quat_inv = extra_matrix_rot_inv
 				# now import everything
 				# ##############################
 
 				# get controller, interpolator, and data
 				# note: the NiKeyframeController check also includes
 				#	   NiTransformController (see hierarchy!)
-				kfc = self.find_controller(niBone,
+				kfc = self.nif_common.find_controller(niBone,
 										   NifFormat.NiKeyframeController)
 				# old style: data directly on controller
 				kfd = kfc.data if kfc else None
@@ -408,7 +417,8 @@ class armature_import():
 
 		# constraints (priority)
 		# must be done outside edit mode hence after calling
-		for bone_name, b_posebone in b_armature.getPose().bones.items():
+		bpy.ops.object.mode_set(mode='OBJECT')
+		for bone_name, b_posebone in b_armature.pose.bones.items():
 			# find bone nif block
 			niBone = self.nif_common.blocks[bone_name]
 			# store bone priority, if applicable
@@ -417,10 +427,13 @@ class armature_import():
 					bpy.types.Constraint.NULL)
 				constr.name = "priority:%i" % self.nif_common.bone_priorities[niBone.name]
 
+		scn.update()
 		return b_armature  
 
 	def import_bone(self, niBlock, b_armature, b_armatureData, niArmature):
 		"""Adds a bone to the armature in edit mode."""
+		
+		bpy.ops.object.mode_set(mode='EDIT')
 		# check that niBlock is indeed a bone
 		if not self.is_bone(niBlock):
 			return None
@@ -429,18 +442,18 @@ class armature_import():
 		nub_length = 5.0
 		scale = 1 / self.nif_common.properties.scale_correction
 		# bone name
-		bone_name = self.import_name(niBlock, 32)
+		bone_name = self.nif_common.import_name(niBlock, 32)
 		niChildBones = [ child for child in niBlock.children
 						 if self.is_bone(child) ]
 		# create a new bone
-		b_bone = Blender.Armature.Editbone()
+		b_bone = b_armatureData.edit_bones.new(bone_name)
 		# head: get position from niBlock
-		armature_space_matrix = self.import_matrix(niBlock,
+		armature_space_matrix = self.nif_common.import_matrix(niBlock,
 												   relative_to=niArmature)
 
-		b_bone_head_x = armature_space_matrix[3][0]
-		b_bone_head_y = armature_space_matrix[3][1]
-		b_bone_head_z = armature_space_matrix[3][2]
+		b_bone_head_x = armature_space_matrix[0][3]
+		b_bone_head_y = armature_space_matrix[1][3]
+		b_bone_head_z = armature_space_matrix[2][3]
 		# temporarily sets the tail as for a 0 length bone
 		b_bone_tail_x = b_bone_head_x
 		b_bone_tail_y = b_bone_head_y
@@ -449,16 +462,16 @@ class armature_import():
 		# tail: average of children location
 		if len(niChildBones) > 0:
 			m_correction = self.find_correction_matrix(niBlock, niArmature)
-			child_matrices = [ self.import_matrix(child,
+			child_matrices = [ self.nif_common.import_matrix(child,
 												  relative_to=niArmature)
 							   for child in niChildBones ]
-			b_bone_tail_x = sum(child_matrix[3][0]
+			b_bone_tail_x = sum(child_matrix[0][3]
 								for child_matrix
 								in child_matrices) / len(child_matrices)
-			b_bone_tail_y = sum(child_matrix[3][1]
+			b_bone_tail_y = sum(child_matrix[1][3]
 								for child_matrix
 								in child_matrices) / len(child_matrices)
-			b_bone_tail_z = sum(child_matrix[3][2]
+			b_bone_tail_z = sum(child_matrix[2][3]
 								for child_matrix
 								in child_matrices) / len(child_matrices)
 			# checking bone length
@@ -466,7 +479,7 @@ class armature_import():
 			dy = b_bone_head_y - b_bone_tail_y
 			dz = b_bone_head_z - b_bone_tail_z
 			is_zero_length = abs(dx + dy + dz) * 200 < self.nif_common.properties.epsilon
-		elif self.nif_common.IMPORT_REALIGN_BONES == 2:
+		elif self.nif_common.properties.import_realign_bones == 2:
 			# The correction matrix value is based on the childrens' head
 			# positions.
 			# If there are no children then set it as the same as the
@@ -477,7 +490,7 @@ class armature_import():
 		if is_zero_length:
 			# this is a 0 length bone, to avoid it being removed
 			# set a default minimum length
-			if (self.nif_common.IMPORT_REALIGN_BONES == 2) \
+			if (self.nif_common.properties.import_realign_bones == 2) \
 			   or not self.is_bone(niBlock._parent):
 				# no parent bone, or bone is realigned with correction
 				# set one random direction
@@ -499,53 +512,54 @@ class armature_import():
 					dx = parent_tail[0] - parent_head[0]
 					dy = parent_tail[1] - parent_head[1]
 					dz = parent_tail[2] - parent_head[2]
-				direction = Vector(dx, dy, dz)
+				direction = mathutils.Vector((dx, dy, dz))
 				direction.normalize()
 				b_bone_tail_x = b_bone_head_x + (direction[0] * nub_length * scale)
 				b_bone_tail_y = b_bone_head_y + (direction[1] * nub_length * scale)
 				b_bone_tail_z = b_bone_head_z + (direction[2] * nub_length * scale)
 				
 		# sets the bone heads & tails
-		b_bone.head = Vector(b_bone_head_x, b_bone_head_y, b_bone_head_z)
-		b_bone.tail = Vector(b_bone_tail_x, b_bone_tail_y, b_bone_tail_z)
+		b_bone.head = mathutils.Vector((b_bone_head_x, b_bone_head_y, b_bone_head_z))
+		b_bone.tail = mathutils.Vector((b_bone_tail_x, b_bone_tail_y, b_bone_tail_z))
 		
-		if self.nif_common.IMPORT_REALIGN_BONES == 2:
+		if self.nif_common.properties.import_realign_bones == 2:
 			# applies the corrected matrix explicitly
-			b_bone.matrix = m_correction.resize4x4() * armature_space_matrix
-		elif self.nif_common.IMPORT_REALIGN_BONES == 1:
+			b_bone.matrix = m_correction.resize_4x4() * armature_space_matrix
+		elif self.nif_common.properties.import_realign_bones == 1:
 			# do not do anything, keep unit matrix
 			pass
 		else:
 			# no realign, so use original matrix
-			b_bone.matrix = armature_space_matrix
+			 armature_space_matrix = b_bone.matrix
 
 		# set bone name and store the niBlock for future reference
-		b_armatureData.bones[bone_name] = b_bone
-		# calculate bone difference matrix; we will need this when
+		bpy.ops.object.mode_set(mode='OBJECT')
+		b_bone = b_armatureData.bones[bone_name]		# calculate bone difference matrix; we will need this when
 		# importing animation
 		old_bone_matrix_inv = mathutils.Matrix(armature_space_matrix)
 		old_bone_matrix_inv.invert()
 		new_bone_matrix = mathutils.Matrix(b_bone.matrix)
-		new_bone_matrix.resize4x4()
-		new_bone_matrix[3][0] = b_bone_head_x
-		new_bone_matrix[3][1] = b_bone_head_y
-		new_bone_matrix[3][2] = b_bone_head_z
+		new_bone_matrix.resize_4x4()
+		new_bone_matrix[0][3] = b_bone_head_x
+		new_bone_matrix[1][3] = b_bone_head_y
+		new_bone_matrix[2][3] = b_bone_head_z
 		# stores any correction or alteration applied to the bone matrix
 		# new * inverse(old)
-		self.bones_extra_matrix[niBlock] = new_bone_matrix * old_bone_matrix_inv
+		self.nif_common.bones_extra_matrix[niBlock] = new_bone_matrix * old_bone_matrix_inv
 		# set bone children
+		bpy.ops.object.mode_set(mode='EDIT')
 		for niBone in niChildBones:
 			b_child_bone = self.import_bone(
 				niBone, b_armature, b_armatureData, niArmature)
-			b_child_bone.parent = b_bone
-
+			b_bone = b_child_bone.parent
+		bpy.ops.object.mode_set(mode='OBJECT')
 		return b_bone
 
 
 	def find_correction_matrix(self, niBlock, niArmature):
 		"""Returns the correction matrix for a bone."""
-		m_correction = self.IDENTITY44.rotationPart()
-		if (self.nif_common.IMPORT_REALIGN_BONES == 2) and self.is_bone(niBlock):
+		m_correction = self.IDENTITY44.to_3x3()
+		if (self.nif_common.properties.import_realign_bones == 2) and self.is_bone(niBlock):
 			armature_space_matrix = self.nif_common.import_matrix(niBlock,
 													   relative_to=niArmature)
 
@@ -555,9 +569,9 @@ class armature_import():
 			if len(niChildBones) > 0:
 				child_local_matrices = [ self.nif_common.import_matrix(child)
 										 for child in niChildBones ]
-				sum_x = sum(cm[3][0] for cm in child_local_matrices)
-				sum_y = sum(cm[3][1] for cm in child_local_matrices)
-				sum_z = sum(cm[3][2] for cm in child_local_matrices)
+				sum_x = sum(cm[0][3] for cm in child_local_matrices)
+				sum_y = sum(cm[1][3] for cm in child_local_matrices)
+				sum_z = sum(cm[2][3] for cm in child_local_matrices)
 			list_xyz = [ int(c * 200)
 						 for c in (sum_x, sum_y, sum_z,
 								   - sum_x, -sum_y, -sum_z) ]
@@ -578,11 +592,11 @@ class armature_import():
 
 	def append_armature_modifier(self, b_obj, b_armature):
 		"""Append an armature modifier for the object."""
-		b_mod = b_obj.modifiers.append(
-			Blender.Modifier.Types.ARMATURE)
-		b_mod[Blender.Modifier.Settings.OBJECT] = b_armature
-		b_mod[Blender.Modifier.Settings.ENVELOPES] = False
-		b_mod[Blender.Modifier.Settings.VGROUPS] = True
+		armature_name = b_armature.name
+		b_mod = b_obj.modifiers.new(armature_name,'ARMATURE')
+		b_mod.object = b_armature
+		b_mod.use_bone_envelopes = False
+		b_mod.use_vertex_groups = True
 
 
 	def mark_armatures_bones(self, niBlock):
@@ -777,28 +791,30 @@ class armature_import():
 	def decompose_srt(self, matrix):
 		"""Decompose Blender transform matrix as a scale, rotation matrix, and translation vector."""
 		# get scale components
-		"""b_scale_rot = m.rotationPart()
+		trans_vec, rot_quat, scale_vec = matrix.decompose()
+		#matrix1 = matrix.to_quaternion()
+		b_scale_rot = rot_quat.to_matrix()
 		b_scale_rot_T = mathutils.Matrix(b_scale_rot)
 		b_scale_rot_T.transpose()
 		b_scale_rot_2 = b_scale_rot * b_scale_rot_T
-		b_scale = mathutils.Vector(b_scale_rot_2[0][0] ** 0.5,\
+		b_scale = mathutils.Vector((b_scale_rot_2[0][0] ** 0.5,\
 								   b_scale_rot_2[1][1] ** 0.5,\
-								   b_scale_rot_2[2][2] ** 0.5)
+								   b_scale_rot_2[2][2] ** 0.5))
 		# and fix their sign
 		if (b_scale_rot.determinant() < 0): b_scale.negate()
 		# only uniform scaling
-		if (abs(b_scale[0]-b_scale[1]) >= self.properties.epsilon
-			or abs(b_scale[1]-b_scale[2]) >= self.properties.epsilon):
-			self.warning(
+		if (abs(b_scale[0]-b_scale[1]) >= self.nif_common.properties.epsilon
+			or abs(b_scale[1]-b_scale[2]) >= self.nif_common.properties.epsilon):
+			self.nif_common.warning(
 				"Corrupt rotation matrix in nif: geometry errors may result.")
 		b_scale = b_scale[0]
 		# get rotation matrix
 		b_rot = b_scale_rot * (1.0/b_scale)
 		# get translation
-		b_trans = m.translationPart()"""
-		b_trans_vec, b_rot_quat, b_scale_vec = matrix.decompose()
+		b_trans = mathutils.Vector(matrix[3][0:3])
+		#b_trans_vec, b_rot_quat, b_scale_vec = matrix.decompose()
 		# done!
-		return [b_trans_vec, b_rot_quat, b_scale_vec]
+		return [b_scale, b_rot, b_trans]
 	
 	def store_bones_extra_matrix(self):
 		"""Stores correction matrices in a text buffer so that the original

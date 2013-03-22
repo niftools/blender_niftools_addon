@@ -363,7 +363,7 @@ class NifImport(NifCommon):
             # (for blends imported with older versions of the scripts!)
             for b_child_obj in self.selected_objects:
                 if b_child_obj.type == 'MESH':
-                    for oldgroupname in b_child_obj.data.getVertGroupNames():
+                    for oldgroupname in b_child_obj.vertex_groups.items():
                         newgroupname = self.get_bone_name_for_blender(oldgroupname)
                         if oldgroupname != newgroupname:
                             self.info(
@@ -372,7 +372,12 @@ class NifImport(NifCommon):
                             b_child_obj.data.renameVertGroup(
                                 oldgroupname, newgroupname)
             # set parenting
-            b_obj.makeParentDeform(self.selected_objects)
+            #b_obj.parent_set(self.selected_objects)
+            bpy.ops.object.parent_set(type='OBJECT')
+            scn = bpy.context.scene
+            scn.objects.active = b_obj
+            scn.update()
+
 
     def import_branch(self, niBlock, b_armature=None, n_armature=None):
         """Read the content of the current NIF tree branch to Blender
@@ -533,7 +538,11 @@ class NifImport(NifCommon):
             elif isinstance(b_obj, bpy.types.Bone):
                 # bone parentship, is a bit more complicated
                 # go to rest position
-                b_armature.data.restPosition = True
+                
+                #b_armature.data.restPosition = True
+                bpy.context.scene.objects.active = b_armature
+                bpy.ops.object.mode_set(mode='EDIT')
+                
                 # set up transforms
                 for n_child, b_child in object_children:
                     # save transform
@@ -575,7 +584,8 @@ class NifImport(NifCommon):
                     # parent child to the bone
                     b_armature.makeParentBone(
                         [b_child], b_obj.name)
-                b_armature.data.restPosition = False
+                bpy.ops.object.mode_set(mode='OBJECT')
+
             else:
                 raise RuntimeError(
                     "Unexpected object type %s" % b_obj.__class__)
@@ -699,22 +709,24 @@ class NifImport(NifCommon):
 
     def import_matrix(self, niBlock, relative_to=None):
         """Retrieves a niBlock's transform matrix as a Mathutil.Matrix."""
+        # return Matrix(*niBlock.get_transform(relative_to).as_list())
         n_scale, n_rot_mat3, n_loc_vec3 = niBlock.get_transform(relative_to).get_scale_rotation_translation()
 
         # create a location matrix
         b_loc_vec = mathutils.Vector(n_loc_vec3.as_tuple())
         b_loc_vec = mathutils.Matrix.Translation(b_loc_vec)
-
+        
         # create a scale matrix
         b_scale_mat = mathutils.Matrix.Scale(n_scale, 4)
 
         # create a rotation matrix
         b_rot_mat = mathutils.Matrix()
-        b_rot_mat[0].xyz = n_rot_mat3.m_11, n_rot_mat3.m_21, n_rot_mat3.m_31
-        b_rot_mat[1].xyz = n_rot_mat3.m_12, n_rot_mat3.m_22, n_rot_mat3.m_32
-        b_rot_mat[2].xyz = n_rot_mat3.m_13, n_rot_mat3.m_23, n_rot_mat3.m_33
-
-        return b_loc_vec * b_rot_mat * b_scale_mat
+        b_rot_mat[0].xyz = n_rot_mat3.m_11, n_rot_mat3.m_12, n_rot_mat3.m_13
+        b_rot_mat[1].xyz = n_rot_mat3.m_21, n_rot_mat3.m_22, n_rot_mat3.m_23
+        b_rot_mat[2].xyz = n_rot_mat3.m_31, n_rot_mat3.m_32, n_rot_mat3.m_33
+        
+        b_import_matrix = (b_loc_vec * b_rot_mat) * b_scale_mat
+        return b_import_matrix
 
     def import_empty(self, niBlock):
         """Creates and returns a grouping empty."""
@@ -1241,14 +1253,12 @@ class NifImport(NifCommon):
                     continue
                 vertex_weights = boneWeights[idx].vertex_weights
                 groupname = self.names[bone]
-                if not groupname in b_mesh.getVertGroupNames():
-                    b_mesh.addVertGroup(groupname)
+                if not groupname in b_obj.vertex_groups.items():
+                    v_group = b_obj.vertex_groups.new(groupname)
                 for skinWeight in vertex_weights:
                     vert = skinWeight.index
                     weight = skinWeight.weight
-                    b_mesh.assignVertsToGroup(
-                        groupname, [v_map[vert]], weight,
-                        Blender.Mesh.AssignModes.REPLACE)
+                    v_group.add([v_map[vert]], weight, 'REPLACE')
 
         # import body parts as vertex groups
         if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
@@ -1259,7 +1269,7 @@ class NifImport(NifCommon):
                 bodypart_wrap.set_value(bodypart.body_part)
                 groupname = bodypart_wrap.get_detail_display()
                 # create vertex group if it did not exist yet
-                if not(groupname in b_mesh.getVertGroupNames()):
+                if not(groupname in b_mesh.vert_groups.items()):
                     b_mesh.addVertGroup(groupname)
                 # find vertex indices of this group
                 groupverts = [v_map[v_index]
