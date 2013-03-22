@@ -61,15 +61,20 @@ class TestCollisionBhkBoxShape(SingleNif):
 
 
     def n_check_data(self):
-        n_trishape = self.n_data.roots[0].children[0]
+        n_ninode = self.n_data.roots[0]
+        
+        #bsx flag
+        # nose.tools.assert_equal(n_ninode.num_extra_data_list, 1) #UPB TODO
+        n_bsxflag = n_ninode.extra_data_list[0]
+        n_gen_collision.n_check_bsx_flag(n_bsxflag)
+        
+        #collision
+        n_gen_collision.n_check_bhkcollisionobject_data(n_ninode)
+        
+        #geometry
+        n_trishape = n_ninode.children[0]
         n_gen_geometry.n_check_trishape(n_trishape)
         
         
-        
-        pass
-#         n_nitrishape = self.n_data.roots[0].children[0]
-#         n_gen_geometry.n_check_trishape(n_nitrishape)
-#         
-#         nose.tools.assert_equal(n_nitrishape.num_properties, 0)
     
 
