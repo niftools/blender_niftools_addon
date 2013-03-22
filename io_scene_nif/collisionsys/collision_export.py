@@ -290,7 +290,13 @@ class bhkshape_export():
         maxx = max([b_vert[0] for b_vert in b_vertlist])
         maxy = max([b_vert[1] for b_vert in b_vertlist])
         maxz = max([b_vert[2] for b_vert in b_vertlist])
-
+        
+        calc_bhkshape_radius = (maxx - minx + maxy - miny + maxz - minz) / (6.0 * self.nif_common.HAVOK_SCALE)
+        if(b_obj.game.radius - calc_bhkshape_radius > self.nif_common.properties.epsilon):
+            radius = calc_bhkshape_radius
+        else:
+            radius = b_obj.game.radius
+        
         if b_obj.game.collision_bounds_type in {'BOX', 'SPHERE'}:
             # note: collision settings are taken from lowerclasschair01.nif
             coltf = self.nif_common.create_block("bhkConvexTransformShape", b_obj)
@@ -326,7 +332,7 @@ class bhkshape_export():
                 colbox = self.nif_common.create_block("bhkBoxShape", b_obj)
                 coltf.shape = colbox
                 colbox.material = n_havok_mat
-                colbox.radius = 0.1
+                colbox.radius = radius
                 colbox.unknown_8_bytes[0] = 0x6b
                 colbox.unknown_8_bytes[1] = 0xee
                 colbox.unknown_8_bytes[2] = 0x43
@@ -347,7 +353,7 @@ class bhkshape_export():
                 colsphere.material = n_havok_mat
                 # take average radius and
                 # Todo find out what this is: fix for havok coordinate system (6 * 7 = 42)
-                colsphere.radius = (maxx - minx + maxy - miny + maxz - minz) / (6.0 * self.nif_common.HAVOK_SCALE)
+                colsphere.radius = radius
 
             return coltf
 
@@ -449,7 +455,7 @@ class bhkshape_export():
 
             colhull = self.nif_common.create_block("bhkConvexVerticesShape", b_obj)
             colhull.material = n_havok_mat
-            colhull.radius = 0.1
+            colhull.radius = radius
             colhull.unknown_6_floats[2] = -0.0 # enables arrow detection
             colhull.unknown_6_floats[5] = -0.0 # enables arrow detection
             # note: unknown 6 floats are usually all 0
