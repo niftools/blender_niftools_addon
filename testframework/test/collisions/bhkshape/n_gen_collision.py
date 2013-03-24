@@ -42,6 +42,8 @@ import nose
 from pyffi.utils.withref import ref
 from pyffi.formats.nif import NifFormat
 
+HAVOK_SCALE = 7
+
 def n_attach_bsx_flag(n_ninode):
     '''Attach a BSXFlag with collision setting enabled'''
     
