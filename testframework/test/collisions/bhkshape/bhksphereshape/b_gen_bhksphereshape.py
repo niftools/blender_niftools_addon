@@ -8,6 +8,7 @@ import nose.tools
 def b_create_bhksphere(b_obj, b_name):
     """Create a UV Sphere encapsulating the given object"""
     
+    #this assumes that the objects center is at the vertex mesh centre.
     b_obj_matrix = b_obj.matrix_local
     b_rot_quat = b_obj_matrix.decompose()[1]
     b_vertlist = [b_rot_quat * b_vert.co for b_vert in b_obj.data.vertices] #pre-compute where the vertices in local space
