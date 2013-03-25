@@ -92,14 +92,15 @@ class armature_import():
 		for niBone in niChildBones:
 			self.import_bone(
 				niBone, b_armature, b_armatureData, niArmature)
-		#b_armatureData.update()
+		b_armatureData.update_tag(refresh=set())
+		scn = bpy.context.scene
+		scn.objects.active = b_armature
 		scn.update()
-		
 		# TODO: Move to Animation.py
 
 		# The armature has been created in editmode,
 		# now we are ready to set the bone keyframes.
-		bpy.ops.object.mode_set(mode='POSE')
+		bpy.ops.object.mode_set(mode='POSE', toggle=False)
 		if self.nif_common.properties.animation:
 			# create an action
 			action = bpy.data.actions.new(armature_name)
@@ -417,7 +418,7 @@ class armature_import():
 
 		# constraints (priority)
 		# must be done outside edit mode hence after calling
-		bpy.ops.object.mode_set(mode='OBJECT')
+		bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
 		for bone_name, b_posebone in b_armature.pose.bones.items():
 			# find bone nif block
 			niBone = self.nif_common.blocks[bone_name]
@@ -433,7 +434,7 @@ class armature_import():
 	def import_bone(self, niBlock, b_armature, b_armatureData, niArmature):
 		"""Adds a bone to the armature in edit mode."""
 		
-		bpy.ops.object.mode_set(mode='EDIT')
+		bpy.ops.object.mode_set(mode='EDIT',toggle=False)
 		# check that niBlock is indeed a bone
 		if not self.is_bone(niBlock):
 			return None
@@ -533,7 +534,7 @@ class armature_import():
 			 armature_space_matrix = b_bone.matrix
 
 		# set bone name and store the niBlock for future reference
-		bpy.ops.object.mode_set(mode='OBJECT')
+		bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
 		b_bone = b_armatureData.bones[bone_name]		# calculate bone difference matrix; we will need this when
 		# importing animation
 		old_bone_matrix_inv = mathutils.Matrix(armature_space_matrix)
@@ -547,12 +548,12 @@ class armature_import():
 		# new * inverse(old)
 		self.nif_common.bones_extra_matrix[niBlock] = new_bone_matrix * old_bone_matrix_inv
 		# set bone children
-		bpy.ops.object.mode_set(mode='EDIT')
+		
 		for niBone in niChildBones:
 			b_child_bone = self.import_bone(
 				niBone, b_armature, b_armatureData, niArmature)
-			b_bone = b_child_bone.parent
-		bpy.ops.object.mode_set(mode='OBJECT')
+			b_child_bone.parent = b_bone
+		
 		return b_bone
 
 
