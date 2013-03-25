@@ -109,7 +109,7 @@ class NifImport(NifCommon):
         try:
             # check that one armature is selected in 'import geometry + parent
             # to armature' mode
-            if False: #TODO self.properties.skeleton ==  "GEOMETRY_ONLY":
+            if self.properties.skeleton ==  "GEOMETRY_ONLY":
                 if (len(self.selected_objects) != 1
                     or self.selected_objects[0].type != 'ARMATURE'):
                     raise NifImportError(

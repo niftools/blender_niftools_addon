@@ -255,7 +255,7 @@ class NifExport(NifCommon):
                 if b_obj.type == 'ARMATURE':
                     # ensure we get the mesh vertices in animation mode,
                     # and not in rest position!
-                    b_obj.data.pose_position != 'REST'
+                    b_obj.data.pose_position == 'POSE'
                     if (b_obj.data.use_deform_envelopes):
                         return self.error(
                             "'%s': Cannot export envelope skinning."
