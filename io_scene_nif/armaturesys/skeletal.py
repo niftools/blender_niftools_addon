@@ -91,7 +91,7 @@ class armature_import():
 						if self.is_bone(child)]
 		for niBone in niChildBones:
 			self.import_bone(
-				niBone, b_armature, b_armatureData, niArmature)
+				niBone, b_armatureData, niArmature)
 		b_armatureData.update_tag(refresh=set())
 		scn = bpy.context.scene
 		scn.objects.active = b_armature
@@ -431,7 +431,7 @@ class armature_import():
 		scn.update()
 		return b_armature  
 
-	def import_bone(self, niBlock, b_armature, b_armatureData, niArmature):
+	def import_bone(self, niBlock, b_armatureData, niArmature):
 		"""Adds a bone to the armature in edit mode."""
 		
 		bpy.ops.object.mode_set(mode='EDIT',toggle=False)
@@ -549,10 +549,13 @@ class armature_import():
 		self.nif_common.bones_extra_matrix[niBlock] = new_bone_matrix * old_bone_matrix_inv
 		# set bone children
 		
+		bpy.ops.object.mode_set(mode='EDIT')
 		for niBone in niChildBones:
 			b_child_bone = self.import_bone(
-				niBone, b_armature, b_armatureData, niArmature)
-			b_child_bone.parent = b_bone
+				niBone, b_armatureData, niArmature)
+			bpy.ops.object.mode_set(mode='EDIT')
+			b_armatureData.edit_bones[b_child_bone.name].parent = b_armatureData.edit_bones[b_bone.name] 
+		bpy.ops.object.mode_set(mode='OBJECT')
 		
 		return b_bone
 
