@@ -553,9 +553,7 @@ class armature_import():
 		for niBone in niChildBones:
 			b_child_bone = self.import_bone(
 				niBone, b_armatureData, niArmature)
-			bpy.ops.object.mode_set(mode='EDIT')
 			b_armatureData.edit_bones[b_child_bone.name].parent = b_armatureData.edit_bones[b_bone.name] 
-		bpy.ops.object.mode_set(mode='OBJECT')
 		
 		return b_bone
 
