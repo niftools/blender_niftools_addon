@@ -436,7 +436,7 @@ class NifImport(NifCommon):
                 geom_group = []
             elif self.armaturehelper.is_bone(niBlock):
                 # bones have already been imported during import_armature
-                b_obj = b_armature.data.bones[self.names[niBlock]]
+                b_obj = b_armature.data.edit_bones[self.names[niBlock]]
                 # bones cannot group geometries into a single mesh
                 geom_group = []
             else:
@@ -535,13 +535,12 @@ class NifImport(NifCommon):
                 for (n_child, b_child) in object_children:
                     b_child.parent = b_obj
 
-            elif isinstance(b_obj, bpy.types.Bone):
+            elif isinstance(b_obj, bpy.types.EditBone):
                 # bone parentship, is a bit more complicated
                 # go to rest position
                 
                 #b_armature.data.restPosition = True
                 bpy.context.scene.objects.active = b_armature
-                bpy.ops.object.mode_set(mode='EDIT')
                 
                 # set up transforms
                 for n_child, b_child in object_children:
@@ -584,8 +583,7 @@ class NifImport(NifCommon):
                     # parent child to the bone
                     b_armature.makeParentBone(
                         [b_child], b_obj.name)
-                bpy.ops.object.mode_set(mode='OBJECT')
-
+                
             else:
                 raise RuntimeError(
                     "Unexpected object type %s" % b_obj.__class__)

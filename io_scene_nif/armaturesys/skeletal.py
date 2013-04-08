@@ -91,7 +91,7 @@ class armature_import():
 						if self.is_bone(child)]
 		for niBone in niChildBones:
 			self.import_bone(
-				niBone, b_armatureData, niArmature)
+				niBone, b_armature, b_armatureData, niArmature)
 		b_armatureData.update_tag(refresh=set())
 		scn = bpy.context.scene
 		scn.objects.active = b_armature
@@ -100,7 +100,6 @@ class armature_import():
 
 		# The armature has been created in editmode,
 		# now we are ready to set the bone keyframes.
-		bpy.ops.object.mode_set(mode='POSE', toggle=False)
 		if self.nif_common.properties.animation:
 			# create an action
 			action = bpy.data.actions.new(armature_name)
@@ -418,7 +417,6 @@ class armature_import():
 
 		# constraints (priority)
 		# must be done outside edit mode hence after calling
-		bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
 		for bone_name, b_posebone in b_armature.pose.bones.items():
 			# find bone nif block
 			niBone = self.nif_common.blocks[bone_name]
@@ -431,10 +429,9 @@ class armature_import():
 		scn.update()
 		return b_armature  
 
-	def import_bone(self, niBlock, b_armatureData, niArmature):
+	def import_bone(self, niBlock, b_armature, b_armatureData, niArmature):
 		"""Adds a bone to the armature in edit mode."""
 		
-		bpy.ops.object.mode_set(mode='EDIT',toggle=False)
 		# check that niBlock is indeed a bone
 		if not self.is_bone(niBlock):
 			return None
@@ -500,7 +497,7 @@ class armature_import():
 				# to keep things neat if bones aren't realigned on import
 				# orient it as the vector between this
 				# bone's head and the parent's tail
-				parent_tail = b_armatureData.bones[
+				parent_tail = b_armatureData.edit_bones[
 					self.nif_common.names[niBlock._parent]].tail
 				dx = b_bone_head_x - parent_tail[0]
 				dy = b_bone_head_y - parent_tail[1]
@@ -508,7 +505,7 @@ class armature_import():
 				if abs(dx + dy + dz) * 200 < self.nif_common.properties.epsilon:
 					# no offset from the parent: follow the parent's
 					# orientation
-					parent_head = b_armatureData.bones[
+					parent_head = b_armatureData.edit_bones[
 						self.nif_common.names[niBlock._parent]].head
 					dx = parent_tail[0] - parent_head[0]
 					dy = parent_tail[1] - parent_head[1]
@@ -534,8 +531,8 @@ class armature_import():
 			 armature_space_matrix = b_bone.matrix
 
 		# set bone name and store the niBlock for future reference
-		bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
-		b_bone = b_armatureData.bones[bone_name]		# calculate bone difference matrix; we will need this when
+		b_bone = b_armatureData.edit_bones[bone_name]
+		# calculate bone difference matrix; we will need this when
 		# importing animation
 		old_bone_matrix_inv = mathutils.Matrix(armature_space_matrix)
 		old_bone_matrix_inv.invert()
@@ -549,11 +546,10 @@ class armature_import():
 		self.nif_common.bones_extra_matrix[niBlock] = new_bone_matrix * old_bone_matrix_inv
 		# set bone children
 		
-		bpy.ops.object.mode_set(mode='EDIT')
 		for niBone in niChildBones:
 			b_child_bone = self.import_bone(
-				niBone, b_armatureData, niArmature)
-			b_armatureData.edit_bones[b_child_bone.name].parent = b_armatureData.edit_bones[b_bone.name] 
+				niBone, b_armature, b_armatureData, niArmature)
+			b_child_bone.parent = b_bone
 		
 		return b_bone
 
