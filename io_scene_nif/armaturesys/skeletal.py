@@ -77,9 +77,11 @@ class armature_import():
 		b_armatureData.show_axes = True
 		b_armatureData.draw_type = 'STICK'
 		b_armature = bpy.data.objects.new(armature_name, b_armatureData)
+		b_armature.select = True
 		b_armature.show_x_ray = True
 		
 		#Link object to scene
+		b_armature.update_tag(refresh=set())
 		scn = bpy.context.scene
 		scn.objects.link(b_armature)
 		scn.objects.active = b_armature
@@ -92,7 +94,9 @@ class armature_import():
 		for niBone in niChildBones:
 			self.import_bone(
 				niBone, b_armature, b_armatureData, niArmature)
-		b_armatureData.update_tag(refresh=set())
+			
+		bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
+		b_armature.update_tag(refresh=set())
 		scn = bpy.context.scene
 		scn.objects.active = b_armature
 		scn.update()
@@ -155,7 +159,7 @@ class armature_import():
 				extra_matrix_quat = extra_matrix_rot.to_quaternion()
 				extra_matrix_rot_inv = mathutils.Matrix(extra_matrix_rot)
 				extra_matrix_rot_inv.invert()
-				extra_matrix_quat_inv = extra_matrix_rot_inv
+				extra_matrix_quat_inv = extra_matrix_rot_inv.to_quaternion()
 				# now import everything
 				# ##############################
 
@@ -426,12 +430,10 @@ class armature_import():
 					bpy.types.Constraint.NULL)
 				constr.name = "priority:%i" % self.nif_common.bone_priorities[niBone.name]
 
-		scn.update()
 		return b_armature  
 
 	def import_bone(self, niBlock, b_armature, b_armatureData, niArmature):
 		"""Adds a bone to the armature in edit mode."""
-		
 		# check that niBlock is indeed a bone
 		if not self.is_bone(niBlock):
 			return None
@@ -445,6 +447,8 @@ class armature_import():
 						 if self.is_bone(child) ]
 		# create a new bone
 		b_bone = b_armatureData.edit_bones.new(bone_name)
+		#Sets active so edit bones are marked selected after import
+		b_armatureData.edit_bones.active = b_bone
 		# head: get position from niBlock
 		armature_space_matrix = self.nif_common.import_matrix(niBlock,
 												   relative_to=niArmature)
@@ -529,7 +533,7 @@ class armature_import():
 		else:
 			# no realign, so use original matrix
 			 armature_space_matrix = b_bone.matrix
-
+		
 		# set bone name and store the niBlock for future reference
 		b_bone = b_armatureData.edit_bones[bone_name]
 		# calculate bone difference matrix; we will need this when
@@ -545,12 +549,11 @@ class armature_import():
 		# new * inverse(old)
 		self.nif_common.bones_extra_matrix[niBlock] = new_bone_matrix * old_bone_matrix_inv
 		# set bone children
-		
 		for niBone in niChildBones:
 			b_child_bone = self.import_bone(
 				niBone, b_armature, b_armatureData, niArmature)
 			b_child_bone.parent = b_bone
-		
+
 		return b_bone
 
 
@@ -810,7 +813,6 @@ class armature_import():
 		b_rot = b_scale_rot * (1.0/b_scale)
 		# get translation
 		b_trans = mathutils.Vector(matrix[3][0:3])
-		#b_trans_vec, b_rot_quat, b_scale_vec = matrix.decompose()
 		# done!
 		return [b_scale, b_rot, b_trans]
 	
