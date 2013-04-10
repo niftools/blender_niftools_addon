@@ -219,9 +219,9 @@ class bhkshape_import():
         b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices) # TODO - calc actual radius
 
         # Recalculate mesh to render correctly
-        b_mesh.calc_normals()
         b_mesh.validate()
         b_mesh.update()
+        b_obj.select=True
 
         return [ b_obj ]
 
@@ -244,9 +244,9 @@ class bhkshape_import():
 
         # Recalculate mesh to render correctly
         b_mesh = b_obj.data
-        b_mesh.calc_normals()
         b_mesh.validate()
         b_mesh.update()
+        b_obj.select=True
 
         return [ b_obj ]
 
@@ -330,9 +330,9 @@ class bhkshape_import():
         b_obj.matrix_local = transform
 
         # Recalculate mesh to render correctly
-        b_mesh.calc_normals()
         b_mesh.validate()
         b_mesh.update()
+        b_obj.select=True
 
         # return object
         return [ b_obj ]
@@ -385,9 +385,9 @@ class bhkshape_import():
         '''
 
         # Recalculate mesh to render correctly
-        b_mesh.calc_normals()
         b_mesh.validate()
         b_mesh.update()
+        b_obj.select=True
 
         return [ b_obj ]
 
@@ -433,9 +433,9 @@ class bhkshape_import():
         '''
 
         # Recalculate mesh to render correctly
-        b_mesh.calc_normals()
         b_mesh.validate()
         b_mesh.update()
+        b_obj.select=True
 
         return [ b_obj ]
 
@@ -514,9 +514,9 @@ class bhkshape_import():
             '''
 
             # Recalculate mesh to render correctly
-            b_mesh.calc_normals()
             b_mesh.validate()
             b_mesh.update()
+            b_obj.select=True
 
             vertex_offset += subshape.num_vertices
             hk_objects.append(b_obj)
