@@ -88,7 +88,7 @@ class armature_import():
 		scn.update()
 		
 		# make armature editable and create bones
-		bpy.ops.object.editmode_toggle()
+		bpy.ops.object.mode_set(mode='EDIT',toggle=False)
 		niChildBones = [child for child in niArmature.children
 						if self.is_bone(child)]
 		for niBone in niChildBones:
