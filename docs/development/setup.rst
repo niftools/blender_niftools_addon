@@ -162,8 +162,8 @@ Install Build Environment Batch Script
 .. note::
 
    * The build enviroment is a tool to standardise development for all NifTools application on Windows
-   * Its purpose is to initialises a command line window with temporary enviromental setting, to avoid PATH variables.
-   * It reads from a .ini file where non-standard locations path can be defined.
+   * Its purpose is to initialises a command line window with temporary enviromental setting, avoiding bloating PATH.
+   * It will attempt to look for supported build utilities which can also be read from an .ini file 
    * For more information, read the :file:`README.rst` file provided with the repository.
 
 **Windows**
@@ -173,20 +173,26 @@ Get the build environment batch script::
    cd workspace
    git clone git://github.com/niftools/buildenv.git
 
-Navigate to the BuildEnv directory and create a new .ini file or using msysgit::
+In the repo is a script called create_shortcut.bat.
+This creates shortcuts that when generate buildenv console, hooking to their specific ini file.
 
-   cd buildenv/ini
-   touch blender.ini
+The following is a sample .ini file for the Blender Nif Plug-in::
 
-The following is a sample .ini file::
-
-   arch=32
    start=workspace
    python=C:\Python32
    blender=C:\Program Files\Blender Foundation\Blender
    seven_zip=C:\Program Files\7-Zip
+   
+By default running Create_shortcut.bat adds shortcuts on the Desktop for each .ini file.
 
-Running Create_shortcut.bat will now add shortcuts on the Desktop for each .ini file, which when run will open a buildenv command window.
+Running from command-line you can decided where it will look for .ini files and where the shortcuts get created::
+
+   create-shortcuts.bat <ini-files>
+   or
+   create-shortcuts.bat <ini-files> <output_location>
+
+Example
+   create-shortcuts.bat C:\Users\username\workspace\bin\ini C:\Users\monkey\Desktop\shortcuts
 
 
 Install Pip
