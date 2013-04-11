@@ -408,32 +408,4 @@ Debugging with PyDev
    * Executing the script, Eclipse will automatically open the file once it encounters the breakpoint.
    * Remember to run install.bat to overwrite the old addon version.
 
-Eclipse: Optional Extras
-------------------------
-The following are optional and levels of support varies
-
-Command Line Completion
-```````````````````````
-To add in command-line completion for Blender modules, use the following stub Blender plugin repo.::
-
-   git:// clone --recursive https://github.com/neomonkeus/blender_eclipse_debug
-
-#. Copy the following to the Blender directory::
-
-   ./docs/python_api/
-   ./docs/refresh_python_api.bat
-
-#. Run ``docs/refresh_python_api.bat`` to generate an updated API.
-#. Link the generated API to the ``blender_nif_plugin`` project:
-#. **Project > Properties > Pydev - PYTHONPATH > external libraries > .../Blender/docs/python_api/pypredef/**
-
-.. note::
-   * Variable declarations must have qualified type before auto-completion kicks in.
-   * (b_obj = bpy.types.object, context = bpy.context.active_object, etc.)
-   * Hovering over a variable will hot-link to the generated documentation.
-
-* Generation of the pypredef files used from command-line completion only works with certain versions of Blender.
-* Even still certain modules like BGE will not get generated.
-* Currently 2.59 is the latest version that generates without error, so refer to online documentation for the most up-to-date documentation.
-
 Happy coding & debugging.
