@@ -247,37 +247,12 @@ Install Sphinx and Nose
 
    sudo yum install python3-nose python3-sphinx
 
-Install PyFFI
--------------
-
-The blender nif plugin require pyffi. You will need to get a
-version of pyffi that works with blender::
-
-   cd workspace
-   git clone --recursive git://niftools.git.sourceforge.net/gitroot/pyffi/pyffi
-
-**Windows** run in buildenv::
-
-   cd /pyffi
-   python setup.py install
-   
-**Ubuntu** run in a terminal::
-
-   cd ~/workspace/pyffi
-   python setup.py install
-
-**Fedora** run in a terminal::
-
-   cd ~/workspace/pyffi
-   python setup.py install
-
 Check Installation
 ------------------
 
-Now, to check that everything is installed correctly, start blender, open a Python console,
+To verify everything is installed correctly, start blender, open the internal Python console,
 and type::
 
-   import site
    import pyffi
    import sphinx
    import nose
