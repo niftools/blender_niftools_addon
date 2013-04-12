@@ -56,10 +56,8 @@ bl_info = {
     "support": "COMMUNITY",
     "category": "Import-Export"}
 
-DEBUGGING = False
-if(DEBUGGING):
-    from . import nif_debug
-    nif_debug.startdebug()
+from . import nif_debug
+nif_debug.startdebug()
 
 import logging
 import sys
