@@ -6,15 +6,18 @@ PYDEV_SOURCE_DIR = ""
 def startdebug():
 
     try:
-        PYDEV_SOURCE_DIR = os.environ['PYDEV_SOURCE_DIR']
+        pydev_src = os.environ['PYDEVDEBUG']
         
-        if sys.path.count(PYDEV_SOURCE_DIR) > 0:
-            sys.path.append(PYDEV_SOURCE_DIR)
+        if (sys.path.count(pydev_src) < 1) :
+             sys.path.append(pydev_src)
              
         import pydevd
+    except:
+        print("Could not find Python Remote Debugger")
+        pass
+    
+    try:
         pydevd.settrace(None, True, True, 5678, False, False)
-     
     except:    
         print("Unable to connect to Remote debugging server")
-        print("PYDEV_SOURCE_DIR := " + PYDEV_SOURCE_DIR)
         pass
