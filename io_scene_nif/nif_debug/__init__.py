@@ -1,19 +1,23 @@
 import sys
+import os
+
+PYDEV_SOURCE_DIR = ""
 
 def startdebug():
+
     try:
-        # set the PYDEV_SOURCE_DIR correctly before using the debugger
-        PYDEV_SOURCE_DIR = 'C:\Program Files\eclipse\plugins\org.python.pydev.debug_2.5.0.2012040618\pysrc'
+        pydev_src = os.environ['PYDEVDEBUG']
         
-        # test if PYDEV_SOURCE_DIR already in sys.path, otherwise append it
-        if sys.path.count(PYDEV_SOURCE_DIR) < 1:
-            sys.path.append(PYDEV_SOURCE_DIR)
-            
-        # import pydevd module
+        if (sys.path.count(pydev_src) < 1) :
+             sys.path.append(pydev_src)
+             
         import pydevd
-            
-        # set debugging enabled
-        pydevd.settrace(None, True, True, 5678, False, False)
     except:
-        print("Unable to connect to Remote Debug Server.")
+        print("Could not find Python Remote Debugger")
+        pass
+    
+    try:
+        pydevd.settrace(None, True, True, 5678, False, False)
+    except:    
+        print("Unable to connect to Remote debugging server")
         pass
