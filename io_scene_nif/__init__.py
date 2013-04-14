@@ -56,10 +56,11 @@ bl_info = {
     "support": "COMMUNITY",
     "category": "Import-Export"}
 
-DEBUGGING = False
-if(DEBUGGING):
+try:
     from . import nif_debug
     nif_debug.startdebug()
+except:
+    print("Failed to load debug module")
 
 import logging
 import sys
