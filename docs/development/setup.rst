@@ -149,6 +149,23 @@ To get the code, run in a terminal (linux) or in git bash (windows)::
    git clone --recursive git@github.com:<username>/blender_nif_plugin.git
    cd blender_nif_plugin
 
+We use submodules to point to the external repository. 
+This avoids having to internally store & maintain seperate code bases.
+
+Fetching the submodules::
+   
+   $ git submodule update --init
+   
+If you get the following error::
+
+   fatal: Needed a single revision 
+   Unable to find current revision in submodule path ’pyffi’
+
+Run::
+   
+   $ rm -rf pyffi   
+   $ git submodule update --init
+
 Optional remote tracking::
 
    git remote add neomonkeus git://github.com/neomonkeus/blender_nif_plugin.git
@@ -162,8 +179,8 @@ Install Build Environment Batch Script
 .. note::
 
    * The build enviroment is a tool to standardise development for all NifTools application on Windows
-   * Its purpose is to initialises a command line window with temporary enviromental setting, to avoid PATH variables.
-   * It reads from a .ini file where non-standard locations path can be defined.
+   * Its purpose is to initialises a command line window with temporary enviromental setting, avoiding bloating PATH.
+   * It will attempt to look for supported build utilities which can also be read from an .ini file 
    * For more information, read the :file:`README.rst` file provided with the repository.
 
 **Windows**
@@ -173,20 +190,27 @@ Get the build environment batch script::
    cd workspace
    git clone git://github.com/niftools/buildenv.git
 
-Navigate to the BuildEnv directory and create a new .ini file or using msysgit::
+In the repo is a script called create_shortcut.bat.
+This creates shortcuts that when generate buildenv console, hooking to their specific ini file.
 
-   cd buildenv/ini
-   touch blender.ini
+The following is a sample .ini file for the Blender Nif Plug-in::
 
-The following is a sample .ini file::
-
-   arch=32
    start=workspace
    python=C:\Python32
    blender=C:\Program Files\Blender Foundation\Blender
    seven_zip=C:\Program Files\7-Zip
+   pydev_debug='C:\Program Files\eclipse\plugins\org.python.pydev_2.7.3.2013031601\pysrc'
+   
+By default running Create_shortcut.bat adds shortcuts on the Desktop for each .ini file.
 
-Running Create_shortcut.bat will now add shortcuts on the Desktop for each .ini file, which when run will open a buildenv command window.
+Running from command-line you can decided where it will look for .ini files and where the shortcuts get created::
+
+   create-shortcuts.bat <ini-files>
+   or
+   create-shortcuts.bat <ini-files> <output_location>
+
+Example
+   create-shortcuts.bat C:\Users\<username>\workspace\bin\ini C:\Users\<username>\Desktop\shortcuts
 
 
 Install Pip
@@ -241,38 +265,12 @@ Install Sphinx and Nose
 
    sudo yum install python3-nose python3-sphinx
 
-Install PyFFI
--------------
-
-The blender nif plugin require pyffi. You will need to get a
-version of pyffi that works with blender::
-
-   cd workspace
-   git clone --recursive git://niftools.git.sourceforge.net/gitroot/pyffi/pyffi
-
-**Windows** run in buildenv::
-
-   cd /pyffi
-   python setup.py install
-   
-**Ubuntu** run in a terminal::
-
-   cd ~/workspace/pyffi
-   python setup.py install
-
-**Fedora** run in a terminal::
-
-   cd ~/workspace/pyffi
-   python setup.py install
-
 Check Installation
 ------------------
 
-Now, to check that everything is installed correctly, start blender, open a Python console,
+To verify everything is installed correctly, start blender, open the internal Python console,
 and type::
 
-   import site
-   import pyffi
    import sphinx
    import nose
 
@@ -294,8 +292,9 @@ repo management, python scripting, and hooks into Blender's debugging server.
 #. Install `Eclipse Classic <http://www.eclipse.org/downloads/>`_
 
 #. Unzip the file under ``C:\Program Files\eclipse``.
+
 * If you want to create a shortcut from your desktop, right-click ``C:\Program Files\eclipse\eclipse.exe``
-and select **Send to > Desktop (create shortcut)**.
+  and select **Send to > Desktop (create shortcut)**.
 
 **Fedora**, simply run::
 
@@ -388,71 +387,36 @@ Import Projects Into Eclipse
 Eclipse Debugging
 -----------------
 
-The Blender nif plugin repo comes with built-in code to link Blenders internal server with Eclipse's debug server.
+The Blender nif plugin repo comes with built-in code to connect to a Remote Python Debug Server.
 This allows run-time debugging; watching the script execute, variables, function call stack etc.
 
-Launching Blender from PyDev
-````````````````````````````
+Launching Blender
+`````````````````
 
-* Go to Run->External Tools->External Tools Configuration.
-* Right click on Program and select New to add a new Launch configuration
-* Type in Blender for Name and select the path to blender executable under Location (f.e. Blender Foundation/Blender/blender.exe)
-* Set the Working Directory to Blender Foundation/Blender
-* click on Apply, then Close
-
-Test this launch configuration by click on the Run... Toolbar icon (the one with the red toolbox).
-If you have done it correctly, blender should start up.
-
-Enable the blender plug-in and try to import one of the test nifs.
-If everything works, Blender's console should be visible in Pydev's console.
+Blender should be launched via BuildEnv, using ``start blender``
 
 Setup Eclipse PyDev Debugger
 ````````````````````````````
 Add the Pydev Debug Perspective: **Customise Perspective -> Pydev Debug**.
-Start the Pydev server.
 
-* Open blender_nif_plugin/scripts/addon/../nifdebug.py
-* Edit PYDEV_SOURCE_DIR to point to the correct folder which contain /pysrc.
-* This will need to be updated if Pydev is updated.
+ * Start the Pydev server.
 
 Debugging with PyDev
 ''''''''''''''''''''
 
-* Debugging is enabled via the ./scripts/addons/io_scene/nif_debug/__init__.py file, disabled by default.
-* Set the DEBUGGING variable to True.
-* This works both from Blender run via Launch Config or via the nose test suite.
+ * Debugging is enabled by default.
+ * The debug scripts require Environmental variables defined by the .ini as previous described above.
+
+ ..Note::
+   
+   Each time PyDev is updated the path defined in the .ini file will need to be updated also.
+
+* This works both from Blender run via ``start blender`` or via the nose test suite.
+
 * When the plugin loads it will attempt to connect the internal server to the eclipses server, it will prompt if failure.
 
 .. note::
    * Executing the script, Eclipse will automatically open the file once it encounters the breakpoint.
    * Remember to run install.bat to overwrite the old addon version.
-
-Eclipse: Optional Extras
-------------------------
-The following are optional and levels of support varies
-
-Command Line Completion
-```````````````````````
-To add in command-line completion for Blender modules, use the following stub Blender plugin repo.::
-
-   git:// clone --recursive https://github.com/neomonkeus/blender_eclipse_debug
-
-#. Copy the following to the Blender directory::
-
-   ./docs/python_api/
-   ./docs/refresh_python_api.bat
-
-#. Run ``docs/refresh_python_api.bat`` to generate an updated API.
-#. Link the generated API to the ``blender_nif_plugin`` project:
-#. **Project > Properties > Pydev - PYTHONPATH > external libraries > .../Blender/docs/python_api/pypredef/**
-
-.. note::
-   * Variable declarations must have qualified type before auto-completion kicks in.
-   * (b_obj = bpy.types.object, context = bpy.context.active_object, etc.)
-   * Hovering over a variable will hot-link to the generated documentation.
-
-* Generation of the pypredef files used from command-line completion only works with certain versions of Blender.
-* Even still certain modules like BGE will not get generated.
-* Currently 2.59 is the latest version that generates without error, so refer to online documentation for the most up-to-date documentation.
 
 Happy coding & debugging.

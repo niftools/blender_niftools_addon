@@ -50,7 +50,7 @@ class TestFeature(SingleNif):
     b_name = ''
     # name of blender object
     
-    def b_create_objects(self):
+    def b_create_data(self):
         """Create blender objects in current blender scene for feature."""
         # call sub_methods for reusability
         raise NotImplementedError

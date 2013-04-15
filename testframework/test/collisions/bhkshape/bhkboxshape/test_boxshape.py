@@ -21,7 +21,7 @@ class TestCollisionBhkBoxShape(SingleNif):
     b_name = 'Cube'
     b_col_name = 'box'
 
-    def b_create_objects(self):
+    def b_create_data(self):
         '''Create a cube and bhkboxshape collision object'''
         
         #Mesh obj
