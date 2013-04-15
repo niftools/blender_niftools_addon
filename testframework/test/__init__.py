@@ -69,38 +69,47 @@ class Base:
 
 class SingleNif(Base):
     """Base class for testing a feature concerning single nif files.
+    
+    Each new feature test inherits from SingleNif.
+    SingleNif will take care of loading nifs, running import, object clean-up.
+    
+    Every test must define the following attributes
+    
+    * :attr: `SingleNif.n_name` - sets path where to generate files. 
+    
+    Every test needs to implement four functions, with specific behaviour for that test:
+    
+    * :meth:`SingleNif.n_create_data` - Python code used to create a physical nif
+    
+    * :meth:`SingleNif.n_check_data` - Used to check a physical nif contain information as expected
+    
+    * :meth:`SingleNif.b_create_data` - Setup Blender scene as user would with the same information as physical nif
+    
+    * :meth:`SingleNif.b_create_data` - Check that the scene contains contains the information as expected.
+   
+    If features can be reused, then they should be put into a b_gen_xxx or n_gen_xxx file, rather than kept in the test itself.
+    This reduces both the test complexity and avoids issues where tests are re-run if they are imported.
+    
+    Execution Order:
+       
+    Two tests are run (see implementation of :meth:`SingleNif.test_pycode_nif`
+    and :meth:`SingleNif.test_user_nif`):
 
-    Every test consists of two pieces of data:
+    1. 
+        * Create Physical Nif
+        * Check nif data,
+        * Import nif,
+        * Check blender scene data,
+        * Export nif,
+        * Check exported nif data.
 
-    * a nif file (see :attr:`SingleNif.n_create_data`)
-    * one or more blender objects (produced by blender code,
-      see :meth:`SingleNif.b_create_objects`)
-
-    To construct a new test, you must create a new nif file,
-    and overload :meth:`SingleNif.b_create_objects` to match
-    the desired imported nif in blender.
-
-    Then, overload the following two methods for checking this data:
-
-    * :meth:`SingleNif.b_check_data`
-    * :meth:`SingleNif.n_check_data`
-
-    Two tests will be run
-    (see implementation of :meth:`SingleNif.test_import_export`
-    and :meth:`SingleNif.test_export_import`):
-
-    1. Check nif data to be imported,
-       import nif,
-       check imported blender data,
-       export it again,
-       check exported nif data.
-
-    2. Create blender objects,
-       check blender data to be exported,
-       export to nif,
-       check exported nif data,
-       import the nif just exported,
-       check imported blender data.
+    2. 
+        * Create Blender scene
+        * Check Blender scene data,
+        * Export nif,
+        * Check exported nif data,
+        * Import nif,
+        * Check Blender scene data,
 
     """
 
@@ -245,22 +254,26 @@ class SingleNif(Base):
         # create initial nif file and check data
         self.n_write(self.n_create_data(), self.n_filepath_0)
         self.n_check(self.n_filepath_0)
+         
+        #clear scene
+        self.b_clear()
         
         # import nif and check data
-        self.b_clear()
         self.n_import(self.n_filepath_0)
         b_obj_names = self._b_select_all()
         if(self.gen_blender_scene):
             self.b_save(self.b_filepath_0)
         self.b_check_data()
-        
+         
         # export and check data
         self.n_export(self.n_filepath_1)
         self.n_check(self.n_filepath_1)
+        
+        #clear scene
         self.b_clear()
         self._b_clear_check(b_obj_names)
 
-    def test_user_scene_nif(self):       
+    def test_user_nif(self):       
         # create scene
         self.b_create_objects()
         b_obj_names = self._b_select_all()
@@ -271,14 +284,18 @@ class SingleNif(Base):
         # export and check data
         self.n_export(self.n_filepath_2)
         self.n_check(self.n_filepath_2)
+
+        # clear scene
         self.b_clear()
         self._b_clear_check(b_obj_names)
-        
+         
         # import and check data
         self.n_import(self.n_filepath_2)
         b_obj_names = self._b_select_all()
         if(self.gen_blender_scene):
             self.b_save(self.b_filepath_2)
         self.b_check_data()
+        
+        #clear scene
         self.b_clear()
         self._b_clear_check(b_obj_names)

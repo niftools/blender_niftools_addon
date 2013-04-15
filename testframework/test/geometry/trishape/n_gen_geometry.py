@@ -230,9 +230,10 @@ def n_create_blocks(n_data):
 def n_check_trishape(n_trishape):
     nose.tools.assert_is_instance(n_trishape, NifFormat.NiTriShape)
     n_check_transform(n_trishape)
+    
     n_trishapedata = n_trishape.data
     n_check_trishape_data(n_trishapedata)
-    n_check_vertices(n_trishapedata)
+    n_check_8_vertices(n_trishapedata)
 
 def n_check_transform(n_trishape):        
     nose.tools.assert_equal(n_trishape.translation.as_tuple(),(20.0, 20.0, 20.0)) # location
@@ -251,7 +252,7 @@ def n_check_trishape_data(n_trishape_data):
     nose.tools.assert_equal(n_trishape_data.consistency_flags, NifFormat.ConsistencyType.CT_STATIC)
     
     
-def n_check_vertices(n_trishape_data):
+def n_check_8_vertices(n_trishape_data):
     nose.tools.assert_equal(n_trishape_data.num_vertices, 8)
     verts = {
         tuple(round(co, 4) for co in vert.as_list())
