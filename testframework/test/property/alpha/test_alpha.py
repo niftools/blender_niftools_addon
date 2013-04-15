@@ -57,7 +57,7 @@ class TestAlphaProperty(SingleNif):
     n_name = "property/alpha/test_alpha"
     b_name = "Cube"
     
-    def b_create_objects(self):
+    def b_create_data(self):
         b_obj = b_gen_geometry.b_create_base_geometry(self.b_name)
         b_mat = b_gen_material.b_create_material_block(b_obj)
         b_gen_material.b_create_set_default_material_property(b_mat)

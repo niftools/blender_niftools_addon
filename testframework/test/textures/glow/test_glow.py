@@ -71,7 +71,7 @@ class TestTexturePropertyGlowMap(SingleNif):
     diffuse_texture_path = os.path.join(nif_dir, 'textures', 'diffuse', 'diffuse.dds')
     glowmap_texture_path = os.path.join(nif_dir, 'textures', 'glow', 'glow.dds')
 
-    def b_create_objects(self):
+    def b_create_data(self):
         b_obj = b_gen_geometry.b_create_cube(self.b_name)
         b_gen_uv.b_uv_object()
         b_gen_geometry.b_transform_cube(b_obj)

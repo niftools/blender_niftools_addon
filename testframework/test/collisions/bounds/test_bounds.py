@@ -26,7 +26,7 @@ class TestBBox(SingleNif):
         (10, -10, 10),
         }
 
-    def b_create_objects(self):
+    def b_create_data(self):
         # TODO
         # b_obj = self.b_create_base_geometry()
         bpy.ops.mesh.primitive_cube_add()
@@ -63,7 +63,7 @@ class TestBSBound(TestBaseGeometry):
     n_name = "collisions/boundbox/bsbound"
     b_name = "BSBound"
 
-    def b_create_objects(self):
+    def b_create_data(self):
         b_obj = TestBaseGeometry.b_create_object(self)
         b_obj.name = self.b_name
 
