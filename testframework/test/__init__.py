@@ -146,7 +146,7 @@ class SingleNif(Base):
     """
 
     b_filepath_1 = None
-    """The name of the blend file resulting from *b_create_objects*
+    """The name of the blend file resulting from *b_create_data*
     (set automatically from :attr:`SingleNif.n_name`).
     """
 
@@ -197,7 +197,7 @@ class SingleNif(Base):
             b_obj_names.append(b_obj.name)
         return b_obj_names
 
-    def b_create_objects(self):
+    def b_create_data(self):
         """Create blender objects for feature."""
         raise NotImplementedError
 
@@ -275,7 +275,7 @@ class SingleNif(Base):
 
     def test_user_nif(self):       
         # create scene
-        self.b_create_objects()
+        self.b_create_data()
         b_obj_names = self._b_select_all()
         if(self.gen_blender_scene):
             self.b_save(self.b_filepath_1)
