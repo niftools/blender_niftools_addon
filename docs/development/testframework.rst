@@ -24,25 +24,25 @@ or from a terminal (Linux | Ubuntu)::
 Tests
 -----
 
-Ideally, for every feature, first, a regression test should be
-written.
+Ideally, for every feature, first, a regression test should be written.
 
 The following process is followed:
 
 #. Create a new python file to contain the feature regression test
    code. For example, if the feature concerns *x_feature*, the test case
    would be stored in ``testframework/test/../../test_x_feature.py``.
-   Derive the test class from
-   :class:`test.SingleNif`, and name it :class:`TestBlabla`.
-
+   
+   Derive the test class from :class:`test.SingleNif` and name it :class:`TestXFeature`.
+   :class:`test.SingleNif` is a designed upon the template pattern and takes care of all execution, loading of files and clean up.
+   
    .. Note::
-      Use the template available in ``testframework/test/template.py``.
+      A template for a test class is available in ``testframework/test/template.py``.
 
-Each test should overwrite the following methods from :class:`test.SingleNif`
+Each test needs overwrite the following methods from :class:`test.SingleNif`
 
    * The :meth:`n_create_data` used to create the physical .nif
    * The :meth:`n_check_data` used to test the data of physical .nif
-   * The :meth:`b_create_objects` used to mimic how the user would create the objects. 
+   * The :meth:`b_create_data` used to mimic how the user would create the objects. 
    * The :meth:`b_check_data` check blender data, used to check before export and after import.
    
    Where possible reuse methods from other tests to build up the tests in blocks 
@@ -72,10 +72,10 @@ Each test should overwrite the following methods from :class:`test.SingleNif`
     
   - Where possible make the test case as simple as possible. For
     instance, use primitives readily available in blender. This code
-    goes in the :meth:`b_create_objects` method of the test class.
+    goes in the :meth:`b_create_data` method of the test class.
 
   - Document the feature in ``docs/features/x_feature.rst`` as you write
-    :meth:`b_create_objects`: explain what the user has to do in blender in order
+    :meth:`b_create_data`: explain what the user has to do in blender in order
     to export the desired data, and where in blender the data ends up
     on import.
 
@@ -111,7 +111,7 @@ The tests will actually do the following:
    
    * User generated part
    
-   #. :meth:`b_create_objects` to create the scene, saved to ``test/autoblend/../../x_feature_userver.blend``
+   #. :meth:`b_create_data` to create the scene, saved to ``test/autoblend/../../x_feature_userver.blend``
    
    #. :meth:`b_check_data` to check it before export
 

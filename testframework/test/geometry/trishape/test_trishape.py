@@ -56,7 +56,7 @@ class TestBaseGeometry(SingleNif):
     n_name = 'geometry/trishape/test_trishape' # (documented in base class)
     b_name = 'Cube'
 
-    def b_create_objects(self):
+    def b_create_data(self):
         # (documented in base class)
         b_obj = b_gen_geometry.b_create_cube(self.b_name)
         

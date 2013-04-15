@@ -56,7 +56,7 @@ class TestBaseUV(SingleNif):
     b_name = 'Cube'
     n_name = "geometry/uvdata/test_uv"
     
-    def b_create_objects(self):        
+    def b_create_data(self):        
         b_obj = b_gen_geometry.b_create_cube(self.b_name)
         b_gen_uv.b_uv_object()
         b_gen_geometry.b_transform_cube(b_obj)

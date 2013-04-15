@@ -56,7 +56,7 @@ class TestStencilProperty(SingleNif):
     n_name = "property/stencil/test_stencil"
     b_name = "Cube"
 
-    def b_create_objects(self):
+    def b_create_data(self):
         b_obj = b_gen_geometry.b_create_base_geometry(self.b_name)
         b_gen_stencil.b_create_stensil_property(b_obj)
 

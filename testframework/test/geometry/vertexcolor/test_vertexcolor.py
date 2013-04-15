@@ -52,7 +52,7 @@ class TestBaseVertexColor(SingleNif):
                (0.0,0.0,0.0)] #0
 
 
-    def b_create_objects(self):
+    def b_create_data(self):
         b_obj = TestBaseGeometry().b_create_base_geometry()
         self.b_create_vertexcolor(b_obj)
         
