@@ -216,8 +216,9 @@ class bhkshape_import():
         b_obj.draw_bounds_type = 'BOX'
         b_obj.game.use_collision_bounds = True
         b_obj.game.collision_bounds_type = 'BOX'
-        b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices) # TODO - calc actual radius
-
+        b_obj.game.radius = bhkshape.radius
+        b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
+        
         # Recalculate mesh to render correctly
         b_mesh.validate()
         b_mesh.update()
@@ -301,7 +302,7 @@ class bhkshape_import():
         b_obj.draw_bounds_type = 'CYLINDER'
         b_obj.game.use_collision_bounds = True
         b_obj.game.collision_bounds_type = 'CYLINDER'
-        b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices)
+        b_obj.game.radius = bhkshape.radius
         b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
 
 
@@ -369,7 +370,7 @@ class bhkshape_import():
         b_obj.game.collision_bounds_type = 'CONVEX_HULL'
 
         # radius: quick estimate
-        b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices)
+        b_obj.game.radius = bhkshape.radius
         b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
 
         # also remove duplicate vertices
@@ -416,7 +417,7 @@ class bhkshape_import():
         b_obj.game.use_collision_bounds = True
         b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
         # radius: quick estimate
-        b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices)
+        b_obj.game.radius = bhkshape.radius
         b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[self.havok_mat]
 
 
@@ -496,7 +497,7 @@ class bhkshape_import():
             b_obj.game.use_collision_bounds = True
             b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
             # radius: quick estimate
-            b_obj.game.radius = max(vert.co.length for vert in b_mesh.vertices) * self.nif_common.HAVOK_SCALE
+            b_obj.game.radius = bhkshape.radius
             # set material
             b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[subshape.material]
 
