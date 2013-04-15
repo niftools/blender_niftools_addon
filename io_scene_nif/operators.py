@@ -164,6 +164,17 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
         description="Apply skin deformation to all skinned geometries.",
         default=False)
 
+    #: Re-align Tail bones on import
+    import_realign_bones = bpy.props.EnumProperty(
+        items=(
+            ("1", "Re-Align Tail Bone", "Re-Aligns bone tail on import."),
+            ("2", "Re-Align Tail Bone + Roll", "Re-Align tail bone + roll"),
+            ),
+        name="Align",
+        description="Re-align or Re-Align+Roll",
+        default="1")
+
+
     #: What should be imported.
     skeleton = bpy.props.EnumProperty(
         items=(
