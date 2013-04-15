@@ -255,7 +255,7 @@ class NifExport(NifCommon):
                 if b_obj.type == 'ARMATURE':
                     # ensure we get the mesh vertices in animation mode,
                     # and not in rest position!
-                    b_obj.data.pose_position == 'POSE'
+                    b_obj.data.pose_position = 'POSE'
                     if (b_obj.data.use_deform_envelopes):
                         return self.error(
                             "'%s': Cannot export envelope skinning."
@@ -3145,8 +3145,8 @@ class NifExport(NifCommon):
             if root_bones.count(root_bone) == 0:
                 root_bones.append(root_bone)
 
-        if (arm.Action()):
-            bones_ipo = arm.Action().groups() # dictionary of Bone Ipos (name -> ipo)
+        if (bpy.types.Action(arm)):
+            bones_ipo = bpy.types.ActionGroups(arm) # dictionary of Bone Ipos (name -> ipo)
         else:
             bones_ipo = {} # no ipos
 
@@ -3206,7 +3206,7 @@ class NifExport(NifCommon):
                     bind_mat = bonerestmat, extra_mat_inv = bonexmat_inv)
 
             # does bone have priority value in NULL constraint?
-            for constr in arm.getPose().bones[bone.name].constraints:
+            for constr in arm.pose.bones[bone.name].constraints:
                 # yes! store it for reference when creating the kf file
                 if constr.name[:9].lower() == "priority:":
                     self.bone_priorities[
@@ -3435,12 +3435,12 @@ class NifExport(NifCommon):
         else:
             corrmat.identity()
         if (space == 'ARMATURESPACE'):
-            mat = mathutils.Matrix(bone.matrix['ARMATURESPACE'])
+            mat = mathutils.Matrix(bone.matrix_local)
             if tail:
-                tail_pos = bone.tail['ARMATURESPACE']
-                mat[3][0] = tail_pos[0]
-                mat[3][1] = tail_pos[1]
-                mat[3][2] = tail_pos[2]
+                tail_pos = bone.tail_local
+                mat[0][3] = tail_pos[0]
+                mat[1][3] = tail_pos[1]
+                mat[2][3] = tail_pos[2]
             return corrmat * mat
         elif (space == 'BONESPACE'):
             if bone.parent:
