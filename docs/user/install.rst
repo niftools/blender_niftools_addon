@@ -6,16 +6,11 @@ Installation
 Install Blender
 ---------------
 
-Windows
-~~~~~~~
-
-Download the recommended version of `Blender.exe installer <http://www.blender.org/download/get-blender/>`_
+Download the recommended version of `Blender <http://www.blender.org/download/get-blender/>`_
 for your platform (32-bit or 64-bit; if unsure, pick the 32-bit version)
 and follow the instructions.
 
-* If you are upgrading to a new version of Blender then it is advisable to uninstall previous versions.
-* Alternatively but less advisable, rename /Blender in the Program Files/Blender Foundation folder thus allowing multiple installs.
-
+* Ensure that the version of Blender being installed is supported by the Blender Nif Plugin.
 
 Install and Register the Addon
 ------------------------------
