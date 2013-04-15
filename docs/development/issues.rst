@@ -97,10 +97,13 @@ Bone
 * Setting up the parent chile relationship is difficult for a number of reasons
 
  - The :attr:`bpy.types.Bone.parent` is a read-only value, only writable by through a :class:`bpy.types.EditBone`.
+ 
  - Assuming that :class:`bpy.types.Bone` 's have been created and added to an  :class:`bpy.types.Armature`
+ 
  - :class:`bpy.types.EditBone` 's are access via the collection attribute :attr:`bpy.types.Armature.edit_bones`, which only exists while in Edit mode.
+ 
  - EditBones are accessed through :class:`int` indexed rather :class:`str` index::
-   
+ 
    b_armatureData.edit_bones[b_child_bone.name].parent = b_armatureData.edit_bones[b_bone.name]
 
 
