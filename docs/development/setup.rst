@@ -149,7 +149,8 @@ To get the code, run in a terminal (linux) or in git bash (windows)::
    git clone --recursive git@github.com:<username>/blender_nif_plugin.git
    cd blender_nif_plugin
 
-We use submodules to point to the external repository, to avoid having to store & maintain seperate code bases.
+We use submodules to point to the external repository. 
+This avoids having to internally store & maintain seperate code bases.
 
 Fetching the submodules::
    
@@ -269,7 +270,6 @@ Check Installation
 To verify everything is installed correctly, start blender, open the internal Python console,
 and type::
 
-   import pyffi
    import sphinx
    import nose
 
