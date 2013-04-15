@@ -149,6 +149,22 @@ To get the code, run in a terminal (linux) or in git bash (windows)::
    git clone --recursive git@github.com:<username>/blender_nif_plugin.git
    cd blender_nif_plugin
 
+We use submodules to point to the external repository, to avoid having to store & maintain seperate code bases.
+
+Fetching the submodules::
+   
+   $ git submodule update --init
+   
+If you get the following error::
+
+   fatal: Needed a single revision 
+   Unable to find current revision in submodule path ’pyffi’
+
+Run::
+   
+   $ rm -rf pyffi   
+   $ git submodule update --init
+
 Optional remote tracking::
 
    git remote add neomonkeus git://github.com/neomonkeus/blender_nif_plugin.git
