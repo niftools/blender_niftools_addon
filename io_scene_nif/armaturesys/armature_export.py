@@ -102,13 +102,13 @@ class Armature():
         """Set bone extra matrix, inverted. The bonename is first converted
         to blender style (to ensure compatibility with older imports).
         """
-        self.bones_extra_matrix_inv[self.parent.get_bone_name_for_blender(bonename)] = mat
+        self.bones_extra_matrix_inv[self.nif_common.get_bone_name_for_blender(bonename)] = mat
 
     def get_bone_extra_matrix_inv(self, bonename):
         """Get bone extra matrix, inverted. The bonename is first converted
         to blender style (to ensure compatibility with older imports).
         """
-        return self.bones_extra_matrix_inv[self.parent.get_bone_name_for_blender(bonename)]
+        return self.bones_extra_matrix_inv[self.nif_common.get_bone_name_for_blender(bonename)]
     
     
     def export_bones(self, arm, parent_block):
@@ -141,24 +141,24 @@ class Armature():
         # ok, let's create the bone NiNode blocks
         for bone in list(bones.values()):
             # create a new block for this bone
-            node = self.create_ninode(bone)
+            node = self.nif_common.create_ninode(bone)
             # doing bone map now makes linkage very easy in second run
             bones_node[bone.name] = node
 
             # add the node and the keyframe for this bone
-            node.name = self.get_full_name(bone.name).encode()
-            if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
+            node.name = self.nif_common.get_full_name(bone.name).encode()
+            if self.nif_common.properties.game in ('OBLIVION', 'FALLOUT_3'):
                 # default for Oblivion bones
                 # note: bodies have 0x000E, clothing has 0x000F
                 node.flags = 0x000E
-            elif self.properties.game in ('CIVILIZATION_IV', 'EMPIRE_EARTH_II'):
+            elif self.nif_common.properties.game in ('CIVILIZATION_IV', 'EMPIRE_EARTH_II'):
                 if bone.children:
                     # default for Civ IV/EE II bones with children
                     node.flags = 0x0006
                 else:
                     # default for Civ IV/EE II final bones
                     node.flags = 0x0016
-            elif self.properties.game in ('DIVINITY_2',):
+            elif self.nif_common.properties.game in ('DIVINITY_2',):
                 if bone.children:
                     # default for Div 2 bones with children
                     node.flags = 0x0186
@@ -169,12 +169,12 @@ class Armature():
                     node.flags = 0x0196
             else:
                 node.flags = 0x0002 # default for Morrowind bones
-            self.export_matrix(bone, 'localspace', node) # rest pose
+            self.nif_common.export_matrix(bone, 'localspace', node) # rest pose
 
             # bone rotations are stored in the IPO relative to the rest position
             # so we must take the rest position into account
             # (need original one, without extra transforms, so extra = False)
-            bonerestmat = self.get_bone_rest_matrix(bone, 'BONESPACE',
+            bonerestmat = self.nif_common.get_bone_rest_matrix(bone, 'BONESPACE',
                                                     extra = False)
             try:
                 bonexmat_inv = mathutils.Matrix(
@@ -183,7 +183,7 @@ class Armature():
                 bonexmat_inv = mathutils.Matrix()
                 bonexmat_inv.identity()
             if bone.name in bones_ipo:
-                self.export_keyframes(
+                self.nif_common.export_keyframes(
                     bones_ipo[bone.name], 'localspace', node,
                     bind_mat = bonerestmat, extra_mat_inv = bonexmat_inv)
 
@@ -191,7 +191,7 @@ class Armature():
             for constr in arm.pose.bones[bone.name].constraints:
                 # yes! store it for reference when creating the kf file
                 if constr.name[:9].lower() == "priority:":
-                    self.bone_priorities[
+                    self.nif_common.bone_priorities[
                         self.get_bone_name_for_nif(bone.name)
                         ] = int(constr.name[9:])
 
@@ -219,7 +219,7 @@ class Armature():
             if b_obj_child.type in ['MESH', 'EMPTY', 'ARMATURE']:
                 if (b_obj.type != 'ARMATURE'):
                     # not parented to an armature
-                    self.parent.export_node(b_obj_child, 'localspace',
+                    self.nif_common.export_node(b_obj_child, 'localspace',
                                      parent_block, b_obj_child.name)
                 else:
                     # this object is parented to an armature
@@ -228,7 +228,7 @@ class Armature():
                     # or whether it is parented to some bone of the armature
                     parent_bone_name = b_obj_child.parent_bone
                     if parent_bone_name is None:
-                        self.parent.export_node(b_obj_child, 'localspace',
+                        self.nif_common.export_node(b_obj_child, 'localspace',
                                          parent_block, b_obj_child.name)
                     else:
                         # we should parent the object to the bone instead of
@@ -247,7 +247,7 @@ class Armature():
                                 #     extra translation along the Y axis
                                 #     with length of the bone ("tail")
                                 # this is handled in the get_object_srt function
-                                self.parent.export_node(b_obj_child, 'localspace',
+                                self.nif_common.export_node(b_obj_child, 'localspace',
                                                  bone_block, b_obj_child.name)
                                 break
                         else:
