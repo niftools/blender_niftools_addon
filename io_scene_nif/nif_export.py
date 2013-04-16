@@ -169,17 +169,6 @@ class NifExport(NifCommon):
         # keeps track of names of exported blocks, to make sure they are unique
         self.block_names = []
 
-        # dictionary of bones, maps Blender bone name to matrix that maps the
-        # NIF bone matrix on the Blender bone matrix
-        # Recall from the import script
-        #   B' = X * B,
-        # where B' is the Blender bone matrix, and B is the NIF bone matrix,
-        # both in armature space. So to restore the NIF matrices we need to do
-        #   B = X^{-1} * B'
-        # Hence, we will restore the X's, invert them, and store those inverses in the
-        # following dictionary.
-        self.bones_extra_matrix_inv = {}
-
         # store bone priorities (from NULL constraints) as the armature bones
         # are parsed, so they are available when writing the kf file
         # maps bone NiNode to priority value
@@ -1098,7 +1087,7 @@ class NifExport(NifCommon):
             # if it is an armature, export the bones as ninode
             # children of this ninode
             elif (b_obj.type == 'ARMATURE'):
-                self.export_bones(b_obj, node)
+                self.armaturehelper.export_bones(b_obj, node)
 
             # export all children of this empty/mesh/armature/bone
             # object as children of this NiNode
@@ -3082,103 +3071,7 @@ class NifExport(NifCommon):
             # attach block to node
             n_node.add_controller(n_vis_ctrl)
 
-    def export_bones(self, arm, parent_block):
-        """Export the bones of an armature."""
-        # the armature was already exported as a NiNode
-        # now we must export the armature's bones
-        assert( arm.type == 'ARMATURE' )
-
-        # find the root bones
-        # dictionary of bones (name -> bone)
-        bones = dict(list(arm.data.bones.items()))
-        root_bones = []
-        for root_bone in list(bones.values()):
-            while root_bone.parent in list(bones.values()):
-                root_bone = root_bone.parent
-            if root_bones.count(root_bone) == 0:
-                root_bones.append(root_bone)
-
-        if (bpy.types.Action(arm)):
-            bones_ipo = bpy.types.ActionGroups(arm) # dictionary of Bone Ipos (name -> ipo)
-        else:
-            bones_ipo = {} # no ipos
-
-        bones_node = {} # maps bone names to NiNode blocks
-
-        # here all the bones are added
-        # first create all bones with their keyframes
-        # and then fix the links in a second run
-
-        # ok, let's create the bone NiNode blocks
-        for bone in list(bones.values()):
-            # create a new block for this bone
-            node = self.create_ninode(bone)
-            # doing bone map now makes linkage very easy in second run
-            bones_node[bone.name] = node
-
-            # add the node and the keyframe for this bone
-            node.name = self.get_full_name(bone.name).encode()
-            if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
-                # default for Oblivion bones
-                # note: bodies have 0x000E, clothing has 0x000F
-                node.flags = 0x000E
-            elif self.properties.game in ('CIVILIZATION_IV', 'EMPIRE_EARTH_II'):
-                if bone.children:
-                    # default for Civ IV/EE II bones with children
-                    node.flags = 0x0006
-                else:
-                    # default for Civ IV/EE II final bones
-                    node.flags = 0x0016
-            elif self.properties.game in ('DIVINITY_2',):
-                if bone.children:
-                    # default for Div 2 bones with children
-                    node.flags = 0x0186
-                elif bone.name.lower()[-9:] == 'footsteps':
-                    node.flags = 0x0116
-                else:
-                    # default for Div 2 final bones
-                    node.flags = 0x0196
-            else:
-                node.flags = 0x0002 # default for Morrowind bones
-            self.export_matrix(bone, 'localspace', node) # rest pose
-
-            # bone rotations are stored in the IPO relative to the rest position
-            # so we must take the rest position into account
-            # (need original one, without extra transforms, so extra = False)
-            bonerestmat = self.get_bone_rest_matrix(bone, 'BONESPACE',
-                                                    extra = False)
-            try:
-                bonexmat_inv = mathutils.Matrix(
-                    self.get_bone_extra_matrix_inv(bone.name))
-            except KeyError:
-                bonexmat_inv = mathutils.Matrix()
-                bonexmat_inv.identity()
-            if bone.name in bones_ipo:
-                self.export_keyframes(
-                    bones_ipo[bone.name], 'localspace', node,
-                    bind_mat = bonerestmat, extra_mat_inv = bonexmat_inv)
-
-            # does bone have priority value in NULL constraint?
-            for constr in arm.pose.bones[bone.name].constraints:
-                # yes! store it for reference when creating the kf file
-                if constr.name[:9].lower() == "priority:":
-                    self.bone_priorities[
-                        self.get_bone_name_for_nif(bone.name)
-                        ] = int(constr.name[9:])
-
-        # now fix the linkage between the blocks
-        for bone in list(bones.values()):
-            # link the bone's children to the bone
-            if bone.children:
-                self.debug("Linking children of bone %s" % bone.name)
-                for child in bone.children:
-                    # bone.children returns also grandchildren etc.
-                    # we only want immediate children, so do a parent check
-                    if child.parent.name == bone.name:
-                        bones_node[bone.name].add_child(bones_node[child.name])
-            # if it is a root bone, link it to the armature
-            if not bone.parent:
-                parent_block.add_child(bones_node[bone.name])
+    
 
     def export_children(self, b_obj, parent_block):
         """Export all children of blender object b_obj as children of
