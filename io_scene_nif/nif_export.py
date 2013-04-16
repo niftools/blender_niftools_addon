@@ -50,6 +50,7 @@ from pyffi.formats.egm import EgmFormat
 
 from .nif_common import NifCommon
 from .collisionsys.collision_export import bhkshape_export, bound_export
+from .armaturesys.armature_export import Armature
 
 class NifExportError(Exception):
     """A simple custom exception class for export errors."""
@@ -1091,7 +1092,7 @@ class NifExport(NifCommon):
 
             # export all children of this empty/mesh/armature/bone
             # object as children of this NiNode
-            self.export_children(b_obj, node)
+            self.armaturehelper.export_children(b_obj, node)
 
         return node
 
@@ -3073,48 +3074,7 @@ class NifExport(NifCommon):
 
     
 
-    def export_children(self, b_obj, parent_block):
-        """Export all children of blender object b_obj as children of
-        parent_block."""
-        # loop over all obj's children
-        for b_obj_child in b_obj.children:
-            # is it a regular node?
-            if b_obj_child.type in ['MESH', 'EMPTY', 'ARMATURE']:
-                if (b_obj.type != 'ARMATURE'):
-                    # not parented to an armature
-                    self.export_node(b_obj_child, 'localspace',
-                                     parent_block, b_obj_child.name)
-                else:
-                    # this object is parented to an armature
-                    # we should check whether it is really parented to the
-                    # armature using vertex weights
-                    # or whether it is parented to some bone of the armature
-                    parent_bone_name = b_obj_child.parent_bone
-                    if parent_bone_name is None:
-                        self.export_node(b_obj_child, 'localspace',
-                                         parent_block, b_obj_child.name)
-                    else:
-                        # we should parent the object to the bone instead of
-                        # to the armature
-                        # so let's find that bone!
-                        nif_bone_name = self.get_full_name(parent_bone_name)
-                        for bone_block in self.blocks:
-                            if isinstance(bone_block, NifFormat.NiNode) and \
-                                bone_block.name.decode() == nif_bone_name:
-                                # ok, we should parent to block
-                                # instead of to parent_block
-                                # two problems to resolve:
-                                #   - blender bone matrix is not the exported
-                                #     bone matrix!
-                                #   - blender objects parented to bone have
-                                #     extra translation along the Y axis
-                                #     with length of the bone ("tail")
-                                # this is handled in the get_object_srt function
-                                self.export_node(b_obj_child, 'localspace',
-                                                 bone_block, b_obj_child.name)
-                                break
-                        else:
-                            assert(False) # BUG!
+   
 
     def export_matrix(self, b_obj, space, block):
         """Set a block's transform matrix to an object's
