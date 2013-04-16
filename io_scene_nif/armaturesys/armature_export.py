@@ -174,7 +174,7 @@ class Armature():
             # bone rotations are stored in the IPO relative to the rest position
             # so we must take the rest position into account
             # (need original one, without extra transforms, so extra = False)
-            bonerestmat = self.nif_common.get_bone_rest_matrix(bone, 'BONESPACE',
+            bonerestmat = self.get_bone_rest_matrix(bone, 'BONESPACE',
                                                     extra = False)
             try:
                 bonexmat_inv = mathutils.Matrix(
@@ -199,7 +199,7 @@ class Armature():
         for bone in list(bones.values()):
             # link the bone's children to the bone
             if bone.children:
-                self.debug("Linking children of bone %s" % bone.name)
+                self.nif_common.debug("Linking children of bone %s" % bone.name)
                 for child in bone.children:
                     # bone.children returns also grandchildren etc.
                     # we only want immediate children, so do a parent check
