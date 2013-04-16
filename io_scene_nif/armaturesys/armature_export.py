@@ -87,3 +87,15 @@ class Armature():
                 # Matrices are stored inverted for easier math later on.
                 mat.invert()
                 self.set_bone_extra_matrix_inv(b, mat)
+                
+    def set_bone_extra_matrix_inv(self, bonename, mat):
+        """Set bone extra matrix, inverted. The bonename is first converted
+        to blender style (to ensure compatibility with older imports).
+        """
+        self.bones_extra_matrix_inv[self.get_bone_name_for_blender(bonename)] = mat
+
+    def get_bone_extra_matrix_inv(self, bonename):
+        """Get bone extra matrix, inverted. The bonename is first converted
+        to blender style (to ensure compatibility with older imports).
+        """
+        return self.bones_extra_matrix_inv[self.get_bone_name_for_blender(bonename)]
