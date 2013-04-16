@@ -46,7 +46,7 @@ from pyffi.formats.nif import NifFormat
 
 class Armature():
 	
-		# correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z
+	# correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z
 	BONE_CORRECTION_MATRICES = (
 		mathutils.Matrix([[ 0.0, -1.0, 0.0], [ 1.0, 0.0, 0.0], [ 0.0, 0.0, 1.0]]),
 		mathutils.Matrix([[ 1.0, 0.0, 0.0], [ 0.0, 1.0, 0.0], [ 0.0, 0.0, 1.0]]),
