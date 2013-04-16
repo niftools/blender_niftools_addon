@@ -252,3 +252,47 @@ class Armature():
                                 break
                         else:
                             assert(False) # BUG!
+                            
+                            
+    def get_bone_rest_matrix(self, bone, space, extra = True, tail = False):
+        """Get bone matrix in rest position ("bind pose"). Space can be
+        ARMATURESPACE or BONESPACE. This returns also a 4x4 matrix if space
+        is BONESPACE (translation is bone head plus tail from parent bone).
+        If tail is True then the matrix translation includes the bone tail."""
+        # Retrieves the offset from the original NIF matrix, if existing
+        corrmat = mathutils.Matrix()
+        if extra:
+            try:
+                corrmat = mathutils.Matrix(
+                    self.get_bone_extra_matrix_inv(bone.name))
+            except KeyError:
+                corrmat.identity()
+        else:
+            corrmat.identity()
+        if (space == 'ARMATURESPACE'):
+            mat = mathutils.Matrix(bone.matrix_local)
+            if tail:
+                tail_pos = bone.tail_local
+                mat[0][3] = tail_pos[0]
+                mat[1][3] = tail_pos[1]
+                mat[2][3] = tail_pos[2]
+            return corrmat * mat
+        elif (space == 'BONESPACE'):
+            if bone.parent:
+                # not sure why extra = True is required here
+                # but if extra = extra then transforms are messed up, so keep
+                # for now
+                parinv = self.get_bone_rest_matrix(bone.parent, 'ARMATURESPACE',
+                                                   extra = True, tail = False)
+                parinv.invert()
+                return self.get_bone_rest_matrix(bone,
+                                                 'ARMATURESPACE',
+                                                 extra = extra,
+                                                 tail = tail) * parinv
+            else:
+                return self.get_bone_rest_matrix(bone, 'ARMATURESPACE',
+                                                 extra = extra, tail = tail)
+        else:
+            assert(False) # bug!
+
+
