@@ -39,7 +39,7 @@
 
 from .nif_common import NifCommon
 from .collisionsys.collision_import import bhkshape_import, bound_import
-from .armaturesys.skeletal import armature_import
+from .armaturesys.armature_import import Armature
 from .materialsys.material import material_import
 from .texturesys.texture import texture_import
 
@@ -100,7 +100,7 @@ class NifImport(NifCommon):
         # Store references to subsystems as needed.
         self.bhkhelper = bhkshape_import(parent=self)
         self.boundhelper = bound_import(parent=self)
-        self.armaturehelper = armature_import(parent=self)
+        self.armaturehelper = Armature(parent=self)
         self.texturehelper = texture_import(parent=self)
         self.materialhelper = material_import(parent=self)
 
