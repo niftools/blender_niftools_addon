@@ -65,43 +65,6 @@ class NifExport(NifCommon):
     FLOAT_MAX = +3.4028234663852886e+38
 
 
-
-    def rebuild_bones_extra_matrices(self):
-        """Recover bone extra matrices."""
-        try:
-            bonetxt = Blender.Text.Get('BoneExMat')
-        except NameError:
-            return
-        # Blender bone names are unique so we can use them as keys.
-        for ln in bonetxt.asLines():
-            if len(ln)>0:
-                # reconstruct matrix from text
-                b, m = ln.split('/')
-                try:
-                    mat = mathutils.Matrix(
-                        [[float(f) for f in row.split(',')]
-                         for row in m.split(';')])
-                except:
-                    raise NifExportError('Syntax error in BoneExMat buffer.')
-                # Check if matrices are clean, and if necessary fix them.
-                quat = mat.rotationPart().toQuat()
-                if sum(sum(abs(x) for x in vec)
-                       for vec in mat.rotationPart() - quat.toMatrix()) > 0.01:
-                    self.warning(
-                        "Bad bone extra matrix for bone %s. \n"
-                        "Attempting to fix... but bone transform \n"
-                        "may be incompatible with existing animations." % b)
-                    self.warning("old invalid matrix:\n%s" % mat)
-                    trans = mat.translationPart()
-                    mat = quat.toMatrix().resize4x4()
-                    mat[3][0] = trans[0]
-                    mat[3][1] = trans[1]
-                    mat[3][2] = trans[2]
-                    self.warning("new valid matrix:\n%s" % mat)
-                # Matrices are stored inverted for easier math later on.
-                mat.invert()
-                self.set_bone_extra_matrix_inv(b, mat)
-
     def set_bone_extra_matrix_inv(self, bonename, mat):
         """Set bone extra matrix, inverted. The bonename is first converted
         to blender style (to ensure compatibility with older imports).
@@ -188,8 +151,8 @@ class NifExport(NifCommon):
         # Helper systems
         # Store references to subsystems as needed.
         self.boundhelper = bound_export(parent=self)
-        self.bhkhelper = bhkshape_export(parent=self)
-
+        self.bhkshapehelper = bhkshape_export(parent=self)
+        self.armaturehelper = Armature(parent=self)
 
         self.info("exporting {0}".format(self.properties.filepath))
 
@@ -365,7 +328,7 @@ class NifExport(NifCommon):
                 animtxt = None
 
             # rebuild the bone extra matrix dictionary from the 'BoneExMat' text buffer
-            self.rebuild_bones_extra_matrices()
+            self.armaturehelper.rebuild_bones_extra_matrices()
 
             # rebuild the full name dictionary from the 'FullNames' text buffer
             self.rebuild_full_names()
@@ -3537,7 +3500,7 @@ class NifExport(NifCommon):
                            if block.name[:14] == 'collisiondummy' ])
             for node in nodes:
                 try:
-                    self.bhkhelper.export_collision_helper(b_obj, node)
+                    self.bhkshapehelper.export_collision_helper(b_obj, node)
                     break
                 except ValueError: # adding collision failed
                     continue
@@ -3547,7 +3510,7 @@ class NifExport(NifCommon):
                 node.name = 'collisiondummy%i' % parent_block.num_children
                 node.flags = 0x000E # default
                 parent_block.add_child(node)
-                self.bhkhelper.export_collision_helper(b_obj, node)
+                self.bhkshapehelper.export_collision_helper(b_obj, node)
 
         else:
             self.warning(
