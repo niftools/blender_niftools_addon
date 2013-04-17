@@ -234,8 +234,8 @@ class Armature():
                         # we should parent the object to the bone instead of
                         # to the armature
                         # so let's find that bone!
-                        nif_bone_name = self.get_full_name(parent_bone_name)
-                        for bone_block in self.blocks:
+                        nif_bone_name = self.nif_common.get_full_name(parent_bone_name)
+                        for bone_block in self.nif_common.blocks:
                             if isinstance(bone_block, NifFormat.NiNode) and \
                                 bone_block.name.decode() == nif_bone_name:
                                 # ok, we should parent to block
