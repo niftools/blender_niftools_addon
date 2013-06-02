@@ -72,7 +72,7 @@ class NifExport(NifCommon):
         """Recovers the full object names from the text buffer and rebuilds
         the names dictionary."""
         try:
-            namestxt = Blender.Text.Get('FullNames')
+            namestxt = bpy.data.texts['FullNames']
         except NameError:
             return
         for ln in namestxt.asLines():
@@ -1096,7 +1096,7 @@ class NifExport(NifCommon):
 
         return node
 
-    def export_keyframes(self, ipo, space, parent_block, bind_mat = None,
+    def export_keyframes(self, ipo, space, parent_block, bind_matrix = None,
                          extra_mat_inv = None):
         #
         # Export the animation of blender Ipo as keyframe controller and
@@ -1105,7 +1105,7 @@ class NifExport(NifCommon):
         # when exporting bone ipo's, which are relative to the rest pose, so
         # we can pass the rest pose through these extra transformations.
         #
-        # bind_mat is the original Blender bind matrix (the B' matrix below)
+        # bind_matrix is the original Blender bind matrix (the B' matrix below)
         # extra_mat_inv is the inverse matrix which transforms the Blender bone matrix
         # to the NIF bone matrix (the inverse of the X matrix below)
         #
@@ -1224,8 +1224,8 @@ class NifExport(NifCommon):
         # -> get keyframe information
 
         # some calculations
-        if bind_mat:
-            bind_scale, bind_rot, bind_trans = self.decompose_srt(bind_mat)
+        if bind_matrix:
+            bind_scale, bind_rot, bind_trans = self.decompose_srt(bind_matrix)
             bind_quat = bind_rot.toQuat()
         else:
             bind_scale = 1.0
@@ -1308,7 +1308,7 @@ class NifExport(NifCommon):
                              10 * ipo[Ipo.OB_ROTZ][frame]])
                         # use quat if we have bind matrix and/or extra matrix
                         # XXX maybe we should just stick with eulers??
-                        if bind_mat or extra_mat_inv:
+                        if bind_matrix or extra_mat_inv:
                             rot_curve[frame] = rot_curve[frame].toQuat()
                             # beware, CrossQuats takes arguments in a counter-intuitive order:
                             # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
@@ -1746,13 +1746,13 @@ class NifExport(NifCommon):
 
         # get the mesh's materials, this updates the mesh material list
         if not isinstance(parent_block, NifFormat.RootCollisionNode):
-            mesh_mats = mesh.materials
+            mesh_materials = mesh.materials
         else:
             # ignore materials on collision trishapes
-            mesh_mats = []
+            mesh_materials = []
         # if the mesh has no materials, all face material indices should be 0, so it's ok to fake one material in the material list
-        if not mesh_mats:
-            mesh_mats = [None]
+        if not mesh_materials:
+            mesh_materials = [None]
 
         # is mesh double sided?
         mesh_doublesided = mesh.show_double_sided
@@ -1790,7 +1790,7 @@ class NifExport(NifCommon):
         # let's now export one trishape for every mesh material
         ### TODO: needs refactoring - move material, texture, etc.
         ### to separate function
-        for materialIndex, mesh_mat in enumerate(mesh_mats):
+        for materialIndex, mesh_material in enumerate(mesh_materials):
             # -> first, extract valuable info from our b_obj
 
             mesh_base_mtex = None
@@ -1810,7 +1810,7 @@ class NifExport(NifCommon):
             mesh_hasspec = False  # mesh specular property
 
             mesh_hasnormals = False
-            if mesh_mat is not None:
+            if mesh_material is not None:
                 mesh_hasnormals = True # for proper lighting
 
                 #ambient mat
@@ -1822,14 +1822,14 @@ class NifExport(NifCommon):
                 TODO_3.0 - If needed where ambient should not be defaulted
 
                 #ambient mat
-                mesh_mat_ambient_color[0] = mesh_mat.niftools.ambient_color[0] * mesh_mat.niftools.ambient_factor
-                mesh_mat_ambient_color[1] = mesh_mat.niftools.ambient_color[1] * mesh_mat.niftools.ambient_factor
-                mesh_mat_ambient_color[2] = mesh_mat.niftools.ambient_color[2] * mesh_mat.niftools.ambient_factor
+                mesh_mat_ambient_color[0] = mesh_material.niftools.ambient_color[0] * mesh_material.niftools.ambient_factor
+                mesh_mat_ambient_color[1] = mesh_material.niftools.ambient_color[1] * mesh_material.niftools.ambient_factor
+                mesh_mat_ambient_color[2] = mesh_material.niftools.ambient_color[2] * mesh_material.niftools.ambient_factor
 
                 #diffuse mat
-                mest_mat_diffuse_color[0] = mesh_mat.niftools.diffuse_color[0] * mesh_mat.niftools.diffuse_factor
-                mest_mat_diffuse_color[1] = mesh_mat.niftools.diffuse_color[1] * mesh_mat.niftools.diffuse_factor
-                mest_mat_diffuse_color[2] = mesh_mat.niftools.diffuse_color[2] * mesh_mat.niftools.diffuse_factor
+                mest_mat_diffuse_color[0] = mesh_material.niftools.diffuse_color[0] * mesh_material.niftools.diffuse_factor
+                mest_mat_diffuse_color[1] = mesh_material.niftools.diffuse_color[1] * mesh_material.niftools.diffuse_factor
+                mest_mat_diffuse_color[2] = mesh_material.niftools.diffuse_color[2] * mesh_material.niftools.diffuse_factor
                 '''
 
                 #emissive mat
@@ -1837,28 +1837,28 @@ class NifExport(NifCommon):
                 mesh_mat_emitmulti = 1.0 # default
                 if self.properties.game != 'FALLOUT_3':
                     #old code
-                    #mesh_mat_emissive_color = mesh_mat.diffuse_color * mesh_mat.emit
-                    mesh_mat_emissive_color = mesh_mat.niftools.emissive_color * mesh_mat.emit
+                    #mesh_mat_emissive_color = mesh_material.diffuse_color * mesh_material.emit
+                    mesh_mat_emissive_color = mesh_material.niftools.emissive_color * mesh_material.emit
 
                 else:
                     # special case for Fallout 3 (it does not store diffuse color)
                     # if emit is non-zero, set emissive color to diffuse
                     # (otherwise leave the color to zero)
-                    if mesh_mat.emit > self.properties.epsilon:
+                    if mesh_material.emit > self.properties.epsilon:
 
                         #old code
-                        #mesh_mat_emissive_color = mesh_mat.diffuse_color
-                        mesh_mat_emissive_color = mesh_mat.niftools.emissive_color
-                        mesh_mat_emitmulti = mesh_mat.emit * 10.0
+                        #mesh_mat_emissive_color = mesh_material.diffuse_color
+                        mesh_mat_emissive_color = mesh_material.niftools.emissive_color
+                        mesh_mat_emitmulti = mesh_material.emit * 10.0
 
                 #specular mat
-                mesh_mat_specular_color = mesh_mat.specular_color
-                if mesh_mat.specular_intensity > 1.0:
-                    mesh_mat.specular_intensity = 1.0
+                mesh_mat_specular_color = mesh_material.specular_color
+                if mesh_material.specular_intensity > 1.0:
+                    mesh_material.specular_intensity = 1.0
 
-                mesh_mat_specular_color[0] *= mesh_mat.specular_intensity
-                mesh_mat_specular_color[1] *= mesh_mat.specular_intensity
-                mesh_mat_specular_color[2] *= mesh_mat.specular_intensity
+                mesh_mat_specular_color[0] *= mesh_material.specular_intensity
+                mesh_mat_specular_color[1] *= mesh_material.specular_intensity
+                mesh_mat_specular_color[2] *= mesh_material.specular_intensity
 
                 if ( mesh_mat_specular_color[0] > self.properties.epsilon ) \
                     or ( mesh_mat_specular_color[1] > self.properties.epsilon ) \
@@ -1867,25 +1867,25 @@ class NifExport(NifCommon):
 
                 #gloss mat
                 #'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
-                mesh_mat_gloss = mesh_mat.specular_hardness / 4.0
+                mesh_mat_gloss = mesh_material.specular_hardness / 4.0
 
                 #alpha mat
                 mesh_hasalpha = False
-                mesh_mat_transparency = mesh_mat.alpha
-                if(mesh_mat.use_transparency):
+                mesh_mat_transparency = mesh_material.alpha
+                if(mesh_material.use_transparency):
                     if(abs(mesh_mat_transparency - 1.0)> self.properties.epsilon):
                         mesh_hasalpha = True
                 elif(mesh_hasvcola):
                     mesh_hasalpha = True
-                elif(mesh_mat.animation_data and mesh_mat.animation_data.action.fcurves['Alpha']):
+                elif(mesh_material.animation_data and mesh_material.animation_data.action.fcurves['Alpha']):
                     mesh_hasalpha = True
 
                 #wire mat
-                mesh_haswire = (mesh_mat.type == 'WIRE')
+                mesh_haswire = (mesh_material.type == 'WIRE')
 
                 # the base texture = first material texture
                 # note that most morrowind files only have a base texture, so let's for now only support single textured materials
-                for b_mat_texslot in mesh_mat.texture_slots:
+                for b_mat_texslot in mesh_material.texture_slots:
                     if not b_mat_texslot or not b_mat_texslot.use:
                         # skip unused texture slots
                         continue
@@ -1906,14 +1906,14 @@ class NifExport(NifCommon):
                                 "Either delete all non-COL-mapped reflection textures,"
                                 " or in the Shading Panel, under Material Buttons,"
                                 " set texture 'Map To' to 'COL'."
-                                % (b_obj.name,mesh_mat.name))
+                                % (b_obj.name,mesh_material.name))
                         if b_mat_texslot.blend_type != 'ADD':
                             # it should have "ADD" blending mode
                             self.warning(
                                "Reflection texture should have blending"
                                " mode 'Add' on texture"
                                " in mesh '%s', material '%s')."
-                               % (b_obj.name,mesh_mat.name))
+                               % (b_obj.name,mesh_material.name))
                             # an envmap image should have an empty... don't care
                         mesh_texeff_mtex = b_mat_texslot
 
@@ -1930,7 +1930,7 @@ class NifExport(NifCommon):
                                 raise NifExportError(
                                     "Multiple glow textures in mesh '%s', material '%s'.\n"
                                     "Make sure Texture -> Influence -> Shading -> Emit is disabled"
-                                    %(mesh.name,mesh_mat.name))
+                                    %(mesh.name,mesh_material.name))
                             '''
                             TODO_3.0 - Fallout3 + specific.
                             Check if these are still possible
@@ -1940,7 +1940,7 @@ class NifExport(NifCommon):
                                 self.warning(
                                     "In mesh '%s', material '%s': glow texture must have"
                                     " CALCALPHA flag set, and must have MapTo.ALPHA enabled."
-                                    %(b_obj.name,mesh_mat.name))
+                                    %(b_obj.name,mesh_material.name))
                             '''
 
                             # check if alpha channel is enabled for this texture
@@ -1957,7 +1957,7 @@ class NifExport(NifCommon):
                                     " mesh '%s', material '%s'."
                                     " Make sure there is only one texture"
                                     " with MapTo.SPEC"
-                                    %(mesh.name,mesh_mat.name))
+                                    %(mesh.name,mesh_material.name))
 
                             # check if alpha channel is enabled for this texture
                             if(b_mat_texslot.use_map_alpha):
@@ -1974,7 +1974,7 @@ class NifExport(NifCommon):
                                     " in mesh '%s', material '%s'."
                                     " Make sure there is only one texture"
                                     " with MapTo.NOR"
-                                    %(mesh.name,mesh_mat.name))
+                                    %(mesh.name,mesh_material.name))
 
                             # check if alpha channel is enabled for this texture
                             if(b_mat_texslot.use_map_alpha):
@@ -2018,8 +2018,8 @@ class NifExport(NifCommon):
                                         " and to use the 'Var' slider"
                                         " in the 'Map To' tab under the"
                                         " material buttons."
-                                        %mesh_mat.name)
-                                if (mesh_mat.animation_data and mesh_mat.animation_data.action.fcurves['Alpha']):
+                                        %mesh_material.name)
+                                if (mesh_material.animation_data and mesh_material.animation_data.action.fcurves['Alpha']):
                                     raise NifExportError(
                                         "Cannot export animation for"
                                         " this type of transparency"
@@ -2027,7 +2027,7 @@ class NifExport(NifCommon):
                                         " remove alpha animation,"
                                         " or turn off MapTo.ALPHA,"
                                         " and try again."
-                                        %mesh_mat.name)
+                                        %mesh_material.name)
 
                                 mesh_mat_transparency = b_mat_texslot.varfac # we must use the "Var" value
                                 '''
@@ -2040,7 +2040,7 @@ class NifExport(NifCommon):
                                     " in mesh '%s', material '%s'."
                                     " Make sure there is only one texture"
                                     " with MapTo.NOR"
-                                    %(mesh.name,mesh_mat.name))
+                                    %(mesh.name,mesh_material.name))
                             # check if alpha channel is enabled for this texture
                             if(b_mat_texslot.use_map_alpha):
                                 mesh_hasalpha = True
@@ -2065,7 +2065,7 @@ class NifExport(NifCommon):
                                     " in mesh '%s', material '%s'."
                                     " Make sure there is only one texture"
                                     " with MapTo.REF"
-                                    %(mesh.name,mesh_mat.name))
+                                    %(mesh.name,mesh_material.name))
                             # check if alpha channel is enabled for this texture
                             if(b_mat_texslot.use_map_alpha):
                                 mesh_hasalpha = True
@@ -2081,7 +2081,7 @@ class NifExport(NifCommon):
                                 " go to the Shading Panel,"
                                 " Material Buttons, and set texture"
                                 " 'Map To' to 'COL'."
-                                % (b_mat_texslot.texture.name,b_obj.name,mesh_mat.name))
+                                % (b_mat_texslot.texture.name,b_obj.name,mesh_material.name))
 
                     # nif only support UV-mapped textures
                     else:
@@ -2091,7 +2091,7 @@ class NifExport(NifCommon):
                             " or in the Shading Panel,"
                             " under Material Buttons,"
                             " set texture 'Map Input' to 'UV'."
-                            %(b_obj.name,mesh_mat.name))
+                            %(b_obj.name,mesh_material.name))
 
             # list of body part (name, index, vertices) in this mesh
             bodypartgroups = []
@@ -2139,7 +2139,7 @@ class NifExport(NifCommon):
             faces_without_bodypart = []
             for f in mesh.faces:
                 # does the face belong to this trishape?
-                if (mesh_mat != None): # we have a material
+                if (mesh_material != None): # we have a material
                     if (f.material_index != materialIndex): # but this face has another material
                         continue # so skip this face
                 f_numverts = len(f.vertices)
@@ -2333,7 +2333,7 @@ class NifExport(NifCommon):
             else:
                 trishape.name = trishape_name.encode()
 
-            if len(mesh_mats) > 1:
+            if len(mesh_materials) > 1:
                 # multimaterial meshes: add material index
                 # (Morrowind's child naming convention)
                 b_name = trishape.name.decode() + ":%i" % materialIndex
@@ -2423,7 +2423,7 @@ class NifExport(NifCommon):
                 # add NiStencilProperty
                 trishape.add_property(self.export_stencil_property())
 
-            if mesh_mat:
+            if mesh_material:
                 # add NiTriShape's specular property
                 # but NOT for sid meier's railroads and other extra shader
                 # games (they use specularity even without this property)
@@ -2436,7 +2436,7 @@ class NifExport(NifCommon):
 
                 # add NiTriShape's material property
                 trimatprop = self.export_material_property(
-                    name=self.get_full_name(mesh_mat.name),
+                    name=self.get_full_name(mesh_material.name),
                     flags=0x0001, # TODO - standard flag, check?
                     ambient=mesh_mat_ambient_color,
                     diffuse=mesh_mat_diffuse_color,
@@ -2452,7 +2452,7 @@ class NifExport(NifCommon):
 
                 # material animation
                 self.export_material_controllers(
-                    b_material=mesh_mat, n_geom=trishape)
+                    b_material=mesh_material, n_geom=trishape)
 
             # add NiTriShape's data
             # NIF flips the texture V-coordinate (OpenGL standard)
@@ -3110,27 +3110,27 @@ class NifExport(NifCommon):
         the bone correction); this differs from getMatrix which
         returns the transform relative to the armature."""
         n_scale, n_rot_mat33, n_trans_vec = self.get_object_srt(b_obj, space)
-        mat = NifFormat.Matrix44()
+        matrix = NifFormat.Matrix44()
 
-        mat.m_11 = n_rot_mat33[0][0] * n_scale
-        mat.m_12 = n_rot_mat33[0][1] * n_scale
-        mat.m_13 = n_rot_mat33[0][2] * n_scale
-        mat.m_21 = n_rot_mat33[1][0] * n_scale
-        mat.m_22 = n_rot_mat33[1][1] * n_scale
-        mat.m_23 = n_rot_mat33[1][2] * n_scale
-        mat.m_31 = n_rot_mat33[2][0] * n_scale
-        mat.m_32 = n_rot_mat33[2][1] * n_scale
-        mat.m_33 = n_rot_mat33[2][2] * n_scale
-        mat.m_41 = n_trans_vec[0]
-        mat.m_42 = n_trans_vec[1]
-        mat.m_43 = n_trans_vec[2]
+        matrix.m_11 = n_rot_mat33[0][0] * n_scale
+        matrix.m_12 = n_rot_mat33[0][1] * n_scale
+        matrix.m_13 = n_rot_mat33[0][2] * n_scale
+        matrix.m_21 = n_rot_mat33[1][0] * n_scale
+        matrix.m_22 = n_rot_mat33[1][1] * n_scale
+        matrix.m_23 = n_rot_mat33[1][2] * n_scale
+        matrix.m_31 = n_rot_mat33[2][0] * n_scale
+        matrix.m_32 = n_rot_mat33[2][1] * n_scale
+        matrix.m_33 = n_rot_mat33[2][2] * n_scale
+        matrix.m_41 = n_trans_vec[0]
+        matrix.m_42 = n_trans_vec[1]
+        matrix.m_43 = n_trans_vec[2]
 
-        mat.m_14 = 0.0
-        mat.m_24 = 0.0
-        mat.m_34 = 0.0
-        mat.m_44 = 1.0
+        matrix.m_14 = 0.0
+        matrix.m_24 = 0.0
+        matrix.m_34 = 0.0
+        matrix.m_44 = 1.0
 
-        return mat
+        return matrix
 
     def get_object_srt(self, b_obj, space = 'localspace'):
         """Find scale, rotation, and translation components of an object in
@@ -3155,7 +3155,7 @@ class NifExport(NifCommon):
 
         # now write out spaces
         if not isinstance(b_obj, bpy.types.Bone):
-            mat = b_obj.matrix_local.copy()
+            matrix = b_obj.matrix_local.copy()
             bone_parent_name = b_obj.parent_bone
             # if there is a bone parent then the object is parented
             # then get the matrix relative to the bone parent head
@@ -3169,12 +3169,12 @@ class NifExport(NifCommon):
                 # b_obj.getMatrix('localspace')
                 # gets the object local transform matrix, relative
                 # to the armature!! (not relative to the bone)
-                # so at this point, mat = O * T * B'
-                # hence it must hold that mat = Z * B,
-                # or equivalently Z = mat * B^{-1}
+                # so at this point, matrix = O * T * B'
+                # hence it must hold that matrix = Z * B,
+                # or equivalently Z = matrix * B^{-1}
 
                 # now, B' = X * B, so B^{-1} = B'^{-1} * X
-                # hence Z = mat * B'^{-1} * X
+                # hence Z = matrix * B'^{-1} * X
 
                 # first multiply with inverse of the Blender bone matrix
                 bone_parent = b_obj.parent.data.bones[
@@ -3182,24 +3182,24 @@ class NifExport(NifCommon):
                 boneinv = mathutils.Matrix(
                     bone_parent.matrix['ARMATURESPACE'])
                 boneinv.invert()
-                mat = mat * boneinv
+                matrix = matrix * boneinv
                 # now multiply with the bone correction matrix X
                 try:
                     extra = mathutils.Matrix(
                         self.get_bone_extra_matrix_inv(bone_parent_name))
                     extra.invert()
-                    mat = mat * extra
+                    matrix = matrix * extra
                 except KeyError:
                     # no extra local transform
                     pass
         else:
             # bones, get the rest matrix
-            mat = self.armaturehelper.get_bone_rest_matrix(b_obj, 'BONESPACE')
+            matrix = self.armaturehelper.get_bone_rest_matrix(b_obj, 'BONESPACE')
 
         try:
-            return self.decompose_srt(mat)
+            return self.decompose_srt(matrix)
         except NifExportError: # non-uniform scaling
-            self.debug(str(mat))
+            self.debug(str(matrix))
             raise NifExportError(
                 "Non-uniform scaling on bone '%s' not supported."
                 " This could be a bug... No workaround. :-( Post your blend!"
@@ -3207,23 +3207,35 @@ class NifExport(NifCommon):
 
 
 
-    def decompose_srt(self, mat):
+    def decompose_srt(self, matrix):
         """Decompose Blender transform matrix as a scale, rotation matrix, and
         translation vector."""
-        b_trans_vec, b_rot_quat, b_scale_vec = mat.decompose()
-        b_rot_mat = b_rot_quat.to_matrix()
-        b_rot_mat.invert()
-
+        # get scale components
+        trans_vec, rot_quat, scale_vec = matrix.decompose()
+        #matrix1 = matrix.to_quaternion()
+        b_scale_rot = rot_quat.to_matrix()
+        b_scale_rot_T = mathutils.Matrix(b_scale_rot)
+        b_scale_rot_T.transpose()
+        b_scale_rot_2 = b_scale_rot * b_scale_rot_T
+        b_scale = mathutils.Vector((b_scale_rot_2[0][0] ** 0.5,\
+                                   b_scale_rot_2[1][1] ** 0.5,\
+                                   b_scale_rot_2[2][2] ** 0.5))
+        # and fix their sign
+        if (b_scale_rot.determinant() < 0): b_scale.negate()
         # only uniform scaling
         # allow rather large error to accomodate some nifs
-        if abs(b_scale_vec[0]-b_scale_vec[1]) + abs(b_scale_vec[1]-b_scale_vec[2]) > 0.02:
+        if abs(b_scale[0]-b_scale[1]) + abs(b_scale[1]-b_scale[2]) > 0.02:
             raise NifExportError(
                 "Non-uniform scaling not supported."
                 " Workaround: apply size and rotation (CTRL-A).")
 
-        return b_scale_vec[0], b_rot_mat, b_trans_vec
-
-
+        b_scale = b_scale[0]
+        # get rotation matrix
+        b_rot = b_scale_rot * (1.0 / b_scale)
+        # get translation
+        b_trans = mathutils.Vector(matrix[3][0:3])
+        # done!
+        return b_scale, b_rot, b_trans
 
    
     def create_block(self, blocktype, b_obj = None):
