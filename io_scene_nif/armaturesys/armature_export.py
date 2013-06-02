@@ -65,38 +65,38 @@ class Armature():
         """Recover bone extra matrices."""
         
         try:
-            bonetxt = Blender.Text.Get('BoneExMat')
+            bonetxt = bpy.data.texts['BoneExMat']
         except NameError:
             return
         # Blender bone names are unique so we can use them as keys.
-        for ln in bonetxt.asLines():
+        for ln in bonetxt.lines():
             if len(ln)>0:
                 # reconstruct matrix from text
                 b, m = ln.split('/')
                 try:
-                    mat = mathutils.Matrix(
+                    matrix = mathutils.Matrix(
                         [[float(f) for f in row.split(',')]
                          for row in m.split(';')])
                 except:
                     raise NifExportError('Syntax error in BoneExMat buffer.')
                 # Check if matrices are clean, and if necessary fix them.
-                quat = mat.rotationPart().toQuat()
+                quat = matrix.rotationPart().toQuat()
                 if sum(sum(abs(x) for x in vec)
-                       for vec in mat.rotationPart() - quat.toMatrix()) > 0.01:
+                       for vec in matrix.rotationPart() - quat.toMatrix()) > 0.01:
                     self.warning(
                         "Bad bone extra matrix for bone %s. \n"
                         "Attempting to fix... but bone transform \n"
                         "may be incompatible with existing animations." % b)
-                    self.warning("old invalid matrix:\n%s" % mat)
-                    trans = mat.translationPart()
-                    mat = quat.toMatrix().resize4x4()
-                    mat[3][0] = trans[0]
-                    mat[3][1] = trans[1]
-                    mat[3][2] = trans[2]
-                    self.warning("new valid matrix:\n%s" % mat)
+                    self.warning("old invalid matrix:\n%s" % matrix)
+                    trans = matrix.translationPart()
+                    matrix = quat.toMatrix().resize4x4()
+                    matrix[3][0] = trans[0]
+                    matrix[3][1] = trans[1]
+                    matrix[3][2] = trans[2]
+                    self.warning("new valid matrix:\n%s" % matrix)
                 # Matrices are stored inverted for easier math later on.
-                mat.invert()
-                self.set_bone_extra_matrix_inv(b, mat)
+                matrix.invert()
+                self.set_bone_extra_matrix_inv(b, matrix)
                 
     def set_bone_extra_matrix_inv(self, bonename, mat):
         """Set bone extra matrix, inverted. The bonename is first converted
@@ -185,7 +185,7 @@ class Armature():
             if bone.name in bones_ipo:
                 self.nif_common.export_keyframes(
                     bones_ipo[bone.name], 'localspace', node,
-                    bind_mat = bonerestmat, extra_mat_inv = bonexmat_inv)
+                    bind_matrix = bonerestmat, extra_mat_inv = bonexmat_inv)
 
             # does bone have priority value in NULL constraint?
             for constr in arm.pose.bones[bone.name].constraints:
@@ -270,13 +270,13 @@ class Armature():
         else:
             corrmat.identity()
         if (space == 'ARMATURESPACE'):
-            mat = mathutils.Matrix(bone.matrix_local)
+            matrix = mathutils.Matrix(bone.matrix_local)
             if tail:
                 tail_pos = bone.tail_local
-                mat[0][3] = tail_pos[0]
-                mat[1][3] = tail_pos[1]
-                mat[2][3] = tail_pos[2]
-            return corrmat * mat
+                matrix[0][3] = tail_pos[0]
+                matrix[1][3] = tail_pos[1]
+                matrix[2][3] = tail_pos[2]
+            return corrmat * matrix
         elif (space == 'BONESPACE'):
             if bone.parent:
                 # not sure why extra = True is required here
