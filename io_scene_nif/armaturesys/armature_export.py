@@ -69,10 +69,11 @@ class Armature():
         except NameError:
             return
         # Blender bone names are unique so we can use them as keys.
-        for ln in bonetxt.lines():
-            if len(ln)>0:
+        for b_textline in bonetxt.lines:
+            line = b_textline.body
+            if len(line)>0:
                 # reconstruct matrix from text
-                b, m = ln.split('/')
+                b, m = line.split('/')
                 try:
                     matrix = mathutils.Matrix(
                         [[float(f) for f in row.split(',')]
