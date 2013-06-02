@@ -75,9 +75,10 @@ class NifExport(NifCommon):
             namestxt = bpy.data.texts['FullNames']
         except NameError:
             return
-        for ln in namestxt.asLines():
-            if len(ln)>0:
-                name, fullname = ln.split(';')
+        for b_textline in namestxt.lines:
+            line = b_textline.body
+            if len(line)>0:
+                name, fullname = line.split(';')
                 self.names[name] = fullname
 
     def get_unique_name(self, blender_name):
