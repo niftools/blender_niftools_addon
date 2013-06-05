@@ -2274,8 +2274,6 @@ class NifExport(NifCommon):
                     face.select = False
                 for face in faces_without_bodypart:
                     face.select = True
-                # switch to edit mode and raise exception
-                bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
                 raise ValueError(
                     "Some faces of %s not assigned to any body part."
                     " The unassigned faces"
