@@ -2263,7 +2263,7 @@ class NifExport(NifCommon):
 
             # check that there are no missing body part faces
             if faces_without_bodypart:
-                Blender.Window.EditMode(0)
+                bpy.ops.object.mode_set(mode='EDIT',toggle=False)
                 # select mesh object
                 for b_obj in self.context.scene.objects:
                     b_obj.sel = False
@@ -2275,7 +2275,7 @@ class NifExport(NifCommon):
                 for face in faces_without_bodypart:
                     face.sel = 1
                 # switch to edit mode and raise exception
-                Blender.Window.EditMode(1)
+                bpy.ops.object.mode_set(mode='EDIT',toggle=False)
                 raise ValueError(
                     "Some faces of %s not assigned to any body part."
                     " The unassigned faces"
@@ -2571,12 +2571,18 @@ class NifExport(NifCommon):
                         # first find weights and normalization factors
                         vert_list = {}
                         vert_norm = {}
+                                                
                         for bone in boneinfluences:
-                            try:
-                                vert_list[bone] = b_obj.data.getVertsFromGroup(bone, 1)
-                            except AttributeError:
-                                # this happens when the vertex group has been
-                                # added, but the weights have not been painted
+                            b_list_weight = []
+                            b_group_index = b_obj.vertex_groups[bone].index
+                            
+                            # run though the vertices, check if they have group
+                            for b_vert in b_obj.data.vertices:
+                                for g in b_vert.groups:
+                                    if g.group == b_group_index:
+                                        b_list_weight.append((b_vert.index, g.weight))
+                            
+                            if(len(b_list_weight) == 0):
                                 raise NifExportError(
                                     "Mesh %s has vertex group for bone %s,"
                                     " but no weights."
@@ -2584,7 +2590,9 @@ class NifExport(NifCommon):
                                     " delete the vertex group,"
                                     " or go to weight paint mode,"
                                     " and paint weights."
-                                    % (b_obj.name, bone))
+                                    % (b_obj.name, bone))                                
+                            vert_list[bone] = b_list_weight             
+                            
                             for v in vert_list[bone]:
                                 if v[0] in vert_norm:
                                     vert_norm[v[0]] += v[1]
@@ -2647,7 +2655,7 @@ class NifExport(NifCommon):
                             for b_scene_obj in self.context.scene.objects:
                                 b_scene_obj.sel = False
                             self.context.scene.objects.active = b_obj
-                            b_obj.sel = 1
+                            b_obj.select = 1
                             # select bad vertices
                             for v in mesh.vertices:
                                 v.sel = 0
@@ -2661,7 +2669,7 @@ class NifExport(NifCommon):
                                         raise RuntimeError("vertmap bug")
                                     mesh.vertices[idx].sel = 1
                             # switch to edit mode and raise exception
-                            Blender.Window.EditMode(1)
+                            bpy.ops.object.mode_set(mode='EDIT',toggle=False)
                             raise NifExportError(
                                 "Cannot export mesh with unweighted vertices."
                                 " The unweighted vertices have been selected"
