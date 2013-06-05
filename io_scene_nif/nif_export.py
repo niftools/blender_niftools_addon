@@ -2266,16 +2266,16 @@ class NifExport(NifCommon):
                 bpy.ops.object.mode_set(mode='EDIT',toggle=False)
                 # select mesh object
                 for b_obj in self.context.scene.objects:
-                    b_obj.sel = False
+                    b_obj.select = False
                 self.context.scene.objects.active = b_obj
-                b_obj.sel = 1
+                b_obj.select = True
                 # select bad faces
                 for face in mesh.faces:
-                    face.sel = 0
+                    face.select = False
                 for face in faces_without_bodypart:
-                    face.sel = 1
+                    face.select = True
                 # switch to edit mode and raise exception
-                bpy.ops.object.mode_set(mode='EDIT',toggle=False)
+                bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
                 raise ValueError(
                     "Some faces of %s not assigned to any body part."
                     " The unassigned faces"
