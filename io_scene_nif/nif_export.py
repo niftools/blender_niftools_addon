@@ -2584,16 +2584,6 @@ class NifExport(NifCommon):
                                         if g.group == b_vert_group.index:
                                             b_list_weight.append((b_vert.index, g.weight))
                                             break
-                                        
-                                    else: #group without bone
-                                        for b_scene_obj in self.context.scene.objects:
-                                            b_scene_obj.select = False
-                                            
-                                        self.context.scene.objects.active = b_obj
-                                        raise NifExportError(
-                                            "Mesh %s has vertex group for bone %s, but no weights."
-                                            "Either delete the vertex group or paint weights in weight paint mode."
-                                                % (b_obj.name, bone))
                                                 
                             vert_list[bone_group] = b_list_weight             
                             
