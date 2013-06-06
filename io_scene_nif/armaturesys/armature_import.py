@@ -793,14 +793,11 @@ class Armature():
 		"""Decompose Blender transform matrix as a scale, rotation matrix, and translation vector."""
 		# get scale components
 		trans_vec, rot_quat, scale_vec = matrix.decompose()
-		#matrix1 = matrix.to_quaternion()
 		b_scale_rot = rot_quat.to_matrix()
 		b_scale_rot_T = mathutils.Matrix(b_scale_rot)
 		b_scale_rot_T.transpose()
 		b_scale_rot_2 = b_scale_rot * b_scale_rot_T
-		b_scale = mathutils.Vector((b_scale_rot_2[0][0] ** 0.5,\
-								   b_scale_rot_2[1][1] ** 0.5,\
-								   b_scale_rot_2[2][2] ** 0.5))
+		b_scale = scale_vec
 		# and fix their sign
 		if (b_scale_rot.determinant() < 0): b_scale.negate()
 		# only uniform scaling
@@ -812,7 +809,7 @@ class Armature():
 		# get rotation matrix
 		b_rot = b_scale_rot * (1.0/b_scale)
 		# get translation
-		b_trans = mathutils.Vector(matrix[3][0:3])
+		b_trans = trans_vec
 		# done!
 		return [b_scale, b_rot, b_trans]
 	
