@@ -304,7 +304,7 @@ class NifExport(NifCommon):
             # TODO use Blender actions for animation groups
             # check for animation groups definition in a text buffer 'Anim'
             try:
-                animtxt = Blender.Text.Get("Anim")
+                animtxt = None #Changed for testing needs fix bpy.data.texts["Anim"]
             except NameError:
                 animtxt = None
 
@@ -2263,6 +2263,7 @@ class NifExport(NifCommon):
 
             # check that there are no missing body part faces
             if faces_without_bodypart:
+                # switch to edit mode to select faces
                 bpy.ops.object.mode_set(mode='EDIT',toggle=False)
                 # select mesh object
                 for b_obj in self.context.scene.objects:
@@ -2274,8 +2275,7 @@ class NifExport(NifCommon):
                     face.select = False
                 for face in faces_without_bodypart:
                     face.select = True
-                # switch to edit mode and raise exception
-                bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
+                # raise exception
                 raise ValueError(
                     "Some faces of %s not assigned to any body part."
                     " The unassigned faces"
@@ -3221,14 +3221,11 @@ class NifExport(NifCommon):
         translation vector."""
         # get scale components
         trans_vec, rot_quat, scale_vec = matrix.decompose()
-        #matrix1 = matrix.to_quaternion()
         b_scale_rot = rot_quat.to_matrix()
         b_scale_rot_T = mathutils.Matrix(b_scale_rot)
         b_scale_rot_T.transpose()
         b_scale_rot_2 = b_scale_rot * b_scale_rot_T
-        b_scale = mathutils.Vector((b_scale_rot_2[0][0] ** 0.5,\
-                                   b_scale_rot_2[1][1] ** 0.5,\
-                                   b_scale_rot_2[2][2] ** 0.5))
+        b_scale = scale_vec
         # and fix their sign
         if (b_scale_rot.determinant() < 0): b_scale.negate()
         # only uniform scaling
@@ -3242,9 +3239,9 @@ class NifExport(NifCommon):
         # get rotation matrix
         b_rot = b_scale_rot * (1.0 / b_scale)
         # get translation
-        b_trans = mathutils.Vector(matrix[3][0:3])
+        b_trans = trans_vec
         # done!
-        return b_scale, b_rot, b_trans
+        return [b_scale, b_rot, b_trans]
 
    
     def create_block(self, blocktype, b_obj = None):

@@ -59,13 +59,13 @@ class Armature():
         #   B = X^{-1} * B'
         # Hence, we will restore the X's, invert them, and store those inverses in the
         # following dictionary.
-        self.bones_extra_matrix_inv = {}
+        self.nif_common.bones_extra_matrix_inv = {}
         
     def rebuild_bones_extra_matrices(self):
         """Recover bone extra matrices."""
         
         try:
-            bonetxt = bpy.data.texts['BoneExMat']
+            bonetxt = bpy.data.texts["BoneExMat"]
         except NameError:
             return
         # Blender bone names are unique so we can use them as keys.
@@ -103,13 +103,13 @@ class Armature():
         """Set bone extra matrix, inverted. The bonename is first converted
         to blender style (to ensure compatibility with older imports).
         """
-        self.bones_extra_matrix_inv[self.nif_common.get_bone_name_for_blender(bonename)] = mat
+        self.nif_common.bones_extra_matrix_inv[self.nif_common.get_bone_name_for_blender(bonename)] = mat
 
     def get_bone_extra_matrix_inv(self, bonename):
         """Get bone extra matrix, inverted. The bonename is first converted
         to blender style (to ensure compatibility with older imports).
         """
-        return self.bones_extra_matrix_inv[self.nif_common.get_bone_name_for_blender(bonename)]
+        return self.nif_common.bones_extra_matrix_inv[self.nif_common.get_bone_name_for_blender(bonename)]
     
     
     def export_bones(self, arm, parent_block):
