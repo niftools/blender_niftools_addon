@@ -2564,39 +2564,71 @@ class NifExport(NifCommon):
                         # skeleton root
                         skindata.set_transform(
                             self.get_object_matrix(b_obj, 'localspace').get_inverse())
-
-                        # add vertex weights
-                        # first find weights and normalization factors
+                       
+                        # Vertex weights,  find weights and normalization factors
                         vert_list = {}
                         vert_norm = {}
+                        unassigned_verts = []
                                                 
-                        for bone in boneinfluences:
+                        for bone_group in boneinfluences:
                             b_list_weight = []
-                            b_group_index = b_obj.vertex_groups[bone].index
+                            b_vert_group = b_obj.vertex_groups[bone_group]
                             
-                            # run though the vertices, check if they have group
                             for b_vert in b_obj.data.vertices:
+                                if len(b_vert.groups) == 0: #check vert has weight_groups
+                                    unassigned_verts.append(b_vert)
+                                    continue
+                                
                                 for g in b_vert.groups:
-                                    if g.group == b_group_index:
-                                        b_list_weight.append((b_vert.index, g.weight))
+                                    if b_vert_group.name in boneinfluences:
+                                        if g.group == b_vert_group.index:
+                                            b_list_weight.append((b_vert.index, g.weight))
+                                            break
+                                        
+                                    else: #group without bone
+                                        for b_scene_obj in self.context.scene.objects:
+                                            b_scene_obj.select = False
+                                            
+                                        self.context.scene.objects.active = b_obj
+                                        raise NifExportError(
+                                            "Mesh %s has vertex group for bone %s, but no weights."
+                                            "Either delete the vertex group or paint weights in weight paint mode."
+                                                % (b_obj.name, bone))
+                                                
+                            vert_list[bone_group] = b_list_weight             
                             
-                            if(len(b_list_weight) == 0):
-                                raise NifExportError(
-                                    "Mesh %s has vertex group for bone %s,"
-                                    " but no weights."
-                                    " Please select the mesh, and either"
-                                    " delete the vertex group,"
-                                    " or go to weight paint mode,"
-                                    " and paint weights."
-                                    % (b_obj.name, bone))                                
-                            vert_list[bone] = b_list_weight             
-                            
-                            for v in vert_list[bone]:
+                            #create normalisation groupings
+                            for v in vert_list[bone_group]:
                                 if v[0] in vert_norm:
                                     vert_norm[v[0]] += v[1]
                                 else:
                                     vert_norm[v[0]] = v[1]
-
+                        
+                        # vertices must be assigned at least one vertex group
+                        # lets be nice and display them for the user 
+                        if len(unassigned_verts) > 0:
+                            for b_scene_obj in self.context.scene.objects:
+                                b_scene_obj.select = False
+                                
+                            self.context.scene.objects.active = b_obj
+                            b_obj.select = True
+                            
+                            # select unweighted vertices
+                            for v in mesh.vertices:
+                                v.select = False    
+                            
+                            for b_vert in unassigned_verts:
+                                b_obj.data.vertices[b_vert.index].select = True
+                                
+                            # switch to edit mode and raise exception
+                            bpy.ops.object.mode_set(mode='EDIT',toggle=False)
+                            raise NifExportError(
+                                "Cannot export mesh with unweighted vertices."
+                                " The unweighted vertices have been selected"
+                                " in the mesh so they can easily be"
+                                " identified.")
+                        
+                        
                         # for each bone, first we get the bone block
                         # then we get the vertex weights
                         # and then we add it to the NiSkinData
@@ -2619,9 +2651,11 @@ class NifExport(NifCommon):
                                                 " to a single armature"
                                                 " and try again"
                                                 % bone)
+                            
                             if not bone_block:
                                 raise NifExportError(
                                     "Bone '%s' not found." % bone)
+                            
                             # find vertex weights
                             vert_weights = {}
                             for v in vert_list[bone]:
@@ -2643,36 +2677,6 @@ class NifExport(NifCommon):
                             # actually any vertices influenced by the bone
                             if vert_weights:
                                 trishape.add_bone(bone_block, vert_weights)
-
-                        # each vertex must have been assigned to at least one
-                        # vertex group
-                        # or the model doesn't display correctly in the TESCS
-                        vert_weights = {}
-                        if False in vert_added:
-                            # select mesh object
-                            for b_scene_obj in self.context.scene.objects:
-                                b_scene_obj.sel = False
-                            self.context.scene.objects.active = b_obj
-                            b_obj.select = 1
-                            # select bad vertices
-                            for v in mesh.vertices:
-                                v.sel = 0
-                            for i, added in enumerate(vert_added):
-                                if not added:
-                                    for j, vlist in enumerate(vertmap):
-                                        if vlist and (i in vlist):
-                                            idx = j
-                                            break
-                                    else:
-                                        raise RuntimeError("vertmap bug")
-                                    mesh.vertices[idx].sel = 1
-                            # switch to edit mode and raise exception
-                            bpy.ops.object.mode_set(mode='EDIT',toggle=False)
-                            raise NifExportError(
-                                "Cannot export mesh with unweighted vertices."
-                                " The unweighted vertices have been selected"
-                                " in the mesh so they can easily be"
-                                " identified.")
 
                         # update bind position skinning data
                         trishape.update_bind_position()
