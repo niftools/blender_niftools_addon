@@ -606,7 +606,7 @@ class NifExport(NifCommon):
             """
 
             # apply scale
-            if abs(self.properties.scale_correction - 1.0) > self.properties.epsilon:
+            if abs(self.properties.scale_correction * 1.0) > self.properties.epsilon:
                 self.info("Applying scale correction %f"
                                  % self.properties.scale_correction)
                 data = NifFormat.Data()
@@ -3090,13 +3090,13 @@ class NifExport(NifCommon):
         block.translation.y = n_trans_vec[1]
         block.translation.z = n_trans_vec[2]
         block.rotation.m_11 = n_rot_mat33[0][0]
-        block.rotation.m_12 = n_rot_mat33[0][1]
-        block.rotation.m_13 = n_rot_mat33[0][2]
-        block.rotation.m_21 = n_rot_mat33[1][0]
+        block.rotation.m_21 = n_rot_mat33[0][1]
+        block.rotation.m_31 = n_rot_mat33[0][2]
+        block.rotation.m_12 = n_rot_mat33[1][0]
         block.rotation.m_22 = n_rot_mat33[1][1]
-        block.rotation.m_23 = n_rot_mat33[1][2]
-        block.rotation.m_31 = n_rot_mat33[2][0]
-        block.rotation.m_32 = n_rot_mat33[2][1]
+        block.rotation.m_32 = n_rot_mat33[1][2]
+        block.rotation.m_13 = n_rot_mat33[2][0]
+        block.rotation.m_23 = n_rot_mat33[2][1]
         block.rotation.m_33 = n_rot_mat33[2][2]
         block.velocity.x = 0.0
         block.velocity.y = 0.0
@@ -3116,21 +3116,21 @@ class NifExport(NifCommon):
         matrix = NifFormat.Matrix44()
 
         matrix.m_11 = n_rot_mat33[0][0] * n_scale
-        matrix.m_12 = n_rot_mat33[0][1] * n_scale
-        matrix.m_13 = n_rot_mat33[0][2] * n_scale
-        matrix.m_21 = n_rot_mat33[1][0] * n_scale
+        matrix.m_21 = n_rot_mat33[0][1] * n_scale
+        matrix.m_31 = n_rot_mat33[0][2] * n_scale
+        matrix.m_12 = n_rot_mat33[1][0] * n_scale
         matrix.m_22 = n_rot_mat33[1][1] * n_scale
-        matrix.m_23 = n_rot_mat33[1][2] * n_scale
-        matrix.m_31 = n_rot_mat33[2][0] * n_scale
-        matrix.m_32 = n_rot_mat33[2][1] * n_scale
+        matrix.m_32 = n_rot_mat33[1][2] * n_scale
+        matrix.m_13 = n_rot_mat33[2][0] * n_scale
+        matrix.m_23 = n_rot_mat33[2][1] * n_scale
         matrix.m_33 = n_rot_mat33[2][2] * n_scale
-        matrix.m_41 = n_trans_vec[0]
-        matrix.m_42 = n_trans_vec[1]
-        matrix.m_43 = n_trans_vec[2]
+        matrix.m_14 = n_trans_vec[0]
+        matrix.m_24 = n_trans_vec[1]
+        matrix.m_34 = n_trans_vec[2]
 
-        matrix.m_14 = 0.0
-        matrix.m_24 = 0.0
-        matrix.m_34 = 0.0
+        matrix.m_41 = 0.0
+        matrix.m_42 = 0.0
+        matrix.m_43 = 0.0
         matrix.m_44 = 1.0
 
         return matrix
@@ -3214,30 +3214,28 @@ class NifExport(NifCommon):
         """Decompose Blender transform matrix as a scale, rotation matrix, and
         translation vector."""
         # get scale components
+        # get scale components
         trans_vec, rot_quat, scale_vec = matrix.decompose()
-        b_scale_rot = rot_quat.to_matrix()
-        b_scale_rot_T = mathutils.Matrix(b_scale_rot)
-        b_scale_rot_T.transpose()
-        b_scale_rot_2 = b_scale_rot * b_scale_rot_T
-        b_scale = scale_vec
+        scale_rot = rot_quat.to_matrix()
+        scale_rot_T = mathutils.Matrix(scale_rot)
+        scale_rot_T.transpose()
+        scale_rot_2 = scale_rot * scale_rot_T
         # and fix their sign
-        if (b_scale_rot.determinant() < 0): b_scale.negate()
+        if (scale_rot.determinant() < 0): scale_vec.negate()
         # only uniform scaling
         # allow rather large error to accomodate some nifs
-        if abs(b_scale[0]-b_scale[1]) + abs(b_scale[1]-b_scale[2]) > 0.02:
+        if abs(scale_vec[0]-scale_vec[1]) + abs(scale_vec[1]-scale_vec[2]) > 0.02:
             raise NifExportError(
                 "Non-uniform scaling not supported."
                 " Workaround: apply size and rotation (CTRL-A).")
-
-        b_scale = b_scale[0]
+        b_scale = scale_vec[0]
         # get rotation matrix
-        b_rot = b_scale_rot * (1.0 / b_scale)
+        b_rot = scale_rot * b_scale
         # get translation
         b_trans = trans_vec
         # done!
         return [b_scale, b_rot, b_trans]
 
-   
     def create_block(self, blocktype, b_obj = None):
         """Helper function to create a new block, register it in the list of
         exported blocks, and associate it with a Blender object.

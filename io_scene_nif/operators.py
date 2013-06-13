@@ -299,7 +299,7 @@ class NifExportOperator(bpy.types.Operator, ExportHelper, NifOperatorCommon):
     max_bones_per_partition = bpy.props.IntProperty(
         name = "Max Bones Per Partition",
         description="Maximum number of bones per skin partition.",
-        default=18, min=4, max=18)
+        default=18, min=4, max=35)
 
     #: Maximum number of bones per vertex in skin partitions.
     max_bones_per_vertex = bpy.props.IntProperty(
