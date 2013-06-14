@@ -255,8 +255,8 @@ class NifExport(NifCommon):
                 if b_obj.type == 'ARMATURE':
                     # ensure we get the mesh vertices in animation mode,
                     # and not in rest position!
-                    b_obj.data.restPosition = False
-                    if (b_obj.data.envelopes):
+                    b_obj.data.pose_position == 'POSE'
+                    if (b_obj.data.use_deform_envelopes):
                         return self.error(
                             "'%s': Cannot export envelope skinning."
                             " If you have vertex groups,"
@@ -3145,8 +3145,8 @@ class NifExport(NifCommon):
             if root_bones.count(root_bone) == 0:
                 root_bones.append(root_bone)
 
-        if (arm.getAction()):
-            bones_ipo = arm.getAction().getAllChannelIpos() # dictionary of Bone Ipos (name -> ipo)
+        if (arm.Action()):
+            bones_ipo = arm.Action().groups() # dictionary of Bone Ipos (name -> ipo)
         else:
             bones_ipo = {} # no ipos
 
