@@ -176,7 +176,7 @@ class NifImport(NifCommon):
                         self.info("Reading FaceGen egm file")
                         self.egmdata.read(egmfile)
                         # scale the data
-                        self.egmdata.apply_scale(1 / self.properties.scale_correction)
+                        self.egmdata.apply_scale(self.properties.scale_correction)
                     elif self.egmdata.version == -1:
                         raise NifImportError("Unsupported EGM version.")
                     else:
@@ -220,7 +220,7 @@ class NifImport(NifCommon):
 
             # scale tree
             toaster = pyffi.spells.nif.NifToaster()
-            toaster.scale = 1 / self.properties.scale_correction
+            toaster.scale = self.properties.scale_correction
             pyffi.spells.nif.fix.SpellScale(data=self.data, toaster=toaster).recurse()
 
             # import all root blocks
