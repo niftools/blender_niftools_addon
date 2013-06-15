@@ -670,8 +670,6 @@ class NifImport(NifCommon):
 
         # find unique name for Blender to use
         uniqueInt = 0
-        # strip null terminator from name
-        niBlock.name = niBlock.name.strip(b"\x00")
         niName = niBlock.name.decode()
         # if name is empty, create something non-empty
         if not niName:
