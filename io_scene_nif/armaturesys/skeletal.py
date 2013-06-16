@@ -434,6 +434,7 @@ class armature_import():
 
 	def import_bone(self, niBlock, b_armature, b_armatureData, niArmature):
 		"""Adds a bone to the armature in edit mode."""
+		bpy.ops.object.mode_set(mode='EDIT',toggle=False)
 		# check that niBlock is indeed a bone
 		if not self.is_bone(niBlock):
 			return None
@@ -554,6 +555,7 @@ class armature_import():
 				niBone, b_armature, b_armatureData, niArmature)
 			b_child_bone.parent = b_bone
 
+		bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
 		return b_bone
 
 
