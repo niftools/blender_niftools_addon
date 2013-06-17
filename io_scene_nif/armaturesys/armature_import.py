@@ -44,7 +44,7 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 
-class Armature():
+class armature_import():
 	
 	# correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z
 	BONE_CORRECTION_MATRICES = (
@@ -434,6 +434,7 @@ class Armature():
 
 	def import_bone(self, niBlock, b_armature, b_armatureData, niArmature):
 		"""Adds a bone to the armature in edit mode."""
+		bpy.ops.object.mode_set(mode='EDIT',toggle=False)
 		# check that niBlock is indeed a bone
 		if not self.is_bone(niBlock):
 			return None
@@ -554,6 +555,7 @@ class Armature():
 				niBone, b_armature, b_armatureData, niArmature)
 			b_child_bone.parent = b_bone
 
+		bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
 		return b_bone
 
 
@@ -793,22 +795,26 @@ class Armature():
 		"""Decompose Blender transform matrix as a scale, rotation matrix, and translation vector."""
 		# get scale components
 		trans_vec, rot_quat, scale_vec = matrix.decompose()
-		scale_rot = rot_quat.to_matrix()
-		scale_rot_T = mathutils.Matrix(scale_rot)
-		scale_rot_T.transpose()
-		scale_rot_2 = scale_rot * scale_rot_T
+        
+		b_scale_rot = rot_quat.to_matrix()
+		b_scale_rot_T = mathutils.Matrix(b_scale_rot)
+		b_scale_rot_T.transpose()
+		b_scale_rot_2 = b_scale_rot * b_scale_rot_T
+		b_scale = mathutils.Vector((b_scale_rot_2[0][0] ** 0.5,\
+								   b_scale_rot_2[1][1] ** 0.5,\
+								   b_scale_rot_2[2][2] ** 0.5))
 		# and fix their sign
-		if (scale_rot.determinant() < 0): scale_vec.negate()
+		if (b_scale_rot.determinant() < 0): b_scale.negate()
 		# only uniform scaling
-		if (abs(scale_vec[0]-scale_vec[1]) >= self.nif_common.properties.epsilon
-			or abs(scale_vec[1]-scale_vec[2]) >= self.nif_common.properties.epsilon):
+		if (abs(b_scale[0]-b_scale[1]) >= self.nif_common.properties.epsilon
+			or abs(b_scale[1]-b_scale[2]) >= self.nif_common.properties.epsilon):
 			self.nif_common.warning(
 				"Corrupt rotation matrix in nif: geometry errors may result.")
-		b_scale = scale_vec[0]
+		b_scale = b_scale[0]
 		# get rotation matrix
-		b_rot = scale_rot * b_scale
+		b_rot = b_scale_rot * b_scale
 		# get translation
-		b_trans = trans_vec
+		b_trans = mathutils.Vector(matrix[3][0:3])
 		# done!
 		return [b_scale, b_rot, b_trans]
 	
@@ -855,4 +861,4 @@ class Armature():
 		for block, shortname in self.nif_common.names.items():
 			if block.name and shortname != block.name:
 				block_name = block.name.decode()
-				namestxt.write('%s;%s\n' % (shortname, block.name))
+				namestxt.write('%s;%s\n' % (shortname, block_name))
