@@ -606,7 +606,7 @@ class NifExport(NifCommon):
             """
 
             # apply scale
-            if abs(self.properties.scale_correction * 1.0) > self.properties.epsilon:
+            if abs(self.properties.scale_correction) > self.properties.epsilon:
                 self.info("Applying scale correction %f"
                                  % self.properties.scale_correction)
                 data = NifFormat.Data()
