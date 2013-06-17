@@ -795,26 +795,22 @@ class Armature():
 		"""Decompose Blender transform matrix as a scale, rotation matrix, and translation vector."""
 		# get scale components
 		trans_vec, rot_quat, scale_vec = matrix.decompose()
-        
-		b_scale_rot = rot_quat.to_matrix()
-		b_scale_rot_T = mathutils.Matrix(b_scale_rot)
-		b_scale_rot_T.transpose()
-		b_scale_rot_2 = b_scale_rot * b_scale_rot_T
-		b_scale = mathutils.Vector((b_scale_rot_2[0][0] ** 0.5,\
-								   b_scale_rot_2[1][1] ** 0.5,\
-								   b_scale_rot_2[2][2] ** 0.5))
+		scale_rot = rot_quat.to_matrix()
+		scale_rot_T = mathutils.Matrix(scale_rot)
+		scale_rot_T.transpose()
+		scale_rot_2 = scale_rot * scale_rot_T
 		# and fix their sign
-		if (b_scale_rot.determinant() < 0): b_scale.negate()
+		if (scale_rot.determinant() < 0): scale_vec.negate()
 		# only uniform scaling
-		if (abs(b_scale[0]-b_scale[1]) >= self.nif_common.properties.epsilon
-			or abs(b_scale[1]-b_scale[2]) >= self.nif_common.properties.epsilon):
+		if (abs(scale_vec[0]-scale_vec[1]) >= self.nif_common.properties.epsilon
+			or abs(scale_vec[1]-scale_vec[2]) >= self.nif_common.properties.epsilon):
 			self.nif_common.warning(
 				"Corrupt rotation matrix in nif: geometry errors may result.")
-		b_scale = b_scale[0]
+		b_scale = scale_vec[0]
 		# get rotation matrix
-		b_rot = b_scale_rot * b_scale
+		b_rot = scale_rot * b_scale
 		# get translation
-		b_trans = mathutils.Vector(matrix[3][0:3])
+		b_trans = trans_vec
 		# done!
 		return [b_scale, b_rot, b_trans]
 	
