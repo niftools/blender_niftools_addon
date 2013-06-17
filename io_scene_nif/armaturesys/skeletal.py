@@ -225,7 +225,7 @@ class armature_import():
 							# time 0.0 is frame 1
 							frame = 1 + int(time * self.nif_common.fps + 0.5)
 							trans = mathutils.Vector(*translation)
-							locVal = (trans - niBone_bind_trans) * niBone_bind_rot_inv * (1.0 / niBone_bind_scale)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
+							locVal = (trans - niBone_bind_trans) * niBone_bind_rot_inv * (niBone_bind_scale)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
 							# the rotation matrix is needed at this frame (that's
 							# why the other keys are inserted first)
 							if rot_keys_dict:
@@ -260,7 +260,7 @@ class armature_import():
 													 [0.0, sizeVal, 0.0],
 													 [0.0, 0.0, sizeVal]])
 							# now we can do the final calculation
-							loc = (extra_matrix_trans * size * rot + locVal - extra_matrix_trans) * extra_matrix_rot_inv * (1.0 / extra_matrix_scale) # C' = X * C * inverse(X)
+							loc = (extra_matrix_trans * size * rot + locVal - extra_matrix_trans) * extra_matrix_rot_inv * (extra_matrix_scale) # C' = X * C * inverse(X)
 							b_posebone.loc = loc
 							b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.LOC])
 
@@ -367,7 +367,7 @@ class armature_import():
 						frame = 1 + int(key.time * self.nif_common.fps + 0.5)
 						keyVal = key.value
 						trans = mathutils.Vector(keyVal.x, keyVal.y, keyVal.z)
-						locVal = (trans - niBone_bind_trans) * niBone_bind_rot_inv * (1.0 / niBone_bind_scale)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
+						locVal = (trans - niBone_bind_trans) * niBone_bind_rot_inv * (niBone_bind_scale)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
 						# the rotation matrix is needed at this frame (that's
 						# why the other keys are inserted first)
 						if rot_keys_dict:
@@ -402,7 +402,7 @@ class armature_import():
 												 [0.0, sizeVal, 0.0],
 												 [0.0, 0.0, sizeVal]])
 						# now we can do the final calculation
-						loc = (extra_matrix_trans * size * rot + locVal - extra_matrix_trans) * extra_matrix_rot_inv * (1.0 / extra_matrix_scale) # C' = X * C * inverse(X)
+						loc = (extra_matrix_trans * size * rot + locVal - extra_matrix_trans) * extra_matrix_rot_inv * (extra_matrix_scale) # C' = X * C * inverse(X)
 						b_posebone.loc = loc
 						b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.LOC])
 					if translations:
@@ -441,7 +441,7 @@ class armature_import():
 
 		# bone length for nubs and zero length bones
 		nub_length = 5.0
-		scale = 1 / self.nif_common.properties.scale_correction
+		scale = self.nif_common.properties.scale_correction
 		# bone name
 		bone_name = self.nif_common.import_name(niBlock, 32)
 		niChildBones = [ child for child in niBlock.children
@@ -812,7 +812,7 @@ class armature_import():
 				"Corrupt rotation matrix in nif: geometry errors may result.")
 		b_scale = b_scale[0]
 		# get rotation matrix
-		b_rot = b_scale_rot * (1.0/b_scale)
+		b_rot = b_scale_rot * b_scale
 		# get translation
 		b_trans = mathutils.Vector(matrix[3][0:3])
 		# done!
