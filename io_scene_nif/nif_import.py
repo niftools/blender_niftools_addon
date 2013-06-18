@@ -38,8 +38,10 @@
 # ***** END LICENSE BLOCK *****
 
 from .nif_common import NifCommon
-from .collisionsys.collision_import import bhkshape_import, bound_import
+
+from .animationsys.animation_import import AnimationHelper
 from .armaturesys.armature_import import Armature
+from .collisionsys.collision_import import bhkshape_import, bound_import
 from .materialsys.material import material_import
 from .texturesys.texture import texture_import
 
@@ -103,7 +105,7 @@ class NifImport(NifCommon):
         self.armaturehelper = Armature(parent=self)
         self.texturehelper = texture_import(parent=self)
         self.materialhelper = material_import(parent=self)
-
+        self.animationhelper = AnimationHelper(parent=self)
 
         # catch NifImportError
         try:
@@ -190,7 +192,7 @@ class NifImport(NifCommon):
             self.info("Importing data")
             # calculate and set frames per second
             if self.properties.animation:
-                self.fps = self.get_frames_per_second(
+                self.fps = self.animation_helper.get_frames_per_second(
                     self.data.roots
                     + (self.kfdata.roots if self.kfdata else []))
                 self.context.scene.render.fps = self.fps
@@ -288,7 +290,7 @@ class NifImport(NifCommon):
 
         # import the keyframe notes
         if self.properties.animation:
-            self.import_text_keys(root_block)
+            self.animationhelper.import_text_keys(root_block)
 
         # read the NIF tree
         if self.armaturehelper.is_armature_root(root_block):
@@ -622,11 +624,11 @@ class NifImport(NifCommon):
 
                 # import the animations
                 if self.properties.animation:
-                    self.set_animation(niBlock, b_obj)
+                    self.animation_helper.set_animation(niBlock, b_obj)
                     # import the extras
-                    self.import_text_keys(niBlock)
+                    self.animation_helper.import_text_keys(niBlock)
                     # import vis controller
-                    self.import_object_vis_controller(
+                    self.animation_helper.object_animation.import_object_vis_controller(
                         b_object=b_obj, n_node=niBlock)
 
             # import extra node data, such as node type
@@ -1674,7 +1676,7 @@ class NifImport(NifCommon):
             raise NifImportError("non-Oblivion .kf import not supported")
 
         # import text keys
-        self.import_text_keys(kf_root)
+        self.animation_helper.import_text_keys(kf_root)
 
 
         # go over all controlled blocks
