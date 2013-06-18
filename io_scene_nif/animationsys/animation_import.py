@@ -1,0 +1,353 @@
+"""This script contains classes to help import animations."""
+
+# ***** BEGIN LICENSE BLOCK *****
+#
+# Copyright © 2005-2013, NIF File Format Library and Tools contributors.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+#    * Redistributions of source code must retain the above copyright
+#      notice, this list of conditions and the following disclaimer.
+#
+#    * Redistributions in binary form must reproduce the above
+#      copyright notice, this list of conditions and the following
+#      disclaimer in the documentation and/or other materials provided
+#      with the distribution.
+#
+#    * Neither the name of the NIF File Format Library and Tools
+#      project nor the names of its contributors may be used to endorse
+#      or promote products derived from this software without specific
+#      prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# ***** END LICENSE BLOCK *****
+
+
+class Animation():
+    
+    # import animation groups
+    def import_text_keys(self, niBlock):
+        """Stores the text keys that define animation start and end in a text
+        buffer, so that they can be re-exported. Since the text buffer is
+        cleared on each import only the last import will be exported
+        correctly."""
+        if isinstance(niBlock, NifFormat.NiControllerSequence):
+            txk = niBlock.text_keys
+        else:
+            txk = niBlock.find(block_type=NifFormat.NiTextKeyExtraData)
+        if txk:
+            # get animation text buffer, and clear it if it already exists
+            # TODO git rid of try-except block here
+            try:
+                animtxt = [txt for txt in bpy.data.texts if txt.name == "Anim"][0]
+                animtxt.clear()
+            except:
+                animtxt = bpy.data.texts.new("Anim")
+
+            frame = 1
+            for key in txk.text_keys:
+                newkey = str(key.value).replace('\r\n', '/').rstrip('/')
+                frame = 1 + int(key.time * self.fps + 0.5) # time 0.0 is frame 1
+                animtxt.write('%i/%s\n'%(frame, newkey))
+
+            # set start and end frames
+            self.context.scene.getRenderingContext().startFrame(1)
+            self.context.scene.getRenderingContext().endFrame(frame)
+
+    def get_frames_per_second(self, roots):
+        """Scan all blocks and return a reasonable number for FPS."""
+        # find all key times
+        key_times = []
+        for root in roots:
+            for kfd in root.tree(block_type=NifFormat.NiKeyframeData):
+                key_times.extend(key.time for key in kfd.translations.keys)
+                key_times.extend(key.time for key in kfd.scales.keys)
+                key_times.extend(key.time for key in kfd.quaternion_keys)
+                key_times.extend(key.time for key in kfd.xyz_rotations[0].keys)
+                key_times.extend(key.time for key in kfd.xyz_rotations[1].keys)
+                key_times.extend(key.time for key in kfd.xyz_rotations[2].keys)
+            for kfi in root.tree(block_type=NifFormat.NiBSplineInterpolator):
+                if not kfi.basis_data:
+                    # skip bsplines without basis data (eg bowidle.kf in
+                    # Oblivion)
+                    continue
+                key_times.extend(
+                    point * (kfi.stop_time - kfi.start_time)
+                    / (kfi.basis_data.num_control_points - 2)
+                    for point in range(kfi.basis_data.num_control_points - 2))
+            for uvdata in root.tree(block_type=NifFormat.NiUVData):
+                for uvgroup in uvdata.uv_groups:
+                    key_times.extend(key.time for key in uvgroup.keys)
+        # not animated, return a reasonable default
+        if not key_times:
+            return 30
+        # calculate FPS
+        fps = 30
+        lowest_diff = sum(abs(int(time * fps + 0.5) - (time * fps))
+                          for time in key_times)
+        # for fps in range(1,120): #disabled, used for testing
+        for test_fps in [20, 25, 35]:
+            diff = sum(abs(int(time * test_fps + 0.5)-(time * test_fps))
+                       for time in key_times)
+            if diff < lowest_diff:
+                lowest_diff = diff
+                fps = test_fps
+        self.info("Animation estimated at %i frames per second." % fps)
+        return fps
+
+    def store_animation_data(self, rootBlock):
+        return
+        # very slow, implement later
+        """
+        niBlockList = [block for block in rootBlock.tree() if isinstance(block, NifFormat.NiAVObject)]
+        for niBlock in niBlockList:
+            kfc = self.find_controller(niBlock, NifFormat.NiKeyframeController)
+            if not kfc: continue
+            kfd = kfc.data
+            if not kfd: continue
+            _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.translations.keys])
+            _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.scales.keys])
+            if kfd.rotation_type == 4:
+                _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.xyz_rotations.keys])
+            else:
+                _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.quaternion_keys])
+
+        # set the frames in the _ANIMATION_DATA list
+        for key in _ANIMATION_DATA:
+            # time 0 is frame 1
+            key['frame'] = 1 + int(key['data'].time * self.fps + 0.5)
+
+        # sort by frame, I need this later
+        _ANIMATION_DATA.sort(lambda key1, key2: cmp(key1['frame'], key2['frame']))
+        """
+
+        
+    def set_animation(self, niBlock, b_obj):
+        """Load basic animation info for this object."""
+        kfc = self.find_controller(niBlock, NifFormat.NiKeyframeController)
+        if not kfc:
+            # no animation data: do nothing
+            return
+
+        if kfc.interpolator:
+            if isinstance(kfc.interpolator, NifFormat.NiBSplineInterpolator):
+                kfd = None # not supported yet so avoids fatal error - should be kfc.interpolator.spline_data when spline data is figured out.
+            else:
+                kfd = kfc.interpolator.data
+        else:
+            kfd = kfc.data
+
+        if not kfd:
+            # no animation data: do nothing
+            return
+
+        # denote progress
+        self.info("Animation")
+        self.info("Importing animation data for %s" % b_obj.name)
+        assert(isinstance(kfd, NifFormat.NiKeyframeData))
+        # create an Ipo for this object
+        b_ipo = self.get_object_ipo(b_obj)
+        # get the animation keys
+        translations = kfd.translations
+        scales = kfd.scales
+        # add the keys
+        self.debug('Scale keys...')
+        for key in scales.keys:
+            frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
+            Blender.Set('curframe', frame)
+            b_obj.SizeX = key.value
+            b_obj.SizeY = key.value
+            b_obj.SizeZ = key.value
+            b_obj.insertIpoKey(Blender.Object.SIZE)
+
+        # detect the type of rotation keys
+        rotation_type = kfd.rotation_type
+        if rotation_type == 4:
+            # uses xyz rotation
+            xkeys = kfd.xyz_rotations[0].keys
+            ykeys = kfd.xyz_rotations[1].keys
+            zkeys = kfd.xyz_rotations[2].keys
+            self.debug('Rotation keys...(euler)')
+            for (xkey, ykey, zkey) in zip(xkeys, ykeys, zkeys):
+                frame = 1+int(xkey.time * self.fps + 0.5) # time 0.0 is frame 1
+                # XXX we assume xkey.time == ykey.time == zkey.time
+                Blender.Set('curframe', frame)
+                # both in radians, no conversion needed
+                b_obj.RotX = xkey.value
+                b_obj.RotY = ykey.value
+                b_obj.RotZ = zkey.value
+                b_obj.insertIpoKey(Blender.Object.ROT)
+        else:
+            # uses quaternions
+            if kfd.quaternion_keys:
+                self.debug('Rotation keys...(quaternions)')
+            for key in kfd.quaternion_keys:
+                frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
+                Blender.Set('curframe', frame)
+                rot = mathutils.Quaternion(key.value.w, key.value.x, key.value.y, key.value.z).toEuler()
+                # Blender euler is in degrees, object RotXYZ is in radians
+                b_obj.RotX = rot.x * self.D2R
+                b_obj.RotY = rot.y * self.D2R
+                b_obj.RotZ = rot.z * self.D2R
+                b_obj.insertIpoKey(Blender.Object.ROT)
+
+        if translations.keys:
+            self.debug('Translation keys...')
+        for key in translations.keys:
+            frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
+            Blender.Set('curframe', frame)
+            b_obj.LocX = key.value.x
+            b_obj.LocY = key.value.y
+            b_obj.LocZ = key.value.z
+            b_obj.insertIpoKey(Blender.Object.LOC)
+
+        Blender.Set('curframe', 1)
+
+
+class Object():
+    
+    def get_object_ipo(self, b_object):
+        """Return existing object ipo data, or if none exists, create one
+        and return that.
+        """
+        if not b_object.ipo:
+            b_object.ipo = Blender.Ipo.New("Object", "Ipo")
+        return b_object.ipo    
+    
+    def import_object_vis_controller(self, b_object, n_node):
+        """Import vis controller for blender object."""
+        n_vis_ctrl = self.find_controller(n_node, NifFormat.NiVisController)
+        if not(n_vis_ctrl and n_vis_ctrl.data):
+            return
+        self.info("importing vis controller")
+        b_channel = "Layer"
+        b_ipo = self.get_object_ipo(b_object)
+        b_curve = b_ipo.addCurve(b_channel)
+        b_curve.interpolation = Blender.IpoCurve.InterpTypes.CONST
+        b_curve.extend = self.get_extend_from_flags(n_vis_ctrl.flags)
+        for n_key in n_vis_ctrl.data.keys:
+            b_curve[1 + n_key.time * self.fps] = (
+                2 ** (n_key.value + max([1] + self.context.scene.getLayers()) - 1))
+
+class Material():
+    
+    def __init__(self, parent):
+        self.nif_common = parent
+    
+    def import_material_controllers(self, b_material, n_geom):
+        """Import material animation data for given geometry."""
+        if not self.nif_common.properties.animation:
+            return
+
+        self.import_material_alpha_controller(b_material, n_geom)
+        self.import_material_color_controller(
+            b_material=b_material,
+            b_channels=("MirR", "MirG", "MirB"),
+            n_geom=n_geom,
+            n_target_color=NifFormat.TargetColor.TC_AMBIENT)
+        self.import_material_color_controller(
+            b_material=b_material,
+            b_channels=("R", "G", "B"),
+            n_geom=n_geom,
+            n_target_color=NifFormat.TargetColor.TC_DIFFUSE)
+        self.import_material_color_controller(
+            b_material=b_material,
+            b_channels=("SpecR", "SpecG", "SpecB"),
+            n_geom=n_geom,
+            n_target_color=NifFormat.TargetColor.TC_SPECULAR)
+        self.import_material_uv_controller(b_material, n_geom)
+        
+    def import_material_alpha_controller(self, b_material, n_geom):
+        # find alpha controller
+        n_matprop = self.find_property(n_geom, NifFormat.NiMaterialProperty)
+        if not n_matprop:
+            return
+        n_alphactrl = self.find_controller(n_matprop,
+                                           NifFormat.NiAlphaController)
+        if not(n_alphactrl and n_alphactrl.data):
+            return
+        self.info("importing alpha controller")
+        b_channel = "Alpha"
+        b_ipo = self.get_material_ipo(b_material)
+        b_curve = b_ipo.addCurve(b_channel)
+        b_curve.interpolation = self.get_b_ipol_from_n_ipol(
+            n_alphactrl.data.data.interpolation)
+        b_curve.extend = self.get_extend_from_flags(n_alphactrl.flags)
+        for n_key in n_alphactrl.data.data.keys:
+            b_curve[1 + n_key.time * self.fps] = n_key.value
+
+    def import_material_color_controller(
+        self, b_material, b_channels, n_geom, n_target_color):
+        # find material color controller with matching target color
+        n_matprop = self.find_property(n_geom, NifFormat.NiMaterialProperty)
+        if not n_matprop:
+            return
+        for ctrl in n_matprop.get_controllers():
+            if isinstance(ctrl, NifFormat.NiMaterialColorController):
+                if ctrl.get_target_color() == n_target_color:
+                    n_matcolor_ctrl = ctrl
+                    break
+        else:
+            return
+        self.info(
+            "importing material color controller for target color %s"
+            " into blender channels %s"
+            % (n_target_color, b_channels))
+        # import data as curves
+        b_ipo = self.get_material_ipo(b_material)
+        for i, b_channel in enumerate(b_channels):
+            b_curve = b_ipo.addCurve(b_channel)
+            b_curve.interpolation = self.get_b_ipol_from_n_ipol(
+                n_matcolor_ctrl.data.data.interpolation)
+            b_curve.extend = self.get_extend_from_flags(n_matcolor_ctrl.flags)
+            for n_key in n_matcolor_ctrl.data.data.keys:
+                b_curve[1 + n_key.time * self.fps] = n_key.value.as_list()[i]
+
+    def import_material_uv_controller(self, b_material, n_geom):
+        """Import UV controller data."""
+        # search for the block
+        n_ctrl = self.find_controller(n_geom,
+                                      NifFormat.NiUVController)
+        if not(n_ctrl and n_ctrl.data):
+            return
+        self.info("importing UV controller")
+        b_channels = ("OfsX", "OfsY", "SizeX", "SizeY")
+        for b_channel, n_uvgroup in zip(b_channels,
+                                        n_ctrl.data.uv_groups):
+            if n_uvgroup.keys:
+                # create curve in material ipo
+                b_ipo = self.get_material_ipo(b_material)
+                b_curve = b_ipo.addCurve(b_channel)
+                b_curve.interpolation = self.get_b_ipol_from_n_ipol(
+                    n_uvgroup.interpolation)
+                b_curve.extend = self.get_extend_from_flags(n_ctrl.flags)
+                for n_key in n_uvgroup.keys:
+                    if b_channel.startswith("Ofs"):
+                        # offsets are negated
+                        b_curve[1 + n_key.time * self.fps] = -n_key.value
+                    else:
+                        b_curve[1 + n_key.time * self.fps] = n_key.value    
+    
+
+    def get_material_ipo(self, b_material):
+        """Return existing material ipo data, or if none exists, create one
+        and return that.
+        """
+        if not b_material.ipo:
+            b_material.ipo = Blender.Ipo.New("Material", "MatIpo")
+        return b_material.ipo
