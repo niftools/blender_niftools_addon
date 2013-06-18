@@ -37,8 +37,15 @@
 #
 # ***** END LICENSE BLOCK *****
 
+from pyffi.formats.nif import NifFormat
 
-class Animation():
+class AnimationHelper():
+    
+    def __init__(self, parent):
+        self.nif_common = parent
+        self.object_animation = ObjectAnimation(parent)
+        self.material_animation = MaterialAnimation(parent)
+    
     
     # import animation groups
     def import_text_keys(self, niBlock):
@@ -46,6 +53,7 @@ class Animation():
         buffer, so that they can be re-exported. Since the text buffer is
         cleared on each import only the last import will be exported
         correctly."""
+        
         if isinstance(niBlock, NifFormat.NiControllerSequence):
             txk = niBlock.text_keys
         else:
@@ -66,8 +74,8 @@ class Animation():
                 animtxt.write('%i/%s\n'%(frame, newkey))
 
             # set start and end frames
-            self.context.scene.getRenderingContext().startFrame(1)
-            self.context.scene.getRenderingContext().endFrame(frame)
+            self.nif_common.context.scene.getRenderingContext().startFrame(1)
+            self.nif_common.context.scene.getRenderingContext().endFrame(frame)
 
     def get_frames_per_second(self, roots):
         """Scan all blocks and return a reasonable number for FPS."""
@@ -107,7 +115,7 @@ class Animation():
             if diff < lowest_diff:
                 lowest_diff = diff
                 fps = test_fps
-        self.info("Animation estimated at %i frames per second." % fps)
+        self.nif_common.info("Animation estimated at %i frames per second." % fps)
         return fps
 
     def store_animation_data(self, rootBlock):
@@ -161,7 +169,7 @@ class Animation():
         self.info("Importing animation data for %s" % b_obj.name)
         assert(isinstance(kfd, NifFormat.NiKeyframeData))
         # create an Ipo for this object
-        b_ipo = self.get_object_ipo(b_obj)
+        b_ipo = ObjectAnimation.get_object_ipo(b_obj)
         # get the animation keys
         translations = kfd.translations
         scales = kfd.scales
@@ -219,7 +227,10 @@ class Animation():
         Blender.Set('curframe', 1)
 
 
-class Object():
+class ObjectAnimation():
+    
+    def __init__(self, parent):
+        self.nif_common = parent
     
     def get_object_ipo(self, b_object):
         """Return existing object ipo data, or if none exists, create one
@@ -231,7 +242,7 @@ class Object():
     
     def import_object_vis_controller(self, b_object, n_node):
         """Import vis controller for blender object."""
-        n_vis_ctrl = self.find_controller(n_node, NifFormat.NiVisController)
+        n_vis_ctrl = self.nif_common.find_controller(n_node, NifFormat.NiVisController)
         if not(n_vis_ctrl and n_vis_ctrl.data):
             return
         self.info("importing vis controller")
@@ -239,12 +250,12 @@ class Object():
         b_ipo = self.get_object_ipo(b_object)
         b_curve = b_ipo.addCurve(b_channel)
         b_curve.interpolation = Blender.IpoCurve.InterpTypes.CONST
-        b_curve.extend = self.get_extend_from_flags(n_vis_ctrl.flags)
+        b_curve.extend = self.nif_common.get_extend_from_flags(n_vis_ctrl.flags)
         for n_key in n_vis_ctrl.data.keys:
             b_curve[1 + n_key.time * self.fps] = (
-                2 ** (n_key.value + max([1] + self.context.scene.getLayers()) - 1))
+                2 ** (n_key.value + max([1] + self.nif_common.context.scene.getLayers()) - 1))
 
-class Material():
+class MaterialAnimation():
     
     def __init__(self, parent):
         self.nif_common = parent
@@ -274,20 +285,20 @@ class Material():
         
     def import_material_alpha_controller(self, b_material, n_geom):
         # find alpha controller
-        n_matprop = self.find_property(n_geom, NifFormat.NiMaterialProperty)
+        n_matprop = self.nif_common.find_property(n_geom, NifFormat.NiMaterialProperty)
         if not n_matprop:
             return
-        n_alphactrl = self.find_controller(n_matprop,
+        n_alphactrl = self.nif_common.find_controller(n_matprop,
                                            NifFormat.NiAlphaController)
         if not(n_alphactrl and n_alphactrl.data):
             return
-        self.info("importing alpha controller")
+        self.nif_common.info("importing alpha controller")
         b_channel = "Alpha"
         b_ipo = self.get_material_ipo(b_material)
         b_curve = b_ipo.addCurve(b_channel)
-        b_curve.interpolation = self.get_b_ipol_from_n_ipol(
+        b_curve.interpolation = self.nif_common.get_b_ipol_from_n_ipol(
             n_alphactrl.data.data.interpolation)
-        b_curve.extend = self.get_extend_from_flags(n_alphactrl.flags)
+        b_curve.extend = self.nif_common.get_extend_from_flags(n_alphactrl.flags)
         for n_key in n_alphactrl.data.data.keys:
             b_curve[1 + n_key.time * self.fps] = n_key.value
 
@@ -312,16 +323,16 @@ class Material():
         b_ipo = self.get_material_ipo(b_material)
         for i, b_channel in enumerate(b_channels):
             b_curve = b_ipo.addCurve(b_channel)
-            b_curve.interpolation = self.get_b_ipol_from_n_ipol(
+            b_curve.interpolation = self.nif_common.get_b_ipol_from_n_ipol(
                 n_matcolor_ctrl.data.data.interpolation)
-            b_curve.extend = self.get_extend_from_flags(n_matcolor_ctrl.flags)
+            b_curve.extend = self.nif_common.get_extend_from_flags(n_matcolor_ctrl.flags)
             for n_key in n_matcolor_ctrl.data.data.keys:
                 b_curve[1 + n_key.time * self.fps] = n_key.value.as_list()[i]
 
     def import_material_uv_controller(self, b_material, n_geom):
         """Import UV controller data."""
         # search for the block
-        n_ctrl = self.find_controller(n_geom,
+        n_ctrl = self.nif_common.find_controller(n_geom,
                                       NifFormat.NiUVController)
         if not(n_ctrl and n_ctrl.data):
             return
@@ -333,9 +344,9 @@ class Material():
                 # create curve in material ipo
                 b_ipo = self.get_material_ipo(b_material)
                 b_curve = b_ipo.addCurve(b_channel)
-                b_curve.interpolation = self.get_b_ipol_from_n_ipol(
+                b_curve.interpolation = self.nif_common.get_b_ipol_from_n_ipol(
                     n_uvgroup.interpolation)
-                b_curve.extend = self.get_extend_from_flags(n_ctrl.flags)
+                b_curve.extend = self.nif_common.get_extend_from_flags(n_ctrl.flags)
                 for n_key in n_uvgroup.keys:
                     if b_channel.startswith("Ofs"):
                         # offsets are negated
