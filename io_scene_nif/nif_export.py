@@ -50,6 +50,7 @@ from pyffi.formats.egm import EgmFormat
 
 from .nif_common import NifCommon
 from .collisionsys.collision_export import bhkshape_export, bound_export
+from .armaturesys.armature_export import Armature
 
 class NifExportError(Exception):
     """A simple custom exception class for export errors."""
@@ -65,65 +66,19 @@ class NifExport(NifCommon):
     FLOAT_MAX = +3.4028234663852886e+38
 
 
-
-    def rebuild_bones_extra_matrices(self):
-        """Recover bone extra matrices."""
-        try:
-            bonetxt = Blender.Text.Get('BoneExMat')
-        except NameError:
-            return
-        # Blender bone names are unique so we can use them as keys.
-        for ln in bonetxt.asLines():
-            if len(ln)>0:
-                # reconstruct matrix from text
-                b, m = ln.split('/')
-                try:
-                    mat = mathutils.Matrix(
-                        [[float(f) for f in row.split(',')]
-                         for row in m.split(';')])
-                except:
-                    raise NifExportError('Syntax error in BoneExMat buffer.')
-                # Check if matrices are clean, and if necessary fix them.
-                quat = mat.rotationPart().toQuat()
-                if sum(sum(abs(x) for x in vec)
-                       for vec in mat.rotationPart() - quat.toMatrix()) > 0.01:
-                    self.warning(
-                        "Bad bone extra matrix for bone %s. \n"
-                        "Attempting to fix... but bone transform \n"
-                        "may be incompatible with existing animations." % b)
-                    self.warning("old invalid matrix:\n%s" % mat)
-                    trans = mat.translationPart()
-                    mat = quat.toMatrix().resize4x4()
-                    mat[3][0] = trans[0]
-                    mat[3][1] = trans[1]
-                    mat[3][2] = trans[2]
-                    self.warning("new valid matrix:\n%s" % mat)
-                # Matrices are stored inverted for easier math later on.
-                mat.invert()
-                self.set_bone_extra_matrix_inv(b, mat)
-
-    def set_bone_extra_matrix_inv(self, bonename, mat):
-        """Set bone extra matrix, inverted. The bonename is first converted
-        to blender style (to ensure compatibility with older imports).
-        """
-        self.bones_extra_matrix_inv[self.get_bone_name_for_blender(bonename)] = mat
-
-    def get_bone_extra_matrix_inv(self, bonename):
-        """Get bone extra matrix, inverted. The bonename is first converted
-        to blender style (to ensure compatibility with older imports).
-        """
-        return self.bones_extra_matrix_inv[self.get_bone_name_for_blender(bonename)]
+    
 
     def rebuild_full_names(self):
         """Recovers the full object names from the text buffer and rebuilds
         the names dictionary."""
         try:
-            namestxt = Blender.Text.Get('FullNames')
+            namestxt = bpy.data.texts['FullNames']
         except NameError:
             return
-        for ln in namestxt.asLines():
-            if len(ln)>0:
-                name, fullname = ln.split(';')
+        for b_textline in namestxt.lines:
+            line = b_textline.body
+            if len(line)>0:
+                name, fullname = line.split(';')
                 self.names[name] = fullname
 
     def get_unique_name(self, blender_name):
@@ -188,8 +143,8 @@ class NifExport(NifCommon):
         # Helper systems
         # Store references to subsystems as needed.
         self.boundhelper = bound_export(parent=self)
-        self.bhkhelper = bhkshape_export(parent=self)
-
+        self.bhkshapehelper = bhkshape_export(parent=self)
+        self.armaturehelper = Armature(parent=self)
 
         self.info("exporting {0}".format(self.properties.filepath))
 
@@ -215,17 +170,6 @@ class NifExport(NifCommon):
         self.names = {}
         # keeps track of names of exported blocks, to make sure they are unique
         self.block_names = []
-
-        # dictionary of bones, maps Blender bone name to matrix that maps the
-        # NIF bone matrix on the Blender bone matrix
-        # Recall from the import script
-        #   B' = X * B,
-        # where B' is the Blender bone matrix, and B is the NIF bone matrix,
-        # both in armature space. So to restore the NIF matrices we need to do
-        #   B = X^{-1} * B'
-        # Hence, we will restore the X's, invert them, and store those inverses in the
-        # following dictionary.
-        self.bones_extra_matrix_inv = {}
 
         # store bone priorities (from NULL constraints) as the armature bones
         # are parsed, so they are available when writing the kf file
@@ -255,7 +199,7 @@ class NifExport(NifCommon):
                 if b_obj.type == 'ARMATURE':
                     # ensure we get the mesh vertices in animation mode,
                     # and not in rest position!
-                    b_obj.data.pose_position == 'POSE'
+                    b_obj.data.pose_position = 'POSE'
                     if (b_obj.data.use_deform_envelopes):
                         return self.error(
                             "'%s': Cannot export envelope skinning."
@@ -360,12 +304,12 @@ class NifExport(NifCommon):
             # TODO use Blender actions for animation groups
             # check for animation groups definition in a text buffer 'Anim'
             try:
-                animtxt = Blender.Text.Get("Anim")
+                animtxt = None #Changed for testing needs fix bpy.data.texts["Anim"]
             except NameError:
                 animtxt = None
 
             # rebuild the bone extra matrix dictionary from the 'BoneExMat' text buffer
-            self.rebuild_bones_extra_matrices()
+            self.armaturehelper.rebuild_bones_extra_matrices()
 
             # rebuild the full name dictionary from the 'FullNames' text buffer
             self.rebuild_full_names()
@@ -662,7 +606,7 @@ class NifExport(NifCommon):
             """
 
             # apply scale
-            if abs(self.properties.scale_correction - 1.0) > self.properties.epsilon:
+            if abs(self.properties.scale_correction) > self.properties.epsilon:
                 self.info("Applying scale correction %f"
                                  % self.properties.scale_correction)
                 data = NifFormat.Data()
@@ -1145,15 +1089,15 @@ class NifExport(NifCommon):
             # if it is an armature, export the bones as ninode
             # children of this ninode
             elif (b_obj.type == 'ARMATURE'):
-                self.export_bones(b_obj, node)
+                self.armaturehelper.export_bones(b_obj, node)
 
             # export all children of this empty/mesh/armature/bone
             # object as children of this NiNode
-            self.export_children(b_obj, node)
+            self.armaturehelper.export_children(b_obj, node)
 
         return node
 
-    def export_keyframes(self, ipo, space, parent_block, bind_mat = None,
+    def export_keyframes(self, ipo, space, parent_block, bind_matrix = None,
                          extra_mat_inv = None):
         #
         # Export the animation of blender Ipo as keyframe controller and
@@ -1162,7 +1106,7 @@ class NifExport(NifCommon):
         # when exporting bone ipo's, which are relative to the rest pose, so
         # we can pass the rest pose through these extra transformations.
         #
-        # bind_mat is the original Blender bind matrix (the B' matrix below)
+        # bind_matrix is the original Blender bind matrix (the B' matrix below)
         # extra_mat_inv is the inverse matrix which transforms the Blender bone matrix
         # to the NIF bone matrix (the inverse of the X matrix below)
         #
@@ -1281,8 +1225,8 @@ class NifExport(NifCommon):
         # -> get keyframe information
 
         # some calculations
-        if bind_mat:
-            bind_scale, bind_rot, bind_trans = self.decompose_srt(bind_mat)
+        if bind_matrix:
+            bind_scale, bind_rot, bind_trans = self.decompose_srt(bind_matrix)
             bind_quat = bind_rot.toQuat()
         else:
             bind_scale = 1.0
@@ -1365,7 +1309,7 @@ class NifExport(NifCommon):
                              10 * ipo[Ipo.OB_ROTZ][frame]])
                         # use quat if we have bind matrix and/or extra matrix
                         # XXX maybe we should just stick with eulers??
-                        if bind_mat or extra_mat_inv:
+                        if bind_matrix or extra_mat_inv:
                             rot_curve[frame] = rot_curve[frame].toQuat()
                             # beware, CrossQuats takes arguments in a counter-intuitive order:
                             # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
@@ -1803,13 +1747,13 @@ class NifExport(NifCommon):
 
         # get the mesh's materials, this updates the mesh material list
         if not isinstance(parent_block, NifFormat.RootCollisionNode):
-            mesh_mats = mesh.materials
+            mesh_materials = mesh.materials
         else:
             # ignore materials on collision trishapes
-            mesh_mats = []
+            mesh_materials = []
         # if the mesh has no materials, all face material indices should be 0, so it's ok to fake one material in the material list
-        if not mesh_mats:
-            mesh_mats = [None]
+        if not mesh_materials:
+            mesh_materials = [None]
 
         # is mesh double sided?
         mesh_doublesided = mesh.show_double_sided
@@ -1847,7 +1791,7 @@ class NifExport(NifCommon):
         # let's now export one trishape for every mesh material
         ### TODO: needs refactoring - move material, texture, etc.
         ### to separate function
-        for materialIndex, mesh_mat in enumerate(mesh_mats):
+        for materialIndex, mesh_material in enumerate(mesh_materials):
             # -> first, extract valuable info from our b_obj
 
             mesh_base_mtex = None
@@ -1867,7 +1811,7 @@ class NifExport(NifCommon):
             mesh_hasspec = False  # mesh specular property
 
             mesh_hasnormals = False
-            if mesh_mat is not None:
+            if mesh_material is not None:
                 mesh_hasnormals = True # for proper lighting
 
                 #ambient mat
@@ -1879,14 +1823,14 @@ class NifExport(NifCommon):
                 TODO_3.0 - If needed where ambient should not be defaulted
 
                 #ambient mat
-                mesh_mat_ambient_color[0] = mesh_mat.niftools.ambient_color[0] * mesh_mat.niftools.ambient_factor
-                mesh_mat_ambient_color[1] = mesh_mat.niftools.ambient_color[1] * mesh_mat.niftools.ambient_factor
-                mesh_mat_ambient_color[2] = mesh_mat.niftools.ambient_color[2] * mesh_mat.niftools.ambient_factor
+                mesh_mat_ambient_color[0] = mesh_material.niftools.ambient_color[0] * mesh_material.niftools.ambient_factor
+                mesh_mat_ambient_color[1] = mesh_material.niftools.ambient_color[1] * mesh_material.niftools.ambient_factor
+                mesh_mat_ambient_color[2] = mesh_material.niftools.ambient_color[2] * mesh_material.niftools.ambient_factor
 
                 #diffuse mat
-                mest_mat_diffuse_color[0] = mesh_mat.niftools.diffuse_color[0] * mesh_mat.niftools.diffuse_factor
-                mest_mat_diffuse_color[1] = mesh_mat.niftools.diffuse_color[1] * mesh_mat.niftools.diffuse_factor
-                mest_mat_diffuse_color[2] = mesh_mat.niftools.diffuse_color[2] * mesh_mat.niftools.diffuse_factor
+                mest_mat_diffuse_color[0] = mesh_material.niftools.diffuse_color[0] * mesh_material.niftools.diffuse_factor
+                mest_mat_diffuse_color[1] = mesh_material.niftools.diffuse_color[1] * mesh_material.niftools.diffuse_factor
+                mest_mat_diffuse_color[2] = mesh_material.niftools.diffuse_color[2] * mesh_material.niftools.diffuse_factor
                 '''
 
                 #emissive mat
@@ -1894,28 +1838,28 @@ class NifExport(NifCommon):
                 mesh_mat_emitmulti = 1.0 # default
                 if self.properties.game != 'FALLOUT_3':
                     #old code
-                    #mesh_mat_emissive_color = mesh_mat.diffuse_color * mesh_mat.emit
-                    mesh_mat_emissive_color = mesh_mat.niftools.emissive_color * mesh_mat.emit
+                    #mesh_mat_emissive_color = mesh_material.diffuse_color * mesh_material.emit
+                    mesh_mat_emissive_color = mesh_material.niftools.emissive_color * mesh_material.emit
 
                 else:
                     # special case for Fallout 3 (it does not store diffuse color)
                     # if emit is non-zero, set emissive color to diffuse
                     # (otherwise leave the color to zero)
-                    if mesh_mat.emit > self.properties.epsilon:
+                    if mesh_material.emit > self.properties.epsilon:
 
                         #old code
-                        #mesh_mat_emissive_color = mesh_mat.diffuse_color
-                        mesh_mat_emissive_color = mesh_mat.niftools.emissive_color
-                        mesh_mat_emitmulti = mesh_mat.emit * 10.0
+                        #mesh_mat_emissive_color = mesh_material.diffuse_color
+                        mesh_mat_emissive_color = mesh_material.niftools.emissive_color
+                        mesh_mat_emitmulti = mesh_material.emit * 10.0
 
                 #specular mat
-                mesh_mat_specular_color = mesh_mat.specular_color
-                if mesh_mat.specular_intensity > 1.0:
-                    mesh_mat.specular_intensity = 1.0
+                mesh_mat_specular_color = mesh_material.specular_color
+                if mesh_material.specular_intensity > 1.0:
+                    mesh_material.specular_intensity = 1.0
 
-                mesh_mat_specular_color[0] *= mesh_mat.specular_intensity
-                mesh_mat_specular_color[1] *= mesh_mat.specular_intensity
-                mesh_mat_specular_color[2] *= mesh_mat.specular_intensity
+                mesh_mat_specular_color[0] *= mesh_material.specular_intensity
+                mesh_mat_specular_color[1] *= mesh_material.specular_intensity
+                mesh_mat_specular_color[2] *= mesh_material.specular_intensity
 
                 if ( mesh_mat_specular_color[0] > self.properties.epsilon ) \
                     or ( mesh_mat_specular_color[1] > self.properties.epsilon ) \
@@ -1924,25 +1868,25 @@ class NifExport(NifCommon):
 
                 #gloss mat
                 #'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
-                mesh_mat_gloss = mesh_mat.specular_hardness / 4.0
+                mesh_mat_gloss = mesh_material.specular_hardness / 4.0
 
                 #alpha mat
                 mesh_hasalpha = False
-                mesh_mat_transparency = mesh_mat.alpha
-                if(mesh_mat.use_transparency):
+                mesh_mat_transparency = mesh_material.alpha
+                if(mesh_material.use_transparency):
                     if(abs(mesh_mat_transparency - 1.0)> self.properties.epsilon):
                         mesh_hasalpha = True
                 elif(mesh_hasvcola):
                     mesh_hasalpha = True
-                elif(mesh_mat.animation_data and mesh_mat.animation_data.action.fcurves['Alpha']):
+                elif(mesh_material.animation_data and mesh_material.animation_data.action.fcurves['Alpha']):
                     mesh_hasalpha = True
 
                 #wire mat
-                mesh_haswire = (mesh_mat.type == 'WIRE')
+                mesh_haswire = (mesh_material.type == 'WIRE')
 
                 # the base texture = first material texture
                 # note that most morrowind files only have a base texture, so let's for now only support single textured materials
-                for b_mat_texslot in mesh_mat.texture_slots:
+                for b_mat_texslot in mesh_material.texture_slots:
                     if not b_mat_texslot or not b_mat_texslot.use:
                         # skip unused texture slots
                         continue
@@ -1963,14 +1907,14 @@ class NifExport(NifCommon):
                                 "Either delete all non-COL-mapped reflection textures,"
                                 " or in the Shading Panel, under Material Buttons,"
                                 " set texture 'Map To' to 'COL'."
-                                % (b_obj.name,mesh_mat.name))
+                                % (b_obj.name,mesh_material.name))
                         if b_mat_texslot.blend_type != 'ADD':
                             # it should have "ADD" blending mode
                             self.warning(
                                "Reflection texture should have blending"
                                " mode 'Add' on texture"
                                " in mesh '%s', material '%s')."
-                               % (b_obj.name,mesh_mat.name))
+                               % (b_obj.name,mesh_material.name))
                             # an envmap image should have an empty... don't care
                         mesh_texeff_mtex = b_mat_texslot
 
@@ -1987,7 +1931,7 @@ class NifExport(NifCommon):
                                 raise NifExportError(
                                     "Multiple glow textures in mesh '%s', material '%s'.\n"
                                     "Make sure Texture -> Influence -> Shading -> Emit is disabled"
-                                    %(mesh.name,mesh_mat.name))
+                                    %(mesh.name,mesh_material.name))
                             '''
                             TODO_3.0 - Fallout3 + specific.
                             Check if these are still possible
@@ -1997,7 +1941,7 @@ class NifExport(NifCommon):
                                 self.warning(
                                     "In mesh '%s', material '%s': glow texture must have"
                                     " CALCALPHA flag set, and must have MapTo.ALPHA enabled."
-                                    %(b_obj.name,mesh_mat.name))
+                                    %(b_obj.name,mesh_material.name))
                             '''
 
                             # check if alpha channel is enabled for this texture
@@ -2014,7 +1958,7 @@ class NifExport(NifCommon):
                                     " mesh '%s', material '%s'."
                                     " Make sure there is only one texture"
                                     " with MapTo.SPEC"
-                                    %(mesh.name,mesh_mat.name))
+                                    %(mesh.name,mesh_material.name))
 
                             # check if alpha channel is enabled for this texture
                             if(b_mat_texslot.use_map_alpha):
@@ -2031,7 +1975,7 @@ class NifExport(NifCommon):
                                     " in mesh '%s', material '%s'."
                                     " Make sure there is only one texture"
                                     " with MapTo.NOR"
-                                    %(mesh.name,mesh_mat.name))
+                                    %(mesh.name,mesh_material.name))
 
                             # check if alpha channel is enabled for this texture
                             if(b_mat_texslot.use_map_alpha):
@@ -2075,8 +2019,8 @@ class NifExport(NifCommon):
                                         " and to use the 'Var' slider"
                                         " in the 'Map To' tab under the"
                                         " material buttons."
-                                        %mesh_mat.name)
-                                if (mesh_mat.animation_data and mesh_mat.animation_data.action.fcurves['Alpha']):
+                                        %mesh_material.name)
+                                if (mesh_material.animation_data and mesh_material.animation_data.action.fcurves['Alpha']):
                                     raise NifExportError(
                                         "Cannot export animation for"
                                         " this type of transparency"
@@ -2084,7 +2028,7 @@ class NifExport(NifCommon):
                                         " remove alpha animation,"
                                         " or turn off MapTo.ALPHA,"
                                         " and try again."
-                                        %mesh_mat.name)
+                                        %mesh_material.name)
 
                                 mesh_mat_transparency = b_mat_texslot.varfac # we must use the "Var" value
                                 '''
@@ -2097,7 +2041,7 @@ class NifExport(NifCommon):
                                     " in mesh '%s', material '%s'."
                                     " Make sure there is only one texture"
                                     " with MapTo.NOR"
-                                    %(mesh.name,mesh_mat.name))
+                                    %(mesh.name,mesh_material.name))
                             # check if alpha channel is enabled for this texture
                             if(b_mat_texslot.use_map_alpha):
                                 mesh_hasalpha = True
@@ -2122,7 +2066,7 @@ class NifExport(NifCommon):
                                     " in mesh '%s', material '%s'."
                                     " Make sure there is only one texture"
                                     " with MapTo.REF"
-                                    %(mesh.name,mesh_mat.name))
+                                    %(mesh.name,mesh_material.name))
                             # check if alpha channel is enabled for this texture
                             if(b_mat_texslot.use_map_alpha):
                                 mesh_hasalpha = True
@@ -2138,7 +2082,7 @@ class NifExport(NifCommon):
                                 " go to the Shading Panel,"
                                 " Material Buttons, and set texture"
                                 " 'Map To' to 'COL'."
-                                % (b_mat_texslot.texture.name,b_obj.name,mesh_mat.name))
+                                % (b_mat_texslot.texture.name,b_obj.name,mesh_material.name))
 
                     # nif only support UV-mapped textures
                     else:
@@ -2148,7 +2092,7 @@ class NifExport(NifCommon):
                             " or in the Shading Panel,"
                             " under Material Buttons,"
                             " set texture 'Map Input' to 'UV'."
-                            %(b_obj.name,mesh_mat.name))
+                            %(b_obj.name,mesh_material.name))
 
             # list of body part (name, index, vertices) in this mesh
             bodypartgroups = []
@@ -2196,7 +2140,7 @@ class NifExport(NifCommon):
             faces_without_bodypart = []
             for f in mesh.faces:
                 # does the face belong to this trishape?
-                if (mesh_mat != None): # we have a material
+                if (mesh_material != None): # we have a material
                     if (f.material_index != materialIndex): # but this face has another material
                         continue # so skip this face
                 f_numverts = len(f.vertices)
@@ -2319,19 +2263,19 @@ class NifExport(NifCommon):
 
             # check that there are no missing body part faces
             if faces_without_bodypart:
-                Blender.Window.EditMode(0)
+                # switch to edit mode to select faces
+                bpy.ops.object.mode_set(mode='EDIT',toggle=False)
                 # select mesh object
                 for b_obj in self.context.scene.objects:
-                    b_obj.sel = False
+                    b_obj.select = False
                 self.context.scene.objects.active = b_obj
-                b_obj.sel = 1
+                b_obj.select = True
                 # select bad faces
                 for face in mesh.faces:
-                    face.sel = 0
+                    face.select = False
                 for face in faces_without_bodypart:
-                    face.sel = 1
-                # switch to edit mode and raise exception
-                Blender.Window.EditMode(1)
+                    face.select = True
+                # raise exception
                 raise ValueError(
                     "Some faces of %s not assigned to any body part."
                     " The unassigned faces"
@@ -2390,7 +2334,7 @@ class NifExport(NifCommon):
             else:
                 trishape.name = trishape_name.encode()
 
-            if len(mesh_mats) > 1:
+            if len(mesh_materials) > 1:
                 # multimaterial meshes: add material index
                 # (Morrowind's child naming convention)
                 b_name = trishape.name.decode() + ":%i" % materialIndex
@@ -2480,7 +2424,7 @@ class NifExport(NifCommon):
                 # add NiStencilProperty
                 trishape.add_property(self.export_stencil_property())
 
-            if mesh_mat:
+            if mesh_material:
                 # add NiTriShape's specular property
                 # but NOT for sid meier's railroads and other extra shader
                 # games (they use specularity even without this property)
@@ -2493,7 +2437,7 @@ class NifExport(NifCommon):
 
                 # add NiTriShape's material property
                 trimatprop = self.export_material_property(
-                    name=self.get_full_name(mesh_mat.name),
+                    name=self.get_full_name(mesh_material.name),
                     flags=0x0001, # TODO - standard flag, check?
                     ambient=mesh_mat_ambient_color,
                     diffuse=mesh_mat_diffuse_color,
@@ -2509,7 +2453,7 @@ class NifExport(NifCommon):
 
                 # material animation
                 self.export_material_controllers(
-                    b_material=mesh_mat, n_geom=trishape)
+                    b_material=mesh_material, n_geom=trishape)
 
             # add NiTriShape's data
             # NIF flips the texture V-coordinate (OpenGL standard)
@@ -2622,31 +2566,61 @@ class NifExport(NifCommon):
                         # skeleton root
                         skindata.set_transform(
                             self.get_object_matrix(b_obj, 'localspace').get_inverse())
-
-                        # add vertex weights
-                        # first find weights and normalization factors
+                       
+                        # Vertex weights,  find weights and normalization factors
                         vert_list = {}
                         vert_norm = {}
-                        for bone in boneinfluences:
-                            try:
-                                vert_list[bone] = b_obj.data.getVertsFromGroup(bone, 1)
-                            except AttributeError:
-                                # this happens when the vertex group has been
-                                # added, but the weights have not been painted
-                                raise NifExportError(
-                                    "Mesh %s has vertex group for bone %s,"
-                                    " but no weights."
-                                    " Please select the mesh, and either"
-                                    " delete the vertex group,"
-                                    " or go to weight paint mode,"
-                                    " and paint weights."
-                                    % (b_obj.name, bone))
-                            for v in vert_list[bone]:
+                        unassigned_verts = []
+                                                
+                        for bone_group in boneinfluences:
+                            b_list_weight = []
+                            b_vert_group = b_obj.vertex_groups[bone_group]
+                            
+                            for b_vert in b_obj.data.vertices:
+                                if len(b_vert.groups) == 0: #check vert has weight_groups
+                                    unassigned_verts.append(b_vert)
+                                    continue
+                                
+                                for g in b_vert.groups:
+                                    if b_vert_group.name in boneinfluences:
+                                        if g.group == b_vert_group.index:
+                                            b_list_weight.append((b_vert.index, g.weight))
+                                            break
+                                                
+                            vert_list[bone_group] = b_list_weight             
+                            
+                            #create normalisation groupings
+                            for v in vert_list[bone_group]:
                                 if v[0] in vert_norm:
                                     vert_norm[v[0]] += v[1]
                                 else:
                                     vert_norm[v[0]] = v[1]
-
+                        
+                        # vertices must be assigned at least one vertex group
+                        # lets be nice and display them for the user 
+                        if len(unassigned_verts) > 0:
+                            for b_scene_obj in self.context.scene.objects:
+                                b_scene_obj.select = False
+                                
+                            self.context.scene.objects.active = b_obj
+                            b_obj.select = True
+                            
+                            # select unweighted vertices
+                            for v in mesh.vertices:
+                                v.select = False    
+                            
+                            for b_vert in unassigned_verts:
+                                b_obj.data.vertices[b_vert.index].select = True
+                                
+                            # switch to edit mode and raise exception
+                            bpy.ops.object.mode_set(mode='EDIT',toggle=False)
+                            raise NifExportError(
+                                "Cannot export mesh with unweighted vertices."
+                                " The unweighted vertices have been selected"
+                                " in the mesh so they can easily be"
+                                " identified.")
+                        
+                        
                         # for each bone, first we get the bone block
                         # then we get the vertex weights
                         # and then we add it to the NiSkinData
@@ -2669,9 +2643,11 @@ class NifExport(NifCommon):
                                                 " to a single armature"
                                                 " and try again"
                                                 % bone)
+                            
                             if not bone_block:
                                 raise NifExportError(
                                     "Bone '%s' not found." % bone)
+                            
                             # find vertex weights
                             vert_weights = {}
                             for v in vert_list[bone]:
@@ -2693,36 +2669,6 @@ class NifExport(NifCommon):
                             # actually any vertices influenced by the bone
                             if vert_weights:
                                 trishape.add_bone(bone_block, vert_weights)
-
-                        # each vertex must have been assigned to at least one
-                        # vertex group
-                        # or the model doesn't display correctly in the TESCS
-                        vert_weights = {}
-                        if False in vert_added:
-                            # select mesh object
-                            for b_scene_obj in self.context.scene.objects:
-                                b_scene_obj.sel = False
-                            self.context.scene.objects.active = b_obj
-                            b_obj.sel = 1
-                            # select bad vertices
-                            for v in mesh.vertices:
-                                v.sel = 0
-                            for i, added in enumerate(vert_added):
-                                if not added:
-                                    for j, vlist in enumerate(vertmap):
-                                        if vlist and (i in vlist):
-                                            idx = j
-                                            break
-                                    else:
-                                        raise RuntimeError("vertmap bug")
-                                    mesh.vertices[idx].sel = 1
-                            # switch to edit mode and raise exception
-                            Blender.Window.EditMode(1)
-                            raise NifExportError(
-                                "Cannot export mesh with unweighted vertices."
-                                " The unweighted vertices have been selected"
-                                " in the mesh so they can easily be"
-                                " identified.")
 
                         # update bind position skinning data
                         trishape.update_bind_position()
@@ -3129,146 +3075,9 @@ class NifExport(NifCommon):
             # attach block to node
             n_node.add_controller(n_vis_ctrl)
 
-    def export_bones(self, arm, parent_block):
-        """Export the bones of an armature."""
-        # the armature was already exported as a NiNode
-        # now we must export the armature's bones
-        assert( arm.type == 'ARMATURE' )
+    
 
-        # find the root bones
-        # dictionary of bones (name -> bone)
-        bones = dict(list(arm.data.bones.items()))
-        root_bones = []
-        for root_bone in list(bones.values()):
-            while root_bone.parent in list(bones.values()):
-                root_bone = root_bone.parent
-            if root_bones.count(root_bone) == 0:
-                root_bones.append(root_bone)
-
-        if (arm.Action()):
-            bones_ipo = arm.Action().groups() # dictionary of Bone Ipos (name -> ipo)
-        else:
-            bones_ipo = {} # no ipos
-
-        bones_node = {} # maps bone names to NiNode blocks
-
-        # here all the bones are added
-        # first create all bones with their keyframes
-        # and then fix the links in a second run
-
-        # ok, let's create the bone NiNode blocks
-        for bone in list(bones.values()):
-            # create a new block for this bone
-            node = self.create_ninode(bone)
-            # doing bone map now makes linkage very easy in second run
-            bones_node[bone.name] = node
-
-            # add the node and the keyframe for this bone
-            node.name = self.get_full_name(bone.name).encode()
-            if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
-                # default for Oblivion bones
-                # note: bodies have 0x000E, clothing has 0x000F
-                node.flags = 0x000E
-            elif self.properties.game in ('CIVILIZATION_IV', 'EMPIRE_EARTH_II'):
-                if bone.children:
-                    # default for Civ IV/EE II bones with children
-                    node.flags = 0x0006
-                else:
-                    # default for Civ IV/EE II final bones
-                    node.flags = 0x0016
-            elif self.properties.game in ('DIVINITY_2',):
-                if bone.children:
-                    # default for Div 2 bones with children
-                    node.flags = 0x0186
-                elif bone.name.lower()[-9:] == 'footsteps':
-                    node.flags = 0x0116
-                else:
-                    # default for Div 2 final bones
-                    node.flags = 0x0196
-            else:
-                node.flags = 0x0002 # default for Morrowind bones
-            self.export_matrix(bone, 'localspace', node) # rest pose
-
-            # bone rotations are stored in the IPO relative to the rest position
-            # so we must take the rest position into account
-            # (need original one, without extra transforms, so extra = False)
-            bonerestmat = self.get_bone_rest_matrix(bone, 'BONESPACE',
-                                                    extra = False)
-            try:
-                bonexmat_inv = mathutils.Matrix(
-                    self.get_bone_extra_matrix_inv(bone.name))
-            except KeyError:
-                bonexmat_inv = mathutils.Matrix()
-                bonexmat_inv.identity()
-            if bone.name in bones_ipo:
-                self.export_keyframes(
-                    bones_ipo[bone.name], 'localspace', node,
-                    bind_mat = bonerestmat, extra_mat_inv = bonexmat_inv)
-
-            # does bone have priority value in NULL constraint?
-            for constr in arm.getPose().bones[bone.name].constraints:
-                # yes! store it for reference when creating the kf file
-                if constr.name[:9].lower() == "priority:":
-                    self.bone_priorities[
-                        self.get_bone_name_for_nif(bone.name)
-                        ] = int(constr.name[9:])
-
-        # now fix the linkage between the blocks
-        for bone in list(bones.values()):
-            # link the bone's children to the bone
-            if bone.children:
-                self.debug("Linking children of bone %s" % bone.name)
-                for child in bone.children:
-                    # bone.children returns also grandchildren etc.
-                    # we only want immediate children, so do a parent check
-                    if child.parent.name == bone.name:
-                        bones_node[bone.name].add_child(bones_node[child.name])
-            # if it is a root bone, link it to the armature
-            if not bone.parent:
-                parent_block.add_child(bones_node[bone.name])
-
-    def export_children(self, b_obj, parent_block):
-        """Export all children of blender object b_obj as children of
-        parent_block."""
-        # loop over all obj's children
-        for b_obj_child in b_obj.children:
-            # is it a regular node?
-            if b_obj_child.type in ['MESH', 'EMPTY', 'ARMATURE']:
-                if (b_obj.type != 'ARMATURE'):
-                    # not parented to an armature
-                    self.export_node(b_obj_child, 'localspace',
-                                     parent_block, b_obj_child.name)
-                else:
-                    # this object is parented to an armature
-                    # we should check whether it is really parented to the
-                    # armature using vertex weights
-                    # or whether it is parented to some bone of the armature
-                    parent_bone_name = b_obj_child.parent_bone
-                    if parent_bone_name is None:
-                        self.export_node(b_obj_child, 'localspace',
-                                         parent_block, b_obj_child.name)
-                    else:
-                        # we should parent the object to the bone instead of
-                        # to the armature
-                        # so let's find that bone!
-                        nif_bone_name = self.get_full_name(parent_bone_name)
-                        for bone_block in self.blocks:
-                            if isinstance(bone_block, NifFormat.NiNode) and \
-                                bone_block.name.decode() == nif_bone_name:
-                                # ok, we should parent to block
-                                # instead of to parent_block
-                                # two problems to resolve:
-                                #   - blender bone matrix is not the exported
-                                #     bone matrix!
-                                #   - blender objects parented to bone have
-                                #     extra translation along the Y axis
-                                #     with length of the bone ("tail")
-                                # this is handled in the get_object_srt function
-                                self.export_node(b_obj_child, 'localspace',
-                                                 bone_block, b_obj_child.name)
-                                break
-                        else:
-                            assert(False) # BUG!
+   
 
     def export_matrix(self, b_obj, space, block):
         """Set a block's transform matrix to an object's
@@ -3281,13 +3090,13 @@ class NifExport(NifCommon):
         block.translation.y = n_trans_vec[1]
         block.translation.z = n_trans_vec[2]
         block.rotation.m_11 = n_rot_mat33[0][0]
-        block.rotation.m_12 = n_rot_mat33[0][1]
-        block.rotation.m_13 = n_rot_mat33[0][2]
-        block.rotation.m_21 = n_rot_mat33[1][0]
+        block.rotation.m_21 = n_rot_mat33[0][1]
+        block.rotation.m_31 = n_rot_mat33[0][2]
+        block.rotation.m_12 = n_rot_mat33[1][0]
         block.rotation.m_22 = n_rot_mat33[1][1]
-        block.rotation.m_23 = n_rot_mat33[1][2]
-        block.rotation.m_31 = n_rot_mat33[2][0]
-        block.rotation.m_32 = n_rot_mat33[2][1]
+        block.rotation.m_32 = n_rot_mat33[1][2]
+        block.rotation.m_13 = n_rot_mat33[2][0]
+        block.rotation.m_23 = n_rot_mat33[2][1]
         block.rotation.m_33 = n_rot_mat33[2][2]
         block.velocity.x = 0.0
         block.velocity.y = 0.0
@@ -3304,27 +3113,27 @@ class NifExport(NifCommon):
         the bone correction); this differs from getMatrix which
         returns the transform relative to the armature."""
         n_scale, n_rot_mat33, n_trans_vec = self.get_object_srt(b_obj, space)
-        mat = NifFormat.Matrix44()
+        matrix = NifFormat.Matrix44()
 
-        mat.m_11 = n_rot_mat33[0][0] * n_scale
-        mat.m_12 = n_rot_mat33[0][1] * n_scale
-        mat.m_13 = n_rot_mat33[0][2] * n_scale
-        mat.m_21 = n_rot_mat33[1][0] * n_scale
-        mat.m_22 = n_rot_mat33[1][1] * n_scale
-        mat.m_23 = n_rot_mat33[1][2] * n_scale
-        mat.m_31 = n_rot_mat33[2][0] * n_scale
-        mat.m_32 = n_rot_mat33[2][1] * n_scale
-        mat.m_33 = n_rot_mat33[2][2] * n_scale
-        mat.m_41 = n_trans_vec[0]
-        mat.m_42 = n_trans_vec[1]
-        mat.m_43 = n_trans_vec[2]
+        matrix.m_11 = n_rot_mat33[0][0] * n_scale
+        matrix.m_21 = n_rot_mat33[0][1] * n_scale
+        matrix.m_31 = n_rot_mat33[0][2] * n_scale
+        matrix.m_12 = n_rot_mat33[1][0] * n_scale
+        matrix.m_22 = n_rot_mat33[1][1] * n_scale
+        matrix.m_32 = n_rot_mat33[1][2] * n_scale
+        matrix.m_13 = n_rot_mat33[2][0] * n_scale
+        matrix.m_23 = n_rot_mat33[2][1] * n_scale
+        matrix.m_33 = n_rot_mat33[2][2] * n_scale
+        matrix.m_14 = n_trans_vec[0]
+        matrix.m_24 = n_trans_vec[1]
+        matrix.m_34 = n_trans_vec[2]
 
-        mat.m_14 = 0.0
-        mat.m_24 = 0.0
-        mat.m_34 = 0.0
-        mat.m_44 = 1.0
+        matrix.m_41 = 0.0
+        matrix.m_42 = 0.0
+        matrix.m_43 = 0.0
+        matrix.m_44 = 1.0
 
-        return mat
+        return matrix
 
     def get_object_srt(self, b_obj, space = 'localspace'):
         """Find scale, rotation, and translation components of an object in
@@ -3349,7 +3158,7 @@ class NifExport(NifCommon):
 
         # now write out spaces
         if not isinstance(b_obj, bpy.types.Bone):
-            mat = b_obj.matrix_local.copy()
+            matrix = b_obj.matrix_local.copy()
             bone_parent_name = b_obj.parent_bone
             # if there is a bone parent then the object is parented
             # then get the matrix relative to the bone parent head
@@ -3363,12 +3172,12 @@ class NifExport(NifCommon):
                 # b_obj.getMatrix('localspace')
                 # gets the object local transform matrix, relative
                 # to the armature!! (not relative to the bone)
-                # so at this point, mat = O * T * B'
-                # hence it must hold that mat = Z * B,
-                # or equivalently Z = mat * B^{-1}
+                # so at this point, matrix = O * T * B'
+                # hence it must hold that matrix = Z * B,
+                # or equivalently Z = matrix * B^{-1}
 
                 # now, B' = X * B, so B^{-1} = B'^{-1} * X
-                # hence Z = mat * B'^{-1} * X
+                # hence Z = matrix * B'^{-1} * X
 
                 # first multiply with inverse of the Blender bone matrix
                 bone_parent = b_obj.parent.data.bones[
@@ -3376,24 +3185,24 @@ class NifExport(NifCommon):
                 boneinv = mathutils.Matrix(
                     bone_parent.matrix['ARMATURESPACE'])
                 boneinv.invert()
-                mat = mat * boneinv
+                matrix = matrix * boneinv
                 # now multiply with the bone correction matrix X
                 try:
                     extra = mathutils.Matrix(
                         self.get_bone_extra_matrix_inv(bone_parent_name))
                     extra.invert()
-                    mat = mat * extra
+                    matrix = matrix * extra
                 except KeyError:
                     # no extra local transform
                     pass
         else:
             # bones, get the rest matrix
-            mat = self.get_bone_rest_matrix(b_obj, 'BONESPACE')
+            matrix = self.armaturehelper.get_bone_rest_matrix(b_obj, 'BONESPACE')
 
         try:
-            return self.decompose_srt(mat)
+            return self.decompose_srt(matrix)
         except NifExportError: # non-uniform scaling
-            self.debug(str(mat))
+            self.debug(str(matrix))
             raise NifExportError(
                 "Non-uniform scaling on bone '%s' not supported."
                 " This could be a bug... No workaround. :-( Post your blend!"
@@ -3401,66 +3210,31 @@ class NifExport(NifCommon):
 
 
 
-    def decompose_srt(self, mat):
+    def decompose_srt(self, matrix):
         """Decompose Blender transform matrix as a scale, rotation matrix, and
         translation vector."""
-        b_trans_vec, b_rot_quat, b_scale_vec = mat.decompose()
-        b_rot_mat = b_rot_quat.to_matrix()
-        b_rot_mat.invert()
-
+        # get scale components
+        # get scale components
+        trans_vec, rot_quat, scale_vec = matrix.decompose()
+        scale_rot = rot_quat.to_matrix()
+        scale_rot_T = mathutils.Matrix(scale_rot)
+        scale_rot_T.transpose()
+        scale_rot_2 = scale_rot * scale_rot_T
+        # and fix their sign
+        if (scale_rot.determinant() < 0): scale_vec.negate()
         # only uniform scaling
         # allow rather large error to accomodate some nifs
-        if abs(b_scale_vec[0]-b_scale_vec[1]) + abs(b_scale_vec[1]-b_scale_vec[2]) > 0.02:
+        if abs(scale_vec[0]-scale_vec[1]) + abs(scale_vec[1]-scale_vec[2]) > 0.02:
             raise NifExportError(
                 "Non-uniform scaling not supported."
                 " Workaround: apply size and rotation (CTRL-A).")
-
-        return b_scale_vec[0], b_rot_mat, b_trans_vec
-
-
-
-    def get_bone_rest_matrix(self, bone, space, extra = True, tail = False):
-        """Get bone matrix in rest position ("bind pose"). Space can be
-        ARMATURESPACE or BONESPACE. This returns also a 4x4 matrix if space
-        is BONESPACE (translation is bone head plus tail from parent bone).
-        If tail is True then the matrix translation includes the bone tail."""
-        # Retrieves the offset from the original NIF matrix, if existing
-        corrmat = mathutils.Matrix()
-        if extra:
-            try:
-                corrmat = mathutils.Matrix(
-                    self.get_bone_extra_matrix_inv(bone.name))
-            except KeyError:
-                corrmat.identity()
-        else:
-            corrmat.identity()
-        if (space == 'ARMATURESPACE'):
-            mat = mathutils.Matrix(bone.matrix['ARMATURESPACE'])
-            if tail:
-                tail_pos = bone.tail['ARMATURESPACE']
-                mat[3][0] = tail_pos[0]
-                mat[3][1] = tail_pos[1]
-                mat[3][2] = tail_pos[2]
-            return corrmat * mat
-        elif (space == 'BONESPACE'):
-            if bone.parent:
-                # not sure why extra = True is required here
-                # but if extra = extra then transforms are messed up, so keep
-                # for now
-                parinv = self.get_bone_rest_matrix(bone.parent, 'ARMATURESPACE',
-                                                   extra = True, tail = False)
-                parinv.invert()
-                return self.get_bone_rest_matrix(bone,
-                                                 'ARMATURESPACE',
-                                                 extra = extra,
-                                                 tail = tail) * parinv
-            else:
-                return self.get_bone_rest_matrix(bone, 'ARMATURESPACE',
-                                                 extra = extra, tail = tail)
-        else:
-            assert(False) # bug!
-
-
+        b_scale = scale_vec[0]
+        # get rotation matrix
+        b_rot = scale_rot * b_scale
+        # get translation
+        b_trans = trans_vec
+        # done!
+        return [b_scale, b_rot, b_trans]
 
     def create_block(self, blocktype, b_obj = None):
         """Helper function to create a new block, register it in the list of
@@ -3537,7 +3311,7 @@ class NifExport(NifCommon):
                            if block.name[:14] == 'collisiondummy' ])
             for node in nodes:
                 try:
-                    self.bhkhelper.export_collision_helper(b_obj, node)
+                    self.bhkshapehelper.export_collision_helper(b_obj, node)
                     break
                 except ValueError: # adding collision failed
                     continue
@@ -3547,7 +3321,7 @@ class NifExport(NifCommon):
                 node.name = 'collisiondummy%i' % parent_block.num_children
                 node.flags = 0x000E # default
                 parent_block.add_child(node)
-                self.bhkhelper.export_collision_helper(b_obj, node)
+                self.bhkshapehelper.export_collision_helper(b_obj, node)
 
         else:
             self.warning(
