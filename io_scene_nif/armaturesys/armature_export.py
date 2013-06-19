@@ -99,17 +99,17 @@ class Armature():
                 matrix.invert()
                 self.set_bone_extra_matrix_inv(b, matrix)
                 
-    def set_bone_extra_matrix_inv(self, bonename, mat):
-        """Set bone extra matrix, inverted. The bonename is first converted
+    def set_bone_extra_matrix_inv(self, bone_name, matrix):
+        """Set bone extra matrix, inverted. The bone_name is first converted
         to blender style (to ensure compatibility with older imports).
         """
-        self.nif_common.bones_extra_matrix_inv[self.nif_common.get_bone_name_for_blender(bonename)] = mat
+        self.nif_common.bones_extra_matrix_inv[self.nif_common.get_bone_name_for_blender(bone_name)] = matrix
 
-    def get_bone_extra_matrix_inv(self, bonename):
-        """Get bone extra matrix, inverted. The bonename is first converted
+    def get_bone_extra_matrix_inv(self, bone_name):
+        """Get bone extra matrix, inverted. The bone_name is first converted
         to blender style (to ensure compatibility with older imports).
         """
-        return self.nif_common.bones_extra_matrix_inv[self.nif_common.get_bone_name_for_blender(bonename)]
+        return self.nif_common.bones_extra_matrix_inv[self.nif_common.get_bone_name_for_blender(bone_name)]
     
     
     def export_bones(self, arm, parent_block):
@@ -261,15 +261,15 @@ class Armature():
         is BONESPACE (translation is bone head plus tail from parent bone).
         If tail is True then the matrix translation includes the bone tail."""
         # Retrieves the offset from the original NIF matrix, if existing
-        corrmat = mathutils.Matrix()
+        correction_matrix = mathutils.Matrix()
         if extra:
             try:
-                corrmat = mathutils.Matrix(
+                correction_matrix = mathutils.Matrix(
                     self.get_bone_extra_matrix_inv(bone.name))
             except KeyError:
-                corrmat.identity()
+                correction_matrix.identity()
         else:
-            corrmat.identity()
+            correction_matrix.identity()
         if (space == 'ARMATURESPACE'):
             matrix = mathutils.Matrix(bone.matrix_local)
             if tail:
@@ -277,7 +277,7 @@ class Armature():
                 matrix[0][3] = tail_pos[0]
                 matrix[1][3] = tail_pos[1]
                 matrix[2][3] = tail_pos[2]
-            return corrmat * matrix
+            return correction_matrix * matrix
         elif (space == 'BONESPACE'):
             if bone.parent:
                 # not sure why extra = True is required here
