@@ -2527,16 +2527,16 @@ class NifExport(NifCommon):
             # now export the vertex weights, if there are any
             vertgroups = {vertex_group.name
                           for vertex_group in b_obj.vertex_groups}
-            bonenames = []
+            bone_names = []
             if b_obj.parent:
                 if b_obj.parent.type == 'ARMATURE':
                     b_obj_armature = b_obj.parent
                     armaturename = b_obj_armature.name
-                    bonenames = list(b_obj_armature.data.bones.keys())
-                    # the vertgroups that correspond to bonenames are bones
+                    bone_names = list(b_obj_armature.data.bones.keys())
+                    # the vertgroups that correspond to bone_names are bones
                     # that influence the mesh
                     boneinfluences = []
-                    for bone in bonenames:
+                    for bone in bone_names:
                         if bone in vertgroups:
                             boneinfluences.append(bone)
                     if boneinfluences: # yes we have skinning!
