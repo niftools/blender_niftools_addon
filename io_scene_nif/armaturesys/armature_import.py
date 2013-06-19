@@ -778,16 +778,16 @@ class Armature():
 	def get_blender_object(self, niBlock):
 		"""Retrieves the Blender object or Blender bone matching the block."""
 		if self.is_bone(niBlock):
-			boneName = self.nif_common.names[niBlock]
+			bone_name = self.nif_common.names[niBlock]
 			armatureName = None
 			for armatureBlock, boneBlocks in self.nif_common.armatures.items():
 				if niBlock in boneBlocks:
 					armatureName = self.nif_common.names[armatureBlock]
 					break
 				else:
-					raise NifImportError("cannot find bone '%s'" % boneName)
+					raise NifImportError("cannot find bone '%s'" % bone_name)
 			armatureObject = Blender.Object.Get(armatureName)
-			return armatureObject.data.bones[boneName]
+			return armatureObject.data.bones[bone_name]
 		else:
 			return Blender.Object.Get(self.nif_common.names[niBlock])
 		   
