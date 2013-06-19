@@ -39,11 +39,11 @@
 
 from .nif_common import NifCommon
 
-from .animationsys.animation_import import AnimationHelper
-from .armaturesys.armature_import import Armature
-from .collisionsys.collision_import import bhkshape_import, bound_import
-from .materialsys.material import material_import
-from .texturesys.texture import texture_import
+from io_scene_nif.animationsys.animation_import import AnimationHelper
+from io_scene_nif.armaturesys.armature_import import Armature
+from io_scene_nif.collisionsys.collision_import import bhkshape_import, bound_import
+from io_scene_nif.materialsys.material import material_import
+from io_scene_nif.texturesys.texture import texture_import
 
 from functools import reduce
 import logging
