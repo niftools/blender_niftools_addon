@@ -192,7 +192,7 @@ class NifImport(NifCommon):
             self.info("Importing data")
             # calculate and set frames per second
             if self.properties.animation:
-                self.fps = self.animation_helper.get_frames_per_second(
+                self.fps = self.animationhelper.get_frames_per_second(
                     self.data.roots
                     + (self.kfdata.roots if self.kfdata else []))
                 self.context.scene.render.fps = self.fps
@@ -253,7 +253,7 @@ class NifImport(NifCommon):
                 # merge animation from kf tree into nif tree
                 if self.properties.animation and self.kfdata:
                     for kf_root in self.kfdata.roots:
-                        self.import_kf_root(kf_root, root)
+                        self.animationhelper.import_kf_root(kf_root, root)
                 # import the nif tree
                 self.import_root(root)
         finally:
@@ -895,7 +895,7 @@ class NifImport(NifCommon):
                                             bsShaderProperty, extra_datas)
 
             # XXX todo: merge this call into import_material
-            self.import_material_controllers(material, niBlock)
+            self.animationhelper.material_animation.import_material_controllers(material, niBlock)
             b_mesh_materials = list(b_mesh.materials)
             try:
                 materialIndex = b_mesh_materials.index(material)
@@ -1661,99 +1661,6 @@ class NifImport(NifCommon):
                 raise ValueError("unknown descriptor %s"
                                  % hkdescriptor.__class__.__name__)
 
-
-
-    def import_kf_root(self, kf_root, root):
-        """Merge kf into nif.
-
-        *** Note: this function will eventually move to PyFFI. ***
-        """
-
-        self.info("Merging kf tree into nif tree")
-
-        # check that this is an Oblivion style kf file
-        if not isinstance(kf_root, NifFormat.NiControllerSequence):
-            raise NifImportError("non-Oblivion .kf import not supported")
-
-        # import text keys
-        self.animation_helper.import_text_keys(kf_root)
-
-
-        # go over all controlled blocks
-        for controlledblock in kf_root.controlled_blocks:
-            # get the name
-            nodename = controlledblock.get_node_name()
-            # match from nif tree?
-            node = root.find(block_name = nodename)
-            if not node:
-                self.info(
-                    "Animation for %s but no such node found in nif tree"
-                    % nodename)
-                continue
-            # node found, now find the controller
-            controllertype = controlledblock.get_controller_type()
-            if not controllertype:
-                self.info(
-                    "Animation for %s without controller type, so skipping"
-                    % nodename)
-                continue
-            controller = self.find_controller(node, getattr(NifFormat, controllertype))
-            if not controller:
-                self.info(
-                    "Animation for %s with %s controller,"
-                    " but no such controller type found"
-                    " in corresponding node, so creating one"
-                    % (nodename, controllertype))
-                controller = getattr(NifFormat, controllertype)()
-                # TODO set all the fields of this controller
-                node.add_controller(controller)
-            # yes! attach interpolator
-            controller.interpolator = controlledblock.interpolator
-            # in case of a NiTransformInterpolator without a data block
-            # we still must re-export the interpolator for Oblivion to
-            # accept the file
-            # so simply add dummy keyframe data for this one with just a single
-            # key to flag the exporter to export the keyframe as interpolator
-            # (i.e. length 1 keyframes are simply interpolators)
-            if isinstance(controller.interpolator,
-                          NifFormat.NiTransformInterpolator) \
-                and controller.interpolator.data is None:
-                # create data block
-                kfi = controller.interpolator
-                kfi.data = NifFormat.NiTransformData()
-                # fill with info from interpolator
-                kfd = controller.interpolator.data
-                # copy rotation
-                kfd.num_rotation_keys = 1
-                kfd.rotation_type = NifFormat.KeyType.LINEAR_KEY
-                kfd.quaternion_keys.update_size()
-                kfd.quaternion_keys[0].time = 0.0
-                kfd.quaternion_keys[0].value.x = kfi.rotation.x
-                kfd.quaternion_keys[0].value.y = kfi.rotation.y
-                kfd.quaternion_keys[0].value.z = kfi.rotation.z
-                kfd.quaternion_keys[0].value.w = kfi.rotation.w
-                # copy translation
-                if kfi.translation.x < -1000000:
-                    # invalid, happens in fallout 3, e.g. h2haim.kf
-                    self.warning("ignored NaN in interpolator translation")
-                else:
-                    kfd.translations.num_keys = 1
-                    kfd.translations.keys.update_size()
-                    kfd.translations.keys[0].time = 0.0
-                    kfd.translations.keys[0].value.x = kfi.translation.x
-                    kfd.translations.keys[0].value.y = kfi.translation.y
-                    kfd.translations.keys[0].value.z = kfi.translation.z
-                # ignore scale, usually contains invalid data in interpolator
-
-            # save priority for future reference
-            # (priorities will be stored into the name of a NULL constraint on
-            # bones, see import_armature function)
-            self.bone_priorities[nodename] = controlledblock.priority
-
-        # DEBUG: save the file for manual inspection
-        #niffile = open("C:\\test.nif", "wb")
-        #NifFormat.write(niffile,
-        #                version = 0x14000005, user_version = 11, roots = [root])
 
 def menu_func(self, context):
     """Import operator for the menu."""
