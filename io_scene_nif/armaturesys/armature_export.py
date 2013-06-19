@@ -71,7 +71,7 @@ class Armature():
         # Blender bone names are unique so we can use them as keys.
         for b_textline in bonetxt.lines:
             line = b_textline.body
-            if len(line)>0:
+            if len(line) > 0:
                 # reconstruct matrix from text
                 b, m = line.split('/')
                 try:
