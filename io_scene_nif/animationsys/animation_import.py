@@ -82,7 +82,7 @@ class AnimationHelper():
                     "Animation for %s without controller type, so skipping"
                     % nodename)
                 continue
-            controller = selfnif_common.find_controller(node, getattr(NifFormat, controllertype))
+            controller = self.nif_common.find_controller(node, getattr(NifFormat, controllertype))
             if not controller:
                 self.info(
                     "Animation for %s with %s controller,"
@@ -120,7 +120,7 @@ class AnimationHelper():
                 # copy translation
                 if kfi.translation.x < -1000000:
                     # invalid, happens in fallout 3, e.g. h2haim.kf
-                    self.warning("ignored NaN in interpolator translation")
+                    self.nif_common.warning("ignored NaN in interpolator translation")
                 else:
                     kfd.translations.num_keys = 1
                     kfd.translations.keys.update_size()
@@ -156,9 +156,9 @@ class AnimationHelper():
             # get animation text buffer, and clear it if it already exists
             # TODO git rid of try-except block here
             try:
-                animtxt = [txt for txt in bpy.data.texts if txt.name == "Anim"][0]
+                bpy.data.texts["Anim"]
                 animtxt.clear()
-            except:
+            except KeyError:
                 animtxt = bpy.data.texts.new("Anim")
 
             frame = 1
@@ -241,7 +241,7 @@ class AnimationHelper():
         
     def set_animation(self, niBlock, b_obj):
         """Load basic animation info for this object."""
-        kfc = self.find_controller(niBlock, NifFormat.NiKeyframeController)
+        kfc = self.nif_common.find_controller(niBlock, NifFormat.NiKeyframeController)
         if not kfc:
             # no animation data: do nothing
             return
@@ -259,8 +259,8 @@ class AnimationHelper():
             return
 
         # denote progress
-        self.info("Animation")
-        self.info("Importing animation data for %s" % b_obj.name)
+        self.nif_common.info("Animation")
+        self.nif_common.info("Importing animation data for %s" % b_obj.name)
         assert(isinstance(kfd, NifFormat.NiKeyframeData))
         # create an Ipo for this object
         b_ipo = ObjectAnimation.get_object_ipo(b_obj)
@@ -268,7 +268,7 @@ class AnimationHelper():
         translations = kfd.translations
         scales = kfd.scales
         # add the keys
-        self.debug('Scale keys...')
+        self.nif_common.debug('Scale keys...')
         for key in scales.keys:
             frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
             Blender.Set('curframe', frame)
@@ -284,7 +284,7 @@ class AnimationHelper():
             xkeys = kfd.xyz_rotations[0].keys
             ykeys = kfd.xyz_rotations[1].keys
             zkeys = kfd.xyz_rotations[2].keys
-            self.debug('Rotation keys...(euler)')
+            self.nif_common.debug('Rotation keys...(euler)')
             for (xkey, ykey, zkey) in zip(xkeys, ykeys, zkeys):
                 frame = 1+int(xkey.time * self.fps + 0.5) # time 0.0 is frame 1
                 # XXX we assume xkey.time == ykey.time == zkey.time
@@ -297,7 +297,7 @@ class AnimationHelper():
         else:
             # uses quaternions
             if kfd.quaternion_keys:
-                self.debug('Rotation keys...(quaternions)')
+                self.nif_common.debug('Rotation keys...(quaternions)')
             for key in kfd.quaternion_keys:
                 frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                 Blender.Set('curframe', frame)
@@ -309,9 +309,9 @@ class AnimationHelper():
                 b_obj.insertIpoKey(Blender.Object.ROT)
 
         if translations.keys:
-            self.debug('Translation keys...')
+            self.nif_common.debug('Translation keys...')
         for key in translations.keys:
-            frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
+            frame = 1+int(key.time * self.nif_common.fps + 0.5) # time 0.0 is frame 1
             Blender.Set('curframe', frame)
             b_obj.LocX = key.value.x
             b_obj.LocY = key.value.y
