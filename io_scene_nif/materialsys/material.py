@@ -50,7 +50,9 @@ class material_import():
         
         # dictionary of materials, to reuse materials
         self.materials = {}
-        self.texturehelper = self.nif_common.texturehelper
+        
+    def set_texture_helper(self, texturehelper):
+        self.texturehelper = texturehelper
 
     def get_material_hash(self, n_mat_prop, n_texture_prop,
                           n_alpha_prop, n_specular_prop,

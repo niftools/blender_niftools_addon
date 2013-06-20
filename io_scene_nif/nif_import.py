@@ -42,6 +42,7 @@ from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.animationsys.animation_import import AnimationHelper
 from io_scene_nif.armaturesys.armature_import import Armature
 from io_scene_nif.collisionsys.collision_import import bhkshape_import, bound_import
+from io_scene_nif.constraintsys.constraint_import import Constraint
 from io_scene_nif.materialsys.material import material_import
 from io_scene_nif.texturesys.texture import texture_import
 
@@ -93,20 +94,16 @@ class NifImport(NifCommon):
         # import_armature
         self.bone_priorities = {}
 
-        # dictionary mapping bhkRigidBody objects to list of objects imported
-        # in Blender; after we've imported the tree, we use this dictionary
-        # to set the physics constraints (ragdoll etc)
-        self.havok_objects = {}
-
         # Helper systems
         # Store references to subsystems as needed.
+        self.animationhelper = AnimationHelper(parent=self)
+        self.armaturehelper = Armature(parent=self)
         self.bhkhelper = bhkshape_import(parent=self)
         self.boundhelper = bound_import(parent=self)
-        self.armaturehelper = Armature(parent=self)
+        self.constrainthelper = Constraint(parent=self)
         self.texturehelper = texture_import(parent=self)
         self.materialhelper = material_import(parent=self)
-        self.animationhelper = AnimationHelper(parent=self)
-
+        self.materialhelper.set_texture_helper(self.texturehelper)
         # catch NifImportError
         try:
             # check that one armature is selected in 'import geometry + parent
@@ -353,11 +350,12 @@ class NifImport(NifCommon):
         # store original names for re-export
         if self.names:
             self.armaturehelper.store_names()
-
+        
+        
         # now all havok objects are imported, so we are
         # ready to import the havok constraints
-        for hkbody in self.havok_objects:
-            self.import_bhk_constraints(hkbody)
+        self.constrainthelper.set_havok_objects(self.bhkhelper.get_havok_objects())
+        self.constrainthelper.import_bhk_constraints()
 
         # parent selected meshes to imported skeleton
         if self.properties.skeleton ==  "SKELETON_ONLY":

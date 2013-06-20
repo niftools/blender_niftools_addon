@@ -54,6 +54,13 @@ class bhkshape_import():
 
     def __init__(self, parent):
         self.nif_common = parent
+        
+        # dictionary mapping bhkRigidBody objects to objects imported in Blender; 
+        # we use this dictionary to set the physics constraints (ragdoll etc)
+        self.havok_objects = {}
+
+    def get_havok_objects(self):
+        return self.havok_objects
 
     def import_bhk_shape(self, bhkshape, upbflags="", bsxflags=2):
         """Imports any supported collision shape as list of blender meshes."""
@@ -171,7 +178,7 @@ class bhkshape_import():
         # import constraints
         # this is done once all objects are imported
         # for now, store all imported havok shapes with object lists
-        self.nif_common.havok_objects[bhkshape] = collision_objs
+        self.havok_objects[bhkshape] = collision_objs
 
         # and return a list of transformed collision shapes
         return collision_objs
