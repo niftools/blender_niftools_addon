@@ -66,7 +66,7 @@ class Armature():
         
         try:
             bonetxt = bpy.data.texts["BoneExMat"]
-        except NameError:
+        except KeyError:
             return
         # Blender bone names are unique so we can use them as keys.
         for b_textline in bonetxt.lines:
