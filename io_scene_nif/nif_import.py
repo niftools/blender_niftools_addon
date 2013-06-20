@@ -622,11 +622,11 @@ class NifImport(NifCommon):
 
                 # import the animations
                 if self.properties.animation:
-                    self.animation_helper.set_animation(niBlock, b_obj)
+                    self.animationhelper.set_animation(niBlock, b_obj)
                     # import the extras
-                    self.animation_helper.import_text_keys(niBlock)
+                    self.animationhelper.import_text_keys(niBlock)
                     # import vis controller
-                    self.animation_helper.object_animation.import_object_vis_controller(
+                    self.animationhelper.object_animation.import_object_vis_controller(
                         b_object=b_obj, n_node=niBlock)
 
             # import extra node data, such as node type
