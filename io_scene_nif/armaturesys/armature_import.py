@@ -823,9 +823,9 @@ class Armature():
 		# clear the text buffer, or create new buffer
 		try:
 			bonetxt = bpy.data.texts["BoneExMat"]
+			bonetxt.clear()
 		except KeyError:
 			bonetxt = bpy.data.texts.new("BoneExMat")
-		bonetxt.clear()
 		# write correction matrices to text buffer
 		for niBone, correction_matrix in self.nif_common.bones_extra_matrix.items():
 			# skip identity transforms
