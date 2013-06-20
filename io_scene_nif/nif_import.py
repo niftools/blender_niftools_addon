@@ -37,7 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from .nif_common import NifCommon
+from io_scene_nif.nif_common import NifCommon
 
 from io_scene_nif.animationsys.animation_import import AnimationHelper
 from io_scene_nif.armaturesys.armature_import import Armature
