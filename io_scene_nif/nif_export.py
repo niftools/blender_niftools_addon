@@ -73,7 +73,7 @@ class NifExport(NifCommon):
         the names dictionary."""
         try:
             namestxt = bpy.data.texts['FullNames']
-        except NameError:
+        except KeyError:
             return
         for b_textline in namestxt.lines:
             line = b_textline.body
