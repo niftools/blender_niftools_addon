@@ -19,6 +19,7 @@ def import_matrix(self, niBlock, relative_to=None):
     b_rot_mat[0].xyz = n_rot_mat3.m_11, n_rot_mat3.m_12, n_rot_mat3.m_13
     b_rot_mat[1].xyz = n_rot_mat3.m_21, n_rot_mat3.m_22, n_rot_mat3.m_23
     b_rot_mat[2].xyz = n_rot_mat3.m_31, n_rot_mat3.m_32, n_rot_mat3.m_33
+    b_rot_mat = b_rot_mat.transposed()
     
-    b_import_matrix = (b_loc_vec * b_rot_mat) * b_scale_mat
+    b_import_matrix = b_loc_vec * b_rot_mat * b_scale_mat
     return b_import_matrix
