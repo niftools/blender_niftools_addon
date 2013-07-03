@@ -38,6 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 from io_scene_nif.nif_common import NifCommon
+from io_scene_nif.utility import nif_utils
 
 from io_scene_nif.animationsys.animation_import import AnimationHelper
 from io_scene_nif.armaturesys.armature_import import Armature
@@ -618,7 +619,7 @@ class NifImport(NifCommon):
             # parented to b_obj
             if isinstance(b_obj, bpy.types.Object):
                 # note: bones already have their matrix set
-                b_obj.matrix_local = self.import_matrix(niBlock)
+                b_obj.matrix_local = nif_utils.import_matrix(niBlock)
 
                 # import the animations
                 if self.properties.animation:
@@ -703,27 +704,6 @@ class NifImport(NifCommon):
         self.debug("Selected unique name %s" % shortName)
         return shortName
 
-    def import_matrix(self, niBlock, relative_to=None):
-        """Retrieves a niBlock's transform matrix as a Mathutil.Matrix."""
-        # return Matrix(*niBlock.get_transform(relative_to).as_list())
-        n_scale, n_rot_mat3, n_loc_vec3 = niBlock.get_transform(relative_to).get_scale_rotation_translation()
-
-        # create a location matrix
-        b_loc_vec = mathutils.Vector(n_loc_vec3.as_tuple())
-        b_loc_vec = mathutils.Matrix.Translation(b_loc_vec)
-        
-        # create a scale matrix
-        b_scale_mat = mathutils.Matrix.Scale(n_scale, 4)
-
-        # create a rotation matrix
-        b_rot_mat = mathutils.Matrix()
-        b_rot_mat[0].xyz = n_rot_mat3.m_11, n_rot_mat3.m_12, n_rot_mat3.m_13
-        b_rot_mat[1].xyz = n_rot_mat3.m_21, n_rot_mat3.m_22, n_rot_mat3.m_23
-        b_rot_mat[2].xyz = n_rot_mat3.m_31, n_rot_mat3.m_32, n_rot_mat3.m_33
-        
-        b_import_matrix = (b_loc_vec * b_rot_mat) * b_scale_mat
-        return b_import_matrix
-
     def import_empty(self, niBlock):
         """Creates and returns a grouping empty."""
         shortname = self.import_name(niBlock)
@@ -790,11 +770,11 @@ class NifImport(NifCommon):
                     "BUG: cannot set matrix when importing meshes in groups;"
                     " use applytransform = True")
 
-            b_obj.matrix_local = self.import_matrix(niBlock, relative_to=relative_to)
+            b_obj.matrix_local = nif_utils.import_matrix(niBlock, relative_to=relative_to)
 
         else:
             # used later on
-            transform = self.import_matrix(niBlock, relative_to=relative_to)
+            transform = nif_utils.import_matrix(niBlock, relative_to=relative_to)
 
         # shortcut for mesh geometry data
         niData = niBlock.data
