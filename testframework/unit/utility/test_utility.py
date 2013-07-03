@@ -1,5 +1,4 @@
 import nose
-from nose import with_setup
 
 import pyffi
 from pyffi.formats.nif import NifFormat
