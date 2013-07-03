@@ -45,7 +45,6 @@ import nose
 from pyffi.utils.withref import ref
 from pyffi.formats.nif import NifFormat
 
-EPSILON = 0.005
 
 """Vertex coordinates for testing."""
 b_verts = {
@@ -87,14 +86,14 @@ def n_create_blocks(n_data):
             n_vector3.z = 20
         with ref(n_nitrishape.rotation) as n_matrix33:
             n_matrix33.m_11 = 0.0
-            n_matrix33.m_21 = -0.5
-            n_matrix33.m_31 = 0.866025
-            n_matrix33.m_12 = 0.866025
-            n_matrix33.m_22 = -0.433013
-            n_matrix33.m_32 = -0.25
-            n_matrix33.m_13 = 0.5
-            n_matrix33.m_23 = 0.75
-            n_matrix33.m_33 = 0.433012
+            n_matrix33.m_21 = -1.0
+            n_matrix33.m_31 = 1.732
+            n_matrix33.m_12 = 1.732
+            n_matrix33.m_22 = -0.866
+            n_matrix33.m_32 = -0.5
+            n_matrix33.m_13 = 1.0
+            n_matrix33.m_23 = 1.5
+            n_matrix33.m_33 = 0.866
             assert(n_matrix33.is_rotation()) # make sure in case we change values:
         n_nitrishape.scale = 0.75
         n_nitrishape.data = n_nitrishapedata_1
@@ -239,11 +238,11 @@ def n_check_transform(n_trishape):
     nose.tools.assert_equal(n_trishape.translation.as_tuple(),(20.0, 20.0, 20.0)) # location
     
     n_rot_eul = mathutils.Matrix(n_trishape.rotation.as_tuple()).to_euler()
-    nose.tools.assert_equal((n_rot_eul.x - math.radians(30.0)) < EPSILON, True) # x rotation
-    nose.tools.assert_equal((n_rot_eul.y - math.radians(60.0)) < EPSILON, True) # y rotation
-    nose.tools.assert_equal((n_rot_eul.z - math.radians(90.0)) < EPSILON, True) # z rotation
+    nose.tools.assert_equal((n_rot_eul.x - math.radians(30.0)) < NifFormat.EPSILON, True) # x rotation
+    nose.tools.assert_equal((n_rot_eul.y - math.radians(60.0)) < NifFormat.EPSILON, True) # y rotation
+    nose.tools.assert_equal((n_rot_eul.z - math.radians(90.0)) < NifFormat.EPSILON, True) # z rotation
     
-    nose.tools.assert_equal(n_trishape.scale - 0.75 < EPSILON, True) # scale
+    nose.tools.assert_equal(n_trishape.scale - 0.75 < NifFormat.EPSILON, True) # scale
 
 def n_check_trishape_data(n_trishape_data):
     nose.tools.assert_true(n_trishape_data.has_vertices)

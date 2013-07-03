@@ -11,7 +11,7 @@ Test driven development in a nutshell means:
  * We code the feature.
  * We re-run our tests, changing the code until it passes.
  
-The adantages of TDD is:
+The advantages of TDD is:
  * It gives us quick feedback when changes arises.
  * Constantly testing the code to ensure that it is doing what is meant to do, no assumptions.
  * When things break, it narrows the search; allowing fixes to be developed more quickily.
@@ -83,7 +83,7 @@ The goals were:
  
  #. Central clean repository which everyone forks from, avoids new developer cleaning up unwanted branches
  #. Developers create feature branch off develop, rebase if develop is updated
- #. Central repsitory to accept pull requests, for peer review.
+ #. Central repository to accept pull requests, for peer review.
  #. Merge code into develop, developers synch with central
  
 When a develop forks from the central repo, their repo will have only 2 branches, master & develop.

@@ -2,7 +2,7 @@ import mathutils
 
 
 
-def import_matrix(self, niBlock, relative_to=None):
+def import_matrix(niBlock, relative_to=None):
     """Retrieves a niBlock's transform matrix as a Mathutil.Matrix."""
     # return Matrix(*niBlock.get_transform(relative_to).as_list())
     n_scale, n_rot_mat3, n_loc_vec3 = niBlock.get_transform(relative_to).get_scale_rotation_translation()
