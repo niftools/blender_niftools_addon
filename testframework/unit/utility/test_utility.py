@@ -76,7 +76,7 @@ class Test_Utilites:
         n_mat33_z.m_32 = rhsrotz[7]
         n_mat33_z.m_33 = rhsrotz[8]
         
-        n_com = n_mat33_z * n_mat33_y * n_mat33_x
+        n_com = n_mat33_x * n_mat33_y * n_mat33_z
         
         cls.n_mat = NifFormat.Matrix44()
         cls.n_mat.set_scale_rotation_translation(scale, n_com, n_vec3)
@@ -88,16 +88,16 @@ class Test_Utilites:
         b_rot_mat_x = mathutils.Matrix.Rotation(math.radians(30.0), 4, 'X')
         b_rot_mat_y = mathutils.Matrix.Rotation(math.radians(60.0), 4, 'Y')
         b_rot_mat_z = mathutils.Matrix.Rotation(math.radians(90.0), 4, 'Z')
-        b_rot_mat = b_rot_mat_x * b_rot_mat_y * b_rot_mat_z
+        b_rot_mat = b_rot_mat_z * b_rot_mat_y * b_rot_mat_x
         
         b_scale_mat = mathutils.Matrix.Scale(scale, 4)
         
         cls.b_mat = b_loc_vec * b_rot_mat * b_scale_mat
         
         print("Building Matrices")
-        print("Nif - RHS")
+        print("Nif - LHS")
         print(cls.n_mat)
-        print("Blender - LHS")
+        print("Blender - RHS")
         print(cls.b_mat)
         
     @classmethod
