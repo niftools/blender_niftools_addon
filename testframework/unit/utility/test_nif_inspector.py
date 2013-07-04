@@ -7,7 +7,8 @@ from pyffi.formats.nif import NifFormat
 from pyffi.utils.withref import ref
 
 import mathutils
-
+import io_scene_nif
+from io_scene_nif.utility import nif_utils
 
 
 '''Handy class for reading / writing nifs'''
@@ -34,31 +35,25 @@ class Test_NifInspector:
         print(self.data)
         with open(self.dir + self.filename + ".nif", 'wb') as stream:
             self.data.write(stream)
+            
          
     def read_file(self):
         stream = open(self.dir + self.filename + ".nif", 'rb')
         self.data.read(stream)
-        # write inspection code.
+        self.check_data()
          
     def create_data(self):
         
-        translation = (2.0, 3.0, 4.0)
+        translation = (1, 2, 3)
         scale = 2
-         
-        #create equivilant Blender matrix
-        b_loc_vec = mathutils.Vector(translation)
-        b_loc_vec = mathutils.Matrix.Translation(b_loc_vec)
-         
-        b_rot_mat_x = mathutils.Matrix.Rotation(math.radians(30.0), 4, 'X')
-        b_rot_mat_y = mathutils.Matrix.Rotation(math.radians(60.0), 4, 'Y')
-        b_rot_mat_z = mathutils.Matrix.Rotation(math.radians(90.0), 4, 'Z')
-        b_rot_mat = b_rot_mat_x * b_rot_mat_y * b_rot_mat_z
-         
-        b_scale_mat = mathutils.Matrix.Scale(scale, 4)
-         
-        b_mat = b_loc_vec * b_rot_mat * b_scale_mat
-        b_mat = b_mat.transposed()
-         
+
+        n_rot_mat_x = mathutils.Matrix.Rotation(math.radians(30.0), 4, 'X')
+        n_rot_mat_y = mathutils.Matrix.Rotation(math.radians(60.0), 4, 'Y')
+        n_rot_mat_z = mathutils.Matrix.Rotation(math.radians(90.0), 4, 'Z')
+        n_rot_mat = n_rot_mat_z * n_rot_mat_y * n_rot_mat_x
+        n_rot_mat.transpose()
+        print(n_rot_mat)
+        
         self.data.version = 0x14000005
         self.data.user_version = 11
         self.data.user_version_2 = 11
@@ -70,22 +65,27 @@ class Test_NifInspector:
             n_ninode.name = b'Scene Root'
             n_ninode.flags = 14
             with ref(n_ninode.rotation) as n_matrix33:
-                n_matrix33.m_11 = b_mat[0][0]
-                n_matrix33.m_21 = b_mat[1][0]
-                n_matrix33.m_31 = b_mat[2][0]
-                n_matrix33.m_12 = b_mat[0][1]
-                n_matrix33.m_22 = b_mat[1][1]
-                n_matrix33.m_32 = b_mat[2][1]
-                n_matrix33.m_13 = b_mat[0][2]
-                n_matrix33.m_23 = b_mat[1][2]
-                n_matrix33.m_33 = b_mat[2][2]
+                n_matrix33.m_11 = n_rot_mat[0][0]
+                n_matrix33.m_21 = n_rot_mat[0][1]
+                n_matrix33.m_31 = n_rot_mat[0][2]
+                n_matrix33.m_12 = n_rot_mat[1][0]
+                n_matrix33.m_22 = n_rot_mat[1][1]
+                n_matrix33.m_32 = n_rot_mat[1][2]
+                n_matrix33.m_13 = n_rot_mat[2][0]
+                n_matrix33.m_23 = n_rot_mat[2][1]
+                n_matrix33.m_33 = n_rot_mat[2][2]
             
             with ref(n_ninode.translation) as n_vector3:
-                n_vector3.x = b_mat[3][0]
-                n_vector3.y = b_mat[3][1]
-                n_vector3.z = b_mat[3][2]
+                n_vector3.x = translation[0]
+                n_vector3.y = translation[1]
+                n_vector3.z = translation[2]
             
-            n_ninode.scale = 1
+            n_ninode.scale = scale
             
-    
+            
+    def check_data(self):
+        ni_node = self.data.roots[0]
+        b_mat = nif_utils.import_matrix(ni_node)
+        print(b_mat)
+        
     
