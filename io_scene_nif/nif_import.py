@@ -85,9 +85,6 @@ class NifImport(NifCommon):
         # B' = X * B, where B' is the Blender bone matrix, and B is the NIF bone matrix
         self.bones_extra_matrix = {}
 
-        # dictionary of bones that belong to a certain armature
-        # maps NIF armature name to list of NIF bone name
-        self.armatures = {}
 
         # bone animation priorities (maps NiNode name to priority number);
         # priorities are set in import_kf_root and are stored into the name

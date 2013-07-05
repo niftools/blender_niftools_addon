@@ -61,6 +61,10 @@ class Armature():
 								   [ 0.0, 0.0, 1.0, 0.0],
 								   [ 0.0, 0.0, 0.0, 1.0]])
 	
+	# dictionary of bones that belong to a certain armature
+    # maps NIF armature name to list of NIF bone name
+	armatures = {}
+	
 	def __init__(self, parent):
 		self.nif_common = parent
 	
@@ -623,8 +627,8 @@ class Armature():
 					skelroot = niBlock
 			else:
 				skelroot = niBlock
-			if skelroot not in self.nif_common.armatures:
-				self.nif_common.armatures[skelroot] = []
+			if skelroot not in self.armatures:
+				self.armatures[skelroot] = []
 			self.nif_common.info("Selecting node '%s' as skeleton root"
 							 % skelroot.name)
 			# add bones
@@ -635,18 +639,18 @@ class Armature():
 					continue
 				if self.nif_common.is_grouping_node(bone):
 					continue
-				if bone not in self.nif_common.armatures[skelroot]:
-					self.nif_common.armatures[skelroot].append(bone)
+				if bone not in self.armatures[skelroot]:
+					self.armatures[skelroot].append(bone)
 			return # done!
 
 		# attaching to selected armature -> first identify armature and bones
-		elif self.nif_common.properties.skeleton == "GEOMETRY_ONLY" and not self.nif_common.armatures:
+		elif self.nif_common.properties.skeleton == "GEOMETRY_ONLY" and not self.armatures:
 			skelroot = niBlock.find(block_name=self.nif_common.selected_objects[0].name)
 			if not skelroot:
 				raise NifImportError(
 					"nif has no armature '%s'" % self.nif_common.selected_objects[0].name)
 			self.nif_common.debug("Identified '%s' as armature" % skelroot.name)
-			self.nif_common.armatures[skelroot] = []
+			self.armatures[skelroot] = []
 			for bone_name in self.nif_common.selected_objects[0].data.bones.keys():
 				# blender bone naming -> nif bone naming
 				nif_bone_name = self.nif_common.get_bone_name_for_nif(bone_name)
@@ -658,7 +662,7 @@ class Armature():
 						"Identified nif block '%s' with bone '%s' "
 						"in selected armature" % (nif_bone_name, bone_name))
 					self.nif_common.names[bone_block] = bone_name
-					self.nif_common.armatures[skelroot].append(bone_block)
+					self.armatures[skelroot].append(bone_block)
 					self.complete_bone_tree(bone_block, skelroot)
 
 		# search for all NiTriShape or NiTriStrips blocks...
@@ -672,12 +676,12 @@ class Armature():
 				skininst = niBlock.skin_instance
 				skelroot = skininst.skeleton_root
 				if self.nif_common.properties.skeleton == "EVERYTHING":
-					if skelroot not in self.nif_common.armatures:
-						self.nif_common.armatures[skelroot] = []
+					if skelroot not in self.armatures:
+						self.armatures[skelroot] = []
 						self.nif_common.debug("'%s' is an armature"
 										  % skelroot.name)
 				elif self.nif_common.properties.skeleton == "GEOMETRY_ONLY":
-					if skelroot not in self.nif_common.armatures:
+					if skelroot not in self.armatures:
 						raise NifImportError(
 							"nif structure incompatible with '%s' as armature:"
 							" node '%s' has '%s' as armature"
@@ -688,8 +692,8 @@ class Armature():
 					# boneBlock can be None; see pyffi issue #3114079
 					if not boneBlock:
 						continue
-					if boneBlock not in self.nif_common.armatures[skelroot]:
-						self.nif_common.armatures[skelroot].append(boneBlock)
+					if boneBlock not in self.armatures[skelroot]:
+						self.armatures[skelroot].append(boneBlock)
 						self.nif_common.debug(
 							"'%s' is a bone of armature '%s'"
 							% (boneBlock.name, skelroot.name))
@@ -711,8 +715,8 @@ class Armature():
 							continue
 						if self.nif_common.is_grouping_node(bone):
 							continue
-						if bone not in self.nif_common.armatures[skelroot]:
-							self.nif_common.armatures[skelroot].append(bone)
+						if bone not in self.armatures[skelroot]:
+							self.armatures[skelroot].append(bone)
 							self.nif_common.debug(
 								"'%s' marked as extra bone of armature '%s'"
 								% (bone.name, skelroot.name))
@@ -732,15 +736,15 @@ class Armature():
 		a skin instance.
 		"""
 		# we must already have marked this one as a bone
-		assert skelroot in self.nif_common.armatures # debug
-		assert bone in self.nif_common.armatures[skelroot] # debug
+		assert skelroot in self.armatures # debug
+		assert bone in self.armatures[skelroot] # debug
 		# get the node parent, this should be marked as an armature or as a bone
 		boneparent = bone._parent
 		if boneparent != skelroot:
 			# parent is not the skeleton root
-			if boneparent not in self.nif_common.armatures[skelroot]:
+			if boneparent not in self.armatures[skelroot]:
 				# neither is it marked as a bone: so mark the parent as a bone
-				self.nif_common.armatures[skelroot].append(boneparent)
+				self.armatures[skelroot].append(boneparent)
 				# store the coordinates for realignement autodetection 
 				self.nif_common.debug("'%s' is a bone of armature '%s'"
 								  % (boneparent.name, skelroot.name))
@@ -753,7 +757,7 @@ class Armature():
 		"""Tests a NiNode to see if it's a bone."""
 		if not niBlock :
 			return False
-		for bones in self.nif_common.armatures.values():
+		for bones in self.armatures.values():
 			if niBlock in bones:
 				return True
 		return False
@@ -761,7 +765,7 @@ class Armature():
 	def is_armature_root(self, niBlock):
 		"""Tests a block to see if it's an armature."""
 		if isinstance(niBlock, NifFormat.NiNode):
-			return  niBlock in self.nif_common.armatures
+			return  niBlock in self.armatures
 		return False
 		
 	def get_closest_bone(self, niBlock, skelroot):
@@ -780,7 +784,7 @@ class Armature():
 		if self.is_bone(niBlock):
 			bone_name = self.nif_common.names[niBlock]
 			armatureName = None
-			for armatureBlock, boneBlocks in self.nif_common.armatures.items():
+			for armatureBlock, boneBlocks in self.armatures.items():
 				if niBlock in boneBlocks:
 					armatureName = self.nif_common.names[armatureBlock]
 					break
