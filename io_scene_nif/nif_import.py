@@ -80,12 +80,6 @@ class NifImport(NifCommon):
         # dictionary of bones, maps Blender name to NIF block
         self.blocks = {}
 
-        # dictionary of bones, maps Blender bone name to matrix that maps the
-        # NIF bone matrix on the Blender bone matrix
-        # B' = X * B, where B' is the Blender bone matrix, and B is the NIF bone matrix
-        self.bones_extra_matrix = {}
-
-
         # bone animation priorities (maps NiNode name to priority number);
         # priorities are set in import_kf_root and are stored into the name
         # of a NULL constraint (for lack of something better) in
@@ -342,7 +336,7 @@ class NifImport(NifCommon):
                 % root_block.__class__)
 
         # store bone matrix offsets for re-export
-        if self.bones_extra_matrix:
+        if self.armaturehelper.bones_extra_matrix:
             self.armaturehelper.store_bones_extra_matrix()
 
         # store original names for re-export
@@ -534,6 +528,9 @@ class NifImport(NifCommon):
                     b_child.parent = b_obj
 
             elif isinstance(b_obj, bpy.types.Bone):
+                
+                #TODO MOVE TO ANIMATIONHELPER
+                
                 # bone parentship, is a bit more complicated
                 # go to rest position
                 
@@ -570,7 +567,7 @@ class NifImport(NifCommon):
 
                     # post multiply Z with X^{-1}
                     extra = mathutils.Matrix(
-                        self.bones_extra_matrix[niBlock])
+                        self.armaturehelper.bones_extra_matrix[niBlock])
                     extra.invert()
                     matrix = matrix * extra
                     # cancel out the tail translation T

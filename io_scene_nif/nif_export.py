@@ -151,6 +151,7 @@ class NifExport(NifCommon):
         self.boundhelper = bound_export(parent=self)
         self.bhkshapehelper = bhkshape_export(parent=self)
         self.armaturehelper = Armature(parent=self)
+        self.animationhelper = AnimationHelper(parent=self)
 
         self.info("exporting {0}".format(self.properties.filepath))
 
@@ -374,7 +375,7 @@ class NifExport(NifCommon):
                     and (not self.properties.bs_animation_node)):
                     self.info("Defining dummy keyframe controller")
                     # add a trivial keyframe controller on the scene root
-                    self.export_keyframes(None, 'localspace', root_block)
+                    self.animationhelper.export_keyframes(None, 'localspace', root_block)
             if (self.properties.bs_animation_node
                 and self.properties.game == 'MORROWIND'):
                 for block in self.blocks:
@@ -1084,7 +1085,7 @@ class NifExport(NifCommon):
                 if any(
                     b_obj_ipo[b_channel]
                     for b_channel in (Ipo.OB_LOCX, Ipo.OB_ROTX, Ipo.OB_SCALEX)):
-                    self.export_keyframes(b_obj_ipo, space, node)
+                    self.animationhelper.export_keyframes(b_obj_ipo, space, node)
                 self.export_object_vis_controller(b_obj, node)
             # if it is a mesh, export the mesh as trishape children of
             # this ninode
