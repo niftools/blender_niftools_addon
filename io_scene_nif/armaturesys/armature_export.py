@@ -184,7 +184,7 @@ class Armature():
                 bonexmat_inv = mathutils.Matrix()
                 bonexmat_inv.identity()
             if bone.name in bones_ipo:
-                self.nif_common.export_keyframes(
+                self.nif_common.animationhelper.export_keyframes(
                     bones_ipo[bone.name], 'localspace', node,
                     bind_matrix = bonerestmat, extra_mat_inv = bonexmat_inv)
 
