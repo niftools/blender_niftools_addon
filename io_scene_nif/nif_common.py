@@ -203,16 +203,6 @@ class NifCommon:
             "Unsupported cycle mode in nif, using clamped.")
         return Blender.IpoCurve.ExtendTypes.CONST
 
-    def get_flags_from_extend(self, extend):
-        if extend == Blender.IpoCurve.ExtendTypes.CONST:
-            return 4 # 0b100
-        elif extend == Blender.IpoCurve.ExtendTypes.CYCLIC:
-            return 0
-
-        self.warning(
-            "Unsupported extend type in blend, using clamped.")
-        return 4
-
     def get_b_ipol_from_n_ipol(self, n_ipol):
         if n_ipol == NifFormat.KeyType.LINEAR_KEY:
             return Blender.IpoCurve.InterpTypes.LINEAR
