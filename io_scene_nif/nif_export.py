@@ -2849,31 +2849,7 @@ class NifExport(NifCommon):
 
 
 
-    def decompose_srt(self, matrix):
-        """Decompose Blender transform matrix as a scale, rotation matrix, and
-        translation vector."""
-        # get scale components
-        # get scale components
-        trans_vec, rot_quat, scale_vec = matrix.decompose()
-        scale_rot = rot_quat.to_matrix()
-        scale_rot_T = mathutils.Matrix(scale_rot)
-        scale_rot_T.transpose()
-        scale_rot_2 = scale_rot * scale_rot_T
-        # and fix their sign
-        if (scale_rot.determinant() < 0): scale_vec.negate()
-        # only uniform scaling
-        # allow rather large error to accomodate some nifs
-        if abs(scale_vec[0]-scale_vec[1]) + abs(scale_vec[1]-scale_vec[2]) > 0.02:
-            raise NifExportError(
-                "Non-uniform scaling not supported."
-                " Workaround: apply size and rotation (CTRL-A).")
-        b_scale = scale_vec[0]
-        # get rotation matrix
-        b_rot = scale_rot * b_scale
-        # get translation
-        b_trans = trans_vec
-        # done!
-        return [b_scale, b_rot, b_trans]
+
 
     def create_block(self, blocktype, b_obj = None):
         """Helper function to create a new block, register it in the list of
