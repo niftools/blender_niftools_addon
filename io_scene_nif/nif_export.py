@@ -43,6 +43,7 @@ from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.animationsys.animation_export import AnimationHelper
 from io_scene_nif.collisionsys.collision_export import bhkshape_export, bound_export
 from io_scene_nif.armaturesys.armature_export import Armature
+from io_scene_nif.propertysys.property_export import PropertyHelper
 
 
 import logging
@@ -152,6 +153,7 @@ class NifExport(NifCommon):
         self.bhkshapehelper = bhkshape_export(parent=self)
         self.armaturehelper = Armature(parent=self)
         self.animationhelper = AnimationHelper(parent=self)
+        self.propertyhelper = PropertyHelper(parent=self)
 
         self.info("exporting {0}".format(self.properties.filepath))
 
@@ -578,11 +580,11 @@ class NifExport(NifCommon):
 
             # add vertex color and zbuffer properties for civ4 and railroads
             if self.properties.game in ('CIVILIZATION_IV', 'SID_MEIER_S_RAILROADS'):
-                self.export_vertex_color_property(root_block)
-                self.export_z_buffer_property(root_block)
+                self.propertyhelper.object_property.export_vertex_color_property(root_block)
+                self.propertyhelper.object_property.export_z_buffer_property(root_block)
             elif self.properties.game in ('EMPIRE_EARTH_II',):
-                self.export_vertex_color_property(root_block)
-                self.export_z_buffer_property(root_block, flags=15, function=1)
+                self.propertyhelper.object_property.export_vertex_color_property(root_block)
+                self.propertyhelper.object_property.export_z_buffer_property(root_block, flags=15, function=1)
 
             # FIXME
             """
@@ -1104,52 +1106,7 @@ class NifExport(NifCommon):
 
         return node
 
-    def export_vertex_color_property(self, block_parent,
-                                     flags=1,
-                                     vertex_mode=0, lighting_mode=1):
-        """Create a vertex color property, and attach it to an existing block
-        (typically, the root of the nif tree).
 
-        @param block_parent: The block to which to attach the new property.
-        @param flags: The C{flags} of the new property.
-        @param vertex_mode: The C{vertex_mode} of the new property.
-        @param lighting_mode: The C{lighting_mode} of the new property.
-        @return: The new property block.
-        """
-        # create new vertex color property block
-        vcolprop = self.create_block("NiVertexColorProperty")
-
-        # make it a property of the parent
-        block_parent.add_property(vcolprop)
-
-        # and now export the parameters
-        vcolprop.flags = flags
-        vcolprop.vertex_mode = vertex_mode
-        vcolprop.lighting_mode = lighting_mode
-
-        return vcolprop
-
-    def export_z_buffer_property(self, block_parent,
-                                 flags=15, function=3):
-        """Create a z-buffer property, and attach it to an existing block
-        (typically, the root of the nif tree).
-
-        @param block_parent: The block to which to attach the new property.
-        @param flags: The C{flags} of the new property.
-        @param function: The C{function} of the new property.
-        @return: The new property block.
-        """
-        # create new z-buffer property block
-        zbuf = self.create_block("NiZBufferProperty")
-
-        # make it a property of the parent
-        block_parent.add_property(zbuf)
-
-        # and now export the parameters
-        zbuf.flags = flags
-        zbuf.function = function
-
-        return zbuf
 
     def export_anim_groups(self, animtxt, block_parent):
         """Parse the animation groups buffer and write an extra string
