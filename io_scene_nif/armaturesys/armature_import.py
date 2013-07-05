@@ -65,8 +65,14 @@ class Armature():
     # maps NIF armature name to list of NIF bone name
 	armatures = {}
 	
+	# dictionary of bones, maps Blender bone name to matrix that maps the
+	# NIF bone matrix on the Blender bone matrix
+    # B' = X * B, where B' is the Blender bone matrix, and B is the NIF bone matrix
+	bones_extra_matrix = {}
+	
 	def __init__(self, parent):
 		self.nif_common = parent
+		self.properties = self.nif_common.properties
 	
 	def import_armature(self, niArmature):
 		"""Scans an armature hierarchy, and returns a whole armature.
@@ -108,7 +114,7 @@ class Armature():
 
 		# The armature has been created in editmode,
 		# now we are ready to set the bone keyframes.
-		if self.nif_common.properties.animation:
+		if self.properties.animation:
 			# create an action
 			action = bpy.data.actions.new(armature_name)
 			bpy.types.NlaTrack.select = b_armature #action.setActive(b_armature)
@@ -314,8 +320,8 @@ class Armature():
 							# time 0.0 is frame 1
 							# XXX it is assumed that all the keys have the
 							# XXX same times!!!
-							if (abs(xkey.time - ykey.time) > self.nif_common.properties.epsilon
-								or abs(xkey.time - zkey.time) > self.nif_common.properties.epsilon):
+							if (abs(xkey.time - ykey.time) > self.properties.epsilon
+								or abs(xkey.time - zkey.time) > self.properties.epsilon):
 								self.nif_common.warning(
 									"xyz key times do not correspond, "
 									"animation may not be correctly imported")
@@ -445,7 +451,7 @@ class Armature():
 
 		# bone length for nubs and zero length bones
 		nub_length = 5.0
-		scale = self.nif_common.properties.scale_correction
+		scale = self.properties.scale_correction
 		# bone name
 		bone_name = self.nif_common.import_name(niBlock, 32)
 		niChildBones = [ child for child in niBlock.children
@@ -485,8 +491,8 @@ class Armature():
 			dx = b_bone_head_x - b_bone_tail_x
 			dy = b_bone_head_y - b_bone_tail_y
 			dz = b_bone_head_z - b_bone_tail_z
-			is_zero_length = abs(dx + dy + dz) * 200 < self.nif_common.properties.epsilon
-		elif self.nif_common.properties.import_realign_bones == 2:
+			is_zero_length = abs(dx + dy + dz) * 200 < self.properties.epsilon
+		elif self.properties.import_realign_bones == 2:
 			# The correction matrix value is based on the childrens' head
 			# positions.
 			# If there are no children then set it as the same as the
@@ -497,7 +503,7 @@ class Armature():
 		if is_zero_length:
 			# this is a 0 length bone, to avoid it being removed
 			# set a default minimum length
-			if (self.nif_common.properties.import_realign_bones == 2) \
+			if (self.properties.import_realign_bones == 2) \
 			   or not self.is_bone(niBlock._parent):
 				# no parent bone, or bone is realigned with correction
 				# set one random direction
@@ -511,7 +517,7 @@ class Armature():
 				dx = b_bone_head_x - parent_tail[0]
 				dy = b_bone_head_y - parent_tail[1]
 				dz = b_bone_head_z - parent_tail[2]
-				if abs(dx + dy + dz) * 200 < self.nif_common.properties.epsilon:
+				if abs(dx + dy + dz) * 200 < self.properties.epsilon:
 					# no offset from the parent: follow the parent's
 					# orientation
 					parent_head = b_armatureData.edit_bones[
@@ -529,10 +535,10 @@ class Armature():
 		b_bone.head = mathutils.Vector((b_bone_head_x, b_bone_head_y, b_bone_head_z))
 		b_bone.tail = mathutils.Vector((b_bone_tail_x, b_bone_tail_y, b_bone_tail_z))
 		
-		if self.nif_common.properties.import_realign_bones == 2:
+		if self.properties.import_realign_bones == 2:
 			# applies the corrected matrix explicitly
 			b_bone.matrix = m_correction.resize_4x4() * armature_space_matrix
-		elif self.nif_common.properties.import_realign_bones == 1:
+		elif self.properties.import_realign_bones == 1:
 			# do not do anything, keep unit matrix
 			pass
 		else:
@@ -552,7 +558,7 @@ class Armature():
 		new_bone_matrix[2][3] = b_bone_head_z
 		# stores any correction or alteration applied to the bone matrix
 		# new * inverse(old)
-		self.nif_common.bones_extra_matrix[niBlock] = new_bone_matrix * old_bone_matrix_inv
+		self.bones_extra_matrix[niBlock] = new_bone_matrix * old_bone_matrix_inv
 		# set bone children
 		for niBone in niChildBones:
 			b_child_bone = self.import_bone(
@@ -566,7 +572,7 @@ class Armature():
 	def find_correction_matrix(self, niBlock, niArmature):
 		"""Returns the correction matrix for a bone."""
 		m_correction = self.IDENTITY44.to_3x3()
-		if (self.nif_common.properties.import_realign_bones == 2) and self.is_bone(niBlock):
+		if (self.properties.import_realign_bones == 2) and self.is_bone(niBlock):
 			armature_space_matrix = self.nif_common.import_matrix(niBlock,
 													   relative_to=niArmature)
 
@@ -611,9 +617,9 @@ class Armature():
 		# case where we import skeleton only,
 		# or importing an Oblivion or Fallout 3 skeleton:
 		# do all NiNode's as bones
-		if self.nif_common.properties.skeleton == "SKELETON_ONLY" or (
+		if self.properties.skeleton == "SKELETON_ONLY" or (
 			self.nif_common.data.version in (0x14000005, 0x14020007) and
-			(os.path.basename(self.nif_common.properties.filepath).lower()
+			(os.path.basename(self.properties.filepath).lower()
 			 in ('skeleton.nif', 'skeletonbeast.nif'))):
 
 			if not isinstance(niBlock, NifFormat.NiNode):
@@ -644,7 +650,7 @@ class Armature():
 			return # done!
 
 		# attaching to selected armature -> first identify armature and bones
-		elif self.nif_common.properties.skeleton == "GEOMETRY_ONLY" and not self.armatures:
+		elif self.properties.skeleton == "GEOMETRY_ONLY" and not self.armatures:
 			skelroot = niBlock.find(block_name=self.nif_common.selected_objects[0].name)
 			if not skelroot:
 				raise NifImportError(
@@ -675,12 +681,12 @@ class Armature():
 				# so mark the node to be imported as an armature
 				skininst = niBlock.skin_instance
 				skelroot = skininst.skeleton_root
-				if self.nif_common.properties.skeleton == "EVERYTHING":
+				if self.properties.skeleton == "EVERYTHING":
 					if skelroot not in self.armatures:
 						self.armatures[skelroot] = []
 						self.nif_common.debug("'%s' is an armature"
 										  % skelroot.name)
-				elif self.nif_common.properties.skeleton == "GEOMETRY_ONLY":
+				elif self.properties.skeleton == "GEOMETRY_ONLY":
 					if skelroot not in self.armatures:
 						raise NifImportError(
 							"nif structure incompatible with '%s' as armature:"
@@ -806,8 +812,8 @@ class Armature():
 		# and fix their sign
 		if (scale_rot.determinant() < 0): scale_vec.negate()
 		# only uniform scaling
-		if (abs(scale_vec[0]-scale_vec[1]) >= self.nif_common.properties.epsilon
-			or abs(scale_vec[1]-scale_vec[2]) >= self.nif_common.properties.epsilon):
+		if (abs(scale_vec[0]-scale_vec[1]) >= self.properties.epsilon
+			or abs(scale_vec[1]-scale_vec[2]) >= self.properties.epsilon):
 			self.nif_common.warning(
 				"Corrupt rotation matrix in nif: geometry errors may result.")
 		b_scale = scale_vec[0]
@@ -831,11 +837,11 @@ class Armature():
 		except KeyError:
 			bonetxt = bpy.data.texts.new("BoneExMat")
 		# write correction matrices to text buffer
-		for niBone, correction_matrix in self.nif_common.bones_extra_matrix.items():
+		for niBone, correction_matrix in self.bones_extra_matrix.items():
 			# skip identity transforms
 			if sum(sum(abs(x) for x in row)
 				   for row in (correction_matrix - self.IDENTITY44)) \
-				< self.nif_common.properties.epsilon:
+				< self.properties.epsilon:
 				continue
 			# 'pickle' the correction matrix
 			line = ''
