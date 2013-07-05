@@ -1,6 +1,9 @@
 import mathutils
 import math
 
+class NifExportError(Exception):
+    """A simple custom exception class for export errors."""
+    pass
 
 def import_matrix(niBlock, relative_to=None):
     """Retrieves a niBlock's transform matrix as a Mathutil.Matrix."""
@@ -30,3 +33,30 @@ def import_matrix(niBlock, relative_to=None):
     b_rot_mat = b_rot_mat.to_matrix()
     b_import_matrix = b_loc_vec * b_rot_mat * b_scale_mat
     return b_import_matrix
+
+
+def decompose_srt(self, matrix):
+    """Decompose Blender transform matrix as a scale, rotation matrix, and
+    translation vector."""
+    # get scale components
+    # get scale components
+    trans_vec, rot_quat, scale_vec = matrix.decompose()
+    scale_rot = rot_quat.to_matrix()
+    scale_rot_T = mathutils.Matrix(scale_rot)
+    scale_rot_T.transpose()
+    scale_rot_2 = scale_rot * scale_rot_T
+    # and fix their sign
+    if (scale_rot.determinant() < 0): scale_vec.negate()
+    # only uniform scaling
+    # allow rather large error to accomodate some nifs
+    if abs(scale_vec[0]-scale_vec[1]) + abs(scale_vec[1]-scale_vec[2]) > 0.02:
+        raise NifExportError(
+            "Non-uniform scaling not supported."
+            " Workaround: apply size and rotation (CTRL-A).")
+    b_scale = scale_vec[0]
+    # get rotation matrix
+    b_rot = scale_rot * b_scale
+    # get translation
+    b_trans = trans_vec
+    # done!
+    return [b_scale, b_rot, b_trans]
