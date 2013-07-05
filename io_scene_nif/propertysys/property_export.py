@@ -42,7 +42,7 @@ from pyffi.formats.nif import NifFormat
 class AnimationHelper():
     
     def __init__(self, parent):
-        self.nif_common = parent
+        self.nif_export = parent
         self.properties = parent.properties
         self.object_property = ObjectProperty(parent)
         self.material_property = MaterialProperty(parent)
@@ -52,7 +52,7 @@ class AnimationHelper():
 class ObjectProperty():
     
     def __init__(self, parent):
-        self.nif_common = parent
+        self.nif_export = parent
     
     def export_vertex_color_property(self, block_parent,
                                  flags=1,
@@ -67,7 +67,7 @@ class ObjectProperty():
         @return: The new property block.
         """
         # create new vertex color property block
-        vcolprop = self.create_block("NiVertexColorProperty")
+        vcolprop = self.nif_export.create_block("NiVertexColorProperty")
     
         # make it a property of the parent
         block_parent.add_property(vcolprop)
@@ -90,7 +90,7 @@ class ObjectProperty():
         @return: The new property block.
         """
         # create new z-buffer property block
-        zbuf = self.create_block("NiZBufferProperty")
+        zbuf = self.nif_export.create_block("NiZBufferProperty")
 
         # make it a property of the parent
         block_parent.add_property(zbuf)
