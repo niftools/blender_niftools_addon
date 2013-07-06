@@ -49,7 +49,7 @@ class Texture():
     textures = {}
 
     def __init__(self, parent):
-        self.nif_common = parent
+        self.nif_export = parent
         self.properties = parent.properties
         
     def export_texture_filename(self, texture):
@@ -115,3 +115,46 @@ class Texture():
                 % texture.name)
             
 
+    def export_source_texture(self, texture=None, filename=None):
+        """Export a NiSourceTexture.
+
+        :param texture: The texture object in blender to be exported.
+        :param filename: The full or relative path to the texture file
+            (this argument is used when exporting NiFlipControllers
+            and when exporting default shader slots that have no use in
+            being imported into Blender).
+        :return: The exported NiSourceTexture block.
+        """
+
+        # create NiSourceTexture
+        srctex = NifFormat.NiSourceTexture()
+        srctex.use_external = True
+        if not filename is None:
+            # preset filename
+            srctex.file_name = filename
+        elif not texture is None:
+            srctex.file_name = self.export_texture_filename(texture)
+        else:
+            # this probably should not happen
+            self.nif_export.warning(
+                "Exporting source texture without texture or filename (bug?).")
+
+        # fill in default values (TODO: can we use 6 for everything?)
+        if self.nif_export.version >= 0x0a000100:
+            srctex.pixel_layout = 6
+        else:
+            srctex.pixel_layout = 5
+        srctex.use_mipmaps = 1
+        srctex.alpha_format = 3
+        srctex.unknown_byte = 1
+
+        # search for duplicate
+        for block in self.blocks:
+            if isinstance(block, NifFormat.NiSourceTexture) and block.get_hash() == srctex.get_hash():
+                return block
+
+        # no identical source texture found, so use and register
+        # the new one
+        return self.nif_export.register_block(srctex, texture)
+    
+    
