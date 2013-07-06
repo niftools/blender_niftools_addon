@@ -1105,54 +1105,7 @@ class NifExport(NifCommon):
             self.armaturehelper.export_children(b_obj, node)
 
         return node
-
-
-    
-
-    
-
-    def export_flip_controller(self, fliptxt, texture, target, target_tex):
-        ## TODO port code to use native Blender texture flipping system
-        #
-        # export a NiFlipController
-        #
-        # fliptxt is a blender text object containing the flip definitions
-        # texture is the texture object in blender ( texture is used to checked for pack and mipmap flags )
-        # target is the NiTexturingProperty
-        # target_tex is the texture to flip ( 0 = base texture, 4 = glow texture )
-        #
-        # returns exported NiFlipController
-        #
-        tlist = fliptxt.asLines()
-
-        # create a NiFlipController
-        flip = self.create_block("NiFlipController", fliptxt)
-        target.add_controller(flip)
-
-        # fill in NiFlipController's values
-        flip.flags = 8 # active
-        flip.frequency = 1.0
-        flip.start_time = (self.context.scene.frame_start - 1) * self.context.scene.render.fps
-        flip.stop_time = ( self.context.scene.frame_end - self.context.scene.frame_start ) * self.context.scene.render.fps
-        flip.texture_slot = target_tex
-        count = 0
-        for t in tlist:
-            if len( t ) == 0: continue  # skip empty lines
-            # create a NiSourceTexture for each flip
-            tex = self.export_source_texture(texture, t)
-            flip.num_sources += 1
-            flip.sources.update_size()
-            flip.sources[flip.num_sources-1] = tex
-            count += 1
-        if count < 2:
-            raise NifExportError(
-                "Error in Texture Flip buffer '%s':"
-                " must define at least two textures"
-                %fliptxt.name)
-        flip.delta = (flip.stop_time - flip.start_time) / count
-
-
-
+  
     #
     # Export a blender object ob of the type mesh, child of nif block
     # parent_block, as NiTriShape and NiTriShapeData blocks, possibly
@@ -1887,7 +1840,7 @@ class NifExport(NifCommon):
 
 
                 # material animation
-                self.export_material_controllers(
+                self.animationhelper.material_helper.export_material_controllers(
                     b_material=mesh_material, n_geom=trishape)
 
             # add NiTriShape's data
@@ -2284,231 +2237,9 @@ class NifExport(NifCommon):
                         # fix data consistency type
                         tridata.consistency_flags = NifFormat.ConsistencyType.CT_VOLATILE
 
-    def export_material_controllers(self, b_material, n_geom):
-        """Export material animation data for given geometry."""
-        # XXX todo: port to blender 2.5x+ interface
-        # XXX Blender.Ipo channel constants are replaced by FCurve.data_path?
-        return
 
-        if self.properties.animation == 'GEOM_NIF':
-            # geometry only: don't write controllers
-            return
 
-        self.export_material_alpha_controller(b_material, n_geom)
-        self.export_material_color_controller(
-            b_material=b_material,
-            b_channels=(
-                Blender.Ipo.MA_MIRR, Blender.Ipo.MA_MIRG, Blender.Ipo.MA_MIRB),
-            n_geom=n_geom,
-            n_target_color=NifFormat.TargetColor.TC_AMBIENT)
-        self.export_material_color_controller(
-            b_material=b_material,
-            b_channels=(
-                Blender.Ipo.MA_R, Blender.Ipo.MA_G, Blender.Ipo.MA_B),
-            n_geom=n_geom,
-            n_target_color=NifFormat.TargetColor.TC_DIFFUSE)
-        self.export_material_color_controller(
-            b_material=b_material,
-            b_channels=(
-                Blender.Ipo.MA_SPECR, Blender.Ipo.MA_SPECG, Blender.Ipo.MA_SPECB),
-            n_geom=n_geom,
-            n_target_color=NifFormat.TargetColor.TC_SPECULAR)
-        self.export_material_uv_controller(b_material, n_geom)
-
-    def export_material_alpha_controller(self, b_material, n_geom):
-        """Export the material alpha controller data."""
-        b_ipo = b_material.animation_data
-        if not b_ipo:
-            return
-        # get the alpha curve and translate it into nif data
-        b_curve = b_ipo[Blender.Ipo.MA_ALPHA]
-        if not b_curve:
-            return
-        n_floatdata = self.create_block("NiFloatData", b_curve)
-        n_times = [] # track all times (used later in start time and end time)
-        n_floatdata.data.num_keys = len(b_curve.bezierPoints)
-        n_floatdata.data.interpolation = self.get_n_ipol_from_b_ipol(
-            b_curve.interpolation)
-        n_floatdata.data.keys.update_size()
-        for b_point, n_key in zip(b_curve.bezierPoints, n_floatdata.data.keys):
-            # add each point of the curve
-            b_time, b_value = b_point.pt
-            n_key.arg = n_floatdata.data.interpolation
-            n_key.time = (b_time - 1) * self.context.scene.render.fps
-            n_key.value = b_value
-            # track time
-            n_times.append(n_key.time)
-        # if alpha data is present (check this by checking if times were added)
-        # then add the controller so it is exported
-        if n_times:
-            n_alphactrl = self.create_block("NiAlphaController", b_ipo)
-            n_alphaipol = self.create_block("NiFloatInterpolator", b_ipo)
-            n_alphactrl.interpolator = n_alphaipol
-            n_alphactrl.flags = 8 # active
-            n_alphactrl.flags |= self.get_flags_from_extend(b_curve.extend)
-            n_alphactrl.frequency = 1.0
-            n_alphactrl.start_time = min(n_times)
-            n_alphactrl.stop_time = max(n_times)
-            n_alphactrl.data = n_floatdata
-            n_alphaipol.data = n_floatdata
-            # attach block to geometry
-            n_matprop = self.find_property(n_geom,
-                                           NifFormat.NiMaterialProperty)
-            if not n_matprop:
-                raise ValueError(
-                    "bug!! must add material property"
-                    " before exporting alpha controller")
-            n_matprop.add_controller(n_alphactrl)
-
-    def export_material_color_controller(
-        self, b_material, b_channels, n_geom, n_target_color):
-        """Export the material color controller data."""
-        b_ipo = b_material.animation_data
-        if not b_ipo:
-            return
-        # get the material color curves and translate it into nif data
-        b_curves = [b_ipo[b_channel] for b_channel in b_channels]
-        if not all(b_curves):
-            return
-        n_posdata = self.create_block("NiPosData", b_curves)
-        # and also to have common reference times for all curves
-        b_times = set()
-        for b_curve in b_curves:
-            b_times |= set(b_point.pt[0] for b_point in b_curve.bezierPoints)
-        # track all nif times: used later in start time and end time
-        n_times = []
-        n_posdata.data.num_keys = len(b_times)
-        n_posdata.data.interpolation = self.get_n_ipol_from_b_ipol(
-            b_curves[0].interpolation)
-        n_posdata.data.keys.update_size()
-        for b_time, n_key in zip(sorted(b_times), n_posdata.data.keys):
-            # add each point of the curves
-            n_key.arg = n_posdata.data.interpolation
-            n_key.time = (b_time - 1) * self.context.scene.render.fps
-            n_key.value.x = b_curves[0][b_time]
-            n_key.value.y = b_curves[1][b_time]
-            n_key.value.z = b_curves[2][b_time]
-            # track time
-            n_times.append(n_key.time)
-        # if alpha data is present (check this by checking if times were added)
-        # then add the controller so it is exported
-        if n_times:
-            n_matcolor_ctrl = self.create_block(
-                "NiMaterialColorController", b_ipo)
-            n_matcolor_ipol = self.create_block(
-                "NiPoint3Interpolator", b_ipo)
-            n_matcolor_ctrl.interpolator = n_matcolor_ipol
-            n_matcolor_ctrl.flags = 8 # active
-            n_matcolor_ctrl.flags |= self.get_flags_from_extend(b_curve.extend)
-            n_matcolor_ctrl.set_target_color(n_target_color)
-            n_matcolor_ctrl.frequency = 1.0
-            n_matcolor_ctrl.start_time = min(n_times)
-            n_matcolor_ctrl.stop_time = max(n_times)
-            n_matcolor_ctrl.data = n_posdata
-            n_matcolor_ipol.data = n_posdata
-            # attach block to geometry
-            n_matprop = self.find_property(n_geom,
-                                           NifFormat.NiMaterialProperty)
-            if not n_matprop:
-                raise ValueError(
-                    "bug!! must add material property"
-                    " before exporting material color controller")
-            n_matprop.add_controller(n_matcolor_ctrl)
-
-    def export_material_uv_controller(self, b_material, n_geom):
-        """Export the material UV controller data."""
-        # get the material ipo
-        b_ipo = b_material.ipo
-        if not b_ipo:
-            return
-        # get the uv curves and translate them into nif data
-        n_uvdata = NifFormat.NiUVData()
-        n_times = [] # track all times (used later in start time and end time)
-        b_channels = (Blender.Ipo.MA_OFSX, Blender.Ipo.MA_OFSY,
-                      Blender.Ipo.MA_SIZEX, Blender.Ipo.MA_SIZEY)
-        for b_channel, n_uvgroup in zip(b_channels, n_uvdata.uv_groups):
-            b_curve = b_ipo[b_channel]
-            if b_curve:
-                self.info("Exporting %s as NiUVData" % b_curve)
-                n_uvgroup.num_keys = len(b_curve.bezierPoints)
-                n_uvgroup.interpolation = self.get_n_ipol_from_b_ipol(
-                    b_curve.interpolation)
-                n_uvgroup.keys.update_size()
-                for b_point, n_key in zip(b_curve.bezierPoints, n_uvgroup.keys):
-                    # add each point of the curve
-                    b_time, b_value = b_point.pt
-                    if b_channel in (Blender.Ipo.MA_OFSX, Blender.Ipo.MA_OFSY):
-                        # offsets are negated in blender
-                        b_value = -b_value
-                    n_key.arg = n_uvgroup.interpolation
-                    n_key.time = (b_time - 1) * self.context.scene.render.fps
-                    n_key.value = b_value
-                    # track time
-                    n_times.append(n_key.time)
-                # save extend mode to export later
-                b_curve_extend = b_curve.extend
-        # if uv data is present (we check this by checking if times were added)
-        # then add the controller so it is exported
-        if n_times:
-            n_uvctrl = NifFormat.NiUVController()
-            n_uvctrl.flags = 8 # active
-            n_uvctrl.flags |= self.get_flags_from_extend(b_curve_extend)
-            n_uvctrl.frequency = 1.0
-            n_uvctrl.start_time = min(n_times)
-            n_uvctrl.stop_time = max(n_times)
-            n_uvctrl.data = n_uvdata
-            # attach block to geometry
-            n_geom.add_controller(n_uvctrl)
-
-    def export_object_vis_controller(self, b_obj, n_node):
-        """Export the material alpha controller data."""
-        b_ipo = b_obj.ipo
-        if not b_ipo:
-            return
-        # get the alpha curve and translate it into nif data
-        b_curve = b_ipo[Blender.Ipo.OB_LAYER]
-        if not b_curve:
-            return
-        # NiVisData = old style, NiBoolData = new style
-        n_vis_data = self.create_block("NiVisData", b_curve)
-        n_bool_data = self.create_block("NiBoolData", b_curve)
-        n_times = [] # track all times (used later in start time and end time)
-        # we just leave interpolation at constant
-        n_bool_data.data.interpolation = NifFormat.KeyType.CONST_KEY
-        #n_bool_data.data.interpolation = self.get_n_ipol_from_b_ipol(
-        #    b_curve.interpolation)
-        n_vis_data.num_keys = len(b_curve.bezierPoints)
-        n_bool_data.data.num_keys = len(b_curve.bezierPoints)
-        n_vis_data.keys.update_size()
-        n_bool_data.data.keys.update_size()
-        visible_layer = 2 ** (min(self.context.scene.getLayers()) - 1)
-        for b_point, n_vis_key, n_bool_key in zip(
-            b_curve.bezierPoints, n_vis_data.keys, n_bool_data.data.keys):
-            # add each point of the curve
-            b_time, b_value = b_point.pt
-            n_vis_key.arg = n_bool_data.data.interpolation # n_vis_data has no interpolation stored
-            n_vis_key.time = (b_time - 1) * self.context.scene.render.fps
-            n_vis_key.value = 1 if (int(b_value + 0.01) & visible_layer) else 0
-            n_bool_key.arg = n_bool_data.data.interpolation
-            n_bool_key.time = n_vis_key.time
-            n_bool_key.value = n_vis_key.value
-            # track time
-            n_times.append(n_vis_key.time)
-        # if alpha data is present (check this by checking if times were added)
-        # then add the controller so it is exported
-        if n_times:
-            n_vis_ctrl = self.create_block("NiVisController", b_ipo)
-            n_vis_ipol = self.create_block("NiBoolInterpolator", b_ipo)
-            n_vis_ctrl.interpolator = n_vis_ipol
-            n_vis_ctrl.flags = 8 # active
-            n_vis_ctrl.flags |= self.get_flags_from_extend(b_curve.extend)
-            n_vis_ctrl.frequency = 1.0
-            n_vis_ctrl.start_time = min(n_times)
-            n_vis_ctrl.stop_time = max(n_times)
-            n_vis_ctrl.data = n_vis_data
-            n_vis_ipol.data = n_bool_data
-            # attach block to node
-            n_node.add_controller(n_vis_ctrl)
+    
 
     
 
@@ -3179,7 +2910,7 @@ class NifExport(NifCommon):
                 pass
             else:
                 # texture slot 0 = base
-                self.export_flip_controller(fliptxt, basemtex.texture, texprop, 0)
+                self.animationhelper.texture_animation.export_flip_controller(fliptxt, basemtex.texture, texprop, 0)
 
         if glowmtex:
             texprop.has_glow_texture = True
