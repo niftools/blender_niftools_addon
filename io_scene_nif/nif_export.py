@@ -434,7 +434,7 @@ class NifExport(NifCommon):
                 # for Oblivion skeleton exports
                 # export animation groups (not for skeleton.nif export!)
                 if animtxt:
-                    anim_textextra = self.export_anim_groups(animtxt, root_block)
+                    anim_textextra = self.animationhelper.export_anim_groups(animtxt, root_block)
                 else:
                     anim_textextra = None
 
@@ -1106,67 +1106,6 @@ class NifExport(NifCommon):
 
         return node
 
-
-
-    def export_anim_groups(self, animtxt, block_parent):
-        """Parse the animation groups buffer and write an extra string
-        data block, and attach it to an existing block (typically, the root
-        of the nif tree)."""
-        if self.properties.animation == 'GEOM_NIF':
-            # animation group extra data is not present in geometry only files
-            return
-
-        self.info("Exporting animation groups")
-        # -> get animation groups information
-
-        # parse the anim text descriptor
-
-        # the format is:
-        # frame/string1[/string2[.../stringN]]
-
-        # example:
-        # 001/Idle: Start/Idle: Stop/Idle2: Start/Idle2: Loop Start
-        # 051/Idle2: Stop/Idle3: Start
-        # 101/Idle3: Loop Start/Idle3: Stop
-
-        slist = animtxt.asLines()
-        flist = []
-        dlist = []
-        for s in slist:
-            # ignore empty lines
-            if not s:
-                continue
-            # parse line
-            t = s.split('/')
-            if (len(t) < 2):
-                raise NifExportError("Syntax error in Anim buffer ('%s')" % s)
-            f = int(t[0])
-            if ((f < self.context.scene.frame_start) or (f > self.context.scene.frame_end)):
-                self.warning("frame in animation buffer out of range "
-                                 "(%i not in [%i, %i])"
-                                 % (f, self.context.scene.frame_start, self.context.scene.frame_end))
-            d = t[1].strip(' ')
-            for i in range(2, len(t)):
-                d = d + '\r\n' + t[i].strip(' ')
-            #print 'frame %d'%f + ' -> \'%s\''%d # debug
-            flist.append(f)
-            dlist.append(d)
-
-        # -> now comes the real export
-
-        # add a NiTextKeyExtraData block, and refer to this block in the
-        # parent node (we choose the root block)
-        textextra = self.create_block("NiTextKeyExtraData", animtxt)
-        block_parent.add_extra_data(textextra)
-
-        # create a text key for each frame descriptor
-        textextra.num_text_keys = len(flist)
-        textextra.text_keys.update_size()
-        for i, key in enumerate(textextra.text_keys):
-            key.time = self.context.scene.render.fps * (flist[i]-1)
-            key.value = dlist[i]
-
-        return textextra
 
     def export_texture_filename(self, texture):
         """Returns file name from texture.
