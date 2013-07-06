@@ -45,7 +45,7 @@ from io_scene_nif.armaturesys.armature_import import Armature
 from io_scene_nif.collisionsys.collision_import import bhkshape_import, bound_import
 from io_scene_nif.constraintsys.constraint_import import Constraint
 from io_scene_nif.materialsys.material import material_import
-from io_scene_nif.texturesys.texture import texture_import
+from io_scene_nif.texturesys.texture_import import Texture
 
 from functools import reduce
 import logging
@@ -93,7 +93,7 @@ class NifImport(NifCommon):
         self.bhkhelper = bhkshape_import(parent=self)
         self.boundhelper = bound_import(parent=self)
         self.constrainthelper = Constraint(parent=self)
-        self.texturehelper = texture_import(parent=self)
+        self.texturehelper = Texture(parent=self)
         self.materialhelper = material_import(parent=self)
         self.materialhelper.set_texture_helper(self.texturehelper)
         # catch NifImportError

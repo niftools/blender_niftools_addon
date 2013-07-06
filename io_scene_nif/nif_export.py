@@ -1107,67 +1107,7 @@ class NifExport(NifCommon):
         return node
 
 
-    def export_texture_filename(self, texture):
-        """Returns file name from texture.
-
-        @param texture: The texture object in blender.
-        @return: The file name of the image used in the texture.
-        """
-        if texture.type == 'ENVIRONMENT_MAP':
-            # this works for morrowind only
-            if self.properties.game != 'MORROWIND':
-                raise NifExportError(
-                    "cannot export environment maps for nif version '%s'"
-                    %self.properties.game)
-            return "enviro 01.TGA"
-        elif texture.type == 'IMAGE':
-            # get filename from image
-
-            # XXX still needed? can texture.image be None in current blender?
-            # check that image is loaded
-            if texture.image is None:
-                raise NifExportError(
-                    "image type texture has no file loaded ('%s')"
-                    % texture.name)
-
-            filename = texture.image.filepath
-
-            # warn if packed flag is enabled
-            if texture.image.packed_file:
-                self.warning(
-                    "Packed image in texture '%s' ignored, "
-                    "exporting as '%s' instead."
-                    % (texture.name, filename))
-
-            # try and find a DDS alternative, force it if required
-            ddsfilename = "%s%s" % (filename[:-4], '.dds')
-            if os.path.exists(ddsfilename) or self.properties.force_dds:
-                filename = ddsfilename
-
-            # sanitize file path
-            if not self.properties.game in ('MORROWIND', 'OBLIVION',
-                                           'FALLOUT_3'):
-                # strip texture file path
-                filename = os.path.basename(filename)
-            else:
-                # strip the data files prefix from the texture's file name
-                filename = filename.lower()
-                idx = filename.find("textures")
-                if ( idx >= 0 ):
-                    filename = filename[idx:]
-                else:
-                    self.warning(
-                        "%s does not reside in a 'Textures' folder;"
-                        " texture path will be stripped"
-                        " and textures may not display in-game" % filename)
-                    filename = os.path.basename(filename)
-            # for linux export: fix path seperators
-            return filename.replace('/', '\\')
-        else:
-            # texture must be of type IMAGE or ENVMAP
-            raise NifExportError(
-                "Error: Texture '%s' must be of type IMAGE or ENVMAP"
-                % texture.name)
+    
 
     def export_source_texture(self, texture=None, filename=None):
         """Export a NiSourceTexture.
