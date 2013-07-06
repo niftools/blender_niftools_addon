@@ -45,14 +45,14 @@ import bpy
 
 from pyffi.formats.nif import NifFormat
 
-class texture_import():
+class Texture():
 	
+	# dictionary of texture files, to reuse textures
+	textures = {}
 
 	def __init__(self, parent):
 		self.nif_common = parent
-		# dictionary of texture files, to reuse textures
-		self.textures = {}
-
+		
 	def get_texture_hash(self, source):
 		"""Helper function for import_texture. Returns a key that uniquely
 		identifies a texture from its source (which is either a
