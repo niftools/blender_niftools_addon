@@ -586,7 +586,7 @@ class MaterialAnimation():
         b_curve = b_ipo[Blender.Ipo.MA_ALPHA]
         if not b_curve:
             return
-        n_floatdata = self.create_block("NiFloatData", b_curve)
+        n_floatdata = self.nif_export.create_block("NiFloatData", b_curve)
         n_times = [] # track all times (used later in start time and end time)
         n_floatdata.data.num_keys = len(b_curve.bezierPoints)
         n_floatdata.data.interpolation = self.get_n_ipol_from_b_ipol(
@@ -603,8 +603,8 @@ class MaterialAnimation():
         # if alpha data is present (check this by checking if times were added)
         # then add the controller so it is exported
         if n_times:
-            n_alphactrl = self.create_block("NiAlphaController", b_ipo)
-            n_alphaipol = self.create_block("NiFloatInterpolator", b_ipo)
+            n_alphactrl = self.nif_export.create_block("NiAlphaController", b_ipo)
+            n_alphaipol = self.nif_export.create_block("NiFloatInterpolator", b_ipo)
             n_alphactrl.interpolator = n_alphaipol
             n_alphactrl.flags = 8 # active
             n_alphactrl.flags |= self.get_flags_from_extend(b_curve.extend)
@@ -632,7 +632,7 @@ class MaterialAnimation():
         b_curves = [b_ipo[b_channel] for b_channel in b_channels]
         if not all(b_curves):
             return
-        n_posdata = self.create_block("NiPosData", b_curves)
+        n_posdata = self.nif_export.create_block("NiPosData", b_curves)
         # and also to have common reference times for all curves
         b_times = set()
         for b_curve in b_curves:
@@ -655,9 +655,9 @@ class MaterialAnimation():
         # if alpha data is present (check this by checking if times were added)
         # then add the controller so it is exported
         if n_times:
-            n_matcolor_ctrl = self.create_block(
+            n_matcolor_ctrl = self.nif_export.create_block(
                 "NiMaterialColorController", b_ipo)
-            n_matcolor_ipol = self.create_block(
+            n_matcolor_ipol = self.nif_export.create_block(
                 "NiPoint3Interpolator", b_ipo)
             n_matcolor_ctrl.interpolator = n_matcolor_ipol
             n_matcolor_ctrl.flags = 8 # active
@@ -739,8 +739,8 @@ class ObjectAnimation():
         if not b_curve:
             return
         # NiVisData = old style, NiBoolData = new style
-        n_vis_data = self.create_block("NiVisData", b_curve)
-        n_bool_data = self.create_block("NiBoolData", b_curve)
+        n_vis_data = self.nif_export.create_block("NiVisData", b_curve)
+        n_bool_data = self.nif_export.create_block("NiBoolData", b_curve)
         n_times = [] # track all times (used later in start time and end time)
         # we just leave interpolation at constant
         n_bool_data.data.interpolation = NifFormat.KeyType.CONST_KEY
@@ -766,8 +766,8 @@ class ObjectAnimation():
         # if alpha data is present (check this by checking if times were added)
         # then add the controller so it is exported
         if n_times:
-            n_vis_ctrl = self.create_block("NiVisController", b_ipo)
-            n_vis_ipol = self.create_block("NiBoolInterpolator", b_ipo)
+            n_vis_ctrl = self.nif_export.create_block("NiVisController", b_ipo)
+            n_vis_ipol = self.nif_export.create_block("NiBoolInterpolator", b_ipo)
             n_vis_ctrl.interpolator = n_vis_ipol
             n_vis_ctrl.flags = 8 # active
             n_vis_ctrl.flags |= self.get_flags_from_extend(b_curve.extend)
