@@ -167,7 +167,7 @@ class Armature():
 				# SC' = SX * SC / SX = SC
 				# RC' = RX * RC * inverse(RX)
 				# TC' = (TX * SC * RC + TC - TX) * inverse(RX) / SX
-				extra_matrix_scale, extra_matrix_rot, extra_matrix_trans = self.decompose_srt(self.nif_import.bones_extra_matrix[niBone])
+				extra_matrix_scale, extra_matrix_rot, extra_matrix_trans = self.decompose_srt(self.bones_extra_matrix[niBone])
 				extra_matrix_quat = extra_matrix_rot.to_quaternion()
 				extra_matrix_rot_inv = mathutils.Matrix(extra_matrix_rot)
 				extra_matrix_rot_inv.invert()
