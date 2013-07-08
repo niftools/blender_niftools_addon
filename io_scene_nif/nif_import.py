@@ -398,7 +398,7 @@ class NifImport(NifCommon):
         elif isinstance(niBlock, NifFormat.NiNode):
             children = niBlock.children
             # bounding box child?
-            bsbound = self.find_extra(niBlock, NifFormat.BSBound)
+            bsbound = nif_utils.find_extra(niBlock, NifFormat.BSBound)
             if not (children
                     or niBlock.collision_object
                     or bsbound or niBlock.has_bounding_box
@@ -439,7 +439,7 @@ class NifImport(NifCommon):
                 # morph controllers from geometry group
                 if self.properties.animation:
                     for child in geom_group:
-                        if self.find_controller(
+                        if nif_utils.find_controller(
                             child, NifFormat.NiGeomMorpherController):
                             geom_group.remove(child)
                 # import geometry/empty
@@ -793,7 +793,7 @@ class NifImport(NifCommon):
         '''
 
         # Stencil (for double sided meshes)
-        n_stencil_prop = self.find_property(niBlock, NifFormat.NiStencilProperty)
+        n_stencil_prop = nif_utils.find_property(niBlock, NifFormat.NiStencilProperty)
         # we don't check flags for now, nothing fancy
         if n_stencil_prop:
             b_mesh.show_double_sided = True
@@ -803,30 +803,30 @@ class NifImport(NifCommon):
         # Material
         # note that NIF files only support one material for each trishape
         # find material property
-        n_mat_prop = self.find_property(niBlock,
+        n_mat_prop = nif_utils.find_property(niBlock,
                                          NifFormat.NiMaterialProperty)
 
         if n_mat_prop:
             # Texture
             n_texture_prop = None
             if n_uvco:
-                n_texture_prop = self.find_property(niBlock,
+                n_texture_prop = nif_utils.find_property(niBlock,
                                                   NifFormat.NiTexturingProperty)
 
             # Alpha
-            n_alpha_prop = self.find_property(niBlock,
+            n_alpha_prop = nif_utils.find_property(niBlock,
                                                NifFormat.NiAlphaProperty)
 
             # Specularity
-            n_specular_prop = self.find_property(niBlock,
+            n_specular_prop = nif_utils.find_property(niBlock,
                                               NifFormat.NiSpecularProperty)
 
             # Wireframe
-            n_wire_prop = self.find_property(niBlock,
+            n_wire_prop = nif_utils.find_property(niBlock,
                                               NifFormat.NiWireframeProperty)
 
             # bethesda shader
-            bsShaderProperty = self.find_property(
+            bsShaderProperty = nif_utils.find_property(
                 niBlock, NifFormat.BSShaderPPLightingProperty)
 
             # texturing effect for environment map
@@ -1127,7 +1127,7 @@ class NifImport(NifCommon):
         # import morph controller
         # XXX todo: move this to import_mesh_controllers
         if self.properties.animation:
-            morphCtrl = self.find_controller(niBlock, NifFormat.NiGeomMorpherController)
+            morphCtrl = nif_utils.find_controller(niBlock, NifFormat.NiGeomMorpherController)
             if morphCtrl:
                 morphData = morphCtrl.data
                 if morphData.num_morphs:

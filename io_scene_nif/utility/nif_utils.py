@@ -60,3 +60,38 @@ def decompose_srt(self, matrix):
     b_trans = trans_vec
     # done!
     return [b_scale, b_rot, b_trans]
+
+def find_property(self, niBlock, property_type):
+    """Find a property."""
+    for prop in niBlock.properties:
+        if isinstance(prop, property_type):
+            return prop
+    return None
+
+def find_controller(self, niBlock, controller_type):
+        """Find a controller."""
+        ctrl = niBlock.controller
+        while ctrl:
+            if isinstance(ctrl, controller_type):
+                break
+            ctrl = ctrl.next_controller
+        return ctrl
+    
+def find_extra(self, niBlock, extratype):
+    # TODO_3.0 - Optimise
+    
+    """Find extra data."""
+    # pre-10.x.x.x system: extra data chain
+    extra = niBlock.extra_data
+    while extra:
+        if isinstance(extra, extratype):
+            break
+        extra = extra.next_extra_data
+    if extra:
+        return extra
+
+    # post-10.x.x.x system: extra data list
+    for extra in niBlock.extra_data_list:
+        if isinstance(extra, extratype):
+            return extra
+    return None

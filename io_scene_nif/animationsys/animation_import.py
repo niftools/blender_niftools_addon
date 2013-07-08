@@ -39,6 +39,8 @@
 
 from pyffi.formats.nif import NifFormat
 
+import io_scene_nif.utility.nif_utils
+
 class AnimationHelper():
     
     def __init__(self, parent):
@@ -82,7 +84,7 @@ class AnimationHelper():
                     "Animation for %s without controller type, so skipping"
                     % nodename)
                 continue
-            controller = self.nif_common.find_controller(node, getattr(NifFormat, controllertype))
+            controller = nif_utils.find_controller(node, getattr(NifFormat, controllertype))
             if not controller:
                 self.info(
                     "Animation for %s with %s controller,"
@@ -218,7 +220,7 @@ class AnimationHelper():
         """
         niBlockList = [block for block in rootBlock.tree() if isinstance(block, NifFormat.NiAVObject)]
         for niBlock in niBlockList:
-            kfc = self.find_controller(niBlock, NifFormat.NiKeyframeController)
+            kfc = nif_utils.find_controller(niBlock, NifFormat.NiKeyframeController)
             if not kfc: continue
             kfd = kfc.data
             if not kfd: continue
@@ -241,7 +243,7 @@ class AnimationHelper():
         
     def set_animation(self, niBlock, b_obj):
         """Load basic animation info for this object."""
-        kfc = self.nif_common.find_controller(niBlock, NifFormat.NiKeyframeController)
+        kfc = nif_utils.find_controller(niBlock, NifFormat.NiKeyframeController)
         if not kfc:
             # no animation data: do nothing
             return
@@ -336,7 +338,7 @@ class ObjectAnimation():
     
     def import_object_vis_controller(self, b_object, n_node):
         """Import vis controller for blender object."""
-        n_vis_ctrl = self.nif_common.find_controller(n_node, NifFormat.NiVisController)
+        n_vis_ctrl = nif_utils.find_controller(n_node, NifFormat.NiVisController)
         if not(n_vis_ctrl and n_vis_ctrl.data):
             return
         self.info("importing vis controller")
@@ -379,10 +381,10 @@ class MaterialAnimation():
         
     def import_material_alpha_controller(self, b_material, n_geom):
         # find alpha controller
-        n_matprop = self.nif_common.find_property(n_geom, NifFormat.NiMaterialProperty)
+        n_matprop = nif_utils.find_property(n_geom, NifFormat.NiMaterialProperty)
         if not n_matprop:
             return
-        n_alphactrl = self.nif_common.find_controller(n_matprop,
+        n_alphactrl = nif_utils.find_controller(n_matprop,
                                            NifFormat.NiAlphaController)
         if not(n_alphactrl and n_alphactrl.data):
             return
@@ -399,7 +401,7 @@ class MaterialAnimation():
     def import_material_color_controller(
         self, b_material, b_channels, n_geom, n_target_color):
         # find material color controller with matching target color
-        n_matprop = self.nif_common.find_property(n_geom, NifFormat.NiMaterialProperty)
+        n_matprop = nif_utils.find_property(n_geom, NifFormat.NiMaterialProperty)
         if not n_matprop:
             return
         for ctrl in n_matprop.get_controllers():
@@ -426,7 +428,7 @@ class MaterialAnimation():
     def import_material_uv_controller(self, b_material, n_geom):
         """Import UV controller data."""
         # search for the block
-        n_ctrl = self.nif_common.find_controller(n_geom,
+        n_ctrl = nif_utils.find_controller(n_geom,
                                       NifFormat.NiUVController)
         if not(n_ctrl and n_ctrl.data):
             return

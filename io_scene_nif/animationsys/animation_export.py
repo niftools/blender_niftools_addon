@@ -614,7 +614,7 @@ class MaterialAnimation():
             n_alphactrl.data = n_floatdata
             n_alphaipol.data = n_floatdata
             # attach block to geometry
-            n_matprop = self.find_property(n_geom,
+            n_matprop = nif_utils.find_property(n_geom,
                                            NifFormat.NiMaterialProperty)
             if not n_matprop:
                 raise ValueError(
@@ -669,7 +669,7 @@ class MaterialAnimation():
             n_matcolor_ctrl.data = n_posdata
             n_matcolor_ipol.data = n_posdata
             # attach block to geometry
-            n_matprop = self.find_property(n_geom,
+            n_matprop = nif_utils.find_property(n_geom,
                                            NifFormat.NiMaterialProperty)
             if not n_matprop:
                 raise ValueError(
