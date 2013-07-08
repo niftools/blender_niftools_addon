@@ -563,7 +563,7 @@ class NifExport(NifCommon):
             # export constraints
             for b_obj in self.get_exported_objects():
                 if isinstance(b_obj, bpy.types.Object) and b_obj.constraints:
-                    self.export_constraints(b_obj, root_block)
+                    self.constrainthelper.export_constraints(b_obj, root_block)
 
             # export weapon location
             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
