@@ -172,7 +172,6 @@ class NifExport(NifCommon):
         self.animationhelper = AnimationHelper(parent=self)
         self.propertyhelper = PropertyHelper(parent=self)
         self.constrainthelper = Constraint(parent=self)
-        self.collisionhelper = Collision(parent=self)
         self.texturehelper = Texture(parent=self)
 
         self.info("exporting {0}".format(self.properties.filepath))
