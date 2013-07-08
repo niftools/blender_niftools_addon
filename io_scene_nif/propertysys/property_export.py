@@ -156,6 +156,12 @@ class ObjectProperty():
             stencilprop.flags = 19840
         return stencilprop
     
+    
+class MaterialProperty():
+    
+    def __init__(self, parent):
+        self.nif_export = parent
+        
     def export_material_property(self, name='', flags=0x0001,
                              ambient=(1.0, 1.0, 1.0), diffuse=(1.0, 1.0, 1.0),
                              specular=(0.0, 0.0, 0.0), emissive=(0.0, 0.0, 0.0),
