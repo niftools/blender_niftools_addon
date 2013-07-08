@@ -176,7 +176,7 @@ class Armature():
 				# get controller, interpolator, and data
 				# note: the NiKeyframeController check also includes
 				#	   NiTransformController (see hierarchy!)
-				kfc = self.nif_common.find_controller(niBone,
+				kfc = nif_utils.find_controller(niBone,
 										   NifFormat.NiKeyframeController)
 				# old style: data directly on controller
 				kfd = kfc.data if kfc else None
