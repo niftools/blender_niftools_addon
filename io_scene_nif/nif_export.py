@@ -73,7 +73,28 @@ class NifExport(NifCommon):
     FLOAT_MIN = -3.4028234663852886e+38
     FLOAT_MAX = +3.4028234663852886e+38
 
-
+    USED_EXTRA_SHADER_TEXTURES = {
+        'SID_MEIER_S_RAILROADS': (3, 0, 4, 1, 5, 2),
+        'CIVILIZATION_IV': (3, 0, 1, 2)}
+    """The default ordering of the extra data blocks for different games."""
+    
+    # TODO - Expose via properties
+    
+    EXPORT_OPTIMIZE_MATERIALS = True
+    EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES = False
+    
+    EXPORT_BHKLISTSHAPE = False
+    EXPORT_OB_BSXFLAGS = 2
+    EXPORT_OB_MASS = 10.0
+    EXPORT_OB_SOLID = True
+    EXPORT_OB_MOTIONSYSTEM = 7, # MO_SYS_FIXED
+    EXPORT_OB_UNKNOWNBYTE1 = 1
+    EXPORT_OB_UNKNOWNBYTE2 = 1
+    EXPORT_OB_QUALITYTYPE = 1 # MO_QUAL_FIXED
+    EXPORT_OB_WIND = 0
+    EXPORT_OB_LAYER = 1 # static
+    EXPORT_OB_MATERIAL = 9 # wood
+    EXPORT_OB_PRN = "NONE" # Todo with location on character. For weapons, rings, helmets, Sheilds ect
     
 
     def rebuild_full_names(self):
