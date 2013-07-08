@@ -70,7 +70,8 @@ class NifImport(NifCommon):
 
     # degrees to radians conversion constant
     D2R = 3.14159265358979/180.0
-
+    IMPORT_EXTRANODES = True
+    
     def execute(self):
         """Main import function."""
 
