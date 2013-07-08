@@ -44,7 +44,7 @@ from io_scene_nif.animationsys.animation_export import AnimationHelper
 from io_scene_nif.collisionsys.collision_export import bhkshape_export, bound_export
 from io_scene_nif.armaturesys.armature_export import Armature
 from io_scene_nif.propertysys.property_export import PropertyHelper
-from io_scene_nif.constraint.constraint_export import Constraint
+from io_scene_nif.constraintsys.constraint_export import Constraint
 from io_scene_nif.texturesys.texture_export import Texture
 
 
