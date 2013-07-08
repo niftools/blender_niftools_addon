@@ -149,13 +149,13 @@ class NifExport(NifCommon):
         """Main export function."""
 
         # Helper systems
-        # Store references to subsystems as needed.
-        self.boundhelper = bound_export(parent=self)
         self.bhkshapehelper = bhkshape_export(parent=self)
+        self.boundhelper = bound_export(parent=self)
         self.armaturehelper = Armature(parent=self)
         self.animationhelper = AnimationHelper(parent=self)
         self.propertyhelper = PropertyHelper(parent=self)
         self.constrainthelper = Constraint(parent=self)
+        self.collisionhelper = Collision(parent=self)
 
         self.info("exporting {0}".format(self.properties.filepath))
 
