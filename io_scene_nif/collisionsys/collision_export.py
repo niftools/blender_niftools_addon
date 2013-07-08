@@ -49,7 +49,9 @@ class bhkshape_export():
     FLOAT_MAX = +3.4028234663852886e+38
 
     def __init__(self, parent):
-        self.nif_common = parent
+        self.nif_export = parent
+        self.HAVOK_SCALE = self.HAVOK_SCALE
+
 
     def export_collision_helper(self, b_obj, parent_block):
         """Helper function to add collision objects to a node. This function
@@ -84,12 +86,12 @@ class bhkshape_export():
             # note: collision settings are taken from lowerclasschair01.nif
             if b_obj.nifcollision.oblivion_layer == NifFormat.OblivionLayer.OL_BIPED:
                 # special collision object for creatures
-                n_col_obj = self.nif_common.create_block("bhkBlendCollisionObject", b_obj)
+                n_col_obj = self.nif_export.create_block("bhkBlendCollisionObject", b_obj)
                 n_col_obj.flags = 9
                 n_col_obj.unknown_float_1 = 1.0
                 n_col_obj.unknown_float_2 = 1.0
                 # also add a controller for it
-                blendctrl = self.nif_common.create_block("bhkBlendController", b_obj)
+                blendctrl = self.nif_export.create_block("bhkBlendController", b_obj)
                 blendctrl.flags = 12
                 blendctrl.frequency = 1.0
                 blendctrl.phase = 0.0
@@ -98,7 +100,7 @@ class bhkshape_export():
                 parent_block.add_controller(blendctrl)
             else:
                 # usual collision object
-                n_col_obj = self.nif_common.create_block("bhkCollisionObject", b_obj)
+                n_col_obj = self.nif_export.create_block("bhkCollisionObject", b_obj)
                 if layer == NifFormat.OblivionLayer.OL_ANIM_STATIC and col_filter != 128:
                     # animated collision requires flags = 41
                     # unless it is a constrainted but not keyframed object
@@ -109,7 +111,7 @@ class bhkshape_export():
 
             parent_block.collision_object = n_col_obj
             n_col_obj.target = parent_block
-            n_bhkrigidbody = self.nif_common.create_block("bhkRigidBody", b_obj)
+            n_bhkrigidbody = self.nif_export.create_block("bhkRigidBody", b_obj)
             n_col_obj.body = n_bhkrigidbody
             n_bhkrigidbody.layer = getattr(NifFormat.OblivionLayer, layer)
             n_bhkrigidbody.col_filter = col_filter
@@ -145,10 +147,10 @@ class bhkshape_export():
             n_bhkrigidbody.max_angular_velocity = 31.4159
             n_bhkrigidbody.penetration_depth = 0.15
             n_bhkrigidbody.motion_system = motion_system
-            n_bhkrigidbody.unknown_byte_1 = self.nif_common.EXPORT_OB_UNKNOWNBYTE1
-            n_bhkrigidbody.unknown_byte_2 = self.nif_common.EXPORT_OB_UNKNOWNBYTE2
+            n_bhkrigidbody.unknown_byte_1 = self.nif_export.EXPORT_OB_UNKNOWNBYTE1
+            n_bhkrigidbody.unknown_byte_2 = self.nif_export.EXPORT_OB_UNKNOWNBYTE2
             n_bhkrigidbody.quality_type = quality_type
-            n_bhkrigidbody.unknown_int_9 = self.nif_common.EXPORT_OB_WIND
+            n_bhkrigidbody.unknown_int_9 = self.nif_export.EXPORT_OB_WIND
             
             # we will use n_col_body to attach shapes to below
             n_col_body = n_bhkrigidbody
@@ -176,7 +178,7 @@ class bhkshape_export():
 
         if not n_col_body.shape:
 
-            n_col_mopp = self.nif_common.create_block("bhkMoppBvTreeShape", b_obj)
+            n_col_mopp = self.nif_export.create_block("bhkMoppBvTreeShape", b_obj)
             n_col_body.shape = n_col_mopp
             n_col_mopp.material = n_havok_mat
             n_col_mopp.unknown_8_bytes[0] = 160
@@ -190,7 +192,7 @@ class bhkshape_export():
             n_col_mopp.unknown_float = 1.0
 
             # the mopp origin, scale, and data are written later
-            n_col_shape = self.nif_common.create_block("bhkPackedNiTriStripsShape", b_obj)
+            n_col_shape = self.nif_export.create_block("bhkPackedNiTriStripsShape", b_obj)
             n_col_mopp.shape = n_col_shape
             
             n_col_shape.unknown_int_1 = 0
@@ -221,7 +223,7 @@ class bhkshape_export():
 
         mesh = b_obj.data
         transform = mathutils.Matrix(
-            self.nif_common.get_object_matrix(b_obj, 'localspace').as_list())
+            self.nif_export.get_object_matrix(b_obj, 'localspace').as_list())
         rotation = transform.decompose()[1]
 
         vertices = [vert.co * transform for vert in mesh.vertices]
@@ -261,7 +263,7 @@ class bhkshape_export():
         # (this works in all cases, can be simplified just before
         # the file is written)
         if not n_col_body.shape:
-            n_col_shape = self.nif_common.create_block("bhkListShape")
+            n_col_shape = self.nif_export.create_block("bhkListShape")
             n_col_body.shape = n_col_shape
             n_col_shape.material = n_havok_mat
         else:
@@ -291,15 +293,15 @@ class bhkshape_export():
         maxy = max([b_vert[1] for b_vert in b_vertlist])
         maxz = max([b_vert[2] for b_vert in b_vertlist])
         
-        calc_bhkshape_radius = (maxx - minx + maxy - miny + maxz - minz) / (6.0 * self.nif_common.HAVOK_SCALE)
-        if(b_obj.game.radius - calc_bhkshape_radius > self.nif_common.properties.epsilon):
+        calc_bhkshape_radius = (maxx - minx + maxy - miny + maxz - minz) / (6.0 * self.HAVOK_SCALE)
+        if(b_obj.game.radius - calc_bhkshape_radius > self.nif_export.properties.epsilon):
             radius = calc_bhkshape_radius
         else:
             radius = b_obj.game.radius
         
         if b_obj.game.collision_bounds_type in {'BOX', 'SPHERE'}:
             # note: collision settings are taken from lowerclasschair01.nif
-            coltf = self.nif_common.create_block("bhkConvexTransformShape", b_obj)
+            coltf = self.nif_export.create_block("bhkConvexTransformShape", b_obj)
             coltf.material = n_havok_mat
             coltf.unknown_float_1 = 0.1
             coltf.unknown_8_bytes[0] = 96
@@ -311,7 +313,7 @@ class bhkshape_export():
             coltf.unknown_8_bytes[6] = 253
             coltf.unknown_8_bytes[7] = 4
             hktf = mathutils.Matrix(
-                self.nif_common.get_object_matrix(b_obj, 'localspace').as_list())
+                self.nif_export.get_object_matrix(b_obj, 'localspace').as_list())
             # the translation part must point to the center of the data
             # so calculate the center in local coordinates
             center = mathutils.Vector(((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0))
@@ -324,12 +326,12 @@ class bhkshape_export():
             hktf.transpose()
             coltf.transform.set_rows(*hktf)
             # fix matrix for havok coordinate system
-            coltf.transform.m_14 /= self.nif_common.HAVOK_SCALE
-            coltf.transform.m_24 /= self.nif_common.HAVOK_SCALE
-            coltf.transform.m_34 /= self.nif_common.HAVOK_SCALE
+            coltf.transform.m_14 /= self.HAVOK_SCALE
+            coltf.transform.m_24 /= self.HAVOK_SCALE
+            coltf.transform.m_34 /= self.HAVOK_SCALE
 
             if b_obj.game.collision_bounds_type == 'BOX':
-                colbox = self.nif_common.create_block("bhkBoxShape", b_obj)
+                colbox = self.nif_export.create_block("bhkBoxShape", b_obj)
                 coltf.shape = colbox
                 colbox.material = n_havok_mat
                 colbox.radius = radius
@@ -342,13 +344,13 @@ class bhkshape_export():
                 colbox.unknown_8_bytes[6] = 0x8e
                 colbox.unknown_8_bytes[7] = 0x3e
                 # fix dimensions for havok coordinate system
-                colbox.dimensions.x = (maxx - minx) / (2.0 * self.nif_common.HAVOK_SCALE)
-                colbox.dimensions.y = (maxy - miny) / (2.0 * self.nif_common.HAVOK_SCALE)
-                colbox.dimensions.z = (maxz - minz) / (2.0 * self.nif_common.HAVOK_SCALE)
+                colbox.dimensions.x = (maxx - minx) / (2.0 * self.HAVOK_SCALE)
+                colbox.dimensions.y = (maxy - miny) / (2.0 * self.HAVOK_SCALE)
+                colbox.dimensions.z = (maxz - minz) / (2.0 * self.HAVOK_SCALE)
                 colbox.minimum_size = min(colbox.dimensions.x, colbox.dimensions.y, colbox.dimensions.z)
 
             elif b_obj.game.collision_bounds_type == 'SPHERE':
-                colsphere = self.nif_common.create_block("bhkSphereShape", b_obj)
+                colsphere = self.nif_export.create_block("bhkSphereShape", b_obj)
                 coltf.shape = colsphere
                 colsphere.material = n_havok_mat
                 # take average radius and
@@ -361,7 +363,7 @@ class bhkshape_export():
             # take average radius and calculate end points
             localradius = (maxx + maxy - minx - miny) / 4.0
             transform = mathutils.Matrix(
-                self.nif_common.get_object_matrix(b_obj, 'localspace').as_list())
+                self.nif_export.get_object_matrix(b_obj, 'localspace').as_list())
             vert1 = mathutils.Vector( [ (maxx + minx)/2.0,
                                        (maxy + miny)/2.0,
                                        minz + localradius ] )
@@ -382,14 +384,14 @@ class bhkshape_export():
                 return self.export_collision_object(b_obj, layer, n_havok_mat)
 
             # end points are ok, so export as capsule
-            colcaps = self.nif_common.create_block("bhkCapsuleShape", b_obj)
+            colcaps = self.nif_export.create_block("bhkCapsuleShape", b_obj)
             colcaps.material = n_havok_mat
-            colcaps.first_point.x = vert1[0] / self.nif_common.HAVOK_SCALE
-            colcaps.first_point.y = vert1[1] / self.nif_common.HAVOK_SCALE
-            colcaps.first_point.z = vert1[2] / self.nif_common.HAVOK_SCALE
-            colcaps.second_point.x = vert2[0] / self.nif_common.HAVOK_SCALE
-            colcaps.second_point.y = vert2[1] / self.nif_common.HAVOK_SCALE
-            colcaps.second_point.z = vert2[2] / self.nif_common.HAVOK_SCALE
+            colcaps.first_point.x = vert1[0] / self.HAVOK_SCALE
+            colcaps.first_point.y = vert1[1] / self.HAVOK_SCALE
+            colcaps.first_point.z = vert1[2] / self.HAVOK_SCALE
+            colcaps.second_point.x = vert2[0] / self.HAVOK_SCALE
+            colcaps.second_point.y = vert2[1] / self.HAVOK_SCALE
+            colcaps.second_point.z = vert2[2] / self.HAVOK_SCALE
 
             # set radius, with correct scale
             size_x = b_obj.scale.x
@@ -401,15 +403,15 @@ class bhkshape_export():
             colcaps.radius_2 = colcaps.radius
 
             # fix havok coordinate system for radii
-            colcaps.radius /= self.nif_common.HAVOK_SCALE
-            colcaps.radius_1 /= self.nif_common.HAVOK_SCALE
-            colcaps.radius_2 /= self.nif_common.HAVOK_SCALE
+            colcaps.radius /= self.HAVOK_SCALE
+            colcaps.radius_1 /= self.HAVOK_SCALE
+            colcaps.radius_2 /= self.HAVOK_SCALE
             return colcaps
 
         elif b_obj.game.collision_bounds_type == 'CONVEX_HULL':
             b_mesh = b_obj.data
             b_transform_mat = mathutils.Matrix(
-                self.nif_common.get_object_matrix(b_obj, 'localspace').as_list())
+                self.nif_export.get_object_matrix(b_obj, 'localspace').as_list())
 
             b_rot_quat = b_transform_mat.decompose()[1]
             b_scale_vec = b_transform_mat.decompose()[0]
@@ -432,15 +434,15 @@ class bhkshape_export():
             # remove duplicates through dictionary
             vertdict = {}
             for i, vert in enumerate(vertlist):
-                vertdict[(int(vert[0]*self.nif_common.VERTEX_RESOLUTION),
-                          int(vert[1]*self.nif_common.VERTEX_RESOLUTION),
-                          int(vert[2]*self.nif_common.VERTEX_RESOLUTION))] = i
+                vertdict[(int(vert[0]*self.nif_export.VERTEX_RESOLUTION),
+                          int(vert[1]*self.nif_export.VERTEX_RESOLUTION),
+                          int(vert[2]*self.nif_export.VERTEX_RESOLUTION))] = i
             fdict = {}
             for i, (norm, dist) in enumerate(zip(fnormlist, fdistlist)):
-                fdict[(int(norm[0]*self.nif_common.NORMAL_RESOLUTION),
-                       int(norm[1]*self.nif_common.NORMAL_RESOLUTION),
-                       int(norm[2]*self.nif_common.NORMAL_RESOLUTION),
-                       int(dist*self.nif_common.VERTEX_RESOLUTION))] = i
+                fdict[(int(norm[0]*self.nif_export.NORMAL_RESOLUTION),
+                       int(norm[1]*self.nif_export.NORMAL_RESOLUTION),
+                       int(norm[2]*self.nif_export.NORMAL_RESOLUTION),
+                       int(dist*self.nif_export.VERTEX_RESOLUTION))] = i
             # sort vertices and normals
             vertkeys = sorted(vertdict.keys())
             fkeys = sorted(fdict.keys())
@@ -453,7 +455,7 @@ class bhkshape_export():
                     "ERROR%t|Too many faces/vertices."
                     " Decimate/split your b_mesh and try again.")
 
-            colhull = self.nif_common.create_block("bhkConvexVerticesShape", b_obj)
+            colhull = self.nif_export.create_block("bhkConvexVerticesShape", b_obj)
             colhull.material = n_havok_mat
             colhull.radius = radius
             colhull.unknown_6_floats[2] = -0.0 # enables arrow detection
@@ -462,9 +464,9 @@ class bhkshape_export():
             colhull.num_vertices = len(vertlist)
             colhull.vertices.update_size()
             for vhull, vert in zip(colhull.vertices, vertlist):
-                vhull.x = vert[0] / self.nif_common.HAVOK_SCALE
-                vhull.y = vert[1] / self.nif_common.HAVOK_SCALE
-                vhull.z = vert[2] / self.nif_common.HAVOK_SCALE
+                vhull.x = vert[0] / self.HAVOK_SCALE
+                vhull.y = vert[1] / self.HAVOK_SCALE
+                vhull.z = vert[2] / self.HAVOK_SCALE
                 # w component is 0
             colhull.num_normals = len(fnormlist)
             colhull.normals.update_size()
@@ -472,7 +474,7 @@ class bhkshape_export():
                 nhull.x = norm[0]
                 nhull.y = norm[1]
                 nhull.z = norm[2]
-                nhull.w = dist / self.nif_common.HAVOK_SCALE
+                nhull.w = dist / self.HAVOK_SCALE
 
             return colhull
 
@@ -485,7 +487,7 @@ class bhkshape_export():
 class bound_export():
 
     def __init__(self, parent):
-        self.nif_common = parent
+        self.nif_export = parent
 
     def export_bounding_box(self, b_obj, block_parent, bsbound=False):
         """Export a Morrowind or Oblivion bounding box."""
@@ -500,7 +502,7 @@ class bound_export():
         maxz = max([b_vert[2] for b_vert in b_vertlist])
 
         if bsbound:
-            n_bbox = self.nif_common.create_block("BSBound")
+            n_bbox = self.nif_export.create_block("BSBound")
             # ... the following incurs double scaling because it will be added in
             # both the extra data list and in the old extra data sequence!!!
             # block_parent.add_extra_data(n_bbox)
@@ -519,7 +521,7 @@ class bound_export():
             n_bbox.dimensions.z = (maxz - minz) * b_obj.scale[2] * 0.5
 
         else:
-            n_bbox = self.nif_common.create_ninode()
+            n_bbox = self.nif_export.create_ninode()
             block_parent.add_child(n_bbox)
             # set name, flags, translation, and radius
             n_bbox.name = "Bounding Box"
