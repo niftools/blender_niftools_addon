@@ -39,6 +39,7 @@
 
 
 from io_scene_nif.nif_common import NifCommon
+from io_scene_nif.utility import nif_utils
 
 from io_scene_nif.animationsys.animation_export import AnimationHelper
 from io_scene_nif.collisionsys.collision_export import bhkshape_export, bound_export
@@ -2379,7 +2380,7 @@ class NifExport(NifCommon):
             matrix = self.armaturehelper.get_bone_rest_matrix(b_obj, 'BONESPACE')
 
         try:
-            return self.decompose_srt(matrix)
+            return nif_utils.decompose_srt(matrix)
         except NifExportError: # non-uniform scaling
             self.debug(str(matrix))
             raise NifExportError(
