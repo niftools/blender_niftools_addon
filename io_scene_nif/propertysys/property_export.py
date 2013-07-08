@@ -39,7 +39,7 @@
 
 from pyffi.formats.nif import NifFormat
 
-class AnimationHelper():
+class PropertyHelper():
     
     def __init__(self, parent):
         self.nif_export = parent
