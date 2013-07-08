@@ -74,7 +74,7 @@ class Constraint():
                         " can be exported: skipped %s." % b_constr)
                     continue
                 # check that the object is a rigid body
-                for otherbody, otherobj in self.blocks.items():
+                for otherbody, otherobj in self.nif_export.blocks.items():
                     if isinstance(otherbody, NifFormat.bhkRigidBody) \
                         and otherobj is b_obj:
                         hkbody = otherbody
@@ -157,7 +157,7 @@ class Constraint():
                     self.warning("Constraint %s has no target, skipped")
                     continue
                 # find target's bhkRigidBody
-                for otherbody, otherobj in self.blocks.items():
+                for otherbody, otherobj in self.nif_export.blocks.items():
                     if isinstance(otherbody, NifFormat.bhkRigidBody) \
                         and otherobj == targetobj:
                         hkconstraint.entities[1] = otherbody
