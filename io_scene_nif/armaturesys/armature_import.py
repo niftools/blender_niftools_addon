@@ -71,14 +71,14 @@ class Armature():
 	bones_extra_matrix = {}
 	
 	def __init__(self, parent):
-		self.nif_common = parent
-		self.properties = self.nif_common.properties
+		self.nif_import = parent
+		self.properties = self.nif_import.properties
 	
 	def import_armature(self, niArmature):
 		"""Scans an armature hierarchy, and returns a whole armature.
 		This is done outside the normal node tree scan to allow for positioning
 		of the bones before skins are attached."""
-		armature_name = self.nif_common.import_name(niArmature)
+		armature_name = self.nif_import.import_name(niArmature)
 
 		b_armatureData = bpy.data.armatures.new(armature_name)
 		b_armatureData.use_deform_vertex_groups = True
@@ -120,11 +120,11 @@ class Armature():
 			bpy.types.NlaTrack.select = b_armature #action.setActive(b_armature)
 			# go through all armature pose bones
 			# see http://www.elysiun.com/forum/viewtopic.php?t=58693
-			self.nif_common.info('Importing Animations')
+			self.nif_import.info('Importing Animations')
 			for bone_name, b_posebone in b_armature.pose.bones.items():
 				# denote progress
-				self.nif_common.debug('Importing animation for bone %s' % bone_name)
-				niBone = self.nif_common.blocks[bone_name]
+				self.nif_import.debug('Importing animation for bone %s' % bone_name)
+				niBone = self.nif_import.blocks[bone_name]
 
 				# get bind matrix (NIF format stores full transformations in keyframes,
 				# but Blender wants relative transformations, hence we need to know
@@ -139,7 +139,7 @@ class Armature():
 				# Schannel = Stotal / Sbind
 				# Rchannel = Rtotal * inverse(Rbind)
 				# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
-				bone_bm = self.nif_common.import_matrix(niBone) # base pose
+				bone_bm = self.nif_import.import_matrix(niBone) # base pose
 				niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = self.decompose_srt(bone_bm)
 				niBone_bind_rot_inv = mathutils.Matrix(niBone_bind_rot)
 				niBone_bind_rot_inv.invert()
@@ -165,7 +165,7 @@ class Armature():
 				# SC' = SX * SC / SX = SC
 				# RC' = RX * RC * inverse(RX)
 				# TC' = (TX * SC * RC + TC - TX) * inverse(RX) / SX
-				extra_matrix_scale, extra_matrix_rot, extra_matrix_trans = self.decompose_srt(self.nif_common.bones_extra_matrix[niBone])
+				extra_matrix_scale, extra_matrix_rot, extra_matrix_trans = self.decompose_srt(self.nif_import.bones_extra_matrix[niBone])
 				extra_matrix_quat = extra_matrix_rot.to_quaternion()
 				extra_matrix_rot_inv = mathutils.Matrix(extra_matrix_rot)
 				extra_matrix_rot_inv.invert()
@@ -210,10 +210,10 @@ class Armature():
 
 					# rotations
 					if rotations:
-						self.nif_common.debug(
+						self.nif_import.debug(
 							'Rotation keys...(bspline quaternions)')
 						for time, quat in zip(times, rotations):
-							frame = 1 + int(time * self.nif_common.fps + 0.5)
+							frame = 1 + int(time * self.nif_import.fps + 0.5)
 							quat = mathutils.Quaternion(
 								[quat[0], quat[1], quat[2], quat[3]])
 							# beware, CrossQuats takes arguments in a
@@ -230,10 +230,10 @@ class Armature():
 
 					# translations
 					if translations:
-						self.nif_common.debug('Translation keys...(bspline)')
+						self.nif_import.debug('Translation keys...(bspline)')
 						for time, translation in zip(times, translations):
 							# time 0.0 is frame 1
-							frame = 1 + int(time * self.nif_common.fps + 0.5)
+							frame = 1 + int(time * self.nif_import.fps + 0.5)
 							trans = mathutils.Vector(*translation)
 							locVal = (trans - niBone_bind_trans) * niBone_bind_rot_inv * (niBone_bind_scale)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
 							# the rotation matrix is needed at this frame (that's
@@ -294,10 +294,10 @@ class Armature():
 
 					# Scaling
 					if scales.keys:
-						self.nif_common.debug('Scale keys...')
+						self.nif_import.debug('Scale keys...')
 					for scaleKey in scales.keys:
 						# time 0.0 is frame 1
-						frame = 1 + int(scaleKey.time * self.nif_common.fps + 0.5)
+						frame = 1 + int(scaleKey.time * self.nif_import.fps + 0.5)
 						sizeVal = scaleKey.value
 						size = sizeVal / niBone_bind_scale # Schannel = Stotal / Sbind
 						b_posebone.size = mathutils.Vector(size, size, size)
@@ -313,7 +313,7 @@ class Armature():
 					if rotation_type == 4:
 						# uses xyz rotation
 						if kfd.xyz_rotations[0].keys:
-							self.nif_common.debug('Rotation keys...(euler)')
+							self.nif_import.debug('Rotation keys...(euler)')
 						for xkey, ykey, zkey in zip(kfd.xyz_rotations[0].keys,
 													 kfd.xyz_rotations[1].keys,
 													 kfd.xyz_rotations[2].keys):
@@ -322,10 +322,10 @@ class Armature():
 							# XXX same times!!!
 							if (abs(xkey.time - ykey.time) > self.properties.epsilon
 								or abs(xkey.time - zkey.time) > self.properties.epsilon):
-								self.nif_common.warning(
+								self.nif_import.warning(
 									"xyz key times do not correspond, "
 									"animation may not be correctly imported")
-							frame = 1 + int(xkey.time * self.nif_common.fps + 0.5)
+							frame = 1 + int(xkey.time * self.nif_import.fps + 0.5)
 							euler = mathutils.Euler(
 								[xkey.value * 180.0 / math.pi,
 								 ykey.value * 180.0 / math.pi,
@@ -347,10 +347,10 @@ class Armature():
 					else:
 						# TODO take rotation type into account for interpolation
 						if kfd.quaternion_keys:
-							self.nif_common.debug('Rotation keys...(quaternions)')
+							self.nif_import.debug('Rotation keys...(quaternions)')
 						quaternion_keys = kfd.quaternion_keys
 						for key in quaternion_keys:
-							frame = 1 + int(key.time * self.nif_common.fps + 0.5)
+							frame = 1 + int(key.time * self.nif_import.fps + 0.5)
 							keyVal = key.value
 							quat = mathutils.Quaternion([keyVal.w, keyVal.x, keyVal.y, keyVal.z])
 							# beware, CrossQuats takes arguments in a
@@ -371,10 +371,10 @@ class Armature():
 		
 					# Translations
 					if translations.keys:
-						self.nif_common.debug('Translation keys...')
+						self.nif_import.debug('Translation keys...')
 					for key in translations.keys:
 						# time 0.0 is frame 1
-						frame = 1 + int(key.time * self.nif_common.fps + 0.5)
+						frame = 1 + int(key.time * self.nif_import.fps + 0.5)
 						keyVal = key.value
 						trans = mathutils.Vector(keyVal.x, keyVal.y, keyVal.z)
 						locVal = (trans - niBone_bind_trans) * niBone_bind_rot_inv * (niBone_bind_scale)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
@@ -427,18 +427,18 @@ class Armature():
 						pass
 					else:
 						for b_curve in ipo:
-							b_curve.extend = self.nif_common.get_extend_from_flags(kfc.flags)
+							b_curve.extend = self.nif_import.get_extend_from_flags(kfc.flags)
 
 		# constraints (priority)
 		# must be done outside edit mode hence after calling
 		for bone_name, b_posebone in b_armature.pose.bones.items():
 			# find bone nif block
-			niBone = self.nif_common.blocks[bone_name]
+			niBone = self.nif_import.blocks[bone_name]
 			# store bone priority, if applicable
-			if niBone.name in self.nif_common.bone_priorities:
+			if niBone.name in self.nif_import.bone_priorities:
 				constr = b_posebone.constraints.append(
 					bpy.types.Constraint.NULL)
-				constr.name = "priority:%i" % self.nif_common.bone_priorities[niBone.name]
+				constr.name = "priority:%i" % self.nif_import.bone_priorities[niBone.name]
 
 		return b_armature  
 
@@ -453,7 +453,7 @@ class Armature():
 		nub_length = 5.0
 		scale = self.properties.scale_correction
 		# bone name
-		bone_name = self.nif_common.import_name(niBlock, 32)
+		bone_name = self.nif_import.import_name(niBlock, 32)
 		niChildBones = [ child for child in niBlock.children
 						 if self.is_bone(child) ]
 		# create a new bone
@@ -461,7 +461,7 @@ class Armature():
 		#Sets active so edit bones are marked selected after import
 		b_armatureData.edit_bones.active = b_bone
 		# head: get position from niBlock
-		armature_space_matrix = self.nif_common.import_matrix(niBlock,
+		armature_space_matrix = self.nif_import.import_matrix(niBlock,
 												   relative_to=niArmature)
 
 		b_bone_head_x = armature_space_matrix[0][3]
@@ -475,7 +475,7 @@ class Armature():
 		# tail: average of children location
 		if len(niChildBones) > 0:
 			m_correction = self.find_correction_matrix(niBlock, niArmature)
-			child_matrices = [ self.nif_common.import_matrix(child,
+			child_matrices = [ self.nif_import.import_matrix(child,
 												  relative_to=niArmature)
 							   for child in niChildBones ]
 			b_bone_tail_x = sum(child_matrix[0][3]
@@ -513,7 +513,7 @@ class Armature():
 				# orient it as the vector between this
 				# bone's head and the parent's tail
 				parent_tail = b_armatureData.edit_bones[
-					self.nif_common.names[niBlock._parent]].tail
+					self.nif_import.names[niBlock._parent]].tail
 				dx = b_bone_head_x - parent_tail[0]
 				dy = b_bone_head_y - parent_tail[1]
 				dz = b_bone_head_z - parent_tail[2]
@@ -521,7 +521,7 @@ class Armature():
 					# no offset from the parent: follow the parent's
 					# orientation
 					parent_head = b_armatureData.edit_bones[
-						self.nif_common.names[niBlock._parent]].head
+						self.nif_import.names[niBlock._parent]].head
 					dx = parent_tail[0] - parent_head[0]
 					dy = parent_tail[1] - parent_head[1]
 					dz = parent_tail[2] - parent_head[2]
@@ -573,14 +573,14 @@ class Armature():
 		"""Returns the correction matrix for a bone."""
 		m_correction = self.IDENTITY44.to_3x3()
 		if (self.properties.import_realign_bones == 2) and self.is_bone(niBlock):
-			armature_space_matrix = self.nif_common.import_matrix(niBlock,
+			armature_space_matrix = self.nif_import.import_matrix(niBlock,
 													   relative_to=niArmature)
 
 			niChildBones = [ child for child in niBlock.children
 							 if self.is_bone(child) ]
 			(sum_x, sum_y, sum_z, dummy) = armature_space_matrix[3]
 			if len(niChildBones) > 0:
-				child_local_matrices = [ self.nif_common.import_matrix(child)
+				child_local_matrices = [ self.nif_import.import_matrix(child)
 										 for child in niChildBones ]
 				sum_x = sum(cm[0][3] for cm in child_local_matrices)
 				sum_y = sum(cm[1][3] for cm in child_local_matrices)
@@ -618,7 +618,7 @@ class Armature():
 		# or importing an Oblivion or Fallout 3 skeleton:
 		# do all NiNode's as bones
 		if self.properties.skeleton == "SKELETON_ONLY" or (
-			self.nif_common.data.version in (0x14000005, 0x14020007) and
+			self.nif_import.data.version in (0x14000005, 0x14020007) and
 			(os.path.basename(self.properties.filepath).lower()
 			 in ('skeleton.nif', 'skeletonbeast.nif'))):
 
@@ -626,7 +626,7 @@ class Armature():
 				raise NifImportError(
 					"cannot import skeleton: root is not a NiNode")
 			# for morrowind, take the Bip01 node to be the skeleton root
-			if self.nif_common.data.version == 0x04000002:
+			if self.nif_import.data.version == 0x04000002:
 				skelroot = niBlock.find(block_name='Bip01',
 										block_type=NifFormat.NiNode)
 				if not skelroot:
@@ -635,7 +635,7 @@ class Armature():
 				skelroot = niBlock
 			if skelroot not in self.armatures:
 				self.armatures[skelroot] = []
-			self.nif_common.info("Selecting node '%s' as skeleton root"
+			self.nif_import.info("Selecting node '%s' as skeleton root"
 							 % skelroot.name)
 			# add bones
 			for bone in skelroot.tree():
@@ -643,7 +643,7 @@ class Armature():
 					continue
 				if not isinstance(bone, NifFormat.NiNode):
 					continue
-				if self.nif_common.is_grouping_node(bone):
+				if self.nif_import.is_grouping_node(bone):
 					continue
 				if bone not in self.armatures[skelroot]:
 					self.armatures[skelroot].append(bone)
@@ -651,23 +651,23 @@ class Armature():
 
 		# attaching to selected armature -> first identify armature and bones
 		elif self.properties.skeleton == "GEOMETRY_ONLY" and not self.armatures:
-			skelroot = niBlock.find(block_name=self.nif_common.selected_objects[0].name)
+			skelroot = niBlock.find(block_name=self.nif_import.selected_objects[0].name)
 			if not skelroot:
 				raise NifImportError(
-					"nif has no armature '%s'" % self.nif_common.selected_objects[0].name)
-			self.nif_common.debug("Identified '%s' as armature" % skelroot.name)
+					"nif has no armature '%s'" % self.nif_import.selected_objects[0].name)
+			self.nif_import.debug("Identified '%s' as armature" % skelroot.name)
 			self.armatures[skelroot] = []
-			for bone_name in self.nif_common.selected_objects[0].data.bones.keys():
+			for bone_name in self.nif_import.selected_objects[0].data.bones.keys():
 				# blender bone naming -> nif bone naming
-				nif_bone_name = self.nif_common.get_bone_name_for_nif(bone_name)
+				nif_bone_name = self.nif_import.get_bone_name_for_nif(bone_name)
 				# find a block with bone name
 				bone_block = skelroot.find(block_name=nif_bone_name)
 				# add it to the name list if there is a bone with that name
 				if bone_block:
-					self.nif_common.info(
+					self.nif_import.info(
 						"Identified nif block '%s' with bone '%s' "
 						"in selected armature" % (nif_bone_name, bone_name))
-					self.nif_common.names[bone_block] = bone_name
+					self.nif_import.names[bone_block] = bone_name
 					self.armatures[skelroot].append(bone_block)
 					self.complete_bone_tree(bone_block, skelroot)
 
@@ -675,7 +675,7 @@ class Armature():
 		if isinstance(niBlock, NifFormat.NiTriBasedGeom):
 			# yes, we found one, get its skin instance
 			if niBlock.is_skin():
-				self.nif_common.debug("Skin found on block '%s'" % niBlock.name)
+				self.nif_import.debug("Skin found on block '%s'" % niBlock.name)
 				# it has a skin instance, so get the skeleton root
 				# which is an armature only if it's not a skinning influence
 				# so mark the node to be imported as an armature
@@ -684,14 +684,14 @@ class Armature():
 				if self.properties.skeleton == "EVERYTHING":
 					if skelroot not in self.armatures:
 						self.armatures[skelroot] = []
-						self.nif_common.debug("'%s' is an armature"
+						self.nif_import.debug("'%s' is an armature"
 										  % skelroot.name)
 				elif self.properties.skeleton == "GEOMETRY_ONLY":
 					if skelroot not in self.armatures:
 						raise NifImportError(
 							"nif structure incompatible with '%s' as armature:"
 							" node '%s' has '%s' as armature"
-							% (self.nif_common.selected_objects[0].name, niBlock.name,
+							% (self.nif_import.selected_objects[0].name, niBlock.name,
 							   skelroot.name))
 
 				for i, boneBlock in enumerate(skininst.bones):
@@ -700,7 +700,7 @@ class Armature():
 						continue
 					if boneBlock not in self.armatures[skelroot]:
 						self.armatures[skelroot].append(boneBlock)
-						self.nif_common.debug(
+						self.nif_import.debug(
 							"'%s' is a bone of armature '%s'"
 							% (boneBlock.name, skelroot.name))
 					# now we "attach" the bone to the armature:
@@ -709,7 +709,7 @@ class Armature():
 					self.complete_bone_tree(boneBlock, skelroot)
 
 				# mark all nodes as bones if asked
-				if self.nif_common.IMPORT_EXTRANODES:
+				if self.nif_import.IMPORT_EXTRANODES:
 					# add bones
 					for bone in skelroot.tree():
 						if bone is skelroot:
@@ -719,11 +719,11 @@ class Armature():
 						if isinstance(bone, NifFormat.NiLODNode):
 							# LOD nodes are never bones
 							continue
-						if self.nif_common.is_grouping_node(bone):
+						if self.nif_import.is_grouping_node(bone):
 							continue
 						if bone not in self.armatures[skelroot]:
 							self.armatures[skelroot].append(bone)
-							self.nif_common.debug(
+							self.nif_import.debug(
 								"'%s' marked as extra bone of armature '%s'"
 								% (bone.name, skelroot.name))
 							# we make sure all NiNodes from this bone
@@ -752,7 +752,7 @@ class Armature():
 				# neither is it marked as a bone: so mark the parent as a bone
 				self.armatures[skelroot].append(boneparent)
 				# store the coordinates for realignement autodetection 
-				self.nif_common.debug("'%s' is a bone of armature '%s'"
+				self.nif_import.debug("'%s' is a bone of armature '%s'"
 								  % (boneparent.name, skelroot.name))
 			# now the parent is marked as a bone
 			# recursion: complete the bone tree,
@@ -788,18 +788,18 @@ class Armature():
 	def get_blender_object(self, niBlock):
 		"""Retrieves the Blender object or Blender bone matching the block."""
 		if self.is_bone(niBlock):
-			bone_name = self.nif_common.names[niBlock]
+			bone_name = self.nif_import.names[niBlock]
 			armatureName = None
 			for armatureBlock, boneBlocks in self.armatures.items():
 				if niBlock in boneBlocks:
-					armatureName = self.nif_common.names[armatureBlock]
+					armatureName = self.nif_import.names[armatureBlock]
 					break
 				else:
 					raise NifImportError("cannot find bone '%s'" % bone_name)
 			armatureObject = Blender.Object.Get(armatureName)
 			return armatureObject.data.bones[bone_name]
 		else:
-			return Blender.Object.Get(self.nif_common.names[niBlock])
+			return Blender.Object.Get(self.nif_import.names[niBlock])
 		   
 	def decompose_srt(self, matrix):
 		"""Decompose Blender transform matrix as a scale, rotation matrix, and translation vector."""
@@ -814,7 +814,7 @@ class Armature():
 		# only uniform scaling
 		if (abs(scale_vec[0]-scale_vec[1]) >= self.properties.epsilon
 			or abs(scale_vec[1]-scale_vec[2]) >= self.properties.epsilon):
-			self.nif_common.warning(
+			self.nif_import.warning(
 				"Corrupt rotation matrix in nif: geometry errors may result.")
 		b_scale = scale_vec[0]
 		# get rotation matrix
@@ -848,7 +848,7 @@ class Armature():
 			for row in correction_matrix:
 				line = '%s;%s,%s,%s,%s' % (line, row[0], row[1], row[2], row[3])
 			# we write the bone names with their blender name!
-			blender_bone_name = self.nif_common.names[niBone] # NOT niBone.name !!
+			blender_bone_name = self.nif_import.names[niBone] # NOT niBone.name !!
 			# write it to the text buffer
 			bonetxt.write('%s/%s\n' % (blender_bone_name, line[1:]))
 		
@@ -865,7 +865,7 @@ class Armature():
 			namestxt = bpy.data.texts.new("FullNames")
 			
 		# write the names to the text buffer
-		for block, shortname in self.nif_common.names.items():
+		for block, shortname in self.nif_import.names.items():
 			if block.name and shortname != block.name:
 				block_name = block.name.decode()
 				namestxt.write('%s;%s\n' % (shortname, block_name))
