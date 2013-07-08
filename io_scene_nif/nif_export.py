@@ -45,6 +45,7 @@ from io_scene_nif.collisionsys.collision_export import bhkshape_export, bound_ex
 from io_scene_nif.armaturesys.armature_export import Armature
 from io_scene_nif.propertysys.property_export import PropertyHelper
 from io_scene_nif.constraint.constraint_export import Constraint
+from io_scene_nif.texturesys.texture_export import Texture
 
 
 import logging
@@ -72,11 +73,6 @@ class NifExport(NifCommon):
     IDENTITY44.set_identity()
     FLOAT_MIN = -3.4028234663852886e+38
     FLOAT_MAX = +3.4028234663852886e+38
-
-    USED_EXTRA_SHADER_TEXTURES = {
-        'SID_MEIER_S_RAILROADS': (3, 0, 4, 1, 5, 2),
-        'CIVILIZATION_IV': (3, 0, 1, 2)}
-    """The default ordering of the extra data blocks for different games."""
     
     # TODO - Expose via properties
     
@@ -177,6 +173,7 @@ class NifExport(NifCommon):
         self.propertyhelper = PropertyHelper(parent=self)
         self.constrainthelper = Constraint(parent=self)
         self.collisionhelper = Collision(parent=self)
+        self.texturehelper = Texture(parent=self)
 
         self.info("exporting {0}".format(self.properties.filepath))
 
@@ -1792,11 +1789,11 @@ class NifExport(NifCommon):
                         #darkmtex = mesh_dark_mtex,
                         #detailmtex = mesh_detail_mtex))
                 else:
-                    if self.properties.game in self.USED_EXTRA_SHADER_TEXTURES:
+                    if self.properties.game in self.texturehelper.USED_EXTRA_SHADER_TEXTURES:
                         # sid meier's railroad and civ4:
                         # set shader slots in extra data
                         self.add_shader_integer_extra_datas(trishape)
-                    trishape.add_property(self.export_texturing_property(
+                    trishape.add_property(self.texturehelper.export_texturing_property(
                         flags=0x0001, # standard
                         applymode=self.get_n_apply_mode_from_b_blend_type(
                             mesh_base_mtex.blend_type
@@ -1824,16 +1821,16 @@ class NifExport(NifCommon):
                     alphaflags = 0x12ED
                     alphathreshold = 0
                 trishape.add_property(
-                    self.export_alpha_property(flags=alphaflags,
-                                             threshold=alphathreshold))
+                    self.propertyhelper.object_property.export_alpha_property(flags=alphaflags,
+                                                                              threshold=alphathreshold))
 
             if mesh_haswire:
                 # add NiWireframeProperty
-                trishape.add_property(self.export_wireframe_property(flags=1))
+                trishape.add_property(self.propertyhelper.object_property.export_wireframe_property(flags=1))
 
             if mesh_doublesided:
                 # add NiStencilProperty
-                trishape.add_property(self.export_stencil_property())
+                trishape.add_property(self.propertyhelper.object_property.export_stencil_property())
 
             if mesh_material:
                 # add NiTriShape's specular property
@@ -1841,13 +1838,13 @@ class NifExport(NifCommon):
                 # games (they use specularity even without this property)
                 if (mesh_hasspec
                     and (self.properties.game
-                         not in self.USED_EXTRA_SHADER_TEXTURES)):
+                         not in self.texturehelper.USED_EXTRA_SHADER_TEXTURES)):
                     # refer to the specular property in the trishape block
                     trishape.add_property(
                         self.export_specular_property(flags=0x0001))
 
                 # add NiTriShape's material property
-                trimatprop = self.export_material_property(
+                trimatprop = self.propertyhelper.object_property.export_material_property(
                     name=self.get_full_name(mesh_material.name),
                     flags=0x0001, # TODO - standard flag, check?
                     ambient=mesh_mat_ambient_color,
@@ -1931,7 +1928,7 @@ class NifExport(NifCommon):
             # not using tangent space on non shadered nifs)
             if mesh_uvlayers and mesh_hasnormals:
                 if (self.properties.game in ('OBLIVION', 'FALLOUT_3')
-                    or (self.properties.game in self.USED_EXTRA_SHADER_TEXTURES)):
+                    or (self.properties.game in self.texturehelper.USED_EXTRA_SHADER_TEXTURES)):
                     trishape.update_tangent_space(
                         as_extra=(self.properties.game == 'OBLIVION'))
 
@@ -2262,12 +2259,6 @@ class NifExport(NifCommon):
 
 
 
-    
-
-    
-
-   
-
     def export_matrix(self, b_obj, space, block):
         """Set a block's transform matrix to an object's
         transformation matrix in rest pose."""
@@ -2490,353 +2481,7 @@ class NifExport(NifCommon):
                 "Only Morrowind, Oblivion, and Fallout 3"
                 " collisions are supported, skipped collision object '%s'"
                 % b_obj.name)
-
-    
-    def export_alpha_property(self, flags=0x00ED, threshold=0):
-        """Return existing alpha property with given flags, or create new one
-        if an alpha property with required flags is not found."""
-        # search for duplicate
-        for block in self.blocks:
-            if isinstance(block, NifFormat.NiAlphaProperty) \
-               and block.flags == flags and block.threshold == threshold:
-                return block
-        # no alpha property with given flag found, so create new one
-        alphaprop = self.create_block("NiAlphaProperty")
-        alphaprop.flags = flags
-        alphaprop.threshold = threshold
-        return alphaprop
-
-    def export_specular_property(self, flags = 0x0001):
-        """Return existing specular property with given flags, or create new one
-        if a specular property with required flags is not found."""
-        # search for duplicate
-        for block in self.blocks:
-            if isinstance(block, NifFormat.NiSpecularProperty) \
-               and block.flags == flags:
-                return block
-        # no specular property with given flag found, so create new one
-        specprop = self.create_block("NiSpecularProperty")
-        specprop.flags = flags
-        return specprop
-
-    def export_wireframe_property(self, flags = 0x0001):
-        """Return existing wire property with given flags, or create new one
-        if an wire property with required flags is not found."""
-        # search for duplicate
-        for block in self.blocks:
-            if isinstance(block, NifFormat.NiWireframeProperty) \
-               and block.flags == flags:
-                return block
-
-        # no wire property with given flag found, so create new one
-        wireprop = self.create_block("NiWireframeProperty")
-        wireprop.flags = flags
-        return wireprop
-
-    def export_stencil_property(self):
-        """Return existing stencil property with given flags, or create new one
-        if an identical stencil property."""
-        # search for duplicate
-        for block in self.blocks:
-            if isinstance(block, NifFormat.NiStencilProperty):
-                # all these blocks have the same setting, no further check
-                # is needed
-                return block
-        # no stencil property found, so create new one
-        stencilprop = self.create_block("NiStencilProperty")
-        if self.properties.game == 'FALLOUT_3':
-            stencilprop.flags = 19840
-        return stencilprop
-
-    def export_material_property(self, name='', flags=0x0001,
-                                 ambient=(1.0, 1.0, 1.0), diffuse=(1.0, 1.0, 1.0),
-                                 specular=(0.0, 0.0, 0.0), emissive=(0.0, 0.0, 0.0),
-                                 gloss=10.0, alpha=1.0, emitmulti=1.0):
-        """Return existing material property with given settings, or create
-        a new one if a material property with these settings is not found."""
-
-        # create block (but don't register it yet in self.blocks)
-        matprop = NifFormat.NiMaterialProperty()
-
-        # list which determines whether the material name is relevant or not
-        # only for particular names this holds, such as EnvMap2
-        # by default, the material name does not affect rendering
-        specialnames = ("EnvMap2", "EnvMap", "skin", "Hair",
-                        "dynalpha", "HideSecret", "Lava")
-
-        # hack to preserve EnvMap2, skinm, ... named blocks (even if they got
-        # renamed to EnvMap2.xxx or skin.xxx on import)
-        if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
-            for specialname in specialnames:
-                if (name.lower() == specialname.lower()
-                    or name.lower().startswith(specialname.lower() + ".")):
-                    if name != specialname:
-                        self.warning("Renaming material '%s' to '%s'"
-                                            % (name, specialname))
-                    name = specialname
-
-        # clear noname materials
-        if name.lower().startswith("noname"):
-            self.warning("Renaming material '%s' to ''" % name)
-            name = ""
-
-        matprop.name = name
-        matprop.flags = flags
-        matprop.ambient_color.r = ambient[0]
-        matprop.ambient_color.g = ambient[1]
-        matprop.ambient_color.b = ambient[2]
-        matprop.diffuse_color.r = diffuse[0]
-        matprop.diffuse_color.g = diffuse[1]
-        matprop.diffuse_color.b = diffuse[2]
-        matprop.specular_color.r = specular[0]
-        matprop.specular_color.g = specular[1]
-        matprop.specular_color.b = specular[2]
-        matprop.emissive_color.r = emissive[0]
-        matprop.emissive_color.g = emissive[1]
-        matprop.emissive_color.b = emissive[2]
-        matprop.glossiness = gloss
-        matprop.alpha = alpha
-        matprop.emit_multi = emitmulti
-
-        # search for duplicate
-        # (ignore the name string as sometimes import needs to create different
-        # materials even when NiMaterialProperty is the same)
-        for block in self.blocks:
-            if not isinstance(block, NifFormat.NiMaterialProperty):
-                continue
-
-            # when optimization is enabled, ignore material name
-            if self.EXPORT_OPTIMIZE_MATERIALS:
-                ignore_strings = not(block.name in specialnames)
-            else:
-                ignore_strings = False
-
-            # check hash
-            first_index = 1 if ignore_strings else 0
-            if (block.get_hash()[first_index:] ==
-                matprop.get_hash()[first_index:]):
-                self.warning(
-                    "Merging materials '%s' and '%s'"
-                    " (they are identical in nif)"
-                    % (matprop.name, block.name))
-                return block
-
-        # no material property with given settings found, so use and register
-        # the new one
-        return self.register_block(matprop)
-
-    def export_tex_desc(self, texdesc=None, uvlayers=None, b_mat_texslot=None):
-        """Helper function for export_texturing_property to export each texture
-        slot."""
-        try:
-            texdesc.uv_set = uvlayers.index(b_mat_texslot.uv_layer) if b_mat_texslot.uv_layer else 0
-        except ValueError: # mtex.uv_layer not in uvlayers list
-            self.warning(
-                "Bad uv layer name '%s' in texture '%s'."
-                " Falling back on first uv layer"
-                % (b_mat_texslot.uv_layer, b_mat_texslot.texture.name))
-            texdesc.uv_set = 0 # assume 0 is active layer
-
-        texdesc.source = self.export_source_texture(b_mat_texslot.texture)
-
-    def export_texturing_property(
-        self, flags=0x0001, applymode=None, uvlayers=None,
-        basemtex=None, glowmtex=None, bumpmtex=None, normalmtex=None, glossmtex=None,
-        darkmtex=None, detailmtex=None, refmtex=None):
-        """Export texturing property. The parameters basemtex,
-        glowmtex, bumpmtex, ... are the Blender material textures
-        (MTex, not Texture) that correspond to the base, glow, bump
-        map, ... textures. The uvlayers parameter is a list of uvlayer
-        strings, that is, mesh.getUVLayers().
-        """
-
-        texprop = NifFormat.NiTexturingProperty()
-
-        texprop.flags = flags
-        texprop.apply_mode = applymode
-        texprop.texture_count = 7
-
-        # export extra shader textures
-        if self.properties.game == 'SID_MEIER_S_RAILROADS':
-            # sid meier's railroads:
-            # some textures end up in the shader texture list
-            # there are 5 slots available, so set them up
-            texprop.num_shader_textures = 5
-            texprop.shader_textures.update_size()
-            for mapindex, shadertexdesc in enumerate(texprop.shader_textures):
-                # set default values
-                shadertexdesc.is_used = False
-                shadertexdesc.map_index = mapindex
-
-            # some texture slots required by the engine
-            shadertexdesc_envmap = texprop.shader_textures[0]
-            shadertexdesc_envmap.is_used = True
-            shadertexdesc_envmap.texture_data.source = \
-                self.export_source_texture(filename="RRT_Engine_Env_map.dds")
-
-            shadertexdesc_cubelightmap = texprop.shader_textures[4]
-            shadertexdesc_cubelightmap.is_used = True
-            shadertexdesc_cubelightmap.texture_data.source = \
-                self.export_source_texture(filename="RRT_Cube_Light_map_128.dds")
-
-            # the other slots are exported below
-
-        elif self.properties.game == 'CIVILIZATION_IV':
-            # some textures end up in the shader texture list
-            # there are 4 slots available, so set them up
-            texprop.num_shader_textures = 4
-            texprop.shader_textures.update_size()
-            for mapindex, shadertexdesc in enumerate(texprop.shader_textures):
-                # set default values
-                shadertexdesc.is_used = False
-                shadertexdesc.map_index = mapindex
-
-        if basemtex:
-            texprop.has_base_texture = True
-            self.export_tex_desc(texdesc = texprop.base_texture,
-                                 uvlayers = uvlayers,
-                                 b_mat_texslot = basemtex)
-            # check for texture flip definition
-            try:
-                fliptxt = Blender.Text.Get(basemtex.texture.name)
-            except NameError:
-                pass
-            else:
-                # texture slot 0 = base
-                self.animationhelper.texture_animation.export_flip_controller(fliptxt, basemtex.texture, texprop, 0)
-
-        if glowmtex:
-            texprop.has_glow_texture = True
-            self.export_tex_desc(texdesc = texprop.glow_texture,
-                                 uvlayers = uvlayers,
-                                 b_mat_texslot = glowmtex)
-
-        if bumpmtex:
-            if self.properties.game not in self.USED_EXTRA_SHADER_TEXTURES:
-                texprop.has_bump_map_texture = True
-                self.export_tex_desc(texdesc = texprop.bump_map_texture,
-                                     uvlayers = uvlayers,
-                                     b_mat_texslot = bumpmtex)
-                texprop.bump_map_luma_scale = 1.0
-                texprop.bump_map_luma_offset = 0.0
-                texprop.bump_map_matrix.m_11 = 1.0
-                texprop.bump_map_matrix.m_12 = 0.0
-                texprop.bump_map_matrix.m_21 = 0.0
-                texprop.bump_map_matrix.m_22 = 1.0
-
-        if normalmtex:
-                shadertexdesc = texprop.shader_textures[1]
-                shadertexdesc.is_used = True
-                shadertexdesc.texture_data.source = \
-                    self.export_source_texture(texture=normalmtex.texture)
-
-        if glossmtex:
-            if self.properties.game not in self.USED_EXTRA_SHADER_TEXTURES:
-                texprop.has_gloss_texture = True
-                self.export_tex_desc(texdesc = texprop.gloss_texture,
-                                     uvlayers = uvlayers,
-                                     b_mat_texslot = glossmtex)
-            else:
-                shadertexdesc = texprop.shader_textures[2]
-                shadertexdesc.is_used = True
-                shadertexdesc.texture_data.source = \
-                    self.export_source_texture(texture=glossmtex.texture)
-
-        if darkmtex:
-            texprop.has_dark_texture = True
-            self.export_tex_desc(texdesc = texprop.dark_texture,
-                                 uvlayers = uvlayers,
-                                 b_mat_texslot = darkmtex)
-
-        if detailmtex:
-            texprop.has_detail_texture = True
-            self.export_tex_desc(texdesc = texprop.detail_texture,
-                                 uvlayers = uvlayers,
-                                 b_mat_texslot = detailmtex)
-
-        if refmtex:
-            if self.properties.game not in self.USED_EXTRA_SHADER_TEXTURES:
-                self.warning(
-                    "Cannot export reflection texture for this game.")
-                #texprop.hasRefTexture = True
-                #self.export_tex_desc(texdesc = texprop.refTexture,
-                #                     uvlayers = uvlayers,
-                #                     mtex = refmtex)
-            else:
-                shadertexdesc = texprop.shader_textures[3]
-                shadertexdesc.is_used = True
-                shadertexdesc.texture_data.source = \
-                    self.export_source_texture(texture=refmtex.texture)
-
-        # search for duplicate
-        for block in self.blocks:
-            if isinstance(block, NifFormat.NiTexturingProperty) \
-               and block.get_hash() == texprop.get_hash():
-                return block
-
-        # no texturing property with given settings found, so use and register
-        # the new one
-        return self.register_block(texprop)
-
-    def export_bs_shader_property(
-        self, basemtex=None, normalmtex=None, glowmtex=None):
-        """Export a Bethesda shader property block."""
-
-        # create new block
-        bsshader = NifFormat.BSShaderPPLightingProperty()
-        # set shader options
-        bsshader.shader_type = self.EXPORT_FO3_SHADER_TYPE
-        bsshader.shader_flags.zbuffer_test = self.EXPORT_FO3_SF_ZBUF
-        bsshader.shader_flags.shadow_map = self.EXPORT_FO3_SF_SMAP
-        bsshader.shader_flags.shadow_frustum = self.EXPORT_FO3_SF_SFRU
-        bsshader.shader_flags.window_environment_mapping = self.EXPORT_FO3_SF_WINDOW_ENVMAP
-        bsshader.shader_flags.empty = self.EXPORT_FO3_SF_EMPT
-        bsshader.shader_flags.unknown_31 = self.EXPORT_FO3_SF_UN31
-        # set textures
-        texset = NifFormat.BSShaderTextureSet()
-        bsshader.texture_set = texset
-        if basemtex:
-            texset.textures[0] = self.export_texture_filename(basemtex.texture)
-        if normalmtex:
-            texset.textures[1] = self.export_texture_filename(normalmtex.texture)
-        if glowmtex:
-            texset.textures[2] = self.export_texture_filename(glowmtex.texture)
-
-        # search for duplicates
-        # DISABLED: the Fallout 3 engine cannot handle them
-        #for block in self.blocks:
-        #    if (isinstance(block, NifFormat.BSShaderPPLightingProperty)
-        #        and block.get_hash() == bsshader.get_hash()):
-        #        return block
-
-        # no duplicate found, so use and register new one
-        return self.register_block(bsshader)
-
-    def export_texture_effect(self, b_mat_texslot = None):
-        """Export a texture effect block from material texture mtex (MTex, not
-        Texture)."""
-        texeff = NifFormat.NiTextureEffect()
-        texeff.flags = 4
-        texeff.rotation.set_identity()
-        texeff.scale = 1.0
-        texeff.model_projection_matrix.set_identity()
-        texeff.texture_filtering = NifFormat.TexFilterMode.FILTER_TRILERP
-        texeff.texture_clamping  = NifFormat.TexClampMode.WRAP_S_WRAP_T
-        texeff.texture_type = NifFormat.EffectType.EFFECT_ENVIRONMENT_MAP
-        texeff.coordinate_generation_type = NifFormat.CoordGenType.CG_SPHERE_MAP
-        if b_mat_texslot:
-            texeff.source_texture = self.export_source_texture(b_mat_texslot.texture)
-            if self.properties.game == 'MORROWIND':
-                texeff.num_affected_node_list_pointers += 1
-                texeff.affected_node_list_pointers.update_size()
-        texeff.unknown_vector.x = 1.0
-        return self.register_block(texeff)
-
-    def add_shader_integer_extra_datas(self, trishape):
-        """Add extra data blocks for shader indices."""
-        for shaderindex in self.USED_EXTRA_SHADER_TEXTURES[self.properties.game]:
-            shadername = self.EXTRA_SHADER_TEXTURES[shaderindex]
-            trishape.add_integer_extra_data(shadername, shaderindex)
+            
 
     def create_ninode(self, b_obj=None):
         # trivial case first
@@ -2854,6 +2499,7 @@ class NifExport(NifCommon):
 
         # return the node
         return n_node
+
 
     def export_range_lod_data(self, n_node, b_obj):
         """Export range lod data for for the children of b_obj, as a
