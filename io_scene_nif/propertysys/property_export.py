@@ -54,9 +54,8 @@ class ObjectProperty():
     def __init__(self, parent):
         self.nif_export = parent
     
-    def export_vertex_color_property(self, block_parent,
-                                 flags=1,
-                                 vertex_mode=0, lighting_mode=1):
+    def export_vertex_color_property(self, block_parent, flags=1,
+                                     vertex_mode=0, lighting_mode=1):
         """Create a vertex color property, and attach it to an existing block
         (typically, the root of the nif tree).
     
