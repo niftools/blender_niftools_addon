@@ -35,7 +35,7 @@ def import_matrix(niBlock, relative_to=None):
     return b_import_matrix
 
 
-def decompose_srt(self, matrix):
+def decompose_srt(matrix):
     """Decompose Blender transform matrix as a scale, rotation matrix, and
     translation vector."""
     # get scale components
@@ -61,14 +61,14 @@ def decompose_srt(self, matrix):
     # done!
     return [b_scale, b_rot, b_trans]
 
-def find_property(self, niBlock, property_type):
+def find_property(niBlock, property_type):
     """Find a property."""
     for prop in niBlock.properties:
         if isinstance(prop, property_type):
             return prop
     return None
 
-def find_controller(self, niBlock, controller_type):
+def find_controller(niBlock, controller_type):
         """Find a controller."""
         ctrl = niBlock.controller
         while ctrl:
