@@ -44,6 +44,8 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 
+from io_scene_nif.utility import nif_utils
+
 class Armature():
 	
 	# correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z
@@ -139,7 +141,7 @@ class Armature():
 				# Schannel = Stotal / Sbind
 				# Rchannel = Rtotal * inverse(Rbind)
 				# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
-				bone_bm = self.nif_import.import_matrix(niBone) # base pose
+				bone_bm = nif_utils.import_matrix(niBone) # base pose
 				niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = self.decompose_srt(bone_bm)
 				niBone_bind_rot_inv = mathutils.Matrix(niBone_bind_rot)
 				niBone_bind_rot_inv.invert()
@@ -461,7 +463,7 @@ class Armature():
 		#Sets active so edit bones are marked selected after import
 		b_armatureData.edit_bones.active = b_bone
 		# head: get position from niBlock
-		armature_space_matrix = self.nif_import.import_matrix(niBlock,
+		armature_space_matrix = nif_utils.import_matrix(niBlock,
 												   relative_to=niArmature)
 
 		b_bone_head_x = armature_space_matrix[0][3]
@@ -475,7 +477,7 @@ class Armature():
 		# tail: average of children location
 		if len(niChildBones) > 0:
 			m_correction = self.find_correction_matrix(niBlock, niArmature)
-			child_matrices = [ self.nif_import.import_matrix(child,
+			child_matrices = [ nif_utils.import_matrix(child,
 												  relative_to=niArmature)
 							   for child in niChildBones ]
 			b_bone_tail_x = sum(child_matrix[0][3]
@@ -573,14 +575,14 @@ class Armature():
 		"""Returns the correction matrix for a bone."""
 		m_correction = self.IDENTITY44.to_3x3()
 		if (self.properties.import_realign_bones == 2) and self.is_bone(niBlock):
-			armature_space_matrix = self.nif_import.import_matrix(niBlock,
+			armature_space_matrix = nif_utils.import_matrix(niBlock,
 													   relative_to=niArmature)
 
 			niChildBones = [ child for child in niBlock.children
 							 if self.is_bone(child) ]
 			(sum_x, sum_y, sum_z, dummy) = armature_space_matrix[3]
 			if len(niChildBones) > 0:
-				child_local_matrices = [ self.nif_import.import_matrix(child)
+				child_local_matrices = [ nif_utils.import_matrix(child)
 										 for child in niChildBones ]
 				sum_x = sum(cm[0][3] for cm in child_local_matrices)
 				sum_y = sum(cm[1][3] for cm in child_local_matrices)
