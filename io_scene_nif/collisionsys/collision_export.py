@@ -50,7 +50,7 @@ class bhkshape_export():
 
     def __init__(self, parent):
         self.nif_export = parent
-        self.HAVOK_SCALE = self.HAVOK_SCALE
+        self.HAVOK_SCALE = parent.HAVOK_SCALE
 
 
     def export_collision_helper(self, b_obj, parent_block):
