@@ -1841,7 +1841,7 @@ class NifExport(NifCommon):
                          not in self.texturehelper.USED_EXTRA_SHADER_TEXTURES)):
                     # refer to the specular property in the trishape block
                     trishape.add_property(
-                        self.export_specular_property(flags=0x0001))
+                        self.propertyhelper.object_property.export_specular_property(flags=0x0001))
 
                 # add NiTriShape's material property
                 trimatprop = self.propertyhelper.material_property.export_material_property(
