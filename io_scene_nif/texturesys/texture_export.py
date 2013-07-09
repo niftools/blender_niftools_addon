@@ -47,17 +47,14 @@ class Texture():
     
     # dictionary of texture files, to reuse textures
     textures = {}
-
+    #Default ordering of Extra data blocks for different games
+    USED_EXTRA_SHADER_TEXTURES = {'SID_MEIER_S_RAILROADS': (3, 0, 4, 1, 5, 2),
+                                  'CIVILIZATION_IV': (3, 0, 1, 2)}
+    
     def __init__(self, parent):
         self.nif_export = parent
         self.properties = parent.properties
-        
-        #Default ordering of Extra data blocks for different games
-        USED_EXTRA_SHADER_TEXTURES = {
-        'SID_MEIER_S_RAILROADS': (3, 0, 4, 1, 5, 2),
-        'CIVILIZATION_IV': (3, 0, 1, 2)}
-    
-        
+                
     def export_texture_filename(self, texture):
         """Returns file name from texture.
 
@@ -328,7 +325,7 @@ class Texture():
 
         if refmtex:
             if self.properties.game not in self.USED_EXTRA_SHADER_TEXTURES:
-                self.warning(
+                self.nif_export.warning(
                     "Cannot export reflection texture for this game.")
                 #texprop.hasRefTexture = True
                 #self.export_tex_desc(texdesc = texprop.refTexture,
@@ -341,7 +338,7 @@ class Texture():
                     self.export_source_texture(texture=refmtex.texture)
 
         # search for duplicate
-        for block in self.blocks:
+        for block in self.nif_export.blocks:
             if isinstance(block, NifFormat.NiTexturingProperty) \
                and block.get_hash() == texprop.get_hash():
                 return block

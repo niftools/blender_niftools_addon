@@ -104,12 +104,12 @@ class ObjectProperty():
         """Return existing alpha property with given flags, or create new one
         if an alpha property with required flags is not found."""
         # search for duplicate
-        for block in self.blocks:
+        for block in self.nif_export.blocks:
             if isinstance(block, NifFormat.NiAlphaProperty) \
                and block.flags == flags and block.threshold == threshold:
                 return block
         # no alpha property with given flag found, so create new one
-        alphaprop = self.create_block("NiAlphaProperty")
+        alphaprop = self.nif_export.create_block("NiAlphaProperty")
         alphaprop.flags = flags
         alphaprop.threshold = threshold
         return alphaprop
@@ -118,12 +118,12 @@ class ObjectProperty():
         """Return existing specular property with given flags, or create new one
         if a specular property with required flags is not found."""
         # search for duplicate
-        for block in self.blocks:
+        for block in self.nif_export.blocks:
             if isinstance(block, NifFormat.NiSpecularProperty) \
                and block.flags == flags:
                 return block
         # no specular property with given flag found, so create new one
-        specprop = self.create_block("NiSpecularProperty")
+        specprop = self.nif_export.create_block("NiSpecularProperty")
         specprop.flags = flags
         return specprop
 
@@ -131,13 +131,13 @@ class ObjectProperty():
         """Return existing wire property with given flags, or create new one
         if an wire property with required flags is not found."""
         # search for duplicate
-        for block in self.blocks:
+        for block in self.nif_export.blocks:
             if isinstance(block, NifFormat.NiWireframeProperty) \
                and block.flags == flags:
                 return block
 
         # no wire property with given flag found, so create new one
-        wireprop = self.create_block("NiWireframeProperty")
+        wireprop = self.nif_export.create_block("NiWireframeProperty")
         wireprop.flags = flags
         return wireprop
 
@@ -145,13 +145,13 @@ class ObjectProperty():
         """Return existing stencil property with given flags, or create new one
         if an identical stencil property."""
         # search for duplicate
-        for block in self.blocks:
+        for block in self.nif_export.blocks:
             if isinstance(block, NifFormat.NiStencilProperty):
                 # all these blocks have the same setting, no further check
                 # is needed
                 return block
         # no stencil property found, so create new one
-        stencilprop = self.create_block("NiStencilProperty")
+        stencilprop = self.nif_export.create_block("NiStencilProperty")
         if self.properties.game == 'FALLOUT_3':
             stencilprop.flags = 19840
         return stencilprop

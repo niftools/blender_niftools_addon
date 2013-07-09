@@ -50,6 +50,7 @@ class bhkshape_export():
 
     def __init__(self, parent):
         self.nif_export = parent
+        self.properties = parent.properties
         self.HAVOK_SCALE = parent.HAVOK_SCALE
 
 
