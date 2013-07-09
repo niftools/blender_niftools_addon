@@ -42,8 +42,6 @@ from pyffi.formats.nif import NifFormat
 class PropertyHelper():
     
     def __init__(self, parent):
-        self.nif_export = parent
-        self.properties = parent.properties
         self.object_property = ObjectProperty(parent)
         self.material_property = MaterialProperty(parent)
         
@@ -53,7 +51,8 @@ class ObjectProperty():
     
     def __init__(self, parent):
         self.nif_export = parent
-    
+        self.properties = parent.properties
+        
     def export_vertex_color_property(self, block_parent, flags=1,
                                      vertex_mode=0, lighting_mode=1):
         """Create a vertex color property, and attach it to an existing block
