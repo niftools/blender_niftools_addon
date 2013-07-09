@@ -1844,7 +1844,7 @@ class NifExport(NifCommon):
                         self.export_specular_property(flags=0x0001))
 
                 # add NiTriShape's material property
-                trimatprop = self.propertyhelper.object_property.export_material_property(
+                trimatprop = self.propertyhelper.material_property.export_material_property(
                     name=self.get_full_name(mesh_material.name),
                     flags=0x0001, # TODO - standard flag, check?
                     ambient=mesh_mat_ambient_color,
@@ -1860,7 +1860,7 @@ class NifExport(NifCommon):
 
 
                 # material animation
-                self.animationhelper.material_helper.export_material_controllers(
+                self.animationhelper.material_animation.export_material_controllers(
                     b_material=mesh_material, n_geom=trishape)
 
             # add NiTriShape's data
