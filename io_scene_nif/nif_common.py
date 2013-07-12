@@ -51,8 +51,6 @@ class NifCommon:
 
     VERTEX_RESOLUTION = 1000
     NORMAL_RESOLUTION = 100
-    UV_RESOLUTION = 10000
-    VCOL_RESOLUTION = 100
 
     EXTRA_SHADER_TEXTURES = [
         "EnvironmentMapIndex",
@@ -64,35 +62,8 @@ class NifCommon:
     """Names (ordered by default index) of shader texture slots for
     Sid Meier's Railroads and similar games.
     """
-
-    USED_EXTRA_SHADER_TEXTURES = {
-        'SID_MEIER_S_RAILROADS': (3, 0, 4, 1, 5, 2),
-        'CIVILIZATION_IV': (3, 0, 1, 2)}
-    """The default ordering of the extra data blocks for different games."""
     
     HAVOK_SCALE = 7.0
-    IMPORT_EXTRANODES = True
-
-    # TODO - Find a better way to expose these
-    EXPORT_OPTIMIZE_MATERIALS = True
-    EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES = False
-    
-    EXPORT_BHKLISTSHAPE = False
-    EXPORT_OB_BSXFLAGS = 2
-    EXPORT_OB_MASS = 10.0
-    EXPORT_OB_SOLID = True
-    EXPORT_OB_MOTIONSYSTEM = 7, # MO_SYS_FIXED
-    EXPORT_OB_UNKNOWNBYTE1 = 1
-    EXPORT_OB_UNKNOWNBYTE2 = 1
-    EXPORT_OB_QUALITYTYPE = 1 # MO_QUAL_FIXED
-    EXPORT_OB_WIND = 0
-    EXPORT_OB_LAYER = 1 # static
-    EXPORT_OB_MATERIAL = 9 # wood
-    EXPORT_OB_PRN = "NONE" # Todo with location on character. For weapons, rings, helmets, Sheilds ect
-    progress_bar = 0
-    """Level of the progress bar."""
-
-
 
     def __init__(self, operator, context):
         """Common initialization functions for executing the import/export
@@ -203,16 +174,6 @@ class NifCommon:
             "Unsupported cycle mode in nif, using clamped.")
         return Blender.IpoCurve.ExtendTypes.CONST
 
-    def get_flags_from_extend(self, extend):
-        if extend == Blender.IpoCurve.ExtendTypes.CONST:
-            return 4 # 0b100
-        elif extend == Blender.IpoCurve.ExtendTypes.CYCLIC:
-            return 0
-
-        self.warning(
-            "Unsupported extend type in blend, using clamped.")
-        return 4
-
     def get_b_ipol_from_n_ipol(self, n_ipol):
         if n_ipol == NifFormat.KeyType.LINEAR_KEY:
             return Blender.IpoCurve.InterpTypes.LINEAR
@@ -248,37 +209,3 @@ class NifCommon:
             " using apply mode APPLY_MODULATE" % b_blend_type)
         return NifFormat.ApplyMode.APPLY_MODULATE
 
-    def find_controller(self, niBlock, controller_type):
-        """Find a controller."""
-        ctrl = niBlock.controller
-        while ctrl:
-            if isinstance(ctrl, controller_type):
-                break
-            ctrl = ctrl.next_controller
-        return ctrl
-
-    def find_property(self, niBlock, property_type):
-        """Find a property."""
-        for prop in niBlock.properties:
-            if isinstance(prop, property_type):
-                return prop
-        return None
-
-    def find_extra(self, niBlock, extratype):
-        # TODO_3.0 - Optimise
-        
-        """Find extra data."""
-        # pre-10.x.x.x system: extra data chain
-        extra = niBlock.extra_data
-        while extra:
-            if isinstance(extra, extratype):
-                break
-            extra = extra.next_extra_data
-        if extra:
-            return extra
-
-        # post-10.x.x.x system: extra data list
-        for extra in niBlock.extra_data_list:
-            if isinstance(extra, extratype):
-                return extra
-        return None

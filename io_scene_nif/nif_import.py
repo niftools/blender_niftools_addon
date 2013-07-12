@@ -37,11 +37,15 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from .nif_common import NifCommon
-from .collisionsys.collision_import import bhkshape_import, bound_import
-from .armaturesys.armature_import import Armature
-from .materialsys.material import material_import
-from .texturesys.texture import texture_import
+from io_scene_nif.nif_common import NifCommon
+from io_scene_nif.utility import nif_utils
+
+from io_scene_nif.animationsys.animation_import import AnimationHelper
+from io_scene_nif.armaturesys.armature_import import Armature
+from io_scene_nif.collisionsys.collision_import import bhkshape_import, bound_import
+from io_scene_nif.constraintsys.constraint_import import Constraint
+from io_scene_nif.materialsys.material import material_import
+from io_scene_nif.texturesys.texture_import import Texture
 
 from functools import reduce
 import logging
@@ -66,7 +70,8 @@ class NifImport(NifCommon):
 
     # degrees to radians conversion constant
     D2R = 3.14159265358979/180.0
-
+    IMPORT_EXTRANODES = True
+    
     def execute(self):
         """Main import function."""
 
@@ -76,35 +81,22 @@ class NifImport(NifCommon):
         # dictionary of bones, maps Blender name to NIF block
         self.blocks = {}
 
-        # dictionary of bones, maps Blender bone name to matrix that maps the
-        # NIF bone matrix on the Blender bone matrix
-        # B' = X * B, where B' is the Blender bone matrix, and B is the NIF bone matrix
-        self.bones_extra_matrix = {}
-
-        # dictionary of bones that belong to a certain armature
-        # maps NIF armature name to list of NIF bone name
-        self.armatures = {}
-
         # bone animation priorities (maps NiNode name to priority number);
         # priorities are set in import_kf_root and are stored into the name
         # of a NULL constraint (for lack of something better) in
         # import_armature
         self.bone_priorities = {}
 
-        # dictionary mapping bhkRigidBody objects to list of objects imported
-        # in Blender; after we've imported the tree, we use this dictionary
-        # to set the physics constraints (ragdoll etc)
-        self.havok_objects = {}
-
         # Helper systems
         # Store references to subsystems as needed.
+        self.animationhelper = AnimationHelper(parent=self)
+        self.armaturehelper = Armature(parent=self)
         self.bhkhelper = bhkshape_import(parent=self)
         self.boundhelper = bound_import(parent=self)
-        self.armaturehelper = Armature(parent=self)
-        self.texturehelper = texture_import(parent=self)
+        self.constrainthelper = Constraint(parent=self)
+        self.texturehelper = Texture(parent=self)
         self.materialhelper = material_import(parent=self)
-
-
+        self.materialhelper.set_texture_helper(self.texturehelper)
         # catch NifImportError
         try:
             # check that one armature is selected in 'import geometry + parent
@@ -190,7 +182,7 @@ class NifImport(NifCommon):
             self.info("Importing data")
             # calculate and set frames per second
             if self.properties.animation:
-                self.fps = self.get_frames_per_second(
+                self.fps = self.animationhelper.get_frames_per_second(
                     self.data.roots
                     + (self.kfdata.roots if self.kfdata else []))
                 self.context.scene.render.fps = self.fps
@@ -251,7 +243,7 @@ class NifImport(NifCommon):
                 # merge animation from kf tree into nif tree
                 if self.properties.animation and self.kfdata:
                     for kf_root in self.kfdata.roots:
-                        self.import_kf_root(kf_root, root)
+                        self.animationhelper.import_kf_root(kf_root, root)
                 # import the nif tree
                 self.import_root(root)
         finally:
@@ -288,7 +280,7 @@ class NifImport(NifCommon):
 
         # import the keyframe notes
         if self.properties.animation:
-            self.import_text_keys(root_block)
+            self.animationhelper.import_text_keys(root_block)
 
         # read the NIF tree
         if self.armaturehelper.is_armature_root(root_block):
@@ -345,17 +337,18 @@ class NifImport(NifCommon):
                 % root_block.__class__)
 
         # store bone matrix offsets for re-export
-        if self.bones_extra_matrix:
+        if self.armaturehelper.bones_extra_matrix:
             self.armaturehelper.store_bones_extra_matrix()
 
         # store original names for re-export
         if self.names:
             self.armaturehelper.store_names()
-
+        
+        
         # now all havok objects are imported, so we are
         # ready to import the havok constraints
-        for hkbody in self.havok_objects:
-            self.import_bhk_constraints(hkbody)
+        self.constrainthelper.set_havok_objects(self.bhkhelper.get_havok_objects())
+        self.constrainthelper.import_bhk_constraints()
 
         # parent selected meshes to imported skeleton
         if self.properties.skeleton ==  "SKELETON_ONLY":
@@ -405,7 +398,7 @@ class NifImport(NifCommon):
         elif isinstance(niBlock, NifFormat.NiNode):
             children = niBlock.children
             # bounding box child?
-            bsbound = self.find_extra(niBlock, NifFormat.BSBound)
+            bsbound = nif_utils.find_extra(niBlock, NifFormat.BSBound)
             if not (children
                     or niBlock.collision_object
                     or bsbound or niBlock.has_bounding_box
@@ -446,7 +439,7 @@ class NifImport(NifCommon):
                 # morph controllers from geometry group
                 if self.properties.animation:
                     for child in geom_group:
-                        if self.find_controller(
+                        if nif_utils.find_controller(
                             child, NifFormat.NiGeomMorpherController):
                             geom_group.remove(child)
                 # import geometry/empty
@@ -536,6 +529,9 @@ class NifImport(NifCommon):
                     b_child.parent = b_obj
 
             elif isinstance(b_obj, bpy.types.Bone):
+                
+                #TODO MOVE TO ANIMATIONHELPER
+                
                 # bone parentship, is a bit more complicated
                 # go to rest position
                 
@@ -572,7 +568,7 @@ class NifImport(NifCommon):
 
                     # post multiply Z with X^{-1}
                     extra = mathutils.Matrix(
-                        self.bones_extra_matrix[niBlock])
+                        self.armaturehelper.bones_extra_matrix[niBlock])
                     extra.invert()
                     matrix = matrix * extra
                     # cancel out the tail translation T
@@ -618,15 +614,15 @@ class NifImport(NifCommon):
             # parented to b_obj
             if isinstance(b_obj, bpy.types.Object):
                 # note: bones already have their matrix set
-                b_obj.matrix_local = self.import_matrix(niBlock)
+                b_obj.matrix_local = nif_utils.import_matrix(niBlock)
 
                 # import the animations
                 if self.properties.animation:
-                    self.set_animation(niBlock, b_obj)
+                    self.animationhelper.set_animation(niBlock, b_obj)
                     # import the extras
-                    self.import_text_keys(niBlock)
+                    self.animationhelper.import_text_keys(niBlock)
                     # import vis controller
-                    self.import_object_vis_controller(
+                    self.animationhelper.object_animation.import_object_vis_controller(
                         b_object=b_obj, n_node=niBlock)
 
             # import extra node data, such as node type
@@ -703,27 +699,6 @@ class NifImport(NifCommon):
         self.debug("Selected unique name %s" % shortName)
         return shortName
 
-    def import_matrix(self, niBlock, relative_to=None):
-        """Retrieves a niBlock's transform matrix as a Mathutil.Matrix."""
-        # return Matrix(*niBlock.get_transform(relative_to).as_list())
-        n_scale, n_rot_mat3, n_loc_vec3 = niBlock.get_transform(relative_to).get_scale_rotation_translation()
-
-        # create a location matrix
-        b_loc_vec = mathutils.Vector(n_loc_vec3.as_tuple())
-        b_loc_vec = mathutils.Matrix.Translation(b_loc_vec)
-        
-        # create a scale matrix
-        b_scale_mat = mathutils.Matrix.Scale(n_scale, 4)
-
-        # create a rotation matrix
-        b_rot_mat = mathutils.Matrix()
-        b_rot_mat[0].xyz = n_rot_mat3.m_11, n_rot_mat3.m_12, n_rot_mat3.m_13
-        b_rot_mat[1].xyz = n_rot_mat3.m_21, n_rot_mat3.m_22, n_rot_mat3.m_23
-        b_rot_mat[2].xyz = n_rot_mat3.m_31, n_rot_mat3.m_32, n_rot_mat3.m_33
-        
-        b_import_matrix = (b_loc_vec * b_rot_mat) * b_scale_mat
-        return b_import_matrix
-
     def import_empty(self, niBlock):
         """Creates and returns a grouping empty."""
         shortname = self.import_name(niBlock)
@@ -739,133 +714,6 @@ class NifImport(NifCommon):
                 bpy.types.Constraint.NULL)
             constr.name = "priority:%i" % self.bone_priorities[niBlock.name]
         return b_empty
-
-
-
-    def import_material_controllers(self, b_material, n_geom):
-        """Import material animation data for given geometry."""
-        if not self.properties.animation:
-            return
-
-        self.import_material_alpha_controller(b_material, n_geom)
-        self.import_material_color_controller(
-            b_material=b_material,
-            b_channels=("MirR", "MirG", "MirB"),
-            n_geom=n_geom,
-            n_target_color=NifFormat.TargetColor.TC_AMBIENT)
-        self.import_material_color_controller(
-            b_material=b_material,
-            b_channels=("R", "G", "B"),
-            n_geom=n_geom,
-            n_target_color=NifFormat.TargetColor.TC_DIFFUSE)
-        self.import_material_color_controller(
-            b_material=b_material,
-            b_channels=("SpecR", "SpecG", "SpecB"),
-            n_geom=n_geom,
-            n_target_color=NifFormat.TargetColor.TC_SPECULAR)
-        self.import_material_uv_controller(b_material, n_geom)
-
-    def import_material_uv_controller(self, b_material, n_geom):
-        """Import UV controller data."""
-        # search for the block
-        n_ctrl = self.find_controller(n_geom,
-                                      NifFormat.NiUVController)
-        if not(n_ctrl and n_ctrl.data):
-            return
-        self.info("importing UV controller")
-        b_channels = ("OfsX", "OfsY", "SizeX", "SizeY")
-        for b_channel, n_uvgroup in zip(b_channels,
-                                        n_ctrl.data.uv_groups):
-            if n_uvgroup.keys:
-                # create curve in material ipo
-                b_ipo = self.get_material_ipo(b_material)
-                b_curve = b_ipo.addCurve(b_channel)
-                b_curve.interpolation = self.get_b_ipol_from_n_ipol(
-                    n_uvgroup.interpolation)
-                b_curve.extend = self.get_extend_from_flags(n_ctrl.flags)
-                for n_key in n_uvgroup.keys:
-                    if b_channel.startswith("Ofs"):
-                        # offsets are negated
-                        b_curve[1 + n_key.time * self.fps] = -n_key.value
-                    else:
-                        b_curve[1 + n_key.time * self.fps] = n_key.value
-
-    def import_material_alpha_controller(self, b_material, n_geom):
-        # find alpha controller
-        n_matprop = self.find_property(n_geom, NifFormat.NiMaterialProperty)
-        if not n_matprop:
-            return
-        n_alphactrl = self.find_controller(n_matprop,
-                                           NifFormat.NiAlphaController)
-        if not(n_alphactrl and n_alphactrl.data):
-            return
-        self.info("importing alpha controller")
-        b_channel = "Alpha"
-        b_ipo = self.get_material_ipo(b_material)
-        b_curve = b_ipo.addCurve(b_channel)
-        b_curve.interpolation = self.get_b_ipol_from_n_ipol(
-            n_alphactrl.data.data.interpolation)
-        b_curve.extend = self.get_extend_from_flags(n_alphactrl.flags)
-        for n_key in n_alphactrl.data.data.keys:
-            b_curve[1 + n_key.time * self.fps] = n_key.value
-
-    def import_material_color_controller(
-        self, b_material, b_channels, n_geom, n_target_color):
-        # find material color controller with matching target color
-        n_matprop = self.find_property(n_geom, NifFormat.NiMaterialProperty)
-        if not n_matprop:
-            return
-        for ctrl in n_matprop.get_controllers():
-            if isinstance(ctrl, NifFormat.NiMaterialColorController):
-                if ctrl.get_target_color() == n_target_color:
-                    n_matcolor_ctrl = ctrl
-                    break
-        else:
-            return
-        self.info(
-            "importing material color controller for target color %s"
-            " into blender channels %s"
-            % (n_target_color, b_channels))
-        # import data as curves
-        b_ipo = self.get_material_ipo(b_material)
-        for i, b_channel in enumerate(b_channels):
-            b_curve = b_ipo.addCurve(b_channel)
-            b_curve.interpolation = self.get_b_ipol_from_n_ipol(
-                n_matcolor_ctrl.data.data.interpolation)
-            b_curve.extend = self.get_extend_from_flags(n_matcolor_ctrl.flags)
-            for n_key in n_matcolor_ctrl.data.data.keys:
-                b_curve[1 + n_key.time * self.fps] = n_key.value.as_list()[i]
-
-    def get_material_ipo(self, b_material):
-        """Return existing material ipo data, or if none exists, create one
-        and return that.
-        """
-        if not b_material.ipo:
-            b_material.ipo = Blender.Ipo.New("Material", "MatIpo")
-        return b_material.ipo
-
-    def import_object_vis_controller(self, b_object, n_node):
-        """Import vis controller for blender object."""
-        n_vis_ctrl = self.find_controller(n_node, NifFormat.NiVisController)
-        if not(n_vis_ctrl and n_vis_ctrl.data):
-            return
-        self.info("importing vis controller")
-        b_channel = "Layer"
-        b_ipo = self.get_object_ipo(b_object)
-        b_curve = b_ipo.addCurve(b_channel)
-        b_curve.interpolation = Blender.IpoCurve.InterpTypes.CONST
-        b_curve.extend = self.get_extend_from_flags(n_vis_ctrl.flags)
-        for n_key in n_vis_ctrl.data.keys:
-            b_curve[1 + n_key.time * self.fps] = (
-                2 ** (n_key.value + max([1] + self.context.scene.getLayers()) - 1))
-
-    def get_object_ipo(self, b_object):
-        """Return existing object ipo data, or if none exists, create one
-        and return that.
-        """
-        if not b_object.ipo:
-            b_object.ipo = Blender.Ipo.New("Object", "Ipo")
-        return b_object.ipo
 
     def import_mesh(self, niBlock,
                     group_mesh=None,
@@ -917,11 +765,11 @@ class NifImport(NifCommon):
                     "BUG: cannot set matrix when importing meshes in groups;"
                     " use applytransform = True")
 
-            b_obj.matrix_local = self.import_matrix(niBlock, relative_to=relative_to)
+            b_obj.matrix_local = nif_utils.import_matrix(niBlock, relative_to=relative_to)
 
         else:
             # used later on
-            transform = self.import_matrix(niBlock, relative_to=relative_to)
+            transform = nif_utils.import_matrix(niBlock, relative_to=relative_to)
 
         # shortcut for mesh geometry data
         niData = niBlock.data
@@ -945,7 +793,7 @@ class NifImport(NifCommon):
         '''
 
         # Stencil (for double sided meshes)
-        n_stencil_prop = self.find_property(niBlock, NifFormat.NiStencilProperty)
+        n_stencil_prop = nif_utils.find_property(niBlock, NifFormat.NiStencilProperty)
         # we don't check flags for now, nothing fancy
         if n_stencil_prop:
             b_mesh.show_double_sided = True
@@ -955,30 +803,30 @@ class NifImport(NifCommon):
         # Material
         # note that NIF files only support one material for each trishape
         # find material property
-        n_mat_prop = self.find_property(niBlock,
+        n_mat_prop = nif_utils.find_property(niBlock,
                                          NifFormat.NiMaterialProperty)
 
         if n_mat_prop:
             # Texture
             n_texture_prop = None
             if n_uvco:
-                n_texture_prop = self.find_property(niBlock,
+                n_texture_prop = nif_utils.find_property(niBlock,
                                                   NifFormat.NiTexturingProperty)
 
             # Alpha
-            n_alpha_prop = self.find_property(niBlock,
+            n_alpha_prop = nif_utils.find_property(niBlock,
                                                NifFormat.NiAlphaProperty)
 
             # Specularity
-            n_specular_prop = self.find_property(niBlock,
+            n_specular_prop = nif_utils.find_property(niBlock,
                                               NifFormat.NiSpecularProperty)
 
             # Wireframe
-            n_wire_prop = self.find_property(niBlock,
+            n_wire_prop = nif_utils.find_property(niBlock,
                                               NifFormat.NiWireframeProperty)
 
             # bethesda shader
-            bsShaderProperty = self.find_property(
+            bsShaderProperty = nif_utils.find_property(
                 niBlock, NifFormat.BSShaderPPLightingProperty)
 
             # texturing effect for environment map
@@ -1018,8 +866,9 @@ class NifImport(NifCommon):
                                             n_alpha_prop, n_specular_prop,
                                             textureEffect, n_wire_prop,
                                             bsShaderProperty, extra_datas)
+
             # XXX todo: merge this call into import_material
-            self.import_material_controllers(material, niBlock)
+            self.animationhelper.material_animation.import_material_controllers(material, niBlock)
             b_mesh_materials = list(b_mesh.materials)
             try:
                 materialIndex = b_mesh_materials.index(material)
@@ -1278,7 +1127,7 @@ class NifImport(NifCommon):
         # import morph controller
         # XXX todo: move this to import_mesh_controllers
         if self.properties.animation:
-            morphCtrl = self.find_controller(niBlock, NifFormat.NiGeomMorpherController)
+            morphCtrl = nif_utils.find_controller(niBlock, NifFormat.NiGeomMorpherController)
             if morphCtrl:
                 morphData = morphCtrl.data
                 if morphData.num_morphs:
@@ -1442,103 +1291,7 @@ class NifImport(NifCommon):
 
         return b_obj
 
-    # import animation groups
-
-    def import_text_keys(self, niBlock):
-        """Stores the text keys that define animation start and end in a text
-        buffer, so that they can be re-exported. Since the text buffer is
-        cleared on each import only the last import will be exported
-        correctly."""
-        if isinstance(niBlock, NifFormat.NiControllerSequence):
-            txk = niBlock.text_keys
-        else:
-            txk = niBlock.find(block_type=NifFormat.NiTextKeyExtraData)
-        if txk:
-            # get animation text buffer, and clear it if it already exists
-            # TODO git rid of try-except block here
-            try:
-                animtxt = [txt for txt in bpy.data.texts if txt.name == "Anim"][0]
-                animtxt.clear()
-            except:
-                animtxt = bpy.data.texts.new("Anim")
-
-            frame = 1
-            for key in txk.text_keys:
-                newkey = str(key.value).replace('\r\n', '/').rstrip('/')
-                frame = 1 + int(key.time * self.fps + 0.5) # time 0.0 is frame 1
-                animtxt.write('%i/%s\n'%(frame, newkey))
-
-            # set start and end frames
-            self.context.scene.getRenderingContext().startFrame(1)
-            self.context.scene.getRenderingContext().endFrame(frame)
-
-    def get_frames_per_second(self, roots):
-        """Scan all blocks and return a reasonable number for FPS."""
-        # find all key times
-        key_times = []
-        for root in roots:
-            for kfd in root.tree(block_type=NifFormat.NiKeyframeData):
-                key_times.extend(key.time for key in kfd.translations.keys)
-                key_times.extend(key.time for key in kfd.scales.keys)
-                key_times.extend(key.time for key in kfd.quaternion_keys)
-                key_times.extend(key.time for key in kfd.xyz_rotations[0].keys)
-                key_times.extend(key.time for key in kfd.xyz_rotations[1].keys)
-                key_times.extend(key.time for key in kfd.xyz_rotations[2].keys)
-            for kfi in root.tree(block_type=NifFormat.NiBSplineInterpolator):
-                if not kfi.basis_data:
-                    # skip bsplines without basis data (eg bowidle.kf in
-                    # Oblivion)
-                    continue
-                key_times.extend(
-                    point * (kfi.stop_time - kfi.start_time)
-                    / (kfi.basis_data.num_control_points - 2)
-                    for point in range(kfi.basis_data.num_control_points - 2))
-            for uvdata in root.tree(block_type=NifFormat.NiUVData):
-                for uvgroup in uvdata.uv_groups:
-                    key_times.extend(key.time for key in uvgroup.keys)
-        # not animated, return a reasonable default
-        if not key_times:
-            return 30
-        # calculate FPS
-        fps = 30
-        lowest_diff = sum(abs(int(time * fps + 0.5) - (time * fps))
-                          for time in key_times)
-        # for fps in range(1,120): #disabled, used for testing
-        for test_fps in [20, 25, 35]:
-            diff = sum(abs(int(time * test_fps + 0.5)-(time * test_fps))
-                       for time in key_times)
-            if diff < lowest_diff:
-                lowest_diff = diff
-                fps = test_fps
-        self.info("Animation estimated at %i frames per second." % fps)
-        return fps
-
-    def store_animation_data(self, rootBlock):
-        return
-        # very slow, implement later
-        """
-        niBlockList = [block for block in rootBlock.tree() if isinstance(block, NifFormat.NiAVObject)]
-        for niBlock in niBlockList:
-            kfc = self.find_controller(niBlock, NifFormat.NiKeyframeController)
-            if not kfc: continue
-            kfd = kfc.data
-            if not kfd: continue
-            _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.translations.keys])
-            _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.scales.keys])
-            if kfd.rotation_type == 4:
-                _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.xyz_rotations.keys])
-            else:
-                _ANIMATION_DATA.extend([{'data': key, 'block': niBlock, 'frame': None} for key in kfd.quaternion_keys])
-
-        # set the frames in the _ANIMATION_DATA list
-        for key in _ANIMATION_DATA:
-            # time 0 is frame 1
-            key['frame'] = 1 + int(key['data'].time * self.fps + 0.5)
-
-        # sort by frame, I need this later
-        _ANIMATION_DATA.sort(lambda key1, key2: cmp(key1['frame'], key2['frame']))
-        """
-
+    
     def set_parents(self, niBlock):
         """Set the parent block recursively through the tree, to allow
         crawling back as needed."""
@@ -1581,481 +1334,7 @@ class NifImport(NifCommon):
                  if (isinstance(child, NifFormat.NiTriBasedGeom)
                      and child.name.find(node_name) != -1) ]
 
-    def set_animation(self, niBlock, b_obj):
-        """Load basic animation info for this object."""
-        kfc = self.find_controller(niBlock, NifFormat.NiKeyframeController)
-        if not kfc:
-            # no animation data: do nothing
-            return
-
-        if kfc.interpolator:
-            if isinstance(kfc.interpolator, NifFormat.NiBSplineInterpolator):
-                kfd = None # not supported yet so avoids fatal error - should be kfc.interpolator.spline_data when spline data is figured out.
-            else:
-                kfd = kfc.interpolator.data
-        else:
-            kfd = kfc.data
-
-        if not kfd:
-            # no animation data: do nothing
-            return
-
-        # denote progress
-        self.info("Animation")
-        self.info("Importing animation data for %s" % b_obj.name)
-        assert(isinstance(kfd, NifFormat.NiKeyframeData))
-        # create an Ipo for this object
-        b_ipo = self.get_object_ipo(b_obj)
-        # get the animation keys
-        translations = kfd.translations
-        scales = kfd.scales
-        # add the keys
-        self.debug('Scale keys...')
-        for key in scales.keys:
-            frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
-            Blender.Set('curframe', frame)
-            b_obj.SizeX = key.value
-            b_obj.SizeY = key.value
-            b_obj.SizeZ = key.value
-            b_obj.insertIpoKey(Blender.Object.SIZE)
-
-        # detect the type of rotation keys
-        rotation_type = kfd.rotation_type
-        if rotation_type == 4:
-            # uses xyz rotation
-            xkeys = kfd.xyz_rotations[0].keys
-            ykeys = kfd.xyz_rotations[1].keys
-            zkeys = kfd.xyz_rotations[2].keys
-            self.debug('Rotation keys...(euler)')
-            for (xkey, ykey, zkey) in zip(xkeys, ykeys, zkeys):
-                frame = 1+int(xkey.time * self.fps + 0.5) # time 0.0 is frame 1
-                # XXX we assume xkey.time == ykey.time == zkey.time
-                Blender.Set('curframe', frame)
-                # both in radians, no conversion needed
-                b_obj.RotX = xkey.value
-                b_obj.RotY = ykey.value
-                b_obj.RotZ = zkey.value
-                b_obj.insertIpoKey(Blender.Object.ROT)
-        else:
-            # uses quaternions
-            if kfd.quaternion_keys:
-                self.debug('Rotation keys...(quaternions)')
-            for key in kfd.quaternion_keys:
-                frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
-                Blender.Set('curframe', frame)
-                rot = mathutils.Quaternion(key.value.w, key.value.x, key.value.y, key.value.z).toEuler()
-                # Blender euler is in degrees, object RotXYZ is in radians
-                b_obj.RotX = rot.x * self.D2R
-                b_obj.RotY = rot.y * self.D2R
-                b_obj.RotZ = rot.z * self.D2R
-                b_obj.insertIpoKey(Blender.Object.ROT)
-
-        if translations.keys:
-            self.debug('Translation keys...')
-        for key in translations.keys:
-            frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
-            Blender.Set('curframe', frame)
-            b_obj.LocX = key.value.x
-            b_obj.LocY = key.value.y
-            b_obj.LocZ = key.value.z
-            b_obj.insertIpoKey(Blender.Object.LOC)
-
-        Blender.Set('curframe', 1)
-
-    def import_bhk_constraints(self, hkbody):
-        """Imports a bone havok constraint as Blender object constraint."""
-        assert(isinstance(hkbody, NifFormat.bhkRigidBody))
-
-        # check for constraints
-        if not hkbody.constraints:
-            return
-
-        # find objects
-        if len(self.havok_objects[hkbody]) != 1:
-            self.warning(
-                "Rigid body with no or multiple shapes, constraints skipped")
-            return
-
-        b_hkobj = self.havok_objects[hkbody][0]
-
-        self.info("Importing constraints for %s" % b_hkobj.name)
-
-        # now import all constraints
-        for hkconstraint in hkbody.constraints:
-
-            # check constraint entities
-            if not hkconstraint.num_entities == 2:
-                self.warning(
-                    "Constraint with more than 2 entities, skipped")
-                continue
-            if not hkconstraint.entities[0] is hkbody:
-                self.warning(
-                    "First constraint entity not self, skipped")
-                continue
-            if not hkconstraint.entities[1] in self.havok_objects:
-                self.warning(
-                    "Second constraint entity not imported, skipped")
-                continue
-
-            # get constraint descriptor
-            if isinstance(hkconstraint, NifFormat.bhkRagdollConstraint):
-                hkdescriptor = hkconstraint.ragdoll
-            elif isinstance(hkconstraint, NifFormat.bhkLimitedHingeConstraint):
-                hkdescriptor = hkconstraint.limited_hinge
-            elif isinstance(hkconstraint, NifFormat.bhkHingeConstraint):
-                hkdescriptor = hkconstraint.hinge
-            elif isinstance(hkconstraint, NifFormat.bhkMalleableConstraint):
-                if hkconstraint.type == 7:
-                    hkdescriptor = hkconstraint.ragdoll
-                elif hkconstraint.type == 2:
-                    hkdescriptor = hkconstraint.limited_hinge
-                else:
-                    self.warning("Unknown malleable type (%i), skipped"
-                                        % hkconstraint.type)
-                # extra malleable constraint settings
-                ### damping parameters not yet in Blender Python API
-                ### tau (force between bodies) not supported by Blender
-            else:
-                self.warning("Unknown constraint type (%s), skipped"
-                                    % hkconstraint.__class__.__name__)
-                continue
-
-            # add the constraint as a rigid body joint
-            b_constr = b_hkobj.constraints.append(bpy.types.Constraint.RIGIDBODYJOINT)
-
-            # note: rigidbodyjoint parameters (from Constraint.c)
-            # CONSTR_RB_AXX 0.0
-            # CONSTR_RB_AXY 0.0
-            # CONSTR_RB_AXZ 0.0
-            # CONSTR_RB_EXTRAFZ 0.0
-            # CONSTR_RB_MAXLIMIT0 0.0
-            # CONSTR_RB_MAXLIMIT1 0.0
-            # CONSTR_RB_MAXLIMIT2 0.0
-            # CONSTR_RB_MAXLIMIT3 0.0
-            # CONSTR_RB_MAXLIMIT4 0.0
-            # CONSTR_RB_MAXLIMIT5 0.0
-            # CONSTR_RB_MINLIMIT0 0.0
-            # CONSTR_RB_MINLIMIT1 0.0
-            # CONSTR_RB_MINLIMIT2 0.0
-            # CONSTR_RB_MINLIMIT3 0.0
-            # CONSTR_RB_MINLIMIT4 0.0
-            # CONSTR_RB_MINLIMIT5 0.0
-            # CONSTR_RB_PIVX 0.0
-            # CONSTR_RB_PIVY 0.0
-            # CONSTR_RB_PIVZ 0.0
-            # CONSTR_RB_TYPE 12
-            # LIMIT 63
-            # PARSIZEY 63
-            # TARGET [Object "capsule.002"]
-
-            # limit 3, 4, 5 correspond to angular limits along x, y and z
-            # and are measured in degrees
-
-            # pivx/y/z is the pivot point
-
-            # set constraint target
-            b_constr[Blender.Constraint.Settings.TARGET] = \
-                self.havok_objects[hkconstraint.entities[1]][0]
-            # set rigid body type (generic)
-            b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE] = 12
-            # limiting parameters (limit everything)
-            b_constr[Blender.Constraint.Settings.LIMIT] = 63
-
-            # get pivot point
-            pivot = mathutils.Vector(
-                hkdescriptor.pivot_a.x * self.HAVOK_SCALE,
-                hkdescriptor.pivot_a.y * self.HAVOK_SCALE,
-                hkdescriptor.pivot_a.z * self.HAVOK_SCALE)
-
-            # get z- and x-axes of the constraint
-            # (also see export_nif.py NifImport.export_constraints)
-            if isinstance(hkdescriptor, NifFormat.RagdollDescriptor):
-                # for ragdoll, take z to be the twist axis (central axis of the
-                # cone, that is)
-                axis_z = mathutils.Vector(
-                    hkdescriptor.twist_a.x,
-                    hkdescriptor.twist_a.y,
-                    hkdescriptor.twist_a.z)
-                # for ragdoll, let x be the plane vector
-                axis_x = mathutils.Vector(
-                    hkdescriptor.plane_a.x,
-                    hkdescriptor.plane_a.y,
-                    hkdescriptor.plane_a.z)
-                # set the angle limits
-                # (see http://niftools.sourceforge.net/wiki/Oblivion/Bhk_Objects/Ragdoll_Constraint
-                # for a nice picture explaining this)
-                b_constr[Blender.Constraint.Settings.CONSTR_RB_MINLIMIT5] = \
-                    hkdescriptor.twist_min_angle
-                b_constr[Blender.Constraint.Settings.CONSTR_RB_MAXLIMIT5] = \
-                    hkdescriptor.twist_max_angle
-                b_constr[Blender.Constraint.Settings.CONSTR_RB_MINLIMIT3] = \
-                    -hkdescriptor.cone_max_angle
-                b_constr[Blender.Constraint.Settings.CONSTR_RB_MAXLIMIT3] = \
-                    hkdescriptor.cone_max_angle
-                b_constr[Blender.Constraint.Settings.CONSTR_RB_MINLIMIT4] = \
-                    hkdescriptor.plane_min_angle
-                b_constr[Blender.Constraint.Settings.CONSTR_RB_MAXLIMIT4] = \
-                    hkdescriptor.plane_max_angle
-            elif isinstance(hkdescriptor, NifFormat.LimitedHingeDescriptor):
-                # for hinge, y is the vector on the plane of rotation defining
-                # the zero angle
-                axis_y = mathutils.Vector(
-                    hkdescriptor.perp_2_axle_in_a_1.x,
-                    hkdescriptor.perp_2_axle_in_a_1.y,
-                    hkdescriptor.perp_2_axle_in_a_1.z)
-                # for hinge, take x to be the the axis of rotation
-                # (this corresponds with Blender's convention for hinges)
-                axis_x = mathutils.Vector(
-                    hkdescriptor.axle_a.x,
-                    hkdescriptor.axle_a.y,
-                    hkdescriptor.axle_a.z)
-                # for hinge, z is the vector on the plane of rotation defining
-                # the positive direction of rotation
-                axis_z = mathutils.Vector(
-                    hkdescriptor.perp_2_axle_in_a_2.x,
-                    hkdescriptor.perp_2_axle_in_a_2.y,
-                    hkdescriptor.perp_2_axle_in_a_2.z)
-                # they should form a orthogonal basis
-                if (mathutils.CrossVecs(axis_x, axis_y)
-                    - axis_z).length > 0.01:
-                    # either not orthogonal, or negative orientation
-                    if (mathutils.CrossVecs(-axis_x, axis_y)
-                        - axis_z).length > 0.01:
-                        self.warning(
-                            "Axes are not orthogonal in %s;"
-                            " arbitrary orientation has been chosen"
-                            % hkdescriptor.__class__.__name__)
-                        axis_z = mathutils.CrossVecs(axis_x, axis_y)
-                    else:
-                        # fix orientation
-                        self.warning(
-                            "X axis flipped in %s to fix orientation"
-                            % hkdescriptor.__class__.__name__)
-                        axis_x = -axis_x
-                # getting properties with no blender constraint
-                # equivalent and setting as obj properties
-                b_hkobj.addProperty("LimitedHinge_MaxAngle",
-                                    hkdescriptor.max_angle)
-                b_hkobj.addProperty("LimitedHinge_MinAngle",
-                                    hkdescriptor.min_angle)
-                b_hkobj.addProperty("LimitedHinge_MaxFriction",
-                                    hkdescriptor.max_friction)
-
-            elif isinstance(hkdescriptor, NifFormat.HingeDescriptor):
-                # for hinge, y is the vector on the plane of rotation defining
-                # the zero angle
-                axis_y = mathutils.Vector(
-                    hkdescriptor.perp_2_axle_in_a_1.x,
-                    hkdescriptor.perp_2_axle_in_a_1.y,
-                    hkdescriptor.perp_2_axle_in_a_1.z)
-                # for hinge, z is the vector on the plane of rotation defining
-                # the positive direction of rotation
-                axis_z = mathutils.Vector(
-                    hkdescriptor.perp_2_axle_in_a_2.x,
-                    hkdescriptor.perp_2_axle_in_a_2.y,
-                    hkdescriptor.perp_2_axle_in_a_2.z)
-                # take x to be the the axis of rotation
-                # (this corresponds with Blender's convention for hinges)
-                axis_x = mathutils.CrossVecs(axis_y, axis_z)
-            else:
-                raise ValueError("unknown descriptor %s"
-                                 % hkdescriptor.__class__.__name__)
-
-            # transform pivot point and constraint matrix into object
-            # coordinates
-            # (also see export_nif.py NifImport.export_constraints)
-
-            # the pivot point v is in hkbody coordinates
-            # however blender expects it in object coordinates, v'
-            # v * R * B = v' * O * T * B'
-            # with R = rigid body transform (usually unit tf)
-            # B = nif bone matrix
-            # O = blender object transform
-            # T = bone tail matrix (translation in Y direction)
-            # B' = blender bone matrix
-            # so we need to cancel out the object transformation by
-            # v' = v * R * B * B'^{-1} * T^{-1} * O^{-1}
-
-            # the local rotation L at the pivot point must be such that
-            # (axis_z + v) * R * B = ([0 0 1] * L + v') * O * T * B'
-            # so (taking the rotation parts of all matrices!!!)
-            # [0 0 1] * L = axis_z * R * B * B'^{-1} * T^{-1} * O^{-1}
-            # and similarly
-            # [1 0 0] * L = axis_x * R * B * B'^{-1} * T^{-1} * O^{-1}
-            # hence these give us the first and last row of L
-            # which is exactly enough to provide the euler angles
-
-            # multiply with rigid body transform
-            if isinstance(hkbody, NifFormat.bhkRigidBodyT):
-                # set rotation
-                transform = mathutils.Quaternion(
-                    hkbody.rotation.w, hkbody.rotation.x,
-                    hkbody.rotation.y, hkbody.rotation.z).toMatrix()
-                transform.resize4x4()
-                # set translation
-                transform[3][0] = hkbody.translation.x * 7
-                transform[3][1] = hkbody.translation.y * 7
-                transform[3][2] = hkbody.translation.z * 7
-                # apply transform
-                pivot = pivot * transform
-                transform = transform.rotationPart()
-                axis_z = axis_z * transform
-                axis_x = axis_x * transform
-
-            # next, cancel out bone matrix correction
-            # note that B' = X * B with X = self.bones_extra_matrix[B]
-            # so multiply with the inverse of X
-            for niBone in self.bones_extra_matrix:
-                if niBone.collision_object \
-                   and niBone.collision_object.body is hkbody:
-                    transform = mathutils.Matrix(
-                        self.bones_extra_matrix[niBone])
-                    transform.invert()
-                    pivot = pivot * transform
-                    transform = transform.rotationPart()
-                    axis_z = axis_z * transform
-                    axis_x = axis_x * transform
-                    break
-
-            # cancel out bone tail translation
-            if b_hkobj.parentbonename:
-                pivot[1] -= b_hkobj.parent.data.bones[
-                    b_hkobj.parentbonename].length
-
-            # cancel out object transform
-            transform = mathutils.Matrix(
-                b_hkobj.getMatrix('localspace'))
-            transform.invert()
-            pivot = pivot * transform
-            transform = transform.rotationPart()
-            axis_z = axis_z * transform
-            axis_x = axis_x * transform
-
-            # set pivot point
-            b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVX] = pivot[0]
-            b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVY] = pivot[1]
-            b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVZ] = pivot[2]
-
-            # set euler angles
-            constr_matrix = mathutils.Matrix(
-                axis_x,
-                mathutils.CrossVecs(axis_z, axis_x),
-                axis_z)
-            constr_euler = constr_matrix.toEuler()
-            b_constr[Blender.Constraint.Settings.CONSTR_RB_AXX] = constr_euler.x
-            b_constr[Blender.Constraint.Settings.CONSTR_RB_AXY] = constr_euler.y
-            b_constr[Blender.Constraint.Settings.CONSTR_RB_AXZ] = constr_euler.z
-            # DEBUG
-            assert((axis_x - mathutils.Vector(1,0,0) * constr_matrix).length < 0.0001)
-            assert((axis_z - mathutils.Vector(0,0,1) * constr_matrix).length < 0.0001)
-
-            # the generic rigid body type is very buggy... so for simulation
-            # purposes let's transform it into ball and hinge
-            if isinstance(hkdescriptor, NifFormat.RagdollDescriptor):
-                # ball
-                b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE] = 1
-            elif isinstance(hkdescriptor, (NifFormat.LimitedHingeDescriptor,
-                                         NifFormat.HingeDescriptor)):
-                # (limited) hinge
-                b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE] = 2
-            else:
-                raise ValueError("unknown descriptor %s"
-                                 % hkdescriptor.__class__.__name__)
-
-
-
-    def import_kf_root(self, kf_root, root):
-        """Merge kf into nif.
-
-        *** Note: this function will eventually move to PyFFI. ***
-        """
-
-        self.info("Merging kf tree into nif tree")
-
-        # check that this is an Oblivion style kf file
-        if not isinstance(kf_root, NifFormat.NiControllerSequence):
-            raise NifImportError("non-Oblivion .kf import not supported")
-
-        # import text keys
-        self.import_text_keys(kf_root)
-
-
-        # go over all controlled blocks
-        for controlledblock in kf_root.controlled_blocks:
-            # get the name
-            nodename = controlledblock.get_node_name()
-            # match from nif tree?
-            node = root.find(block_name = nodename)
-            if not node:
-                self.info(
-                    "Animation for %s but no such node found in nif tree"
-                    % nodename)
-                continue
-            # node found, now find the controller
-            controllertype = controlledblock.get_controller_type()
-            if not controllertype:
-                self.info(
-                    "Animation for %s without controller type, so skipping"
-                    % nodename)
-                continue
-            controller = self.find_controller(node, getattr(NifFormat, controllertype))
-            if not controller:
-                self.info(
-                    "Animation for %s with %s controller,"
-                    " but no such controller type found"
-                    " in corresponding node, so creating one"
-                    % (nodename, controllertype))
-                controller = getattr(NifFormat, controllertype)()
-                # TODO set all the fields of this controller
-                node.add_controller(controller)
-            # yes! attach interpolator
-            controller.interpolator = controlledblock.interpolator
-            # in case of a NiTransformInterpolator without a data block
-            # we still must re-export the interpolator for Oblivion to
-            # accept the file
-            # so simply add dummy keyframe data for this one with just a single
-            # key to flag the exporter to export the keyframe as interpolator
-            # (i.e. length 1 keyframes are simply interpolators)
-            if isinstance(controller.interpolator,
-                          NifFormat.NiTransformInterpolator) \
-                and controller.interpolator.data is None:
-                # create data block
-                kfi = controller.interpolator
-                kfi.data = NifFormat.NiTransformData()
-                # fill with info from interpolator
-                kfd = controller.interpolator.data
-                # copy rotation
-                kfd.num_rotation_keys = 1
-                kfd.rotation_type = NifFormat.KeyType.LINEAR_KEY
-                kfd.quaternion_keys.update_size()
-                kfd.quaternion_keys[0].time = 0.0
-                kfd.quaternion_keys[0].value.x = kfi.rotation.x
-                kfd.quaternion_keys[0].value.y = kfi.rotation.y
-                kfd.quaternion_keys[0].value.z = kfi.rotation.z
-                kfd.quaternion_keys[0].value.w = kfi.rotation.w
-                # copy translation
-                if kfi.translation.x < -1000000:
-                    # invalid, happens in fallout 3, e.g. h2haim.kf
-                    self.warning("ignored NaN in interpolator translation")
-                else:
-                    kfd.translations.num_keys = 1
-                    kfd.translations.keys.update_size()
-                    kfd.translations.keys[0].time = 0.0
-                    kfd.translations.keys[0].value.x = kfi.translation.x
-                    kfd.translations.keys[0].value.y = kfi.translation.y
-                    kfd.translations.keys[0].value.z = kfi.translation.z
-                # ignore scale, usually contains invalid data in interpolator
-
-            # save priority for future reference
-            # (priorities will be stored into the name of a NULL constraint on
-            # bones, see import_armature function)
-            self.bone_priorities[nodename] = controlledblock.priority
-
-        # DEBUG: save the file for manual inspection
-        #niffile = open("C:\\test.nif", "wb")
-        #NifFormat.write(niffile,
-        #                version = 0x14000005, user_version = 11, roots = [root])
-
+    
 def menu_func(self, context):
     """Import operator for the menu."""
     # TODO get default path from config registry
