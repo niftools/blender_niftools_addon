@@ -37,6 +37,18 @@
 #
 # ***** END LICENSE BLOCK *****
 
+
+from io_scene_nif.nif_common import NifCommon
+from io_scene_nif.utility import nif_utils
+
+from io_scene_nif.animationsys.animation_export import AnimationHelper
+from io_scene_nif.collisionsys.collision_export import bhkshape_export, bound_export
+from io_scene_nif.armaturesys.armature_export import Armature
+from io_scene_nif.propertysys.property_export import PropertyHelper
+from io_scene_nif.constraintsys.constraint_export import Constraint
+from io_scene_nif.texturesys.texture_export import Texture
+
+
 import logging
 import os.path
 
@@ -48,9 +60,7 @@ import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 from pyffi.formats.egm import EgmFormat
 
-from .nif_common import NifCommon
-from .collisionsys.collision_export import bhkshape_export, bound_export
-from .armaturesys.armature_export import Armature
+
 
 class NifExportError(Exception):
     """A simple custom exception class for export errors."""
@@ -64,8 +74,24 @@ class NifExport(NifCommon):
     IDENTITY44.set_identity()
     FLOAT_MIN = -3.4028234663852886e+38
     FLOAT_MAX = +3.4028234663852886e+38
-
-
+    
+    # TODO - Expose via properties
+    
+    EXPORT_OPTIMIZE_MATERIALS = True
+    EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES = False
+    
+    EXPORT_BHKLISTSHAPE = False
+    EXPORT_OB_BSXFLAGS = 2
+    EXPORT_OB_MASS = 10.0
+    EXPORT_OB_SOLID = True
+    EXPORT_OB_MOTIONSYSTEM = 7, # MO_SYS_FIXED
+    EXPORT_OB_UNKNOWNBYTE1 = 1
+    EXPORT_OB_UNKNOWNBYTE2 = 1
+    EXPORT_OB_QUALITYTYPE = 1 # MO_QUAL_FIXED
+    EXPORT_OB_WIND = 0
+    EXPORT_OB_LAYER = 1 # static
+    EXPORT_OB_MATERIAL = 9 # wood
+    EXPORT_OB_PRN = "NONE" # Todo with location on character. For weapons, rings, helmets, Sheilds ect
     
 
     def rebuild_full_names(self):
@@ -73,7 +99,7 @@ class NifExport(NifCommon):
         the names dictionary."""
         try:
             namestxt = bpy.data.texts['FullNames']
-        except NameError:
+        except KeyError:
             return
         for b_textline in namestxt.lines:
             line = b_textline.body
@@ -141,10 +167,13 @@ class NifExport(NifCommon):
         """Main export function."""
 
         # Helper systems
-        # Store references to subsystems as needed.
-        self.boundhelper = bound_export(parent=self)
         self.bhkshapehelper = bhkshape_export(parent=self)
+        self.boundhelper = bound_export(parent=self)
         self.armaturehelper = Armature(parent=self)
+        self.animationhelper = AnimationHelper(parent=self)
+        self.propertyhelper = PropertyHelper(parent=self)
+        self.constrainthelper = Constraint(parent=self)
+        self.texturehelper = Texture(parent=self)
 
         self.info("exporting {0}".format(self.properties.filepath))
 
@@ -368,7 +397,7 @@ class NifExport(NifCommon):
                     and (not self.properties.bs_animation_node)):
                     self.info("Defining dummy keyframe controller")
                     # add a trivial keyframe controller on the scene root
-                    self.export_keyframes(None, 'localspace', root_block)
+                    self.animationhelper.export_keyframes(None, 'localspace', root_block)
             if (self.properties.bs_animation_node
                 and self.properties.game == 'MORROWIND'):
                 for block in self.blocks:
@@ -425,7 +454,7 @@ class NifExport(NifCommon):
                 # for Oblivion skeleton exports
                 # export animation groups (not for skeleton.nif export!)
                 if animtxt:
-                    anim_textextra = self.export_anim_groups(animtxt, root_block)
+                    anim_textextra = self.animationhelper.export_anim_groups(animtxt, root_block)
                 else:
                     anim_textextra = None
 
@@ -552,7 +581,7 @@ class NifExport(NifCommon):
             # export constraints
             for b_obj in self.get_exported_objects():
                 if isinstance(b_obj, bpy.types.Object) and b_obj.constraints:
-                    self.export_constraints(b_obj, root_block)
+                    self.constrainthelper.export_constraints(b_obj, root_block)
 
             # export weapon location
             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
@@ -571,11 +600,11 @@ class NifExport(NifCommon):
 
             # add vertex color and zbuffer properties for civ4 and railroads
             if self.properties.game in ('CIVILIZATION_IV', 'SID_MEIER_S_RAILROADS'):
-                self.export_vertex_color_property(root_block)
-                self.export_z_buffer_property(root_block)
+                self.propertyhelper.object_property.export_vertex_color_property(root_block)
+                self.propertyhelper.object_property.export_z_buffer_property(root_block)
             elif self.properties.game in ('EMPIRE_EARTH_II',):
-                self.export_vertex_color_property(root_block)
-                self.export_z_buffer_property(root_block, flags=15, function=1)
+                self.propertyhelper.object_property.export_vertex_color_property(root_block)
+                self.propertyhelper.object_property.export_z_buffer_property(root_block, flags=15, function=1)
 
             # FIXME
             """
@@ -1078,7 +1107,7 @@ class NifExport(NifCommon):
                 if any(
                     b_obj_ipo[b_channel]
                     for b_channel in (Ipo.OB_LOCX, Ipo.OB_ROTX, Ipo.OB_SCALEX)):
-                    self.export_keyframes(b_obj_ipo, space, node)
+                    self.animationhelper.export_keyframes(b_obj_ipo, space, node)
                 self.export_object_vis_controller(b_obj, node)
             # if it is a mesh, export the mesh as trishape children of
             # this ninode
@@ -1096,628 +1125,7 @@ class NifExport(NifCommon):
             self.armaturehelper.export_children(b_obj, node)
 
         return node
-
-    def export_keyframes(self, ipo, space, parent_block, bind_matrix = None,
-                         extra_mat_inv = None):
-        #
-        # Export the animation of blender Ipo as keyframe controller and
-        # keyframe data. Extra quaternion is multiplied prior to keyframe
-        # rotation, and dito for translation. These extra fields come in handy
-        # when exporting bone ipo's, which are relative to the rest pose, so
-        # we can pass the rest pose through these extra transformations.
-        #
-        # bind_matrix is the original Blender bind matrix (the B' matrix below)
-        # extra_mat_inv is the inverse matrix which transforms the Blender bone matrix
-        # to the NIF bone matrix (the inverse of the X matrix below)
-        #
-        # Explanation of extra transformations:
-        # Final transformation matrix is vec * Rchannel * Tchannel * Rbind * Tbind
-        # So we export:
-        # [ SRchannel 0 ]    [ SRbind 0 ]   [ SRchannel * SRbind        0 ]
-        # [ Tchannel  1 ] *  [ Tbind  1 ] = [ Tchannel * SRbind + Tbind 1 ]
-        # or, in detail,
-        # Stotal = Schannel * Sbind
-        # Rtotal = Rchannel * Rbind
-        # Ttotal = Tchannel * Sbind * Rbind + Tbind
-        # We also need the conversion of the new bone matrix to the original matrix, say X,
-        # B' = X * B
-        # (with B' the Blender matrix and B the NIF matrix) because we need that
-        # C' * B' = X * C * B
-        # and therefore
-        # C * B = inverse(X) * C' * B'
-        # (we need to write out C * B, the NIF format stores total transformation in keyframes).
-        # In detail:
-        #          [ SRX 0 ]     [ SRC' 0 ]   [ SRB' 0 ]
-        # inverse( [ TX  1 ] ) * [ TC'  1 ] * [ TB'  1 ] =
-        # [ inverse(SRX)         0 ]   [ SRC' * SRB'         0 ]
-        # [ -TX * inverse(SRX)   1 ] * [ TC' * SRB' + TB'    1 ] =
-        # [ inverse(SRX) * SRC' * SRB'                       0 ]
-        # [ (-TX * inverse(SRX) * SRC' + TC') * SRB' + TB'    1 ]
-        # Hence
-        # S = SC' * SB' / SX
-        # R = inverse(RX) * RC' * RB'
-        # T = - TX * inverse(RX) * RC' * RB' * SC' * SB' / SX + TC' * SB' * RB' + TB'
-        #
-        # Finally, note that
-        # - TX * inverse(RX) / SX = translation part of inverse(X)
-        # inverse(RX) = rotation part of inverse(X)
-        # 1 / SX = scale part of inverse(X)
-        # so having inverse(X) around saves on calculations
-
-
-        if self.properties.animation == 'GEOM_NIF' and self.version < 0x0A020000:
-            # keyframe controllers are not present in geometry only files
-            # for more recent versions, the controller and interpolators are
-            # present, only the data is not present (see further on)
-            return
-
-        # only localspace keyframes need to be exported
-        assert(space == 'localspace')
-
-        # make sure the parent is of the right type
-        assert(isinstance(parent_block, NifFormat.NiNode))
-
-        # add a keyframecontroller block, and refer to this block in the
-        # parent's time controller
-        if self.version < 0x0A020000:
-            kfc = self.create_block("NiKeyframeController", ipo)
-        else:
-            kfc = self.create_block("NiTransformController", ipo)
-            kfi = self.create_block("NiTransformInterpolator", ipo)
-            # link interpolator from the controller
-            kfc.interpolator = kfi
-            # set interpolator default data
-            scale, quat, trans = \
-                parent_block.get_transform().get_scale_quat_translation()
-            kfi.translation.x = trans.x
-            kfi.translation.y = trans.y
-            kfi.translation.z = trans.z
-            kfi.rotation.x = quat.x
-            kfi.rotation.y = quat.y
-            kfi.rotation.z = quat.z
-            kfi.rotation.w = quat.w
-            kfi.scale = scale
-
-        parent_block.add_controller(kfc)
-
-        # determine cycle mode for this controller
-        # this is stored in the blender ipo curves
-        # while we're at it, we also determine the
-        # start and stop frames
-        extend = None
-        if ipo:
-            start_frame = +1000000
-            stop_frame = -1000000
-            for curve in ipo:
-                # get cycle mode
-                if extend is None:
-                    extend = curve.extend
-                elif extend != curve.extend:
-                    self.warning(
-                        "Inconsistent extend type in %s, will use %s."
-                        % (ipo, extend))
-                # get start and stop frames
-                start_frame = min(
-                    start_frame,
-                    min(btriple.pt[0] for btriple in curve.bezierPoints))
-                stop_frame = max(
-                    stop_frame,
-                    max(btriple.pt[0] for btriple in curve.bezierPoints))
-        else:
-            # dummy ipo
-            # default extend, start, and end
-            extend = Blender.IpoCurve.ExtendTypes.CYCLIC
-            start_frame = self.context.scene.frame_start
-            stop_frame = self.context.scene.frame_end
-
-        # fill in the non-trivial values
-        kfc.flags = 8 # active
-        kfc.flags |= self.get_flags_from_extend(extend)
-        kfc.frequency = 1.0
-        kfc.phase = 0.0
-        kfc.start_time = (start_frame - 1) * self.context.scene.render.fps
-        kfc.stop_time = (stop_frame - 1) * self.context.scene.render.fps
-
-        if self.properties.animation == 'GEOM_NIF':
-            # keyframe data is not present in geometry files
-            return
-
-        # -> get keyframe information
-
-        # some calculations
-        if bind_matrix:
-            bind_scale, bind_rot, bind_trans = self.decompose_srt(bind_matrix)
-            bind_quat = bind_rot.toQuat()
-        else:
-            bind_scale = 1.0
-            bind_rot = mathutils.Matrix([[1,0,0],[0,1,0],[0,0,1]])
-            bind_quat = mathutils.Quaternion(1,0,0,0)
-            bind_trans = mathutils.Vector()
-        if extra_mat_inv:
-            extra_scale_inv, extra_rot_inv, extra_trans_inv = \
-                self.decompose_srt(extra_mat_inv)
-            extra_quat_inv = extra_rot_inv.toQuat()
-        else:
-            extra_scale_inv = 1.0
-            extra_rot_inv = mathutils.Matrix([[1,0,0],[0,1,0],[0,0,1]])
-            extra_quat_inv = mathutils.Quaternion(1,0,0,0)
-            extra_trans_inv = mathutils.Vector()
-
-        # sometimes we need to export an empty keyframe... this will take care of that
-        if (ipo == None):
-            scale_curve = {}
-            rot_curve = {}
-            trans_curve = {}
-        # the usual case comes now...
-        else:
-            # merge the animation curves into a rotation vector and translation vector curve
-            scale_curve = {}
-            rot_curve = {}
-            trans_curve = {}
-            # the following code makes these assumptions
-            assert(Ipo.PO_SCALEX == Ipo.OB_SCALEX)
-            assert(Ipo.PO_LOCX == Ipo.OB_LOCX)
-            # check validity of curves
-            for curvecollection in (
-                (Ipo.PO_SCALEX, Ipo.PO_SCALEY, Ipo.PO_SCALEZ),
-                (Ipo.PO_LOCX, Ipo.PO_LOCY, Ipo.PO_LOCZ),
-                (Ipo.PO_QUATX, Ipo.PO_QUATY, Ipo.PO_QUATZ, Ipo.PO_QUATW),
-                (Ipo.OB_ROTX, Ipo.OB_ROTY, Ipo.OB_ROTZ)):
-                # skip invalid curves
-                try:
-                    ipo[curvecollection[0]]
-                except KeyError:
-                    continue
-                # check that if any curve is defined in the collection
-                # then all curves are defined in the collection
-                if (any(ipo[curve] for curve in curvecollection)
-                    and not all(ipo[curve] for curve in curvecollection)):
-                    keytype = {Ipo.PO_SCALEX: "SCALE",
-                               Ipo.PO_LOCX: "LOC",
-                               Ipo.PO_QUATX: "ROT",
-                               Ipo.OB_ROTX: "ROT"}
-                    raise NifExportError(
-                        "missing curves in %s; insert %s key at frame 1"
-                        " and try again"
-                        % (ipo, keytype[curvecollection[0]]))
-            # go over all curves
-            ipo_curves = list(ipo.curveConsts.values())
-            for curve in ipo_curves:
-                # skip empty curves
-                if ipo[curve] is None:
-                    continue
-                # non-empty curve: go over all frames of the curve
-                for btriple in ipo[curve].bezierPoints:
-                    frame = btriple.pt[0]
-                    if (frame < self.context.scene.frame_start) or (frame > self.context.scene.frame_end):
-                        continue
-                    # PO_SCALEX == OB_SCALEX, so this does both pose and object
-                    # scale
-                    if curve in (Ipo.PO_SCALEX, Ipo.PO_SCALEY, Ipo.PO_SCALEZ):
-                        # support only uniform scaling... take the mean
-                        scale_curve[frame] = (ipo[Ipo.PO_SCALEX][frame]
-                                              + ipo[Ipo.PO_SCALEY][frame]
-                                              + ipo[Ipo.PO_SCALEZ][frame]) / 3.0
-                        # SC' * SB' / SX
-                        scale_curve[frame] = \
-                            scale_curve[frame] * bind_scale * extra_scale_inv
-                    # object rotation
-                    elif curve in (Ipo.OB_ROTX, Ipo.OB_ROTY, Ipo.OB_ROTZ):
-                        rot_curve[frame] = mathutils.Euler(
-                            [10 * ipo[Ipo.OB_ROTX][frame],
-                             10 * ipo[Ipo.OB_ROTY][frame],
-                             10 * ipo[Ipo.OB_ROTZ][frame]])
-                        # use quat if we have bind matrix and/or extra matrix
-                        # XXX maybe we should just stick with eulers??
-                        if bind_matrix or extra_mat_inv:
-                            rot_curve[frame] = rot_curve[frame].toQuat()
-                            # beware, CrossQuats takes arguments in a counter-intuitive order:
-                            # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
-                            rot_curve[frame] = mathutils.CrossQuats(mathutils.CrossQuats(bind_quat, rot_curve[frame]), extra_quat_inv) # inverse(RX) * RC' * RB'
-                    # pose rotation
-                    elif curve in (Ipo.PO_QUATX, Ipo.PO_QUATY,
-                                   Ipo.PO_QUATZ, Ipo.PO_QUATW):
-                        rot_curve[frame] = mathutils.Quaternion()
-                        rot_curve[frame].x = ipo[Ipo.PO_QUATX][frame]
-                        rot_curve[frame].y = ipo[Ipo.PO_QUATY][frame]
-                        rot_curve[frame].z = ipo[Ipo.PO_QUATZ][frame]
-                        rot_curve[frame].w = ipo[Ipo.PO_QUATW][frame]
-                        # beware, CrossQuats takes arguments in a counter-intuitive order:
-                        # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
-                        rot_curve[frame] = mathutils.CrossQuats(mathutils.CrossQuats(bind_quat, rot_curve[frame]), extra_quat_inv) # inverse(RX) * RC' * RB'
-                    # PO_LOCX == OB_LOCX, so this does both pose and object
-                    # location
-                    elif curve in (Ipo.PO_LOCX, Ipo.PO_LOCY, Ipo.PO_LOCZ):
-                        trans_curve[frame] = mathutils.Vector(
-                            [ipo[Ipo.PO_LOCX][frame],
-                             ipo[Ipo.PO_LOCY][frame],
-                             ipo[Ipo.PO_LOCZ][frame]])
-                        # T = - TX * inverse(RX) * RC' * RB' * SC' * SB' / SX + TC' * SB' * RB' + TB'
-                        trans_curve[frame] *= bind_scale
-                        trans_curve[frame] *= bind_rot
-                        trans_curve[frame] += bind_trans
-                        # we need RC' and SC'
-                        if Ipo.OB_ROTX in ipo_curves and ipo[Ipo.OB_ROTX]:
-                            rot_c = mathutils.Euler(
-                                [10 * ipo[Ipo.OB_ROTX][frame],
-                                 10 * ipo[Ipo.OB_ROTY][frame],
-                                 10 * ipo[Ipo.OB_ROTZ][frame]]).toMatrix()
-                        elif Ipo.PO_QUATX in ipo_curves and ipo[Ipo.PO_QUATX]:
-                            rot_c = mathutils.Quaternion()
-                            rot_c.x = ipo[Ipo.PO_QUATX][frame]
-                            rot_c.y = ipo[Ipo.PO_QUATY][frame]
-                            rot_c.z = ipo[Ipo.PO_QUATZ][frame]
-                            rot_c.w = ipo[Ipo.PO_QUATW][frame]
-                            rot_c = rot_c.toMatrix()
-                        else:
-                            rot_c = mathutils.Matrix([[1,0,0],[0,1,0],[0,0,1]])
-                        # note, PO_SCALEX == OB_SCALEX, so this does both
-                        if ipo[Ipo.PO_SCALEX]:
-                            # support only uniform scaling... take the mean
-                            scale_c = (ipo[Ipo.PO_SCALEX][frame]
-                                       + ipo[Ipo.PO_SCALEY][frame]
-                                       + ipo[Ipo.PO_SCALEZ][frame]) / 3.0
-                        else:
-                            scale_c = 1.0
-                        trans_curve[frame] += \
-                            extra_trans_inv * rot_c * bind_rot * \
-                            scale_c * bind_scale
-
-        # -> now comes the real export
-
-        if (max(len(rot_curve), len(trans_curve), len(scale_curve)) <= 1
-            and self.version >= 0x0A020000):
-            # only add data if number of keys is > 1
-            # (see importer comments with import_kf_root: a single frame
-            # keyframe denotes an interpolator without further data)
-            # insufficient keys, so set the data and we're done!
-            if trans_curve:
-                trans = list(trans_curve.values())[0]
-                kfi.translation.x = trans[0]
-                kfi.translation.y = trans[1]
-                kfi.translation.z = trans[2]
-            if rot_curve:
-                rot = list(rot_curve.values())[0]
-                # XXX blender weirdness... Euler() is a function!!
-                if isinstance(rot, mathutils.Euler().__class__):
-                    rot = rot.toQuat()
-                kfi.rotation.x = rot.x
-                kfi.rotation.y = rot.y
-                kfi.rotation.z = rot.z
-                kfi.rotation.w = rot.w
-            # ignore scale for now...
-            kfi.scale = 1.0
-            # done!
-            return
-
-        # add the keyframe data
-        if self.version < 0x0A020000:
-            kfd = self.create_block("NiKeyframeData", ipo)
-            kfc.data = kfd
-        else:
-            # number of frames is > 1, so add transform data
-            kfd = self.create_block("NiTransformData", ipo)
-            kfi.data = kfd
-
-        frames = list(rot_curve.keys())
-        frames.sort()
-        # XXX blender weirdness... Euler() is a function!!
-        if (frames
-            and isinstance(list(rot_curve.values())[0],
-                           mathutils.Euler().__class__)):
-            # eulers
-            kfd.rotation_type = NifFormat.KeyType.XYZ_ROTATION_KEY
-            kfd.num_rotation_keys = 1 # *NOT* len(frames) this crashes the engine!
-            kfd.xyz_rotations[0].num_keys = len(frames)
-            kfd.xyz_rotations[1].num_keys = len(frames)
-            kfd.xyz_rotations[2].num_keys = len(frames)
-            # XXX todo: quadratic interpolation?
-            kfd.xyz_rotations[0].interpolation = NifFormat.KeyType.LINEAR_KEY
-            kfd.xyz_rotations[1].interpolation = NifFormat.KeyType.LINEAR_KEY
-            kfd.xyz_rotations[2].interpolation = NifFormat.KeyType.LINEAR_KEY
-            kfd.xyz_rotations[0].keys.update_size()
-            kfd.xyz_rotations[1].keys.update_size()
-            kfd.xyz_rotations[2].keys.update_size()
-            for i, frame in enumerate(frames):
-                # XXX todo: speed up by not recalculating stuff
-                rot_frame_x = kfd.xyz_rotations[0].keys[i]
-                rot_frame_y = kfd.xyz_rotations[1].keys[i]
-                rot_frame_z = kfd.xyz_rotations[2].keys[i]
-                rot_frame_x.time = (frame - 1) * self.context.scene.render.fps
-                rot_frame_y.time = (frame - 1) * self.context.scene.render.fps
-                rot_frame_z.time = (frame - 1) * self.context.scene.render.fps
-                rot_frame_x.value = rot_curve[frame].x * 3.14159265358979323846 / 180.0
-                rot_frame_y.value = rot_curve[frame].y * 3.14159265358979323846 / 180.0
-                rot_frame_z.value = rot_curve[frame].z * 3.14159265358979323846 / 180.0
-        else:
-            # quaternions
-            # XXX todo: quadratic interpolation?
-            kfd.rotation_type = NifFormat.KeyType.LINEAR_KEY
-            kfd.num_rotation_keys = len(frames)
-            kfd.quaternion_keys.update_size()
-            for i, frame in enumerate(frames):
-                rot_frame = kfd.quaternion_keys[i]
-                rot_frame.time = (frame - 1) * self.context.scene.render.fps
-                rot_frame.value.w = rot_curve[frame].w
-                rot_frame.value.x = rot_curve[frame].x
-                rot_frame.value.y = rot_curve[frame].y
-                rot_frame.value.z = rot_curve[frame].z
-
-        frames = list(trans_curve.keys())
-        frames.sort()
-        kfd.translations.interpolation = NifFormat.KeyType.LINEAR_KEY
-        kfd.translations.num_keys = len(frames)
-        kfd.translations.keys.update_size()
-        for i, frame in enumerate(frames):
-            trans_frame = kfd.translations.keys[i]
-            trans_frame.time = (frame - 1) * self.context.scene.render.fps
-            trans_frame.value.x = trans_curve[frame][0]
-            trans_frame.value.y = trans_curve[frame][1]
-            trans_frame.value.z = trans_curve[frame][2]
-
-        frames = list(scale_curve.keys())
-        frames.sort()
-        kfd.scales.interpolation = NifFormat.KeyType.LINEAR_KEY
-        kfd.scales.num_keys = len(frames)
-        kfd.scales.keys.update_size()
-        for i, frame in enumerate(frames):
-            scale_frame = kfd.scales.keys[i]
-            scale_frame.time = (frame - 1) * self.context.scene.render.fps
-            scale_frame.value = scale_curve[frame]
-
-    def export_vertex_color_property(self, block_parent,
-                                     flags=1,
-                                     vertex_mode=0, lighting_mode=1):
-        """Create a vertex color property, and attach it to an existing block
-        (typically, the root of the nif tree).
-
-        @param block_parent: The block to which to attach the new property.
-        @param flags: The C{flags} of the new property.
-        @param vertex_mode: The C{vertex_mode} of the new property.
-        @param lighting_mode: The C{lighting_mode} of the new property.
-        @return: The new property block.
-        """
-        # create new vertex color property block
-        vcolprop = self.create_block("NiVertexColorProperty")
-
-        # make it a property of the parent
-        block_parent.add_property(vcolprop)
-
-        # and now export the parameters
-        vcolprop.flags = flags
-        vcolprop.vertex_mode = vertex_mode
-        vcolprop.lighting_mode = lighting_mode
-
-        return vcolprop
-
-    def export_z_buffer_property(self, block_parent,
-                                 flags=15, function=3):
-        """Create a z-buffer property, and attach it to an existing block
-        (typically, the root of the nif tree).
-
-        @param block_parent: The block to which to attach the new property.
-        @param flags: The C{flags} of the new property.
-        @param function: The C{function} of the new property.
-        @return: The new property block.
-        """
-        # create new z-buffer property block
-        zbuf = self.create_block("NiZBufferProperty")
-
-        # make it a property of the parent
-        block_parent.add_property(zbuf)
-
-        # and now export the parameters
-        zbuf.flags = flags
-        zbuf.function = function
-
-        return zbuf
-
-    def export_anim_groups(self, animtxt, block_parent):
-        """Parse the animation groups buffer and write an extra string
-        data block, and attach it to an existing block (typically, the root
-        of the nif tree)."""
-        if self.properties.animation == 'GEOM_NIF':
-            # animation group extra data is not present in geometry only files
-            return
-
-        self.info("Exporting animation groups")
-        # -> get animation groups information
-
-        # parse the anim text descriptor
-
-        # the format is:
-        # frame/string1[/string2[.../stringN]]
-
-        # example:
-        # 001/Idle: Start/Idle: Stop/Idle2: Start/Idle2: Loop Start
-        # 051/Idle2: Stop/Idle3: Start
-        # 101/Idle3: Loop Start/Idle3: Stop
-
-        slist = animtxt.asLines()
-        flist = []
-        dlist = []
-        for s in slist:
-            # ignore empty lines
-            if not s:
-                continue
-            # parse line
-            t = s.split('/')
-            if (len(t) < 2):
-                raise NifExportError("Syntax error in Anim buffer ('%s')" % s)
-            f = int(t[0])
-            if ((f < self.context.scene.frame_start) or (f > self.context.scene.frame_end)):
-                self.warning("frame in animation buffer out of range "
-                                 "(%i not in [%i, %i])"
-                                 % (f, self.context.scene.frame_start, self.context.scene.frame_end))
-            d = t[1].strip(' ')
-            for i in range(2, len(t)):
-                d = d + '\r\n' + t[i].strip(' ')
-            #print 'frame %d'%f + ' -> \'%s\''%d # debug
-            flist.append(f)
-            dlist.append(d)
-
-        # -> now comes the real export
-
-        # add a NiTextKeyExtraData block, and refer to this block in the
-        # parent node (we choose the root block)
-        textextra = self.create_block("NiTextKeyExtraData", animtxt)
-        block_parent.add_extra_data(textextra)
-
-        # create a text key for each frame descriptor
-        textextra.num_text_keys = len(flist)
-        textextra.text_keys.update_size()
-        for i, key in enumerate(textextra.text_keys):
-            key.time = self.context.scene.render.fps * (flist[i]-1)
-            key.value = dlist[i]
-
-        return textextra
-
-    def export_texture_filename(self, texture):
-        """Returns file name from texture.
-
-        @param texture: The texture object in blender.
-        @return: The file name of the image used in the texture.
-        """
-        if texture.type == 'ENVIRONMENT_MAP':
-            # this works for morrowind only
-            if self.properties.game != 'MORROWIND':
-                raise NifExportError(
-                    "cannot export environment maps for nif version '%s'"
-                    %self.properties.game)
-            return "enviro 01.TGA"
-        elif texture.type == 'IMAGE':
-            # get filename from image
-
-            # XXX still needed? can texture.image be None in current blender?
-            # check that image is loaded
-            if texture.image is None:
-                raise NifExportError(
-                    "image type texture has no file loaded ('%s')"
-                    % texture.name)
-
-            filename = texture.image.filepath
-
-            # warn if packed flag is enabled
-            if texture.image.packed_file:
-                self.warning(
-                    "Packed image in texture '%s' ignored, "
-                    "exporting as '%s' instead."
-                    % (texture.name, filename))
-
-            # try and find a DDS alternative, force it if required
-            ddsfilename = "%s%s" % (filename[:-4], '.dds')
-            if os.path.exists(ddsfilename) or self.properties.force_dds:
-                filename = ddsfilename
-
-            # sanitize file path
-            if not self.properties.game in ('MORROWIND', 'OBLIVION',
-                                           'FALLOUT_3'):
-                # strip texture file path
-                filename = os.path.basename(filename)
-            else:
-                # strip the data files prefix from the texture's file name
-                filename = filename.lower()
-                idx = filename.find("textures")
-                if ( idx >= 0 ):
-                    filename = filename[idx:]
-                else:
-                    self.warning(
-                        "%s does not reside in a 'Textures' folder;"
-                        " texture path will be stripped"
-                        " and textures may not display in-game" % filename)
-                    filename = os.path.basename(filename)
-            # for linux export: fix path seperators
-            return filename.replace('/', '\\')
-        else:
-            # texture must be of type IMAGE or ENVMAP
-            raise NifExportError(
-                "Error: Texture '%s' must be of type IMAGE or ENVMAP"
-                % texture.name)
-
-    def export_source_texture(self, texture=None, filename=None):
-        """Export a NiSourceTexture.
-
-        :param texture: The texture object in blender to be exported.
-        :param filename: The full or relative path to the texture file
-            (this argument is used when exporting NiFlipControllers
-            and when exporting default shader slots that have no use in
-            being imported into Blender).
-        :return: The exported NiSourceTexture block.
-        """
-
-        # create NiSourceTexture
-        srctex = NifFormat.NiSourceTexture()
-        srctex.use_external = True
-        if not filename is None:
-            # preset filename
-            srctex.file_name = filename
-        elif not texture is None:
-            srctex.file_name = self.export_texture_filename(texture)
-        else:
-            # this probably should not happen
-            self.warning(
-                "Exporting source texture without texture or filename (bug?).")
-
-        # fill in default values (TODO: can we use 6 for everything?)
-        if self.version >= 0x0a000100:
-            srctex.pixel_layout = 6
-        else:
-            srctex.pixel_layout = 5
-        srctex.use_mipmaps = 1
-        srctex.alpha_format = 3
-        srctex.unknown_byte = 1
-
-        # search for duplicate
-        for block in self.blocks:
-            if isinstance(block, NifFormat.NiSourceTexture) and block.get_hash() == srctex.get_hash():
-                return block
-
-        # no identical source texture found, so use and register
-        # the new one
-        return self.register_block(srctex, texture)
-
-    def export_flip_controller(self, fliptxt, texture, target, target_tex):
-        ## TODO port code to use native Blender texture flipping system
-        #
-        # export a NiFlipController
-        #
-        # fliptxt is a blender text object containing the flip definitions
-        # texture is the texture object in blender ( texture is used to checked for pack and mipmap flags )
-        # target is the NiTexturingProperty
-        # target_tex is the texture to flip ( 0 = base texture, 4 = glow texture )
-        #
-        # returns exported NiFlipController
-        #
-        tlist = fliptxt.asLines()
-
-        # create a NiFlipController
-        flip = self.create_block("NiFlipController", fliptxt)
-        target.add_controller(flip)
-
-        # fill in NiFlipController's values
-        flip.flags = 8 # active
-        flip.frequency = 1.0
-        flip.start_time = (self.context.scene.frame_start - 1) * self.context.scene.render.fps
-        flip.stop_time = ( self.context.scene.frame_end - self.context.scene.frame_start ) * self.context.scene.render.fps
-        flip.texture_slot = target_tex
-        count = 0
-        for t in tlist:
-            if len( t ) == 0: continue  # skip empty lines
-            # create a NiSourceTexture for each flip
-            tex = self.export_source_texture(texture, t)
-            flip.num_sources += 1
-            flip.sources.update_size()
-            flip.sources[flip.num_sources-1] = tex
-            count += 1
-        if count < 2:
-            raise NifExportError(
-                "Error in Texture Flip buffer '%s':"
-                " must define at least two textures"
-                %fliptxt.name)
-        flip.delta = (flip.stop_time - flip.start_time) / count
-
-
-
+  
     #
     # Export a blender object ob of the type mesh, child of nif block
     # parent_block, as NiTriShape and NiTriShapeData blocks, possibly
@@ -2381,11 +1789,11 @@ class NifExport(NifCommon):
                         #darkmtex = mesh_dark_mtex,
                         #detailmtex = mesh_detail_mtex))
                 else:
-                    if self.properties.game in self.USED_EXTRA_SHADER_TEXTURES:
+                    if self.properties.game in self.texturehelper.USED_EXTRA_SHADER_TEXTURES:
                         # sid meier's railroad and civ4:
                         # set shader slots in extra data
                         self.add_shader_integer_extra_datas(trishape)
-                    trishape.add_property(self.export_texturing_property(
+                    trishape.add_property(self.texturehelper.export_texturing_property(
                         flags=0x0001, # standard
                         applymode=self.get_n_apply_mode_from_b_blend_type(
                             mesh_base_mtex.blend_type
@@ -2413,16 +1821,16 @@ class NifExport(NifCommon):
                     alphaflags = 0x12ED
                     alphathreshold = 0
                 trishape.add_property(
-                    self.export_alpha_property(flags=alphaflags,
-                                             threshold=alphathreshold))
+                    self.propertyhelper.object_property.export_alpha_property(flags=alphaflags,
+                                                                              threshold=alphathreshold))
 
             if mesh_haswire:
                 # add NiWireframeProperty
-                trishape.add_property(self.export_wireframe_property(flags=1))
+                trishape.add_property(self.propertyhelper.object_property.export_wireframe_property(flags=1))
 
             if mesh_doublesided:
                 # add NiStencilProperty
-                trishape.add_property(self.export_stencil_property())
+                trishape.add_property(self.propertyhelper.object_property.export_stencil_property())
 
             if mesh_material:
                 # add NiTriShape's specular property
@@ -2430,13 +1838,13 @@ class NifExport(NifCommon):
                 # games (they use specularity even without this property)
                 if (mesh_hasspec
                     and (self.properties.game
-                         not in self.USED_EXTRA_SHADER_TEXTURES)):
+                         not in self.texturehelper.USED_EXTRA_SHADER_TEXTURES)):
                     # refer to the specular property in the trishape block
                     trishape.add_property(
-                        self.export_specular_property(flags=0x0001))
+                        self.propertyhelper.object_property.export_specular_property(flags=0x0001))
 
                 # add NiTriShape's material property
-                trimatprop = self.export_material_property(
+                trimatprop = self.propertyhelper.material_property.export_material_property(
                     name=self.get_full_name(mesh_material.name),
                     flags=0x0001, # TODO - standard flag, check?
                     ambient=mesh_mat_ambient_color,
@@ -2452,7 +1860,7 @@ class NifExport(NifCommon):
 
 
                 # material animation
-                self.export_material_controllers(
+                self.animationhelper.material_animation.export_material_controllers(
                     b_material=mesh_material, n_geom=trishape)
 
             # add NiTriShape's data
@@ -2520,23 +1928,23 @@ class NifExport(NifCommon):
             # not using tangent space on non shadered nifs)
             if mesh_uvlayers and mesh_hasnormals:
                 if (self.properties.game in ('OBLIVION', 'FALLOUT_3')
-                    or (self.properties.game in self.USED_EXTRA_SHADER_TEXTURES)):
+                    or (self.properties.game in self.texturehelper.USED_EXTRA_SHADER_TEXTURES)):
                     trishape.update_tangent_space(
                         as_extra=(self.properties.game == 'OBLIVION'))
 
             # now export the vertex weights, if there are any
             vertgroups = {vertex_group.name
                           for vertex_group in b_obj.vertex_groups}
-            bonenames = []
+            bone_names = []
             if b_obj.parent:
                 if b_obj.parent.type == 'ARMATURE':
                     b_obj_armature = b_obj.parent
                     armaturename = b_obj_armature.name
-                    bonenames = list(b_obj_armature.data.bones.keys())
-                    # the vertgroups that correspond to bonenames are bones
+                    bone_names = list(b_obj_armature.data.bones.keys())
+                    # the vertgroups that correspond to bone_names are bones
                     # that influence the mesh
                     boneinfluences = []
-                    for bone in bonenames:
+                    for bone in bone_names:
                         if bone in vertgroups:
                             boneinfluences.append(bone)
                     if boneinfluences: # yes we have skinning!
@@ -2849,235 +2257,7 @@ class NifExport(NifCommon):
                         # fix data consistency type
                         tridata.consistency_flags = NifFormat.ConsistencyType.CT_VOLATILE
 
-    def export_material_controllers(self, b_material, n_geom):
-        """Export material animation data for given geometry."""
-        # XXX todo: port to blender 2.5x+ interface
-        # XXX Blender.Ipo channel constants are replaced by FCurve.data_path?
-        return
 
-        if self.properties.animation == 'GEOM_NIF':
-            # geometry only: don't write controllers
-            return
-
-        self.export_material_alpha_controller(b_material, n_geom)
-        self.export_material_color_controller(
-            b_material=b_material,
-            b_channels=(
-                Blender.Ipo.MA_MIRR, Blender.Ipo.MA_MIRG, Blender.Ipo.MA_MIRB),
-            n_geom=n_geom,
-            n_target_color=NifFormat.TargetColor.TC_AMBIENT)
-        self.export_material_color_controller(
-            b_material=b_material,
-            b_channels=(
-                Blender.Ipo.MA_R, Blender.Ipo.MA_G, Blender.Ipo.MA_B),
-            n_geom=n_geom,
-            n_target_color=NifFormat.TargetColor.TC_DIFFUSE)
-        self.export_material_color_controller(
-            b_material=b_material,
-            b_channels=(
-                Blender.Ipo.MA_SPECR, Blender.Ipo.MA_SPECG, Blender.Ipo.MA_SPECB),
-            n_geom=n_geom,
-            n_target_color=NifFormat.TargetColor.TC_SPECULAR)
-        self.export_material_uv_controller(b_material, n_geom)
-
-    def export_material_alpha_controller(self, b_material, n_geom):
-        """Export the material alpha controller data."""
-        b_ipo = b_material.animation_data
-        if not b_ipo:
-            return
-        # get the alpha curve and translate it into nif data
-        b_curve = b_ipo[Blender.Ipo.MA_ALPHA]
-        if not b_curve:
-            return
-        n_floatdata = self.create_block("NiFloatData", b_curve)
-        n_times = [] # track all times (used later in start time and end time)
-        n_floatdata.data.num_keys = len(b_curve.bezierPoints)
-        n_floatdata.data.interpolation = self.get_n_ipol_from_b_ipol(
-            b_curve.interpolation)
-        n_floatdata.data.keys.update_size()
-        for b_point, n_key in zip(b_curve.bezierPoints, n_floatdata.data.keys):
-            # add each point of the curve
-            b_time, b_value = b_point.pt
-            n_key.arg = n_floatdata.data.interpolation
-            n_key.time = (b_time - 1) * self.context.scene.render.fps
-            n_key.value = b_value
-            # track time
-            n_times.append(n_key.time)
-        # if alpha data is present (check this by checking if times were added)
-        # then add the controller so it is exported
-        if n_times:
-            n_alphactrl = self.create_block("NiAlphaController", b_ipo)
-            n_alphaipol = self.create_block("NiFloatInterpolator", b_ipo)
-            n_alphactrl.interpolator = n_alphaipol
-            n_alphactrl.flags = 8 # active
-            n_alphactrl.flags |= self.get_flags_from_extend(b_curve.extend)
-            n_alphactrl.frequency = 1.0
-            n_alphactrl.start_time = min(n_times)
-            n_alphactrl.stop_time = max(n_times)
-            n_alphactrl.data = n_floatdata
-            n_alphaipol.data = n_floatdata
-            # attach block to geometry
-            n_matprop = self.find_property(n_geom,
-                                           NifFormat.NiMaterialProperty)
-            if not n_matprop:
-                raise ValueError(
-                    "bug!! must add material property"
-                    " before exporting alpha controller")
-            n_matprop.add_controller(n_alphactrl)
-
-    def export_material_color_controller(
-        self, b_material, b_channels, n_geom, n_target_color):
-        """Export the material color controller data."""
-        b_ipo = b_material.animation_data
-        if not b_ipo:
-            return
-        # get the material color curves and translate it into nif data
-        b_curves = [b_ipo[b_channel] for b_channel in b_channels]
-        if not all(b_curves):
-            return
-        n_posdata = self.create_block("NiPosData", b_curves)
-        # and also to have common reference times for all curves
-        b_times = set()
-        for b_curve in b_curves:
-            b_times |= set(b_point.pt[0] for b_point in b_curve.bezierPoints)
-        # track all nif times: used later in start time and end time
-        n_times = []
-        n_posdata.data.num_keys = len(b_times)
-        n_posdata.data.interpolation = self.get_n_ipol_from_b_ipol(
-            b_curves[0].interpolation)
-        n_posdata.data.keys.update_size()
-        for b_time, n_key in zip(sorted(b_times), n_posdata.data.keys):
-            # add each point of the curves
-            n_key.arg = n_posdata.data.interpolation
-            n_key.time = (b_time - 1) * self.context.scene.render.fps
-            n_key.value.x = b_curves[0][b_time]
-            n_key.value.y = b_curves[1][b_time]
-            n_key.value.z = b_curves[2][b_time]
-            # track time
-            n_times.append(n_key.time)
-        # if alpha data is present (check this by checking if times were added)
-        # then add the controller so it is exported
-        if n_times:
-            n_matcolor_ctrl = self.create_block(
-                "NiMaterialColorController", b_ipo)
-            n_matcolor_ipol = self.create_block(
-                "NiPoint3Interpolator", b_ipo)
-            n_matcolor_ctrl.interpolator = n_matcolor_ipol
-            n_matcolor_ctrl.flags = 8 # active
-            n_matcolor_ctrl.flags |= self.get_flags_from_extend(b_curve.extend)
-            n_matcolor_ctrl.set_target_color(n_target_color)
-            n_matcolor_ctrl.frequency = 1.0
-            n_matcolor_ctrl.start_time = min(n_times)
-            n_matcolor_ctrl.stop_time = max(n_times)
-            n_matcolor_ctrl.data = n_posdata
-            n_matcolor_ipol.data = n_posdata
-            # attach block to geometry
-            n_matprop = self.find_property(n_geom,
-                                           NifFormat.NiMaterialProperty)
-            if not n_matprop:
-                raise ValueError(
-                    "bug!! must add material property"
-                    " before exporting material color controller")
-            n_matprop.add_controller(n_matcolor_ctrl)
-
-    def export_material_uv_controller(self, b_material, n_geom):
-        """Export the material UV controller data."""
-        # get the material ipo
-        b_ipo = b_material.ipo
-        if not b_ipo:
-            return
-        # get the uv curves and translate them into nif data
-        n_uvdata = NifFormat.NiUVData()
-        n_times = [] # track all times (used later in start time and end time)
-        b_channels = (Blender.Ipo.MA_OFSX, Blender.Ipo.MA_OFSY,
-                      Blender.Ipo.MA_SIZEX, Blender.Ipo.MA_SIZEY)
-        for b_channel, n_uvgroup in zip(b_channels, n_uvdata.uv_groups):
-            b_curve = b_ipo[b_channel]
-            if b_curve:
-                self.info("Exporting %s as NiUVData" % b_curve)
-                n_uvgroup.num_keys = len(b_curve.bezierPoints)
-                n_uvgroup.interpolation = self.get_n_ipol_from_b_ipol(
-                    b_curve.interpolation)
-                n_uvgroup.keys.update_size()
-                for b_point, n_key in zip(b_curve.bezierPoints, n_uvgroup.keys):
-                    # add each point of the curve
-                    b_time, b_value = b_point.pt
-                    if b_channel in (Blender.Ipo.MA_OFSX, Blender.Ipo.MA_OFSY):
-                        # offsets are negated in blender
-                        b_value = -b_value
-                    n_key.arg = n_uvgroup.interpolation
-                    n_key.time = (b_time - 1) * self.context.scene.render.fps
-                    n_key.value = b_value
-                    # track time
-                    n_times.append(n_key.time)
-                # save extend mode to export later
-                b_curve_extend = b_curve.extend
-        # if uv data is present (we check this by checking if times were added)
-        # then add the controller so it is exported
-        if n_times:
-            n_uvctrl = NifFormat.NiUVController()
-            n_uvctrl.flags = 8 # active
-            n_uvctrl.flags |= self.get_flags_from_extend(b_curve_extend)
-            n_uvctrl.frequency = 1.0
-            n_uvctrl.start_time = min(n_times)
-            n_uvctrl.stop_time = max(n_times)
-            n_uvctrl.data = n_uvdata
-            # attach block to geometry
-            n_geom.add_controller(n_uvctrl)
-
-    def export_object_vis_controller(self, b_obj, n_node):
-        """Export the material alpha controller data."""
-        b_ipo = b_obj.ipo
-        if not b_ipo:
-            return
-        # get the alpha curve and translate it into nif data
-        b_curve = b_ipo[Blender.Ipo.OB_LAYER]
-        if not b_curve:
-            return
-        # NiVisData = old style, NiBoolData = new style
-        n_vis_data = self.create_block("NiVisData", b_curve)
-        n_bool_data = self.create_block("NiBoolData", b_curve)
-        n_times = [] # track all times (used later in start time and end time)
-        # we just leave interpolation at constant
-        n_bool_data.data.interpolation = NifFormat.KeyType.CONST_KEY
-        #n_bool_data.data.interpolation = self.get_n_ipol_from_b_ipol(
-        #    b_curve.interpolation)
-        n_vis_data.num_keys = len(b_curve.bezierPoints)
-        n_bool_data.data.num_keys = len(b_curve.bezierPoints)
-        n_vis_data.keys.update_size()
-        n_bool_data.data.keys.update_size()
-        visible_layer = 2 ** (min(self.context.scene.getLayers()) - 1)
-        for b_point, n_vis_key, n_bool_key in zip(
-            b_curve.bezierPoints, n_vis_data.keys, n_bool_data.data.keys):
-            # add each point of the curve
-            b_time, b_value = b_point.pt
-            n_vis_key.arg = n_bool_data.data.interpolation # n_vis_data has no interpolation stored
-            n_vis_key.time = (b_time - 1) * self.context.scene.render.fps
-            n_vis_key.value = 1 if (int(b_value + 0.01) & visible_layer) else 0
-            n_bool_key.arg = n_bool_data.data.interpolation
-            n_bool_key.time = n_vis_key.time
-            n_bool_key.value = n_vis_key.value
-            # track time
-            n_times.append(n_vis_key.time)
-        # if alpha data is present (check this by checking if times were added)
-        # then add the controller so it is exported
-        if n_times:
-            n_vis_ctrl = self.create_block("NiVisController", b_ipo)
-            n_vis_ipol = self.create_block("NiBoolInterpolator", b_ipo)
-            n_vis_ctrl.interpolator = n_vis_ipol
-            n_vis_ctrl.flags = 8 # active
-            n_vis_ctrl.flags |= self.get_flags_from_extend(b_curve.extend)
-            n_vis_ctrl.frequency = 1.0
-            n_vis_ctrl.start_time = min(n_times)
-            n_vis_ctrl.stop_time = max(n_times)
-            n_vis_ctrl.data = n_vis_data
-            n_vis_ipol.data = n_bool_data
-            # attach block to node
-            n_node.add_controller(n_vis_ctrl)
-
-    
-
-   
 
     def export_matrix(self, b_obj, space, block):
         """Set a block's transform matrix to an object's
@@ -3200,7 +2380,7 @@ class NifExport(NifCommon):
             matrix = self.armaturehelper.get_bone_rest_matrix(b_obj, 'BONESPACE')
 
         try:
-            return self.decompose_srt(matrix)
+            return nif_utils.decompose_srt(matrix)
         except NifExportError: # non-uniform scaling
             self.debug(str(matrix))
             raise NifExportError(
@@ -3208,33 +2388,6 @@ class NifExport(NifCommon):
                 " This could be a bug... No workaround. :-( Post your blend!"
                 % b_obj.name)
 
-
-
-    def decompose_srt(self, matrix):
-        """Decompose Blender transform matrix as a scale, rotation matrix, and
-        translation vector."""
-        # get scale components
-        # get scale components
-        trans_vec, rot_quat, scale_vec = matrix.decompose()
-        scale_rot = rot_quat.to_matrix()
-        scale_rot_T = mathutils.Matrix(scale_rot)
-        scale_rot_T.transpose()
-        scale_rot_2 = scale_rot * scale_rot_T
-        # and fix their sign
-        if (scale_rot.determinant() < 0): scale_vec.negate()
-        # only uniform scaling
-        # allow rather large error to accomodate some nifs
-        if abs(scale_vec[0]-scale_vec[1]) + abs(scale_vec[1]-scale_vec[2]) > 0.02:
-            raise NifExportError(
-                "Non-uniform scaling not supported."
-                " Workaround: apply size and rotation (CTRL-A).")
-        b_scale = scale_vec[0]
-        # get rotation matrix
-        b_rot = scale_rot * b_scale
-        # get translation
-        b_trans = trans_vec
-        # done!
-        return [b_scale, b_rot, b_trans]
 
     def create_block(self, blocktype, b_obj = None):
         """Helper function to create a new block, register it in the list of
@@ -3328,580 +2481,7 @@ class NifExport(NifCommon):
                 "Only Morrowind, Oblivion, and Fallout 3"
                 " collisions are supported, skipped collision object '%s'"
                 % b_obj.name)
-
-    def export_constraints(self, b_obj, root_block):
-        """Export the constraints of an object.
-
-        @param b_obj: The object whose constraints to export.
-        @param root_block: The root of the nif tree (required for update_a_b)."""
-        if isinstance(b_obj, Blender.Armature.Bone):
-            # bone object has its constraints stored in the posebone
-            # so now we should get the posebone, but no constraints for
-            # bones are exported anyway for now
-            # so skip this object
-            return
-
-        if not hasattr(b_obj, "constraints"):
-            # skip text buffers etc
-            return
-
-        for b_constr in b_obj.constraints:
-            # rigid body joints
-            if b_constr.type == Blender.Constraint.Type.RIGIDBODYJOINT:
-                if self.properties.game not in ('OBLIVION', 'FALLOUT_3'):
-                    self.warning(
-                        "Only Oblivion/Fallout 3 rigid body constraints"
-                        " can be exported: skipped %s." % b_constr)
-                    continue
-                # check that the object is a rigid body
-                for otherbody, otherobj in self.blocks.items():
-                    if isinstance(otherbody, NifFormat.bhkRigidBody) \
-                        and otherobj is b_obj:
-                        hkbody = otherbody
-                        break
-                else:
-                    # no collision body for this object
-                    raise NifExportError(
-                        "Object %s has a rigid body constraint,"
-                        " but is not exported as collision object"
-                        % b_obj.name)
-                # yes there is a rigid body constraint
-                # is it of a type that is supported?
-                if b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE] == 1:
-                    # ball
-                    if not self.EXPORT_OB_MALLEABLECONSTRAINT:
-                        hkconstraint = self.create_block(
-                            "bhkRagdollConstraint", b_constr)
-                    else:
-                        hkconstraint = self.create_block(
-                            "bhkMalleableConstraint", b_constr)
-                        hkconstraint.type = 7
-                    hkdescriptor = hkconstraint.ragdoll
-                elif b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE] == 2:
-                    # hinge
-                    if not self.EXPORT_OB_MALLEABLECONSTRAINT:
-                        hkconstraint = self.create_block(
-                            "bhkLimitedHingeConstraint", b_constr)
-                    else:
-                        hkconstraint = self.create_block(
-                            "bhkMalleableConstraint", b_constr)
-                        hkconstraint.type = 2
-                    hkdescriptor = hkconstraint.limited_hinge
-                else:
-                    raise NifExportError(
-                        "Unsupported rigid body joint type (%i),"
-                        " only ball and hinge are supported."
-                        % b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE])
-
-                # defaults and getting object properties for user
-                # settings (should use constraint properties, but
-                # blender does not have those...)
-                max_angle = 1.5
-                min_angle = 0.0
-                # friction: again, just picking a reasonable value if
-                # no real value given
-                if isinstance(hkconstraint,
-                              NifFormat.bhkMalleableConstraint):
-                    # malleable typically have 0
-                    # (perhaps because they have a damping parameter)
-                    max_friction = 0
-                else:
-                    # non-malleable typically have 10
-                    if self.properties.game == 'FALLOUT_3':
-                        max_friction = 100
-                    else: # oblivion
-                        max_friction = 10
-                for prop in b_obj.getAllProperties():
-                    if (prop.name == 'LimitedHinge_MaxAngle'
-                        and prop.type == "FLOAT"):
-                        max_angle = prop.data
-                    if (prop.name == 'LimitedHinge_MinAngle'
-                        and prop.type == "FLOAT"):
-                        min_angle = prop.data
-                    if (prop.name == 'LimitedHinge_MaxFriction'
-                        and prop.type == "FLOAT"):
-                        max_friction = prop.data
-
-                # parent constraint to hkbody
-                hkbody.num_constraints += 1
-                hkbody.constraints.update_size()
-                hkbody.constraints[-1] = hkconstraint
-
-                # export hkconstraint settings
-                hkconstraint.num_entities = 2
-                hkconstraint.entities.update_size()
-                hkconstraint.entities[0] = hkbody
-                # is there a target?
-                targetobj = b_constr[Blender.Constraint.Settings.TARGET]
-                if not targetobj:
-                    self.warning("Constraint %s has no target, skipped")
-                    continue
-                # find target's bhkRigidBody
-                for otherbody, otherobj in self.blocks.items():
-                    if isinstance(otherbody, NifFormat.bhkRigidBody) \
-                        and otherobj == targetobj:
-                        hkconstraint.entities[1] = otherbody
-                        break
-                else:
-                    # not found
-                    raise NifExportError(
-                        "Rigid body target not exported in nif tree"
-                        " check that %s is selected during export." % targetobj)
-                # priority
-                hkconstraint.priority = 1
-                # extra malleable constraint settings
-                if isinstance(hkconstraint, NifFormat.bhkMalleableConstraint):
-                    # unknowns
-                    hkconstraint.unknown_int_2 = 2
-                    hkconstraint.unknown_int_3 = 1
-                    # force required to keep bodies together
-                    # 0.5 seems a good standard value for creatures
-                    hkconstraint.tau = 0.5
-                    # default damping settings
-                    # (cannot access rbDamping in Blender Python API)
-                    hkconstraint.damping = 0.5
-
-                # calculate pivot point and constraint matrix
-                pivot = mathutils.Vector([
-                    b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVX],
-                    b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVY],
-                    b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVZ],
-                    ])
-                constr_matrix = mathutils.Euler(
-                    b_constr[Blender.Constraint.Settings.CONSTR_RB_AXX],
-                    b_constr[Blender.Constraint.Settings.CONSTR_RB_AXY],
-                    b_constr[Blender.Constraint.Settings.CONSTR_RB_AXZ])
-                constr_matrix = constr_matrix.toMatrix()
-
-                # transform pivot point and constraint matrix into bhkRigidBody
-                # coordinates (also see import_nif.py, the
-                # NifImport.import_bhk_constraints method)
-
-                # the pivot point v' is in object coordinates
-                # however nif expects it in hkbody coordinates, v
-                # v * R * B = v' * O * T * B'
-                # with R = rigid body transform (usually unit tf)
-                # B = nif bone matrix
-                # O = blender object transform
-                # T = bone tail matrix (translation in Y direction)
-                # B' = blender bone matrix
-                # so we need to cancel out the object transformation by
-                # v = v' * O * T * B' * B^{-1} * R^{-1}
-
-                # for the rotation matrix, we transform in the same way
-                # but ignore all translation parts
-
-                # assume R is unit transform...
-
-                # apply object transform relative to the bone head
-                # (this is O * T * B' * B^{-1} at once)
-                transform = mathutils.Matrix(
-                    self.get_object_matrix(b_obj, 'localspace').as_list())
-                pivot = pivot * transform
-                constr_matrix = constr_matrix * transform.rotationPart()
-
-                # export hkdescriptor pivot point
-                hkdescriptor.pivot_a.x = pivot[0] / self.HAVOK_SCALE
-                hkdescriptor.pivot_a.y = pivot[1] / self.HAVOK_SCALE
-                hkdescriptor.pivot_a.z = pivot[2] / self.HAVOK_SCALE
-                # export hkdescriptor axes and other parameters
-                # (also see import_nif.py NifImport.import_bhk_constraints)
-                axis_x = mathutils.Vector([1,0,0]) * constr_matrix
-                axis_y = mathutils.Vector([0,1,0]) * constr_matrix
-                axis_z = mathutils.Vector([0,0,1]) * constr_matrix
-                if isinstance(hkdescriptor, NifFormat.RagdollDescriptor):
-                    # z axis is the twist vector
-                    hkdescriptor.twist_a.x = axis_z[0]
-                    hkdescriptor.twist_a.y = axis_z[1]
-                    hkdescriptor.twist_a.z = axis_z[2]
-                    # x axis is the plane vector
-                    hkdescriptor.plane_a.x = axis_x[0]
-                    hkdescriptor.plane_a.y = axis_x[1]
-                    hkdescriptor.plane_a.z = axis_x[2]
-                    # angle limits
-                    # take them twist and plane to be 45 deg (3.14 / 4 = 0.8)
-                    hkdescriptor.twist_min_angle = -0.8
-                    hkdescriptor.twist_max_angle = +0.8
-                    hkdescriptor.plane_min_angle = -0.8
-                    hkdescriptor.plane_max_angle = +0.8
-                    # same for maximum cone angle
-                    hkdescriptor.cone_max_angle  = +0.8
-                elif isinstance(hkdescriptor, NifFormat.LimitedHingeDescriptor):
-                    # y axis is the zero angle vector on the plane of rotation
-                    hkdescriptor.perp_2_axle_in_a_1.x = axis_y[0]
-                    hkdescriptor.perp_2_axle_in_a_1.y = axis_y[1]
-                    hkdescriptor.perp_2_axle_in_a_1.z = axis_y[2]
-                    # x axis is the axis of rotation
-                    hkdescriptor.axle_a.x = axis_x[0]
-                    hkdescriptor.axle_a.y = axis_x[1]
-                    hkdescriptor.axle_a.z = axis_x[2]
-                    # z is the remaining axis determining the positive
-                    # direction of rotation
-                    hkdescriptor.perp_2_axle_in_a_2.x = axis_z[0]
-                    hkdescriptor.perp_2_axle_in_a_2.y = axis_z[1]
-                    hkdescriptor.perp_2_axle_in_a_2.z = axis_z[2]
-                    # angle limits
-                    # typically, the constraint on one side is defined
-                    # by the z axis
-                    hkdescriptor.min_angle = min_angle
-                    # the maximum axis is typically about 90 degrees
-                    # 3.14 / 2 = 1.5
-                    hkdescriptor.max_angle = max_angle
-                    # friction
-                    hkdescriptor.max_friction = max_friction
-                else:
-                    raise ValueError("unknown descriptor %s"
-                                     % hkdescriptor.__class__.__name__)
-
-                # do AB
-                hkconstraint.update_a_b(root_block)
-
-
-    def export_alpha_property(self, flags=0x00ED, threshold=0):
-        """Return existing alpha property with given flags, or create new one
-        if an alpha property with required flags is not found."""
-        # search for duplicate
-        for block in self.blocks:
-            if isinstance(block, NifFormat.NiAlphaProperty) \
-               and block.flags == flags and block.threshold == threshold:
-                return block
-        # no alpha property with given flag found, so create new one
-        alphaprop = self.create_block("NiAlphaProperty")
-        alphaprop.flags = flags
-        alphaprop.threshold = threshold
-        return alphaprop
-
-    def export_specular_property(self, flags = 0x0001):
-        """Return existing specular property with given flags, or create new one
-        if a specular property with required flags is not found."""
-        # search for duplicate
-        for block in self.blocks:
-            if isinstance(block, NifFormat.NiSpecularProperty) \
-               and block.flags == flags:
-                return block
-        # no specular property with given flag found, so create new one
-        specprop = self.create_block("NiSpecularProperty")
-        specprop.flags = flags
-        return specprop
-
-    def export_wireframe_property(self, flags = 0x0001):
-        """Return existing wire property with given flags, or create new one
-        if an wire property with required flags is not found."""
-        # search for duplicate
-        for block in self.blocks:
-            if isinstance(block, NifFormat.NiWireframeProperty) \
-               and block.flags == flags:
-                return block
-
-        # no wire property with given flag found, so create new one
-        wireprop = self.create_block("NiWireframeProperty")
-        wireprop.flags = flags
-        return wireprop
-
-    def export_stencil_property(self):
-        """Return existing stencil property with given flags, or create new one
-        if an identical stencil property."""
-        # search for duplicate
-        for block in self.blocks:
-            if isinstance(block, NifFormat.NiStencilProperty):
-                # all these blocks have the same setting, no further check
-                # is needed
-                return block
-        # no stencil property found, so create new one
-        stencilprop = self.create_block("NiStencilProperty")
-        if self.properties.game == 'FALLOUT_3':
-            stencilprop.flags = 19840
-        return stencilprop
-
-    def export_material_property(self, name='', flags=0x0001,
-                                 ambient=(1.0, 1.0, 1.0), diffuse=(1.0, 1.0, 1.0),
-                                 specular=(0.0, 0.0, 0.0), emissive=(0.0, 0.0, 0.0),
-                                 gloss=10.0, alpha=1.0, emitmulti=1.0):
-        """Return existing material property with given settings, or create
-        a new one if a material property with these settings is not found."""
-
-        # create block (but don't register it yet in self.blocks)
-        matprop = NifFormat.NiMaterialProperty()
-
-        # list which determines whether the material name is relevant or not
-        # only for particular names this holds, such as EnvMap2
-        # by default, the material name does not affect rendering
-        specialnames = ("EnvMap2", "EnvMap", "skin", "Hair",
-                        "dynalpha", "HideSecret", "Lava")
-
-        # hack to preserve EnvMap2, skinm, ... named blocks (even if they got
-        # renamed to EnvMap2.xxx or skin.xxx on import)
-        if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
-            for specialname in specialnames:
-                if (name.lower() == specialname.lower()
-                    or name.lower().startswith(specialname.lower() + ".")):
-                    if name != specialname:
-                        self.warning("Renaming material '%s' to '%s'"
-                                            % (name, specialname))
-                    name = specialname
-
-        # clear noname materials
-        if name.lower().startswith("noname"):
-            self.warning("Renaming material '%s' to ''" % name)
-            name = ""
-
-        matprop.name = name
-        matprop.flags = flags
-        matprop.ambient_color.r = ambient[0]
-        matprop.ambient_color.g = ambient[1]
-        matprop.ambient_color.b = ambient[2]
-        matprop.diffuse_color.r = diffuse[0]
-        matprop.diffuse_color.g = diffuse[1]
-        matprop.diffuse_color.b = diffuse[2]
-        matprop.specular_color.r = specular[0]
-        matprop.specular_color.g = specular[1]
-        matprop.specular_color.b = specular[2]
-        matprop.emissive_color.r = emissive[0]
-        matprop.emissive_color.g = emissive[1]
-        matprop.emissive_color.b = emissive[2]
-        matprop.glossiness = gloss
-        matprop.alpha = alpha
-        matprop.emit_multi = emitmulti
-
-        # search for duplicate
-        # (ignore the name string as sometimes import needs to create different
-        # materials even when NiMaterialProperty is the same)
-        for block in self.blocks:
-            if not isinstance(block, NifFormat.NiMaterialProperty):
-                continue
-
-            # when optimization is enabled, ignore material name
-            if self.EXPORT_OPTIMIZE_MATERIALS:
-                ignore_strings = not(block.name in specialnames)
-            else:
-                ignore_strings = False
-
-            # check hash
-            first_index = 1 if ignore_strings else 0
-            if (block.get_hash()[first_index:] ==
-                matprop.get_hash()[first_index:]):
-                self.warning(
-                    "Merging materials '%s' and '%s'"
-                    " (they are identical in nif)"
-                    % (matprop.name, block.name))
-                return block
-
-        # no material property with given settings found, so use and register
-        # the new one
-        return self.register_block(matprop)
-
-    def export_tex_desc(self, texdesc=None, uvlayers=None, b_mat_texslot=None):
-        """Helper function for export_texturing_property to export each texture
-        slot."""
-        try:
-            texdesc.uv_set = uvlayers.index(b_mat_texslot.uv_layer) if b_mat_texslot.uv_layer else 0
-        except ValueError: # mtex.uv_layer not in uvlayers list
-            self.warning(
-                "Bad uv layer name '%s' in texture '%s'."
-                " Falling back on first uv layer"
-                % (b_mat_texslot.uv_layer, b_mat_texslot.texture.name))
-            texdesc.uv_set = 0 # assume 0 is active layer
-
-        texdesc.source = self.export_source_texture(b_mat_texslot.texture)
-
-    def export_texturing_property(
-        self, flags=0x0001, applymode=None, uvlayers=None,
-        basemtex=None, glowmtex=None, bumpmtex=None, normalmtex=None, glossmtex=None,
-        darkmtex=None, detailmtex=None, refmtex=None):
-        """Export texturing property. The parameters basemtex,
-        glowmtex, bumpmtex, ... are the Blender material textures
-        (MTex, not Texture) that correspond to the base, glow, bump
-        map, ... textures. The uvlayers parameter is a list of uvlayer
-        strings, that is, mesh.getUVLayers().
-        """
-
-        texprop = NifFormat.NiTexturingProperty()
-
-        texprop.flags = flags
-        texprop.apply_mode = applymode
-        texprop.texture_count = 7
-
-        # export extra shader textures
-        if self.properties.game == 'SID_MEIER_S_RAILROADS':
-            # sid meier's railroads:
-            # some textures end up in the shader texture list
-            # there are 5 slots available, so set them up
-            texprop.num_shader_textures = 5
-            texprop.shader_textures.update_size()
-            for mapindex, shadertexdesc in enumerate(texprop.shader_textures):
-                # set default values
-                shadertexdesc.is_used = False
-                shadertexdesc.map_index = mapindex
-
-            # some texture slots required by the engine
-            shadertexdesc_envmap = texprop.shader_textures[0]
-            shadertexdesc_envmap.is_used = True
-            shadertexdesc_envmap.texture_data.source = \
-                self.export_source_texture(filename="RRT_Engine_Env_map.dds")
-
-            shadertexdesc_cubelightmap = texprop.shader_textures[4]
-            shadertexdesc_cubelightmap.is_used = True
-            shadertexdesc_cubelightmap.texture_data.source = \
-                self.export_source_texture(filename="RRT_Cube_Light_map_128.dds")
-
-            # the other slots are exported below
-
-        elif self.properties.game == 'CIVILIZATION_IV':
-            # some textures end up in the shader texture list
-            # there are 4 slots available, so set them up
-            texprop.num_shader_textures = 4
-            texprop.shader_textures.update_size()
-            for mapindex, shadertexdesc in enumerate(texprop.shader_textures):
-                # set default values
-                shadertexdesc.is_used = False
-                shadertexdesc.map_index = mapindex
-
-        if basemtex:
-            texprop.has_base_texture = True
-            self.export_tex_desc(texdesc = texprop.base_texture,
-                                 uvlayers = uvlayers,
-                                 b_mat_texslot = basemtex)
-            # check for texture flip definition
-            try:
-                fliptxt = Blender.Text.Get(basemtex.texture.name)
-            except NameError:
-                pass
-            else:
-                # texture slot 0 = base
-                self.export_flip_controller(fliptxt, basemtex.texture, texprop, 0)
-
-        if glowmtex:
-            texprop.has_glow_texture = True
-            self.export_tex_desc(texdesc = texprop.glow_texture,
-                                 uvlayers = uvlayers,
-                                 b_mat_texslot = glowmtex)
-
-        if bumpmtex:
-            if self.properties.game not in self.USED_EXTRA_SHADER_TEXTURES:
-                texprop.has_bump_map_texture = True
-                self.export_tex_desc(texdesc = texprop.bump_map_texture,
-                                     uvlayers = uvlayers,
-                                     b_mat_texslot = bumpmtex)
-                texprop.bump_map_luma_scale = 1.0
-                texprop.bump_map_luma_offset = 0.0
-                texprop.bump_map_matrix.m_11 = 1.0
-                texprop.bump_map_matrix.m_12 = 0.0
-                texprop.bump_map_matrix.m_21 = 0.0
-                texprop.bump_map_matrix.m_22 = 1.0
-
-        if normalmtex:
-                shadertexdesc = texprop.shader_textures[1]
-                shadertexdesc.is_used = True
-                shadertexdesc.texture_data.source = \
-                    self.export_source_texture(texture=normalmtex.texture)
-
-        if glossmtex:
-            if self.properties.game not in self.USED_EXTRA_SHADER_TEXTURES:
-                texprop.has_gloss_texture = True
-                self.export_tex_desc(texdesc = texprop.gloss_texture,
-                                     uvlayers = uvlayers,
-                                     b_mat_texslot = glossmtex)
-            else:
-                shadertexdesc = texprop.shader_textures[2]
-                shadertexdesc.is_used = True
-                shadertexdesc.texture_data.source = \
-                    self.export_source_texture(texture=glossmtex.texture)
-
-        if darkmtex:
-            texprop.has_dark_texture = True
-            self.export_tex_desc(texdesc = texprop.dark_texture,
-                                 uvlayers = uvlayers,
-                                 b_mat_texslot = darkmtex)
-
-        if detailmtex:
-            texprop.has_detail_texture = True
-            self.export_tex_desc(texdesc = texprop.detail_texture,
-                                 uvlayers = uvlayers,
-                                 b_mat_texslot = detailmtex)
-
-        if refmtex:
-            if self.properties.game not in self.USED_EXTRA_SHADER_TEXTURES:
-                self.warning(
-                    "Cannot export reflection texture for this game.")
-                #texprop.hasRefTexture = True
-                #self.export_tex_desc(texdesc = texprop.refTexture,
-                #                     uvlayers = uvlayers,
-                #                     mtex = refmtex)
-            else:
-                shadertexdesc = texprop.shader_textures[3]
-                shadertexdesc.is_used = True
-                shadertexdesc.texture_data.source = \
-                    self.export_source_texture(texture=refmtex.texture)
-
-        # search for duplicate
-        for block in self.blocks:
-            if isinstance(block, NifFormat.NiTexturingProperty) \
-               and block.get_hash() == texprop.get_hash():
-                return block
-
-        # no texturing property with given settings found, so use and register
-        # the new one
-        return self.register_block(texprop)
-
-    def export_bs_shader_property(
-        self, basemtex=None, normalmtex=None, glowmtex=None):
-        """Export a Bethesda shader property block."""
-
-        # create new block
-        bsshader = NifFormat.BSShaderPPLightingProperty()
-        # set shader options
-        bsshader.shader_type = self.EXPORT_FO3_SHADER_TYPE
-        bsshader.shader_flags.zbuffer_test = self.EXPORT_FO3_SF_ZBUF
-        bsshader.shader_flags.shadow_map = self.EXPORT_FO3_SF_SMAP
-        bsshader.shader_flags.shadow_frustum = self.EXPORT_FO3_SF_SFRU
-        bsshader.shader_flags.window_environment_mapping = self.EXPORT_FO3_SF_WINDOW_ENVMAP
-        bsshader.shader_flags.empty = self.EXPORT_FO3_SF_EMPT
-        bsshader.shader_flags.unknown_31 = self.EXPORT_FO3_SF_UN31
-        # set textures
-        texset = NifFormat.BSShaderTextureSet()
-        bsshader.texture_set = texset
-        if basemtex:
-            texset.textures[0] = self.export_texture_filename(basemtex.texture)
-        if normalmtex:
-            texset.textures[1] = self.export_texture_filename(normalmtex.texture)
-        if glowmtex:
-            texset.textures[2] = self.export_texture_filename(glowmtex.texture)
-
-        # search for duplicates
-        # DISABLED: the Fallout 3 engine cannot handle them
-        #for block in self.blocks:
-        #    if (isinstance(block, NifFormat.BSShaderPPLightingProperty)
-        #        and block.get_hash() == bsshader.get_hash()):
-        #        return block
-
-        # no duplicate found, so use and register new one
-        return self.register_block(bsshader)
-
-    def export_texture_effect(self, b_mat_texslot = None):
-        """Export a texture effect block from material texture mtex (MTex, not
-        Texture)."""
-        texeff = NifFormat.NiTextureEffect()
-        texeff.flags = 4
-        texeff.rotation.set_identity()
-        texeff.scale = 1.0
-        texeff.model_projection_matrix.set_identity()
-        texeff.texture_filtering = NifFormat.TexFilterMode.FILTER_TRILERP
-        texeff.texture_clamping  = NifFormat.TexClampMode.WRAP_S_WRAP_T
-        texeff.texture_type = NifFormat.EffectType.EFFECT_ENVIRONMENT_MAP
-        texeff.coordinate_generation_type = NifFormat.CoordGenType.CG_SPHERE_MAP
-        if b_mat_texslot:
-            texeff.source_texture = self.export_source_texture(b_mat_texslot.texture)
-            if self.properties.game == 'MORROWIND':
-                texeff.num_affected_node_list_pointers += 1
-                texeff.affected_node_list_pointers.update_size()
-        texeff.unknown_vector.x = 1.0
-        return self.register_block(texeff)
-
-    def add_shader_integer_extra_datas(self, trishape):
-        """Add extra data blocks for shader indices."""
-        for shaderindex in self.USED_EXTRA_SHADER_TEXTURES[self.properties.game]:
-            shadername = self.EXTRA_SHADER_TEXTURES[shaderindex]
-            trishape.add_integer_extra_data(shadername, shaderindex)
+            
 
     def create_ninode(self, b_obj=None):
         # trivial case first
@@ -3919,6 +2499,7 @@ class NifExport(NifCommon):
 
         # return the node
         return n_node
+
 
     def export_range_lod_data(self, n_node, b_obj):
         """Export range lod data for for the children of b_obj, as a
