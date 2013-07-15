@@ -1114,15 +1114,13 @@ class NifImport(NifCommon):
                 bodypart_wrap.set_value(bodypart.body_part)
                 groupname = bodypart_wrap.get_detail_display()
                 # create vertex group if it did not exist yet
-                if not(groupname in b_mesh.vert_groups.items()):
-                    b_mesh.addVertGroup(groupname)
+                if not(groupname in b_obj.vertex_groups.items()):
+                    v_group = b_obj.vertex_groups.new(groupname)
                 # find vertex indices of this group
                 groupverts = [v_map[v_index]
                               for v_index in skinpartblock.vertex_map]
                 # create the group
-                b_mesh.assignVertsToGroup(
-                    groupname, groupverts, 1,
-                    Blender.Mesh.AssignModes.ADD)
+                v_group.add(groupverts, 1, 'ADD')
 
         # import morph controller
         # XXX todo: move this to import_mesh_controllers
