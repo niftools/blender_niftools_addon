@@ -1083,7 +1083,7 @@ class NifExport(NifCommon):
             parent_block.add_child(node)
 
         # and fill in this node's non-trivial values
-        node.name = self.get_full_name(node_name).encode()
+        node.name = self.get_full_name(node_name)
 
         # default node flags
         if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
@@ -1733,21 +1733,20 @@ class NifExport(NifCommon):
 
             # fill in the NiTriShape's non-trivial values
             if isinstance(parent_block, NifFormat.RootCollisionNode):
-                trishape.name = b""
+                trishape.name = ""
             elif not trishape_name:
                 if parent_block.name:
-                    trishape.name = b"Tri " + str(parent_block.name.decode()).encode()
+                    trishape.name = "Tri " + parent_block.name
                 else:
-                    trishape.name = b"Tri " + str(b_obj.name).encode()
+                    trishape.name = "Tri " + b_obj.name()
             else:
-                trishape.name = trishape_name.encode()
+                trishape.name = trishape_name
 
             if len(mesh_materials) > 1:
                 # multimaterial meshes: add material index
                 # (Morrowind's child naming convention)
-                b_name = trishape.name.decode() + ":%i" % materialIndex
-                trishape.name = b_name.encode()
-            trishape.name = self.get_full_name(trishape.name.decode()).encode()
+                b_name = trishape.name + ":%i" % materialIndex                
+            trishape.name = self.get_full_name(trishape.name)
 
             #Trishape Flags...
             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
@@ -1957,7 +1956,7 @@ class NifExport(NifCommon):
                         trishape.skin_instance = skininst
                         for block in self.blocks:
                             if isinstance(block, NifFormat.NiNode):
-                                if block.name == self.get_full_name(armaturename).encode():
+                                if block.name == self.get_full_name(armaturename):
                                     skininst.skeleton_root = block
                                     break
                         else:
@@ -2039,7 +2038,7 @@ class NifExport(NifCommon):
                             bone_block = None
                             for block in self.blocks:
                                 if isinstance(block, NifFormat.NiNode):
-                                    if block.name == self.get_full_name(bone).encode():
+                                    if block.name == self.get_full_name(bone):
                                         if not bone_block:
                                             bone_block = block
                                         else:
