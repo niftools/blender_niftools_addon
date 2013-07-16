@@ -147,7 +147,7 @@ class Armature():
             bones_node[bone.name] = node
 
             # add the node and the keyframe for this bone
-            node.name = self.nif_common.get_full_name(bone.name).encode()
+            node.name = self.nif_common.get_full_name(bone.name)
             if self.nif_common.properties.game in ('OBLIVION', 'FALLOUT_3'):
                 # default for Oblivion bones
                 # note: bodies have 0x000E, clothing has 0x000F
