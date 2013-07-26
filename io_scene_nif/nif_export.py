@@ -1298,7 +1298,7 @@ class NifExport(NifCommon):
                         # skip unused texture slots
                         continue
 
-                    self.texturehelper.export_texture(b_obj, b_mat, b_mat_texslot)
+                    self.texturehelper.export_texture(b_obj, b_mat, b_mat_texslot, mesh_uvlayers)
                     
             # list of body part (name, index, vertices) in this mesh
             bodypartgroups = []
@@ -1576,8 +1576,8 @@ class NifExport(NifCommon):
 
             self.export_matrix(b_obj, space, trishape)
 
-            if mesh_base_mtex or mesh_glow_mtex:
-                # add NiTriShape's texturing property
+#             if mesh_base_mtex or mesh_glow_mtex:
+#                 # add NiTriShape's texturing property
                 if self.properties.game == 'FALLOUT_3':
                     trishape.add_property(self.export_bs_shader_property(
                         basemtex = mesh_base_mtex,
