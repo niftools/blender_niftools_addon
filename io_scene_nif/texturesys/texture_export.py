@@ -378,7 +378,7 @@ class Texture():
             trishape.add_integer_extra_data(shadername, shaderindex)
             
             
-    def export_texture(self, b_obj, b_mat, b_mat_texslot):
+    def export_texture(self, b_obj, b_mat, b_mat_texslot, mesh_uvlayers):
             
         # check REFL-mapped textures
         # (used for "NiTextureEffect" materials)
