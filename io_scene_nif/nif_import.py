@@ -1046,7 +1046,7 @@ class NifImport(NifCommon):
                 # Set the face UV's for the mesh. The NIF format only supports
                 # vertex UV's, but Blender only allows explicit editing of face
                 # UV's, so load vertex UV's as face UV's
-                uvlayer = self.materialhelper.get_uv_layer_name(i)
+                uvlayer = self.texturehelper.get_uv_layer_name(i)
                 if not uvlayer in b_mesh.uv_textures:
                     b_mesh.uv_textures.new(uvlayer)
                 for f, b_f_index in zip(n_tris, f_map):
