@@ -201,18 +201,20 @@ class Texture():
 				tex = os.path.join(searchPathList[0], fn)
 
 		# create a stub image if the image could not be loaded
+		
+		b_text_name = os.path.basename(fn)
 		if not b_image:
 			self.nif_common.warning(
 				"Texture '%s' not found or not supported"
 				" and no alternate available"
 				% fn)
 			b_image = bpy.data.images.new(
-				name=fn, width=1, height=1, alpha=False)
+				name=b_text_name, width=1, height=1, alpha=False)
 			# TODO is this still needed? commented out for now
 			# b_image.filepath = tex
-
+			
 		# create a texture
-		b_texture = bpy.data.textures.new(name="Tex", type='IMAGE')
+		b_texture = bpy.data.textures.new(name=b_text_name, type='IMAGE')
 		b_texture.image = b_image
 		b_texture.use_interpolation = True
 		b_texture.use_mipmap = True
