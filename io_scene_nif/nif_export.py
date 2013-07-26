@@ -286,45 +286,45 @@ class NifExport(NifCommon):
                 vdict = {}
                 for b_obj in [b_obj for b_obj in self.context.scene.objects
                            if b_obj.type == 'MESH']:
-                    mesh = b_obj.data
-                    # for v in mesh.vertices:
+                    b_mesh = b_obj.data
+                    # for v in b_mesh.vertices:
                     #    v.sel = False
-                    for f in mesh.faces:
+                    for f in b_mesh.faces:
                         for v_index in f.vertices:
-                            v = mesh.vertices[v_index]
+                            v = b_mesh.vertices[v_index]
                             vkey = (int(v.co[0]*self.VERTEX_RESOLUTION),
                                     int(v.co[1]*self.VERTEX_RESOLUTION),
                                     int(v.co[2]*self.VERTEX_RESOLUTION))
                             try:
-                                vdict[vkey].append((v, f, mesh))
+                                vdict[vkey].append((v, f, b_mesh))
                             except KeyError:
-                                vdict[vkey] = [(v, f, mesh)]
+                                vdict[vkey] = [(v, f, b_mesh)]
                 # set normals on shared vertices
                 nv = 0
                 for vlist in vdict.values():
                     if len(vlist) <= 1: continue # not shared
-                    meshes = set([mesh for v, f, mesh in vlist])
+                    meshes = set([b_mesh for v, f, b_mesh in vlist])
                     if len(meshes) <= 1: continue # not shared
                     # take average of all face normals of faces that have this
                     # vertex
                     norm = mathutils.Vector()
-                    for v, f, mesh in vlist:
+                    for v, f, b_mesh in vlist:
                         norm += f.normal
                     norm.normalize()
                     # remove outliers (fixes better bodies issue)
                     # first calculate fitness of each face
                     fitlist = [f.normal.dot(norm)
-                               for v, f, mesh in vlist]
+                               for v, f, b_mesh in vlist]
                     bestfit = max(fitlist)
                     # recalculate normals only taking into account
                     # well-fitting faces
                     norm = mathutils.Vector()
-                    for (v, f, mesh), fit in zip(vlist, fitlist):
+                    for (v, f, b_mesh), fit in zip(vlist, fitlist):
                         if fit >= bestfit - 0.2:
                             norm += f.normal
                     norm.normalize()
                     # save normal of this vertex
-                    for v, f, mesh in vlist:
+                    for v, f, b_mesh in vlist:
                         v.normal = norm
                         # v.sel = True
                     nv += 1
@@ -991,7 +991,7 @@ class NifExport(NifCommon):
             b_obj_type = None
             b_obj_ipo = None
         else:
-            # -> empty, mesh, or armature
+            # -> empty, b_mesh, or armature
             b_obj_type = b_obj.type
             assert(b_obj_type in ['EMPTY', 'MESH', 'ARMATURE']) # debug
             assert(parent_block) # debug
@@ -1143,7 +1143,7 @@ class NifExport(NifCommon):
         assert(b_obj.type == 'MESH')
 
         # get mesh from b_obj
-        mesh = b_obj.data # get mesh data
+        b_mesh = b_obj.data # get mesh data
 
         # getVertsFromGroup fails if the mesh has no vertices
         # (this happens when checking for fallout 3 body parts)
@@ -1155,7 +1155,7 @@ class NifExport(NifCommon):
 
         # get the mesh's materials, this updates the mesh material list
         if not isinstance(parent_block, NifFormat.RootCollisionNode):
-            mesh_materials = mesh.materials
+            mesh_materials = b_mesh.materials
         else:
             # ignore materials on collision trishapes
             mesh_materials = []
@@ -1164,17 +1164,17 @@ class NifExport(NifCommon):
             mesh_materials = [None]
 
         # is mesh double sided?
-        mesh_doublesided = mesh.show_double_sided
+        mesh_doublesided = b_mesh.show_double_sided
 
         #vertex color check
         mesh_hasvcol = False
         mesh_hasvcola = False
 
-        if(mesh.vertex_colors):
+        if(b_mesh.vertex_colors):
             mesh_hasvcol = True
 
             #vertex alpha check
-            if(len(mesh.vertex_colors) == 1):
+            if(len(b_mesh.vertex_colors) == 1):
                 self.warning("Mesh only has one Vertex Color layer"
                              " default alpha values will be written\n"
                              " - For Alpha values add a second vertex layer, "
@@ -1183,7 +1183,7 @@ class NifExport(NifCommon):
                 mesh_hasvcola = False
             else:
                 #iterate over colorfaces
-                for b_meshcolor in mesh.vertex_colors[1].data:
+                for b_meshcolor in b_mesh.vertex_colors[1].data:
                     #iterate over verts
                     for i in [0,1,2]:
                         b_color = getattr(b_meshcolor, "color%s" % (i + 1))
@@ -1199,7 +1199,7 @@ class NifExport(NifCommon):
         # let's now export one trishape for every mesh material
         ### TODO: needs refactoring - move material, texture, etc.
         ### to separate function
-        for materialIndex, mesh_material in enumerate(mesh_materials):
+        for materialIndex, b_mat in enumerate(mesh_materials):
             # -> first, extract valuable info from our b_obj
 
             mesh_base_mtex = None
@@ -1219,7 +1219,7 @@ class NifExport(NifCommon):
             mesh_hasspec = False  # mesh specular property
 
             mesh_hasnormals = False
-            if mesh_material is not None:
+            if b_mat is not None:
                 mesh_hasnormals = True # for proper lighting
 
                 #ambient mat
@@ -1231,14 +1231,14 @@ class NifExport(NifCommon):
                 TODO_3.0 - If needed where ambient should not be defaulted
 
                 #ambient mat
-                mesh_mat_ambient_color[0] = mesh_material.niftools.ambient_color[0] * mesh_material.niftools.ambient_factor
-                mesh_mat_ambient_color[1] = mesh_material.niftools.ambient_color[1] * mesh_material.niftools.ambient_factor
-                mesh_mat_ambient_color[2] = mesh_material.niftools.ambient_color[2] * mesh_material.niftools.ambient_factor
+                mesh_mat_ambient_color[0] = b_mat.niftools.ambient_color[0] * b_mat.niftools.ambient_factor
+                mesh_mat_ambient_color[1] = b_mat.niftools.ambient_color[1] * b_mat.niftools.ambient_factor
+                mesh_mat_ambient_color[2] = b_mat.niftools.ambient_color[2] * b_mat.niftools.ambient_factor
 
                 #diffuse mat
-                mest_mat_diffuse_color[0] = mesh_material.niftools.diffuse_color[0] * mesh_material.niftools.diffuse_factor
-                mest_mat_diffuse_color[1] = mesh_material.niftools.diffuse_color[1] * mesh_material.niftools.diffuse_factor
-                mest_mat_diffuse_color[2] = mesh_material.niftools.diffuse_color[2] * mesh_material.niftools.diffuse_factor
+                mest_mat_diffuse_color[0] = b_mat.niftools.diffuse_color[0] * b_mat.niftools.diffuse_factor
+                mest_mat_diffuse_color[1] = b_mat.niftools.diffuse_color[1] * b_mat.niftools.diffuse_factor
+                mest_mat_diffuse_color[2] = b_mat.niftools.diffuse_color[2] * b_mat.niftools.diffuse_factor
                 '''
 
                 #emissive mat
@@ -1246,28 +1246,28 @@ class NifExport(NifCommon):
                 mesh_mat_emitmulti = 1.0 # default
                 if self.properties.game != 'FALLOUT_3':
                     #old code
-                    #mesh_mat_emissive_color = mesh_material.diffuse_color * mesh_material.emit
-                    mesh_mat_emissive_color = mesh_material.niftools.emissive_color * mesh_material.emit
+                    #mesh_mat_emissive_color = b_mat.diffuse_color * b_mat.emit
+                    mesh_mat_emissive_color = b_mat.niftools.emissive_color * b_mat.emit
 
                 else:
                     # special case for Fallout 3 (it does not store diffuse color)
                     # if emit is non-zero, set emissive color to diffuse
                     # (otherwise leave the color to zero)
-                    if mesh_material.emit > self.properties.epsilon:
+                    if b_mat.emit > self.properties.epsilon:
 
                         #old code
-                        #mesh_mat_emissive_color = mesh_material.diffuse_color
-                        mesh_mat_emissive_color = mesh_material.niftools.emissive_color
-                        mesh_mat_emitmulti = mesh_material.emit * 10.0
+                        #mesh_mat_emissive_color = b_mat.diffuse_color
+                        mesh_mat_emissive_color = b_mat.niftools.emissive_color
+                        mesh_mat_emitmulti = b_mat.emit * 10.0
 
                 #specular mat
-                mesh_mat_specular_color = mesh_material.specular_color
-                if mesh_material.specular_intensity > 1.0:
-                    mesh_material.specular_intensity = 1.0
+                mesh_mat_specular_color = b_mat.specular_color
+                if b_mat.specular_intensity > 1.0:
+                    b_mat.specular_intensity = 1.0
 
-                mesh_mat_specular_color[0] *= mesh_material.specular_intensity
-                mesh_mat_specular_color[1] *= mesh_material.specular_intensity
-                mesh_mat_specular_color[2] *= mesh_material.specular_intensity
+                mesh_mat_specular_color[0] *= b_mat.specular_intensity
+                mesh_mat_specular_color[1] *= b_mat.specular_intensity
+                mesh_mat_specular_color[2] *= b_mat.specular_intensity
 
                 if ( mesh_mat_specular_color[0] > self.properties.epsilon ) \
                     or ( mesh_mat_specular_color[1] > self.properties.epsilon ) \
@@ -1276,232 +1276,30 @@ class NifExport(NifCommon):
 
                 #gloss mat
                 #'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
-                mesh_mat_gloss = mesh_material.specular_hardness / 4.0
+                mesh_mat_gloss = b_mat.specular_hardness / 4.0
 
                 #alpha mat
                 mesh_hasalpha = False
-                mesh_mat_transparency = mesh_material.alpha
-                if(mesh_material.use_transparency):
+                mesh_mat_transparency = b_mat.alpha
+                if(b_mat.use_transparency):
                     if(abs(mesh_mat_transparency - 1.0)> self.properties.epsilon):
                         mesh_hasalpha = True
                 elif(mesh_hasvcola):
                     mesh_hasalpha = True
-                elif(mesh_material.animation_data and mesh_material.animation_data.action.fcurves['Alpha']):
+                elif(b_mat.animation_data and b_mat.animation_data.action.fcurves['Alpha']):
                     mesh_hasalpha = True
 
                 #wire mat
-                mesh_haswire = (mesh_material.type == 'WIRE')
-
-                # the base texture = first material texture
-                # note that most morrowind files only have a base texture, so let's for now only support single textured materials
-                for b_mat_texslot in mesh_material.texture_slots:
+                mesh_haswire = (b_mat.type == 'WIRE')
+                
+                #textures
+                for b_mat_texslot in b_mat.texture_slots:
                     if not b_mat_texslot or not b_mat_texslot.use:
                         # skip unused texture slots
                         continue
 
-                    # check REFL-mapped textures
-                    # (used for "NiTextureEffect" materials)
-                    if b_mat_texslot.texture_coords == 'REFLECTION':
-                        # of course the user should set all kinds of other
-                        # settings to make the environment mapping come out
-                        # (MapTo "COL", blending mode "Add")
-                        # but let's not care too much about that
-                        # only do some simple checks
-                        if not b_mat_texslot.use_map_color_diffuse:
-                            # it should map to colour
-                            raise NifExportError(
-                                "Non-COL-mapped reflection texture in mesh '%s', material '%s',"
-                                " these cannot be exported to NIF.\n"
-                                "Either delete all non-COL-mapped reflection textures,"
-                                " or in the Shading Panel, under Material Buttons,"
-                                " set texture 'Map To' to 'COL'."
-                                % (b_obj.name,mesh_material.name))
-                        if b_mat_texslot.blend_type != 'ADD':
-                            # it should have "ADD" blending mode
-                            self.warning(
-                               "Reflection texture should have blending"
-                               " mode 'Add' on texture"
-                               " in mesh '%s', material '%s')."
-                               % (b_obj.name,mesh_material.name))
-                            # an envmap image should have an empty... don't care
-                        mesh_texeff_mtex = b_mat_texslot
-
-                    # check UV-mapped textures
-                    elif b_mat_texslot.texture_coords == 'UV':
-                        # update set of uv layers that must be exported
-                        if not b_mat_texslot.uv_layer in mesh_uvlayers:
-                            mesh_uvlayers.append(b_mat_texslot.uv_layer)
-
-                        #glow tex
-                        if b_mat_texslot.use_map_emit:
-                            #multi-check
-                            if mesh_glow_mtex:
-                                raise NifExportError(
-                                    "Multiple glow textures in mesh '%s', material '%s'.\n"
-                                    "Make sure Texture -> Influence -> Shading -> Emit is disabled"
-                                    %(mesh.name,mesh_material.name))
-                            '''
-                            TODO_3.0 - Fallout3 + specific.
-                            Check if these are still possible
-                            # check if calculation of alpha channel is enabled
-                            # for this texture
-                            if b_mat_texslot.texture.use_calculate_alpha and b_mat_texslot.use_map_alpha:
-                                self.warning(
-                                    "In mesh '%s', material '%s': glow texture must have"
-                                    " CALCALPHA flag set, and must have MapTo.ALPHA enabled."
-                                    %(b_obj.name,mesh_material.name))
-                            '''
-
-                            # check if alpha channel is enabled for this texture
-                            if(b_mat_texslot.use_map_alpha):
-                                mesh_hasalpha = True
-                            mesh_glow_mtex = b_mat_texslot
-
-                        #specular
-                        elif b_mat_texslot.use_map_specular:
-                            #multi-check
-                            if mesh_gloss_mtex:
-                                raise NifExportError(
-                                    "Multiple gloss textures in"
-                                    " mesh '%s', material '%s'."
-                                    " Make sure there is only one texture"
-                                    " with MapTo.SPEC"
-                                    %(mesh.name,mesh_material.name))
-
-                            # check if alpha channel is enabled for this texture
-                            if(b_mat_texslot.use_map_alpha):
-                                mesh_hasalpha = True
-                            # got the gloss map
-                            mesh_gloss_mtex = b_mat_texslot
-
-                        #bump map
-                        elif b_mat_texslot.use_map_normal:
-                            #multi-check
-                            if mesh_bump_mtex:
-                                raise NifExportError(
-                                    "Multiple bump/normal textures"
-                                    " in mesh '%s', material '%s'."
-                                    " Make sure there is only one texture"
-                                    " with MapTo.NOR"
-                                    %(mesh.name,mesh_material.name))
-
-                            # check if alpha channel is enabled for this texture
-                            if(b_mat_texslot.use_map_alpha):
-                                mesh_hasalpha = True
-
-                            mesh_bump_mtex = b_mat_texslot
-
-                        #darken
-                        elif b_mat_texslot.use_map_color_diffuse and \
-                             b_mat_texslot.blend_type == 'DARKEN' and \
-                             not mesh_dark_mtex:
-
-                            # check if alpha channel is enabled for this texture
-                            if(b_mat_texslot.use_map_alpha):
-                                mesh_hasalpha = True
-                            # got the dark map
-                            mesh_dark_mtex = b_mat_texslot
-
-                        #diffuse
-                        elif b_mat_texslot.use_map_color_diffuse and \
-                             not mesh_base_mtex:
-
-                            mesh_base_mtex = b_mat_texslot
-
-                            # check if alpha channel is enabled for this texture
-                            if(b_mat_texslot.use_map_alpha):
-                                mesh_hasalpha = True
-
-                                '''
-                                # in this case, Blender replaces the texture transparant parts with the underlying material color...
-                                # in NIF, material alpha is multiplied with texture alpha channel...
-                                # how can we emulate the NIF alpha system (simply multiplying material alpha with texture alpha) when MapTo.ALPHA is turned on?
-                                # require the Blender material alpha to be 0.0 (no material color can show up), and use the "Var" slider in the texture blending mode tab!
-                                # but...
-
-                                if mesh_mat_transparency > self.properties.epsilon:
-                                    raise NifExportError(
-                                        "Cannot export this type of"
-                                        " transparency in material '%s': "
-                                        " instead, try to set alpha to 0.0"
-                                        " and to use the 'Var' slider"
-                                        " in the 'Map To' tab under the"
-                                        " material buttons."
-                                        %mesh_material.name)
-                                if (mesh_material.animation_data and mesh_material.animation_data.action.fcurves['Alpha']):
-                                    raise NifExportError(
-                                        "Cannot export animation for"
-                                        " this type of transparency"
-                                        " in material '%s':"
-                                        " remove alpha animation,"
-                                        " or turn off MapTo.ALPHA,"
-                                        " and try again."
-                                        %mesh_material.name)
-
-                                mesh_mat_transparency = b_mat_texslot.varfac # we must use the "Var" value
-                                '''
-
-                        #normal map
-                        elif b_mat_texslot.use_map_normal and b_mat_texslot.texture.use_normal_map:
-                            if mesh_normal_mtex:
-                                raise NifExportError(
-                                    "Multiple bump/normal textures"
-                                    " in mesh '%s', material '%s'."
-                                    " Make sure there is only one texture"
-                                    " with MapTo.NOR"
-                                    %(mesh.name,mesh_material.name))
-                            # check if alpha channel is enabled for this texture
-                            if(b_mat_texslot.use_map_alpha):
-                                mesh_hasalpha = True
-                            mesh_normal_mtex = b_mat_texslot
-
-                        #detail
-                        elif b_mat_texslot.use_map_color_diffuse and \
-                             not mesh_detail_mtex:
-                            # extra diffuse consider as detail texture
-
-                            # check if alpha channel is enabled for this texture
-                            if(b_mat_texslot.use_map_alpha):
-                                mesh_hasalpha = True
-                            mesh_detail_mtex = b_mat_texslot
-
-                        #reflection
-                        elif b_mat_texslot.mapto & Blender.Texture.MapTo.REF:
-                            # got the reflection map
-                            if mesh_ref_mtex:
-                                raise NifExportError(
-                                    "Multiple reflection textures"
-                                    " in mesh '%s', material '%s'."
-                                    " Make sure there is only one texture"
-                                    " with MapTo.REF"
-                                    %(mesh.name,mesh_material.name))
-                            # check if alpha channel is enabled for this texture
-                            if(b_mat_texslot.use_map_alpha):
-                                mesh_hasalpha = True
-                            mesh_ref_mtex = b_mat_texslot
-
-                        # unsupported map
-                        else:
-                            raise NifExportError(
-                                "Do not know how to export texture '%s',"
-                                " in mesh '%s', material '%s'."
-                                " Either delete it, or if this texture"
-                                " is to be your base texture,"
-                                " go to the Shading Panel,"
-                                " Material Buttons, and set texture"
-                                " 'Map To' to 'COL'."
-                                % (b_mat_texslot.texture.name,b_obj.name,mesh_material.name))
-
-                    # nif only support UV-mapped textures
-                    else:
-                        raise NifExportError(
-                            "Non-UV texture in mesh '%s', material '%s'."
-                            " Either delete all non-UV textures,"
-                            " or in the Shading Panel,"
-                            " under Material Buttons,"
-                            " set texture 'Map Input' to 'UV'."
-                            %(b_obj.name,mesh_material.name))
-
+                    self.texturehelper.export_texture(b_obj, b_mat, b_mat_texslot)
+                    
             # list of body part (name, index, vertices) in this mesh
             bodypartgroups = []
             for bodypartgroupname in NifFormat.BSDismemberBodyPartType().get_editor_keys():
@@ -1537,7 +1335,7 @@ class NifExport(NifCommon):
             # produce lists of vertices, uv-vertices, normals, vertex colors, and face indices.
 
             vertquad_list = [] # (vertex, uv coordinate, normal, vertex color) list
-            vertmap = [None for i in range(len(mesh.vertices))] # blender vertex -> nif vertices
+            vertmap = [None for i in range(len(b_mesh.vertices))] # blender vertex -> nif vertices
             vertlist = []
             normlist = []
             vcollist = []
@@ -1546,9 +1344,9 @@ class NifExport(NifCommon):
             # for each face in trilist, a body part index
             bodypartfacemap = []
             faces_without_bodypart = []
-            for f in mesh.faces:
+            for f in b_mesh.faces:
                 # does the face belong to this trishape?
-                if (mesh_material != None): # we have a material
+                if (b_mat != None): # we have a material
                     if (f.material_index != materialIndex): # but this face has another material
                         continue # so skip this face
                 f_numverts = len(f.vertices)
@@ -1559,18 +1357,18 @@ class NifExport(NifCommon):
                     # double check that we have uv data
                     # XXX should we check that every uvlayer in mesh_uvlayers
                     # XXX is in uv_textures?
-                    if not mesh.uv_textures:
+                    if not b_mesh.uv_textures:
                         raise NifExportError(
                             "ERROR%t|Create a UV map for every texture,"
                             " and run the script again.")
                 # find (vert, uv-vert, normal, vcol) quad, and if not found, create it
                 f_index = [ -1 ] * f_numverts
                 for i, fv_index in enumerate(f.vertices):
-                    fv = mesh.vertices[fv_index].co
+                    fv = b_mesh.vertices[fv_index].co
                     # get vertex normal for lighting (smooth = Blender vertex normal, non-smooth = Blender face normal)
                     if mesh_hasnormals:
                         if f.use_smooth:
-                            fn = mesh.vertices[fv_index].normal
+                            fn = b_mesh.vertices[fv_index].normal
                         else:
                             fn = f.normal
                     else:
@@ -1578,7 +1376,7 @@ class NifExport(NifCommon):
                     fuv = []
                     for uvlayer in mesh_uvlayers:
                         fuv.append(
-                            getattr(mesh.uv_textures[uvlayer].data[f.index],
+                            getattr(b_mesh.uv_textures[uvlayer].data[f.index],
                                     "uv%i" % (i + 1)))
 
                     fcol = None
@@ -1587,10 +1385,10 @@ class NifExport(NifCommon):
                     if mesh_hasvcol:
                         vertcol = []
                         #check for an alpha layer
-                        b_meshcolor = mesh.vertex_colors[0].data[f.index]
+                        b_meshcolor = b_mesh.vertex_colors[0].data[f.index]
                         b_color = getattr(b_meshcolor, "color%s" % (i + 1))
                         if(mesh_hasvcola):
-                            b_meshcoloralpha = mesh.vertex_colors[1].data[f.index]
+                            b_meshcoloralpha = b_mesh.vertex_colors[1].data[f.index]
                             b_colora = getattr(b_meshcolor, "color%s" % (i + 1))
                             vertcol = [b_color.r, b_color.g, b_color.b, b_colora.v]
                         else:
@@ -1679,7 +1477,7 @@ class NifExport(NifCommon):
                 self.context.scene.objects.active = b_obj
                 b_obj.select = True
                 # select bad faces
-                for face in mesh.faces:
+                for face in b_mesh.faces:
                     face.select = False
                 for face in faces_without_bodypart:
                     face.select = True
@@ -1832,7 +1630,7 @@ class NifExport(NifCommon):
                 # add NiStencilProperty
                 trishape.add_property(self.propertyhelper.object_property.export_stencil_property())
 
-            if mesh_material:
+            if b_mat:
                 # add NiTriShape's specular property
                 # but NOT for sid meier's railroads and other extra shader
                 # games (they use specularity even without this property)
@@ -1845,7 +1643,7 @@ class NifExport(NifCommon):
 
                 # add NiTriShape's material property
                 trimatprop = self.propertyhelper.material_property.export_material_property(
-                    name=self.get_full_name(mesh_material.name),
+                    name=self.get_full_name(b_mat.name),
                     flags=0x0001, # TODO - standard flag, check?
                     ambient=mesh_mat_ambient_color,
                     diffuse=mesh_mat_diffuse_color,
@@ -1861,7 +1659,7 @@ class NifExport(NifCommon):
 
                 # material animation
                 self.animationhelper.material_animation.export_material_controllers(
-                    b_material=mesh_material, n_geom=trishape)
+                    b_material=b_mat, n_geom=trishape)
 
             # add NiTriShape's data
             # NIF flips the texture V-coordinate (OpenGL standard)
@@ -2014,11 +1812,11 @@ class NifExport(NifCommon):
                             b_obj.select = True
                             
                             # select unweighted vertices
-                            for v in mesh.vertices:
+                            for v in b_mesh.vertices:
                                 v.select = False    
                             
                             for b_vert in unassigned_verts:
-                                b_obj.data.vertices[b_vert.index].select = True
+                                b_mesh.data.vertices[b_vert.index].select = True
                                 
                             # switch to edit mode and raise exception
                             bpy.ops.object.mode_set(mode='EDIT',toggle=False)
@@ -2128,7 +1926,7 @@ class NifExport(NifCommon):
 
 
             # shape key morphing
-            key = mesh.shape_keys
+            key = b_mesh.shape_keys
             if key:
                 if len(key.key_blocks) > 1:
                     # yes, there is a key object attached
@@ -2194,9 +1992,9 @@ class NifExport(NifCommon):
                                 # copy vertex and assign morph vertex
                                 mv = vert.copy()
                                 if keyblocknum > 0:
-                                    mv.x -= mesh.vertices[b_v_index].co.x
-                                    mv.y -= mesh.vertices[b_v_index].co.y
-                                    mv.z -= mesh.vertices[b_v_index].co.z
+                                    mv.x -= b_mesh.vertices[b_v_index].co.x
+                                    mv.y -= b_mesh.vertices[b_v_index].co.y
+                                    mv.z -= b_mesh.vertices[b_v_index].co.z
                                 for vert_index in vert_indices:
                                     morph.vectors[vert_index].x = mv.x
                                     morph.vectors[vert_index].y = mv.y
