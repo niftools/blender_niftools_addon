@@ -157,6 +157,9 @@ class NifCommon:
         :return: Bone name in nif convention.
         :rtype: :class:`str`
         """
+        if isinstance(name, bytes):
+            name = name.decode()
+
         if name.startswith("Bip01 "):
             if name.endswith(".L"):
                 return "Bip01 L " + name[6:-2]
