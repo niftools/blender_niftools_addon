@@ -17,13 +17,53 @@ class Test_Utilites:
     def setUpClass(cls):
         print("Setup" + str(cls))
         
-        cls.build_matices(cls)
-        
+        cls.nif_matrix = self.build_nif_matrix()
         cls.niBlock = NifFormat.NiNode()
-        cls.niBlock.set_transform(cls.n_mat)
+        cls.niBlock.set_transform(cls.nif_matrix)
         
+        cls.blender_matrix= self.build_blender_matrix()
         
-    def build_matices(cls):
+    @classmethod
+    def tearDownClass(cls):
+        print("Teardown" + str(cls))
+        
+        cls.niBlock = None
+        cls.vec = None
+        
+    def test_import_matrix(self):
+        converted_mat = nif_utils.import_matrix(self.niBlock)
+        
+        print("Comparing Matrices:")
+        for row in range(0,4):
+            for col in range(0,4):
+                print(str(row) + ":" + str(col) + " = " + 
+                      str(converted_mat[row][col]) + " : " + str(self.b_mat[row][col]))
+                nose.tools.assert_true(converted_mat[row][col] - self.b_mat[row][col] 
+                                         < NifFormat.EPSILON)
+                
+                
+    @classmethod
+    def build_blender_matrix(cls):
+        #Blender matrix
+        b_loc_vec = mathutils.Vector(translation)
+        b_loc_vec = mathutils.Matrix.Translation(b_loc_vec)
+        
+        b_rot_mat_x = mathutils.Matrix.Rotation(math.radians(30.0), 4, 'X')
+        b_rot_mat_y = mathutils.Matrix.Rotation(math.radians(60.0), 4, 'Y')
+        b_rot_mat_z = mathutils.Matrix.Rotation(math.radians(90.0), 4, 'Z')
+        b_rot_mat = b_rot_mat_z * b_rot_mat_y * b_rot_mat_x
+        
+        b_scale_mat = mathutils.Matrix.Scale(scale, 4)
+        
+        print("Blender - RHS")
+        print(cls.b_mat)
+        
+        return b_loc_vec * b_rot_mat * b_scale_mat
+        
+
+        
+    @classmethod
+    def build_nif_matrix(cls):
         translation = (2.0, 3.0, 4.0)
         scale = 2
         rhsrotx = (1.0, 0.0, 0.0,
@@ -78,43 +118,11 @@ class Test_Utilites:
         
         n_com = n_mat33_x * n_mat33_y * n_mat33_z
         
-        cls.n_mat = NifFormat.Matrix44()
-        cls.n_mat.set_scale_rotation_translation(scale, n_com, n_vec3)
-        
-        #create equivilant Blender matrix
-        b_loc_vec = mathutils.Vector(translation)
-        b_loc_vec = mathutils.Matrix.Translation(b_loc_vec)
-        
-        b_rot_mat_x = mathutils.Matrix.Rotation(math.radians(30.0), 4, 'X')
-        b_rot_mat_y = mathutils.Matrix.Rotation(math.radians(60.0), 4, 'Y')
-        b_rot_mat_z = mathutils.Matrix.Rotation(math.radians(90.0), 4, 'Z')
-        b_rot_mat = b_rot_mat_z * b_rot_mat_y * b_rot_mat_x
-        
-        b_scale_mat = mathutils.Matrix.Scale(scale, 4)
-        
-        cls.b_mat = b_loc_vec * b_rot_mat * b_scale_mat
+        n_mat = NifFormat.Matrix44()
+        n_mat.set_scale_rotation_translation(scale, n_com, n_vec3)
         
         print("Building Matrices")
         print("Nif - LHS")
         print(cls.n_mat)
-        print("Blender - RHS")
-        print(cls.b_mat)
         
-    @classmethod
-    def tearDownClass(cls):
-        print("Teardown" + str(cls))
-        cls.niBlock = None
-        cls.vec = None
-        
-    def test_import_matrix(self):
-        converted_mat = nif_utils.import_matrix(self.niBlock)
-        
-        print("Comparing Matrices:")
-        for row in range(0,4):
-            for col in range(0,4):
-                print(str(row) + ":" + str(col) + " = " + 
-                      str(converted_mat[row][col]) + " : " + str(self.b_mat[row][col]))
-                nose.tools.assert_true(converted_mat[row][col] - self.b_mat[row][col] 
-                                         < NifFormat.EPSILON)
-       
-        
+        return n_mat
