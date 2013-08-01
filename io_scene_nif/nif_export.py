@@ -141,6 +141,8 @@ class NifExport(NifCommon):
 
         .. todo:: Refactor and simplify this code.
         """
+        if isinstance(blender_name, bytes):
+            blender_name = blender_name.decode()
         try:
             return self.names[blender_name]
         except KeyError:
@@ -1956,7 +1958,7 @@ class NifExport(NifCommon):
                         trishape.skin_instance = skininst
                         for block in self.blocks:
                             if isinstance(block, NifFormat.NiNode):
-                                if block.name == self.get_full_name(armaturename):
+                                if block.name.decode() == self.get_full_name(armaturename):
                                     skininst.skeleton_root = block
                                     break
                         else:
@@ -2038,7 +2040,7 @@ class NifExport(NifCommon):
                             bone_block = None
                             for block in self.blocks:
                                 if isinstance(block, NifFormat.NiNode):
-                                    if block.name == self.get_full_name(bone):
+                                    if block.name.decode() == self.get_full_name(bone):
                                         if not bone_block:
                                             bone_block = block
                                         else:
