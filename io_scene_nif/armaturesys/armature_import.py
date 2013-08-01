@@ -871,6 +871,6 @@ class Armature():
 			
 		# write the names to the text buffer
 		for block, shortname in self.nif_import.names.items():
-			if block.name and shortname != block.name:
-				block_name = block.name.decode()
+			block_name = block.name.decode()
+			if block_name and shortname != block_name:
 				namestxt.write('%s;%s\n' % (shortname, block_name))
