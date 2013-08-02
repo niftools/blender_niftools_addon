@@ -95,7 +95,14 @@ class material_import():
         b_mat = bpy.data.materials.new(name)
         
         #texures
-        self.texturehelper.import_textures(b_mat, n_texture_prop, bsShaderProperty, textureEffect)
+        if (n_texture_prop):
+            self.texturehelper.import_textures(b_mat, n_texture_prop)
+            if(extra_data):
+                self.texturehelper.import_texture_extra_shader(b_mat, n_texture_prop, extra_datas)
+        if (bsShaderProperty):
+            self.texturehelper.import_bsshaderproperty(b_mat, bsShaderProperty)
+        if(textureEffect):
+            self.texturehelper.import_texture_effect(b_mat, textureEffect)
         
         # Diffuse color
         b_mat.diffuse_color[0] = n_mat_prop.diffuse_color.r
