@@ -812,23 +812,19 @@ class NifImport(NifCommon):
             if n_uvco:
                 n_texture_prop = nif_utils.find_property(niBlock,
                                                   NifFormat.NiTexturingProperty)
-
-            # Alpha
-            n_alpha_prop = nif_utils.find_property(niBlock,
-                                               NifFormat.NiAlphaProperty)
-
-            # Specularity
-            n_specular_prop = nif_utils.find_property(niBlock,
-                                              NifFormat.NiSpecularProperty)
-
-            # Wireframe
-            n_wire_prop = nif_utils.find_property(niBlock,
-                                              NifFormat.NiWireframeProperty)
-
+                
+            # extra datas (for sid meier's railroads) that have material info
+            extra_datas = []
+            for extra in niBlock.get_extra_datas():
+                if isinstance(extra, NifFormat.NiIntegerExtraData):
+                    if extra.name in self.EXTRA_SHADER_TEXTURES:
+                        # yes, it describes the shader slot number
+                        extra_datas.append(extra)    
+            
             # bethesda shader
             bsShaderProperty = nif_utils.find_property(
                 niBlock, NifFormat.BSShaderPPLightingProperty)
-
+            
             # texturing effect for environment map
             # in official files this is activated by a NiTextureEffect child
             # preceeding the niBlock
@@ -851,14 +847,19 @@ class NifImport(NifCommon):
                         if isinstance(effect, NifFormat.NiTextureEffect):
                             textureEffect = effect
                             break
+            
+            # Alpha
+            n_alpha_prop = nif_utils.find_property(niBlock,
+                                               NifFormat.NiAlphaProperty)
 
-            # extra datas (for sid meier's railroads) that have material info
-            extra_datas = []
-            for extra in niBlock.get_extra_datas():
-                if isinstance(extra, NifFormat.NiIntegerExtraData):
-                    if extra.name in self.EXTRA_SHADER_TEXTURES:
-                        # yes, it describes the shader slot number
-                        extra_datas.append(extra)
+            # Specularity
+            n_specular_prop = nif_utils.find_property(niBlock,
+                                              NifFormat.NiSpecularProperty)
+
+            # Wireframe
+            n_wire_prop = nif_utils.find_property(niBlock,
+                                              NifFormat.NiWireframeProperty)
+
 
             # create material and assign it to the mesh
             # XXX todo: delegate search for properties to import_material
