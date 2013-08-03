@@ -45,7 +45,8 @@ from io_scene_nif.armaturesys.armature_import import Armature
 from io_scene_nif.collisionsys.collision_import import bhkshape_import, bound_import
 from io_scene_nif.constraintsys.constraint_import import Constraint
 from io_scene_nif.materialsys.material import material_import
-from io_scene_nif.texturesys.texture_import import Texture, TextureLoader
+from io_scene_nif.texturesys.texture_import import Texture
+from io_scene_nif.texturesys.texture_loader import TextureLoader
 
 from functools import reduce
 import logging
@@ -72,12 +73,13 @@ class NifImport(NifCommon):
     D2R = 3.14159265358979/180.0
     IMPORT_EXTRANODES = True
     
-    def __init__(self):
+    def __init__(self, operator, context):
+        NifCommon.__init__(self, operator, context)
+
         # Helper systems
-        # Store references to subsystems as needed.
         self.animationhelper = AnimationHelper(parent=self)
         self.armaturehelper = Armature(parent=self)
-        # todo move these to attribute of a collisionhelper
+        # TODO create super collisionhelper
         self.bhkhelper = bhkshape_import(parent=self)
         self.boundhelper = bound_import(parent=self)
         self.constrainthelper = Constraint(parent=self)
