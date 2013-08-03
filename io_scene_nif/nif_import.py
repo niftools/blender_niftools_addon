@@ -45,7 +45,7 @@ from io_scene_nif.armaturesys.armature_import import Armature
 from io_scene_nif.collisionsys.collision_import import bhkshape_import, bound_import
 from io_scene_nif.constraintsys.constraint_import import Constraint
 from io_scene_nif.materialsys.material import material_import
-from io_scene_nif.texturesys.texture_import import Texture
+from io_scene_nif.texturesys.texture_import import Texture, TextureLoader
 
 from functools import reduce
 import logging
@@ -72,6 +72,20 @@ class NifImport(NifCommon):
     D2R = 3.14159265358979/180.0
     IMPORT_EXTRANODES = True
     
+    def __init__(self):
+        # Helper systems
+        # Store references to subsystems as needed.
+        self.animationhelper = AnimationHelper(parent=self)
+        self.armaturehelper = Armature(parent=self)
+        # todo move these to attribute of a collisionhelper
+        self.bhkhelper = bhkshape_import(parent=self)
+        self.boundhelper = bound_import(parent=self)
+        self.constrainthelper = Constraint(parent=self)
+        self.texturehelper = Texture(parent=self)
+        self.texturehelper.set_texture_loader(TextureLoader())
+        self.materialhelper = material_import(parent=self)
+        self.materialhelper.set_texture_helper(self.texturehelper)
+    
     def execute(self):
         """Main import function."""
 
@@ -87,16 +101,6 @@ class NifImport(NifCommon):
         # import_armature
         self.bone_priorities = {}
 
-        # Helper systems
-        # Store references to subsystems as needed.
-        self.animationhelper = AnimationHelper(parent=self)
-        self.armaturehelper = Armature(parent=self)
-        self.bhkhelper = bhkshape_import(parent=self)
-        self.boundhelper = bound_import(parent=self)
-        self.constrainthelper = Constraint(parent=self)
-        self.texturehelper = Texture(parent=self)
-        self.materialhelper = material_import(parent=self)
-        self.materialhelper.set_texture_helper(self.texturehelper)
         # catch NifImportError
         try:
             # check that one armature is selected in 'import geometry + parent
