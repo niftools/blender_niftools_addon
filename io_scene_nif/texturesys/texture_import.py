@@ -67,13 +67,13 @@ class Texture():
 			self.import_glow_texture(b_mat, n_texture_prop)
 				
 		if n_texture_prop.has_gloss_texture:
-			self.import_gloss_texture(b_mat, n_textureDesc)
+			self.import_gloss_texture(b_mat, n_texture_prop)
 			
 		if n_texture_prop.has_dark_texture:
-			self.import_dark_texture(b_mat, n_textureDesc)
+			self.import_dark_texture(b_mat, n_texture_prop)
 		
 		if n_texture_prop.has_detail_texture:
-			self.import_detail_texture(b_mat, n_textureDesc)
+			self.import_detail_texture(b_mat, n_texture_prop)
 			
 # 		has_base_texture
 # 	 	has_bump_map_texture
@@ -210,7 +210,7 @@ class Texture():
 		# Influence
 		b_mat_texslot.use_map_color_diffuse = True
 		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
-                diffuse_texture.apply_mode)
+                n_textureDesc.apply_mode)
 		
 # 		if(n_alpha_prop):
 # 			b_mat_texslot.use_map_alpha
@@ -236,7 +236,7 @@ class Texture():
 		# Influence
 		b_mat_texslot.use_map_normal = True
 		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
-                bumpmap_texture.apply_mode)
+                n_textureDesc.apply_mode)
 		
 # 		if(n_alpha_prop):
 # 			b_mat_texslot.use_map_alpha
@@ -263,7 +263,7 @@ class Texture():
 		# Influence
 		b_mat_texslot.use_map_emit = True
 		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
-                glow_texture.apply_mode)
+                n_textureDesc.apply_mode)
 		
 # 		if(n_alpha_prop):
 # 			b_mat_texslot.use_map_alpha
@@ -323,7 +323,7 @@ class Texture():
 		# Influence
 		b_mat_texslot.use_map_color_diffuse = True
 		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
-                dark_texture.apply_mode)
+                n_textureDesc.apply_mode)
 		
 # 		if(n_alpha_prop):
 # 			b_mat_texslot.use_map_alpha
@@ -359,7 +359,7 @@ class Texture():
 		# Influence
 		b_mat_texslot.use_map_color_diffuse = True
 		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
-                detail_texture.apply_mode)
+                n_textureDesc.apply_mode)
 		
 # 		if(n_alpha_prop):
 # 			b_mat_texslot.use_map_alpha
@@ -393,7 +393,7 @@ class Texture():
 		# Influence
 		b_mat_texslot.use_map_color_diffuse = True
 		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
-                reflection_texture.apply_mode)
+                n_textureDesc.apply_mode)
 		
 # 		if(n_alpha_prop):
 # 			b_mat_texslot.use_map_alpha

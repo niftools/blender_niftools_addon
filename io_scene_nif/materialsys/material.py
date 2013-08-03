@@ -97,7 +97,7 @@ class material_import():
         #texures
         if (n_texture_prop):
             self.texturehelper.import_nitextureprop_textures(b_mat, n_texture_prop)
-            if(extra_data):
+            if(extra_datas):
                 self.texturehelper.import_texture_extra_shader(b_mat, n_texture_prop, extra_datas)
         if (bsShaderProperty):
             self.texturehelper.import_bsshaderproperty(b_mat, bsShaderProperty)
