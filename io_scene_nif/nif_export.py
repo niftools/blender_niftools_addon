@@ -1578,33 +1578,33 @@ class NifExport(NifCommon):
 
 #             if mesh_base_mtex or mesh_glow_mtex:
 #                 # add NiTriShape's texturing property
-                if self.properties.game == 'FALLOUT_3':
-                    trishape.add_property(self.export_bs_shader_property(
-                        basemtex = mesh_base_mtex,
-                        glowmtex = mesh_glow_mtex,
-                        normalmtex = mesh_normal_mtex))
-                        #glossmtex = mesh_gloss_mtex,
-                        #darkmtex = mesh_dark_mtex,
-                        #detailmtex = mesh_detail_mtex))
-                else:
-                    if self.properties.game in self.texturehelper.USED_EXTRA_SHADER_TEXTURES:
-                        # sid meier's railroad and civ4:
-                        # set shader slots in extra data
-                        self.add_shader_integer_extra_datas(trishape)
-                    trishape.add_property(self.texturehelper.export_texturing_property(
-                        flags=0x0001, # standard
-                        applymode=self.get_n_apply_mode_from_b_blend_type(
-                            mesh_base_mtex.blend_type
-                            if mesh_base_mtex else 'MIX'),
-                        uvlayers=mesh_uvlayers,
-                        basemtex=mesh_base_mtex,
-                        glowmtex=mesh_glow_mtex,
-                        bumpmtex=mesh_bump_mtex,
-                        normalmtex=mesh_normal_mtex,
-                        glossmtex=mesh_gloss_mtex,
-                        darkmtex=mesh_dark_mtex,
-                        detailmtex=mesh_detail_mtex,
-                        refmtex=mesh_ref_mtex))
+            if self.properties.game == 'FALLOUT_3':
+                trishape.add_property(self.export_bs_shader_property(
+                    basemtex = mesh_base_mtex,
+                    glowmtex = mesh_glow_mtex,
+                    normalmtex = mesh_normal_mtex))
+                    #glossmtex = mesh_gloss_mtex,
+                    #darkmtex = mesh_dark_mtex,
+                    #detailmtex = mesh_detail_mtex))
+            else:
+                if self.properties.game in self.texturehelper.USED_EXTRA_SHADER_TEXTURES:
+                    # sid meier's railroad and civ4:
+                    # set shader slots in extra data
+                    self.add_shader_integer_extra_datas(trishape)
+                trishape.add_property(self.texturehelper.export_texturing_property(
+                    flags=0x0001, # standard
+                    applymode=self.get_n_apply_mode_from_b_blend_type(
+                        mesh_base_mtex.blend_type
+                        if mesh_base_mtex else 'MIX'),
+                    uvlayers=mesh_uvlayers,
+                    basemtex=mesh_base_mtex,
+                    glowmtex=mesh_glow_mtex,
+                    bumpmtex=mesh_bump_mtex,
+                    normalmtex=mesh_normal_mtex,
+                    glossmtex=mesh_gloss_mtex,
+                    darkmtex=mesh_dark_mtex,
+                    detailmtex=mesh_detail_mtex,
+                    refmtex=mesh_ref_mtex))
 
             if mesh_hasalpha:
                 # add NiTriShape's alpha propery
