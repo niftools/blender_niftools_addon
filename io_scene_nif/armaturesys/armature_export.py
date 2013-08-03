@@ -81,20 +81,20 @@ class Armature():
                 except:
                     raise NifExportError('Syntax error in BoneExMat buffer.')
                 # Check if matrices are clean, and if necessary fix them.
-                quat = matrix.rotationPart().toQuat()
+                quat = matrix.to_3x3().to_quaternion()
                 if sum(sum(abs(x) for x in vec)
-                       for vec in matrix.rotationPart() - quat.toMatrix()) > 0.01:
-                    self.warning(
+                       for vec in matrix.to_3x3() - quat.to_matrix()) > 0.01:
+                    self.nif_common.warning(
                         "Bad bone extra matrix for bone %s. \n"
                         "Attempting to fix... but bone transform \n"
                         "may be incompatible with existing animations." % b)
-                    self.warning("old invalid matrix:\n%s" % matrix)
-                    trans = matrix.translationPart()
-                    matrix = quat.toMatrix().resize4x4()
-                    matrix[3][0] = trans[0]
-                    matrix[3][1] = trans[1]
-                    matrix[3][2] = trans[2]
-                    self.warning("new valid matrix:\n%s" % matrix)
+                    self.nif_common.warning("old invalid matrix:\n%s" % matrix)
+                    trans = matrix.to_translation()
+                    matrix = quat.to_matrix().resize_4x4()
+                    matrix[0][3] = trans[0]
+                    matrix[1][3] = trans[1]
+                    matrix[2][3] = trans[2]
+                    self.nif_common.warning("new valid matrix:\n%s" % matrix)
                 # Matrices are stored inverted for easier math later on.
                 matrix.invert()
                 self.set_bone_extra_matrix_inv(b, matrix)
