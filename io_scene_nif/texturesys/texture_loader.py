@@ -91,9 +91,9 @@ class TextureLoader():
         
         if (isinstance(source, NifFormat.NiSourceTexture)
             and not source.use_external):
-            b_image = self.import_embedded_texture_source(source)
+            fn, b_image = self.import_embedded_texture_source(source)
         else:
-            b_image = self.import_source(source)
+            fn, b_image = self.import_source(source)
             
         # create a stub image if the image could not be loaded
         
@@ -119,6 +119,8 @@ class TextureLoader():
         return b_texture
 
     def import_embedded_texture_source(self, source):
+        fn = None
+        
         # find a file name (but avoid overwriting)
         n = 0
         while True:
@@ -152,10 +154,11 @@ class TextureLoader():
                 stream.close()
         else:
             b_image = None
-        return b_image
+        return [fn, b_image]
         
     def import_source(self, source):
         b_image = None
+        fn = None
         
         # the texture uses an external image file
         if isinstance(source, NifFormat.NiSourceTexture):
@@ -227,6 +230,8 @@ class TextureLoader():
                         self.nif_import.debug("Found '%s' at %s" % (fn, tex))
                         break
             if b_image:
-                return b_image
+                return [tex, b_image]
         else:
             tex = os.path.join(searchPathList[0], fn)
+
+        return [tex, b_image]
