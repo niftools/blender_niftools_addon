@@ -536,19 +536,27 @@ class Armature():
 		# sets the bone heads & tails
 		b_bone.head = mathutils.Vector((b_bone_head_x, b_bone_head_y, b_bone_head_z))
 		b_bone.tail = mathutils.Vector((b_bone_tail_x, b_bone_tail_y, b_bone_tail_z))
+
+		# set bone children
+		for niBone in niChildBones:
+			b_child_bone = self.import_bone(
+				niBone, b_armature, b_armatureData, niArmature)
+			b_child_bone.parent = b_bone
+
+		# set bone name and store the niBlock for future reference
+		bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
+		b_bone = b_armatureData.bones[bone_name]
 		
 		if self.properties.import_realign_bones == 2:
 			# applies the corrected matrix explicitly
-			b_bone.matrix = m_correction.resize_4x4() * armature_space_matrix
+			b_bone.matrix_local = m_correction.resize_4x4() * armature_space_matrix
 		elif self.properties.import_realign_bones == 1:
 			# do not do anything, keep unit matrix
 			pass
 		else:
 			# no realign, so use original matrix
-			 armature_space_matrix = b_bone.matrix
+			b_bone.matrix_local = armature_space_matrix
 		
-		# set bone name and store the niBlock for future reference
-		b_bone = b_armatureData.edit_bones[bone_name]
 		# calculate bone difference matrix; we will need this when
 		# importing animation
 		old_bone_matrix_inv = mathutils.Matrix(armature_space_matrix)
@@ -561,15 +569,8 @@ class Armature():
 		# stores any correction or alteration applied to the bone matrix
 		# new * inverse(old)
 		self.bones_extra_matrix[niBlock] = new_bone_matrix * old_bone_matrix_inv
-		# set bone children
-		for niBone in niChildBones:
-			b_child_bone = self.import_bone(
-				niBone, b_armature, b_armatureData, niArmature)
-			b_child_bone.parent = b_bone
-
 		bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
 		return b_bone
-
 
 	def find_correction_matrix(self, niBlock, niArmature):
 		"""Returns the correction matrix for a bone."""
@@ -844,14 +845,14 @@ class Armature():
 		# write correction matrices to text buffer
 		for niBone, correction_matrix in self.bones_extra_matrix.items():
 			# skip identity transforms
-			if sum(sum(abs(x) for x in row)
-				   for row in (correction_matrix - self.IDENTITY44)) \
+			if sum(sum(abs(x) for x in col)
+				   for col in (correction_matrix - self.IDENTITY44)) \
 				< self.properties.epsilon:
 				continue
 			# 'pickle' the correction matrix
 			line = ''
-			for row in correction_matrix:
-				line = '%s;%s,%s,%s,%s' % (line, row[0], row[1], row[2], row[3])
+			for col in correction_matrix:
+				line = '%s;%s,%s,%s,%s' % (line, col[0], col[1], col[2], col[3])
 			# we write the bone names with their blender name!
 			blender_bone_name = self.nif_import.names[niBone] # NOT niBone.name !!
 			# write it to the text buffer
