@@ -2370,7 +2370,7 @@ class NifExport(NifCommon):
                 # now multiply with the bone correction matrix X
                 try:
                     extra = mathutils.Matrix(
-                        self.get_bone_extra_matrix_inv(bone_parent_name))
+                        self.armaturehelper.get_bone_extra_matrix_inv(bone_parent_name))
                     extra.invert()
                     matrix = matrix * extra
                 except KeyError:
