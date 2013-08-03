@@ -83,8 +83,9 @@ class NifImport(NifCommon):
         self.bhkhelper = bhkshape_import(parent=self)
         self.boundhelper = bound_import(parent=self)
         self.constrainthelper = Constraint(parent=self)
+        self.textureloader = TextureLoader(parent=self)
         self.texturehelper = Texture(parent=self)
-        self.texturehelper.set_texture_loader(TextureLoader())
+        self.texturehelper.set_texture_loader(self.textureloader)
         self.materialhelper = material_import(parent=self)
         self.materialhelper.set_texture_helper(self.texturehelper)
     
