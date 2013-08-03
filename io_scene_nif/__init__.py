@@ -57,7 +57,7 @@ bl_info = {
     "category": "Import-Export"}
 
 try:
-    from . import nif_debug
+    from io_scene_nif import nif_debug
     nif_debug.startdebug()
 except:
     print("Failed to load debug module")
@@ -76,7 +76,7 @@ if not _modules_path in sys.path:
     sys.path.append(_modules_path)
 del _modules_path
 
-from . import properties, ui, operators
+from io_scene_nif import properties, ui, operators
 
 import pyffi
 from pyffi.formats.nif import NifFormat
