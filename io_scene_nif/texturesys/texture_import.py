@@ -510,8 +510,7 @@ class TextureLoader():
 		self.textures[texture_hash] = b_texture
 		return b_texture
 
-	@classmethod
-	def import_embedded_texture_source(cls, source):
+	def import_embedded_texture_source(self, source):
 		# find a file name (but avoid overwriting)
 		n = 0
 		while True:
