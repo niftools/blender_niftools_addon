@@ -94,6 +94,18 @@ class NifExport(NifCommon):
     EXPORT_OB_PRN = "NONE" # Todo with location on character. For weapons, rings, helmets, Sheilds ect
     
 
+    def __init__(self, operator, context):
+        NifCommon.__init__(self, operator, context)
+    
+        # Helper systems
+        self.bhkshapehelper = bhkshape_export(parent=self)
+        self.boundhelper = bound_export(parent=self)
+        self.armaturehelper = Armature(parent=self)
+        self.animationhelper = AnimationHelper(parent=self)
+        self.propertyhelper = PropertyHelper(parent=self)
+        self.constrainthelper = Constraint(parent=self)
+        self.texturehelper = Texture(parent=self)
+    
     def rebuild_full_names(self):
         """Recovers the full object names from the text buffer and rebuilds
         the names dictionary."""
@@ -166,14 +178,7 @@ class NifExport(NifCommon):
     def execute(self):
         """Main export function."""
 
-        # Helper systems
-        self.bhkshapehelper = bhkshape_export(parent=self)
-        self.boundhelper = bound_export(parent=self)
-        self.armaturehelper = Armature(parent=self)
-        self.animationhelper = AnimationHelper(parent=self)
-        self.propertyhelper = PropertyHelper(parent=self)
-        self.constrainthelper = Constraint(parent=self)
-        self.texturehelper = Texture(parent=self)
+        
 
         self.info("exporting {0}".format(self.properties.filepath))
 

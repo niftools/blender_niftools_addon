@@ -49,8 +49,23 @@ class TextureLoader():
     textures = {}
     
     
-    def __init__(self):
-        print("Initialising Texture Loader")
+    def __init__(self, parent):
+        self.nif_import = parent
+        self.properties = parent.properties
+    
+    def get_texture_hash(self, source):
+        """Helper function for import_texture. Returns a key that uniquely
+        identifies a texture from its source (which is either a
+        NiSourceTexture block, or simply a path string).
+        """
+        if not source:
+            return None
+        elif isinstance(source, NifFormat.NiSourceTexture):
+            return source.get_hash()
+        elif isinstance(source, str):
+            return source.lower()
+        else:
+            raise TypeError("source must be NiSourceTexture block or string")
     
     def import_texture_source(self, source):
         """Convert a NiSourceTexture block, or simply a path string,
@@ -139,7 +154,9 @@ class TextureLoader():
             b_image = None
         return b_image
         
-    def import_source(source):
+    def import_source(self, source):
+        b_image = None
+        
         # the texture uses an external image file
         if isinstance(source, NifFormat.NiSourceTexture):
             fn = source.file_name.decode()
