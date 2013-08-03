@@ -50,20 +50,6 @@ class Texture():
 		
 	def set_texture_loader(self, textureloader):
 		self.textureloader = textureloader
-		
-	def get_texture_hash(self, source):
-		"""Helper function for import_texture. Returns a key that uniquely
-		identifies a texture from its source (which is either a
-		NiSourceTexture block, or simply a path string).
-		"""
-		if not source:
-			return None
-		elif isinstance(source, NifFormat.NiSourceTexture):
-			return source.get_hash()
-		elif isinstance(source, str):
-			return source.lower()
-		else:
-			raise TypeError("source must be NiSourceTexture block or string")
 
 	def import_nitextureprop_textures(self, b_mat, n_texture_prop):
 
@@ -177,7 +163,7 @@ class Texture():
 		diffuse_texture = n_textureDesc.base_texture
 		
 		b_mat_texslot = b_mat.texture_slots.create(0)
-		b_mat_texslot.texture = TextureHelper.import_texture_source(diffuse_texture.source)
+		b_mat_texslot.texture = self.textureloader.import_texture_source(diffuse_texture.source)
 		b_mat_texslot.use = True
 
 		# Influence mapping
@@ -196,7 +182,7 @@ class Texture():
 		# update: needed later
 		base_texture = b_mat_texslot
 # 		
-# 		envmapTexture = TextureHelper.import_texture_source(textureEffect.source_texture)
+# 		envmapTexture = self.textureloader.import_texture_source(textureEffect.source_texture)
 # 		if envmapTexture:
 # 			# set the texture to use face reflection coordinates
 # 			texco = 'REFLECTION'
@@ -212,7 +198,7 @@ class Texture():
 		diffuse_texture = n_textureDesc.base_texture
 		
 		b_mat_texslot = b_mat.texture_slots.add()
-		b_mat_texslot.texture = TextureHelper.import_texture_source(diffuse_texture.source)
+		b_mat_texslot.texture = self.textureloader.import_texture_source(diffuse_texture.source)
 		b_mat_texslot.use = True
 
 		# Influence mapping
@@ -236,7 +222,7 @@ class Texture():
 		bumpmap_texture = n_textureDesc.bump_map_texture
 		
 		b_mat_texslot = b_mat.texture_slots.add()
-		b_mat_texslot.texture = TextureHelper.import_texture_source(bumpmap_texture.source)
+		b_mat_texslot.texture = self.textureloader.import_texture_source(bumpmap_texture.source)
 		b_mat_texslot.use = True
 		
 		# Influence mapping
@@ -262,7 +248,7 @@ class Texture():
 		glow_texture = n_textureDesc.glow_texture
 		
 		b_mat_texslot = b_mat.texture_slots.add()
-		b_mat_texslot.texture = TextureHelper.import_texture_source(glow_texture.source)
+		b_mat_texslot.texture = self.textureloader.import_texture_source(glow_texture.source)
 		b_mat_texslot.use = True
 		
 		# Influence mapping
@@ -325,7 +311,7 @@ class Texture():
 		dark_texture = n_textureDesc.base_texture
 		
 		b_mat_texslot = b_mat.texture_slots.add()
-		b_mat_texslot.texture = TextureHelper.import_texture_source(dark_texture.source)
+		b_mat_texslot.texture = self.textureloader.import_texture_source(dark_texture.source)
 		b_mat_texslot.use = True
 
 		# Influence mapping
@@ -343,7 +329,7 @@ class Texture():
 # 			b_mat_texslot.use_map_alpha
 		# update: needed later
 		
-# 		dark_texture = TextureHelper.import_texture_source(darkTexDesc.source)
+# 		dark_texture = self.textureloader.import_texture_source(darkTexDesc.source)
 # 		if dark_texture:
 # 			# set the texture to use face UV coordinates
 # 			texco = 'UV'
@@ -361,7 +347,7 @@ class Texture():
 		detail_texture = n_textureDesc.base_texture
 		
 		b_mat_texslot = b_mat.texture_slots.add()
-		b_mat_texslot.texture = TextureHelper.import_texture_source(detail_texture.source)
+		b_mat_texslot.texture = self.textureloader.import_texture_source(detail_texture.source)
 		b_mat_texslot.use = True
 
 		# Influence mapping
@@ -379,7 +365,7 @@ class Texture():
 # 			b_mat_texslot.use_map_alpha
 		# update: needed later
 		
-# 		detail_texture = TextureHelper.import_texture_source(detailTexDesc.source)
+# 		detail_texture = self.textureloader.import_texture_source(detailTexDesc.source)
 # 		if detail_texture:
 # 			# import detail texture as extra base texture
 # 			# set the texture to use face UV coordinates
@@ -395,7 +381,7 @@ class Texture():
 		reflection_texture = n_textureDesc.base_texture
 		
 		b_mat_texslot = b_mat.texture_slots.add()
-		b_mat_texslot.texture = TextureHelper.import_texture_source(reflection_texture.source)
+		b_mat_texslot.texture = self.textureloader.import_texture_source(reflection_texture.source)
 		b_mat_texslot.use = True
 
 		# Influence mapping
@@ -414,7 +400,7 @@ class Texture():
 		# update: needed later
 		
 		
-# 		refTexture = TextureHelper.import_texture_source(refTexDesc.source)
+# 		refTexture = self.textureloader.import_texture_source(refTexDesc.source)
 # 		if refTexture:
 # 			# set the texture to use face UV coordinates
 # 			texco = 'UV'
