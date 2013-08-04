@@ -162,7 +162,7 @@ class Texture():
 	def import_texture_effect(b_mat, textureEffect):
 		diffuse_texture = n_textureDesc.base_texture
 		
-		b_mat_texslot = b_mat.texture_slots.create(0)
+		b_mat_texslot = b_mat.texture_slots.add()
 		b_mat_texslot.texture = self.textureloader.import_texture_source(diffuse_texture.source)
 		b_mat_texslot.use = True
 
@@ -175,7 +175,7 @@ class Texture():
 		# Influence
 		b_mat_texslot.use_map_color_diffuse = True
 		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
-                diffuse_texture.apply_mode)
+                n_textureDesc.apply_mode)
 		
 # 		if(n_alpha_prop):
 # 			b_mat_texslot.use_map_alpha
