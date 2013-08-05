@@ -434,7 +434,11 @@ class Texture():
 	def get_uv_layer_name(self, uvset):
 		return "UVMap.%03i" % uvset if uvset != 0 else "UVMap"
 
-
-
-
-
+	def get_textures_by_type(b_mat):
+		glowtextures = []
+		for b_mat_textslot in b_mat.texture_slots:
+			#glow
+			if b_mat_textslot.use and b_mat_texslot.use_map_emit:
+				glowtextures.append(b_mat_texslot)
+				
+	
