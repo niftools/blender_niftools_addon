@@ -435,30 +435,30 @@ class Texture():
 		return "UVMap.%03i" % uvset if uvset != 0 else "UVMap"
 			
 			
-	def has_diffuse_texture(self, b_mat):
-		diffusetextures = None
+	def has_diffuse_textures(self, b_mat):
+		diffusetextures = []
 		
-		for b_mat_textslot in b_mat.texture_slots:
+		for b_mat_texslot in b_mat.texture_slots:
 			#diffuse
-			if b_mat_textslot.use and b_mat_texslot.use_map_color_diffuse:
+			if b_mat_texslot.use and b_mat_texslot.use_map_color_diffuse:
 				diffusetextures.append(b_mat_texslot)
 		return diffusetextures	
 	
 	def has_glow_textures(self, b_mat):
-		glowtextures = None
+		glowtextures = []
 		
-		for b_mat_textslot in b_mat.texture_slots:
+		for b_mat_texslot in b_mat.texture_slots:
 			#glow
-			if b_mat_textslot.use and b_mat_texslot.use_map_emit:
+			if b_mat_texslot.use and b_mat_texslot.use_map_emit:
 				glowtextures.append(b_mat_texslot)
 		return glowtextures
 				
 	def has_bumpmap_textures(self, b_mat):
-		bumpmaptextures = None
+		bumpmaptextures = []
 		
-		for b_mat_textslot in b_mat.texture_slots:
+		for b_mat_texslot in b_mat.texture_slots:
 			#glow
-			if b_mat_textslot.use:
+			if b_mat_texslot.use:
 				if b_mat_texslot.texture.use_normal_map == False and \
 				b_mat_texslot.use_map_color_diffuse == False:
 					bumpmaptextures.append(b_mat_texslot)
@@ -467,11 +467,11 @@ class Texture():
 	
 	
 	def has_normalmap_textures(self, b_mat):
-		normalmaptextures = None
+		normalmaptextures = []
 		
-		for b_mat_textslot in b_mat.texture_slots:
+		for b_mat_texslot in b_mat.texture_slots:
 			#normal
-			if b_mat_textslot.use:
+			if b_mat_texslot.use:
 				if b_mat_texslot.use_map_color_diffuse == False and \
 				b_mat_texslot.texture.use_normal_map and b_mat_texslot.use_map_normal:
 					normalmaptextures.append(b_mat_texslot)
