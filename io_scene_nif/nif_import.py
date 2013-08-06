@@ -2,7 +2,7 @@
 
 # ***** BEGIN LICENSE BLOCK *****
 #
-# Copyright © 2005-2013, NIF File Format Library and Tools contributors.
+# Copyright Â© 2005-2013, NIF File Format Library and Tools contributors.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -1069,8 +1069,8 @@ class NifImport(NifCommon):
         if material:
             # fix up vertex colors depending on whether we had textures in the
             # material
-            mbasetex = material.texture_slots[0]
-            mglowtex = material.texture_slots[1]
+            mbasetex = self.texturehelper.has_diffuse_textures(material)
+            mglowtex = self.texturehelper.has_glow_textures(material)
             if b_mesh.vertex_colors:
                 if mbasetex or mglowtex:
                     # textured material: vertex colors influence lighting
