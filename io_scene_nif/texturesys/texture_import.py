@@ -49,17 +49,25 @@ class Texture():
 		self.textureloader = None
 		self.used_slots = []
 		self.b_mat = None
-		diffusetextures = []
-		bumpmaptextures = []
-		normalmaptextures = []
-		glowtextures = []
+		
+		self.diffuse_map = None 
+		self.bump_map = None 
+		self.dark_map = None
+		self.decal_map = None
+		self.detail_map = None
+		self.gloss_map = None
+		self.glow_map = None
+		self.normal_map = None
+		self.unknown_2_map = None
 		
 		
 	def set_texture_loader(self, textureloader):
 		self.textureloader = textureloader
 
 	def import_nitextureprop_textures(self, b_mat, n_texture_prop):
-
+		if(self.b_mat != b_mat):
+			self.cached = False
+			
 		if n_texture_prop.has_base_texture:
 			self.import_diffuse_texture(b_mat, n_texture_prop)
 	
@@ -81,20 +89,10 @@ class Texture():
 		
 		if n_texture_prop.has_detail_texture:
 			self.import_detail_texture(b_mat, n_texture_prop)
-			
-# 		has_base_texture
-# 	 	has_bump_map_texture
-# 	 	has_dark_texture
-# 	 	has_decal_0_texture
-# 	 	has_decal_1_texture
-# 	 	has_decal_2_texture
-# 	 	has_decal_3_texture
-# 	 	has_detail_texture
-# 	 	has_gloss_texture
-# 	 	has_glow_texture
-# 	 	has_normal_texture
-# 	 	has_unknown_2_texture	
-			
+		
+		self.cached = True
+		self.b_mat = b_mat
+		
 	def import_texture_extra_shader(b_mat,n_texture_prop, extra_datas):
 		# extra texture shader slots
 		for shader_tex_desc in n_texture_prop.shader_textures:
@@ -187,7 +185,7 @@ class Texture():
 # 		if(n_alpha_prop):
 # 			b_mat_texslot.use_map_alpha
 		# update: needed later
-		base_texture = b_mat_texslot
+		self.normal_textures.append(b_mat_texslot)
 # 		
 # 		envmapTexture = self.textureloader.import_texture_source(textureEffect.source_texture)
 # 		if envmapTexture:
@@ -200,6 +198,19 @@ class Texture():
 # 			menvmapTexture = material.getTextures()[3]
 # 			menvmapTexture.blend_type = 'ADD'
 
+
+# 		has_base_texture
+# 	 	has_bump_map_texture
+# 	 	has_dark_texture
+# 	 	has_decal_0_texture
+# 	 	has_decal_1_texture
+# 	 	has_decal_2_texture
+# 	 	has_decal_3_texture
+# 	 	has_detail_texture
+# 	 	has_gloss_texture
+# 	 	has_glow_texture
+# 	 	has_normal_texture
+# 	 	has_unknown_2_texture	
 
 	def import_diffuse_texture(self, b_mat, n_textureDesc):
 		diffuse_texture = n_textureDesc.base_texture
@@ -222,7 +233,7 @@ class Texture():
 # 		if(n_alpha_prop):
 # 			b_mat_texslot.use_map_alpha
 		# update: needed later
-		base_texture = b_mat_texslot
+		self.diffuse_map = b_mat_texslot
 
 
 	def import_bump_texture(self, b_mat, n_textureDesc):
@@ -249,7 +260,7 @@ class Texture():
 # 			b_mat_texslot.use_map_alpha
 		
 		# update: needed later
-		
+		self.bump_map = b_mat_texslot
 		
 	def import_glow_texture(self, b_mat, n_textureDesc):
 		glow_texture = n_textureDesc.glow_texture
@@ -276,7 +287,7 @@ class Texture():
 # 			b_mat_texslot.use_map_alpha
 			
 		# update: needed later
-
+		self.glow_map = b_mat_texslot
 
 	def import_gloss_texture(self, b_mat, n_textureDesc):
 		gloss_texture = n_textureDesc.base_texture
@@ -299,17 +310,16 @@ class Texture():
 # 		if(n_alpha_prop):
 # 			b_mat_texslot.use_map_alpha
 		# update: needed later
-		base_texture = b_mat_texslot
+		self.gloss_textures = b_mat_texslot
 		
-		
-# 		gloss_texture = 
-# 		if gloss_texture:
+# 		gloss_map = 
+# 		if gloss_map:
 # 			# set the texture to use face UV coordinates
 # 			texco = 'UV'
 # 			# map the texture to the specularity channel
 # 			mapto = FIXME.use_map_specular
 # 			# set the texture for the material
-# 			material.setTexture(4, gloss_texture, texco, mapto)
+# 			material.setTexture(4, gloss_map, texco, mapto)
 # 			mgloss_texture = material.getTextures()[4]
 # 			mgloss_texture.uv_layer = self.get_uv_layer_name(glossTexDesc.uv_set)
 			
@@ -442,62 +452,31 @@ class Texture():
 		return "UVMap.%03i" % uvset if uvset != 0 else "UVMap"
 	
 	
-	def get_used_textslots(self, b_mat):
-		# same material, should be pre-computed
-		if self.b_mat == b_mat:
-			return self.used_slots
-		
-		#first time through this material, lets precompute everything
+	def get_used_textslots(self, b_mat):	
 		self.used_slots = [b_texslot for b_texslot in b_mat.texture_slots if b_texslot != None]
-				
-		self.diffusetextures = self.has_diffuse_textures(b_mat)
-		self.bumpmaptextures = self.has_bumpmap_textures(b_mat)
-		self.normalmaptextures = self.has_normalmap_textures(b_mat)
-		self.glowtextures = self.has_glow_textures(b_mat)
-
-		self.b_mat = b_mat
-		
 		return self.used_slots
-		
-	def has_diffuse_textures(self, b_mat):
-		if(self.b_mat == b_mat):
-			return self.diffusetextures
-
-		for b_mat_texslot in self.get_used_textslots(b_mat):
-			if b_mat_texslot.use and b_mat_texslot.use_map_color_diffuse:
-				self.diffusetextures.append(b_mat_texslot)
-		return self.diffusetextures	
 	
+	def has_diffuse_texture(self, b_mat):
+		return self.diffuse_map	
 	
-	def has_glow_textures(self, b_mat):
-		if(self.b_mat == b_mat):
-			return self.glowtextures
-		
-		for b_mat_texslot in self.get_used_textslots(b_mat):
-			if b_mat_texslot.use and b_mat_texslot.use_map_emit:
-				self.glowtextures.append(b_mat_texslot)
-		return self.glowtextures
+	def has_glow_texture(self, b_mat):
+		return self.glow_map
 				
-	def has_bumpmap_textures(self, b_mat):
-		if(self.b_mat == b_mat):
-			return self.bumpmaptextures
-		
-		for b_mat_texslot in self.get_used_textslots(b_mat):
-			if b_mat_texslot.use:
-				if b_mat_texslot.texture.use_normal_map == False and \
-				b_mat_texslot.use_map_color_diffuse == False:
-					self.bumpmaptextures.append(b_mat_texslot)
-		return self.bumpmaptextures
+	def has_bumpmap_texture(self, b_mat):
+		return self.bump_map
 	
 	
+	def has_normalmap_texture(self, b_mat):
+		return self.normal_map
 	
-	def has_normalmap_textures(self, b_mat):
-		if(self.b_mat == b_mat):
-			return self.normalmaptextures
-		
-		for b_mat_texslot in self.get_used_textslots(b_mat):
-			if b_mat_texslot.use:
-				if b_mat_texslot.use_map_color_diffuse == False and \
-				b_mat_texslot.texture.use_normal_map and b_mat_texslot.use_map_normal:
-					self.normalmaptextures.append(b_mat_texslot)
-		return self.normalmaptextures
+# Caching code for when there are more than one textures
+# 	if(self.cached):
+# 			return self.bump_map
+# 		
+# 		for b_mat_texslot in self.used_slots:
+# 			if b_mat_texslot.texture.use_normal_map == False and \
+# 			b_mat_texslot.use_map_normal and \
+# 			b_mat_texslot.use_map_color_diffuse == False:
+# 				self.bump_map = b_mat_texslot
+# 				break
+	
