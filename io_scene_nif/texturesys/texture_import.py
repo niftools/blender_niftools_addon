@@ -480,3 +480,6 @@ class Texture():
 # 				self.bump_map = b_mat_texslot
 # 				break
 	
+	
+	
+	

@@ -526,7 +526,7 @@ class TextureAnimation():
         for t in tlist:
             if len( t ) == 0: continue  # skip empty lines
             # create a NiSourceTexture for each flip
-            tex = self.nif_export.texturehelper.export_source_texture(texture, t)
+            tex = self.nif_export.texturehelper.texture_writer.export_source_texture(texture, t)
             flip.num_sources += 1
             flip.sources.update_size()
             flip.sources[flip.num_sources-1] = tex
