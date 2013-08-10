@@ -118,27 +118,7 @@ class Texture():
 
         # export extra shader textures
         if self.properties.game == 'SID_MEIER_S_RAILROADS':
-            # sid meier's railroads:
-            # some textures end up in the shader texture list
-            # there are 5 slots available, so set them up
-            texprop.num_shader_textures = 5
-            texprop.shader_textures.update_size()
-            for mapindex, shadertexdesc in enumerate(texprop.shader_textures):
-                # set default values
-                shadertexdesc.is_used = False
-                shadertexdesc.map_index = mapindex
-
-            # some texture slots required by the engine
-            shadertexdesc_envmap = texprop.shader_textures[0]
-            shadertexdesc_envmap.is_used = True
-            shadertexdesc_envmap.texture_data.source = \
-                self.texture_writer.export_source_texture(filename="RRT_Engine_Env_map.dds")
-
-            shadertexdesc_cubelightmap = texprop.shader_textures[4]
-            shadertexdesc_cubelightmap.is_used = True
-            shadertexdesc_cubelightmap.texture_data.source = \
-                self.texture_writer.export_source_texture(filename="RRT_Cube_Light_map_128.dds")
-
+            self.export_texture_shader_effect(texprop)
             # the other slots are exported below
 
         elif self.properties.game == 'CIVILIZATION_IV':
@@ -237,6 +217,29 @@ class Texture():
         # no texturing property with given settings found, so use and register
         # the new one
         return self.nif_export.register_block(texprop)
+    
+    
+    def export_texture_shader_effect(self, texprop):
+        # sid meier's railroads:
+        # some textures end up in the shader texture list
+        # there are 5 slots available, so set them up
+        texprop.num_shader_textures = 5
+        texprop.shader_textures.update_size()
+        for mapindex, shadertexdesc in enumerate(texprop.shader_textures):
+            # set default values
+            shadertexdesc.is_used = False
+            shadertexdesc.map_index = mapindex
+
+        # some texture slots required by the engine
+        shadertexdesc_envmap = texprop.shader_textures[0]
+        shadertexdesc_envmap.is_used = True
+        shadertexdesc_envmap.texture_data.source = \
+            self.texture_writer.export_source_texture(filename="RRT_Engine_Env_map.dds")
+
+        shadertexdesc_cubelightmap = texprop.shader_textures[4]
+        shadertexdesc_cubelightmap.is_used = True
+        shadertexdesc_cubelightmap.texture_data.source = \
+            self.texture_writer.export_source_texture(filename="RRT_Cube_Light_map_128.dds")
     
     
     def export_texture_effect(self, b_mat_texslot = None):
