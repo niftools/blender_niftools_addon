@@ -1577,13 +1577,7 @@ class NifExport(NifCommon):
             if mesh_base_mtex or mesh_glow_mtex:
                 # add NiTriShape's texturing property
                 if self.properties.game == 'FALLOUT_3':
-                    trishape.add_property(self.export_bs_shader_property(
-                        basemtex = mesh_base_mtex,
-                        glowmtex = mesh_glow_mtex,
-                        normalmtex = mesh_normal_mtex))
-                        #glossmtex = mesh_gloss_mtex,
-                        #darkmtex = mesh_dark_mtex,
-                        #detailmtex = mesh_detail_mtex))
+                    trishape.add_property(self.export_bs_shader_property(b_mat))
                 else:
                     if self.properties.game in self.texturehelper.USED_EXTRA_SHADER_TEXTURES:
                         # sid meier's railroad and civ4:
