@@ -845,14 +845,14 @@ class Armature():
 		# write correction matrices to text buffer
 		for niBone, correction_matrix in self.bones_extra_matrix.items():
 			# skip identity transforms
-			if sum(sum(abs(x) for x in col)
-				   for col in (correction_matrix - self.IDENTITY44)) \
+			if sum(sum(abs(x) for x in row)
+				   for row in (correction_matrix - self.IDENTITY44)) \
 				< self.properties.epsilon:
 				continue
 			# 'pickle' the correction matrix
 			line = ''
-			for col in correction_matrix:
-				line = '%s;%s,%s,%s,%s' % (line, col[0], col[1], col[2], col[3])
+			for row in correction_matrix:
+				line = '%s;%s,%s,%s,%s' % (line, row[0], row[1], row[2], row[3])
 			# we write the bone names with their blender name!
 			blender_bone_name = self.nif_import.names[niBone] # NOT niBone.name !!
 			# write it to the text buffer

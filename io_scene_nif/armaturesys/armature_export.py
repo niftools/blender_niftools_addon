@@ -59,14 +59,14 @@ class Armature():
         #   B = X^{-1} * B'
         # Hence, we will restore the X's, invert them, and store those inverses in the
         # following dictionary.
-        self.nif_export.bones_extra_matrix_inv = {}
+        self.bones_extra_matrix_inv = {}
         
     def rebuild_bones_extra_matrices(self):
         """Recover bone extra matrices."""
         
         try:
             bonetxt = bpy.data.texts["BoneExMat"]
-        except NameError:
+        except KeyError:
             return
         # Blender bone names are unique so we can use them as keys.
         for b_textline in bonetxt.lines:
@@ -103,13 +103,13 @@ class Armature():
         """Set bone extra matrix, inverted. The bone_name is first converted
         to blender style (to ensure compatibility with older imports).
         """
-        self.nif_export.bones_extra_matrix_inv[self.nif_export.get_bone_name_for_blender(bone_name)] = matrix
+        self.bones_extra_matrix_inv[self.nif_export.get_bone_name_for_blender(bone_name)] = matrix
 
     def get_bone_extra_matrix_inv(self, bone_name):
         """Get bone extra matrix, inverted. The bone_name is first converted
         to blender style (to ensure compatibility with older imports).
         """
-        return self.nif_export.bones_extra_matrix_inv[self.nif_export.get_bone_name_for_blender(bone_name)]
+        return self.bones_extra_matrix_inv[self.nif_export.get_bone_name_for_blender(bone_name)]
     
     
     def export_bones(self, arm, parent_block):
@@ -175,7 +175,7 @@ class Armature():
             # bone rotations are stored in the IPO relative to the rest position
             # so we must take the rest position into account
             # (need original one, without extra transforms, so extra = False)
-            bonerestmat = self.get_bone_rest_matrix(bone, 'BONESPACE',
+            bone_rest_matrix = self.get_bone_rest_matrix(bone, 'BONESPACE',
                                                     extra = False)
             try:
                 bonexmat_inv = mathutils.Matrix(
@@ -186,7 +186,7 @@ class Armature():
             if bone.name in bones_ipo:
                 self.nif_export.animationhelper.export_keyframes(
                     bones_ipo[bone.name], 'localspace', node,
-                    bind_matrix = bonerestmat, extra_mat_inv = bonexmat_inv)
+                    bind_matrix = bone_rest_matrix, extra_mat_inv = bonexmat_inv)
 
             # does bone have priority value in NULL constraint?
             for constr in arm.pose.bones[bone.name].constraints:
