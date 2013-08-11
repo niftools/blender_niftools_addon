@@ -141,8 +141,6 @@ class NifExport(NifCommon):
 
         .. todo:: Refactor and simplify this code.
         """
-        if isinstance(blender_name, bytes):
-            blender_name = blender_name.decode()
         try:
             return self.names[blender_name]
         except KeyError:
@@ -1740,14 +1738,14 @@ class NifExport(NifCommon):
                 if parent_block.name:
                     trishape.name = "Tri " + parent_block.name
                 else:
-                    trishape.name = "Tri " + b_obj.name()
+                    trishape.name = "Tri " + b_obj.name
             else:
                 trishape.name = trishape_name
 
             if len(mesh_materials) > 1:
                 # multimaterial meshes: add material index
                 # (Morrowind's child naming convention)
-                b_name = trishape.name + ":%i" % materialIndex                
+                b_name = trishape.name.decode() + ":%i" % materialIndex                
             trishape.name = self.get_full_name(trishape.name)
 
             #Trishape Flags...
