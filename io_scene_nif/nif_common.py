@@ -142,10 +142,13 @@ class NifCommon:
         :return: Bone name in Blender convention.
         :rtype: :class:`str`
         """
+        if isinstance(name, bytes):
+            name = name.decode()
         if name.startswith("Bip01 L "):
             return "Bip01 " + name[8:] + ".L"
         elif name.startswith("Bip01 R "):
             return "Bip01 " + name[8:] + ".R"
+
         return name
 
     def get_bone_name_for_nif(self, name):
@@ -159,12 +162,12 @@ class NifCommon:
         """
         if isinstance(name, bytes):
             name = name.decode()
-
         if name.startswith("Bip01 "):
             if name.endswith(".L"):
                 return "Bip01 L " + name[6:-2]
             elif name.endswith(".R"):
                 return "Bip01 R " + name[6:-2]
+
         return name
 
     def get_extend_from_flags(self, flags):
