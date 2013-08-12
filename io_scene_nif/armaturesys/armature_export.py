@@ -228,7 +228,7 @@ class Armature():
                     # armature using vertex weights
                     # or whether it is parented to some bone of the armature
                     parent_bone_name = b_obj_child.parent_bone
-                    if parent_bone_name is None:
+                    if parent_bone_name == "":
                         self.nif_export.export_node(b_obj_child, 'localspace',
                                          parent_block, b_obj_child.name)
                     else:
