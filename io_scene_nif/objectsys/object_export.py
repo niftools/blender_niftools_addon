@@ -1,4 +1,4 @@
-    """This script contains helper methods to export textures."""
+"""This script contains helper methods to export textures."""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
