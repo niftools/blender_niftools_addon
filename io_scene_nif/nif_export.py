@@ -2088,8 +2088,8 @@ class NifExport(NifCommon):
                             and self.properties.skin_partition):
                             self.info("Creating skin partition")
                             lostweight = trishape.update_skin_partition(
-                                maxbonesperpartition=self.properties.bones_per_partition,
-                                maxbonespervertex=self.properties.bones_per_vertex,
+                                maxbonesperpartition=self.properties.max_bones_per_partition,
+                                maxbonespervertex=self.properties.max_bones_per_vertex,
                                 stripify=self.properties.stripify,
                                 stitchstrips=self.properties.stitch_strips,
                                 padbones=self.properties.pad_bones,
@@ -2107,7 +2107,7 @@ class NifExport(NifCommon):
                                        " Disable the pad bones option to get"
                                        " higher quality skin partitions.")
                             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
-                               if self.properties.bones_per_partition < 18:
+                               if self.properties.max_bones_per_partition < 18:
                                    self.warning(
                                        "Using less than 18 bones"
                                        " per partition on Oblivion/Fallout 3"
