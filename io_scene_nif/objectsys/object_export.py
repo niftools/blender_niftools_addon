@@ -45,7 +45,7 @@ class ObjectHelper():
 
     def __init__(self, parent):
         self.nif_import = parent
-
+        
         # Maps exported blocks to either None or associated Blender object
         self.blocks = {}
         
@@ -88,6 +88,57 @@ class ObjectHelper():
                      % (b_obj, block.__class__.__name__))
         self.blocks[block] = b_obj
         return block
+    
+    
+    def smooth_mesh_seams(self, b_objs):
+        # get shared vertices
+        self.info("Smoothing seams between objects...")
+        vdict = {}
+        for b_obj in [b_obj for b_obj in b_objs if b_obj.type == 'MESH']:
+            b_mesh = b_obj.data
+            # for v in b_mesh.vertices:
+            #    v.sel = False
+            for f in b_mesh.faces:
+                for v_index in f.vertices:
+                    v = b_mesh.vertices[v_index]
+                    vkey = (int(v.co[0]*self.VERTEX_RESOLUTION),
+                            int(v.co[1]*self.VERTEX_RESOLUTION),
+                            int(v.co[2]*self.VERTEX_RESOLUTION))
+                    try:
+                        vdict[vkey].append((v, f, b_mesh))
+                    except KeyError:
+                        vdict[vkey] = [(v, f, b_mesh)]
+        # set normals on shared vertices
+        nv = 0
+        for vlist in vdict.values():
+            if len(vlist) <= 1: continue # not shared
+            meshes = set([b_mesh for v, f, b_mesh in vlist])
+            if len(meshes) <= 1: continue # not shared
+            # take average of all face normals of faces that have this
+            # vertex
+            norm = mathutils.Vector()
+            for v, f, b_mesh in vlist:
+                norm += f.normal
+            norm.normalize()
+            # remove outliers (fixes better bodies issue)
+            # first calculate fitness of each face
+            fitlist = [f.normal.dot(norm)
+                       for v, f, b_mesh in vlist]
+            bestfit = max(fitlist)
+            # recalculate normals only taking into account
+            # well-fitting faces
+            norm = mathutils.Vector()
+            for (v, f, b_mesh), fit in zip(vlist, fitlist):
+                if fit >= bestfit - 0.2:
+                    norm += f.normal
+            norm.normalize()
+            # save normal of this vertex
+            for v, f, b_mesh in vlist:
+                v.normal = norm
+                # v.sel = True
+            nv += 1
+        self.info("Fixed normals on %i vertices." % nv)
+
     
     
     def export_node(self, b_obj, space, parent_block, node_name):
