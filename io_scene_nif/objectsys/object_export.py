@@ -110,7 +110,7 @@ class ObjectHelper():
     
     def smooth_mesh_seams(self, b_objs):
         # get shared vertices
-        self.info("Smoothing seams between objects...")
+        self.nif_import.info("Smoothing seams between objects...")
         vdict = {}
         for b_obj in [b_obj for b_obj in b_objs if b_obj.type == 'MESH']:
             b_mesh = b_obj.data
@@ -155,7 +155,7 @@ class ObjectHelper():
                 v.normal = norm
                 # v.sel = True
             nv += 1
-        self.info("Fixed normals on %i vertices." % nv)
+        self.nif_import.info("Fixed normals on %i vertices." % nv)
 
     
     
