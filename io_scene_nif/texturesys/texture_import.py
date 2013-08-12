@@ -469,17 +469,5 @@ class Texture():
 	def has_normalmap_texture(self, b_mat):
 		return self.normal_map
 	
-# Caching code for when there are more than one textures
-# 	if(self.cached):
-# 			return self.bump_map
-# 		
-# 		for b_mat_texslot in self.used_slots:
-# 			if b_mat_texslot.texture.use_normal_map == False and \
-# 			b_mat_texslot.use_map_normal and \
-# 			b_mat_texslot.use_map_color_diffuse == False:
-# 				self.bump_map = b_mat_texslot
-# 				break
-	
-	
 	
 	
