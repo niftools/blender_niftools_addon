@@ -236,4 +236,4 @@ class MaterialProperty():
 
         # no material property with given settings found, so use and register
         # the new one
-        return self.nif_export.register_block(matprop)
+        return matprop
