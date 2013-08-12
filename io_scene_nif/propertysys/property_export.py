@@ -65,7 +65,7 @@ class ObjectProperty():
         @return: The new property block.
         """
         # create new vertex color property block
-        vcolprop = self.nif_export.create_block("NiVertexColorProperty")
+        vcolprop = self.nif_export.objecthelper.create_block("NiVertexColorProperty")
     
         # make it a property of the parent
         block_parent.add_property(vcolprop)
@@ -88,7 +88,7 @@ class ObjectProperty():
         @return: The new property block.
         """
         # create new z-buffer property block
-        zbuf = self.nif_export.create_block("NiZBufferProperty")
+        zbuf = self.nif_export.objecthelper.create_block("NiZBufferProperty")
 
         # make it a property of the parent
         block_parent.add_property(zbuf)
@@ -108,7 +108,7 @@ class ObjectProperty():
                and block.flags == flags and block.threshold == threshold:
                 return block
         # no alpha property with given flag found, so create new one
-        alphaprop = self.nif_export.create_block("NiAlphaProperty")
+        alphaprop = self.nif_export.objecthelper.create_block("NiAlphaProperty")
         alphaprop.flags = flags
         alphaprop.threshold = threshold
         return alphaprop
@@ -122,7 +122,7 @@ class ObjectProperty():
                and block.flags == flags:
                 return block
         # no specular property with given flag found, so create new one
-        specprop = self.nif_export.create_block("NiSpecularProperty")
+        specprop = self.nif_export.objecthelper.create_block("NiSpecularProperty")
         specprop.flags = flags
         return specprop
 
@@ -136,7 +136,7 @@ class ObjectProperty():
                 return block
 
         # no wire property with given flag found, so create new one
-        wireprop = self.nif_export.create_block("NiWireframeProperty")
+        wireprop = self.nif_export.objecthelper.create_block("NiWireframeProperty")
         wireprop.flags = flags
         return wireprop
 
@@ -150,7 +150,7 @@ class ObjectProperty():
                 # is needed
                 return block
         # no stencil property found, so create new one
-        stencilprop = self.nif_export.create_block("NiStencilProperty")
+        stencilprop = self.nif_export.objecthelper.create_block("NiStencilProperty")
         if self.properties.game == 'FALLOUT_3':
             stencilprop.flags = 19840
         return stencilprop
