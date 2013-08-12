@@ -90,20 +90,20 @@ class Constraint():
                 if b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE] == 1:
                     # ball
                     if not self.properties.EXPORT_OB_MALLEABLECONSTRAINT:
-                        hkconstraint = self.nif_export.create_block(
+                        hkconstraint = self.nif_export.objecthelper.create_block(
                             "bhkRagdollConstraint", b_constr)
                     else:
-                        hkconstraint = self.nif_export.create_block(
+                        hkconstraint = self.nif_export.objecthelper.create_block(
                             "bhkMalleableConstraint", b_constr)
                         hkconstraint.type = 7
                     hkdescriptor = hkconstraint.ragdoll
                 elif b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE] == 2:
                     # hinge
                     if not self.properties.EXPORT_OB_MALLEABLECONSTRAINT:
-                        hkconstraint = self.nif_export.create_block(
+                        hkconstraint = self.nif_export.objecthelper.create_block(
                             "bhkLimitedHingeConstraint", b_constr)
                     else:
-                        hkconstraint = self.nif_export.create_block(
+                        hkconstraint = self.nif_export.objecthelper.create_block(
                             "bhkMalleableConstraint", b_constr)
                         hkconstraint.type = 2
                     hkdescriptor = hkconstraint.limited_hinge
