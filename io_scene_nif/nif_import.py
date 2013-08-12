@@ -574,7 +574,7 @@ class NifImport(NifCommon):
                     # cancel out the tail translation T
                     # (the tail causes a translation along
                     # the local Y axis)
-                    matrix[3][1] -= b_obj.length
+                    matrix[1][3] -= b_obj.length
                     b_child.matrix_local = matrix
                     # parent child to the bone
                     b_armature.makeParentBone(
