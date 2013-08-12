@@ -172,9 +172,6 @@ class TextureWriter():
                 % texture.name)
             
 
-
-
-
 def has_diffuse_textures(self, b_mat):        
     if(self.b_mat == b_mat):
         return self.diffusetextures
