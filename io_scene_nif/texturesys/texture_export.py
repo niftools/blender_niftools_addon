@@ -39,8 +39,8 @@
 
 from pyffi.formats.nif import NifFormat
 
-import io_scene_nif.utility.nif_utils
-
+from io_scene_nif.utility import nif_utils
+from io_scene_nif.texturesys.texture_writer import TextureWriter
 import os.path
 
 class TextureHelper():
