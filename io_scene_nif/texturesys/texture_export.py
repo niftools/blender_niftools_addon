@@ -43,7 +43,7 @@ import io_scene_nif.utility.nif_utils
 
 import os.path
 
-class Texture():
+class TextureHelper():
     
     # dictionary of texture files, to reuse textures
     textures = {}
@@ -106,30 +106,31 @@ class Texture():
         The uvlayers parameter is a list of uvlayer strings.
         """
         
-        self.get_used_textslots(b_mat)
-        self.texturehelper.determine_texture_types(b_obj, b_mat, uvlayers)
-        
-
         texprop = NifFormat.NiTexturingProperty()
 
         texprop.flags = flags
         texprop.apply_mode = applymode
         texprop.texture_count = 7
 
-        # export extra shader textures
-        if self.properties.game == 'SID_MEIER_S_RAILROADS':
-            self.export_texture_shader_effect(texprop)
-            # the other slots are exported below
+        self.export_texture_shader_effect(texprop)
+        self.get_used_textslots(b_mat)
+        self.texturehelper.determine_texture_types(b_obj, b_mat, uvlayers)
+        
+        self.texture_writer.export_nitextureprop_tex_descs()
+        
 
-        elif self.properties.game == 'CIVILIZATION_IV':
-            # some textures end up in the shader texture list
-            # there are 4 slots available, so set them up
-            texprop.num_shader_textures = 4
-            texprop.shader_textures.update_size()
-            for mapindex, shadertexdesc in enumerate(texprop.shader_textures):
-                # set default values
-                shadertexdesc.is_used = False
-                shadertexdesc.map_index = mapindex
+        # search for duplicate
+        for block in self.nif_export.blocks:
+            if isinstance(block, NifFormat.NiTexturingProperty) \
+               and block.get_hash() == texprop.get_hash():
+                return block
+
+        # no texturing property with given settings found, so use and register
+        # the new one
+        return self.nif_export.register_block(texprop)
+    
+
+    def export_nitextureprop_tex_descs(basemtex, uvlayers, ):
 
         if basemtex:
             texprop.has_base_texture = True
@@ -208,38 +209,45 @@ class Texture():
                 shadertexdesc.texture_data.source = \
                     self.texture_writer.export_source_texture(texture=refmtex.texture)
 
-        # search for duplicate
-        for block in self.nif_export.blocks:
-            if isinstance(block, NifFormat.NiTexturingProperty) \
-               and block.get_hash() == texprop.get_hash():
-                return block
 
-        # no texturing property with given settings found, so use and register
-        # the new one
-        return self.nif_export.register_block(texprop)
+
+
+    
     
     
     def export_texture_shader_effect(self, texprop):
-        # sid meier's railroads:
-        # some textures end up in the shader texture list
-        # there are 5 slots available, so set them up
-        texprop.num_shader_textures = 5
-        texprop.shader_textures.update_size()
-        for mapindex, shadertexdesc in enumerate(texprop.shader_textures):
-            # set default values
-            shadertexdesc.is_used = False
-            shadertexdesc.map_index = mapindex
+        # export extra shader textures
+        if self.properties.game == 'SID_MEIER_S_RAILROADS':
+            # sid meier's railroads:
+            # some textures end up in the shader texture list
+            # there are 5 slots available, so set them up
+            texprop.num_shader_textures = 5
+            texprop.shader_textures.update_size()
+            for mapindex, shadertexdesc in enumerate(texprop.shader_textures):
+                # set default values
+                shadertexdesc.is_used = False
+                shadertexdesc.map_index = mapindex
+    
+            # some texture slots required by the engine
+            shadertexdesc_envmap = texprop.shader_textures[0]
+            shadertexdesc_envmap.is_used = True
+            shadertexdesc_envmap.texture_data.source = \
+                self.texture_writer.export_source_texture(filename="RRT_Engine_Env_map.dds")
+    
+            shadertexdesc_cubelightmap = texprop.shader_textures[4]
+            shadertexdesc_cubelightmap.is_used = True
+            shadertexdesc_cubelightmap.texture_data.source = \
+                self.texture_writer.export_source_texture(filename="RRT_Cube_Light_map_128.dds")
 
-        # some texture slots required by the engine
-        shadertexdesc_envmap = texprop.shader_textures[0]
-        shadertexdesc_envmap.is_used = True
-        shadertexdesc_envmap.texture_data.source = \
-            self.texture_writer.export_source_texture(filename="RRT_Engine_Env_map.dds")
-
-        shadertexdesc_cubelightmap = texprop.shader_textures[4]
-        shadertexdesc_cubelightmap.is_used = True
-        shadertexdesc_cubelightmap.texture_data.source = \
-            self.texture_writer.export_source_texture(filename="RRT_Cube_Light_map_128.dds")
+        elif self.properties.game == 'CIVILIZATION_IV':
+            # some textures end up in the shader texture list
+            # there are 4 slots available, so set them up
+            texprop.num_shader_textures = 4
+            texprop.shader_textures.update_size()
+            for mapindex, shadertexdesc in enumerate(texprop.shader_textures):
+                # set default values
+                shadertexdesc.is_used = False
+                shadertexdesc.map_index = mapindex
     
     
     def export_texture_effect(self, b_mat_texslot = None):
@@ -269,7 +277,7 @@ class Texture():
             shadername = self.EXTRA_SHADER_TEXTURES[shaderindex]
             trishape.add_integer_extra_data(shadername, shaderindex)
             
-            
+
     def determine_texture_types(self, b_obj, b_mat, mesh_uvlayers):
         
         for b_mat_texslot in self.used_slots:
