@@ -111,7 +111,6 @@ class NifExport(NifCommon):
     def execute(self):
         """Main export function."""
 
-        
 
         self.info("exporting {0}".format(self.properties.filepath))
 
@@ -212,55 +211,9 @@ class NifExport(NifCommon):
 
             # smoothen seams of objects
             if self.properties.smooth_object_seams:
-                # get shared vertices
-                self.info("Smoothing seams between objects...")
-                vdict = {}
-                for b_obj in [b_obj for b_obj in self.context.scene.objects
-                           if b_obj.type == 'MESH']:
-                    b_mesh = b_obj.data
-                    # for v in b_mesh.vertices:
-                    #    v.sel = False
-                    for f in b_mesh.faces:
-                        for v_index in f.vertices:
-                            v = b_mesh.vertices[v_index]
-                            vkey = (int(v.co[0]*self.VERTEX_RESOLUTION),
-                                    int(v.co[1]*self.VERTEX_RESOLUTION),
-                                    int(v.co[2]*self.VERTEX_RESOLUTION))
-                            try:
-                                vdict[vkey].append((v, f, b_mesh))
-                            except KeyError:
-                                vdict[vkey] = [(v, f, b_mesh)]
-                # set normals on shared vertices
-                nv = 0
-                for vlist in vdict.values():
-                    if len(vlist) <= 1: continue # not shared
-                    meshes = set([b_mesh for v, f, b_mesh in vlist])
-                    if len(meshes) <= 1: continue # not shared
-                    # take average of all face normals of faces that have this
-                    # vertex
-                    norm = mathutils.Vector()
-                    for v, f, b_mesh in vlist:
-                        norm += f.normal
-                    norm.normalize()
-                    # remove outliers (fixes better bodies issue)
-                    # first calculate fitness of each face
-                    fitlist = [f.normal.dot(norm)
-                               for v, f, b_mesh in vlist]
-                    bestfit = max(fitlist)
-                    # recalculate normals only taking into account
-                    # well-fitting faces
-                    norm = mathutils.Vector()
-                    for (v, f, b_mesh), fit in zip(vlist, fitlist):
-                        if fit >= bestfit - 0.2:
-                            norm += f.normal
-                    norm.normalize()
-                    # save normal of this vertex
-                    for v, f, b_mesh in vlist:
-                        v.normal = norm
-                        # v.sel = True
-                    nv += 1
-                self.info("Fixed normals on %i vertices." % nv)
-
+                self.objecthelper.smooth_mesh_seams(self.context.scene.objects)
+                
+                
             # TODO use Blender actions for animation groups
             # check for animation groups definition in a text buffer 'Anim'
             try:
@@ -272,7 +225,7 @@ class NifExport(NifCommon):
             self.armaturehelper.rebuild_bones_extra_matrices()
 
             # rebuild the full name dictionary from the 'FullNames' text buffer
-            self.rebuild_full_names()
+            self.objecthelper.rebuild_full_names()
 
             # export nif:
             # -----------
@@ -282,7 +235,7 @@ class NifExport(NifCommon):
 
             # export the root node (the name is fixed later to avoid confusing the
             # exporter with duplicate names)
-            root_block = self.export_node(None, 'none', None, '')
+            root_block = self.objecthelper.export_node(None, 'none', None, '')
 
             # export objects
             self.info("Exporting objects")
@@ -291,7 +244,7 @@ class NifExport(NifCommon):
                 # exported as well
                 # note that localspace = worldspace, because root objects have
                 # no parents
-                self.export_node(root_object, 'localspace',
+                self.objecthelper.export_node(root_object, 'localspace',
                                  root_block, root_object.name)
 
             # post-processing:
