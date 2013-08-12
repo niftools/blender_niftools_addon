@@ -107,18 +107,18 @@ class NifExport(NifCommon):
                 name, fullname = line.split(';')
                 self.names[name] = fullname
 
-    def get_unique_name(self, blender_name):
+    def get_unique_name(self, b_name):
         """Returns an unique name for use in the NIF file, from the name of a
         Blender object.
 
-        :param blender_name: Name of object as in blender.
-        :type blender_name: :class:`str`
+        :param b_name: Name of object as in blender.
+        :type b_name: :class:`str`
 
         .. todo:: Refactor and simplify this code.
         """
         unique_name = "unnamed"
-        if blender_name:
-            unique_name = blender_name
+        if b_name:
+            unique_name = b_name
         # blender bone naming -> nif bone naming
         unique_name = self.get_bone_name_for_nif(unique_name)
         # ensure uniqueness
@@ -129,22 +129,22 @@ class NifExport(NifCommon):
                 unique_name = "%s.%02d" % (old_name, unique_int)
                 unique_int += 1
         self.block_names.append(unique_name)
-        self.names[blender_name] = unique_name
+        self.names[b_name] = unique_name
         return unique_name
 
-    def get_full_name(self, blender_name):
+    def get_full_name(self, b_name):
         """Returns the original imported name if present, or the name by which
         the object was exported already.
 
-        :param blender_name: Name of object as in blender.
-        :type blender_name: :class:`str`
+        :param b_name: Name of object as in blender.
+        :type b_name: :class:`str`
 
         .. todo:: Refactor and simplify this code.
         """
         try:
-            return self.names[blender_name]
+            return self.names[b_name]
         except KeyError:
-            return self.get_unique_name(blender_name)
+            return self.get_unique_name(b_name)
 
     def get_exported_objects(self):
         """Return a list of exported objects."""
