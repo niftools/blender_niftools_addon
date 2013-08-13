@@ -456,15 +456,6 @@ class MeshHelper():
         for materialIndex, b_mat in enumerate(mesh_materials):
             # -> first, extract valuable info from our b_obj
 
-            mesh_base_mtex = None
-            mesh_glow_mtex = None
-            mesh_bump_mtex = None
-            mesh_normal_mtex = None
-            mesh_gloss_mtex = None
-            mesh_dark_mtex = None
-            mesh_detail_mtex = None
-            mesh_texeff_mtex = None
-            mesh_ref_mtex = None
             mesh_texture_alpha = False #texture has transparency
 
             mesh_uvlayers = []    # uv layers used by this material
@@ -823,26 +814,25 @@ class MeshHelper():
 
             self.nif_export.export_matrix(b_obj, space, trishape)
 
-            if mesh_base_mtex or mesh_glow_mtex:
-                # add NiTriShape's texturing property
-                if self.properties.game == 'FALLOUT_3':
-                    trishape.add_property(self.export_bs_shader_property(b_mat))
-                else:
-                    if self.properties.game in self.texturehelper.USED_EXTRA_SHADER_TEXTURES:
-                        # sid meier's railroad and civ4:
-                        # set shader slots in extra data
-                        self.add_shader_integer_extra_datas(trishape)
-                        
-                        n_nitextureprop = self.texturehelper.export_texturing_property(
-                        
-                            flags=0x0001, # standard
-                            applymode=self.get_n_apply_mode_from_b_blend_type(
-                                mesh_base_mtex.blend_type
-                                if mesh_base_mtex else 'MIX'),
-                            uvlayers=mesh_uvlayers))
-                        trishape.add_property(n_nitextureprop)
+            # add NiTriShape's texturing property
+            if self.properties.game == 'FALLOUT_3':
+                trishape.add_property(self.export_bs_shader_property(b_mat))
+            else:
+                if self.properties.game in self.texturehelper.USED_EXTRA_SHADER_TEXTURES:
+                    # sid meier's railroad and civ4:
+                    # set shader slots in extra data
+                    self.texturehelper.add_shader_integer_extra_datas(trishape)
+                    
+                    n_nitextureprop = self.texturehelper.export_texturing_property(
+                        flags=0x0001, # standard
+                        applymode=self.get_n_apply_mode_from_b_blend_type(
+                            mesh_base_mtex.blend_type
+                            if mesh_base_mtex else 'MIX'), b_mat)
+                    
+                    self.nif_export.objecthelper.register_block(n_nitextureprop)
+                    
+                    trishape.add_property(n_nitextureprop)
                                           
-                        
 
             if mesh_hasalpha:
                 # add NiTriShape's alpha propery

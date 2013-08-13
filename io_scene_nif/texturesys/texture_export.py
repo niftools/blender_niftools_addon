@@ -55,7 +55,9 @@ class TextureHelper():
         self.nif_export = parent
         self.properties = parent.properties
         self.texture_writer = TextureWriter(parent=self)
+        self.mesh_uvlayers = None
         
+    def clear_store(self):
         self.basemtex=None 
         self.glowmtex=None
         self.bumpmtex=None
@@ -65,10 +67,21 @@ class TextureHelper():
         self.detailmtex=None
         self.refmtex=None
         
+#         mesh_base_mtex = None
+#         mesh_glow_mtex = None
+#         mesh_bump_mtex = None
+#         mesh_normal_mtex = None
+#         mesh_gloss_mtex = None
+#         mesh_dark_mtex = None
+#         mesh_detail_mtex = None
+#         mesh_texeff_mtex = None
+#         mesh_ref_mtex = None
+        
     
     def export_bs_shader_property(self, ):
         """Export a Bethesda shader property block."""
-
+        self.clear_store()
+        
         # create new block
         bsshader = NifFormat.BSShaderPPLightingProperty()
         # set shader options
@@ -97,12 +110,14 @@ class TextureHelper():
         return self.used_slots
     
     
-    def export_texturing_property(self, flags=0x0001, applymode=None, uvlayers=None):
+    def export_texturing_property(self, flags=0x0001, applymode=None, b_mat):
         """Export texturing property. The parameters basemtex,
         glowmtex, bumpmtex, ... are the Blender material textures
         that correspond to the base, glow, bumpmap, ... textures. 
         The uvlayers parameter is a list of uvlayer strings.
         """
+        
+        self.clear_store()
         
         texprop = NifFormat.NiTexturingProperty()
 
@@ -125,12 +140,12 @@ class TextureHelper():
 
         # no texturing property with given settings found, so use and register
         # the new one
-        return self.nif_export.objectsys.register_block(texprop)
+        return texprop
     
 
     def export_nitextureprop_tex_descs(basemtex, uvlayers, ):
 
-        if basemtex:
+        if self.basemtex:
             texprop.has_base_texture = True
             self.export_tex_desc(texdesc = texprop.base_texture,
                                  uvlayers = uvlayers,
@@ -276,7 +291,7 @@ class TextureHelper():
             trishape.add_integer_extra_data(shadername, shaderindex)
             
 
-    def determine_texture_types(self, b_obj, b_mat, mesh_uvlayers):
+    def determine_texture_types(self, b_obj, b_mat):
         
         for b_mat_texslot in self.used_slots:
             # check REFL-mapped textures
