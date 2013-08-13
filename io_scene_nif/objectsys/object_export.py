@@ -41,10 +41,14 @@ import bpy
 
 from pyffi.formats.nif import NifFormat
 
+from io_scene_nif.utility import nif_utils
+
 class ObjectHelper():
 
+
     def __init__(self, parent):
-        self.nif_import = parent
+        self.nif_export = parent
+        self.properties = parent.properties
         self.mesh_helper = MeshHelper(parent)
         
         # Maps exported blocks to either None or associated Blender object
@@ -68,7 +72,7 @@ class ObjectHelper():
         try:
             block = getattr(NifFormat, blocktype)()
         except AttributeError:
-            raise NifExportError(
+            raise nif_utils.NifExportError(
                 "'%s': Unknown block type (this is probably a bug)."
                 % blocktype)
         return self.register_block(block, b_obj)
@@ -100,9 +104,9 @@ class ObjectHelper():
         @param b_obj: The Blender object.
         @return: C{block}"""
         if b_obj is None:
-            self.info("Exporting %s block"%block.__class__.__name__)
+            self.nif_export.info("Exporting %s block"%block.__class__.__name__)
         else:
-            self.info("Exporting %s as %s block"
+            self.nif_export.info("Exporting %s as %s block"
                      % (b_obj, block.__class__.__name__))
         self.blocks[block] = b_obj
         return block
@@ -110,7 +114,7 @@ class ObjectHelper():
     
     def smooth_mesh_seams(self, b_objs):
         # get shared vertices
-        self.nif_import.info("Smoothing seams between objects...")
+        self.nif_export.info("Smoothing seams between objects...")
         vdict = {}
         for b_obj in [b_obj for b_obj in b_objs if b_obj.type == 'MESH']:
             b_mesh = b_obj.data
@@ -119,9 +123,9 @@ class ObjectHelper():
             for f in b_mesh.faces:
                 for v_index in f.vertices:
                     v = b_mesh.vertices[v_index]
-                    vkey = (int(v.co[0]*self.VERTEX_RESOLUTION),
-                            int(v.co[1]*self.VERTEX_RESOLUTION),
-                            int(v.co[2]*self.VERTEX_RESOLUTION))
+                    vkey = (int(v.co[0]*self.nif_export.VERTEX_RESOLUTION),
+                            int(v.co[1]*self.nif_export.VERTEX_RESOLUTION),
+                            int(v.co[2]*self.nif_export.VERTEX_RESOLUTION))
                     try:
                         vdict[vkey].append((v, f, b_mesh))
                     except KeyError:
@@ -155,7 +159,7 @@ class ObjectHelper():
                 v.normal = norm
                 # v.sel = True
             nv += 1
-        self.nif_import.info("Fixed normals on %i vertices." % nv)
+        self.nif_export.info("Fixed normals on %i vertices." % nv)
 
     
     
@@ -229,7 +233,7 @@ class ObjectHelper():
                     # does geom have priority value in NULL constraint?
                     elif constr.name[:9].lower() == "priority:":
                         self.bone_priorities[
-                            self.get_bone_name_for_nif(b_obj.name)
+                            self.nif_export.get_bone_name_for_nif(b_obj.name)
                             ] = int(constr.name[9:])
                 if is_collision:
                     self.export_collision(b_obj, parent_block)
@@ -252,7 +256,7 @@ class ObjectHelper():
                 for constr in b_obj.constraints:
                     if constr.name[:9].lower() == "priority:":
                         self.bone_priorities[
-                            self.get_bone_name_for_nif(b_obj.name)
+                            self.nif_export.get_bone_name_for_nif(b_obj.name)
                             ] = int(constr.name[9:])
 
         # set transform on trishapes rather than on NiNode for skinned meshes
@@ -292,7 +296,7 @@ class ObjectHelper():
             # morrowind
             node.flags = 0x000C
 
-        self.export_matrix(b_obj, space, node)
+        self.nif_export.export_matrix(b_obj, space, node)
 
         if b_obj:
             # export animation
@@ -377,7 +381,7 @@ class ObjectHelper():
         if blender_name:
             unique_name = blender_name
         # blender bone naming -> nif bone naming
-        unique_name = self.get_bone_name_for_nif(unique_name)
+        unique_name = self.nif_export.get_bone_name_for_nif(unique_name)
         # ensure uniqueness
         if unique_name in self.block_names or unique_name in list(self.names.values()):
             unique_int = 0
@@ -430,11 +434,12 @@ class ObjectHelper():
 class MeshHelper():
 
     def __init__(self, parent):
-        self.nif_import = parent
+        self.nif_export = parent
+        self.properties = parent.properties
 
 
     def export_tri_shapes(self, b_obj, space, parent_block, trishape_name = None):
-        self.info("Exporting %s" % b_obj)
+        self.nif_export.info("Exporting %s" % b_obj)
 
         assert(b_obj.type == 'MESH')
 
@@ -446,7 +451,7 @@ class MeshHelper():
         # so quickly catch this (rare!) case
         if not b_obj.data.vertices:
             # do not export anything
-            self.warning("%s has no vertices, skipped." % b_obj)
+            self.nif_export.warning("%s has no vertices, skipped." % b_obj)
             return
 
         # get the mesh's materials, this updates the mesh material list
@@ -471,7 +476,7 @@ class MeshHelper():
 
             #vertex alpha check
             if(len(b_mesh.vertex_colors) == 1):
-                self.warning("Mesh only has one Vertex Color layer"
+                self.nif_export.warning("Mesh only has one Vertex Color layer"
                              " default alpha values will be written\n"
                              " - For Alpha values add a second vertex layer, "
                              " greyscale only"
@@ -594,7 +599,7 @@ class MeshHelper():
             for bodypartgroupname in NifFormat.BSDismemberBodyPartType().get_editor_keys():
                 vertex_group = b_obj.vertex_groups.get(bodypartgroupname)
                 if vertex_group:
-                    self.debug("Found body part %s" % bodypartgroupname)
+                    self.nif_export.debug("Found body part %s" % bodypartgroupname)
                     bodypartgroups.append(
                         [bodypartgroupname,
                          getattr(NifFormat.BSDismemberBodyPartType,
@@ -793,15 +798,15 @@ class MeshHelper():
 
             # create a trishape block
             if not self.properties.stripify:
-                trishape = self.create_block("NiTriShape", b_obj)
+                trishape = self.nif_export.objecthelper.create_block("NiTriShape", b_obj)
             else:
-                trishape = self.create_block("NiTriStrips", b_obj)
+                trishape = self.nif_export.objecthelper.create_block("NiTriStrips", b_obj)
 
             # add texture effect block (must be added as preceeding child of
             # the trishape)
             if self.properties.game == 'MORROWIND' and mesh_texeff_mtex:
                 # create a new parent block for this shape
-                extra_node = self.create_block("NiNode", mesh_texeff_mtex)
+                extra_node = self.nif_export.objecthelper.create_block("NiNode", mesh_texeff_mtex)
                 parent_block.add_child(extra_node)
                 # set default values for this ninode
                 extra_node.rotation.set_identity()
@@ -834,7 +839,7 @@ class MeshHelper():
                 # (Morrowind's child naming convention)
                 b_name = trishape.name.decode() + ":%i" % materialIndex
                 trishape.name = b_name.encode()
-            trishape.name = self.get_full_name(trishape.name.decode()).encode()
+            trishape.name = self.nif_export.objecthelper.get_full_name(trishape.name.decode()).encode()
 
             #Trishape Flags...
             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
@@ -863,7 +868,7 @@ class MeshHelper():
                 trishape.shader_name = "RRT_NormalMap_Spec_Env_CubeLight"
                 trishape.unknown_integer = -1 # default
 
-            self.export_matrix(b_obj, space, trishape)
+            self.nif_export.export_matrix(b_obj, space, trishape)
 
             if mesh_base_mtex or mesh_glow_mtex:
                 # add NiTriShape's texturing property
@@ -913,14 +918,14 @@ class MeshHelper():
                 # games (they use specularity even without this property)
                 if (mesh_hasspec
                     and (self.properties.game
-                         not in self.texturehelper.USED_EXTRA_SHADER_TEXTURES)):
+                         not in self.nif_export.texturehelper.USED_EXTRA_SHADER_TEXTURES)):
                     # refer to the specular property in the trishape block
                     trishape.add_property(
-                        self.propertyhelper.object_property.export_specular_property(flags=0x0001))
+                        self.nif_export.propertyhelper.object_property.export_specular_property(flags=0x0001))
 
                 # add NiTriShape's material property
-                trimatprop = self.propertyhelper.material_property.export_material_property(
-                    name=self.get_full_name(b_mat.name),
+                trimatprop = self.nif_export.propertyhelper.material_property.export_material_property(
+                    name=self.nif_export.objecthelper.get_full_name(b_mat.name),
                     flags=0x0001, # TODO - standard flag, check?
                     ambient=mesh_mat_ambient_color,
                     diffuse=mesh_mat_diffuse_color,
@@ -930,22 +935,22 @@ class MeshHelper():
                     alpha=mesh_mat_transparency,
                     emitmulti=mesh_mat_emitmulti)
 
-                self.objecthelper.register_block(matprop)
+                self.nif_export.objecthelper.register_block(trimatprop)
                 
                 # refer to the material property in the trishape block
                 trishape.add_property(trimatprop)
 
 
                 # material animation
-                self.animationhelper.material_animation.export_material_controllers(
+                self.nif_export.animationhelper.material_animation.export_material_controllers(
                     b_material=b_mat, n_geom=trishape)
 
             # add NiTriShape's data
             # NIF flips the texture V-coordinate (OpenGL standard)
             if isinstance(trishape, NifFormat.NiTriShape):
-                tridata = self.create_block("NiTriShapeData", b_obj)
+                tridata = self.nif_export.objecthelper.create_block("NiTriShapeData", b_obj)
             else:
-                tridata = self.create_block("NiTriStripsData", b_obj)
+                tridata = self.nif_export.objecthelper.create_block("NiTriStripsData", b_obj)
             trishape.data = tridata
 
             # flags
@@ -1028,9 +1033,9 @@ class MeshHelper():
                         # create new skinning instance block and link it
                         if (self.properties.game == 'FALLOUT_3'
                             and self.EXPORT_FO3_BODYPARTS):
-                            skininst = self.create_block("BSDismemberSkinInstance", b_obj)
+                            skininst = self.nif_export.objecthelper.create_block("BSDismemberSkinInstance", b_obj)
                         else:
-                            skininst = self.create_block("NiSkinInstance", b_obj)
+                            skininst = self.nif_export.objecthelper.create_block("NiSkinInstance", b_obj)
                         trishape.skin_instance = skininst
                         for block in self.objecthelper.blocks:
                             if isinstance(block, NifFormat.NiNode):
@@ -1043,7 +1048,7 @@ class MeshHelper():
                                 % armaturename)
 
                         # create skinning data and link it
-                        skindata = self.create_block("NiSkinData", b_obj)
+                        skindata = self.nif_export.objecthelper.create_block("NiSkinData", b_obj)
                         skininst.data = skindata
 
                         skindata.has_vertex_weights = True
@@ -1225,7 +1230,7 @@ class MeshHelper():
                                 "Can only export relative shape keys.")
 
                         # create geometry morph controller
-                        morphctrl = self.create_block("NiGeomMorpherController",
+                        morphctrl = self.nif_export.objecthelper.create_block("NiGeomMorpherController",
                                                      keyipo)
                         trishape.add_controller(morphctrl)
                         morphctrl.target = trishape
@@ -1236,7 +1241,7 @@ class MeshHelper():
                         ctrlFlags = 0x000c
 
                         # create geometry morph data
-                        morphdata = self.create_block("NiMorphData", keyipo)
+                        morphdata = self.nif_export.objecthelper.create_block("NiMorphData", keyipo)
                         morphctrl.data = morphdata
                         morphdata.num_morphs = len(key.key_blocks)
                         morphdata.num_vertices = len(vertlist)
@@ -1284,7 +1289,7 @@ class MeshHelper():
 
                             # create interpolator for shape key
                             # (needs to be there even if there is no curve)
-                            interpol = self.create_block("NiFloatInterpolator")
+                            interpol = self.nif_export.objecthelper.create_block("NiFloatInterpolator")
                             interpol.value = 0
                             morphctrl.interpolators[keyblocknum] = interpol
                             # fallout 3 stores interpolators inside the
@@ -1302,7 +1307,7 @@ class MeshHelper():
                             # written to the file
                             self.info("Exporting morph %s: curve"
                                              % keyblock.name)
-                            interpol.data = self.create_block("NiFloatData", curve)
+                            interpol.data = self.nif_export.objecthelper.create_block("NiFloatData", curve)
                             floatdata = interpol.data.data
                             if curve.getExtrapolation() == "Constant":
                                 ctrlFlags = 0x000c
