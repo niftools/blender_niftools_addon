@@ -83,20 +83,18 @@ class TextureHelper():
         texset = NifFormat.BSShaderTextureSet()
         bsshader.texture_set = texset
         if basemtex:
-            texset.textures[0] = self.export_texture_filename(basemtex.texture)
+            texset.textures[0] = self.texture_writer.export_texture_filename(basemtex.texture)
         if normalmtex:
-            texset.textures[1] = self.export_texture_filename(normalmtex.texture)
+            texset.textures[1] = self.texture_writer.export_texture_filename(normalmtex.texture)
         if glowmtex:
-            texset.textures[2] = self.export_texture_filename(glowmtex.texture)
+            texset.textures[2] = self.texture_writer.export_texture_filename(glowmtex.texture)
 
-        return self.nif_export.register_block(bsshader)
+        return self.nif_export.objectsys.register_block(bsshader)
+    
     
     def get_used_textslots(self, b_mat):    
         self.used_slots = [b_texslot for b_texslot in b_mat.texture_slots if b_texslot != None]
         return self.used_slots
-    
-
-            
     
     
     def export_texturing_property(self, flags=0x0001, applymode=None, uvlayers=None):
@@ -127,7 +125,7 @@ class TextureHelper():
 
         # no texturing property with given settings found, so use and register
         # the new one
-        return self.nif_export.register_block(texprop)
+        return self.nif_export.objectsys.register_block(texprop)
     
 
     def export_nitextureprop_tex_descs(basemtex, uvlayers, ):

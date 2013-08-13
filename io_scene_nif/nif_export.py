@@ -211,7 +211,7 @@ class NifExport(NifCommon):
 
             # smoothen seams of objects
             if self.properties.smooth_object_seams:
-                self.objecthelper.smooth_mesh_seams(self.context.scene.objects)
+                self.objecthelper.mesh_helper.smooth_mesh_seams(self.context.scene.objects)
                 
                 
             # TODO use Blender actions for animation groups
