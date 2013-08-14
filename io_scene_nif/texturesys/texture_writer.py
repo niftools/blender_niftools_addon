@@ -76,7 +76,7 @@ class TextureWriter():
                 "Exporting source texture without texture or filename (bug?).")
 
         # fill in default values (TODO: can we use 6 for everything?)
-        if self.nif_export.version >= 0x0a000100:
+        if self.nif_export.nif_export.version >= 0x0a000100:
             srctex.pixel_layout = 6
         else:
             srctex.pixel_layout = 5
@@ -85,13 +85,13 @@ class TextureWriter():
         srctex.unknown_byte = 1
 
         # search for duplicate
-        for block in self.nif_export.blocks:
+        for block in self.nif_export.nif_export.objecthelper.blocks:
             if isinstance(block, NifFormat.NiSourceTexture) and block.get_hash() == srctex.get_hash():
                 return block
 
         # no identical source texture found, so use and register
         # the new one
-        return self.nif_export.register_block(srctex, texture)
+        return self.nif_export.nif_export.objecthelper.register_block(srctex, texture)
 
 
     def export_tex_desc(self, texdesc=None, uvlayers=None, b_mat_texslot=None):

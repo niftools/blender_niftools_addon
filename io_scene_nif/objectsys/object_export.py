@@ -552,6 +552,173 @@ class MeshHelper():
                          #set(vertex_group.vertices)])
                          {}])
 
+
+
+
+            # note: we can be in any of the following five situations
+            # material + base texture        -> normal object
+            # material + base tex + glow tex -> normal glow mapped object
+            # material + glow texture        -> (needs to be tested)
+            # material, but no texture       -> uniformly coloured object
+            # no material                    -> typically, collision mesh
+
+            # create a trishape block
+            if not self.properties.stripify:
+                trishape = self.nif_export.objecthelper.create_block("NiTriShape", b_obj)
+            else:
+                trishape = self.nif_export.objecthelper.create_block("NiTriStrips", b_obj)
+
+            # fill in the NiTriShape's non-trivial values
+            if isinstance(parent_block, NifFormat.RootCollisionNode):
+                trishape.name = b""
+            elif not trishape_name:
+                if parent_block.name:
+                    trishape.name = b"Tri " + str(parent_block.name.decode()).encode()
+                else:
+                    trishape.name = b"Tri " + str(b_obj.name).encode()
+            else:
+                trishape.name = trishape_name.encode()
+
+            if len(mesh_materials) > 1:
+                # multimaterial meshes: add material index
+                # (Morrowind's child naming convention)
+                b_name = trishape.name.decode() + ":%i" % materialIndex
+                trishape.name = b_name.encode()
+            trishape.name = self.nif_export.objecthelper.get_full_name(trishape.name.decode()).encode()
+
+            #Trishape Flags...
+            if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
+                trishape.flags = 0x000E
+
+            elif self.properties.game in ('SID_MEIER_S_RAILROADS',
+                                         'CIVILIZATION_IV'):
+                trishape.flags = 0x0010
+            elif self.properties.game in ('EMPIRE_EARTH_II',):
+                trishape.flags = 0x0016
+            elif self.properties.game in ('DIVINITY_2',):
+                if trishape.name.lower[-3:] in ("med", "low"):
+                    trishape.flags = 0x0014
+                else:
+                    trishape.flags = 0x0016
+            else:
+                # morrowind
+                if b_obj.draw_type != 'WIRE': # not wire
+                    trishape.flags = 0x0004 # use triangles as bounding box
+                else:
+                    trishape.flags = 0x0005 # use triangles as bounding box + hide
+
+            # extra shader for Sid Meier's Railroads
+            if self.properties.game == 'SID_MEIER_S_RAILROADS':
+                trishape.has_shader = True
+                trishape.shader_name = "RRT_NormalMap_Spec_Env_CubeLight"
+                trishape.unknown_integer = -1 # default
+
+            self.nif_export.export_matrix(b_obj, space, trishape)
+
+            if self.properties.game == 'FALLOUT_3':
+                bs_shader = self.export_bs_shader_property(b_mat)
+                
+                self.nif_export.objecthelper.register_block(bs_shader)
+                trishape.add_property(bs_shader)
+            else:
+                if self.properties.game in self.nif_export.texturehelper.USED_EXTRA_SHADER_TEXTURES:
+                    # sid meier's railroad and civ4:
+                    # set shader slots in extra data
+                    self.nif_export.texturehelper.add_shader_integer_extra_datas(trishape)
+                    
+                n_nitextureprop = self.nif_export.texturehelper.export_texturing_property(
+                    flags=0x0001, # standard
+                    applymode=self.nif_export.get_n_apply_mode_from_b_blend_type('MIX'),
+#                         mesh_base_mtex.blend_type
+#                         if mesh_base_mtex else 
+                    b_mat=b_mat, b_obj=b_obj)
+                
+                self.nif_export.objecthelper.register_block(n_nitextureprop)
+            
+            trishape.add_property(n_nitextureprop)
+            
+            # add texture effect block (must be added as preceeding child of
+            # the trishape)
+            if self.properties.game == 'MORROWIND' and mesh_texeff_mtex:
+                # create a new parent block for this shape
+                extra_node = self.nif_export.objecthelper.create_block("NiNode", mesh_texeff_mtex)
+                parent_block.add_child(extra_node)
+                # set default values for this ninode
+                extra_node.rotation.set_identity()
+                extra_node.scale = 1.0
+                extra_node.flags = 0x000C # morrowind
+                # create texture effect block and parent the
+                # texture effect and trishape to it
+                texeff = self.export_texture_effect(mesh_texeff_mtex)
+                extra_node.add_child(texeff)
+                extra_node.add_child(trishape)
+                extra_node.add_effect(texeff)
+            else:
+                # refer to this block in the parent's
+                # children list
+                parent_block.add_child(trishape)                         
+
+            if mesh_hasalpha:
+                # add NiTriShape's alpha propery
+                # refer to the alpha property in the trishape block
+                if self.properties.game == 'SID_MEIER_S_RAILROADS':
+                    alphaflags = 0x32ED
+                    alphathreshold = 150
+                elif self.properties.game == 'EMPIRE_EARTH_II':
+                    alphaflags = 0x00ED
+                    alphathreshold = 0
+                else:
+                    alphaflags = 0x12ED
+                    alphathreshold = 0
+                trishape.add_property(
+                    self.propertyhelper.object_property.export_alpha_property(flags=alphaflags,
+                                                                              threshold=alphathreshold))
+
+            if mesh_haswire:
+                # add NiWireframeProperty
+                trishape.add_property(self.propertyhelper.object_property.export_wireframe_property(flags=1))
+
+            if mesh_doublesided:
+                # add NiStencilProperty
+                trishape.add_property(self.propertyhelper.object_property.export_stencil_property())
+
+            if b_mat:
+                # add NiTriShape's specular property
+                # but NOT for sid meier's railroads and other extra shader
+                # games (they use specularity even without this property)
+                if (mesh_hasspec
+                    and (self.properties.game
+                         not in self.nif_export.texturehelper.USED_EXTRA_SHADER_TEXTURES)):
+                    # refer to the specular property in the trishape block
+                    trishape.add_property(
+                        self.nif_export.propertyhelper.object_property.export_specular_property(flags=0x0001))
+
+                # add NiTriShape's material property
+                trimatprop = self.nif_export.propertyhelper.material_property.export_material_property(
+                    name=self.nif_export.objecthelper.get_full_name(b_mat.name),
+                    flags=0x0001, # TODO - standard flag, check?
+                    ambient=mesh_mat_ambient_color,
+                    diffuse=mesh_mat_diffuse_color,
+                    specular=mesh_mat_specular_color,
+                    emissive=mesh_mat_emissive_color,
+                    gloss=mesh_mat_gloss,
+                    alpha=mesh_mat_transparency,
+                    emitmulti=mesh_mat_emitmulti)
+
+                self.nif_export.objecthelper.register_block(trimatprop)
+                
+                # refer to the material property in the trishape block
+                trishape.add_property(trimatprop)
+
+
+                # material animation
+                self.nif_export.animationhelper.material_animation.export_material_controllers(
+                    b_material=b_mat, n_geom=trishape)
+
+
+
+
+
             # -> now comes the real export
 
             '''
@@ -571,7 +738,8 @@ class MeshHelper():
 
             # The following algorithm extracts all unique quads(vert, uv-vert, normal, vcol),
             # produce lists of vertices, uv-vertices, normals, vertex colors, and face indices.
-
+            
+            mesh_uvlayers = self.nif_export.texturehelper.mesh_uvlayers
             vertquad_list = [] # (vertex, uv coordinate, normal, vertex color) list
             vertmap = [None for i in range(len(b_mesh.vertices))] # blender vertex -> nif vertices
             vertlist = []
@@ -733,164 +901,7 @@ class MeshHelper():
             if len(vertlist) == 0:
                 continue # m_4444x: skip 'empty' material indices
 
-            # note: we can be in any of the following five situations
-            # material + base texture        -> normal object
-            # material + base tex + glow tex -> normal glow mapped object
-            # material + glow texture        -> (needs to be tested)
-            # material, but no texture       -> uniformly coloured object
-            # no material                    -> typically, collision mesh
-
-            # create a trishape block
-            if not self.properties.stripify:
-                trishape = self.nif_export.objecthelper.create_block("NiTriShape", b_obj)
-            else:
-                trishape = self.nif_export.objecthelper.create_block("NiTriStrips", b_obj)
-
-            # add texture effect block (must be added as preceeding child of
-            # the trishape)
-            if self.properties.game == 'MORROWIND' and mesh_texeff_mtex:
-                # create a new parent block for this shape
-                extra_node = self.nif_export.objecthelper.create_block("NiNode", mesh_texeff_mtex)
-                parent_block.add_child(extra_node)
-                # set default values for this ninode
-                extra_node.rotation.set_identity()
-                extra_node.scale = 1.0
-                extra_node.flags = 0x000C # morrowind
-                # create texture effect block and parent the
-                # texture effect and trishape to it
-                texeff = self.export_texture_effect(mesh_texeff_mtex)
-                extra_node.add_child(texeff)
-                extra_node.add_child(trishape)
-                extra_node.add_effect(texeff)
-            else:
-                # refer to this block in the parent's
-                # children list
-                parent_block.add_child(trishape)
-
-            # fill in the NiTriShape's non-trivial values
-            if isinstance(parent_block, NifFormat.RootCollisionNode):
-                trishape.name = b""
-            elif not trishape_name:
-                if parent_block.name:
-                    trishape.name = b"Tri " + str(parent_block.name.decode()).encode()
-                else:
-                    trishape.name = b"Tri " + str(b_obj.name).encode()
-            else:
-                trishape.name = trishape_name.encode()
-
-            if len(mesh_materials) > 1:
-                # multimaterial meshes: add material index
-                # (Morrowind's child naming convention)
-                b_name = trishape.name.decode() + ":%i" % materialIndex
-                trishape.name = b_name.encode()
-            trishape.name = self.nif_export.objecthelper.get_full_name(trishape.name.decode()).encode()
-
-            #Trishape Flags...
-            if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
-                trishape.flags = 0x000E
-
-            elif self.properties.game in ('SID_MEIER_S_RAILROADS',
-                                         'CIVILIZATION_IV'):
-                trishape.flags = 0x0010
-            elif self.properties.game in ('EMPIRE_EARTH_II',):
-                trishape.flags = 0x0016
-            elif self.properties.game in ('DIVINITY_2',):
-                if trishape.name.lower[-3:] in ("med", "low"):
-                    trishape.flags = 0x0014
-                else:
-                    trishape.flags = 0x0016
-            else:
-                # morrowind
-                if b_obj.draw_type != 'WIRE': # not wire
-                    trishape.flags = 0x0004 # use triangles as bounding box
-                else:
-                    trishape.flags = 0x0005 # use triangles as bounding box + hide
-
-            # extra shader for Sid Meier's Railroads
-            if self.properties.game == 'SID_MEIER_S_RAILROADS':
-                trishape.has_shader = True
-                trishape.shader_name = "RRT_NormalMap_Spec_Env_CubeLight"
-                trishape.unknown_integer = -1 # default
-
-            self.nif_export.export_matrix(b_obj, space, trishape)
-
-            # add NiTriShape's texturing property
-            if self.properties.game == 'FALLOUT_3':
-                trishape.add_property(self.export_bs_shader_property(b_mat))
-            else:
-                if self.properties.game in self.texturehelper.USED_EXTRA_SHADER_TEXTURES:
-                    # sid meier's railroad and civ4:
-                    # set shader slots in extra data
-                    self.texturehelper.add_shader_integer_extra_datas(trishape)
-                    
-                    n_nitextureprop = self.texturehelper.export_texturing_property(
-                        flags=0x0001, # standard
-                        applymode=self.get_n_apply_mode_from_b_blend_type(
-                            mesh_base_mtex.blend_type
-                            if mesh_base_mtex else 'MIX'), b_mat)
-                    
-                    self.nif_export.objecthelper.register_block(n_nitextureprop)
-                    
-                    trishape.add_property(n_nitextureprop)
-                                          
-
-            if mesh_hasalpha:
-                # add NiTriShape's alpha propery
-                # refer to the alpha property in the trishape block
-                if self.properties.game == 'SID_MEIER_S_RAILROADS':
-                    alphaflags = 0x32ED
-                    alphathreshold = 150
-                elif self.properties.game == 'EMPIRE_EARTH_II':
-                    alphaflags = 0x00ED
-                    alphathreshold = 0
-                else:
-                    alphaflags = 0x12ED
-                    alphathreshold = 0
-                trishape.add_property(
-                    self.propertyhelper.object_property.export_alpha_property(flags=alphaflags,
-                                                                              threshold=alphathreshold))
-
-            if mesh_haswire:
-                # add NiWireframeProperty
-                trishape.add_property(self.propertyhelper.object_property.export_wireframe_property(flags=1))
-
-            if mesh_doublesided:
-                # add NiStencilProperty
-                trishape.add_property(self.propertyhelper.object_property.export_stencil_property())
-
-            if b_mat:
-                # add NiTriShape's specular property
-                # but NOT for sid meier's railroads and other extra shader
-                # games (they use specularity even without this property)
-                if (mesh_hasspec
-                    and (self.properties.game
-                         not in self.nif_export.texturehelper.USED_EXTRA_SHADER_TEXTURES)):
-                    # refer to the specular property in the trishape block
-                    trishape.add_property(
-                        self.nif_export.propertyhelper.object_property.export_specular_property(flags=0x0001))
-
-                # add NiTriShape's material property
-                trimatprop = self.nif_export.propertyhelper.material_property.export_material_property(
-                    name=self.nif_export.objecthelper.get_full_name(b_mat.name),
-                    flags=0x0001, # TODO - standard flag, check?
-                    ambient=mesh_mat_ambient_color,
-                    diffuse=mesh_mat_diffuse_color,
-                    specular=mesh_mat_specular_color,
-                    emissive=mesh_mat_emissive_color,
-                    gloss=mesh_mat_gloss,
-                    alpha=mesh_mat_transparency,
-                    emitmulti=mesh_mat_emitmulti)
-
-                self.nif_export.objecthelper.register_block(trimatprop)
-                
-                # refer to the material property in the trishape block
-                trishape.add_property(trimatprop)
-
-
-                # material animation
-                self.nif_export.animationhelper.material_animation.export_material_controllers(
-                    b_material=b_mat, n_geom=trishape)
-
+            
             # add NiTriShape's data
             # NIF flips the texture V-coordinate (OpenGL standard)
             if isinstance(trishape, NifFormat.NiTriShape):
@@ -1113,7 +1124,7 @@ class MeshHelper():
                         # block
                         trishape.update_skin_center_radius()
 
-                        if (self.version >= 0x04020100
+                        if (self.nif_export.version >= 0x04020100
                             and self.properties.skin_partition):
                             self.info("Creating skin partition")
                             lostweight = trishape.update_skin_partition(
