@@ -548,8 +548,7 @@ class NifImport(NifCommon):
                 # set up transforms
                 for n_child, b_child in object_children:
                     # save transform
-                    matrix = mathutils.Matrix(
-                        b_child.getMatrix('localspace'))
+                    matrix = mathutils.Matrix(b_child.matrix_local)
                     # fix transform
                     # the bone has in the nif file an armature space transform
                     # given by niBlock.get_transform(relative_to=n_armature)
@@ -583,9 +582,13 @@ class NifImport(NifCommon):
                     # the local Y axis)
                     matrix[3][1] -= b_obj.length
                     b_child.matrix_local = matrix
+                    
+                    # FIXME
+                    # b_armature.makeParentBone(
+                    # [b_child], b_obj.name)
+                    
                     # parent child to the bone
-                    b_armature.makeParentBone(
-                        [b_child], b_obj.name)
+                    # b_child.parent = b_obj
                 
             else:
                 raise RuntimeError(
