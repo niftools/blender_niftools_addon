@@ -496,7 +496,7 @@ class AnimationHelper():
 class TextureAnimation():
     
     def __init__(self, parent):
-        self.nif_nif_export = parent
+        self.nif_export = parent
     
     def export_flip_controller(self, fliptxt, texture, target, target_tex):
         ## TODO port code to use native Blender texture flipping system
