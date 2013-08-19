@@ -293,7 +293,7 @@ class Texture():
 		gloss_texture = n_textureDesc.base_texture
 		
 		b_mat_texslot = b_mat.texture_slots.create(0)
-		b_mat_texslot.texture = self.import_texture_source(glossTexDesc.source)
+		b_mat_texslot.texture = self.textureloader.import_texture_source(gloss_texture.source)
 		b_mat_texslot.use = True
 
 		# Influence mapping
