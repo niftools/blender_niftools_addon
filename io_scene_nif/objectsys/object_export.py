@@ -233,7 +233,7 @@ class ObjectHelper():
             parent_block.add_child(node)
 
         # and fill in this node's non-trivial values
-        node.name = self.get_full_name(node_name).encode()
+        node.name = self.get_full_name(node_name)
 
         # default node flags
         if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
@@ -321,18 +321,18 @@ class ObjectHelper():
     
     #TODO: get objects to store their own names.
 
-    def get_unique_name(self, blender_name):
+    def get_unique_name(self, b_name):
         """Returns an unique name for use in the NIF file, from the name of a
         Blender object.
 
-        :param blender_name: Name of object as in blender.
-        :type blender_name: :class:`str`
+        :param b_name: Name of object as in blender.
+        :type b_name: :class:`str`
 
         .. todo:: Refactor and simplify this code.
         """
         unique_name = "unnamed"
-        if blender_name:
-            unique_name = blender_name
+        if b_name:
+            unique_name = b_name
         # blender bone naming -> nif bone naming
         unique_name = self.nif_export.get_bone_name_for_nif(unique_name)
         # ensure uniqueness
@@ -343,11 +343,11 @@ class ObjectHelper():
                 unique_name = "%s.%02d" % (old_name, unique_int)
                 unique_int += 1
         self.block_names.append(unique_name)
-        self.names[blender_name] = unique_name
+        self.names[b_name] = unique_name
         return unique_name
 
 
-    def get_full_name(self, blender_name):
+    def get_full_name(self, b_name):
         """Returns the original imported name if present, or the name by which
         the object was exported already.
 
@@ -357,9 +357,9 @@ class ObjectHelper():
         .. todo:: Refactor and simplify this code.
         """
         try:
-            return self.names[blender_name]
+            return self.names[b_name]
         except KeyError:
-            return self.get_unique_name(blender_name)
+            return self.get_unique_name(b_name)
     
     
     def export_range_lod_data(self, n_node, b_obj):
@@ -573,18 +573,17 @@ class MeshHelper():
                 trishape.name = b""
             elif not trishape_name:
                 if parent_block.name:
-                    trishape.name = b"Tri " + str(parent_block.name.decode()).encode()
+                    trishape.name = "Tri " + parent_block.name
                 else:
-                    trishape.name = b"Tri " + str(b_obj.name).encode()
+                    trishape.name = "Tri " + b_obj.name
             else:
-                trishape.name = trishape_name.encode()
+                trishape.name = trishape_name
 
             if len(mesh_materials) > 1:
                 # multimaterial meshes: add material index
                 # (Morrowind's child naming convention)
-                b_name = trishape.name.decode() + ":%i" % materialIndex
-                trishape.name = b_name.encode()
-            trishape.name = self.nif_export.objecthelper.get_full_name(trishape.name.decode()).encode()
+                b_name = trishape.name.decode() + ":%i" % materialIndex                
+            trishape.name = self.nif_export.object_helper.get_full_name(trishape.name)
 
             #Trishape Flags...
             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
@@ -996,7 +995,7 @@ class MeshHelper():
                         trishape.skin_instance = skininst
                         for block in self.objecthelper.blocks:
                             if isinstance(block, NifFormat.NiNode):
-                                if block.name == self.get_full_name(armaturename).encode():
+                                if block.name.decode() == self.get_full_name(armaturename):
                                     skininst.skeleton_root = block
                                     break
                         else:
@@ -1078,7 +1077,7 @@ class MeshHelper():
                             bone_block = None
                             for block in self.objecthelper.blocks:
                                 if isinstance(block, NifFormat.NiNode):
-                                    if block.name == self.get_full_name(bone).encode():
+                                    if block.name.decode() == self.get_full_name(bone):
                                         if not bone_block:
                                             bone_block = block
                                         else:
@@ -1128,8 +1127,8 @@ class MeshHelper():
                             and self.properties.skin_partition):
                             self.info("Creating skin partition")
                             lostweight = trishape.update_skin_partition(
-                                maxbonesperpartition=self.properties.bones_per_partition,
-                                maxbonespervertex=self.properties.bones_per_vertex,
+                                maxbonesperpartition=self.properties.max_bones_per_partition,
+                                maxbonespervertex=self.properties.max_bones_per_vertex,
                                 stripify=self.properties.stripify,
                                 stitchstrips=self.properties.stitch_strips,
                                 padbones=self.properties.pad_bones,
@@ -1147,7 +1146,7 @@ class MeshHelper():
                                        " Disable the pad bones option to get"
                                        " higher quality skin partitions.")
                             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
-                               if self.properties.bones_per_partition < 18:
+                               if self.properties.max_bones_per_partition < 18:
                                    self.warning(
                                        "Using less than 18 bones"
                                        " per partition on Oblivion/Fallout 3"
