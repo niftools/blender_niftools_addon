@@ -112,10 +112,6 @@ class ObjectHelper():
         return block
     
     
-    
-
-    
-    
     def export_node(self, b_obj, space, parent_block, node_name):
         """Export a mesh/armature/empty object b_obj as child of parent_block.
         Export also all children of b_obj.
@@ -304,6 +300,7 @@ class ObjectHelper():
 
         # return the node
         return n_node
+    
     
     def rebuild_full_names(self):
         """Recovers the full object names from the text buffer and rebuilds
@@ -583,7 +580,7 @@ class MeshHelper():
                 # multimaterial meshes: add material index
                 # (Morrowind's child naming convention)
                 b_name = trishape.name.decode() + ":%i" % materialIndex                
-            trishape.name = self.nif_export.object_helper.get_full_name(trishape.name)
+            trishape.name = self.nif_export.objecthelper.get_full_name(trishape.name)
 
             #Trishape Flags...
             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
@@ -640,7 +637,7 @@ class MeshHelper():
             # the trishape)
             if self.properties.game == 'MORROWIND' and mesh_texeff_mtex:
                 # create a new parent block for this shape
-                extra_node = self.nif_export.objecthelper.create_block("NiNode", mesh_texeff_mtex)
+                extra_node = self.nif_export.create_block("NiNode", mesh_texeff_mtex)
                 parent_block.add_child(extra_node)
                 # set default values for this ninode
                 extra_node.rotation.set_identity()
@@ -966,7 +963,7 @@ class MeshHelper():
             # not using tangent space on non shadered nifs)
             if mesh_uvlayers and mesh_hasnormals:
                 if (self.properties.game in ('OBLIVION', 'FALLOUT_3')
-                    or (self.properties.game in self.texturehelper.USED_EXTRA_SHADER_TEXTURES)):
+                    or (self.properties.game in self.nif_export.texturehelper.USED_EXTRA_SHADER_TEXTURES)):
                     trishape.update_tangent_space(
                         as_extra=(self.properties.game == 'OBLIVION'))
 
