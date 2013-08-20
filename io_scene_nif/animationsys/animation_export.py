@@ -541,7 +541,7 @@ class TextureAnimation():
 class MaterialAnimation():
     
     def __init__(self, parent):
-        self.nif_nif_export = parent
+        self.nif_export = parent
     
 
     def export_material_controllers(self, b_material, n_geom):
@@ -726,7 +726,7 @@ class MaterialAnimation():
 class ObjectAnimation():
         
     def __init__(self, parent):
-        self.nif_nif_export = parent
+        self.nif_export = parent
         self.context = parent.context
     
     def export_object_vis_controller(self, b_obj, n_node):
