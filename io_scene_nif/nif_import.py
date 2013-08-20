@@ -548,6 +548,8 @@ class NifImport(NifCommon):
                 # set up transforms
                 for n_child, b_child in object_children:
                     # save transform
+                    
+                    # FIXME
                     matrix = mathutils.Matrix(b_child.matrix_local)
                     # fix transform
                     # the bone has in the nif file an armature space transform
@@ -583,12 +585,9 @@ class NifImport(NifCommon):
                     matrix[3][1] -= b_obj.length
                     b_child.matrix_local = matrix
                     
-                    # FIXME
-                    # b_armature.makeParentBone(
-                    # [b_child], b_obj.name)
-                    
-                    # parent child to the bone
-                    # b_child.parent = b_obj
+                    b_child.parent = b_armature
+                    b_child.parent_type = 'BONE'
+                    b_child.parent_bone = b_obj.name
                 
             else:
                 raise RuntimeError(
