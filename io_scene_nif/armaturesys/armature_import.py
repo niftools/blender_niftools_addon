@@ -536,19 +536,27 @@ class Armature():
 		# sets the bone heads & tails
 		b_bone.head = mathutils.Vector((b_bone_head_x, b_bone_head_y, b_bone_head_z))
 		b_bone.tail = mathutils.Vector((b_bone_tail_x, b_bone_tail_y, b_bone_tail_z))
+
+		# set bone children
+		for niBone in niChildBones:
+			b_child_bone = self.import_bone(
+				niBone, b_armature, b_armatureData, niArmature)
+			b_child_bone.parent = b_bone
+
+		# set bone name and store the niBlock for future reference
+		bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
+		b_bone = b_armatureData.bones[bone_name]
 		
 		if self.properties.import_realign_bones == 2:
 			# applies the corrected matrix explicitly
-			b_bone.matrix = m_correction.resize_4x4() * armature_space_matrix
+			b_bone.matrix_local = m_correction.resize_4x4() * armature_space_matrix
 		elif self.properties.import_realign_bones == 1:
 			# do not do anything, keep unit matrix
 			pass
 		else:
 			# no realign, so use original matrix
-			 armature_space_matrix = b_bone.matrix
+			b_bone.matrix_local = armature_space_matrix
 		
-		# set bone name and store the niBlock for future reference
-		b_bone = b_armatureData.edit_bones[bone_name]
 		# calculate bone difference matrix; we will need this when
 		# importing animation
 		old_bone_matrix_inv = mathutils.Matrix(armature_space_matrix)
@@ -561,15 +569,8 @@ class Armature():
 		# stores any correction or alteration applied to the bone matrix
 		# new * inverse(old)
 		self.bones_extra_matrix[niBlock] = new_bone_matrix * old_bone_matrix_inv
-		# set bone children
-		for niBone in niChildBones:
-			b_child_bone = self.import_bone(
-				niBone, b_armature, b_armatureData, niArmature)
-			b_child_bone.parent = b_bone
-
 		bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
 		return b_bone
-
 
 	def find_correction_matrix(self, niBlock, niArmature):
 		"""Returns the correction matrix for a bone."""
@@ -811,14 +812,17 @@ class Armature():
 		scale_rot_T = mathutils.Matrix(scale_rot)
 		scale_rot_T.transpose()
 		scale_rot_2 = scale_rot * scale_rot_T
+		b_scale = mathutils.Vector((scale_vec[0] ** 0.5,\
+                         scale_vec[1] ** 0.5,\
+                         scale_vec[2] ** 0.5))
 		# and fix their sign
-		if (scale_rot.determinant() < 0): scale_vec.negate()
+		if (scale_rot.determinant() < 0): b_scale.negate()
 		# only uniform scaling
 		if (abs(scale_vec[0]-scale_vec[1]) >= self.properties.epsilon
 			or abs(scale_vec[1]-scale_vec[2]) >= self.properties.epsilon):
 			self.nif_import.warning(
 				"Corrupt rotation matrix in nif: geometry errors may result.")
-		b_scale = scale_vec[0]
+		b_scale = b_scale[0]
 		# get rotation matrix
 		b_rot = scale_rot * b_scale
 		# get translation
@@ -868,6 +872,6 @@ class Armature():
 			
 		# write the names to the text buffer
 		for block, shortname in self.nif_import.names.items():
-			if block.name and shortname != block.name:
-				block_name = block.name.decode()
+			block_name = block.name.decode()
+			if block_name and shortname != block_name:
 				namestxt.write('%s;%s\n' % (shortname, block_name))
