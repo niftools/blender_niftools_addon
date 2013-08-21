@@ -39,11 +39,11 @@
 
 from pyffi.formats.nif import NifFormat
 
-import io_scene_nif.utility.nif_utils
-
+from io_scene_nif.utility import nif_utils
+from io_scene_nif.texturesys.texture_writer import TextureWriter
 import os.path
 
-class Texture():
+class TextureHelper():
     
     # dictionary of texture files, to reuse textures
     textures = {}
@@ -54,131 +54,35 @@ class Texture():
     def __init__(self, parent):
         self.nif_export = parent
         self.properties = parent.properties
-                
-    def export_texture_filename(self, texture):
-        """Returns file name from texture.
-
-        @param texture: The texture object in blender.
-        @return: The file name of the image used in the texture.
-        """
-        if texture.type == 'ENVIRONMENT_MAP':
-            # this works for morrowind only
-            if self.properties.game != 'MORROWIND':
-                raise nif_utils.NifExportError(
-                    "cannot export environment maps for nif version '%s'"
-                    %self.properties.game)
-            return "enviro 01.TGA"
-        elif texture.type == 'IMAGE':
-            # get filename from image
-
-            # XXX still needed? can texture.image be None in current blender?
-            # check that image is loaded
-            if texture.image is None:
-                raise nif_utils.NifExportError(
-                    "image type texture has no file loaded ('%s')"
-                    % texture.name)
-
-            filename = texture.image.filepath
-
-            # warn if packed flag is enabled
-            if texture.image.packed_file:
-                self.nif_export.warning(
-                    "Packed image in texture '%s' ignored, "
-                    "exporting as '%s' instead."
-                    % (texture.name, filename))
-
-            # try and find a DDS alternative, force it if required
-            ddsfilename = "%s%s" % (filename[:-4], '.dds')
-            if os.path.exists(ddsfilename) or self.properties.force_dds:
-                filename = ddsfilename
-
-            # sanitize file path
-            if not self.properties.game in ('MORROWIND', 'OBLIVION',
-                                           'FALLOUT_3'):
-                # strip texture file path
-                filename = os.path.basename(filename)
-            else:
-                # strip the data files prefix from the texture's file name
-                filename = filename.lower()
-                idx = filename.find("textures")
-                if ( idx >= 0 ):
-                    filename = filename[idx:]
-                else:
-                    self.nif_export.warning(
-                        "%s does not reside in a 'Textures' folder;"
-                        " texture path will be stripped"
-                        " and textures may not display in-game" % filename)
-                    filename = os.path.basename(filename)
-            # for linux export: fix path seperators
-            return filename.replace('/', '\\')
-        else:
-            # texture must be of type IMAGE or ENVMAP
-            raise nif_utils.NifExportError(
-                "Error: Texture '%s' must be of type IMAGE or ENVMAP"
-                % texture.name)
-            
-
-    def export_source_texture(self, texture=None, filename=None):
-        """Export a NiSourceTexture.
-
-        :param texture: The texture object in blender to be exported.
-        :param filename: The full or relative path to the texture file
-            (this argument is used when exporting NiFlipControllers
-            and when exporting default shader slots that have no use in
-            being imported into Blender).
-        :return: The exported NiSourceTexture block.
-        """
-
-        # create NiSourceTexture
-        srctex = NifFormat.NiSourceTexture()
-        srctex.use_external = True
-        if not filename is None:
-            # preset filename
-            srctex.file_name = filename
-        elif not texture is None:
-            srctex.file_name = self.export_texture_filename(texture)
-        else:
-            # this probably should not happen
-            self.nif_export.warning(
-                "Exporting source texture without texture or filename (bug?).")
-
-        # fill in default values (TODO: can we use 6 for everything?)
-        if self.nif_export.version >= 0x0a000100:
-            srctex.pixel_layout = 6
-        else:
-            srctex.pixel_layout = 5
-        srctex.use_mipmaps = 1
-        srctex.alpha_format = 3
-        srctex.unknown_byte = 1
-
-        # search for duplicate
-        for block in self.nif_export.blocks:
-            if isinstance(block, NifFormat.NiSourceTexture) and block.get_hash() == srctex.get_hash():
-                return block
-
-        # no identical source texture found, so use and register
-        # the new one
-        return self.nif_export.register_block(srctex, texture)
+        self.texture_writer = TextureWriter(parent=self)
+        self.mesh_uvlayers = []
+        
+    def clear_store(self):
+        self.basemtex=None 
+        self.glowmtex=None
+        self.bumpmtex=None
+        self.normalmtex=None
+        self.glossmtex=None
+        self.darkmtex=None
+        self.detailmtex=None
+        self.refmtex=None
+        
+#         mesh_base_mtex = None
+#         mesh_glow_mtex = None
+#         mesh_bump_mtex = None
+#         mesh_normal_mtex = None
+#         mesh_gloss_mtex = None
+#         mesh_dark_mtex = None
+#         mesh_detail_mtex = None
+#         mesh_texeff_mtex = None
+#         mesh_ref_mtex = None
+        
     
-    def export_tex_desc(self, texdesc=None, uvlayers=None, b_mat_texslot=None):
-        """Helper function for export_texturing_property to export each texture
-        slot."""
-        try:
-            texdesc.uv_set = uvlayers.index(b_mat_texslot.uv_layer) if b_mat_texslot.uv_layer else 0
-        except ValueError: # mtex.uv_layer not in uvlayers list
-            self.nif_export.warning(
-                "Bad uv layer name '%s' in texture '%s'."
-                " Falling back on first uv layer"
-                % (b_mat_texslot.uv_layer, b_mat_texslot.texture.name))
-            texdesc.uv_set = 0 # assume 0 is active layer
-
-        texdesc.source = self.export_source_texture(b_mat_texslot.texture)
-    
-    
-    def export_bs_shader_property(
-        self, basemtex=None, normalmtex=None, glowmtex=None):
+    def export_bs_shader_property(self, b_obj=None, b_mat=None):
         """Export a Bethesda shader property block."""
-
+        self.clear_store()
+        self.determine_texture_types(b_mat)
+        
         # create new block
         bsshader = NifFormat.BSShaderPPLightingProperty()
         # set shader options
@@ -193,78 +97,60 @@ class Texture():
         texset = NifFormat.BSShaderTextureSet()
         bsshader.texture_set = texset
         if basemtex:
-            texset.textures[0] = self.export_texture_filename(basemtex.texture)
+            texset.textures[0] = self.texture_writer.export_texture_filename(basemtex.texture)
         if normalmtex:
-            texset.textures[1] = self.export_texture_filename(normalmtex.texture)
+            texset.textures[1] = self.texture_writer.export_texture_filename(normalmtex.texture)
         if glowmtex:
-            texset.textures[2] = self.export_texture_filename(glowmtex.texture)
+            texset.textures[2] = self.texture_writer.export_texture_filename(glowmtex.texture)
 
-        # search for duplicates
-        # DISABLED: the Fallout 3 engine cannot handle them
-        #for block in self.blocks:
-        #    if (isinstance(block, NifFormat.BSShaderPPLightingProperty)
-        #        and block.get_hash() == bsshader.get_hash()):
-        #        return block
-
-        # no duplicate found, so use and register new one
-        return self.nif_export.register_block(bsshader)
+        return bsshader
     
-    def export_texturing_property(self, flags=0x0001, applymode=None, uvlayers=None,
-                                  basemtex=None, glowmtex=None, bumpmtex=None, 
-                                  normalmtex=None, glossmtex=None, darkmtex=None, 
-                                  detailmtex=None, refmtex=None):
+    
+    def get_used_textslots(self, b_mat):    
+        self.used_slots = [b_texslot for b_texslot in b_mat.texture_slots if b_texslot != None]
+        return self.used_slots
+    
+    
+    def export_texturing_property(self, flags=0x0001, applymode=None, b_mat=None, b_obj=None):
         """Export texturing property. The parameters basemtex,
         glowmtex, bumpmtex, ... are the Blender material textures
         that correspond to the base, glow, bumpmap, ... textures. 
         The uvlayers parameter is a list of uvlayer strings.
         """
-
+        
+        self.clear_store()
+        self.determine_texture_types(b_obj, b_mat)
+        
         texprop = NifFormat.NiTexturingProperty()
-
+        
         texprop.flags = flags
         texprop.apply_mode = applymode
         texprop.texture_count = 7
 
-        # export extra shader textures
-        if self.properties.game == 'SID_MEIER_S_RAILROADS':
-            # sid meier's railroads:
-            # some textures end up in the shader texture list
-            # there are 5 slots available, so set them up
-            texprop.num_shader_textures = 5
-            texprop.shader_textures.update_size()
-            for mapindex, shadertexdesc in enumerate(texprop.shader_textures):
-                # set default values
-                shadertexdesc.is_used = False
-                shadertexdesc.map_index = mapindex
+        self.export_texture_shader_effect(texprop)
+        self.export_nitextureprop_tex_descs(texprop)
+        
 
-            # some texture slots required by the engine
-            shadertexdesc_envmap = texprop.shader_textures[0]
-            shadertexdesc_envmap.is_used = True
-            shadertexdesc_envmap.texture_data.source = \
-                self.export_source_texture(filename="RRT_Engine_Env_map.dds")
+        # search for duplicate
+        for block in self.nif_export.objecthelper.blocks:
+            if isinstance(block, NifFormat.NiTexturingProperty) \
+               and block.get_hash() == texprop.get_hash():
+                return block
 
-            shadertexdesc_cubelightmap = texprop.shader_textures[4]
-            shadertexdesc_cubelightmap.is_used = True
-            shadertexdesc_cubelightmap.texture_data.source = \
-                self.export_source_texture(filename="RRT_Cube_Light_map_128.dds")
+        # no texturing property with given settings found, so use and register
+        # the new one
+        return texprop
+    
+    
+    
 
-            # the other slots are exported below
+    def export_nitextureprop_tex_descs(self, texprop):
 
-        elif self.properties.game == 'CIVILIZATION_IV':
-            # some textures end up in the shader texture list
-            # there are 4 slots available, so set them up
-            texprop.num_shader_textures = 4
-            texprop.shader_textures.update_size()
-            for mapindex, shadertexdesc in enumerate(texprop.shader_textures):
-                # set default values
-                shadertexdesc.is_used = False
-                shadertexdesc.map_index = mapindex
-
-        if basemtex:
+        if self.basemtex:
             texprop.has_base_texture = True
-            self.export_tex_desc(texdesc = texprop.base_texture,
-                                 uvlayers = uvlayers,
-                                 b_mat_texslot = basemtex)
+            self.texture_writer.export_tex_desc(texdesc = texprop.base_texture,
+                                 uvlayers = self.mesh_uvlayers,
+                                 b_mat_texslot = self.basemtex)
             # check for texture flip definition
             try:
                 fliptxt = Blender.Text.Get(basemtex.texture.name)
@@ -272,20 +158,20 @@ class Texture():
                 pass
             else:
                 # texture slot 0 = base
-                self.animationhelper.texture_animation.export_flip_controller(fliptxt, basemtex.texture, texprop, 0)
+                self.animationhelper.texture_animation.export_flip_controller(fliptxt, self.basemtex.texture, texprop, 0)
 
-        if glowmtex:
+        if self.glowmtex:
             texprop.has_glow_texture = True
-            self.export_tex_desc(texdesc = texprop.glow_texture,
-                                 uvlayers = uvlayers,
-                                 b_mat_texslot = glowmtex)
+            self.texture_writer.export_tex_desc(texdesc = texprop.glow_texture,
+                                 uvlayers = self.mesh_uvlayers,
+                                 b_mat_texslot = self.glowmtex)
 
-        if bumpmtex:
+        if self.bumpmtex:
             if self.properties.game not in self.USED_EXTRA_SHADER_TEXTURES:
                 texprop.has_bump_map_texture = True
-                self.export_tex_desc(texdesc = texprop.bump_map_texture,
-                                     uvlayers = uvlayers,
-                                     b_mat_texslot = bumpmtex)
+                self.texture_writer.export_tex_desc(texdesc = texprop.bump_map_texture,
+                                     uvlayers = self.mesh_uvlayers,
+                                     b_mat_texslot = self.bumpmtex)
                 texprop.bump_map_luma_scale = 1.0
                 texprop.bump_map_luma_offset = 0.0
                 texprop.bump_map_matrix.m_11 = 1.0
@@ -293,37 +179,37 @@ class Texture():
                 texprop.bump_map_matrix.m_21 = 0.0
                 texprop.bump_map_matrix.m_22 = 1.0
 
-        if normalmtex:
+        if self.normalmtex:
                 shadertexdesc = texprop.shader_textures[1]
                 shadertexdesc.is_used = True
                 shadertexdesc.texture_data.source = \
-                    self.export_source_texture(texture=normalmtex.texture)
+                    self.texture_writer.export_source_texture(texture=self.normalmtex.texture)
 
-        if glossmtex:
+        if self.glossmtex:
             if self.properties.game not in self.USED_EXTRA_SHADER_TEXTURES:
                 texprop.has_gloss_texture = True
-                self.export_tex_desc(texdesc = texprop.gloss_texture,
-                                     uvlayers = uvlayers,
-                                     b_mat_texslot = glossmtex)
+                self.texture_writer.export_tex_desc(texdesc = texprop.gloss_texture,
+                                     uvlayers = self.mesh_uvlayers,
+                                     b_mat_texslot = self.glossmtex)
             else:
                 shadertexdesc = texprop.shader_textures[2]
                 shadertexdesc.is_used = True
                 shadertexdesc.texture_data.source = \
-                    self.export_source_texture(texture=glossmtex.texture)
+                    self.texture_writer.export_source_texture(texture=self.glossmtex.texture)
 
-        if darkmtex:
+        if self.darkmtex:
             texprop.has_dark_texture = True
-            self.export_tex_desc(texdesc = texprop.dark_texture,
-                                 uvlayers = uvlayers,
-                                 b_mat_texslot = darkmtex)
+            self.texture_writer.export_tex_desc(texdesc = texprop.dark_texture,
+                                 uvlayers = self.mesh_uvlayers,
+                                 b_mat_texslot = self.darkmtex)
 
-        if detailmtex:
+        if self.detailmtex:
             texprop.has_detail_texture = True
-            self.export_tex_desc(texdesc = texprop.detail_texture,
-                                 uvlayers = uvlayers,
-                                 b_mat_texslot = detailmtex)
+            self.texture_writer.export_tex_desc(texdesc = texprop.detail_texture,
+                                 uvlayers = self.mesh_uvlayers,
+                                 b_mat_texslot = self.detailmtex)
 
-        if refmtex:
+        if self.refmtex:
             if self.properties.game not in self.USED_EXTRA_SHADER_TEXTURES:
                 self.nif_export.warning(
                     "Cannot export reflection texture for this game.")
@@ -335,17 +221,43 @@ class Texture():
                 shadertexdesc = texprop.shader_textures[3]
                 shadertexdesc.is_used = True
                 shadertexdesc.texture_data.source = \
-                    self.export_source_texture(texture=refmtex.texture)
+                    self.texture_writer.export_source_texture(texture=self.refmtex.texture)
 
-        # search for duplicate
-        for block in self.nif_export.blocks:
-            if isinstance(block, NifFormat.NiTexturingProperty) \
-               and block.get_hash() == texprop.get_hash():
-                return block
+    
+    def export_texture_shader_effect(self, texprop):
+        # export extra shader textures
+        if self.properties.game == 'SID_MEIER_S_RAILROADS':
+            # sid meier's railroads:
+            # some textures end up in the shader texture list
+            # there are 5 slots available, so set them up
+            texprop.num_shader_textures = 5
+            texprop.shader_textures.update_size()
+            for mapindex, shadertexdesc in enumerate(texprop.shader_textures):
+                # set default values
+                shadertexdesc.is_used = False
+                shadertexdesc.map_index = mapindex
+    
+            # some texture slots required by the engine
+            shadertexdesc_envmap = texprop.shader_textures[0]
+            shadertexdesc_envmap.is_used = True
+            shadertexdesc_envmap.texture_data.source = \
+                self.texture_writer.export_source_texture(filename="RRT_Engine_Env_map.dds")
+    
+            shadertexdesc_cubelightmap = texprop.shader_textures[4]
+            shadertexdesc_cubelightmap.is_used = True
+            shadertexdesc_cubelightmap.texture_data.source = \
+                self.texture_writer.export_source_texture(filename="RRT_Cube_Light_map_128.dds")
 
-        # no texturing property with given settings found, so use and register
-        # the new one
-        return self.nif_export.register_block(texprop)
+        elif self.properties.game == 'CIVILIZATION_IV':
+            # some textures end up in the shader texture list
+            # there are 4 slots available, so set them up
+            texprop.num_shader_textures = 4
+            texprop.shader_textures.update_size()
+            for mapindex, shadertexdesc in enumerate(texprop.shader_textures):
+                # set default values
+                shadertexdesc.is_used = False
+                shadertexdesc.map_index = mapindex
+    
     
     def export_texture_effect(self, b_mat_texslot = None):
         """Export a texture effect block from material texture mtex (MTex, not
@@ -360,15 +272,208 @@ class Texture():
         texeff.texture_type = NifFormat.EffectType.EFFECT_ENVIRONMENT_MAP
         texeff.coordinate_generation_type = NifFormat.CoordGenType.CG_SPHERE_MAP
         if b_mat_texslot:
-            texeff.source_texture = self.export_source_texture(b_mat_texslot.texture)
+            texeff.source_texture = self.texture_writer.export_source_texture(b_mat_texslot.texture)
             if self.properties.game == 'MORROWIND':
                 texeff.num_affected_node_list_pointers += 1
                 texeff.affected_node_list_pointers.update_size()
         texeff.unknown_vector.x = 1.0
         return self.register_block(texeff)
 
+
     def add_shader_integer_extra_datas(self, trishape):
         """Add extra data blocks for shader indices."""
         for shaderindex in self.USED_EXTRA_SHADER_TEXTURES[self.properties.game]:
             shadername = self.EXTRA_SHADER_TEXTURES[shaderindex]
             trishape.add_integer_extra_data(shadername, shaderindex)
+            
+
+    def determine_texture_types(self, b_obj, b_mat):
+        
+        self.get_used_textslots(b_mat)
+        
+        for b_mat_texslot in self.used_slots:
+            # check REFL-mapped textures
+            # (used for "NiTextureEffect" materials)
+            if b_mat_texslot.texture_coords == 'REFLECTION':
+                if not b_mat_texslot.use_map_color_diffuse:
+                    # it should map to colour
+                    raise nif_utils.NifExportError("Non-COL-mapped reflection texture in mesh '%s', material '%s',"
+                                         " these cannot be exported to NIF.\n"
+                                         "Either delete all non-COL-mapped reflection textures,"
+                                         " or in the Shading Panel, under Material Buttons,"
+                                         " set texture 'Map To' to 'COL'."
+                                         % (b_mesh.name,b_mat.name))
+                if b_mat_texslot.blend_type != 'ADD':
+                # it should have "ADD" blending mode
+                     self.nif_export.warning("Reflection texture should have blending"
+                                 " mode 'Add' on texture"
+                                 " in mesh '%s', material '%s')."
+                                 % (b_obj.name,b_mat.name))
+                # an envmap image should have an empty... don't care
+                self.refmtex = b_mat_texslot
+    
+    
+            # check UV-mapped textures
+            elif b_mat_texslot.texture_coords == 'UV':
+            # update set of uv layers that must be exported
+                if not b_mat_texslot.uv_layer in self.mesh_uvlayers:
+                    self.mesh_uvlayers.append(b_mat_texslot.uv_layer)
+    
+                #glow tex
+                if b_mat_texslot.use_map_emit:
+                    #multi-check
+                    if self.glowmtex:
+                        raise nif_utils.NifExportError("Multiple glow textures in mesh '%s', material '%s'.\n"
+                                             "Make sure Texture -> Influence -> Shading -> Emit is disabled"
+                                             %(b_mesh.name,b_mat.name))
+    
+                    # check if alpha channel is enabled for this texture
+                    if(b_mat_texslot.use_map_alpha):
+                        mesh_hasalpha = True
+                    
+                    self.glowmtex = b_mat_texslot
+    
+                #specular
+                elif b_mat_texslot.use_map_specular:
+                    #multi-check
+                    if self.glossmtex:
+                        raise nif_utils.NifExportError("Multiple gloss textures in"
+                                             " mesh '%s', material '%s'."
+                                             " Make sure there is only one texture"
+                                             " with MapTo.SPEC"
+                                             %(b_mesh.name,b_mat.name))
+    
+                    # check if alpha channel is enabled for this texture
+                    if(b_mat_texslot.use_map_alpha):
+                        mesh_hasalpha = True
+                    
+                    # got the gloss map
+                    self.glossmtex = b_mat_texslot
+    
+                #bump map
+                elif b_mat_texslot.use_map_normal:
+                    #multi-check
+                    if self.bumpmtex:
+                        raise nif_utils.NifExportError("Multiple bump/normal textures"
+                                             " in mesh '%s', material '%s'."
+                                             " Make sure there is only one texture"
+                                             " with MapTo.NOR"
+                                             %(b_mesh.name,b_mat.name))
+    
+                    # check if alpha channel is enabled for this texture
+                    if(b_mat_texslot.use_map_alpha):
+                        mesh_hasalpha = True
+    
+                    self.bumpmtex = b_mat_texslot
+    
+                #darken
+                elif b_mat_texslot.use_map_color_diffuse and \
+                     b_mat_texslot.blend_type == 'DARKEN' and \
+                     not self.darkmtex:
+    
+                    # check if alpha channel is enabled for this texture
+                    if(b_mat_texslot.use_map_alpha):
+                        mesh_hasalpha = True
+                    # got the dark map
+                    mesh_dark_mtex = b_mat_texslot
+    
+                #diffuse
+                elif b_mat_texslot.use_map_color_diffuse and \
+                     not self.basemtex:
+    
+                    self.basemtex = b_mat_texslot
+    
+                    # check if alpha channel is enabled for this texture
+                    if(b_mat_texslot.use_map_alpha):
+                        mesh_hasalpha = True
+    
+                        '''
+                        # in this case, Blender replaces the texture transparant parts with the underlying material color...
+                        # in NIF, material alpha is multiplied with texture alpha channel...
+                        # how can we emulate the NIF alpha system (simply multiplying material alpha with texture alpha) when MapTo.ALPHA is turned on?
+                        # require the Blender material alpha to be 0.0 (no material color can show up), and use the "Var" slider in the texture blending mode tab!
+                        # but...
+    
+                        if mesh_mat_transparency > self.properties.epsilon:
+                            raise nif_utils.NifExportError(
+                                "Cannot export this type of"
+                                " transparency in material '%s': "
+                                " instead, try to set alpha to 0.0"
+                                " and to use the 'Var' slider"
+                                " in the 'Map To' tab under the"
+                                " material buttons."
+                                %b_mat.name)
+                        if (b_mat.animation_data and b_mat.animation_data.action.fcurves['Alpha']):
+                            raise nif_utils.NifExportError(
+                                "Cannot export animation for"
+                                " this type of transparency"
+                                " in material '%s':"
+                                " remove alpha animation,"
+                                " or turn off MapTo.ALPHA,"
+                                " and try again."
+                                %b_mat.name)
+    
+                        mesh_mat_transparency = b_mat_texslot.varfac # we must use the "Var" value
+                        '''
+    
+                #normal map
+                elif b_mat_texslot.use_map_normal and b_mat_texslot.texture.use_normal_map:
+                    if self.normalmtex:
+                        raise nif_utils.NifExportError(
+                            "Multiple bump/normal textures"
+                            " in mesh '%s', material '%s'."
+                            " Make sure there is only one texture"
+                            " with MapTo.NOR"
+                            %(b_mesh.name, b_mat.name))
+                    # check if alpha channel is enabled for this texture
+                    if(b_mat_texslot.use_map_alpha):
+                        mesh_hasalpha = True
+                    self.normalmtex = b_mat_texslot
+    
+                #detail
+                elif b_mat_texslot.use_map_color_diffuse and \
+                     not self.detailmtex:
+                    # extra diffuse consider as detail texture
+    
+                    # check if alpha channel is enabled for this texture
+                    if(b_mat_texslot.use_map_alpha):
+                        mesh_hasalpha = True
+                    self.detailmtex = b_mat_texslot
+    
+                #reflection
+                elif b_mat_texslot.mapto & Blender.Texture.MapTo.REF:
+                    # got the reflection map
+                    if self.refmtex:
+                        raise nif_utils.NifExportError(
+                            "Multiple reflection textures"
+                            " in mesh '%s', material '%s'."
+                            " Make sure there is only one texture"
+                            " with MapTo.REF"
+                            %(b_mesh.name,b_mat.name))
+                    # check if alpha channel is enabled for this texture
+                    if(b_mat_texslot.use_map_alpha):
+                        mesh_hasalpha = True
+                    self.refmtex = b_mat_texslot
+    
+                # unsupported map
+                else:
+                    raise nif_utils.NifExportError(
+                        "Do not know how to export texture '%s',"
+                        " in mesh '%s', material '%s'."
+                        " Either delete it, or if this texture"
+                        " is to be your base texture,"
+                        " go to the Shading Panel,"
+                        " Material Buttons, and set texture"
+                        " 'Map To' to 'COL'."
+                        % (b_mat_texslot.texture.name, b_obj.name, b_mat.name))
+    
+            # nif only support UV-mapped textures
+            else:
+                raise nif_utils.NifExportError(
+                    "Non-UV texture in mesh '%s', material '%s'."
+                    " Either delete all non-UV textures,"
+                    " or in the Shading Panel,"
+                    " under Material Buttons,"
+                    " set texture 'Map Input' to 'UV'."
+                    %(b_obj.name, b_mat.name))
+
