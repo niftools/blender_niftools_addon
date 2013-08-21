@@ -252,7 +252,7 @@ class Armature():
 		for niBone in niChildBones:
 			b_child_bone = self.import_bone(
 				niBone, b_armature, b_armatureData, niArmature)
-			b_child_bone.parent = b_bone
+			# b_child_bone.parent = b_bone
 
 		bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
 		return b_bone
