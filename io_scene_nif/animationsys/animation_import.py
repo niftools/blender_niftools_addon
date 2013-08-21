@@ -47,7 +47,7 @@ class AnimationHelper():
         self.nif_common = parent
         self.object_animation = ObjectAnimation(parent)
         self.material_animation = MaterialAnimation(parent)
-    
+        self.armature_animation = ArmatureAnimation(parent)
     
 
     def import_kf_root(self, kf_root, root):
@@ -458,3 +458,324 @@ class MaterialAnimation():
         if not b_material.ipo:
             b_material.ipo = Blender.Ipo.New("Material", "MatIpo")
         return b_material.ipo
+
+class ArmatureAnimation():
+    
+    def __init__(self, parent):
+        self.nif_import = parent
+        
+        
+    def import_armature_animation(self, b_armature):
+        # create an action
+        action = bpy.data.actions.new(armature_name)
+        bpy.types.NlaTrack.select = b_armature #action.setActive(b_armature)
+        # go through all armature pose bones
+        # see http://www.elysiun.com/forum/viewtopic.php?t=58693
+        self.nif_import.info('Importing Animations')
+        for bone_name, b_posebone in b_armature.pose.bones.items():
+            # denote progress
+            self.nif_import.debug('Importing animation for bone %s' % bone_name)
+            niBone = self.nif_import.blocks[bone_name]
+
+            # get bind matrix (NIF format stores full transformations in keyframes,
+            # but Blender wants relative transformations, hence we need to know
+            # the bind position for conversion). Since
+            # [ SRchannel 0 ]    [ SRbind 0 ]   [ SRchannel * SRbind         0 ]   [ SRtotal 0 ]
+            # [ Tchannel  1 ] *  [ Tbind  1 ] = [ Tchannel  * SRbind + Tbind 1 ] = [ Ttotal  1 ]
+            # with
+            # 'total' the transformations as stored in the NIF keyframes,
+            # 'bind' the Blender bind pose, and
+            # 'channel' the Blender IPO channel,
+            # it follows that
+            # Schannel = Stotal / Sbind
+            # Rchannel = Rtotal * inverse(Rbind)
+            # Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
+            bone_bm = nif_utils.import_matrix(niBone) # base pose
+            niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = self.decompose_srt(bone_bm)
+            niBone_bind_rot_inv = mathutils.Matrix(niBone_bind_rot)
+            niBone_bind_rot_inv.invert()
+            niBone_bind_quat_inv = niBone_bind_rot_inv.to_quaternion()
+            # we also need the conversion of the original matrix to the
+            # new bone matrix, say X,
+            # B' = X * B
+            # (with B' the Blender matrix and B the NIF matrix) because we
+            # need that
+            # C' * B' = X * C * B
+            # and therefore
+            # C' = X * C * B * inverse(B') = X * C * inverse(X),
+            # where X = B' * inverse(B)
+            #
+            # In detail:
+            # [ SRX 0 ]   [ SRC 0 ]            [ SRX 0 ]
+            # [ TX  1 ] * [ TC  1 ] * inverse( [ TX  1 ] ) =
+            # [ SRX * SRC       0 ]   [ inverse(SRX)         0 ]
+            # [ TX * SRC + TC   1 ] * [ -TX * inverse(SRX)   1 ] =
+            # [ SRX * SRC * inverse(SRX)              0 ]
+            # [ (TX * SRC + TC - TX) * inverse(SRX)   1 ]
+            # Hence
+            # SC' = SX * SC / SX = SC
+            # RC' = RX * RC * inverse(RX)
+            # TC' = (TX * SC * RC + TC - TX) * inverse(RX) / SX
+            extra_matrix_scale, extra_matrix_rot, extra_matrix_trans = self.decompose_srt(self.bones_extra_matrix[niBone])
+            extra_matrix_quat = extra_matrix_rot.to_quaternion()
+            extra_matrix_rot_inv = mathutils.Matrix(extra_matrix_rot)
+            extra_matrix_rot_inv.invert()
+            extra_matrix_quat_inv = extra_matrix_rot_inv.to_quaternion()
+            # now import everything
+            # ##############################
+
+            # get controller, interpolator, and data
+            # note: the NiKeyframeController check also includes
+            #       NiTransformController (see hierarchy!)
+            kfc = nif_utils.find_controller(niBone,
+                                       NifFormat.NiKeyframeController)
+            # old style: data directly on controller
+            kfd = kfc.data if kfc else None
+            # new style: data via interpolator
+            kfi = kfc.interpolator if kfc else None
+            # next is a quick hack to make the new transform
+            # interpolator work as if it is an old style keyframe data
+            # block parented directly on the controller
+            if isinstance(kfi, NifFormat.NiTransformInterpolator):
+                kfd = kfi.data
+                # for now, in this case, ignore interpolator
+                kfi = None
+
+            # B-spline curve import
+            if isinstance(kfi, NifFormat.NiBSplineInterpolator):
+                times = list(kfi.get_times())
+                translations = list(kfi.get_translations())
+                scales = list(kfi.get_scales())
+                rotations = list(kfi.get_rotations())
+
+                # if we have translation keys, we make a dictionary of
+                # rot_keys and scale_keys, this makes the script work MUCH
+                # faster in most cases
+                if translations:
+                    scale_keys_dict = {}
+                    rot_keys_dict = {}
+
+                # scales: ignore for now, implement later
+                #         should come here
+                scales = None
+
+                # rotations
+                if rotations:
+                    self.nif_import.debug(
+                        'Rotation keys...(bspline quaternions)')
+                    for time, quat in zip(times, rotations):
+                        frame = 1 + int(time * self.nif_import.fps + 0.5)
+                        quat = mathutils.Quaternion(
+                            [quat[0], quat[1], quat[2], quat[3]])
+                        # beware, CrossQuats takes arguments in a
+                        # counter-intuitive order:
+                        # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
+                        quatVal = CrossQuats(niBone_bind_quat_inv, quat) # Rchannel = Rtotal * inverse(Rbind)
+                        rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
+                        b_posebone.quat = rot
+                        b_posebone.insertKey(b_armature, frame,
+                                             [Blender.Object.Pose.ROT])
+                        # fill optimizer dictionary
+                        if translations:
+                            rot_keys_dict[frame] = mathutils.Quaternion(rot)
+
+                # translations
+                if translations:
+                    self.nif_import.debug('Translation keys...(bspline)')
+                    for time, translation in zip(times, translations):
+                        # time 0.0 is frame 1
+                        frame = 1 + int(time * self.nif_import.fps + 0.5)
+                        trans = mathutils.Vector(*translation)
+                        locVal = (trans - niBone_bind_trans) * niBone_bind_rot_inv * (niBone_bind_scale)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
+                        # the rotation matrix is needed at this frame (that's
+                        # why the other keys are inserted first)
+                        if rot_keys_dict:
+                            try:
+                                rot = rot_keys_dict[frame].toMatrix()
+                            except KeyError:
+                                # fall back on slow method
+                                ipo = action.getChannelIpo(bone_name)
+                                quat = mathutils.Quaternion()
+                                quat.x = ipo.getCurve('QuatX').evaluate(frame)
+                                quat.y = ipo.getCurve('QuatY').evaluate(frame)
+                                quat.z = ipo.getCurve('QuatZ').evaluate(frame)
+                                quat.w = ipo.getCurve('QuatW').evaluate(frame)
+                                rot = quat.toMatrix()
+                        else:
+                            rot = mathutils.Matrix([[1.0, 0.0, 0.0],
+                                                    [0.0, 1.0, 0.0],
+                                                    [0.0, 0.0, 1.0]])
+                        # we also need the scale at this frame
+                        if scale_keys_dict:
+                            try:
+                                sizeVal = scale_keys_dict[frame]
+                            except KeyError:
+                                ipo = action.getChannelIpo(bone_name)
+                                if ipo.getCurve('SizeX'):
+                                    sizeVal = ipo.getCurve('SizeX').evaluate(frame) # assume uniform scale
+                                else:
+                                    sizeVal = 1.0
+                        else:
+                            sizeVal = 1.0
+                        size = mathutils.Matrix([[sizeVal, 0.0, 0.0],
+                                                 [0.0, sizeVal, 0.0],
+                                                 [0.0, 0.0, sizeVal]])
+                        # now we can do the final calculation
+                        loc = (extra_matrix_trans * size * rot + locVal - extra_matrix_trans) * extra_matrix_rot_inv * (extra_matrix_scale) # C' = X * C * inverse(X)
+                        b_posebone.loc = loc
+                        b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.LOC])
+
+                # delete temporary dictionaries
+                if translations:
+                    del scale_keys_dict
+                    del rot_keys_dict
+
+            # NiKeyframeData and NiTransformData import
+            elif isinstance(kfd, NifFormat.NiKeyframeData):
+
+                translations = kfd.translations
+                scales = kfd.scales
+                # if we have translation keys, we make a dictionary of
+                # rot_keys and scale_keys, this makes the script work MUCH
+                # faster in most cases
+                if translations:
+                    scale_keys_dict = {}
+                    rot_keys_dict = {}
+                # add the keys
+
+                # Scaling
+                if scales.keys:
+                    self.nif_import.debug('Scale keys...')
+                for scaleKey in scales.keys:
+                    # time 0.0 is frame 1
+                    frame = 1 + int(scaleKey.time * self.nif_import.fps + 0.5)
+                    sizeVal = scaleKey.value
+                    size = sizeVal / niBone_bind_scale # Schannel = Stotal / Sbind
+                    b_posebone.size = mathutils.Vector(size, size, size)
+                    b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.SIZE]) # this is very slow... :(
+                    # fill optimizer dictionary
+                    if translations:
+                        scale_keys_dict[frame] = size
+
+                # detect the type of rotation keys
+                rotation_type = kfd.rotation_type
+
+                # Euler Rotations
+                if rotation_type == 4:
+                    # uses xyz rotation
+                    if kfd.xyz_rotations[0].keys:
+                        self.nif_import.debug('Rotation keys...(euler)')
+                    for xkey, ykey, zkey in zip(kfd.xyz_rotations[0].keys,
+                                                 kfd.xyz_rotations[1].keys,
+                                                 kfd.xyz_rotations[2].keys):
+                        # time 0.0 is frame 1
+                        # XXX it is assumed that all the keys have the
+                        # XXX same times!!!
+                        if (abs(xkey.time - ykey.time) > self.properties.epsilon
+                            or abs(xkey.time - zkey.time) > self.properties.epsilon):
+                            self.nif_import.warning(
+                                "xyz key times do not correspond, "
+                                "animation may not be correctly imported")
+                        frame = 1 + int(xkey.time * self.nif_import.fps + 0.5)
+                        euler = mathutils.Euler(
+                            [xkey.value * 180.0 / math.pi,
+                             ykey.value * 180.0 / math.pi,
+                             zkey.value * 180.0 / math.pi])
+                        quat = euler.toQuat()
+
+                        # beware, CrossQuats takes arguments in a counter-intuitive order:
+                        # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
+
+                        quatVal = CrossQuats(niBone_bind_quat_inv, quat) # Rchannel = Rtotal * inverse(Rbind)
+                        rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
+                        b_posebone.quat = rot
+                        b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.ROT]) # this is very slow... :(
+                        # fill optimizer dictionary
+                        if translations:
+                            rot_keys_dict[frame] = mathutils.Quaternion(rot) 
+
+                # Quaternion Rotations
+                else:
+                    # TODO take rotation type into account for interpolation
+                    if kfd.quaternion_keys:
+                        self.nif_import.debug('Rotation keys...(quaternions)')
+                    quaternion_keys = kfd.quaternion_keys
+                    for key in quaternion_keys:
+                        frame = 1 + int(key.time * self.nif_import.fps + 0.5)
+                        keyVal = key.value
+                        quat = mathutils.Quaternion([keyVal.w, keyVal.x, keyVal.y, keyVal.z])
+                        # beware, CrossQuats takes arguments in a
+                        # counter-intuitive order:
+                        # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
+                        quatVal = CrossQuats(niBone_bind_quat_inv, quat) # Rchannel = Rtotal * inverse(Rbind)
+                        rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
+                        b_posebone.quat = rot
+                        b_posebone.insertKey(b_armature, frame,
+                                             [Blender.Object.Pose.ROT])
+                        # fill optimizer dictionary
+                        if translations:
+                            rot_keys_dict[frame] = mathutils.Quaternion(rot)
+                    #else:
+                    #    print("Rotation keys...(unknown)" + 
+                    #          "WARNING: rotation animation data of type" +
+                    #          " %i found, but this type is not yet supported; data has been skipped""" % rotation_type)                        
+    
+                # Translations
+                if translations.keys:
+                    self.nif_import.debug('Translation keys...')
+                for key in translations.keys:
+                    # time 0.0 is frame 1
+                    frame = 1 + int(key.time * self.nif_import.fps + 0.5)
+                    keyVal = key.value
+                    trans = mathutils.Vector(keyVal.x, keyVal.y, keyVal.z)
+                    locVal = (trans - niBone_bind_trans) * niBone_bind_rot_inv * (niBone_bind_scale)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
+                    # the rotation matrix is needed at this frame (that's
+                    # why the other keys are inserted first)
+                    if rot_keys_dict:
+                        try:
+                            rot = rot_keys_dict[frame].toMatrix()
+                        except KeyError:
+                            # fall back on slow method
+                            ipo = action.getChannelIpo(bone_name)
+                            quat = mathutils.Quaternion()
+                            quat.x = ipo.getCurve('QuatX').evaluate(frame)
+                            quat.y = ipo.getCurve('QuatY').evaluate(frame)
+                            quat.z = ipo.getCurve('QuatZ').evaluate(frame)
+                            quat.w = ipo.getCurve('QuatW').evaluate(frame)
+                            rot = quat.toMatrix()
+                    else:
+                        rot = mathutils.Matrix([[1.0, 0.0, 0.0],
+                                                [0.0, 1.0, 0.0],
+                                                [0.0, 0.0, 1.0]])
+                    # we also need the scale at this frame
+                    if scale_keys_dict:
+                        try:
+                            sizeVal = scale_keys_dict[frame]
+                        except KeyError:
+                            ipo = action.getChannelIpo(bone_name)
+                            if ipo.getCurve('SizeX'):
+                                sizeVal = ipo.getCurve('SizeX').evaluate(frame) # assume uniform scale
+                            else:
+                                sizeVal = 1.0
+                    else:
+                        sizeVal = 1.0
+                    size = mathutils.Matrix([[sizeVal, 0.0, 0.0],
+                                             [0.0, sizeVal, 0.0],
+                                             [0.0, 0.0, sizeVal]])
+                    # now we can do the final calculation
+                    loc = (extra_matrix_trans * size * rot + locVal - extra_matrix_trans) * extra_matrix_rot_inv * (extra_matrix_scale) # C' = X * C * inverse(X)
+                    b_posebone.loc = loc
+                    b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.LOC])
+                if translations:
+                    del scale_keys_dict
+                    del rot_keys_dict
+            # set extend mode for all ipo curves
+            if kfc:
+                try:
+                    ipo = action.getChannelIpo(bone_name)
+                except ValueError:
+                    # no channel for bone_name
+                    pass
+                else:
+                    for b_curve in ipo:
+                        b_curve.extend = self.nif_import.get_extend_from_flags(kfc.flags)

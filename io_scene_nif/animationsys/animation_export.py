@@ -126,10 +126,10 @@ class AnimationHelper():
         # add a keyframecontroller block, and refer to this block in the
         # parent's time controller
         if self.nif_export.version < 0x0A020000:
-            kfc = self.nif_export.create_block("NiKeyframeController", ipo)
+            kfc = self.nif_export.objecthelper.create_block("NiKeyframeController", ipo)
         else:
-            kfc = self.nif_export.create_block("NiTransformController", ipo)
-            kfi = self.nif_export.create_block("NiTransformInterpolator", ipo)
+            kfc = self.nif_export.objecthelper.create_block("NiTransformController", ipo)
+            kfi = self.nif_export.objecthelper.create_block("NiTransformInterpolator", ipo)
             # link interpolator from the controller
             kfc.interpolator = kfi
             # set interpolator default data
@@ -358,11 +358,11 @@ class AnimationHelper():
     
         # add the keyframe data
         if self.nif_export.version < 0x0A020000:
-            kfd = self.nif_export.create_block("NiKeyframeData", ipo)
+            kfd = self.nif_export.objecthelper.create_block("NiKeyframeData", ipo)
             kfc.data = kfd
         else:
             # number of frames is > 1, so add transform data
-            kfd = self.nif_export.create_block("NiTransformData", ipo)
+            kfd = self.nif_export.objecthelper.create_block("NiTransformData", ipo)
             kfi.data = kfd
     
         frames = list(rot_curve.keys())
@@ -480,7 +480,7 @@ class AnimationHelper():
 
         # add a NiTextKeyExtraData block, and refer to this block in the
         # parent node (we choose the root block)
-        textextra = self.nif_export.create_block("NiTextKeyExtraData", animtxt)
+        textextra = self.nif_export.objecthelper.create_block("NiTextKeyExtraData", animtxt)
         block_parent.add_extra_data(textextra)
 
         # create a text key for each frame descriptor
@@ -496,7 +496,7 @@ class AnimationHelper():
 class TextureAnimation():
     
     def __init__(self, parent):
-        self.nif_nif_export = parent
+        self.nif_export = parent
     
     def export_flip_controller(self, fliptxt, texture, target, target_tex):
         ## TODO port code to use native Blender texture flipping system
@@ -513,7 +513,7 @@ class TextureAnimation():
         tlist = fliptxt.asLines()
 
         # create a NiFlipController
-        flip = self.nif_export.create_block("NiFlipController", fliptxt)
+        flip = self.nif_export.objecthelper.create_block("NiFlipController", fliptxt)
         target.add_controller(flip)
 
         # fill in NiFlipController's values
@@ -526,7 +526,7 @@ class TextureAnimation():
         for t in tlist:
             if len( t ) == 0: continue  # skip empty lines
             # create a NiSourceTexture for each flip
-            tex = self.nif_export.texturehelper.export_source_texture(texture, t)
+            tex = self.nif_export.texturehelper.texture_writer.export_source_texture(texture, t)
             flip.num_sources += 1
             flip.sources.update_size()
             flip.sources[flip.num_sources-1] = tex
@@ -541,7 +541,7 @@ class TextureAnimation():
 class MaterialAnimation():
     
     def __init__(self, parent):
-        self.nif_nif_export = parent
+        self.nif_export = parent
     
 
     def export_material_controllers(self, b_material, n_geom):
@@ -586,7 +586,7 @@ class MaterialAnimation():
         b_curve = b_ipo[Blender.Ipo.MA_ALPHA]
         if not b_curve:
             return
-        n_floatdata = self.nif_export.create_block("NiFloatData", b_curve)
+        n_floatdata = self.nif_export.objecthelper.create_block("NiFloatData", b_curve)
         n_times = [] # track all times (used later in start time and end time)
         n_floatdata.data.num_keys = len(b_curve.bezierPoints)
         n_floatdata.data.interpolation = self.get_n_ipol_from_b_ipol(
@@ -603,8 +603,8 @@ class MaterialAnimation():
         # if alpha data is present (check this by checking if times were added)
         # then add the controller so it is exported
         if n_times:
-            n_alphactrl = self.nif_export.create_block("NiAlphaController", b_ipo)
-            n_alphaipol = self.nif_export.create_block("NiFloatInterpolator", b_ipo)
+            n_alphactrl = self.nif_export.objecthelper.create_block("NiAlphaController", b_ipo)
+            n_alphaipol = self.nif_export.objecthelper.create_block("NiFloatInterpolator", b_ipo)
             n_alphactrl.interpolator = n_alphaipol
             n_alphactrl.flags = 8 # active
             n_alphactrl.flags |= self.get_flags_from_extend(b_curve.extend)
@@ -632,7 +632,7 @@ class MaterialAnimation():
         b_curves = [b_ipo[b_channel] for b_channel in b_channels]
         if not all(b_curves):
             return
-        n_posdata = self.nif_export.create_block("NiPosData", b_curves)
+        n_posdata = self.nif_export.objecthelper.create_block("NiPosData", b_curves)
         # and also to have common reference times for all curves
         b_times = set()
         for b_curve in b_curves:
@@ -655,9 +655,9 @@ class MaterialAnimation():
         # if alpha data is present (check this by checking if times were added)
         # then add the controller so it is exported
         if n_times:
-            n_matcolor_ctrl = self.nif_export.create_block(
+            n_matcolor_ctrl = self.nif_export.objecthelper.create_block(
                 "NiMaterialColorController", b_ipo)
-            n_matcolor_ipol = self.nif_export.create_block(
+            n_matcolor_ipol = self.nif_export.objecthelper.create_block(
                 "NiPoint3Interpolator", b_ipo)
             n_matcolor_ctrl.interpolator = n_matcolor_ipol
             n_matcolor_ctrl.flags = 8 # active
@@ -726,7 +726,7 @@ class MaterialAnimation():
 class ObjectAnimation():
         
     def __init__(self, parent):
-        self.nif_nif_export = parent
+        self.nif_export = parent
         self.context = parent.context
     
     def export_object_vis_controller(self, b_obj, n_node):
@@ -739,8 +739,8 @@ class ObjectAnimation():
         if not b_curve:
             return
         # NiVisData = old style, NiBoolData = new style
-        n_vis_data = self.nif_export.create_block("NiVisData", b_curve)
-        n_bool_data = self.nif_export.create_block("NiBoolData", b_curve)
+        n_vis_data = self.nif_export.objecthelper.create_block("NiVisData", b_curve)
+        n_bool_data = self.nif_export.objecthelper.create_block("NiBoolData", b_curve)
         n_times = [] # track all times (used later in start time and end time)
         # we just leave interpolation at constant
         n_bool_data.data.interpolation = NifFormat.KeyType.CONST_KEY
@@ -766,8 +766,8 @@ class ObjectAnimation():
         # if alpha data is present (check this by checking if times were added)
         # then add the controller so it is exported
         if n_times:
-            n_vis_ctrl = self.nif_export.create_block("NiVisController", b_ipo)
-            n_vis_ipol = self.nif_export.create_block("NiBoolInterpolator", b_ipo)
+            n_vis_ctrl = self.nif_export.objecthelper.create_block("NiVisController", b_ipo)
+            n_vis_ipol = self.nif_export.objecthelper.create_block("NiBoolInterpolator", b_ipo)
             n_vis_ctrl.interpolator = n_vis_ipol
             n_vis_ctrl.flags = 8 # active
             n_vis_ctrl.flags |= self.get_flags_from_extend(b_curve.extend)

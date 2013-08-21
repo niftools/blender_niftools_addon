@@ -87,12 +87,12 @@ class bhkshape_export():
             # note: collision settings are taken from lowerclasschair01.nif
             if b_obj.nifcollision.oblivion_layer == NifFormat.OblivionLayer.OL_BIPED:
                 # special collision object for creatures
-                n_col_obj = self.nif_export.create_block("bhkBlendCollisionObject", b_obj)
+                n_col_obj = self.nif_export.objecthelper.create_block("bhkBlendCollisionObject", b_obj)
                 n_col_obj.flags = 9
                 n_col_obj.unknown_float_1 = 1.0
                 n_col_obj.unknown_float_2 = 1.0
                 # also add a controller for it
-                blendctrl = self.nif_export.create_block("bhkBlendController", b_obj)
+                blendctrl = self.nif_export.objecthelper.create_block("bhkBlendController", b_obj)
                 blendctrl.flags = 12
                 blendctrl.frequency = 1.0
                 blendctrl.phase = 0.0
@@ -101,7 +101,7 @@ class bhkshape_export():
                 parent_block.add_controller(blendctrl)
             else:
                 # usual collision object
-                n_col_obj = self.nif_export.create_block("bhkCollisionObject", b_obj)
+                n_col_obj = self.nif_export.objecthelper.create_block("bhkCollisionObject", b_obj)
                 if layer == NifFormat.OblivionLayer.OL_ANIM_STATIC and col_filter != 128:
                     # animated collision requires flags = 41
                     # unless it is a constrainted but not keyframed object
@@ -112,7 +112,7 @@ class bhkshape_export():
 
             parent_block.collision_object = n_col_obj
             n_col_obj.target = parent_block
-            n_bhkrigidbody = self.nif_export.create_block("bhkRigidBody", b_obj)
+            n_bhkrigidbody = self.nif_export.objecthelper.create_block("bhkRigidBody", b_obj)
             n_col_obj.body = n_bhkrigidbody
             n_bhkrigidbody.layer = getattr(NifFormat.OblivionLayer, layer)
             n_bhkrigidbody.col_filter = col_filter
@@ -179,7 +179,7 @@ class bhkshape_export():
 
         if not n_col_body.shape:
 
-            n_col_mopp = self.nif_export.create_block("bhkMoppBvTreeShape", b_obj)
+            n_col_mopp = self.nif_export.objecthelper.create_block("bhkMoppBvTreeShape", b_obj)
             n_col_body.shape = n_col_mopp
             n_col_mopp.material = n_havok_mat
             n_col_mopp.unknown_8_bytes[0] = 160
@@ -193,7 +193,7 @@ class bhkshape_export():
             n_col_mopp.unknown_float = 1.0
 
             # the mopp origin, scale, and data are written later
-            n_col_shape = self.nif_export.create_block("bhkPackedNiTriStripsShape", b_obj)
+            n_col_shape = self.nif_export.objecthelper.create_block("bhkPackedNiTriStripsShape", b_obj)
             n_col_mopp.shape = n_col_shape
             
             n_col_shape.unknown_int_1 = 0
@@ -264,7 +264,7 @@ class bhkshape_export():
         # (this works in all cases, can be simplified just before
         # the file is written)
         if not n_col_body.shape:
-            n_col_shape = self.nif_export.create_block("bhkListShape")
+            n_col_shape = self.nif_export.objecthelper.create_block("bhkListShape")
             n_col_body.shape = n_col_shape
             n_col_shape.material = n_havok_mat
         else:
@@ -302,7 +302,7 @@ class bhkshape_export():
         
         if b_obj.game.collision_bounds_type in {'BOX', 'SPHERE'}:
             # note: collision settings are taken from lowerclasschair01.nif
-            coltf = self.nif_export.create_block("bhkConvexTransformShape", b_obj)
+            coltf = self.nif_export.objecthelper.create_block("bhkConvexTransformShape", b_obj)
             coltf.material = n_havok_mat
             coltf.unknown_float_1 = 0.1
             coltf.unknown_8_bytes[0] = 96
@@ -332,7 +332,7 @@ class bhkshape_export():
             coltf.transform.m_34 /= self.HAVOK_SCALE
 
             if b_obj.game.collision_bounds_type == 'BOX':
-                colbox = self.nif_export.create_block("bhkBoxShape", b_obj)
+                colbox = self.nif_export.objecthelper.create_block("bhkBoxShape", b_obj)
                 coltf.shape = colbox
                 colbox.material = n_havok_mat
                 colbox.radius = radius
@@ -351,7 +351,7 @@ class bhkshape_export():
                 colbox.minimum_size = min(colbox.dimensions.x, colbox.dimensions.y, colbox.dimensions.z)
 
             elif b_obj.game.collision_bounds_type == 'SPHERE':
-                colsphere = self.nif_export.create_block("bhkSphereShape", b_obj)
+                colsphere = self.nif_export.objecthelper.create_block("bhkSphereShape", b_obj)
                 coltf.shape = colsphere
                 colsphere.material = n_havok_mat
                 # take average radius and
@@ -385,7 +385,7 @@ class bhkshape_export():
                 return self.export_collision_object(b_obj, layer, n_havok_mat)
 
             # end points are ok, so export as capsule
-            colcaps = self.nif_export.create_block("bhkCapsuleShape", b_obj)
+            colcaps = self.nif_export.objecthelper.create_block("bhkCapsuleShape", b_obj)
             colcaps.material = n_havok_mat
             colcaps.first_point.x = vert1[0] / self.HAVOK_SCALE
             colcaps.first_point.y = vert1[1] / self.HAVOK_SCALE
@@ -456,7 +456,7 @@ class bhkshape_export():
                     "ERROR%t|Too many faces/vertices."
                     " Decimate/split your b_mesh and try again.")
 
-            colhull = self.nif_export.create_block("bhkConvexVerticesShape", b_obj)
+            colhull = self.nif_export.objecthelper.create_block("bhkConvexVerticesShape", b_obj)
             colhull.material = n_havok_mat
             colhull.radius = radius
             colhull.unknown_6_floats[2] = -0.0 # enables arrow detection
@@ -503,7 +503,7 @@ class bound_export():
         maxz = max([b_vert[2] for b_vert in b_vertlist])
 
         if bsbound:
-            n_bbox = self.nif_export.create_block("BSBound")
+            n_bbox = self.nif_export.objecthelper.create_block("BSBound")
             # ... the following incurs double scaling because it will be added in
             # both the extra data list and in the old extra data sequence!!!
             # block_parent.add_extra_data(n_bbox)
