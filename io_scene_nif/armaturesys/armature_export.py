@@ -48,7 +48,7 @@ class Armature():
     
 
     def __init__(self, parent):
-        self.nif_common = parent
+        self.nif_export = parent
         
         # dictionary of bones, maps Blender bone name to matrix that maps the
         # NIF bone matrix on the Blender bone matrix
@@ -59,7 +59,7 @@ class Armature():
         #   B = X^{-1} * B'
         # Hence, we will restore the X's, invert them, and store those inverses in the
         # following dictionary.
-        self.nif_common.bones_extra_matrix_inv = {}
+        self.bones_extra_matrix_inv = {}
         
     def rebuild_bones_extra_matrices(self):
         """Recover bone extra matrices."""
@@ -81,20 +81,20 @@ class Armature():
                 except:
                     raise NifExportError('Syntax error in BoneExMat buffer.')
                 # Check if matrices are clean, and if necessary fix them.
-                quat = matrix.rotationPart().toQuat()
+                quat = matrix.to_3x3().to_quaternion()
                 if sum(sum(abs(x) for x in vec)
-                       for vec in matrix.rotationPart() - quat.toMatrix()) > 0.01:
-                    self.warning(
+                       for vec in matrix.to_3x3() - quat.to_matrix()) > 0.01:
+                    self.nif_export.warning(
                         "Bad bone extra matrix for bone %s. \n"
                         "Attempting to fix... but bone transform \n"
                         "may be incompatible with existing animations." % b)
-                    self.warning("old invalid matrix:\n%s" % matrix)
-                    trans = matrix.translationPart()
-                    matrix = quat.toMatrix().resize4x4()
-                    matrix[3][0] = trans[0]
-                    matrix[3][1] = trans[1]
-                    matrix[3][2] = trans[2]
-                    self.warning("new valid matrix:\n%s" % matrix)
+                    self.nif_export.warning("old invalid matrix:\n%s" % matrix)
+                    trans = matrix.to_translation()
+                    matrix = quat.to_matrix().resize_4x4()
+                    matrix[0][3] = trans[0]
+                    matrix[1][3] = trans[1]
+                    matrix[2][3] = trans[2]
+                    self.nif_export.warning("new valid matrix:\n%s" % matrix)
                 # Matrices are stored inverted for easier math later on.
                 matrix.invert()
                 self.set_bone_extra_matrix_inv(b, matrix)
@@ -103,13 +103,13 @@ class Armature():
         """Set bone extra matrix, inverted. The bone_name is first converted
         to blender style (to ensure compatibility with older imports).
         """
-        self.nif_common.bones_extra_matrix_inv[self.nif_common.get_bone_name_for_blender(bone_name)] = matrix
+        self.bones_extra_matrix_inv[self.nif_export.get_bone_name_for_blender(bone_name)] = matrix
 
     def get_bone_extra_matrix_inv(self, bone_name):
         """Get bone extra matrix, inverted. The bone_name is first converted
         to blender style (to ensure compatibility with older imports).
         """
-        return self.nif_common.bones_extra_matrix_inv[self.nif_common.get_bone_name_for_blender(bone_name)]
+        return self.bones_extra_matrix_inv[self.nif_export.get_bone_name_for_blender(bone_name)]
     
     
     def export_bones(self, arm, parent_block):
@@ -142,24 +142,24 @@ class Armature():
         # ok, let's create the bone NiNode blocks
         for bone in list(bones.values()):
             # create a new block for this bone
-            node = self.nif_common.create_ninode(bone)
+            node = self.nif_export.create_ninode(bone)
             # doing bone map now makes linkage very easy in second run
             bones_node[bone.name] = node
 
             # add the node and the keyframe for this bone
-            node.name = self.nif_common.get_full_name(bone.name).encode()
-            if self.nif_common.properties.game in ('OBLIVION', 'FALLOUT_3'):
+            node.name = self.nif_export.get_full_name(bone.name)
+            if self.nif_export.properties.game in ('OBLIVION', 'FALLOUT_3'):
                 # default for Oblivion bones
                 # note: bodies have 0x000E, clothing has 0x000F
                 node.flags = 0x000E
-            elif self.nif_common.properties.game in ('CIVILIZATION_IV', 'EMPIRE_EARTH_II'):
+            elif self.nif_export.properties.game in ('CIVILIZATION_IV', 'EMPIRE_EARTH_II'):
                 if bone.children:
                     # default for Civ IV/EE II bones with children
                     node.flags = 0x0006
                 else:
                     # default for Civ IV/EE II final bones
                     node.flags = 0x0016
-            elif self.nif_common.properties.game in ('DIVINITY_2',):
+            elif self.nif_export.properties.game in ('DIVINITY_2',):
                 if bone.children:
                     # default for Div 2 bones with children
                     node.flags = 0x0186
@@ -170,12 +170,12 @@ class Armature():
                     node.flags = 0x0196
             else:
                 node.flags = 0x0002 # default for Morrowind bones
-            self.nif_common.export_matrix(bone, 'localspace', node) # rest pose
+            self.nif_export.export_matrix(bone, 'localspace', node) # rest pose
 
             # bone rotations are stored in the IPO relative to the rest position
             # so we must take the rest position into account
             # (need original one, without extra transforms, so extra = False)
-            bonerestmat = self.get_bone_rest_matrix(bone, 'BONESPACE',
+            bone_rest_matrix = self.get_bone_rest_matrix(bone, 'BONESPACE',
                                                     extra = False)
             try:
                 bonexmat_inv = mathutils.Matrix(
@@ -184,15 +184,15 @@ class Armature():
                 bonexmat_inv = mathutils.Matrix()
                 bonexmat_inv.identity()
             if bone.name in bones_ipo:
-                self.nif_common.animationhelper.export_keyframes(
+                self.nif_export.animationhelper.export_keyframes(
                     bones_ipo[bone.name], 'localspace', node,
-                    bind_matrix = bonerestmat, extra_mat_inv = bonexmat_inv)
+                    bind_matrix = bone_rest_matrix, extra_mat_inv = bonexmat_inv)
 
             # does bone have priority value in NULL constraint?
             for constr in arm.pose.bones[bone.name].constraints:
                 # yes! store it for reference when creating the kf file
                 if constr.name[:9].lower() == "priority:":
-                    self.nif_common.bone_priorities[
+                    self.nif_export.bone_priorities[
                         self.get_bone_name_for_nif(bone.name)
                         ] = int(constr.name[9:])
 
@@ -200,7 +200,7 @@ class Armature():
         for bone in list(bones.values()):
             # link the bone's children to the bone
             if bone.children:
-                self.nif_common.debug("Linking children of bone %s" % bone.name)
+                self.nif_export.debug("Linking children of bone %s" % bone.name)
                 for child in bone.children:
                     # bone.children returns also grandchildren etc.
                     # we only want immediate children, so do a parent check
@@ -220,7 +220,7 @@ class Armature():
             if b_obj_child.type in ['MESH', 'EMPTY', 'ARMATURE']:
                 if (b_obj.type != 'ARMATURE'):
                     # not parented to an armature
-                    self.nif_common.export_node(b_obj_child, 'localspace',
+                    self.nif_export.export_node(b_obj_child, 'localspace',
                                      parent_block, b_obj_child.name)
                 else:
                     # this object is parented to an armature
@@ -228,15 +228,15 @@ class Armature():
                     # armature using vertex weights
                     # or whether it is parented to some bone of the armature
                     parent_bone_name = b_obj_child.parent_bone
-                    if parent_bone_name is None:
-                        self.nif_common.export_node(b_obj_child, 'localspace',
+                    if parent_bone_name == "":
+                        self.nif_export.export_node(b_obj_child, 'localspace',
                                          parent_block, b_obj_child.name)
                     else:
                         # we should parent the object to the bone instead of
                         # to the armature
                         # so let's find that bone!
-                        nif_bone_name = self.nif_common.get_full_name(parent_bone_name)
-                        for bone_block in self.nif_common.blocks:
+                        nif_bone_name = self.nif_export.get_full_name(parent_bone_name)
+                        for bone_block in self.nif_export.blocks:
                             if isinstance(bone_block, NifFormat.NiNode) and \
                                 bone_block.name.decode() == nif_bone_name:
                                 # ok, we should parent to block
@@ -248,7 +248,7 @@ class Armature():
                                 #     extra translation along the Y axis
                                 #     with length of the bone ("tail")
                                 # this is handled in the get_object_srt function
-                                self.nif_common.export_node(b_obj_child, 'localspace',
+                                self.nif_export.export_node(b_obj_child, 'localspace',
                                                  bone_block, b_obj_child.name)
                                 break
                         else:

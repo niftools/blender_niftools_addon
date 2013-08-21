@@ -1,4 +1,4 @@
-"""This script contains helper methods to import/export textures."""
+"""This script contains helper methods to import textures."""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -37,186 +37,437 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import os.path
-from functools import reduce 
-import operator
 
 import bpy
 
 from pyffi.formats.nif import NifFormat
 
 class Texture():
-	
-	# dictionary of texture files, to reuse textures
-	textures = {}
 
 	def __init__(self, parent):
-		self.nif_common = parent
+		self.nif_import = parent
+		self.textureloader = None
+		self.used_slots = []
+		self.b_mat = None
 		
-	def get_texture_hash(self, source):
-		"""Helper function for import_texture. Returns a key that uniquely
-		identifies a texture from its source (which is either a
-		NiSourceTexture block, or simply a path string).
-		"""
-		if not source:
-			return None
-		elif isinstance(source, NifFormat.NiSourceTexture):
-			return source.get_hash()
-		elif isinstance(source, str):
-			return source.lower()
-		else:
-			raise TypeError("source must be NiSourceTexture block or string")
-
-	def import_texture(self, source):
-		"""Convert a NiSourceTexture block, or simply a path string,
-		to a Blender Texture object, return the Texture object and
-		stores it in the self.textures dictionary to avoid future
-		duplicate imports.
-		"""
-
-		# if the source block is not linked then return None
-		if not source:
-			return None
-
-		# calculate the texture hash key
-		texture_hash = self.get_texture_hash(source)
-
-		try:
-			# look up the texture in the dictionary of imported textures
-			# and return it if found
-			return self.textures[texture_hash]
-		except KeyError:
-			pass
-
-		b_image = None
+		self.diffuse_map = None 
+		self.bump_map = None 
+		self.dark_map = None
+		self.decal_map = None
+		self.detail_map = None
+		self.gloss_map = None
+		self.glow_map = None
+		self.normal_map = None
+		self.unknown_2_map = None
 		
-		if (isinstance(source, NifFormat.NiSourceTexture)
-			and not source.use_external):
-			# find a file name (but avoid overwriting)
-			n = 0
-			while True:
-				fn = "image%03i.dds" % n
-				tex = os.path.join(
-					os.path.dirname(self.properties.filepath), fn)
-				if not os.path.exists(tex):
-					break
-				n += 1
-			if self.IMPORT_EXPORTEMBEDDEDTEXTURES:
-				# save embedded texture as dds file
-				stream = open(tex, "wb")
-				try:
-					self.nif_common.info("Saving embedded texture as %s" % tex)
-					source.pixel_data.save_as_dds(stream)
-				except ValueError:
-					# value error means that the pixel format is not supported
-					b_image = None
-				else:
-					# saving dds succeeded so load the file
-					b_image = bpy.ops.image.open(tex)
-					# Blender will return an image object even if the
-					# file format is not supported,
-					# so to check if the image is actually loaded an error
-					# is forced via "b_image.size"
-					try:
-						b_image.size
-					except: # RuntimeError: couldn't load image data in Blender
-						b_image = None # not supported, delete image object
-				finally:
-					stream.close()
-			else:
-				b_image = None
-		else:
-			# the texture uses an external image file
-			if isinstance(source, NifFormat.NiSourceTexture):
-				fn = source.file_name.decode()
-			elif isinstance(source, str):
-				fn = source
-			else:
-				raise TypeError(
-					"source must be NiSourceTexture or str")
-			fn = fn.replace( '\\', os.sep )
-			fn = fn.replace( '/', os.sep )
-			# go searching for it
-			importpath = os.path.dirname(self.nif_common.properties.filepath)
-			searchPathList = [importpath]
-			if self.nif_common.context.user_preferences.filepaths.texture_directory:
-				searchPathList.append(
-					self.nif_common.context.user_preferences.filepaths.texture_directory)
+		
+	def set_texture_loader(self, textureloader):
+		self.textureloader = textureloader
+
+	def import_nitextureprop_textures(self, b_mat, n_texture_prop):
+		if(self.b_mat != b_mat):
+			self.cached = False
 			
-			# TODO_3 - Implement full texture path finding.
-			nif_dir = os.path.join(os.getcwd() , 'nif')
-			searchPathList.append(nif_dir)
+		if n_texture_prop.has_base_texture:
+			self.import_diffuse_texture(b_mat, n_texture_prop)
+	
+		if n_texture_prop.has_bump_map_texture:
+			self.import_bump_texture(b_mat, n_texture_prop)
+				
+		if n_texture_prop.has_bump_map_texture:
+			self.import_bump_texture(b_mat, n_texture_prop)
+			has_normal_texture		
+		
+		if n_texture_prop.has_glow_texture:
+			self.import_glow_texture(b_mat, n_texture_prop)
+				
+		if n_texture_prop.has_gloss_texture:
+			self.import_gloss_texture(b_mat, n_texture_prop)
 			
-			# if it looks like a Morrowind style path, use common sense to
-			# guess texture path
-			meshes_index = importpath.lower().find("meshes")
-			if meshes_index != -1:
-				searchPathList.append(importpath[:meshes_index] + 'textures')
-			# if it looks like a Civilization IV style path, use common sense
-			# to guess texture path
-			art_index = importpath.lower().find("art")
-			if art_index != -1:
-				searchPathList.append(importpath[:art_index] + 'shared')
-			# go through all texture search paths
-			for texdir in searchPathList:
-				texdir = texdir.replace( '\\', os.sep )
-				texdir = texdir.replace( '/', os.sep )
-				# go through all possible file names, try alternate extensions
-				# too; for linux, also try lower case versions of filenames
-				texfns = reduce(operator.add,
-								[ [ fn[:-4]+ext, fn[:-4].lower()+ext ]
-								  for ext in ('.DDS','.dds','.PNG','.png',
-											 '.TGA','.tga','.BMP','.bmp',
-											 '.JPG','.jpg') ] )
-				texfns = [fn, fn.lower()] + list(set(texfns))
-				for texfn in texfns:
-					# now a little trick, to satisfy many Morrowind mods
-					if (texfn[:9].lower() == 'textures' + os.sep) \
-					   and (texdir[-9:].lower() == os.sep + 'textures'):
-						# strip one of the two 'textures' from the path
-						tex = os.path.join( texdir[:-9], texfn )
-					else:
-						tex = os.path.join( texdir, texfn )
-					# "ignore case" on linux
-					tex = bpy.path.resolve_ncase(tex)
-					self.nif_common.debug("Searching %s" % tex)
-					if os.path.exists(tex):
-						# tries to load the file
-						b_image = bpy.data.images.load(tex)
-						# Blender will return an image object even if the
-						# file format is not supported,
-						# so to check if the image is actually loaded an error
-						# is forced via "b_image.size"
-						try:
-							b_image.size
-						except: # RuntimeError: couldn't load image data in Blender
-							b_image = None # not supported, delete image object
-						else:
-							# file format is supported
-							self.nif_common.debug("Found '%s' at %s" % (fn, tex))
-							break
-				if b_image:
+		if n_texture_prop.has_dark_texture:
+			self.import_dark_texture(b_mat, n_texture_prop)
+		
+		if n_texture_prop.has_detail_texture:
+			self.import_detail_texture(b_mat, n_texture_prop)
+		
+		self.cached = True
+		self.b_mat = b_mat
+		
+	def import_texture_extra_shader(b_mat,n_texture_prop, extra_datas):
+		# extra texture shader slots
+		for shader_tex_desc in n_texture_prop.shader_textures:
+			
+			if not shader_tex_desc.is_used:
+				continue
+			
+			# it is used, figure out the slot it is used for
+			for extra in extra_datas:
+				if extra.integer_data == shader_tex_desc.map_index:
+					shader_name = extra.name
 					break
 			else:
-				tex = os.path.join(searchPathList[0], fn)
+				self.nif_import.warning("No slot for shader texture %s."
+										% shader_tex_desc.texture_data.source.file_name)
+				continue
+			try:
+				extra_shader_index = (self.nif_import.EXTRA_SHADER_TEXTURES.index(shader_name))
+			except ValueError:
+				# shader_name not in self.EXTRA_SHADER_TEXTURES
+				self.nif_import.warning(
+					"No slot for shader texture %s."
+					% shader_tex_desc.texture_data.source.file_name)
+				continue
+			
+			self.import_shader_by_type(extra_shader_index)
+			
+	def import_shader_by_type(extra_shader_index):
+		if extra_shader_index == 0:
+			# EnvironmentMapIndex
+			if shader_tex_desc.texture_data.source.file_name.lower().startswith("rrt_engine_env_map"):
+				# sid meier's railroads: env map generated by engine
+				# we can skip this
+				print("Ignoring Env Map as generated by Engine")
+			# XXX todo, civ4 uses this
+			self.nif_import.warning("Skipping environment map texture.")
+		elif extra_shader_index == 1:
+			# NormalMapIndex
+			bumpTexDesc = shader_tex_desc.texture_data
+		elif extra_shader_index == 2:
+			# SpecularIntensityIndex
+			glossTexDesc = shader_tex_desc.texture_data
+		elif extra_shader_index == 3:
+			# EnvironmentIntensityIndex (this is reflection)
+			refTexDesc = shader_tex_desc.texture_data
+		elif extra_shader_index == 4:
+			# LightCubeMapIndex
+			if shader_tex_desc.texture_data.source.file_name.lower().startswith("rrt_cube_light_map"):
+				# sid meier's railroads: light map generated by engine
+				# we can skip this
+				print("Ignoring Env Map as generated by Engine")
+			self.nif_import.warning("Skipping light cube texture.")
+		elif extra_shader_index == 5:
+			# ShadowTextureIndex
+			self.nif_import.warning("Skipping shadow texture.")
+		
+		
+	def import_bsshaderproperty(b_mat, bsShaderProperty):
+		baseTexFile = bsShaderProperty.texture_set.textures[0]
+		if baseTexFile:
+			self.import_diffuse_texture(b_mat, baseTexFile)
+			
+		bumpTexFile = bsShaderProperty.texture_set.textures[1]
+		if n_texture_prop.has_bump_map_texture:
+			self.import_bump_texture(b_mat, n_texture_prop)
+		
+		glowTexFile = bsShaderProperty.texture_set.textures[2]
+		if n_texture_prop.has_glow_texture:
+			self.import_glow_texture(b_mat, n_texture_prop)			
+							
+											
+	def import_texture_effect(b_mat, textureEffect):
+		diffuse_texture = n_textureDesc.base_texture
+		
+		b_mat_texslot = b_mat.texture_slots.add()
+		b_mat_texslot.texture = self.textureloader.import_texture_source(diffuse_texture.source)
+		b_mat_texslot.use = True
 
-		# create a stub image if the image could not be loaded
-		if not b_image:
-			self.nif_common.warning(
-				"Texture '%s' not found or not supported"
-				" and no alternate available"
-				% fn)
-			b_image = bpy.data.images.new(
-				name=fn, width=1, height=1, alpha=False)
-			# TODO is this still needed? commented out for now
-			# b_image.filepath = tex
+		# Influence mapping
+		
+		# Mapping
+		b_mat_texslot.texture_coords = 'UV'
+		b_mat_texslot.uv_layer = self.get_uv_layer_name(diffuse_texture.uv_set)
+		
+		# Influence
+		b_mat_texslot.use_map_color_diffuse = True
+		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
+                n_textureDesc.apply_mode)
+		
+# 		if(n_alpha_prop):
+# 			b_mat_texslot.use_map_alpha
+		# update: needed later
+		self.normal_textures.append(b_mat_texslot)
+# 		
+# 		envmapTexture = self.textureloader.import_texture_source(textureEffect.source_texture)
+# 		if envmapTexture:
+# 			# set the texture to use face reflection coordinates
+# 			texco = 'REFLECTION'
+# 			# map the texture to the base color channel
+# 			mapto = FIXME.use_map_color_diffuse
+# 			# set the texture for the material
+# 			material.setTexture(3, envmapTexture, texco, mapto)
+# 			menvmapTexture = material.getTextures()[3]
+# 			menvmapTexture.blend_type = 'ADD'
 
-		# create a texture
-		b_texture = bpy.data.textures.new(name="Tex", type='IMAGE')
-		b_texture.image = b_image
-		b_texture.use_interpolation = True
-		b_texture.use_mipmap = True
 
-		# save texture to avoid duplicate imports, and return it
-		self.textures[texture_hash] = b_texture
-		return b_texture
+# 		has_base_texture
+# 	 	has_bump_map_texture
+# 	 	has_dark_texture
+# 	 	has_decal_0_texture
+# 	 	has_decal_1_texture
+# 	 	has_decal_2_texture
+# 	 	has_decal_3_texture
+# 	 	has_detail_texture
+# 	 	has_gloss_texture
+# 	 	has_glow_texture
+# 	 	has_normal_texture
+# 	 	has_unknown_2_texture	
+
+	def import_diffuse_texture(self, b_mat, n_textureDesc):
+		diffuse_texture = n_textureDesc.base_texture
+		
+		b_mat_texslot = b_mat.texture_slots.add()
+		b_mat_texslot.texture = self.textureloader.import_texture_source(diffuse_texture.source)
+		b_mat_texslot.use = True
+
+		# Influence mapping
+		
+		# Mapping
+		b_mat_texslot.texture_coords = 'UV'
+		b_mat_texslot.uv_layer = self.get_uv_layer_name(diffuse_texture.uv_set)
+		
+		# Influence
+		b_mat_texslot.use_map_color_diffuse = True
+		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
+                n_textureDesc.apply_mode)
+		
+# 		if(n_alpha_prop):
+# 			b_mat_texslot.use_map_alpha
+		# update: needed later
+		self.diffuse_map = b_mat_texslot
+
+
+	def import_bump_texture(self, b_mat, n_textureDesc):
+		bumpmap_texture = n_textureDesc.bump_map_texture
+		
+		b_mat_texslot = b_mat.texture_slots.add()
+		b_mat_texslot.texture = self.textureloader.import_texture_source(bumpmap_texture.source)
+		b_mat_texslot.use = True
+		
+		# Influence mapping
+		b_mat_texslot.texture.use_normal_map = False # causes artifacts otherwise.
+		b_mat_texslot.use_map_color_diffuse = False
+		
+		# Mapping
+		b_mat_texslot.texture_coords = 'UV'
+		b_mat_texslot.uv_layer = self.get_uv_layer_name(bumpmap_texture.uv_set)
+		
+		# Influence
+		b_mat_texslot.use_map_normal = True
+		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
+                n_textureDesc.apply_mode)
+		
+# 		if(n_alpha_prop):
+# 			b_mat_texslot.use_map_alpha
+		
+		# update: needed later
+		self.bump_map = b_mat_texslot
+		
+	def import_glow_texture(self, b_mat, n_textureDesc):
+		glow_texture = n_textureDesc.glow_texture
+		
+		b_mat_texslot = b_mat.texture_slots.add()
+		b_mat_texslot.texture = self.textureloader.import_texture_source(glow_texture.source)
+		b_mat_texslot.use = True
+		
+		# Influence mapping
+		b_mat_texslot.texture.use_alpha = False
+		b_mat_texslot.use_map_color_diffuse = False
+		
+		
+		# Mapping
+		b_mat_texslot.texture_coords = 'UV'
+		b_mat_texslot.uv_layer = self.get_uv_layer_name(glow_texture.uv_set)
+		
+		# Influence
+		b_mat_texslot.use_map_emit = True
+		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
+                n_textureDesc.apply_mode)
+		
+# 		if(n_alpha_prop):
+# 			b_mat_texslot.use_map_alpha
+			
+		# update: needed later
+		self.glow_map = b_mat_texslot
+
+	def import_gloss_texture(self, b_mat, n_textureDesc):
+		gloss_texture = n_textureDesc.base_texture
+		
+		b_mat_texslot = b_mat.texture_slots.create(0)
+		b_mat_texslot.texture = self.textureloader.import_texture_source(gloss_texture.source)
+		b_mat_texslot.use = True
+
+		# Influence mapping
+		
+		# Mapping
+		b_mat_texslot.texture_coords = 'UV'
+		b_mat_texslot.uv_layer = self.get_uv_layer_name(gloss_texture.uv_set)
+		
+		# Influence
+		b_mat_texslot.use_map_color_diffuse = True
+		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
+                n_textureDesc.apply_mode)
+		
+# 		if(n_alpha_prop):
+# 			b_mat_texslot.use_map_alpha
+		# update: needed later
+		self.gloss_textures = b_mat_texslot
+		
+# 		gloss_map = 
+# 		if gloss_map:
+# 			# set the texture to use face UV coordinates
+# 			texco = 'UV'
+# 			# map the texture to the specularity channel
+# 			mapto = FIXME.use_map_specular
+# 			# set the texture for the material
+# 			material.setTexture(4, gloss_map, texco, mapto)
+# 			mgloss_texture = material.getTextures()[4]
+# 			mgloss_texture.uv_layer = self.get_uv_layer_name(glossTexDesc.uv_set)
+			
+			
+	def import_dark_texture(self, b_mat, n_textureDesc):
+		dark_texture = n_textureDesc.base_texture
+		
+		b_mat_texslot = b_mat.texture_slots.add()
+		b_mat_texslot.texture = self.textureloader.import_texture_source(dark_texture.source)
+		b_mat_texslot.use = True
+
+		# Influence mapping
+		
+		# Mapping
+		b_mat_texslot.texture_coords = 'UV'
+		b_mat_texslot.uv_layer = self.get_uv_layer_name(dark_texture.uv_set)
+		
+		# Influence
+		b_mat_texslot.use_map_color_diffuse = True
+		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
+                n_textureDesc.apply_mode)
+		
+# 		if(n_alpha_prop):
+# 			b_mat_texslot.use_map_alpha
+		# update: needed later
+		
+# 		dark_texture = self.textureloader.import_texture_source(darkTexDesc.source)
+# 		if dark_texture:
+# 			# set the texture to use face UV coordinates
+# 			texco = 'UV'
+# 			# map the texture to the COL channel
+# 			mapto = FIXME.use_map_color_diffuse
+# 			# set the texture for the material
+# 			material.setTexture(5, dark_texture, texco, mapto)
+# 			mdark_texture = material.getTextures()[5]
+# 			mdark_texture.uv_layer = self.get_uv_layer_name(darkTexDesc.uv_set)
+# 			# set blend mode to "DARKEN"
+# 			mdark_texture.blend_type = 'DARKEN'
+		
+
+	def import_detail_texture(self, b_mat, n_textureDesc):
+		detail_texture = n_textureDesc.base_texture
+		
+		b_mat_texslot = b_mat.texture_slots.add()
+		b_mat_texslot.texture = self.textureloader.import_texture_source(detail_texture.source)
+		b_mat_texslot.use = True
+
+		# Influence mapping
+		
+		# Mapping
+		b_mat_texslot.texture_coords = 'UV'
+		b_mat_texslot.uv_layer = self.get_uv_layer_name(detail_texture.uv_set)
+		
+		# Influence
+		b_mat_texslot.use_map_color_diffuse = True
+		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
+                n_textureDesc.apply_mode)
+		
+# 		if(n_alpha_prop):
+# 			b_mat_texslot.use_map_alpha
+		# update: needed later
+		
+# 		detail_texture = self.textureloader.import_texture_source(detailTexDesc.source)
+# 		if detail_texture:
+# 			# import detail texture as extra base texture
+# 			# set the texture to use face UV coordinates
+# 			texco = 'UV'
+# 			# map the texture to the COL channel
+# 			mapto = FIXME.use_map_color_diffuse
+# 			# set the texture for the material
+# 			material.setTexture(6, detail_texture, texco, mapto)
+# 			mdetail_texture = material.getTextures()[6]
+# 			mdetail_texture.uv_layer = self.get_uv_layer_name(detailTexDesc.uv_set)
+
+	def import_reflection_texture(self, b_mat, n_textureDesc):
+		reflection_texture = n_textureDesc.base_texture
+		
+		b_mat_texslot = b_mat.texture_slots.add()
+		b_mat_texslot.texture = self.textureloader.import_texture_source(reflection_texture.source)
+		b_mat_texslot.use = True
+
+		# Influence mapping
+		
+		# Mapping
+		b_mat_texslot.texture_coords = 'UV'
+		b_mat_texslot.uv_layer = self.get_uv_layer_name(reflection_texture.uv_set)
+		
+		# Influence
+		b_mat_texslot.use_map_color_diffuse = True
+		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
+                n_textureDesc.apply_mode)
+		
+# 		if(n_alpha_prop):
+# 			b_mat_texslot.use_map_alpha
+		# update: needed later
+		
+		
+# 		refTexture = self.textureloader.import_texture_source(refTexDesc.source)
+# 		if refTexture:
+# 			# set the texture to use face UV coordinates
+# 			texco = 'UV'
+# 			# map the texture to the base color and emit channel
+# 			mapto = Blender.Texture.MapTo.REF
+# 			# set the texture for the material
+# 			material.setTexture(7, refTexture, texco, mapto)
+# 			mrefTexture = material.getTextures()[7]
+# 			mrefTexture.uv_layer = self.get_uv_layer_name(refTexDesc.uv_set)
+
+		
+	def get_b_blend_type_from_n_apply_mode(self, n_apply_mode):
+		# TODO - Check out n_apply_modes
+		if n_apply_mode == NifFormat.ApplyMode.APPLY_MODULATE:
+			return "MIX"
+        # TODO - These seem unsupported by Blender, check
+		elif n_apply_mode == NifFormat.ApplyMode.APPLY_REPLACE:
+			return "MIX"
+		elif n_apply_mode == NifFormat.ApplyMode.APPLY_DECAL:
+			return "MIX"
+		elif n_apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT:
+			return "LIGHTEN"
+		elif n_apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT2: # used by Oblivion for parallax
+			return "MULTIPLY"
+		self.nif_import.warning(
+			"Unknown apply mode (%i) in material,"
+			" using blend type 'MIX'" % n_apply_mode)
+		return "MIX"
+
+
+	def get_uv_layer_name(self, uvset):
+		return "UVMap.%03i" % uvset if uvset != 0 else "UVMap"
+	
+	
+	def get_used_textslots(self, b_mat):	
+		self.used_slots = [b_texslot for b_texslot in b_mat.texture_slots if b_texslot != None]
+		return self.used_slots
+	
+	def has_diffuse_texture(self, b_mat):
+		return self.diffuse_map	
+	
+	def has_glow_texture(self, b_mat):
+		return self.glow_map
+				
+	def has_bumpmap_texture(self, b_mat):
+		return self.bump_map
+	
+	
+	def has_normalmap_texture(self, b_mat):
+		return self.normal_map
+	
+	
+	

@@ -1,8 +1,6 @@
 import sys
 import os
 
-PYDEV_SOURCE_DIR = ""
-
 def startdebug():
 
     try:
@@ -12,12 +10,16 @@ def startdebug():
              sys.path.append(pydev_src)
              
         import pydevd
-    except:
-        print("Could not find Python Remote Debugger")
+        print("Found: " + pydev_src)
+        
+        try:
+            pydevd.settrace(None, True, True, 5678, False, False)
+        except:    
+            print("Unable to connect to Remote debugging server")
         pass
     
-    try:
-        pydevd.settrace(None, True, True, 5678, False, False)
-    except:    
-        print("Unable to connect to Remote debugging server")
+    except:
+        print("Python Remote Debugging Server not found")
         pass
+    
+    
