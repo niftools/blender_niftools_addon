@@ -2,7 +2,7 @@
 
 # ***** BEGIN LICENSE BLOCK *****
 #
-# Copyright © 2005-2013, NIF File Format Library and Tools contributors.
+# Copyright Â© 2005-2013, NIF File Format Library and Tools contributors.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -46,6 +46,7 @@ from io_scene_nif.collisionsys.collision_import import bhkshape_import, bound_im
 from io_scene_nif.constraintsys.constraint_import import Constraint
 from io_scene_nif.materialsys.material import material_import
 from io_scene_nif.texturesys.texture_import import Texture
+from io_scene_nif.texturesys.texture_loader import TextureLoader
 
 from functools import reduce
 import logging
@@ -72,6 +73,22 @@ class NifImport(NifCommon):
     D2R = 3.14159265358979/180.0
     IMPORT_EXTRANODES = True
     
+    def __init__(self, operator, context):
+        NifCommon.__init__(self, operator, context)
+
+        # Helper systems
+        self.animationhelper = AnimationHelper(parent=self)
+        self.armaturehelper = Armature(parent=self)
+        # TODO create super collisionhelper
+        self.bhkhelper = bhkshape_import(parent=self)
+        self.boundhelper = bound_import(parent=self)
+        self.constrainthelper = Constraint(parent=self)
+        self.textureloader = TextureLoader(parent=self)
+        self.texturehelper = Texture(parent=self)
+        self.texturehelper.set_texture_loader(self.textureloader)
+        self.materialhelper = material_import(parent=self)
+        self.materialhelper.set_texture_helper(self.texturehelper)
+    
     def execute(self):
         """Main import function."""
 
@@ -87,16 +104,6 @@ class NifImport(NifCommon):
         # import_armature
         self.bone_priorities = {}
 
-        # Helper systems
-        # Store references to subsystems as needed.
-        self.animationhelper = AnimationHelper(parent=self)
-        self.armaturehelper = Armature(parent=self)
-        self.bhkhelper = bhkshape_import(parent=self)
-        self.boundhelper = bound_import(parent=self)
-        self.constrainthelper = Constraint(parent=self)
-        self.texturehelper = Texture(parent=self)
-        self.materialhelper = material_import(parent=self)
-        self.materialhelper.set_texture_helper(self.texturehelper)
         # catch NifImportError
         try:
             # check that one armature is selected in 'import geometry + parent
@@ -541,8 +548,9 @@ class NifImport(NifCommon):
                 # set up transforms
                 for n_child, b_child in object_children:
                     # save transform
-                    matrix = mathutils.Matrix(
-                        b_child.getMatrix('localspace'))
+                    
+                    # FIXME
+                    matrix = mathutils.Matrix(b_child.matrix_local)
                     # fix transform
                     # the bone has in the nif file an armature space transform
                     # given by niBlock.get_transform(relative_to=n_armature)
@@ -574,11 +582,12 @@ class NifImport(NifCommon):
                     # cancel out the tail translation T
                     # (the tail causes a translation along
                     # the local Y axis)
-                    matrix[3][1] -= b_obj.length
+                    matrix[1][3] -= b_obj.length
                     b_child.matrix_local = matrix
-                    # parent child to the bone
-                    b_armature.makeParentBone(
-                        [b_child], b_obj.name)
+                    
+                    b_child.parent = b_armature
+                    b_child.parent_type = 'BONE'
+                    b_child.parent_bone = b_obj.name
                 
             else:
                 raise RuntimeError(
@@ -812,23 +821,19 @@ class NifImport(NifCommon):
             if n_uvco:
                 n_texture_prop = nif_utils.find_property(niBlock,
                                                   NifFormat.NiTexturingProperty)
-
-            # Alpha
-            n_alpha_prop = nif_utils.find_property(niBlock,
-                                               NifFormat.NiAlphaProperty)
-
-            # Specularity
-            n_specular_prop = nif_utils.find_property(niBlock,
-                                              NifFormat.NiSpecularProperty)
-
-            # Wireframe
-            n_wire_prop = nif_utils.find_property(niBlock,
-                                              NifFormat.NiWireframeProperty)
-
+                
+            # extra datas (for sid meier's railroads) that have material info
+            extra_datas = []
+            for extra in niBlock.get_extra_datas():
+                if isinstance(extra, NifFormat.NiIntegerExtraData):
+                    if extra.name in self.EXTRA_SHADER_TEXTURES:
+                        # yes, it describes the shader slot number
+                        extra_datas.append(extra)    
+            
             # bethesda shader
             bsShaderProperty = nif_utils.find_property(
                 niBlock, NifFormat.BSShaderPPLightingProperty)
-
+            
             # texturing effect for environment map
             # in official files this is activated by a NiTextureEffect child
             # preceeding the niBlock
@@ -851,14 +856,19 @@ class NifImport(NifCommon):
                         if isinstance(effect, NifFormat.NiTextureEffect):
                             textureEffect = effect
                             break
+            
+            # Alpha
+            n_alpha_prop = nif_utils.find_property(niBlock,
+                                               NifFormat.NiAlphaProperty)
 
-            # extra datas (for sid meier's railroads) that have material info
-            extra_datas = []
-            for extra in niBlock.get_extra_datas():
-                if isinstance(extra, NifFormat.NiIntegerExtraData):
-                    if extra.name in self.EXTRA_SHADER_TEXTURES:
-                        # yes, it describes the shader slot number
-                        extra_datas.append(extra)
+            # Specularity
+            n_specular_prop = nif_utils.find_property(niBlock,
+                                              NifFormat.NiSpecularProperty)
+
+            # Wireframe
+            n_wire_prop = nif_utils.find_property(niBlock,
+                                              NifFormat.NiWireframeProperty)
+
 
             # create material and assign it to the mesh
             # XXX todo: delegate search for properties to import_material
@@ -1046,7 +1056,7 @@ class NifImport(NifCommon):
                 # Set the face UV's for the mesh. The NIF format only supports
                 # vertex UV's, but Blender only allows explicit editing of face
                 # UV's, so load vertex UV's as face UV's
-                uvlayer = self.materialhelper.get_uv_layer_name(i)
+                uvlayer = self.texturehelper.get_uv_layer_name(i)
                 if not uvlayer in b_mesh.uv_textures:
                     b_mesh.uv_textures.new(uvlayer)
                 for f, b_f_index in zip(n_tris, f_map):
@@ -1061,8 +1071,8 @@ class NifImport(NifCommon):
         if material:
             # fix up vertex colors depending on whether we had textures in the
             # material
-            mbasetex = material.texture_slots[0]
-            mglowtex = material.texture_slots[1]
+            mbasetex = self.texturehelper.has_diffuse_texture(material)
+            mglowtex = self.texturehelper.has_glow_texture(material)
             if b_mesh.vertex_colors:
                 if mbasetex or mglowtex:
                     # textured material: vertex colors influence lighting
@@ -1114,15 +1124,13 @@ class NifImport(NifCommon):
                 bodypart_wrap.set_value(bodypart.body_part)
                 groupname = bodypart_wrap.get_detail_display()
                 # create vertex group if it did not exist yet
-                if not(groupname in b_mesh.vert_groups.items()):
-                    b_mesh.addVertGroup(groupname)
+                if not(groupname in b_obj.vertex_groups.items()):
+                    v_group = b_obj.vertex_groups.new(groupname)
                 # find vertex indices of this group
                 groupverts = [v_map[v_index]
                               for v_index in skinpartblock.vertex_map]
                 # create the group
-                b_mesh.assignVertsToGroup(
-                    groupname, groupverts, 1,
-                    Blender.Mesh.AssignModes.ADD)
+                v_group.add(groupverts, 1, 'ADD')
 
         # import morph controller
         # XXX todo: move this to import_mesh_controllers

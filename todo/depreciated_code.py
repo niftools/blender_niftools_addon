@@ -1333,3 +1333,27 @@
             elif b_obj.get('ColFilter') and b_obj.get('ColFilter') == int(prop):
                 col_filter = b_obj.get('ColFilter')
 '''
+
+
+#Aaron1178 collision export stuff
+'''
+    def export_bsx_upb_flags(self, b_obj, parent_block):
+        """Gets BSXFlags prop and creates BSXFlags node
+
+        @param b_obj: The blender Object
+        @param parent_block: The nif parent block
+        """
+
+        if not b_obj.nifcollision.bsxFlags or not b_obj.nifcollision.upb:
+            return
+
+        bsxNode = self.create_block("BSXFlags", b_obj)
+        bsxNode.name = "BSX"
+        bsxNode.integer_data = b_obj.nifcollision.bsxFlags
+        parent_block.add_extra_data(bsxNode)
+
+        upbNode = self.create_block("NiStringExtraData", b_obj)
+        upbNode.name = "UPB"
+        upbNode.string_data = b_obj.nifcollision.upb
+        parent_block.add_extra_data(upbNode)
+'''

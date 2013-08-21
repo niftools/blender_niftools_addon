@@ -66,6 +66,7 @@ def underscore_to_camelcase(s):
             first_word_passed = True
     return ''.join(camelcase_words(s.split('_')))
 
+
 class NiftoolsMaterialProps(bpy.types.PropertyGroup):
     '''Adds custom properties to material'''
     
@@ -92,6 +93,7 @@ class NiftoolsMaterialProps(bpy.types.PropertyGroup):
     @classmethod
     def unregister(cls):
         del bpy.types.Material.niftools
+
 
 class NiftoolsObjectProps(bpy.types.PropertyGroup):
     @classmethod
@@ -184,10 +186,12 @@ class NiftoolsObjectCollisionProps(bpy.types.PropertyGroup):
     def unregister(cls):
         del bpy.types.Object.nifcollision
         
+        
 def register():
     bpy.utils.register_class(NiftoolsMaterialProps)
     bpy.utils.register_class(NiftoolsObjectProps)
     bpy.utils.register_class(NiftoolsObjectCollisionProps)
+
 
 def unregister():
     bpy.utils.unregister_class(NiftoolsMaterialProps)

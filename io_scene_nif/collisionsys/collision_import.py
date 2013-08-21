@@ -54,6 +54,7 @@ class bhkshape_import():
 
     def __init__(self, parent):
         self.nif_common = parent
+        self.HAVOK_SCALE = parent.HAVOK_SCALE
         
         # dictionary mapping bhkRigidBody objects to objects imported in Blender; 
         # we use this dictionary to set the physics constraints (ragdoll etc)
@@ -116,7 +117,7 @@ class bhkshape_import():
         transform = mathutils.Matrix(bhkshape.transform.as_list())
 
         # fix scale
-        transform.translation = transform.translation * self.nif_common.HAVOK_SCALE
+        transform.translation = transform.translation * self.HAVOK_SCALE
 
         # apply transform
         for b_col_obj in collision_objs:
@@ -142,9 +143,9 @@ class bhkshape_import():
 
             # set translation
             transform.translation = mathutils.Vector(
-                    (bhkshape.translation.x * self.nif_common.HAVOK_SCALE,
-                     bhkshape.translation.y * self.nif_common.HAVOK_SCALE,
-                     bhkshape.translation.z * self.nif_common.HAVOK_SCALE))
+                    (bhkshape.translation.x * self.HAVOK_SCALE,
+                     bhkshape.translation.y * self.HAVOK_SCALE,
+                     bhkshape.translation.z * self.HAVOK_SCALE))
 
             # apply transform
             for b_col_obj in collision_objs:
@@ -187,12 +188,12 @@ class bhkshape_import():
     def import_bhkbox_shape(self, bhkshape, upbflags="", bsxflags=2):
         """Import a BhkBox block as a simple Box collision object"""
         # create box
-        minx = -bhkshape.dimensions.x * self.nif_common.HAVOK_SCALE
-        maxx = +bhkshape.dimensions.x * self.nif_common.HAVOK_SCALE
-        miny = -bhkshape.dimensions.y * self.nif_common.HAVOK_SCALE
-        maxy = +bhkshape.dimensions.y * self.nif_common.HAVOK_SCALE
-        minz = -bhkshape.dimensions.z * self.nif_common.HAVOK_SCALE
-        maxz = +bhkshape.dimensions.z * self.nif_common.HAVOK_SCALE
+        minx = -bhkshape.dimensions.x * self.HAVOK_SCALE
+        maxx = +bhkshape.dimensions.x * self.HAVOK_SCALE
+        miny = -bhkshape.dimensions.y * self.HAVOK_SCALE
+        maxy = +bhkshape.dimensions.y * self.HAVOK_SCALE
+        minz = -bhkshape.dimensions.z * self.HAVOK_SCALE
+        maxz = +bhkshape.dimensions.z * self.HAVOK_SCALE
 
         b_mesh = bpy.data.meshes.new('box')
         vert_list = {}
@@ -237,7 +238,7 @@ class bhkshape_import():
     def import_bhksphere_shape(self, bhkshape, upbflags="", bsxflags=2):
         """Import a BhkSphere block as a simple uv-sphere collision object"""
 
-        b_radius = bhkshape.radius * self.nif_common.HAVOK_SCALE
+        b_radius = bhkshape.radius * self.HAVOK_SCALE
 
         bpy.ops.mesh.primitive_uv_sphere_add(segments=8, ring_count=8, size=b_radius)
         b_obj = bpy.context.scene.objects.active
@@ -264,8 +265,8 @@ class bhkshape_import():
 
         # create capsule mesh
         length = (bhkshape.first_point - bhkshape.second_point).norm()
-        minx = miny = -bhkshape.radius * self.nif_common.HAVOK_SCALE
-        maxx = maxy = +bhkshape.radius * self.nif_common.HAVOK_SCALE
+        minx = miny = -bhkshape.radius * self.HAVOK_SCALE
+        maxx = maxy = +bhkshape.radius * self.HAVOK_SCALE
         minz = -(length + 2*bhkshape.radius) * 3.5
         maxz = +(length + 2*bhkshape.radius) * 3.5
 
@@ -298,7 +299,7 @@ class bhkshape_import():
                     vert_index += 1
 
 
-        bpy.ops.mesh.primitive_cylinder_add(vertices=vert_index, radius=bhkshape.radius*self.nif_common.HAVOK_SCALE, depth=(length*14))
+        bpy.ops.mesh.primitive_cylinder_add(vertices=vert_index, radius=bhkshape.radius*self.HAVOK_SCALE, depth=(length*14))
         b_obj = bpy.context.active_object
         """
         b_obj = bpy.data.objects.new('Capsule', b_mesh)
@@ -351,9 +352,9 @@ class bhkshape_import():
 
         # find vertices (and fix scale)
         n_vertices, n_triangles = qhull3d(
-                                  [ (self.nif_common.HAVOK_SCALE * n_vert.x,
-                                     self.nif_common.HAVOK_SCALE * n_vert.y,
-                                     self.nif_common.HAVOK_SCALE * n_vert.z)
+                                  [ (self.HAVOK_SCALE * n_vert.x,
+                                     self.HAVOK_SCALE * n_vert.y,
+                                     self.HAVOK_SCALE * n_vert.z)
                                      for n_vert in bhkshape.vertices ])
 
         # create convex mesh
@@ -465,9 +466,9 @@ class bhkshape_import():
             for vert_index in range(vertex_offset, vertex_offset + subshape.num_vertices):
                 b_vert = bhkshape.data.vertices[vert_index]
                 b_mesh.vertices.add(1)
-                b_mesh.vertices[-1].co = (b_vert.x * self.nif_common.HAVOK_SCALE,
-                                          b_vert.y * self.nif_common.HAVOK_SCALE,
-                                          b_vert.z * self.nif_common.HAVOK_SCALE)
+                b_mesh.vertices[-1].co = (b_vert.x * self.HAVOK_SCALE,
+                                          b_vert.y * self.HAVOK_SCALE,
+                                          b_vert.z * self.HAVOK_SCALE)
 
             for hktriangle in bhkshape.data.triangles:
                 if ((vertex_offset <= hktriangle.triangle.v_1)

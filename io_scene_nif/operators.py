@@ -44,7 +44,7 @@ import pyffi
 from pyffi.formats.nif import NifFormat
 from pyffi.formats.egm import EgmFormat
 
-from . import nif_export, nif_import
+from io_scene_nif import nif_export, nif_import
 
 class NifOperatorCommon:
     """Abstract base class for import and export user interface."""
@@ -131,7 +131,7 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
     animation = bpy.props.BoolProperty(
         name="Animation",
         description="Import animation.",
-        default=True)
+        default=False)
 
     #: Merge skeleton roots.
     merge_skeleton_roots = bpy.props.BoolProperty(
