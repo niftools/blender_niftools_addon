@@ -522,7 +522,7 @@ class bound_export():
             n_bbox.dimensions.z = (maxz - minz) * b_obj.scale[2] * 0.5
 
         else:
-            n_bbox = self.nif_export.create_ninode()
+            n_bbox = self.nif_export.objecthelper.create_ninode()
             block_parent.add_child(n_bbox)
             # set name, flags, translation, and radius
             n_bbox.name = "Bounding Box"
