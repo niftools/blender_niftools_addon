@@ -142,12 +142,12 @@ class Armature():
         # ok, let's create the bone NiNode blocks
         for bone in list(bones.values()):
             # create a new block for this bone
-            node = self.nif_export.create_ninode(bone)
+            node = self.nif_export.objecthelper.create_ninode(bone)
             # doing bone map now makes linkage very easy in second run
             bones_node[bone.name] = node
 
             # add the node and the keyframe for this bone
-            node.name = self.nif_export.get_full_name(bone.name)
+            node.name = self.nif_export.objecthelper.get_full_name(bone.name)
             if self.nif_export.properties.game in ('OBLIVION', 'FALLOUT_3'):
                 # default for Oblivion bones
                 # note: bodies have 0x000E, clothing has 0x000F
@@ -220,7 +220,7 @@ class Armature():
             if b_obj_child.type in ['MESH', 'EMPTY', 'ARMATURE']:
                 if (b_obj.type != 'ARMATURE'):
                     # not parented to an armature
-                    self.nif_export.export_node(b_obj_child, 'localspace',
+                    self.nif_export.objecthelper.export_node(b_obj_child, 'localspace',
                                      parent_block, b_obj_child.name)
                 else:
                     # this object is parented to an armature
@@ -229,14 +229,14 @@ class Armature():
                     # or whether it is parented to some bone of the armature
                     parent_bone_name = b_obj_child.parent_bone
                     if parent_bone_name == "":
-                        self.nif_export.export_node(b_obj_child, 'localspace',
+                        self.nif_export.objecthelper.export_node(b_obj_child, 'localspace',
                                          parent_block, b_obj_child.name)
                     else:
                         # we should parent the object to the bone instead of
                         # to the armature
                         # so let's find that bone!
-                        nif_bone_name = self.nif_export.get_full_name(parent_bone_name)
-                        for bone_block in self.nif_export.blocks:
+                        nif_bone_name = self.nif_export.objecthelper.get_full_name(parent_bone_name)
+                        for bone_block in self.nif_export.objecthelper.blocks:
                             if isinstance(bone_block, NifFormat.NiNode) and \
                                 bone_block.name.decode() == nif_bone_name:
                                 # ok, we should parent to block
@@ -248,7 +248,7 @@ class Armature():
                                 #     extra translation along the Y axis
                                 #     with length of the bone ("tail")
                                 # this is handled in the get_object_srt function
-                                self.nif_export.export_node(b_obj_child, 'localspace',
+                                self.nif_export.objecthelper.export_node(b_obj_child, 'localspace',
                                                  bone_block, b_obj_child.name)
                                 break
                         else:
