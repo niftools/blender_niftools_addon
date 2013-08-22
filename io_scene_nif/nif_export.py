@@ -1008,7 +1008,7 @@ class NifExport(NifCommon):
                 except ValueError: # adding collision failed
                     continue
             else: # all nodes failed so add new one
-                node = self.create_ninode(b_obj)
+                node = self.objecthelper.create_ninode(b_obj)
                 node.set_transform(self.IDENTITY44)
                 node.name = 'collisiondummy%i' % parent_block.num_children
                 node.flags = 0x000E # default
