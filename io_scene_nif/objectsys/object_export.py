@@ -264,11 +264,11 @@ class ObjectHelper():
             # if it is an armature, export the bones as ninode
             # children of this ninode
             elif (b_obj.type == 'ARMATURE'):
-                self.armaturehelper.export_bones(b_obj, node)
+                self.nif_export.armaturehelper.export_bones(b_obj, node)
 
             # export all children of this empty/mesh/armature/bone
             # object as children of this NiNode
-            self.armaturehelper.export_children(b_obj, node)
+            self.nif_export.armaturehelper.export_children(b_obj, node)
 
         return node
   
@@ -567,7 +567,7 @@ class MeshHelper():
 
             # fill in the NiTriShape's non-trivial values
             if isinstance(parent_block, NifFormat.RootCollisionNode):
-                trishape.name = b""
+                trishape.name = ""
             elif not trishape_name:
                 if parent_block.name:
                     trishape.name = "Tri " + parent_block.name
@@ -637,7 +637,7 @@ class MeshHelper():
             # the trishape)
             if self.properties.game == 'MORROWIND' and mesh_texeff_mtex:
                 # create a new parent block for this shape
-                extra_node = self.nif_export.create_block("NiNode", mesh_texeff_mtex)
+                extra_node = self.create_block("NiNode", mesh_texeff_mtex)
                 parent_block.add_child(extra_node)
                 # set default values for this ninode
                 extra_node.rotation.set_identity()
@@ -667,16 +667,16 @@ class MeshHelper():
                     alphaflags = 0x12ED
                     alphathreshold = 0
                 trishape.add_property(
-                    self.propertyhelper.object_property.export_alpha_property(flags=alphaflags,
+                    self.nif_export.propertyhelper.object_property.export_alpha_property(flags=alphaflags,
                                                                               threshold=alphathreshold))
 
             if mesh_haswire:
                 # add NiWireframeProperty
-                trishape.add_property(self.propertyhelper.object_property.export_wireframe_property(flags=1))
+                trishape.add_property(self.nif_export.propertyhelper.object_property.export_wireframe_property(flags=1))
 
             if mesh_doublesided:
                 # add NiStencilProperty
-                trishape.add_property(self.propertyhelper.object_property.export_stencil_property())
+                trishape.add_property(self.nif_export.propertyhelper.object_property.export_stencil_property())
 
             if b_mat:
                 # add NiTriShape's specular property
@@ -990,9 +990,9 @@ class MeshHelper():
                         else:
                             skininst = self.nif_export.objecthelper.create_block("NiSkinInstance", b_obj)
                         trishape.skin_instance = skininst
-                        for block in self.objecthelper.blocks:
+                        for block in self.nif_export.objecthelper.blocks:
                             if isinstance(block, NifFormat.NiNode):
-                                if block.name.decode() == self.get_full_name(armaturename):
+                                if block.name.decode() == self.nif_export.objecthelper.get_full_name(armaturename):
                                     skininst.skeleton_root = block
                                     break
                         else:
@@ -1008,7 +1008,7 @@ class MeshHelper():
                         # fix geometry rest pose: transform relative to
                         # skeleton root
                         skindata.set_transform(
-                            self.get_object_matrix(b_obj, 'localspace').get_inverse())
+                            self.nif_export.get_object_matrix(b_obj, 'localspace').get_inverse())
                        
                         # Vertex weights,  find weights and normalization factors
                         vert_list = {}
@@ -1072,9 +1072,9 @@ class MeshHelper():
                         for bone_index, bone in enumerate(boneinfluences):
                             # find bone in exported blocks
                             bone_block = None
-                            for block in self.objecthelper.blocks:
+                            for block in self.nif_export.objecthelper.blocks:
                                 if isinstance(block, NifFormat.NiNode):
-                                    if block.name.decode() == self.get_full_name(bone):
+                                    if block.name.decode() == self.nif_export.objecthelper.get_full_name(bone):
                                         if not bone_block:
                                             bone_block = block
                                         else:
@@ -1122,7 +1122,7 @@ class MeshHelper():
 
                         if (self.nif_export.version >= 0x04020100
                             and self.properties.skin_partition):
-                            self.info("Creating skin partition")
+                            self.nif_export.info("Creating skin partition")
                             lostweight = trishape.update_skin_partition(
                                 maxbonesperpartition=self.properties.max_bones_per_partition,
                                 maxbonespervertex=self.properties.max_bones_per_vertex,
@@ -1217,7 +1217,7 @@ class MeshHelper():
                             # export morphed vertices
                             morph = morphdata.morphs[keyblocknum]
                             morph.frame_name = keyblock.name
-                            self.info("Exporting morph %s: vertices"
+                            self.nif_export.info("Exporting morph %s: vertices"
                                              % keyblock.name)
                             morph.arg = morphdata.num_vertices
                             morph.vectors.update_size()
@@ -1258,7 +1258,7 @@ class MeshHelper():
                             # and on floatdata for newer nifs
                             # of course only one of these will be actually
                             # written to the file
-                            self.info("Exporting morph %s: curve"
+                            self.nif_export.info("Exporting morph %s: curve"
                                              % keyblock.name)
                             interpol.data = self.nif_export.objecthelper.create_block("NiFloatData", curve)
                             floatdata = interpol.data.data
