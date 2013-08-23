@@ -110,7 +110,7 @@ class NifExport(NifCommon):
 
     def execute(self):
         """Main export function."""
-
+        bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
 
         self.info("exporting {0}".format(self.properties.filepath))
 
