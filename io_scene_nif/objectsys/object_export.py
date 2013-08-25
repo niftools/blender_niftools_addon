@@ -172,7 +172,7 @@ class ObjectHelper():
                 is_collision = b_obj.game.use_collision_bounds
                 has_ipo = b_obj_ipo and len(b_obj_ipo.getCurves()) > 0
                 has_children = len(b_obj_children) > 0
-                is_multimaterial = len(set([f.material_index for f in b_obj.data.faces])) > 1
+                is_multimaterial = len(set([f.material_index for f in b_obj.data.tessfaces])) > 1
                 # determine if object tracks camera
                 has_track = False
                 for constr in b_obj.constraints:
@@ -745,21 +745,21 @@ class MeshHelper():
             trilist = []
             # for each face in trilist, a body part index
             bodypartfacemap = []
-            faces_without_bodypart = []
-            for f in b_mesh.faces:
+            tessfaces_without_bodypart = []
+            for f in b_mesh.tessfaces:
                 # does the face belong to this trishape?
                 if (b_mat != None): # we have a material
                     if (f.material_index != materialIndex): # but this face has another material
                         continue # so skip this face
                 f_numverts = len(f.vertices)
-                if (f_numverts < 3): continue # ignore degenerate faces
+                if (f_numverts < 3): continue # ignore degenerate tessfaces
                 assert((f_numverts == 3) or (f_numverts == 4)) # debug
                 if mesh_uvlayers:
                     # if we have uv coordinates
                     # double check that we have uv data
                     # XXX should we check that every uvlayer in mesh_uvlayers
-                    # XXX is in uv_textures?
-                    if not b_mesh.uv_textures:
+                    # XXX is in tessface_uv_textures?
+                    if not b_mesh.tessface_uv_textures:
                         raise NifExportError(
                             "ERROR%t|Create a UV map for every texture,"
                             " and run the script again.")
@@ -778,7 +778,7 @@ class MeshHelper():
                     fuv = []
                     for uvlayer in mesh_uvlayers:
                         fuv.append(
-                            getattr(b_mesh.uv_textures[uvlayer].data[f.index],
+                            getattr(b_mesh.tessface_uv_textures[uvlayer].data[f.index],
                                     "uv%i" % (i + 1)))
 
                     fcol = None
@@ -867,33 +867,33 @@ class MeshHelper():
                                 break
                         else:
                             # this signals an error
-                            faces_without_bodypart.append(f)
+                            tessfaces_without_bodypart.append(f)
 
-            # check that there are no missing body part faces
-            if faces_without_bodypart:
-                # switch to edit mode to select faces
+            # check that there are no missing body part tessfaces
+            if tessfaces_without_bodypart:
+                # switch to edit mode to select tessfaces
                 bpy.ops.object.mode_set(mode='EDIT',toggle=False)
                 # select mesh object
                 for b_obj in self.context.scene.objects:
                     b_obj.select = False
                 self.context.scene.objects.active = b_obj
                 b_obj.select = True
-                # select bad faces
-                for face in b_mesh.faces:
+                # select bad tessfaces
+                for face in b_mesh.tessfaces:
                     face.select = False
-                for face in faces_without_bodypart:
+                for face in tessfaces_without_bodypart:
                     face.select = True
                 # raise exception
                 raise ValueError(
-                    "Some faces of %s not assigned to any body part."
-                    " The unassigned faces"
+                    "Some tessfaces of %s not assigned to any body part."
+                    " The unassigned tessfaces"
                     " have been selected in the mesh so they can easily"
                     " be identified."
                     % b_obj)
 
             if len(trilist) > 65535:
                 raise NifExportError(
-                    "ERROR%t|Too many faces. Decimate your mesh and try again.")
+                    "ERROR%t|Too many tessfaces. Decimate your mesh and try again.")
             if len(vertlist) == 0:
                 continue # m_4444x: skip 'empty' material indices
 
@@ -1301,7 +1301,7 @@ class MeshHelper():
             b_mesh = b_obj.data
             # for v in b_mesh.vertices:
             #    v.sel = False
-            for f in b_mesh.faces:
+            for f in b_mesh.tessfaces:
                 for v_index in f.vertices:
                     v = b_mesh.vertices[v_index]
                     vkey = (int(v.co[0]*self.nif_export.VERTEX_RESOLUTION),
@@ -1317,7 +1317,7 @@ class MeshHelper():
             if len(vlist) <= 1: continue # not shared
             meshes = set([b_mesh for v, f, b_mesh in vlist])
             if len(meshes) <= 1: continue # not shared
-            # take average of all face normals of faces that have this
+            # take average of all face normals of tessfaces that have this
             # vertex
             norm = mathutils.Vector()
             for v, f, b_mesh in vlist:
@@ -1329,7 +1329,7 @@ class MeshHelper():
                        for v, f, b_mesh in vlist]
             bestfit = max(fitlist)
             # recalculate normals only taking into account
-            # well-fitting faces
+            # well-fitting tessfaces
             norm = mathutils.Vector()
             for (v, f, b_mesh), fit in zip(vlist, fitlist):
                 if fit >= bestfit - 0.2:
