@@ -230,9 +230,9 @@ class bhkshape_export():
         vertices = [vert.co * transform for vert in mesh.vertices]
         triangles = []
         normals = []
-        for face in mesh.faces:
+        for face in mesh.tessfaces:
             if len(face.vertices) < 3:
-                continue # ignore degenerate faces
+                continue # ignore degenerate tessfaces
             triangles.append([face.vertices[i] for i in (0, 1, 2)])
             normals.append(rotation * face.normal)
             if len(face.vertices) == 4:
@@ -427,10 +427,10 @@ class bhkshape_export():
 
             # calculate vertices, normals, and distances
             vertlist = [b_transform_mat * vert.co for vert in b_mesh.vertices]
-            fnormlist = [b_rot_quat * b_face.normal for b_face in b_mesh.faces]
-            fdistlist = [(b_transform_mat * (-1 * b_mesh.vertices[b_mesh.faces[b_face.index].vertices[0]].co)).dot(
+            fnormlist = [b_rot_quat * b_face.normal for b_face in b_mesh.tessfaces]
+            fdistlist = [(b_transform_mat * (-1 * b_mesh.vertices[b_mesh.tessfaces[b_face.index].vertices[0]].co)).dot(
                             b_rot_quat.to_matrix() * b_face.normal)
-                         for b_face in b_mesh.faces ]
+                         for b_face in b_mesh.tessfaces ]
 
             # remove duplicates through dictionary
             vertdict = {}
@@ -453,7 +453,7 @@ class bhkshape_export():
 
             if len(fnormlist) > 65535 or len(vertlist) > 65535:
                 raise NifExportError(
-                    "ERROR%t|Too many faces/vertices."
+                    "ERROR%t|Too many tessfaces/vertices."
                     " Decimate/split your b_mesh and try again.")
 
             colhull = self.nif_export.objecthelper.create_block("bhkConvexVerticesShape", b_obj)

@@ -788,7 +788,7 @@ class NifImport(NifCommon):
         # vertices
         n_verts = niData.vertices
 
-        # faces
+        # tessfaces
         n_tris = [list(tri) for tri in niData.get_triangles()]
 
         # "sticky" UV coordinates: these are transformed in Blender UV's
@@ -965,42 +965,42 @@ class NifImport(NifCommon):
         # release memory
         del n_map
 
-        # Adds the faces to the mesh
+        # Adds the tessfaces to the mesh
         f_map = [None]*len(n_tris)
-        b_f_index = len(b_mesh.faces)
+        b_f_index = len(b_mesh.tessfaces)
         num_new_faces = 0 # counter for debugging
-        unique_faces = set() # to avoid duplicate faces
+        unique_faces = set() # to avoid duplicate tessfaces
         for i, f in enumerate(n_tris):
             # get face index
             f_verts = [v_map[vert_index] for vert_index in f]
-            # skip degenerate faces
-            # we get a ValueError on faces.extend otherwise
+            # skip degenerate tessfaces
+            # we get a ValueError on tessfaces.extend otherwise
             if (f_verts[0] == f_verts[1]) or (f_verts[1] == f_verts[2]) or (f_verts[2] == f_verts[0]):
                 continue
             if tuple(f_verts) in unique_faces:
                 continue
             unique_faces.add(tuple(f_verts))
-            b_mesh.faces.add(1)
+            b_mesh.tessfaces.add(1)
             if f_verts[2] == 0:
                 # eeekadoodle fix
                 f_verts[0], f_verts[1], f_verts[2] = f_verts[2], f_verts[0], f_verts[1]
                 f[0], f[1], f[2] = f[2], f[0], f[1] # f[0] comes second
-            b_mesh.faces[-1].vertices_raw = f_verts + [0]
-            # keep track of added faces, mapping NIF face index to
+            b_mesh.tessfaces[-1].vertices_raw = f_verts + [0]
+            # keep track of added tessfaces, mapping NIF face index to
             # Blender face index
             f_map[i] = b_f_index
             b_f_index += 1
             num_new_faces += 1
-        # at this point, deleted faces (degenerate or duplicate)
+        # at this point, deleted tessfaces (degenerate or duplicate)
         # satisfy f_map[i] = None
 
-        self.debug("%i unique faces" % num_new_faces)
+        self.debug("%i unique tessfaces" % num_new_faces)
 
         # set face smoothing and material
         for b_f_index in f_map:
             if b_f_index is None:
                 continue
-            f = b_mesh.faces[b_f_index]
+            f = b_mesh.tessfaces[b_f_index]
             f.use_smooth = True if n_norms else False
             f.material_index = materialIndex
 
@@ -1045,10 +1045,10 @@ class NifImport(NifCommon):
         # only must duplicate vertices for hard edges; duplicating for UV seams
         # would introduce unnecessary hard edges.
 
-        # only import UV if there are faces
-        # (some corner cases have only one vertex, and no faces,
+        # only import UV if there are tessfaces
+        # (some corner cases have only one vertex, and no tessfaces,
         # and b_mesh.faceUV = 1 on such mesh raises a runtime error)
-        if b_mesh.faces:
+        if b_mesh.tessfaces:
             # blender 2.5+ aloways uses uv's per face?
             #b_mesh.faceUV = 1
             #b_mesh.vertexUV = 0
@@ -1057,16 +1057,16 @@ class NifImport(NifCommon):
                 # vertex UV's, but Blender only allows explicit editing of face
                 # UV's, so load vertex UV's as face UV's
                 uvlayer = self.texturehelper.get_uv_layer_name(i)
-                if not uvlayer in b_mesh.uv_textures:
-                    b_mesh.uv_textures.new(uvlayer)
+                if not uvlayer in b_mesh.tessface_uv_textures:
+                    b_mesh.tessface_uv_textures.new(uvlayer)
                 for f, b_f_index in zip(n_tris, f_map):
                     if b_f_index is None:
                         continue
                     uvlist = [(uv_set[vert_index].u, 1.0 - uv_set[vert_index].v) for vert_index in f]
-                    b_mesh.uv_textures[uvlayer].data[b_f_index].uv1 = uvlist[0]
-                    b_mesh.uv_textures[uvlayer].data[b_f_index].uv2 = uvlist[1]
-                    b_mesh.uv_textures[uvlayer].data[b_f_index].uv3 = uvlist[2]
-            b_mesh.uv_textures.active_index = 0
+                    b_mesh.tessface_uv_textures[uvlayer].data[b_f_index].uv1 = uvlist[0]
+                    b_mesh.tessface_uv_textures[uvlayer].data[b_f_index].uv2 = uvlist[1]
+                    b_mesh.tessface_uv_textures[uvlayer].data[b_f_index].uv3 = uvlist[2]
+            b_mesh.tessface_uv_textures.active_index = 0
 
         if material:
             # fix up vertex colors depending on whether we had textures in the
@@ -1090,7 +1090,7 @@ class NifImport(NifCommon):
                     for b_f_index in f_map:
                         if b_f_index is None:
                             continue
-                        tface = b_mesh.uv_textures.active.data[b_f_index]
+                        tface = b_mesh.tessface_uv_textures.active.data[b_f_index]
                         # gone in blender 2.5x+?
                         # f.mode = Blender.Mesh.FaceModes['TEX']
                         # f.transp = Blender.Mesh.FaceTranspModes['ALPHA']
