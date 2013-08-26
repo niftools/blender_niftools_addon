@@ -315,7 +315,8 @@ class TextureHelper():
     
             # check UV-mapped textures
             elif b_mat_texslot.texture_coords == 'UV':
-            # update set of uv layers that must be exported
+            
+                # update set of uv layers that must be exported
                 if not b_mat_texslot.uv_layer in self.mesh_uvlayers:
                     self.mesh_uvlayers.append(b_mat_texslot.uv_layer)
     
@@ -351,7 +352,7 @@ class TextureHelper():
                     self.glossmtex = b_mat_texslot
     
                 #bump map
-                elif b_mat_texslot.use_map_normal:
+                elif b_mat_texslot.use_map_normal and b_mat_texslot.texture.use_normal_map == False:
                     #multi-check
                     if self.bumpmtex:
                         raise nif_utils.NifExportError("Multiple bump/normal textures"
@@ -365,6 +366,20 @@ class TextureHelper():
                         mesh_hasalpha = True
     
                     self.bumpmtex = b_mat_texslot
+    
+                #normal map
+                elif b_mat_texslot.use_map_normal and b_mat_texslot.texture.use_normal_map:
+                    if self.normalmtex:
+                        raise nif_utils.NifExportError(
+                            "Multiple bump/normal textures"
+                            " in mesh '%s', material '%s'."
+                            " Make sure there is only one texture"
+                            " with MapTo.NOR"
+                            %(b_mesh.name, b_mat.name))
+                    # check if alpha channel is enabled for this texture
+                    if(b_mat_texslot.use_map_alpha):
+                        mesh_hasalpha = True
+                    self.normalmtex = b_mat_texslot
     
                 #darken
                 elif b_mat_texslot.use_map_color_diffuse and \
@@ -415,20 +430,6 @@ class TextureHelper():
     
                         mesh_mat_transparency = b_mat_texslot.varfac # we must use the "Var" value
                         '''
-    
-                #normal map
-                elif b_mat_texslot.use_map_normal and b_mat_texslot.texture.use_normal_map:
-                    if self.normalmtex:
-                        raise nif_utils.NifExportError(
-                            "Multiple bump/normal textures"
-                            " in mesh '%s', material '%s'."
-                            " Make sure there is only one texture"
-                            " with MapTo.NOR"
-                            %(b_mesh.name, b_mat.name))
-                    # check if alpha channel is enabled for this texture
-                    if(b_mat_texslot.use_map_alpha):
-                        mesh_hasalpha = True
-                    self.normalmtex = b_mat_texslot
     
                 #detail
                 elif b_mat_texslot.use_map_color_diffuse and \

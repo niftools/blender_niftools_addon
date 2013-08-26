@@ -255,7 +255,7 @@ class Texture():
 		b_mat_texslot.uv_layer = self.get_uv_layer_name(bumpmap_texture.uv_set)
 		
 		# Influence
-		b_mat_texslot.use_map_normal = True
+		b_mat_texslot.use_map_normal = False
 		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
                 n_textureDesc.apply_mode)
 		
@@ -267,10 +267,10 @@ class Texture():
 		
 		
 	def import_normalmap_texture(self, b_mat, n_textureDesc):
-		bumpmap_texture = n_textureDesc.bump_map_texture
+		normalmap_texture = n_textureDesc.normal_map_texture
 		
 		b_mat_texslot = b_mat.texture_slots.add()
-		b_mat_texslot.texture = self.textureloader.import_texture_source(bumpmap_texture.source)
+		b_mat_texslot.texture = self.textureloader.import_texture_source(normalmap_texture.source)
 		b_mat_texslot.use = True
 		
 		# Influence mapping
@@ -279,7 +279,7 @@ class Texture():
 		
 		# Mapping
 		b_mat_texslot.texture_coords = 'UV'
-		b_mat_texslot.uv_layer = self.get_uv_layer_name(bumpmap_texture.uv_set)
+		b_mat_texslot.uv_layer = self.get_uv_layer_name(normalmap_texture.uv_set)
 		
 		# Influence
 		b_mat_texslot.use_map_normal = True
