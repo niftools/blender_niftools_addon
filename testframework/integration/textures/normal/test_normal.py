@@ -96,7 +96,7 @@ class TestTexturePropertyNormalMap(SingleNif):
         # normal
         b_mat_texslot = b_gen_texture.b_create_textureslot(b_mat, 'Normal')
         b_gen_texture.b_create_load_texture(b_mat_texslot, self.normalmap_texture_path)
-        b_gen_normalmap.b_create_noraml_texture_properties(b_mat_texslot)
+        b_gen_normalmap.b_create_normal_texture_properties(b_mat_texslot)
         
 
     def b_check_data(self):
@@ -136,8 +136,6 @@ class TestTexturePropertyNormalMap(SingleNif):
         n_gen_diffusemap.n_create_diffuse_map(n_textureprop) #add nitexturesource diffuse
         n_gen_normalmap.n_create_normal_map(n_textureprop) #add nitexturesource normalmap
         
-        return self.n_data
-
 
     def n_check_data(self):
         
