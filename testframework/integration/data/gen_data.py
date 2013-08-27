@@ -44,3 +44,15 @@ def n_create_header_oblivion(n_data):
     n_data.version = 0x14000005
     n_data.user_version = 11
     n_data.user_version_2 = 11
+    
+    
+def n_create_header_fo3(n_data):
+    n_data.version = 0x14020005
+    n_data.user_version = 11
+    n_data.user_version_2 = 34
+    
+
+def n_create_header_sky(n_data):
+    raise NotImplementedError
+
+    

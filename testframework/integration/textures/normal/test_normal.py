@@ -62,7 +62,7 @@ from integration.textures.normal import n_gen_normalmap
  Normal map, technically special case....
  Handling if user supplies normal map instead of bump & vice-versa
 
-    Extra_shader_data -> NormalMapIndex (Civ VI, Sid Miener)
+    Extra_shader_data -> NormalMapIndex (Civ VI, Sid Miener, Morrowind)
     BSShaderPPLightingProperty (FO3 & NV)
     BSLightingShaderProperty(Skyrim)
 '''
