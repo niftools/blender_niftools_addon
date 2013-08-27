@@ -69,7 +69,7 @@ class TestGlossProperty(SingleNif):
 
 
     def n_create_data(self):
-        gen_data.n_create_header(self.n_data)
+        gen_data.n_create_header_oblivion(self.n_data)
         n_gen_geometry.n_create_blocks(self.n_data)
         
         n_trishape = self.n_data.roots[0].children[0]
