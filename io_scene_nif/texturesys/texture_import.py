@@ -248,13 +248,14 @@ class Texture():
 		
 		# Influence mapping
 		b_mat_texslot.texture.use_normal_map = False # causes artifacts otherwise.
-		b_mat_texslot.use_map_color_diffuse = False
+
 		
 		# Mapping
 		b_mat_texslot.texture_coords = 'UV'
 		b_mat_texslot.uv_layer = self.get_uv_layer_name(bumpmap_texture.uv_set)
 		
 		# Influence
+		b_mat_texslot.use_map_color_diffuse = False
 		b_mat_texslot.use_map_normal = False
 		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
                 n_textureDesc.apply_mode)
@@ -275,13 +276,13 @@ class Texture():
 		
 		# Influence mapping
 		b_mat_texslot.texture.use_normal_map = True # causes artifacts otherwise.
-		b_mat_texslot.use_map_color_diffuse = False
 		
 		# Mapping
 		b_mat_texslot.texture_coords = 'UV'
 		b_mat_texslot.uv_layer = self.get_uv_layer_name(normalmap_texture.uv_set)
 		
 		# Influence
+		b_mat_texslot.use_map_color_diffuse = False
 		b_mat_texslot.use_map_normal = True
 		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
                 n_textureDesc.apply_mode)
@@ -292,6 +293,7 @@ class Texture():
 		# update: needed later
 		self.normal_map = b_mat_texslot
 		
+		
 	def import_glow_texture(self, b_mat, n_textureDesc):
 		glow_texture = n_textureDesc.glow_texture
 		
@@ -301,14 +303,13 @@ class Texture():
 		
 		# Influence mapping
 		b_mat_texslot.texture.use_alpha = False
-		b_mat_texslot.use_map_color_diffuse = False
-		
 		
 		# Mapping
 		b_mat_texslot.texture_coords = 'UV'
 		b_mat_texslot.uv_layer = self.get_uv_layer_name(glow_texture.uv_set)
 		
 		# Influence
+		b_mat_texslot.use_map_color_diffuse = False
 		b_mat_texslot.use_map_emit = True
 		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
                 n_textureDesc.apply_mode)
@@ -318,6 +319,7 @@ class Texture():
 			
 		# update: needed later
 		self.glow_map = b_mat_texslot
+
 
 	def import_gloss_texture(self, b_mat, n_textureDesc):
 		gloss_texture = n_textureDesc.base_texture
@@ -333,26 +335,16 @@ class Texture():
 		b_mat_texslot.uv_layer = self.get_uv_layer_name(gloss_texture.uv_set)
 		
 		# Influence
-		b_mat_texslot.use_map_color_diffuse = True
+		b_mat_texslot.use_map_color_diffuse = False
+		b_mat_texslot.use_map_color_spec = True
 		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
                 n_textureDesc.apply_mode)
 		
 # 		if(n_alpha_prop):
 # 			b_mat_texslot.use_map_alpha
 		# update: needed later
-		self.gloss_textures = b_mat_texslot
+		self.gloss_map = b_mat_texslot
 		
-# 		gloss_map = 
-# 		if gloss_map:
-# 			# set the texture to use face UV coordinates
-# 			texco = 'UV'
-# 			# map the texture to the specularity channel
-# 			mapto = FIXME.use_map_specular
-# 			# set the texture for the material
-# 			material.setTexture(4, gloss_map, texco, mapto)
-# 			mgloss_texture = material.getTextures()[4]
-# 			mgloss_texture.uv_layer = self.get_uv_layer_name(glossTexDesc.uv_set)
-			
 			
 	def import_dark_texture(self, b_mat, n_textureDesc):
 		dark_texture = n_textureDesc.base_texture
@@ -423,6 +415,7 @@ class Texture():
 # 			material.setTexture(6, detail_texture, texco, mapto)
 # 			mdetail_texture = material.getTextures()[6]
 # 			mdetail_texture.uv_layer = self.get_uv_layer_name(detailTexDesc.uv_set)
+
 
 	def import_reflection_texture(self, b_mat, n_textureDesc):
 		reflection_texture = n_textureDesc.base_texture
