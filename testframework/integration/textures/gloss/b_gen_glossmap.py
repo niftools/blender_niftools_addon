@@ -44,7 +44,7 @@ import mathutils
 import nose
 
 def b_create_gloss_texture_properties(b_mat_texslot):
-    '''Sets the textureslot settings for using a glow map'''
+    '''Sets the textureslot settings for using a gloss map'''
     
     #Influence mapping
     b_mat_texslot.use_map_color_diffuse = False
@@ -55,7 +55,7 @@ def b_create_gloss_texture_properties(b_mat_texslot):
     
     
 def b_check_gloss_texture_settings(b_mat_texslot):
-    '''Test the textureslot for settings to use a glow map'''
+    '''Test the textureslot for settings to use a gloss map'''
     
     nose.tools.assert_equal(b_mat_texslot.use_map_color_diffuse, False)
     nose.tools.assert_equal(b_mat_texslot.texture.use_alpha, False)
