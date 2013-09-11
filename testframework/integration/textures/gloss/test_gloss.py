@@ -107,9 +107,9 @@ class TestTexturePropertyGlossMap(SingleNif):
         # glow
         nose.tools.assert_equal(b_mat.texture_slots[1] != None, True) # check slot exists
         b_texslot_gloss = b_mat.texture_slots[1]
-        b_gen_texture.b_check_texture_slot(b_texslot_glow)
+        b_gen_texture.b_check_texture_slot(b_texslot_gloss)
         b_gen_texture.b_check_image_texture_property(b_texslot_gloss, self.glossmap_texture_path)  
-        b_gen_glossmap.b_check_glow_texture_settings(b_texslot_gloss)
+        b_gen_glossmap.b_check_gloss_texture_settings(b_texslot_gloss)
         
         
     def n_create_data(self):
@@ -125,7 +125,7 @@ class TestTexturePropertyGlossMap(SingleNif):
         
         n_textureprop = n_nitrishape.properties[0]
         n_gen_diffusemap.n_create_diffuse_map(n_textureprop) #add nitexturesource diffuse
-        n_gen_glowmap.n_create_gloss_map(n_textureprop) #add nitexturesource glowmap
+        n_gen_glossmap.n_create_gloss_map(n_textureprop) #add nitexturesource glowmap
         
         return self.n_data
 
@@ -149,6 +149,6 @@ class TestTexturePropertyGlossMap(SingleNif):
         
         # glow
         n_texdesc_glossmap = n_tex_prop.gloss_texture
-        n_gen_texture.n_check_texdesc(n_texdesc_glowmap) # check generic props
-        n_gen_glossmap.n_check_glow_map_source_texture(n_texdesc_glowmap.source, self.glossmap_texture_path) #check diffuse image
+        n_gen_texture.n_check_texdesc(n_texdesc_glossmap) # check generic props
+        n_gen_glossmap.n_check_glow_map_source_texture(n_texdesc_glossmap.source, self.glossmap_texture_path) #check diffuse image
         
