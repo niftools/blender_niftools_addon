@@ -335,7 +335,7 @@ class TextureHelper():
                     self.glowmtex = b_mat_texslot
     
                 #specular
-                elif b_mat_texslot.use_map_color_spec:
+                elif b_mat_texslot.use_map_specular:
                     #multi-check
                     if self.glossmtex:
                         raise nif_utils.NifExportError("Multiple gloss textures in"
