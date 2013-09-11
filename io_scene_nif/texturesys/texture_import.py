@@ -336,6 +336,7 @@ class Texture():
 		
 		# Influence
 		b_mat_texslot.use_map_color_diffuse = False
+		b_mat_texslot.use_map_specular = True
 		b_mat_texslot.use_map_color_spec = True
 		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
                 n_textureDesc.apply_mode)
