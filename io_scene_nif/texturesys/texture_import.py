@@ -76,7 +76,7 @@ class Texture():
 		if n_texture_prop.has_bump_map_texture:
 			self.import_bump_texture(b_mat, n_texture_prop)
 				
-		if n_texture_prop.has_normal_map_texture:
+		if n_texture_prop.has_normal_texture:
 			self.import_normal_texture(b_mat, n_texture_prop)
 		
 		if n_texture_prop.has_glow_texture:
@@ -256,7 +256,7 @@ class Texture():
 		
 		# Influence
 		b_mat_texslot.use_map_color_diffuse = False
-		b_mat_texslot.use_map_normal = False
+		b_mat_texslot.use_map_normal = True
 		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
                 n_textureDesc.apply_mode)
 		
