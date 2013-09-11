@@ -130,7 +130,7 @@ class TextureLoader():
             if not os.path.exists(tex):
                 break
             n += 1
-        if self.IMPORT_EXPORTEMBEDDEDTEXTURES:
+        if self.nif_import.IMPORT_EXPORTEMBEDDEDTEXTURES:
             # save embedded texture as dds file
             stream = open(tex, "wb")
             try:
