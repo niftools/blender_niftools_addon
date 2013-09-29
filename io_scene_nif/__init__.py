@@ -65,7 +65,6 @@ except:
 import logging
 import sys
 import os
-import os.path
 
 import bpy
 import bpy.props
@@ -77,10 +76,6 @@ if not _modules_path in sys.path:
 del _modules_path
 
 from io_scene_nif import properties, ui, operators
-
-import pyffi
-from pyffi.formats.nif import NifFormat
-from pyffi.formats.egm import EgmFormat
 
 def _init_loggers():
     """Set up loggers."""
