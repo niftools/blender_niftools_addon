@@ -197,16 +197,24 @@ class SingleNif(Base):
             b_obj_names.append(b_obj.name)
         return b_obj_names
 
+    def b_save(self, b_filepath):
+            """Save current scene to blend file."""
+            bpy.ops.wm.save_mainfile(filepath=b_filepath)
+
+    def b_create_header(self):
+        """Select game version to export as"""
+        raise NotImplementedError
+
     def b_create_data(self):
         """Create blender objects for feature."""
         raise NotImplementedError
 
-    def b_save(self, b_filepath):
-        """Save current scene to blend file."""
-        bpy.ops.wm.save_mainfile(filepath=b_filepath)
-
     def b_check_data(self):
         """Check blender objects against feature."""
+        raise NotImplementedError
+
+    def n_create_header(self):
+        """Create header"""
         raise NotImplementedError
 
     def n_create_data(self):
