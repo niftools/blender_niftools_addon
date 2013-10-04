@@ -396,12 +396,12 @@ class MeshHelper():
         # get mesh from b_obj
         b_mesh = b_obj.data # get mesh data
 
-        # getVertsFromGroup fails if the mesh has no vertices
+        # getVertsFromGroup fails if the mesh has no loops
         # (this happens when checking for fallout 3 body parts)
         # so quickly catch this (rare!) case
-        if not b_obj.data.vertices:
+        if not b_obj.data.loops:
             # do not export anything
-            self.nif_export.warning("%s has no vertices, skipped." % b_obj)
+            self.nif_export.warning("%s has no loops, skipped." % b_obj)
             return
 
         # get the mesh's materials, this updates the mesh material list
@@ -535,7 +535,7 @@ class MeshHelper():
                 mesh_haswire = (b_mat.type == 'WIRE')
             
                     
-            # list of body part (name, index, vertices) in this mesh
+            # list of body part (name, index, loops) in this mesh
             bodypartgroups = []
             for bodypartgroupname in NifFormat.BSDismemberBodyPartType().get_editor_keys():
                 vertex_group = b_obj.vertex_groups.get(bodypartgroupname)
@@ -545,8 +545,8 @@ class MeshHelper():
                         [bodypartgroupname,
                          getattr(NifFormat.BSDismemberBodyPartType,
                                  bodypartgroupname),
-                         # FIXME how do you get the vertices in the group???
-                         #set(vertex_group.vertices)])
+                         # FIXME how do you get the loops in the group???
+                         #set(vertex_group.loops)])
                          {}])
 
 
@@ -725,19 +725,19 @@ class MeshHelper():
                 Smooth faces should use Blender's vertex normals,
                 solid faces should use Blender's face normals.
 
-                Blender's uv vertices and normals per face.
+                Blender's uv loops and normals per face.
                 Blender supports per face vertex coloring,
             '''
 
-            # We now extract vertices, uv-vertices, normals, and
-            # vertex colors from the mesh's face list. Some vertices must be duplicated.
+            # We now extract loops, uv-loops, normals, and
+            # vertex colors from the mesh's face list. Some loops must be duplicated.
 
             # The following algorithm extracts all unique quads(vert, uv-vert, normal, vcol),
-            # produce lists of vertices, uv-vertices, normals, vertex colors, and face indices.
+            # produce lists of loops, uv-loops, normals, vertex colors, and face indices.
             
             mesh_uvlayers = self.nif_export.texturehelper.mesh_uvlayers
             vertquad_list = [] # (vertex, uv coordinate, normal, vertex color) list
-            vertmap = [None for i in range(len(b_mesh.vertices))] # blender vertex -> nif vertices
+            vertmap = [None for i in range(len(b_mesh.loops))] # blender vertex -> nif loops
             vertlist = []
             normlist = []
             vcollist = []
@@ -751,7 +751,7 @@ class MeshHelper():
                 if (b_mat != None): # we have a material
                     if (f.material_index != materialIndex): # but this face has another material
                         continue # so skip this face
-                f_numverts = len(f.vertices)
+                f_numverts = len(f.loops)
                 if (f_numverts < 3): continue # ignore degenerate polygons
                 assert((f_numverts == 3) or (f_numverts == 4)) # debug
                 if mesh_uvlayers:
@@ -765,12 +765,12 @@ class MeshHelper():
                             " and run the script again.")
                 # find (vert, uv-vert, normal, vcol) quad, and if not found, create it
                 f_index = [ -1 ] * f_numverts
-                for i, fv_index in enumerate(f.vertices):
-                    fv = b_mesh.vertices[fv_index].co
+                for i, fv_index in enumerate(f.loops):
+                    fv = b_mesh.loops[fv_index].co
                     # get vertex normal for lighting (smooth = Blender vertex normal, non-smooth = Blender face normal)
                     if mesh_hasnormals:
                         if f.use_smooth:
-                            fn = b_mesh.vertices[fv_index].normal
+                            fn = b_mesh.loops[fv_index].normal
                         else:
                             fn = f.normal
                     else:
@@ -805,7 +805,7 @@ class MeshHelper():
                     # do we already have this vertquad? (optimized by m_4444x)
                     f_index[i] = len(vertquad_list)
                     if vertmap[fv_index]:
-                        # iterate only over vertices with the same vertex index
+                        # iterate only over loops with the same vertex index
                         # and check if they have the same uvs, normals and colors (wow is that fast!)
                         for j in vertmap[fv_index]:
                             if mesh_uvlayers:
@@ -832,7 +832,7 @@ class MeshHelper():
 
                     if f_index[i] > 65535:
                         raise NifExportError(
-                            "ERROR%t|Too many vertices. Decimate your mesh"
+                            "ERROR%t|Too many loops. Decimate your mesh"
                             " and try again.")
                     if (f_index[i] == len(vertquad_list)):
                         # first: add it to the vertex map
@@ -861,7 +861,7 @@ class MeshHelper():
                         bodypartfacemap.append(0)
                     else:
                         for bodypartname, bodypartindex, bodypartverts in bodypartgroups:
-                            if (set(b_vert_index for b_vert_index in f.vertices)
+                            if (set(b_vert_index for b_vert_index in f.loops)
                                 <= bodypartverts):
                                 bodypartfacemap.append(bodypartindex)
                                 break
@@ -912,8 +912,8 @@ class MeshHelper():
             # data
             tridata.num_vertices = len(vertlist)
             tridata.has_vertices = True
-            tridata.vertices.update_size()
-            for i, v in enumerate(tridata.vertices):
+            tridata.loops.update_size()
+            for i, v in enumerate(tridata.loops):
                 v.x = vertlist[i][0]
                 v.y = vertlist[i][1]
                 v.z = vertlist[i][2]
@@ -1019,7 +1019,7 @@ class MeshHelper():
                             b_list_weight = []
                             b_vert_group = b_obj.vertex_groups[bone_group]
                             
-                            for b_vert in b_obj.data.vertices:
+                            for b_vert in b_obj.data.loops:
                                 if len(b_vert.groups) == 0: #check vert has weight_groups
                                     unassigned_verts.append(b_vert)
                                     continue
@@ -1039,7 +1039,7 @@ class MeshHelper():
                                 else:
                                     vert_norm[v[0]] = v[1]
                         
-                        # vertices must be assigned at least one vertex group
+                        # loops must be assigned at least one vertex group
                         # lets be nice and display them for the user 
                         if len(unassigned_verts) > 0:
                             for b_scene_obj in self.context.scene.objects:
@@ -1048,18 +1048,18 @@ class MeshHelper():
                             self.context.scene.objects.active = b_obj
                             b_obj.select = True
                             
-                            # select unweighted vertices
-                            for v in b_mesh.vertices:
+                            # select unweighted loops
+                            for v in b_mesh.loops:
                                 v.select = False    
                             
                             for b_vert in unassigned_verts:
-                                b_mesh.data.vertices[b_vert.index].select = True
+                                b_mesh.data.loops[b_vert.index].select = True
                                 
                             # switch to edit mode and raise exception
                             bpy.ops.object.mode_set(mode='EDIT',toggle=False)
                             raise NifExportError(
-                                "Cannot export mesh with unweighted vertices."
-                                " The unweighted vertices have been selected"
+                                "Cannot export mesh with unweighted loops."
+                                " The unweighted loops have been selected"
                                 " in the mesh so they can easily be"
                                 " identified.")
                         
@@ -1097,7 +1097,7 @@ class MeshHelper():
                                 # v[0] is the original vertex index
                                 # v[1] is the weight
 
-                                # vertmap[v[0]] is the set of vertices (indices)
+                                # vertmap[v[0]] is the set of loops (indices)
                                 # to which v[0] was mapped
                                 # so we simply export the same weight as the
                                 # original vertex for each new vertex
@@ -1109,7 +1109,7 @@ class MeshHelper():
                                         vert_weights[vert_index] = v[1] / vert_norm[v[0]]
                                         vert_added[vert_index] = True
                             # add bone as influence, but only if there were
-                            # actually any vertices influenced by the bone
+                            # actually any loops influenced by the bone
                             if vert_weights:
                                 trishape.add_bone(bone_block, vert_weights)
 
@@ -1214,10 +1214,10 @@ class MeshHelper():
                         morphctrl.unknown_ints.update_size()
 
                         for keyblocknum, keyblock in enumerate(key.key_blocks):
-                            # export morphed vertices
+                            # export morphed loops
                             morph = morphdata.morphs[keyblocknum]
                             morph.frame_name = keyblock.name
-                            self.nif_export.info("Exporting morph %s: vertices"
+                            self.nif_export.info("Exporting morph %s: loops"
                                              % keyblock.name)
                             morph.arg = morphdata.num_vertices
                             morph.vectors.update_size()
@@ -1229,9 +1229,9 @@ class MeshHelper():
                                 # copy vertex and assign morph vertex
                                 mv = vert.copy()
                                 if keyblocknum > 0:
-                                    mv.x -= b_mesh.vertices[b_v_index].co.x
-                                    mv.y -= b_mesh.vertices[b_v_index].co.y
-                                    mv.z -= b_mesh.vertices[b_v_index].co.z
+                                    mv.x -= b_mesh.loops[b_v_index].co.x
+                                    mv.y -= b_mesh.loops[b_v_index].co.y
+                                    mv.z -= b_mesh.loops[b_v_index].co.z
                                 for vert_index in vert_indices:
                                     morph.vectors[vert_index].x = mv.x
                                     morph.vectors[vert_index].y = mv.y
@@ -1294,19 +1294,19 @@ class MeshHelper():
 
 
     def smooth_mesh_seams(self, b_objs):
-        # get shared vertices
+        # get shared loops
         self.nif_export.info("Smoothing seams between objects...")
         vdict = {}
         for b_obj in [b_obj for b_obj in b_objs if b_obj.type == 'MESH']:
             b_mesh = b_obj.data
-            # for v in b_mesh.vertices:
+            # for v in b_mesh.loops:
             #    v.sel = False
             for f in b_mesh.polygons:
-                for v_index in f.vertices:
-                    v = b_mesh.vertices[v_index]
-                    vkey = (int(v.co[0]*self.nif_export.VERTEX_RESOLUTION),
-                            int(v.co[1]*self.nif_export.VERTEX_RESOLUTION),
-                            int(v.co[2]*self.nif_export.VERTEX_RESOLUTION))
+                for v_index in f.loop_indices:
+                    v = b_mesh.loops[v_index]
+                    vkey = (int(v[0]*self.nif_export.VERTEX_RESOLUTION),
+                            int(v[1]*self.nif_export.VERTEX_RESOLUTION),
+                            int(v[2]*self.nif_export.VERTEX_RESOLUTION))
                     try:
                         vdict[vkey].append((v, f, b_mesh))
                     except KeyError:
@@ -1340,6 +1340,6 @@ class MeshHelper():
                 v.normal = norm
                 # v.sel = True
             nv += 1
-        self.nif_export.info("Fixed normals on %i vertices." % nv)
+        self.nif_export.info("Fixed normals on %i loops." % nv)
     
     
