@@ -55,6 +55,7 @@ class Texture():
 		self.dark_map = None
 		self.decal_map = None
 		self.detail_map = None
+		self.env_map = None
 		self.gloss_map = None
 		self.glow_map = None
 		self.normal_map = None
@@ -63,6 +64,7 @@ class Texture():
 		
 	def set_texture_loader(self, textureloader):
 		self.textureloader = textureloader
+
 
 	def import_nitextureprop_textures(self, b_mat, n_texture_prop):
 		if(self.b_mat != b_mat):
@@ -74,9 +76,8 @@ class Texture():
 		if n_texture_prop.has_bump_map_texture:
 			self.import_bump_texture(b_mat, n_texture_prop)
 				
-		if n_texture_prop.has_bump_map_texture:
-			self.import_bump_texture(b_mat, n_texture_prop)
-			has_normal_texture		
+		if n_texture_prop.has_normal_texture:
+			self.import_normal_texture(b_mat, n_texture_prop)
 		
 		if n_texture_prop.has_glow_texture:
 			self.import_glow_texture(b_mat, n_texture_prop)
@@ -92,6 +93,7 @@ class Texture():
 		
 		self.cached = True
 		self.b_mat = b_mat
+		
 		
 	def import_texture_extra_shader(b_mat,n_texture_prop, extra_datas):
 		# extra texture shader slots
@@ -119,6 +121,7 @@ class Texture():
 				continue
 			
 			self.import_shader_by_type(extra_shader_index)
+		
 			
 	def import_shader_by_type(extra_shader_index):
 		if extra_shader_index == 0:
@@ -185,7 +188,7 @@ class Texture():
 # 		if(n_alpha_prop):
 # 			b_mat_texslot.use_map_alpha
 		# update: needed later
-		self.normal_textures.append(b_mat_texslot)
+		self.env_map = b_mat_texslot
 # 		
 # 		envmapTexture = self.textureloader.import_texture_source(textureEffect.source_texture)
 # 		if envmapTexture:
@@ -245,13 +248,14 @@ class Texture():
 		
 		# Influence mapping
 		b_mat_texslot.texture.use_normal_map = False # causes artifacts otherwise.
-		b_mat_texslot.use_map_color_diffuse = False
+
 		
 		# Mapping
 		b_mat_texslot.texture_coords = 'UV'
 		b_mat_texslot.uv_layer = self.get_uv_layer_name(bumpmap_texture.uv_set)
 		
 		# Influence
+		b_mat_texslot.use_map_color_diffuse = False
 		b_mat_texslot.use_map_normal = True
 		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
                 n_textureDesc.apply_mode)
@@ -262,6 +266,34 @@ class Texture():
 		# update: needed later
 		self.bump_map = b_mat_texslot
 		
+		
+	def import_normalmap_texture(self, b_mat, n_textureDesc):
+		normalmap_texture = n_textureDesc.normal_map_texture
+		
+		b_mat_texslot = b_mat.texture_slots.add()
+		b_mat_texslot.texture = self.textureloader.import_texture_source(normalmap_texture.source)
+		b_mat_texslot.use = True
+		
+		# Influence mapping
+		b_mat_texslot.texture.use_normal_map = True # causes artifacts otherwise.
+		
+		# Mapping
+		b_mat_texslot.texture_coords = 'UV'
+		b_mat_texslot.uv_layer = self.get_uv_layer_name(normalmap_texture.uv_set)
+		
+		# Influence
+		b_mat_texslot.use_map_color_diffuse = False
+		b_mat_texslot.use_map_normal = True
+		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
+                n_textureDesc.apply_mode)
+		
+# 		if(n_alpha_prop):
+# 			b_mat_texslot.use_map_alpha
+		
+		# update: needed later
+		self.normal_map = b_mat_texslot
+		
+		
 	def import_glow_texture(self, b_mat, n_textureDesc):
 		glow_texture = n_textureDesc.glow_texture
 		
@@ -271,14 +303,13 @@ class Texture():
 		
 		# Influence mapping
 		b_mat_texslot.texture.use_alpha = False
-		b_mat_texslot.use_map_color_diffuse = False
-		
 		
 		# Mapping
 		b_mat_texslot.texture_coords = 'UV'
 		b_mat_texslot.uv_layer = self.get_uv_layer_name(glow_texture.uv_set)
 		
 		# Influence
+		b_mat_texslot.use_map_color_diffuse = False
 		b_mat_texslot.use_map_emit = True
 		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
                 n_textureDesc.apply_mode)
@@ -288,6 +319,7 @@ class Texture():
 			
 		# update: needed later
 		self.glow_map = b_mat_texslot
+
 
 	def import_gloss_texture(self, b_mat, n_textureDesc):
 		gloss_texture = n_textureDesc.base_texture
@@ -303,26 +335,17 @@ class Texture():
 		b_mat_texslot.uv_layer = self.get_uv_layer_name(gloss_texture.uv_set)
 		
 		# Influence
-		b_mat_texslot.use_map_color_diffuse = True
+		b_mat_texslot.use_map_color_diffuse = False
+		b_mat_texslot.use_map_specular = True
+		b_mat_texslot.use_map_color_spec = True
 		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
                 n_textureDesc.apply_mode)
 		
 # 		if(n_alpha_prop):
 # 			b_mat_texslot.use_map_alpha
 		# update: needed later
-		self.gloss_textures = b_mat_texslot
+		self.gloss_map = b_mat_texslot
 		
-# 		gloss_map = 
-# 		if gloss_map:
-# 			# set the texture to use face UV coordinates
-# 			texco = 'UV'
-# 			# map the texture to the specularity channel
-# 			mapto = FIXME.use_map_specular
-# 			# set the texture for the material
-# 			material.setTexture(4, gloss_map, texco, mapto)
-# 			mgloss_texture = material.getTextures()[4]
-# 			mgloss_texture.uv_layer = self.get_uv_layer_name(glossTexDesc.uv_set)
-			
 			
 	def import_dark_texture(self, b_mat, n_textureDesc):
 		dark_texture = n_textureDesc.base_texture
@@ -394,6 +417,7 @@ class Texture():
 # 			mdetail_texture = material.getTextures()[6]
 # 			mdetail_texture.uv_layer = self.get_uv_layer_name(detailTexDesc.uv_set)
 
+
 	def import_reflection_texture(self, b_mat, n_textureDesc):
 		reflection_texture = n_textureDesc.base_texture
 		
@@ -456,11 +480,14 @@ class Texture():
 		self.used_slots = [b_texslot for b_texslot in b_mat.texture_slots if b_texslot != None]
 		return self.used_slots
 	
+	
 	def has_diffuse_texture(self, b_mat):
 		return self.diffuse_map	
 	
+	
 	def has_glow_texture(self, b_mat):
 		return self.glow_map
+	
 				
 	def has_bumpmap_texture(self, b_mat):
 		return self.bump_map
@@ -468,6 +495,5 @@ class Texture():
 	
 	def has_normalmap_texture(self, b_mat):
 		return self.normal_map
-	
 	
 	

@@ -425,7 +425,7 @@ class MeshHelper():
             mesh_hasvcol = True
 
             #vertex alpha check
-            if(len(b_mesh.vertex_colors) == 1):
+            if len(b_mesh.vertex_colors) == 1:
                 self.nif_export.warning("Mesh only has one Vertex Color layer"
                              " default alpha values will be written\n"
                              " - For Alpha values add a second vertex layer, "
@@ -523,12 +523,12 @@ class MeshHelper():
                 #alpha mat
                 mesh_hasalpha = False
                 mesh_mat_transparency = b_mat.alpha
-                if(b_mat.use_transparency):
-                    if(abs(mesh_mat_transparency - 1.0)> self.properties.epsilon):
+                if b_mat.use_transparency:
+                    if abs(mesh_mat_transparency - 1.0)> self.properties.epsilon:
                         mesh_hasalpha = True
                 elif(mesh_hasvcola):
                     mesh_hasalpha = True
-                elif(b_mat.animation_data and b_mat.animation_data.action.fcurves['Alpha']):
+                elif b_mat.animation_data and b_mat.animation_data.action.fcurves['Alpha']:
                     mesh_hasalpha = True
 
                 #wire mat
@@ -611,27 +611,27 @@ class MeshHelper():
 
             self.nif_export.export_matrix(b_obj, space, trishape)
 
+            #add textures
             if self.properties.game == 'FALLOUT_3':
-                bs_shader = self.export_bs_shader_property(b_mat)
+                if b_mat:
+                    bs_shader = self.export_bs_shader_property(b_mat)
                 
-                self.nif_export.objecthelper.register_block(bs_shader)
-                trishape.add_property(bs_shader)
+                    self.nif_export.objecthelper.register_block(bs_shader)
+                    trishape.add_property(bs_shader)
             else:
                 if self.properties.game in self.nif_export.texturehelper.USED_EXTRA_SHADER_TEXTURES:
                     # sid meier's railroad and civ4:
                     # set shader slots in extra data
                     self.nif_export.texturehelper.add_shader_integer_extra_datas(trishape)
-                    
-                n_nitextureprop = self.nif_export.texturehelper.export_texturing_property(
-                    flags=0x0001, # standard
-                    applymode=self.nif_export.get_n_apply_mode_from_b_blend_type('MIX'),
-#                         mesh_base_mtex.blend_type
-#                         if mesh_base_mtex else 
-                    b_mat=b_mat, b_obj=b_obj)
-                
-                self.nif_export.objecthelper.register_block(n_nitextureprop)
-            
-            trishape.add_property(n_nitextureprop)
+
+                if b_mat:
+                    n_nitextureprop = self.nif_export.texturehelper.export_texturing_property(
+                        flags=0x0001, # standard
+                        applymode=self.nif_export.get_n_apply_mode_from_b_blend_type('MIX'),
+                        b_mat=b_mat, b_obj=b_obj)
+
+                    self.nif_export.objecthelper.register_block(n_nitextureprop)
+                    trishape.add_property(n_nitextureprop)
             
             # add texture effect block (must be added as preceeding child of
             # the trishape)
@@ -735,7 +735,7 @@ class MeshHelper():
             # The following algorithm extracts all unique quads(vert, uv-vert, normal, vcol),
             # produce lists of vertices, uv-vertices, normals, vertex colors, and face indices.
             
-            mesh_uvlayers = self.nif_export.texturehelper.mesh_uvlayers
+            mesh_uvlayers = b_mesh.uv_textures
             vertquad_list = [] # (vertex, uv coordinate, normal, vertex color) list
             vertmap = [None for i in range(len(b_mesh.vertices))] # blender vertex -> nif vertices
             vertlist = []
@@ -754,15 +754,7 @@ class MeshHelper():
                 f_numverts = len(f.vertices)
                 if (f_numverts < 3): continue # ignore degenerate polygons
                 assert((f_numverts == 3) or (f_numverts == 4)) # debug
-                if mesh_uvlayers:
-                    # if we have uv coordinates
-                    # double check that we have uv data
-                    # XXX should we check that every uvlayer in mesh_uvlayers
-                    # XXX is in uv_textures?
-                    if not b_mesh.uv_textures:
-                        raise NifExportError(
-                            "ERROR%t|Create a UV map for every texture,"
-                            " and run the script again.")
+
                 # find (vert, uv-vert, normal, vcol) quad, and if not found, create it
                 f_index = [ -1 ] * f_numverts
                 for i, fv_index in enumerate(f.vertices):
@@ -778,7 +770,7 @@ class MeshHelper():
                     fuv = []
                     for uvlayer in mesh_uvlayers:
                         fuv.append(
-                            getattr(b_mesh.uv_textures[uvlayer].data[f.index],
+                            getattr(b_mesh.uv_textures[uvlayer.name].data[f.index],
                                     "uv%i" % (i + 1)))
 
                     fcol = None

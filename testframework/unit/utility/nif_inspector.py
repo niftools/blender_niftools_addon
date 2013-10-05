@@ -12,7 +12,7 @@ from io_scene_nif.utility import nif_utils
 
 
 '''Handy class for reading / writing nifs'''
-class TestNifInspector:
+class NifInspector:
     
     @classmethod
     def setupClass(cls):
@@ -24,7 +24,7 @@ class TestNifInspector:
         cls.data = NifFormat.Data()
         print("setup class")
     
-    def test_runner(self):
+    def runner(self):
         print("test running")
         self.write_file()
         self.read_file()
