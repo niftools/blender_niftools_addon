@@ -49,7 +49,6 @@ from io_scene_nif.constraintsys.constraint_export import Constraint
 from io_scene_nif.texturesys.texture_export import TextureHelper
 from io_scene_nif.objectsys.object_export import ObjectHelper
 
-import logging
 import os.path
 
 import mathutils
@@ -106,7 +105,7 @@ class NifExport(NifCommon):
         self.constrainthelper = Constraint(parent=self)
         self.texturehelper = TextureHelper(parent=self)
         self.objecthelper = ObjectHelper(parent=self)
-    
+
 
     def execute(self):
         """Main export function."""

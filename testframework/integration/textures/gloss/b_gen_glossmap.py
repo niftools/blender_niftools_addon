@@ -1,27 +1,25 @@
-"""Header Helper functions"""
-
 # ***** BEGIN LICENSE BLOCK *****
-#
+# 
 # Copyright © 2005-2013, NIF File Format Library and Tools contributors.
 # All rights reserved.
-#
+# 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-#
+# 
 #    * Redistributions of source code must retain the above copyright
 #      notice, this list of conditions and the following disclaimer.
-#
+# 
 #    * Redistributions in binary form must reproduce the above
 #      copyright notice, this list of conditions and the following
 #      disclaimer in the documentation and/or other materials provided
 #      with the distribution.
-#
+# 
 #    * Neither the name of the NIF File Format Library and Tools
 #      project nor the names of its contributors may be used to endorse
 #      or promote products derived from this software without specific
 #      prior written permission.
-#
+# 
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -37,25 +35,30 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from pyffi.utils.withref import ref
-from pyffi.formats.nif import NifFormat
+from os import path
 
-def n_create_header_morrowind(n_data):
-    n_data.version = 0x14000005
+import bpy
+import math
+import mathutils
 
-def n_create_header_oblivion(n_data):
-    n_data.version = 0x14000005
-    n_data.user_version = 11
-    n_data.user_version_2 = 11
+import nose
+
+def b_create_gloss_texture_properties(b_mat_texslot):
+    '''Sets the textureslot settings for using a gloss map'''
+    
+    #Influence mapping
+    b_mat_texslot.use_map_color_diffuse = False
+    b_mat_texslot.texture.use_alpha = False #If no alpha channel or white causes display error
+
+    #Influence
+    b_mat_texslot.use_map_emit = True
     
     
-def n_create_header_fo3(n_data):
-    n_data.version = 0x14020005
-    n_data.user_version = 11
-    n_data.user_version_2 = 34
+def b_check_gloss_texture_settings(b_mat_texslot):
+    '''Test the textureslot for settings to use a gloss map'''
     
+    nose.tools.assert_equal(b_mat_texslot.use_map_color_diffuse, False)
+    nose.tools.assert_equal(b_mat_texslot.texture.use_alpha, False)
 
-def n_create_header_sky(n_data):
-    raise NotImplementedError
 
-    
+    nose.tools.assert_equal(b_mat_texslot.use_map_emit, True)
