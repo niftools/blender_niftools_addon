@@ -1302,8 +1302,8 @@ class MeshHelper():
             # for v in b_mesh.loops:
             #    v.sel = False
             for f in b_mesh.polygons:
-                for v_index in f.loop_indices:
-                    v = b_mesh.loops[v_index]
+                for v_index in f.vertices:
+                    v = b_mesh.vertices[v_index].co
                     vkey = (int(v[0]*self.nif_export.VERTEX_RESOLUTION),
                             int(v[1]*self.nif_export.VERTEX_RESOLUTION),
                             int(v[2]*self.nif_export.VERTEX_RESOLUTION))
