@@ -62,7 +62,7 @@ from integration.textures.normal import n_gen_normalmap
  Normal map, technically special case....
  Handling if user supplies normal map instead of bump & vice-versa
 
-    Extra_shader_data -> NormalMapIndex (Civ VI, Sid Miener)
+    Extra_shader_data -> NormalMapIndex (Civ VI, Sid Miener, Morrowind)
     BSShaderPPLightingProperty (FO3 & NV)
     BSLightingShaderProperty(Skyrim)
 '''
@@ -70,7 +70,7 @@ from integration.textures.normal import n_gen_normalmap
 class TestTexturePropertyNormalMap(SingleNif):
     """Test import/export of meshes with NiTexturingProperty based diffuse texture"""
     
-    n_name = "textures/diffuse/test_diffuse"
+    n_name = "textures/normal/test_normal"
     b_name = 'Cube'
 
     # Paths
@@ -94,9 +94,9 @@ class TestTexturePropertyNormalMap(SingleNif):
         b_gen_diffusemap.b_create_diffuse_texture_properties(b_mat_texslot)
         
         # normal
-        b_mat_texslot = b_gen_texture.b_create_textureslot(b_mat, 'normal')
+        b_mat_texslot = b_gen_texture.b_create_textureslot(b_mat, 'Normal')
         b_gen_texture.b_create_load_texture(b_mat_texslot, self.normalmap_texture_path)
-        b_gen_normalmap.b_create_noraml_texture_properties(b_mat_texslot)
+        b_gen_normalmap.b_create_normal_texture_properties(b_mat_texslot)
         
 
     def b_check_data(self):
@@ -123,7 +123,7 @@ class TestTexturePropertyNormalMap(SingleNif):
         
     def n_create_data(self):
         
-        gen_data.n_create_header(self.n_data)
+        gen_data.n_create_header_oblivion(self.n_data)
         n_gen_texture.n_create_blocks(self.n_data)
         
         n_nitrishape = self.n_data.roots[0].children[0]
@@ -161,9 +161,3 @@ class TestTexturePropertyNormalMap(SingleNif):
         n_gen_texture.n_check_texdesc(n_texdesc_normalmap) # check generic props
         n_gen_normalmap.n_check_normal_map_source_texture(n_texdesc_normalmap.source, self.normalmap_texture_path) #check diffuse image
  
-
-    def n_check_texturing_property(self, n_tex_prop):
-        nose.tools.assert_is_instance(n_tex_prop, NifFormat.NiTexturingProperty)
-        nose.tools.assert_equal(n_tex_prop.has_, True)
-        self.n_check_base_texture(n_tex_prop.base_texture)
-
