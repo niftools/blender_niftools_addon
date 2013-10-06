@@ -54,10 +54,8 @@ class TextureHelper():
         self.nif_export = parent
         self.properties = parent.properties
         self.texture_writer = TextureWriter(parent=self)
-
-
-    def clear_store(self):
         self.mesh_uvlayers = []
+
         self.basemtex=None
         self.glowmtex=None
         self.bumpmtex=None
@@ -77,10 +75,20 @@ class TextureHelper():
 #         mesh_texeff_mtex = None
 #         mesh_ref_mtex = None
         
-    
+    def get_used_textslots(self, b_mat):
+        if b_mat is not None:
+            self.used_slots = [b_texslot for b_texslot in b_mat.texture_slots if b_texslot is not None and b_texslot.use]
+        return self.used_slots
+
+    def get_uv_layers(self, b_mat):
+        used_uvlayers = set()
+        texture_slots = self.get_used_textslots(b_mat)
+        for slot in texture_slots:
+            used_uvlayers.add(slot.uv_layer)
+        return used_uvlayers
+        
     def export_bs_shader_property(self, b_obj=None, b_mat=None):
         """Export a Bethesda shader property block."""
-        self.clear_store()
         self.determine_texture_types(b_mat)
         
         # create new block
@@ -106,16 +114,9 @@ class TextureHelper():
         return bsshader
     
     
-    def get_used_textslots(self, b_mat):
-        if b_mat is not None:
-            self.used_slots = [b_texslot for b_texslot in b_mat.texture_slots if b_texslot is not None and b_texslot.use]
-        return self.used_slots
-    
-    
     def export_texturing_property(self, flags=0x0001, applymode=None, b_mat=None, b_obj=None):
         """Export texturing property."""
         
-        self.clear_store()
         self.determine_texture_types(b_obj, b_mat)
         
         texprop = NifFormat.NiTexturingProperty()
@@ -127,7 +128,6 @@ class TextureHelper():
         self.export_texture_shader_effect(texprop)
         self.export_nitextureprop_tex_descs(texprop)
         
-
         # search for duplicate
         for block in self.nif_export.objecthelper.blocks:
             if isinstance(block, NifFormat.NiTexturingProperty) \
@@ -137,8 +137,6 @@ class TextureHelper():
         # no texturing property with given settings found, so use and register
         # the new one
         return texprop
-
-
 
 
     def export_nitextureprop_tex_descs(self, texprop):
