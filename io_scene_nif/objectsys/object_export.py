@@ -735,7 +735,7 @@ class MeshHelper():
             # The following algorithm extracts all unique quads(vert, uv-vert, normal, vcol),
             # produce lists of vertices, uv-vertices, normals, vertex colors, and face indices.
             
-            mesh_uvlayers = b_mesh.uv_textures
+            mesh_uvlayers = self.nif_export.texturehelper.get_uv_layers(b_mat)
             vertquad_list = [] # (vertex, uv coordinate, normal, vertex color) list
             vertmap = [None for i in range(len(b_mesh.vertices))] # blender vertex -> nif vertices
             vertlist = []
@@ -767,8 +767,12 @@ class MeshHelper():
                             fn = f.normal
                     else:
                         fn = None
+                        
                     fuv = []
                     for uvlayer in mesh_uvlayers:
+                        #TODO : map uv layer to index
+                        #currently we have uv_layer names, but we need their index value
+                        #b_mesh.uv_layers[0].data[f.index].uv
                         fuv.append(
                             getattr(b_mesh.uv_textures[uvlayer.name].data[f.index],
                                     "uv%i" % (i + 1)))
