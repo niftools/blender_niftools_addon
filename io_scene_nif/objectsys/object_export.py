@@ -735,7 +735,6 @@ class MeshHelper():
             # The following algorithm extracts all unique quads(vert, uv-vert, normal, vcol),
             # produce lists of vertices, uv-vertices, normals, vertex colors, and face indices.
             
-            mesh_uvlayers = self.nif_export.texturehelper.get_uv_layers(b_mat)
             vertquad_list = [] # (vertex, uv coordinate, normal, vertex color) list
             vertmap = [None for i in range(len(b_mesh.vertices))] # blender vertex -> nif vertices
             vertlist = []
@@ -754,7 +753,13 @@ class MeshHelper():
                 f_numverts = len(f.vertices)
                 if (f_numverts < 3): continue # ignore degenerate polygons
                 assert((f_numverts == 3) or (f_numverts == 4)) # debug
-
+                if mesh_uvlayers:
+                    # if we have uv coordinates
+                    # double check that we have uv data
+                    if not b_mesh.uv_layer_stencil:
+                        raise NifExportError(
+                            "ERROR%t|Create a UV map for every texture,"
+                            " and run the script again.")
                 # find (vert, uv-vert, normal, vcol) quad, and if not found, create it
                 f_index = [ -1 ] * f_numverts
                 for i, fv_index in enumerate(f.vertices):
