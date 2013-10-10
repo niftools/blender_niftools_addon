@@ -746,25 +746,25 @@ class MeshHelper():
             # for each face in trilist, a body part index
             bodypartfacemap = []
             polygons_without_bodypart = []
-            for f in b_mesh.polygons:
+            for poly in b_mesh.polygons:
                 # does the face belong to this trishape?
                 if (b_mat != None): # we have a material
-                    if (f.material_index != materialIndex): # but this face has another material
+                    if (poly.material_index != materialIndex): # but this face has another material
                         continue # so skip this face
-                f_numverts = len(f.vertices)
+                f_numverts = len(poly.vertices)
                 if (f_numverts < 3): continue # ignore degenerate polygons
                 assert((f_numverts == 3) or (f_numverts == 4)) # debug
 
                 # find (vert, uv-vert, normal, vcol) quad, and if not found, create it
                 f_index = [ -1 ] * f_numverts
-                for i, fv_index in enumerate(f.vertices):
+                for i, fv_index in enumerate(poly.vertices):
                     fv = b_mesh.vertices[fv_index].co
                     # get vertex normal for lighting (smooth = Blender vertex normal, non-smooth = Blender face normal)
                     if mesh_hasnormals:
-                        if f.use_smooth:
+                        if poly.use_smooth:
                             fn = b_mesh.vertices[fv_index].normal
                         else:
-                            fn = f.normal
+                            fn = poly.normal
                     else:
                         fn = None
                         
@@ -772,9 +772,9 @@ class MeshHelper():
                     for uvlayer in mesh_uvlayers:
                         #TODO : map uv layer to index
                         #currently we have uv_layer names, but we need their index value
-                        #b_mesh.uv_layers[0].data[f.index].uv
+                        #b_mesh.uv_layers[0].data[poly.index].uv
                         fuv.append(
-                            getattr(b_mesh.uv_textures[uvlayer.name].data[f.index],
+                            getattr(b_mesh.uv_textures[uvlayer.name].data[poly.index],
                                     "uv%i" % (i + 1)))
 
                     fcol = None
@@ -783,10 +783,10 @@ class MeshHelper():
                     if mesh_hasvcol:
                         vertcol = []
                         #check for an alpha layer
-                        b_meshcolor = b_mesh.vertex_colors[0].data[f.index]
+                        b_meshcolor = b_mesh.vertex_colors[0].data[poly.index]
                         b_color = getattr(b_meshcolor, "color%s" % (i + 1))
                         if(mesh_hasvcola):
-                            b_meshcoloralpha = b_mesh.vertex_colors[1].data[f.index]
+                            b_meshcoloralpha = b_mesh.vertex_colors[1].data[poly.ipolydex]
                             b_colora = getattr(b_meshcolor, "color%s" % (i + 1))
                             vertcol = [b_color.r, b_color.g, b_color.b, b_colora.v]
                         else:
