@@ -163,7 +163,7 @@ class NifExport(NifCommon):
                     if b_obj.type == 'MESH':
                         b_obj_name = b_obj.name
                         b_obj_parent = b_obj.parent.name
-                        if (bpy.data.objects[b_obj_name].modifiers[b_obj_parent].use_bone_envelopes == True):
+                        if bpy.data.objects[b_obj_name].modifiers[b_obj_parent].use_bone_envelopes:
                         
                             return self.error(
                                     "'%s': Cannot export envelope skinning."
