@@ -423,7 +423,7 @@ class MeshHelper():
 
         if(b_mesh.vertex_colors):
             mesh_hasvcol = True
-
+            mesh_hasvcola = False
             #vertex alpha check
             if len(b_mesh.vertex_colors) == 1:
                 self.nif_export.warning("Mesh only has one Vertex Color layer"
@@ -431,18 +431,12 @@ class MeshHelper():
                              " - For Alpha values add a second vertex layer, "
                              " greyscale only"
                              )
-                mesh_hasvcola = False
             else:
-                #iterate over colorfaces
-                for b_meshcolor in b_mesh.vertex_colors[1].data:
-                    #iterate over verts
-                    for i in [0,1,2]:
-                        b_color = getattr(b_meshcolor, "color%s" % (i + 1))
-                        if(b_color.v > self.properties.epsilon):
-                            mesh_hasvcola = True
-                            break
-                    if(mesh_hasvcola):
-                        break
+                 for b_loop in b_mesh.vertex_colors[1].data:
+                     if(b_loop.color.v > self.properties.epsilon):
+                         mesh_hasvcola = True    
+                         break
+                       
 
         # Non-textured materials, vertex colors are used to color the mesh
         # Textured materials, they represent lighting details
@@ -747,22 +741,30 @@ class MeshHelper():
             bodypartfacemap = []
             polygons_without_bodypart = []
             for poly in b_mesh.polygons:
+                
                 # does the face belong to this trishape?
                 if (b_mat != None): # we have a material
                     if (poly.material_index != materialIndex): # but this face has another material
                         continue # so skip this face
+                    
                 f_numverts = len(poly.vertices)
                 if (f_numverts < 3): continue # ignore degenerate polygons
                 assert((f_numverts == 3) or (f_numverts == 4)) # debug
 
+                
                 # find (vert, uv-vert, normal, vcol) quad, and if not found, create it
                 f_index = [ -1 ] * f_numverts
-                for i, fv_index in enumerate(poly.vertices):
-                    fv = b_mesh.vertices[fv_index].co
-                    # get vertex normal for lighting (smooth = Blender vertex normal, non-smooth = Blender face normal)
+                for i, loop_index in enumerate(
+                                    range(poly.loop_start, poly.loop_start + poly.loop_total)):
+                    
+                    fv_index = b_mesh.loops[loop_index].vertex_index
+                    vertex = b_mesh.vertices[fv_index]
+                    
+                    fv = vertex.co
+                    #smooth = vertex normal, non-smooth = face normal)
                     if mesh_hasnormals:
                         if poly.use_smooth:
-                            fn = b_mesh.vertices[fv_index].normal
+                            fn = vertex.normal
                         else:
                             fn = poly.normal
                     else:
@@ -773,9 +775,7 @@ class MeshHelper():
                         #TODO : map uv layer to index
                         #currently we have uv_layer names, but we need their index value
                         #b_mesh.uv_layers[0].data[poly.index].uv
-                        fuv.append(
-                            getattr(b_mesh.uv_textures[uvlayer.name].data[poly.index],
-                                    "uv%i" % (i + 1)))
+                        fuv.append(b_mesh.uv_layers[uvlayer].data[loop_index].uv)
 
                     fcol = None
 
@@ -783,16 +783,12 @@ class MeshHelper():
                     if mesh_hasvcol:
                         vertcol = []
                         #check for an alpha layer
-                        b_meshcolor = b_mesh.vertex_colors[0].data[poly.index]
-                        b_color = getattr(b_meshcolor, "color%s" % (i + 1))
+                        b_color = b_mesh.vertex_colors[0].data[loop_index].color
                         if(mesh_hasvcola):
-                            b_meshcoloralpha = b_mesh.vertex_colors[1].data[poly.ipolydex]
-                            b_colora = getattr(b_meshcolor, "color%s" % (i + 1))
-                            vertcol = [b_color.r, b_color.g, b_color.b, b_colora.v]
+                            b_alpha = b_mesh.vertex_colors[1].data[loop_index].color
+                            fcol = [b_color.r, b_color.g, b_color.b, b_alpha.v]
                         else:
-                            vertcol = [b_color.r, b_color.g, b_color.b, 1.0]
-                        fcol = vertcol
-
+                            fcol = [b_color.r, b_color.g, b_color.b, 1.0]
                     else:
                         fcol = None
 
@@ -800,10 +796,10 @@ class MeshHelper():
 
                     # do we already have this vertquad? (optimized by m_4444x)
                     f_index[i] = len(vertquad_list)
-                    if vertmap[fv_index]:
+                    if vertmap[loop_index]:
                         # iterate only over vertices with the same vertex index
                         # and check if they have the same uvs, normals and colors (wow is that fast!)
-                        for j in vertmap[fv_index]:
+                        for j in vertmap[loop_index]:
                             if mesh_uvlayers:
                                 if max(abs(vertquad[1][uvlayer][0] - vertquad_list[j][1][uvlayer][0])
                                        for uvlayer in range(len(mesh_uvlayers))) \
@@ -832,9 +828,9 @@ class MeshHelper():
                             " and try again.")
                     if (f_index[i] == len(vertquad_list)):
                         # first: add it to the vertex map
-                        if not vertmap[fv_index]:
-                            vertmap[fv_index] = []
-                        vertmap[fv_index].append(len(vertquad_list))
+                        if not vertmap[loop_index]:
+                            vertmap[loop_index] = []
+                        vertmap[loop_index].append(len(vertquad_list))
                         # new (vert, uv-vert, normal, vcol) quad: add it
                         vertquad_list.append(vertquad)
                         # add the vertex
