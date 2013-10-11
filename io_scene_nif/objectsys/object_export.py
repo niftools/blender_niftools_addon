@@ -763,7 +763,7 @@ class MeshHelper():
                     
                     fv_index = b_mesh.loops[loop_index].vertex_index
                     vertex = b_mesh.vertices[fv_index]
-                    
+                    vertex_index = vertex.index
                     fv = vertex.co
                     #smooth = vertex normal, non-smooth = face normal)
                     if mesh_hasnormals:
@@ -800,10 +800,10 @@ class MeshHelper():
 
                     # do we already have this vertquad? (optimized by m_4444x)
                     f_index[i] = len(vertquad_list)
-                    if vertmap[loop_index]:
+                    if vertmap[vertex_index]:
                         # iterate only over vertices with the same vertex index
                         # and check if they have the same uvs, normals and colors (wow is that fast!)
-                        for j in vertmap[loop_index]:
+                        for j in vertmap[vertex_index]:
                             if mesh_uvlayers:
                                 if max(abs(vertquad[1][uvlayer][0] - vertquad_list[j][1][uvlayer][0])
                                        for uvlayer in range(len(mesh_uvlayers))) \
@@ -832,9 +832,9 @@ class MeshHelper():
                             " and try again.")
                     if (f_index[i] == len(vertquad_list)):
                         # first: add it to the vertex map
-                        if not vertmap[loop_index]:
-                            vertmap[loop_index] = []
-                        vertmap[loop_index].append(len(vertquad_list))
+                        if not vertmap[vertex_index]:
+                            vertmap[vertex_index] = []
+                        vertmap[vertex_index].append(len(vertquad_list))
                         # new (vert, uv-vert, normal, vcol) quad: add it
                         vertquad_list.append(vertquad)
                         # add the vertex
