@@ -754,7 +754,7 @@ class MeshHelper():
                     # if we have uv coordinates
                     # double check that we have uv data
                     if not b_mesh.uv_layer_stencil:
-                        raise NifExportError(
+                        raise nif_utils.NifExportError(
                             "ERROR%t|Create a UV map for every texture,"
                             " and run the script again.")
                 # find (vert, uv-vert, normal, vcol) quad, and if not found, create it
@@ -828,7 +828,7 @@ class MeshHelper():
                             break
 
                     if f_index[i] > 65535:
-                        raise NifExportError(
+                        raise nif_utils.NifExportError(
                             "ERROR%t|Too many vertices. Decimate your mesh"
                             " and try again.")
                     if (f_index[i] == len(vertquad_list)):
@@ -889,7 +889,7 @@ class MeshHelper():
                     % b_obj)
 
             if len(trilist) > 65535:
-                raise NifExportError(
+                raise nif_utils.NifExportError(
                     "ERROR%t|Too many polygons. Decimate your mesh and try again.")
             if len(vertlist) == 0:
                 continue # m_4444x: skip 'empty' material indices
@@ -940,7 +940,7 @@ class MeshHelper():
                 tridata.bs_num_uv_sets = len(mesh_uvlayers)
                 if self.properties.game == 'FALLOUT_3':
                     if len(mesh_uvlayers) > 1:
-                        raise NifExportError(
+                        raise nif_utils.NifExportError(
                             "Fallout 3 does not support multiple UV layers")
                 tridata.has_uv = True
                 tridata.uv_sets.update_size()
@@ -993,7 +993,7 @@ class MeshHelper():
                                     skininst.skeleton_root = block
                                     break
                         else:
-                            raise NifExportError(
+                            raise nif_utils.NifExportError(
                                 "Skeleton root '%s' not found."
                                 % armaturename)
 
@@ -1039,22 +1039,20 @@ class MeshHelper():
                         # vertices must be assigned at least one vertex group
                         # lets be nice and display them for the user 
                         if len(unassigned_verts) > 0:
-                            for b_scene_obj in self.context.scene.objects:
+                            for b_scene_obj in self.nif_export.context.scene.objects:
                                 b_scene_obj.select = False
                                 
-                            self.context.scene.objects.active = b_obj
+                            b_obj = self.nif_export.context.scene.objects.active
                             b_obj.select = True
                             
-                            # select unweighted vertices
-                            for v in b_mesh.vertices:
-                                v.select = False    
-                            
-                            for b_vert in unassigned_verts:
-                                b_mesh.data.vertices[b_vert.index].select = True
-                                
                             # switch to edit mode and raise exception
                             bpy.ops.object.mode_set(mode='EDIT',toggle=False)
-                            raise NifExportError(
+                            # clear all currently selected vertices
+                            bpy.ops.mesh.select_all(action='DESELECT')
+                            # select unweighted vertices
+                            bpy.ops.mesh.select_ungrouped(extend=False)
+                                
+                            raise nif_utils.NifExportError(
                                 "Cannot export mesh with unweighted vertices."
                                 " The unweighted vertices have been selected"
                                 " in the mesh so they can easily be"
@@ -1075,7 +1073,7 @@ class MeshHelper():
                                         if not bone_block:
                                             bone_block = block
                                         else:
-                                            raise NifExportError(
+                                            raise nif_utils.NifExportError(
                                                 "multiple bones"
                                                 " with name '%s': probably"
                                                 " you have multiple armatures,"
@@ -1085,7 +1083,7 @@ class MeshHelper():
                                                 % bone)
                             
                             if not bone_block:
-                                raise NifExportError(
+                                raise nif_utils.NifExportError(
                                     "Bone '%s' not found." % bone)
                             
                             # find vertex weights
