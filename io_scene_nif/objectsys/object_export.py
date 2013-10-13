@@ -38,6 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
+import mathutils
 
 from pyffi.formats.nif import NifFormat
 
@@ -131,82 +132,100 @@ class ObjectHelper():
         # b_obj_ipo:  object animation ipo
         # node:    contains new NifFormat.NiNode instance
         if (b_obj == None):
+            export_types = ('EMPTY', 'MESH', 'ARMATURE')
+            for root_object in [b_obj for b_obj in self.nif_export.context.selected_objects
+                                if b_obj.type in export_types]:
+                while root_object.parent:
+                    root_object = root_object.parent
             # -> root node
-            assert(parent_block == None) # debug
-            node = self.create_ninode()
-            b_obj_type = None
-            b_obj_ipo = None
-        else:
+            if (root_object.type == 'ARMATURE'):
+                b_obj = root_object
+            if (b_obj == None):
+                # -> root node
+                assert(parent_block == None) # debug
+                node = self.create_ninode()
+                b_obj_type = None
+                b_obj_ipo = None
+            else:
+                b_obj_type = b_obj.type
+                assert(b_obj_type in ['EMPTY', 'MESH', 'ARMATURE']) # debug
+                assert(parent_block == None) # debug
+                b_obj_ipo = b_obj.animation_data # get animation data
+                b_obj_children = b_obj.children
+                node_name = b_obj.name
+        elif (b_obj.name != parent_block.name.decode()):
             # -> empty, b_mesh, or armature
             b_obj_type = b_obj.type
             assert(b_obj_type in ['EMPTY', 'MESH', 'ARMATURE']) # debug
             assert(parent_block) # debug
             b_obj_ipo = b_obj.animation_data # get animation data
             b_obj_children = b_obj.children
+        else:
+            return None
+            
+        if (node_name == 'RootCollisionNode'):
+            # -> root collision node (can be mesh or empty)
+            # TODO do we need to fix this stuff on export?
+            #b_obj.draw_bounds_type = 'POLYHEDERON'
+            #b_obj.draw_type = 'BOUNDS'
+            #b_obj.show_wire = True
+            self.export_collision(b_obj, parent_block)
+            return None # done; stop here
 
-            if (node_name == 'RootCollisionNode'):
-                # -> root collision node (can be mesh or empty)
-                # TODO do we need to fix this stuff on export?
-                #b_obj.draw_bounds_type = 'POLYHEDERON'
-                #b_obj.draw_type = 'BOUNDS'
-                #b_obj.show_wire = True
+        elif (b_obj_type == 'MESH' and b_obj.show_bounds
+              and b_obj.name.lower().startswith('bsbound')):
+            # add a bounding box
+            self.boundhelper.export_bounding_box(b_obj, parent_block, bsbound=True)
+            return None # done; stop here
+
+        elif (b_obj_type == 'MESH' and b_obj.show_bounds
+              and b_obj.name.lower().startswith("bounding box")):
+            # Morrowind bounding box
+            self.boundhelper.export_bounding_box(b_obj, parent_block, bsbound=False)
+            return None # done; stop here
+
+        elif b_obj_type == 'MESH':
+            # -> mesh data.
+            # If this has children or animations or more than one material
+            # it gets wrapped in a purpose made NiNode.
+            is_collision = b_obj.game.use_collision_bounds
+            has_ipo = b_obj_ipo and len(b_obj_ipo.getCurves()) > 0
+            has_children = len(b_obj_children) > 0
+            is_multimaterial = len(set([f.material_index for f in b_obj.data.polygons])) > 1
+            # determine if object tracks camera
+            has_track = False
+            for constr in b_obj.constraints:
+                if constr.type == Blender.Constraint.Type.TRACKTO:
+                    has_track = True
+                    break
+                # does geom have priority value in NULL constraint?
+                elif constr.name[:9].lower() == "priority:":
+                    self.bone_priorities[
+                                         self.nif_export.get_bone_name_for_nif(b_obj.name)
+                                         ] = int(constr.name[9:])
+            if is_collision:
                 self.export_collision(b_obj, parent_block)
                 return None # done; stop here
-
-            elif (b_obj_type == 'MESH' and b_obj.show_bounds
-                  and b_obj.name.lower().startswith('bsbound')):
-                # add a bounding box
-                self.boundhelper.export_bounding_box(b_obj, parent_block, bsbound=True)
-                return None # done; stop here
-
-            elif (b_obj_type == 'MESH' and b_obj.show_bounds
-                  and b_obj.name.lower().startswith("bounding box")):
-                # Morrowind bounding box
-                self.boundhelper.export_bounding_box(b_obj, parent_block, bsbound=False)
-                return None # done; stop here
-
-            elif b_obj_type == 'MESH':
-                # -> mesh data.
-                # If this has children or animations or more than one material
-                # it gets wrapped in a purpose made NiNode.
-                is_collision = b_obj.game.use_collision_bounds
-                has_ipo = b_obj_ipo and len(b_obj_ipo.getCurves()) > 0
-                has_children = len(b_obj_children) > 0
-                is_multimaterial = len(set([f.material_index for f in b_obj.data.polygons])) > 1
-                # determine if object tracks camera
-                has_track = False
-                for constr in b_obj.constraints:
-                    if constr.type == Blender.Constraint.Type.TRACKTO:
-                        has_track = True
-                        break
-                    # does geom have priority value in NULL constraint?
-                    elif constr.name[:9].lower() == "priority:":
-                        self.bone_priorities[
-                            self.nif_export.get_bone_name_for_nif(b_obj.name)
-                            ] = int(constr.name[9:])
-                if is_collision:
-                    self.export_collision(b_obj, parent_block)
-                    return None # done; stop here
-                elif has_ipo or has_children or is_multimaterial or has_track:
-                    # -> mesh ninode for the hierarchy to work out
-                    if not has_track:
-                        node = self.create_block('NiNode', b_obj)
-                    else:
-                        node = self.create_block('NiBillboardNode', b_obj)
+            elif has_ipo or has_children or is_multimaterial or has_track:
+                # -> mesh ninode for the hierarchy to work out
+                if not has_track:
+                    node = self.create_block('NiNode', b_obj)
                 else:
-                    # don't create intermediate ninode for this guy
-                    self.mesh_helper.export_tri_shapes(b_obj, space, parent_block, node_name)
-                    # we didn't create a ninode, return nothing
-                    return None
+                    node = self.create_block('NiBillboardNode', b_obj)
             else:
-                # -> everything else (empty/armature) is a regular node
-                node = self.create_ninode(b_obj)
-                # does node have priority value in NULL constraint?
-                for constr in b_obj.constraints:
-                    if constr.name[:9].lower() == "priority:":
-                        self.bone_priorities[
-                            self.nif_export.get_bone_name_for_nif(b_obj.name)
-                            ] = int(constr.name[9:])
+                # don't create intermediate ninode for this guy
+                self.mesh_helper.export_tri_shapes(b_obj, space, parent_block, node_name)
+                # we didn't create a ninode, return nothing
+                return None
+        elif (b_obj != None):
+            # -> everything else (empty/armature) is a regular node
+            node = self.create_ninode(b_obj)
+            # does node have priority value in NULL constraint?
+            for constr in b_obj.constraints:
+                if constr.name[:9].lower() == "priority:":
+                    self.bone_priorities[
+                                         self.nif_export.get_bone_name_for_nif(b_obj.name)
+                                         ] = int(constr.name[9:])
 
         # set transform on trishapes rather than on NiNode for skinned meshes
         # this fixes an issue with clothing slots
