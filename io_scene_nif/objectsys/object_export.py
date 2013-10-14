@@ -464,6 +464,17 @@ class MeshHelper():
         ### TODO: needs refactoring - move material, texture, etc.
         ### to separate function
         for materialIndex, b_mat in enumerate(mesh_materials):
+            b_ambient_prop = None
+            b_diffuse_prop = None
+            b_spec_prop = None
+            b_emissive_prop = None
+            b_gloss_prop = None
+            b_alpha_prop = None
+            b_emit_prop = None
+            for b_slot in b_mat.texture_slots:
+                if b_slot != None:
+                    if b_spec_prop != True:
+                        b_spec_prop = b_slot.use_map_color_spec
             # -> first, extract valuable info from our b_obj
 
             mesh_texture_alpha = False #texture has transparency
@@ -527,7 +538,7 @@ class MeshHelper():
                 if ( mesh_mat_specular_color[0] > self.properties.epsilon ) \
                     or ( mesh_mat_specular_color[1] > self.properties.epsilon ) \
                     or ( mesh_mat_specular_color[2] > self.properties.epsilon ):
-                    mesh_hasspec = True
+                    mesh_hasspec = b_spec_prop
 
                 #gloss mat
                 #'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
