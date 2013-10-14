@@ -38,6 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
+import mathutils
 
 from pyffi.formats.nif import NifFormat
 
@@ -131,82 +132,100 @@ class ObjectHelper():
         # b_obj_ipo:  object animation ipo
         # node:    contains new NifFormat.NiNode instance
         if (b_obj == None):
+            export_types = ('EMPTY', 'MESH', 'ARMATURE')
+            for root_object in [b_obj for b_obj in self.nif_export.context.selected_objects
+                                if b_obj.type in export_types]:
+                while root_object.parent:
+                    root_object = root_object.parent
             # -> root node
-            assert(parent_block == None) # debug
-            node = self.create_ninode()
-            b_obj_type = None
-            b_obj_ipo = None
-        else:
+            if (root_object.type == 'ARMATURE'):
+                b_obj = root_object
+            if (b_obj == None):
+                # -> root node
+                assert(parent_block == None) # debug
+                node = self.create_ninode()
+                b_obj_type = None
+                b_obj_ipo = None
+            else:
+                b_obj_type = b_obj.type
+                assert(b_obj_type in ['EMPTY', 'MESH', 'ARMATURE']) # debug
+                assert(parent_block == None) # debug
+                b_obj_ipo = b_obj.animation_data # get animation data
+                b_obj_children = b_obj.children
+                node_name = b_obj.name
+        elif (b_obj.name != parent_block.name.decode()):
             # -> empty, b_mesh, or armature
             b_obj_type = b_obj.type
             assert(b_obj_type in ['EMPTY', 'MESH', 'ARMATURE']) # debug
             assert(parent_block) # debug
             b_obj_ipo = b_obj.animation_data # get animation data
             b_obj_children = b_obj.children
+        else:
+            return None
+            
+        if (node_name == 'RootCollisionNode'):
+            # -> root collision node (can be mesh or empty)
+            # TODO do we need to fix this stuff on export?
+            #b_obj.draw_bounds_type = 'POLYHEDERON'
+            #b_obj.draw_type = 'BOUNDS'
+            #b_obj.show_wire = True
+            self.export_collision(b_obj, parent_block)
+            return None # done; stop here
 
-            if (node_name == 'RootCollisionNode'):
-                # -> root collision node (can be mesh or empty)
-                # TODO do we need to fix this stuff on export?
-                #b_obj.draw_bounds_type = 'POLYHEDERON'
-                #b_obj.draw_type = 'BOUNDS'
-                #b_obj.show_wire = True
+        elif (b_obj_type == 'MESH' and b_obj.show_bounds
+              and b_obj.name.lower().startswith('bsbound')):
+            # add a bounding box
+            self.boundhelper.export_bounding_box(b_obj, parent_block, bsbound=True)
+            return None # done; stop here
+
+        elif (b_obj_type == 'MESH' and b_obj.show_bounds
+              and b_obj.name.lower().startswith("bounding box")):
+            # Morrowind bounding box
+            self.boundhelper.export_bounding_box(b_obj, parent_block, bsbound=False)
+            return None # done; stop here
+
+        elif b_obj_type == 'MESH':
+            # -> mesh data.
+            # If this has children or animations or more than one material
+            # it gets wrapped in a purpose made NiNode.
+            is_collision = b_obj.game.use_collision_bounds
+            has_ipo = b_obj_ipo and len(b_obj_ipo.getCurves()) > 0
+            has_children = len(b_obj_children) > 0
+            is_multimaterial = len(set([f.material_index for f in b_obj.data.polygons])) > 1
+            # determine if object tracks camera
+            has_track = False
+            for constr in b_obj.constraints:
+                if constr.type == Blender.Constraint.Type.TRACKTO:
+                    has_track = True
+                    break
+                # does geom have priority value in NULL constraint?
+                elif constr.name[:9].lower() == "priority:":
+                    self.bone_priorities[
+                                         self.nif_export.get_bone_name_for_nif(b_obj.name)
+                                         ] = int(constr.name[9:])
+            if is_collision:
                 self.export_collision(b_obj, parent_block)
                 return None # done; stop here
-
-            elif (b_obj_type == 'MESH' and b_obj.show_bounds
-                  and b_obj.name.lower().startswith('bsbound')):
-                # add a bounding box
-                self.boundhelper.export_bounding_box(b_obj, parent_block, bsbound=True)
-                return None # done; stop here
-
-            elif (b_obj_type == 'MESH' and b_obj.show_bounds
-                  and b_obj.name.lower().startswith("bounding box")):
-                # Morrowind bounding box
-                self.boundhelper.export_bounding_box(b_obj, parent_block, bsbound=False)
-                return None # done; stop here
-
-            elif b_obj_type == 'MESH':
-                # -> mesh data.
-                # If this has children or animations or more than one material
-                # it gets wrapped in a purpose made NiNode.
-                is_collision = b_obj.game.use_collision_bounds
-                has_ipo = b_obj_ipo and len(b_obj_ipo.getCurves()) > 0
-                has_children = len(b_obj_children) > 0
-                is_multimaterial = len(set([f.material_index for f in b_obj.data.polygons])) > 1
-                # determine if object tracks camera
-                has_track = False
-                for constr in b_obj.constraints:
-                    if constr.type == Blender.Constraint.Type.TRACKTO:
-                        has_track = True
-                        break
-                    # does geom have priority value in NULL constraint?
-                    elif constr.name[:9].lower() == "priority:":
-                        self.bone_priorities[
-                            self.nif_export.get_bone_name_for_nif(b_obj.name)
-                            ] = int(constr.name[9:])
-                if is_collision:
-                    self.export_collision(b_obj, parent_block)
-                    return None # done; stop here
-                elif has_ipo or has_children or is_multimaterial or has_track:
-                    # -> mesh ninode for the hierarchy to work out
-                    if not has_track:
-                        node = self.create_block('NiNode', b_obj)
-                    else:
-                        node = self.create_block('NiBillboardNode', b_obj)
+            elif has_ipo or has_children or is_multimaterial or has_track:
+                # -> mesh ninode for the hierarchy to work out
+                if not has_track:
+                    node = self.create_block('NiNode', b_obj)
                 else:
-                    # don't create intermediate ninode for this guy
-                    self.mesh_helper.export_tri_shapes(b_obj, space, parent_block, node_name)
-                    # we didn't create a ninode, return nothing
-                    return None
+                    node = self.create_block('NiBillboardNode', b_obj)
             else:
-                # -> everything else (empty/armature) is a regular node
-                node = self.create_ninode(b_obj)
-                # does node have priority value in NULL constraint?
-                for constr in b_obj.constraints:
-                    if constr.name[:9].lower() == "priority:":
-                        self.bone_priorities[
-                            self.nif_export.get_bone_name_for_nif(b_obj.name)
-                            ] = int(constr.name[9:])
+                # don't create intermediate ninode for this guy
+                self.mesh_helper.export_tri_shapes(b_obj, space, parent_block, node_name)
+                # we didn't create a ninode, return nothing
+                return None
+        elif (b_obj != None):
+            # -> everything else (empty/armature) is a regular node
+            node = self.create_ninode(b_obj)
+            # does node have priority value in NULL constraint?
+            for constr in b_obj.constraints:
+                if constr.name[:9].lower() == "priority:":
+                    self.bone_priorities[
+                                         self.nif_export.get_bone_name_for_nif(b_obj.name)
+                                         ] = int(constr.name[9:])
 
         # set transform on trishapes rather than on NiNode for skinned meshes
         # this fixes an issue with clothing slots
@@ -423,7 +442,7 @@ class MeshHelper():
 
         if(b_mesh.vertex_colors):
             mesh_hasvcol = True
-            mesh_hasvcola = False
+
             #vertex alpha check
             if len(b_mesh.vertex_colors) == 1:
                 self.nif_export.warning("Mesh only has one Vertex Color layer"
@@ -445,6 +464,17 @@ class MeshHelper():
         ### TODO: needs refactoring - move material, texture, etc.
         ### to separate function
         for materialIndex, b_mat in enumerate(mesh_materials):
+            b_ambient_prop = None
+            b_diffuse_prop = None
+            b_spec_prop = None
+            b_emissive_prop = None
+            b_gloss_prop = None
+            b_alpha_prop = None
+            b_emit_prop = None
+            for b_slot in b_mat.texture_slots:
+                if b_slot != None:
+                    if b_spec_prop != True:
+                        b_spec_prop = b_slot.use_map_color_spec
             # -> first, extract valuable info from our b_obj
 
             mesh_texture_alpha = False #texture has transparency
@@ -508,7 +538,7 @@ class MeshHelper():
                 if ( mesh_mat_specular_color[0] > self.properties.epsilon ) \
                     or ( mesh_mat_specular_color[1] > self.properties.epsilon ) \
                     or ( mesh_mat_specular_color[2] > self.properties.epsilon ):
-                    mesh_hasspec = True
+                    mesh_hasspec = b_spec_prop
 
                 #gloss mat
                 #'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
@@ -750,8 +780,13 @@ class MeshHelper():
                 f_numverts = len(poly.vertices)
                 if (f_numverts < 3): continue # ignore degenerate polygons
                 assert((f_numverts == 3) or (f_numverts == 4)) # debug
-
-                
+                if mesh_uvlayers:
+                    # if we have uv coordinates
+                    # double check that we have uv data
+                    if not b_mesh.uv_layer_stencil:
+                        raise nif_utils.NifExportError(
+                            "ERROR%t|Create a UV map for every texture,"
+                            " and run the script again.")
                 # find (vert, uv-vert, normal, vcol) quad, and if not found, create it
                 f_index = [ -1 ] * f_numverts
                 for i, loop_index in enumerate(
@@ -759,7 +794,7 @@ class MeshHelper():
                     
                     fv_index = b_mesh.loops[loop_index].vertex_index
                     vertex = b_mesh.vertices[fv_index]
-                    
+                    vertex_index = vertex.index
                     fv = vertex.co
                     #smooth = vertex normal, non-smooth = face normal)
                     if mesh_hasnormals:
@@ -796,10 +831,10 @@ class MeshHelper():
 
                     # do we already have this vertquad? (optimized by m_4444x)
                     f_index[i] = len(vertquad_list)
-                    if vertmap[loop_index]:
+                    if vertmap[vertex_index]:
                         # iterate only over vertices with the same vertex index
                         # and check if they have the same uvs, normals and colors (wow is that fast!)
-                        for j in vertmap[loop_index]:
+                        for j in vertmap[vertex_index]:
                             if mesh_uvlayers:
                                 if max(abs(vertquad[1][uvlayer][0] - vertquad_list[j][1][uvlayer][0])
                                        for uvlayer in range(len(mesh_uvlayers))) \
@@ -823,14 +858,14 @@ class MeshHelper():
                             break
 
                     if f_index[i] > 65535:
-                        raise NifExportError(
+                        raise nif_utils.NifExportError(
                             "ERROR%t|Too many vertices. Decimate your mesh"
                             " and try again.")
                     if (f_index[i] == len(vertquad_list)):
                         # first: add it to the vertex map
-                        if not vertmap[loop_index]:
-                            vertmap[loop_index] = []
-                        vertmap[loop_index].append(len(vertquad_list))
+                        if not vertmap[vertex_index]:
+                            vertmap[vertex_index] = []
+                        vertmap[vertex_index].append(len(vertquad_list))
                         # new (vert, uv-vert, normal, vcol) quad: add it
                         vertquad_list.append(vertquad)
                         # add the vertex
@@ -884,7 +919,7 @@ class MeshHelper():
                     % b_obj)
 
             if len(trilist) > 65535:
-                raise NifExportError(
+                raise nif_utils.NifExportError(
                     "ERROR%t|Too many polygons. Decimate your mesh and try again.")
             if len(vertlist) == 0:
                 continue # m_4444x: skip 'empty' material indices
@@ -935,7 +970,7 @@ class MeshHelper():
                 tridata.bs_num_uv_sets = len(mesh_uvlayers)
                 if self.properties.game == 'FALLOUT_3':
                     if len(mesh_uvlayers) > 1:
-                        raise NifExportError(
+                        raise nif_utils.NifExportError(
                             "Fallout 3 does not support multiple UV layers")
                 tridata.has_uv = True
                 tridata.uv_sets.update_size()
@@ -988,7 +1023,7 @@ class MeshHelper():
                                     skininst.skeleton_root = block
                                     break
                         else:
-                            raise NifExportError(
+                            raise nif_utils.NifExportError(
                                 "Skeleton root '%s' not found."
                                 % armaturename)
 
@@ -1034,22 +1069,20 @@ class MeshHelper():
                         # vertices must be assigned at least one vertex group
                         # lets be nice and display them for the user 
                         if len(unassigned_verts) > 0:
-                            for b_scene_obj in self.context.scene.objects:
+                            for b_scene_obj in self.nif_export.context.scene.objects:
                                 b_scene_obj.select = False
                                 
-                            self.context.scene.objects.active = b_obj
+                            b_obj = self.nif_export.context.scene.objects.active
                             b_obj.select = True
                             
-                            # select unweighted vertices
-                            for v in b_mesh.vertices:
-                                v.select = False    
-                            
-                            for b_vert in unassigned_verts:
-                                b_mesh.data.vertices[b_vert.index].select = True
-                                
                             # switch to edit mode and raise exception
                             bpy.ops.object.mode_set(mode='EDIT',toggle=False)
-                            raise NifExportError(
+                            # clear all currently selected vertices
+                            bpy.ops.mesh.select_all(action='DESELECT')
+                            # select unweighted vertices
+                            bpy.ops.mesh.select_ungrouped(extend=False)
+                                
+                            raise nif_utils.NifExportError(
                                 "Cannot export mesh with unweighted vertices."
                                 " The unweighted vertices have been selected"
                                 " in the mesh so they can easily be"
@@ -1070,7 +1103,7 @@ class MeshHelper():
                                         if not bone_block:
                                             bone_block = block
                                         else:
-                                            raise NifExportError(
+                                            raise nif_utils.NifExportError(
                                                 "multiple bones"
                                                 " with name '%s': probably"
                                                 " you have multiple armatures,"
@@ -1080,7 +1113,7 @@ class MeshHelper():
                                                 % bone)
                             
                             if not bone_block:
-                                raise NifExportError(
+                                raise nif_utils.NifExportError(
                                     "Bone '%s' not found." % bone)
                             
                             # find vertex weights
