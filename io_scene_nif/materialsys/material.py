@@ -141,15 +141,14 @@ class material_import():
                 b_mat.transparency_method = 'Z_TRANSPARENCY'  # enable z-buffered transparency
 
         # Specular color
-        if n_specular_prop:
-            b_mat.specular_color[0] = n_mat_prop.specular_color.r
-            b_mat.specular_color[1] = n_mat_prop.specular_color.g
-            b_mat.specular_color[2] = n_mat_prop.specular_color.b
+        b_mat.specular_color[0] = n_mat_prop.specular_color.r
+        b_mat.specular_color[1] = n_mat_prop.specular_color.g
+        b_mat.specular_color[2] = n_mat_prop.specular_color.b
         
-            if (not n_specular_prop) and (self.nif_import.data.version != 0x14000004):
-                b_mat.specular_intensity = 0.0 # no specular prop 
-            else:
-                b_mat.specular_intensity = 1.0 # Blender multiplies specular color with this value
+        if (not n_specular_prop) and (self.nif_import.data.version != 0x14000004):
+            b_mat.specular_intensity = 0.0 # no specular prop 
+        else:
+            b_mat.specular_intensity = 1.0 # Blender multiplies specular color with this value
         
         # check wireframe property
         if n_wire_prop:
