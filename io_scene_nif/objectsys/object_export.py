@@ -464,17 +464,30 @@ class MeshHelper():
         ### TODO: needs refactoring - move material, texture, etc.
         ### to separate function
         for materialIndex, b_mat in enumerate(mesh_materials):
-            b_ambient_prop = None
-            b_diffuse_prop = None
-            b_spec_prop = None
-            b_emissive_prop = None
-            b_gloss_prop = None
-            b_alpha_prop = None
-            b_emit_prop = None
+            b_ambient_prop = False
+            b_diffuse_prop = False
+            b_spec_prop = False
+            b_emissive_prop = False
+            b_gloss_prop = False
+            b_alpha_prop = False
+            b_emit_prop = False
             for b_slot in b_mat.texture_slots:
                 if b_slot != None:
-                    if b_spec_prop != True:
+                    if b_ambient_prop != True & b_slot.use == True:
+                        b_ambient_prop = b_slot.use_map_ambient
+                    if b_diffuse_prop != True & b_slot.use == True:
+                        b_diffuse_prop = b_slot.use_map_color_diffuse
+                    if b_spec_prop != True & b_slot.use == True:
                         b_spec_prop = b_slot.use_map_color_spec
+                    if b_emissive_prop != True & b_slot.use == True:
+                        b_emissive_prop = b_slot.use_map_emit
+                    if b_gloss_prop != True & b_slot.use == True:
+                        b_gloss_prop = b_slot.use_map_hardness
+                    if b_alpha_prop != True & b_slot.use == True:
+                        b_alpha_prop = b_slot.use_map_alpha
+                    if b_emit_prop != True & b_slot.use == True:
+                        b_emit_prop = b_slot.use_map_emit
+                    
             # -> first, extract valuable info from our b_obj
 
             mesh_texture_alpha = False #texture has transparency
