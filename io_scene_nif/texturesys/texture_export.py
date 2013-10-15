@@ -292,12 +292,13 @@ class TextureHelper():
             if b_mat_texslot.texture_coords == 'REFLECTION':
                 if not b_mat_texslot.use_map_color_diffuse:
                     # it should map to colour
-                    raise nif_utils.NifExportError("Non-COL-mapped reflection texture in mesh '%s', material '%s',"
-                                         " these cannot be exported to NIF.\n"
-                                         "Either delete all non-COL-mapped reflection textures,"
-                                         " or in the Shading Panel, under Material Buttons,"
-                                         " set texture 'Map To' to 'COL'."
-                                         % (b_mesh.name,b_mat.name))
+                    raise nif_utils.NifExportError(
+                        "Non-COL-mapped reflection texture in mesh '%s', material '%s',"
+                        " these cannot be exported to NIF.\n"
+                        "Either delete all non-COL-mapped reflection textures,"
+                        " or in the Shading Panel, under Material Buttons,"
+                        " set texture 'Map To' to 'COL'."
+                        % (b_obj.name,b_mat.name))
                 if b_mat_texslot.blend_type != 'ADD':
                 # it should have "ADD" blending mode
                      self.nif_export.warning("Reflection texture should have blending"
@@ -316,12 +317,16 @@ class TextureHelper():
                     self.mesh_uvlayers.append(b_mat_texslot.uv_layer)
     
                 #glow tex
-                if b_mat_texslot.use_map_emit:
+                if b_mat_texslot.use_map_emit and \
+                    b_mat_texslot.use:
                     #multi-check
                     if self.glowmtex:
-                        raise nif_utils.NifExportError("Multiple glow textures in mesh '%s', material '%s'.\n"
-                                             "Make sure Texture -> Influence -> Shading -> Emit is disabled"
-                                             %(b_mesh.name,b_mat.name))
+                         raise nif_utils.NifExportError(
+                            "Multiple emissive textures"
+                            " in mesh '%s', material '%s'."
+                            " Make sure there is only one texture"
+                            " set as Influence > emit"
+                            %(b_obj.name,b_mat.name))
     
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
@@ -330,14 +335,16 @@ class TextureHelper():
                     self.glowmtex = b_mat_texslot
     
                 #specular
-                elif b_mat_texslot.use_map_specular:
+                elif (b_mat_texslot.use_map_specular or b_mat_texslot.use_map_color_spec) and \
+                    b_mat_texslot.use:
                     #multi-check
                     if self.glossmtex:
-                        raise nif_utils.NifExportError("Multiple gloss textures in"
-                                             " mesh '%s', material '%s'."
-                                             " Make sure there is only one texture"
-                                             " with MapTo.SPEC"
-                                             %(b_mesh.name,b_mat.name))
+                         raise nif_utils.NifExportError(
+                            "Multiple specular gloss textures"
+                            " in mesh '%s', material '%s'."
+                            " Make sure there is only one texture"
+                            " set as Influence > specular"
+                            %(b_obj.name,b_mat.name))
     
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
@@ -347,14 +354,17 @@ class TextureHelper():
                     self.glossmtex = b_mat_texslot
     
                 #bump map
-                elif b_mat_texslot.use_map_normal and b_mat_texslot.texture.use_normal_map == False:
+                elif b_mat_texslot.use_map_normal and \
+                    b_mat_texslot.texture.use_normal_map == False and \
+                    b_mat_texslot.use:
                     #multi-check
                     if self.bumpmtex:
-                        raise nif_utils.NifExportError("Multiple bump/normal textures"
-                                             " in mesh '%s', material '%s'."
-                                             " Make sure there is only one texture"
-                                             " with MapTo.NOR"
-                                             %(b_mesh.name,b_mat.name))
+                         raise nif_utils.NifExportError(
+                            "Multiple bump/normal textures"
+                            " in mesh '%s', material '%s'."
+                            " Make sure there is only one texture"
+                            " set as Influence > normal"
+                            %(b_obj.name,b_mat.name))
     
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
@@ -363,14 +373,17 @@ class TextureHelper():
                     self.bumpmtex = b_mat_texslot
     
                 #normal map
-                elif b_mat_texslot.use_map_normal and b_mat_texslot.texture.use_normal_map:
+                elif b_mat_texslot.use_map_normal and \
+                    b_mat_texslot.texture.use_normal_map and \
+                    b_mat_texslot.use:
+                    # multi-check
                     if self.normalmtex:
-                        raise nif_utils.NifExportError(
+                         raise nif_utils.NifExportError(
                             "Multiple bump/normal textures"
                             " in mesh '%s', material '%s'."
                             " Make sure there is only one texture"
-                            " with MapTo.NOR"
-                            %(b_mesh.name, b_mat.name))
+                            " set as Influence > normal"
+                            %(b_obj.name,b_mat.name))
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
                         mesh_hasalpha = True
@@ -379,7 +392,15 @@ class TextureHelper():
                 #darken
                 elif b_mat_texslot.use_map_color_diffuse and \
                      b_mat_texslot.blend_type == 'DARKEN' and \
-                     not self.darkmtex:
+                     b_mat_texslot.use:
+                    
+                    if self.darkmtex:
+                        raise nif_utils.NifExportError(
+                            "Multiple Darken textures"
+                            " in mesh '%s', material '%s'."
+                            " Make sure there is only one texture"
+                            " with Influence > Blend Type > Dark"
+                            %(b_obj.name,b_mat.name))
     
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
@@ -389,7 +410,14 @@ class TextureHelper():
     
                 #diffuse
                 elif b_mat_texslot.use_map_color_diffuse and \
-                     not self.basemtex:
+                     b_mat_texslot.use:
+                    if self.basemtex:
+                         raise nif_utils.NifExportError(
+                            "Multiple Diffuse textures"
+                            " in mesh '%s', material '%s'."
+                            " Make sure there is only one texture"
+                            " with Influence > Diffuse > color"
+                            %(b_obj.name,b_mat.name))
     
                     self.basemtex = b_mat_texslot
     
@@ -428,7 +456,14 @@ class TextureHelper():
     
                 #detail
                 elif b_mat_texslot.use_map_color_diffuse and \
-                     not self.detailmtex:
+                    b_mat_texslot.use:
+                    if self.detailmtex:
+                         raise nif_utils.NifExportError(
+                            "Multiple detail textures"
+                            " in mesh '%s', material '%s'."
+                            " Make sure there is only one texture"
+                            " with Influence Diffuse > color"
+                            %(b_obj.name,b_mat.name))
                     # extra diffuse consider as detail texture
     
                     # check if alpha channel is enabled for this texture
@@ -437,15 +472,17 @@ class TextureHelper():
                     self.detailmtex = b_mat_texslot
     
                 #reflection
-                elif b_mat_texslot.mapto & Blender.Texture.MapTo.REF:
-                    # got the reflection map
-                    if self.refmtex:
-                        raise nif_utils.NifExportError(
+                elif (b_mat_texslot.use_map_mirror or b_mat_texslot.use_map_raymir) and\
+                    b_mat_texslot.use:
+                    #multi-check
+                    if self.glowmtex:
+                         raise nif_utils.NifExportError(
                             "Multiple reflection textures"
                             " in mesh '%s', material '%s'."
                             " Make sure there is only one texture"
-                            " with MapTo.REF"
-                            %(b_mesh.name,b_mat.name))
+                            " set as Influence > Mirror/Ray Mirror"
+                            %(b_obj.name,b_mat.name))
+                    # got the reflection map
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
                         mesh_hasalpha = True
@@ -470,6 +507,6 @@ class TextureHelper():
                     " Either delete all non-UV textures,"
                     " or in the Shading Panel,"
                     " under Material Buttons,"
-                    " set texture 'Map Input' to 'UV'."
+                    " set texture 'Mapping Coordinates' to 'UV'."
                     %(b_obj.name, b_mat.name))
 
