@@ -820,16 +820,16 @@ class MeshHelper():
                         
                     fuv = []
                     for uvlayer in mesh_uvlayers:
-                        if mesh_uvlayers != {''}:
+                        if uvlayer != "":
                             #TODO : map uv layer to index
                             #currently we have uv_layer names, but we need their index value
                             #b_mesh.uv_layers[0].data[poly.index].uv
                             fuv.append(b_mesh.uv_layers[uvlayer].data[loop_index].uv)
                         else:
                             raise nif_utils.NifExportError(
-                                "ERROR%t / Texture is set to use UV"
+                                "ERROR%t|Texture is set to use UV"
                                 " but no UV Map is Selected for"
-                                "Mapping > Map")
+                                " Mapping > Map")
                     fcol = None
 
                     '''TODO: Need to map b_verts -> n_verts'''
