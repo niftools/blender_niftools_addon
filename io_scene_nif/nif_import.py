@@ -1010,8 +1010,8 @@ class NifImport(NifCommon):
 
         if n_vcol:
             # create vertex_layers
-            b_meshcolorlayer = b_mesh.vertex_colors.new(name="VertexColor") # color layer
-            b_meshcolorlayeralpha = b_mesh.vertex_colors.new(name="VertexAlpha") # greyscale
+            b_meshcolorlayer = b_mesh.tessface_vertex_colors.new(name="VertexColor") # color layer
+            b_meshcolorlayeralpha = b_mesh.tessface_vertex_colors.new(name="VertexAlpha") # greyscale
 
             # Mesh Vertex Color / Mesh Face
             for n_tri, b_face_index in zip(n_tris, f_map):
