@@ -1344,42 +1344,42 @@ class MeshHelper():
             b_mesh = b_obj.data
             # for v in b_mesh.vertices:
             #    v.sel = False
-            for f in b_mesh.polygons:
-                for v_index in f.vertices:
+            for poly in b_mesh.polygons:
+                for v_index in poly.vertices:
                     v = b_mesh.vertices[v_index].co
                     vkey = (int(v[0]*self.nif_export.VERTEX_RESOLUTION),
                             int(v[1]*self.nif_export.VERTEX_RESOLUTION),
                             int(v[2]*self.nif_export.VERTEX_RESOLUTION))
                     try:
-                        vdict[vkey].append((v, f, b_mesh))
+                        vdict[vkey].append((v, poly, b_mesh))
                     except KeyError:
-                        vdict[vkey] = [(v, f, b_mesh)]
+                        vdict[vkey] = [(v, poly, b_mesh)]
         # set normals on shared vertices
         nv = 0
         for vlist in vdict.values():
             if len(vlist) <= 1: continue # not shared
-            meshes = set([b_mesh for v, f, b_mesh in vlist])
+            meshes = set([b_mesh for v, poly, b_mesh in vlist])
             if len(meshes) <= 1: continue # not shared
             # take average of all face normals of polygons that have this
             # vertex
             norm = mathutils.Vector()
-            for v, f, b_mesh in vlist:
-                norm += f.normal
+            for v, poly, b_mesh in vlist:
+                norm += poly.normal
             norm.normalize()
             # remove outliers (fixes better bodies issue)
             # first calculate fitness of each face
-            fitlist = [f.normal.dot(norm)
-                       for v, f, b_mesh in vlist]
+            fitlist = [poly.normal.dot(norm)
+                       for v, poly, b_mesh in vlist]
             bestfit = max(fitlist)
             # recalculate normals only taking into account
             # well-fitting polygons
             norm = mathutils.Vector()
-            for (v, f, b_mesh), fit in zip(vlist, fitlist):
+            for (v, poly, b_mesh), fit in zip(vlist, fitlist):
                 if fit >= bestfit - 0.2:
-                    norm += f.normal
+                    norm += poly.normal
             norm.normalize()
             # save normal of this vertex
-            for v, f, b_mesh in vlist:
+            for v, poly, b_mesh in vlist:
                 v.normal = norm
                 # v.sel = True
             nv += 1
