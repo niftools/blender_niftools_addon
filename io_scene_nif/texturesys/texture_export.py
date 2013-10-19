@@ -317,8 +317,7 @@ class TextureHelper():
                     self.mesh_uvlayers.append(b_mat_texslot.uv_layer)
     
                 #glow tex
-                if b_mat_texslot.use_map_emit and \
-                    b_mat_texslot.use:
+                if b_mat_texslot.use_map_emit:
                     #multi-check
                     if self.glowmtex:
                         if b_mat_texslot == self.glowmtex:
@@ -336,8 +335,7 @@ class TextureHelper():
                     self.glowmtex = b_mat_texslot
     
                 #specular
-                elif (b_mat_texslot.use_map_specular or b_mat_texslot.use_map_color_spec) and \
-                    b_mat_texslot.use:
+                elif (b_mat_texslot.use_map_specular or b_mat_texslot.use_map_color_spec):
                     #multi-check
                     if self.glossmtex:
                         if b_mat_texslot == self.glossmtex:
@@ -357,8 +355,7 @@ class TextureHelper():
     
                 #bump map
                 elif b_mat_texslot.use_map_normal and \
-                    b_mat_texslot.texture.use_normal_map == False and \
-                    b_mat_texslot.use:
+                    b_mat_texslot.texture.use_normal_map == False:
                     #multi-check
                     if self.bumpmtex:
                         if b_mat_texslot == self.bumpmtex:
@@ -377,8 +374,7 @@ class TextureHelper():
     
                 #normal map
                 elif b_mat_texslot.use_map_normal and \
-                    b_mat_texslot.texture.use_normal_map and \
-                    b_mat_texslot.use:
+                    b_mat_texslot.texture.use_normal_map:
                     # multi-check
                     if self.normalmtex:
                         if b_mat_texslot == self.normalmtex:
@@ -395,8 +391,7 @@ class TextureHelper():
     
                 #darken
                 elif b_mat_texslot.use_map_color_diffuse and \
-                     b_mat_texslot.blend_type == 'DARKEN' and \
-                     b_mat_texslot.use:
+                     b_mat_texslot.blend_type == 'DARKEN':
                     
                     if self.darkmtex:
                         if b_mat_texslot == self.darkmtex:
@@ -414,8 +409,7 @@ class TextureHelper():
                     mesh_dark_mtex = b_mat_texslot
     
                 #diffuse
-                elif b_mat_texslot.use_map_color_diffuse and \
-                     b_mat_texslot.use:
+                elif b_mat_texslot.use_map_color_diffuse:
                     if self.basemtex:
                         if b_mat_texslot == self.basemtex:
                             raise nif_utils.NifExportError(
@@ -461,8 +455,7 @@ class TextureHelper():
                         '''
     
                 #detail
-                elif b_mat_texslot.use_map_color_diffuse and \
-                    b_mat_texslot.use:
+                elif b_mat_texslot.use_map_color_diffuse:
                     if self.detailmtex:
                         if b_mat_texslot == self.detailmtex:
                             raise nif_utils.NifExportError(
@@ -479,8 +472,7 @@ class TextureHelper():
                     self.detailmtex = b_mat_texslot
     
                 #reflection
-                elif (b_mat_texslot.use_map_mirror or b_mat_texslot.use_map_raymir) and\
-                    b_mat_texslot.use:
+                elif (b_mat_texslot.use_map_mirror or b_mat_texslot.use_map_raymir):
                     #multi-check
                     if self.glowmtex:
                         if b_mat_texslot == self.glowmtex:
