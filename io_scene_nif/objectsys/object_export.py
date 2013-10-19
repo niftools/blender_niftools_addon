@@ -1346,11 +1346,11 @@ class MeshHelper():
                     pv_index = b_mesh.loops[loop_index].vertex_index
                     vertex = b_mesh.vertices[pv_index]
                     vertex_index = vertex.index
-                    vertex_tri = vertex.co
+                    vertex_vec = vertex.co
                     
-                    vkey = (int(vertex_tri[0]*self.nif_export.VERTEX_RESOLUTION),
-                            int(vertex_tri[1]*self.nif_export.VERTEX_RESOLUTION),
-                            int(vertex_tri[2]*self.nif_export.VERTEX_RESOLUTION))
+                    vkey = (int(vertex_vec[0]*self.nif_export.VERTEX_RESOLUTION),
+                            int(vertex_vec[1]*self.nif_export.VERTEX_RESOLUTION),
+                            int(vertex_vec[2]*self.nif_export.VERTEX_RESOLUTION))
                     try:
                         vdict[vkey].append((vertex, poly, b_mesh))
                     except KeyError:
