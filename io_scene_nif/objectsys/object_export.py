@@ -204,7 +204,7 @@ class ObjectHelper():
                                          self.nif_export.get_bone_name_for_nif(b_obj.name)
                                          ] = int(constr.name[9:])
             if is_collision:
-                self.export_collision(b_obj, parent_block)
+                self.nif_export.export_collision(b_obj, parent_block)
                 return None # done; stop here
             elif has_ipo or has_children or is_multimaterial or has_track:
                 # -> mesh ninode for the hierarchy to work out
@@ -1342,46 +1342,50 @@ class MeshHelper():
         vdict = {}
         for b_obj in [b_obj for b_obj in b_objs if b_obj.type == 'MESH']:
             b_mesh = b_obj.data
-            # for v in b_mesh.vertices:
-            #    v.sel = False
+            # for vertex in b_mesh.vertices:
+            #    vertex.sel = False
             for poly in b_mesh.polygons:
-                for v_index in poly.vertices:
-                    v = b_mesh.vertices[v_index].co
-                    vkey = (int(v[0]*self.nif_export.VERTEX_RESOLUTION),
-                            int(v[1]*self.nif_export.VERTEX_RESOLUTION),
-                            int(v[2]*self.nif_export.VERTEX_RESOLUTION))
+                for loop_index in range(poly.loop_start, poly.loop_start + poly.loop_total):
+                    pv_index = b_mesh.loops[loop_index].vertex_index
+                    vertex = b_mesh.vertices[pv_index]
+                    vertex_index = vertex.index
+                    vertex_tri = vertex.co
+                    
+                    vkey = (int(vertex_tri[0]*self.nif_export.VERTEX_RESOLUTION),
+                            int(vertex_tri[1]*self.nif_export.VERTEX_RESOLUTION),
+                            int(vertex_tri[2]*self.nif_export.VERTEX_RESOLUTION))
                     try:
-                        vdict[vkey].append((v, poly, b_mesh))
+                        vdict[vkey].append((vertex, poly, b_mesh))
                     except KeyError:
-                        vdict[vkey] = [(v, poly, b_mesh)]
+                        vdict[vkey] = [(vertex, poly, b_mesh)]
         # set normals on shared vertices
         nv = 0
         for vlist in vdict.values():
             if len(vlist) <= 1: continue # not shared
-            meshes = set([b_mesh for v, poly, b_mesh in vlist])
+            meshes = set([b_mesh for vertex, poly, b_mesh in vlist])
             if len(meshes) <= 1: continue # not shared
             # take average of all face normals of polygons that have this
             # vertex
             norm = mathutils.Vector()
-            for v, poly, b_mesh in vlist:
+            for vertex, poly, b_mesh in vlist:
                 norm += poly.normal
             norm.normalize()
             # remove outliers (fixes better bodies issue)
             # first calculate fitness of each face
             fitlist = [poly.normal.dot(norm)
-                       for v, poly, b_mesh in vlist]
+                       for vertex, poly, b_mesh in vlist]
             bestfit = max(fitlist)
             # recalculate normals only taking into account
             # well-fitting polygons
             norm = mathutils.Vector()
-            for (v, poly, b_mesh), fit in zip(vlist, fitlist):
+            for (vertex, poly, b_mesh), fit in zip(vlist, fitlist):
                 if fit >= bestfit - 0.2:
                     norm += poly.normal
             norm.normalize()
             # save normal of this vertex
-            for v, poly, b_mesh in vlist:
-                v.normal = norm
-                # v.sel = True
+            for vertex, poly, b_mesh in vlist:
+                vertex.normal = norm
+                # vertex.sel = True
             nv += 1
         self.nif_export.info("Fixed normals on %i vertices." % nv)
     

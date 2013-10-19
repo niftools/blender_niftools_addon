@@ -321,12 +321,13 @@ class TextureHelper():
                     b_mat_texslot.use:
                     #multi-check
                     if self.glowmtex:
-                         raise nif_utils.NifExportError(
-                            "Multiple emissive textures"
-                            " in mesh '%s', material '%s'."
-                            " Make sure there is only one texture"
-                            " set as Influence > emit"
-                            %(b_obj.name,b_mat.name))
+                        if b_mat_texslot == self.glowmtex:
+                            raise nif_utils.NifExportError(
+                                "Multiple emissive textures"
+                                " in mesh '%s', material '%s'."
+                                " Make sure there is only one texture"
+                                " set as Influence > emit"
+                                %(b_obj.name,b_mat.name))
     
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
@@ -339,12 +340,13 @@ class TextureHelper():
                     b_mat_texslot.use:
                     #multi-check
                     if self.glossmtex:
-                         raise nif_utils.NifExportError(
-                            "Multiple specular gloss textures"
-                            " in mesh '%s', material '%s'."
-                            " Make sure there is only one texture"
-                            " set as Influence > specular"
-                            %(b_obj.name,b_mat.name))
+                        if b_mat_texslot == self.glossmtex:
+                            raise nif_utils.NifExportError(
+                                "Multiple specular gloss textures"
+                                " in mesh '%s', material '%s'."
+                                " Make sure there is only one texture"
+                                " set as Influence > specular"
+                                %(b_obj.name,b_mat.name))
     
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
@@ -359,12 +361,13 @@ class TextureHelper():
                     b_mat_texslot.use:
                     #multi-check
                     if self.bumpmtex:
-                         raise nif_utils.NifExportError(
-                            "Multiple bump/normal textures"
-                            " in mesh '%s', material '%s'."
-                            " Make sure there is only one texture"
-                            " set as Influence > normal"
-                            %(b_obj.name,b_mat.name))
+                        if b_mat_texslot == self.bumpmtex:
+                            raise nif_utils.NifExportError(
+                                "Multiple bump/normal textures"
+                                " in mesh '%s', material '%s'."
+                                " Make sure there is only one texture"
+                                " set as Influence > normal"
+                                %(b_obj.name,b_mat.name))
     
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
@@ -378,12 +381,13 @@ class TextureHelper():
                     b_mat_texslot.use:
                     # multi-check
                     if self.normalmtex:
-                         raise nif_utils.NifExportError(
-                            "Multiple bump/normal textures"
-                            " in mesh '%s', material '%s'."
-                            " Make sure there is only one texture"
-                            " set as Influence > normal"
-                            %(b_obj.name,b_mat.name))
+                        if b_mat_texslot == self.normalmtex:
+                            raise nif_utils.NifExportError(
+                                "Multiple bump/normal textures"
+                                " in mesh '%s', material '%s'."
+                                " Make sure there is only one texture"
+                                " set as Influence > normal"
+                                %(b_obj.name,b_mat.name))
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
                         mesh_hasalpha = True
@@ -395,12 +399,13 @@ class TextureHelper():
                      b_mat_texslot.use:
                     
                     if self.darkmtex:
-                        raise nif_utils.NifExportError(
-                            "Multiple Darken textures"
-                            " in mesh '%s', material '%s'."
-                            " Make sure there is only one texture"
-                            " with Influence > Blend Type > Dark"
-                            %(b_obj.name,b_mat.name))
+                        if b_mat_texslot == self.darkmtex:
+                            raise nif_utils.NifExportError(
+                                "Multiple Darken textures"
+                                " in mesh '%s', material '%s'."
+                                " Make sure there is only one texture"
+                                " with Influence > Blend Type > Dark"
+                                %(b_obj.name,b_mat.name))
     
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
@@ -412,12 +417,13 @@ class TextureHelper():
                 elif b_mat_texslot.use_map_color_diffuse and \
                      b_mat_texslot.use:
                     if self.basemtex:
-                         raise nif_utils.NifExportError(
-                            "Multiple Diffuse textures"
-                            " in mesh '%s', material '%s'."
-                            " Make sure there is only one texture"
-                            " with Influence > Diffuse > color"
-                            %(b_obj.name,b_mat.name))
+                        if b_mat_texslot == self.basemtex:
+                            raise nif_utils.NifExportError(
+                                "Multiple Diffuse textures"
+                                " in mesh '%s', material '%s'."
+                                " Make sure there is only one texture"
+                                " with Influence > Diffuse > color"
+                                %(b_obj.name,b_mat.name))
     
                     self.basemtex = b_mat_texslot
     
@@ -458,12 +464,13 @@ class TextureHelper():
                 elif b_mat_texslot.use_map_color_diffuse and \
                     b_mat_texslot.use:
                     if self.detailmtex:
-                         raise nif_utils.NifExportError(
-                            "Multiple detail textures"
-                            " in mesh '%s', material '%s'."
-                            " Make sure there is only one texture"
-                            " with Influence Diffuse > color"
-                            %(b_obj.name,b_mat.name))
+                        if b_mat_texslot == self.detailmtex:
+                            raise nif_utils.NifExportError(
+                                "Multiple detail textures"
+                                " in mesh '%s', material '%s'."
+                                " Make sure there is only one texture"
+                                " with Influence Diffuse > color"
+                                %(b_obj.name,b_mat.name))
                     # extra diffuse consider as detail texture
     
                     # check if alpha channel is enabled for this texture
@@ -476,12 +483,13 @@ class TextureHelper():
                     b_mat_texslot.use:
                     #multi-check
                     if self.glowmtex:
-                         raise nif_utils.NifExportError(
-                            "Multiple reflection textures"
-                            " in mesh '%s', material '%s'."
-                            " Make sure there is only one texture"
-                            " set as Influence > Mirror/Ray Mirror"
-                            %(b_obj.name,b_mat.name))
+                        if b_mat_texslot == self.glowmtex:
+                            raise nif_utils.NifExportError(
+                                "Multiple reflection textures"
+                                " in mesh '%s', material '%s'."
+                                " Make sure there is only one texture"
+                                " set as Influence > Mirror/Ray Mirror"
+                                %(b_obj.name,b_mat.name))
                     # got the reflection map
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
