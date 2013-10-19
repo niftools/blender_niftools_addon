@@ -67,13 +67,13 @@ class TestBaseUV(SingleNif):
         '''
         b_obj = bpy.data.objects[self.b_name]
         b_mesh = b_obj.data
-        nose.tools.assert_equal(len(b_mesh.uv_textures), 1)
+        nose.tools.assert_equal(len(b_mesh.tessface_uv_textures), 1)
         nose.tools.assert_equal()
         '''
         # TODO_3.0 - Separate out the UV writing from requiring a texture.
 
     def n_create_data(self):
-        gen_data.n_create_header(self.n_data)
+        gen_data.n_create_header_oblivion(self.n_data)
         n_gen_geometry.n_create_blocks(self.n_data)
         return self.n_data
 

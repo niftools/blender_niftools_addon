@@ -39,10 +39,6 @@
 
 import bpy
 import nose.tools
-import math
-import mathutils
-
-from pyffi.formats.nif import NifFormat
 
 from integration import Base
 from integration import SingleNif
@@ -56,6 +52,9 @@ class TestBaseGeometry(SingleNif):
     n_name = 'geometry/trishape/test_trishape' # (documented in base class)
     b_name = 'Cube'
 
+    def b_create_header(self):
+        self.n_game = 'OBLIVION'
+
     def b_create_data(self):
         # (documented in base class)
         b_obj = b_gen_geometry.b_create_cube(self.b_name)
@@ -67,8 +66,10 @@ class TestBaseGeometry(SingleNif):
         b_obj = bpy.data.objects[self.b_name]
         b_gen_geometry.b_check_geom_obj(b_obj)
 
+    def n_create_header(self):
+        gen_data.n_create_header_oblivion(self.n_data)
+
     def n_create_data(self):
-        gen_data.n_create_header(self.n_data)
         n_gen_geometry.n_create_blocks(self.n_data)
         return self.n_data
 

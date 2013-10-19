@@ -207,12 +207,12 @@ class bhkshape_import():
                     vert_list[vert_index] = [x,y,z]
                     vert_index += 1
 
-        faces = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,0,1,5],[7,6,2,3]]
+        tessfaces = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,0,1,5],[7,6,2,3]]
         face_index = 0
 
-        for x in range(len(faces)):
-            b_mesh.faces.add(1)
-            b_mesh.faces[-1].vertices_raw = faces[face_index]
+        for x in range(len(tessfaces)):
+            b_mesh.tessfaces.add(1)
+            b_mesh.tessfaces[-1].vertices_raw = tessfaces[face_index]
             face_index += 1
 
         # link box to scene and set transform
@@ -282,12 +282,12 @@ class bhkshape_import():
                     vert_list[vert_index] = [x,y,z]
                     vert_index += 1
 
-        faces = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]]
+        tessfaces = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]]
         face_index = 0
 
-        for x in range(len(faces)):
-            b_mesh.faces.add(1)
-            b_mesh.faces[-1].vertices
+        for x in range(len(tessfaces)):
+            b_mesh.tessfaces.add(1)
+            b_mesh.tessfaces[-1].vertices
 
         # link box to scene and set transform
 
@@ -365,8 +365,8 @@ class bhkshape_import():
             b_mesh.vertices[-1].co = n_vert
 
         for n_triangle in n_triangles:
-            b_mesh.faces.add(1)
-            b_mesh.faces[-1].vertices = n_triangle
+            b_mesh.tessfaces.add(1)
+            b_mesh.tessfaces[-1].vertices = n_triangle
 
         # link mesh to scene and set transform
         b_obj = bpy.data.objects.new('Convexpoly', b_mesh)
@@ -411,8 +411,8 @@ class bhkshape_import():
             b_mesh.vertices[-1].co = (n_vert.x, n_vert.y, n_vert.z)
 
         for n_triangle in list(bhkshape.get_triangles()):
-            b_mesh.faces.add(1)
-            b_mesh.faces[-1].vertices = n_triangle
+            b_mesh.tessfaces.add(1)
+            b_mesh.tessfaces[-1].vertices = n_triangle
 
         # link mesh to scene and set transform
         b_obj = bpy.data.objects.new('poly', b_mesh)
@@ -474,8 +474,8 @@ class bhkshape_import():
                 if ((vertex_offset <= hktriangle.triangle.v_1)
                     and (hktriangle.triangle.v_1
                          < vertex_offset + subshape.num_vertices)):
-                    b_mesh.faces.add(1)
-                    b_mesh.faces[-1].vertices = [
+                    b_mesh.tessfaces.add(1)
+                    b_mesh.tessfaces[-1].vertices = [
                                              hktriangle.triangle.v_1 - vertex_offset,
                                              hktriangle.triangle.v_2 - vertex_offset,
                                              hktriangle.triangle.v_3 - vertex_offset]
@@ -483,18 +483,18 @@ class bhkshape_import():
                     continue
                 # check face normal
                 align_plus = sum(abs(x)
-                                 for x in ( b_mesh.faces[-1].normal[0] + hktriangle.normal.x,
-                                            b_mesh.faces[-1].normal[1] + hktriangle.normal.y,
-                                            b_mesh.faces[-1].normal[2] + hktriangle.normal.z ))
+                                 for x in ( b_mesh.tessfaces[-1].normal[0] + hktriangle.normal.x,
+                                            b_mesh.tessfaces[-1].normal[1] + hktriangle.normal.y,
+                                            b_mesh.tessfaces[-1].normal[2] + hktriangle.normal.z ))
                 align_minus = sum(abs(x)
-                                  for x in ( b_mesh.faces[-1].normal[0] - hktriangle.normal.x,
-                                             b_mesh.faces[-1].normal[1] - hktriangle.normal.y,
-                                             b_mesh.faces[-1].normal[2] - hktriangle.normal.z ))
+                                  for x in ( b_mesh.tessfaces[-1].normal[0] - hktriangle.normal.x,
+                                             b_mesh.tessfaces[-1].normal[1] - hktriangle.normal.y,
+                                             b_mesh.tessfaces[-1].normal[2] - hktriangle.normal.z ))
                 # fix face orientation
                 if align_plus < align_minus:
-                    b_mesh.faces[-1].vertices = ( b_mesh.faces[-1].vertices[1],
-                                                  b_mesh.faces[-1].vertices[0],
-                                                  b_mesh.faces[-1].vertices[2] )
+                    b_mesh.tessfaces[-1].vertices = ( b_mesh.tessfaces[-1].vertices[1],
+                                                  b_mesh.tessfaces[-1].vertices[0],
+                                                  b_mesh.tessfaces[-1].vertices[2] )
 
             # link mesh to scene and set transform
             b_obj = bpy.data.objects.new('poly%i' % subshape_num, b_mesh)
@@ -576,9 +576,9 @@ class bound_import():
                     b_mesh.vertices.add(1)
                     b_mesh.vertices[-1].co = (x,y,z)
 
-        faces = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]]
-        b_mesh.faces.add(len(faces))
-        b_mesh.faces.foreach_set("vertices_raw", unpack_face_list(faces))
+        tessfaces = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]]
+        b_mesh.tessfaces.add(len(tessfaces))
+        b_mesh.tessfaces.foreach_set("vertices_raw", unpack_face_list(tessfaces))
 
         # link box to scene and set transform
         if isinstance(bbox, NifFormat.BSBound):

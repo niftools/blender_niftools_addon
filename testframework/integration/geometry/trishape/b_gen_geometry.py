@@ -94,11 +94,11 @@ def b_scale_single_face(b_obj):
     """Scale a single face of the object."""
 
     # scale single face
-    for faces in b_obj.data.faces:
-        faces.select = False
-    b_obj.data.faces[2].select = True
+    for tessfaces in b_obj.data.tessfaces:
+        tessfaces.select = False
+    b_obj.data.tessfaces[2].select = True
     
-    for b_vert_index in b_obj.data.faces[2].vertices: 
+    for b_vert_index in b_obj.data.tessfaces[2].vertices: 
         b_obj.data.vertices[b_vert_index].co[1] = b_obj.data.vertices[b_vert_index].co[1] * 0.5
         b_obj.data.vertices[b_vert_index].co[2] = b_obj.data.vertices[b_vert_index].co[2] * 0.5
                            
@@ -143,8 +143,8 @@ def b_check_transform(b_obj):
             < mathutils.Vector((EPSILON, EPSILON, EPSILON)), True) # uniform scale
 
 def b_check_geom(b_mesh):
-    num_triangles = len( [face for face in b_mesh.faces if len(face.vertices) == 3]) # check for tri
-    num_triangles += 2 * len( [face for face in b_mesh.faces if len(face.vertices) == 4]) # face = 2 tris
+    num_triangles = len( [face for face in b_mesh.tessfaces if len(face.vertices) == 3]) # check for tri
+    num_triangles += 2 * len( [face for face in b_mesh.tessfaces if len(face.vertices) == 4]) # face = 2 tris
     nose.tools.assert_equal(num_triangles, 12)
     
 def b_check_vertex_count(b_mesh):
