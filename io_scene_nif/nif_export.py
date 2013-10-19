@@ -49,7 +49,6 @@ from io_scene_nif.constraintsys.constraint_export import Constraint
 from io_scene_nif.texturesys.texture_export import TextureHelper
 from io_scene_nif.objectsys.object_export import ObjectHelper
 
-import logging
 import os.path
 
 import mathutils
@@ -106,7 +105,7 @@ class NifExport(NifCommon):
         self.constrainthelper = Constraint(parent=self)
         self.texturehelper = TextureHelper(parent=self)
         self.objecthelper = ObjectHelper(parent=self)
-    
+
 
     def execute(self):
         """Main export function."""
@@ -159,15 +158,21 @@ class NifExport(NifCommon):
                     # ensure we get the mesh vertices in animation mode,
                     # and not in rest position!
                     b_obj.data.pose_position = 'POSE'
-                    if (b_obj.data.use_deform_envelopes):
-                        return self.error(
-                            "'%s': Cannot export envelope skinning."
-                            " If you have vertex groups,"
-                            " turn off envelopes. If you don't have vertex"
-                            " groups, select the bones one by one press W"
-                            " to convert their envelopes to vertex weights,"
-                            " and turn off envelopes."
-                            % b_obj.name)
+
+
+                    if b_obj.type == 'MESH':
+                        b_obj_name = b_obj.name
+                        b_obj_parent = b_obj.parent.name
+                        if bpy.data.objects[b_obj_name].modifiers[b_obj_parent].use_bone_envelopes:
+                        
+                            return self.error(
+                                    "'%s': Cannot export envelope skinning."
+                                    " If you have vertex groups,"
+                                    " turn off envelopes. If you don't have vertex"
+                                    " groups, select the bones one by one press W"
+                                    " to convert their envelopes to vertex weights,"
+                                    " and turn off envelopes."
+                                    % b_obj.name)
 
                 # check for non-uniform transforms
                 # (lattices are not exported so ignore them as they often tend

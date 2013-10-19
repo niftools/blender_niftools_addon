@@ -83,8 +83,8 @@ class Armature():
 		armature_name = self.nif_import.import_name(niArmature)
 
 		b_armatureData = bpy.data.armatures.new(armature_name)
-		b_armatureData.use_deform_vertex_groups = True
-		b_armatureData.use_deform_envelopes = False
+		#b_armatureData.use_vertex_groups = True
+		#b_armatureData.use_bone_envelopes = False
 		b_armatureData.show_names = True
 		b_armatureData.show_axes = True
 		b_armatureData.draw_type = 'STICK'
