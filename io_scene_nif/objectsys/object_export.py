@@ -474,19 +474,16 @@ class MeshHelper():
             b_emit_prop = False
             
             # use the texture properties as preference
-            
-            #TODO - replace with TextureHelper func
-            for b_slot in b_mat.texture_slots:
-                if b_slot != None and b_slot.use:
-                    
-                    # replace with texture helper queries
-                    b_ambient_prop |= b_slot.use_map_ambient
-                    b_diffuse_prop |= b_slot.use_map_color_diffuse
-                    b_spec_prop |= b_slot.use_map_color_spec
-                    b_emissive_prop |= b_slot.use_map_emit
-                    b_gloss_prop |= b_slot.use_map_hardness
-                    b_alpha_prop |= b_slot.use_map_alpha
-                    b_emit_prop |= b_slot.use_map_emit
+            for slot in self.nif_export.texturehelper.get_used_slots(b_mat):             
+
+                # replace with texture helper queries
+                b_ambient_prop |= b_slot.use_map_ambient
+                b_diffuse_prop |= b_slot.use_map_color_diffuse
+                b_spec_prop |= b_slot.use_map_color_spec
+                b_emissive_prop |= b_slot.use_map_emit
+                b_gloss_prop |= b_slot.use_map_hardness
+                b_alpha_prop |= b_slot.use_map_alpha
+                b_emit_prop |= b_slot.use_map_emit
                     
             # -> first, extract valuable info from our b_obj
 
