@@ -474,7 +474,7 @@ class MeshHelper():
             b_emit_prop = False
             
             # use the texture properties as preference
-            for slot in self.nif_export.texturehelper.get_used_slots(b_mat):             
+            for b_slot in self.nif_export.texturehelper.get_used_textslots(b_mat):             
 
                 # replace with texture helper queries
                 b_ambient_prop |= b_slot.use_map_ambient
