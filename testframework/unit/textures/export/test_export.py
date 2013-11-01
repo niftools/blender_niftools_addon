@@ -2,7 +2,6 @@ import nose
  
 import bpy
  
-import io_scene_nif
 from io_scene_nif.texturesys.texture_export import TextureHelper
  
 class Test_Material_Slot():
