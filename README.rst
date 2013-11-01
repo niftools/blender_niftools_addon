@@ -5,12 +5,6 @@ Requirements
 
 * `blender 2.69 <http://www.blender.org/download/get-blender/>`_
 
-Fork
-----
-
-* git clone git://github.com/niftools/blender_nif_plugin.git
-* http://github.com/niftools/blender_nif_plugin
-
 Download
 --------
 
@@ -30,3 +24,9 @@ Support
 * `report a bug <http://sourceforge.net/tracker/?group_id=149157>`_
   (please include the .blend or .nif that caused the error and a brief description
   of how to reproduce the error)
+
+Fork
+----
+
+* git clone git://github.com/niftools/blender_nif_plugin.git
+* http://github.com/niftools/blender_nif_plugin
