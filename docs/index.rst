@@ -13,7 +13,7 @@ Welcome to Blender NIF Plugin documentation!
 Contents:
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 1
 
    user/index
    development/index
