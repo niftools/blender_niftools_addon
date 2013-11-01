@@ -71,7 +71,7 @@ approach should be taken to building the nifs.
     Reusable functions should be created from the dump_python and stored in ``testframework/test/../../n_gen_x_feature.py``.
 
  - Write code to test the desired features of the physical.
-   The :meth:`n_check_data` method is cwill call the methods 
+   The :meth:`n_check_data` method will call the methods 
    from :mod:`n_gen_x_feature` module to check the nif data.
 
 #. Recreate the feature within blender, using user functions:
