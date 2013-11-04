@@ -1,5 +1,12 @@
+Development Overview
+====================
+
+This section provides an overview of the development process. 
+It is geared towards anyone interested in delving into developing the Blender Nif Plug-in or knowing more about the process.
+
+
 Development Methodology
-=======================
+-----------------------
 
 A development methodology describes the principles we want as part of the development process.
 
@@ -29,40 +36,14 @@ Code Development & Maintenance
 The initial proposal was to port all the current code directly to the new Blender Python API.
 See :ref:`Code Porting Strategy <development-porting_strategy>`
 
-Additionally::
+Additionally
 
-   * It was decided that as code was ported that the conventions as described in the next section
-   would be introduced to keep the code consistent and improve readability.
+   * It was decided that as code was ported that the conventions as described in the next section would be introduced to keep the code consistent and improve readability.
 
    * Refactored of code into modular components when working on features sets; collisions, texture, armature etc. 
-
-Naming Conventions
-******************
-
-* Stick to the official Python style guide (`PEP 8
-  <http://www.python.org/dev/peps/pep-0008/>`_).
-  
-* Instances of blender classes start with ``b_`` whilst instances of
-  nif classes start with ``n_``. Examples:
-
-  * ``b_mesh`` for a blender :class:`bpy.types.Mesh`
-  * ``b_face`` for a blender :class:`bpy.types.MeshFace`
-  * ``b_vertex`` for a blender :class:`bpy.types.MeshVertex`
-  * ``b_vector`` for a blender :class:`mathutils.Vector`
-  * ``b_obj`` for a blender :class:`bpy.types.Object`
-  * ``b_mat`` for a blender :class:`bpy.types.Material`
-  * ``b_bone`` for a blender :class:`bpy.types.Bone`
-  * ``n_obj`` for a generic :class:`pyffi.formats.nif.NifFormat.NiObject`
-  * ``n_geom`` for a :class:`pyffi.formats.nif.NifFormat.NiGeometry`
-
-.. todo::
-
-   These conventions are not yet consistently applied in the
-   code. Stick to it for new code, but we are holding off a rename for
-   the planned 3.x.x refactor.
    
 Modularisation
-**************
+--------------
 
 During the code porting process it became apparent that the code was monolithic. All of the import code was in one class, all export code in another.
 Initially we planned to hold off large scale refactoring until the code was ported and do it as part of the 3.0.x series.
@@ -104,7 +85,7 @@ When a developer feels that their feature branch is ready they can start the rev
  :image: http://i211.photobucket.com/albums/bb189/NifTools/Blender/documentation/Git%20Development%20Model/git_developer_model_zps55d02850.png
  
 Test-Framework
-**************
+--------------
 
 In Test Driven Development, tests are the core to ensuring software quality. 
 Before any production code is written, a test should be written to check to see that the code does what it does. 
@@ -135,7 +116,7 @@ Supporting features is detailed workflow is detail in the :ref:`Test Framework S
 Documentation
 -------------
 
-Documentation forms the final core principle of development. Unless the users can understand how to use the plugin, there is 
-not much point in development. 
+Documentation forms the final core principle of development. Without documentation that enable users to understand how to use the plugin, there is 
+not much point in development.  
 
    
