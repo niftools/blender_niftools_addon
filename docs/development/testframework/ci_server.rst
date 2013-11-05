@@ -22,8 +22,8 @@ Build Steps :
 	xcopy /K /F  "*.zip" "%build_folder%\blender_nif_plugin\nightly\"
 	
 	cd testframework
-	blender-nosetests.bat --with-xunit --xunit-file=reports\unit_test.xml 
-	--cover-package=io_scene_nif --cover-xml-file=reports\unit_test_coverage.xml unit
+	blender-nosetests.bat --with-xunit --xunit-file=reports\unit.xml 
+	--cover-xml --cover-package=io_scene_nif unit
 	
 	cd testframework
 	testframework\blender-nosetests.bat --with-xunit --xunit-file=testframework\reports\integration_test.xml 
