@@ -138,9 +138,7 @@ Bone
  
  - :class:`bpy.types.EditBone` 's are access via the collection attribute :attr:`bpy.types.Armature.edit_bones`, which only exists while in Edit mode.
  
- - EditBones are accessed through :class:`int` indexed rather :class:`str` index::
- 
-   b_armatureData.edit_bones[b_child_bone.name].parent = b_armatureData.edit_bones[b_bone.name]
+ - EditBones are accessed through :class:`int` indexed rather :class:`str` index b_armatureData.edit_bones[b_child_bone.name].parent = b_armatureData.edit_bones[b_bone.name]
 
 
 Strings and Bytes
