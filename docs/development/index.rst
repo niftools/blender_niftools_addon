@@ -10,7 +10,7 @@ Contents:
    design/index
    setup/index
    testframework/index
-   
+   testframework/ci_server
 
    
 Indices and tables
