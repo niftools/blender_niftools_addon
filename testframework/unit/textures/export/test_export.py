@@ -39,15 +39,15 @@ class Test_Material_Slot():
      
     def test_two_textures_one_used_textureslot(self):
          
-         print("Adding textureslots: ")
-         self.texture_slot0 = self.b_mat.texture_slots.add()
-         self.texture_slot1 = self.b_mat.texture_slots.add()
-         
-         print("Not using second: ")
-         self.texture_slot1.use = False
-         
-         self.used_textslots = TextureHelper.get_used_textslots(self.b_mat)
-         
-         print("Used Slots: %s, items = %s" % (self.used_textslots, len(self.used_textslots)))
-         nose.tools.assert_true(len(self.used_textslots) == 1)
+        print("Adding textureslots: ")
+        self.texture_slot0 = self.b_mat.texture_slots.add()
+        self.texture_slot1 = self.b_mat.texture_slots.add()
+        
+        print("Not using second: ")
+        self.texture_slot1.use = False
+        
+        self.used_textslots = TextureHelper.get_used_textslots(self.b_mat)
+        
+        print("Used Slots: %s, items = %s" % (self.used_textslots, len(self.used_textslots)))
+        nose.tools.assert_true(len(self.used_textslots) == 1)
          
