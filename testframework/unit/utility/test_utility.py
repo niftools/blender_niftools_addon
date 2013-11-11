@@ -1,4 +1,5 @@
 import nose
+from nose.tools import nottest
 
 import pyffi
 from pyffi.formats.nif import NifFormat
@@ -10,6 +11,7 @@ import bpy
 import mathutils
 import math
 
+@nottest
 class Test_Utilites:
 #Read docs/development/issues.rst for more info on matrix conversions.
 
