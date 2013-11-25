@@ -96,6 +96,7 @@ class TextureHelper():
         
         # create new block
         bsshader = NifFormat.BSShaderPPLightingProperty()
+        
         # set shader options
         bsshader.shader_type = self.nif_export.EXPORT_FO3_SHADER_TYPE
         bsshader.shader_flags.zbuffer_test = self.nif_export.EXPORT_FO3_SF_ZBUF
@@ -104,6 +105,7 @@ class TextureHelper():
         bsshader.shader_flags.window_environment_mapping = self.nif_export.EXPORT_FO3_SF_WINDOW_ENVMAP
         bsshader.shader_flags.empty = self.nif_export.EXPORT_FO3_SF_EMPT
         bsshader.shader_flags.unknown_31 = self.nif_export.EXPORT_FO3_SF_UN31
+        
         # set textures
         texset = NifFormat.BSShaderTextureSet()
         bsshader.texture_set = texset
@@ -287,7 +289,7 @@ class TextureHelper():
 
     def determine_texture_types(self, b_obj, b_mat):
         
-        self.get_used_textslots(b_mat)
+        used_slots = self.get_used_textslots(b_mat)
         self.basemtex = None
         self.bumpmtex = None
         self.darkmtex = None
@@ -297,7 +299,7 @@ class TextureHelper():
         self.normalmtex = None
         self.refmtex = None
                 
-        for b_mat_texslot in self.used_slots:
+        for b_mat_texslot in used_slots:
             # check REFL-mapped textures
             # (used for "NiTextureEffect" materials)
             if b_mat_texslot.texture_coords == 'REFLECTION':
