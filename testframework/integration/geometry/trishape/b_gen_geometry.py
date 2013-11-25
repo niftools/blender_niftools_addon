@@ -94,11 +94,11 @@ def b_scale_single_face(b_obj):
     """Scale a single face of the object."""
 
     # scale single face
-    for tessfaces in b_obj.data.tessfaces:
-        tessfaces.select = False
-    b_obj.data.tessfaces[2].select = True
+    for poly in b_obj.data.polygons:
+        poly.select = False
+    b_obj.data.polygons[2].select = True
     
-    for b_vert_index in b_obj.data.tessfaces[2].vertices: 
+    for b_vert_index in b_obj.data.polygons[2].vertices: 
         b_obj.data.vertices[b_vert_index].co[1] = b_obj.data.vertices[b_vert_index].co[1] * 0.5
         b_obj.data.vertices[b_vert_index].co[2] = b_obj.data.vertices[b_vert_index].co[2] * 0.5
                            
