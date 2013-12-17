@@ -10,14 +10,18 @@ Welcome to Blender NIF Plugin documentation!
 
    Documentation is incomplete, and is still a work in progress.
 
+The Blender Nif Plugin enable Blender to import and export NIF files.
+
 Contents:
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 1
 
    user/index
+   
    development/index
    api/index
+   
    additional/authors
    additional/license
    additional/changes
