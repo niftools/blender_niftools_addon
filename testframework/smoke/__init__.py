@@ -19,6 +19,14 @@ def test_enable_addon():
     nose.tools.assert_true(enabled)
     
     
+def test_dependancies():
+    try:
+        import pyffi
+    except:
+        print("Dependancy was not found, ensure that pyffi was built and included with the installer")
+        assert(False)
+    
+    
 def test_disable_addon():
     """Disables the nif scripts addon, so all tests can use it."""
     

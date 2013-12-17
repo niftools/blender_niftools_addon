@@ -129,22 +129,22 @@ def b_check_geom_obj(b_obj):
     
 def b_check_transform(b_obj):
     
-    b_loc_vec, b_rot_quat, b_scale_vec = b_obj.matrix_local.decompose() # transforms
+#     b_loc_vec, b_rot_quat, b_scale_vec = b_obj.matrix_local.decompose() # transforms   
     
     nose.tools.assert_equal(b_obj.location, mathutils.Vector((20.0, 20.0, 20.0))) # location
     
-    b_rot_quat.to_euler()
-    b_rot_eul = b_rot_quat
+    b_rot_eul = b_rot_quat.to_euler()
     nose.tools.assert_equal((b_rot_eul.x - math.radians(30.0)) < EPSILON, True) # x rotation
     nose.tools.assert_equal((b_rot_eul.y - math.radians(60.0)) < EPSILON, True) # y rotation
-    nose.tools.assert_equal((b_rot_eul.z - math.radians(90.0)) < EPSILON, True) # z rotation
+    nose.tools.assert_equal((b_rot_eul.x - math.radians(90.0)) < EPSILON, True) # z rotation
     
-    nose.tools.assert_equal((b_obj.scale - mathutils.Vector((0.75, 0.75, 0.75))) 
+    nose.tools.assert_equal((b_scale_vec - mathutils.Vector((0.75, 0.75, 0.75))) 
             < mathutils.Vector((EPSILON, EPSILON, EPSILON)), True) # uniform scale
 
 def b_check_geom(b_mesh):
-    num_triangles = len( [face for face in b_mesh.tessfaces if len(face.vertices) == 3]) # check for tri
-    num_triangles += 2 * len( [face for face in b_mesh.tessfaces if len(face.vertices) == 4]) # face = 2 tris
+    
+    num_triangles = len( [face for face in b_mesh.polygons if len(face.vertices) == 3]) # check for tri
+    num_triangles += 2 * len( [face for face in b_mesh.polygons if len(face.vertices) == 4]) # face = 2 tris
     nose.tools.assert_equal(num_triangles, 12)
     
 def b_check_vertex_count(b_mesh):
