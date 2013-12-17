@@ -1,7 +1,14 @@
-Development Methodology
-=======================
+Development Overview
+====================
 
-A Methodology is guideline for the principles we want for development process.
+This section provides an overview of the development process. 
+It is geared towards anyone interested in delving into developing the Blender Nif Plug-in or knowing more about the process.
+
+
+Development Methodology
+-----------------------
+
+A development methodology describes the principles we want as part of the development process.
 
 For the 2.6.x series of development we decided to develop a Feature Oriented, Test Driven Development (TDD) methodology to suit both current and future needs.
 
@@ -14,14 +21,14 @@ Test driven development in a nutshell means:
 The advantages of TDD is:
  * It gives us quick feedback when changes arises.
  * Constantly testing the code to ensure that it is doing what is meant to do, no assumptions.
- * When things break, it narrows the search; allowing fixes to be developed more quickily.
- * Ensure that the changes haven't broken any other existing funcitonality.
+ * When things break, it narrows the search; allowing fixes to be developed more quickly.
+ * Ensure that the changes haven't broken any other existing functionality.
 
 **The focus of our TDD methodology is 3 main areas:**
 
- * Develop maintainable code
- * Testing features 
- * Documentation 
+ * Develop maintainable code - Ensure good foundation for stable development & improvement.
+ * Constant feedback - Testing features ensuring they work and remain working.
+ * Documentation - Ensure that people can actually use the tools, think about user perspective.
  
 Code Development & Maintenance
 ------------------------------
@@ -29,44 +36,18 @@ Code Development & Maintenance
 The initial proposal was to port all the current code directly to the new Blender Python API.
 See :ref:`Code Porting Strategy <development-porting_strategy>`
 
-Additionally::
+Additionally
 
-   * It was decided that as code was ported that the conventions as described in the next section
-   would be introduced to keep the code consistent and improve readability.
+   * It was decided that as code was ported that the conventions as described in the next section would be introduced to keep the code consistent and improve readability.
 
    * Refactored of code into modular components when working on features sets; collisions, texture, armature etc. 
-
-Naming Conventions
-******************
-
-* Stick to the official Python style guide (`PEP 8
-  <http://www.python.org/dev/peps/pep-0008/>`_).
-  
-* Instances of blender classes start with ``b_`` whilst instances of
-  nif classes start with ``n_``. Examples:
-
-  * ``b_mesh`` for a blender :class:`bpy.types.Mesh`
-  * ``b_face`` for a blender :class:`bpy.types.MeshFace`
-  * ``b_vertex`` for a blender :class:`bpy.types.MeshVertex`
-  * ``b_vector`` for a blender :class:`mathutils.Vector`
-  * ``b_obj`` for a blender :class:`bpy.types.Object`
-  * ``b_mat`` for a blender :class:`bpy.types.Material`
-  * ``b_bone`` for a blender :class:`bpy.types.Bone`
-  * ``n_obj`` for a generic :class:`pyffi.formats.nif.NifFormat.NiObject`
-  * ``n_geom`` for a :class:`pyffi.formats.nif.NifFormat.NiGeometry`
-
-.. todo::
-
-   These conventions are not yet consistently applied in the
-   code. Stick to it for new code, but we are holding off a rename for
-   the planned 3.x.x refactor.
    
 Modularisation
-**************
+--------------
 
 During the code porting process it became apparent that the code was monolithic. All of the import code was in one class, all export code in another.
 Initially we planned to hold off large scale refactoring until the code was ported and do it as part of the 3.0.x series.
-It was decided to seperate out common areas of functionatlity into submodules which would be responsible for that specific areas.
+It was decided to separate out common areas of functionality into submodules which would be responsible for that specific areas.
 
  * Some systems are still highly coupled, such as geometry generation with the material system, these will remain in place.
 
@@ -104,10 +85,10 @@ When a developer feels that their feature branch is ready they can start the rev
  :image: http://i211.photobucket.com/albums/bb189/NifTools/Blender/documentation/Git%20Development%20Model/git_developer_model_zps55d02850.png
  
 Test-Framework
-**************
+--------------
 
 In Test Driven Development, tests are the core to ensuring software quality. 
-Before any production code is writen, a test should be written to check to see that the code does what it does. 
+Before any production code is written, a test should be written to check to see that the code does what it does. 
 Initially the tests will fail. As the code is developed, then more tests should pass until all tests do. 
 At this point a feature is deemed to be implemented.
 
@@ -135,7 +116,7 @@ Supporting features is detailed workflow is detail in the :ref:`Test Framework S
 Documentation
 -------------
 
-Documentation forms the final core principle of development. Unless the users can understand how to use the plugin, there is 
-not much point in development. 
+Documentation forms the final core principle of development. Without documentation that enable users to understand how to use the plugin, there is 
+not much point in development.  
 
    
