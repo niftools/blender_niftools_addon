@@ -1,20 +1,16 @@
 Developer Documentation
 =======================
 
-The pupose of this section is to document the methodology used to develop the Blender Nif Plug-in.
-It will give new developers a complete guide from initial environment setup, 
-design considerations and conventions, development workflow and testing.
 
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    
-   design
-   setup
-   workflow
-   testframework
-   issues
+   design/index
+   setup/index
+   testframework/index
+   testframework/ci_server
 
    
 Indices and tables

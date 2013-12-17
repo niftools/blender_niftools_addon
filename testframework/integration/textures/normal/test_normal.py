@@ -58,6 +58,8 @@ from integration.textures.diffuse import n_gen_diffusemap
 from integration.textures.normal import b_gen_normalmap
 from integration.textures.normal import n_gen_normalmap
 
+from nose.tools import nottest
+
 '''
  Normal map, technically special case....
  Handling if user supplies normal map instead of bump & vice-versa
@@ -67,6 +69,8 @@ from integration.textures.normal import n_gen_normalmap
     BSLightingShaderProperty(Skyrim)
 '''
 
+#TODO
+@nottest
 class TestTexturePropertyNormalMap(SingleNif):
     """Test import/export of meshes with NiTexturingProperty based diffuse texture"""
     

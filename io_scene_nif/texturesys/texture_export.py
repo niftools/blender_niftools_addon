@@ -76,16 +76,16 @@ class TextureHelper():
 #         mesh_ref_mtex = None
     
     @classmethod
-    def get_used_textslots(b_mat):
+    def get_used_textslots(cls, b_mat):
         used_slots = []
         if b_mat is not None:
             used_slots = [b_texslot for b_texslot in b_mat.texture_slots if b_texslot is not None and b_texslot.use]
         return used_slots
 
     @classmethod
-    def get_uv_layers(self, b_mat):
+    def get_uv_layers(cls, b_mat):
         used_uvlayers = set()
-        texture_slots = self.get_used_textslots(b_mat)
+        texture_slots = cls.get_used_textslots(b_mat)
         for slot in texture_slots:
             used_uvlayers.add(slot.uv_layer)
         return used_uvlayers
@@ -96,6 +96,7 @@ class TextureHelper():
         
         # create new block
         bsshader = NifFormat.BSShaderPPLightingProperty()
+        
         # set shader options
         bsshader.shader_type = self.nif_export.EXPORT_FO3_SHADER_TYPE
         bsshader.shader_flags.zbuffer_test = self.nif_export.EXPORT_FO3_SF_ZBUF
@@ -104,6 +105,7 @@ class TextureHelper():
         bsshader.shader_flags.window_environment_mapping = self.nif_export.EXPORT_FO3_SF_WINDOW_ENVMAP
         bsshader.shader_flags.empty = self.nif_export.EXPORT_FO3_SF_EMPT
         bsshader.shader_flags.unknown_31 = self.nif_export.EXPORT_FO3_SF_UN31
+        
         # set textures
         texset = NifFormat.BSShaderTextureSet()
         bsshader.texture_set = texset
@@ -287,7 +289,7 @@ class TextureHelper():
 
     def determine_texture_types(self, b_obj, b_mat):
         
-        self.get_used_textslots(b_mat)
+        used_slots = self.get_used_textslots(b_mat)
         self.basemtex = None
         self.bumpmtex = None
         self.darkmtex = None
@@ -297,7 +299,7 @@ class TextureHelper():
         self.normalmtex = None
         self.refmtex = None
                 
-        for b_mat_texslot in self.used_slots:
+        for b_mat_texslot in used_slots:
             # check REFL-mapped textures
             # (used for "NiTextureEffect" materials)
             if b_mat_texslot.texture_coords == 'REFLECTION':
