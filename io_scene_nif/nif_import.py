@@ -913,7 +913,7 @@ class NifImport(NifCommon):
 
         # v_map will store the vertex index mapping
         # nif vertex i maps to blender vertex v_map[i]
-        v_map = [0 for i in range(len(n_verts))] # pre-allocate memory, for faster performance
+        v_map = [(i) for i in range(len(n_verts))] # pre-allocate memory, for faster performance
 
         # Following code avoids introducing unwanted cracks in UV seams:
         # Construct vertex map to get unique vertex / normal pair list.
