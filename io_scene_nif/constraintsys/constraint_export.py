@@ -67,7 +67,7 @@ class Constraint():
 
         for b_constr in b_obj.constraints:
             # rigid body joints
-            if b_constr.type == Blender.Constraint.Type.RIGIDBODYJOINT:
+            if b_constr.type == Blender.Constraint.Type.RIGID_BODY_JOINT:
                 if self.properties.game not in ('OBLIVION', 'FALLOUT_3'):
                     self.nif_export.warning(
                         "Only Oblivion/Fallout 3 rigid body constraints"
