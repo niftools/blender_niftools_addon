@@ -115,7 +115,7 @@ class Constraint():
                 continue
 
             # add the constraint as a rigid body joint
-            b_constr = b_hkobj.constraints.append(bpy.types.Constraint.RIGIDBODYJOINT)
+            b_constr = b_hkobj.constraints.new('RIGID_BODY_JOINT')
 
             # note: rigidbodyjoint parameters (from Constraint.c)
             # CONSTR_RB_AXX 0.0
@@ -148,28 +148,26 @@ class Constraint():
             # pivx/y/z is the pivot point
 
             # set constraint target
-            b_constr[Blender.Constraint.Settings.TARGET] = \
+            b_constr.target = \
                 self.havok_objects[hkconstraint.entities[1]][0]
             # set rigid body type (generic)
-            b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE] = 12
+            b_constr.pivot_type = 'CONE_TWIST'
             # limiting parameters (limit everything)
-            b_constr[Blender.Constraint.Settings.LIMIT] = 63
+            b_constr.use_limit_x = True
+            b_constr.use_limit_y = True
+            b_constr.use_limit_z = True
 
             # get pivot point
-            pivot = mathutils.Vector(
-                hkdescriptor.pivot_a.x * self.HAVOK_SCALE,
-                hkdescriptor.pivot_a.y * self.HAVOK_SCALE,
-                hkdescriptor.pivot_a.z * self.HAVOK_SCALE)
+            pivot_x = hkdescriptor.pivot_a.x
+            pivot_x = hkdescriptor.pivot_a.y
+            pivot_x = hkdescriptor.pivot_a.z
 
             # get z- and x-axes of the constraint
             # (also see export_nif.py NifImport.export_constraints)
             if isinstance(hkdescriptor, NifFormat.RagdollDescriptor):
                 # for ragdoll, take z to be the twist axis (central axis of the
                 # cone, that is)
-                axis_z = mathutils.Vector(
-                    hkdescriptor.twist_a.x,
-                    hkdescriptor.twist_a.y,
-                    hkdescriptor.twist_a.z)
+                axis_z = hkdescriptor.twist_a.z
                 # for ragdoll, let x be the plane vector
                 axis_x = mathutils.Vector(
                     hkdescriptor.plane_a.x,
