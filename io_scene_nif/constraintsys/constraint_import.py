@@ -283,17 +283,17 @@ class Constraint():
             # multiply with rigid body transform
             if isinstance(hkbody, NifFormat.bhkRigidBodyT):
                 # set rotation
-                transform = mathutils.Quaternion(
+                transform = mathutils.Quaternion((
                     hkbody.rotation.w, hkbody.rotation.x,
-                    hkbody.rotation.y, hkbody.rotation.z).toMatrix()
-                transform.resize4x4()
+                    hkbody.rotation.y, hkbody.rotation.z)).to_matrix()
+                transform.resize_4x4()
                 # set translation
-                transform[3][0] = hkbody.translation.x * 7
-                transform[3][1] = hkbody.translation.y * 7
-                transform[3][2] = hkbody.translation.z * 7
+                transform[0][3] = hkbody.translation.x * HAVOK_SCALE
+                transform[1][3] = hkbody.translation.y * HAVOK_SCALE
+                transform[2][3] = hkbody.translation.z * HAVOK_SCALE
                 # apply transform
                 pivot = pivot * transform
-                transform = transform.rotationPart()
+                transform = transform.to_3x3()
                 axis_z = axis_z * transform
                 axis_x = axis_x * transform
 
@@ -307,7 +307,7 @@ class Constraint():
                         self.nif_common.armaturehelper.bones_extra_matrix[niBone])
                     transform.invert()
                     pivot = pivot * transform
-                    transform = transform.rotationPart()
+                    transform = transform.to_3x3()
                     axis_z = axis_z * transform
                     axis_x = axis_x * transform
                     break
