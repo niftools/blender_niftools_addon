@@ -789,7 +789,7 @@ class NifImport(NifCommon):
         # vertices
         n_verts = niData.vertices
 
-        # tessfaces
+        # polygons
         n_tris = [list(tri) for tri in niData.get_triangles()]
 
         # "sticky" UV coordinates: these are transformed in Blender UV's
@@ -966,42 +966,42 @@ class NifImport(NifCommon):
         # release memory
         del n_map
 
-        # Adds the tessfaces to the mesh
+        # Adds the polygons to the mesh
         f_map = [None]*len(n_tris)
-        b_f_index = len(b_mesh.tessfaces)
+        b_f_index = len(b_mesh.polygons)
         num_new_faces = 0 # counter for debugging
-        unique_faces = set() # to avoid duplicate tessfaces
+        unique_faces = set() # to avoid duplicate polygons
         for i, f in enumerate(n_tris):
             # get face index
             f_verts = [v_map[vert_index] for vert_index in f]
-            # skip degenerate tessfaces
-            # we get a ValueError on tessfaces.extend otherwise
+            # skip degenerate polygons
+            # we get a ValueError on polygons.extend otherwise
             if (f_verts[0] == f_verts[1]) or (f_verts[1] == f_verts[2]) or (f_verts[2] == f_verts[0]):
                 continue
             if tuple(f_verts) in unique_faces:
                 continue
             unique_faces.add(tuple(f_verts))
-            b_mesh.tessfaces.add(1)
+            b_mesh.polygons.add(1)
             if f_verts[2] == 0:
                 # eeekadoodle fix
                 f_verts[0], f_verts[1], f_verts[2] = f_verts[2], f_verts[0], f_verts[1]
                 f[0], f[1], f[2] = f[2], f[0], f[1] # f[0] comes second
-            b_mesh.tessfaces[-1].vertices_raw = f_verts + [0]
-            # keep track of added tessfaces, mapping NIF face index to
+            b_mesh.polygons[-1].vertices_raw = f_verts + [0]
+            # keep track of added polygons, mapping NIF face index to
             # Blender face index
             f_map[i] = b_f_index
             b_f_index += 1
             num_new_faces += 1
-        # at this point, deleted tessfaces (degenerate or duplicate)
+        # at this point, deleted polygons (degenerate or duplicate)
         # satisfy f_map[i] = None
 
-        self.debug("%i unique tessfaces" % num_new_faces)
+        self.debug("%i unique polygons" % num_new_faces)
 
         # set face smoothing and material
         for b_f_index in f_map:
             if b_f_index is None:
                 continue
-            f = b_mesh.tessfaces[b_f_index]
+            f = b_mesh.polygons[b_f_index]
             f.use_smooth = True if n_norms else False
             f.material_index = materialIndex
 
@@ -1046,10 +1046,10 @@ class NifImport(NifCommon):
         # only must duplicate vertices for hard edges; duplicating for UV seams
         # would introduce unnecessary hard edges.
 
-        # only import UV if there are tessfaces
-        # (some corner cases have only one vertex, and no tessfaces,
+        # only import UV if there are polygons
+        # (some corner cases have only one vertex, and no polygons,
         # and b_mesh.faceUV = 1 on such mesh raises a runtime error)
-        if b_mesh.tessfaces:
+        if b_mesh.polygons:
             # blender 2.5+ aloways uses uv's per face?
             #b_mesh.faceUV = 1
             #b_mesh.vertexUV = 0
