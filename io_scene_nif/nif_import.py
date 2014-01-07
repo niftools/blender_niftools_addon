@@ -969,6 +969,10 @@ class NifImport(NifCommon):
         # Adds the polygons to the mesh
         f_map = [None]*len(n_tris)
         b_f_index = len(b_mesh.polygons)
+        bl_index = len(b_mesh.loops)
+        poly_count = len(n_tris)
+        b_mesh.polygons.add(poly_count)
+        b_mesh.loops.add(poly_count * 3)
         num_new_faces = 0 # counter for debugging
         unique_faces = set() # to avoid duplicate polygons
         for i, f in enumerate(n_tris):
@@ -981,15 +985,21 @@ class NifImport(NifCommon):
             if tuple(f_verts) in unique_faces:
                 continue
             unique_faces.add(tuple(f_verts))
-            b_mesh.polygons.add(1)
-            if f_verts[2] == 0:
-                # eeekadoodle fix
-                f_verts[0], f_verts[1], f_verts[2] = f_verts[2], f_verts[0], f_verts[1]
-                f[0], f[1], f[2] = f[2], f[0], f[1] # f[0] comes second
-            b_mesh.polygons[-1].vertices_raw = f_verts + [0]
-            # keep track of added polygons, mapping NIF face index to
-            # Blender face index
+        for i in range(len(n_tris)):
             f_map[i] = b_f_index
+            
+            ls_list = list()
+            for ls1 in range(0, poly_count * (len(n_tris[i])), (len(n_tris[i]))):
+                #ls2 = (ls1 + bp_index)
+                ls_list.append(ls1)
+
+            b_mesh.polygons[f_map[i]].loop_start = ls_list[i]
+            b_mesh.polygons[f_map[i]].loop_total = len(n_tris[i])
+            l = 0
+            while l < (len(n_tris[i])):
+                b_mesh.loops[(l + (bl_index))].vertex_index = n_tris[i][l]
+                l += 1
+            bl_index += (len(n_tris[i]))
             b_f_index += 1
             num_new_faces += 1
         # at this point, deleted polygons (degenerate or duplicate)
@@ -1010,8 +1020,8 @@ class NifImport(NifCommon):
 
         if n_vcol:
             # create vertex_layers
-            b_meshcolorlayer = b_mesh.tessface_vertex_colors.new(name="VertexColor") # color layer
-            b_meshcolorlayeralpha = b_mesh.tessface_vertex_colors.new(name="VertexAlpha") # greyscale
+            b_meshcolorlayer = b_mesh.vertex_colors.new(name="VertexColor") # color layer
+            b_meshcolorlayeralpha = b_mesh.vertex_colors.new(name="VertexAlpha") # greyscale
 
             # Mesh Vertex Color / Mesh Face
             for n_tri, b_face_index in zip(n_tris, f_map):
@@ -1058,16 +1068,16 @@ class NifImport(NifCommon):
                 # vertex UV's, but Blender only allows explicit editing of face
                 # UV's, so load vertex UV's as face UV's
                 uvlayer = self.texturehelper.get_uv_layer_name(i)
-                if not uvlayer in b_mesh.tessface_uv_textures:
-                    b_mesh.tessface_uv_textures.new(uvlayer)
+                if not uvlayer in b_mesh.uv_textures:
+                    b_mesh.uv_textures.new(uvlayer)
                 for f, b_f_index in zip(n_tris, f_map):
                     if b_f_index is None:
                         continue
                     uvlist = [(uv_set[vert_index].u, 1.0 - uv_set[vert_index].v) for vert_index in f]
-                    b_mesh.tessface_uv_textures[uvlayer].data[b_f_index].uv1 = uvlist[0]
-                    b_mesh.tessface_uv_textures[uvlayer].data[b_f_index].uv2 = uvlist[1]
-                    b_mesh.tessface_uv_textures[uvlayer].data[b_f_index].uv3 = uvlist[2]
-            b_mesh.tessface_uv_textures.active_index = 0
+                    b_mesh.uv_textures[uvlayer].data[b_f_index].uv1 = uvlist[0]
+                    b_mesh.uv_textures[uvlayer].data[b_f_index].uv2 = uvlist[1]
+                    b_mesh.uv_textures[uvlayer].data[b_f_index].uv3 = uvlist[2]
+            b_mesh.uv_textures.active_index = 0
 
         if material:
             # fix up vertex colors depending on whether we had textures in the
@@ -1091,7 +1101,7 @@ class NifImport(NifCommon):
                     for b_f_index in f_map:
                         if b_f_index is None:
                             continue
-                        tface = b_mesh.tessface_uv_textures.active.data[b_f_index]
+                        tface = b_mesh.uv_textures.active.data[b_f_index]
                         # gone in blender 2.5x+?
                         # f.mode = Blender.Mesh.FaceModes['TEX']
                         # f.transp = Blender.Mesh.FaceTranspModes['ALPHA']
