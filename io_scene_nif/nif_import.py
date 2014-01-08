@@ -793,7 +793,14 @@ class NifImport(NifCommon):
         n_tris = [list(tri) for tri in niData.get_triangles()]
 
         # "sticky" UV coordinates: these are transformed in Blender UV's
-        n_uvco = niData.uv_sets
+        n_uv = list()
+        for i in range(len(niData.uv_sets)):
+            for lw in range(len(niData.uv_sets[i])):
+                n_uvt = list()
+                n_uvt.append(niData.uv_sets[i][lw].u)
+                n_uvt.append(1.0 - (niData.uv_sets[i][lw].v))
+                n_uv.append(tuple(n_uvt))
+        n_uvco = tuple(n_uv)
 
         # vertex normals
         n_norms = niData.normals
@@ -996,8 +1003,9 @@ class NifImport(NifCommon):
             b_mesh.polygons[f_map[i]].loop_start = ls_list[i]
             b_mesh.polygons[f_map[i]].loop_total = len(n_tris[i])
             l = 0
+            lp_points = [v_map[loop_point] for loop_point in n_tris[i]]
             while l < (len(n_tris[i])):
-                b_mesh.loops[(l + (bl_index))].vertex_index = n_tris[i][l]
+                b_mesh.loops[(l + (bl_index))].vertex_index = lp_points[l]
                 l += 1
             bl_index += (len(n_tris[i]))
             b_f_index += 1
@@ -1063,20 +1071,28 @@ class NifImport(NifCommon):
             # blender 2.5+ aloways uses uv's per face?
             #b_mesh.faceUV = 1
             #b_mesh.vertexUV = 0
-            for i, uv_set in enumerate(n_uvco):
+            for i, uv_set in enumerate(niData.uv_sets):
                 # Set the face UV's for the mesh. The NIF format only supports
                 # vertex UV's, but Blender only allows explicit editing of face
                 # UV's, so load vertex UV's as face UV's
                 uvlayer = self.texturehelper.get_uv_layer_name(i)
-                if not uvlayer in b_mesh.uv_textures:
-                    b_mesh.uv_textures.new(uvlayer)
-                for f, b_f_index in zip(n_tris, f_map):
+            if not uvlayer in b_mesh.uv_textures:
+                b_mesh.uv_textures.new(uvlayer)
+                uv_faces = b_mesh.uv_textures.active.data[:]
+            else:
+                uv_faces = None
+            if uv_faces:
+                uvl = b_mesh.uv_layers.active.data[:]
+                for b_f_index, f in enumerate(b_mesh.polygons):
                     if b_f_index is None:
                         continue
-                    uvlist = [(uv_set[vert_index].u, 1.0 - uv_set[vert_index].v) for vert_index in f]
-                    b_mesh.uv_textures[uvlayer].data[b_f_index].uv1 = uvlist[0]
-                    b_mesh.uv_textures[uvlayer].data[b_f_index].uv2 = uvlist[1]
-                    b_mesh.uv_textures[uvlayer].data[b_f_index].uv3 = uvlist[2]
+                    uvlist = n_tris[b_f_index]
+                    v1,v2,v3 = uvlist
+                    if v3 ==0:
+                        v1,v2,v3 = v3,v1,v2
+                    uvl[f.loop_start].uv = n_uvco[v1]
+                    uvl[f.loop_start + 1].uv = n_uvco[v2]
+                    uvl[f.loop_start + 2].uv = n_uvco[v3]
             b_mesh.uv_textures.active_index = 0
 
         if material:
@@ -1307,6 +1323,9 @@ class NifImport(NifCommon):
         b_mesh.validate()
         b_mesh.update()
         b_obj.select=True
+        scn = bpy.context.scene
+        scn.objects.active = b_obj
+
 
         return b_obj
 
