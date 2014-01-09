@@ -1024,34 +1024,38 @@ class NifImport(NifCommon):
             f.material_index = materialIndex
 
         # vertex colors
-        n_vcol = niData.vertex_colors
+        
 
-        if n_vcol:
+        if b_mesh.polygons and niData.vertex_colors:
+            n_vcol_map = list()
+            for n_vcol, n_vmap in zip(niData.vertex_colors, v_map):
+                n_vcol_map.append((n_vcol, n_vmap))
+                
             # create vertex_layers
             b_meshcolorlayer = b_mesh.vertex_colors.new(name="VertexColor") # color layer
             b_meshcolorlayeralpha = b_mesh.vertex_colors.new(name="VertexAlpha") # greyscale
-
+            
             # Mesh Vertex Color / Mesh Face
-            for n_tri, b_face_index in zip(n_tris, f_map):
-                if b_face_index is None:
-                    continue
+            for b_polygon_loop in b_mesh.loops:
+                b_loop_index = b_polygon_loop.index
+                vcol = b_mesh.vertex_colors["VertexColor"].data[b_loop_index]
+                vcola = b_mesh.vertex_colors["VertexAlpha"].data[b_loop_index]
+                
+                for n_col_index, n_map_index in n_vcol_map:
+                    if n_map_index == b_polygon_loop.vertex_index:
+                        
+                        col_list = n_col_index
+                        #c1,c2,c3,c4 = col_list
+                            
+                        vcol.color.r = col_list.r
+                        vcol.color.g = col_list.g
+                        vcol.color.b = col_list.b
+                            
+                        vcola.color.v = col_list.a
+                
 
-                # MeshFace to MeshColor
-                b_meshcolor = b_meshcolorlayer.data[b_face_index]
-                b_meshalpha = b_meshcolorlayeralpha.data[b_face_index]
 
-                for n_vert_index, n_vert in enumerate(n_tri):
-                    '''TODO: Request index access in the Bpy API
-                    b_meshcolor.color[n_vert_index]'''
 
-                    # Each MeshColor has n Color's, mapping to (n)_vertex.
-                    b_color = getattr(b_meshcolor, "color%s" % (n_vert_index + 1))
-                    b_colora = getattr(b_meshalpha, "color%s" % (n_vert_index + 1))
-
-                    b_color.r = n_vcol[n_vert].r
-                    b_color.g = n_vcol[n_vert].g
-                    b_color.b = n_vcol[n_vert].b
-                    b_colora.v = n_vcol[n_vert].a
 
             # vertex colors influence lighting...
             # we have to set the use_vertex_color_light flag on the material
