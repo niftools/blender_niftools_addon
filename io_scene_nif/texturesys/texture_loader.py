@@ -45,11 +45,12 @@ import bpy
 from pyffi.formats.nif import NifFormat
 
 class TextureLoader():
-    # dictionary of texture files, to reuse textures
-    textures = {}
+    
     
     
     def __init__(self, parent):
+        # dictionary of texture files, to reuse textures
+        self.textures = {}
         self.nif_import = parent
         self.properties = parent.properties
     
