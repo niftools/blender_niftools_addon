@@ -1030,33 +1030,21 @@ class NifImport(NifCommon):
             n_vcol_map = list()
             for n_vcol, n_vmap in zip(niData.vertex_colors, v_map):
                 n_vcol_map.append((n_vcol, n_vmap))
-                
             # create vertex_layers
             b_meshcolorlayer = b_mesh.vertex_colors.new(name="VertexColor") # color layer
             b_meshcolorlayeralpha = b_mesh.vertex_colors.new(name="VertexAlpha") # greyscale
-            
             # Mesh Vertex Color / Mesh Face
             for b_polygon_loop in b_mesh.loops:
                 b_loop_index = b_polygon_loop.index
                 vcol = b_mesh.vertex_colors["VertexColor"].data[b_loop_index]
                 vcola = b_mesh.vertex_colors["VertexAlpha"].data[b_loop_index]
-                
                 for n_col_index, n_map_index in n_vcol_map:
                     if n_map_index == b_polygon_loop.vertex_index:
-                        
                         col_list = n_col_index
-                        #c1,c2,c3,c4 = col_list
-                            
                         vcol.color.r = col_list.r
                         vcol.color.g = col_list.g
                         vcol.color.b = col_list.b
-                            
                         vcola.color.v = col_list.a
-                
-
-
-
-
             # vertex colors influence lighting...
             # we have to set the use_vertex_color_light flag on the material
             # see below
@@ -1330,9 +1318,7 @@ class NifImport(NifCommon):
         scn = bpy.context.scene
         scn.objects.active = b_obj
 
-
         return b_obj
-
     
     def set_parents(self, niBlock):
         """Set the parent block recursively through the tree, to allow

@@ -44,7 +44,6 @@ from io_scene_nif.texturesys.texture_writer import TextureWriter
 
 class TextureHelper():
     
-    
     #Default ordering of Extra data blocks for different games
     USED_EXTRA_SHADER_TEXTURES = {'SID_MEIER_S_RAILROADS': (3, 0, 4, 1, 5, 2),
                                   'CIVILIZATION_IV': (3, 0, 1, 2)}
