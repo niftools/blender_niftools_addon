@@ -63,8 +63,6 @@ class Armature():
 								   [ 0.0, 0.0, 1.0, 0.0],
 								   [ 0.0, 0.0, 0.0, 1.0]])
 	
-	
-	
 	def __init__(self, parent):
 		# dictionary of bones that belong to a certain armature
 	    # maps NIF armature name to list of NIF bone name
