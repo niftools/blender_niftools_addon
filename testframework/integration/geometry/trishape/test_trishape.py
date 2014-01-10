@@ -46,7 +46,7 @@ from integration.data import gen_data
 from integration.geometry.trishape import b_gen_geometry
 from integration.geometry.trishape import n_gen_geometry
 
-class TestBaseGeometry(SingleNif):
+class TestTriShape(SingleNif):
     """Test base geometry, single blender object."""
 
     n_name = 'geometry/trishape/test_trishape' # (documented in base class)
