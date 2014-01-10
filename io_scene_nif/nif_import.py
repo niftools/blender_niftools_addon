@@ -993,13 +993,11 @@ class NifImport(NifCommon):
                 continue
             unique_faces.add(tuple(f_verts))
         for i in range(len(n_tris)):
-            f_map[i] = b_f_index
-            
             ls_list = list()
             for ls1 in range(0, poly_count * (len(n_tris[i])), (len(n_tris[i]))):
-                #ls2 = (ls1 + bp_index)
-                ls_list.append(ls1)
-
+                ls_list.append((ls1 + bl_index))
+        for i in range(len(n_tris)):
+            f_map[i] = b_f_index
             b_mesh.polygons[f_map[i]].loop_start = ls_list[i]
             b_mesh.polygons[f_map[i]].loop_total = len(n_tris[i])
             l = 0
