@@ -976,6 +976,7 @@ class NifImport(NifCommon):
         # Adds the polygons to the mesh
         f_map = [None]*len(n_tris)
         b_f_index = len(b_mesh.polygons)
+        bf2_index = len(b_mesh.polygons)
         bl_index = len(b_mesh.loops)
         poly_count = len(n_tris)
         b_mesh.polygons.add(poly_count)
@@ -1014,12 +1015,12 @@ class NifImport(NifCommon):
         self.debug("%i unique polygons" % num_new_faces)
 
         # set face smoothing and material
-        for b_f_index in f_map:
-            if b_f_index is None:
+        for b_polysmooth_index in f_map:
+            if b_polysmooth_index is None:
                 continue
-            f = b_mesh.polygons[b_f_index]
-            f.use_smooth = True if n_norms else False
-            f.material_index = materialIndex
+            polysmooth = b_mesh.polygons[b_polysmooth_index]
+            polysmooth.use_smooth = True if n_norms else False
+            polysmooth.material_index = materialIndex
 
         # vertex colors
         
@@ -1058,7 +1059,7 @@ class NifImport(NifCommon):
         # (some corner cases have only one vertex, and no polygons,
         # and b_mesh.faceUV = 1 on such mesh raises a runtime error)
         if b_mesh.polygons:
-            # blender 2.5+ aloways uses uv's per face?
+           
             #b_mesh.faceUV = 1
             #b_mesh.vertexUV = 0
             for i, uv_set in enumerate(niData.uv_sets):
@@ -1069,20 +1070,23 @@ class NifImport(NifCommon):
             if not uvlayer in b_mesh.uv_textures:
                 b_mesh.uv_textures.new(uvlayer)
                 uv_faces = b_mesh.uv_textures.active.data[:]
+            elif uvlayer in b_mesh.uv_textures:
+                uv_faces = b_mesh.uv_textures[uvlayer].data[:]
             else:
                 uv_faces = None
             if uv_faces:
                 uvl = b_mesh.uv_layers.active.data[:]
-                for b_f_index, f in enumerate(b_mesh.polygons):
+                for b_f_index, f in enumerate(n_tris):
                     if b_f_index is None:
                         continue
-                    uvlist = n_tris[b_f_index]
+                    uvlist = f
                     v1,v2,v3 = uvlist
                     if v3 ==0:
                         v1,v2,v3 = v3,v1,v2
-                    uvl[f.loop_start].uv = n_uvco[v1]
-                    uvl[f.loop_start + 1].uv = n_uvco[v2]
-                    uvl[f.loop_start + 2].uv = n_uvco[v3]
+                    b_poly_index = b_mesh.polygons[b_f_index + bf2_index]
+                    uvl[b_poly_index.loop_start].uv = n_uvco[v1]
+                    uvl[b_poly_index.loop_start + 1].uv = n_uvco[v2]
+                    uvl[b_poly_index.loop_start + 2].uv = n_uvco[v3]
             b_mesh.uv_textures.active_index = 0
 
         if material:
@@ -1104,10 +1108,10 @@ class NifImport(NifCommon):
             if mbasetex and mbasetex.texture and n_uvco:
                 imgobj = mbasetex.texture.image
                 if imgobj:
-                    for b_f_index in f_map:
-                        if b_f_index is None:
+                    for b_polyimage_index in f_map:
+                        if b_polyimage_index is None:
                             continue
-                        tface = b_mesh.uv_textures.active.data[b_f_index]
+                        tface = b_mesh.uv_textures.active.data[b_polyimage_index]
                         # gone in blender 2.5x+?
                         # f.mode = Blender.Mesh.FaceModes['TEX']
                         # f.transp = Blender.Mesh.FaceTranspModes['ALPHA']
