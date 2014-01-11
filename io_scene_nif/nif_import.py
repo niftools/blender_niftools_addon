@@ -1067,26 +1067,26 @@ class NifImport(NifCommon):
                 # vertex UV's, but Blender only allows explicit editing of face
                 # UV's, so load vertex UV's as face UV's
                 uvlayer = self.texturehelper.get_uv_layer_name(i)
-            if not uvlayer in b_mesh.uv_textures:
-                b_mesh.uv_textures.new(uvlayer)
-                uv_faces = b_mesh.uv_textures.active.data[:]
-            elif uvlayer in b_mesh.uv_textures:
-                uv_faces = b_mesh.uv_textures[uvlayer].data[:]
-            else:
-                uv_faces = None
-            if uv_faces:
-                uvl = b_mesh.uv_layers.active.data[:]
-                for b_f_index, f in enumerate(n_tris):
-                    if b_f_index is None:
-                        continue
-                    uvlist = f
-                    v1,v2,v3 = uvlist
-                    if v3 ==0:
-                        v1,v2,v3 = v3,v1,v2
-                    b_poly_index = b_mesh.polygons[b_f_index + bf2_index]
-                    uvl[b_poly_index.loop_start].uv = n_uvco[v1]
-                    uvl[b_poly_index.loop_start + 1].uv = n_uvco[v2]
-                    uvl[b_poly_index.loop_start + 2].uv = n_uvco[v3]
+                if not uvlayer in b_mesh.uv_textures:
+                    b_mesh.uv_textures.new(uvlayer)
+                    uv_faces = b_mesh.uv_textures.active.data[:]
+                elif uvlayer in b_mesh.uv_textures:
+                    uv_faces = b_mesh.uv_textures[uvlayer].data[:]
+                else:
+                    uv_faces = None
+                if uv_faces:
+                    uvl = b_mesh.uv_layers.active.data[:]
+                    for b_f_index, f in enumerate(n_tris):
+                        if b_f_index is None:
+                            continue
+                        uvlist = f
+                        v1,v2,v3 = uvlist
+                        if v3 ==0:
+                            v1,v2,v3 = v3,v1,v2
+                        b_poly_index = b_mesh.polygons[b_f_index + bf2_index]
+                        uvl[b_poly_index.loop_start].uv = n_uvco[v1]
+                        uvl[b_poly_index.loop_start + 1].uv = n_uvco[v2]
+                        uvl[b_poly_index.loop_start + 2].uv = n_uvco[v3]
             b_mesh.uv_textures.active_index = 0
 
         if material:
