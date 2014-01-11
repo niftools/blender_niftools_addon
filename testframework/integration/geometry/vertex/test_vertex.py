@@ -47,7 +47,7 @@ from integration.geometry.vertex import n_gen_vertex
 class TestVertex(SingleNif):
     """Test base geometry, single blender object."""
 
-    n_name = 'geometry/trishape/test_vertex' # (documented in base class)
+    n_name = 'geometry/vertex/test_vertex' # (documented in base class)
     b_name = 'Cube'
 
     def b_create_header(self):
