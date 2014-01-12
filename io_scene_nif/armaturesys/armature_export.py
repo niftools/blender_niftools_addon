@@ -128,7 +128,7 @@ class Armature():
             if root_bones.count(root_bone) == 0:
                 root_bones.append(root_bone)
 
-        if (bpy.types.Action(arm)):
+        if bpy.types.Action(arm):
             bones_ipo = bpy.types.ActionGroups(arm) # dictionary of Bone Ipos (name -> ipo)
         else:
             bones_ipo = {} # no ipos
