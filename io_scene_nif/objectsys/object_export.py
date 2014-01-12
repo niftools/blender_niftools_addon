@@ -604,9 +604,9 @@ class MeshHelper():
                 trishape.name = ""
             elif not trishape_name:
                 if parent_block.name:
-                    trishape.name = "Tri " + parent_block.name
+                    trishape.name = "Tri " + parent_block.name.decode()
                 else:
-                    trishape.name = "Tri " + b_obj.name
+                    trishape.name = "Tri " + b_obj.name.decode()
             else:
                 trishape.name = trishape_name
 

@@ -320,9 +320,9 @@ class bhkshape_export():
             center = mathutils.Vector(((minx + maxx) / 2.0, (miny + maxy) / 2.0, (minz + maxz) / 2.0))
             # and transform it to global coordinates
             center = center * hktf
-            hktf[3][0] = center[0]
-            hktf[3][1] = center[1]
-            hktf[3][2] = center[2]
+            hktf[0][3] = center[0]
+            hktf[1][3] = center[1]
+            hktf[2][3] = center[2]
             # we need to store the transpose of the matrix
             hktf.transpose()
             coltf.transform.set_rows(*hktf)
