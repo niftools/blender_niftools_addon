@@ -7,7 +7,7 @@ def startdebug():
         pydev_src = os.environ['PYDEVDEBUG']
         
         if (sys.path.count(pydev_src) < 1) :
-             sys.path.append(pydev_src)
+            sys.path.append(pydev_src)
              
         import pydevd
         print("Found: " + pydev_src)
