@@ -136,7 +136,7 @@ def b_check_transform(b_obj):
     b_rot_eul = b_rot_quat.to_euler()
     nose.tools.assert_equal((b_rot_eul.x - math.radians(30.0)) < EPSILON, True) # x rotation
     nose.tools.assert_equal((b_rot_eul.y - math.radians(60.0)) < EPSILON, True) # y rotation
-    nose.tools.assert_equal((b_rot_eul.x - math.radians(90.0)) < EPSILON, True) # z rotation
+    nose.tools.assert_equal((b_rot_eul.z - math.radians(90.0)) < EPSILON, True) # z rotation
     
     nose.tools.assert_equal((b_scale_vec - mathutils.Vector((0.75, 0.75, 0.75))) 
             < mathutils.Vector((EPSILON, EPSILON, EPSILON)), True) # uniform scale
