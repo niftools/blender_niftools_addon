@@ -63,16 +63,15 @@ class Armature():
 								   [ 0.0, 0.0, 1.0, 0.0],
 								   [ 0.0, 0.0, 0.0, 1.0]])
 	
-	# dictionary of bones that belong to a certain armature
-    # maps NIF armature name to list of NIF bone name
-	armatures = {}
-	
-	# dictionary of bones, maps Blender bone name to matrix that maps the
-	# NIF bone matrix on the Blender bone matrix
-    # B' = X * B, where B' is the Blender bone matrix, and B is the NIF bone matrix
-	bones_extra_matrix = {}
-	
 	def __init__(self, parent):
+		# dictionary of bones that belong to a certain armature
+	    # maps NIF armature name to list of NIF bone name
+		self.armatures = {}
+		
+		# dictionary of bones, maps Blender bone name to matrix that maps the
+		# NIF bone matrix on the Blender bone matrix
+	    # B' = X * B, where B' is the Blender bone matrix, and B is the NIF bone matrix
+		self.bones_extra_matrix = {}
 		self.nif_import = parent
 		self.properties = self.nif_import.properties
 	
