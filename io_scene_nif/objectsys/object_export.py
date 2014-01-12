@@ -451,10 +451,10 @@ class MeshHelper():
                              " greyscale only"
                              )
             else:
-                 for b_loop in b_mesh.vertex_colors[1].data:
-                     if(b_loop.color.v > self.properties.epsilon):
-                         mesh_hasvcola = True    
-                         break
+                for b_loop in b_mesh.vertex_colors[1].data:
+                    if(b_loop.color.v > self.properties.epsilon):
+                        mesh_hasvcola = True    
+                        break
                        
 
         # Non-textured materials, vertex colors are used to color the mesh
@@ -613,8 +613,9 @@ class MeshHelper():
             if len(mesh_materials) > 1:
                 # multimaterial meshes: add material index
                 # (Morrowind's child naming convention)
-                b_name = trishape.name.decode() + ":%i" % materialIndex                
-            trishape.name = self.nif_export.objecthelper.get_full_name(trishape.name)
+                trishape.name = trishape.name.decode() + ":%i" % materialIndex
+            else
+                trishape.name = self.nif_export.objecthelper.get_full_name(trishape.name)
 
             #Trishape Flags...
             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
@@ -831,7 +832,6 @@ class MeshHelper():
 
                     '''TODO: Need to map b_verts -> n_verts'''
                     if mesh_hasvcol:
-                        vertcol = []
                         #check for an alpha layer
                         b_color = b_mesh.vertex_colors[0].data[loop_index].color
                         if(mesh_hasvcola):
@@ -1175,16 +1175,16 @@ class MeshHelper():
                                     self.properties.game == 'FALLOUT_3'))
                             # warn on bad config settings
                             if self.properties.game == 'OBLIVION':
-                               if self.properties.pad_bones:
-                                   self.warning(
+                                if self.properties.pad_bones:
+                                    self.warning(
                                        "Using padbones on Oblivion export,"
                                        " but you probably do not want to do"
                                        " this."
                                        " Disable the pad bones option to get"
                                        " higher quality skin partitions.")
                             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
-                               if self.properties.max_bones_per_partition < 18:
-                                   self.warning(
+                                if self.properties.max_bones_per_partition < 18:
+                                    self.warning(
                                        "Using less than 18 bones"
                                        " per partition on Oblivion/Fallout 3"
                                        " export."
@@ -1345,8 +1345,6 @@ class MeshHelper():
                 for loop_index in range(poly.loop_start, poly.loop_start + poly.loop_total):
                     pv_index = b_mesh.loops[loop_index].vertex_index
                     vertex = b_mesh.vertices[pv_index]
-                    vertex_index = vertex.index
-                    vertex_vec = vertex.co
                     
                     vkey = (int(vertex_vec[0]*self.nif_export.VERTEX_RESOLUTION),
                             int(vertex_vec[1]*self.nif_export.VERTEX_RESOLUTION),
