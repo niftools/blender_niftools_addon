@@ -41,8 +41,6 @@
 
 import bpy
 
-from pyffi.formats.nif import NifFormat
-
 class material_import():
     
     def __init__(self, parent):
