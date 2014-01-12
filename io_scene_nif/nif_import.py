@@ -48,17 +48,9 @@ from io_scene_nif.materialsys.material import material_import
 from io_scene_nif.texturesys.texture_import import Texture
 from io_scene_nif.texturesys.texture_loader import TextureLoader
 
-from functools import reduce
-import logging
-import math
-import operator
-import os
-import os.path
-
 import bpy
 import mathutils
 
-import pyffi.spells.nif
 import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 from pyffi.formats.egm import EgmFormat
@@ -903,13 +895,6 @@ class NifImport(NifCommon):
         else:
             material = None
             materialIndex = 0
-
-        # if there are no vertices then enable face index shifts
-        # (this fixes an issue with indexing)
-        if len(b_mesh.vertices) == 0:
-            check_shift = True
-        else:
-            check_shift = False
 
         # v_map will store the vertex index mapping
         # nif vertex i maps to blender vertex v_map[i]
