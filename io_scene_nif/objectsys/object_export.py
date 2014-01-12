@@ -195,7 +195,7 @@ class ObjectHelper():
             # determine if object tracks camera
             has_track = False
             for constr in b_obj.constraints:
-                if constr.type == Blender.Constraint.Type.TRACKTO:
+                if constr.type == 'TRACK_TO':
                     has_track = True
                     break
                 # does geom have priority value in NULL constraint?
