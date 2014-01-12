@@ -37,11 +37,12 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import bpy
+import mathutils
+
 from pyffi.formats.nif import NifFormat
 
-import io_scene_nif.utility.nif_utils
-
-import mathutils
+from io_scene_nif.utility import nif_utils
 
 class AnimationHelper():
     
