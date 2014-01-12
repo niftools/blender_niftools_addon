@@ -607,7 +607,7 @@ class NifImport(NifCommon):
                 # make b_obj track camera object
                 #b_obj.setEuler(0,0,0)
                 b_obj.constraints.append(
-                    bpy.types.Constraint.TRACKTO)
+                    bpy.types.Constraint('TRACK_TO'))
                 self.warning(
                     "Constraint for billboard node on %s added"
                     " but target not set due to transform bug"
