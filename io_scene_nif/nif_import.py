@@ -1015,24 +1015,12 @@ class NifImport(NifCommon):
         self.debug("%i unique polygons" % num_new_faces)
 
         # set face smoothing and material
-<<<<<<< Upstream, based on import/poly
         for b_polysmooth_index in f_map:
             if b_polysmooth_index is None:
-=======
-        for b_f2_index in f_map:
-            if b_f2_index is None:
->>>>>>> ac088e7 renamed variable to avoid masking
                 continue
-<<<<<<< Upstream, based on import/poly
             polysmooth = b_mesh.polygons[b_polysmooth_index]
             polysmooth.use_smooth = True if n_norms else False
             polysmooth.material_index = materialIndex
-=======
-            f = b_mesh.polygons[b_f2_index]
-            f.use_smooth = True if n_norms else False
-            f.material_index = materialIndex
->>>>>>> ac088e7 renamed variable to avoid masking
-
         # vertex colors
         
 
