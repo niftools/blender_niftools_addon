@@ -80,22 +80,6 @@ def n_create_blocks(n_data):
     with ref(n_nitrishape_1) as n_nitrishape:
         n_nitrishape.name = b'Cube'
         n_nitrishape.flags = 14
-        with ref(n_nitrishape.translation) as n_vector3:
-            n_vector3.x = 20
-            n_vector3.y = 20
-            n_vector3.z = 20
-        with ref(n_nitrishape.rotation) as n_matrix33:
-            n_matrix33.m_11 = 0.0
-            n_matrix33.m_21 = -0.5
-            n_matrix33.m_31 = 0.866025
-            n_matrix33.m_12 = 0.866025
-            n_matrix33.m_22 = -0.433013
-            n_matrix33.m_32 = -0.25
-            n_matrix33.m_13 = 0.5
-            n_matrix33.m_23 = 0.75
-            n_matrix33.m_33 = 0.433012
-            assert(n_matrix33.is_rotation()) # make sure in case we change values:
-        n_nitrishape.scale = 0.75
         n_nitrishape.data = n_nitrishapedata_1
         
     with ref(n_nitrishapedata_1) as n_nitrishapedata:
@@ -228,21 +212,11 @@ def n_create_blocks(n_data):
 
 def n_check_trishape(n_trishape):
     nose.tools.assert_is_instance(n_trishape, NifFormat.NiTriShape)
-    n_check_transform(n_trishape)
     
     n_trishapedata = n_trishape.data
     n_check_trishape_data(n_trishapedata)
-    n_check_8_vertices(n_trishapedata)
+    n_check_cube_vertices(n_trishapedata)
 
-def n_check_transform(n_trishape):        
-    nose.tools.assert_equal(n_trishape.translation.as_tuple(),(20.0, 20.0, 20.0)) # location
-    
-    n_rot_eul = mathutils.Matrix(n_trishape.rotation.as_tuple()).to_euler()
-    nose.tools.assert_equal((n_rot_eul.x - math.radians(30.0)) < NifFormat.EPSILON, True) # x rotation
-    nose.tools.assert_equal((n_rot_eul.y - math.radians(60.0)) < NifFormat.EPSILON, True) # y rotation
-    nose.tools.assert_equal((n_rot_eul.z - math.radians(90.0)) < NifFormat.EPSILON, True) # z rotation
-    
-    nose.tools.assert_equal(n_trishape.scale - 0.75 < NifFormat.EPSILON, True) # scale
 
 def n_check_trishape_data(n_trishape_data):
     nose.tools.assert_true(n_trishape_data.has_vertices)
@@ -253,7 +227,7 @@ def n_check_trishape_data(n_trishape_data):
     # nose.tools.assert_equal(n_trishape_data.consistency_flags, NifFormat.ConsistencyType.CT_STATIC)
     
     
-def n_check_8_vertices(n_trishape_data):
+def n_check_cube_vertices(n_trishape_data):
     nose.tools.assert_equal(n_trishape_data.num_vertices, 8)
     verts = {
         tuple(round(co, 4) for co in vert.as_list())
