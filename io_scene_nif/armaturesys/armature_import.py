@@ -65,12 +65,12 @@ class Armature():
 	
 	def __init__(self, parent):
 		# dictionary of bones that belong to a certain armature
-	    # maps NIF armature name to list of NIF bone name
+		# maps NIF armature name to list of NIF bone name
 		self.armatures = {}
 		
 		# dictionary of bones, maps Blender bone name to matrix that maps the
 		# NIF bone matrix on the Blender bone matrix
-	    # B' = X * B, where B' is the Blender bone matrix, and B is the NIF bone matrix
+		# B' = X * B, where B' is the Blender bone matrix, and B is the NIF bone matrix
 		self.bones_extra_matrix = {}
 		self.nif_import = parent
 		self.properties = self.nif_import.properties
@@ -298,7 +298,7 @@ class Armature():
 			if alignment_offset < 0.25:
 				m_correction = self.BONE_CORRECTION_MATRICES[idx_correction]
 		return m_correction
-	   
+
 
 	def append_armature_modifier(self, b_obj, b_armature):
 		"""Append an armature modifier for the object."""
@@ -348,11 +348,13 @@ class Armature():
 
 		# attaching to selected armature -> first identify armature and bones
 		elif self.properties.skeleton == "GEOMETRY_ONLY" and not self.armatures:
-			skelroot = niBlock.find(block_name=self.nif_import.selected_objects[0].name)
+			skelroot = niBlock.find(
+							block_name=self.nif_import.selected_objects[0].name)
 			if not skelroot:
-				raise NifImportError(
-					"nif has no armature '%s'" % self.nif_import.selected_objects[0].name)
-			self.nif_import.debug("Identified '%s' as armature" % skelroot.name)
+				raise NifImportError("nif has no armature '%s'" % 
+									self.nif_import.selected_objects[0].name)
+			self.nif_import.debug("Identified '%s' as armature" % 
+									skelroot.name)
 			self.armatures[skelroot] = []
 			for bone_name in self.nif_import.selected_objects[0].data.bones.keys():
 				# blender bone naming -> nif bone naming
@@ -482,6 +484,7 @@ class Armature():
 			par = par._parent
 		return par
 
+
 	def get_blender_object(self, niBlock):
 		"""Retrieves the Blender object or Blender bone matching the block."""
 		if self.is_bone(niBlock):
@@ -497,7 +500,8 @@ class Armature():
 			return armatureObject.data.bones[bone_name]
 		else:
 			return Blender.Object.Get(self.nif_import.names[niBlock])
-		   
+		
+
 	def decompose_srt(self, matrix):
 		"""Decompose Blender transform matrix as a scale, rotation matrix, and translation vector."""
 		# get scale components
@@ -523,6 +527,7 @@ class Armature():
 		b_trans = trans_vec
 		# done!
 		return [b_scale, b_rot, b_trans]
+	
 	
 	def store_bones_extra_matrix(self):
 		"""Stores correction matrices in a text buffer so that the original
@@ -552,6 +557,7 @@ class Armature():
 			# write it to the text buffer
 			bonetxt.write('%s/%s\n' % (blender_bone_name, line[1:]))
 		
+		
 	def store_names(self):
 		"""Stores the original, long object names so that they can be
 		re-exported. In order for this to work it is necessary to mantain the
@@ -569,3 +575,5 @@ class Armature():
 			block_name = block.name.decode()
 			if block_name and shortname != block_name:
 				namestxt.write('%s;%s\n' % (shortname, block_name))
+				
+				
