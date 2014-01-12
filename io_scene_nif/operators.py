@@ -40,9 +40,7 @@
 import bpy
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 
-import pyffi
 from pyffi.formats.nif import NifFormat
-from pyffi.formats.egm import EgmFormat
 
 from io_scene_nif import nif_export, nif_import
 
