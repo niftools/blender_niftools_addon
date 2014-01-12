@@ -44,7 +44,6 @@ import mathutils
 from functools import reduce
 import operator
 
-import pyffi
 from pyffi.formats.nif import NifFormat
 from pyffi.utils.quickhull import qhull3d
 
@@ -283,7 +282,6 @@ class bhkshape_import():
                     vert_index += 1
 
         tessfaces = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]]
-        face_index = 0
 
         for x in range(len(tessfaces)):
             b_mesh.tessfaces.add(1)
