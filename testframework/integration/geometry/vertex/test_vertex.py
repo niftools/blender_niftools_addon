@@ -38,18 +38,16 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-import nose.tools
 
-from integration import Base
 from integration import SingleNif
 from integration.data import gen_data 
-from integration.geometry.trishape import b_gen_geometry
-from integration.geometry.trishape import n_gen_geometry
+from integration.geometry.vertex import b_gen_vertex
+from integration.geometry.vertex import n_gen_vertex
 
-class TestTriShape(SingleNif):
+class TestVertex(SingleNif):
     """Test base geometry, single blender object."""
 
-    n_name = 'geometry/trishape/test_trishape' # (documented in base class)
+    n_name = 'geometry/vertex/test_vertex' # (documented in base class)
     b_name = 'Cube'
 
     def b_create_header(self):
@@ -57,37 +55,23 @@ class TestTriShape(SingleNif):
 
     def b_create_data(self):
         # (documented in base class)
-        b_obj = b_gen_geometry.b_create_cube(self.b_name)
+        b_obj = b_gen_vertex.b_create_cube(self.b_name)
         
         # transform it into something less trivial
-        b_gen_geometry.b_transform_cube(b_obj)
+        b_gen_vertex.b_transform_cube(b_obj)
     
     def b_check_data(self):
         b_obj = bpy.data.objects[self.b_name]
-        b_gen_geometry.b_check_geom_obj(b_obj)
+        b_gen_vertex.b_check_geom_obj(b_obj)
 
     def n_create_header(self):
         gen_data.n_create_header_oblivion(self.n_data)
 
     def n_create_data(self):
-        n_gen_geometry.n_create_blocks(self.n_data)
+        n_gen_vertex.n_create_blocks(self.n_data)
         return self.n_data
 
     def n_check_data(self):
         n_trishape = self.n_data.roots[0].children[0]
-        n_gen_geometry.n_check_trishape(n_trishape)
-
-class TestNonUniformlyScaled(Base):
-    def setup(self):
-        # create a non-uniformly scaled cube
-        bpy.ops.mesh.primitive_cube_add()
-        b_obj = bpy.data.objects["Cube"]
-        b_obj.scale = (1, 2, 3)
-
-    @nose.tools.raises(Exception)
-    def test_export(self):
-        bpy.ops.export_scene.nif(
-            filepath="test/export/non_uniformly_scaled_cube.nif",
-            log_level='DEBUG',
-            )
+        n_gen_vertex.n_check_trishape(n_trishape)
 
