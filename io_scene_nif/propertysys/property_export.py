@@ -38,13 +38,13 @@
 # ***** END LICENSE BLOCK *****
 
 from pyffi.formats.nif import NifFormat
-from io_scene_nif.materialsys.material_export import MaterialProperty
+from io_scene_nif.materialsys.material_export import Material
 
 class PropertyHelper():
     
     def __init__(self, parent):
         self.object_property = ObjectProperty(parent)
-        self.material_property = MaterialProperty(parent)
+        self.material_property = Material(parent)
         
         
 class ObjectProperty():
