@@ -38,12 +38,9 @@
 # ***** END LICENSE BLOCK *****
 
 
-
 import bpy
 
-from pyffi.formats.nif import NifFormat
-
-class material_import():
+class Material():
     
     def __init__(self, parent):
         self.nif_import = parent
