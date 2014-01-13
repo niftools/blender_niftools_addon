@@ -54,7 +54,6 @@ import os.path
 import mathutils
 import bpy
 
-import pyffi.spells.nif
 import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 from pyffi.formats.egm import EgmFormat
