@@ -314,7 +314,7 @@ class TextureHelper():
                         % (b_obj.name,b_mat.name))
                 if b_mat_texslot.blend_type != 'ADD':
                 # it should have "ADD" blending mode
-                     self.nif_export.warning("Reflection texture should have blending"
+                    self.nif_export.warning("Reflection texture should have blending"
                                  " mode 'Add' on texture"
                                  " in mesh '%s', material '%s')."
                                  % (b_obj.name,b_mat.name))
@@ -333,7 +333,7 @@ class TextureHelper():
                 if b_mat_texslot.use_map_emit:
                     #multi-check
                     if self.glowmtex:
-                         raise nif_utils.NifExportError(
+                        raise nif_utils.NifExportError(
                             "Multiple emissive textures"
                             " in mesh '%s', material '%s'."
                             " Make sure there is only one texture"
@@ -350,7 +350,7 @@ class TextureHelper():
                 elif (b_mat_texslot.use_map_specular or b_mat_texslot.use_map_color_spec):
                     #multi-check
                     if self.glossmtex:
-                         raise nif_utils.NifExportError(
+                        raise nif_utils.NifExportError(
                             "Multiple specular gloss textures"
                             " in mesh '%s', material '%s'."
                             " Make sure there is only one texture"
@@ -369,7 +369,7 @@ class TextureHelper():
                     b_mat_texslot.texture.use_normal_map == False:
                     #multi-check
                     if self.bumpmtex:
-                         raise nif_utils.NifExportError(
+                        raise nif_utils.NifExportError(
                             "Multiple bump/normal textures"
                             " in mesh '%s', material '%s'."
                             " Make sure there is only one texture"
@@ -387,7 +387,7 @@ class TextureHelper():
                     b_mat_texslot.texture.use_normal_map:
                     # multi-check
                     if self.normalmtex:
-                         raise nif_utils.NifExportError(
+                        raise nif_utils.NifExportError(
                             "Multiple bump/normal textures"
                             " in mesh '%s', material '%s'."
                             " Make sure there is only one texture"
@@ -419,7 +419,7 @@ class TextureHelper():
                 #diffuse
                 elif b_mat_texslot.use_map_color_diffuse:
                     if self.basemtex:
-                         raise nif_utils.NifExportError(
+                        raise nif_utils.NifExportError(
                             "Multiple Diffuse textures"
                             " in mesh '%s', material '%s'."
                             " Make sure there is only one texture"
@@ -464,7 +464,7 @@ class TextureHelper():
                 #detail
                 elif b_mat_texslot.use_map_color_diffuse:
                     if self.detailmtex:
-                         raise nif_utils.NifExportError(
+                        raise nif_utils.NifExportError(
                             "Multiple detail textures"
                             " in mesh '%s', material '%s'."
                             " Make sure there is only one texture"
@@ -481,7 +481,7 @@ class TextureHelper():
                 elif (b_mat_texslot.use_map_mirror or b_mat_texslot.use_map_raymir):
                     #multi-check
                     if self.glowmtex:
-                         raise nif_utils.NifExportError(
+                        raise nif_utils.NifExportError(
                             "Multiple reflection textures"
                             " in mesh '%s', material '%s'."
                             " Make sure there is only one texture"
