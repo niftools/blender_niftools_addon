@@ -610,11 +610,11 @@ class MeshHelper():
             else:
                 trishape.name = trishape_name
 
+            # multimaterial meshes: add material index
+            # (Morrowind's child naming convention)
             if len(mesh_materials) > 1:
-                # multimaterial meshes: add material index
-                # (Morrowind's child naming convention)
                 trishape.name = trishape.name.decode() + ":%i" % materialIndex
-            else
+            else:
                 trishape.name = self.nif_export.objecthelper.get_full_name(trishape.name)
 
             #Trishape Flags...
