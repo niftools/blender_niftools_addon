@@ -44,7 +44,7 @@ from io_scene_nif.animationsys.animation_import import AnimationHelper
 from io_scene_nif.armaturesys.armature_import import Armature
 from io_scene_nif.collisionsys.collision_import import bhkshape_import, bound_import
 from io_scene_nif.constraintsys.constraint_import import Constraint
-from io_scene_nif.materialsys.material import material_import
+from io_scene_nif.materialsys.material_import import Material
 from io_scene_nif.texturesys.texture_import import Texture
 from io_scene_nif.texturesys.texture_loader import TextureLoader
 
@@ -79,7 +79,7 @@ class NifImport(NifCommon):
         self.textureloader = TextureLoader(parent=self)
         self.texturehelper = Texture(parent=self)
         self.texturehelper.set_texture_loader(self.textureloader)
-        self.materialhelper = material_import(parent=self)
+        self.materialhelper = Material(parent=self)
         self.materialhelper.set_texture_helper(self.texturehelper)
     
     def execute(self):
