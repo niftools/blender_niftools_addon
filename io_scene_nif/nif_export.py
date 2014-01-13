@@ -54,7 +54,6 @@ import os.path
 import mathutils
 import bpy
 
-import pyffi.spells.nif
 import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 from pyffi.formats.egm import EgmFormat
@@ -540,15 +539,15 @@ class NifExport(NifCommon):
             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
                 for block in self.objecthelper.blocks:
                     if isinstance(block, NifFormat.bhkMoppBvTreeShape):
-                       self.info("Generating mopp...")
-                       block.update_mopp()
-                       #print "=== DEBUG: MOPP TREE ==="
-                       #block.parse_mopp(verbose = True)
-                       #print "=== END OF MOPP TREE ==="
-                       # warn about mopps on non-static objects
-                       if any(sub_shape.layer != 1
-                              for sub_shape in block.shape.sub_shapes):
-                           self.warning(
+                        self.info("Generating mopp...")
+                        block.update_mopp()
+                        #print "=== DEBUG: MOPP TREE ==="
+                        #block.parse_mopp(verbose = True)
+                        #print "=== END OF MOPP TREE ==="
+                        # warn about mopps on non-static objects
+                        if any(sub_shape.layer != 1
+                            for sub_shape in block.shape.sub_shapes):
+                                self.warning(
                                "Mopps for non-static objects may not function"
                                " correctly in-game. You may wish to use"
                                " simple primitives for collision.")
@@ -646,7 +645,7 @@ class NifExport(NifCommon):
                     for ctrl in ctrls:
                         if self.properties.game == 'MORROWIND':
                             # morrowind: only keyframe controllers
-                            if not isinstance(ctrl,
+                            if not isinstance(ctrl, 
                                               NifFormat.NiKeyframeController):
                                 continue
                         if not node in node_kfctrls:
@@ -991,15 +990,15 @@ class NifExport(NifCommon):
     def export_collision(self, b_obj, parent_block):
         """Main function for adding collision object b_obj to a node."""
         if self.properties.game == 'MORROWIND':
-             if b_obj.game.collision_bounds_type != 'TRIANGLE_MESH':
-                 raise NifExportError(
+            if b_obj.game.collision_bounds_type != 'TRIANGLE_MESH':
+                raise NifExportError(
                      "Morrowind only supports"
                      " Triangle Mesh collisions.")
-             node = self.objecthelper.create_block("RootCollisionNode", b_obj)
-             parent_block.add_child(node)
-             node.flags = 0x0003 # default
-             self.export_matrix(b_obj, 'localspace', node)
-             self.objecthelper.mesh_helper.export_tri_shapes(b_obj, 'none', node)
+            node = self.objecthelper.create_block("RootCollisionNode", b_obj)
+            parent_block.add_child(node)
+            node.flags = 0x0003 # default
+            self.export_matrix(b_obj, 'localspace', node)
+            self.objecthelper.mesh_helper.export_tri_shapes(b_obj, 'none', node)
 
         elif self.properties.game in ('OBLIVION', 'FALLOUT_3'):
 

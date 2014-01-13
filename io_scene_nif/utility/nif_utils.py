@@ -1,5 +1,4 @@
 import mathutils
-import math
 
 class NifExportError(Exception):
     """A simple custom exception class for export errors."""
@@ -39,8 +38,8 @@ def decompose_srt(matrix):
     scale_rot_T.transpose()
     scale_rot_2 = scale_rot * scale_rot_T
     b_scale = mathutils.Vector((scale_vec[0] ** 0.5,\
-                         scale_vec[1] ** 0.5,\
-                         scale_vec[2] ** 0.5))
+                                scale_vec[1] ** 0.5,\
+                                scale_vec[2] ** 0.5))
     # and fix their sign
     if (scale_rot.determinant() < 0): b_scale.negate()
     # only uniform scaling
@@ -50,11 +49,8 @@ def decompose_srt(matrix):
             "Non-uniform scaling not supported."
             " Workaround: apply size and rotation (CTRL-A).")
     b_scale = b_scale[0]
-    # get rotation matrix
     b_rot = scale_rot * b_scale
-    # get translation
     b_trans = trans_vec
-    # done!
     return [b_scale, b_rot, b_trans]
 
 def find_property(niBlock, property_type):

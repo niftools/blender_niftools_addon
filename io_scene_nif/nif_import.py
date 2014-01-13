@@ -44,21 +44,13 @@ from io_scene_nif.animationsys.animation_import import AnimationHelper
 from io_scene_nif.armaturesys.armature_import import Armature
 from io_scene_nif.collisionsys.collision_import import bhkshape_import, bound_import
 from io_scene_nif.constraintsys.constraint_import import Constraint
-from io_scene_nif.materialsys.material import material_import
+from io_scene_nif.materialsys.material_import import Material
 from io_scene_nif.texturesys.texture_import import Texture
 from io_scene_nif.texturesys.texture_loader import TextureLoader
-
-from functools import reduce
-import logging
-import math
-import operator
-import os
-import os.path
 
 import bpy
 import mathutils
 
-import pyffi.spells.nif
 import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 from pyffi.formats.egm import EgmFormat
@@ -87,7 +79,7 @@ class NifImport(NifCommon):
         self.textureloader = TextureLoader(parent=self)
         self.texturehelper = Texture(parent=self)
         self.texturehelper.set_texture_loader(self.textureloader)
-        self.materialhelper = material_import(parent=self)
+        self.materialhelper = Material(parent=self)
         self.materialhelper.set_texture_helper(self.texturehelper)
     
     def execute(self):
@@ -904,13 +896,6 @@ class NifImport(NifCommon):
             material = None
             materialIndex = 0
 
-        # if there are no vertices then enable face index shifts
-        # (this fixes an issue with indexing)
-        if len(b_mesh.vertices) == 0:
-            check_shift = True
-        else:
-            check_shift = False
-
         # v_map will store the vertex index mapping
         # nif vertex i maps to blender vertex v_map[i]
         v_map = [0 for i in range(len(n_verts))] # pre-allocate memory, for faster performance
@@ -1029,9 +1014,11 @@ class NifImport(NifCommon):
             n_vcol_map = list()
             for n_vcol, n_vmap in zip(niData.vertex_colors, v_map):
                 n_vcol_map.append((n_vcol, n_vmap))
+            
             # create vertex_layers
-            b_meshcolorlayer = b_mesh.vertex_colors.new(name="VertexColor") # color layer
-            b_meshcolorlayeralpha = b_mesh.vertex_colors.new(name="VertexAlpha") # greyscale
+            b_mesh.vertex_colors.new(name="VertexColor") # color layer
+            b_mesh.vertex_colors.new(name="VertexAlpha") # greyscale
+            
             # Mesh Vertex Color / Mesh Face
             for b_polygon_loop in b_mesh.loops:
                 b_loop_index = b_polygon_loop.index
@@ -1062,7 +1049,7 @@ class NifImport(NifCommon):
            
             #b_mesh.faceUV = 1
             #b_mesh.vertexUV = 0
-            for i, uv_set in enumerate(niData.uv_sets):
+            for i in range(niData.num_uv_sets):
                 # Set the face UV's for the mesh. The NIF format only supports
                 # vertex UV's, but Blender only allows explicit editing of face
                 # UV's, so load vertex UV's as face UV's
@@ -1081,7 +1068,7 @@ class NifImport(NifCommon):
                             continue
                         uvlist = f
                         v1,v2,v3 = uvlist
-                        if v3 ==0:
+                        if v3 == 0:
                             v1,v2,v3 = v3,v1,v2
                         b_poly_index = b_mesh.polygons[b_f_index + bf2_index]
                         uvl[b_poly_index.loop_start].uv = n_uvco[v1]
