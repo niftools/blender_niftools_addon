@@ -38,8 +38,6 @@
 # ***** END LICENSE BLOCK *****
 
 
-import bpy
-
 from pyffi.formats.nif import NifFormat
 
 class Texture():
@@ -457,7 +455,7 @@ class Texture():
 		# TODO - Check out n_apply_modes
 		if n_apply_mode == NifFormat.ApplyMode.APPLY_MODULATE:
 			return "MIX"
-        # TODO - These seem unsupported by Blender, check
+		# TODO - These seem unsupported by Blender, check
 		elif n_apply_mode == NifFormat.ApplyMode.APPLY_REPLACE:
 			return "MIX"
 		elif n_apply_mode == NifFormat.ApplyMode.APPLY_DECAL:
