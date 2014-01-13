@@ -1014,9 +1014,11 @@ class NifImport(NifCommon):
             n_vcol_map = list()
             for n_vcol, n_vmap in zip(niData.vertex_colors, v_map):
                 n_vcol_map.append((n_vcol, n_vmap))
+            
             # create vertex_layers
-            b_meshcolorlayer = b_mesh.vertex_colors.new(name="VertexColor") # color layer
-            b_meshcolorlayeralpha = b_mesh.vertex_colors.new(name="VertexAlpha") # greyscale
+            b_mesh.vertex_colors.new(name="VertexColor") # color layer
+            b_mesh.vertex_colors.new(name="VertexAlpha") # greyscale
+            
             # Mesh Vertex Color / Mesh Face
             for b_polygon_loop in b_mesh.loops:
                 b_loop_index = b_polygon_loop.index
@@ -1066,7 +1068,7 @@ class NifImport(NifCommon):
                             continue
                         uvlist = f
                         v1,v2,v3 = uvlist
-                        if v3 ==0:
+                        if v3 == 0:
                             v1,v2,v3 = v3,v1,v2
                         b_poly_index = b_mesh.polygons[b_f_index + bf2_index]
                         uvl[b_poly_index.loop_start].uv = n_uvco[v1]
