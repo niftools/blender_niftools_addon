@@ -40,7 +40,7 @@
 
 from pyffi.formats.nif import NifFormat
 
-class MaterialProperty():
+class Material():
     
     def __init__(self, parent):
         self.nif_export = parent
