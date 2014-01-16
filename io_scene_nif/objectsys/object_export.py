@@ -54,7 +54,7 @@ class ObjectHelper():
         
         # Maps exported blocks to either None or associated Blender object
         self.blocks = {}
-        
+        self.bone_priorities = {}
         # maps Blender names to previously imported names from the FullNames
         # buffer (see self.rebuild_full_names())
         self.names = {}
