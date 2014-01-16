@@ -320,7 +320,7 @@ class Armature():
 			 in ('skeleton.nif', 'skeletonbeast.nif'))):
 
 			if not isinstance(niBlock, NifFormat.NiNode):
-				raise NifImportError(
+				raise self.nif_import.NifImportError(
 					"cannot import skeleton: root is not a NiNode")
 			# for morrowind, take the Bip01 node to be the skeleton root
 			if self.nif_import.data.version == 0x04000002:
@@ -351,7 +351,7 @@ class Armature():
 			skelroot = niBlock.find(
 							block_name=self.nif_import.selected_objects[0].name)
 			if not skelroot:
-				raise NifImportError("nif has no armature '%s'" % 
+				raise self.nif_import.NifImportError("nif has no armature '%s'" % 
 									self.nif_import.selected_objects[0].name)
 			self.nif_import.debug("Identified '%s' as armature" % 
 									skelroot.name)
@@ -387,7 +387,7 @@ class Armature():
 										  % skelroot.name)
 				elif self.properties.skeleton == "GEOMETRY_ONLY":
 					if skelroot not in self.armatures:
-						raise NifImportError(
+						raise self.nif_import.NifImportError(
 							"nif structure incompatible with '%s' as armature:"
 							" node '%s' has '%s' as armature"
 							% (self.nif_import.selected_objects[0].name, niBlock.name,
@@ -495,7 +495,7 @@ class Armature():
 					armatureName = self.nif_import.names[armatureBlock]
 					break
 				else:
-					raise NifImportError("cannot find bone '%s'" % bone_name)
+					raise self.nif_import.NifImportError("cannot find bone '%s'" % bone_name)
 			armatureObject = Blender.Object.Get(armatureName)
 			return armatureObject.data.bones[bone_name]
 		else:
