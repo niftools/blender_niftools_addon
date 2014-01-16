@@ -926,7 +926,10 @@ class NifImport(NifCommon):
             try:
                 # this is the bottle neck...
                 # can we speed this up?
-                n_map_k = n_map[k]
+                if not self.properties.combine_vertices:
+                    n_map_k = None
+                else:
+                    n_map_k = n_map[k]
             except KeyError:
                 n_map_k = None
             if not n_map_k:
