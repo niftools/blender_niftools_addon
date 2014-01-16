@@ -48,7 +48,6 @@ class Armature():
     
 
     def __init__(self, parent):
-        self.nif_export = parent
         
         # dictionary of bones, maps Blender bone name to matrix that maps the
         # NIF bone matrix on the Blender bone matrix
@@ -60,6 +59,11 @@ class Armature():
         # Hence, we will restore the X's, invert them, and store those inverses in the
         # following dictionary.
         self.bones_extra_matrix_inv = {}
+        
+        self.armatures = {}
+        
+        self.nif_export = parent
+        
         
     def rebuild_bones_extra_matrices(self):
         """Recover bone extra matrices."""

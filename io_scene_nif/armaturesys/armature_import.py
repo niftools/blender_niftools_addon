@@ -92,7 +92,6 @@ class Armature():
 		b_armature.show_x_ray = True
 		
 		#Link object to scene
-		b_armature.update_tag(refresh=set())
 		scn = bpy.context.scene
 		scn.objects.link(b_armature)
 		scn.objects.active = b_armature
@@ -107,7 +106,6 @@ class Armature():
 				niBone, b_armature, b_armatureData, niArmature)
 			
 		bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
-		b_armature.update_tag(refresh=set())
 		scn = bpy.context.scene
 		scn.objects.active = b_armature
 		scn.update()
@@ -127,7 +125,13 @@ class Armature():
 				constr = b_posebone.constraints.append(
 					bpy.types.Constraint.NULL)
 				constr.name = "priority:%i" % self.nif_import.bone_priorities[niBone.name]
-
+		
+		bpy.ops.object.mode_set(mode='EDIT',toggle=False)
+		bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
+		
+		scn = bpy.context.scene
+		scn.objects.active = b_armature
+		scn.update()
 		return b_armature  
 
 	def import_bone(self, niBlock, b_armature, b_armatureData, niArmature):
