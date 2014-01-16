@@ -192,6 +192,13 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
         name="Combine Shapes",
         description="Import multi-material shapes as a single mesh.",
         default=False)
+    
+    #: Merge vertices that have identical location and normal values.
+    combine_vertices = bpy.props.BoolProperty(
+        name="Combine Vertices",
+        description="Merge vertices that have identical location and normal values.",
+        default=False)
+    
 
     def execute(self, context):
         """Execute the import operator: first constructs a
