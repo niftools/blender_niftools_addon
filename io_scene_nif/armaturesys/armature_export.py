@@ -79,7 +79,7 @@ class Armature():
                         [[float(f) for f in row.split(',')]
                          for row in m.split(';')])
                 except:
-                    raise NifExportError('Syntax error in BoneExMat buffer.')
+                    raise self.nif_export.NifExportError('Syntax error in BoneExMat buffer.')
                 # Check if matrices are clean, and if necessary fix them.
                 quat = matrix.to_3x3().to_quaternion()
                 if sum(sum(abs(x) for x in vec)
