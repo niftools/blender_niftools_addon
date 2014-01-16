@@ -43,6 +43,7 @@ from pyffi.formats.nif import NifFormat
 class Material():
     
     def __init__(self, parent):
+        self.materials = {}
         self.nif_export = parent
         
     def export_material_property(self, name='', flags=0x0001,
