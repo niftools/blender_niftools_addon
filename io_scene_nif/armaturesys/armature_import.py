@@ -397,7 +397,7 @@ class Armature():
 							% (self.nif_import.selected_objects[0].name, niBlock.name,
 							   skelroot.name))
 
-				for i, boneBlock in enumerate(skininst.bones):
+				for boneBlock in skininst.bones:
 					# boneBlock can be None; see pyffi issue #3114079
 					if not boneBlock:
 						continue
@@ -500,10 +500,10 @@ class Armature():
 					break
 				else:
 					raise self.nif_import.NifImportError("cannot find bone '%s'" % bone_name)
-			armatureObject = Blender.Object.Get(armatureName)
+			armatureObject = bpy.types.Object(armatureName)
 			return armatureObject.data.bones[bone_name]
 		else:
-			return Blender.Object.Get(self.nif_import.names[niBlock])
+			return bpy.types.Object(self.nif_import.names[niBlock])
 		
 
 	def decompose_srt(self, matrix):
@@ -511,12 +511,9 @@ class Armature():
 		# get scale components
 		trans_vec, rot_quat, scale_vec = matrix.decompose()
 		scale_rot = rot_quat.to_matrix()
-		scale_rot_T = mathutils.Matrix(scale_rot)
-		scale_rot_T.transpose()
-		scale_rot_2 = scale_rot * scale_rot_T
 		b_scale = mathutils.Vector((scale_vec[0] ** 0.5,\
-                         scale_vec[1] ** 0.5,\
-                         scale_vec[2] ** 0.5))
+                         			scale_vec[1] ** 0.5,\
+                            		scale_vec[2] ** 0.5))
 		# and fix their sign
 		if (scale_rot.determinant() < 0): b_scale.negate()
 		# only uniform scaling
