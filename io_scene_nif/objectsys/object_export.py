@@ -165,7 +165,7 @@ class ObjectHelper():
             
         if (node_name == 'RootCollisionNode'):
             # -> root collision node (can be mesh or empty)
-            # TODO do we need to fix this stuff on export?
+            # TODO: do we need to fix this stuff on export?
             #b_obj.draw_bounds_type = 'POLYHEDERON'
             #b_obj.draw_type = 'BOUNDS'
             #b_obj.show_wire = True
@@ -504,7 +504,7 @@ class MeshHelper():
                 #diffuse mat
                 mesh_mat_diffuse_color = [1.0, 1.0, 1.0]
                 '''
-                TODO_3.0 - If needed where ambient should not be defaulted
+                TODO: 3.0 - If needed where ambient should not be defaulted
 
                 #ambient mat
                 mesh_mat_ambient_color[0] = b_mat.niftools.ambient_color[0] * b_mat.niftools.ambient_factor
@@ -579,7 +579,7 @@ class MeshHelper():
                         [bodypartgroupname,
                          getattr(NifFormat.BSDismemberBodyPartType,
                                  bodypartgroupname),
-                         # FIXME how do you get the vertices in the group???
+                         # FIXME:how do you get the vertices in the group???
                          #set(vertex_group.vertices)])
                          {}])
 
@@ -649,7 +649,7 @@ class MeshHelper():
             #add textures
             if self.properties.game == 'FALLOUT_3':
                 if b_mat:
-                    bs_shader = self.export_bs_shader_property(b_mat)
+                    bs_shader = self.nif_export.texturehelper.export_bs_shader_property(b_obj, b_mat)
                 
                     self.nif_export.objecthelper.register_block(bs_shader)
                     trishape.add_property(bs_shader)
@@ -727,7 +727,7 @@ class MeshHelper():
                 # add NiTriShape's material property
                 trimatprop = self.nif_export.propertyhelper.material_property.export_material_property(
                     name=self.nif_export.objecthelper.get_full_name(b_mat.name),
-                    flags=0x0001, # TODO - standard flag, check?
+                    flags=0x0001, # TODO: - standard flag, check?
                     ambient=mesh_mat_ambient_color,
                     diffuse=mesh_mat_diffuse_color,
                     specular=mesh_mat_specular_color,
@@ -819,7 +819,7 @@ class MeshHelper():
                     fuv = []
                     for uvlayer in mesh_uvlayers:
                         if uvlayer != "":
-                            #TODO : map uv layer to index
+                            #TODO: map uv layer to index
                             #currently we have uv_layer names, but we need their index value
                             #b_mesh.uv_layers[0].data[poly.index].uv
                             fuv.append(b_mesh.uv_layers[uvlayer].data[loop_index].uv)
