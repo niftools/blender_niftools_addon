@@ -599,7 +599,7 @@ class NifImport(NifCommon):
                 # make b_obj track camera object
                 #b_obj.setEuler(0,0,0)
                 b_obj.constraints.append(
-                    bpy.types.Constraint.TRACKTO)
+                    bpy.types.Constraint('TRACK_TO'))
                 self.warning(
                     "Constraint for billboard node on %s added"
                     " but target not set due to transform bug"
@@ -898,7 +898,7 @@ class NifImport(NifCommon):
 
         # v_map will store the vertex index mapping
         # nif vertex i maps to blender vertex v_map[i]
-        v_map = [0 for i in range(len(n_verts))] # pre-allocate memory, for faster performance
+        v_map = [(i) for i in range(len(n_verts))] # pre-allocate memory, for faster performance
 
         # Following code avoids introducing unwanted cracks in UV seams:
         # Construct vertex map to get unique vertex / normal pair list.
@@ -1006,7 +1006,6 @@ class NifImport(NifCommon):
             polysmooth = b_mesh.polygons[b_polysmooth_index]
             polysmooth.use_smooth = True if n_norms else False
             polysmooth.material_index = materialIndex
-
         # vertex colors
         
 

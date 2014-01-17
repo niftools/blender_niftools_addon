@@ -106,18 +106,33 @@ class NiftoolsObjectProps(bpy.types.PropertyGroup):
         cls.longname = StringProperty(
                         name = 'Nif LongName'
                         )
-        
+
         cls.bsxflags = IntProperty(
                         name = 'BSXFlags',
                         description = 'Controls animation and collision',
                         default = 2 # 2 = Bit 1, enable collision
                         )
-        
+
         cls.upb = StringProperty(
                         name = 'UPB',
                         description = 'Commands for an optimizer?',
                         default = ''
-                        )    
+                        )
+
+        cls.LHMaxAngle = IntProperty(
+                        name = 'LHMaxAngle',
+                        description = 'Havok limited hinge max angle.',
+                        )
+
+        cls.LHMinAngle = IntProperty(
+                        name = 'LHMinAngle',
+                        description = 'Havok limited hinge min angle.',
+                        )
+
+        cls.LHMaxFriction = IntProperty(
+                        name = 'LHMaxFriction',
+                        description = 'Havok limited hinge max friction.',
+                        )
         
     @classmethod
     def unregister(cls):

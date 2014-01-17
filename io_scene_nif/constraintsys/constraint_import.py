@@ -115,7 +115,7 @@ class Constraint():
                 continue
 
             # add the constraint as a rigid body joint
-            b_constr = b_hkobj.constraints.append(bpy.types.Constraint.RIGIDBODYJOINT)
+            b_constr = b_hkobj.constraints.new('RIGID_BODY_JOINT')
 
             # note: rigidbodyjoint parameters (from Constraint.c)
             # CONSTR_RB_AXX 0.0
@@ -148,78 +148,82 @@ class Constraint():
             # pivx/y/z is the pivot point
 
             # set constraint target
-            b_constr[Blender.Constraint.Settings.TARGET] = \
+            b_constr.target = \
                 self.havok_objects[hkconstraint.entities[1]][0]
             # set rigid body type (generic)
-            b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE] = 12
+            b_constr.pivot_type = 'BALL'
             # limiting parameters (limit everything)
-            b_constr[Blender.Constraint.Settings.LIMIT] = 63
+            b_constr.use_limit_x = True
+            b_constr.use_limit_y = True
+            b_constr.use_limit_z = True
 
             # get pivot point
-            pivot = mathutils.Vector(
-                hkdescriptor.pivot_a.x * self.HAVOK_SCALE,
-                hkdescriptor.pivot_a.y * self.HAVOK_SCALE,
-                hkdescriptor.pivot_a.z * self.HAVOK_SCALE)
+            pivot = mathutils.Vector((
+                hkdescriptor.pivot_a.x * self.nif_common.HAVOK_SCALE,
+                hkdescriptor.pivot_a.y * self.nif_common.HAVOK_SCALE,
+                hkdescriptor.pivot_a.z * self.nif_common.HAVOK_SCALE))
 
             # get z- and x-axes of the constraint
             # (also see export_nif.py NifImport.export_constraints)
             if isinstance(hkdescriptor, NifFormat.RagdollDescriptor):
+                b_constr.pivot_type = 'CONE_TWIST'
                 # for ragdoll, take z to be the twist axis (central axis of the
                 # cone, that is)
-                axis_z = mathutils.Vector(
+                axis_z = mathutils.Vector((
                     hkdescriptor.twist_a.x,
                     hkdescriptor.twist_a.y,
-                    hkdescriptor.twist_a.z)
+                    hkdescriptor.twist_a.z))
                 # for ragdoll, let x be the plane vector
-                axis_x = mathutils.Vector(
+                axis_x = mathutils.Vector((
                     hkdescriptor.plane_a.x,
                     hkdescriptor.plane_a.y,
-                    hkdescriptor.plane_a.z)
+                    hkdescriptor.plane_a.z))
                 # set the angle limits
                 # (see http://niftools.sourceforge.net/wiki/Oblivion/Bhk_Objects/Ragdoll_Constraint
                 # for a nice picture explaining this)
-                b_constr[Blender.Constraint.Settings.CONSTR_RB_MINLIMIT5] = \
+                b_constr.limit_angle_min_z = \
                     hkdescriptor.twist_min_angle
-                b_constr[Blender.Constraint.Settings.CONSTR_RB_MAXLIMIT5] = \
+                b_constr.limit_angle_max_z = \
                     hkdescriptor.twist_max_angle
-                b_constr[Blender.Constraint.Settings.CONSTR_RB_MINLIMIT3] = \
+                b_constr.limit_angle_min_x = \
                     -hkdescriptor.cone_max_angle
-                b_constr[Blender.Constraint.Settings.CONSTR_RB_MAXLIMIT3] = \
+                b_constr.limit_angle_max_x = \
                     hkdescriptor.cone_max_angle
-                b_constr[Blender.Constraint.Settings.CONSTR_RB_MINLIMIT4] = \
+                b_constr.limit_angle_min_y = \
                     hkdescriptor.plane_min_angle
-                b_constr[Blender.Constraint.Settings.CONSTR_RB_MAXLIMIT4] = \
+                b_constr.limit_angle_max_y = \
                     hkdescriptor.plane_max_angle
+
             elif isinstance(hkdescriptor, NifFormat.LimitedHingeDescriptor):
                 # for hinge, y is the vector on the plane of rotation defining
                 # the zero angle
-                axis_y = mathutils.Vector(
+                axis_y = mathutils.Vector((
                     hkdescriptor.perp_2_axle_in_a_1.x,
                     hkdescriptor.perp_2_axle_in_a_1.y,
-                    hkdescriptor.perp_2_axle_in_a_1.z)
+                    hkdescriptor.perp_2_axle_in_a_1.z))
                 # for hinge, take x to be the the axis of rotation
                 # (this corresponds with Blender's convention for hinges)
-                axis_x = mathutils.Vector(
+                axis_x = mathutils.Vector((
                     hkdescriptor.axle_a.x,
                     hkdescriptor.axle_a.y,
-                    hkdescriptor.axle_a.z)
+                    hkdescriptor.axle_a.z))
                 # for hinge, z is the vector on the plane of rotation defining
                 # the positive direction of rotation
-                axis_z = mathutils.Vector(
+                axis_z = mathutils.Vector((
                     hkdescriptor.perp_2_axle_in_a_2.x,
                     hkdescriptor.perp_2_axle_in_a_2.y,
-                    hkdescriptor.perp_2_axle_in_a_2.z)
+                    hkdescriptor.perp_2_axle_in_a_2.z))
                 # they should form a orthogonal basis
-                if (mathutils.CrossVecs(axis_x, axis_y)
+                if (mathutils.Vector.cross(axis_x, axis_y)
                     - axis_z).length > 0.01:
                     # either not orthogonal, or negative orientation
-                    if (mathutils.CrossVecs(-axis_x, axis_y)
+                    if (mathutils.Vector.cross(-axis_x, axis_y)
                         - axis_z).length > 0.01:
                         self.nif_common.warning(
                             "Axes are not orthogonal in %s;"
                             " arbitrary orientation has been chosen"
                             % hkdescriptor.__class__.__name__)
-                        axis_z = mathutils.CrossVecs(axis_x, axis_y)
+                        axis_z = mathutils.Vector.cross(axis_x, axis_y)
                     else:
                         # fix orientation
                         self.nif_common.warning(
@@ -228,29 +232,26 @@ class Constraint():
                         axis_x = -axis_x
                 # getting properties with no blender constraint
                 # equivalent and setting as obj properties
-                b_hkobj.addProperty("LimitedHinge_MaxAngle",
-                                    hkdescriptor.max_angle)
-                b_hkobj.addProperty("LimitedHinge_MinAngle",
-                                    hkdescriptor.min_angle)
-                b_hkobj.addProperty("LimitedHinge_MaxFriction",
-                                    hkdescriptor.max_friction)
+                b_hkobj.niftools.LHMaxAngle = hkdescriptor.max_angle
+                b_hkobj.niftools.LHMinAngle = hkdescriptor.min_angle
+                b_hkobj.niftools.LHMaxFriction = hkdescriptor.max_friction
 
             elif isinstance(hkdescriptor, NifFormat.HingeDescriptor):
                 # for hinge, y is the vector on the plane of rotation defining
                 # the zero angle
-                axis_y = mathutils.Vector(
+                axis_y = mathutils.Vector((
                     hkdescriptor.perp_2_axle_in_a_1.x,
                     hkdescriptor.perp_2_axle_in_a_1.y,
-                    hkdescriptor.perp_2_axle_in_a_1.z)
+                    hkdescriptor.perp_2_axle_in_a_1.z))
                 # for hinge, z is the vector on the plane of rotation defining
                 # the positive direction of rotation
-                axis_z = mathutils.Vector(
+                axis_z = mathutils.Vector((
                     hkdescriptor.perp_2_axle_in_a_2.x,
                     hkdescriptor.perp_2_axle_in_a_2.y,
-                    hkdescriptor.perp_2_axle_in_a_2.z)
+                    hkdescriptor.perp_2_axle_in_a_2.z))
                 # take x to be the the axis of rotation
                 # (this corresponds with Blender's convention for hinges)
-                axis_x = mathutils.CrossVecs(axis_y, axis_z)
+                axis_x = mathutils.Vector.cross(axis_y, axis_z)
             else:
                 raise ValueError("unknown descriptor %s"
                                  % hkdescriptor.__class__.__name__)
@@ -282,17 +283,17 @@ class Constraint():
             # multiply with rigid body transform
             if isinstance(hkbody, NifFormat.bhkRigidBodyT):
                 # set rotation
-                transform = mathutils.Quaternion(
+                transform = mathutils.Quaternion((
                     hkbody.rotation.w, hkbody.rotation.x,
-                    hkbody.rotation.y, hkbody.rotation.z).toMatrix()
-                transform.resize4x4()
+                    hkbody.rotation.y, hkbody.rotation.z)).to_matrix()
+                transform.resize_4x4()
                 # set translation
-                transform[3][0] = hkbody.translation.x * 7
-                transform[3][1] = hkbody.translation.y * 7
-                transform[3][2] = hkbody.translation.z * 7
+                transform[0][3] = hkbody.translation.x * HAVOK_SCALE
+                transform[1][3] = hkbody.translation.y * HAVOK_SCALE
+                transform[2][3] = hkbody.translation.z * HAVOK_SCALE
                 # apply transform
                 pivot = pivot * transform
-                transform = transform.rotationPart()
+                transform = transform.to_3x3()
                 axis_z = axis_z * transform
                 axis_x = axis_x * transform
 
@@ -306,52 +307,52 @@ class Constraint():
                         self.nif_common.armaturehelper.bones_extra_matrix[niBone])
                     transform.invert()
                     pivot = pivot * transform
-                    transform = transform.rotationPart()
+                    transform = transform.to_3x3()
                     axis_z = axis_z * transform
                     axis_x = axis_x * transform
                     break
 
             # cancel out bone tail translation
-            if b_hkobj.parentbonename:
+            if b_hkobj.parent_bone:
                 pivot[1] -= b_hkobj.parent.data.bones[
-                    b_hkobj.parentbonename].length
+                    b_hkobj.parent_bone].length
 
             # cancel out object transform
             transform = mathutils.Matrix(
-                b_hkobj.getMatrix('localspace'))
+                b_hkobj.matrix_local)
             transform.invert()
             pivot = pivot * transform
-            transform = transform.rotationPart()
+            transform = transform.to_3x3()
             axis_z = axis_z * transform
             axis_x = axis_x * transform
 
             # set pivot point
-            b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVX] = pivot[0]
-            b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVY] = pivot[1]
-            b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVZ] = pivot[2]
+            b_constr.pivot_x = pivot[0]
+            b_constr.pivot_y = pivot[1]
+            b_constr.pivot_z = pivot[2]
 
             # set euler angles
-            constr_matrix = mathutils.Matrix(
+            constr_matrix = mathutils.Matrix((
                 axis_x,
-                mathutils.CrossVecs(axis_z, axis_x),
-                axis_z)
-            constr_euler = constr_matrix.toEuler()
-            b_constr[Blender.Constraint.Settings.CONSTR_RB_AXX] = constr_euler.x
-            b_constr[Blender.Constraint.Settings.CONSTR_RB_AXY] = constr_euler.y
-            b_constr[Blender.Constraint.Settings.CONSTR_RB_AXZ] = constr_euler.z
+                mathutils.Vector.cross(axis_z, axis_x),
+                axis_z))
+            constr_euler = constr_matrix.to_euler()
+            b_constr.axis_x = constr_euler.x
+            b_constr.axis_y = constr_euler.y
+            b_constr.axis_z = constr_euler.z
             # DEBUG
-            assert((axis_x - mathutils.Vector(1,0,0) * constr_matrix).length < 0.0001)
-            assert((axis_z - mathutils.Vector(0,0,1) * constr_matrix).length < 0.0001)
+            assert((axis_x - mathutils.Vector((1,0,0)) * constr_matrix).length < 0.0001)
+            assert((axis_z - mathutils.Vector((0,0,1)) * constr_matrix).length < 0.0001)
 
             # the generic rigid body type is very buggy... so for simulation
             # purposes let's transform it into ball and hinge
             if isinstance(hkdescriptor, NifFormat.RagdollDescriptor):
-                # ball
-                b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE] = 1
+                # cone_twist
+                b_constr.pivot_type = 'CONE_TWIST'
             elif isinstance(hkdescriptor, (NifFormat.LimitedHingeDescriptor,
                                          NifFormat.HingeDescriptor)):
                 # (limited) hinge
-                b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE] = 2
+                b_constr.pivot_type = 'HINGE'
             else:
                 raise ValueError("unknown descriptor %s"
                                  % hkdescriptor.__class__.__name__)

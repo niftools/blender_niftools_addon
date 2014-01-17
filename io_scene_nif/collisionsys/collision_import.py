@@ -331,9 +331,9 @@ class bhkshape_import():
         # (0,0,1) maps to normal
         transform = mathutils.Matrix([vec1, vec2, normal])
         transform.resize_4x4()
-        transform[3][0] = 3.5 * (bhkshape.first_point.x + bhkshape.second_point.x)
-        transform[3][1] = 3.5 * (bhkshape.first_point.y + bhkshape.second_point.y)
-        transform[3][2] = 3.5 * (bhkshape.first_point.z + bhkshape.second_point.z)
+        transform[0][3] = 3.5 * (bhkshape.first_point.x + bhkshape.second_point.x)
+        transform[1][3] = 3.5 * (bhkshape.first_point.y + bhkshape.second_point.y)
+        transform[2][3] = 3.5 * (bhkshape.first_point.z + bhkshape.second_point.z)
         b_obj.matrix_local = transform
 
         # Recalculate mesh to render correctly
