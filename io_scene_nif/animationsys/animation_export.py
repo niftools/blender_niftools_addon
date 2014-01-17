@@ -500,7 +500,7 @@ class TextureAnimation():
         self.nif_export = parent
     
     def export_flip_controller(self, fliptxt, texture, target, target_tex):
-        ## TODO port code to use native Blender texture flipping system
+        ## TODO:port code to use native Blender texture flipping system
         #
         # export a NiFlipController
         #

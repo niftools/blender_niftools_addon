@@ -105,7 +105,7 @@ def find_controller(niBlock, controller_type):
     return ctrl
     
 def find_extra(niBlock, extratype):
-    # TODO_3.0 - Optimise
+    # TODO: 3.0 - Optimise
     
     """Find extra data."""
     # pre-10.x.x.x system: extra data chain

@@ -106,7 +106,7 @@ class TextureLoader():
                 % fn)
             b_image = bpy.data.images.new(
                 name=b_text_name, width=1, height=1, alpha=False)
-            # TODO is this still needed? commented out for now
+            # TODO: is this still needed? commented out for now
             # b_image.filepath = tex
         
         # create a texture
@@ -178,7 +178,7 @@ class TextureLoader():
             searchPathList.append(
                 self.nif_import.context.user_preferences.filepaths.texture_directory)
         
-        # TODO_3 - Implement full texture path finding.
+        # TODO: 3 - Implement full texture path finding.
         nif_dir = os.path.join(os.getcwd() , 'nif')
         searchPathList.append(nif_dir)
         
