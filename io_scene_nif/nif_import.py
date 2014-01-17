@@ -1018,8 +1018,9 @@ class NifImport(NifCommon):
                 n_vcol_map.append((n_vcol, n_vmap))
             
             # create vertex_layers
-            b_mesh.vertex_colors.new(name="VertexColor") # color layer
-            b_mesh.vertex_colors.new(name="VertexAlpha") # greyscale
+            if not "VertexColor" in b_mesh.vertex_colors:
+                b_mesh.vertex_colors.new(name="VertexColor") # color layer
+                b_mesh.vertex_colors.new(name="VertexAlpha") # greyscale
             
             # Mesh Vertex Color / Mesh Face
             for b_polygon_loop in b_mesh.loops:
