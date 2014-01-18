@@ -92,19 +92,20 @@ class TextureHelper():
         
     def export_bs_shader_property(self, b_obj=None, b_mat=None):
         """Export a Bethesda shader property block."""
-        self.determine_texture_types(b_mat)
+        self.determine_texture_types(b_obj, b_mat)
         
         # create new block
         bsshader = NifFormat.BSShaderPPLightingProperty()
         
         # set shader options
-        bsshader.shader_type = self.nif_export.EXPORT_FO3_SHADER_TYPE
-        bsshader.shader_flags.zbuffer_test = self.nif_export.EXPORT_FO3_SF_ZBUF
-        bsshader.shader_flags.shadow_map = self.nif_export.EXPORT_FO3_SF_SMAP
-        bsshader.shader_flags.shadow_frustum = self.nif_export.EXPORT_FO3_SF_SFRU
-        bsshader.shader_flags.window_environment_mapping = self.nif_export.EXPORT_FO3_SF_WINDOW_ENVMAP
-        bsshader.shader_flags.empty = self.nif_export.EXPORT_FO3_SF_EMPT
-        bsshader.shader_flags.unknown_31 = self.nif_export.EXPORT_FO3_SF_UN31
+        # TODO: FIXME:
+        #bsshader.shader_type = self.nif_export.EXPORT_FO3_SHADER_TYPE
+        #bsshader.shader_flags.zbuffer_test = self.nif_export.EXPORT_FO3_SF_ZBUF
+        #bsshader.shader_flags.shadow_map = self.nif_export.EXPORT_FO3_SF_SMAP
+        #bsshader.shader_flags.shadow_frustum = self.nif_export.EXPORT_FO3_SF_SFRU
+        #bsshader.shader_flags.window_environment_mapping = self.nif_export.EXPORT_FO3_SF_WINDOW_ENVMAP
+        #bsshader.shader_flags.empty = self.nif_export.EXPORT_FO3_SF_EMPT
+        #bsshader.shader_flags.unknown_31 = self.nif_export.EXPORT_FO3_SF_UN31
         
         # set textures
         texset = NifFormat.BSShaderTextureSet()

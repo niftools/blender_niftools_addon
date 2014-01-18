@@ -92,7 +92,6 @@ class Armature():
 		b_armature.show_x_ray = True
 		
 		#Link object to scene
-		b_armature.update_tag(refresh=set())
 		scn = bpy.context.scene
 		scn.objects.link(b_armature)
 		scn.objects.active = b_armature
@@ -107,7 +106,6 @@ class Armature():
 				niBone, b_armature, b_armatureData, niArmature)
 			
 		bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
-		b_armature.update_tag(refresh=set())
 		scn = bpy.context.scene
 		scn.objects.active = b_armature
 		scn.update()
@@ -127,7 +125,13 @@ class Armature():
 				constr = b_posebone.constraints.append(
 					bpy.types.Constraint.NULL)
 				constr.name = "priority:%i" % self.nif_import.bone_priorities[niBone.name]
-
+		
+		bpy.ops.object.mode_set(mode='EDIT',toggle=False)
+		bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
+		
+		scn = bpy.context.scene
+		scn.objects.active = b_armature
+		scn.update()
 		return b_armature  
 
 	def import_bone(self, niBlock, b_armature, b_armatureData, niArmature):
@@ -320,7 +324,7 @@ class Armature():
 			 in ('skeleton.nif', 'skeletonbeast.nif'))):
 
 			if not isinstance(niBlock, NifFormat.NiNode):
-				raise NifImportError(
+				raise self.nif_import.NifImportError(
 					"cannot import skeleton: root is not a NiNode")
 			# for morrowind, take the Bip01 node to be the skeleton root
 			if self.nif_import.data.version == 0x04000002:
@@ -351,7 +355,7 @@ class Armature():
 			skelroot = niBlock.find(
 							block_name=self.nif_import.selected_objects[0].name)
 			if not skelroot:
-				raise NifImportError("nif has no armature '%s'" % 
+				raise self.nif_import.NifImportError("nif has no armature '%s'" % 
 									self.nif_import.selected_objects[0].name)
 			self.nif_import.debug("Identified '%s' as armature" % 
 									skelroot.name)
@@ -387,13 +391,13 @@ class Armature():
 										  % skelroot.name)
 				elif self.properties.skeleton == "GEOMETRY_ONLY":
 					if skelroot not in self.armatures:
-						raise NifImportError(
+						raise self.nif_import.NifImportError(
 							"nif structure incompatible with '%s' as armature:"
 							" node '%s' has '%s' as armature"
 							% (self.nif_import.selected_objects[0].name, niBlock.name,
 							   skelroot.name))
 
-				for i, boneBlock in enumerate(skininst.bones):
+				for boneBlock in skininst.bones:
 					# boneBlock can be None; see pyffi issue #3114079
 					if not boneBlock:
 						continue
@@ -495,11 +499,11 @@ class Armature():
 					armatureName = self.nif_import.names[armatureBlock]
 					break
 				else:
-					raise NifImportError("cannot find bone '%s'" % bone_name)
-			armatureObject = Blender.Object.Get(armatureName)
+					raise self.nif_import.NifImportError("cannot find bone '%s'" % bone_name)
+			armatureObject = bpy.types.Object(armatureName)
 			return armatureObject.data.bones[bone_name]
 		else:
-			return Blender.Object.Get(self.nif_import.names[niBlock])
+			return bpy.types.Object(self.nif_import.names[niBlock])
 		
 
 	def decompose_srt(self, matrix):
@@ -507,12 +511,9 @@ class Armature():
 		# get scale components
 		trans_vec, rot_quat, scale_vec = matrix.decompose()
 		scale_rot = rot_quat.to_matrix()
-		scale_rot_T = mathutils.Matrix(scale_rot)
-		scale_rot_T.transpose()
-		scale_rot_2 = scale_rot * scale_rot_T
 		b_scale = mathutils.Vector((scale_vec[0] ** 0.5,\
-                         scale_vec[1] ** 0.5,\
-                         scale_vec[2] ** 0.5))
+                         			scale_vec[1] ** 0.5,\
+                            		scale_vec[2] ** 0.5))
 		# and fix their sign
 		if (scale_rot.determinant() < 0): b_scale.negate()
 		# only uniform scaling

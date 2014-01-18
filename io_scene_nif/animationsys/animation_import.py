@@ -60,7 +60,7 @@ class AnimationHelper():
 
         # check that this is an Oblivion style kf file
         if not isinstance(kf_root, NifFormat.NiControllerSequence):
-            raise NifImportError("non-Oblivion .kf import not supported")
+            raise self.nif_common.NifImportError("non-Oblivion .kf import not supported")
 
         # import text keys
         self.import_text_keys(kf_root)
@@ -92,7 +92,7 @@ class AnimationHelper():
                     " in corresponding node, so creating one"
                     % (nodename, controllertype))
                 controller = getattr(NifFormat, controllertype)()
-                # TODO set all the fields of this controller
+                # TODO:set all the fields of this controller
                 node.add_controller(controller)
             # yes! attach interpolator
             controller.interpolator = controlledblock.interpolator
@@ -156,7 +156,7 @@ class AnimationHelper():
             txk = niBlock.find(block_type=NifFormat.NiTextKeyExtraData)
         if txk:
             # get animation text buffer, and clear it if it already exists
-            # TODO git rid of try-except block here
+            # TODO:git rid of try-except block here
             try:
                 bpy.data.texts["Anim"]
                 animtxt.clear()
@@ -696,7 +696,7 @@ class ArmatureAnimation():
 
                 # Quaternion Rotations
                 else:
-                    # TODO take rotation type into account for interpolation
+                    # TODO:take rotation type into account for interpolation
                     if kfd.quaternion_keys:
                         self.nif_import.debug('Rotation keys...(quaternions)')
                     quaternion_keys = kfd.quaternion_keys
