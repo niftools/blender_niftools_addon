@@ -72,7 +72,7 @@ class NifImport(NifCommon):
         # Helper systems
         self.animationhelper = AnimationHelper(parent=self)
         self.armaturehelper = Armature(parent=self)
-        # TODO create super collisionhelper
+        # TODO: create super collisionhelper
         self.bhkhelper = bhkshape_import(parent=self)
         self.boundhelper = bound_import(parent=self)
         self.constrainthelper = Constraint(parent=self)
@@ -530,7 +530,7 @@ class NifImport(NifCommon):
 
             elif isinstance(b_obj, bpy.types.Bone):
                 
-                #TODO MOVE TO ANIMATIONHELPER
+                #TODO: MOVE TO ANIMATIONHELPER
                 
                 # bone parentship, is a bit more complicated
                 # go to rest position
@@ -542,7 +542,7 @@ class NifImport(NifCommon):
                 for n_child, b_child in object_children:
                     # save transform
                     
-                    # FIXME
+                    # FIXME:
                     matrix = mathutils.Matrix(b_child.matrix_local)
                     # fix transform
                     # the bone has in the nif file an armature space transform
@@ -706,7 +706,7 @@ class NifImport(NifCommon):
         shortname = self.import_name(niBlock)
         b_empty = bpy.data.objects.new(shortname, None)
 
-        # TODO - is longname needed???
+        # TODO: - is longname needed???
         b_empty.niftools.longname = niBlock.name.decode()
 
         self.context.scene.objects.link(b_empty)
@@ -926,7 +926,10 @@ class NifImport(NifCommon):
             try:
                 # this is the bottle neck...
                 # can we speed this up?
-                n_map_k = n_map[k]
+                if not self.properties.combine_vertices:
+                    n_map_k = None
+                else:
+                    n_map_k = n_map[k]
             except KeyError:
                 n_map_k = None
             if not n_map_k:
@@ -1015,8 +1018,9 @@ class NifImport(NifCommon):
                 n_vcol_map.append((n_vcol, n_vmap))
             
             # create vertex_layers
-            b_mesh.vertex_colors.new(name="VertexColor") # color layer
-            b_mesh.vertex_colors.new(name="VertexAlpha") # greyscale
+            if not "VertexColor" in b_mesh.vertex_colors:
+                b_mesh.vertex_colors.new(name="VertexColor") # color layer
+                b_mesh.vertex_colors.new(name="VertexAlpha") # greyscale
             
             # Mesh Vertex Color / Mesh Face
             for b_polygon_loop in b_mesh.loops:
@@ -1353,7 +1357,7 @@ class NifImport(NifCommon):
     
 def menu_func(self, context):
     """Import operator for the menu."""
-    # TODO get default path from config registry
+    # TODO: get default path from config registry
     # default_path = bpy.data.filename.replace(".blend", ".nif")
     default_path = "import.nif"
     self.layout.operator(

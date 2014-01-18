@@ -73,7 +73,7 @@ class NifExport(NifCommon):
     FLOAT_MIN = -3.4028234663852886e+38
     FLOAT_MAX = +3.4028234663852886e+38
     
-    # TODO - Expose via properties
+    # TODO: - Expose via properties
     
     EXPORT_OPTIMIZE_MATERIALS = True
     EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES = False
@@ -112,7 +112,7 @@ class NifExport(NifCommon):
 
         self.info("exporting {0}".format(self.properties.filepath))
 
-        # TODO
+        # TODO:
         '''
         if self.properties.animation == 'ALL_NIF_XNIF_XKF' and self.properties.game == 'MORROWIND':
             # if exporting in nif+xnif+kf mode, then first export
@@ -218,7 +218,7 @@ class NifExport(NifCommon):
                 self.objecthelper.mesh_helper.smooth_mesh_seams(self.context.scene.objects)
                 
                 
-            # TODO use Blender actions for animation groups
+            # TODO: use Blender actions for animation groups
             # check for animation groups definition in a text buffer 'Anim'
             try:
                 animtxt = None #Changed for testing needs fix bpy.data.texts["Anim"]
@@ -378,7 +378,7 @@ class NifExport(NifCommon):
                 root_block.add_extra_data(furnmark)
                 root_block.add_extra_data(sgokeep)
 
-            # FIXME
+            # FIXME:
             self.info("Checking collision")
             # activate oblivion/Fallout 3 collision and physics
             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
@@ -494,7 +494,7 @@ class NifExport(NifCommon):
                 self.propertyhelper.object_property.export_vertex_color_property(root_block)
                 self.propertyhelper.object_property.export_z_buffer_property(root_block, flags=15, function=1)
 
-            # FIXME
+            # FIXME:
             """
             if self.EXPORT_FLATTENSKIN:
                 # (warning: trouble if armatures parent other armatures or
@@ -925,7 +925,7 @@ class NifExport(NifCommon):
         relative to the bone parent head including bone correction.
 
         space is either 'none' (gives identity transform) or 'localspace'"""
-        # TODO remove the space argument, always do local space
+        # TODO: remove the space argument, always do local space
         # handle the trivial case first
         if (space == 'none'):
             return ( 1.0,
@@ -1045,7 +1045,7 @@ class NifExport(NifCommon):
 
 def menu_func(self, context):
     """Export operator for the menu."""
-    # TODO get default path from config registry
+    # TODO: get default path from config registry
     #default_path = bpy.data.filename.replace(".blend", ".nif")
     default_path = "export.nif"
     self.layout.operator(

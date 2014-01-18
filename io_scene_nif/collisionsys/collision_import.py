@@ -430,7 +430,7 @@ class bhkshape_import():
         # also remove duplicate vertices
         numverts = len(b_mesh.vertices)
         # 0.005 = 1/200
-        '''TODO: FIXME
+        '''TODO: FIXME:
         numdel = b_mesh.remDoubles(0.005)
         if numdel:
             self.info(

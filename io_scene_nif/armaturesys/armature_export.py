@@ -48,7 +48,6 @@ class Armature():
     
 
     def __init__(self, parent):
-        self.nif_export = parent
         
         # dictionary of bones, maps Blender bone name to matrix that maps the
         # NIF bone matrix on the Blender bone matrix
@@ -60,6 +59,11 @@ class Armature():
         # Hence, we will restore the X's, invert them, and store those inverses in the
         # following dictionary.
         self.bones_extra_matrix_inv = {}
+        
+        self.armatures = {}
+        
+        self.nif_export = parent
+        
         
     def rebuild_bones_extra_matrices(self):
         """Recover bone extra matrices."""
@@ -79,7 +83,7 @@ class Armature():
                         [[float(f) for f in row.split(',')]
                          for row in m.split(';')])
                 except:
-                    raise NifExportError('Syntax error in BoneExMat buffer.')
+                    raise self.nif_export.NifExportError('Syntax error in BoneExMat buffer.')
                 # Check if matrices are clean, and if necessary fix them.
                 quat = matrix.to_3x3().to_quaternion()
                 if sum(sum(abs(x) for x in vec)
