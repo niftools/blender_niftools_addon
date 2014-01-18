@@ -464,7 +464,7 @@ class AnimationHelper():
             # parse line
             t = s.split('/')
             if (len(t) < 2):
-                raise nifutils.NifExportError("Syntax error in Anim buffer ('%s')" % s)
+                raise nif_utils.NifExportError("Syntax error in Anim buffer ('%s')" % s)
             f = int(t[0])
             if ((f < self.context.scene.frame_start) or (f > self.context.scene.frame_end)):
                 self.warning("frame in animation buffer out of range "
@@ -500,7 +500,7 @@ class TextureAnimation():
         self.nif_export = parent
     
     def export_flip_controller(self, fliptxt, texture, target, target_tex):
-        ## TODO port code to use native Blender texture flipping system
+        ## TODO:port code to use native Blender texture flipping system
         #
         # export a NiFlipController
         #
@@ -533,7 +533,7 @@ class TextureAnimation():
             flip.sources[flip.num_sources-1] = tex
             count += 1
         if count < 2:
-            raise NifExportError(
+            raise nif_utils.NifExportError(
                 "Error in Texture Flip buffer '%s':"
                 " must define at least two textures"
                 %fliptxt.name)

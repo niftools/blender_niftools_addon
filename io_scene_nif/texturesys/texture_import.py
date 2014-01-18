@@ -193,7 +193,7 @@ class Texture():
 # 			# set the texture to use face reflection coordinates
 # 			texco = 'REFLECTION'
 # 			# map the texture to the base color channel
-# 			mapto = FIXME.use_map_color_diffuse
+# 			mapto = FIXME: .use_map_color_diffuse
 # 			# set the texture for the material
 # 			material.setTexture(3, envmapTexture, texco, mapto)
 # 			menvmapTexture = material.getTextures()[3]
@@ -372,7 +372,7 @@ class Texture():
 # 			# set the texture to use face UV coordinates
 # 			texco = 'UV'
 # 			# map the texture to the COL channel
-# 			mapto = FIXME.use_map_color_diffuse
+# 			mapto = FIXME: .use_map_color_diffuse
 # 			# set the texture for the material
 # 			material.setTexture(5, dark_texture, texco, mapto)
 # 			mdark_texture = material.getTextures()[5]
@@ -409,7 +409,7 @@ class Texture():
 # 			# set the texture to use face UV coordinates
 # 			texco = 'UV'
 # 			# map the texture to the COL channel
-# 			mapto = FIXME.use_map_color_diffuse
+# 			mapto = FIXME: .use_map_color_diffuse
 # 			# set the texture for the material
 # 			material.setTexture(6, detail_texture, texco, mapto)
 # 			mdetail_texture = material.getTextures()[6]
@@ -452,10 +452,10 @@ class Texture():
 
 		
 	def get_b_blend_type_from_n_apply_mode(self, n_apply_mode):
-		# TODO - Check out n_apply_modes
+		# TODO: - Check out n_apply_modes
 		if n_apply_mode == NifFormat.ApplyMode.APPLY_MODULATE:
 			return "MIX"
-		# TODO - These seem unsupported by Blender, check
+		# TODO: - These seem unsupported by Blender, check
 		elif n_apply_mode == NifFormat.ApplyMode.APPLY_REPLACE:
 			return "MIX"
 		elif n_apply_mode == NifFormat.ApplyMode.APPLY_DECAL:

@@ -46,6 +46,7 @@ import mathutils
 class Constraint():
 
     def __init__(self, parent):
+        self.havok_objects = {}
         self.nif_export = parent
         self.properties = parent.properties
         
