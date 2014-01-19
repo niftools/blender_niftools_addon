@@ -1052,7 +1052,7 @@ class NifImport(NifCommon):
            
             #b_mesh.faceUV = 1
             #b_mesh.vertexUV = 0
-            for i in range(niData.num_uv_sets):
+            for i in range(len(niData.uv_sets)):
                 # Set the face UV's for the mesh. The NIF format only supports
                 # vertex UV's, but Blender only allows explicit editing of face
                 # UV's, so load vertex UV's as face UV's
