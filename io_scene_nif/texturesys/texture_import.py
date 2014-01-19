@@ -93,7 +93,7 @@ class Texture():
 		self.b_mat = b_mat
 		
 		
-	def import_texture_extra_shader(b_mat,n_texture_prop, extra_datas):
+	def import_texture_extra_shader(self, b_mat,n_texture_prop, extra_datas):
 		# extra texture shader slots
 		for shader_tex_desc in n_texture_prop.shader_textures:
 			
@@ -118,10 +118,10 @@ class Texture():
 					% shader_tex_desc.texture_data.source.file_name)
 				continue
 			
-			self.import_shader_by_type(extra_shader_index)
+			self.import_shader_by_type(shader_tex_desc, extra_shader_index)
 		
 			
-	def import_shader_by_type(extra_shader_index):
+	def import_shader_by_type(self, shader_tex_desc, extra_shader_index):
 		if extra_shader_index == 0:
 			# EnvironmentMapIndex
 			if shader_tex_desc.texture_data.source.file_name.lower().startswith("rrt_engine_env_map"):
@@ -151,21 +151,21 @@ class Texture():
 			self.nif_import.warning("Skipping shadow texture.")
 		
 		
-	def import_bsshaderproperty(b_mat, bsShaderProperty):
-		baseTexFile = bsShaderProperty.texture_set.textures[0]
+	def import_bsshaderproperty(self, b_mat, bsShaderProperty):
+		baseTexFile = bsShaderProperty.texture_set.textures[0].decode()
 		if baseTexFile:
 			self.import_diffuse_texture(b_mat, baseTexFile)
 			
-		bumpTexFile = bsShaderProperty.texture_set.textures[1]
-		if n_texture_prop.has_bump_map_texture:
-			self.import_bump_texture(b_mat, n_texture_prop)
+		bumpTexFile = bsShaderProperty.texture_set.textures[1].decode()
+		if bumpTexFile:
+			self.import_bump_texture(b_mat, bumpTexFile)
 		
-		glowTexFile = bsShaderProperty.texture_set.textures[2]
-		if n_texture_prop.has_glow_texture:
-			self.import_glow_texture(b_mat, n_texture_prop)			
+		glowTexFile = bsShaderProperty.texture_set.textures[2].decode()
+		if glowTexFile:
+			self.import_glow_texture(b_mat, glowTexFile)			
 							
 											
-	def import_texture_effect(b_mat, textureEffect):
+	def import_texture_effect(self, b_mat, textureEffect):
 		diffuse_texture = n_textureDesc.base_texture
 		
 		b_mat_texslot = b_mat.texture_slots.add()
@@ -214,23 +214,34 @@ class Texture():
 # 	 	has_unknown_2_texture	
 
 	def import_diffuse_texture(self, b_mat, n_textureDesc):
-		diffuse_texture = n_textureDesc.base_texture
-		
+		try:
+			diffuse_texture = n_textureDesc.base_texture
+		except:
+			diffuse_texture = n_textureDesc
+
 		b_mat_texslot = b_mat.texture_slots.add()
-		b_mat_texslot.texture = self.textureloader.import_texture_source(diffuse_texture.source)
+		try:
+			b_mat_texslot.texture = self.textureloader.import_texture_source(diffuse_texture.source)
+		except:
+			b_mat_texslot.texture = self.textureloader.import_texture_source(diffuse_texture)
 		b_mat_texslot.use = True
 
 		# Influence mapping
 		
 		# Mapping
 		b_mat_texslot.texture_coords = 'UV'
-		b_mat_texslot.uv_layer = self.get_uv_layer_name(diffuse_texture.uv_set)
+		try:
+			b_mat_texslot.uv_layer = self.get_uv_layer_name(diffuse_texture.uv_set)
+		except:
+			b_mat_texslot.texture_coords = 'UV'
 		
 		# Influence
 		b_mat_texslot.use_map_color_diffuse = True
-		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
-                n_textureDesc.apply_mode)
-		
+		try:
+			b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
+            							n_textureDesc.apply_mode)
+		except:
+			b_mat_texslot.blend_type = "MIX"
 # 		if(n_alpha_prop):
 # 			b_mat_texslot.use_map_alpha
 		# update: needed later
@@ -238,10 +249,16 @@ class Texture():
 
 
 	def import_bump_texture(self, b_mat, n_textureDesc):
-		bumpmap_texture = n_textureDesc.bump_map_texture
+		try:
+			bumpmap_texture = n_textureDesc.bump_map_texture
+		except:
+			bumpmap_texture = n_textureDesc
 		
 		b_mat_texslot = b_mat.texture_slots.add()
-		b_mat_texslot.texture = self.textureloader.import_texture_source(bumpmap_texture.source)
+		try:
+			b_mat_texslot.texture = self.textureloader.import_texture_source(bumpmap_texture.source)
+		except:
+			b_mat_texslot.texture = self.textureloader.import_texture_source(bumpmap_texture)
 		b_mat_texslot.use = True
 		
 		# Influence mapping
@@ -250,14 +267,19 @@ class Texture():
 		
 		# Mapping
 		b_mat_texslot.texture_coords = 'UV'
-		b_mat_texslot.uv_layer = self.get_uv_layer_name(bumpmap_texture.uv_set)
+		try:
+			b_mat_texslot.uv_layer = self.get_uv_layer_name(bumpmap_texture.uv_set)
+		except:
+			b_mat_texslot.texture_coords = 'UV'
 		
 		# Influence
 		b_mat_texslot.use_map_color_diffuse = False
 		b_mat_texslot.use_map_normal = True
-		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
-                n_textureDesc.apply_mode)
-		
+		try:
+			b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
+            							n_textureDesc.apply_mode)
+		except:
+			b_mat_texslot.blend_type = "MIX"
 # 		if(n_alpha_prop):
 # 			b_mat_texslot.use_map_alpha
 		
@@ -293,10 +315,16 @@ class Texture():
 		
 		
 	def import_glow_texture(self, b_mat, n_textureDesc):
-		glow_texture = n_textureDesc.glow_texture
+		try:
+			glow_texture = n_textureDesc.glow_texture
+		except:
+			glow_texture = n_textureDesc
 		
 		b_mat_texslot = b_mat.texture_slots.add()
-		b_mat_texslot.texture = self.textureloader.import_texture_source(glow_texture.source)
+		try:
+			b_mat_texslot.texture = self.textureloader.import_texture_source(glow_texture.source)
+		except:
+			b_mat_texslot.texture = self.textureloader.import_texture_source(glow_texture)
 		b_mat_texslot.use = True
 		
 		# Influence mapping
@@ -304,13 +332,19 @@ class Texture():
 		
 		# Mapping
 		b_mat_texslot.texture_coords = 'UV'
-		b_mat_texslot.uv_layer = self.get_uv_layer_name(glow_texture.uv_set)
+		try:
+			b_mat_texslot.uv_layer = self.get_uv_layer_name(glow_texture.uv_set)
+		except:
+			b_mat_texslot.texture_coords = 'UV'
 		
 		# Influence
 		b_mat_texslot.use_map_color_diffuse = False
 		b_mat_texslot.use_map_emit = True
-		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
-                n_textureDesc.apply_mode)
+		try:
+			b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
+            							n_textureDesc.apply_mode)
+		except:
+			b_mat_texslot.blend_type = "MIX"
 		
 # 		if(n_alpha_prop):
 # 			b_mat_texslot.use_map_alpha
