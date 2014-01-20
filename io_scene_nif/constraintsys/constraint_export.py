@@ -46,7 +46,6 @@ import mathutils
 class Constraint():
 
     def __init__(self, parent):
-        self.havok_objects = {}
         self.nif_export = parent
         self.properties = parent.properties
         
@@ -75,7 +74,7 @@ class Constraint():
                         " can be exported: skipped %s." % b_constr)
                     continue
                 # check that the object is a rigid body
-                for otherbody, otherobj in self.nif_export.blocks.items():
+                for otherbody, otherobj in self.nif_export.dict_blocks.items():
                     if isinstance(otherbody, NifFormat.bhkRigidBody) \
                         and otherobj is b_obj:
                         hkbody = otherbody
@@ -158,7 +157,7 @@ class Constraint():
                     self.warning("Constraint %s has no target, skipped")
                     continue
                 # find target's bhkRigidBody
-                for otherbody, otherobj in self.nif_export.blocks.items():
+                for otherbody, otherobj in self.nif_export.dict_blocks.items():
                     if isinstance(otherbody, NifFormat.bhkRigidBody) \
                         and otherobj == targetobj:
                         hkconstraint.entities[1] = otherbody

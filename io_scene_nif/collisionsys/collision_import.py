@@ -52,15 +52,11 @@ class bhkshape_import():
     """Import basic and Havok Collision Shapes"""
 
     def __init__(self, parent):
-        self.nif_common = parent
+        self.nif_import = parent
         self.HAVOK_SCALE = parent.HAVOK_SCALE
-        
-        # dictionary mapping bhkRigidBody objects to objects imported in Blender; 
-        # we use this dictionary to set the physics constraints (ragdoll etc)
-        self.havok_objects = {}
 
     def get_havok_objects(self):
-        return self.havok_objects
+        return self.nif_import.dict_havok_objects
 
     def import_bhk_shape(self, bhkshape, upbflags="", bsxflags=2):
         """Imports any supported collision shape as list of blender meshes."""
@@ -102,7 +98,7 @@ class bhkshape_import():
             return reduce(operator.add, ( self.import_bhk_shape(subshape)
                                           for subshape in bhkshape.sub_shapes ))
 
-        self.nif_common.warning("Unsupported bhk shape %s"
+        self.nif_import.warning("Unsupported bhk shape %s"
                             % bhkshape.__class__.__name__)
         return []
 
@@ -178,7 +174,7 @@ class bhkshape_import():
         # import constraints
         # this is done once all objects are imported
         # for now, store all imported havok shapes with object lists
-        self.havok_objects[bhkshape] = collision_objs
+        self.nif_import.dict_havok_objects[bhkshape] = collision_objs
 
         # and return a list of transformed collision shapes
         return collision_objs
@@ -313,11 +309,11 @@ class bhkshape_import():
 
 
         # find transform
-        if length > self.nif_common.properties.epsilon:
+        if length > self.nif_import.properties.epsilon:
             normal = (bhkshape.first_point - bhkshape.second_point) / length
             normal = mathutils.Vector((normal.x, normal.y, normal.z))
         else:
-            self.nif_common.warning(
+            self.nif_import.warning(
                 "bhkCapsuleShape with identical points:"
                 " using arbitrary axis")
             normal = mathutils.Vector((0, 0, 1))
@@ -534,7 +530,7 @@ class bound_import():
     """Import a bound box shape"""
 
     def __init__(self, parent):
-        self.nif_common = parent
+        self.nif_import = parent
 
     def import_bounding_box(self, bbox):
         """Import a bounding box (BSBound, or NiNode with bounding box)."""
