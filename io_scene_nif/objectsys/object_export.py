@@ -51,16 +51,6 @@ class ObjectHelper():
         self.nif_export = parent
         self.properties = parent.properties
         self.mesh_helper = MeshHelper(parent)
-        
-        # Maps exported blocks to either None or associated Blender object
-        self.blocks = {}
-        self.bone_priorities = {}
-        # maps Blender names to previously imported names from the FullNames
-        # buffer (see self.rebuild_full_names())
-        self.names = {}
-        # keeps track of names of exported blocks, to make sure they are unique
-        self.block_names = []
-    
     
     def create_block(self, blocktype, b_obj = None):
         """Helper function to create a new block, register it in the list of
@@ -82,9 +72,9 @@ class ObjectHelper():
     def get_exported_objects(self):
         """Return a list of exported objects."""
         exported_objects = []
-        # iterating over self.blocks.itervalues() will count some objects
+        # iterating over self.nif_export.dict_blocks.itervalues() will count some objects
         # twice
-        for b_obj in self.blocks.values():
+        for b_obj in self.nif_export.dict_blocks.values():
             # skip empty objects
             if b_obj is None:
                 continue
@@ -109,7 +99,7 @@ class ObjectHelper():
         else:
             self.nif_export.info("Exporting %s as %s block"
                      % (b_obj, block.__class__.__name__))
-        self.blocks[block] = b_obj
+        self.nif_export.dict_blocks[block] = b_obj
         return block
     
     
@@ -200,7 +190,7 @@ class ObjectHelper():
                     break
                 # does geom have priority value in NULL constraint?
                 elif constr.name[:9].lower() == "priority:":
-                    self.bone_priorities[
+                    self.nif_export.dict_bone_priorities[
                                          self.nif_export.get_bone_name_for_nif(b_obj.name)
                                          ] = int(constr.name[9:])
             if is_collision:
@@ -223,7 +213,7 @@ class ObjectHelper():
             # does node have priority value in NULL constraint?
             for constr in b_obj.constraints:
                 if constr.name[:9].lower() == "priority:":
-                    self.bone_priorities[
+                    self.nif_export.dict_bone_priorities[
                                          self.nif_export.get_bone_name_for_nif(b_obj.name)
                                          ] = int(constr.name[9:])
 
@@ -332,7 +322,7 @@ class ObjectHelper():
             line = b_textline.body
             if len(line)>0:
                 name, fullname = line.split(';')
-                self.names[name] = fullname
+                self.nif_export.dict_names[name] = fullname
 
     
     #TODO: get objects to store their own names.
@@ -352,14 +342,14 @@ class ObjectHelper():
         # blender bone naming -> nif bone naming
         unique_name = self.nif_export.get_bone_name_for_nif(unique_name)
         # ensure uniqueness
-        if unique_name in self.block_names or unique_name in list(self.names.values()):
+        if unique_name in self.nif_export.dict_block_names or unique_name in list(self.nif_export.dict_names.values()):
             unique_int = 0
             old_name = unique_name
-            while unique_name in self.block_names or unique_name in list(self.names.values()):
+            while unique_name in self.nif_export.dict_block_names or unique_name in list(self.nif_export.dict_names.values()):
                 unique_name = "%s.%02d" % (old_name, unique_int)
                 unique_int += 1
-        self.block_names.append(unique_name)
-        self.names[b_name] = unique_name
+        self.nif_export.dict_block_names.append(unique_name)
+        self.nif_export.dict_names[b_name] = unique_name
         return unique_name
 
 
@@ -373,7 +363,7 @@ class ObjectHelper():
         .. todo:: Refactor and simplify this code.
         """
         try:
-            return self.names[b_name]
+            return self.nif_export.dict_names[b_name]
         except KeyError:
             return self.get_unique_name(b_name)
     
@@ -1032,7 +1022,7 @@ class MeshHelper():
                         else:
                             skininst = self.nif_export.objecthelper.create_block("NiSkinInstance", b_obj)
                         trishape.skin_instance = skininst
-                        for block in self.nif_export.objecthelper.blocks:
+                        for block in self.nif_export.dict_blocks:
                             if isinstance(block, NifFormat.NiNode):
                                 if block.name.decode() == self.nif_export.objecthelper.get_full_name(armaturename):
                                     skininst.skeleton_root = block
@@ -1112,7 +1102,7 @@ class MeshHelper():
                         for bone_index, bone in enumerate(boneinfluences):
                             # find bone in exported blocks
                             bone_block = None
-                            for block in self.nif_export.objecthelper.blocks:
+                            for block in self.nif_export.dict_blocks:
                                 if isinstance(block, NifFormat.NiNode):
                                     if block.name.decode() == self.nif_export.objecthelper.get_full_name(bone):
                                         if not bone_block:

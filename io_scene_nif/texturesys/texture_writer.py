@@ -85,7 +85,7 @@ class TextureWriter():
         srctex.unknown_byte = 1
 
         # search for duplicate
-        for block in self.nif_export.nif_export.objecthelper.blocks:
+        for block in self.nif_export.nif_export.dict_blocks:
             if isinstance(block, NifFormat.NiSourceTexture) and block.get_hash() == srctex.get_hash():
                 return block
 
@@ -158,7 +158,7 @@ class TextureWriter():
                 if ( idx >= 0 ):
                     filename = filename[idx:]
                 else:
-                    self.nif_export.nif_export.warning(
+                    self.nif_export.warning(
                         "%s does not reside in a 'Textures' folder;"
                         " texture path will be stripped"
                         " and textures may not display in-game" % filename)
