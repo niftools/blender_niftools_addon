@@ -143,7 +143,7 @@ class ObjectHelper():
                 b_obj_ipo = b_obj.animation_data # get animation data
                 b_obj_children = b_obj.children
                 node_name = b_obj.name
-        elif (b_obj.name != parent_block.name.decode()):
+        elif (b_obj.name != parent_block.name.decode()) and (b_obj.parent != None):
             # -> empty, b_mesh, or armature
             b_obj_type = b_obj.type
             assert(b_obj_type in ['EMPTY', 'MESH', 'ARMATURE']) # debug

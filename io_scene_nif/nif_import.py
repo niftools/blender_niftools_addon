@@ -706,7 +706,7 @@ class NifImport(NifCommon):
         shortname = self.import_name(niBlock)
         b_empty = bpy.data.objects.new(shortname, None)
 
-        # TODO: - is longname needed???
+        # TODO: - is longname needed??? Yes it is needed, it resets the original name on export
         b_empty.niftools.longname = niBlock.name.decode()
 
         self.context.scene.objects.link(b_empty)
@@ -752,7 +752,7 @@ class NifImport(NifCommon):
             self.context.scene.objects.link(b_obj)
             # save original name as object property, for export
             if b_name != niBlock.name.decode():
-                b_obj['Nif Name'] = niBlock.name.decode()
+                b_obj.niftools.longname = niBlock.name.decode()
 
             # Mesh hidden flag
             if niBlock.flags & 1 == 1:
