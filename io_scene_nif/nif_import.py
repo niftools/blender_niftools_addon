@@ -81,21 +81,21 @@ class NifImport(NifCommon):
         self.texturehelper.set_texture_loader(self.textureloader)
         self.materialhelper = Material(parent=self)
         self.materialhelper.set_texture_helper(self.texturehelper)
-    
+        
     def execute(self):
         """Main import function."""
 
-        # dictionary of names, to map NIF blocks to correct Blender names
-        self.names = {}
-
-        # dictionary of bones, maps Blender name to NIF block
-        self.blocks = {}
-
-        # bone animation priorities (maps NiNode name to priority number);
-        # priorities are set in import_kf_root and are stored into the name
-        # of a NULL constraint (for lack of something better) in
-        # import_armature
-        self.bone_priorities = {}
+        self.dict_armatures = {}
+        self.dict_bones_extra_matrix = {}
+        self.dict_bones_extra_matrix_inv = {}
+        self.dict_bone_priorities = {}
+        self.dict_havok_objects = {}
+        self.dict_names = {}
+        self.dict_blocks = {}
+        self.dict_block_names = []
+        self.dict_materials = {}
+        self.dict_textures = {}
+        self.dict_mesh_uvlayers = []
 
         # catch NifImportError
         try:
@@ -337,17 +337,17 @@ class NifImport(NifCommon):
                 % root_block.__class__)
 
         # store bone matrix offsets for re-export
-        if self.armaturehelper.bones_extra_matrix:
+        if self.dict_bones_extra_matrix:
             self.armaturehelper.store_bones_extra_matrix()
 
         # store original names for re-export
-        if self.names:
+        if self.dict_names:
             self.armaturehelper.store_names()
         
         
         # now all havok objects are imported, so we are
         # ready to import the havok constraints
-        self.constrainthelper.set_havok_objects(self.bhkhelper.get_havok_objects())
+        self.bhkhelper.get_havok_objects()
         self.constrainthelper.import_bhk_constraints()
 
         # parent selected meshes to imported skeleton
@@ -429,7 +429,7 @@ class NifImport(NifCommon):
                 geom_group = []
             elif self.armaturehelper.is_bone(niBlock):
                 # bones have already been imported during import_armature
-                b_obj = b_armature.data.bones[self.names[niBlock]]
+                b_obj = b_armature.data.bones[self.dict_names[niBlock]]
                 # bones cannot group geometries into a single mesh
                 geom_group = []
             else:
@@ -565,11 +565,11 @@ class NifImport(NifCommon):
                     #     = Z * X^{-1} * T^{-1}
                     # since
                     #   B' = X * B
-                    # with X = self.bones_extra_matrix[B]
+                    # with X = self.dict_bones_extra_matrix[B]
 
                     # post multiply Z with X^{-1}
                     extra = mathutils.Matrix(
-                        self.armaturehelper.bones_extra_matrix[niBlock])
+                        self.dict_bones_extra_matrix[niBlock])
                     extra.invert()
                     matrix = matrix * extra
                     # cancel out the tail translation T
@@ -659,8 +659,8 @@ class NifImport(NifCommon):
         :param max_length: The maximum length of the name.
         :type max_length: :class:`int`
         """
-        if niBlock in self.names:
-            return self.names[niBlock]
+        if niBlock in self.dict_names:
+            return self.dict_names[niBlock]
 
         self.debug(
             "Importing name for %s block from %s"
@@ -695,9 +695,9 @@ class NifImport(NifCommon):
             raise RuntimeError("Ran out of names.")
         # save mapping
         # block niBlock has Blender name shortName
-        self.names[niBlock] = shortName
+        self.dict_names[niBlock] = shortName
         # Blender name shortName corresponds to niBlock
-        self.blocks[shortName] = niBlock
+        self.dict_blocks[shortName] = niBlock
         self.debug("Selected unique name %s" % shortName)
         return shortName
 
@@ -711,10 +711,10 @@ class NifImport(NifCommon):
 
         self.context.scene.objects.link(b_empty)
 
-        if niBlock.name in self.bone_priorities:
+        if niBlock.name in self.dict_bone_priorities:
             constr = b_empty.constraints.append(
                 bpy.types.Constraint.NULL)
-            constr.name = "priority:%i" % self.bone_priorities[niBlock.name]
+            constr.name = "priority:%i" % self.dict_bone_priorities[niBlock.name]
         return b_empty
 
     def import_mesh(self, niBlock,
@@ -1118,7 +1118,7 @@ class NifImport(NifCommon):
                 if not bone:
                     continue
                 vertex_weights = boneWeights[idx].vertex_weights
-                groupname = self.names[bone]
+                groupname = self.dict_names[bone]
                 if not groupname in b_obj.vertex_groups.items():
                     v_group = b_obj.vertex_groups.new(groupname)
                 for skinWeight in vertex_weights:
@@ -1296,10 +1296,10 @@ class NifImport(NifCommon):
 
 
         # import priority if existing
-        if niBlock.name in self.bone_priorities:
+        if niBlock.name in self.dict_bone_priorities:
             constr = b_obj.constraints.append(
                 bpy.types.Constraint.NULL)
-            constr.name = "priority:%i" % self.bone_priorities[niBlock.name]
+            constr.name = "priority:%i" % self.dict_bone_priorities[niBlock.name]
 
         # recalculate mesh to render correctly
         # implementation note: update() without validate() can cause crash

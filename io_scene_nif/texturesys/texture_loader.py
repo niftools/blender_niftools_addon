@@ -49,8 +49,6 @@ class TextureLoader():
     
     
     def __init__(self, parent):
-        # dictionary of texture files, to reuse textures
-        self.textures = {}
         self.nif_import = parent
         self.properties = parent.properties
     
@@ -71,7 +69,7 @@ class TextureLoader():
     def import_texture_source(self, source):
         """Convert a NiSourceTexture block, or simply a path string,
         to a Blender Texture object, return the Texture object and
-        stores it in the self.textures dictionary to avoid future
+        stores it in the self.nif_import.dict_textures dictionary to avoid future
         duplicate imports.
         """
         # if the source block is not linked then return None
@@ -84,7 +82,7 @@ class TextureLoader():
         try:
             # look up the texture in the dictionary of imported textures
             # and return it if found
-            return self.textures[texture_hash]
+            return self.nif_import.dict_textures[texture_hash]
         except KeyError:
             pass
 
@@ -116,7 +114,7 @@ class TextureLoader():
         b_texture.use_mipmap = True
 
         # save texture to avoid duplicate imports, and return it
-        self.textures[texture_hash] = b_texture
+        self.nif_import.dict_textures[texture_hash] = b_texture
         return b_texture
 
     def import_embedded_texture_source(self, source):

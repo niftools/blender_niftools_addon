@@ -46,14 +46,11 @@ import mathutils
 class Constraint():
 
     def __init__(self, parent):
-        self.nif_common = parent
-        self.havok_objects = {}
+        self.nif_import = parent
+        self.HAVOK_SCALE = parent.HAVOK_SCALE
         
-    def set_havok_objects(self, havok_dict):
-        self.havok_objects = havok_dict
-    
     def import_bhk_constraints(self):
-        for hkbody in self.havok_objects:
+        for hkbody in self.nif_import.dict_havok_objects:
             self.import_constraint(hkbody)
         
     def import_constraint(self, hkbody):
@@ -65,14 +62,14 @@ class Constraint():
             return
 
         # find objects
-        if len(self.havok_objects[hkbody]) != 1:
-            self.nif_common.warning(
+        if len(self.nif_import.dict_havok_objects[hkbody]) != 1:
+            self.nif_import.warning(
                 "Rigid body with no or multiple shapes, constraints skipped")
             return
 
-        b_hkobj = self.havok_objects[hkbody][0]
+        b_hkobj = self.nif_import.dict_havok_objects[hkbody][0]
 
-        self.nif_common.info("Importing constraints for %s" % b_hkobj.name)
+        self.nif_import.info("Importing constraints for %s" % b_hkobj.name)
 
         # now import all constraints
         for hkconstraint in hkbody.constraints:
@@ -86,7 +83,7 @@ class Constraint():
                 self.warning(
                     "First constraint entity not self, skipped")
                 continue
-            if not hkconstraint.entities[1] in self.havok_objects:
+            if not hkconstraint.entities[1] in self.nif_import.dict_havok_objects:
                 self.warning(
                     "Second constraint entity not imported, skipped")
                 continue
@@ -104,13 +101,13 @@ class Constraint():
                 elif hkconstraint.type == 2:
                     hkdescriptor = hkconstraint.limited_hinge
                 else:
-                    self.nif_common.warning("Unknown malleable type (%i), skipped"
+                    self.nif_import.warning("Unknown malleable type (%i), skipped"
                                         % hkconstraint.type)
                 # extra malleable constraint settings
                 ### damping parameters not yet in Blender Python API
                 ### tau (force between bodies) not supported by Blender
             else:
-                self.nif_common.warning("Unknown constraint type (%s), skipped"
+                self.nif_import.warning("Unknown constraint type (%s), skipped"
                                     % hkconstraint.__class__.__name__)
                 continue
 
@@ -149,7 +146,7 @@ class Constraint():
 
             # set constraint target
             b_constr.target = \
-                self.havok_objects[hkconstraint.entities[1]][0]
+                self.nif_import.dict_havok_objects[hkconstraint.entities[1]][0]
             # set rigid body type (generic)
             b_constr.pivot_type = 'BALL'
             # limiting parameters (limit everything)
@@ -159,9 +156,9 @@ class Constraint():
 
             # get pivot point
             pivot = mathutils.Vector((
-                hkdescriptor.pivot_a.x * self.nif_common.HAVOK_SCALE,
-                hkdescriptor.pivot_a.y * self.nif_common.HAVOK_SCALE,
-                hkdescriptor.pivot_a.z * self.nif_common.HAVOK_SCALE))
+                hkdescriptor.pivot_a.x * self.nif_import.HAVOK_SCALE,
+                hkdescriptor.pivot_a.y * self.nif_import.HAVOK_SCALE,
+                hkdescriptor.pivot_a.z * self.nif_import.HAVOK_SCALE))
 
             # get z- and x-axes of the constraint
             # (also see export_nif.py NifImport.export_constraints)
@@ -219,14 +216,14 @@ class Constraint():
                     # either not orthogonal, or negative orientation
                     if (mathutils.Vector.cross(-axis_x, axis_y)
                         - axis_z).length > 0.01:
-                        self.nif_common.warning(
+                        self.nif_import.warning(
                             "Axes are not orthogonal in %s;"
                             " arbitrary orientation has been chosen"
                             % hkdescriptor.__class__.__name__)
                         axis_z = mathutils.Vector.cross(axis_x, axis_y)
                     else:
                         # fix orientation
-                        self.nif_common.warning(
+                        self.nif_import.warning(
                             "X axis flipped in %s to fix orientation"
                             % hkdescriptor.__class__.__name__)
                         axis_x = -axis_x
@@ -288,9 +285,9 @@ class Constraint():
                     hkbody.rotation.y, hkbody.rotation.z)).to_matrix()
                 transform.resize_4x4()
                 # set translation
-                transform[0][3] = hkbody.translation.x * HAVOK_SCALE
-                transform[1][3] = hkbody.translation.y * HAVOK_SCALE
-                transform[2][3] = hkbody.translation.z * HAVOK_SCALE
+                transform[0][3] = hkbody.translation.x * self.nif_import.HAVOK_SCALE
+                transform[1][3] = hkbody.translation.y * self.nif_import.HAVOK_SCALE
+                transform[2][3] = hkbody.translation.z * self.nif_import.HAVOK_SCALE
                 # apply transform
                 pivot = pivot * transform
                 transform = transform.to_3x3()
@@ -298,13 +295,13 @@ class Constraint():
                 axis_x = axis_x * transform
 
             # next, cancel out bone matrix correction
-            # note that B' = X * B with X = self.bones_extra_matrix[B]
+            # note that B' = X * B with X = self.nif_import.dict_bones_extra_matrix[B]
             # so multiply with the inverse of X
-            for niBone in self.nif_common.armaturehelper.bones_extra_matrix:
+            for niBone in self.nif_import.dict_bones_extra_matrix:
                 if niBone.collision_object \
                    and niBone.collision_object.body is hkbody:
                     transform = mathutils.Matrix(
-                        self.nif_common.armaturehelper.bones_extra_matrix[niBone])
+                        self.nif_import.dict_bones_extra_matrix[niBone])
                     transform.invert()
                     pivot = pivot * transform
                     transform = transform.to_3x3()

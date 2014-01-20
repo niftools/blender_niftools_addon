@@ -48,20 +48,6 @@ class Armature():
     
 
     def __init__(self, parent):
-        
-        # dictionary of bones, maps Blender bone name to matrix that maps the
-        # NIF bone matrix on the Blender bone matrix
-        # Recall from the import script
-        #   B' = X * B,
-        # where B' is the Blender bone matrix, and B is the NIF bone matrix,
-        # both in armature space. So to restore the NIF matrices we need to do
-        #   B = X^{-1} * B'
-        # Hence, we will restore the X's, invert them, and store those inverses in the
-        # following dictionary.
-        self.bones_extra_matrix_inv = {}
-        
-        self.armatures = {}
-        
         self.nif_export = parent
         
         
@@ -107,13 +93,13 @@ class Armature():
         """Set bone extra matrix, inverted. The bone_name is first converted
         to blender style (to ensure compatibility with older imports).
         """
-        self.bones_extra_matrix_inv[self.nif_export.get_bone_name_for_blender(bone_name)] = matrix
+        self.nif_export.dict_bones_extra_matrix_inv[self.nif_export.get_bone_name_for_blender(bone_name)] = matrix
 
     def get_bone_extra_matrix_inv(self, bone_name):
         """Get bone extra matrix, inverted. The bone_name is first converted
         to blender style (to ensure compatibility with older imports).
         """
-        return self.bones_extra_matrix_inv[self.nif_export.get_bone_name_for_blender(bone_name)]
+        return self.nif_export.dict_bones_extra_matrix_inv[self.nif_export.get_bone_name_for_blender(bone_name)]
     
     
     def export_bones(self, arm, parent_block):
@@ -196,7 +182,7 @@ class Armature():
             for constr in arm.pose.bones[bone.name].constraints:
                 # yes! store it for reference when creating the kf file
                 if constr.name[:9].lower() == "priority:":
-                    self.nif_export.bone_priorities[
+                    self.nif_export.dict_bone_priorities[
                         self.get_bone_name_for_nif(bone.name)
                         ] = int(constr.name[9:])
 
@@ -240,7 +226,7 @@ class Armature():
                         # to the armature
                         # so let's find that bone!
                         nif_bone_name = self.nif_export.objecthelper.get_full_name(parent_bone_name)
-                        for bone_block in self.nif_export.objecthelper.blocks:
+                        for bone_block in self.nif_export.dict_blocks:
                             if isinstance(bone_block, NifFormat.NiNode) and \
                                 bone_block.name.decode() == nif_bone_name:
                                 # ok, we should parent to block
