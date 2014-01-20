@@ -104,8 +104,7 @@ class NifExport(NifCommon):
         self.constrainthelper = Constraint(parent=self)
         self.texturehelper = TextureHelper(parent=self)
         self.objecthelper = ObjectHelper(parent=self)
-
-
+        
     def execute(self):
         """Main export function."""
         bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
@@ -125,14 +124,18 @@ class NifExport(NifCommon):
         filebase, fileext = os.path.splitext(
             os.path.basename(self.properties.filepath))
 
-
-
-
-        # store bone priorities (from NULL constraints) as the armature bones
-        # are parsed, so they are available when writing the kf file
-        # maps bone NiNode to priority value
-        self.bone_priorities = {}
-
+        self.dict_armatures = {}
+        self.dict_bones_extra_matrix = {}
+        self.dict_bones_extra_matrix_inv = {}
+        self.dict_bone_priorities = {}
+        self.dict_havok_objects = {}
+        self.dict_names = {}
+        self.dict_blocks = {}
+        self.dict_block_names = []
+        self.dict_materials = {}
+        self.dict_textures = {}
+        self.dict_mesh_uvlayers = []
+        
         # if an egm is exported, this will contain the data
         self.egmdata = None
 
@@ -259,7 +262,7 @@ class NifExport(NifCommon):
             self.info("Checking animation groups")
             if not animtxt:
                 has_controllers = False
-                for block in self.objecthelper.blocks:
+                for block in self.dict_blocks:
                     # has it a controller field?
                     if isinstance(block, NifFormat.NiObjectNET):
                         if block.controller:
@@ -277,7 +280,7 @@ class NifExport(NifCommon):
             self.info("Checking controllers")
             if animtxt and self.properties.game == 'MORROWIND':
                 has_keyframecontrollers = False
-                for block in self.objecthelper.blocks:
+                for block in self.dict_blocks:
                     if isinstance(block, NifFormat.NiKeyframeController):
                         has_keyframecontrollers = True
                         break
@@ -288,7 +291,7 @@ class NifExport(NifCommon):
                     self.animationhelper.export_keyframes(None, 'localspace', root_block)
             if (self.properties.bs_animation_node
                 and self.properties.game == 'MORROWIND'):
-                for block in self.objecthelper.blocks:
+                for block in self.dict_blocks:
                     if isinstance(block, NifFormat.NiNode):
                         # if any of the shape children has a controller
                         # or if the ninode has a controller
@@ -313,7 +316,7 @@ class NifExport(NifCommon):
                 # specific
                 self.info(
                     "Adding controllers and interpolators for skeleton")
-                for block in list(self.objecthelper.blocks.keys()):
+                for block in list(self.dict_blocks.keys()):
                     if isinstance(block, NifFormat.NiNode) \
                         and block.name == "Bip01":
                         for bone in block.tree(block_type = NifFormat.NiNode):
@@ -410,7 +413,7 @@ class NifExport(NifCommon):
                     # so calculate mass automatically
                     # first calculate distribution of mass
                     total_mass = 0
-                    for block in self.objecthelper.blocks:
+                    for block in self.dict_blocks:
                         if isinstance(block, NifFormat.bhkRigidBody):
                             block.update_mass_center_inertia(
                                 solid = self.EXPORT_OB_SOLID)
@@ -422,7 +425,7 @@ class NifExport(NifCommon):
                         total_mass = 1
                     # now update the mass ensuring that total mass is
                     # self.EXPORT_OB_MASS
-                    for block in self.objecthelper.blocks:
+                    for block in self.dict_blocks:
                         if isinstance(block, NifFormat.bhkRigidBody):
                             mass = self.EXPORT_OB_MASS * block.mass / total_mass
                             # lower bound on mass
@@ -434,7 +437,7 @@ class NifExport(NifCommon):
                 else:
                     # using blender properties, so block.mass *should* have
                     # been set properly
-                    for block in self.objecthelper.blocks:
+                    for block in self.dict_blocks:
                         if isinstance(block, NifFormat.bhkRigidBody):
                             # lower bound on mass
                             if block.mass < 0.0001:
@@ -446,8 +449,8 @@ class NifExport(NifCommon):
             # bhkConvexVerticesShape of children of bhkListShapes
             # need an extra bhkConvexTransformShape
             # (see issue #3308638, reported by Koniption)
-            # note: self.objecthelper.blocks changes during iteration, so need list copy
-            for block in list(self.objecthelper.blocks):
+            # note: self.dict_blocks changes during iteration, so need list copy
+            for block in list(self.dict_blocks):
                 if isinstance(block, NifFormat.bhkListShape):
                     for i, sub_shape in enumerate(block.sub_shapes):
                         if isinstance(sub_shape, NifFormat.bhkConvexVerticesShape):
@@ -502,7 +505,7 @@ class NifExport(NifCommon):
                 # flatten skins
                 skelroots = set()
                 affectedbones = []
-                for block in self.objecthelper.blocks:
+                for block in self.dict_blocks:
                     if isinstance(block, NifFormat.NiGeometry) and block.is_skin():
                         self.info("Flattening skin on geometry %s"
                                          % block.name)
@@ -537,7 +540,7 @@ class NifExport(NifCommon):
 
             # generate mopps (must be done after applying scale!)
             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
-                for block in self.objecthelper.blocks:
+                for block in self.dict_blocks:
                     if isinstance(block, NifFormat.bhkMoppBvTreeShape):
                         self.info("Generating mopp...")
                         block.update_mopp()
@@ -559,8 +562,8 @@ class NifExport(NifCommon):
                     root_block.children[0].name = filebase
                 self.info(
                     "Making '%s' the root block" % root_block.children[0].name)
-                # remove root_block from self.objecthelper.blocks
-                self.objecthelper.blocks.pop(root_block)
+                # remove root_block from self.dict_blocks
+                self.dict_blocks.pop(root_block)
                 # set new root block
                 old_root_block = root_block
                 root_block = old_root_block.children[0]
@@ -744,7 +747,7 @@ class NifExport(NifCommon):
                                 # get bone animation priority (previously
                                 # fetched from the constraints during
                                 # export_bones)
-                                if not node.name in self.bone_priorities or self.EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES:
+                                if not node.name in self.dict_bone_priorities or self.EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES:
                                     if self.EXPORT_ANIMPRIORITY != 0:
                                         priority = self.EXPORT_ANIMPRIORITY
                                     else:
@@ -754,7 +757,7 @@ class NifExport(NifCommon):
                                             "falling back on default value (%i)"
                                             % (node.name, priority))
                                 else:
-                                    priority = self.bone_priorities[node.name]
+                                    priority = self.dict_bone_priorities[node.name]
                                 controlledblock.priority = priority
                                 # set palette, and node and controller type
                                 # names, and variables

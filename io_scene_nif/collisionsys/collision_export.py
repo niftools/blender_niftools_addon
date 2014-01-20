@@ -47,7 +47,6 @@ class bhkshape_export():
     FLOAT_MAX = +3.4028234663852886e+38
 
     def __init__(self, parent):
-        self.havok_objects = {}
         self.nif_export = parent
         self.properties = parent.properties
         self.HAVOK_SCALE = parent.HAVOK_SCALE
