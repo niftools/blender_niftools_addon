@@ -44,7 +44,7 @@ from io_scene_nif.utility import nif_utils
 class AnimationHelper():
     
     def __init__(self, parent):
-        self.nif_common = parent
+        self.nif_import = parent
         self.object_animation = ObjectAnimation(parent)
         self.material_animation = MaterialAnimation(parent)
         self.armature_animation = ArmatureAnimation(parent)
@@ -60,7 +60,7 @@ class AnimationHelper():
 
         # check that this is an Oblivion style kf file
         if not isinstance(kf_root, NifFormat.NiControllerSequence):
-            raise self.nif_common.NifImportError("non-Oblivion .kf import not supported")
+            raise self.nif_import.NifImportError("non-Oblivion .kf import not supported")
 
         # import text keys
         self.import_text_keys(kf_root)
@@ -122,7 +122,7 @@ class AnimationHelper():
                 # copy translation
                 if kfi.translation.x < -1000000:
                     # invalid, happens in fallout 3, e.g. h2haim.kf
-                    self.nif_common.warning("ignored NaN in interpolator translation")
+                    self.nif_import.warning("ignored NaN in interpolator translation")
                 else:
                     kfd.translations.num_keys = 1
                     kfd.translations.keys.update_size()
@@ -135,7 +135,7 @@ class AnimationHelper():
             # save priority for future reference
             # (priorities will be stored into the name of a NULL constraint on
             # bones, see import_armature function)
-            self.nif_common.bone_priorities[nodename] = controlledblock.priority
+            self.nif_import.dict_bone_priorities[nodename] = controlledblock.priority
 
         # DEBUG: save the file for manual inspection
         #niffile = open("C:\\test.nif", "wb")
@@ -170,8 +170,8 @@ class AnimationHelper():
                 animtxt.write('%i/%s\n'%(frame, newkey))
 
             # set start and end frames
-            self.nif_common.context.scene.getRenderingContext().startFrame(1)
-            self.nif_common.context.scene.getRenderingContext().endFrame(frame)
+            self.nif_import.context.scene.getRenderingContext().startFrame(1)
+            self.nif_import.context.scene.getRenderingContext().endFrame(frame)
 
     def get_frames_per_second(self, roots):
         """Scan all blocks and return a reasonable number for FPS."""
@@ -211,7 +211,7 @@ class AnimationHelper():
             if diff < lowest_diff:
                 lowest_diff = diff
                 fps = test_fps
-        self.nif_common.info("Animation estimated at %i frames per second." % fps)
+        self.nif_import.info("Animation estimated at %i frames per second." % fps)
         return fps
 
     def store_animation_data(self, rootBlock):
@@ -261,8 +261,8 @@ class AnimationHelper():
             return
 
         # denote progress
-        self.nif_common.info("Animation")
-        self.nif_common.info("Importing animation data for %s" % b_obj.name)
+        self.nif_import.info("Animation")
+        self.nif_import.info("Importing animation data for %s" % b_obj.name)
         assert(isinstance(kfd, NifFormat.NiKeyframeData))
         # create an Ipo for this object
         b_ipo = ObjectAnimation.get_object_ipo(b_obj)
@@ -270,7 +270,7 @@ class AnimationHelper():
         translations = kfd.translations
         scales = kfd.scales
         # add the keys
-        self.nif_common.debug('Scale keys...')
+        self.nif_import.debug('Scale keys...')
         for key in scales.keys:
             frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
             Blender.Set('curframe', frame)
@@ -286,7 +286,7 @@ class AnimationHelper():
             xkeys = kfd.xyz_rotations[0].keys
             ykeys = kfd.xyz_rotations[1].keys
             zkeys = kfd.xyz_rotations[2].keys
-            self.nif_common.debug('Rotation keys...(euler)')
+            self.nif_import.debug('Rotation keys...(euler)')
             for (xkey, ykey, zkey) in zip(xkeys, ykeys, zkeys):
                 frame = 1+int(xkey.time * self.fps + 0.5) # time 0.0 is frame 1
                 # XXX we assume xkey.time == ykey.time == zkey.time
@@ -299,7 +299,7 @@ class AnimationHelper():
         else:
             # uses quaternions
             if kfd.quaternion_keys:
-                self.nif_common.debug('Rotation keys...(quaternions)')
+                self.nif_import.debug('Rotation keys...(quaternions)')
             for key in kfd.quaternion_keys:
                 frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                 Blender.Set('curframe', frame)
@@ -311,9 +311,9 @@ class AnimationHelper():
                 b_obj.insertIpoKey(Blender.Object.ROT)
 
         if translations.keys:
-            self.nif_common.debug('Translation keys...')
+            self.nif_import.debug('Translation keys...')
         for key in translations.keys:
-            frame = 1+int(key.time * self.nif_common.fps + 0.5) # time 0.0 is frame 1
+            frame = 1+int(key.time * self.nif_import.fps + 0.5) # time 0.0 is frame 1
             Blender.Set('curframe', frame)
             b_obj.LocX = key.value.x
             b_obj.LocY = key.value.y
@@ -326,7 +326,7 @@ class AnimationHelper():
 class ObjectAnimation():
     
     def __init__(self, parent):
-        self.nif_common = parent
+        self.nif_import = parent
     
     def get_object_ipo(self, b_object):
         """Return existing object ipo data, or if none exists, create one
@@ -346,19 +346,19 @@ class ObjectAnimation():
         b_ipo = self.get_object_ipo(b_object)
         b_curve = b_ipo.addCurve(b_channel)
         b_curve.interpolation = Blender.IpoCurve.InterpTypes.CONST
-        b_curve.extend = self.nif_common.get_extend_from_flags(n_vis_ctrl.flags)
+        b_curve.extend = self.nif_import.get_extend_from_flags(n_vis_ctrl.flags)
         for n_key in n_vis_ctrl.data.keys:
             b_curve[1 + n_key.time * self.fps] = (
-                2 ** (n_key.value + max([1] + self.nif_common.context.scene.getLayers()) - 1))
+                2 ** (n_key.value + max([1] + self.nif_import.context.scene.getLayers()) - 1))
 
 class MaterialAnimation():
     
     def __init__(self, parent):
-        self.nif_common = parent
+        self.nif_import = parent
     
     def import_material_controllers(self, b_material, n_geom):
         """Import material animation data for given geometry."""
-        if not self.nif_common.properties.animation:
+        if not self.nif_import.properties.animation:
             return
 
         self.import_material_alpha_controller(b_material, n_geom)
@@ -388,13 +388,13 @@ class MaterialAnimation():
                                            NifFormat.NiAlphaController)
         if not(n_alphactrl and n_alphactrl.data):
             return
-        self.nif_common.info("importing alpha controller")
+        self.nif_import.info("importing alpha controller")
         b_channel = "Alpha"
         b_ipo = self.get_material_ipo(b_material)
         b_curve = b_ipo.addCurve(b_channel)
-        b_curve.interpolation = self.nif_common.get_b_ipol_from_n_ipol(
+        b_curve.interpolation = self.nif_import.get_b_ipol_from_n_ipol(
             n_alphactrl.data.data.interpolation)
-        b_curve.extend = self.nif_common.get_extend_from_flags(n_alphactrl.flags)
+        b_curve.extend = self.nif_import.get_extend_from_flags(n_alphactrl.flags)
         for n_key in n_alphactrl.data.data.keys:
             b_curve[1 + n_key.time * self.fps] = n_key.value
 
@@ -419,9 +419,9 @@ class MaterialAnimation():
         b_ipo = self.get_material_ipo(b_material)
         for i, b_channel in enumerate(b_channels):
             b_curve = b_ipo.addCurve(b_channel)
-            b_curve.interpolation = self.nif_common.get_b_ipol_from_n_ipol(
+            b_curve.interpolation = self.nif_import.get_b_ipol_from_n_ipol(
                 n_matcolor_ctrl.data.data.interpolation)
-            b_curve.extend = self.nif_common.get_extend_from_flags(n_matcolor_ctrl.flags)
+            b_curve.extend = self.nif_import.get_extend_from_flags(n_matcolor_ctrl.flags)
             for n_key in n_matcolor_ctrl.data.data.keys:
                 b_curve[1 + n_key.time * self.fps] = n_key.value.as_list()[i]
 
@@ -440,9 +440,9 @@ class MaterialAnimation():
                 # create curve in material ipo
                 b_ipo = self.get_material_ipo(b_material)
                 b_curve = b_ipo.addCurve(b_channel)
-                b_curve.interpolation = self.nif_common.get_b_ipol_from_n_ipol(
+                b_curve.interpolation = self.nif_import.get_b_ipol_from_n_ipol(
                     n_uvgroup.interpolation)
-                b_curve.extend = self.nif_common.get_extend_from_flags(n_ctrl.flags)
+                b_curve.extend = self.nif_import.get_extend_from_flags(n_ctrl.flags)
                 for n_key in n_uvgroup.keys:
                     if b_channel.startswith("Ofs"):
                         # offsets are negated
@@ -475,7 +475,7 @@ class ArmatureAnimation():
         for bone_name, b_posebone in b_armature.pose.bones.items():
             # denote progress
             self.nif_import.debug('Importing animation for bone %s' % bone_name)
-            niBone = self.nif_import.blocks[bone_name]
+            niBone = self.nif_import.dict_blocks[bone_name]
 
             # get bind matrix (NIF format stores full transformations in keyframes,
             # but Blender wants relative transformations, hence we need to know
@@ -516,7 +516,7 @@ class ArmatureAnimation():
             # SC' = SX * SC / SX = SC
             # RC' = RX * RC * inverse(RX)
             # TC' = (TX * SC * RC + TC - TX) * inverse(RX) / SX
-            extra_matrix_scale, extra_matrix_rot, extra_matrix_trans = self.decompose_srt(self.bones_extra_matrix[niBone])
+            extra_matrix_scale, extra_matrix_rot, extra_matrix_trans = self.decompose_srt(self.nif_import.dict_bones_extra_matrix[niBone])
             extra_matrix_quat = extra_matrix_rot.to_quaternion()
             extra_matrix_rot_inv = mathutils.Matrix(extra_matrix_rot)
             extra_matrix_rot_inv.invert()

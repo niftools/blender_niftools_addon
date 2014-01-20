@@ -48,6 +48,56 @@ class NifCommon:
     """Abstract base class for import and export. Contains utility functions
     that are commonly used in both import and export.
     """
+    
+    # dictionary of bones that belong to a certain armature
+    # maps NIF armature name to list of NIF bone name
+    dict_armatures = {}
+    # dictionary of bones, maps Blender bone name to matrix that maps the
+    # NIF bone matrix on the Blender bone matrix
+    # B' = X * B, where B' is the Blender bone matrix, and B is the NIF bone matrix
+    dict_bones_extra_matrix = {}
+
+    # dictionary of bones, maps Blender bone name to matrix that maps the
+    # NIF bone matrix on the Blender bone matrix
+    # Recall from the import script
+    #   B' = X * B,
+    # where B' is the Blender bone matrix, and B is the NIF bone matrix,
+    # both in armature space. So to restore the NIF matrices we need to do
+    #   B = X^{-1} * B'
+    # Hence, we will restore the X's, invert them, and store those inverses in the
+    # following dictionary.
+    dict_bones_extra_matrix_inv = {}
+
+    # dictionary mapping bhkRigidBody objects to objects imported in Blender; 
+    # we use this dictionary to set the physics constraints (ragdoll etc)
+    dict_havok_objects = {}
+    
+    # dictionary of names, to map NIF blocks to correct Blender names
+    dict_names = {}
+
+    # dictionary of bones, maps Blender name to NIF block
+    dict_blocks = {}
+    
+    # keeps track of names of exported blocks, to make sure they are unique
+    dict_block_names = []
+
+    # bone animation priorities (maps NiNode name to priority number);
+    # priorities are set in import_kf_root and are stored into the name
+    # of a NULL constraint (for lack of something better) in
+    # import_armature
+    dict_bone_priorities = {}
+
+    # dictionary of materials, to reuse materials
+    dict_materials = {}
+    
+    # dictionary of texture files, to reuse textures
+    dict_textures = {}
+    dict_mesh_uvlayers = []
+
+    
+    
+    
+    
 
     VERTEX_RESOLUTION = 1000
     NORMAL_RESOLUTION = 100
@@ -234,4 +284,3 @@ class NifCommon:
             "Unsupported blend type (%s) in material,"
             " using apply mode APPLY_MODULATE" % b_blend_type)
         return NifFormat.ApplyMode.APPLY_MODULATE
-

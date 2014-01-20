@@ -45,9 +45,6 @@ class Material():
     def __init__(self, parent):
         self.nif_import = parent
         
-        # dictionary of materials, to reuse materials
-        self.materials = {}
-        
     def set_texture_helper(self, texturehelper):
         self.texturehelper = texturehelper
 
@@ -83,7 +80,7 @@ class Material():
                                                bsShaderProperty,
                                                extra_datas)
         try:
-            return self.materials[material_hash]                
+            return self.nif_import.dict_materials[material_hash]                
         except KeyError:
             pass
         
@@ -152,7 +149,7 @@ class Material():
             # enable wireframe rendering
             b_mat.type = 'WIRE'
 
-        self.materials[material_hash] = b_mat
+        self.nif_import.dict_materials[material_hash] = b_mat
         return b_mat
     
     
