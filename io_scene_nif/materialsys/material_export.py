@@ -43,7 +43,6 @@ from pyffi.formats.nif import NifFormat
 class Material():
     
     def __init__(self, parent):
-        self.materials = {}
         self.nif_export = parent
         
     def export_material_property(self, name='', flags=0x0001,
@@ -53,7 +52,7 @@ class Material():
         """Return existing material property with given settings, or create
         a new one if a material property with these settings is not found."""
 
-        # create block (but don't register it yet in self.blocks)
+        # create block (but don't register it yet in self.dict_blocks)
         matprop = NifFormat.NiMaterialProperty()
 
         # list which determines whether the material name is relevant or not
@@ -99,7 +98,7 @@ class Material():
         # search for duplicate
         # (ignore the name string as sometimes import needs to create different
         # materials even when NiMaterialProperty is the same)
-        for block in self.nif_export.objecthelper.blocks:
+        for block in self.nif_export.dict_blocks:
             if not isinstance(block, NifFormat.NiMaterialProperty):
                 continue
 
