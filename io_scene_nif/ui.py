@@ -85,6 +85,8 @@ class NifObjectPanel(Panel):
         layout = self.layout
         row = layout.row()
         row.prop(nif_obj_props, "upb")
+        row.prop(nif_obj_props, "bsxflags")
+        row.prop(nif_obj_props, "longname")
 
 class NifCollisionBoundsPanel(Panel):
     bl_label = "Collision Bounds"
