@@ -166,7 +166,7 @@ class Texture():
 							
 											
 	def import_texture_effect(self, b_mat, textureEffect):
-		diffuse_texture = n_textureDesc.base_texture
+		diffuse_texture = textureEffect.base_texture
 		
 		b_mat_texslot = b_mat.texture_slots.add()
 		b_mat_texslot.texture = self.textureloader.import_texture_source(diffuse_texture.source)
@@ -181,7 +181,7 @@ class Texture():
 		# Influence
 		b_mat_texslot.use_map_color_diffuse = True
 		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
-                n_textureDesc.apply_mode)
+                textureEffect.apply_mode)
 		
 # 		if(n_alpha_prop):
 # 			b_mat_texslot.use_map_alpha
@@ -233,7 +233,7 @@ class Texture():
 		try:
 			b_mat_texslot.uv_layer = self.get_uv_layer_name(diffuse_texture.uv_set)
 		except:
-			b_mat_texslot.texture_coords = 'UV'
+			b_mat_texslot.uv_layer = self.get_uv_layer_name(0)
 		
 		# Influence
 		b_mat_texslot.use_map_color_diffuse = True
@@ -241,7 +241,8 @@ class Texture():
 			b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
             							n_textureDesc.apply_mode)
 		except:
-			b_mat_texslot.blend_type = "MIX"
+			b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
+            							n_textureDesc)
 # 		if(n_alpha_prop):
 # 			b_mat_texslot.use_map_alpha
 		# update: needed later
@@ -270,7 +271,7 @@ class Texture():
 		try:
 			b_mat_texslot.uv_layer = self.get_uv_layer_name(bumpmap_texture.uv_set)
 		except:
-			b_mat_texslot.texture_coords = 'UV'
+			b_mat_texslot.uv_layer = self.get_uv_layer_name(0)
 		
 		# Influence
 		b_mat_texslot.use_map_color_diffuse = False
@@ -279,7 +280,8 @@ class Texture():
 			b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
             							n_textureDesc.apply_mode)
 		except:
-			b_mat_texslot.blend_type = "MIX"
+			b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
+            							n_textureDesc)
 # 		if(n_alpha_prop):
 # 			b_mat_texslot.use_map_alpha
 		
@@ -335,7 +337,7 @@ class Texture():
 		try:
 			b_mat_texslot.uv_layer = self.get_uv_layer_name(glow_texture.uv_set)
 		except:
-			b_mat_texslot.texture_coords = 'UV'
+			b_mat_texslot.uv_layer = self.get_uv_layer_name(0)
 		
 		# Influence
 		b_mat_texslot.use_map_color_diffuse = False
@@ -344,7 +346,8 @@ class Texture():
 			b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
             							n_textureDesc.apply_mode)
 		except:
-			b_mat_texslot.blend_type = "MIX"
+			b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
+            							n_textureDesc)
 		
 # 		if(n_alpha_prop):
 # 			b_mat_texslot.use_map_alpha
@@ -498,10 +501,12 @@ class Texture():
 			return "LIGHTEN"
 		elif n_apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT2: # used by Oblivion for parallax
 			return "MULTIPLY"
+		elif isinstance(n_apply_mode, str):
+			return "MIX"
 		self.nif_import.warning(
 			"Unknown apply mode (%i) in material,"
 			" using blend type 'MIX'" % n_apply_mode)
-		return "MIX"
+		
 
 
 	def get_uv_layer_name(self, uvset):
