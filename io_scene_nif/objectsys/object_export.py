@@ -906,18 +906,18 @@ class MeshHelper():
                     trilist.append(f_indexed)
                     # add body part number
                     if (self.properties.game != 'FALLOUT_3'
-                        or not bodypartgroups
-                        or not self.EXPORT_FO3_BODYPARTS):
+                        or not bodypartgroups):
+                        # TODO: or not self.EXPORT_FO3_BODYPARTS):
                         bodypartfacemap.append(0)
                     else:
                         for bodypartname, bodypartindex, bodypartverts in bodypartgroups:
-                            if (set(b_vert_index for b_vert_index in f.vertices)
+                            if (set(b_vert_index for b_vert_index in poly.vertices)
                                 <= bodypartverts):
                                 bodypartfacemap.append(bodypartindex)
                                 break
                         else:
                             # this signals an error
-                            polygons_without_bodypart.append(f)
+                            polygons_without_bodypart.append(poly)
 
             # check that there are no missing body part polygons
             if polygons_without_bodypart:
