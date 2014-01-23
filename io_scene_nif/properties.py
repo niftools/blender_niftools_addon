@@ -106,6 +106,153 @@ class NiftoolsBoneProps(bpy.types.PropertyGroup):
         cls.flags = IntProperty(
                         name = 'Nif Flags'
                         )
+        
+    @classmethod
+    def unregister(cls):
+        del bpy.types.Bone.niftools
+
+
+class NiftoolsBsShaderProps(bpy.types.PropertyGroup):
+    @classmethod
+    def register(cls):
+        bpy.types.Object.niftools_bsshader = PointerProperty(
+                        name='Niftools BsShader Property',
+                        description = 'Properties used by the BsShader for the Nif File Format',
+                        type = cls,
+                        )
+        cls.specular = BoolProperty(
+                        name = 'Specular'
+                        )
+        
+        cls.skin = BoolProperty(
+                        name = 'Skinned'
+                        )
+        
+        cls.lowdetail = BoolProperty(
+                        name = 'Low Detail'
+                        )
+        
+        cls.vertexalpha = BoolProperty(
+                        name = 'Vertex Alpha'
+                        )
+        
+        cls.unknown1 = BoolProperty(
+                        name = 'Unknown 1'
+                        )
+        
+        cls.singlepass = BoolProperty(
+                        name = 'Single Pass'
+                        )
+        
+        cls.empty = BoolProperty(
+                        name = 'Empty'
+                        )
+        
+        cls.environmentmapping = BoolProperty(
+                        name = 'Environment Mapping'
+                        )
+        
+        cls.alphatexture = BoolProperty(
+                        name = 'Alpha Texture'
+                        )
+        
+        cls.unknown2 = BoolProperty(
+                        name = 'Unknown 2'
+                        )
+        
+        cls.facegen = BoolProperty(
+                        name = 'Face Gen'
+                        )
+        
+        cls.parallaxshaderindex = BoolProperty(
+                        name = 'Parallax Shader Index'
+                        )
+        
+        cls.unknown3 = BoolProperty(
+                        name = 'Unknown 3'
+                        )
+        
+        cls.nonprojectiveshadows = BoolProperty(
+                        name = 'Non-Projective Shadows'
+                        )
+        
+        cls.unknown4 = BoolProperty(
+                        name = 'Unknown 4'
+                        )
+        
+        cls.refraction = BoolProperty(
+                        name = 'Refraction'
+                        )
+        
+        cls.firerefraction = BoolProperty(
+                        name = 'Fire Refraction'
+                        )
+        
+        cls.eyeenvronmentmapping = BoolProperty(
+                        name = 'Eye Environment Mapping'
+                        )
+        
+        cls.hair = BoolProperty(
+                        name = 'Hair'
+                        )
+        
+        cls.dynamicalpha = BoolProperty(
+                        name = 'Dynamic Alpha'
+                        )
+        
+        cls.localmaphidesecret = BoolProperty(
+                        name = 'Local Map Hide Secret'
+                        )
+        
+        cls.windowenvironmentmapping = BoolProperty(
+                        name = 'Window Environment Mapping'
+                        )
+        
+        cls.treebillboard = BoolProperty(
+                        name = 'Tree Billboard'
+                        )
+        
+        cls.shadowfrustum = BoolProperty(
+                        name = 'Shadow Frustum'
+                        )
+        
+        cls.multipletextures = BoolProperty(
+                        name = 'Multiple Textures'
+                        )
+        
+        cls.remappabletextures = BoolProperty(
+                        name = 'Remappable Textures'
+                        )
+        
+        cls.decalsinglepass = BoolProperty(
+                        name = 'Decal Single Pass'
+                        )
+        
+        cls.dynamicdecalsinglepass = BoolProperty(
+                        name = 'Dynamic Decal Single Pass'
+                        )
+        
+        cls.parallaxocclusion = BoolProperty(
+                        name = 'Parallax Occlusion'
+                        )
+        
+        cls.externalemittance = BoolProperty(
+                        name = 'External Emittance'
+                        )
+        
+        cls.shadowmap = BoolProperty(
+                        name = 'Shadow Map'
+                        )
+        
+        cls.zbuffertest = BoolProperty(
+                        name = 'Z Buffer Test'
+                        )
+        
+    @classmethod
+    def unregister(cls):
+        del bpy.types.Object.niftools_bsshader
+
+
 
 
 class NiftoolsObjectProps(bpy.types.PropertyGroup):
@@ -151,6 +298,11 @@ class NiftoolsObjectProps(bpy.types.PropertyGroup):
         cls.LHMaxFriction = IntProperty(
                         name = 'LHMaxFriction',
                         description = 'Havok limited hinge max friction.',
+                        )
+        
+        cls.shadowfrustrum = BoolProperty(
+                        name = 'Shadow Frustrum',
+                        description = 'Shader property to do stuff with things',
                         )
         
     @classmethod

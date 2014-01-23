@@ -68,6 +68,57 @@ class NifEmissivePanel(Panel):
         colL.prop(mat, "emissive_preview")
         colR.prop(mat, "emissive_color", text="")      
 
+class NifBsShaderObjectPanel(Panel):
+    bl_label = "Niftools BsShader"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "object"
+
+    @classmethod
+    def poll(cls, context):
+        return True
+        
+
+    def draw(self, context):
+        nif_obj_props = context.object.niftools_bsshader
+        
+        layout = self.layout
+        row = layout.column()
+        
+        row.prop(nif_obj_props, "specular")
+        row.prop(nif_obj_props, "skin")
+        row.prop(nif_obj_props, "lowdetail")
+        row.prop(nif_obj_props, "vertexalpha")
+        row.prop(nif_obj_props, "unknown1")
+        row.prop(nif_obj_props, "singlepass")
+        row.prop(nif_obj_props, "empty")
+        row.prop(nif_obj_props, "environmentmapping")
+        row.prop(nif_obj_props, "alphatexture")
+        row.prop(nif_obj_props, "unknown2")
+        row.prop(nif_obj_props, "facegen")
+        row.prop(nif_obj_props, "parallaxshaderindex")
+        row.prop(nif_obj_props, "unknown3")
+        row.prop(nif_obj_props, "nonprojectiveshadows")
+        row.prop(nif_obj_props, "unknown4")
+        row.prop(nif_obj_props, "refraction")
+        row.prop(nif_obj_props, "fire refraction")
+        row.prop(nif_obj_props, "eyeenvironmentmapping")
+        row.prop(nif_obj_props, "hair")
+        row.prop(nif_obj_props, "dynamicalpha")
+        row.prop(nif_obj_props, "localmaphidesecret")
+        row.prop(nif_obj_props, "windowenvironmentmapping")
+        row.prop(nif_obj_props, "treebillboard")
+        row.prop(nif_obj_props, "shadowfrustum")
+        row.prop(nif_obj_props, "multipletextures")
+        row.prop(nif_obj_props, "remappabletextures")
+        row.prop(nif_obj_props, "decalsinglepass")
+        row.prop(nif_obj_props, "dynamicdecalsinglepass")
+        row.prop(nif_obj_props, "parallaxocclusion")
+        row.prop(nif_obj_props, "externalemittance")
+        row.prop(nif_obj_props, "shadowmap")
+        row.prop(nif_obj_props, "zbuffertest")
+
+
 class NifObjectPanel(Panel):
     bl_label = "Niftools Object Panel"
     
@@ -89,6 +140,7 @@ class NifObjectPanel(Panel):
         row.prop(nif_obj_props, "bsxflags")
         row.prop(nif_obj_props, "objectflags")
         row.prop(nif_obj_props, "longname")
+        
 
 class NifCollisionBoundsPanel(Panel):
     bl_label = "Collision Bounds"
