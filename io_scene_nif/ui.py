@@ -79,13 +79,15 @@ class NifObjectPanel(Panel):
     def poll(cls, context):
         return True
         
+
     def draw(self, context):
         nif_obj_props = context.object.niftools
         
         layout = self.layout
-        row = layout.row()
+        row = layout.column()
         row.prop(nif_obj_props, "upb")
         row.prop(nif_obj_props, "bsxflags")
+        row.prop(nif_obj_props, "objectflags")
         row.prop(nif_obj_props, "longname")
 
 class NifCollisionBoundsPanel(Panel):

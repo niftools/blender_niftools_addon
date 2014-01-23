@@ -391,6 +391,7 @@ class NifImport(NifCommon):
             self.debug("Building mesh in import_branch")
             # note: transform matrix is set during import
             b_obj = self.import_mesh(niBlock)
+            b_obj.niftools.objectflags = niBlock.flags
             # skinning? add armature modifier
             if niBlock.skin_instance:
                 self.armaturehelper.append_armature_modifier(b_obj, b_armature)
@@ -431,6 +432,7 @@ class NifImport(NifCommon):
                 # bones have already been imported during import_armature
                 b_obj = b_armature.data.bones[self.dict_names[niBlock]]
                 # bones cannot group geometries into a single mesh
+                b_obj.niftools.flags = niBlock.flags
                 geom_group = []
             else:
                 # is it a grouping node?

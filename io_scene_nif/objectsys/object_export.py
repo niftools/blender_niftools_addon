@@ -150,6 +150,13 @@ class ObjectHelper():
             assert(parent_block) # debug
             b_obj_ipo = b_obj.animation_data # get animation data
             b_obj_children = b_obj.children
+        elif (b_obj.name != parent_block.name.decode()) and (b_obj.type != 'ARMATURE'):
+            # -> empty, b_mesh, or armature
+            b_obj_type = b_obj.type
+            assert(b_obj_type in ['EMPTY', 'MESH']) # debug
+            assert(parent_block) # debug
+            b_obj_ipo = b_obj.animation_data # get animation data
+            b_obj_children = b_obj.children
         else:
             return None
             
@@ -241,18 +248,26 @@ class ObjectHelper():
         node.name = self.get_full_name(node_name)
 
         # default node flags
-        if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
-            node.flags = 0x000E
-        elif self.properties.game in ('SID_MEIER_S_RAILROADS',
-                                     'CIVILIZATION_IV'):
-            node.flags = 0x0010
-        elif self.properties.game in ('EMPIRE_EARTH_II',):
-            node.flags = 0x0002
-        elif self.properties.game in ('DIVINITY_2',):
-            node.flags = 0x0310
-        else:
-            # morrowind
-            node.flags = 0x000C
+        if b_obj_type in ['Empty', 'Mesh', 'Armature']:
+            if (b_obj_type == 'MESH') and (b_obj.niftools.bsxflags != 2):
+                node.flags = b_obj.niftools.bsxflags
+            elif (b_obj_type == 'ARMATURE') and (b_obj.niftools.bsxflags != 2):
+                node.flags = b_obj.niftools.bsxflags
+            elif (b_obj_type == 'ARMATURE') and (b_obj.niftools.bsxflags == 2) and (b_obj.parent == None):
+                node.flags = b_obj.niftools.bsxflags
+            else:
+                if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
+                    node.flags = 0x000E
+                elif self.properties.game in ('SID_MEIER_S_RAILROADS',
+                                             'CIVILIZATION_IV'):
+                    node.flags = 0x0010
+                elif self.properties.game in ('EMPIRE_EARTH_II',):
+                    node.flags = 0x0002
+                elif self.properties.game in ('DIVINITY_2',):
+                    node.flags = 0x0310
+                else:
+                    # morrowind
+                    node.flags = 0x000C
 
         self.nif_export.export_matrix(b_obj, space, node)
 
@@ -608,25 +623,28 @@ class MeshHelper():
                 trishape.name = self.nif_export.objecthelper.get_full_name(trishape.name)
 
             #Trishape Flags...
-            if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
-                trishape.flags = 0x000E
-
-            elif self.properties.game in ('SID_MEIER_S_RAILROADS',
-                                         'CIVILIZATION_IV'):
-                trishape.flags = 0x0010
-            elif self.properties.game in ('EMPIRE_EARTH_II',):
-                trishape.flags = 0x0016
-            elif self.properties.game in ('DIVINITY_2',):
-                if trishape.name.lower[-3:] in ("med", "low"):
-                    trishape.flags = 0x0014
-                else:
-                    trishape.flags = 0x0016
+            if (b_obj.type == 'MESH') and (b_obj.niftools.objectflags != 2):
+                trishape.flags = b_obj.niftools.objectflags
             else:
-                # morrowind
-                if b_obj.draw_type != 'WIRE': # not wire
-                    trishape.flags = 0x0004 # use triangles as bounding box
+                if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
+                    trishape.flags = 0x000E
+    
+                elif self.properties.game in ('SID_MEIER_S_RAILROADS',
+                                             'CIVILIZATION_IV'):
+                    trishape.flags = 0x0010
+                elif self.properties.game in ('EMPIRE_EARTH_II',):
+                    trishape.flags = 0x0016
+                elif self.properties.game in ('DIVINITY_2',):
+                    if trishape.name.lower[-3:] in ("med", "low"):
+                        trishape.flags = 0x0014
+                    else:
+                        trishape.flags = 0x0016
                 else:
-                    trishape.flags = 0x0005 # use triangles as bounding box + hide
+                    # morrowind
+                    if b_obj.draw_type != 'WIRE': # not wire
+                        trishape.flags = 0x0004 # use triangles as bounding box
+                    else:
+                        trishape.flags = 0x0005 # use triangles as bounding box + hide
 
             # extra shader for Sid Meier's Railroads
             if self.properties.game == 'SID_MEIER_S_RAILROADS':
