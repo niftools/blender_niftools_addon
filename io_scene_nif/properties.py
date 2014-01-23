@@ -43,7 +43,8 @@ from bpy.props import (PointerProperty,
                        StringProperty,
                        IntProperty,
                        BoolProperty,
-                       EnumProperty
+                       EnumProperty,
+                       CollectionProperty
                        )
 
 from pyffi.formats.nif import NifFormat
@@ -120,6 +121,13 @@ class NiftoolsBsShaderProps(bpy.types.PropertyGroup):
                         description = 'Properties used by the BsShader for the Nif File Format',
                         type = cls,
                         )
+        cls.shadertype = EnumProperty(
+                        name='Shader Type',
+                        description = 'Havok Motion System settings for bhkRigidBody(t)',
+                        items = [(item, item,"", i) for i, item in enumerate(NifFormat.BSShaderType._enumkeys)],
+                        default = 'SHADER_DEFAULT'
+                        )
+        
         cls.specular = BoolProperty(
                         name = 'Specular'
                         )

@@ -85,6 +85,8 @@ class NifBsShaderObjectPanel(Panel):
         layout = self.layout
         row = layout.column()
         
+        row.prop(nif_obj_props, "shadertype")
+        
         row.prop(nif_obj_props, "specular")
         row.prop(nif_obj_props, "skin")
         row.prop(nif_obj_props, "lowdetail")
