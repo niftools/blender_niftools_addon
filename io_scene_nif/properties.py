@@ -95,6 +95,19 @@ class NiftoolsMaterialProps(bpy.types.PropertyGroup):
         del bpy.types.Material.niftools
 
 
+class NiftoolsBoneProps(bpy.types.PropertyGroup):
+    @classmethod
+    def register(cls):
+        bpy.types.Bone.niftools = PointerProperty(
+                        name='Niftools Bone Property',
+                        description = 'Additional bone properties used by the Nif File Format',
+                        type = cls,
+                        )
+        cls.flags = IntProperty(
+                        name = 'Nif Flags'
+                        )
+
+
 class NiftoolsObjectProps(bpy.types.PropertyGroup):
     @classmethod
     def register(cls):
@@ -105,6 +118,12 @@ class NiftoolsObjectProps(bpy.types.PropertyGroup):
                         )
         cls.longname = StringProperty(
                         name = 'Nif LongName'
+                        )
+
+        cls.objectflags = IntProperty(
+                        name = 'Object Flag',
+                        description = 'Controls animation and collision',
+                        default = 2 # 2 = Bit 1, enable collision
                         )
 
         cls.bsxflags = IntProperty(
