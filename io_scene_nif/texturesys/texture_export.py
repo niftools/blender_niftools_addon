@@ -107,12 +107,12 @@ class TextureHelper():
         # set textures
         texset = NifFormat.BSShaderTextureSet()
         bsshader.texture_set = texset
-        if baseTexFile:
-            texset.textures[0] = self.texture_writer.export_texture_filename(baseTexFile.texture)
-        if normalmtex:
-            texset.textures[1] = self.texture_writer.export_texture_filename(normalmtex.texture)
-        if glowmtex:
-            texset.textures[2] = self.texture_writer.export_texture_filename(glowmtex.texture)
+        if self.basemtex:
+            texset.textures[0] = self.texture_writer.export_texture_filename(self.basemtex.texture)
+        if self.normalmtex:
+            texset.textures[1] = self.texture_writer.export_texture_filename(self.normalmtex.texture)
+        if self.glowmtex:
+            texset.textures[2] = self.texture_writer.export_texture_filename(self.glowmtex.texture)
 
         return bsshader
     
