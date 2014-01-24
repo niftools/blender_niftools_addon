@@ -44,7 +44,6 @@ from bpy.props import (PointerProperty,
                        IntProperty,
                        BoolProperty,
                        EnumProperty,
-                       CollectionProperty
                        )
 
 from pyffi.formats.nif import NifFormat

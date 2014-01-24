@@ -300,6 +300,18 @@ class NifImport(NifCommon):
         elif isinstance(root_block, NifFormat.NiNode):
             # root node is dummy scene node
 
+            #process extra data
+            for n_extra in root_block.get_extra_datas():
+                if isinstance(n_extra, NifFormat.BSXFlags):
+                    # get bsx flags so we can attach it to collision object
+                    self.bsxflags = n_extra.integer_data
+                elif isinstance(n_extra, NifFormat.NiStringExtraData):
+                    if n_extra.name == "UPB":
+                        self.upbflags = n_extra.string_data
+                elif isinstance(n_extra, NifFormat.BSBound):
+                    self.boundhelper.import_bounding_box(n_extra)
+
+
             # process collision
             if root_block.collision_object:
                 bhk_body = root_block.collision_object.body
@@ -309,16 +321,7 @@ class NifImport(NifCommon):
                         % root_block.name)
                 self.bhkhelper.import_bhk_shape(bhkshape=bhk_body)
 
-            #process extra data
-            for n_extra in root_block.get_extra_datas():
-                if isinstance(n_extra, NifFormat.BSXFlags):
-                    # get bsx flags so we can attach it to collision object
-                    bsx_flags = n_extra.integer_data
-                elif isinstance(n_extra, NifFormat.NiStringExtraData):
-                    if n_extra.name == "UPB":
-                        upbflags = n_extra.string_data
-                elif isinstance(n_extra, NifFormat.BSBound):
-                    self.boundhelper.import_bounding_box(n_extra)
+
 
 
             # process all its children
@@ -973,6 +976,7 @@ class NifImport(NifCommon):
         b_mesh.loops.add(poly_count * 3)
         num_new_faces = 0 # counter for debugging
         unique_faces = set() # to avoid duplicate polygons
+        tri_point_list = list()
         for i, f in enumerate(n_tris):
             # get face index
             f_verts = [v_map[vert_index] for vert_index in f]
@@ -983,10 +987,10 @@ class NifImport(NifCommon):
             if tuple(f_verts) in unique_faces:
                 continue
             unique_faces.add(tuple(f_verts))
-        for i in range(len(n_tris)):
+            tri_point_list.append(len(n_tris[i]))
             ls_list = list()
-            for ls1 in range(0, poly_count * (len(n_tris[i])), (len(n_tris[i]))):
-                ls_list.append((ls1 + bl_index))
+        for ls1 in range(0, poly_count * (tri_point_list[i]), (tri_point_list[i])):
+            ls_list.append((ls1 + bl_index))
         for i in range(len(n_tris)):
             f_map[i] = b_f_index
             b_mesh.polygons[f_map[i]].loop_start = ls_list[i]

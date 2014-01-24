@@ -166,22 +166,22 @@ class Texture():
 							
 											
 	def import_texture_effect(self, b_mat, textureEffect):
-		diffuse_texture = textureEffect.base_texture
+		diffuse_texture = textureEffect.source_texture.file_name.decode()
 		
 		b_mat_texslot = b_mat.texture_slots.add()
-		b_mat_texslot.texture = self.textureloader.import_texture_source(diffuse_texture.source)
+		b_mat_texslot.texture = self.textureloader.import_texture_source(diffuse_texture)
 		b_mat_texslot.use = True
 
 		# Influence mapping
 		
 		# Mapping
 		b_mat_texslot.texture_coords = 'UV'
-		b_mat_texslot.uv_layer = self.get_uv_layer_name(diffuse_texture.uv_set)
+		b_mat_texslot.uv_layer = self.get_uv_layer_name(0)
 		
 		# Influence
 		b_mat_texslot.use_map_color_diffuse = True
 		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
-                textureEffect.apply_mode)
+                diffuse_texture)
 		
 # 		if(n_alpha_prop):
 # 			b_mat_texslot.use_map_alpha
