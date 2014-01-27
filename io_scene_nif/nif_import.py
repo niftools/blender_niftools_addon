@@ -306,8 +306,8 @@ class NifImport(NifCommon):
                     # get bsx flags so we can attach it to collision object
                     self.bsxflags = n_extra.integer_data
                 elif isinstance(n_extra, NifFormat.NiStringExtraData):
-                    if n_extra.name == "UPB":
-                        self.upbflags = n_extra.string_data
+                    if n_extra.name.decode() == "UPB":
+                        self.upbflags = n_extra.string_data.decode()
                 elif isinstance(n_extra, NifFormat.BSBound):
                     self.boundhelper.import_bounding_box(n_extra)
 
@@ -1348,7 +1348,7 @@ class NifImport(NifCommon):
             return [ child for child in niBlock.children if
                      isinstance(child, NifFormat.NiTriBasedGeom) ]
         # check that node has name
-        node_name = niBlock.name
+        node_name = niBlock.name.decode()
         if not node_name:
             return []
         # strip "NonAccum" trailer, if present
