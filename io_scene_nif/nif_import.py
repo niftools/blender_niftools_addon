@@ -975,34 +975,33 @@ class NifImport(NifCommon):
         b_mesh.polygons.add(poly_count)
         b_mesh.loops.add(poly_count * 3)
         num_new_faces = 0 # counter for debugging
-        unique_faces = set() # to avoid duplicate polygons
+        unique_faces = list() # to avoid duplicate polygons
         tri_point_list = list()
         for i, f in enumerate(n_tris):
             # get face index
             f_verts = [v_map[vert_index] for vert_index in f]
-            # skip degenerate polygons
-            # we get a ValueError on polygons.extend otherwise
-            if (f_verts[0] == f_verts[1]) or (f_verts[1] == f_verts[2]) or (f_verts[2] == f_verts[0]):
-                continue
             if tuple(f_verts) in unique_faces:
                 continue
-            unique_faces.add(tuple(f_verts))
+            unique_faces.append(tuple(f_verts))
+            f_map[i] = b_f_index
             tri_point_list.append(len(n_tris[i]))
             ls_list = list()
-        for ls1 in range(0, poly_count * (tri_point_list[i]), (tri_point_list[i])):
-            ls_list.append((ls1 + bl_index))
-        for i in range(len(n_tris)):
-            f_map[i] = b_f_index
-            b_mesh.polygons[f_map[i]].loop_start = ls_list[i]
-            b_mesh.polygons[f_map[i]].loop_total = len(n_tris[i])
-            l = 0
-            lp_points = [v_map[loop_point] for loop_point in n_tris[i]]
-            while l < (len(n_tris[i])):
-                b_mesh.loops[(l + (bl_index))].vertex_index = lp_points[l]
-                l += 1
-            bl_index += (len(n_tris[i]))
             b_f_index += 1
             num_new_faces += 1
+        for ls1 in range(0, num_new_faces * (tri_point_list[len(ls_list)]), (tri_point_list[len(ls_list)])):
+            ls_list.append((ls1 + bl_index))
+        for i in range(len(unique_faces)):
+            if f_map[i] is None:
+                continue
+            b_mesh.polygons[f_map[i]].loop_start = ls_list[(f_map[i] - bf2_index)]
+            b_mesh.polygons[f_map[i]].loop_total = len(unique_faces[(f_map[i] - bf2_index)])
+            l = 0
+            lp_points = [v_map[loop_point] for loop_point in n_tris[(f_map[i] - bf2_index)]]
+            while l < (len(n_tris[(f_map[i] - bf2_index)])):
+                b_mesh.loops[(l + (bl_index))].vertex_index = lp_points[l]
+                l += 1
+            bl_index += (len(n_tris[(f_map[i] - bf2_index)]))
+            
         # at this point, deleted polygons (degenerate or duplicate)
         # satisfy f_map[i] = None
 
@@ -1013,7 +1012,7 @@ class NifImport(NifCommon):
             if b_polysmooth_index is None:
                 continue
             polysmooth = b_mesh.polygons[b_polysmooth_index]
-            polysmooth.use_smooth = True if n_norms else False
+            polysmooth.use_smooth = True if (n_norms or niBlock.skin_instance) else False
             polysmooth.material_index = materialIndex
         # vertex colors
         
