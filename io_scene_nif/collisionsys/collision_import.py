@@ -164,11 +164,11 @@ class bhkshape_import():
             b_col_obj.nifcollision.quality_type = NifFormat.MotionQuality._enumkeys[bhkshape.quality_type]
             b_col_obj.nifcollision.motion_system = NifFormat.MotionSystem._enumkeys[bhkshape.motion_system]
             try:
-                b_col_obj.nifcollision.bsxFlags = self.nif_import.bsxflags
+                b_col_obj.niftools.bsxFlags = self.nif_import.bsxflags
             except:
                 pass
             try:
-                b_col_obj.nifcollision.upb = self.nif_import.upbflags
+                b_col_obj.niftools.upb = self.nif_import.upbflags
             except:
                 pass
             # note: also imported as rbMass, but hard to find by users
