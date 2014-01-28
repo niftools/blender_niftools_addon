@@ -103,8 +103,8 @@ class NiftoolsBoneProps(bpy.types.PropertyGroup):
                         description = 'Additional bone properties used by the Nif File Format',
                         type = cls,
                         )
-        cls.flags = IntProperty(
-                        name = 'Nif Flags'
+        cls.boneflags = IntProperty(
+                        name = 'Bone Flag'
                         )
         
     @classmethod
@@ -306,11 +306,7 @@ class NiftoolsObjectProps(bpy.types.PropertyGroup):
                         name = 'LHMaxFriction',
                         description = 'Havok limited hinge max friction.',
                         )
-        
-        cls.shadowfrustrum = BoolProperty(
-                        name = 'Shadow Frustrum',
-                        description = 'Shader property to do stuff with things',
-                        )
+
         
     @classmethod
     def unregister(cls):

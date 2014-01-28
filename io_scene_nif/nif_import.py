@@ -255,6 +255,28 @@ class NifImport(NifCommon):
 
         return {'FINISHED'}
 
+    def import_bsxflag_data(self, root_block):
+        for n_extra in root_block.get_extra_datas():
+            if isinstance(n_extra, NifFormat.BSXFlags):
+                    # get bsx flags so we can attach it to collision object
+                    bsxflags = n_extra.integer_data
+                    return bsxflags
+
+    def import_upbflag_data(self, root_block):
+            #process extra data
+            for n_extra in root_block.get_extra_datas():
+                if isinstance(n_extra, NifFormat.NiStringExtraData):
+                    if n_extra.name.decode() == "UPB":
+                        upbflags = n_extra.string_data.decode()
+                        return upbflags
+                        
+    def import_bsbound_data(self, root_block):
+        for n_extra in root_block.get_extra_datas():
+            if isinstance(n_extra, NifFormat.BSBound):
+                    self.boundhelper.import_bounding_box(n_extra)
+
+
+
     def import_root(self, root_block):
         """Main import function."""
         # check that this is not a kf file
@@ -286,30 +308,27 @@ class NifImport(NifCommon):
         if self.armaturehelper.is_armature_root(root_block):
             # special case 1: root node is skeleton root
             self.debug("%s is an armature root" % root_block.name)
+            self.bsxflags = self.import_bsxflag_data(root_block)
+            self.upbflags = self.import_upbflag_data(root_block)
             b_obj = self.import_branch(root_block)
 
         elif self.is_grouping_node(root_block):
             # special case 2: root node is grouping node
             self.debug("%s is a grouping node" % root_block.name)
+            self.bsxflags = self.import_bsxflag_data(root_block)
+            self.upbflags = self.import_upbflag_data(root_block)
             b_obj = self.import_branch(root_block)
 
         elif isinstance(root_block, NifFormat.NiTriBasedGeom):
             # trishape/tristrips root
+            self.bsxflags = self.import_bsxflag_data(root_block)
+            self.upbflags = self.import_upbflag_data(root_block)
             b_obj = self.import_branch(root_block)
 
         elif isinstance(root_block, NifFormat.NiNode):
             # root node is dummy scene node
-
-            #process extra data
-            for n_extra in root_block.get_extra_datas():
-                if isinstance(n_extra, NifFormat.BSXFlags):
-                    # get bsx flags so we can attach it to collision object
-                    self.bsxflags = n_extra.integer_data
-                elif isinstance(n_extra, NifFormat.NiStringExtraData):
-                    if n_extra.name.decode() == "UPB":
-                        self.upbflags = n_extra.string_data.decode()
-                elif isinstance(n_extra, NifFormat.BSBound):
-                    self.boundhelper.import_bounding_box(n_extra)
+            self.bsxflags = self.import_bsxflag_data(root_block)
+            self.upbflags = self.import_upbflag_data(root_block)
 
 
             # process collision
@@ -435,7 +454,7 @@ class NifImport(NifCommon):
                 # bones have already been imported during import_armature
                 b_obj = b_armature.data.bones[self.dict_names[niBlock]]
                 # bones cannot group geometries into a single mesh
-                b_obj.niftools.flags = niBlock.flags
+                b_obj.niftools.boneflags = niBlock.flags
                 geom_group = []
             else:
                 # is it a grouping node?
@@ -1348,7 +1367,7 @@ class NifImport(NifCommon):
             return [ child for child in niBlock.children if
                      isinstance(child, NifFormat.NiTriBasedGeom) ]
         # check that node has name
-        node_name = niBlock.name.decode()
+        node_name = niBlock.name
         if not node_name:
             return []
         # strip "NonAccum" trailer, if present
