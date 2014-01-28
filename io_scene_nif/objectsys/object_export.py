@@ -248,13 +248,13 @@ class ObjectHelper():
         node.name = self.get_full_name(node_name)
 
         # default node flags
-        if b_obj_type in ['Empty', 'Mesh', 'Armature']:
-            if (b_obj_type == 'MESH') and (b_obj.niftools.bsxflags != 2):
-                node.flags = b_obj.niftools.bsxflags
-            elif (b_obj_type == 'ARMATURE') and (b_obj.niftools.bsxflags != 2):
-                node.flags = b_obj.niftools.bsxflags
-            elif (b_obj_type == 'ARMATURE') and (b_obj.niftools.bsxflags == 2) and (b_obj.parent == None):
-                node.flags = b_obj.niftools.bsxflags
+        if b_obj_type in ['EMPTY', 'MESH', 'ARMATURE']:
+            if (b_obj_type == 'MESH') and (b_obj.niftools.objectflags != 2):
+                node.flags = b_obj.niftools.objectflags
+            elif (b_obj_type == 'ARMATURE') and (b_obj.niftools.boneflags != 2):
+                node.flags = b_obj.niftools.objectflags
+            elif (b_obj_type == 'ARMATURE') and (b_obj.niftools.boneflags == 2) and (b_obj.parent == None):
+                node.flags = b_obj.niftools.boneflags
             else:
                 if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
                     node.flags = 0x000E
