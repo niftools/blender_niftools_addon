@@ -96,13 +96,13 @@ class TextureHelper():
         
         # set shader options
         # TODO: FIXME:
-        #bsshader.shader_type = self.nif_export.EXPORT_FO3_SHADER_TYPE
-        #bsshader.shader_flags.zbuffer_test = self.nif_export.EXPORT_FO3_SF_ZBUF
-        #bsshader.shader_flags.shadow_map = self.nif_export.EXPORT_FO3_SF_SMAP
-        #bsshader.shader_flags.shadow_frustum = self.nif_export.EXPORT_FO3_SF_SFRU
-        #bsshader.shader_flags.window_environment_mapping = self.nif_export.EXPORT_FO3_SF_WINDOW_ENVMAP
-        #bsshader.shader_flags.empty = self.nif_export.EXPORT_FO3_SF_EMPT
-        #bsshader.shader_flags.unknown_31 = self.nif_export.EXPORT_FO3_SF_UN31
+        bsshader.shader_type = self.niftools_bsshader.shadertype
+        bsshader.shader_flags.zbuffer_test = self.niftools_bsshader.zbuffertest
+        bsshader.shader_flags.shadow_map = self.niftools_bsshader.shadowmap
+        bsshader.shader_flags.shadow_frustum = self.niftools_bsshader.shadowfrustum
+        bsshader.shader_flags.window_environment_mapping = self.niftools_bsshader.environmentmapping
+        bsshader.shader_flags.empty = self.niftools_bsshader.empty
+        #bsshader.shader_flags.unknown_31 = self.niftools_bsshader.
         
         # set textures
         texset = NifFormat.BSShaderTextureSet()

@@ -48,7 +48,6 @@ class Constraint():
     def __init__(self, parent):
         self.nif_export = parent
         self.properties = parent.properties
-        self.nif_utils = parent.nif_utils
         
     def export_constraints(self, b_obj, root_block):
         """Export the constraints of an object.
@@ -82,7 +81,7 @@ class Constraint():
                         break
                 else:
                     # no collision body for this object
-                    raise self.nif_utils.NifExportError(
+                    raise self.nif_export.nif_utils.NifExportError(
                         "Object %s has a rigid body constraint,"
                         " but is not exported as collision object"
                         % b_obj.name)
@@ -109,7 +108,7 @@ class Constraint():
                         hkconstraint.type = 2
                     hkdescriptor = hkconstraint.limited_hinge
                 else:
-                    raise self.nif_utils.NifExportError(
+                    raise self.nif_export.nif_utils.NifExportError(
                         "Unsupported rigid body joint type (%i),"
                         " only ball and hinge are supported."
                         % b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE])

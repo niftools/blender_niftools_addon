@@ -68,6 +68,27 @@ class NifEmissivePanel(Panel):
         colL.prop(mat, "emissive_preview")
         colR.prop(mat, "emissive_color", text="")      
 
+class NiftoolsBonePanel(Panel):
+    bl_label = "Niftools Bone Props"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "bone"
+
+    @classmethod
+    def poll(cls, context):
+        return True
+        
+
+    def draw(self, context):
+        nif_obj_props = context.bone.niftools
+        
+        layout = self.layout
+        row = layout.column()
+        
+        row.prop(nif_obj_props, "boneflags")
+    
+
+
 class NifBsShaderObjectPanel(Panel):
     bl_label = "Niftools BsShader"
     bl_space_type = 'PROPERTIES'
