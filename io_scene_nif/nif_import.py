@@ -499,7 +499,7 @@ class NifImport(NifCommon):
                     if isinstance(niBlock, NifFormat.RootCollisionNode):
                         b_obj.draw_type = 'BOUNDS'
                         b_obj.show_wire = True
-                        b_obj.draw_bounds_type = 'POLYHEDERON'
+                        b_obj.draw_bounds_type = 'BOX'
                         b_obj.game.use_collision_bounds = True
                         b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
                         b_obj.niftools.objectflags = niBlock.flags
@@ -507,12 +507,14 @@ class NifImport(NifCommon):
                         b_mesh = b_obj.data
                         numverts = len(b_mesh.vertices)
                         # 0.005 = 1/200
+                        '''
                         numdel = b_mesh.remDoubles(0.005)
                         if numdel:
                             self.info(
                                 "Removed %i duplicate vertices"
                                 " (out of %i) from collision mesh"
                                 % (numdel, numverts))
+                        '''
 
             # find children that aren't part of the geometry group
             b_children_list = []
@@ -617,6 +619,7 @@ class NifImport(NifCommon):
                 # find camera object
                 for obj in self.context.scene.objects:
                     if obj.type == 'CAMERA':
+                        b_obj_camera = obj
                         break
                 else:
                     raise NifImportError(
@@ -624,16 +627,17 @@ class NifImport(NifCommon):
                         " (add a camera and try again)")
                 # make b_obj track camera object
                 #b_obj.setEuler(0,0,0)
-                b_obj.constraints.append(
-                    bpy.types.Constraint('TRACK_TO'))
-                self.warning(
+                b_obj.constraints.new('TRACK_TO')
+                constr = b_obj.constraints[-1]
+                constr.target = b_obj_camera
+                if constr.target == None:
+                    self.warning(
                     "Constraint for billboard node on %s added"
                     " but target not set due to transform bug"
                     " in Blender. Set target to Camera manually."
                     % b_obj)
-                constr = b_obj.constraints[-1]
-                constr[Blender.Constraint.Settings.TRACK] = Blender.Constraint.Settings.TRACKZ
-                constr[Blender.Constraint.Settings.UP] = Blender.Constraint.Settings.UPY
+                constr.track_axis = 'TRACK_Z'
+                constr.up_axis = 'UP_Y'
                 # yields transform bug!
                 #constr[Blender.Constraint.Settings.TARGET] = obj
 
