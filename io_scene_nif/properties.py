@@ -98,18 +98,19 @@ class NiftoolsMaterialProps(bpy.types.PropertyGroup):
 class NiftoolsBoneProps(bpy.types.PropertyGroup):
     @classmethod
     def register(cls):
-        bpy.types.Bone.niftools = PointerProperty(
+        bpy.types.Bone.niftools_bone = PointerProperty(
                         name='Niftools Bone Property',
                         description = 'Additional bone properties used by the Nif File Format',
                         type = cls,
                         )
         cls.boneflags = IntProperty(
-                        name = 'Bone Flag'
+                        name = 'Bone Flag',
+                        default = 0
                         )
         
     @classmethod
     def unregister(cls):
-        del bpy.types.Bone.niftools
+        del bpy.types.Bone.niftools_bone
 
 
 class NiftoolsBsShaderProps(bpy.types.PropertyGroup):
@@ -277,13 +278,13 @@ class NiftoolsObjectProps(bpy.types.PropertyGroup):
         cls.objectflags = IntProperty(
                         name = 'Object Flag',
                         description = 'Controls animation and collision',
-                        default = 2 # 2 = Bit 1, enable collision
+                        default = 0 # 2 = Bit 1, enable collision
                         )
 
         cls.bsxflags = IntProperty(
                         name = 'BSXFlags',
                         description = 'Controls animation and collision',
-                        default = 2 # 2 = Bit 1, enable collision
+                        default = 0 # 2 = Bit 1, enable collision
                         )
 
         cls.upb = StringProperty(

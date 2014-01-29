@@ -296,6 +296,9 @@ class NifImport(NifCommon):
         # set the block parent through the tree, to ensure I can always move
         # backward
         self.set_parents(root_block)
+        self.bsxflags = self.import_bsxflag_data(root_block)
+        self.upbflags = self.import_upbflag_data(root_block)
+        self.objectflags = root_block.flags
 
         # mark armature nodes and bones
         self.armaturehelper.mark_armatures_bones(root_block)
@@ -308,29 +311,25 @@ class NifImport(NifCommon):
         if self.armaturehelper.is_armature_root(root_block):
             # special case 1: root node is skeleton root
             self.debug("%s is an armature root" % root_block.name)
-            self.bsxflags = self.import_bsxflag_data(root_block)
-            self.upbflags = self.import_upbflag_data(root_block)
             b_obj = self.import_branch(root_block)
-
+            b_obj.niftools.objectflags = root_block.flags
+            
         elif self.is_grouping_node(root_block):
             # special case 2: root node is grouping node
             self.debug("%s is a grouping node" % root_block.name)
-            self.bsxflags = self.import_bsxflag_data(root_block)
-            self.upbflags = self.import_upbflag_data(root_block)
             b_obj = self.import_branch(root_block)
+            b_obj.niftools.bsxflags = self.bsxflags
 
         elif isinstance(root_block, NifFormat.NiTriBasedGeom):
             # trishape/tristrips root
-            self.bsxflags = self.import_bsxflag_data(root_block)
-            self.upbflags = self.import_upbflag_data(root_block)
             b_obj = self.import_branch(root_block)
+            b_obj.niftools.bsxflags = self.bsxflags
 
         elif isinstance(root_block, NifFormat.NiNode):
             # root node is dummy scene node
-            self.bsxflags = self.import_bsxflag_data(root_block)
-            self.upbflags = self.import_upbflag_data(root_block)
-
-
+            for n_extra in root_block.get_extra_datas():
+                if isinstance(n_extra, NifFormat.BSBound):
+                    self.boundhelper.import_bounding_box(n_extra)
             # process collision
             if root_block.collision_object:
                 bhk_body = root_block.collision_object.body
@@ -454,7 +453,8 @@ class NifImport(NifCommon):
                 # bones have already been imported during import_armature
                 b_obj = b_armature.data.bones[self.dict_names[niBlock]]
                 # bones cannot group geometries into a single mesh
-                b_obj.niftools.boneflags = niBlock.flags
+                b_obj.niftools_bone.bsxflags = self.bsxflags
+                b_obj.niftools_bone.boneflags = niBlock.flags
                 geom_group = []
             else:
                 # is it a grouping node?
@@ -490,6 +490,7 @@ class NifImport(NifCommon):
                                                  group_mesh=b_obj,
                                                  applytransform=True)
                     b_obj.name = self.import_name(niBlock)
+                    b_obj.niftools.objectflags = niBlock.flags
                     # skinning? add armature modifier
                     if any(child.skin_instance
                            for child in geom_group):
@@ -501,6 +502,7 @@ class NifImport(NifCommon):
                         b_obj.draw_bounds_type = 'POLYHEDERON'
                         b_obj.game.use_collision_bounds = True
                         b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
+                        b_obj.niftools.objectflags = niBlock.flags
                         # also remove duplicate vertices
                         b_mesh = b_obj.data
                         numverts = len(b_mesh.vertices)
