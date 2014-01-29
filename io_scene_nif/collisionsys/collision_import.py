@@ -311,7 +311,7 @@ class bhkshape_import():
         b_obj.draw_bounds_type = 'CYLINDER'
         b_obj.game.use_collision_bounds = True
         b_obj.game.collision_bounds_type = 'CYLINDER'
-        b_obj.game.radius = bhkshape.radius
+        b_obj.game.radius = bhkshape.radius*self.HAVOK_SCALE
         b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
 
 
