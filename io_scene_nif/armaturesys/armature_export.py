@@ -139,7 +139,7 @@ class Armature():
             # add the node and the keyframe for this bone
             node.name = self.nif_export.objecthelper.get_full_name(bone.name)
             
-            if (bone.niftools.boneflags != 2):
+            if (bone.niftools.boneflags != 0):
                 node.flags = bone.niftools.boneflags
             else:
                 if self.nif_export.properties.game in ('OBLIVION', 'FALLOUT_3'):
