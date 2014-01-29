@@ -58,29 +58,29 @@ class bhkshape_import():
     def get_havok_objects(self):
         return self.nif_import.dict_havok_objects
 
-    def import_bhk_shape(self, bhkshape, upbflags="", bsxflags=2):
+    def import_bhk_shape(self, bhkshape):
         """Imports any supported collision shape as list of blender meshes."""
 
         if isinstance(bhkshape, NifFormat.bhkTransformShape):
-            return self.import_bhktransform(bhkshape, upbflags, bsxflags)
+            return self.import_bhktransform(bhkshape)
 
         elif isinstance(bhkshape, NifFormat.bhkRigidBody):
-            return self.import_bhkridgidbody(bhkshape, upbflags, bsxflags)
+            return self.import_bhkridgidbody(bhkshape)
 
         elif isinstance(bhkshape, NifFormat.bhkBoxShape):
-            return self.import_bhkbox_shape(bhkshape, upbflags, bsxflags)
+            return self.import_bhkbox_shape(bhkshape)
 
         elif isinstance(bhkshape, NifFormat.bhkSphereShape):
-            return self.import_bhksphere_shape(bhkshape, upbflags, bsxflags)
+            return self.import_bhksphere_shape(bhkshape)
 
         elif isinstance(bhkshape, NifFormat.bhkCapsuleShape):
-            return self.import_bhkcapsule_shape(bhkshape, upbflags, bsxflags)
+            return self.import_bhkcapsule_shape(bhkshape)
 
         elif isinstance(bhkshape, NifFormat.bhkConvexVerticesShape):
-            return self.import_bhkconvex_vertices_shape(bhkshape, upbflags, bsxflags)
+            return self.import_bhkconvex_vertices_shape(bhkshape)
 
         elif isinstance(bhkshape, NifFormat.bhkPackedNiTriStripsShape):
-            return self.import_bhkpackednitristrips_shape(bhkshape, upbflags, bsxflags)
+            return self.import_bhkpackednitristrips_shape(bhkshape)
 
         elif isinstance(bhkshape, NifFormat.bhkNiTriStripsShape):
             self.havok_mat = bhkshape.material
@@ -89,7 +89,7 @@ class bhkshape_import():
                            for strips in bhkshape.strips_data))
 
         elif isinstance(bhkshape, NifFormat.NiTriStripsData):
-            return self.import_nitristrips(bhkshape, upbflags, bsxflags)
+            return self.import_nitristrips(bhkshape)
 
         elif isinstance(bhkshape, NifFormat.bhkMoppBvTreeShape):
             return self.import_bhk_shape(bhkshape.shape)
@@ -103,7 +103,7 @@ class bhkshape_import():
         return []
 
 
-    def import_bhktransform(self, bhkshape, upbflags="", bsxflags=2):
+    def import_bhktransform(self, bhkshape):
         """Imports a BhkTransform block and applies the transform to the collision object"""
 
         # import shapes
@@ -122,7 +122,7 @@ class bhkshape_import():
         return collision_objs
 
 
-    def import_bhkridgidbody(self, bhkshape, upbflags="", bsxflags=2):
+    def import_bhkridgidbody(self, bhkshape):
         """Imports a BhkRigidBody block and applies the transform to the collision objects"""
 
         # import shapes
@@ -164,7 +164,8 @@ class bhkshape_import():
             b_col_obj.nifcollision.quality_type = NifFormat.MotionQuality._enumkeys[bhkshape.quality_type]
             b_col_obj.nifcollision.motion_system = NifFormat.MotionSystem._enumkeys[bhkshape.motion_system]
             try:
-                b_col_obj.niftools.bsxFlags = self.nif_import.bsxflags
+                b_col_obj.niftools.bsxflags = self.nif_import.bsxflags
+                b_col_obj.niftools.objectflags = self.nif_import.objectflags
             except:
                 pass
             try:
@@ -186,7 +187,7 @@ class bhkshape_import():
         return collision_objs
 
 
-    def import_bhkbox_shape(self, bhkshape, upbflags="", bsxflags=2):
+    def import_bhkbox_shape(self, bhkshape):
         """Import a BhkBox block as a simple Box collision object"""
         # create box
         minx = -bhkshape.dimensions.x * self.HAVOK_SCALE
@@ -236,7 +237,7 @@ class bhkshape_import():
         return [ b_obj ]
 
 
-    def import_bhksphere_shape(self, bhkshape, upbflags="", bsxflags=2):
+    def import_bhksphere_shape(self, bhkshape):
         """Import a BhkSphere block as a simple uv-sphere collision object"""
 
         b_radius = bhkshape.radius * self.HAVOK_SCALE
@@ -261,7 +262,7 @@ class bhkshape_import():
         return [ b_obj ]
 
 
-    def import_bhkcapsule_shape(self, bhkshape, upbflags="", bsxflags=2):
+    def import_bhkcapsule_shape(self, bhkshape):
         """Import a BhkCapsule block as a simple cylinder collision object"""
 
         # create capsule mesh
@@ -347,7 +348,7 @@ class bhkshape_import():
         return [ b_obj ]
 
 
-    def import_bhkconvex_vertices_shape(self, bhkshape, upbflags="", bsxflags=2):
+    def import_bhkconvex_vertices_shape(self, bhkshape):
         """Import a BhkConvexVertex block as a convex hull collision object"""
 
         # find vertices (and fix scale)
@@ -401,7 +402,7 @@ class bhkshape_import():
         return [ b_obj ]
 
 
-    def import_nitristrips(self, bhkshape, upbflags="", bsxflags=2):
+    def import_nitristrips(self, bhkshape):
         """Import a NiTriStrips block as a Triangle-Mesh collision object"""
 
         b_mesh = bpy.data.meshes.new('poly')
@@ -448,7 +449,7 @@ class bhkshape_import():
 
         return [ b_obj ]
 
-    def import_bhkpackednitristrips_shape(self, bhkshape, upbflags="", bsxflags=2):
+    def import_bhkpackednitristrips_shape(self, bhkshape):
         """Import a BhkPackedNiTriStrips block as a Triangle-Mesh collision object"""
 
         # create mesh for each sub shape

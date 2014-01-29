@@ -249,11 +249,11 @@ class ObjectHelper():
 
         # default node flags
         if b_obj_type in ['EMPTY', 'MESH', 'ARMATURE']:
-            if (b_obj_type == 'MESH') and (b_obj.niftools.objectflags != 2):
+            if (b_obj_type == 'MESH') and (b_obj.niftools.objectflags != 0):
                 node.flags = b_obj.niftools.objectflags
-            elif (b_obj_type == 'ARMATURE') and (b_obj.niftools.boneflags != 2):
+            elif (b_obj_type == 'ARMATURE') and (b_obj.niftools.boneflags != 0):
                 node.flags = b_obj.niftools.objectflags
-            elif (b_obj_type == 'ARMATURE') and (b_obj.niftools.boneflags == 2) and (b_obj.parent == None):
+            elif (b_obj_type == 'ARMATURE') and (b_obj.niftools.boneflags == 0) and (b_obj.parent == None):
                 node.flags = b_obj.niftools.boneflags
             else:
                 if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
@@ -623,7 +623,7 @@ class MeshHelper():
                 trishape.name = self.nif_export.objecthelper.get_full_name(trishape.name)
 
             #Trishape Flags...
-            if (b_obj.type == 'MESH') and (b_obj.niftools.objectflags != 2):
+            if (b_obj.type == 'MESH') and (b_obj.niftools.objectflags != 0):
                 trishape.flags = b_obj.niftools.objectflags
             else:
                 if self.properties.game in ('OBLIVION', 'FALLOUT_3'):

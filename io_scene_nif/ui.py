@@ -80,12 +80,12 @@ class NiftoolsBonePanel(Panel):
         
 
     def draw(self, context):
-        nif_obj_props = context.bone.niftools
+        nif_bone_props = context.bone.niftools_bone
         
         layout = self.layout
         row = layout.column()
         
-        row.prop(nif_obj_props, "boneflags")
+        row.prop(nif_bone_props, "boneflags")
     
 
 
@@ -108,7 +108,7 @@ class NifBsShaderObjectPanel(Panel):
         row = layout.column()
         
         row.prop(nif_obj_props, "shadertype")
-        
+                
         row.prop(nif_obj_props, "specular")
         row.prop(nif_obj_props, "skin")
         row.prop(nif_obj_props, "lowdetail")
