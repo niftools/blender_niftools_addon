@@ -150,17 +150,16 @@ class bhkshape_import():
         for b_col_obj in collision_objs:
             ''' What are these used for
             ob.rbFlags = (
-                Blender.Object.RBFlags.ACTOR |
-                Blender.Object.RBFlags.DYNAMIC |
-                Blender.Object.RBFlags.RIGIDBODY |
-                Blender.Object.RBFlags.BOUNDS)
-            '''
-            #if bhkshape == NifFormat.bhkRigidBody:
+            Blender.Object.RBFlags.RIGIDBODY
+            Blender.Object.RBFlags.ACTOR'''
             bpy.ops.rigidbody.object_add(type='ACTIVE')
+            
+            '''Blender.Object.RBFlags.DYNAMIC'''
+            b_col_obj.rigid_body.enabled = True
+            
+            ''''Blender.Object.RBFlags.BOUNDS)'''
             bpy.ops.object.modifier_add(type='COLLISION')
             bpy.ops.object.forcefield_toggle()
-            #b_col_obj.rigid_body = b_col_obj_rigidbody
-                
             
             if bhkshape.mass > 0.0001:
                 # for physics emulation
@@ -179,13 +178,18 @@ class bhkshape_import():
                 b_col_obj.niftools.upb = self.nif_import.upbflags
             except:
                 pass
+            b_col_obj.rotation_quaternion.x = bhkshape.rotation.x
+            b_col_obj.rotation_quaternion.y = bhkshape.rotation.y
+            b_col_obj.rotation_quaternion.z = bhkshape.rotation.z
+            b_col_obj.rotation_quaternion.w = bhkshape.rotation.w
             # note: also imported as rbMass, but hard to find by users
             # so we import it as a property, and this is also what will
             # be re-exported
             b_col_obj.rigid_body.mass = bhkshape.mass / len(collision_objs)
-            b_col_obj.rigid_body.enabled = True
+            
             b_col_obj.rigid_body.use_deactivation = True
             b_col_obj.rigid_body.friction = bhkshape.friction
+            b_col_obj.rigid_body.restitution = bhkshape.restitution
             #b_col_obj.rigid_body. = bhkshape.
             b_col_obj.rigid_body.linear_damping = bhkshape.linear_damping
             b_col_obj.rigid_body.angular_damping = bhkshape.angular_damping
@@ -198,7 +202,7 @@ class bhkshape_import():
             #b_col_obj.field.distance_min = bhkshape.
             
             b_col_obj.field.use_max_distance = True
-            #b_col_obj.field.distance_max = bhkshape.
+            b_col_obj.field.distance_max = bhkshape.max_linear_velocity
             
             b_col_obj.field.falloff_power = bhkshape.motion_system
             
