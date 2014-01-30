@@ -271,7 +271,7 @@ class NifExport(NifCommon):
                 if has_controllers:
                     self.info("Defining default animation group.")
                     # write the animation group text buffer
-                    animtxt = Blender.Text.New("Anim")
+                    animtxt = bpy.data.texts.new("Anim")
                     animtxt.write("%i/Idle: Start/Idle: Loop Start\n%i/Idle: Loop Stop/Idle: Stop" %
                                   (self.context.scene.frame_start, self.context.scene.frame_end))
 
