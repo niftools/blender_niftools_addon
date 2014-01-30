@@ -36,7 +36,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ***** END LICENSE BLOCK *****
-
+import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.utility import nif_utils
