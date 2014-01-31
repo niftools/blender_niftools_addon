@@ -515,6 +515,10 @@ class NifImport(NifCommon):
                                 " (out of %i) from collision mesh"
                                 % (numdel, numverts))
                         '''
+                        b_mesh.validate()
+                        b_mesh.update()
+
+
 
             # find children that aren't part of the geometry group
             b_children_list = []
@@ -812,7 +816,7 @@ class NifImport(NifCommon):
         n_verts = niData.vertices
 
         # polygons
-        n_tris = [list(tri) for tri in niData.get_triangles()]
+        poly_gens = [list(tri) for tri in niData.get_triangles()]
 
         # "sticky" UV coordinates: these are transformed in Blender UV's
         n_uv = list()
@@ -992,24 +996,24 @@ class NifImport(NifCommon):
         del n_map
 
         # Adds the polygons to the mesh
-        f_map = [None]*len(n_tris)
+        f_map = [None]*len(poly_gens)
         b_f_index = len(b_mesh.polygons)
         bf2_index = len(b_mesh.polygons)
         bl_index = len(b_mesh.loops)
-        poly_count = len(n_tris)
+        poly_count = len(poly_gens)
         b_mesh.polygons.add(poly_count)
         b_mesh.loops.add(poly_count * 3)
         num_new_faces = 0 # counter for debugging
         unique_faces = list() # to avoid duplicate polygons
         tri_point_list = list()
-        for i, f in enumerate(n_tris):
+        for i, f in enumerate(poly_gens):
             # get face index
             f_verts = [v_map[vert_index] for vert_index in f]
             if tuple(f_verts) in unique_faces:
                 continue
             unique_faces.append(tuple(f_verts))
             f_map[i] = b_f_index
-            tri_point_list.append(len(n_tris[i]))
+            tri_point_list.append(len(poly_gens[i]))
             ls_list = list()
             b_f_index += 1
             num_new_faces += 1
@@ -1021,11 +1025,11 @@ class NifImport(NifCommon):
             b_mesh.polygons[f_map[i]].loop_start = ls_list[(f_map[i] - bf2_index)]
             b_mesh.polygons[f_map[i]].loop_total = len(unique_faces[(f_map[i] - bf2_index)])
             l = 0
-            lp_points = [v_map[loop_point] for loop_point in n_tris[(f_map[i] - bf2_index)]]
-            while l < (len(n_tris[(f_map[i] - bf2_index)])):
+            lp_points = [v_map[loop_point] for loop_point in poly_gens[(f_map[i] - bf2_index)]]
+            while l < (len(poly_gens[(f_map[i] - bf2_index)])):
                 b_mesh.loops[(l + (bl_index))].vertex_index = lp_points[l]
                 l += 1
-            bl_index += (len(n_tris[(f_map[i] - bf2_index)]))
+            bl_index += (len(poly_gens[(f_map[i] - bf2_index)]))
             
         # at this point, deleted polygons (degenerate or duplicate)
         # satisfy f_map[i] = None
@@ -1096,7 +1100,7 @@ class NifImport(NifCommon):
                     uv_faces = None
                 if uv_faces:
                     uvl = b_mesh.uv_layers.active.data[:]
-                    for b_f_index, f in enumerate(n_tris):
+                    for b_f_index, f in enumerate(poly_gens):
                         if b_f_index is None:
                             continue
                         uvlist = f
