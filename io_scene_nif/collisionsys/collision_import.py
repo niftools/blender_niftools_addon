@@ -291,10 +291,6 @@ class bhkshape_import():
         poly_gens = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,0,1,5],[7,6,2,3]]
         b_mesh = poly_gen.col_poly_gen(b_mesh, poly_gens)
 
-        '''this is bad do not use it'''
-        #bpy.ops.mesh.primitive_uv_sphere_add(segments=8, ring_count=8, size=b_radius)
-        '''continuing'''
-
         b_obj = bpy.data.objects.new('sphere', b_mesh)
         bpy.context.scene.objects.link(b_obj)
         scn = bpy.context.scene
@@ -348,18 +344,6 @@ class bhkshape_import():
         b_mesh.update()
 
         # link box to scene and set transform
-
-        """
-        vert_index = 0
-        for x in [minx,maxx]:
-            for y in [miny,maxy]:
-                for z in [minz,maxz]:
-                    vert_index += 1
-
-
-        bpy.ops.mesh.primitive_cylinder_add(vertices=vert_index, radius=bhkshape.radius*self.HAVOK_SCALE, depth=(length*14))
-        b_obj = bpy.context.active_object
-        """
         b_obj = bpy.data.objects.new('Capsule', b_mesh)
         bpy.context.scene.objects.link(b_obj)
         scn = bpy.context.scene
@@ -436,26 +420,15 @@ class bhkshape_import():
         scn.objects.active = b_obj
 
         b_obj.show_bounds = True
+        b_obj.show_wire = True
         b_obj.draw_type = 'BOUNDS'
-        b_obj.draw_bounds_type = 'SPHERE'
+        b_obj.draw_bounds_type = 'BOX'
         b_obj.game.use_collision_bounds = True
         b_obj.game.collision_bounds_type = 'CONVEX_HULL'
 
         # radius: quick estimate
         b_obj.game.radius = bhkshape.radius
         b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
-
-        # also remove duplicate vertices
-        numverts = len(b_mesh.vertices)
-        # 0.005 = 1/200
-
-        '''
-        numdel = b_mesh.remove_doubles(0.005)
-        if numdel:
-            self.info(
-                "Removed %i duplicate vertices"
-                " (out of %i) from collision mesh" % (numdel, numverts))
-        '''
 
         # Recalculate mesh to render correctly
         b_mesh = b_obj.data
@@ -493,19 +466,6 @@ class bhkshape_import():
         # radius: quick estimate
         b_obj.game.radius = bhkshape.radius
         b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[self.havok_mat]
-
-
-        # also remove duplicate vertices
-        numverts = len(b_mesh.vertices)
-        # 0.005 = 1/200
-        '''TODO: FIXME:
-        numdel = b_mesh.remDoubles(0.005)
-        if numdel:
-            self.info(
-                "Removed %i duplicate vertices"
-                " (out of %i) from collision mesh"
-                % (numdel, numverts))
-        '''
 
         # Recalculate mesh to render correctly
         b_mesh = b_obj.data
@@ -579,19 +539,6 @@ class bhkshape_import():
             b_obj.game.radius = min(vert.co.length for vert in b_mesh.vertices)
             # set material
             b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[subshape.material]
-
-            # also remove duplicate vertices
-            numverts = len(b_mesh.vertices)
-            # 0.005 = 1/200
-            # bpy.ops.object.editmode_toggle()
-            '''
-            b_mesh.remove_doubles(limit=0.005)
-            if numdel:
-                self.info(
-                    "Removed %i duplicate vertices"
-                    " (out of %i) from collision mesh"
-                    % (numdel, numverts))
-            '''
 
             # Recalculate mesh to render correctly
             b_mesh = b_obj.data
