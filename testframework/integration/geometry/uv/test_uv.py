@@ -67,7 +67,7 @@ class TestBaseUV(SingleNif):
         '''
         b_obj = bpy.data.objects[self.b_name]
         b_mesh = b_obj.data
-        nose.tools.assert_equal(len(b_mesh.tessface_uv_textures), 1)
+        nose.tools.assert_equal(len(b_mesh.uv_textures), 1)
         nose.tools.assert_equal()
         '''
         # TODO_3.0 - Separate out the UV writing from requiring a texture.

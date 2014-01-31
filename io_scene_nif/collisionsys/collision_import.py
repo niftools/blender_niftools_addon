@@ -38,7 +38,6 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-from bpy_extras.io_utils import unpack_list, unpack_face_list
 import mathutils
 
 from functools import reduce
@@ -239,20 +238,18 @@ class bhkshape_import():
                     vert_list[vert_index] = [x,y,z]
                     vert_index += 1
 
-        tessfaces = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,0,1,5],[7,6,2,3]]
-        face_index = 0
-
-        for x in range(len(tessfaces)):
-            b_mesh.tessfaces.add(1)
-            b_mesh.tessfaces[-1].vertices_raw = tessfaces[face_index]
-            face_index += 1
+        poly_gens = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,0,1,5],[7,6,2,3]]
+        b_mesh = poly_gen.col_poly_gen(b_mesh, poly_gens)
 
         # link box to scene and set transform
         b_obj = bpy.data.objects.new('box', b_mesh)
         bpy.context.scene.objects.link(b_obj)
+        scn = bpy.context.scene
+        scn.objects.active = b_obj
 
         # set bounds type
-        b_obj.draw_type = 'WIRE'
+        b_obj.show_bounds = True
+        b_obj.draw_type = 'BOUNDS'
         b_obj.draw_bounds_type = 'BOX'
         b_obj.game.use_collision_bounds = True
         b_obj.game.collision_bounds_type = 'BOX'
@@ -262,21 +259,50 @@ class bhkshape_import():
         # Recalculate mesh to render correctly
         b_mesh.validate()
         b_mesh.update()
-        b_obj.select=True
+        
 
         return [ b_obj ]
 
 
     def import_bhksphere_shape(self, bhkshape):
         """Import a BhkSphere block as a simple uv-sphere collision object"""
-
+        # create sphere
         b_radius = bhkshape.radius * self.HAVOK_SCALE
+                
+        minx = -b_radius
+        maxx = +b_radius
+        miny = -b_radius
+        maxy = +b_radius
+        minz = -b_radius
+        maxz = +b_radius
 
-        bpy.ops.mesh.primitive_uv_sphere_add(segments=8, ring_count=8, size=b_radius)
-        b_obj = bpy.context.scene.objects.active
+        b_mesh = bpy.data.meshes.new('sphere')
+        vert_list = {}
+        vert_index = 0
+
+        for x in [minx, maxx]:
+            for y in [miny, maxy]:
+                for z in [minz, maxz]:
+                    b_mesh.vertices.add(1)
+                    b_mesh.vertices[-1].co = (x,y,z)
+                    vert_list[vert_index] = [x,y,z]
+                    vert_index += 1
+
+        poly_gens = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,0,1,5],[7,6,2,3]]
+        b_mesh = poly_gen.col_poly_gen(b_mesh, poly_gens)
+
+        '''this is bad do not use it'''
+        #bpy.ops.mesh.primitive_uv_sphere_add(segments=8, ring_count=8, size=b_radius)
+        '''continuing'''
+
+        b_obj = bpy.data.objects.new('sphere', b_mesh)
+        bpy.context.scene.objects.link(b_obj)
+        scn = bpy.context.scene
+        scn.objects.active = b_obj
 
         # set bounds type
-        b_obj.draw_type = 'WIRE'
+        b_obj.show_bounds = True
+        b_obj.draw_type = 'BOUNDS'
         b_obj.draw_bounds_type = 'SPHERE'
         b_obj.game.use_collision_bounds = True
         b_obj.game.collision_bounds_type = 'SPHERE'
@@ -287,20 +313,20 @@ class bhkshape_import():
         b_mesh = b_obj.data
         b_mesh.validate()
         b_mesh.update()
-        b_obj.select=True
+        
 
         return [ b_obj ]
 
 
     def import_bhkcapsule_shape(self, bhkshape):
         """Import a BhkCapsule block as a simple cylinder collision object"""
-
+        b_radius = bhkshape.radius
         # create capsule mesh
         length = (bhkshape.first_point - bhkshape.second_point).norm()
-        minx = miny = -bhkshape.radius * self.HAVOK_SCALE
-        maxx = maxy = +bhkshape.radius * self.HAVOK_SCALE
-        minz = -(length + 2*bhkshape.radius) * 3.5
-        maxz = +(length + 2*bhkshape.radius) * 3.5
+        minx = miny = -b_radius * self.HAVOK_SCALE
+        maxx = maxy = +b_radius * self.HAVOK_SCALE
+        minz = -(length + 2*b_radius) * 3.5
+        maxz = +(length + 2*b_radius) * 3.5
 
         b_mesh = bpy.data.meshes.new('capsule')
         vert_list = {}
@@ -314,11 +340,12 @@ class bhkshape_import():
                     vert_list[vert_index] = [x,y,z]
                     vert_index += 1
 
-        tessfaces = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]]
+        poly_gens = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]]
+        b_mesh = poly_gen.col_poly_gen(b_mesh, poly_gens)
 
-        for x in range(len(tessfaces)):
-            b_mesh.tessfaces.add(1)
-            b_mesh.tessfaces[-1].vertices
+        # Recalculate mesh to render correctly
+        b_mesh.validate()
+        b_mesh.update()
 
         # link box to scene and set transform
 
@@ -335,9 +362,11 @@ class bhkshape_import():
         """
         b_obj = bpy.data.objects.new('Capsule', b_mesh)
         bpy.context.scene.objects.link(b_obj)
-        b_obj = bpy.context.scene.objects.active
+        scn = bpy.context.scene
+        scn.objects.active = b_obj
 
         # set bounds type
+        b_obj.show_bounds = True
         b_obj.draw_type = 'BOUNDS'
         b_obj.draw_bounds_type = 'CYLINDER'
         b_obj.game.use_collision_bounds = True
@@ -371,9 +400,10 @@ class bhkshape_import():
         b_obj.matrix_local = transform
 
         # Recalculate mesh to render correctly
+        b_mesh = b_obj.data
         b_mesh.validate()
         b_mesh.update()
-        b_obj.select=True
+        
 
         # return object
         return [ b_obj ]
@@ -396,17 +426,18 @@ class bhkshape_import():
             b_mesh.vertices.add(1)
             b_mesh.vertices[-1].co = n_vert
 
-        for n_triangle in n_triangles:
-            b_mesh.tessfaces.add(1)
-            b_mesh.tessfaces[-1].vertices = n_triangle
+        poly_gens = n_triangles
+        b_mesh = poly_gen.col_poly_gen(b_mesh, poly_gens)
 
         # link mesh to scene and set transform
         b_obj = bpy.data.objects.new('Convexpoly', b_mesh)
         bpy.context.scene.objects.link(b_obj)
-        b_obj = bpy.context.scene.objects.active
+        scn = bpy.context.scene
+        scn.objects.active = b_obj
 
-        b_obj.show_wire = True
-        b_obj.draw_type = 'WIRE'
+        b_obj.show_bounds = True
+        b_obj.draw_type = 'BOUNDS'
+        b_obj.draw_bounds_type = 'SPHERE'
         b_obj.game.use_collision_bounds = True
         b_obj.game.collision_bounds_type = 'CONVEX_HULL'
 
@@ -427,9 +458,10 @@ class bhkshape_import():
         '''
 
         # Recalculate mesh to render correctly
+        b_mesh = b_obj.data
         b_mesh.validate()
         b_mesh.update()
-        b_obj.select=True
+        
 
         return [ b_obj ]
 
@@ -444,17 +476,18 @@ class bhkshape_import():
             b_mesh.vertices[-1].co = (n_vert.x, n_vert.y, n_vert.z)
 
         for n_triangle in list(bhkshape.get_triangles()):
-            b_mesh.tessfaces.add(1)
-            b_mesh.tessfaces[-1].vertices = n_triangle
+            b_mesh.polygons.add(1)
+            b_mesh.polygons[-1].vertices = n_triangle
 
         # link mesh to scene and set transform
         b_obj = bpy.data.objects.new('poly', b_mesh)
         bpy.context.scene.objects.link(b_obj)
-
+        scn = bpy.context.scene
+        scn.objects.active = b_obj
         # set bounds type
-        b_obj.draw_type = 'WIRE'
+        b_obj.show_bounds = True
+        b_obj.draw_type = 'BOUNDS'
         b_obj.draw_bounds_type = 'BOX'
-        b_obj.show_wire = True
         b_obj.game.use_collision_bounds = True
         b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
         # radius: quick estimate
@@ -475,9 +508,10 @@ class bhkshape_import():
         '''
 
         # Recalculate mesh to render correctly
+        b_mesh = b_obj.data
         b_mesh.validate()
         b_mesh.update()
-        b_obj.select=True
+        
 
         return [ b_obj ]
 
@@ -507,8 +541,8 @@ class bhkshape_import():
                 if ((vertex_offset <= hktriangle.triangle.v_1)
                     and (hktriangle.triangle.v_1
                          < vertex_offset + subshape.num_vertices)):
-                    b_mesh.tessfaces.add(1)
-                    b_mesh.tessfaces[-1].vertices = [
+                    b_mesh.polygons.add(1)
+                    b_mesh.polygons[-1].vertices = [
                                              hktriangle.triangle.v_1 - vertex_offset,
                                              hktriangle.triangle.v_2 - vertex_offset,
                                              hktriangle.triangle.v_3 - vertex_offset]
@@ -516,25 +550,29 @@ class bhkshape_import():
                     continue
                 # check face normal
                 align_plus = sum(abs(x)
-                                 for x in ( b_mesh.tessfaces[-1].normal[0] + hktriangle.normal.x,
-                                            b_mesh.tessfaces[-1].normal[1] + hktriangle.normal.y,
-                                            b_mesh.tessfaces[-1].normal[2] + hktriangle.normal.z ))
+                                 for x in ( b_mesh.polygons[-1].normal[0] + hktriangle.normal.x,
+                                            b_mesh.polygons[-1].normal[1] + hktriangle.normal.y,
+                                            b_mesh.polygons[-1].normal[2] + hktriangle.normal.z ))
                 align_minus = sum(abs(x)
-                                  for x in ( b_mesh.tessfaces[-1].normal[0] - hktriangle.normal.x,
-                                             b_mesh.tessfaces[-1].normal[1] - hktriangle.normal.y,
-                                             b_mesh.tessfaces[-1].normal[2] - hktriangle.normal.z ))
+                                  for x in ( b_mesh.polygons[-1].normal[0] - hktriangle.normal.x,
+                                             b_mesh.polygons[-1].normal[1] - hktriangle.normal.y,
+                                             b_mesh.polygons[-1].normal[2] - hktriangle.normal.z ))
                 # fix face orientation
                 if align_plus < align_minus:
-                    b_mesh.tessfaces[-1].vertices = ( b_mesh.tessfaces[-1].vertices[1],
-                                                  b_mesh.tessfaces[-1].vertices[0],
-                                                  b_mesh.tessfaces[-1].vertices[2] )
+                    b_mesh.polygons[-1].vertices = ( b_mesh.polygons[-1].vertices[1],
+                                                  b_mesh.polygons[-1].vertices[0],
+                                                  b_mesh.polygons[-1].vertices[2] )
 
             # link mesh to scene and set transform
             b_obj = bpy.data.objects.new('poly%i' % subshape_num, b_mesh)
             bpy.context.scene.objects.link(b_obj)
+            scn = bpy.context.scene
+            scn.objects.active = b_obj
 
             # set bounds type
-            b_obj.draw_type = 'WIRE'
+            b_obj.show_bounds = True
+            b_obj.draw_type = 'BOUNDS'
+            b_obj.draw_bounds_type = 'BOX'
             b_obj.game.use_collision_bounds = True
             b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
             # radius: quick estimate
@@ -556,9 +594,10 @@ class bhkshape_import():
             '''
 
             # Recalculate mesh to render correctly
+            b_mesh = b_obj.data
             b_mesh.validate()
             b_mesh.update()
-            b_obj.select=True
+            
 
             vertex_offset += subshape.num_vertices
             hk_objects.append(b_obj)
@@ -609,15 +648,20 @@ class bound_import():
                     b_mesh.vertices.add(1)
                     b_mesh.vertices[-1].co = (x,y,z)
 
-        tessfaces = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]]
-        b_mesh.tessfaces.add(len(tessfaces))
-        b_mesh.tessfaces.foreach_set("vertices_raw", unpack_face_list(tessfaces))
+        poly_gens = [[0,1,3,2],[6,7,5,4],[0,2,6,4],[3,1,5,7],[4,5,1,0],[7,6,2,3]]
+        b_mesh = poly_gen.col_poly_gen(b_mesh, poly_gens)
 
         # link box to scene and set transform
         if isinstance(bbox, NifFormat.BSBound):
             b_obj = bpy.data.objects.new('BSBound', b_mesh)
+            bpy.context.scene.objects.link(b_obj)
+            scn = bpy.context.scene
+            scn.objects.active = b_obj
         else:
             b_obj = bpy.data.objects.new('Bounding Box', b_mesh)
+            bpy.context.scene.objects.link(b_obj)
+            scn = bpy.context.scene
+            scn.objects.active = b_obj
             # XXX this is set in the import_branch() method
             # ob.matrix_local = mathutils.Matrix(
             #    *bbox.bounding_box.rotation.as_list())
@@ -628,7 +672,63 @@ class bound_import():
         b_obj.show_bounds = True
         b_obj.draw_type = 'BOUNDS'
         b_obj.draw_bounds_type = 'BOX'
+        b_obj.game.use_collision_bounds = True
+        b_obj.game.collision_bounds_type = 'BOX'
         # quick radius estimate
         b_obj.game.radius = max(maxx, maxy, maxz)
-        bpy.context.scene.objects.link(b_obj)
+        
+        b_mesh = b_obj.data
+        b_mesh.validate()
+        b_mesh.update()
+        
         return b_obj
+
+
+class poly_gen():
+    
+    def __init__(self, parent):
+        self.nif_import = parent
+
+    def col_poly_gen(self, poly_gens):
+        f_map = [None]*len(poly_gens)
+        b_f_index = len(self.polygons)
+        bf2_index = len(self.polygons)
+        bl_index = len(self.loops)
+        poly_count = len(poly_gens)
+        self.polygons.add(poly_count)
+        llp_count_list = list()
+        for l_count in poly_gens:
+            for lp_count in l_count:
+                llp_count_list.append(lp_count)
+        self.loops.add(len(llp_count_list))
+        num_new_faces = 0 # counter for debugging
+        unique_faces = list() # to avoid duplicate polygons
+        tri_point_list = list()
+        for i, f in enumerate(poly_gens):
+            # get face index
+            f_verts = [vert_index for vert_index in f]
+            if tuple(f_verts) in unique_faces:
+                continue
+            unique_faces.append(tuple(f_verts))
+            f_map[i] = b_f_index
+            tri_point_list.append(len(poly_gens[i]))
+            ls_list = list()
+            b_f_index += 1
+            num_new_faces += 1
+        for ls1 in range(0, num_new_faces * (tri_point_list[len(ls_list)]), (tri_point_list[len(ls_list)])):
+            ls_list.append((ls1 + bl_index))
+        for i in range(len(unique_faces)):
+            if f_map[i] is None:
+                continue
+            self.polygons[f_map[i]].loop_start = ls_list[(f_map[i] - bf2_index)]
+            self.polygons[f_map[i]].loop_total = len(unique_faces[(f_map[i] - bf2_index)])
+            l = 0
+            lp_points = [loop_point for loop_point in poly_gens[(f_map[i] - bf2_index)]]
+            while l < (len(poly_gens[(f_map[i] - bf2_index)])):
+                self.loops[(l + (bl_index))].vertex_index = lp_points[l]
+                l += 1
+            bl_index += (len(poly_gens[(f_map[i] - bf2_index)]))            
+        return self
+    
+    
+    

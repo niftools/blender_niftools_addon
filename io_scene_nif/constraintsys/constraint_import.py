@@ -113,6 +113,8 @@ class Constraint():
 
             # add the constraint as a rigid body joint
             b_constr = b_hkobj.constraints.new('RIGID_BODY_JOINT')
+            b_constr.name = b_hkobj.name
+            b_constr.show_pivot = True
 
             # note: rigidbodyjoint parameters (from Constraint.c)
             # CONSTR_RB_AXX 0.0
@@ -148,11 +150,11 @@ class Constraint():
             b_constr.target = \
                 self.nif_import.dict_havok_objects[hkconstraint.entities[1]][0]
             # set rigid body type (generic)
-            b_constr.pivot_type = 'BALL'
+            b_constr.pivot_type = 'GENERIC_6_DOF'
             # limiting parameters (limit everything)
-            b_constr.use_limit_x = True
-            b_constr.use_limit_y = True
-            b_constr.use_limit_z = True
+            b_constr.use_angular_limit_x = True
+            b_constr.use_angular_limit_y = True
+            b_constr.use_angular_limit_z = True
 
             # get pivot point
             pivot = mathutils.Vector((
