@@ -1334,6 +1334,21 @@
                 col_filter = b_obj.get('ColFilter')
 '''
 
+#removed from collision generation blocks by Gshostwalker71
+'''
+                        numverts = len(b_mesh.vertices)
+                        # 0.005 = 1/200
+                        numdel = b_mesh.remDoubles(0.005)
+                        if numdel:
+                            self.info(
+                                "Removed %i duplicate vertices"
+                                " (out of %i) from collision mesh"
+                                % (numdel, numverts))
+ '''
+
+
+
+
 
 #Aaron1178 collision export stuff
 '''
