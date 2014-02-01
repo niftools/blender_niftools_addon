@@ -505,16 +505,6 @@ class NifImport(NifCommon):
                         b_obj.niftools.objectflags = niBlock.flags
                         # also remove duplicate vertices
                         b_mesh = b_obj.data
-                        numverts = len(b_mesh.vertices)
-                        # 0.005 = 1/200
-                        '''
-                        numdel = b_mesh.remDoubles(0.005)
-                        if numdel:
-                            self.info(
-                                "Removed %i duplicate vertices"
-                                " (out of %i) from collision mesh"
-                                % (numdel, numverts))
-                        '''
                         b_mesh.validate()
                         b_mesh.update()
 
