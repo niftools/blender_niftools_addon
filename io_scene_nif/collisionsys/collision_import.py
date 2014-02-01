@@ -352,9 +352,9 @@ class bhkshape_import():
         # set bounds type
         b_obj.show_bounds = True
         b_obj.draw_type = 'BOUNDS'
-        b_obj.draw_bounds_type = 'CYLINDER'
+        b_obj.draw_bounds_type = 'CAPSULE'
         b_obj.game.use_collision_bounds = True
-        b_obj.game.collision_bounds_type = 'CYLINDER'
+        b_obj.game.collision_bounds_type = 'CAPSULE'
         b_obj.game.radius = bhkshape.radius*self.HAVOK_SCALE
         b_obj.nifcollision.havok_material = NifFormat.HavokMaterial._enumkeys[bhkshape.material]
 
@@ -448,9 +448,8 @@ class bhkshape_import():
             b_mesh.vertices.add(1)
             b_mesh.vertices[-1].co = (n_vert.x, n_vert.y, n_vert.z)
 
-        for n_triangle in list(bhkshape.get_triangles()):
-            b_mesh.polygons.add(1)
-            b_mesh.polygons[-1].vertices = n_triangle
+        poly_gens = [[x,y,z,] for x,y,z in list(bhkshape.get_triangles())]
+        b_mesh = poly_gen.col_poly_gen(b_mesh, poly_gens)
 
         # link mesh to scene and set transform
         b_obj = bpy.data.objects.new('poly', b_mesh)
