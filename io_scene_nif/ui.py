@@ -162,6 +162,7 @@ class NifObjectPanel(Panel):
         row = layout.column()
         row.prop(nif_obj_props, "upb")
         row.prop(nif_obj_props, "bsxflags")
+        row.prop(nif_obj_props, "consistency_flags")
         row.prop(nif_obj_props, "objectflags")
         row.prop(nif_obj_props, "longname")
         
