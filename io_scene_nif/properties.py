@@ -275,10 +275,16 @@ class NiftoolsObjectProps(bpy.types.PropertyGroup):
                         name = 'Nif LongName'
                         )
 
+        cls.consistency_flags = StringProperty(
+                        name = 'Consistency Flag',
+                        description = 'Controls animation type',
+                        default = 'CT_OOPS'
+                        )
+
         cls.objectflags = IntProperty(
                         name = 'Object Flag',
                         description = 'Controls animation and collision',
-                        default = 0 # 2 = Bit 1, enable collision
+                        default = 0
                         )
 
         cls.bsxflags = IntProperty(

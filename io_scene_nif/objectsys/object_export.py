@@ -251,10 +251,10 @@ class ObjectHelper():
         if b_obj_type in ['EMPTY', 'MESH', 'ARMATURE']:
             if (b_obj_type == 'MESH') and (b_obj.niftools.objectflags != 0):
                 node.flags = b_obj.niftools.objectflags
-            elif (b_obj_type == 'ARMATURE') and (b_obj.niftools.boneflags != 0):
+            elif (b_obj_type == 'ARMATURE') and (b_obj.niftools.objectflags != 0):
                 node.flags = b_obj.niftools.objectflags
-            elif (b_obj_type == 'ARMATURE') and (b_obj.niftools.boneflags == 0) and (b_obj.parent == None):
-                node.flags = b_obj.niftools.boneflags
+            elif (b_obj_type == 'ARMATURE') and (b_obj.niftools.objectflags == 0) and (b_obj.parent == None):
+                node.flags = b_obj.niftools.objectflags
             else:
                 if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
                     node.flags = 0x000E
@@ -957,7 +957,7 @@ class MeshHelper():
             trishape.data = tridata
 
             # flags
-            tridata.consistency_flags = NifFormat.ConsistencyType.CT_STATIC
+            tridata.consistency_flags = b_obj.niftools.consistency_flags
 
             # data
             tridata.num_vertices = len(vertlist)
@@ -1338,7 +1338,7 @@ class MeshHelper():
                         morphctrl.start_time = ctrlStart
                         morphctrl.stop_time = ctrlStop
                         # fix data consistency type
-                        tridata.consistency_flags = NifFormat.ConsistencyType.CT_VOLATILE
+                        tridata.consistency_flags = b_obj.niftools.consistency_flags
 
 
     def smooth_mesh_seams(self, b_objs):
