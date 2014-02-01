@@ -413,6 +413,9 @@ class NifImport(NifCommon):
             # note: transform matrix is set during import
             b_obj = self.import_mesh(niBlock)
             b_obj.niftools.objectflags = niBlock.flags
+            if niBlock.data.consistency_flags in NifFormat.ConsistencyType._enumvalues:
+                cf_index = NifFormat.ConsistencyType._enumvalues.index(niBlock.data.consistency_flags)
+                b_obj.niftools.consistency_flags = NifFormat.ConsistencyType._enumkeys[cf_index]
             # skinning? add armature modifier
             if niBlock.skin_instance:
                 self.armaturehelper.append_armature_modifier(b_obj, b_armature)
