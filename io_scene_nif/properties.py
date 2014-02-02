@@ -278,7 +278,6 @@ class NiftoolsObjectProps(bpy.types.PropertyGroup):
         cls.consistency_flags = StringProperty(
                         name = 'Consistency Flag',
                         description = 'Controls animation type',
-                        default = 'CT_OOPS'
                         )
 
         cls.objectflags = IntProperty(
@@ -297,16 +296,6 @@ class NiftoolsObjectProps(bpy.types.PropertyGroup):
                         name = 'UPB',
                         description = 'Commands for an optimizer?',
                         default = ''
-                        )
-
-        cls.LHMaxAngle = IntProperty(
-                        name = 'LHMaxAngle',
-                        description = 'Havok limited hinge max angle.',
-                        )
-
-        cls.LHMinAngle = IntProperty(
-                        name = 'LHMinAngle',
-                        description = 'Havok limited hinge min angle.',
                         )
 
         cls.LHMaxFriction = IntProperty(

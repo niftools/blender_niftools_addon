@@ -492,8 +492,14 @@ class NifImport(NifCommon):
                         b_obj = self.import_mesh(child,
                                                  group_mesh=b_obj,
                                                  applytransform=True)
+                        b_obj.niftools.objectflags = child.flags
+                        if child.data.consistency_flags in NifFormat.ConsistencyType._enumvalues:
+                            cf_index = NifFormat.ConsistencyType._enumvalues.index(child.data.consistency_flags)
+                            b_obj.niftools.consistency_flags = NifFormat.ConsistencyType._enumkeys[cf_index]
+  
+                    
                     b_obj.name = self.import_name(niBlock)
-                    b_obj.niftools.objectflags = niBlock.flags
+                    
                     # skinning? add armature modifier
                     if any(child.skin_instance
                            for child in geom_group):
@@ -1098,8 +1104,8 @@ class NifImport(NifCommon):
                             continue
                         uvlist = f
                         v1,v2,v3 = uvlist
-                        if v3 == 0:
-                            v1,v2,v3 = v3,v1,v2
+                        #if v3 == 0:
+                        #   v1,v2,v3 = v3,v1,v2
                         b_poly_index = b_mesh.polygons[b_f_index + bf2_index]
                         uvl[b_poly_index.loop_start].uv = n_uvco[v1]
                         uvl[b_poly_index.loop_start + 1].uv = n_uvco[v2]
