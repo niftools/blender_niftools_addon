@@ -249,6 +249,8 @@ class ObjectHelper():
 
         # default node flags
         if b_obj_type in ['EMPTY', 'MESH', 'ARMATURE']:
+            if (b_obj_type == 'EMPTY') and (b_obj.niftools.objectflags != 0):
+                node.flags = b_obj.niftools.objectflags
             if (b_obj_type == 'MESH') and (b_obj.niftools.objectflags != 0):
                 node.flags = b_obj.niftools.objectflags
             elif (b_obj_type == 'ARMATURE') and (b_obj.niftools.objectflags != 0):
@@ -957,7 +959,14 @@ class MeshHelper():
             trishape.data = tridata
 
             # flags
-            tridata.consistency_flags = b_obj.niftools.consistency_flags
+            if b_obj.niftools.consistency_flags in NifFormat.ConsistencyType._enumkeys:
+                cf_index = NifFormat.ConsistencyType._enumkeys.index(b_obj.niftools.consistency_flags)
+                tridata.consistency_flags = NifFormat.ConsistencyType._enumvalues[cf_index]
+            else:
+                tridata.consistency_flags = NifFormat.ConsistencyType.CT_STATIC
+                self.nif_export.warning(
+                    "%s has no consistency type set"
+                    "using default CT_STATIC." % b_obj)
 
             # data
             tridata.num_vertices = len(vertlist)
