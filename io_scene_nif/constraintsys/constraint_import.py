@@ -43,7 +43,7 @@ from pyffi.formats.nif import NifFormat
 import bpy
 import mathutils
 
-class Constraint():
+class constraint_import():
 
     def __init__(self, parent):
         self.nif_import = parent
