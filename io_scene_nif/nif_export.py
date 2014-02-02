@@ -45,7 +45,7 @@ from io_scene_nif.animationsys.animation_export import AnimationHelper
 from io_scene_nif.collisionsys.collision_export import bhkshape_export, bound_export
 from io_scene_nif.armaturesys.armature_export import Armature
 from io_scene_nif.propertysys.property_export import PropertyHelper
-from io_scene_nif.constraintsys.constraint_export import Constraint
+from io_scene_nif.constraintsys.constraint_export import constraint_export
 from io_scene_nif.texturesys.texture_export import TextureHelper
 from io_scene_nif.objectsys.object_export import ObjectHelper
 
@@ -101,7 +101,7 @@ class NifExport(NifCommon):
         self.armaturehelper = Armature(parent=self)
         self.animationhelper = AnimationHelper(parent=self)
         self.propertyhelper = PropertyHelper(parent=self)
-        self.constrainthelper = Constraint(parent=self)
+        self.constrainthelper = constraint_export(parent=self)
         self.texturehelper = TextureHelper(parent=self)
         self.objecthelper = ObjectHelper(parent=self)
         

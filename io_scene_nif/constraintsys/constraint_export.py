@@ -1,4 +1,4 @@
-'''Script to import/export constraints.'''
+'''Script to export constraints.'''
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -43,7 +43,7 @@ from pyffi.formats.nif import NifFormat
 import bpy
 import mathutils
 
-class Constraint():
+class constraint_export():
 
     def __init__(self, parent):
         self.nif_export = parent

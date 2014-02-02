@@ -43,7 +43,7 @@ from io_scene_nif.utility import nif_utils
 from io_scene_nif.animationsys.animation_import import AnimationHelper
 from io_scene_nif.armaturesys.armature_import import Armature
 from io_scene_nif.collisionsys.collision_import import bhkshape_import, bound_import
-from io_scene_nif.constraintsys.constraint_import import Constraint
+from io_scene_nif.constraintsys.constraint_import import constraint_import
 from io_scene_nif.materialsys.material_import import Material
 from io_scene_nif.texturesys.texture_import import Texture
 from io_scene_nif.texturesys.texture_loader import TextureLoader
@@ -75,7 +75,7 @@ class NifImport(NifCommon):
         # TODO: create super collisionhelper
         self.bhkhelper = bhkshape_import(parent=self)
         self.boundhelper = bound_import(parent=self)
-        self.constrainthelper = Constraint(parent=self)
+        self.constrainthelper = constraint_import(parent=self)
         self.textureloader = TextureLoader(parent=self)
         self.texturehelper = Texture(parent=self)
         self.texturehelper.set_texture_loader(self.textureloader)
