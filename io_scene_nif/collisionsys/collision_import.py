@@ -147,6 +147,8 @@ class bhkshape_import():
 
         # set physics flags and mass
         for b_col_obj in collision_objs:
+            scn = bpy.context.scene
+            scn.objects.active = b_col_obj
             ''' What are these used for
             ob.rbFlags = (
             Blender.Object.RBFlags.RIGIDBODY
@@ -158,7 +160,7 @@ class bhkshape_import():
             
             ''''Blender.Object.RBFlags.BOUNDS)'''
             bpy.ops.object.modifier_add(type='COLLISION')
-            bpy.ops.object.forcefield_toggle()
+            
             
             if bhkshape.mass > 0.0001:
                 # for physics emulation

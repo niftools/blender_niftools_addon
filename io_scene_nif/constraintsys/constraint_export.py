@@ -54,7 +54,7 @@ class Constraint():
 
         @param b_obj: The object whose constraints to export.
         @param root_block: The root of the nif tree (required for update_a_b)."""
-        if isinstance(b_obj, Blender.Armature.Bone):
+        if isinstance(b_obj, bpy.types.Bone):
             # bone object has its constraints stored in the posebone
             # so now we should get the posebone, but no constraints for
             # bones are exported anyway for now
@@ -67,7 +67,7 @@ class Constraint():
 
         for b_constr in b_obj.constraints:
             # rigid body joints
-            if b_constr.type == Blender.Constraint.Type.RIGID_BODY_JOINT:
+            if b_constr.type == bpy.types.Constraint('RIGID_BODY_JOINT'):
                 if self.properties.game not in ('OBLIVION', 'FALLOUT_3'):
                     self.nif_export.warning(
                         "Only Oblivion/Fallout 3 rigid body constraints"
@@ -87,7 +87,7 @@ class Constraint():
                         % b_obj.name)
                 # yes there is a rigid body constraint
                 # is it of a type that is supported?
-                if b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE] == 1:
+                if b_constr.type == 'CONE_TWIST':
                     # ball
                     if not self.properties.EXPORT_OB_MALLEABLECONSTRAINT:
                         hkconstraint = self.nif_export.objecthelper.create_block(
@@ -97,7 +97,7 @@ class Constraint():
                             "bhkMalleableConstraint", b_constr)
                         hkconstraint.type = 7
                     hkdescriptor = hkconstraint.ragdoll
-                elif b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE] == 2:
+                elif b_constr.type == 'HINGE':
                     # hinge
                     if not self.properties.EXPORT_OB_MALLEABLECONSTRAINT:
                         hkconstraint = self.nif_export.objecthelper.create_block(
@@ -111,7 +111,7 @@ class Constraint():
                     raise self.nif_export.nif_utils.NifExportError(
                         "Unsupported rigid body joint type (%i),"
                         " only ball and hinge are supported."
-                        % b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE])
+                        % b_constr.type)
 
                 # defaults and getting object properties for user
                 # settings (should use constraint properties, but
@@ -152,7 +152,7 @@ class Constraint():
                 hkconstraint.entities.update_size()
                 hkconstraint.entities[0] = hkbody
                 # is there a target?
-                targetobj = b_constr[Blender.Constraint.Settings.TARGET]
+                targetobj = b_constr.target
                 if not targetobj:
                     self.warning("Constraint %s has no target, skipped")
                     continue
@@ -164,7 +164,7 @@ class Constraint():
                         break
                 else:
                     # not found
-                    raise NifExportError(
+                    raise self.nif_import.NifExportError(
                         "Rigid body target not exported in nif tree"
                         " check that %s is selected during export." % targetobj)
                 # priority
@@ -183,15 +183,15 @@ class Constraint():
 
                 # calculate pivot point and constraint matrix
                 pivot = mathutils.Vector([
-                    b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVX],
-                    b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVY],
-                    b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVZ],
+                    b_constr.pivot_x,
+                    b_constr.pivot_y,
+                    b_constr.pivot_z,
                     ])
                 constr_matrix = mathutils.Euler(
-                    b_constr[Blender.Constraint.Settings.CONSTR_RB_AXX],
-                    b_constr[Blender.Constraint.Settings.CONSTR_RB_AXY],
-                    b_constr[Blender.Constraint.Settings.CONSTR_RB_AXZ])
-                constr_matrix = constr_matrix.toMatrix()
+                    b_constr.axis_x,
+                    b_constr.axis_y,
+                    b_constr.axis_z)
+                constr_matrix = constr_matrix.to_Matrix()
 
                 # transform pivot point and constraint matrix into bhkRigidBody
                 # coordinates (also see import_nif.py, the

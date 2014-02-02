@@ -189,14 +189,7 @@ class NifExport(NifCommon):
                             " Workaround: apply size and rotation (CTRL-A)"
                             " on '%s'." % b_obj.name)
 
-            # oblivion, Fallout 3 and civ4
-            if (self.properties.game
-                in ('CIVILIZATION_IV', 'OBLIVION', 'FALLOUT_3')):
-                root_name = 'Scene Root'
-            # other games
-            else:
-                root_name = filebase
-
+            root_name = filebase
             # get the root object from selected object
             # only export empties, meshes, and armatures
             if not self.context.selected_objects:
@@ -209,6 +202,10 @@ class NifExport(NifCommon):
                                 if b_obj.type in export_types]:
                 while root_object.parent:
                     root_object = root_object.parent
+                if (self.properties.game
+                    in ('CIVILIZATION_IV', 'OBLIVION', 'FALLOUT_3')):
+                    if root_object.type == 'ARMATURE':
+                        root_name = 'Scene Root'
                 if root_object.type not in export_types:
                     raise NifExportError(
                         "Root object (%s) must be an 'EMPTY', 'MESH',"

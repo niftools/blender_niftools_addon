@@ -231,8 +231,8 @@ class Constraint():
                         axis_x = -axis_x
                 # getting properties with no blender constraint
                 # equivalent and setting as obj properties
-                b_hkobj.niftools.LHMaxAngle = hkdescriptor.max_angle
-                b_hkobj.niftools.LHMinAngle = hkdescriptor.min_angle
+                b_constr.limit_angle_max_x = hkdescriptor.max_angle
+                b_constr.limit_angle_min_x = hkdescriptor.min_angle
                 b_hkobj.niftools.LHMaxFriction = hkdescriptor.max_friction
 
             elif isinstance(hkdescriptor, NifFormat.HingeDescriptor):
