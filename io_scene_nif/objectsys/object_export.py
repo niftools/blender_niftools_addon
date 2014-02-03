@@ -172,13 +172,13 @@ class ObjectHelper():
         elif (b_obj_type == 'MESH' and b_obj.show_bounds
               and b_obj.name.lower().startswith('bsbound')):
             # add a bounding box
-            self.boundhelper.export_bounding_box(b_obj, parent_block, bsbound=True)
+            self.nif_export.boundhelper.export_bounding_box(b_obj, parent_block, bsbound=True)
             return None # done; stop here
 
         elif (b_obj_type == 'MESH' and b_obj.show_bounds
               and b_obj.name.lower().startswith("bounding box")):
             # Morrowind bounding box
-            self.boundhelper.export_bounding_box(b_obj, parent_block, bsbound=False)
+            self.nif_export.boundhelper.export_bounding_box(b_obj, parent_block, bsbound=False)
             return None # done; stop here
 
         elif b_obj_type == 'MESH':
