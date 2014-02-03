@@ -91,15 +91,20 @@ class constraint_import():
             # get constraint descriptor
             if isinstance(hkconstraint, NifFormat.bhkRagdollConstraint):
                 hkdescriptor = hkconstraint.ragdoll
+                b_hkobj.rigid_body.enabled = True
             elif isinstance(hkconstraint, NifFormat.bhkLimitedHingeConstraint):
                 hkdescriptor = hkconstraint.limited_hinge
+                b_hkobj.rigid_body.enabled = True
             elif isinstance(hkconstraint, NifFormat.bhkHingeConstraint):
                 hkdescriptor = hkconstraint.hinge
+                b_hkobj.rigid_body.enabled = True
             elif isinstance(hkconstraint, NifFormat.bhkMalleableConstraint):
                 if hkconstraint.type == 7:
                     hkdescriptor = hkconstraint.ragdoll
+                    b_hkobj.rigid_body.enabled = False
                 elif hkconstraint.type == 2:
                     hkdescriptor = hkconstraint.limited_hinge
+                    b_hkobj.rigid_body.enabled = False
                 else:
                     self.nif_import.warning("Unknown malleable type (%i), skipped"
                                         % hkconstraint.type)
@@ -158,9 +163,9 @@ class constraint_import():
 
             # get pivot point
             pivot = mathutils.Vector((
-                hkdescriptor.pivot_a.x * self.nif_import.HAVOK_SCALE,
-                hkdescriptor.pivot_a.y * self.nif_import.HAVOK_SCALE,
-                hkdescriptor.pivot_a.z * self.nif_import.HAVOK_SCALE))
+                hkdescriptor.pivot_a.x * self.HAVOK_SCALE,
+                hkdescriptor.pivot_a.y * self.HAVOK_SCALE,
+                hkdescriptor.pivot_a.z * self.HAVOK_SCALE))
 
             # get z- and x-axes of the constraint
             # (also see export_nif.py NifImport.export_constraints)
@@ -287,9 +292,9 @@ class constraint_import():
                     hkbody.rotation.y, hkbody.rotation.z)).to_matrix()
                 transform.resize_4x4()
                 # set translation
-                transform[0][3] = hkbody.translation.x * self.nif_import.HAVOK_SCALE
-                transform[1][3] = hkbody.translation.y * self.nif_import.HAVOK_SCALE
-                transform[2][3] = hkbody.translation.z * self.nif_import.HAVOK_SCALE
+                transform[0][3] = hkbody.translation.x * self.HAVOK_SCALE
+                transform[1][3] = hkbody.translation.y * self.HAVOK_SCALE
+                transform[2][3] = hkbody.translation.z * self.HAVOK_SCALE
                 # apply transform
                 pivot = pivot * transform
                 transform = transform.to_3x3()

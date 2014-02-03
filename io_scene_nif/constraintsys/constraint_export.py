@@ -90,7 +90,7 @@ class constraint_export():
                 # is it of a type that is supported?
                 if b_constr.pivot_type == 'CONE_TWIST':
                     # ball
-                    if b_constr.active == True:
+                    if b_obj.rigid_body.enabled == True:
                         hkconstraint = self.nif_export.objecthelper.create_block(
                             "bhkRagdollConstraint", b_constr)
                     else:
@@ -100,7 +100,7 @@ class constraint_export():
                     hkdescriptor = hkconstraint.ragdoll
                 elif b_constr.pivot_type == 'HINGE':
                     # hinge
-                    if b_constr.active == True:
+                    if b_obj.rigid_body.enabled == True:
                         hkconstraint = self.nif_export.objecthelper.create_block(
                             "bhkLimitedHingeConstraint", b_constr)
                     else:
