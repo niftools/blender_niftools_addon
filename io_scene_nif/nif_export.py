@@ -204,7 +204,7 @@ class NifExport(NifCommon):
                     root_object = root_object.parent
                 if (self.properties.game
                     in ('CIVILIZATION_IV', 'OBLIVION', 'FALLOUT_3')):
-                    if root_object.type == 'ARMATURE':
+                    if (root_object.type == 'ARMATURE') or (root_object.name.lower() == "bip01"):
                         root_name = 'Scene Root'
                 if root_object.type not in export_types:
                     raise NifExportError(
@@ -315,7 +315,7 @@ class NifExport(NifCommon):
                     "Adding controllers and interpolators for skeleton")
                 for block in list(self.dict_blocks.keys()):
                     if isinstance(block, NifFormat.NiNode) \
-                        and block.name == "Bip01":
+                        and block.name.decode() == "Bip01":
                         for bone in block.tree(block_type = NifFormat.NiNode):
                             ctrl = self.objecthelper.create_block("NiTransformController")
                             interp = self.objecthelper.create_block("NiTransformInterpolator")
