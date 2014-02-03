@@ -298,11 +298,6 @@ class NiftoolsObjectProps(bpy.types.PropertyGroup):
                         default = ''
                         )
 
-        cls.LHMaxFriction = IntProperty(
-                        name = 'LHMaxFriction',
-                        description = 'Havok limited hinge max friction.',
-                        )
-
         
     @classmethod
     def unregister(cls):
@@ -370,8 +365,27 @@ class NiftoolsObjectCollisionProps(bpy.types.PropertyGroup):
     @classmethod
     def unregister(cls):
         del bpy.types.Object.nifcollision
-        
-        
+
+
+class NiftoolsConstraintProps(bpy.types.PropertyGroup):
+    @classmethod
+    def register(cls):
+        bpy.types.Object.niftools_constraint = PointerProperty(
+						name='Niftools Constraint Property',
+						description = 'Additional constraint properties used by the Nif File Format',
+						type = cls
+						)
+
+        cls.LHMaxFriction = IntProperty(
+						name = 'LHMaxFriction',
+						description = 'Havok limited hinge max friction.',
+						)
+
+    @classmethod
+    def unregister(cls):
+        del bpy.types.Object.niftools_constraint
+
+
 def register():
     bpy.utils.register_class(NiftoolsMaterialProps)
     bpy.utils.register_class(NiftoolsObjectProps)

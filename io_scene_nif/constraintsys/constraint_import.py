@@ -233,7 +233,7 @@ class constraint_import():
                 # equivalent and setting as obj properties
                 b_constr.limit_angle_max_x = hkdescriptor.max_angle
                 b_constr.limit_angle_min_x = hkdescriptor.min_angle
-                b_hkobj.niftools.LHMaxFriction = hkdescriptor.max_friction
+                b_hkobj.niftools_constraint.LHMaxFriction = hkdescriptor.max_friction
 
             elif isinstance(hkdescriptor, NifFormat.HingeDescriptor):
                 # for hinge, y is the vector on the plane of rotation defining

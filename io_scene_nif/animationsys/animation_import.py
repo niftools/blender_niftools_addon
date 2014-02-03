@@ -569,7 +569,7 @@ class ArmatureAnimation():
                             [quat[0], quat[1], quat[2], quat[3]])
                         # beware, CrossQuats takes arguments in a
                         # counter-intuitive order:
-                        # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
+                        # q1.to_matrix() * q2.to_matrix() == CrossQuats(q2, q1).to_matrix()
                         quatVal = CrossQuats(niBone_bind_quat_inv, quat) # Rchannel = Rtotal * inverse(Rbind)
                         rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
                         b_posebone.quat = rot
@@ -591,7 +591,7 @@ class ArmatureAnimation():
                         # why the other keys are inserted first)
                         if rot_keys_dict:
                             try:
-                                rot = rot_keys_dict[frame].toMatrix()
+                                rot = rot_keys_dict[frame].to_matrix()
                             except KeyError:
                                 # fall back on slow method
                                 ipo = action.getChannelIpo(bone_name)
@@ -600,7 +600,7 @@ class ArmatureAnimation():
                                 quat.y = ipo.getCurve('QuatY').evaluate(frame)
                                 quat.z = ipo.getCurve('QuatZ').evaluate(frame)
                                 quat.w = ipo.getCurve('QuatW').evaluate(frame)
-                                rot = quat.toMatrix()
+                                rot = quat.to_matrix()
                         else:
                             rot = mathutils.Matrix([[1.0, 0.0, 0.0],
                                                     [0.0, 1.0, 0.0],
@@ -684,7 +684,7 @@ class ArmatureAnimation():
                         quat = euler.toQuat()
 
                         # beware, CrossQuats takes arguments in a counter-intuitive order:
-                        # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
+                        # q1.to_matrix() * q2.to_matrix() == CrossQuats(q2, q1).to_matrix()
 
                         quatVal = CrossQuats(niBone_bind_quat_inv, quat) # Rchannel = Rtotal * inverse(Rbind)
                         rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
@@ -706,7 +706,7 @@ class ArmatureAnimation():
                         quat = mathutils.Quaternion([keyVal.w, keyVal.x, keyVal.y, keyVal.z])
                         # beware, CrossQuats takes arguments in a
                         # counter-intuitive order:
-                        # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
+                        # q1.to_matrix() * q2.to_matrix() == CrossQuats(q2, q1).to_matrix()
                         quatVal = CrossQuats(niBone_bind_quat_inv, quat) # Rchannel = Rtotal * inverse(Rbind)
                         rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
                         b_posebone.quat = rot
@@ -733,7 +733,7 @@ class ArmatureAnimation():
                     # why the other keys are inserted first)
                     if rot_keys_dict:
                         try:
-                            rot = rot_keys_dict[frame].toMatrix()
+                            rot = rot_keys_dict[frame].to_matrix()
                         except KeyError:
                             # fall back on slow method
                             ipo = action.getChannelIpo(bone_name)
@@ -742,7 +742,7 @@ class ArmatureAnimation():
                             quat.y = ipo.getCurve('QuatY').evaluate(frame)
                             quat.z = ipo.getCurve('QuatZ').evaluate(frame)
                             quat.w = ipo.getCurve('QuatW').evaluate(frame)
-                            rot = quat.toMatrix()
+                            rot = quat.to_matrix()
                     else:
                         rot = mathutils.Matrix([[1.0, 0.0, 0.0],
                                                 [0.0, 1.0, 0.0],

@@ -279,7 +279,7 @@ class AnimationHelper():
                         if bind_matrix or extra_mat_inv:
                             rot_curve[frame] = rot_curve[frame].toQuat()
                             # beware, CrossQuats takes arguments in a counter-intuitive order:
-                            # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
+                            # q1.to_matrix() * q2.to_matrix() == CrossQuats(q2, q1).to_matrix()
                             rot_curve[frame] = mathutils.CrossQuats(mathutils.CrossQuats(bind_quat, rot_curve[frame]), extra_quat_inv) # inverse(RX) * RC' * RB'
                     # pose rotation
                     elif curve in (Ipo.PO_QUATX, Ipo.PO_QUATY,
@@ -290,7 +290,7 @@ class AnimationHelper():
                         rot_curve[frame].z = ipo[Ipo.PO_QUATZ][frame]
                         rot_curve[frame].w = ipo[Ipo.PO_QUATW][frame]
                         # beware, CrossQuats takes arguments in a counter-intuitive order:
-                        # q1.toMatrix() * q2.toMatrix() == CrossQuats(q2, q1).toMatrix()
+                        # q1.to_matrix() * q2.to_matrix() == CrossQuats(q2, q1).to_matrix()
                         rot_curve[frame] = mathutils.CrossQuats(mathutils.CrossQuats(bind_quat, rot_curve[frame]), extra_quat_inv) # inverse(RX) * RC' * RB'
                     # PO_LOCX == OB_LOCX, so this does both pose and object
                     # location
@@ -308,14 +308,14 @@ class AnimationHelper():
                             rot_c = mathutils.Euler(
                                 [10 * ipo[Ipo.OB_ROTX][frame],
                                  10 * ipo[Ipo.OB_ROTY][frame],
-                                 10 * ipo[Ipo.OB_ROTZ][frame]]).toMatrix()
+                                 10 * ipo[Ipo.OB_ROTZ][frame]]).to_matrix()
                         elif Ipo.PO_QUATX in ipo_curves and ipo[Ipo.PO_QUATX]:
                             rot_c = mathutils.Quaternion()
                             rot_c.x = ipo[Ipo.PO_QUATX][frame]
                             rot_c.y = ipo[Ipo.PO_QUATY][frame]
                             rot_c.z = ipo[Ipo.PO_QUATZ][frame]
                             rot_c.w = ipo[Ipo.PO_QUATW][frame]
-                            rot_c = rot_c.toMatrix()
+                            rot_c = rot_c.to_matrix()
                         else:
                             rot_c = mathutils.Matrix([[1,0,0],[0,1,0],[0,0,1]])
                         # note, PO_SCALEX == OB_SCALEX, so this does both
