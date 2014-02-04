@@ -69,7 +69,7 @@ class bhkshape_export():
         layer = b_obj.nifcollision.oblivion_layer
         motion_system = b_obj.nifcollision.motion_system
         quality_type = b_obj.nifcollision.quality_type
-        mass = 1.0 # will be fixed later
+        mass = b_obj.rigid_body.mass
         col_filter = b_obj.nifcollision.col_filter
 
         # Aaron1178 collison stuff
