@@ -615,6 +615,8 @@ class bound_import():
             #    *bbox.bounding_box.rotation.as_list())
             # ob.setLocation(
             #    *bbox.bounding_box.translation.as_list())
+        b_obj.niftools.bsxflags = self.nif_import.bsxflags
+        b_obj.niftools.objectflags = self.nif_import.objectflags
 
         # set bounds type
         b_obj.show_bounds = True

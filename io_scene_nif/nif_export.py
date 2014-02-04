@@ -396,13 +396,14 @@ class NifExport(NifCommon):
 
                     # many Oblivion nifs have a UPB, but export is disabled as
                     # they do not seem to affect anything in the game
-                    upb = self.objecthelper.create_block("NiStringExtraData")
-                    upb.name = 'UPB'
-                    if(b_obj.niftools.upb == ''):
-                        upb.string_data = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
-                    else:
-                        upb.string_data = b_obj.niftools.upb.encode()
-                    root_block.add_extra_data(upb)
+                    if b_obj.niftools.upb:
+                        upb = self.objecthelper.create_block("NiStringExtraData")
+                        upb.name = 'UPB'
+                        if(b_obj.niftools.upb == ''):
+                            upb.string_data = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
+                        else:
+                            upb.string_data = b_obj.niftools.upb.encode()
+                        root_block.add_extra_data(upb)
 
                 # update rigid body center of gravity and mass
                 if self.EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES:
