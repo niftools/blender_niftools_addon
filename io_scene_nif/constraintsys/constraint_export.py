@@ -215,7 +215,7 @@ class constraint_export():
                 # apply object transform relative to the bone head
                 # (this is O * T * B' * B^{-1} at once)
                 transform = mathutils.Matrix(
-                    b_obj.matrix_local)
+                    b_obj.matrix_world)
                 pivot = pivot * transform
                 constr_matrix = constr_matrix * transform.to_3x3()
 
