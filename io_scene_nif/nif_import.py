@@ -551,7 +551,7 @@ class NifImport(NifCommon):
                 # import bounding box
                 if bsbound:
                     object_children += [
-                        (bsbound, self.bhkhelper.import_bounding_box(bsbound))]
+                        (bsbound, self.boundhelper.import_bounding_box(bsbound))]
 
             # fix parentship
             if isinstance(b_obj, bpy.types.Object):
