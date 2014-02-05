@@ -83,7 +83,7 @@ class bhkshape_export():
         # bhkCollisionObject -> bhkRigidBody
         if not parent_block.collision_object:
             # note: collision settings are taken from lowerclasschair01.nif
-            if b_obj.nifcollision.oblivion_layer == NifFormat.OblivionLayer.OL_BIPED:
+            if layer == "OL_BIPED":
                 # special collision object for creatures
                 n_col_obj = self.nif_export.objecthelper.create_block("bhkBlendCollisionObject", b_obj)
                 n_col_obj.flags = 9
@@ -100,7 +100,7 @@ class bhkshape_export():
             else:
                 # usual collision object
                 n_col_obj = self.nif_export.objecthelper.create_block("bhkCollisionObject", b_obj)
-                if layer == NifFormat.OblivionLayer.OL_ANIM_STATIC and col_filter != 128:
+                if layer == "OL_ANIM_STATIC" and col_filter != 128:
                     # animated collision requires flags = 41
                     # unless it is a constrainted but not keyframed object
                     n_col_obj.flags = 41
