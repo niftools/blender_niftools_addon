@@ -89,8 +89,8 @@ class NiftoolsBonePanel(Panel):
     
 
 
-class NifBsShaderObjectPanel(Panel):
-    bl_label = "Niftools BsShader"
+class NifShaderObjectPanel(Panel):
+    bl_label = "Niftools Shader"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "object"
@@ -102,12 +102,13 @@ class NifBsShaderObjectPanel(Panel):
         
 
     def draw(self, context):
-        nif_obj_props = context.object.niftools_bsshader
+        nif_obj_props = context.object.niftools_shader
         
         layout = self.layout
         row = layout.column()
         
         row.prop(nif_obj_props, "shadertype")
+        row.prop(nif_obj_props, "shaderobjtype")
                 
         row.prop(nif_obj_props, "specular")
         row.prop(nif_obj_props, "skin")
