@@ -96,12 +96,12 @@ class TextureHelper():
         
         # set shader options
         # TODO: FIXME:
-        bsshader.shader_type = self.niftools_bsshader.shadertype
-        bsshader.shader_flags.zbuffer_test = self.niftools_bsshader.zbuffertest
-        bsshader.shader_flags.shadow_map = self.niftools_bsshader.shadowmap
-        bsshader.shader_flags.shadow_frustum = self.niftools_bsshader.shadowfrustum
-        bsshader.shader_flags.window_environment_mapping = self.niftools_bsshader.environmentmapping
-        bsshader.shader_flags.empty = self.niftools_bsshader.empty
+        bsshader.shader_type = self.niftools_shader.shadertype
+        bsshader.shader_flags.zbuffer_test = self.niftools_shader.zbuffertest
+        bsshader.shader_flags.shadow_map = self.niftools_shader.shadowmap
+        bsshader.shader_flags.shadow_frustum = self.niftools_shader.shadowfrustum
+        bsshader.shader_flags.window_environment_mapping = self.niftools_shader.environmentmapping
+        bsshader.shader_flags.empty = self.niftools_shader.empty
         #bsshader.shader_flags.unknown_31 = self.niftools_bsshader.
         
         # set textures

@@ -854,11 +854,11 @@ class MeshHelper():
 
                     vertquad = ( fv, fuv, fn, fcol )
 
-                    # do we already have this vertquad? (optimized by m_4444x)
+                    # check for duplicate vertquad?
                     f_index[i] = len(vertquad_list)
                     if vertmap[vertex_index]:
                         # iterate only over vertices with the same vertex index
-                        # and check if they have the same uvs, normals and colors (wow is that fast!)
+                        # and check if they have the same uvs, normals and colors
                         for j in vertmap[vertex_index]:
                             if mesh_uvlayers:
                                 if max(abs(vertquad[1][uvlayer][0] - vertquad_list[j][1][uvlayer][0])

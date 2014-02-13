@@ -113,17 +113,27 @@ class NiftoolsBoneProps(bpy.types.PropertyGroup):
         del bpy.types.Bone.niftools_bone
 
 
-class NiftoolsBsShaderProps(bpy.types.PropertyGroup):
+class NiftoolsShaderProps(bpy.types.PropertyGroup):
     @classmethod
     def register(cls):
-        bpy.types.Object.niftools_bsshader = PointerProperty(
+        bpy.types.Object.niftools_shader = PointerProperty(
                         name='Niftools BsShader Property',
                         description = 'Properties used by the BsShader for the Nif File Format',
                         type = cls,
                         )
+        
         cls.shadertype = EnumProperty(
                         name='Shader Type',
-                        description = 'Havok Motion System settings for bhkRigidBody(t)',
+                        description = 'Type of property used to display meshes.',
+                        items = (('None','None',"",0),
+                                 ('BSShaderProperty', 'BS Shader Property',"", 1),
+                                 ('BSShaderPPLightingProperty', 'BS Shader PP Lighting Property',"", 2)),
+                        
+                        )
+
+        cls.shaderobjtype = EnumProperty(
+                        name='Shader Object Type',
+                        description = 'Type of object linked to shader',
                         items = [(item, item,"", i) for i, item in enumerate(NifFormat.BSShaderType._enumkeys)],
                         default = 'SHADER_DEFAULT'
                         )
@@ -258,7 +268,7 @@ class NiftoolsBsShaderProps(bpy.types.PropertyGroup):
         
     @classmethod
     def unregister(cls):
-        del bpy.types.Object.niftools_bsshader
+        del bpy.types.Object.niftools_shader
 
 
 
