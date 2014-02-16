@@ -580,15 +580,20 @@ class MeshHelper():
             bodypartgroups = []
             for bodypartgroupname in NifFormat.BSDismemberBodyPartType().get_editor_keys():
                 vertex_group = b_obj.vertex_groups.get(bodypartgroupname)
+                vertices_list = set()
                 if vertex_group:
+                    for b_vert in b_mesh.vertices:
+                        for b_groupname in b_vert.groups:
+                            if b_groupname.group == vertex_group.index:
+                                vertices_list.add(b_vert.index)
                     self.nif_export.debug("Found body part %s" % bodypartgroupname)
                     bodypartgroups.append(
                         [bodypartgroupname,
                          getattr(NifFormat.BSDismemberBodyPartType,
                                  bodypartgroupname),
                          # FIXME:how do you get the vertices in the group???
-                         #set(vertex_group.vertices)])
-                         {}])
+                         vertices_list])
+                         
 
 
 
