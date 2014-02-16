@@ -138,131 +138,131 @@ class NiftoolsShaderProps(bpy.types.PropertyGroup):
                         default = 'SHADER_DEFAULT'
                         )
         
-        cls.specular = BoolProperty(
+        cls.sf_specular = BoolProperty(
                         name = 'Specular'
                         )
         
-        cls.skin = BoolProperty(
+        cls.sf_skinned = BoolProperty(
                         name = 'Skinned'
                         )
         
-        cls.lowdetail = BoolProperty(
+        cls.sf_low_detail = BoolProperty(
                         name = 'Low Detail'
                         )
         
-        cls.vertexalpha = BoolProperty(
+        cls.sf_vertex_alpha = BoolProperty(
                         name = 'Vertex Alpha'
                         )
         
-        cls.unknown1 = BoolProperty(
+        cls.sf_unknown_1 = BoolProperty(
                         name = 'Unknown 1'
                         )
         
-        cls.singlepass = BoolProperty(
+        cls.sf_single_pass = BoolProperty(
                         name = 'Single Pass'
                         )
         
-        cls.empty = BoolProperty(
+        cls.sf_empty = BoolProperty(
                         name = 'Empty'
                         )
         
-        cls.environmentmapping = BoolProperty(
+        cls.sf_environment_mapping = BoolProperty(
                         name = 'Environment Mapping'
                         )
         
-        cls.alphatexture = BoolProperty(
+        cls.sf_alpha_texture = BoolProperty(
                         name = 'Alpha Texture'
                         )
         
-        cls.unknown2 = BoolProperty(
+        cls.sf_unknown_2 = BoolProperty(
                         name = 'Unknown 2'
                         )
         
-        cls.facegen = BoolProperty(
+        cls.sf_face_gen = BoolProperty(
                         name = 'Face Gen'
                         )
         
-        cls.parallaxshaderindex = BoolProperty(
+        cls.sf_parallax_shader_index_15 = BoolProperty(
                         name = 'Parallax Shader Index'
                         )
         
-        cls.unknown3 = BoolProperty(
+        cls.sf_unknown_3 = BoolProperty(
                         name = 'Unknown 3'
                         )
         
-        cls.nonprojectiveshadows = BoolProperty(
+        cls.sf_non_projective_shadows = BoolProperty(
                         name = 'Non-Projective Shadows'
                         )
         
-        cls.unknown4 = BoolProperty(
+        cls.sf_unknown_4 = BoolProperty(
                         name = 'Unknown 4'
                         )
         
-        cls.refraction = BoolProperty(
+        cls.sf_refraction = BoolProperty(
                         name = 'Refraction'
                         )
         
-        cls.firerefraction = BoolProperty(
+        cls.sf_fire_refraction = BoolProperty(
                         name = 'Fire Refraction'
                         )
         
-        cls.eyeenvronmentmapping = BoolProperty(
+        cls.sf_eye_environment_mapping = BoolProperty(
                         name = 'Eye Environment Mapping'
                         )
         
-        cls.hair = BoolProperty(
+        cls.sf_hair = BoolProperty(
                         name = 'Hair'
                         )
         
-        cls.dynamicalpha = BoolProperty(
+        cls.sf_dynamic_alpha = BoolProperty(
                         name = 'Dynamic Alpha'
                         )
         
-        cls.localmaphidesecret = BoolProperty(
+        cls.sf_localmap_hide_secret = BoolProperty(
                         name = 'Local Map Hide Secret'
                         )
         
-        cls.windowenvironmentmapping = BoolProperty(
+        cls.sf_window_environment_mapping = BoolProperty(
                         name = 'Window Environment Mapping'
                         )
         
-        cls.treebillboard = BoolProperty(
+        cls.sf_tree_billboard = BoolProperty(
                         name = 'Tree Billboard'
                         )
         
-        cls.shadowfrustum = BoolProperty(
+        cls.sf_shadow_frustum = BoolProperty(
                         name = 'Shadow Frustum'
                         )
         
-        cls.multipletextures = BoolProperty(
+        cls.sf_multiple_textures = BoolProperty(
                         name = 'Multiple Textures'
                         )
         
-        cls.remappabletextures = BoolProperty(
+        cls.sf_remappable_textures = BoolProperty(
                         name = 'Remappable Textures'
                         )
         
-        cls.decalsinglepass = BoolProperty(
+        cls.sf_decal_single_pass = BoolProperty(
                         name = 'Decal Single Pass'
                         )
         
-        cls.dynamicdecalsinglepass = BoolProperty(
+        cls.sf_dynamic_decal_single_pass = BoolProperty(
                         name = 'Dynamic Decal Single Pass'
                         )
         
-        cls.parallaxocclusion = BoolProperty(
+        cls.sf_parallax_occulsion = BoolProperty(
                         name = 'Parallax Occlusion'
                         )
         
-        cls.externalemittance = BoolProperty(
+        cls.sf_external_emittance = BoolProperty(
                         name = 'External Emittance'
                         )
         
-        cls.shadowmap = BoolProperty(
+        cls.sf_shadow_map = BoolProperty(
                         name = 'Shadow Map'
                         )
         
-        cls.zbuffertest = BoolProperty(
+        cls.sf_z_buffer_test = BoolProperty(
                         name = 'Z Buffer Test'
                         )
         
