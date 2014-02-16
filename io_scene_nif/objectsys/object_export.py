@@ -591,8 +591,7 @@ class MeshHelper():
                         [bodypartgroupname,
                          getattr(NifFormat.BSDismemberBodyPartType,
                                  bodypartgroupname),
-                         # FIXME:how do you get the vertices in the group???
-                         vertices_list])
+                                 vertices_list])
                          
 
 
@@ -1049,7 +1048,7 @@ class MeshHelper():
                     if boneinfluences: # yes we have skinning!
                         # create new skinning instance block and link it
                         if (self.properties.game == 'FALLOUT_3'
-                            and self.EXPORT_FO3_BODYPARTS):
+                            and bodypartgroups):
                             skininst = self.nif_export.objecthelper.create_block("BSDismemberSkinInstance", b_obj)
                         else:
                             skininst = self.nif_export.objecthelper.create_block("NiSkinInstance", b_obj)

@@ -128,7 +128,6 @@ class NiftoolsShaderProps(bpy.types.PropertyGroup):
                         items = (('None','None',"",0),
                                  ('BSShaderProperty', 'BS Shader Property',"", 1),
                                  ('BSShaderPPLightingProperty', 'BS Shader PP Lighting Property',"", 2)),
-                        
                         )
 
         cls.shaderobjtype = EnumProperty(
@@ -281,6 +280,15 @@ class NiftoolsObjectProps(bpy.types.PropertyGroup):
                         description = 'Additional object properties used by the Nif File Format',
                         type = cls,
                         )
+        
+        cls.rootnode = EnumProperty(
+                        name = 'Nif Root Node',
+                        description = 'Type of property used to display meshes.',
+                        items = (('NiNode', 'NiNode',"", 0),
+                                ('BSFadeNode', 'BSFadeNode',"", 1)),
+                        default = 'NiNode',
+                        )
+        
         cls.longname = StringProperty(
                         name = 'Nif LongName'
                         )

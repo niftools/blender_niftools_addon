@@ -299,7 +299,10 @@ class NifImport(NifCommon):
         self.bsxflags = self.import_bsxflag_data(root_block)
         self.upbflags = self.import_upbflag_data(root_block)
         self.objectflags = root_block.flags
-
+        
+        if isinstance(root_block, NifFormat.BSFadeNode):
+            self.root_ninode = 'BSFadeNode'
+            
         # mark armature nodes and bones
         self.armaturehelper.mark_armatures_bones(root_block)
 
@@ -357,6 +360,8 @@ class NifImport(NifCommon):
                 "Skipped unsupported root block type '%s' (corrupted nif?)."
                 % root_block.__class__)
 
+        if self.root_ninode:
+            b_obj.niftools.rootnode = self.root_ninode
         # store bone matrix offsets for re-export
         if self.dict_bones_extra_matrix:
             self.armaturehelper.store_bones_extra_matrix()
