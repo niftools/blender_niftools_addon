@@ -579,9 +579,15 @@ class NifExport(NifCommon):
                     root_block.add_effect(b)
             else:
                 root_block.name = root_name
-
+                
+            self.root_ninode = None
+            for root_obj in root_objects:
+                if root_obj.niftools.rootnode == 'BSFadeNode':
+                    self.root_ninode = 'BSFadeNode'
+                elif self.root_ninode == None:
+                    self.root_ninode = 'NiNode'
             # making root block a fade node
-            if (self.properties.game == 'FALLOUT_3' and self.EXPORT_FO3_FADENODE):
+            if (self.properties.game == 'FALLOUT_3' and self.root_ninode == 'BSFadeNode'):
                 self.info("Making root block a BSFadeNode")
                 fade_root_block = NifFormat.BSFadeNode().deepcopy(root_block)
                 fade_root_block.replace_global_node(root_block, fade_root_block)
