@@ -90,20 +90,20 @@ class TextureHelper():
     def export_bs_shader_property(self, b_obj=None, b_mat=None):
         """Export a Bethesda shader property block."""
         self.determine_texture_types(b_obj, b_mat)
-        
+        b_s_type = NifFormat.BSShaderType._enumkeys.index(b_obj.niftools_shader.shaderobjtype)
+        b_flag_list = b_obj.niftools_shader.bl_rna.properties.keys()
         # create new block
-        bsshader = NifFormat.BSShaderPPLightingProperty()
-        
-        # set shader options
-        # TODO: FIXME:
-        bsshader.shader_type = self.niftools_shader.shadertype
-        bsshader.shader_flags.zbuffer_test = self.niftools_shader.zbuffertest
-        bsshader.shader_flags.shadow_map = self.niftools_shader.shadowmap
-        bsshader.shader_flags.shadow_frustum = self.niftools_shader.shadowfrustum
-        bsshader.shader_flags.window_environment_mapping = self.niftools_shader.environmentmapping
-        bsshader.shader_flags.empty = self.niftools_shader.empty
-        #bsshader.shader_flags.unknown_31 = self.niftools_bsshader.
-        
+        if b_obj.niftools_shader.shadertype == 'BSShaderPPLightingProperty':
+            bsshader = NifFormat.BSShaderPPLightingProperty()
+            # set shader options
+            # TODO: FIXME:
+            bsshader.shader_type = NifFormat.BSShaderType._enumvalues[b_s_type]
+            for sf_flag in bsshader.shader_flags._names:
+                if sf_flag in b_flag_list:
+                    b_flag = b_obj.niftools_shader.get(sf_flag)
+                    if b_flag  == True:
+                        sf_flag_index = bsshader.shader_flags._names.index(sf_flag)
+                        bsshader.shader_flags._items[sf_flag_index]._value = 1
         # set textures
         texset = NifFormat.BSShaderTextureSet()
         bsshader.texture_set = texset
