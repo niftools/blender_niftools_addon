@@ -66,8 +66,10 @@ class NifImport(NifCommon):
     IMPORT_EXTRANODES = True
     IMPORT_EXPORTEMBEDDEDTEXTURES = False
     
+    
     def __init__(self, operator, context):
         NifCommon.__init__(self, operator, context)
+        self.root_ninode = 'NiNode'
 
         # Helper systems
         self.animationhelper = AnimationHelper(parent=self)
@@ -911,6 +913,7 @@ class NifImport(NifCommon):
             # Alpha
             n_alpha_prop = nif_utils.find_property(niBlock,
                                                NifFormat.NiAlphaProperty)
+            self.ni_alpha_prop = n_alpha_prop
 
             # Specularity
             n_specular_prop = nif_utils.find_property(niBlock,
