@@ -183,8 +183,8 @@ class Texture():
 		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
                 diffuse_texture)
 		
-# 		if(n_alpha_prop):
-# 			b_mat_texslot.use_map_alpha
+		if(self.nif_import.ni_alpha_prop):
+			b_mat_texslot.use_map_alpha = True
 		# update: needed later
 		self.env_map = b_mat_texslot
 # 		
@@ -243,8 +243,9 @@ class Texture():
 		except:
 			b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
             							n_textureDesc)
-# 		if(n_alpha_prop):
-# 			b_mat_texslot.use_map_alpha
+			
+		if(self.nif_import.ni_alpha_prop):
+			b_mat_texslot.use_map_alpha = True
 		# update: needed later
 		self.diffuse_map = b_mat_texslot
 
@@ -282,8 +283,9 @@ class Texture():
 		except:
 			b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
             							n_textureDesc)
-# 		if(n_alpha_prop):
-# 			b_mat_texslot.use_map_alpha
+			
+		if(self.nif_import.ni_alpha_prop):
+			b_mat_texslot.use_map_alpha = True
 		
 		# update: needed later
 		self.bump_map = b_mat_texslot
@@ -309,8 +311,8 @@ class Texture():
 		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
                 n_textureDesc.apply_mode)
 		
-# 		if(n_alpha_prop):
-# 			b_mat_texslot.use_map_alpha
+		if(self.nif_import.ni_alpha_prop):
+			b_mat_texslot.use_map_alpha = True
 		
 		# update: needed later
 		self.normal_map = b_mat_texslot
@@ -349,8 +351,8 @@ class Texture():
 			b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
             							n_textureDesc)
 		
-# 		if(n_alpha_prop):
-# 			b_mat_texslot.use_map_alpha
+		if(self.nif_import.ni_alpha_prop):
+			b_mat_texslot.use_map_alpha = True
 			
 		# update: needed later
 		self.glow_map = b_mat_texslot
@@ -376,8 +378,8 @@ class Texture():
 		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
                 n_textureDesc.apply_mode)
 		
-# 		if(n_alpha_prop):
-# 			b_mat_texslot.use_map_alpha
+		if(self.nif_import.ni_alpha_prop):
+			b_mat_texslot.use_map_alpha = True
 		# update: needed later
 		self.gloss_map = b_mat_texslot
 		
@@ -400,8 +402,8 @@ class Texture():
 		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
                 n_textureDesc.apply_mode)
 		
-# 		if(n_alpha_prop):
-# 			b_mat_texslot.use_map_alpha
+		if(self.nif_import.ni_alpha_prop):
+			b_mat_texslot.use_map_alpha = True
 		# update: needed later
 		
 # 		dark_texture = self.textureloader.import_texture_source(darkTexDesc.source)
@@ -436,8 +438,8 @@ class Texture():
 		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
                 n_textureDesc.apply_mode)
 		
-# 		if(n_alpha_prop):
-# 			b_mat_texslot.use_map_alpha
+		if(self.nif_import.ni_alpha_prop):
+			b_mat_texslot.use_map_alpha = True
 		# update: needed later
 		
 # 		detail_texture = self.textureloader.import_texture_source(detailTexDesc.source)
@@ -471,8 +473,8 @@ class Texture():
 		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
                 n_textureDesc.apply_mode)
 		
-# 		if(n_alpha_prop):
-# 			b_mat_texslot.use_map_alpha
+		if(self.nif_import.ni_alpha_prop):
+			b_mat_texslot.use_map_alpha = True
 		# update: needed later
 		
 		

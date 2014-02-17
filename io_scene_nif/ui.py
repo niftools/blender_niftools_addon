@@ -40,6 +40,35 @@
 import bpy
 from bpy.types import Panel
    
+
+
+class NifAlphaPanel(Panel):
+    bl_label = "Alpha Panel"
+    
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "material"
+    
+    @classmethod
+    def poll(cls, context):
+        mat = context.material
+        if mat is not None:
+            if mat.use_nodes:
+                if mat.active_node_material is not None:
+                    return True
+                return False
+            return True
+        return False
+    
+    def draw(self, context):
+        matalpha = context.material.niftools_alpha
+        
+        layout = self.layout
+        row = layout.column()
+        
+        row.prop(matalpha, "alphaflag")
+        
+
 class NifEmissivePanel(Panel):
     bl_label = "Emission Panel"
     
