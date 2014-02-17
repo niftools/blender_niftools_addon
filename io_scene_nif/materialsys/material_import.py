@@ -128,11 +128,13 @@ class Material():
         
         # Alpha
         if n_alpha_prop:
-            if(n_mat_prop.alpha < 1.0):
-                self.nif_import.debug("Alpha prop detected")
-                b_mat.use_transparency = True 
-                b_mat.alpha = n_mat_prop.alpha
-                b_mat.transparency_method = 'Z_TRANSPARENCY'  # enable z-buffered transparency
+            #if(n_mat_prop.alpha < 1.0):
+            self.nif_import.debug("Alpha prop detected")
+            b_mat.use_transparency = True 
+            b_mat.alpha = n_mat_prop.alpha
+            b_mat.transparency_method = 'Z_TRANSPARENCY'  # enable z-buffered transparency
+            b_mat.offset_z = n_alpha_prop.threshold # Transparency threshold
+            b_mat.niftools_alpha.alphaflag = n_alpha_prop.flags
 
         # Specular color
         b_mat.specular_color[0] = n_mat_prop.specular_color.r

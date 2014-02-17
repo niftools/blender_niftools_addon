@@ -109,8 +109,8 @@ class TextureHelper():
         bsshader.texture_set = texset
         if self.basemtex:
             texset.textures[0] = self.texture_writer.export_texture_filename(self.basemtex.texture)
-        if self.normalmtex:
-            texset.textures[1] = self.texture_writer.export_texture_filename(self.normalmtex.texture)
+        if self.bumpmtex:
+            texset.textures[1] = self.texture_writer.export_texture_filename(self.bumpmtex.texture)
         if self.glowmtex:
             texset.textures[2] = self.texture_writer.export_texture_filename(self.glowmtex.texture)
 

@@ -67,6 +67,27 @@ def underscore_to_camelcase(s):
     return ''.join(camelcase_words(s.split('_')))
 
 
+
+class NiftoolsMatAlphaProps(bpy.types.PropertyGroup):
+    '''Adds custom properties to material'''
+    
+    @classmethod
+    def register(cls):
+        bpy.types.Material.niftools_alpha = PointerProperty(
+                        name='Niftools Material Alpha',
+                        description = 'Additional material properties used by the Nif File Format',
+                        type=cls,
+                        )
+        
+        cls.alphaflag = IntProperty(
+                        name = 'Alpha Flag',
+                        default = 0
+                        )
+        
+    @classmethod
+    def unregister(cls):
+        del bpy.types.Material.niftools_alpha
+
 class NiftoolsMaterialProps(bpy.types.PropertyGroup):
     '''Adds custom properties to material'''
     

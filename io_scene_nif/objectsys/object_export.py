@@ -315,6 +315,7 @@ class ObjectHelper():
         if not b_obj:
             return self.create_block("NiNode")
         # exporting an object, so first create node of correct type
+        #TODO: FIXME: rework to get node type from nif format based on custom value?
         try:
             n_node_type = b_obj.getProperty("Type").data
         except (RuntimeError, AttributeError, NameError):
@@ -562,7 +563,7 @@ class MeshHelper():
                 mesh_mat_gloss = b_mat.specular_hardness / 4.0
 
                 #alpha mat
-                mesh_hasalpha = False
+                mesh_hasalpha = b_alpha_prop
                 mesh_mat_transparency = b_mat.alpha
                 if b_mat.use_transparency:
                     if abs(mesh_mat_transparency - 1.0)> self.properties.epsilon:
@@ -706,7 +707,10 @@ class MeshHelper():
             if mesh_hasalpha:
                 # add NiTriShape's alpha propery
                 # refer to the alpha property in the trishape block
-                if self.properties.game == 'SID_MEIER_S_RAILROADS':
+                if b_mat.niftools_alpha.alphaflag != 0:
+                    alphaflags = b_mat.niftools_alpha.alphaflag
+                    alphathreshold = b_mat.offset_z
+                elif self.properties.game == 'SID_MEIER_S_RAILROADS':
                     alphaflags = 0x32ED
                     alphathreshold = 150
                 elif self.properties.game == 'EMPIRE_EARTH_II':
