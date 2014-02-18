@@ -507,52 +507,16 @@ class MeshHelper():
                 mesh_hasnormals = True # for proper lighting
 
                 #ambient mat
-                if b_ambient_prop:
-                    mesh_mat_ambient_color = b_mat.subsurface_scattering.color
-                else:
-                    mesh_mat_ambient_color = mathutils.Color((0.0, 0.0, 0.0))
-
+                mesh_mat_ambient_color = b_mat.mirror_color
                 #diffuse mat
-                if b_diffuse_prop:
-                    mesh_mat_diffuse_color = b_mat.diffuse_color
-                else:
-                    mesh_mat_diffuse_color = mathutils.Color((1.0, 1.0, 1.0))
-                
+                mesh_mat_diffuse_color = b_mat.diffuse_color
                 #emissive mat
-                if b_emissive_prop:
-                    mesh_mat_emissive_color = b_mat.subsurface_scattering.color
-                else:
-                    mesh_mat_emissive_color = mathutils.Color((0.0, 0.0, 0.0))
-
-                if b_emit_prop:
-                    mesh_mat_emitmulti = b_mat.emit
-                else:
-                    mesh_mat_emitmulti = 1.0
-
-                if self.properties.game != 'FALLOUT_3':
-                    #old code
-                    #mesh_mat_emissive_color = b_mat.diffuse_color * b_mat.emit
-                    mesh_mat_emissive_color = b_mat.subsurface_scattering.color
-
-                else:
-                    # special case for Fallout 3 (it does not store diffuse color)
-                    # if emit is non-zero, set emissive color to diffuse
-                    # (otherwise leave the color to zero)
-                    if b_mat.emit > self.properties.epsilon:
-
-                        #old code
-                        #mesh_mat_emissive_color = b_mat.diffuse_color
-                        mesh_mat_emissive_color = b_mat.subsurface_scattering.color
-                        mesh_mat_emitmulti = b_mat.emit
-
+                mesh_mat_emissive_color = b_mat.subsurface_scattering.color
+                mesh_mat_emitmulti = b_mat.emit
                 #specular mat
                 mesh_mat_specular_color = b_mat.specular_color
                 if b_mat.specular_intensity > 1.0:
                     b_mat.specular_intensity = 1.0
-
-                #mesh_mat_specular_color.r *= b_mat.specular_intensity
-                #mesh_mat_specular_color.g *= b_mat.specular_intensity
-                #mesh_mat_specular_color.b *= b_mat.specular_intensity
 
                 if ( mesh_mat_specular_color.r > self.properties.epsilon ) \
                     or ( mesh_mat_specular_color.g > self.properties.epsilon ) \
@@ -665,10 +629,10 @@ class MeshHelper():
             #add textures
             if self.properties.game == 'FALLOUT_3':
                 if b_mat:
-                    bs_shader = self.nif_export.texturehelper.export_bs_shader_property(b_obj, b_mat)
+                    bsshader = self.nif_export.texturehelper.export_bs_shader_property(b_obj, b_mat)
                 
-                    self.nif_export.objecthelper.register_block(bs_shader)
-                    trishape.add_property(bs_shader)
+                    self.nif_export.objecthelper.register_block(bsshader)
+                    trishape.add_property(bsshader)
             else:
                 if self.properties.game in self.nif_export.texturehelper.USED_EXTRA_SHADER_TEXTURES:
                     # sid meier's railroad and civ4:
