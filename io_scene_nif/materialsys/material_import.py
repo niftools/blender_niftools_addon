@@ -99,9 +99,9 @@ class Material():
             self.texturehelper.import_texture_effect(b_mat, textureEffect)
         
         # Diffuse color
-        b_mat.diffuse_color[0] = n_mat_prop.diffuse_color.r
-        b_mat.diffuse_color[1] = n_mat_prop.diffuse_color.g
-        b_mat.diffuse_color[2] = n_mat_prop.diffuse_color.b
+        b_mat.diffuse_color.r = n_mat_prop.diffuse_color.r
+        b_mat.diffuse_color.g = n_mat_prop.diffuse_color.g
+        b_mat.diffuse_color.b = n_mat_prop.diffuse_color.b
         b_mat.diffuse_intensity = 1.0
         
         # TODO: - Detect fallout 3+, use emit multi as a degree of emission
@@ -109,22 +109,13 @@ class Material():
         # Should we factor in blender bounds 0.0 - 2.0
         
         # Emissive
-        b_mat.niftools.emissive_color[0] = n_mat_prop.emissive_color.r
-        b_mat.niftools.emissive_color[1] = n_mat_prop.emissive_color.g
-        b_mat.niftools.emissive_color[2] = n_mat_prop.emissive_color.b
-        if(b_mat.niftools.emissive_color[0] > self.nif_import.properties.epsilon or 
-           b_mat.niftools.emissive_color[1] > self.nif_import.properties.epsilon or 
-           b_mat.niftools.emissive_color[2] > self.nif_import.properties.epsilon):
-            b_mat.emit = 1.0
-        else:
-            b_mat.emit = 0.0
+        b_mat.subsurface_scattering.color.r = n_mat_prop.emissive_color.r
+        b_mat.subsurface_scattering.color.g = n_mat_prop.emissive_color.g
+        b_mat.subsurface_scattering.color.b = n_mat_prop.emissive_color.b
+        b_mat.emit = n_mat_prop.emit_multi
             
         # gloss
-        gloss = n_mat_prop.glossiness
-        hardness = int(gloss * 4) # just guessing really
-        if hardness < 1: hardness = 1
-        if hardness > 511: hardness = 511
-        b_mat.specular_hardness = hardness
+        b_mat.specular_hardness = n_mat_prop.glossiness
         
         # Alpha
         if n_alpha_prop:
@@ -137,9 +128,9 @@ class Material():
             b_mat.niftools_alpha.alphaflag = n_alpha_prop.flags
 
         # Specular color
-        b_mat.specular_color[0] = n_mat_prop.specular_color.r
-        b_mat.specular_color[1] = n_mat_prop.specular_color.g
-        b_mat.specular_color[2] = n_mat_prop.specular_color.b
+        b_mat.specular_color.r = n_mat_prop.specular_color.r
+        b_mat.specular_color.g = n_mat_prop.specular_color.g
+        b_mat.specular_color.b = n_mat_prop.specular_color.b
         
         if (not n_specular_prop) and (self.nif_import.data.version != 0x14000004):
             b_mat.specular_intensity = 0.0 # no specular prop 
