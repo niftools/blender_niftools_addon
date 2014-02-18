@@ -511,6 +511,18 @@ class NifImport(NifCommon):
                                                  group_mesh=b_obj,
                                                  applytransform=True)
                         b_obj.niftools.objectflags = child.flags
+                        
+                        if child.properties:
+                            for b_prop in child.properties:
+                                if isinstance(b_prop, NifFormat.BSShaderPPLightingProperty):
+                                    b_obj.niftools_shader.shadertype = 'BSShaderPPLightingProperty'
+                                    sf_type = NifFormat.BSShaderType._enumvalues.index(b_prop.shader_type)
+                                    b_obj.niftools_shader.shaderobjtype = NifFormat.BSShaderType._enumkeys[sf_type]
+                                    for b_flag_name in b_prop.shader_flags._names:
+                                        sf_index = b_prop.shader_flags._names.index(b_flag_name)
+                                        if b_prop.shader_flags._items[sf_index]._value == 1:
+                                            b_obj.niftools_shader[b_flag_name] = True
+
                         if child.data.consistency_flags in NifFormat.ConsistencyType._enumvalues:
                             cf_index = NifFormat.ConsistencyType._enumvalues.index(child.data.consistency_flags)
                             b_obj.niftools.consistency_flags = NifFormat.ConsistencyType._enumkeys[cf_index]
