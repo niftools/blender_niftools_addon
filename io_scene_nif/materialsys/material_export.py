@@ -45,10 +45,10 @@ class Material():
     def __init__(self, parent):
         self.nif_export = parent
         
-    def export_material_property(self, name='', flags=0x0001,
-                             ambient=(1.0, 1.0, 1.0), diffuse=(1.0, 1.0, 1.0),
-                             specular=(0.0, 0.0, 0.0), emissive=(0.0, 0.0, 0.0),
-                             gloss=10.0, alpha=1.0, emitmulti=1.0):
+    def export_material_property(self, name, flags,
+                             ambient, diffuse,
+                             specular, emissive,
+                             gloss, alpha, emitmulti):
         """Return existing material property with given settings, or create
         a new one if a material property with these settings is not found."""
 
@@ -79,18 +79,21 @@ class Material():
 
         matprop.name = name
         matprop.flags = flags
-        matprop.ambient_color.r = ambient[0]
-        matprop.ambient_color.g = ambient[1]
-        matprop.ambient_color.b = ambient[2]
-        matprop.diffuse_color.r = diffuse[0]
-        matprop.diffuse_color.g = diffuse[1]
-        matprop.diffuse_color.b = diffuse[2]
-        matprop.specular_color.r = specular[0]
-        matprop.specular_color.g = specular[1]
-        matprop.specular_color.b = specular[2]
-        matprop.emissive_color.r = emissive[0]
-        matprop.emissive_color.g = emissive[1]
-        matprop.emissive_color.b = emissive[2]
+        matprop.ambient_color.r = ambient.r
+        matprop.ambient_color.g = ambient.g
+        matprop.ambient_color.b = ambient.b
+        
+        matprop.diffuse_color.r = diffuse.r
+        matprop.diffuse_color.g = diffuse.g
+        matprop.diffuse_color.b = diffuse.b
+        
+        matprop.specular_color.r = specular.r
+        matprop.specular_color.g = specular.g
+        matprop.specular_color.b = specular.b
+        
+        matprop.emissive_color.r = emissive.r
+        matprop.emissive_color.g = emissive.g
+        matprop.emissive_color.b = emissive.b
         matprop.glossiness = gloss
         matprop.alpha = alpha
         matprop.emit_multi = emitmulti

@@ -507,31 +507,32 @@ class MeshHelper():
                 mesh_hasnormals = True # for proper lighting
 
                 #ambient mat
-                mesh_mat_ambient_color = [1.0, 1.0, 1.0]
+                if b_ambient_prop:
+                    mesh_mat_ambient_color = b_mat.subsurface_scattering.color
+                else:
+                    mesh_mat_ambient_color = mathutils.Color((0.0, 0.0, 0.0))
 
                 #diffuse mat
-                mesh_mat_diffuse_color = [1.0, 1.0, 1.0]
-                '''
-                TODO: 3.0 - If needed where ambient should not be defaulted
-
-                #ambient mat
-                mesh_mat_ambient_color[0] = b_mat.niftools.ambient_color[0] * b_mat.niftools.ambient_factor
-                mesh_mat_ambient_color[1] = b_mat.niftools.ambient_color[1] * b_mat.niftools.ambient_factor
-                mesh_mat_ambient_color[2] = b_mat.niftools.ambient_color[2] * b_mat.niftools.ambient_factor
-
-                #diffuse mat
-                mest_mat_diffuse_color[0] = b_mat.niftools.diffuse_color[0] * b_mat.niftools.diffuse_factor
-                mest_mat_diffuse_color[1] = b_mat.niftools.diffuse_color[1] * b_mat.niftools.diffuse_factor
-                mest_mat_diffuse_color[2] = b_mat.niftools.diffuse_color[2] * b_mat.niftools.diffuse_factor
-                '''
-
+                if b_diffuse_prop:
+                    mesh_mat_diffuse_color = b_mat.diffuse_color
+                else:
+                    mesh_mat_diffuse_color = mathutils.Color((1.0, 1.0, 1.0))
+                
                 #emissive mat
-                mesh_mat_emissive_color = [0.0, 0.0, 0.0]
-                mesh_mat_emitmulti = 1.0 # default
+                if b_emissive_prop:
+                    mesh_mat_emissive_color = b_mat.subsurface_scattering.color
+                else:
+                    mesh_mat_emissive_color = mathutils.Color((0.0, 0.0, 0.0))
+
+                if b_emit_prop:
+                    mesh_mat_emitmulti = b_mat.emit
+                else:
+                    mesh_mat_emitmulti = 1.0
+
                 if self.properties.game != 'FALLOUT_3':
                     #old code
                     #mesh_mat_emissive_color = b_mat.diffuse_color * b_mat.emit
-                    mesh_mat_emissive_color = b_mat.niftools.emissive_color * b_mat.emit
+                    mesh_mat_emissive_color = b_mat.subsurface_scattering.color
 
                 else:
                     # special case for Fallout 3 (it does not store diffuse color)
@@ -541,26 +542,26 @@ class MeshHelper():
 
                         #old code
                         #mesh_mat_emissive_color = b_mat.diffuse_color
-                        mesh_mat_emissive_color = b_mat.niftools.emissive_color
-                        mesh_mat_emitmulti = b_mat.emit * 10.0
+                        mesh_mat_emissive_color = b_mat.subsurface_scattering.color
+                        mesh_mat_emitmulti = b_mat.emit
 
                 #specular mat
                 mesh_mat_specular_color = b_mat.specular_color
                 if b_mat.specular_intensity > 1.0:
                     b_mat.specular_intensity = 1.0
 
-                mesh_mat_specular_color[0] *= b_mat.specular_intensity
-                mesh_mat_specular_color[1] *= b_mat.specular_intensity
-                mesh_mat_specular_color[2] *= b_mat.specular_intensity
+                #mesh_mat_specular_color.r *= b_mat.specular_intensity
+                #mesh_mat_specular_color.g *= b_mat.specular_intensity
+                #mesh_mat_specular_color.b *= b_mat.specular_intensity
 
-                if ( mesh_mat_specular_color[0] > self.properties.epsilon ) \
-                    or ( mesh_mat_specular_color[1] > self.properties.epsilon ) \
-                    or ( mesh_mat_specular_color[2] > self.properties.epsilon ):
+                if ( mesh_mat_specular_color.r > self.properties.epsilon ) \
+                    or ( mesh_mat_specular_color.g > self.properties.epsilon ) \
+                    or ( mesh_mat_specular_color.b > self.properties.epsilon ):
                     mesh_hasspec = b_spec_prop
 
                 #gloss mat
                 #'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
-                mesh_mat_gloss = b_mat.specular_hardness / 4.0
+                mesh_mat_gloss = b_mat.specular_hardness
 
                 #alpha mat
                 mesh_hasalpha = b_alpha_prop
@@ -745,7 +746,7 @@ class MeshHelper():
                 # add NiTriShape's material property
                 trimatprop = self.nif_export.propertyhelper.material_property.export_material_property(
                     name=self.nif_export.objecthelper.get_full_name(b_mat.name),
-                    flags=0x0001, # TODO: - standard flag, check?
+                    flags=0x0001, # TODO: - standard flag, check? material and texture properties in morrowind style nifs had a flag
                     ambient=mesh_mat_ambient_color,
                     diffuse=mesh_mat_diffuse_color,
                     specular=mesh_mat_specular_color,
