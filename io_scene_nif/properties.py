@@ -68,7 +68,7 @@ def underscore_to_camelcase(s):
 
 
 
-class NiftoolsMatAlphaProps(bpy.types.PropertyGroup):
+class NiftoolsMatFlagProps(bpy.types.PropertyGroup):
     '''Adds custom properties to material'''
     
     @classmethod
@@ -81,6 +81,16 @@ class NiftoolsMatAlphaProps(bpy.types.PropertyGroup):
         
         cls.alphaflag = IntProperty(
                         name = 'Alpha Flag',
+                        default = 0
+                        )
+        
+        cls.textureflag = IntProperty(
+                        name = 'Texture Flag',
+                        default = 0
+                        )
+
+        cls.materialflag = IntProperty(
+                        name = 'Material Flag',
                         default = 0
                         )
         
@@ -98,18 +108,18 @@ class NiftoolsMaterialProps(bpy.types.PropertyGroup):
                         description = 'Additional material properties used by the Nif File Format',
                         type=cls,
                         )
-        
-        cls.diffuse_color = FloatVectorProperty(
-                name='Diffuse', subtype='COLOR', default=[1.0,1.0,1.0],min=0.0, max=1.0)
+
+        cls.ambient_preview = BoolProperty(
+                name='Preview', description='Allows a viewport preview of the emissive property', default=False)
         
         cls.ambient_color = FloatVectorProperty(
                 name='Ambient', subtype='COLOR', default=[1.0,1.0,1.0],min=0.0, max=1.0)
         
-        cls.emissive_color = FloatVectorProperty(
-                name='Emissive', subtype='COLOR', default=[0.0,0.0,0.0],min=0.0, max=1.0)
-        
         cls.emissive_preview = BoolProperty(
                 name='Preview', description='Allows a viewport preview of the emissive property', default=False)
+        
+        cls.emissive_color = FloatVectorProperty(
+                name='Emissive', subtype='COLOR', default=[0.0,0.0,0.0],min=0.0, max=1.0)
     
     @classmethod
     def unregister(cls):

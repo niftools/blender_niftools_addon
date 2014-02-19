@@ -42,8 +42,8 @@ from bpy.types import Panel
    
 
 
-class NifAlphaPanel(Panel):
-    bl_label = "Alpha Panel"
+class NifMatFlagPanel(Panel):
+    bl_label = "Flag Panel"
     
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -67,10 +67,12 @@ class NifAlphaPanel(Panel):
         row = layout.column()
         
         row.prop(matalpha, "alphaflag")
+        row.prop(matalpha, "materialflag")
+        row.prop(matalpha, "textureflag")
         
 
-class NifEmissivePanel(Panel):
-    bl_label = "Emission Panel"
+class NifMatColorPanel(Panel):
+    bl_label = "Material Color Panel"
     
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -91,11 +93,17 @@ class NifEmissivePanel(Panel):
         mat = context.material.niftools
         
         layout = self.layout
-        row = layout.row()
-        colL = row.column()
-        colR = row.column()
-        colL.prop(mat, "emissive_preview")
-        colR.prop(mat, "emissive_color", text="")      
+        row = layout.column()
+        col_ambient_L = row.column()
+        col_ambient_R = row.column()
+        col_ambient_L.prop(mat, "ambient_preview")
+        col_ambient_R.prop(mat, "ambient_color", text="")
+        
+        col_emissive_L = row.column()
+        col_emissive_R = row.column()
+        col_emissive_L.prop(mat, "emissive_preview")
+        col_emissive_R.prop(mat, "emissive_color", text="")      
+
 
 class NiftoolsBonePanel(Panel):
     bl_label = "Niftools Bone Props"
@@ -232,12 +240,12 @@ class NifCollisionBoundsPanel(Panel):
         box.prop(col_setting, "havok_material", text='Havok Material') # havok material prop
 
 def register():
-    bpy.utils.register_class(NifEmissivePanel)
-    bpy.types.MATERIAL_PT_shading.prepend(NifEmissivePanel)
+    bpy.utils.register_class(NifMatColorPanel)
+    bpy.types.MATERIAL_PT_shading.prepend(NifMatColorPanel)
     bpy.utils.register_class(NifCollisionBoundsPanel)
 
 def unregister():
-    bpy.types.MATERIAL_PT_shading.remove(NifEmissivePanel)
-    bpy.utils.unregister_class(NifEmissivePanel)
+    bpy.types.MATERIAL_PT_shading.remove(NifMatColorPanel)
+    bpy.utils.unregister_class(NifMatColorPanel)
     bpy.utils.unregister_class(NifCollisionBoundsPanel)
     
