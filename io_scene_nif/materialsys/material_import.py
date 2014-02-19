@@ -98,11 +98,10 @@ class Material():
         if(textureEffect):
             self.texturehelper.import_texture_effect(b_mat, textureEffect)
         
-
         # Ambient color
-        b_mat.mirror_color.r = n_mat_prop.ambient_color.r
-        b_mat.mirror_color.g = n_mat_prop.ambient_color.g
-        b_mat.mirror_color.b = n_mat_prop.ambient_color.b
+        b_mat.niftools.ambient_color.r = n_mat_prop.ambient_color.r
+        b_mat.niftools.ambient_color.g = n_mat_prop.ambient_color.g
+        b_mat.niftools.ambient_color.b = n_mat_prop.ambient_color.b
         
         # Diffuse color
         b_mat.diffuse_color.r = n_mat_prop.diffuse_color.r
@@ -115,9 +114,9 @@ class Material():
         # Should we factor in blender bounds 0.0 - 2.0
         
         # Emissive
-        b_mat.subsurface_scattering.color.r = n_mat_prop.emissive_color.r
-        b_mat.subsurface_scattering.color.g = n_mat_prop.emissive_color.g
-        b_mat.subsurface_scattering.color.b = n_mat_prop.emissive_color.b
+        b_mat.niftools.emissive_color.r = n_mat_prop.emissive_color.r
+        b_mat.niftools.emissive_color.g = n_mat_prop.emissive_color.g
+        b_mat.niftools.emissive_color.b = n_mat_prop.emissive_color.b
         b_mat.emit = n_mat_prop.emit_multi
             
         # gloss
