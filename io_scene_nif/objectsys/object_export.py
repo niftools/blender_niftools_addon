@@ -507,17 +507,15 @@ class MeshHelper():
                 mesh_hasnormals = True # for proper lighting
 
                 #ambient mat
-                mesh_mat_ambient_color = b_mat.mirror_color
+                mesh_mat_ambient_color = b_mat.niftools.ambient_color
                 #diffuse mat
                 mesh_mat_diffuse_color = b_mat.diffuse_color
                 #emissive mat
-                mesh_mat_emissive_color = b_mat.subsurface_scattering.color
+                mesh_mat_emissive_color = b_mat.niftools.emissive_color
                 mesh_mat_emitmulti = b_mat.emit
                 #specular mat
                 mesh_mat_specular_color = b_mat.specular_color
-                if b_mat.specular_intensity > 1.0:
-                    b_mat.specular_intensity = 1.0
-
+                
                 if ( mesh_mat_specular_color.r > self.properties.epsilon ) \
                     or ( mesh_mat_specular_color.g > self.properties.epsilon ) \
                     or ( mesh_mat_specular_color.b > self.properties.epsilon ):
