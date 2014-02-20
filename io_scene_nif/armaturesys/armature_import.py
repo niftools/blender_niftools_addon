@@ -115,7 +115,7 @@ class Armature():
 			# store bone priority, if applicable
 			if niBone.name in self.nif_import.dict_bone_priorities:
 				constr = b_posebone.constraints.append(
-					bpy.types.Constraint.NULL)
+					bpy.types.ConstraintNULL)
 				constr.name = "priority:%i" % self.nif_import.dict_bone_priorities[niBone.name]
 		
 		bpy.ops.object.mode_set(mode='EDIT',toggle=False)

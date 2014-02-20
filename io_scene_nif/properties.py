@@ -43,7 +43,7 @@ from bpy.props import (PointerProperty,
                        StringProperty,
                        IntProperty,
                        BoolProperty,
-                       EnumProperty
+                       EnumProperty,
                        )
 
 from pyffi.formats.nif import NifFormat
@@ -67,6 +67,37 @@ def underscore_to_camelcase(s):
     return ''.join(camelcase_words(s.split('_')))
 
 
+
+class NiftoolsMatFlagProps(bpy.types.PropertyGroup):
+    '''Adds custom properties to material'''
+    
+    @classmethod
+    def register(cls):
+        bpy.types.Material.niftools_alpha = PointerProperty(
+                        name='Niftools Material Alpha',
+                        description = 'Additional material properties used by the Nif File Format',
+                        type=cls,
+                        )
+        
+        cls.alphaflag = IntProperty(
+                        name = 'Alpha Flag',
+                        default = 0
+                        )
+        
+        cls.textureflag = IntProperty(
+                        name = 'Texture Flag',
+                        default = 0
+                        )
+
+        cls.materialflag = IntProperty(
+                        name = 'Material Flag',
+                        default = 0
+                        )
+        
+    @classmethod
+    def unregister(cls):
+        del bpy.types.Material.niftools_alpha
+
 class NiftoolsMaterialProps(bpy.types.PropertyGroup):
     '''Adds custom properties to material'''
     
@@ -77,22 +108,199 @@ class NiftoolsMaterialProps(bpy.types.PropertyGroup):
                         description = 'Additional material properties used by the Nif File Format',
                         type=cls,
                         )
-        
-        cls.diffuse_color = FloatVectorProperty(
-                name='Diffuse', subtype='COLOR', default=[1.0,1.0,1.0],min=0.0, max=1.0)
+
+        cls.ambient_preview = BoolProperty(
+                name='Preview', description='Allows a viewport preview of the emissive property', default=False)
         
         cls.ambient_color = FloatVectorProperty(
                 name='Ambient', subtype='COLOR', default=[1.0,1.0,1.0],min=0.0, max=1.0)
         
-        cls.emissive_color = FloatVectorProperty(
-                name='Emissive', subtype='COLOR', default=[0.0,0.0,0.0],min=0.0, max=1.0)
-        
         cls.emissive_preview = BoolProperty(
                 name='Preview', description='Allows a viewport preview of the emissive property', default=False)
+        
+        cls.emissive_color = FloatVectorProperty(
+                name='Emissive', subtype='COLOR', default=[0.0,0.0,0.0],min=0.0, max=1.0)
     
     @classmethod
     def unregister(cls):
         del bpy.types.Material.niftools
+
+
+class NiftoolsBoneProps(bpy.types.PropertyGroup):
+    @classmethod
+    def register(cls):
+        bpy.types.Bone.niftools_bone = PointerProperty(
+                        name='Niftools Bone Property',
+                        description = 'Additional bone properties used by the Nif File Format',
+                        type = cls,
+                        )
+        cls.boneflags = IntProperty(
+                        name = 'Bone Flag',
+                        default = 0
+                        )
+        
+    @classmethod
+    def unregister(cls):
+        del bpy.types.Bone.niftools_bone
+
+
+class NiftoolsShaderProps(bpy.types.PropertyGroup):
+    @classmethod
+    def register(cls):
+        bpy.types.Object.niftools_shader = PointerProperty(
+                        name='Niftools BsShader Property',
+                        description = 'Properties used by the BsShader for the Nif File Format',
+                        type = cls,
+                        )
+        
+        cls.shadertype = EnumProperty(
+                        name='Shader Type',
+                        description = 'Type of property used to display meshes.',
+                        items = (('None','None',"",0),
+                                 ('BSShaderProperty', 'BS Shader Property',"", 1),
+                                 ('BSShaderPPLightingProperty', 'BS Shader PP Lighting Property',"", 2)),
+                        )
+
+        cls.shaderobjtype = EnumProperty(
+                        name='Shader Object Type',
+                        description = 'Type of object linked to shader',
+                        items = [(item, item,"", i) for i, item in enumerate(NifFormat.BSShaderType._enumkeys)],
+                        default = 'SHADER_DEFAULT'
+                        )
+        
+        cls.sf_specular = BoolProperty(
+                        name = 'Specular'
+                        )
+        
+        cls.sf_skinned = BoolProperty(
+                        name = 'Skinned'
+                        )
+        
+        cls.sf_low_detail = BoolProperty(
+                        name = 'Low Detail'
+                        )
+        
+        cls.sf_vertex_alpha = BoolProperty(
+                        name = 'Vertex Alpha'
+                        )
+        
+        cls.sf_unknown_1 = BoolProperty(
+                        name = 'Unknown 1'
+                        )
+        
+        cls.sf_single_pass = BoolProperty(
+                        name = 'Single Pass'
+                        )
+        
+        cls.sf_empty = BoolProperty(
+                        name = 'Empty'
+                        )
+        
+        cls.sf_environment_mapping = BoolProperty(
+                        name = 'Environment Mapping'
+                        )
+        
+        cls.sf_alpha_texture = BoolProperty(
+                        name = 'Alpha Texture'
+                        )
+        
+        cls.sf_unknown_2 = BoolProperty(
+                        name = 'Unknown 2'
+                        )
+        
+        cls.sf_face_gen = BoolProperty(
+                        name = 'Face Gen'
+                        )
+        
+        cls.sf_parallax_shader_index_15 = BoolProperty(
+                        name = 'Parallax Shader Index'
+                        )
+        
+        cls.sf_unknown_3 = BoolProperty(
+                        name = 'Unknown 3'
+                        )
+        
+        cls.sf_non_projective_shadows = BoolProperty(
+                        name = 'Non-Projective Shadows'
+                        )
+        
+        cls.sf_unknown_4 = BoolProperty(
+                        name = 'Unknown 4'
+                        )
+        
+        cls.sf_refraction = BoolProperty(
+                        name = 'Refraction'
+                        )
+        
+        cls.sf_fire_refraction = BoolProperty(
+                        name = 'Fire Refraction'
+                        )
+        
+        cls.sf_eye_environment_mapping = BoolProperty(
+                        name = 'Eye Environment Mapping'
+                        )
+        
+        cls.sf_hair = BoolProperty(
+                        name = 'Hair'
+                        )
+        
+        cls.sf_dynamic_alpha = BoolProperty(
+                        name = 'Dynamic Alpha'
+                        )
+        
+        cls.sf_localmap_hide_secret = BoolProperty(
+                        name = 'Local Map Hide Secret'
+                        )
+        
+        cls.sf_window_environment_mapping = BoolProperty(
+                        name = 'Window Environment Mapping'
+                        )
+        
+        cls.sf_tree_billboard = BoolProperty(
+                        name = 'Tree Billboard'
+                        )
+        
+        cls.sf_shadow_frustum = BoolProperty(
+                        name = 'Shadow Frustum'
+                        )
+        
+        cls.sf_multiple_textures = BoolProperty(
+                        name = 'Multiple Textures'
+                        )
+        
+        cls.sf_remappable_textures = BoolProperty(
+                        name = 'Remappable Textures'
+                        )
+        
+        cls.sf_decal_single_pass = BoolProperty(
+                        name = 'Decal Single Pass'
+                        )
+        
+        cls.sf_dynamic_decal_single_pass = BoolProperty(
+                        name = 'Dynamic Decal Single Pass'
+                        )
+        
+        cls.sf_parallax_occulsion = BoolProperty(
+                        name = 'Parallax Occlusion'
+                        )
+        
+        cls.sf_external_emittance = BoolProperty(
+                        name = 'External Emittance'
+                        )
+        
+        cls.sf_shadow_map = BoolProperty(
+                        name = 'Shadow Map'
+                        )
+        
+        cls.sf_z_buffer_test = BoolProperty(
+                        name = 'Z Buffer Test'
+                        )
+        
+    @classmethod
+    def unregister(cls):
+        del bpy.types.Object.niftools_shader
+
+
 
 
 class NiftoolsObjectProps(bpy.types.PropertyGroup):
@@ -103,14 +311,34 @@ class NiftoolsObjectProps(bpy.types.PropertyGroup):
                         description = 'Additional object properties used by the Nif File Format',
                         type = cls,
                         )
+        
+        cls.rootnode = EnumProperty(
+                        name = 'Nif Root Node',
+                        description = 'Type of property used to display meshes.',
+                        items = (('NiNode', 'NiNode',"", 0),
+                                ('BSFadeNode', 'BSFadeNode',"", 1)),
+                        default = 'NiNode',
+                        )
+        
         cls.longname = StringProperty(
                         name = 'Nif LongName'
+                        )
+
+        cls.consistency_flags = StringProperty(
+                        name = 'Consistency Flag',
+                        description = 'Controls animation type',
+                        )
+
+        cls.objectflags = IntProperty(
+                        name = 'Object Flag',
+                        description = 'Controls animation and collision',
+                        default = 0
                         )
 
         cls.bsxflags = IntProperty(
                         name = 'BSXFlags',
                         description = 'Controls animation and collision',
-                        default = 2 # 2 = Bit 1, enable collision
+                        default = 0 # 2 = Bit 1, enable collision
                         )
 
         cls.upb = StringProperty(
@@ -119,20 +347,6 @@ class NiftoolsObjectProps(bpy.types.PropertyGroup):
                         default = ''
                         )
 
-        cls.LHMaxAngle = IntProperty(
-                        name = 'LHMaxAngle',
-                        description = 'Havok limited hinge max angle.',
-                        )
-
-        cls.LHMinAngle = IntProperty(
-                        name = 'LHMinAngle',
-                        description = 'Havok limited hinge min angle.',
-                        )
-
-        cls.LHMaxFriction = IntProperty(
-                        name = 'LHMaxFriction',
-                        description = 'Havok limited hinge max friction.',
-                        )
         
     @classmethod
     def unregister(cls):
@@ -200,8 +414,27 @@ class NiftoolsObjectCollisionProps(bpy.types.PropertyGroup):
     @classmethod
     def unregister(cls):
         del bpy.types.Object.nifcollision
-        
-        
+
+
+class NiftoolsConstraintProps(bpy.types.PropertyGroup):
+    @classmethod
+    def register(cls):
+        bpy.types.Object.niftools_constraint = PointerProperty(
+						name='Niftools Constraint Property',
+						description = 'Additional constraint properties used by the Nif File Format',
+						type = cls
+						)
+
+        cls.LHMaxFriction = IntProperty(
+						name = 'LHMaxFriction',
+						description = 'Havok limited hinge max friction.',
+						)
+
+    @classmethod
+    def unregister(cls):
+        del bpy.types.Object.niftools_constraint
+
+
 def register():
     bpy.utils.register_class(NiftoolsMaterialProps)
     bpy.utils.register_class(NiftoolsObjectProps)
