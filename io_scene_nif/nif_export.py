@@ -45,7 +45,7 @@ from io_scene_nif.animationsys.animation_export import AnimationHelper
 from io_scene_nif.collisionsys.collision_export import bhkshape_export, bound_export
 from io_scene_nif.armaturesys.armature_export import Armature
 from io_scene_nif.propertysys.property_export import PropertyHelper
-from io_scene_nif.constraintsys.constraint_export import Constraint
+from io_scene_nif.constraintsys.constraint_export import constraint_export
 from io_scene_nif.texturesys.texture_export import TextureHelper
 from io_scene_nif.objectsys.object_export import ObjectHelper
 
@@ -101,7 +101,7 @@ class NifExport(NifCommon):
         self.armaturehelper = Armature(parent=self)
         self.animationhelper = AnimationHelper(parent=self)
         self.propertyhelper = PropertyHelper(parent=self)
-        self.constrainthelper = Constraint(parent=self)
+        self.constrainthelper = constraint_export(parent=self)
         self.texturehelper = TextureHelper(parent=self)
         self.objecthelper = ObjectHelper(parent=self)
         
@@ -189,14 +189,7 @@ class NifExport(NifCommon):
                             " Workaround: apply size and rotation (CTRL-A)"
                             " on '%s'." % b_obj.name)
 
-            # oblivion, Fallout 3 and civ4
-            if (self.properties.game
-                in ('CIVILIZATION_IV', 'OBLIVION', 'FALLOUT_3')):
-                root_name = 'Scene Root'
-            # other games
-            else:
-                root_name = filebase
-
+            root_name = filebase
             # get the root object from selected object
             # only export empties, meshes, and armatures
             if not self.context.selected_objects:
@@ -209,6 +202,10 @@ class NifExport(NifCommon):
                                 if b_obj.type in export_types]:
                 while root_object.parent:
                     root_object = root_object.parent
+                if (self.properties.game
+                    in ('CIVILIZATION_IV', 'OBLIVION', 'FALLOUT_3')):
+                    if (root_object.type == 'ARMATURE') or (root_object.name.lower() == "bip01"):
+                        root_name = 'Scene Root'
                 if root_object.type not in export_types:
                     raise NifExportError(
                         "Root object (%s) must be an 'EMPTY', 'MESH',"
@@ -271,7 +268,7 @@ class NifExport(NifCommon):
                 if has_controllers:
                     self.info("Defining default animation group.")
                     # write the animation group text buffer
-                    animtxt = Blender.Text.New("Anim")
+                    animtxt = bpy.data.texts.new("Anim")
                     animtxt.write("%i/Idle: Start/Idle: Loop Start\n%i/Idle: Loop Stop/Idle: Stop" %
                                   (self.context.scene.frame_start, self.context.scene.frame_end))
 
@@ -318,7 +315,7 @@ class NifExport(NifCommon):
                     "Adding controllers and interpolators for skeleton")
                 for block in list(self.dict_blocks.keys()):
                     if isinstance(block, NifFormat.NiNode) \
-                        and block.name == "Bip01":
+                        and block.name.decode() == "Bip01":
                         for bone in block.tree(block_type = NifFormat.NiNode):
                             ctrl = self.objecthelper.create_block("NiTransformController")
                             interp = self.objecthelper.create_block("NiTransformInterpolator")
@@ -399,13 +396,14 @@ class NifExport(NifCommon):
 
                     # many Oblivion nifs have a UPB, but export is disabled as
                     # they do not seem to affect anything in the game
-                    upb = self.objecthelper.create_block("NiStringExtraData")
-                    upb.name = 'UPB'
-                    if(b_obj.niftools.upb != ''):
-                        upb.string_data = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
-                    else:
-                        upb.string_data = b_obj.niftools.upb
-                    root_block.add_extra_data(upb)
+                    if b_obj.niftools.upb:
+                        upb = self.objecthelper.create_block("NiStringExtraData")
+                        upb.name = 'UPB'
+                        if(b_obj.niftools.upb == ''):
+                            upb.string_data = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
+                        else:
+                            upb.string_data = b_obj.niftools.upb.encode()
+                        root_block.add_extra_data(upb)
 
                 # update rigid body center of gravity and mass
                 if self.EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES:
@@ -581,9 +579,15 @@ class NifExport(NifCommon):
                     root_block.add_effect(b)
             else:
                 root_block.name = root_name
-
+                
+            self.root_ninode = None
+            for root_obj in root_objects:
+                if root_obj.niftools.rootnode == 'BSFadeNode':
+                    self.root_ninode = 'BSFadeNode'
+                elif self.root_ninode == None:
+                    self.root_ninode = 'NiNode'
             # making root block a fade node
-            if (self.properties.game == 'FALLOUT_3' and self.EXPORT_FO3_FADENODE):
+            if (self.properties.game == 'FALLOUT_3' and self.root_ninode == 'BSFadeNode'):
                 self.info("Making root block a BSFadeNode")
                 fade_root_block = NifFormat.BSFadeNode().deepcopy(root_block)
                 fade_root_block.replace_global_node(root_block, fade_root_block)

@@ -40,8 +40,39 @@
 import bpy
 from bpy.types import Panel
    
-class NifEmissivePanel(Panel):
-    bl_label = "Emission Panel"
+
+
+class NifMatFlagPanel(Panel):
+    bl_label = "Flag Panel"
+    
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "material"
+    
+    @classmethod
+    def poll(cls, context):
+        mat = context.material
+        if mat is not None:
+            if mat.use_nodes:
+                if mat.active_node_material is not None:
+                    return True
+                return False
+            return True
+        return False
+    
+    def draw(self, context):
+        matalpha = context.material.niftools_alpha
+        
+        layout = self.layout
+        row = layout.column()
+        
+        row.prop(matalpha, "alphaflag")
+        row.prop(matalpha, "materialflag")
+        row.prop(matalpha, "textureflag")
+        
+
+class NifMatColorPanel(Panel):
+    bl_label = "Material Color Panel"
     
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
@@ -62,11 +93,93 @@ class NifEmissivePanel(Panel):
         mat = context.material.niftools
         
         layout = self.layout
-        row = layout.row()
-        colL = row.column()
-        colR = row.column()
-        colL.prop(mat, "emissive_preview")
-        colR.prop(mat, "emissive_color", text="")      
+        row = layout.column()
+        col_ambient_L = row.column()
+        col_ambient_R = row.column()
+        col_ambient_L.prop(mat, "ambient_preview")
+        col_ambient_R.prop(mat, "ambient_color", text="")
+        
+        col_emissive_L = row.column()
+        col_emissive_R = row.column()
+        col_emissive_L.prop(mat, "emissive_preview")
+        col_emissive_R.prop(mat, "emissive_color", text="")      
+
+
+class NiftoolsBonePanel(Panel):
+    bl_label = "Niftools Bone Props"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "bone"
+
+    @classmethod
+    def poll(cls, context):
+        return True
+        
+
+    def draw(self, context):
+        nif_bone_props = context.bone.niftools_bone
+        
+        layout = self.layout
+        row = layout.column()
+        
+        row.prop(nif_bone_props, "boneflags")
+    
+
+
+class NifShaderObjectPanel(Panel):
+    bl_label = "Niftools Shader"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "object"
+    bl_options =  {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+        
+
+    def draw(self, context):
+        nif_obj_props = context.object.niftools_shader
+        
+        layout = self.layout
+        row = layout.column()
+        
+        row.prop(nif_obj_props, "shadertype")
+        row.prop(nif_obj_props, "shaderobjtype")
+                
+        row.prop(nif_obj_props, "sf_specular")
+        row.prop(nif_obj_props, "sf_skinned")
+        row.prop(nif_obj_props, "sf_low_detail")
+        row.prop(nif_obj_props, "sf_vertex_alpha")
+        row.prop(nif_obj_props, "sf_unknown_1")
+        row.prop(nif_obj_props, "sf_single_pass")
+        row.prop(nif_obj_props, "sf_empty")
+        row.prop(nif_obj_props, "sf_environment_mapping")
+        row.prop(nif_obj_props, "sf_alpha_texture")
+        row.prop(nif_obj_props, "sf_unknown_2")
+        row.prop(nif_obj_props, "sf_face_gen")
+        row.prop(nif_obj_props, "sf_parallax_shader_index_15")
+        row.prop(nif_obj_props, "sf_unknown_3")
+        row.prop(nif_obj_props, "sf_non_projective_shadows")
+        row.prop(nif_obj_props, "sf_unknown_4")
+        row.prop(nif_obj_props, "sf_refraction")
+        row.prop(nif_obj_props, "sf_fire_refraction")
+        row.prop(nif_obj_props, "sf_eye_environment_mapping")
+        row.prop(nif_obj_props, "sf_hair")
+        row.prop(nif_obj_props, "sf_dynamic_alpha")
+        row.prop(nif_obj_props, "sf_localmap_hide_secret")
+        row.prop(nif_obj_props, "sf_window_environment_mapping")
+        row.prop(nif_obj_props, "sf_tree_billboard")
+        row.prop(nif_obj_props, "sf_shadow_frustum")
+        row.prop(nif_obj_props, "sf_multiple_textures")
+        row.prop(nif_obj_props, "sf_remappable_textures")
+        row.prop(nif_obj_props, "sf_decal_single_pass")
+        row.prop(nif_obj_props, "sf_dynamic_decal_single_pass")
+        row.prop(nif_obj_props, "sf_parallax_occulsion")
+        row.prop(nif_obj_props, "sf_external_emittance")
+        row.prop(nif_obj_props, "sf_shadow_map")
+        row.prop(nif_obj_props, "sf_z_buffer_test")
+
 
 class NifObjectPanel(Panel):
     bl_label = "Niftools Object Panel"
@@ -79,12 +192,19 @@ class NifObjectPanel(Panel):
     def poll(cls, context):
         return True
         
+
     def draw(self, context):
         nif_obj_props = context.object.niftools
         
         layout = self.layout
-        row = layout.row()
+        row = layout.column()
+        row.prop(nif_obj_props, "rootnode")
         row.prop(nif_obj_props, "upb")
+        row.prop(nif_obj_props, "bsxflags")
+        row.prop(nif_obj_props, "consistency_flags")
+        row.prop(nif_obj_props, "objectflags")
+        row.prop(nif_obj_props, "longname")
+        
 
 class NifCollisionBoundsPanel(Panel):
     bl_label = "Collision Bounds"
@@ -120,12 +240,12 @@ class NifCollisionBoundsPanel(Panel):
         box.prop(col_setting, "havok_material", text='Havok Material') # havok material prop
 
 def register():
-    bpy.utils.register_class(NifEmissivePanel)
-    bpy.types.MATERIAL_PT_shading.prepend(NifEmissivePanel)
+    bpy.utils.register_class(NifMatColorPanel)
+    bpy.types.MATERIAL_PT_shading.prepend(NifMatColorPanel)
     bpy.utils.register_class(NifCollisionBoundsPanel)
 
 def unregister():
-    bpy.types.MATERIAL_PT_shading.remove(NifEmissivePanel)
-    bpy.utils.unregister_class(NifEmissivePanel)
+    bpy.types.MATERIAL_PT_shading.remove(NifMatColorPanel)
+    bpy.utils.unregister_class(NifMatColorPanel)
     bpy.utils.unregister_class(NifCollisionBoundsPanel)
     
