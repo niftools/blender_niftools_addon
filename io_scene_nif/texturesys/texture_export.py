@@ -90,29 +90,29 @@ class TextureHelper():
     def export_bs_shader_property(self, b_obj=None, b_mat=None):
         """Export a Bethesda shader property block."""
         self.determine_texture_types(b_obj, b_mat)
-        
+        b_s_type = NifFormat.BSShaderType._enumkeys.index(b_obj.niftools_shader.shaderobjtype)
+        b_flag_list = b_obj.niftools_shader.bl_rna.properties.keys()
         # create new block
-        bsshader = NifFormat.BSShaderPPLightingProperty()
-        
-        # set shader options
-        # TODO: FIXME:
-        #bsshader.shader_type = self.nif_export.EXPORT_FO3_SHADER_TYPE
-        #bsshader.shader_flags.zbuffer_test = self.nif_export.EXPORT_FO3_SF_ZBUF
-        #bsshader.shader_flags.shadow_map = self.nif_export.EXPORT_FO3_SF_SMAP
-        #bsshader.shader_flags.shadow_frustum = self.nif_export.EXPORT_FO3_SF_SFRU
-        #bsshader.shader_flags.window_environment_mapping = self.nif_export.EXPORT_FO3_SF_WINDOW_ENVMAP
-        #bsshader.shader_flags.empty = self.nif_export.EXPORT_FO3_SF_EMPT
-        #bsshader.shader_flags.unknown_31 = self.nif_export.EXPORT_FO3_SF_UN31
-        
+        if b_obj.niftools_shader.shadertype == 'BSShaderPPLightingProperty':
+            bsshader = NifFormat.BSShaderPPLightingProperty()
+            # set shader options
+            # TODO: FIXME:
+            bsshader.shader_type = NifFormat.BSShaderType._enumvalues[b_s_type]
+            for sf_flag in bsshader.shader_flags._names:
+                if sf_flag in b_flag_list:
+                    b_flag = b_obj.niftools_shader.get(sf_flag)
+                    if b_flag  == True:
+                        sf_flag_index = bsshader.shader_flags._names.index(sf_flag)
+                        bsshader.shader_flags._items[sf_flag_index]._value = 1
         # set textures
         texset = NifFormat.BSShaderTextureSet()
         bsshader.texture_set = texset
-        if basemtex:
-            texset.textures[0] = self.texture_writer.export_texture_filename(basemtex.texture)
-        if normalmtex:
-            texset.textures[1] = self.texture_writer.export_texture_filename(normalmtex.texture)
-        if glowmtex:
-            texset.textures[2] = self.texture_writer.export_texture_filename(glowmtex.texture)
+        if self.basemtex:
+            texset.textures[0] = self.texture_writer.export_texture_filename(self.basemtex.texture)
+        if self.normalmtex:
+            texset.textures[1] = self.texture_writer.export_texture_filename(self.normalmtex.texture)
+        if self.glowmtex:
+            texset.textures[2] = self.texture_writer.export_texture_filename(self.glowmtex.texture)
 
         return bsshader
     

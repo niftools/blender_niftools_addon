@@ -1,4 +1,4 @@
-'''Script to import/export constraints.'''
+'''Script to export constraints.'''
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -43,18 +43,19 @@ from pyffi.formats.nif import NifFormat
 import bpy
 import mathutils
 
-class Constraint():
+class constraint_export():
 
     def __init__(self, parent):
         self.nif_export = parent
         self.properties = parent.properties
+        self.HAVOK_SCALE = parent.HAVOK_SCALE
         
     def export_constraints(self, b_obj, root_block):
         """Export the constraints of an object.
 
         @param b_obj: The object whose constraints to export.
         @param root_block: The root of the nif tree (required for update_a_b)."""
-        if isinstance(b_obj, Blender.Armature.Bone):
+        if isinstance(b_obj, bpy.types.Bone):
             # bone object has its constraints stored in the posebone
             # so now we should get the posebone, but no constraints for
             # bones are exported anyway for now
@@ -67,7 +68,7 @@ class Constraint():
 
         for b_constr in b_obj.constraints:
             # rigid body joints
-            if b_constr.type == Blender.Constraint.Type.RIGID_BODY_JOINT:
+            if b_constr.type == 'RIGID_BODY_JOINT':
                 if self.properties.game not in ('OBLIVION', 'FALLOUT_3'):
                     self.nif_export.warning(
                         "Only Oblivion/Fallout 3 rigid body constraints"
@@ -81,15 +82,15 @@ class Constraint():
                         break
                 else:
                     # no collision body for this object
-                    raise nif_utils.NifExportError(
+                    raise self.nif_utils.NifExportError(
                         "Object %s has a rigid body constraint,"
                         " but is not exported as collision object"
                         % b_obj.name)
                 # yes there is a rigid body constraint
                 # is it of a type that is supported?
-                if b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE] == 1:
+                if b_constr.pivot_type == 'CONE_TWIST':
                     # ball
-                    if not self.properties.EXPORT_OB_MALLEABLECONSTRAINT:
+                    if b_obj.rigid_body.enabled == True:
                         hkconstraint = self.nif_export.objecthelper.create_block(
                             "bhkRagdollConstraint", b_constr)
                     else:
@@ -97,9 +98,9 @@ class Constraint():
                             "bhkMalleableConstraint", b_constr)
                         hkconstraint.type = 7
                     hkdescriptor = hkconstraint.ragdoll
-                elif b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE] == 2:
+                elif b_constr.pivot_type == 'HINGE':
                     # hinge
-                    if not self.properties.EXPORT_OB_MALLEABLECONSTRAINT:
+                    if b_obj.rigid_body.enabled == True:
                         hkconstraint = self.nif_export.objecthelper.create_block(
                             "bhkLimitedHingeConstraint", b_constr)
                     else:
@@ -108,16 +109,22 @@ class Constraint():
                         hkconstraint.type = 2
                     hkdescriptor = hkconstraint.limited_hinge
                 else:
-                    raise nif_utils.NifExportError(
+                    raise self.nif_utils.NifExportError(
                         "Unsupported rigid body joint type (%i),"
                         " only ball and hinge are supported."
-                        % b_constr[Blender.Constraint.Settings.CONSTR_RB_TYPE])
+                        % b_constr.type)
 
                 # defaults and getting object properties for user
                 # settings (should use constraint properties, but
                 # blender does not have those...)
-                max_angle = 1.5
-                min_angle = 0.0
+                if b_constr.limit_angle_max_x:
+                    max_angle = b_constr.limit_angle_max_x
+                else:
+                    max_angle = 1.5
+                if b_constr.limit_angle_min_x:
+                    min_angle = b_constr.limit_angle_min_x
+                else:
+                    min_angle = 0.0
                 # friction: again, just picking a reasonable value if
                 # no real value given
                 if isinstance(hkconstraint,
@@ -131,16 +138,8 @@ class Constraint():
                         max_friction = 100
                     else: # oblivion
                         max_friction = 10
-                for prop in b_obj.getAllProperties():
-                    if (prop.name == 'LimitedHinge_MaxAngle'
-                        and prop.type == "FLOAT"):
-                        max_angle = prop.data
-                    if (prop.name == 'LimitedHinge_MinAngle'
-                        and prop.type == "FLOAT"):
-                        min_angle = prop.data
-                    if (prop.name == 'LimitedHinge_MaxFriction'
-                        and prop.type == "FLOAT"):
-                        max_friction = prop.data
+                if b_obj.niftools_constraint.LHMaxFriction:
+                    max_friction = b_obj.niftools_constraint.LHMaxFriction
 
                 # parent constraint to hkbody
                 hkbody.num_constraints += 1
@@ -152,7 +151,7 @@ class Constraint():
                 hkconstraint.entities.update_size()
                 hkconstraint.entities[0] = hkbody
                 # is there a target?
-                targetobj = b_constr[Blender.Constraint.Settings.TARGET]
+                targetobj = b_constr.target
                 if not targetobj:
                     self.warning("Constraint %s has no target, skipped")
                     continue
@@ -164,7 +163,7 @@ class Constraint():
                         break
                 else:
                     # not found
-                    raise NifExportError(
+                    raise self.nif_import.NifExportError(
                         "Rigid body target not exported in nif tree"
                         " check that %s is selected during export." % targetobj)
                 # priority
@@ -183,15 +182,15 @@ class Constraint():
 
                 # calculate pivot point and constraint matrix
                 pivot = mathutils.Vector([
-                    b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVX],
-                    b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVY],
-                    b_constr[Blender.Constraint.Settings.CONSTR_RB_PIVZ],
+                    b_constr.pivot_x,
+                    b_constr.pivot_y,
+                    b_constr.pivot_z,
                     ])
-                constr_matrix = mathutils.Euler(
-                    b_constr[Blender.Constraint.Settings.CONSTR_RB_AXX],
-                    b_constr[Blender.Constraint.Settings.CONSTR_RB_AXY],
-                    b_constr[Blender.Constraint.Settings.CONSTR_RB_AXZ])
-                constr_matrix = constr_matrix.toMatrix()
+                constr_matrix = mathutils.Euler((
+                    b_constr.axis_x,
+                    b_constr.axis_y,
+                    b_constr.axis_z))
+                constr_matrix = constr_matrix.to_matrix()
 
                 # transform pivot point and constraint matrix into bhkRigidBody
                 # coordinates (also see import_nif.py, the
@@ -216,9 +215,9 @@ class Constraint():
                 # apply object transform relative to the bone head
                 # (this is O * T * B' * B^{-1} at once)
                 transform = mathutils.Matrix(
-                    self.get_object_matrix(b_obj, 'localspace').as_list())
+                    b_obj.matrix_world)
                 pivot = pivot * transform
-                constr_matrix = constr_matrix * transform.rotationPart()
+                constr_matrix = constr_matrix * transform.to_3x3()
 
                 # export hkdescriptor pivot point
                 hkdescriptor.pivot_a.x = pivot[0] / self.HAVOK_SCALE

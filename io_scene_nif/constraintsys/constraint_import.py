@@ -43,7 +43,7 @@ from pyffi.formats.nif import NifFormat
 import bpy
 import mathutils
 
-class Constraint():
+class constraint_import():
 
     def __init__(self, parent):
         self.nif_import = parent
@@ -91,15 +91,20 @@ class Constraint():
             # get constraint descriptor
             if isinstance(hkconstraint, NifFormat.bhkRagdollConstraint):
                 hkdescriptor = hkconstraint.ragdoll
+                b_hkobj.rigid_body.enabled = True
             elif isinstance(hkconstraint, NifFormat.bhkLimitedHingeConstraint):
                 hkdescriptor = hkconstraint.limited_hinge
+                b_hkobj.rigid_body.enabled = True
             elif isinstance(hkconstraint, NifFormat.bhkHingeConstraint):
                 hkdescriptor = hkconstraint.hinge
+                b_hkobj.rigid_body.enabled = True
             elif isinstance(hkconstraint, NifFormat.bhkMalleableConstraint):
                 if hkconstraint.type == 7:
                     hkdescriptor = hkconstraint.ragdoll
+                    b_hkobj.rigid_body.enabled = False
                 elif hkconstraint.type == 2:
                     hkdescriptor = hkconstraint.limited_hinge
+                    b_hkobj.rigid_body.enabled = False
                 else:
                     self.nif_import.warning("Unknown malleable type (%i), skipped"
                                         % hkconstraint.type)
@@ -113,6 +118,8 @@ class Constraint():
 
             # add the constraint as a rigid body joint
             b_constr = b_hkobj.constraints.new('RIGID_BODY_JOINT')
+            b_constr.name = b_hkobj.name
+            b_constr.show_pivot = True
 
             # note: rigidbodyjoint parameters (from Constraint.c)
             # CONSTR_RB_AXX 0.0
@@ -148,17 +155,17 @@ class Constraint():
             b_constr.target = \
                 self.nif_import.dict_havok_objects[hkconstraint.entities[1]][0]
             # set rigid body type (generic)
-            b_constr.pivot_type = 'BALL'
+            b_constr.pivot_type = 'GENERIC_6_DOF'
             # limiting parameters (limit everything)
-            b_constr.use_limit_x = True
-            b_constr.use_limit_y = True
-            b_constr.use_limit_z = True
+            b_constr.use_angular_limit_x = True
+            b_constr.use_angular_limit_y = True
+            b_constr.use_angular_limit_z = True
 
             # get pivot point
             pivot = mathutils.Vector((
-                hkdescriptor.pivot_a.x * self.nif_import.HAVOK_SCALE,
-                hkdescriptor.pivot_a.y * self.nif_import.HAVOK_SCALE,
-                hkdescriptor.pivot_a.z * self.nif_import.HAVOK_SCALE))
+                hkdescriptor.pivot_a.x * self.HAVOK_SCALE,
+                hkdescriptor.pivot_a.y * self.HAVOK_SCALE,
+                hkdescriptor.pivot_a.z * self.HAVOK_SCALE))
 
             # get z- and x-axes of the constraint
             # (also see export_nif.py NifImport.export_constraints)
@@ -229,9 +236,9 @@ class Constraint():
                         axis_x = -axis_x
                 # getting properties with no blender constraint
                 # equivalent and setting as obj properties
-                b_hkobj.niftools.LHMaxAngle = hkdescriptor.max_angle
-                b_hkobj.niftools.LHMinAngle = hkdescriptor.min_angle
-                b_hkobj.niftools.LHMaxFriction = hkdescriptor.max_friction
+                b_constr.limit_angle_max_x = hkdescriptor.max_angle
+                b_constr.limit_angle_min_x = hkdescriptor.min_angle
+                b_hkobj.niftools_constraint.LHMaxFriction = hkdescriptor.max_friction
 
             elif isinstance(hkdescriptor, NifFormat.HingeDescriptor):
                 # for hinge, y is the vector on the plane of rotation defining
@@ -285,9 +292,9 @@ class Constraint():
                     hkbody.rotation.y, hkbody.rotation.z)).to_matrix()
                 transform.resize_4x4()
                 # set translation
-                transform[0][3] = hkbody.translation.x * self.nif_import.HAVOK_SCALE
-                transform[1][3] = hkbody.translation.y * self.nif_import.HAVOK_SCALE
-                transform[2][3] = hkbody.translation.z * self.nif_import.HAVOK_SCALE
+                transform[0][3] = hkbody.translation.x * self.HAVOK_SCALE
+                transform[1][3] = hkbody.translation.y * self.HAVOK_SCALE
+                transform[2][3] = hkbody.translation.z * self.HAVOK_SCALE
                 # apply transform
                 pivot = pivot * transform
                 transform = transform.to_3x3()

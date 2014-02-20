@@ -69,7 +69,7 @@ class bhkshape_export():
         layer = b_obj.nifcollision.oblivion_layer
         motion_system = b_obj.nifcollision.motion_system
         quality_type = b_obj.nifcollision.quality_type
-        mass = 1.0 # will be fixed later
+        mass = b_obj.rigid_body.mass
         col_filter = b_obj.nifcollision.col_filter
 
         # Aaron1178 collison stuff
@@ -83,7 +83,7 @@ class bhkshape_export():
         # bhkCollisionObject -> bhkRigidBody
         if not parent_block.collision_object:
             # note: collision settings are taken from lowerclasschair01.nif
-            if b_obj.nifcollision.oblivion_layer == NifFormat.OblivionLayer.OL_BIPED:
+            if layer == "OL_BIPED":
                 # special collision object for creatures
                 n_col_obj = self.nif_export.objecthelper.create_block("bhkBlendCollisionObject", b_obj)
                 n_col_obj.flags = 9
@@ -100,7 +100,7 @@ class bhkshape_export():
             else:
                 # usual collision object
                 n_col_obj = self.nif_export.objecthelper.create_block("bhkCollisionObject", b_obj)
-                if layer == NifFormat.OblivionLayer.OL_ANIM_STATIC and col_filter != 128:
+                if layer == "OL_ANIM_STATIC" and col_filter != 128:
                     # animated collision requires flags = 41
                     # unless it is a constrainted but not keyframed object
                     n_col_obj.flags = 41
@@ -450,7 +450,7 @@ class bhkshape_export():
             fdistlist = [ fdistlist[fdict[hsh]] for hsh in fkeys ]
 
             if len(fnormlist) > 65535 or len(vertlist) > 65535:
-                raise NifExportError(
+                raise self.nif_export.NifExportError(
                     "ERROR%t|Too many polygons/vertices."
                     " Decimate/split your b_mesh and try again.")
 
@@ -478,7 +478,7 @@ class bhkshape_export():
             return colhull
 
         else:
-            raise NifExportError(
+            raise self.nif_export.NifExportError(
                 'cannot export collision type %s to collision shape list'
                 % b_obj.game.collision_bounds_type)
 

@@ -43,7 +43,7 @@ from io_scene_nif.utility import nif_utils
 from io_scene_nif.animationsys.animation_import import AnimationHelper
 from io_scene_nif.armaturesys.armature_import import Armature
 from io_scene_nif.collisionsys.collision_import import bhkshape_import, bound_import
-from io_scene_nif.constraintsys.constraint_import import Constraint
+from io_scene_nif.constraintsys.constraint_import import constraint_import
 from io_scene_nif.materialsys.material_import import Material
 from io_scene_nif.texturesys.texture_import import Texture
 from io_scene_nif.texturesys.texture_loader import TextureLoader
@@ -66,8 +66,10 @@ class NifImport(NifCommon):
     IMPORT_EXTRANODES = True
     IMPORT_EXPORTEMBEDDEDTEXTURES = False
     
+    
     def __init__(self, operator, context):
         NifCommon.__init__(self, operator, context)
+        self.root_ninode = 'NiNode'
 
         # Helper systems
         self.animationhelper = AnimationHelper(parent=self)
@@ -75,7 +77,7 @@ class NifImport(NifCommon):
         # TODO: create super collisionhelper
         self.bhkhelper = bhkshape_import(parent=self)
         self.boundhelper = bound_import(parent=self)
-        self.constrainthelper = Constraint(parent=self)
+        self.constrainthelper = constraint_import(parent=self)
         self.textureloader = TextureLoader(parent=self)
         self.texturehelper = Texture(parent=self)
         self.texturehelper.set_texture_loader(self.textureloader)
@@ -255,6 +257,28 @@ class NifImport(NifCommon):
 
         return {'FINISHED'}
 
+    def import_bsxflag_data(self, root_block):
+        for n_extra in root_block.get_extra_datas():
+            if isinstance(n_extra, NifFormat.BSXFlags):
+                    # get bsx flags so we can attach it to collision object
+                    bsxflags = n_extra.integer_data
+                    return bsxflags
+
+    def import_upbflag_data(self, root_block):
+            #process extra data
+            for n_extra in root_block.get_extra_datas():
+                if isinstance(n_extra, NifFormat.NiStringExtraData):
+                    if n_extra.name.decode() == "UPB":
+                        upbflags = n_extra.string_data.decode()
+                        return upbflags
+                        
+    def import_bsbound_data(self, root_block):
+        for n_extra in root_block.get_extra_datas():
+            if isinstance(n_extra, NifFormat.BSBound):
+                    self.boundhelper.import_bounding_box(n_extra)
+
+
+
     def import_root(self, root_block):
         """Main import function."""
         # check that this is not a kf file
@@ -274,7 +298,13 @@ class NifImport(NifCommon):
         # set the block parent through the tree, to ensure I can always move
         # backward
         self.set_parents(root_block)
-
+        self.bsxflags = self.import_bsxflag_data(root_block)
+        self.upbflags = self.import_upbflag_data(root_block)
+        self.objectflags = root_block.flags
+        
+        if isinstance(root_block, NifFormat.BSFadeNode):
+            self.root_ninode = 'BSFadeNode'
+            
         # mark armature nodes and bones
         self.armaturehelper.mark_armatures_bones(root_block)
 
@@ -287,19 +317,24 @@ class NifImport(NifCommon):
             # special case 1: root node is skeleton root
             self.debug("%s is an armature root" % root_block.name)
             b_obj = self.import_branch(root_block)
-
+            b_obj.niftools.objectflags = root_block.flags
+            
         elif self.is_grouping_node(root_block):
             # special case 2: root node is grouping node
             self.debug("%s is a grouping node" % root_block.name)
             b_obj = self.import_branch(root_block)
+            b_obj.niftools.bsxflags = self.bsxflags
 
         elif isinstance(root_block, NifFormat.NiTriBasedGeom):
             # trishape/tristrips root
             b_obj = self.import_branch(root_block)
+            b_obj.niftools.bsxflags = self.bsxflags
 
         elif isinstance(root_block, NifFormat.NiNode):
             # root node is dummy scene node
-
+            for n_extra in root_block.get_extra_datas():
+                if isinstance(n_extra, NifFormat.BSBound):
+                    self.boundhelper.import_bounding_box(n_extra)
             # process collision
             if root_block.collision_object:
                 bhk_body = root_block.collision_object.body
@@ -309,16 +344,7 @@ class NifImport(NifCommon):
                         % root_block.name)
                 self.bhkhelper.import_bhk_shape(bhkshape=bhk_body)
 
-            #process extra data
-            for n_extra in root_block.get_extra_datas():
-                if isinstance(n_extra, NifFormat.BSXFlags):
-                    # get bsx flags so we can attach it to collision object
-                    bsx_flags = n_extra.integer_data
-                elif isinstance(n_extra, NifFormat.NiStringExtraData):
-                    if n_extra.name == "UPB":
-                        upbflags = n_extra.string_data
-                elif isinstance(n_extra, NifFormat.BSBound):
-                    self.boundhelper.import_bounding_box(n_extra)
+
 
 
             # process all its children
@@ -336,6 +362,8 @@ class NifImport(NifCommon):
                 "Skipped unsupported root block type '%s' (corrupted nif?)."
                 % root_block.__class__)
 
+        if self.root_ninode:
+            b_obj.niftools.rootnode = self.root_ninode
         # store bone matrix offsets for re-export
         if self.dict_bones_extra_matrix:
             self.armaturehelper.store_bones_extra_matrix()
@@ -391,6 +419,21 @@ class NifImport(NifCommon):
             self.debug("Building mesh in import_branch")
             # note: transform matrix is set during import
             b_obj = self.import_mesh(niBlock)
+            b_obj.niftools.objectflags = niBlock.flags
+            if niBlock.properties:
+                for b_prop in niBlock.properties:
+                    if isinstance(b_prop, NifFormat.BSShaderPPLightingProperty):
+                        b_obj.niftools_shader.shadertype = 'BSShaderPPLightingProperty'
+                        sf_type = NifFormat.BSShaderType._enumvalues.index(b_prop.shader_type)
+                        b_obj.niftools_shader.shaderobjtype = NifFormat.BSShaderType._enumkeys[sf_type]
+                        for b_flag_name in b_prop.shader_flags._names:
+                            sf_index = b_prop.shader_flags._names.index(b_flag_name)
+                            if b_prop.shader_flags._items[sf_index]._value == 1:
+                                b_obj.niftools_shader[b_flag_name] = True
+                                
+            if niBlock.data.consistency_flags in NifFormat.ConsistencyType._enumvalues:
+                cf_index = NifFormat.ConsistencyType._enumvalues.index(niBlock.data.consistency_flags)
+                b_obj.niftools.consistency_flags = NifFormat.ConsistencyType._enumkeys[cf_index]
             # skinning? add armature modifier
             if niBlock.skin_instance:
                 self.armaturehelper.append_armature_modifier(b_obj, b_armature)
@@ -431,6 +474,8 @@ class NifImport(NifCommon):
                 # bones have already been imported during import_armature
                 b_obj = b_armature.data.bones[self.dict_names[niBlock]]
                 # bones cannot group geometries into a single mesh
+                b_obj.niftools_bone.bsxflags = self.bsxflags
+                b_obj.niftools_bone.boneflags = niBlock.flags
                 geom_group = []
             else:
                 # is it a grouping node?
@@ -465,7 +510,26 @@ class NifImport(NifCommon):
                         b_obj = self.import_mesh(child,
                                                  group_mesh=b_obj,
                                                  applytransform=True)
+                        b_obj.niftools.objectflags = child.flags
+                        
+                        if child.properties:
+                            for b_prop in child.properties:
+                                if isinstance(b_prop, NifFormat.BSShaderPPLightingProperty):
+                                    b_obj.niftools_shader.shadertype = 'BSShaderPPLightingProperty'
+                                    sf_type = NifFormat.BSShaderType._enumvalues.index(b_prop.shader_type)
+                                    b_obj.niftools_shader.shaderobjtype = NifFormat.BSShaderType._enumkeys[sf_type]
+                                    for b_flag_name in b_prop.shader_flags._names:
+                                        sf_index = b_prop.shader_flags._names.index(b_flag_name)
+                                        if b_prop.shader_flags._items[sf_index]._value == 1:
+                                            b_obj.niftools_shader[b_flag_name] = True
+
+                        if child.data.consistency_flags in NifFormat.ConsistencyType._enumvalues:
+                            cf_index = NifFormat.ConsistencyType._enumvalues.index(child.data.consistency_flags)
+                            b_obj.niftools.consistency_flags = NifFormat.ConsistencyType._enumkeys[cf_index]
+  
+                    
                     b_obj.name = self.import_name(niBlock)
+                    
                     # skinning? add armature modifier
                     if any(child.skin_instance
                            for child in geom_group):
@@ -474,19 +538,16 @@ class NifImport(NifCommon):
                     if isinstance(niBlock, NifFormat.RootCollisionNode):
                         b_obj.draw_type = 'BOUNDS'
                         b_obj.show_wire = True
-                        b_obj.draw_bounds_type = 'POLYHEDERON'
+                        b_obj.draw_bounds_type = 'BOX'
                         b_obj.game.use_collision_bounds = True
                         b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
+                        b_obj.niftools.objectflags = niBlock.flags
                         # also remove duplicate vertices
                         b_mesh = b_obj.data
-                        numverts = len(b_mesh.vertices)
-                        # 0.005 = 1/200
-                        numdel = b_mesh.remDoubles(0.005)
-                        if numdel:
-                            self.info(
-                                "Removed %i duplicate vertices"
-                                " (out of %i) from collision mesh"
-                                % (numdel, numverts))
+                        b_mesh.validate()
+                        b_mesh.update()
+
+
 
             # find children that aren't part of the geometry group
             b_children_list = []
@@ -520,7 +581,7 @@ class NifImport(NifCommon):
                 # import bounding box
                 if bsbound:
                     object_children += [
-                        (bsbound, self.bhkhelper.import_bounding_box(bsbound))]
+                        (bsbound, self.boundhelper.import_bounding_box(bsbound))]
 
             # fix parentship
             if isinstance(b_obj, bpy.types.Object):
@@ -591,6 +652,7 @@ class NifImport(NifCommon):
                 # find camera object
                 for obj in self.context.scene.objects:
                     if obj.type == 'CAMERA':
+                        b_obj_camera = obj
                         break
                 else:
                     raise NifImportError(
@@ -598,16 +660,17 @@ class NifImport(NifCommon):
                         " (add a camera and try again)")
                 # make b_obj track camera object
                 #b_obj.setEuler(0,0,0)
-                b_obj.constraints.append(
-                    bpy.types.Constraint('TRACK_TO'))
-                self.warning(
+                b_obj.constraints.new('TRACK_TO')
+                constr = b_obj.constraints[-1]
+                constr.target = b_obj_camera
+                if constr.target == None:
+                    self.warning(
                     "Constraint for billboard node on %s added"
                     " but target not set due to transform bug"
                     " in Blender. Set target to Camera manually."
                     % b_obj)
-                constr = b_obj.constraints[-1]
-                constr[Blender.Constraint.Settings.TRACK] = Blender.Constraint.Settings.TRACKZ
-                constr[Blender.Constraint.Settings.UP] = Blender.Constraint.Settings.UPY
+                constr.track_axis = 'TRACK_Z'
+                constr.up_axis = 'UP_Y'
                 # yields transform bug!
                 #constr[Blender.Constraint.Settings.TARGET] = obj
 
@@ -710,6 +773,8 @@ class NifImport(NifCommon):
         b_empty.niftools.longname = niBlock.name.decode()
 
         self.context.scene.objects.link(b_empty)
+        b_empty.niftools.bsxflags = self.bsxflags
+        b_empty.niftools.objectflags = niBlock.flags
 
         if niBlock.name in self.dict_bone_priorities:
             constr = b_empty.constraints.append(
@@ -782,7 +847,7 @@ class NifImport(NifCommon):
         n_verts = niData.vertices
 
         # polygons
-        n_tris = [list(tri) for tri in niData.get_triangles()]
+        poly_gens = [list(tri) for tri in niData.get_triangles()]
 
         # "sticky" UV coordinates: these are transformed in Blender UV's
         n_uv = list()
@@ -860,6 +925,7 @@ class NifImport(NifCommon):
             # Alpha
             n_alpha_prop = nif_utils.find_property(niBlock,
                                                NifFormat.NiAlphaProperty)
+            self.ni_alpha_prop = n_alpha_prop
 
             # Specularity
             n_specular_prop = nif_utils.find_property(niBlock,
@@ -962,41 +1028,41 @@ class NifImport(NifCommon):
         del n_map
 
         # Adds the polygons to the mesh
-        f_map = [None]*len(n_tris)
+        f_map = [None]*len(poly_gens)
         b_f_index = len(b_mesh.polygons)
         bf2_index = len(b_mesh.polygons)
         bl_index = len(b_mesh.loops)
-        poly_count = len(n_tris)
+        poly_count = len(poly_gens)
         b_mesh.polygons.add(poly_count)
         b_mesh.loops.add(poly_count * 3)
         num_new_faces = 0 # counter for debugging
-        unique_faces = set() # to avoid duplicate polygons
-        for i, f in enumerate(n_tris):
+        unique_faces = list() # to avoid duplicate polygons
+        tri_point_list = list()
+        for i, f in enumerate(poly_gens):
             # get face index
             f_verts = [v_map[vert_index] for vert_index in f]
-            # skip degenerate polygons
-            # we get a ValueError on polygons.extend otherwise
-            if (f_verts[0] == f_verts[1]) or (f_verts[1] == f_verts[2]) or (f_verts[2] == f_verts[0]):
-                continue
             if tuple(f_verts) in unique_faces:
                 continue
-            unique_faces.add(tuple(f_verts))
-        for i in range(len(n_tris)):
-            ls_list = list()
-            for ls1 in range(0, poly_count * (len(n_tris[i])), (len(n_tris[i]))):
-                ls_list.append((ls1 + bl_index))
-        for i in range(len(n_tris)):
+            unique_faces.append(tuple(f_verts))
             f_map[i] = b_f_index
-            b_mesh.polygons[f_map[i]].loop_start = ls_list[i]
-            b_mesh.polygons[f_map[i]].loop_total = len(n_tris[i])
-            l = 0
-            lp_points = [v_map[loop_point] for loop_point in n_tris[i]]
-            while l < (len(n_tris[i])):
-                b_mesh.loops[(l + (bl_index))].vertex_index = lp_points[l]
-                l += 1
-            bl_index += (len(n_tris[i]))
+            tri_point_list.append(len(poly_gens[i]))
+            ls_list = list()
             b_f_index += 1
             num_new_faces += 1
+        for ls1 in range(0, num_new_faces * (tri_point_list[len(ls_list)]), (tri_point_list[len(ls_list)])):
+            ls_list.append((ls1 + bl_index))
+        for i in range(len(unique_faces)):
+            if f_map[i] is None:
+                continue
+            b_mesh.polygons[f_map[i]].loop_start = ls_list[(f_map[i] - bf2_index)]
+            b_mesh.polygons[f_map[i]].loop_total = len(unique_faces[(f_map[i] - bf2_index)])
+            l = 0
+            lp_points = [v_map[loop_point] for loop_point in poly_gens[(f_map[i] - bf2_index)]]
+            while l < (len(poly_gens[(f_map[i] - bf2_index)])):
+                b_mesh.loops[(l + (bl_index))].vertex_index = lp_points[l]
+                l += 1
+            bl_index += (len(poly_gens[(f_map[i] - bf2_index)]))
+            
         # at this point, deleted polygons (degenerate or duplicate)
         # satisfy f_map[i] = None
 
@@ -1007,7 +1073,7 @@ class NifImport(NifCommon):
             if b_polysmooth_index is None:
                 continue
             polysmooth = b_mesh.polygons[b_polysmooth_index]
-            polysmooth.use_smooth = True if n_norms else False
+            polysmooth.use_smooth = True if (n_norms or niBlock.skin_instance) else False
             polysmooth.material_index = materialIndex
         # vertex colors
         
@@ -1052,7 +1118,7 @@ class NifImport(NifCommon):
            
             #b_mesh.faceUV = 1
             #b_mesh.vertexUV = 0
-            for i in range(niData.num_uv_sets):
+            for i in range(len(niData.uv_sets)):
                 # Set the face UV's for the mesh. The NIF format only supports
                 # vertex UV's, but Blender only allows explicit editing of face
                 # UV's, so load vertex UV's as face UV's
@@ -1066,13 +1132,13 @@ class NifImport(NifCommon):
                     uv_faces = None
                 if uv_faces:
                     uvl = b_mesh.uv_layers.active.data[:]
-                    for b_f_index, f in enumerate(n_tris):
+                    for b_f_index, f in enumerate(poly_gens):
                         if b_f_index is None:
                             continue
                         uvlist = f
                         v1,v2,v3 = uvlist
-                        if v3 == 0:
-                            v1,v2,v3 = v3,v1,v2
+                        #if v3 == 0:
+                        #   v1,v2,v3 = v3,v1,v2
                         b_poly_index = b_mesh.polygons[b_f_index + bf2_index]
                         uvl[b_poly_index.loop_start].uv = n_uvco[v1]
                         uvl[b_poly_index.loop_start + 1].uv = n_uvco[v2]

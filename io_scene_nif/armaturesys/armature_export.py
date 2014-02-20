@@ -138,28 +138,32 @@ class Armature():
 
             # add the node and the keyframe for this bone
             node.name = self.nif_export.objecthelper.get_full_name(bone.name)
-            if self.nif_export.properties.game in ('OBLIVION', 'FALLOUT_3'):
-                # default for Oblivion bones
-                # note: bodies have 0x000E, clothing has 0x000F
-                node.flags = 0x000E
-            elif self.nif_export.properties.game in ('CIVILIZATION_IV', 'EMPIRE_EARTH_II'):
-                if bone.children:
-                    # default for Civ IV/EE II bones with children
-                    node.flags = 0x0006
-                else:
-                    # default for Civ IV/EE II final bones
-                    node.flags = 0x0016
-            elif self.nif_export.properties.game in ('DIVINITY_2',):
-                if bone.children:
-                    # default for Div 2 bones with children
-                    node.flags = 0x0186
-                elif bone.name.lower()[-9:] == 'footsteps':
-                    node.flags = 0x0116
-                else:
-                    # default for Div 2 final bones
-                    node.flags = 0x0196
+            
+            if (bone.niftools_bone.boneflags != 0):
+                node.flags = bone.niftools_bone.boneflags
             else:
-                node.flags = 0x0002 # default for Morrowind bones
+                if self.nif_export.properties.game in ('OBLIVION', 'FALLOUT_3'):
+                    # default for Oblivion bones
+                    # note: bodies have 0x000E, clothing has 0x000F
+                    node.flags = 0x000E
+                elif self.nif_export.properties.game in ('CIVILIZATION_IV', 'EMPIRE_EARTH_II'):
+                    if bone.children:
+                        # default for Civ IV/EE II bones with children
+                        node.flags = 0x0006
+                    else:
+                        # default for Civ IV/EE II final bones
+                        node.flags = 0x0016
+                elif self.nif_export.properties.game in ('DIVINITY_2',):
+                    if bone.children:
+                        # default for Div 2 bones with children
+                        node.flags = 0x0186
+                    elif bone.name.lower()[-9:] == 'footsteps':
+                        node.flags = 0x0116
+                    else:
+                        # default for Div 2 final bones
+                        node.flags = 0x0196
+                else:
+                    node.flags = 0x0002 # default for Morrowind bones
             self.nif_export.export_matrix(bone, 'localspace', node) # rest pose
 
             # bone rotations are stored in the IPO relative to the rest position

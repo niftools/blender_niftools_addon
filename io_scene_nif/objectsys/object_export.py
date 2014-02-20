@@ -150,6 +150,13 @@ class ObjectHelper():
             assert(parent_block) # debug
             b_obj_ipo = b_obj.animation_data # get animation data
             b_obj_children = b_obj.children
+        elif (b_obj.name != parent_block.name.decode()) and (b_obj.type != 'ARMATURE'):
+            # -> empty, b_mesh, or armature
+            b_obj_type = b_obj.type
+            assert(b_obj_type in ['EMPTY', 'MESH']) # debug
+            assert(parent_block) # debug
+            b_obj_ipo = b_obj.animation_data # get animation data
+            b_obj_children = b_obj.children
         else:
             return None
             
@@ -165,13 +172,13 @@ class ObjectHelper():
         elif (b_obj_type == 'MESH' and b_obj.show_bounds
               and b_obj.name.lower().startswith('bsbound')):
             # add a bounding box
-            self.boundhelper.export_bounding_box(b_obj, parent_block, bsbound=True)
+            self.nif_export.boundhelper.export_bounding_box(b_obj, parent_block, bsbound=True)
             return None # done; stop here
 
         elif (b_obj_type == 'MESH' and b_obj.show_bounds
               and b_obj.name.lower().startswith("bounding box")):
             # Morrowind bounding box
-            self.boundhelper.export_bounding_box(b_obj, parent_block, bsbound=False)
+            self.nif_export.boundhelper.export_bounding_box(b_obj, parent_block, bsbound=False)
             return None # done; stop here
 
         elif b_obj_type == 'MESH':
@@ -241,18 +248,28 @@ class ObjectHelper():
         node.name = self.get_full_name(node_name)
 
         # default node flags
-        if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
-            node.flags = 0x000E
-        elif self.properties.game in ('SID_MEIER_S_RAILROADS',
-                                     'CIVILIZATION_IV'):
-            node.flags = 0x0010
-        elif self.properties.game in ('EMPIRE_EARTH_II',):
-            node.flags = 0x0002
-        elif self.properties.game in ('DIVINITY_2',):
-            node.flags = 0x0310
-        else:
-            # morrowind
-            node.flags = 0x000C
+        if b_obj_type in ['EMPTY', 'MESH', 'ARMATURE']:
+            if (b_obj_type == 'EMPTY') and (b_obj.niftools.objectflags != 0):
+                node.flags = b_obj.niftools.objectflags
+            if (b_obj_type == 'MESH') and (b_obj.niftools.objectflags != 0):
+                node.flags = b_obj.niftools.objectflags
+            elif (b_obj_type == 'ARMATURE') and (b_obj.niftools.objectflags != 0):
+                node.flags = b_obj.niftools.objectflags
+            elif (b_obj_type == 'ARMATURE') and (b_obj.niftools.objectflags == 0) and (b_obj.parent == None):
+                node.flags = b_obj.niftools.objectflags
+            else:
+                if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
+                    node.flags = 0x000E
+                elif self.properties.game in ('SID_MEIER_S_RAILROADS',
+                                             'CIVILIZATION_IV'):
+                    node.flags = 0x0010
+                elif self.properties.game in ('EMPIRE_EARTH_II',):
+                    node.flags = 0x0002
+                elif self.properties.game in ('DIVINITY_2',):
+                    node.flags = 0x0310
+                else:
+                    # morrowind
+                    node.flags = 0x000C
 
         self.nif_export.export_matrix(b_obj, space, node)
 
@@ -298,6 +315,7 @@ class ObjectHelper():
         if not b_obj:
             return self.create_block("NiNode")
         # exporting an object, so first create node of correct type
+        #TODO: FIXME: rework to get node type from nif format based on custom value?
         try:
             n_node_type = b_obj.getProperty("Type").data
         except (RuntimeError, AttributeError, NameError):
@@ -489,63 +507,26 @@ class MeshHelper():
                 mesh_hasnormals = True # for proper lighting
 
                 #ambient mat
-                mesh_mat_ambient_color = [1.0, 1.0, 1.0]
-
+                mesh_mat_ambient_color = b_mat.niftools.ambient_color
                 #diffuse mat
-                mesh_mat_diffuse_color = [1.0, 1.0, 1.0]
-                '''
-                TODO: 3.0 - If needed where ambient should not be defaulted
-
-                #ambient mat
-                mesh_mat_ambient_color[0] = b_mat.niftools.ambient_color[0] * b_mat.niftools.ambient_factor
-                mesh_mat_ambient_color[1] = b_mat.niftools.ambient_color[1] * b_mat.niftools.ambient_factor
-                mesh_mat_ambient_color[2] = b_mat.niftools.ambient_color[2] * b_mat.niftools.ambient_factor
-
-                #diffuse mat
-                mest_mat_diffuse_color[0] = b_mat.niftools.diffuse_color[0] * b_mat.niftools.diffuse_factor
-                mest_mat_diffuse_color[1] = b_mat.niftools.diffuse_color[1] * b_mat.niftools.diffuse_factor
-                mest_mat_diffuse_color[2] = b_mat.niftools.diffuse_color[2] * b_mat.niftools.diffuse_factor
-                '''
-
+                mesh_mat_diffuse_color = b_mat.diffuse_color
                 #emissive mat
-                mesh_mat_emissive_color = [0.0, 0.0, 0.0]
-                mesh_mat_emitmulti = 1.0 # default
-                if self.properties.game != 'FALLOUT_3':
-                    #old code
-                    #mesh_mat_emissive_color = b_mat.diffuse_color * b_mat.emit
-                    mesh_mat_emissive_color = b_mat.niftools.emissive_color * b_mat.emit
-
-                else:
-                    # special case for Fallout 3 (it does not store diffuse color)
-                    # if emit is non-zero, set emissive color to diffuse
-                    # (otherwise leave the color to zero)
-                    if b_mat.emit > self.properties.epsilon:
-
-                        #old code
-                        #mesh_mat_emissive_color = b_mat.diffuse_color
-                        mesh_mat_emissive_color = b_mat.niftools.emissive_color
-                        mesh_mat_emitmulti = b_mat.emit * 10.0
-
+                mesh_mat_emissive_color = b_mat.niftools.emissive_color
+                mesh_mat_emitmulti = b_mat.emit
                 #specular mat
                 mesh_mat_specular_color = b_mat.specular_color
-                if b_mat.specular_intensity > 1.0:
-                    b_mat.specular_intensity = 1.0
-
-                mesh_mat_specular_color[0] *= b_mat.specular_intensity
-                mesh_mat_specular_color[1] *= b_mat.specular_intensity
-                mesh_mat_specular_color[2] *= b_mat.specular_intensity
-
-                if ( mesh_mat_specular_color[0] > self.properties.epsilon ) \
-                    or ( mesh_mat_specular_color[1] > self.properties.epsilon ) \
-                    or ( mesh_mat_specular_color[2] > self.properties.epsilon ):
+                
+                if ( mesh_mat_specular_color.r > self.properties.epsilon ) \
+                    or ( mesh_mat_specular_color.g > self.properties.epsilon ) \
+                    or ( mesh_mat_specular_color.b > self.properties.epsilon ):
                     mesh_hasspec = b_spec_prop
 
                 #gloss mat
                 #'Hardness' scrollbar in Blender, takes values between 1 and 511 (MW -> 0.0 - 128.0)
-                mesh_mat_gloss = b_mat.specular_hardness / 4.0
+                mesh_mat_gloss = b_mat.specular_hardness
 
                 #alpha mat
-                mesh_hasalpha = False
+                mesh_hasalpha = b_alpha_prop
                 mesh_mat_transparency = b_mat.alpha
                 if b_mat.use_transparency:
                     if abs(mesh_mat_transparency - 1.0)> self.properties.epsilon:
@@ -563,15 +544,19 @@ class MeshHelper():
             bodypartgroups = []
             for bodypartgroupname in NifFormat.BSDismemberBodyPartType().get_editor_keys():
                 vertex_group = b_obj.vertex_groups.get(bodypartgroupname)
+                vertices_list = set()
                 if vertex_group:
+                    for b_vert in b_mesh.vertices:
+                        for b_groupname in b_vert.groups:
+                            if b_groupname.group == vertex_group.index:
+                                vertices_list.add(b_vert.index)
                     self.nif_export.debug("Found body part %s" % bodypartgroupname)
                     bodypartgroups.append(
                         [bodypartgroupname,
                          getattr(NifFormat.BSDismemberBodyPartType,
                                  bodypartgroupname),
-                         # FIXME:how do you get the vertices in the group???
-                         #set(vertex_group.vertices)])
-                         {}])
+                                 vertices_list])
+                         
 
 
 
@@ -608,25 +593,28 @@ class MeshHelper():
                 trishape.name = self.nif_export.objecthelper.get_full_name(trishape.name)
 
             #Trishape Flags...
-            if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
-                trishape.flags = 0x000E
-
-            elif self.properties.game in ('SID_MEIER_S_RAILROADS',
-                                         'CIVILIZATION_IV'):
-                trishape.flags = 0x0010
-            elif self.properties.game in ('EMPIRE_EARTH_II',):
-                trishape.flags = 0x0016
-            elif self.properties.game in ('DIVINITY_2',):
-                if trishape.name.lower[-3:] in ("med", "low"):
-                    trishape.flags = 0x0014
-                else:
-                    trishape.flags = 0x0016
+            if (b_obj.type == 'MESH') and (b_obj.niftools.objectflags != 0):
+                trishape.flags = b_obj.niftools.objectflags
             else:
-                # morrowind
-                if b_obj.draw_type != 'WIRE': # not wire
-                    trishape.flags = 0x0004 # use triangles as bounding box
+                if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
+                    trishape.flags = 0x000E
+    
+                elif self.properties.game in ('SID_MEIER_S_RAILROADS',
+                                             'CIVILIZATION_IV'):
+                    trishape.flags = 0x0010
+                elif self.properties.game in ('EMPIRE_EARTH_II',):
+                    trishape.flags = 0x0016
+                elif self.properties.game in ('DIVINITY_2',):
+                    if trishape.name.lower[-3:] in ("med", "low"):
+                        trishape.flags = 0x0014
+                    else:
+                        trishape.flags = 0x0016
                 else:
-                    trishape.flags = 0x0005 # use triangles as bounding box + hide
+                    # morrowind
+                    if b_obj.draw_type != 'WIRE': # not wire
+                        trishape.flags = 0x0004 # use triangles as bounding box
+                    else:
+                        trishape.flags = 0x0005 # use triangles as bounding box + hide
 
             # extra shader for Sid Meier's Railroads
             if self.properties.game == 'SID_MEIER_S_RAILROADS':
@@ -639,10 +627,10 @@ class MeshHelper():
             #add textures
             if self.properties.game == 'FALLOUT_3':
                 if b_mat:
-                    bs_shader = self.nif_export.texturehelper.export_bs_shader_property(b_obj, b_mat)
+                    bsshader = self.nif_export.texturehelper.export_bs_shader_property(b_obj, b_mat)
                 
-                    self.nif_export.objecthelper.register_block(bs_shader)
-                    trishape.add_property(bs_shader)
+                    self.nif_export.objecthelper.register_block(bsshader)
+                    trishape.add_property(bsshader)
             else:
                 if self.properties.game in self.nif_export.texturehelper.USED_EXTRA_SHADER_TEXTURES:
                     # sid meier's railroad and civ4:
@@ -682,7 +670,10 @@ class MeshHelper():
             if mesh_hasalpha:
                 # add NiTriShape's alpha propery
                 # refer to the alpha property in the trishape block
-                if self.properties.game == 'SID_MEIER_S_RAILROADS':
+                if b_mat.niftools_alpha.alphaflag != 0:
+                    alphaflags = b_mat.niftools_alpha.alphaflag
+                    alphathreshold = b_mat.offset_z
+                elif self.properties.game == 'SID_MEIER_S_RAILROADS':
                     alphaflags = 0x32ED
                     alphathreshold = 150
                 elif self.properties.game == 'EMPIRE_EARTH_II':
@@ -717,7 +708,7 @@ class MeshHelper():
                 # add NiTriShape's material property
                 trimatprop = self.nif_export.propertyhelper.material_property.export_material_property(
                     name=self.nif_export.objecthelper.get_full_name(b_mat.name),
-                    flags=0x0001, # TODO: - standard flag, check?
+                    flags=0x0001, # TODO: - standard flag, check? material and texture properties in morrowind style nifs had a flag
                     ambient=mesh_mat_ambient_color,
                     diffuse=mesh_mat_diffuse_color,
                     specular=mesh_mat_specular_color,
@@ -834,11 +825,11 @@ class MeshHelper():
 
                     vertquad = ( fv, fuv, fn, fcol )
 
-                    # do we already have this vertquad? (optimized by m_4444x)
+                    # check for duplicate vertquad?
                     f_index[i] = len(vertquad_list)
                     if vertmap[vertex_index]:
                         # iterate only over vertices with the same vertex index
-                        # and check if they have the same uvs, normals and colors (wow is that fast!)
+                        # and check if they have the same uvs, normals and colors
                         for j in vertmap[vertex_index]:
                             if mesh_uvlayers:
                                 if max(abs(vertquad[1][uvlayer][0] - vertquad_list[j][1][uvlayer][0])
@@ -888,18 +879,18 @@ class MeshHelper():
                     trilist.append(f_indexed)
                     # add body part number
                     if (self.properties.game != 'FALLOUT_3'
-                        or not bodypartgroups
-                        or not self.EXPORT_FO3_BODYPARTS):
+                        or not bodypartgroups):
+                        # TODO: or not self.EXPORT_FO3_BODYPARTS):
                         bodypartfacemap.append(0)
                     else:
                         for bodypartname, bodypartindex, bodypartverts in bodypartgroups:
-                            if (set(b_vert_index for b_vert_index in f.vertices)
+                            if (set(b_vert_index for b_vert_index in poly.vertices)
                                 <= bodypartverts):
                                 bodypartfacemap.append(bodypartindex)
                                 break
                         else:
                             # this signals an error
-                            polygons_without_bodypart.append(f)
+                            polygons_without_bodypart.append(poly)
 
             # check that there are no missing body part polygons
             if polygons_without_bodypart:
@@ -939,7 +930,14 @@ class MeshHelper():
             trishape.data = tridata
 
             # flags
-            tridata.consistency_flags = NifFormat.ConsistencyType.CT_STATIC
+            if b_obj.niftools.consistency_flags in NifFormat.ConsistencyType._enumkeys:
+                cf_index = NifFormat.ConsistencyType._enumkeys.index(b_obj.niftools.consistency_flags)
+                tridata.consistency_flags = NifFormat.ConsistencyType._enumvalues[cf_index]
+            else:
+                tridata.consistency_flags = NifFormat.ConsistencyType.CT_STATIC
+                self.nif_export.warning(
+                    "%s has no consistency type set"
+                    "using default CT_STATIC." % b_obj)
 
             # data
             tridata.num_vertices = len(vertlist)
@@ -1017,7 +1015,7 @@ class MeshHelper():
                     if boneinfluences: # yes we have skinning!
                         # create new skinning instance block and link it
                         if (self.properties.game == 'FALLOUT_3'
-                            and self.EXPORT_FO3_BODYPARTS):
+                            and bodypartgroups):
                             skininst = self.nif_export.objecthelper.create_block("BSDismemberSkinInstance", b_obj)
                         else:
                             skininst = self.nif_export.objecthelper.create_block("NiSkinInstance", b_obj)
@@ -1320,7 +1318,7 @@ class MeshHelper():
                         morphctrl.start_time = ctrlStart
                         morphctrl.stop_time = ctrlStop
                         # fix data consistency type
-                        tridata.consistency_flags = NifFormat.ConsistencyType.CT_VOLATILE
+                        tridata.consistency_flags = b_obj.niftools.consistency_flags
 
 
     def smooth_mesh_seams(self, b_objs):
