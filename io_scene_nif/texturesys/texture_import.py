@@ -162,9 +162,20 @@ class Texture():
 		
 		glowTexFile = bsShaderProperty.texture_set.textures[2].decode()
 		if glowTexFile:
-			self.import_glow_texture(b_mat, glowTexFile)			
-							
-											
+			self.import_glow_texture(b_mat, glowTexFile)
+
+		detailTexFile = bsShaderProperty.texture_set.textures[3].decode()
+		if detailTexFile:
+			self.import_detail_texture(b_mat, detailTexFile)
+
+		faceTexFile = bsShaderProperty.texture_set.textures[6].decode()
+		if faceTexFile:
+			self.import_diffuse_texture(b_mat, faceTexFile)
+
+		darkTexFile = bsShaderProperty.texture_set.textures[7].decode()
+		if darkTexFile:
+			self.import_dark_texture(b_mat, darkTexFile)
+				
 	def import_texture_effect(self, b_mat, textureEffect):
 		diffuse_texture = textureEffect.source_texture.file_name.decode()
 		
@@ -373,24 +384,39 @@ class Texture():
 
 
 	def import_gloss_texture(self, b_mat, n_textureDesc):
-		gloss_texture = n_textureDesc.base_texture
+		try:
+			gloss_texture = n_textureDesc.base_texture
+		except:
+			gloss_texture = n_textureDesc
 		
-		b_mat_texslot = b_mat.texture_slots.create(0)
-		b_mat_texslot.texture = self.textureloader.import_texture_source(gloss_texture.source)
+		b_mat_texslot = b_mat.texture_slots.add()
+		try:
+			b_mat_texslot.texture = self.textureloader.import_texture_source(gloss_texture.source)
+		except:
+			b_mat_texslot.texture = self.textureloader.import_texture_source(gloss_texture)
 		b_mat_texslot.use = True
 
 		# Influence mapping
+		b_mat_texslot.texture.use_alpha = False
 		
 		# Mapping
 		b_mat_texslot.texture_coords = 'UV'
-		b_mat_texslot.uv_layer = self.get_uv_layer_name(gloss_texture.uv_set)
+		try:
+			b_mat_texslot.uv_layer = self.get_uv_layer_name(gloss_texture.uv_set)
+		except:
+			b_mat_texslot.uv_layer = self.get_uv_layer_name(gloss_texture)
 		
 		# Influence
 		b_mat_texslot.use_map_color_diffuse = False
 		b_mat_texslot.use_map_specular = True
 		b_mat_texslot.use_map_color_spec = True
-		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
-                n_textureDesc.apply_mode)
+		try:
+			b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
+	                n_textureDesc.apply_mode)
+		except:
+			b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
+	                n_textureDesc)
+
 		
 		if(self.nif_import.ni_alpha_prop):
 			b_mat_texslot.use_map_alpha = True
@@ -399,23 +425,37 @@ class Texture():
 		
 			
 	def import_dark_texture(self, b_mat, n_textureDesc):
-		dark_texture = n_textureDesc.base_texture
+		try:
+			dark_texture = n_textureDesc.base_texture
+		except:
+			dark_texture = n_textureDesc
 		
 		b_mat_texslot = b_mat.texture_slots.add()
-		b_mat_texslot.texture = self.textureloader.import_texture_source(dark_texture.source)
+		try:
+			b_mat_texslot.texture = self.textureloader.import_texture_source(dark_texture.source)
+		except:
+			b_mat_texslot.texture = self.textureloader.import_texture_source(dark_texture)
 		b_mat_texslot.use = True
 
 		# Influence mapping
 		
 		# Mapping
 		b_mat_texslot.texture_coords = 'UV'
-		b_mat_texslot.uv_layer = self.get_uv_layer_name(dark_texture.uv_set)
+		try:
+			b_mat_texslot.uv_layer = self.get_uv_layer_name(dark_texture.uv_set)
+		except:
+			b_mat_texslot.uv_layer = self.get_uv_layer_name(0)
 		
 		# Influence
 		b_mat_texslot.use_map_color_diffuse = True
-		b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
+		try:
+			b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
                 n_textureDesc.apply_mode)
-		
+		except:
+			b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
+                n_textureDesc)
+
+
 		if(self.nif_import.ni_alpha_prop):
 			b_mat_texslot.use_map_alpha = True
 		# update: needed later

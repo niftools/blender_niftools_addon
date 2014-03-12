@@ -93,6 +93,9 @@ def find_property(niBlock, property_type):
     for prop in niBlock.properties:
         if isinstance(prop, property_type):
             return prop
+    for prop in niBlock.bs_properties:
+        if isinstance(prop, property_type):
+            return prop
     return None
 
 def find_controller(niBlock, controller_type):
