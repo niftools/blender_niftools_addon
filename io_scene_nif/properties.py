@@ -111,13 +111,13 @@ class NiftoolsMaterialProps(bpy.types.PropertyGroup):
                         )
 
         cls.ambient_preview = BoolProperty(
-                name='Preview', description='Allows a viewport preview of the emissive property', default=False)
+                name='Ambient Preview', description='Allows a viewport preview of the ambient property', default=False)
         
         cls.ambient_color = FloatVectorProperty(
                 name='Ambient', subtype='COLOR', default=[1.0,1.0,1.0],min=0.0, max=1.0)
         
         cls.emissive_preview = BoolProperty(
-                name='Preview', description='Allows a viewport preview of the emissive property', default=False)
+                name='Emissive Preview', description='Allows a viewport preview of the emissive property', default=False)
         
         cls.emissive_color = FloatVectorProperty(
                 name='Emissive', subtype='COLOR', default=[0.0,0.0,0.0],min=0.0, max=1.0)
@@ -159,15 +159,24 @@ class NiftoolsShaderProps(bpy.types.PropertyGroup):
                         description = 'Type of property used to display meshes.',
                         items = (('None','None',"",0),
                                  ('BSShaderProperty', 'BS Shader Property',"", 1),
-                                 ('BSShaderPPLightingProperty', 'BS Shader PP Lighting Property',"", 2)),
+                                 ('BSShaderPPLightingProperty', 'BS Shader PP Lighting Property',"", 2),
+                                 ('BSLightingShaderProperty', 'BS Lighting Shader Property', "", 3)),
                         )
 
-        cls.shaderobjtype = EnumProperty(
-                        name='Shader Object Type',
+        cls.bsspplp_shaderobjtype = EnumProperty(
+                        name='BS Shader PP Lighting Object Type',
                         description = 'Type of object linked to shader',
                         items = [(item, item,"", i) for i, item in enumerate(NifFormat.BSShaderType._enumkeys)],
                         default = 'SHADER_DEFAULT'
                         )
+
+        cls.bslsp_shaderobjtype = EnumProperty(
+                        name='BS Lighting Shader Object Type',
+                        description = 'Type of object linked to shader',
+                        items = [(item, item,"", i) for i, item in enumerate(NifFormat.BSLightingShaderPropertyShaderType._enumkeys)],
+                        #default = 'SHADER_DEFAULT'
+                        )
+
         
         cls.sf_specular = BoolProperty(
                         name = 'Specular'

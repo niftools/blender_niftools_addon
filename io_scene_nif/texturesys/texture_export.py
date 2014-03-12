@@ -113,6 +113,10 @@ class TextureHelper():
             texset.textures[1] = self.texture_writer.export_texture_filename(self.normalmtex.texture)
         if self.glowmtex:
             texset.textures[2] = self.texture_writer.export_texture_filename(self.glowmtex.texture)
+        if self.detailmtex:
+            texset.textures[3] = self.texture_writer.export_texture_filename(self.detailmtex.texture)
+        if self.facemtex:
+            texset.textures[6] = self.texture_writer.export_texture_filename(self.facemtex.texture)
 
         return bsshader
     
@@ -412,7 +416,7 @@ class TextureHelper():
                     if b_mat_texslot.use_map_alpha:
                         mesh_hasalpha = True
                     # got the dark map
-                    mesh_dark_mtex = b_mat_texslot
+                    self.darkmtex = b_mat_texslot
     
                 #diffuse
                 elif b_mat_texslot.use_map_color_diffuse:
