@@ -87,7 +87,7 @@ class Material():
         # name unique material
         name = self.nif_import.import_name(n_mat_prop)
         if name is None:
-            name = (self.nif_import.context.active_object.name + "_nt_mat")
+            name = (self.nif_import.active_obj_name + "_nt_mat")
         b_mat = bpy.data.materials.new(name)
         
         #texures
@@ -104,7 +104,7 @@ class Material():
             b_mat.niftools.ambient_color.r = n_mat_prop.ambient_color.r
             b_mat.niftools.ambient_color.g = n_mat_prop.ambient_color.g
             b_mat.niftools.ambient_color.b = n_mat_prop.ambient_color.b
-        
+
             # Diffuse color
             b_mat.diffuse_color.r = n_mat_prop.diffuse_color.r
             b_mat.diffuse_color.g = n_mat_prop.diffuse_color.g
@@ -146,6 +146,21 @@ class Material():
 
             
         if n_mat_prop is None and bsShaderProperty:
+            
+            # Diffuse color
+            if bsShaderProperty.skin_tint_color:
+                b_mat.diffuse_color.r = bsShaderProperty.skin_tint_color.r
+                b_mat.diffuse_color.g = bsShaderProperty.skin_tint_color.g
+                b_mat.diffuse_color.b = bsShaderProperty.skin_tint_color.b
+                b_mat.diffuse_intensity = 1.0
+                
+            if (b_mat.diffuse_color.r + b_mat.diffuse_color.g + b_mat.diffuse_color.g) == 0:
+                b_mat.diffuse_color.r = bsShaderProperty.hair_tint_color.r
+                b_mat.diffuse_color.g = bsShaderProperty.hair_tint_color.g
+                b_mat.diffuse_color.b = bsShaderProperty.hair_tint_color.b
+                b_mat.diffuse_intensity = 1.0
+            
+            
             # Emissive
             b_mat.niftools.emissive_color.r = bsShaderProperty.emissive_color.r
             b_mat.niftools.emissive_color.g = bsShaderProperty.emissive_color.g
