@@ -418,6 +418,7 @@ class NifImport(NifCommon):
             # (self.properties.skeleton ==  "SKELETON_ONLY")
             self.debug("Building mesh in import_branch")
             # note: transform matrix is set during import
+            self.active_obj_name = niBlock.name.decode()
             b_obj = self.import_mesh(niBlock)
             b_obj.niftools.objectflags = niBlock.flags
             if niBlock.properties:
@@ -527,6 +528,7 @@ class NifImport(NifCommon):
                           niBlock.name))
                     b_obj = None
                     for child in geom_group:
+                        self.active_obj_name = niBlock.name.decode()
                         b_obj = self.import_mesh(child,
                                                  group_mesh=b_obj,
                                                  applytransform=True)
