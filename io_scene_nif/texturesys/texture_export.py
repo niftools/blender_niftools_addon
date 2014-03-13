@@ -90,13 +90,13 @@ class TextureHelper():
     def export_bs_shader_property(self, b_obj=None, b_mat=None):
         """Export a Bethesda shader property block."""
         self.determine_texture_types(b_obj, b_mat)
-        b_s_type = NifFormat.BSShaderType._enumkeys.index(b_obj.niftools_shader.shaderobjtype)
         b_flag_list = b_obj.niftools_shader.bl_rna.properties.keys()
         # create new block
-        if b_obj.niftools_shader.shadertype == 'BSShaderPPLightingProperty':
+        if b_obj.niftools_shader.bs_shadertype == 'BSShaderPPLightingProperty':
             bsshader = NifFormat.BSShaderPPLightingProperty()
             # set shader options
             # TODO: FIXME:
+            b_s_type = NifFormat.BSShaderType._enumkeys.index(b_obj.niftools_shader.bsspplp_shaderobjtype)
             bsshader.shader_type = NifFormat.BSShaderType._enumvalues[b_s_type]
             for sf_flag in bsshader.shader_flags._names:
                 if sf_flag in b_flag_list:
@@ -104,6 +104,23 @@ class TextureHelper():
                     if b_flag  == True:
                         sf_flag_index = bsshader.shader_flags._names.index(sf_flag)
                         bsshader.shader_flags._items[sf_flag_index]._value = 1
+                        
+        if b_obj.niftools_shader.bs_shadertype == 'BSLightingShaderProperty':
+            bsshader = NifFormat.BSLightingShaderProperty()
+            b_s_type = NifFormat.BSLightingShaderPropertyShaderType._enumkeys.index(b_obj.niftools_shader.bslsp_shaderobjtype)
+            bsshader.shader_type = NifFormat.BSLightingShaderPropertyShaderType._enumvalues[b_s_type]
+            for sf_flag in bsshader.shader_flags_1._names:
+                if sf_flag in b_flag_list:
+                    b_flag = b_obj.niftools_shader.get(sf_flag)
+                    if b_flag  == True:
+                        sf_flag_index = bsshader.shader_flags_1._names.index(sf_flag)
+                        bsshader.shader_flags_1._items[sf_flag_index]._value = 1
+            for sf_flag in bsshader.shader_flags_2._names:
+                if sf_flag in b_flag_list:
+                    b_flag = b_obj.niftools_shader.get(sf_flag)
+                    if b_flag  == True:
+                        sf_flag_index = bsshader.shader_flags_2._names.index(sf_flag)
+                        bsshader.shader_flags_2._items[sf_flag_index]._value = 1
         # set textures
         texset = NifFormat.BSShaderTextureSet()
         bsshader.texture_set = texset
@@ -115,8 +132,10 @@ class TextureHelper():
             texset.textures[2] = self.texture_writer.export_texture_filename(self.glowmtex.texture)
         if self.detailmtex:
             texset.textures[3] = self.texture_writer.export_texture_filename(self.detailmtex.texture)
-        if self.facemtex:
-            texset.textures[6] = self.texture_writer.export_texture_filename(self.facemtex.texture)
+        if self.detailmtex:
+            texset.textures[6] = self.texture_writer.export_texture_filename(self.detailmtex.texture)
+        if self.glossmtex:
+            texset.textures[7] = self.texture_writer.export_texture_filename(self.glossmtex.texture)
 
         return bsshader
     

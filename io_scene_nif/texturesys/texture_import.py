@@ -171,9 +171,9 @@ class Texture():
 		if detailTexFile:
 			self.import_detail_texture(b_mat, detailTexFile)
 
-		faceTexFile = bsShaderProperty.texture_set.textures[6].decode()
-		if faceTexFile:
-			self.import_diffuse_texture(b_mat, faceTexFile)
+		detailmtex = bsShaderProperty.texture_set.textures[6].decode()
+		if detailmtex:
+			self.import_diffuse_texture(b_mat, detailmtex)
 
 		glossTexFile = bsShaderProperty.texture_set.textures[7].decode()
 		if glossTexFile:

@@ -631,6 +631,13 @@ class MeshHelper():
                 
                     self.nif_export.objecthelper.register_block(bsshader)
                     trishape.add_property(bsshader)
+            elif self.properties.game == 'SKYRIM':
+                if b_mat:
+                    bsshader = self.nif_export.texturehelper.export_bs_shader_property(b_obj, b_mat)
+                
+                    self.nif_export.objecthelper.register_block(bsshader)
+                    trishape.add_property(bsshader)
+
             else:
                 if self.properties.game in self.nif_export.texturehelper.USED_EXTRA_SHADER_TEXTURES:
                     # sid meier's railroad and civ4:
