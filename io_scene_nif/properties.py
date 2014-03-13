@@ -154,7 +154,7 @@ class NiftoolsShaderProps(bpy.types.PropertyGroup):
                         type = cls,
                         )
         
-        cls.shadertype = EnumProperty(
+        cls.bs_shadertype = EnumProperty(
                         name='Shader Type',
                         description = 'Type of property used to display meshes.',
                         items = (('None','None',"",0),
@@ -304,6 +304,262 @@ class NiftoolsShaderProps(bpy.types.PropertyGroup):
         
         cls.sf_z_buffer_test = BoolProperty(
                         name = 'Z Buffer Test'
+                        )
+        
+        cls.slsf_1_specular = BoolProperty(
+                        name = 'Specular'
+                        )
+
+        cls.slsf_1_skinned = BoolProperty(
+                        name = 'Skinned'
+                        )
+        
+        cls.slsf_1_temp_refraction = BoolProperty(
+                        name = 'Temp Refraction'
+                        )
+        
+        cls.slsf_1_vertex_alpha = BoolProperty(
+                        name = 'Vertex Alpha'
+                        )
+        
+        cls.slsf_1_greyscale_to_paletteColor = BoolProperty(
+                        name = 'Greyscale to Palette Color'
+                        )
+        
+        cls.slsf_1_greyscale_to_palettealpha = BoolProperty(
+                        name = 'Greyscale to Palette Alpha'
+                        )
+        
+        cls.slsf_1_use_falloff = BoolProperty(
+                        name = 'Use Falloff'
+                        )
+        
+        cls.slsf_1_enviroment_mapping = BoolProperty(
+                        name = 'Enviroment Mapping'
+                        )
+        
+        cls.slsf_1_recieve_shadows = BoolProperty(
+                        name = 'Receive Shadows'
+                        )
+        
+        cls.slsf_1_cast_shadows = BoolProperty(
+                        name = 'Cast Shadows'
+                        )
+        
+        cls.slsf_1_facegen_detail = BoolProperty(
+                        name = 'Facegen Detail'
+                        )
+        
+        cls.slsf_1_Parallax = BoolProperty(
+                        name = 'Parallax'
+                        )
+        
+        cls.slsf_1_model_space_normals = BoolProperty(
+                        name = 'Model Space Normals'
+                        )
+        
+        cls.slsf_1_non_projective_shadows = BoolProperty(
+                        name = 'Non Projective Shadows'
+                        )
+        
+        cls.slsf_1_Landscape = BoolProperty(
+                        name = 'Landscape'
+                        )
+        
+        cls.slsf_1_refraction = BoolProperty(
+                        name = 'Refraction'
+                        )
+        
+        cls.slsf_1_fire_refraction = BoolProperty(
+                        name = 'Fire Refraction'
+                        )
+        
+        cls.slsf_1_eye_environment_mapping = BoolProperty(
+                        name = 'Eye Environment Mapping'
+                        )
+        
+        cls.slsf_1_hair_soft_lighting = BoolProperty(
+                        name = 'Hair Soft Lighting'
+                        )
+        
+        cls.slsf_1_screendoor_alpha_fade = BoolProperty(
+                        name = 'Screendoor Alpha Fade'
+                        )
+        
+        cls.slsf_1_localmap_hide_secret = BoolProperty(
+                        name = 'Localmap Hide Secret'
+                        )
+        
+        cls.slsf_1_facegen_rgb_tint = BoolProperty(
+                        name = 'Facegen RGB Tint'
+                        )
+        
+        cls.slsf_1_own_emit = BoolProperty(
+                        name = 'Own Emit'
+                        )
+        
+        cls.slsf_1_projected_uv = BoolProperty(
+                        name = 'Projected UV'
+                        )
+        
+        cls.slsf_1_multiple_textures = BoolProperty(
+                        name = 'Multiple Textures'
+                        )
+
+        cls.slsf_1_remappable_textures = BoolProperty(
+                        name = 'Remappable Textures'
+                        )
+        
+        cls.slsf_1_decal = BoolProperty(
+                        name = 'decal'
+                        )
+        
+        cls.slsf_1_dynamic_decal = BoolProperty(
+                        name = 'Dynamic Decal'
+                        )
+        
+        cls.slsf_1_parallax_occlusion = BoolProperty(
+                        name = 'Parallax Occlusion'
+                        )
+        
+        cls.slsf_1_external_emittance = BoolProperty(
+                        name = 'External Emittance'
+                        )
+        
+        cls.slsf_1_soft_effect = BoolProperty(
+                        name = 'Soft Effect'
+                        )
+        
+        cls.slsf_1_z_buffer_test = BoolProperty(
+                        name = 'ZBuffer Test'
+                        )
+        
+        cls.slsf_2_z_buffer_write = BoolProperty(
+                        name = 'ZBuffer Write'
+                        )
+        
+        cls.slsf_2_lod_landscape = BoolProperty(
+                        name = 'LOD Landscape'
+                        )
+        
+        cls.slsf_2_lod_objects = BoolProperty(
+                        name = 'LOD Objects'
+                        )
+        
+        cls.slsf_2_no_fade = BoolProperty(
+                        name = 'No Fade'
+                        )
+        
+        cls.slsf_2_double_sided = BoolProperty(
+                        name = 'Double Sided'
+                        )
+        
+        cls.slsf_2_vertex_colors = BoolProperty(
+                        name = 'Vertex Colors'
+                        )
+        
+        cls.slsf_2_glow_map = BoolProperty(
+                        name = 'Glow Map'
+                        )
+        
+        cls.slsf_2_assume_shadowmask = BoolProperty(
+                        name = 'Assume Shadowmask'
+                        )
+        
+        cls.slsf_2_packed_tangent = BoolProperty(
+                        name = 'Packed Tangent'
+                        )
+        
+        cls.slsf_2_multi_index_snow = BoolProperty(
+                        name = 'Multi Index Snow'
+                        )
+        
+        cls.slsf_2_vertex_lighting = BoolProperty(
+                        name = 'Vertex Lighting'
+                        )
+        
+        cls.slsf_2_uniform_scale = BoolProperty(
+                        name = 'Uniform Scale'
+                        )
+        
+        cls.slsf_2_fit_slope = BoolProperty(
+                        name = 'Fit Slope'
+                        )
+        
+        cls.slsf_2_billboard = BoolProperty(
+                        name = 'Billboard'
+                        )
+        
+        cls.slsf_2_no_lod_land_blend = BoolProperty(
+                        name = 'No LOD Land Blend'
+                        )
+        
+        cls.slsf_2_env_map_light_fade = BoolProperty(
+                        name = 'Envmap Light Fade'
+                        )
+        
+        cls.slsf_2_wireframe = BoolProperty(
+                        name = 'Wireframe'
+                        )
+        
+        cls.slsf_2_weapon_blood = BoolProperty(
+                        name = 'Weapon Blood'
+                        )
+        
+        cls.slsf_2_hide_on_local_map = BoolProperty(
+                        name = 'Hide On Local Map'
+                        )
+        
+        cls.slsf_2_premult_alpha = BoolProperty(
+                        name = 'Premult Alpha'
+                        )
+        
+        cls.slsf_2_cloud_lod = BoolProperty(
+                        name = 'Cloud Lod'
+                        )
+        
+        cls.slsf_2_anisotropic_lighting = BoolProperty(
+                        name = 'Anisotropic Lighting'
+                        )
+        
+        cls.slsf_2_no_transparency_multisampling = BoolProperty(
+                        name = 'No Transparency Multisampling'
+                        )
+        
+        cls.slsf_2_unused01 = BoolProperty(
+                        name = 'Unused01'
+                        )
+        
+        cls.slsf_2_multi_layer_parallax = BoolProperty(
+                        name = 'Multi Layer Parallax'
+                        )
+        
+        cls.slsf_2_soft_lighting = BoolProperty(
+                        name = 'Soft Lighting'
+                        )
+        
+        cls.slsf_2_rim_lighting = BoolProperty(
+                        name = 'Rim Lighting'
+                        )
+        
+        cls.slsf_2_back_lighting = BoolProperty(
+                        name = 'Back Lighting'
+                        )
+        
+        cls.slsf_2_unused02 = BoolProperty(
+                        name = 'Unused02'
+                        )
+        
+        cls.slsf_2_tree_anim = BoolProperty(
+                        name = 'Tree Anim'
+                        )
+        
+        cls.slsf_2_effect_lighting = BoolProperty(
+                        name = 'Effect Lighting'
+                        )
+        
+        cls.slsf_2_hd_lod_objects = BoolProperty(
+                        name = 'HD LOD Objects'
                         )
         
     @classmethod
