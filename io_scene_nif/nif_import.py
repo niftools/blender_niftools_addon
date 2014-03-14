@@ -420,6 +420,9 @@ class NifImport(NifCommon):
             # note: transform matrix is set during import
             self.active_obj_name = niBlock.name.decode()
             b_obj = self.import_mesh(niBlock)
+            b_obj.niftools.nif_version = hex(self.data._version_value_._value)
+            b_obj.niftools.user_version = self.data._user_version_value_._value
+            b_obj.niftools.user_version_2 = self.data._user_version_2_value_._value
             b_obj.niftools.objectflags = niBlock.flags
             if niBlock.properties:
                 for b_prop in niBlock.properties:
@@ -532,6 +535,9 @@ class NifImport(NifCommon):
                         b_obj = self.import_mesh(child,
                                                  group_mesh=b_obj,
                                                  applytransform=True)
+                        b_obj.niftools.nif_version = hex(self.data._version_value_._value)
+                        b_obj.niftools.user_version = self.data._user_version_value_._value
+                        b_obj.niftools.user_version_2 = self.data._user_version_2_value_._value
                         b_obj.niftools.objectflags = child.flags
                         
                         if child.properties:

@@ -38,7 +38,8 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-from bpy.props import (PointerProperty, 
+from bpy.props import (PointerProperty,
+                       FloatProperty,
                        FloatVectorProperty,
                        FloatProperty,
                        StringProperty,
@@ -576,6 +577,18 @@ class NiftoolsObjectProps(bpy.types.PropertyGroup):
                         name='Niftools Object Property',
                         description = 'Additional object properties used by the Nif File Format',
                         type = cls,
+                        )
+        
+        cls.nif_version = StringProperty(
+                        name = 'Nif Version',
+                        )
+        
+        cls.user_version = IntProperty(
+                        name = 'User Version'
+                        )
+        
+        cls.user_version_2 = IntProperty(
+                        name = 'User Version2'
                         )
         
         cls.rootnode = EnumProperty(

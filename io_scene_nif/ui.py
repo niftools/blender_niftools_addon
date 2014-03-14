@@ -144,10 +144,10 @@ class NifShaderObjectPanel(Panel):
         layout = self.layout
         row = layout.column()
         
-        row.prop(nif_obj_props, "shadertype")
+        row.prop(nif_obj_props, "bs_shadertype")
         
         if nif_obj_props.bs_shadertype == 'BSShaderPPLightingProperty':
-            row.prop(nif_obj_props, "shaderobjtype")
+            row.prop(nif_obj_props, "bsspplp_shaderobjtype")
                     
             row.prop(nif_obj_props, "sf_alpha_texture")
             row.prop(nif_obj_props, "sf_decal_single_pass")
@@ -183,7 +183,7 @@ class NifShaderObjectPanel(Panel):
             row.prop(nif_obj_props, "sf_z_buffer_test")
 
         if nif_obj_props.bs_shadertype == 'BSLightingShaderProperty':
-            row.prop(nif_obj_props, "shaderobjtype")
+            row.prop(nif_obj_props, "bslsp_shaderobjtype")
 
             row.prop(nif_obj_props, "slsf_1_cast_shadows")
             row.prop(nif_obj_props, "slsf_1_decal")
@@ -268,6 +268,9 @@ class NifObjectPanel(Panel):
         
         layout = self.layout
         row = layout.column()
+        row.prop(nif_obj_props, "nif_version")
+        row.prop(nif_obj_props, "user_version")
+        row.prop(nif_obj_props, "user_version_2")
         row.prop(nif_obj_props, "rootnode")
         row.prop(nif_obj_props, "upb")
         row.prop(nif_obj_props, "bsxflags")
