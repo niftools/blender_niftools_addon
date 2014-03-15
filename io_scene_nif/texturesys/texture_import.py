@@ -48,7 +48,7 @@ class Texture():
 		self.used_slots = []
 		self.b_mat = None
 		
-		self.base_map = None 
+		self.diffuse_map = None 
 		self.bump_map = None 
 		self.dark_map = None
 		self.decal_map = None
@@ -78,7 +78,7 @@ class Texture():
 		if(self.b_mat != b_mat):
 			self.cached = False
 			
-		if n_texture_prop.has_diffuse_texture:
+		if n_texture_prop.has_base_texture:
 			self.diffusetex = 1
 			self.import_image_texture(b_mat, n_texture_prop)
 	
@@ -241,7 +241,7 @@ class Texture():
 # 			menvmapTexture.blend_type = 'ADD'
 
 
-# 		has_diffuse_texture
+# 		has_base_texture
 # 	 	has_bump_map_texture
 # 	 	has_dark_texture
 # 	 	has_decal_0_texture
@@ -255,8 +255,24 @@ class Texture():
 # 	 	has_unknown_2_texture	
 
 	def import_image_texture(self, b_mat, n_textureDesc):
+		
+		
+
 		try:
-			image_texture = n_textureDesc.image_texture
+			if self.diffusetex == 1 or self.glosstex == 1:
+				image_texture = n_textureDesc.base_texture
+			elif self.bumptex == 1:
+				image_texture = n_textureDesc.bump_map_texture
+			elif self.normaltex == 1:
+				image_texture = n_textureDesc.normal_map_texture
+			elif self.glowtex == 1:
+				image_texture = n_textureDesc.glow_texture
+			elif self.darktex == 1:
+				image_texture = n_textureDesc.base_texture
+			elif self.detailtex == 1:
+				image_texture = n_textureDesc.base_texture
+			elif self.reftex == 1:
+				image_texture = n_textureDesc.base_texture
 		except:
 			image_texture = n_textureDesc
 
@@ -309,7 +325,7 @@ class Texture():
 			b_mat_texslot.use_map_alpha = True
 		# update: needed later
 		if self.diffusetex:
-			self.base_map = b_mat_texslot
+			self.diffuse_map = b_mat_texslot
 		if self.bumptex:
 			self.bump_map = b_mat_texslot
 		if self.normaltex:
@@ -366,8 +382,8 @@ class Texture():
 		return self.used_slots
 	
 	
-	def has_diffuse_texture(self, b_mat):
-		return self.base_map	
+	def has_base_texture(self, b_mat):
+		return self.diffuse_map	
 	
 	def has_bumpmap_texture(self, b_mat):
 		return self.bump_map

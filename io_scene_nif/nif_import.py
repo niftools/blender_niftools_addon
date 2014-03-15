@@ -1198,7 +1198,7 @@ class NifImport(NifCommon):
         if material:
             # fix up vertex colors depending on whether we had textures in the
             # material
-            mbasetex = self.texturehelper.has_diffuse_texture(material)
+            mbasetex = self.texturehelper.has_base_texture(material)
             mglowtex = self.texturehelper.has_glow_texture(material)
             if b_mesh.vertex_colors:
                 if mbasetex or mglowtex:
