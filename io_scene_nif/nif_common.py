@@ -240,6 +240,19 @@ class NifCommon:
 
         return name
 
+    def hex_to_dec(self, nif_ver_hex):
+        
+        nif_ver_hex_1 = str(int('{0:.4}'.format(hex(self.data._version_value_._value)),0))
+        nif_ver_hex_2 = str(int('0x{0:.2}'.format(hex(self.data._version_value_._value)[4:]),0))
+        nif_ver_hex_3 = str(int('0x{0:.2}'.format(hex(self.data._version_value_._value)[6:]),0))
+        nif_ver_hex_4 = str(int('0x{0:.2}'.format(hex(self.data._version_value_._value)[8:]),0))
+        
+        nif_ver_hex = str(nif_ver_hex_1 + "." + nif_ver_hex_2 + "." + nif_ver_hex_3 + "." + nif_ver_hex_4)
+        
+        return nif_ver_hex
+            
+
+
     def get_extend_from_flags(self, flags):
         if flags & 6 == 4: # 0b100
             return Blender.IpoCurve.ExtendTypes.CONST
