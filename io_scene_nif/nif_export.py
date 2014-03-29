@@ -155,6 +155,11 @@ class NifExport(NifCommon):
                 self.info("Exporting animation only (as .kf file)")
 
             for b_obj in bpy.data.objects:
+                nif_ver_hex = self.dec_to_hex(b_obj.niftools.nif_version)
+                if nif_ver_hex not in NifFormat.games[self.properties.game]:
+                    return self.error(
+                            " '%s': version does not match selected export settings"
+                            % b_obj.name)
                 # armatures should not be in rest position
                 if b_obj.type == 'ARMATURE':
                     # ensure we get the mesh vertices in animation mode,
@@ -593,19 +598,19 @@ class NifExport(NifCommon):
                 fade_root_block.replace_global_node(root_block, fade_root_block)
                 root_block = fade_root_block
 
-            # figure out user version and user version 2
+            # set user version and user version 2 for export
             if self.properties.game == 'OBLIVION':
                 NIF_USER_VERSION = 11
-                NIF_USER_VERSION2 = 11
+                NIF_USER_VERSION_2 = 11
             elif self.properties.game == 'FALLOUT_3':
                 NIF_USER_VERSION = 11
-                NIF_USER_VERSION2 = 34
+                NIF_USER_VERSION_2 = 34
             elif self.properties.game == 'DIVINITY_2':
                 NIF_USER_VERSION = 131072
                 NIF_USER_VERSION = 0
             else:
                 NIF_USER_VERSION = 0
-                NIF_USER_VERSION2 = 0
+                NIF_USER_VERSION_2 = 0
 
             # export nif file:
             # ----------------
@@ -625,7 +630,7 @@ class NifExport(NifCommon):
                 niffile = os.path.join(directory, filebase + ext)
                 data = NifFormat.Data(version=self.version,
                                       user_version=NIF_USER_VERSION,
-                                      user_version_2=NIF_USER_VERSION2)
+                                      user_version_2=NIF_USER_VERSION_2)
                 data.roots = [root_block]
                 if self.properties.game == 'NEOSTEAM':
                     data.modification = "neosteam"
@@ -788,7 +793,7 @@ class NifExport(NifCommon):
                 kffile = os.path.join(directory, prefix + filebase + ext)
                 data = NifFormat.Data(version=self.version,
                                       user_version=NIF_USER_VERSION,
-                                      user_version2=NIF_USER_VERSION2)
+                                      user_version_2=NIF_USER_VERSION_2)
                 data.roots = [kf_root]
                 data.neosteam = (self.properties.game == 'NEOSTEAM')
                 stream = open(kffile, "wb")
@@ -830,7 +835,7 @@ class NifExport(NifCommon):
                 xniffile = os.path.join(directory, prefix + filebase + ext)
                 data = NifFormat.Data(version=self.version,
                                       user_version=NIF_USER_VERSION,
-                                      user_version2=NIF_USER_VERSION2)
+                                      user_version_2=NIF_USER_VERSION_2)
                 data.roots = [root_block]
                 data.neosteam = (self.properties.game == 'NEOSTEAM')
                 stream = open(xniffile, "wb")

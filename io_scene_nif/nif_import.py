@@ -318,6 +318,10 @@ class NifImport(NifCommon):
             self.debug("%s is an armature root" % root_block.name)
             b_obj = self.import_branch(root_block)
             b_obj.niftools.objectflags = root_block.flags
+            b_obj.niftools.nif_version = self.hex_to_dec(self.data._version_value_._value)
+            b_obj.niftools.user_version = self.data._user_version_value_._value
+            b_obj.niftools.user_version_2 = self.data._user_version_2_value_._value
+            
             
         elif self.is_grouping_node(root_block):
             # special case 2: root node is grouping node

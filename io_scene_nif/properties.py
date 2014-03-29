@@ -588,7 +588,7 @@ class NiftoolsObjectProps(bpy.types.PropertyGroup):
                         )
         
         cls.user_version_2 = IntProperty(
-                        name = 'User Version2'
+                        name = 'User Version 2'
                         )
         
         cls.rootnode = EnumProperty(
@@ -603,9 +603,11 @@ class NiftoolsObjectProps(bpy.types.PropertyGroup):
                         name = 'Nif LongName'
                         )
 
-        cls.consistency_flags = StringProperty(
+        cls.consistency_flags = EnumProperty(
                         name = 'Consistency Flag',
                         description = 'Controls animation type',
+                        items = [(item, item,"", i) for i, item in enumerate(NifFormat.ConsistencyType._enumkeys)],
+                        #default = 'SHADER_DEFAULT'
                         )
 
         cls.objectflags = IntProperty(
