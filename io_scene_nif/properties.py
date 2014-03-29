@@ -379,6 +379,18 @@ class NiftoolsObjectCollisionProps(bpy.types.PropertyGroup):
                         items = [(item, item,"", i) for i, item in enumerate(NifFormat.OblivionLayer._enumkeys)],
                         # default = 'OL_STATIC',
                         )
+
+        cls.deactivator_type = EnumProperty(
+                        name = 'Deactivator Type',
+                        description = 'Motion deactivation setting',
+                        items = [(item, item,"", i) for i, item in enumerate(NifFormat.DeactivatorType._enumkeys)],
+                        )
+
+        cls.solver_deactivation = EnumProperty(
+                        name = 'Solver Deactivation',
+                        description = 'Motion deactivation setting',
+                        items = [(item, item,"", i) for i, item in enumerate(NifFormat.SolverDeactivation._enumkeys)],
+                        )
           
         cls.quality_type = EnumProperty(
                         name = 'Quality Type',
@@ -390,6 +402,18 @@ class NiftoolsObjectCollisionProps(bpy.types.PropertyGroup):
         cls.col_filter = IntProperty(
                         name = 'Col Filter',
                         description = 'Flags for bhkRigidBody(t)',
+                        default = 0
+                        )
+
+        cls.max_linear_velocity = IntProperty(
+                        name = 'Max Linear Velocity',
+                        description = 'Linear velocity limit for bhkRigidBody(t)',
+                        default = 0
+                        )
+
+        cls.max_angular_velocity = IntProperty(
+                        name = 'Max Angular Velocity',
+                        description = 'Angular velocity limit for bhkRigidBody(t)',
                         default = 0
                         )
         

@@ -68,8 +68,19 @@ class bhkshape_export():
         n_havok_mat = b_obj.nifcollision.havok_material
         layer = b_obj.nifcollision.oblivion_layer
         motion_system = b_obj.nifcollision.motion_system
+        deactivator_type = b_obj.nifcollision.deactivator_type
+        solver_deactivation = b_obj.nifcollision.solver_deactivation
         quality_type = b_obj.nifcollision.quality_type
         mass = b_obj.rigid_body.mass
+        restitution = b_obj.rigid_body.restitution
+        friction = b_obj.rigid_body.friction
+        penetration_depth = b_obj.collision.permeability
+        linear_damping = b_obj.rigid_body.linear_damping
+        angular_damping = b_obj.rigid_body.angular_damping
+        #linear_velocity = b_obj.rigid_body.deactivate_linear_velocity
+        #angular_velocity = b_obj.rigid_body.deactivate_angular_velocity
+        max_linear_velocity = b_obj.nifcollision.max_linear_velocity
+        max_angular_velocity = b_obj.nifcollision.max_angular_velocity
         col_filter = b_obj.nifcollision.col_filter
 
         # Aaron1178 collison stuff
@@ -138,14 +149,18 @@ class bhkshape_export():
             # mass is 1.0 at the moment (unless property was set)
             # will be fixed later
             n_bhkrigidbody.mass = mass
-            n_bhkrigidbody.linear_damping = 0.1
-            n_bhkrigidbody.angular_damping = 0.05
-            n_bhkrigidbody.friction = 0.3
-            n_bhkrigidbody.restitution = 0.3
-            n_bhkrigidbody.max_linear_velocity = 250.0
-            n_bhkrigidbody.max_angular_velocity = 31.4159
-            n_bhkrigidbody.penetration_depth = 0.15
+            n_bhkrigidbody.linear_damping = linear_damping
+            n_bhkrigidbody.angular_damping = angular_damping
+            #n_bhkrigidbody.linear_velocity = linear_velocity
+            #n_bhkrigidbody.angular_velocity = angular_velocity
+            n_bhkrigidbody.friction = friction
+            n_bhkrigidbody.restitution = restitution
+            n_bhkrigidbody.max_linear_velocity = max_linear_velocity
+            n_bhkrigidbody.max_angular_velocity = max_angular_velocity
+            n_bhkrigidbody.penetration_depth = penetration_depth
             n_bhkrigidbody.motion_system = motion_system
+            n_bhkrigidbody.deactivator_type = deactivator_type
+            n_bhkrigidbody.solver_deactivation = solver_deactivation 
             n_bhkrigidbody.unknown_byte_1 = self.nif_export.EXPORT_OB_UNKNOWNBYTE1
             n_bhkrigidbody.unknown_byte_2 = self.nif_export.EXPORT_OB_UNKNOWNBYTE2
             n_bhkrigidbody.quality_type = quality_type
