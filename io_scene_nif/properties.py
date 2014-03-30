@@ -40,6 +40,7 @@
 import bpy
 from bpy.props import (PointerProperty, 
                        FloatVectorProperty,
+                       FloatProperty,
                        StringProperty,
                        IntProperty,
                        BoolProperty,
@@ -405,13 +406,13 @@ class NiftoolsObjectCollisionProps(bpy.types.PropertyGroup):
                         default = 0
                         )
 
-        cls.max_linear_velocity = IntProperty(
+        cls.max_linear_velocity = FloatProperty(
                         name = 'Max Linear Velocity',
                         description = 'Linear velocity limit for bhkRigidBody(t)',
                         default = 0
                         )
 
-        cls.max_angular_velocity = IntProperty(
+        cls.max_angular_velocity = FloatProperty(
                         name = 'Max Angular Velocity',
                         description = 'Angular velocity limit for bhkRigidBody(t)',
                         default = 0
