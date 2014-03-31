@@ -233,9 +233,13 @@ class NifCollisionBoundsPanel(Panel):
         box = layout.box()
         box.active = game.use_collision_bounds
         
-        box.prop(col_setting, "col_filter", text='Col Filter') # col filter prop       
+        box.prop(col_setting, "col_filter", text='Col Filter') # col filter prop
+        box.prop(col_setting, "deactivator_type", text='Deactivator Type') # motion dactivation prop
+        box.prop(col_setting, "solver_deactivation", text='Solver Deactivator') # motion dactivation prop
         box.prop(col_setting, "quality_type", text='Quality Type') # quality type prop
-        box.prop(col_setting, "oblivion_layer", text='Oblivion Layer') # oblivion layer prop 
+        box.prop(col_setting, "oblivion_layer", text='Oblivion Layer') # oblivion layer prop
+        box.prop(col_setting, "max_linear_velocity", text='max_linear_velocity') # oblivion layer prop
+        box.prop(col_setting, "max_angular_velocity", text='max_angular_velocity') # oblivion layer prop
         box.prop(col_setting, "motion_system", text='Motion System') # motion system prop
         box.prop(col_setting, "havok_material", text='Havok Material') # havok material prop
 
