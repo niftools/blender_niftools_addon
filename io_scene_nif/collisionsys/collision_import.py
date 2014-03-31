@@ -167,6 +167,9 @@ class bhkshape_import():
                 # (mass 0 results in issues with simulation)
                 b_col_obj.rigid_body.mass = bhkshape.mass / len(collision_objs)
 
+
+            b_col_obj.nifcollision.deactivator_type = NifFormat.DeactivatorType._enumkeys[bhkshape.deactivator_type]
+            b_col_obj.nifcollision.solver_deactivation = NifFormat.SolverDeactivation._enumkeys[bhkshape.solver_deactivation]
             b_col_obj.nifcollision.oblivion_layer = NifFormat.OblivionLayer._enumkeys[bhkshape.layer]
             b_col_obj.nifcollision.quality_type = NifFormat.MotionQuality._enumkeys[bhkshape.quality_type]
             b_col_obj.nifcollision.motion_system = NifFormat.MotionSystem._enumkeys[bhkshape.motion_system]
@@ -179,10 +182,10 @@ class bhkshape_import():
                 b_col_obj.niftools.upb = self.nif_import.upbflags
             except:
                 pass
-            b_col_obj.rotation_quaternion.x = bhkshape.rotation.x
-            b_col_obj.rotation_quaternion.y = bhkshape.rotation.y
-            b_col_obj.rotation_quaternion.z = bhkshape.rotation.z
-            b_col_obj.rotation_quaternion.w = bhkshape.rotation.w
+            #b_col_obj.rotation_quaternion.x = bhkshape.rotation.x
+            #b_col_obj.rotation_quaternion.y = bhkshape.rotation.y
+            #b_col_obj.rotation_quaternion.z = bhkshape.rotation.z
+            #b_col_obj.rotation_quaternion.w = bhkshape.rotation.w
             # note: also imported as rbMass, but hard to find by users
             # so we import it as a property, and this is also what will
             # be re-exported
@@ -197,16 +200,11 @@ class bhkshape_import():
             #b_col_obj.rigid_body.deactivate_linear_velocity = bhkshape.linear_velocity
             #b_col_obj.rigid_body.deactivate_angular_velocity = bhkshape.angular_velocity
             
-            b_col_obj.collision.damping = bhkshape.penetration_depth
-            
-            b_col_obj.field.use_min_distance = True
-            #b_col_obj.field.distance_min = bhkshape.
-            
-            b_col_obj.field.use_max_distance = True
-            b_col_obj.field.distance_max = bhkshape.max_linear_velocity
-            
-            b_col_obj.field.falloff_power = bhkshape.motion_system
-            
+            b_col_obj.collision.permeability = bhkshape.penetration_depth
+
+            b_col_obj.nifcollision.max_linear_velocity = bhkshape.max_linear_velocity
+            b_col_obj.nifcollision.max_angular_velocity = bhkshape.max_angular_velocity
+                        
             b_col_obj.nifcollision.col_filter = bhkshape.col_filter
 
         # import constraints
