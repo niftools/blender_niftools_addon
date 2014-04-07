@@ -117,7 +117,7 @@ class TextureWriter():
         if texture.type == 'ENVIRONMENT_MAP':
             # this works for morrowind only
             if self.properties.game != 'MORROWIND':
-                raise nif_utils.NifExportError(
+                raise nif_utils.NifError(
                     "cannot export environment maps for nif version '%s'"
                     %self.properties.game)
             return "enviro 01.TGA"
@@ -128,7 +128,7 @@ class TextureWriter():
             # XXX still needed? can texture.image be None in current blender?
             # check that image is loaded
             if texture.image is None:
-                raise nif_utils.NifExportError(
+                raise nif_utils.NifError(
                     "image type texture has no file loaded ('%s')"
                     % texture.name)
 
@@ -167,7 +167,7 @@ class TextureWriter():
             return filename.replace('/', '\\')
         else:
             # texture must be of type IMAGE or ENVMAP
-            raise nif_utils.NifExportError(
+            raise nif_utils.NifError(
                 "Error: Texture '%s' must be of type IMAGE or ENVMAP"
                 % texture.name)
             

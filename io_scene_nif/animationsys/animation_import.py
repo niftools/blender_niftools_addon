@@ -60,7 +60,7 @@ class AnimationHelper():
 
         # check that this is an Oblivion style kf file
         if not isinstance(kf_root, NifFormat.NiControllerSequence):
-            raise self.nif_import.NifImportError("non-Oblivion .kf import not supported")
+            raise nif_utils.NifError("non-Oblivion .kf import not supported")
 
         # import text keys
         self.import_text_keys(kf_root)

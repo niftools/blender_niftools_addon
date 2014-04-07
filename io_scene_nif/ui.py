@@ -301,7 +301,9 @@ class NifCollisionBoundsPanel(Panel):
         col_setting = context.active_object.nifcollision
         
         layout.active = game.use_collision_bounds
-        layout.prop(game, "collision_bounds_type", text="Bounds")
+        layout.prop(game, "collision_bounds_type", text="Bounds Type")
+        layout.prop(game, "radius", text="Radius")
+        layout.prop(game, "velocity_max", text="Velocity Max")
         
         box = layout.box()
         box.active = game.use_collision_bounds
