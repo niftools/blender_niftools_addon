@@ -149,18 +149,8 @@ class bhkshape_import():
         for b_col_obj in collision_objs:
             scn = bpy.context.scene
             scn.objects.active = b_col_obj
-            ''' What are these used for
-            ob.rbFlags = (
-            Blender.Object.RBFlags.RIGIDBODY
-            Blender.Object.RBFlags.ACTOR'''
             bpy.ops.rigidbody.object_add(type='ACTIVE')
-            
-            '''Blender.Object.RBFlags.DYNAMIC'''
             b_col_obj.rigid_body.enabled = True
-            
-            ''''Blender.Object.RBFlags.BOUNDS)'''
-            bpy.ops.object.modifier_add(type='COLLISION')
-            
             
             if bhkshape.mass > 0.0001:
                 # for physics emulation
@@ -173,6 +163,10 @@ class bhkshape_import():
             b_col_obj.nifcollision.oblivion_layer = NifFormat.OblivionLayer._enumkeys[bhkshape.layer]
             b_col_obj.nifcollision.quality_type = NifFormat.MotionQuality._enumkeys[bhkshape.quality_type]
             b_col_obj.nifcollision.motion_system = NifFormat.MotionSystem._enumkeys[bhkshape.motion_system]
+            b_col_obj.niftools.nif_version = self.nif_import.hex_to_dec(self.nif_import.data._version_value_._value)
+            b_col_obj.niftools.user_version = self.nif_import.data._user_version_value_._value
+            b_col_obj.niftools.user_version_2 = self.nif_import.data._user_version_2_value_._value
+            
             try:
                 b_col_obj.niftools.bsxflags = self.nif_import.bsxflags
                 b_col_obj.niftools.objectflags = self.nif_import.objectflags
@@ -182,13 +176,6 @@ class bhkshape_import():
                 b_col_obj.niftools.upb = self.nif_import.upbflags
             except:
                 pass
-            #b_col_obj.rotation_quaternion.x = bhkshape.rotation.x
-            #b_col_obj.rotation_quaternion.y = bhkshape.rotation.y
-            #b_col_obj.rotation_quaternion.z = bhkshape.rotation.z
-            #b_col_obj.rotation_quaternion.w = bhkshape.rotation.w
-            # note: also imported as rbMass, but hard to find by users
-            # so we import it as a property, and this is also what will
-            # be re-exported
             b_col_obj.rigid_body.mass = bhkshape.mass / len(collision_objs)
             
             b_col_obj.rigid_body.use_deactivation = True
@@ -197,8 +184,16 @@ class bhkshape_import():
             #b_col_obj.rigid_body. = bhkshape.
             b_col_obj.rigid_body.linear_damping = bhkshape.linear_damping
             b_col_obj.rigid_body.angular_damping = bhkshape.angular_damping
-            #b_col_obj.rigid_body.deactivate_linear_velocity = bhkshape.linear_velocity
-            #b_col_obj.rigid_body.deactivate_angular_velocity = bhkshape.angular_velocity
+            b_col_obj.rigid_body.deactivate_linear_velocity = mathutils.Vector([
+                                            bhkshape.linear_velocity.w,
+                                            bhkshape.linear_velocity.x, 
+                                            bhkshape.linear_velocity.y, 
+                                            bhkshape.linear_velocity.z]).magnitude
+            b_col_obj.rigid_body.deactivate_angular_velocity = mathutils.Vector([
+                                            bhkshape.angular_velocity.w,
+                                            bhkshape.angular_velocity.x, 
+                                            bhkshape.angular_velocity.y, 
+                                            bhkshape.angular_velocity.z]).magnitude
             
             b_col_obj.collision.permeability = bhkshape.penetration_depth
 
@@ -615,15 +610,12 @@ class bound_import():
             #    *bbox.bounding_box.translation.as_list())
         b_obj.niftools.bsxflags = self.nif_import.bsxflags
         b_obj.niftools.objectflags = self.nif_import.objectflags
-<<<<<<< Upstream, based on niftools/develop
         b_obj.location = mathutils.Vector((bbox.center.x,bbox.center.y,bbox.center.z))
-=======
+
         b_obj.niftools.nif_version = self.nif_import.hex_to_dec(self.nif_import.data._version_value_._value)
         b_obj.niftools.user_version = self.nif_import.data._user_version_value_._value
         b_obj.niftools.user_version_2 = self.nif_import.data._user_version_2_value_._value
-        
 
->>>>>>> 243ee2d Added version customs, and updated import and export to better handle current nif files
         # set bounds type
         b_obj.show_bounds = True
         b_obj.draw_type = 'BOUNDS'

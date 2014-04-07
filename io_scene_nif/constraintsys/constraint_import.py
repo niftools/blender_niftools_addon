@@ -296,19 +296,19 @@ class constraint_import():
             # multiply with rigid body transform
             if isinstance(hkbody, NifFormat.bhkRigidBodyT):
                 # set rotation
-                transform = mathutils.Quaternion((
+                self.nif_import.transform = mathutils.Quaternion((
                     hkbody.rotation.w, hkbody.rotation.x,
                     hkbody.rotation.y, hkbody.rotation.z)).to_matrix()
-                transform.resize_4x4()
+                self.nif_import.transform.resize_4x4()
                 # set translation
-                transform[0][3] = hkbody.translation.x * self.HAVOK_SCALE
-                transform[1][3] = hkbody.translation.y * self.HAVOK_SCALE
-                transform[2][3] = hkbody.translation.z * self.HAVOK_SCALE
+                self.nif_import.transform[0][3] = hkbody.translation.x * self.HAVOK_SCALE
+                self.nif_import.transform[1][3] = hkbody.translation.y * self.HAVOK_SCALE
+                self.nif_import.transform[2][3] = hkbody.translation.z * self.HAVOK_SCALE
                 # apply transform
-                pivot = pivot * transform
-                transform = transform.to_3x3()
-                axis_z = axis_z * transform
-                axis_x = axis_x * transform
+                pivot = pivot * self.nif_import.transform
+                self.nif_import.transform = self.nif_import.transform.to_3x3()
+                axis_z = axis_z * self.nif_import.transform
+                axis_x = axis_x * self.nif_import.transform
 
             # next, cancel out bone matrix correction
             # note that B' = X * B with X = self.nif_import.dict_bones_extra_matrix[B]
@@ -316,13 +316,13 @@ class constraint_import():
             for niBone in self.nif_import.dict_bones_extra_matrix:
                 if niBone.collision_object \
                    and niBone.collision_object.body is hkbody:
-                    transform = mathutils.Matrix(
+                    self.nif_import.transform = mathutils.Matrix(
                         self.nif_import.dict_bones_extra_matrix[niBone])
-                    transform.invert()
-                    pivot = pivot * transform
-                    transform = transform.to_3x3()
-                    axis_z = axis_z * transform
-                    axis_x = axis_x * transform
+                    self.nif_import.transform.invert()
+                    pivot = pivot * self.nif_import.transform
+                    self.nif_import.transform = self.nif_import.transform.to_3x3()
+                    axis_z = axis_z * self.nif_import.transform
+                    axis_x = axis_x * self.nif_import.transform
                     break
 
             # cancel out bone tail translation
@@ -331,13 +331,13 @@ class constraint_import():
                     b_hkobj.parent_bone].length
 
             # cancel out object transform
-            transform = mathutils.Matrix(
+            self.nif_import.transform = mathutils.Matrix(
                 b_hkobj.matrix_local)
-            transform.invert()
-            pivot = pivot * transform
-            transform = transform.to_3x3()
-            axis_z = axis_z * transform
-            axis_x = axis_x * transform
+            self.nif_import.transform.invert()
+            pivot = pivot * self.nif_import.transform
+            self.nif_import.transform = self.nif_import.transform.to_3x3()
+            axis_z = axis_z * self.nif_import.transform
+            axis_x = axis_x * self.nif_import.transform
 
             # set pivot point
             b_constr.pivot_x = pivot[0]

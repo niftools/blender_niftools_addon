@@ -63,7 +63,7 @@ class ObjectHelper():
         try:
             block = getattr(NifFormat, blocktype)()
         except AttributeError:
-            raise nif_utils.NifExportError(
+            raise nif_utils.NifError(
                 "'%s': Unknown block type (this is probably a bug)."
                 % blocktype)
         return self.register_block(block, b_obj)
@@ -783,7 +783,7 @@ class MeshHelper():
                     # if we have uv coordinates
                     # double check that we have uv data
                     if not b_mesh.uv_layer_stencil:
-                        raise nif_utils.NifExportError(
+                        raise nif_utils.NifError(
                             "ERROR%t|Create a UV map for every texture,"
                             " and run the script again.")
                 # find (vert, uv-vert, normal, vcol) quad, and if not found, create it
@@ -812,7 +812,7 @@ class MeshHelper():
                             #b_mesh.uv_layers[0].data[poly.index].uv
                             fuv.append(b_mesh.uv_layers[uvlayer].data[loop_index].uv)
                         else:
-                            raise nif_utils.NifExportError(
+                            raise nif_utils.NifError(
                                 "ERROR%t|Texture is set to use UV"
                                 " but no UV Map is Selected for"
                                 " Mapping > Map")
@@ -861,7 +861,7 @@ class MeshHelper():
                             break
 
                     if f_index[i] > 65535:
-                        raise nif_utils.NifExportError(
+                        raise nif_utils.NifError(
                             "ERROR%t|Too many vertices. Decimate your mesh"
                             " and try again.")
                     if (f_index[i] == len(vertquad_list)):
@@ -922,7 +922,7 @@ class MeshHelper():
                     % b_obj)
 
             if len(trilist) > 65535:
-                raise nif_utils.NifExportError(
+                raise nif_utils.NifError(
                     "ERROR%t|Too many polygons. Decimate your mesh and try again.")
             if len(vertlist) == 0:
                 continue # m_4444x: skip 'empty' material indices
@@ -980,7 +980,7 @@ class MeshHelper():
                 tridata.bs_num_uv_sets = len(mesh_uvlayers)
                 if self.properties.game == 'FALLOUT_3':
                     if len(mesh_uvlayers) > 1:
-                        raise nif_utils.NifExportError(
+                        raise nif_utils.NifError(
                             "Fallout 3 does not support multiple UV layers")
                 tridata.has_uv = True
                 tridata.uv_sets.update_size()
@@ -1033,7 +1033,7 @@ class MeshHelper():
                                     skininst.skeleton_root = block
                                     break
                         else:
-                            raise nif_utils.NifExportError(
+                            raise nif_utils.NifError(
                                 "Skeleton root '%s' not found."
                                 % armaturename)
 
@@ -1092,7 +1092,7 @@ class MeshHelper():
                             # select unweighted vertices
                             bpy.ops.mesh.select_ungrouped(extend=False)
                                 
-                            raise nif_utils.NifExportError(
+                            raise nif_utils.NifError(
                                 "Cannot export mesh with unweighted vertices."
                                 " The unweighted vertices have been selected"
                                 " in the mesh so they can easily be"
@@ -1113,7 +1113,7 @@ class MeshHelper():
                                         if not bone_block:
                                             bone_block = block
                                         else:
-                                            raise nif_utils.NifExportError(
+                                            raise nif_utils.NifError(
                                                 "multiple bones"
                                                 " with name '%s': probably"
                                                 " you have multiple armatures,"
@@ -1123,7 +1123,7 @@ class MeshHelper():
                                                 % bone)
                             
                             if not bone_block:
-                                raise nif_utils.NifExportError(
+                                raise nif_utils.NifError(
                                     "Bone '%s' not found." % bone)
                             
                             # find vertex weights
@@ -1186,7 +1186,7 @@ class MeshHelper():
                                        " Set it to 18 to get higher quality"
                                        " skin partitions.")
                             if lostweight > self.properties.epsilon:
-                                self.warning(
+                                self.nif_export.warning(
                                     "Lost %f in vertex weights"
                                     " while creating a skin partition"
                                     " for Blender object '%s' (nif block '%s')"

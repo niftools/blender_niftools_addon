@@ -121,6 +121,13 @@ class TextureHelper():
                     if b_flag  == True:
                         sf_flag_index = bsshader.shader_flags_2._names.index(sf_flag)
                         bsshader.shader_flags_2._items[sf_flag_index]._value = 1
+        if b_obj.niftools_shader.bs_shadertype == 'None':
+            raise nif_utils.NifError(
+                        "Export version expected shader. "
+                        "no shader applied to mesh '%s', "
+                        " these cannot be exported to NIF."
+                        " Set shader before exporting."
+                        % b_obj)
         # set textures
         texset = NifFormat.BSShaderTextureSet()
         bsshader.texture_set = texset
@@ -132,10 +139,11 @@ class TextureHelper():
             texset.textures[2] = self.texture_writer.export_texture_filename(self.glowmtex.texture)
         if self.detailmtex:
             texset.textures[3] = self.texture_writer.export_texture_filename(self.detailmtex.texture)
-        if self.detailmtex:
-            texset.textures[6] = self.texture_writer.export_texture_filename(self.detailmtex.texture)
-        if self.glossmtex:
-            texset.textures[7] = self.texture_writer.export_texture_filename(self.glossmtex.texture)
+        if b_obj.niftools_shader.bs_shadertype == 'BSLightingShaderProperty':
+            if self.detailmtex:
+                texset.textures[6] = self.texture_writer.export_texture_filename(self.detailmtex.texture)
+            if self.glossmtex:
+                texset.textures[7] = self.texture_writer.export_texture_filename(self.glossmtex.texture)
 
         return bsshader
     
@@ -326,7 +334,7 @@ class TextureHelper():
             if b_mat_texslot.texture_coords == 'REFLECTION':
                 if not b_mat_texslot.use_map_color_diffuse:
                     # it should map to colour
-                    raise nif_utils.NifExportError(
+                    raise nif_utils.NifError(
                         "Non-COL-mapped reflection texture in mesh '%s', material '%s',"
                         " these cannot be exported to NIF.\n"
                         "Either delete all non-COL-mapped reflection textures,"
@@ -354,7 +362,7 @@ class TextureHelper():
                 if b_mat_texslot.use_map_emit:
                     #multi-check
                     if self.glowmtex:
-                        raise nif_utils.NifExportError(
+                        raise nif_utils.NifError(
                             "Multiple emissive textures"
                             " in mesh '%s', material '%s'."
                             " Make sure there is only one texture"
@@ -371,7 +379,7 @@ class TextureHelper():
                 elif (b_mat_texslot.use_map_specular or b_mat_texslot.use_map_color_spec):
                     #multi-check
                     if self.glossmtex:
-                        raise nif_utils.NifExportError(
+                        raise nif_utils.NifError(
                             "Multiple specular gloss textures"
                             " in mesh '%s', material '%s'."
                             " Make sure there is only one texture"
@@ -390,7 +398,7 @@ class TextureHelper():
                     b_mat_texslot.texture.use_normal_map == False:
                     #multi-check
                     if self.bumpmtex:
-                        raise nif_utils.NifExportError(
+                        raise nif_utils.NifError(
                             "Multiple bump/normal textures"
                             " in mesh '%s', material '%s'."
                             " Make sure there is only one texture"
@@ -408,7 +416,7 @@ class TextureHelper():
                     b_mat_texslot.texture.use_normal_map:
                     # multi-check
                     if self.normalmtex:
-                        raise nif_utils.NifExportError(
+                        raise nif_utils.NifError(
                             "Multiple bump/normal textures"
                             " in mesh '%s', material '%s'."
                             " Make sure there is only one texture"
@@ -424,7 +432,7 @@ class TextureHelper():
                      b_mat_texslot.blend_type == 'DARKEN':
                     
                     if self.darkmtex:
-                        raise nif_utils.NifExportError(
+                        raise nif_utils.NifError(
                             "Multiple Darken textures"
                             " in mesh '%s', material '%s'."
                             " Make sure there is only one texture"
@@ -440,7 +448,7 @@ class TextureHelper():
                 #diffuse
                 elif b_mat_texslot.use_map_color_diffuse:
                     if self.basemtex:
-                        raise nif_utils.NifExportError(
+                        raise nif_utils.NifError(
                             "Multiple Diffuse textures"
                             " in mesh '%s', material '%s'."
                             " Make sure there is only one texture"
@@ -461,7 +469,7 @@ class TextureHelper():
                         # but...
     
                         if mesh_mat_transparency > self.properties.epsilon:
-                            raise nif_utils.NifExportError(
+                            raise nif_utils.NifError(
                                 "Cannot export this type of"
                                 " transparency in material '%s': "
                                 " instead, try to set alpha to 0.0"
@@ -470,7 +478,7 @@ class TextureHelper():
                                 " material buttons."
                                 %b_mat.name)
                         if (b_mat.animation_data and b_mat.animation_data.action.fcurves['Alpha']):
-                            raise nif_utils.NifExportError(
+                            raise nif_utils.NifError(
                                 "Cannot export animation for"
                                 " this type of transparency"
                                 " in material '%s':"
@@ -485,7 +493,7 @@ class TextureHelper():
                 #detail
                 elif b_mat_texslot.use_map_color_diffuse:
                     if self.detailmtex:
-                        raise nif_utils.NifExportError(
+                        raise nif_utils.NifError(
                             "Multiple detail textures"
                             " in mesh '%s', material '%s'."
                             " Make sure there is only one texture"
@@ -502,7 +510,7 @@ class TextureHelper():
                 elif (b_mat_texslot.use_map_mirror or b_mat_texslot.use_map_raymir):
                     #multi-check
                     if self.glowmtex:
-                        raise nif_utils.NifExportError(
+                        raise nif_utils.NifError(
                             "Multiple reflection textures"
                             " in mesh '%s', material '%s'."
                             " Make sure there is only one texture"
@@ -516,7 +524,7 @@ class TextureHelper():
     
                 # unsupported map
                 else:
-                    raise nif_utils.NifExportError(
+                    raise nif_utils.NifError(
                         "Do not know how to export texture '%s',"
                         " in mesh '%s', material '%s'."
                         " Either delete it, or if this texture"
@@ -528,7 +536,7 @@ class TextureHelper():
     
             # nif only support UV-mapped textures
             else:
-                raise nif_utils.NifExportError(
+                raise nif_utils.NifError(
                     "Non-UV texture in mesh '%s', material '%s'."
                     " Either delete all non-UV textures,"
                     " or in the Shading Panel,"

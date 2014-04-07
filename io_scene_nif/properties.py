@@ -584,11 +584,13 @@ class NiftoolsObjectProps(bpy.types.PropertyGroup):
                         )
         
         cls.user_version = IntProperty(
-                        name = 'User Version'
+                        name = 'User Version',
+                        default = 0
                         )
         
         cls.user_version_2 = IntProperty(
-                        name = 'User Version 2'
+                        name = 'User Version 2',
+                        default = 0
                         )
         
         cls.rootnode = EnumProperty(

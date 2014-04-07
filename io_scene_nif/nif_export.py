@@ -58,12 +58,6 @@ import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 from pyffi.formats.egm import EgmFormat
 
-
-
-class NifExportError(Exception):
-    """A simple custom exception class for export errors."""
-    pass
-
 # main export class
 class NifExport(NifCommon):
 
@@ -155,11 +149,11 @@ class NifExport(NifCommon):
                 self.info("Exporting animation only (as .kf file)")
 
             for b_obj in bpy.data.objects:
-                nif_ver_hex = self.dec_to_hex(b_obj.niftools.nif_version)
-                if nif_ver_hex not in NifFormat.games[self.properties.game]:
-                    return self.error(
-                            " '%s': version does not match selected export settings"
-                            % b_obj.name)
+#                nif_ver_hex = self.dec_to_hex(b_obj.niftools.nif_version)
+#                if nif_ver_hex not in NifFormat.games[self.properties.game]:
+#                    return self.error(
+#                            " '%s': version does not match selected export settings"
+#                            % b_obj.name)
                 # armatures should not be in rest position
                 if b_obj.type == 'ARMATURE':
                     # ensure we get the mesh vertices in animation mode,
@@ -198,7 +192,7 @@ class NifExport(NifCommon):
             # get the root object from selected object
             # only export empties, meshes, and armatures
             if not self.context.selected_objects:
-                raise NifExportError(
+                raise nif_utils.NifError(
                     "Please select the object(s) to export,"
                     " and run this script again.")
             root_objects = set()
@@ -212,7 +206,7 @@ class NifExport(NifCommon):
                     if (root_object.type == 'ARMATURE') or (root_object.name.lower() == "bip01"):
                         root_name = 'Scene Root'
                 if root_object.type not in export_types:
-                    raise NifExportError(
+                    raise nif_utils.NifError(
                         "Root object (%s) must be an 'EMPTY', 'MESH',"
                         " or 'ARMATURE' object."
                         % root_object.name)
@@ -358,7 +352,7 @@ class NifExport(NifCommon):
                 try:
                     furniturenumber = int(filebase[15:])
                 except ValueError:
-                    raise NifExportError(
+                    raise nif_utils.NifError(
                         "Furniture marker has invalid number (%s)."
                         " Name your file 'furnituremarkerxx.nif'"
                         " where xx is a number between 00 and 19."
@@ -599,18 +593,26 @@ class NifExport(NifCommon):
                 root_block = fade_root_block
 
             # set user version and user version 2 for export
-            if self.properties.game == 'OBLIVION':
-                NIF_USER_VERSION = 11
-                NIF_USER_VERSION_2 = 11
-            elif self.properties.game == 'FALLOUT_3':
-                NIF_USER_VERSION = 11
-                NIF_USER_VERSION_2 = 34
-            elif self.properties.game == 'DIVINITY_2':
-                NIF_USER_VERSION = 131072
-                NIF_USER_VERSION = 0
-            else:
-                NIF_USER_VERSION = 0
-                NIF_USER_VERSION_2 = 0
+            if root_obj.niftools:
+                NIF_USER_VERSION = root_obj.niftools.user_version
+                NIF_USER_VERSION_2 = root_obj.niftools.user_version_2
+            if root_obj.niftools.user_version == 0:
+                if self.properties.game == 'OBLIVION':
+                    NIF_USER_VERSION = 11
+                elif self.properties.game == 'FALLOUT_3':
+                    NIF_USER_VERSION = 11
+                elif self.properties.game == 'DIVINITY_2':
+                    NIF_USER_VERSION = 131072
+                else:
+                    NIF_USER_VERSION = 0
+                    
+            if root_obj.niftools.user_version_2 == 0:
+                if self.properties.game == 'OBLIVION':
+                    NIF_USER_VERSION_2 = 11
+                elif self.properties.game == 'FALLOUT_3':
+                    NIF_USER_VERSION_2 = 34
+                else:
+                    NIF_USER_VERSION_2 = 0
 
             # export nif file:
             # ----------------
@@ -776,7 +778,7 @@ class NifExport(NifCommon):
                                 if variable_2:
                                     controlledblock.set_variable_2(variable_2)
                 else:
-                    raise NifExportError(
+                    raise nif_utils.NifError(
                         "Keyframe export for '%s' is not supported. "
                         " Only Morrowind, Oblivion, Fallout 3, Civilization IV,"
                         " Zoo Tycoon 2, Freedom Force, and"
@@ -991,9 +993,9 @@ class NifExport(NifCommon):
 
         try:
             return nif_utils.decompose_srt(matrix)
-        except NifExportError: # non-uniform scaling
+        except nif_utils.NifError: # non-uniform scaling
             self.debug(str(matrix))
-            raise NifExportError(
+            raise nif_utils.NifError(
                 "Non-uniform scaling on bone '%s' not supported."
                 " This could be a bug... No workaround. :-( Post your blend!"
                 % b_obj.name)
@@ -1003,7 +1005,7 @@ class NifExport(NifCommon):
         """Main function for adding collision object b_obj to a node."""
         if self.properties.game == 'MORROWIND':
             if b_obj.game.collision_bounds_type != 'TRIANGLE_MESH':
-                raise NifExportError(
+                raise nif_utils.NifError(
                      "Morrowind only supports"
                      " Triangle Mesh collisions.")
             node = self.objecthelper.create_block("RootCollisionNode", b_obj)
