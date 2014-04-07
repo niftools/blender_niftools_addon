@@ -55,10 +55,6 @@ import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 from pyffi.formats.egm import EgmFormat
 
-class NifImportError(Exception):
-    """A simple custom exception class for import errors."""
-    pass
-
 class NifImport(NifCommon):
 
     # degrees to radians conversion constant
@@ -99,14 +95,14 @@ class NifImport(NifCommon):
         self.dict_textures = {}
         self.dict_mesh_uvlayers = []
 
-        # catch NifImportError
+        # catch nif import errors
         try:
             # check that one armature is selected in 'import geometry + parent
             # to armature' mode
             if self.properties.skeleton ==  "GEOMETRY_ONLY":
                 if (len(self.selected_objects) != 1
                     or self.selected_objects[0].type != 'ARMATURE'):
-                    raise NifImportError(
+                    raise nif_utils.NifError(
                         "You must select exactly one armature in"
                         " 'Import Geometry Only + Parent To Selected Armature'"
                         " mode.")
@@ -124,9 +120,9 @@ class NifImport(NifCommon):
                     self.info("Reading file")
                     self.data.read(niffile)
                 elif self.data.version == -1:
-                    raise NifImportError("Unsupported NIF version.")
+                    raise nif_utils.NifError("Unsupported NIF version.")
                 else:
-                    raise NifImportError("Not a NIF file.")
+                    raise nif_utils.NifError("Not a NIF file.")
             finally:
                 # the file has been read or an error occurred: close file
                 niffile.close()
@@ -146,9 +142,9 @@ class NifImport(NifCommon):
                         self.info("Reading keyframe file")
                         self.kfdata.read(kffile)
                     elif self.kfdata.version == -1:
-                        raise NifImportError("Unsupported KF version.")
+                        raise nif_utils.NifError("Unsupported KF version.")
                     else:
-                        raise NifImportError("Not a KF file.")
+                        raise nif_utils.NifError("Not a KF file.")
                 finally:
                     # the file has been read or an error occurred: close file
                     kffile.close()
@@ -172,9 +168,9 @@ class NifImport(NifCommon):
                         # scale the data
                         self.egmdata.apply_scale(self.properties.scale_correction)
                     elif self.egmdata.version == -1:
-                        raise NifImportError("Unsupported EGM version.")
+                        raise nif_utils.NifError("Unsupported EGM version.")
                     else:
-                        raise NifImportError("Not an EGM file.")
+                        raise nif_utils.NifError("Not an EGM file.")
                 finally:
                     # the file has been read or an error occurred: close file
                     egmfile.close()
@@ -285,7 +281,7 @@ class NifImport(NifCommon):
         if isinstance(root_block,
                       (NifFormat.NiSequence,
                        NifFormat.NiSequenceStreamHelper)):
-            raise NifImportError("direct .kf import not supported")
+            raise nif_utils.NifError("direct .kf import not supported")
 
         # divinity 2: handle CStreamableAssetData
         if isinstance(root_block, NifFormat.CStreamableAssetData):
@@ -701,7 +697,7 @@ class NifImport(NifCommon):
                         b_obj_camera = obj
                         break
                 else:
-                    raise NifImportError(
+                    raise nif_utils.NifError(
                         "Scene needs camera for billboard node"
                         " (add a camera and try again)")
                 # make b_obj track camera object
@@ -877,7 +873,7 @@ class NifImport(NifCommon):
         # set transform matrix for the mesh
         if not applytransform:
             if group_mesh:
-                raise NifImportError(
+                raise nif_utils.NifError(
                     "BUG: cannot set matrix when importing meshes in groups;"
                     " use applytransform = True")
 
@@ -885,12 +881,12 @@ class NifImport(NifCommon):
 
         else:
             # used later on
-            transform = nif_utils.import_matrix(niBlock, relative_to=relative_to)
+            self.transform = nif_utils.import_matrix(niBlock, relative_to=relative_to)
 
         # shortcut for mesh geometry data
         niData = niBlock.data
         if not niData:
-            raise NifImportError("no shape data in %s" % b_name)
+            raise nif_utils.NifError("no shape data in %s" % b_name)
 
         # vertices
         n_verts = niData.vertices
@@ -1059,7 +1055,7 @@ class NifImport(NifCommon):
                 # add the vertex
                 if applytransform:
                     v = mathutils.Vector([v.x, v.y, v.z])
-                    v  = v * transform
+                    v  = v * self.transform
                     b_mesh.vertices.add(1)
                     b_mesh.vertices[-1].co = [v.x, v.y, v.z]
                 else:
@@ -1298,7 +1294,7 @@ class NifImport(NifCommon):
                             delta = mathutils.Vector(mv.x, mv.y, mv.z)
                             v = base + delta
                             if applytransform:
-                                v *= transform
+                                v *= self.transform
                             b_mesh.vertices[b_v_index].co[0] = v.x
                             b_mesh.vertices[b_v_index].co[1] = v.y
                             b_mesh.vertices[b_v_index].co[2] = v.z
@@ -1335,7 +1331,7 @@ class NifImport(NifCommon):
                         for bv, b_v_index in zip(baseverts, v_map):
                             base = mathutils.Vector(bv.x, bv.y, bv.z)
                             if applytransform:
-                                base *= transform
+                                base *= self.transform
                             b_mesh.vertices[b_v_index].co[0] = base.x
                             b_mesh.vertices[b_v_index].co[1] = base.y
                             b_mesh.vertices[b_v_index].co[2] = base.z
@@ -1371,12 +1367,12 @@ class NifImport(NifCommon):
 
                 # for each vertex calculate the key position from base
                 # pos + delta offset
-                for bv, mv, b_v_index in zip(verts, morphverts, v_map):
+                for bv, mv, b_v_index in zip(n_verts, morphverts, v_map):
                     base = mathutils.Vector(bv.x, bv.y, bv.z)
                     delta = mathutils.Vector(mv[0], mv[1], mv[2])
                     v = base + delta
                     if applytransform:
-                        v *= transform
+                        v *= self.transform
                     b_mesh.vertices[b_v_index].co[0] = v.x
                     b_mesh.vertices[b_v_index].co[1] = v.y
                     b_mesh.vertices[b_v_index].co[2] = v.z
@@ -1406,10 +1402,10 @@ class NifImport(NifCommon):
                     11 + len(b_mesh.key.blocks) * 10)
 
             # finally: return to base position
-            for bv, b_v_index in zip(verts, v_map):
+            for bv, b_v_index in zip(n_verts, v_map):
                 base = mathutils.Vector(bv.x, bv.y, bv.z)
                 if applytransform:
-                    base *= transform
+                    base *= self.transform
                 b_mesh.vertices[b_v_index].co[0] = base.x
                 b_mesh.vertices[b_v_index].co[1] = base.y
                 b_mesh.vertices[b_v_index].co[2] = base.z

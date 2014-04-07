@@ -41,6 +41,7 @@ import os
 
 import bpy
 import mathutils
+from io_scene_nif.utility import nif_utils
 
 from pyffi.formats.nif import NifFormat
 
@@ -69,7 +70,7 @@ class Armature():
                         [[float(f) for f in row.split(',')]
                          for row in m.split(';')])
                 except:
-                    raise self.nif_export.NifExportError('Syntax error in BoneExMat buffer.')
+                    raise nif_utils.NifError('Syntax error in BoneExMat buffer.')
                 # Check if matrices are clean, and if necessary fix them.
                 quat = matrix.to_3x3().to_quaternion()
                 if sum(sum(abs(x) for x in vec)

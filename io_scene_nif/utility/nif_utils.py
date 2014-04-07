@@ -38,7 +38,7 @@
 
 import mathutils
 
-class NifExportError(Exception):
+class NifError(Exception):
     """A simple custom exception class for export errors."""
     pass
 
@@ -80,7 +80,7 @@ def decompose_srt(matrix):
     # only uniform scaling
     # allow rather large error to accomodate some nifs
     if abs(scale_vec[0]-scale_vec[1]) + abs(scale_vec[1]-scale_vec[2]) > 0.02:
-        raise NifExportError(
+        raise NifError(
             "Non-uniform scaling not supported."
             " Workaround: apply size and rotation (CTRL-A).")
     b_scale = b_scale[0]
