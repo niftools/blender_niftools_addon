@@ -312,7 +312,7 @@ class NifExportOperator(bpy.types.Operator, ExportHelper, NifOperatorCommon):
         name = "Max Bones Per Vertex",
         description="Maximum number of bones per vertex in skin partitions.",
         default=4, min=1,
-        options={'HIDDEN'})
+        )
 
     #: Pad and sort bones.
     force_dds = bpy.props.BoolProperty(
