@@ -601,6 +601,11 @@ class NiftoolsObjectProps(bpy.types.PropertyGroup):
                         default = 'NiNode',
                         )
         
+        cls.bsnumuvset = IntProperty(
+                        name = 'BS Num UV Set',
+                        default = 0
+                        )
+        
         cls.longname = StringProperty(
                         name = 'Nif LongName'
                         )

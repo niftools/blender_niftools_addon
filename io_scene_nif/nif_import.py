@@ -458,6 +458,7 @@ class NifImport(NifCommon):
             if niBlock.data.consistency_flags in NifFormat.ConsistencyType._enumvalues:
                 cf_index = NifFormat.ConsistencyType._enumvalues.index(niBlock.data.consistency_flags)
                 b_obj.niftools.consistency_flags = NifFormat.ConsistencyType._enumkeys[cf_index]
+                b_obj.niftools.bsnumuvset = niBlock.data.bs_num_uv_sets
             # skinning? add armature modifier
             if niBlock.skin_instance:
                 self.armaturehelper.append_armature_modifier(b_obj, b_armature)
