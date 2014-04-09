@@ -340,9 +340,9 @@ class bhkshape_export():
             hktf.transpose()
             coltf.transform.set_rows(*hktf)
             # fix matrix for havok coordinate system
-            coltf.transform.m_14 /= self.HAVOK_SCALE
-            coltf.transform.m_24 /= self.HAVOK_SCALE
-            coltf.transform.m_34 /= self.HAVOK_SCALE
+            coltf.transform.m_41 /= self.HAVOK_SCALE
+            coltf.transform.m_42 /= self.HAVOK_SCALE
+            coltf.transform.m_43 /= self.HAVOK_SCALE
 
             if b_obj.game.collision_bounds_type == 'BOX':
                 colbox = self.nif_export.objecthelper.create_block("bhkBoxShape", b_obj)
@@ -376,8 +376,7 @@ class bhkshape_export():
         elif b_obj.game.collision_bounds_type in {'CYLINDER', 'CAPSULE'}:
             # take average radius and calculate end points
             localradius = (maxx + maxy - minx - miny) / 4.0
-            transform = mathutils.Matrix(
-                self.nif_export.get_object_matrix(b_obj, 'localspace').as_list())
+            transform = b_obj.matrix_local.transposed()
             vert1 = mathutils.Vector( [ (maxx + minx)/2.0,
                                        (maxy + miny)/2.0,
                                        minz + localradius ] )
@@ -529,7 +528,7 @@ class bound_export():
             n_bbox.name = "BBX"
             n_bbox.center.x = b_obj.location[0]
             n_bbox.center.y = b_obj.location[1]
-            n_bbox.center.z = b_obj.location[2]
+            n_bbox.center.z = (maxz - minz) * b_obj.scale[2] * 0.5
             n_bbox.dimensions.x = (maxx - minx) * b_obj.scale[0] * 0.5
             n_bbox.dimensions.y = (maxy - miny) * b_obj.scale[1] * 0.5
             n_bbox.dimensions.z = (maxz - minz) * b_obj.scale[2] * 0.5

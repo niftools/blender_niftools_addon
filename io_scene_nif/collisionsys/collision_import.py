@@ -376,7 +376,7 @@ class bhkshape_import():
         vec2 = mathutils.Vector.cross(normal, vec1)
         # the rotation matrix should be such that
         # (0,0,1) maps to normal
-        transform = mathutils.Matrix([vec1, vec2, normal])
+        transform = mathutils.Matrix([vec1, vec2, normal]).transposed()
         transform.resize_4x4()
         transform[0][3] = 3.5 * (bhkshape.first_point.x + bhkshape.second_point.x)
         transform[1][3] = 3.5 * (bhkshape.first_point.y + bhkshape.second_point.y)
