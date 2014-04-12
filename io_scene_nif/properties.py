@@ -450,10 +450,18 @@ class NiftoolsConstraintProps(bpy.types.PropertyGroup):
 						type = cls
 						)
 
-        cls.LHMaxFriction = IntProperty(
+        cls.LHMaxFriction = FloatProperty(
 						name = 'LHMaxFriction',
 						description = 'Havok limited hinge max friction.',
 						)
+        cls.tau = FloatProperty(
+                        name = 'tau',
+                        description = 'Havok limited hinge max friction.',
+                        )
+        cls.damping = FloatProperty(
+                        name = 'damping',
+                        description = 'Havok limited hinge max friction.',
+                        )
 
     @classmethod
     def unregister(cls):
