@@ -528,7 +528,7 @@ class bound_export():
             n_bbox.name = "BBX"
             n_bbox.center.x = b_obj.location[0]
             n_bbox.center.y = b_obj.location[1]
-            n_bbox.center.z = (maxz - minz) * b_obj.scale[2] * 0.5
+            n_bbox.center.z = b_obj.location[2]
             n_bbox.dimensions.x = (maxx - minx) * b_obj.scale[0] * 0.5
             n_bbox.dimensions.y = (maxy - miny) * b_obj.scale[1] * 0.5
             n_bbox.dimensions.z = (maxz - minz) * b_obj.scale[2] * 0.5
