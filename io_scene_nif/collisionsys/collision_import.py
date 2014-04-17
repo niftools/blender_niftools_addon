@@ -376,7 +376,7 @@ class bhkshape_import():
         vec2 = mathutils.Vector.cross(normal, vec1)
         # the rotation matrix should be such that
         # (0,0,1) maps to normal
-        transform = mathutils.Matrix([vec1, vec2, normal])
+        transform = mathutils.Matrix([vec1, vec2, normal]).transposed()
         transform.resize_4x4()
         transform[0][3] = 3.5 * (bhkshape.first_point.x + bhkshape.second_point.x)
         transform[1][3] = 3.5 * (bhkshape.first_point.y + bhkshape.second_point.y)
@@ -615,7 +615,7 @@ class bound_import():
             #    *bbox.bounding_box.translation.as_list())
         b_obj.niftools.bsxflags = self.nif_import.bsxflags
         b_obj.niftools.objectflags = self.nif_import.objectflags
-
+        b_obj.location = mathutils.Vector((bbox.center.x,bbox.center.y,bbox.center.z))
         # set bounds type
         b_obj.show_bounds = True
         b_obj.draw_type = 'BOUNDS'
