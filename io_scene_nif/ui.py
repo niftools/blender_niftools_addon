@@ -223,7 +223,7 @@ class NifCollisionBoundsPanel(Panel):
 
     def draw(self, context):
         layout = self.layout
-
+        
         game = context.active_object.game
         col_setting = context.active_object.nifcollision
         
@@ -242,6 +242,12 @@ class NifCollisionBoundsPanel(Panel):
         box.prop(col_setting, "max_angular_velocity", text='max_angular_velocity') # oblivion layer prop
         box.prop(col_setting, "motion_system", text='Motion System') # motion system prop
         box.prop(col_setting, "havok_material", text='Havok Material') # havok material prop
+        
+        con_setting = context.active_object.niftools_constraint
+                
+        box.prop(con_setting, "LHMaxFriction", text='LHMaxFriction')
+        box.prop(con_setting, "tau", text='tau')
+        box.prop(con_setting, "damping", text='damping')
 
 def register():
     bpy.utils.register_class(NifMatColorPanel)
