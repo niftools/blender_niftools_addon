@@ -215,17 +215,10 @@ class constraint_export():
 
                 # apply object transform relative to the bone head
                 # (this is O * T * B' * B^{-1} at once)
-<<<<<<< Upstream, based on niftools/develop
                 transform = mathutils.Matrix(
                     b_obj.matrix_local)
                 pivot = pivot * transform
                 constr_matrix = constr_matrix * transform.to_3x3()
-=======
-                self.nif_import.transform = mathutils.Matrix(
-                    b_obj.matrix_world)
-                pivot = pivot * self.nif_import.transform
-                constr_matrix = constr_matrix * self.nif_import.transform.to_3x3()
->>>>>>> 6153b11 More cleanup of import and export, Fixed several issues with item type settings. Unified import and export error classes to nif_utils.NifError for sanity sake. 
 
                 # export hkdescriptor pivot point
                 hkdescriptor.pivot_a.x = pivot[0] / self.HAVOK_SCALE

@@ -244,9 +244,12 @@ class constraint_import():
                 # equivalent and setting as obj properties
                 b_constr.limit_angle_max_x = hkdescriptor.max_angle
                 b_constr.limit_angle_min_x = hkdescriptor.min_angle
-                b_hkobj.niftools_constraint.tau = hkconstraint.tau
-                b_hkobj.niftools_constraint.damping = hkconstraint.damping
                 b_hkobj.niftools_constraint.LHMaxFriction = hkdescriptor.max_friction
+                
+                if b_hkobj.niftools.user_version < 12:
+                    b_hkobj.niftools_constraint.tau = hkconstraint.tau
+                    b_hkobj.niftools_constraint.damping = hkconstraint.damping
+                
 
             elif isinstance(hkdescriptor, NifFormat.HingeDescriptor):
                 # for hinge, y is the vector on the plane of rotation defining
@@ -296,19 +299,19 @@ class constraint_import():
             # multiply with rigid body transform
             if isinstance(hkbody, NifFormat.bhkRigidBodyT):
                 # set rotation
-                self.nif_import.transform = mathutils.Quaternion((
+                transform = mathutils.Quaternion((
                     hkbody.rotation.w, hkbody.rotation.x,
                     hkbody.rotation.y, hkbody.rotation.z)).to_matrix()
-                self.nif_import.transform.resize_4x4()
+                transform.resize_4x4()
                 # set translation
-                self.nif_import.transform[0][3] = hkbody.translation.x * self.HAVOK_SCALE
-                self.nif_import.transform[1][3] = hkbody.translation.y * self.HAVOK_SCALE
-                self.nif_import.transform[2][3] = hkbody.translation.z * self.HAVOK_SCALE
+                transform[0][3] = hkbody.translation.x * self.HAVOK_SCALE
+                transform[1][3] = hkbody.translation.y * self.HAVOK_SCALE
+                transform[2][3] = hkbody.translation.z * self.HAVOK_SCALE
                 # apply transform
-                pivot = pivot * self.nif_import.transform
-                self.nif_import.transform = self.nif_import.transform.to_3x3()
-                axis_z = axis_z * self.nif_import.transform
-                axis_x = axis_x * self.nif_import.transform
+                pivot = pivot * transform
+                transform = transform.to_3x3()
+                axis_z = axis_z * transform
+                axis_x = axis_x * transform
 
             # next, cancel out bone matrix correction
             # note that B' = X * B with X = self.nif_import.dict_bones_extra_matrix[B]
@@ -316,13 +319,13 @@ class constraint_import():
             for niBone in self.nif_import.dict_bones_extra_matrix:
                 if niBone.collision_object \
                    and niBone.collision_object.body is hkbody:
-                    self.nif_import.transform = mathutils.Matrix(
+                    transform = mathutils.Matrix(
                         self.nif_import.dict_bones_extra_matrix[niBone])
-                    self.nif_import.transform.invert()
-                    pivot = pivot * self.nif_import.transform
-                    self.nif_import.transform = self.nif_import.transform.to_3x3()
-                    axis_z = axis_z * self.nif_import.transform
-                    axis_x = axis_x * self.nif_import.transform
+                    transform.invert()
+                    pivot = pivot * transform
+                    transform = transform.to_3x3()
+                    axis_z = axis_z * transform
+                    axis_x = axis_x * transform
                     break
 
             # cancel out bone tail translation
@@ -331,13 +334,13 @@ class constraint_import():
                     b_hkobj.parent_bone].length
 
             # cancel out object transform
-            self.nif_import.transform = mathutils.Matrix(
+            transform = mathutils.Matrix(
                 b_hkobj.matrix_local)
-            self.nif_import.transform.invert()
-            pivot = pivot * self.nif_import.transform
-            self.nif_import.transform = self.nif_import.transform.to_3x3()
-            axis_z = axis_z * self.nif_import.transform
-            axis_x = axis_x * self.nif_import.transform
+            transform.invert()
+            pivot = pivot * transform
+            transform = transform.to_3x3()
+            axis_z = axis_z * transform
+            axis_x = axis_x * transform
 
             # set pivot point
             b_constr.pivot_x = pivot[0]
