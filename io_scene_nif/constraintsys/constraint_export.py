@@ -39,6 +39,7 @@
 
 import pyffi
 from pyffi.formats.nif import NifFormat
+from io_scene_nif.utility import nif_utils
 
 import bpy
 import mathutils
@@ -82,7 +83,7 @@ class constraint_export():
                         break
                 else:
                     # no collision body for this object
-                    raise self.nif_utils.NifExportError(
+                    raise nif_utils.NifError(
                         "Object %s has a rigid body constraint,"
                         " but is not exported as collision object"
                         % b_obj.name)
@@ -109,7 +110,7 @@ class constraint_export():
                         hkconstraint.type = 2
                     hkdescriptor = hkconstraint.limited_hinge
                 else:
-                    raise self.nif_utils.NifExportError(
+                    raise nif_utils.NifError(
                         "Unsupported rigid body joint type (%i),"
                         " only ball and hinge are supported."
                         % b_constr.type)
@@ -117,29 +118,32 @@ class constraint_export():
                 # defaults and getting object properties for user
                 # settings (should use constraint properties, but
                 # blender does not have those...)
-                if b_constr.limit_angle_max_x:
+                if b_constr.limit_angle_max_x != 0:
                     max_angle = b_constr.limit_angle_max_x
                 else:
                     max_angle = 1.5
-                if b_constr.limit_angle_min_x:
+                if b_constr.limit_angle_min_x != 0:
                     min_angle = b_constr.limit_angle_min_x
                 else:
                     min_angle = 0.0
                 # friction: again, just picking a reasonable value if
                 # no real value given
-                if isinstance(hkconstraint,
-                              NifFormat.bhkMalleableConstraint):
-                    # malleable typically have 0
-                    # (perhaps because they have a damping parameter)
-                    max_friction = 0
-                else:
-                    # non-malleable typically have 10
-                    if self.properties.game == 'FALLOUT_3':
-                        max_friction = 100
-                    else: # oblivion
-                        max_friction = 10
-                if b_obj.niftools_constraint.LHMaxFriction:
+                if b_obj.niftools_constraint.LHMaxFriction != 0:
                     max_friction = b_obj.niftools_constraint.LHMaxFriction
+                    
+                
+                else:
+                    if isinstance(hkconstraint,
+                                  NifFormat.bhkMalleableConstraint):
+                        # malleable typically have 0
+                        # (perhaps because they have a damping parameter)
+                        max_friction = 0
+                    else:
+                        # non-malleable typically have 10
+                        if self.properties.game == 'FALLOUT_3':
+                            max_friction = 100
+                        else: # oblivion
+                            max_friction = 10
 
                 # parent constraint to hkbody
                 hkbody.num_constraints += 1
@@ -163,7 +167,7 @@ class constraint_export():
                         break
                 else:
                     # not found
-                    raise self.nif_import.NifExportError(
+                    raise nif_utils.NifError(
                         "Rigid body target not exported in nif tree"
                         " check that %s is selected during export." % targetobj)
                 # priority
@@ -174,11 +178,8 @@ class constraint_export():
                     hkconstraint.unknown_int_2 = 2
                     hkconstraint.unknown_int_3 = 1
                     # force required to keep bodies together
-                    # 0.5 seems a good standard value for creatures
-                    hkconstraint.tau = 0.5
-                    # default damping settings
-                    # (cannot access rbDamping in Blender Python API)
-                    hkconstraint.damping = 0.5
+                    hkconstraint.tau = b_obj.niftools_constraint.tau
+                    hkconstraint.damping = b_obj.niftools_constraint.damping
 
                 # calculate pivot point and constraint matrix
                 pivot = mathutils.Vector([
@@ -215,7 +216,7 @@ class constraint_export():
                 # apply object transform relative to the bone head
                 # (this is O * T * B' * B^{-1} at once)
                 transform = mathutils.Matrix(
-                    b_obj.matrix_world)
+                    b_obj.matrix_local)
                 pivot = pivot * transform
                 constr_matrix = constr_matrix * transform.to_3x3()
 
@@ -228,6 +229,7 @@ class constraint_export():
                 axis_x = mathutils.Vector([1,0,0]) * constr_matrix
                 axis_y = mathutils.Vector([0,1,0]) * constr_matrix
                 axis_z = mathutils.Vector([0,0,1]) * constr_matrix
+                    
                 if isinstance(hkdescriptor, NifFormat.RagdollDescriptor):
                     # z axis is the twist vector
                     hkdescriptor.twist_a.x = axis_z[0]
@@ -239,12 +241,17 @@ class constraint_export():
                     hkdescriptor.plane_a.z = axis_x[2]
                     # angle limits
                     # take them twist and plane to be 45 deg (3.14 / 4 = 0.8)
-                    hkdescriptor.twist_min_angle = -0.8
-                    hkdescriptor.twist_max_angle = +0.8
-                    hkdescriptor.plane_min_angle = -0.8
-                    hkdescriptor.plane_max_angle = +0.8
+
+                    hkdescriptor.plane_min_angle = b_constr.limit_angle_min_x
+                    hkdescriptor.plane_max_angle = b_constr.limit_angle_max_x
+
+                    hkdescriptor.cone_max_angle = b_constr.limit_angle_max_y
+
+                    hkdescriptor.twist_min_angle = b_constr.limit_angle_min_z
+                    hkdescriptor.twist_max_angle = b_constr.limit_angle_max_z
+                    
                     # same for maximum cone angle
-                    hkdescriptor.cone_max_angle  = +0.8
+                    hkdescriptor.max_friction = max_friction
                 elif isinstance(hkdescriptor, NifFormat.LimitedHingeDescriptor):
                     # y axis is the zero angle vector on the plane of rotation
                     hkdescriptor.perp_2_axle_in_a_1.x = axis_y[0]
