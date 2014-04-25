@@ -135,7 +135,7 @@ class Armature():
 
 		# bone length for nubs and zero length bones
 		nub_length = 5.0
-		scale = self.properties.scale_correction
+		scale = self.properties.scale_correction_import
 		# bone name
 		bone_name = self.nif_import.import_name(niBlock, 32)
 		niChildBones = [ child for child in niBlock.children

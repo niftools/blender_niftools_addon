@@ -182,7 +182,7 @@ class TextureHelper():
                                  b_mat_texslot = self.basemtex)
             # check for texture flip definition
             try:
-                fliptxt = Blender.Text.Get(basemtex.texture.name)
+                fliptxt = self.basemtex.texture.name
             except NameError:
                 pass
             else:
