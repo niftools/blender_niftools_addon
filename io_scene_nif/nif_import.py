@@ -882,7 +882,7 @@ class NifImport(NifCommon):
 
         else:
             # used later on
-            self.transform = nif_utils.import_matrix(niBlock, relative_to=relative_to)
+            transform = nif_utils.import_matrix(niBlock, relative_to=relative_to)
 
         # shortcut for mesh geometry data
         niData = niBlock.data
@@ -1056,7 +1056,7 @@ class NifImport(NifCommon):
                 # add the vertex
                 if applytransform:
                     v = mathutils.Vector([v.x, v.y, v.z])
-                    v  = v * self.transform
+                    v  = v * transform
                     b_mesh.vertices.add(1)
                     b_mesh.vertices[-1].co = [v.x, v.y, v.z]
                 else:
@@ -1295,7 +1295,7 @@ class NifImport(NifCommon):
                             delta = mathutils.Vector(mv.x, mv.y, mv.z)
                             v = base + delta
                             if applytransform:
-                                v *= self.transform
+                                v *= transform
                             b_mesh.vertices[b_v_index].co[0] = v.x
                             b_mesh.vertices[b_v_index].co[1] = v.y
                             b_mesh.vertices[b_v_index].co[2] = v.z
@@ -1332,7 +1332,7 @@ class NifImport(NifCommon):
                         for bv, b_v_index in zip(baseverts, v_map):
                             base = mathutils.Vector(bv.x, bv.y, bv.z)
                             if applytransform:
-                                base *= self.transform
+                                base *= transform
                             b_mesh.vertices[b_v_index].co[0] = base.x
                             b_mesh.vertices[b_v_index].co[1] = base.y
                             b_mesh.vertices[b_v_index].co[2] = base.z
@@ -1373,7 +1373,7 @@ class NifImport(NifCommon):
                     delta = mathutils.Vector(mv[0], mv[1], mv[2])
                     v = base + delta
                     if applytransform:
-                        v *= self.transform
+                        v *= transform
                     b_mesh.vertices[b_v_index].co[0] = v.x
                     b_mesh.vertices[b_v_index].co[1] = v.y
                     b_mesh.vertices[b_v_index].co[2] = v.z
@@ -1406,7 +1406,7 @@ class NifImport(NifCommon):
             for bv, b_v_index in zip(n_verts, v_map):
                 base = mathutils.Vector(bv.x, bv.y, bv.z)
                 if applytransform:
-                    base *= self.transform
+                    base *= transform
                 b_mesh.vertices[b_v_index].co[0] = base.x
                 b_mesh.vertices[b_v_index].co[1] = base.y
                 b_mesh.vertices[b_v_index].co[2] = base.z
