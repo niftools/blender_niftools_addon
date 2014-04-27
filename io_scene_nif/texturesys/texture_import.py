@@ -213,24 +213,7 @@ class Texture():
 		except:
 			image_texture = textureEffect
 		
-		b_mat_texslot = b_mat.texture_slots.add()
-		try:
-			b_mat_texslot.texture = self.textureloader.import_texture_source(
-										image_texture.source)
-		except:
-			b_mat_texslot.texture = self.textureloader.import_texture_source(
-										image_texture)
-		b_mat_texslot.use = True
-
-		# Influence mapping
-		
-		# Mapping
-		b_mat_texslot.texture_coords = 'UV'
-		try:
-			b_mat_texslot.uv_layer = self.get_uv_layer_name(
-										image_texture.uv_set)
-		except:
-			b_mat_texslot.uv_layer = self.get_uv_layer_name(0)
+		b_mat_texslot = self.create_texture_slot(b_mat, image_texture)
 		
 		# Influence
 		b_mat_texslot.use_map_color_diffuse = True
@@ -258,6 +241,28 @@ class Texture():
 # 			menvmapTexture.blend_type = 'ADD'
 
 
+	def create_texture_slot(self, b_mat, image_texture):
+		b_mat_texslot = b_mat.texture_slots.add()
+		try:
+			b_mat_texslot.texture = self.textureloader.import_texture_source(
+										image_texture.source)
+		except:
+			b_mat_texslot.texture = self.textureloader.import_texture_source(
+										image_texture)
+		b_mat_texslot.use = True
+
+		# Influence mapping
+		
+		# Mapping
+		b_mat_texslot.texture_coords = 'UV'
+		try:
+			b_mat_texslot.uv_layer = self.get_uv_layer_name(
+										image_texture.uv_set)
+		except:
+			b_mat_texslot.uv_layer = self.get_uv_layer_name(0)
+
+		return b_mat_texslot
+
 	def import_image_texture(self, b_mat, n_textureDesc):
 
 		try:
@@ -280,15 +285,8 @@ class Texture():
 		except:
 			image_texture = n_textureDesc
 
-		b_mat_texslot = b_mat.texture_slots.add()
-		try:
-			b_mat_texslot.texture = self.textureloader.import_texture_source(
-										image_texture.source)
-		except:
-			b_mat_texslot.texture = self.textureloader.import_texture_source(
-										image_texture)
-		b_mat_texslot.use = True
-
+		b_mat_texslot = self.create_texture_slot(b_mat, image_texture)
+		
 		# Influence mapping
 		if self.has_bumptex:
 			b_mat_texslot.texture.use_normal_map = False # causes artifacts otherwise.
@@ -296,14 +294,7 @@ class Texture():
 			b_mat_texslot.texture.use_normal_map = True # causes artifacts otherwise.
 		if self.has_glowtex or self.has_glosstex:
 			b_mat_texslot.texture.use_alpha = False
-		
-		# Mapping
-		b_mat_texslot.texture_coords = 'UV'
-		try:
-			b_mat_texslot.uv_layer = self.get_uv_layer_name(image_texture.uv_set)
-		except:
-			b_mat_texslot.uv_layer = self.get_uv_layer_name(0)
-		
+
 		# Influence
 		if self.has_diffusetex or self.has_darktex or self.has_detailtex or self.has_reftex or self.has_envtex:
 			b_mat_texslot.use_map_color_diffuse = True
