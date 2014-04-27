@@ -55,10 +55,6 @@ import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 from pyffi.formats.egm import EgmFormat
 
-class NifImportError(Exception):
-    """A simple custom exception class for import errors."""
-    pass
-
 class NifImport(NifCommon):
 
     # degrees to radians conversion constant
@@ -99,14 +95,14 @@ class NifImport(NifCommon):
         self.dict_textures = {}
         self.dict_mesh_uvlayers = []
 
-        # catch NifImportError
+        # catch nif import errors
         try:
             # check that one armature is selected in 'import geometry + parent
             # to armature' mode
             if self.properties.skeleton ==  "GEOMETRY_ONLY":
                 if (len(self.selected_objects) != 1
                     or self.selected_objects[0].type != 'ARMATURE'):
-                    raise NifImportError(
+                    raise nif_utils.NifError(
                         "You must select exactly one armature in"
                         " 'Import Geometry Only + Parent To Selected Armature'"
                         " mode.")
@@ -124,9 +120,9 @@ class NifImport(NifCommon):
                     self.info("Reading file")
                     self.data.read(niffile)
                 elif self.data.version == -1:
-                    raise NifImportError("Unsupported NIF version.")
+                    raise nif_utils.NifError("Unsupported NIF version.")
                 else:
-                    raise NifImportError("Not a NIF file.")
+                    raise nif_utils.NifError("Not a NIF file.")
             finally:
                 # the file has been read or an error occurred: close file
                 niffile.close()
@@ -146,9 +142,9 @@ class NifImport(NifCommon):
                         self.info("Reading keyframe file")
                         self.kfdata.read(kffile)
                     elif self.kfdata.version == -1:
-                        raise NifImportError("Unsupported KF version.")
+                        raise nif_utils.NifError("Unsupported KF version.")
                     else:
-                        raise NifImportError("Not a KF file.")
+                        raise nif_utils.NifError("Not a KF file.")
                 finally:
                     # the file has been read or an error occurred: close file
                     kffile.close()
@@ -170,11 +166,11 @@ class NifImport(NifCommon):
                         self.info("Reading FaceGen egm file")
                         self.egmdata.read(egmfile)
                         # scale the data
-                        self.egmdata.apply_scale(self.properties.scale_correction)
+                        self.egmdata.apply_scale(self.properties.scale_correction_import)
                     elif self.egmdata.version == -1:
-                        raise NifImportError("Unsupported EGM version.")
+                        raise nif_utils.NifError("Unsupported EGM version.")
                     else:
-                        raise NifImportError("Not an EGM file.")
+                        raise nif_utils.NifError("Not an EGM file.")
                 finally:
                     # the file has been read or an error occurred: close file
                     egmfile.close()
@@ -214,7 +210,7 @@ class NifImport(NifCommon):
 
             # scale tree
             toaster = pyffi.spells.nif.NifToaster()
-            toaster.scale = self.properties.scale_correction
+            toaster.scale = self.properties.scale_correction_import
             pyffi.spells.nif.fix.SpellScale(data=self.data, toaster=toaster).recurse()
 
             # import all root blocks
@@ -285,7 +281,7 @@ class NifImport(NifCommon):
         if isinstance(root_block,
                       (NifFormat.NiSequence,
                        NifFormat.NiSequenceStreamHelper)):
-            raise NifImportError("direct .kf import not supported")
+            raise nif_utils.NifError("direct .kf import not supported")
 
         # divinity 2: handle CStreamableAssetData
         if isinstance(root_block, NifFormat.CStreamableAssetData):
@@ -318,6 +314,10 @@ class NifImport(NifCommon):
             self.debug("%s is an armature root" % root_block.name)
             b_obj = self.import_branch(root_block)
             b_obj.niftools.objectflags = root_block.flags
+            b_obj.niftools.nif_version = self.hex_to_dec(self.data._version_value_._value)
+            b_obj.niftools.user_version = self.data._user_version_value_._value
+            b_obj.niftools.user_version_2 = self.data._user_version_2_value_._value
+            
             
         elif self.is_grouping_node(root_block):
             # special case 2: root node is grouping node
@@ -418,22 +418,47 @@ class NifImport(NifCommon):
             # (self.properties.skeleton ==  "SKELETON_ONLY")
             self.debug("Building mesh in import_branch")
             # note: transform matrix is set during import
+            self.active_obj_name = niBlock.name.decode()
             b_obj = self.import_mesh(niBlock)
+            b_obj.niftools.nif_version = self.hex_to_dec(self.data._version_value_._value)
+            b_obj.niftools.user_version = self.data._user_version_value_._value
+            b_obj.niftools.user_version_2 = self.data._user_version_2_value_._value
             b_obj.niftools.objectflags = niBlock.flags
             if niBlock.properties:
                 for b_prop in niBlock.properties:
                     if isinstance(b_prop, NifFormat.BSShaderPPLightingProperty):
-                        b_obj.niftools_shader.shadertype = 'BSShaderPPLightingProperty'
+                        b_obj.niftools_shader.bs_shadertype = 'BSShaderPPLightingProperty'
                         sf_type = NifFormat.BSShaderType._enumvalues.index(b_prop.shader_type)
-                        b_obj.niftools_shader.shaderobjtype = NifFormat.BSShaderType._enumkeys[sf_type]
+                        b_obj.niftools_shader.bsspplp_shaderobjtype = NifFormat.BSShaderType._enumkeys[sf_type]
                         for b_flag_name in b_prop.shader_flags._names:
                             sf_index = b_prop.shader_flags._names.index(b_flag_name)
                             if b_prop.shader_flags._items[sf_index]._value == 1:
                                 b_obj.niftools_shader[b_flag_name] = True
+            elif niBlock.bs_properties:
+                for b_prop in niBlock.bs_properties:
+                    if isinstance(b_prop, NifFormat.BSLightingShaderProperty):
+                        b_obj.niftools_shader.bs_shadertype = 'BSLightingShaderProperty'
+                        sf_type = NifFormat.BSLightingShaderPropertyShaderType._enumvalues.index(b_prop.skyrim_shader_type)
+                        b_obj.niftools_shader.bslsp_shaderobjtype = NifFormat.BSLightingShaderPropertyShaderType._enumkeys[sf_type]
+                        for b_flag_name_1 in b_prop.shader_flags_1._names:
+                            sf_index = b_prop.shader_flags_1._names.index(b_flag_name_1)
+                            if b_prop.shader_flags_1._items[sf_index]._value == 1:
+                                b_obj.niftools_shader[b_flag_name_1] = True
+                        for b_flag_name_2 in b_prop.shader_flags_2._names:
+                            sf_index = b_prop.shader_flags_2._names.index(b_flag_name_2)
+                            if b_prop.shader_flags_2._items[sf_index]._value == 1:
+                                b_obj.niftools_shader[b_flag_name_2] = True
+
+                        
+
+
+
+
                                 
             if niBlock.data.consistency_flags in NifFormat.ConsistencyType._enumvalues:
                 cf_index = NifFormat.ConsistencyType._enumvalues.index(niBlock.data.consistency_flags)
                 b_obj.niftools.consistency_flags = NifFormat.ConsistencyType._enumkeys[cf_index]
+                b_obj.niftools.bsnumuvset = niBlock.data.bs_num_uv_sets
             # skinning? add armature modifier
             if niBlock.skin_instance:
                 self.armaturehelper.append_armature_modifier(b_obj, b_armature)
@@ -507,21 +532,39 @@ class NifImport(NifCommon):
                           niBlock.name))
                     b_obj = None
                     for child in geom_group:
+                        self.active_obj_name = niBlock.name.decode()
                         b_obj = self.import_mesh(child,
                                                  group_mesh=b_obj,
                                                  applytransform=True)
+                        b_obj.niftools.nif_version = self.hex_to_dec(self.data._version_value_._value)
+                        b_obj.niftools.user_version = self.data._user_version_value_._value
+                        b_obj.niftools.user_version_2 = self.data._user_version_2_value_._value
                         b_obj.niftools.objectflags = child.flags
                         
                         if child.properties:
                             for b_prop in child.properties:
                                 if isinstance(b_prop, NifFormat.BSShaderPPLightingProperty):
-                                    b_obj.niftools_shader.shadertype = 'BSShaderPPLightingProperty'
+                                    b_obj.niftools_shader.bs_shadertype = 'BSShaderPPLightingProperty'
                                     sf_type = NifFormat.BSShaderType._enumvalues.index(b_prop.shader_type)
-                                    b_obj.niftools_shader.shaderobjtype = NifFormat.BSShaderType._enumkeys[sf_type]
+                                    b_obj.niftools_shader.bsspplp_shaderobjtype = NifFormat.BSShaderType._enumkeys[sf_type]
                                     for b_flag_name in b_prop.shader_flags._names:
                                         sf_index = b_prop.shader_flags._names.index(b_flag_name)
                                         if b_prop.shader_flags._items[sf_index]._value == 1:
                                             b_obj.niftools_shader[b_flag_name] = True
+                        if child.bs_properties:
+                            for b_prop in child.bs_properties:
+                                if isinstance(b_prop, NifFormat.BSLightingShaderProperty):
+                                    b_obj.niftools_shader.bs_shadertype = 'BSLightingShaderProperty'
+                                    sf_type = NifFormat.BSLightingShaderPropertyShaderType._enumvalues.index(b_prop.skyrim_shader_type)
+                                    b_obj.niftools_shader.bslsp_shaderobjtype = NifFormat.BSLightingShaderPropertyShaderType._enumkeys[sf_type]
+                                    for b_flag_name_1 in b_prop.shader_flags_1._names:
+                                        sf_index = b_prop.shader_flags_1._names.index(b_flag_name_1)
+                                        if b_prop.shader_flags_1._items[sf_index]._value == 1:
+                                            b_obj.niftools_shader[b_flag_name_1] = True
+                                    for b_flag_name_2 in b_prop.shader_flags_2._names:
+                                        sf_index = b_prop.shader_flags_2._names.index(b_flag_name_2)
+                                        if b_prop.shader_flags_2._items[sf_index]._value == 1:
+                                            b_obj.niftools_shader[b_flag_name_2] = True
 
                         if child.data.consistency_flags in NifFormat.ConsistencyType._enumvalues:
                             cf_index = NifFormat.ConsistencyType._enumvalues.index(child.data.consistency_flags)
@@ -655,7 +698,7 @@ class NifImport(NifCommon):
                         b_obj_camera = obj
                         break
                 else:
-                    raise NifImportError(
+                    raise nif_utils.NifError(
                         "Scene needs camera for billboard node"
                         " (add a camera and try again)")
                 # make b_obj track camera object
@@ -722,6 +765,9 @@ class NifImport(NifCommon):
         :param max_length: The maximum length of the name.
         :type max_length: :class:`int`
         """
+        if niBlock is None:
+            return None
+        
         if niBlock in self.dict_names:
             return self.dict_names[niBlock]
 
@@ -828,7 +874,7 @@ class NifImport(NifCommon):
         # set transform matrix for the mesh
         if not applytransform:
             if group_mesh:
-                raise NifImportError(
+                raise nif_utils.NifError(
                     "BUG: cannot set matrix when importing meshes in groups;"
                     " use applytransform = True")
 
@@ -841,7 +887,7 @@ class NifImport(NifCommon):
         # shortcut for mesh geometry data
         niData = niBlock.data
         if not niData:
-            raise NifImportError("no shape data in %s" % b_name)
+            raise nif_utils.NifError("no shape data in %s" % b_name)
 
         # vertices
         n_verts = niData.vertices
@@ -879,8 +925,9 @@ class NifImport(NifCommon):
         # find material property
         n_mat_prop = nif_utils.find_property(niBlock,
                                          NifFormat.NiMaterialProperty)
+        n_shader_prop = nif_utils.find_property(niBlock, NifFormat.BSLightingShaderProperty)
 
-        if n_mat_prop:
+        if n_mat_prop or n_shader_prop:
             # Texture
             n_texture_prop = None
             if n_uvco:
@@ -898,6 +945,10 @@ class NifImport(NifCommon):
             # bethesda shader
             bsShaderProperty = nif_utils.find_property(
                 niBlock, NifFormat.BSShaderPPLightingProperty)
+            if bsShaderProperty is None:
+                bsShaderProperty = nif_utils.find_property(
+                niBlock, NifFormat.BSLightingShaderProperty)
+
             
             # texturing effect for environment map
             # in official files this is activated by a NiTextureEffect child
@@ -1148,7 +1199,7 @@ class NifImport(NifCommon):
         if material:
             # fix up vertex colors depending on whether we had textures in the
             # material
-            mbasetex = self.texturehelper.has_diffuse_texture(material)
+            mbasetex = self.texturehelper.has_base_texture(material)
             mglowtex = self.texturehelper.has_glow_texture(material)
             if b_mesh.vertex_colors:
                 if mbasetex or mglowtex:
@@ -1317,7 +1368,7 @@ class NifImport(NifCommon):
 
                 # for each vertex calculate the key position from base
                 # pos + delta offset
-                for bv, mv, b_v_index in zip(verts, morphverts, v_map):
+                for bv, mv, b_v_index in zip(n_verts, morphverts, v_map):
                     base = mathutils.Vector(bv.x, bv.y, bv.z)
                     delta = mathutils.Vector(mv[0], mv[1], mv[2])
                     v = base + delta
@@ -1352,7 +1403,7 @@ class NifImport(NifCommon):
                     11 + len(b_mesh.key.blocks) * 10)
 
             # finally: return to base position
-            for bv, b_v_index in zip(verts, v_map):
+            for bv, b_v_index in zip(n_verts, v_map):
                 base = mathutils.Vector(bv.x, bv.y, bv.z)
                 if applytransform:
                     base *= transform

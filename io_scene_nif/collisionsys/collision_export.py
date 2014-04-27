@@ -40,6 +40,7 @@
 import mathutils
 
 from pyffi.formats.nif import NifFormat
+from io_scene_nif.utility import nif_utils
 
 class bhkshape_export():
 
@@ -464,7 +465,7 @@ class bhkshape_export():
             fdistlist = [ fdistlist[fdict[hsh]] for hsh in fkeys ]
 
             if len(fnormlist) > 65535 or len(vertlist) > 65535:
-                raise self.nif_export.NifExportError(
+                raise nif_utils.NifError(
                     "ERROR%t|Too many polygons/vertices."
                     " Decimate/split your b_mesh and try again.")
 
@@ -492,7 +493,7 @@ class bhkshape_export():
             return colhull
 
         else:
-            raise self.nif_export.NifExportError(
+            raise nif_utils.NifError(
                 'cannot export collision type %s to collision shape list'
                 % b_obj.game.collision_bounds_type)
 

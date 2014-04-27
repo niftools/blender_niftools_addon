@@ -104,8 +104,7 @@ class TextureLoader():
                 % fn)
             b_image = bpy.data.images.new(
                 name=b_text_name, width=1, height=1, alpha=False)
-            # TODO: is this still needed? commented out for now
-            # b_image.filepath = tex
+            b_image.filepath = fn
         
         # create a texture
         b_texture = bpy.data.textures.new(name=b_text_name, type='IMAGE')
