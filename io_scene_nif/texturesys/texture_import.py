@@ -213,36 +213,9 @@ class Texture():
 
 				
 	def import_texture_effect(self, b_mat, textureEffect):
-		try:
-			image_texture = textureEffect.base_texture
-		except:
-			image_texture = textureEffect
-		
-		b_mat_texslot = self.create_texture_slot(b_mat, image_texture)
-		
-		# Influence
-		b_mat_texslot.use_map_color_diffuse = True
-		if(hasattr(image_texture, "apply_mode")):
-			b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
-               							image_texture)
-		else:
-			b_mat_texslot.blend_type = 'MIX'
-			
-		if(self.nif_import.ni_alpha_prop):
-			b_mat_texslot.use_map_alpha = True
-		# update: needed later
-		self.env_map = b_mat_texslot
- 		
-# 		envmapTexture = self.textureloader.import_texture_source(textureEffect.source_texture)
-# 		if envmapTexture:
-# 			# set the texture to use face reflection coordinates
-# 			texco = 'REFLECTION'
-# 			# map the texture to the base color channel
-# 			mapto = FIXME: .use_map_color_diffuse
-# 			# set the texture for the material
-# 			material.setTexture(3, envmapTexture, texco, mapto)
-# 			menvmapTexture = material.getTextures()[3]
-# 			menvmapTexture.blend_type = 'ADD'
+		ImageTexFile = textureEffect
+		self.envtex = True
+		self.import_image_texture(b_mat, ImageTexFile)
 
 
 	def create_texture_slot(self, b_mat, image_texture):
@@ -296,9 +269,12 @@ class Texture():
 		if self.has_reftex:
 			b_mat_texslot.use_map_mirror = True
 
+		#Blend mode
 		if hasattr(n_textureDesc, "apply_mode"):
 			b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
             							n_textureDesc.apply_mode)
+		elif self.envtex:
+			b_mat_texslot.blend_type = 'ADD'
 		else:
 			b_mat_texslot.blend_type = "MIX"
 		
