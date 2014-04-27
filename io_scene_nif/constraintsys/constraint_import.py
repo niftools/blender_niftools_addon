@@ -244,9 +244,12 @@ class constraint_import():
                 # equivalent and setting as obj properties
                 b_constr.limit_angle_max_x = hkdescriptor.max_angle
                 b_constr.limit_angle_min_x = hkdescriptor.min_angle
-                b_hkobj.niftools_constraint.tau = hkconstraint.tau
-                b_hkobj.niftools_constraint.damping = hkconstraint.damping
                 b_hkobj.niftools_constraint.LHMaxFriction = hkdescriptor.max_friction
+                
+                if b_hkobj.niftools.user_version < 12:
+                    b_hkobj.niftools_constraint.tau = hkconstraint.tau
+                    b_hkobj.niftools_constraint.damping = hkconstraint.damping
+                
 
             elif isinstance(hkdescriptor, NifFormat.HingeDescriptor):
                 # for hinge, y is the vector on the plane of rotation defining

@@ -86,9 +86,15 @@ class NifOperatorCommon:
         options={'HIDDEN'})
 
     #: Number of nif units per blender unit.
-    scale_correction = bpy.props.FloatProperty(
-        name="Scale Correction",
-        description="Number of nif units per blender unit.",
+    scale_correction_import = bpy.props.FloatProperty(
+        name="Scale Correction Import",
+        description="Changes size of mesh to fit onto Blender's default grid.",
+        default=1.0,
+        min=0.01, max=100.0, precision=2)
+
+    scale_correction_export = bpy.props.FloatProperty(
+        name="Scale Correction Export",
+        description="Changes size of mesh from Blender default to nif default.",
         default=1.0,
         min=0.01, max=100.0, precision=2)
 
@@ -211,7 +217,9 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
         bpy.context.scene.game_settings.material_mode = 'GLSL'
         for area in bpy.context.window.screen.areas:
             if area.type =='VIEW_3D':
-                area.spaces[0].viewport_shade = 'TEXTURED'
+                area.spaces[0].viewport_shade = 'SOLID'
+                area.spaces[0].show_textured_solid = True
+                area.spaces[0].show_backface_culling = True
         
         return nif_import.NifImport(self, context).execute()
 
@@ -310,7 +318,7 @@ class NifExportOperator(bpy.types.Operator, ExportHelper, NifOperatorCommon):
         name = "Max Bones Per Vertex",
         description="Maximum number of bones per vertex in skin partitions.",
         default=4, min=1,
-        options={'HIDDEN'})
+        )
 
     #: Pad and sort bones.
     force_dds = bpy.props.BoolProperty(
