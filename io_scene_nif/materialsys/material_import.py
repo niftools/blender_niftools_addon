@@ -86,6 +86,8 @@ class Material():
         
         # name unique material
         name = self.nif_import.import_name(n_mat_prop)
+        if name is None:
+            name = (self.nif_import.active_obj_name + "_nt_mat")
         b_mat = bpy.data.materials.new(name)
         
         #texures
@@ -97,50 +99,94 @@ class Material():
             self.texturehelper.import_bsshaderproperty(b_mat, bsShaderProperty)
         if(textureEffect):
             self.texturehelper.import_texture_effect(b_mat, textureEffect)
-        
-        # Ambient color
-        b_mat.niftools.ambient_color.r = n_mat_prop.ambient_color.r
-        b_mat.niftools.ambient_color.g = n_mat_prop.ambient_color.g
-        b_mat.niftools.ambient_color.b = n_mat_prop.ambient_color.b
-        
-        # Diffuse color
-        b_mat.diffuse_color.r = n_mat_prop.diffuse_color.r
-        b_mat.diffuse_color.g = n_mat_prop.diffuse_color.g
-        b_mat.diffuse_color.b = n_mat_prop.diffuse_color.b
-        b_mat.diffuse_intensity = 1.0
-        
-        # TODO: - Detect fallout 3+, use emit multi as a degree of emission
-        #        test some values to find emission maximium. 0-1 -> 0-max_val
-        # Should we factor in blender bounds 0.0 - 2.0
-        
-        # Emissive
-        b_mat.niftools.emissive_color.r = n_mat_prop.emissive_color.r
-        b_mat.niftools.emissive_color.g = n_mat_prop.emissive_color.g
-        b_mat.niftools.emissive_color.b = n_mat_prop.emissive_color.b
-        b_mat.emit = n_mat_prop.emit_multi
-            
-        # gloss
-        b_mat.specular_hardness = n_mat_prop.glossiness
-        
-        # Alpha
-        if n_alpha_prop:
-            #if(n_mat_prop.alpha < 1.0):
-            self.nif_import.debug("Alpha prop detected")
-            b_mat.use_transparency = True 
-            b_mat.alpha = n_mat_prop.alpha
-            b_mat.transparency_method = 'Z_TRANSPARENCY'  # enable z-buffered transparency
-            b_mat.offset_z = n_alpha_prop.threshold # Transparency threshold
-            b_mat.niftools_alpha.alphaflag = n_alpha_prop.flags
+        if n_mat_prop:
+            # Ambient color
+            b_mat.niftools.ambient_color.r = n_mat_prop.ambient_color.r
+            b_mat.niftools.ambient_color.g = n_mat_prop.ambient_color.g
+            b_mat.niftools.ambient_color.b = n_mat_prop.ambient_color.b
 
-        # Specular color
-        b_mat.specular_color.r = n_mat_prop.specular_color.r
-        b_mat.specular_color.g = n_mat_prop.specular_color.g
-        b_mat.specular_color.b = n_mat_prop.specular_color.b
+            # Diffuse color
+            b_mat.diffuse_color.r = n_mat_prop.diffuse_color.r
+            b_mat.diffuse_color.g = n_mat_prop.diffuse_color.g
+            b_mat.diffuse_color.b = n_mat_prop.diffuse_color.b
+            b_mat.diffuse_intensity = 1.0
         
-        if (not n_specular_prop) and (self.nif_import.data.version != 0x14000004):
-            b_mat.specular_intensity = 0.0 # no specular prop 
-        else:
-            b_mat.specular_intensity = 1.0 # Blender multiplies specular color with this value
+            # TODO: - Detect fallout 3+, use emit multi as a degree of emission
+            #        test some values to find emission maximium. 0-1 -> 0-max_val
+            # Should we factor in blender bounds 0.0 - 2.0
+            
+            # Emissive
+            b_mat.niftools.emissive_color.r = n_mat_prop.emissive_color.r
+            b_mat.niftools.emissive_color.g = n_mat_prop.emissive_color.g
+            b_mat.niftools.emissive_color.b = n_mat_prop.emissive_color.b
+            b_mat.emit = n_mat_prop.emit_multi
+                
+            # gloss
+            b_mat.specular_hardness = n_mat_prop.glossiness
+            
+            # Alpha
+            if n_alpha_prop:
+                #if(n_mat_prop.alpha < 1.0):
+                self.nif_import.debug("Alpha prop detected")
+                b_mat.use_transparency = True 
+                b_mat.alpha = n_mat_prop.alpha
+                b_mat.transparency_method = 'Z_TRANSPARENCY'  # enable z-buffered transparency
+                b_mat.offset_z = n_alpha_prop.threshold # Transparency threshold
+                b_mat.niftools_alpha.alphaflag = n_alpha_prop.flags
+    
+            # Specular color
+            b_mat.specular_color.r = n_mat_prop.specular_color.r
+            b_mat.specular_color.g = n_mat_prop.specular_color.g
+            b_mat.specular_color.b = n_mat_prop.specular_color.b
+
+            if (not n_specular_prop) and (self.nif_import.data.version != 0x14000004):
+                b_mat.specular_intensity = 0.0 # no specular prop 
+            else:
+                b_mat.specular_intensity = 1.0 # Blender multiplies specular color with this value
+
+            
+        if n_mat_prop is None and bsShaderProperty:
+            
+            # Diffuse color
+            if bsShaderProperty.skin_tint_color:
+                b_mat.diffuse_color.r = bsShaderProperty.skin_tint_color.r
+                b_mat.diffuse_color.g = bsShaderProperty.skin_tint_color.g
+                b_mat.diffuse_color.b = bsShaderProperty.skin_tint_color.b
+                b_mat.diffuse_intensity = 1.0
+                
+            if (b_mat.diffuse_color.r + b_mat.diffuse_color.g + b_mat.diffuse_color.g) == 0:
+                b_mat.diffuse_color.r = bsShaderProperty.hair_tint_color.r
+                b_mat.diffuse_color.g = bsShaderProperty.hair_tint_color.g
+                b_mat.diffuse_color.b = bsShaderProperty.hair_tint_color.b
+                b_mat.diffuse_intensity = 1.0
+            
+            
+            # Emissive
+            b_mat.niftools.emissive_color.r = bsShaderProperty.emissive_color.r
+            b_mat.niftools.emissive_color.g = bsShaderProperty.emissive_color.g
+            b_mat.niftools.emissive_color.b = bsShaderProperty.emissive_color.b
+            b_mat.emit = bsShaderProperty.emissive_multiple
+
+            # Alpha
+            if n_alpha_prop:
+                #if(bsShaderProperty.alpha < 1.0):
+                self.nif_import.debug("Alpha prop detected")
+                b_mat.use_transparency = True 
+                b_mat.alpha = bsShaderProperty.alpha
+                b_mat.transparency_method = 'Z_TRANSPARENCY'  # enable z-buffered transparency
+                b_mat.offset_z = n_alpha_prop.threshold # Transparency threshold
+                b_mat.niftools_alpha.alphaflag = n_alpha_prop.flags
+
+            # gloss
+            b_mat.specular_hardness = bsShaderProperty.glossiness
+
+            # Specular color
+            b_mat.specular_color.r = bsShaderProperty.specular_color.r
+            b_mat.specular_color.g = bsShaderProperty.specular_color.g
+            b_mat.specular_color.b = bsShaderProperty.specular_color.b
+            b_mat.specular_intensity = bsShaderProperty.specular_strength
+            
+        
         
         # check wireframe property
         if n_wire_prop:
