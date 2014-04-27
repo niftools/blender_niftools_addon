@@ -60,9 +60,10 @@ class Texture():
 		self.reflection_map = None
 		self.unknown_2_map = None
 		
-		self.reset_textureslot()
+		self.reset_texture_flags()
+
 		
-	def reset_textureslot(self):
+	def reset_texture_flags(self):
 		self.has_bumptex = False
 		self.has_darktex = False
 		self.has_decaltex = False
@@ -174,7 +175,9 @@ class Texture():
 		elif extra_shader_index == 5:
 			# ShadowTextureIndex
 			self.nif_import.warning("Skipping shadow texture.")
-		
+		else:
+			self.nif_import.warning("Unknown texture type found in extra_shader_index")
+
 		
 	def import_bsshaderproperty(self, b_mat, bsShaderProperty):
 		ImageTexFile = bsShaderProperty.texture_set.textures[0].decode()
@@ -207,6 +210,7 @@ class Texture():
 			if ImageTexFile:
 				self.has_glosstex = True
 				self.import_image_texture(b_mat, ImageTexFile)
+
 				
 	def import_texture_effect(self, b_mat, textureEffect):
 		try:
@@ -218,18 +222,17 @@ class Texture():
 		
 		# Influence
 		b_mat_texslot.use_map_color_diffuse = True
-		try:
-			b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
-               							image_texture.source)
-		except:
+		if(hasattr(image_texture, "apply_mode")):
 			b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
                							image_texture)
-		
+		else:
+			b_mat_texslot.blend_type = 'MIX'
+			
 		if(self.nif_import.ni_alpha_prop):
 			b_mat_texslot.use_map_alpha = True
 		# update: needed later
 		self.env_map = b_mat_texslot
-# 		
+ 		
 # 		envmapTexture = self.textureloader.import_texture_source(textureEffect.source_texture)
 # 		if envmapTexture:
 # 			# set the texture to use face reflection coordinates
@@ -263,6 +266,7 @@ class Texture():
 
 		return b_mat_texslot
 
+
 	def import_image_texture(self, b_mat, n_textureDesc):
 
 		image_texture = n_textureDesc
@@ -292,13 +296,11 @@ class Texture():
 		if self.has_reftex:
 			b_mat_texslot.use_map_mirror = True
 
-		
-		try:
+		if hasattr(n_textureDesc, "apply_mode"):
 			b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
             							n_textureDesc.apply_mode)
-		except:
-			b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
-            							n_textureDesc)
+		else:
+			b_mat_texslot.blend_type = "MIX"
 		
 		if(self.nif_import.ni_alpha_prop):
 			b_mat_texslot.use_map_alpha = True
@@ -327,6 +329,7 @@ class Texture():
 			
 		image_texture = None
 		self.reset_textureslot()
+
 		
 	def get_b_blend_type_from_n_apply_mode(self, n_apply_mode):
 		# TODO: - Check out n_apply_modes
@@ -340,12 +343,12 @@ class Texture():
 			return "LIGHTEN"
 		elif n_apply_mode == NifFormat.ApplyMode.APPLY_HILIGHT2: # used by Oblivion for parallax
 			return "MULTIPLY"
-		elif isinstance(n_apply_mode, str):
-			return "MIX"
-		self.nif_import.warning(
+		else:
+			self.nif_import.warning(
 			"Unknown apply mode (%i) in material,"
 			" using blend type 'MIX'" % n_apply_mode)
-		
+			return "MIX"
+
 
 	def get_uv_layer_name(self, uvset):
 		return "UVMap.%03i" % uvset if uvset != 0 else "UVMap"
