@@ -80,34 +80,35 @@ class Texture():
 		self.textureloader = textureloader
 
 
-	def import_nitextureprop_textures(self, b_mat, n_texture_prop):
-		if n_texture_prop.has_base_texture:
+	def import_nitextureprop_textures(self, b_mat, n_textureDesc):
+		
+		if n_textureDesc.has_base_texture:
 			self.has_diffusetex = True
-			self.import_image_texture(b_mat, n_texture_prop)
+			self.import_image_texture(b_mat, n_textureDesc.base_texture)
 	
-		if n_texture_prop.has_bump_map_texture:
+		if n_textureDesc.has_bump_map_texture:
 			self.has_bumptex = True
-			self.import_image_texture(b_mat, n_texture_prop)
+			self.import_image_texture(b_mat, n_textureDesc.base_texture)
 				
-		if n_texture_prop.has_normal_texture:
+		if n_textureDesc.has_normal_texture:
 			self.has_normaltex = True
-			self.import_image_texture(b_mat, n_texture_prop)
+			self.import_image_texture(b_mat, n_textureDesc.bump_map_texture)
 		
-		if n_texture_prop.has_glow_texture:
+		if n_textureDesc.has_glow_texture:
 			self.has_glowtex = True
-			self.import_image_texture(b_mat, n_texture_prop)
+			self.import_image_texture(b_mat, n_textureDesc.normal_map_texture)
 				
-		if n_texture_prop.has_gloss_texture:
+		if n_textureDesc.has_gloss_texture:
 			self.has_glosstex = True
-			self.import_image_texture(b_mat, n_texture_prop)
+			self.import_image_texture(b_mat, n_textureDesc.glow_texture)
 			
-		if n_texture_prop.has_dark_texture:
+		if n_textureDesc.has_dark_texture:
 			self.has_darktex = True
-			self.import_image_texture(b_mat, n_texture_prop)
+			self.import_image_texture(b_mat, n_textureDesc.base_texture)
 		
-		if n_texture_prop.has_detail_texture:
+		if n_textureDesc.has_detail_texture:
 			self.has_detailtex = True
-			self.import_image_texture(b_mat, n_texture_prop)
+			self.import_image_texture(b_mat, n_textureDesc.base_texture)
 	
 		
 	def import_texture_extra_shader(self, b_mat,n_texture_prop, extra_datas):
@@ -256,8 +257,7 @@ class Texture():
 		# Mapping
 		b_mat_texslot.texture_coords = 'UV'
 		try:
-			b_mat_texslot.uv_layer = self.get_uv_layer_name(
-										image_texture.uv_set)
+			b_mat_texslot.uv_layer = self.get_uv_layer_name(image_texture.uv_set)
 		except:
 			b_mat_texslot.uv_layer = self.get_uv_layer_name(0)
 
@@ -265,25 +265,7 @@ class Texture():
 
 	def import_image_texture(self, b_mat, n_textureDesc):
 
-		try:
-			if self.has_diffusetex:
-				image_texture = n_textureDesc.base_texture
-			elif self.has_glosstex:
-				image_texture = n_textureDesc.base_texture
-			elif self.has_bumptex:
-				image_texture = n_textureDesc.bump_map_texture
-			elif self.has_normaltex:
-				image_texture = n_textureDesc.normal_map_texture
-			elif self.has_glowtex:
-				image_texture = n_textureDesc.glow_texture
-			elif self.has_darktex:
-				image_texture = n_textureDesc.base_texture
-			elif self.has_detailtex:
-				image_texture = n_textureDesc.base_texture
-			elif self.has_reftex:
-				image_texture = n_textureDesc.base_texture
-		except:
-			image_texture = n_textureDesc
+		image_texture = n_textureDesc
 
 		b_mat_texslot = self.create_texture_slot(b_mat, image_texture)
 		
@@ -310,13 +292,14 @@ class Texture():
 		if self.has_reftex:
 			b_mat_texslot.use_map_mirror = True
 
+		
 		try:
 			b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
             							n_textureDesc.apply_mode)
 		except:
 			b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
             							n_textureDesc)
-			
+		
 		if(self.nif_import.ni_alpha_prop):
 			b_mat_texslot.use_map_alpha = True
 			
