@@ -64,17 +64,17 @@ class Texture():
 
 		
 	def reset_texture_flags(self):
-		self.has_bumptex = False
-		self.has_darktex = False
-		self.has_decaltex = False
-		self.has_detailtex = False
-		self.has_diffusetex = False
-		self.has_envtex = False
-		self.has_glosstex = False
-		self.has_glowtex = False
-		self.has_normaltex = False
-		self.has_reftex = False
-		self.has_unk2tex = False
+		self.has_bumptex = None
+		self.has_darktex = None
+		self.has_decaltex = None
+		self.has_detailtex = None
+		self.has_diffusetex = None
+		self.has_envtex = None
+		self.has_glosstex = None
+		self.has_glowtex = None
+		self.has_normaltex = None
+		self.has_reftex = None
+		self.has_unk2tex = None
 		
 		
 	def set_texture_loader(self, textureloader):
@@ -273,7 +273,7 @@ class Texture():
 		if hasattr(n_textureDesc, "apply_mode"):
 			b_mat_texslot.blend_type = self.get_b_blend_type_from_n_apply_mode(
             							n_textureDesc.apply_mode)
-		elif self.envtex:
+		elif self.has_envtex:
 			b_mat_texslot.blend_type = 'ADD'
 		else:
 			b_mat_texslot.blend_type = "MIX"
@@ -304,7 +304,7 @@ class Texture():
 			self.reflection_map = b_mat_texslot
 			
 		image_texture = None
-		self.reset_textureslot()
+		self.reset_texture_flags()
 
 		
 	def get_b_blend_type_from_n_apply_mode(self, n_apply_mode):
