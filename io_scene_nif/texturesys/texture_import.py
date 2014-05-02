@@ -207,7 +207,7 @@ class Texture():
 			self.has_detailtex = True
 			self.detail_map = self.import_image_texture(b_mat, ImageTexFile)
 			
-		if isinstance(bsShaderProperty, NifFormat.BSLightingShaderProperty):
+		if hasattr(bsShaderProperty.texture_set.textures, '6'):
 			ImageTexFile = bsShaderProperty.texture_set.textures[6].decode()
 			if ImageTexFile:
 				self.has_decaltex = True
