@@ -11,8 +11,8 @@ if "%SEVENZIPHOME%" == "" goto sevenzipnotfounderror
 
 if exist "%DIR%\temp" rmdir /s /q "%DIR%\temp"
 pushd %ROOT%
-git clean -xfd
-git submodule foreach --recursive git clean -xfd
+%git% clean -xfd
+%git% submodule foreach --recursive %git% clean -xfd
 popd
 
 mkdir %DIR%\temp
