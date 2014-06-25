@@ -246,7 +246,7 @@ class constraint_import():
                 b_constr.limit_angle_min_x = hkdescriptor.min_angle
                 b_hkobj.niftools_constraint.LHMaxFriction = hkdescriptor.max_friction
                 
-                if b_hkobj.niftools.user_version < 12:
+                if hasattr(hkconstraint, "tau"):
                     b_hkobj.niftools_constraint.tau = hkconstraint.tau
                     b_hkobj.niftools_constraint.damping = hkconstraint.damping
                 

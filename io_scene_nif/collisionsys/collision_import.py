@@ -243,8 +243,7 @@ class bhkshape_import():
         scn.objects.active = b_obj
 
         # set bounds type
-        b_obj.show_bounds = True
-        b_obj.draw_type = 'BOUNDS'
+        b_obj.draw_type = 'WIRE'
         b_obj.draw_bounds_type = 'BOX'
         b_obj.game.use_collision_bounds = True
         b_obj.game.collision_bounds_type = 'BOX'
@@ -292,8 +291,7 @@ class bhkshape_import():
         scn.objects.active = b_obj
 
         # set bounds type
-        b_obj.show_bounds = True
-        b_obj.draw_type = 'BOUNDS'
+        b_obj.draw_type = 'WIRE'
         b_obj.draw_bounds_type = 'SPHERE'
         b_obj.game.use_collision_bounds = True
         b_obj.game.collision_bounds_type = 'SPHERE'
@@ -345,8 +343,7 @@ class bhkshape_import():
         scn.objects.active = b_obj
 
         # set bounds type
-        b_obj.show_bounds = True
-        b_obj.draw_type = 'BOUNDS'
+        b_obj.draw_type = 'WIRE'
         b_obj.draw_bounds_type = 'CAPSULE'
         b_obj.game.use_collision_bounds = True
         b_obj.game.collision_bounds_type = 'CAPSULE'
@@ -414,9 +411,8 @@ class bhkshape_import():
         scn = bpy.context.scene
         scn.objects.active = b_obj
 
-        b_obj.show_bounds = True
         b_obj.show_wire = True
-        b_obj.draw_type = 'BOUNDS'
+        b_obj.draw_type = 'WIRE'
         b_obj.draw_bounds_type = 'BOX'
         b_obj.game.use_collision_bounds = True
         b_obj.game.collision_bounds_type = 'CONVEX_HULL'
@@ -452,8 +448,7 @@ class bhkshape_import():
         scn = bpy.context.scene
         scn.objects.active = b_obj
         # set bounds type
-        b_obj.show_bounds = True
-        b_obj.draw_type = 'BOUNDS'
+        b_obj.draw_type = 'WIRE'
         b_obj.draw_bounds_type = 'BOX'
         b_obj.game.use_collision_bounds = True
         b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
@@ -524,8 +519,7 @@ class bhkshape_import():
             scn.objects.active = b_obj
 
             # set bounds type
-            b_obj.show_bounds = True
-            b_obj.draw_type = 'BOUNDS'
+            b_obj.draw_type = 'WIRE'
             b_obj.draw_bounds_type = 'BOX'
             b_obj.game.use_collision_bounds = True
             b_obj.game.collision_bounds_type = 'TRIANGLE_MESH'
