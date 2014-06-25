@@ -99,6 +99,8 @@ class Material():
             self.texturehelper.import_bsshaderproperty(b_mat, bsShaderProperty)
         if(textureEffect):
             self.texturehelper.import_texture_effect(b_mat, textureEffect)
+        
+        #material based properties
         if n_mat_prop:
             # Ambient color
             b_mat.niftools.ambient_color.r = n_mat_prop.ambient_color.r
@@ -144,7 +146,7 @@ class Material():
             else:
                 b_mat.specular_intensity = 1.0 # Blender multiplies specular color with this value
 
-            
+        #shader based properties
         if n_mat_prop is None and bsShaderProperty:
             
             # Diffuse color
