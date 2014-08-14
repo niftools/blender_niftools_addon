@@ -306,7 +306,7 @@ class NifExport(NifCommon):
 
             # oblivion skeleton export: check that all bones have a
             # transform controller and transform interpolator
-            if self.properties.game in ('OBLIVION', 'FALLOUT_3') \
+            if self.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') \
                 and filebase.lower() in ('skeleton', 'skeletonbeast'):
                 # here comes everything that is Oblivion skeleton export
                 # specific
@@ -346,7 +346,7 @@ class NifExport(NifCommon):
                     anim_textextra = None
 
             # oblivion and Fallout 3 furniture markers
-            if (self.properties.game in ('OBLIVION', 'FALLOUT_3')
+            if (self.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM')
                 and filebase[:15].lower() == 'furnituremarker'):
                 # exporting a furniture marker for Oblivion/FO3
                 try:
@@ -380,7 +380,7 @@ class NifExport(NifCommon):
             # FIXME:
             self.info("Checking collision")
             # activate oblivion/Fallout 3 collision and physics
-            if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
+            if self.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
                 hascollision = False
                 for b_obj in bpy.data.objects:
                     if b_obj.game.use_collision_bounds == True:
@@ -472,7 +472,7 @@ class NifExport(NifCommon):
                     self.constrainthelper.export_constraints(b_obj, root_block)
 
             # export weapon location
-            if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
+            if self.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
                 if self.EXPORT_OB_PRN != "NONE":
                     # add string extra data
                     prn = self.objecthelper.create_block("NiStringExtraData")
@@ -536,7 +536,7 @@ class NifExport(NifCommon):
                     self.egmdata.apply_scale(self.properties.scale_correction_export)
 
             # generate mopps (must be done after applying scale!)
-            if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
+            if self.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
                 for block in self.dict_blocks:
                     if isinstance(block, NifFormat.bhkMoppBvTreeShape):
                         self.info("Generating mopp...")
@@ -1014,7 +1014,7 @@ class NifExport(NifCommon):
             self.export_matrix(b_obj, 'localspace', node)
             self.objecthelper.mesh_helper.export_tri_shapes(b_obj, 'none', node)
 
-        elif self.properties.game in ('OBLIVION', 'FALLOUT_3'):
+        elif self.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
 
             nodes = [ parent_block ]
             nodes.extend([ block for block in parent_block.children
@@ -1029,7 +1029,11 @@ class NifExport(NifCommon):
                 node = self.objecthelper.create_ninode(b_obj)
                 node.set_transform(self.IDENTITY44)
                 node.name = 'collisiondummy%i' % parent_block.num_children
-                node.flags = 0x000E # default
+                if b_obj.niftools.objectflags != 0:
+                    node_flag_hex = b_obj.niftools.objectflags.to_hex()
+                else:
+                    node_flag_hex = 0x000E # default
+                node.flags = node_flag_hex
                 parent_block.add_child(node)
                 self.bhkshapehelper.export_collision_helper(b_obj, node)
 
