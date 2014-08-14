@@ -63,7 +63,7 @@ class Material():
 
         # hack to preserve EnvMap2, skinm, ... named blocks (even if they got
         # renamed to EnvMap2.xxx or skin.xxx on import)
-        if self.nif_export.properties.game in ('OBLIVION', 'FALLOUT_3'):
+        if self.nif_export.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
             for specialname in specialnames:
                 if (name.lower() == specialname.lower()
                     or name.lower().startswith(specialname.lower() + ".")):
