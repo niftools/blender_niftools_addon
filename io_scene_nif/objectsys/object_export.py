@@ -258,7 +258,7 @@ class ObjectHelper():
             elif (b_obj_type == 'ARMATURE') and (b_obj.niftools.objectflags == 0) and (b_obj.parent == None):
                 node.flags = b_obj.niftools.objectflags
             else:
-                if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
+                if self.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
                     node.flags = 0x000E
                 elif self.properties.game in ('SID_MEIER_S_RAILROADS',
                                              'CIVILIZATION_IV'):
@@ -596,7 +596,7 @@ class MeshHelper():
             if (b_obj.type == 'MESH') and (b_obj.niftools.objectflags != 0):
                 trishape.flags = b_obj.niftools.objectflags
             else:
-                if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
+                if self.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
                     trishape.flags = 0x000E
     
                 elif self.properties.game in ('SID_MEIER_S_RAILROADS',
@@ -999,7 +999,7 @@ class MeshHelper():
             # textures are actually exported (civ4 seems to be consistent with
             # not using tangent space on non shadered nifs)
             if mesh_uvlayers and mesh_hasnormals:
-                if (self.properties.game in ('OBLIVION', 'FALLOUT_3')
+                if (self.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM')
                     or (self.properties.game in self.nif_export.texturehelper.USED_EXTRA_SHADER_TEXTURES)):
                     trishape.update_tangent_space(
                         as_extra=(self.properties.game == 'OBLIVION'))
@@ -1184,6 +1184,14 @@ class MeshHelper():
                                        " per partition on Oblivion/Fallout 3"
                                        " export."
                                        " Set it to 18 to get higher quality"
+                                       " skin partitions.")
+                            if self.properties.game in ('SKYRIM'):
+                                if self.properties.max_bones_per_partition < 23:
+                                    self.warning(
+                                       "Using less than 23 bones"
+                                       " per partition on Skyrim"
+                                       " export."
+                                       " Set it to 23 to get higher quality"
                                        " skin partitions.")
                             if lostweight > self.properties.epsilon:
                                 self.nif_export.warning(

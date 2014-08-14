@@ -143,7 +143,7 @@ class Armature():
             if (bone.niftools_bone.boneflags != 0):
                 node.flags = bone.niftools_bone.boneflags
             else:
-                if self.nif_export.properties.game in ('OBLIVION', 'FALLOUT_3'):
+                if self.nif_export.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
                     # default for Oblivion bones
                     # note: bodies have 0x000E, clothing has 0x000F
                     node.flags = 0x000E
