@@ -819,7 +819,8 @@ class NifImport(NifCommon):
         b_empty.niftools.longname = niBlock.name.decode()
 
         self.context.scene.objects.link(b_empty)
-        b_empty.niftools.bsxflags = self.bsxflags
+        if not self.bsxflags == None:
+            b_empty.niftools.bsxflags = self.bsxflags
         b_empty.niftools.objectflags = niBlock.flags
 
         if niBlock.name in self.dict_bone_priorities:
