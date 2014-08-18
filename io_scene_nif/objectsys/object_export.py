@@ -885,7 +885,7 @@ class MeshHelper():
                         f_indexed = (f_index[0], f_index[2+i], f_index[1+i])
                     trilist.append(f_indexed)
                     # add body part number
-                    if (self.properties.game != 'FALLOUT_3'
+                    if (self.properties.game not in ('FALLOUT_3','SKYRIM')
                         or not bodypartgroups):
                         # TODO: or not self.EXPORT_FO3_BODYPARTS):
                         bodypartfacemap.append(0)
@@ -1021,7 +1021,7 @@ class MeshHelper():
                             boneinfluences.append(bone)
                     if boneinfluences: # yes we have skinning!
                         # create new skinning instance block and link it
-                        if (self.properties.game == 'FALLOUT_3'
+                        if (self.properties.game in ('FALLOUT_3', 'SKYRIM')
                             and bodypartgroups):
                             skininst = self.nif_export.objecthelper.create_block("BSDismemberSkinInstance", b_obj)
                         else:
@@ -1167,11 +1167,12 @@ class MeshHelper():
                                 triangles=trilist,
                                 trianglepartmap=bodypartfacemap,
                                 maximize_bone_sharing=(
-                                    self.properties.game == 'FALLOUT_3'))
+                                            self.properties.game in (
+                                                    'FALLOUT_3','SKYRIM')))
                             # warn on bad config settings
                             if self.properties.game == 'OBLIVION':
                                 if self.properties.pad_bones:
-                                    self.warning(
+                                    self.nif_export.warning(
                                        "Using padbones on Oblivion export,"
                                        " but you probably do not want to do"
                                        " this."
@@ -1179,16 +1180,16 @@ class MeshHelper():
                                        " higher quality skin partitions.")
                             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
                                 if self.properties.max_bones_per_partition < 18:
-                                    self.warning(
+                                    self.nif_export.warning(
                                        "Using less than 18 bones"
                                        " per partition on Oblivion/Fallout 3"
                                        " export."
                                        " Set it to 18 to get higher quality"
                                        " skin partitions.")
                             if self.properties.game in ('SKYRIM'):
-                                if self.properties.max_bones_per_partition < 23:
-                                    self.warning(
-                                       "Using less than 23 bones"
+                                if self.properties.max_bones_per_partition < 24:
+                                    self.nif_export.warning(
+                                       "Using less than 24 bones"
                                        " per partition on Skyrim"
                                        " export."
                                        " Set it to 23 to get higher quality"
