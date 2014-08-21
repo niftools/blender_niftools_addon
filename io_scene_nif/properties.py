@@ -39,7 +39,7 @@
 
 import bpy
 from bpy.props import (PointerProperty,
-                       FloatProperty,
+                       CollectionProperty,
                        FloatVectorProperty,
                        FloatProperty,
                        StringProperty,
@@ -570,6 +570,94 @@ class NiftoolsShaderProps(bpy.types.PropertyGroup):
 
 
 
+
+class NiftoolsSkinPartFlagsPanel(bpy.types.PropertyGroup):
+    @classmethod
+    def register(cls):
+        bpy.types.Object.niftools_part_flags_panel = PointerProperty(
+                        name='Niftools Skin Part Flag Panel',
+                        description = 'Properties used by the BsShader for the Nif File Format',
+                        type = cls,
+                        )
+
+        cls.pf_partcount = IntProperty(
+                        name = 'Partition count',
+                        min = 0,
+                        max = 15,
+                        default = 0
+                        )
+
+        
+    @classmethod
+    def unregister(cls):
+        del bpy.types.Object.niftools_part_flags_panel
+
+
+
+class NfTlPartFlagAdd(bpy.types.Operator):
+    """Adds Dismember partition Flag set"""
+    bl_idname = "object.niftools_part_flags_add"
+    bl_label = "Add Dismember Flags"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        b_obj_partflag = context.active_object.niftools_part_flags.add()
+        b_obj_partflag.name = ""
+        b_obj_partflag.pf_startflag = 0
+        b_obj_partflag.pf_editorflag = 0
+        
+        return {'FINISHED'}
+
+class NfTlPartFlagRemove(bpy.types.Operator):
+    """Removes Dismember partition Flag set"""
+    bl_idname = "object.niftools_part_flags_remove"
+    bl_label = "Remove Dismember Flags"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        item = len(context.active_object.niftools_part_flags)-1
+        b_obj_partflag = context.active_object
+        b_obj_partflag.niftools_part_flags.remove(item)
+        return {'FINISHED'}
+        
+class NiftoolsSkinPartFlags(bpy.types.PropertyGroup):
+    
+    name  = bpy.props.StringProperty(
+                    name = (''),
+                    default = ''
+                    )
+
+    pf_startflag = bpy.props.BoolProperty(
+                    name = ('Start Net Boneset')
+                    )
+        
+    pf_editorflag = bpy.props.BoolProperty(
+                    name = ('Editor Visible')
+                    )
+
+bpy.utils.register_class(NiftoolsSkinPartFlags)
+    
+bpy.types.Object.niftools_part_flags = \
+        CollectionProperty(type=NiftoolsSkinPartFlags)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class NiftoolsObjectProps(bpy.types.PropertyGroup):
     @classmethod
     def register(cls):
@@ -756,12 +844,17 @@ class NiftoolsConstraintProps(bpy.types.PropertyGroup):
 
 
 def register():
+    bpy.utils.register_class(NfTlPartFlagAdd)
+    bpy.utils.register_class(NfTlPartFlagRemove)
     bpy.utils.register_class(NiftoolsMaterialProps)
     bpy.utils.register_class(NiftoolsObjectProps)
     bpy.utils.register_class(NiftoolsObjectCollisionProps)
 
 
 def unregister():
+    bpy.utils.unregister_class(NfTlPartFlagAdd)
+    bpy.utils.unregister_class(NfTlPartFlagRemove)
     bpy.utils.unregister_class(NiftoolsMaterialProps)
     bpy.utils.unregister_class(NiftoolsObjectProps)
     bpy.utils.unregister_class(NiftoolsObjectCollisionProps)
+    bpy.utils.unregister_class(NiftoolsSkinPartFlags)

@@ -251,6 +251,43 @@ class NifShaderObjectPanel(Panel):
             row.prop(nif_obj_props, "slsf_2_z_buffer_write")
 
 
+
+class NifPartFlagPanel(Panel):
+    bl_label = "Niftools Dismember Flags Panel"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "data"
+    bl_options =  {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    def draw(self, context):
+        nif_pf_panel_props = context.object.niftools_part_flags_panel
+        nif_pf_list_props = context.object.niftools_part_flags
+        obj = context.active_object
+        layout = self.layout
+        row = layout.row()
+
+                
+        col = row.column(align=True)
+        col.operator("object.niftools_part_flags_add", icon='ZOOMIN', text="")
+        col.operator("object.niftools_part_flags_remove", icon='ZOOMOUT', text="")
+        
+            
+        for i,x in enumerate(nif_pf_list_props):
+            col.prop(nif_pf_list_props[i], "name", index = i)
+            col.prop(nif_pf_list_props[i], "pf_startflag", index = i)
+            col.prop(nif_pf_list_props[i], "pf_editorflag", index = i)
+
+
+
+
+
+
+
+
 class NifObjectPanel(Panel):
     bl_label = "Niftools Object Panel"
     
