@@ -1227,8 +1227,8 @@ class MeshHelper():
                                 "Can only export relative shape keys.")
 
                         # create geometry morph controller
-                        morphctrl = self.nif_export.objecthelper.create_block("NiGeomMorpherController",
-                                                     keyipo)
+                        morphctrl = self.nif_export.objecthelper.create_block(
+                                                    "NiGeomMorpherController", keyipo)
                         trishape.add_controller(morphctrl)
                         morphctrl.target = trishape
                         morphctrl.frequency = 1.0
@@ -1238,7 +1238,8 @@ class MeshHelper():
                         ctrlFlags = 0x000c
 
                         # create geometry morph data
-                        morphdata = self.nif_export.objecthelper.create_block("NiMorphData", keyipo)
+                        morphdata = self.nif_export.objecthelper.create_block(
+                                                                "NiMorphData", keyipo)
                         morphctrl.data = morphdata
                         morphdata.num_morphs = len(key.key_blocks)
                         morphdata.num_vertices = len(vertlist)

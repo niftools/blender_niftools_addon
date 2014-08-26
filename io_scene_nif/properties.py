@@ -567,10 +567,6 @@ class NiftoolsShaderProps(bpy.types.PropertyGroup):
     def unregister(cls):
         del bpy.types.Object.niftools_shader
 
-
-
-
-
 class NiftoolsSkinPartFlagsPanel(bpy.types.PropertyGroup):
     @classmethod
     def register(cls):
@@ -586,14 +582,10 @@ class NiftoolsSkinPartFlagsPanel(bpy.types.PropertyGroup):
                         max = 15,
                         default = 0
                         )
-
         
     @classmethod
     def unregister(cls):
         del bpy.types.Object.niftools_part_flags_panel
-
-
-
 
 class NiftoolsSkinPartFlags(bpy.types.PropertyGroup):
     
@@ -614,23 +606,6 @@ bpy.utils.register_class(NiftoolsSkinPartFlags)
     
 bpy.types.Object.niftools_part_flags = \
         CollectionProperty(type=NiftoolsSkinPartFlags)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 class NiftoolsObjectProps(bpy.types.PropertyGroup):
