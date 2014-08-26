@@ -348,10 +348,12 @@ class NfTlPartFlagAdd(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
     
     def execute(self, context):
-        b_obj_partflag = context.active_object.niftools_part_flags.add()
+        obj = context.active_object
+        b_obj_partflag = obj.niftools_part_flags.add()
         b_obj_partflag.name = ""
         b_obj_partflag.pf_startflag = 0
         b_obj_partflag.pf_editorflag = 0
+        obj.niftools_part_flags_panel.pf_partcount = len(obj.niftools_part_flags)
         
         return {'FINISHED'}
 
@@ -363,8 +365,9 @@ class NfTlPartFlagRemove(bpy.types.Operator):
 
     def execute(self, context):
         item = len(context.active_object.niftools_part_flags)-1
-        b_obj_partflag = context.active_object
-        b_obj_partflag.niftools_part_flags.remove(item)
+        obj = context.active_object
+        obj.niftools_part_flags.remove(item)
+        obj.niftools_part_flags_panel.pf_partcount = len(obj.niftools_part_flags)
         return {'FINISHED'}
 
 
