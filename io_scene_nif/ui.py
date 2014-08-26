@@ -266,17 +266,17 @@ class NifPartFlagPanel(Panel):
     def draw(self, context):
         nif_pf_panel_props = context.object.niftools_part_flags_panel
         nif_pf_list_props = context.object.niftools_part_flags
-        obj = context.active_object
         layout = self.layout
         row = layout.row()
 
                 
         col = row.column(align=True)
-        col.operator("object.niftools_part_flags_add", icon='ZOOMIN', text="")
-        col.operator("object.niftools_part_flags_remove", icon='ZOOMOUT', text="")
-        
+        row.operator("object.niftools_part_flags_add", icon='ZOOMIN', text="")
+        row.operator("object.niftools_part_flags_remove", icon='ZOOMOUT', text="")
+        col.prop(nif_pf_panel_props, "pf_partcount")
             
         for i,x in enumerate(nif_pf_list_props):
+            col.separator()
             col.prop(nif_pf_list_props[i], "name", index = i)
             col.prop(nif_pf_list_props[i], "pf_startflag", index = i)
             col.prop(nif_pf_list_props[i], "pf_editorflag", index = i)
