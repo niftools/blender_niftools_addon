@@ -579,7 +579,6 @@ class NiftoolsSkinPartFlagsPanel(bpy.types.PropertyGroup):
         cls.pf_partcount = IntProperty(
                         name = 'Partition count',
                         min = 0,
-                        max = 15,
                         default = 0
                         )
         
