@@ -1192,7 +1192,7 @@ class MeshHelper():
                                        "Using less than 24 bones"
                                        " per partition on Skyrim"
                                        " export."
-                                       " Set it to 23 to get higher quality"
+                                       " Set it to 24 to get higher quality"
                                        " skin partitions.")
                             if lostweight > self.properties.epsilon:
                                 self.nif_export.warning(
@@ -1200,6 +1200,21 @@ class MeshHelper():
                                     " while creating a skin partition"
                                     " for Blender object '%s' (nif block '%s')"
                                     % (lostweight, b_obj.name, trishape.name))
+
+
+                        if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
+                            partitions = skininst.partitions
+                            b_obj_part_flags = b_obj.niftools_part_flags
+                            for s_part in partitions:
+                                s_part_index = NifFormat.BSDismemberBodyPartType._enumvalues.index(s_part.body_part)
+                                s_part_name = NifFormat.BSDismemberBodyPartType._enumkeys[s_part_index]
+                                for b_part in b_obj_part_flags:
+                                    if s_part_name == b_part.name:
+                                        s_part.part_flag.pf_start_net_boneset = b_part.pf_startflag
+                                        s_part.part_flag.pf_editor_visible = b_part.pf_editorflag
+                                
+
+
 
                         # clean up
                         del vert_weights
