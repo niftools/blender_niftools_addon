@@ -70,7 +70,7 @@ def underscore_to_camelcase(s):
 
 
 
-class NiftoolsMatFlagProps(bpy.types.PropertyGroup):
+class MatFlagProps(bpy.types.PropertyGroup):
     '''Adds custom properties to material'''
     
     @classmethod
@@ -100,7 +100,7 @@ class NiftoolsMatFlagProps(bpy.types.PropertyGroup):
     def unregister(cls):
         del bpy.types.Material.niftools_alpha
 
-class NiftoolsMaterialProps(bpy.types.PropertyGroup):
+class MaterialProps(bpy.types.PropertyGroup):
     '''Adds custom properties to material'''
     
     @classmethod
@@ -128,7 +128,7 @@ class NiftoolsMaterialProps(bpy.types.PropertyGroup):
         del bpy.types.Material.niftools
 
 
-class NiftoolsBoneProps(bpy.types.PropertyGroup):
+class BoneProps(bpy.types.PropertyGroup):
     @classmethod
     def register(cls):
         bpy.types.Bone.niftools_bone = PointerProperty(
@@ -146,7 +146,7 @@ class NiftoolsBoneProps(bpy.types.PropertyGroup):
         del bpy.types.Bone.niftools_bone
 
 
-class NiftoolsShaderProps(bpy.types.PropertyGroup):
+class ShaderProps(bpy.types.PropertyGroup):
     @classmethod
     def register(cls):
         bpy.types.Object.niftools_shader = PointerProperty(
@@ -586,7 +586,7 @@ class NiftoolsSkinPartFlagsPanel(bpy.types.PropertyGroup):
     def unregister(cls):
         del bpy.types.Object.niftools_part_flags_panel
 
-class NiftoolsSkinPartFlags(bpy.types.PropertyGroup):
+class SkinPartFlags(bpy.types.PropertyGroup):
     
     name  = bpy.props.StringProperty(
                     name = (''),
@@ -601,13 +601,18 @@ class NiftoolsSkinPartFlags(bpy.types.PropertyGroup):
                     name = ('Editor Visible')
                     )
 
-bpy.utils.register_class(NiftoolsSkinPartFlags)
+    @classmethod
+    def register(cls):
+        bpy.types.Object.niftools_part_flags = CollectionProperty(type=SkinPartFlags)
+        
+    @classmethod
+    def unregister(cls):
+        del bpy.types.Object.niftools_part_flags
+
     
-bpy.types.Object.niftools_part_flags = \
-        CollectionProperty(type=NiftoolsSkinPartFlags)
 
 
-class NiftoolsObjectProps(bpy.types.PropertyGroup):
+class ObjectProps(bpy.types.PropertyGroup):
     @classmethod
     def register(cls):
         bpy.types.Object.niftools = PointerProperty(
@@ -678,7 +683,7 @@ class NiftoolsObjectProps(bpy.types.PropertyGroup):
         del bpy.types.Object.niftools   
 
 
-class NiftoolsObjectCollisionProps(bpy.types.PropertyGroup):
+class ObjectCollisionProps(bpy.types.PropertyGroup):
     '''Group of Havok related properties, which gets attached to objects through a property pointer.'''
     @classmethod
     def register(cls):
@@ -793,13 +798,14 @@ class NiftoolsConstraintProps(bpy.types.PropertyGroup):
 
 
 def register():
-    bpy.utils.register_class(NiftoolsMaterialProps)
-    bpy.utils.register_class(NiftoolsObjectProps)
-    bpy.utils.register_class(NiftoolsObjectCollisionProps)
+    bpy.utils.register_class(MaterialProps)
+    bpy.utils.register_class(ObjectProps)
+    bpy.utils.register_class(ObjectCollisionProps)
+    bpy.utils.register_class(SkinPartFlags)
 
 
 def unregister():
-    bpy.utils.unregister_class(NiftoolsMaterialProps)
-    bpy.utils.unregister_class(NiftoolsObjectProps)
-    bpy.utils.unregister_class(NiftoolsObjectCollisionProps)
-    bpy.utils.unregister_class(NiftoolsSkinPartFlags)
+    bpy.utils.unregister_class(MaterialProps)
+    bpy.utils.unregister_class(ObjectProps)
+    bpy.utils.unregister_class(ObjectCollisionProps)
+    bpy.utils.unregister_class(SkinPartFlags)
