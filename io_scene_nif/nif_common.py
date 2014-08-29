@@ -114,7 +114,7 @@ class NifCommon:
     Sid Meier's Railroads and similar games.
     """
     
-    HAVOK_SCALE = 7.0
+    HAVOK_SCALE = 6.996
 
     def __init__(self, operator, context):
         """Common initialization functions for executing the import/export

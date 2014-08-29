@@ -59,6 +59,12 @@ class bhkshape_import():
 
     def import_bhk_shape(self, bhkshape):
         """Imports any supported collision shape as list of blender meshes."""
+        
+        if self.nif_import.data._user_version_value_._value == 12:
+            if self.nif_import.data._user_version_2_value_._value == 83:
+                self.HAVOK_SCALE = self.nif_import.HAVOK_SCALE * 10
+            else:
+                self.HAVOK_SCALE = self.nif_import.HAVOK_SCALE
 
         if isinstance(bhkshape, NifFormat.bhkTransformShape):
             return self.import_bhktransform(bhkshape)
@@ -314,8 +320,8 @@ class bhkshape_import():
         length = (bhkshape.first_point - bhkshape.second_point).norm()
         minx = miny = -b_radius * self.HAVOK_SCALE
         maxx = maxy = +b_radius * self.HAVOK_SCALE
-        minz = -(length + 2*b_radius) * 3.5
-        maxz = +(length + 2*b_radius) * 3.5
+        minz = -(length + 2*b_radius) * (self.HAVOK_SCALE / 2)
+        maxz = +(length + 2*b_radius) * (self.HAVOK_SCALE / 2)
 
         b_mesh = bpy.data.meshes.new('capsule')
         vert_list = {}
@@ -343,7 +349,7 @@ class bhkshape_import():
         scn.objects.active = b_obj
 
         # set bounds type
-        b_obj.draw_type = 'WIRE'
+        b_obj.draw_type = 'BOUNDS'
         b_obj.draw_bounds_type = 'CAPSULE'
         b_obj.game.use_collision_bounds = True
         b_obj.game.collision_bounds_type = 'CAPSULE'
@@ -370,9 +376,12 @@ class bhkshape_import():
         # (0,0,1) maps to normal
         transform = mathutils.Matrix([vec1, vec2, normal]).transposed()
         transform.resize_4x4()
-        transform[0][3] = 3.5 * (bhkshape.first_point.x + bhkshape.second_point.x)
-        transform[1][3] = 3.5 * (bhkshape.first_point.y + bhkshape.second_point.y)
-        transform[2][3] = 3.5 * (bhkshape.first_point.z + bhkshape.second_point.z)
+        transform[0][3] = (self.HAVOK_SCALE / 2) * (
+                            bhkshape.first_point.x + bhkshape.second_point.x)
+        transform[1][3] = (self.HAVOK_SCALE / 2) * (
+                            bhkshape.first_point.y + bhkshape.second_point.y)
+        transform[2][3] = (self.HAVOK_SCALE / 2) * (
+                            bhkshape.first_point.z + bhkshape.second_point.z)
         b_obj.matrix_local = transform
 
         # Recalculate mesh to render correctly

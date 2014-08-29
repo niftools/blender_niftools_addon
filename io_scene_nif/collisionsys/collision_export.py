@@ -64,6 +64,14 @@ class bhkshape_export():
 
         # is it packed
         coll_ispacked = (b_obj.game.collision_bounds_type == 'TRIANGLE_MESH')
+        
+        # Set Havok Scale ratio
+        if b_obj.niftools.user_version == 12:
+            if b_obj.niftools.user_version_2 == 83:
+                self.HAVOK_SCALE = self.nif_export.HAVOK_SCALE * 10
+            else:
+                self.HAVOK_SCALE = self.nif_export.HAVOK_SCALE
+
 
         # find physics properties/defaults
         n_havok_mat = b_obj.nifcollision.havok_material
@@ -380,10 +388,10 @@ class bhkshape_export():
             transform = b_obj.matrix_local.transposed()
             vert1 = mathutils.Vector( [ (maxx + minx)/2.0,
                                        (maxy + miny)/2.0,
-                                       minz + localradius ] )
+                                       maxz - localradius ] )
             vert2 = mathutils.Vector( [ (maxx + minx) / 2.0,
                                        (maxy + miny) / 2.0,
-                                       maxz - localradius ] )
+                                       minz + localradius ] )
             vert1 = vert1 * transform
             vert2 = vert2 * transform
 

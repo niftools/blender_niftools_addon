@@ -39,7 +39,7 @@
 
 import bpy
 from bpy.props import (PointerProperty,
-                       FloatProperty,
+                       CollectionProperty,
                        FloatVectorProperty,
                        FloatProperty,
                        StringProperty,
@@ -567,7 +567,44 @@ class NiftoolsShaderProps(bpy.types.PropertyGroup):
     def unregister(cls):
         del bpy.types.Object.niftools_shader
 
+class NiftoolsSkinPartFlagsPanel(bpy.types.PropertyGroup):
+    @classmethod
+    def register(cls):
+        bpy.types.Object.niftools_part_flags_panel = PointerProperty(
+                        name='Niftools Skin Part Flag Panel',
+                        description = 'Properties used by the BsShader for the Nif File Format',
+                        type = cls,
+                        )
 
+        cls.pf_partcount = IntProperty(
+                        name = 'Partition count',
+                        min = 0,
+                        default = 0
+                        )
+        
+    @classmethod
+    def unregister(cls):
+        del bpy.types.Object.niftools_part_flags_panel
+
+class NiftoolsSkinPartFlags(bpy.types.PropertyGroup):
+    
+    name  = bpy.props.StringProperty(
+                    name = (''),
+                    default = ''
+                    )
+
+    pf_startflag = bpy.props.BoolProperty(
+                    name = ('Start Net Boneset')
+                    )
+        
+    pf_editorflag = bpy.props.BoolProperty(
+                    name = ('Editor Visible')
+                    )
+
+bpy.utils.register_class(NiftoolsSkinPartFlags)
+    
+bpy.types.Object.niftools_part_flags = \
+        CollectionProperty(type=NiftoolsSkinPartFlags)
 
 
 class NiftoolsObjectProps(bpy.types.PropertyGroup):
@@ -765,3 +802,4 @@ def unregister():
     bpy.utils.unregister_class(NiftoolsMaterialProps)
     bpy.utils.unregister_class(NiftoolsObjectProps)
     bpy.utils.unregister_class(NiftoolsObjectCollisionProps)
+    bpy.utils.unregister_class(NiftoolsSkinPartFlags)

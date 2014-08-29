@@ -1246,6 +1246,8 @@ class NifImport(NifCommon):
 
         # import body parts as vertex groups
         if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
+            skinpart_list = []
+            bodypart_flag = []
             skinpart = niBlock.get_skin_partition()
             for bodypart, skinpartblock in zip(
                 skininst.partitions, skinpart.skin_partition_blocks):
@@ -1255,12 +1257,21 @@ class NifImport(NifCommon):
                 # create vertex group if it did not exist yet
                 if not(groupname in b_obj.vertex_groups.items()):
                     v_group = b_obj.vertex_groups.new(groupname)
+                    skinpart_index = len(skinpart_list)
+                    skinpart_list.append((skinpart_index, groupname))
+                    bodypart_flag.append(bodypart.part_flag)
                 # find vertex indices of this group
                 groupverts = [v_map[v_index]
                               for v_index in skinpartblock.vertex_map]
                 # create the group
                 v_group.add(groupverts, 1, 'ADD')
-
+            b_obj.niftools_part_flags_panel.pf_partcount = len(skinpart_list)
+            for i,pl_name in skinpart_list:
+                b_obj_partflag = b_obj.niftools_part_flags.add()
+                #b_obj.niftools_part_flags.pf_partint = (i)
+                b_obj_partflag.name = (pl_name)
+                b_obj_partflag.pf_editorflag = (bodypart_flag[i].pf_editor_visible)
+                b_obj_partflag.pf_startflag = (bodypart_flag[i].pf_start_net_boneset)
         # import morph controller
         # XXX todo: move this to import_mesh_controllers
         if self.properties.animation:

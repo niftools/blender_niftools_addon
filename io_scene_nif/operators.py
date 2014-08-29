@@ -339,3 +339,44 @@ class NifExportOperator(bpy.types.Operator, ExportHelper, NifOperatorCommon):
         method.
         """
         return nif_export.NifExport(self, context).execute()
+    
+    
+class NfTlPartFlagAdd(bpy.types.Operator):
+    """Adds Dismember partition Flag set"""
+    bl_idname = "object.niftools_part_flags_add"
+    bl_label = "Add Dismember Flags"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        obj = context.active_object
+        b_obj_partflag = obj.niftools_part_flags.add()
+        b_obj_partflag.name = ""
+        b_obj_partflag.pf_startflag = 0
+        b_obj_partflag.pf_editorflag = 0
+        obj.niftools_part_flags_panel.pf_partcount = len(obj.niftools_part_flags)
+        
+        return {'FINISHED'}
+
+class NfTlPartFlagRemove(bpy.types.Operator):
+    """Removes Dismember partition Flag set"""
+    bl_idname = "object.niftools_part_flags_remove"
+    bl_label = "Remove Dismember Flags"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        item = len(context.active_object.niftools_part_flags)-1
+        obj = context.active_object
+        obj.niftools_part_flags.remove(item)
+        obj.niftools_part_flags_panel.pf_partcount = len(obj.niftools_part_flags)
+        return {'FINISHED'}
+
+
+
+def register():
+    bpy.utils.register_class(NfTlPartFlagAdd)
+    bpy.utils.register_class(NfTlPartFlagRemove)
+    
+def unregister():
+    bpy.utils.unregister_class(NfTlPartFlagAdd)
+    bpy.utils.unregister_class(NfTlPartFlagRemove)
+        
