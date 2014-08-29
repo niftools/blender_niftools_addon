@@ -258,7 +258,7 @@ class ObjectHelper():
             elif (b_obj_type == 'ARMATURE') and (b_obj.niftools.objectflags == 0) and (b_obj.parent == None):
                 node.flags = b_obj.niftools.objectflags
             else:
-                if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
+                if self.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
                     node.flags = 0x000E
                 elif self.properties.game in ('SID_MEIER_S_RAILROADS',
                                              'CIVILIZATION_IV'):
@@ -596,7 +596,7 @@ class MeshHelper():
             if (b_obj.type == 'MESH') and (b_obj.niftools.objectflags != 0):
                 trishape.flags = b_obj.niftools.objectflags
             else:
-                if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
+                if self.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
                     trishape.flags = 0x000E
     
                 elif self.properties.game in ('SID_MEIER_S_RAILROADS',
@@ -885,7 +885,7 @@ class MeshHelper():
                         f_indexed = (f_index[0], f_index[2+i], f_index[1+i])
                     trilist.append(f_indexed)
                     # add body part number
-                    if (self.properties.game != 'FALLOUT_3'
+                    if (self.properties.game not in ('FALLOUT_3','SKYRIM')
                         or not bodypartgroups):
                         # TODO: or not self.EXPORT_FO3_BODYPARTS):
                         bodypartfacemap.append(0)
@@ -999,7 +999,7 @@ class MeshHelper():
             # textures are actually exported (civ4 seems to be consistent with
             # not using tangent space on non shadered nifs)
             if mesh_uvlayers and mesh_hasnormals:
-                if (self.properties.game in ('OBLIVION', 'FALLOUT_3')
+                if (self.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM')
                     or (self.properties.game in self.nif_export.texturehelper.USED_EXTRA_SHADER_TEXTURES)):
                     trishape.update_tangent_space(
                         as_extra=(self.properties.game == 'OBLIVION'))
@@ -1021,7 +1021,7 @@ class MeshHelper():
                             boneinfluences.append(bone)
                     if boneinfluences: # yes we have skinning!
                         # create new skinning instance block and link it
-                        if (self.properties.game == 'FALLOUT_3'
+                        if (self.properties.game in ('FALLOUT_3', 'SKYRIM')
                             and bodypartgroups):
                             skininst = self.nif_export.objecthelper.create_block("BSDismemberSkinInstance", b_obj)
                         else:
@@ -1167,11 +1167,12 @@ class MeshHelper():
                                 triangles=trilist,
                                 trianglepartmap=bodypartfacemap,
                                 maximize_bone_sharing=(
-                                    self.properties.game == 'FALLOUT_3'))
+                                            self.properties.game in (
+                                                    'FALLOUT_3','SKYRIM')))
                             # warn on bad config settings
                             if self.properties.game == 'OBLIVION':
                                 if self.properties.pad_bones:
-                                    self.warning(
+                                    self.nif_export.warning(
                                        "Using padbones on Oblivion export,"
                                        " but you probably do not want to do"
                                        " this."
@@ -1179,11 +1180,19 @@ class MeshHelper():
                                        " higher quality skin partitions.")
                             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
                                 if self.properties.max_bones_per_partition < 18:
-                                    self.warning(
+                                    self.nif_export.warning(
                                        "Using less than 18 bones"
                                        " per partition on Oblivion/Fallout 3"
                                        " export."
                                        " Set it to 18 to get higher quality"
+                                       " skin partitions.")
+                            if self.properties.game in ('SKYRIM'):
+                                if self.properties.max_bones_per_partition < 24:
+                                    self.nif_export.warning(
+                                       "Using less than 24 bones"
+                                       " per partition on Skyrim"
+                                       " export."
+                                       " Set it to 24 to get higher quality"
                                        " skin partitions.")
                             if lostweight > self.properties.epsilon:
                                 self.nif_export.warning(
@@ -1191,6 +1200,21 @@ class MeshHelper():
                                     " while creating a skin partition"
                                     " for Blender object '%s' (nif block '%s')"
                                     % (lostweight, b_obj.name, trishape.name))
+
+
+                        if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
+                            partitions = skininst.partitions
+                            b_obj_part_flags = b_obj.niftools_part_flags
+                            for s_part in partitions:
+                                s_part_index = NifFormat.BSDismemberBodyPartType._enumvalues.index(s_part.body_part)
+                                s_part_name = NifFormat.BSDismemberBodyPartType._enumkeys[s_part_index]
+                                for b_part in b_obj_part_flags:
+                                    if s_part_name == b_part.name:
+                                        s_part.part_flag.pf_start_net_boneset = b_part.pf_startflag
+                                        s_part.part_flag.pf_editor_visible = b_part.pf_editorflag
+                                
+
+
 
                         # clean up
                         del vert_weights
@@ -1218,8 +1242,8 @@ class MeshHelper():
                                 "Can only export relative shape keys.")
 
                         # create geometry morph controller
-                        morphctrl = self.nif_export.objecthelper.create_block("NiGeomMorpherController",
-                                                     keyipo)
+                        morphctrl = self.nif_export.objecthelper.create_block(
+                                                    "NiGeomMorpherController", keyipo)
                         trishape.add_controller(morphctrl)
                         morphctrl.target = trishape
                         morphctrl.frequency = 1.0
@@ -1229,7 +1253,8 @@ class MeshHelper():
                         ctrlFlags = 0x000c
 
                         # create geometry morph data
-                        morphdata = self.nif_export.objecthelper.create_block("NiMorphData", keyipo)
+                        morphdata = self.nif_export.objecthelper.create_block(
+                                                                "NiMorphData", keyipo)
                         morphctrl.data = morphdata
                         morphdata.num_morphs = len(key.key_blocks)
                         morphdata.num_vertices = len(vertlist)
