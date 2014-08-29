@@ -70,7 +70,7 @@ class constraint_export():
         for b_constr in b_obj.constraints:
             # rigid body joints
             if b_constr.type == 'RIGID_BODY_JOINT':
-                if self.properties.game not in ('OBLIVION', 'FALLOUT_3'):
+                if self.properties.game not in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
                     self.nif_export.warning(
                         "Only Oblivion/Fallout 3 rigid body constraints"
                         " can be exported: skipped %s." % b_constr)
