@@ -75,7 +75,8 @@ if not _modules_path in sys.path:
     sys.path.append(_modules_path)
 del _modules_path
 
-from io_scene_nif import properties, ui, operators
+import io_scene_nif.ui
+from io_scene_nif import properties, operators
 
 def _init_loggers():
     """Set up loggers."""
@@ -90,13 +91,16 @@ def _init_loggers():
     niftoolslogger.addHandler(loghandler)
     pyffilogger.addHandler(loghandler)
 
+
 def menu_func_import(self, context):
     self.layout.operator(
         operators.NifImportOperator.bl_idname, text="NetImmerse/Gamebryo (.nif)")
 
+
 def menu_func_export(self, context):
     self.layout.operator(
         operators.NifExportOperator.bl_idname, text="NetImmerse/Gamebryo (.nif)")
+
 
 def register():
     _init_loggers()
@@ -106,14 +110,16 @@ def register():
     bpy.types.INFO_MT_file_import.append(menu_func_import)
     bpy.types.INFO_MT_file_export.append(menu_func_export)
 
+
 def unregister():
     # no idea how to do this... oh well, let's not lose any sleep over it
     #_uninit_loggers()
-    properties.unregister()
-    ui.unregister()
-    bpy.utils.unregister_module(__name__)
     bpy.types.INFO_MT_file_import.remove(menu_func_import)
     bpy.types.INFO_MT_file_export.remove(menu_func_export)
+    ui.unregister()
+    properties.unregister()
+    bpy.utils.unregister_module(__name__)
+
 
 if __name__ == "__main__":
     register()
