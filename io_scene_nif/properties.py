@@ -70,7 +70,7 @@ def underscore_to_camelcase(s):
 
 
 
-class MatFlagProps(bpy.types.PropertyGroup):
+class MaterialFlags(bpy.types.PropertyGroup):
     '''Adds custom properties to material'''
     
     @classmethod
@@ -100,7 +100,7 @@ class MatFlagProps(bpy.types.PropertyGroup):
     def unregister(cls):
         del bpy.types.Material.niftools_alpha
 
-class MaterialProps(bpy.types.PropertyGroup):
+class Material(bpy.types.PropertyGroup):
     '''Adds custom properties to material'''
     
     @classmethod
@@ -567,7 +567,7 @@ class ShaderProps(bpy.types.PropertyGroup):
     def unregister(cls):
         del bpy.types.Object.niftools_shader
 
-class NiftoolsSkinPartFlagsPanel(bpy.types.PropertyGroup):
+class SkinPartHeader(bpy.types.PropertyGroup):
     @classmethod
     def register(cls):
         bpy.types.Object.niftools_part_flags_panel = PointerProperty(
@@ -612,7 +612,7 @@ class SkinPartFlags(bpy.types.PropertyGroup):
     
 
 
-class ObjectProps(bpy.types.PropertyGroup):
+class Object(bpy.types.PropertyGroup):
     @classmethod
     def register(cls):
         bpy.types.Object.niftools = PointerProperty(
@@ -770,7 +770,7 @@ class ObjectCollisionProps(bpy.types.PropertyGroup):
         del bpy.types.Object.nifcollision
 
 
-class NiftoolsConstraintProps(bpy.types.PropertyGroup):
+class ObjectCollision(bpy.types.PropertyGroup):
     @classmethod
     def register(cls):
         bpy.types.Object.niftools_constraint = PointerProperty(
@@ -798,14 +798,14 @@ class NiftoolsConstraintProps(bpy.types.PropertyGroup):
 
 
 def register():
-    bpy.utils.register_class(MaterialProps)
-    bpy.utils.register_class(ObjectProps)
-    bpy.utils.register_class(ObjectCollisionProps)
+    bpy.utils.register_class(Material)
+    bpy.utils.register_class(Object)
+    bpy.utils.register_class(ObjectCollision)
     bpy.utils.register_class(SkinPartFlags)
 
 
 def unregister():
-    bpy.utils.unregister_class(MaterialProps)
-    bpy.utils.unregister_class(ObjectProps)
-    bpy.utils.unregister_class(ObjectCollisionProps)
+    bpy.utils.unregister_class(Material)
+    bpy.utils.unregister_class(Object)
+    bpy.utils.unregister_class(ObjectCollision)
     bpy.utils.unregister_class(SkinPartFlags)
