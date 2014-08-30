@@ -111,6 +111,8 @@ class Armature():
 		# must be done outside edit mode hence after calling
 		for bone_name, b_posebone in b_armature.pose.bones.items():
 			# find bone nif block
+			if bone_name.startswith("InvMarker"):
+				bone_name = "InvMarker"
 			niBone = self.nif_import.dict_blocks[bone_name]
 			# store bone priority, if applicable
 			if niBone.name in self.nif_import.dict_bone_priorities:
