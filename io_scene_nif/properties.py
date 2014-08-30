@@ -611,6 +611,39 @@ class SkinPartFlags(PropertyGroup):
         del bpy.types.Object.niftools_part_flags
 
     
+        
+
+class BsInventoryMarker(bpy.types.PropertyGroup):
+
+    name  = bpy.props.StringProperty(
+                    name = (''),
+                    default = ''
+                    )
+
+    bs_inv_x = bpy.props.IntProperty(
+                    name = "Inv X value",
+                    description = "Position of object in inventory on the x axis.",
+                    default = 0)
+
+    bs_inv_y = bpy.props.IntProperty(
+                    name = "Inv Y value",
+                    description = "Position of object in inventory on the y axis.",
+                    default = 0)
+
+    bs_inv_z = bpy.props.IntProperty(
+                    name = "Inv Z value",
+                    description = "Position of object in inventory on the z axis.",
+                    default = 0)
+
+    bs_inv_zoom = bpy.props.FloatProperty(
+                    name = "Inv zoom value",
+                    description = "Inventory object Zoom level.",
+                    default = 0)
+
+bpy.utils.register_class(BsInventoryMarker)
+
+bpy.types.Object.niftools_bs_invmarker = \
+        CollectionProperty(type=BsInventoryMarker)
 
 
 class Object(PropertyGroup):
