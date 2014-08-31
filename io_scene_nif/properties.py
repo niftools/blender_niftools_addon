@@ -82,17 +82,17 @@ class MaterialFlags(bpy.types.PropertyGroup):
                         )
         
         cls.alphaflag = IntProperty(
-                        name = 'Alpha Flag',
+                        name='Alpha Flag',
                         default = 0
                         )
         
         cls.textureflag = IntProperty(
-                        name = 'Texture Flag',
+                        name='Texture Flag',
                         default = 0
                         )
 
         cls.materialflag = IntProperty(
-                        name = 'Material Flag',
+                        name='Material Flag',
                         default = 0
                         )
         
@@ -137,7 +137,7 @@ class BoneProps(bpy.types.PropertyGroup):
                         type = cls,
                         )
         cls.boneflags = IntProperty(
-                        name = 'Bone Flag',
+                        name='Bone Flag',
                         default = 0
                         )
         
@@ -180,387 +180,387 @@ class ShaderProps(bpy.types.PropertyGroup):
 
         
         cls.sf_specular = BoolProperty(
-                        name = 'Specular'
+                        name='Specular'
                         )
         
         cls.sf_skinned = BoolProperty(
-                        name = 'Skinned'
+                        name='Skinned'
                         )
         
         cls.sf_low_detail = BoolProperty(
-                        name = 'Low Detail'
+                        name='Low Detail'
                         )
         
         cls.sf_vertex_alpha = BoolProperty(
-                        name = 'Vertex Alpha'
+                        name='Vertex Alpha'
                         )
         
         cls.sf_unknown_1 = BoolProperty(
-                        name = 'Unknown 1'
+                        name='Unknown 1'
                         )
         
         cls.sf_single_pass = BoolProperty(
-                        name = 'Single Pass'
+                        name='Single Pass'
                         )
         
         cls.sf_empty = BoolProperty(
-                        name = 'Empty'
+                        name='Empty'
                         )
         
         cls.sf_environment_mapping = BoolProperty(
-                        name = 'Environment Mapping'
+                        name='Environment Mapping'
                         )
         
         cls.sf_alpha_texture = BoolProperty(
-                        name = 'Alpha Texture'
+                        name='Alpha Texture'
                         )
         
         cls.sf_unknown_2 = BoolProperty(
-                        name = 'Unknown 2'
+                        name='Unknown 2'
                         )
         
         cls.sf_face_gen = BoolProperty(
-                        name = 'Face Gen'
+                        name='Face Gen'
                         )
         
         cls.sf_parallax_shader_index_15 = BoolProperty(
-                        name = 'Parallax Shader Index'
+                        name='Parallax Shader Index'
                         )
         
         cls.sf_unknown_3 = BoolProperty(
-                        name = 'Unknown 3'
+                        name='Unknown 3'
                         )
         
         cls.sf_non_projective_shadows = BoolProperty(
-                        name = 'Non-Projective Shadows'
+                        name='Non-Projective Shadows'
                         )
         
         cls.sf_unknown_4 = BoolProperty(
-                        name = 'Unknown 4'
+                        name='Unknown 4'
                         )
         
         cls.sf_refraction = BoolProperty(
-                        name = 'Refraction'
+                        name='Refraction'
                         )
         
         cls.sf_fire_refraction = BoolProperty(
-                        name = 'Fire Refraction'
+                        name='Fire Refraction'
                         )
         
         cls.sf_eye_environment_mapping = BoolProperty(
-                        name = 'Eye Environment Mapping'
+                        name='Eye Environment Mapping'
                         )
         
         cls.sf_hair = BoolProperty(
-                        name = 'Hair'
+                        name='Hair'
                         )
         
         cls.sf_dynamic_alpha = BoolProperty(
-                        name = 'Dynamic Alpha'
+                        name='Dynamic Alpha'
                         )
         
         cls.sf_localmap_hide_secret = BoolProperty(
-                        name = 'Local Map Hide Secret'
+                        name='Local Map Hide Secret'
                         )
         
         cls.sf_window_environment_mapping = BoolProperty(
-                        name = 'Window Environment Mapping'
+                        name='Window Environment Mapping'
                         )
         
         cls.sf_tree_billboard = BoolProperty(
-                        name = 'Tree Billboard'
+                        name='Tree Billboard'
                         )
         
         cls.sf_shadow_frustum = BoolProperty(
-                        name = 'Shadow Frustum'
+                        name='Shadow Frustum'
                         )
         
         cls.sf_multiple_textures = BoolProperty(
-                        name = 'Multiple Textures'
+                        name='Multiple Textures'
                         )
         
         cls.sf_remappable_textures = BoolProperty(
-                        name = 'Remappable Textures'
+                        name='Remappable Textures'
                         )
         
         cls.sf_decal_single_pass = BoolProperty(
-                        name = 'Decal Single Pass'
+                        name='Decal Single Pass'
                         )
         
         cls.sf_dynamic_decal_single_pass = BoolProperty(
-                        name = 'Dynamic Decal Single Pass'
+                        name='Dynamic Decal Single Pass'
                         )
         
         cls.sf_parallax_occulsion = BoolProperty(
-                        name = 'Parallax Occlusion'
+                        name='Parallax Occlusion'
                         )
         
         cls.sf_external_emittance = BoolProperty(
-                        name = 'External Emittance'
+                        name='External Emittance'
                         )
         
         cls.sf_shadow_map = BoolProperty(
-                        name = 'Shadow Map'
+                        name='Shadow Map'
                         )
         
         cls.sf_z_buffer_test = BoolProperty(
-                        name = 'Z Buffer Test'
+                        name='Z Buffer Test'
                         )
         
         cls.slsf_1_specular = BoolProperty(
-                        name = 'Specular'
+                        name='Specular'
                         )
 
         cls.slsf_1_skinned = BoolProperty(
-                        name = 'Skinned'
+                        name='Skinned'
                         )
         
         cls.slsf_1_temp_refraction = BoolProperty(
-                        name = 'Temp Refraction'
+                        name='Temp Refraction'
                         )
         
         cls.slsf_1_vertex_alpha = BoolProperty(
-                        name = 'Vertex Alpha'
+                        name='Vertex Alpha'
                         )
         
         cls.slsf_1_greyscale_to_paletteColor = BoolProperty(
-                        name = 'Greyscale to Palette Color'
+                        name='Greyscale to Palette Color'
                         )
         
         cls.slsf_1_greyscale_to_palettealpha = BoolProperty(
-                        name = 'Greyscale to Palette Alpha'
+                        name='Greyscale to Palette Alpha'
                         )
         
         cls.slsf_1_use_falloff = BoolProperty(
-                        name = 'Use Falloff'
+                        name='Use Falloff'
                         )
         
         cls.slsf_1_enviroment_mapping = BoolProperty(
-                        name = 'Enviroment Mapping'
+                        name='Enviroment Mapping'
                         )
         
         cls.slsf_1_recieve_shadows = BoolProperty(
-                        name = 'Receive Shadows'
+                        name='Receive Shadows'
                         )
         
         cls.slsf_1_cast_shadows = BoolProperty(
-                        name = 'Cast Shadows'
+                        name='Cast Shadows'
                         )
         
         cls.slsf_1_facegen_detail = BoolProperty(
-                        name = 'Facegen Detail'
+                        name='Facegen Detail'
                         )
         
         cls.slsf_1_Parallax = BoolProperty(
-                        name = 'Parallax'
+                        name='Parallax'
                         )
         
         cls.slsf_1_model_space_normals = BoolProperty(
-                        name = 'Model Space Normals'
+                        name='Model Space Normals'
                         )
         
         cls.slsf_1_non_projective_shadows = BoolProperty(
-                        name = 'Non Projective Shadows'
+                        name='Non Projective Shadows'
                         )
         
         cls.slsf_1_Landscape = BoolProperty(
-                        name = 'Landscape'
+                        name='Landscape'
                         )
         
         cls.slsf_1_refraction = BoolProperty(
-                        name = 'Refraction'
+                        name='Refraction'
                         )
         
         cls.slsf_1_fire_refraction = BoolProperty(
-                        name = 'Fire Refraction'
+                        name='Fire Refraction'
                         )
         
         cls.slsf_1_eye_environment_mapping = BoolProperty(
-                        name = 'Eye Environment Mapping'
+                        name='Eye Environment Mapping'
                         )
         
         cls.slsf_1_hair_soft_lighting = BoolProperty(
-                        name = 'Hair Soft Lighting'
+                        name='Hair Soft Lighting'
                         )
         
         cls.slsf_1_screendoor_alpha_fade = BoolProperty(
-                        name = 'Screendoor Alpha Fade'
+                        name='Screendoor Alpha Fade'
                         )
         
         cls.slsf_1_localmap_hide_secret = BoolProperty(
-                        name = 'Localmap Hide Secret'
+                        name='Localmap Hide Secret'
                         )
         
         cls.slsf_1_facegen_rgb_tint = BoolProperty(
-                        name = 'Facegen RGB Tint'
+                        name='Facegen RGB Tint'
                         )
         
         cls.slsf_1_own_emit = BoolProperty(
-                        name = 'Own Emit'
+                        name='Own Emit'
                         )
         
         cls.slsf_1_projected_uv = BoolProperty(
-                        name = 'Projected UV'
+                        name='Projected UV'
                         )
         
         cls.slsf_1_multiple_textures = BoolProperty(
-                        name = 'Multiple Textures'
+                        name='Multiple Textures'
                         )
 
         cls.slsf_1_remappable_textures = BoolProperty(
-                        name = 'Remappable Textures'
+                        name='Remappable Textures'
                         )
         
         cls.slsf_1_decal = BoolProperty(
-                        name = 'decal'
+                        name='decal'
                         )
         
         cls.slsf_1_dynamic_decal = BoolProperty(
-                        name = 'Dynamic Decal'
+                        name='Dynamic Decal'
                         )
         
         cls.slsf_1_parallax_occlusion = BoolProperty(
-                        name = 'Parallax Occlusion'
+                        name='Parallax Occlusion'
                         )
         
         cls.slsf_1_external_emittance = BoolProperty(
-                        name = 'External Emittance'
+                        name='External Emittance'
                         )
         
         cls.slsf_1_soft_effect = BoolProperty(
-                        name = 'Soft Effect'
+                        name='Soft Effect'
                         )
         
         cls.slsf_1_z_buffer_test = BoolProperty(
-                        name = 'ZBuffer Test'
+                        name='ZBuffer Test'
                         )
         
         cls.slsf_2_z_buffer_write = BoolProperty(
-                        name = 'ZBuffer Write'
+                        name='ZBuffer Write'
                         )
         
         cls.slsf_2_lod_landscape = BoolProperty(
-                        name = 'LOD Landscape'
+                        name='LOD Landscape'
                         )
         
         cls.slsf_2_lod_objects = BoolProperty(
-                        name = 'LOD Objects'
+                        name='LOD Objects'
                         )
         
         cls.slsf_2_no_fade = BoolProperty(
-                        name = 'No Fade'
+                        name='No Fade'
                         )
         
         cls.slsf_2_double_sided = BoolProperty(
-                        name = 'Double Sided'
+                        name='Double Sided'
                         )
         
         cls.slsf_2_vertex_colors = BoolProperty(
-                        name = 'Vertex Colors'
+                        name='Vertex Colors'
                         )
         
         cls.slsf_2_glow_map = BoolProperty(
-                        name = 'Glow Map'
+                        name='Glow Map'
                         )
         
         cls.slsf_2_assume_shadowmask = BoolProperty(
-                        name = 'Assume Shadowmask'
+                        name='Assume Shadowmask'
                         )
         
         cls.slsf_2_packed_tangent = BoolProperty(
-                        name = 'Packed Tangent'
+                        name='Packed Tangent'
                         )
         
         cls.slsf_2_multi_index_snow = BoolProperty(
-                        name = 'Multi Index Snow'
+                        name='Multi Index Snow'
                         )
         
         cls.slsf_2_vertex_lighting = BoolProperty(
-                        name = 'Vertex Lighting'
+                        name='Vertex Lighting'
                         )
         
         cls.slsf_2_uniform_scale = BoolProperty(
-                        name = 'Uniform Scale'
+                        name='Uniform Scale'
                         )
         
         cls.slsf_2_fit_slope = BoolProperty(
-                        name = 'Fit Slope'
+                        name='Fit Slope'
                         )
         
         cls.slsf_2_billboard = BoolProperty(
-                        name = 'Billboard'
+                        name='Billboard'
                         )
         
         cls.slsf_2_no_lod_land_blend = BoolProperty(
-                        name = 'No LOD Land Blend'
+                        name='No LOD Land Blend'
                         )
         
         cls.slsf_2_env_map_light_fade = BoolProperty(
-                        name = 'Envmap Light Fade'
+                        name='Envmap Light Fade'
                         )
         
         cls.slsf_2_wireframe = BoolProperty(
-                        name = 'Wireframe'
+                        name='Wireframe'
                         )
         
         cls.slsf_2_weapon_blood = BoolProperty(
-                        name = 'Weapon Blood'
+                        name='Weapon Blood'
                         )
         
         cls.slsf_2_hide_on_local_map = BoolProperty(
-                        name = 'Hide On Local Map'
+                        name='Hide On Local Map'
                         )
         
         cls.slsf_2_premult_alpha = BoolProperty(
-                        name = 'Premult Alpha'
+                        name='Premult Alpha'
                         )
         
         cls.slsf_2_cloud_lod = BoolProperty(
-                        name = 'Cloud Lod'
+                        name='Cloud Lod'
                         )
         
         cls.slsf_2_anisotropic_lighting = BoolProperty(
-                        name = 'Anisotropic Lighting'
+                        name='Anisotropic Lighting'
                         )
         
         cls.slsf_2_no_transparency_multisampling = BoolProperty(
-                        name = 'No Transparency Multisampling'
+                        name='No Transparency Multisampling'
                         )
         
         cls.slsf_2_unused01 = BoolProperty(
-                        name = 'Unused01'
+                        name='Unused01'
                         )
         
         cls.slsf_2_multi_layer_parallax = BoolProperty(
-                        name = 'Multi Layer Parallax'
+                        name='Multi Layer Parallax'
                         )
         
         cls.slsf_2_soft_lighting = BoolProperty(
-                        name = 'Soft Lighting'
+                        name='Soft Lighting'
                         )
         
         cls.slsf_2_rim_lighting = BoolProperty(
-                        name = 'Rim Lighting'
+                        name='Rim Lighting'
                         )
         
         cls.slsf_2_back_lighting = BoolProperty(
-                        name = 'Back Lighting'
+                        name='Back Lighting'
                         )
         
         cls.slsf_2_unused02 = BoolProperty(
-                        name = 'Unused02'
+                        name='Unused02'
                         )
         
         cls.slsf_2_tree_anim = BoolProperty(
-                        name = 'Tree Anim'
+                        name='Tree Anim'
                         )
         
         cls.slsf_2_effect_lighting = BoolProperty(
-                        name = 'Effect Lighting'
+                        name='Effect Lighting'
                         )
         
         cls.slsf_2_hd_lod_objects = BoolProperty(
-                        name = 'HD LOD Objects'
+                        name='HD LOD Objects'
                         )
         
     @classmethod
@@ -577,7 +577,7 @@ class SkinPartHeader(bpy.types.PropertyGroup):
                         )
 
         cls.pf_partcount = IntProperty(
-                        name = 'Partition count',
+                        name='Partition count',
                         min = 0,
                         default = 0
                         )
@@ -589,16 +589,16 @@ class SkinPartHeader(bpy.types.PropertyGroup):
 class SkinPartFlags(bpy.types.PropertyGroup):
     
     name  = bpy.props.StringProperty(
-                    name = (''),
+                    name=(''),
                     default = ''
                     )
 
     pf_startflag = bpy.props.BoolProperty(
-                    name = ('Start Net Boneset')
+                    name=('Start Net Boneset')
                     )
         
     pf_editorflag = bpy.props.BoolProperty(
-                    name = ('Editor Visible')
+                    name=('Editor Visible')
                     )
 
     @classmethod
@@ -622,21 +622,21 @@ class Object(bpy.types.PropertyGroup):
                         )
         
         cls.nif_version = StringProperty(
-                        name = 'Nif Version',
+                        name='Nif Version',
                         )
         
         cls.user_version = IntProperty(
-                        name = 'User Version',
+                        name='User Version',
                         default = 0
                         )
         
         cls.user_version_2 = IntProperty(
-                        name = 'User Version 2',
+                        name='User Version 2',
                         default = 0
                         )
         
         cls.rootnode = EnumProperty(
-                        name = 'Nif Root Node',
+                        name='Nif Root Node',
                         description = 'Type of property used to display meshes.',
                         items = (('NiNode', 'NiNode',"", 0),
                                 ('BSFadeNode', 'BSFadeNode',"", 1)),
@@ -644,35 +644,35 @@ class Object(bpy.types.PropertyGroup):
                         )
         
         cls.bsnumuvset = IntProperty(
-                        name = 'BS Num UV Set',
+                        name='BS Num UV Set',
                         default = 0
                         )
         
-        cls.longname = StringProperty(
-                        name = 'Nif LongName'
+        cls.longname=StringProperty(
+                        name='Nif LongName'
                         )
 
         cls.consistency_flags = EnumProperty(
-                        name = 'Consistency Flag',
+                        name='Consistency Flag',
                         description = 'Controls animation type',
                         items = [(item, item,"", i) for i, item in enumerate(NifFormat.ConsistencyType._enumkeys)],
                         #default = 'SHADER_DEFAULT'
                         )
 
         cls.objectflags = IntProperty(
-                        name = 'Object Flag',
+                        name='Object Flag',
                         description = 'Controls animation and collision',
                         default = 0
                         )
 
         cls.bsxflags = IntProperty(
-                        name = 'BSXFlags',
+                        name='BSXFlags',
                         description = 'Controls animation and collision',
                         default = 0 # 2 = Bit 1, enable collision
                         )
 
         cls.upb = StringProperty(
-                        name = 'UPB',
+                        name='UPB',
                         description = 'Commands for an optimizer?',
                         default = ''
                         )
@@ -704,64 +704,64 @@ class ObjectCollisionProps(bpy.types.PropertyGroup):
                         )
            
         cls.oblivion_layer = EnumProperty(
-                        name = 'Oblivion Layer',
+                        name='Oblivion Layer',
                         description = 'Mesh color, used in Editor',
                         items = [(item, item,"", i) for i, item in enumerate(NifFormat.OblivionLayer._enumkeys)],
                         # default = 'OL_STATIC',
                         )
 
         cls.deactivator_type = EnumProperty(
-                        name = 'Deactivator Type',
+                        name='Deactivator Type',
                         description = 'Motion deactivation setting',
                         items = [(item, item,"", i) for i, item in enumerate(NifFormat.DeactivatorType._enumkeys)],
                         )
 
         cls.solver_deactivation = EnumProperty(
-                        name = 'Solver Deactivation',
+                        name='Solver Deactivation',
                         description = 'Motion deactivation setting',
                         items = [(item, item,"", i) for i, item in enumerate(NifFormat.SolverDeactivation._enumkeys)],
                         )
           
         cls.quality_type = EnumProperty(
-                        name = 'Quality Type',
+                        name='Quality Type',
                         description = 'Determines quality of motion',
                         items = [(item, item,"", i) for i, item in enumerate(NifFormat.MotionQuality._enumkeys)],
                         # default = 'MO_QUAL_FIXED',
                         )
         
         cls.col_filter = IntProperty(
-                        name = 'Col Filter',
+                        name='Col Filter',
                         description = 'Flags for bhkRigidBody(t)',
                         default = 0
                         )
 
         cls.max_linear_velocity = FloatProperty(
-                        name = 'Max Linear Velocity',
+                        name='Max Linear Velocity',
                         description = 'Linear velocity limit for bhkRigidBody(t)',
                         default = 0
                         )
 
         cls.max_angular_velocity = FloatProperty(
-                        name = 'Max Angular Velocity',
+                        name='Max Angular Velocity',
                         description = 'Angular velocity limit for bhkRigidBody(t)',
                         default = 0
                         )
         
         cls.havok_material = EnumProperty(
-                        name = 'Havok Material',
+                        name='Havok Material',
                         description = 'The Shapes material',
                         items = [(item, item,"", i) for i, item in enumerate(NifFormat.HavokMaterial._enumkeys)],
                         # default = 'HAV_MAT_WOOD'
                         )
                         
         cls.export_bhklist = BoolProperty(
-                        name = 'Export BHKList',
+                        name='Export BHKList',
                         description = 'None',
                         default = False
                         )
         
         cls.use_blender_properties = BoolProperty(
-                        name = 'Use Blender Properties',
+                        name='Use Blender Properties',
                         description = 'Whether or not to export collision settings via blender properties',
                         default = False,
                         )
@@ -780,15 +780,15 @@ class ObjectCollision(bpy.types.PropertyGroup):
 						)
 
         cls.LHMaxFriction = FloatProperty(
-						name = 'LHMaxFriction',
+						name='LHMaxFriction',
 						description = 'Havok limited hinge max friction.',
 						)
         cls.tau = FloatProperty(
-                        name = 'tau',
+                        name='tau',
                         description = 'Havok limited hinge max friction.',
                         )
         cls.damping = FloatProperty(
-                        name = 'damping',
+                        name='damping',
                         description = 'Havok limited hinge max friction.',
                         )
 
