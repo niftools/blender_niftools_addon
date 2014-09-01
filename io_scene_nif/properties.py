@@ -38,6 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
+from bpy.types import PropertyGroup
 from bpy.props import (PointerProperty,
                        CollectionProperty,
                        FloatVectorProperty,
@@ -70,14 +71,14 @@ def underscore_to_camelcase(s):
 
 
 
-class MaterialFlags(bpy.types.PropertyGroup):
+class MaterialFlags(PropertyGroup):
     '''Adds custom properties to material'''
     
     @classmethod
     def register(cls):
         bpy.types.Material.niftools_alpha = PointerProperty(
                         name='Niftools Material Alpha',
-                        description = 'Additional material properties used by the Nif File Format',
+                        description='Additional material properties used by the Nif File Format',
                         type=cls,
                         )
         
@@ -100,14 +101,14 @@ class MaterialFlags(bpy.types.PropertyGroup):
     def unregister(cls):
         del bpy.types.Material.niftools_alpha
 
-class Material(bpy.types.PropertyGroup):
+class Material(PropertyGroup):
     '''Adds custom properties to material'''
     
     @classmethod
     def register(cls):
         bpy.types.Material.niftools = PointerProperty(
                         name='Niftools Materials',
-                        description = 'Additional material properties used by the Nif File Format',
+                        description='Additional material properties used by the Nif File Format',
                         type=cls,
                         )
 
@@ -128,12 +129,12 @@ class Material(bpy.types.PropertyGroup):
         del bpy.types.Material.niftools
 
 
-class BoneProps(bpy.types.PropertyGroup):
+class BoneProps(PropertyGroup):
     @classmethod
     def register(cls):
         bpy.types.Bone.niftools_bone = PointerProperty(
                         name='Niftools Bone Property',
-                        description = 'Additional bone properties used by the Nif File Format',
+                        description='Additional bone properties used by the Nif File Format',
                         type = cls,
                         )
         cls.boneflags = IntProperty(
@@ -146,18 +147,18 @@ class BoneProps(bpy.types.PropertyGroup):
         del bpy.types.Bone.niftools_bone
 
 
-class ShaderProps(bpy.types.PropertyGroup):
+class ShaderProps(PropertyGroup):
     @classmethod
     def register(cls):
         bpy.types.Object.niftools_shader = PointerProperty(
                         name='Niftools BsShader Property',
-                        description = 'Properties used by the BsShader for the Nif File Format',
+                        description='Properties used by the BsShader for the Nif File Format',
                         type = cls,
                         )
         
         cls.bs_shadertype = EnumProperty(
                         name='Shader Type',
-                        description = 'Type of property used to display meshes.',
+                        description='Type of property used to display meshes.',
                         items = (('None','None',"",0),
                                  ('BSShaderProperty', 'BS Shader Property',"", 1),
                                  ('BSShaderPPLightingProperty', 'BS Shader PP Lighting Property',"", 2),
@@ -166,14 +167,14 @@ class ShaderProps(bpy.types.PropertyGroup):
 
         cls.bsspplp_shaderobjtype = EnumProperty(
                         name='BS Shader PP Lighting Object Type',
-                        description = 'Type of object linked to shader',
+                        description='Type of object linked to shader',
                         items = [(item, item,"", i) for i, item in enumerate(NifFormat.BSShaderType._enumkeys)],
                         default = 'SHADER_DEFAULT'
                         )
 
         cls.bslsp_shaderobjtype = EnumProperty(
                         name='BS Lighting Shader Object Type',
-                        description = 'Type of object linked to shader',
+                        description='Type of object linked to shader',
                         items = [(item, item,"", i) for i, item in enumerate(NifFormat.BSLightingShaderPropertyShaderType._enumkeys)],
                         #default = 'SHADER_DEFAULT'
                         )
@@ -567,12 +568,12 @@ class ShaderProps(bpy.types.PropertyGroup):
     def unregister(cls):
         del bpy.types.Object.niftools_shader
 
-class SkinPartHeader(bpy.types.PropertyGroup):
+class SkinPartHeader(PropertyGroup):
     @classmethod
     def register(cls):
         bpy.types.Object.niftools_part_flags_panel = PointerProperty(
                         name='Niftools Skin Part Flag Panel',
-                        description = 'Properties used by the BsShader for the Nif File Format',
+                        description='Properties used by the BsShader for the Nif File Format',
                         type = cls,
                         )
 
@@ -586,18 +587,18 @@ class SkinPartHeader(bpy.types.PropertyGroup):
     def unregister(cls):
         del bpy.types.Object.niftools_part_flags_panel
 
-class SkinPartFlags(bpy.types.PropertyGroup):
+class SkinPartFlags(PropertyGroup):
     
     name  = bpy.props.StringProperty(
                     name=(''),
                     default = ''
                     )
 
-    pf_startflag = bpy.props.BoolProperty(
+    pf_startflag = BoolProperty(
                     name=('Start Net Boneset')
                     )
         
-    pf_editorflag = bpy.props.BoolProperty(
+    pf_editorflag = BoolProperty(
                     name=('Editor Visible')
                     )
 
@@ -612,12 +613,12 @@ class SkinPartFlags(bpy.types.PropertyGroup):
     
 
 
-class Object(bpy.types.PropertyGroup):
+class Object(PropertyGroup):
     @classmethod
     def register(cls):
         bpy.types.Object.niftools = PointerProperty(
                         name='Niftools Object Property',
-                        description = 'Additional object properties used by the Nif File Format',
+                        description='Additional object properties used by the Nif File Format',
                         type = cls,
                         )
         
@@ -637,7 +638,7 @@ class Object(bpy.types.PropertyGroup):
         
         cls.rootnode = EnumProperty(
                         name='Nif Root Node',
-                        description = 'Type of property used to display meshes.',
+                        description='Type of property used to display meshes.',
                         items = (('NiNode', 'NiNode',"", 0),
                                 ('BSFadeNode', 'BSFadeNode',"", 1)),
                         default = 'NiNode',
@@ -654,26 +655,26 @@ class Object(bpy.types.PropertyGroup):
 
         cls.consistency_flags = EnumProperty(
                         name='Consistency Flag',
-                        description = 'Controls animation type',
+                        description='Controls animation type',
                         items = [(item, item,"", i) for i, item in enumerate(NifFormat.ConsistencyType._enumkeys)],
                         #default = 'SHADER_DEFAULT'
                         )
 
         cls.objectflags = IntProperty(
                         name='Object Flag',
-                        description = 'Controls animation and collision',
+                        description='Controls animation and collision',
                         default = 0
                         )
 
         cls.bsxflags = IntProperty(
                         name='BSXFlags',
-                        description = 'Controls animation and collision',
+                        description='Controls animation and collision',
                         default = 0 # 2 = Bit 1, enable collision
                         )
 
         cls.upb = StringProperty(
                         name='UPB',
-                        description = 'Commands for an optimizer?',
+                        description='Commands for an optimizer?',
                         default = ''
                         )
 
@@ -683,7 +684,7 @@ class Object(bpy.types.PropertyGroup):
         del bpy.types.Object.niftools   
 
 
-class ObjectCollisionProps(bpy.types.PropertyGroup):
+class ObjectCollisionProps(PropertyGroup):
     '''Group of Havok related properties, which gets attached to objects through a property pointer.'''
     @classmethod
     def register(cls):
@@ -691,13 +692,13 @@ class ObjectCollisionProps(bpy.types.PropertyGroup):
         # physics
         bpy.types.Object.nifcollision = PointerProperty(
                         name='Niftools Collision Property',
-                        description = 'Additional collision properties used by the Nif File Format',
+                        description='Additional collision properties used by the Nif File Format',
                         type = cls,
                         )
         
         cls.motion_system = EnumProperty(
                         name='Motion System',
-                        description = 'Havok Motion System settings for bhkRigidBody(t)',
+                        description='Havok Motion System settings for bhkRigidBody(t)',
                         items = [(item, item,"", i) for i, item in enumerate(NifFormat.MotionSystem._enumkeys)],
                         # default = 'MO_SYS_FIXED',
                         
@@ -705,64 +706,64 @@ class ObjectCollisionProps(bpy.types.PropertyGroup):
            
         cls.oblivion_layer = EnumProperty(
                         name='Oblivion Layer',
-                        description = 'Mesh color, used in Editor',
+                        description='Mesh color, used in Editor',
                         items = [(item, item,"", i) for i, item in enumerate(NifFormat.OblivionLayer._enumkeys)],
                         # default = 'OL_STATIC',
                         )
 
         cls.deactivator_type = EnumProperty(
                         name='Deactivator Type',
-                        description = 'Motion deactivation setting',
+                        description='Motion deactivation setting',
                         items = [(item, item,"", i) for i, item in enumerate(NifFormat.DeactivatorType._enumkeys)],
                         )
 
         cls.solver_deactivation = EnumProperty(
                         name='Solver Deactivation',
-                        description = 'Motion deactivation setting',
+                        description='Motion deactivation setting',
                         items = [(item, item,"", i) for i, item in enumerate(NifFormat.SolverDeactivation._enumkeys)],
                         )
           
         cls.quality_type = EnumProperty(
                         name='Quality Type',
-                        description = 'Determines quality of motion',
+                        description='Determines quality of motion',
                         items = [(item, item,"", i) for i, item in enumerate(NifFormat.MotionQuality._enumkeys)],
                         # default = 'MO_QUAL_FIXED',
                         )
         
         cls.col_filter = IntProperty(
                         name='Col Filter',
-                        description = 'Flags for bhkRigidBody(t)',
+                        description='Flags for bhkRigidBody(t)',
                         default = 0
                         )
 
         cls.max_linear_velocity = FloatProperty(
                         name='Max Linear Velocity',
-                        description = 'Linear velocity limit for bhkRigidBody(t)',
+                        description='Linear velocity limit for bhkRigidBody(t)',
                         default = 0
                         )
 
         cls.max_angular_velocity = FloatProperty(
                         name='Max Angular Velocity',
-                        description = 'Angular velocity limit for bhkRigidBody(t)',
+                        description='Angular velocity limit for bhkRigidBody(t)',
                         default = 0
                         )
         
         cls.havok_material = EnumProperty(
                         name='Havok Material',
-                        description = 'The Shapes material',
+                        description='The Shapes material',
                         items = [(item, item,"", i) for i, item in enumerate(NifFormat.HavokMaterial._enumkeys)],
                         # default = 'HAV_MAT_WOOD'
                         )
                         
         cls.export_bhklist = BoolProperty(
                         name='Export BHKList',
-                        description = 'None',
+                        description='None',
                         default = False
                         )
         
         cls.use_blender_properties = BoolProperty(
                         name='Use Blender Properties',
-                        description = 'Whether or not to export collision settings via blender properties',
+                        description='Whether or not to export collision settings via blender properties',
                         default = False,
                         )
     @classmethod
@@ -770,42 +771,67 @@ class ObjectCollisionProps(bpy.types.PropertyGroup):
         del bpy.types.Object.nifcollision
 
 
-class ObjectCollision(bpy.types.PropertyGroup):
+class ObjectCollision(PropertyGroup):
     @classmethod
     def register(cls):
         bpy.types.Object.niftools_constraint = PointerProperty(
 						name='Niftools Constraint Property',
-						description = 'Additional constraint properties used by the Nif File Format',
+						description='Additional constraint properties used by the Nif File Format',
 						type = cls
 						)
 
         cls.LHMaxFriction = FloatProperty(
 						name='LHMaxFriction',
-						description = 'Havok limited hinge max friction.',
+						description='Havok limited hinge max friction.',
 						)
         cls.tau = FloatProperty(
                         name='tau',
-                        description = 'Havok limited hinge max friction.',
+                        description='Havok limited hinge max friction.',
                         )
         cls.damping = FloatProperty(
                         name='damping',
-                        description = 'Havok limited hinge max friction.',
+                        description='Havok limited hinge max friction.',
                         )
 
     @classmethod
     def unregister(cls):
         del bpy.types.Object.niftools_constraint
 
-
+class VertexGroupProperty(PropertyGroup):
+    @classmethod
+    def register(cls):
+        bpy.types.VertexGroup.niftools_skin_data = PointerProperty(
+                        name='Niftools Vertex Group Property',
+                        description='Additional vertex group properties used by the Nif File Format',
+                        type = cls
+                        )
+        
+        cls.blah = BoolProperty(
+                        name=('Start Net Boneset'), 
+                        description='None',
+                        default = False
+                        )
+        cls.random = BoolProperty(
+                        name=('Editor Visible'), 
+                        description='None',
+                        default = False
+                        )
+        
+    @classmethod
+    def unregister(cls):
+        del bpy.types.VertexGroup.niftools_skin_data
+        
+        
 def register():
     bpy.utils.register_class(Material)
     bpy.utils.register_class(Object)
     bpy.utils.register_class(ObjectCollision)
     bpy.utils.register_class(SkinPartFlags)
-
+    bpy.utils.register_class(VertexGroupProperty)
 
 def unregister():
     bpy.utils.unregister_class(Material)
     bpy.utils.unregister_class(Object)
     bpy.utils.unregister_class(ObjectCollision)
     bpy.utils.unregister_class(SkinPartFlags)
+    bpy.utils.unregister_class(VertexGroupProperty)

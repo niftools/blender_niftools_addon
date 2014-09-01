@@ -73,8 +73,34 @@ class PartFlag(Panel):
             col.prop(nif_pf_list_props[i], "pf_startflag", index = i)
             col.prop(nif_pf_list_props[i], "pf_editorflag", index = i)
 
+class VertexSkinInfoPanel(Panel):
+    bl_label = "Niftools Vertex Info Panel"
+    
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "data"
+    
+    COMPAT_ENGINES = {'BLENDER_RENDER', 'BLENDER_GAME'}
+    
+    @classmethod
+    def poll(cls, context):
+        engine = context.scene.render.engine
+        obj = context.object
+        return (obj and obj.type in {'MESH', 'LATTICE'} and (engine in cls.COMPAT_ENGINES))
+        
+    def draw(self, context):      
+        layout = self.layout
+        
+        active = context.active_object.vertex_groups.active
+        if(active):
+            skindata = active.niftools_skin_data
+            layout.prop(skindata, "random")
+
+
 def register():
     bpy.utils.register_class(PartFlag)
+    bpy.utils.register_class(VertexSkinInfoPanel)
     
 def unregister():
     bpy.utils.unregister_class(PartFlag)
+    bpy.utils.unregister_class(VertexSkinInfoPanel)
