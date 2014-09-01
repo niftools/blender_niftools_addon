@@ -73,5 +73,7 @@ class ObjectPanel(Panel):
 def register():
     bpy.utils.register_class(ObjectPanel)
 
+
 def unregister():
     bpy.utils.unregister_class(ObjectPanel)
+
