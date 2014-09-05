@@ -161,12 +161,12 @@ class NifExport(NifCommon):
                     b_obj.data.pose_position = 'POSE'
 
 
-                    if b_obj.type == 'MESH':
-                        b_obj_name = b_obj.name
+                if b_obj.type == 'MESH':
+                    b_obj_name = b_obj.name
+                    if b_obj.parent:
                         b_obj_parent = b_obj.parent.name
                         if bpy.data.objects[b_obj_name].modifiers[b_obj_parent].use_bone_envelopes:
-                        
-                            return self.error(
+                            raise nif_utils.NifError(
                                     "'%s': Cannot export envelope skinning."
                                     " If you have vertex groups,"
                                     " turn off envelopes. If you don't have vertex"
@@ -183,7 +183,7 @@ class NifExport(NifCommon):
                     if (abs(scale.x - scale.y) > self.properties.epsilon
                         or abs(scale.y - scale.z) > self.properties.epsilon):
 
-                        return self.error(
+                        raise nif_utils.NifError(
                             "Non-uniform scaling not supported."
                             " Workaround: apply size and rotation (CTRL-A)"
                             " on '%s'." % b_obj.name)
