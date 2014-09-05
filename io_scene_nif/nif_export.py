@@ -149,11 +149,6 @@ class NifExport(NifCommon):
                 self.info("Exporting animation only (as .kf file)")
 
             for b_obj in bpy.data.objects:
-#                nif_ver_hex = self.dec_to_hex(b_obj.niftools.nif_version)
-#                if nif_ver_hex not in NifFormat.games[self.properties.game]:
-#                    return self.error(
-#                            " '%s': version does not match selected export settings"
-#                            % b_obj.name)
                 # armatures should not be in rest position
                 if b_obj.type == 'ARMATURE':
                     # ensure we get the mesh vertices in animation mode,
@@ -211,7 +206,18 @@ class NifExport(NifCommon):
                         " or 'ARMATURE' object."
                         % root_object.name)
                 root_objects.add(root_object)
-
+            # version checking to help avoid errors
+            # due to invalid settings
+            for r_obj in root_objects:
+                nif_ver_hex = self.dec_to_hex(r_obj.niftools.nif_version)
+                for gname in NifFormat.games:
+                    gname_trans = self.get_game_to_trans(gname)
+                    if gname_trans == self.properties.game:
+                        if nif_ver_hex not in NifFormat.games[gname]:
+                            raise nif_utils.NifError(
+                            " '%s': version does not match selected export settings"
+                            % b_obj.name)
+                        break
             # smoothen seams of objects
             if self.properties.smooth_object_seams:
                 self.objecthelper.mesh_helper.smooth_mesh_seams(self.context.scene.objects)
