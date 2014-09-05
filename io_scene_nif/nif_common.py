@@ -184,6 +184,12 @@ class NifCommon:
         self.operator.report({'ERROR'}, message)
         return {'FINISHED'}
 
+    def get_game_to_trans(self, gname):
+        symbols = ":,'\" +-*!?;./="
+        table = str.maketrans(symbols, "_" * len(symbols))
+        enum = gname.upper().translate(table).replace("__", "_")
+        return enum
+
     def get_bone_name_for_blender(self, name):
         """Convert a bone name to a name that can be used by Blender: turns
         'Bip01 R xxx' into 'Bip01 xxx.R', and similar for L.
@@ -243,12 +249,17 @@ class NifCommon:
 
     def hex_to_dec(self, nif_ver_hex):
         
-        nif_ver_hex_1 = str(int('{0:.4}'.format(hex(self.data._version_value_._value)),0))
-        nif_ver_hex_2 = str(int('0x{0:.2}'.format(hex(self.data._version_value_._value)[4:]),0))
-        nif_ver_hex_3 = str(int('0x{0:.2}'.format(hex(self.data._version_value_._value)[6:]),0))
-        nif_ver_hex_4 = str(int('0x{0:.2}'.format(hex(self.data._version_value_._value)[8:]),0))
+        nif_ver_hex_1 = str(int('{0:.4}'.format(
+                        hex(self.data._version_value_._value)),0)).zfill(2)
+        nif_ver_hex_2 = str(int('0x{0:.2}'.format(
+                        hex(self.data._version_value_._value)[4:]),0)).zfill(2)
+        nif_ver_hex_3 = str(int('0x{0:.2}'.format(
+                        hex(self.data._version_value_._value)[6:]),0)).zfill(2)
+        nif_ver_hex_4 = str(int('0x{0:.2}'.format(
+                        hex(self.data._version_value_._value)[8:]),0)).zfill(2)
         
-        nif_ver_dec = str(nif_ver_hex_1 + "." + nif_ver_hex_2 + "." + nif_ver_hex_3 + "." + nif_ver_hex_4)
+        nif_ver_dec = str(
+        nif_ver_hex_1 + "." + nif_ver_hex_2 + "." + nif_ver_hex_3 + "." + nif_ver_hex_4)
         
         return nif_ver_dec
 
@@ -259,23 +270,12 @@ class NifCommon:
         dec_split = dec_split.split(nif_ver_dec)
 
         nif_ver_dec_1, nif_ver_dec_2, nif_ver_dec_3, nif_ver_dec_4 = dec_split
-        if int(nif_ver_dec_1) < 10 and int(nif_ver_dec_1) >= 0:
-            nif_ver_dec_1 = ("0" + nif_ver_dec_1)
-        else:
-            nif_ver_dec_1 = hex(int(nif_ver_dec_1, 10))[2:]
-        if int(nif_ver_dec_2) < 10 and int(nif_ver_dec_2) >= 0:
-            nif_ver_dec_2 = ("0" + nif_ver_dec_2)
-        else:
-            nif_ver_dec_2 = hex(int(nif_ver_dec_2, 10))[2:]
-        if int(nif_ver_dec_3) < 10 and int(nif_ver_dec_3) >= 0:
-            nif_ver_dec_3 = ("0" + nif_ver_dec_3)
-        else:
-            nif_ver_dec_3 = hex(int(nif_ver_dec_3, 10))[2:]
-        if int(nif_ver_dec_4) < 10 and int(nif_ver_dec_4) >= 0:
-            nif_ver_dec_4 = ("0" + nif_ver_dec_4)
-        else:
-            nif_ver_dec_4 = hex(int(nif_ver_dec_4, 10))[2:]
-        nif_ver_hex = ("0x" + nif_ver_dec_1 + nif_ver_dec_2 + nif_ver_dec_3 + nif_ver_dec_4)
+        nif_ver_dec_1 = hex(int(nif_ver_dec_1, 10))[2:].zfill(2)
+        nif_ver_dec_2 = hex(int(nif_ver_dec_2, 10))[2:].zfill(2)
+        nif_ver_dec_3 = hex(int(nif_ver_dec_3, 10))[2:].zfill(2)
+        nif_ver_dec_4 = hex(int(nif_ver_dec_4, 10))[2:].zfill(2)
+        nif_ver_hex = int(
+            (nif_ver_dec_1 + nif_ver_dec_2 + nif_ver_dec_3 + nif_ver_dec_4), 16)
         return nif_ver_hex
 
 
