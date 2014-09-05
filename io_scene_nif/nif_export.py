@@ -218,6 +218,13 @@ class NifExport(NifCommon):
                             " '%s': version does not match selected export settings"
                             % b_obj.name)
                         break
+                for r_obj_c in r_obj.children:
+                    if (r_obj_c.niftools.nif_version != r_obj.niftools.nif_version) or \
+                        (r_obj_c.niftools.user_version != r_obj.niftools.user_version) or \
+                            (r_obj_c.niftools.user_version_2 != r_obj.niftools.user_version_2):
+                        raise nif_utils.NifError(
+                            " '%s': has mismatched nif version, user version or user version 2"
+                            % r_obj_c.name)
             # smoothen seams of objects
             if self.properties.smooth_object_seams:
                 self.objecthelper.mesh_helper.smooth_mesh_seams(self.context.scene.objects)
