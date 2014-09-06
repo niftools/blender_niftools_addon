@@ -613,29 +613,29 @@ class SkinPartFlags(PropertyGroup):
     
         
 
-class BsInventoryMarker(bpy.types.PropertyGroup):
+class BsInventoryMarker(PropertyGroup):
 
-    name  = bpy.props.StringProperty(
+    name  = StringProperty(
                     name = (''),
                     default = ''
                     )
 
-    bs_inv_x = bpy.props.IntProperty(
+    bs_inv_x = IntProperty(
                     name = "Inv X value",
                     description = "Position of object in inventory on the x axis.",
                     default = 0)
 
-    bs_inv_y = bpy.props.IntProperty(
+    bs_inv_y = IntProperty(
                     name = "Inv Y value",
                     description = "Position of object in inventory on the y axis.",
                     default = 0)
 
-    bs_inv_z = bpy.props.IntProperty(
+    bs_inv_z = IntProperty(
                     name = "Inv Z value",
                     description = "Position of object in inventory on the z axis.",
                     default = 0)
 
-    bs_inv_zoom = bpy.props.FloatProperty(
+    bs_inv_zoom = FloatProperty(
                     name = "Inv zoom value",
                     description = "Inventory object Zoom level.",
                     default = 0)
