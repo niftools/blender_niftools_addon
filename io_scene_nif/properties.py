@@ -617,7 +617,7 @@ class BsInventoryMarker(PropertyGroup):
 
     name  = StringProperty(
                     name = (''),
-                    default = ''
+                    default = 'INV'
                     )
 
     bs_inv_x = IntProperty(
@@ -638,12 +638,17 @@ class BsInventoryMarker(PropertyGroup):
     bs_inv_zoom = FloatProperty(
                     name = "Inv zoom value",
                     description = "Inventory object Zoom level.",
-                    default = 0)
+                    default = 1)
 
-bpy.utils.register_class(BsInventoryMarker)
+    @classmethod
+    def register(cls):
+        bpy.types.Object.niftools_bs_invmarker = \
+            CollectionProperty(type=BsInventoryMarker)
+            
+    @classmethod
+    def unregister(cls):
+        del bpy.types.Object.niftools_bs_invmarker
 
-bpy.types.Object.niftools_bs_invmarker = \
-        CollectionProperty(type=BsInventoryMarker)
 
 
 class Object(PropertyGroup):
@@ -861,6 +866,7 @@ def register():
     bpy.utils.register_class(ObjectCollision)
     bpy.utils.register_class(SkinPartFlags)
     bpy.utils.register_class(VertexGroupProperty)
+    bpy.utils.register_class(BsInventoryMarker)
 
 def unregister():
     bpy.utils.unregister_class(Material)
@@ -868,3 +874,4 @@ def unregister():
     bpy.utils.unregister_class(ObjectCollision)
     bpy.utils.unregister_class(SkinPartFlags)
     bpy.utils.unregister_class(VertexGroupProperty)
+    bpy.utils.unregister_class(BsInventoryMarker)
