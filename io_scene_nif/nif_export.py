@@ -243,6 +243,24 @@ class NifExport(NifCommon):
             # export objects
             self.info("Exporting objects")
             for root_object in root_objects:
+                if self.properties.game in ('SKYRIM'):
+                    if root_object.niftools_bs_invmarker:
+                        for extra_item in root_block.extra_data_list:
+                            if isinstance(extra_item, NifFormat.BSInvMarker):
+                                raise nif_utils.NifError(
+                                    "Multiple Items have Inventory marker data"
+                                    " only one item may contain this data")
+                        else:
+                            n_extra_list = NifFormat.BSInvMarker()
+                            n_extra_list.name = root_object.niftools_bs_invmarker[0].name.encode()
+                            n_extra_list.rotation_x = root_object.niftools_bs_invmarker[0].bs_inv_x
+                            n_extra_list.rotation_y = root_object.niftools_bs_invmarker[0].bs_inv_y
+                            n_extra_list.rotation_z = root_object.niftools_bs_invmarker[0].bs_inv_z
+                            n_extra_list.zoom = root_object.niftools_bs_invmarker[0].bs_inv_zoom
+                             
+                            root_block.add_extra_data(n_extra_list)
+                    
+                    
                 # export the root objects as a NiNodes; their children are
                 # exported as well
                 # note that localspace = worldspace, because root objects have
@@ -1030,7 +1048,7 @@ class NifExport(NifCommon):
                 node.set_transform(self.IDENTITY44)
                 node.name = 'collisiondummy%i' % parent_block.num_children
                 if b_obj.niftools.objectflags != 0:
-                    node_flag_hex = b_obj.niftools.objectflags.to_hex()
+                    node_flag_hex = hex(b_obj.niftools.objectflags)
                 else:
                     node_flag_hex = 0x000E # default
                 node.flags = node_flag_hex
