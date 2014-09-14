@@ -77,13 +77,26 @@ Vertex Color
 * `This image should clarify per-face vertes coloring <http://i211.photobucket.com/albums/bb189/NifTools/Blender/documentation/per_face_vertex_color.jpg>`_
 * On export the scripts will take an average of colors. 
 
-.. warning::
-   alpha layer support has been added but disabled due to known issues with general vertex color support.
+Vertex Alpha
+------------
+.. _geometry-vertexalpha:
 
-.. todo::
-   Write up workflow for alpha layer once implemented.
+Vertex alpha is handled in the same way as vertex color. The only difference is that vertex alpha use grey scale.
    
-   
+**Example:**
+
+#. :ref:`Create a mesh-object <geometry-mesh>`.
+#. Switch to Vertex Paint mode, If there are no vertex color layers this will create a new layer.
+	you will need to add a second layer manually by clicking the + button in the vertex colors 
+	control panel located in the object data menu.
+#. In the brush menu on the left side of the screen, leave the color selector in the center and 
+	use the slider on the right side to change the level of shading with white being fully visible
+	and black being fully transparent.
+#. Apply the shading to the vertices just as you would for :ref:`Vertex Color <geometry-vertexcolor>`
+
+**Notes:**
+* Vertex alpha must use the second vertex color layer, even if there is no color applied in first color layer
+	the default color layer must be in place.
    
 Version Control
 ---------------
@@ -111,5 +124,17 @@ BS Inventory Marker
 .. _geometry-BSInvMarker:
 * BS Inv Marker
 	This sets the x, y, z rotation and zoom level of objects for the in game inventory display in games that support the property.
+	
+#. With blender in Object mode, open the BS Inv Marker property window and click + 
+	This should only be applied to the Root object, For rigged meshed this should be applied to the armature, For non rigged objects it should be applied to the Mesh object
+#. Apply desired values to x,y,z to set the preferred rotation.
+	#. Set view to back view and use rotation to achieve the preferred object orientation.
+	#. Copy the values from the rotation display into the x,y,z lines for BS Inv Marker.
+	#. Delete the decimal and remove any numbers to the right of the fourth digit.
+	#. Press alt + R to reset the object rotation back to 0
+#. Apply desired value to zoom	
+	#. a value of 1 for zoom is the default, lower values .99 to .01 decrease the item size in the menu.
+		
+	
 **Notes:**
-* Rigged objects that use this value may also use InvMarker Bones.
+* Rigged objects that use this value may also use :ref:`InvMarker Bones <armature-invmarker>`.

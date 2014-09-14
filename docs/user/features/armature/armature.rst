@@ -15,6 +15,13 @@ Inventory Marker
 	It may also be used for animation placement involving multiple NPCs
 * The InvMarker bone should only be used in engines that can support them.
 **Example:**
-	The Elder Scrolls - Skyrim
+	
+#. Create this item in the same manner as you would for a standard armature bone.
+#. parent must be Armature root
+#. Naming must start with InvMarker and can only be appended with .000
+	A model with 4 inventory marker bone items should be named as InvMarker, InvMarker.001, InvMarker.002, InvMarker.003 
+	
 **Notes:**
-	Exporting this type of bone into engines that do not support it will cause crashes.
+*	Games known to support this include
+		The Elder Scrolls - Skyrim
+*	Exporting this type of bone into engines that do not support it will cause crashes.
