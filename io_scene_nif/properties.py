@@ -611,6 +611,44 @@ class SkinPartFlags(PropertyGroup):
         del bpy.types.Object.niftools_part_flags
 
     
+        
+
+class BsInventoryMarker(PropertyGroup):
+
+    name  = StringProperty(
+                    name = (''),
+                    default = 'INV'
+                    )
+
+    bs_inv_x = IntProperty(
+                    name = "Inv X value",
+                    description = "Position of object in inventory on the x axis.",
+                    default = 0)
+
+    bs_inv_y = IntProperty(
+                    name = "Inv Y value",
+                    description = "Position of object in inventory on the y axis.",
+                    default = 0)
+
+    bs_inv_z = IntProperty(
+                    name = "Inv Z value",
+                    description = "Position of object in inventory on the z axis.",
+                    default = 0)
+
+    bs_inv_zoom = FloatProperty(
+                    name = "Inv zoom value",
+                    description = "Inventory object Zoom level.",
+                    default = 1)
+
+    @classmethod
+    def register(cls):
+        bpy.types.Object.niftools_bs_invmarker = \
+            CollectionProperty(type=BsInventoryMarker)
+            
+    @classmethod
+    def unregister(cls):
+        del bpy.types.Object.niftools_bs_invmarker
+
 
 
 class Object(PropertyGroup):
@@ -828,6 +866,7 @@ def register():
     bpy.utils.register_class(ObjectCollision)
     bpy.utils.register_class(SkinPartFlags)
     bpy.utils.register_class(VertexGroupProperty)
+    bpy.utils.register_class(BsInventoryMarker)
 
 def unregister():
     bpy.utils.unregister_class(Material)
@@ -835,3 +874,4 @@ def unregister():
     bpy.utils.unregister_class(ObjectCollision)
     bpy.utils.unregister_class(SkinPartFlags)
     bpy.utils.unregister_class(VertexGroupProperty)
+    bpy.utils.unregister_class(BsInventoryMarker)

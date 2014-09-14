@@ -70,10 +70,42 @@ class ObjectPanel(Panel):
         row.prop(nif_obj_props, "longname")
 
 
+class ObjectInvMarkerPanel(Panel):
+    bl_label = "BS Inv Marker"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "object"
+    
+    @classmethod
+    def poll(cls, context):
+        return True
+        
+
+    def draw(self, context):
+        nif_bsinv_props = context.object.niftools_bs_invmarker
+        
+        layout = self.layout
+        row = layout.row()
+        
+        col = row.column(align=True)
+        if not context.object.niftools_bs_invmarker:
+            row.operator("object.niftools_bs_invmarker_add", icon='ZOOMIN', text="")
+        if context.object.niftools_bs_invmarker:
+            row.operator("object.niftools_bs_invmarker_remove", icon='ZOOMOUT', text="")
+
+        for i,x in enumerate(nif_bsinv_props):
+            col.prop(nif_bsinv_props[i], "bs_inv_x", index= i)
+            col.prop(nif_bsinv_props[i], "bs_inv_y", index= i)
+            col.prop(nif_bsinv_props[i], "bs_inv_z", index= i)
+            col.prop(nif_bsinv_props[i], "bs_inv_zoom", index= i)
+
+
 def register():
     bpy.utils.register_class(ObjectPanel)
+    bpy.utils.register_class(ObjectInvMarkerPanel)
 
 
 def unregister():
     bpy.utils.unregister_class(ObjectPanel)
+    bpy.utils.unregister_class(ObjectInvMarkerPanel)
 

@@ -56,7 +56,7 @@ UV Unwrapping/Mapping
 **Notes:**
 
 * UV-unwrapping adds a :class:`~bpy.types.MeshTextureFaceLayer` to the Object.
-* Althought Blender allows multiple :class:`~bpy.types.MeshTextureFaceLayer`, most versions of the Nif format only support one UV layer
+* Although Blender allows multiple :class:`~bpy.types.MeshTextureFaceLayer`, most versions of the Nif format only support one UV layer
 
 Vertex Color
 ------------
@@ -83,3 +83,33 @@ Vertex Color
 .. todo::
    Write up workflow for alpha layer once implemented.
    
+   
+   
+Version Control
+---------------
+.. _geometry-VersionControl:
+* Nif Version
+	The base version, generally related to a single game or company. Displayed in format xx.xx.xx.xx
+**Example:**
+	Nif Version 20.02.00.07 is the version that is used for Fallout 3
+
+* User Version
+	A two digit single integer sub value of Nif Version
+	11 Would designate Fallout 3 as the specific game file.
+	
+* User Version 2:
+	A second two digit single integer sub value, with the same function as User Version.
+
+**Notes:**
+* All three values are used to verify which data should be attached to a file during the export process.
+* The values of each object are checked against the root object during export, any
+	mismatches will trigger and error and alert the user so that corrections can be effected.
+
+
+BS Inventory Marker
+-------------------
+.. _geometry-BSInvMarker:
+* BS Inv Marker
+	This sets the x, y, z rotation and zoom level of objects for the in game inventory display in games that support the property.
+**Notes:**
+* Rigged objects that use this value may also use InvMarker Bones.
