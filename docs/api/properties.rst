@@ -4,11 +4,11 @@ Blender Properties
 
 .. module:: io_scene_nif.properties
 
-.. autoclass:: NiftoolsMaterialProps
+.. autoclass:: Material
    :members:
 
-.. autoclass:: NiftoolsObjectProps
+.. autoclass:: Object
    :members:
    
-.. autoclass:: NiftoolsObjectCollisionProps
+.. autoclass:: ObjectCollision
    :members:

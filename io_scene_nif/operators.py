@@ -370,13 +370,43 @@ class NfTlPartFlagRemove(bpy.types.Operator):
         obj.niftools_part_flags_panel.pf_partcount = len(obj.niftools_part_flags)
         return {'FINISHED'}
 
+class BsInvMarkerAdd(bpy.types.Operator):
+    """Adds BsInvMarker set"""
+    bl_idname = "object.niftools_bs_invmarker_add"
+    bl_label = "Add Inventory Marker"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        obj = context.active_object
+        b_obj_invmarker = obj.niftools_bs_invmarker.add()
+        b_obj_invmarker.name = "INV"
+        b_obj_invmarker.bs_inv_x = 0
+        b_obj_invmarker.bs_inv_y = 0
+        b_obj_invmarker.bs_inv_z = 0
+        b_obj_invmarker.bs_inv_zoom = 1
+        return {'FINISHED'}
 
+class BsInvMarkerRemove(bpy.types.Operator):
+    """Removes BsInvMarker set"""
+    bl_idname = "object.niftools_bs_invmarker_remove"
+    bl_label = "Remove Inventory Marker"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        item = len(context.active_object.niftools_bs_invmarker)-1
+        obj = context.active_object
+        obj.niftools_bs_invmarker.remove(item)
+        return {'FINISHED'}
 
 def register():
     bpy.utils.register_class(NfTlPartFlagAdd)
     bpy.utils.register_class(NfTlPartFlagRemove)
+    bpy.utils.register_class(BsInvMarkerAdd)
+    bpy.utils.register_class(BsInvMarkerRemove)
     
 def unregister():
     bpy.utils.unregister_class(NfTlPartFlagAdd)
     bpy.utils.unregister_class(NfTlPartFlagRemove)
+    bpy.utils.unregister_class(BsInvMarkerAdd)
+    bpy.utils.unregister_class(BsInvMarkerRemove)
         
