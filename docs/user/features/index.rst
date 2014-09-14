@@ -11,6 +11,7 @@ Features
 .. toctree::
    :maxdepth: 1
    
+   armature/index
    collisions/index
    geometry/index
    properties/index
