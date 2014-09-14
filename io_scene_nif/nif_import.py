@@ -317,8 +317,7 @@ class NifImport(NifCommon):
             b_obj.niftools.nif_version = self.hex_to_dec(self.data._version_value_._value)
             b_obj.niftools.user_version = self.data._user_version_value_._value
             b_obj.niftools.user_version_2 = self.data._user_version_2_value_._value
-            
-            
+
         elif self.is_grouping_node(root_block):
             # special case 2: root node is grouping node
             self.debug("%s is a grouping node" % root_block.name)
@@ -344,9 +343,6 @@ class NifImport(NifCommon):
                         % root_block.name)
                 self.bhkhelper.import_bhk_shape(bhkshape=bhk_body)
 
-
-
-
             # process all its children
             for child in root_block.children:
                 b_obj = self.import_branch(child)
@@ -361,6 +357,18 @@ class NifImport(NifCommon):
             self.warning(
                 "Skipped unsupported root block type '%s' (corrupted nif?)."
                 % root_block.__class__)
+
+        if hasattr(root_block, "extra_data_list"):
+            for n_extra_list in root_block.extra_data_list:
+                if isinstance(n_extra_list, NifFormat.BSInvMarker):
+                    b_obj.niftools_bs_invmarker.add()
+                    b_obj.niftools_bs_invmarker[0].name = n_extra_list.name.decode()
+                    b_obj.niftools_bs_invmarker[0].bs_inv_x = n_extra_list.rotation_x
+                    b_obj.niftools_bs_invmarker[0].bs_inv_y = n_extra_list.rotation_y
+                    b_obj.niftools_bs_invmarker[0].bs_inv_z = n_extra_list.rotation_z
+                    b_obj.niftools_bs_invmarker[0].bs_inv_zoom = n_extra_list.zoom
+
+
 
         if self.root_ninode:
             b_obj.niftools.rootnode = self.root_ninode
@@ -784,6 +792,7 @@ class NifImport(NifCommon):
                 niName = "collision"
             else:
                 niName = "noname"
+        
         for uniqueInt in range(-1, 1000):
             # limit name length
             if uniqueInt == -1:
@@ -795,6 +804,9 @@ class NifImport(NifCommon):
             # bone naming convention for blender
             shortName = self.get_bone_name_for_blender(shortName)
             # make sure it is unique
+            if niName == "InvMarker":
+                if niName not in self.dict_names:
+                    break
             if (shortName not in bpy.data.objects
                 and shortName not in bpy.data.materials
                 and shortName not in bpy.data.meshes):
