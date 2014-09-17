@@ -189,8 +189,8 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
             ("GEOMETRY_ONLY", "Geometry Only",
              "Import geometry only and parent them to selected skeleton."),
             ),
-        name="What",
-        description="What should be imported.",
+        name="Process",
+        description="Parts of nif to be imported.",
         default="EVERYTHING")
 
     #: Import multi-material shapes as a single mesh.
