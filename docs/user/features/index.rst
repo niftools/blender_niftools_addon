@@ -14,5 +14,6 @@ Features
    armature/index
    collisions/index
    geometry/index
+   iosettings/index
    properties/index
    textures/index

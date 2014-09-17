@@ -1,0 +1,40 @@
+Import and Export Settings
+--------------------------
+
+This section explains the import and export settings.
+
+Import Settings
+---------------
+.. _iosettings-settings:
+
+* Scale Correction Import
+	The Nif model scale is much larger than the blender 3d scale, Blender Nif Plugin uses a default correction of .1 (which is 1 tenth of the size of the nif) So that the imported model will fit into the viewable area of the blender 3d view for editing.
+	 
+
+Log Level
+---------
+.. _iosettings-loglevel:
+
+* Log Level
+	The level at which a log entry is generated. This is used for debugging and error checking. The user will rarely have a need to alter this setting.
+	
+Keyframe File
+-------------
+.. _iosettings-keyframe:
+
+* keyframe file ( .kf ) is an animation file using key frame markers
+* A more complex animation file introduced with Skyrim ( .hkx ) is basically a compressed file containing .kf files.
+
+
+EGM File
+--------
+.. _iosettings-egm:
+
+* EGM files are a vertex morph animation file, most commonly used for facial animations and lip synch.
+
+Animation
+---------
+.. _iosettings-animation
+
+* Animation option when selected will import the :ref:`keyframe <iosettings-keyframe>` and/or the :ref:`EGM <iosettings-egm>` files listed in the file selection entries.
+
