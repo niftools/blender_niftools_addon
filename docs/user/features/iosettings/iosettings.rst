@@ -66,15 +66,31 @@ This options will combine vertices that contain the same x,y,z location and norm
 Select this when vertex ordering is not critical, non animated objects or animated objects that use a skeleton for the animations, but do not contain morph animations.
 Do not use this for any object that uses morph type animations.
 
+Game
+----
+.. _iosettings-game:
+
+A list of supported game for which the nif plugin will export working files.
+
+
 Process
 ---------
 .. _iosettings-process:
 
 Determines what parts of the file to import.
 
-* Options include
+* Import options include
 	* Everything - This will import geometry, armature, (keyframe, and EGM if set).
 	* Geometry only - Imports geometry and skips all other parts of the file.
 	* Skeleton only - Imports the armature and skips all other parts of the file.
+
+* Export options include
+	* All (nif) - Geometry and animation to a single nif.
+    * All (nif, xnif, xkf) - Geometry and animation to a nif, xnif, and xkf (for Morrowind).
+	* Geometry only (nif) - Only geometry to a single nif.
+	* Animation only (kf) - Only animation to a single kf.
 	
-	
+Smooth Inter-Object Seams
+-------------------------
+
+This option combines the normals data for all vertices containing the same xyz location data along an edge and uses the same normal tangent and bi-tangent values for all affected vertices.

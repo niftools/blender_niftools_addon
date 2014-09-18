@@ -259,14 +259,14 @@ class NifExportOperator(bpy.types.Operator, ExportHelper, NifOperatorCommon):
             ('GEOM_NIF', "Geometry only (nif)", "Only geometry to a single nif."),
             ('ANIM_KF', "Animation only (kf)", "Only animation to a single kf."),
             ],
-        name="Animation",
-        description="How to export animation.",
+        name="Process",
+        description="Selects which parts of the blender file to export.",
         default='ALL_NIF')
 
     #: Smoothen inter-object seams.
     smooth_object_seams = bpy.props.BoolProperty(
-        name="Smoothen Inter-Object Seams",
-        description="Smoothen inter-object seams.",
+        name="Smooth Inter-Object Seams",
+        description="Smooth normal data along inter-object seams.",
         default=True)
 
     #: Use BSAnimationNode (for Morrowind).
