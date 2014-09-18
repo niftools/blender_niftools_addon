@@ -66,12 +66,41 @@ This options will combine vertices that contain the same x,y,z location and norm
 Select this when vertex ordering is not critical, non animated objects or animated objects that use a skeleton for the animations, but do not contain morph animations.
 Do not use this for any object that uses morph type animations.
 
+Flatten Skin
+------------
+.. _iosettings-flattenskin:
+
+This option does something to the thing, no really it does, but I can't tell you because it's a sekret.
+
+Force DDS
+---------
+.. _iosettings-forcedds:
+
+Changes the suffix for the texture file path in the nif to use .dds
+
 Game
 ----
 .. _iosettings-game:
 
 A list of supported game for which the nif plugin will export working files.
 
+Max Partition Bones
+-------------------
+.. _iosettings-maxpartitionbones:
+
+The maximum number of bones that a single dismember partition can use before starting a new partition.
+
+Max Vertex Bones
+----------------
+.. _iosettings-maxvertexbones:
+
+The maximum number of bone weight values that can be applied to a single vertex.
+
+Pad & Sort Bones
+----------------
+.. _iosettings-padnsort:
+
+Adjusts the number of bones in a given partition to match the total number of bones used for the dismember instance.
 
 Process
 ---------
@@ -86,11 +115,19 @@ Determines what parts of the file to import.
 
 * Export options include
 	* All (nif) - Geometry and animation to a single nif.
-    * All (nif, xnif, xkf) - Geometry and animation to a nif, xnif, and xkf (for Morrowind).
+	* All (nif, xnif, xkf) - Geometry and animation to a nif, xnif, and xkf.
 	* Geometry only (nif) - Only geometry to a single nif.
 	* Animation only (kf) - Only animation to a single kf.
 	
 Smooth Inter-Object Seams
 -------------------------
+.. _iosettings-smoothseams:
 
 This option combines the normals data for all vertices containing the same xyz location data along an edge and uses the same normal tangent and bi-tangent values for all affected vertices.
+
+Use NiBSAnimationNode
+---------------------
+.. _iosettings-bsanimationnode:
+
+NiBSAnimationNode is specific to "The Elder Scrolls - Morrowind" and should only be used when exporting animated items for that game.
+
