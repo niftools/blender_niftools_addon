@@ -44,10 +44,10 @@ bl_info = {
     "Import and export files in the NetImmerse/Gamebryo nif format (.nif)",
     "author": "NifTools Team",
     "version": (2, 6, 0), # can't read from VERSION, blender wants it hardcoded
-    "blender": (2, 6, 2),
+    "blender": (2, 7, 1),
     "api": 39257,
     "location": "File > Import-Export",
-    "warning": "not functional, port from 2.49 series still in progress",
+    "warning": "partially functional, port from 2.49 series still in progress",
     "wiki_url": (
         "http://wiki.blender.org/index.php/Extensions:2.5/Py/Scripts/"\
         "Import-Export/Nif"),
@@ -105,7 +105,6 @@ def menu_func_export(self, context):
 def register():
     _init_loggers()
     properties.register()
-    ui.register()
     bpy.utils.register_module(__name__)
     bpy.types.INFO_MT_file_import.append(menu_func_import)
     bpy.types.INFO_MT_file_export.append(menu_func_export)
@@ -116,7 +115,6 @@ def unregister():
     #_uninit_loggers()
     bpy.types.INFO_MT_file_import.remove(menu_func_import)
     bpy.types.INFO_MT_file_export.remove(menu_func_export)
-    ui.unregister()
     properties.unregister()
     bpy.utils.unregister_module(__name__)
 

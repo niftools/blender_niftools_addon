@@ -2,7 +2,7 @@ Current developers
 ------------------
 
 * Neomonkeus (neomonkeus@users.sourceforge.net)
-* Ghostwalker71 ()
+* Ghostwalker71 (Ghostwalker71@users.sourceforge.net)
 
 
 Former developers
