@@ -38,6 +38,43 @@ Mesh Geometry
 * Double Sided Mesh - Adds a :class:`~pyffi.formats.nif.NifFormat.NiStencilProperty` or similiar, 
   see :ref:`Properties - Stencil Property <properties-stencil>` for more info.
 
+BS Inventory Marker
+-------------------
+.. _geometry-BSInvMarker:
+
+* BS Inv Marker
+	This sets the x, y, z rotation and zoom level of objects for the in game inventory display in games that support the property.
+	
+#. With blender in Object mode, open the BS Inv Marker property window and click + 
+	This should only be applied to the Root object, For rigged meshed this should be applied to the armature, For non rigged objects it should be applied to the Mesh object
+#. Apply desired values to x,y,z to set the preferred rotation.
+	#. Set view to back view and use rotation to achieve the preferred object orientation.
+	#. Copy the values from the rotation display into the x,y,z lines for BS Inv Marker.
+	#. Delete the decimal and remove any numbers to the right of the fourth digit.
+	#. Press alt + R to reset the object rotation back to 0
+#. Apply desired value to zoom	
+	#. a value of 1 for zoom is the default, lower values .99 to .01 decrease the item size in the menu.
+		
+	
+**Notes:**
+* Rigged objects that use this value may also use :ref:`InvMarker Bones <armature-invmarker>`.
+
+BSX
+---
+.. _geometry-bsx:
+
+BSX is a flagging variable that determines how havok will interact with the object
+	* Havok = 1
+	* Collision = 2
+	* Is armature (?) = 4
+	* Enable animation = 8
+	* Flame nodes = 16
+	* Editor marker present = 32
+
+**Notes:**
+	The value is equal to the sum of all items that are enabled.
+	to enable havok and collision the value would be 3
+
 UV Unwrapping/Mapping
 ---------------------
 
@@ -58,6 +95,15 @@ UV Unwrapping/Mapping
 * UV-unwrapping adds a :class:`~bpy.types.MeshTextureFaceLayer` to the Object.
 * Although Blender allows multiple :class:`~bpy.types.MeshTextureFaceLayer`, most versions of the Nif format only support one UV layer
 
+
+UPB
+---
+.. _geometry-upb:
+
+The UPB is a group of values contained in a single data string. It's use is unknown. 
+	* Niftools uses Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n as the default value set for this item.
+
+
 Vertex Color
 ------------
 .. _geometry-vertexcolor:
@@ -77,20 +123,36 @@ Vertex Color
 * `This image should clarify per-face vertes coloring <http://i211.photobucket.com/albums/bb189/NifTools/Blender/documentation/per_face_vertex_color.jpg>`_
 * On export the scripts will take an average of colors. 
 
-.. warning::
-   alpha layer support has been added but disabled due to known issues with general vertex color support.
+Vertex Alpha
+------------
+.. _geometry-vertexalpha:
 
-.. todo::
-   Write up workflow for alpha layer once implemented.
+Vertex alpha is handled in the same way as vertex color. The only difference is that vertex alpha use grey scale.
    
-   
+**Example:**
+
+#. :ref:`Create a mesh-object <geometry-mesh>`.
+#. Switch to Vertex Paint mode, If there are no vertex color layers this will create a new layer.
+	you will need to add a second layer manually by clicking the + button in the vertex colors 
+	control panel located in the object data menu.
+#. In the brush menu on the left side of the screen, leave the color selector in the center and 
+	use the slider on the right side to change the level of shading with white being fully visible
+	and black being fully transparent.
+#. Apply the shading to the vertices just as you would for :ref:`Vertex Color <geometry-vertexcolor>`
+
+**Notes:**
+
+	* Vertex alpha must use the second vertex color layer, even if there is no color applied in first color layer the default color layer must be in place.
    
 Version Control
 ---------------
 .. _geometry-VersionControl:
+
 * Nif Version
 	The base version, generally related to a single game or company. Displayed in format xx.xx.xx.xx
+	
 **Example:**
+
 	Nif Version 20.02.00.07 is the version that is used for Fallout 3
 
 * User Version
@@ -101,15 +163,9 @@ Version Control
 	A second two digit single integer sub value, with the same function as User Version.
 
 **Notes:**
-* All three values are used to verify which data should be attached to a file during the export process.
-* The values of each object are checked against the root object during export, any
-	mismatches will trigger and error and alert the user so that corrections can be effected.
+
+	* All three values are used to verify which data should be attached to a file during the export process.
+	* The values of each object are checked against the root object during export, any
+		mismatches will trigger and error and alert the user so that corrections can be effected.
 
 
-BS Inventory Marker
--------------------
-.. _geometry-BSInvMarker:
-* BS Inv Marker
-	This sets the x, y, z rotation and zoom level of objects for the in game inventory display in games that support the property.
-**Notes:**
-* Rigged objects that use this value may also use InvMarker Bones.
