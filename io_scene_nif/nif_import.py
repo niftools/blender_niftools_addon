@@ -815,7 +815,6 @@ class NifImport(NifCommon):
         shortname = self.import_name(niBlock)
         b_empty = bpy.data.objects.new(shortname, None)
 
-        # TODO: - is longname needed??? Yes it is needed, it resets the original name on export
         b_empty.niftools.longname = niBlock.name.decode()
 
         self.context.scene.objects.link(b_empty)
@@ -824,8 +823,7 @@ class NifImport(NifCommon):
         b_empty.niftools.objectflags = niBlock.flags
 
         if niBlock.name in self.dict_bone_priorities:
-            constr = b_empty.constraints.append(
-                bpy.types.Constraint.NULL)
+            constr = b_empty.constraints.new('ACTION')
             constr.name = "priority:%i" % self.dict_bone_priorities[niBlock.name]
         return b_empty
 
