@@ -1,4 +1,4 @@
-''' Nif User Interface, connect custom properties from properties.py into Blenders UI'''
+''' Nif User Interface, custom nif properties for materials'''
 
 # ***** BEGIN LICENSE BLOCK *****
 # 

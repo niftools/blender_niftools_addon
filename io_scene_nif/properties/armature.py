@@ -1,4 +1,4 @@
-'''Nif Format Properties, stored custom properties for armature settings'''
+'''Nif Format Properties, stores custom nif properties for armature settings'''
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
