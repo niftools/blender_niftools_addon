@@ -1,8 +1,8 @@
-''' Nif User Interface, custom properties store for collisions settings'''
+''' Nif User Interface, custom nif properties store for collisions settings'''
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
-# Copyright © 2005-2013, NIF File Format Library and Tools contributors.
+# Copyright © 2005-2014, NIF File Format Library and Tools contributors.
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,7 @@ from bpy.props import (PointerProperty,
 from pyffi.formats.nif import NifFormat
 
 
-class ObjectCollisionProps(PropertyGroup):
+class CollisionProperties(PropertyGroup):
     '''Group of Havok related properties, which gets attached to objects through a property pointer.'''
     @classmethod
     def register(cls):
