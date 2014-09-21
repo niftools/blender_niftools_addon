@@ -47,7 +47,7 @@ from bpy.props import (PointerProperty,
                        FloatProperty,
                        )
 
-class BoneProps(PropertyGroup):
+class BoneProperty(PropertyGroup):
     @classmethod
     def register(cls):
         bpy.types.Bone.niftools_bone = PointerProperty(
@@ -101,3 +101,11 @@ class BsInventoryMarker(PropertyGroup):
     def unregister(cls):
         del bpy.types.Object.niftools_bs_invmarker
 
+
+def register():
+    bpy.utils.register_class(BoneProperty)
+    bpy.utils.register_class(BsInventoryMarker)
+    
+def unregister():
+    bpy.utils.unregister_class(BoneProperty)
+    bpy.utils.unregister_class(BsInventoryMarker)

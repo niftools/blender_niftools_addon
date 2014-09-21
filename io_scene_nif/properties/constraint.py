@@ -37,6 +37,8 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import bpy
+
 from bpy.types import PropertyGroup
 from bpy.props import (PointerProperty,
                        FloatProperty,
@@ -67,3 +69,10 @@ class ConstraintProperty(PropertyGroup):
     @classmethod
     def unregister(cls):
         del bpy.types.Object.niftools_constraint
+
+
+def register():
+    bpy.utils.register_class(ConstraintProperty)
+    
+def unregister():
+    bpy.utils.unregister_class(ConstraintProperty)
