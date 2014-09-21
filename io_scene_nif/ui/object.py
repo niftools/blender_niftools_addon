@@ -38,7 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-from bpy.types import Panel
+from bpy.types import Panel, UIList
 
 
 class ObjectPanel(Panel):
@@ -55,6 +55,7 @@ class ObjectPanel(Panel):
 
     def draw(self, context):
         nif_obj_props = context.object.niftools
+        ob = context.object
         
         layout = self.layout
         row = layout.column()
@@ -69,6 +70,19 @@ class ObjectPanel(Panel):
         row.prop(nif_obj_props, "objectflags")
         row.prop(nif_obj_props, "longname")
 
+        row.prop(nif_obj_props, "extra_data_index")
+#         if not context.object.nif_obj_props:
+#             row.operator("object.niftools_bs_invmarker_add", icon='ZOOMIN', text="")
+        row.operator("object.niftools_extradata_add", icon='ZOOMIN', text="")
+        if len(context.object.niftools_bs_invmarker) == 0:
+            row.operator("object.niftools_extradata_remove", icon='ZOOMOUT', text="")
+        row.template_list("OBJECT_UL_ExtraData", "", nif_obj_props, "extra_data", nif_obj_props, "extra_data_index")
+
+class OBJECT_UL_ExtraData(UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        split = layout.split(0.2)
+        split.label(str(item.name))
+        split.prop(item, "name", text="", emboss=False, translate=False, icon='BORDER_RECT')
 
 class ObjectInvMarkerPanel(Panel):
     bl_label = "BS Inv Marker"
@@ -81,19 +95,18 @@ class ObjectInvMarkerPanel(Panel):
         return True
         
 
-    def draw(self, context):
-        nif_bsinv_props = context.object.niftools_bs_invmarker
-        
+    def draw(self, context):       
         layout = self.layout
+        nif_bsinv_props = context.object.niftools_bs_invmarker
+                
         row = layout.row()
-        
-        col = row.column(align=True)
         if not context.object.niftools_bs_invmarker:
             row.operator("object.niftools_bs_invmarker_add", icon='ZOOMIN', text="")
         if context.object.niftools_bs_invmarker:
             row.operator("object.niftools_bs_invmarker_remove", icon='ZOOMOUT', text="")
 
-        for i,x in enumerate(nif_bsinv_props):
+        col = row.column(align=True)
+        for i, x in enumerate(nif_bsinv_props):
             col.prop(nif_bsinv_props[i], "bs_inv_x", index= i)
             col.prop(nif_bsinv_props[i], "bs_inv_y", index= i)
             col.prop(nif_bsinv_props[i], "bs_inv_z", index= i)
@@ -103,9 +116,17 @@ class ObjectInvMarkerPanel(Panel):
 def register():
     bpy.utils.register_class(ObjectPanel)
     bpy.utils.register_class(ObjectInvMarkerPanel)
+    bpy.utils.register_class(OBJECT_UL_ExtraData)
+    
+    ob = bpy.context.object
+    item = ob.niftools.extra_data.add()
+    item.id = len(ob.niftools.extra_data)
+    item.name = "extra_data " + chr(item.id + 64)
 
 
 def unregister():
     bpy.utils.unregister_class(ObjectPanel)
     bpy.utils.unregister_class(ObjectInvMarkerPanel)
+    bpy.utils.unregister_class(OBJECT_UL_ExtraData)
+
 
