@@ -110,10 +110,11 @@ def register():
 
 
 def unregister():
-    _init_loggers()
-    bpy.utils.unregister_module(__name__)
+    # no idea how to do this... oh well, let's not lose any sleep over it
+    #_uninit_loggers()
     bpy.types.INFO_MT_file_import.remove(menu_func_import)
     bpy.types.INFO_MT_file_export.remove(menu_func_export)
+    bpy.utils.unregister_module(__name__)
     
 
 if __name__ == "__main__":
