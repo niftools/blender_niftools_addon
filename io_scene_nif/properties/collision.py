@@ -44,12 +44,13 @@ from bpy.props import (PointerProperty,
                        IntProperty,
                        BoolProperty,
                        EnumProperty,
+                       FloatProperty,
                        )
 
 from pyffi.formats.nif import NifFormat
 
 
-class CollisionProperties(PropertyGroup):
+class CollisionProperty(PropertyGroup):
     '''Group of Havok related properties, which gets attached to objects through a property pointer.'''
     @classmethod
     def register(cls):
@@ -134,3 +135,9 @@ class CollisionProperties(PropertyGroup):
     @classmethod
     def unregister(cls):
         del bpy.types.Object.nifcollision
+        
+def register():
+    bpy.utils.register_class(CollisionProperty)
+    
+def unregister():
+    bpy.utils.unregister_class(CollisionProperty)
