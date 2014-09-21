@@ -44,9 +44,14 @@ from bpy.props import (PointerProperty,
                        StringProperty,
                        IntProperty,
                        EnumProperty,
+                       CollectionProperty
                        )
 
 from pyffi.formats.nif import NifFormat
+
+class ExtraData(bpy.types.PropertyGroup):
+    # name = StringProperty()
+    id = IntProperty()
 
 class ObjectProperty(PropertyGroup):
     @classmethod
@@ -111,6 +116,12 @@ class ObjectProperty(PropertyGroup):
                         name='UPB',
                         description='Commands for an optimizer?',
                         default = ''
+                        )
+                        
+        cls.extra_data = CollectionProperty(
+                        name= "Extra Data",
+                        description="Collection of extra data",
+                        type=ExtraData,
                         )
 
         
