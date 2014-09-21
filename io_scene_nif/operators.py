@@ -396,16 +396,44 @@ class BsInvMarkerRemove(bpy.types.Operator):
         obj = context.active_object
         obj.niftools_bs_invmarker.remove(item)
         return {'FINISHED'}
+    
+    
+class NiExtraDataAdd(bpy.types.Operator):
+    """Adds BsInvMarker set"""
+    bl_idname = "object.niftools_extradata_add"
+    bl_label = "Add Extra Marker"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        obj = context.active_object
+        obj.niftools.extra_data.add()
+        return {'FINISHED'}
+
+class NiExtraDataRemove(bpy.types.Operator):
+    """Removes Extra Data from Objects"""
+    bl_idname = "object.niftools_extradata_remove"
+    bl_label = "Remove Inventory Marker"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        item = context.active_object.niftools.extra_data_index
+        obj = context.active_object
+        obj.niftools.extra_data.remove(item)
+        return {'FINISHED'}
 
 def register():
     bpy.utils.register_class(NfTlPartFlagAdd)
     bpy.utils.register_class(NfTlPartFlagRemove)
     bpy.utils.register_class(BsInvMarkerAdd)
     bpy.utils.register_class(BsInvMarkerRemove)
+    bpy.utils.register_class(NiExtraDataAdd)
+    bpy.utils.register_class(NiExtraDataRemove)
     
 def unregister():
     bpy.utils.unregister_class(NfTlPartFlagAdd)
     bpy.utils.unregister_class(NfTlPartFlagRemove)
     bpy.utils.unregister_class(BsInvMarkerAdd)
     bpy.utils.unregister_class(BsInvMarkerRemove)
+    bpy.utils.unregister_class(NiExtraDataAdd)
+    bpy.utils.unregister_class(NiExtraDataRemove)
         
