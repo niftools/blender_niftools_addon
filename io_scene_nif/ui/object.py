@@ -70,14 +70,37 @@ class ObjectPanel(Panel):
         row.prop(nif_obj_props, "objectflags")
         row.prop(nif_obj_props, "longname")
 
-        row.prop(nif_obj_props.extra_data_store, "extra_data_index")
-#         if not context.object.nif_obj_props:
-#             row.operator("object.niftools_bs_invmarker_add", icon='ZOOMIN', text="")
-        row.operator("object.niftools_extradata_add", icon='ZOOMIN', text="")
-        if len(context.object.niftools_bs_invmarker) == 0:
-            row.operator("object.niftools_extradata_remove", icon='ZOOMOUT', text="")
+        
+
+class OBJECT_PT_ExtraData(Panel):
+    bl_label = "Niftools Object Extra Data Panel"
+    
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "object"
+    
+    @classmethod
+    def poll(cls, context):
+        return True
+        
+
+    def draw(self, context):
+        b_obj = context.object
+        extra_data_store = b_obj.niftools.extra_data_store
+        
+        layout = self.layout
+        row = layout.row()
+        
+        col = row.column(align=True)
+        col.operator("object.niftools_extradata_add", icon='ZOOMIN', text="")
+        if len(extra_data_store.extra_data) != 0:
+            col.operator("object.niftools_extradata_remove", icon='ZOOMOUT', text="")
+
+        col = row.column()
+        col.template_list("OBJECT_UL_ExtraData", "", extra_data_store, "extra_data", extra_data_store, "extra_data_index")
+
             
-        row.template_list("OBJECT_UL_ExtraData", "", nif_obj_props.extra_data_store, "extra_data", nif_obj_props.extra_data_store, "extra_data_index")
+        
 
 class OBJECT_UL_ExtraData(UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
@@ -113,16 +136,5 @@ class ObjectInvMarkerPanel(Panel):
             col.prop(nif_bsinv_props[i], "bs_inv_z", index= i)
             col.prop(nif_bsinv_props[i], "bs_inv_zoom", index= i)
 
-
-def register():
-    bpy.utils.register_class(ObjectPanel)
-    bpy.utils.register_class(ObjectInvMarkerPanel)
-    bpy.utils.register_class(OBJECT_UL_ExtraData)
-    
-
-def unregister():
-    bpy.utils.unregister_class(ObjectPanel)
-    bpy.utils.unregister_class(ObjectInvMarkerPanel)
-    bpy.utils.unregister_class(OBJECT_UL_ExtraData)
 
 
