@@ -70,13 +70,14 @@ class ObjectPanel(Panel):
         row.prop(nif_obj_props, "objectflags")
         row.prop(nif_obj_props, "longname")
 
-        row.prop(nif_obj_props, "extra_data_index")
+        row.prop(nif_obj_props.extra_data_store, "extra_data_index")
 #         if not context.object.nif_obj_props:
 #             row.operator("object.niftools_bs_invmarker_add", icon='ZOOMIN', text="")
         row.operator("object.niftools_extradata_add", icon='ZOOMIN', text="")
         if len(context.object.niftools_bs_invmarker) == 0:
             row.operator("object.niftools_extradata_remove", icon='ZOOMOUT', text="")
-        row.template_list("OBJECT_UL_ExtraData", "", nif_obj_props, "extra_data", nif_obj_props, "extra_data_index")
+            
+        row.template_list("OBJECT_UL_ExtraData", "", nif_obj_props.extra_data_store, "extra_data", nif_obj_props.extra_data_store, "extra_data_index")
 
 class OBJECT_UL_ExtraData(UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
