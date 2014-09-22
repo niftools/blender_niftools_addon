@@ -49,7 +49,7 @@ class NiExtraDataAdd(Operator):
     
     def execute(self, context):
         obj = context.active_object
-        obj.niftools.extra_data.add()
+        obj.niftools.extra_data_store.extra_data.add()
         return {'FINISHED'}
 
 class NiExtraDataRemove(Operator):
@@ -59,7 +59,7 @@ class NiExtraDataRemove(Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        item = context.active_object.niftools.extra_data_index
-        obj = context.active_object
-        obj.niftools.extra_data.remove(item)
+        b_obj = context.active_object
+        item = b_obj.niftools.extra_data_store.extra_data_index
+        b_obj.niftools.extra_data_store.extra_data.remove(item)
         return {'FINISHED'}

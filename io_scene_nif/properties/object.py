@@ -49,9 +49,26 @@ from bpy.props import (PointerProperty,
 
 from pyffi.formats.nif import NifFormat
 
-class ExtraData(bpy.types.PropertyGroup):
-    # name = StringProperty()
+
+class ExtraData(PropertyGroup):
+    name = StringProperty()
     id = IntProperty()
+
+class ExtraDataStore(PropertyGroup):
+    @classmethod
+    def register(cls):
+        cls.extra_data = CollectionProperty(
+                                        name= "Extra Data",
+                                        description="Used to store all the Extra data",
+                                        type=ExtraData,
+                                        )
+        cls.extra_data_index = IntProperty()
+    
+    @classmethod
+    def unregister(cls):
+        del cls.extra_data
+        del cls.extra_data_index
+    
 
 class ObjectProperty(PropertyGroup):
     @classmethod
@@ -117,13 +134,13 @@ class ObjectProperty(PropertyGroup):
                         description='Commands for an optimizer?',
                         default = ''
                         )
-                        
-        cls.extra_data = CollectionProperty(
-                        name= "Extra Data",
-                        description="Collection of extra data",
-                        type=ExtraData,
-                        )
 
+        cls.extra_data_store = PointerProperty(
+                        name= "Extra Data",
+                        description="Used to store all the Extra data",
+                        type = ExtraDataStore,
+                        )
+        
         
     @classmethod
     def unregister(cls):
