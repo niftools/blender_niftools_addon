@@ -56,6 +56,8 @@ bl_info = {
     "support": "COMMUNITY",
     "category": "Import-Export"}
 
+import io_scene_nif
+
 try:
     from io_scene_nif import nif_debug
     nif_debug.startdebug()
@@ -75,8 +77,8 @@ if not _modules_path in sys.path:
     sys.path.append(_modules_path)
 del _modules_path
 
-import io_scene_nif.ui
-from io_scene_nif import properties, operators
+
+from io_scene_nif import properties, operators, operator, ui
 
 def _init_loggers():
     """Set up loggers."""

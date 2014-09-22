@@ -115,10 +115,3 @@ class SkinPartFlags(PropertyGroup):
     def unregister(cls):
         del bpy.types.Object.niftools_part_flags
 
-
-
-def register():
-    bpy.utils.register_class(VertexGroupProperty)
-    
-def unregister():
-    bpy.utils.unregister_class(VertexGroupProperty)
