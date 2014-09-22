@@ -56,21 +56,3 @@ def underscore_to_camelcase(s):
                 yield word.lower()
             first_word_passed = True
     return ''.join(camelcase_words(s.split('_')))
-
-def register():
-    armature.register()
-    collision.register()
-    constraint.register()
-    geometry.register()
-    material.register()
-    object.register()
-    shader.register()
-    
-def unregister():
-    armature.unregister()
-    collision.unregister()
-    constraint.unregister()
-    geometry.unregister()
-    material.unregister()
-    object.unregister()
-    shader.unregister()

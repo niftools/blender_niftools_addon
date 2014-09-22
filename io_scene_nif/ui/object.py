@@ -118,11 +118,6 @@ def register():
     bpy.utils.register_class(ObjectInvMarkerPanel)
     bpy.utils.register_class(OBJECT_UL_ExtraData)
     
-    ob = bpy.context.object
-    item = ob.niftools.extra_data.add()
-    item.id = len(ob.niftools.extra_data)
-    item.name = "extra_data " + chr(item.id + 64)
-
 
 def unregister():
     bpy.utils.unregister_class(ObjectPanel)

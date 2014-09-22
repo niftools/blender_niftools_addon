@@ -1,8 +1,8 @@
-''' Nif User Interface, custom properties store for constaints'''
+''' Nif User Interface, connect custom properties from properties.py into Blenders UI'''
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
-# Copyright © 2005-2014, NIF File Format Library and Tools contributors.
+# Copyright © 2005-2013, NIF File Format Library and Tools contributors.
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -38,35 +38,28 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
+from bpy.types import Operator
 
-from bpy.types import PropertyGroup
-from bpy.props import (PointerProperty,
-                       FloatProperty,
-                       )
 
-class ConstraintProperty(PropertyGroup):
-    @classmethod
-    def register(cls):
-        bpy.types.Object.niftools_constraint = PointerProperty(
-						name='Niftools Constraint Property',
-						description='Additional constraint properties used by the Nif File Format',
-						type = cls
-						)
+class NiExtraDataAdd(Operator):
+    """Adds BsInvMarker set"""
+    bl_idname = "object.niftools_extradata_add"
+    bl_label = "Add Extra Marker"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        obj = context.active_object
+        obj.niftools.extra_data.add()
+        return {'FINISHED'}
 
-        cls.LHMaxFriction = FloatProperty(
-						name='LHMaxFriction',
-						description='Havok limited hinge max friction.',
-						)
-        cls.tau = FloatProperty(
-                        name='tau',
-                        description='Havok limited hinge max friction.',
-                        )
-        cls.damping = FloatProperty(
-                        name='damping',
-                        description='Havok limited hinge max friction.',
-                        )
+class NiExtraDataRemove(Operator):
+    """Removes Extra Data from Objects"""
+    bl_idname = "object.niftools_extradata_remove"
+    bl_label = "Remove Inventory Marker"
+    bl_options = {'REGISTER', 'UNDO'}
 
-    @classmethod
-    def unregister(cls):
-        del bpy.types.Object.niftools_constraint
-
+    def execute(self, context):
+        item = context.active_object.niftools.extra_data_index
+        obj = context.active_object
+        obj.niftools.extra_data.remove(item)
+        return {'FINISHED'}
