@@ -136,8 +136,3 @@ class CollisionProperty(PropertyGroup):
     def unregister(cls):
         del bpy.types.Object.nifcollision
         
-def register():
-    bpy.utils.register_class(CollisionProperty)
-    
-def unregister():
-    bpy.utils.unregister_class(CollisionProperty)
