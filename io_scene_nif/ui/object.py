@@ -38,7 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-from bpy.types import Panel, UIList
+from bpy.types import Panel, UIList, Menu
 
 
 class ObjectPanel(Panel):
@@ -89,24 +89,39 @@ class OBJECT_PT_ExtraData(Panel):
         extra_data_store = b_obj.niftools.extra_data_store
         
         layout = self.layout
+
         row = layout.row()
+        row.template_list("OBJECT_UL_ExtraData", "", extra_data_store, "extra_data", extra_data_store, "extra_data_index")
         
         col = row.column(align=True)
-        col.operator("object.niftools_extradata_add", icon='ZOOMIN', text="")
+        col.menu("OBJECT_MT_ExtraDataType", icon='ZOOMIN', text="")
+#         col.menu("object.niftools_extradata_add", icon='ZOOMIN', text="")
         if len(extra_data_store.extra_data) != 0:
             col.operator("object.niftools_extradata_remove", icon='ZOOMOUT', text="")
-
-        col = row.column()
-        col.template_list("OBJECT_UL_ExtraData", "", extra_data_store, "extra_data", extra_data_store, "extra_data_index")
-
             
+        row = layout.row()
+        box = layout.box()
+        
+        selected_extra_data = extra_data_store.extra_data[extra_data_store.extra_data_index]
+        box.prop(selected_extra_data, "name")
+        box.prop(selected_extra_data, "data")
+
+class OBJECT_MT_ExtraDataType(Menu):
+    bl_label = "Extra Data Types"
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.operator("object.niftools_extradata_bsx_add")
+        layout.operator("object.niftools_extradata_upb_add")
+        layout.operator("object.niftools_extradata_sample_add")
+        layout.operator("object.niftools_extradata_sample_add")
         
 
 class OBJECT_UL_ExtraData(UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         split = layout.split(0.2)
         split.label(str(item.name))
-        split.prop(item, "name", text="", emboss=False, translate=False, icon='BORDER_RECT')
+        split.prop(item, "type", text="", emboss=False, translate=False, icon='BORDER_RECT')
 
 class ObjectInvMarkerPanel(Panel):
     bl_label = "BS Inv Marker"
