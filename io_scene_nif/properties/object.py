@@ -53,6 +53,8 @@ from pyffi.formats.nif import NifFormat
 class ExtraData(PropertyGroup):
     name = StringProperty()
     id = IntProperty()
+    data = StringProperty()
+    type = StringProperty()
 
 class ExtraDataStore(PropertyGroup):
     @classmethod
