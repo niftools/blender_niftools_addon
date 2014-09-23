@@ -267,7 +267,6 @@ class AnimationHelper():
         assert(isinstance(kfd, NifFormat.NiKeyframeData))
         # create an Ipo for this object
         b_action = ObjectAnimation.get_object_ipo(self, b_obj)
-        b_fcurve = b_action.fcurves.new(b_obj.name)
         # get the animation keys
         translations = kfd.translations
         scales = kfd.scales
@@ -302,27 +301,32 @@ class AnimationHelper():
             # uses quaternions
             if kfd.quaternion_keys:
                 self.nif_import.debug('Rotation keys...(quaternions)')
+                b_fcurve_rx = b_action.fcurves.new('rotation_euler', 0)
+                b_fcurve_ry = b_action.fcurves.new('rotation_euler', 1)
+                b_fcurve_rz = b_action.fcurves.new('rotation_euler', 2)
             for key in kfd.quaternion_keys:
                 frame = 1+int(key.time * self.nif_import.fps + 0.5) # time 0.0 is frame 1
                 bpy.context.scene.frame_set(frame)
-                rot = mathutils.Quaternion((
-                        key.value.x, key.value.y, key.value.z, key.value.w)).to_euler()
-                # Blender euler is in degrees, object RotXYZ is in radians
-                b_obj.rotation_euler.x = rot.x * self.nif_import.D2R
-                b_obj.rotation_euler.y = rot.y * self.nif_import.D2R
-                b_obj.rotation_euler.z = rot.z * self.nif_import.D2R
-                b_fcurve.keyframe_points.insert(frame,0)
+                b_obj.rotation_euler = mathutils.Quaternion((
+                        key.value.w, key.value.x, key.value.y, key.value.z)).to_euler()
+                b_fcurve_rx.keyframe_points.insert(frame, b_obj.rotation_euler.x)
+                b_fcurve_ry.keyframe_points.insert(frame, b_obj.rotation_euler.y)
+                b_fcurve_rz.keyframe_points.insert(frame, b_obj.rotation_euler.z)
 
         if translations.keys:
             self.nif_import.debug('Translation keys...')
+            b_fcurve_x = b_action.fcurves.new('location', 0)
+            b_fcurve_y = b_action.fcurves.new('location', 1)
+            b_fcurve_z = b_action.fcurves.new('location', 2)            
         for key in translations.keys:
             frame = 1+int(key.time * self.nif_import.fps + 0.5) # time 0.0 is frame 1
             bpy.context.scene.frame_set(frame)
             b_obj.location.x = key.value.x
             b_obj.location.y = key.value.y
             b_obj.location.z = key.value.z
-            b_fcurve.keyframe_points.insert(frame,0)
-
+            b_fcurve_x.keyframe_points.insert(frame, b_obj.location.x)
+            b_fcurve_y.keyframe_points.insert(frame, b_obj.location.y)
+            b_fcurve_z.keyframe_points.insert(frame, b_obj.location.z)
         bpy.context.scene.frame_set(1)
 
 
@@ -337,8 +341,9 @@ class ObjectAnimation():
         """
         if not b_object.animation_data:
             b_object.animation_data_create()
+        if not b_object.animation_data.action:
             b_object.animation_data.action = \
-                bpy.data.actions.new('OBJECT')
+                bpy.data.actions.new(b_object.name)
         return b_object.animation_data.action    
     
     def import_object_vis_controller(self, b_object, n_node):
