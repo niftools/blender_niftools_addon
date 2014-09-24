@@ -1305,8 +1305,8 @@ class NifImport(NifCommon):
                     b_mesh.key.blocks[0].name = keyname
                     # get base vectors and import all morphs
                     baseverts = morphData.morphs[0].vectors
-                    b_ipo = Blender.Ipo.New('Key' , 'KeyIpo')
-                    b_mesh.key.ipo = b_ipo
+                    b_action = Blender.action.New('Key' , 'Keyaction')
+                    b_mesh.key.action = b_action
                     for idxMorph in range(1, morphData.num_morphs):
                         # get name for key
                         keyname = morphData.morphs[idxMorph].frame_name
@@ -1331,9 +1331,9 @@ class NifImport(NifCommon):
                         b_mesh.insertKey(idxMorph, 'relative')
                         # set name for key
                         b_mesh.key.blocks[idxMorph].name = keyname
-                        # set up the ipo key curve
+                        # set up the action key curve
                         try:
-                            b_curve = b_ipo.addCurve(keyname)
+                            b_curve = b_action.addCurve(keyname)
                         except ValueError:
                             # this happens when two keys have the same name
                             # an instance of this is in fallout 3
@@ -1342,7 +1342,7 @@ class NifImport(NifCommon):
                                 "skipped duplicate of key '%s'" % keyname)
                         # no idea how to set up the bezier triples -> switching
                         # to linear instead
-                        b_curve.interpolation = Blender.IpoCurve.InterpTypes.LINEAR
+                        b_curve.interpolation = Blender.actionCurve.InterpTypes.LINEAR
                         # select extrapolation
                         b_curve.extend = self.get_extend_from_flags(morphCtrl.flags)
                         # set up the curve's control points
@@ -1378,9 +1378,9 @@ class NifImport(NifCommon):
             b_mesh.insertKey(1, 'relative')
 
             if self.IMPORT_EGMANIM:
-                # if morphs are animated: create key ipo for mesh
-                b_ipo = Blender.Ipo.New('Key' , 'KeyIpo')
-                b_mesh.key.ipo = b_ipo
+                # if morphs are animated: create key action for mesh
+                b_action = Blender.action.New('Key' , 'Keyaction')
+                b_mesh.key.action = b_action
 
 
             morphs = ([(morph, "EGM SYM %i" % i)
@@ -1411,12 +1411,12 @@ class NifImport(NifCommon):
                 b_mesh.key.blocks[-1].name = keyname
 
                 if self.IMPORT_EGMANIM:
-                    # set up the ipo key curve
-                    b_curve = b_ipo.addCurve(keyname)
+                    # set up the action key curve
+                    b_curve = b_action.addCurve(keyname)
                     # linear interpolation
-                    b_curve.interpolation = Blender.IpoCurve.InterpTypes.LINEAR
+                    b_curve.interpolation = Blender.actionCurve.InterpTypes.LINEAR
                     # constant extrapolation
-                    b_curve.extend = Blender.IpoCurve.ExtendTypes.CONST
+                    b_curve.extend = Blender.actionCurve.ExtendTypes.CONST
                     # set up the curve's control points
                     framestart = 1 + len(b_mesh.key.blocks) * 10
                     for frame, value in ((framestart, 0),

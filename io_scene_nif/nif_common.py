@@ -279,34 +279,35 @@ class NifCommon:
         return nif_ver_hex
 
 
-    def get_extend_from_flags(self, flags):
+    def get_extend_from_flags(self, b_fcurve, flags):
         if flags & 6 == 4: # 0b100
-            return Blender.IpoCurve.ExtendTypes.CONST
+            return b_fcurve
         elif flags & 6 == 0: # 0b000
-            return Blender.IpoCurve.ExtendTypes.CYCLIC
+            b_fcurve.modifiers.new('CYCLES')
+            return b_fcurve
 
         self.warning(
             "Unsupported cycle mode in nif, using clamped.")
-        return Blender.IpoCurve.ExtendTypes.CONST
+        return b_fcurve
 
-    def get_b_ipol_from_n_ipol(self, n_ipol):
-        if n_ipol == NifFormat.KeyType.LINEAR_KEY:
-            return Blender.IpoCurve.InterpTypes.LINEAR
-        elif n_ipol == NifFormat.KeyType.QUADRATIC_KEY:
-            return Blender.IpoCurve.InterpTypes.BEZIER
-        elif n_ipol == 0:
+    def get_b_actionl_from_n_actionl(self, n_actionl):
+        if n_actionl == NifFormat.KeyType.LINEAR_KEY:
+            return Blender.actionCurve.InterpTypes.LINEAR
+        elif n_actionl == NifFormat.KeyType.QUADRATIC_KEY:
+            return Blender.actionCurve.InterpTypes.BEZIER
+        elif n_actionl == 0:
             # guessing, not documented in nif.xml
-            return Blender.IpoCurve.InterpTypes.CONST
+            return Blender.actionCurve.InterpTypes.CONST
         self.warning(
             "Unsupported interpolation mode in nif, using quadratic/bezier.")
-        return Blender.IpoCurve.InterpTypes.BEZIER
+        return Blender.actionCurve.InterpTypes.BEZIER
 
-    def get_n_ipol_from_b_ipol(self, b_ipol):
-        if b_ipol == Blender.IpoCurve.InterpTypes.LINEAR:
+    def get_n_actionl_from_b_actionl(self, b_actionl):
+        if b_actionl == Blender.actionCurve.InterpTypes.LINEAR:
             return NifFormat.KeyType.LINEAR_KEY
-        elif b_ipol == Blender.IpoCurve.InterpTypes.BEZIER:
+        elif b_actionl == Blender.actionCurve.InterpTypes.BEZIER:
             return NifFormat.KeyType.QUADRATIC_KEY
-        elif b_ipol == Blender.IpoCurve.InterpTypes.CONST:
+        elif b_actionl == Blender.actionCurve.InterpTypes.CONST:
             return NifFormat.KeyType.CONST_KEY
         self.warning(
             "Unsupported interpolation mode in blend, using quadratic/bezier.")

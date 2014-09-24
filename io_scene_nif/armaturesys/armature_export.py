@@ -120,9 +120,9 @@ class Armature():
                 root_bones.append(root_bone)
 
         if bpy.types.Action(arm):
-            bones_ipo = bpy.types.ActionGroups(arm) # dictionary of Bone Ipos (name -> ipo)
+            bones_action = bpy.types.ActionGroups(arm) # dictionary of Bone actions (name -> action)
         else:
-            bones_ipo = {} # no ipos
+            bones_action = {} # no actions
 
         bones_node = {} # maps bone names to NiNode blocks
 
@@ -167,7 +167,7 @@ class Armature():
                     node.flags = 0x0002 # default for Morrowind bones
             self.nif_export.export_matrix(bone, 'localspace', node) # rest pose
 
-            # bone rotations are stored in the IPO relative to the rest position
+            # bone rotations are stored in the action relative to the rest position
             # so we must take the rest position into account
             # (need original one, without extra transforms, so extra = False)
             bone_rest_matrix = self.get_bone_rest_matrix(bone, 'BONESPACE',
@@ -178,9 +178,9 @@ class Armature():
             except KeyError:
                 bonexmat_inv = mathutils.Matrix()
                 bonexmat_inv.identity()
-            if bone.name in bones_ipo:
+            if bone.name in bones_action:
                 self.nif_export.animationhelper.export_keyframes(
-                    bones_ipo[bone.name], 'localspace', node,
+                    bones_action[bone.name], 'localspace', node,
                     bind_matrix = bone_rest_matrix, extra_mat_inv = bonexmat_inv)
 
             # does bone have priority value in NULL constraint?

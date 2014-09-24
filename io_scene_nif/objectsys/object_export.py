@@ -119,7 +119,7 @@ class ObjectHelper():
         """
         # b_obj_type: determine the block type
         #          (None, 'MESH', 'EMPTY' or 'ARMATURE')
-        # b_obj_ipo:  object animation ipo
+        # b_obj_action:  object animation action
         # node:    contains new NifFormat.NiNode instance
         if (b_obj == None):
             export_types = ('EMPTY', 'MESH', 'ARMATURE')
@@ -135,12 +135,12 @@ class ObjectHelper():
                 assert(parent_block == None) # debug
                 node = self.create_ninode()
                 b_obj_type = None
-                b_obj_ipo = None
+                b_obj_action = None
             else:
                 b_obj_type = b_obj.type
                 assert(b_obj_type in ['EMPTY', 'MESH', 'ARMATURE']) # debug
                 assert(parent_block == None) # debug
-                b_obj_ipo = b_obj.animation_data # get animation data
+                b_obj_action = b_obj.animation_data # get animation data
                 b_obj_children = b_obj.children
                 node_name = b_obj.name
         elif (b_obj.name != parent_block.name.decode()) and (b_obj.parent != None):
@@ -148,14 +148,14 @@ class ObjectHelper():
             b_obj_type = b_obj.type
             assert(b_obj_type in ['EMPTY', 'MESH', 'ARMATURE']) # debug
             assert(parent_block) # debug
-            b_obj_ipo = b_obj.animation_data # get animation data
+            b_obj_action = b_obj.animation_data # get animation data
             b_obj_children = b_obj.children
         elif (b_obj.name != parent_block.name.decode()) and (b_obj.type != 'ARMATURE'):
             # -> empty, b_mesh, or armature
             b_obj_type = b_obj.type
             assert(b_obj_type in ['EMPTY', 'MESH']) # debug
             assert(parent_block) # debug
-            b_obj_ipo = b_obj.animation_data # get animation data
+            b_obj_action = b_obj.animation_data # get animation data
             b_obj_children = b_obj.children
         else:
             return None
@@ -186,7 +186,7 @@ class ObjectHelper():
             # If this has children or animations or more than one material
             # it gets wrapped in a purpose made NiNode.
             is_collision = b_obj.game.use_collision_bounds
-            has_ipo = b_obj_ipo and len(b_obj_ipo.getCurves()) > 0
+            has_action = b_obj_action and len(b_obj_action.getCurves()) > 0
             has_children = len(b_obj_children) > 0
             is_multimaterial = len(set([f.material_index for f in b_obj.data.polygons])) > 1
             # determine if object tracks camera
@@ -203,7 +203,7 @@ class ObjectHelper():
             if is_collision:
                 self.nif_export.export_collision(b_obj, parent_block)
                 return None # done; stop here
-            elif has_ipo or has_children or is_multimaterial or has_track:
+            elif has_action or has_children or is_multimaterial or has_track:
                 # -> mesh ninode for the hierarchy to work out
                 if not has_track:
                     node = self.create_block('NiNode', b_obj)
@@ -228,13 +228,13 @@ class ObjectHelper():
         # this fixes an issue with clothing slots
         if b_obj_type == 'MESH':
             if b_obj.parent and b_obj.parent.type == 'ARMATURE':
-                if b_obj_ipo:
+                if b_obj_action:
                     # mesh with armature parent should not have animation!
                     self.warning(
                         "Mesh %s is skinned but also has object animation. "
                         "The nif format does not support this: "
                         "ignoring object animation." % b_obj.name)
-                    b_obj_ipo = None
+                    b_obj_action = None
                 trishape_space = space
                 space = 'none'
             else:
@@ -275,11 +275,11 @@ class ObjectHelper():
 
         if b_obj:
             # export animation
-            if b_obj_ipo:
+            if b_obj_action:
                 if any(
-                    b_obj_ipo[b_channel]
-                    for b_channel in (Ipo.OB_LOCX, Ipo.OB_ROTX, Ipo.OB_SCALEX)):
-                    self.animationhelper.export_keyframes(b_obj_ipo, space, node)
+                    b_obj_action[b_channel]
+                    for b_channel in (action.OB_LOCX, action.OB_ROTX, action.OB_SCALEX)):
+                    self.animationhelper.export_keyframes(b_obj_action, space, node)
                 self.export_object_vis_controller(b_obj, node)
             # if it is a mesh, export the mesh as trishape children of
             # this ninode
@@ -1248,10 +1248,10 @@ class MeshHelper():
                     if key.key_blocks[1].name.startswith("EGM"):
                         # egm export!
                         self.exportEgm(key.key_blocks)
-                    elif key.ipo:
+                    elif key.action:
                         # regular morphdata export
-                        # (there must be a shape ipo)
-                        keyipo = key.ipo
+                        # (there must be a shape action)
+                        keyaction = key.action
                         # check that they are relative shape keys
                         if not key.relative:
                             # XXX if we do "key.relative = True"
@@ -1261,7 +1261,7 @@ class MeshHelper():
 
                         # create geometry morph controller
                         morphctrl = self.nif_export.objecthelper.create_block(
-                                                    "NiGeomMorpherController", keyipo)
+                                                    "NiGeomMorpherController", keyaction)
                         trishape.add_controller(morphctrl)
                         morphctrl.target = trishape
                         morphctrl.frequency = 1.0
@@ -1272,7 +1272,7 @@ class MeshHelper():
 
                         # create geometry morph data
                         morphdata = self.nif_export.objecthelper.create_block(
-                                                                "NiMorphData", keyipo)
+                                                                "NiMorphData", keyaction)
                         morphctrl.data = morphdata
                         morphdata.num_morphs = len(key.key_blocks)
                         morphdata.num_vertices = len(vertlist)
@@ -1315,8 +1315,8 @@ class MeshHelper():
                                     morph.vectors[vert_index].y = mv.y
                                     morph.vectors[vert_index].z = mv.z
 
-                            # export ipo shape key curve
-                            curve = keyipo[keyblock.name]
+                            # export action shape key curve
+                            curve = keyaction[keyblock.name]
 
                             # create interpolator for shape key
                             # (needs to be there even if there is no curve)

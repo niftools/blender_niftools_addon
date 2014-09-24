@@ -265,20 +265,26 @@ class AnimationHelper():
         self.nif_import.info("Animation")
         self.nif_import.info("Importing animation data for %s" % b_obj.name)
         assert(isinstance(kfd, NifFormat.NiKeyframeData))
-        # create an Ipo for this object
-        b_action = ObjectAnimation.get_object_ipo(self, b_obj)
+        # create an action for this object
+        b_action = ObjectAnimation.get_object_action(self, b_obj)
         # get the animation keys
         translations = kfd.translations
         scales = kfd.scales
         # add the keys
-        self.nif_import.debug('Scale keys...')
-        for key in scales.keys:
-            frame = 1+int(key.time * self.nif_import.fps + 0.5) # time 0.0 is frame 1
-            Blender.Set('curframe', frame)
-            b_obj.SizeX = key.value
-            b_obj.SizeY = key.value
-            b_obj.SizeZ = key.value
-            b_obj.insertIpoKey(Blender.Object.SIZE)
+        if scales.keys:
+            self.nif_import.debug('Scale keys...')
+            b_fcurve_sx = b_action.fcurves.new('scale', 0)
+            b_fcurve_sy = b_action.fcurves.new('scale', 1)
+            b_fcurve_sz = b_action.fcurves.new('scale', 2)
+            for key in scales.keys:
+                frame = 1+int(key.time * self.nif_import.fps + 0.5) # time 0.0 is frame 1
+                bpy.context.scene.frame_set(frame)
+                b_obj.scale.x = key.value
+                b_obj.scale.y = key.value
+                b_obj.scale.z = key.value
+                b_fcurve_sx.keyframe_points.insert(frame, b_obj.scale.x)
+                b_fcurve_sy.keyframe_points.insert(frame, b_obj.scale.y)
+                b_fcurve_sz.keyframe_points.insert(frame, b_obj.scale.z)
 
         # detect the type of rotation keys
         rotation_type = kfd.rotation_type
@@ -288,15 +294,20 @@ class AnimationHelper():
             ykeys = kfd.xyz_rotations[1].keys
             zkeys = kfd.xyz_rotations[2].keys
             self.nif_import.debug('Rotation keys...(euler)')
+            b_fcurve_rx = b_action.fcurves.new('rotation_euler', 0)
+            b_fcurve_ry = b_action.fcurves.new('rotation_euler', 1)
+            b_fcurve_rz = b_action.fcurves.new('rotation_euler', 2)
             for (xkey, ykey, zkey) in zip(xkeys, ykeys, zkeys):
                 frame = 1+int(xkey.time * self.nif_import.fps + 0.5) # time 0.0 is frame 1
                 # XXX we assume xkey.time == ykey.time == zkey.time
-                Blender.Set('curframe', frame)
+                bpy.context.scene.frame_set(frame)
                 # both in radians, no conversion needed
-                b_obj.RotX = xkey.value
-                b_obj.RotY = ykey.value
-                b_obj.RotZ = zkey.value
-                b_obj.insertIpoKey(Blender.Object.ROT)
+                b_obj.rotation_euler.x = xkey.value
+                b_obj.rotation_euler.y = ykey.value
+                b_obj.rotation_euler.z = zkey.value
+                b_fcurve_rx.keyframe_points.insert(frame, b_obj.rotation_euler.x)
+                b_fcurve_ry.keyframe_points.insert(frame, b_obj.rotation_euler.y)
+                b_fcurve_rz.keyframe_points.insert(frame, b_obj.rotation_euler.z)
         else:
             # uses quaternions
             if kfd.quaternion_keys:
@@ -335,8 +346,8 @@ class ObjectAnimation():
     def __init__(self, parent):
         self.nif_import = parent
     
-    def get_object_ipo(self, b_object):
-        """Return existing object ipo data, or if none exists, create one
+    def get_object_action(self, b_object):
+        """Return existing object action data, or if none exists, create one
         and return that.
         """
         if not b_object.animation_data:
@@ -344,7 +355,18 @@ class ObjectAnimation():
         if not b_object.animation_data.action:
             b_object.animation_data.action = \
                 bpy.data.actions.new(b_object.name)
-        return b_object.animation_data.action    
+        return b_object.animation_data.action
+    
+    def get_armature_action(self, bone_name, b_arm_object):
+        """Return existing armature action data, or if none exists, create one
+        and return that.
+        """
+        if not b_arm_object.animation_data:
+            b_arm_object.animation_data_create()
+        b_arm_object.animation_data.action = \
+                bpy.data.actions.new(bone_name)
+        
+        return b_arm_object.animation_data, b_arm_object.animation_data.action
     
     def import_object_vis_controller(self, b_object, n_node):
         """Import vis controller for blender object."""
@@ -353,9 +375,9 @@ class ObjectAnimation():
             return
         self.nif_import.info("importing vis controller")
         b_channel = "Layer"
-        b_ipo = self.get_object_ipo(b_object)
-        b_curve = b_ipo.addCurve(b_channel)
-        b_curve.interpolation = Blender.IpoCurve.InterpTypes.CONST
+        b_action = self.get_object_action(b_object)
+        b_curve = b_action.addCurve(b_channel)
+        b_curve.interpolation = Blender.actionCurve.InterpTypes.CONST
         b_curve.extend = self.nif_import.get_extend_from_flags(n_vis_ctrl.flags)
         for n_key in n_vis_ctrl.data.keys:
             b_curve[1 + n_key.time * self.nif_import.fps] = (
@@ -400,9 +422,9 @@ class MaterialAnimation():
             return
         self.nif_import.info("importing alpha controller")
         b_channel = "Alpha"
-        b_ipo = self.get_material_ipo(b_material)
-        b_curve = b_ipo.addCurve(b_channel)
-        b_curve.interpolation = self.nif_import.get_b_ipol_from_n_ipol(
+        b_action = self.get_material_action(b_material)
+        b_curve = b_action.addCurve(b_channel)
+        b_curve.interpolation = self.nif_import.get_b_actionl_from_n_actionl(
             n_alphactrl.data.data.interpolation)
         b_curve.extend = self.nif_import.get_extend_from_flags(n_alphactrl.flags)
         for n_key in n_alphactrl.data.data.keys:
@@ -426,10 +448,10 @@ class MaterialAnimation():
             " into blender channels %s"
             % (n_target_color, b_channels))
         # import data as curves
-        b_ipo = self.get_material_ipo(b_material)
+        b_action = self.get_material_action(b_material)
         for i, b_channel in enumerate(b_channels):
-            b_curve = b_ipo.addCurve(b_channel)
-            b_curve.interpolation = self.nif_import.get_b_ipol_from_n_ipol(
+            b_curve = b_action.addCurve(b_channel)
+            b_curve.interpolation = self.nif_import.get_b_actionl_from_n_actionl(
                 n_matcolor_ctrl.data.data.interpolation)
             b_curve.extend = self.nif_import.get_extend_from_flags(n_matcolor_ctrl.flags)
             for n_key in n_matcolor_ctrl.data.data.keys:
@@ -447,10 +469,10 @@ class MaterialAnimation():
         for b_channel, n_uvgroup in zip(b_channels,
                                         n_ctrl.data.uv_groups):
             if n_uvgroup.keys:
-                # create curve in material ipo
-                b_ipo = self.get_material_ipo(b_material)
-                b_curve = b_ipo.addCurve(b_channel)
-                b_curve.interpolation = self.nif_import.get_b_ipol_from_n_ipol(
+                # create curve in material action
+                b_action = self.get_material_action(b_material)
+                b_curve = b_action.addCurve(b_channel)
+                b_curve.interpolation = self.nif_import.get_b_actionl_from_n_actionl(
                     n_uvgroup.interpolation)
                 b_curve.extend = self.nif_import.get_extend_from_flags(n_ctrl.flags)
                 for n_key in n_uvgroup.keys:
@@ -461,13 +483,13 @@ class MaterialAnimation():
                         b_curve[1 + n_key.time * self.nif_import.fps] = n_key.value    
     
 
-    def get_material_ipo(self, b_material):
-        """Return existing material ipo data, or if none exists, create one
+    def get_material_action(self, b_material):
+        """Return existing material action data, or if none exists, create one
         and return that.
         """
-        if not b_material.ipo:
-            b_material.ipo = Blender.Ipo.New("Material", "MatIpo")
-        return b_material.ipo
+        if not b_material.action:
+            b_material.action = Blender.action.New("Material", "Mataction")
+        return b_material.action
 
 class ArmatureAnimation():
     
@@ -477,13 +499,14 @@ class ArmatureAnimation():
         
     def import_armature_animation(self, b_armature):
         # create an action
-        action = bpy.data.actions.new(armature_name)
-        bpy.types.NlaTrack.select = b_armature #action.setActive(b_armature)
         # go through all armature pose bones
-        # see http://www.elysiun.com/forum/viewtopic.php?t=58693
+        bpy.ops.object.mode_set(mode='POSE',toggle=False)
         self.nif_import.info('Importing Animations')
         for bone_name, b_posebone in b_armature.pose.bones.items():
             # denote progress
+            b_animdata, b_action = ObjectAnimation.get_armature_action(
+                                        self, bone_name, b_armature)
+        
             self.nif_import.debug('Importing animation for bone %s' % bone_name)
             niBone = self.nif_import.dict_blocks[bone_name]
 
@@ -495,13 +518,13 @@ class ArmatureAnimation():
             # with
             # 'total' the transformations as stored in the NIF keyframes,
             # 'bind' the Blender bind pose, and
-            # 'channel' the Blender IPO channel,
+            # 'channel' the Blender action channel,
             # it follows that
             # Schannel = Stotal / Sbind
             # Rchannel = Rtotal * inverse(Rbind)
             # Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
             bone_bm = nif_utils.import_matrix(niBone) # base pose
-            niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = self.decompose_srt(bone_bm)
+            niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = nif_utils.decompose_srt(bone_bm)
             niBone_bind_rot_inv = mathutils.Matrix(niBone_bind_rot)
             niBone_bind_rot_inv.invert()
             niBone_bind_quat_inv = niBone_bind_rot_inv.to_quaternion()
@@ -526,7 +549,7 @@ class ArmatureAnimation():
             # SC' = SX * SC / SX = SC
             # RC' = RX * RC * inverse(RX)
             # TC' = (TX * SC * RC + TC - TX) * inverse(RX) / SX
-            extra_matrix_scale, extra_matrix_rot, extra_matrix_trans = self.decompose_srt(self.nif_import.dict_bones_extra_matrix[niBone])
+            extra_matrix_scale, extra_matrix_rot, extra_matrix_trans = nif_utils.decompose_srt(self.nif_import.dict_bones_extra_matrix[niBone])
             extra_matrix_quat = extra_matrix_rot.to_quaternion()
             extra_matrix_rot_inv = mathutils.Matrix(extra_matrix_rot)
             extra_matrix_rot_inv.invert()
@@ -580,9 +603,9 @@ class ArmatureAnimation():
                         # beware, CrossQuats takes arguments in a
                         # counter-intuitive order:
                         # q1.to_matrix() * q2.to_matrix() == CrossQuats(q2, q1).to_matrix()
-                        quatVal = CrossQuats(niBone_bind_quat_inv, quat) # Rchannel = Rtotal * inverse(Rbind)
-                        rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
-                        b_posebone.quat = rot
+                        quatVal = mathutils.Quaternion.cross(niBone_bind_quat_inv, quat) # Rchannel = Rtotal * inverse(Rbind)
+                        rot = mathutils.Quaternion.cross(mathutils.Quaternion.cross(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
+                        b_posebone.rotation_quaternion = rot
                         b_posebone.insertKey(b_armature, frame,
                                              [Blender.Object.Pose.ROT])
                         # fill optimizer dictionary
@@ -604,12 +627,12 @@ class ArmatureAnimation():
                                 rot = rot_keys_dict[frame].to_matrix()
                             except KeyError:
                                 # fall back on slow method
-                                ipo = action.getChannelIpo(bone_name)
+                                action = action.getChannelaction(bone_name)
                                 quat = mathutils.Quaternion()
-                                quat.x = ipo.getCurve('QuatX').evaluate(frame)
-                                quat.y = ipo.getCurve('QuatY').evaluate(frame)
-                                quat.z = ipo.getCurve('QuatZ').evaluate(frame)
-                                quat.w = ipo.getCurve('QuatW').evaluate(frame)
+                                quat.x = action.getCurve('QuatX').evaluate(frame)
+                                quat.y = action.getCurve('QuatY').evaluate(frame)
+                                quat.z = action.getCurve('QuatZ').evaluate(frame)
+                                quat.w = action.getCurve('QuatW').evaluate(frame)
                                 rot = quat.to_matrix()
                         else:
                             rot = mathutils.Matrix([[1.0, 0.0, 0.0],
@@ -620,9 +643,9 @@ class ArmatureAnimation():
                             try:
                                 sizeVal = scale_keys_dict[frame]
                             except KeyError:
-                                ipo = action.getChannelIpo(bone_name)
-                                if ipo.getCurve('SizeX'):
-                                    sizeVal = ipo.getCurve('SizeX').evaluate(frame) # assume uniform scale
+                                action = action.getChannelaction(bone_name)
+                                if action.getCurve('SizeX'):
+                                    sizeVal = action.getCurve('SizeX').evaluate(frame) # assume uniform scale
                                 else:
                                     sizeVal = 1.0
                         else:
@@ -696,9 +719,9 @@ class ArmatureAnimation():
                         # beware, CrossQuats takes arguments in a counter-intuitive order:
                         # q1.to_matrix() * q2.to_matrix() == CrossQuats(q2, q1).to_matrix()
 
-                        quatVal = CrossQuats(niBone_bind_quat_inv, quat) # Rchannel = Rtotal * inverse(Rbind)
-                        rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
-                        b_posebone.quat = rot
+                        quatVal = mathutils.Quaternion.cross(niBone_bind_quat_inv, quat) # Rchannel = Rtotal * inverse(Rbind)
+                        rot = mathutils.Quaternion.cross(mathutils.Quaternion.cross(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
+                        b_posebone.rotation_quaternion = rot
                         b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.ROT]) # this is very slow... :(
                         # fill optimizer dictionary
                         if translations:
@@ -709,19 +732,30 @@ class ArmatureAnimation():
                     # TODO:take rotation type into account for interpolation
                     if kfd.quaternion_keys:
                         self.nif_import.debug('Rotation keys...(quaternions)')
+                        b_fcurve_qw = b_action.fcurves.new(
+                                        'rotation_quaternion', 0)
+                        b_fcurve_qx = b_action.fcurves.new(
+                                        'rotation_quaternion', 1)
+                        b_fcurve_qy = b_action.fcurves.new(
+                                        'rotation_quaternion', 2)
+                        b_fcurve_qz = b_action.fcurves.new(
+                                        'rotation_quaternion', 3)
                     quaternion_keys = kfd.quaternion_keys
                     for key in quaternion_keys:
                         frame = 1 + int(key.time * self.nif_import.fps + 0.5)
                         keyVal = key.value
-                        quat = mathutils.Quaternion([keyVal.w, keyVal.x, keyVal.y, keyVal.z])
+                        quat = mathutils.Quaternion(
+                                    [keyVal.w, keyVal.x, keyVal.y, keyVal.z])
                         # beware, CrossQuats takes arguments in a
                         # counter-intuitive order:
                         # q1.to_matrix() * q2.to_matrix() == CrossQuats(q2, q1).to_matrix()
-                        quatVal = CrossQuats(niBone_bind_quat_inv, quat) # Rchannel = Rtotal * inverse(Rbind)
-                        rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
-                        b_posebone.quat = rot
-                        b_posebone.insertKey(b_armature, frame,
-                                             [Blender.Object.Pose.ROT])
+                        quatVal = mathutils.Quaternion.cross(niBone_bind_quat_inv, quat) # Rchannel = Rtotal * inverse(Rbind)
+                        rot = mathutils.Quaternion.cross(mathutils.Quaternion.cross(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
+                        b_posebone.rotation_quaternion = rot
+                        b_fcurve_qw.keyframe_points.insert(frame, b_posebone.rotation_quaternion.w)
+                        b_fcurve_qx.keyframe_points.insert(frame, b_posebone.rotation_quaternion.x)
+                        b_fcurve_qy.keyframe_points.insert(frame, b_posebone.rotation_quaternion.y)
+                        b_fcurve_qz.keyframe_points.insert(frame, b_posebone.rotation_quaternion.z)
                         # fill optimizer dictionary
                         if translations:
                             rot_keys_dict[frame] = mathutils.Quaternion(rot)
@@ -733,11 +767,14 @@ class ArmatureAnimation():
                 # Translations
                 if translations.keys:
                     self.nif_import.debug('Translation keys...')
+                    b_fcurve_x = b_action.fcurves.new('location', 0)
+                    b_fcurve_y = b_action.fcurves.new('location', 1)
+                    b_fcurve_z = b_action.fcurves.new('location', 2)
                 for key in translations.keys:
                     # time 0.0 is frame 1
                     frame = 1 + int(key.time * self.nif_import.fps + 0.5)
                     keyVal = key.value
-                    trans = mathutils.Vector(keyVal.x, keyVal.y, keyVal.z)
+                    trans = mathutils.Vector((keyVal.x, keyVal.y, keyVal.z))
                     locVal = (trans - niBone_bind_trans) * niBone_bind_rot_inv * (niBone_bind_scale)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
                     # the rotation matrix is needed at this frame (that's
                     # why the other keys are inserted first)
@@ -746,12 +783,21 @@ class ArmatureAnimation():
                             rot = rot_keys_dict[frame].to_matrix()
                         except KeyError:
                             # fall back on slow method
-                            ipo = action.getChannelIpo(bone_name)
+                            b_action_buc = b_action.fcurves
                             quat = mathutils.Quaternion()
-                            quat.x = ipo.getCurve('QuatX').evaluate(frame)
-                            quat.y = ipo.getCurve('QuatY').evaluate(frame)
-                            quat.z = ipo.getCurve('QuatZ').evaluate(frame)
-                            quat.w = ipo.getCurve('QuatW').evaluate(frame)
+                            for curve in b_action_buc:
+                                if (curve.array_index == 1) and (
+                                        curve.data_path == "rotation_quaternion"):
+                                    quat.x = curve.evaluate(frame)
+                                if (curve.array_index == 2) and (
+                                        curve.data_path == "rotation_quaternion"):
+                                    quat.y = curve.evaluate(frame)
+                                if (curve.array_index == 3) and (
+                                        curve.data_path == "rotation_quaternion"):
+                                    quat.z = curve.evaluate(frame)
+                                if (curve.array_index == 0) and (
+                                        curve.data_path == "rotation_quaternion"):
+                                    quat.w = curve.evaluate(frame)
                             rot = quat.to_matrix()
                     else:
                         rot = mathutils.Matrix([[1.0, 0.0, 0.0],
@@ -762,9 +808,9 @@ class ArmatureAnimation():
                         try:
                             sizeVal = scale_keys_dict[frame]
                         except KeyError:
-                            ipo = action.getChannelIpo(bone_name)
-                            if ipo.getCurve('SizeX'):
-                                sizeVal = ipo.getCurve('SizeX').evaluate(frame) # assume uniform scale
+                            action = action.getChannelaction(bone_name)
+                            if action.getCurve('SizeX'):
+                                sizeVal = action.getCurve('SizeX').evaluate(frame) # assume uniform scale
                             else:
                                 sizeVal = 1.0
                     else:
@@ -774,18 +820,29 @@ class ArmatureAnimation():
                                              [0.0, 0.0, sizeVal]])
                     # now we can do the final calculation
                     loc = (extra_matrix_trans * size * rot + locVal - extra_matrix_trans) * extra_matrix_rot_inv * (extra_matrix_scale) # C' = X * C * inverse(X)
-                    b_posebone.loc = loc
-                    b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.LOC])
+                    b_posebone.location = loc
+                    b_fcurve_x.keyframe_points.insert(frame, b_posebone.location.x)
+                    b_fcurve_y.keyframe_points.insert(frame, b_posebone.location.y)
+                    b_fcurve_z.keyframe_points.insert(frame, b_posebone.location.z)
                 if translations:
                     del scale_keys_dict
                     del rot_keys_dict
-            # set extend mode for all ipo curves
+            # set extend mode for all action curves
             if kfc:
                 try:
-                    ipo = action.getChannelIpo(bone_name)
+                    if b_action.name == bone_name:
+                        b_bone_fcurves = b_action.fcurves
                 except ValueError:
                     # no channel for bone_name
                     pass
                 else:
-                    for b_curve in ipo:
-                        b_curve.extend = self.nif_import.get_extend_from_flags(kfc.flags)
+                    for b_fcurve in b_bone_fcurves:
+                        b_fcurve = self.nif_import.get_extend_from_flags(b_fcurve, kfc.flags)
+            b_animdata.nla_tracks.new()
+            b_animdata.nla_tracks.active.name = bone_name
+            b_animdata.nla_tracks[bone_name].strips.new(bone_name, 1, b_action)
+            #b_animdata.action = bpy.data.actions.remove(bone_name)
+            
+        bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
+            
+            
