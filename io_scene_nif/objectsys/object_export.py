@@ -902,13 +902,16 @@ class MeshHelper():
             # check that there are no missing body part polygons
             if polygons_without_bodypart:
                 # switch to edit mode to select polygons
-                bpy.ops.object.mode_set(mode='EDIT',toggle=False)
+                #bpy.ops.object.mode_set(mode='EDIT',toggle=False)
                 # select mesh object
-                for b_obj in self.context.scene.objects:
+                for b_obj in self.nif_export.context.scene.objects:
                     b_obj.select = False
-                self.context.scene.objects.active = b_obj
+                self.nif_export.context.scene.objects.active = \
+                    self.nif_export.context.scene.objects[b_mesh.name]
+                b_obj = self.nif_export.context.scene.objects.active
                 b_obj.select = True
                 # select bad polygons
+                bpy.ops.object.mode_set(mode='EDIT',toggle=False)
                 for face in b_mesh.polygons:
                     face.select = False
                 for face in polygons_without_bodypart:
