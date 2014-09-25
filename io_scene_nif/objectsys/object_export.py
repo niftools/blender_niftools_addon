@@ -879,7 +879,7 @@ class MeshHelper():
 
                 # now add the (hopefully, convex) face, in triangles
                 for i in range(f_numverts - 2):
-                    if True: #TODO: #(b_obj_scale > 0):
+                    if ((b_obj.scale.x + b_obj.scale.y + b_obj.scale.z) > 0):
                         f_indexed = (f_index[0], f_index[1+i], f_index[2+i])
                     else:
                         f_indexed = (f_index[0], f_index[2+i], f_index[1+i])
@@ -901,16 +901,13 @@ class MeshHelper():
 
             # check that there are no missing body part polygons
             if polygons_without_bodypart:
-                # switch to edit mode to select polygons
-                #bpy.ops.object.mode_set(mode='EDIT',toggle=False)
                 # select mesh object
-                for b_obj in self.nif_export.context.scene.objects:
-                    b_obj.select = False
-                self.nif_export.context.scene.objects.active = \
-                    self.nif_export.context.scene.objects[b_mesh.name]
-                b_obj = self.nif_export.context.scene.objects.active
+                for b_deselect_obj in self.nif_export.context.scene.objects:
+                    b_deselect_obj.select = False
+                self.nif_export.context.scene.objects.active = b_obj
                 b_obj.select = True
                 # select bad polygons
+                # switch to edit mode to select polygons
                 bpy.ops.object.mode_set(mode='EDIT',toggle=False)
                 for face in b_mesh.polygons:
                     face.select = False
