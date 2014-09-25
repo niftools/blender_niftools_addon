@@ -104,20 +104,17 @@ def menu_func_export(self, context):
 
 def register():
     _init_loggers()
-    properties.register()
     bpy.utils.register_module(__name__)
     bpy.types.INFO_MT_file_import.append(menu_func_import)
     bpy.types.INFO_MT_file_export.append(menu_func_export)
 
 
 def unregister():
-    # no idea how to do this... oh well, let's not lose any sleep over it
-    #_uninit_loggers()
+    _init_loggers()
+    bpy.utils.unregister_module(__name__)
     bpy.types.INFO_MT_file_import.remove(menu_func_import)
     bpy.types.INFO_MT_file_export.remove(menu_func_export)
-    properties.unregister()
-    bpy.utils.unregister_module(__name__)
-
+    
 
 if __name__ == "__main__":
     register()
