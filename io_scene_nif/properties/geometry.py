@@ -47,31 +47,6 @@ from bpy.props import (PointerProperty,
                        BoolProperty,
                        )
 
-class VertexGroupProperty(PropertyGroup):
-    @classmethod
-    def register(cls):
-        bpy.types.VertexGroup.niftools_skin_data = PointerProperty(
-                        name='Niftools Vertex Group Property',
-                        description='Additional vertex group properties used by the Nif File Format',
-                        type = cls
-                        )
-        
-        cls.blah = BoolProperty(
-                        name=('Start Net Boneset'), 
-                        description='None',
-                        default = False
-                        )
-        cls.random = BoolProperty(
-                        name=('Editor Visible'), 
-                        description='None',
-                        default = False
-                        )
-        
-    @classmethod
-    def unregister(cls):
-        del bpy.types.VertexGroup.niftools_skin_data
-
-
 
 class SkinPartHeader(PropertyGroup):
     @classmethod
@@ -91,6 +66,7 @@ class SkinPartHeader(PropertyGroup):
     @classmethod
     def unregister(cls):
         del bpy.types.Object.niftools_part_flags_panel
+
 
 class SkinPartFlags(PropertyGroup):
     
