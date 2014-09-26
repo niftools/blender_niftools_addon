@@ -55,7 +55,6 @@ class ObjectPanel(Panel):
 
     def draw(self, context):
         nif_obj_props = context.object.niftools
-        ob = context.object
         
         layout = self.layout
         row = layout.column()
@@ -69,7 +68,6 @@ class ObjectPanel(Panel):
         row.prop(nif_obj_props, "consistency_flags")
         row.prop(nif_obj_props, "objectflags")
         row.prop(nif_obj_props, "longname")
-
         
 
 class OBJECT_PT_ExtraData(Panel):
@@ -87,24 +85,27 @@ class OBJECT_PT_ExtraData(Panel):
     def draw(self, context):
         b_obj = context.object
         extra_data_store = b_obj.niftools.extra_data_store
+        has_extra_data = len(extra_data_store.extra_data) > 0
         
         layout = self.layout
 
         row = layout.row()
         row.template_list("OBJECT_UL_ExtraData", "", extra_data_store, "extra_data", extra_data_store, "extra_data_index")
         
+        #Add/Remove operators
         col = row.column(align=True)
         col.menu("OBJECT_MT_ExtraDataType", icon='ZOOMIN', text="")
-#         col.menu("object.niftools_extradata_add", icon='ZOOMIN', text="")
-        if len(extra_data_store.extra_data) != 0:
+
+        if has_extra_data:
             col.operator("object.niftools_extradata_remove", icon='ZOOMOUT', text="")
             
-        row = layout.row()
-        box = layout.box()
-        
-        selected_extra_data = extra_data_store.extra_data[extra_data_store.extra_data_index]
-        box.prop(selected_extra_data, "name")
-        box.prop(selected_extra_data, "data")
+        if has_extra_data:
+            row = layout.row()
+            box = layout.box()
+            
+            selected_extra_data = extra_data_store.extra_data[extra_data_store.extra_data_index]
+            box.prop(selected_extra_data, "name")
+            box.prop(selected_extra_data, "data")
 
 class OBJECT_MT_ExtraDataType(Menu):
     bl_label = "Extra Data Types"
