@@ -109,6 +109,38 @@ class TextureHelper():
             bsshader = NifFormat.BSLightingShaderProperty()
             b_s_type = NifFormat.BSLightingShaderPropertyShaderType._enumkeys.index(b_obj.niftools_shader.bslsp_shaderobjtype)
             bsshader.shader_type = NifFormat.BSLightingShaderPropertyShaderType._enumvalues[b_s_type]
+            
+            # Diffuse color
+            bsshader.skin_tint_color.r = b_mat.diffuse_color.r
+            bsshader.skin_tint_color.g = b_mat.diffuse_color.g
+            bsshader.skin_tint_color.b = b_mat.diffuse_color.b
+            #b_mat.diffuse_intensity = 1.0
+            
+            # Emissive
+            bsshader.emissive_color.r = b_mat.niftools.emissive_color.r
+            bsshader.emissive_color.g = b_mat.niftools.emissive_color.g
+            bsshader.emissive_color.b = b_mat.niftools.emissive_color.b
+            bsshader.emissive_multiple = b_mat.emit
+
+            # gloss
+            bsshader.glossiness = b_mat.specular_hardness
+
+            # Specular color
+            bsshader.specular_color.r = b_mat.specular_color.r
+            bsshader.specular_color.g = b_mat.specular_color.g
+            bsshader.specular_color.b = b_mat.specular_color.b
+            bsshader.specular_strength = b_mat.specular_intensity
+
+            # Alpha
+            if True == False: #n_alpha_prop:
+                #if(bsShaderProperty.alpha < 1.0):
+                self.nif_import.debug("Alpha prop detected")
+                b_mat.use_transparency = True 
+                b_mat.alpha = bsShaderProperty.alpha
+                b_mat.transparency_method = 'Z_TRANSPARENCY'  # enable z-buffered transparency
+                b_mat.offset_z = n_alpha_prop.threshold # Transparency threshold
+                b_mat.niftools_alpha.alphaflag = n_alpha_prop.flags
+
             for sf_flag in bsshader.shader_flags_1._names:
                 if sf_flag in b_flag_list:
                     b_flag = b_obj.niftools_shader.get(sf_flag)
@@ -139,7 +171,10 @@ class TextureHelper():
             texset.textures[2] = self.texture_writer.export_texture_filename(self.glowmtex.texture)
         if self.detailmtex:
             texset.textures[3] = self.texture_writer.export_texture_filename(self.detailmtex.texture)
-        if b_obj.niftools_shader.bs_shadertype == 'BSLightingShaderProperty':
+        if len(texset.textures) > 6:
+            texset.num_textures = 9
+            while len(texset.textures) < 9:
+                texset.textures.extend([None])
             if self.detailmtex:
                 texset.textures[6] = self.texture_writer.export_texture_filename(self.detailmtex.texture)
             if self.glossmtex:

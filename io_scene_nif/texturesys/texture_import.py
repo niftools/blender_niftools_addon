@@ -207,17 +207,18 @@ class Texture():
 			self.has_detailtex = True
 			self.detail_map = self.import_image_texture(b_mat, ImageTexFile)
 			
-		if hasattr(bsShaderProperty.texture_set.textures, '6'):
+		if len(bsShaderProperty.texture_set.textures) > 6:
 			ImageTexFile = bsShaderProperty.texture_set.textures[6].decode()
 			if ImageTexFile:
 				self.has_decaltex = True
 				self.decal_map = self.import_image_texture(b_mat, ImageTexFile)
-	
+
 			ImageTexFile = bsShaderProperty.texture_set.textures[7].decode()
 			if ImageTexFile:
 				self.has_glosstex = True
 				self.gloss_map = self.import_image_texture(b_mat, ImageTexFile)
-
+		if True == False:
+			bob=1
 				
 	def import_texture_effect(self, b_mat, textureEffect):
 		ImageTexFile = textureEffect
@@ -258,7 +259,7 @@ class Texture():
 			b_mat_texslot.texture.use_normal_map = False # causes artifacts otherwise.
 		if self.has_normaltex:
 			b_mat_texslot.texture.use_normal_map = True # causes artifacts otherwise.
-		if self.has_glowtex or self.has_glosstex:
+		if self.has_glowtex or self.has_glosstex or self.has_decaltex:
 			b_mat_texslot.texture.use_alpha = False
 
 		# Influence
