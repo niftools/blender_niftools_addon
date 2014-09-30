@@ -504,7 +504,9 @@ class MeshHelper():
 
             mesh_hasnormals = False
             if b_mat is not None:
-                mesh_hasnormals = True # for proper lighting
+                if not ((self.properties.game == 'SKYRIM') and (
+                            b_obj.niftools_shader.bslsp_shaderobjtype == 'Skin Tint')):
+                    mesh_hasnormals = True # for proper lighting
 
                 #ambient mat
                 mesh_mat_ambient_color = b_mat.niftools.ambient_color
