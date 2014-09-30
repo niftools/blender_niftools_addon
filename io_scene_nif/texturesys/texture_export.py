@@ -110,6 +110,23 @@ class TextureHelper():
             b_s_type = NifFormat.BSLightingShaderPropertyShaderType._enumkeys.index(b_obj.niftools_shader.bslsp_shaderobjtype)
             bsshader.shader_type = NifFormat.BSLightingShaderPropertyShaderType._enumvalues[b_s_type]
             
+            # UV Scale
+            bsshader.uv_offset.u = self.basemtex.texture.crop_min_x
+            bsshader.uv_offset.v = self.basemtex.texture.crop_min_y
+            bsshader.uv_scale.u = self.basemtex.texture.crop_max_x
+            bsshader.uv_scale.v = self.basemtex.texture.crop_max_y
+            
+            # Texture Clamping mode
+            if self.basemtex.texture.image.use_clamp_x == False:
+                wrap_s = 2
+            else:
+                wrap_s = 0
+            if self.basemtex.texture.image.use_clamp_y == False:
+                wrap_t = 1
+            else:
+                wrap_t = 0
+            bsshader.texture_clamp_mode = (wrap_s + wrap_t)
+            
             # Diffuse color
             bsshader.skin_tint_color.r = b_mat.diffuse_color.r
             bsshader.skin_tint_color.g = b_mat.diffuse_color.g
@@ -171,10 +188,9 @@ class TextureHelper():
             texset.textures[2] = self.texture_writer.export_texture_filename(self.glowmtex.texture)
         if self.detailmtex:
             texset.textures[3] = self.texture_writer.export_texture_filename(self.detailmtex.texture)
-        if len(texset.textures) > 6:
+        if b_obj.niftools_shader.bs_shadertype == 'BSLightingShaderProperty':
             texset.num_textures = 9
-            while len(texset.textures) < 9:
-                texset.textures.extend([None])
+            texset.textures.update_size()
             if self.detailmtex:
                 texset.textures[6] = self.texture_writer.export_texture_filename(self.detailmtex.texture)
             if self.glossmtex:
