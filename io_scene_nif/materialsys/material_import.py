@@ -190,7 +190,9 @@ class Material():
             
             
             # lighting effect
-            
+            b_mat.use_transparency = True
+            b_mat.raytrace_transparency.fresnel = bsShaderProperty.lighting_effect_1
+            b_mat.raytrace_transparency.fresnel_factor = bsShaderProperty.lighting_effect_2
         
         
         # check wireframe property
