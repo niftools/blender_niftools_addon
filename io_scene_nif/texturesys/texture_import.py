@@ -217,14 +217,36 @@ class Texture():
 			if ImageTexFile:
 				self.has_glosstex = True
 				self.gloss_map = self.import_image_texture(b_mat, ImageTexFile)
-		if True == False:
-			bob=1
-				
+		if hasattr(bsShaderProperty, 'texture_clamp_mode'):
+			self.b_mat = self.import_clamp(b_mat, bsShaderProperty)
+		
 	def import_texture_effect(self, b_mat, textureEffect):
 		ImageTexFile = textureEffect
 		self.envtex = True
 		self.env_map = self.import_image_texture(b_mat, ImageTexFile)
 
+
+	def import_clamp(self, b_mat, bsShaderProperty):
+		clamp = bsShaderProperty.texture_clamp_mode
+		for texslot in b_mat.texture_slots:
+			if texslot:
+				if clamp == 3:
+					texslot.texture.image.use_clamp_x = False
+					texslot.texture.image.use_clamp_y = False
+				if clamp == 2:
+					texslot.texture.image.use_clamp_x = False
+					texslot.texture.image.use_clamp_y = True
+				if clamp == 1:
+					texslot.texture.image.use_clamp_x = True
+					texslot.texture.image.use_clamp_y = False
+				if clamp == 0:
+					texslot.texture.image.use_clamp_x = True
+					texslot.texture.image.use_clamp_y = True
+				texslot.texture.crop_min_x = bsShaderProperty.uv_offset.u
+				texslot.texture.crop_min_y = bsShaderProperty.uv_offset.v
+				texslot.texture.crop_max_x = bsShaderProperty.uv_scale.u
+				texslot.texture.crop_max_y = bsShaderProperty.uv_scale.v
+		return self
 
 	def create_texture_slot(self, b_mat, image_texture):
 		b_mat_texslot = b_mat.texture_slots.add()
