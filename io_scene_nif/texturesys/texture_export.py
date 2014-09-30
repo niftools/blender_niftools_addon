@@ -132,6 +132,10 @@ class TextureHelper():
             bsshader.skin_tint_color.g = b_mat.diffuse_color.g
             bsshader.skin_tint_color.b = b_mat.diffuse_color.b
             #b_mat.diffuse_intensity = 1.0
+
+            bsshader.lighting_effect_1 = b_mat.raytrace_transparency.fresnel
+            bsshader.lighting_effect_2 = b_mat.raytrace_transparency.fresnel_factor
+
             
             # Emissive
             bsshader.emissive_color.r = b_mat.niftools.emissive_color.r
