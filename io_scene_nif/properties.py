@@ -124,6 +124,15 @@ class Material(PropertyGroup):
         cls.emissive_color = FloatVectorProperty(
                 name='Emissive', subtype='COLOR', default=[0.0,0.0,0.0],min=0.0, max=1.0)
     
+        cls.lightingeffect1 = FloatProperty(
+                name='Lighting Effect 1',
+                default = 0.3
+                )
+        cls.lightingeffect2 = FloatProperty(
+                name='Lighting Effect 2',
+                default = 2
+                )
+        
     @classmethod
     def unregister(cls):
         del bpy.types.Material.niftools
