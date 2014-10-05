@@ -626,7 +626,7 @@ class NifExport(NifCommon):
                 elif self.root_ninode == None:
                     self.root_ninode = 'NiNode'
             # making root block a fade node
-            if (self.properties.game == 'FALLOUT_3' and self.root_ninode == 'BSFadeNode'):
+            if (self.properties.game in ('FALLOUT_3', 'SKYRIM') and self.root_ninode == 'BSFadeNode'):
                 self.info("Making root block a BSFadeNode")
                 fade_root_block = NifFormat.BSFadeNode().deepcopy(root_block)
                 fade_root_block.replace_global_node(root_block, fade_root_block)

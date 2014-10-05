@@ -92,15 +92,13 @@ class NifMatColorPanel(Panel):
         
         layout = self.layout
         row = layout.column()
-        col_ambient_L = row.column()
-        col_ambient_R = row.column()
-        col_ambient_L.prop(mat, "ambient_preview")
-        col_ambient_R.prop(mat, "ambient_color", text="")
-        
-        col_emissive_L = row.column()
-        col_emissive_R = row.column()
-        col_emissive_L.prop(mat, "emissive_preview")
-        col_emissive_R.prop(mat, "emissive_color", text="")   
+        col = row.column()
+        col.prop(mat, "ambient_preview")
+        col.prop(mat, "ambient_color", text="")
+        col.prop(mat, "emissive_preview")
+        col.prop(mat, "emissive_color", text="")
+        col.prop(mat, "lightingeffect1")
+        col.prop(mat, "lightingeffect2")
         
         
 def register():

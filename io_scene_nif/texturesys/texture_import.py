@@ -246,7 +246,6 @@ class Texture():
 				texslot.texture.crop_min_y = bsShaderProperty.uv_offset.v
 				texslot.texture.crop_max_x = bsShaderProperty.uv_scale.u
 				texslot.texture.crop_max_y = bsShaderProperty.uv_scale.v
-		return self
 
 	def create_texture_slot(self, b_mat, image_texture):
 		b_mat_texslot = b_mat.texture_slots.add()
