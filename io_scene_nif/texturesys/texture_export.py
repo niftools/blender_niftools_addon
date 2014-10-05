@@ -133,8 +133,8 @@ class TextureHelper():
             bsshader.skin_tint_color.b = b_mat.diffuse_color.b
             #b_mat.diffuse_intensity = 1.0
 
-            bsshader.lighting_effect_1 = b_mat.raytrace_transparency.fresnel
-            bsshader.lighting_effect_2 = b_mat.raytrace_transparency.fresnel_factor
+            bsshader.lighting_effect_1 = b_mat.niftools.lightingeffect1
+            bsshader.lighting_effect_2 = b_mat.niftools.lightingeffect2
 
             
             # Emissive
@@ -153,14 +153,9 @@ class TextureHelper():
             bsshader.specular_strength = b_mat.specular_intensity
 
             # Alpha
-            if True == False: #n_alpha_prop:
-                #if(bsShaderProperty.alpha < 1.0):
-                self.nif_import.debug("Alpha prop detected")
-                b_mat.use_transparency = True 
-                b_mat.alpha = bsShaderProperty.alpha
-                b_mat.transparency_method = 'Z_TRANSPARENCY'  # enable z-buffered transparency
-                b_mat.offset_z = n_alpha_prop.threshold # Transparency threshold
-                b_mat.niftools_alpha.alphaflag = n_alpha_prop.flags
+            if b_mat.use_transparency == True: 
+                bsshader.alpha = b_mat.alpha
+                
 
             for sf_flag in bsshader.shader_flags_1._names:
                 if sf_flag in b_flag_list:
