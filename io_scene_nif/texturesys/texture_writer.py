@@ -147,7 +147,7 @@ class TextureWriter():
                 filename = ddsfilename
 
             # sanitize file path
-            if not self.properties.game in ('MORROWIND', 'OBLIVION','FALLOUT_3'):
+            if not self.properties.game in ('MORROWIND', 'OBLIVION','FALLOUT_3', 'SKYRIM'):
                 # strip texture file path
                 filename = os.path.basename(filename)
                 
@@ -202,7 +202,14 @@ def has_bumpmap_textures(self, b_mat):
                 self.bumpmaptextures.append(b_mat_texslot)
     return self.bumpmaptextures
 
+def has_gloss_textures(self, b_mat):        
+    if(self.b_mat == b_mat):
+        return self.glosstextures
 
+    for b_mat_texslot in self.get_used_textslots(b_mat):
+        if b_mat_texslot.use and b_mat_texslot.use_map_color_spec:
+            self.glosstextures.append(b_mat_texslot)
+    return self.glosstextures
 
 def has_normalmap_textures(self, b_mat):
     if(self.b_mat == b_mat):

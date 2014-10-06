@@ -505,6 +505,9 @@ class MeshHelper():
             mesh_hasnormals = False
             if b_mat is not None:
                 mesh_hasnormals = True # for proper lighting
+                if ((self.properties.game == 'SKYRIM') and (
+                            b_obj.niftools_shader.bslsp_shaderobjtype == 'Skin Tint')):
+                    mesh_hasnormals = False # for proper lighting
 
                 #ambient mat
                 mesh_mat_ambient_color = b_mat.niftools.ambient_color
@@ -636,8 +639,16 @@ class MeshHelper():
                     bsshader = self.nif_export.texturehelper.export_bs_shader_property(b_obj, b_mat)
                 
                     self.nif_export.objecthelper.register_block(bsshader)
-                    trishape.add_property(bsshader)
+                    num_props = trishape.num_properties
+                    trishape.num_properties = num_props + 1
+                    trishape.bs_properties.update_size()
+                    trishape.bs_properties[num_props] = bsshader
 
+                    #trishape.add_property(bsshader)
+                    '''Neomonkeus I had to do this because you still have not merged those changes 
+                    ttl269 made to the xml can you make the effort to contact him and get him to 
+                    rebase and clear the conflict so it can be merged'''
+                    
             else:
                 if self.properties.game in self.nif_export.texturehelper.USED_EXTRA_SHADER_TEXTURES:
                     # sid meier's railroad and civ4:
@@ -701,7 +712,7 @@ class MeshHelper():
                 # add NiStencilProperty
                 trishape.add_property(self.nif_export.propertyhelper.object_property.export_stencil_property())
 
-            if b_mat:
+            if b_mat and not (self.properties.game == 'SKYRIM'):
                 # add NiTriShape's specular property
                 # but NOT for sid meier's railroads and other extra shader
                 # games (they use specularity even without this property)
