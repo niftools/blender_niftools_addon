@@ -207,23 +207,45 @@ class Texture():
 			self.has_detailtex = True
 			self.detail_map = self.import_image_texture(b_mat, ImageTexFile)
 			
-		if hasattr(bsShaderProperty.texture_set.textures, '6'):
+		if len(bsShaderProperty.texture_set.textures) > 6:
 			ImageTexFile = bsShaderProperty.texture_set.textures[6].decode()
 			if ImageTexFile:
 				self.has_decaltex = True
 				self.decal_map = self.import_image_texture(b_mat, ImageTexFile)
-	
+
 			ImageTexFile = bsShaderProperty.texture_set.textures[7].decode()
 			if ImageTexFile:
 				self.has_glosstex = True
 				self.gloss_map = self.import_image_texture(b_mat, ImageTexFile)
-
-				
+		if hasattr(bsShaderProperty, 'texture_clamp_mode'):
+			self.b_mat = self.import_clamp(b_mat, bsShaderProperty)
+		
 	def import_texture_effect(self, b_mat, textureEffect):
 		ImageTexFile = textureEffect
 		self.envtex = True
 		self.env_map = self.import_image_texture(b_mat, ImageTexFile)
 
+
+	def import_clamp(self, b_mat, bsShaderProperty):
+		clamp = bsShaderProperty.texture_clamp_mode
+		for texslot in b_mat.texture_slots:
+			if texslot:
+				if clamp == 3:
+					texslot.texture.image.use_clamp_x = False
+					texslot.texture.image.use_clamp_y = False
+				if clamp == 2:
+					texslot.texture.image.use_clamp_x = False
+					texslot.texture.image.use_clamp_y = True
+				if clamp == 1:
+					texslot.texture.image.use_clamp_x = True
+					texslot.texture.image.use_clamp_y = False
+				if clamp == 0:
+					texslot.texture.image.use_clamp_x = True
+					texslot.texture.image.use_clamp_y = True
+				texslot.texture.crop_min_x = bsShaderProperty.uv_offset.u
+				texslot.texture.crop_min_y = bsShaderProperty.uv_offset.v
+				texslot.texture.crop_max_x = bsShaderProperty.uv_scale.u
+				texslot.texture.crop_max_y = bsShaderProperty.uv_scale.v
 
 	def create_texture_slot(self, b_mat, image_texture):
 		b_mat_texslot = b_mat.texture_slots.add()
@@ -258,7 +280,7 @@ class Texture():
 			b_mat_texslot.texture.use_normal_map = False # causes artifacts otherwise.
 		if self.has_normaltex:
 			b_mat_texslot.texture.use_normal_map = True # causes artifacts otherwise.
-		if self.has_glowtex or self.has_glosstex:
+		if self.has_glowtex or self.has_glosstex or self.has_decaltex:
 			b_mat_texslot.texture.use_alpha = False
 
 		# Influence

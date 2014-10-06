@@ -188,6 +188,10 @@ class Material():
             b_mat.specular_color.b = bsShaderProperty.specular_color.b
             b_mat.specular_intensity = bsShaderProperty.specular_strength
             
+            
+            # lighting effect
+            b_mat.niftools.lightingeffect1 = bsShaderProperty.lighting_effect_1
+            b_mat.niftools.lightingeffect2 = bsShaderProperty.lighting_effect_2
         
         
         # check wireframe property
