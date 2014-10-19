@@ -47,7 +47,10 @@ class Texture():
 		self.textureloader = None
 		self.used_slots = []
 		self.b_mat = None
-		
+		self.reset_textures()
+		self.reset_texture_flags()
+	
+	def reset_textures(self):
 		self.bump_map = None 
 		self.dark_map = None
 		self.decal_map = None
@@ -60,7 +63,6 @@ class Texture():
 		self.reflection_map = None
 		self.unknown_2_map = None
 		
-		self.reset_texture_flags()
 
 		
 	def reset_texture_flags(self):
@@ -187,6 +189,7 @@ class Texture():
 
 		
 	def import_bsshaderproperty(self, b_mat, bsShaderProperty):
+		self.reset_textures()
 		ImageTexFile = bsShaderProperty.texture_set.textures[0].decode()
 		if ImageTexFile:
 			self.has_diffusetex = True
@@ -219,10 +222,21 @@ class Texture():
 				self.gloss_map = self.import_image_texture(b_mat, ImageTexFile)
 		if hasattr(bsShaderProperty, 'texture_clamp_mode'):
 			self.b_mat = self.import_clamp(b_mat, bsShaderProperty)
+
+	def import_bseffectshaderproperty(self, b_mat, bsEffectShaderProperty):
+		self.reset_textures()
+		ImageTexFile = bsEffectShaderProperty.source_texture.decode()
+		if ImageTexFile:
+			self.has_envtex = True
+			self.env_map = self.import_image_texture(b_mat, ImageTexFile)
+		ImageTexFile = bsEffectShaderProperty.greyscale_texture.decode()
+		if ImageTexFile:
+			self.has_detailtex = True
+			self.detail_map = self.import_image_texture(b_mat, ImageTexFile)
 		
 	def import_texture_effect(self, b_mat, textureEffect):
 		ImageTexFile = textureEffect
-		self.envtex = True
+		self.has_envtex = True
 		self.env_map = self.import_image_texture(b_mat, ImageTexFile)
 
 
