@@ -51,7 +51,8 @@ class Material():
     def get_material_hash(self, n_mat_prop, n_texture_prop,
                           n_alpha_prop, n_specular_prop,
                           textureEffect, n_wire_prop,
-                          bsShaderProperty, extra_datas):
+                          bsShaderProperty, bsEffectShaderProperty,
+                           extra_datas):
         """Helper function for import_material. Returns a key that
         uniquely identifies a material from its properties. The key
         ignores the material name as that does not affect the
@@ -64,13 +65,15 @@ class Material():
                 textureEffect.get_hash()    if textureEffect else None,
                 n_wire_prop.get_hash()      if n_wire_prop  else None,
                 bsShaderProperty.get_hash() if bsShaderProperty else None,
+                bsEffectShaderProperty.get_hash() if bsEffectShaderProperty else None,
                 tuple(extra.get_hash()      for extra in extra_datas))
         
     
     def import_material(self, n_mat_prop, n_texture_prop,
                         n_alpha_prop, n_specular_prop,
                         textureEffect, n_wire_prop,
-                        bsShaderProperty, extra_datas):
+                        bsShaderProperty, bsEffectShaderProperty,
+                        extra_datas):
         
         """Creates and returns a material."""
         # First check if material has been created before.
@@ -78,6 +81,7 @@ class Material():
                                                n_alpha_prop, n_specular_prop,
                                                textureEffect, n_wire_prop,
                                                bsShaderProperty,
+                                               bsEffectShaderProperty,
                                                extra_datas)
         try:
             return self.nif_import.dict_materials[material_hash]                
@@ -97,6 +101,8 @@ class Material():
                 self.texturehelper.import_texture_extra_shader(b_mat, n_texture_prop, extra_datas)
         if (bsShaderProperty):
             self.texturehelper.import_bsshaderproperty(b_mat, bsShaderProperty)
+        if (bsEffectShaderProperty):
+            self.texturehelper.import_bseffectshaderproperty(b_mat, bsEffectShaderProperty)
         if(textureEffect):
             self.texturehelper.import_texture_effect(b_mat, textureEffect)
         
@@ -193,7 +199,15 @@ class Material():
             b_mat.niftools.lightingeffect1 = bsShaderProperty.lighting_effect_1
             b_mat.niftools.lightingeffect2 = bsShaderProperty.lighting_effect_2
         
-        
+        if n_mat_prop is None and bsEffectShaderProperty:
+            
+            if bsEffectShaderProperty.emissive_color:
+                b_mat.niftools.emissive_color.r = bsEffectShaderProperty.emissive_color.r
+                b_mat.niftools.emissive_color.g = bsEffectShaderProperty.emissive_color.g
+                b_mat.niftools.emissive_color.b = bsEffectShaderProperty.emissive_color.b
+                b_mat.emit = bsEffectShaderProperty.emissive_multiple
+                
+                
         # check wireframe property
         if n_wire_prop:
             # enable wireframe rendering
