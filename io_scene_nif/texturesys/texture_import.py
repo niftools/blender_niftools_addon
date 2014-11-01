@@ -222,17 +222,27 @@ class Texture():
 				self.gloss_map = self.import_image_texture(b_mat, ImageTexFile)
 		if hasattr(bsShaderProperty, 'texture_clamp_mode'):
 			self.b_mat = self.import_clamp(b_mat, bsShaderProperty)
+		if hasattr(bsShaderProperty, 'uv_offset'):
+			self.b_mat = self.import_uv_offset(b_mat, bsShaderProperty)
+		if hasattr(bsShaderProperty, 'uv_scale'):
+			self.b_mat = self.import_uv_scale(b_mat, bsShaderProperty)
 
 	def import_bseffectshaderproperty(self, b_mat, bsEffectShaderProperty):
 		self.reset_textures()
 		ImageTexFile = bsEffectShaderProperty.source_texture.decode()
 		if ImageTexFile:
-			self.has_envtex = True
-			self.env_map = self.import_image_texture(b_mat, ImageTexFile)
+			self.has_diffusetex = True
+			self.diffuse_map = self.import_image_texture(b_mat, ImageTexFile)
 		ImageTexFile = bsEffectShaderProperty.greyscale_texture.decode()
 		if ImageTexFile:
-			self.has_detailtex = True
-			self.detail_map = self.import_image_texture(b_mat, ImageTexFile)
+			self.has_glowtex = True
+			self.glow_map = self.import_image_texture(b_mat, ImageTexFile)
+
+		if hasattr(bsEffectShaderProperty, 'uv_offset'):
+			self.b_mat = self.import_uv_offset(b_mat, bsEffectShaderProperty)
+		if hasattr(bsEffectShaderProperty, 'uv_scale'):
+			self.b_mat = self.import_uv_scale(b_mat, bsEffectShaderProperty)
+
 		
 	def import_texture_effect(self, b_mat, textureEffect):
 		ImageTexFile = textureEffect
@@ -240,8 +250,8 @@ class Texture():
 		self.env_map = self.import_image_texture(b_mat, ImageTexFile)
 
 
-	def import_clamp(self, b_mat, bsShaderProperty):
-		clamp = bsShaderProperty.texture_clamp_mode
+	def import_clamp(self, b_mat, ShaderProperty):
+		clamp = ShaderProperty.texture_clamp_mode
 		for texslot in b_mat.texture_slots:
 			if texslot:
 				if clamp == 3:
@@ -256,10 +266,18 @@ class Texture():
 				if clamp == 0:
 					texslot.texture.image.use_clamp_x = True
 					texslot.texture.image.use_clamp_y = True
-				texslot.texture.crop_min_x = bsShaderProperty.uv_offset.u
-				texslot.texture.crop_min_y = bsShaderProperty.uv_offset.v
-				texslot.texture.crop_max_x = bsShaderProperty.uv_scale.u
-				texslot.texture.crop_max_y = bsShaderProperty.uv_scale.v
+					
+	def import_uv_offset(self, b_mat, ShaderProperty):
+		for texslot in b_mat.texture_slots:
+			if texslot:					
+				texslot.texture.crop_min_x = ShaderProperty.uv_offset.u
+				texslot.texture.crop_max_x = ShaderProperty.uv_offset.v
+				
+	def import_uv_scale(self, b_mat, ShaderProperty):
+		for texslot in b_mat.texture_slots:
+			if texslot:					
+				texslot.texture.crop_min_y = ShaderProperty.uv_scale.u
+				texslot.texture.crop_max_y = ShaderProperty.uv_scale.v
 
 	def create_texture_slot(self, b_mat, image_texture):
 		b_mat_texslot = b_mat.texture_slots.add()
