@@ -316,12 +316,16 @@ class Texture():
 			b_mat_texslot.texture.use_alpha = False
 
 		# Influence
+		if(self.nif_import.ni_alpha_prop):
+			b_mat_texslot.use_map_alpha = True
+
 		if self.has_diffusetex or self.has_darktex or self.has_detailtex or self.has_reftex or self.has_envtex:
 			b_mat_texslot.use_map_color_diffuse = True
 		if self.has_bumptex or self.has_normaltex or self.has_glowtex or self.has_glosstex:
 			b_mat_texslot.use_map_color_diffuse = False
 		if self.has_bumptex or self.has_normaltex:
 			b_mat_texslot.use_map_normal = True
+			b_mat_texslot.use_map_alpha = False
 		if self.has_glowtex or self.has_reftex:
 			b_mat_texslot.use_map_emit = True
 		if self.has_glosstex:
@@ -339,8 +343,6 @@ class Texture():
 		else:
 			b_mat_texslot.blend_type = "MIX"
 		
-		if(self.nif_import.ni_alpha_prop):
-			b_mat_texslot.use_map_alpha = True
 			
 		self.reset_texture_flags()
 		return b_mat_texslot
