@@ -86,11 +86,11 @@ class TextureHelper():
         for slot in texture_slots:
             used_uvlayers.add(slot.uv_layer)
         return used_uvlayers
-        
+
     def export_bs_shader_property(self, b_obj=None, b_mat=None):
         """Export a Bethesda shader property block."""
         self.determine_texture_types(b_obj, b_mat)
-        b_flag_list = b_obj.niftools_shader.bl_rna.properties.keys()
+        
         # create new block
         if b_obj.niftools_shader.bs_shadertype == 'BSShaderPPLightingProperty':
             bsshader = NifFormat.BSShaderPPLightingProperty()
@@ -98,24 +98,25 @@ class TextureHelper():
             # TODO: FIXME:
             b_s_type = NifFormat.BSShaderType._enumkeys.index(b_obj.niftools_shader.bsspplp_shaderobjtype)
             bsshader.shader_type = NifFormat.BSShaderType._enumvalues[b_s_type]
-            for sf_flag in bsshader.shader_flags._names:
-                if sf_flag in b_flag_list:
-                    b_flag = b_obj.niftools_shader.get(sf_flag)
-                    if b_flag  == True:
-                        sf_flag_index = bsshader.shader_flags._names.index(sf_flag)
-                        bsshader.shader_flags._items[sf_flag_index]._value = 1
+            
+            # Shader Flags
+            if hasattr(bsshader, 'shader_flags'):
+                self.export_shader_flags(b_obj, bsshader)
+            
                         
         if b_obj.niftools_shader.bs_shadertype == 'BSLightingShaderProperty':
             bsshader = NifFormat.BSLightingShaderProperty()
             b_s_type = NifFormat.BSLightingShaderPropertyShaderType._enumkeys.index(b_obj.niftools_shader.bslsp_shaderobjtype)
             bsshader.shader_type = NifFormat.BSLightingShaderPropertyShaderType._enumvalues[b_s_type]
-            
+        
+            # UV Offset
+            if hasattr(bsshader, 'uv_offset'):
+                self.export_uv_offset(bsshader)
+                
             # UV Scale
-            bsshader.uv_offset.u = self.basemtex.texture.crop_min_x
-            bsshader.uv_offset.v = self.basemtex.texture.crop_min_y
-            bsshader.uv_scale.u = self.basemtex.texture.crop_max_x
-            bsshader.uv_scale.v = self.basemtex.texture.crop_max_y
-            
+            if hasattr(bsshader, 'uv_scale'):
+                self.export_uv_scale(bsshader)
+                
             # Texture Clamping mode
             if self.basemtex.texture.image.use_clamp_x == False:
                 wrap_s = 2
@@ -156,19 +157,32 @@ class TextureHelper():
             if b_mat.use_transparency == True: 
                 bsshader.alpha = (1 - b_mat.alpha)
                 
+            # Shader Flags
+            if hasattr(bsshader, 'shader_flags_1'):
+                self.export_shader_flags(b_obj, bsshader)
 
-            for sf_flag in bsshader.shader_flags_1._names:
-                if sf_flag in b_flag_list:
-                    b_flag = b_obj.niftools_shader.get(sf_flag)
-                    if b_flag  == True:
-                        sf_flag_index = bsshader.shader_flags_1._names.index(sf_flag)
-                        bsshader.shader_flags_1._items[sf_flag_index]._value = 1
-            for sf_flag in bsshader.shader_flags_2._names:
-                if sf_flag in b_flag_list:
-                    b_flag = b_obj.niftools_shader.get(sf_flag)
-                    if b_flag  == True:
-                        sf_flag_index = bsshader.shader_flags_2._names.index(sf_flag)
-                        bsshader.shader_flags_2._items[sf_flag_index]._value = 1
+
+        if b_obj.niftools_shader.bs_shadertype == 'BSEffectShaderProperty':
+            bsshader = NifFormat.BSEffectShaderProperty()
+
+            # Alpha
+            if b_mat.use_transparency == True: 
+                bsshader.alpha = (1 - b_mat.alpha)
+            
+            # clamp Mode
+            bsshader.texture_clamp_mode = 65283
+
+            # Emissive
+            bsshader.emissive_color.r = b_mat.niftools.emissive_color.r
+            bsshader.emissive_color.g = b_mat.niftools.emissive_color.g
+            bsshader.emissive_color.b = b_mat.niftools.emissive_color.b
+            bsshader.emissive_multiple = b_mat.emit
+
+            # Shader Flags
+            if hasattr(bsshader, 'shader_flags_1'):
+                self.export_shader_flags(b_obj, bsshader)
+
+
         if b_obj.niftools_shader.bs_shadertype == 'None':
             raise nif_utils.NifError(
                         "Export version expected shader. "
@@ -357,6 +371,48 @@ class TextureHelper():
                 texeff.affected_node_list_pointers.update_size()
         texeff.unknown_vector.x = 1.0
         return self.register_block(texeff)
+
+
+    def export_uv_offset(self, shader):
+        shader.uv_offset.u = self.basemtex.texture.crop_min_x
+        shader.uv_offset.v = self.basemtex.texture.crop_max_x
+            
+        return shader
+        
+    def export_uv_scale(self, shader):
+        shader.uv_scale.u = self.basemtex.texture.crop_min_y
+        shader.uv_scale.v = self.basemtex.texture.crop_max_y
+        
+        return shader
+        
+    def export_shader_flags(self, b_obj, shader):
+        
+        b_flag_list = b_obj.niftools_shader.bl_rna.properties.keys()
+        if hasattr(shader, 'shader_flags'):
+            for sf_flag in shader.shader_flags._names:
+                if sf_flag in b_flag_list:
+                    b_flag = b_obj.niftools_shader.get(sf_flag)
+                    if b_flag  == True:
+                        sf_flag_index = shader.shader_flags._names.index(sf_flag)
+                        shader.shader_flags._items[sf_flag_index]._value = 1
+
+        if hasattr(shader, 'shader_flags_1'):
+            for sf_flag in shader.shader_flags_1._names:
+                if sf_flag in b_flag_list:
+                    b_flag = b_obj.niftools_shader.get(sf_flag)
+                    if b_flag  == True:
+                        sf_flag_index = shader.shader_flags_1._names.index(sf_flag)
+                        shader.shader_flags_1._items[sf_flag_index]._value = 1
+
+        if hasattr(shader, 'shader_flags_2'):
+            for sf_flag in shader.shader_flags_2._names:
+                if sf_flag in b_flag_list:
+                    b_flag = b_obj.niftools_shader.get(sf_flag)
+                    if b_flag  == True:
+                        sf_flag_index = shader.shader_flags_2._names.index(sf_flag)
+                        shader.shader_flags_2._items[sf_flag_index]._value = 1
+
+        return shader
 
 
     def add_shader_integer_extra_datas(self, trishape):
