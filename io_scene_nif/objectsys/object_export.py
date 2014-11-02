@@ -530,7 +530,7 @@ class MeshHelper():
 
                 #alpha mat
                 mesh_hasalpha = b_alpha_prop
-                mesh_mat_transparency = b_mat.alpha
+                mesh_mat_transparency = (1 - b_mat.alpha)
                 if b_mat.use_transparency:
                     if abs(mesh_mat_transparency - 1.0)> self.properties.epsilon:
                         mesh_hasalpha = True

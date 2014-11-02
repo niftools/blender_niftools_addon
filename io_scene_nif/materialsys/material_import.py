@@ -69,6 +69,20 @@ class Material():
                 tuple(extra.get_hash()      for extra in extra_datas))
         
     
+    def set_alpha(self, b_mat, ShaderProperty, n_alpha_prop):
+        self.nif_import.debug("Alpha prop detected")
+        b_mat.use_transparency = True
+        if hasattr(ShaderProperty, 'alpha'):
+            b_mat.alpha = (1 - ShaderProperty.alpha)
+        else:
+            b_mat.alpha = 0
+        b_mat.transparency_method = 'Z_TRANSPARENCY'  # enable z-buffered transparency
+        b_mat.offset_z = n_alpha_prop.threshold # Transparency threshold
+        b_mat.niftools_alpha.alphaflag = n_alpha_prop.flags
+        
+        return b_mat
+    
+    
     def import_material(self, n_mat_prop, n_texture_prop,
                         n_alpha_prop, n_specular_prop,
                         textureEffect, n_wire_prop,
@@ -134,13 +148,7 @@ class Material():
             
             # Alpha
             if n_alpha_prop:
-                #if(n_mat_prop.alpha < 1.0):
-                self.nif_import.debug("Alpha prop detected")
-                b_mat.use_transparency = True 
-                b_mat.alpha = n_mat_prop.alpha
-                b_mat.transparency_method = 'Z_TRANSPARENCY'  # enable z-buffered transparency
-                b_mat.offset_z = n_alpha_prop.threshold # Transparency threshold
-                b_mat.niftools_alpha.alphaflag = n_alpha_prop.flags
+                b_mat = self.set_alpha(b_mat, bsShaderProperty, n_alpha_prop)
     
             # Specular color
             b_mat.specular_color.r = n_mat_prop.specular_color.r
@@ -177,13 +185,7 @@ class Material():
 
             # Alpha
             if n_alpha_prop:
-                #if(bsShaderProperty.alpha < 1.0):
-                self.nif_import.debug("Alpha prop detected")
-                b_mat.use_transparency = True 
-                b_mat.alpha = bsShaderProperty.alpha
-                b_mat.transparency_method = 'Z_TRANSPARENCY'  # enable z-buffered transparency
-                b_mat.offset_z = n_alpha_prop.threshold # Transparency threshold
-                b_mat.niftools_alpha.alphaflag = n_alpha_prop.flags
+                b_mat = self.set_alpha(b_mat, bsShaderProperty, n_alpha_prop)
 
             # gloss
             b_mat.specular_hardness = bsShaderProperty.glossiness
@@ -200,12 +202,16 @@ class Material():
             b_mat.niftools.lightingeffect2 = bsShaderProperty.lighting_effect_2
         
         if n_mat_prop is None and bsEffectShaderProperty:
+            # Alpha
+            if n_alpha_prop:
+                b_mat = self.set_alpha(b_mat, bsShaderProperty, n_alpha_prop)
             
             if bsEffectShaderProperty.emissive_color:
                 b_mat.niftools.emissive_color.r = bsEffectShaderProperty.emissive_color.r
                 b_mat.niftools.emissive_color.g = bsEffectShaderProperty.emissive_color.g
                 b_mat.niftools.emissive_color.b = bsEffectShaderProperty.emissive_color.b
                 b_mat.emit = bsEffectShaderProperty.emissive_multiple
+            
                 
                 
         # check wireframe property
