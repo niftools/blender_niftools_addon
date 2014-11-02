@@ -154,7 +154,7 @@ class TextureHelper():
 
             # Alpha
             if b_mat.use_transparency == True: 
-                bsshader.alpha = b_mat.alpha
+                bsshader.alpha = (1 - b_mat.alpha)
                 
 
             for sf_flag in bsshader.shader_flags_1._names:
