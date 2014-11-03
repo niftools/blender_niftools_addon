@@ -210,8 +210,9 @@ class Material():
                 b_mat.niftools.emissive_color.r = bsEffectShaderProperty.emissive_color.r
                 b_mat.niftools.emissive_color.g = bsEffectShaderProperty.emissive_color.g
                 b_mat.niftools.emissive_color.b = bsEffectShaderProperty.emissive_color.b
+                b_mat.niftools.emissive_alpha = bsEffectShaderProperty.emissive_color.a
                 b_mat.emit = bsEffectShaderProperty.emissive_multiple
-            
+            b_mat.niftools_alpha.textureflag = bsEffectShaderProperty.controller.flags
                 
                 
         # check wireframe property

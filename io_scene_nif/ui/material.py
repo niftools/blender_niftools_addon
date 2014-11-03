@@ -97,6 +97,7 @@ class NifMatColorPanel(Panel):
         col.prop(mat, "ambient_color", text="")
         col.prop(mat, "emissive_preview")
         col.prop(mat, "emissive_color", text="")
+        col.prop(mat, "emissive_alpha")
         col.prop(mat, "lightingeffect1")
         col.prop(mat, "lightingeffect2")
         

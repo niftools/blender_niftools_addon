@@ -123,7 +123,11 @@ class Material(PropertyGroup):
         
         cls.emissive_color = FloatVectorProperty(
                 name='Emissive', subtype='COLOR', default=[0.0,0.0,0.0],min=0.0, max=1.0)
-    
+        
+        cls.emissive_alpha = FloatProperty(
+                name='Emissive Alpha',
+                default = 1
+                )
         cls.lightingeffect1 = FloatProperty(
                 name='Lighting Effect 1',
                 default = 0.3
