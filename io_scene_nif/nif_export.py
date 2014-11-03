@@ -381,7 +381,8 @@ class NifExport(NifCommon):
                 # for Oblivion skeleton exports
                 # export animation groups (not for skeleton.nif export!)
                 if animtxt:
-                    anim_textextra = self.animationhelper.export_anim_groups(animtxt, root_block)
+                    # TODO: removed temorarily to process bseffectshader export
+                    anim_textextra = None #self.animationhelper.export_anim_groups(animtxt, root_block)
                 else:
                     anim_textextra = None
 

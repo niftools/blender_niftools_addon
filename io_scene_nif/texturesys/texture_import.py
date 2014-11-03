@@ -242,6 +242,8 @@ class Texture():
 			self.b_mat = self.import_uv_offset(b_mat, bsEffectShaderProperty)
 		if hasattr(bsEffectShaderProperty, 'uv_scale'):
 			self.b_mat = self.import_uv_scale(b_mat, bsEffectShaderProperty)
+			
+		self.b_mat = self.import_texture_game_properties(b_mat, bsEffectShaderProperty)
 
 		
 	def import_texture_effect(self, b_mat, textureEffect):
@@ -278,6 +280,14 @@ class Texture():
 			if texslot:					
 				texslot.texture.crop_min_y = ShaderProperty.uv_scale.u
 				texslot.texture.crop_max_y = ShaderProperty.uv_scale.v
+	
+	def import_texture_game_properties(self, b_mat, ShaderProperty):
+		for texslot in b_mat.texture_slots:
+			if texslot:
+				texslot.texture.image.use_animation = True
+				texslot.texture.image.fps = ShaderProperty.controller.frequency
+				texslot.texture.image.frame_start = ShaderProperty.controller.start_time
+				texslot.texture.image.frame_end	= ShaderProperty.controller.stop_time
 
 	def create_texture_slot(self, b_mat, image_texture):
 		b_mat_texslot = b_mat.texture_slots.add()

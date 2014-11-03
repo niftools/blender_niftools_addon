@@ -176,6 +176,7 @@ class TextureHelper():
             bsshader.emissive_color.r = b_mat.niftools.emissive_color.r
             bsshader.emissive_color.g = b_mat.niftools.emissive_color.g
             bsshader.emissive_color.b = b_mat.niftools.emissive_color.b
+            bsshader.emissive_color.a = b_mat.niftools.emissive_alpha 
             bsshader.emissive_multiple = b_mat.emit
 
             # Shader Flags
@@ -208,6 +209,11 @@ class TextureHelper():
                 texset.textures[6] = self.texture_writer.export_texture_filename(self.detailmtex.texture)
             if self.glossmtex:
                 texset.textures[7] = self.texture_writer.export_texture_filename(self.glossmtex.texture)
+
+        if b_obj.niftools_shader.bs_shadertype == 'BSEffectShaderProperty':
+            bsshader.source_texture = self.texture_writer.export_texture_filename(self.basemtex.texture)
+            bsshader.greyscale_texture = self.texture_writer.export_texture_filename(self.glowmtex.texture)
+
 
         return bsshader
     
