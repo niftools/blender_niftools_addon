@@ -217,8 +217,7 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
         bpy.context.scene.game_settings.material_mode = 'GLSL'
         for area in bpy.context.window.screen.areas:
             if area.type =='VIEW_3D':
-                area.spaces[0].viewport_shade = 'SOLID'
-                area.spaces[0].show_textured_solid = True
+                area.spaces[0].viewport_shade = 'MATERIAL'
                 area.spaces[0].show_backface_culling = True
         
         return nif_import.NifImport(self, context).execute()
