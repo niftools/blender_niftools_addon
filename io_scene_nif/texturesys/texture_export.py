@@ -380,14 +380,14 @@ class TextureHelper():
 
 
     def export_uv_offset(self, shader):
-        shader.uv_offset.u = self.basemtex.texture.crop_min_x
-        shader.uv_offset.v = self.basemtex.texture.crop_max_x
+        shader.uv_offset.u = self.basemtex.offset.x
+        shader.uv_offset.v = self.basemtex.offset.y
             
         return shader
         
     def export_uv_scale(self, shader):
-        shader.uv_scale.u = self.basemtex.texture.crop_min_y
-        shader.uv_scale.v = self.basemtex.texture.crop_max_y
+        shader.uv_scale.u = self.basemtex.scale.x
+        shader.uv_scale.v = self.basemtex.scale.y
         
         return shader
         
