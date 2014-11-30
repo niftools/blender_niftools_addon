@@ -272,14 +272,14 @@ class Texture():
 	def import_uv_offset(self, b_mat, ShaderProperty):
 		for texslot in b_mat.texture_slots:
 			if texslot:					
-				texslot.texture.crop_min_x = ShaderProperty.uv_offset.u
-				texslot.texture.crop_max_x = ShaderProperty.uv_offset.v
+				texslot.offset.x = ShaderProperty.uv_offset.u
+				texslot.offset.y = ShaderProperty.uv_offset.v
 				
 	def import_uv_scale(self, b_mat, ShaderProperty):
 		for texslot in b_mat.texture_slots:
 			if texslot:					
-				texslot.texture.crop_min_y = ShaderProperty.uv_scale.u
-				texslot.texture.crop_max_y = ShaderProperty.uv_scale.v
+				texslot.scale.x = ShaderProperty.uv_scale.u
+				texslot.scale.y = ShaderProperty.uv_scale.v
 	
 	def import_texture_game_properties(self, b_mat, ShaderProperty):
 		for texslot in b_mat.texture_slots:
