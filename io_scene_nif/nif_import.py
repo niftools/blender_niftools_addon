@@ -965,6 +965,14 @@ class NifImport(NifCommon):
                 bsShaderProperty = nif_utils.find_property(
                 niBlock, NifFormat.BSLightingShaderProperty)
                 
+            if bsShaderProperty:
+                for textureslot in bsShaderProperty.texture_set.textures:
+                    if textureslot:
+                        self.bsShaderProperty1st = bsShaderProperty
+                        break
+                else:
+                    bsShaderProperty = self.bsShaderProperty1st
+                
             bsEffectShaderProperty = None
             bsEffectShaderProperty = nif_utils.find_property(
                 niBlock, NifFormat.BSEffectShaderProperty)
