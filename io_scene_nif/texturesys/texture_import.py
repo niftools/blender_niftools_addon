@@ -47,7 +47,10 @@ class Texture():
 		self.textureloader = None
 		self.used_slots = []
 		self.b_mat = None
-		
+		self.reset_textures()
+		self.reset_texture_flags()
+	
+	def reset_textures(self):
 		self.bump_map = None 
 		self.dark_map = None
 		self.decal_map = None
@@ -60,7 +63,6 @@ class Texture():
 		self.reflection_map = None
 		self.unknown_2_map = None
 		
-		self.reset_texture_flags()
 
 		
 	def reset_texture_flags(self):
@@ -187,6 +189,7 @@ class Texture():
 
 		
 	def import_bsshaderproperty(self, b_mat, bsShaderProperty):
+		self.reset_textures()
 		ImageTexFile = bsShaderProperty.texture_set.textures[0].decode()
 		if ImageTexFile:
 			self.has_diffusetex = True
@@ -219,15 +222,38 @@ class Texture():
 				self.gloss_map = self.import_image_texture(b_mat, ImageTexFile)
 		if hasattr(bsShaderProperty, 'texture_clamp_mode'):
 			self.b_mat = self.import_clamp(b_mat, bsShaderProperty)
+		if hasattr(bsShaderProperty, 'uv_offset'):
+			self.b_mat = self.import_uv_offset(b_mat, bsShaderProperty)
+		if hasattr(bsShaderProperty, 'uv_scale'):
+			self.b_mat = self.import_uv_scale(b_mat, bsShaderProperty)
+
+	def import_bseffectshaderproperty(self, b_mat, bsEffectShaderProperty):
+		self.reset_textures()
+		ImageTexFile = bsEffectShaderProperty.source_texture.decode()
+		if ImageTexFile:
+			self.has_diffusetex = True
+			self.diffuse_map = self.import_image_texture(b_mat, ImageTexFile)
+		ImageTexFile = bsEffectShaderProperty.greyscale_texture.decode()
+		if ImageTexFile:
+			self.has_glowtex = True
+			self.glow_map = self.import_image_texture(b_mat, ImageTexFile)
+
+		if hasattr(bsEffectShaderProperty, 'uv_offset'):
+			self.b_mat = self.import_uv_offset(b_mat, bsEffectShaderProperty)
+		if hasattr(bsEffectShaderProperty, 'uv_scale'):
+			self.b_mat = self.import_uv_scale(b_mat, bsEffectShaderProperty)
+			
+		self.b_mat = self.import_texture_game_properties(b_mat, bsEffectShaderProperty)
+
 		
 	def import_texture_effect(self, b_mat, textureEffect):
 		ImageTexFile = textureEffect
-		self.envtex = True
+		self.has_envtex = True
 		self.env_map = self.import_image_texture(b_mat, ImageTexFile)
 
 
-	def import_clamp(self, b_mat, bsShaderProperty):
-		clamp = bsShaderProperty.texture_clamp_mode
+	def import_clamp(self, b_mat, ShaderProperty):
+		clamp = ShaderProperty.texture_clamp_mode
 		for texslot in b_mat.texture_slots:
 			if texslot:
 				if clamp == 3:
@@ -242,10 +268,26 @@ class Texture():
 				if clamp == 0:
 					texslot.texture.image.use_clamp_x = True
 					texslot.texture.image.use_clamp_y = True
-				texslot.texture.crop_min_x = bsShaderProperty.uv_offset.u
-				texslot.texture.crop_min_y = bsShaderProperty.uv_offset.v
-				texslot.texture.crop_max_x = bsShaderProperty.uv_scale.u
-				texslot.texture.crop_max_y = bsShaderProperty.uv_scale.v
+					
+	def import_uv_offset(self, b_mat, ShaderProperty):
+		for texslot in b_mat.texture_slots:
+			if texslot:					
+				texslot.offset.x = ShaderProperty.uv_offset.u
+				texslot.offset.y = ShaderProperty.uv_offset.v
+				
+	def import_uv_scale(self, b_mat, ShaderProperty):
+		for texslot in b_mat.texture_slots:
+			if texslot:					
+				texslot.scale.x = ShaderProperty.uv_scale.u
+				texslot.scale.y = ShaderProperty.uv_scale.v
+	
+	def import_texture_game_properties(self, b_mat, ShaderProperty):
+		for texslot in b_mat.texture_slots:
+			if texslot:
+				texslot.texture.image.use_animation = True
+				texslot.texture.image.fps = ShaderProperty.controller.frequency
+				texslot.texture.image.frame_start = ShaderProperty.controller.start_time
+				texslot.texture.image.frame_end	= ShaderProperty.controller.stop_time
 
 	def create_texture_slot(self, b_mat, image_texture):
 		b_mat_texslot = b_mat.texture_slots.add()
@@ -284,12 +326,16 @@ class Texture():
 			b_mat_texslot.texture.use_alpha = False
 
 		# Influence
+		if(self.nif_import.ni_alpha_prop):
+			b_mat_texslot.use_map_alpha = True
+
 		if self.has_diffusetex or self.has_darktex or self.has_detailtex or self.has_reftex or self.has_envtex:
 			b_mat_texslot.use_map_color_diffuse = True
 		if self.has_bumptex or self.has_normaltex or self.has_glowtex or self.has_glosstex:
 			b_mat_texslot.use_map_color_diffuse = False
 		if self.has_bumptex or self.has_normaltex:
 			b_mat_texslot.use_map_normal = True
+			b_mat_texslot.use_map_alpha = False
 		if self.has_glowtex or self.has_reftex:
 			b_mat_texslot.use_map_emit = True
 		if self.has_glosstex:
@@ -307,8 +353,6 @@ class Texture():
 		else:
 			b_mat_texslot.blend_type = "MIX"
 		
-		if(self.nif_import.ni_alpha_prop):
-			b_mat_texslot.use_map_alpha = True
 			
 		self.reset_texture_flags()
 		return b_mat_texslot

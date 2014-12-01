@@ -448,19 +448,11 @@ class NifImport(NifCommon):
                         b_obj.niftools_shader.bs_shadertype = 'BSLightingShaderProperty'
                         sf_type = NifFormat.BSLightingShaderPropertyShaderType._enumvalues.index(b_prop.skyrim_shader_type)
                         b_obj.niftools_shader.bslsp_shaderobjtype = NifFormat.BSLightingShaderPropertyShaderType._enumkeys[sf_type]
-                        for b_flag_name_1 in b_prop.shader_flags_1._names:
-                            sf_index = b_prop.shader_flags_1._names.index(b_flag_name_1)
-                            if b_prop.shader_flags_1._items[sf_index]._value == 1:
-                                b_obj.niftools_shader[b_flag_name_1] = True
-                        for b_flag_name_2 in b_prop.shader_flags_2._names:
-                            sf_index = b_prop.shader_flags_2._names.index(b_flag_name_2)
-                            if b_prop.shader_flags_2._items[sf_index]._value == 1:
-                                b_obj.niftools_shader[b_flag_name_2] = True
-
-                        
-
-
-
+                        self.import_shader_flags(b_obj, b_prop)
+                    elif isinstance(b_prop, NifFormat.BSEffectShaderProperty):
+                        b_obj.niftools_shader.bs_shadertype = 'BSEffectShaderProperty'
+                        b_obj.niftools_shader.bslsp_shaderobjtype = 'Default'
+                        self.import_shader_flags(b_obj, b_prop)
 
                                 
             if niBlock.data.consistency_flags in NifFormat.ConsistencyType._enumvalues:
@@ -565,14 +557,11 @@ class NifImport(NifCommon):
                                     b_obj.niftools_shader.bs_shadertype = 'BSLightingShaderProperty'
                                     sf_type = NifFormat.BSLightingShaderPropertyShaderType._enumvalues.index(b_prop.skyrim_shader_type)
                                     b_obj.niftools_shader.bslsp_shaderobjtype = NifFormat.BSLightingShaderPropertyShaderType._enumkeys[sf_type]
-                                    for b_flag_name_1 in b_prop.shader_flags_1._names:
-                                        sf_index = b_prop.shader_flags_1._names.index(b_flag_name_1)
-                                        if b_prop.shader_flags_1._items[sf_index]._value == 1:
-                                            b_obj.niftools_shader[b_flag_name_1] = True
-                                    for b_flag_name_2 in b_prop.shader_flags_2._names:
-                                        sf_index = b_prop.shader_flags_2._names.index(b_flag_name_2)
-                                        if b_prop.shader_flags_2._items[sf_index]._value == 1:
-                                            b_obj.niftools_shader[b_flag_name_2] = True
+                                    b_obj = b_obj.import_shader_flags(b_obj, b_prop)
+                                elif isinstance(b_prop, NifFormat.BSEffectShaderProperty):
+                                    b_obj.niftools_shader.bs_shadertype = 'BSEffectShaderProperty'
+                                    b_obj.niftools_shader.bslsp_shaderobjtype = 'Default'
+                                    b_obj = b_obj.import_shader_flags(b_obj, b_prop)
 
                         if child.data.consistency_flags in NifFormat.ConsistencyType._enumvalues:
                             cf_index = NifFormat.ConsistencyType._enumvalues.index(child.data.consistency_flags)
@@ -762,7 +751,17 @@ class NifImport(NifCommon):
             return b_obj
         # all else is currently discarded
         return None
-
+    def import_shader_flags(self, b_obj, b_prop):
+        for b_flag_name_1 in b_prop.shader_flags_1._names:
+            sf_index = b_prop.shader_flags_1._names.index(b_flag_name_1)
+            if b_prop.shader_flags_1._items[sf_index]._value == 1:
+                b_obj.niftools_shader[b_flag_name_1] = True
+        for b_flag_name_2 in b_prop.shader_flags_2._names:
+            sf_index = b_prop.shader_flags_2._names.index(b_flag_name_2)
+            if b_prop.shader_flags_2._items[sf_index]._value == 1:
+                b_obj.niftools_shader[b_flag_name_2] = True
+        return b_obj
+        
     def import_name(self, niBlock, max_length=22):
         """Get unique name for an object, preserving existing names.
         The maximum name length defaults to 22, since this is the
@@ -936,11 +935,14 @@ class NifImport(NifCommon):
         # Material
         # note that NIF files only support one material for each trishape
         # find material property
-        n_mat_prop = nif_utils.find_property(niBlock,
-                                         NifFormat.NiMaterialProperty)
-        n_shader_prop = nif_utils.find_property(niBlock, NifFormat.BSLightingShaderProperty)
+        n_mat_prop = nif_utils.find_property(
+                        niBlock, NifFormat.NiMaterialProperty)
+        n_shader_prop = nif_utils.find_property(
+                        niBlock, NifFormat.BSLightingShaderProperty)
+        n_effect_shader_prop = nif_utils.find_property(
+                        niBlock, NifFormat.BSEffectShaderProperty)
 
-        if n_mat_prop or n_shader_prop:
+        if n_mat_prop or n_shader_prop or n_effect_shader_prop:
             # Texture
             n_texture_prop = None
             if n_uvco:
@@ -956,11 +958,24 @@ class NifImport(NifCommon):
                         extra_datas.append(extra)    
             
             # bethesda shader
+            bsShaderProperty = None
             bsShaderProperty = nif_utils.find_property(
                 niBlock, NifFormat.BSShaderPPLightingProperty)
             if bsShaderProperty is None:
                 bsShaderProperty = nif_utils.find_property(
                 niBlock, NifFormat.BSLightingShaderProperty)
+                
+            if bsShaderProperty:
+                for textureslot in bsShaderProperty.texture_set.textures:
+                    if textureslot:
+                        self.bsShaderProperty1st = bsShaderProperty
+                        break
+                else:
+                    bsShaderProperty = self.bsShaderProperty1st
+                
+            bsEffectShaderProperty = None
+            bsEffectShaderProperty = nif_utils.find_property(
+                niBlock, NifFormat.BSEffectShaderProperty)
 
             
             # texturing effect for environment map
@@ -1005,7 +1020,9 @@ class NifImport(NifCommon):
             material = self.materialhelper.import_material(n_mat_prop, n_texture_prop,
                                             n_alpha_prop, n_specular_prop,
                                             textureEffect, n_wire_prop,
-                                            bsShaderProperty, extra_datas)
+                                            bsShaderProperty,
+                                            bsEffectShaderProperty,
+                                            extra_datas)
 
             # XXX todo: merge this call into import_material
             self.animationhelper.material_animation.import_material_controllers(material, niBlock)

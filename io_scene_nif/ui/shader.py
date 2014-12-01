@@ -97,7 +97,7 @@ class ObjectShader(Panel):
             row.prop(nif_obj_props, "sf_window_environment_mapping")
             row.prop(nif_obj_props, "sf_z_buffer_test")
 
-        if nif_obj_props.bs_shadertype == 'BSLightingShaderProperty':
+        if nif_obj_props.bs_shadertype in ('BSLightingShaderProperty', 'BSEffectShaderProperty'):
             row.prop(nif_obj_props, "bslsp_shaderobjtype")
 
             row.prop(nif_obj_props, "slsf_1_cast_shadows")
