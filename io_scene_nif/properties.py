@@ -123,7 +123,11 @@ class Material(PropertyGroup):
         
         cls.emissive_color = FloatVectorProperty(
                 name='Emissive', subtype='COLOR', default=[0.0,0.0,0.0],min=0.0, max=1.0)
-    
+        
+        cls.emissive_alpha = FloatProperty(
+                name='Emissive Alpha',
+                default = 1
+                )
         cls.lightingeffect1 = FloatProperty(
                 name='Lighting Effect 1',
                 default = 0.3
@@ -171,7 +175,9 @@ class ShaderProps(PropertyGroup):
                         items = (('None','None',"",0),
                                  ('BSShaderProperty', 'BS Shader Property',"", 1),
                                  ('BSShaderPPLightingProperty', 'BS Shader PP Lighting Property',"", 2),
-                                 ('BSLightingShaderProperty', 'BS Lighting Shader Property', "", 3)),
+                                 ('BSLightingShaderProperty', 'BS Lighting Shader Property', "", 3),
+                                 ('BSEffectShaderProperty', 'BS Effect Shader Property', "", 4)
+                                )
                         )
 
         cls.bsspplp_shaderobjtype = EnumProperty(

@@ -530,7 +530,7 @@ class MeshHelper():
 
                 #alpha mat
                 mesh_hasalpha = b_alpha_prop
-                mesh_mat_transparency = b_mat.alpha
+                mesh_mat_transparency = (1 - b_mat.alpha)
                 if b_mat.use_transparency:
                     if abs(mesh_mat_transparency - 1.0)> self.properties.epsilon:
                         mesh_hasalpha = True
@@ -648,7 +648,14 @@ class MeshHelper():
                     '''Neomonkeus I had to do this because you still have not merged those changes 
                     ttl269 made to the xml can you make the effort to contact him and get him to 
                     rebase and clear the conflict so it can be merged'''
-                    
+                    if isinstance(bsshader, NifFormat.BSEffectShaderProperty):
+                        effect_control = self.nif_export.objecthelper.create_block(
+                                            "BSEffectShaderPropertyFloatController", bsshader)
+                        effect_control.flags = b_mat.niftools_alpha.textureflag
+                        effect_control.frequency = b_slot.texture.image.fps
+                        effect_control.start_time = b_slot.texture.image.frame_start
+                        effect_control.stop_time = b_slot.texture.image.frame_end
+                        bsshader.add_controller(effect_control)
             else:
                 if self.properties.game in self.nif_export.texturehelper.USED_EXTRA_SHADER_TEXTURES:
                     # sid meier's railroad and civ4:
