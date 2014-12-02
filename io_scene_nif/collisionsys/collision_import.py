@@ -609,9 +609,15 @@ class bound_import():
             #    *bbox.bounding_box.rotation.as_list())
             # ob.setLocation(
             #    *bbox.bounding_box.translation.as_list())
-        b_obj.niftools.bsxflags = self.nif_import.bsxflags
-        b_obj.niftools.objectflags = self.nif_import.objectflags
-        b_obj.location = mathutils.Vector((bbox.center.x,bbox.center.y,bbox.center.z))
+        if self.nif_import.bsxflags:
+            b_obj.niftools.bsxflags = self.nif_import.bsxflags
+        if self.nif_import.objectflags:
+            b_obj.niftools.objectflags = self.nif_import.objectflags
+        if hasattr(bbox, "center"):
+            b_obj.location = mathutils.Vector((bbox.center.x,bbox.center.y,bbox.center.z))
+        else:
+            # TODO: enhance to account for + min values 
+            b_obj.location = mathutils.Vector(((maxx - minx),(maxy - miny),(maxz - minz)))
 
         b_obj.niftools.nif_version = self.nif_import.hex_to_dec(self.nif_import.data._version_value_._value)
         b_obj.niftools.user_version = self.nif_import.data._user_version_value_._value
