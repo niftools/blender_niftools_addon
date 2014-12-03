@@ -434,26 +434,10 @@ class NifImport(NifCommon):
             b_obj.niftools.objectflags = niBlock.flags
             if niBlock.properties:
                 for b_prop in niBlock.properties:
-                    if isinstance(b_prop, NifFormat.BSShaderPPLightingProperty):
-                        b_obj.niftools_shader.bs_shadertype = 'BSShaderPPLightingProperty'
-                        sf_type = NifFormat.BSShaderType._enumvalues.index(b_prop.shader_type)
-                        b_obj.niftools_shader.bsspplp_shaderobjtype = NifFormat.BSShaderType._enumkeys[sf_type]
-                        for b_flag_name in b_prop.shader_flags._names:
-                            sf_index = b_prop.shader_flags._names.index(b_flag_name)
-                            if b_prop.shader_flags._items[sf_index]._value == 1:
-                                b_obj.niftools_shader[b_flag_name] = True
+                    self.import_shader_types(b_obj, b_prop)
             elif niBlock.bs_properties:
                 for b_prop in niBlock.bs_properties:
-                    if isinstance(b_prop, NifFormat.BSLightingShaderProperty):
-                        b_obj.niftools_shader.bs_shadertype = 'BSLightingShaderProperty'
-                        sf_type = NifFormat.BSLightingShaderPropertyShaderType._enumvalues.index(b_prop.skyrim_shader_type)
-                        b_obj.niftools_shader.bslsp_shaderobjtype = NifFormat.BSLightingShaderPropertyShaderType._enumkeys[sf_type]
-                        self.import_shader_flags(b_obj, b_prop)
-                    elif isinstance(b_prop, NifFormat.BSEffectShaderProperty):
-                        b_obj.niftools_shader.bs_shadertype = 'BSEffectShaderProperty'
-                        b_obj.niftools_shader.bslsp_shaderobjtype = 'Default'
-                        self.import_shader_flags(b_obj, b_prop)
-
+                    self.import_shader_types(b_obj, b_prop)
                                 
             if niBlock.data.consistency_flags in NifFormat.ConsistencyType._enumvalues:
                 cf_index = NifFormat.ConsistencyType._enumvalues.index(niBlock.data.consistency_flags)
@@ -543,26 +527,12 @@ class NifImport(NifCommon):
                         
                         if child.properties:
                             for b_prop in child.properties:
-                                if isinstance(b_prop, NifFormat.BSShaderPPLightingProperty):
-                                    b_obj.niftools_shader.bs_shadertype = 'BSShaderPPLightingProperty'
-                                    sf_type = NifFormat.BSShaderType._enumvalues.index(b_prop.shader_type)
-                                    b_obj.niftools_shader.bsspplp_shaderobjtype = NifFormat.BSShaderType._enumkeys[sf_type]
-                                    for b_flag_name in b_prop.shader_flags._names:
-                                        sf_index = b_prop.shader_flags._names.index(b_flag_name)
-                                        if b_prop.shader_flags._items[sf_index]._value == 1:
-                                            b_obj.niftools_shader[b_flag_name] = True
+                                self.import_shader_types(b_obj, b_prop)
+
                         if child.bs_properties:
                             for b_prop in child.bs_properties:
-                                if isinstance(b_prop, NifFormat.BSLightingShaderProperty):
-                                    b_obj.niftools_shader.bs_shadertype = 'BSLightingShaderProperty'
-                                    sf_type = NifFormat.BSLightingShaderPropertyShaderType._enumvalues.index(b_prop.skyrim_shader_type)
-                                    b_obj.niftools_shader.bslsp_shaderobjtype = NifFormat.BSLightingShaderPropertyShaderType._enumkeys[sf_type]
-                                    b_obj = b_obj.import_shader_flags(b_obj, b_prop)
-                                elif isinstance(b_prop, NifFormat.BSEffectShaderProperty):
-                                    b_obj.niftools_shader.bs_shadertype = 'BSEffectShaderProperty'
-                                    b_obj.niftools_shader.bslsp_shaderobjtype = 'Default'
-                                    b_obj = b_obj.import_shader_flags(b_obj, b_prop)
-
+                                self.import_shader_types(b_obj, b_prop)
+                                
                         if child.data.consistency_flags in NifFormat.ConsistencyType._enumvalues:
                             cf_index = NifFormat.ConsistencyType._enumvalues.index(child.data.consistency_flags)
                             b_obj.niftools.consistency_flags = NifFormat.ConsistencyType._enumkeys[cf_index]
@@ -751,6 +721,28 @@ class NifImport(NifCommon):
             return b_obj
         # all else is currently discarded
         return None
+    
+    def import_shader_types(self, b_obj, b_prop):
+        if isinstance(b_prop, NifFormat.BSShaderPPLightingProperty):
+            b_obj.niftools_shader.bs_shadertype = 'BSShaderPPLightingProperty'
+            sf_type = NifFormat.BSShaderType._enumvalues.index(b_prop.shader_type)
+            b_obj.niftools_shader.bsspplp_shaderobjtype = NifFormat.BSShaderType._enumkeys[sf_type]
+            for b_flag_name in b_prop.shader_flags._names:
+                sf_index = b_prop.shader_flags._names.index(b_flag_name)
+                if b_prop.shader_flags._items[sf_index]._value == 1:
+                    b_obj.niftools_shader[b_flag_name] = True
+                
+        if isinstance(b_prop, NifFormat.BSLightingShaderProperty):
+            b_obj.niftools_shader.bs_shadertype = 'BSLightingShaderProperty'
+            sf_type = NifFormat.BSLightingShaderPropertyShaderType._enumvalues.index(b_prop.skyrim_shader_type)
+            b_obj.niftools_shader.bslsp_shaderobjtype = NifFormat.BSLightingShaderPropertyShaderType._enumkeys[sf_type]
+            self.import_shader_flags(b_obj, b_prop)
+
+        elif isinstance(b_prop, NifFormat.BSEffectShaderProperty):
+            b_obj.niftools_shader.bs_shadertype = 'BSEffectShaderProperty'
+            b_obj.niftools_shader.bslsp_shaderobjtype = 'Default'
+            self.import_shader_flags(b_obj, b_prop)
+                    
     def import_shader_flags(self, b_obj, b_prop):
         for b_flag_name_1 in b_prop.shader_flags_1._names:
             sf_index = b_prop.shader_flags_1._names.index(b_flag_name_1)
@@ -760,7 +752,6 @@ class NifImport(NifCommon):
             sf_index = b_prop.shader_flags_2._names.index(b_flag_name_2)
             if b_prop.shader_flags_2._items[sf_index]._value == 1:
                 b_obj.niftools_shader[b_flag_name_2] = True
-        return b_obj
         
     def import_name(self, niBlock, max_length=22):
         """Get unique name for an object, preserving existing names.
