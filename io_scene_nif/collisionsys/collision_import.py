@@ -169,9 +169,7 @@ class bhkshape_import():
             b_col_obj.nifcollision.oblivion_layer = NifFormat.OblivionLayer._enumkeys[bhkshape.layer]
             b_col_obj.nifcollision.quality_type = NifFormat.MotionQuality._enumkeys[bhkshape.quality_type]
             b_col_obj.nifcollision.motion_system = NifFormat.MotionSystem._enumkeys[bhkshape.motion_system]
-            b_col_obj.niftools.nif_version = self.nif_import.hex_to_dec(self.nif_import.data._version_value_._value)
-            b_col_obj.niftools.user_version = self.nif_import.data._user_version_value_._value
-            b_col_obj.niftools.user_version_2 = self.nif_import.data._user_version_2_value_._value
+            self.nif_import.import_version_set(b_col_obj)
             
             try:
                 b_col_obj.niftools.bsxflags = self.nif_import.bsxflags
