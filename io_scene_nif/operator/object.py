@@ -39,7 +39,7 @@
 
 import bpy
 from bpy.types import Operator
-
+from io_scene_nif import properties
 
 class BSXExtraDataAdd(Operator):
     """Adds BSX Flag to extra data of the currently selected object"""
@@ -49,6 +49,7 @@ class BSXExtraDataAdd(Operator):
     
     def execute(self, context):
         b_obj = context.active_object
+        extradata = properties.object.BSXFlags
         b_obj.niftools.extra_data_store.extra_data.add()
         return {'FINISHED'}
     

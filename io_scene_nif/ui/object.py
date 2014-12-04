@@ -105,8 +105,9 @@ class OBJECT_PT_ExtraData(Panel):
             
             selected_extra_data = extra_data_store.extra_data[extra_data_store.extra_data_index]
             box.prop(selected_extra_data, "name")
-            box.prop(selected_extra_data, "data")
-
+            box.prop(selected_extra_data, "data") 
+            box.prop(selected_extra_data, "sub_class")
+            
 class OBJECT_MT_ExtraDataType(Menu):
     bl_label = "Extra Data Types"
     
@@ -122,7 +123,7 @@ class OBJECT_UL_ExtraData(UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         split = layout.split(0.2)
         split.label(str(item.name))
-        split.prop(item, "type", text="", emboss=False, translate=False, icon='BORDER_RECT')
+        split.prop(item, "data", text="", emboss=False, translate=False, icon='BORDER_RECT')
 
 class ObjectInvMarkerPanel(Panel):
     bl_label = "BS Inv Marker"
