@@ -62,13 +62,17 @@ class ObjectPanel(Panel):
         row.prop(nif_obj_props, "user_version")
         row.prop(nif_obj_props, "user_version_2")
         row.prop(nif_obj_props, "rootnode")
-        row.prop(nif_obj_props, "bsnumuvset")
-        row.prop(nif_obj_props, "upb")
-        row.prop(nif_obj_props, "bsxflags")
-        row.prop(nif_obj_props, "consistency_flags")
-        row.prop(nif_obj_props, "objectflags")
-        row.prop(nif_obj_props, "longname")
-
+        if context.object.draw_type == 'TEXTURED':
+            row.prop(nif_obj_props, "bsnumuvset")
+            row.prop(nif_obj_props, "consistency_flags")
+            row.prop(nif_obj_props, "objectflags")
+            row.prop(nif_obj_props, "longname")
+            
+        if context.object.draw_type == 'WIRE':
+            row.prop(nif_obj_props, "upb")
+            row.prop(nif_obj_props, "bsxflags")
+        
+        
 
 class ObjectInvMarkerPanel(Panel):
     bl_label = "BS Inv Marker"
