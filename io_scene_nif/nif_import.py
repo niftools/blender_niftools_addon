@@ -272,8 +272,11 @@ class NifImport(NifCommon):
         for n_extra in root_block.get_extra_datas():
             if isinstance(n_extra, NifFormat.BSBound):
                     self.boundhelper.import_bounding_box(n_extra)
-
-
+    
+    def import_version_set(self, b_obj):
+        b_obj.niftools.nif_version = self.hex_to_dec(self.data._version_value_._value)
+        b_obj.niftools.user_version = self.data._user_version_value_._value
+        b_obj.niftools.user_version_2 = self.data._user_version_2_value_._value
 
     def import_root(self, root_block):
         """Main import function."""
@@ -314,10 +317,8 @@ class NifImport(NifCommon):
             self.debug("%s is an armature root" % root_block.name)
             b_obj = self.import_branch(root_block)
             b_obj.niftools.objectflags = root_block.flags
-            b_obj.niftools.nif_version = self.hex_to_dec(self.data._version_value_._value)
-            b_obj.niftools.user_version = self.data._user_version_value_._value
-            b_obj.niftools.user_version_2 = self.data._user_version_2_value_._value
-
+            self.import_version_set(b_obj)
+            
         elif self.is_grouping_node(root_block):
             # special case 2: root node is grouping node
             self.debug("%s is a grouping node" % root_block.name)
@@ -428,10 +429,9 @@ class NifImport(NifCommon):
             # note: transform matrix is set during import
             self.active_obj_name = niBlock.name.decode()
             b_obj = self.import_mesh(niBlock)
-            b_obj.niftools.nif_version = self.hex_to_dec(self.data._version_value_._value)
-            b_obj.niftools.user_version = self.data._user_version_value_._value
-            b_obj.niftools.user_version_2 = self.data._user_version_2_value_._value
             b_obj.niftools.objectflags = niBlock.flags
+            self.import_version_set(b_obj)
+            
             if niBlock.properties:
                 for b_prop in niBlock.properties:
                     self.import_shader_types(b_obj, b_prop)
@@ -520,10 +520,8 @@ class NifImport(NifCommon):
                         b_obj = self.import_mesh(child,
                                                  group_mesh=b_obj,
                                                  applytransform=True)
-                        b_obj.niftools.nif_version = self.hex_to_dec(self.data._version_value_._value)
-                        b_obj.niftools.user_version = self.data._user_version_value_._value
-                        b_obj.niftools.user_version_2 = self.data._user_version_2_value_._value
                         b_obj.niftools.objectflags = child.flags
+                        self.import_version_set(b_obj)
                         
                         if child.properties:
                             for b_prop in child.properties:
