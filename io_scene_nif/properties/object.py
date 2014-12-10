@@ -64,7 +64,7 @@ class ExtraData(PropertyGroup):
     
     
 class BSXFlags():
-    #type = NifFormat.BSXFlags()
+    # type = NifFormat.BSXFlags()
     #     data = {}
     
     def __init__(self):
@@ -75,7 +75,7 @@ class ExtraDataStore(PropertyGroup):
     @classmethod
     def register(cls):
         cls.extra_data = CollectionProperty(
-                                        name= "Extra Data",
+                                        name="Extra Data",
                                         description="Used to store all the Extra data",
                                         type=ExtraData,
                                         )
@@ -93,7 +93,7 @@ class ObjectProperty(PropertyGroup):
         bpy.types.Object.niftools = PointerProperty(
                         name='Niftools Object Property',
                         description='Additional object properties used by the Nif File Format',
-                        type = cls,
+                        type=cls,
                         )
         
         cls.nif_version = StringProperty(
@@ -102,60 +102,60 @@ class ObjectProperty(PropertyGroup):
         
         cls.user_version = IntProperty(
                         name='User Version',
-                        default = 0
+                        default=0
                         )
         
         cls.user_version_2 = IntProperty(
                         name='User Version 2',
-                        default = 0
+                        default=0
                         )
         
         cls.rootnode = EnumProperty(
                         name='Nif Root Node',
                         description='Type of property used to display meshes.',
-                        items = (('NiNode', 'NiNode',"", 0),
-                                ('BSFadeNode', 'BSFadeNode',"", 1)),
-                        default = 'NiNode',
+                        items=(('NiNode', 'NiNode', "", 0),
+                                ('BSFadeNode', 'BSFadeNode', "", 1)),
+                        default='NiNode',
                         )
         
         cls.bsnumuvset = IntProperty(
                         name='BS Num UV Set',
-                        default = 0
+                        default=0
                         )
         
-        cls.longname=StringProperty(
+        cls.longname = StringProperty(
                         name='Nif LongName'
                         )
 
         cls.consistency_flags = EnumProperty(
                         name='Consistency Flag',
                         description='Controls animation type',
-                        items = [(item, item,"", i) for i, item in enumerate(NifFormat.ConsistencyType._enumkeys)],
-                        #default = 'SHADER_DEFAULT'
+                        items=[(item, item, "", i) for i, item in enumerate(NifFormat.ConsistencyType._enumkeys)],
+                        # default = 'SHADER_DEFAULT'
                         )
 
         cls.objectflags = IntProperty(
                         name='Object Flag',
                         description='Controls animation and collision',
-                        default = 0
+                        default=0
                         )
 
         cls.bsxflags = IntProperty(
                         name='BSXFlags',
                         description='Controls animation and collision',
-                        default = 0 # 2 = Bit 1, enable collision
+                        default=0  # 2 = Bit 1, enable collision
                         )
 
         cls.upb = StringProperty(
                         name='UPB',
                         description='Commands for an optimizer?',
-                        default = ''
+                        default=''
                         )
 
         cls.extra_data_store = PointerProperty(
-                        name= "Extra Data",
+                        name="Extra Data",
                         description="Used to store all the Extra data",
-                        type = ExtraDataStore,
+                        type=ExtraDataStore,
                         )
         
         
@@ -165,33 +165,32 @@ class ObjectProperty(PropertyGroup):
 
 
 class BsInventoryMarker(PropertyGroup):
-
-	@classmethod
+    
+    @classmethod
     def register(cls):
-		cls.name  = StringProperty(
-	                    name = (''),
-	                    default = 'INV'
-	                    )
-	
-	    cls.bs_inv_x = IntProperty(
-	                    name = "Inv X value",
-	                    description = "Position of object in inventory on the x axis.",
-	                    default = 0)
-	
-	    cls.bs_inv_y = IntProperty(
-	                    name = "Inv Y value",
-	                    description = "Position of object in inventory on the y axis.",
-	                    default = 0)
-	
-	    cls.bs_inv_z = IntProperty(
-	                    name = "Inv Z value",
-	                    description = "Position of object in inventory on the z axis.",
-	                    default = 0)
-	
-	    cls.bs_inv_zoom = FloatProperty(
-	                    name = "Inv zoom value",
-	                    description = "Inventory object Zoom level.",
-	                    default = 1)
+        cls.name = StringProperty(
+                        name=(''),
+                        default='INV'
+                        )
+        cls.bs_inv_x = IntProperty(
+                        name="Inv X value",
+                        description="Position of object in inventory on the x axis.",
+                        default=0)
+        
+        cls.bs_inv_y = IntProperty(
+                        name="Inv Y value",
+                        description="Position of object in inventory on the y axis.",
+                        default=0)
+
+        cls.bs_inv_z = IntProperty(
+                        name="Inv Z value",
+                        description="Position of object in inventory on the z axis.",
+                        default=0)
+
+        cls.bs_inv_zoom = FloatProperty(
+                        name="Inv zoom value",
+                        description="Inventory object Zoom level.",
+                        default=1)
 
     @classmethod
     def register(cls):

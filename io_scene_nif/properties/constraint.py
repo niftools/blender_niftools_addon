@@ -50,7 +50,7 @@ class ConstraintProperty(PropertyGroup):
         bpy.types.Object.niftools_constraint = PointerProperty(
 						name='Niftools Constraint Property',
 						description='Additional constraint properties used by the Nif File Format',
-						type = cls
+						type=cls
 						)
 
         cls.LHMaxFriction = FloatProperty(

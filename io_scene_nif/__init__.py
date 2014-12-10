@@ -64,12 +64,8 @@ try:
 except:
     print("Failed to load debug module")
 
-import logging
 import sys
 import os
-
-import bpy
-import bpy.props
 
 # Python dependencies are bundled inside the io_scene_nif/modules folder
 _modules_path = os.path.join(os.path.dirname(__file__), "modules")
@@ -77,8 +73,12 @@ if not _modules_path in sys.path:
     sys.path.append(_modules_path)
 del _modules_path
 
-
 from io_scene_nif import properties, operators, operator, ui
+
+import bpy
+import bpy.props
+
+import logging
 
 def _init_loggers():
     """Set up loggers."""

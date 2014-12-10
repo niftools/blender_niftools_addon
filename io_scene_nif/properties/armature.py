@@ -53,11 +53,11 @@ class BoneProperty(PropertyGroup):
         bpy.types.Bone.niftools_bone = PointerProperty(
                         name='Niftools Bone Property',
                         description='Additional bone properties used by the Nif File Format',
-                        type = cls,
+                        type=cls,
                         )
         cls.boneflags = IntProperty(
                         name='Bone Flag',
-                        default = 0
+                        default=0
                         )
         
     @classmethod
@@ -67,30 +67,30 @@ class BoneProperty(PropertyGroup):
 
 class BsInventoryMarker(PropertyGroup):
 
-    name  = StringProperty(
-                    name = (''),
-                    default = 'INV'
+    name = StringProperty(
+                    name=(''),
+                    default='INV'
                     )
 
     bs_inv_x = IntProperty(
-                    name = "Inv X value",
-                    description = "Position of object in inventory on the x axis.",
-                    default = 0)
+                    name="Inv X value",
+                    description="Position of object in inventory on the x axis.",
+                    default=0)
 
     bs_inv_y = IntProperty(
-                    name = "Inv Y value",
-                    description = "Position of object in inventory on the y axis.",
-                    default = 0)
+                    name="Inv Y value",
+                    description="Position of object in inventory on the y axis.",
+                    default=0)
 
     bs_inv_z = IntProperty(
-                    name = "Inv Z value",
-                    description = "Position of object in inventory on the z axis.",
-                    default = 0)
+                    name="Inv Z value",
+                    description="Position of object in inventory on the z axis.",
+                    default=0)
 
     bs_inv_zoom = FloatProperty(
-                    name = "Inv zoom value",
-                    description = "Inventory object Zoom level.",
-                    default = 1)
+                    name="Inv zoom value",
+                    description="Inventory object Zoom level.",
+                    default=1)
 
     @classmethod
     def register(cls):
