@@ -44,6 +44,7 @@ from bpy.props import (PointerProperty,
                        FloatVectorProperty,
                        IntProperty,
                        BoolProperty,
+                       FloatProperty,
                        )
 
 class Material(PropertyGroup):
@@ -61,21 +62,24 @@ class Material(PropertyGroup):
                 name='Ambient Preview', description='Allows a viewport preview of the ambient property', default=False)
         
         cls.ambient_color = FloatVectorProperty(
-                name='Ambient', subtype='COLOR', default=[1.0,1.0,1.0],min=0.0, max=1.0)
+                name='Ambient', subtype='COLOR', default=[1.0, 1.0, 1.0], min=0.0, max=1.0)
         
         cls.emissive_preview = BoolProperty(
                 name='Emissive Preview', description='Allows a viewport preview of the emissive property', default=False)
         
         cls.emissive_color = FloatVectorProperty(
-                name='Emissive', subtype='COLOR', default=[0.0,0.0,0.0],min=0.0, max=1.0)
+                name='Emissive', subtype='COLOR', default=[0.0, 0.0, 0.0], min=0.0, max=1.0)
+        
+        cls.emissive_alpha = FloatVectorProperty(
+                name='Alpha', subtype='COLOR', default=[0.0, 0.0, 0.0], min=0.0, max=1.0)
     
-    	cls.lightingeffect1 = FloatProperty(
+        cls.lightingeffect1 = FloatProperty(
                 name='Lighting Effect 1',
-                default = 0.3
+                default=0.3
                 )
         cls.lightingeffect2 = FloatProperty(
                 name='Lighting Effect 2',
-                default = 2
+                default=2
                 )
                 
     @classmethod
@@ -96,17 +100,17 @@ class AlphaFlags(PropertyGroup):
         
         cls.alphaflag = IntProperty(
                         name='Alpha Flag',
-                        default = 0
+                        default=0
                         )
         
         cls.textureflag = IntProperty(
                         name='Texture Flag',
-                        default = 0
+                        default=0
                         )
 
         cls.materialflag = IntProperty(
                         name='Material Flag',
-                        default = 0
+                        default=0
                         )
         
     @classmethod
