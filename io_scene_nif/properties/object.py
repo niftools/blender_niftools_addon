@@ -44,7 +44,8 @@ from bpy.props import (PointerProperty,
                        StringProperty,
                        IntProperty,
                        EnumProperty,
-                       CollectionProperty
+                       CollectionProperty,
+                       FloatProperty
                        )
 
 from pyffi.formats.nif import NifFormat
@@ -168,6 +169,9 @@ class BsInventoryMarker(PropertyGroup):
     
     @classmethod
     def register(cls):
+        bpy.types.Object.niftools_bs_invmarker = \
+            CollectionProperty(type=BsInventoryMarker)
+            
         cls.name = StringProperty(
                         name=(''),
                         default='INV'
@@ -193,6 +197,5 @@ class BsInventoryMarker(PropertyGroup):
                         default=1)
 
     @classmethod
-    def register(cls):
-        bpy.types.Object.niftools_bs_invmarker = \
-            CollectionProperty(type=BsInventoryMarker)
+    def unregister(cls):
+        del bpy.types.Object.niftools_bs_invmarker
