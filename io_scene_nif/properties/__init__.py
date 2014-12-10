@@ -59,19 +59,3 @@ def underscore_to_camelcase(s):
             first_word_passed = True
     return ''.join(camelcase_words(s.split('_')))
 
-
-# def register():        
-#     bpy.utils.register_class(material.Material)        
-#     bpy.utils.register_class(object.BsInventoryMarker)        
-#     bpy.utils.register_class(collision.CollisionProperty)        
-#     bpy.utils.register_class(geometry.SkinPartFlags)
-#     bpy.utils.register_class(geometry.SkinPartHeader)
-#     bpy.utils.register_class(geometry.VertexGroupProperty)        
-#         
-# def unregister():        
-#     bpy.utils.unregister_class(Material)        
-#     bpy.utils.unregister_class(Object)        
-#     bpy.utils.unregister_class(ObjectCollision)        
-#     bpy.utils.unregister_class(SkinPartFlags)        
-#     bpy.utils.unregister_class(VertexGroupProperty)        
-#     bpy.utils.unregister_class(BsInventoryMarker)
