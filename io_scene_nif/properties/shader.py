@@ -54,15 +54,15 @@ class ShaderProps(PropertyGroup):
         bpy.types.Object.niftools_shader = PointerProperty(
                         name='Niftools BsShader Property',
                         description='Properties used by the BsShader for the Nif File Format',
-                        type = cls,
+                        type=cls,
                         )
         
         cls.bs_shadertype = EnumProperty(
                         name='Shader Type',
                         description='Type of property used to display meshes.',
-                        items = (('None','None',"",0),
-                                 ('BSShaderProperty', 'BS Shader Property',"", 1),
-                                 ('BSShaderPPLightingProperty', 'BS Shader PP Lighting Property',"", 2),
+                        items=(('None', 'None', "", 0),
+                                 ('BSShaderProperty', 'BS Shader Property', "", 1),
+                                 ('BSShaderPPLightingProperty', 'BS Shader PP Lighting Property', "", 2),
                                  ('BSLightingShaderProperty', 'BS Lighting Shader Property', "", 3),
                                  ('BSEffectShaderProperty', 'BS Effect Shader Property', "", 4)
                                 )
@@ -71,15 +71,15 @@ class ShaderProps(PropertyGroup):
         cls.bsspplp_shaderobjtype = EnumProperty(
                         name='BS Shader PP Lighting Object Type',
                         description='Type of object linked to shader',
-                        items = [(item, item,"", i) for i, item in enumerate(NifFormat.BSShaderType._enumkeys)],
-                        default = 'SHADER_DEFAULT'
+                        items=[(item, item, "", i) for i, item in enumerate(NifFormat.BSShaderType._enumkeys)],
+                        default='SHADER_DEFAULT'
                         )
 
         cls.bslsp_shaderobjtype = EnumProperty(
                         name='BS Lighting Shader Object Type',
                         description='Type of object linked to shader',
-                        items = [(item, item,"", i) for i, item in enumerate(NifFormat.BSLightingShaderPropertyShaderType._enumkeys)],
-                        #default = 'SHADER_DEFAULT'
+                        items=[(item, item, "", i) for i, item in enumerate(NifFormat.BSLightingShaderPropertyShaderType._enumkeys)],
+                        # default = 'SHADER_DEFAULT'
                         )
 
         

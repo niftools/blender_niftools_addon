@@ -59,13 +59,13 @@ class CollisionProperty(PropertyGroup):
         bpy.types.Object.nifcollision = PointerProperty(
                         name='Niftools Collision Property',
                         description='Additional collision properties used by the Nif File Format',
-                        type = cls,
+                        type=cls,
                         )
         
         cls.motion_system = EnumProperty(
                         name='Motion System',
                         description='Havok Motion System settings for bhkRigidBody(t)',
-                        items = [(item, item,"", i) for i, item in enumerate(NifFormat.MotionSystem._enumkeys)],
+                        items=[(item, item, "", i) for i, item in enumerate(NifFormat.MotionSystem._enumkeys)],
                         # default = 'MO_SYS_FIXED',
                         
                         )
@@ -73,64 +73,64 @@ class CollisionProperty(PropertyGroup):
         cls.oblivion_layer = EnumProperty(
                         name='Oblivion Layer',
                         description='Mesh color, used in Editor',
-                        items = [(item, item,"", i) for i, item in enumerate(NifFormat.OblivionLayer._enumkeys)],
+                        items=[(item, item, "", i) for i, item in enumerate(NifFormat.OblivionLayer._enumkeys)],
                         # default = 'OL_STATIC',
                         )
 
         cls.deactivator_type = EnumProperty(
                         name='Deactivator Type',
                         description='Motion deactivation setting',
-                        items = [(item, item,"", i) for i, item in enumerate(NifFormat.DeactivatorType._enumkeys)],
+                        items=[(item, item, "", i) for i, item in enumerate(NifFormat.DeactivatorType._enumkeys)],
                         )
 
         cls.solver_deactivation = EnumProperty(
                         name='Solver Deactivation',
                         description='Motion deactivation setting',
-                        items = [(item, item,"", i) for i, item in enumerate(NifFormat.SolverDeactivation._enumkeys)],
+                        items=[(item, item, "", i) for i, item in enumerate(NifFormat.SolverDeactivation._enumkeys)],
                         )
           
         cls.quality_type = EnumProperty(
                         name='Quality Type',
                         description='Determines quality of motion',
-                        items = [(item, item,"", i) for i, item in enumerate(NifFormat.MotionQuality._enumkeys)],
+                        items=[(item, item, "", i) for i, item in enumerate(NifFormat.MotionQuality._enumkeys)],
                         # default = 'MO_QUAL_FIXED',
                         )
         
         cls.col_filter = IntProperty(
                         name='Col Filter',
                         description='Flags for bhkRigidBody(t)',
-                        default = 0
+                        default=0
                         )
 
         cls.max_linear_velocity = FloatProperty(
                         name='Max Linear Velocity',
                         description='Linear velocity limit for bhkRigidBody(t)',
-                        default = 0
+                        default=0
                         )
 
         cls.max_angular_velocity = FloatProperty(
                         name='Max Angular Velocity',
                         description='Angular velocity limit for bhkRigidBody(t)',
-                        default = 0
+                        default=0
                         )
         
         cls.havok_material = EnumProperty(
                         name='Havok Material',
                         description='The Shapes material',
-                        items = [(item, item,"", i) for i, item in enumerate(NifFormat.HavokMaterial._enumkeys)],
+                        items=[(item, item, "", i) for i, item in enumerate(NifFormat.HavokMaterial._enumkeys)],
                         # default = 'HAV_MAT_WOOD'
                         )
                         
         cls.export_bhklist = BoolProperty(
                         name='Export BHKList',
                         description='None',
-                        default = False
+                        default=False
                         )
         
         cls.use_blender_properties = BoolProperty(
                         name='Use Blender Properties',
                         description='Whether or not to export collision settings via blender properties',
-                        default = False,
+                        default=False,
                         )
     @classmethod
     def unregister(cls):

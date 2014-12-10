@@ -54,13 +54,13 @@ class SkinPartHeader(PropertyGroup):
         bpy.types.Object.niftools_part_flags_panel = PointerProperty(
                         name='Niftools Skin Part Flag Panel',
                         description='Properties used by the BsShader for the Nif File Format',
-                        type = cls,
+                        type=cls,
                         )
 
         cls.pf_partcount = IntProperty(
                         name='Partition count',
-                        min = 0,
-                        default = 0
+                        min=0,
+                        default=0
                         )
         
     @classmethod
@@ -72,7 +72,7 @@ class SkinPartFlags(PropertyGroup):
     
     name = bpy.props.StringProperty(
                     name=(''),
-                    default = ''
+                    default=''
                     )
 
     pf_startflag = BoolProperty(
