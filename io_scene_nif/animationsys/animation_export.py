@@ -659,7 +659,7 @@ class MaterialAnimation():
             n_matcolor_ctrl = self.nif_export.objecthelper.create_block(
                 "NiMaterialColorController", b_action)
             n_matcolor_actionl = self.nif_export.objecthelper.create_block(
-                "Nactionint3Interpolator", b_action)
+                "NiPoint3Interpolator", b_action)
             n_matcolor_ctrl.interpolator = n_matcolor_actionl
             n_matcolor_ctrl.flags = 8 # active
             n_matcolor_ctrl.flags |= self.get_flags_from_extend(b_curve.extend)
