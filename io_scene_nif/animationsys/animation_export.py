@@ -633,7 +633,7 @@ class MaterialAnimation():
         b_curves = [b_action[b_channel] for b_channel in b_channels]
         if not all(b_curves):
             return
-        n_posdata = self.nif_export.objecthelper.create_block("NactionsData", b_curves)
+        n_posdata = self.nif_export.objecthelper.create_block("NiPosData", b_curves)
         # and also to have common reference times for all curves
         b_times = set()
         for b_curve in b_curves:
