@@ -398,19 +398,4 @@ class BsInvMarkerRemove(bpy.types.Operator):
         return {'FINISHED'}
     
     
-
-
-def register():
-    bpy.utils.register_class(NfTlPartFlagAdd)
-    bpy.utils.register_class(NfTlPartFlagRemove)
-    bpy.utils.register_class(BsInvMarkerAdd)
-    bpy.utils.register_class(BsInvMarkerRemove)
-
-    
-def unregister():
-    bpy.utils.unregister_class(NfTlPartFlagAdd)
-    bpy.utils.unregister_class(NfTlPartFlagRemove)
-    bpy.utils.unregister_class(BsInvMarkerAdd)
-    bpy.utils.unregister_class(BsInvMarkerRemove)
-
-        
+      
