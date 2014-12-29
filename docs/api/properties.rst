@@ -4,11 +4,8 @@ Blender Properties
 
 .. module:: io_scene_nif.properties
 
-.. autoclass:: Material
-   :members:
+.. module:: Material
 
-.. autoclass:: Object
-   :members:
+.. module:: Object
    
-.. autoclass:: ObjectCollision
-   :members:
+.. module:: ObjectCollision
