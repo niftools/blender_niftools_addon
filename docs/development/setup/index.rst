@@ -143,7 +143,7 @@ guides.
 Setup SSH Keys
 --------------
 
-Follow the instructions at `Github's SSH Page <https://github.com/login>`_.
+Follow the instructions at `Github's SSH Page <https://help.github.com/articles/generating-ssh-keys/>`_.
 
 .. note::
 
