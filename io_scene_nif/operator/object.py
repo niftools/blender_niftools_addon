@@ -38,47 +38,55 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-from bpy.types import Panel
+from bpy.types import Operator
+from io_scene_nif import properties
 
-
-class PartFlag(Panel):
-    bl_label = "Niftools Dismember Flags Panel"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = "data"
-    bl_options =  {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context):
-        if(context.active_object.type == 'MESH'):
-            return True
-        else:
-            return False
+class BSXExtraDataAdd(Operator):
+    """Adds BSX Flag to extra data of the currently selected object"""
+    bl_idname = "object.niftools_extradata_bsx_add"
+    bl_label = "Add BSX Flags"
+    bl_options = {'REGISTER', 'UNDO'}
     
-    def draw(self, context):
-        nif_pf_panel_props = context.object.niftools_part_flags_panel
-        nif_pf_list_props = context.object.niftools_part_flags
-        layout = self.layout
-        row = layout.row()
-
-                
-        col = row.column(align=True)
-        row.operator("object.niftools_part_flags_add", icon='ZOOMIN', text="")
-        if context.object.niftools_part_flags:
-            row.operator("object.niftools_part_flags_remove", icon='ZOOMOUT', text="")
-        col.prop(nif_pf_panel_props, "pf_partcount")
-            
-        for i,x in enumerate(nif_pf_list_props):
-            col.separator()
-            col.prop(nif_pf_list_props[i], "name", index = i)
-            col.prop(nif_pf_list_props[i], "pf_startflag", index = i)
-            col.prop(nif_pf_list_props[i], "pf_editorflag", index = i)
-
-def register():
-    bpy.utils.register_class(PartFlag)
-    bpy.utils.register_class(VertexSkinInfoPanel)
+    def execute(self, context):
+        b_obj = context.active_object
+        extradata = properties.object.BSXFlags
+        b_obj.niftools.extra_data_store.extra_data.add()
+        return {'FINISHED'}
     
-def unregister():
-    bpy.utils.unregister_class(PartFlag)
-    bpy.utils.unregister_class(VertexSkinInfoPanel)
+    
+class UPBExtraDataAdd(Operator):
+    """Adds BSX Flags to extra data"""
+    bl_idname = "object.niftools_extradata_upb_add"
+    bl_label = "Add UPB"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        b_obj = context.active_object
+        b_obj.niftools.extra_data_store.extra_data.add()
+        return {'FINISHED'}
+
+
+class SampleExtraDataAdd(Operator):
+    """Sample"""
+    bl_idname = "object.niftools_extradata_sample_add"
+    bl_label = "Sample 1"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    def execute(self, context):
+        b_obj = context.active_object
+        b_obj.niftools.extra_data_store.extra_data.add()
+        return {'FINISHED'}
+
+
+class NiExtraDataRemove(Operator):
+    """Removes Extra Data from Objects"""
+    bl_idname = "object.niftools_extradata_remove"
+    bl_label = "Remove Inventory Marker"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        b_obj = context.active_object
+        item = b_obj.niftools.extra_data_store.extra_data_index
+        b_obj.niftools.extra_data_store.extra_data.remove(item)
+        return {'FINISHED'}
 
