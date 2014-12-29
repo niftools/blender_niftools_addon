@@ -68,7 +68,7 @@ Install Python 3.2
 
 #. Pick the installer appropriate for your platform, and follow the instructions.
 
-#. Use the default install location.
+#. Use the default install location. (recommended)
 
 **Fedora**::
 
@@ -140,13 +140,22 @@ Be sure to read the remaining `github help
 pages <http://help.github.com/>`_, particularly the beginner's
 guides.
 
+Setup SSH Keys
+--------------
+
+Follow the instructions at `Github's SSH Page <https://github.com/login>`_.
+
+.. note::
+
+   * If you run into errors while starting the ssh-agent or adding the keys to the ssh-agent try running "eval `ssh-agent -s`".
+
 Get the Source Code
 -------------------
 
 To get the code, run in a terminal (linux) or in git bash (windows)::
 
    cd ~/workspace
-   git clone --recursive https://github.com/<username>/blender_nif_plugin.git
+   git clone --recursive git@github.com:<username>/blender_nif_plugin.git
    cd blender_nif_plugin
 
 We use submodules to point to the external repository. 
@@ -188,7 +197,7 @@ Install Build Environment Batch Script
 Get the build environment batch script::
 
    cd workspace
-   git clone https://github.com/niftools/buildenv.git
+   git clone git@github.com:niftools/buildenv.git
 
 In the repo is a script called create_shortcut.bat.
 This creates shortcuts that when generate buildenv console, hooking to their specific ini file.
@@ -196,10 +205,10 @@ This creates shortcuts that when generate buildenv console, hooking to their spe
 The following is a sample .ini file for the Blender Nif Plug-in::
 
    start=workspace
-   python=C:\Python32
-   blender=C:\Program Files\Blender Foundation\Blender
-   seven_zip=C:\Program Files\7-Zip
-   pydev_debug=C:\Program Files\Eclipse\plugins\org.python.pydev_3.9.0.201411111611\pysrc
+   python=<Python Directory>
+   blender=<Blender Directory>
+   seven_zip=<7-Zip Directory>
+   pydev_debug=<Eclipse Directory>\plugins\org.python.pydev_x.x.x.xxxxxxxxxxxxxxx\pysrc
    
 By default running Create_shortcut.bat adds shortcuts on the Desktop for each .ini file.
 
@@ -279,7 +288,7 @@ repo management, python scripting, and hooks into Blender's debugging server.
 
 **Windows**
 
-#. Install `Eclipse Classic <http://www.eclipse.org/downloads/>`_
+#. Install `Eclipse Luna <http://www.eclipse.org/downloads/>`_
 
 #. Unzip the file under ``C:\Program Files\eclipse``.
 
@@ -307,10 +316,12 @@ You should also install a few plugins.
 
   1. Go to: **Help > Install New Software > Add...**
 
-  2. Under **Work with**, select **Indigo**.
+  2. Under **Work with**, select **--All Available Sites--**.
 
   3. A large number of plugins will be listed. Select
-     **Collaboration > Eclipse EGit**
+     **Collaboration >   Eclipse Git Team Provider**
+ 
+  4. Click **Next**, and follow the instructions.
      
   - **Note:** If you experience problems with CLFR/EOF even though you set ``git config --global user.autocrlf true``, 
      
@@ -329,12 +340,9 @@ You should also install a few plugins.
 
   4. Click **Next**, and follow the instructions.
 
-  5. Once installed, you will be asked to configure the
-     Python interpreter. Select your Python 3.2 executable
-     when presented with a choice
-     (``C:\Python32\python.exe`` on Windows
-     and ``/usr/bin/python3`` on Fedora),
-     and use **Auto Config**.
+  5. Once installed, you need to configure the
+     Python interpreter. Go to **Window > Preferences > PyDev > Interpreters > Python Interpreter** 
+     and select **Quick Auto Config**.
 
   6. Finally, you may wish to configure the eclipse editor for
      UTF-8 encoding, which is the default encoding used
@@ -387,9 +395,9 @@ Blender should be launched via BuildEnv, using ``start blender``
 
 Setup Eclipse PyDev Debugger
 ````````````````````````````
-Add the Pydev Debug Perspective: **Customise Perspective -> Pydev Debug**.
+Add the Pydev Debug Perspective: **Window > Customise Perspective > Command Groups Availability > Pydev Debug**.
 
- * Start the Pydev server.
+ * Start the Pydev Debug server from the toolbar.
 
 Debugging with PyDev
 ''''''''''''''''''''
