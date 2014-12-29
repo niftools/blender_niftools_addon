@@ -199,3 +199,4 @@ class BsInventoryMarker(PropertyGroup):
     @classmethod
     def unregister(cls):
         del bpy.types.Object.niftools_bs_invmarker
+

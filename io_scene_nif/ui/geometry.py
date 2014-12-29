@@ -81,3 +81,4 @@ def register():
 def unregister():
     bpy.utils.unregister_class(PartFlag)
     bpy.utils.unregister_class(VertexSkinInfoPanel)
+
