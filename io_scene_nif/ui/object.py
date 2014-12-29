@@ -153,5 +153,3 @@ class ObjectInvMarkerPanel(Panel):
             col.prop(nif_bsinv_props[i], "bs_inv_z", index= i)
             col.prop(nif_bsinv_props[i], "bs_inv_zoom", index= i)
 
-
-
