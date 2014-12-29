@@ -89,3 +89,4 @@ class NiExtraDataRemove(Operator):
         item = b_obj.niftools.extra_data_store.extra_data_index
         b_obj.niftools.extra_data_store.extra_data.remove(item)
         return {'FINISHED'}
+

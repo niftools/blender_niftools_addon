@@ -470,3 +470,4 @@ class ShaderProps(PropertyGroup):
     @classmethod
     def unregister(cls):
         del bpy.types.Object.niftools_shader
+

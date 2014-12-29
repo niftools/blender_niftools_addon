@@ -116,3 +116,4 @@ class AlphaFlags(PropertyGroup):
     @classmethod
     def unregister(cls):
         del bpy.types.Material.niftools_alpha
+
