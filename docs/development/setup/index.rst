@@ -146,7 +146,7 @@ Get the Source Code
 To get the code, run in a terminal (linux) or in git bash (windows)::
 
    cd ~/workspace
-   git clone --recursive git@github.com:<username>/blender_nif_plugin.git
+   git clone --recursive https://github.com/<username>/blender_nif_plugin.git
    cd blender_nif_plugin
 
 We use submodules to point to the external repository. 
@@ -188,7 +188,7 @@ Install Build Environment Batch Script
 Get the build environment batch script::
 
    cd workspace
-   git clone git://github.com/niftools/buildenv.git
+   git clone https://github.com/niftools/buildenv.git
 
 In the repo is a script called create_shortcut.bat.
 This creates shortcuts that when generate buildenv console, hooking to their specific ini file.
@@ -199,7 +199,7 @@ The following is a sample .ini file for the Blender Nif Plug-in::
    python=C:\Python32
    blender=C:\Program Files\Blender Foundation\Blender
    seven_zip=C:\Program Files\7-Zip
-   pydev_debug='C:\Program Files\eclipse\plugins\org.python.pydev_2.7.3.2013031601\pysrc'
+   pydev_debug=C:\Program Files\Eclipse\plugins\org.python.pydev_3.9.0.201411111611\pysrc
    
 By default running Create_shortcut.bat adds shortcuts on the Desktop for each .ini file.
 
@@ -224,21 +224,18 @@ Pip makes it easy to install various Python modules.
 
 **Ubuntu/Windows**
 
-Save `distribute_setup.py <http://python-distribute.org/distribute_setup.py>`_
-and `get-pip.py <https://raw.github.com/pypa/pip/master/contrib/get-pip.py>`_
+Save `get-pip.py <https://raw.github.com/pypa/pip/master/contrib/get-pip.py>`_
 in your ``workspace`` folder.
 
 **Windows**
 
 Use the Build environment shortcut you just created to open the command prompt::
 
-   python distribute_setup.py
    python get-pip.py
 
 **Ubuntu**::
 
    cd ~/workfolder
-   sudo python3 distribute_setup.py
    sudo python3 get-pip.py
 
 Install Sphinx and Nose
@@ -246,8 +243,8 @@ Install Sphinx and Nose
 
 **Windows** run in buildenv::
 
-   pip-3.2 install Sphinx --target="%APPDATABLENDERADDONS%\modules"
-   pip-3.2 install nose --target="%APPDATABLENDERADDONS%\modules"
+   pip install Sphinx --target="%APPDATABLENDERADDONS%\modules"
+   pip install nose --target="%APPDATABLENDERADDONS%\modules"
 
 **Ubuntu** run in a terminal::
 
