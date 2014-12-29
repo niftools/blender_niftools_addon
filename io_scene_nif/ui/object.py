@@ -38,7 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-from bpy.types import Panel
+from bpy.types import Panel, UIList, Menu
 
 
 class ObjectPanel(Panel):
@@ -68,7 +68,62 @@ class ObjectPanel(Panel):
         row.prop(nif_obj_props, "consistency_flags")
         row.prop(nif_obj_props, "objectflags")
         row.prop(nif_obj_props, "longname")
+        
 
+class OBJECT_PT_ExtraData(Panel):
+    bl_label = "Niftools Object Extra Data Panel"
+    
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "object"
+    
+    @classmethod
+    def poll(cls, context):
+        return True
+        
+
+    def draw(self, context):
+        b_obj = context.object
+        extra_data_store = b_obj.niftools.extra_data_store
+        has_extra_data = len(extra_data_store.extra_data) > 0
+        
+        layout = self.layout
+
+        row = layout.row()
+        row.template_list("OBJECT_UL_ExtraData", "", extra_data_store, "extra_data", extra_data_store, "extra_data_index")
+        
+        #Add/Remove operators
+        col = row.column(align=True)
+        col.menu("OBJECT_MT_ExtraDataType", icon='ZOOMIN', text="")
+
+        if has_extra_data:
+            col.operator("object.niftools_extradata_remove", icon='ZOOMOUT', text="")
+            
+        if has_extra_data:
+            row = layout.row()
+            box = layout.box()
+            
+            selected_extra_data = extra_data_store.extra_data[extra_data_store.extra_data_index]
+            box.prop(selected_extra_data, "name")
+            box.prop(selected_extra_data, "data") 
+            box.prop(selected_extra_data, "sub_class")
+            
+class OBJECT_MT_ExtraDataType(Menu):
+    bl_label = "Extra Data Types"
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.operator("object.niftools_extradata_bsx_add")
+        layout.operator("object.niftools_extradata_upb_add")
+        layout.operator("object.niftools_extradata_sample_add")
+        layout.operator("object.niftools_extradata_sample_add")
+        
+
+class OBJECT_UL_ExtraData(UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        split = layout.split(0.2)
+        split.label(str(item.name))
+        split.prop(item, "data", text="", emboss=False, translate=False, icon='BORDER_RECT')
 
 class ObjectInvMarkerPanel(Panel):
     bl_label = "BS Inv Marker"
@@ -81,31 +136,20 @@ class ObjectInvMarkerPanel(Panel):
         return True
         
 
-    def draw(self, context):
-        nif_bsinv_props = context.object.niftools_bs_invmarker
-        
+    def draw(self, context):       
         layout = self.layout
+        nif_bsinv_props = context.object.niftools_bs_invmarker
+                
         row = layout.row()
-        
-        col = row.column(align=True)
         if not context.object.niftools_bs_invmarker:
             row.operator("object.niftools_bs_invmarker_add", icon='ZOOMIN', text="")
         if context.object.niftools_bs_invmarker:
             row.operator("object.niftools_bs_invmarker_remove", icon='ZOOMOUT', text="")
 
-        for i,x in enumerate(nif_bsinv_props):
+        col = row.column(align=True)
+        for i, x in enumerate(nif_bsinv_props):
             col.prop(nif_bsinv_props[i], "bs_inv_x", index= i)
             col.prop(nif_bsinv_props[i], "bs_inv_y", index= i)
             col.prop(nif_bsinv_props[i], "bs_inv_z", index= i)
             col.prop(nif_bsinv_props[i], "bs_inv_zoom", index= i)
-
-
-def register():
-    bpy.utils.register_class(ObjectPanel)
-    bpy.utils.register_class(ObjectInvMarkerPanel)
-
-
-def unregister():
-    bpy.utils.unregister_class(ObjectPanel)
-    bpy.utils.unregister_class(ObjectInvMarkerPanel)
 

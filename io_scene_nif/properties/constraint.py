@@ -1,8 +1,8 @@
-''' Nif User Interface, connect custom properties from properties.py into Blenders UI'''
+''' Nif User Interface, custom properties store for constaints'''
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
-# Copyright © 2005-2013, NIF File Format Library and Tools contributors.
+# Copyright © 2005-2014, NIF File Format Library and Tools contributors.
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
@@ -38,47 +38,35 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-from bpy.types import Panel
 
+from bpy.types import PropertyGroup
+from bpy.props import (PointerProperty,
+                       FloatProperty,
+                       )
 
-class PartFlag(Panel):
-    bl_label = "Niftools Dismember Flags Panel"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = "data"
-    bl_options =  {'DEFAULT_CLOSED'}
+class ConstraintProperty(PropertyGroup):
+    @classmethod
+    def register(cls):
+        bpy.types.Object.niftools_constraint = PointerProperty(
+						name='Niftools Constraint Property',
+						description='Additional constraint properties used by the Nif File Format',
+						type=cls
+						)
+
+        cls.LHMaxFriction = FloatProperty(
+						name='LHMaxFriction',
+						description='Havok limited hinge max friction.',
+						)
+        cls.tau = FloatProperty(
+                        name='tau',
+                        description='Havok limited hinge max friction.',
+                        )
+        cls.damping = FloatProperty(
+                        name='damping',
+                        description='Havok limited hinge max friction.',
+                        )
 
     @classmethod
-    def poll(cls, context):
-        if(context.active_object.type == 'MESH'):
-            return True
-        else:
-            return False
-    
-    def draw(self, context):
-        nif_pf_panel_props = context.object.niftools_part_flags_panel
-        nif_pf_list_props = context.object.niftools_part_flags
-        layout = self.layout
-        row = layout.row()
-
-                
-        col = row.column(align=True)
-        row.operator("object.niftools_part_flags_add", icon='ZOOMIN', text="")
-        if context.object.niftools_part_flags:
-            row.operator("object.niftools_part_flags_remove", icon='ZOOMOUT', text="")
-        col.prop(nif_pf_panel_props, "pf_partcount")
-            
-        for i,x in enumerate(nif_pf_list_props):
-            col.separator()
-            col.prop(nif_pf_list_props[i], "name", index = i)
-            col.prop(nif_pf_list_props[i], "pf_startflag", index = i)
-            col.prop(nif_pf_list_props[i], "pf_editorflag", index = i)
-
-def register():
-    bpy.utils.register_class(PartFlag)
-    bpy.utils.register_class(VertexSkinInfoPanel)
-    
-def unregister():
-    bpy.utils.unregister_class(PartFlag)
-    bpy.utils.unregister_class(VertexSkinInfoPanel)
+    def unregister(cls):
+        del bpy.types.Object.niftools_constraint
 
