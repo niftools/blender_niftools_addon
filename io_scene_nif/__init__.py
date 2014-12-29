@@ -56,18 +56,16 @@ bl_info = {
     "support": "COMMUNITY",
     "category": "Import-Export"}
 
+import io_scene_nif
+
 try:
     from io_scene_nif import nif_debug
     nif_debug.startdebug()
 except:
     print("Failed to load debug module")
 
-import logging
 import sys
 import os
-
-import bpy
-import bpy.props
 
 # Python dependencies are bundled inside the io_scene_nif/modules folder
 _modules_path = os.path.join(os.path.dirname(__file__), "modules")
@@ -75,8 +73,12 @@ if not _modules_path in sys.path:
     sys.path.append(_modules_path)
 del _modules_path
 
-import io_scene_nif.ui
-from io_scene_nif import properties, operators
+from io_scene_nif import properties, operators, operator, ui
+
+import bpy
+import bpy.props
+
+import logging
 
 def _init_loggers():
     """Set up loggers."""
@@ -110,11 +112,14 @@ def register():
 
 
 def unregister():
-    _init_loggers()
-    bpy.utils.unregister_module(__name__)
+    # no idea how to do this... oh well, let's not lose any sleep over it
+    #_uninit_loggers()
     bpy.types.INFO_MT_file_import.remove(menu_func_import)
     bpy.types.INFO_MT_file_export.remove(menu_func_export)
+    bpy.utils.unregister_module(__name__)
     
 
 if __name__ == "__main__":
     register()
+
+
