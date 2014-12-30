@@ -7,9 +7,10 @@ if "%BLENDERHOME%" == "" (
 	goto end
 )
 set SPHINXBUILD="%BLENDERHOME%/blender.exe" --background --factory-startup --python blender-sphinx-build.py --
+set SPHINXAPIBUILD="%BLENDERHOME%/blender.exe" --background --factory-startup --python blender-sphinx-api-build.py --
 set BUILDDIR=_build
 set APIDIR=api/submodules
-set SPHINXAPIBUILD=sphinx-apidoc -o %APIDIR% ../io_scene_nif/
+set ALLAPIOPTS=%APIDIR% ../io_scene_nif/
 set ALLSPHINXOPTS=-d %BUILDDIR%/doctrees %SPHINXOPTS% .
 set I18NSPHINXOPTS=%SPHINXOPTS% .
 if NOT "%PAPER%" == "" (
@@ -43,14 +44,14 @@ if "%1" == "help" (
 )
 
 if "%1" == "clean" (
-	del /q /s "%APIDIR%\*"
 	for /d %%i in (%BUILDDIR%\*) do rmdir /q /s %%i
 	del /q /s %BUILDDIR%\*
+	del /q /s "%APIDIR%\*"
 	goto end
 )
 
 if "%1" == "html" (
-	%SPHINXAPIBUILD% 
+	%SPHINXAPIBUILD% -o %ALLAPIOPTS%
 	if errorlevel 1 exit /b 1
 	echo.
 	echo.Generated auto-docs for api
