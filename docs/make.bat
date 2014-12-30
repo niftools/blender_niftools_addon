@@ -8,6 +8,8 @@ if "%BLENDERHOME%" == "" (
 )
 set SPHINXBUILD="%BLENDERHOME%/blender.exe" --background --factory-startup --python blender-sphinx-build.py --
 set BUILDDIR=_build
+set APIDIR=api
+set SPHINXAPIBUILD=sphinx-apidoc -o %APIDIR%/submodules ../io_scene_nif/
 set ALLSPHINXOPTS=-d %BUILDDIR%/doctrees %SPHINXOPTS% .
 set I18NSPHINXOPTS=%SPHINXOPTS% .
 if NOT "%PAPER%" == "" (
@@ -47,8 +49,10 @@ if "%1" == "clean" (
 )
 
 if "%1" == "html" (
+	%SPHINXAPIBUILD% 
 	%SPHINXBUILD% -b html %ALLSPHINXOPTS% %BUILDDIR%/html
 	if errorlevel 1 exit /b 1
+	sphinx-apidoc -
 	echo.
 	echo.Build finished. The HTML pages are in %BUILDDIR%/html.
 	goto end
