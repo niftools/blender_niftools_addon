@@ -1,6 +1,7 @@
 API Documentation
 =================
 
+
 The following documentation contains high-level overview of components and submodules.
 The sub-module documentation is generated automatically using Sphinx.
 
@@ -13,7 +14,7 @@ Contents:
    
    
 User Interface
-==============
+--------------
 
 * The user first activates the addon via **File > User Preferences > Addons**.  
 * This triggers the :func:`~io_scene_nif.register` function, which adds the :class:`~io_scene_nif.ui.NifImportUI` and :class:`~io_scene_nif.ui.NifExportUI` operators to the **File > Import** and **File > Export** menus.
@@ -23,7 +24,7 @@ User Interface
 
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
