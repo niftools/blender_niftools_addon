@@ -51,6 +51,7 @@ if "%1" == "clean" (
 )
 
 if "%1" == "html" (
+	call make.bat clean
 	%SPHINXAPIBUILD% -o %ALLAPIOPTS%
 	if errorlevel 1 exit /b 1
 	echo.
