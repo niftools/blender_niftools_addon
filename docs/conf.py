@@ -246,8 +246,8 @@ texinfo_documents = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    'http://docs.python.org/': None,
-    'http://www.blender.org/api/blender_python_api_2_72_release/': None,
+    'https://docs.python.org/': None,
+    'https://www.blender.org/api/blender_python_api_2_72_release/': None,
     'http://pyffi.sourceforge.net/': None,
     }
 
