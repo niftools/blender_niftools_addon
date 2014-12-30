@@ -9,7 +9,7 @@ if "%BLENDERHOME%" == "" (
 set SPHINXBUILD="%BLENDERHOME%/blender.exe" --background --factory-startup --python blender-sphinx-build.py --
 set SPHINXAPIBUILD="%BLENDERHOME%/blender.exe" --background --factory-startup --python blender-sphinx-api-build.py --
 set BUILDDIR=_build
-set APIDIR=api/submodules
+set APIDIR=development/api/submodules
 set ALLAPIOPTS=%APIDIR% ../io_scene_nif/
 set ALLSPHINXOPTS=-d %BUILDDIR%/doctrees %SPHINXOPTS% .
 set I18NSPHINXOPTS=%SPHINXOPTS% .
