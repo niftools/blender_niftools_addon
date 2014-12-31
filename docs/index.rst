@@ -10,7 +10,18 @@ Welcome to Blender NIF Plugin documentation!
 
    Documentation is incomplete, and is still a work in progress.
 
-The Blender Nif Plugin enable Blender to import and export NIF files.
+The Blender Nif Plugin is a Blender addon that adds support for import and export NIF files.
+The plugin allows the user to create custom content for a variety of games which use the nif format.
+
+Features:
+ - Native support for reading & writing of nif files.
+ - Integration with Blender modules: Mesh, Texture, Armature, Animation & Collision Systems
+ - Custom UI to expose Nif specific data
+ - Utility scripts 
+
+This is one of the many nif-related projects developed by Niftools, our open source community.
+For more projects see www.niftools.org
+For latest news follow us - @niftools
 
 Contents:
 
