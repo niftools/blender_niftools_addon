@@ -1,9 +1,7 @@
 Development Overview
 ====================
 
-This section provides an overview of the development process. 
-It is geared towards anyone interested in delving into developing the Blender Nif Plug-in or knowing more about the process.
-
+This section outlines various priciples which govern how we develop the Blender Nif Plugin and why.
 
 Development Methodology
 -----------------------
@@ -96,7 +94,7 @@ Some points of note:
 
  * It is up to the developer to create tests which are appropriate in the level of testing.
 
-Previous, tests were created ad-hoc, based often on bug fixes, so did not extensively test the code.
+Previously, tests were created ad-hoc, based often on bug fixes, so did not extensively test the code.
 It was decided that we would develop a test-framework to standardise testing in parallel to the porting process.
 The current goal of the test-framework is to provide integration level testing to ensure features function as required.
 
