@@ -1,9 +1,9 @@
 Workflow
 ========
 
-The aim of this section is to describe the desired workflow for a developer
-
 .. _development-porting_strategy:
+
+The aim of this section is to describe the desired workflow for a developer
 
 Porting Strategy
 ----------------
