@@ -1,5 +1,5 @@
 Armature Bones
---------------
+==============
 .. _armature-armatures:
 
 * The following section deals with Armatures
