@@ -1,20 +1,19 @@
-Version 2.6.0a3 (in development)
-================================
+Version 2.6.0a3 (3 Jan 2015)
+============================
+
+* Migrated to Bmesh API
+
+* Fix uv layer detection
 
 * Additional material properties support (alpha, specular, stencil, wire).
 
-* Add support for NiTexturingProperty (diffuse, bump, and glow).
+* Add support for NiTexturingProperty (diffuse, bump, normalmap, specular and glow).
 
-* Fix issue with material texture blend type importing (reported and 
-  fix contributed by mgm101).
+* Fix crash when combine shapes is enabled (reported and fix contributed by Aaron1178)
+
+* Fix issue with material texture blend type importing (reported and fix contributed by mgm101).
 
 * Added experimental vertex color support.
-
-* Extensive work on the testing framework:
-
-  - Tests created based on new features.
-  - Re-organised tests into per feature, generated test nifs.
-  - Inheritance based checks now functioning.
 
 * Collision support:
 
@@ -28,9 +27,16 @@ Version 2.6.0a3 (in development)
 
 * Distribute zip that can be used with Blender's built-in installer.
 
-* Documentation vastly improved.
+* Extensive work on the testing framework:
 
-* Fix crash when combine shapes is enabled.
+  - Tests created based on new features.
+  - Re-organised tests into per feature, generated test nifs.
+  - Inheritance based checks now functioning.
+
+* Documentation vastly improved.
+   - Feature documentation
+   - Developer documentation, api auto-doc and workflow
+   
 
 Version 2.6.0a0 (20 Nov 2011)
 =============================

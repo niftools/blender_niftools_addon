@@ -43,7 +43,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Blender NIF Plugin'
-copyright = '2014, Niftools'
+copyright = '2015, Niftools'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

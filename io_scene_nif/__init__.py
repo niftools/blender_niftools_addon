@@ -2,7 +2,7 @@
 
 # ***** BEGIN LICENSE BLOCK *****
 #
-# Copyright © 2005-2011, NIF File Format Library and Tools contributors.
+# Copyright © 2005-2015, NIF File Format Library and Tools contributors.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,7 @@ bl_info = {
     "Import and export files in the NetImmerse/Gamebryo nif format (.nif)",
     "author": "NifTools Team",
     "version": (2, 6, 0), # can't read from VERSION, blender wants it hardcoded
-    "blender": (2, 7, 1),
+    "blender": (2, 7, 2),
     "api": 39257,
     "location": "File > Import-Export",
     "warning": "partially functional, port from 2.49 series still in progress",
