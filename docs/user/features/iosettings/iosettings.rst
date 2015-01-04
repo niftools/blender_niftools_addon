@@ -3,6 +3,10 @@ Import and Export Settings
 
 This section explains the import and export settings.
 
+.. warning::
+   Only a subset of these settings are currently supported even though they have been documented. 
+   This is due to the fact that they are ported directly from the old plugin and as such, will functionally remain the same.
+
 Align
 -----
 .. _iosettings-align:
@@ -18,10 +22,12 @@ Scale correction
 .. _iosettings-scale:
 
 * Scale Correction Import
-	The Nif model scale is much larger than the blender 3d scale, Blender Nif Plugin uses a default correction of .1 (one tenth of the size of the nif) So that the imported model will fit into the viewable area of the blender 3d view for editing.
+	The relative scale of Nif units to blender unit is 10:1.
+   The Blender Nif Plugin applies a default correction of 0.1 so that the imported model will fit into the view Blender viewport.
+   When importing large-scale nif models, such as structures, the user can edit this value.
 
 * Scale Correction Export
-	Reverses the scale applied during import. nif scripts default value is 10
+	Reverses the scale applied during import. nif scripts default value is 10.
 
 Log Level
 ---------
@@ -56,7 +62,8 @@ Combine Shapes
 --------------
 .. _iosettings-combineshapes:
 
-Select this option if you want all parts of a nif file to be imported as a single multi-part object. this is useful for keeping nifs organized when they contain several parts. As well as allowing for easier exporting of the nif.
+Select this option if you want all parts of a nif file to be imported as a single multi-part object. 
+This is useful for keeping nifs organized when they contain several parts. As well as allowing for easier exporting of the nif.
 
 Combine Vertices
 ----------------
@@ -103,7 +110,7 @@ Pad & Sort Bones
 Adjusts the number of bones in a given partition to match the total number of bones used for the dismember instance.
 
 Process
----------
+-------
 .. _iosettings-process:
 
 Determines what parts of the file to import.
@@ -115,7 +122,7 @@ Determines what parts of the file to import.
 
 * Export options include
 	* All (nif) - Geometry and animation to a single nif.
-	* All (nif, xnif, xkf) - Geometry and animation to a nif, xnif, and xkf.
+	* All (nif, xnif, xkf) - Geometry and animation to a nif. Generates an xnif, and xkf.
 	* Geometry only (nif) - Only geometry to a single nif.
 	* Animation only (kf) - Only animation to a single kf.
 	
