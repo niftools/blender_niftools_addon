@@ -17,4 +17,5 @@ Contents:
    environment
    sourcecode
    ide
+   buildblender
 
