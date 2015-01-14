@@ -14,7 +14,7 @@ Example
 #. Assign the Material an appropriate name.
  
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    
    property
 
