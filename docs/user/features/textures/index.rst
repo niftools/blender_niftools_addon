@@ -53,7 +53,7 @@ Texture Maps
 Each Texture Map affects different properties of how the geometry is rendered
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    
    texture_maps
    
