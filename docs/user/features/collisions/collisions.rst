@@ -10,6 +10,10 @@ This is used as the bound box.
 
 #. In the Object Tab, enable bounds in the display section.
 
+
+
+*************Which games use this?
+
 Collision
 =========
 .. _collision:
@@ -35,6 +39,10 @@ Collision Mapping
 * The following section describes the most appropriate primitive object to represent the desired collision object type.
 * The suggested shapes also correspond to shapes generated through import by the plugin.
 * On export the BhkShape is created from data pulled from the Collision object.
+
+* Start by choosing a shape adequate to your model and follow the steps below the appropriate section.
+
+**************rigid body needed, collision modifier also used but not needed?
 
 Blender's Collision types map to the following Nif types:
 
@@ -175,15 +183,66 @@ First we enable Collision Setting for the selected Collision Object:
 
 The bounds type is used to select which BhkShape type to use.
 
-* Enable the desired **Bounds** type.
+* Select the desired **Bounds** type from the dropdown box.
+
+The Radius determines ???????????. Check if exporter reduces the radius for p.e. skyrim.
+
+* Set the Radius to the appropriate number.
+
+**************Velocity Max does not seem to be used in the nif.
+
+The Collision Filter Flags determines ???????????. Skyrim's models all have this at 0, unsure about use in other games.
+
+* Set the Col Filter to the appropriate number.
+
+The Deactivator Type determines ???????????.
+
+* Select a Deactivator Type from the dropdown box.
+
+The Solver Deactivator determines ???????????.
+
+* Select a Solver Deactivator from the dropdown box.
+
+The Quality Type determines ???????????.
+
+* Select a Quality Type from the dropdown box.
+
+The Oblivion Layer determines ???????????.
+
+* Select a Oblivion Layer from the dropdown box.
+
+The Max Linear Velocity determines ???????????.
+
+* Set the Max Linear Velocity to the appropriate number.
+
+The Max Angular Velocity determines ???????????.
+
+* Set the Max Angular Velocity to the appropriate number.
+
+The Motion System determines ???????????.
+
+* Select a Motion System from the dropdown box.
 
 The Havok Material decides how the material should behave for collisions, eg. sound, decals.
 
-* Select a Havok Material from the list.
+* Select a Havok Material from the dropdown box.
+
+The LHMaxFriction determines ???????????.
+
+* Set the LHMaxFriction to the appropriate number.
+
+The tau determines ???????????.
+
+* Set the tau to the appropriate number.
+
+The Damping determines ???????????.
+
+* Set the Damping to the appropriate number.
 
 .. todo::
 
    write up layer, quality type, motion system, etc.
+   general workflow for creating collision
 
 
 
