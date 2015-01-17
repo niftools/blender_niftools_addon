@@ -2,6 +2,10 @@
 Bounding Box
 ============
 
+.. warning::
+
+   * This section has not been ported yet, meaning it does not currently work.
+   
 This is used as the bound box.
 
 #. Create a Mesh-Object to represent the bound box, a Cube is recommended.
@@ -12,7 +16,8 @@ This is used as the bound box.
 
 
 
-*************Which games use this?
+General collision workflow -> Intro -> make mesh -> add new object to serve as bounds -> add rigid body [constraint?] [-> add collision ->] Define nif settings
+
 
 Collision
 =========
@@ -26,11 +31,14 @@ This is used by the havok system for collision detection.
    * For Cylinder Export, we need to fix them to show how the user would create the objects. We are using a Meta Capsule
    * Some of the collision types lack viewport rendering, see workaround for visulisations below.
 
-Notes
-~~~~~
-.. _collision-notes:
 
-* Collision Bounds are represented by a dashed line, unlike Bounds which are by solid lines. 
+General Workflow
+~~~~~~~~~~~~~~~~
+.. _collision-workflow:
+
+#. 
+
+
 
 Collision Mapping
 ~~~~~~~~~~~~~~~~~
@@ -40,11 +48,9 @@ Collision Mapping
 * The suggested shapes also correspond to shapes generated through import by the plugin.
 * On export the BhkShape is created from data pulled from the Collision object.
 
-* Start by choosing a shape adequate to your model and follow the steps below the appropriate section.
 
-**************rigid body needed, collision modifier also used but not needed?
+#. Start by choosing a shape adequate to your model and follow the steps below the appropriate section.
 
-Blender's Collision types map to the following Nif types:
 
 - Oblivion, Fallout 3, and Fallout NV; 
 
@@ -71,7 +77,7 @@ Blender's Collision types map to the following Nif types:
 +----------------------------+-------------------+
 
 Box Collision
-~~~~~~~~~~~~~
+-------------
 .. _collison-box:
 
 #. :ref:`Create your mesh-object <geometry-mesh>`.
@@ -85,7 +91,7 @@ Box Collision
 #. :ref:`Add physics to our 'CollisionBox' <collison-settings>`.
 
 Sphere Collision
-~~~~~~~~~~~~~~~~
+----------------
 .. _collision-sphere:
 
 #. :ref:`Create your mesh-object <geometry-mesh>`.
@@ -99,7 +105,7 @@ Sphere Collision
 #. :ref:`Add physics to our 'CollisionSphere' <collison-settings>`.
 
 Capsule Collision
-~~~~~~~~~~~~~~~~~
+-----------------
 .. _collision-capsule:
 
 #. :ref:`Create your mesh-object <geometry-mesh>`.
@@ -128,7 +134,7 @@ Capsule Collision
 * This shape best represents the capsule, but visually missing the end caps which are hemi-spheres. 
 
 Convex Hull Collision
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 .. _collision-convex-hull:
 
 #. :ref:`Create your mesh-object <geometry-mesh>`. 
@@ -148,7 +154,7 @@ Convex Hull Collision
 * It is advisable to use a convex hull generator to create the collision-mesh.
 
 Triangle Mesh Collision
-~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------
 .. _collision-triangle-mesh:
 
 #. :ref:`Create your mesh-object <geometry-mesh>`.
@@ -243,6 +249,15 @@ The Damping determines ???????????.
 
    write up layer, quality type, motion system, etc.
    general workflow for creating collision
+
+
+Notes
+~~~~~
+
+* Collision Bounds are represented by a dashed line, unlike Bounds which are by solid lines. 
+
+**************Get this into the intro? Or place at bottom
+
 
 
 
