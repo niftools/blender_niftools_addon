@@ -1,5 +1,6 @@
 Import and Export Settings
 --------------------------
+.. _iosettings:
 
 This section explains the import and export settings.
 

@@ -11,6 +11,7 @@ Features
 .. toctree::
    :maxdepth: 1
    
+   workflow/index
    armature/index
    collisions/index
    geometry/index
