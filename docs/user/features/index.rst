@@ -12,9 +12,15 @@ Features
    :maxdepth: 1
    
    workflow/index
-   armature/index
-   collisions/index
-   geometry/index
+
    iosettings/index
+   
+   object/index
+   geometry/index
    properties/index
    textures/index
+   
+   armature/index
+   collisions/index
+   
+   
