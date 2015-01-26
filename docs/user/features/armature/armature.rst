@@ -11,8 +11,6 @@ Bone Flags
 * These are set upon export if left at 0.
 * Only change the value in very specific cases: Oblivion Clothing uses 0x000F
 
-*****************Otherwise no idea what they do, more research needed.
-
 Dismember Flags
 ---------------
 .. _armature-dismemberflags:

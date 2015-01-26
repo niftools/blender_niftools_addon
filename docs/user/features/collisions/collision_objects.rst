@@ -1,10 +1,17 @@
-
-Bounding Box
-============
+Collision Object
+----------------
+.. _collision_object:
 
 .. warning::
 
    * This section has not been ported yet, meaning it does not currently work.
+
+The following section deals with creating a mesh-object which will physically represent our collision object.
+Once a suitable object has been created, then the appropriate settings should be enabled on 
+
+
+Bounding Box
+============
    
 This is used as the bound box.
 
@@ -15,39 +22,29 @@ This is used as the bound box.
 #. In the Object Tab, enable bounds in the display section.
 
 
-
-General collision workflow -> Intro -> make mesh -> add new object to serve as bounds -> add rigid body [constraint?] [-> add collision ->] Define nif settings
-
-
-Collision
-=========
-.. _collision:
+Havok Collision
+===============
 
 This is used by the havok system for collision detection.
 
 .. warning::
 
-   * Collisions are in the process of being ported. This section is subject to change.
    * For Cylinder Export, we need to fix them to show how the user would create the objects. We are using a Meta Capsule
    * Some of the collision types lack viewport rendering, see workaround for visulisations below.
 
+Notes
+~~~~~
 
-General Workflow
+* Collision Bounds are represented by a dashed line, unlike Bounds which are by solid lines. 
+
+
+Collision Object
 ~~~~~~~~~~~~~~~~
-.. _collision-workflow:
-
-#. 
-
-
-
-Collision Mapping
-~~~~~~~~~~~~~~~~~
-.. _collision-mapping:
+.. _collision-object:
 
 * The following section describes the most appropriate primitive object to represent the desired collision object type.
-* The suggested shapes also correspond to shapes generated through import by the plugin.
-* On export the BhkShape is created from data pulled from the Collision object.
-
+* The suggested shapes are the same objects generated through import by the plugin.
+* Upon export, a BhkShape is created from data pulled from the Collision object.
 
 #. Start by choosing a shape adequate to your model and follow the steps below the appropriate section.
 
@@ -77,7 +74,7 @@ Collision Mapping
 +----------------------------+-------------------+
 
 Box Collision
--------------
+^^^^^^^^^^^^^
 .. _collison-box:
 
 #. :ref:`Create your mesh-object <geometry-mesh>`.
@@ -91,7 +88,7 @@ Box Collision
 #. :ref:`Add physics to our 'CollisionBox' <collison-settings>`.
 
 Sphere Collision
-----------------
+^^^^^^^^^^^^^^^^
 .. _collision-sphere:
 
 #. :ref:`Create your mesh-object <geometry-mesh>`.
@@ -105,7 +102,7 @@ Sphere Collision
 #. :ref:`Add physics to our 'CollisionSphere' <collison-settings>`.
 
 Capsule Collision
------------------
+^^^^^^^^^^^^^^^^^
 .. _collision-capsule:
 
 #. :ref:`Create your mesh-object <geometry-mesh>`.
@@ -134,7 +131,7 @@ Capsule Collision
 * This shape best represents the capsule, but visually missing the end caps which are hemi-spheres. 
 
 Convex Hull Collision
----------------------
+^^^^^^^^^^^^^^^^^^^^^
 .. _collision-convex-hull:
 
 #. :ref:`Create your mesh-object <geometry-mesh>`. 
@@ -154,7 +151,7 @@ Convex Hull Collision
 * It is advisable to use a convex hull generator to create the collision-mesh.
 
 Triangle Mesh Collision
------------------------
+^^^^^^^^^^^^^^^^^^^^^^^
 .. _collision-triangle-mesh:
 
 #. :ref:`Create your mesh-object <geometry-mesh>`.
@@ -173,91 +170,4 @@ Triangle Mesh Collision
 
 * Often a duplicate object can be used, simplified by decimating, then triangulated(**Ctrl + T**).
 * A :ref:`Convex Hulled Object<collision-convex-hull-notes>` can also be used.
-
-Collision Settings
-~~~~~~~~~~~~~~~~~~
-.. _collison-settings:
-
-* Meshes with Collision Bounds enabled will be exported as a :class:`~pyffi.formats.nif.NifFormat.bhkShape`, rather than a :class:`~pyffi.formats.nif.NifFormat.NiTriShape`.
-* The Collision settings are used by the :class:`~pyffi.formats.nif.NifFormat.bhkShape` to control it reacts in the Havok physics simulation.
-
-**Example:**
-
-First we enable Collision Setting for the selected Collision Object:
-
-* In the the **Physics** tab, enable **Collision Bounds** 
-
-The bounds type is used to select which BhkShape type to use.
-
-* Select the desired **Bounds** type from the dropdown box.
-
-The Radius determines ???????????. Check if exporter reduces the radius for p.e. skyrim.
-
-* Set the Radius to the appropriate number.
-
-**************Velocity Max does not seem to be used in the nif.
-
-The Collision Filter Flags determines ???????????. Skyrim's models all have this at 0, unsure about use in other games.
-
-* Set the Col Filter to the appropriate number.
-
-The Deactivator Type determines ???????????.
-
-* Select a Deactivator Type from the dropdown box.
-
-The Solver Deactivator determines ???????????.
-
-* Select a Solver Deactivator from the dropdown box.
-
-The Quality Type determines ???????????.
-
-* Select a Quality Type from the dropdown box.
-
-The Oblivion Layer determines ???????????.
-
-* Select a Oblivion Layer from the dropdown box.
-
-The Max Linear Velocity determines ???????????.
-
-* Set the Max Linear Velocity to the appropriate number.
-
-The Max Angular Velocity determines ???????????.
-
-* Set the Max Angular Velocity to the appropriate number.
-
-The Motion System determines ???????????.
-
-* Select a Motion System from the dropdown box.
-
-The Havok Material decides how the material should behave for collisions, eg. sound, decals.
-
-* Select a Havok Material from the dropdown box.
-
-The LHMaxFriction determines ???????????.
-
-* Set the LHMaxFriction to the appropriate number.
-
-The tau determines ???????????.
-
-* Set the tau to the appropriate number.
-
-The Damping determines ???????????.
-
-* Set the Damping to the appropriate number.
-
-.. todo::
-
-   write up layer, quality type, motion system, etc.
-   general workflow for creating collision
-
-
-Notes
-~~~~~
-
-* Collision Bounds are represented by a dashed line, unlike Bounds which are by solid lines. 
-
-**************Get this into the intro? Or place at bottom
-
-
-
 
