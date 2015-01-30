@@ -24,8 +24,10 @@ Here it is explained how to add collision to your mesh.
    a) Choose between a :ref:`Bounding Box <collisionobject-bbox>` or :ref:`Havok Collision <collisionobject-havok>`.
    #) The bounding box is complete. If you have chosen Havok Collision proceed to choosing an :ref:`appropriate shape <collisionobject-havokobject>` for your collision. 
    #) Add a :ref:`Rigid Body <collisionobject-rigidbody>` modifier.
-..   #) Add a :ref:`Collision <collisionobject-collmodifier>` modifier. Not sure if needed/used check its own section.
-
+   
+.. Add a :ref:`Collision <collisionobject-collmodifier>` modifier. Not sure if needed/used check its own section.
+   
+   
 #. Go to :ref:`Collision Settings <collisonsettings>` and follow the steps indicated there:
 
    a) Start by :ref:`enabling collision bounds <collisonsettings-enable>`.
