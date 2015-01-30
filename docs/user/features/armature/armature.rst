@@ -1,25 +1,32 @@
+
+.. _armature-armatures:
+
 Armature Bones
 ==============
-.. _armature-armatures:
 
 * The following section deals with Armatures
 
+.. _armature-boneflags:
+
 Bone Flags
 ----------
-.. _armature-boneflags:
 
 * These are set upon export if left at 0.
 * Only change the value in very specific cases: Oblivion Clothing uses 0x000F
 
+.. Otherwise no idea what they do, more research needed.
+
+.. _armature-dismemberflags:
+
 Dismember Flags
 ---------------
-.. _armature-dismemberflags:
 
 * Currently does nothing - in testing.
 
+.. _armature-invmarker:
+
 Inventory Marker
 ----------------
-.. _armature-invmarker:
 
 * This is a special type of bone which is used to position object in the inventory display. 
 * It may also be used for animation placement involving multiple NPCs
