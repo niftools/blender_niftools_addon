@@ -159,3 +159,4 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
                 area.spaces[0].show_backface_culling = True
         
         return nif_import.NifImport(self, context).execute()
+    
