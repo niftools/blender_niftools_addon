@@ -162,3 +162,4 @@ class NifExportOperator(bpy.types.Operator, ExportHelper, NifOperatorCommon):
         method.
         """
         return nif_export.NifExport(self, context).execute()
+    

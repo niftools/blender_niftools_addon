@@ -82,3 +82,4 @@ class NfTlPartFlagRemove(bpy.types.Operator):
         obj.niftools_part_flags.remove(item)
         obj.niftools_part_flags_panel.pf_partcount = len(obj.niftools_part_flags)
         return {'FINISHED'}
+
