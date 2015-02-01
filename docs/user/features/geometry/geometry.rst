@@ -1,7 +1,8 @@
-Mesh Geometry
--------------
 
 .. _geometry-mesh:
+
+Mesh Geometry
+-------------
 
 * The following section deals with :class:`~bpy.types.Object` which are of type 'MESH', containing Mesh Data(Mesh-Object)
 * Each :class:`~bpy.types.Object` is exported as a combination of :class:`~pyffi.formats.nif.NifFormat.NiTriShape` and :class:`~pyffi.formats.nif.NifFormat.NiNode`.
@@ -26,6 +27,7 @@ Mesh Geometry
 * Strips (:class:`~pyffi.formats.nif.NifFormat.NiTriStrips`) are available but not developer supported
   as they are `unnecessary for current hardware <http://tomsdxfaq.blogspot.com/2005_12_01_archive.html>`_.
   
+.. _geometry-doubleside:
 
 Double Sided Mesh
 =================
@@ -44,10 +46,10 @@ Double Sided Mesh - Adds a :class:`~pyffi.formats.nif.NifFormat.NiStencilPropert
 
  
 
-UV Unwrapping/Mapping
----------------------
-
 .. _geometry-uv:
+
+UV Unwrapping/Mapping
+=====================
 
 * UV-unwrapping is the process of unfolding all the faces onto a flat plane, see `Cube Unwrap <http://en.wikipedia.org/wiki/File:Cube_Representative_UV_Unwrapping.png>`_.
 * The UV-unwrapping process creates a UV Map layer.
@@ -65,9 +67,10 @@ UV Unwrapping/Mapping
 * Although Blender allows multiple :class:`~bpy.types.MeshTextureFaceLayer`, most versions of the Nif format only support one UV layer
 
 
-Vertex Color
-------------
 .. _geometry-vertexcolor:
+
+Vertex Color
+============
 
 **Example:**
 
@@ -83,9 +86,10 @@ Vertex Color
 * `This image should clarify per-face vertes coloring <http://i211.photobucket.com/albums/bb189/NifTools/Blender/documentation/per_face_vertex_color.jpg>`_
 * On export the scripts will take an average of colors. 
 
-Vertex Alpha
-------------
 .. _geometry-vertexalpha:
+
+Vertex Alpha
+============
 
 Vertex alpha is handled in the same way as vertex color. The only difference is that vertex alpha use grey scale.
    

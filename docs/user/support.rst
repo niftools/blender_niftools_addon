@@ -1,9 +1,12 @@
 Support
 -------
 
-.. todo::
+.. 
+   todo::
 
    For now, this is just a quick stub. What else do we need here?
+
+For more information and further support, please contact us at:
 
 * `wiki <http://niftools.sourceforge.net/wiki/Blender>`_
 * `forum <http://niftools.sourceforge.net/forum>`_
