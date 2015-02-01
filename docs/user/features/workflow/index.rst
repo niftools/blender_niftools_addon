@@ -6,7 +6,7 @@ Workflow
 This section will explain the general workflow used to import/export .nif files to/from blender.
 
 
-.. Note::
+.. note::
    This assumes at least begginer level skills with blender.
    If you need an introduction consider reading `the Blender Manual <https://http://blender.org/manual/>`_.
 
@@ -28,9 +28,11 @@ The following section deals the various model components, required to export to 
 +------------------------+---------------------------------------------------------------------------------------------------------------------------+
 | **Base Model**         | Create your base model and configure the settings on the object, refer to the :ref:`Geometry Section <geometry-mesh>`.    |
 +------------------------+---------------------------------------------------------------------------------------------------------------------------+
-| **General Nif Info**   | Add in the general info required to identify the .nif file, refer to the :ref:`Nif Version Info <object-common-version>`. |
+| **General Nif Info**   | Add in the general info required to identify the .nif file, refer to the :ref:`Nif Version Info <object-common>`.         |
 +------------------------+---------------------------------------------------------------------------------------------------------------------------+
-| **Material & Shaders** | Create and configure the materials for each selected object, refer to the :ref:`Materials Section <properties>`.          |
+| **Shaders**            | Create and configure the shaders for each selected object, refer to the **TBD**                                           |
++------------------------+---------------------------------------------------------------------------------------------------------------------------+
+| **Material**           | Create and configure the materials for each selected object, refer to the :ref:`Materials Section <properties>`.          |
 +------------------------+---------------------------------------------------------------------------------------------------------------------------+
 | **Textures**           | Add the different textures types for each material, refer to the :ref:`Textures Section <textures>`.                      |
 +------------------------+---------------------------------------------------------------------------------------------------------------------------+
@@ -43,7 +45,7 @@ The following section deals the various model components, required to export to 
 Advanced Modeling
 -----------------
 
-The following are advanced topics.
+The following are advanced topics and optional for most models.
 You should only attempt the following when you are compentent in the basics.
 
 +----------------+----------------------------------------------------------------------------------------------------------------------------------+
@@ -51,6 +53,6 @@ You should only attempt the following when you are compentent in the basics.
 +----------------+----------------------------------------------------------------------------------------------------------------------------------+
 | **Armatures**  | Create a rigged model and configure the flags for each selected bone, refer to the :ref:`Armature Section <armature-armatures>`. |
 +----------------+----------------------------------------------------------------------------------------------------------------------------------+
-| **Animations** | Not yet supported                                                                                                                |
+| **Animations** | Not yet supported.                                                                                                               |
 +----------------+----------------------------------------------------------------------------------------------------------------------------------+
 

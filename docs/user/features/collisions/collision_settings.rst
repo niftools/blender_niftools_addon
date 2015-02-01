@@ -5,7 +5,7 @@ Collision Settings
 ------------------
 
 The following section details the setting which need to be applied to the collision body to react appropriately in the collision simulation.
-Alot of these setting are havok specific; where possible we have mapped them to blender's collision simulation.
+A lot of these setting are havok specific; where possible we have mapped them to blender's collision simulation.
 
 
 .. _collisonsettings-enable:
@@ -39,59 +39,59 @@ Havok Settings
    Decide if we should reference the nif.xml directly or improve tooltips?
 
 
-   The Radius is used as region around the collision object.
+   The **Radius** is used as region around the collision object.
    If another collision object intersects this region; a quickier, but less accurate collision algorithm is used. 
    If the object intersects futher than the region value, then full collision calculation occurs.
    
-   * Set the Radius to the appropriate number.
+   * Set the **Radius** to the appropriate number.
    
-   The Havok Material decides how the material should behave for collisions, eg. sound, decals.
+   The **Havok Material** decides how the material should behave for collisions, eg. sound, decals.
    
-   * Select a Havok Material from the dropdown box.
+   * Select a **Havok Material** from the dropdown box.
    
                      Velocity Max does not seem to be used in the nif.
    
-   The Collision Filter Flags determines
+   The **Collision Filter Flags** determines
    
-   * Set the Col Filter to the appropriate number.
+   * Set the **Col Filter** to the appropriate number.
    
-   The Deactivator Type determines .
+   The **Deactivator Type** determines .
    
-   * Select a Deactivator Type from the dropdown box.
+   * Select a **Deactivator Type** from the dropdown box.
    
-   The Solver Deactivator determines .
+   The **Solver Deactivator** determines .
    
-   * Select a Solver Deactivator from the dropdown box.
+   * Select a **Solver Deactivator** from the dropdown box.
    
-   The Quality Type determines .
+   The **Quality Type** determines .
    
-   * Select a Quality Type from the dropdown box.
+   * Select a **Quality Type** from the dropdown box.
    
-   The Oblivion Layer determines.
+   The **Oblivion Layer** determines.
    
-   * Select a Oblivion Layer from the dropdown box.
+   * Select a **Oblivion Layer** from the dropdown box.
    
-   The Max Linear Velocity determines .
+   The **Max Linear Velocity** determines .
    
-   * Set the Max Linear Velocity to the appropriate number.
+   * Set the **Max Linear Velocity** to the appropriate number.
    
-   The Max Angular Velocity determines .
+   The **Max Angular Velocity** determines .
    
-   * Set the Max Angular Velocity to the appropriate number.
+   * Set the **Max Angular Velocity** to the appropriate number.
    
-   The Motion System determines .
+   The **Motion System** determines .
    
-   * Select a Motion System from the dropdown box.
+   * Select a **Motion System** from the dropdown box.
    
-   The LHMaxFriction determines .
+   The **LHMaxFriction** determines .
    
-   * Set the LHMaxFriction to the appropriate number.
+   * Set the **LHMaxFriction** to the appropriate number.
    
-   The tau determines .
+   The **tau** determines .
    
-   * Set the tau to the appropriate number.
+   * Set the **tau** to the appropriate number.
    
-   The Damping determines .
+   The **Damping** determines .
    
-   * Set the Damping to the appropriate number.
+   * Set the **Damping** to the appropriate number.
 
