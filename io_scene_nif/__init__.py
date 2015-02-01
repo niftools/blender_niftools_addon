@@ -96,12 +96,12 @@ def _init_loggers():
 
 def menu_func_import(self, context):
     self.layout.operator(
-        operators.NifImportOperator.bl_idname, text="NetImmerse/Gamebryo (.nif)")
+        operators.nif_import_op.NifImportOperator.bl_idname, text="NetImmerse/Gamebryo (.nif)")
 
 
 def menu_func_export(self, context):
     self.layout.operator(
-        operators.NifExportOperator.bl_idname, text="NetImmerse/Gamebryo (.nif)")
+        operators.nif_export_op.NifExportOperator.bl_idname, text="NetImmerse/Gamebryo (.nif)")
 
 
 def register():
