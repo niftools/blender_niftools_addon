@@ -4,7 +4,7 @@
 Collision Systems
 -----------------
 
-The follow section deals with the various collision systems that the Blender Nif Plugins supports.
+The following section deals with the various collision systems that the Blender Nif Plugins supports.
 
 .. toctree::
    :maxdepth: 1
