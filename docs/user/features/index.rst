@@ -20,15 +20,13 @@ If in need of a guide to make sure your model is complete please visit the :ref:
    :maxdepth: 1
    
    workflow/index
-
    iosettings/index
-   
-   object/index
    geometry/index
+   object/index
+   shader/index
    properties/index
    textures/index
-   
-   armature/index
    collisions/index
+   armature/index
    
    

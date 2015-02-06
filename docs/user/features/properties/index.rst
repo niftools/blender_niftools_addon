@@ -1,6 +1,8 @@
+
+.. _properties:
+
 Properties
 ==========
-.. _properties:
 
 The following section describes how Blender object properties/settings map to their Nif counterpart.
 
