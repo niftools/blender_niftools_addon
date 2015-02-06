@@ -30,7 +30,7 @@ The following section deals the various model components, required to export to 
 +------------------------+---------------------------------------------------------------------------------------------------------------------------+
 | **General Nif Info**   | Add in the general info required to identify the .nif file, refer to the :ref:`Nif Version Info <object-common>`.         |
 +------------------------+---------------------------------------------------------------------------------------------------------------------------+
-| **Shaders**            | Create and configure the shaders for each selected object, refer to the **TBD**                                           |
+| **Shaders**            | Create and configure the shaders for each selected object, refer to the :ref:`Shader Section <shader>`.                   |
 +------------------------+---------------------------------------------------------------------------------------------------------------------------+
 | **Material**           | Create and configure the materials for each selected object, refer to the :ref:`Materials Section <properties>`.          |
 +------------------------+---------------------------------------------------------------------------------------------------------------------------+

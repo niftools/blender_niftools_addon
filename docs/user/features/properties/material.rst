@@ -1,6 +1,8 @@
+
+.. _properties-material:
+
 Material Based Properties
 -------------------------
-.. _properties-material:
 
 * The following section goes through those Blender material settings and how they relate to corresponding nif blocks or attributes.
 * Unless otherwise stated your mesh needs to have a material.
@@ -19,9 +21,10 @@ Example
 * :ref:`See material settings <properties-material-settings>` to see what material settings we use.
 
 
+.. _properties-material-settings:
+
 Blender Materials Settings
 ==========================
-.. _properties-material-settings:
 
 The following section describes which Blender Material setting we actively use.
 Depending on the nif version you are exporting to, they will be mapped to different Nif block types or block attributes.
@@ -55,7 +58,8 @@ This value sets how much light the material emit.
 
 * Blender uses the diffuse color for emission, viewable in the viewport.
 
-.. todo::
+.. 
+   todo::
    add a preview button
 
 Gloss
