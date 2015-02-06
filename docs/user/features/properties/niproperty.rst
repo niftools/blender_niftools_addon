@@ -1,43 +1,47 @@
+
+.. _properties-niproperty:
+
 NiProperty
 ==========
-.. _properties-niproperty:
 
 The following is a overview of what the Nif Plugin will export Blender settings are mapped to.
 
 
+.. _properties-nimaterial:
+
 NiMaterialProperty
 ------------------
-.. _properties-nimaterial:
 
 The following section is for nifs which use :class:`~pyffi.formats.nif.NifFormat.NiMaterialProperty`.
 * Every :class:`~bpy.types.Material` is exported to a :class:`~pyffi.formats.nif.NifFormat.NiMaterialProperty`.
 
 
+.. _properties-nispecular:
+
 NiSpecularProperty
 ------------------
 
-.. _properties-nispecular:
-
-
 * Setting the **Intensity** to **0** will disable specularity; a :class:`~pyffi.formats.nif.NifFormat.NiSpecularProperty` will not be exported.
+
+.. _properties-nialpha:
 
 NiAlphaProperty
 ---------------
 
-.. _properties-nialpha:
-
 * An :class:`~pyffi.formats.nif.NifFormat.NiAlphaProperty` is exported for Materials or Texture have Alpha value.
    
    
+.. _properties-niwireframe:
+
 NiWireFrameProperty
 -------------------
-.. _properties-niwireframe:
 
 :class:`~pyffi.formats.nif.NifFormat.NiWireframeProperty`
 
+.. _properties-stencil:
+
 NiStencilProperty
 -----------------
-.. _properties-stencil:
 
 The NiStencilProperty ignores the face normal and renders both sides of the mesh.
 
@@ -47,7 +51,8 @@ The NiStencilProperty ignores the face normal and renders both sides of the mesh
 
 
 
-.. todo::
+.. 
+   todo::
    
    Document these bad boys once implemented
    

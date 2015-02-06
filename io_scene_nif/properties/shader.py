@@ -316,7 +316,7 @@ class ShaderProps(PropertyGroup):
                         )
         
         cls.slsf_1_decal = BoolProperty(
-                        name='decal'
+                        name='Decal'
                         )
         
         cls.slsf_1_dynamic_decal = BoolProperty(
