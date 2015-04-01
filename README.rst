@@ -3,25 +3,25 @@ The Blender NIF plugin enables Blender to import and export NIF files.
 Requirements
 ------------
 
-* `blender 2.69 <http://www.blender.org/download/get-blender/>`_
+* `Latest Blender - <http://www.blender.org/download/get-blender/>`_
 
 Download
 --------
 
-* http://sourceforge.net/projects/niftools/files/blender_nif_scripts/
+* Currently no official releases of Blender Nif Plugin 2.6.x series - https://github.com/niftools/blender_nif_plugin/releases 
+* See forums for developer and nightly builds  
 
 Documentation
 -------------
 
-* `online documentation <http://niftools.sourceforge.net/docs/blender_nif_plugin>`_
-* `wiki <http://niftools.sourceforge.net/wiki/Blender>`_
-* `changelog <http://niftools.sourceforge.net/doc/blender_nif_plugin/additional/changes.html>`_
+* `online documentation <http://niftools.org/projects/plugins/blender_nif_plugin/docs/>`_
+* `changelog <http://niftools.org/projects/plugins/blender_nif_plugin/docs/additional/changes.html>`_
 
 Support
 -------
 
 * `forum <http://niftools.sourceforge.net/forum>`_
-* `report a bug <http://sourceforge.net/tracker/?group_id=149157>`_
+* `report a bug via github's Issue tracker - <http://github.com/niftools/blender_nif_plugin/issues>`_
   (please include the .blend or .nif that caused the error and a brief description
   of how to reproduce the error)
 
