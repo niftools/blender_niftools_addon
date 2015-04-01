@@ -3,7 +3,7 @@ The Blender NIF plugin enables Blender to import and export NIF files.
 Requirements
 ------------
 
-* `blender 2.69 <http://www.blender.org/download/get-blender/>`_
+* `Latest Blender - <http://www.blender.org/download/get-blender/>`_
 
 Download
 --------
