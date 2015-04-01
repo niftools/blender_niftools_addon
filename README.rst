@@ -8,20 +8,20 @@ Requirements
 Download
 --------
 
-* http://sourceforge.net/projects/niftools/files/blender_nif_scripts/
+* Currently no official releases of 2.6.0 - https://github.com/niftools/blender_nif_plugin/releases 
+* see forums for nightly builds  
 
 Documentation
 -------------
 
-* `online documentation <http://niftools.sourceforge.net/docs/blender_nif_plugin>`_
-* `wiki <http://niftools.sourceforge.net/wiki/Blender>`_
-* `changelog <http://niftools.sourceforge.net/doc/blender_nif_plugin/additional/changes.html>`_
+* `online documentation <http://niftools.org/projects/plugins/blender_nif_plugin/docs/>`_
+* `changelog <http://niftools.org/projects/plugins/blender_nif_plugin/docs/additional/changes.html>`_
 
 Support
 -------
 
 * `forum <http://niftools.sourceforge.net/forum>`_
-* `report a bug <http://sourceforge.net/tracker/?group_id=149157>`_
+* `report a bug via githubs - <http://github.com/niftools/blender_nif_plugin/issues>`_
   (please include the .blend or .nif that caused the error and a brief description
   of how to reproduce the error)
 
