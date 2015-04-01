@@ -21,7 +21,7 @@ Support
 -------
 
 * `forum <http://niftools.sourceforge.net/forum>`_
-* `report a bug via githubs - <http://github.com/niftools/blender_nif_plugin/issues>`_
+* `report a bug via github's Issue tracker - <http://github.com/niftools/blender_nif_plugin/issues>`_
   (please include the .blend or .nif that caused the error and a brief description
   of how to reproduce the error)
 
