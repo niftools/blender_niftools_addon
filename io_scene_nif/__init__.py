@@ -73,7 +73,7 @@ if not _modules_path in sys.path:
     sys.path.append(_modules_path)
 del _modules_path
 
-from io_scene_nif import properties, operators, operator, ui
+from io_scene_nif import properties, operators, ui
 
 import bpy
 import bpy.props
