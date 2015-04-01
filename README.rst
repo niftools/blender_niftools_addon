@@ -8,8 +8,8 @@ Requirements
 Download
 --------
 
-* Currently no official releases of 2.6.0 - https://github.com/niftools/blender_nif_plugin/releases 
-* see forums for nightly builds  
+* Currently no official releases of Blender Nif Plugin 2.6.x series - https://github.com/niftools/blender_nif_plugin/releases 
+* See forums for developer and nightly builds  
 
 Documentation
 -------------
