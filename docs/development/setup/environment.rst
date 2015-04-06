@@ -22,12 +22,12 @@ Once you have created the directories, time to grab the source code.
 See :ref:`source code <developer-setup-sourcecode>` to setup source control and download the code repositories.
 You will also need to download buildenv, it used to manage dependancies, needs to be updated for nix platforms.
  
-Install Python 3.2
+Install Python 3.4
 ------------------
 
 **Windows**
 
-#. Download `Python 3.2 <http://www.python.org/download/releases/3.2.3/>`_.
+#. Download `Python 3.4 <http://www.python.org/download/releases/3.2.3/>`_.
 
 #. Pick the installer appropriate for your platform, and follow the instructions.
 
@@ -41,6 +41,7 @@ Install Python 3.2
 
    sudo apt-get install python3-minimal
  
+This is installed by default on 14.04 or later
 
 Setup BuildEnv
 --------------
@@ -65,34 +66,9 @@ Running from command-line you can decided where it will look for .ini files and 
    create-shortcuts.bat <ini-files> <output_location>
 
 Example
+   
    create-shortcuts.bat C:\Users\<username>\workspace\bin\ini C:\Users\<username>\Desktop\shortcuts
    
-  
-Install Pip
------------
-
-Pip makes it easy to install various Python modules.
-
-**Fedora**::
-
-   sudo yum install python3-pip
-
-**Ubuntu/Windows**
-
-Save `get-pip.py <https://raw.github.com/pypa/pip/master/contrib/get-pip.py>`_
-in your ``workspace`` folder.
-
-**Windows**
-
-Use the Build environment shortcut you just created to open the command prompt::
-
-   python get-pip.py
-
-**Ubuntu**::
-
-   cd ~/workfolder
-   sudo python3 get-pip.py
-
 
 Install Blender
 ---------------
@@ -105,23 +81,26 @@ Alternatively you can build blender from source :ref:`Building Blender from Sour
 Install Sphinx and Nose
 -----------------------
 
+Dependancy scripts are available in the install directory.
+
 **Windows** run in buildenv::
 
-   pip install Sphinx --target="%APPDATABLENDERADDONS%\modules"
-   pip install nose --target="%APPDATABLENDERADDONS%\modules"
+   install_deps.bat
+
+**Unix**::
+   
+   install_deps.sh
+   
+Using software management:
 
 **Ubuntu** run in a terminal::
 
    sudo apt-get install python3-nose python3-sphinx
 
-
 **Fedora** run in a terminal::
 
    sudo yum install python3-nose python3-sphinx
    
-   cd workspace
-
-
 
 Check Installation
 ------------------
@@ -133,6 +112,4 @@ and type::
    import nose
 
 You should not get any import errors.
-
-
 
