@@ -48,15 +48,15 @@ class ConstraintProperty(PropertyGroup):
     @classmethod
     def register(cls):
         bpy.types.Object.niftools_constraint = PointerProperty(
-						name='Niftools Constraint Property',
-						description='Additional constraint properties used by the Nif File Format',
-						type=cls
-						)
+                        name='Niftools Constraint Property',
+                        description='Additional constraint properties used by the Nif File Format',
+                        type=cls
+                        )
 
         cls.LHMaxFriction = FloatProperty(
-						name='LHMaxFriction',
-						description='Havok limited hinge max friction.',
-						)
+                        name='LHMaxFriction',
+                        description='Havok limited hinge max friction.',
+                        )
         cls.tau = FloatProperty(
                         name='tau',
                         description='Havok limited hinge max friction.',

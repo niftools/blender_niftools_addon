@@ -152,10 +152,10 @@ class BodyPartTestSuite(TestSuite):
         self.info("checking that there are no body parts")
         if nif_export.root_blocks[0].find(
             block_type=NifFormat.BSDismemberSkinInstance):
-			raise ValueError("body part found even though they were disabled on export")
+            raise ValueError("body part found even though they were disabled on export")
         if not nif_export.root_blocks[0].find(
             block_type=NifFormat.NiSkinInstance):
-			raise ValueError("no skinning exported")
+            raise ValueError("no skinning exported")
 
 suite = BodyPartTestSuite("bodypart")
 suite.run()
