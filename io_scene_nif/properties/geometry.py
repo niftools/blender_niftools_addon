@@ -1,27 +1,27 @@
 ''' Nif User Interface, custom nif properties for geometry'''
 
 # ***** BEGIN LICENSE BLOCK *****
-# 
+#
 # Copyright © 2005-2015, NIF File Format Library and Tools contributors.
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 #    * Redistributions of source code must retain the above copyright
 #      notice, this list of conditions and the following disclaimer.
-# 
+#
 #    * Redistributions in binary form must reproduce the above
 #      copyright notice, this list of conditions and the following
 #      disclaimer in the documentation and/or other materials provided
 #      with the distribution.
-# 
+#
 #    * Neither the name of the NIF File Format Library and Tools
 #      project nor the names of its contributors may be used to endorse
 #      or promote products derived from this software without specific
 #      prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -40,11 +40,11 @@
 import bpy
 
 from bpy.types import PropertyGroup
-from bpy.props import (PointerProperty,
+from bpy.props import (
+                       PointerProperty,
                        CollectionProperty,
-                       StringProperty,
                        IntProperty,
-                       BoolProperty,
+                       BoolProperty
                        )
 
 
@@ -53,8 +53,10 @@ class SkinPartHeader(PropertyGroup):
     def register(cls):
         bpy.types.Object.niftools_part_flags_panel = PointerProperty(
                         name='Niftools Skin Part Flag Panel',
-                        description='Properties used by the BsShader for the Nif File Format',
-                        type=cls,
+                        description=('Properties used by the BsShader'
+                                     ' for the Nif File Format'
+                                     ),
+                        type=cls
                         )
 
         cls.pf_partcount = IntProperty(
@@ -62,14 +64,14 @@ class SkinPartHeader(PropertyGroup):
                         min=0,
                         default=0
                         )
-        
+
     @classmethod
     def unregister(cls):
         del bpy.types.Object.niftools_part_flags_panel
 
 
 class SkinPartFlags(PropertyGroup):
-    
+
     name = bpy.props.StringProperty(
                     name=(''),
                     default=''
@@ -78,16 +80,16 @@ class SkinPartFlags(PropertyGroup):
     pf_startflag = BoolProperty(
                     name=('Start Net Boneset')
                     )
-        
+
     pf_editorflag = BoolProperty(
                     name=('Editor Visible')
                     )
 
     @classmethod
     def register(cls):
-        bpy.types.Object.niftools_part_flags = CollectionProperty(type=SkinPartFlags)
-        
+        bpy.types.Object.niftools_part_flags = \
+            CollectionProperty(type=SkinPartFlags)
+
     @classmethod
     def unregister(cls):
         del bpy.types.Object.niftools_part_flags
-
