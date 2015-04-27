@@ -17,6 +17,6 @@ Naming Conventions
   * ``n_obj`` for a generic :class:`pyffi.formats.nif.NifFormat.NiObject`
   * ``n_geom`` for a :class:`pyffi.formats.nif.NifFormat.NiGeometry`
 
-.. todo::
+.. TODO:
 
    These conventions are not yet consistently applied in the code. 

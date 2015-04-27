@@ -181,7 +181,7 @@ The Havok Material decides how the material should behave for collisions, eg. so
 
 * Select a Havok Material from the list.
 
-.. todo::
+.. TODO::
 
    write up layer, quality type, motion system, etc.
 
