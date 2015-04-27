@@ -1,27 +1,28 @@
-''' Nif User Interface, connect custom properties from properties.py into Blenders UI'''
+''' Nif User Interface, connect custom properties
+ from properties.py into Blenders UI'''
 
 # ***** BEGIN LICENSE BLOCK *****
-# 
+#
 # Copyright © 2005-2015, NIF File Format Library and Tools contributors.
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 #    * Redistributions of source code must retain the above copyright
 #      notice, this list of conditions and the following disclaimer.
-# 
+#
 #    * Redistributions in binary form must reproduce the above
 #      copyright notice, this list of conditions and the following
 #      disclaimer in the documentation and/or other materials provided
 #      with the distribution.
-# 
+#
 #    * Neither the name of the NIF File Format Library and Tools
 #      project nor the names of its contributors may be used to endorse
 #      or promote products derived from this software without specific
 #      prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -40,13 +41,13 @@
 import bpy
 from bpy.types import Panel
 
+
 class NifMatFlagPanel(Panel):
     bl_label = "Flag Panel"
-    
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "material"
-    
+
     @classmethod
     def poll(cls, context):
         mat = context.material
@@ -57,25 +58,24 @@ class NifMatFlagPanel(Panel):
                 return False
             return True
         return False
-    
+
     def draw(self, context):
         matalpha = context.material.niftools_alpha
-        
+
         layout = self.layout
         row = layout.column()
-        
+
         row.prop(matalpha, "alphaflag")
         row.prop(matalpha, "materialflag")
         row.prop(matalpha, "textureflag")
-        
+
 
 class NifMatColorPanel(Panel):
     bl_label = "Material Color Panel"
-    
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "material"
-    
+
     @classmethod
     def poll(cls, context):
         mat = context.material
@@ -86,25 +86,49 @@ class NifMatColorPanel(Panel):
                 return False
             return True
         return False
-    
+
     def draw(self, context):
         mat = context.material.niftools
-        
+
         layout = self.layout
         row = layout.column()
         col = row.column()
-        col.prop(mat, "ambient_preview")
-        col.prop(mat, "ambient_color", text="")
-        col.prop(mat, "emissive_preview")
-        col.prop(mat, "emissive_color", text="")
-        col.prop(mat, "emissive_alpha")
-        col.prop(mat, "lightingeffect1")
-        col.prop(mat, "lightingeffect2")
-        
-        
+        col.prop(
+                 mat,
+                 "ambient_preview"
+                 )
+        col.prop(
+                 mat,
+                 "ambient_color",
+                 text=""
+                 )
+        col.prop(
+                 mat,
+                 "emissive_preview"
+                 )
+        col.prop(
+                 mat,
+                 "emissive_color",
+                 text=""
+                 )
+        col.prop(
+                 mat,
+                 "emissive_alpha"
+                 )
+        col.prop(
+                 mat,
+                 "lightingeffect1"
+                 )
+        col.prop(
+                 mat,
+                 "lightingeffect2"
+                 )
+
+
 def register():
     bpy.utils.register_class(NifMatColorPanel)
     bpy.types.MATERIAL_PT_shading.prepend(NifMatColorPanel)
+
 
 def unregister():
     bpy.types.MATERIAL_PT_shading.remove(NifMatColorPanel)

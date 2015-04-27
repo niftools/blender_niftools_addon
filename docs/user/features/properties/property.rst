@@ -39,7 +39,7 @@ This value sets how much light the material emit.
 
 * Blender uses the diffuse color for emission, viewable in the viewport.
 
-.. todo::
+.. TODO::
    add a preview button
 
 Gloss
@@ -104,7 +104,7 @@ Notes
 * In-game if the camera is facing the normal then the face will be rendered.
 * Otherside, it is not rendered and you will be able to look through the face.
 
-.. todo::
+.. TODO::
    
    Document these bad boys once implemented
    

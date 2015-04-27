@@ -42,7 +42,9 @@ from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
 
 from io_scene_nif.animationsys.animation_export import AnimationHelper
-from io_scene_nif.collisionsys.collision_export import bhkshape_export, bound_export
+from io_scene_nif.collisionsys.collision_export import (
+        bhkshape_export,
+        bound_export)
 from io_scene_nif.armaturesys.armature_export import Armature
 from io_scene_nif.propertysys.property_export import PropertyHelper
 from io_scene_nif.constraintsys.constraint_export import constraint_export
@@ -58,37 +60,47 @@ import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 from pyffi.formats.egm import EgmFormat
 
+
 # main export class
 class NifExport(NifCommon):
-
 
     IDENTITY44 = NifFormat.Matrix44()
     IDENTITY44.set_identity()
     FLOAT_MIN = -3.4028234663852886e+38
     FLOAT_MAX = +3.4028234663852886e+38
-    
+
     # TODO: - Expose via properties
-    
+
     EXPORT_OPTIMIZE_MATERIALS = True
     EXPORT_OB_COLLISION_DO_NOT_USE_BLENDER_PROPERTIES = False
-    
+
     EXPORT_BHKLISTSHAPE = False
     EXPORT_OB_BSXFLAGS = 2
     EXPORT_OB_MASS = 10.0
     EXPORT_OB_SOLID = True
-    EXPORT_OB_MOTIONSYSTEM = 7, # MO_SYS_FIXED
+
+    # MO_SYS_FIXED
+    EXPORT_OB_MOTIONSYSTEM = 7,
     EXPORT_OB_UNKNOWNBYTE1 = 1
     EXPORT_OB_UNKNOWNBYTE2 = 1
-    EXPORT_OB_QUALITYTYPE = 1 # MO_QUAL_FIXED
+
+    # MO_QUAL_FIXED
+    EXPORT_OB_QUALITYTYPE = 1
     EXPORT_OB_WIND = 0
-    EXPORT_OB_LAYER = 1 # static
-    EXPORT_OB_MATERIAL = 9 # wood
-    EXPORT_OB_PRN = "NONE" # Todo with location on character. For weapons, rings, helmets, Sheilds ect
-    
+
+    # static
+    EXPORT_OB_LAYER = 1
+
+    # wood
+    EXPORT_OB_MATERIAL = 9
+
+    # TODO: with location on character.
+    # For weapons, rings, helmets, Sheilds ect
+    EXPORT_OB_PRN = "NONE"
 
     def __init__(self, operator, context):
         NifCommon.__init__(self, operator, context)
-    
+
         # Helper systems
         self.bhkshapehelper = bhkshape_export(parent=self)
         self.boundhelper = bound_export(parent=self)
@@ -98,7 +110,7 @@ class NifExport(NifCommon):
         self.constrainthelper = constraint_export(parent=self)
         self.texturehelper = TextureHelper(parent=self)
         self.objecthelper = ObjectHelper(parent=self)
-        
+
     def execute(self):
         """Main export function."""
         bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
@@ -107,12 +119,12 @@ class NifExport(NifCommon):
 
         # TODO:
         '''
-        if self.properties.animation == 'ALL_NIF_XNIF_XKF' and self.properties.game == 'MORROWIND':
+        if self.properties.animation == 'ALL_NIF_XNIF_XKF' and \
+                self.properties.game == 'MORROWIND':
             # if exporting in nif+xnif+kf mode, then first export
             # the nif with geometry + animation, which is done by:
             self.properties.animation = 'ALL_NIF'
         '''
-
         # extract directory, base name, extension
         directory = os.path.dirname(self.properties.filepath)
         filebase, fileext = os.path.splitext(
@@ -129,11 +141,11 @@ class NifExport(NifCommon):
         self.dict_materials = {}
         self.dict_textures = {}
         self.dict_mesh_uvlayers = []
-        
+
         # if an egm is exported, this will contain the data
         self.egmdata = None
 
-        try: # catch export errors
+        try:  # catch export errors
 
             # find nif version to write
             self.version = self.operator.version[self.properties.game]
@@ -155,7 +167,6 @@ class NifExport(NifCommon):
                     # and not in rest position!
                     b_obj.data.pose_position = 'POSE'
 
-
                 if b_obj.type == 'MESH':
                     b_armature_modifier = None
                     b_obj_name = b_obj.name
@@ -165,13 +176,18 @@ class NifExport(NifCommon):
                                 b_armature_modifier = b_mod.name
                                 if b_mod.use_bone_envelopes:
                                     raise nif_utils.NifError(
-                                            "'%s': Cannot export envelope skinning."
-                                            " If you have vertex groups,"
-                                            " turn off envelopes. If you don't have vertex"
-                                            " groups, select the bones one by one press W"
-                                            " to convert their envelopes to vertex weights,"
-                                            " and turn off envelopes."
-                                            % b_obj.name)
+                                        "'%s': Cannot export envelope"
+                                        "skinning."
+                                        " If you have vertex groups,"
+                                        " turn off envelopes."
+                                        " If you don't have vertex"
+                                        " groups, select the bones"
+                                        " one by one press W"
+                                        " to convert their envelopes to"
+                                        " vertex weights,"
+                                        " and turn off envelopes."
+                                        % b_obj.name
+                                        )
                         if not b_armature_modifier:
                             raise nif_utils.NifError(
                                     "'%s': is parented but does not have"
@@ -184,9 +200,8 @@ class NifExport(NifCommon):
                 # to have non-uniform scaling)
                 if b_obj.type != 'LATTICE':
                     scale = b_obj.matrix_local.to_scale()
-                    if (abs(scale.x - scale.y) > self.properties.epsilon
-                        or abs(scale.y - scale.z) > self.properties.epsilon):
-
+                    if (abs(scale.x - scale.y) > self.properties.epsilon or
+                            abs(scale.y - scale.z) > self.properties.epsilon):
                         raise nif_utils.NifError(
                             "Non-uniform scaling not supported."
                             " Workaround: apply size and rotation (CTRL-A)"
@@ -201,13 +216,19 @@ class NifExport(NifCommon):
                     " and run this script again.")
             root_objects = set()
             export_types = ('EMPTY', 'MESH', 'ARMATURE')
-            for root_object in [b_obj for b_obj in self.context.selected_objects
+            for root_object in [b_obj for b_obj in
+                                self.context.selected_objects
                                 if b_obj.type in export_types]:
                 while root_object.parent:
                     root_object = root_object.parent
-                if (self.properties.game
-                    in ('CIVILIZATION_IV', 'OBLIVION', 'FALLOUT_3')):
-                    if (root_object.type == 'ARMATURE') or (root_object.name.lower() == "bip01"):
+                if (self.properties.game in (
+                                             'CIVILIZATION_IV',
+                                             'OBLIVION',
+                                             'FALLOUT_3'
+                                             )):
+
+                    if (root_object.type == 'ARMATURE') or (
+                            root_object.name.lower() == "bip01"):
                         root_name = 'Scene Root'
                 if root_object.type not in export_types:
                     raise nif_utils.NifError(
@@ -224,29 +245,38 @@ class NifExport(NifCommon):
                     if gname_trans == self.properties.game:
                         if nif_ver_hex not in NifFormat.games[gname]:
                             raise nif_utils.NifError(
-                            " '%s': version does not match selected export settings"
-                            % b_obj.name)
+                                " '%s': version does not match selected"
+                                " export settings"
+                                % b_obj.name
+                                )
                         break
                 for r_obj_c in r_obj.children:
-                    if (r_obj_c.niftools.nif_version != r_obj.niftools.nif_version) or \
-                        (r_obj_c.niftools.user_version != r_obj.niftools.user_version) or \
-                            (r_obj_c.niftools.user_version_2 != r_obj.niftools.user_version_2):
+                    if (r_obj_c.niftools.nif_version !=
+                        r_obj.niftools.nif_version) or \
+                        (r_obj_c.niftools.user_version !=
+                         r_obj.niftools.user_version) or \
+                            (r_obj_c.niftools.user_version_2 !=
+                             r_obj.niftools.user_version_2):
                         raise nif_utils.NifError(
-                            " '%s': has mismatched nif version, user version or user version 2"
-                            % r_obj_c.name)
+                            " '%s': has mismatched nif version,"
+                            " user version or user version 2"
+                            % r_obj_c.name
+                            )
             # smoothen seams of objects
             if self.properties.smooth_object_seams:
-                self.objecthelper.mesh_helper.smooth_mesh_seams(self.context.scene.objects)
-                
-                
+                self.objecthelper.mesh_helper.smooth_mesh_seams(
+                        self.context.scene.objects)
+
             # TODO: use Blender actions for animation groups
             # check for animation groups definition in a text buffer 'Anim'
             try:
-                animtxt = None #Changed for testing needs fix bpy.data.texts["Anim"]
+                # Changed for testing needs fix bpy.data.texts["Anim"]
+                animtxt = None
             except NameError:
                 animtxt = None
 
-            # rebuild the bone extra matrix dictionary from the 'BoneExMat' text buffer
+            # rebuild the bone extra matrix dictionary
+            # from the 'BoneExMat' text buffer
             self.armaturehelper.rebuild_bones_extra_matrices()
 
             # rebuild the full name dictionary from the 'FullNames' text buffer
@@ -258,8 +288,8 @@ class NifExport(NifCommon):
 
             # create a nif object
 
-            # export the root node (the name is fixed later to avoid confusing the
-            # exporter with duplicate names)
+            # export the root node (the name is fixed later to avoid confusing
+            # the exporter with duplicate names)
             root_block = self.objecthelper.export_node(None, 'none', None, '')
 
             # export objects
@@ -274,21 +304,31 @@ class NifExport(NifCommon):
                                     " only one item may contain this data")
                         else:
                             n_extra_list = NifFormat.BSInvMarker()
-                            n_extra_list.name = root_object.niftools_bs_invmarker[0].name.encode()
-                            n_extra_list.rotation_x = root_object.niftools_bs_invmarker[0].bs_inv_x
-                            n_extra_list.rotation_y = root_object.niftools_bs_invmarker[0].bs_inv_y
-                            n_extra_list.rotation_z = root_object.niftools_bs_invmarker[0].bs_inv_z
-                            n_extra_list.zoom = root_object.niftools_bs_invmarker[0].bs_inv_zoom
-                             
+                            n_extra_list.name = \
+                                root_object.niftools_bs_invmarker[0].\
+                                name.encode()
+                            n_extra_list.rotation_x = \
+                                root_object.niftools_bs_invmarker[0].bs_inv_x
+                            n_extra_list.rotation_y = \
+                                root_object.niftools_bs_invmarker[0].bs_inv_y
+                            n_extra_list.rotation_z = \
+                                root_object.niftools_bs_invmarker[0].bs_inv_z
+                            n_extra_list.zoom = \
+                                root_object.niftools_bs_invmarker[0].\
+                                bs_inv_zoom
+
                             root_block.add_extra_data(n_extra_list)
-                    
-                    
+
                 # export the root objects as a NiNodes; their children are
                 # exported as well
                 # note that localspace = worldspace, because root objects have
                 # no parents
-                self.objecthelper.export_node(root_object, 'localspace',
-                                 root_block, root_object.name)
+                self.objecthelper.export_node(
+                                              root_object,
+                                              'localspace',
+                                              root_block,
+                                              root_object.name
+                                              )
 
             # post-processing:
             # ----------------
@@ -308,8 +348,14 @@ class NifExport(NifCommon):
                     self.info("Defining default animation group.")
                     # write the animation group text buffer
                     animtxt = bpy.data.texts.new("Anim")
-                    animtxt.write("%i/Idle: Start/Idle: Loop Start\n%i/Idle: Loop Stop/Idle: Stop" %
-                                  (self.context.scene.frame_start, self.context.scene.frame_end))
+                    animtxt.write(
+                        "%i/Idle: Start/Idle: Loop Start\n%i/Idle:"
+                        " Loop Stop/Idle: Stop"
+                        % (
+                           self.context.scene.frame_start,
+                           self.context.scene.frame_end
+                           )
+                                  )
 
             # animations without keyframe animations crash the TESCS
             # if we are in that situation, add a trivial keyframe animation
@@ -320,13 +366,17 @@ class NifExport(NifCommon):
                     if isinstance(block, NifFormat.NiKeyframeController):
                         has_keyframecontrollers = True
                         break
-                if ((not has_keyframecontrollers)
-                    and (not self.properties.bs_animation_node)):
+                if ((not has_keyframecontrollers) and
+                        (not self.properties.bs_animation_node)):
                     self.info("Defining dummy keyframe controller")
                     # add a trivial keyframe controller on the scene root
-                    self.animationhelper.export_keyframes(None, 'localspace', root_block)
-            if (self.properties.bs_animation_node
-                and self.properties.game == 'MORROWIND'):
+                    self.animationhelper.export_keyframes(
+                                                          None,
+                                                          'localspace',
+                                                          root_block
+                                                          )
+            if (self.properties.bs_animation_node and
+                    self.properties.game == 'MORROWIND'):
                 for block in self.dict_blocks:
                     if isinstance(block, NifFormat.NiNode):
                         # if any of the shape children has a controller
@@ -335,7 +385,7 @@ class NifExport(NifCommon):
                         if block.controller or any(
                             child.controller
                             for child in block.children
-                            if isinstance(child, NifFormat.NiGeometry)):
+                                if isinstance(child, NifFormat.NiGeometry)):
                             new_block = NifFormat.NiBSAnimationNode().deepcopy(
                                 block)
                             # have to change flags to 42 to make it work
@@ -346,18 +396,28 @@ class NifExport(NifCommon):
 
             # oblivion skeleton export: check that all bones have a
             # transform controller and transform interpolator
-            if self.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') \
-                and filebase.lower() in ('skeleton', 'skeletonbeast'):
+            if self.properties.game in (
+                                        'OBLIVION',
+                                        'FALLOUT_3',
+                                        'SKYRIM') and \
+                    filebase.lower() in (
+                                         'skeleton',
+                                         'skeletonbeast'
+                                         ):
                 # here comes everything that is Oblivion skeleton export
                 # specific
                 self.info(
                     "Adding controllers and interpolators for skeleton")
                 for block in list(self.dict_blocks.keys()):
-                    if isinstance(block, NifFormat.NiNode) \
-                        and block.name.decode() == "Bip01":
-                        for bone in block.tree(block_type = NifFormat.NiNode):
-                            ctrl = self.objecthelper.create_block("NiTransformController")
-                            interp = self.objecthelper.create_block("NiTransformInterpolator")
+                    if isinstance(block, NifFormat.NiNode) and \
+                            block.name.decode() == "Bip01":
+                        for bone in block.tree(block_type=NifFormat.NiNode):
+                            ctrl = self.objecthelper.create_block(
+                                        "NiTransformController"
+                                        )
+                            interp = self.objecthelper.create_block(
+                                        "NiTransformInterpolator"
+                                        )
 
                             ctrl.interpolator = interp
                             bone.add_controller(ctrl)
@@ -382,13 +442,19 @@ class NifExport(NifCommon):
                 # export animation groups (not for skeleton.nif export!)
                 if animtxt:
                     # TODO: removed temorarily to process bseffectshader export
-                    anim_textextra = None #self.animationhelper.export_anim_groups(animtxt, root_block)
+                    # self.animationhelper.export_anim_groups(
+                    #        animtxt, root_block)
+                    anim_textextra = None
                 else:
                     anim_textextra = None
 
             # oblivion and Fallout 3 furniture markers
-            if (self.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM')
-                and filebase[:15].lower() == 'furnituremarker'):
+            if (self.properties.game in (
+                                         'OBLIVION',
+                                         'FALLOUT_3',
+                                         'SKYRIM'
+                                         ) and
+                    filebase[:15].lower() == 'furnituremarker'):
                 # exporting a furniture marker for Oblivion/FO3
                 try:
                     furniturenumber = int(filebase[15:])
@@ -411,8 +477,10 @@ class NifExport(NifCommon):
 
                 # create extra string data sgoKeep
                 sgokeep = self.objecthelper.create_block("NiStringExtraData")
-                sgokeep.name = "UPB" # user property buffer
-                sgokeep.string_data = "sgoKeep=1 ExportSel = Yes" # Unyielding = 0, sgoKeep=1ExportSel = Yes
+                # user property buffer
+                sgokeep.name = "UPB"
+                # Unyielding = 0, sgoKeep=1ExportSel = Yes
+                sgokeep.string_data = "sgoKeep=1 ExportSel = Yes"
 
                 # add extra blocks
                 root_block.add_extra_data(furnmark)
@@ -421,10 +489,14 @@ class NifExport(NifCommon):
             # FIXME:
             self.info("Checking collision")
             # activate oblivion/Fallout 3 collision and physics
-            if self.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+            if self.properties.game in (
+                                        'OBLIVION',
+                                        'FALLOUT_3',
+                                        'SKYRIM'
+                                        ):
                 hascollision = False
                 for b_obj in bpy.data.objects:
-                    if b_obj.game.use_collision_bounds == True:
+                    if b_obj.game.use_collision_bounds is True:
                         hascollision = True
                         break
                 if hascollision:
@@ -437,10 +509,22 @@ class NifExport(NifCommon):
                     # many Oblivion nifs have a UPB, but export is disabled as
                     # they do not seem to affect anything in the game
                     if b_obj.niftools.upb:
-                        upb = self.objecthelper.create_block("NiStringExtraData")
+                        upb = self.objecthelper.create_block(
+                                    "NiStringExtraData")
                         upb.name = 'UPB'
                         if(b_obj.niftools.upb == ''):
-                            upb.string_data = 'Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n'
+                            upb.string_data = (
+                                'Mass = 0.000000\r\nEllasticity =' +
+                                ' 0.300000\r\nFriction =' +
+                                ' 0.300000\r\nUnyielding =' +
+                                ' 0\r\nSimulation_Geometry =' +
+                                ' 2\r\nProxy_Geometry =' +
+                                ' <None>\r\nUse_Display_Proxy =' +
+                                ' 0\r\nDisplay_Children =' +
+                                ' 1\r\nDisable_Collisions =' +
+                                ' 0\r\nInactive =' +
+                                ' 0\r\nDisplay_Proxy =' +
+                                ' <None>\r\n')
                         else:
                             upb.string_data = b_obj.niftools.upb.encode()
                         root_block.add_extra_data(upb)
@@ -454,7 +538,8 @@ class NifExport(NifCommon):
                     for block in self.dict_blocks:
                         if isinstance(block, NifFormat.bhkRigidBody):
                             block.update_mass_center_inertia(
-                                solid = self.EXPORT_OB_SOLID)
+                                solid=self.EXPORT_OB_SOLID
+                                )
                             total_mass += block.mass
                     if total_mass == 0:
                         # to avoid zero division error later
@@ -465,13 +550,17 @@ class NifExport(NifCommon):
                     # self.EXPORT_OB_MASS
                     for block in self.dict_blocks:
                         if isinstance(block, NifFormat.bhkRigidBody):
-                            mass = self.EXPORT_OB_MASS * block.mass / total_mass
+                            mass = (
+                                    self.EXPORT_OB_MASS *
+                                    block.mass / total_mass
+                                    )
                             # lower bound on mass
                             if mass < 0.0001:
                                 mass = 0.05
                             block.update_mass_center_inertia(
-                                mass = mass,
-                                solid = self.EXPORT_OB_SOLID)
+                                mass=mass,
+                                solid=self.EXPORT_OB_SOLID
+                                )
                 else:
                     # using blender properties, so block.mass *should* have
                     # been set properly
@@ -487,12 +576,15 @@ class NifExport(NifCommon):
             # bhkConvexVerticesShape of children of bhkListShapes
             # need an extra bhkConvexTransformShape
             # (see issue #3308638, reported by Koniption)
-            # note: self.dict_blocks changes during iteration, so need list copy
+            # note: self.dict_blocks changes during iteration,
+            # so need list copy
             for block in list(self.dict_blocks):
                 if isinstance(block, NifFormat.bhkListShape):
                     for i, sub_shape in enumerate(block.sub_shapes):
-                        if isinstance(sub_shape, NifFormat.bhkConvexVerticesShape):
-                            coltf = self.objecthelper.create_block("bhkConvexTransformShape")
+                        if isinstance(sub_shape,
+                                      NifFormat.bhkConvexVerticesShape):
+                            coltf = self.objecthelper.create_block(
+                                            "bhkConvexTransformShape")
                             coltf.material = sub_shape.material
                             coltf.unknown_float_1 = 0.1
                             coltf.unknown_8_bytes[0] = 96
@@ -528,12 +620,19 @@ class NifExport(NifCommon):
                     root_block.add_extra_data(prn)
 
             # add vertex color and zbuffer properties for civ4 and railroads
-            if self.properties.game in ('CIVILIZATION_IV', 'SID_MEIER_S_RAILROADS'):
-                self.propertyhelper.object_property.export_vertex_color_property(root_block)
-                self.propertyhelper.object_property.export_z_buffer_property(root_block)
+            if self.properties.game in (
+                                        'CIVILIZATION_IV',
+                                        'SID_MEIER_S_RAILROADS'
+                                        ):
+                self.propertyhelper.object_property.\
+                    export_vertex_color_property(root_block)
+                self.propertyhelper.object_property.\
+                    export_z_buffer_property(root_block)
             elif self.properties.game in ('EMPIRE_EARTH_II',):
-                self.propertyhelper.object_property.export_vertex_color_property(root_block)
-                self.propertyhelper.object_property.export_z_buffer_property(root_block, flags=15, function=1)
+                self.propertyhelper.object_property.\
+                    export_vertex_color_property(root_block)
+                self.propertyhelper.object_property.\
+                    export_z_buffer_property(root_block, flags=15, function=1)
 
             # FIXME:
             """
@@ -544,7 +643,8 @@ class NifExport(NifCommon):
                 skelroots = set()
                 affectedbones = []
                 for block in self.dict_blocks:
-                    if isinstance(block, NifFormat.NiGeometry) and block.is_skin():
+                    if isinstance(block, NifFormat.NiGeometry) and \
+                            block.is_skin():
                         self.info("Flattening skin on geometry %s"
                                          % block.name)
                         affectedbones.extend(block.flatten_skin())
@@ -564,17 +664,22 @@ class NifExport(NifCommon):
             """
 
             # apply scale
-            if abs(self.properties.scale_correction_export) > self.properties.epsilon:
-                self.info("Applying scale correction %f"
-                                 % self.properties.scale_correction_export)
+            if abs(self.properties.scale_correction_export) > \
+                    self.properties.epsilon:
+                self.info(
+                          "Applying scale correction %f"
+                          % self.properties.scale_correction_export)
                 data = NifFormat.Data()
                 data.roots = [root_block]
                 toaster = pyffi.spells.nif.NifToaster()
                 toaster.scale = self.properties.scale_correction_export
-                pyffi.spells.nif.fix.SpellScale(data=data, toaster=toaster).recurse()
+                pyffi.spells.nif.fix.SpellScale(
+                                                data=data,
+                                                toaster=toaster).recurse()
                 # also scale egm
                 if self.egmdata:
-                    self.egmdata.apply_scale(self.properties.scale_correction_export)
+                    self.egmdata.apply_scale(
+                            self.properties.scale_correction_export)
 
             # generate mopps (must be done after applying scale!)
             if self.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
@@ -582,20 +687,24 @@ class NifExport(NifCommon):
                     if isinstance(block, NifFormat.bhkMoppBvTreeShape):
                         self.info("Generating mopp...")
                         block.update_mopp()
-                        #print "=== DEBUG: MOPP TREE ==="
-                        #block.parse_mopp(verbose = True)
-                        #print "=== END OF MOPP TREE ==="
+                        # print "=== DEBUG: MOPP TREE ==="
+                        # block.parse_mopp(verbose = True)
+                        # print "=== END OF MOPP TREE ==="
                         # warn about mopps on non-static objects
-                        if any(sub_shape.layer != 1
-                            for sub_shape in block.shape.sub_shapes):
-                                self.warning(
-                               "Mopps for non-static objects may not function"
-                               " correctly in-game. You may wish to use"
-                               " simple primitives for collision.")
+                        if any(sub_shape.layer != 1 for
+                                sub_shape in block.shape.sub_shapes):
+                            self.warning(
+                                "Mopps for non-static objects may not function"
+                                " correctly in-game. You may wish to use"
+                                " simple primitives for collision."
+                                )
 
-            # delete original scene root if a scene root object was already defined
-            if ((root_block.num_children == 1)
-                and ((root_block.children[0].name in ['Scene Root', 'Bip01']) or root_block.children[0].name[-3:] == 'nif')):
+            # delete original scene root if a scene root object
+            # was already defined
+            if ((root_block.num_children == 1) and
+                    ((root_block.children[0].name in
+                      ['Scene Root', 'Bip01']) or
+                     root_block.children[0].name[-3:] == 'nif')):
                 if root_block.children[0].name[-3:] == 'nif':
                     root_block.children[0].name = filebase
                 self.info(
@@ -619,18 +728,21 @@ class NifExport(NifCommon):
                     root_block.add_effect(b)
             else:
                 root_block.name = root_name
-                
+
             self.root_ninode = None
             for root_obj in root_objects:
                 if root_obj.niftools.rootnode == 'BSFadeNode':
                     self.root_ninode = 'BSFadeNode'
-                elif self.root_ninode == None:
+                elif self.root_ninode is None:
                     self.root_ninode = 'NiNode'
             # making root block a fade node
-            if (self.properties.game in ('FALLOUT_3', 'SKYRIM') and self.root_ninode == 'BSFadeNode'):
+            if (self.properties.game in ('FALLOUT_3', 'SKYRIM') and
+                    self.root_ninode == 'BSFadeNode'):
                 self.info("Making root block a BSFadeNode")
                 fade_root_block = NifFormat.BSFadeNode().deepcopy(root_block)
-                fade_root_block.replace_global_node(root_block, fade_root_block)
+                fade_root_block.replace_global_node(
+                    root_block,
+                    fade_root_block)
                 root_block = fade_root_block
 
             # set user version and user version 2 for export
@@ -646,7 +758,7 @@ class NifExport(NifCommon):
                     NIF_USER_VERSION = 131072
                 else:
                     NIF_USER_VERSION = 0
-                    
+
             if root_obj.niftools.user_version_2 == 0:
                 if self.properties.game == 'OBLIVION':
                     NIF_USER_VERSION_2 = 11
@@ -688,7 +800,8 @@ class NifExport(NifCommon):
             # ----------------------------------------------
 
             # convert root_block tree into a keyframe tree
-            if self.properties.animation == 'ANIM_KF' or self.properties.animation == 'ALL_NIF_XNIF_XKF':
+            if self.properties.animation == 'ANIM_KF' or \
+                    self.properties.animation == 'ALL_NIF_XNIF_XKF':
                 self.info("Creating keyframe tree")
                 # find all nodes and relevant controllers
                 node_kfctrls = {}
@@ -700,16 +813,20 @@ class NifExport(NifCommon):
                     for ctrl in ctrls:
                         if self.properties.game == 'MORROWIND':
                             # morrowind: only keyframe controllers
-                            if not isinstance(ctrl, 
-                                              NifFormat.NiKeyframeController):
+                            if not isinstance(
+                                              ctrl,
+                                              NifFormat.NiKeyframeController
+                                              ):
                                 continue
-                        if not node in node_kfctrls:
+                        if node not in node_kfctrls:
                             node_kfctrls[node] = []
                         node_kfctrls[node].append(ctrl)
                 # morrowind
                 if self.properties.game in ('MORROWIND', 'FREEDOM_FORCE'):
                     # create kf root header
-                    kf_root = self.objecthelper.create_block("NiSequenceStreamHelper")
+                    kf_root = self.objecthelper.create_block(
+                                    "NiSequenceStreamHelper"
+                                    )
                     kf_root.add_extra_data(anim_textextra)
                     # reparent controller tree
                     for node, ctrls in node_kfctrls.items():
@@ -729,11 +846,16 @@ class NifExport(NifCommon):
                             # wipe controller target
                             ctrl.target = None
                 # oblivion
-                elif self.properties.game in ('OBLIVION', 'FALLOUT_3',
-                                             'CIVILIZATION_IV', 'ZOO_TYCOON_2',
-                                             'FREEDOM_FORCE_VS_THE_3RD_REICH'):
+                elif self.properties.game in (
+                                              'OBLIVION',
+                                              'FALLOUT_3',
+                                              'CIVILIZATION_IV',
+                                              'ZOO_TYCOON_2',
+                                              'FREEDOM_FORCE_VS_THE_3RD_REICH'
+                                              ):
                     # create kf root header
-                    kf_root = self.objecthelper.create_block("NiControllerSequence")
+                    kf_root = self.objecthelper.create_block(
+                                    "NiControllerSequence")
                     if self.EXPORT_ANIMSEQUENCENAME:
                         kf_root.name = self.EXPORT_ANIMSEQUENCENAME
                     else:
@@ -743,15 +865,20 @@ class NifExport(NifCommon):
                     kf_root.text_keys = anim_textextra
                     kf_root.cycle_type = NifFormat.CycleType.CYCLE_CLAMP
                     kf_root.frequency = 1.0
-                    kf_root.start_time =(self.context.scene.frame_start - 1) * self.context.scene.render.fps
-                    kf_root.stop_time = (self.context.scene.frame_end - self.context.scene.frame_start) * self.context.scene.render.fps
+                    kf_root.start_time = (
+                        self.context.scene.frame_start - 1) * \
+                        self.context.scene.render.fps
+                    kf_root.stop_time = (
+                        self.context.scene.frame_end -
+                        self.context.scene.frame_start) * \
+                        self.context.scene.render.fps
                     # quick hack to set correct target name
                     if not self.EXPORT_ANIMTARGETNAME:
                         if "Bip01" in [node.name for
                                        node in node_kfctrls.iterkeys()]:
                             targetname = "Bip01"
                         elif "Bip02" in [node.name for
-                                        node in node_kfctrls.iterkeys()]:
+                                         node in node_kfctrls.iterkeys()]:
                             targetname = "Bip02"
                         else:
                             targetname = root_block.name
@@ -760,8 +887,10 @@ class NifExport(NifCommon):
                     kf_root.target_name = targetname
                     kf_root.string_palette = NifFormat.NiStringPalette()
                     for node, ctrls \
-                        in zip(iter(node_kfctrls.keys()),
-                                iter(node_kfctrls.values())):
+                        in zip(
+                               iter(node_kfctrls.keys()),
+                               iter(node_kfctrls.values())
+                               ):
                         # export a block for every interpolator in every
                         # controller
                         for ctrl in ctrls:
@@ -778,13 +907,15 @@ class NifExport(NifCommon):
                                 variable_2s = [morph.frame_name
                                                for morph in ctrl.data.morphs]
                             else:
-                                variable_2s = [None
-                                               for interpolator in interpolators]
+                                variable_2s = [None for
+                                               interpolator in
+                                               interpolators]
                             for interpolator, variable_2 in zip(interpolators,
                                                                 variable_2s):
                                 # create ControlledLink for each
                                 # interpolator
-                                controlledblock = kf_root.add_controlled_block()
+                                controlledblock = \
+                                    kf_root.add_controlled_block()
                                 if self.version < 0x0A020000:
                                     # older versions need the actual controller
                                     # blocks
@@ -799,36 +930,44 @@ class NifExport(NifCommon):
                                 # get bone animation priority (previously
                                 # fetched from the constraints during
                                 # export_bones)
-                                if not node.name in self.dict_bone_priorities or self.EXPORT_ANIM_DO_NOT_USE_BLENDER_PROPERTIES:
+                                if node.name not in self.dict_bone_priorities or \
+                                        self.EXPORT_ANIM_NON_BLENDER_PROPS:
                                     if self.EXPORT_ANIMPRIORITY != 0:
                                         priority = self.EXPORT_ANIMPRIORITY
                                     else:
                                         priority = 26
                                         self.warning(
                                             "No priority set for bone %s, "
-                                            "falling back on default value (%i)"
-                                            % (node.name, priority))
+                                            "falling back on default"
+                                            "value (%i)"
+                                            % (node.name, priority)
+                                            )
                                 else:
-                                    priority = self.dict_bone_priorities[node.name]
+                                    priority = self.dict_bone_priorities[
+                                                    node.name]
                                 controlledblock.priority = priority
                                 # set palette, and node and controller type
                                 # names, and variables
-                                controlledblock.string_palette = kf_root.string_palette
+                                controlledblock.string_palette = \
+                                    kf_root.string_palette
                                 controlledblock.set_node_name(node.name)
-                                controlledblock.set_controller_type(ctrl.__class__.__name__)
+                                controlledblock.set_controller_type(
+                                    ctrl.__class__.__name__)
                                 if variable_2:
                                     controlledblock.set_variable_2(variable_2)
                 else:
                     raise nif_utils.NifError(
                         "Keyframe export for '%s' is not supported. "
-                        " Only Morrowind, Oblivion, Fallout 3, Civilization IV,"
+                        " Only Morrowind, Oblivion, Fallout 3,"
+                        " Civilization IV,"
                         " Zoo Tycoon 2, Freedom Force, and"
                         " Freedom Force vs. the 3rd Reich"
                         " keyframes are supported."
                         % self.properties.game)
 
                 # write kf (and xnif if asked)
-                prefix = "" if (self.properties.animation != 'ALL_NIF_XNIF_XKF') else "x"
+                prefix = "" if (
+                    self.properties.animation != 'ALL_NIF_XNIF_XKF') else "x"
 
                 ext = ".kf"
                 self.info("Writing %s file" % (prefix + ext))
@@ -853,13 +992,19 @@ class NifExport(NifCommon):
                         continue
                     # remove references to keyframe controllers from node
                     # (for xnif)
-                    while isinstance(node.controller, NifFormat.NiKeyframeController):
+                    while isinstance(
+                                     node.controller,
+                                     NifFormat.NiKeyframeController
+                                     ):
                         node.controller = node.controller.next_controller
                     ctrl = node.controller
                     while ctrl:
-                        if isinstance(ctrl.next_controller,
-                                      NifFormat.NiKeyframeController):
-                            ctrl.next_controller = ctrl.next_controller.next_controller
+                        if isinstance(
+                                      ctrl.next_controller,
+                                      NifFormat.NiKeyframeController
+                                      ):
+                            ctrl.next_controller = \
+                                ctrl.next_controller.next_controller
                         else:
                             ctrl = ctrl.next_controller
 
@@ -871,7 +1016,7 @@ class NifExport(NifCommon):
                         " wasn't where expected...")
                 root_block.extra_data = None
 
-                prefix = "x" # we are in morrowind 'nifxnifkf mode'
+                prefix = "x"  # we are in morrowind 'nifxnifkf mode'
                 ext = ".nif"
                 self.info("Writing %s file" % (prefix + ext))
 
@@ -888,7 +1033,7 @@ class NifExport(NifCommon):
                     stream.close()
 
             # export egm file:
-            #-----------------
+            # -----------------
 
             if self.egmdata:
                 ext = ".egm"
@@ -908,7 +1053,6 @@ class NifExport(NifCommon):
         self.root_blocks = [root_block]
 
         return {'FINISHED'}
-
 
     def export_matrix(self, b_obj, space, block):
         """Set a block's transform matrix to an object's
@@ -935,7 +1079,6 @@ class NifExport(NifCommon):
         block.scale = n_scale
 
         return n_scale, n_rot_mat33, n_trans_vec
-
 
     def get_object_matrix(self, b_obj, space):
         """Get an object's matrix as NifFormat.Matrix44
@@ -967,8 +1110,7 @@ class NifExport(NifCommon):
 
         return matrix
 
-
-    def get_object_srt(self, b_obj, space = 'localspace'):
+    def get_object_srt(self, b_obj, space='localspace'):
         """Find scale, rotation, and translation components of an object in
         the rest pose. Returns a triple (bs, br, bt), where bs
         is a scale float, br is a 3x3 rotation matrix, and bt is a
@@ -983,9 +1125,15 @@ class NifExport(NifCommon):
         # TODO: remove the space argument, always do local space
         # handle the trivial case first
         if (space == 'none'):
-            return ( 1.0,
-                     mathutils.Matrix([[1,0,0],[0,1,0],[0,0,1]]),
-                     mathutils.Vector([0, 0, 0]) )
+            return (
+                    1.0,
+                    mathutils.Matrix(
+                                     [[1, 0, 0],
+                                      [0, 1, 0],
+                                      [0, 0, 1]]
+                                     ),
+                    mathutils.Vector([0, 0, 0])
+                    )
 
         assert(space == 'localspace')
 
@@ -1022,7 +1170,10 @@ class NifExport(NifCommon):
                 # now multiply with the bone correction matrix X
                 try:
                     extra = mathutils.Matrix(
-                        self.armaturehelper.get_bone_extra_matrix_inv(bone_parent_name))
+                        self.armaturehelper.get_bone_extra_matrix_inv(
+                                bone_parent_name
+                                )
+                                             )
                     extra.invert()
                     matrix = matrix * extra
                 except KeyError:
@@ -1030,17 +1181,19 @@ class NifExport(NifCommon):
                     pass
         else:
             # bones, get the rest matrix
-            matrix = self.armaturehelper.get_bone_rest_matrix(b_obj, 'BONESPACE')
+            matrix = self.armaturehelper.get_bone_rest_matrix(
+                                                              b_obj,
+                                                              'BONESPACE'
+                                                              )
 
         try:
             return nif_utils.decompose_srt(matrix)
-        except nif_utils.NifError: # non-uniform scaling
+        except nif_utils.NifError:  # non-uniform scaling
             self.debug(str(matrix))
             raise nif_utils.NifError(
                 "Non-uniform scaling on bone '%s' not supported."
-                " This could be a bug... No workaround. :-( Post your blend!"
+                " This could be a bug... No workaround. :-(Post your blend!"
                 % b_obj.name)
-
 
     def export_collision(self, b_obj, parent_block):
         """Main function for adding collision object b_obj to a node."""
@@ -1051,29 +1204,33 @@ class NifExport(NifCommon):
                      " Triangle Mesh collisions.")
             node = self.objecthelper.create_block("RootCollisionNode", b_obj)
             parent_block.add_child(node)
-            node.flags = 0x0003 # default
+            node.flags = 0x0003  # default
             self.export_matrix(b_obj, 'localspace', node)
-            self.objecthelper.mesh_helper.export_tri_shapes(b_obj, 'none', node)
+            self.objecthelper.mesh_helper.export_tri_shapes(
+                                                            b_obj,
+                                                            'none',
+                                                            node
+                                                            )
 
         elif self.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
 
-            nodes = [ parent_block ]
-            nodes.extend([ block for block in parent_block.children
-                           if block.name[:14] == 'collisiondummy' ])
+            nodes = [parent_block]
+            nodes.extend([block for block in parent_block.children if
+                          block.name[:14] == 'collisiondummy'])
             for node in nodes:
                 try:
                     self.bhkshapehelper.export_collision_helper(b_obj, node)
                     break
-                except ValueError: # adding collision failed
+                except ValueError:  # adding collision failed
                     continue
-            else: # all nodes failed so add new one
+            else:  # all nodes failed so add new one
                 node = self.objecthelper.create_ninode(b_obj)
                 node.set_transform(self.IDENTITY44)
                 node.name = 'collisiondummy%i' % parent_block.num_children
                 if b_obj.niftools.objectflags != 0:
                     node_flag_hex = hex(b_obj.niftools.objectflags)
                 else:
-                    node_flag_hex = 0x000E # default
+                    node_flag_hex = 0x000E  # default
                 node.flags = node_flag_hex
                 parent_block.add_child(node)
                 self.bhkshapehelper.export_collision_helper(b_obj, node)
@@ -1083,8 +1240,7 @@ class NifExport(NifCommon):
                 "Only Morrowind, Oblivion, and Fallout 3"
                 " collisions are supported, skipped collision object '%s'"
                 % b_obj.name)
-            
-    
+
     def exportEgm(self, keyblocks):
         self.egmdata = EgmFormat.Data(num_vertices=len(keyblocks[0].data))
         for keyblock in keyblocks:
@@ -1105,7 +1261,7 @@ class NifExport(NifCommon):
 def menu_func(self, context):
     """Export operator for the menu."""
     # TODO: get default path from config registry
-    #default_path = bpy.data.filename.replace(".blend", ".nif")
+    # default_path = bpy.data.filename.replace(".blend", ".nif")
     default_path = "export.nif"
     self.layout.operator(
         NifExport.bl_idname,
@@ -1128,4 +1284,3 @@ def unregister():
 if __name__ == '__main__':
     """Register nif import, when starting Blender."""
     register()
-

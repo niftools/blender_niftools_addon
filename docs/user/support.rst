@@ -1,7 +1,7 @@
 Support
 -------
 
-.. todo::
+.. TODO::
 
    For now, this is just a quick stub. What else do we need here?
 

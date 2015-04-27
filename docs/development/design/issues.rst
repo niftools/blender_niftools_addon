@@ -147,7 +147,7 @@ Strings and Bytes
 Generally, we use :class:`str` everywhere, and convert :class:`bytes`
 to :class:`str` whenever interfacing directly with the nif data.
 
-.. todo::
+.. TODO::
 
    Add an encoding import/export option.
 
@@ -202,6 +202,11 @@ Blender API Mysteries
   We are using
   ``'CYLINDER'`` at the moment because ``'CAPSULE'`` is lacking
   visualisation.
+
+- Capsule is simply a cylinder with a sphere at each end. This lets the point
+    of rotation rest further inside of the object which works better for
+    collision object animation
+  
 
 * How do you get the set of all vertices in a :class:`bpy.types.VertexGroup`?
 

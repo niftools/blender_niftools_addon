@@ -1,27 +1,28 @@
-''' Nif User Interface, connect custom geometry properties from properties.py into Blenders UI'''
+''' Nif User Interface, connect custom geometry properties
+ from properties.py into Blenders UI'''
 
 # ***** BEGIN LICENSE BLOCK *****
-# 
+#
 # Copyright © 2005-2015, NIF File Format Library and Tools contributors.
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 #    * Redistributions of source code must retain the above copyright
 #      notice, this list of conditions and the following disclaimer.
-# 
+#
 #    * Redistributions in binary form must reproduce the above
 #      copyright notice, this list of conditions and the following
 #      disclaimer in the documentation and/or other materials provided
 #      with the distribution.
-# 
+#
 #    * Neither the name of the NIF File Format Library and Tools
 #      project nor the names of its contributors may be used to endorse
 #      or promote products derived from this software without specific
 #      prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -41,12 +42,13 @@ import bpy
 from bpy.types import Operator
 from io_scene_nif import properties
 
+
 class BsInvMarkerAdd(bpy.types.Operator):
     """Adds BsInvMarker set"""
     bl_idname = "object.niftools_bs_invmarker_add"
     bl_label = "Add Inventory Marker"
     bl_options = {'REGISTER', 'UNDO'}
-    
+
     def execute(self, context):
         obj = context.active_object
         b_obj_invmarker = obj.niftools_bs_invmarker.add()
@@ -56,6 +58,7 @@ class BsInvMarkerAdd(bpy.types.Operator):
         b_obj_invmarker.bs_inv_z = 0
         b_obj_invmarker.bs_inv_zoom = 1
         return {'FINISHED'}
+
 
 class BsInvMarkerRemove(bpy.types.Operator):
     """Removes BsInvMarker set"""
@@ -68,8 +71,8 @@ class BsInvMarkerRemove(bpy.types.Operator):
         obj = context.active_object
         obj.niftools_bs_invmarker.remove(item)
         return {'FINISHED'}
-    
-    
+
+
 class NfTlPartFlagRemove(bpy.types.Operator):
     """Removes Dismember partition Flag set"""
     bl_idname = "object.niftools_part_flags_remove"
@@ -80,6 +83,6 @@ class NfTlPartFlagRemove(bpy.types.Operator):
         item = len(context.active_object.niftools_part_flags)-1
         obj = context.active_object
         obj.niftools_part_flags.remove(item)
-        obj.niftools_part_flags_panel.pf_partcount = len(obj.niftools_part_flags)
+        obj.niftools_part_flags_panel.pf_partcount = \
+            len(obj.niftools_part_flags)
         return {'FINISHED'}
-

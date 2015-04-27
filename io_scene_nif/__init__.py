@@ -37,13 +37,25 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import sys
+import os
+
+import bpy
+import bpy.props
+
+import logging
+
+from io_scene_nif import properties, operators, ui
+
+
 #: Blender addon info.
 bl_info = {
     "name": "NetImmerse/Gamebryo nif format",
     "description":
     "Import and export files in the NetImmerse/Gamebryo nif format (.nif)",
     "author": "NifTools Team",
-    "version": (2, 6, 0), # can't read from VERSION, blender wants it hardcoded
+    "version": (2, 6, 0),  # can't read from VERSION,
+                           # blender wants it hard coded
     "blender": (2, 7, 2),
     "api": 39257,
     "location": "File > Import-Export",
@@ -56,29 +68,18 @@ bl_info = {
     "support": "COMMUNITY",
     "category": "Import-Export"}
 
-import io_scene_nif
-
 try:
     from io_scene_nif import nif_debug
     nif_debug.startdebug()
 except:
     print("Failed to load debug module")
 
-import sys
-import os
-
 # Python dependencies are bundled inside the io_scene_nif/modules folder
 _modules_path = os.path.join(os.path.dirname(__file__), "modules")
-if not _modules_path in sys.path:
+if modules_path not in sys.path:
     sys.path.append(_modules_path)
 del _modules_path
 
-from io_scene_nif import properties, operators, ui
-
-import bpy
-import bpy.props
-
-import logging
 
 def _init_loggers():
     """Set up loggers."""
@@ -96,12 +97,16 @@ def _init_loggers():
 
 def menu_func_import(self, context):
     self.layout.operator(
-        operators.nif_import_op.NifImportOperator.bl_idname, text="NetImmerse/Gamebryo (.nif)")
+        operators.nif_import_op.NifImportOperator.bl_idname,
+        text="NetImmerse/Gamebryo (.nif)"
+        )
 
 
 def menu_func_export(self, context):
     self.layout.operator(
-        operators.nif_export_op.NifExportOperator.bl_idname, text="NetImmerse/Gamebryo (.nif)")
+        operators.nif_export_op.NifExportOperator.bl_idname,
+        text="NetImmerse/Gamebryo (.nif)"
+        )
 
 
 def register():
@@ -113,13 +118,11 @@ def register():
 
 def unregister():
     # no idea how to do this... oh well, let's not lose any sleep over it
-    #_uninit_loggers()
+    # _uninit_loggers()
     bpy.types.INFO_MT_file_import.remove(menu_func_import)
     bpy.types.INFO_MT_file_export.remove(menu_func_export)
     bpy.utils.unregister_module(__name__)
-    
+
 
 if __name__ == "__main__":
     register()
-
-
