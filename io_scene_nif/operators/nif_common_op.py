@@ -1,27 +1,27 @@
 '''Blender operators, functions called through menus'''
 
 # ***** BEGIN LICENSE BLOCK *****
-# 
+#
 # Copyright © 2005-2013, NIF File Format Library and Tools contributors.
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 #    * Redistributions of source code must retain the above copyright
 #      notice, this list of conditions and the following disclaimer.
-# 
+#
 #    * Redistributions in binary form must reproduce the above
 #      copyright notice, this list of conditions and the following
 #      disclaimer in the documentation and/or other materials provided
 #      with the distribution.
-# 
+#
 #    * Neither the name of the NIF File Format Library and Tools
 #      project nor the names of its contributors may be used to endorse
 #      or promote products derived from this software without specific
 #      prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -39,6 +39,7 @@
 
 
 import bpy
+
 
 class NifOperatorCommon:
     """Abstract base class for import and export user interface."""
@@ -64,8 +65,7 @@ class NifOperatorCommon:
             ("ERROR", "Error",
              "Only show errors."),
             ("CRITICAL", "Critical",
-             "Only show extremely critical errors."),
-            ),
+             "Only show extremely critical errors.")),
         name="Log Level",
         description="Level of verbosity on the console.",
         default="WARNING")
@@ -73,9 +73,9 @@ class NifOperatorCommon:
     #: Name of file where Python profiler dumps the profile.
     profile_path = bpy.props.StringProperty(
         name="Profile Path",
-        description=
-        "Name of file where Python profiler dumps the profile."
-        " Set to empty string to turn off profiling.",
+        description=(
+            "Name of file where Python profiler dumps the profile."
+            " Set to empty string to turn off profiling."),
         maxlen=1024,
         default="",
         subtype="FILE_PATH",
@@ -90,7 +90,8 @@ class NifOperatorCommon:
 
     scale_correction_export = bpy.props.FloatProperty(
         name="Scale Correction Export",
-        description="Changes size of mesh from Blender default to nif default.",
+        description=(
+            "Changes size of mesh from Blender default to nif default."),
         default=1.0,
         min=0.01, max=100.0, precision=2)
 
@@ -101,5 +102,3 @@ class NifOperatorCommon:
         default=0.0005,
         min=0.0, max=1.0, precision=5,
         options={'HIDDEN'})
-
-
