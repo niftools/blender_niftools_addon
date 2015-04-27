@@ -40,15 +40,24 @@
 
 from pyffi.formats.nif import NifFormat
 
+
 class Material():
-    
+
     def __init__(self, parent):
         self.nif_export = parent
-        
-    def export_material_property(self, name, flags,
-                             ambient, diffuse,
-                             specular, emissive,
-                             gloss, alpha, emitmulti):
+
+    def export_material_property(
+                                 self,
+                                 name,
+                                 flags,
+                                 ambient,
+                                 diffuse,
+                                 specular,
+                                 emissive,
+                                 gloss,
+                                 alpha,
+                                 emitmulti
+                                 ):
         """Return existing material property with given settings, or create
         a new one if a material property with these settings is not found."""
 
@@ -63,13 +72,17 @@ class Material():
 
         # hack to preserve EnvMap2, skinm, ... named blocks (even if they got
         # renamed to EnvMap2.xxx or skin.xxx on import)
-        if self.nif_export.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
+        if self.nif_export.properties.game in ('OBLIVION',
+                                               'FALLOUT_3',
+                                               'SKYRIM'
+                                               ):
             for specialname in specialnames:
-                if (name.lower() == specialname.lower()
-                    or name.lower().startswith(specialname.lower() + ".")):
+                if (name.lower() == specialname.lower() or
+                        name.lower().startswith(specialname.lower() + ".")):
                     if name != specialname:
-                        self.nif_export.warning("Renaming material '%s' to '%s'"
-                                            % (name, specialname))
+                        self.nif_export.warning(
+                            "Renaming material '%s' to '%s'"
+                            % (name, specialname))
                     name = specialname
 
         # clear noname materials
@@ -82,15 +95,15 @@ class Material():
         matprop.ambient_color.r = ambient.r
         matprop.ambient_color.g = ambient.g
         matprop.ambient_color.b = ambient.b
-        
+
         matprop.diffuse_color.r = diffuse.r
         matprop.diffuse_color.g = diffuse.g
         matprop.diffuse_color.b = diffuse.b
-        
+
         matprop.specular_color.r = specular.r
         matprop.specular_color.g = specular.g
         matprop.specular_color.b = specular.b
-        
+
         matprop.emissive_color.r = emissive.r
         matprop.emissive_color.g = emissive.g
         matprop.emissive_color.b = emissive.b
@@ -114,7 +127,7 @@ class Material():
             # check hash
             first_index = 1 if ignore_strings else 0
             if (block.get_hash()[first_index:] ==
-                matprop.get_hash()[first_index:]):
+                    matprop.get_hash()[first_index:]):
                 self.nif_export.warning(
                     "Merging materials '%s' and '%s'"
                     " (they are identical in nif)"
