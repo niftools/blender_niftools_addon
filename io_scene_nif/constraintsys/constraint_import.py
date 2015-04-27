@@ -1,27 +1,27 @@
 '''Script to import/export constraints.'''
 
 # ***** BEGIN LICENSE BLOCK *****
-# 
+#
 # Copyright © 2005-2015, NIF File Format Library and Tools contributors.
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 #    * Redistributions of source code must retain the above copyright
 #      notice, this list of conditions and the following disclaimer.
-# 
+#
 #    * Redistributions in binary form must reproduce the above
 #      copyright notice, this list of conditions and the following
 #      disclaimer in the documentation and/or other materials provided
 #      with the distribution.
-# 
+#
 #    * Neither the name of the NIF File Format Library and Tools
 #      project nor the names of its contributors may be used to endorse
 #      or promote products derived from this software without specific
 #      prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -43,16 +43,17 @@ from pyffi.formats.nif import NifFormat
 import bpy
 import mathutils
 
+
 class constraint_import():
 
     def __init__(self, parent):
         self.nif_import = parent
         self.HAVOK_SCALE = parent.HAVOK_SCALE
-        
+
     def import_bhk_constraints(self):
         for hkbody in self.nif_import.dict_havok_objects:
             self.import_constraint(hkbody)
-        
+
     def import_constraint(self, hkbody):
         """Imports a bone havok constraint as Blender object constraint."""
         assert(isinstance(hkbody, NifFormat.bhkRigidBody))
@@ -83,7 +84,8 @@ class constraint_import():
                 self.warning(
                     "First constraint entity not self, skipped")
                 continue
-            if not hkconstraint.entities[1] in self.nif_import.dict_havok_objects:
+            if hkconstraint.entities[1] not in \
+                    self.nif_import.dict_havok_objects:
                 self.warning(
                     "Second constraint entity not imported, skipped")
                 continue
@@ -106,14 +108,16 @@ class constraint_import():
                     hkdescriptor = hkconstraint.limited_hinge
                     b_hkobj.rigid_body.enabled = False
                 else:
-                    self.nif_import.warning("Unknown malleable type (%i), skipped"
-                                        % hkconstraint.type)
+                    self.nif_import.warning(
+                        "Unknown malleable type (%i), skipped"
+                        % hkconstraint.type)
                 # extra malleable constraint settings
-                ### damping parameters not yet in Blender Python API
-                ### tau (force between bodies) not supported by Blender
+                # damping parameters not yet in Blender Python API
+                # tau (force between bodies) not supported by Blender
             else:
-                self.nif_import.warning("Unknown constraint type (%s), skipped"
-                                    % hkconstraint.__class__.__name__)
+                self.nif_import.warning(
+                    "Unknown constraint type (%s), skipped"
+                    % hkconstraint.__class__.__name__)
                 continue
 
             # add the constraint as a rigid body joint
@@ -183,7 +187,8 @@ class constraint_import():
                     hkdescriptor.plane_a.y,
                     hkdescriptor.plane_a.z))
                 # set the angle limits
-                # (see http://niftools.sourceforge.net/wiki/Oblivion/Bhk_Objects/Ragdoll_Constraint
+                # (see http://niftools.sourceforge.net/
+                # wiki/Oblivion/Bhk_Objects/Ragdoll_Constraint
                 # for a nice picture explaining this)
                 b_constr.limit_angle_min_x = \
                     hkdescriptor.plane_min_angle
@@ -199,10 +204,9 @@ class constraint_import():
                     hkdescriptor.twist_min_angle
                 b_constr.limit_angle_max_z = \
                     hkdescriptor.twist_max_angle
-                    
-                b_hkobj.niftools_constraint.LHMaxFriction = hkdescriptor.max_friction
-                    
-                
+
+                b_hkobj.niftools_constraint.LHMaxFriction = \
+                    hkdescriptor.max_friction
 
             elif isinstance(hkdescriptor, NifFormat.LimitedHingeDescriptor):
                 # for hinge, y is the vector on the plane of rotation defining
@@ -224,11 +228,11 @@ class constraint_import():
                     hkdescriptor.perp_2_axle_in_a_2.y,
                     hkdescriptor.perp_2_axle_in_a_2.z))
                 # they should form a orthogonal basis
-                if (mathutils.Vector.cross(axis_x, axis_y)
-                    - axis_z).length > 0.01:
+                if (mathutils.Vector.cross(axis_x, axis_y) -
+                        axis_z).length > 0.01:
                     # either not orthogonal, or negative orientation
-                    if (mathutils.Vector.cross(-axis_x, axis_y)
-                        - axis_z).length > 0.01:
+                    if (mathutils.Vector.cross(-axis_x, axis_y) -
+                            axis_z).length > 0.01:
                         self.nif_import.warning(
                             "Axes are not orthogonal in %s;"
                             " arbitrary orientation has been chosen"
@@ -244,12 +248,12 @@ class constraint_import():
                 # equivalent and setting as obj properties
                 b_constr.limit_angle_max_x = hkdescriptor.max_angle
                 b_constr.limit_angle_min_x = hkdescriptor.min_angle
-                b_hkobj.niftools_constraint.LHMaxFriction = hkdescriptor.max_friction
-                
+                b_hkobj.niftools_constraint.LHMaxFriction = \
+                    hkdescriptor.max_friction
+
                 if hasattr(hkconstraint, "tau"):
                     b_hkobj.niftools_constraint.tau = hkconstraint.tau
                     b_hkobj.niftools_constraint.damping = hkconstraint.damping
-                
 
             elif isinstance(hkdescriptor, NifFormat.HingeDescriptor):
                 # for hinge, y is the vector on the plane of rotation defining
@@ -267,7 +271,8 @@ class constraint_import():
                 # take x to be the the axis of rotation
                 # (this corresponds with Blender's convention for hinges)
                 axis_x = mathutils.Vector.cross(axis_y, axis_z)
-                b_hkobj.niftools_constraint.LHMaxFriction = hkdescriptor.max_friction
+                b_hkobj.niftools_constraint.LHMaxFriction = \
+                    hkdescriptor.max_friction
             else:
                 raise ValueError("unknown descriptor %s"
                                  % hkdescriptor.__class__.__name__)
@@ -314,7 +319,8 @@ class constraint_import():
                 axis_x = axis_x * transform
 
             # next, cancel out bone matrix correction
-            # note that B' = X * B with X = self.nif_import.dict_bones_extra_matrix[B]
+            # note that B' = X * B with X =
+            # self.nif_import.dict_bones_extra_matrix[B]
             # so multiply with the inverse of X
             for niBone in self.nif_import.dict_bones_extra_matrix:
                 if niBone.collision_object \
@@ -357,19 +363,25 @@ class constraint_import():
             b_constr.axis_y = constr_euler.y
             b_constr.axis_z = constr_euler.z
             # DEBUG
-            assert((axis_x - mathutils.Vector((1,0,0)) * constr_matrix).length < 0.0001)
-            assert((axis_z - mathutils.Vector((0,0,1)) * constr_matrix).length < 0.0001)
+            assert((axis_x - mathutils.Vector((1, 0, 0)) *
+                    constr_matrix).length < 0.0001)
+            assert((axis_z - mathutils.Vector((0, 0, 1)) *
+                    constr_matrix).length < 0.0001)
 
             # the generic rigid body type is very buggy... so for simulation
             # purposes let's transform it into ball and hinge
             if isinstance(hkdescriptor, NifFormat.RagdollDescriptor):
                 # cone_twist
                 b_constr.pivot_type = 'CONE_TWIST'
-            elif isinstance(hkdescriptor, (NifFormat.LimitedHingeDescriptor,
-                                         NifFormat.HingeDescriptor)):
+            elif isinstance(
+                            hkdescriptor,
+                            (
+                             NifFormat.LimitedHingeDescriptor,
+                             NifFormat.HingeDescriptor
+                             )
+                            ):
                 # (limited) hinge
                 b_constr.pivot_type = 'HINGE'
             else:
                 raise ValueError("unknown descriptor %s"
                                  % hkdescriptor.__class__.__name__)
-
