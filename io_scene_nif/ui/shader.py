@@ -1,27 +1,28 @@
-''' Nif User Interface, connect custom properties from properties.py into Blenders UI'''
+''' Nif User Interface, connect custom properties
+ from properties.py into Blenders UI'''
 
 # ***** BEGIN LICENSE BLOCK *****
-# 
+#
 # Copyright © 2005-2015, NIF File Format Library and Tools contributors.
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 #    * Redistributions of source code must retain the above copyright
 #      notice, this list of conditions and the following disclaimer.
-# 
+#
 #    * Redistributions in binary form must reproduce the above
 #      copyright notice, this list of conditions and the following
 #      disclaimer in the documentation and/or other materials provided
 #      with the distribution.
-# 
+#
 #    * Neither the name of the NIF File Format Library and Tools
 #      project nor the names of its contributors may be used to endorse
 #      or promote products derived from this software without specific
 #      prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -51,19 +52,24 @@ class ObjectShader(Panel):
     @classmethod
     def poll(cls, context):
         return True
-        
 
     def draw(self, context):
         nif_obj_props = context.object.niftools_shader
-        
+
         layout = self.layout
         row = layout.column()
-        
-        row.prop(nif_obj_props, "bs_shadertype")
-        
+
+        row.prop(
+                 nif_obj_props,
+                 "bs_shadertype"
+                 )
+
         if nif_obj_props.bs_shadertype == 'BSShaderPPLightingProperty':
-            row.prop(nif_obj_props, "bsspplp_shaderobjtype")
-                    
+            row.prop(
+                     nif_obj_props,
+                     "bsspplp_shaderobjtype"
+                     )
+
             row.prop(nif_obj_props, "sf_alpha_texture")
             row.prop(nif_obj_props, "sf_decal_single_pass")
             row.prop(nif_obj_props, "sf_dynamic_alpha")
@@ -97,7 +103,10 @@ class ObjectShader(Panel):
             row.prop(nif_obj_props, "sf_window_environment_mapping")
             row.prop(nif_obj_props, "sf_z_buffer_test")
 
-        if nif_obj_props.bs_shadertype in ('BSLightingShaderProperty', 'BSEffectShaderProperty'):
+        if nif_obj_props.bs_shadertype in (
+                        'BSLightingShaderProperty',
+                        'BSEffectShaderProperty'
+                        ):
             row.prop(nif_obj_props, "bslsp_shaderobjtype")
 
             row.prop(nif_obj_props, "slsf_1_cast_shadows")
@@ -169,6 +178,6 @@ class ObjectShader(Panel):
 def register():
     bpy.utils.register_class(ObjectShader)
 
+
 def unregister():
     bpy.utils.unregister_class(ObjectShader)
-
