@@ -259,7 +259,7 @@ class bhkshape_import():
         b_mesh.update()
         b_obj.select = True
 
-        return [ b_obj ]
+        return [b_obj]
 
 
     def import_bhksphere_shape(self, bhkshape):
@@ -308,7 +308,7 @@ class bhkshape_import():
         b_mesh.update()
         b_obj.select = True
 
-        return [ b_obj ]
+        return [b_obj]
 
 
     def import_bhkcapsule_shape(self, bhkshape):
@@ -389,7 +389,7 @@ class bhkshape_import():
         b_obj.select = True
 
         # return object
-        return [ b_obj ]
+        return [b_obj]
 
 
     def import_bhkconvex_vertices_shape(self, bhkshape):
@@ -397,10 +397,10 @@ class bhkshape_import():
 
         # find vertices (and fix scale)
         n_vertices, n_triangles = qhull3d(
-                                  [ (self.HAVOK_SCALE * n_vert.x,
+                                  [(self.HAVOK_SCALE * n_vert.x,
                                      self.HAVOK_SCALE * n_vert.y,
                                      self.HAVOK_SCALE * n_vert.z)
-                                     for n_vert in bhkshape.vertices ])
+                                     for n_vert in bhkshape.vertices])
 
         # create convex mesh
         b_mesh = bpy.data.meshes.new('convexpoly')
@@ -434,7 +434,7 @@ class bhkshape_import():
         b_mesh.update()
         b_obj.select = True
 
-        return [ b_obj ]
+        return [b_obj]
 
 
     def import_nitristrips(self, bhkshape):
@@ -469,7 +469,7 @@ class bhkshape_import():
         b_mesh.update()
         b_obj.select = True
 
-        return [ b_obj ]
+        return [b_obj]
 
     def import_bhkpackednitristrips_shape(self, bhkshape):
         """Import a BhkPackedNiTriStrips block as a Triangle-Mesh collision object"""

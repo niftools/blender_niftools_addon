@@ -1464,7 +1464,7 @@ class NifImport(NifCommon):
         crawling back as needed."""
         if isinstance(niBlock, NifFormat.NiNode):
             # list of non-null children
-            children = [ child for child in niBlock.children if child ]
+            children = [child for child in niBlock.children if child]
             for child in children:
                 child._parent = niBlock
                 self.set_parents(child)
@@ -1487,8 +1487,8 @@ class NifImport(NifCommon):
             return []
         # root collision node: join everything
         if isinstance(niBlock, NifFormat.RootCollisionNode):
-            return [ child for child in niBlock.children if
-                     isinstance(child, NifFormat.NiTriBasedGeom) ]
+            return [child for child in niBlock.children if
+                     isinstance(child, NifFormat.NiTriBasedGeom)]
         # check that node has name
         node_name = niBlock.name
         if not node_name:
@@ -1497,9 +1497,9 @@ class NifImport(NifCommon):
         if node_name[-9:].lower() == " nonaccum":
             node_name = node_name[:-9]
         # get all geometry children
-        return [ child for child in niBlock.children
+        return [child for child in niBlock.children
                  if (isinstance(child, NifFormat.NiTriBasedGeom)
-                     and child.name.find(node_name) != -1) ]
+                     and child.name.find(node_name) != -1)]
 
     
 def menu_func(self, context):

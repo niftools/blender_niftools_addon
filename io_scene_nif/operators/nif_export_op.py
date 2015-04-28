@@ -67,21 +67,17 @@ class NifExportOperator(bpy.types.Operator, ExportHelper, NifOperatorCommon):
             (_game_to_enum(game), game, "Export for " + game)
             # implementation note: reversed makes it show alphabetically
             # (at least with the current blender)
-            for game in reversed(sorted(
-                [x for x in NifFormat.games.keys() if x != '?']))
-            ],
+            for game in reversed(sorted([x for x in NifFormat.games.keys() if x != '?']))],
         name="Game",
         description="For which game to export.",
         default='OBLIVION')
 
     #: How to export animation.
     animation = bpy.props.EnumProperty(
-        items=[
-            ('ALL_NIF', "All (nif)", "Geometry and animation to a single nif."),
-            ('ALL_NIF_XNIF_XKF', "All (nif, xnif, xkf)", "Geometry and animation to a nif, xnif, and xkf (for Morrowind)."),
-            ('GEOM_NIF', "Geometry only (nif)", "Only geometry to a single nif."),
-            ('ANIM_KF', "Animation only (kf)", "Only animation to a single kf."),
-            ],
+        items=[('ALL_NIF', "All (nif)", "Geometry and animation to a single nif."),
+               ('ALL_NIF_XNIF_XKF', "All (nif, xnif, xkf)", "Geometry and animation to a nif, xnif, and xkf (for Morrowind)."),
+               ('GEOM_NIF', "Geometry only (nif)", "Only geometry to a single nif."),
+               ('ANIM_KF', "Animation only (kf)", "Only animation to a single kf.")],
         name="Process",
         description="Selects which parts of the blender file to export.",
         default='ALL_NIF')

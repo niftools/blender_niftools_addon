@@ -161,15 +161,13 @@ class constraint_export():
                     continue
                 # find target's bhkRigidBody
                 for otherbody, otherobj in self.nif_export.dict_blocks.items():
-                    if isinstance(otherbody, NifFormat.bhkRigidBody) \
-                        and otherobj == targetobj:
+                    if isinstance(otherbody, NifFormat.bhkRigidBody) and otherobj == targetobj:
                         hkconstraint.entities[1] = otherbody
                         break
                 else:
                     # not found
-                    raise nif_utils.NifError(
-                        "Rigid body target not exported in nif tree"
-                        " check that %s is selected during export." % targetobj)
+                    raise nif_utils.NifError("Rigid body target not exported in nif tree check that %s is selected during export."
+                                             % targetobj)
                 # priority
                 hkconstraint.priority = 1
                 # extra malleable constraint settings
@@ -182,15 +180,8 @@ class constraint_export():
                     hkconstraint.damping = b_obj.niftools_constraint.damping
 
                 # calculate pivot point and constraint matrix
-                pivot = mathutils.Vector([
-                    b_constr.pivot_x,
-                    b_constr.pivot_y,
-                    b_constr.pivot_z,
-                    ])
-                constr_matrix = mathutils.Euler((
-                    b_constr.axis_x,
-                    b_constr.axis_y,
-                    b_constr.axis_z))
+                pivot = mathutils.Vector([b_constr.pivot_x, b_constr.pivot_y, b_constr.pivot_z])
+                constr_matrix = mathutils.Euler((b_constr.axis_x, b_constr.axis_y, b_constr.axis_z))
                 constr_matrix = constr_matrix.to_matrix()
 
                 # transform pivot point and constraint matrix into bhkRigidBody
@@ -215,8 +206,7 @@ class constraint_export():
 
                 # apply object transform relative to the bone head
                 # (this is O * T * B' * B^{-1} at once)
-                transform = mathutils.Matrix(
-                    b_obj.matrix_local)
+                transform = mathutils.Matrix(b_obj.matrix_local)
                 pivot = pivot * transform
                 constr_matrix = constr_matrix * transform.to_3x3()
 

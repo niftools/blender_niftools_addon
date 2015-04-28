@@ -196,10 +196,10 @@ class TextureLoader():
             # go through all possible file names, try alternate extensions
             # too; for linux, also try lower case versions of filenames
             texfns = reduce(operator.add,
-                            [ [ fn[:-4]+ext, fn[:-4].lower()+ext ]
+                            [[fn[:-4]+ext, fn[:-4].lower()+ext]
                               for ext in ('.DDS','.dds','.PNG','.png',
                                          '.TGA','.tga','.BMP','.bmp',
-                                         '.JPG','.jpg') ] )
+                                         '.JPG','.jpg')] )
             texfns = [fn, fn.lower()] + list(set(texfns))
             for texfn in texfns:
                 # now a little trick, to satisfy many Morrowind mods

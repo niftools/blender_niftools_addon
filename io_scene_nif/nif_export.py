@@ -1057,9 +1057,9 @@ class NifExport(NifCommon):
 
         elif self.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
 
-            nodes = [ parent_block ]
-            nodes.extend([ block for block in parent_block.children
-                           if block.name[:14] == 'collisiondummy' ])
+            nodes = [parent_block]
+            nodes.extend([block for block in parent_block.children
+                           if block.name[:14] == 'collisiondummy'])
             for node in nodes:
                 try:
                     self.bhkshapehelper.export_collision_helper(b_obj, node)

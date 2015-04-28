@@ -197,12 +197,10 @@ class ObjectHelper():
                     break
                 # does geom have priority value in NULL constraint?
                 elif constr.name[:9].lower() == "priority:":
-                    self.nif_export.dict_bone_priorities[
-                                         self.nif_export.get_bone_name_for_nif(b_obj.name)
-                                         ] = int(constr.name[9:])
+                    self.nif_export.dict_bone_priorities[self.nif_export.get_bone_name_for_nif(b_obj.name)] = int(constr.name[9:])
             if is_collision:
                 self.nif_export.export_collision(b_obj, parent_block)
-                return None # done; stop here
+                return None  # done; stop here
             elif has_ipo or has_children or is_multimaterial or has_track:
                 # -> mesh ninode for the hierarchy to work out
                 if not has_track:
@@ -214,15 +212,13 @@ class ObjectHelper():
                 self.mesh_helper.export_tri_shapes(b_obj, space, parent_block, node_name)
                 # we didn't create a ninode, return nothing
                 return None
-        elif (b_obj != None):
+        elif b_obj is not None:
             # -> everything else (empty/armature) is a regular node
             node = self.create_ninode(b_obj)
             # does node have priority value in NULL constraint?
             for constr in b_obj.constraints:
                 if constr.name[:9].lower() == "priority:":
-                    self.nif_export.dict_bone_priorities[
-                                         self.nif_export.get_bone_name_for_nif(b_obj.name)
-                                         ] = int(constr.name[9:])
+                    self.nif_export.dict_bone_priorities[self.nif_export.get_bone_name_for_nif(b_obj.name)] = int(constr.name[9:])
 
         # set transform on trishapes rather than on NiNode for skinned meshes
         # this fixes an issue with clothing slots
@@ -255,13 +251,12 @@ class ObjectHelper():
                 node.flags = b_obj.niftools.objectflags
             elif (b_obj_type == 'ARMATURE') and (b_obj.niftools.objectflags != 0):
                 node.flags = b_obj.niftools.objectflags
-            elif (b_obj_type == 'ARMATURE') and (b_obj.niftools.objectflags == 0) and (b_obj.parent == None):
+            elif (b_obj_type == 'ARMATURE') and (b_obj.niftools.objectflags == 0) and (b_obj.parent is None):
                 node.flags = b_obj.niftools.objectflags
             else:
                 if self.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
                     node.flags = 0x000E
-                elif self.properties.game in ('SID_MEIER_S_RAILROADS',
-                                             'CIVILIZATION_IV'):
+                elif self.properties.game in ('SID_MEIER_S_RAILROADS', 'CIVILIZATION_IV'):
                     node.flags = 0x0010
                 elif self.properties.game in ('EMPIRE_EARTH_II',):
                     node.flags = 0x0002
@@ -276,9 +271,7 @@ class ObjectHelper():
         if b_obj:
             # export animation
             if b_obj_ipo:
-                if any(
-                    b_obj_ipo[b_channel]
-                    for b_channel in (Ipo.OB_LOCX, Ipo.OB_ROTX, Ipo.OB_SCALEX)):
+                if any(b_obj_ipo[b_channel]for b_channel in (Ipo.OB_LOCX, Ipo.OB_ROTX, Ipo.OB_SCALEX)):
                     self.animationhelper.export_keyframes(b_obj_ipo, space, node)
                 self.export_object_vis_controller(b_obj, node)
             # if it is a mesh, export the mesh as trishape children of
@@ -297,7 +290,7 @@ class ObjectHelper():
             self.nif_export.armaturehelper.export_children(b_obj, node)
 
         return node
-  
+
     #
     # Export a blender object ob of the type mesh, child of nif block
     # parent_block, as NiTriShape and NiTriShapeData blocks, possibly
@@ -308,7 +301,6 @@ class ObjectHelper():
     # The parameter trishape_name passes on the name for meshes that
     # should be exported as a single mesh.
     #
-
 
     def create_ninode(self, b_obj=None):
         # trivial case first
@@ -795,8 +787,9 @@ class MeshHelper():
                         continue # so skip this face
                     
                 f_numverts = len(poly.vertices)
-                if (f_numverts < 3): continue # ignore degenerate polygons
-                assert((f_numverts == 3) or (f_numverts == 4)) # debug
+                if (f_numverts < 3):
+                    continue  # ignore degenerate polygons
+                assert((f_numverts == 3) or (f_numverts == 4))  # debug
                 if mesh_uvlayers:
                     # if we have uv coordinates
                     # double check that we have uv data
@@ -805,15 +798,13 @@ class MeshHelper():
                             "ERROR%t|Create a UV map for every texture,"
                             " and run the script again.")
                 # find (vert, uv-vert, normal, vcol) quad, and if not found, create it
-                f_index = [ -1 ] * f_numverts
-                for i, loop_index in enumerate(
-                                    range(poly.loop_start, poly.loop_start + poly.loop_total)):
-                    
+                f_index = [-1] * f_numverts
+                for i, loop_index in enumerate(range(poly.loop_start, poly.loop_start + poly.loop_total)):
                     fv_index = b_mesh.loops[loop_index].vertex_index
                     vertex = b_mesh.vertices[fv_index]
                     vertex_index = vertex.index
                     fv = vertex.co
-                    #smooth = vertex normal, non-smooth = face normal)
+                    # smooth = vertex normal, non-smooth = face normal)
                     if mesh_hasnormals:
                         if poly.use_smooth:
                             fn = vertex.normal
@@ -821,24 +812,21 @@ class MeshHelper():
                             fn = poly.normal
                     else:
                         fn = None
-                        
+
                     fuv = []
                     for uvlayer in mesh_uvlayers:
                         if uvlayer != "":
-                            #TODO: map uv layer to index
-                            #currently we have uv_layer names, but we need their index value
-                            #b_mesh.uv_layers[0].data[poly.index].uv
+                            # TODO: map uv layer to index
+                            # currently we have uv_layer names, but we need their index value
+                            # b_mesh.uv_layers[0].data[poly.index].uv
                             fuv.append(b_mesh.uv_layers[uvlayer].data[loop_index].uv)
                         else:
-                            raise nif_utils.NifError(
-                                "ERROR%t|Texture is set to use UV"
-                                " but no UV Map is Selected for"
-                                " Mapping > Map")
+                            raise nif_utils.NifError("ERROR%t|Texture is set to use UV but no UV Map is Selected for Mapping > Map")
                     fcol = None
 
-                    '''TODO: Need to map b_verts -> n_verts'''
+                    # TODO: Need to map b_verts -> n_verts
                     if mesh_hasvcol:
-                        #check for an alpha layer
+                        # check for an alpha layer
                         b_color = b_mesh.vertex_colors[0].data[loop_index].color
                         if(mesh_hasvcola):
                             b_alpha = b_mesh.vertex_colors[1].data[loop_index].color
@@ -848,7 +836,7 @@ class MeshHelper():
                     else:
                         fcol = None
 
-                    vertquad = ( fv, fuv, fn, fcol )
+                    vertquad = (fv, fuv, fn, fcol)
 
                     # check for duplicate vertquad?
                     f_index[i] = len(vertquad_list)

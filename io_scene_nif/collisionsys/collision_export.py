@@ -386,12 +386,12 @@ class bhkshape_export():
             # take average radius and calculate end points
             localradius = (maxx + maxy - minx - miny) / 4.0
             transform = b_obj.matrix_local.transposed()
-            vert1 = mathutils.Vector( [ (maxx + minx)/2.0,
+            vert1 = mathutils.Vector( [(maxx + minx)/2.0,
                                        (maxy + miny)/2.0,
-                                       maxz - localradius ] )
-            vert2 = mathutils.Vector( [ (maxx + minx) / 2.0,
+                                       maxz - localradius] )
+            vert2 = mathutils.Vector( [(maxx + minx) / 2.0,
                                        (maxy + miny) / 2.0,
-                                       minz + localradius ] )
+                                       minz + localradius] )
             vert1 = vert1 * transform
             vert2 = vert2 * transform
 
@@ -451,7 +451,7 @@ class bhkshape_export():
             fnormlist = [b_rot_quat * b_face.normal for b_face in b_mesh.polygons]
             fdistlist = [(b_transform_mat * (-1 * b_mesh.vertices[b_mesh.polygons[b_face.index].vertices[0]].co)).dot(
                             b_rot_quat.to_matrix() * b_face.normal)
-                         for b_face in b_mesh.polygons ]
+                         for b_face in b_mesh.polygons]
 
             # remove duplicates through dictionary
             vertdict = {}
@@ -468,9 +468,9 @@ class bhkshape_export():
             # sort vertices and normals
             vertkeys = sorted(vertdict.keys())
             fkeys = sorted(fdict.keys())
-            vertlist = [ vertlist[vertdict[hsh]] for hsh in vertkeys ]
-            fnormlist = [ fnormlist[fdict[hsh]] for hsh in fkeys ]
-            fdistlist = [ fdistlist[fdict[hsh]] for hsh in fkeys ]
+            vertlist = [vertlist[vertdict[hsh]] for hsh in vertkeys]
+            fnormlist = [fnormlist[fdict[hsh]] for hsh in fkeys]
+            fdistlist = [fdistlist[fdict[hsh]] for hsh in fkeys]
 
             if len(fnormlist) > 65535 or len(vertlist) > 65535:
                 raise nif_utils.NifError(
