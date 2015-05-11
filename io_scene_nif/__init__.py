@@ -37,13 +37,24 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import sys
+import os
+
+import bpy
+import bpy.props
+
+import logging
+
+import io_scene_nif
+from io_scene_nif import properties, operators, ui
+
 #: Blender addon info.
 bl_info = {
     "name": "NetImmerse/Gamebryo nif format",
     "description":
     "Import and export files in the NetImmerse/Gamebryo nif format (.nif)",
     "author": "NifTools Team",
-    "version": (2, 6, 0), # can't read from VERSION, blender wants it hardcoded
+    "version": (2, 6, 0),  # can't read from VERSION, blender wants it hardcoded
     "blender": (2, 7, 2),
     "api": 39257,
     "location": "File > Import-Export",
@@ -56,29 +67,18 @@ bl_info = {
     "support": "COMMUNITY",
     "category": "Import-Export"}
 
-import io_scene_nif
-
 try:
     from io_scene_nif import nif_debug
     nif_debug.startdebug()
 except:
     print("Failed to load debug module")
 
-import sys
-import os
-
 # Python dependencies are bundled inside the io_scene_nif/modules folder
 _modules_path = os.path.join(os.path.dirname(__file__), "modules")
-if not _modules_path in sys.path:
+if _modules_path not in sys.path:
     sys.path.append(_modules_path)
 del _modules_path
 
-from io_scene_nif import properties, operators, ui
-
-import bpy
-import bpy.props
-
-import logging
 
 def _init_loggers():
     """Set up loggers."""
@@ -113,13 +113,11 @@ def register():
 
 def unregister():
     # no idea how to do this... oh well, let's not lose any sleep over it
-    #_uninit_loggers()
+    # _uninit_loggers()
     bpy.types.INFO_MT_file_import.remove(menu_func_import)
     bpy.types.INFO_MT_file_export.remove(menu_func_export)
     bpy.utils.unregister_module(__name__)
-    
+
 
 if __name__ == "__main__":
     register()
-
-
