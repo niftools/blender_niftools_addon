@@ -977,7 +977,7 @@ class NifImport(NifCommon):
                                                            bsEffectShaderProperty,
                                                            extra_datas)
 
-            # XXX todo: merge this call into import_material
+            # TODO: merge this call into import_material
             self.animationhelper.material_animation.import_material_controllers(material, niBlock)
             b_mesh_materials = list(b_mesh.materials)
             try:
@@ -1252,7 +1252,7 @@ class NifImport(NifCommon):
                 b_obj_partflag.pf_editorflag = (bodypart_flag[i].pf_editor_visible)
                 b_obj_partflag.pf_startflag = (bodypart_flag[i].pf_start_net_boneset)
         # import morph controller
-        # XXX todo: move this to import_mesh_controllers
+        # TODO: move this to import_mesh_controllers
         if self.properties.animation:
             morphCtrl = nif_utils.find_controller(niBlock, NifFormat.NiGeomMorpherController)
             if morphCtrl:

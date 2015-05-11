@@ -344,7 +344,7 @@ class Texture():
         return b_mat_texslot
 
     def get_b_blend_type_from_n_apply_mode(self, n_apply_mode):
-        # TODO: - Check out n_apply_modes
+        # TODO: Check out n_apply_modes
         if n_apply_mode == NifFormat.ApplyMode.APPLY_MODULATE:
             return "MIX"
         elif n_apply_mode == NifFormat.ApplyMode.APPLY_REPLACE:

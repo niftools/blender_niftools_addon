@@ -336,7 +336,7 @@ class ObjectHelper():
         :param b_name: Name of object as in blender.
         :type b_name: :class:`str`
 
-        .. todo:: Refactor and simplify this code.
+        .. TODO: Refactor and simplify this code.
         """
         unique_name = "unnamed"
         if b_name:
@@ -361,7 +361,7 @@ class ObjectHelper():
         :param blender_name: Name of object as in blender.
         :type blender_name: :class:`str`
 
-        .. todo:: Refactor and simplify this code.
+        .. TODO: Refactor and simplify this code.
         """
         try:
             return self.nif_export.dict_names[b_name]

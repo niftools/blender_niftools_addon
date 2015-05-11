@@ -372,7 +372,7 @@ class bhkshape_export():
                 coltf.shape = colsphere
                 colsphere.material = n_havok_mat
                 # take average radius and
-                # Todo find out what this is: fix for havok coordinate system (6 * 7 = 42)
+                # TODO: find out what this is: fix for havok coordinate system (6 * 7 = 42)
                 colsphere.radius = radius
 
             return coltf

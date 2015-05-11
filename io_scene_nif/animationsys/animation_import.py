@@ -87,7 +87,7 @@ class AnimationHelper():
                 self.info("Animation for %s with %s controller, but no such controller type found in corresponding node, so creating one"
                           % (nodename, controllertype))
                 controller = getattr(NifFormat, controllertype)()
-                # TODO:set all the fields of this controller
+                # TODO: set all the fields of this controller
                 node.add_controller(controller)
             # yes! attach interpolator
             controller.interpolator = controlledblock.interpolator
@@ -148,7 +148,7 @@ class AnimationHelper():
             txk = niBlock.find(block_type=NifFormat.NiTextKeyExtraData)
         if txk:
             # get animation text buffer, and clear it if it already exists
-            # TODO:git rid of try-except block here
+            # TODO: git rid of try-except block here
             try:
                 bpy.data.texts["Anim"]
                 animtxt.clear()
@@ -679,7 +679,7 @@ class ArmatureAnimation():
 
                 # Quaternion Rotations
                 else:
-                    # TODO:take rotation type into account for interpolation
+                    # TODO: take rotation type into account for interpolation
                     if kfd.quaternion_keys:
                         self.nif_import.debug('Rotation keys...(quaternions)')
                     quaternion_keys = kfd.quaternion_keys

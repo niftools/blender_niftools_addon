@@ -128,7 +128,7 @@ class Material():
             b_mat.diffuse_color.b = n_mat_prop.diffuse_color.b
             b_mat.diffuse_intensity = 1.0
 
-            # TODO: - Detect fallout 3+, use emit multi as a degree of emission
+            # TODO: Detect fallout 3+, use emit multi as a degree of emission
             #        test some values to find emission maximium. 0-1 -> 0-max_val
             # Should we factor in blender bounds 0.0 - 2.0
 

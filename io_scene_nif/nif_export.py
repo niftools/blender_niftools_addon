@@ -82,7 +82,7 @@ class NifExport(NifCommon):
     EXPORT_OB_WIND = 0
     EXPORT_OB_LAYER = 1  # static
     EXPORT_OB_MATERIAL = 9  # wood
-    EXPORT_OB_PRN = "NONE"  # Todo with location on character. For weapons, rings, helmets, Sheilds ect
+    EXPORT_OB_PRN = "NONE"  # To do with location on character. For weapons, rings, helmets, Sheilds ect
 
     def __init__(self, operator, context):
         NifCommon.__init__(self, operator, context)
