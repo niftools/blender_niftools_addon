@@ -1,27 +1,27 @@
 """This script contains helper methods to export textures sources."""
 
 # ***** BEGIN LICENSE BLOCK *****
-# 
+#
 # Copyright © 2005-2015, NIF File Format Library and Tools contributors.
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 #    * Redistributions of source code must retain the above copyright
 #      notice, this list of conditions and the following disclaimer.
-# 
+#
 #    * Redistributions in binary form must reproduce the above
 #      copyright notice, this list of conditions and the following
 #      disclaimer in the documentation and/or other materials provided
 #      with the distribution.
-# 
+#
 #    * Neither the name of the NIF File Format Library and Tools
 #      project nor the names of its contributors may be used to endorse
 #      or promote products derived from this software without specific
 #      prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -43,14 +43,13 @@ from io_scene_nif.utility import nif_utils
 
 import os.path
 
-class TextureWriter():
 
+class TextureWriter():
 
     def __init__(self, parent):
         self.nif_export = parent
         self.properties = parent.properties
 
-    
     def export_source_texture(self, texture=None, filename=None):
         """Export a NiSourceTexture.
 
@@ -65,10 +64,10 @@ class TextureWriter():
         # create NiSourceTexture
         srctex = NifFormat.NiSourceTexture()
         srctex.use_external = True
-        if not filename is None:
+        if filename is not None:
             # preset filename
             srctex.file_name = filename
-        elif not texture is None:
+        elif texture is not None:
             srctex.file_name = self.export_texture_filename(texture)
         else:
             # this probably should not happen
@@ -93,18 +92,17 @@ class TextureWriter():
         # the new one
         return self.nif_export.nif_export.objecthelper.register_block(srctex, texture)
 
-
     def export_tex_desc(self, texdesc=None, uvlayers=None, b_mat_texslot=None):
         """Helper function for export_texturing_property to export each texture
         slot."""
         try:
             texdesc.uv_set = uvlayers.index(b_mat_texslot.uv_layer) if b_mat_texslot.uv_layer else 0
-        except ValueError: # mtex.uv_layer not in uvlayers list
+        except ValueError:  # mtex.uv_layer not in uvlayers list
             self.nif_export.warning(
                 "Bad uv layer name '%s' in texture '%s'."
                 " Falling back on first uv layer"
                 % (b_mat_texslot.uv_layer, b_mat_texslot.texture.name))
-            texdesc.uv_set = 0 # assume 0 is active layer
+            texdesc.uv_set = 0  # assume 0 is active layer
 
         texdesc.source = self.export_source_texture(b_mat_texslot.texture)
 
@@ -117,29 +115,28 @@ class TextureWriter():
         if texture.type == 'ENVIRONMENT_MAP':
             # this works for morrowind only
             if self.properties.game != 'MORROWIND':
-                raise nif_utils.NifError(
-                    "cannot export environment maps for nif version '%s'"
-                    %self.properties.game)
+                raise nif_utils.NifError("cannot export environment maps for nif version '%s'"
+                                         % self.properties.game
+                                         )
             return "enviro 01.TGA"
-        
+
         elif texture.type == 'IMAGE':
             # get filename from image
 
             # XXX still needed? can texture.image be None in current blender?
             # check that image is loaded
             if texture.image is None:
-                raise nif_utils.NifError(
-                    "image type texture has no file loaded ('%s')"
-                    % texture.name)
+                raise nif_utils.NifError("image type texture has no file loaded ('%s')"
+                                         % texture.name
+                                         )
 
             filename = texture.image.filepath
 
             # warn if packed flag is enabled
             if texture.image.packed_file:
-                self.nif_export.warning(
-                    "Packed image in texture '%s' ignored, "
-                    "exporting as '%s' instead."
-                    % (texture.name, filename))
+                self.nif_export.warning("Packed image in texture '%s' ignored, exporting as '%s' instead."
+                                        % (texture.name, filename)
+                                        )
 
             # try and find a DDS alternative, force it if required
             ddsfilename = "%s%s" % (filename[:-4], '.dds')
@@ -147,62 +144,62 @@ class TextureWriter():
                 filename = ddsfilename
 
             # sanitize file path
-            if not self.properties.game in ('MORROWIND', 'OBLIVION','FALLOUT_3', 'SKYRIM'):
+            if self.properties.game not in ('MORROWIND', 'OBLIVION', 'FALLOUT_3', 'SKYRIM'):
                 # strip texture file path
                 filename = os.path.basename(filename)
-                
             else:
                 # strip the data files prefix from the texture's file name
                 filename = filename.lower()
                 idx = filename.find("textures")
-                if ( idx >= 0 ):
+                if (idx >= 0):
                     filename = filename[idx:]
                 else:
-                    self.nif_export.warning(
-                        "%s does not reside in a 'Textures' folder;"
-                        " texture path will be stripped"
-                        " and textures may not display in-game" % filename)
+                    self.nif_export.warning("%s does not reside in a 'Textures' folder; texture path will be stripped"
+                                            " and textures may not display in-game"
+                                            % filename
+                                            )
                     filename = os.path.basename(filename)
             # for linux export: fix path seperators
             return filename.replace('/', '\\')
         else:
             # texture must be of type IMAGE or ENVMAP
-            raise nif_utils.NifError(
-                "Error: Texture '%s' must be of type IMAGE or ENVMAP"
-                % texture.name)
-            
+            raise nif_utils.NifError("Error: Texture '%s' must be of type IMAGE or ENVMAP"
+                                     % texture.name
+                                     )
 
-def has_diffuse_textures(self, b_mat):        
+
+def has_diffuse_textures(self, b_mat):
     if(self.b_mat == b_mat):
         return self.diffusetextures
 
     for b_mat_texslot in self.get_used_textslots(b_mat):
         if b_mat_texslot.use and b_mat_texslot.use_map_color_diffuse:
             self.diffusetextures.append(b_mat_texslot)
-    return self.diffusetextures    
-    
+    return self.diffusetextures
+
 
 def has_glow_textures(self, b_mat):
     if(self.b_mat == b_mat):
         return self.glowtextures
-    
+
     for b_mat_texslot in self.get_used_textslots(b_mat):
         if b_mat_texslot.use and b_mat_texslot.use_map_emit:
             self.glowtextures.append(b_mat_texslot)
     return self.glowtextures
-            
+
+
 def has_bumpmap_textures(self, b_mat):
     if(self.b_mat == b_mat):
         return self.bumpmaptextures
-    
+
     for b_mat_texslot in self.get_used_textslots(b_mat):
         if b_mat_texslot.use:
-            if b_mat_texslot.texture.use_normal_map == False and \
-            b_mat_texslot.use_map_color_diffuse == False:
+            if b_mat_texslot.texture.use_normal_map is False and b_mat_texslot.use_map_color_diffuse is False:
                 self.bumpmaptextures.append(b_mat_texslot)
     return self.bumpmaptextures
 
-def has_gloss_textures(self, b_mat):        
+
+def has_gloss_textures(self, b_mat):
     if(self.b_mat == b_mat):
         return self.glosstextures
 
@@ -211,13 +208,13 @@ def has_gloss_textures(self, b_mat):
             self.glosstextures.append(b_mat_texslot)
     return self.glosstextures
 
+
 def has_normalmap_textures(self, b_mat):
     if(self.b_mat == b_mat):
         return self.normalmaptextures
-    
+
     for b_mat_texslot in self.get_used_textslots(b_mat):
         if b_mat_texslot.use:
-            if b_mat_texslot.use_map_color_diffuse == False and \
-            b_mat_texslot.texture.use_normal_map and b_mat_texslot.use_map_normal:
+            if b_mat_texslot.use_map_color_diffuse is False and b_mat_texslot.texture.use_normal_map and b_mat_texslot.use_map_normal:
                 self.normalmaptextures.append(b_mat_texslot)
     return self.normalmaptextures
