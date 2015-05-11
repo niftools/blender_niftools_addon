@@ -1,27 +1,27 @@
 '''Script to import/export constraints.'''
 
 # ***** BEGIN LICENSE BLOCK *****
-# 
+#
 # Copyright © 2005-2015, NIF File Format Library and Tools contributors.
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 #    * Redistributions of source code must retain the above copyright
 #      notice, this list of conditions and the following disclaimer.
-# 
+#
 #    * Redistributions in binary form must reproduce the above
 #      copyright notice, this list of conditions and the following
 #      disclaimer in the documentation and/or other materials provided
 #      with the distribution.
-# 
+#
 #    * Neither the name of the NIF File Format Library and Tools
 #      project nor the names of its contributors may be used to endorse
 #      or promote products derived from this software without specific
 #      prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -43,16 +43,17 @@ from pyffi.formats.nif import NifFormat
 import bpy
 import mathutils
 
+
 class constraint_import():
 
     def __init__(self, parent):
         self.nif_import = parent
         self.HAVOK_SCALE = parent.HAVOK_SCALE
-        
+
     def import_bhk_constraints(self):
         for hkbody in self.nif_import.dict_havok_objects:
             self.import_constraint(hkbody)
-        
+
     def import_constraint(self, hkbody):
         """Imports a bone havok constraint as Blender object constraint."""
         assert(isinstance(hkbody, NifFormat.bhkRigidBody))
@@ -107,13 +108,13 @@ class constraint_import():
                     b_hkobj.rigid_body.enabled = False
                 else:
                     self.nif_import.warning("Unknown malleable type (%i), skipped"
-                                        % hkconstraint.type)
+                                            % hkconstraint.type)
                 # extra malleable constraint settings
-                ### damping parameters not yet in Blender Python API
-                ### tau (force between bodies) not supported by Blender
+                # damping parameters not yet in Blender Python API
+                # tau (force between bodies) not supported by Blender
             else:
                 self.nif_import.warning("Unknown constraint type (%s), skipped"
-                                    % hkconstraint.__class__.__name__)
+                                        % hkconstraint.__class__.__name__)
                 continue
 
             # add the constraint as a rigid body joint
@@ -185,24 +186,16 @@ class constraint_import():
                 # set the angle limits
                 # (see http://niftools.sourceforge.net/wiki/Oblivion/Bhk_Objects/Ragdoll_Constraint
                 # for a nice picture explaining this)
-                b_constr.limit_angle_min_x = \
-                    hkdescriptor.plane_min_angle
-                b_constr.limit_angle_max_x = \
-                    hkdescriptor.plane_max_angle
+                b_constr.limit_angle_min_x = hkdescriptor.plane_min_angle
+                b_constr.limit_angle_max_x = hkdescriptor.plane_max_angle
+                # TODO: verify this
+                b_constr.limit_angle_min_y = -hkdescriptor.cone_max_angle
+                b_constr.limit_angle_max_y = hkdescriptor.cone_max_angle
 
-                b_constr.limit_angle_min_y = \
-                    -hkdescriptor.cone_max_angle
-                b_constr.limit_angle_max_y = \
-                    hkdescriptor.cone_max_angle
+                b_constr.limit_angle_min_z = hkdescriptor.twist_min_angle
+                b_constr.limit_angle_max_z = hkdescriptor.twist_max_angle
 
-                b_constr.limit_angle_min_z = \
-                    hkdescriptor.twist_min_angle
-                b_constr.limit_angle_max_z = \
-                    hkdescriptor.twist_max_angle
-                    
                 b_hkobj.niftools_constraint.LHMaxFriction = hkdescriptor.max_friction
-                    
-                
 
             elif isinstance(hkdescriptor, NifFormat.LimitedHingeDescriptor):
                 # for hinge, y is the vector on the plane of rotation defining
@@ -224,32 +217,27 @@ class constraint_import():
                     hkdescriptor.perp_2_axle_in_a_2.y,
                     hkdescriptor.perp_2_axle_in_a_2.z))
                 # they should form a orthogonal basis
-                if (mathutils.Vector.cross(axis_x, axis_y)
-                    - axis_z).length > 0.01:
+                if (mathutils.Vector.cross(axis_x, axis_y) - axis_z).length > 0.01:
                     # either not orthogonal, or negative orientation
-                    if (mathutils.Vector.cross(-axis_x, axis_y)
-                        - axis_z).length > 0.01:
-                        self.nif_import.warning(
-                            "Axes are not orthogonal in %s;"
-                            " arbitrary orientation has been chosen"
-                            % hkdescriptor.__class__.__name__)
+                    if (mathutils.Vector.cross(-axis_x, axis_y) - axis_z).length > 0.01:
+                        self.nif_import.warning("Axes are not orthogonal in %s;"
+                                                " arbitrary orientation has been chosen"
+                                                % hkdescriptor.__class__.__name__)
                         axis_z = mathutils.Vector.cross(axis_x, axis_y)
                     else:
                         # fix orientation
-                        self.nif_import.warning(
-                            "X axis flipped in %s to fix orientation"
-                            % hkdescriptor.__class__.__name__)
+                        self.nif_import.warning("X axis flipped in %s to fix orientation"
+                                                % hkdescriptor.__class__.__name__)
                         axis_x = -axis_x
                 # getting properties with no blender constraint
                 # equivalent and setting as obj properties
                 b_constr.limit_angle_max_x = hkdescriptor.max_angle
                 b_constr.limit_angle_min_x = hkdescriptor.min_angle
                 b_hkobj.niftools_constraint.LHMaxFriction = hkdescriptor.max_friction
-                
+
                 if hasattr(hkconstraint, "tau"):
                     b_hkobj.niftools_constraint.tau = hkconstraint.tau
                     b_hkobj.niftools_constraint.damping = hkconstraint.damping
-                
 
             elif isinstance(hkdescriptor, NifFormat.HingeDescriptor):
                 # for hinge, y is the vector on the plane of rotation defining
@@ -357,19 +345,17 @@ class constraint_import():
             b_constr.axis_y = constr_euler.y
             b_constr.axis_z = constr_euler.z
             # DEBUG
-            assert((axis_x - mathutils.Vector((1,0,0)) * constr_matrix).length < 0.0001)
-            assert((axis_z - mathutils.Vector((0,0,1)) * constr_matrix).length < 0.0001)
+            assert((axis_x - mathutils.Vector((1, 0, 0)) * constr_matrix).length < 0.0001)
+            assert((axis_z - mathutils.Vector((0, 0, 1)) * constr_matrix).length < 0.0001)
 
             # the generic rigid body type is very buggy... so for simulation
             # purposes let's transform it into ball and hinge
             if isinstance(hkdescriptor, NifFormat.RagdollDescriptor):
                 # cone_twist
                 b_constr.pivot_type = 'CONE_TWIST'
-            elif isinstance(hkdescriptor, (NifFormat.LimitedHingeDescriptor,
-                                         NifFormat.HingeDescriptor)):
+            elif isinstance(hkdescriptor, (NifFormat.LimitedHingeDescriptor, NifFormat.HingeDescriptor)):
                 # (limited) hinge
                 b_constr.pivot_type = 'HINGE'
             else:
                 raise ValueError("unknown descriptor %s"
                                  % hkdescriptor.__class__.__name__)
-

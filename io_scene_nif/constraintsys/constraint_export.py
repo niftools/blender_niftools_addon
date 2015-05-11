@@ -1,27 +1,27 @@
 '''Script to export constraints.'''
 
 # ***** BEGIN LICENSE BLOCK *****
-# 
+#
 # Copyright © 2005-2015, NIF File Format Library and Tools contributors.
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 #    * Redistributions of source code must retain the above copyright
 #      notice, this list of conditions and the following disclaimer.
-# 
+#
 #    * Redistributions in binary form must reproduce the above
 #      copyright notice, this list of conditions and the following
 #      disclaimer in the documentation and/or other materials provided
 #      with the distribution.
-# 
+#
 #    * Neither the name of the NIF File Format Library and Tools
 #      project nor the names of its contributors may be used to endorse
 #      or promote products derived from this software without specific
 #      prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -44,13 +44,14 @@ from io_scene_nif.utility import nif_utils
 import bpy
 import mathutils
 
+
 class constraint_export():
 
     def __init__(self, parent):
         self.nif_export = parent
         self.properties = parent.properties
         self.HAVOK_SCALE = parent.HAVOK_SCALE
-        
+
     def export_constraints(self, b_obj, root_block):
         """Export the constraints of an object.
 
@@ -77,8 +78,7 @@ class constraint_export():
                     continue
                 # check that the object is a rigid body
                 for otherbody, otherobj in self.nif_export.dict_blocks.items():
-                    if isinstance(otherbody, NifFormat.bhkRigidBody) \
-                        and otherobj is b_obj:
+                    if isinstance(otherbody, NifFormat.bhkRigidBody) and otherobj is b_obj:
                         hkbody = otherbody
                         break
                 else:
@@ -91,7 +91,7 @@ class constraint_export():
                 # is it of a type that is supported?
                 if b_constr.pivot_type == 'CONE_TWIST':
                     # ball
-                    if b_obj.rigid_body.enabled == True:
+                    if b_obj.rigid_body.enabled is True:
                         hkconstraint = self.nif_export.objecthelper.create_block(
                             "bhkRagdollConstraint", b_constr)
                     else:
@@ -101,7 +101,7 @@ class constraint_export():
                     hkdescriptor = hkconstraint.ragdoll
                 elif b_constr.pivot_type == 'HINGE':
                     # hinge
-                    if b_obj.rigid_body.enabled == True:
+                    if b_obj.rigid_body.enabled is True:
                         hkconstraint = self.nif_export.objecthelper.create_block(
                             "bhkLimitedHingeConstraint", b_constr)
                     else:
@@ -130,8 +130,7 @@ class constraint_export():
                 # no real value given
                 if b_obj.niftools_constraint.LHMaxFriction != 0:
                     max_friction = b_obj.niftools_constraint.LHMaxFriction
-                    
-                
+
                 else:
                     if isinstance(hkconstraint,
                                   NifFormat.bhkMalleableConstraint):
@@ -142,7 +141,7 @@ class constraint_export():
                         # non-malleable typically have 10
                         if self.properties.game == 'FALLOUT_3':
                             max_friction = 100
-                        else: # oblivion
+                        else:  # oblivion
                             max_friction = 10
 
                 # parent constraint to hkbody
@@ -216,10 +215,10 @@ class constraint_export():
                 hkdescriptor.pivot_a.z = pivot[2] / self.HAVOK_SCALE
                 # export hkdescriptor axes and other parameters
                 # (also see import_nif.py NifImport.import_bhk_constraints)
-                axis_x = mathutils.Vector([1,0,0]) * constr_matrix
-                axis_y = mathutils.Vector([0,1,0]) * constr_matrix
-                axis_z = mathutils.Vector([0,0,1]) * constr_matrix
-                    
+                axis_x = mathutils.Vector([1, 0, 0]) * constr_matrix
+                axis_y = mathutils.Vector([0, 1, 0]) * constr_matrix
+                axis_z = mathutils.Vector([0, 0, 1]) * constr_matrix
+
                 if isinstance(hkdescriptor, NifFormat.RagdollDescriptor):
                     # z axis is the twist vector
                     hkdescriptor.twist_a.x = axis_z[0]
@@ -239,7 +238,7 @@ class constraint_export():
 
                     hkdescriptor.twist_min_angle = b_constr.limit_angle_min_z
                     hkdescriptor.twist_max_angle = b_constr.limit_angle_max_z
-                    
+
                     # same for maximum cone angle
                     hkdescriptor.max_friction = max_friction
                 elif isinstance(hkdescriptor, NifFormat.LimitedHingeDescriptor):
@@ -271,4 +270,3 @@ class constraint_export():
 
                 # do AB
                 hkconstraint.update_a_b(root_block)
-
