@@ -64,7 +64,8 @@ class ObjectHelper():
             block = getattr(NifFormat, blocktype)()
         except AttributeError:
             raise nif_utils.NifError("'%s': Unknown block type (this is probably a bug)."
-                                     % blocktype)
+                                     % blocktype
+                                     )
         return self.register_block(block, b_obj)
 
     def get_exported_objects(self):

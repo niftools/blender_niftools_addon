@@ -631,13 +631,15 @@ class NifExport(NifCommon):
                     ext = ".nifcache"
                 else:
                     ext = ".nif"
-                self.info("Writing %s file" % ext)
+                self.info("Writing %s file"
+                          % ext
+                          )
 
                 # make sure we have the right file extension
                 if (fileext.lower() != ext):
-                    self.warning(
-                        "Changing extension from %s to %s on output file"
-                        % (fileext, ext))
+                    self.warning("Changing extension from %s to %s on output file"
+                                 % (fileext, ext)
+                                 )
                 niffile = os.path.join(directory, filebase + ext)
                 data = NifFormat.Data(version=self.version,
                                       user_version=NIF_USER_VERSION,
@@ -780,19 +782,21 @@ class NifExport(NifCommon):
                                 if variable_2:
                                     controlledblock.set_variable_2(variable_2)
                 else:
-                    raise nif_utils.NifError(
-                        "Keyframe export for '%s' is not supported. "
-                        " Only Morrowind, Oblivion, Fallout 3, Civilization IV,"
-                        " Zoo Tycoon 2, Freedom Force, and"
-                        " Freedom Force vs. the 3rd Reich"
-                        " keyframes are supported."
-                        % self.properties.game)
+                    raise nif_utils.NifError("Keyframe export for '%s' is not supported. "
+                                             " Only Morrowind, Oblivion, Fallout 3, Civilization IV,"
+                                             " Zoo Tycoon 2, Freedom Force, and"
+                                             " Freedom Force vs. the 3rd Reich"
+                                             " keyframes are supported."
+                                             % self.properties.game
+                                             )
 
                 # write kf (and xnif if asked)
                 prefix = "" if (self.properties.animation != 'ALL_NIF_XNIF_XKF') else "x"
 
                 ext = ".kf"
-                self.info("Writing %s file" % (prefix + ext))
+                self.info("Writing %s file"
+                          % (prefix + ext)
+                          )
 
                 kffile = os.path.join(directory, prefix + filebase + ext)
                 data = NifFormat.Data(version=self.version,
@@ -834,7 +838,9 @@ class NifExport(NifCommon):
 
                 prefix = "x"  # we are in morrowind 'nifxnifkf mode'
                 ext = ".nif"
-                self.info("Writing %s file" % (prefix + ext))
+                self.info("Writing %s file"
+                          % (prefix + ext)
+                          )
 
                 xniffile = os.path.join(directory, prefix + filebase + ext)
                 data = NifFormat.Data(version=self.version,
@@ -853,7 +859,9 @@ class NifExport(NifCommon):
 
             if self.egmdata:
                 ext = ".egm"
-                self.info("Writing %s file" % ext)
+                self.info("Writing %s file"
+                          % ext
+                          )
 
                 egmfile = os.path.join(directory, filebase + ext)
                 stream = open(egmfile, "wb")
@@ -1050,7 +1058,9 @@ class NifExport(NifCommon):
                 morph = self.egmdata.add_asym_morph()
             else:
                 continue
-            self.info("Exporting morph %s to egm" % keyblock.name)
+            self.info("Exporting morph %s to egm"
+                      % keyblock.name
+                      )
             relative_vertices = []
             # note: keyblocks[0] is base key
             for vert, key_vert in zip(keyblocks[0].data, keyblock.data):

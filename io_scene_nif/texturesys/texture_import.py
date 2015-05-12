@@ -123,15 +123,16 @@ class Texture():
                     break
             else:
                 self.nif_import.warning("No slot for shader texture %s."
-                                        % shader_tex_desc.texture_data.source.file_name)
+                                        % shader_tex_desc.texture_data.source.file_name
+                                        )
                 continue
             try:
                 extra_shader_index = (self.nif_import.EXTRA_SHADER_TEXTURES.index(shader_name))
             except ValueError:
                 # shader_name not in self.EXTRA_SHADER_TEXTURES
-                self.nif_import.warning(
-                    "No slot for shader texture %s."
-                    % shader_tex_desc.texture_data.source.file_name)
+                self.nif_import.warning("No slot for shader texture %s."
+                                        % shader_tex_desc.texture_data.source.file_name
+                                        )
                 continue
 
             self.import_shader_by_type(shader_tex_desc, extra_shader_index)

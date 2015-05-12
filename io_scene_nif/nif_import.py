@@ -104,7 +104,9 @@ class NifImport(NifCommon):
                     raise nif_utils.NifError("You must select exactly one armature in 'Import Geometry Only + Parent To Selected Armature' mode.")
 
             # open file for binary reading
-            self.info("Importing %s" % self.properties.filepath)
+            self.info("Importing %s"
+                      % self.properties.filepath
+                      )
             niffile = open(self.properties.filepath, "rb")
             self.data = NifFormat.Data()
             try:
@@ -125,7 +127,9 @@ class NifImport(NifCommon):
 
             if self.properties.keyframe_file:
                 # open keyframe file for binary reading
-                self.info("Importing %s" % self.properties.keyframe_file)
+                self.info("Importing %s"
+                          % self.properties.keyframe_file
+                          )
                 kffile = open(self.properties.keyframe_file, "rb")
                 self.kfdata = NifFormat.Data()
                 try:
@@ -232,7 +236,9 @@ class NifImport(NifCommon):
                             for child in nonbip_children:
                                 root.remove_child(child)
                 # import this root block
-                self.debug("Root block: %s" % root.get_global_display())
+                self.debug("Root block: %s"
+                           % root.get_global_display()
+                           )
                 # merge animation from kf tree into nif tree
                 if self.properties.animation and self.kfdata:
                     for kf_root in self.kfdata.roots:
@@ -309,14 +315,18 @@ class NifImport(NifCommon):
         # read the NIF tree
         if self.armaturehelper.is_armature_root(root_block):
             # special case 1: root node is skeleton root
-            self.debug("%s is an armature root" % root_block.name)
+            self.debug("%s is an armature root"
+                       % root_block.name
+                       )
             b_obj = self.import_branch(root_block)
             b_obj.niftools.objectflags = root_block.flags
             self.import_version_set(b_obj)
 
         elif self.is_grouping_node(root_block):
             # special case 2: root node is grouping node
-            self.debug("%s is a grouping node" % root_block.name)
+            self.debug("%s is a grouping node"
+                       % root_block.name
+                       )
             b_obj = self.import_branch(root_block)
             b_obj.niftools.bsxflags = self.bsxflags
 
@@ -334,9 +344,9 @@ class NifImport(NifCommon):
             if root_block.collision_object:
                 bhk_body = root_block.collision_object.body
                 if not isinstance(bhk_body, NifFormat.bhkRigidBody):
-                    self.warning(
-                        "Unsupported collision structure under node %s"
-                        % root_block.name)
+                    self.warning("Unsupported collision structure under node %s"
+                                 % root_block.name
+                                 )
                 self.bhkhelper.import_bhk_shape(bhkshape=bhk_body)
 
             # process all its children
@@ -350,9 +360,9 @@ class NifImport(NifCommon):
             self.warning('Skipped NiPhysXProp root')
 
         else:
-            self.warning(
-                "Skipped unsupported root block type '%s' (corrupted nif?)."
-                % root_block.__class__)
+            self.warning("Skipped unsupported root block type '%s' (corrupted nif?)."
+                         % root_block.__class__
+                         )
 
         if hasattr(root_block, "extra_data_list"):
             for n_extra_list in root_block.extra_data_list:
@@ -557,9 +567,9 @@ class NifImport(NifCommon):
                 if isinstance(niBlock.collision_object, NifFormat.bhkNiCollisionObject):
                     bhk_body = niBlock.collision_object.body
                     if not isinstance(bhk_body, NifFormat.bhkRigidBody):
-                        self.warning(
-                            "Unsupported collision structure"
-                            " under node %s" % niBlock.name)
+                        self.warning("Unsupported collision structure under node %s"
+                                     % niBlock.name
+                                     )
 
                     collision_objs = self.bhkhelper.import_bhk_shape(bhkshape=bhk_body)
                     # register children for parentship
@@ -590,8 +600,6 @@ class NifImport(NifCommon):
                 # set up transforms
                 for n_child, b_child in object_children:
                     # save transform
-
-                    # FIXME:
                     matrix = mathutils.Matrix(b_child.matrix_local)
                     # fix transform
                     # the bone has in the nif file an armature space transform
@@ -617,8 +625,7 @@ class NifImport(NifCommon):
                     # with X = self.dict_bones_extra_matrix[B]
 
                     # post multiply Z with X^{-1}
-                    extra = mathutils.Matrix(
-                        self.dict_bones_extra_matrix[niBlock])
+                    extra = mathutils.Matrix(self.dict_bones_extra_matrix[niBlock])
                     extra.invert()
                     matrix = matrix * extra
                     # cancel out the tail translation T
@@ -632,8 +639,9 @@ class NifImport(NifCommon):
                     b_child.parent_bone = b_obj.name
 
             else:
-                raise RuntimeError(
-                    "Unexpected object type %s" % b_obj.__class__)
+                raise RuntimeError("Unexpected object type %s"
+                                   % b_obj.__class__
+                                   )
 
             # track camera for billboard nodes
             if isinstance(niBlock, NifFormat.NiBillboardNode):
@@ -781,7 +789,9 @@ class NifImport(NifCommon):
         self.dict_names[niBlock] = shortName
         # Blender name shortName corresponds to niBlock
         self.dict_blocks[shortName] = niBlock
-        self.debug("Selected unique name %s" % shortName)
+        self.debug("Selected unique name %s"
+                   % shortName
+                   )
         return shortName
 
     def import_empty(self, niBlock):
@@ -822,7 +832,9 @@ class NifImport(NifCommon):
         """
         assert(isinstance(niBlock, NifFormat.NiTriBasedGeom))
 
-        self.info("Importing mesh data for geometry %s" % niBlock.name)
+        self.info("Importing mesh data for geometry %s"
+                  % niBlock.name
+                  )
 
         if group_mesh:
             b_obj = group_mesh
@@ -860,7 +872,9 @@ class NifImport(NifCommon):
         # shortcut for mesh geometry data
         niData = niBlock.data
         if not niData:
-            raise nif_utils.NifError("no shape data in %s" % b_name)
+            raise nif_utils.NifError("no shape data in %s"
+                                     % b_name
+                                     )
 
         # vertices
         n_verts = niData.vertices
@@ -1275,7 +1289,9 @@ class NifImport(NifCommon):
                         keyname = morphData.morphs[idxMorph].frame_name
                         if not keyname:
                             keyname = 'Key %i' % idxMorph
-                        self.info("inserting key '%s'" % keyname)
+                        self.info("inserting key '%s'"
+                                  % keyname
+                                  )
                         # get vectors
                         morphverts = morphData.morphs[idxMorph].vectors
                         # for each vertex calculate the key position from base
@@ -1301,8 +1317,9 @@ class NifImport(NifCommon):
                             # this happens when two keys have the same name
                             # an instance of this is in fallout 3
                             # meshes/characters/_male/skeleton.nif HeadAnims:0
-                            self.warning(
-                                "skipped duplicate of key '%s'" % keyname)
+                            self.warning("skipped duplicate of key '%s'"
+                                         % keyname
+                                         )
                         # no idea how to set up the bezier triples -> switching
                         # to linear instead
                         b_curve.interpolation = Blender.IpoCurve.InterpTypes.LINEAR

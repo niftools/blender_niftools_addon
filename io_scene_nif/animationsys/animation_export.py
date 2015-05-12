@@ -159,9 +159,9 @@ class AnimationHelper():
                 if extend is None:
                     extend = curve.extend
                 elif extend != curve.extend:
-                    self.nif_export.warning(
-                        "Inconsistent extend type in %s, will use %s."
-                        % (ipo, extend))
+                    self.nif_export.warning("Inconsistent extend type in %s, will use %s."
+                                            % (ipo, extend)
+                                            )
                 # get start and stop frames
                 start_frame = min(
                     start_frame,
@@ -238,7 +238,8 @@ class AnimationHelper():
                 if (any(ipo[curve] for curve in curvecollection) and not all(ipo[curve] for curve in curvecollection)):
                     keytype = {Ipo.PO_SCALEX: "SCALE", Ipo.PO_LOCX: "LOC", Ipo.PO_QUATX: "ROT", Ipo.OB_ROTX: "ROT"}
                     raise nif_utils.NifError("missing curves in %s; insert %s key at frame 1 and try again"
-                                             % (ipo, keytype[curvecollection[0]]))
+                                             % (ipo, keytype[curvecollection[0]])
+                                             )
             # go over all curves
             ipo_curves = list(ipo.curveConsts.values())
             for curve in ipo_curves:
@@ -449,11 +450,14 @@ class AnimationHelper():
             # parse line
             t = s.split('/')
             if (len(t) < 2):
-                raise nif_utils.NifError("Syntax error in Anim buffer ('%s')" % s)
+                raise nif_utils.NifError("Syntax error in Anim buffer ('%s')"
+                                         % s
+                                         )
             f = int(t[0])
             if ((f < self.context.scene.frame_start) or (f > self.context.scene.frame_end)):
                 self.warning("frame in animation buffer out of range (%i not in [%i, %i])"
-                             % (f, self.context.scene.frame_start, self.context.scene.frame_end))
+                             % (f, self.context.scene.frame_start, self.context.scene.frame_end)
+                             )
             d = t[1].strip(' ')
             for i in range(2, len(t)):
                 d = d + '\r\n' + t[i].strip(' ')
@@ -519,7 +523,8 @@ class TextureAnimation():
             count += 1
         if count < 2:
             raise nif_utils.NifError("Error in Texture Flip buffer '%s': must define at least two textures"
-                                     % fliptxt.name)
+                                     % fliptxt.name
+                                     )
         flip.delta = (flip.stop_time - flip.start_time) / count
 
 
@@ -666,7 +671,8 @@ class MaterialAnimation():
             b_curve = b_ipo[b_channel]
             if b_curve:
                 self.info("Exporting %s as NiUVData"
-                          % b_curve)
+                          % b_curve
+                          )
                 n_uvgroup.num_keys = len(b_curve.bezierPoints)
                 n_uvgroup.interpolation = self.get_n_ipol_from_b_ipol(
                     b_curve.interpolation)

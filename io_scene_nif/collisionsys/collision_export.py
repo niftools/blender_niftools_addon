@@ -299,8 +299,9 @@ class bhkshape_export():
 
         # find bounding box data
         if not b_obj.data.vertices:
-            self.warning(
-                "Skipping collision object %s without vertices." % b_obj)
+            self.warning("Skipping collision object %s without vertices."
+                         % b_obj
+                         )
             return None
         b_vertlist = [vert.co for vert in b_obj.data.vertices]
 
@@ -392,9 +393,9 @@ class bhkshape_export():
 
             # check if end points are far enough from each other
             if (vert1 - vert2).length < self.properties.epsilon:
-                self.warning(
-                    "End points of cylinder %s too close,"
-                    " converting to sphere." % b_obj)
+                self.warning("End points of cylinder %s too close, converting to sphere."
+                             % b_obj
+                             )
                 # change type
                 b_obj.game.collision_bounds_type = 'SPHERE'
                 # instead of duplicating code, just run the function again
@@ -495,9 +496,9 @@ class bhkshape_export():
             return colhull
 
         else:
-            raise nif_utils.NifError(
-                'cannot export collision type %s to collision shape list'
-                % b_obj.game.collision_bounds_type)
+            raise nif_utils.NifError('cannot export collision type %s to collision shape list'
+                                     % b_obj.game.collision_bounds_type
+                                     )
 
 
 class bound_export():

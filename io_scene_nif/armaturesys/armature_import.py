@@ -306,7 +306,8 @@ class Armature():
             if skelroot not in self.nif_import.dict_armatures:
                 self.nif_import.dict_armatures[skelroot] = []
             self.nif_import.info("Selecting node '%s' as skeleton root"
-                                 % skelroot.name)
+                                 % skelroot.name
+                                 )
             # add bones
             for bone in skelroot.tree():
                 if bone is skelroot:
@@ -324,9 +325,11 @@ class Armature():
             skelroot = niBlock.find(block_name=self.nif_import.selected_objects[0].name)
             if not skelroot:
                 raise nif_utils.NifError("nif has no armature '%s'"
-                                         % self.nif_import.selected_objects[0].name)
+                                         % self.nif_import.selected_objects[0].name
+                                         )
             self.nif_import.debug("Identified '%s' as armature"
-                                  % skelroot.name)
+                                  % skelroot.name
+                                  )
             self.nif_import.dict_armatures[skelroot] = []
             for bone_name in self.nif_import.selected_objects[0].data.bones.keys():
                 # blender bone naming -> nif bone naming
@@ -335,9 +338,9 @@ class Armature():
                 bone_block = skelroot.find(block_name=nif_bone_name)
                 # add it to the name list if there is a bone with that name
                 if bone_block:
-                    self.nif_import.info(
-                        "Identified nif block '%s' with bone '%s' "
-                        "in selected armature" % (nif_bone_name, bone_name))
+                    self.nif_import.info("Identified nif block '%s' with bone '%s' in selected armature"
+                                         % (nif_bone_name, bone_name)
+                                         )
                     self.nif_import.dict_names[bone_block] = bone_name
                     self.nif_import.dict_armatures[skelroot].append(bone_block)
                     self.complete_bone_tree(bone_block, skelroot)
@@ -346,7 +349,9 @@ class Armature():
         if isinstance(niBlock, NifFormat.NiTriBasedGeom):
             # yes, we found one, get its skin instance
             if niBlock.is_skin():
-                self.nif_import.debug("Skin found on block '%s'" % niBlock.name)
+                self.nif_import.debug("Skin found on block '%s'"
+                                      % niBlock.name
+                                      )
                 # it has a skin instance, so get the skeleton root
                 # which is an armature only if it's not a skinning influence
                 # so mark the node to be imported as an armature
@@ -356,11 +361,13 @@ class Armature():
                     if skelroot not in self.nif_import.dict_armatures:
                         self.nif_import.dict_armatures[skelroot] = []
                         self.nif_import.debug("'%s' is an armature"
-                                              % skelroot.name)
+                                              % skelroot.name
+                                              )
                 elif self.properties.skeleton == "GEOMETRY_ONLY":
                     if skelroot not in self.nif_import.dict_armatures:
                         raise nif_utils.NifError("nif structure incompatible with '%s' as armature: node '%s' has '%s' as armature"
-                                                 % (self.nif_import.selected_objects[0].name, niBlock.name, skelroot.name))
+                                                 % (self.nif_import.selected_objects[0].name, niBlock.name, skelroot.name)
+                                                 )
 
                 for boneBlock in skininst.bones:
                     # boneBlock can be None; see pyffi issue #3114079
@@ -369,7 +376,8 @@ class Armature():
                     if boneBlock not in self.nif_import.dict_armatures[skelroot]:
                         self.nif_import.dict_armatures[skelroot].append(boneBlock)
                         self.nif_import.debug("'%s' is a bone of armature '%s'"
-                                              % (boneBlock.name, skelroot.name))
+                                              % (boneBlock.name, skelroot.name)
+                                              )
                     # now we "attach" the bone to the armature:
                     # we make sure all NiNodes from this bone all the way
                     # down to the armature NiNode are marked as bones
@@ -391,7 +399,8 @@ class Armature():
                         if bone not in self.nif_import.dict_armatures[skelroot]:
                             self.nif_import.dict_armatures[skelroot].append(bone)
                             self.nif_import.debug("'%s' marked as extra bone of armature '%s'"
-                                                  % (bone.name, skelroot.name))
+                                                  % (bone.name, skelroot.name)
+                                                  )
                             # we make sure all NiNodes from this bone
                             # all the way down to the armature NiNode
                             # are marked as bones
@@ -420,7 +429,8 @@ class Armature():
                 self.nif_import.dict_armatures[skelroot].append(boneparent)
                 # store the coordinates for realignement autodetection
                 self.nif_import.debug("'%s' is a bone of armature '%s'"
-                                      % (boneparent.name, skelroot.name))
+                                      % (boneparent.name, skelroot.name)
+                                      )
             # now the parent is marked as a bone
             # recursion: complete the bone tree,
             # this time starting from the parent bone
@@ -462,7 +472,9 @@ class Armature():
                     armatureName = self.nif_import.dict_names[armatureBlock]
                     break
                 else:
-                    raise nif_utils.NifError("cannot find bone '%s'" % bone_name)
+                    raise nif_utils.NifError("cannot find bone '%s'"
+                                             % bone_name
+                                             )
             armatureObject = bpy.types.Object(armatureName)
             return armatureObject.data.bones[bone_name]
         else:

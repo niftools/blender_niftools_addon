@@ -128,7 +128,9 @@ class TextureLoader():
             # save embedded texture as dds file
             stream = open(tex, "wb")
             try:
-                self.nif_import.info("Saving embedded texture as %s" % tex)
+                self.nif_import.info("Saving embedded texture as %s"
+                                     % tex
+                                     )
                 source.pixel_data.save_as_dds(stream)
             except ValueError:
                 # value error means that the pixel format is not supported
@@ -209,7 +211,9 @@ class TextureLoader():
                     tex = os.path.join(texdir, texfn)
                 # "ignore case" on linux
                 tex = bpy.path.resolve_ncase(tex)
-                self.nif_import.debug("Searching %s" % tex)
+                self.nif_import.debug("Searching %s"
+                                      % tex
+                                      )
                 if os.path.exists(tex):
                     # tries to load the file
                     b_image = bpy.data.images.load(tex)

@@ -66,12 +66,15 @@ class Material():
                 if (name.lower() == specialname.lower() or name.lower().startswith(specialname.lower() + ".")):
                     if name != specialname:
                         self.nif_export.warning("Renaming material '%s' to '%s'"
-                                                % (name, specialname))
+                                                % (name, specialname)
+                                                )
                     name = specialname
 
         # clear noname materials
         if name.lower().startswith("noname"):
-            self.nif_export.warning("Renaming material '%s' to ''" % name)
+            self.nif_export.warning("Renaming material '%s' to ''"
+                                    % name
+                                    )
             name = ""
 
         matprop.name = name
@@ -113,7 +116,8 @@ class Material():
             if (block.get_hash()[first_index:] == matprop.get_hash()[first_index:]):
                 self.nif_export.warning("Merging materials '%s' and '%s'"
                                         " (they are identical in nif)"
-                                        % (matprop.name, block.name))
+                                        % (matprop.name, block.name)
+                                        )
                 return block
 
         # no material property with given settings found, so use and register

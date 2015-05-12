@@ -73,19 +73,21 @@ class AnimationHelper():
             node = root.find(block_name=nodename)
             if not node:
                 self.info("Animation for %s but no such node found in nif tree"
-                          % nodename)
+                          % nodename
+                          )
                 continue
             # node found, now find the controller
             controllertype = controlledblock.get_controller_type()
             if not controllertype:
-                self.info(
-                    "Animation for %s without controller type, so skipping"
-                    % nodename)
+                self.info("Animation for %s without controller type, so skipping"
+                          % nodename
+                          )
                 continue
             controller = nif_utils.find_controller(node, getattr(NifFormat, controllertype))
             if not controller:
                 self.info("Animation for %s with %s controller, but no such controller type found in corresponding node, so creating one"
-                          % (nodename, controllertype))
+                          % (nodename, controllertype)
+                          )
                 controller = getattr(NifFormat, controllertype)()
                 # TODO: set all the fields of this controller
                 node.add_controller(controller)
@@ -254,7 +256,8 @@ class AnimationHelper():
         # denote progress
         self.nif_import.info("Animation")
         self.nif_import.info("Importing animation data for %s"
-                             % b_obj.name)
+                             % b_obj.name
+                             )
         assert(isinstance(kfd, NifFormat.NiKeyframeData))
         # create an Ipo for this object
         b_ipo = ObjectAnimation.get_object_ipo(b_obj)
@@ -403,7 +406,8 @@ class MaterialAnimation():
         else:
             return
         self.info("importing material color controller for target color %s into blender channels %s"
-                  % (n_target_color, b_channels))
+                  % (n_target_color, b_channels)
+                  )
         # import data as curves
         b_ipo = self.get_material_ipo(b_material)
         for i, b_channel in enumerate(b_channels):
@@ -461,7 +465,9 @@ class ArmatureAnimation():
         self.nif_import.info('Importing Animations')
         for bone_name, b_posebone in b_armature.pose.bones.items():
             # denote progress
-            self.nif_import.debug('Importing animation for bone %s' % bone_name)
+            self.nif_import.debug('Importing animation for bone %s'
+                                  % bone_name
+                                  )
             niBone = self.nif_import.dict_blocks[bone_name]
 
             # get bind matrix (NIF format stores full transformations in keyframes,

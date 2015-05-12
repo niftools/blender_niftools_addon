@@ -70,7 +70,9 @@ class constraint_import():
 
         b_hkobj = self.nif_import.dict_havok_objects[hkbody][0]
 
-        self.nif_import.info("Importing constraints for %s" % b_hkobj.name)
+        self.nif_import.info("Importing constraints for %s"
+                             % b_hkobj.name
+                             )
 
         # now import all constraints
         for hkconstraint in hkbody.constraints:
@@ -114,7 +116,8 @@ class constraint_import():
                 # tau (force between bodies) not supported by Blender
             else:
                 self.nif_import.warning("Unknown constraint type (%s), skipped"
-                                        % hkconstraint.__class__.__name__)
+                                        % hkconstraint.__class__.__name__
+                                        )
                 continue
 
             # add the constraint as a rigid body joint
@@ -222,12 +225,14 @@ class constraint_import():
                     if (mathutils.Vector.cross(-axis_x, axis_y) - axis_z).length > 0.01:
                         self.nif_import.warning("Axes are not orthogonal in %s;"
                                                 " arbitrary orientation has been chosen"
-                                                % hkdescriptor.__class__.__name__)
+                                                % hkdescriptor.__class__.__name__
+                                                )
                         axis_z = mathutils.Vector.cross(axis_x, axis_y)
                     else:
                         # fix orientation
                         self.nif_import.warning("X axis flipped in %s to fix orientation"
-                                                % hkdescriptor.__class__.__name__)
+                                                % hkdescriptor.__class__.__name__
+                                                )
                         axis_x = -axis_x
                 # getting properties with no blender constraint
                 # equivalent and setting as obj properties
@@ -258,7 +263,8 @@ class constraint_import():
                 b_hkobj.niftools_constraint.LHMaxFriction = hkdescriptor.max_friction
             else:
                 raise ValueError("unknown descriptor %s"
-                                 % hkdescriptor.__class__.__name__)
+                                 % hkdescriptor.__class__.__name__
+                                 )
 
             # transform pivot point and constraint matrix into object
             # coordinates
@@ -358,4 +364,5 @@ class constraint_import():
                 b_constr.pivot_type = 'HINGE'
             else:
                 raise ValueError("unknown descriptor %s"
-                                 % hkdescriptor.__class__.__name__)
+                                 % hkdescriptor.__class__.__name__
+                                 )

@@ -72,9 +72,9 @@ class constraint_export():
             # rigid body joints
             if b_constr.type == 'RIGID_BODY_JOINT':
                 if self.properties.game not in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-                    self.nif_export.warning(
-                        "Only Oblivion/Fallout 3 rigid body constraints"
-                        " can be exported: skipped %s." % b_constr)
+                    self.nif_export.warning("Only Oblivion/Fallout 3 rigid body constraints can be exported: skipped %s."
+                                            % b_constr
+                                            )
                     continue
                 # check that the object is a rigid body
                 for otherbody, otherobj in self.nif_export.dict_blocks.items():
@@ -83,10 +83,9 @@ class constraint_export():
                         break
                 else:
                     # no collision body for this object
-                    raise nif_utils.NifError(
-                        "Object %s has a rigid body constraint,"
-                        " but is not exported as collision object"
-                        % b_obj.name)
+                    raise nif_utils.NifError("Object %s has a rigid body constraint, but is not exported as collision object"
+                                             % b_obj.name
+                                             )
                 # yes there is a rigid body constraint
                 # is it of a type that is supported?
                 if b_constr.pivot_type == 'CONE_TWIST':
@@ -166,7 +165,8 @@ class constraint_export():
                 else:
                     # not found
                     raise nif_utils.NifError("Rigid body target not exported in nif tree check that %s is selected during export."
-                                             % targetobj)
+                                             % targetobj
+                                             )
                 # priority
                 hkconstraint.priority = 1
                 # extra malleable constraint settings
@@ -266,7 +266,8 @@ class constraint_export():
                     hkdescriptor.max_friction = max_friction
                 else:
                     raise ValueError("unknown descriptor %s"
-                                     % hkdescriptor.__class__.__name__)
+                                     % hkdescriptor.__class__.__name__
+                                     )
 
                 # do AB
                 hkconstraint.update_a_b(root_block)

@@ -104,7 +104,8 @@ class bhkshape_import():
                                          for subshape in bhkshape.sub_shapes))
 
         self.nif_import.warning("Unsupported bhk shape %s"
-                                % bhkshape.__class__.__name__)
+                                % bhkshape.__class__.__name__
+                                )
         return []
 
     def import_bhktransform(self, bhkshape):
@@ -563,7 +564,8 @@ class bound_import():
 
         else:
             raise TypeError("Expected BSBound or NiNode but got %s."
-                            % bbox.__class__.__name__)
+                            % bbox.__class__.__name__
+                            )
 
         # create mesh
         for x in [minx, maxx]:

@@ -286,8 +286,7 @@ class NifCommon:
         elif n_ipol == 0:
             # guessing, not documented in nif.xml
             return Blender.IpoCurve.InterpTypes.CONST
-        self.warning(
-            "Unsupported interpolation mode in nif, using quadratic/bezier.")
+        self.warning("Unsupported interpolation mode in nif, using quadratic/bezier.")
         return Blender.IpoCurve.InterpTypes.BEZIER
 
     def get_n_ipol_from_b_ipol(self, b_ipol):
@@ -297,8 +296,7 @@ class NifCommon:
             return NifFormat.KeyType.QUADRATIC_KEY
         elif b_ipol == Blender.IpoCurve.InterpTypes.CONST:
             return NifFormat.KeyType.CONST_KEY
-        self.warning(
-            "Unsupported interpolation mode in blend, using quadratic/bezier.")
+        self.warning("Unsupported interpolation mode in blend, using quadratic/bezier.")
         return NifFormat.KeyType.QUADRATIC_KEY
 
     def get_n_apply_mode_from_b_blend_type(self, b_blend_type):
@@ -308,7 +306,7 @@ class NifCommon:
             return NifFormat.ApplyMode.APPLY_HILIGHT2
         elif b_blend_type == "MIX":
             return NifFormat.ApplyMode.APPLY_MODULATE
-        self.warning(
-            "Unsupported blend type (%s) in material,"
-            " using apply mode APPLY_MODULATE" % b_blend_type)
+        self.warning("Unsupported blend type (%s) in material, using apply mode APPLY_MODULATE"
+                     % b_blend_type
+                     )
         return NifFormat.ApplyMode.APPLY_MODULATE

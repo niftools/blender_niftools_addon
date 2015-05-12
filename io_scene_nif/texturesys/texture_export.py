@@ -185,7 +185,8 @@ class TextureHelper():
         if b_obj.niftools_shader.bs_shadertype == 'None':
             raise nif_utils.NifError("Export version expected shader. no shader applied to mesh '%s',"
                                      " these cannot be exported to NIF. Set shader before exporting."
-                                     % b_obj)
+                                     % b_obj
+                                     )
         # set textures
         texset = NifFormat.BSShaderTextureSet()
         bsshader.texture_set = texset
@@ -609,7 +610,8 @@ class TextureHelper():
                     raise nif_utils.NifError("Do not know how to export texture '%s', in mesh '%s', material '%s'."
                                              " Either delete it, or if this texture is to be your base texture,"
                                              " go to the Shading Panel, Material Buttons, and set texture 'Map To' to 'COL'."
-                                             % (b_mat_texslot.texture.name, b_obj.name, b_mat.name))
+                                             % (b_mat_texslot.texture.name, b_obj.name, b_mat.name)
+                                             )
 
             # nif only support UV-mapped textures
             else:

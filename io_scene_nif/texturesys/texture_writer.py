@@ -98,10 +98,9 @@ class TextureWriter():
         try:
             texdesc.uv_set = uvlayers.index(b_mat_texslot.uv_layer) if b_mat_texslot.uv_layer else 0
         except ValueError:  # mtex.uv_layer not in uvlayers list
-            self.nif_export.warning(
-                "Bad uv layer name '%s' in texture '%s'."
-                " Falling back on first uv layer"
-                % (b_mat_texslot.uv_layer, b_mat_texslot.texture.name))
+            self.nif_export.warning("Bad uv layer name '%s' in texture '%s'. Falling back on first uv layer"
+                                    % (b_mat_texslot.uv_layer, b_mat_texslot.texture.name)
+                                    )
             texdesc.uv_set = 0  # assume 0 is active layer
 
         texdesc.source = self.export_source_texture(b_mat_texslot.texture)
