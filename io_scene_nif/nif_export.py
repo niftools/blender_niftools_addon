@@ -311,8 +311,7 @@ class NifExport(NifCommon):
                         # or if the ninode has a controller
                         # convert its type
                         if block.controller or any(child.controller for child in block.children if isinstance(child, NifFormat.NiGeometry)):
-                            new_block = NifFormat.NiBSAnimationNode().deepcopy(
-                                block)
+                            new_block = NifFormat.NiBSAnimationNode().deepcopy(block)
                             # have to change flags to 42 to make it work
                             new_block.flags = 42
                             root_block.replace_global_node(block, new_block)
@@ -561,8 +560,7 @@ class NifExport(NifCommon):
                                              " You may wish to use simple primitives for collision.")
 
             # delete original scene root if a scene root object was already defined
-            if ((root_block.num_children == 1) and ((root_block.children[0].name in [
-                    'Scene Root', 'Bip01']) or root_block.children[0].name[-3:] == 'nif')):
+            if ((root_block.num_children == 1) and ((root_block.children[0].name in ['Scene Root', 'Bip01']) or root_block.children[0].name[-3:] == 'nif')):
                 if root_block.children[0].name[-3:] == 'nif':
                     root_block.children[0].name = filebase
                 self.info("Making '%s' the root block"
@@ -670,8 +668,7 @@ class NifExport(NifCommon):
                     for ctrl in ctrls:
                         if self.properties.game == 'MORROWIND':
                             # morrowind: only keyframe controllers
-                            if not isinstance(ctrl,
-                                              NifFormat.NiKeyframeController):
+                            if not isinstance(ctrl, NifFormat.NiKeyframeController):
                                 continue
                         if node not in node_kfctrls:
                             node_kfctrls[node] = []
@@ -730,22 +727,15 @@ class NifExport(NifCommon):
                         # controller
                         for ctrl in ctrls:
                             # XXX add get_interpolators to pyffi interface
-                            if isinstance(ctrl,
-                                          NifFormat.NiSingleInterpController):
+                            if isinstance(ctrl, NifFormat.NiSingleInterpController):
                                 interpolators = [ctrl.interpolator]
-                            elif isinstance(
-                                ctrl, (NifFormat.NiGeomMorpherController,
-                                       NifFormat.NiMorphWeightsController)):
+                            elif isinstance(ctrl, (NifFormat.NiGeomMorpherController, NifFormat.NiMorphWeightsController)):
                                 interpolators = ctrl.interpolators
-                            if isinstance(ctrl,
-                                          NifFormat.NiGeomMorpherController):
-                                variable_2s = [morph.frame_name
-                                               for morph in ctrl.data.morphs]
+                            if isinstance(ctrl, NifFormat.NiGeomMorpherController):
+                                variable_2s = [morph.frame_name for morph in ctrl.data.morphs]
                             else:
-                                variable_2s = [None
-                                               for interpolator in interpolators]
-                            for interpolator, variable_2 in zip(interpolators,
-                                                                variable_2s):
+                                variable_2s = [None for interpolator in interpolators]
+                            for interpolator, variable_2 in zip(interpolators, variable_2s):
                                 # create ControlledLink for each
                                 # interpolator
                                 controlledblock = kf_root.add_controlled_block()
@@ -782,11 +772,8 @@ class NifExport(NifCommon):
                                 if variable_2:
                                     controlledblock.set_variable_2(variable_2)
                 else:
-                    raise nif_utils.NifError("Keyframe export for '%s' is not supported. "
-                                             " Only Morrowind, Oblivion, Fallout 3, Civilization IV,"
-                                             " Zoo Tycoon 2, Freedom Force, and"
-                                             " Freedom Force vs. the 3rd Reich"
-                                             " keyframes are supported."
+                    raise nif_utils.NifError("Keyframe export for '%s' is not supported. Only Morrowind, Oblivion, Fallout 3, Civilization IV,"
+                                             " Zoo Tycoon 2, Freedom Force, and Freedom Force vs. the 3rd Reich keyframes are supported."
                                              % self.properties.game
                                              )
 
@@ -1007,7 +994,6 @@ class NifExport(NifCommon):
         except nif_utils.NifError:  # non-uniform scaling
             self.debug(str(matrix))
             raise nif_utils.NifError("Non-uniform scaling on bone '%s' not supported."
-                                     " This could be a bug... No workaround. :-( Post your blend!"
                                      % b_obj.name
                                      )
 
