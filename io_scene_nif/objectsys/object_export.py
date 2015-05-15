@@ -94,10 +94,12 @@ class ObjectHelper():
         @return: C{block}"""
         if b_obj is None:
             self.nif_export.info("Exporting %s block"
-                                 % block.__class__.__name__)
+                                 % block.__class__.__name__
+                                 )
         else:
             self.nif_export.info("Exporting %s as %s block"
-                                 % (b_obj, block.__class__.__name__))
+                                 % (b_obj, block.__class__.__name__)
+                                 )
         self.nif_export.dict_blocks[block] = b_obj
         return block
 
@@ -222,10 +224,9 @@ class ObjectHelper():
             if b_obj.parent and b_obj.parent.type == 'ARMATURE':
                 if b_obj_ipo:
                     # mesh with armature parent should not have animation!
-                    self.warning(
-                        "Mesh %s is skinned but also has object animation. "
-                        "The nif format does not support this: "
-                        "ignoring object animation." % b_obj.name)
+                    self.warning("Mesh %s is skinned but also has object animation. The nif format does not support this: ignoring object animation."
+                                 % b_obj.name
+                                 )
                     b_obj_ipo = None
                 trishape_space = space
                 space = 'none'
@@ -397,7 +398,9 @@ class MeshHelper():
         self.properties = parent.properties
 
     def export_tri_shapes(self, b_obj, space, parent_block, trishape_name=None):
-        self.nif_export.info("Exporting %s" % b_obj)
+        self.nif_export.info("Exporting %s"
+                             % b_obj
+                             )
 
         assert(b_obj.type == 'MESH')
 
@@ -409,7 +412,9 @@ class MeshHelper():
         # so quickly catch this (rare!) case
         if not b_obj.data.vertices:
             # do not export anything
-            self.nif_export.warning("%s has no vertices, skipped." % b_obj)
+            self.nif_export.warning("%s has no vertices, skipped."
+                                    % b_obj
+                                    )
             return
 
         # get the mesh's materials, this updates the mesh material list
@@ -434,11 +439,7 @@ class MeshHelper():
 
             # vertex alpha check
             if len(b_mesh.vertex_colors) == 1:
-                self.nif_export.warning("Mesh only has one Vertex Color layer"
-                                        " default alpha values will be written\n"
-                                        " - For Alpha values add a second vertex layer, "
-                                        " greyscale only"
-                                        )
+                self.nif_export.warning("Mesh only has one Vertex Color layer default alpha values will be written. For Alpha values add a second vertex layer, greyscale only")
             else:
                 for b_loop in b_mesh.vertex_colors[1].data:
                     if(b_loop.color.v > self.properties.epsilon):
@@ -497,9 +498,9 @@ class MeshHelper():
                 # specular mat
                 mesh_mat_specular_color = b_mat.specular_color
 
-                if (mesh_mat_specular_color.r > self.properties.epsilon) or (
-                        mesh_mat_specular_color.g > self.properties.epsilon) or (
-                            mesh_mat_specular_color.b > self.properties.epsilon):
+                if (mesh_mat_specular_color.r > self.properties.epsilon) or \
+                   (mesh_mat_specular_color.g > self.properties.epsilon) or \
+                   (mesh_mat_specular_color.b > self.properties.epsilon):
                     mesh_hasspec = b_spec_prop
 
                 # gloss mat
@@ -764,8 +765,7 @@ class MeshHelper():
                     # if we have uv coordinates
                     # double check that we have uv data
                     if not b_mesh.uv_layer_stencil:
-                        raise nif_utils.NifError("ERROR%t|Create a UV map for every texture,"
-                                                 " and run the script again.")
+                        raise nif_utils.NifError("ERROR%t|Create a UV map for every texture, and run the script again.")
                 # find (vert, uv-vert, normal, vcol) quad, and if not found, create it
                 f_index = [-1] * f_numverts
                 for i, loop_index in enumerate(range(poly.loop_start, poly.loop_start + poly.loop_total)):
@@ -841,9 +841,7 @@ class MeshHelper():
                             break
 
                     if f_index[i] > 65535:
-                        raise nif_utils.NifError(
-                            "ERROR%t|Too many vertices. Decimate your mesh"
-                            " and try again.")
+                        raise nif_utils.NifError("ERROR%t|Too many vertices. Decimate your mesh and try again.")
                     if (f_index[i] == len(vertquad_list)):
                         # first: add it to the vertex map
                         if not vertmap[vertex_index]:
@@ -895,11 +893,9 @@ class MeshHelper():
                 for face in polygons_without_bodypart:
                     face.select = True
                 # raise exception
-                raise ValueError("Some polygons of %s not assigned to any body part."
-                                 " The unassigned polygons"
-                                 " have been selected in the mesh so they can easily"
-                                 " be identified."
-                                 % b_obj)
+                raise ValueError("Some polygons of %s not assigned to any body part. The unassigned polygons have been selected in the mesh so they can easily be identified."
+                                 % b_obj
+                                 )
 
             if len(trilist) > 65535:
                 raise nif_utils.NifError("ERROR%t|Too many polygons. Decimate your mesh and try again.")
@@ -957,8 +953,7 @@ class MeshHelper():
                 tridata.bs_num_uv_sets = len(mesh_uvlayers)
                 if self.properties.game == 'FALLOUT_3':
                     if len(mesh_uvlayers) > 1:
-                        raise nif_utils.NifError(
-                            "Fallout 3 does not support multiple UV layers")
+                        raise nif_utils.NifError("Fallout 3 does not support multiple UV layers")
                 tridata.has_uv = True
                 tridata.uv_sets.update_size()
                 for j, uvlayer in enumerate(mesh_uvlayers):
@@ -1006,9 +1001,9 @@ class MeshHelper():
                                     skininst.skeleton_root = block
                                     break
                         else:
-                            raise nif_utils.NifError(
-                                "Skeleton root '%s' not found."
-                                % armaturename)
+                            raise nif_utils.NifError("Skeleton root '%s' not found."
+                                                     % armaturename
+                                                     )
 
                         # create skinning data and link it
                         skindata = self.nif_export.objecthelper.create_block("NiSkinData", b_obj)
@@ -1065,10 +1060,7 @@ class MeshHelper():
                             # select unweighted vertices
                             bpy.ops.mesh.select_ungrouped(extend=False)
 
-                            raise nif_utils.NifError("Cannot export mesh with unweighted vertices."
-                                                     " The unweighted vertices have been selected"
-                                                     " in the mesh so they can easily be"
-                                                     " identified.")
+                            raise nif_utils.NifError("Cannot export mesh with unweighted vertices. The unweighted vertices have been selected in the mesh so they can easily be identified.")
 
                         # for each bone, first we get the bone block
                         # then we get the vertex weights
@@ -1084,15 +1076,14 @@ class MeshHelper():
                                         if not bone_block:
                                             bone_block = block
                                         else:
-                                            raise nif_utils.NifError("multiple bones with name '%s': probably"
-                                                                     " you have multiple armatures, please parent all meshes"
-                                                                     " to a single armature and try again"
+                                            raise nif_utils.NifError("multiple bones with name '%s': you probably have multiple armatures, please parent all meshes to a single armature and try again"
                                                                      % bone
                                                                      )
 
                             if not bone_block:
-                                raise nif_utils.NifError(
-                                    "Bone '%s' not found." % bone)
+                                raise nif_utils.NifError("Bone '%s' not found."
+                                                         % bone
+                                                         )
 
                             # find vertex weights
                             vert_weights = {}
@@ -1137,23 +1128,17 @@ class MeshHelper():
                             # warn on bad config settings
                             if self.properties.game == 'OBLIVION':
                                 if self.properties.pad_bones:
-                                    self.nif_export.warning("Using padbones on Oblivion export, but you probably do not want to do"
-                                                            " this. Disable the pad bones option to get higher quality skin partitions."
-                                                            )
+                                    self.nif_export.warning("Using padbones on Oblivion export, but you probably do not want to do this. Disable the pad bones option to get higher quality skin partitions.")
                             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
                                 if self.properties.max_bones_per_partition < 18:
-                                    self.nif_export.warning("Using less than 18 bones per partition on Oblivion/Fallout 3"
-                                                            " export. Set it to 18 to get higher quality skin partitions."
-                                                            )
+                                    self.nif_export.warning("Using less than 18 bones per partition on Oblivion/Fallout 3 export. Set it to 18 to get higher quality skin partitions.")
                             if self.properties.game in ('SKYRIM'):
                                 if self.properties.max_bones_per_partition < 24:
-                                    self.nif_export.warning("Using less than 24 bones per partition on Skyrim"
-                                                            " export. Set it to 24 to get higher quality skin partitions."
-                                                            )
+                                    self.nif_export.warning("Using less than 24 bones per partition on Skyrim export. Set it to 24 to get higher quality skin partitions.")
                             if lostweight > self.properties.epsilon:
-                                self.nif_export.warning("Lost %f in vertex weights while creating a skin partition"
-                                                        " for Blender object '%s' (nif block '%s')"
-                                                        % (lostweight, b_obj.name, trishape.name))
+                                self.nif_export.warning("Lost %f in vertex weights while creating a skin partition for Blender object '%s' (nif block '%s')"
+                                                        % (lostweight, b_obj.name, trishape.name)
+                                                        )
 
                         if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
                             partitions = skininst.partitions
@@ -1187,8 +1172,7 @@ class MeshHelper():
                         if not key.relative:
                             # XXX if we do "key.relative = True"
                             # XXX would this automatically fix the keys?
-                            raise ValueError(
-                                "Can only export relative shape keys.")
+                            raise ValueError("Can only export relative shape keys.")
 
                         # create geometry morph controller
                         morphctrl = self.nif_export.objecthelper.create_block("NiGeomMorpherController", keyipo)
@@ -1224,7 +1208,8 @@ class MeshHelper():
                             morph = morphdata.morphs[keyblocknum]
                             morph.frame_name = keyblock.name
                             self.nif_export.info("Exporting morph %s: vertices"
-                                                 % keyblock.name)
+                                                 % keyblock.name
+                                                 )
                             morph.arg = morphdata.num_vertices
                             morph.vectors.update_size()
                             for b_v_index, (vert_indices, vert) in enumerate(list(zip(vertmap, keyblock.data))):
@@ -1264,7 +1249,8 @@ class MeshHelper():
                             # of course only one of these will be actually
                             # written to the file
                             self.nif_export.info("Exporting morph %s: curve"
-                                                 % keyblock.name)
+                                                 % keyblock.name
+                                                 )
                             interpol.data = self.nif_export.objecthelper.create_block("NiFloatData", curve)
                             floatdata = interpol.data.data
                             if curve.getExtrapolation() == "Constant":
@@ -1348,4 +1334,6 @@ class MeshHelper():
                 vertex.normal = norm
                 # vertex.sel = True
             nv += 1
-        self.nif_export.info("Fixed normals on %i vertices." % nv)
+        self.nif_export.info("Fixed normals on %i vertices."
+                             % nv
+                             )

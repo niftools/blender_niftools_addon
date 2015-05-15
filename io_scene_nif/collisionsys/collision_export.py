@@ -468,9 +468,7 @@ class bhkshape_export():
             fdistlist = [fdistlist[fdict[hsh]] for hsh in fkeys]
 
             if len(fnormlist) > 65535 or len(vertlist) > 65535:
-                raise nif_utils.NifError(
-                    "ERROR%t|Too many polygons/vertices."
-                    " Decimate/split your b_mesh and try again.")
+                raise nif_utils.NifError("ERROR%t|Too many polygons/vertices. Decimate/split your b_mesh and try again.")
 
             colhull = self.nif_export.objecthelper.create_block("bhkConvexVerticesShape", b_obj)
             colhull.material = n_havok_mat

@@ -114,8 +114,7 @@ class Material():
             # check hash
             first_index = 1 if ignore_strings else 0
             if (block.get_hash()[first_index:] == matprop.get_hash()[first_index:]):
-                self.nif_export.warning("Merging materials '%s' and '%s'"
-                                        " (they are identical in nif)"
+                self.nif_export.warning("Merging materials '%s' and '%s', they are identical in nif"
                                         % (matprop.name, block.name)
                                         )
                 return block

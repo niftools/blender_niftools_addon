@@ -162,8 +162,7 @@ class TextureLoader():
         elif isinstance(source, str):
             fn = source
         else:
-            raise TypeError(
-                "source must be NiSourceTexture or str")
+            raise TypeError("source must be NiSourceTexture or str")
         fn = fn.replace('\\', os.sep)
         fn = fn.replace('/', os.sep)
         # go searching for it

@@ -205,7 +205,8 @@ class AnimationHelper():
                 lowest_diff = diff
                 fps = test_fps
         self.nif_import.info("Animation estimated at %i frames per second."
-                             % fps)
+                             % fps
+                             )
         return fps
 
     def store_animation_data(self, rootBlock):
@@ -662,9 +663,7 @@ class ArmatureAnimation():
                         # XXX it is assumed that all the keys have the
                         # XXX same times!!!
                         if (abs(xkey.time - ykey.time) > self.properties.epsilon or abs(xkey.time - zkey.time) > self.properties.epsilon):
-                            self.nif_import.warning(
-                                "xyz key times do not correspond, "
-                                "animation may not be correctly imported")
+                            self.nif_import.warning("xyz key times do not correspond, animation may not be correctly imported")
                         frame = 1 + int(xkey.time * self.nif_import.fps + 0.5)
                         euler = mathutils.Euler(
                             [xkey.value * 180.0 / math.pi,

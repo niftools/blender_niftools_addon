@@ -105,8 +105,7 @@ class AnimationHelper():
         elif extend == bpy.types.IpoCurve.ExtendTypes.CYCLIC:
             return 0
 
-        self.nif_export.warning(
-            "Unsupported extend type in blend, using clamped.")
+        self.nif_export.warning("Unsupported extend type in blend, using clamped.")
         return 4
 
     def export_keyframes(self, ipo, space, parent_block, bind_matrix=None, extra_mat_inv=None):

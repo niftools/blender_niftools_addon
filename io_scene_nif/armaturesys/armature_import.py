@@ -293,8 +293,7 @@ class Armature():
              in ('skeleton.nif', 'skeletonbeast.nif'))):
 
             if not isinstance(niBlock, NifFormat.NiNode):
-                raise nif_utils.NifError(
-                    "cannot import skeleton: root is not a NiNode")
+                raise nif_utils.NifError("cannot import skeleton: root is not a NiNode")
             # for morrowind, take the Bip01 node to be the skeleton root
             if self.nif_import.data.version == 0x04000002:
                 skelroot = niBlock.find(block_name='Bip01',

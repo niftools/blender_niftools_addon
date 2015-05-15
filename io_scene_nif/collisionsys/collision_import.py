@@ -352,9 +352,7 @@ class bhkshape_import():
             normal = (bhkshape.first_point - bhkshape.second_point) / length
             normal = mathutils.Vector((normal.x, normal.y, normal.z))
         else:
-            self.nif_import.warning(
-                "bhkCapsuleShape with identical points:"
-                " using arbitrary axis")
+            self.nif_import.warning("bhkCapsuleShape with identical points: using arbitrary axis")
             normal = mathutils.Vector((0, 0, 1))
         minindex = min((abs(x), i) for i, x in enumerate(normal))[1]
         orthvec = mathutils.Vector([(1 if i == minindex else 0) for i in (0, 1, 2)])

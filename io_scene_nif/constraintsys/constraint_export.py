@@ -109,10 +109,9 @@ class constraint_export():
                         hkconstraint.type = 2
                     hkdescriptor = hkconstraint.limited_hinge
                 else:
-                    raise nif_utils.NifError(
-                        "Unsupported rigid body joint type (%i),"
-                        " only ball and hinge are supported."
-                        % b_constr.type)
+                    raise nif_utils.NifError("Unsupported rigid body joint type (%i), only ball and hinge are supported."
+                                             % b_constr.type
+                                             )
 
                 # defaults and getting object properties for user
                 # settings (should use constraint properties, but

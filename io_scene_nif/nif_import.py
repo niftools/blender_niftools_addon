@@ -114,7 +114,9 @@ class NifImport(NifCommon):
                 self.data.inspect(niffile)
                 if self.data.version >= 0:
                     # it is valid, so read the file
-                    self.info("NIF file version: 0x%08X" % self.data.version)
+                    self.info("NIF file version: 0x%08X"
+                              % self.data.version
+                              )
                     self.info("Reading file")
                     self.data.read(niffile)
                 elif self.data.version == -1:
@@ -658,8 +660,7 @@ class NifImport(NifCommon):
                 constr = b_obj.constraints[-1]
                 constr.target = b_obj_camera
                 if constr.target is None:
-                    self.warning("Constraint for billboard node on %s added but target not set due to transform bug"
-                                 " in Blender. Set target to Camera manually."
+                    self.warning("Constraint for billboard node on %s added but target not set due to transform bug in Blender. Set target to Camera manually."
                                  % b_obj
                                  )
                 constr.track_axis = 'TRACK_Z'

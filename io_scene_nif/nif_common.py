@@ -274,8 +274,7 @@ class NifCommon:
         elif flags & 6 == 0:  # 0b000
             return Blender.IpoCurve.ExtendTypes.CYCLIC
 
-        self.warning(
-            "Unsupported cycle mode in nif, using clamped.")
+        self.warning("Unsupported cycle mode in nif, using clamped.")
         return Blender.IpoCurve.ExtendTypes.CONST
 
     def get_b_ipol_from_n_ipol(self, n_ipol):

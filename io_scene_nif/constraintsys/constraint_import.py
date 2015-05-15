@@ -64,8 +64,7 @@ class constraint_import():
 
         # find objects
         if len(self.nif_import.dict_havok_objects[hkbody]) != 1:
-            self.nif_import.warning(
-                "Rigid body with no or multiple shapes, constraints skipped")
+            self.nif_import.warning("Rigid body with no or multiple shapes, constraints skipped")
             return
 
         b_hkobj = self.nif_import.dict_havok_objects[hkbody][0]
@@ -79,16 +78,13 @@ class constraint_import():
 
             # check constraint entities
             if not hkconstraint.num_entities == 2:
-                self.warning(
-                    "Constraint with more than 2 entities, skipped")
+                self.warning("Constraint with more than 2 entities, skipped")
                 continue
             if not hkconstraint.entities[0] is hkbody:
-                self.warning(
-                    "First constraint entity not self, skipped")
+                self.warning("First constraint entity not self, skipped")
                 continue
             if not hkconstraint.entities[1] in self.nif_import.dict_havok_objects:
-                self.warning(
-                    "Second constraint entity not imported, skipped")
+                self.warning("Second constraint entity not imported, skipped")
                 continue
 
             # get constraint descriptor
@@ -223,8 +219,7 @@ class constraint_import():
                 if (mathutils.Vector.cross(axis_x, axis_y) - axis_z).length > 0.01:
                     # either not orthogonal, or negative orientation
                     if (mathutils.Vector.cross(-axis_x, axis_y) - axis_z).length > 0.01:
-                        self.nif_import.warning("Axes are not orthogonal in %s;"
-                                                " arbitrary orientation has been chosen"
+                        self.nif_import.warning("Axes are not orthogonal in %s; arbitrary orientation has been chosen"
                                                 % hkdescriptor.__class__.__name__
                                                 )
                         axis_z = mathutils.Vector.cross(axis_x, axis_y)

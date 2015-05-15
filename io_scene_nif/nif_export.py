@@ -135,7 +135,9 @@ class NifExport(NifCommon):
 
             # find nif version to write
             self.version = self.operator.version[self.properties.game]
-            self.info("Writing NIF version 0x%08X" % self.version)
+            self.info("Writing NIF version 0x%08X"
+                      % self.version
+                      )
 
             if self.properties.animation == 'ALL_NIF':
                 self.info("Exporting geometry and animation")
@@ -161,9 +163,7 @@ class NifExport(NifCommon):
                             if b_mod.type == 'ARMATURE':
                                 b_armature_modifier = b_mod.name
                                 if b_mod.use_bone_envelopes:
-                                    raise nif_utils.NifError("'%s': Cannot export envelope skinning. If you have vertex groups, turn off envelopes."
-                                                             " If you don't have vertex groups, select the bones one by one press W"
-                                                             " to convert their envelopes to vertex weights, and turn off envelopes."
+                                    raise nif_utils.NifError("'%s': Cannot export envelope skinning. If you have vertex groups, turn off envelopes. If you don't have vertex groups, select the bones one by one press W to convert their envelopes to vertex weights, and turn off envelopes."
                                                              % b_obj.name
                                                              )
                         if not b_armature_modifier:
@@ -323,8 +323,7 @@ class NifExport(NifCommon):
             if self.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM') and filebase.lower() in ('skeleton', 'skeletonbeast'):
                 # here comes everything that is Oblivion skeleton export
                 # specific
-                self.info(
-                    "Adding controllers and interpolators for skeleton")
+                self.info("Adding controllers and interpolators for skeleton")
                 for block in list(self.dict_blocks.keys()):
                     if isinstance(block, NifFormat.NiNode) and block.name.decode() == "Bip01":
                         for bone in block.tree(block_type=NifFormat.NiNode):
@@ -364,11 +363,9 @@ class NifExport(NifCommon):
                 try:
                     furniturenumber = int(filebase[15:])
                 except ValueError:
-                    raise nif_utils.NifError(
-                        "Furniture marker has invalid number (%s)."
-                        " Name your file 'furnituremarkerxx.nif'"
-                        " where xx is a number between 00 and 19."
-                        % filebase[15:])
+                    raise nif_utils.NifError("Furniture marker has invalid number (%s). Name your file 'furnituremarkerxx.nif' where xx is a number between 00 and 19."
+                                             % filebase[15:]
+                                             )
                 # name scene root name the file base name
                 root_name = filebase
 
@@ -556,8 +553,7 @@ class NifExport(NifCommon):
                         # print "=== END OF MOPP TREE ==="
                         # warn about mopps on non-static objects
                         if any(sub_shape.layer != 1 for sub_shape in block.shape.sub_shapes):
-                                self.warning("Mopps for non-static objects may not function correctly in-game."
-                                             " You may wish to use simple primitives for collision.")
+                                self.warning("Mopps for non-static objects may not function correctly in-game. You may wish to use simple primitives for collision.")
 
             # delete original scene root if a scene root object was already defined
             if ((root_block.num_children == 1) and ((root_block.children[0].name in ['Scene Root', 'Bip01']) or root_block.children[0].name[-3:] == 'nif')):
@@ -772,8 +768,7 @@ class NifExport(NifCommon):
                                 if variable_2:
                                     controlledblock.set_variable_2(variable_2)
                 else:
-                    raise nif_utils.NifError("Keyframe export for '%s' is not supported. Only Morrowind, Oblivion, Fallout 3, Civilization IV,"
-                                             " Zoo Tycoon 2, Freedom Force, and Freedom Force vs. the 3rd Reich keyframes are supported."
+                    raise nif_utils.NifError("Keyframe export for '%s' is not supported. Only Morrowind, Oblivion, Fallout 3, Civilization IV, Zoo Tycoon 2, Freedom Force, and Freedom Force vs. the 3rd Reich keyframes are supported."
                                              % self.properties.game
                                              )
 
@@ -818,9 +813,7 @@ class NifExport(NifCommon):
                 self.info("Detaching animation text keys from nif")
                 # detach animation text keys
                 if root_block.extra_data is not anim_textextra:
-                    raise RuntimeError(
-                        "Oops, you found a bug! Animation extra data"
-                        " wasn't where expected...")
+                    raise RuntimeError("Oops, you found a bug! Animation extra data wasn't where expected.")
                 root_block.extra_data = None
 
                 prefix = "x"  # we are in morrowind 'nifxnifkf mode'

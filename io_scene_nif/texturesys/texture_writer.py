@@ -71,8 +71,7 @@ class TextureWriter():
             srctex.file_name = self.export_texture_filename(texture)
         else:
             # this probably should not happen
-            self.nif_export.warning(
-                "Exporting source texture without texture or filename (bug?).")
+            self.nif_export.warning("Exporting source texture without texture or filename (bug?).")
 
         # fill in default values (TODO: can we use 6 for everything?)
         if self.nif_export.nif_export.version >= 0x0a000100:
@@ -153,8 +152,7 @@ class TextureWriter():
                 if (idx >= 0):
                     filename = filename[idx:]
                 else:
-                    self.nif_export.warning("%s does not reside in a 'Textures' folder; texture path will be stripped"
-                                            " and textures may not display in-game"
+                    self.nif_export.warning("%s does not reside in a 'Textures' folder; texture path will be stripped and textures may not display in-game"
                                             % filename
                                             )
                     filename = os.path.basename(filename)
