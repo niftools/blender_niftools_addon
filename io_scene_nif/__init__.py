@@ -43,10 +43,12 @@ import os
 import bpy
 import bpy.props
 
-import logging
-
 import io_scene_nif
+from io_scene_nif import modules_path
+from io_scene_nif import nif_debug
 from io_scene_nif import properties, operators, ui
+
+import logging
 
 #: Blender addon info.
 bl_info = {
@@ -66,18 +68,6 @@ bl_info = {
         "http://sourceforge.net/tracker/?group_id=149157&atid=776343"),
     "support": "COMMUNITY",
     "category": "Import-Export"}
-
-try:
-    from io_scene_nif import nif_debug
-    nif_debug.startdebug()
-except:
-    print("Failed to load debug module")
-
-# Python dependencies are bundled inside the io_scene_nif/modules folder
-_modules_path = os.path.join(os.path.dirname(__file__), "modules")
-if _modules_path not in sys.path:
-    sys.path.append(_modules_path)
-del _modules_path
 
 
 def _init_loggers():

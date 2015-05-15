@@ -1,3 +1,5 @@
+"""Blender path settings for submodules."""
+
 # ***** BEGIN LICENSE BLOCK *****
 #
 # Copyright © 2005-2015, NIF File Format Library and Tools contributors.
@@ -35,24 +37,12 @@
 #
 # ***** END LICENSE BLOCK *****
 
+# Python dependencies are bundled inside the io_scene_nif/modules folder
 import sys
 import os
 
-try:
-    pydev_src = os.environ['PYDEVDEBUG']
 
-    if (sys.path.count(pydev_src) < 1):
-        sys.path.append(pydev_src)
-
-    import pydevd
-    print("Found: " + pydev_src)
-
-    try:
-        pydevd.settrace(None, True, True, 5678, False, False)
-    except:
-        print("Unable to connect to Remote debugging server")
-    pass
-
-except:
-    print("Python Remote Debugging Server not found")
-    pass
+_modules_path = os.path.join(os.path.dirname(__file__), "modules")
+if _modules_path not in sys.path:
+    sys.path.append(_modules_path)
+del _modules_path
