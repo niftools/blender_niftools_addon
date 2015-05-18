@@ -602,7 +602,7 @@ class MaterialAnimation():
             # attach block to geometry
             n_matprop = nif_utils.find_property(n_geom, NifFormat.NiMaterialProperty)
             if not n_matprop:
-                raise ValueError("bug!! must add material property before exporting alpha controller")
+                raise ValueError("A material property must be added before exporting alpha controller")
             n_matprop.add_controller(n_alphactrl)
 
     def export_material_color_controller(self, b_material, b_channels, n_geom, n_target_color):
@@ -653,7 +653,7 @@ class MaterialAnimation():
             # attach block to geometry
             n_matprop = nif_utils.find_property(n_geom, NifFormat.NiMaterialProperty)
             if not n_matprop:
-                raise ValueError("bug!! must add material property before exporting material color controller")
+                raise ValueError("A material property must be added before exporting material color controller")
             n_matprop.add_controller(n_matcolor_ctrl)
 
     def export_material_uv_controller(self, b_material, n_geom):

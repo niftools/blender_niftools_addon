@@ -50,19 +50,38 @@ from io_scene_nif.utility import nif_utils
 class Armature():
 
     # correction matrices list, the order is +X, +Y, +Z, -X, -Y, -Z
-    BONE_CORRECTION_MATRICES = (
-        mathutils.Matrix([[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]]),
-        mathutils.Matrix([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]),
-        mathutils.Matrix([[1.0, 0.0, 0.0], [0.0, 0.0, 1.0], [0.0, -1.0, 0.0]]),
-        mathutils.Matrix([[0.0, 1.0, 0.0], [-1.0, 0.0, 0.0], [0.0, 0.0, 1.0]]),
-        mathutils.Matrix([[-1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, 1.0]]),
-        mathutils.Matrix([[1.0, 0.0, 0.0], [0.0, 0.0, -1.0], [0.0, 1.0, 0.0]]))
+    BONE_CORRECTION_MATRICES = (mathutils.Matrix([[0.0, -1.0, 0.0],
+                                                  [1.0, 0.0, 0.0],
+                                                  [0.0, 0.0, 1.0]]
+                                                 ),
+                                mathutils.Matrix([[1.0, 0.0, 0.0],
+                                                  [0.0, 1.0, 0.0],
+                                                  [0.0, 0.0, 1.0]]
+                                                 ),
+                                mathutils.Matrix([[1.0, 0.0, 0.0],
+                                                  [0.0, 0.0, 1.0],
+                                                  [0.0, -1.0, 0.0]]
+                                                 ),
+                                mathutils.Matrix([[0.0, 1.0, 0.0],
+                                                  [-1.0, 0.0, 0.0],
+                                                  [0.0, 0.0, 1.0]]
+                                                 ),
+                                mathutils.Matrix([[-1.0, 0.0, 0.0],
+                                                  [0.0, -1.0, 0.0],
+                                                  [0.0, 0.0, 1.0]]
+                                                 ),
+                                mathutils.Matrix([[1.0, 0.0, 0.0],
+                                                  [0.0, 0.0, -1.0],
+                                                  [0.0, 1.0, 0.0]]
+                                                 )
+                                )
 
     # identity matrix, for comparisons
     IDENTITY44 = mathutils.Matrix([[1.0, 0.0, 0.0, 0.0],
                                    [0.0, 1.0, 0.0, 0.0],
                                    [0.0, 0.0, 1.0, 0.0],
-                                   [0.0, 0.0, 0.0, 1.0]])
+                                   [0.0, 0.0, 0.0, 1.0]]
+                                  )
 
     def __init__(self, parent):
         self.nif_import = parent
@@ -491,7 +510,8 @@ class Armature():
         if (scale_rot.determinant() < 0):
             b_scale.negate()
         # only uniform scaling
-        if (abs(scale_vec[0] - scale_vec[1]) >= self.properties.epsilon or abs(scale_vec[1] - scale_vec[2]) >= self.properties.epsilon):
+        if (abs(scale_vec[0] - scale_vec[1]) >= self.properties.epsilon or
+                abs(scale_vec[1] - scale_vec[2]) >= self.properties.epsilon):
             self.nif_import.warning("Corrupt rotation matrix in nif: geometry errors may result.")
         b_scale = b_scale[0]
         # get rotation matrix

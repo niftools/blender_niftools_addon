@@ -176,7 +176,8 @@ class NifExport(NifCommon):
                 # to have non-uniform scaling)
                 if b_obj.type != 'LATTICE':
                     scale = b_obj.matrix_local.to_scale()
-                    if (abs(scale.x - scale.y) > self.properties.epsilon or abs(scale.y - scale.z) > self.properties.epsilon):
+                    if (abs(scale.x - scale.y) > self.properties.epsilon or
+                            abs(scale.y - scale.z) > self.properties.epsilon):
                         raise nif_utils.NifError("Non-uniform scaling not supported. Workaround: apply size and rotation (CTRL-A) on '%s'."
                                                  % b_obj.name
                                                  )
