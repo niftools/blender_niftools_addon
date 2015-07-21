@@ -1,7 +1,7 @@
 #!/bin/sh
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-VERSION=`cat ${DIR}/../io_scene_nif/VERSION`
+DIR=`pwd`/`dirname $0`
+VERSION=`cat $DIR/../io_scene_nif/VERSION`
 NAME="blender_nif_plugin"
 
 for BLENDERVERSION in 2.66 2.65 2.64 2.63 2.62
@@ -30,5 +30,4 @@ rm -rf $BLENDERADDONS/io_scene_nif/
 sh $DIR/makezip.sh
 
 # copy files from repository to blender addons folder
-unzip "$DIR/${NAME}-${VERSION}.zip" -d $BLENDERADDONS
-
+unzip -q "$DIR/$NAME-$VERSION.zip" -d $BLENDERADDONS
