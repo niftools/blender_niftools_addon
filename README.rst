@@ -28,5 +28,5 @@ Support
 Fork
 ----
 
-* git clone git://github.com/niftools/blender_nif_plugin.git
+* git clone --recursive git://github.com/niftools/blender_nif_plugin.git
 * http://github.com/niftools/blender_nif_plugin
