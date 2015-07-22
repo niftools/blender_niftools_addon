@@ -1,4 +1,4 @@
-'''Nif Operators, nif specific operators to update nif properties'''
+"""Blender path settings for submodules."""
 
 # ***** BEGIN LICENSE BLOCK *****
 #
@@ -37,4 +37,12 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from . import object, geometry, nif_import_op, nif_export_op, nif_common_op
+# Python dependencies are bundled inside the io_scene_nif/modules folder
+import sys
+import os
+
+
+_modules_path = os.path.join(os.path.dirname(__file__), "modules")
+if _modules_path not in sys.path:
+    sys.path.append(_modules_path)
+del _modules_path

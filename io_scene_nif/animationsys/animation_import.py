@@ -41,14 +41,14 @@ from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.utility import nif_utils
 
+
 class AnimationHelper():
-    
+
     def __init__(self, parent):
         self.nif_import = parent
         self.object_animation = ObjectAnimation(parent)
         self.material_animation = MaterialAnimation(parent)
         self.armature_animation = ArmatureAnimation(parent)
-    
 
     def import_kf_root(self, kf_root, root):
         """Merge kf into nif.
@@ -65,34 +65,31 @@ class AnimationHelper():
         # import text keys
         self.import_text_keys(kf_root)
 
-
         # go over all controlled blocks
         for controlledblock in kf_root.controlled_blocks:
             # get the name
             nodename = controlledblock.get_node_name()
             # match from nif tree?
-            node = root.find(block_name = nodename)
+            node = root.find(block_name=nodename)
             if not node:
-                self.info(
-                    "Animation for %s but no such node found in nif tree"
-                    % nodename)
+                self.info("Animation for %s but no such node found in nif tree"
+                          % nodename
+                          )
                 continue
             # node found, now find the controller
             controllertype = controlledblock.get_controller_type()
             if not controllertype:
-                self.info(
-                    "Animation for %s without controller type, so skipping"
-                    % nodename)
+                self.info("Animation for %s without controller type, so skipping"
+                          % nodename
+                          )
                 continue
             controller = nif_utils.find_controller(node, getattr(NifFormat, controllertype))
             if not controller:
-                self.info(
-                    "Animation for %s with %s controller,"
-                    " but no such controller type found"
-                    " in corresponding node, so creating one"
-                    % (nodename, controllertype))
+                self.info("Animation for %s with %s controller, but no such controller type found in corresponding node, so creating one"
+                          % (nodename, controllertype)
+                          )
                 controller = getattr(NifFormat, controllertype)()
-                # TODO:set all the fields of this controller
+                # TODO: set all the fields of this controller
                 node.add_controller(controller)
             # yes! attach interpolator
             controller.interpolator = controlledblock.interpolator
@@ -102,9 +99,7 @@ class AnimationHelper():
             # so simply add dummy keyframe data for this one with just a single
             # key to flag the exporter to export the keyframe as interpolator
             # (i.e. length 1 keyframes are simply interpolators)
-            if isinstance(controller.interpolator,
-                          NifFormat.NiTransformInterpolator) \
-                and controller.interpolator.data is None:
+            if isinstance(controller.interpolator, NifFormat.NiTransformInterpolator) and controller.interpolator.data is None:
                 # create data block
                 kfi = controller.interpolator
                 kfi.data = NifFormat.NiTransformData()
@@ -138,25 +133,24 @@ class AnimationHelper():
             self.nif_import.dict_bone_priorities[nodename] = controlledblock.priority
 
         # DEBUG: save the file for manual inspection
-        #niffile = open("C:\\test.nif", "wb")
-        #NifFormat.write(niffile,
+        # niffile = open("C:\\test.nif", "wb")
+        # NifFormat.write(niffile,
         #                version = 0x14000005, user_version = 11, roots = [root])
-    
-    
+
     # import animation groups
     def import_text_keys(self, niBlock):
         """Stores the text keys that define animation start and end in a text
         buffer, so that they can be re-exported. Since the text buffer is
         cleared on each import only the last import will be exported
         correctly."""
-        
+
         if isinstance(niBlock, NifFormat.NiControllerSequence):
             txk = niBlock.text_keys
         else:
             txk = niBlock.find(block_type=NifFormat.NiTextKeyExtraData)
         if txk:
             # get animation text buffer, and clear it if it already exists
-            # TODO:git rid of try-except block here
+            # TODO: git rid of try-except block here
             try:
                 bpy.data.texts["Anim"]
                 animtxt.clear()
@@ -166,8 +160,8 @@ class AnimationHelper():
             frame = 1
             for key in txk.text_keys:
                 newkey = str(key.value).replace('\r\n', '/').rstrip('/')
-                frame = 1 + int(key.time * self.fps + 0.5) # time 0.0 is frame 1
-                animtxt.write('%i/%s\n'%(frame, newkey))
+                frame = 1 + int(key.time * self.fps + 0.5)  # time 0.0 is frame 1
+                animtxt.write('%i/%s\n' % (frame, newkey))
 
             # set start and end frames
             self.nif_import.context.scene.getRenderingContext().startFrame(1)
@@ -191,8 +185,7 @@ class AnimationHelper():
                     # Oblivion)
                     continue
                 key_times.extend(
-                    point * (kfi.stop_time - kfi.start_time)
-                    / (kfi.basis_data.num_control_points - 2)
+                    point * (kfi.stop_time - kfi.start_time) / (kfi.basis_data.num_control_points - 2)
                     for point in range(kfi.basis_data.num_control_points - 2))
             for uvdata in root.tree(block_type=NifFormat.NiUVData):
                 for uvgroup in uvdata.uv_groups:
@@ -206,12 +199,14 @@ class AnimationHelper():
                           for time in key_times)
         # for fps in range(1,120): #disabled, used for testing
         for test_fps in [20, 25, 35]:
-            diff = sum(abs(int(time * test_fps + 0.5)-(time * test_fps))
+            diff = sum(abs(int(time * test_fps + 0.5) - (time * test_fps))
                        for time in key_times)
             if diff < lowest_diff:
                 lowest_diff = diff
                 fps = test_fps
-        self.nif_import.info("Animation estimated at %i frames per second." % fps)
+        self.nif_import.info("Animation estimated at %i frames per second."
+                             % fps
+                             )
         return fps
 
     def store_animation_data(self, rootBlock):
@@ -240,7 +235,6 @@ class AnimationHelper():
         _ANIMATION_DATA.sort(lambda key1, key2: cmp(key1['frame'], key2['frame']))
         """
 
-        
     def set_animation(self, niBlock, b_obj):
         """Load basic animation info for this object."""
         kfc = nif_utils.find_controller(niBlock, NifFormat.NiKeyframeController)
@@ -250,7 +244,7 @@ class AnimationHelper():
 
         if kfc.interpolator:
             if isinstance(kfc.interpolator, NifFormat.NiBSplineInterpolator):
-                kfd = None # not supported yet so avoids fatal error - should be kfc.interpolator.spline_data when spline data is figured out.
+                kfd = None  # not supported yet so avoids fatal error - should be kfc.interpolator.spline_data when spline data is figured out.
             else:
                 kfd = kfc.interpolator.data
         else:
@@ -262,7 +256,9 @@ class AnimationHelper():
 
         # denote progress
         self.nif_import.info("Animation")
-        self.nif_import.info("Importing animation data for %s" % b_obj.name)
+        self.nif_import.info("Importing animation data for %s"
+                             % b_obj.name
+                             )
         assert(isinstance(kfd, NifFormat.NiKeyframeData))
         # create an Ipo for this object
         b_ipo = ObjectAnimation.get_object_ipo(b_obj)
@@ -272,7 +268,7 @@ class AnimationHelper():
         # add the keys
         self.nif_import.debug('Scale keys...')
         for key in scales.keys:
-            frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
+            frame = 1 + int(key.time * self.fps + 0.5)  # time 0.0 is frame 1
             Blender.Set('curframe', frame)
             b_obj.SizeX = key.value
             b_obj.SizeY = key.value
@@ -288,7 +284,7 @@ class AnimationHelper():
             zkeys = kfd.xyz_rotations[2].keys
             self.nif_import.debug('Rotation keys...(euler)')
             for (xkey, ykey, zkey) in zip(xkeys, ykeys, zkeys):
-                frame = 1+int(xkey.time * self.fps + 0.5) # time 0.0 is frame 1
+                frame = 1 + int(xkey.time * self.fps + 0.5)  # time 0.0 is frame 1
                 # XXX we assume xkey.time == ykey.time == zkey.time
                 Blender.Set('curframe', frame)
                 # both in radians, no conversion needed
@@ -301,7 +297,7 @@ class AnimationHelper():
             if kfd.quaternion_keys:
                 self.nif_import.debug('Rotation keys...(quaternions)')
             for key in kfd.quaternion_keys:
-                frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
+                frame = 1 + int(key.time * self.fps + 0.5)  # time 0.0 is frame 1
                 Blender.Set('curframe', frame)
                 rot = mathutils.Quaternion(key.value.w, key.value.x, key.value.y, key.value.z).toEuler()
                 # Blender euler is in degrees, object RotXYZ is in radians
@@ -313,7 +309,7 @@ class AnimationHelper():
         if translations.keys:
             self.nif_import.debug('Translation keys...')
         for key in translations.keys:
-            frame = 1+int(key.time * self.nif_import.fps + 0.5) # time 0.0 is frame 1
+            frame = 1 + int(key.time * self.nif_import.fps + 0.5)  # time 0.0 is frame 1
             Blender.Set('curframe', frame)
             b_obj.LocX = key.value.x
             b_obj.LocY = key.value.y
@@ -324,18 +320,18 @@ class AnimationHelper():
 
 
 class ObjectAnimation():
-    
+
     def __init__(self, parent):
         self.nif_import = parent
-    
+
     def get_object_ipo(self, b_object):
         """Return existing object ipo data, or if none exists, create one
         and return that.
         """
         if not b_object.ipo:
             b_object.ipo = Blender.Ipo.New("Object", "Ipo")
-        return b_object.ipo    
-    
+        return b_object.ipo
+
     def import_object_vis_controller(self, b_object, n_node):
         """Import vis controller for blender object."""
         n_vis_ctrl = nif_utils.find_controller(n_node, NifFormat.NiVisController)
@@ -351,11 +347,12 @@ class ObjectAnimation():
             b_curve[1 + n_key.time * self.fps] = (
                 2 ** (n_key.value + max([1] + self.nif_import.context.scene.getLayers()) - 1))
 
+
 class MaterialAnimation():
-    
+
     def __init__(self, parent):
         self.nif_import = parent
-    
+
     def import_material_controllers(self, b_material, n_geom):
         """Import material animation data for given geometry."""
         if not self.nif_import.properties.animation:
@@ -378,14 +375,13 @@ class MaterialAnimation():
             n_geom=n_geom,
             n_target_color=NifFormat.TargetColor.TC_SPECULAR)
         self.import_material_uv_controller(b_material, n_geom)
-        
+
     def import_material_alpha_controller(self, b_material, n_geom):
         # find alpha controller
         n_matprop = nif_utils.find_property(n_geom, NifFormat.NiMaterialProperty)
         if not n_matprop:
             return
-        n_alphactrl = nif_utils.find_controller(n_matprop,
-                                           NifFormat.NiAlphaController)
+        n_alphactrl = nif_utils.find_controller(n_matprop, NifFormat.NiAlphaController)
         if not(n_alphactrl and n_alphactrl.data):
             return
         self.nif_import.info("importing alpha controller")
@@ -398,8 +394,7 @@ class MaterialAnimation():
         for n_key in n_alphactrl.data.data.keys:
             b_curve[1 + n_key.time * self.fps] = n_key.value
 
-    def import_material_color_controller(
-        self, b_material, b_channels, n_geom, n_target_color):
+    def import_material_color_controller(self, b_material, b_channels, n_geom, n_target_color):
         # find material color controller with matching target color
         n_matprop = nif_utils.find_property(n_geom, NifFormat.NiMaterialProperty)
         if not n_matprop:
@@ -411,10 +406,9 @@ class MaterialAnimation():
                     break
         else:
             return
-        self.info(
-            "importing material color controller for target color %s"
-            " into blender channels %s"
-            % (n_target_color, b_channels))
+        self.info("importing material color controller for target color %s into blender channels %s"
+                  % (n_target_color, b_channels)
+                  )
         # import data as curves
         b_ipo = self.get_material_ipo(b_material)
         for i, b_channel in enumerate(b_channels):
@@ -428,8 +422,7 @@ class MaterialAnimation():
     def import_material_uv_controller(self, b_material, n_geom):
         """Import UV controller data."""
         # search for the block
-        n_ctrl = nif_utils.find_controller(n_geom,
-                                      NifFormat.NiUVController)
+        n_ctrl = nif_utils.find_controller(n_geom, NifFormat.NiUVController)
         if not(n_ctrl and n_ctrl.data):
             return
         self.info("importing UV controller")
@@ -448,8 +441,7 @@ class MaterialAnimation():
                         # offsets are negated
                         b_curve[1 + n_key.time * self.fps] = -n_key.value
                     else:
-                        b_curve[1 + n_key.time * self.fps] = n_key.value    
-    
+                        b_curve[1 + n_key.time * self.fps] = n_key.value
 
     def get_material_ipo(self, b_material):
         """Return existing material ipo data, or if none exists, create one
@@ -459,29 +451,31 @@ class MaterialAnimation():
             b_material.ipo = Blender.Ipo.New("Material", "MatIpo")
         return b_material.ipo
 
+
 class ArmatureAnimation():
-    
+
     def __init__(self, parent):
         self.nif_import = parent
-        
-        
+
     def import_armature_animation(self, b_armature):
         # create an action
         action = bpy.data.actions.new(armature_name)
-        bpy.types.NlaTrack.select = b_armature #action.setActive(b_armature)
+        bpy.types.NlaTrack.select = b_armature  # action.setActive(b_armature)
         # go through all armature pose bones
         # see http://www.elysiun.com/forum/viewtopic.php?t=58693
         self.nif_import.info('Importing Animations')
         for bone_name, b_posebone in b_armature.pose.bones.items():
             # denote progress
-            self.nif_import.debug('Importing animation for bone %s' % bone_name)
+            self.nif_import.debug('Importing animation for bone %s'
+                                  % bone_name
+                                  )
             niBone = self.nif_import.dict_blocks[bone_name]
 
             # get bind matrix (NIF format stores full transformations in keyframes,
             # but Blender wants relative transformations, hence we need to know
             # the bind position for conversion). Since
-            # [ SRchannel 0 ]    [ SRbind 0 ]   [ SRchannel * SRbind         0 ]   [ SRtotal 0 ]
-            # [ Tchannel  1 ] *  [ Tbind  1 ] = [ Tchannel  * SRbind + Tbind 1 ] = [ Ttotal  1 ]
+            # [SRchannel 0]    [SRbind 0]   [SRchannel * SRbind         0]   [SRtotal 0]
+            # [Tchannel  1] *  [Tbind  1] = [Tchannel  * SRbind + Tbind 1] = [Ttotal  1]
             # with
             # 'total' the transformations as stored in the NIF keyframes,
             # 'bind' the Blender bind pose, and
@@ -490,7 +484,7 @@ class ArmatureAnimation():
             # Schannel = Stotal / Sbind
             # Rchannel = Rtotal * inverse(Rbind)
             # Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
-            bone_bm = nif_utils.import_matrix(niBone) # base pose
+            bone_bm = nif_utils.import_matrix(niBone)  # base pose
             niBone_bind_scale, niBone_bind_rot, niBone_bind_trans = self.decompose_srt(bone_bm)
             niBone_bind_rot_inv = mathutils.Matrix(niBone_bind_rot)
             niBone_bind_rot_inv.invert()
@@ -506,12 +500,12 @@ class ArmatureAnimation():
             # where X = B' * inverse(B)
             #
             # In detail:
-            # [ SRX 0 ]   [ SRC 0 ]            [ SRX 0 ]
-            # [ TX  1 ] * [ TC  1 ] * inverse( [ TX  1 ] ) =
-            # [ SRX * SRC       0 ]   [ inverse(SRX)         0 ]
-            # [ TX * SRC + TC   1 ] * [ -TX * inverse(SRX)   1 ] =
-            # [ SRX * SRC * inverse(SRX)              0 ]
-            # [ (TX * SRC + TC - TX) * inverse(SRX)   1 ]
+            # [SRX 0]   [SRC 0]            [SRX 0]
+            # [TX  1] * [TC  1] * inverse( [TX  1] ) =
+            # [SRX * SRC       0]   [inverse(SRX)         0]
+            # [TX * SRC + TC   1] * [-TX * inverse(SRX)   1] =
+            # [SRX * SRC * inverse(SRX)              0]
+            # [(TX * SRC + TC - TX) * inverse(SRX)   1]
             # Hence
             # SC' = SX * SC / SX = SC
             # RC' = RX * RC * inverse(RX)
@@ -527,8 +521,7 @@ class ArmatureAnimation():
             # get controller, interpolator, and data
             # note: the NiKeyframeController check also includes
             #       NiTransformController (see hierarchy!)
-            kfc = nif_utils.find_controller(niBone,
-                                       NifFormat.NiKeyframeController)
+            kfc = nif_utils.find_controller(niBone, NifFormat.NiKeyframeController)
             # old style: data directly on controller
             kfd = kfc.data if kfc else None
             # new style: data via interpolator
@@ -570,8 +563,8 @@ class ArmatureAnimation():
                         # beware, CrossQuats takes arguments in a
                         # counter-intuitive order:
                         # q1.to_matrix() * q2.to_matrix() == CrossQuats(q2, q1).to_matrix()
-                        quatVal = CrossQuats(niBone_bind_quat_inv, quat) # Rchannel = Rtotal * inverse(Rbind)
-                        rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
+                        quatVal = CrossQuats(niBone_bind_quat_inv, quat)  # Rchannel = Rtotal * inverse(Rbind)
+                        rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat)  # C' = X * C * inverse(X)
                         b_posebone.quat = rot
                         b_posebone.insertKey(b_armature, frame,
                                              [Blender.Object.Pose.ROT])
@@ -586,7 +579,7 @@ class ArmatureAnimation():
                         # time 0.0 is frame 1
                         frame = 1 + int(time * self.nif_import.fps + 0.5)
                         trans = mathutils.Vector(*translation)
-                        locVal = (trans - niBone_bind_trans) * niBone_bind_rot_inv * (niBone_bind_scale)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
+                        locVal = (trans - niBone_bind_trans) * niBone_bind_rot_inv * (niBone_bind_scale)  # Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
                         # the rotation matrix is needed at this frame (that's
                         # why the other keys are inserted first)
                         if rot_keys_dict:
@@ -612,7 +605,7 @@ class ArmatureAnimation():
                             except KeyError:
                                 ipo = action.getChannelIpo(bone_name)
                                 if ipo.getCurve('SizeX'):
-                                    sizeVal = ipo.getCurve('SizeX').evaluate(frame) # assume uniform scale
+                                    sizeVal = ipo.getCurve('SizeX').evaluate(frame)  # assume uniform scale
                                 else:
                                     sizeVal = 1.0
                         else:
@@ -621,7 +614,7 @@ class ArmatureAnimation():
                                                  [0.0, sizeVal, 0.0],
                                                  [0.0, 0.0, sizeVal]])
                         # now we can do the final calculation
-                        loc = (extra_matrix_trans * size * rot + locVal - extra_matrix_trans) * extra_matrix_rot_inv * (extra_matrix_scale) # C' = X * C * inverse(X)
+                        loc = (extra_matrix_trans * size * rot + locVal - extra_matrix_trans) * extra_matrix_rot_inv * (extra_matrix_scale)  # C' = X * C * inverse(X)
                         b_posebone.loc = loc
                         b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.LOC])
 
@@ -650,9 +643,9 @@ class ArmatureAnimation():
                     # time 0.0 is frame 1
                     frame = 1 + int(scaleKey.time * self.nif_import.fps + 0.5)
                     sizeVal = scaleKey.value
-                    size = sizeVal / niBone_bind_scale # Schannel = Stotal / Sbind
+                    size = sizeVal / niBone_bind_scale  # Schannel = Stotal / Sbind
                     b_posebone.size = mathutils.Vector(size, size, size)
-                    b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.SIZE]) # this is very slow... :(
+                    b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.SIZE])  # this is very slow... :(
                     # fill optimizer dictionary
                     if translations:
                         scale_keys_dict[frame] = size
@@ -665,17 +658,13 @@ class ArmatureAnimation():
                     # uses xyz rotation
                     if kfd.xyz_rotations[0].keys:
                         self.nif_import.debug('Rotation keys...(euler)')
-                    for xkey, ykey, zkey in zip(kfd.xyz_rotations[0].keys,
-                                                 kfd.xyz_rotations[1].keys,
-                                                 kfd.xyz_rotations[2].keys):
+                    for xkey, ykey, zkey in zip(kfd.xyz_rotations[0].keys, kfd.xyz_rotations[1].keys, kfd.xyz_rotations[2].keys):
                         # time 0.0 is frame 1
                         # XXX it is assumed that all the keys have the
                         # XXX same times!!!
-                        if (abs(xkey.time - ykey.time) > self.properties.epsilon
-                            or abs(xkey.time - zkey.time) > self.properties.epsilon):
-                            self.nif_import.warning(
-                                "xyz key times do not correspond, "
-                                "animation may not be correctly imported")
+                        if (abs(xkey.time - ykey.time) > self.properties.epsilon or
+                                abs(xkey.time - zkey.time) > self.properties.epsilon):
+                            self.nif_import.warning("xyz key times do not correspond, animation may not be correctly imported")
                         frame = 1 + int(xkey.time * self.nif_import.fps + 0.5)
                         euler = mathutils.Euler(
                             [xkey.value * 180.0 / math.pi,
@@ -686,17 +675,17 @@ class ArmatureAnimation():
                         # beware, CrossQuats takes arguments in a counter-intuitive order:
                         # q1.to_matrix() * q2.to_matrix() == CrossQuats(q2, q1).to_matrix()
 
-                        quatVal = CrossQuats(niBone_bind_quat_inv, quat) # Rchannel = Rtotal * inverse(Rbind)
-                        rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
+                        quatVal = CrossQuats(niBone_bind_quat_inv, quat)  # Rchannel = Rtotal * inverse(Rbind)
+                        rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat)  # C' = X * C * inverse(X)
                         b_posebone.quat = rot
-                        b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.ROT]) # this is very slow... :(
+                        b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.ROT])  # this is very slow... :(
                         # fill optimizer dictionary
                         if translations:
-                            rot_keys_dict[frame] = mathutils.Quaternion(rot) 
+                            rot_keys_dict[frame] = mathutils.Quaternion(rot)
 
                 # Quaternion Rotations
                 else:
-                    # TODO:take rotation type into account for interpolation
+                    # TODO: take rotation type into account for interpolation
                     if kfd.quaternion_keys:
                         self.nif_import.debug('Rotation keys...(quaternions)')
                     quaternion_keys = kfd.quaternion_keys
@@ -707,19 +696,19 @@ class ArmatureAnimation():
                         # beware, CrossQuats takes arguments in a
                         # counter-intuitive order:
                         # q1.to_matrix() * q2.to_matrix() == CrossQuats(q2, q1).to_matrix()
-                        quatVal = CrossQuats(niBone_bind_quat_inv, quat) # Rchannel = Rtotal * inverse(Rbind)
-                        rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat) # C' = X * C * inverse(X)
+                        quatVal = CrossQuats(niBone_bind_quat_inv, quat)  # Rchannel = Rtotal * inverse(Rbind)
+                        rot = CrossQuats(CrossQuats(extra_matrix_quat_inv, quatVal), extra_matrix_quat)  # C' = X * C * inverse(X)
                         b_posebone.quat = rot
                         b_posebone.insertKey(b_armature, frame,
                                              [Blender.Object.Pose.ROT])
                         # fill optimizer dictionary
                         if translations:
                             rot_keys_dict[frame] = mathutils.Quaternion(rot)
-                    #else:
-                    #    print("Rotation keys...(unknown)" + 
+                    # else:
+                    #    print("Rotation keys...(unknown)" +
                     #          "WARNING: rotation animation data of type" +
-                    #          " %i found, but this type is not yet supported; data has been skipped""" % rotation_type)                        
-    
+                    #          " %i found, but this type is not yet supported; data has been skipped""" % rotation_type)
+
                 # Translations
                 if translations.keys:
                     self.nif_import.debug('Translation keys...')
@@ -728,7 +717,7 @@ class ArmatureAnimation():
                     frame = 1 + int(key.time * self.nif_import.fps + 0.5)
                     keyVal = key.value
                     trans = mathutils.Vector(keyVal.x, keyVal.y, keyVal.z)
-                    locVal = (trans - niBone_bind_trans) * niBone_bind_rot_inv * (niBone_bind_scale)# Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
+                    locVal = (trans - niBone_bind_trans) * niBone_bind_rot_inv * (niBone_bind_scale)  # Tchannel = (Ttotal - Tbind) * inverse(Rbind) / Sbind
                     # the rotation matrix is needed at this frame (that's
                     # why the other keys are inserted first)
                     if rot_keys_dict:
@@ -754,7 +743,7 @@ class ArmatureAnimation():
                         except KeyError:
                             ipo = action.getChannelIpo(bone_name)
                             if ipo.getCurve('SizeX'):
-                                sizeVal = ipo.getCurve('SizeX').evaluate(frame) # assume uniform scale
+                                sizeVal = ipo.getCurve('SizeX').evaluate(frame)  # assume uniform scale
                             else:
                                 sizeVal = 1.0
                     else:
@@ -763,7 +752,7 @@ class ArmatureAnimation():
                                              [0.0, sizeVal, 0.0],
                                              [0.0, 0.0, sizeVal]])
                     # now we can do the final calculation
-                    loc = (extra_matrix_trans * size * rot + locVal - extra_matrix_trans) * extra_matrix_rot_inv * (extra_matrix_scale) # C' = X * C * inverse(X)
+                    loc = (extra_matrix_trans * size * rot + locVal - extra_matrix_trans) * extra_matrix_rot_inv * (extra_matrix_scale)  # C' = X * C * inverse(X)
                     b_posebone.loc = loc
                     b_posebone.insertKey(b_armature, frame, [Blender.Object.Pose.LOC])
                 if translations:

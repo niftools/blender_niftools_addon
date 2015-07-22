@@ -1,27 +1,27 @@
 '''Nif Format Properties, stores custom nif properties for armature settings'''
 
 # ***** BEGIN LICENSE BLOCK *****
-# 
+#
 # Copyright © 2005-2015, NIF File Format Library and Tools contributors.
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 #    * Redistributions of source code must retain the above copyright
 #      notice, this list of conditions and the following disclaimer.
-# 
+#
 #    * Redistributions in binary form must reproduce the above
 #      copyright notice, this list of conditions and the following
 #      disclaimer in the documentation and/or other materials provided
 #      with the distribution.
-# 
+#
 #    * Neither the name of the NIF File Format Library and Tools
 #      project nor the names of its contributors may be used to endorse
 #      or promote products derived from this software without specific
 #      prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -47,21 +47,18 @@ from bpy.props import (PointerProperty,
                        FloatProperty,
                        )
 
+
 class BoneProperty(PropertyGroup):
     @classmethod
     def register(cls):
-        bpy.types.Bone.niftools_bone = PointerProperty(
-                        name='Niftools Bone Property',
-                        description='Additional bone properties used by the Nif File Format',
-                        type=cls,
-                        )
-        cls.boneflags = IntProperty(
-                        name='Bone Flag',
-                        default=0
-                        )
-        
+        bpy.types.Bone.niftools_bone = PointerProperty(name='Niftools Bone Property',
+                                                       description='Additional bone properties used by the Nif File Format',
+                                                       type=cls,
+                                                       )
+        cls.boneflags = IntProperty(name='Bone Flag',
+                                    default=0
+                                    )
+
     @classmethod
     def unregister(cls):
         del bpy.types.Bone.niftools_bone
-
-
