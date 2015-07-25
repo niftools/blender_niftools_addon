@@ -241,7 +241,7 @@ def main(arg):
     pup_block = [
         ('Quality:', PREF_QUALITY, 0, 4,
          'Generate interpolated verts for a higher quality result.'),
-	('No X Crossing', PREF_NO_XCROSS,
+    ('No X Crossing', PREF_NO_XCROSS,
          'Do not snap across the zero X axis'),
         '',
         '"Update Selected" copies',

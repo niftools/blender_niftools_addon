@@ -40,24 +40,24 @@
 from pyffi.formats.nif import NifFormat
 from io_scene_nif.materialsys.material_export import Material
 
+
 class PropertyHelper():
-    
+
     def __init__(self, parent):
         self.object_property = ObjectProperty(parent)
         self.material_property = Material(parent)
-        
-        
+
+
 class ObjectProperty():
-    
+
     def __init__(self, parent):
         self.nif_export = parent
         self.properties = parent.properties
-        
-    def export_vertex_color_property(self, block_parent, flags=1,
-                                     vertex_mode=0, lighting_mode=1):
+
+    def export_vertex_color_property(self, block_parent, flags=1, vertex_mode=0, lighting_mode=1):
         """Create a vertex color property, and attach it to an existing block
         (typically, the root of the nif tree).
-    
+
         @param block_parent: The block to which to attach the new property.
         @param flags: The C{flags} of the new property.
         @param vertex_mode: The C{vertex_mode} of the new property.
@@ -66,19 +66,18 @@ class ObjectProperty():
         """
         # create new vertex color property block
         vcolprop = self.nif_export.objecthelper.create_block("NiVertexColorProperty")
-    
+
         # make it a property of the parent
         block_parent.add_property(vcolprop)
-    
+
         # and now export the parameters
         vcolprop.flags = flags
         vcolprop.vertex_mode = vertex_mode
         vcolprop.lighting_mode = lighting_mode
-    
+
         return vcolprop
-    
-    def export_z_buffer_property(self, block_parent,
-                                 flags=15, function=3):
+
+    def export_z_buffer_property(self, block_parent, flags=15, function=3):
         """Create a z-buffer property, and attach it to an existing block
         (typically, the root of the nif tree).
 
@@ -98,7 +97,7 @@ class ObjectProperty():
         zbuf.function = function
 
         return zbuf
-    
+
     def export_alpha_property(self, flags=0x00ED, threshold=0):
         """Return existing alpha property with given flags, or create new one
         if an alpha property with required flags is not found."""
@@ -113,7 +112,7 @@ class ObjectProperty():
         alphaprop.threshold = threshold
         return alphaprop
 
-    def export_specular_property(self, flags = 0x0001):
+    def export_specular_property(self, flags=0x0001):
         """Return existing specular property with given flags, or create new one
         if a specular property with required flags is not found."""
         # search for duplicate
@@ -126,7 +125,7 @@ class ObjectProperty():
         specprop.flags = flags
         return specprop
 
-    def export_wireframe_property(self, flags = 0x0001):
+    def export_wireframe_property(self, flags=0x0001):
         """Return existing wire property with given flags, or create new one
         if an wire property with required flags is not found."""
         # search for duplicate
@@ -154,5 +153,3 @@ class ObjectProperty():
         if self.properties.game == 'FALLOUT_3':
             stencilprop.flags = 19840
         return stencilprop
-    
-    

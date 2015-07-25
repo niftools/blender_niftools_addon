@@ -1,27 +1,27 @@
 """This script contains helper methods to export textures."""
 
 # ***** BEGIN LICENSE BLOCK *****
-# 
+#
 # Copyright © 2005-2015, NIF File Format Library and Tools contributors.
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 #    * Redistributions of source code must retain the above copyright
 #      notice, this list of conditions and the following disclaimer.
-# 
+#
 #    * Redistributions in binary form must reproduce the above
 #      copyright notice, this list of conditions and the following
 #      disclaimer in the documentation and/or other materials provided
 #      with the distribution.
-# 
+#
 #    * Neither the name of the NIF File Format Library and Tools
 #      project nor the names of its contributors may be used to endorse
 #      or promote products derived from this software without specific
 #      prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -42,25 +42,26 @@ from pyffi.formats.nif import NifFormat
 from io_scene_nif.utility import nif_utils
 from io_scene_nif.texturesys.texture_writer import TextureWriter
 
+
 class TextureHelper():
-    
-    #Default ordering of Extra data blocks for different games
+
+    # Default ordering of Extra data blocks for different games
     USED_EXTRA_SHADER_TEXTURES = {'SID_MEIER_S_RAILROADS': (3, 0, 4, 1, 5, 2),
                                   'CIVILIZATION_IV': (3, 0, 1, 2)}
-    
+
     def __init__(self, parent):
         self.nif_export = parent
         self.properties = parent.properties
         self.texture_writer = TextureWriter(parent=self)
-        
-        self.basemtex=None
-        self.glowmtex=None
-        self.bumpmtex=None
-        self.normalmtex=None
-        self.glossmtex=None
-        self.darkmtex=None
-        self.detailmtex=None
-        self.refmtex=None
+
+        self.basemtex = None
+        self.glowmtex = None
+        self.bumpmtex = None
+        self.normalmtex = None
+        self.glossmtex = None
+        self.darkmtex = None
+        self.detailmtex = None
+        self.refmtex = None
 
 #         mesh_base_mtex = None
 #         mesh_glow_mtex = None
@@ -71,7 +72,7 @@ class TextureHelper():
 #         mesh_detail_mtex = None
 #         mesh_texeff_mtex = None
 #         mesh_ref_mtex = None
-    
+
     @classmethod
     def get_used_textslots(cls, b_mat):
         used_slots = []
@@ -90,7 +91,7 @@ class TextureHelper():
     def export_bs_shader_property(self, b_obj=None, b_mat=None):
         """Export a Bethesda shader property block."""
         self.determine_texture_types(b_obj, b_mat)
-        
+
         # create new block
         if b_obj.niftools_shader.bs_shadertype == 'BSShaderPPLightingProperty':
             bsshader = NifFormat.BSShaderPPLightingProperty()
@@ -98,46 +99,45 @@ class TextureHelper():
             # TODO: FIXME:
             b_s_type = NifFormat.BSShaderType._enumkeys.index(b_obj.niftools_shader.bsspplp_shaderobjtype)
             bsshader.shader_type = NifFormat.BSShaderType._enumvalues[b_s_type]
-            
+
             # Shader Flags
             if hasattr(bsshader, 'shader_flags'):
                 self.export_shader_flags(b_obj, bsshader)
-            
-                        
+
         if b_obj.niftools_shader.bs_shadertype == 'BSLightingShaderProperty':
             bsshader = NifFormat.BSLightingShaderProperty()
             b_s_type = NifFormat.BSLightingShaderPropertyShaderType._enumkeys.index(b_obj.niftools_shader.bslsp_shaderobjtype)
             bsshader.shader_type = NifFormat.BSLightingShaderPropertyShaderType._enumvalues[b_s_type]
-        
+
             # UV Offset
             if hasattr(bsshader, 'uv_offset'):
                 self.export_uv_offset(bsshader)
-                
+
             # UV Scale
             if hasattr(bsshader, 'uv_scale'):
                 self.export_uv_scale(bsshader)
-                
+
             # Texture Clamping mode
-            if self.basemtex.texture.image.use_clamp_x == False:
+            if self.basemtex.texture.image.use_clamp_x is False:
                 wrap_s = 2
             else:
                 wrap_s = 0
-            if self.basemtex.texture.image.use_clamp_y == False:
+            if self.basemtex.texture.image.use_clamp_y is False:
                 wrap_t = 1
             else:
                 wrap_t = 0
             bsshader.texture_clamp_mode = (wrap_s + wrap_t)
-            
+
             # Diffuse color
             bsshader.skin_tint_color.r = b_mat.diffuse_color.r
             bsshader.skin_tint_color.g = b_mat.diffuse_color.g
             bsshader.skin_tint_color.b = b_mat.diffuse_color.b
-            #b_mat.diffuse_intensity = 1.0
+            # TODO: need a better method to set diffuse intensity for viewing shaded models in blender.
+            # b_mat.diffuse_intensity = 1.0
 
             bsshader.lighting_effect_1 = b_mat.niftools.lightingeffect1
             bsshader.lighting_effect_2 = b_mat.niftools.lightingeffect2
 
-            
             # Emissive
             bsshader.emissive_color.r = b_mat.niftools.emissive_color.r
             bsshader.emissive_color.g = b_mat.niftools.emissive_color.g
@@ -154,21 +154,20 @@ class TextureHelper():
             bsshader.specular_strength = b_mat.specular_intensity
 
             # Alpha
-            if b_mat.use_transparency == True: 
+            if b_mat.use_transparency is True:
                 bsshader.alpha = (1 - b_mat.alpha)
-                
+
             # Shader Flags
             if hasattr(bsshader, 'shader_flags_1'):
                 self.export_shader_flags(b_obj, bsshader)
-
 
         if b_obj.niftools_shader.bs_shadertype == 'BSEffectShaderProperty':
             bsshader = NifFormat.BSEffectShaderProperty()
 
             # Alpha
-            if b_mat.use_transparency == True: 
+            if b_mat.use_transparency is True:
                 bsshader.alpha = (1 - b_mat.alpha)
-            
+
             # clamp Mode
             bsshader.texture_clamp_mode = 65283
 
@@ -176,21 +175,17 @@ class TextureHelper():
             bsshader.emissive_color.r = b_mat.niftools.emissive_color.r
             bsshader.emissive_color.g = b_mat.niftools.emissive_color.g
             bsshader.emissive_color.b = b_mat.niftools.emissive_color.b
-            bsshader.emissive_color.a = b_mat.niftools.emissive_alpha 
+            bsshader.emissive_color.a = b_mat.niftools.emissive_alpha
             bsshader.emissive_multiple = b_mat.emit
 
             # Shader Flags
             if hasattr(bsshader, 'shader_flags_1'):
                 self.export_shader_flags(b_obj, bsshader)
 
-
         if b_obj.niftools_shader.bs_shadertype == 'None':
-            raise nif_utils.NifError(
-                        "Export version expected shader. "
-                        "no shader applied to mesh '%s', "
-                        " these cannot be exported to NIF."
-                        " Set shader before exporting."
-                        % b_obj)
+            raise nif_utils.NifError("Export version expected shader. no shader applied to mesh '%s', these cannot be exported to NIF. Set shader before exporting."
+                                     % b_obj
+                                     )
         # set textures
         texset = NifFormat.BSShaderTextureSet()
         bsshader.texture_set = texset
@@ -214,24 +209,22 @@ class TextureHelper():
             bsshader.source_texture = self.texture_writer.export_texture_filename(self.basemtex.texture)
             bsshader.greyscale_texture = self.texture_writer.export_texture_filename(self.glowmtex.texture)
 
-
         return bsshader
-    
-    
+
     def export_texturing_property(self, flags=0x0001, applymode=None, b_mat=None, b_obj=None):
         """Export texturing property."""
-        
+
         self.determine_texture_types(b_obj, b_mat)
-        
+
         texprop = NifFormat.NiTexturingProperty()
-        
+
         texprop.flags = flags
         texprop.apply_mode = applymode
         texprop.texture_count = 7
 
         self.export_texture_shader_effect(texprop)
         self.export_nitextureprop_tex_descs(texprop)
-        
+
         # search for duplicate
         for block in self.nif_export.dict_blocks:
             if isinstance(block, NifFormat.NiTexturingProperty) \
@@ -242,14 +235,14 @@ class TextureHelper():
         # the new one
         return texprop
 
-
     def export_nitextureprop_tex_descs(self, texprop):
 
         if self.basemtex:
             texprop.has_base_texture = True
-            self.texture_writer.export_tex_desc(texdesc = texprop.base_texture,
-                                 uvlayers = self.nif_export.dict_mesh_uvlayers,
-                                 b_mat_texslot = self.basemtex)
+            self.texture_writer.export_tex_desc(texdesc=texprop.base_texture,
+                                                uvlayers=self.nif_export.dict_mesh_uvlayers,
+                                                b_mat_texslot=self.basemtex
+                                                )
             # check for texture flip definition
             try:
                 fliptxt = Blender.Text.Get(basemtex.texture.name)
@@ -261,16 +254,18 @@ class TextureHelper():
 
         if self.glowmtex:
             texprop.has_glow_texture = True
-            self.texture_writer.export_tex_desc(texdesc = texprop.glow_texture,
-                                 uvlayers = self.nif_export.dict_mesh_uvlayers,
-                                 b_mat_texslot = self.glowmtex)
+            self.texture_writer.export_tex_desc(texdesc=texprop.glow_texture,
+                                                uvlayers=self.nif_export.dict_mesh_uvlayers,
+                                                b_mat_texslot=self.glowmtex
+                                                )
 
         if self.bumpmtex:
             if self.properties.game not in self.USED_EXTRA_SHADER_TEXTURES:
                 texprop.has_bump_map_texture = True
-                self.texture_writer.export_tex_desc(texdesc = texprop.bump_map_texture,
-                                     uvlayers = self.nif_export.dict_mesh_uvlayers,
-                                     b_mat_texslot = self.bumpmtex)
+                self.texture_writer.export_tex_desc(texdesc=texprop.bump_map_texture,
+                                                    uvlayers=self.nif_export.dict_mesh_uvlayers,
+                                                    b_mat_texslot=self.bumpmtex
+                                                    )
                 texprop.bump_map_luma_scale = 1.0
                 texprop.bump_map_luma_offset = 0.0
                 texprop.bump_map_matrix.m_11 = 1.0
@@ -287,9 +282,10 @@ class TextureHelper():
         if self.glossmtex:
             if self.properties.game not in self.USED_EXTRA_SHADER_TEXTURES:
                 texprop.has_gloss_texture = True
-                self.texture_writer.export_tex_desc(texdesc = texprop.gloss_texture,
-                                     uvlayers = self.nif_export.dict_mesh_uvlayers,
-                                     b_mat_texslot = self.glossmtex)
+                self.texture_writer.export_tex_desc(texdesc=texprop.gloss_texture,
+                                                    uvlayers=self.nif_export.dict_mesh_uvlayers,
+                                                    b_mat_texslot=self.glossmtex
+                                                    )
             else:
                 shadertexdesc = texprop.shader_textures[2]
                 shadertexdesc.is_used = True
@@ -298,22 +294,23 @@ class TextureHelper():
 
         if self.darkmtex:
             texprop.has_dark_texture = True
-            self.texture_writer.export_tex_desc(texdesc = texprop.dark_texture,
-                                 uvlayers = self.nif_export.dict_mesh_uvlayers,
-                                 b_mat_texslot = self.darkmtex)
+            self.texture_writer.export_tex_desc(texdesc=texprop.dark_texture,
+                                                uvlayers=self.nif_export.dict_mesh_uvlayers,
+                                                b_mat_texslot=self.darkmtex
+                                                )
 
         if self.detailmtex:
             texprop.has_detail_texture = True
-            self.texture_writer.export_tex_desc(texdesc = texprop.detail_texture,
-                                 uvlayers = self.nif_export.dict_mesh_uvlayers,
-                                 b_mat_texslot = self.detailmtex)
+            self.texture_writer.export_tex_desc(texdesc=texprop.detail_texture,
+                                                uvlayers=self.nif_export.dict_mesh_uvlayers,
+                                                b_mat_texslot=self.detailmtex
+                                                )
 
         if self.refmtex:
             if self.properties.game not in self.USED_EXTRA_SHADER_TEXTURES:
-                self.nif_export.warning(
-                    "Cannot export reflection texture for this game.")
-                #texprop.hasRefTexture = True
-                #self.export_tex_desc(texdesc = texprop.refTexture,
+                self.nif_export.warning("Cannot export reflection texture for this game.")
+                # texprop.hasRefTexture = True
+                # self.export_tex_desc(texdesc = texprop.refTexture,
                 #                     uvlayers = uvlayers,
                 #                     mtex = refmtex)
             else:
@@ -322,7 +319,6 @@ class TextureHelper():
                 shadertexdesc.texture_data.source = \
                     self.texture_writer.export_source_texture(texture=self.refmtex.texture)
 
-    
     def export_texture_shader_effect(self, texprop):
         # export extra shader textures
         if self.properties.game == 'SID_MEIER_S_RAILROADS':
@@ -335,13 +331,13 @@ class TextureHelper():
                 # set default values
                 shadertexdesc.is_used = False
                 shadertexdesc.map_index = mapindex
-    
+
             # some texture slots required by the engine
             shadertexdesc_envmap = texprop.shader_textures[0]
             shadertexdesc_envmap.is_used = True
             shadertexdesc_envmap.texture_data.source = \
                 self.texture_writer.export_source_texture(filename="RRT_Engine_Env_map.dds")
-    
+
             shadertexdesc_cubelightmap = texprop.shader_textures[4]
             shadertexdesc_cubelightmap.is_used = True
             shadertexdesc_cubelightmap.texture_data.source = \
@@ -356,9 +352,8 @@ class TextureHelper():
                 # set default values
                 shadertexdesc.is_used = False
                 shadertexdesc.map_index = mapindex
-    
-    
-    def export_texture_effect(self, b_mat_texslot = None):
+
+    def export_texture_effect(self, b_mat_texslot=None):
         """Export a texture effect block from material texture mtex (MTex, not
         Texture)."""
         texeff = NifFormat.NiTextureEffect()
@@ -367,7 +362,7 @@ class TextureHelper():
         texeff.scale = 1.0
         texeff.model_projection_matrix.set_identity()
         texeff.texture_filtering = NifFormat.TexFilterMode.FILTER_TRILERP
-        texeff.texture_clamping  = NifFormat.TexClampMode.WRAP_S_WRAP_T
+        texeff.texture_clamping = NifFormat.TexClampMode.WRAP_S_WRAP_T
         texeff.texture_type = NifFormat.EffectType.EFFECT_ENVIRONMENT_MAP
         texeff.coordinate_generation_type = NifFormat.CoordGenType.CG_SPHERE_MAP
         if b_mat_texslot:
@@ -378,27 +373,26 @@ class TextureHelper():
         texeff.unknown_vector.x = 1.0
         return self.register_block(texeff)
 
-
     def export_uv_offset(self, shader):
         shader.uv_offset.u = self.basemtex.offset.x
         shader.uv_offset.v = self.basemtex.offset.y
-            
+
         return shader
-        
+
     def export_uv_scale(self, shader):
         shader.uv_scale.u = self.basemtex.scale.x
         shader.uv_scale.v = self.basemtex.scale.y
-        
+
         return shader
-        
+
     def export_shader_flags(self, b_obj, shader):
-        
+
         b_flag_list = b_obj.niftools_shader.bl_rna.properties.keys()
         if hasattr(shader, 'shader_flags'):
             for sf_flag in shader.shader_flags._names:
                 if sf_flag in b_flag_list:
                     b_flag = b_obj.niftools_shader.get(sf_flag)
-                    if b_flag  == True:
+                    if b_flag is True:
                         sf_flag_index = shader.shader_flags._names.index(sf_flag)
                         shader.shader_flags._items[sf_flag_index]._value = 1
 
@@ -406,7 +400,7 @@ class TextureHelper():
             for sf_flag in shader.shader_flags_1._names:
                 if sf_flag in b_flag_list:
                     b_flag = b_obj.niftools_shader.get(sf_flag)
-                    if b_flag  == True:
+                    if b_flag is True:
                         sf_flag_index = shader.shader_flags_1._names.index(sf_flag)
                         shader.shader_flags_1._items[sf_flag_index]._value = 1
 
@@ -414,22 +408,20 @@ class TextureHelper():
             for sf_flag in shader.shader_flags_2._names:
                 if sf_flag in b_flag_list:
                     b_flag = b_obj.niftools_shader.get(sf_flag)
-                    if b_flag  == True:
+                    if b_flag is True:
                         sf_flag_index = shader.shader_flags_2._names.index(sf_flag)
                         shader.shader_flags_2._items[sf_flag_index]._value = 1
 
         return shader
-
 
     def add_shader_integer_extra_datas(self, trishape):
         """Add extra data blocks for shader indices."""
         for shaderindex in self.USED_EXTRA_SHADER_TEXTURES[self.properties.game]:
             shadername = self.EXTRA_SHADER_TEXTURES[shaderindex]
             trishape.add_integer_extra_data(shadername, shaderindex)
-            
 
     def determine_texture_types(self, b_obj, b_mat):
-        
+
         used_slots = self.get_used_textslots(b_mat)
         self.basemtex = None
         self.bumpmtex = None
@@ -439,147 +431,118 @@ class TextureHelper():
         self.glowmtex = None
         self.normalmtex = None
         self.refmtex = None
-                
+
         for b_mat_texslot in used_slots:
             # check REFL-mapped textures
             # (used for "NiTextureEffect" materials)
             if b_mat_texslot.texture_coords == 'REFLECTION':
                 if not b_mat_texslot.use_map_color_diffuse:
                     # it should map to colour
-                    raise nif_utils.NifError(
-                        "Non-COL-mapped reflection texture in mesh '%s', material '%s',"
-                        " these cannot be exported to NIF.\n"
-                        "Either delete all non-COL-mapped reflection textures,"
-                        " or in the Shading Panel, under Material Buttons,"
-                        " set texture 'Map To' to 'COL'."
-                        % (b_obj.name,b_mat.name))
-                if b_mat_texslot.blend_type != 'ADD':
-                # it should have "ADD" blending mode
-                    self.nif_export.warning("Reflection texture should have blending"
-                                 " mode 'Add' on texture"
-                                 " in mesh '%s', material '%s')."
-                                 % (b_obj.name,b_mat.name))
-                # an envmap image should have an empty... don't care
+                    raise nif_utils.NifError("Non-COL-mapped reflection texture in mesh '%s', material '%s', these cannot be exported to NIF.\nEither delete all non-COL-mapped reflection textures, or in the Shading Panel, under Material Buttons, set texture 'Map To' to 'COL'."
+                                             % (b_obj.name, b_mat.name)
+                                             )
+                if b_mat_texslot.blend_type != 'ADD':  # it should have "ADD" blending mode
+                    self.nif_export.warning("Reflection texture should have blending mode 'Add' on texture in mesh '%s', material '%s')."
+                                            % (b_obj.name, b_mat.name)
+                                            )  # an envmap image should have an empty... don't care
                 self.refmtex = b_mat_texslot
-    
-    
+
             # check UV-mapped textures
             elif b_mat_texslot.texture_coords == 'UV':
-            
+
                 # update set of uv layers that must be exported
-                if not b_mat_texslot.uv_layer in self.nif_export.dict_mesh_uvlayers:
+                if b_mat_texslot.uv_layer not in self.nif_export.dict_mesh_uvlayers:
                     self.nif_export.dict_mesh_uvlayers.append(b_mat_texslot.uv_layer)
-    
-                #glow tex
+
+                # glow tex
                 if b_mat_texslot.use_map_emit:
-                    #multi-check
+                    # multi-check
                     if self.glowmtex:
-                        raise nif_utils.NifError(
-                            "Multiple emissive textures"
-                            " in mesh '%s', material '%s'."
-                            " Make sure there is only one texture"
-                            " set as Influence > emit"
-                            %(b_obj.name,b_mat.name))
-    
+                        raise nif_utils.NifError("Multiple emissive textures in mesh '%s', material '%s'. Make sure there is only one texture set as Influence > emit"
+                                                 % (b_obj.name, b_mat.name)
+                                                 )
+
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
                         mesh_hasalpha = True
-                    
+
                     self.glowmtex = b_mat_texslot
-    
-                #specular
+
+                # specular
                 elif (b_mat_texslot.use_map_specular or b_mat_texslot.use_map_color_spec):
-                    #multi-check
+                    # multi-check
                     if self.glossmtex:
-                        raise nif_utils.NifError(
-                            "Multiple specular gloss textures"
-                            " in mesh '%s', material '%s'."
-                            " Make sure there is only one texture"
-                            " set as Influence > specular"
-                            %(b_obj.name,b_mat.name))
-    
+                        raise nif_utils.NifError("Multiple specular gloss textures in mesh '%s', material '%s'. Make sure there is only one texture set as Influence > specular"
+                                                 % (b_obj.name, b_mat.name)
+                                                 )
+
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
                         mesh_hasalpha = True
-                    
+
                     # got the gloss map
                     self.glossmtex = b_mat_texslot
-    
-                #bump map
-                elif b_mat_texslot.use_map_normal and \
-                    b_mat_texslot.texture.use_normal_map == False:
-                    #multi-check
+
+                # bump map
+                elif b_mat_texslot.use_map_normal and b_mat_texslot.texture.use_normal_map is False:
+                    # multi-check
                     if self.bumpmtex:
-                        raise nif_utils.NifError(
-                            "Multiple bump/normal textures"
-                            " in mesh '%s', material '%s'."
-                            " Make sure there is only one texture"
-                            " set as Influence > normal"
-                            %(b_obj.name,b_mat.name))
-    
+                        raise nif_utils.NifError("Multiple bump/normal textures in mesh '%s', material '%s'. Make sure there is only one texture set as Influence > normal"
+                                                 % (b_obj.name, b_mat.name)
+                                                 )
+
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
                         mesh_hasalpha = True
-    
+
                     self.bumpmtex = b_mat_texslot
-    
-                #normal map
-                elif b_mat_texslot.use_map_normal and \
-                    b_mat_texslot.texture.use_normal_map:
+
+                # normal map
+                elif b_mat_texslot.use_map_normal and b_mat_texslot.texture.use_normal_map:
                     # multi-check
                     if self.normalmtex:
-                        raise nif_utils.NifError(
-                            "Multiple bump/normal textures"
-                            " in mesh '%s', material '%s'."
-                            " Make sure there is only one texture"
-                            " set as Influence > normal"
-                            %(b_obj.name,b_mat.name))
+                        raise nif_utils.NifError("Multiple bump/normal textures in mesh '%s', material '%s'. Make sure there is only one texture set as Influence > normal"
+                                                 % (b_obj.name, b_mat.name)
+                                                 )
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
                         mesh_hasalpha = True
                     self.normalmtex = b_mat_texslot
-    
-                #darken
-                elif b_mat_texslot.use_map_color_diffuse and \
-                     b_mat_texslot.blend_type == 'DARKEN':
-                    
+
+                # darken
+                elif b_mat_texslot.use_map_color_diffuse and b_mat_texslot.blend_type == 'DARKEN':
+
                     if self.darkmtex:
-                        raise nif_utils.NifError(
-                            "Multiple Darken textures"
-                            " in mesh '%s', material '%s'."
-                            " Make sure there is only one texture"
-                            " with Influence > Blend Type > Dark"
-                            %(b_obj.name,b_mat.name))
-    
+                        raise nif_utils.NifError("Multiple Darken textures in mesh '%s', material '%s'. Make sure there is only one texture with Influence > Blend Type > Dark"
+                                                 % (b_obj.name, b_mat.name)
+                                                 )
+
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
                         mesh_hasalpha = True
                     # got the dark map
                     self.darkmtex = b_mat_texslot
-    
-                #diffuse
+
+                # diffuse
                 elif b_mat_texslot.use_map_color_diffuse:
                     if self.basemtex:
-                        raise nif_utils.NifError(
-                            "Multiple Diffuse textures"
-                            " in mesh '%s', material '%s'."
-                            " Make sure there is only one texture"
-                            " with Influence > Diffuse > color"
-                            %(b_obj.name,b_mat.name))
-    
+                        raise nif_utils.NifError("Multiple Diffuse textures in mesh '%s', material '%s'. Make sure there is only one texture with Influence > Diffuse > color"
+                                                 % (b_obj.name, b_mat.name)
+                                                 )
+
                     self.basemtex = b_mat_texslot
-    
+
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
                         mesh_hasalpha = True
-    
+
                         '''
                         # in this case, Blender replaces the texture transparant parts with the underlying material color...
                         # in NIF, material alpha is multiplied with texture alpha channel...
                         # how can we emulate the NIF alpha system (simply multiplying material alpha with texture alpha) when MapTo.ALPHA is turned on?
                         # require the Blender material alpha to be 0.0 (no material color can show up), and use the "Var" slider in the texture blending mode tab!
                         # but...
-    
+
                         if mesh_mat_transparency > self.properties.epsilon:
                             raise nif_utils.NifError(
                                 "Cannot export this type of"
@@ -598,61 +561,44 @@ class TextureHelper():
                                 " or turn off MapTo.ALPHA,"
                                 " and try again."
                                 %b_mat.name)
-    
+
                         mesh_mat_transparency = b_mat_texslot.varfac # we must use the "Var" value
                         '''
-    
-                #detail
+
+                # detail
                 elif b_mat_texslot.use_map_color_diffuse:
                     if self.detailmtex:
-                        raise nif_utils.NifError(
-                            "Multiple detail textures"
-                            " in mesh '%s', material '%s'."
-                            " Make sure there is only one texture"
-                            " with Influence Diffuse > color"
-                            %(b_obj.name,b_mat.name))
+                        raise nif_utils.NifError("Multiple detail textures in mesh '%s', material '%s'. Make sure there is only one texture with Influence Diffuse > color"
+                                                 % (b_obj.name, b_mat.name)
+                                                 )
                     # extra diffuse consider as detail texture
-    
+
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
                         mesh_hasalpha = True
                     self.detailmtex = b_mat_texslot
-    
-                #reflection
+
+                # reflection
                 elif (b_mat_texslot.use_map_mirror or b_mat_texslot.use_map_raymir):
-                    #multi-check
+                    # multi-check
                     if self.glowmtex:
-                        raise nif_utils.NifError(
-                            "Multiple reflection textures"
-                            " in mesh '%s', material '%s'."
-                            " Make sure there is only one texture"
-                            " set as Influence > Mirror/Ray Mirror"
-                            %(b_obj.name,b_mat.name))
+                        raise nif_utils.NifError("Multiple reflection textures in mesh '%s', material '%s'. Make sure there is only one texture set as Influence > Mirror/Ray Mirror"
+                                                 % (b_obj.name, b_mat.name)
+                                                 )
                     # got the reflection map
                     # check if alpha channel is enabled for this texture
                     if b_mat_texslot.use_map_alpha:
                         mesh_hasalpha = True
                     self.refmtex = b_mat_texslot
-    
+
                 # unsupported map
                 else:
-                    raise nif_utils.NifError(
-                        "Do not know how to export texture '%s',"
-                        " in mesh '%s', material '%s'."
-                        " Either delete it, or if this texture"
-                        " is to be your base texture,"
-                        " go to the Shading Panel,"
-                        " Material Buttons, and set texture"
-                        " 'Map To' to 'COL'."
-                        % (b_mat_texslot.texture.name, b_obj.name, b_mat.name))
-    
+                    raise nif_utils.NifError("Do not know how to export texture '%s', in mesh '%s', material '%s'. Either delete it, or if this texture is to be your base texture, go to the Shading Panel, Material Buttons, and set texture 'Map To' to 'COL'."
+                                             % (b_mat_texslot.texture.name, b_obj.name, b_mat.name)
+                                             )
+
             # nif only support UV-mapped textures
             else:
-                raise nif_utils.NifError(
-                    "Non-UV texture in mesh '%s', material '%s'."
-                    " Either delete all non-UV textures,"
-                    " or in the Shading Panel,"
-                    " under Material Buttons,"
-                    " set texture 'Mapping Coordinates' to 'UV'."
-                    %(b_obj.name, b_mat.name))
-
+                raise nif_utils.NifError("Non-UV texture in mesh '%s', material '%s'. Either delete all non-UV textures, or in the Shading Panel, under Material Buttons, set texture 'Mapping Coordinates' to 'UV'."
+                                         % (b_obj.name, b_mat.name)
+                                         )

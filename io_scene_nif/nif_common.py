@@ -1,27 +1,27 @@
 """Helper functions for nif import and export scripts."""
 
 # ***** BEGIN LICENSE BLOCK *****
-# 
+#
 # Copyright © 2005-2015, NIF File Format Library and Tools contributors.
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 #    * Redistributions of source code must retain the above copyright
 #      notice, this list of conditions and the following disclaimer.
-# 
+#
 #    * Redistributions in binary form must reproduce the above
 #      copyright notice, this list of conditions and the following
 #      disclaimer in the documentation and/or other materials provided
 #      with the distribution.
-# 
+#
 #    * Neither the name of the NIF File Format Library and Tools
 #      project nor the names of its contributors may be used to endorse
 #      or promote products derived from this software without specific
 #      prior written permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -45,11 +45,12 @@ import re
 import pyffi
 from pyffi.formats.nif import NifFormat
 
+
 class NifCommon:
     """Abstract base class for import and export. Contains utility functions
     that are commonly used in both import and export.
     """
-    
+
     # dictionary of bones that belong to a certain armature
     # maps NIF armature name to list of NIF bone name
     dict_armatures = {}
@@ -69,16 +70,16 @@ class NifCommon:
     # following dictionary.
     dict_bones_extra_matrix_inv = {}
 
-    # dictionary mapping bhkRigidBody objects to objects imported in Blender; 
+    # dictionary mapping bhkRigidBody objects to objects imported in Blender;
     # we use this dictionary to set the physics constraints (ragdoll etc)
     dict_havok_objects = {}
-    
+
     # dictionary of names, to map NIF blocks to correct Blender names
     dict_names = {}
 
     # dictionary of bones, maps Blender name to NIF block
     dict_blocks = {}
-    
+
     # keeps track of names of exported blocks, to make sure they are unique
     dict_block_names = []
 
@@ -90,30 +91,25 @@ class NifCommon:
 
     # dictionary of materials, to reuse materials
     dict_materials = {}
-    
+
     # dictionary of texture files, to reuse textures
     dict_textures = {}
     dict_mesh_uvlayers = []
 
-    
-    
-    
-    
-
     VERTEX_RESOLUTION = 1000
     NORMAL_RESOLUTION = 100
 
-    EXTRA_SHADER_TEXTURES = [
-        "EnvironmentMapIndex",
-        "NormalMapIndex",
-        "SpecularIntensityIndex",
-        "EnvironmentIntensityIndex",
-        "LightCubeMapIndex",
-        "ShadowTextureIndex"]
+    EXTRA_SHADER_TEXTURES = ["EnvironmentMapIndex",
+                             "NormalMapIndex",
+                             "SpecularIntensityIndex",
+                             "EnvironmentIntensityIndex",
+                             "LightCubeMapIndex",
+                             "ShadowTextureIndex"
+                             ]
     """Names (ordered by default index) of shader texture slots for
     Sid Meier's Railroads and similar games.
     """
-    
+
     HAVOK_SCALE = 6.996
 
     def __init__(self, operator, context):
@@ -248,24 +244,18 @@ class NifCommon:
         return name
 
     def hex_to_dec(self, nif_ver_hex):
-        
-        nif_ver_hex_1 = str(int('{0:.4}'.format(
-                        hex(self.data._version_value_._value)),0)).zfill(2)
-        nif_ver_hex_2 = str(int('0x{0:.2}'.format(
-                        hex(self.data._version_value_._value)[4:]),0)).zfill(2)
-        nif_ver_hex_3 = str(int('0x{0:.2}'.format(
-                        hex(self.data._version_value_._value)[6:]),0)).zfill(2)
-        nif_ver_hex_4 = str(int('0x{0:.2}'.format(
-                        hex(self.data._version_value_._value)[8:]),0)).zfill(2)
-        
-        nif_ver_dec = str(
-        nif_ver_hex_1 + "." + nif_ver_hex_2 + "." + nif_ver_hex_3 + "." + nif_ver_hex_4)
-        
+
+        nif_ver_hex_1 = str(int('{0:.4}'.format(hex(self.data._version_value_._value)), 0))
+        nif_ver_hex_2 = str(int('0x{0:.2}'.format(hex(self.data._version_value_._value)[4:]), 0))
+        nif_ver_hex_3 = str(int('0x{0:.2}'.format(hex(self.data._version_value_._value)[6:]), 0))
+        nif_ver_hex_4 = str(int('0x{0:.2}'.format(hex(self.data._version_value_._value)[8:]), 0))
+
+        nif_ver_dec = str(nif_ver_hex_1 + "." + nif_ver_hex_2 + "." + nif_ver_hex_3 + "." + nif_ver_hex_4)
+
         return nif_ver_dec
 
-
     def dec_to_hex(self, nif_ver_dec):
-        
+
         dec_split = re.compile(r'\W+')
         dec_split = dec_split.split(nif_ver_dec)
 
@@ -278,15 +268,13 @@ class NifCommon:
             (nif_ver_dec_1 + nif_ver_dec_2 + nif_ver_dec_3 + nif_ver_dec_4), 16)
         return nif_ver_hex
 
-
     def get_extend_from_flags(self, flags):
-        if flags & 6 == 4: # 0b100
+        if flags & 6 == 4:  # 0b100
             return Blender.IpoCurve.ExtendTypes.CONST
-        elif flags & 6 == 0: # 0b000
+        elif flags & 6 == 0:  # 0b000
             return Blender.IpoCurve.ExtendTypes.CYCLIC
 
-        self.warning(
-            "Unsupported cycle mode in nif, using clamped.")
+        self.warning("Unsupported cycle mode in nif, using clamped.")
         return Blender.IpoCurve.ExtendTypes.CONST
 
     def get_b_ipol_from_n_ipol(self, n_ipol):
@@ -297,8 +285,7 @@ class NifCommon:
         elif n_ipol == 0:
             # guessing, not documented in nif.xml
             return Blender.IpoCurve.InterpTypes.CONST
-        self.warning(
-            "Unsupported interpolation mode in nif, using quadratic/bezier.")
+        self.warning("Unsupported interpolation mode in nif, using quadratic/bezier.")
         return Blender.IpoCurve.InterpTypes.BEZIER
 
     def get_n_ipol_from_b_ipol(self, b_ipol):
@@ -308,8 +295,7 @@ class NifCommon:
             return NifFormat.KeyType.QUADRATIC_KEY
         elif b_ipol == Blender.IpoCurve.InterpTypes.CONST:
             return NifFormat.KeyType.CONST_KEY
-        self.warning(
-            "Unsupported interpolation mode in blend, using quadratic/bezier.")
+        self.warning("Unsupported interpolation mode in blend, using quadratic/bezier.")
         return NifFormat.KeyType.QUADRATIC_KEY
 
     def get_n_apply_mode_from_b_blend_type(self, b_blend_type):
@@ -319,7 +305,7 @@ class NifCommon:
             return NifFormat.ApplyMode.APPLY_HILIGHT2
         elif b_blend_type == "MIX":
             return NifFormat.ApplyMode.APPLY_MODULATE
-        self.warning(
-            "Unsupported blend type (%s) in material,"
-            " using apply mode APPLY_MODULATE" % b_blend_type)
+        self.warning("Unsupported blend type (%s) in material, using apply mode APPLY_MODULATE"
+                     % b_blend_type
+                     )
         return NifFormat.ApplyMode.APPLY_MODULATE
