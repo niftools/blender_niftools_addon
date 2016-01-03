@@ -1,20 +1,20 @@
+
+.. _properties:
+
 Properties
 ==========
 
-* Most Nif properties, :class:`~pyffi.formats.nif.NifFormat.NiProperty` are mapped to some part of Blender's Material System.
-* The following section goes through those Blender material settings and how they relate to those properties.
-* Unless otherwise stated your mesh needs to have a material to use these properties.
+The following section describes how Blender object properties/settings map to their Nif counterpart.
 
-Example
-~~~~~~~
 
-#. :ref:`Create a mesh-object <geometry-mesh>` as explained before.
-#. In the **Properties** panel, in the *Material* tab
-   click **New** to create a new material.
-#. Assign the Material an appropriate name.
- 
+Mapping
+-------
+* :ref:`Read NiProperty<properties-niproperty>`. to see what blender settings are mapped for Nif versions using NiProperty blocks. 
+* Nif versions which is BSLightingShaderProperty
+
 .. toctree::
    :maxdepth: 1
    
-   property
+   material
+   niproperty
 
