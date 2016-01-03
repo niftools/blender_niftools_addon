@@ -125,7 +125,7 @@ class ObjectProperty(PropertyGroup):
                         )
         
         cls.longname = StringProperty(
-                        name='Nif LongName'
+                        name='Nif Long Name'
                         )
 
         cls.consistency_flags = EnumProperty(
@@ -142,7 +142,7 @@ class ObjectProperty(PropertyGroup):
                         )
 
         cls.bsxflags = IntProperty(
-                        name='BSXFlags',
+                        name='BSX Flags',
                         description='Controls animation and collision',
                         default=0  # 2 = Bit 1, enable collision
                         )
@@ -192,7 +192,7 @@ class BsInventoryMarker(PropertyGroup):
                         default=0)
 
         cls.bs_inv_zoom = FloatProperty(
-                        name="Inv zoom value",
+                        name="Inv Zoom Value",
                         description="Inventory object Zoom level.",
                         default=1)
 

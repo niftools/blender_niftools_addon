@@ -1,7 +1,8 @@
-Mesh Geometry
--------------
 
 .. _geometry-mesh:
+
+Mesh Geometry
+-------------
 
 * The following section deals with :class:`~bpy.types.Object` which are of type 'MESH', containing Mesh Data(Mesh-Object)
 * Each :class:`~bpy.types.Object` is exported as a combination of :class:`~pyffi.formats.nif.NifFormat.NiTriShape` and :class:`~pyffi.formats.nif.NifFormat.NiNode`.
@@ -12,21 +13,12 @@ Mesh Geometry
 #. Start Blender and empty the scene.
 #. Create any Mesh-Object to the scene, eg. cube primitive: 
 
-  - **Add(Shift + A) -> Mesh -> Cube**.
-
-#. Set whether the Mesh-object should be Double-sided:
-   
-  - In the **Properties** Editor, in the **Object Data Tab**
-  - Enable/Disable **Double Sided**, see notes for more detail.
-
 #. Give the Object an appropriate name.
 
   - In the **Object Tab** 
   - Generic names are automatically generated, unique names helps distingush objects, 
 
-#. Export the file: **File -> Export -> NetImmerse/Gamebryo**.
-
-**Notes:**
+.. Notes:
 
 * The Nif format only supports triangle based geometry.
 
@@ -35,50 +27,29 @@ Mesh Geometry
 * Strips (:class:`~pyffi.formats.nif.NifFormat.NiTriStrips`) are available but not developer supported
   as they are `unnecessary for current hardware <http://tomsdxfaq.blogspot.com/2005_12_01_archive.html>`_.
   
-* Double Sided Mesh - Adds a :class:`~pyffi.formats.nif.NifFormat.NiStencilProperty` or similiar, 
+.. _geometry-doubleside:
+
+Double Sided Mesh
+=================
+
+* Each triangle is composed of 3 vertices, edges and a face.
+* To decide which way the face is pointing a vector(normal), perpendecular to the face is used.
+* This normal vector can be flipped to either side of the triangle; a common source for triangles appearing to not render. 
+
+Sometimes you want to allow the mesh to ignore the normal and render both sides, eg a cloak.
+
+  - In the **Properties** Editor, in the **Object Data Tab**
+  - Enable/Disable **Double Sided**, see notes for more detail.
+
+Double Sided Mesh - Adds a :class:`~pyffi.formats.nif.NifFormat.NiStencilProperty` or similiar, 
   see :ref:`Properties - Stencil Property <properties-stencil>` for more info.
 
-BS Inventory Marker
--------------------
-.. _geometry-BSInvMarker:
-
-* BS Inv Marker
-	This sets the x, y, z rotation and zoom level of objects for the in game inventory display in games that support the property.
-	
-#. With blender in Object mode, open the BS Inv Marker property window and click + 
-	This should only be applied to the Root object, For rigged meshed this should be applied to the armature, For non rigged objects it should be applied to the Mesh object
-#. Apply desired values to x,y,z to set the preferred rotation.
-	#. Set view to back view and use rotation to achieve the preferred object orientation.
-	#. Copy the values from the rotation display into the x,y,z lines for BS Inv Marker.
-	#. Delete the decimal and remove any numbers to the right of the fourth digit.
-	#. Press alt + R to reset the object rotation back to 0
-#. Apply desired value to zoom	
-	#. a value of 1 for zoom is the default, lower values .99 to .01 decrease the item size in the menu.
-		
-	
-**Notes:**
-* Rigged objects that use this value may also use :ref:`InvMarker Bones <armature-invmarker>`.
-
-BSX
----
-.. _geometry-bsx:
-
-BSX is a flagging variable that determines how havok will interact with the object
-	* Havok = 1
-	* Collision = 2
-	* Is armature (?) = 4
-	* Enable animation = 8
-	* Flame nodes = 16
-	* Editor marker present = 32
-
-**Notes:**
-	The value is equal to the sum of all items that are enabled.
-	to enable havok and collision the value would be 3
-
-UV Unwrapping/Mapping
----------------------
+ 
 
 .. _geometry-uv:
+
+UV Unwrapping/Mapping
+=====================
 
 * UV-unwrapping is the process of unfolding all the faces onto a flat plane, see `Cube Unwrap <http://en.wikipedia.org/wiki/File:Cube_Representative_UV_Unwrapping.png>`_.
 * The UV-unwrapping process creates a UV Map layer.
@@ -96,25 +67,17 @@ UV Unwrapping/Mapping
 * Although Blender allows multiple :class:`~bpy.types.MeshTextureFaceLayer`, most versions of the Nif format only support one UV layer
 
 
-UPB
----
-.. _geometry-upb:
-
-The UPB is a group of values contained in a single data string. It's use is unknown. 
-	* Niftools uses Mass = 0.000000\r\nEllasticity = 0.300000\r\nFriction = 0.300000\r\nUnyielding = 0\r\nSimulation_Geometry = 2\r\nProxy_Geometry = <None>\r\nUse_Display_Proxy = 0\r\nDisplay_Children = 1\r\nDisable_Collisions = 0\r\nInactive = 0\r\nDisplay_Proxy = <None>\r\n as the default value set for this item.
-
+.. _geometry-vertexcolor:
 
 Vertex Color
-------------
-.. _geometry-vertexcolor:
+============
 
 **Example:**
 
 #. :ref:`Create a mesh-object <geometry-mesh>`.
 #. Switch to Vertex Paint mode, this automatically adds a base vertex color layer.
 #. Apply the desired vertex colors evenly to the vertex.
-#. Ensure you have added a :ref:`material<properties-material>`.
-#. Now export as usual.
+#. Ensure you have added a :ref:`material<properties-material-settings>`.
 
 **Notes:**
 
@@ -123,9 +86,10 @@ Vertex Color
 * `This image should clarify per-face vertes coloring <http://i211.photobucket.com/albums/bb189/NifTools/Blender/documentation/per_face_vertex_color.jpg>`_
 * On export the scripts will take an average of colors. 
 
-Vertex Alpha
-------------
 .. _geometry-vertexalpha:
+
+Vertex Alpha
+============
 
 Vertex alpha is handled in the same way as vertex color. The only difference is that vertex alpha use grey scale.
    
@@ -144,28 +108,5 @@ Vertex alpha is handled in the same way as vertex color. The only difference is 
 
 	* Vertex alpha must use the second vertex color layer, even if there is no color applied in first color layer the default color layer must be in place.
    
-Version Control
----------------
-.. _geometry-VersionControl:
-
-* Nif Version
-	The base version, generally related to a single game or company. Displayed in format xx.xx.xx.xx
-	
-**Example:**
-
-	Nif Version 20.02.00.07 is the version that is used for Fallout 3
-
-* User Version
-	A two digit single integer sub value of Nif Version
-	11 Would designate Fallout 3 as the specific game file.
-	
-* User Version 2:
-	A second two digit single integer sub value, with the same function as User Version.
-
-**Notes:**
-
-	* All three values are used to verify which data should be attached to a file during the export process.
-	* The values of each object are checked against the root object during export, any
-		mismatches will trigger and error and alert the user so that corrections can be effected.
 
 
