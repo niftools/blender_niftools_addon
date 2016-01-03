@@ -20,9 +20,9 @@ Features:
  - Utility scripts 
 
 This is one of the many nif-related projects developed by Niftools, our open source community.
- - For more projects see `www.niftools.org <www.niftools.org>`_
- - For latest news follow us - `@niftools <www.twitter.com/niftools>`_
- - For support check out  `Forums <niftools.sf.net/forums>`_
+ - For more projects see `www.niftools.org <http://www.niftools.org>`_
+ - For latest news follow us - `@niftools <http://www.twitter.com/niftools>`_
+ - For support check out  `Forums <http://niftools.sf.net/forums>`_
 
 Contents:
 

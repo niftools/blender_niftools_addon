@@ -23,7 +23,9 @@ if "%1" == "" goto help
 if "%1" == "help" (
 	:help
 	echo.Please use `make ^<target^>` where ^<target^> is one of
+	echo.  clean      to clean your build directory
 	echo.  html       to make standalone HTML files
+	echo.  htmlclean  to clean your build directory and make standalone HTML files
 	echo.  dirhtml    to make HTML files named index.html in directories
 	echo.  singlehtml to make a single large HTML file
 	echo.  pickle     to make pickle files
@@ -51,6 +53,18 @@ if "%1" == "clean" (
 )
 
 if "%1" == "html" (
+	%SPHINXAPIBUILD% -o %ALLAPIOPTS%
+	if errorlevel 1 exit /b 1
+	echo.
+	echo.Generated auto-docs for api
+	%SPHINXBUILD% -b html %ALLSPHINXOPTS% %BUILDDIR%/html
+	if errorlevel 1 exit /b 1
+	echo.
+	echo.Build finished. The HTML pages are in %BUILDDIR%/html.
+	goto end
+)
+
+if "%1" == "htmlclean" (
 	call make.bat clean
 	%SPHINXAPIBUILD% -o %ALLAPIOPTS%
 	if errorlevel 1 exit /b 1
@@ -61,6 +75,7 @@ if "%1" == "html" (
 	echo.
 	echo.Build finished. The HTML pages are in %BUILDDIR%/html.
 	goto end
+
 )
 
 if "%1" == "dirhtml" (
