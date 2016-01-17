@@ -2195,11 +2195,11 @@ class NifImport(NifImportExport):
                 else:
                     b_meshData.verts.extend(v.x, v.y, v.z)
                 # adds normal info if present (Blender recalculates these when
-                # switching between edit mode and object mode, handled further)
-                #if norms:
-                #    mv = b_meshData.verts[b_v_index]
-                #    n = norms[i]
-                #    mv.no = Blender.Mathutils.Vector(n.x, n.y, n.z)
+                # switching between edit mode and object mode)
+                if norms:
+                    mv = b_meshData.verts[b_v_index]
+                    n = norms[i]
+                    mv.no = Blender.Mathutils.Vector(n.x, n.y, n.z)
                 b_v_index += 1
             else:
                 # already added
@@ -2525,8 +2525,9 @@ class NifImport(NifImportExport):
                 b_meshData.verts[b_v_index].co[1] = base.y
                 b_meshData.verts[b_v_index].co[2] = base.z
      
-        # recalculate normals
-        b_meshData.calcNormals()
+        # recalculate normals if we did not import them
+        if not norms:
+            b_meshData.calcNormals()
         # import priority if existing
         if niBlock.name in self.bone_priorities:
             constr = b_mesh.constraints.append(
@@ -3748,7 +3749,8 @@ class NifImport(NifImportExport):
             # save priority for future reference
             # (priorities will be stored into the name of a NULL constraint on
             # bones, see import_armature function)
-            self.bone_priorities[nodename] = controlledblock.priority
+            if self.IMPORT_BONEPRIORITIES:
+                self.bone_priorities[nodename] = controlledblock.priority
 
         # DEBUG: save the file for manual inspection
         #niffile = open("C:\\test.nif", "wb")

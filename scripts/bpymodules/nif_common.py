@@ -1,6 +1,6 @@
 """Common functions for the Blender nif import and export scripts."""
 
-__version__ = "2.5.8"
+__version__ = "2.5.9"
 __requiredpyffiversion__ = "2.1.9"
 __requiredblenderversion__ = "245"
 
@@ -370,6 +370,7 @@ class NifConfig:
         IMPORT_SENDBONESTOBINDPOS = True,
         IMPORT_APPLYSKINDEFORM = False,
         IMPORT_EXTRANODES = True,
+        IMPORT_BONEPRIORITIES = True,
         EXPORT_BHKLISTSHAPE = False,
         EXPORT_OB_BSXFLAGS = 2,
         EXPORT_OB_MASS = 10.0,
@@ -736,6 +737,11 @@ class NifConfig:
                 text = "Import Geometry Only + Parent To Selected Armature",
                 event_name = "IMPORT_SKELETON_2",
                 val = (self.config["IMPORT_SKELETON"] == 2))
+            self.draw_y_sep()
+
+            self.draw_toggle(
+                text="Import Bone Priorities",
+                event_name="IMPORT_BONEPRIORITIES")
             self.draw_y_sep()
 
             self.draw_toggle(
@@ -1304,6 +1310,8 @@ class NifConfig:
             self.config["IMPORT_APPLYSKINDEFORM"] = not self.config["IMPORT_APPLYSKINDEFORM"]
         elif evName == "IMPORT_EXTRANODES":
             self.config["IMPORT_EXTRANODES"] = not self.config["IMPORT_EXTRANODES"]
+        elif evName == "IMPORT_BONEPRIORITIES":
+            self.config["IMPORT_BONEPRIORITIES"] = not self.config["IMPORT_BONEPRIORITIES"]
         elif evName == "IMPORT_EXPORTEMBEDDEDTEXTURES":
             self.config["IMPORT_EXPORTEMBEDDEDTEXTURES"] = not self.config["IMPORT_EXPORTEMBEDDEDTEXTURES"]
         elif evName == "IMPORT_COMBINESHAPES":
@@ -1322,6 +1330,7 @@ class NifConfig:
             self.config["IMPORT_SENDBONESTOBINDPOS"] = True
             self.config["IMPORT_APPLYSKINDEFORM"] = False
             self.config["IMPORT_EXTRANODES"] = True
+            self.config["IMPORT_BONEPRIORITIES"] = True
             self.config["IMPORT_EGMFILE"] = ''
             self.config["IMPORT_EGMANIM"] = True
             self.config["IMPORT_EGMANIMSCALE"] = 1.0
