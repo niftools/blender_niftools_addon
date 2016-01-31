@@ -105,7 +105,7 @@ class Armature():
 		# The armature has been created in editmode,
 		# now we are ready to set the bone keyframes.
 		if self.properties.animation:
-			self.nif_import.animationhelper.armature_animation.import_armature_animation(b_armature)
+			self.nif_import.animationhelper.armature_animation.import_armature_animation(b_armature, armature_name)
 			
 		# constraints (priority)
 		# must be done outside edit mode hence after calling
