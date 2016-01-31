@@ -467,7 +467,7 @@ class ArmatureAnimation():
         
     def import_armature_animation(self, b_armature):
         # create an action
-        action = bpy.data.actions.new(armature_name)
+        action = bpy.data.actions.new(b_armature.name)
         bpy.types.NlaTrack.select = b_armature #action.setActive(b_armature)
         # go through all armature pose bones
         # see http://www.elysiun.com/forum/viewtopic.php?t=58693
