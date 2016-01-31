@@ -465,7 +465,7 @@ class ArmatureAnimation():
         self.nif_import = parent
         
         
-    def import_armature_animation(self, b_armature):
+    def import_armature_animation(self, b_armature, armature_name):
         # create an action
         action = bpy.data.actions.new(armature_name)
         bpy.types.NlaTrack.select = b_armature #action.setActive(b_armature)
