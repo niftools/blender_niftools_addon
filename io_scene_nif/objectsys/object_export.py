@@ -673,9 +673,9 @@ class MeshHelper():
             
             # add texture effect block (must be added as preceeding child of
             # the trishape)
-            if self.properties.game == 'MORROWIND' and mesh_texeff_mtex:
+            if self.properties.game == 'MORROWIND' and self.nif_export.texturehelper.refmtex:
                 # create a new parent block for this shape
-                extra_node = self.create_block("NiNode", mesh_texeff_mtex)
+                extra_node = self.create_block("NiNode", self.nif_export.texturehelper.refmtex)
                 parent_block.add_child(extra_node)
                 # set default values for this ninode
                 extra_node.rotation.set_identity()
@@ -683,7 +683,7 @@ class MeshHelper():
                 extra_node.flags = 0x000C # morrowind
                 # create texture effect block and parent the
                 # texture effect and trishape to it
-                texeff = self.export_texture_effect(mesh_texeff_mtex)
+                texeff = self.export_texture_effect(self.nif_export.texturehelper.refmtex)
                 extra_node.add_child(texeff)
                 extra_node.add_child(trishape)
                 extra_node.add_effect(texeff)
