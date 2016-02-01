@@ -259,6 +259,7 @@ class NifImport(NifCommon):
                     # get bsx flags so we can attach it to collision object
                     bsxflags = n_extra.integer_data
                     return bsxflags
+        return 0
 
     def import_upbflag_data(self, root_block):
             #process extra data
@@ -267,6 +268,7 @@ class NifImport(NifCommon):
                     if n_extra.name.decode() == "UPB":
                         upbflags = n_extra.string_data.decode()
                         return upbflags
+            return ''
                         
     def import_bsbound_data(self, root_block):
         for n_extra in root_block.get_extra_datas():
@@ -819,8 +821,7 @@ class NifImport(NifCommon):
         b_empty.niftools.longname = niBlock.name.decode()
 
         self.context.scene.objects.link(b_empty)
-        if self.bsxflags:
-            b_empty.niftools.bsxflags = self.bsxflags
+        b_empty.niftools.bsxflags = self.bsxflags
         b_empty.niftools.objectflags = niBlock.flags
 
         if niBlock.name in self.dict_bone_priorities:
