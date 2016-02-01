@@ -268,7 +268,7 @@ class NifImport(NifCommon):
                     if n_extra.name.decode() == "UPB":
                         upbflags = n_extra.string_data.decode()
                         return upbflags
-            return 0
+            return ''
                         
     def import_bsbound_data(self, root_block):
         for n_extra in root_block.get_extra_datas():
