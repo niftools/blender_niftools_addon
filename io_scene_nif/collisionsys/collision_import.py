@@ -171,14 +171,9 @@ class bhkshape_import():
             b_col_obj.nifcollision.motion_system = NifFormat.MotionSystem._enumkeys[bhkshape.motion_system]
             self.nif_import.import_version_set(b_col_obj)
             
-            if self.nif_import.bsxflags:
-                b_col_obj.niftools.bsxflags = self.nif_import.bsxflags
-            
-            if self.nif_import.objectflags:
-                b_col_obj.niftools.objectflags = self.nif_import.objectflags
-            
-            if self.nif_import.upbflags:
-                b_col_obj.niftools.upb = self.nif_import.upbflags
+            b_col_obj.niftools.bsxflags = self.nif_import.bsxflags
+            b_col_obj.niftools.objectflags = self.nif_import.objectflags
+            b_col_obj.niftools.upb = self.nif_import.upbflags
             
             b_col_obj.rigid_body.mass = bhkshape.mass / len(collision_objs)
             
