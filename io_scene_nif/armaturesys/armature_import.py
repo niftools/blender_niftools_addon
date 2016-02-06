@@ -257,7 +257,6 @@ class Armature():
 			b_child_bone.parent = b_bone
 			bpy.ops.object.mode_set(mode='OBJECT',toggle=False)
 			b_bone = b_armatureData.bones[bone_name]
-			b_child_bone = b_armatureData.bones[b_child_bone.name]
 
 
 		
