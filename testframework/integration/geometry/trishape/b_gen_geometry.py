@@ -88,7 +88,8 @@ def b_scale_object():
     bpy.ops.transform.resize(value=(7.5,1,1), constraint_axis=(True,False,False))
     bpy.ops.transform.resize(value=(1,7.5,1), constraint_axis=(False,True,False))
     bpy.ops.transform.resize(value=(1,1,3.5), constraint_axis=(False,False,True))
-    bpy.ops.object.transform_apply(scale=True)
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    
 
 def b_scale_single_face(b_obj):
     """Scale a single face of the object."""
@@ -129,7 +130,7 @@ def b_check_geom_obj(b_obj):
     
 def b_check_transform(b_obj):
     
-#     b_loc_vec, b_rot_quat, b_scale_vec = b_obj.matrix_local.decompose() # transforms   
+    b_loc_vec, b_rot_quat, b_scale_vec = b_obj.matrix_local.decompose() # transforms   
     
     nose.tools.assert_equal(b_obj.location, mathutils.Vector((20.0, 20.0, 20.0))) # location
     
