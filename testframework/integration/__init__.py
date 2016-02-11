@@ -257,34 +257,9 @@ class SingleNif(Base):
             game=self.n_game,
             )
 
-    def test_pycode_nif(self):
-        """Test import followed by export."""
-        # create initial nif file and check data
-        self.n_write(self.n_create_data(), self.n_filepath_0)
-        self.n_check(self.n_filepath_0)
-         
-        #clear scene
-        self.b_clear()
-        
-        # import nif and check data
-        self.n_import(self.n_filepath_0)
-        b_obj_names = self._b_select_all()
-        if(self.gen_blender_scene):
-            self.b_save(self.b_filepath_0)
-        self.b_check_data()
-         
-        # export and check data
-        self.n_export(self.n_filepath_1)
-        self.n_check(self.n_filepath_1)
-        
-        #clear scene
-        self.b_clear()
-        self._b_clear_check(b_obj_names)
-
-    def test_user_nif(self):       
+    def test_user_blend_export(self):       
         # create scene
         self.b_create_data()
-        b_obj_names = self._b_select_all()
         if(self.gen_blender_scene):
             self.b_save(self.b_filepath_1)
         self.b_check_data()
@@ -295,15 +270,40 @@ class SingleNif(Base):
 
         # clear scene
         self.b_clear()
+        b_obj_names = self._b_select_all()
         self._b_clear_check(b_obj_names)
          
         # import and check data
         self.n_import(self.n_filepath_2)
-        b_obj_names = self._b_select_all()
         if(self.gen_blender_scene):
             self.b_save(self.b_filepath_2)
         self.b_check_data()
         
-        #clear scene
+        # clear scene
         self.b_clear()
+        b_obj_names = self._b_select_all()
+        self._b_clear_check(b_obj_names)
+
+    def test_pycode_nif_import(self):
+        """Test import followed by export."""
+        # create initial nif file and check data
+        self.n_write(self.n_create_data(), self.n_filepath_0)
+        self.n_check(self.n_filepath_0)
+         
+        # clear scene
+        self.b_clear()
+        
+        # import nif and check data
+        self.n_import(self.n_filepath_0)
+        if(self.gen_blender_scene):
+            self.b_save(self.b_filepath_0)
+        self.b_check_data()
+         
+        # export and check data
+        self.n_export(self.n_filepath_1)
+        self.n_check(self.n_filepath_1)
+        
+        # clear scene
+        self.b_clear()
+        b_obj_names = self._b_select_all()
         self._b_clear_check(b_obj_names)
