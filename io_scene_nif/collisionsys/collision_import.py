@@ -60,7 +60,6 @@ class bhkshape_import():
     def import_bhk_shape(self, bhkshape):
         """Imports any supported collision shape as list of blender meshes."""
 
-        # TODO use version info form scene ?
         if self.nif_import.data._user_version_value_._value == 12:
             if self.nif_import.data._user_version_2_value_._value == 83:
                 self.HAVOK_SCALE = self.nif_import.HAVOK_SCALE * 10
