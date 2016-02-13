@@ -215,25 +215,20 @@ class NifExport(NifCommon):
                         " or 'ARMATURE' object."
                         % root_object.name)
                 root_objects.add(root_object)
+
             # version checking to help avoid errors
             # due to invalid settings
-            for r_obj in root_objects:
-                nif_ver_hex = self.dec_to_hex(r_obj.niftools.nif_version)
-                for gname in NifFormat.games:
-                    gname_trans = self.get_game_to_trans(gname)
-                    if gname_trans == self.properties.game:
-                        if nif_ver_hex not in NifFormat.games[gname]:
-                            raise nif_utils.NifError(
-                            " '%s': version does not match selected export settings"
-                            % b_obj.name)
-                        break
-                for r_obj_c in r_obj.children:
-                    if (r_obj_c.niftools.nif_version != r_obj.niftools.nif_version) or \
-                        (r_obj_c.niftools.user_version != r_obj.niftools.user_version) or \
-                            (r_obj_c.niftools.user_version_2 != r_obj.niftools.user_version_2):
+            b_scene = bpy.context.scene
+            nif_ver_hex = b_scene.niftools.nif_version
+            for gname in NifFormat.games:
+                gname_trans = self.get_game_to_trans(gname)
+                if gname_trans == self.properties.game:
+                    if nif_ver_hex not in NifFormat.games[gname]:
                         raise nif_utils.NifError(
-                            " '%s': has mismatched nif version, user version or user version 2"
-                            % r_obj_c.name)
+                        "Version for export not found: %s"
+                        % str(nif_ver_hex))
+                    break
+
             # smoothen seams of objects
             if self.properties.smooth_object_seams:
                 self.objecthelper.mesh_helper.smooth_mesh_seams(self.context.scene.objects)
@@ -634,10 +629,11 @@ class NifExport(NifCommon):
                 root_block = fade_root_block
 
             # set user version and user version 2 for export
-            if root_obj.niftools:
-                NIF_USER_VERSION = root_obj.niftools.user_version
-                NIF_USER_VERSION_2 = root_obj.niftools.user_version_2
-            if root_obj.niftools.user_version == 0:
+            b_scene = bpy.context.scene
+            if b_scene.niftools:
+                NIF_USER_VERSION = b_scene.niftools.user_version
+                NIF_USER_VERSION_2 = b_scene.niftools.user_version_2
+            if b_scene.niftools.user_version == 0:
                 if self.properties.game == 'OBLIVION':
                     NIF_USER_VERSION = 11
                 elif self.properties.game == 'FALLOUT_3':
@@ -647,7 +643,7 @@ class NifExport(NifCommon):
                 else:
                     NIF_USER_VERSION = 0
                     
-            if root_obj.niftools.user_version_2 == 0:
+            if b_scene.niftools.user_version_2 == 0:
                 if self.properties.game == 'OBLIVION':
                     NIF_USER_VERSION_2 = 11
                 elif self.properties.game == 'FALLOUT_3':
