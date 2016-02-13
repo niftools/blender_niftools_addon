@@ -630,9 +630,7 @@ class NifExport(NifCommon):
 
             # set user version and user version 2 for export
             b_scene = bpy.context.scene
-            if b_scene.niftools:
-                NIF_USER_VERSION = b_scene.niftools.user_version
-                NIF_USER_VERSION_2 = b_scene.niftools.user_version_2
+
             if b_scene.niftools.user_version == 0:
                 if self.properties.game == 'OBLIVION':
                     NIF_USER_VERSION = 11
@@ -642,6 +640,8 @@ class NifExport(NifCommon):
                     NIF_USER_VERSION = 131072
                 else:
                     NIF_USER_VERSION = 0
+            else:
+                NIF_USER_VERSION = b_scene.niftools.user_version
                     
             if b_scene.niftools.user_version_2 == 0:
                 if self.properties.game == 'OBLIVION':
@@ -650,6 +650,8 @@ class NifExport(NifCommon):
                     NIF_USER_VERSION_2 = 34
                 else:
                     NIF_USER_VERSION_2 = 0
+            else:
+                NIF_USER_VERSION_2 = b_scene.niftools.user_version_2
 
             # export nif file:
             # ----------------
