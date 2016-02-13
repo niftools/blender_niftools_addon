@@ -275,10 +275,11 @@ class NifImport(NifCommon):
             if isinstance(n_extra, NifFormat.BSBound):
                     self.boundhelper.import_bounding_box(n_extra)
     
-    def import_version_set(self, b_obj):
-        b_obj.niftools.nif_version = self.hex_to_dec(self.data._version_value_._value)
-        b_obj.niftools.user_version = self.data._user_version_value_._value
-        b_obj.niftools.user_version_2 = self.data._user_version_2_value_._value
+    def import_version_set(self):
+        scene = bpy.context.scene
+        scene.niftools.nif_version = self.data._version_value_._value
+        scene.niftools.user_version = self.data._user_version_value_._value
+        scene.niftools.user_version_2 = self.data._user_version_2_value_._value
 
     def import_root(self, root_block):
         """Main import function."""
@@ -291,6 +292,8 @@ class NifImport(NifCommon):
         # divinity 2: handle CStreamableAssetData
         if isinstance(root_block, NifFormat.CStreamableAssetData):
             root_block = root_block.root
+
+        self.import_version_set()
 
         # sets the root block parent to None, so that when crawling back the
         # script won't barf
@@ -319,8 +322,7 @@ class NifImport(NifCommon):
             self.debug("%s is an armature root" % root_block.name)
             b_obj = self.import_branch(root_block)
             b_obj.niftools.objectflags = root_block.flags
-            self.import_version_set(b_obj)
-            
+
         elif self.is_grouping_node(root_block):
             # special case 2: root node is grouping node
             self.debug("%s is a grouping node" % root_block.name)
@@ -432,8 +434,7 @@ class NifImport(NifCommon):
             self.active_obj_name = niBlock.name.decode()
             b_obj = self.import_mesh(niBlock)
             b_obj.niftools.objectflags = niBlock.flags
-            self.import_version_set(b_obj)
-            
+
             if niBlock.properties:
                 for b_prop in niBlock.properties:
                     self.import_shader_types(b_obj, b_prop)
@@ -523,8 +524,7 @@ class NifImport(NifCommon):
                                                  group_mesh=b_obj,
                                                  applytransform=True)
                         b_obj.niftools.objectflags = child.flags
-                        self.import_version_set(b_obj)
-                        
+
                         if child.properties:
                             for b_prop in child.properties:
                                 self.import_shader_types(b_obj, b_prop)
