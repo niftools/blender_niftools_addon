@@ -96,21 +96,7 @@ class ObjectProperty(PropertyGroup):
                         description='Additional object properties used by the Nif File Format',
                         type=cls,
                         )
-        
-        cls.nif_version = StringProperty(
-                        name='Nif Version',
-                        )
-        
-        cls.user_version = IntProperty(
-                        name='User Version',
-                        default=0
-                        )
-        
-        cls.user_version_2 = IntProperty(
-                        name='User Version 2',
-                        default=0
-                        )
-        
+
         cls.rootnode = EnumProperty(
                         name='Nif Root Node',
                         description='Type of property used to display meshes.',

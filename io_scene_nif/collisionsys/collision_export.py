@@ -37,6 +37,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import bpy
 import mathutils
 
 from pyffi.formats.nif import NifFormat
@@ -66,8 +67,9 @@ class bhkshape_export():
         coll_ispacked = (b_obj.game.collision_bounds_type == 'TRIANGLE_MESH')
         
         # Set Havok Scale ratio
-        if b_obj.niftools.user_version == 12:
-            if b_obj.niftools.user_version_2 == 83:
+        b_scene = bpy.context.scene
+        if b_scene.niftools.user_version == 12:
+            if b_scene.niftools.user_version_2 == 83:
                 self.HAVOK_SCALE = self.nif_export.HAVOK_SCALE * 10
             else:
                 self.HAVOK_SCALE = self.nif_export.HAVOK_SCALE
