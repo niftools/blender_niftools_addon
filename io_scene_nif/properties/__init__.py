@@ -39,7 +39,7 @@
 
 import bpy
 
-from . import armature, collision, constraint, geometry, material, object, shader
+from . import armature, collision, constraint, geometry, material, object, scene, shader
 
 def underscore_to_camelcase(s):
     """Take the underscore-separated string s and return a camelCase
