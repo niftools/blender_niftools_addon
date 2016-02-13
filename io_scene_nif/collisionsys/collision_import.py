@@ -59,7 +59,7 @@ class bhkshape_import():
 
     def import_bhk_shape(self, bhkshape):
         """Imports any supported collision shape as list of blender meshes."""
-        
+
         if self.nif_import.data._user_version_value_._value == 12:
             if self.nif_import.data._user_version_2_value_._value == 83:
                 self.HAVOK_SCALE = self.nif_import.HAVOK_SCALE * 10
@@ -609,10 +609,6 @@ class bound_import():
         b_obj.niftools.bsxflags = self.nif_import.bsxflags
         b_obj.niftools.objectflags = self.nif_import.objectflags
         b_obj.location = n_bbox_center
-
-        b_obj.niftools.nif_version = self.nif_import.hex_to_dec(self.nif_import.data._version_value_._value)
-        b_obj.niftools.user_version = self.nif_import.data._user_version_value_._value
-        b_obj.niftools.user_version_2 = self.nif_import.data._user_version_2_value_._value
 
         # set bounds type
         b_obj.show_bounds = True
