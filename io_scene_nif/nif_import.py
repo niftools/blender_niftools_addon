@@ -753,10 +753,10 @@ class NifImport(NifCommon):
             if b_prop.shader_flags_2._items[sf_index]._value == 1:
                 b_obj.niftools_shader[b_flag_name_2] = True
         
-    def import_name(self, niBlock, max_length=22):
+    def import_name(self, niBlock, max_length=63):
         """Get unique name for an object, preserving existing names.
-        The maximum name length defaults to 22, since this is the
-        maximum for Blender objects. Bone names can reach length 32.
+        The maximum name length defaults to 63, since this is the
+        maximum for Blender objects.
 
         :param niBlock: A named nif block.
         :type niBlock: :class:`~pyffi.formats.nif.NifFormat.NiObjectNET`
