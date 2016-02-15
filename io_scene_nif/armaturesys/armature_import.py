@@ -139,7 +139,7 @@ class Armature():
 		nub_length = 5.0
 		scale = self.properties.scale_correction_import
 		# bone name
-		bone_name = self.nif_import.import_name(niBlock, 32)
+		bone_name = self.nif_import.import_name(niBlock)
 		niChildBones = [ child for child in niBlock.children
 						 if self.is_bone(child) ]
 		# create a new bone
