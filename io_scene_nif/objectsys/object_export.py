@@ -1,4 +1,4 @@
-"""This script contains helper methods to export textures. Obviously not, neomonkeus fix this"""
+"""This script contains helper methods to export objects."""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
