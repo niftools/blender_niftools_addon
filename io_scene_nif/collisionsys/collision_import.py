@@ -45,6 +45,7 @@ import operator
 
 from pyffi.formats.nif import NifFormat
 from pyffi.utils.quickhull import qhull3d
+from io_scene_nif.objectsys.object_import import Object
 
 
 class bhkshape_import():
@@ -559,7 +560,7 @@ class bound_import():
             maxx = bbox.center.x + bbox.dimensions.x
             maxy = bbox.center.y + bbox.dimensions.y
             maxz = bbox.center.z + bbox.dimensions.z
-            n_bbox_center = mathutils.Vector((bbox.center.x,bbox.center.y,bbox.center.z))
+            n_bbox_center = bbox.center.as_list()
             
         elif isinstance(bbox, NifFormat.NiNode):
             if not bbox.has_bounding_box:
@@ -606,8 +607,8 @@ class bound_import():
             #    *bbox.bounding_box.rotation.as_list())
             # ob.setLocation(
             #    *bbox.bounding_box.translation.as_list())
-        b_obj.niftools.bsxflags = self.nif_import.bsxflags
-        b_obj.niftools.objectflags = self.nif_import.objectflags
+        b_obj.niftools.bsxflags = Object.import_bsxflag_data(bbox)
+        # TODO b_obj.niftools.objectflags = self.nif_import.objectflags
         b_obj.location = n_bbox_center
 
         # set bounds type
