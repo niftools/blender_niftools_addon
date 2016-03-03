@@ -47,6 +47,7 @@ from io_scene_nif.constraintsys.constraint_import import constraint_import
 from io_scene_nif.materialsys.material_import import Material
 from io_scene_nif.texturesys.texture_import import Texture
 from io_scene_nif.texturesys.texture_loader import TextureLoader
+from io_scene_nif.objectsys.object_import import Object
 
 import bpy
 import mathutils
@@ -79,6 +80,7 @@ class NifImport(NifCommon):
         self.texturehelper.set_texture_loader(self.textureloader)
         self.materialhelper = Material(parent=self)
         self.materialhelper.set_texture_helper(self.texturehelper)
+        self.objecthelper = Object()
         
     def execute(self):
         """Main import function."""
@@ -252,28 +254,7 @@ class NifImport(NifCommon):
             # self.context.scene.update()
 
         return {'FINISHED'}
-
-    def import_bsxflag_data(self, root_block):
-        for n_extra in root_block.get_extra_datas():
-            if isinstance(n_extra, NifFormat.BSXFlags):
-                    # get bsx flags so we can attach it to collision object
-                    bsxflags = n_extra.integer_data
-                    return bsxflags
-        return 0
-
-    def import_upbflag_data(self, root_block):
-            #process extra data
-            for n_extra in root_block.get_extra_datas():
-                if isinstance(n_extra, NifFormat.NiStringExtraData):
-                    if n_extra.name.decode() == "UPB":
-                        upbflags = n_extra.string_data.decode()
-                        return upbflags
-            return ''
-                        
-    def import_bsbound_data(self, root_block):
-        for n_extra in root_block.get_extra_datas():
-            if isinstance(n_extra, NifFormat.BSBound):
-                    self.boundhelper.import_bounding_box(n_extra)
+     
     
     def import_version_set(self):
         scene = bpy.context.scene
@@ -302,8 +283,8 @@ class NifImport(NifCommon):
         # set the block parent through the tree, to ensure I can always move
         # backward
         self.set_parents(root_block)
-        self.bsxflags = self.import_bsxflag_data(root_block)
-        self.upbflags = self.import_upbflag_data(root_block)
+        self.bsxflags = self.objecthelper.import_bsxflag_data(root_block)
+        self.upbflags = self.objecthelper.import_upbflag_data(root_block)
         self.objectflags = root_block.flags
         
         if isinstance(root_block, NifFormat.BSFadeNode):
