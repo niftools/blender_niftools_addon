@@ -1,7 +1,10 @@
-.. _scene-common-version:
+Scene
+-----
+
+The follow section outlines Scene level settings that are required for import/export
 
 Nif Version
------------
+===========
 
 **Nif Version**
    The base version, generally related to a single game or company. Displayed in format *xx.xx.xx.xx*
