@@ -216,19 +216,6 @@ class NifExport(NifCommon):
                         % root_object.name)
                 root_objects.add(root_object)
 
-            # version checking to help avoid errors
-            # due to invalid settings
-            b_scene = bpy.context.scene
-            nif_ver_hex = b_scene.niftools.nif_version
-            for gname in NifFormat.games:
-                gname_trans = self.get_game_to_trans(gname)
-                if gname_trans == self.properties.game:
-                    if nif_ver_hex not in NifFormat.games[gname]:
-                        raise nif_utils.NifError(
-                        "Version for export not found: %s"
-                        % str(nif_ver_hex))
-                    break
-
             # smoothen seams of objects
             if self.properties.smooth_object_seams:
                 self.objecthelper.mesh_helper.smooth_mesh_seams(self.context.scene.objects)
@@ -282,8 +269,7 @@ class NifExport(NifCommon):
                 # exported as well
                 # note that localspace = worldspace, because root objects have
                 # no parents
-                self.objecthelper.export_node(root_object, 'localspace',
-                                 root_block, root_object.name)
+                self.objecthelper.export_node(root_object, 'localspace', root_block, root_object.name)
 
             # post-processing:
             # ----------------
@@ -909,8 +895,7 @@ class NifExport(NifCommon):
 
 
     def export_matrix(self, b_obj, space, block):
-        """Set a block's transform matrix to an object's
-        transformation matrix in rest pose."""
+        """Set a block's transform matrix to an object's transformation matrix in rest pose."""
         # decompose
         n_scale, n_rot_mat33, n_trans_vec = self.get_object_srt(b_obj, space)
 
