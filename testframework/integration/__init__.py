@@ -171,6 +171,7 @@ class SingleNif(Base):
         self.b_filepath_0 = "autoblend/" + self.n_name + "_pycode_import.blend"
         self.b_filepath_1 = "autoblend/" + self.n_name + "_userver.blend"
         self.b_filepath_2 = "autoblend/" + self.n_name + "_userver_reimport.blend"
+        self.b_filepath_except = "autoblend/" + self.n_name + "_exception.blend"
 
         if not os.path.exists(os.path.dirname(self.n_filepath_0)):
             os.makedirs(os.path.dirname(self.n_filepath_0))
@@ -186,8 +187,9 @@ class SingleNif(Base):
         except KeyError:
             pass
         else:
-            raise RuntimeError(
-                "failed to clear {0} from scene".format(b_obj))
+            print(b_obj_names)
+            self.b_save(self.b_filepath_except)
+            raise RuntimeError("failed to clear objects from scene")
 
     def _b_select_all(self):
         """Select all objects, and return their names."""
@@ -267,43 +269,44 @@ class SingleNif(Base):
         # export and check data
         self.n_export(self.n_filepath_2)
         self.n_check(self.n_filepath_2)
+    
+        # clear scene
+        b_obj_names = self._b_select_all()
+        self.b_clear()
+        self._b_clear_check(b_obj_names)
+    
+#     def test_user_blend_import(self):     
+#         # import and check data
+#         self.n_import(self.n_filepath_2)
+#         if(self.gen_blender_scene):
+#             self.b_save(self.b_filepath_2)
+#         self.b_check_data()
+#         
+#         # clear scene
+#         b_obj_names = self._b_select_all()
+#         self.b_clear()
+#         self._b_clear_check(b_obj_names)
 
-        # clear scene
-        self.b_clear()
-        b_obj_names = self._b_select_all()
-        self._b_clear_check(b_obj_names)
-         
-        # import and check data
-        self.n_import(self.n_filepath_2)
-        if(self.gen_blender_scene):
-            self.b_save(self.b_filepath_2)
-        self.b_check_data()
-        
-        # clear scene
-        self.b_clear()
-        b_obj_names = self._b_select_all()
-        self._b_clear_check(b_obj_names)
-
-    def test_pycode_nif_import(self):
-        """Test import followed by export."""
-        # create initial nif file and check data
-        self.n_write(self.n_create_data(), self.n_filepath_0)
-        self.n_check(self.n_filepath_0)
-         
-        # clear scene
-        self.b_clear()
-        
-        # import nif and check data
-        self.n_import(self.n_filepath_0)
-        if(self.gen_blender_scene):
-            self.b_save(self.b_filepath_0)
-        self.b_check_data()
-         
-        # export and check data
-        self.n_export(self.n_filepath_1)
-        self.n_check(self.n_filepath_1)
-        
-        # clear scene
-        self.b_clear()
-        b_obj_names = self._b_select_all()
-        self._b_clear_check(b_obj_names)
+#     def test_pycode_nif_import(self):
+#         """Test import followed by export."""
+#         # create initial nif file and check data
+#         self.n_write(self.n_create_data(), self.n_filepath_0)
+#         self.n_check(self.n_filepath_0)
+#          
+#         # clear scene
+#         self.b_clear()
+#         
+#         # import nif and check data
+#         self.n_import(self.n_filepath_0)
+#         if(self.gen_blender_scene):
+#             self.b_save(self.b_filepath_0)
+#         self.b_check_data()
+#          
+#         # export and check data
+#         self.n_export(self.n_filepath_1)
+#         self.n_check(self.n_filepath_1)
+#         
+#         # clear scene
+#         self.b_clear()
+#         b_obj_names = self._b_select_all()
+#         self._b_clear_check(b_obj_names)
