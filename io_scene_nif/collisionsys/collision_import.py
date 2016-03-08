@@ -170,7 +170,6 @@ class bhkshape_import():
             b_col_obj.nifcollision.oblivion_layer = NifFormat.OblivionLayer._enumkeys[bhkshape.layer]
             b_col_obj.nifcollision.quality_type = NifFormat.MotionQuality._enumkeys[bhkshape.quality_type]
             b_col_obj.nifcollision.motion_system = NifFormat.MotionSystem._enumkeys[bhkshape.motion_system]
-            self.nif_import.import_version_set(b_col_obj)
             
             b_col_obj.niftools.bsxflags = self.nif_import.bsxflags
             b_col_obj.niftools.objectflags = self.nif_import.objectflags
