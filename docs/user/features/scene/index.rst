@@ -28,6 +28,6 @@ Nif Version
 .. note::
 
    * All three values are used to verify which data should be attached to a file during the export process.
-   * The values of each object are checked against the scene during export.
+   * The scene version is checked at export and compared with the intended export format's version.
    * Mismatches will trigger and error and alert the user so that corrections can be effected.
    * Check the nif files included with the game you're modding to know which versions to use.
