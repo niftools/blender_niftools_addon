@@ -2,6 +2,29 @@
 
 '''
 
+    Fundementally broken
+
+    # version checking to help avoid errors
+    # due to invalid settings
+    b_scene = bpy.context.scene
+    nif_ver_hex = b_scene.niftools.nif_version
+    for gname in NifFormat.games:
+        gname_trans = self.get_game_to_trans(gname)
+        if gname_trans == self.properties.game:
+            if nif_ver_hex not in NifFormat.games[gname]:
+                raise nif_utils.NifError(
+                "Version for export not found: %s"
+                % str(nif_ver_hex))
+            break
+
+    def import_version_set(self):
+        scene = bpy.context.scene
+        scene.niftools.nif_version = self.data._version_value_._value
+        scene.niftools.user_version = self.data._user_version_value_._value
+        scene.niftools.user_version_2 = self.data._user_version_2_value_._value
+
+    self.nif_import.import_version_set(b_col_obj)
+
     def __init__(self):
         """Initialize and load configuration."""
         # initialize all instance variables

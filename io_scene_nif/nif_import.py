@@ -256,11 +256,7 @@ class NifImport(NifCommon):
         return {'FINISHED'}
      
     
-    def import_version_set(self):
-        scene = bpy.context.scene
-        scene.niftools.nif_version = self.data._version_value_._value
-        scene.niftools.user_version = self.data._user_version_value_._value
-        scene.niftools.user_version_2 = self.data._user_version_2_value_._value
+    
 
     def import_root(self, root_block):
         """Main import function."""
@@ -273,8 +269,6 @@ class NifImport(NifCommon):
         # divinity 2: handle CStreamableAssetData
         if isinstance(root_block, NifFormat.CStreamableAssetData):
             root_block = root_block.root
-
-        self.import_version_set()
 
         # sets the root block parent to None, so that when crawling back the
         # script won't barf
