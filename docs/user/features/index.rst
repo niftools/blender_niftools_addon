@@ -21,6 +21,7 @@ If in need of a guide to make sure your model is complete please visit the :ref:
    
    workflow/index
    iosettings/index
+   scene/index
    geometry/index
    object/index
    shader/index
