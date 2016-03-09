@@ -47,13 +47,13 @@ from io_scene_nif.utility import nif_utils
 class Object():     
     
     @staticmethod
-    def import_bsbound_data(self, root_block):
+    def import_bsbound_data(root_block):
         for n_extra in root_block.get_extra_datas():
             if isinstance(n_extra, NifFormat.BSBound):
                 self.boundhelper.import_bounding_box(n_extra)
                     
     @staticmethod    
-    def import_bsxflag_data(self, root_block):
+    def import_bsxflag_data(root_block):
         for n_extra in root_block.get_extra_datas():
             if isinstance(n_extra, NifFormat.BSXFlags):
                 # get bsx flags so we can attach it to collision object
@@ -62,7 +62,7 @@ class Object():
         return 0
 
     @staticmethod
-    def import_upbflag_data(self, root_block):
+    def import_upbflag_data(root_block):
         #process extra data
         for n_extra in root_block.get_extra_datas():
             if isinstance(n_extra, NifFormat.NiStringExtraData):
