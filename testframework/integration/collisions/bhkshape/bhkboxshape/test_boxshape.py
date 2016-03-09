@@ -66,7 +66,7 @@ class TestCollisionBhkBoxShape(SingleNif):
                 
         #Col obj
         b_col_obj = b_gen_geometry.b_create_cube(self.b_col_name)
-        b_gen_geometry.b_scale_object()
+        b_gen_geometry.b_apply_object_scale()
         b_col_obj.matrix_local = b_gen_geometry.b_get_transform_matrix()
         b_gen_collision.b_create_default_collision_properties(b_col_obj)
         b_gen_bhkboxshape.b_create_bhkboxshape_properties(b_col_obj)

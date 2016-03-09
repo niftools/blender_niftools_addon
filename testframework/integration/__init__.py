@@ -292,10 +292,10 @@ class SingleNif(Base):
 #         # create initial nif file and check data
 #         self.n_write(self.n_create_data(), self.n_filepath_0)
 #         self.n_check(self.n_filepath_0)
-#          
+#           
 #         # clear scene
 #         self.b_clear()
-#         
+#          
 #         # import nif and check data
 #         self.n_import(self.n_filepath_0)
 #         if(self.gen_blender_scene):
