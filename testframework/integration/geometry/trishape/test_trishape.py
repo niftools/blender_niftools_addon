@@ -83,7 +83,7 @@ class TestNonUniformlyScaled(Base):
         bpy.ops.mesh.primitive_cube_add()
         b_obj = bpy.data.objects["Cube"]
         b_obj.scale = (1, 2, 3)
-
+ 
     @nose.tools.raises(Exception)
     def test_export(self):
         bpy.ops.export_scene.nif(
