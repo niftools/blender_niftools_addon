@@ -68,7 +68,7 @@ class TestNiNode(SingleNif):
         return self.n_data
 
     def n_check_data(self):
-        pass
-        # n_trishape = self.n_data.roots[0].children[0]
-        # n_gen_geometry.n_check_trishape(n_trishape)
+        n_ninode = self.n_data.roots[0].children[0]
+        n_gen_object.n_check_ninode(n_ninode)
+        n_gen_object.n_check_transform(n_ninode)
 
