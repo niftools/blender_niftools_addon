@@ -46,7 +46,6 @@ import nose
 from pyffi.utils.withref import ref
 from pyffi.formats.nif import NifFormat
 
-
 def n_create_blocks(n_data):
     n_ninode_1 = NifFormat.NiNode()
     n_ninode_2 = NifFormat.NiNode()
@@ -54,35 +53,28 @@ def n_create_blocks(n_data):
 
     with ref(n_ninode_1) as n_ninode:
         n_ninode.name = b'Scene Root'
-        n_ninode.flags = 14
-        with ref(n_ninode.rotation) as n_matrix33:
-            n_matrix33.m_11 = 1
-            n_matrix33.m_22 = 1
-            n_matrix33.m_33 = 1
-        n_ninode.scale = 1
         n_ninode.num_children = 1
         n_ninode.children.update_size()
         n_ninode.children[0] = n_ninode_2
-        
-        n_ninode_2.name = b'NifObject'
-        n_ninode_2.flags = 14
-        with ref(n_ninode_2.translation) as n_vector3:
+    with ref(n_ninode_2) as n_ninode:
+        n_ninode.name = b'NifObject'
+        n_ninode.flags = 14
+        with ref(n_ninode.translation) as n_vector3:
             n_vector3.x = 20
             n_vector3.y = 20
             n_vector3.z = 20
-        with ref(n_ninode_2.rotation) as n_matrix33:
-            n_matrix33.m_11 = 0.0
-            n_matrix33.m_21 = -0.5
-            n_matrix33.m_31 = 0.866025
-            n_matrix33.m_12 = 0.866025
-            n_matrix33.m_22 = -0.433013
-            n_matrix33.m_32 = -0.25
-            n_matrix33.m_13 = 0.5
-            n_matrix33.m_23 = 0.75
-            n_matrix33.m_33 = 0.433012
+        with ref(n_ninode.rotation) as n_matrix33:
+            n_matrix33.m_11 = -1.43774e-14
+            n_matrix33.m_21 = -0.866025
+            n_matrix33.m_31 = 0.5
+            n_matrix33.m_12 = 0.5
+            n_matrix33.m_22 = 0.433013
+            n_matrix33.m_32 = 0.75
+            n_matrix33.m_13 = -0.866025
+            n_matrix33.m_23 = 0.25
+            n_matrix33.m_33 = 0.433013
             assert(n_matrix33.is_rotation()) # make sure in case we change values:
-        n_ninode_2.scale = 0.75
-
+        n_ninode.scale = 0.75
     return n_data
 
 def n_check_ninode(n_ninode):
@@ -115,4 +107,6 @@ def n_check_rotation(n_ninode):
     nose.tools.assert_equal((n_rot_eul.y - radians(60.0)) < NifFormat.EPSILON, True) # y rotation
     nose.tools.assert_equal((n_rot_eul.z - radians(90.0)) < NifFormat.EPSILON, True) # z rotation
     
+
+
 
