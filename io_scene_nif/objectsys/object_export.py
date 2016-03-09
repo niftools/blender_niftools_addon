@@ -279,7 +279,7 @@ class ObjectHelper():
                 if any(
                     b_obj_ipo[b_channel]
                     for b_channel in (Ipo.OB_LOCX, Ipo.OB_ROTX, Ipo.OB_SCALEX)):
-                    self.animationhelper.export_keyframes(b_obj_ipo, space, node)
+                    self.nif_export.animationhelper.export_keyframes(b_obj_ipo, space, node)
                 self.export_object_vis_controller(b_obj, node)
             # if it is a mesh, export the mesh as trishape children of
             # this ninode
