@@ -2,7 +2,37 @@
 
 '''
 
-    Fundementally broken
+    Fundementally broken versioning system
+    def hex_to_dec(self, nif_ver_hex):
+        
+        nif_ver_hex_1 = str(int('{0:.4}'.format(
+                        hex(self.data._version_value_._value)),0)).zfill(2)
+        nif_ver_hex_2 = str(int('0x{0:.2}'.format(
+                        hex(self.data._version_value_._value)[4:]),0)).zfill(2)
+        nif_ver_hex_3 = str(int('0x{0:.2}'.format(
+                        hex(self.data._version_value_._value)[6:]),0)).zfill(2)
+        nif_ver_hex_4 = str(int('0x{0:.2}'.format(
+                        hex(self.data._version_value_._value)[8:]),0)).zfill(2)
+        
+        nif_ver_dec = str(
+        nif_ver_hex_1 + "." + nif_ver_hex_2 + "." + nif_ver_hex_3 + "." + nif_ver_hex_4)
+        
+        return nif_ver_dec
+
+
+    def dec_to_hex(self, nif_ver_dec):
+        
+        dec_split = re.compile(r'\W+')
+        dec_split = dec_split.split(nif_ver_dec)
+
+        nif_ver_dec_1, nif_ver_dec_2, nif_ver_dec_3, nif_ver_dec_4 = dec_split
+        nif_ver_dec_1 = hex(int(nif_ver_dec_1, 10))[2:].zfill(2)
+        nif_ver_dec_2 = hex(int(nif_ver_dec_2, 10))[2:].zfill(2)
+        nif_ver_dec_3 = hex(int(nif_ver_dec_3, 10))[2:].zfill(2)
+        nif_ver_dec_4 = hex(int(nif_ver_dec_4, 10))[2:].zfill(2)
+        nif_ver_hex = int(
+            (nif_ver_dec_1 + nif_ver_dec_2 + nif_ver_dec_3 + nif_ver_dec_4), 16)
+        return nif_ver_hex
 
     # version checking to help avoid errors
     # due to invalid settings
