@@ -38,6 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 import math
+from math import radians, degrees
 import mathutils
 
 import nose
@@ -84,16 +85,34 @@ def n_create_blocks(n_data):
 
     return n_data
 
-def n_check_ninode(n_trishape):
-    nose.tools.assert_is_instance(n_trishape, NifFormat.NiNode)
-        
+def n_check_ninode(n_ninode):
+    nose.tools.assert_is_instance(n_ninode, NifFormat.NiNode)
 
 def n_check_transform(n_ninode):        
-    nose.tools.assert_equal(n_ninode.translation.as_tuple(),(20.0, 20.0, 20.0)) # location
+    n_check_translation(n_ninode)
+    n_check_scale(n_ninode)
+    n_check_rotation(n_ninode)
     
-    n_rot_eul = mathutils.Matrix(n_ninode.rotation.as_tuple()).to_euler()
-    nose.tools.assert_equal((n_rot_eul.x - math.radians(30.0)) < NifFormat.EPSILON, True) # x rotation
-    nose.tools.assert_equal((n_rot_eul.y - math.radians(60.0)) < NifFormat.EPSILON, True) # y rotation
-    nose.tools.assert_equal((n_rot_eul.z - math.radians(90.0)) < NifFormat.EPSILON, True) # z rotation
+def n_check_translation(n_ninode):
+    location = n_ninode.translation.as_tuple()
+    print("Translation - {0}".format(location))
     
-    nose.tools.assert_equal(n_ninode.scale - 0.75 < NifFormat.EPSILON, True) # scale
+    nose.tools.assert_equal(location,(20.0, 20.0, 20.0)) # location
+
+def n_check_scale(n_ninode):
+    scale = n_ninode.scale
+    print("Scale - {0}".format(scale))
+    
+    nose.tools.assert_equal(scale - 0.75 < NifFormat.EPSILON, True) # scale
+
+def n_check_rotation(n_ninode): 
+    n_rot_eul = mathutils.Matrix(n_ninode.rotation.as_tuple()).transposed().to_euler()
+    
+    print("n_rot_eul - {0}".format(n_rot_eul))
+    n_rot_axis = (degrees(n_rot_eul.x), degrees(n_rot_eul.y), degrees(n_rot_eul.z))
+    print("n_rot_eul(x,y,z) - {0}".format(n_rot_axis))
+    nose.tools.assert_equal((n_rot_eul.x - radians(30.0)) < NifFormat.EPSILON, True) # x rotation
+    nose.tools.assert_equal((n_rot_eul.y - radians(60.0)) < NifFormat.EPSILON, True) # y rotation
+    nose.tools.assert_equal((n_rot_eul.z - radians(90.0)) < NifFormat.EPSILON, True) # z rotation
+    
+
