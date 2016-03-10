@@ -58,9 +58,6 @@ class ObjectPanel(Panel):
         
         layout = self.layout
         row = layout.column()
-        row.prop(nif_obj_props, "nif_version")
-        row.prop(nif_obj_props, "user_version")
-        row.prop(nif_obj_props, "user_version_2")
         row.prop(nif_obj_props, "rootnode")
         row.prop(nif_obj_props, "bsnumuvset")
         row.prop(nif_obj_props, "upb")
