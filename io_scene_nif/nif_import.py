@@ -251,7 +251,7 @@ class NifImport(NifCommon):
             self.info("Finished")
             # XXX no longer needed?
             # do a full scene update to ensure that transformations are applied
-            # self.context.scene.update()
+            self.context.scene.update()
 
         return {'FINISHED'}
      
