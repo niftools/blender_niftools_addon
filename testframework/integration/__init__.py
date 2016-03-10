@@ -181,20 +181,23 @@ class SingleNif(Base):
 
     def _b_clear_check(self, b_obj_names):
         """Check that *b_obj_names* are really cleared from the scene."""
-        try:
-            for name in b_obj_names:
-                b_obj = bpy.data.objects[name]
-        except KeyError:
-            pass
-        else:
-            print(b_obj_names)
-            self.b_save(self.b_filepath_except)
-            raise RuntimeError("failed to clear objects from scene")
+        if(len(b_obj_names) != 0):
+            try:
+                for name in b_obj_names:
+                    b_obj = bpy.data.objects[name]
+            except KeyError:
+                pass
+            else:
+                print(b_obj_names)
+                self.b_save(self.b_filepath_except)
+                raise RuntimeError("failed to clear objects from scene")
 
     def _b_select_all(self):
         """Select all objects, and return their names."""
         b_obj_names = []
+        print("Objects in scene - {0}".format(len(bpy.data.objects)))
         for b_obj in bpy.data.objects:
+            print("Scene Object - " + b_obj.name)
             b_obj.select = True
             b_obj_names.append(b_obj.name)
         return b_obj_names
@@ -259,8 +262,9 @@ class SingleNif(Base):
             game=self.n_game,
             )
 
-    def test_user_blend_export(self):       
+    def test_export_user(self):       
         """User : Export user generated file"""
+        
         # create scene
         self.b_create_data()
         if(self.gen_blender_scene):
@@ -271,12 +275,7 @@ class SingleNif(Base):
         self.n_export(self.n_filepath_2)
         self.n_check(self.n_filepath_2)
     
-        # clear scene
-        b_obj_names = self._b_select_all()
-        self.b_clear()
-        self._b_clear_check(b_obj_names)
-    
-    def test_user_nif_import(self):     
+    def test_import_user(self):     
         """User : Import user generated file"""
         # import and check data
         self.n_import(self.n_filepath_2)
@@ -284,13 +283,8 @@ class SingleNif(Base):
             self.b_save(self.b_filepath_2)
         self.b_check_data()
          
-        # clear scene
-        b_obj_names = self._b_select_all()
-        self.b_clear()
-        self._b_clear_check(b_obj_names)
-
-    def test_pycode_nif_import(self):
-        """PyCode : Import python generated file"""
+    def test_pycode_nif_fullflow(self):
+        """PyCode : Import/Export python generated file"""
         # create initial nif file and check data
         self.n_write(self.n_create_data(), self.n_filepath_0)
         self.n_check(self.n_filepath_0)
@@ -304,12 +298,9 @@ class SingleNif(Base):
             self.b_save(self.b_filepath_0)
         self.b_check_data()
         
-#     def test_pycode_nif_export(self):
-#         # export and check data
-#         self.n_export(self.n_filepath_1)
-#         self.n_check(self.n_filepath_1)
-#           
-#         # clear scene
-#         self.b_clear()
-#         b_obj_names = self._b_select_all()
-#         self._b_clear_check(b_obj_names)
+        self._b_select_all()
+        
+        # export and check data
+        self.n_export(self.n_filepath_1)
+        self.n_check(self.n_filepath_1)
+           
