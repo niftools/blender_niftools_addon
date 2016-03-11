@@ -1,6 +1,7 @@
 API Documentation
 =================
 
+.. _development-api:
 
 The following documentation contains high-level overview of components and submodules.
 The sub-module documentation is generated automatically using Sphinx.

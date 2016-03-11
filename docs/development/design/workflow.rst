@@ -1,7 +1,7 @@
 Workflow
 ========
 
-.. _development-porting_strategy:
+.. _development-design-workflow:
 
 The aim of this section is to describe the desired workflow for a developer
 

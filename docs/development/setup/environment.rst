@@ -1,6 +1,8 @@
 Setting Up the Build Environment
 ================================
 
+.. _development-design-setup-environment:
+
 .. warning::
 
     The following instructions are currently a work in progress.
@@ -19,7 +21,7 @@ Source Code
 -----------
 
 Once you have created the directories, time to grab the source code.
-See :ref:`source code <developer-setup-sourcecode>` to setup source control and download the code repositories.
+See :ref:`source code <development-setup-sourcecode>` to setup source control and download the code repositories.
 You will also need to download buildenv, it used to manage dependancies, needs to be updated for nix platforms.
  
 Install Python 3.4
