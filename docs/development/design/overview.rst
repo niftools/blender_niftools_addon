@@ -1,6 +1,8 @@
 Development Overview
 ====================
 
+.. _development-design-overview:
+
 This section outlines various priciples which govern how we develop the Blender Nif Plugin and why.
 
 Development Methodology
@@ -32,7 +34,7 @@ Code Development & Maintenance
 ------------------------------
 
 The initial proposal was to port all the current code directly to the new Blender Python API.
-See :ref:`Code Porting Strategy <development-porting_strategy>`
+See :ref:`Code Porting Strategy <development-design-workflow>`
 
 Additionally
 
@@ -109,7 +111,7 @@ The Test Framework has several purposes
 Feature Tests Creation
 ----------------------
 
-Supporting features is detailed workflow is detail in the :ref:`Test Framework Section <development-porting_strategy>`.
+Supporting features is detailed workflow is detail in the :ref:`Test Framework Section <development-design-workflow>`.
 
 Documentation
 -------------

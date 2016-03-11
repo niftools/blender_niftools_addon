@@ -1,6 +1,8 @@
 Development Issues
 ==================
 
+.. _development-design-issues:
+
 This document lists a few non-trivial issues that we have come across while porting 
 the plugin from the Blender 2.4x API to the 2.6x+ API.
 
