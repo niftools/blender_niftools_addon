@@ -7,10 +7,12 @@ Nif Version
 ===========
 
 **Nif Version**
-   The base version, generally related to a single game or company. Displayed in format *xx.xx.xx.xx*
+   The base version, generally related to a single game or company.
+   * This is currently not very user friendly, this will be addressed in a future release
+   * Check the nif files included with the game you're modding to know which versions to use.
    
    *Example:*
-      Nif Version 20.02.00.07 is the version that is used for Fallout 3.
+      Nif Version 335544325 is the version that is used for Oblivion.
 
 **User Version**
    A two digit single integer sub value of Nif Version.
@@ -27,7 +29,13 @@ Nif Version
 
 .. note::
 
+   
+   * Fill in the **Nif Version**, **User Version** and **User Version 2** adequate for your game.
    * All three values are used to verify which data should be attached to a file during the export process.
    * The scene version is checked at export and compared with the intended export format's version.
    * Mismatches will trigger and error and alert the user so that corrections can be effected.
-   * Check the nif files included with the game you're modding to know which versions to use.
+   
+   
+   
+
+   
