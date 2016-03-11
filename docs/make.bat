@@ -9,8 +9,16 @@ if "%BLENDERHOME%" == "" (
 set SPHINXBUILD="%BLENDERHOME%/blender.exe" --background --factory-startup --python blender-sphinx-build.py --
 set SPHINXAPIBUILD="%BLENDERHOME%/blender.exe" --background --factory-startup --python blender-sphinx-api-build.py --
 set BUILDDIR=_build
-set APIDIR=development/api/submodules
-set ALLAPIOPTS=%APIDIR% ../io_scene_nif/
+
+set CODEAPI=../io_scene_nif/
+set CODEDIR=development/api/submodules
+set CODEOPTS=%CODEDIR% %CODEAPI%
+
+set TESTAPI=../testframework/
+set TESTDIR=development/testframework/api/submodules
+set TESTOPTS=%TESTDIR% %TESTAPI%
+
+set ALLAPIOPTS=%TESTOPTS% %CODEDIR%
 set ALLSPHINXOPTS=-d %BUILDDIR%/doctrees %SPHINXOPTS% .
 set I18NSPHINXOPTS=%SPHINXOPTS% .
 if NOT "%PAPER%" == "" (
@@ -45,18 +53,22 @@ if "%1" == "help" (
 	goto end
 )
 
+if "%1" == "htmlfull" (
+	call make.bat clean
+	call make.bat gencodeapi
+	call make.bat gentestapi
+	call make.bat html
+)
+
 if "%1" == "clean" (
 	for /d %%i in (%BUILDDIR%\*) do rmdir /q /s %%i
 	del /q /s %BUILDDIR%\*
-	del /q /s "%APIDIR%\*"
+	del /q /s "%CODEDIR%\*"
+	del /q /s "%TESTDIR%\*"
 	goto end
 )
 
 if "%1" == "html" (
-	%SPHINXAPIBUILD% -o %ALLAPIOPTS%
-	if errorlevel 1 exit /b 1
-	echo.
-	echo.Generated auto-docs for api
 	%SPHINXBUILD% -b html %ALLSPHINXOPTS% %BUILDDIR%/html
 	if errorlevel 1 exit /b 1
 	echo.
@@ -64,18 +76,23 @@ if "%1" == "html" (
 	goto end
 )
 
-if "%1" == "htmlclean" (
-	call make.bat clean
-	%SPHINXAPIBUILD% -o %ALLAPIOPTS%
-	if errorlevel 1 exit /b 1
+if "%1" == "gencodeapi" (
 	echo.
-	echo.Generated auto-docs for api
-	%SPHINXBUILD% -b html %ALLSPHINXOPTS% %BUILDDIR%/html
-	if errorlevel 1 exit /b 1
+	echo.Generating auto-docs for plugin source api
 	echo.
-	echo.Build finished. The HTML pages are in %BUILDDIR%/html.
+	%SPHINXAPIBUILD% -o %CODEOPTS%
+	if errorlevel 1 exit /b 1
+	echo.Generated auto-docs
 	goto end
+)
 
+if "%1" == "gentestapi" (
+	echo.
+	echo.Generating auto-docs for testframework api
+	%SPHINXAPIBUILD% -o %TESTOPTS%
+	if errorlevel 1 exit /b 1
+	echo.Generated auto-docs for testframework
+	goto end
 )
 
 if "%1" == "dirhtml" (
