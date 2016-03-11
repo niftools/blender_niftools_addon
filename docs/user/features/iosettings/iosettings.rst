@@ -92,7 +92,7 @@ Game
 ----
 .. _iosettings-game:
 
-A list of supported game for which the nif plugin will export working files.
+A list of supported games which the plugin will export working nif files.
 
 Max Partition Bones
 -------------------

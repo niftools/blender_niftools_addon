@@ -89,7 +89,6 @@ Settings
 
 First we complete the object panel:
 
-   a. Fill in the **Nif Version**, **User Version** and **User Version 2** adequate for your game.
    #. The **Nif Root Node** determines the kind of block used at the nif's root. Select one from the dropdown box.
    #. The **BS Num UV Set** is ????????. Set it to an appropriate number.
    #. The **UPB**'s use is currently unknown. It is recommended you leave it at the default value.
