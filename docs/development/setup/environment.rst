@@ -78,7 +78,7 @@ Install Blender
 See :ref:`user docs <user-getblender>`.
 
 
-Alternatively you can build blender from source :ref:`Building Blender from Source <design-setup-buildblender>`
+Alternatively you can build blender from source :ref:`Building Blender from Source <development-setup-buildblender>`
 
 Install Sphinx and Nose
 -----------------------
