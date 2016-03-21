@@ -1,4 +1,4 @@
-"""Exports and imports mesh data"""
+"""This script contains helper methods to export objects."""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -38,56 +38,36 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-import nose.tools
+import mathutils
 
-from integration import Base
-from integration import SingleNif
-from integration.data import gen_data 
-from integration.geometry.trishape import b_gen_geometry
-from integration.geometry.trishape import n_gen_geometry
+from pyffi.formats.nif import NifFormat
 
-class TestTriShape(SingleNif):
-    """Test base geometry, single blender object."""
+from io_scene_nif.utility import nif_utils
 
-    n_name = 'geometry/trishape/test_trishape' # (documented in base class)
-    b_name = 'Cube'
-
-    def b_create_header(self):
-        self.n_game = 'OBLIVION'
-
-    def b_create_data(self):
-        # (documented in base class)
-        b_obj = b_gen_geometry.b_create_cube(self.b_name)
-        
-        # transform it into something less trivial
-        b_gen_geometry.b_transform_cube(b_obj)
+class Object():     
     
-    def b_check_data(self):
-        b_obj = bpy.data.objects[self.b_name]
-        b_gen_geometry.b_check_geom_obj(b_obj)
+    @staticmethod
+    def import_bsbound_data(root_block):
+        for n_extra in root_block.get_extra_datas():
+            if isinstance(n_extra, NifFormat.BSBound):
+                self.boundhelper.import_bounding_box(n_extra)
+                    
+    @staticmethod    
+    def import_bsxflag_data(root_block):
+        for n_extra in root_block.get_extra_datas():
+            if isinstance(n_extra, NifFormat.BSXFlags):
+                # get bsx flags so we can attach it to collision object
+                bsxflags = n_extra.integer_data
+                return bsxflags
+        return 0
 
-    def n_create_header(self):
-        gen_data.n_create_header_oblivion(self.n_data)
-
-    def n_create_data(self):
-        n_gen_geometry.n_create_blocks(self.n_data)
-        return self.n_data
-
-    def n_check_data(self):
-        n_trishape = self.n_data.roots[0].children[0]
-        n_gen_geometry.n_check_trishape(n_trishape)
-
-class TestNonUniformlyScaled(Base):
-    def setup(self):
-        # create a non-uniformly scaled cube
-        bpy.ops.mesh.primitive_cube_add()
-        b_obj = bpy.data.objects["Cube"]
-        b_obj.scale = (1, 2, 3)
- 
-    @nose.tools.raises(Exception)
-    def test_export(self):
-        bpy.ops.export_scene.nif(
-            filepath="test/export/non_uniformly_scaled_cube.nif",
-            log_level='DEBUG',
-            )
-
+    @staticmethod
+    def import_upbflag_data(root_block):
+        #process extra data
+        for n_extra in root_block.get_extra_datas():
+            if isinstance(n_extra, NifFormat.NiStringExtraData):
+                if n_extra.name.decode() == "UPB":
+                    upbflags = n_extra.string_data.decode()
+                    return upbflags
+        return ''
+    

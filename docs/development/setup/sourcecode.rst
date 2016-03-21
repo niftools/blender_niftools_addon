@@ -1,7 +1,7 @@
 Downloading the Source Code
 ===========================
 
-.. _developer-setup-sourcecode:
+.. _development-setup-sourcecode:
 
 This section will guide new developers through the process of downloading the source code.
 We use git as to manage and version our source control.

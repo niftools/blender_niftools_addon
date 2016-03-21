@@ -61,8 +61,9 @@ def import_matrix(niBlock, relative_to=None):
     n_rot_mat[0].xyz = n_rot_mat3.m_11, n_rot_mat3.m_21, n_rot_mat3.m_31
     n_rot_mat[1].xyz = n_rot_mat3.m_12, n_rot_mat3.m_22, n_rot_mat3.m_32
     n_rot_mat[2].xyz = n_rot_mat3.m_13, n_rot_mat3.m_23, n_rot_mat3.m_33    
-    b_rot_mat = n_rot_mat * b_scale_mat.transposed()
-
+    # b_rot_mat = n_rot_mat * b_scale_mat.transposed()
+    b_rot_mat = n_rot_mat
+    
     b_import_matrix = b_loc_vec * b_rot_mat * b_scale_mat
     return b_import_matrix
 
@@ -73,22 +74,27 @@ def decompose_srt(matrix):
 
     # get scale components
     trans_vec, rot_quat, scale_vec = matrix.decompose()
-    scale_rot = rot_quat.to_matrix()
-    b_scale = mathutils.Vector((scale_vec[0] ** 0.5,\
-                                scale_vec[1] ** 0.5,\
-                                scale_vec[2] ** 0.5))
+    
+    """Keeping commented code as potentially required for armatures 
+    Suspect thought it is due to old style matrix access."""
+    # TODO Verify nolonger needed for armatures
+    
+    # scale_rot = rot_quat.to_matrix()
+    # b_scale = mathutils.Vector((scale_vec[0] ** 0.5,\
+    #                             scale_vec[1] ** 0.5,\
+    #                             scale_vec[2] ** 0.5))
     # and fix their sign
-    if (scale_rot.determinant() < 0): b_scale.negate()
+    # if (scale_rot.determinant() < 0): b_scale.negate()
     # only uniform scaling
     # allow rather large error to accomodate some nifs
     if abs(scale_vec[0]-scale_vec[1]) + abs(scale_vec[1]-scale_vec[2]) > 0.02:
         raise NifError(
             "Non-uniform scaling not supported."
             " Workaround: apply size and rotation (CTRL-A).")
-    b_scale = b_scale[0]
-    b_rot = scale_rot * b_scale
-    b_trans = trans_vec
-    return [b_scale, b_rot, b_trans]
+    # b_scale = b_scale[0]
+    # b_rot = scale_rot * b_scale
+    # b_trans = trans_vec
+    return [scale_vec[0], rot_quat.to_matrix(), trans_vec]
 
 def find_property(niBlock, property_type):
     """Find a property."""
