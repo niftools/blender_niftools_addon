@@ -1,4 +1,4 @@
-"""This script contains helper methods to export textures. Obviously not, neomonkeus fix this"""
+"""This script contains helper methods to export objects."""
 
 # ***** BEGIN LICENSE BLOCK *****
 # 
@@ -271,7 +271,7 @@ class ObjectHelper():
                     # morrowind
                     node.flags = 0x000C
 
-        self.nif_export.export_matrix(b_obj, space, node)
+        self.set_object_matrix(b_obj, space, node)
 
         if b_obj:
             # export animation
@@ -279,7 +279,7 @@ class ObjectHelper():
                 if any(
                     b_obj_ipo[b_channel]
                     for b_channel in (Ipo.OB_LOCX, Ipo.OB_ROTX, Ipo.OB_SCALEX)):
-                    self.animationhelper.export_keyframes(b_obj_ipo, space, node)
+                    self.nif_export.animationhelper.export_keyframes(b_obj_ipo, space, node)
                 self.export_object_vis_controller(b_obj, node)
             # if it is a mesh, export the mesh as trishape children of
             # this ninode
@@ -406,6 +406,135 @@ class ObjectHelper():
             n_lod_level.far_extent = b_child.getProperty("Far Extent").data
             n_rd_lod_level.near_extent = n_lod_level.near_extent
             n_rd_lod_level.far_extent = n_lod_level.far_extent
+
+    def set_object_matrix(self, b_obj, space, block):
+        """Set a block's transform matrix to an object's transformation matrix in rest pose."""
+        # decompose
+        n_scale, n_rot_mat33, n_trans_vec = self.get_object_srt(b_obj, space)
+
+        # and fill in the values
+        block.translation.x = n_trans_vec[0]
+        block.translation.y = n_trans_vec[1]
+        block.translation.z = n_trans_vec[2]
+        block.rotation.m_11 = n_rot_mat33[0][0]
+        block.rotation.m_21 = n_rot_mat33[0][1]
+        block.rotation.m_31 = n_rot_mat33[0][2]
+        block.rotation.m_12 = n_rot_mat33[1][0]
+        block.rotation.m_22 = n_rot_mat33[1][1]
+        block.rotation.m_32 = n_rot_mat33[1][2]
+        block.rotation.m_13 = n_rot_mat33[2][0]
+        block.rotation.m_23 = n_rot_mat33[2][1]
+        block.rotation.m_33 = n_rot_mat33[2][2]
+        block.velocity.x = 0.0
+        block.velocity.y = 0.0
+        block.velocity.z = 0.0
+        block.scale = n_scale
+
+        return n_scale, n_rot_mat33, n_trans_vec
+
+
+    def get_object_matrix(self, b_obj, space):
+        """Get an object's matrix as NifFormat.Matrix44
+
+        Note: for objects parented to bones, this will return the transform
+        relative to the bone parent head in nif coordinates (that is, including
+        the bone correction); this differs from getMatrix which
+        returns the transform relative to the armature."""
+        n_scale, n_rot_mat33, n_trans_vec = self.get_object_srt(b_obj, space)
+        matrix = NifFormat.Matrix44()
+
+        matrix.m_11 = n_rot_mat33[0][0] * n_scale
+        matrix.m_21 = n_rot_mat33[0][1] * n_scale
+        matrix.m_31 = n_rot_mat33[0][2] * n_scale
+        matrix.m_12 = n_rot_mat33[1][0] * n_scale
+        matrix.m_22 = n_rot_mat33[1][1] * n_scale
+        matrix.m_32 = n_rot_mat33[1][2] * n_scale
+        matrix.m_13 = n_rot_mat33[2][0] * n_scale
+        matrix.m_23 = n_rot_mat33[2][1] * n_scale
+        matrix.m_33 = n_rot_mat33[2][2] * n_scale
+        matrix.m_14 = n_trans_vec[0]
+        matrix.m_24 = n_trans_vec[1]
+        matrix.m_34 = n_trans_vec[2]
+
+        matrix.m_41 = 0.0
+        matrix.m_42 = 0.0
+        matrix.m_43 = 0.0
+        matrix.m_44 = 1.0
+
+        return matrix
+
+
+    def get_object_srt(self, b_obj, space = 'localspace'):
+        """Find scale, rotation, and translation components of an object in
+        the rest pose. Returns a triple (bs, br, bt), where bs
+        is a scale float, br is a 3x3 rotation matrix, and bt is a
+        translation vector. It should hold that
+
+        ob.getMatrix(space) == bs * br * bt
+
+        Note: for objects parented to bones, this will return the transform
+        relative to the bone parent head including bone correction.
+
+        space is either 'none' (gives identity transform) or 'localspace'"""
+        # TODO: remove the space argument, always do local space
+        # handle the trivial case first
+        if (space == 'none'):
+            return ( 1.0,
+                     mathutils.Matrix([[1,0,0],[0,1,0],[0,0,1]]),
+                     mathutils.Vector([0, 0, 0]) )
+
+        assert(space == 'localspace')
+
+        # now write out spaces
+        if isinstance(b_obj, bpy.types.Bone):
+            # bones, get the rest matrix
+            matrix = self.nif_export.armaturehelper.get_bone_rest_matrix(b_obj, 'BONESPACE')
+        
+        else:
+            #TODO MOVE TO ARMATUREHELPER
+            
+            matrix = b_obj.matrix_local.copy()
+            bone_parent_name = b_obj.parent_bone
+            # if there is a bone parent then the object is parented
+            # then get the matrix relative to the bone parent head
+            if bone_parent_name:
+                # so v * O * T * B' = v * Z * B
+                # where B' is the Blender bone matrix in armature
+                # space, T is the bone tail translation, O is the object
+                # matrix (relative to the head), and B is the nif bone matrix;
+                # we wish to find Z
+
+                # b_obj.getMatrix('localspace')
+                # gets the object local transform matrix, relative
+                # to the armature!! (not relative to the bone)
+                # so at this point, matrix = O * T * B'
+                # hence it must hold that matrix = Z * B,
+                # or equivalently Z = matrix * B^{-1}
+
+                # now, B' = X * B, so B^{-1} = B'^{-1} * X
+                # hence Z = matrix * B'^{-1} * X
+
+                # first multiply with inverse of the Blender bone matrix
+                bone_parent = b_obj.parent.data.bones[bone_parent_name]
+                boneinv = mathutils.Matrix(bone_parent.matrix['ARMATURESPACE'])
+                boneinv.invert()
+                matrix = matrix * boneinv
+                # now multiply with the bone correction matrix X
+                try:
+                    extra = mathutils.Matrix(self.nif_export.armaturehelper.get_bone_extra_matrix_inv(bone_parent_name))
+                    extra.invert()
+                    matrix = matrix * extra
+                except KeyError:
+                    # no extra local transform
+                    pass           
+
+        try:
+            return nif_utils.decompose_srt(matrix)
+        except nif_utils.NifError: # non-uniform scaling
+            raise nif_utils.NifError(
+                "Non-uniform scaling on bone '%s' not supported."
+                " This could be a bug... No workaround. :-( Post your blend!"
+                % b_obj.name)
 
 
 class MeshHelper():
@@ -625,7 +754,7 @@ class MeshHelper():
                 trishape.shader_name = "RRT_NormalMap_Spec_Env_CubeLight"
                 trishape.unknown_integer = -1 # default
 
-            self.nif_export.export_matrix(b_obj, space, trishape)
+            self.nif_export.set_object_matrix(b_obj, space, trishape)
 
             #add textures
             if self.properties.game == 'FALLOUT_3':

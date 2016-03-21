@@ -1,6 +1,7 @@
 Developer Documentation
 =======================
 
+.. _development:
 
 Contents:
 

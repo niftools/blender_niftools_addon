@@ -79,11 +79,11 @@ def b_create_cube(b_name):
 def b_transform_cube(b_obj):
     """ Alters the cube, scaling, transforming """
     
-    b_scale_object()
+    b_apply_scale_object()
     b_scale_single_face(b_obj)
 
 
-def b_scale_object():
+def b_apply_scale_object():
     """Scale the currently selected object along each axis."""
     
     bpy.ops.transform.resize(value=(7.5,1,1), constraint_axis=(True,False,False))

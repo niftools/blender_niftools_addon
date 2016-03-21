@@ -1,6 +1,8 @@
 Continuous Integration Build Server
 ===================================
 
+.. _development-testframework-ci_server:
+
 The following section is both for internal reference for the build server used by the Niftools team.
 We encourage developers to build their own; it provides a fast feedback loop, encourages you to run test and fix them when they get broken. 
 We use jenkins as our build server
@@ -36,7 +38,7 @@ Inject Environment variables ::
 	
 	..<path_to_jenkins>/.jenkins/workspace/bin/blender.properties
 
-Build Steps 
+Build Steps
 ***********
 
 Build ::
@@ -73,7 +75,7 @@ Nightly ::
 
 	
 
-Post Build Actions 
+Post Build Actions
 ******************
 
 Publish Cobertura Coverage reports ::

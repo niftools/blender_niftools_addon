@@ -1,6 +1,8 @@
 Interactive Development Environment
 ===================================
 
+.. _development-design-setup-ide:
+
 The `Eclipse <http://www.eclipse.org/>`_ IDE allows us maintain a unified workflow for general file manipulation,
 repo management, python scripting, and hooks into Blender's debugging server.
 
