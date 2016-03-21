@@ -1,7 +1,7 @@
 Building Blender from Source
 ============================
 
-.. _design-setup-buildblender:
+.. _development-setup-buildblender:
 
 As a developer, there are a number of advantages that come from building from source.
  * Avoid having to wait for bug fixes from full releases
