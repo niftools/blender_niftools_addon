@@ -48,6 +48,7 @@ from io_scene_nif.materialsys.material_import import Material
 from io_scene_nif.texturesys.texture_import import Texture
 from io_scene_nif.texturesys.texture_loader import TextureLoader
 from io_scene_nif.objectsys.object_import import Object
+from io_scene_nif.scenesys import scene_import
 
 import bpy
 import mathutils
@@ -121,6 +122,7 @@ class NifImport(NifCommon):
                     self.info("NIF file version: 0x%08X" % self.data.version)
                     self.info("Reading file")
                     self.data.read(niffile)
+                    scene_import.import_version_info(self.data)
                 elif self.data.version == -1:
                     raise nif_utils.NifError("Unsupported NIF version.")
                 else:
@@ -197,6 +199,8 @@ class NifImport(NifCommon):
             if self.properties.send_bones_to_bind_position:
                 pyffi.spells.nif.fix.SpellSendBonesToBindPosition(data=self.data).recurse()
             if self.properties.apply_skin_deformation:
+                
+                # TODO Create function & move to object/mesh class
                 for n_geom in self.data.get_global_iterator():
                     if not isinstance(n_geom, NifFormat.NiGeometry):
                         continue

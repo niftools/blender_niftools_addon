@@ -1,3 +1,5 @@
+"""This script contains classes to help import nif header information."""
+
 # ***** BEGIN LICENSE BLOCK *****
 #
 # Copyright © 2016, NIF File Format Library and Tools contributors.
