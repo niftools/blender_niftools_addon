@@ -73,26 +73,12 @@ class NifOperatorCommon:
     #: Name of file where Python profiler dumps the profile.
     profile_path = bpy.props.StringProperty(
         name="Profile Path",
-        description=
-        "Name of file where Python profiler dumps the profile."
-        " Set to empty string to turn off profiling.",
+        description="Name of file where Python profiler dumps the profile."
+                    "Set to empty string to turn off profiling.",
         maxlen=1024,
         default="",
         subtype="FILE_PATH",
         options={'HIDDEN'})
-
-    #: Number of nif units per blender unit.
-    scale_correction_import = bpy.props.FloatProperty(
-        name="Scale Correction Import",
-        description="Changes size of mesh to fit onto Blender's default grid.",
-        default=1.0,
-        min=0.01, max=100.0, precision=2)
-
-    scale_correction_export = bpy.props.FloatProperty(
-        name="Scale Correction Export",
-        description="Changes size of mesh from Blender default to nif default.",
-        default=1.0,
-        min=0.01, max=100.0, precision=2)
 
     #: Used for checking equality between floats.
     epsilon = bpy.props.FloatProperty(
