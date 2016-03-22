@@ -53,6 +53,12 @@ class NifImportOperator(bpy.types.Operator, ImportHelper, NifOperatorCommon):
     #: How the nif import operators is labelled in the user interface.
     bl_label = "Import NIF"
 
+    # Whether or not to import the header information into the scene
+    override_scene_info = bpy.props.BoolProperty(
+        name="Override Scene Information",
+        description="This will overwrite any previously stored scene information with the Nif header info.",
+        default=True)
+
     #: Keyframe file for animations.
     keyframe_file = bpy.props.StringProperty(
         name="Keyframe File",
