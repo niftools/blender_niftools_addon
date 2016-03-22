@@ -57,6 +57,7 @@ import bpy
 import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 from pyffi.formats.egm import EgmFormat
+from io_scene_nif.scenesys import scene_export
 
 # main export class
 class NifExport(NifCommon):
@@ -135,19 +136,6 @@ class NifExport(NifCommon):
         self.egmdata = None
 
         try: # catch export errors
-
-            # find nif version to write
-            self.version = self.operator.version[self.properties.game]
-            self.info("Writing NIF version 0x%08X" % self.version)
-
-            if self.properties.animation == 'ALL_NIF':
-                self.info("Exporting geometry and animation")
-            elif self.properties.animation == 'GEOM_NIF':
-                # for morrowind: everything except keyframe controllers
-                self.info("Exporting geometry only")
-            elif self.properties.animation == 'ANIM_KF':
-                # for morrowind: only keyframe controllers
-                self.info("Exporting animation only (as .kf file)")
 
             for b_obj in bpy.data.objects:
                 # armatures should not be in rest position
@@ -614,35 +602,28 @@ class NifExport(NifCommon):
                 fade_root_block.replace_global_node(root_block, fade_root_block)
                 root_block = fade_root_block
 
-            # set user version and user version 2 for export
-            b_scene = bpy.context.scene
 
-            if b_scene.niftools.user_version == 0:
-                if self.properties.game == 'OBLIVION':
-                    NIF_USER_VERSION = 11
-                elif self.properties.game == 'FALLOUT_3':
-                    NIF_USER_VERSION = 11
-                elif self.properties.game == 'DIVINITY_2':
-                    NIF_USER_VERSION = 131072
-                else:
-                    NIF_USER_VERSION = 0
-            else:
-                NIF_USER_VERSION = b_scene.niftools.user_version
-                    
-            if b_scene.niftools.user_version_2 == 0:
-                if self.properties.game == 'OBLIVION':
-                    NIF_USER_VERSION_2 = 11
-                elif self.properties.game == 'FALLOUT_3':
-                    NIF_USER_VERSION_2 = 34
-                else:
-                    NIF_USER_VERSION_2 = 0
-            else:
-                NIF_USER_VERSION_2 = b_scene.niftools.user_version_2
+            export_animation = self.properties.animation
+            if  export_animation == 'ALL_NIF':
+                self.info("Exporting geometry and animation")
+            elif export_animation == 'GEOM_NIF':
+                # for morrowind: everything except keyframe controllers
+                self.info("Exporting geometry only")
+            elif export_animation == 'ANIM_KF':
+                # for morrowind: only keyframe controllers
+                self.info("Exporting animation only (as .kf file)")
 
             # export nif file:
             # ----------------
 
-            if self.properties.animation != 'ANIM_KF':
+            # find nif version to write
+            #TODO Move fully to scene level
+            self.version = self.operator.version[self.properties.game]
+            self.user_version, self.user_version_2 = scene_export.get_version_info(self.properties)
+            
+            self.info("Writing NIF version 0x%08X" % self.version)
+
+            if export_animation != 'ANIM_KF':
                 if self.properties.game == 'EMPIRE_EARTH_II':
                     ext = ".nifcache"
                 else:
@@ -651,13 +632,10 @@ class NifExport(NifCommon):
 
                 # make sure we have the right file extension
                 if (fileext.lower() != ext):
-                    self.warning(
-                        "Changing extension from %s to %s on output file"
-                        % (fileext, ext))
+                    self.warning("Changing extension from {0} to {1} on output file".format(fileext, ext))
                 niffile = os.path.join(directory, filebase + ext)
-                data = NifFormat.Data(version=self.version,
-                                      user_version=NIF_USER_VERSION,
-                                      user_version_2=NIF_USER_VERSION_2)
+                
+                data = NifFormat.Data(version=self.version, user_version=self.user_version, user_version_2=self.user_version_2)
                 data.roots = [root_block]
                 if self.properties.game == 'NEOSTEAM':
                     data.modification = "neosteam"
@@ -672,7 +650,7 @@ class NifExport(NifCommon):
             # ----------------------------------------------
 
             # convert root_block tree into a keyframe tree
-            if self.properties.animation == 'ANIM_KF' or self.properties.animation == 'ALL_NIF_XNIF_XKF':
+            if export_animation == 'ANIM_KF' or export_animation == 'ALL_NIF_XNIF_XKF':
                 self.info("Creating keyframe tree")
                 # find all nodes and relevant controllers
                 node_kfctrls = {}
@@ -812,15 +790,13 @@ class NifExport(NifCommon):
                         % self.properties.game)
 
                 # write kf (and xnif if asked)
-                prefix = "" if (self.properties.animation != 'ALL_NIF_XNIF_XKF') else "x"
+                prefix = "" if (export_animation != 'ALL_NIF_XNIF_XKF') else "x"
 
                 ext = ".kf"
                 self.info("Writing %s file" % (prefix + ext))
 
                 kffile = os.path.join(directory, prefix + filebase + ext)
-                data = NifFormat.Data(version=self.version,
-                                      user_version=NIF_USER_VERSION,
-                                      user_version_2=NIF_USER_VERSION_2)
+                data = NifFormat.Data(version=self.version, user_version=self.user_version, user_version_2=self.user_version_2)
                 data.roots = [kf_root]
                 data.neosteam = (self.properties.game == 'NEOSTEAM')
                 stream = open(kffile, "wb")
@@ -829,7 +805,7 @@ class NifExport(NifCommon):
                 finally:
                     stream.close()
 
-            if self.properties.animation == 'ALL_NIF_XNIF_XKF':
+            if export_animation == 'ALL_NIF_XNIF_XKF':
                 self.info("Detaching keyframe controllers from nif")
                 # detach the keyframe controllers from the nif (for xnif)
                 for node in root_block.tree():
@@ -860,9 +836,7 @@ class NifExport(NifCommon):
                 self.info("Writing %s file" % (prefix + ext))
 
                 xniffile = os.path.join(directory, prefix + filebase + ext)
-                data = NifFormat.Data(version=self.version,
-                                      user_version=NIF_USER_VERSION,
-                                      user_version_2=NIF_USER_VERSION_2)
+                data = NifFormat.Data(version=self.version, user_version=self.user_version, user_version_2=self.user_version_2)
                 data.roots = [root_block]
                 data.neosteam = (self.properties.game == 'NEOSTEAM')
                 stream = open(xniffile, "wb")
@@ -873,7 +847,6 @@ class NifExport(NifCommon):
 
             # export egm file:
             #-----------------
-
             if self.egmdata:
                 ext = ".egm"
                 self.info("Writing %s file" % ext)
