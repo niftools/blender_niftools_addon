@@ -122,7 +122,8 @@ class NifImport(NifCommon):
                     self.info("NIF file version: 0x%08X" % self.data.version)
                     self.info("Reading file")
                     self.data.read(niffile)
-                    scene_import.import_version_info(self.data)
+                    if self.properties.override_scene_info:
+                        scene_import.import_version_info(self.data)
                 elif self.data.version == -1:
                     raise nif_utils.NifError("Unsupported NIF version.")
                 else:
@@ -141,8 +142,7 @@ class NifImport(NifCommon):
                     self.kfdata.inspect(kffile)
                     if self.kfdata.version >= 0:
                         # it is valid, so read the file
-                        self.info(
-                            "KF file version: 0x%08X" % self.kfdata.version)
+                        self.info("KF file version: 0x%08X" % self.kfdata.version)
                         self.info("Reading keyframe file")
                         self.kfdata.read(kffile)
                     elif self.kfdata.version == -1:
