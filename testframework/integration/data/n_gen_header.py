@@ -37,9 +37,6 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from pyffi.utils.withref import ref
-from pyffi.formats.nif import NifFormat
-
 def n_create_header_morrowind(n_data):
     n_data.version = 0x14000005
 
@@ -55,7 +52,7 @@ def n_create_header_fo3(n_data):
     n_data.user_version_2 = 34
     
 
-def n_create_header_sky(n_data):
+def n_create_header_skyrim(n_data):
     raise NotImplementedError
 
     
