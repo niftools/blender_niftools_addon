@@ -39,30 +39,30 @@
 
 import bpy
 
+user_version = {
+    'OBLIVION' : 11,
+    'FALLOUT_3' : 11,
+    'DIVINITY_2' : 131072
+}
+
+user_version_2 = {
+    'OBLIVION' : 11,
+    'FALLOUT_3' : 34
+}
+
 def get_version_info(properties):
-    
-    NIF_USER_VERSION = 0
-    NIF_USER_VERSION_2 = 0
-    
+
     # set user version and user version 2 for export
     b_scene = bpy.context.scene.niftools_scene
 
     if b_scene.user_version == 0:
-        if properties.game == 'OBLIVION':
-            NIF_USER_VERSION = 11
-        elif properties.game == 'FALLOUT_3':
-            NIF_USER_VERSION = 11
-        elif properties.game == 'DIVINITY_2':
-            NIF_USER_VERSION = 131072
-    else:
+        NIF_USER_VERSION = user_version.get(properties.game, 0)
+    else :
         NIF_USER_VERSION = b_scene.user_version
-            
+
     if b_scene.user_version_2 == 0:
-        if properties.game == 'OBLIVION':
-            NIF_USER_VERSION_2 = 11
-        elif properties.game == 'FALLOUT_3':
-            NIF_USER_VERSION_2 = 34
+        NIF_USER_VERSION_2 = user_version_2.get(properties.game, 0)
     else:
         NIF_USER_VERSION_2 = b_scene.user_version_2
-        
+
     return (NIF_USER_VERSION, NIF_USER_VERSION_2)
