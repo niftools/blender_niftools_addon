@@ -73,8 +73,7 @@ class NifOperatorCommon:
     #: Name of file where Python profiler dumps the profile.
     profile_path = bpy.props.StringProperty(
         name="Profile Path",
-        description="Name of file where Python profiler dumps the profile."
-                    "Set to empty string to turn off profiling.",
+        description="File where Python profiler dumps the profile. Set to empty string to turn off profiling.",
         maxlen=1024,
         default="",
         subtype="FILE_PATH",
