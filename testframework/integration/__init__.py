@@ -164,27 +164,31 @@ class SingleNif(Base):
         
         self.n_data = NifFormat.Data()
         
-        self.n_filepath_0 = "nif/" + self.n_name + "_py_code.nif"
-        self.n_filepath_1 = "nif/" + self.n_name + "_export_py_code.nif"
-        self.n_filepath_2 = "nif/" + self.n_name + "_export_user_ver.nif"
+        root = "integration/gen/"
+        nif_path = root + "nif/" + self.n_name
+        blend_path = root + "autoblend/" + self.n_name
+        
+        self.n_filepath_0 = nif_path + "_py_code.nif"
+        self.n_filepath_1 = nif_path + "_export_py_code.nif"
+        self.n_filepath_2 = nif_path + "_export_user_ver.nif"
 
-        self.b_filepath_0 = "autoblend/" + self.n_name + "_pycode_import.blend"
-        self.b_filepath_1 = "autoblend/" + self.n_name + "_userver.blend"
-        self.b_filepath_2 = "autoblend/" + self.n_name + "_userver_reimport.blend"
-        self.b_filepath_except = "autoblend/" + self.n_name + "_exception.blend"
+        self.b_filepath_0 = blend_path + "_pycode_import.blend"
+        self.b_filepath_1 = blend_path + "_userver.blend"
+        self.b_filepath_2 = blend_path + "_userver_reimport.blend"
+        self.b_filepath_except = blend_path + "_exception.blend"
 
-        if not os.path.exists(os.path.dirname(self.n_filepath_0)):
-            os.makedirs(os.path.dirname(self.n_filepath_0))
+        if not os.path.exists(nif_path):
+            os.makedirs(nif_path)
 
-        if not os.path.exists(os.path.dirname(self.b_filepath_0)):
-            os.makedirs(os.path.dirname(self.b_filepath_0))
+        if not os.path.exists(blend_path):
+            os.makedirs(blend_path)
 
     def _b_clear_check(self, b_obj_names):
         """Check that *b_obj_names* are really cleared from the scene."""
         if(len(b_obj_names) != 0):
             try:
                 for name in b_obj_names:
-                    b_obj = bpy.data.objects[name]
+                    bpy.data.objects[name]
             except KeyError:
                 pass
             else:
