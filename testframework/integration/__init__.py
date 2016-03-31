@@ -293,7 +293,9 @@ class SingleNif(Base):
     def test_pycode_nif_fullflow(self):
         """PyCode : Import/Export python generated file"""
         # create initial nif file and check data
-        self.n_write(self.n_create_data(), self.n_filepath_0)
+        self.n_create_header()
+        self.n_create_data()
+        self.n_write(self.n_data, self.n_filepath_0)
         self.n_check(self.n_filepath_0)
            
         # clear scene
