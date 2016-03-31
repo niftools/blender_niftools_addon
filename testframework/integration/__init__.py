@@ -4,6 +4,8 @@ import bpy
 import io_scene_nif.nif_import
 import io_scene_nif.nif_export
 
+
+
 import os
 import os.path
 
@@ -85,7 +87,7 @@ class SingleNif(Base):
     
     * :meth:`SingleNif.b_create_data` - Setup Blender scene as user would with the same information as physical nif
     
-    * :meth:`SingleNif.b_create_data` - Check that the scene contains contains the information as expected.
+    * :meth:`SingleNif.b_check_data` - Check that the scene contains contains the information as expected.
    
     If features can be reused, then they should be put into a b_gen_xxx or n_gen_xxx file, rather than kept in the test itself.
     This reduces both the test complexity and avoids issues where tests are re-run if they are imported.
@@ -260,16 +262,17 @@ class SingleNif(Base):
 
     def n_export(self, n_filepath):
         """Export selected blender object to nif file."""
-        bpy.ops.export_scene.nif(
-            filepath=n_filepath,
-            log_level='DEBUG',
-            game=self.n_game,
-            )
+        print("Export Options {0}, {1}".format(n_filepath, self.n_game))
+        bpy.ops.export_scene.nif(filepath=n_filepath,
+                                 log_level='DEBUG',
+                                 game=self.n_game,
+                                 )
 
     def test_export_user(self):       
         """User : Export user generated file"""
         
         # create scene
+        self.b_create_header()
         self.b_create_data()
         if(self.gen_blender_scene):
             self.b_save(self.b_filepath_1)
