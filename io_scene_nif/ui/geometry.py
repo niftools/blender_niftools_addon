@@ -74,11 +74,3 @@ class PartFlag(Panel):
             col.prop(nif_pf_list_props[i], "pf_startflag", index = i)
             col.prop(nif_pf_list_props[i], "pf_editorflag", index = i)
 
-def register():
-    bpy.utils.register_class(PartFlag)
-    bpy.utils.register_class(VertexSkinInfoPanel)
-    
-def unregister():
-    bpy.utils.unregister_class(PartFlag)
-    bpy.utils.unregister_class(VertexSkinInfoPanel)
-

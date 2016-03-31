@@ -8,7 +8,7 @@ from bpy.props import (PointerProperty,
 class Scene(PropertyGroup):
     @classmethod
     def register(cls):
-        bpy.types.Scene.niftools = PointerProperty(
+        bpy.types.Scene.niftools_scene = PointerProperty(
                         name='Niftools Scene Property',
                         description='Additional scene properties used by the Nif File Format',
                         type=cls
@@ -31,4 +31,4 @@ class Scene(PropertyGroup):
 
     @classmethod
     def unregister(cls):
-        del bpy.types.Scene.niftools
+        del bpy.types.Scene.niftools_scene

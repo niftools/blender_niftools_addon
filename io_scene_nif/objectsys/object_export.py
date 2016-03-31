@@ -754,7 +754,7 @@ class MeshHelper():
                 trishape.shader_name = "RRT_NormalMap_Spec_Env_CubeLight"
                 trishape.unknown_integer = -1 # default
 
-            self.nif_export.set_object_matrix(b_obj, space, trishape)
+            self.nif_export.objecthelper.set_object_matrix(b_obj, space, trishape)
 
             #add textures
             if self.properties.game == 'FALLOUT_3':

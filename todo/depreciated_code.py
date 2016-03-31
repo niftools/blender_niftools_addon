@@ -1,6 +1,11 @@
 #__init__.py
 
 '''
+    def get_game_to_trans(self, gname):
+        symbols = ":,'\" +-*!?;./="
+        table = str.maketrans(symbols, "_" * len(symbols))
+        enum = gname.upper().translate(table).replace("__", "_")
+        return enum
 
     Fundementally broken versioning system
     def hex_to_dec(self, nif_ver_hex):
