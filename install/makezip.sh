@@ -1,5 +1,5 @@
 #!/bin/bash
-DIR=`dirname $0`
+DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 VERSION=`cat ${DIR}/../io_scene_nif/VERSION`
 NAME="blender_nif_plugin"
 ROOT=${DIR}/..
