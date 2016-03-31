@@ -37,7 +37,6 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import math
 from math import radians, degrees
 import mathutils
 

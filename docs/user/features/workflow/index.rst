@@ -16,7 +16,7 @@ Import
 ------
 
 You now can import the nif directly into blender! 
-These settings are explained at :ref:`I/O Settings Section <iosettings>`.
+These settings are explained at :ref:`I/O Settings Section <user-features-iosettings-import>`.
 
 .. _workflow-export:
 

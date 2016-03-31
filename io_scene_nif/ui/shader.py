@@ -166,9 +166,3 @@ class ObjectShader(Panel):
             row.prop(nif_obj_props, "slsf_2_z_buffer_write")
 
 
-def register():
-    bpy.utils.register_class(ObjectShader)
-
-def unregister():
-    bpy.utils.unregister_class(ObjectShader)
-
