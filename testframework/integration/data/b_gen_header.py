@@ -46,13 +46,13 @@ def set_version_info(nif_ver=0, user_ver=0, user_ver_2=0):
     scene.user_version_2 = user_ver_2
 
 def b_set_morrowind_info():
-    set_version_info(nif_ver=0x14000005)
+    set_version_info(nif_ver=67108866)
     
 def b_set_oblivion_info():
-    set_version_info(nif_ver=0x14000005, user_ver=11, user_ver_2=11)
+    set_version_info(nif_ver=335544325, user_ver=11, user_ver_2=11)
     
 def b_set_fo3_info():
-    set_version_info(nif_ver=0x14000005, user_ver=11, user_ver_2=34)
+    set_version_info(nif_ver=335675399, user_ver=11, user_ver_2=34)
     
 def b_set_skyrim_info():
     raise NotImplementedError
