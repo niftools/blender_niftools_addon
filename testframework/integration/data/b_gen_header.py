@@ -38,7 +38,16 @@
 # ***** END LICENSE BLOCK *****
 
 import bpy
-   
+
+import nose
+
+MV_VER = 67108866
+OB_VER = 335544325
+FO3_VER = 335675399
+BETH_UV = 11
+BETH_UV2_FO3 = 34
+
+
 def set_version_info(nif_ver=0, user_ver=0, user_ver_2=0):
     scene = bpy.context.scene.niftools_scene
     scene.nif_version = nif_ver
@@ -46,13 +55,45 @@ def set_version_info(nif_ver=0, user_ver=0, user_ver_2=0):
     scene.user_version_2 = user_ver_2
 
 def b_set_morrowind_info():
-    set_version_info(nif_ver=67108866)
+    set_version_info(nif_ver=MV_VER)
     
 def b_set_oblivion_info():
-    set_version_info(nif_ver=335544325, user_ver=11, user_ver_2=11)
+    set_version_info(nif_ver=OB_VER, user_ver=BETH_UV, user_ver_2=BETH_UV)
     
 def b_set_fo3_info():
-    set_version_info(nif_ver=335675399, user_ver=11, user_ver_2=34)
+    set_version_info(nif_ver=FO3_VER, user_ver=BETH_UV, user_ver_2=BETH_UV2_FO3)
     
 def b_set_skyrim_info():
+    raise NotImplementedError
+
+
+def b_check_version_info(nif_ver=0, user_ver=0, user_ver_2=0):
+    scene = bpy.context.scene.niftools_scene
+    print("Expected - {0}, {1}, {2}".format(nif_ver, user_ver, user_ver_2))
+    
+    nv = scene.nif_version
+    print("nif_version - {0}".format(nv))
+    nose.tools.assert_equal(nv, nif_ver)  
+    
+    uv = scene.user_version
+    print("user_version - {0}".format(uv))
+    nose.tools.assert_equal(uv, user_ver) 
+    
+    uv2 = scene.user_version_2
+    print("user_version_2 - {0}".format(uv2))
+    nose.tools.assert_equal(uv2, user_ver_2) 
+    
+    nose.tools.assert_equal(scene.user_version, user_ver)  
+    nose.tools.assert_equal(scene.user_version_2, user_ver_2)
+
+def b_check_morrowind_info():    
+    b_check_version_info(nif_ver=67108866)
+    
+def b_check_oblivion_info():
+    b_check_version_info(nif_ver=335544325, user_ver=11, user_ver_2=11)
+    
+def b_check_fo3_info():
+    b_check_version_info(nif_ver=335675399, user_ver=11, user_ver_2=34)
+    
+def b_check_skyrim_info():
     raise NotImplementedError
