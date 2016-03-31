@@ -4,6 +4,8 @@ import bpy
 import io_scene_nif.nif_import
 import io_scene_nif.nif_export
 
+
+
 import os
 import os.path
 
@@ -85,7 +87,7 @@ class SingleNif(Base):
     
     * :meth:`SingleNif.b_create_data` - Setup Blender scene as user would with the same information as physical nif
     
-    * :meth:`SingleNif.b_create_data` - Check that the scene contains contains the information as expected.
+    * :meth:`SingleNif.b_check_data` - Check that the scene contains contains the information as expected.
    
     If features can be reused, then they should be put into a b_gen_xxx or n_gen_xxx file, rather than kept in the test itself.
     This reduces both the test complexity and avoids issues where tests are re-run if they are imported.
@@ -164,27 +166,31 @@ class SingleNif(Base):
         
         self.n_data = NifFormat.Data()
         
-        self.n_filepath_0 = "nif/" + self.n_name + "_py_code.nif"
-        self.n_filepath_1 = "nif/" + self.n_name + "_export_py_code.nif"
-        self.n_filepath_2 = "nif/" + self.n_name + "_export_user_ver.nif"
+        root = "integration/gen/"
+        nif_path = root + "nif/" + self.n_name
+        blend_path = root + "autoblend/" + self.n_name
+        
+        self.n_filepath_0 = nif_path + "_py_code.nif"
+        self.n_filepath_1 = nif_path + "_export_py_code.nif"
+        self.n_filepath_2 = nif_path + "_export_user_ver.nif"
 
-        self.b_filepath_0 = "autoblend/" + self.n_name + "_pycode_import.blend"
-        self.b_filepath_1 = "autoblend/" + self.n_name + "_userver.blend"
-        self.b_filepath_2 = "autoblend/" + self.n_name + "_userver_reimport.blend"
-        self.b_filepath_except = "autoblend/" + self.n_name + "_exception.blend"
+        self.b_filepath_0 = blend_path + "_pycode_import.blend"
+        self.b_filepath_1 = blend_path + "_userver.blend"
+        self.b_filepath_2 = blend_path + "_userver_reimport.blend"
+        self.b_filepath_except = blend_path + "_exception.blend"
 
-        if not os.path.exists(os.path.dirname(self.n_filepath_0)):
-            os.makedirs(os.path.dirname(self.n_filepath_0))
+        if not os.path.exists(nif_path):
+            os.makedirs(nif_path)
 
-        if not os.path.exists(os.path.dirname(self.b_filepath_0)):
-            os.makedirs(os.path.dirname(self.b_filepath_0))
+        if not os.path.exists(blend_path):
+            os.makedirs(blend_path)
 
     def _b_clear_check(self, b_obj_names):
         """Check that *b_obj_names* are really cleared from the scene."""
         if(len(b_obj_names) != 0):
             try:
                 for name in b_obj_names:
-                    b_obj = bpy.data.objects[name]
+                    bpy.data.objects[name]
             except KeyError:
                 pass
             else:
@@ -256,16 +262,17 @@ class SingleNif(Base):
 
     def n_export(self, n_filepath):
         """Export selected blender object to nif file."""
-        bpy.ops.export_scene.nif(
-            filepath=n_filepath,
-            log_level='DEBUG',
-            game=self.n_game,
-            )
+        print("Export Options {0}, {1}".format(n_filepath, self.n_game))
+        bpy.ops.export_scene.nif(filepath=n_filepath,
+                                 log_level='DEBUG',
+                                 game=self.n_game,
+                                 )
 
     def test_export_user(self):       
         """User : Export user generated file"""
         
         # create scene
+        self.b_create_header()
         self.b_create_data()
         if(self.gen_blender_scene):
             self.b_save(self.b_filepath_1)
@@ -286,7 +293,9 @@ class SingleNif(Base):
     def test_pycode_nif_fullflow(self):
         """PyCode : Import/Export python generated file"""
         # create initial nif file and check data
-        self.n_write(self.n_create_data(), self.n_filepath_0)
+        self.n_create_header()
+        self.n_create_data()
+        self.n_write(self.n_data, self.n_filepath_0)
         self.n_check(self.n_filepath_0)
            
         # clear scene

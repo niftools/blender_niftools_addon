@@ -184,11 +184,6 @@ class NifCommon:
         self.operator.report({'ERROR'}, message)
         return {'FINISHED'}
 
-    def get_game_to_trans(self, gname):
-        symbols = ":,'\" +-*!?;./="
-        table = str.maketrans(symbols, "_" * len(symbols))
-        enum = gname.upper().translate(table).replace("__", "_")
-        return enum
 
     def get_bone_name_for_blender(self, name):
         """Convert a bone name to a name that can be used by Blender: turns

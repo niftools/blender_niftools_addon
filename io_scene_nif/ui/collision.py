@@ -86,8 +86,3 @@ class CollisionBoundsPanel(Panel):
         box.prop(con_setting, "damping", text='Damping')
 
 
-def register():
-    bpy.utils.register_class(CollisionBoundsPanel)
-    
-def unregister():
-    bpy.utils.unregister_class(CollisionBoundsPanel)

@@ -1,8 +1,6 @@
-"""Header Helper functions"""
-
 # ***** BEGIN LICENSE BLOCK *****
 #
-# Copyright © 2005-2015, NIF File Format Library and Tools contributors.
+# Copyright © 2016, NIF File Format Library and Tools contributors.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,25 +35,4 @@
 #
 # ***** END LICENSE BLOCK *****
 
-from pyffi.utils.withref import ref
-from pyffi.formats.nif import NifFormat
 
-def n_create_header_morrowind(n_data):
-    n_data.version = 0x14000005
-
-def n_create_header_oblivion(n_data):
-    n_data.version = 0x14000005
-    n_data.user_version = 11
-    n_data.user_version_2 = 11
-    
-    
-def n_create_header_fo3(n_data):
-    n_data.version = 0x14020005
-    n_data.user_version = 11
-    n_data.user_version_2 = 34
-    
-
-def n_create_header_sky(n_data):
-    raise NotImplementedError
-
-    
