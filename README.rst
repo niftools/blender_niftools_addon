@@ -16,6 +16,7 @@ Documentation
 
 * `Online documentation <http://niftools.org/projects/plugins/blender_nif_plugin/docs/>`_
 * `Changelog <http://niftools.org/projects/plugins/blender_nif_plugin/docs/additional/changes.html>`_
+* See [CONTRIBUTING.md](CONTRIBUTING.md) for a list of contribution rules.
 
 Support
 -------
