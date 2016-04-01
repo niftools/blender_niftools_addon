@@ -26,19 +26,19 @@ Code
 
 General rule of thumb is to see what has gone before, but if your way is better, ensure you demonstrate that to the review team. 
  * Adhere to conventions, see out main documenation for developers.
- * Code should be as readible as possible.
- * Comments should help break down complex behavior. If the behavior is too complex, group the code into logical chuncks, or extract to functions for easier to understand code.
- * Docstrings - Ensure that the intention, not the implementation is described. Self describing code is good, but if it doesn't do as intended, the s what is coded may work, but not be what 
+ * Code should be as readable as possible.
+ * Comments should help break down complex behavior. If the behavior is too complex, group the code into logical chunks, or extract to functions for easier to understand code.
+ * Docstrings to descibe the intention, not implementation. Self describing code is good and may provide functionality, but useless if it doesn't do what is actually needed.
 
 Testing
 ~~~~~~~
 
 Our template includes sections relating to ensure appropiate testing has been completed.
- * If you change the behavior of part of the code, you should try to change the relevant tests to adapt to the new behavior.
+ * If you change the behavior of part of the code, you should try to change the relevent tests to adapt to the new behavior.
  * If a test fails, it has to be fixed either in the test or the code.
 
-When possible, for evey API additions add either unit or integration tests.
-The template requires documenting any tests changes in the Pull Request, and be prepared to answer questions about test changed or deletion.
+When possible, for every API additions add either unit or integration tests.
+The template requires documenting any tests changes in the Pull Request. Expect questions about any test updates or deletions.
 
 Documentation
 ~~~~~~~~~~~~~
@@ -50,7 +50,7 @@ Documentation is used by both users and developers and is published.
 Reviewer Contribution
 ---------------------
 
-The reivew group is to ensure that contributions are openly discussed, people can participate in the development process and ensure quality of development
+The review group is to ensure that contributions are openly discussed, people can participate in the development process and ensure quality of development
  * If you are interested in joining the review group to give your input on contributions, talk to the @niftools/core team to be added as reviewer.
  * You will automatically recieve notificiations for any PR related to this repo.
 
@@ -58,8 +58,8 @@ Release process
 ---------------
 
 When all issues in a milestone are complete, a release branch is created from the `dev` branch, tagged, log updates and PR done towards `master`.  
- * The project uses the python versioning scheme - https://www.python.org/dev/peps/pep-0440/#public-version-identifiers
- * A release will always include an accompaning version change, but the reverse is not true : the version can change without a release.
+ * The project uses the Python versioning scheme - https://www.python.org/dev/peps/pep-0440/#public-version-identifiers
+ * A release will always include an accompanying version change, but the reverse is not true : the version can change without a release.
 After being merged, a release will be officially released using the GitHub release system.
 
 
