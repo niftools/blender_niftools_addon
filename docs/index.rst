@@ -34,8 +34,9 @@ Contents:
    development/index
    
    additional/authors
-   additional/license
+   additional/contributing
    additional/changes
+   additional/license
 
 Indices and tables
 ------------------
