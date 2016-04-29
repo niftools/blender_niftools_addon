@@ -230,7 +230,7 @@ class ObjectHelper():
             if b_obj.parent and b_obj.parent.type == 'ARMATURE':
                 if b_obj_ipo:
                     # mesh with armature parent should not have animation!
-                    NifLog.warning("Mesh {0} is skinned but also has object animation. The nif format does not support this, ignoring object animation.".format(b_obj.name))
+                    NifLog.warn("Mesh {0} is skinned but also has object animation. The nif format does not support this, ignoring object animation.".format(b_obj.name))
                     b_obj_ipo = None
                 trishape_space = space
                 space = 'none'
@@ -554,7 +554,7 @@ class MeshHelper():
         # so quickly catch this (rare!) case
         if not b_obj.data.vertices:
             # do not export anything
-            NifLog.warning("{0} has no vertices, skipped.".format(b_obj))
+            NifLog.warn("{0} has no vertices, skipped.".format(b_obj))
             return
 
         # get the mesh's materials, this updates the mesh material list
@@ -579,7 +579,7 @@ class MeshHelper():
 
             #vertex alpha check
             if len(b_mesh.vertex_colors) == 1:
-                NifLog.warning("Mesh only has one Vertex Color layer. Default alpha values will be written."
+                NifLog.warn("Mesh only has one Vertex Color layer. Default alpha values will be written."
                                "For Custom alpha values add a second vertex layer, greyscale only" )
             else:
                 for b_loop in b_mesh.vertex_colors[1].data:
@@ -1079,7 +1079,7 @@ class MeshHelper():
                 tridata.consistency_flags = NifFormat.ConsistencyType._enumvalues[cf_index]
             else:
                 tridata.consistency_flags = NifFormat.ConsistencyType.CT_STATIC
-                NifLog.warning("{0} has no consistency type set using default CT_STATIC.".format(b_obj))
+                NifLog.warn("{0} has no consistency type set using default CT_STATIC.".format(b_obj))
 
             # data
             tridata.num_vertices = len(vertlist)
@@ -1307,17 +1307,17 @@ class MeshHelper():
                             # warn on bad config settings
                             if self.properties.game == 'OBLIVION':
                                 if self.properties.pad_bones:
-                                    NifLog.warning("Using padbones on Oblivion export. Disable the pad bones option to get higher quality skin partitions.")
+                                    NifLog.warn("Using padbones on Oblivion export. Disable the pad bones option to get higher quality skin partitions.")
                             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
                                 if self.properties.max_bones_per_partition < 18:
-                                    NifLog.warning("Using less than 18 bones per partition on Oblivion/Fallout 3 export."
+                                    NifLog.warn("Using less than 18 bones per partition on Oblivion/Fallout 3 export."
                                                    "Set it to 18 to get higher quality skin partitions.")
                             if self.properties.game in ('SKYRIM'):
                                 if self.properties.max_bones_per_partition < 24:
-                                    NifLog.warning("Using less than 24 bones per partition on Skyrim export."
+                                    NifLog.warn("Using less than 24 bones per partition on Skyrim export."
                                        "Set it to 24 to get higher quality skin partitions.")
                             if lostweight > self.properties.epsilon:
-                                NifLog.warning("Lost {0} in vertex weights while creating a skin partition for Blender object '{1}' (nif block '{2}')"
+                                NifLog.warn("Lost {0} in vertex weights while creating a skin partition for Blender object '{1}' (nif block '{2}')"
                                                .format(str(lostweight), b_obj.name, trishape.name))
 
                         if isinstance(skininst, NifFormat.BSDismemberSkinInstance):

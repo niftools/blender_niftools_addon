@@ -105,7 +105,7 @@ class AnimationHelper():
         elif extend == bpy.types.IpoCurve.ExtendTypes.CYCLIC:
             return 0
 
-        NifLog.warning("Unsupported extend type in blend, using clamped.")
+        NifLog.warn("Unsupported extend type in blend, using clamped.")
         return 4
     
     def export_keyframes(self, ipo, space, parent_block, bind_matrix = None,
@@ -160,7 +160,7 @@ class AnimationHelper():
                 if extend is None:
                     extend = curve.extend
                 elif extend != curve.extend:
-                    NifLog.warning("Inconsistent extend type in {0}, will use {1}.".format(ipo, extend))
+                    NifLog.warn("Inconsistent extend type in {0}, will use {1}.".format(ipo, extend))
                 # get start and stop frames
                 start_frame = min(
                     start_frame,
@@ -465,7 +465,7 @@ class AnimationHelper():
                 raise nif_utils.NifError("Syntax error in Anim buffer ('%s')" % s)
             f = int(t[0])
             if ((f < self.context.scene.frame_start) or (f > self.context.scene.frame_end)):
-                NifLog.warning("Frame in animation buffer out of range ({0} not between [{1}, {2}])".format(str(f), str(self.context.scene.frame_start), str(self.context.scene.frame_end)))
+                NifLog.warn("Frame in animation buffer out of range ({0} not between [{1}, {2}])".format(str(f), str(self.context.scene.frame_start), str(self.context.scene.frame_end)))
             d = t[1].strip(' ')
             for i in range(2, len(t)):
                 d = d + '\r\n' + t[i].strip(' ')
