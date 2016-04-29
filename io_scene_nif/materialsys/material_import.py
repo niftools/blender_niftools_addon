@@ -39,6 +39,7 @@
 
 
 import bpy
+from io_scene_nif.utility.nif_logging import NifLog
 
 class Material():
     
@@ -70,7 +71,7 @@ class Material():
         
     
     def set_alpha(self, b_mat, ShaderProperty, n_alpha_prop):
-        self.nif_import.debug("Alpha prop detected")
+        NifLog.debug("Alpha prop detected")
         b_mat.use_transparency = True
         if hasattr(ShaderProperty, 'alpha'):
             b_mat.alpha = (1 - ShaderProperty.alpha)
