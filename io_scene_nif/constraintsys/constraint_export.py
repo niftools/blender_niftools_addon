@@ -71,7 +71,7 @@ class constraint_export():
             # rigid body joints
             if b_constr.type == 'RIGID_BODY_JOINT':
                 if self.properties.game not in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-                    NifLog.warning("Only Oblivion/Fallout/Skyrim rigid body constraints currently supported: Skipping {0}.".format(b_constr))
+                    NifLog.warn("Only Oblivion/Fallout/Skyrim rigid body constraints currently supported: Skipping {0}.".format(b_constr))
                     continue
                 # check that the object is a rigid body
                 for otherbody, otherobj in self.nif_export.dict_blocks.items():
@@ -155,7 +155,7 @@ class constraint_export():
                 # is there a target?
                 targetobj = b_constr.target
                 if not targetobj:
-                    NifLog.warning("Constraint {0} has no target, skipped".format(b_constr))
+                    NifLog.warn("Constraint {0} has no target, skipped".format(b_constr))
                     continue
                 # find target's bhkRigidBody
                 for otherbody, otherobj in self.nif_export.dict_blocks.items():

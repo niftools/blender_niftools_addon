@@ -69,12 +69,12 @@ class Material():
                 if (name.lower() == specialname.lower()
                     or name.lower().startswith(specialname.lower() + ".")):
                     if name != specialname:
-                        NifLog.warning("Renaming material '{0}' to '{1}'".format(name, specialname))
+                        NifLog.warn("Renaming material '{0}' to '{1}'".format(name, specialname))
                     name = specialname
 
         # clear noname materials
         if name.lower().startswith("noname"):
-            NifLog.warning("Renaming material '{0}' to ''".format(name))
+            NifLog.warn("Renaming material '{0}' to ''".format(name))
             name = ""
 
         matprop.name = name
@@ -115,7 +115,7 @@ class Material():
             first_index = 1 if ignore_strings else 0
             if (block.get_hash()[first_index:] ==
                 matprop.get_hash()[first_index:]):
-                NifLog.warning("Merging materials '{0}' and '{1}' (they are identical in nif)".format(matprop.name, block.name))
+                NifLog.warn("Merging materials '{0}' and '{1}' (they are identical in nif)".format(matprop.name, block.name))
                 return block
 
         # no material property with given settings found, so use and register

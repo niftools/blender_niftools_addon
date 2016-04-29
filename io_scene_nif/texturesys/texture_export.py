@@ -312,7 +312,7 @@ class TextureHelper():
 
         if self.refmtex:
             if self.properties.game not in self.USED_EXTRA_SHADER_TEXTURES:
-                NifLog.warning("Cannot export reflection texture for this game.")
+                NifLog.warn("Cannot export reflection texture for this game.")
                 #texprop.hasRefTexture = True
                 #self.export_tex_desc(texdesc = texprop.refTexture,
                 #                     uvlayers = uvlayers,
@@ -456,7 +456,7 @@ class TextureHelper():
                         % (b_obj.name,b_mat.name))
                 if b_mat_texslot.blend_type != 'ADD':
                 # it should have "ADD" blending mode
-                    NifLog.warning("Reflection texture should have blending mode 'Add' on texture in mesh '{0}', material '{1}').".format(b_obj.name,b_mat.name))
+                    NifLog.warn("Reflection texture should have blending mode 'Add' on texture in mesh '{0}', material '{1}').".format(b_obj.name,b_mat.name))
                 # an envmap image should have an empty... don't care
                 self.refmtex = b_mat_texslot
     

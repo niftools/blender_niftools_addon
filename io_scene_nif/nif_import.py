@@ -320,7 +320,7 @@ class NifImport(NifCommon):
             if root_block.collision_object:
                 bhk_body = root_block.collision_object.body
                 if not isinstance(bhk_body, NifFormat.bhkRigidBody):
-                    NifLog.warning("Unsupported collision structure under node {0}".format(root_block.name))
+                    NifLog.warn("Unsupported collision structure under node {0}".format(root_block.name))
                 self.bhkhelper.import_bhk_shape(bhkshape=bhk_body)
 
             # process all its children
@@ -328,13 +328,13 @@ class NifImport(NifCommon):
                 b_obj = self.import_branch(child)
 
         elif isinstance(root_block, NifFormat.NiCamera):
-            NifLog.warning('Skipped NiCamera root')
+            NifLog.warn('Skipped NiCamera root')
 
         elif isinstance(root_block, NifFormat.NiPhysXProp):
-            NifLog.warning('Skipped NiPhysXProp root')
+            NifLog.warn('Skipped NiPhysXProp root')
 
         else:
-            NifLog.warning("Skipped unsupported root block type '{0}' (corrupted nif?).".format(root_block.__class__))
+            NifLog.warn("Skipped unsupported root block type '{0}' (corrupted nif?).".format(root_block.__class__))
 
         if hasattr(root_block, "extra_data_list"):
             for n_extra_list in root_block.extra_data_list:
@@ -444,7 +444,7 @@ class NifImport(NifCommon):
                     n_armature = niBlock
                     NifLog.info("Merging nif tree '{0}' with armature '{1}'".format(niBlock.name, b_obj.name))
                     if niBlock.name != b_obj.name:
-                        NifLog.warning("Using Nif block '{0}' as armature '{1}' but names do not match".format(niBlock.name, b_obj.name))
+                        NifLog.warn("Using Nif block '{0}' as armature '{1}' but names do not match".format(niBlock.name, b_obj.name))
                 # armatures cannot group geometries into a single mesh
                 geom_group = []
             elif self.armaturehelper.is_bone(niBlock):
@@ -539,7 +539,7 @@ class NifImport(NifCommon):
                 if isinstance(niBlock.collision_object, NifFormat.bhkNiCollisionObject):
                     bhk_body = niBlock.collision_object.body
                     if not isinstance(bhk_body, NifFormat.bhkRigidBody):
-                        NifLog.warning("Unsupported collision structure under node {0}".format(niBlock.name))
+                        NifLog.warn("Unsupported collision structure under node {0}".format(niBlock.name))
 
                     collision_objs = self.bhkhelper.import_bhk_shape(bhkshape=bhk_body)
                     # register children for parentship
@@ -632,7 +632,7 @@ class NifImport(NifCommon):
                 constr = b_obj.constraints[-1]
                 constr.target = b_obj_camera
                 if constr.target == None:
-                    NifLog.warning("Constraint for billboard node on {0} added but target not set due to transform bug. Set target to Camera manually.".format(b_obj))
+                    NifLog.warn("Constraint for billboard node on {0} added but target not set due to transform bug. Set target to Camera manually.".format(b_obj))
                 constr.track_axis = 'TRACK_Z'
                 constr.up_axis = 'UP_Y'
                 # yields transform bug!
@@ -1293,7 +1293,7 @@ class NifImport(NifCommon):
                             # this happens when two keys have the same name
                             # an instance of this is in fallout 3
                             # meshes/characters/_male/skeleton.nif HeadAnims:0
-                            NifLog.warning("Skipped duplicate of key '{0}'".format(keyname))
+                            NifLog.warn("Skipped duplicate of key '{0}'".format(keyname))
                         # no idea how to set up the bezier triples -> switching
                         # to linear instead
                         b_curve.interpolation = Blender.IpoCurve.InterpTypes.LINEAR
