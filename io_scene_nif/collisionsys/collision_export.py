@@ -42,6 +42,7 @@ import mathutils
 
 from pyffi.formats.nif import NifFormat
 from io_scene_nif.utility import nif_utils
+from io_scene_nif.utility.nif_logging import NifLog
 
 class bhkshape_export():
 
@@ -305,8 +306,7 @@ class bhkshape_export():
 
         # find bounding box data
         if not b_obj.data.vertices:
-            self.warning(
-                "Skipping collision object %s without vertices." % b_obj)
+            NifLog.warning("Skipping collision object {0} without vertices.".format(b_obj))
             return None
         b_vertlist = [vert.co for vert in b_obj.data.vertices]
 
@@ -398,9 +398,7 @@ class bhkshape_export():
 
             # check if end points are far enough from each other
             if (vert1 - vert2).length < self.properties.epsilon:
-                self.warning(
-                    "End points of cylinder %s too close,"
-                    " converting to sphere." % b_obj)
+                NifLog.warning("End points of cylinder {0} too close, converting to sphere.".format(b_obj))
                 # change type
                 b_obj.game.collision_bounds_type = 'SPHERE'
                 # instead of duplicating code, just run the function again

@@ -38,6 +38,7 @@
 # ***** END LICENSE BLOCK *****
 
 
+from io_scene_nif.utility.nif_logging import NifLog
 from pyffi.formats.nif import NifFormat
 
 class Material():
@@ -68,13 +69,12 @@ class Material():
                 if (name.lower() == specialname.lower()
                     or name.lower().startswith(specialname.lower() + ".")):
                     if name != specialname:
-                        self.nif_export.warning("Renaming material '%s' to '%s'"
-                                            % (name, specialname))
+                        NifLog.warning("Renaming material '{0}' to '{1}'".format(name, specialname))
                     name = specialname
 
         # clear noname materials
         if name.lower().startswith("noname"):
-            self.nif_export.warning("Renaming material '%s' to ''" % name)
+            NifLog.warning("Renaming material '{0}' to ''".format(name))
             name = ""
 
         matprop.name = name
@@ -115,10 +115,7 @@ class Material():
             first_index = 1 if ignore_strings else 0
             if (block.get_hash()[first_index:] ==
                 matprop.get_hash()[first_index:]):
-                self.nif_export.warning(
-                    "Merging materials '%s' and '%s'"
-                    " (they are identical in nif)"
-                    % (matprop.name, block.name))
+                NifLog.warning("Merging materials '{0}' and '{1}' (they are identical in nif)".format(matprop.name, block.name))
                 return block
 
         # no material property with given settings found, so use and register

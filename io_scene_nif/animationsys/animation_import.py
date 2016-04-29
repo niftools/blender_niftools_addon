@@ -74,7 +74,7 @@ class AnimationHelper():
             # match from nif tree?
             node = root.find(block_name = nodename)
             if not node:
-                NifLog.info("Animation for {0} but no such node found in nif tree".format(nodename)
+                NifLog.info("Animation for {0} but no such node found in nif tree".format(nodename))
                 continue
             # node found, now find the controller
             controllertype = controlledblock.get_controller_type()
@@ -115,7 +115,7 @@ class AnimationHelper():
                 # copy translation
                 if kfi.translation.x < -1000000:
                     # invalid, happens in fallout 3, e.g. h2haim.kf
-                    self.nif_import.warning("ignored NaN in interpolator translation")
+                    NifLog.warning("Ignored NaN in interpolator translation")
                 else:
                     kfd.translations.num_keys = 1
                     kfd.translations.keys.update_size()
@@ -663,9 +663,7 @@ class ArmatureAnimation():
                         # XXX same times!!!
                         if (abs(xkey.time - ykey.time) > self.properties.epsilon
                             or abs(xkey.time - zkey.time) > self.properties.epsilon):
-                            self.nif_import.warning(
-                                "xyz key times do not correspond, "
-                                "animation may not be correctly imported")
+                            NifLog.warning("XYZ key times do not correspond, animation may not be correctly imported")
                         frame = 1 + int(xkey.time * self.nif_import.fps + 0.5)
                         euler = mathutils.Euler(
                             [xkey.value * 180.0 / math.pi,
