@@ -43,6 +43,7 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.utility import nif_utils
+from io_scene_nif.utility.nif_logging import NifLog
 
 class ObjectHelper():
 
@@ -95,10 +96,9 @@ class ObjectHelper():
         @param b_obj: The Blender object.
         @return: C{block}"""
         if b_obj is None:
-            self.nif_export.info("Exporting %s block"%block.__class__.__name__)
+            NifLog.info("Exporting {0} block".format(block.__class__.__name__))
         else:
-            self.nif_export.info("Exporting %s as %s block"
-                     % (b_obj, block.__class__.__name__))
+            NifLog.info("Exporting {0} as {1} block".format(b_obj, block.__class__.__name__))
         self.nif_export.dict_blocks[block] = b_obj
         return block
     
@@ -545,7 +545,7 @@ class MeshHelper():
 
 
     def export_tri_shapes(self, b_obj, space, parent_block, trishape_name = None):
-        self.nif_export.info("Exporting %s" % b_obj)
+        NifLog.info("Exporting {0}".format(b_obj))
 
         assert(b_obj.type == 'MESH')
 
@@ -1305,7 +1305,7 @@ class MeshHelper():
 
                         if (self.nif_export.version >= 0x04020100
                             and self.properties.skin_partition):
-                            self.nif_export.info("Creating skin partition")
+                            NifLog.info("Creating skin partition")
                             lostweight = trishape.update_skin_partition(
                                 maxbonesperpartition=self.properties.max_bones_per_partition,
                                 maxbonespervertex=self.properties.max_bones_per_vertex,
@@ -1425,8 +1425,7 @@ class MeshHelper():
                             # export morphed vertices
                             morph = morphdata.morphs[keyblocknum]
                             morph.frame_name = keyblock.name
-                            self.nif_export.info("Exporting morph %s: vertices"
-                                             % keyblock.name)
+                            NifLog.info("Exporting morph {0}: vertices".format(keyblock.name))
                             morph.arg = morphdata.num_vertices
                             morph.vectors.update_size()
                             for b_v_index, (vert_indices, vert) \
@@ -1466,8 +1465,7 @@ class MeshHelper():
                             # and on floatdata for newer nifs
                             # of course only one of these will be actually
                             # written to the file
-                            self.nif_export.info("Exporting morph %s: curve"
-                                             % keyblock.name)
+                            NifLog.info("Exporting morph {0}: curve".format(keyblock.name))
                             interpol.data = self.nif_export.objecthelper.create_block("NiFloatData", curve)
                             floatdata = interpol.data.data
                             if curve.getExtrapolation() == "Constant":
@@ -1503,7 +1501,7 @@ class MeshHelper():
 
     def smooth_mesh_seams(self, b_objs):
         # get shared vertices
-        self.nif_export.info("Smoothing seams between objects...")
+        NifLog.info("Smoothing seams between objects...")
         vdict = {}
         for b_obj in [b_obj for b_obj in b_objs if b_obj.type == 'MESH']:
             b_mesh = b_obj.data
@@ -1550,6 +1548,6 @@ class MeshHelper():
                 vertex.normal = norm
                 # vertex.sel = True
             nv += 1
-        self.nif_export.info("Fixed normals on %i vertices." % nv)
+        NifLog.info("Fixed normals on {0} vertices.".format(str(nv))
     
     

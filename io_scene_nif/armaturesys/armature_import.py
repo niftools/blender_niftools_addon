@@ -45,6 +45,7 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.utility import nif_utils
+from io_scene_nif.utility.nif_logging import NifLog
 
 class Armature():
 	
@@ -329,8 +330,7 @@ class Armature():
 				skelroot = niBlock
 			if skelroot not in self.nif_import.dict_armatures:
 				self.nif_import.dict_armatures[skelroot] = []
-			self.nif_import.info("Selecting node '%s' as skeleton root"
-							 % skelroot.name)
+			NifLog.info("Selecting node '%s' as skeleton root".format(skelroot.name))
 			# add bones
 			for bone in skelroot.tree():
 				if bone is skelroot:
@@ -360,9 +360,7 @@ class Armature():
 				bone_block = skelroot.find(block_name=nif_bone_name)
 				# add it to the name list if there is a bone with that name
 				if bone_block:
-					self.nif_import.info(
-						"Identified nif block '%s' with bone '%s' "
-						"in selected armature" % (nif_bone_name, bone_name))
+					NifLog.info("Identified nif block '{0}' with bone '{1}' in selected armature".format(nif_bone_name, bone_name))
 					self.nif_import.dict_names[bone_block] = bone_name
 					self.nif_import.dict_armatures[skelroot].append(bone_block)
 					self.complete_bone_tree(bone_block, skelroot)

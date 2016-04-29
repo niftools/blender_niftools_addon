@@ -40,6 +40,7 @@
 
 from io_scene_nif.nif_common import NifCommon
 from io_scene_nif.utility import nif_utils
+from io_scene_nif.utility.nif_logging import NifLog
 
 from io_scene_nif.animationsys.animation_export import AnimationHelper
 from io_scene_nif.collisionsys.collision_export import bhkshape_export, bound_export
@@ -48,16 +49,16 @@ from io_scene_nif.propertysys.property_export import PropertyHelper
 from io_scene_nif.constraintsys.constraint_export import constraint_export
 from io_scene_nif.texturesys.texture_export import TextureHelper
 from io_scene_nif.objectsys.object_export import ObjectHelper
+from io_scene_nif.scenesys import scene_export
+
+import pyffi.spells.nif.fix
+from pyffi.formats.nif import NifFormat
+from pyffi.formats.egm import EgmFormat
 
 import os.path
 
 import mathutils
 import bpy
-
-import pyffi.spells.nif.fix
-from pyffi.formats.nif import NifFormat
-from pyffi.formats.egm import EgmFormat
-from io_scene_nif.scenesys import scene_export
 
 # main export class
 class NifExport(NifCommon):
@@ -105,7 +106,7 @@ class NifExport(NifCommon):
         if(bpy.context.mode != 'OBJECT'):
             bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
 
-        self.info("exporting {0}".format(self.properties.filepath))
+        NifLog.info("Exporting {0}".format(self.properties.filepath))
 
         # TODO:
         '''
@@ -225,7 +226,7 @@ class NifExport(NifCommon):
 
             # export nif:
             # -----------
-            self.info("Exporting")
+            NifLog.info("Exporting")
 
             # create a nif object
 
@@ -234,7 +235,7 @@ class NifExport(NifCommon):
             root_block = self.objecthelper.export_node(None, 'none', None, '')
 
             # export objects
-            self.info("Exporting objects")
+            NifLog.info("Exporting objects")
             for root_object in root_objects:
                 if self.properties.game in ('SKYRIM'):
                     if root_object.niftools_bs_invmarker:
@@ -265,7 +266,7 @@ class NifExport(NifCommon):
 
             # if we exported animations, but no animation groups are defined,
             # define a default animation group
-            self.info("Checking animation groups")
+            NifLog.info("Checking animation groups")
             if not animtxt:
                 has_controllers = False
                 for block in self.dict_blocks:
@@ -275,7 +276,7 @@ class NifExport(NifCommon):
                             has_controllers = True
                             break
                 if has_controllers:
-                    self.info("Defining default animation group.")
+                    NifLog.info("Defining default animation group.")
                     # write the animation group text buffer
                     animtxt = bpy.data.texts.new("Anim")
                     animtxt.write("%i/Idle: Start/Idle: Loop Start\n%i/Idle: Loop Stop/Idle: Stop" %
@@ -283,7 +284,7 @@ class NifExport(NifCommon):
 
             # animations without keyframe animations crash the TESCS
             # if we are in that situation, add a trivial keyframe animation
-            self.info("Checking controllers")
+            NifLog.info("Checking controllers")
             if animtxt and self.properties.game == 'MORROWIND':
                 has_keyframecontrollers = False
                 for block in self.dict_blocks:
@@ -292,7 +293,7 @@ class NifExport(NifCommon):
                         break
                 if ((not has_keyframecontrollers)
                     and (not self.properties.bs_animation_node)):
-                    self.info("Defining dummy keyframe controller")
+                    NifLog.info("Defining dummy keyframe controller")
                     # add a trivial keyframe controller on the scene root
                     self.animationhelper.export_keyframes(None, 'localspace', root_block)
             if (self.properties.bs_animation_node
@@ -320,8 +321,7 @@ class NifExport(NifCommon):
                 and filebase.lower() in ('skeleton', 'skeletonbeast'):
                 # here comes everything that is Oblivion skeleton export
                 # specific
-                self.info(
-                    "Adding controllers and interpolators for skeleton")
+                NifLog.info("Adding controllers and interpolators for skeleton")
                 for block in list(self.dict_blocks.keys()):
                     if isinstance(block, NifFormat.NiNode) \
                         and block.name.decode() == "Bip01":
@@ -389,7 +389,7 @@ class NifExport(NifCommon):
                 root_block.add_extra_data(sgokeep)
 
             # FIXME:
-            self.info("Checking collision")
+            NifLog.info("Checking collision")
             # activate oblivion/Fallout 3 collision and physics
             if self.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
                 hascollision = False
@@ -515,14 +515,12 @@ class NifExport(NifCommon):
                 affectedbones = []
                 for block in self.dict_blocks:
                     if isinstance(block, NifFormat.NiGeometry) and block.is_skin():
-                        self.info("Flattening skin on geometry %s"
-                                         % block.name)
+                        NifLog.info("Flattening skin on geometry {0}".format(block.name))
                         affectedbones.extend(block.flatten_skin())
                         skelroots.add(block.skin_instance.skeleton_root)
                 # remove NiNodes that do not affect skin
                 for skelroot in skelroots:
-                    self.info("Removing unused NiNodes in '%s'"
-                                     % skelroot.name)
+                    NifLog.info("Removing unused NiNodes in '{0}'".format(skelroot.name))
                     skelrootchildren = [child for child in skelroot.children
                                         if ((not isinstance(child,
                                                             NifFormat.NiNode))
@@ -535,7 +533,7 @@ class NifExport(NifCommon):
 
             # apply scale
             if abs(self.properties.scale_correction_export) > self.properties.epsilon:
-                self.info("Applying scale correction %f" % self.properties.scale_correction_export)
+                NifLog.info("Applying scale correction {0}".format(str(self.properties.scale_correction_export)))
                 data = NifFormat.Data()
                 data.roots = [root_block]
                 toaster = pyffi.spells.nif.NifToaster()
@@ -549,7 +547,7 @@ class NifExport(NifCommon):
             if self.properties.game in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
                 for block in self.dict_blocks:
                     if isinstance(block, NifFormat.bhkMoppBvTreeShape):
-                        self.info("Generating mopp...")
+                        NifLog.info("Generating mopp...")
                         block.update_mopp()
                         #print "=== DEBUG: MOPP TREE ==="
                         #block.parse_mopp(verbose = True)
@@ -567,8 +565,7 @@ class NifExport(NifCommon):
                 and ((root_block.children[0].name in ['Scene Root', 'Bip01']) or root_block.children[0].name[-3:] == 'nif')):
                 if root_block.children[0].name[-3:] == 'nif':
                     root_block.children[0].name = filebase
-                self.info(
-                    "Making '%s' the root block" % root_block.children[0].name)
+                NifLog.info("Making '{0}' the root block".format(root_block.children[0].name))
                 # remove root_block from self.dict_blocks
                 self.dict_blocks.pop(root_block)
                 # set new root block
@@ -597,7 +594,7 @@ class NifExport(NifCommon):
                     self.root_ninode = 'NiNode'
             # making root block a fade node
             if (self.properties.game in ('FALLOUT_3', 'SKYRIM') and self.root_ninode == 'BSFadeNode'):
-                self.info("Making root block a BSFadeNode")
+                NifLog.info("Making root block a BSFadeNode")
                 fade_root_block = NifFormat.BSFadeNode().deepcopy(root_block)
                 fade_root_block.replace_global_node(root_block, fade_root_block)
                 root_block = fade_root_block
@@ -605,13 +602,13 @@ class NifExport(NifCommon):
 
             export_animation = self.properties.animation
             if  export_animation == 'ALL_NIF':
-                self.info("Exporting geometry and animation")
+                NifLog.info("Exporting geometry and animation")
             elif export_animation == 'GEOM_NIF':
                 # for morrowind: everything except keyframe controllers
-                self.info("Exporting geometry only")
+                NifLog.info("Exporting geometry only")
             elif export_animation == 'ANIM_KF':
                 # for morrowind: only keyframe controllers
-                self.info("Exporting animation only (as .kf file)")
+                NifLog.info("Exporting animation only (as .kf file)")
 
             # export nif file:
             # ----------------
@@ -621,14 +618,14 @@ class NifExport(NifCommon):
             self.version = self.operator.version[self.properties.game]
             self.user_version, self.user_version_2 = scene_export.get_version_info(self.properties)
             
-            self.info("Writing NIF version 0x%08X" % self.version)
+            NifLog.info("Writing NIF version 0x%08X" % self.version)
 
             if export_animation != 'ANIM_KF':
                 if self.properties.game == 'EMPIRE_EARTH_II':
                     ext = ".nifcache"
                 else:
                     ext = ".nif"
-                self.info("Writing %s file" % ext)
+                NifLog.info("Writing %s file".format(ext))
 
                 # make sure we have the right file extension
                 if (fileext.lower() != ext):
@@ -651,7 +648,7 @@ class NifExport(NifCommon):
 
             # convert root_block tree into a keyframe tree
             if export_animation == 'ANIM_KF' or export_animation == 'ALL_NIF_XNIF_XKF':
-                self.info("Creating keyframe tree")
+                NifLog.info("Creating keyframe tree")
                 # find all nodes and relevant controllers
                 node_kfctrls = {}
                 for node in root_block.tree():
@@ -793,7 +790,7 @@ class NifExport(NifCommon):
                 prefix = "" if (export_animation != 'ALL_NIF_XNIF_XKF') else "x"
 
                 ext = ".kf"
-                self.info("Writing %s file" % (prefix + ext))
+                NifLog.info("Writing {0} file".format(prefix + ext))
 
                 kffile = os.path.join(directory, prefix + filebase + ext)
                 data = NifFormat.Data(version=self.version, user_version=self.user_version, user_version_2=self.user_version_2)
@@ -806,7 +803,7 @@ class NifExport(NifCommon):
                     stream.close()
 
             if export_animation == 'ALL_NIF_XNIF_XKF':
-                self.info("Detaching keyframe controllers from nif")
+                NifLog.info("Detaching keyframe controllers from nif")
                 # detach the keyframe controllers from the nif (for xnif)
                 for node in root_block.tree():
                     if not isinstance(node, NifFormat.NiNode):
@@ -823,7 +820,7 @@ class NifExport(NifCommon):
                         else:
                             ctrl = ctrl.next_controller
 
-                self.info("Detaching animation text keys from nif")
+                NifLog.info("Detaching animation text keys from nif")
                 # detach animation text keys
                 if root_block.extra_data is not anim_textextra:
                     raise RuntimeError(
@@ -833,7 +830,7 @@ class NifExport(NifCommon):
 
                 prefix = "x" # we are in morrowind 'nifxnifkf mode'
                 ext = ".nif"
-                self.info("Writing %s file" % (prefix + ext))
+                NifLog.info("Writing {0} file" .format(prefix + ext))
 
                 xniffile = os.path.join(directory, prefix + filebase + ext)
                 data = NifFormat.Data(version=self.version, user_version=self.user_version, user_version_2=self.user_version_2)
@@ -849,7 +846,7 @@ class NifExport(NifCommon):
             #-----------------
             if self.egmdata:
                 ext = ".egm"
-                self.info("Writing %s file" % ext)
+                NifLog.info("Writing {0} file".format(ext))
 
                 egmfile = os.path.join(directory, filebase + ext)
                 stream = open(egmfile, "wb")
@@ -859,7 +856,7 @@ class NifExport(NifCommon):
                     stream.close()
         finally:
             # clear progress bar
-            self.info("Finished")
+            NifLog.info("Finished")
 
         # save exported file (this is used by the test suite)
         self.root_blocks = [root_block]
