@@ -37,12 +37,12 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import pyffi
 from pyffi.formats.nif import NifFormat
 from io_scene_nif.utility import nif_utils
 
 import bpy
 import mathutils
+from io_scene_nif.utility.nif_logging import NifLog
 
 class constraint_export():
 
@@ -71,9 +71,7 @@ class constraint_export():
             # rigid body joints
             if b_constr.type == 'RIGID_BODY_JOINT':
                 if self.properties.game not in ('OBLIVION', 'FALLOUT_3', 'SKYRIM'):
-                    self.nif_export.warning(
-                        "Only Oblivion/Fallout 3 rigid body constraints"
-                        " can be exported: skipped %s." % b_constr)
+                    NifLog.warning("Only Oblivion/Fallout/Skyrim rigid body constraints currently supported: Skipping {0}.".format(b_constr))
                     continue
                 # check that the object is a rigid body
                 for otherbody, otherobj in self.nif_export.dict_blocks.items():
@@ -157,7 +155,7 @@ class constraint_export():
                 # is there a target?
                 targetobj = b_constr.target
                 if not targetobj:
-                    self.warning("Constraint %s has no target, skipped")
+                    NifLog.warning("Constraint {0} has no target, skipped".format(b_constr))
                     continue
                 # find target's bhkRigidBody
                 for otherbody, otherobj in self.nif_export.dict_blocks.items():

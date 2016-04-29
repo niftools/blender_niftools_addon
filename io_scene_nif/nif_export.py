@@ -555,10 +555,8 @@ class NifExport(NifCommon):
                         # warn about mopps on non-static objects
                         if any(sub_shape.layer != 1
                             for sub_shape in block.shape.sub_shapes):
-                                self.warning(
-                               "Mopps for non-static objects may not function"
-                               " correctly in-game. You may wish to use"
-                               " simple primitives for collision.")
+                                NifLog.warning("Mopps for non-static objects may not function correctly in-game."
+                                               "You may wish to use simple primitives for collision.")
 
             # delete original scene root if a scene root object was already defined
             if ((root_block.num_children == 1)
@@ -625,11 +623,11 @@ class NifExport(NifCommon):
                     ext = ".nifcache"
                 else:
                     ext = ".nif"
-                NifLog.info("Writing %s file".format(ext))
+                NifLog.info("Writing {0} file".format(ext))
 
                 # make sure we have the right file extension
                 if (fileext.lower() != ext):
-                    self.warning("Changing extension from {0} to {1} on output file".format(fileext, ext))
+                    NifLog.warning("Changing extension from {0} to {1} on output file".format(fileext, ext))
                 niffile = os.path.join(directory, filebase + ext)
                 
                 data = NifFormat.Data(version=self.version, user_version=self.user_version, user_version_2=self.user_version_2)
@@ -763,10 +761,7 @@ class NifExport(NifCommon):
                                         priority = self.EXPORT_ANIMPRIORITY
                                     else:
                                         priority = 26
-                                        self.warning(
-                                            "No priority set for bone %s, "
-                                            "falling back on default value (%i)"
-                                            % (node.name, priority))
+                                        NifLog.warning("No priority set for bone {0}, falling back on default value ({1})".format(node.name, str(priority)))
                                 else:
                                     priority = self.dict_bone_priorities[node.name]
                                 controlledblock.priority = priority
@@ -901,10 +896,7 @@ class NifExport(NifCommon):
                 self.bhkshapehelper.export_collision_helper(b_obj, node)
 
         else:
-            self.warning(
-                "Only Morrowind, Oblivion, and Fallout 3"
-                " collisions are supported, skipped collision object '%s'"
-                % b_obj.name)
+            NifLog.warning("Only Morrowind, Oblivion, and Fallout 3 collisions are supported, skipped collision object '{0}'".format(b_obj.name))
             
     
     def exportEgm(self, keyblocks):
@@ -929,10 +921,7 @@ def menu_func(self, context):
     # TODO: get default path from config registry
     #default_path = bpy.data.filename.replace(".blend", ".nif")
     default_path = "export.nif"
-    self.layout.operator(
-        NifExport.bl_idname,
-        text="NetImmerse/Gamebryo (.nif & .kf & .egm)"
-        ).filepath = default_path
+    self.layout.operator(NifExport.bl_idname, text="NetImmerse/Gamebryo (.nif & .kf & .egm)").filepath = default_path
 
 
 def register():

@@ -40,6 +40,8 @@
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.utility import nif_utils
+from io_scene_nif.utility.nif_logging import NifLog
+
 
 import os.path
 
@@ -72,8 +74,7 @@ class TextureWriter():
             srctex.file_name = self.export_texture_filename(texture)
         else:
             # this probably should not happen
-            self.nif_export.warning(
-                "Exporting source texture without texture or filename (bug?).")
+            NifLog.warning("Exporting source texture without texture or filename (bug?).")
 
         # fill in default values (TODO: can we use 6 for everything?)
         if self.nif_export.nif_export.version >= 0x0a000100:
@@ -100,10 +101,7 @@ class TextureWriter():
         try:
             texdesc.uv_set = uvlayers.index(b_mat_texslot.uv_layer) if b_mat_texslot.uv_layer else 0
         except ValueError: # mtex.uv_layer not in uvlayers list
-            self.nif_export.warning(
-                "Bad uv layer name '%s' in texture '%s'."
-                " Falling back on first uv layer"
-                % (b_mat_texslot.uv_layer, b_mat_texslot.texture.name))
+            NifLog.warning("Bad uv layer name '{0}' in texture '{1}'. Using first uv layer".format(b_mat_texslot.uv_layer, b_mat_texslot.texture.name))
             texdesc.uv_set = 0 # assume 0 is active layer
 
         texdesc.source = self.export_source_texture(b_mat_texslot.texture)
@@ -136,10 +134,7 @@ class TextureWriter():
 
             # warn if packed flag is enabled
             if texture.image.packed_file:
-                self.nif_export.warning(
-                    "Packed image in texture '%s' ignored, "
-                    "exporting as '%s' instead."
-                    % (texture.name, filename))
+                NifLog.warning("Packed image in texture '{0}' ignored, exporting as '{1}' instead.".format(texture.name, filename))
 
             # try and find a DDS alternative, force it if required
             ddsfilename = "%s%s" % (filename[:-4], '.dds')
@@ -158,10 +153,7 @@ class TextureWriter():
                 if ( idx >= 0 ):
                     filename = filename[idx:]
                 else:
-                    self.nif_export.warning(
-                        "%s does not reside in a 'Textures' folder;"
-                        " texture path will be stripped"
-                        " and textures may not display in-game" % filename)
+                    NifLog.warning("{0} does not reside in a 'Textures' folder; texture path will be stripped  and textures may not display in-game".format(filename))
                     filename = os.path.basename(filename)
             # for linux export: fix path seperators
             return filename.replace('/', '\\')

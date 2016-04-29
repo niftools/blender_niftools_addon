@@ -230,10 +230,7 @@ class ObjectHelper():
             if b_obj.parent and b_obj.parent.type == 'ARMATURE':
                 if b_obj_ipo:
                     # mesh with armature parent should not have animation!
-                    self.warning(
-                        "Mesh %s is skinned but also has object animation. "
-                        "The nif format does not support this: "
-                        "ignoring object animation." % b_obj.name)
+                    NifLog.warning("Mesh {0} is skinned but also has object animation. The nif format does not support this, ignoring object animation.".format(b_obj.name))
                     b_obj_ipo = None
                 trishape_space = space
                 space = 'none'
@@ -557,7 +554,7 @@ class MeshHelper():
         # so quickly catch this (rare!) case
         if not b_obj.data.vertices:
             # do not export anything
-            self.nif_export.warning("%s has no vertices, skipped." % b_obj)
+            NifLog.warning("{0} has no vertices, skipped.".format(b_obj))
             return
 
         # get the mesh's materials, this updates the mesh material list
@@ -582,11 +579,8 @@ class MeshHelper():
 
             #vertex alpha check
             if len(b_mesh.vertex_colors) == 1:
-                self.nif_export.warning("Mesh only has one Vertex Color layer"
-                             " default alpha values will be written\n"
-                             " - For Alpha values add a second vertex layer, "
-                             " greyscale only"
-                             )
+                NifLog.warning("Mesh only has one Vertex Color layer. Default alpha values will be written."
+                               "For Custom alpha values add a second vertex layer, greyscale only" )
             else:
                 for b_loop in b_mesh.vertex_colors[1].data:
                     if(b_loop.color.v > self.properties.epsilon):
@@ -1090,9 +1084,7 @@ class MeshHelper():
                 tridata.consistency_flags = NifFormat.ConsistencyType._enumvalues[cf_index]
             else:
                 tridata.consistency_flags = NifFormat.ConsistencyType.CT_STATIC
-                self.nif_export.warning(
-                    "%s has no consistency type set"
-                    "using default CT_STATIC." % b_obj)
+                NifLog.warning("{0} has no consistency type set using default CT_STATIC.".format(b_obj))
 
             # data
             tridata.num_vertices = len(vertlist)
@@ -1320,35 +1312,18 @@ class MeshHelper():
                             # warn on bad config settings
                             if self.properties.game == 'OBLIVION':
                                 if self.properties.pad_bones:
-                                    self.nif_export.warning(
-                                       "Using padbones on Oblivion export,"
-                                       " but you probably do not want to do"
-                                       " this."
-                                       " Disable the pad bones option to get"
-                                       " higher quality skin partitions.")
+                                    NifLog.warning("Using padbones on Oblivion export. Disable the pad bones option to get higher quality skin partitions.")
                             if self.properties.game in ('OBLIVION', 'FALLOUT_3'):
                                 if self.properties.max_bones_per_partition < 18:
-                                    self.nif_export.warning(
-                                       "Using less than 18 bones"
-                                       " per partition on Oblivion/Fallout 3"
-                                       " export."
-                                       " Set it to 18 to get higher quality"
-                                       " skin partitions.")
+                                    NifLog.warning("Using less than 18 bones per partition on Oblivion/Fallout 3 export."
+                                                   "Set it to 18 to get higher quality skin partitions.")
                             if self.properties.game in ('SKYRIM'):
                                 if self.properties.max_bones_per_partition < 24:
-                                    self.nif_export.warning(
-                                       "Using less than 24 bones"
-                                       " per partition on Skyrim"
-                                       " export."
-                                       " Set it to 24 to get higher quality"
-                                       " skin partitions.")
+                                    NifLog.warning("Using less than 24 bones per partition on Skyrim export."
+                                       "Set it to 24 to get higher quality skin partitions.")
                             if lostweight > self.properties.epsilon:
-                                self.nif_export.warning(
-                                    "Lost %f in vertex weights"
-                                    " while creating a skin partition"
-                                    " for Blender object '%s' (nif block '%s')"
-                                    % (lostweight, b_obj.name, trishape.name))
-
+                                NifLog.warning("Lost {0} in vertex weights while creating a skin partition for Blender object '{1}' (nif block '{2}')"
+                                               .format(str(lostweight), b_obj.name, trishape.name))
 
                         if isinstance(skininst, NifFormat.BSDismemberSkinInstance):
                             partitions = skininst.partitions
@@ -1360,9 +1335,6 @@ class MeshHelper():
                                     if s_part_name == b_part.name:
                                         s_part.part_flag.pf_start_net_boneset = b_part.pf_startflag
                                         s_part.part_flag.pf_editor_visible = b_part.pf_editorflag
-                                
-
-
 
                         # clean up
                         del vert_weights
@@ -1548,6 +1520,6 @@ class MeshHelper():
                 vertex.normal = norm
                 # vertex.sel = True
             nv += 1
-        NifLog.info("Fixed normals on {0} vertices.".format(str(nv))
+        NifLog.info("Fixed normals on {0} vertices.".format(str(nv)))
     
     
