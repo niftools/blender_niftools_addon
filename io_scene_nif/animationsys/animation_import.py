@@ -40,6 +40,7 @@ import bpy
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.utility import nif_utils
+from io_scene_nif.utility.nif_logging import NifLog
 
 class AnimationHelper():
     
@@ -56,7 +57,7 @@ class AnimationHelper():
         *** Note: this function will eventually move to PyFFI. ***
         """
 
-        self.info("Merging kf tree into nif tree")
+        NifLog.info("Merging kf tree into nif tree")
 
         # check that this is an Oblivion style kf file
         if not isinstance(kf_root, NifFormat.NiControllerSequence):
@@ -73,24 +74,16 @@ class AnimationHelper():
             # match from nif tree?
             node = root.find(block_name = nodename)
             if not node:
-                self.info(
-                    "Animation for %s but no such node found in nif tree"
-                    % nodename)
+                NifLog.info("Animation for {0} but no such node found in nif tree".format(nodename)
                 continue
             # node found, now find the controller
             controllertype = controlledblock.get_controller_type()
             if not controllertype:
-                self.info(
-                    "Animation for %s without controller type, so skipping"
-                    % nodename)
+                NifLog.info("Animation for {0} without controller type, so skipping".format(nodename))
                 continue
             controller = nif_utils.find_controller(node, getattr(NifFormat, controllertype))
             if not controller:
-                self.info(
-                    "Animation for %s with %s controller,"
-                    " but no such controller type found"
-                    " in corresponding node, so creating one"
-                    % (nodename, controllertype))
+                NifLog.info("No {1} Controller found in corresponding animation node {0}, creating one".format(controllertype, nodename))
                 controller = getattr(NifFormat, controllertype)()
                 # TODO:set all the fields of this controller
                 node.add_controller(controller)
@@ -211,7 +204,7 @@ class AnimationHelper():
             if diff < lowest_diff:
                 lowest_diff = diff
                 fps = test_fps
-        self.nif_import.info("Animation estimated at %i frames per second." % fps)
+        NifLog.info("Animation estimated at %i frames per second." % fps)
         return fps
 
     def store_animation_data(self, rootBlock):
@@ -261,8 +254,8 @@ class AnimationHelper():
             return
 
         # denote progress
-        self.nif_import.info("Animation")
-        self.nif_import.info("Importing animation data for %s" % b_obj.name)
+        NifLog.info("Animation")
+        NifLog.info("Importing animation data for {0}".format(b_obj.name))
         assert(isinstance(kfd, NifFormat.NiKeyframeData))
         # create an Ipo for this object
         b_ipo = ObjectAnimation.get_object_ipo(b_obj)
@@ -341,7 +334,7 @@ class ObjectAnimation():
         n_vis_ctrl = nif_utils.find_controller(n_node, NifFormat.NiVisController)
         if not(n_vis_ctrl and n_vis_ctrl.data):
             return
-        self.info("importing vis controller")
+        NifLog.info("Importing vis controller")
         b_channel = "Layer"
         b_ipo = self.get_object_ipo(b_object)
         b_curve = b_ipo.addCurve(b_channel)
@@ -388,7 +381,7 @@ class MaterialAnimation():
                                            NifFormat.NiAlphaController)
         if not(n_alphactrl and n_alphactrl.data):
             return
-        self.nif_import.info("importing alpha controller")
+        NifLog.info("Importing alpha controller")
         b_channel = "Alpha"
         b_ipo = self.get_material_ipo(b_material)
         b_curve = b_ipo.addCurve(b_channel)
@@ -411,10 +404,7 @@ class MaterialAnimation():
                     break
         else:
             return
-        self.info(
-            "importing material color controller for target color %s"
-            " into blender channels %s"
-            % (n_target_color, b_channels))
+        NifLog.info("Importing material color controller for target color {0} into blender channels {0}".format(n_target_color, b_channels))
         # import data as curves
         b_ipo = self.get_material_ipo(b_material)
         for i, b_channel in enumerate(b_channels):
@@ -432,7 +422,7 @@ class MaterialAnimation():
                                       NifFormat.NiUVController)
         if not(n_ctrl and n_ctrl.data):
             return
-        self.info("importing UV controller")
+        NifLog.info("Importing UV controller")
         b_channels = ("OfsX", "OfsY", "SizeX", "SizeY")
         for b_channel, n_uvgroup in zip(b_channels,
                                         n_ctrl.data.uv_groups):
@@ -471,7 +461,7 @@ class ArmatureAnimation():
         bpy.types.NlaTrack.select = b_armature #action.setActive(b_armature)
         # go through all armature pose bones
         # see http://www.elysiun.com/forum/viewtopic.php?t=58693
-        self.nif_import.info('Importing Animations')
+        NifLog.info('Importing Animations')
         for bone_name, b_posebone in b_armature.pose.bones.items():
             # denote progress
             self.nif_import.debug('Importing animation for bone %s' % bone_name)

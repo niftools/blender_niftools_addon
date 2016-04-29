@@ -43,10 +43,9 @@ import os.path
 
 import bpy
 from pyffi.formats.nif import NifFormat
+from io_scene_nif.utility.nif_logging import NifLog
 
 class TextureLoader():
-    
-    
     
     def __init__(self, parent):
         self.nif_import = parent
@@ -132,7 +131,7 @@ class TextureLoader():
             # save embedded texture as dds file
             stream = open(tex, "wb")
             try:
-                self.nif_import.info("Saving embedded texture as %s" % tex)
+                NifLog.info("Saving embedded texture as {0}".format(tex))
                 source.pixel_data.save_as_dds(stream)
             except ValueError:
                 # value error means that the pixel format is not supported

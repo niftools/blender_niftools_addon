@@ -37,11 +37,11 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import pyffi
 from pyffi.formats.nif import NifFormat
 
 import bpy
 import mathutils
+from io_scene_nif.utility.nif_logging import NifLog
 
 class constraint_import():
 
@@ -69,7 +69,7 @@ class constraint_import():
 
         b_hkobj = self.nif_import.dict_havok_objects[hkbody][0]
 
-        self.nif_import.info("Importing constraints for %s" % b_hkobj.name)
+        NifLog.info("Importing constraints for %s" % b_hkobj.name)
 
         # now import all constraints
         for hkconstraint in hkbody.constraints:

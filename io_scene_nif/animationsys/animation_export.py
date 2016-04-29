@@ -43,6 +43,7 @@ import mathutils
 from pyffi.formats.nif import NifFormat
 
 from io_scene_nif.utility import nif_utils
+from io_scene_nif.utility.nif_logging import NifLog
 
 class AnimationHelper():
     
@@ -441,7 +442,7 @@ class AnimationHelper():
             # animation group extra data is not present in geometry only files
             return
 
-        self.nif_export.info("Exporting animation groups")
+        NifLog.info("Exporting animation groups")
         # -> get animation groups information
 
         # parse the anim text descriptor
@@ -692,7 +693,7 @@ class MaterialAnimation():
         for b_channel, n_uvgroup in zip(b_channels, n_uvdata.uv_groups):
             b_curve = b_ipo[b_channel]
             if b_curve:
-                self.info("Exporting %s as NiUVData" % b_curve)
+                NifLog.info("Exporting {0} as NiUVData".format(b_curve)
                 n_uvgroup.num_keys = len(b_curve.bezierPoints)
                 n_uvgroup.interpolation = self.get_n_ipol_from_b_ipol(
                     b_curve.interpolation)
