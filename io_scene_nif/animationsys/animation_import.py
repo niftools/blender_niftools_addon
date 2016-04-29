@@ -263,7 +263,7 @@ class AnimationHelper():
         translations = kfd.translations
         scales = kfd.scales
         # add the keys
-        self.nif_import.debug('Scale keys...')
+        NifLog.debug('Scale keys...')
         for key in scales.keys:
             frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
             Blender.Set('curframe', frame)
@@ -279,7 +279,7 @@ class AnimationHelper():
             xkeys = kfd.xyz_rotations[0].keys
             ykeys = kfd.xyz_rotations[1].keys
             zkeys = kfd.xyz_rotations[2].keys
-            self.nif_import.debug('Rotation keys...(euler)')
+            NifLog.debug('Rotation keys...(euler)')
             for (xkey, ykey, zkey) in zip(xkeys, ykeys, zkeys):
                 frame = 1+int(xkey.time * self.fps + 0.5) # time 0.0 is frame 1
                 # XXX we assume xkey.time == ykey.time == zkey.time
@@ -292,7 +292,7 @@ class AnimationHelper():
         else:
             # uses quaternions
             if kfd.quaternion_keys:
-                self.nif_import.debug('Rotation keys...(quaternions)')
+                NifLog.debug('Rotation keys...(quaternions)')
             for key in kfd.quaternion_keys:
                 frame = 1+int(key.time * self.fps + 0.5) # time 0.0 is frame 1
                 Blender.Set('curframe', frame)
@@ -304,7 +304,7 @@ class AnimationHelper():
                 b_obj.insertIpoKey(Blender.Object.ROT)
 
         if translations.keys:
-            self.nif_import.debug('Translation keys...')
+            NifLog.debug('Translation keys...')
         for key in translations.keys:
             frame = 1+int(key.time * self.nif_import.fps + 0.5) # time 0.0 is frame 1
             Blender.Set('curframe', frame)
@@ -464,7 +464,7 @@ class ArmatureAnimation():
         NifLog.info('Importing Animations')
         for bone_name, b_posebone in b_armature.pose.bones.items():
             # denote progress
-            self.nif_import.debug('Importing animation for bone %s' % bone_name)
+            NifLog.debug('Importing animation for bone %s'.format(bone_name))
             niBone = self.nif_import.dict_blocks[bone_name]
 
             # get bind matrix (NIF format stores full transformations in keyframes,
@@ -551,8 +551,7 @@ class ArmatureAnimation():
 
                 # rotations
                 if rotations:
-                    self.nif_import.debug(
-                        'Rotation keys...(bspline quaternions)')
+                    NifLog.debug('Rotation keys...(bspline quaternions)')
                     for time, quat in zip(times, rotations):
                         frame = 1 + int(time * self.nif_import.fps + 0.5)
                         quat = mathutils.Quaternion(
@@ -571,7 +570,7 @@ class ArmatureAnimation():
 
                 # translations
                 if translations:
-                    self.nif_import.debug('Translation keys...(bspline)')
+                    NifLog.debug('Translation keys...(bspline)')
                     for time, translation in zip(times, translations):
                         # time 0.0 is frame 1
                         frame = 1 + int(time * self.nif_import.fps + 0.5)
@@ -635,7 +634,7 @@ class ArmatureAnimation():
 
                 # Scaling
                 if scales.keys:
-                    self.nif_import.debug('Scale keys...')
+                    NifLog.debug('Scale keys...')
                 for scaleKey in scales.keys:
                     # time 0.0 is frame 1
                     frame = 1 + int(scaleKey.time * self.nif_import.fps + 0.5)
@@ -654,7 +653,7 @@ class ArmatureAnimation():
                 if rotation_type == 4:
                     # uses xyz rotation
                     if kfd.xyz_rotations[0].keys:
-                        self.nif_import.debug('Rotation keys...(euler)')
+                        NifLog.debug('Rotation keys...(euler)')
                     for xkey, ykey, zkey in zip(kfd.xyz_rotations[0].keys,
                                                  kfd.xyz_rotations[1].keys,
                                                  kfd.xyz_rotations[2].keys):
@@ -686,7 +685,7 @@ class ArmatureAnimation():
                 else:
                     # TODO:take rotation type into account for interpolation
                     if kfd.quaternion_keys:
-                        self.nif_import.debug('Rotation keys...(quaternions)')
+                        NifLog.debug('Rotation keys...(quaternions)')
                     quaternion_keys = kfd.quaternion_keys
                     for key in quaternion_keys:
                         frame = 1 + int(key.time * self.nif_import.fps + 0.5)
@@ -710,7 +709,7 @@ class ArmatureAnimation():
     
                 # Translations
                 if translations.keys:
-                    self.nif_import.debug('Translation keys...')
+                    NifLog.debug('Translation keys...')
                 for key in translations.keys:
                     # time 0.0 is frame 1
                     frame = 1 + int(key.time * self.nif_import.fps + 0.5)

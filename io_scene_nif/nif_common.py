@@ -146,20 +146,6 @@ class NifCommon:
         # find and store this list now of selected objects as creating new objects adds them to the selection list
         self.selected_objects = self.context.selected_objects[:]
 
-    # TODO Replace proxy methods with direct calls
-
-    def debug(self, message):
-        NifLog().debug(message)
-
-    def info(self, message):
-        NifLog.info(message)
-
-    def warning(self, message):
-        NifLog().warn(message)
-
-    def error(self, message):
-        NifLog().error(message)
-
 
     def get_bone_name_for_blender(self, name):
         """Convert a bone name to a name that can be used by Blender: turns
@@ -224,7 +210,7 @@ class NifCommon:
         elif flags & 6 == 0: # 0b000
             return Blender.IpoCurve.ExtendTypes.CYCLIC
 
-        NifLog().warn("Unsupported cycle mode in nif, using clamped.")
+        NifLog.warn("Unsupported cycle mode in nif, using clamped.")
         return Blender.IpoCurve.ExtendTypes.CONST
 
     def get_b_ipol_from_n_ipol(self, n_ipol):
@@ -236,7 +222,7 @@ class NifCommon:
             # guessing, not documented in nif.xml
             return Blender.IpoCurve.InterpTypes.CONST
         
-        NifLog().warn("Unsupported interpolation mode ({0}) in nif, using quadratic/bezier.".format(n_ipol))
+        NifLog.warn("Unsupported interpolation mode ({0}) in nif, using quadratic/bezier.".format(n_ipol))
         return Blender.IpoCurve.InterpTypes.BEZIER
 
     def get_n_ipol_from_b_ipol(self, b_ipol):
@@ -247,7 +233,7 @@ class NifCommon:
         elif b_ipol == Blender.IpoCurve.InterpTypes.CONST:
             return NifFormat.KeyType.CONST_KEY
         
-        NifLog().warn("Unsupported interpolation mode ({0}) in blend, using quadratic/bezier.".format(b_ipol))
+        NifLog.warn("Unsupported interpolation mode ({0}) in blend, using quadratic/bezier.".format(b_ipol))
         return NifFormat.KeyType.QUADRATIC_KEY
 
     def get_n_apply_mode_from_b_blend_type(self, b_blend_type):
@@ -258,5 +244,5 @@ class NifCommon:
         elif b_blend_type == "MIX":
             return NifFormat.ApplyMode.APPLY_MODULATE
         
-        NifLog().warn("Unsupported blend type ({0}) in material, using apply mode APPLY_MODULATE".format(b_blend_type))
+        NifLog.warn("Unsupported blend type ({0}) in material, using apply mode APPLY_MODULATE".format(b_blend_type))
         return NifFormat.ApplyMode.APPLY_MODULATE

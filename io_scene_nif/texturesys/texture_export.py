@@ -646,11 +646,6 @@ class TextureHelper():
     
             # nif only support UV-mapped textures
             else:
-                raise nif_utils.NifError(
-                    "Non-UV texture in mesh '%s', material '%s'."
-                    " Either delete all non-UV textures,"
-                    " or in the Shading Panel,"
-                    " under Material Buttons,"
-                    " set texture 'Mapping Coordinates' to 'UV'."
-                    %(b_obj.name, b_mat.name))
+                NifLog.error("Non-UV texture in mesh '{0}', material '{1}'."
+                             "Either delete all non-UV textures or in the Shading Panel under Material Buttons".format(b_obj.name, b_mat.name))
 

@@ -676,15 +676,10 @@ class MeshHelper():
                         for b_groupname in b_vert.groups:
                             if b_groupname.group == vertex_group.index:
                                 vertices_list.add(b_vert.index)
-                    self.nif_export.debug("Found body part %s" % bodypartgroupname)
-                    bodypartgroups.append(
-                        [bodypartgroupname,
-                         getattr(NifFormat.BSDismemberBodyPartType,
-                                 bodypartgroupname),
-                                 vertices_list])
-                         
-
-
+                    NifLog.debug("Found body part {0}".format(bodypartgroupname))
+                    bodypartgroups.append([bodypartgroupname,
+                                           getattr(NifFormat.BSDismemberBodyPartType, bodypartgroupname),
+                                           vertices_list])
 
 
             # note: we can be in any of the following five situations
