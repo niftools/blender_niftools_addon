@@ -243,7 +243,7 @@ class NifImport(NifCommon):
                             for child in nonbip_children:
                                 root.remove_child(child)
                 # import this root block
-                self.debug("Root block: %s" % root.get_global_display())
+                NifLog.debug("Root block: {0}".format(root.get_global_display()))
                 # merge animation from kf tree into nif tree
                 if self.properties.animation and self.kfdata:
                     for kf_root in self.kfdata.roots:
@@ -265,9 +265,7 @@ class NifImport(NifCommon):
     def import_root(self, root_block):
         """Main import function."""
         # check that this is not a kf file
-        if isinstance(root_block,
-                      (NifFormat.NiSequence,
-                       NifFormat.NiSequenceStreamHelper)):
+        if isinstance(root_block, (NifFormat.NiSequence, NifFormat.NiSequenceStreamHelper)):
             raise nif_utils.NifError("direct .kf import not supported")
 
         # divinity 2: handle CStreamableAssetData
@@ -298,13 +296,13 @@ class NifImport(NifCommon):
         # read the NIF tree
         if self.armaturehelper.is_armature_root(root_block):
             # special case 1: root node is skeleton root
-            self.debug("%s is an armature root" % root_block.name)
+            NifLog.debug("{0} is an armature root".format(root_block.name))
             b_obj = self.import_branch(root_block)
             b_obj.niftools.objectflags = root_block.flags
 
         elif self.is_grouping_node(root_block):
             # special case 2: root node is grouping node
-            self.debug("%s is a grouping node" % root_block.name)
+            NifLog.debug("{0} is a grouping node".format(root_block.name))
             b_obj = self.import_branch(root_block)
             b_obj.niftools.bsxflags = self.bsxflags
 
@@ -401,7 +399,7 @@ class NifImport(NifCommon):
               and self.properties.skeleton != "SKELETON_ONLY"):
             # it's a shape node and we're not importing skeleton only
             # (self.properties.skeleton ==  "SKELETON_ONLY")
-            self.debug("Building mesh in import_branch")
+            NifLog.debug("Building mesh in import_branch")
             # note: transform matrix is set during import
             self.active_obj_name = niBlock.name.decode()
             b_obj = self.import_mesh(niBlock)
@@ -725,9 +723,7 @@ class NifImport(NifCommon):
         if niBlock in self.dict_names:
             return self.dict_names[niBlock]
 
-        self.debug(
-            "Importing name for %s block from %s"
-            % (niBlock.__class__.__name__, niBlock.name))
+        NifLog.debug("Importing name for {0} block from {1}".format(niBlock.__class__.__name__, niBlock.name))
 
         # find unique name for Blender to use
         uniqueInt = 0
@@ -765,7 +761,7 @@ class NifImport(NifCommon):
         self.dict_names[niBlock] = shortName
         # Blender name shortName corresponds to niBlock
         self.dict_blocks[shortName] = niBlock
-        self.debug("Selected unique name %s" % shortName)
+        NifLog.debug("Selected unique name {0}".format(shortName))
         return shortName
 
     def import_empty(self, niBlock):
@@ -1050,7 +1046,7 @@ class NifImport(NifCommon):
                 # NIF vertex i maps to Blender vertex v_map[n_map_k]
                 v_map[i] = v_map[n_map_k]
         # report
-        self.debug("%i unique vertex-normal pairs" % len(n_map))
+        NifLog.debug("{0} unique vertex-normal pairs".format(str(len(n_map))))
         # release memory
         del n_map
 
@@ -1093,7 +1089,7 @@ class NifImport(NifCommon):
         # at this point, deleted polygons (degenerate or duplicate)
         # satisfy f_map[i] = None
 
-        self.debug("%i unique polygons" % num_new_faces)
+        NifLog.debug("{0} unique polygons".format(num_new_faces))
 
         # set face smoothing and material
         for b_polysmooth_index in f_map:

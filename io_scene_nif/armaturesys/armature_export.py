@@ -192,7 +192,7 @@ class Armature():
         for bone in list(bones.values()):
             # link the bone's children to the bone
             if bone.children:
-                self.nif_export.debug("Linking children of bone %s" % bone.name)
+                NifLog.debug("Linking children of bone {0}".format(bone.name))
                 for child in bone.children:
                     # bone.children returns also grandchildren etc.
                     # we only want immediate children, so do a parent check

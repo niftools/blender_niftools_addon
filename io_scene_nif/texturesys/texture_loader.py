@@ -206,7 +206,7 @@ class TextureLoader():
                     tex = os.path.join( texdir, texfn )
                 # "ignore case" on linux
                 tex = bpy.path.resolve_ncase(tex)
-                self.nif_import.debug("Searching %s" % tex)
+                NifLog.debug("Searching {0}".format(tex))
                 if os.path.exists(tex):
                     # tries to load the file
                     b_image = bpy.data.images.load(tex)
@@ -220,7 +220,7 @@ class TextureLoader():
                         b_image = None # not supported, delete image object
                     else:
                         # file format is supported
-                        self.nif_import.debug("Found '%s' at %s" % (fn, tex))
+                        NifLog.debug("Found '{0}' at {1}".format(fn, tex))
                         break
             if b_image:
                 return [tex, b_image]
