@@ -1284,7 +1284,7 @@ class NifImport(NifCommon):
                         keyname = morphData.morphs[idxMorph].frame_name
                         if not keyname:
                             keyname = 'Key %i' % idxMorph
-                        NifLog.info("inserting key '{0}'".format(keyname))
+                        NifLog.info("Inserting key '{0}'".format(keyname))
                         # get vectors
                         morphverts = morphData.morphs[idxMorph].vectors
                         # for each vertex calculate the key position from base
