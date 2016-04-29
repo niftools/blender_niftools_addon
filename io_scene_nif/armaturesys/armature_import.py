@@ -503,7 +503,7 @@ class Armature():
 		# only uniform scaling
 		if (abs(scale_vec[0]-scale_vec[1]) >= self.properties.epsilon
 			or abs(scale_vec[1]-scale_vec[2]) >= self.properties.epsilon):
-			NifLog.warning("Corrupt rotation matrix in nif: geometry errors may result.")
+			NifLog.warn("Corrupt rotation matrix in nif: geometry errors may result.")
 		b_scale = b_scale[0]
 		# get rotation matrix
 		b_rot = scale_rot * b_scale

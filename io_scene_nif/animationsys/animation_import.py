@@ -115,7 +115,7 @@ class AnimationHelper():
                 # copy translation
                 if kfi.translation.x < -1000000:
                     # invalid, happens in fallout 3, e.g. h2haim.kf
-                    NifLog.warning("Ignored NaN in interpolator translation")
+                    NifLog.warn("Ignored NaN in interpolator translation")
                 else:
                     kfd.translations.num_keys = 1
                     kfd.translations.keys.update_size()
@@ -662,7 +662,7 @@ class ArmatureAnimation():
                         # XXX same times!!!
                         if (abs(xkey.time - ykey.time) > self.properties.epsilon
                             or abs(xkey.time - zkey.time) > self.properties.epsilon):
-                            NifLog.warning("XYZ key times do not correspond, animation may not be correctly imported")
+                            NifLog.warn("XYZ key times do not correspond, animation may not be correctly imported")
                         frame = 1 + int(xkey.time * self.nif_import.fps + 0.5)
                         euler = mathutils.Euler(
                             [xkey.value * 180.0 / math.pi,

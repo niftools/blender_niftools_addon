@@ -97,7 +97,7 @@ class TextureLoader():
         
         b_text_name = os.path.basename(fn)
         if not b_image:
-            NifLog.warning("Texture '{0}' not found or not supported and no alternate available".format(fn))
+            NifLog.warn("Texture '{0}' not found or not supported and no alternate available".format(fn))
             b_image = bpy.data.images.new(name=b_text_name, width=1, height=1, alpha=False)
             b_image.filepath = fn
         

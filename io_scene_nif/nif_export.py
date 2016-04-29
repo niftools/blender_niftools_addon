@@ -555,7 +555,7 @@ class NifExport(NifCommon):
                         # warn about mopps on non-static objects
                         if any(sub_shape.layer != 1
                             for sub_shape in block.shape.sub_shapes):
-                                NifLog.warning("Mopps for non-static objects may not function correctly in-game."
+                                NifLog.warn("Mopps for non-static objects may not function correctly in-game."
                                                "You may wish to use simple primitives for collision.")
 
             # delete original scene root if a scene root object was already defined
@@ -627,7 +627,7 @@ class NifExport(NifCommon):
 
                 # make sure we have the right file extension
                 if (fileext.lower() != ext):
-                    NifLog.warning("Changing extension from {0} to {1} on output file".format(fileext, ext))
+                    NifLog.warn("Changing extension from {0} to {1} on output file".format(fileext, ext))
                 niffile = os.path.join(directory, filebase + ext)
                 
                 data = NifFormat.Data(version=self.version, user_version=self.user_version, user_version_2=self.user_version_2)
@@ -761,7 +761,7 @@ class NifExport(NifCommon):
                                         priority = self.EXPORT_ANIMPRIORITY
                                     else:
                                         priority = 26
-                                        NifLog.warning("No priority set for bone {0}, falling back on default value ({1})".format(node.name, str(priority)))
+                                        NifLog.warn("No priority set for bone {0}, falling back on default value ({1})".format(node.name, str(priority)))
                                 else:
                                     priority = self.dict_bone_priorities[node.name]
                                 controlledblock.priority = priority
@@ -896,7 +896,7 @@ class NifExport(NifCommon):
                 self.bhkshapehelper.export_collision_helper(b_obj, node)
 
         else:
-            NifLog.warning("Only Morrowind, Oblivion, and Fallout 3 collisions are supported, skipped collision object '{0}'".format(b_obj.name))
+            NifLog.warn("Only Morrowind, Oblivion, and Fallout 3 collisions are supported, skipped collision object '{0}'".format(b_obj.name))
             
     
     def exportEgm(self, keyblocks):

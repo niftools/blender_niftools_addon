@@ -74,7 +74,7 @@ class Armature():
                 quat = matrix.to_3x3().to_quaternion()
                 if sum(sum(abs(x) for x in vec)
                        for vec in matrix.to_3x3() - quat.to_matrix()) > 0.01:
-                    NifLog.warning("Bad bone extra matrix for bone {0}.\n"
+                    NifLog.warn("Bad bone extra matrix for bone {0}.\n"
                                    "Attempting to fix... but bone transform may be incompatible with existing animations.".format(b))
                     NifLog.debug("Old invalid matrix:\n{0}".format(str(matrix)))
                     trans = matrix.to_translation()
