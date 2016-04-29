@@ -56,6 +56,7 @@ import mathutils
 import pyffi.spells.nif.fix
 from pyffi.formats.nif import NifFormat
 from pyffi.formats.egm import EgmFormat
+from io_scene_nif.utility.nif_logging import NifLog
 
 class NifImport(NifCommon):
 
@@ -67,6 +68,7 @@ class NifImport(NifCommon):
     
     def __init__(self, operator, context):
         NifCommon.__init__(self, operator, context)
+        
         self.root_ninode = 'NiNode'
 
         # Helper systems
@@ -82,7 +84,7 @@ class NifImport(NifCommon):
         self.materialhelper = Material(parent=self)
         self.materialhelper.set_texture_helper(self.texturehelper)
         self.objecthelper = Object()
-        
+             
     def execute(self):
         """Main import function."""
 
@@ -119,7 +121,7 @@ class NifImport(NifCommon):
                 self.data.inspect(niffile)
                 if self.data.version >= 0:
                     # it is valid, so read the file
-                    self.info("NIF file version: 0x%08X" % self.data.version)
+                    NifLog.info("NIF file version: 0x%08X" % self.data.version)
                     self.info("Reading file")
                     self.data.read(niffile)
                     if self.properties.override_scene_info:
