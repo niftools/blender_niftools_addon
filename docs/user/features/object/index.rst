@@ -1,8 +1,6 @@
-
-.. _object-common:
-
 Object Settings
 ===============
+.. _object-common:
 
 This section will take you through the base settings required for your model.
 
