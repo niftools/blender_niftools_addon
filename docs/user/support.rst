@@ -1,5 +1,5 @@
 Support
--------
+=======
 
 .. 
    todo::
@@ -8,8 +8,6 @@ Support
 
 For more information and further support, please contact us at:
 
-* `wiki <http://niftools.sourceforge.net/wiki/Blender>`_
-* `forum <http://niftools.sourceforge.net/forum>`_
-* `report a bug <http://sourceforge.net/tracker/?group_id=149157>`_
-  (please include the .blend or .nif that caused the error and a brief description
-  of how to reproduce the error)
+* `Wiki <http://niftools.sourceforge.net/wiki/Blender>`_
+* `Forum <http://niftools.sourceforge.net/forum>`_
+* `Report issues via Github Issues <https://www.github.com/niftools/blender_nif_plugin/issues>`_

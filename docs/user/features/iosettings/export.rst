@@ -1,5 +1,5 @@
-Import Settings
----------------
+Export Settings
+===============
 .. _user-features-iosettings-export:
 
 This section explains the import and export settings.

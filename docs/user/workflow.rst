@@ -1,16 +1,18 @@
-.. _workflow:
+.. _user-workflow:
 
 Workflow
 ========
 
 This section will explain the general workflow used to import/export .nif files to/from blender.
 
+* The nif importer and exporter is show under 
+   **File > Import** and **File > Export**.
 
 .. note::
    This assumes at least begginer level skills with blender.
    If you need an introduction consider reading `the Blender Manual <https://http://blender.org/manual/>`_.
 
-.. _workflow-import:
+.. _user-workflow-import:
 
 Import
 ------
@@ -18,7 +20,7 @@ Import
 You now can import the nif directly into blender! 
 These settings are explained at :ref:`I/O Settings Section <user-features-iosettings-import>`.
 
-.. _workflow-export:
+.. _user-workflow-export:
 
 Export
 ------
