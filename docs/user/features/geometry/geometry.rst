@@ -1,8 +1,6 @@
-
-.. _geometry-mesh:
-
 Mesh Geometry
 -------------
+.. _geometry-mesh:
 
 * The following section deals with :class:`~bpy.types.Object` which are of type 'MESH', containing Mesh Data(Mesh-Object)
 * Each :class:`~bpy.types.Object` is exported as a combination of :class:`~pyffi.formats.nif.NifFormat.NiTriShape` and :class:`~pyffi.formats.nif.NifFormat.NiNode`.

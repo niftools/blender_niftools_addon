@@ -24,7 +24,7 @@ Install and Register the Addon
 ------------------------------
 
 #. Download the `blender nif plugin .zip release
-   <http://sourceforge.net/projects/niftools/files/blender_nif_plugin/>`_.
+   <https://github.com/niftools/blender_nif_plugin/releases>`_.
 
 #. Start blender.
 

@@ -1,4 +1,5 @@
-
+Armatures
+=========
 .. _armature-armatures:
 
 Armature Bones
